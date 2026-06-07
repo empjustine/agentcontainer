@@ -1,0 +1,17 @@
+[tools]
+hadolint = "latest"
+shellcheck = "latest"
+shfmt = "latest"
+
+
+[tasks.shfmt]
+description = "shfmt lint"
+run = "find . -type f '(' -name '*.sh' -o -name '*.env' ')' -print -exec shfmt --write --indent 0 --binary-next-line --case-indent -- '{}' '+'"
+
+[tasks.shellcheck]
+description = "shellcheck lint"
+run = "find . -type f '(' -name '*.sh' -o -name '*.env' ')' -print -exec shellcheck --check-sourced --external-sources --severity=style --enable=all --exclude=SC2292,SC2250 '{}' '+'"
+
+[tasks.hadolint]
+description = "hadolint lint"
+run = "find . -type f -name '*.Containerfile' -print -exec hadolint '{}' '+'"
