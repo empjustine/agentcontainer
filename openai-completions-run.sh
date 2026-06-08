@@ -33,7 +33,6 @@ podman container run \
 	--pull=newer \
 	--stop-timeout="${stop_time}" \
 	--publish 8080:8080/tcp \
-	--detach \
 	--env-file ~/agentcontainer/-openai-completions.env \
 	--device /dev/dri/renderD128:/dev/dri/renderD128:rw \
 	--device /dev/kfd:/dev/kfd:rw \

@@ -1,5 +1,7 @@
 FROM docker.io/library/debian:13-slim AS build-mise
 
+ARG BUILD_DATE
+
 RUN apt-get update && \
 apt-get -y --no-install-recommends upgrade && \
 apt-get -y --no-install-recommends install curl ca-certificates && \
@@ -12,6 +14,8 @@ curl -fSs https://mise.en.dev/gpg-key.pub | tee /etc/apt/keyrings/mise-archive-k
 echo "deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.asc] https://mise.en.dev/deb stable main" | tee /etc/apt/sources.list.d/mise.list
 
 FROM docker.io/library/debian:13-slim
+
+ARG BUILD_DATE
 
 RUN apt-get update && \
 apt-get -y --no-install-recommends upgrade && \
@@ -75,9 +79,9 @@ UV_EXCLUDE_NEWER="7 days" \
 PATH="/mise/shims:/uv/bin:/npm/bin:/root/.local/share/pnpm:/root/.local/bin:$PATH"
 
 WORKDIR /workspace
-
-RUN mise install --system node@22 node@24 node@26 python@3.12 python@3.14 aube uv
-RUN mise use --global node@24 python@3.14 aube uv
+RUN git config --global --add safe.directory /workspace && \
+mise install --system node@22 node@24 node@26 python@3.12 python@3.14 aube uv && \
+mise use --global node@24 python@3.14 aube uv
 RUN uv tool install mistral-vibe
 # RUN uv tool install ruff
 RUN aube add --ignore-scripts --global \
@@ -103,7 +107,6 @@ little-coder@1.8.2,\
 @mariozechner/clipboard-win32-x64-msvc@0.3.6,\
  \
 aube add --ignore-scripts --global little-coder
-RUN git config --global --add safe.directory /workspace
 RUN curl -fsSL https://junie.jetbrains.com/install.sh | bash
 RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
 
