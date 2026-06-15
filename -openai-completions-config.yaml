@@ -1,6 +1,9 @@
-# @see https://github.com/mostlygeek/llama-swap/blob/main/docker/config.example.yaml
 # @see https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md
+# @see https://github.com/mostlygeek/llama-swap/blob/main/config.example.yaml
+# @see https://github.com/mostlygeek/llama-swap/blob/main/docker/config.example.yaml
+# @see https://github.com/mostlygeek/llama-swap/blob/main/docs/configuration.md
 # @see https://gabriel.devenyi.ca/huggingface-estimate/
+# default ollama quant: Q4_K_M
 
 globalTTL: 0
 healthCheckTimeout: 600
@@ -22,35 +25,29 @@ macros:
   # -ot ".ffn_.*_exps.=CPU" # offloads all MoE layers to the CPU
   # -ot ".ffn_(up|down)_exps.=CPU"
   # -ot ".ffn_(up)_exps.=CPU"
-  # --no-kv-offload
-  # --fit-target 1536
-  # -ctk f16 -ctv q8_0
   # --cpu-moe
-  # default ollama quant: Q4_K_M
   # --no-kv-offload
   # --fit-ctx  65536
   # --fit-ctx 131072
   # --fit-ctx 262144
   # --ctx-size 262144
-  # --parallel 1
   "L_PREFIX": >
-    /usr/local/bin/llama-server --port ${PORT} --prio 2
+    llama-server --hf-repo ${MODEL_ID} --port ${PORT} --prio 2
     --log-verbosity 4
 
-    --batch-size 128
+    --batch-size 512
     --log-colors off
     --no-mmproj-offload
     --no-ui
     --no-warmup
     --ubatch-size 128
 
-    --cache-idle-slots --kv-unified --cache-ram 8192
+    --cache-idle-slots --kv-unified --cache-ram 8192 --flash-attn on --parallel 2
     --cache-type-k q8_0
     --cache-type-k-draft q8_0
+    --spec-draft-type-k q8_0
     --cache-type-v q8_0
     --cache-type-v-draft q8_0
-    --flash-attn on
-    --spec-draft-type-k q8_0
     --spec-draft-type-v q8_0
 
     --fit on
@@ -58,8 +55,6 @@ macros:
     --fit-target 1024
     --n-predict 65536
     --no-context-shift
-
-    --hf-repo
   # https://unsloth.ai/docs/models/tutorials/devstral-2#devstral-small-2-24b
   "D_DEVSTR": "--temp 0.15"
   # https://unsloth.ai/docs/models/qwen3.6#qwen3.6-35b-a3b
@@ -82,28 +77,39 @@ macros:
     </think>.
     
     "
-  "D_NTP": ""
-  # https://unsloth.ai/docs/models/qwen3.6#llama.cpp-mtp-guide
-  "D_MTP": "--spec-type draft-mtp --spec-draft-n-max 3"
-  # https://unsloth.ai/docs/models/gemma-4#llama.cpp-guide
-  "D_GEMMA4": "--temp 1.0 --top-p 0.95 --top-k 64"
-  "D_GPTOSS": "--temp 1.0 --min-p 0.0 --top-p 1.0 --top-k 0"
-  "D_GRAN41": "--temp 0.0 --top-k 0 --top-p 1.0"
+  "D_GEMMA4": "--temp 1.0 --top-p 0.95 --top-k 64" # https://unsloth.ai/docs/models/gemma-4#llama.cpp-guide
+  "D_GLM47F": "--temp 0.7 --top-p 1.0 --min-p 0.01 --repeat-penalty 1.00"
+  
+  #"D_GPTOSS": "--temp 1.0 --min-p 0.0 --top-p 1.0 --top-k 0"
+  #"D_GRAN41": "--temp 0.0 --top-k 0 --top-p 1.0"
+  #"D_NTP": ""  
+  #"D_MTP": "--spec-type draft-mtp --spec-draft-n-max 3" # https://unsloth.ai/docs/models/qwen3.6#llama.cpp-mtp-guide
 apiKeys:
   - "${env.LLAMASWAP_API_KEY}"
 models:
-  "llama/Devstral-Small-2-24B-Instruct-2512-fast":  {cmd:  "${L_PREFIX}  byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS    ${D_DEVSTR}  ${D_NTP}"}
-  "llama/Devstral-Small-2-24B-Instruct-2512":       {cmd:  "${L_PREFIX}  unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF:UD-Q8_K_XL  ${D_DEVSTR}  ${D_NTP}"}
-  "llama/gemma-4-002-E2B-qat":                      {cmd:  "${L_PREFIX}  unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL                  ${D_GEMMA4}  ${D_NTP}"}
-  "llama/gemma-4-004-E4B-qat":                      {cmd:  "${L_PREFIX}  unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL                  ${D_GEMMA4}  ${D_NTP}"}
-  "llama/gemma-4-04A-26B-A4B-qat":                  {cmd:  "${L_PREFIX}  unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL              ${D_GEMMA4}  ${D_NTP}"}
-  "llama/gemma-4-04A-26B-A4B":                      {cmd:  "${L_PREFIX}  unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL                  ${D_GEMMA4}  ${D_NTP}"}
-  "llama/gemma-4-12B-qat":                          {cmd:  "${L_PREFIX}  unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL                  ${D_GEMMA4}  ${D_NTP}"}
-  "llama/gemma-4-31B-qat":                          {cmd:  "${L_PREFIX}  unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL                  ${D_GEMMA4}  ${D_NTP}"}
-  "llama/gemma-4-31B":                              {cmd:  "${L_PREFIX}  unsloth/gemma-4-31B-it-GGUF:UD-Q8_K_XL                      ${D_GEMMA4}  ${D_NTP}"}
-  "llama/granite-4.1-03b":                          {cmd:  "${L_PREFIX}  unsloth/granite-4.1-3b-GGUF:UD-Q8_K_XL                      ${D_GRAN41}  ${D_NTP}"}
-  "llama/granite-4.1-08b":                          {cmd:  "${L_PREFIX}  unsloth/granite-4.1-8b-GGUF:UD-Q8_K_XL                      ${D_GRAN41}  ${D_NTP}"}
-  "llama/Qwen3.6-03A-35B-A3B-fast":                 {cmd:  "${L_PREFIX}  byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S                       ${D_QWEN36}  ${D_NTP}"}
-  "llama/Qwen3.6-03A-35B-A3B":                      {cmd:  "${L_PREFIX}  unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL                     ${D_QWEN36}  ${D_NTP}"}
-  "llama/Qwen3.6-27B-fast":                         {cmd:  "${L_PREFIX}  unsloth/Qwen3.6-27B-GGUF:Q4_K_M                             ${D_QWEN36}  ${D_NTP}"}
-  "llama/Qwen3.6-27B":                              {cmd:  "${L_PREFIX}  unsloth/Qwen3.6-27B-GGUF:UD-Q8_K_XL                         ${D_QWEN36}  ${D_NTP}"}
+  "byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS":     {cmd:  "${L_PREFIX}  ${D_DEVSTR}"}
+
+  "unsloth/gemma-4-12b-it-GGUF:UD-Q6_K_XL":                       {cmd:  "${L_PREFIX}  ${D_GEMMA4}"}
+  "unsloth/gemma-4-12b-it-GGUF:UD-Q8_K_XL":                       {cmd:  "${L_PREFIX}  ${D_GEMMA4}"}
+  "unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL":                   {cmd:  "${L_PREFIX}  ${D_GEMMA4}"}
+  "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL":                   {cmd:  "${L_PREFIX}  ${D_GEMMA4}"}
+  "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL":                   {cmd:  "${L_PREFIX}  ${D_GEMMA4}"}
+  "unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL":               {cmd:  "${L_PREFIX}  ${D_GEMMA4}"}
+
+  "unsloth/GLM-4.7-Flash-GGUF:UD-Q6_K_XL":                        {cmd:  "${L_PREFIX}  ${D_GLM47F}"}
+  "unsloth/GLM-4.7-Flash-GGUF:UD-Q8_K_XL":                        {cmd:  "${L_PREFIX}  ${D_GLM47F}"}
+
+  "byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S":                        {cmd:  "${L_PREFIX}  ${D_QWEN36}  --hf-file  Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf"}
+  "unsloth/Qwen3.6-27B-GGUF:Q4_K_M":                              {cmd:  "${L_PREFIX}  ${D_QWEN36}"}
+  "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL":                      {cmd:  "${L_PREFIX}  ${D_QWEN36}"}
+  "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL":                      {cmd:  "${L_PREFIX}  ${D_QWEN36}"}
+
+  #"unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF:UD-Q8_K_XL":  {cmd:  "${L_PREFIX}  ${D_DEVSTR}"}
+  #"unsloth/gemma-4-31B-it-GGUF:UD-Q8_K_XL":                      {cmd:  "${L_PREFIX}  ${D_GEMMA4}"}
+  #"unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL":                  {cmd:  "${L_PREFIX}  ${D_GEMMA4}"}
+  #"unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL":                  {cmd:  "${L_PREFIX}  ${D_GEMMA4}"}
+  #"unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL":                  {cmd:  "${L_PREFIX}  ${D_GEMMA4}"}
+  #"unsloth/granite-4.1-3b-GGUF:UD-Q8_K_XL":                      {cmd:  "${L_PREFIX}  ${D_GRAN41}"}
+  #"unsloth/granite-4.1-8b-GGUF:UD-Q8_K_XL":                      {cmd:  "${L_PREFIX}  ${D_GRAN41}"}
+  #"byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S":                       {cmd:  "${L_PREFIX}  ${D_QWEN36}"}
+  #"unsloth/Qwen3.6-27B-GGUF:UD-Q8_K_XL":                         {cmd:  "${L_PREFIX}  ${D_QWEN36}"}

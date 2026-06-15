@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# container_image='ghcr.io/mostlygeek/llama-swap:unified-rocm'
-container_image='ghcr.io/mostlygeek/llama-swap:unified-vulkan'
+container_image='ghcr.io/mostlygeek/llama-swap:rocm'
+# container_image='ghcr.io/mostlygeek/llama-swap:unified-vulkan'
 container_id='llama-swap-container'
 stop_time='30'
 
@@ -32,14 +32,18 @@ podman container run \
 	--init \
 	--pull=newer \
 	--stop-timeout="${stop_time}" \
+	--detach \
 	--publish 8080:8080/tcp \
 	--env-file ~/agentcontainer/-openai-completions.env \
 	--device /dev/dri/renderD128:/dev/dri/renderD128:rw \
 	--device /dev/kfd:/dev/kfd:rw \
 	--group-add keep-groups \
+	--volume "${HOME}/agentcontainer/-openai-completions-config.yaml:/app/config.yaml:z,U" \
 	--volume "${HOME}/agentcontainer/-openai-completions-config.yaml:/etc/llama-swap/config/config.yaml:z,U" \
 	--volume "${HF_HUB_CACHE}:/root/.cache/huggingface/hub:z,U" \
 	--cap-drop=all \
 	--privileged=false \
 	--security-opt no-new-privileges \
 	"$container_image"
+
+podman logs "$container_id" | head

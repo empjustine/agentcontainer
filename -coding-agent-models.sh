@@ -25,7 +25,7 @@ export BEARER_TOKEN
 
 curl --variable '%URL' --expand-url '{{URL}}/models' \
 	--header "Authorization: Bearer ${BEARER_TOKEN}" \
-	| jq '{"providers":{"llamacpp":{
+	| jq -c '{"providers":{"llamacpp":{
   "baseUrl": env.URL,
   "api": "openai-completions",
   "apiKey": "$LLAMACPP_API_KEY",
