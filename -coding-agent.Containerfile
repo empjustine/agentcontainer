@@ -32,15 +32,16 @@ COPY --from=build-mise /etc/apt/sources.list.d/mise.list  /etc/apt/sources.list.
 # tesseract-ocr-eng \
 # libtesseract-dev \
 # libleptonica-dev \
+# build-essential \
+# pkg-config \
+
 RUN apt-get update && \
 apt-get -y --no-install-recommends upgrade && \
 apt-get -y --no-install-recommends install \
 git \
-build-essential \
 ripgrep \
 jq \
 fd-find \
-pkg-config \
 unzip \
 mise
 
@@ -82,33 +83,10 @@ WORKDIR /workspace
 RUN git config --global --add safe.directory /workspace && \
 mise install --system node@22 node@24 node@26 python@3.12 python@3.14 aube uv && \
 mise use --global node@24 python@3.14 aube uv
-RUN uv tool install mistral-vibe
-# RUN uv tool install ruff
-RUN aube add --ignore-scripts --global \
-@ast-grep/cli \
-@biomejs/biome \
-@earendil-works/pi-coding-agent \
-@getgrit/cli \
-@google/gemini-cli \
-@openai/codex
-RUN AUBE_LOW_DOWNLOAD_THRESHOLD=800 \
-AUBE_TRUST_POLICY_EXCLUDE=\
-little-coder@1.8.2,\
-@mariozechner/clipboard-darwin-arm64@0.3.6,\
-@mariozechner/clipboard-darwin-universal@0.3.6,\
-@mariozechner/clipboard-darwin-x64@0.3.6,\
-@mariozechner/clipboard-linux-arm64-gnu@0.3.6,\
-@mariozechner/clipboard-linux-arm64-gnu@0.3.6,\
-@mariozechner/clipboard-linux-arm64-musl@0.3.6,\
-@mariozechner/clipboard-linux-riscv64-gnu@0.3.6,\
-@mariozechner/clipboard-linux-x64-gnu@0.3.6,\
-@mariozechner/clipboard-linux-x64-musl@0.3.6,\
-@mariozechner/clipboard-win32-arm64-msvc@0.3.6,\
-@mariozechner/clipboard-win32-x64-msvc@0.3.6,\
- \
-aube add --ignore-scripts --global little-coder
+RUN uv tool install hf
+RUN uv tool install fastmcp-slim[server]
+RUN aube add --ignore-scripts --global @earendil-works/pi-coding-agent
 RUN curl -fsSL https://junie.jetbrains.com/install.sh | bash
-RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
 
 ENTRYPOINT ["/usr/bin/env"]
 

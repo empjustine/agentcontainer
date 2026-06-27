@@ -25,7 +25,7 @@ else
 	exit 91
 fi
 
-mkdir -p -- "${HOME}/workspace/${container_name}/pi/agent" "${HOME}/workspace/${container_name}/vibe" "$references"
+mkdir -p -- "${HOME}/workspace/${container_name}/pi/agent" "$references"
 
 ~/agentcontainer/-coding-agent-models.sh >"${HOME}/workspace/${container_name}/pi/agent/models.json"
 echo '{"retry":{"enabled":true,"maxRetries":7,"baseDelayMs":10000}}' >"${HOME}/workspace/${container_name}/pi/agent/settings.json"
@@ -34,7 +34,6 @@ echo '{"retry":{"enabled":true,"maxRetries":7,"baseDelayMs":10000}}' >"${HOME}/w
 	-v "${references}:/references:z,ro" \
 	-v "${workspace}:/workspace:z" --workdir /workspace \
 	-v "${HOME}/workspace/${container_name}/pi:/root/.pi:Z" \
-	-v "${HOME}/workspace/${container_name}/vibe:/root/.vibe:Z" \
 	--network=host \
 	--name "$container_name" --hostname "$container_name" \
 	--env-file ~/agentcontainer/-coding-agent.env \
@@ -43,10 +42,12 @@ echo '{"retry":{"enabled":true,"maxRetries":7,"baseDelayMs":10000}}' >"${HOME}/w
 
 "$_container_tool" container exec -it "$container_name" mkdir -p /root/.pi/agent
 
-echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-llamacpp.env" -it "$container_name" env LITTLE_CODER_PERMISSION_MODE=accept-all little-coder
-echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-llamacpp.env" -it "$container_name" pi
-echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-mistral.env" -it "$container_name" vibe --agent auto-approve
-echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-opencode.env" -it "$container_name" pi
-echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-openrouter.env" -it "$container_name" pi
+# LITTLE_CODER_PERMISSION_MODE=accept-all little-coder
+echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-llamacpp.env" -it "$container_name" bash
+echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-geminicli.env" -it "$container_name" bash
+echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-mistral.env" -it "$container_name" bash 
+echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-opencode.env" -it "$container_name" bash
+echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-openrouter.env" -it "$container_name" bash
+# vibe --agent auto-approve
 
 echo "$_container_tool" container attach "$container_name"
