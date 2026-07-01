@@ -11,9 +11,9 @@ fi
 
 DOWNLOAD="$(xdg-user-dir DOWNLOAD)"
 if [ -n "$DOWNLOAD" ]; then
-	references="${DOWNLOAD}/github"
+	references="${DOWNLOAD}"
 else
-	references="${HOME}/Downloads/github"
+	references="${HOME}/Downloads"
 fi
 
 if [ -x /usr/bin/podman ]; then
@@ -31,7 +31,8 @@ mkdir -p -- "${HOME}/workspace/${container_name}/pi/agent" "$references"
 echo '{"retry":{"enabled":true,"maxRetries":7,"baseDelayMs":10000}}' >"${HOME}/workspace/${container_name}/pi/agent/settings.json"
 
 "$_container_tool" container run -it --rm --init \
-	-v "${references}:/references:z,ro" \
+	-v "${references}/github:/references/github:z,ro" \
+	-v "${references}/kiwix:/references/kiwix:z,ro" \
 	-v "${workspace}:/workspace:z" --workdir /workspace \
 	-v "${HOME}/workspace/${container_name}/pi:/root/.pi:Z" \
 	--network=host \

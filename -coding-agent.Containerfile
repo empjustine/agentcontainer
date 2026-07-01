@@ -1,4 +1,4 @@
-FROM docker.io/library/debian:13-slim AS build-mise
+FROM docker.io/library/debian:13-slim AS base-debian-slim
 
 ARG BUILD_DATE
 
@@ -8,24 +8,25 @@ apt-get -y --no-install-recommends install curl ca-certificates && \
 apt-get autoremove && \
 apt-get clean && \
 rm -rf /var/lib/apt/lists/*
+
+FROM base-debian-slim AS intermediate
 
 RUN install -dm 755 /etc/apt/keyrings && \
 curl -fSs https://mise.en.dev/gpg-key.pub | tee /etc/apt/keyrings/mise-archive-keyring.asc 1>/dev/null && \
 echo "deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.asc] https://mise.en.dev/deb stable main" | tee /etc/apt/sources.list.d/mise.list
+WORKDIR /usr/local/bin
+# RUN env \
+#   TAG="v0.9.0" \
+#   OS="$(uname -s | tr '[:upper:]' '[:lower:]')" \
+#   ARCH="$(uname -m | sed -e 's/x86_64/amd64/')" \
+#   bash -c 'curl -L "https://github.com/scip-code/scip/releases/download/$TAG/scip-$OS-$ARCH.tar.gz"' \
+# | tar xzf - scip
 
-FROM docker.io/library/debian:13-slim
+FROM base-debian-slim
 
-ARG BUILD_DATE
-
-RUN apt-get update && \
-apt-get -y --no-install-recommends upgrade && \
-apt-get -y --no-install-recommends install curl ca-certificates && \
-apt-get autoremove && \
-apt-get clean && \
-rm -rf /var/lib/apt/lists/*
-
-COPY --from=build-mise /etc/apt/keyrings/mise-archive-keyring.asc /etc/apt/keyrings/mise-archive-keyring.asc
-COPY --from=build-mise /etc/apt/sources.list.d/mise.list  /etc/apt/sources.list.d/mise.list
+COPY --from=intermediate /etc/apt/keyrings/mise-archive-keyring.asc /etc/apt/keyrings/mise-archive-keyring.asc
+COPY --from=intermediate /etc/apt/sources.list.d/mise.list  /etc/apt/sources.list.d/mise.list
+# COPY --from=intermediate /usr/local/bin/scip /usr/local/bin/scip
 
 # [Junie] ERROR: 'unzip' is required to install Junie, but it was not found in PATH.
 # tesseract-ocr \
@@ -50,41 +51,20 @@ mise
 # apt-get clean && \
 # rm -rf /var/lib/apt/lists/*
 
-# ENV MISE_TMP_DIR=/mise/tmp
-# ENV MISE_IDIOMATIC_VERSION_FILE_ENABLE_TOOLS=node
-
 ENV \
-MISE_INSTALL_PATH=/usr/local/bin/mise \
-UV_INSTALL_DIR=/usr/local/bin \
-MISE_DATA_DIR=/mise \
-MISE_CONFIG_DIR=/mise \
-MISE_CACHE_DIR=/mise/cache \
-MISE_STATE_DIR=/mise/state \
-\
-npm_config_prefix=/npm \
-npm_config_cache=/npm/cache \
-\
-UV_CACHE_DIR=/uv/cache \
-UV_TOOL_DIR=/uv/tools \
-UV_TOOL_BIN_DIR=/uv/bin \
-UV_PYTHON_INSTALL_DIR=/uv/python \
-UV_PYTHON_BIN_DIR=/uv/bin \
-UV_CREDENTIALS_DIR=/uv/credentials \
-\
-AUBE_MINIMUM_RELEASE_AGE=10080 \
+AUBE_MINIMUM_RELEASE_AGE=4320 \
 npm_config_ignore_scripts=true \
-npm_config_min_release_age=7 \
-pnpm_config_minimum_release_age=10080 \
-UV_EXCLUDE_NEWER="7 days" \
+npm_config_min_release_age=3 \
+pnpm_config_minimum_release_age=4320 \
+UV_EXCLUDE_NEWER="3 days" \
+MISE_MINIMUM_RELEASE_AGE="3d" \
 \
-PATH="/mise/shims:/uv/bin:/npm/bin:/root/.local/share/pnpm:/root/.local/bin:$PATH"
+PATH="/root/.local/bin:/root/.local/share/mise/shims:/root/.local/share/pnpm:$PATH"
 
 WORKDIR /workspace
 RUN git config --global --add safe.directory /workspace && \
-mise install --system node@22 node@24 node@26 python@3.12 python@3.14 aube uv && \
+mise install --system node@22 node@24 python@3.12 python@3.14 aube uv && \
 mise use --global node@24 python@3.14 aube uv
-RUN uv tool install hf
-RUN uv tool install fastmcp-slim[server]
 RUN aube add --ignore-scripts --global @earendil-works/pi-coding-agent
 RUN curl -fsSL https://junie.jetbrains.com/install.sh | bash
 

@@ -48,7 +48,7 @@ macros:
 
     --fit on
     --fit-target 1024
-    --n-predict 65536
+    --n-predict 100000
     --no-context-shift
   "ctx064":  "--fit-ctx  65536 "
   "ctx100":  "--fit-ctx 100000 "
