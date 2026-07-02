@@ -1,6 +1,5 @@
 #!/bin/sh
 
-source ~/agentcontainer/-coding-agent.env
 source ~/agentcontainer/-coding-agent-api-llamacpp.env
 
 if [ -n "$LLAMACPP_BASE_URL" ]; then
