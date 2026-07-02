@@ -1,6 +1,6 @@
 #!/bin/sh
 
-container_name="agentcontainer-$(date +'%Y-%m-%dT%H-%M-%S-%3N')"
+container_name="agentcontainer-$(date +'%Y%m%d%H%M%S%3N')"
 tag='localhost/empjustine/coding-agent:latest'
 workspace="$(pwd)"
 
@@ -28,7 +28,7 @@ fi
 mkdir -p -- "${HOME}/workspace/${container_name}/pi/agent" "$references"
 
 ~/agentcontainer/-coding-agent-models.sh >"${HOME}/workspace/${container_name}/pi/agent/models.json"
-echo '{"retry":{"enabled":true,"maxRetries":7,"baseDelayMs":10000}}' >"${HOME}/workspace/${container_name}/pi/agent/settings.json"
+echo '{"retry":{"enabled":true,"maxRetries":9,"baseDelayMs":10000}}' >"${HOME}/workspace/${container_name}/pi/agent/settings.json"
 
 "$_container_tool" container run -it --rm --init \
 	-v "${references}/github:/references/github:z,ro" \
@@ -37,18 +37,13 @@ echo '{"retry":{"enabled":true,"maxRetries":7,"baseDelayMs":10000}}' >"${HOME}/w
 	-v "${HOME}/workspace/${container_name}/pi:/root/.pi:Z" \
 	--network=host \
 	--name "$container_name" --hostname "$container_name" \
-	--env-file ~/agentcontainer/-coding-agent.env \
 	--detach \
 	"$tag"
 
 "$_container_tool" container exec -it "$container_name" mkdir -p /root/.pi/agent
 
 # LITTLE_CODER_PERMISSION_MODE=accept-all little-coder
-echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-llamacpp.env" -it "$container_name" bash
-echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-geminicli.env" -it "$container_name" bash
-echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-mistral.env" -it "$container_name" bash 
-echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-opencode.env" -it "$container_name" bash
-echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-openrouter.env" -it "$container_name" bash
 # vibe --agent auto-approve
-
-echo "$_container_tool" container attach "$container_name"
+echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-cloud.env" -it "$container_name" bash
+echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-llamacpp.env" -it "$container_name" bash
+echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-openrouter.env" -it "$container_name" bash

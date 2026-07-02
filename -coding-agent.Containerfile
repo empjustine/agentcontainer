@@ -39,12 +39,13 @@ COPY --from=intermediate /etc/apt/sources.list.d/mise.list  /etc/apt/sources.lis
 RUN apt-get update && \
 apt-get -y --no-install-recommends upgrade && \
 apt-get -y --no-install-recommends install \
-git \
-ripgrep \
-jq \
+build-essential \
 fd-find \
-unzip \
-mise
+git \
+jq \
+mise \
+ripgrep \
+unzip
 
 # && \
 # apt-get autoremove && \
@@ -63,11 +64,11 @@ PATH="/root/.local/bin:/root/.local/share/mise/shims:/root/.local/share/pnpm:$PA
 
 WORKDIR /workspace
 RUN git config --global --add safe.directory /workspace && \
-mise install --system node@22 node@24 python@3.12 python@3.14 aube uv && \
-mise use --global node@24 python@3.14 aube uv
-RUN aube add --ignore-scripts --global @earendil-works/pi-coding-agent
+mise install --system node@22 node@24 python@3.12 python@3.14 uv && \
+mise use --global node@24 python@3.14 uv
+RUN npm install --global @earendil-works/pi-coding-agent little-coder @ataraxy-labs/sem @ataraxy-labs/weave
 RUN curl -fsSL https://junie.jetbrains.com/install.sh | bash
 
 ENTRYPOINT ["/usr/bin/env"]
 
-CMD ["/bin/bash"]
+CMD ["/usr/bin/sleep", "infinity"]
