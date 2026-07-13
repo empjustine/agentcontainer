@@ -53,20 +53,41 @@ unzip
 # rm -rf /var/lib/apt/lists/*
 
 ENV \
-AUBE_MINIMUM_RELEASE_AGE=4320 \
+COREPACK_ENABLE_STRICT=1 \
+MISE_MINIMUM_RELEASE_AGE="3d" \
 npm_config_ignore_scripts=true \
 npm_config_min_release_age=3 \
+PIP_REQUIRE_VIRTUALENV="true" \
+PIP_UPLOADED_PRIOR_TO="P3D" \
 pnpm_config_minimum_release_age=4320 \
 UV_EXCLUDE_NEWER="3 days" \
-MISE_MINIMUM_RELEASE_AGE="3d" \
 \
 PATH="/root/.local/bin:/root/.local/share/mise/shims:/root/.local/share/pnpm:$PATH"
 
 WORKDIR /workspace
 RUN git config --global --add safe.directory /workspace && \
 mise install --system node@22 node@24 python@3.12 python@3.14 uv && \
-mise use --global node@24 python@3.14 uv
-RUN npm install --global @earendil-works/pi-coding-agent little-coder @ataraxy-labs/sem @ataraxy-labs/weave
+mise use --global node@24 python@3.14 uv && \
+touch /workspace/mise.toml && \
+mise trust /workspace/mise.toml
+RUN mise use --global \
+    npm:@earendil-works/pi-coding-agent@latest \
+    npm:little-coder@latest \
+    npm:@ataraxy-labs/sem@latest \
+    npm:@ataraxy-labs/weave@latest && \
+mkdir -p /root/.local/share/stubs && \
+echo '#!/bin/sh' > /usr/local/bin/pip && \
+echo 'echo "WARNING: Please use uv and pyproject.toml." >&2' >> /usr/local/bin/pip && \
+echo 'echo "If you really need pip, use: ~/.local/share/mise/shims/pip" >&2' >> /usr/local/bin/pip && \
+echo 'exit 100' >> /usr/local/bin/pip && \
+chmod +x /usr/local/bin/pip && \
+echo '#!/bin/sh' > /usr/local/bin/pip3 && \
+echo 'echo "WARNING: Please use uv and pyproject.toml." >&2' >> /usr/local/bin/pip && \
+echo 'echo "If you really need pip3, use: ~/.local/share/mise/shims/pip3" >&2' >> /usr/local/bin/pip3 && \
+echo 'exit 100' >> /usr/local/bin/pip3 && \
+chmod +x /usr/local/bin/pip3
+
+ENV PATH="/root/.local/bin:/root/.local/share/stubs:/root/.local/share/mise/shims:/root/.local/share/pnpm:$PATH"
 RUN curl -fsSL https://junie.jetbrains.com/install.sh | bash
 
 ENTRYPOINT ["/usr/bin/env"]

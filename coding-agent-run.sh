@@ -42,8 +42,9 @@ echo '{"retry":{"enabled":true,"maxRetries":9,"baseDelayMs":10000}}' >"${HOME}/w
 
 "$_container_tool" container exec -it "$container_name" mkdir -p /root/.pi/agent
 
-# LITTLE_CODER_PERMISSION_MODE=accept-all little-coder
+echo "$_container_tool" container exec -it "$container_name" mise use --global npm:@earendil-works/pi-coding-agent@latest npm:little-coder@latest
+
 # vibe --agent auto-approve
+echo LITTLE_CODER_PERMISSION_MODE=accept-all little-coder
 echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-cloud.env" -it "$container_name" bash
 echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-llamacpp.env" -it "$container_name" bash
-echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-openrouter.env" -it "$container_name" bash
