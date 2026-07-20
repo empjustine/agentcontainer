@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# Accept an optional PATH argument.  When given, pi processes that path
+# instead of dropping to an interactive shell.
+target_path="${1:-}"
+shift 2>/dev/null || true
+
 container_name="agentcontainer-$(date +'%Y%m%d%H%M%S%3N')"
 tag='localhost/empjustine/coding-agent:latest'
 workspace="$(pwd)"
@@ -27,24 +32,17 @@ fi
 
 mkdir -p -- "${HOME}/workspace/${container_name}/pi/agent" "$references"
 
-~/agentcontainer/-coding-agent-models.sh >"${HOME}/workspace/${container_name}/pi/agent/models.json"
-echo '{"retry":{"enabled":true,"maxRetries":9,"baseDelayMs":10000}}' >"${HOME}/workspace/${container_name}/pi/agent/settings.json"
+echo '{"retry":{"enabled":true,"maxRetries":9,"baseDelayMs":10000,"provider":{"timeoutMs":600000}},"editorPaddingX":0,"outputPad":0,"showCacheMissNotices":true,"terminal":{"showTerminalProgress":false}}' >"${HOME}/workspace/${container_name}/pi/agent/settings.json"
+mise exec node@24 -- node --env-file ~/agentcontainer/coding-agent/.env "${HOME}/agentcontainer/provider-models/generate-pi-models.js" >"${HOME}/workspace/${container_name}/pi/agent/models.json"
 
 "$_container_tool" container run -it --rm --init \
 	-v "${references}/github:/references/github:z,ro" \
 	-v "${references}/kiwix:/references/kiwix:z,ro" \
 	-v "${workspace}:/workspace:z" --workdir /workspace \
 	-v "${HOME}/workspace/${container_name}/pi:/root/.pi:Z" \
+	-v "${HOME}/agentcontainer:/agentcontainer:ro" \
 	--network=host \
 	--name "$container_name" --hostname "$container_name" \
-	--detach \
-	"$tag"
-
-"$_container_tool" container exec -it "$container_name" mkdir -p /root/.pi/agent
-
-echo "$_container_tool" container exec -it "$container_name" mise use --global npm:@earendil-works/pi-coding-agent@latest npm:little-coder@latest
-
-# vibe --agent auto-approve
-echo LITTLE_CODER_PERMISSION_MODE=accept-all little-coder
-echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-cloud.env" -it "$container_name" bash
-echo "$_container_tool" container exec --env-file "~/agentcontainer/-coding-agent-api-llamacpp.env" -it "$container_name" bash
+	--env-file ~/agentcontainer/coding-agent/.env \
+	"$tag" \
+	bash

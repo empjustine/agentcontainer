@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -xe
-
 container_id='llama-swap-container'
 
 HF_HOME="${XDG_CACHE_HOME:-${HOME}/.cache}/huggingface"
@@ -19,4 +17,4 @@ fi
 
 mkdir -p -- "$LLAMA_CACHE"
 
-"$_container_tool" exec -it "$container_id" /usr/local/bin/llama-server -hf "$@" || true
+"$_container_tool" exec -it "$container_id" /usr/local/bin/llama-server "$@"

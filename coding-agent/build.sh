@@ -3,7 +3,7 @@
 set -xe
 
 BUILD_DATE="$(date +'%Y%m%d')"
-containerfile="${HOME}/agentcontainer/-coding-agent.Containerfile"
+containerfile="${HOME}/agentcontainer/coding-agent/Containerfile"
 latest_tag="localhost/empjustine/coding-agent:latest"
 tag="localhost/empjustine/coding-agent:${BUILD_DATE}"
 

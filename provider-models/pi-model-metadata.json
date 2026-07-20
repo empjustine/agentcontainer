@@ -1,0 +1,2672 @@
+{
+  "openrouter": {
+    "ai21/jamba-large-1.7": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "aion-labs/aion-2.0": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "aion-labs/aion-3.0": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "aion-labs/aion-3.0-mini": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "amazon/nova-2-lite-v1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "amazon/nova-lite-v1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "amazon/nova-micro-v1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "amazon/nova-premier-v1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "amazon/nova-pro-v1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "anthropic/claude-3-haiku": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": false
+    },
+    "anthropic/claude-fable-5": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true
+    },
+    "anthropic/claude-haiku-4.5": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true
+    },
+    "anthropic/claude-opus-4": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true
+    },
+    "anthropic/claude-opus-4.1": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true
+    },
+    "anthropic/claude-opus-4.5": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true
+    },
+    "anthropic/claude-opus-4.6": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "max": "max"
+      }
+    },
+    "anthropic/claude-opus-4.7": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "anthropic/claude-opus-4.7-fast": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "anthropic/claude-opus-4.8": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "anthropic/claude-opus-4.8-fast": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "anthropic/claude-sonnet-4": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true
+    },
+    "anthropic/claude-sonnet-4.5": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true
+    },
+    "anthropic/claude-sonnet-4.6": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "max": "max"
+      }
+    },
+    "anthropic/claude-sonnet-5": {
+      "compat": {
+        "thinkingFormat": "openrouter",
+        "cacheControlFormat": "anthropic"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "arcee-ai/trinity-large-thinking": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "arcee-ai/trinity-mini": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "arcee-ai/virtuoso-large": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "auto": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "bytedance-seed/seed-1.6": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "bytedance-seed/seed-1.6-flash": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "bytedance-seed/seed-2.0-lite": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "bytedance-seed/seed-2.0-mini": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "cohere/command-r-08-2024": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "cohere/command-r-plus-08-2024": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "cohere/north-mini-code:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "deepseek/deepseek-chat": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "deepseek/deepseek-chat-v3-0324": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "deepseek/deepseek-chat-v3.1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "deepseek/deepseek-r1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "deepseek/deepseek-r1-0528": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "deepseek/deepseek-v3.1-terminus": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "deepseek/deepseek-v3.2": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "deepseek/deepseek-v3.2-exp": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "deepseek/deepseek-v4-flash": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter",
+        "requiresReasoningContentOnAssistantMessages": true
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "minimal": null,
+        "low": null,
+        "medium": null,
+        "high": "high",
+        "max": null,
+        "xhigh": "xhigh"
+      }
+    },
+    "deepseek/deepseek-v4-pro": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter",
+        "requiresReasoningContentOnAssistantMessages": true
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "minimal": null,
+        "low": null,
+        "medium": null,
+        "high": "high",
+        "max": null,
+        "xhigh": "xhigh"
+      }
+    },
+    "google/gemini-2.5-flash": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemini-2.5-flash-lite": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemini-2.5-pro": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemini-2.5-pro-preview": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemini-2.5-pro-preview-05-06": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemini-3-flash-preview": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemini-3-pro-image": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemini-3.1-flash-lite": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemini-3.1-flash-lite-preview": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemini-3.1-pro-preview": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemini-3.1-pro-preview-customtools": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemini-3.5-flash": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemma-3-12b-it": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "google/gemma-3-27b-it": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "google/gemma-4-26b-a4b-it": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemma-4-26b-a4b-it:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemma-4-31b-it": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "google/gemma-4-31b-it:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "ibm-granite/granite-4.1-8b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "inception/mercury-2": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "inclusionai/ling-2.6-1t": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "inclusionai/ling-2.6-flash": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "inclusionai/ring-2.6-1t": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "kwaipilot/kat-coder-pro-v2": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "liquid/lfm-2.5-1.2b-thinking:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "meta-llama/llama-3.1-70b-instruct": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "meta-llama/llama-3.1-8b-instruct": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "meta-llama/llama-3.3-70b-instruct": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "meta-llama/llama-3.3-70b-instruct:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "meta-llama/llama-4-maverick": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "meta-llama/llama-4-scout": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "minimax/minimax-m1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "minimax/minimax-m2": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "minimax/minimax-m2.1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "minimax/minimax-m2.5": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "minimax/minimax-m2.7": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "minimax/minimax-m3": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "mistralai/codestral-2508": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/devstral-2512": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/ministral-14b-2512": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/ministral-3b-2512": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/ministral-8b-2512": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/mistral-large": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/mistral-large-2407": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/mistral-large-2512": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/mistral-medium-3": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/mistral-medium-3-5": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "mistralai/mistral-medium-3.1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/mistral-nemo": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/mistral-saba": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/mistral-small-2603": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "mistralai/mistral-small-3.2-24b-instruct": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/mixtral-8x22b-instruct": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "mistralai/voxtral-small-24b-2507": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "moonshotai/kimi-k2": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "moonshotai/kimi-k2-0905": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "moonshotai/kimi-k2-thinking": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "moonshotai/kimi-k2.5": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "moonshotai/kimi-k2.6": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter",
+        "requiresReasoningContentOnAssistantMessages": true
+      },
+      "reasoning": true
+    },
+    "moonshotai/kimi-k2.7-code": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "nex-agi/nex-n2-mini": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "nex-agi/nex-n2-pro": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "nvidia/llama-3.3-nemotron-super-49b-v1.5": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "nvidia/nemotron-3-nano-30b-a3b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "nvidia/nemotron-3-nano-30b-a3b:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "nvidia/nemotron-3-super-120b-a12b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "nvidia/nemotron-3-super-120b-a12b:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "nvidia/nemotron-3-ultra-550b-a55b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "nvidia/nemotron-3-ultra-550b-a55b:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "nvidia/nemotron-nano-12b-v2-vl:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "nvidia/nemotron-nano-9b-v2:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-3.5-turbo": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-3.5-turbo-0613": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-3.5-turbo-16k": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-4": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-4-turbo": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-4-turbo-preview": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-4.1": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-4.1-mini": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-4.1-nano": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-4o": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-4o-2024-05-13": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-4o-2024-08-06": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-4o-2024-11-20": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-4o-mini": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-4o-mini-2024-07-18": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-5": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-5-codex": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-5-mini": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-5-nano": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-5-pro": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-5.1": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-5.1-chat": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-5.1-codex": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-5.1-codex-max": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-5.1-codex-mini": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-5.2": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh"
+      }
+    },
+    "openai/gpt-5.2-chat": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh"
+      }
+    },
+    "openai/gpt-5.2-codex": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh"
+      }
+    },
+    "openai/gpt-5.2-pro": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh"
+      }
+    },
+    "openai/gpt-5.3-chat": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh"
+      }
+    },
+    "openai/gpt-5.3-codex": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh"
+      }
+    },
+    "openai/gpt-5.4": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh"
+      }
+    },
+    "openai/gpt-5.4-mini": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh"
+      }
+    },
+    "openai/gpt-5.4-nano": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh"
+      }
+    },
+    "openai/gpt-5.4-pro": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh"
+      }
+    },
+    "openai/gpt-5.5": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh"
+      }
+    },
+    "openai/gpt-5.5-pro": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "off": null,
+        "minimal": null,
+        "low": null
+      }
+    },
+    "openai/gpt-5.6-luna": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "openai/gpt-5.6-luna-pro": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "openai/gpt-5.6-sol": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "openai/gpt-5.6-sol-pro": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "openai/gpt-5.6-terra": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "openai/gpt-5.6-terra-pro": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "openai/gpt-audio": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-audio-mini": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-chat-latest": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "openai/gpt-oss-120b": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-oss-120b:free": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-oss-20b": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-oss-20b:free": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/gpt-oss-safeguard-20b": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/o1": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/o3": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/o3-deep-research": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/o3-mini": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/o3-mini-high": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/o3-pro": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/o4-mini": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/o4-mini-deep-research": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openai/o4-mini-high": {
+      "compat": {
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openrouter/auto": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openrouter/free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "openrouter/fusion": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "poolside/laguna-m.1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "poolside/laguna-m.1:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "poolside/laguna-xs-2.1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "poolside/laguna-xs-2.1:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen-2.5-72b-instruct": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen-2.5-7b-instruct": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen-plus": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen-plus-2025-07-28": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen-plus-2025-07-28:thinking": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3-14b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3-235b-a22b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3-235b-a22b-2507": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-235b-a22b-thinking-2507": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3-30b-a3b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3-30b-a3b-instruct-2507": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-30b-a3b-thinking-2507": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3-32b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3-8b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3-coder": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-coder-30b-a3b-instruct": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-coder-flash": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-coder-next": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-coder-plus": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-coder:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-max": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-max-thinking": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3-next-80b-a3b-instruct": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-next-80b-a3b-instruct:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-next-80b-a3b-thinking": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3-vl-235b-a22b-instruct": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-vl-235b-a22b-thinking": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3-vl-30b-a3b-instruct": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-vl-30b-a3b-thinking": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3-vl-32b-instruct": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-vl-8b-instruct": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "qwen/qwen3-vl-8b-thinking": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.5-122b-a10b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.5-27b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.5-35b-a3b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.5-397b-a17b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.5-9b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.5-flash-02-23": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.5-plus-02-15": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.5-plus-20260420": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.6-27b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.6-35b-a3b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.6-flash": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.6-max-preview": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.6-plus": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.7-max": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "qwen/qwen3.7-plus": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "rekaai/reka-edge": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "relace/relace-search": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "sakana/fugu-ultra": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "sao10k/l3.1-euryale-70b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "stepfun/step-3.5-flash": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "stepfun/step-3.7-flash": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "tencent/hy3": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "tencent/hy3-preview": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "tencent/hy3:free": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "thedrummer/unslopnemo-12b": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": false
+    },
+    "upstage/solar-pro-3": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "x-ai/grok-4.20": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "x-ai/grok-4.3": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "x-ai/grok-4.5": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "x-ai/grok-build-0.1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "xiaomi/mimo-v2.5": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "xiaomi/mimo-v2.5-pro": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "z-ai/glm-4.5": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "z-ai/glm-4.5-air": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "z-ai/glm-4.5v": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "z-ai/glm-4.6": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "z-ai/glm-4.6v": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "z-ai/glm-4.7": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "z-ai/glm-4.7-flash": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "z-ai/glm-5": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "z-ai/glm-5-turbo": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "z-ai/glm-5.1": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "z-ai/glm-5.2": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh"
+      }
+    },
+    "z-ai/glm-5v-turbo": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "~anthropic/claude-fable-latest": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "~anthropic/claude-haiku-latest": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "~anthropic/claude-opus-latest": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "~anthropic/claude-sonnet-latest": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "~google/gemini-flash-latest": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "~google/gemini-pro-latest": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "~moonshotai/kimi-latest": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "~openai/gpt-latest": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "~openai/gpt-mini-latest": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    },
+    "~x-ai/grok-latest": {
+      "compat": {
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "openrouter"
+      },
+      "reasoning": true
+    }
+  },
+  "opencode": {
+    "big-pickle": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "claude-fable-5": {
+      "compat": {
+        "forceAdaptiveThinking": true
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "claude-haiku-4-5": {
+      "reasoning": true
+    },
+    "claude-opus-4-1": {
+      "reasoning": true
+    },
+    "claude-opus-4-5": {
+      "reasoning": true
+    },
+    "claude-opus-4-6": {
+      "compat": {
+        "forceAdaptiveThinking": true
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "max": "max"
+      }
+    },
+    "claude-opus-4-7": {
+      "compat": {
+        "forceAdaptiveThinking": true,
+        "supportsTemperature": false
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "claude-opus-4-8": {
+      "compat": {
+        "forceAdaptiveThinking": true,
+        "supportsTemperature": false
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "claude-sonnet-4": {
+      "reasoning": true
+    },
+    "claude-sonnet-4-5": {
+      "reasoning": true
+    },
+    "claude-sonnet-4-6": {
+      "compat": {
+        "forceAdaptiveThinking": true
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "max": "max"
+      }
+    },
+    "claude-sonnet-5": {
+      "compat": {
+        "forceAdaptiveThinking": true
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "xhigh": "xhigh",
+        "max": "max"
+      }
+    },
+    "deepseek-v4-flash": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens",
+        "supportsLongCacheRetention": false,
+        "requiresReasoningContentOnAssistantMessages": true
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "minimal": null,
+        "low": null,
+        "medium": null,
+        "high": "high",
+        "max": "max"
+      }
+    },
+    "deepseek-v4-flash-free": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens",
+        "requiresReasoningContentOnAssistantMessages": true
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "minimal": null,
+        "low": null,
+        "medium": null,
+        "high": "high",
+        "max": "max"
+      }
+    },
+    "deepseek-v4-pro": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens",
+        "supportsLongCacheRetention": false,
+        "requiresReasoningContentOnAssistantMessages": true
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "minimal": null,
+        "low": null,
+        "medium": null,
+        "high": "high",
+        "max": "max"
+      }
+    },
+    "gemini-3-flash": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gemini-3.1-pro": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "minimal": null,
+        "low": "LOW",
+        "medium": null,
+        "high": "HIGH"
+      }
+    },
+    "gemini-3.5-flash": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "glm-5": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "glm-5.1": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "glm-5.2": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "gpt-5": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gpt-5-codex": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gpt-5-nano": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gpt-5.1": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gpt-5.1-codex": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gpt-5.1-codex-max": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gpt-5.1-codex-mini": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gpt-5.2": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "xhigh": "xhigh"
+      }
+    },
+    "gpt-5.2-codex": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "xhigh": "xhigh"
+      }
+    },
+    "gpt-5.3-codex": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "xhigh": "xhigh"
+      }
+    },
+    "gpt-5.4": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "xhigh": "xhigh"
+      }
+    },
+    "gpt-5.4-mini": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "xhigh": "xhigh"
+      }
+    },
+    "gpt-5.4-nano": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "xhigh": "xhigh"
+      }
+    },
+    "gpt-5.4-pro": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "xhigh": "xhigh"
+      }
+    },
+    "gpt-5.5": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "xhigh": "xhigh"
+      }
+    },
+    "gpt-5.5-pro": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "xhigh": "xhigh",
+        "minimal": null,
+        "low": null
+      }
+    },
+    "grok-4.5": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "grok-build-0.1": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "minimal": null,
+        "low": null,
+        "medium": null
+      }
+    },
+    "hy3-free": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "kimi-k2.5": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens",
+        "supportsLongCacheRetention": false
+      },
+      "reasoning": true
+    },
+    "kimi-k2.6": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "deepseek",
+        "supportsReasoningEffort": false,
+        "maxTokensField": "max_tokens",
+        "supportsLongCacheRetention": false
+      },
+      "reasoning": true
+    },
+    "kimi-k2.7-code": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "mimo-v2.5-free": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "minimax-m2.5": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "minimax-m2.7": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens",
+        "supportsLongCacheRetention": false
+      },
+      "reasoning": true
+    },
+    "minimax-m3": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "nemotron-3-ultra-free": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "north-mini-code-free": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "qwen3.5-plus": {
+      "reasoning": true
+    },
+    "qwen3.6-plus": {
+      "reasoning": true
+    }
+  },
+  "opencode-go": {
+    "deepseek-v4-flash": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens",
+        "requiresReasoningContentOnAssistantMessages": true,
+        "thinkingFormat": "deepseek"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "minimal": null,
+        "low": null,
+        "medium": null,
+        "high": "high",
+        "max": "max"
+      }
+    },
+    "deepseek-v4-pro": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens",
+        "requiresReasoningContentOnAssistantMessages": true,
+        "thinkingFormat": "deepseek"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "minimal": null,
+        "low": null,
+        "medium": null,
+        "high": "high",
+        "max": "max"
+      }
+    },
+    "glm-5.1": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "glm-5.2": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "minimal": null,
+        "low": null,
+        "medium": null,
+        "high": "high",
+        "max": "max"
+      }
+    },
+    "kimi-k2.6": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "deepseek",
+        "supportsReasoningEffort": false,
+        "maxTokensField": "max_tokens",
+        "supportsLongCacheRetention": false
+      },
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "minimal": null,
+        "low": null,
+        "medium": null
+      }
+    },
+    "kimi-k2.7-code": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "mimo-v2.5": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "mimo-v2.5-pro": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "minimax-m2.7": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "minimax-m3": {
+      "reasoning": true
+    },
+    "qwen3.6-plus": {
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "thinkingFormat": "qwen",
+        "maxTokensField": "max_tokens"
+      },
+      "reasoning": true
+    },
+    "qwen3.7-max": {
+      "reasoning": true
+    },
+    "qwen3.7-plus": {
+      "reasoning": true
+    }
+  },
+  "mistral": {
+    "codestral-latest": {
+      "reasoning": false
+    },
+    "devstral-2512": {
+      "reasoning": false
+    },
+    "devstral-latest": {
+      "reasoning": false
+    },
+    "devstral-medium-2507": {
+      "reasoning": false
+    },
+    "devstral-medium-latest": {
+      "reasoning": false
+    },
+    "devstral-small-2505": {
+      "reasoning": false
+    },
+    "devstral-small-2507": {
+      "reasoning": false
+    },
+    "labs-devstral-small-2512": {
+      "reasoning": false
+    },
+    "magistral-medium-latest": {
+      "reasoning": true
+    },
+    "magistral-small": {
+      "reasoning": true
+    },
+    "ministral-3b-latest": {
+      "reasoning": false
+    },
+    "ministral-8b-latest": {
+      "reasoning": false
+    },
+    "mistral-large-2411": {
+      "reasoning": false
+    },
+    "mistral-large-2512": {
+      "reasoning": false
+    },
+    "mistral-large-latest": {
+      "reasoning": false
+    },
+    "mistral-medium-2505": {
+      "reasoning": false
+    },
+    "mistral-medium-2508": {
+      "reasoning": false
+    },
+    "mistral-medium-2604": {
+      "reasoning": true
+    },
+    "mistral-medium-3.5": {
+      "reasoning": true
+    },
+    "mistral-medium-latest": {
+      "reasoning": true
+    },
+    "mistral-nemo": {
+      "reasoning": false
+    },
+    "mistral-small-2506": {
+      "reasoning": false
+    },
+    "mistral-small-2603": {
+      "reasoning": true
+    },
+    "mistral-small-latest": {
+      "reasoning": true
+    },
+    "open-mistral-7b": {
+      "reasoning": false
+    },
+    "open-mistral-nemo": {
+      "reasoning": false
+    },
+    "open-mixtral-8x22b": {
+      "reasoning": false
+    },
+    "open-mixtral-8x7b": {
+      "reasoning": false
+    },
+    "pixtral-12b": {
+      "reasoning": false
+    },
+    "pixtral-large-latest": {
+      "reasoning": false
+    }
+  },
+  "google": {
+    "gemini-2.0-flash": {
+      "reasoning": false
+    },
+    "gemini-2.0-flash-lite": {
+      "reasoning": false
+    },
+    "gemini-2.5-flash": {
+      "reasoning": true
+    },
+    "gemini-2.5-flash-lite": {
+      "reasoning": true
+    },
+    "gemini-2.5-pro": {
+      "reasoning": true
+    },
+    "gemini-3-flash-preview": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gemini-3-pro-preview": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "minimal": null,
+        "low": "LOW",
+        "medium": null,
+        "high": "HIGH"
+      }
+    },
+    "gemini-3.1-flash-lite": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gemini-3.1-flash-lite-preview": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gemini-3.1-pro-preview": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "minimal": null,
+        "low": "LOW",
+        "medium": null,
+        "high": "HIGH"
+      }
+    },
+    "gemini-3.1-pro-preview-customtools": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "minimal": null,
+        "low": "LOW",
+        "medium": null,
+        "high": "HIGH"
+      }
+    },
+    "gemini-3.5-flash": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gemini-flash-latest": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gemini-flash-lite-latest": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null
+      }
+    },
+    "gemma-4-26b-a4b-it": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "minimal": "MINIMAL",
+        "low": null,
+        "medium": null,
+        "high": "HIGH"
+      }
+    },
+    "gemma-4-31b-it": {
+      "reasoning": true,
+      "thinkingLevelMap": {
+        "off": null,
+        "minimal": "MINIMAL",
+        "low": null,
+        "medium": null,
+        "high": "HIGH"
+      }
+    }
+  }
+}

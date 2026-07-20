@@ -1,0 +1,13 @@
+{
+  "glm-5.2":             { "input": 1.40,  "output": 4.40,  "cacheRead": 0.26,   "cacheWrite": 0 },
+  "kimi-k3":             { "input": 3.00,  "output": 15.00, "cacheRead": 0.30,   "cacheWrite": 0 },
+  "kimi-k2.7-code":      { "input": 0.95,  "output": 4.00,  "cacheRead": 0.19,   "cacheWrite": 0 },
+  "kimi-k2.6":           { "input": 0.95,  "output": 4.00,  "cacheRead": 0.16,   "cacheWrite": 0 },
+  "deepseek-v4-pro":     { "input": 1.74,  "output": 3.48,  "cacheRead": 0.0145, "cacheWrite": 0 },
+  "deepseek-v4-flash":   { "input": 0.14,  "output": 0.28,  "cacheRead": 0.0028, "cacheWrite": 0 },
+  "mimo-v2.5":           { "input": 0.14,  "output": 0.28,  "cacheRead": 0.0028, "cacheWrite": 0 },
+  "mimo-v2.5-pro":       { "input": 1.74,  "output": 3.48,  "cacheRead": 0.0145, "cacheWrite": 0 },
+  "minimax-m3":          { "input": 0.30,  "output": 1.20,  "cacheRead": 0.06,   "cacheWrite": 0 },
+  "qwen3.7-max":         { "input": 2.50,  "output": 7.50,  "cacheRead": 0.50,   "cacheWrite": 3.125 },
+  "qwen3.7-plus":        { "input": 0.40,  "output": 1.60,  "cacheRead": 0.04,   "cacheWrite": 0.50 }
+}

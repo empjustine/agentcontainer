@@ -1,3 +1,10 @@
 *.env
 !*.example.env
 models.json
+
+# Transient raw provider model dumps — regenerated on every run of
+# provider-models/generate-pi-models.js (and apply-*.js / coding-agent/models.sh).
+# These are intermediate working artifacts and are not committed; see
+# provider-models/d012-intermediate-json-dumps.md. (provider-models/pi-models.ndjson
+# and the *-pricing.json / pi-model-metadata.json snapshots are kept.)
+provider-models/*-raw-models.json
