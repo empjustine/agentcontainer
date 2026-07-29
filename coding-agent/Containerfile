@@ -49,18 +49,23 @@ WORKDIR /workspace
 RUN git config --global --add safe.directory /workspace && \
 touch /workspace/mise.toml && \
 mise trust /workspace/mise.toml && \
+mise install \
+node@22 \
+python@3.12 \
+&& \
 mise use --global \
 fd \
 jq \
-node@24 \
-python@3.14 \
 ripgrep \
 uv \
+deno \
+biome \
+node@24 \
+python@3.14 \
 && \
 mise use --global \
-npm:@earendil-works/pi-coding-agent@latest \
-npm:little-coder@latest
+npm:@earendil-works/pi-coding-agent@latest
 
 ENTRYPOINT ["/usr/bin/env"]
 
-CMD ["/usr/bin/sleep", "infinity"]
+CMD ["/usr/bin/bash"]
