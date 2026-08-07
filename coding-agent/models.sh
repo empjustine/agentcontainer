@@ -24,11 +24,11 @@ export BEARER_TOKEN
 
 # Dump raw (unfiltered) response for offline inspection.
 script_dir="$(cd "$(dirname "$0")" && pwd)"
-mkdir -p "${script_dir}/provider-models"
+mkdir -p "${script_dir}/raw-models"
 
 curl --variable '%URL' --expand-url '{{URL}}/models' \
 	--header "Authorization: Bearer ${BEARER_TOKEN}" \
-	| tee "${script_dir}/provider-models/llamacpp-raw-models.json" \
+	| tee "${script_dir}/raw-models/llamacpp-raw-models.json" \
 	| jq -c '{"providers":{"llamacpp":{
   "baseUrl": env.URL,
   "api": "openai-completions",

@@ -4,9 +4,32 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "node:module";
+
+// HF flat-model cache lookup (models-local/) — lives with the cache tooling.
+import { modelArgs } from "../../huggingface/models-local.mjs";
 
 // Directory this script lives in — used for relative data-file and dump paths.
 const scriptDir = dirname(fileURLToPath(import.meta.url));
+
+// HTTP proxy support — see README for rationale.
+
+if (
+  process.env.http_proxy || process.env.HTTP_PROXY ||
+  process.env.https_proxy || process.env.HTTPS_PROXY
+) {
+  try {
+    const require = createRequire(import.meta.url);
+    const { EnvHttpProxyAgent, setGlobalDispatcher } = require("undici");
+    setGlobalDispatcher(new EnvHttpProxyAgent());
+  } catch (err) {
+    console.warn(
+      `  warning: http_proxy/https_proxy is set but undici's EnvHttpProxyAgent ` +
+      `could not be loaded: ${err.message} — fetch requests will NOT use ` +
+      "the proxy",
+    );
+  }
+}
 
 // Well under 10s so a hung request doesn't block the whole generation step.
 const REQUEST_TIMEOUT_MS = 8000;
@@ -29,48 +52,17 @@ function fetchWithTimeout(url, options = {}) {
 // Preserve unfiltered API responses for offline inspection.
 // Silently skip on read-only script directories (e.g. container :ro mounts)
 // so a failed dump doesn't abort the provider fetch.
+// Unfiltered API dumps go to the legacy data directory (not this code dir).
 function dumpRawJson(name, data) {
-  const out = join(scriptDir, name);
+  const dumpDir = join(scriptDir, "..", "..", "provider-models");
+  const out = join(dumpDir, name);
   try {
-    mkdirSync(scriptDir, { recursive: true });
+    mkdirSync(dumpDir, { recursive: true });
     writeFileSync(out, JSON.stringify(data, null, 2) + "\n");
   } catch {
     return;
   }
 }
-
-// A bare `fetch failed` TypeError carries no useful info on its own;
-// the real reason (DNS, TLS, timeout, connection refused) lives in the
-// `cause` property.  Surface it so the user isn't left guessing.
-function describeError(err) {
-  if (!err) return "(unknown error)";
-  const e = err instanceof Error ? err : new Error(String(err));
-  let msg = e.message || String(e);
-  const cause = e.cause;
-  if (cause) {
-    const c = cause instanceof Error ? cause : { message: String(cause) };
-    if (c.code) {
-      msg += ` (cause: ${c.code}`;
-      if (c.hostname) msg += ` ${c.hostname}`;
-      if (c.port) msg += `:${c.port}`;
-      if (c.message && c.message !== c.code) msg += ` — ${c.message}`;
-      msg += ")";
-    } else if (c.message) {
-      msg += ` (cause: ${c.message})`;
-    } else {
-      msg += ` (cause: ${String(cause)})`;
-    }
-  }
-  const isAbort = e.name === "AbortError" || /aborted\b/i.test(msg);
-  if (isAbort || e.stack && e.stack.includes("timed out")) {
-    msg += " (the request timed out)";
-  }
-  return msg;
-}
-
-// =====================================================================
-// 1.  Env access (read from process.env, not from a .env file)
-// =====================================================================
 
 // =====================================================================
 // 2.  Provider definitions
@@ -89,35 +81,23 @@ const BUILDIN_PROVIDERS = [
     api: "openai-completions",
     baseUrlEnv: "OPENCODE_ZEN_BASE_URL",
     apiKeyEnv: "__OPENCODE_ZEN_API_KEY",
-    // Require an API key to fetch models.  Without a key the OpenCode API
-    // returns ALL models (including paid ones like gpt-5.5, claude-*, etc.)
-    // and relies solely on the client-side suffix filter — too fragile.
-    // With a key the server already restricts to free-tier models.
+    // Without a key the API returns ALL models (including paid ones);
+    // with a key it restricts to free-tier models server-side.
     requireApiKey: true,
   },
   {
     id: "opencode-go-sub",
     api: "openai-completions",
     baseUrlEnv: "OPENCODE_GO_BASE_URL",
-    // Requires a dedicated __OPENCODE_GO_API_KEY; does not fall back to
-    // OPENCODE_API_KEY.  The Go-subscription endpoint exposes paid models
-    // that should only be accessible with a valid Go-tier credential.
+    // Dedicated env var — MODEL_FILTERS gates on its presence.
     apiKeyEnv: "__OPENCODE_GO_API_KEY",
-    // Gating is handled by the MODEL_FILTERS entry below: it keeps models
-    // only while __OPENCODE_GO_API_KEY is available, so no tier/paid models
-    // are exposed without a Go-tier credential.  No explicitOnly /
-    // requireApiKey flags are needed (see DEFAULT_BASE_URLS for the
-    // fallback endpoint).
   },
   {
     id: "google-free",
     api: "google-generative-ai",
     baseUrlEnv: "GOOGLE_BASE_URL",
     apiKeyEnv: "__GEMINI_API_KEY",
-    // Google's Gemini API uses X-Goog-Api-Key, not Authorization: Bearer
     fetchAuth: "x-goog-api-key",
-    // Google returns IDs with "models/" prefix ("models/gemini-2.0-flash")
-    // but PI_MODEL_METADATA keys are bare ("gemini-2.0-flash").
     modelIdPrefix: "models/",
   },
   {
@@ -129,10 +109,7 @@ const BUILDIN_PROVIDERS = [
   {
     id: "clinepass",
     api: "openai-completions",
-    // Subscription-backed provider.  The pricing snapshot is always loaded
-    // into the cross-provider pricing DB as a reference.  The actual provider
-    // entry (model fetch) is gated behind __CLINE_API_KEY so that the provider
-    // only appears when the user has a valid credential.
+    // Gated behind __CLINE_API_KEY — only appears when the user has a credential.
     baseUrlEnv: "CLINE_BASE_URL",
     apiKeyEnv: "__CLINE_API_KEY",
     requireApiKey: true,
@@ -166,7 +143,10 @@ const MODEL_FILTERS = {
   // Keep all models, but only while __OPENCODE_GO_API_KEY is available.
   // With the key absent the filter drops every model, so this provider is
   // effectively disabled and no tier/paid models are exposed.
-  "opencode-go-sub":  (_m) => process.env["__OPENCODE_GO_API_KEY"] !== undefined,
+  "opencode-go-sub":  (m) => {
+    if (process.env["__OPENCODE_GO_API_KEY"] === undefined) return false;
+    return !m.id.toLowerCase().includes("grok");
+  },
   "mistral-free":      (m) => {
     const id = m.id.toLowerCase();
     return id.includes("devstral") || id.includes("devstral-small");
@@ -183,19 +163,17 @@ const MODEL_FILTERS = {
 };
 
 // Context windows and model capabilities are loaded from the canonical
-// llamacpp-model-data.json at project root.  That file is the single source
+// openai-completions/llamacpp-model-data.json.  That file is the single source
 // of truth for model capabilities (input/output modalities, context windows)
-// shared with openai-completions/config.yaml.
+// shared with the generated config.yaml.
 // Models with no matching entry in the canonical data fall back to slug-based
 // ctxNNN parsing (e.g. `ctx200` → 200000) or a default of 65536.
-const LLAMACPP_CTX_WINDOWS_DEFAULT = 65536;
-
 /**
  * Load the canonical llama.cpp model data from llamacpp-model-data.json.
  * @returns {{ ctxWindows: Record<string, number>, modelCapabilities: Record<string, {capabilities: {in: string[], out: string[]}, contextWindow: number}> }}
  */
 function loadLlamaCppModelData() {
-  const dataPath = join(dirname(fileURLToPath(import.meta.url)), "..", "llamacpp-model-data.json");
+  const dataPath = join(scriptDir, "..", "..", "openai-completions", "llamacpp-model-data.json");
   try {
     return JSON.parse(readFileSync(dataPath, "utf-8"));
   } catch {
@@ -209,11 +187,6 @@ function loadLlamaCppModelData() {
 
 // Loaded once at module startup.
 const LLAMACPP_MODEL_DATA = loadLlamaCppModelData();
-const LLAMACPP_CTX_WINDOWS = LLAMACPP_MODEL_DATA.ctxWindows || {};
-// Build a lookup map from the models array (keyed by id) for fast random access.
-const LLAMACPP_MODEL_CAPABILITIES = Object.fromEntries(
-  (LLAMACPP_MODEL_DATA.models || []).map(m => [m.id, m])
-);
 
 /**
  * Resolve a llama-swap model's context window from its ID slug.
@@ -228,9 +201,10 @@ const LLAMACPP_MODEL_CAPABILITIES = Object.fromEntries(
  * @returns {number}        Context window in tokens.
  */
 function resolveLlamaCppContextWindow(modelId) {
+  const DEFAULT = 65536;
   const m = modelId.match(/-ctx(\d+)(?=[-/])/);
-  if (!m) return LLAMACPP_CTX_WINDOWS_DEFAULT;
-  return LLAMACPP_CTX_WINDOWS["CTX" + m[1]] ?? LLAMACPP_CTX_WINDOWS_DEFAULT;
+  if (!m) return DEFAULT;
+  return (LLAMACPP_MODEL_DATA.ctxWindows ?? {})["CTX" + m[1]] ?? DEFAULT;
 }
 
 /**
@@ -290,7 +264,7 @@ const CLINEPASS_PRICING = loadPricingJson("clinepass-pricing.json",
 
 function loadPricingJson(name, warnMsg) {
   try {
-    const path = join(scriptDir, name);
+    const path = join(scriptDir, "..", "..", "provider-models", name);
     return JSON.parse(readFileSync(path, "utf-8"));
   } catch {
     console.warn(`  note: ${warnMsg}`);
@@ -346,79 +320,54 @@ const PRICING_DB = new Map();
  * These contain accurate documented costs for OpenCode Go / Zen models
  * and serve as cross-provider references for locally-run equivalents.
  */
-function initPricingDB() {
-  const sources = [
-    { name: "OpenCode Go", data: OPENCODE_GO_PRICING },
-    { name: "OpenCode Zen", data: OPENCODE_ZEN_PRICING },
-  ];
-  for (const { name, data } of sources) {
-    for (const [bareId, cost] of Object.entries(data)) {
-      // Only add entries with meaningful (non-zero) costs
-      if (Number(cost.output) > 0 || Number(cost.input) > 0) {
-        const key = normalizeModelId(bareId);
-        if (!PRICING_DB.has(key)) PRICING_DB.set(key, []);
-        PRICING_DB.get(key).push({
-          input: Number(cost.input) || 0,
-          output: Number(cost.output) || 0,
-          cacheRead: Number(cost.cacheRead) || 0,
-          cacheWrite: Number(cost.cacheWrite) || 0,
-          variant: "standard",
-          source: name,
-        });
-      }
+// Pre-populate PRICING_DB from static pricing snapshot files.
+for (const { name, data } of [
+  { name: "OpenCode Go", data: OPENCODE_GO_PRICING },
+  { name: "OpenCode Zen", data: OPENCODE_ZEN_PRICING },
+]) {
+  for (const [bareId, cost] of Object.entries(data)) {
+    if (Number(cost.output) > 0 || Number(cost.input) > 0) {
+      const key = normalizeModelId(bareId);
+      if (!PRICING_DB.has(key)) PRICING_DB.set(key, []);
+      PRICING_DB.get(key).push({
+        input: Number(cost.input) || 0,
+        output: Number(cost.output) || 0,
+        cacheRead: Number(cost.cacheRead) || 0,
+        cacheWrite: Number(cost.cacheWrite) || 0,
+        variant: "standard",
+        source: name,
+      });
     }
   }
 }
-
-// Initialize the pricing DB from the static snapshots at module load.
-initPricingDB();
 
 /**
  * Fetch the OpenCode Zen /models endpoint without authentication to obtain
  * real-time per-token pricing for all models (including paid ones).
- * Stores the result in ZEN_LIVE_PRICING (modelId → cost map, or null).
+ * Returns a map of modelId → cost, or null.
  */
 async function fetchZenPricing(baseUrl) {
   const url = baseUrl.replace(/\/+$/, "") + "/models";
-  let res;
   try {
-    res = await fetchWithTimeout(url);
+    const res = await fetchWithTimeout(url);
+    if (!res.ok) return null;
+    const body = await res.json();
+    const data = body.data || body.models || body;
+    if (!Array.isArray(data)) return null;
+    const map = {};
+    for (const m of data) {
+      const cost = extractRealCost(m.id, m, 1e6);
+      if (cost) map[m.id] = cost;
+    }
+    return Object.keys(map).length > 0 ? map : null;
   } catch {
-    ZEN_LIVE_PRICING = null;
-    return;
+    return null;
   }
-  if (!res.ok) { ZEN_LIVE_PRICING = null; return; }
-  let body;
-  try { body = await res.json(); } catch { ZEN_LIVE_PRICING = null; return; }
-  const data = body.data || body.models || body;
-  if (!Array.isArray(data)) { ZEN_LIVE_PRICING = null; return; }
-  const map = {};
-  for (const m of data) {
-    const cost = m.cost;
-    if (cost && (Number(cost.output) > 0 || Number(cost.input) > 0)) {
-      map[m.id] = {
-        input: Number(cost.input) || 0,
-        output: Number(cost.output) || 0,
-        cacheRead: Number(cost.cache_read) || 0,
-        cacheWrite: Number(cost.cache_write) || 0,
-      };
-    }
-    const pr = m.pricing;
-    if (pr && (Number(pr.completion ?? pr.output) > 0)) {
-      map[m.id] = {
-        input: (Number(pr.prompt ?? pr.input) || 0) * 1e6,
-        output: (Number(pr.completion ?? pr.output) || 0) * 1e6,
-        cacheRead: (Number(pr.cache_read ?? pr.input_cache_read) || 0) * 1e6,
-        cacheWrite: (Number(pr.cache_write ?? pr.input_cache_write) || 0) * 1e6,
-      };
-    }
-  }
-  ZEN_LIVE_PRICING = Object.keys(map).length > 0 ? map : null;
 }
 
 function loadPiModelMetadata() {
   try {
-    const path = join(scriptDir, "pi-model-metadata.json");
+    const path = join(scriptDir, "..", "..", "provider-models", "pi-model-metadata.json");
     return JSON.parse(readFileSync(path, "utf-8"));
   } catch {
     console.warn(
@@ -459,17 +408,15 @@ const VIRTUAL_COST = {
   fallbackBillions: 30,
 };
 
-function round4(n) {
-  return Math.round(n * 10000) / 10000;
-}
-
-// Split "tencent/hy3:free" into base (tencent/hy3) and variant (free).
+// Split "tencent/hy3:free" into base (tencent/hy3) and variant suffix.
 // Key the capability estimate on the base so free/paid siblings get equal cost.
 function parseModelVariant(modelId) {
   const [base, ...rest] = modelId.split(":");
   const variant = rest.join(":").toLowerCase();
+  const known = ["free", "nitro", "throughput", "online", "thinking"];
   return {
     base,
+    variant: known.includes(variant) ? variant : "standard",
     nitro: variant.includes("nitro"),
     throughput: variant.includes("throughput"),
     online: variant.includes("online"),
@@ -503,37 +450,18 @@ function virtualCost(modelId) {
   const output = Math.max(VIRTUAL_COST.minOutput, VIRTUAL_COST.perBillionOutput * sizeB) * mult;
   const input = output * VIRTUAL_COST.inputRatio;
   return {
-    input: round4(input),
-    output: round4(output),
-    cacheRead: round4(input * VIRTUAL_COST.cacheReadRatio),
-    cacheWrite: round4(input * VIRTUAL_COST.cacheWriteRatio),
+    input,
+    output,
+    cacheRead: input * VIRTUAL_COST.cacheReadRatio,
+    cacheWrite: input * VIRTUAL_COST.cacheWriteRatio,
   };
-}
-
-// Providers express token costs differently:
-//   OpenRouter:               per-token USD  (×1e6 → pi's per-million convention)
-//   Together/DeepInfra/CrofAI: per-million USD (already in pi's units, ×1)
-// Default multiplier is 1e6 (OpenRouter convention).
-const PROVIDER_PRICING_MULTIPLIER = {
-  // Per-token (OpenRouter style) — multiply by 1e6
-  "openrouter-free":   1e6,
-  //"fastrouter":        1e6,
-  // Unknown / no pricing — default to 1 (no-op)
-};
-
-function getPricingMultiplier(providerId) {
-  if (providerId in PROVIDER_PRICING_MULTIPLIER) {
-    return PROVIDER_PRICING_MULTIPLIER[providerId];
-  }
-  // Default to 1e6 (per-token) — safer over-estimate than under-estimate.
-  return 1e6;
 }
 
 /**
  * Extract real (non-virtual, non-zero) cost from a raw model object.
  * Returns null if no real pricing is available (zero, sentinel, or absent).
  *
- * Handles the same shapes as resolveCost:
+ * Handles the same shapes as resolveCostWithDB:
  *   • `cost`    — OpenCode / models.dev shape (already in pi's units)
  *   • `pricing` — OpenRouter / AI-Gateway shape (USD per token, ×1e6)
  *                or per-million (Together / DeepInfra style), depending
@@ -549,10 +477,10 @@ function extractRealCost(modelId, raw = {}, multiplier = 1e6) {
   const cost = raw.cost;
   if (cost && (Number(cost.output) > 0 || Number(cost.input) > 0)) {
     return {
-      input: round4(Number(cost.input) || 0),
-      output: round4(Number(cost.output) || 0),
-      cacheRead: round4(Number(cost.cache_read) || 0),
-      cacheWrite: round4(Number(cost.cache_write) || 0),
+      input: Number(cost.input) || 0,
+      output: Number(cost.output) || 0,
+      cacheRead: Number(cost.cache_read) || 0,
+      cacheWrite: Number(cost.cache_write) || 0,
     };
   }
 
@@ -565,10 +493,10 @@ function extractRealCost(modelId, raw = {}, multiplier = 1e6) {
       const cr = Number(pricing.cache_read ?? pricing.input_cache_read) || 0;
       const cw = Number(pricing.cache_write ?? pricing.input_cache_write) || 0;
       return {
-        input: round4(inTok * multiplier),
-        output: round4(outTok * multiplier),
-        cacheRead: round4(cr * multiplier),
-        cacheWrite: round4(cw * multiplier),
+        input: inTok * multiplier,
+        output: outTok * multiplier,
+        cacheRead: cr * multiplier,
+        cacheWrite: cw * multiplier,
       };
     }
   }
@@ -583,17 +511,6 @@ function normalizeModelId(modelId) {
   let id = modelId.includes("/") ? modelId.split("/").pop() : modelId;
   id = id.replace(/:(free|nitro|throughput|online|thinking)$/i, "");
   return id.toLowerCase();
-}
-
-// Extract variant suffix (:free/:nitro/...), or 'standard' if absent.
-function parseVariant(modelId) {
-  const m = modelId.match(/:([a-z]+)$/i);
-  if (!m) return "standard";
-  const variant = m[1].toLowerCase();
-  if (["free", "nitro", "throughput", "online", "thinking"].includes(variant)) {
-    return variant;
-  }
-  return "standard";
 }
 
 // Look up equivalent pricing from the cross-provider PRICING_DB.
@@ -647,18 +564,6 @@ function resolveCostWithDB(modelId, raw, pricingDB, multiplier = 1e6) {
   return virtualCost(modelId);
 }
 
-// Simpler cost resolver for use outside fetchProviderModels (no PRICING_DB lookup).
-/**
- * @param {string}  modelId
- * @param {object}  [raw={}]
- * @param {number}  [multiplier=1e6]
- */
-function resolveCost(modelId, raw = {}, multiplier = 1e6) {
-  const real = extractRealCost(modelId, raw, multiplier);
-  if (real) return real;
-  return virtualCost(modelId);
-}
-
 // =====================================================================
 // 4.  Model fetchers
 // =====================================================================
@@ -688,8 +593,12 @@ async function fetchLlamaCppModels(baseUrl, apiKey) {
 
   dumpRawJson("llamacpp-raw-models.json", data);
 
+  const capabilities = Object.fromEntries(
+    (LLAMACPP_MODEL_DATA.models || []).map(mdl => [mdl.id, mdl])
+  );
+
   return data.map((m) => {
-    const canonical = LLAMACPP_MODEL_CAPABILITIES[m.id];
+    const canonical = capabilities[m.id];
     const ctx = canonical?.contextWindow ?? m.context_length ?? resolveLlamaCppContextWindow(m.id);
     return {
       id: m.id,
@@ -708,6 +617,109 @@ async function fetchLlamaCppModels(baseUrl, apiKey) {
 }
 
 /**
+ * Build the auth header object for a provider fetch.
+ * @param {string} apiKey
+ * @param {string} [fetchAuth="bearer"]
+ * @returns {Record<string,string>|undefined}
+ */
+function buildAuthHeaders(apiKey, fetchAuth = "bearer") {
+  if (!apiKey) return undefined;
+  switch (fetchAuth) {
+    case "x-goog-api-key": return { "X-Goog-Api-Key": apiKey };
+    case "none":           return undefined;
+    default:               return { Authorization: `Bearer ${apiKey}` };
+  }
+}
+
+/**
+ * Fetch /models (or /v1/models with 404 fallback) and return the parsed models array.
+ * @param {string} baseUrl
+ * @param {Record<string,string>|undefined} headers
+ * @returns {Promise<{data: object[], url: string}>}
+ */
+async function fetchModelsJson(baseUrl, headers, apiKey, fetchAuth) {
+  let url = baseUrl.replace(/\/+$/, "") + "/models";
+  let res = await fetchWithTimeout(url, { headers });
+
+  if (res.status === 404 && !url.endsWith("/v1/models")) {
+    url = baseUrl.replace(/\/+$/, "") + "/v1/models";
+    res = await fetchWithTimeout(url, { headers });
+  }
+
+  if (!res.ok) {
+    let body;
+    try { body = await res.text(); } catch {}
+    const detail = body ? `: ${body.slice(0, 500)}` : "";
+    throw new Error(`GET ${url} returned ${res.status} ${res.statusText}${detail}`);
+  }
+
+  const body = await res.json();
+  const data = body.data || body.models || body;
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error(`GET ${url} returned no models`);
+  }
+  return { data, url };
+}
+
+/**
+ * Apply opencode-go-sub cost overrides.
+ * Priority: 1) fresh Zen API, 2) fresh Go API, 3) stale Go docs, 4) stale Zen docs.
+ */
+function applyOpenCodeGoCost(model, cleanId, raw) {
+  if (ZEN_LIVE_PRICING) {
+    const zc = lookupCost(ZEN_LIVE_PRICING, cleanId);
+    if (zc) { model.cost = zc; return model; }
+  }
+  const rawCost = raw.cost;
+  const rawPricing = raw.pricing;
+  if ((rawCost && (Number(rawCost.output) > 0 || Number(rawCost.input) > 0)) ||
+      (rawPricing && (Number(rawPricing.completion ?? rawPricing.output) > 0 ||
+                      Number(rawPricing.prompt ?? rawPricing.input) > 0))) {
+    return model;
+  }
+  const go = lookupCost(OPENCODE_GO_PRICING, cleanId);
+  if (go) { model.cost = go; return model; }
+  const zen = lookupCost(OPENCODE_ZEN_PRICING, cleanId);
+  if (zen) { model.cost = zen; return model; }
+  return model;
+}
+
+/**
+ * Apply clinepass cost override — prefer documented pricing over virtual heuristic.
+ */
+function applyClinePassCost(model, cleanId) {
+  const cp = lookupCost(CLINEPASS_PRICING, cleanId);
+  if (cp) { model.cost = cp;}
+  return model;
+}
+
+/**
+ * Populate the cross-provider pricing DB from a raw /models response.
+ */
+function populatePricingDB(data, modelIdPrefix, priceMult, providerId) {
+  for (const m of data) {
+    const rawId = m.id;
+    if (!rawId) continue;
+    const cleanId = modelIdPrefix && typeof rawId === "string" && rawId.startsWith(modelIdPrefix)
+      ? rawId.slice(modelIdPrefix.length)
+      : rawId;
+    const real = extractRealCost(cleanId, m, priceMult);
+    if (real) {
+      const key = normalizeModelId(cleanId);
+      if (!PRICING_DB.has(key)) PRICING_DB.set(key, []);
+      PRICING_DB.get(key).push({
+        input: real.input,
+        output: real.output,
+        cacheRead: real.cacheRead,
+        cacheWrite: real.cacheWrite,
+        variant: parseModelVariant(cleanId).variant,
+        source: providerId,
+      });
+    }
+  }
+}
+
+/**
  * @param {string}  baseUrl
  * @param {string}  apiKey
  * @param {function} filterFn
@@ -722,88 +734,15 @@ async function fetchProviderModels(baseUrl, apiKey, filterFn, providerId, opts =
     modelIdPrefix = "",
   } = opts;
 
-  let headers;
-  if (apiKey) {
-    switch (fetchAuth) {
-      case "x-goog-api-key":
-        headers = { "X-Goog-Api-Key": apiKey };
-        break;
-      case "none":
-        headers = undefined;
-        break;
-      default:
-        headers = { Authorization: `Bearer ${apiKey}` };
-    }
-  }
-
-  // Try {baseUrl}/models; if 404 and no /v1 prefix, retry with /v1/models.
-  let url = baseUrl.replace(/\/+$/, "") + "/models";
-
-  let res = await fetchWithTimeout(url, { headers });
-
-  if (res.status === 404 && !url.endsWith("/v1/models")) {
-    url = baseUrl.replace(/\/+$/, "") + "/v1/models";
-    res = await fetchWithTimeout(url, { headers });
-  }
-
-  if (!res.ok) {
-    // The response body often contains the real reason (quota, invalid key)
-    // that the status line alone doesn't convey.
-    let detail = "";
-    try {
-      const errBody = await res.text();
-      if (errBody && errBody.length > 0 && errBody.length < 500) {
-        try {
-          const parsed = JSON.parse(errBody);
-          const msg = parsed?.error?.message || parsed?.message || errBody;
-          if (msg && typeof msg === "string" && msg.length < 200) {
-            detail = `: ${msg}`;
-          }
-        } catch {
-          if (errBody.length < 200) detail = `: ${errBody}`;
-        }
-      }
-    } catch {
-    }
-    throw new Error(
-      `GET ${url} returned ${res.status} ${res.statusText}${detail}` +
-      (apiKey ? "" : " (no API key provided)") +
-      (fetchAuth !== "bearer" ? ` (auth: ${fetchAuth})` : "")
-    );
-  }
-
-  const body = await res.json();
-  const data = body.data || body.models || body; // handle { data: [...] }, { models: [...] }, and bare arrays
-
-  if (!Array.isArray(data) || data.length === 0) {
-    throw new Error(`GET ${url} returned no models`);
-  }
+  const headers = buildAuthHeaders(apiKey, fetchAuth);
+  const { data, url } = await fetchModelsJson(baseUrl, headers, apiKey, fetchAuth);
 
   dumpRawJson(`${providerId}-raw-models.json`, data);
 
   // Build cross-provider pricing DB from ALL (unfiltered) models
   // so free / local models inherit cost from their paid siblings.
-  const priceMult = getPricingMultiplier(providerId);
-    for (const m of data) {
-    const rawId = m.id;
-    if (!rawId) continue;
-    const cleanIdForDb = modelIdPrefix && typeof rawId === "string" && rawId.startsWith(modelIdPrefix)
-      ? rawId.slice(modelIdPrefix.length)
-      : rawId;
-    const real = extractRealCost(cleanIdForDb, m, priceMult);
-    if (real) {
-      const key = normalizeModelId(cleanIdForDb);
-      if (!PRICING_DB.has(key)) PRICING_DB.set(key, []);
-      PRICING_DB.get(key).push({
-        input: real.input,
-        output: real.output,
-        cacheRead: real.cacheRead,
-        cacheWrite: real.cacheWrite,
-        variant: parseVariant(cleanIdForDb),
-        source: providerId,
-      });
-    }
-  }
+  const priceMult = 1e6;
+  populatePricingDB(data, modelIdPrefix, priceMult, providerId);
 
   return data.filter(filterFn).map((m) => {
     const rawId = m.id ?? "unknown";
@@ -817,48 +756,19 @@ async function fetchProviderModels(baseUrl, apiKey, filterFn, providerId, opts =
       name: cleanId,
       input: ["text"],
       contextWindow: m.context_length ?? 128000,
-      maxTokens: m.max_tokens ?? 65536,
+      maxTokens: m.max_tokens ?? m.context_length ?? 65536,
       cost: resolveCostWithDB(cleanId, m, PRICING_DB, priceMult),
     };
-    // Mirror pi's per-model compat/thinkingFormat/reasoning settings
-    // from pi-model-metadata.json (the /models endpoint never returns these).
-    const metadataProviderId = METADATA_PROVIDER_MAP[providerId] || providerId;
-    const meta = PI_MODEL_METADATA[metadataProviderId]?.[cleanId];
+    // Mirror pi's per-model settings from pi-model-metadata.json
+    const meta = PI_MODEL_METADATA[METADATA_PROVIDER_MAP[providerId] ?? providerId]?.[cleanId];
     if (meta) {
-      if (meta.compat !== undefined && model.compat === undefined) model.compat = meta.compat;
-      if (meta.thinkingFormat !== undefined && model.thinkingFormat === undefined) model.thinkingFormat = meta.thinkingFormat;
-      if (meta.reasoning !== undefined && model.reasoning === undefined) model.reasoning = meta.reasoning;
-      if (meta.thinkingLevelMap !== undefined && model.thinkingLevelMap === undefined) model.thinkingLevelMap = meta.thinkingLevelMap;
-    }
-
-    if (providerId === "opencode-go-sub") {
-      // Cost priority: 1) fresh Zen API, 2) fresh Go API, 3) stale Go docs, 4) stale Zen docs, 5) virtual fallback
-      if (ZEN_LIVE_PRICING) {
-        const zc = lookupCost(ZEN_LIVE_PRICING, cleanId);
-        if (zc) { model.cost = zc; return model; }
+      for (const k of ["compat", "thinkingFormat", "reasoning", "thinkingLevelMap"]) {
+        if (meta[k] !== undefined && model[k] === undefined) model[k] = meta[k];
       }
-
-      const rawCost = m.cost;
-      const rawPricing = m.pricing;
-      if ((rawCost && (Number(rawCost.output) > 0 || Number(rawCost.input) > 0)) ||
-          (rawPricing && (Number(rawPricing.completion ?? rawPricing.output) > 0 ||
-                          Number(rawPricing.prompt ?? rawPricing.input) > 0))) {
-        return model;
-      }
-
-      const go = lookupCost(OPENCODE_GO_PRICING, cleanId);
-      if (go) { model.cost = go; return model; }
-
-      const zen = lookupCost(OPENCODE_ZEN_PRICING, cleanId);
-      if (zen) { model.cost = zen; return model; }
     }
 
-    if (providerId === "clinepass") {
-      // Subscription-backed models report zero from the live API;
-      // prefer the documented reference pricing over the virtual heuristic.
-      const cp = lookupCost(CLINEPASS_PRICING, cleanId);
-      if (cp) { model.cost = cp; return model; }
-    }
+    if (providerId === "opencode-go-sub") return applyOpenCodeGoCost(model, cleanId, m);
+    if (providerId === "clinepass") return applyClinePassCost(model, cleanId);
 
     return model;
   });
@@ -868,23 +778,89 @@ async function fetchProviderModels(baseUrl, apiKey, filterFn, providerId, opts =
 // 5.  Main
 // =====================================================================
 
+async function fetchForProvider(p, baseUrl, apiKey, effectiveFilter, opts, entry) {
+  if (p.id === "opencode-go-sub") {
+    const zenBaseUrl = process.env["OPENCODE_ZEN_BASE_URL"] || DEFAULT_BASE_URLS["opencode-zen-free"];
+    if (zenBaseUrl) ZEN_LIVE_PRICING = await fetchZenPricing(zenBaseUrl);
+  }
+  const models = await fetchProviderModels(baseUrl, apiKey, effectiveFilter, p.id, opts);
+  return { id: p.id, models, entry };
+}
+
+/**
+ * Generate a llama-swap config.yaml from canonical model data + core settings
+ * + fetched cloud provider data.  Writes JSON (valid YAML) to outputPath.
+ */
+function generateLlamaSwapConfig(providerOverrides, outputPath) {
+  const core = JSON.parse(readFileSync(
+    join(scriptDir, "..", "..", "openai-completions", "llama-swap-core.json"), "utf-8"
+  ));
+  const modelData = JSON.parse(readFileSync(
+    join(scriptDir, "..", "..", "openai-completions", "llamacpp-model-data.json"), "utf-8"
+  ));
+
+  // Build models section from canonical model data
+  const models = {};
+  for (const m of modelData.models) {
+    const family = modelData.modelFamilies[m.family];
+    const cacheType = modelData.cacheTypes[m.cacheType];
+
+    let cmd = modelData.baseServerArgs;
+    if (family?.samplingArgs) cmd += " " + family.samplingArgs;
+    if (family?.reasoningBudget) cmd += " " + family.reasoningBudget;
+    if (cacheType) cmd += " " + cacheType;
+    cmd += ` --fit-ctx ${m.contextWindow}`;
+
+    // Cache-aware model args: --model when the flat file is already in
+    // models-local/, else --hf-repo/--hf-file (see huggingface/models-local.mjs
+    // and huggingface/docs/d017-fallback-aware-config-generation.md).
+    const home = process.env.HOME || process.env.HOMEPATH || "/root";
+    cmd += modelArgs({ repo: m.hf.repo, file: m.hf.file, mmproj: m.hf.mmproj, home });
+
+    const entry = { cmd };
+    if (m.capabilities) entry.capabilities = m.capabilities;
+    models[m.id] = entry;
+  }
+
+  // Build peers section from fetched cloud provider data
+  const peers = {};
+  for (const [id, entry] of Object.entries(providerOverrides)) {
+    if (id === "llamacpp") continue;
+    if (!entry.models?.length) continue;
+    if (entry.customAuth && entry.customAuth !== "bearer") continue;
+
+    const proxy = entry.baseUrl.replace(/\/v1\/?$/, "").replace(/\/+$/, "");
+    const peerEntry = { proxy, models: entry.models.map((m) => m.id) };
+    if (entry.apiKey?.startsWith("$")) {
+      peerEntry.apiKey = "\${env." + entry.apiKey.slice(1) + "}";
+    }
+    peers[id] = peerEntry;
+  }
+
+  const config = { ...core, models };
+  if (Object.keys(peers).length) config.peers = peers;
+
+  try { mkdirSync(dirname(outputPath), { recursive: true }); } catch {}
+  writeFileSync(outputPath, JSON.stringify(config, null, 2) + "\n", "utf-8");
+  console.warn(`  wrote llama-swap config to ${outputPath}`);
+}
+
 async function main() {
   const providerOverrides = {};
   const fetchTasks = [];
 
   for (const p of BUILDIN_PROVIDERS) {
-    const customBaseUrl = process.env[p.baseUrlEnv] ?? "";
-    const baseUrl = customBaseUrl || DEFAULT_BASE_URLS[p.id];
+    const baseUrl = process.env[p.baseUrlEnv] || DEFAULT_BASE_URLS[p.id];
 
-    const entry = {};
-    entry.baseUrl = customBaseUrl || DEFAULT_BASE_URLS[p.id];
-    entry.api = p.api;
+    const entry = {
+      baseUrl,
+      api: p.api,
+    };
+    if (p.fetchAuth) entry.customAuth = p.fetchAuth;
 
     const apiKeyEnv = process.env[p.apiKeyEnv] !== undefined ? p.apiKeyEnv : "";
     const apiKey = apiKeyEnv ? process.env[apiKeyEnv] ?? "" : "";
-    if (apiKeyEnv) {
-      entry.apiKey = "$" + apiKeyEnv;
-    }
+    if (apiKeyEnv) entry.apiKey = "$" + apiKeyEnv;
 
     // Providers without a MODEL_FILTERS entry get override-only (baseUrl + optional apiKey).
     if (!(p.id in MODEL_FILTERS)) {
@@ -896,8 +872,7 @@ async function main() {
 
     // Skip fetch when missing a required API key (avoids exposing paid models without auth).
     if (p.requireApiKey && !apiKey) {
-      const candidateVars = [p.apiKeyEnv, p.apiKeyEnv.replace(/^__/, "")]
-        .filter((v, i, a) => a.indexOf(v) === i);
+      const candidateVars = [...new Set([p.apiKeyEnv, p.apiKeyEnv.replace(/^__/, "")])];
       console.warn(
         `  warning: skipping provider "${p.id}" — requires an API key but none was found in the environment; set ${candidateVars.join(" or ")} to enable this provider`,
       );
@@ -911,24 +886,22 @@ async function main() {
     // keeps every model.  This lets the pricing DB still be populated.
     const effectiveFilter = filterFn ?? (() => true);
 
-    // opencode-go-sub needs Zen pricing fetched first (before its own model fetch)
-    // for correct cost resolution priority.
+    // Wrap each provider fetch so a single network error doesn't crash
+    // the entire generator.  Failed providers are silently skipped and
+    // logged to stderr; successful providers still populate the config.
     fetchTasks.push(
-      (async () => {
-        if (p.id === "opencode-go-sub") {
-          const zenBaseUrl = process.env["OPENCODE_ZEN_BASE_URL"] || DEFAULT_BASE_URLS["opencode-zen-free"];
-          if (zenBaseUrl) {
-            await fetchZenPricing(zenBaseUrl);
-          }
-        }
-
-        const models = await fetchProviderModels(baseUrl, apiKey, effectiveFilter, p.id, opts);
-        return { id: p.id, models, entry };
-      })(),
+      fetchForProvider(p, baseUrl, apiKey, effectiveFilter, opts, entry)
+        .then(result => result)
+        .catch(err => {
+          console.warn(
+            `  warning: fetch for provider "${p.id}" failed: ${err?.cause?.code || err?.message || err} — skipping`,
+          );
+          return null; // signal «no result»
+        }),
     );
   }
 
-  const results = await Promise.all(fetchTasks);
+  const results = (await Promise.all(fetchTasks)).filter(Boolean);
 
   // Include a provider only when its fetch succeeded and returned at least one model.
   for (const { id, models, entry } of results) {
@@ -936,8 +909,6 @@ async function main() {
     entry.models = models;
     providerOverrides[id] = entry;
   }
-
-  const mergedProviders = { ...providerOverrides };
 
   const llamacppBaseUrl = process.env[LLAMACPP.baseUrlEnv] || process.env[LLAMACPP.baseUrlFallback];
 
@@ -947,7 +918,7 @@ async function main() {
 
     try {
       const models = await fetchLlamaCppModels(llamacppBaseUrl, llamacppApiKey);
-      mergedProviders[LLAMACPP.id] = {
+      providerOverrides[LLAMACPP.id] = {
         baseUrl: llamacppBaseUrl.replace(/\/+$/, ""),
         api: "openai-completions",
         apiKey: llamacppApiKeyEnv ? "$" + llamacppApiKeyEnv : undefined,
@@ -955,19 +926,26 @@ async function main() {
       };
     } catch (err) {
       console.warn(
-        `  warning: could not fetch models from llama.cpp at ${llamacppBaseUrl.trim()}/models: ${describeError(err)} — llama-swap models will be unavailable until the server is running`,
+        `  warning: could not fetch models from llama.cpp at ${llamacppBaseUrl.trim()}/models: ${err?.cause?.code || err?.message || err} — llama-swap models will be unavailable until the server is running`,
       );
     }
   }
 
-  if (Object.keys(mergedProviders).length === 0) {
+  if (Object.keys(providerOverrides).length === 0) {
     console.warn(
       "  warning: no provider entries generated (no env overrides and/or " +
       "model fetch failed) — output is an empty providers map",
     );
   }
 
-  console.log(JSON.stringify({ providers: mergedProviders }, null, 2));
+  console.log(JSON.stringify({ providers: providerOverrides }, null, 2));
+
+  // --llama-swap-config <path>: also emit a complete llama-swap config.yaml
+  const lsFlag = "--llama-swap-config";
+  const lsIdx = process.argv.indexOf(lsFlag);
+  if (lsIdx !== -1 && lsIdx + 1 < process.argv.length) {
+    generateLlamaSwapConfig(providerOverrides, process.argv[lsIdx + 1]);
+  }
 }
 
 await main();

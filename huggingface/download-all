@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+"""Download every model file listed in llamacpp-model-data.json.
+
+Files are downloaded into the *standard* HF cache (blobs/), then a flat copy
+is hard-linked into models-local/<repo>/. Hard links (not copies) mean the
+two trees share a single copy of each multi-hundred-GiB file on disk, while
+llama-server still gets a stable --model path. See docs/d016.
+
+This intentionally does NOT use `hf download --local-dir`: since
+huggingface_hub 0.23 the local-dir mode (a) writes `.cache/huggingface/`
+bookkeeping (`.gitignore`, `CACHEDIR.TAG`, download metadata + locks) into
+every target folder, and (b) *copies* a file that already exists in the
+standard cache (`shutil.copyfile`) instead of hard-linking it — silently
+duplicating every model (upwards of 290 GiB each). Downloading into the
+cache and hard-linking the resolved blob avoids both problems.
+
+Files already present in the target dir are skipped; a standalone legacy
+copy that matches a cached blob (same size) is re-linked to the blob to
+reclaim the duplicated storage.
+
+Usage:
+  download-all <data.json> [<target-dir>]
+
+target-dir defaults to ~/.cache/huggingface/hub/models-local/.
+"""
+
+import json
+import os
+import shutil
+import sys
+from pathlib import Path
+
+from huggingface_hub import hf_hub_download, try_to_load_from_cache
+
+
+def _cache_dir() -> Path:
+    """Standard HF cache dir, honouring the same env vars as upkeep.py."""
+    home = os.environ.get("HF_HOME") or os.path.join(
+        os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache")),
+        "huggingface",
+    )
+    return Path(os.environ.get("HF_HUB_CACHE") or os.path.join(home, "hub"))
+
+
+def _cached_blob(cache_dir: Path, repo_id: str, filename: str, revision: str | None) -> Path | None:
+    """Resolve filename's blob inside the standard cache without network.
+
+    Reads refs/<revision> (falling back to refs/main) for the local commit,
+    then resolves the snapshot entry. Returns the blob path or None if the
+    file is not present in the cache.
+    """
+    refs_dir = cache_dir / f"models--{repo_id.replace('/', '--')}" / "refs"
+    ref_name = revision or "main"
+    ref_file = refs_dir / ref_name
+    if not ref_file.is_file():
+        ref_file = refs_dir / "main"
+    if not ref_file.is_file():
+        return None
+    commit = ref_file.read_text().strip()
+    cached = try_to_load_from_cache(
+        repo_id=repo_id,
+        filename=filename,
+        cache_dir=str(cache_dir),
+        revision=commit,
+    )
+    if not isinstance(cached, str):
+        return None
+    # Snapshot entries are symlinks to blobs/; follow them so the hard link
+    # points at the real inode.
+    return Path(cached).resolve()
+
+
+def _link_or_copy(src: Path, dst: Path) -> str:
+    """Hard-link src -> dst when possible (same device); else copy."""
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        os.link(src, dst)
+        return "hardlink"
+    except OSError:
+        shutil.copyfile(src, dst)
+        return "copy"
+
+
+def _relink_standalone_copy(dest: Path, cached: Path) -> str | None:
+    """If dest is a standalone (or stale) copy of cached, replace it with a
+    hard link so both paths share one inode — freeing the duplicated storage.
+
+    Returns "already" (same inode), "relinked" (copy replaced by a link),
+    or None if nothing was done (different content / link failure). Only
+    relinks when sizes match, so the content is assumed identical. The
+    replacement is atomic (link tmp, then rename over dest).
+    """
+    try:
+        if dest.stat().st_ino == cached.stat().st_ino:
+            return "already"
+        if dest.stat().st_size != cached.stat().st_size:
+            return None  # different file; leave both alone
+        tmp = dest.with_name(f".{dest.name}.hf-relink")
+        tmp.unlink(missing_ok=True)  # clear stale tmp from an interrupted run
+        os.link(cached, tmp)
+        try:
+            os.replace(tmp, dest)
+        except OSError:
+            tmp.unlink(missing_ok=True)
+            raise
+        return "relinked"
+    except OSError:
+        return None
+
+
+def _cleanup_legacy_artifacts(repo_dir: Path) -> None:
+    """Remove `.cache/huggingface` bookkeeping left by old `--local-dir` runs.
+
+    `hf download --local-dir` used to create <dir>/.cache/huggingface/
+    (with .gitignore, CACHEDIR.TAG, download metadata + locks) inside every
+    models-local/<repo>/. Current code no longer creates these; delete the
+    leftovers so the flat model tree stays clean.
+    """
+    legacy = repo_dir / ".cache" / "huggingface"
+    if legacy.is_dir():
+        shutil.rmtree(repo_dir / ".cache", ignore_errors=True)
+        print(f"  {repo_dir.name}/.cache — removed legacy --local-dir artifacts")
+
+
+def main() -> None:
+    if len(sys.argv) < 2:
+        print(__doc__.strip(), file=sys.stderr)
+        sys.exit(1)
+
+    data_path = Path(sys.argv[1])
+    target_base = Path(sys.argv[2]) if len(sys.argv) > 2 else (
+        Path.home() / ".cache" / "huggingface" / "hub" / "models-local"
+    )
+    cache_dir = _cache_dir()
+
+    data = json.loads(data_path.read_text())
+
+    seen: set[tuple[str, str]] = set()
+    items: list[tuple[str, str]] = []
+
+    for m in data["models"]:
+        hf = m["hf"]
+        repo = hf["repo"]
+        for key in ("file", "mmproj"):
+            if key in hf:
+                pair = (repo, hf[key])
+                if pair not in seen:
+                    seen.add(pair)
+                    items.append(pair)
+
+    ok = failed = 0
+    for repo, file in items:
+        # Repo strings may carry a `:revision` suffix (e.g. "org/repo:Q6_K").
+        repo_id, _, revision = repo.partition(":")
+        revision = revision or "main"
+
+        out_dir = target_base / repo_id
+        out_dir.mkdir(parents=True, exist_ok=True)
+        _cleanup_legacy_artifacts(out_dir)
+        dest = out_dir / file
+
+        if dest.exists():
+            cached = _cached_blob(cache_dir, repo_id, file, revision)
+            if cached is not None:
+                relink = _relink_standalone_copy(dest, cached)
+                if relink == "already":
+                    print(f"  {repo_id}/{file}  (exists, hardlinked to cache)")
+                    ok += 1
+                    continue
+                if relink == "relinked":
+                    print(f"  {repo_id}/{file}  (re-linked existing copy to cache blob — space reclaimed)")
+                    ok += 1
+                    continue
+            print(f"  {repo_id}/{file}  (already exists)")
+            ok += 1
+            continue
+
+        print(f"  {repo_id}/{file}... ", end="", flush=True)
+        try:
+            # Download into the standard cache (one copy, refs/blobs updated)
+            # so llama-server's --hf-repo fallback reuses the same blob.
+            try:
+                cached = hf_hub_download(
+                    repo_id=repo_id,
+                    filename=file,
+                    revision=revision,
+                    cache_dir=str(cache_dir),
+                )
+            except Exception:
+                if revision == "main":
+                    raise
+                # The `:rev` suffix may not be a resolvable ref for every
+                # repo; fall back to main (legacy behaviour) before giving up.
+                cached = hf_hub_download(
+                    repo_id=repo_id,
+                    filename=file,
+                    revision="main",
+                    cache_dir=str(cache_dir),
+                )
+        except Exception as e:
+            print(f"FAILED: {e}")
+            failed += 1
+            continue
+
+        how = _link_or_copy(Path(cached).resolve(), dest)
+        if how == "hardlink":
+            print("ok (hardlinked from cache)")
+        else:
+            print(f"ok ({how}; cache and models-local on different filesystems?)")
+        ok += 1
+
+    print(f"  done — {ok} ok, {failed} failed")
+
+
+if __name__ == "__main__":
+    main()

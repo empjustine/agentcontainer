@@ -30,16 +30,19 @@ else
 	exit 91
 fi
 
+HF_HOME="${XDG_CACHE_HOME:-${HOME}/.cache}/huggingface"
+HF_HUB_CACHE="${HF_HOME}/hub"
 mkdir -p -- "${HOME}/workspace/${container_name}/pi/agent" "$references"
 
 echo '{"retry":{"enabled":true,"maxRetries":9,"baseDelayMs":10000,"provider":{"timeoutMs":600000}},"editorPaddingX":0,"outputPad":0,"showCacheMissNotices":true,"terminal":{"showTerminalProgress":false}}' >"${HOME}/workspace/${container_name}/pi/agent/settings.json"
-mise exec node@24 -- node --env-file ~/agentcontainer/coding-agent/.env "${HOME}/agentcontainer/provider-models/generate-pi-models.js" >"${HOME}/workspace/${container_name}/pi/agent/models.json"
+mise exec node@24 -- node --env-file ~/agentcontainer/coding-agent/.env "${HOME}/agentcontainer/coding-agent/provider-models/generate-pi-models.js" >"${HOME}/workspace/${container_name}/pi/agent/models.json"
 
 "$_container_tool" container run -it --rm --init \
 	-v "${references}/github:/references/github:z,ro" \
 	-v "${references}/kiwix:/references/kiwix:z,ro" \
 	-v "${workspace}:/workspace:z" --workdir /workspace \
 	-v "${HOME}/workspace/${container_name}/pi:/root/.pi:Z" \
+	-v "${HF_HUB_CACHE}:/root/.cache/huggingface/hub:z,ro" \
 	-v "${HOME}/agentcontainer:/agentcontainer:ro" \
 	--network=host \
 	--name "$container_name" --hostname "$container_name" \

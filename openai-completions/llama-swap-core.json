@@ -1,0 +1,29 @@
+{
+  "globalTTL": 0,
+  "healthCheckTimeout": 600,
+  "includeAliasesInList": false,
+  "startPort": 5800,
+  "captureBuffer": 10,
+  "logLevel": "debug",
+  "logRequests": true,
+  "logTimeFormat": "RFC3339",
+  "logToStdout": "both",
+  "metricsMaxInMemory": 1000,
+  "performance": {
+    "disabled": false,
+    "every": "10s"
+  },
+  "sendLoadingState": false,
+  "apiKeys": [
+    "${env.LLAMASWAP_API_KEY}"
+  ],
+  "ui": {
+    "activity": {
+      "session_id": ["X-Session-ID", "X-Litellm-Session-Id"]
+    }
+  },
+  "hooks": {},
+  "profiles": {},
+  "selectors": {},
+  "routing": {}
+}

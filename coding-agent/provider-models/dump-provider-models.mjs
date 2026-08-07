@@ -25,7 +25,7 @@ import { dirname, join, basename } from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const outDir = here;
+const outDir = join(here, "..", "..", "provider-models");
 mkdirSync(outDir, { recursive: true });
 
 // Resolve the installed pi-ai package via the `pi` binary's real path.

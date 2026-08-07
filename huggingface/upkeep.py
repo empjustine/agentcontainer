@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """HuggingFace model-cache upkeep: list, prune, pull newer revisions, verify.
 
-Drop-in replacement for huggingface/upkeep.bash, using huggingface_hub
+Drop-in replacement for huggingface/upkeep.sh, using huggingface_hub
 directly (no podman, no `hf` CLI, no jq). Runs the full pipeline by default:
 
   1. list cached model repos
