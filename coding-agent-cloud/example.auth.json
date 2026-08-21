@@ -1,0 +1,7 @@
+{ "google": {"type": "api_key","key": "123"}
+, "huggingface": {"type": "api_key","key": "123"}
+, "mistral": {"type": "api_key","key": "123"}
+, "opencode-go": {"type": "api_key","key": "123"}
+, "opencode": {"type": "api_key","key": "123"}
+, "openrouter": {"type": "api_key","key": "123"}
+}

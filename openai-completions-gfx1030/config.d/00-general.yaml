@@ -1,0 +1,54 @@
+{
+  "globalTTL": 0,
+  "healthCheckTimeout": 600,
+  "includeAliasesInList": false,
+  "startPort": 5800,
+  "captureBuffer": 10,
+  "logLevel": "debug",
+  "logRequests": true,
+  "logTimeFormat": "RFC3339",
+  "logToStdout": "both",
+  "metricsMaxInMemory": 1000,
+  "performance": {
+    "disabled": false,
+    "every": "10s"
+  },
+  "sendLoadingState": false,
+  "apiKeys": [
+    "${env.API_KEY}"
+  ],
+  "ui": {
+    "activity": {
+      "session_id": [
+        "X-Session-ID",
+        "X-Litellm-Session-Id"
+      ]
+    }
+  },
+  "hooks": {},
+  "profiles": {},
+  "selectors": {},
+  "routing": {},
+  "macros": {
+    "LLAMA_SERVER": "llama-server --port ${PORT} --log-verbosity 4 --threads-http 6 --log-colors off --no-mmproj-offload --no-ui --no-warmup --cache-idle-slots --kv-unified --cache-ram 8192 --flash-attn on --fit on --fit-target 1024 --n-predict 100000 --no-context-shift --reasoning-preserve --batch-size 1024 --ubatch-size 256",
+    "qwen38": "--image-min-tokens 1024 --temp 1.0 --top-p 0.95 --top-k 20 --repeat-penalty 1.00 --presence-penalty 0.00 --min-p 0.00 --chat-template-kwargs '{\"preserve_thinking\": true, \"reasoning_effort\": \"medium\"}' --reasoning-budget 16384 --reasoning-budget-message \"\nConsidering the limited time by the user, I have to give the solution based on the thinking directly now.\n</think>.\n\n\"",
+    "qwen36": "--image-min-tokens 1024 --temp 0.6 --top-p 0.95 --top-k 20 --repeat-penalty 1.00 --presence-penalty 0.00 --min-p 0.00 --chat-template-kwargs '{\"preserve_thinking\": true}' --reasoning-budget 16384 --reasoning-budget-message \"\nConsidering the limited time by the user, I have to give the solution based on the thinking directly now.\n</think>.\n\n\"",
+    "glm47f": "--temp 0.7 --top-p 1.0 --min-p 0.01 --repeat-penalty 1.00",
+    "gemma4": "--temp 1.0 --top-p 0.95 --top-k 64",
+    "devstral": "--temp 0.15",
+    "laguna": "",
+    "ling": "",
+    "museglimmer": "",
+    "k80v80": "--cache-type-k q8_0 --cache-type-k-draft q8_0 --spec-draft-type-k q8_0 --cache-type-v q8_0 --cache-type-v-draft q8_0 --spec-draft-type-v q8_0",
+    "k80v51": "--cache-type-k q8_0 --cache-type-k-draft q8_0 --spec-draft-type-k q8_0 --cache-type-v q5_1 --cache-type-v-draft q5_1 --spec-draft-type-v q5_1",
+    "k50v41": "--cache-type-k q5_0 --cache-type-k-draft q5_0 --spec-draft-type-k q5_0 --cache-type-v q4_1 --cache-type-v-draft q4_1 --spec-draft-type-v q4_1"
+  },
+  "ctxWindows": {
+    "CTX032": 32768,
+    "CTX064": 65536,
+    "CTX100": 100000,
+    "CTX128": 131072,
+    "CTX200": 200000,
+    "CTX256": 262144
+  }
+}

@@ -1,6 +1,8 @@
 FROM docker.io/library/debian:13-slim AS base-debian-slim
 
 ARG BUILD_DATE
+ARG UID=1000
+ARG GID=1000
 
 RUN apt-get update && \
 apt-get -y --no-install-recommends upgrade && \
@@ -8,6 +10,7 @@ apt-get -y --no-install-recommends install \
 ca-certificates \
 curl \
 git \
+sudo \
 vim-tiny \
 && \
 apt-get autoremove && \
@@ -35,7 +38,17 @@ apt-get autoremove && \
 apt-get clean && \
 rm -rf /var/lib/apt/lists/*
 
+RUN groupadd --gid ${GID} dev && \
+    useradd --uid ${UID} --gid ${GID} --create-home --shell /bin/bash dev && \
+    echo 'dev ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/dev && \
+    chmod 0440 /etc/sudoers.d/dev
+
+USER dev
+
+COPY config.toml /home/dev/.config/mise/config.toml
+
 ENV \
+HOME="/home/dev" \
 MISE_MINIMUM_RELEASE_AGE="3d" \
 npm_config_ignore_scripts=true \
 npm_config_min_release_age=3 \
@@ -43,28 +56,13 @@ PIP_REQUIRE_VIRTUALENV="true" \
 PIP_UPLOADED_PRIOR_TO="P3D" \
 pnpm_config_minimum_release_age=4320 \
 UV_EXCLUDE_NEWER="3 days" \
-PATH="/root/.local/share/mise/shims:${PATH}"
+PATH="/home/dev/.local/share/mise/shims:${PATH}"
 
-WORKDIR /workspace
-RUN git config --global --add safe.directory /workspace && \
-touch /workspace/mise.toml && \
-mise trust /workspace/mise.toml && \
-mise install \
-node@22 \
-python@3.12 \
-&& \
-mise use --global \
-fd \
-jq \
-ripgrep \
-uv \
-deno \
-biome \
-node@24 \
-python@3.14 \
-&& \
-mise use --global \
-npm:@earendil-works/pi-coding-agent@latest
+WORKDIR /home/dev
+
+RUN git config --global --add safe.directory '*' && \
+    mise install && \
+    mkdir -p -- ~/.config/mise ~/.cache/huggingface/hub ~/.pi
 
 ENTRYPOINT ["/usr/bin/env"]
 

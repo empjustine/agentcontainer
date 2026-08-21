@@ -1,0 +1,273 @@
+{
+  "models": {
+    "03a-4q2-8k08v0-200ctx-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S": {
+      "cmd": "${LLAMA_SERVER} ${qwen36} ${k80v80} --fit-ctx 200000 --parallel 2 --hf-repo byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S --hf-file Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "03a-4q3-8k08v0-200ctx-poolside/Laguna-XS-2.1-GGUF:Q4_K_M": {
+      "cmd": "${LLAMA_SERVER} ${laguna} ${k80v80} --fit-ctx 200000 --parallel 2 --hf-repo poolside/Laguna-XS-2.1-GGUF:Q4_K_M --hf-file Laguna-XS-2.1-Q4_K_M.gguf",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "03a-6q2-8k05v1-128ctx-unsloth/GLM-4.7-Flash-GGUF:Q6_K": {
+      "cmd": "${LLAMA_SERVER} ${glm47f} ${k80v51} --fit-ctx 131072 --parallel 2 --hf-repo unsloth/GLM-4.7-Flash-GGUF:Q6_K --hf-file GLM-4.7-Flash-Q6_K.gguf",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "03a-6q2-8k08v0-128ctx-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K": {
+      "cmd": "${LLAMA_SERVER} ${qwen36} ${k80v80} --fit-ctx 131072 --parallel 2 --hf-repo unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K --hf-file Qwen3.6-35B-A3B-UD-Q6_K.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "03a-8q0-8k05v1-128ctx-unsloth/GLM-4.7-Flash-GGUF:Q8_0": {
+      "cmd": "${LLAMA_SERVER} ${glm47f} ${k80v51} --fit-ctx 131072 --parallel 2 --hf-repo unsloth/GLM-4.7-Flash-GGUF:Q8_0 --hf-file GLM-4.7-Flash-Q8_0.gguf",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "03a-8q0-8k08v0-128ctx-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0": {
+      "cmd": "${LLAMA_SERVER} ${qwen36} ${k80v80} --fit-ctx 131072 --parallel 2 --hf-repo unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0 --hf-file Qwen3.6-35B-A3B-Q8_0.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "04a-4q4-8k08v0-256ctx-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "${LLAMA_SERVER} ${gemma4} ${k80v80} --fit-ctx 262144 --parallel 2 --hf-repo unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL --hf-file gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "04a-6q2-8k08v0-128ctx-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K": {
+      "cmd": "${LLAMA_SERVER} ${gemma4} ${k80v80} --fit-ctx 131072 --parallel 2 --hf-repo unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K --hf-file gemma-4-26B-A4B-it-UD-Q6_K.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "04a-8q0-8k08v0-128ctx-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0": {
+      "cmd": "${LLAMA_SERVER} ${gemma4} ${k80v80} --fit-ctx 131072 --parallel 2 --hf-repo unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0 --hf-file gemma-4-26B-A4B-it-Q8_0.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "12a-4q4-8k08v0-256ctx-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "${LLAMA_SERVER} ${gemma4} ${k80v80} --fit-ctx 262144 --parallel 2 --hf-repo unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL --hf-file gemma-4-12B-it-qat-UD-Q4_K_XL.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "12a-6q2-8k08v0-256ctx-unsloth/gemma-4-12b-it-GGUF:Q6_K": {
+      "cmd": "${LLAMA_SERVER} ${gemma4} ${k80v80} --fit-ctx 262144 --parallel 1 --hf-repo unsloth/gemma-4-12b-it-GGUF:Q6_K --hf-file gemma-4-12b-it-Q6_K.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "12a-8q0-8k08v0-200ctx-unsloth/gemma-4-12b-it-GGUF:Q8_0": {
+      "cmd": "${LLAMA_SERVER} ${gemma4} ${k80v80} --fit-ctx 200000 --parallel 1 --hf-repo unsloth/gemma-4-12b-it-GGUF:Q8_0 --hf-file gemma-4-12b-it-Q8_0.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "24a-4q2-8k05v1-032ctx-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS": {
+      "cmd": "${LLAMA_SERVER} ${devstral} ${k80v51} --fit-ctx 32768 --parallel 1 --hf-repo byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS --hf-file Devstral-Small-2-24B-Instruct-2512-IQ4_XS-4.04bpw.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "27a-4q3-5k04v1-032ctx-unsloth/Qwen3.6-27B-GGUF:Q4_K_M": {
+      "cmd": "${LLAMA_SERVER} ${qwen36} ${k50v41} --fit-ctx 32768 --parallel 1 --hf-repo unsloth/Qwen3.6-27B-GGUF:Q4_K_M --hf-file Qwen3.6-27B-Q4_K_M.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "31a-4q4-5k04v1-032ctx-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "${LLAMA_SERVER} ${gemma4} ${k50v41} --fit-ctx 32768 --parallel 1 --hf-repo unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL --hf-file gemma-4-31B-it-qat-UD-Q4_K_XL.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "27a-8q0-5k04v1-032ctx-unsloth/Qwen3.8-27B-GGUF:Q8_0": {
+      "cmd": "${LLAMA_SERVER} ${qwen38} ${k50v41} --fit-ctx 32768 --parallel 1 --override-tensor 'blk\\.([0-9]|1[0-9]|2[0-2])\\.ffn_.*=CPU' --hf-repo unsloth/Qwen3.8-27B-GGUF:Q8_0 --hf-file Qwen3.8-27B-Q8_0.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "27a-6q2-5k04v1-032ctx-unsloth/Qwen3.8-27B-GGUF:Q6_K": {
+      "cmd": "${LLAMA_SERVER} ${qwen38} ${k50v41} --fit-ctx 32768 --parallel 1 --override-tensor 'blk\\.([0-9]|1[0-9]|2[0-2])\\.ffn_.*=CPU' --hf-repo unsloth/Qwen3.8-27B-GGUF:Q6_K --hf-file Qwen3.8-27B-Q6_K.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "27a-4q3-5k04v1-032ctx-unsloth/Qwen3.8-27B-GGUF:Q4_K_M": {
+      "cmd": "${LLAMA_SERVER} ${qwen38} ${k50v41} --fit-ctx 32768 --parallel 1 --override-tensor 'blk\\.([0-9]|1[0-9]|2[0-2])\\.ffn_.*=CPU' --hf-repo unsloth/Qwen3.8-27B-GGUF:Q4_K_M --hf-file Qwen3.8-27B-Q4_K_M.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "27a-3q2-5k04v1-032ctx-unsloth/Qwen3.8-27B-GGUF:Q3_K_S": {
+      "cmd": "${LLAMA_SERVER} ${qwen38} ${k50v41} --fit-ctx 32768 --parallel 1 --hf-repo unsloth/Qwen3.8-27B-GGUF:Q3_K_S --hf-file Qwen3.8-27B-Q3_K_S.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "30a-8q0-5k04v1-032ctx-unsloth/Muse-Glimmer-30B-GGUF:Q8_0": {
+      "cmd": "${LLAMA_SERVER} ${museglimmer} ${k50v41} --fit-ctx 32768 --parallel 1 --hf-repo unsloth/Muse-Glimmer-30B-GGUF:Q8_0 --hf-file Muse-Glimmer-30B-Q8_0.gguf",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "30a-4q4-5k04v1-032ctx-unsloth/Muse-Glimmer-30B-GGUF:UD-Q4_K_XL": {
+      "cmd": "${LLAMA_SERVER} ${museglimmer} ${k50v41} --fit-ctx 32768 --parallel 1 --hf-repo unsloth/Muse-Glimmer-30B-GGUF:UD-Q4_K_XL --hf-file Muse-Glimmer-30B-UD-Q4_K_XL.gguf",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "30a-6q4-5k04v1-032ctx-unsloth/Muse-Glimmer-30B-GGUF:UD-Q6_K_XL": {
+      "cmd": "${LLAMA_SERVER} ${museglimmer} ${k50v41} --fit-ctx 32768 --parallel 1 --hf-repo unsloth/Muse-Glimmer-30B-GGUF:UD-Q6_K_XL --hf-file Muse-Glimmer-30B-UD-Q6_K_XL.gguf",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    },
+    "01a-8q4-8k08v0-128ctx-bloomer010/Ling-3.0-tiny-GGUF:UD-Q8_K_XL": {
+      "cmd": "${LLAMA_SERVER} ${ling} ${k80v80} --fit-ctx 131072 --parallel 2 --hf-repo bloomer010/Ling-3.0-tiny-GGUF:UD-Q8_K_XL --hf-file Ling-3.0-tiny-UD-Q8_K_XL.gguf",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ]
+      }
+    }
+  }
+}

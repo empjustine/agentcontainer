@@ -1,0 +1,254 @@
+{
+  "models": [
+    {
+      "repo": "byteshape/Qwen3.6-35B-A3B-GGUF",
+      "quant": "Q4_K_S",
+      "macros": "qwen36",
+      "cacheType": "k80v80",
+      "parallel": 2,
+      "maxContext": 262144,
+      "maxDesiredContext": 200000,
+      "file": "Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf",
+      "mmproj": "mmproj-bf16.gguf"
+    },
+    {
+      "repo": "poolside/Laguna-XS-2.1-GGUF",
+      "quant": "Q4_K_M",
+      "macros": "laguna",
+      "cacheType": "k80v80",
+      "parallel": 2,
+      "maxContext": 262144,
+      "maxDesiredContext": 200000,
+      "file": "Laguna-XS-2.1-Q4_K_M.gguf"
+    },
+    {
+      "repo": "unsloth/GLM-4.7-Flash-GGUF",
+      "quant": "Q6_K",
+      "macros": "glm47f",
+      "cacheType": "k80v51",
+      "parallel": 2,
+      "maxContext": 202752,
+      "maxDesiredContext": 131072,
+      "file": "GLM-4.7-Flash-Q6_K.gguf"
+    },
+    {
+      "repo": "unsloth/Qwen3.6-35B-A3B-GGUF",
+      "quant": "UD-Q6_K",
+      "macros": "qwen36",
+      "cacheType": "k80v80",
+      "parallel": 2,
+      "maxContext": 262144,
+      "maxDesiredContext": 131072,
+      "file": "Qwen3.6-35B-A3B-UD-Q6_K.gguf",
+      "mmproj": "mmproj-F16.gguf"
+    },
+    {
+      "repo": "unsloth/GLM-4.7-Flash-GGUF",
+      "quant": "Q8_0",
+      "macros": "glm47f",
+      "cacheType": "k80v51",
+      "parallel": 2,
+      "maxContext": 202752,
+      "maxDesiredContext": 131072,
+      "file": "GLM-4.7-Flash-Q8_0.gguf"
+    },
+    {
+      "repo": "unsloth/Qwen3.6-35B-A3B-GGUF",
+      "quant": "Q8_0",
+      "macros": "qwen36",
+      "cacheType": "k80v80",
+      "parallel": 2,
+      "maxContext": 262144,
+      "maxDesiredContext": 131072,
+      "file": "Qwen3.6-35B-A3B-Q8_0.gguf",
+      "mmproj": "mmproj-F16.gguf"
+    },
+    {
+      "repo": "unsloth/gemma-4-26B-A4B-it-qat-GGUF",
+      "quant": "UD-Q4_K_XL",
+      "macros": "gemma4",
+      "cacheType": "k80v80",
+      "parallel": 2,
+      "maxContext": 262144,
+      "maxDesiredContext": 262144,
+      "file": "gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
+      "mmproj": "mmproj-F16.gguf"
+    },
+    {
+      "repo": "unsloth/gemma-4-26B-A4B-it-GGUF",
+      "quant": "UD-Q6_K",
+      "macros": "gemma4",
+      "cacheType": "k80v80",
+      "parallel": 2,
+      "maxContext": 262144,
+      "maxDesiredContext": 131072,
+      "file": "gemma-4-26B-A4B-it-UD-Q6_K.gguf",
+      "mmproj": "mmproj-F16.gguf"
+    },
+    {
+      "repo": "unsloth/gemma-4-26B-A4B-it-GGUF",
+      "quant": "Q8_0",
+      "macros": "gemma4",
+      "cacheType": "k80v80",
+      "parallel": 2,
+      "maxContext": 262144,
+      "maxDesiredContext": 131072,
+      "file": "gemma-4-26B-A4B-it-Q8_0.gguf",
+      "mmproj": "mmproj-F16.gguf"
+    },
+    {
+      "repo": "unsloth/gemma-4-12B-it-qat-GGUF",
+      "quant": "UD-Q4_K_XL",
+      "macros": "gemma4",
+      "cacheType": "k80v80",
+      "parallel": 2,
+      "maxContext": 262144,
+      "maxDesiredContext": 262144,
+      "file": "gemma-4-12B-it-qat-UD-Q4_K_XL.gguf",
+      "mmproj": "mmproj-F16.gguf"
+    },
+    {
+      "repo": "unsloth/gemma-4-12b-it-GGUF",
+      "quant": "Q6_K",
+      "macros": "gemma4",
+      "cacheType": "k80v80",
+      "parallel": 1,
+      "maxContext": 262144,
+      "maxDesiredContext": 262144,
+      "file": "gemma-4-12b-it-Q6_K.gguf",
+      "mmproj": "mmproj-F16.gguf"
+    },
+    {
+      "repo": "unsloth/gemma-4-12b-it-GGUF",
+      "quant": "Q8_0",
+      "macros": "gemma4",
+      "cacheType": "k80v80",
+      "parallel": 1,
+      "maxContext": 262144,
+      "maxDesiredContext": 200000,
+      "file": "gemma-4-12b-it-Q8_0.gguf",
+      "mmproj": "mmproj-F16.gguf"
+    },
+    {
+      "repo": "byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF",
+      "quant": "IQ4_XS",
+      "macros": "devstral",
+      "cacheType": "k80v51",
+      "parallel": 1,
+      "maxContext": 393216,
+      "maxDesiredContext": 32768,
+      "file": "Devstral-Small-2-24B-Instruct-2512-IQ4_XS-4.04bpw.gguf",
+      "mmproj": "mmproj-bf16.gguf"
+    },
+    {
+      "repo": "unsloth/Qwen3.6-27B-GGUF",
+      "quant": "Q4_K_M",
+      "macros": "qwen36",
+      "cacheType": "k50v41",
+      "parallel": 1,
+      "maxContext": 262144,
+      "maxDesiredContext": 32768,
+      "file": "Qwen3.6-27B-Q4_K_M.gguf",
+      "mmproj": "mmproj-F16.gguf"
+    },
+    {
+      "repo": "unsloth/gemma-4-31B-it-qat-GGUF",
+      "quant": "UD-Q4_K_XL",
+      "macros": "gemma4",
+      "cacheType": "k50v41",
+      "parallel": 1,
+      "maxContext": 262144,
+      "maxDesiredContext": 32768,
+      "file": "gemma-4-31B-it-qat-UD-Q4_K_XL.gguf",
+      "mmproj": "mmproj-F16.gguf"
+    },
+    {
+      "repo": "unsloth/Qwen3.8-27B-GGUF",
+      "quant": "Q8_0",
+      "macros": "qwen38",
+      "cacheType": "k50v41",
+      "parallel": 1,
+      "maxContext": 262144,
+      "maxDesiredContext": 32768,
+      "file": "Qwen3.8-27B-Q8_0.gguf",
+      "mmproj": "mmproj-BF16.gguf",
+      "extraArgs": "--override-tensor 'blk\\.([0-9]|1[0-9]|2[0-2])\\.ffn_.*=CPU'"
+    },
+    {
+      "repo": "unsloth/Qwen3.8-27B-GGUF",
+      "quant": "Q6_K",
+      "macros": "qwen38",
+      "cacheType": "k50v41",
+      "parallel": 1,
+      "maxContext": 262144,
+      "maxDesiredContext": 32768,
+      "file": "Qwen3.8-27B-UD-Q6_K.gguf",
+      "mmproj": "mmproj-BF16.gguf",
+      "extraArgs": "--override-tensor 'blk\\.([0-9]|1[0-9]|2[0-2])\\.ffn_.*=CPU'"
+    },
+    {
+      "repo": "unsloth/Qwen3.8-27B-GGUF",
+      "quant": "Q4_K_M",
+      "macros": "qwen38",
+      "cacheType": "k50v41",
+      "parallel": 1,
+      "maxContext": 262144,
+      "maxDesiredContext": 32768,
+      "file": "Qwen3.8-27B-UD-Q4_K_M.gguf",
+      "mmproj": "mmproj-BF16.gguf",
+      "extraArgs": "--override-tensor 'blk\\.([0-9]|1[0-9]|2[0-2])\\.ffn_.*=CPU'"
+    },
+    {
+      "repo": "unsloth/Qwen3.8-27B-GGUF",
+      "quant": "Q3_K_S",
+      "macros": "qwen38",
+      "cacheType": "k50v41",
+      "parallel": 1,
+      "maxContext": 262144,
+      "maxDesiredContext": 32768,
+      "file": "Qwen3.8-27B-UD-Q3_K_XL.gguf",
+      "mmproj": "mmproj-BF16.gguf",
+      "extraArgs": ""
+    },
+    {
+      "repo": "unsloth/Muse-Glimmer-30B-GGUF",
+      "quant": "Q8_0",
+      "macros": "museglimmer",
+      "cacheType": "k50v41",
+      "parallel": 1,
+      "maxContext": 131072,
+      "maxDesiredContext": 32768,
+      "file": "Muse-Glimmer-30B-Q8_0.gguf"
+    },
+    {
+      "repo": "unsloth/Muse-Glimmer-30B-GGUF",
+      "quant": "UD-Q4_K_XL",
+      "macros": "museglimmer",
+      "cacheType": "k50v41",
+      "parallel": 1,
+      "maxContext": 131072,
+      "maxDesiredContext": 32768,
+      "file": "Muse-Glimmer-30B-UD-Q4_K_XL.gguf"
+    },
+    {
+      "repo": "unsloth/Muse-Glimmer-30B-GGUF",
+      "quant": "UD-Q6_K_XL",
+      "macros": "museglimmer",
+      "cacheType": "k50v41",
+      "parallel": 1,
+      "maxContext": 131072,
+      "maxDesiredContext": 32768,
+      "file": "Muse-Glimmer-30B-UD-Q6_K_XL.gguf"
+    },
+    {
+      "repo": "bloomer010/Ling-3.0-tiny-GGUF",
+      "quant": "UD-Q8_K_XL",
+      "macros": "ling",
+      "cacheType": "k80v80",
+      "parallel": 2,
+      "maxContext": 131072,
+      "maxDesiredContext": 131072,
+      "file": "Ling-3.0-tiny-UD-Q8_K_XL.gguf"
+    }
+  ]
+}

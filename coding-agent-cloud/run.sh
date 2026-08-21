@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -x
+
 container_name="agentcontainer-$(date +'%Y%m%d%H%M%S%3N')"
 tag='localhost/empjustine/coding-agent:latest'
 workspace="$(pwd)"
@@ -26,11 +28,12 @@ cp "${HOME}/agentcontainer/coding-agent/auth.json" "${PI_CODING_AGENT_DIR}/auth.
 	${_userns} \
 	--user "$(id -u):$(id -g)" \
 	${_keep_groups} \
-	-v "${references}:${references}:z,ro" \
-	-v "${PI_CODING_AGENT_DIR}:/home/dev/.pi/agent:Z${_vol_u}" \
 	--env PI_CODING_AGENT_DIR=/home/dev/.pi/agent \
-	-v "${HF_HUB_CACHE}:/home/dev/.cache/huggingface/hub:z" \
-	-v "${workspace}:${workspace}:z${_vol_u}" --workdir "${workspace}" \
+	-v "${PI_CODING_AGENT_DIR}:/home/dev/.pi/agent:Z${_vol_u}" \
+	-v "${references}:${references}:z,ro${_vol_u}" \
+	-v "${HF_HUB_CACHE}:/home/dev/.cache/huggingface/hub:z${_vol_u}" \
+	-v "${workspace}:${workspace}:z${_vol_u}" \
+	--workdir "${workspace}" \
 	--network=host --name "$container_name" --hostname "$container_name" \
 	"$tag" \
 	bash

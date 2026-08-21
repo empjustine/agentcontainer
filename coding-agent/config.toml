@@ -1,0 +1,10 @@
+[tools]
+fd = "latest"
+jq = "latest"
+node = ["24", "22"]
+python = "3.14" # ["3.14", "3.12"]
+ripgrep = "latest"
+uv = "latest"
+# "pipx:oci-cli" = { version = "latest", uvx_args = "--python 3.12" }
+"pipx:huggingface-hub" = { version = "latest", uvx_args = "--python 3.14" }
+"npm:@earendil-works/pi-coding-agent" = { version = "latest", trust_policy_excludes = ["@smithy/core@3.33.0", "@smithy/node-http-handler@4.11.0"] }

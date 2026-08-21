@@ -1,0 +1,16 @@
+{
+  "retry": {
+    "enabled": true,
+    "maxRetries": 9,
+    "baseDelayMs": 10000,
+    "provider": {
+      "timeoutMs": 600000
+    }
+  },
+  "editorPaddingX": 0,
+  "outputPad": 0,
+  "showCacheMissNotices": true,
+  "terminal": {
+    "showTerminalProgress": false
+  }
+}
