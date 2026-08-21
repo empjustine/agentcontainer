@@ -1,17 +1,39 @@
 #!/bin/sh
+# Build the coding-agent container image (tagged :<date> and :latest).
 
-set -xe
+set -eux
+
+# shellcheck disable=SC1091
+. "$(dirname "$0")/../container-tool.sh"
+
+# shellcheck disable=SC2154  # set by sourced container-tool.sh
+[ "$_sandbox" = 'container' ] || {
+	>&2 printf "fatal: can't find container tool\n"
+	exit 91
+}
 
 BUILD_DATE="$(date +'%Y%m%d')"
-containerfile="${HOME}/agentcontainer/coding-agent/Containerfile"
-latest_tag="localhost/empjustine/coding-agent:latest"
-tag="localhost/empjustine/coding-agent:${BUILD_DATE}"
+export BUILD_DATE
 
-if [ -x /usr/bin/podman ]; then
-	podman image build --pull --build-arg "BUILD_DATE=$(date +'%Y%m%d')" --tag "$tag" --tag "$latest_tag" - <"$containerfile"
-elif [ -x /usr/bin/docker ]; then
-	docker buildx build --pull --build-arg "BUILD_DATE=$(date +'%Y%m%d')" --tag "$tag" --tag "$latest_tag" - <"$containerfile"
-else
-	>&2 printf "fatal: can't find container tool"
-	exit 91
-fi
+_uid="${SUDO_UID:-$(id -u)}"
+_gid="${SUDO_GID:-$(id -g)}"
+build_context="$SCRIPT_DIR"
+containerfile="$SCRIPT_DIR/Containerfile"
+tag='localhost/empjustine/coding-agent'
+
+# shellcheck disable=SC2154  # set by sourced container-tool.sh
+case "$_container_tool" in
+	podman) set -- image build ;;
+	docker) set -- buildx build ;;
+esac
+
+"$_container_tool" "$@" \
+	--pull \
+	--build-arg BUILD_DATE \
+	--build-arg UID="$_uid" \
+	--build-arg GID="$_gid" \
+	--build-arg USER="$USER" \
+	--tag "${tag}:${BUILD_DATE}" \
+	--tag "${tag}:latest" \
+	-f "$containerfile" \
+	"$build_context"

@@ -1,51 +1,54 @@
 #!/bin/sh
 
-# Accept an optional PATH argument.  When given, pi processes that path
-# instead of dropping to an interactive shell.
-target_path="${1:-}"
-shift 2>/dev/null || true
+set -x
 
-container_name="agentcontainer-$(date +'%Y%m%d%H%M%S%3N')"
-tag='localhost/empjustine/coding-agent:latest'
+# shellcheck disable=SC1091
+. "$(dirname "$0")/../container-tool.sh"
+
 workspace="$(pwd)"
-
 if [ "$workspace" = "$HOME" ]; then
-	>&2 printf "fatal: can't protect HOME"
+	>&2 printf "fatal: can't protect HOME\n"
 	exit 90
 fi
-
-DOWNLOAD="$(xdg-user-dir DOWNLOAD)"
-if [ -n "$DOWNLOAD" ]; then
-	references="${DOWNLOAD}"
-else
-	references="${HOME}/Downloads"
+if ! infisical login --domain="$INFISICAL_API_URL" --log-level=info status; then
+	exit 127
 fi
 
-if [ -x /usr/bin/podman ]; then
-	_container_tool='podman'
-elif [ -x /usr/bin/docker ]; then
-	_container_tool='docker'
-else
-	>&2 printf "fatal: can't find container tool"
-	exit 91
-fi
+# Regenerate pi's models.json (Infisical-backed env) and copy both agent
+# artifacts into the mounted ~/.pi/agent before the container starts.
+"$SCRIPT_DIR/generate.sh"
 
-HF_HOME="${XDG_CACHE_HOME:-${HOME}/.cache}/huggingface"
-HF_HUB_CACHE="${HF_HOME}/hub"
-mkdir -p -- "${HOME}/workspace/${container_name}/pi/agent" "$references"
+container_name="agentcontainer-$(date +'%Y%m%d%H%M%S%3N')"
+sandbox_stage="$HOME/workspace/$container_name"
+agent_dir="$sandbox_stage/pi/agent"
+opencode_cfg_dir="$sandbox_stage/opencode/config"
+opencode_data_dir="$sandbox_stage/opencode/data"
 
-echo '{"retry":{"enabled":true,"maxRetries":9,"baseDelayMs":10000,"provider":{"timeoutMs":600000}},"editorPaddingX":0,"outputPad":0,"showCacheMissNotices":true,"terminal":{"showTerminalProgress":false}}' >"${HOME}/workspace/${container_name}/pi/agent/settings.json"
-mise exec node@24 -- node --env-file ~/agentcontainer/coding-agent/.env "${HOME}/agentcontainer/coding-agent/provider-models/generate-pi-models.js" >"${HOME}/workspace/${container_name}/pi/agent/models.json"
+mkdir -p -- "$agent_dir" "$opencode_cfg_dir" "$opencode_data_dir"
+cp "$SCRIPT_DIR/settings.json" "$agent_dir/settings.json"
+[ -f "$SCRIPT_DIR/models.json" ] && cp "$SCRIPT_DIR/models.json" "$agent_dir/models.json"
+[ -f "$SCRIPT_DIR/opencode.jsonc" ] && cp "$SCRIPT_DIR/opencode.jsonc" "$opencode_cfg_dir/opencode.json"
 
-"$_container_tool" container run -it --rm --init \
-	-v "${references}/github:/references/github:z,ro" \
-	-v "${references}/kiwix:/references/kiwix:z,ro" \
-	-v "${workspace}:/workspace:z" --workdir /workspace \
-	-v "${HOME}/workspace/${container_name}/pi:/root/.pi:Z" \
-	-v "${HF_HUB_CACHE}:/root/.cache/huggingface/hub:z,ro" \
-	-v "${HOME}/agentcontainer:/agentcontainer:ro" \
-	--network=host \
-	--name "$container_name" --hostname "$container_name" \
-	--env-file ~/agentcontainer/coding-agent/.env \
-	"$tag" \
-	bash
+HF_HUB_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/huggingface/hub"
+
+sandbox_name     "$container_name"
+sandbox_image    'localhost/empjustine/coding-agent:latest'
+sandbox_interactive
+sandbox_init
+sandbox_network  host
+sandbox_user
+sandbox_ro_if    "$HOME/Downloads/references" "$HOME/Downloads/references"
+#sandbox_ro_if    "$HF_HUB_CACHE" /home/${USER}/.cache/huggingface/hub
+sandbox_rw       "$agent_dir" /home/${USER}/.pi/agent
+sandbox_rw       "$HF_HUB_CACHE" /home/${USER}/.cache/huggingface/hub
+sandbox_rw       "$opencode_cfg_dir" /home/${USER}/.config/opencode
+sandbox_rw       "$opencode_data_dir" /home/${USER}/.local/share/opencode
+sandbox_rw       "$workspace" "$workspace"
+sandbox_workdir  "$workspace"
+sandbox_env      HF_TOKEN
+sandbox_env      CLINE_API_KEY
+sandbox_env      OPENCODE_API_KEY
+sandbox_env      OPENROUTER_API_KEY
+sandbox_env      PEER_API_KEY
+sandbox_cmd      bash
+sandbox_run infisical run --domain="$INFISICAL_API_URL" --projectId="$INFISICAL_PROJECT_ID" --log-level=info --env=prod --path=/inference --

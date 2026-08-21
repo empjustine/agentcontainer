@@ -1,0 +1,132 @@
+{
+ "repo": "unsloth/LFM2.5-8B-A1B-GGUF",
+ "commit": "37563684c4a625e9958906fd924e15095cf9c896",
+ "fetched_at": "2026-08-30T18:56:00+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "7bd7d02f5c80c552cb325b0bc3f3e61a2bc7959c",
+   "size": 3004
+  },
+  {
+   "path": "LFM2.5-8B-A1B-BF16.gguf",
+   "oid": "bc9c40afbdbeb0bbc764f52c7d0b0088701fdecc78668c92ebc0a89e4a463bbe",
+   "size": 16947260768
+  },
+  {
+   "path": "LFM2.5-8B-A1B-MXFP4_MOE.gguf",
+   "oid": "f4aeaba50cc24bf677aaa0cf75d0410e963195d2202390c5c9706e7f51ee839a",
+   "size": 5348437600
+  },
+  {
+   "path": "LFM2.5-8B-A1B-Q8_0.gguf",
+   "oid": "ec11666b6129f0b4fe893760b66797f22e1c478a561b40e365f2b6930729b8d2",
+   "size": 9010196064
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-IQ1_M.gguf",
+   "oid": "4ea3c929fc1028d3564406c146e38938a47db166f0b5802350a785e4d7788e2b",
+   "size": 2573872736
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-IQ2_M.gguf",
+   "oid": "463670a7140a5d9e2a05f05afce1cd55e81ec764bbfd26e80287727d3e48645f",
+   "size": 2754588256
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-IQ2_XXS.gguf",
+   "oid": "99d381e0345d6a13721c9c0616c2bb45874b83a55e6a7689f8953f9369853730",
+   "size": 2701274720
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-IQ3_S.gguf",
+   "oid": "4a3c682957fa64e4361f651d6a157caaf8f2447bff64167eee0d258c0c937ef4",
+   "size": 3570921056
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-IQ3_XXS.gguf",
+   "oid": "f460496b7cf64a2cadc951e89884eb7509c0aae32f9f62062d42ebb415cfa675",
+   "size": 3272339040
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-IQ4_NL.gguf",
+   "oid": "a1921216ded964e5c4f787226729e8c2c32bd587ac7b897742e0b7a7cc7eff6a",
+   "size": 4358844000
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-IQ4_XS.gguf",
+   "oid": "36a4f1c9fd045794e23978174aefda27971fdc2f257d6d032e3a26c047fe0eca",
+   "size": 4264996448
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-Q2_K_XL.gguf",
+   "oid": "d5d1a7e009fe87e9f53ce2f2c8a6c8b07d560530837430085240be61055f8fed",
+   "size": 2925768288
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-Q3_K_M.gguf",
+   "oid": "541ca0ed07d2d7977858f71ba32e3ab57aed27e1c9f1d54285a665026285e247",
+   "size": 3939626592
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-Q3_K_XL.gguf",
+   "oid": "1cadae9f79eeffa38d950acc75a6e635ffec2372f6d8fee9c79f6ed05e714986",
+   "size": 4003114592
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-Q4_K_M.gguf",
+   "oid": "e2c8350d5e6e7c633b2ba4e20805a2c86bc46884cd285e8f3fe36ad917b772c7",
+   "size": 5322223200
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-Q4_K_S.gguf",
+   "oid": "ff96de1f5ec9b6ee4f78524fcce3955d3fae89413f58e993f30126587d9f4032",
+   "size": 5013941856
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-Q4_K_XL.gguf",
+   "oid": "ee7c5e925a04cd672868959e48d199b66d6dcb9f90afe64f219856189e83b27e",
+   "size": 5351583328
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-Q5_K_M.gguf",
+   "oid": "90e0b86095c6485fd5a9b7fa9822a02ebb103b6846f3eb3648643cea946fe9cf",
+   "size": 6361886304
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-Q5_K_S.gguf",
+   "oid": "cf7d55ec2e0b427e152d31b08a5d7612472566efae7a2749064f507be9992c39",
+   "size": 6005894752
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-Q5_K_XL.gguf",
+   "oid": "f4ae9cae33235d0e5e81f9bd399ea36bb2c9aff6e1a60d1885f6b535406ed33e",
+   "size": 6393081440
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-Q6_K.gguf",
+   "oid": "f5c60637503fcbb479275b1bca9358a315ca5916556f1eeed40013da45a914c3",
+   "size": 7088287328
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-Q6_K_XL.gguf",
+   "oid": "de2718c45e69587a0589ebe5f531ed4a99bccf341b2c122b6479ffe28929a9be",
+   "size": 7742467680
+  },
+  {
+   "path": "LFM2.5-8B-A1B-UD-Q8_K_XL.gguf",
+   "oid": "3e3df81ea436475a727905f01968069f0d2b4bc361b831f10d9137b004c3c395",
+   "size": 9340497504
+  },
+  {
+   "path": "README.md",
+   "oid": "a4d93b23cd69a4a294f6567604173cc4e2652158",
+   "size": 16618
+  },
+  {
+   "path": "imatrix_unsloth.gguf_file",
+   "oid": "09cf3e3f38c9906dc0239750f524d4e728b8fe985ad04bcfc07dd55bbb6e4474",
+   "size": 17375232
+  }
+ ]
+}

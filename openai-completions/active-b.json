@@ -1,0 +1,20 @@
+{
+	"DeepSeek-V4-Flash-0731": "08b",
+	"Devstral-Small-2-24B": "24b",
+	"gemma-4-12b": "12b",
+	"gemma-4-12B": "12b",
+	"gemma-4-26B-A4B": "04b",
+	"gemma-4-31B": "31b",
+	"gemma-4-E2B": "02b",
+	"gemma-4-E4B": "04b",
+	"GLM-4.7-Flash": "03b",
+	"Laguna-XS-2.1": "03b",
+	"LFM2.5-2.6B": "02b",
+	"LFM2.5-8B-A1B": "01b",
+	"Ling-3.0-tiny": "01b",
+	"Muse-Glimmer-30B": "30b",
+	"Qwen3.6-27B": "27b",
+	"Qwen3.6-35B-A3B": "03b",
+	"Qwen3.8-27B": "27b",
+	"Qwen3.8-Flash-Next": "06b"
+}

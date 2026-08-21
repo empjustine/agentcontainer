@@ -1,0 +1,77 @@
+{
+ "repo": "unsloth/gemma-4-E2B-it-qat-GGUF",
+ "commit": "66a399f68ddd113b06dff02fca9523e55465d11d",
+ "fetched_at": "2026-08-25T04:24:06+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "96e6b2f9a6182c7e3db9fcbb59151d4716f66a9b",
+   "size": 2699
+  },
+  {
+   "path": "MTP/README.md",
+   "oid": "96913333e1d8dc97aacabe5ef398fe680110e8ca",
+   "size": 2518
+  },
+  {
+   "path": "MTP/mtp-gemma-4-E2B-it-BF16.gguf",
+   "oid": "72d948683dbd8b4da9c9a1714406a2dc6db3bd7c94afd59b65389605015d5db6",
+   "size": 170212672
+  },
+  {
+   "path": "MTP/mtp-gemma-4-E2B-it-F16.gguf",
+   "oid": "015b3985f671ec9a204dda18175618c0344dd59bc95dd33e2add34910842ab38",
+   "size": 170212672
+  },
+  {
+   "path": "MTP/mtp-gemma-4-E2B-it-Q4_0.gguf",
+   "oid": "586f2460b909008640981ec34060aa864e03c144fbabfb3173c4335087e4aae0",
+   "size": 59235648
+  },
+  {
+   "path": "MTP/mtp-gemma-4-E2B-it-Q8_0.gguf",
+   "oid": "6d1d359ac7a5411a046236a1a687f207ebad50475d484235b95946ef329360cc",
+   "size": 97836352
+  },
+  {
+   "path": "README.md",
+   "oid": "390da662dd0f7080e756fc4cee9aa51c953a920d",
+   "size": 30915
+  },
+  {
+   "path": "config.json",
+   "oid": "df45a921c07748f25e4efbc2acab10711d1debc2",
+   "size": 5041
+  },
+  {
+   "path": "gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf",
+   "oid": "0a5bbc20f91f92da96ab4870fa71b356c45b8500a7b8b9c3e0eb48359b72da28",
+   "size": 2186186784
+  },
+  {
+   "path": "gemma-4-E2B-it-qat-UD-Q4_K_XL.gguf",
+   "oid": "e531007218dfab990486a5de7676a6932d6ea8dea233d1f698d7c21cf8a16889",
+   "size": 2620370976
+  },
+  {
+   "path": "mmproj-BF16.gguf",
+   "oid": "38b33846f56426cd650e0e574d78de125abdfcedf35c0d7f6929f6ffe26efe02",
+   "size": 986833728
+  },
+  {
+   "path": "mmproj-F16.gguf",
+   "oid": "13c8966d1635d02e6727f27402880614906fa291850c07feda18dbcddf2291b6",
+   "size": 985654080
+  },
+  {
+   "path": "mmproj-F32.gguf",
+   "oid": "2fe64403b0865b1bba3de7d191862093ec66a40ccb7bbe43da53505c35f4eb5f",
+   "size": 1903027008
+  },
+  {
+   "path": "mtp-gemma-4-E2B-it.gguf",
+   "oid": "586f2460b909008640981ec34060aa864e03c144fbabfb3173c4335087e4aae0",
+   "size": 59235648
+  }
+ ]
+}

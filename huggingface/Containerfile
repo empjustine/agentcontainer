@@ -1,8 +1,0 @@
-FROM python:3.13-slim
-
-RUN pip install --no-cache-dir 'huggingface_hub>=0.26'
-
-COPY download-all /app/download-all
-RUN chmod +x /app/download-all
-
-ENTRYPOINT ["/app/download-all"]

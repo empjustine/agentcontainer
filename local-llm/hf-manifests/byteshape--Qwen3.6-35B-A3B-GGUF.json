@@ -1,0 +1,82 @@
+{
+ "repo": "byteshape/Qwen3.6-35B-A3B-GGUF",
+ "commit": "57f6dec8727b4c3f5498ff2564a0333ac1f6624a",
+ "fetched_at": "2026-08-23T03:56:24+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "24ebb59f028921c15a1b2cecfdfb0c312fd0158a",
+   "size": 2392
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-IQ2_S-2.17bpw.gguf",
+   "oid": "b91d340ac5b3686f40c20e4cb30dc30af8197bde",
+   "size": 9422386080
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-IQ3_S-3.00bpw.gguf",
+   "oid": "7cf2f1a0be754b33fc2e3657120d3780b277a073",
+   "size": 13014656416
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-IQ3_S-3.48bpw.gguf",
+   "oid": "f63bdc78c2b86f4d568d51fdccf9c43ea90884f1",
+   "size": 15074831776
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-IQ4_XS-3.93bpw.gguf",
+   "oid": "61eb6b95f73ac75ab4dc4f76e8136ea0f25580c6",
+   "size": 17045150112
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-IQ4_XS-4.15bpw.gguf",
+   "oid": "9a33d95c8624e8cdcd39b66f6ada4eb0bbf7382e",
+   "size": 18010713504
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-Q3_K_S-2.69bpw.gguf",
+   "oid": "e5007dd59d0eb825f7fe3e830d2efed602f88593",
+   "size": 11665024928
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-Q3_K_S-2.71bpw.gguf",
+   "oid": "980cdc3a2186efa87153d8d0a64066f469f85752",
+   "size": 11739727264
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-Q3_K_S-3.39bpw.gguf",
+   "oid": "9756b347cc09dd0593c48a29c866bbc055782f17",
+   "size": 14715403680
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf",
+   "oid": "836a775e56bbaba6354fcbf1a3cd70623898b0aa",
+   "size": 16492334496
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf",
+   "oid": "d23c55937077806ddeac9fe7d06586fd401b958d",
+   "size": 18279053216
+  },
+  {
+   "path": "README.md",
+   "oid": "e5d2f8c338c425a49f79ec719031bb7d22dc6cdd",
+   "size": 7161
+  },
+  {
+   "path": "img/RTX4090.png",
+   "oid": "a07e020156208c70a63aeb3fbdedd109831a2c10",
+   "size": 590249
+  },
+  {
+   "path": "img/Ryzen9.png",
+   "oid": "d2bc94d4da58b2f35a4e49b8c7b1e27dcf06e86b",
+   "size": 598794
+  },
+  {
+   "path": "mmproj-bf16.gguf",
+   "oid": "d660b6c510a19e2f3aedfcebaae500fd48e08e49",
+   "size": 902822240
+  }
+ ]
+}

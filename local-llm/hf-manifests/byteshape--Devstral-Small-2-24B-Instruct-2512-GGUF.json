@@ -1,0 +1,77 @@
+{
+ "repo": "byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF",
+ "commit": "12529130b813e35fd10ea92cab21e0ca4dcb7ecc",
+ "fetched_at": "2026-08-23T03:56:26+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "60fbaacd2639aff3f2f480d22eeafe5d7eeca5c2",
+   "size": 2345
+  },
+  {
+   "path": "Devstral-Small-2-24B-Instruct-2512-IQ2_S-2.34bpw.gguf",
+   "oid": "e7110d9181dce634480f1548b4c94250f9bdb6f3",
+   "size": 6901508768
+  },
+  {
+   "path": "Devstral-Small-2-24B-Instruct-2512-IQ2_S-2.43bpw.gguf",
+   "oid": "5f32c57d0e3e55a1fc662279977d6b877ae35b7f",
+   "size": 7181879968
+  },
+  {
+   "path": "Devstral-Small-2-24B-Instruct-2512-IQ3_S-2.67bpw.gguf",
+   "oid": "7b70e8b54a3f2daefb467a446d94828686341a91",
+   "size": 7879264928
+  },
+  {
+   "path": "Devstral-Small-2-24B-Instruct-2512-IQ3_S-2.78bpw.gguf",
+   "oid": "f34d7e79df43c2982b8bfd3873ffc1ceb4ca28d5",
+   "size": 8191093408
+  },
+  {
+   "path": "Devstral-Small-2-24B-Instruct-2512-IQ3_S-2.96bpw.gguf",
+   "oid": "fad4364a7589ebcdf19f236f8ff46f9d5e80429a",
+   "size": 8715545248
+  },
+  {
+   "path": "Devstral-Small-2-24B-Instruct-2512-IQ3_S-3.19bpw.gguf",
+   "oid": "c133227ae57e77a7f0c6915326538fd6689477c1",
+   "size": 9401379456
+  },
+  {
+   "path": "Devstral-Small-2-24B-Instruct-2512-IQ3_S-3.47bpw.gguf",
+   "oid": "75d9c45148763dcc2bb88c859fff14adf3873032",
+   "size": 10245524128
+  },
+  {
+   "path": "Devstral-Small-2-24B-Instruct-2512-IQ4_XS-4.04bpw.gguf",
+   "oid": "de31bb801c212af3083803712bafbb4f02acb2b5",
+   "size": 11916774048
+  },
+  {
+   "path": "README.md",
+   "oid": "823c63755085d4b5a68daa38606e2e4505aff49f",
+   "size": 4036
+  },
+  {
+   "path": "img/RTX5090.png",
+   "oid": "3e2454d95de909a199ea240b9c1741bd58825faa",
+   "size": 734978
+  },
+  {
+   "path": "mmproj-bf16.gguf",
+   "oid": "cd891fd6ed767b68a51a2c98a69848853318189d",
+   "size": 887646752
+  },
+  {
+   "path": "params",
+   "oid": "263fc93dcb96e07a5bd401b14302dc28caaed459",
+   "size": 27
+  },
+  {
+   "path": "template",
+   "oid": "1cbb5980240be1afd1735c488041a1e68563658a",
+   "size": 3418
+  }
+ ]
+}

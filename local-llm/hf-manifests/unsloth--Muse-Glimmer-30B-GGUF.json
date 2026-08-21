@@ -1,0 +1,117 @@
+{
+ "repo": "unsloth/Muse-Glimmer-30B-GGUF",
+ "commit": "faa5b025c584459c13febfa5c59883516710ae39",
+ "fetched_at": "2026-08-23T03:56:28+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "f49b818b26edf4af558260c186979151a6ab401a",
+   "size": 2956
+  },
+  {
+   "path": "BF16/Muse-Glimmer-30B-BF16-00001-of-00002.gguf",
+   "oid": "44c68729c02b89c77824e3f56abaea32d640d567",
+   "size": 29805191936
+  },
+  {
+   "path": "BF16/Muse-Glimmer-30B-BF16-00002-of-00002.gguf",
+   "oid": "5b44cd66ef13b621162d0933b84bdf05b42b8e9a",
+   "size": 25920319232
+  },
+  {
+   "path": "Muse-Glimmer-30B-Q8_0.gguf",
+   "oid": "66683d043ccf2a7f24566f99c8ef92d20c63b790",
+   "size": 29612957984
+  },
+  {
+   "path": "Muse-Glimmer-30B-UD-IQ2_M.gguf",
+   "oid": "a1874d8a38559d63ad31b4bd784d0a6dc3f2d645",
+   "size": 12255421472
+  },
+  {
+   "path": "Muse-Glimmer-30B-UD-IQ2_XS.gguf",
+   "oid": "df10d824bcba3b9ead105c1356c248fe5a922e6a",
+   "size": 11513104416
+  },
+  {
+   "path": "Muse-Glimmer-30B-UD-IQ2_XXS.gguf",
+   "oid": "afce1e2cd470ba842a8d8c649f4d3dd9e87d7bf3",
+   "size": 10746373152
+  },
+  {
+   "path": "Muse-Glimmer-30B-UD-IQ3_M.gguf",
+   "oid": "de2bd77b615a2da1ab685d24e4a5f39a3d9ff36a",
+   "size": 14122705696
+  },
+  {
+   "path": "Muse-Glimmer-30B-UD-IQ3_XXS.gguf",
+   "oid": "a27fea042b917af0453169ad13d152482fba1226",
+   "size": 13130658848
+  },
+  {
+   "path": "Muse-Glimmer-30B-UD-Q2_K_XL.gguf",
+   "oid": "dfea13d9b1248ca18a817bcc687263ac05c935b0",
+   "size": 12444212256
+  },
+  {
+   "path": "Muse-Glimmer-30B-UD-Q3_K_XL.gguf",
+   "oid": "0cd1ac539fab6cf43a9d97c6946c6b9e2126c2f2",
+   "size": 13360983072
+  },
+  {
+   "path": "Muse-Glimmer-30B-UD-Q4_K_XL.gguf",
+   "oid": "b4e1e882459fd7136a2cced315d0fcb0b50c5247",
+   "size": 15878222368
+  },
+  {
+   "path": "Muse-Glimmer-30B-UD-Q5_K_L.gguf",
+   "oid": "bee03d369acd915114cea512f2fffd6a0ce225c9",
+   "size": 19768527904
+  },
+  {
+   "path": "Muse-Glimmer-30B-UD-Q5_K_M.gguf",
+   "oid": "8ead38e4d1eb82b866de8edabfd0260f17c45559",
+   "size": 19194274848
+  },
+  {
+   "path": "Muse-Glimmer-30B-UD-Q5_K_XL.gguf",
+   "oid": "0a170ac99a6c35f2eaf518c8a9c1160322f7ebd0",
+   "size": 21789618976
+  },
+  {
+   "path": "Muse-Glimmer-30B-UD-Q6_K_XL.gguf",
+   "oid": "4bc23b8a4b0e87c9a68718794b07b2a1abd16ce7",
+   "size": 26265362976
+  },
+  {
+   "path": "Muse-Glimmer-30B-UD-Q8_K_XL.gguf",
+   "oid": "01604ad92355e56fc5b35f6f0e6e851778b92210",
+   "size": 32300651040
+  },
+  {
+   "path": "README.md",
+   "oid": "a0b44f02b24ea84ef3abe88566f315e144ea779a",
+   "size": 18526
+  },
+  {
+   "path": "dflash-kquant.gguf",
+   "oid": "f04ef1bd29bbc376600e5fa8935e564a6b065fbb",
+   "size": 1631205312
+  },
+  {
+   "path": "mmproj-Muse-Glimmer-30B-BF16.gguf",
+   "oid": "64600cdb47ef81dda9aaba9a43ba632722a4cfc3",
+   "size": 3849173728
+  },
+  {
+   "path": "mmproj-Muse-Glimmer-30B-Q8_0.gguf",
+   "oid": "01d28bb15d6e9b509a44da6ba28e7325d2d2a10f",
+   "size": 2051685088
+  },
+  {
+   "path": "mmproj-kquant.gguf",
+   "oid": "2280b3a26dfc331226638d1acea270d01a1c1d27",
+   "size": 1400328928
+  }
+ ]
+}

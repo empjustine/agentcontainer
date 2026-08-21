@@ -1,0 +1,172 @@
+{
+ "repo": "bloomer010/Ling-3.0-tiny-GGUF",
+ "commit": "56a85ebe2d6d9d2ad6ad00a5014b13667153e236",
+ "fetched_at": "2026-08-23T03:56:28+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "d9b7503825eea2e059618747f487a1a3ad97aaf9",
+   "size": 3251
+  },
+  {
+   "path": "Ling-3.0-tiny-BF16.gguf",
+   "oid": "1230f0f5765d010a073c9145056ffc536f6cd438",
+   "size": 15803475456
+  },
+  {
+   "path": "Ling-3.0-tiny-IQ1_M.gguf",
+   "oid": "789a5ba6d41a0545a09f739a3c7890c6b4a51a1c",
+   "size": 1928455520
+  },
+  {
+   "path": "Ling-3.0-tiny-IQ1_S.gguf",
+   "oid": "229b42c0d6c447d89f4115ab707af3982857608c",
+   "size": 1760678240
+  },
+  {
+   "path": "Ling-3.0-tiny-IQ2_M.gguf",
+   "oid": "c8ee421047cf5103db2f38d80c273a7c8cdbfad2",
+   "size": 2704009568
+  },
+  {
+   "path": "Ling-3.0-tiny-IQ2_S.gguf",
+   "oid": "825610e9c217b7b3a883bfa90f127d2c73df18b1",
+   "size": 2480306528
+  },
+  {
+   "path": "Ling-3.0-tiny-IQ2_XS.gguf",
+   "oid": "beaca2fb56c1a9396109b4b8e477d3b9629e45b0",
+   "size": 2434146656
+  },
+  {
+   "path": "Ling-3.0-tiny-IQ2_XXS.gguf",
+   "oid": "a446453322fe2272dca16ca3da8cb4269f1cd7d3",
+   "size": 2208084320
+  },
+  {
+   "path": "Ling-3.0-tiny-IQ3_S.gguf",
+   "oid": "214d7d1c4f6cef37831dd41e9200aeba44470842",
+   "size": 3511515488
+  },
+  {
+   "path": "Ling-3.0-tiny-IQ3_XXS.gguf",
+   "oid": "71a17de1277516bce1144a4bf129e28d2d595222",
+   "size": 3129076064
+  },
+  {
+   "path": "Ling-3.0-tiny-IQ4_XS.gguf",
+   "oid": "18ce5b1c317230e8967706b1a2d87955b52138f2",
+   "size": 4287511904
+  },
+  {
+   "path": "Ling-3.0-tiny-MXFP4_MOE.gguf",
+   "oid": "a94850ac3acb24ccbe534f93f37e44729027ff24",
+   "size": 4718249024
+  },
+  {
+   "path": "Ling-3.0-tiny-Q1_0.gguf",
+   "oid": "5042ead97883795c13f45d6a54facee710d78957",
+   "size": 1300255808
+  },
+  {
+   "path": "Ling-3.0-tiny-Q2_K.gguf",
+   "oid": "3dca93ffe4416b98ac37f5bb604660177e74aa29",
+   "size": 2986636352
+  },
+  {
+   "path": "Ling-3.0-tiny-Q3_K_M.gguf",
+   "oid": "63630a6651db2276dc63b9f2fa1fe2e7dbb1d4d1",
+   "size": 3841570880
+  },
+  {
+   "path": "Ling-3.0-tiny-Q3_K_S.gguf",
+   "oid": "8e85756cfa66ff6c0d12f56c6d37bca4f47c6841",
+   "size": 3511515200
+  },
+  {
+   "path": "Ling-3.0-tiny-Q4_0.gguf",
+   "oid": "d0b1c6cc913be26813638dc1e8ba7661a49628d7",
+   "size": 4526279744
+  },
+  {
+   "path": "Ling-3.0-tiny-Q4_K_M.gguf",
+   "oid": "2e34a735017c28d014d766dba8e7b764f3f0c539",
+   "size": 4823895104
+  },
+  {
+   "path": "Ling-3.0-tiny-Q4_K_S.gguf",
+   "oid": "f5a8452f94b2616575d9913ce780a7f1d87bef3b",
+   "size": 4554886208
+  },
+  {
+   "path": "Ling-3.0-tiny-Q5_0.gguf",
+   "oid": "6fbab472c26d21993d2104eb773a31c3f54b7b4a",
+   "size": 5482138688
+  },
+  {
+   "path": "Ling-3.0-tiny-Q5_K_M.gguf",
+   "oid": "b6df5bc693533928cad16d527d478762f0e8a9a1",
+   "size": 5635443776
+  },
+  {
+   "path": "Ling-3.0-tiny-Q5_K_S.gguf",
+   "oid": "050f0fd6834c22d1e5c81b4f55f0af4453a3f115",
+   "size": 5482531904
+  },
+  {
+   "path": "Ling-3.0-tiny-Q6_K.gguf",
+   "oid": "26b5bc59db8397ee1ba88768d01db68564277c64",
+   "size": 6499262528
+  },
+  {
+   "path": "Ling-3.0-tiny-Q8_0.gguf",
+   "oid": "f5ca038fa0efd4fdbd7d256fb8475cb354652f96",
+   "size": 8408187968
+  },
+  {
+   "path": "Ling-3.0-tiny-UD-Q4_K_XL.gguf",
+   "oid": "51cd10f3c9e9815cbb0b01b974c5a9f0a9baebdc",
+   "size": 5340611552
+  },
+  {
+   "path": "Ling-3.0-tiny-UD-Q6_K_XL.gguf",
+   "oid": "7dd99b41dcf4dc63bbf3964a6c9a45ccef5fd256",
+   "size": 7274546528
+  },
+  {
+   "path": "Ling-3.0-tiny-UD-Q8_K_XL.gguf",
+   "oid": "a92c1de0753b7e25478fe39b4ff90768236250a3",
+   "size": 11188839488
+  },
+  {
+   "path": "Ling-3.0-tiny-f16.gguf",
+   "oid": "ad53a4c87f2d470564ff996a5d2a22b5dd244605",
+   "size": 15803475456
+  },
+  {
+   "path": "Ling-3.0-tiny-imatrix.gguf",
+   "oid": "77074138cf34edea9610c80f7adf8e19b0679a39",
+   "size": 44016704
+  },
+  {
+   "path": "README.md",
+   "oid": "99ca85545ab1e0393ef07b8bc01ca0f78aad5f81",
+   "size": 4458
+  },
+  {
+   "path": "chat_template.jinja",
+   "oid": "0f7943ce74b1b38cea4ea78b06ed30bd75e45255",
+   "size": 6265
+  },
+  {
+   "path": "config.json",
+   "oid": "ff6e2903aacd626115acf96bf3f97c842692bc78",
+   "size": 2130
+  },
+  {
+   "path": "generation_config.json",
+   "oid": "6fe28d800f7389572f026c42b6f70899d5918b2f",
+   "size": 56
+  }
+ ]
+}

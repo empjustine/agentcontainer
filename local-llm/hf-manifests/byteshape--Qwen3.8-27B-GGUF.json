@@ -1,0 +1,52 @@
+{
+ "repo": "byteshape/Qwen3.8-27B-GGUF",
+ "commit": "ed2050c1bcdade91a10fbfd7799c70085d15d549",
+ "fetched_at": "2026-08-30T18:56:00+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "039392d9bde49b8a2ac88eaf3f5e3de0dd3aa985",
+   "size": 1979
+  },
+  {
+   "path": "Qwen3.8-27B-IQ3_S-3.44bpw.gguf",
+   "oid": "71f083c98cbee160bccc578f1483b4cf3ae125a681ec7fe32f7a73e8de90ba01",
+   "size": 11771581056
+  },
+  {
+   "path": "Qwen3.8-27B-IQ4_XS-3.67bpw.gguf",
+   "oid": "1a432e0401423f554103233afadca43da3f7683f0250da72900c5c66bc42665e",
+   "size": 12556912896
+  },
+  {
+   "path": "Qwen3.8-27B-IQ4_XS-4.00bpw.gguf",
+   "oid": "d5193a4981982d384550bf0eb26032d32b7f9a0dc2be300b4bf421eaf87d6235",
+   "size": 13663372416
+  },
+  {
+   "path": "Qwen3.8-27B-IQ4_XS-4.40bpw.gguf",
+   "oid": "fa360d9e6c109074b15fd29d92405f45b832084b5c588c0ed11cb49e3c23a46d",
+   "size": 15040742016
+  },
+  {
+   "path": "Qwen3.8-27B-Q5_K_M-5.60bpw.gguf",
+   "oid": "30c7d4b44550ceab4caf114ccb2af6c726f0e5da86a9f564a49cd4ba63f032dc",
+   "size": 19135190016
+  },
+  {
+   "path": "Qwen3.8-27B-Q5_K_S-4.72bpw.gguf",
+   "oid": "95eb408c3e7ceb1fa9fa269789bf7c538044bb006f0ca9e38d78b7fe50a3020d",
+   "size": 16142116736
+  },
+  {
+   "path": "README.md",
+   "oid": "406e2a0458ff026ca35aede84c661ed4b3332a83",
+   "size": 6110
+  },
+  {
+   "path": "mmproj-bf16.gguf",
+   "oid": "e43a597863a21bfa48b0fbd4553a771ae4117e25bb172e66f1dbc3fc6d037131",
+   "size": 931145952
+  }
+ ]
+}

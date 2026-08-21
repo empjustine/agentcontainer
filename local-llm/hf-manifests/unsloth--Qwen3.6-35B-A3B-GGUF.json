@@ -1,0 +1,162 @@
+{
+ "repo": "unsloth/Qwen3.6-35B-A3B-GGUF",
+ "commit": "a483e9e6cbd595906af30beda3187c2663a1118c",
+ "fetched_at": "2026-08-23T03:56:25+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "718c2cfc03222f653ae6177745514595478dc4ef",
+   "size": 3502
+  },
+  {
+   "path": "BF16/Qwen3.6-35B-A3B-BF16-00001-of-00002.gguf",
+   "oid": "7577f84ffbd5d4757b8ba88bc963b33b3741ebcb",
+   "size": 49913715424
+  },
+  {
+   "path": "BF16/Qwen3.6-35B-A3B-BF16-00002-of-00002.gguf",
+   "oid": "2f8c14c6f6bec4081597182221a0004fccf19774",
+   "size": 19462922752
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-MXFP4_MOE.gguf",
+   "oid": "d28b9d68492a569f17c6a80f6e7ace0b463b9d03",
+   "size": 21706144736
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-Q8_0.gguf",
+   "oid": "482eec4f0764b9374d4239af0e3cb61d85b25949",
+   "size": 36903140320
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-IQ1_M.gguf",
+   "oid": "67374606b336bc587b41823d631504fb9f0ce23d",
+   "size": 10047749088
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-IQ2_M.gguf",
+   "oid": "aeb8f1780e20e1c955e77198d0fec4989014eade",
+   "size": 11522702304
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-IQ2_XXS.gguf",
+   "oid": "0175fc7e6694e8ab454e06f5ec6753af6619e0d0",
+   "size": 10756586464
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-IQ3_S.gguf",
+   "oid": "eadd67585ee5e5d3225e40b151e9b042fbd6f728",
+   "size": 13676723168
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-IQ3_XXS.gguf",
+   "oid": "4c22300650190f5944a3549f688c4afed5b65b1e",
+   "size": 13211155424
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-IQ4_NL.gguf",
+   "oid": "3f7543d2dff7f6271ebe9cd9790620b067efcb2c",
+   "size": 18040888288
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-IQ4_NL_XL.gguf",
+   "oid": "df496e8ee2d4d6e59dce16eaf83fc352f68f2d38",
+   "size": 19500506080
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-IQ4_XS.gguf",
+   "oid": "af3d6c1271ef693c3c16fff4f3c94384796b184a",
+   "size": 17730509792
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-Q2_K_XL.gguf",
+   "oid": "38f33a02620571ec295ddddf7d2653e93a968956",
+   "size": 12290628576
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-Q3_K_M.gguf",
+   "oid": "215519914d6c38892d92465ccc383d8d4e0b70bf",
+   "size": 16600710112
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-Q3_K_S.gguf",
+   "oid": "d24bc2761e957f9f1f2d34defad80b0ce231e730",
+   "size": 15359196128
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-Q3_K_XL.gguf",
+   "oid": "5f10301f3eacaf3352204c487ae141dbc77e9df5",
+   "size": 16845511648
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-Q4_K_M.gguf",
+   "oid": "c5100a3445ae71291c3c29f1e2e645744bbd04ca",
+   "size": 22134528992
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-Q4_K_S.gguf",
+   "oid": "1760ce9bc9e87bd4ac5a4a2cfe215c5c497c3a5e",
+   "size": 20893015008
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf",
+   "oid": "58b4c597357d95c31538ed877e31c6ae8072064b",
+   "size": 22360456160
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-Q5_K_M.gguf",
+   "oid": "e63e8e9771da65c0c4ccb44162ee2ecbf82da5fc",
+   "size": 26456194016
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-Q5_K_S.gguf",
+   "oid": "6cf0e981b2a0c8e6be80d97b395a3c3bfe45c357",
+   "size": 24942050272
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+   "oid": "28ad7af506701c4099893701351abc99dbfc0157",
+   "size": 26592508896
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-Q6_K.gguf",
+   "oid": "6ed55f35d114a3240d4c94527824518216bd0507",
+   "size": 29308320736
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf",
+   "oid": "680ff1cedd6653dee0e85f037670d6118b8f626b",
+   "size": 31843777504
+  },
+  {
+   "path": "Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf",
+   "oid": "b744500afbb15836df4dacf520cedc3c03378d27",
+   "size": 38451182560
+  },
+  {
+   "path": "README.md",
+   "oid": "166561e1610007d94f1be22dda1b7008a0fbc653",
+   "size": 66568
+  },
+  {
+   "path": "imatrix_unsloth.gguf_file",
+   "oid": "804991f566d74b41cc9e9b1ca906ae5f5b3276a9",
+   "size": 192223904
+  },
+  {
+   "path": "mmproj-BF16.gguf",
+   "oid": "0c12b8d744e5547ca57378973e31c9adcdcc5fea",
+   "size": 902822624
+  },
+  {
+   "path": "mmproj-F16.gguf",
+   "oid": "feb88525672670439196d09a7cf5ea07f350d7de",
+   "size": 899283680
+  },
+  {
+   "path": "mmproj-F32.gguf",
+   "oid": "e44f845facdbe79b19c79ffd7c369934caf1e15c",
+   "size": 1786305248
+  }
+ ]
+}

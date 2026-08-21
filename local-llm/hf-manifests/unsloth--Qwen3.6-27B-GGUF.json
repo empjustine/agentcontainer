@@ -1,0 +1,152 @@
+{
+ "repo": "unsloth/Qwen3.6-27B-GGUF",
+ "commit": "82d411acf4a06cfb8d9b073a5211bf410bfc29bf",
+ "fetched_at": "2026-08-23T03:56:27+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "4e23d27588197b2765ad3e47f2ae099055231afe",
+   "size": 3180
+  },
+  {
+   "path": "BF16/Qwen3.6-27B-BF16-00001-of-00002.gguf",
+   "oid": "b01460d23a509135100def6235c4291a0438a285",
+   "size": 50004497824
+  },
+  {
+   "path": "BF16/Qwen3.6-27B-BF16-00002-of-00002.gguf",
+   "oid": "2b4da9809317e3cb257b3d5e29c830290e0b5726",
+   "size": 3803783936
+  },
+  {
+   "path": "Qwen3.6-27B-IQ4_NL.gguf",
+   "oid": "412e284e13571e6674861c07193b329a42aa8322",
+   "size": 16071772384
+  },
+  {
+   "path": "Qwen3.6-27B-IQ4_XS.gguf",
+   "oid": "b78819818eedc0b0264a8054694091d488d83fde",
+   "size": 15440005344
+  },
+  {
+   "path": "Qwen3.6-27B-Q3_K_M.gguf",
+   "oid": "c93b95f0b0f8a8cea11e18b16868218298520d1c",
+   "size": 13586217184
+  },
+  {
+   "path": "Qwen3.6-27B-Q3_K_S.gguf",
+   "oid": "1c82efad2b70a8cb786e1f77e75663c4daf5fb06",
+   "size": 12358727904
+  },
+  {
+   "path": "Qwen3.6-27B-Q4_0.gguf",
+   "oid": "a8efd5f280a805b88e2c55881d0de7616f621b97",
+   "size": 15791278304
+  },
+  {
+   "path": "Qwen3.6-27B-Q4_1.gguf",
+   "oid": "e13338725c98814361c15f1503050546d4c6b370",
+   "size": 17252239584
+  },
+  {
+   "path": "Qwen3.6-27B-Q4_K_M.gguf",
+   "oid": "f3015758f351abf31db20bf5cd92d598f3f415d9",
+   "size": 16817244384
+  },
+  {
+   "path": "Qwen3.6-27B-Q4_K_S.gguf",
+   "oid": "c18e16d0ace91739ae4e1099457f11fb902b9f99",
+   "size": 15856158944
+  },
+  {
+   "path": "Qwen3.6-27B-Q5_K_M.gguf",
+   "oid": "198dcea28a55db7a2b5b3ff15de93010fc1c6355",
+   "size": 19509790944
+  },
+  {
+   "path": "Qwen3.6-27B-Q5_K_S.gguf",
+   "oid": "0f5546d0c7ee12335968f15fa49f3c937a55423c",
+   "size": 18958305504
+  },
+  {
+   "path": "Qwen3.6-27B-Q6_K.gguf",
+   "oid": "bc4fcbade613c9bc19ea21a7d0a00c165f280d91",
+   "size": 22523238624
+  },
+  {
+   "path": "Qwen3.6-27B-Q8_0.gguf",
+   "oid": "4838aad44bae6c19b326740d3e6173164b5272aa",
+   "size": 28595763424
+  },
+  {
+   "path": "Qwen3.6-27B-UD-IQ2_M.gguf",
+   "oid": "86fd325e6cfa4b7f413d7d94dfbf59f7bc23e88a",
+   "size": 10846136544
+  },
+  {
+   "path": "Qwen3.6-27B-UD-IQ2_XXS.gguf",
+   "oid": "2f2d88b0ab6aab7054f25b8cd73b1431ee9a8440",
+   "size": 9388779744
+  },
+  {
+   "path": "Qwen3.6-27B-UD-IQ3_XXS.gguf",
+   "oid": "e2cd0250aacfdbd214a6d5b14fb6ba29ef0dd82c",
+   "size": 11994777824
+  },
+  {
+   "path": "Qwen3.6-27B-UD-Q2_K_XL.gguf",
+   "oid": "4b48c6bf00ab30ced94345225f0c8a99e24f3673",
+   "size": 11849779424
+  },
+  {
+   "path": "Qwen3.6-27B-UD-Q3_K_XL.gguf",
+   "oid": "d83fcda1a0a0333382142a1291e97655f541bd16",
+   "size": 14473431264
+  },
+  {
+   "path": "Qwen3.6-27B-UD-Q4_K_XL.gguf",
+   "oid": "0af72b8f28201a403a714f8bbfd10ce0a77f8a11",
+   "size": 17612564704
+  },
+  {
+   "path": "Qwen3.6-27B-UD-Q5_K_XL.gguf",
+   "oid": "d90ebfb29af0060c7a02700321404c480c7430ab",
+   "size": 20038256864
+  },
+  {
+   "path": "Qwen3.6-27B-UD-Q6_K_XL.gguf",
+   "oid": "cf1720e02524c7365e36038bcdbf4dad2e4339f4",
+   "size": 25636485344
+  },
+  {
+   "path": "Qwen3.6-27B-UD-Q8_K_XL.gguf",
+   "oid": "3f5a25458235a3f8cb868db2263ab18ba7bcbd55",
+   "size": 35325163744
+  },
+  {
+   "path": "README.md",
+   "oid": "a2f735b7283aa3d9b5affd81fdb2c706eaeee59b",
+   "size": 24460
+  },
+  {
+   "path": "imatrix_unsloth.gguf_file",
+   "oid": "cf8d42c5fecbef67fe6b3fbacdd9fccd0c481a1e",
+   "size": 13642656
+  },
+  {
+   "path": "mmproj-BF16.gguf",
+   "oid": "e63457f2540389686caaa438676038db6388daa4",
+   "size": 931146304
+  },
+  {
+   "path": "mmproj-F16.gguf",
+   "oid": "b04060d6048af153d716b01fff26067220a19131",
+   "size": 927607360
+  },
+  {
+   "path": "mmproj-F32.gguf",
+   "oid": "94161d0b3277a5a7648b903b11ef1d0d7c70ce2d",
+   "size": 1842940480
+  }
+ ]
+}
