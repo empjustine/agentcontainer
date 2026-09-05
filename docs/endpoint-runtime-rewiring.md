@@ -160,7 +160,7 @@ The proxying itself is llama-swap's **`peers`** feature:
 - `generateLlamaSwapConfig()` (in `generate-config.yaml.js`) emits the peers
   section from fetched cloud providers:
   `peers[id] = { proxy, models, apiKey }` where `proxy` is the upstream base
-  URL and `apiKey` is interpolated as `"${env.__PROVIDER_API_KEY}"`.
+  URL and `apiKey` is interpolated as `"${env.PROVIDER_API_KEY}"`.
 
 An extension cannot edit llama-swap's config file directly (separate process),
 but it can:

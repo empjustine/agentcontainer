@@ -1,167 +1,167 @@
 {
- "repo": "unsloth/GLM-4.7-Flash-GGUF",
- "commit": "0d32489ecb9db6d2a4fc93bd27ef01519f95474d",
- "fetched_at": "2026-08-23T03:56:24+00:00",
- "files": [
-  {
-   "path": ".gitattributes",
-   "oid": "f8d07ccd4990766a38f8b4a2cda344a1adeb9616",
-   "size": 3448
-  },
-  {
-   "path": "BF16/GLM-4.7-Flash-BF16-00001-of-00002.gguf",
-   "oid": "de159b10d796ddf4b7731a203f5fa23d6e3fad99",
-   "size": 49912579232
-  },
-  {
-   "path": "BF16/GLM-4.7-Flash-BF16-00002-of-00002.gguf",
-   "oid": "8667e54bb82c54fbdcc2701c77e856a90417dd6e",
-   "size": 9996258464
-  },
-  {
-   "path": "GLM-4.7-Flash-IQ4_NL.gguf",
-   "oid": "9b56a7413bb148ae876c4ccf1dd86ff543bc4f4a",
-   "size": 17165033824
-  },
-  {
-   "path": "GLM-4.7-Flash-IQ4_XS.gguf",
-   "oid": "635292a50aebd8ff7b1b31b88aacd7ab4c83d973",
-   "size": 16271360352
-  },
-  {
-   "path": "GLM-4.7-Flash-MXFP4_MOE.gguf",
-   "oid": "2d49678d0fb28f1cd1e511347a6f27b2eea57f90",
-   "size": 16968499296
-  },
-  {
-   "path": "GLM-4.7-Flash-Q2_K.gguf",
-   "oid": "61703b678989764849d21664d157bcd06f4238f0",
-   "size": 11344720224
-  },
-  {
-   "path": "GLM-4.7-Flash-Q2_K_L.gguf",
-   "oid": "d38a8b03808b7de506c0c51bb307f678d6a7d7b8",
-   "size": 11419062624
-  },
-  {
-   "path": "GLM-4.7-Flash-Q3_K_M.gguf",
-   "oid": "8a2b251051afc06c2ac5adf0ed43ae2194f94bdb",
-   "size": 14614624608
-  },
-  {
-   "path": "GLM-4.7-Flash-Q3_K_S.gguf",
-   "oid": "649cb8ee6cb3687d06f38650a7910346533edc78",
-   "size": 13288618336
-  },
-  {
-   "path": "GLM-4.7-Flash-Q4_0.gguf",
-   "oid": "4f4bf86db79cb5ac7f36f3edced0fdc6196a6371",
-   "size": 17216676192
-  },
-  {
-   "path": "GLM-4.7-Flash-Q4_1.gguf",
-   "oid": "467463230ecfeee7a426f7a5a5fc17949f76f944",
-   "size": 18972205408
-  },
-  {
-   "path": "GLM-4.7-Flash-Q4_K_M.gguf",
-   "oid": "edd272a00869a9e6d3c8a3f33bef780654a46f66",
-   "size": 18312339808
-  },
-  {
-   "path": "GLM-4.7-Flash-Q4_K_S.gguf",
-   "oid": "f142239fef2c2e78129f7a905106c31e6a8e3059",
-   "size": 17268318560
-  },
-  {
-   "path": "GLM-4.7-Flash-Q5_K_M.gguf",
-   "oid": "96441e4d0f5294d8332b21e71e3a30db9d266ec0",
-   "size": 21408850272
-  },
-  {
-   "path": "GLM-4.7-Flash-Q5_K_S.gguf",
-   "oid": "369f7ddb4645b3b1adc15fde0b78b82d004bc0fe",
-   "size": 20817813856
-  },
-  {
-   "path": "GLM-4.7-Flash-Q6_K.gguf",
-   "oid": "52450b8b6b16fc52846822712a05d873a2fd4f97",
-   "size": 24693098848
-  },
-  {
-   "path": "GLM-4.7-Flash-Q8_0.gguf",
-   "oid": "7aab778b087ca1e6f6509c9a4e90716541a043f2",
-   "size": 31842799968
-  },
-  {
-   "path": "GLM-4.7-Flash-UD-IQ1_M.gguf",
-   "oid": "20fd8ccc1dbc0d63f8c516e04172fbb61359f7bc",
-   "size": 9808507232
-  },
-  {
-   "path": "GLM-4.7-Flash-UD-IQ1_S.gguf",
-   "oid": "fe469bd9b70ce9670a88c1ca47f21040db2c2278",
-   "size": 9247983968
-  },
-  {
-   "path": "GLM-4.7-Flash-UD-IQ2_M.gguf",
-   "oid": "cb7cf735b85fc1b1cbc4b13b435c3d561438bd84",
-   "size": 10991776096
-  },
-  {
-   "path": "GLM-4.7-Flash-UD-IQ2_XXS.gguf",
-   "oid": "0771a9c128dbbb8526be0778a397652ba5ae2a16",
-   "size": 10513625440
-  },
-  {
-   "path": "GLM-4.7-Flash-UD-IQ3_XXS.gguf",
-   "oid": "5a69860ee24dd6ac61738f92f8d3bab73a049fbe",
-   "size": 12907368800
-  },
-  {
-   "path": "GLM-4.7-Flash-UD-Q2_K_XL.gguf",
-   "oid": "949eaba11ad42ae441939fc56f4589002d962ccc",
-   "size": 11888759136
-  },
-  {
-   "path": "GLM-4.7-Flash-UD-Q3_K_XL.gguf",
-   "oid": "c5cb732c164b4a2ba392e8f3304ad03f61588187",
-   "size": 13782004064
-  },
-  {
-   "path": "GLM-4.7-Flash-UD-Q4_K_XL.gguf",
-   "oid": "1e9d5921a6d67b85eedd5efa86e6e4eda8b77332",
-   "size": 17520169312
-  },
-  {
-   "path": "GLM-4.7-Flash-UD-Q5_K_XL.gguf",
-   "oid": "663a4e86c71fb33e83db616596309ed55e435bf8",
-   "size": 21693931872
-  },
-  {
-   "path": "GLM-4.7-Flash-UD-Q6_K_XL.gguf",
-   "oid": "78a8d3af1f8b7f7688b7525d32e8e4750e1be89e",
-   "size": 26175238496
-  },
-  {
-   "path": "GLM-4.7-Flash-UD-Q8_K_XL.gguf",
-   "oid": "f31b23d9c796029c3d7dd0fc5c5126afe84a2075",
-   "size": 35624923488
-  },
-  {
-   "path": "GLM-4.7-Flash-UD-TQ1_0.gguf",
-   "oid": "4a32d8a931dcd9f04ba3dbe90d3b1f76cb818858",
-   "size": 8331004256
-  },
-  {
-   "path": "README.md",
-   "oid": "35674a4689b0952f21dd08bc7b50344012fd3b14",
-   "size": 8597
-  },
-  {
-   "path": "imatrix_unsloth.gguf_file",
-   "oid": "86eb72b213c24343f4185c6f8a28d717d84ae3c4",
-   "size": 72447904
-  }
- ]
+	"repo": "unsloth/GLM-4.7-Flash-GGUF",
+	"commit": "0d32489ecb9db6d2a4fc93bd27ef01519f95474d",
+	"fetched_at": "2026-08-23T03:56:24+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "f8d07ccd4990766a38f8b4a2cda344a1adeb9616",
+			"size": 3448
+		},
+		{
+			"path": "BF16/GLM-4.7-Flash-BF16-00001-of-00002.gguf",
+			"oid": "de159b10d796ddf4b7731a203f5fa23d6e3fad99",
+			"size": 49912579232
+		},
+		{
+			"path": "BF16/GLM-4.7-Flash-BF16-00002-of-00002.gguf",
+			"oid": "8667e54bb82c54fbdcc2701c77e856a90417dd6e",
+			"size": 9996258464
+		},
+		{
+			"path": "GLM-4.7-Flash-IQ4_NL.gguf",
+			"oid": "9b56a7413bb148ae876c4ccf1dd86ff543bc4f4a",
+			"size": 17165033824
+		},
+		{
+			"path": "GLM-4.7-Flash-IQ4_XS.gguf",
+			"oid": "635292a50aebd8ff7b1b31b88aacd7ab4c83d973",
+			"size": 16271360352
+		},
+		{
+			"path": "GLM-4.7-Flash-MXFP4_MOE.gguf",
+			"oid": "2d49678d0fb28f1cd1e511347a6f27b2eea57f90",
+			"size": 16968499296
+		},
+		{
+			"path": "GLM-4.7-Flash-Q2_K.gguf",
+			"oid": "61703b678989764849d21664d157bcd06f4238f0",
+			"size": 11344720224
+		},
+		{
+			"path": "GLM-4.7-Flash-Q2_K_L.gguf",
+			"oid": "d38a8b03808b7de506c0c51bb307f678d6a7d7b8",
+			"size": 11419062624
+		},
+		{
+			"path": "GLM-4.7-Flash-Q3_K_M.gguf",
+			"oid": "8a2b251051afc06c2ac5adf0ed43ae2194f94bdb",
+			"size": 14614624608
+		},
+		{
+			"path": "GLM-4.7-Flash-Q3_K_S.gguf",
+			"oid": "649cb8ee6cb3687d06f38650a7910346533edc78",
+			"size": 13288618336
+		},
+		{
+			"path": "GLM-4.7-Flash-Q4_0.gguf",
+			"oid": "4f4bf86db79cb5ac7f36f3edced0fdc6196a6371",
+			"size": 17216676192
+		},
+		{
+			"path": "GLM-4.7-Flash-Q4_1.gguf",
+			"oid": "467463230ecfeee7a426f7a5a5fc17949f76f944",
+			"size": 18972205408
+		},
+		{
+			"path": "GLM-4.7-Flash-Q4_K_M.gguf",
+			"oid": "edd272a00869a9e6d3c8a3f33bef780654a46f66",
+			"size": 18312339808
+		},
+		{
+			"path": "GLM-4.7-Flash-Q4_K_S.gguf",
+			"oid": "f142239fef2c2e78129f7a905106c31e6a8e3059",
+			"size": 17268318560
+		},
+		{
+			"path": "GLM-4.7-Flash-Q5_K_M.gguf",
+			"oid": "96441e4d0f5294d8332b21e71e3a30db9d266ec0",
+			"size": 21408850272
+		},
+		{
+			"path": "GLM-4.7-Flash-Q5_K_S.gguf",
+			"oid": "369f7ddb4645b3b1adc15fde0b78b82d004bc0fe",
+			"size": 20817813856
+		},
+		{
+			"path": "GLM-4.7-Flash-Q6_K.gguf",
+			"oid": "52450b8b6b16fc52846822712a05d873a2fd4f97",
+			"size": 24693098848
+		},
+		{
+			"path": "GLM-4.7-Flash-Q8_0.gguf",
+			"oid": "7aab778b087ca1e6f6509c9a4e90716541a043f2",
+			"size": 31842799968
+		},
+		{
+			"path": "GLM-4.7-Flash-UD-IQ1_M.gguf",
+			"oid": "20fd8ccc1dbc0d63f8c516e04172fbb61359f7bc",
+			"size": 9808507232
+		},
+		{
+			"path": "GLM-4.7-Flash-UD-IQ1_S.gguf",
+			"oid": "fe469bd9b70ce9670a88c1ca47f21040db2c2278",
+			"size": 9247983968
+		},
+		{
+			"path": "GLM-4.7-Flash-UD-IQ2_M.gguf",
+			"oid": "cb7cf735b85fc1b1cbc4b13b435c3d561438bd84",
+			"size": 10991776096
+		},
+		{
+			"path": "GLM-4.7-Flash-UD-IQ2_XXS.gguf",
+			"oid": "0771a9c128dbbb8526be0778a397652ba5ae2a16",
+			"size": 10513625440
+		},
+		{
+			"path": "GLM-4.7-Flash-UD-IQ3_XXS.gguf",
+			"oid": "5a69860ee24dd6ac61738f92f8d3bab73a049fbe",
+			"size": 12907368800
+		},
+		{
+			"path": "GLM-4.7-Flash-UD-Q2_K_XL.gguf",
+			"oid": "949eaba11ad42ae441939fc56f4589002d962ccc",
+			"size": 11888759136
+		},
+		{
+			"path": "GLM-4.7-Flash-UD-Q3_K_XL.gguf",
+			"oid": "c5cb732c164b4a2ba392e8f3304ad03f61588187",
+			"size": 13782004064
+		},
+		{
+			"path": "GLM-4.7-Flash-UD-Q4_K_XL.gguf",
+			"oid": "1e9d5921a6d67b85eedd5efa86e6e4eda8b77332",
+			"size": 17520169312
+		},
+		{
+			"path": "GLM-4.7-Flash-UD-Q5_K_XL.gguf",
+			"oid": "663a4e86c71fb33e83db616596309ed55e435bf8",
+			"size": 21693931872
+		},
+		{
+			"path": "GLM-4.7-Flash-UD-Q6_K_XL.gguf",
+			"oid": "78a8d3af1f8b7f7688b7525d32e8e4750e1be89e",
+			"size": 26175238496
+		},
+		{
+			"path": "GLM-4.7-Flash-UD-Q8_K_XL.gguf",
+			"oid": "f31b23d9c796029c3d7dd0fc5c5126afe84a2075",
+			"size": 35624923488
+		},
+		{
+			"path": "GLM-4.7-Flash-UD-TQ1_0.gguf",
+			"oid": "4a32d8a931dcd9f04ba3dbe90d3b1f76cb818858",
+			"size": 8331004256
+		},
+		{
+			"path": "README.md",
+			"oid": "35674a4689b0952f21dd08bc7b50344012fd3b14",
+			"size": 8597
+		},
+		{
+			"path": "imatrix_unsloth.gguf_file",
+			"oid": "86eb72b213c24343f4185c6f8a28d717d84ae3c4",
+			"size": 72447904
+		}
+	]
 }

@@ -22,6 +22,15 @@ Env: HF_HUB_CACHE, HF_HOME, HF_TOKEN (see ./docs/hf-cache-upkeep.md).
 import os
 import sys
 
+# Structured logging (JSON lines on stderr; see lib/log.py) — stdout stays
+# reserved for machine-consumed output.
+import pathlib as _pl
+
+sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
+import log
+
+log.set_tool("local-llm/upkeep")
+
 from huggingface_hub import (
     scan_cache_dir,
     snapshot_download,
@@ -55,7 +64,7 @@ def prune(cache_info) -> None:
     if not detached:
         return
     for commit in sorted(detached):
-        print(f"prune: detached revision {commit[:8]}")
+        log.info("pruning detached revision", commit=commit[:8])
     cache_info.delete_revisions(*detached).execute()
 
 
@@ -69,8 +78,7 @@ def pull_newer(cache_dir: str) -> None:
         try:
             refs = api.list_repo_refs(repo_id=repo.repo_id, repo_type="model")
         except Exception as e:
-            print(f"{repo.repo_id}: cannot read remote refs ({e}); skipping",
-                  file=sys.stderr)
+            log.warn("cannot read remote refs; skipping", repo=repo.repo_id, error=str(e))
             continue
         remote = {r.name: _commit(r) for r in refs.branches}
         for name, revision in repo.refs.items():
@@ -81,10 +89,9 @@ def pull_newer(cache_dir: str) -> None:
             # Refresh only the weights already in the cache (e.g. the single GGUF
             # quant an engine serves), not the whole repo at the new revision.
             wanted = sorted(f.file_name for f in revision.files)
-            print(
-                f"{repo.repo_id}: {name} {local_commit[:8]} -> {remote_commit[:8]} "
-                f"(pulling {len(wanted)} cached file(s))"
-            )
+            log.info("pulling newer revision", repo=repo.repo_id, ref=name,
+                     local=local_commit[:8], remote=remote_commit[:8],
+                     cachedFiles=len(wanted))
             try:
                 snapshot_download(
                     repo.repo_id,
@@ -103,7 +110,7 @@ def pull_newer(cache_dir: str) -> None:
                         ignore_patterns=["*.gguf"],
                     )
             except Exception as e:
-                print(f"{repo.repo_id}: pull failed ({e})", file=sys.stderr)
+                log.warn("pull failed", repo=repo.repo_id, error=str(e))
 
 
 def main() -> int:
@@ -134,14 +141,15 @@ def main() -> int:
     for repo in info.repos:
         if repo.repo_type != "model":
             continue
-        print(f"{repo.repo_id}: OK ({repo.nb_files} files, {repo.size_on_disk_str})")
+        log.info("repo ok", repo=repo.repo_id, files=repo.nb_files,
+                 sizeOnDisk=repo.size_on_disk_str)
 
     for w in info.warnings:
         rc = 1
-        print(f"CORRUPTED: {w}", file=sys.stderr)
+        log.error("corrupted", detail=str(w))
 
     for f in getattr(info, "incomplete_files", frozenset()):
-        print(f"INCOMPLETE: {f.file_path}", file=sys.stderr)
+        log.error("incomplete", path=f.file_path)
 
     return rc
 

@@ -1,72 +1,72 @@
 {
- "repo": "unsloth/gemma-4-26B-A4B-it-qat-GGUF",
- "commit": "7b92b5b28818151e8669af2e45e88d6086f490dd",
- "fetched_at": "2026-08-23T03:56:25+00:00",
- "files": [
-  {
-   "path": ".gitattributes",
-   "oid": "d30631a28f53642ca3d52037e22f12a6e8b2af39",
-   "size": 2684
-  },
-  {
-   "path": "MTP/README.md",
-   "oid": "c99bff25a0fc697d8501ebfcce8ad5c212f3788b",
-   "size": 2585
-  },
-  {
-   "path": "MTP/mtp-gemma-4-26B-A4B-it-BF16.gguf",
-   "oid": "e025191ae73adb18c2c66420dc4714c6eb244de5",
-   "size": 855247360
-  },
-  {
-   "path": "MTP/mtp-gemma-4-26B-A4B-it-F16.gguf",
-   "oid": "07284ce561530b9358db2ba9c338599b5ef711cf",
-   "size": 855247360
-  },
-  {
-   "path": "MTP/mtp-gemma-4-26B-A4B-it-Q4_0.gguf",
-   "oid": "6c8c2b3e6af91da5694a24d3d13456ee40599d20",
-   "size": 251939328
-  },
-  {
-   "path": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf",
-   "oid": "2665aa76101aca5f673b75dafb2fe335f41aee06",
-   "size": 461785600
-  },
-  {
-   "path": "README.md",
-   "oid": "80b0b9c6cdc603121d2e278d68c731a600583194",
-   "size": 30935
-  },
-  {
-   "path": "config.json",
-   "oid": "4e3ad9a7516e1e2453915a09b81cc1d8f1920631",
-   "size": 3861
-  },
-  {
-   "path": "gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
-   "oid": "7d98737f9c440366ec0a6d7bac57f4750c94bd35",
-   "size": 14249047104
-  },
-  {
-   "path": "mmproj-BF16.gguf",
-   "oid": "fd02668d3bff198db649013003eab6773b505057",
-   "size": 1194828256
-  },
-  {
-   "path": "mmproj-F16.gguf",
-   "oid": "76ec823e0e36fdf2c4f035557cc5ad970c0ff980",
-   "size": 1193058784
-  },
-  {
-   "path": "mmproj-F32.gguf",
-   "oid": "4a465af7d31f7d8ca7c58916b4efe7b19159c05c",
-   "size": 2291200480
-  },
-  {
-   "path": "mtp-gemma-4-26B-A4B-it.gguf",
-   "oid": "6c8c2b3e6af91da5694a24d3d13456ee40599d20",
-   "size": 251939328
-  }
- ]
+	"repo": "unsloth/gemma-4-26B-A4B-it-qat-GGUF",
+	"commit": "7b92b5b28818151e8669af2e45e88d6086f490dd",
+	"fetched_at": "2026-08-23T03:56:25+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "d30631a28f53642ca3d52037e22f12a6e8b2af39",
+			"size": 2684
+		},
+		{
+			"path": "MTP/README.md",
+			"oid": "c99bff25a0fc697d8501ebfcce8ad5c212f3788b",
+			"size": 2585
+		},
+		{
+			"path": "MTP/mtp-gemma-4-26B-A4B-it-BF16.gguf",
+			"oid": "e025191ae73adb18c2c66420dc4714c6eb244de5",
+			"size": 855247360
+		},
+		{
+			"path": "MTP/mtp-gemma-4-26B-A4B-it-F16.gguf",
+			"oid": "07284ce561530b9358db2ba9c338599b5ef711cf",
+			"size": 855247360
+		},
+		{
+			"path": "MTP/mtp-gemma-4-26B-A4B-it-Q4_0.gguf",
+			"oid": "6c8c2b3e6af91da5694a24d3d13456ee40599d20",
+			"size": 251939328
+		},
+		{
+			"path": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf",
+			"oid": "2665aa76101aca5f673b75dafb2fe335f41aee06",
+			"size": 461785600
+		},
+		{
+			"path": "README.md",
+			"oid": "80b0b9c6cdc603121d2e278d68c731a600583194",
+			"size": 30935
+		},
+		{
+			"path": "config.json",
+			"oid": "4e3ad9a7516e1e2453915a09b81cc1d8f1920631",
+			"size": 3861
+		},
+		{
+			"path": "gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
+			"oid": "7d98737f9c440366ec0a6d7bac57f4750c94bd35",
+			"size": 14249047104
+		},
+		{
+			"path": "mmproj-BF16.gguf",
+			"oid": "fd02668d3bff198db649013003eab6773b505057",
+			"size": 1194828256
+		},
+		{
+			"path": "mmproj-F16.gguf",
+			"oid": "76ec823e0e36fdf2c4f035557cc5ad970c0ff980",
+			"size": 1193058784
+		},
+		{
+			"path": "mmproj-F32.gguf",
+			"oid": "4a465af7d31f7d8ca7c58916b4efe7b19159c05c",
+			"size": 2291200480
+		},
+		{
+			"path": "mtp-gemma-4-26B-A4B-it.gguf",
+			"oid": "6c8c2b3e6af91da5694a24d3d13456ee40599d20",
+			"size": 251939328
+		}
+	]
 }

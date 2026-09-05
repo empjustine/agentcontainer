@@ -9,8 +9,8 @@ The manifest is the single source of truth for
 `openai-completions-gfx1030/config.d/10-local-llm-inference.yaml`:
 
 ```
-llamacpp-model-data.json  --(generate-local-llm-models.yaml.js)-->  config.d/10-local-llm-inference.yaml
-llama-swap-core.json      --(generate-general.yaml.js)----------->  config.d/00-general.yaml   (globals + sampling macros)
+llamacpp-model-data.json  --(generate-local-llm-models.yaml.mjs)-->  config.d/10-local-llm-inference.yaml
+llama-swap-core.json      --(generate-general.yaml.mjs)----------->  config.d/00-general.yaml   (globals + sampling macros)
 active-b.json             --(consumed by deriveModelId)----------->  the <slug> prefix of every model id
 ```
 
@@ -30,7 +30,7 @@ local files only. (`generate.sh` wraps them in `infisical run` and *does* need
 | `ctx-size` | **authoritative** context window; optional, **default `65536`**. The generator never applies `--fit-ctx` |
 | `parallel` | `1` or `2`; optional, **default `1`** |
 
-Keys with an implicit default are filled in by `generate-local-llm-models.yaml.js`
+Keys with an implicit default are filled in by `generate-local-llm-models.yaml.mjs`
 (`DEFAULTS` map) — omit them unless the entry deviates, e.g. `parallel: 2` or a
 cap other than `65536`.
 | `__argv` | family sampling macro `${…}` (see below), or omit when the family has no macro |
@@ -132,17 +132,17 @@ defaults `f16`/`f16`/`1`; only the non-default `ctx-size: 128000` is written.)
 
 Family sampling macros live under the `macros` key of `llama-swap-core.json`
 (the source of truth) and are emitted into `config.d/00-general.yaml` by
-`generate-general.yaml.js`. Current families include `qwen38`, `qwen36`,
+`generate-general.yaml.mjs`. Current families include `qwen38`, `qwen36`,
 `glm47f`, `gemma4`, `devstral`, `ling`, `lfm25`, plus the base `LLAMA_SERVER`
 launcher (check `llama-swap-core.json` for the live list). To add/change a
-macro, edit `llama-swap-core.json` and re-run `generate-general.yaml.js`.
+macro, edit `llama-swap-core.json` and re-run `generate-general.yaml.mjs`.
 
 ## Step 5 — Regenerate `config.d/`
 
 ```sh
 cd openai-completions-gfx1030
-node generate-local-llm-models.yaml.js     # -> config.d/10-local-llm-inference.yaml  (always)
-node generate-general.yaml.js              # -> config.d/00-general.yaml  (only if macros/00-general changed)
+node generate-local-llm-models.yaml.mjs     # -> config.d/10-local-llm-inference.yaml  (always)
+node generate-general.yaml.mjs              # -> config.d/00-general.yaml  (only if macros/00-general changed)
 # full pipeline incl. provider secrets (needs infisical login + network):
 ./generate.sh
 ```
@@ -206,5 +206,7 @@ llama-swap merges `config.d/` files additively at startup. Restart the
   `10-local-llm-inference.yaml` and how llama-swap merges `config.d/`.
 - `hf-cache-upkeep.md` — `upkeep.py` cache GC/pull/verify; `download_models.py`
   must use the `main` ref (not a pinned SHA) to survive pruning.
-- `models-layered-cake.md` — the *coding-agent* model generators (separate
-  concern; not this local-llm manifest).
+- `coding-agent/merge-models-json.mjs` / `coding-agent/generate-models.json.mjs`
+  — the *coding-agent* model generators and the layered `models.json` contract
+  (separate concern; not this local-llm manifest). Their documentation lives in
+  those scripts' headers.

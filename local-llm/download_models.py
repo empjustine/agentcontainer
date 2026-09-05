@@ -28,7 +28,7 @@ are fetched at the SAME resolved commit so a snapshot is internally
 consistent.
 
 Files land in the shared HF cache (HF_HUB_CACHE / HF_HOME / ~/.cache/huggingface/hub),
-where both llama-server's cache resolution (generate-local-llm-models.yaml.js)
+where both llama-server's cache resolution (generate-local-llm-models.yaml.mjs)
 and the coding agent's cache mount pick them up without re-download. Re-runs
 are idempotent: huggingface_hub skips complete blobs via etag comparison.
 After provisioning, upkeep.py owns the cache (refresh newer revisions, prune).
@@ -57,6 +57,15 @@ from pathlib import Path
 
 from huggingface_hub import HfApi, snapshot_download
 from huggingface_hub.hf_api import RepoFile
+
+# Structured logging (JSON lines on stderr; see lib/log.py) — stdout stays
+# reserved for machine-consumed output.
+import pathlib as _pl
+
+sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
+import log
+
+log.set_tool("local-llm/download-models")
 
 HERE = Path(__file__).parent
 MODEL_DATA = HERE.parent / "openai-completions" / "llamacpp-model-data.json"
@@ -149,11 +158,11 @@ def main():
     failures = 0
     total_bytes = 0
     for repo, entries in sorted(by_repo.items()):
-        print(f"\n== {repo} ({len(entries)} entr{'y' if len(entries) == 1 else 'ies'}) ==")
+        log.info("repo plan", repo=repo, entries=len(entries))
         commit, wanted, errors = resolve(api, repo, entries)
         failures += len(errors)
         for err in errors:
-            print(f"  FAIL {err}", file=sys.stderr)
+            log.error("resolution failed", error=str(err))
         if not wanted:
             continue
         if args.dry_run:
@@ -162,7 +171,7 @@ def main():
                 if fname in seen:
                     continue
                 seen.add(fname)
-                print(f"  plan {fname}  [{label}] @ {commit[:8]}")
+                log.info("planned file", file=fname, label=label, commit=commit[:8])
             continue
         try:
             folder = snapshot_download(
@@ -177,18 +186,18 @@ def main():
                 seen.add(fname)
                 size = (Path(folder) / fname).stat().st_size
                 total_bytes += size
-                print(f"  ok   {fname}  ({size / 2**30:.2f} GiB)")
+                log.info("file ensured", file=fname, gib=round(size / 2**30, 2))
         except Exception as e:
             failed = sorted({fname for fname, _ in wanted})
             failures += len(failed)
             for fname in failed:
-                print(f"  FAIL {fname}: {e}", file=sys.stderr)
+                log.error("file failed", file=fname, error=str(e))
 
     if args.dry_run:
-        print("\ndry run — nothing downloaded")
+        log.info("dry run — nothing downloaded")
     else:
-        print(f"\ndone — {total_bytes / 2**30:.2f} GiB newly ensured, "
-              f"{failures} failure(s)")
+        log.info("done", newlyEnsuredGib=round(total_bytes / 2**30, 2),
+                 failures=failures)
     if failures != 0:
         raise SystemExit(1)
 

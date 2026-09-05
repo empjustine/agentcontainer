@@ -23,6 +23,15 @@ Usage:
 import os, sys, glob, argparse
 from gguf import GGUFReader
 
+# Structured logging (JSON lines on stderr; see lib/log.py) — stdout stays
+# reserved for machine-consumed output.
+import pathlib as _pl
+
+sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
+import log
+
+log.set_tool("local-llm/gguf-context-length")
+
 def first_cached(repo):
     if os.environ.get("HF_HUB_CACHE"):
         base = os.environ["HF_HUB_CACHE"]
@@ -61,7 +70,7 @@ def main():
     if a.repo:
         p = first_cached(a.repo)
         if not p:
-            print(f"no cached GGUF found for {a.repo}", file=sys.stderr)
+            log.warn("no cached GGUF found", repo=a.repo)
             sys.exit(2)
         files.append(p)
 
@@ -72,7 +81,7 @@ def main():
     for pat in files:
         hits = glob.glob(pat)
         if not hits:
-            print(f"no match: {pat}", file=sys.stderr)
+            log.warn("no match for pattern", pattern=pat)
             continue
         show(hits[0])  # first shard carries the header; later shards are data-only
 

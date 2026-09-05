@@ -8,8 +8,18 @@
 set -eu
 cd "$(dirname "$0")"
 
+# JSON-log helpers (same contract as lib/log.sh) — the python body below has
+# no shell, so it emits the structured lines itself.
 python3 - <<'EOF'
-import json, urllib.request, os, ssl
+import json, sys, datetime, urllib.request, os, ssl
+
+TOOL = "local-llm/fetch-model-cards"
+
+def log(level, msg, **fields):
+    rec = {"ts": datetime.datetime.now(datetime.timezone.utc).strftime(
+        "%Y-%m-%dT%H:%M:%SZ"), "level": level, "tool": TOOL, "msg": msg}
+    rec.update(fields)
+    print(json.dumps(rec), file=sys.stderr)
 
 data = json.load(open("../openai-completions/llamacpp-model-data.json"))
 base = "model-cards"
@@ -27,10 +37,11 @@ for repo in repos:
         os.makedirs(os.path.dirname(out), exist_ok=True)
         with open(out, "wb") as f:
             f.write(content)
-        print(f"  ok  {out}  ({len(content)} bytes)")
+        log("info", "model card fetched", repo=repo, path=out, bytes=len(content))
         ok += 1
     except Exception as e:
-        print(f"  FAIL {repo}: {e}")
+        log("warn", "model card fetch failed", repo=repo, error=str(e))
         fail += 1
-print(f"done — {ok} ok, {fail} failed")
+log("info", "done", ok=ok, failed=fail)
+sys.exit(1 if fail else 0)
 EOF

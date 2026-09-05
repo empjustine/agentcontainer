@@ -30,7 +30,7 @@ agentcontainer/
 ├── docs/                              # Design docs, environment guides, ADRs
 │   ├── environments-and-peer-variants.md   # bazzite / a50 / work matrix
 │   ├── container-tooling.md                # container-tool.sh, run scripts
-│   ├── termux-serving.md                   # a50 / Termux native build
+│   ├── termux-serving.md                   # a50 / Termux map (detail lives in the code headers)
 │   ├── d0XX-*.md                           # numbered design notes
 │   └── ...
 ├── container-tool.sh                    # Shared sandbox-backend detection (podman/docker)
@@ -39,9 +39,9 @@ agentcontainer/
 │   ├── run.sh                           #   → adapts image/port/GPU/HF to the generated config.d
 │   ├── generate.sh                      #   → capability-gated config.d layers (local LLM / peers)
 │   ├── gen-lib.mjs                      #   → shared generator helpers
-│   ├── generate-general.yaml.js         #   → 00-general.yaml (globals + macros; always)
-│   ├── generate-local-llm-models.yaml.js#   → 10-local-llm-inference.yaml (GGUF; GPU hosts only)
-│   ├── generate-peer-cloud.yaml.js      #   → peer-cloud.yaml (cloud peers; opencode via models.dev catalog)
+│   ├── generate-general.yaml.mjs         #   → 00-general.yaml (globals + macros; always)
+│   ├── generate-local-llm-models.yaml.mjs#   → 10-local-llm-inference.yaml (GGUF; GPU hosts only)
+│   ├── generate-peer-cloud.yaml.mjs      #   → peer-cloud.yaml (cloud peers; opencode via models.dev catalog)
 │   ├── refresh-models-dev.mjs           #   → atomic refresh of the vendored models.dev catalog
 │   ├── models.dev.api.json              #   → vendored models.dev catalog (refreshed, never clobbered on failure)
 │   ├── generate-gfx1030-models.mjs      #   → 22-peer-gfx1030.yaml (remote gfx1030 route; non-GPU hosts)
@@ -79,12 +79,11 @@ agentcontainer/
 | [docs/architecture.md](docs/architecture.md) | Self-contained runners vs base config generators, standalone rule |
 | [docs/future-config-generator-system.md](docs/future-config-generator-system.md) | NEXT-step (PENDING) config-generator system split by concern |
 | [docs/container-tooling.md](docs/container-tooling.md) | container-tool.sh, run scripts, UID/SELinux, PEERS_ONLY |
-| [docs/termux-serving.md](docs/termux-serving.md) | a50/Termux native build, split config.d generators, env vars |
+| [docs/termux-serving.md](docs/termux-serving.md) | a50/Termux native build — map; the build/serve/env detail lives in the `openai-completions/` script headers |
 | [docs/d018-split-config-d.md](docs/d018-split-config-d.md) | split `config.d/` layout + llama-swap merge contract |
 | [docs/d020-libvirt-qemu-sandbox.md](docs/d020-libvirt-qemu-sandbox.md) | qemu/libvirt VM sandboxes — requirements assessment (not implemented) |
-| [docs/models-layered-cake.md](docs/models-layered-cake.md) | layered pi `models.json` (base + `model-*.json` overlays) |
+| [coding-agent/merge-models-json.mjs](coding-agent/merge-models-json.mjs) | layered pi `models.json` (base + `model-*.json` overlays) — contract is documented in the script header |
 | [docs/peer-variant-work.md](docs/peer-variant-work.md) | coding-agent-peer (work environment; **archived** — folded into coding-agent) |
-| [docs/d008-api-key-gating.md](docs/d008-api-key-gating.md) | `__`-prefix key conventions |
 | [docs/scoped-models-and-proxy-overrides.md](docs/scoped-models-and-proxy-overrides.md) | pi models.json / settings.json scoping |
 | [docs/gguf-model-tooling.md](docs/gguf-model-tooling.md) | GGUF tooling (`fetch_hf_manifests.py` live; size-estimation tools archived) |
 | [docs/gguf-vram-fit-estimates.md](docs/gguf-vram-fit-estimates.md) | VRAM/KV/fit tables for all served models (gdevenyi/huggingface-estimate) |

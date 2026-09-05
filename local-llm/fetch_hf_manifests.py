@@ -43,6 +43,15 @@ from pathlib import Path
 from huggingface_hub import HfApi
 from huggingface_hub.hf_api import RepoFile
 
+# Structured logging (JSON lines on stderr; see lib/log.py) — stdout stays
+# reserved for machine-consumed output.
+import pathlib as _pl
+
+sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
+import log
+
+log.set_tool("local-llm/fetch-hf-manifests")
+
 HERE = Path(__file__).parent
 MODEL_DATA = HERE.parent / "openai-completions" / "llamacpp-model-data.json"
 MANIFEST_DIR = HERE / "hf-manifests"
@@ -164,7 +173,7 @@ def main():
             verdict = "ok" if ok else ("MISMATCH" if picked else "NO MATCH")
             print(f"{m['hf-repo']:52s} {configured:44s} {picked or '(none)':40s} {verdict}")
 
-    print(f"\nmanifests: {MANIFEST_DIR} | mismatched entries: {mismatches}")
+    log.info("manifest audit done", manifestDir=str(MANIFEST_DIR), mismatches=mismatches)
     sys.exit(1 if mismatches else 0)
 
 

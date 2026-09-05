@@ -4,11 +4,14 @@
 # container that mounts PATH with :z so podman handles the relabel to
 # container_file_t.  No-op (silently skipped) on non-SELinux systems.
 
+# shellcheck disable=SC1091
+. "$(dirname "$0")/lib/log.sh"
+LOG_TOOL='re-selinux'
+export LOG_TOOL
+
 _path="${1:-.}"
-_path="$(cd "$_path" 2>/dev/null && pwd)" || {
-  >&2 printf 'error: cannot resolve %s\n' "${1:-.}"
-  exit 1
-}
+_path="$(cd "$_path" 2>/dev/null && pwd)" ||
+  log_die 1 "cannot resolve path" arg="${1:-.}"
 
 # Capture stderr; show it only on failure so podman's diagnostics
 # are available when something goes wrong (flight recorder pattern).
@@ -16,7 +19,6 @@ _err=$(podman run --rm \
   -v "$_path:$_path:z" \
   docker.io/library/busybox:latest \
   sleep 1 2>&1 >/dev/null) || {
-  >&2 printf '%s\n' "$_err"
-  >&2 printf 'error: podman relabel failed\n'
+  log_error "podman relabel failed" path="$_path" detail="${_err:-none}"
   exit 1
 }

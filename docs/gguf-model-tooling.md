@@ -51,7 +51,7 @@ uv run local-llm/<tool>.py ...
 All four consume the same canonical model list in
 `openai-completions-gfx1030/llamacpp-model-data.json` that also drives
 `openai-completions-gfx1030/config.d/10-local-llm-inference.yaml` (via
-`generate-local-llm-models.yaml.js`).
+`generate-local-llm-models.yaml.mjs`).
 
 ### Shared code policy
 
@@ -71,7 +71,7 @@ stay standalone by design: different concerns, no GGUF parsing.
 
 The flat, llama.cpp-shaped schema is consumed by both Python tools (this
 directory) and the JS generator
-(`openai-completions-gfx1030/generate-local-llm-models.yaml.js`). Keys:
+(`openai-completions-gfx1030/generate-local-llm-models.yaml.mjs`). Keys:
 
 | Key | Meaning | Generator flag |
 |---|---|---|

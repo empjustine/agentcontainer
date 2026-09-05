@@ -1,0 +1,34 @@
+// Type-checking config for the JSDoc-typed scripts. The types themselves live
+// in the code (JSDoc next to the functions they describe) — this file only
+// points `tsc` at the files that carry them and sets the strictness. Add a
+// script to `include` once it carries JSDoc types; scripts without them are
+// left out on purpose so the checker stays a gate instead of a backlog.
+//
+// Run it with ./check-types.sh (typescript + @types/node are provisioned ad
+// hoc — no pinned dev deps, same as lint.sh).
+{
+	"compilerOptions": {
+		"target": "es2023",
+		"lib": ["es2023"],
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		// No package.json in this repo: every script is ESM regardless of
+		// extension (.js included), so don't let tsc infer CJS for them.
+		"moduleDetection": "force",
+		"types": ["node"],
+		"allowJs": true,
+		"checkJs": true,
+		"noEmit": true,
+		"strict": true,
+		"skipLibCheck": true
+	},
+	"include": [
+		"coding-agent/generate-models.json.mjs",
+		"coding-agent/generate-opencode.jsonc.mjs",
+		"coding-agent/merge-models-json.mjs",
+		"coding-agent/check-node-version.mjs",
+		"coding-agent/filter-relays.mjs",
+		"coding-agent/count-providers.mjs",
+		"coding-agent/list-providers.mjs"
+	]
+}

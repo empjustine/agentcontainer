@@ -1,82 +1,82 @@
 {
- "repo": "LiquidAI/LFM2.5-2.6B-GGUF",
- "commit": "84022ce711b28455e8c4fc364ce68c00cf995875",
- "fetched_at": "2026-08-30T18:56:00+00:00",
- "files": [
-  {
-   "path": ".gitattributes",
-   "oid": "2e28586260c99319ff623f31a8adcb565700230e",
-   "size": 1990
-  },
-  {
-   "path": "LFM2.5-2.6B-BF16.gguf",
-   "oid": "590b1534d5ec57dbddb750d25468d7ba4df0d1976531a731590418efa360edb5",
-   "size": 5403158528
-  },
-  {
-   "path": "LFM2.5-2.6B-F16.gguf",
-   "oid": "e041c231351185eb390f9c417d3bfd1815869a50a8589f3f86e5b9add3c529f1",
-   "size": 5403158528
-  },
-  {
-   "path": "LFM2.5-2.6B-Q4_0.gguf",
-   "oid": "e1a61bf937bc60726e18626e97f7ee9bfd2574d95744c2ed909de98b78006fbe",
-   "size": 1593894912
-  },
-  {
-   "path": "LFM2.5-2.6B-Q4_K_M.gguf",
-   "oid": "02a8b7e17487d326e46d68ce0ba24211e1b80a14c4cd0597fa73c1cd697f52ed",
-   "size": 1674455040
-  },
-  {
-   "path": "LFM2.5-2.6B-Q5_K_M.gguf",
-   "oid": "17ce54cc676e15e572adebfeeed8da6abd12b0f68d595be19b59e662476c21b3",
-   "size": 1939744768
-  },
-  {
-   "path": "LFM2.5-2.6B-Q6_K.gguf",
-   "oid": "2e74b1a0979a4a1936a408445147d103b8f15b2e2ec31c65fa0166f9069c250d",
-   "size": 2221615104
-  },
-  {
-   "path": "LFM2.5-2.6B-Q8_0.gguf",
-   "oid": "1e22128dfa128bdfb684da167e74e072d0a056baa7d06d9f280291e2839b0fc9",
-   "size": 2874779648
-  },
-  {
-   "path": "LFM2.5-2.6B-QAD-Q4_0.gguf",
-   "oid": "a247afd6414918eac8e520a9e6137dc271235461ecbe1180462221d5b8d40b03",
-   "size": 1593894944
-  },
-  {
-   "path": "LICENSE",
-   "oid": "2a513f17eb4b8008fb100349fd2b7551d009fed0",
-   "size": 10574
-  },
-  {
-   "path": "README.md",
-   "oid": "ae3f1e82d4d8cc3762f480c5971749f38034883e",
-   "size": 1797
-  },
-  {
-   "path": "leap/Q4_0.json",
-   "oid": "ae35bacde865452a67f32d46721c9a5715c6e956",
-   "size": 1798
-  },
-  {
-   "path": "leap/Q4_K_M.json",
-   "oid": "e9651afdb64ab8ca7c25af591615842f4d469e83",
-   "size": 1800
-  },
-  {
-   "path": "leap/Q5_K_M.json",
-   "oid": "a7ad824b30cdf68c90ef4c4bac00fa090f41a7f8",
-   "size": 1800
-  },
-  {
-   "path": "leap/Q8_0.json",
-   "oid": "e1d5b11441719408e238bf0feef124fcc2a1be85",
-   "size": 1798
-  }
- ]
+	"repo": "LiquidAI/LFM2.5-2.6B-GGUF",
+	"commit": "84022ce711b28455e8c4fc364ce68c00cf995875",
+	"fetched_at": "2026-08-30T18:56:00+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "2e28586260c99319ff623f31a8adcb565700230e",
+			"size": 1990
+		},
+		{
+			"path": "LFM2.5-2.6B-BF16.gguf",
+			"oid": "590b1534d5ec57dbddb750d25468d7ba4df0d1976531a731590418efa360edb5",
+			"size": 5403158528
+		},
+		{
+			"path": "LFM2.5-2.6B-F16.gguf",
+			"oid": "e041c231351185eb390f9c417d3bfd1815869a50a8589f3f86e5b9add3c529f1",
+			"size": 5403158528
+		},
+		{
+			"path": "LFM2.5-2.6B-Q4_0.gguf",
+			"oid": "e1a61bf937bc60726e18626e97f7ee9bfd2574d95744c2ed909de98b78006fbe",
+			"size": 1593894912
+		},
+		{
+			"path": "LFM2.5-2.6B-Q4_K_M.gguf",
+			"oid": "02a8b7e17487d326e46d68ce0ba24211e1b80a14c4cd0597fa73c1cd697f52ed",
+			"size": 1674455040
+		},
+		{
+			"path": "LFM2.5-2.6B-Q5_K_M.gguf",
+			"oid": "17ce54cc676e15e572adebfeeed8da6abd12b0f68d595be19b59e662476c21b3",
+			"size": 1939744768
+		},
+		{
+			"path": "LFM2.5-2.6B-Q6_K.gguf",
+			"oid": "2e74b1a0979a4a1936a408445147d103b8f15b2e2ec31c65fa0166f9069c250d",
+			"size": 2221615104
+		},
+		{
+			"path": "LFM2.5-2.6B-Q8_0.gguf",
+			"oid": "1e22128dfa128bdfb684da167e74e072d0a056baa7d06d9f280291e2839b0fc9",
+			"size": 2874779648
+		},
+		{
+			"path": "LFM2.5-2.6B-QAD-Q4_0.gguf",
+			"oid": "a247afd6414918eac8e520a9e6137dc271235461ecbe1180462221d5b8d40b03",
+			"size": 1593894944
+		},
+		{
+			"path": "LICENSE",
+			"oid": "2a513f17eb4b8008fb100349fd2b7551d009fed0",
+			"size": 10574
+		},
+		{
+			"path": "README.md",
+			"oid": "ae3f1e82d4d8cc3762f480c5971749f38034883e",
+			"size": 1797
+		},
+		{
+			"path": "leap/Q4_0.json",
+			"oid": "ae35bacde865452a67f32d46721c9a5715c6e956",
+			"size": 1798
+		},
+		{
+			"path": "leap/Q4_K_M.json",
+			"oid": "e9651afdb64ab8ca7c25af591615842f4d469e83",
+			"size": 1800
+		},
+		{
+			"path": "leap/Q5_K_M.json",
+			"oid": "a7ad824b30cdf68c90ef4c4bac00fa090f41a7f8",
+			"size": 1800
+		},
+		{
+			"path": "leap/Q8_0.json",
+			"oid": "e1d5b11441719408e238bf0feef124fcc2a1be85",
+			"size": 1798
+		}
+	]
 }

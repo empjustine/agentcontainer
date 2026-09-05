@@ -5,12 +5,12 @@ set -eux
 
 # shellcheck disable=SC1091
 . "$(dirname "$0")/../container-tool.sh"
+LOG_TOOL='coding-agent/build'
+export LOG_TOOL
 
 # shellcheck disable=SC2154  # set by sourced container-tool.sh
-[ "$_sandbox" = 'container' ] || {
-	>&2 printf "fatal: can't find container tool\n"
-	exit 91
-}
+[ "$_sandbox" = 'container' ] ||
+	log_die 91 "can't find container tool"
 
 BUILD_DATE="$(date +'%Y%m%d')"
 export BUILD_DATE

@@ -3,7 +3,7 @@
 > **ARCHIVED.** The `coding-agent-peer/` folder is gone from the live tree —
 > the coding-agent squash folded the peers-only usage variant into
 > `coding-agent/` itself (static provider config + layered generation, see
-> docs/models-layered-cake.md and
+> `coding-agent/merge-models-json.mjs` for the layer contract and
 > [environments-and-peer-variants.md](environments-and-peer-variants.md)).
 > This note is kept as historical reference.
 

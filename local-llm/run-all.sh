@@ -9,6 +9,10 @@
 # Steps 1-2 are hard prerequisites for anything reading model files; steps
 # 3-4 are mutually independent but ordered for a deterministic run. All
 # python tools use PEP 723 inline metadata via `uv run` — no venv needed.
+# Secrets (HF_TOKEN etc.) are loaded once via ../container-tool.sh's
+# load_secrets (infisical, or keys already in the environment — no .env file
+# is read) — never fatal; gated/private repos simply skip auth when no token
+# is available.
 # See docs/hf-cache-upkeep.md. The GGUF size-estimation tools (layer cards,
 # active params, VRAM fits) are archived in OLD/gguf-size-estimation/;
 # their replacement is gdevenyi/huggingface-estimate (see
@@ -19,19 +23,24 @@
 set -eu
 
 here="$(CDPATH='' cd "$(dirname "$0")" && pwd)"
+# shellcheck disable=SC1091  # loads log.sh + load_secrets
+. "$here/../container-tool.sh"
+LOG_TOOL='local-llm/run-all'
+export LOG_TOOL
 cd "$here"
+load_secrets
+log_info "secrets source" source="${SECRETS_SOURCE:-none}"
 
 if ! command -v uv >/dev/null 2>&1; then
-	printf 'fatal: uv not found (https://docs.astral.sh/uv/)\n' >&2
-	exit 90
+	log_die 90 "uv not found (https://docs.astral.sh/uv/)"
 fi
 
 run_uv() {
 	step="$1"
-	printf '\n=== %s ===\n' "$step"
+	log_info "step start" step="$step"
 	uv run --quiet "$step" || {
-		printf 'fatal: %s failed\n' "$step" >&2
-		exit $?
+		_rc=$?
+		log_die "$_rc" "step failed" step="$step"
 	}
 }
 
@@ -49,17 +58,16 @@ for step in "$@"; do
 		run_uv "$step"
 		;;
 	fetch-model-cards.sh)
-		printf '\n=== %s ===\n' "$step"
+		log_info "step start" step="$step"
 		./"$step" || {
-			printf 'fatal: %s failed\n' "$step" >&2
-			exit $?
+			_rc=$?
+			log_die "$_rc" "step failed" step="$step"
 		}
 		;;
 	*)
-		printf 'fatal: unknown step: %s\n' "$step" >&2
-		exit 64
+		log_die 64 "unknown step" step="$step"
 		;;
 	esac
 done
 
-printf '\nall done\n'
+log_info "all done"

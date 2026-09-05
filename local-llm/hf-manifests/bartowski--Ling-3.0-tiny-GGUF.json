@@ -1,147 +1,147 @@
 {
- "repo": "bartowski/Ling-3.0-tiny-GGUF",
- "commit": "ea072726af0d2e8ba325b2f90fc0efa762105a91",
- "fetched_at": "2026-08-30T18:55:59+00:00",
- "files": [
-  {
-   "path": ".gitattributes",
-   "oid": "f42cc62955f9428c51e4811ccc29757d284796ff",
-   "size": 3058
-  },
-  {
-   "path": "Ling-3.0-tiny-IQ2_M.gguf",
-   "oid": "fd7781053b0e47dbfbba7113200e7727478ef9b4113fc93c5e7968c3fcac55ce",
-   "size": 2827455808
-  },
-  {
-   "path": "Ling-3.0-tiny-IQ3_M.gguf",
-   "oid": "09fdd3647631a8cc7053beaff8cc46023bf443d131b6363b9a170307abe369cf",
-   "size": 3926596672
-  },
-  {
-   "path": "Ling-3.0-tiny-IQ3_XS.gguf",
-   "oid": "07ead227b5a6a31c167264b7bf72f29c40238cbe1d1a53791341b9984fca8948",
-   "size": 3777807424
-  },
-  {
-   "path": "Ling-3.0-tiny-IQ3_XXS.gguf",
-   "oid": "fa1d85222d5f893eca3c70fa262d45855babdbe9adadc1438c86d49dffc3d3d9",
-   "size": 3464425792
-  },
-  {
-   "path": "Ling-3.0-tiny-IQ4_NL.gguf",
-   "oid": "115b79a351f339941c6a01f073c2f76446b5118d97aa046a6847b5384bbaf21b",
-   "size": 4616790208
-  },
-  {
-   "path": "Ling-3.0-tiny-IQ4_XS.gguf",
-   "oid": "bce9e797ece66e7e8a082fe04aefd05c20b35445b785e13f7cc3355b98a5b9d0",
-   "size": 4385795776
-  },
-  {
-   "path": "Ling-3.0-tiny-Q2_K.gguf",
-   "oid": "ede601cd0ee9989e81374fac642cf453375b02f616ac9c2678c0855df75018e5",
-   "size": 3000103360
-  },
-  {
-   "path": "Ling-3.0-tiny-Q2_K_L.gguf",
-   "oid": "95742a235df46b80e1ed08ee4a3c4facf76161fbe4ce7a5b403600c17d0763cb",
-   "size": 3235879360
-  },
-  {
-   "path": "Ling-3.0-tiny-Q3_K_L.gguf",
-   "oid": "9672c0af2194667976b7defade2e004d158675894f710f8a3bb2aaa98e9adfba",
-   "size": 3914234944
-  },
-  {
-   "path": "Ling-3.0-tiny-Q3_K_M.gguf",
-   "oid": "62f7117aa4e6cbf8d366cabf99c75c72e62332d3ff8ea2f98f5688d3f513252f",
-   "size": 3785849920
-  },
-  {
-   "path": "Ling-3.0-tiny-Q3_K_S.gguf",
-   "oid": "0abd458e6ce1b701d259b77231aed19e24dbdf62ba1322d4bf8dd3bdc58555fe",
-   "size": 3636962368
-  },
-  {
-   "path": "Ling-3.0-tiny-Q3_K_XL.gguf",
-   "oid": "bef70268644e6e1b757eb032779e98c4d45159462d93ce90d0e66d1baab2eb32",
-   "size": 4125490240
-  },
-  {
-   "path": "Ling-3.0-tiny-Q4_0.gguf",
-   "oid": "c1a548fd60cfb5a46d6e5fd7635224dec473664c9320a656132106bf7ce23cfb",
-   "size": 4623917248
-  },
-  {
-   "path": "Ling-3.0-tiny-Q4_1.gguf",
-   "oid": "5a2c90c7ac50ec7197525e2d074fa7fa86bc308361c558c6da134b3ce5b622bc",
-   "size": 5077992640
-  },
-  {
-   "path": "Ling-3.0-tiny-Q4_K_L.gguf",
-   "oid": "38e0975a864515eecc05fa17718f7a5f8c915a2927419a17af1d3cdac210668b",
-   "size": 5096544448
-  },
-  {
-   "path": "Ling-3.0-tiny-Q4_K_M.gguf",
-   "oid": "5eb12d8150f502e5ef15c05f0a03aec72ef8b8319fbaa8b2e03b43754ce9f2c5",
-   "size": 4917354688
-  },
-  {
-   "path": "Ling-3.0-tiny-Q4_K_S.gguf",
-   "oid": "10dcbafca1283c2fc81618673fb4ab167146eda7577d1e914792ec613665d8a0",
-   "size": 4752449728
-  },
-  {
-   "path": "Ling-3.0-tiny-Q5_K_L.gguf",
-   "oid": "d3ee4c7bcb08b3001805d5ad440441c8dbd954faf02858bcd4c47c0f1768ef2f",
-   "size": 5865441472
-  },
-  {
-   "path": "Ling-3.0-tiny-Q5_K_M.gguf",
-   "oid": "7625ce18c72b29e616fffa9fdc49e1bc73f2f2ad1784704171cdba7c5c9a149c",
-   "size": 5716431040
-  },
-  {
-   "path": "Ling-3.0-tiny-Q5_K_S.gguf",
-   "oid": "cb336fd32ef9367e87ac9d4bdc2857720a9cbcef94a73ac75eb343407f878a9f",
-   "size": 5548822720
-  },
-  {
-   "path": "Ling-3.0-tiny-Q6_K.gguf",
-   "oid": "cb58a01ea433f00dfccf8851d7bb6cade18064499ba3256d3c043ff3073fc9b8",
-   "size": 6839076160
-  },
-  {
-   "path": "Ling-3.0-tiny-Q6_K_L.gguf",
-   "oid": "f0cddaa11527eb1e486cf957d929ff54e3691c0d6495d019a4132b7a85905a6a",
-   "size": 6956021056
-  },
-  {
-   "path": "Ling-3.0-tiny-Q8_0.gguf",
-   "oid": "628fde593836ab3fd291e93802c8699c7e4eb3e32ba2562e05ba7b906a93be5e",
-   "size": 8409487552
-  },
-  {
-   "path": "Ling-3.0-tiny-bf16.gguf",
-   "oid": "61c0a597cebd50945686076a38348eaa320e8ab17d4df4356704e41bf16e06c7",
-   "size": 15803475264
-  },
-  {
-   "path": "Ling-3.0-tiny-calibration-v6.txt",
-   "oid": "f7ab5677d1ea269201430ceba53cf2c93c5b86d3",
-   "size": 1200501
-  },
-  {
-   "path": "Ling-3.0-tiny-imatrix.gguf",
-   "oid": "1471e235408b2649d79539cd54ffea9a3f73d2b8c52babb4b615ab7db99c5896",
-   "size": 44016704
-  },
-  {
-   "path": "README.md",
-   "oid": "5b0658c3b4d3a4f2dc9b48189520e2bd2f26e80b",
-   "size": 12734
-  }
- ]
+	"repo": "bartowski/Ling-3.0-tiny-GGUF",
+	"commit": "ea072726af0d2e8ba325b2f90fc0efa762105a91",
+	"fetched_at": "2026-08-30T18:55:59+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "f42cc62955f9428c51e4811ccc29757d284796ff",
+			"size": 3058
+		},
+		{
+			"path": "Ling-3.0-tiny-IQ2_M.gguf",
+			"oid": "fd7781053b0e47dbfbba7113200e7727478ef9b4113fc93c5e7968c3fcac55ce",
+			"size": 2827455808
+		},
+		{
+			"path": "Ling-3.0-tiny-IQ3_M.gguf",
+			"oid": "09fdd3647631a8cc7053beaff8cc46023bf443d131b6363b9a170307abe369cf",
+			"size": 3926596672
+		},
+		{
+			"path": "Ling-3.0-tiny-IQ3_XS.gguf",
+			"oid": "07ead227b5a6a31c167264b7bf72f29c40238cbe1d1a53791341b9984fca8948",
+			"size": 3777807424
+		},
+		{
+			"path": "Ling-3.0-tiny-IQ3_XXS.gguf",
+			"oid": "fa1d85222d5f893eca3c70fa262d45855babdbe9adadc1438c86d49dffc3d3d9",
+			"size": 3464425792
+		},
+		{
+			"path": "Ling-3.0-tiny-IQ4_NL.gguf",
+			"oid": "115b79a351f339941c6a01f073c2f76446b5118d97aa046a6847b5384bbaf21b",
+			"size": 4616790208
+		},
+		{
+			"path": "Ling-3.0-tiny-IQ4_XS.gguf",
+			"oid": "bce9e797ece66e7e8a082fe04aefd05c20b35445b785e13f7cc3355b98a5b9d0",
+			"size": 4385795776
+		},
+		{
+			"path": "Ling-3.0-tiny-Q2_K.gguf",
+			"oid": "ede601cd0ee9989e81374fac642cf453375b02f616ac9c2678c0855df75018e5",
+			"size": 3000103360
+		},
+		{
+			"path": "Ling-3.0-tiny-Q2_K_L.gguf",
+			"oid": "95742a235df46b80e1ed08ee4a3c4facf76161fbe4ce7a5b403600c17d0763cb",
+			"size": 3235879360
+		},
+		{
+			"path": "Ling-3.0-tiny-Q3_K_L.gguf",
+			"oid": "9672c0af2194667976b7defade2e004d158675894f710f8a3bb2aaa98e9adfba",
+			"size": 3914234944
+		},
+		{
+			"path": "Ling-3.0-tiny-Q3_K_M.gguf",
+			"oid": "62f7117aa4e6cbf8d366cabf99c75c72e62332d3ff8ea2f98f5688d3f513252f",
+			"size": 3785849920
+		},
+		{
+			"path": "Ling-3.0-tiny-Q3_K_S.gguf",
+			"oid": "0abd458e6ce1b701d259b77231aed19e24dbdf62ba1322d4bf8dd3bdc58555fe",
+			"size": 3636962368
+		},
+		{
+			"path": "Ling-3.0-tiny-Q3_K_XL.gguf",
+			"oid": "bef70268644e6e1b757eb032779e98c4d45159462d93ce90d0e66d1baab2eb32",
+			"size": 4125490240
+		},
+		{
+			"path": "Ling-3.0-tiny-Q4_0.gguf",
+			"oid": "c1a548fd60cfb5a46d6e5fd7635224dec473664c9320a656132106bf7ce23cfb",
+			"size": 4623917248
+		},
+		{
+			"path": "Ling-3.0-tiny-Q4_1.gguf",
+			"oid": "5a2c90c7ac50ec7197525e2d074fa7fa86bc308361c558c6da134b3ce5b622bc",
+			"size": 5077992640
+		},
+		{
+			"path": "Ling-3.0-tiny-Q4_K_L.gguf",
+			"oid": "38e0975a864515eecc05fa17718f7a5f8c915a2927419a17af1d3cdac210668b",
+			"size": 5096544448
+		},
+		{
+			"path": "Ling-3.0-tiny-Q4_K_M.gguf",
+			"oid": "5eb12d8150f502e5ef15c05f0a03aec72ef8b8319fbaa8b2e03b43754ce9f2c5",
+			"size": 4917354688
+		},
+		{
+			"path": "Ling-3.0-tiny-Q4_K_S.gguf",
+			"oid": "10dcbafca1283c2fc81618673fb4ab167146eda7577d1e914792ec613665d8a0",
+			"size": 4752449728
+		},
+		{
+			"path": "Ling-3.0-tiny-Q5_K_L.gguf",
+			"oid": "d3ee4c7bcb08b3001805d5ad440441c8dbd954faf02858bcd4c47c0f1768ef2f",
+			"size": 5865441472
+		},
+		{
+			"path": "Ling-3.0-tiny-Q5_K_M.gguf",
+			"oid": "7625ce18c72b29e616fffa9fdc49e1bc73f2f2ad1784704171cdba7c5c9a149c",
+			"size": 5716431040
+		},
+		{
+			"path": "Ling-3.0-tiny-Q5_K_S.gguf",
+			"oid": "cb336fd32ef9367e87ac9d4bdc2857720a9cbcef94a73ac75eb343407f878a9f",
+			"size": 5548822720
+		},
+		{
+			"path": "Ling-3.0-tiny-Q6_K.gguf",
+			"oid": "cb58a01ea433f00dfccf8851d7bb6cade18064499ba3256d3c043ff3073fc9b8",
+			"size": 6839076160
+		},
+		{
+			"path": "Ling-3.0-tiny-Q6_K_L.gguf",
+			"oid": "f0cddaa11527eb1e486cf957d929ff54e3691c0d6495d019a4132b7a85905a6a",
+			"size": 6956021056
+		},
+		{
+			"path": "Ling-3.0-tiny-Q8_0.gguf",
+			"oid": "628fde593836ab3fd291e93802c8699c7e4eb3e32ba2562e05ba7b906a93be5e",
+			"size": 8409487552
+		},
+		{
+			"path": "Ling-3.0-tiny-bf16.gguf",
+			"oid": "61c0a597cebd50945686076a38348eaa320e8ab17d4df4356704e41bf16e06c7",
+			"size": 15803475264
+		},
+		{
+			"path": "Ling-3.0-tiny-calibration-v6.txt",
+			"oid": "f7ab5677d1ea269201430ceba53cf2c93c5b86d3",
+			"size": 1200501
+		},
+		{
+			"path": "Ling-3.0-tiny-imatrix.gguf",
+			"oid": "1471e235408b2649d79539cd54ffea9a3f73d2b8c52babb4b615ab7db99c5896",
+			"size": 44016704
+		},
+		{
+			"path": "README.md",
+			"oid": "5b0658c3b4d3a4f2dc9b48189520e2bd2f26e80b",
+			"size": 12734
+		}
+	]
 }

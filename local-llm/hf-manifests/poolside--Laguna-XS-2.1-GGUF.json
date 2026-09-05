@@ -1,32 +1,32 @@
 {
- "repo": "poolside/Laguna-XS-2.1-GGUF",
- "commit": "1a37c0a5fb8c7a18e6106decb6be6327d1b63fa6",
- "fetched_at": "2026-08-23T03:56:24+00:00",
- "files": [
-  {
-   "path": ".gitattributes",
-   "oid": "e741f7038b108f042c46de1c6a5781eae88e5a47",
-   "size": 1708
-  },
-  {
-   "path": "LICENSE.md",
-   "oid": "db7c88d0bff738c671a454dfd679cc36b1b15862",
-   "size": 2618
-  },
-  {
-   "path": "Laguna-XS-2.1-BF16.gguf",
-   "oid": "013eb1eb5fc91cebd4a87bf428385b8a18d15aba",
-   "size": 66930226304
-  },
-  {
-   "path": "Laguna-XS-2.1-Q4_K_M.gguf",
-   "oid": "d0c139f17d2e0ded51574bd890d6e6643e418f31",
-   "size": 20274300032
-  },
-  {
-   "path": "README.md",
-   "oid": "aa260e7d719eb00bcefde811e3e4e568786a89a6",
-   "size": 5645
-  }
- ]
+	"repo": "poolside/Laguna-XS-2.1-GGUF",
+	"commit": "1a37c0a5fb8c7a18e6106decb6be6327d1b63fa6",
+	"fetched_at": "2026-08-23T03:56:24+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "e741f7038b108f042c46de1c6a5781eae88e5a47",
+			"size": 1708
+		},
+		{
+			"path": "LICENSE.md",
+			"oid": "db7c88d0bff738c671a454dfd679cc36b1b15862",
+			"size": 2618
+		},
+		{
+			"path": "Laguna-XS-2.1-BF16.gguf",
+			"oid": "013eb1eb5fc91cebd4a87bf428385b8a18d15aba",
+			"size": 66930226304
+		},
+		{
+			"path": "Laguna-XS-2.1-Q4_K_M.gguf",
+			"oid": "d0c139f17d2e0ded51574bd890d6e6643e418f31",
+			"size": 20274300032
+		},
+		{
+			"path": "README.md",
+			"oid": "aa260e7d719eb00bcefde811e3e4e568786a89a6",
+			"size": 5645
+		}
+	]
 }

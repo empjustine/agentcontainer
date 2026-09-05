@@ -45,7 +45,7 @@ Static `settings.json`, copied by `run.sh` into `~/.pi/agent/settings.json`.
 
 > **Deprecated:** the `OPENCODE_GO_API_KEY` name below is retired — OpenCode
 > now uses the unified `OPENCODE_API_KEY` (see
-> **[d019](d019-unified-opencode-key.md)**).
+> **[d019](../OLD/docs/d019-unified-opencode-key.md)** — archived).
 
 - The default model is pinned to the opencode-go subscription (DeepSeek V4
   Flash) **only** when `OPENCODE_GO_API_KEY` is present. When the key is absent
@@ -56,10 +56,11 @@ Static `settings.json`, copied by `run.sh` into `~/.pi/agent/settings.json`.
 ## Related decision records
 
 - [`d001-proxy-env-and-namespace.md`](d001-proxy-env-and-namespace.md) — proxy
-  env vars, `__` namespace isolation, `baseUrl` baking, `resolveApiKeyEnv`.
-- [`d002-model-id-filters.md`](d002-model-id-filters.md),
-  [`d006-virtual-cost-estimation.md`](d006-virtual-cost-estimation.md),
-  [`d008-api-key-gating.md`](d008-api-key-gating.md),
+  env vars, plain un-prefixed key naming, `baseUrl` baking.
+- [`d006-virtual-cost-estimation.md`](d006-virtual-cost-estimation.md),
   [`d009-custom-auth-and-prefix.md`](d009-custom-auth-and-prefix.md),
   [`d010-opencode-go-pricing.md`](d010-opencode-go-pricing.md) — the older
   full-catalog generation decisions, superseded by the scoped-models approach.
+- `d002-model-id-filters.md` / `d008-api-key-gating.md` — same generation, but
+  they describe code that no longer exists (`MODEL_FILTERS`, `requireApiKey`),
+  so they are archived in `OLD/docs/` (see `OLD/docs/README.md`).

@@ -11,7 +11,7 @@
 # syntax ($(...), assignments, globs) therefore cannot appear inline in a
 # `cmd:` string, and `sh -c '...'` wrapping breaks on the single quotes inside
 # the sampling macros (--chat-template-kwargs '{...}'). This script carries the
-# dynamic resolution instead; generate-local-llm-models.yaml.js emits plain
+# dynamic resolution instead; generate-local-llm-models.yaml.mjs emits plain
 # argv cmds that call it.
 #
 # Mounted read-only via run.sh (config.d -> /etc/llama-swap/config.d); invoked
@@ -44,6 +44,28 @@
 
 set -u
 
+# Structured JSON logging to stderr.  Self-contained: this script is copied
+# into config.d/ (read-only mount inside the serving container) and cannot
+# reach lib/log.sh.  Values below are paths/ids — no metacharacters — so the
+# escaping of the full lib is omitted.
+LOG_TOOL='launch-gguf'
+log_emit() {
+	_l_level="$1"; shift
+	_l_msg="$1"; shift
+	_l_fields=""
+	for _l_kv in "$@"; do
+		case "$_l_kv" in *=*) ;; *) continue ;; esac
+		_l_fields="$_l_fields,\"${_l_kv%%=*}\":\"${_l_kv#*=}\""
+	done
+	printf '{"ts":"%s","level":"%s","tool":"%s","msg":"%s"%s}\n' \
+		"$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$_l_level" "$LOG_TOOL" "$_l_msg" \
+		"$_l_fields" >&2
+}
+log_info() { log_emit info "$@"; }
+log_warn() { log_emit warn "$@"; }
+log_error() { log_emit error "$@"; }
+log_die() { _d_code="$1"; shift; log_error "$@"; exit "$_d_code"; }
+
 # Container mount per run.sh; LAUNCH_GGUF_HUB overrides for testing.
 hub=${LAUNCH_GGUF_HUB:-/home/ubuntu/.cache/huggingface/hub}
 
@@ -55,8 +77,7 @@ draft=$5
 shift 5
 
 if [ "${1:-}" != "--" ]; then
-	echo "launch-gguf: expected -- separator, got '${1:-}'" >&2
-	exit 64
+	log_die 64 "expected -- separator" got="${1:-}"
 fi
 shift
 
@@ -93,8 +114,8 @@ case $server in
 			fi
 		done
 		if [ -z "$found" ]; then
-			echo "launch-gguf: server '$server' not found in PATH nor in /usr/local/bin /usr/bin /bin /opt/llama.cpp/bin /app /app/bin" >&2
-			echo "launch-gguf: PATH=${PATH:-<unset>}" >&2
+			log_error "server not found in PATH nor in common install dirs" \
+				server="$server" path="${PATH:-<unset>}"
 			exit 127
 		fi
 		shift
@@ -120,11 +141,13 @@ if [ -n "$snap" ]; then
 else
 	case ${LAUNCH_GGUF_DOWNLOAD:-1} in
 	0 | false | no)
-		echo "launch-gguf: $(missing_msg) not found in the same snapshot under $hub/$repo_dir/snapshots; download fallback disabled (LAUNCH_GGUF_DOWNLOAD=0)" >&2
+		log_error "not found in the same snapshot; download fallback disabled (LAUNCH_GGUF_DOWNLOAD=0)" \
+			missing="$(missing_msg)" repo="$repo_id" hub="$hub/$repo_dir/snapshots"
 		exit 1
 		;;
 	esac
-	echo "launch-gguf: $(missing_msg) not cached under $hub/$repo_dir/snapshots; delegating download to '$server' (--hf-repo $repo_id)" >&2
+	log_warn "not cached; delegating download to the server (--hf-repo/--hf-file)" \
+		missing="$(missing_msg)" repo="$repo_id" hub="$hub/$repo_dir/snapshots" server="$server"
 	set -- "$@" --hf-repo "$repo_id" --hf-file "$gguf"
 fi
 exec "$@"

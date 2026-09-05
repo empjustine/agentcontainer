@@ -45,6 +45,15 @@ import shutil
 import subprocess
 import sys
 import tempfile
+
+# Structured logging (JSON lines on stderr; see lib/log.py) — stdout stays
+# reserved for machine-consumed output.
+import pathlib as _pl
+
+sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
+import log
+
+log.set_tool("local-llm/generate-vram-fit-tables")
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -111,10 +120,10 @@ def ensure_estimator(estimator_dir):
         if readonly:
             work = Path(tempfile.gettempdir()) / "huggingface-estimate"
             if not (work / "run-calc.js").exists():
-                print(f"estimator checkout is read-only; copying to {work}")
+                log.info("estimator checkout is read-only; copying", work=str(work))
                 shutil.copytree(estimator_dir, work,
                                 ignore=shutil.ignore_patterns(".git", "node_modules"))
-        print(f"installing estimator npm dependencies in {work} ...")
+        log.info("installing estimator npm dependencies", work=str(work))
         subprocess.run(["npm", "install", "--no-audit", "--no-fund"],
                        cwd=work, check=True, stdout=subprocess.DEVNULL)
         estimator_dir = work
@@ -127,7 +136,7 @@ def ensure_estimator(estimator_dir):
   return `https://huggingface.co/${modelPath}/resolve/main/${filename}`;
 }'''
         if old not in src:
-            print("fatal: cannot patch parsing.js (unexpected content)", file=sys.stderr)
+            log.error("cannot patch parsing.js (unexpected content)")
             sys.exit(91)
         parsing.write_text(src.replace(old, BUILD_RESOLVE_URL_PATCH))
     return estimator_dir
@@ -188,7 +197,7 @@ def collect(args, estimator_dir):
                 d = run_estimator(estimator_dir, target, fname, ctx, mmproj, args,
                                   is_url=url is not None)
             except RuntimeError as e:
-                print(f"FAIL {e}", file=sys.stderr)
+                log.error("estimator run failed", error=str(e))
                 failures += 1
                 continue
             if cfile:
@@ -197,7 +206,7 @@ def collect(args, estimator_dir):
         if per_ctx:
             rows[(repo, fname)] = per_ctx
         else:
-            print(f"MISS {repo} {fname}", file=sys.stderr)
+            log.warn("no estimator result", repo=repo, file=fname)
             failures += 1
     return rows, failures
 
@@ -342,7 +351,7 @@ def update_model_data(rows, args):
     data["models"].sort(key=lambda m: order.get(
         (m["hf-repo"].split(":")[0], m["model"]), len(order)))
     MODEL_DATA.write_text(json.dumps(data, indent="\t") + "\n")
-    print(f"reordered {MODEL_DATA} by generation speed @ ctx={max_ctx} (desc)")
+    log.info("reordered model data by generation speed", path=str(MODEL_DATA), ctx=max_ctx)
 
 
 def main():
@@ -371,7 +380,7 @@ def main():
 
     estimator = Path(os.path.expanduser(args.estimator_dir))
     if not (estimator / "run-calc.js").exists():
-        print(f"fatal: no run-calc.js under {estimator}", file=sys.stderr)
+        log.error("no run-calc.js under estimator dir", estimator=str(estimator))
         return 90
     estimator = ensure_estimator(estimator)
 
@@ -380,8 +389,8 @@ def main():
     OUT_JSON.write_text(json.dumps(
         {f"{r}:{fn}": {str(c): pc[c] for c in sorted(pc)} for (r, fn), pc in rows.items()},
         indent=1))
-    print(f"wrote {OUT_MD} and {OUT_JSON} ({len(rows)} models x {len(args.ctxs)} ctxs, "
-          f"{failures} failures)")
+    log.info("wrote outputs", md=str(OUT_MD), json=str(OUT_JSON),
+             models=len(rows), ctxs=len(args.ctxs), failures=failures)
     if args.update_model_data:
         update_model_data(rows, args)
     return 1 if failures else 0

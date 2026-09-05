@@ -57,7 +57,7 @@ The affected providers:
 - Reduced maintenance surface for filter logic and pricing metadata.
 
 ### Negative
-- Users who had custom `ROUTEWAY_BASE_URL` / `__ROUTEWAY_API_KEY` env vars
+- Users who had custom `ROUTEWAY_BASE_URL` / `ROUTEWAY_API_KEY` env vars
   will no longer see Routeway models.  They can uncomment the entry manually
   if they have a working subscription.
 

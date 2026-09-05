@@ -1,0 +1,43 @@
+// Biome config. Formatter defaults (tabs, 80 cols) already match the tree; the
+// only explicit setting is import organizing, which the repo relies on.
+//
+// NOTE: comments require the .jsonc filename — Biome 2.x refuses to parse
+// comments in a plain biome.json (and a config that fails to parse silently
+// drops every setting below, including files.ignore).
+//
+// `files.includes` is load-bearing, not tidiness: Biome 2.x uses `includes`
+// with `!`-negated globs (the old `files.ignore` key no longer exists).
+//   - OLD/ is the archived scratch tree (gitignored, several hundred findings);
+//     archived code keeps the style it was written in.
+//   - .pi/ and .vscode/ are tool-owned dirs, not repo source.
+//   - the vendored models.dev catalog, the VRAM-fit data file and the HF
+//     manifests are fetched/derived data, not hand-maintained source.
+//   - coding-agent/models.json and model-*.json are WRITTEN by
+//     merge-models-json.mjs / the generators (JSON.stringify(…, null, 2)) —
+//     formatting them here would only be undone by the next generate.sh run.
+{
+	"files": {
+		"includes": [
+			"**",
+			"!OLD",
+			"!.pi",
+			"!.vscode",
+			"!opencode_share",
+			"!**/models.dev.api.json",
+			"!**/gguf-vram-fit-estimates.data.json",
+			"!local-llm/hf-manifests",
+			"!coding-agent/models.json",
+			"!coding-agent/model-*.json",
+			// same reasoning, .jsonc extension: written by
+			// generate-opencode.jsonc.mjs
+			"!coding-agent/opencode.jsonc"
+		]
+	},
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	}
+}

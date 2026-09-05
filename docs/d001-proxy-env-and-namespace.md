@@ -1,4 +1,4 @@
-# d001: proxy env & namespace isolation
+# d001: proxy env & baseUrl policy
 
 ## Context
 
@@ -13,55 +13,40 @@ available the moment the env var is detected.
 
 ## Decisions
 
-### 1.  Proxy config lives in a dedicated `.env` file (not the shell)
+### 1.  Proxy config lives in the generator's process environment, not the shell
 
-`generate-config.yaml.js` reads provider overrides from the **process environment**
-(via `--env-file` or exported vars). The shell environment is NOT consulted for
-`*_BASE_URL` vars directly — the script reads what Node gives it via
-`process.env` (populated by `--env-file` or manual `export`).
+The provider generators (`openai-completions/gen-lib.mjs`,
+`coding-agent/generate-models.json.mjs`) read provider overrides from the
+**process environment** (`process.env`, populated by `load_secrets` on the
+host — Infisical via `load_secrets`, or keys already exported by the caller).
+The shell environment is NOT consulted for `*_BASE_URL` vars directly — the
+scripts read what Node gives it via `process.env`.  No `.env` file or
+`$ENV_FILE` is read by anything in this repo (see
+[load_secrets](../container-tool.sh) for the contract).
 
-### 2.  `baseUrl` is baked as a literal in `models.json`
+### 2.  `baseUrl` is baked as a literal in the generated config
 
-`baseUrl` in `models.json` does **not** support `$VAR` interpolation (only
-`apiKey` and `headers` do, per pi's `models.md`). Therefore the script reads
-`OPENROUTER_BASE_URL` (etc.) from the environment at generation time and writes
-the resolved URL as a plain string into `models.json`.
+`baseUrl` in the generated peer / provider config (peer-cloud.yaml, models.json
+overrides) does **not** support `$VAR` interpolation (only `apiKey` and
+`headers` do, per pi's `models.md`). Therefore the generator reads
+`OPENROUTER_BASE_URL` / `PEER_BASE_URL` (etc.) from the environment at
+generation time and writes the resolved URL as a plain string into the
+emitted file.
 
-Re-run the script when the proxy URL changes.
+Re-run the generator when the proxy URL changes.
 
-### 3.  API keys use `__` prefix for namespace isolation
+### 3.  No env-var prefix hides provider keys from pi auto-detection
 
-> **Deprecated.** The `__`-prefixed key naming was retired. Generators now read
-> plain env var names (e.g. `OPENCODE_API_KEY`, `OPENROUTER_API_KEY`); see
-> **[d019](d019-unified-opencode-key.md)**.
-
-Standard pi env vars like `OPENROUTER_API_KEY` cause pi to auto-detect the
-provider with the default URL. To prevent this, API key vars use
-**double-underscore-prefixed** names:
-
-```
-OPENROUTER_API_KEY=sk-or-v2-...
-__OPENCODE_ZEN_API_KEY=sk-opencode-...
-```
-
-The script writes them into `models.json` as `"apiKey": "$OPENROUTER_API_KEY"`
-— an env-var reference that pi resolves at runtime. Because pi does **not**
-recognise `OPENROUTER_API_KEY` as a standard auth env var, the mere presence
-of this var in the shell does **not** trigger auto-detection.
-
-**Two usage modes:**
-- **Sourced session:** `source ~/.pi/agent/proxy.env && pi` — the `__` vars
-  are present for pi to resolve, no standard auth env vars are needed.
-- **Persistent env:** set `OPENROUTER_API_KEY=...` in `.bashrc` alongside
-  `OPENROUTER_API_KEY=...` for other tools. Both coexist.
-
-### 4.  `resolveApiKeyEnv()` prefer-then-fallback
-
-> **Deprecated.** `resolveApiKeyEnv()` (prefer `__`-prefixed, fall back to bare)
-> was removed; `gen-lib.mjs` reads `apiKeyEnv` directly. See
-> **[d019](d019-unified-opencode-key.md)**.
-
-The helper `resolveApiKeyEnv("OPENROUTER_API_KEY")` first checks for the
-`__`-prefixed var, then falls back to the bare `OPENROUTER_API_KEY`. Returns
-the chosen name (or `""` when neither is set) so the script writes a `$VAR`
-reference.
+Earlier revisions used a `__` double-underscore prefix on provider keys
+(e.g. `__OPENROUTER_API_KEY`) so the *bare* name would not appear in the
+shell and would not trigger pi's built-in provider auto-detection. The prefix
+was removed: provider keys are read as plain env vars by `gen-lib.mjs`
+(e.g. `OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `CLINE_API_KEY`) and consumed
+**server-side** by llama-swap (which resolves the `${env.*}` references in
+`config.d/` from its own process environment). pi is only a *client* of
+llama-swap and authenticates with the llama-swap bearer key (`PEER_API_KEY`),
+so it never reads these provider keys and the prefix was unnecessary. See
+the historical record in [OLD/docs/d019-unified-opencode-key.md](../OLD/docs/d019-unified-opencode-key.md)
+and [OLD/docs/d001-proxy-env-and-namespace.md](../OLD/docs/d001-proxy-env-and-namespace.md)
+(an earlier version of this file describing the prefix mechanism that has
+since been retired).
