@@ -1,6 +1,6 @@
 # Container tooling & run scripts
 
-This covers the shared container-runtime detection (`container-tool.sh`), the
+This covers the shared container-runtime detection (`lib/workload-runtime.sh`), the
 deployment environments (bazzite, a50, work), and the run scripts that launch
 the llama-swap serving container and the pi coding-agent container.
 
@@ -44,9 +44,9 @@ WSL2 under rootful docker with **no direct cloud access**, so the coding agent
 only ever talks to a peer endpoint. Covered by `coding-agent/` static config
 (see the run-scripts section below).
 
-## Shared support: container-tool.sh (description-driven)
+## Shared support: lib/workload-runtime.sh (description-driven)
 
-`container-tool.sh` (repo root) is a **description-driven sandbox runner**, not a
+`lib/workload-runtime.sh` (repo root) is a **description-driven workload runner**, not a
 bag of flags. Run scripts declare *what* they need; the tool renders *how* for
 the active backend — podman or docker — hiding every backend quirk (SELinux
 `:z`/`:U` relabel + chown-to-subuid, `--userns=keep-id` vs rootful `--user`, GPU
@@ -54,11 +54,11 @@ device passthrough, port publishing, hardening) behind one interface. No
 `:z${_vol_u}` strings, no inline `podman`/`docker` detection, no
 `cd "$(dirname "$0")"` path-guessing leak into the run scripts.
 
-> **PRoot backend removed.** A PRoot backend (`detect_proot` / `sandbox_native`
+> **PRoot backend removed.** A PRoot backend (`detect_proot` / `workload_native`
 > / `proot_run`) used to confine host binaries on Termux. It is gone: PRoot is
 > ptrace-based path translation, not isolation — no kernel namespaces, no
 > cgroups, no real root, no GPU passthrough, no read-only binds — so calling it
-> a "supported sandbox" was a lie the tree no longer tells. Termux serves
+> a "supported workload" was a lie the tree no longer tells. Termux serves
 > natively via `openai-completions/run-native.sh` (the binary talks to the
 > network directly; there is nothing to confine that the shell couldn't).
 > For a stronger-than-container option on capable hosts, see
@@ -67,7 +67,7 @@ device passthrough, port publishing, hardening) behind one interface. No
 Source it from any `run*.sh` (it lives one level up, at the repo root):
 
 ```sh
-. "$(dirname "$0")/../container-tool.sh"
+. "$(dirname "$0")/../lib/workload-runtime.sh"
 ```
 
 On source it detects the backend and computes two paths every run script uses
@@ -76,38 +76,38 @@ On source it detects the backend and computes two paths every run script uses
 - `SCRIPT_DIR` — directory of the sourcing run script (from `$0`)
 - `REPO_ROOT`  — its parent (the repo root)
 
-It also sets `_sandbox` (`container` › `none`) and, for the container
+It also sets `_workload` (`container` › `none`) and, for the container
 backend, `_container_tool` (`podman`/`docker`) — but run scripts should not read
 these directly; they describe intent via the API below. (Capability probing in
 `openai-completions/generate.sh` legitimately reuses the internals —
-`_sandbox` + `detect_gpu_devs` — to decide which config layers the host can
+`_workload` + `detect_gpu_devs` — to decide which config layers the host can
 run.)
 
 ### Declarative API
 
 | Call | Meaning |
 |------|---------|
-| `sandbox_name <n>` | container / instance name |
-| `sandbox_image <img>` | OCI image to run |
-| `sandbox_detach` / `sandbox_interactive` | `-d` / `-it` |
-| `sandbox_init` | `--init` |
-| `sandbox_network <mode>` | e.g. `host` → `--network=host` |
-| `sandbox_user` | run as the host user: `--userns=keep-id --user uid:gid` (podman) or `--user uid:gid` (docker). Uses `SUDO_UID`/`SUDO_GID` when present. |
-| `sandbox_gpu` | detect + passthrough GPU devices (`/dev/kfd`, `/dev/dri/renderD*`) |
-| `sandbox_hardening` | `--cap-drop=all --security-opt no-new-privileges` |
-| `sandbox_publish <host> <guest>` | `-p host:guest/tcp` |
-| `sandbox_ro <host> <guest>` | required read-only bind (fails if host path missing) |
-| `sandbox_rw <host> <guest>` | required read-write bind |
-| `sandbox_ro_if <host> <guest>` | optional variant (skipped if host path absent) |
-| `sandbox_env <NAME...>` | pass these host env vars into the sandbox (`--env`) |
-| `sandbox_cmd <args...>` | the command (argv after the image) |
-| `sandbox_has <field>` | true when a description array is non-empty — e.g. `sandbox_has devices`, which is how `openai-completions/generate.sh` gates the local-inference layer |
-| `sandbox_rm <id>` | remove a prior instance by name |
-| `sandbox_logs <id>` | tail a running instance's logs |
-| `sandbox_run [wrapper...]` | render + launch; optional `wrapper` prefixes the launch command. Host-side only — it cannot inject env into the sandbox; secrets reach the sandbox via the `sandbox_env` allowlist (see `coding-agent/run.sh`: host `load_secrets` → forwarded vault keys) |
+| `workload_name <n>` | container / instance name |
+| `workload_image <img>` | OCI image to run |
+| `workload_detach` / `workload_interactive` | `-d` / `-it` |
+| `workload_init` | `--init` |
+| `workload_network <mode>` | e.g. `host` → `--network=host` |
+| `workload_user` | run as the host user: `--userns=keep-id --user uid:gid` (podman) or `--user uid:gid` (docker). Uses `SUDO_UID`/`SUDO_GID` when present. |
+| `workload_gpu` | detect + passthrough GPU devices (`/dev/kfd`, `/dev/dri/renderD*`) |
+| `workload_hardening` | `--cap-drop=all --security-opt no-new-privileges` |
+| `workload_publish <host> <guest>` | `-p host:guest/tcp` |
+| `workload_ro <host> <guest>` | required read-only bind (fails if host path missing) |
+| `workload_rw <host> <guest>` | required read-write bind |
+| `workload_ro_if <host> <guest>` | optional variant (skipped if host path absent) |
+| `workload_env <NAME...>` | pass these host env vars into the workload (`--env`) |
+| `workload_cmd <args...>` | the command (argv after the image) |
+| `workload_has <field>` | true when a description array is non-empty — e.g. `workload_has devices`, which is how `openai-completions/generate.sh` gates the local-inference layer |
+| `workload_rm <id>` | remove a prior instance by name |
+| `workload_logs <id>` | tail a running instance's logs |
+| `workload_run [wrapper...]` | render + launch; optional `wrapper` prefixes the launch command. Host-side only — it cannot inject env into the workload; secrets reach the workload via the `workload_env` allowlist (see `coding-agent/run.sh`: host `load_secrets` → forwarded vault keys) |
 
-Only `sandbox_ro`/`sandbox_rw` (required) abort the run if the host path is
-gone; `sandbox_ro_if` is best-effort. Mount host/guest paths may contain
+Only `workload_ro`/`workload_rw` (required) abort the run if the host path is
+gone; `workload_ro_if` is best-effort. Mount host/guest paths may contain
 spaces — see the description model below; they are re-emitted as distinct quoted
 words, so splitting is safe at launch.
 
@@ -139,44 +139,44 @@ is its specification** — expected inputs, output shape, and why it exists:
 
 | Filter | Called by | Contract |
 |---|---|---|
-| `lib/sandbox-mount.jq` | `sandbox_ro` / `sandbox_rw` / `sandbox_ro_if` | append `{mode,host,guest}` to `.mounts` |
-| `lib/sandbox-append.jq` | `sandbox_env`, `detect_gpu_devs` | append strings to a named array (`.env`, `.devices`) |
-| `lib/sandbox-port.jq` | `sandbox_publish` | append `{host,guest}` to `.ports` |
-| `lib/sandbox-cmd.jq` | `sandbox_cmd` | **set** `.cmd` to the word array (a set, not an append) |
-| `lib/sandbox-has.jq` | `sandbox_has` | boolean; the answer is jq's `-e` exit status |
-| `lib/sandbox-render.jq` | `_render_container` | the whole description + scalars → one line of `@sh`-quoted argv words |
+| `lib/workload-mount.jq` | `workload_ro` / `workload_rw` / `workload_ro_if` | append `{mode,host,guest}` to `.mounts` |
+| `lib/workload-append.jq` | `workload_env`, `detect_gpu_devs` | append strings to a named array (`.env`, `.devices`) |
+| `lib/workload-port.jq` | `workload_publish` | append `{host,guest}` to `.ports` |
+| `lib/workload-cmd.jq` | `workload_cmd` | **set** `.cmd` to the word array (a set, not an append) |
+| `lib/workload-has.jq` | `workload_has` | boolean; the answer is jq's `-e` exit status |
+| `lib/workload-render.jq` | `_render_container` | the whole description + scalars → one line of `@sh`-quoted argv words |
 
 Two jq invocations rules that are easy to get wrong, and that every filter
 header repeats:
 
 - `--args` **must be followed by a bare `--`**. jq keeps parsing options after
-  `--args`, so `sandbox_cmd -config-dir …` is otherwise read as jq flags
+  `--args`, so `workload_cmd -config-dir …` is otherwise read as jq flags
   ("Unknown option -o").
 - any filter that takes its input from `--argjson` rather than stdin **must be
   run with `jq -n`**, or it waits on stdin and never produces output.
 
-**Dependency:** jq is required by the `sandbox_*` calls only — scripts that
-source `container-tool.sh` just for `log_*` or `load_secrets` never touch it,
+**Dependency:** jq is required by the `workload_*` calls only — scripts that
+source `lib/workload-runtime.sh` just for `log_*` or `load_secrets` never touch it,
 and the lookup is lazy (it fails on first use, not at source time).
 Provisioned in `mise.toml` (host), `coding-agent/config.toml` (image), and
 `pkg install jq` on Termux. `coding-agent/run.sh` bind-mounts every
-`lib/sandbox-*.jq` into `/opt/lib`, since inside the container `REPO_ROOT` is
+`lib/workload-*.jq` into `/opt/lib`, since inside the container `REPO_ROOT` is
 `/opt`.
 
 **Tests:** `./tests/check-sandbox.sh` renders two full descriptions (one per
 backend) and diffs the argv against the pre-refactor output, plus the
-`sandbox_has` predicate. It is a differential test: it exists because the two
+`workload_has` predicate. It is a differential test: it exists because the two
 bugs found during this refactor were semantic, and neither the shellcheck nor
 the jq compile gate in `./lint.sh` can see them.
 
-### `sandbox_run` backend
+### `workload_run` backend
 
 **container** (`podman`/`docker`): renders `container run` with the described
 mounts/ports/env/user/hardening, then launches it (optionally wrapped by a
 host-side command — historically `infisical run … --`; the coding-agent now
 loads vault secrets on the host via `load_secrets` and forwards them through
-`sandbox_env`, so the sandbox itself never runs infisical). Any other
-`_sandbox` value is a fatal error — there is no fallback "sandbox" that isn't
+`workload_env`, so the workload itself never runs infisical). Any other
+`_workload` value is a fatal error — there is no fallback "workload" that isn't
 one.
 
 ## Run scripts
@@ -184,7 +184,7 @@ one.
 ### Serving run script (one multipurpose instance)
 
 Every host runs ONE llama-swap serving container, launched by
-`openai-completions/run.sh` (sources `container-tool.sh`). `run.sh` is
+`openai-completions/run.sh` (sources `lib/workload-runtime.sh`). `run.sh` is
 serve-only: it mounts the already-generated `config.d/` (read-only) loaded via
 `-config-dir` and adapts to it. Generation lives in `openai-completions/generate.sh`.
 
@@ -229,7 +229,7 @@ See [d018-split-config-d.md](d018-split-config-d.md) for the merge contract.
   The legacy local-inference port 18080 is deprecated — nothing listens on
   it since the two-instance squash.
 - **SELinux**: all bind mounts are relabeled + chowned to the mapped subuid
-  by `container-tool.sh` (`:z,U` on podman, `:z` on docker) — no inline flags.
+  by `lib/workload-runtime.sh` (`:z,U` on podman, `:z` on docker) — no inline flags.
 - **Termux alternative**: on a50/termux there is no container — use
   `build.sh` (native binary on termux, image pull elsewhere) + `run-native.sh` (bare serve) instead,
   and the root `./build.sh` to provision the Infisical CLI there.
@@ -241,13 +241,13 @@ See [d018-split-config-d.md](d018-split-config-d.md) for the merge contract.
 Launches the pi coding-agent container with:
 
 - **`settings.json`** (static): copied into `~/.pi/agent/settings.json`
-  (retry config, display settings) and mounted read-only into the sandbox, so
+  (retry config, display settings) and mounted read-only into the workload, so
   the in-container `generate.sh` reinstalls it from the same source; a committed
   `models.json`/`opencode.jsonc` are staged as fallback until the in-container
   generation succeeds.
 - **Secrets**: loaded ONCE on the HOST via `load_secrets` (one cached
   `infisical secrets --output=dotenv`) and forwarded into the container
-  through the `sandbox_env` allowlist — no infisical runs inside the sandbox,
+  through the `workload_env` allowlist — no infisical runs inside the workload,
   no `~/.infisical` staging; pi resolves the `"$VAR"` api-key references in
   the generated `models.json` from the forwarded environment at request time.
 - **Mounts**: workspace, generated `.pi` agent dir, opencode config/data dirs
@@ -256,7 +256,7 @@ Launches the pi coding-agent container with:
   (read-only), `--network=host`.  The generator input set is mounted file by
   file, never as the repo dir, so the list in
   `run.sh` must cover **every** input `generate.sh` reads from its own dir:
-  inside the sandbox `container-tool.sh` resolves `SCRIPT_DIR` from `$0` to
+  inside the workload `lib/workload-runtime.sh` resolves `SCRIPT_DIR` from `$0` to
   `/opt/coding-agent`, and an unlisted file aborts the in-container generation
   on first read (historically `settings.json`, which killed the run before any
   generation stage and left the staged fallback config silently in place).

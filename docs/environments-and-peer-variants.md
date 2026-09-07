@@ -48,7 +48,7 @@ that instance plus its `auth.json`; the instance is also the unified peer
 endpoint for external/peer clients. Rootless podman with SELinux means every
 writable bind mount gets `:z,U` (or `:Z,U`) relabel + chown, and the container
 runs as the host UID via `--userns=keep-id` + `--user $(id -u):$(id -g)`. All of
-that is handled by `container-tool.sh`, sourced from the run scripts.
+that is handled by `lib/workload-runtime.sh`, sourced from the run scripts.
 
 ### a50-en7562ct (termux, peer-only serving)
 Hostname `hjs0aj87e30.sn.mynetname.net`. SoC: **EN7562CT** (ARM32v5, 512 MB RAM, 128 MB flash). Resource-constrained host (a phone/router under Termux). It **cannot run the
@@ -97,8 +97,8 @@ resolves from the env at request time).
   file is read anywhere in the repo. `PEER_BASE_URL` is currently
   informational — the peer baseUrl is hardcoded in the static provider config.
 
-The shared `container-tool.sh` makes this work on both bazzite-gfx1030-style podman and
-wsl2-style docker through the same `sandbox_*` description: `sandbox_user` emits
+The shared `lib/workload-runtime.sh` makes this work on both bazzite-gfx1030-style podman and
+wsl2-style docker through the same `workload_*` description: `workload_user` emits
 `--userns=keep-id --user uid:gid` (plus `--group-add keep-groups`) on rootless
 podman, and just `--user uid:gid` on rootful docker; SELinux relabeling is
 automatic (`:z,U` on podman, `:z` on docker) with no per-script flags.
@@ -107,7 +107,7 @@ automatic (`:z,U` on podman, `:z` on docker) with no per-script flags.
 Hostname `instancepool-1-instance-1.subnetac1efe80.vcnac1efe.oraclevcn.com`. Shape: **VM.Standard.E2.1.Micro** (1/8 OCPU, 1 GB RAM). Tight memory
 budget means **no local llama.cpp inference** (and no GPU); the host only
 proxies cloud providers through llama-swap, just like the `wsl2` variant. The
-difference from `wsl2` is the sandbox (OCI's rootless podman or docker, rather
+difference from `wsl2` is the workload (OCI's rootless podman or docker, rather
 than WSL2 rootful docker) and the image size constraint. Because OCI has no
 dedicated inference device, the routing instance uses the lighter
 `ghcr.io/mostlygeek/llama-swap:cpu` image (override with `LLAMA_SWAP_IMAGE`).
@@ -141,7 +141,7 @@ local GPU/VRAM (generate.sh simply never emits the local layer there).
 
 ## Shared support file
 
-`container-tool.sh` (repo root) is a **description-driven sandbox runner**: run
+`lib/workload-runtime.sh` (repo root) is a **description-driven workload runner**: run
 scripts declare *what* they need and the tool renders *how* for the active
 backend — rootless podman or rootful docker — hiding every backend quirk (SELinux
 `:z`/`:U` relabel + chown-to-subuid, `--userns=keep-id` vs rootful `--user`,
@@ -149,10 +149,10 @@ GPU device passthrough, port publishing, hardening) behind one interface. It is
 the single place that detects the backend and computes `SCRIPT_DIR` / `REPO_ROOT`
 (the only "where do I live" logic), so run scripts never re-detect podman/docker
 or guess their own paths inline. PRoot was removed as a backend (see
-[container-tooling.md](container-tooling.md)); a qemu/libvirt VM backend is
+[lib/workload-runtimeing.md](lib/workload-runtimeing.md)); a qemu/libvirt VM backend is
 assessed in [d020-libvirt-qemu-sandbox.md](d020-libvirt-qemu-sandbox.md).
 
-See [container-tooling.md](container-tooling.md) for the full `sandbox_*` API.
+See [lib/workload-runtimeing.md](lib/workload-runtimeing.md) for the full `workload_*` API.
 
 ## Image / mode per instance
 

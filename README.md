@@ -29,11 +29,11 @@ for the full environment matrix.
 agentcontainer/
 ├── docs/                              # Design docs, environment guides, ADRs
 │   ├── environments-and-peer-variants.md   # bazzite / a50 / work matrix
-│   ├── container-tooling.md                # container-tool.sh, run scripts
+│   ├── container-tooling.md                # lib/workload-runtime.sh, run scripts
 │   ├── termux-serving.md                   # a50 / Termux map (detail lives in the code headers)
 │   ├── d0XX-*.md                           # numbered design notes
 │   └── ...
-├── container-tool.sh                    # Shared sandbox-backend detection (podman/docker)
+├── lib/workload-runtime.sh                    # Shared sandbox-backend detection (podman/docker)
 │
 ├── openai-completions/                   # Multipurpose llama-swap (one instance per host)
 │   ├── run.sh                           #   → adapts image/port/GPU/HF to the generated config.d
@@ -78,7 +78,7 @@ agentcontainer/
 | [docs/environments-and-peer-variants.md](docs/environments-and-peer-variants.md) | Environment matrix (bazzite/a50/work), env vars, serving/usage dirs |
 | [docs/architecture.md](docs/architecture.md) | Self-contained runners vs base config generators, standalone rule |
 | [docs/future-config-generator-system.md](docs/future-config-generator-system.md) | NEXT-step (PENDING) config-generator system split by concern |
-| [docs/container-tooling.md](docs/container-tooling.md) | container-tool.sh, run scripts, UID/SELinux, PEERS_ONLY |
+| [docs/container-tooling.md](docs/container-tooling.md) | lib/workload-runtime.sh, run scripts, UID/SELinux, PEERS_ONLY |
 | [docs/termux-serving.md](docs/termux-serving.md) | a50/Termux native build — map; the build/serve/env detail lives in the `openai-completions/` script headers |
 | [docs/d018-split-config-d.md](docs/d018-split-config-d.md) | split `config.d/` layout + llama-swap merge contract |
 | [docs/d020-libvirt-qemu-sandbox.md](docs/d020-libvirt-qemu-sandbox.md) | qemu/libvirt VM sandboxes — requirements assessment (not implemented) |

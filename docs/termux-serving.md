@@ -29,22 +29,22 @@ that could emit `models`) is never generated.
 | Provider set, key names, base URLs, model-id sources (this is *the* provider list) | `openai-completions/gen-lib.mjs` + each `generate-*.mjs` header |
 | Local GGUF layer — GPU-capable container hosts only, **never** here | `openai-completions/generate-local-llm-models.yaml.mjs`, `launch-gguf.sh` |
 | Peers-only env key names (documentation only — nothing loads the file; no `LLAMACPP_BASE_URL` / `LLAMA_API_BASE_URL`, there is no local llama.cpp server) | `openai-completions/.env.example` |
-| Infisical CLI provisioning on Termux (no official Android release) | repo root `./build.sh`; consumption side: `load_secrets` in `container-tool.sh` |
-| `node` + `jq` — required by `generate.sh` (the `.mjs` generators; and the sandbox description API in `container-tool.sh` is jq-backed, see `lib/sandbox-*.jq`) | repo root `./build.sh` installs both via `pkg` when `$PREFIX/bin/<tool>` is not executable (`SKIP_PKG=1` to opt out; there is no mise here) |
+| Infisical CLI provisioning on Termux (no official Android release) | repo root `./build.sh`; consumption side: `load_secrets` in `lib/workload-runtime.sh` |
+| `node` + `jq` — required by `generate.sh` (the `.mjs` generators; and the workload description API in `lib/workload-runtime.sh` is jq-backed, see `lib/workload-*.jq`) | repo root `./build.sh` installs both via `pkg` when `$PREFIX/bin/<tool>` is not executable (`SKIP_PKG=1` to opt out; there is no mise here) |
 
 > Naming note: older revisions of this file listed `LLAMASWAP_API_KEY` as the
 > client auth key. The generated `apiKeys` reference `${env.PEER_API_KEY}`
 > (from `llama-swap-core.json`), so *that* is the bearer key a client sends
 > today — see `openai-completions/.env.example`.
 
-## Retired: the PRoot sandbox path (run-proot.sh)
+## Retired: the PRoot workload path (run-proot.sh)
 
 `run-proot.sh` used to confine the native llama-swap binary inside a basic
-PRoot sandbox (`proot_run()` in `container-tool.sh`), as a termux analog of the
-container sandbox. It was **removed along with the PRoot backend**: PRoot is
+PRoot workload (`proot_run()` in `lib/workload-runtime.sh`), as a termux analog of the
+container workload. It was **removed along with the PRoot backend**: PRoot is
 ptrace-based path translation — no kernel namespaces, no cgroups, no real
 root, no GPU passthrough, no read-only binds — so it provided the appearance
-of sandboxing without the substance, and the native binary it wrapped talks to
+of workloading without the substance, and the native binary it wrapped talks to
 the network directly anyway. On Termux, serve bare with `run-native.sh`; on
 hosts that need stronger-than-container isolation, the qemu/libvirt option is
 assessed in [d020-libvirt-qemu-sandbox.md](d020-libvirt-qemu-sandbox.md)

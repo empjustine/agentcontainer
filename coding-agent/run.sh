@@ -4,16 +4,16 @@
 # Merges the former run.sh (container sandbox) and run-termux.sh (native pi).
 # The container branch loads secrets ONCE on the HOST (load_secrets — one
 # cached `infisical secrets --output=dotenv`) and forwards the vault keys
-# through the sandbox_env allowlist; the spawn chain inside the container is
+# through the workload_env allowlist; the spawn chain inside the container is
 # plain generate.sh + interactive bash with no infisical at all (the host
 # login state is NOT staged into the sandbox).
 #
-#   container branch (podman/docker, via ../container-tool.sh):
+#   container branch (podman/docker, via ../lib/workload-runtime.sh):
 #     - stage a per-run sandbox dir (agent + opencode config/data)
 #     - ro-mount the generator scripts and a generated launch chain
-#     - host-side load_secrets → sandbox_env forward of the vault keys;
+#     - host-side load_secrets → workload_env forward of the vault keys;
 #       in-container load_secrets short-circuits via SECRETS_ASSUME=1 (the
-#       "emergency not-infisical loader", defined in container-tool.sh)
+#       "emergency not-infisical loader", defined in lib/workload-runtime.sh)
 #     - generate.sh then interactive bash; pi resolves "$VAR" refs in
 #       models.json from the forwarded environment
 #   Termux branch (PREFIX under /data/data/com.termux):
@@ -39,7 +39,7 @@
 set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-# shellcheck disable=SC1091  # loaded for log_* (and container-tool.sh below)
+# shellcheck disable=SC1091  # loaded for log_* (and lib/workload-runtime.sh below)
 . "$SCRIPT_DIR/../lib/log.sh"
 LOG_TOOL='coding-agent/run'
 export LOG_TOOL
@@ -70,7 +70,7 @@ if [ "$_termux" = 1 ]; then
 	# load_secrets: infisical via the Termux CLI build when available; keys
 	# already in the environment short-circuit it.  No .env file is read.
 	# shellcheck disable=SC1091  # loaded for load_secrets
-	. "$SCRIPT_DIR/../container-tool.sh"
+	. "$SCRIPT_DIR/../lib/workload-runtime.sh"
 	load_secrets
 	log_info "secrets source" source="${SECRETS_SOURCE:-none}"
 
@@ -91,7 +91,7 @@ fi
 
 # -------------------------- container branch --------------------------------
 # shellcheck disable=SC1091
-. "$SCRIPT_DIR/../container-tool.sh"
+. "$SCRIPT_DIR/../lib/workload-runtime.sh"
 
 USER="${USER:-$(id -un)}"
 export USER
@@ -101,17 +101,17 @@ if [ "$workspace" = "$HOME" ]; then
 fi
 
 container_name="agentcontainer-$(date +'%Y%m%d%H%M%S%3N')"
-sandbox_stage="$HOME/workspace/$container_name"
-agent_dir="$sandbox_stage/pi/agent"
-opencode_cfg_dir="$sandbox_stage/opencode/config"
-opencode_data_dir="$sandbox_stage/opencode/data"
+workload_stage="$HOME/workspace/$container_name"
+agent_dir="$workload_stage/pi/agent"
+opencode_cfg_dir="$workload_stage/opencode/config"
+opencode_data_dir="$workload_stage/opencode/data"
 
 mkdir -p -- "$agent_dir" "$opencode_cfg_dir" "$opencode_data_dir"
 
 # Secrets are NOT staged into the sandbox anymore: the host loads them once
 # via load_secrets (one cached `infisical secrets --output=dotenv`; see
-# ../container-tool.sh) and the vault keys are forwarded through the
-# sandbox_env allowlist below, so no infisical runs inside the container and
+# ../lib/workload-runtime.sh) and the vault keys are forwarded through the
+# workload_env allowlist below, so no infisical runs inside the container and
 # the host's ~/.infisical login state never leaves the host.
 #
 # Fallback base: if the in-container generation fails entirely, the agent
@@ -126,7 +126,7 @@ cp "$SCRIPT_DIR/settings.json" "$agent_dir/settings.json"
 # Generator scripts + every other input generate.sh reads, read-only (never
 # mount the whole dir: it also carries host-local, untracked files).  Inside the
 # container
-# container-tool.sh derives SCRIPT_DIR from $0, which stays
+# lib/workload-runtime.sh derives SCRIPT_DIR from $0, which stays
 # /opt/coding-agent/generate.sh — so SCRIPT_DIR is /opt/coding-agent and
 # REPO_ROOT is /opt.  Anything missing from this list aborts the in-container
 # generate.sh on first read (settings.json used to be missing: it died at the
@@ -138,39 +138,39 @@ for _f in generate.sh refresh-models-dev.mjs generate-models.json.mjs \
 	check-node-version.mjs filter-relays.mjs count-providers.mjs \
 	list-providers.mjs \
 	settings.json; do
-	sandbox_ro "$SCRIPT_DIR/$_f" "$_gen_target/$_f"
+	workload_ro "$SCRIPT_DIR/$_f" "$_gen_target/$_f"
 done
 # Committed fallbacks generate.sh installs when the cascade comes up empty or
 # SKIP_GEN=1 (ro_if: optional by definition).
-sandbox_ro_if "$SCRIPT_DIR/models.json" "$_gen_target/models.json"
-sandbox_ro_if "$SCRIPT_DIR/opencode.jsonc" "$_gen_target/opencode.jsonc"
-sandbox_ro "$REPO_ROOT/container-tool.sh" '/opt/container-tool.sh'
-sandbox_ro "$REPO_ROOT/lib/log.sh" '/opt/lib/log.sh'
+workload_ro_if "$SCRIPT_DIR/models.json" "$_gen_target/models.json"
+workload_ro_if "$SCRIPT_DIR/opencode.jsonc" "$_gen_target/opencode.jsonc"
+workload_ro "$REPO_ROOT/lib/workload-runtime.sh" '/opt/lib/workload-runtime.sh'
+workload_ro "$REPO_ROOT/lib/log.sh" '/opt/lib/log.sh'
 # generate.sh stages lib/log.mjs beside the generators ($LOG_LIB); the .mjs
 # generators import it dynamically and fall back to ../lib/log.mjs, which
 # from the scratch dir resolves to /opt/lib/log.mjs — mount it or all three
 # generators die on import.
-sandbox_ro "$REPO_ROOT/lib/log.mjs" '/opt/lib/log.mjs'
+workload_ro "$REPO_ROOT/lib/log.mjs" '/opt/lib/log.mjs'
 # The sandbox description API reads its jq filters from $REPO_ROOT/lib, and
 # in-container that resolves to /opt/lib — every filter must be listed or the
-# first sandbox_* call inside the container dies on a missing --from-file.
+# first workload_* call inside the container dies on a missing --from-file.
 for _jq in "$REPO_ROOT"/lib/sandbox-*.jq; do
-	# Unglobbed patterns must not reach sandbox_ro: it log_dies on a missing
+	# Unglobbed patterns must not reach workload_ro: it log_dies on a missing
 	# host path.
 	[ -f "$_jq" ] || continue
-	sandbox_ro "$_jq" "/opt/lib/$(basename "$_jq")"
+	workload_ro "$_jq" "/opt/lib/$(basename "$_jq")"
 done
-sandbox_ro_if "$SCRIPT_DIR/models.dev.api.json" "$_gen_target/models.dev.api.json"
-sandbox_ro_if "$SCRIPT_DIR/00-model-base.json" "$_gen_target/00-model-base.json"
+workload_ro_if "$SCRIPT_DIR/models.dev.api.json" "$_gen_target/models.dev.api.json"
+workload_ro_if "$SCRIPT_DIR/00-model-base.json" "$_gen_target/00-model-base.json"
 
 # In-container launch chain: generated shell with no infisical — the host
-# forwards the vault env through the sandbox_env allowlist instead.
-cat >"$sandbox_stage/launch.sh" <<EOF
+# forwards the vault env through the workload_env allowlist instead.
+cat >"$workload_stage/launch.sh" <<EOF
 #!/bin/sh
 # Generated by coding-agent/run.sh — in-container launch chain.
-# Secrets arrive via the sandbox_env allowlist (host-side infisical via
+# Secrets arrive via the workload_env allowlist (host-side infisical via
 # load_secrets).  SECRETS_ASSUME=1 short-circuits the shared loader — the
-# "emergency not-infisical loader", defined in container-tool.sh — so the
+# "emergency not-infisical loader", defined in lib/workload-runtime.sh — so the
 # sandbox never runs infisical.
 # shellcheck disable=SC1091
 . /opt/lib/log.sh
@@ -205,27 +205,27 @@ fi
 log_info "launching interactive bash" agentDir="\$AGENT_DIR"
 exec bash
 EOF
-chmod 0755 "$sandbox_stage/launch.sh"
-sandbox_ro "$sandbox_stage/launch.sh" '/opt/agentcontainer-launch.sh'
+chmod 0755 "$workload_stage/launch.sh"
+workload_ro "$workload_stage/launch.sh" '/opt/agentcontainer-launch.sh'
 
-log_info "staged sandbox" container="$container_name" stage="$sandbox_stage"
+log_info "staged sandbox" container="$container_name" stage="$workload_stage"
 
 HF_HUB_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/huggingface/hub"
 
-sandbox_name     "$container_name"
-sandbox_image    'localhost/empjustine/coding-agent:latest'
-sandbox_interactive
-sandbox_init
-sandbox_network  host
-sandbox_user
-sandbox_ro_if    "$HOME/Downloads/references" "$HOME/Downloads/references"
-#sandbox_ro_if    "$HF_HUB_CACHE" /home/${USER}/.cache/huggingface/hub
-sandbox_rw       "$agent_dir" "/home/${USER}/.pi/agent"
-sandbox_rw       "$HF_HUB_CACHE" "/home/${USER}/.cache/huggingface/hub"
-sandbox_rw       "$opencode_cfg_dir" "/home/${USER}/.config/opencode"
-sandbox_rw       "$opencode_data_dir" "/home/${USER}/.local/share/opencode"
-sandbox_rw       "$workspace" "$workspace"
-sandbox_workdir  "$workspace"
+workload_name     "$container_name"
+workload_image    'localhost/empjustine/coding-agent:latest'
+workload_interactive
+workload_init
+workload_network  host
+workload_user
+workload_ro_if    "$HOME/Downloads/references" "$HOME/Downloads/references"
+#workload_ro_if    "$HF_HUB_CACHE" /home/${USER}/.cache/huggingface/hub
+workload_rw       "$agent_dir" "/home/${USER}/.pi/agent"
+workload_rw       "$HF_HUB_CACHE" "/home/${USER}/.cache/huggingface/hub"
+workload_rw       "$opencode_cfg_dir" "/home/${USER}/.config/opencode"
+workload_rw       "$opencode_data_dir" "/home/${USER}/.local/share/opencode"
+workload_rw       "$workspace" "$workspace"
+workload_workdir  "$workspace"
 # Secrets! Host-side load_secrets (one cached infisical export) provides the
 # vault keys; the allowlist below forwards them into the sandbox like the
 # openai-completions run path.  Only non-empty values are forwarded (a bare
@@ -235,12 +235,12 @@ log_info "secrets source" source="${SECRETS_SOURCE:-none}"
 for _key in CLINE_API_KEY PEER_API_KEY OPENROUTER_API_KEY OPENCODE_API_KEY \
 	HF_TOKEN GEMINI_API_KEY PEER_BASE_URL; do
 	_value="$(printenv "$_key" 2>/dev/null || true)"
-	[ -n "$_value" ] && sandbox_env "$_key"
+	[ -n "$_value" ] && workload_env "$_key"
 done
 # Forwarded only when set in the host env (unset vars are not exported).
-sandbox_env      SKIP_GEN
-sandbox_env      LOCAL_INFERENCE
-sandbox_env      SELF_RELAY
-sandbox_env      MODELS_DEV_REFRESH
-sandbox_cmd      /bin/sh /opt/agentcontainer-launch.sh
-sandbox_run
+workload_env      SKIP_GEN
+workload_env      LOCAL_INFERENCE
+workload_env      SELF_RELAY
+workload_env      MODELS_DEV_REFRESH
+workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
+workload_run

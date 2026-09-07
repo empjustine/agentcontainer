@@ -67,7 +67,7 @@
 # the existing checkout is still used.  To reset a diverged checkout, delete
 # it (`rm -rf ~/Infisical/cli`) and re-run for a fresh shallow clone.
 #
-# CONSUMPTION: load_secrets (container-tool.sh) looks for the binary at the
+# CONSUMPTION: load_secrets (lib/workload-runtime.sh) looks for the binary at the
 # resolved location above and every secret consumer
 # (openai-completions/generate.sh, run.sh, run-native.sh, coding-agent/…)
 # inherits it from there.  load_secrets is deliberately passive: it only
@@ -105,7 +105,7 @@ branch="${INFISICAL_BRANCH:-main}"
 #   nodejs -> node   the .mjs generators (openai-completions/generate.sh,
 #                    coding-agent/generate.sh) run under the SYSTEM node on
 #                    Termux — there is no mise to pin one.
-#   jq               container-tool.sh's sandbox description API is jq-backed
+#   jq               lib/workload-runtime.sh's workload description API is jq-backed
 #                    (lib/sandbox-*.jq); openai-completions/generate.sh calls
 #                    sandbox_has on every run.
 #
@@ -153,7 +153,7 @@ _ensure_pkg() {
 
 if [ "$_termux" = 1 ]; then
 	_ensure_pkg node nodejs 'the .mjs generators run under the system node here'
-	_ensure_pkg jq jq 'container-tool.sh sandbox_* API (lib/sandbox-*.jq)'
+	_ensure_pkg jq jq 'lib/workload-runtime.sh workload_* API (lib/sandbox-*.jq)'
 else
 	log_debug "not Termux — skipping pkg provisioning (node/jq come from mise)"
 fi

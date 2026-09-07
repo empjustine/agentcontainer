@@ -1,12 +1,12 @@
 #!/bin/sh
-# Shared description-driven sandbox runner for the agentcontainer run scripts.
+# Shared description-driven workload runner for the agentcontainer run scripts.
 #
-# Supported backends: rootless podman and rootful docker (the "container"
+# Supported backends: rootless podman and rootful docker (the "workload"
 # backend). PRoot was removed as a supported backend — it is a ptrace
-# path-translation shim, not a sandbox (no namespaces, no cgroups, no real
+# path-translation shim, not isolation (no namespaces, no cgroups, no real
 # root, no GPU passthrough); the termux/a50 path serves natively via
 # openai-completions/run-native.sh instead. A qemu/libvirt VM backend is
-# assessed in docs/d020-libvirt-qemu-sandbox.md (not implemented).
+# assessed in docs/d020-libvirt-qemu-workload.md (not implemented).
 
 # path resolution (the only "where do I live" logic; run scripts reuse these)
 # shellcheck disable=SC2034  # exported-by-contract for sourcing scripts
@@ -21,9 +21,9 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # Infisical identity, pinned so `infisical` resolves the correct workspace from
 # any working directory (proposals-upstream.md D). Self-hosted instances override
 # INFISICAL_API_URL; the project id matches the workspaceId in the checked-in
-# .infisical.json.  Exported so the generate/run scripts (and the in-container
+# .infisical.json.  Exported so the generate/run scripts (and the in-workload
 # launch chain) reference these instead of duplicating the literal across
-# scripts.  These are routing, NOT secrets — safe to forward via sandbox_env.
+# scripts.  These are routing, NOT secrets — safe to forward via workload_env.
 INFISICAL_API_URL="${INFISICAL_API_URL:-https://app.infisical.com}"
 INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-628c46b6-a5d5-4671-9435-c205847397ce}"
 export INFISICAL_API_URL INFISICAL_PROJECT_ID
@@ -47,11 +47,11 @@ export INFISICAL_API_URL INFISICAL_PROJECT_ID
 #      trigger it:
 #
 #      * SECRETS_ASSUME=1 — "the environment is already correct; do not
-#        re-derive anything".  Canonical user: the coding-agent sandbox.  run.sh
-#        (host) forwards the vault env through its sandbox_env allowlist and the
-#        in-container launch.sh exports SECRETS_ASSUME=1, so load_secrets inside
-#        the sandbox only ever consumes that forwarded env — infisical is never
-#        run inside the container.  This header is the flag's canonical
+#        re-derive anything".  Canonical user: the coding-agent workload.  run.sh
+#        (host) forwards the vault env through its workload_env allowlist and the
+#        in-workload launch.sh exports SECRETS_ASSUME=1, so load_secrets inside
+#        the workload only ever consumes that forwarded env — infisical is never
+#        run inside the workload.  This header is the flag's canonical
 #        definition; elsewhere it is only referenced (coding-agent/run.sh,
 #        coding-agent/config.toml).
 #      * any well-known inference key already set (PEER_API_KEY, CLINE_API_KEY,
@@ -170,46 +170,46 @@ EOF
 }
 
 # backend detection
-_container_tool=''
+_workload_tool=''
 _userns=''
 _keep_groups=''
 
-detect_container_tool() {
+detect_workload_tool() {
 	if [ -x /usr/bin/podman ]; then
-		_container_tool='podman'; _userns='--userns=keep-id'
+		_workload_tool='podman'; _userns='--userns=keep-id'
 		_keep_groups='--group-add keep-groups'
 	elif [ -x /usr/bin/docker ]; then
-		_container_tool='docker'; _userns=''; _keep_groups=''
+		_workload_tool='docker'; _userns=''; _keep_groups=''
 	else
 		return 1
 	fi
 	return 0
 }
 
-_sandbox='none'
-detect_container_tool && _sandbox='container'
+_workload='none'
+detect_workload_tool && _workload='workload'
 
-# sandbox_has <field> — succeed when a named array of the description is
+# workload_has <field> — succeed when a named array of the description is
 # non-empty.  This is how callers ask the description a question without
 # reaching into its internals: openai-completions/generate.sh gates the
-# local-inference layer on `sandbox_has devices` (plus the container backend).
-# The predicate itself lives in lib/sandbox-has.jq and is carried by jq's -e
+# local-inference layer on `workload_has devices` (plus the workload backend).
+# The predicate itself lives in lib/workload-has.jq and is carried by jq's -e
 # exit status (0 = true, 1 = false/null), so there is no string comparison.
-sandbox_has() {
+workload_has() {
 	# -n is mandatory: without it jq reads the filter's input from stdin, which
 	# is not a description document — it would block, or produce no output at
 	# all (exit 4 with -e).  The description arrives through --argjson, not
 	# through input.
-	_sb_jq -rn -e --argjson doc "$_SB_LISTS" --arg field "$1" \
-		--from-file "$_SB_JQDIR/sandbox-has.jq" >/dev/null
+	_sb_jq -rn -e --argjson doc "$workload_LISTS" --arg field "$1" \
+		--from-file "$workload_JQDIR/workload-has.jq" >/dev/null
 }
 
 # --- description -----------------------------------------------------------
 # Two halves.  Scalar settings are one shell global each: they are plain
 # strings and 0/1 flags with no data-structure problem, so jq would only add a
 # subprocess.  List settings (mounts, env names, ports, devices, command
-# words) live in ONE JSON document in $_SB_LISTS, mutated by the filters in
-# lib/sandbox-*.jq and turned into argv by lib/sandbox-render.jq — the header
+# words) live in ONE JSON document in $workload_LISTS, mutated by the filters in
+# lib/workload-*.jq and turned into argv by lib/workload-render.jq — the header
 # of each filter carries its input/output contract, and those headers are the
 # documentation for this half of the API.
 #
@@ -223,72 +223,72 @@ sandbox_has() {
 #
 # EMPTY STRING MEANS "NOT SET": every scalar is handed to the renderer as an
 # --arg, and the renderer omits the flag for an empty value (it never forwards
-# an empty flag).  See lib/sandbox-render.jq.
-_SB_JQDIR="$REPO_ROOT/lib"
+# an empty flag).  See lib/workload-render.jq.
+workload_JQDIR="$REPO_ROOT/lib"
 
-# jq is needed only by the sandbox_* calls.  Scripts that source this file just
+# jq is needed only by the workload_* calls.  Scripts that source this file just
 # for log_* or load_secrets (e.g. local-llm/run-all.sh) never touch it, so the
-# lookup is lazy: it happens on the first sandbox_* call that needs it, not at
+# lookup is lazy: it happens on the first workload_* call that needs it, not at
 # source time.  (The cache below is best-effort: the mutators assign through
 # `$( ... )`, which runs this function in a subshell, so a mutator's lookup
 # does not persist.  That only costs one extra `command -v` per call.)
-_SB_JQ=''
+workload_JQ=''
 _sb_jq() {
-	if [ -z "$_SB_JQ" ]; then
-		_SB_JQ="$(command -v jq 2>/dev/null || true)"
-		[ -n "$_SB_JQ" ] || log_die 92 \
-			"jq not found — required by the sandbox_* API" \
+	if [ -z "$workload_JQ" ]; then
+		workload_JQ="$(command -v jq 2>/dev/null || true)"
+		[ -n "$workload_JQ" ] || log_die 92 \
+			"jq not found — required by the workload_* API" \
 			hint='host: add jq to mise.toml; Termux: pkg install jq'
 	fi
-	"$_SB_JQ" "$@"
+	"$workload_JQ" "$@"
 }
 
-# _wrapper is the host-side command `sandbox_run [wrapper...]` prefixes the
+# _wrapper is the host-side command `workload_run [wrapper...]` prefixes the
 # launch with (historically `infisical run … --`).  Initialised here so
-# _render_container is also callable on its own — tests/check-sandbox.sh does
+# _render_workload is also callable on its own — tests/check-workload.sh does
 # exactly that, and an unset global would trip `set -u`.
 _wrapper=''
 
-_SB_NAME=''
-_SB_IMAGE=''
-_SB_MODE=''
-_SB_NETWORK=''
-_SB_INIT=0
-_SB_USER=0
-_SB_GPU=0
-_SB_HARDEN=0
-_SB_WORKDIR=''
-_SB_ENTRYPOINT=''
-_SB_LISTS='{}'
+workload_NAME=''
+workload_IMAGE=''
+workload_MODE=''
+workload_NETWORK=''
+workload_INIT=0
+workload_USER=0
+workload_GPU=0
+workload_HARDEN=0
+workload_WORKDIR=''
+workload_ENTRYPOINT=''
+workload_LISTS='{}'
 
 # declarative API — scalars are plain assignments
-sandbox_name()     { _SB_NAME="$1"; }
-sandbox_image()    { _SB_IMAGE="$1"; }
-sandbox_detach()   { _SB_MODE='detach'; }
-sandbox_interactive() { _SB_MODE='interactive'; }
-sandbox_init()     { _SB_INIT=1; }
-sandbox_network()  { _SB_NETWORK="$1"; }
-sandbox_user()     { _SB_USER=1; }
-sandbox_gpu()      { _SB_GPU=1; detect_gpu_devs; }
-sandbox_hardening(){ _SB_HARDEN=1; }
-sandbox_workdir()  { _SB_WORKDIR="$1"; }
-sandbox_entrypoint(){ _SB_ENTRYPOINT="$1"; }
+workload_name()     { workload_NAME="$1"; }
+workload_image()    { workload_IMAGE="$1"; }
+workload_detach()   { workload_MODE='detach'; }
+workload_interactive() { workload_MODE='interactive'; }
+workload_init()     { workload_INIT=1; }
+workload_network()  { workload_NETWORK="$1"; }
+workload_user()     { workload_USER=1; }
+workload_gpu()      { workload_GPU=1; detect_gpu_devs; }
+workload_hardening(){ workload_HARDEN=1; }
+workload_workdir()  { workload_WORKDIR="$1"; }
+workload_entrypoint(){ workload_ENTRYPOINT="$1"; }
 
 # declarative API — lists, one jq call each (see each filter's header)
-sandbox_publish() {
-	_SB_LISTS="$(_sb_jq -nc --argjson doc "$_SB_LISTS" --arg host "$1" \
-		--arg guest "$2" --from-file "$_SB_JQDIR/sandbox-port.jq")" ||
-		log_die 92 "sandbox_publish failed" host="$1" guest="$2"
+workload_publish() {
+	workload_LISTS="$(_sb_jq -nc --argjson doc "$workload_LISTS" --arg host "$1" \
+		--arg guest "$2" --from-file "$workload_JQDIR/workload-port.jq")" ||
+		log_die 92 "workload_publish failed" host="$1" guest="$2"
 }
-sandbox_env() { _sb_append env "$@"; }
-sandbox_cmd() {
+workload_env() { _sb_append env "$@"; }
+workload_cmd() {
 	[ "$#" -gt 0 ] || return 0
 	# The bare `--` after --args is REQUIRED: jq keeps parsing options after
 	# --args, so a command word starting with a dash (`-config-dir`) would be
 	# read as jq flags.  -- ends option parsing; everything after is data.
-	_SB_LISTS="$(_sb_jq -nc --argjson doc "$_SB_LISTS" \
-		--from-file "$_SB_JQDIR/sandbox-cmd.jq" --args -- "$@")" ||
-		log_die 92 "sandbox_cmd failed"
+	workload_LISTS="$(_sb_jq -nc --argjson doc "$workload_LISTS" \
+		--from-file "$workload_JQDIR/workload-cmd.jq" --args -- "$@")" ||
+		log_die 92 "workload_cmd failed"
 }
 
 # _sb_append <field> <value...> — append strings to a named array of the
@@ -296,28 +296,28 @@ sandbox_cmd() {
 _sb_append() {
 	_sb_field="$1"; shift
 	[ "$#" -gt 0 ] || return 0
-	# `--` after --args: see sandbox_cmd — a value may start with a dash.
-	_SB_LISTS="$(_sb_jq -nc --argjson doc "$_SB_LISTS" --arg field "$_sb_field" \
-		--from-file "$_SB_JQDIR/sandbox-append.jq" --args -- "$@")" ||
-		log_die 92 "sandbox append failed" field="$_sb_field"
+	# `--` after --args: see workload_cmd — a value may start with a dash.
+	workload_LISTS="$(_sb_jq -nc --argjson doc "$workload_LISTS" --arg field "$_sb_field" \
+		--from-file "$workload_JQDIR/workload-append.jq" --args -- "$@")" ||
+		log_die 92 "workload append failed" field="$_sb_field"
 }
 
-# sandbox_rw_if was removed: nothing called it (only sandbox_ro_if is used).
-sandbox_ro()  { _require "$1" "read-only mount $1"  && _sb_add_mount ro "$1" "$2"; }
-sandbox_rw()  { _require "$1" "read-write mount $1" && _sb_add_mount rw "$1" "$2"; }
-sandbox_ro_if() { [ -e "$1" ] && _sb_add_mount ro "$1" "$2"; return 0; }
+# workload_rw_if was removed: nothing called it (only workload_ro_if is used).
+workload_ro()  { _require "$1" "read-only mount $1"  && _sb_add_mount ro "$1" "$2"; }
+workload_rw()  { _require "$1" "read-write mount $1" && _sb_add_mount rw "$1" "$2"; }
+workload_ro_if() { [ -e "$1" ] && _sb_add_mount ro "$1" "$2"; return 0; }
 
 _sb_add_mount() {
-	_SB_LISTS="$(_sb_jq -nc --argjson doc "$_SB_LISTS" --arg mode "$1" \
+	workload_LISTS="$(_sb_jq -nc --argjson doc "$workload_LISTS" --arg mode "$1" \
 		--arg host "$2" --arg guest "$3" \
-		--from-file "$_SB_JQDIR/sandbox-mount.jq")" ||
-		log_die 92 "sandbox mount failed" mode="$1" host="$2" guest="$3"
+		--from-file "$workload_JQDIR/workload-mount.jq")" ||
+		log_die 92 "workload mount failed" mode="$1" host="$2" guest="$3"
 }
 
-sandbox_rm() {
-	[ "$_sandbox" = 'container' ] || return 0
+workload_rm() {
+	[ "$_workload" = 'workload' ] || return 0
 	# Remove by name through every backend, not just the one picked for `run`.
-	# podman and docker keep separate stores, so a stale container left by the
+	# podman and docker keep separate stores, so a stale workload left by the
 	# other tool (or a tool-detection flip between runs) would otherwise slip
 	# past a single-backend `rm` and collide with the new `--name` at run time.
 	for _ct in podman docker; do
@@ -325,9 +325,9 @@ sandbox_rm() {
 		"$_ct" container rm -f "$1" >/dev/null 2>&1 || true
 	done
 }
-sandbox_logs() {
-	[ "$_sandbox" = 'container' ] || return 0
-	"$_container_tool" logs "$1"
+workload_logs() {
+	[ "$_workload" = 'workload' ] || return 0
+	"$_workload_tool" logs "$1"
 }
 
 _require() { [ -e "$1" ] || log_die 91 "$2 not found" path="$1"; }
@@ -340,59 +340,59 @@ detect_gpu_devs() {
 		[ -e "$_n" ] && set -- "$@" "$_n"
 	done
 	[ "$#" -gt 0 ] && _sb_append devices "$@"
-	# Always succeed: this is called as a side effect of sandbox_gpu() and its
+	# Always succeed: this is called as a side effect of workload_gpu() and its
 	# return value carries no meaning.  A GPU-less host leaves the last test
 	# non-zero, which would trip `set -e` in the caller.
 	return 0
 }
 
-# render — ONE jq call.  lib/sandbox-render.jq owns the flag order and the
+# render — ONE jq call.  lib/workload-render.jq owns the flag order and the
 # empty-string-means-omit contract; read its header, not this function, to
 # learn what the argv looks like.
 _render_argv() {
 	_sb_jq -rn \
-		--argjson doc "$_SB_LISTS" \
-		--arg tool "$_container_tool" \
-		--arg image "$_SB_IMAGE" \
-		--arg name "$_SB_NAME" \
-		--arg network "$_SB_NETWORK" \
-		--arg entrypoint "$_SB_ENTRYPOINT" \
-		--arg workdir "$_SB_WORKDIR" \
-		--arg mode "$_SB_MODE" \
-		--arg init "$_SB_INIT" \
-		--arg user "$_SB_USER" \
+		--argjson doc "$workload_LISTS" \
+		--arg tool "$_workload_tool" \
+		--arg image "$workload_IMAGE" \
+		--arg name "$workload_NAME" \
+		--arg network "$workload_NETWORK" \
+		--arg entrypoint "$workload_ENTRYPOINT" \
+		--arg workdir "$workload_WORKDIR" \
+		--arg mode "$workload_MODE" \
+		--arg init "$workload_INIT" \
+		--arg user "$workload_USER" \
 		--arg uid "${SUDO_UID:-$(id -u)}" \
 		--arg gid "${SUDO_GID:-$(id -g)}" \
 		--arg userns "$_userns" \
 		--arg keepgroups "$_keep_groups" \
-		--arg harden "$_SB_HARDEN" \
-		--from-file "$_SB_JQDIR/sandbox-render.jq"
+		--arg harden "$workload_HARDEN" \
+		--from-file "$workload_JQDIR/workload-render.jq"
 }
 
 # shellcheck disable=SC2120  # "$@" is set by the `eval set --` below, not passed in
-_render_container() {
-	[ -n "$_SB_IMAGE" ] || log_die 91 "sandbox_image not set"
+_render_workload() {
+	[ -n "$workload_IMAGE" ] || log_die 91 "workload_image not set"
 	_sb_argv="$(_render_argv)" ||
-		log_die 92 "sandbox render failed (see the jq error above)"
+		log_die 92 "workload render failed (see the jq error above)"
 	# The renderer emits one line of @sh-quoted words, so expanding $_sb_argv
 	# unquoted is the point — @sh supplies the quoting that keeps each word
 	# (paths with spaces, quotes, newlines) intact as a single argument.
 	# shellcheck disable=SC2086  # intentionally unquoted: @sh-quoted argv
 	eval "set -- $_sb_argv"
 	# shellcheck disable=SC2086  # $_wrapper is an intentional word list
-	$_wrapper "$_container_tool" container run "$@"
+	$_wrapper "$_workload_tool" container run "$@"
 }
 
-# sandbox_run [wrapper...] — render and launch; optional wrapper prefixes the
-# launch command.  Note: the wrapper runs on the HOST around the container-tool
-# invocation, so it cannot inject env into the container — secrets reach the
-# container only through the sandbox_env allowlist (the coding-agent run
+# workload_run [wrapper...] — render and launch; optional wrapper prefixes the
+# launch command.  Note: the wrapper runs on the HOST around the workload-runtime
+# invocation, so it cannot inject env into the workload — secrets reach the
+# workload only through the workload_env allowlist (the coding-agent run
 # forwards host-loaded vault keys that way; it no longer runs infisical inside
-# the sandbox — see coding-agent/run.sh).
-sandbox_run() {
+# the workload — see coding-agent/run.sh).
+workload_run() {
 	_wrapper="$*"
-	[ "$_sandbox" = 'container' ] ||
-		log_die 91 "no sandbox backend available (need podman or docker)"
+	[ "$_workload" = 'workload' ] ||
+		log_die 91 "no workload backend available (need podman or docker)"
 	# shellcheck disable=SC2119  # see SC2120 above: "$@" comes from the eval
-	_render_container
+	_render_workload
 }

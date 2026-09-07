@@ -32,7 +32,7 @@
 # SECRETS: the native binary resolves the ${env.*} references in config.d/
 # from its own process environment, so everything it needs must be exported
 # before the exec below.  That comes from the shared load_secrets
-# (container-tool.sh): infisical first — on Termux via the
+# (lib/workload-runtime.sh): infisical first — on Termux via the
 # ~/Infisical/cli/infisical build produced by the repo's root ./build.sh.
 # No .env / ENV_FILE is ever read — that file-based fallback was removed.
 # Environments that already exported the keys are left untouched (load_secrets
@@ -53,7 +53,7 @@
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck disable=SC1091  # loads log.sh + load_secrets
-. "$script_dir/../container-tool.sh"
+. "$script_dir/../lib/workload-runtime.sh"
 LOG_TOOL='openai-completions/run-native'
 export LOG_TOOL
 config_d="$script_dir/config.d"

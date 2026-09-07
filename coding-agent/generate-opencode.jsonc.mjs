@@ -94,12 +94,11 @@ const REQUEST_TIMEOUT_MS = 8000;
 /**
  * Outcome of probing a provider's REAL endpoint:
  * - `ok` — 2xx with a parseable model list: built-in routing works.
- * - `auth` — 401/403: reachable, we merely have no usable credentials here.
- * - `reachable` — some other http response: the host answered, so the path is
+ * - `reachable` — any other http response: the host answered, so the path is
  *   fine even though the answer was not a model list.
  * - `unreachable` — no http response at all (dns/conn-refused/tls/timeout).
  * Only `unreachable` justifies rerouting the provider through the peer.
- * @typedef {"ok"|"auth"|"reachable"|"unreachable"} ProbeOutcome
+ * @typedef {"ok"|"reachable"|"unreachable"} ProbeOutcome
  */
 
 /**
@@ -187,10 +186,6 @@ const CLOUD_PROVIDERS = {
 	},
 };
 
-// Statuses that mean "we reached the endpoint, we merely lack usable
-// credentials for it" — see the "Reachable" note in the header comment.
-const AUTH_REJECTED_STATUSES = new Set([401, 403]);
-
 /**
  * Bearer auth headers for a peer/provider key, or undefined to probe
  * unauthenticated.
@@ -257,8 +252,6 @@ async function probeDirect(baseUrl, headers) {
 		return { result: "ok" };
 	} catch (err) {
 		const { message, status } = /** @type {HttpError} */ (err);
-		if (status !== undefined && AUTH_REJECTED_STATUSES.has(status))
-			return { result: "auth", error: message };
 		return {
 			result: status === undefined ? "unreachable" : "reachable",
 			error: message,
@@ -370,15 +363,10 @@ async function main() {
 				logInfo("reachable directly — keeping built-in routing", {
 					provider: id,
 				});
-			} else if (result === "auth") {
-				// Not a routing problem: the endpoint answered and refused our
-				// (absent) credentials. opencode authenticates itself at runtime.
-				logInfo("reachable but credential-gated — keeping built-in routing", {
-					provider: id,
-					error,
-				});
 			} else {
-				logWarn("reachable but unexpected answer — keeping built-in routing", {
+				// Any non-unreachable response (401/403/other) proves the network
+				// path works; only total absence of response means unreachable.
+				logInfo("reachable — keeping built-in routing", {
 					provider: id,
 					error,
 				});

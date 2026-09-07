@@ -8,7 +8,7 @@
 # (host/container) and generate-termux.sh (native/Termux).
 # The native-vs-sandboxed split is a real *backend/capability* difference
 # (container + GPU vs. native binary + peers-only), not an env-loading one —
-# secrets are already unified via the shared load_secrets (container-tool.sh).
+# secrets are already unified via the shared load_secrets (lib/workload-runtime.sh).
 #
 # Peers-only hosts (Termux/a50, OCI free tier) get an EMPTY local `models`
 # map: no generator here emits local entries unless the container backend AND
@@ -59,7 +59,7 @@
 # macros/ctxWindows/scalars must be single-defined — hence each generator owns
 # a disjoint key set and 00-general.yaml is the only home of the globals.
 #
-# Secrets via the shared load_secrets (see ../container-tool.sh): ONE in-memory
+# Secrets via the shared load_secrets (see ../lib/workload-runtime.sh): ONE in-memory
 # vault round-trip, injected into the environment — no per-generator
 # `infisical run` wrappers, no --env-file and no .env.  Every stage inherits
 # the loaded environment.  Missing keys are fine: key-gated peers are simply
@@ -78,7 +78,7 @@
 
 set -eu
 # shellcheck disable=SC1091
-. "$(dirname "$0")/../container-tool.sh"
+. "$(dirname "$0")/../lib/workload-runtime.sh"
 LOG_TOOL='openai-completions/generate'
 export LOG_TOOL
 
@@ -182,10 +182,10 @@ _gen generate-general.yaml.mjs
 # branch.  LOCAL_INFERENCE=1 forces the layer regardless (it emits
 # container-side /root/.cache paths — parity/debug only).
 detect_gpu_devs
-# shellcheck disable=SC2154  # _sandbox is set by the sourced container-tool.sh
-# `sandbox_has devices` — not a peek at an internal: the devices live in the
+# shellcheck disable=SC2154  # _workload is set by the sourced lib/workload-runtime.sh
+# `workload_has devices` — not a peek at an internal: the devices live in the
 # JSON description, and this is the documented way to ask about them.
-if [ "$LOCAL_INFERENCE" = 1 ] || { [ "$_sandbox" = 'container' ] && sandbox_has devices; }; then
+if [ "$LOCAL_INFERENCE" = 1 ] || { [ "$_workload" = 'workload' ] && workload_has devices; }; then
 	_gen generate-local-llm-models.yaml.mjs
 	[ -f "$script_dir/launch-gguf.sh" ] &&
 		cp -- "$script_dir/launch-gguf.sh" "$config_d/launch-gguf.sh"

@@ -4,9 +4,9 @@
 # Termux orchestrator).  One file, profile-detected at runtime.  The
 # native-vs-sandboxed split is a real *backend* difference (container image
 # vs. native binary) — not an env-loading one, which is already unified via
-# the shared load_secrets (container-tool.sh).
+# the shared load_secrets (lib/workload-runtime.sh).
 #
-#   container (_sandbox=container): podman/docker, image + GPU passthrough +
+#   container (_workload=container): podman/docker, image + GPU passthrough +
 #                                   HF-cache mounts, via the declarative
 #                                   sandbox API.
 #   native     (Termux):            build the android/arm64 binary if missing,
@@ -29,7 +29,7 @@
 
 set -eu
 # shellcheck disable=SC1091
-. "$(dirname "$0")/../container-tool.sh"
+. "$(dirname "$0")/../lib/workload-runtime.sh"
 LOG_TOOL='openai-completions/run'
 export LOG_TOOL
 
@@ -49,16 +49,16 @@ export LISTEN
 [ -d "$config_d" ] ||
 	log_die 94 "config.d not found — generate it first with ./generate.sh" dir="$config_d"
 
-# Secrets via the shared load_secrets (see ../container-tool.sh): ONE in-memory
-# vault round-trip, loaded here so the sandbox_env allowlist (container path)
+# Secrets via the shared load_secrets (see ../lib/workload-runtime.sh): ONE in-memory
+# vault round-trip, loaded here so the workload_env allowlist (container path)
 # or the native process environment (native path) picks the values straight out
 # of the loaded environment.  Generators must have run first (./generate.sh)
 # with the same helper, so their probes saw the same keys.
 load_secrets
 log_info "secrets source" source="${SECRETS_SOURCE:-none}"
 
-# shellcheck disable=SC2154  # _sandbox is set by the sourced container-tool.sh
-if [ "$_sandbox" = 'container' ]; then
+# shellcheck disable=SC2154  # _workload is set by the sourced lib/workload-runtime.sh
+if [ "$_workload" = 'workload' ]; then
 	# ========================= container backend =========================
 	if [ -z "${OPENCODE_API_KEY:-}" ] && [ -z "${OPENROUTER_API_KEY:-}" ] \
 		&& [ -z "${CLINE_API_KEY:-}" ] && [ -z "${PEER_API_KEY:-}" ]; then
@@ -79,37 +79,37 @@ if [ "$_sandbox" = 'container' ]; then
 		mode="$([ "$local_layer" = yes ] && printf 'local-inference+peers' || printf 'peers-only')" \
 		image="$image" port="$HOST_PORT"
 
-	sandbox_rm "$container_id"
-	sandbox_name     "$container_id"
-	sandbox_image    "$image"
-	sandbox_detach
-	sandbox_init
-	sandbox_publish  "$HOST_PORT" 8080
-	sandbox_user
+	workload_rm "$container_id"
+	workload_name     "$container_id"
+	workload_image    "$image"
+	workload_detach
+	workload_init
+	workload_publish  "$HOST_PORT" 8080
+	workload_user
 	if [ "$local_layer" = yes ]; then
-		sandbox_gpu
-		sandbox_rw "$HF_HUB_CACHE" /root/.cache/huggingface/hub
-		sandbox_rw "$HF_HUB_CACHE" /home/ubuntu/.cache/huggingface/hub
+		workload_gpu
+		workload_rw "$HF_HUB_CACHE" /root/.cache/huggingface/hub
+		workload_rw "$HF_HUB_CACHE" /home/ubuntu/.cache/huggingface/hub
 	fi
-	sandbox_ro       "$config_d" /etc/llama-swap/config.d
-	sandbox_hardening
+	workload_ro       "$config_d" /etc/llama-swap/config.d
+	workload_hardening
 	# HF_TOKEN is only consumed by the local layer (launch-gguf.sh download
 	# fallback); the provider keys are referenced by ${env.*} in
 	# peer-cloud.yaml.  Values come from load_secrets above — no per-step vault
 	# calls, no ambient host-env forwarding beyond this explicit allowlist.
-	sandbox_env      HF_TOKEN
-	sandbox_env      OPENCODE_API_KEY
-	sandbox_env      OPENROUTER_API_KEY
-	sandbox_env      PEER_API_KEY
-	sandbox_env      CLINE_API_KEY
-	sandbox_entrypoint 'llama-swap'
-	sandbox_cmd      -config-dir /etc/llama-swap/config.d -listen 0.0.0.0:8080
+	workload_env      HF_TOKEN
+	workload_env      OPENCODE_API_KEY
+	workload_env      OPENROUTER_API_KEY
+	workload_env      PEER_API_KEY
+	workload_env      CLINE_API_KEY
+	workload_entrypoint 'llama-swap'
+	workload_cmd      -config-dir /etc/llama-swap/config.d -listen 0.0.0.0:8080
 	# No infisical wrapper here: the keys were loaded once via load_secrets and
-	# are forwarded through the sandbox_env allowlist above.
-	sandbox_run
+	# are forwarded through the workload_env allowlist above.
+	workload_run
 
 	sleep 5
-	sandbox_logs "$container_id" | head
+	workload_logs "$container_id" | head
 elif [ "$_termux" = 1 ]; then
 	# ========================= native backend ===========================
 	# Termux has no usable container runtime, so serve the native
@@ -117,13 +117,13 @@ elif [ "$_termux" = 1 ]; then
 	# invocation (the only way this repo runs llama-swap without a container);
 	# this branch only adds what it deliberately leaves out: generate-first,
 	# build-binary-if-missing, native_stop (stop previous instance + cleanup,
-	# the native analogue of the container path's `sandbox_rm`), and
+	# the native analogue of the container path's `workload_rm`), and
 	# background/pid-file.
 	BIN="${LLAMA_SWAP_BIN:-$HOME/mostlygeek/llama-swap/llama-swap}"
 	mkdir -p "$RUN_DIR"
 
 	# native_stop — stop any previous native llama-swap instance so this run
-	# can take the port.  Mirrors the container path's `sandbox_rm
+	# can take the port.  Mirrors the container path's `workload_rm
 	# "$container_id"` (which removes a stale container by name before `run`).
 	# Native has no container name, so we key off the pid-file the BACKGROUND
 	# path writes, and additionally sweep any llama-swap process serving the

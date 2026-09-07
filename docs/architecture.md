@@ -35,7 +35,7 @@ from `local-llm/`.
   `gen-lib.mjs`, `launch-gguf.sh`, `llama-swap-core.json`, `config.d/`,
   `run.sh` and the Termux alternative build/serve (`build.sh` /
   `run-native.sh`).
-- `coding-agent/` is the **pi sandbox baseline generator**: it owns the
+- `coding-agent/` is the **pi workload baseline generator**: it owns the
   `Containerfile`/`config.toml` image definition and the canonical
   `settings.json`/`auth.json`. Archived runners (`-cloud`, `-peer`) used to
   consume that image and copy those artifacts; their concerns are now handled
@@ -54,11 +54,11 @@ prohibits (and what was removed):
 
 ## Repo-level shared infrastructure
 
-`container-tool.sh` (repo root) is **shared infrastructure**, not a sub-project:
+`lib/workload-runtime.sh` (repo root) is **shared infrastructure**, not a sub-project:
 it centralises container-runtime detection (podman vs docker, UID/SELinux
 flags). Runner run-scripts source it from the fixed `~/agentcontainer` layout.
 It is intentionally NOT copied into each runner — it is owned by the repo, like
-`AGENTS.md` and `biome.json`. See [container-tooling.md](container-tooling.md).
+`AGENTS.md` and `biome.json`. See [lib/workload-runtimeing.md](lib/workload-runtimeing.md).
 
 ## Local vs peers (the two layers, one instance)
 
@@ -83,7 +83,7 @@ the variant folders redundant.)
 | Folder | Role | What makes it work |
 |--------|------|--------------------|
 | `openai-completions/` | multipurpose serving (local GGUF where capable, peers everywhere) | `gen-lib.mjs`, `generate-general.yaml.mjs`, `generate-local-llm-models.yaml.mjs` + `llamacpp-model-data.json` + `active-b.json`, `generate-peer-cloud.yaml.mjs`, `generate-gfx1030-models.mjs`, `launch-gguf.sh`, `llama-swap-core.json`, `config.d/` + `run.sh`, `build.sh` (termux-native build or image pull) + `run-native.sh` (Termux) |
-| `coding-agent/` | base pi sandbox image + artifacts | `Containerfile`, `config.toml`, `build.sh`, `run.sh`, `settings.json`, `auth.json` |
+| `coding-agent/` | base pi workload image + artifacts | `Containerfile`, `config.toml`, `build.sh`, `run.sh`, `settings.json`, `auth.json` |
 
 The next planned step — a simplified config-generator system split by concern —
 is sketched in

@@ -90,4 +90,4 @@ The containerized "huggingface environment" + `models-local/` flat layout +
 `old/agentcontainer/local-llm/`. `llama-server` now resolves GGUFs from
 Hugging Face at runtime via `--hf-repo`/`--hf-file`; see
 `openai-completions-gfx1030/generate-local-llm-models.yaml.mjs` and
-`docs/container-tooling.md`.
+`docs/lib/workload-runtimeing.md`.

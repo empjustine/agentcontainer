@@ -19,7 +19,7 @@
 #     - `mise x node@24 -- node` (mise pinned via ../mise.toml / image config)
 #     - secrets expected ALREADY INJECTED by the caller: run.sh loads them on
 #       the HOST (load_secrets — one cached infisical export) and forwards
-#       them through the sandbox_env allowlist, so the in-container
+#       them through the workload_env allowlist, so the in-container
 #       generators never run infisical.  Manual host runs just call
 #       load_secrets below.
 #     - models.dev catalog refreshed best-effort
@@ -73,7 +73,7 @@
 
 set -eu
 # shellcheck disable=SC1091
-. "$(dirname "$0")/../container-tool.sh"
+. "$(dirname "$0")/../lib/workload-runtime.sh"
 LOG_TOOL='coding-agent/generate'
 export LOG_TOOL
 
@@ -119,7 +119,7 @@ log_info "profile" \
 	profile="$([ "$_termux" = 1 ] && printf termux || printf container-host)" \
 	agentDir="$AGENT_DIR" runDir="$RUN_DIR"
 
-# --- secrets (single call; see load_secrets in ../container-tool.sh) --------
+# --- secrets (single call; see load_secrets in ../lib/workload-runtime.sh) --------
 load_secrets
 log_debug "secrets loaded" secrets="$SECRETS_SOURCE"
 

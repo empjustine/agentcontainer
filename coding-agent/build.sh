@@ -4,12 +4,12 @@
 set -eux
 
 # shellcheck disable=SC1091
-. "$(dirname "$0")/../container-tool.sh"
+. "$(dirname "$0")/../lib/workload-runtime.sh"
 LOG_TOOL='coding-agent/build'
 export LOG_TOOL
 
-# shellcheck disable=SC2154  # set by sourced container-tool.sh
-[ "$_sandbox" = 'container' ] ||
+# shellcheck disable=SC2154  # set by sourced lib/workload-runtime.sh
+[ "$_workload" = 'workload' ] ||
 	log_die 91 "can't find container tool"
 
 BUILD_DATE="$(date +'%Y%m%d')"
@@ -21,13 +21,13 @@ build_context="$SCRIPT_DIR"
 containerfile="$SCRIPT_DIR/Containerfile"
 tag='localhost/empjustine/coding-agent'
 
-# shellcheck disable=SC2154  # set by sourced container-tool.sh
-case "$_container_tool" in
+# shellcheck disable=SC2154  # set by sourced lib/workload-runtime.sh
+case "$_workload_tool" in
 	podman) set -- image build ;;
 	docker) set -- buildx build ;;
 esac
 
-"$_container_tool" "$@" \
+"$_workload_tool" "$@" \
 	--pull \
 	--build-arg BUILD_DATE \
 	--build-arg UID="$_uid" \

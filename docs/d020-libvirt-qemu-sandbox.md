@@ -1,11 +1,11 @@
-# d020 — qemu/libvirt VM sandboxes (requirements assessment)
+# d020 — qemu/libvirt VM workloades (requirements assessment)
 
 **Status: verified requirements only — nothing implemented.** This note
-establishes what it would take to support qemu/libvirt VMs as sandbox runtimes
+establishes what it would take to support qemu/libvirt VMs as workload runtimes
 next to the existing podman/docker container backend, for both serving
 (`openai-completions/`) and usage (`coding-agent/`). It is the deliberate
 replacement for the retired PRoot backend (see
-[container-tooling.md](container-tooling.md)): where PRoot only *translated
+[lib/workload-runtimeing.md](lib/workload-runtimeing.md)): where PRoot only *translated
 paths over ptrace* (no namespaces, no cgroups, no real root, no GPU), a
 qemu/KVM VM is a full kernel boundary — real isolation, real devices, at the
 cost of an image + lifecycle surface that containers hide.
@@ -25,25 +25,25 @@ cost of an image + lifecycle surface that containers hide.
 | Snapshot/rollback | rebuild image | `virsh snapshot-*` / qcow2 — cheap full-state reset |
 
 **Conclusion up front:** VMs should *complement* containers, in the "VM as
-sandbox **host**" shape (§2 Level 1), not replace them. A full "VM as the
-sandbox" backend (Level 2) is only worth building for workloads that are
+workload **host**" shape (§2 Level 1), not replace them. A full "VM as the
+workload" backend (Level 2) is only worth building for workloads that are
 peers-only/CPU — GPU inference is strictly worse inside a VM on this fleet
 (§4).
 
 ## 2. Two integration levels
 
-### Level 1 — VM as the sandbox host (recommended first step)
+### Level 1 — VM as the workload host (recommended first step)
 
 A libvirt domain boots a cloud image that runs **podman inside the guest**;
-the existing container backend and the whole `sandbox_*` API then run inside
-the VM unchanged. `container-tool.sh` needs no new renderer — the guest
-re-creates the bazzite/work environment (same `container-tool.sh`, same
+the existing container backend and the whole `workload_*` API then run inside
+the VM unchanged. `lib/workload-runtime.sh` needs no new renderer — the guest
+re-creates the bazzite/work environment (same `lib/workload-runtime.sh`, same
 run scripts) inside a stronger boundary.
 
 What this requires:
 
 - **Guest image**: a cloud image (`Fedora-CoreOS`, `fedora-cloud`, `debian
-  generic-cloud`) with podman + `container-tool.sh` baked in via cloud-init
+  generic-cloud`) with podman + `lib/workload-runtime.sh` baked in via cloud-init
   (write_files + runcmd), or CoreOS Ignition. No OCI-on-libvirt problem — the
   OCI workflow stays inside the guest.
 - **Workspace sharing**: virtiofs share for the workspace + `~/.pi/agent`
@@ -61,24 +61,24 @@ What this requires:
   that podman approximates with `container rm`.
 
 Code cost: a thin `vm-run.sh`-style helper (define/tear down domain, wait for
-SSH, exec a script inside). **No changes to the `sandbox_*` API.**
+SSH, exec a script inside). **No changes to the `workload_*` API.**
 
-### Level 2 — VM as the sandbox itself (new libvirt backend)
+### Level 2 — VM as the workload itself (new libvirt backend)
 
-A `_sandbox='libvirt'` backend in `container-tool.sh` rendering `sandbox_*`
+A `_workload='libvirt'` backend in `lib/workload-runtime.sh` rendering `workload_*`
 descriptions to domain XML / `virt-install`. The mapping, for the record:
 
-| `sandbox_*` API | libvirt rendering |
+| `workload_*` API | libvirt rendering |
 |---|---|
-| `sandbox_name` | domain name (`virsh define/start`) |
-| `sandbox_image` | **does not map** — needs a cloud image + cloud-init seed instead of an OCI ref (this is the main gap) |
-| `sandbox_publish h g` | `<interface type='user'>` + hostfwd, or NAT-network port forward |
-| `sandbox_ro` / `sandbox_rw` | virtiofs share (`<filesystem type='mount'>` + virtiofsd); read-only via virtiofs `--shared-dir` ro or guest mount option |
-| `sandbox_gpu` | VFIO `<hostdev>` PCI passthrough — whole GPU only (§4) |
-| `sandbox_user` | guest-managed (cloud-init user); host UID mapping is meaningless |
-| `sandbox_env` / `sandbox_env_set` | cloud-init or `ssh` injection — no `--env` equivalent |
-| `sandbox_init` / `sandbox_hardening` | N/A / subsumed (the guest has no host access beyond explicit shares) |
-| `sandbox_rm` / `sandbox_logs` | `virsh destroy/undefine`, journal via serial console or guest journald |
+| `workload_name` | domain name (`virsh define/start`) |
+| `workload_image` | **does not map** — needs a cloud image + cloud-init seed instead of an OCI ref (this is the main gap) |
+| `workload_publish h g` | `<interface type='user'>` + hostfwd, or NAT-network port forward |
+| `workload_ro` / `workload_rw` | virtiofs share (`<filesystem type='mount'>` + virtiofsd); read-only via virtiofs `--shared-dir` ro or guest mount option |
+| `workload_gpu` | VFIO `<hostdev>` PCI passthrough — whole GPU only (§4) |
+| `workload_user` | guest-managed (cloud-init user); host UID mapping is meaningless |
+| `workload_env` / `workload_env_set` | cloud-init or `ssh` injection — no `--env` equivalent |
+| `workload_init` / `workload_hardening` | N/A / subsumed (the guest has no host access beyond explicit shares) |
+| `workload_rm` / `workload_logs` | `virsh destroy/undefine`, journal via serial console or guest journald |
 
 This is a real backend, not a flag-flip — and only Level-1's gap list (image
 model, sharing, secrets) shrinks. Defer until Level 1 proves insufficient.
@@ -104,7 +104,7 @@ systemctl --user status virtqemud virtstoraged 2>/dev/null   # user-session daem
 - **SELinux on bazzite**: virtiofsd runs confined (`virtiofsd_t`); shared dirs
   may need `setsebool -P virtiofs_use_execmem` and proper labels
   (`container_file_t` / `virtiofs_content_t`) — same class of friction as the
-  `:z,U` handling `container-tool.sh` already centralizes.
+  `:z,U` handling `lib/workload-runtime.sh` already centralizes.
 
 ## 4. Serving scenario (`openai-completions`) in a VM
 
@@ -167,7 +167,7 @@ boundary). Requirements beyond Level 1:
 
 ## References
 
-- `container-tool.sh` — current container-only sandbox runner.
-- [container-tooling.md](container-tooling.md) — `sandbox_*` API + PRoot removal note.
-- [sandbox-helper-env-analysis.md](sandbox-helper-env-analysis.md) — why PRoot is not a sandbox (§2–3).
+- `lib/workload-runtime.sh` — current container-only workload runner.
+- [lib/workload-runtimeing.md](lib/workload-runtimeing.md) — `workload_*` API + PRoot removal note.
+- [workload-helper-env-analysis.md](workload-helper-env-analysis.md) — why PRoot is not a workload (§2–3).
 - libvirt domain XML (hostdev/VFIO, filesystem/virtiofs), `virt-install --cloud-init`, `virt-host-validate`.

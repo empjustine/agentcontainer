@@ -88,7 +88,7 @@ output:
 
 ## Container run
 
-`run.sh` sources `container-tool.sh`, creates the `.pi/agent/` directory,
+`run.sh` sources `lib/workload-runtime.sh`, creates the `.pi/agent/` directory,
 copies `settings.json` and `models.json` into it, and launches the container:
 
 ```sh

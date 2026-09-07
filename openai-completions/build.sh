@@ -27,7 +27,7 @@
 # `pkg install golang`.
 
 # shellcheck disable=SC1091
-. "$(dirname "$0")/../container-tool.sh"
+. "$(dirname "$0")/../lib/workload-runtime.sh"
 LOG_TOOL='openai-completions/build'
 export LOG_TOOL
 
@@ -35,7 +35,7 @@ set -eu
 
 termux_prefix=/data/data/com.termux/files
 
-# shellcheck disable=SC2154  # _sandbox/_container_tool are set by the sourced container-tool.sh
+# shellcheck disable=SC2154  # _workload/_workload_tool are set by the sourced lib/workload-runtime.sh
 if [ -d "$termux_prefix" ]; then
 	# --- Termux: native build --------------------------------------------
 	src="${LLAMA_SWAP_SRC:-$HOME/mostlygeek/llama-swap}"
@@ -84,9 +84,9 @@ else
 	else
 		image="${LLAMA_SWAP_IMAGE:-ghcr.io/mostlygeek/llama-swap:cpu}"
 	fi
-	[ "$_sandbox" = 'container' ] || {
+	[ "$_workload" = 'workload' ] || {
 		log_die 91 "no container tool (podman/docker) and not on termux — nothing to build/pull"
 	}
-	"$_container_tool" image pull "$image"
+	"$_workload_tool" image pull "$image"
 	log_info "pulled image; serve it with ./run.sh" image="$image"
 fi
