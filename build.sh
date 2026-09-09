@@ -16,7 +16,7 @@
 # the binary should not pay for the toolchain.
 #
 # Same ~/<org>/<repo> + in-checkout-binary convention as the llama-swap Termux
-# branch of openai-completions/build.sh:
+# branch of llm-reverse-proxy/build.sh:
 #
 #   clone https://github.com/Infisical/cli.git ->  ~/Infisical/cli
 #   go build .                                  ->  ~/Infisical/cli/infisical
@@ -69,7 +69,7 @@
 #
 # CONSUMPTION: load_secrets (lib/workload-runtime.sh) looks for the binary at the
 # resolved location above and every secret consumer
-# (openai-completions/generate.sh, run.sh, run-native.sh, coding-agent/…)
+# (llm-reverse-proxy/generate.sh, run.sh, run-native.sh, coding-agent/…)
 # inherits it from there.  load_secrets is deliberately passive: it only
 # consumes whatever binary this script produced, never builds anything itself,
 # and warns pointing back at this script when the binary is absent.
@@ -102,11 +102,11 @@ branch="${INFISICAL_BRANCH:-main}"
 # Termux has no mise, so the two tools the rest of the tree needs that cannot
 # be provisioned any other way here come from `pkg`:
 #
-#   nodejs -> node   the .mjs generators (openai-completions/generate.sh,
+#   nodejs -> node   the .mjs generators (llm-reverse-proxy/generate.sh,
 #                    coding-agent/generate.sh) run under the SYSTEM node on
 #                    Termux — there is no mise to pin one.
 #   jq               lib/workload-runtime.sh's workload description API is jq-backed
-#                    (lib/sandbox-*.jq); openai-completions/generate.sh calls
+#                    (lib/workload-*.jq); llm-reverse-proxy/generate.sh calls
 #                    sandbox_has on every run.
 #
 # Probed with -x at $PREFIX/bin — the directory `pkg` installs into — so the
@@ -153,7 +153,7 @@ _ensure_pkg() {
 
 if [ "$_termux" = 1 ]; then
 	_ensure_pkg node nodejs 'the .mjs generators run under the system node here'
-	_ensure_pkg jq jq 'lib/workload-runtime.sh workload_* API (lib/sandbox-*.jq)'
+	_ensure_pkg jq jq 'lib/workload-runtime.sh workload_* API (lib/workload-*.jq)'
 else
 	log_debug "not Termux — skipping pkg provisioning (node/jq come from mise)"
 fi

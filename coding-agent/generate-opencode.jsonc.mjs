@@ -2,7 +2,9 @@
  * @fileoverview generate-opencode.jsonc.mjs — Emit opencode's overlay config: one
  * `provider` map holding ONLY the providers whose built-in routing does not work from this
  * host, rewritten to route through the llama-swap peer. This is opencode's counterpart to
- * pi's generate-models.json.mjs — same detection cascade, different output schema.
+ * pi's generate-cloud-pi-native-providers.mjs — same detection cascade, same provider
+ * subset (the shared fact table lib/cloud-providers.mjs, minus cline-pass which opencode
+ * has no built-in entry for), different output schema.
  *
  * The peer is a llama-swap instance with peer routing enabled: a reverse proxy
  * that listens on /v1/completions, /v1/responses and /v1/messages and routes
@@ -24,10 +26,13 @@
  *      the peer -> emit an override routing that provider through the peer.
  *      The peer is probed lazily: no unreachable provider means no peer route
  *      is needed, so we never spend the request (or log its failures).
- *   2. Local GGUF: probe PEER_BASE_URL, the co-located LAN :8080, then the
- *      tailscale router; emit an openai-compatible provider for GGUF models.
- *      (The legacy :18080 local-inference port is deprecated — the single
- *      multipurpose instance lives on the LAN port :8080.)
+ *   2. Local GGUF: probe PEER_BASE_URL, then the shared fallback FQDN
+ *      (lib/peer-probe.mjs DEFAULT_PEER_FALLBACK — the world-visible FQDN
+ *      funnel of the LAN :8080 instance); emit an openai-compatible provider
+ *      for GGUF models.  No localhost candidates are probed — the LAN :8080
+ *      listen address is only reachable on the local host and the legacy
+ *      :18080 local-inference port is deprecated, so a co-located peer is
+ *      reached via $PEER_BASE_URL or the FQDN.
  *
  * "Reachable" is about the NETWORK PATH, not about credentials. A 401/403 from
  * e.g. https://api.openai.com/v1/models is what an OpenAI-compatible endpoint
@@ -52,31 +57,26 @@ import { renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Structured logging (JSON lines on stderr; see lib/log.mjs).  The env
-// override lets generate.sh point this at its scratch-dir copy.
-// String() and not a bare URL: `import()` wants a string specifier, and a
-// file: URL stringifies back to itself, so the default keeps working.
-const { logInfo, logWarn, setLogTool } = await import(
-	String(process.env.LOG_LIB ?? new URL("../lib/log.mjs", import.meta.url))
-);
-setLogTool("coding-agent/generate-opencode");
-
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 
-const REQUEST_TIMEOUT_MS = 8000;
-
-/**
- * An error that carries the http status when the failure came from a response
- * (vs. a transport-level failure, which has no status at all).
- * @typedef {Error & { status?: number }} HttpError
- */
-
-/**
- * An unvalidated `/models` entry — only `id` matters here, and it may be
- * missing from a malformed listing.
- * @typedef {object} RawModelEntry
- * @property {string} [id]
- */
+// Shared lib/ helpers (docs/d023): the structured logger and the HTTP probe
+// toolkit, resolved through the LIB_DIR convention (generate.sh stages them
+// into the scratch dir and points LIB_DIR there; manual in-place runs fall
+// back to the sibling ../lib).
+const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const { logInfo, logWarn, setLogTool } =
+	/** @type {typeof import("../lib/log.mjs")} */ (
+		await import(`${LIB_DIR}/log.mjs`)
+	);
+const { bearerHeaders, DEFAULT_PEER_FALLBACK, probeCandidates, probeDirect } =
+	/** @type {typeof import("../lib/peer-probe.mjs")} */ (
+		await import(`${LIB_DIR}/peer-probe.mjs`)
+	);
+const { CLOUD_PROVIDERS: CLOUD_PROVIDER_FACTS } =
+	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
+		await import(`${LIB_DIR}/cloud-providers.mjs`)
+	);
+setLogTool("coding-agent/generate-opencode");
 
 /**
  * A validated `/models` entry.
@@ -85,43 +85,9 @@ const REQUEST_TIMEOUT_MS = 8000;
  */
 
 /**
- * A peer/source candidate that answered with a usable `/models` listing.
- * @typedef {object} PeerSource
- * @property {string} baseUrl
- * @property {ModelEntry[]} entries
- */
-
-/**
- * Outcome of probing a provider's REAL endpoint:
- * - `ok` — 2xx with a parseable model list: built-in routing works.
- * - `reachable` — any other http response: the host answered, so the path is
- *   fine even though the answer was not a model list.
- * - `unreachable` — no http response at all (dns/conn-refused/tls/timeout).
- * Only `unreachable` justifies rerouting the provider through the peer.
- * @typedef {"ok"|"reachable"|"unreachable"} ProbeOutcome
- */
-
-/**
- * @typedef {object} ProbeResult
- * @property {ProbeOutcome} result
- * @property {string} [error] cause, present unless `result` is `ok`
- */
-
-/**
- * A cloud provider opencode can reach natively; overridden only when its real
- * endpoint is unreachable. `keyEnv` names the env var holding the real
- * provider key, used only for the direct-reachability probe — in peer mode the
- * provider's base URL is the peer itself.
- * @typedef {object} CloudProvider
- * @property {string} label
- * @property {string} realBase
- * @property {string} keyEnv
- */
-
-/**
  * The provider id a model belongs to once routed through the peer (`local`
  * being the GGUF catalog, which has no built-in opencode provider).
- * @typedef {"opencode"|"opencode-go"|"openrouter"|"openai"|"local"} ProviderKind
+ * @typedef {"opencode"|"opencode-go"|"openrouter"|"local"} ProviderKind
  */
 
 /**
@@ -135,156 +101,35 @@ const REQUEST_TIMEOUT_MS = 8000;
  * @property {Record<string, { name: string }>} models
  */
 
-// The bazzite tailscale URL reverse-proxies the LAN llama-swap instance
-// (:8080), which serves BOTH concerns, so it is a valid candidate for either.
-const BAZZITE_ROUTER_TAILSCALE_URL =
-	"https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438";
+// The providers opencode ships natively, from the shared fact table
+// (docs/d024). ClinePass is deliberately absent: opencode has no built-in
+// cline-pass provider, and the cline-pass layer is owned exclusively by
+// generate-cloud-alternative-providers.mjs (docs/d022).
+const CLOUD_PROVIDER_IDS = ["opencode", "opencode-go", "openrouter"];
+
+/** @type {Record<string, import("../lib/cloud-providers.mjs").CloudProviderFacts>} */
+const CLOUD_PROVIDERS = Object.fromEntries(
+	CLOUD_PROVIDER_IDS.map((id) => [id, CLOUD_PROVIDER_FACTS[id]]),
+);
 
 // Peer base URL; must be set via env (no localhost:8080 fallback — the peer
 // router is never addressed directly without an explicit PEER_BASE_URL).
 const PEER_BASE_URL = (process.env.PEER_BASE_URL ?? "").replace(/\/+$/, "");
 
-// Peer candidates: explicit override, the co-located multipurpose instance
-// (LAN :8080 — serves local GGUF + cloud peers on one port), then the remote
-// tailscale proxy.
-const CLOUD_PEER_CANDIDATES = [
-	PEER_BASE_URL,
-	"http://localhost:8080",
-	BAZZITE_ROUTER_TAILSCALE_URL,
-].filter(Boolean);
+// Local GGUF rides the same multipurpose llama-swap instance (exposed as
+// FQN "gfx1030/<id>" ids via the fallback FQDN); reach it via
+// $PEER_BASE_URL or the FQDN.
+const LOCAL_SOURCE_CANDIDATES = [PEER_BASE_URL, DEFAULT_PEER_FALLBACK].filter(
+	Boolean,
+);
 
-// Local GGUF is served by the same multipurpose llama-swap instance (:8080
-// LAN); fall back to PEER_BASE_URL / the tailscale router (which exposes the
-// gfx1030 catalog as FQN ids) and the tailscale router.
-const LOCAL_SOURCE_CANDIDATES = [
-	PEER_BASE_URL,
-	"http://localhost:8080",
-	BAZZITE_ROUTER_TAILSCALE_URL,
-].filter(Boolean);
-
-/** @type {Record<string, CloudProvider>} */
-const CLOUD_PROVIDERS = {
-	opencode: {
-		label: "OpenCode Zen",
-		realBase: "https://opencode.ai/zen/v1",
-		keyEnv: "OPENCODE_API_KEY",
-	},
-	"opencode-go": {
-		label: "OpenCode Go",
-		realBase: "https://opencode.ai/zen/go/v1",
-		keyEnv: "OPENCODE_API_KEY",
-	},
-	openrouter: {
-		label: "OpenRouter",
-		realBase: "https://openrouter.ai/api/v1",
-		keyEnv: "OPENROUTER_API_KEY",
-	},
-	openai: {
-		label: "OpenAI",
-		realBase: "https://api.openai.com/v1",
-		keyEnv: "OPENAI_API_KEY",
-	},
-};
-
-/**
- * Bearer auth headers for a peer/provider key, or undefined to probe
- * unauthenticated.
- * @param {string} [key]
- * @returns {Record<string, string>|undefined}
- */
-function bearerOrBasic(key) {
-	return key ? { Authorization: `Bearer ${key}` } : undefined;
-}
-
-/**
- * Fetch an OpenAI-compatible `/models` listing, tolerating peers that serve it
- * under `/v1/models` instead of `/models`.
- * @param {string} serverUrl base URL, with or without the `/v1` suffix
- * @param {Record<string, string>} [headers]
- * @returns {Promise<ModelEntry[]>}
- * @throws {HttpError} `status` is set when the endpoint answered non-2xx
- */
-async function fetchModelEntries(serverUrl, headers) {
-	let url = `${serverUrl}/models`;
-	let res = await fetch(url, {
-		headers,
-		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-	});
-	if (res.status === 404 && !url.endsWith("/v1/models")) {
-		url = `${serverUrl}/v1/models`;
-		res = await fetch(url, {
-			headers,
-			signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-		});
-	}
-	if (!res.ok) {
-		throw Object.assign(
-			new Error(`GET ${url} -> ${res.status} ${res.statusText}`),
-			{
-				status: res.status,
-			},
-		);
-	}
-	/** @type {unknown} */
-	const body = await res.json();
-	const container = /** @type {{ data?: unknown, models?: unknown }} */ (body);
-	const data = container.data ?? container.models ?? body;
-	if (!Array.isArray(data))
-		throw new Error(`GET ${url} returned no models array`);
-	const entries = /** @type {RawModelEntry[]} */ (data);
-	return entries
-		.filter((entry) => Boolean(entry?.id))
-		.map(
-			(entry) =>
-				/** @type {ModelEntry} */ ({ id: /** @type {string} */ (entry.id) }),
-		);
-}
-
-/**
- * Probe a provider's REAL endpoint and classify the outcome.
- * @param {string} baseUrl
- * @param {Record<string, string>} [headers]
- * @returns {Promise<ProbeResult>}
- */
-async function probeDirect(baseUrl, headers) {
-	try {
-		await fetchModelEntries(baseUrl, headers);
-		return { result: "ok" };
-	} catch (err) {
-		const { message, status } = /** @type {HttpError} */ (err);
-		return {
-			result: status === undefined ? "unreachable" : "reachable",
-			error: message,
-		};
-	}
-}
-
-/**
- * Probe candidate base URLs in order; the first one whose catalog passes
- * `accept` wins.
- * @param {string[]} candidates
- * @param {(ids: string[]) => boolean} accept does this catalog serve our concern?
- * @returns {Promise<PeerSource|null>} null when no candidate is usable
- */
-async function probeCandidates(candidates, accept) {
-	const failures = [];
-	for (const baseUrl of candidates) {
-		try {
-			const entries = await fetchModelEntries(
-				baseUrl,
-				bearerOrBasic(process.env.PEER_API_KEY?.trim()),
-			);
-			const ids = entries.map((e) => e.id);
-			if (!accept(ids)) throw new Error("no usable models for this concern");
-			return { baseUrl, entries };
-		} catch (err) {
-			const { message } = /** @type {HttpError} */ (err);
-			failures.push(`${baseUrl}: ${message}`);
-		}
-	}
-	if (failures.length) logWarn("peer candidate endpoints failed", { failures });
-	return null;
-}
+// Peer candidates: explicit override, then the shared fallback FQDN (see
+// DEFAULT_PEER_FALLBACK).  No localhost candidates — the LAN :8080 listen
+// address and the deprecated :18080 local-inference port are not routable from
+// outside the serving host.
+const CLOUD_PEER_CANDIDATES = [PEER_BASE_URL, DEFAULT_PEER_FALLBACK].filter(
+	Boolean,
+);
 
 /**
  * Map a (possibly composite) model id to the provider that owns it, or null to
@@ -304,8 +149,6 @@ function classify(id) {
 			return "opencode-go";
 		case "openrouter":
 			return "openrouter";
-		case "openai":
-			return "openai";
 		case "gfx1030":
 			return "local";
 		default:
@@ -320,10 +163,10 @@ function classify(id) {
 /**
  * Build an opencode provider entry routing `label`'s models through the peer
  * that was actually detected (NOT the literal PEER_BASE_URL — the winning
- * candidate may be localhost:8080 or the tailscale router), under the /v1
- * suffix the peer's OpenAI-compatible endpoints live under.
+ * candidate may be the tailscale router), under the /v1 suffix the peer's
+ * OpenAI-compatible endpoints live under.
  * @param {string} label
- * @param {PeerSource} peer
+ * @param {import("../lib/peer-probe.mjs").PeerSource} peer
  * @param {ModelEntry[]} models
  * @returns {OpenCodeProvider}
  */
@@ -355,8 +198,8 @@ async function main() {
 	const needsPeer = [];
 	for (const [id, cfg] of Object.entries(CLOUD_PROVIDERS)) {
 		const { result, error } = await probeDirect(
-			cfg.realBase,
-			bearerOrBasic(process.env[cfg.keyEnv]?.trim()),
+			cfg.baseUrl,
+			bearerHeaders(process.env[cfg.apiKeyEnv]?.trim()),
 		);
 		if (result !== "unreachable") {
 			if (result === "ok") {

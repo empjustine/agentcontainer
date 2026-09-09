@@ -11,13 +11,13 @@ GGUF inference and cloud LLM peers proxied through
 # Bazzite (rootless podman) — ONE multipurpose llama-swap instance:
 #   local GGUF inference + cloud peers, published on LAN port 8080
 #   (the world reaches it via the tailscale FQDN reverse proxy)
-cd ~/agentcontainer/openai-completions && ./generate.sh && ./run.sh
+cd ~/agentcontainer/llm-reverse-proxy && ./generate.sh && ./run.sh
 #   then the coding agent (uses local models + cloud via auth.json)
 cd ~/agentcontainer/coding-agent && ./run.sh
 
 # a50 / Termux (peers-only serving, native llama-swap binary — alt build/run
-# of openai-completions/)
-cd ~/agentcontainer/openai-completions && ./build.sh && ./run-native.sh
+# of llm-reverse-proxy/)
+cd ~/agentcontainer/llm-reverse-proxy && ./build.sh && ./run-native.sh
 ```
 
 See [docs/environments-and-peer-variants.md](docs/environments-and-peer-variants.md)
@@ -35,7 +35,7 @@ agentcontainer/
 │   └── ...
 ├── lib/workload-runtime.sh                    # Shared sandbox-backend detection (podman/docker)
 │
-├── openai-completions/                   # Multipurpose llama-swap (one instance per host)
+├── llm-reverse-proxy/                   # Multipurpose llama-swap (one instance per host)
 │   ├── run.sh                           #   → adapts image/port/GPU/HF to the generated config.d
 │   ├── generate.sh                      #   → capability-gated config.d layers (local LLM / peers)
 │   ├── gen-lib.mjs                      #   → shared generator helpers
@@ -79,7 +79,7 @@ agentcontainer/
 | [docs/architecture.md](docs/architecture.md) | Self-contained runners vs base config generators, standalone rule |
 | [docs/future-config-generator-system.md](docs/future-config-generator-system.md) | NEXT-step (PENDING) config-generator system split by concern |
 | [docs/container-tooling.md](docs/container-tooling.md) | lib/workload-runtime.sh, run scripts, UID/SELinux, PEERS_ONLY |
-| [docs/termux-serving.md](docs/termux-serving.md) | a50/Termux native build — map; the build/serve/env detail lives in the `openai-completions/` script headers |
+| [docs/termux-serving.md](docs/termux-serving.md) | a50/Termux native build — map; the build/serve/env detail lives in the `llm-reverse-proxy/` script headers |
 | [docs/d018-split-config-d.md](docs/d018-split-config-d.md) | split `config.d/` layout + llama-swap merge contract |
 | [docs/d020-libvirt-qemu-sandbox.md](docs/d020-libvirt-qemu-sandbox.md) | qemu/libvirt VM sandboxes — requirements assessment (not implemented) |
 | [coding-agent/merge-models-json.mjs](coding-agent/merge-models-json.mjs) | layered pi `models.json` (base + `model-*.json` overlays) — contract is documented in the script header |

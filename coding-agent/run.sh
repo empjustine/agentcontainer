@@ -32,7 +32,7 @@
 #   GENERATE         Termux: 1 = run ./generate.sh first
 #   PEER_BASE_URL    relay, printed for confirmation only (consumed by the
 #                    generator, not by pi)
-#   SKIP_GEN / LOCAL_INFERENCE / SELF_RELAY / MODELS_DEV_REFRESH
+#   SKIP_GEN / MODELS_DEV_REFRESH
 #                    forwarded into the container for the in-container
 #                    generate.sh (set them in the host env before running)
 
@@ -133,10 +133,11 @@ cp "$SCRIPT_DIR/settings.json" "$agent_dir/settings.json"
 # settings cp before ANY generation stage ran, leaving the staged fallback
 # config in place and a bare `cp: cannot stat …` as the only clue).
 _gen_target='/opt/coding-agent'
-for _f in generate.sh refresh-models-dev.mjs generate-models.json.mjs \
-	generate-cline-pass.mjs merge-models-json.mjs generate-opencode.jsonc.mjs \
-	check-node-version.mjs filter-relays.mjs count-providers.mjs \
-	list-providers.mjs \
+for _f in generate.sh generate-local-llama-swap.mjs \
+	generate-cloud-pi-native-providers.mjs \
+	generate-cloud-alternative-providers.mjs \
+	merge-models-json.mjs generate-opencode.jsonc.mjs \
+	check-node-version.mjs count-providers.mjs list-providers.mjs \
 	settings.json; do
 	workload_ro "$SCRIPT_DIR/$_f" "$_gen_target/$_f"
 done
@@ -146,22 +147,19 @@ workload_ro_if "$SCRIPT_DIR/models.json" "$_gen_target/models.json"
 workload_ro_if "$SCRIPT_DIR/opencode.jsonc" "$_gen_target/opencode.jsonc"
 workload_ro "$REPO_ROOT/lib/workload-runtime.sh" '/opt/lib/workload-runtime.sh'
 workload_ro "$REPO_ROOT/lib/log.sh" '/opt/lib/log.sh'
-# generate.sh stages lib/log.mjs beside the generators ($LOG_LIB); the .mjs
-# generators import it dynamically and fall back to ../lib/log.mjs, which
-# from the scratch dir resolves to /opt/lib/log.mjs — mount it or all three
-# generators die on import.
+# Shared lib/ modules the generators and lib/refresh-models-dev.mjs import
+# (docs/d023, docs/d024): generate.sh stages log.mjs + peer-probe.mjs + the
+# provider-fact table + the pi shaping module into its scratch dir via
+# $LIB_DIR; refresh-models-dev.mjs runs from /opt/lib and imports its sibling
+# log.mjs — all must be mounted.
 workload_ro "$REPO_ROOT/lib/log.mjs" '/opt/lib/log.mjs'
-# The sandbox description API reads its jq filters from $REPO_ROOT/lib, and
-# in-container that resolves to /opt/lib — every filter must be listed or the
-# first workload_* call inside the container dies on a missing --from-file.
-for _jq in "$REPO_ROOT"/lib/sandbox-*.jq; do
-	# Unglobbed patterns must not reach workload_ro: it log_dies on a missing
-	# host path.
-	[ -f "$_jq" ] || continue
-	workload_ro "$_jq" "/opt/lib/$(basename "$_jq")"
-done
-workload_ro_if "$SCRIPT_DIR/models.dev.api.json" "$_gen_target/models.dev.api.json"
-workload_ro_if "$SCRIPT_DIR/00-model-base.json" "$_gen_target/00-model-base.json"
+workload_ro "$REPO_ROOT/lib/peer-probe.mjs" '/opt/lib/peer-probe.mjs'
+workload_ro "$REPO_ROOT/lib/cloud-providers.mjs" '/opt/lib/cloud-providers.mjs'
+workload_ro "$REPO_ROOT/lib/pi-models.mjs" '/opt/lib/pi-models.mjs'
+workload_ro "$REPO_ROOT/lib/refresh-models-dev.mjs" '/opt/lib/refresh-models-dev.mjs'
+# The shared vendored models.dev catalog (read-only in here; generate.sh's
+# best-effort refresh falls back to a scratch copy when it is not writable).
+workload_ro "$REPO_ROOT/lib/models.dev.api.json" '/opt/lib/models.dev.api.json'
 
 # In-container launch chain: generated shell with no infisical — the host
 # forwards the vault env through the workload_env allowlist instead.
@@ -228,7 +226,7 @@ workload_rw       "$workspace" "$workspace"
 workload_workdir  "$workspace"
 # Secrets! Host-side load_secrets (one cached infisical export) provides the
 # vault keys; the allowlist below forwards them into the sandbox like the
-# openai-completions run path.  Only non-empty values are forwarded (a bare
+# llm-reverse-proxy run path.  Only non-empty values are forwarded (a bare
 # `--env NAME` with an unset host var would inject an empty value).
 load_secrets
 log_info "secrets source" source="${SECRETS_SOURCE:-none}"
@@ -239,8 +237,6 @@ for _key in CLINE_API_KEY PEER_API_KEY OPENROUTER_API_KEY OPENCODE_API_KEY \
 done
 # Forwarded only when set in the host env (unset vars are not exported).
 workload_env      SKIP_GEN
-workload_env      LOCAL_INFERENCE
-workload_env      SELF_RELAY
 workload_env      MODELS_DEV_REFRESH
 workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
 workload_run

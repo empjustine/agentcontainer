@@ -13,17 +13,19 @@
 #       repo root ./build.sh) is used when available; keys already exported
 #       into the environment are used as-is (no .env file is ever read)
 #     - vendored models.dev catalog by default (no refetch over mobile data)
-#     - localhost:18080 / localhost:8080 relay overrides dropped by default
-#       (LOCAL_INFERENCE / SELF_RELAY = 0)
 #   Everywhere else (host or inside the coding-agent container):
-#     - `mise x node@24 -- node` (mise pinned via ../mise.toml / image config)
+#     - node_run from ../lib/workload-runtime.sh (system node on Termux, mise
+#       exec node@24 elsewhere — mise pinned via ../mise.toml / image config)
 #     - secrets expected ALREADY INJECTED by the caller: run.sh loads them on
 #       the HOST (load_secrets — one cached infisical export) and forwards
 #       them through the workload_env allowlist, so the in-container
 #       generators never run infisical.  Manual host runs just call
 #       load_secrets below.
 #     - models.dev catalog refreshed best-effort
-#     - relay overrides kept by default (LOCAL_INFERENCE / SELF_RELAY = 1)
+#     - peer routing goes through $PEER_BASE_URL / the bazzite tailscale
+#       FQDN only — no localhost:8080 or localhost:18080 candidates (the
+#       relay-drop / filter-relays.mjs machinery that cleaned those up is
+#       gone; the cascade never emits a localhost override anymore)
 #
 # Logging: structured JSON on stderr (LOG_FORMAT=logfmt to switch; see
 # lib/log.sh) — stdout is never used for logs.  Every failure is a structured
@@ -34,11 +36,15 @@
 #
 # Stages (each non-fatal on its own; the layered models.json contract these
 # feed is documented in merge-models-json.mjs):
-#   generate-models.json.mjs  -> model-010-local-default.json
-#       peer-router cascade: probes each provider's OWN endpoint and emits an
-#       override only when it is unreachable ("swap only baseUrl").
-#   generate-cline-pass.mjs   -> model-015-cloud-cline-pass.json
-#       derived from the vendored models.dev.api.json; no network, no secrets.
+#   generate-local-llama-swap.mjs -> model-010-local-default.json
+#       local GGUF cascade: probes the llama-swap peer candidates and emits
+#       the `llama-swap` provider (pi-shaped, meta.llamaswap mirrored).
+#   generate-cloud-pi-native-providers.mjs -> model-012-cloud-pi-native.json
+#       pi-native cloud override cascade: probes each provider's OWN endpoint
+#       and emits an override only when it is unreachable.
+#   generate-cloud-alternative-providers.mjs -> model-015-cloud-cline-pass.json
+#       derived from the vendored models.dev.api.json; full provider block
+#       (pi has no native cline-pass), real-or-peer cascade decides the route.
 #   merge-models-json.mjs      -> models.json
 #   generate-opencode.jsonc.mjs -> opencode config (OPENCODE_CFG_DIR/opencode.json,
 #       or <this dir>/opencode.jsonc for manual host runs; skipped on Termux)
@@ -46,8 +52,8 @@
 #       check-node-version.mjs — Termux node floor gate (pre-staging: it is
 #           read from SCRIPT_DIR, and needs no scratch dir because it writes
 #           nothing)
-#       filter-relays.mjs / count-providers.mjs / list-providers.mjs — inspect
-#           and rewrite the generated models.json; each documents itself
+#       count-providers.mjs / list-providers.mjs — inspect the generated
+#           models.json; each documents itself
 #
 # Outputs are installed into $AGENT_DIR (models.json + settings.json, backup
 # kept as .bak-<ts>) — there is no separate install step anymore.
@@ -63,16 +69,12 @@
 #   RUN_DIR          scratch dir for intermediate layers (default $TMPDIR,
 #                    falling back to $PREFIX/tmp on Termux, /tmp elsewhere) —
 #                    this script's dir may be a read-only mount
-#   MODELS_DEV_JSON  models.dev catalog (default <this dir>/models.dev.api.json)
+#   MODELS_DEV_JSON  models.dev catalog (default ../lib/models.dev.api.json —
+#                    the shared vendored catalog, see docs/d023)
 #   MODELS_DEV_REFRESH 1 = force catalog refresh on Termux too
-#   LOCAL_INFERENCE  1 = keep providers relayed at localhost:18080
-#                      (default: 1, 0 on Termux)
-#   SELF_RELAY       1 = keep providers relayed at localhost:8080
-#                      (default: 1, 0 on Termux — on a peers-only host that
-#                      probe is a self-hit and the override would be pointless)
 
 set -eu
-# shellcheck disable=SC1091
+# shellcheck source-path=SCRIPTDIR source=../lib/workload-runtime.sh  # _termux, node_run, default_run_dir, log_**
 . "$(dirname "$0")/../lib/workload-runtime.sh"
 LOG_TOOL='coding-agent/generate'
 export LOG_TOOL
@@ -102,17 +104,10 @@ _gen_abort() {
 }
 trap _gen_abort EXIT
 
-case "${PREFIX:-}" in
-	*/com.termux/*) _termux=1 ;;
-	*) _termux=0 ;;
-esac
-
 SKIP_GEN="${SKIP_GEN:-0}"
 AGENT_DIR="${AGENT_DIR:-${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}}"
-RUN_DIR="${RUN_DIR:-$([ "$_termux" = 1 ] && printf '%s' "${TMPDIR:-${PREFIX}/tmp}" || printf '%s' "${TMPDIR:-/tmp}")}"
-MODELS_DEV_JSON="${MODELS_DEV_JSON:-$SCRIPT_DIR/models.dev.api.json}"
-LOCAL_INFERENCE="${LOCAL_INFERENCE:-$((1 - _termux))}"
-SELF_RELAY="${SELF_RELAY:-$((1 - _termux))}"
+RUN_DIR="${RUN_DIR:-$(default_run_dir)}"
+MODELS_DEV_JSON="${MODELS_DEV_JSON:-$REPO_ROOT/lib/models.dev.api.json}"
 
 mkdir -p "$RUN_DIR" "$AGENT_DIR"
 log_info "profile" \
@@ -167,34 +162,38 @@ fi
 
 # --- scratch dir: generators read layers from their own directory, and this
 # script's dir may be a read-only mount (container ro-mount), so stage the
-# generators — plus lib/log.mjs (generators import it via $LOG_LIB) — there
-# and symlink the big inputs.
+# generators — plus the lib/ modules they import (log.mjs, peer-probe.mjs,
+# resolved via $LIB_DIR, docs/d023) — there and symlink the big inputs.
 _GEN_STAGE='scratch-stage'
 _scratch="$RUN_DIR/pi-models-gen.$$"
 mkdir -p "$_scratch"
-for _f in generate-models.json.mjs generate-cline-pass.mjs \
+for _f in generate-local-llama-swap.mjs \
+	generate-cloud-pi-native-providers.mjs \
+	generate-cloud-alternative-providers.mjs \
 	merge-models-json.mjs generate-opencode.jsonc.mjs \
-	filter-relays.mjs count-providers.mjs list-providers.mjs; do
+	count-providers.mjs list-providers.mjs; do
 	if [ -f "$SCRIPT_DIR/$_f" ]; then
 		cp "$SCRIPT_DIR/$_f" "$_scratch/$_f"
 	else
 		log_warn "generator missing" path="$SCRIPT_DIR/$_f"
 	fi
 done
-# Structured logging for the .mjs generators: they import $LOG_LIB, falling
-# back to ../lib/log.mjs relative to their own file — which from the scratch
-# dir resolves somewhere that does not exist, so a missing copy here costs
-# every generator (three identical stack traces) instead of one clear line.
-if [ -f "$REPO_ROOT/lib/log.mjs" ]; then
-	cp "$REPO_ROOT/lib/log.mjs" "$_scratch/log.mjs"
-	LOG_LIB="$_scratch/log.mjs"
-	export LOG_LIB
-else
-	log_error "lib/log.mjs missing — generators cannot log structured" \
-		path="$REPO_ROOT/lib/log.mjs"
-fi
-[ -f "$SCRIPT_DIR/00-model-base.json" ] &&
-	cp "$SCRIPT_DIR/00-model-base.json" "$_scratch/00-model-base.json"
+# Structured logging + HTTP probing + the shared fact/shaping modules for the
+# .mjs generators: they import all of these from $LIB_DIR (default ../lib
+# relative to their own file — which from the scratch dir resolves somewhere
+# that does not exist, so a missing copy here costs every generator instead of
+# one clear line).
+mkdir -p "$_scratch/lib"
+for _lf in log.mjs peer-probe.mjs cloud-providers.mjs pi-models.mjs; do
+	if [ -f "$REPO_ROOT/lib/$_lf" ]; then
+		cp "$REPO_ROOT/lib/$_lf" "$_scratch/lib/$_lf"
+	else
+		log_error "lib module missing — generators cannot log or probe" \
+			path="$REPO_ROOT/lib/$_lf"
+	fi
+done
+LIB_DIR="$_scratch/lib"
+export LIB_DIR
 [ -f "$MODELS_DEV_JSON" ] &&
 	ln -s "$MODELS_DEV_JSON" "$_scratch/models.dev.api.json"
 
@@ -224,7 +223,7 @@ else
 		if [ ! -w "$MODELS_DEV_JSON" ]; then
 			_catalog_out="$_scratch/models.dev.api.json"
 		fi
-		if node_run "$SCRIPT_DIR/refresh-models-dev.mjs" "$_catalog_out"; then
+		if node_run "$REPO_ROOT/lib/refresh-models-dev.mjs" "$_catalog_out"; then
 			log_info "models.dev catalog refreshed" path="$_catalog_out"
 		else
 			log_warn "models.dev catalog refresh failed; using vendored copy" \
@@ -232,21 +231,28 @@ else
 		fi
 	fi
 
-	log_info "generating models.json (peer-router cascade + models.dev)"
-	if [ -f "$_scratch/generate-models.json.mjs" ]; then
-		node_run "$_scratch/generate-models.json.mjs" \
+	log_info "generating models.json (peer-router cascades + models.dev)"
+	if [ -f "$_scratch/generate-local-llama-swap.mjs" ]; then
+		node_run "$_scratch/generate-local-llama-swap.mjs" \
 			"$_scratch/model-010-local-default.json" ||
-			log_warn "generate-models.json.mjs failed — layer omitted"
+			log_warn "generate-local-llama-swap.mjs failed — layer omitted"
+	fi
+	# Pi-native cloud overrides: probe each provider's own endpoint, override
+	# only when it is unreachable.
+	if [ -f "$_scratch/generate-cloud-pi-native-providers.mjs" ]; then
+		node_run "$_scratch/generate-cloud-pi-native-providers.mjs" \
+			"$_scratch/model-012-cloud-pi-native.json" ||
+			log_warn "generate-cloud-pi-native-providers.mjs failed — layer omitted"
 	fi
 	# ClinePass layer: derived from the vendored models.dev.api.json, no
 	# secrets needed.
 	# NOTE: there is intentionally NO google layer here — llama-swap is an
-	# openai-completions relay and cannot proxy Google's native API, so Google
+	# llm-reverse-proxy relay and cannot proxy Google's native API, so Google
 	# always goes through pi's built-in google provider (GEMINI_API_KEY).
-	if [ -f "$_scratch/generate-cline-pass.mjs" ] && [ -f "$_scratch/models.dev.api.json" ]; then
-		node_run "$_scratch/generate-cline-pass.mjs" \
+	if [ -f "$_scratch/generate-cloud-alternative-providers.mjs" ] && [ -f "$_scratch/models.dev.api.json" ]; then
+		node_run "$_scratch/generate-cloud-alternative-providers.mjs" \
 			"$_scratch/model-015-cloud-cline-pass.json" ||
-			log_warn "generate-cline-pass.mjs failed — layer omitted"
+			log_warn "generate-cloud-alternative-providers.mjs failed — layer omitted"
 	fi
 	if [ -f "$_scratch/merge-models-json.mjs" ]; then
 		node_run "$_scratch/merge-models-json.mjs" "$_scratch/models.json" ||
@@ -259,23 +265,6 @@ else
 		log_warn "no models.json generated; falling back to committed copy" \
 			path="$SCRIPT_DIR/models.json"
 		[ -f "$SCRIPT_DIR/models.json" ] && _models_out="$SCRIPT_DIR/models.json"
-	fi
-fi
-
-# --- drop relays that are invalid on this host -----------------------------
-# generate-models.json.mjs probes localhost:18080 (deprecated local inference)
-# and localhost:8080 (ourselves on a peers-only host); LOCAL_INFERENCE /
-# SELF_RELAY filter the result.  Termux defaults drop both; container hosts
-# keep the upstream behavior unless overridden.
-if [ -n "$_models_out" ]; then
-	_install_tmp="$RUN_DIR/pi-models.install.$$"
-	cp "$_models_out" "$_install_tmp"
-	_models_out="$_install_tmp"
-	if [ "$LOCAL_INFERENCE" != 1 ] || [ "$SELF_RELAY" != 1 ]; then
-		_dropped="$(node_run "$_scratch/filter-relays.mjs" \
-			"$_models_out" "$LOCAL_INFERENCE" "$SELF_RELAY")"
-		[ -n "$_dropped" ] &&
-			log_warn "dropped non-relay provider(s)" providers="$_dropped"
 	fi
 fi
 
@@ -329,6 +318,5 @@ if [ -n "$_oc_out" ] && [ -f "$_scratch/generate-opencode.jsonc.mjs" ]; then
 fi
 
 [ -d "${_scratch:-}" ] && rm -rf "$_scratch"
-[ -f "${_install_tmp:-}" ] && rm -f "${_install_tmp:-}"
 
 log_info "done" secrets="$SECRETS_SOURCE" agentDir="$AGENT_DIR"

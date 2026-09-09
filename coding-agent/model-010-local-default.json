@@ -1,7 +1,7 @@
 {
   "providers": {
     "llama-swap": {
-      "baseUrl": "http://localhost:8080/v1",
+      "baseUrl": "https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438/v1",
       "api": "openai-completions",
       "compat": {
         "supportsStore": false,

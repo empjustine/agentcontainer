@@ -4,8 +4,8 @@
  * provider (it reads these rows in a `while read` loop and logs them with log_info).
  *
  * Deliberately does NOT import lib/log.mjs: this runs from generate.sh's
- * scratch dir, where the logger is only reachable through $LOG_LIB (the
- * generators get a copy staged next to them). If that copy were missing, an
+ * scratch dir, where the logger is reachable through $LIB_DIR (the staged
+ * lib/ copy — see docs/d023). If that copy were missing, an
  * import here would turn a cosmetic per-provider log line into a failed run —
  * so the rows, not the log lines, are this script's output.
  *

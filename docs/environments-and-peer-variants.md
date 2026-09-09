@@ -4,7 +4,7 @@ This repo targets several distinct deployment environments. Environments arrive
 with different capabilities (GPU or none, container runtime or none, cloud
 access or not) and the tree adapts along those functional lines:
 
-- **LLM serving** is ONE multipurpose llama-swap dir, `openai-completions/`:
+- **LLM serving** is ONE multipurpose llama-swap dir, `llm-reverse-proxy/`:
   `generate.sh` emits only the `config.d/` layers the current host can use
   (local GGUF inference on GPU-capable container hosts, cloud peers wherever
   they are reachable, a route to a remote gfx1030 instance elsewhere), and
@@ -19,17 +19,17 @@ names.
 
 | Name             | Sandbox / runtime                          | Cloud access | Serving dir(s)                                       | Usage dir              |
 |------------------|--------------------------------------------|--------------|-----------------------------------------------------|------------------------|
-| **bazzite-gfx1030** | rootless podman, SELinux enforced       | direct       | `openai-completions/` (local layer + peers)          | `coding-agent/`        |
-| **a50-en7562ct**    | rootless **termux**, restrictive SELinux, | direct (if   | `openai-completions/` (native build/run)           | `coding-agent/`        |
+| **bazzite-gfx1030** | rootless podman, SELinux enforced       | direct       | `llm-reverse-proxy/` (local layer + peers)          | `coding-agent/`        |
+| **a50-en7562ct**    | rootless **termux**, restrictive SELinux, | direct (if   | `llm-reverse-proxy/` (native build/run)           | `coding-agent/`        |
 |                  | non-standard file paths                    | any)         |                                                     |                        |
-| **wsl2**             | WSL2 **rootful docker**, no direct cloud | peers only   | `openai-completions/` (peers-only)                 | `coding-agent/` (static config) |
-| **oci-e21micro**     | Oracle OCI Compute (x86), rootless        | peers only   | `openai-completions/` (peers-only)                 | `coding-agent/` (static config) |
+| **wsl2**             | WSL2 **rootful docker**, no direct cloud | peers only   | `llm-reverse-proxy/` (peers-only)                 | `coding-agent/` (static config) |
+| **oci-e21micro**     | Oracle OCI Compute (x86), rootless        | peers only   | `llm-reverse-proxy/` (peers-only)                 | `coding-agent/` (static config) |
 |                  | podman or docker                           |              |                                                     |                        |
 
 ### bazzite-gfx1030 (full, default)
 Hostname `bazzite.coelacanth-barb.ts.net`. GPU: **gfx1030** (RDNA2 / Navi 21 “Sienna Cichlid”, RX 6900 XT 16 GB). Runs **one** multipurpose llama-swap instance:
 
-- `openai-completions/` — `generate.sh` detects the container backend + GPU
+- `llm-reverse-proxy/` — `generate.sh` detects the container backend + GPU
   devices and emits the local GGUF layer (`10-local-llm-inference.yaml` +
   `launch-gguf.sh`) AND the cloud-peer layer into `config.d/`; `run.sh` then
   launches the `unified-vulkan` image with GPU passthrough + the HF cache on
@@ -52,10 +52,10 @@ that is handled by `lib/workload-runtime.sh`, sourced from the run scripts.
 
 ### a50-en7562ct (termux, peer-only serving)
 Hostname `hjs0aj87e30.sn.mynetname.net`. SoC: **EN7562CT** (ARM32v5, 512 MB RAM, 128 MB flash). Resource-constrained host (a phone/router under Termux). It **cannot run the
-`openai-completions` llama-swap container** at all — Termux has no usable
+`llm-reverse-proxy` llama-swap container** at all — Termux has no usable
 podman/docker for this and the image is amd64/container-shaped. Instead it needs
 a termux-specific **native build of llama-swap** (compiled for the device), which
-is what `openai-completions/` provides. Local llama.cpp inference is also
+is what `llm-reverse-proxy/` provides. Local llama.cpp inference is also
 impossible, so serving is **peers-only** — no GGUF, no `llamacpp-model-data.json`
 layer in `config.d/`.
 
@@ -69,7 +69,7 @@ layer in `config.d/`.
   multipurpose instance for bazzite/OCI-style hosts — same `config.d/` shape,
   containerized launch.)
   The operational detail of this path (serving env vars, secrets source,
-  non-configurable paths) lives in `openai-completions/run-native.sh`'s own
+  non-configurable paths) lives in `llm-reverse-proxy/run-native.sh`'s own
   header; see [termux-serving.md](termux-serving.md) for the map of where the
   a50/Termux documentation now lives.
 - `generate-general.yaml.mjs` + `generate-peer-cloud.yaml.mjs` +
@@ -112,13 +112,13 @@ than WSL2 rootful docker) and the image size constraint. Because OCI has no
 dedicated inference device, the routing instance uses the lighter
 `ghcr.io/mostlygeek/llama-swap:cpu` image (override with `LLAMA_SWAP_IMAGE`).
 
-- **Serving** (`openai-completions/`): just `./generate.sh && ./run.sh` —
+- **Serving** (`llm-reverse-proxy/`): just `./generate.sh && ./run.sh` —
   generation detects no GPU (and therefore skips the local layer) and `run.sh`
   launches the CPU peers-only image, skips the HF cache tree, and loads the
   split peers-only `config.d/` with **zero local models** and only cloud peers.
 - **Usage** (`coding-agent/`): static provider config pointing the agent at
   the peer endpoint, as on `wsl2`.
-- **`.env.example`** at `openai-completions/.env.example` — the peers-only env
+- **`.env.example`** at `llm-reverse-proxy/.env.example` — the peers-only env
   *documentation*: `OPENROUTER_API_KEY`, `OPENCODE_API_KEY` (one key for both
   the Zen and Go peers), `CLINE_API_KEY` (ClinePass — models.dev catalog,
   served via api.cline.bot/api/v1), `LISTEN`, and the llama-swap bearer key.
@@ -171,4 +171,4 @@ it is always LAN **8080**):
 Either way llama-swap is launched with `-config-dir <dir>/config.d`. The
 a50/termux path has no container and no image selection — it is peers-only by
 construction (no container backend + no GPU detected) via
-`openai-completions/run-native.sh`.
+`llm-reverse-proxy/run-native.sh`.

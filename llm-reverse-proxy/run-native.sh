@@ -54,7 +54,7 @@
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck disable=SC1091  # loads log.sh + load_secrets
 . "$script_dir/../lib/workload-runtime.sh"
-LOG_TOOL='openai-completions/run-native'
+LOG_TOOL='llm-reverse-proxy/run-native'
 export LOG_TOOL
 config_d="$script_dir/config.d"
 

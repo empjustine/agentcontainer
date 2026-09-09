@@ -1,15 +1,15 @@
-# sandbox-render.jq — turn a sandbox description into `container run` argv.
+# workload-render.jq — turn a workload description into `container run` argv.
 #
-# PART OF: the sandbox description API in ../container-tool.sh.  This is the
-# single renderer: every flag the sandbox API can produce is emitted here, so
+# PART OF: the workload description API in lib/workload-runtime.sh.  This is the
+# single renderer: every flag the workload API can produce is emitted here, so
 # there is exactly one place that knows podman's and docker's dialects.
 #
 # ---------------------------------------------------------------------------
 # INPUT — jq variables.  Two halves:
 #
 #   $doc (--argjson)  the LIST side of the description, built by
-#                     lib/sandbox-mount.jq, lib/sandbox-append.jq,
-#                     lib/sandbox-port.jq and lib/sandbox-cmd.jq:
+#                     lib/workload-mount.jq, lib/workload-append.jq,
+#                     lib/workload-port.jq and lib/workload-cmd.jq:
 #                       {"mounts": [{"mode","host","guest"}, ...],
 #                        "env":     ["NAME", ...],
 #                        "ports":   [{"host","guest"}, ...],

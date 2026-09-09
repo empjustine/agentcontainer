@@ -23,11 +23,15 @@
 		"skipLibCheck": true
 	},
 	"include": [
-		"coding-agent/generate-models.json.mjs",
+		"lib/peer-probe.mjs",
+		"lib/cloud-providers.mjs",
+		"lib/pi-models.mjs",
+		"coding-agent/generate-local-llama-swap.mjs",
+		"coding-agent/generate-cloud-pi-native-providers.mjs",
+		"coding-agent/generate-cloud-alternative-providers.mjs",
 		"coding-agent/generate-opencode.jsonc.mjs",
 		"coding-agent/merge-models-json.mjs",
 		"coding-agent/check-node-version.mjs",
-		"coding-agent/filter-relays.mjs",
 		"coding-agent/count-providers.mjs",
 		"coding-agent/list-providers.mjs"
 	]

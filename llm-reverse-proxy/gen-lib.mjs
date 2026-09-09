@@ -1,56 +1,45 @@
 /**
  * @fileoverview gen-lib.mjs — shared helpers for the split llama-swap peer/general
- * generators. Kept self-contained so a serving dir can be copied onto a host in isolation;
- * explanations live in docs/d018-split-config-d.md (merge contract) and docs/d001
- * (proxy baseUrl / plain-env-var key naming).
+ * generators. explanations live in docs/d018-split-config-d.md (merge contract) and
+ * docs/d001 (proxy baseUrl / plain-env-var key naming). HTTP probing is delegated to the
+ * shared lib/peer-probe.mjs toolkit and re-exported here (docs/d023) — the copy unit for
+ * this folder is "the folder + ../lib" (see docs/architecture.md).
  */
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Structured logging (JSON lines on stderr; see lib/log.mjs), re-exported so
-// the generators that import gen-lib get a consistent logger.
-const { logDebug, logInfo, logWarn, logError, setLogTool } = await import(
-	process.env.LOG_LIB ?? new URL("../lib/log.mjs", import.meta.url)
-);
-setLogTool("openai-completions/gen-lib");
+// Shared lib/ helpers (docs/d023): the structured logger and the HTTP probe
+// toolkit live in ../lib and are resolved through the LIB_DIR convention
+// (default: this folder's sibling lib/).  Re-exported so the generators that
+// import gen-lib get a consistent logger and fetcher without importing lib
+// themselves.
+const LIB_DIR =
+	process.env.LIB_DIR ?? fileURLToPath(new URL("../lib", import.meta.url));
+const { logInfo, logWarn, logError, setLogTool } =
+	/** @type {typeof import("../lib/log.mjs")} */ (
+		await import(`${LIB_DIR}/log.mjs`)
+	);
+const { fetchModelEntries, DEFAULT_PEER_FALLBACK } =
+	/** @type {typeof import("../lib/peer-probe.mjs")} */ (
+		await import(`${LIB_DIR}/peer-probe.mjs`)
+	);
+const { CLOUD_PROVIDERS } =
+	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
+		await import(`${LIB_DIR}/cloud-providers.mjs`)
+	);
+setLogTool("llm-reverse-proxy/gen-lib");
 
-export { logDebug, logError, logInfo, logWarn };
+export { DEFAULT_PEER_FALLBACK, fetchModelEntries, logError, logInfo, logWarn };
 
 export const scriptDir = dirname(fileURLToPath(import.meta.url));
 
-// Route fetch() through http(s)_proxy when set (rationale: docs/d001 §1).
-if (
-	process.env.http_proxy ||
-	process.env.HTTP_PROXY ||
-	process.env.https_proxy ||
-	process.env.HTTPS_PROXY
-) {
-	try {
-		const require = createRequire(import.meta.url);
-		const { EnvHttpProxyAgent, setGlobalDispatcher } = require("undici");
-		setGlobalDispatcher(new EnvHttpProxyAgent());
-	} catch (err) {
-		logWarn(
-			"http(s)_proxy set but undici EnvHttpProxyAgent unavailable — fetch requests will NOT use the proxy",
-			{ error: err.message },
-		);
-	}
-}
-
-const REQUEST_TIMEOUT_MS = 8000;
-
-function fetchWithTimeout(url, options = {}) {
-	return fetch(url, {
-		...options,
-		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-	});
-}
-
 // --- Providers ---------------------------------------------------------
 // Keys match pi-coding-agent's built-in provider names so generated peer ids
-// line up with what pi expects.  Two model-id sources:
+// line up with what pi expects.  The stable FACTS (id / label / apiKeyEnv /
+// default baseUrl) come from the shared lib/cloud-providers.mjs table
+// (docs/d024) — this map only adds the per-provider llama-swap extras.  Two
+// model-id sources:
 //   - `modelsDev` — the vendored models.dev catalog (models.dev.api.json,
 //     atomically refreshed by refresh-models-dev.mjs on every generate.sh
 //     run); ALL models of that catalog provider are enumerated, no filtering
@@ -59,11 +48,12 @@ function fetchWithTimeout(url, options = {}) {
 //     `filter` (openrouter's ":free" slice).
 //
 // `apiKeyEnv` is the env var llama-swap reads for that peer's key at request
-// time.  generate-peer-cloud.yaml.mjs iterates this map, so adding a provider
-// here is the ONLY change needed to emit a new peer.
+// time (from the shared fact table).  generate-peer-cloud.yaml.mjs iterates
+// this map, so adding a provider here is the ONLY change needed to emit a new
+// peer — and one that needs no extra facts needs no edit here at all.
 //
 // CURRENT PROVIDER SET (this table IS the provider list — it mirrors the key
-// names documented in openai-completions/.env.example):
+// names documented in llm-reverse-proxy/.env.example):
 //
 //   | Provider     | Peer id      | Key env            | Base URL                       | Model ids                     |
 //   |--------------|--------------|--------------------|--------------------------------|-------------------------------|
@@ -73,29 +63,25 @@ function fetchWithTimeout(url, options = {}) {
 //   | ClinePass    | cline-pass   | CLINE_API_KEY      | https://api.cline.bot/api/v1   | models.dev catalog, all       |
 //
 // KEY-NAMING CONTRACT (docs/d001 §3 — plain un-prefixed env var names, the
-// historical `__`-prefix is gone; see OLD/docs/d019 for the rationale):
+// historical `__`-prefix is gone):
 //   - PLAIN environment variable names — no `__` prefix.  The `__`-prefix
 //     convention used to hide keys from pi's provider auto-detection, but
 //     these keys are consumed SERVER-side (llama-swap resolves the ${env.*}
 //     references in config.d/ from its own environment); pi is only a client
 //     of llama-swap and authenticates with the llama-swap bearer key, so it
-//     never sees them.  No `__`-prefix is recognized, ever — see
-//   - PLAIN environment variable names — no `__` prefix.  The `__`-prefix
-//     convention used to hide keys from pi's provider auto-detection, but
-//     these keys are consumed SERVER-side (llama-swap resolves the ${env.*}
-//     references in config.d/ from its own environment); pi is only a client
-//     of llama-swap and authenticates with the llama-swap bearer key, so it
-//     never sees them.  No `__`-prefix is recognized, ever — see
-//     OLD/docs/d019-unified-opencode-key.md for the historical rationale and
-//     OLD/docs/d001-proxy-env-and-namespace.md for the original problem the
-//     prefix was a workaround for.
+//     never sees them.  No `__`-prefix is recognized, ever — the historical
+//     rationale lives in the gitignored archive (OLD/docs/d019-
+//     unified-opencode-key.md) alongside the original problem the prefix was
+//     a workaround for (OLD/docs/d001-proxy-env-and-namespace.md).
 //   - ONE unified OPENCODE_API_KEY covers both the Zen and the Go peers.  The
 //     former split (OPENCODE_ZEN_API_KEY / OPENCODE_GO_API_KEY) is retired and
 //     those names are ignored.
-//   - `defaultBaseUrl` is HARDCODED and deliberately NOT env-overridable: the
-//     peer's proxy target is part of the provider definition, not a host
-//     setting.  (Remote-target overrides live in the gfx1030 peer generator,
-//     which is about *which instance* to route to — PEER_BASE_URL.)
+//   - `baseUrl` (the peer's proxy target, derived from the shared fact
+//     table's real endpoint) is HARDCODED and deliberately NOT
+//     env-overridable: the peer's proxy target is part of the provider
+//     definition, not a host setting.  (Remote-target overrides live in the
+//     gfx1030 peer generator, which is about *which instance* to route to —
+//     PEER_BASE_URL.)
 //
 // Keys are read from the process environment (populated by load_secrets in
 // generate.sh: infisical, or keys already in the caller's environment — no
@@ -104,66 +90,39 @@ function fetchWithTimeout(url, options = {}) {
 // is decided at request time — except where the provider's own logic skips it.
 export const PROVIDERS = {
 	openrouter: {
-		id: "openrouter",
-		apiKeyEnv: "OPENROUTER_API_KEY",
-		defaultBaseUrl: "https://openrouter.ai/api/v1",
-		filter: (m) => m.id.endsWith(":free"),
+		...CLOUD_PROVIDERS.openrouter,
+		filter: (/** @type {import("../lib/peer-probe.mjs").RawModelEntry} */ m) =>
+			m.id.endsWith(":free"),
 	},
 	opencode: {
-		id: "opencode",
-		apiKeyEnv: "OPENCODE_API_KEY",
-		defaultBaseUrl: "https://opencode.ai/zen/v1",
+		...CLOUD_PROVIDERS.opencode,
 		modelsDev: "opencode",
 	},
 	"opencode-go": {
-		id: "opencode-go",
-		apiKeyEnv: "OPENCODE_API_KEY",
-		defaultBaseUrl: "https://opencode.ai/zen/go/v1",
+		...CLOUD_PROVIDERS["opencode-go"],
 		modelsDev: "opencode-go",
 	},
 	"cline-pass": {
-		id: "cline-pass",
-		apiKeyEnv: "CLINE_API_KEY",
-		defaultBaseUrl: "https://api.cline.bot/api/v1",
+		...CLOUD_PROVIDERS["cline-pass"],
 		modelsDev: "cline-pass",
 	},
 };
 
 // --- models.dev catalog ----------------------------------------------
-// The vendored models.dev catalog (models.dev.api.json, refreshed atomically
-// by refresh-models-dev.mjs — the tmp+rename contract means a failed fetch
-// never corrupts the last good copy).  Providers flagged `modelsDev` in
-// PROVIDERS take their model-id list from here, unfiltered.
-export function loadModelsDev(path = join(scriptDir, "models.dev.api.json")) {
+// The SHARED vendored models.dev catalog (lib/models.dev.api.json, refreshed
+// atomically by lib/refresh-models-dev.mjs — the tmp+rename contract means a
+// failed fetch never corrupts the last good copy).  Providers flagged
+// `modelsDev` in PROVIDERS take their model-id list from here, unfiltered.
+function loadModelsDev(
+	path = join(scriptDir, "..", "lib", "models.dev.api.json"),
+) {
 	return JSON.parse(readFileSync(path, "utf-8"));
 }
 
 // --- Auth / fetch helpers ---------------------------------------------
-
-export async function fetchModelsJson(baseUrl, headers) {
-	let url = baseUrl.replace(/\/+$/, "") + "/models";
-	let res = await fetchWithTimeout(url, { headers });
-	if (res.status === 404 && !url.endsWith("/v1/models")) {
-		url = baseUrl.replace(/\/+$/, "") + "/v1/models";
-		res = await fetchWithTimeout(url, { headers });
-	}
-	if (!res.ok) {
-		let body;
-		try {
-			body = await res.text();
-		} catch {}
-		const detail = body ? `: ${body.slice(0, 500)}` : "";
-		throw new Error(
-			`GET ${url} returned ${res.status} ${res.statusText}${detail}`,
-		);
-	}
-	const body = await res.json();
-	const data = body.data || body.models || body;
-	if (!Array.isArray(data) || data.length === 0) {
-		throw new Error(`GET ${url} returned no models`);
-	}
-	return { data, url };
-}
+// (the HTTP probe toolkit — fetchModelEntries and its /v1/models fallback,
+// status-carrying errors and proxy handling — lives in lib/peer-probe.mjs and
+// is re-exported above, docs/d023.)
 
 // Resolve the model-id list for one provider: from the models.dev catalog
 // when flagged `modelsDev` (ALL models, unfiltered), otherwise from the
@@ -189,7 +148,10 @@ export async function fetchPeerModels(p) {
 	const apiKey = process.env[p.apiKeyEnv] ?? "";
 	try {
 		const headers = apiKey ? { Authorization: `Bearer ${apiKey}` } : undefined;
-		const { data } = await fetchModelsJson(p.defaultBaseUrl, headers);
+		const data = await fetchModelEntries(p.baseUrl, headers);
+		if (data.length === 0) {
+			throw new Error(`GET ${p.baseUrl}/models returned no models`);
+		}
 		return data.filter(p.filter).map((m) => m.id ?? "unknown");
 	} catch (err) {
 		logWarn("fetch for provider failed — skipping", {
@@ -211,7 +173,7 @@ export function loadCore(path = join(scriptDir, "llama-swap-core.json")) {
 // load time) when the generator's own environment has the key; otherwise it is
 // omitted.
 export function peerEntry(p, models) {
-	const proxy = p.defaultBaseUrl.replace(/\/v1\/?$/, "").replace(/\/+$/, "");
+	const proxy = p.baseUrl.replace(/\/v1\/?$/, "").replace(/\/+$/, "");
 	const entry = { proxy, models };
 	if (process.env[p.apiKeyEnv] !== undefined) {
 		entry.apiKey = `\${env.${p.apiKeyEnv}}`;

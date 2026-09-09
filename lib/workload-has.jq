@@ -1,7 +1,7 @@
-# sandbox-has.jq — is a named array of the description non-empty?
+# workload-has.jq — is a named array of the description non-empty?
 #
-# PART OF: the sandbox description API in ../container-tool.sh.  This is the
-# filter behind `sandbox_has`, which is how a caller asks the description a
+# PART OF: the workload description API in lib/workload-runtime.sh.  This is the
+# filter behind `workload_has`, which is how a caller asks the description a
 # question without reaching into its internals.
 #
 # INPUT — jq variables:
@@ -14,12 +14,12 @@
 # the last output value onto the exit status —
 #     true  → exit 0   (the array has at least one element)
 #     false → exit 1   (missing, null or empty)
-# so `sandbox_has devices` is usable directly as an `if` condition and never
+# so `workload_has devices` is usable directly as an `if` condition and never
 # has to compare a string.  A missing field counts as empty (// []), so
 # callers need no initialisation.
 #
 # WHY THIS EXISTS: it replaces the old `[ -n "$_SB_DEV" ]` test in
-# openai-completions/generate.sh, which reached straight into a space-joined
+# llm-reverse-proxy/generate.sh, which reached straight into a space-joined
 # shell global that this refactor removed.
 #
 # NOTE: a compile error (syntax, or an undefined $var) exits 3, which is

@@ -6,12 +6,12 @@
  * merging config.d/.
  *
  * Generated ONLY on hosts where local inference is viable (container backend
- * + GPU devices detected by openai-completions/generate.sh); peers-only hosts
+ * + GPU devices detected by llm-reverse-proxy/generate.sh); peers-only hosts
  * skip this layer and have no 10-local-llm-inference.yaml.
  *
  * GGUFs (and their mmproj projectors) are read straight from the HF hub cache,
  * mounted into the container at /home/ubuntu/.cache/huggingface/hub (see
- * openai-completions/run.sh); the generated cmd resolves the snapshot
+ * llm-reverse-proxy/run.sh); the generated cmd resolves the snapshot
  * dir at launch via config.d/launch-gguf.sh (mounted ro alongside the yaml),
  * so there is no runtime --hf-repo download and no models-local/ pre-cache
  * step.
@@ -57,7 +57,7 @@ const DEFAULTS = {
 const DEFAULT_SPEC_TYPE = "draft-mtp";
 
 // The in-container HF hub cache path (/home/ubuntu/.cache/huggingface/hub,
-// mounted by openai-completions/run.sh; differs from the host's
+// mounted by llm-reverse-proxy/run.sh; differs from the host's
 // /home/dev/.cache/...) is hardcoded in config.d/launch-gguf.sh, which does
 // the snapshot resolution.
 

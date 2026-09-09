@@ -7,7 +7,7 @@
 # ///
 """download_models.py — provision the exact GGUFs the gfx1030 instance serves.
 
-Reads openai-completions/llamacpp-model-data.json and downloads, from
+Reads llm-reverse-proxy/llamacpp-model-data.json and downloads, from
 each entry's "hf-repo", the LATEST main revision of:
 
   - "model"   the served GGUF. Sharded models are expanded to ALL shards; the
@@ -68,7 +68,7 @@ import log
 log.set_tool("local-llm/download-models")
 
 HERE = Path(__file__).parent
-MODEL_DATA = HERE.parent / "openai-completions" / "llamacpp-model-data.json"
+MODEL_DATA = HERE.parent / "llm-reverse-proxy" / "llamacpp-model-data.json"
 
 SPLIT_RE = re.compile(r"-(\d{5})-of-(\d{5})\.gguf$")
 

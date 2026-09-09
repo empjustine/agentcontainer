@@ -30,7 +30,7 @@
 set -eu
 # shellcheck disable=SC1091
 . "$(dirname "$0")/../lib/workload-runtime.sh"
-LOG_TOOL='openai-completions/run'
+LOG_TOOL='llm-reverse-proxy/run'
 export LOG_TOOL
 
 case "${PREFIX:-}" in

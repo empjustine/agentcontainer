@@ -53,7 +53,7 @@ import log
 log.set_tool("local-llm/fetch-hf-manifests")
 
 HERE = Path(__file__).parent
-MODEL_DATA = HERE.parent / "openai-completions" / "llamacpp-model-data.json"
+MODEL_DATA = HERE.parent / "llm-reverse-proxy" / "llamacpp-model-data.json"
 MANIFEST_DIR = HERE / "hf-manifests"
 
 SIDECAR_RE = re.compile(r"(mmproj|imatrix|mtp-|eagle3-|dflash-|dspark-)")

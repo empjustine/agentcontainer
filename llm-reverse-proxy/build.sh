@@ -28,7 +28,7 @@
 
 # shellcheck disable=SC1091
 . "$(dirname "$0")/../lib/workload-runtime.sh"
-LOG_TOOL='openai-completions/build'
+LOG_TOOL='llm-reverse-proxy/build'
 export LOG_TOOL
 
 set -eu

@@ -9,7 +9,7 @@ model via gdevenyi/huggingface-estimate.
 Replaces the archived size-estimation scripts (OLD/gguf-size-estimation/, see
 docs/gguf-model-tooling.md). Runs the external estimator's CLI
 (run-calc.js, Node) once per (model file, ctx) pair over the canonical model
-list in ../openai-completions/llamacpp-model-data.json, then renders:
+list in ../llm-reverse-proxy/llamacpp-model-data.json, then renders:
 
   - docs/gguf-vram-fit-estimates.md        human-readable tables
   - docs/gguf-vram-fit-estimates.data.json raw per-run estimator output
@@ -58,7 +58,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).parent
-MODEL_DATA = HERE.parent / "openai-completions" / "llamacpp-model-data.json"
+MODEL_DATA = HERE.parent / "llm-reverse-proxy" / "llamacpp-model-data.json"
 DEFAULT_ESTIMATOR = os.environ.get("HUGGINGFACE_ESTIMATE_DIR") or "~/Downloads/references/github/gdevenyi/huggingface-estimate"
 OUT_MD = HERE.parent / "docs" / "gguf-vram-fit-estimates.md"
 OUT_JSON = HERE.parent / "docs" / "gguf-vram-fit-estimates.data.json"
@@ -245,7 +245,7 @@ Parameters common to every row:
 
 Rows are ordered by **token generation speed at ctx=%d** (descending);
 preprocessing (prefill) speed breaks ties. The same order drives
-`openai-completions/llamacpp-model-data.json`.
+`llm-reverse-proxy/llamacpp-model-data.json`.
 
 ## How to read the tables
 

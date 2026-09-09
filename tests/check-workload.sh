@@ -1,10 +1,10 @@
 #!/bin/sh
-# check-sandbox.sh — behavioural check for the sandbox description API.
+# check-workload.sh — behavioural check for the workload description API.
 #
 # WHAT IT CHECKS: that a description assembled through the workload_* calls
 # renders to the exact `container run` argv it produced BEFORE the list side of
 # the description (mounts, env, ports, devices, cmd) was moved out of shell
-# globals and into the JSON document built by lib/sandbox-*.jq.  The
+# globals and into the JSON document built by lib/workload-*.jq.  The
 # expectations below are the pre-refactor output, captured from the old shell
 # renderer, so this is a differential test against the behaviour that shipped.
 #
@@ -18,9 +18,9 @@
 # Only an end-to-end render catches either.
 #
 # Two cases, one per backend, because the mount options are the one genuine
-# backend difference (podman "z,U" vs docker "z" — see lib/sandbox-render.jq).
+# backend difference (podman "z,U" vs docker "z" — see lib/workload-render.jq).
 #
-# Usage: ./tests/check-sandbox.sh     (from any directory)
+# Usage: ./tests/check-workload.sh     (from any directory)
 
 set -eu
 
@@ -30,7 +30,7 @@ set -eu
 root="$(CDPATH='' cd "$(dirname "$0")/.." && pwd)"
 # shellcheck disable=SC1091  # loads log_* + the workload_* API under test
 . "$root/lib/workload-runtime.sh"
-LOG_TOOL='check-sandbox'
+LOG_TOOL='check-workload'
 export LOG_TOOL
 
 tmp=$(mktemp -d)
@@ -133,19 +133,19 @@ case_coding_agent() {
 	workload_env      OPENCODE_API_KEY HF_TOKEN GEMINI_API_KEY PEER_BASE_URL
 	workload_workdir  "$tmp/src/a workspace with spaces"
 	workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
-	_render_container
+	_render_workload
 }
 # A subshell per case: the workload_* accumulators are globals, so without it
 # case 2 would inherit everything case 1 declared.
 ( case_coding_agent ) | _norm >"$tmp/got.coding-agent"
 _check coding-agent
 
-# --- case 2: openai-completions shape, docker -------------------------------
+# --- case 2: llm-reverse-proxy shape, docker -------------------------------
 # Exercises: --detach, --publish (built from a {host,guest} record, not a
 # pre-formatted string), --device (from the devices array), hardening (a
 # three-word flag group), --entrypoint, docker's "z" mount option, and a
 # command word that STARTS WITH A DASH — the case that needs `--args --`.
-cat >"$tmp/expect.openai-completions" <<'EXPECT'
+cat >"$tmp/expect.llm-reverse-proxy" <<'EXPECT'
 ARG[container]
 ARG[run]
 ARG[--detach]
@@ -175,9 +175,9 @@ ARG[ghcr.io/mostlygeek/llama-swap:cpu]
 ARG[-config-dir]
 ARG[/config.d]
 EXPECT
-sed -i "s|<REPO>|$root|g" "$tmp/expect.openai-completions"
+sed -i "s|<REPO>|$root|g" "$tmp/expect.llm-reverse-proxy"
 
-case_openai_completions() {
+case_llm_reverse_proxy() {
 	_workload_tool=docker
 	_userns=''
 	_keep_groups=''
@@ -194,14 +194,14 @@ case_openai_completions() {
 	# Devices are populated by detect_gpu_devs on a real GPU host; there is no
 	# /dev/kfd here, so declare them directly.
 	_sb_append devices /dev/kfd /dev/dri/renderD128
-	_render_container
+	_render_workload
 }
-( case_openai_completions ) | _norm >"$tmp/got.openai-completions"
-_check openai-completions
+( case_llm_reverse_proxy ) | _norm >"$tmp/got.llm-reverse-proxy"
+_check llm-reverse-proxy
 
 # --- case 3: workload_has predicate (jq -e exit status) ----------------------
 # The predicate that replaced `[ -n "$_SB_DEV" ]` in
-# openai-completions/generate.sh.  It must be a usable `if` condition: true
+# llm-reverse-proxy/generate.sh.  It must be a usable `if` condition: true
 # for a populated array, false for a missing or empty one.
 cat >"$tmp/expect.has" <<'EXPECT'
 devices: yes
@@ -219,5 +219,5 @@ EXPECT
 ) >"$tmp/got.has" 2>&1
 _check has
 
-[ "$_fail" = 0 ] || log_die 1 "check-sandbox FAILED (see the diffs above)"
-log_info "check-sandbox passed" cases=3
+[ "$_fail" = 0 ] || log_die 1 "check-workload FAILED (see the diffs above)"
+log_info "check-workload passed" cases=3

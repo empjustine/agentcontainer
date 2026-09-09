@@ -11,8 +11,9 @@
  * convention (Basic base64(":key")).  The first reachable instance wins:
  *
  *   1. $PEER_BASE_URL            (explicit override)
- *   2. bazzite tailscale URL     (https reverse proxy — the world-visible
- *      FQDN funnel of the LAN llama-swap instance; gfx1030 models arrive
+ *   2. shared fallback FQDN      (https reverse proxy — lib/peer-probe.mjs
+ *      DEFAULT_PEER_FALLBACK, the world-visible FQDN funnel of the LAN
+ *      llama-swap instance; gfx1030 models arrive
  *      FQN-prefixed as "gfx1030/<id>" and are normalized back to the bare
  *      ids the upstream instance expects)
  *
@@ -27,7 +28,8 @@
  */
 
 import {
-	fetchModelsJson,
+	DEFAULT_PEER_FALLBACK,
+	fetchModelEntries,
 	logError,
 	logInfo,
 	logWarn,
@@ -36,12 +38,9 @@ import {
 
 const API_KEY = (process.env.PEER_API_KEY || "").trim();
 
-const BAZZITE_ROUTER_TAILSCALE_URL =
-	"https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438";
-
 const CANDIDATE_BASE_URLS = [
 	process.env.PEER_BASE_URL,
-	BAZZITE_ROUTER_TAILSCALE_URL,
+	DEFAULT_PEER_FALLBACK,
 ].filter(Boolean);
 
 const PEER_ID = "gfx1030";
@@ -57,8 +56,11 @@ async function detectBaseURL() {
 	const failures = [];
 	for (const baseUrl of CANDIDATE_BASE_URLS) {
 		try {
-			const { data } = await fetchModelsJson(baseUrl, basicAuthHeader(API_KEY));
-			const ids = data.map((m) => m?.id).filter(Boolean);
+			const entries = await fetchModelEntries(
+				baseUrl,
+				basicAuthHeader(API_KEY),
+			);
+			const ids = entries.map((m) => m?.id).filter(Boolean);
 			// Router-proxied candidates list FQN ids across ALL peer families;
 			// keep only the gfx1030 family, normalized to the bare ids the
 			// upstream instance expects.  Bare-id candidates (the gfx1030 instance

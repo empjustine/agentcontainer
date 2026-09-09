@@ -68,7 +68,8 @@
 # Env overrides:
 #   REFRESH_MODELS_DEV   1 = refetch models.dev.api.json on Termux too
 #                        (default 1 on container hosts, 0 on Termux)
-#   MODELS_DEV_JSON      catalog path (default <this dir>/models.dev.api.json)
+#   MODELS_DEV_JSON      catalog path (default ../lib/models.dev.api.json — the
+#                        shared vendored catalog, see docs/d023)
 #   LOCAL_INFERENCE      1 = force the local-inference layer regardless of the
 #                        capability gate (emits container-side paths; debug)
 #   GFX1030              0 = skip the gfx1030 peer probe (default 1)
@@ -77,22 +78,16 @@
 #   RUN_DIR              snapshot dir (default ${TMPDIR:-$PREFIX/tmp}, else /tmp)
 
 set -eu
-# shellcheck disable=SC1091
+# shellcheck source-path=SCRIPTDIR source=../lib/workload-runtime.sh  # _termux, node_run, default_run_dir, log_**
 . "$(dirname "$0")/../lib/workload-runtime.sh"
-LOG_TOOL='openai-completions/generate'
+LOG_TOOL='llm-reverse-proxy/generate'
 export LOG_TOOL
-
-case "${PREFIX:-}" in
-	*/com.termux/*) _termux=1 ;;
-	*) _termux=0 ;;
-esac
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 config_d="$script_dir/config.d"
-RUN_DIR="${RUN_DIR:-${TMPDIR:-${PREFIX:+$PREFIX/tmp}}}"
-RUN_DIR="${RUN_DIR:-/tmp}"
+RUN_DIR="${RUN_DIR:-$(default_run_dir)}"
 REFRESH_MODELS_DEV="${REFRESH_MODELS_DEV:-$((1 - _termux))}"
-MODELS_DEV_JSON="${MODELS_DEV_JSON:-$script_dir/models.dev.api.json}"
+MODELS_DEV_JSON="${MODELS_DEV_JSON:-$REPO_ROOT/lib/models.dev.api.json}"
 LOCAL_INFERENCE="${LOCAL_INFERENCE:-0}"
 GFX1030="${GFX1030:-1}"
 FORCE="${FORCE:-0}"
@@ -100,17 +95,11 @@ FORCE="${FORCE:-0}"
 mkdir -p -- "$RUN_DIR" "$config_d"
 
 # --- node ------------------------------------------------------------------
-node_run() {
-	if [ "$_termux" = 1 ]; then
-		node "$@"
-	else
-		mise exec node@24 -- node "$@"
-	fi
-}
+# node_run comes from lib/workload-runtime.sh (system node on Termux, mise
+# node@24 elsewhere).  Termux runs the system node; the generators use the
+# global fetch() and AbortSignal.timeout (Node >= 18).  The --env-file flag is
+# no longer used, so the old ">= 20.6 for --env-file" floor does not apply here.
 if [ "$_termux" = 1 ]; then
-	# Termux runs the system node; the generators use the global fetch() and
-	# AbortSignal.timeout (Node >= 18).  The --env-file flag is no longer used,
-	# so the old ">= 20.6 for --env-file" floor does not apply here.
 	if ! command -v node >/dev/null 2>&1; then
 		log_die 93 "node not found (need >= 18.0 for global fetch)"
 	fi
@@ -125,12 +114,12 @@ fi
 # good catalog, so generation always proceeds (offline hosts use the vendored
 # copy).
 if [ "$_termux" = 0 ] || [ "${REFRESH_MODELS_DEV}" = 1 ]; then
-	if [ -f "$script_dir/refresh-models-dev.mjs" ]; then
-		if ! node_run "$script_dir/refresh-models-dev.mjs" "$MODELS_DEV_JSON"; then
+	if [ -f "$REPO_ROOT/lib/refresh-models-dev.mjs" ]; then
+		if ! node_run "$REPO_ROOT/lib/refresh-models-dev.mjs" "$MODELS_DEV_JSON"; then
 			log_warn "models.dev catalog refresh failed — using vendored copy"
 		fi
 	else
-		log_warn "refresh-models-dev.mjs not found — using vendored copy"
+		log_warn "lib/refresh-models-dev.mjs not found — using vendored copy"
 	fi
 fi
 
@@ -206,11 +195,11 @@ _gen generate-peer-cloud.yaml.mjs
 if [ "${local_layer:-}" = 'yes' ]; then
 	rm -f -- "$config_d/22-peer-gfx1030.yaml"
 elif [ "$GFX1030" = 1 ]; then
-	# Probes $PEER_BASE_URL, then localhost:18080 (nonexistent off-device),
-	# then the bazzite tailscale URL, and keeps the existing file when nothing
+	# Probes $PEER_BASE_URL, then the bazzite tailscale URL (no localhost
+	# candidates — docs/d022), and keeps the existing file when nothing
 	# answers.
 	if [ -z "${PEER_BASE_URL:-}" ] && [ -z "${PEER_API_KEY:-}" ]; then
-		log_info "no PEER_BASE_URL or PEER_API_KEY — the gfx1030 probe can only try localhost:18080; set GFX1030=0 to skip"
+		log_info "no PEER_BASE_URL or PEER_API_KEY — the gfx1030 probe can only try the tailscale candidate; set GFX1030=0 to skip"
 	fi
 	_gen generate-gfx1030-models.mjs
 else
@@ -236,7 +225,7 @@ if [ -f "$config_d/peer-cloud.yaml" ]; then
 			fs.writeFileSync(f, JSON.stringify(c, null, 2) + "\n");
 			process.stderr.write(JSON.stringify({
 				ts: new Date().toISOString(), level: "warn",
-				tool: "openai-completions/generate",
+				tool: "llm-reverse-proxy/generate",
 				msg: "dropped non-proxyable peer(s) (llama-swap cannot proxy these API shapes)",
 				peers: dropped,
 			}) + "\n");

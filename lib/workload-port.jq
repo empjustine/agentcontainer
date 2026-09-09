@@ -1,7 +1,7 @@
-# sandbox-port.jq — append ONE published-port record to a sandbox description.
+# workload-port.jq — append ONE published-port record to a workload description.
 #
-# PART OF: the sandbox description API in ../container-tool.sh.  This is the
-# filter behind `sandbox_publish`.
+# PART OF: the workload description API in lib/workload-runtime.sh.  This is the
+# filter behind `workload_publish`.
 #
 # INPUT — jq variables, all required:
 #   $doc    (--argjson)  the current description object.  .ports is created if
@@ -13,7 +13,7 @@
 # OUTPUT: the description with one record appended to .ports, compact JSON on a
 #         single line.
 #
-# RENDERED BY sandbox-render.jq as two argv words:
+# RENDERED BY workload-render.jq as two argv words:
 #   --publish  <host>:<guest>/tcp
 #
 # WHY A RECORD AND NOT A STRING: the old code pre-formatted the pair into

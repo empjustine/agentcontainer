@@ -1,9 +1,9 @@
-# sandbox-mount.jq — append ONE bind-mount record to a sandbox description.
+# workload-mount.jq — append ONE bind-mount record to a workload description.
 #
-# PART OF: the sandbox description API in ../container-tool.sh (see
+# PART OF: the workload description API in lib/workload-runtime.sh (see
 # docs/container-tooling.md).  The description is a JSON document that the
 # shell assembles by piping it through one small jq filter per mutator.  This
-# is the filter behind `sandbox_ro` / `sandbox_ro_if` / `sandbox_rw`.
+# is the filter behind `workload_ro` / `workload_ro_if` / `workload_rw`.
 #
 # INPUT — jq variables, all required:
 #   $doc    (--argjson)  the current description object.  .mounts is created if
@@ -22,10 +22,10 @@
 #
 # WHY: the value carries NO shell quoting.  $host / $guest are bound with
 # --arg, so spaces, quotes and newlines in a path reach jq as literal data and
-# come back out @sh-quoted from sandbox-render.jq.  The previous shell
+# come back out @sh-quoted from workload-render.jq.  The previous shell
 # implementation emulated indexed arrays with `eval` (_sb_add_vol +
 # a matching eval in _render_container) to achieve the same thing.
 #
-# ORDER: .mounts is appended to, never sorted; sandbox-render.jq emits mounts
+# ORDER: .mounts is appended to, never sorted; workload-render.jq emits mounts
 # in array order, which is the order the caller declared them.
 $doc | .mounts += [{mode: $mode, host: $host, guest: $guest}]

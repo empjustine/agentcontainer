@@ -5,8 +5,8 @@
 # backend). PRoot was removed as a supported backend — it is a ptrace
 # path-translation shim, not isolation (no namespaces, no cgroups, no real
 # root, no GPU passthrough); the termux/a50 path serves natively via
-# openai-completions/run-native.sh instead. A qemu/libvirt VM backend is
-# assessed in docs/d020-libvirt-qemu-workload.md (not implemented).
+# llm-reverse-proxy/run-native.sh instead. A qemu/libvirt VM backend is
+# assessed in docs/d020-libvirt-qemu-sandbox.md (not implemented).
 
 # path resolution (the only "where do I live" logic; run scripts reuse these)
 # shellcheck disable=SC2034  # exported-by-contract for sourcing scripts
@@ -17,6 +17,41 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # log_debug/log_info/log_warn/log_error/log_die
 # shellcheck disable=SC1091
 . "$REPO_ROOT/lib/log.sh"
+
+# --- profile + runner helpers ----------------------------------------------
+# Shared by every script that sources this file (the generate.sh scripts used
+# to carry their own identical copies — see docs/d023).
+#
+# Termux profile: 1 = Termux (PREFIX under /data/data/com.termux) — system
+# node, no mise, no container runtime.
+_termux=0
+case "${PREFIX:-}" in
+	*/com.termux/*) _termux=1 ;;
+esac
+
+# node_run [args...] — run node with the repo-pinned version, or the system
+# node on Termux (there is no mise there).  Callers own the version-floor
+# checks, which differ by product (>= 18 for the llm-reverse-proxy
+# generators' global fetch, >= 22.19 for pi-coding-agent's engines).
+node_run() {
+	if [ "$_termux" = 1 ]; then
+		node "$@"
+	else
+		mise exec node@24 -- node "$@"
+	fi
+}
+
+# default_run_dir — the ${RUN_DIR:-...} fallback shared by the generate.sh
+# scripts (scratch dir for intermediate artifacts; the script's own dir may be
+# a read-only mount).  Termux: $TMPDIR or $PREFIX/tmp; elsewhere $TMPDIR or
+# /tmp.
+default_run_dir() {
+	if [ "$_termux" = 1 ]; then
+		printf '%s' "${TMPDIR:-${PREFIX}/tmp}"
+	else
+		printf '%s' "${TMPDIR:-/tmp}"
+	fi
+}
 
 # Infisical identity, pinned so `infisical` resolves the correct workspace from
 # any working directory (proposals-upstream.md D). Self-hosted instances override
@@ -36,7 +71,7 @@ export INFISICAL_API_URL INFISICAL_PROJECT_ID
 # the `<caller's dir>/.env` last-resort fallback were removed — a file of
 # plaintext keys on disk is the failure mode this loader exists to avoid, and
 # every host that used them has infisical (Termux via the locally built CLI,
-# see ./build.sh).  `openai-completions/.env.example` is DOCUMENTATION ONLY:
+# see ./build.sh).  `llm-reverse-proxy/.env.example` is DOCUMENTATION ONLY:
 # it lists the key names the generators and the server read; nothing sources,
 # copies or loads it.
 #
@@ -191,7 +226,7 @@ detect_workload_tool && _workload='workload'
 
 # workload_has <field> — succeed when a named array of the description is
 # non-empty.  This is how callers ask the description a question without
-# reaching into its internals: openai-completions/generate.sh gates the
+# reaching into its internals: llm-reverse-proxy/generate.sh gates the
 # local-inference layer on `workload_has devices` (plus the workload backend).
 # The predicate itself lives in lib/workload-has.jq and is carried by jq's -e
 # exit status (0 = true, 1 = false/null), so there is no string comparison.

@@ -15,23 +15,23 @@
  *
  * | File                              | Concern                                            | Produced by                                              |
  * |-----------------------------------|----------------------------------------------------|----------------------------------------------------------|
- * | `00-model-base.json`              | base foundation (usually `{}`)                     | checked in — optional; `{}` is used when absent          |
  * | `model-000-cloud-default.json`    | cloud providers                                    | no-op slot reserved for cloud — writes `{}`; cloud config lives in env vars / `auth.json` (pi auto-detects). No generator ships it today |
- * | `model-010-local-default.json`    | local llama-swap models **+ cloud-via-peer fallback** | `generate-models.json.mjs`                             |
- * | `model-015-cloud-cline-pass.json` | cloud models off the vendored models.dev catalog   | `generate-cline-pass.mjs` (no network, no secrets)        |
+ * | `model-010-local-default.json`    | local llama-swap models                            | `generate-local-llama-swap.mjs`                          |
+ * | `model-012-cloud-pi-native.json`  | **override** for the pi-native cloud providers (openrouter / opencode / opencode-go) when their default endpoints are unreachable | `generate-cloud-pi-native-providers.mjs`                 |
+ * | `model-015-cloud-cline-pass.json` | cloud models off the vendored models.dev catalog   | `generate-cloud-alternative-providers.mjs` (formerly `generate-cline-pass.mjs`) |
  * | `model-020-peer-default.json`     | peer reverse-proxy models                          | *(future)*                                               |
  *
  * Every `model-*.json` is a `models.json`-shaped layer:
  * `{ "providers": { "<id>": {...} } }` — or `{}` for a no-op layer.
  *
- * Merge order: base (`00-model-base.json`, or `{}` when absent) then every
- * `model-*.json` in **lexical filename order** — the zero-padded lexorank
- * (`000`, `010`, `015`, `020`) makes filename sort equal to merge order:
+ * Merge order: every `model-*.json` in **lexical filename order** — the
+ * zero-padded lexorank (`000`, `010`, `015`, `020`) makes filename sort equal
+ * to merge order:
  *
  * ```text
- * 00-model-base.json  (or {})
- *   + model-000-cloud-default.json
+ * model-000-cloud-default.json
  *   + model-010-local-default.json
+ *   + model-012-cloud-pi-native.json
  *   + model-015-cloud-cline-pass.json
  *   + model-020-peer-default.json   (future)
  *   → models.json
@@ -45,29 +45,28 @@
  *   **replaced** by the later layer.
  *
  * So a later layer *overrides* a scalar/base setting and *adds* models,
- * without the earlier layer needing to know about it.
+ * without the earlier layer needing to know about it. The per-merge-semantic
+ * split (docs/d022, applied in docs/d024) gives each generator one semantic:
+ * `model-010` ADDS the local provider, `model-012` is override-ONLY (empty
+ * when every pi-native cloud endpoint is reachable), and `model-015` is the
+ * AUTHORITATIVE full-block layer for providers pi does not ship natively.
  *
  * Usage: node merge-models-json.mjs [out]
  *   out defaults to $PI_MODELS_JSON else ./models.json.
  *   Copy the merged models.json into the container's ~/.pi/agent/models.json.
  */
 
-import {
-	existsSync,
-	readdirSync,
-	readFileSync,
-	renameSync,
-	writeFileSync,
-} from "node:fs";
+import { readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Structured logging (JSON lines on stderr; see lib/log.mjs).  The env
-// override lets generate.sh point this at its scratch-dir copy.
-// String() and not a bare URL: `import()` wants a string specifier, and a
-// file: URL stringifies back to itself, so the default keeps working.
-const { logInfo, setLogTool } = await import(
-	String(process.env.LOG_LIB ?? new URL("../lib/log.mjs", import.meta.url))
+// Shared lib/ helpers (docs/d023): the structured logger, resolved through the
+// LIB_DIR convention (see the other generators in this folder).
+const LIB_DIR =
+	process.env.LIB_DIR ??
+	join(dirname(fileURLToPath(import.meta.url)), "..", "lib");
+const { logInfo, setLogTool } = /** @type {typeof import("../lib/log.mjs")} */ (
+	await import(`${LIB_DIR}/log.mjs`)
 );
 setLogTool("coding-agent/merge-models-json");
 
@@ -127,15 +126,10 @@ function readJson(path) {
 
 /** @returns {void} */
 function main() {
-	const basePath = join(scriptDir, "00-model-base.json");
-	const base = existsSync(basePath) ? readJson(basePath) : {};
 	const overlayNames = readdirSync(scriptDir)
 		.filter((name) => /^model-.*\.json$/.test(name))
 		.sort();
-	const layers = [
-		base,
-		...overlayNames.map((name) => readJson(join(scriptDir, name))),
-	];
+	const layers = overlayNames.map((name) => readJson(join(scriptDir, name)));
 	const out =
 		process.argv[2] ??
 		process.env.PI_MODELS_JSON ??

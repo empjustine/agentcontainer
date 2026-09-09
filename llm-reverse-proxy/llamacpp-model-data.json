@@ -124,6 +124,8 @@
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
 			"model": "Qwen3.8-27B-UD-Q4_K_M.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q5_1",
 			"__argv": "${qwen38}"
 		},
 		{
@@ -140,12 +142,16 @@
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q8_0",
 			"model": "Qwen3.8-27B-Q8_0.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q5_1",
 			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q6_K",
 			"model": "Qwen3.8-27B-UD-Q6_K.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q5_1",
 			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
 		},
 		{
@@ -287,36 +293,48 @@
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw",
 			"model": "Qwen3.8-27B-Q5_K_M-5.60bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q5_1",
 			"__argv": "${qwen38}"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw",
 			"model": "Qwen3.8-27B-IQ3_S-3.44bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q5_1",
 			"__argv": "${qwen38}"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw",
 			"model": "Qwen3.8-27B-IQ4_XS-3.67bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q5_1",
 			"__argv": "${qwen38}"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw",
 			"model": "Qwen3.8-27B-IQ4_XS-4.00bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q5_1",
 			"__argv": "${qwen38}"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw",
 			"model": "Qwen3.8-27B-IQ4_XS-4.40bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q5_1",
 			"__argv": "${qwen38}"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw",
 			"model": "Qwen3.8-27B-Q5_K_S-4.72bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q5_1",
 			"__argv": "${qwen38}"
 		},
 		{

@@ -1,7 +1,7 @@
-# sandbox-append.jq — append one or more STRINGS to a named array of a sandbox
+# workload-append.jq — append one or more STRINGS to a named array of a workload
 # description.
 #
-# PART OF: the sandbox description API in ../container-tool.sh.
+# PART OF: the workload description API in lib/workload-runtime.sh.
 #
 # INPUT — jq variables:
 #   $doc    (--argjson)  the current description object.
@@ -10,7 +10,7 @@
 #                                     a bare `--env NAME`, so podman/docker
 #                                     takes the value from the host
 #                                     environment (that is how the vault keys
-#                                     reach the sandbox — see
+#                                     reach the workload — see
 #                                     coding-agent/run.sh).
 #                          "devices"  host device paths (e.g. /dev/kfd,
 #                                     /dev/dri/renderD128).  Rendered as
@@ -19,7 +19,7 @@
 #                              FOLLOWED BY A BARE `--`: jq keeps parsing
 #                              options after --args, so without the `--` a
 #                              value beginning with a dash is read as jq flags
-#                              (e.g. `sandbox_cmd -config-dir` fails with
+#                              (e.g. `workload_cmd -config-dir` fails with
 #                              "Unknown option -o").  After `--`, every
 #                              remaining argument is data.
 #

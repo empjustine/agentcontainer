@@ -15,7 +15,7 @@ available the moment the env var is detected.
 
 ### 1.  Proxy config lives in the generator's process environment, not the shell
 
-The provider generators (`openai-completions/gen-lib.mjs`,
+The provider generators (`llm-reverse-proxy/gen-lib.mjs`,
 `coding-agent/generate-models.json.mjs`) read provider overrides from the
 **process environment** (`process.env`, populated by `load_secrets` on the
 host — Infisical via `load_secrets`, or keys already exported by the caller).

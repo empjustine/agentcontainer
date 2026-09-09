@@ -8,15 +8,15 @@ the llama-swap serving container and the pi coding-agent container.
 
 | Name    | Sandbox / runtime                          | Cloud access | Serving dir                     | Usage dir              |
 |---------|--------------------------------------------|--------------|---------------------------------|------------------------|
-| bazzite | rootless podman, SELinux enforced          | direct       | `openai-completions/`           | `coding-agent/`        |
-| a50     | rootless termux, restrictive SELinux,      | direct (if   | `openai-completions/` (native)  | `coding-agent/`        |
+| bazzite | rootless podman, SELinux enforced          | direct       | `llm-reverse-proxy/`           | `coding-agent/`        |
+| a50     | rootless termux, restrictive SELinux,      | direct (if   | `llm-reverse-proxy/` (native)  | `coding-agent/`        |
 |         | non-standard file paths                    | any)         |                                 |                        |
-| work    | WSL2 rootful docker, no direct cloud       | peers only   | `openai-completions/` (peer-only) | `coding-agent/` (static config) |
+| work    | WSL2 rootful docker, no direct cloud       | peers only   | `llm-reverse-proxy/` (peer-only) | `coding-agent/` (static config) |
 
 ### bazzite (full, default)
 
 The reference environment. Runs **one** multipurpose llama-swap instance,
-`openai-completions/` — `generate.sh` detects the container backend + GPU
+`llm-reverse-proxy/` — `generate.sh` detects the container backend + GPU
 devices and emits both the local GGUF layer and the cloud-peer layer into
 `config.d/`; `run.sh` launches the `unified-vulkan` image with GPU passthrough
 + HF cache on LAN port 8080 — plus the full `coding-agent/`. Rootless podman
@@ -27,7 +27,7 @@ chown, and the containers run as the host UID via `--userns=keep-id` +
 ### a50 (termux, peer-only serving)
 
 Resource-constrained host (phone/router under Termux). It **cannot run the
-`openai-completions` llama-swap container** — Termux has no usable podman/docker
+`llm-reverse-proxy` llama-swap container** — Termux has no usable podman/docker
 and the image is amd64/container-shaped. Instead it needs a termux-specific
 **native build of llama-swap** compiled for the device. Local llama.cpp inference
 is also impossible, so `generate.sh` (which detects no container backend + no
@@ -35,7 +35,7 @@ GPU) emits a **peers-only** `config.d/` — no GGUF layer, no
 `llamacpp-model-data.json` usage.
 
 See [termux-serving.md](termux-serving.md) for the a50/termux map — the
-build/serve/env detail lives in the `openai-completions/` script headers it
+build/serve/env detail lives in the `llm-reverse-proxy/` script headers it
 points at.
 
 ### work (nonfree-world, peer-only usage)
@@ -59,7 +59,7 @@ device passthrough, port publishing, hardening) behind one interface. No
 > ptrace-based path translation, not isolation — no kernel namespaces, no
 > cgroups, no real root, no GPU passthrough, no read-only binds — so calling it
 > a "supported workload" was a lie the tree no longer tells. Termux serves
-> natively via `openai-completions/run-native.sh` (the binary talks to the
+> natively via `llm-reverse-proxy/run-native.sh` (the binary talks to the
 > network directly; there is nothing to confine that the shell couldn't).
 > For a stronger-than-container option on capable hosts, see
 > [d020-libvirt-qemu-sandbox.md](d020-libvirt-qemu-sandbox.md).
@@ -79,7 +79,7 @@ On source it detects the backend and computes two paths every run script uses
 It also sets `_workload` (`container` › `none`) and, for the container
 backend, `_container_tool` (`podman`/`docker`) — but run scripts should not read
 these directly; they describe intent via the API below. (Capability probing in
-`openai-completions/generate.sh` legitimately reuses the internals —
+`llm-reverse-proxy/generate.sh` legitimately reuses the internals —
 `_workload` + `detect_gpu_devs` — to decide which config layers the host can
 run.)
 
@@ -101,7 +101,7 @@ run.)
 | `workload_ro_if <host> <guest>` | optional variant (skipped if host path absent) |
 | `workload_env <NAME...>` | pass these host env vars into the workload (`--env`) |
 | `workload_cmd <args...>` | the command (argv after the image) |
-| `workload_has <field>` | true when a description array is non-empty — e.g. `workload_has devices`, which is how `openai-completions/generate.sh` gates the local-inference layer |
+| `workload_has <field>` | true when a description array is non-empty — e.g. `workload_has devices`, which is how `llm-reverse-proxy/generate.sh` gates the local-inference layer |
 | `workload_rm <id>` | remove a prior instance by name |
 | `workload_logs <id>` | tail a running instance's logs |
 | `workload_run [wrapper...]` | render + launch; optional `wrapper` prefixes the launch command. Host-side only — it cannot inject env into the workload; secrets reach the workload via the `workload_env` allowlist (see `coding-agent/run.sh`: host `load_secrets` → forwarded vault keys) |
@@ -163,7 +163,7 @@ Provisioned in `mise.toml` (host), `coding-agent/config.toml` (image), and
 `lib/workload-*.jq` into `/opt/lib`, since inside the container `REPO_ROOT` is
 `/opt`.
 
-**Tests:** `./tests/check-sandbox.sh` renders two full descriptions (one per
+**Tests:** `./tests/check-workload.sh` renders two full descriptions (one per
 backend) and diffs the argv against the pre-refactor output, plus the
 `workload_has` predicate. It is a differential test: it exists because the two
 bugs found during this refactor were semantic, and neither the shellcheck nor
@@ -184,13 +184,13 @@ one.
 ### Serving run script (one multipurpose instance)
 
 Every host runs ONE llama-swap serving container, launched by
-`openai-completions/run.sh` (sources `lib/workload-runtime.sh`). `run.sh` is
+`llm-reverse-proxy/run.sh` (sources `lib/workload-runtime.sh`). `run.sh` is
 serve-only: it mounts the already-generated `config.d/` (read-only) loaded via
-`-config-dir` and adapts to it. Generation lives in `openai-completions/generate.sh`.
+`-config-dir` and adapts to it. Generation lives in `llm-reverse-proxy/generate.sh`.
 
-#### `openai-completions/generate.sh` (capability-gated layers)
+#### `llm-reverse-proxy/generate.sh` (capability-gated layers)
 
-The openai-completions analog of `coding-agent/generate.sh`: generators emit
+The llm-reverse-proxy analog of `coding-agent/generate.sh`: generators emit
 layers, and only the layers that work on the current host land in `config.d/`
 (stale layers from a previous capability set are removed):
 
@@ -212,7 +212,7 @@ layers, and only the layers that work on the current host land in `config.d/`
 
 See [d018-split-config-d.md](d018-split-config-d.md) for the merge contract.
 
-#### `openai-completions/run.sh` (serve-only, adapts to config.d)
+#### `llm-reverse-proxy/run.sh` (serve-only, adapts to config.d)
 
 - **Image**: `ghcr.io/mostlygeek/llama-swap:unified-vulkan` when the local
   layer is present (local llama.cpp needs the GPU/Vulkan runtime); otherwise
@@ -293,4 +293,4 @@ Either way the instance publishes LAN port **8080** (`HOST_PORT` overrides).
 
 Either way llama-swap is launched with `-config-dir <dir>/config.d`. The
 a50/termux path has no container at all — it is peers-only by construction
-via `openai-completions/run-native.sh`.
+via `llm-reverse-proxy/run-native.sh`.
