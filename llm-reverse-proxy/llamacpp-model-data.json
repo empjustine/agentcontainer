@@ -10,6 +10,8 @@
 			"hf-repo": "unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL",
 			"model": "gemma-4-E2B-it-qat-UD-Q4_K_XL.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4}",
@@ -19,6 +21,8 @@
 			"hf-repo": "unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL",
 			"model": "gemma-4-E4B-it-qat-UD-Q4_K_XL.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4}",
@@ -28,6 +32,8 @@
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
 			"model": "gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"__argv": "${gemma4}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
@@ -36,6 +42,8 @@
 			"hf-repo": "unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
 			"model": "gemma-4-12B-it-qat-UD-Q4_K_XL.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"__argv": "${gemma4}",
 			"model-draft": "MTP/mtp-gemma-4-12B-it-Q8_0.gguf"
 		},
@@ -43,6 +51,8 @@
 			"hf-repo": "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K",
 			"model": "Qwen3.6-35B-A3B-UD-Q6_K.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"ctx-size": 131072,
 			"__argv": "${qwen36}"
 		},
@@ -50,6 +60,8 @@
 			"hf-repo": "unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0",
 			"model": "Qwen3.6-35B-A3B-Q8_0.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"ctx-size": 131072,
 			"__argv": "${qwen36}"
 		},
@@ -57,6 +69,8 @@
 			"hf-repo": "byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw",
 			"model": "Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"ctx-size": 131072,
 			"__argv": "${qwen36}"
 		},
@@ -64,6 +78,8 @@
 			"hf-repo": "byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw",
 			"model": "Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"ctx-size": 131072,
 			"__argv": "${qwen36}"
 		},
@@ -71,6 +87,8 @@
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K",
 			"model": "gemma-4-26B-A4B-it-UD-Q6_K.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"__argv": "${gemma4}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
@@ -79,6 +97,8 @@
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
 			"model": "gemma-4-26B-A4B-it-Q8_0.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"__argv": "${gemma4}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
@@ -87,6 +107,8 @@
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q6_K",
 			"model": "gemma-4-12b-it-Q6_K.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"__argv": "${gemma4}",
 			"model-draft": "MTP/mtp-gemma-4-12b-it-Q8_0.gguf"
 		},
@@ -94,6 +116,8 @@
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q8_0",
 			"model": "gemma-4-12b-it-Q8_0.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"__argv": "${gemma4}",
 			"model-draft": "MTP/mtp-gemma-4-12b-it-Q8_0.gguf"
 		},
@@ -118,12 +142,16 @@
 			"hf-repo": "unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
 			"model": "Qwen3.6-27B-Q4_K_M.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"__argv": "${qwen36}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
 			"model": "Qwen3.8-27B-UD-Q4_K_M.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
 			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
@@ -142,6 +170,8 @@
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q8_0",
 			"model": "Qwen3.8-27B-Q8_0.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
 			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
@@ -150,6 +180,8 @@
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q6_K",
 			"model": "Qwen3.8-27B-UD-Q6_K.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
 			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
@@ -158,12 +190,16 @@
 			"hf-repo": "unsloth/Qwen3.8-Flash-Next-GGUF:Q2_K_XL",
 			"model": "UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00001-of-00003.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"__argv": "${qwen38}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
 			"model": "gemma-4-31B-it-qat-UD-Q4_K_XL.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"__argv": "${gemma4}",
 			"model-draft": "MTP/mtp-gemma-4-31B-it-Q8_0.gguf"
 		},
@@ -171,13 +207,13 @@
 			"hf-repo": "unsloth/DeepSeek-V4-Flash-0731-GGUF:UD-IQ1_S",
 			"model": "UD-IQ1_S/DeepSeek-V4-Flash-0731-UD-IQ1_S-00001-of-00003.gguf",
 			"ctx-size": 131072,
-			"__argv": "${deepseekv4}"
+			"__argv": "${deepseekv4} --ubatch-size 128"
 		},
 		{
 			"hf-repo": "unsloth/DeepSeek-V4-Flash-0731-GGUF:UD-Q8_K_XL",
 			"model": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
 			"ctx-size": 131072,
-			"__argv": "${deepseekv4}"
+			"__argv": "${deepseekv4} --ubatch-size 128"
 		},
 		{
 			"hf-repo": "bartowski/Ling-3.0-tiny-GGUF:Q8_0",
@@ -256,6 +292,8 @@
 			"hf-repo": "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL",
 			"model": "Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"ctx-size": 131072,
 			"__argv": "${qwen36}"
 		},
@@ -263,6 +301,8 @@
 			"hf-repo": "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL",
 			"model": "Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"ctx-size": 131072,
 			"__argv": "${qwen36}"
 		},
@@ -270,6 +310,8 @@
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL",
 			"model": "gemma-4-26B-A4B-it-UD-Q6_K_XL.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"__argv": "${gemma4}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
@@ -278,6 +320,8 @@
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL",
 			"model": "gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"__argv": "${gemma4}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
@@ -293,6 +337,8 @@
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw",
 			"model": "Qwen3.8-27B-Q5_K_M-5.60bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
 			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
@@ -301,6 +347,8 @@
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw",
 			"model": "Qwen3.8-27B-IQ3_S-3.44bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
 			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
@@ -309,6 +357,8 @@
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw",
 			"model": "Qwen3.8-27B-IQ4_XS-3.67bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
 			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
@@ -317,6 +367,8 @@
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw",
 			"model": "Qwen3.8-27B-IQ4_XS-4.00bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
 			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
@@ -325,6 +377,8 @@
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw",
 			"model": "Qwen3.8-27B-IQ4_XS-4.40bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
 			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
@@ -333,6 +387,8 @@
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw",
 			"model": "Qwen3.8-27B-Q5_K_S-4.72bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
 			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
@@ -355,6 +411,8 @@
 			"hf-repo": "unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL",
 			"model": "gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4}",
@@ -364,6 +422,8 @@
 			"hf-repo": "unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL",
 			"model": "gemma-4-E4B-it-qat-UD-Q2_K_XL.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4}",
@@ -373,6 +433,8 @@
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q8_0",
 			"model": "gemma-4-E4B-it-Q8_0.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4}",
@@ -382,6 +444,8 @@
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL",
 			"model": "gemma-4-E4B-it-UD-Q8_K_XL.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4}",
@@ -391,6 +455,8 @@
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q8_0",
 			"model": "gemma-4-E2B-it-Q8_0.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4}",
@@ -400,6 +466,8 @@
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL",
 			"model": "gemma-4-E2B-it-UD-Q8_K_XL.gguf",
 			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4}",

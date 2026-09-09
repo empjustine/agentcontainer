@@ -75,7 +75,7 @@ const DEFAULT_SPEC_TYPE = "draft-mtp";
 // and execs.  The emitted cmd is plain argv: sh <launcher> <args> -- ${macros}.
 const LAUNCHER = "/etc/llama-swap/config.d/launch-gguf.sh";
 
-function cacheResolver(m) {
+function cacheResolver(m, mmprojFile) {
 	const repo = m["hf-repo"].split(":")[0]; // drop :revision; the GGUF filename already pins the quant
 	const repoDir = `models--${repo.split("/").join("--")}`;
 	// repo-id is passed separately (reversing models--<org>--<repo> is ambiguous
@@ -85,14 +85,26 @@ function cacheResolver(m) {
 	// The 5th launcher arg is the drafter GGUF ("-" when absent); the launcher
 	// requires it in the SAME snapshot and appends --model-draft itself.
 	return {
-		launcherArgs: `sh ${LAUNCHER} ${repoDir} ${repo} ${m.model} ${m.mmproj || "-"} ${m["model-draft"] || "-"} --`,
+		launcherArgs: `sh ${LAUNCHER} ${repoDir} ${repo} ${m.model} ${mmprojFile ?? "-"} ${m["model-draft"] || "-"} --`,
 	};
 }
 
-// Per-model I/O modalities: vision models (mmproj present) also accept images.
-function inputModalities(m) {
-	return m.mmproj ? ["text", "image"] : ["text"];
-}
+// mmproj models are tripled: one llama-swap model per level of commitment to
+// GPU-offloading the vision projector.  The middle slug segment doubles as a
+// llama-swap macro name (llama-swap-core.json):
+//   0text    -> --no-mmproj --ubatch-size 256   (projector never loaded;
+//              also passed as "-" to launch-gguf.sh so the projector file is
+//              not required in the snapshot / downloaded on cache miss)
+//   1vision  -> --no-mmproj-offload --ubatch-size 2048  (projector loaded, stays on CPU)
+//   2mmproj  -> --ubatch-size 2048                        (projector offloaded to GPU)
+// The 1vision/2mmproj variants additionally pass --image-min-tokens/
+// --image-max-tokens from the manifest, and advertise the "image" input
+// modality; 0text and non-mmproj models stay text-only.
+const MMPROJ_MODES = [
+	{ seg: "0text", vision: false },
+	{ seg: "1vision", vision: true },
+	{ seg: "2mmproj", vision: true },
+];
 
 function activeSlug(m) {
 	for (const slice in activeB) {
@@ -110,10 +122,11 @@ function ctxSlug(contextWindow) {
 
 // The quant now lives in `hf-repo` as `repo:revision`, and the kv-cache type is
 // emitted inline (--cache-type-k/-v), so neither the quant slug nor the
-// kv-quant segment appears in the id anymore — just the active slug, the context
-// window, and the (unique) hf-repo.
-function deriveModelId(m) {
-	return `${activeSlug(m)}-ctx${ctxSlug(m["ctx-size"])}-${m["hf-repo"]}`;
+// kv-quant segment appears in the id anymore — just the active slug, the
+// context window, the mmproj mode segment ("" for non-mmproj models), and the
+// (unique) hf-repo.
+function deriveModelId(m, modeSeg) {
+	return `${activeSlug(m)}-ctx${ctxSlug(m["ctx-size"])}-${modeSeg ? `${modeSeg}-` : ""}${m["hf-repo"]}`;
 }
 
 function main() {
@@ -125,8 +138,10 @@ function main() {
 	for (const raw of modelData.models) {
 		const m = { ...DEFAULTS, ...raw }; // explicit keys win over the defaults
 		const ctxSize = m["ctx-size"]; // AUTHORITATIVE --ctx-size (not --fit-ctx)
-		const modalities = inputModalities(m);
 		const nPredict = ctxSize; // --n-predict mirrors the context window
+		const modes = m.mmproj ? MMPROJ_MODES : [{ seg: null, vision: false }];
+		for (const mode of modes) {
+			const modalities = mode.vision ? ["text", "image"] : ["text"];
 		// The family macro reference (${qwen38} etc.) and any literal extra flags
 		// live in __argv verbatim; llama-swap expands ${...} at load.  Empty __argv
 		// expands to nothing; shlex collapses the gap.
@@ -135,47 +150,54 @@ function main() {
 		// expanded ${LLAMA_SERVER} must directly follow the `--` separator: its
 		// first token ("llama-server") becomes the launcher's server binary, which
 		// it resolves via PATH + common install dirs before exec'ing.
-		const r = cacheResolver(m);
-		let cmd = `${r.launcherArgs} ${LLAMA_SERVER_MACRO}`;
-		if (m["__argv"]) cmd += ` ${m["__argv"]}`;
-		cmd += ` --cache-type-k ${m["cache-type-k"]} --cache-type-v ${m["cache-type-v"]}`;
-		cmd += ` --ctx-size ${ctxSize} --n-predict ${nPredict}`;
-		if (m["model-draft"]) {
-			// explicit: auto-inference only happens on the --hf-repo path, never for
-			// local snapshot paths (see DEFAULT_SPEC_TYPE note above)
-			cmd += ` --spec-type ${m["spec-type"] || DEFAULT_SPEC_TYPE}`;
-		}
-		if (![1, 2].includes(m.parallel)) {
-			throw new Error(
-				`model ${m["hf-repo"]} needs --parallel 1 or --parallel 2, got ${JSON.stringify(m.parallel)}`,
-			);
-		}
-		cmd += ` --parallel ${m.parallel}`;
+			const r = cacheResolver(m, mode.seg === "0text" ? undefined : m.mmproj);
+			let cmd = `${r.launcherArgs} ${LLAMA_SERVER_MACRO}`;
+			// The mode slug is verbatim llama-swap macro text (\${0text} etc.),
+			// NOT JS interpolation — it expands to the projector-offload flags.
+			if (mode.seg) cmd += ` \${${mode.seg}}`;
+			if (mode.vision && m["image-min-tokens"] !== undefined) {
+				cmd += ` --image-min-tokens ${m["image-min-tokens"]} --image-max-tokens ${m["image-max-tokens"]}`;
+			}
+			if (m["__argv"]) cmd += ` ${m["__argv"]}`;
+			cmd += ` --cache-type-k ${m["cache-type-k"]} --cache-type-v ${m["cache-type-v"]}`;
+			cmd += ` --ctx-size ${ctxSize} --n-predict ${nPredict}`;
+			if (m["model-draft"]) {
+				// explicit: auto-inference only happens on the --hf-repo path, never for
+				// local snapshot paths (see DEFAULT_SPEC_TYPE note above)
+				cmd += ` --spec-type ${m["spec-type"] || DEFAULT_SPEC_TYPE}`;
+			}
+			if (![1, 2].includes(m.parallel)) {
+				throw new Error(
+					`model ${m["hf-repo"]} needs --parallel 1 or --parallel 2, got ${JSON.stringify(m.parallel)}`,
+				);
+			}
+			cmd += ` --parallel ${m.parallel}`;
 
-		const id = deriveModelId(m);
-		if (models[id]) {
-			logWarn("duplicate derived model id — skipping", {
-				id,
-				hfRepo: m["hf-repo"],
-			});
-			continue;
+			const id = deriveModelId(m, mode.seg);
+			if (models[id]) {
+				logWarn("duplicate derived model id — skipping", {
+					id,
+					hfRepo: m["hf-repo"],
+				});
+				continue;
+			}
+			// capabilities.context enriches llama-swap's served metadata with the
+			// context window; the "metadata" key (exact name required by llama-swap)
+			// mirrors a pi-coding-agent models.json provider.models[] entry
+			// (reasoning / input / contextWindow / maxTokens).
+			models[id] = {
+				cmd,
+				capabilities: { in: modalities, out: ["text"], context: ctxSize },
+				metadata: {
+					id,
+					reasoning: true,
+					input: modalities,
+					contextWindow: ctxSize,
+					maxTokens: Math.min(ctxSize, nPredict),
+					cost: { input: 1, output: 1, cacheRead: 1, cacheWrite: 1 },
+				},
+			};
 		}
-		// capabilities.context enriches llama-swap's served metadata with the
-		// context window; the "metadata" key (exact name required by llama-swap)
-		// mirrors a pi-coding-agent models.json provider.models[] entry
-		// (reasoning / input / contextWindow / maxTokens).
-		models[id] = {
-			cmd,
-			capabilities: { in: modalities, out: ["text"], context: ctxSize },
-			metadata: {
-				id,
-				reasoning: true,
-				input: modalities,
-				contextWindow: ctxSize,
-				maxTokens: Math.min(ctxSize, nPredict),
-				cost: { input: 1, output: 1, cacheRead: 1, cacheWrite: 1 },
-			},
-		};
 	}
 
 	writeConfigD("10-local-llm-inference.yaml", { models });

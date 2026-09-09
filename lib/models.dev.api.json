@@ -20895,9 +20895,9 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.44,
-					"output": 1.32,
-					"cache_read": 0.014
+					"input": 0.22,
+					"output": 0.66,
+					"cache_read": 0.007
 				}
 			},
 			"deepseek/deepseek-v4-pro-0813": {
@@ -150536,6 +150536,7 @@
 				"tool_call": true,
 				"structured_output": true,
 				"temperature": true,
+				"knowledge": "2023-12",
 				"release_date": "2024-07-23",
 				"last_updated": "2024-07-23",
 				"modalities": {
@@ -197756,7 +197757,7 @@
 			},
 			"meta-llama/llama-3.1-70b-instruct": {
 				"id": "meta-llama/llama-3.1-70b-instruct",
-				"name": "Meta: Llama 3.1 70B Instruct",
+				"name": "Llama-3.1-70B-Instruct",
 				"description": "Open Llama instruction model for multilingual chat, reasoning, and coding",
 				"family": "llama",
 				"attachment": false,
@@ -197764,6 +197765,7 @@
 				"tool_call": true,
 				"structured_output": true,
 				"temperature": true,
+				"knowledge": "2023-12",
 				"release_date": "2024-07-23",
 				"last_updated": "2024-07-23",
 				"modalities": {
@@ -197774,7 +197776,7 @@
 						"text"
 					]
 				},
-				"open_weights": false,
+				"open_weights": true,
 				"limit": {
 					"context": 131072,
 					"output": 16384
@@ -207035,6 +207037,69 @@
 					"cache_write": 6.25
 				}
 			},
+			"eu.amazon.nova-pro-v1:0": {
+				"id": "eu.amazon.nova-pro-v1:0",
+				"name": "Nova Pro (EU)",
+				"description": "Flagship model for demanding analysis, coding, and production agent workflows",
+				"family": "nova-pro",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 300000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.92,
+					"output": 3.68,
+					"cache_read": 0.23
+				}
+			},
+			"us.writer.palmyra-x4-v1:0": {
+				"id": "us.writer.palmyra-x4-v1:0",
+				"name": "Palmyra X4 (US)",
+				"description": "Reasoning model for deliberate analysis, multi-step problem solving, and tool use",
+				"family": "palmyra",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [],
+				"tool_call": true,
+				"temperature": true,
+				"release_date": "2025-04-28",
+				"last_updated": "2025-04-28",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 122880,
+					"output": 8192
+				},
+				"cost": {
+					"input": 2.5,
+					"output": 10
+				}
+			},
 			"us.anthropic.claude-opus-4-6-v1": {
 				"id": "us.anthropic.claude-opus-4-6-v1",
 				"name": "Claude Opus 4.6 (US)",
@@ -207127,6 +207192,36 @@
 					"input": 2.2,
 					"output": 6.6,
 					"cache_read": 0.55
+				}
+			},
+			"eu.mistral.pixtral-large-2502-v1:0": {
+				"id": "eu.mistral.pixtral-large-2502-v1:0",
+				"name": "Pixtral Large (25.02) (EU)",
+				"description": "Mistral vision-language model for image understanding and multimodal chat",
+				"family": "pixtral",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"release_date": "2025-04-08",
+				"last_updated": "2025-04-08",
+				"modalities": {
+					"input": [
+						"text",
+						"image"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 128000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 2,
+					"output": 6
 				}
 			},
 			"qwen.qwen3-coder-next": {
@@ -207673,6 +207768,37 @@
 					"cache_write": 6.25
 				}
 			},
+			"us.amazon.nova-micro-v1:0": {
+				"id": "us.amazon.nova-micro-v1:0",
+				"name": "Nova Micro (US)",
+				"description": "Efficient model for low-latency assistance, extraction, and routine automation",
+				"family": "nova-micro",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 128000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.035,
+					"output": 0.14,
+					"cache_read": 0.00875
+				}
+			},
 			"jp.anthropic.claude-opus-4-7": {
 				"id": "jp.anthropic.claude-opus-4-7",
 				"name": "Claude Opus 4.7 (JP)",
@@ -207767,6 +207893,37 @@
 					"output": 11,
 					"cache_read": 0.22,
 					"cache_write": 2.75
+				}
+			},
+			"apac.amazon.nova-micro-v1:0": {
+				"id": "apac.amazon.nova-micro-v1:0",
+				"name": "Nova Micro (APAC)",
+				"description": "Efficient model for low-latency assistance, extraction, and routine automation",
+				"family": "nova-micro",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 128000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.037,
+					"output": 0.148,
+					"cache_read": 0.00925
 				}
 			},
 			"nvidia.nemotron-nano-9b-v2": {
@@ -207966,6 +208123,106 @@
 					"cache_write": 3.75
 				}
 			},
+			"us.openai.gpt-5.6-sol": {
+				"id": "us.openai.gpt-5.6-sol",
+				"name": "GPT-5.6 Sol (US)",
+				"description": "Frontier GPT-5.6 model for complex professional work, coding, and agentic workflows",
+				"family": "gpt-sol",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"low",
+							"medium",
+							"high",
+							"xhigh",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": false,
+				"temperature": false,
+				"knowledge": "2026-02-16",
+				"release_date": "2026-07-09",
+				"last_updated": "2026-07-09",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1050000,
+					"input": 922000,
+					"output": 128000
+				},
+				"cost": {
+					"input": 4.4,
+					"output": 22,
+					"cache_read": 0.44,
+					"cache_write": 5.5,
+					"tiers": [
+						{
+							"input": 8.8,
+							"output": 33,
+							"cache_read": 0.88,
+							"cache_write": 11,
+							"tier": {
+								"type": "context",
+								"size": 272000
+							}
+						}
+					],
+					"context_over_200k": {
+						"input": 8.8,
+						"output": 33,
+						"cache_read": 0.88,
+						"cache_write": 11
+					}
+				}
+			},
+			"eu.amazon.nova-lite-v1:0": {
+				"id": "eu.amazon.nova-lite-v1:0",
+				"name": "Nova Lite (EU)",
+				"description": "Efficient model for low-latency assistance, extraction, and routine automation",
+				"family": "nova-lite",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 300000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.069,
+					"output": 0.276,
+					"cache_read": 0.01725
+				}
+			},
 			"anthropic.claude-opus-5": {
 				"id": "anthropic.claude-opus-5",
 				"name": "Claude Opus 5",
@@ -208062,6 +208319,39 @@
 					"cache_write": 6.875
 				}
 			},
+			"apac.amazon.nova-pro-v1:0": {
+				"id": "apac.amazon.nova-pro-v1:0",
+				"name": "Nova Pro (APAC)",
+				"description": "Flagship model for demanding analysis, coding, and production agent workflows",
+				"family": "nova-pro",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 300000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.84,
+					"output": 3.36,
+					"cache_read": 0.21
+				}
+			},
 			"anthropic.claude-sonnet-4-6": {
 				"id": "anthropic.claude-sonnet-4-6",
 				"name": "Claude Sonnet 4.6",
@@ -208110,6 +208400,39 @@
 					"output": 15,
 					"cache_read": 0.3,
 					"cache_write": 3.75
+				}
+			},
+			"apac.amazon.nova-lite-v1:0": {
+				"id": "apac.amazon.nova-lite-v1:0",
+				"name": "Nova Lite (APAC)",
+				"description": "Efficient model for low-latency assistance, extraction, and routine automation",
+				"family": "nova-lite",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 300000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.063,
+					"output": 0.252,
+					"cache_read": 0.01575
 				}
 			},
 			"mistral.voxtral-mini-3b-2507": {
@@ -208443,6 +208766,36 @@
 					"cache_write": 2.5
 				}
 			},
+			"us.writer.palmyra-x5-v1:0": {
+				"id": "us.writer.palmyra-x5-v1:0",
+				"name": "Palmyra X5 (US)",
+				"description": "Reasoning model for deliberate analysis, multi-step problem solving, and tool use",
+				"family": "palmyra",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [],
+				"tool_call": true,
+				"temperature": true,
+				"release_date": "2025-04-28",
+				"last_updated": "2025-04-28",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1040000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.6,
+					"output": 6
+				}
+			},
 			"us.meta.llama4-maverick-17b-instruct-v1:0": {
 				"id": "us.meta.llama4-maverick-17b-instruct-v1:0",
 				"name": "Llama 4 Maverick 17B Instruct (US)",
@@ -208643,6 +208996,39 @@
 					"output": 10
 				}
 			},
+			"us.amazon.nova-pro-v1:0": {
+				"id": "us.amazon.nova-pro-v1:0",
+				"name": "Nova Pro (US)",
+				"description": "Flagship model for demanding analysis, coding, and production agent workflows",
+				"family": "nova-pro",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 300000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.8,
+					"output": 3.2,
+					"cache_read": 0.2
+				}
+			},
 			"google.gemma-3-12b-it": {
 				"id": "google.gemma-3-12b-it",
 				"name": "Google Gemma 3 12B",
@@ -208760,6 +209146,52 @@
 					"output": 5,
 					"cache_read": 0.1,
 					"cache_write": 1.25
+				}
+			},
+			"eu.amazon.nova-2-lite-v1:0": {
+				"id": "eu.amazon.nova-2-lite-v1:0",
+				"name": "Nova 2 Lite (EU)",
+				"description": "Multimodal reasoning model for visual analysis, planning, and tool use",
+				"family": "nova",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "toggle"
+					},
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"medium",
+							"high"
+						]
+					}
+				],
+				"tool_call": true,
+				"temperature": true,
+				"release_date": "2025-12-01",
+				"last_updated": "2025-12-01",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1000000,
+					"output": 64000
+				},
+				"cost": {
+					"input": 0.374,
+					"output": 3.157,
+					"cache_read": 0.0935
 				}
 			},
 			"eu.anthropic.claude-opus-4-8": {
@@ -208912,6 +209344,83 @@
 				"cost": {
 					"input": 0.07,
 					"output": 0.2
+				}
+			},
+			"global.amazon.nova-2-lite-v1:0": {
+				"id": "global.amazon.nova-2-lite-v1:0",
+				"name": "Nova 2 Lite (Global)",
+				"description": "Multimodal reasoning model for visual analysis, planning, and tool use",
+				"family": "nova",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "toggle"
+					},
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"medium",
+							"high"
+						]
+					}
+				],
+				"tool_call": true,
+				"temperature": true,
+				"release_date": "2025-12-01",
+				"last_updated": "2025-12-01",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1000000,
+					"output": 64000
+				},
+				"cost": {
+					"input": 0.3,
+					"output": 2.5,
+					"cache_read": 0.075
+				}
+			},
+			"eu.amazon.nova-micro-v1:0": {
+				"id": "eu.amazon.nova-micro-v1:0",
+				"name": "Nova Micro (EU)",
+				"description": "Efficient model for low-latency assistance, extraction, and routine automation",
+				"family": "nova-micro",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 128000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.04,
+					"output": 0.16,
+					"cache_read": 0.01
 				}
 			},
 			"openai.gpt-5.6-luna": {
@@ -209321,6 +209830,179 @@
 					"output": 25,
 					"cache_read": 0.5,
 					"cache_write": 6.25
+				}
+			},
+			"us.amazon.nova-2-lite-v1:0": {
+				"id": "us.amazon.nova-2-lite-v1:0",
+				"name": "Nova 2 Lite (US)",
+				"description": "Multimodal reasoning model for visual analysis, planning, and tool use",
+				"family": "nova",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "toggle"
+					},
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"medium",
+							"high"
+						]
+					}
+				],
+				"tool_call": true,
+				"temperature": true,
+				"release_date": "2025-12-01",
+				"last_updated": "2025-12-01",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1000000,
+					"output": 64000
+				},
+				"cost": {
+					"input": 0.33,
+					"output": 2.75,
+					"cache_read": 0.0825
+				}
+			},
+			"us.openai.gpt-5.6-terra": {
+				"id": "us.openai.gpt-5.6-terra",
+				"name": "GPT-5.6 Terra (US)",
+				"description": "Balanced GPT-5.6 model for capable, cost-efficient everyday work",
+				"family": "gpt-terra",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"low",
+							"medium",
+							"high",
+							"xhigh",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": false,
+				"temperature": false,
+				"knowledge": "2026-02-16",
+				"release_date": "2026-07-09",
+				"last_updated": "2026-07-09",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1050000,
+					"input": 922000,
+					"output": 128000
+				},
+				"cost": {
+					"input": 2.2,
+					"output": 13.2,
+					"cache_read": 0.22,
+					"cache_write": 2.75,
+					"tiers": [
+						{
+							"input": 4.4,
+							"output": 19.8,
+							"cache_read": 0.44,
+							"cache_write": 5.5,
+							"tier": {
+								"type": "context",
+								"size": 272000
+							}
+						}
+					],
+					"context_over_200k": {
+						"input": 4.4,
+						"output": 19.8,
+						"cache_read": 0.44,
+						"cache_write": 5.5
+					}
+				}
+			},
+			"us.meta.llama3-3-70b-instruct-v1:0": {
+				"id": "us.meta.llama3-3-70b-instruct-v1:0",
+				"name": "Llama 3.3 70B Instruct (US)",
+				"description": "Popular open Llama workhorse for multilingual chat, coding, and self-hosting",
+				"family": "llama",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"knowledge": "2023-12",
+				"release_date": "2024-12-06",
+				"last_updated": "2024-12-06",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 128000,
+					"output": 4096
+				},
+				"cost": {
+					"input": 0.72,
+					"output": 0.72
+				}
+			},
+			"us.meta.llama3-1-70b-instruct-v1:0": {
+				"id": "us.meta.llama3-1-70b-instruct-v1:0",
+				"name": "Llama 3.1 70B Instruct (US)",
+				"description": "Open Llama instruction model for multilingual chat, reasoning, and coding",
+				"family": "llama",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"knowledge": "2023-12",
+				"release_date": "2024-07-23",
+				"last_updated": "2024-07-23",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 128000,
+					"output": 4096
+				},
+				"cost": {
+					"input": 0.72,
+					"output": 0.72
 				}
 			},
 			"amazon.nova-pro-v1:0": {
@@ -209815,6 +210497,73 @@
 					"output": 0.66
 				}
 			},
+			"us.openai.gpt-5.6-luna": {
+				"id": "us.openai.gpt-5.6-luna",
+				"name": "GPT-5.6 Luna (US)",
+				"description": "Cost-efficient GPT-5.6 model for fast, high-volume workloads",
+				"family": "gpt-luna",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"low",
+							"medium",
+							"high",
+							"xhigh",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": false,
+				"temperature": false,
+				"knowledge": "2026-02-16",
+				"release_date": "2026-07-09",
+				"last_updated": "2026-07-09",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1050000,
+					"input": 922000,
+					"output": 128000
+				},
+				"cost": {
+					"input": 0.22,
+					"output": 1.32,
+					"cache_read": 0.022,
+					"cache_write": 0.275,
+					"tiers": [
+						{
+							"input": 0.44,
+							"output": 1.98,
+							"cache_read": 0.044,
+							"cache_write": 0.55,
+							"tier": {
+								"type": "context",
+								"size": 272000
+							}
+						}
+					],
+					"context_over_200k": {
+						"input": 0.44,
+						"output": 1.98,
+						"cache_read": 0.044,
+						"cache_write": 0.55
+					}
+				}
+			},
 			"moonshot.kimi-k2-thinking": {
 				"id": "moonshot.kimi-k2-thinking",
 				"name": "Kimi K2 Thinking",
@@ -210186,6 +210935,52 @@
 					"output": 0.66
 				}
 			},
+			"jp.amazon.nova-2-lite-v1:0": {
+				"id": "jp.amazon.nova-2-lite-v1:0",
+				"name": "Nova 2 Lite (JP)",
+				"description": "Multimodal reasoning model for visual analysis, planning, and tool use",
+				"family": "nova",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "toggle"
+					},
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"medium",
+							"high"
+						]
+					}
+				],
+				"tool_call": true,
+				"temperature": true,
+				"release_date": "2025-12-01",
+				"last_updated": "2025-12-01",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1000000,
+					"output": 64000
+				},
+				"cost": {
+					"input": 0.396,
+					"output": 3.311,
+					"cache_read": 0.099
+				}
+			},
 			"google.gemma-3-27b-it": {
 				"id": "google.gemma-3-27b-it",
 				"name": "Google Gemma 3 27B Instruct",
@@ -210247,6 +211042,36 @@
 					"input": 0.035,
 					"output": 0.14,
 					"cache_read": 0.00875
+				}
+			},
+			"us.mistral.pixtral-large-2502-v1:0": {
+				"id": "us.mistral.pixtral-large-2502-v1:0",
+				"name": "Pixtral Large (25.02) (US)",
+				"description": "Mistral vision-language model for image understanding and multimodal chat",
+				"family": "pixtral",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"release_date": "2025-04-08",
+				"last_updated": "2025-04-08",
+				"modalities": {
+					"input": [
+						"text",
+						"image"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 128000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 2,
+					"output": 6
 				}
 			},
 			"anthropic.claude-fable-5": {
@@ -210687,6 +211512,39 @@
 					"output": 15,
 					"cache_read": 0.3,
 					"cache_write": 3.75
+				}
+			},
+			"us.amazon.nova-lite-v1:0": {
+				"id": "us.amazon.nova-lite-v1:0",
+				"name": "Nova Lite (US)",
+				"description": "Efficient model for low-latency assistance, extraction, and routine automation",
+				"family": "nova-lite",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 300000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.06,
+					"output": 0.24,
+					"cache_read": 0.015
 				}
 			},
 			"global.anthropic.claude-opus-4-7": {
@@ -211396,6 +212254,39 @@
 					"output": 2.2
 				}
 			},
+			"ca.amazon.nova-lite-v1:0": {
+				"id": "ca.amazon.nova-lite-v1:0",
+				"name": "Nova Lite (CA)",
+				"description": "Efficient model for low-latency assistance, extraction, and routine automation",
+				"family": "nova-lite",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 300000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.064,
+					"output": 0.256,
+					"cache_read": 0.016
+				}
+			},
 			"us.anthropic.claude-opus-4-5-20251101-v1:0": {
 				"id": "us.anthropic.claude-opus-4-5-20251101-v1:0",
 				"name": "Claude Opus 4.5 (US)",
@@ -211443,6 +212334,52 @@
 					"output": 25,
 					"cache_read": 0.5,
 					"cache_write": 6.25
+				}
+			},
+			"au.anthropic.claude-opus-4-7": {
+				"id": "au.anthropic.claude-opus-4-7",
+				"name": "Claude Opus 4.7 (AU)",
+				"description": "Stronger Opus tier for advanced software work and high-stakes reasoning",
+				"family": "claude-opus",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"medium",
+							"high",
+							"xhigh",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"temperature": false,
+				"knowledge": "2026-01-31",
+				"release_date": "2026-04-16",
+				"last_updated": "2026-04-16",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1000000,
+					"output": 128000
+				},
+				"cost": {
+					"input": 5.5,
+					"output": 27.5,
+					"cache_read": 0.55,
+					"cache_write": 6.875
 				}
 			},
 			"jp.anthropic.claude-sonnet-4-6": {
@@ -212104,6 +213041,36 @@
 					"output": 10,
 					"cache_read": 0.2,
 					"cache_write": 2.5
+				}
+			},
+			"us.meta.llama3-1-8b-instruct-v1:0": {
+				"id": "us.meta.llama3-1-8b-instruct-v1:0",
+				"name": "Llama 3.1 8B Instruct (US)",
+				"description": "Compact open Llama model for lightweight chat, drafting, and self-hosting",
+				"family": "llama",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"knowledge": "2023-12",
+				"release_date": "2024-07-23",
+				"last_updated": "2024-07-23",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 128000,
+					"output": 4096
+				},
+				"cost": {
+					"input": 0.22,
+					"output": 0.22
 				}
 			},
 			"jp.anthropic.claude-sonnet-4-5-20250929-v1:0": {
@@ -215601,6 +216568,37 @@
 					"input": 1.25,
 					"output": 4.25,
 					"cache_read": 0.15
+				}
+			},
+			"meta/llama-3.1-70b-instruct": {
+				"id": "meta/llama-3.1-70b-instruct",
+				"name": "Llama 3.1 70B",
+				"description": "Open Llama instruction model for multilingual chat, reasoning, and coding",
+				"family": "llama",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": false,
+				"temperature": true,
+				"knowledge": "2023-12",
+				"release_date": "2024-07-23",
+				"last_updated": "2024-07-23",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 128000,
+					"output": 2048
+				},
+				"cost": {
+					"input": 0.99,
+					"output": 0.99
 				}
 			},
 			"meta/llama-3.3-70b-instruct": {
@@ -230500,8 +231498,8 @@
 					"output": 16384
 				},
 				"cost": {
-					"input": 0.09,
-					"output": 0.55
+					"input": 0.22,
+					"output": 0.88
 				}
 			},
 			"qwen/qwen3.5-flash-02-23": {
@@ -237843,7 +238841,7 @@
 				"cost": {
 					"input": 0.57948,
 					"output": 1.73844,
-					"cache_read": 0.057948
+					"cache_read": 0.018438
 				}
 			},
 			"deepseek/deepseek-v4-flash-0731": {
@@ -239509,7 +240507,7 @@
 			},
 			"meta-llama/llama-3.1-70b-instruct": {
 				"id": "meta-llama/llama-3.1-70b-instruct",
-				"name": "Llama 3.1 70B Instruct",
+				"name": "Llama-3.1-70B-Instruct",
 				"description": "Open Llama instruction model for multilingual chat, reasoning, and coding",
 				"family": "llama",
 				"attachment": false,
@@ -239517,7 +240515,7 @@
 				"tool_call": true,
 				"structured_output": true,
 				"temperature": true,
-				"knowledge": "2023-12-31",
+				"knowledge": "2023-12",
 				"release_date": "2024-07-23",
 				"last_updated": "2024-07-23",
 				"modalities": {
@@ -290478,8 +291476,8 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.5808,
-					"output": 1.7424
+					"input": 1.122,
+					"output": 3.366
 				}
 			},
 			"qwen/deepseek-v4-flash-0731": {
@@ -290520,8 +291518,8 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.176,
-					"output": 0.528
+					"input": 0.352,
+					"output": 1.056
 				}
 			},
 			"qwen/qwen3-coder-plus": {
@@ -295980,6 +296978,100 @@
 					"output": 3
 				}
 			},
+			"amazon/amazon.nova-micro-v1:0@us": {
+				"id": "amazon/amazon.nova-micro-v1:0@us",
+				"name": "Nova Micro (US)",
+				"description": "Efficient model for low-latency assistance, extraction, and routine automation",
+				"family": "nova-micro",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 128000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.035,
+					"output": 0.14
+				}
+			},
+			"amazon/mistral.pixtral-large-2502-v1:0": {
+				"id": "amazon/mistral.pixtral-large-2502-v1:0",
+				"name": "Pixtral Large (25.02) (Amazon Bedrock)",
+				"description": "Mistral vision-language model for image understanding and multimodal chat",
+				"family": "pixtral",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": false,
+				"temperature": true,
+				"release_date": "2025-04-08",
+				"last_updated": "2025-04-08",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 128000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 2,
+					"output": 6
+				}
+			},
+			"amazon/amazon.nova-lite-v1:0@us": {
+				"id": "amazon/amazon.nova-lite-v1:0@us",
+				"name": "Nova Lite (US)",
+				"description": "Efficient model for low-latency assistance, extraction, and routine automation",
+				"family": "nova-lite",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 300000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.06,
+					"output": 0.24
+				}
+			},
 			"amazon/zai.glm-4.7-flash@us": {
 				"id": "amazon/zai.glm-4.7-flash@us",
 				"name": "GLM-4.7-Flash (Amazon Bedrock, US)",
@@ -296012,6 +297104,105 @@
 					"output": 0.4
 				}
 			},
+			"amazon/amazon.nova-pro-v1:0@us": {
+				"id": "amazon/amazon.nova-pro-v1:0@us",
+				"name": "Nova Pro (US)",
+				"description": "Flagship model for demanding analysis, coding, and production agent workflows",
+				"family": "nova-pro",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 300000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.8,
+					"output": 3.2
+				}
+			},
+			"amazon/amazon.nova-lite-v1:0": {
+				"id": "amazon/amazon.nova-lite-v1:0",
+				"name": "Nova Lite",
+				"description": "Efficient model for low-latency assistance, extraction, and routine automation",
+				"family": "nova-lite",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 300000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.06,
+					"output": 0.24
+				}
+			},
+			"amazon/amazon.nova-pro-v1:0": {
+				"id": "amazon/amazon.nova-pro-v1:0",
+				"name": "Nova Pro",
+				"description": "Flagship model for demanding analysis, coding, and production agent workflows",
+				"family": "nova-pro",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 300000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.8,
+					"output": 3.2
+				}
+			},
 			"amazon/moonshot.kimi-k2-thinking": {
 				"id": "amazon/moonshot.kimi-k2-thinking",
 				"name": "Kimi K2 Thinking (Amazon Bedrock)",
@@ -296042,6 +297233,67 @@
 				"cost": {
 					"input": 0.6,
 					"output": 2.5
+				}
+			},
+			"amazon/amazon.nova-micro-v1:0": {
+				"id": "amazon/amazon.nova-micro-v1:0",
+				"name": "Nova Micro",
+				"description": "Efficient model for low-latency assistance, extraction, and routine automation",
+				"family": "nova-micro",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"knowledge": "2024-10",
+				"release_date": "2024-12-03",
+				"last_updated": "2024-12-03",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 128000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.035,
+					"output": 0.14
+				}
+			},
+			"amazon/mistral.pixtral-large-2502-v1:0@us": {
+				"id": "amazon/mistral.pixtral-large-2502-v1:0@us",
+				"name": "Pixtral Large (25.02) (Amazon Bedrock, US)",
+				"description": "Mistral vision-language model for image understanding and multimodal chat",
+				"family": "pixtral",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": false,
+				"temperature": true,
+				"release_date": "2025-04-08",
+				"last_updated": "2025-04-08",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 128000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 2,
+					"output": 6
 				}
 			},
 			"amazon/zai.glm-4.7-flash": {

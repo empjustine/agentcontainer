@@ -27,8 +27,35 @@
         }
       }
     },
-    "02b-ctx128-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-qat-GGUF unsloth/gemma-4-E2B-it-qat-GGUF gemma-4-E2B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+    "02b-ctx128-0text-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-qat-GGUF unsloth/gemma-4-E2B-it-qat-GGUF gemma-4-E2B-it-qat-UD-Q4_K_XL.gguf - MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "02b-ctx128-0text-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-qat-GGUF unsloth/gemma-4-E2B-it-qat-GGUF gemma-4-E2B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
       "capabilities": {
         "in": [
           "text",
@@ -40,7 +67,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "02b-ctx128-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL",
+        "id": "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -56,8 +83,8 @@
         }
       }
     },
-    "04b-ctx128-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-qat-GGUF unsloth/gemma-4-E4B-it-qat-GGUF gemma-4-E4B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+    "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-qat-GGUF unsloth/gemma-4-E2B-it-qat-GGUF gemma-4-E2B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
       "capabilities": {
         "in": [
           "text",
@@ -69,7 +96,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "04b-ctx128-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL",
+        "id": "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -85,8 +112,35 @@
         }
       }
     },
-    "04b-ctx128-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-qat-GGUF unsloth/gemma-4-26B-A4B-it-qat-GGUF gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+    "04b-ctx128-0text-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-qat-GGUF unsloth/gemma-4-E4B-it-qat-GGUF gemma-4-E4B-it-qat-UD-Q4_K_XL.gguf - MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-0text-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-qat-GGUF unsloth/gemma-4-E4B-it-qat-GGUF gemma-4-E4B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
       "capabilities": {
         "in": [
           "text",
@@ -98,7 +152,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "04b-ctx128-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
+        "id": "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -114,8 +168,149 @@
         }
       }
     },
-    "12b-ctx064-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-12B-it-qat-GGUF unsloth/gemma-4-12B-it-qat-GGUF gemma-4-12B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-12B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
+    "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-qat-GGUF unsloth/gemma-4-E4B-it-qat-GGUF gemma-4-E4B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-qat-GGUF unsloth/gemma-4-26B-A4B-it-qat-GGUF gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf - MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-qat-GGUF unsloth/gemma-4-26B-A4B-it-qat-GGUF gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-2mmproj-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-qat-GGUF unsloth/gemma-4-26B-A4B-it-qat-GGUF gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-2mmproj-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "12b-ctx064-0text-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-12B-it-qat-GGUF unsloth/gemma-4-12B-it-qat-GGUF gemma-4-12B-it-qat-UD-Q4_K_XL.gguf - MTP/mtp-gemma-4-12B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "12b-ctx064-0text-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "12b-ctx064-1vision-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-12B-it-qat-GGUF unsloth/gemma-4-12B-it-qat-GGUF gemma-4-12B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-12B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -127,7 +322,7 @@
         "context": 65536
       },
       "metadata": {
-        "id": "12b-ctx064-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
+        "id": "12b-ctx064-1vision-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -143,182 +338,8 @@
         }
       }
     },
-    "03b-ctx128-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q6_K.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
-      "capabilities": {
-        "in": [
-          "text",
-          "image"
-        ],
-        "out": [
-          "text"
-        ],
-        "context": 131072
-      },
-      "metadata": {
-        "id": "03b-ctx128-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K",
-        "reasoning": true,
-        "input": [
-          "text",
-          "image"
-        ],
-        "contextWindow": 131072,
-        "maxTokens": 131072,
-        "cost": {
-          "input": 1,
-          "output": 1,
-          "cacheRead": 1,
-          "cacheWrite": 1
-        }
-      }
-    },
-    "03b-ctx128-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-Q8_0.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
-      "capabilities": {
-        "in": [
-          "text",
-          "image"
-        ],
-        "out": [
-          "text"
-        ],
-        "context": 131072
-      },
-      "metadata": {
-        "id": "03b-ctx128-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0",
-        "reasoning": true,
-        "input": [
-          "text",
-          "image"
-        ],
-        "contextWindow": 131072,
-        "maxTokens": 131072,
-        "cost": {
-          "input": 1,
-          "output": 1,
-          "cacheRead": 1,
-          "cacheWrite": 1
-        }
-      }
-    },
-    "03b-ctx128-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.6-35B-A3B-GGUF byteshape/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
-      "capabilities": {
-        "in": [
-          "text",
-          "image"
-        ],
-        "out": [
-          "text"
-        ],
-        "context": 131072
-      },
-      "metadata": {
-        "id": "03b-ctx128-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw",
-        "reasoning": true,
-        "input": [
-          "text",
-          "image"
-        ],
-        "contextWindow": 131072,
-        "maxTokens": 131072,
-        "cost": {
-          "input": 1,
-          "output": 1,
-          "cacheRead": 1,
-          "cacheWrite": 1
-        }
-      }
-    },
-    "03b-ctx128-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.6-35B-A3B-GGUF byteshape/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
-      "capabilities": {
-        "in": [
-          "text",
-          "image"
-        ],
-        "out": [
-          "text"
-        ],
-        "context": 131072
-      },
-      "metadata": {
-        "id": "03b-ctx128-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw",
-        "reasoning": true,
-        "input": [
-          "text",
-          "image"
-        ],
-        "contextWindow": 131072,
-        "maxTokens": 131072,
-        "cost": {
-          "input": 1,
-          "output": 1,
-          "cacheRead": 1,
-          "cacheWrite": 1
-        }
-      }
-    },
-    "04b-ctx128-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-UD-Q6_K.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
-      "capabilities": {
-        "in": [
-          "text",
-          "image"
-        ],
-        "out": [
-          "text"
-        ],
-        "context": 131072
-      },
-      "metadata": {
-        "id": "04b-ctx128-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K",
-        "reasoning": true,
-        "input": [
-          "text",
-          "image"
-        ],
-        "contextWindow": 131072,
-        "maxTokens": 131072,
-        "cost": {
-          "input": 1,
-          "output": 1,
-          "cacheRead": 1,
-          "cacheWrite": 1
-        }
-      }
-    },
-    "04b-ctx128-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-Q8_0.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
-      "capabilities": {
-        "in": [
-          "text",
-          "image"
-        ],
-        "out": [
-          "text"
-        ],
-        "context": 131072
-      },
-      "metadata": {
-        "id": "04b-ctx128-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
-        "reasoning": true,
-        "input": [
-          "text",
-          "image"
-        ],
-        "contextWindow": 131072,
-        "maxTokens": 131072,
-        "cost": {
-          "input": 1,
-          "output": 1,
-          "cacheRead": 1,
-          "cacheWrite": 1
-        }
-      }
-    },
-    "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q6_K": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-12b-it-GGUF unsloth/gemma-4-12b-it-GGUF gemma-4-12b-it-Q6_K.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-12b-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
+    "12b-ctx064-2mmproj-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-12B-it-qat-GGUF unsloth/gemma-4-12B-it-qat-GGUF gemma-4-12B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-12B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -330,7 +351,7 @@
         "context": 65536
       },
       "metadata": {
-        "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q6_K",
+        "id": "12b-ctx064-2mmproj-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -346,8 +367,545 @@
         }
       }
     },
-    "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q8_0": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-12b-it-GGUF unsloth/gemma-4-12b-it-GGUF gemma-4-12b-it-Q8_0.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-12b-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
+    "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q6_K.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q6_K.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "03b-ctx128-2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q6_K.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-Q8_0.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-Q8_0.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "03b-ctx128-2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-Q8_0.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "03b-ctx128-0text-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.6-35B-A3B-GGUF byteshape/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-0text-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "03b-ctx128-1vision-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.6-35B-A3B-GGUF byteshape/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-1vision-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "03b-ctx128-2mmproj-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.6-35B-A3B-GGUF byteshape/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-2mmproj-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "03b-ctx128-0text-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.6-35B-A3B-GGUF byteshape/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-0text-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "03b-ctx128-1vision-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.6-35B-A3B-GGUF byteshape/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-1vision-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "03b-ctx128-2mmproj-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.6-35B-A3B-GGUF byteshape/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-2mmproj-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-UD-Q6_K.gguf - MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-UD-Q6_K.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-2mmproj-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-UD-Q6_K.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-2mmproj-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-Q8_0.gguf - MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-Q8_0.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-2mmproj-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-Q8_0.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-2mmproj-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "12b-ctx064-0text-unsloth/gemma-4-12b-it-GGUF:Q6_K": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-12b-it-GGUF unsloth/gemma-4-12b-it-GGUF gemma-4-12b-it-Q6_K.gguf - MTP/mtp-gemma-4-12b-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "12b-ctx064-0text-unsloth/gemma-4-12b-it-GGUF:Q6_K",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "12b-ctx064-1vision-unsloth/gemma-4-12b-it-GGUF:Q6_K": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-12b-it-GGUF unsloth/gemma-4-12b-it-GGUF gemma-4-12b-it-Q6_K.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-12b-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -359,7 +917,121 @@
         "context": 65536
       },
       "metadata": {
-        "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q8_0",
+        "id": "12b-ctx064-1vision-unsloth/gemma-4-12b-it-GGUF:Q6_K",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "12b-ctx064-2mmproj-unsloth/gemma-4-12b-it-GGUF:Q6_K": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-12b-it-GGUF unsloth/gemma-4-12b-it-GGUF gemma-4-12b-it-Q6_K.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-12b-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "12b-ctx064-2mmproj-unsloth/gemma-4-12b-it-GGUF:Q6_K",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "12b-ctx064-0text-unsloth/gemma-4-12b-it-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-12b-it-GGUF unsloth/gemma-4-12b-it-GGUF gemma-4-12b-it-Q8_0.gguf - MTP/mtp-gemma-4-12b-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "12b-ctx064-0text-unsloth/gemma-4-12b-it-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "12b-ctx064-1vision-unsloth/gemma-4-12b-it-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-12b-it-GGUF unsloth/gemma-4-12b-it-GGUF gemma-4-12b-it-Q8_0.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-12b-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "12b-ctx064-1vision-unsloth/gemma-4-12b-it-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "12b-ctx064-2mmproj-unsloth/gemma-4-12b-it-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-12b-it-GGUF unsloth/gemma-4-12b-it-GGUF gemma-4-12b-it-Q8_0.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-12b-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "12b-ctx064-2mmproj-unsloth/gemma-4-12b-it-GGUF:Q8_0",
         "reasoning": true,
         "input": [
           "text",
@@ -402,8 +1074,35 @@
         }
       }
     },
-    "24b-ctx064-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Devstral-Small-2-24B-Instruct-2512-GGUF byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF Devstral-Small-2-24B-Instruct-2512-IQ4_XS-4.04bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${devstral} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1",
+    "24b-ctx064-0text-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Devstral-Small-2-24B-Instruct-2512-GGUF byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF Devstral-Small-2-24B-Instruct-2512-IQ4_XS-4.04bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${devstral} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "24b-ctx064-0text-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "24b-ctx064-1vision-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Devstral-Small-2-24B-Instruct-2512-GGUF byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF Devstral-Small-2-24B-Instruct-2512-IQ4_XS-4.04bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} ${devstral} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -415,7 +1114,36 @@
         "context": 65536
       },
       "metadata": {
-        "id": "24b-ctx064-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw",
+        "id": "24b-ctx064-1vision-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "24b-ctx064-2mmproj-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Devstral-Small-2-24B-Instruct-2512-GGUF byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF Devstral-Small-2-24B-Instruct-2512-IQ4_XS-4.04bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} ${devstral} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "24b-ctx064-2mmproj-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw",
         "reasoning": true,
         "input": [
           "text",
@@ -458,8 +1186,35 @@
         }
       }
     },
-    "27b-ctx064-unsloth/Qwen3.6-27B-GGUF:Q4_K_M": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-27B-GGUF unsloth/Qwen3.6-27B-GGUF Qwen3.6-27B-Q4_K_M.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1",
+    "27b-ctx064-0text-unsloth/Qwen3.6-27B-GGUF:Q4_K_M": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-27B-GGUF unsloth/Qwen3.6-27B-GGUF Qwen3.6-27B-Q4_K_M.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-0text-unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-1vision-unsloth/Qwen3.6-27B-GGUF:Q4_K_M": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-27B-GGUF unsloth/Qwen3.6-27B-GGUF Qwen3.6-27B-Q4_K_M.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -471,7 +1226,7 @@
         "context": 65536
       },
       "metadata": {
-        "id": "27b-ctx064-unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
+        "id": "27b-ctx064-1vision-unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
         "reasoning": true,
         "input": [
           "text",
@@ -487,8 +1242,8 @@
         }
       }
     },
-    "27b-ctx064-unsloth/Qwen3.8-27B-GGUF:Q4_K_M": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q4_K_M.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${qwen38} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+    "27b-ctx064-2mmproj-unsloth/Qwen3.6-27B-GGUF:Q4_K_M": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-27B-GGUF unsloth/Qwen3.6-27B-GGUF Qwen3.6-27B-Q4_K_M.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -500,7 +1255,92 @@
         "context": 65536
       },
       "metadata": {
-        "id": "27b-ctx064-unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
+        "id": "27b-ctx064-2mmproj-unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_M": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q4_K_M.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_M": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q4_K_M.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q4_K_M": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q4_K_M.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
         "reasoning": true,
         "input": [
           "text",
@@ -570,8 +1410,35 @@
         }
       }
     },
-    "27b-ctx064-unsloth/Qwen3.8-27B-GGUF:Q8_0": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-Q8_0.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+    "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-Q8_0.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-Q8_0.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -583,7 +1450,7 @@
         "context": 65536
       },
       "metadata": {
-        "id": "27b-ctx064-unsloth/Qwen3.8-27B-GGUF:Q8_0",
+        "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q8_0",
         "reasoning": true,
         "input": [
           "text",
@@ -599,8 +1466,8 @@
         }
       }
     },
-    "27b-ctx064-unsloth/Qwen3.8-27B-GGUF:Q6_K": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q6_K.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+    "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-Q8_0.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -612,7 +1479,7 @@
         "context": 65536
       },
       "metadata": {
-        "id": "27b-ctx064-unsloth/Qwen3.8-27B-GGUF:Q6_K",
+        "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q8_0",
         "reasoning": true,
         "input": [
           "text",
@@ -628,8 +1495,35 @@
         }
       }
     },
-    "06b-ctx064-unsloth/Qwen3.8-Flash-Next-GGUF:Q2_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-Flash-Next-GGUF unsloth/Qwen3.8-Flash-Next-GGUF UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00001-of-00003.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${qwen38} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1",
+    "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q6_K.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q6_K.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -641,7 +1535,7 @@
         "context": 65536
       },
       "metadata": {
-        "id": "06b-ctx064-unsloth/Qwen3.8-Flash-Next-GGUF:Q2_K_XL",
+        "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K",
         "reasoning": true,
         "input": [
           "text",
@@ -657,8 +1551,8 @@
         }
       }
     },
-    "31b-ctx064-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-31B-it-qat-GGUF unsloth/gemma-4-31B-it-qat-GGUF gemma-4-31B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-31B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
+    "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q6_K": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q6_K.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -670,7 +1564,177 @@
         "context": 65536
       },
       "metadata": {
-        "id": "31b-ctx064-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
+        "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q6_K",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "06b-ctx064-0text-unsloth/Qwen3.8-Flash-Next-GGUF:Q2_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-Flash-Next-GGUF unsloth/Qwen3.8-Flash-Next-GGUF UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00001-of-00003.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "06b-ctx064-0text-unsloth/Qwen3.8-Flash-Next-GGUF:Q2_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "06b-ctx064-1vision-unsloth/Qwen3.8-Flash-Next-GGUF:Q2_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-Flash-Next-GGUF unsloth/Qwen3.8-Flash-Next-GGUF UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00001-of-00003.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "06b-ctx064-1vision-unsloth/Qwen3.8-Flash-Next-GGUF:Q2_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "06b-ctx064-2mmproj-unsloth/Qwen3.8-Flash-Next-GGUF:Q2_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-Flash-Next-GGUF unsloth/Qwen3.8-Flash-Next-GGUF UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00001-of-00003.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "06b-ctx064-2mmproj-unsloth/Qwen3.8-Flash-Next-GGUF:Q2_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "31b-ctx064-0text-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-31B-it-qat-GGUF unsloth/gemma-4-31B-it-qat-GGUF gemma-4-31B-it-qat-UD-Q4_K_XL.gguf - MTP/mtp-gemma-4-31B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "31b-ctx064-0text-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "31b-ctx064-1vision-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-31B-it-qat-GGUF unsloth/gemma-4-31B-it-qat-GGUF gemma-4-31B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-31B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "31b-ctx064-1vision-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "31b-ctx064-2mmproj-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-31B-it-qat-GGUF unsloth/gemma-4-31B-it-qat-GGUF gemma-4-31B-it-qat-UD-Q4_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-31B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "31b-ctx064-2mmproj-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -687,7 +1751,7 @@
       }
     },
     "08b-ctx128-unsloth/DeepSeek-V4-Flash-0731-GGUF:UD-IQ1_S": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--DeepSeek-V4-Flash-0731-GGUF unsloth/DeepSeek-V4-Flash-0731-GGUF UD-IQ1_S/DeepSeek-V4-Flash-0731-UD-IQ1_S-00001-of-00003.gguf - - -- ${LLAMA_SERVER} ${deepseekv4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--DeepSeek-V4-Flash-0731-GGUF unsloth/DeepSeek-V4-Flash-0731-GGUF UD-IQ1_S/DeepSeek-V4-Flash-0731-UD-IQ1_S-00001-of-00003.gguf - - -- ${LLAMA_SERVER} ${deepseekv4} --ubatch-size 128 --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
       "capabilities": {
         "in": [
           "text"
@@ -714,7 +1778,7 @@
       }
     },
     "08b-ctx128-unsloth/DeepSeek-V4-Flash-0731-GGUF:UD-Q8_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--DeepSeek-V4-Flash-0731-GGUF unsloth/DeepSeek-V4-Flash-0731-GGUF UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf - - -- ${LLAMA_SERVER} ${deepseekv4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--DeepSeek-V4-Flash-0731-GGUF unsloth/DeepSeek-V4-Flash-0731-GGUF UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf - - -- ${LLAMA_SERVER} ${deepseekv4} --ubatch-size 128 --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
       "capabilities": {
         "in": [
           "text"
@@ -1064,8 +2128,35 @@
         }
       }
     },
-    "03b-ctx128-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+    "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1077,7 +2168,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "03b-ctx128-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL",
+        "id": "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -1093,8 +2184,8 @@
         }
       }
     },
-    "03b-ctx128-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+    "03b-ctx128-2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1106,7 +2197,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "03b-ctx128-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL",
+        "id": "03b-ctx128-2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -1122,8 +2213,35 @@
         }
       }
     },
-    "04b-ctx128-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-UD-Q6_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+    "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1135,7 +2253,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "04b-ctx128-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL",
+        "id": "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -1151,8 +2269,8 @@
         }
       }
     },
-    "04b-ctx128-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+    "03b-ctx128-2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.6-35B-A3B-GGUF unsloth/Qwen3.6-35B-A3B-GGUF Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1164,7 +2282,177 @@
         "context": 131072
       },
       "metadata": {
-        "id": "04b-ctx128-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL",
+        "id": "03b-ctx128-2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-UD-Q6_K_XL.gguf - MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-UD-Q6_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-2mmproj-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-UD-Q6_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-2mmproj-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf - MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-2mmproj-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-26B-A4B-it-GGUF unsloth/gemma-4-26B-A4B-it-GGUF gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-2mmproj-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -1207,8 +2495,35 @@
         }
       }
     },
-    "27b-ctx064-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_M-5.60bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${qwen38} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+    "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_M-5.60bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_M-5.60bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1220,7 +2535,7 @@
         "context": 65536
       },
       "metadata": {
-        "id": "27b-ctx064-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw",
+        "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw",
         "reasoning": true,
         "input": [
           "text",
@@ -1236,8 +2551,8 @@
         }
       }
     },
-    "27b-ctx064-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ3_S-3.44bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${qwen38} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+    "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_M-5.60bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1249,7 +2564,7 @@
         "context": 65536
       },
       "metadata": {
-        "id": "27b-ctx064-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw",
+        "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw",
         "reasoning": true,
         "input": [
           "text",
@@ -1265,8 +2580,35 @@
         }
       }
     },
-    "27b-ctx064-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-3.67bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${qwen38} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+    "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ3_S-3.44bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ3_S-3.44bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1278,7 +2620,7 @@
         "context": 65536
       },
       "metadata": {
-        "id": "27b-ctx064-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw",
+        "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw",
         "reasoning": true,
         "input": [
           "text",
@@ -1294,8 +2636,8 @@
         }
       }
     },
-    "27b-ctx064-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.00bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${qwen38} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+    "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ3_S-3.44bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1307,7 +2649,7 @@
         "context": 65536
       },
       "metadata": {
-        "id": "27b-ctx064-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw",
+        "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw",
         "reasoning": true,
         "input": [
           "text",
@@ -1323,8 +2665,35 @@
         }
       }
     },
-    "27b-ctx064-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.40bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${qwen38} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+    "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-3.67bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-3.67bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1336,7 +2705,7 @@
         "context": 65536
       },
       "metadata": {
-        "id": "27b-ctx064-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw",
+        "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw",
         "reasoning": true,
         "input": [
           "text",
@@ -1352,8 +2721,8 @@
         }
       }
     },
-    "27b-ctx064-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_S-4.72bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${qwen38} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+    "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-3.67bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1365,7 +2734,262 @@
         "context": 65536
       },
       "metadata": {
-        "id": "27b-ctx064-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw",
+        "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.00bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.00bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.00bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.40bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.40bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.40bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_S-4.72bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_S-4.72bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_S-4.72bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw",
         "reasoning": true,
         "input": [
           "text",
@@ -1435,8 +3059,35 @@
         }
       }
     },
-    "02b-ctx128-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-qat-GGUF unsloth/gemma-4-E2B-it-qat-GGUF gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+    "02b-ctx128-0text-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-qat-GGUF unsloth/gemma-4-E2B-it-qat-GGUF gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf - MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "02b-ctx128-0text-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-qat-GGUF unsloth/gemma-4-E2B-it-qat-GGUF gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
       "capabilities": {
         "in": [
           "text",
@@ -1448,7 +3099,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "02b-ctx128-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL",
+        "id": "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -1464,8 +3115,8 @@
         }
       }
     },
-    "04b-ctx128-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-qat-GGUF unsloth/gemma-4-E4B-it-qat-GGUF gemma-4-E4B-it-qat-UD-Q2_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+    "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-qat-GGUF unsloth/gemma-4-E2B-it-qat-GGUF gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
       "capabilities": {
         "in": [
           "text",
@@ -1477,7 +3128,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "04b-ctx128-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL",
+        "id": "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -1493,8 +3144,35 @@
         }
       }
     },
-    "04b-ctx128-unsloth/gemma-4-E4B-it-GGUF:Q8_0": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-GGUF unsloth/gemma-4-E4B-it-GGUF gemma-4-E4B-it-Q8_0.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+    "04b-ctx128-0text-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-qat-GGUF unsloth/gemma-4-E4B-it-qat-GGUF gemma-4-E4B-it-qat-UD-Q2_K_XL.gguf - MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-0text-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-qat-GGUF unsloth/gemma-4-E4B-it-qat-GGUF gemma-4-E4B-it-qat-UD-Q2_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
       "capabilities": {
         "in": [
           "text",
@@ -1506,7 +3184,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "04b-ctx128-unsloth/gemma-4-E4B-it-GGUF:Q8_0",
+        "id": "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -1522,8 +3200,8 @@
         }
       }
     },
-    "04b-ctx128-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-GGUF unsloth/gemma-4-E4B-it-GGUF gemma-4-E4B-it-UD-Q8_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+    "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-qat-GGUF unsloth/gemma-4-E4B-it-qat-GGUF gemma-4-E4B-it-qat-UD-Q2_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
       "capabilities": {
         "in": [
           "text",
@@ -1535,7 +3213,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "04b-ctx128-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL",
+        "id": "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL",
         "reasoning": true,
         "input": [
           "text",
@@ -1551,8 +3229,35 @@
         }
       }
     },
-    "02b-ctx128-unsloth/gemma-4-E2B-it-GGUF:Q8_0": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-GGUF unsloth/gemma-4-E2B-it-GGUF gemma-4-E2B-it-Q8_0.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+    "04b-ctx128-0text-unsloth/gemma-4-E4B-it-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-GGUF unsloth/gemma-4-E4B-it-GGUF gemma-4-E4B-it-Q8_0.gguf - MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-0text-unsloth/gemma-4-E4B-it-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-GGUF unsloth/gemma-4-E4B-it-GGUF gemma-4-E4B-it-Q8_0.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
       "capabilities": {
         "in": [
           "text",
@@ -1564,7 +3269,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "02b-ctx128-unsloth/gemma-4-E2B-it-GGUF:Q8_0",
+        "id": "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-GGUF:Q8_0",
         "reasoning": true,
         "input": [
           "text",
@@ -1580,8 +3285,8 @@
         }
       }
     },
-    "02b-ctx128-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-GGUF unsloth/gemma-4-E2B-it-GGUF gemma-4-E2B-it-UD-Q8_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+    "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-GGUF unsloth/gemma-4-E4B-it-GGUF gemma-4-E4B-it-Q8_0.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
       "capabilities": {
         "in": [
           "text",
@@ -1593,7 +3298,262 @@
         "context": 131072
       },
       "metadata": {
-        "id": "02b-ctx128-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL",
+        "id": "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-0text-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-GGUF unsloth/gemma-4-E4B-it-GGUF gemma-4-E4B-it-UD-Q8_K_XL.gguf - MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-0text-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-GGUF unsloth/gemma-4-E4B-it-GGUF gemma-4-E4B-it-UD-Q8_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E4B-it-GGUF unsloth/gemma-4-E4B-it-GGUF gemma-4-E4B-it-UD-Q8_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E4B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "02b-ctx128-0text-unsloth/gemma-4-E2B-it-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-GGUF unsloth/gemma-4-E2B-it-GGUF gemma-4-E2B-it-Q8_0.gguf - MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "02b-ctx128-0text-unsloth/gemma-4-E2B-it-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-GGUF unsloth/gemma-4-E2B-it-GGUF gemma-4-E2B-it-Q8_0.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-GGUF unsloth/gemma-4-E2B-it-GGUF gemma-4-E2B-it-Q8_0.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "02b-ctx128-0text-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-GGUF unsloth/gemma-4-E2B-it-GGUF gemma-4-E2B-it-UD-Q8_K_XL.gguf - MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${0text} ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "02b-ctx128-0text-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL",
+        "reasoning": true,
+        "input": [
+          "text"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-GGUF unsloth/gemma-4-E2B-it-GGUF gemma-4-E2B-it-UD-Q8_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 131072,
+        "maxTokens": 131072,
+        "cost": {
+          "input": 1,
+          "output": 1,
+          "cacheRead": 1,
+          "cacheWrite": 1
+        }
+      }
+    },
+    "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--gemma-4-E2B-it-GGUF unsloth/gemma-4-E2B-it-GGUF gemma-4-E2B-it-UD-Q8_K_XL.gguf mmproj-BF16.gguf MTP/mtp-gemma-4-E2B-it-Q8_0.gguf -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --parallel 2",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 131072
+      },
+      "metadata": {
+        "id": "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL",
         "reasoning": true,
         "input": [
           "text",
