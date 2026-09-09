@@ -106,6 +106,15 @@ export const PROVIDERS = {
 		...CLOUD_PROVIDERS["cline-pass"],
 		modelsDev: "cline-pass",
 	},
+	mistral: {
+		...CLOUD_PROVIDERS.mistral,
+		modelsDev: "mistral",
+		// Chat-only slice: the catalog also lists mistral-embed (embeddings)
+		// and voxtral-*-tts (speech) which llama-swap would forward but no
+		// chat client here can use.
+		filter: (/** @type {import("../lib/peer-probe.mjs").RawModelEntry} */ m) =>
+			!/embed|tts/i.test(m.id),
+	},
 };
 
 // --- models.dev catalog ----------------------------------------------
@@ -125,11 +134,11 @@ function loadModelsDev(
 // is re-exported above, docs/d023.)
 
 // Resolve the model-id list for one provider: from the models.dev catalog
-// when flagged `modelsDev` (ALL models, unfiltered), otherwise from the
-// provider's own live /models endpoint filtered by `p.filter`.  Returns null
-// on skip (catalog entry missing / fetch failure) so callers treat it as "no
-// result".  The peer entry written to disk references the env var, never the
-// key value.
+// when flagged `modelsDev` (filtered by `p.filter` when set), otherwise from
+// the provider's own live /models endpoint filtered by `p.filter`.  Returns
+// null on skip (catalog entry missing / fetch failure) so callers treat it as
+// "no result".  The peer entry written to disk references the env var, never
+// the key value.
 export async function fetchPeerModels(p) {
 	if (p.modelsDev) {
 		const provider = loadModelsDev()[p.modelsDev];
@@ -143,7 +152,8 @@ export async function fetchPeerModels(p) {
 			});
 			return null;
 		}
-		return Object.keys(provider.models);
+		const ids = Object.keys(provider.models);
+		return p.filter ? ids.filter((id) => p.filter({ id })) : ids;
 	}
 	const apiKey = process.env[p.apiKeyEnv] ?? "";
 	try {

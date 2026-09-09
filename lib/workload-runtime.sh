@@ -90,8 +90,8 @@ export INFISICAL_API_URL INFISICAL_PROJECT_ID
 #        definition; elsewhere it is only referenced (coding-agent/run.sh,
 #        coding-agent/config.toml).
 #      * any well-known inference key already set (PEER_API_KEY, CLINE_API_KEY,
-#        OPENCODE_API_KEY, OPENROUTER_API_KEY, HF_TOKEN) — same short-circuit
-#        without the flag.
+#        OPENCODE_API_KEY, OPENROUTER_API_KEY, HF_TOKEN, MISTRAL_API_KEY) —
+#        same short-circuit without the flag.
 #   2. infisical: ONE `infisical secrets --output=dotenv` per call, injected
 #      into the environment IN MEMORY (the dotenv text is only the CLI's wire
 #      format; it is parsed straight out of a here-string and never lands on
@@ -118,7 +118,8 @@ load_secrets() {
 	#    (canonical definition in the load_secrets header above)
 	if [ "${SECRETS_ASSUME:-0}" = 1 ] || [ -n "${PEER_API_KEY:-}" ] \
 		|| [ -n "${CLINE_API_KEY:-}" ] || [ -n "${OPENCODE_API_KEY:-}" ] \
-		|| [ -n "${OPENROUTER_API_KEY:-}" ] || [ -n "${HF_TOKEN:-}" ]; then
+		|| [ -n "${OPENROUTER_API_KEY:-}" ] || [ -n "${HF_TOKEN:-}" ] \
+		|| [ -n "${MISTRAL_API_KEY:-}" ]; then
 		SECRETS_SOURCE=injected
 		return 0
 	fi

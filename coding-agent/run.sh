@@ -230,8 +230,8 @@ workload_workdir  "$workspace"
 # `--env NAME` with an unset host var would inject an empty value).
 load_secrets
 log_info "secrets source" source="${SECRETS_SOURCE:-none}"
-for _key in CLINE_API_KEY PEER_API_KEY OPENROUTER_API_KEY OPENCODE_API_KEY \
-	HF_TOKEN GEMINI_API_KEY PEER_BASE_URL; do
+for _key in CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY OPENROUTER_API_KEY \
+	OPENCODE_API_KEY HF_TOKEN GEMINI_API_KEY PEER_BASE_URL; do
 	_value="$(printenv "$_key" 2>/dev/null || true)"
 	[ -n "$_value" ] && workload_env "$_key"
 done

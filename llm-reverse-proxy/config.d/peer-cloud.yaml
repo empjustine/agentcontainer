@@ -192,6 +192,44 @@
         "cline-pass/mimo-v2.5-pro"
       ],
       "apiKey": "${env.CLINE_API_KEY}"
+    },
+    "mistral": {
+      "proxy": "https://api.mistral.ai",
+      "models": [
+        "pixtral-12b",
+        "devstral-small-2507",
+        "mistral-small-2506",
+        "magistral-small",
+        "devstral-2512",
+        "devstral-small-2505",
+        "labs-devstral-small-2512",
+        "magistral-medium-latest",
+        "open-mixtral-8x22b",
+        "open-mixtral-8x7b",
+        "open-mistral-7b",
+        "mistral-medium-latest",
+        "devstral-medium-2507",
+        "mistral-medium-2604",
+        "mistral-large-2512",
+        "devstral-medium-latest",
+        "voxtral-small-latest",
+        "ministral-8b-latest",
+        "mistral-nemo",
+        "mistral-small-latest",
+        "open-mistral-nemo",
+        "mistral-large-latest",
+        "voxtral-mini-latest",
+        "mistral-large-2411",
+        "devstral-latest",
+        "zai-glm-5-2",
+        "mistral-small-2603",
+        "mistral-medium-2505",
+        "codestral-latest",
+        "ministral-3b-latest",
+        "mistral-medium-2508",
+        "pixtral-large-latest"
+      ],
+      "apiKey": "${env.MISTRAL_API_KEY}"
     }
   }
 }

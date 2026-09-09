@@ -19,8 +19,8 @@
  *
  * Detection cascade:
  *
- *   Cloud providers (`openrouter`, `opencode`, `opencode-go` — the shared
- *   fact table lib/cloud-providers.mjs, PI_NATIVE_CLOUD_IDS): probe each
+ *   Cloud providers (`openrouter`, `opencode`, `opencode-go`, `mistral` — the
+ *   shared fact table lib/cloud-providers.mjs, PI_NATIVE_CLOUD_IDS): probe each
  *   provider's DEFAULT /v1/models endpoint.  Reachable ⇒ pi's built-in
  *   provider handles it natively, nothing is emitted.  Unreachable ⇒ look for
  *   the models behind a llama-swap peer router ($PEER_BASE_URL, then the
@@ -50,9 +50,12 @@
  * - `baseUrl` is a LITERAL url resolved at generation time (pi does not expand
  *   ${vars} in baseUrl) and is normalized to `/v1`; `apiKey` is the literal
  *   "$PEER_API_KEY", which pi resolves from the environment at request time.
- *   Both come from lib/pi-models.mjs providerEntry, shared with the local
- *   generator — peer-routed cloud models ride the same llama-swap instance
- *   and carry the same compat block.
+ *   Both come from lib/pi-models.mjs providerReroute: the override is
+ *   REROUTE-ONLY — it deliberately carries NO `api` and NO `compat`, because
+ *   these are pi-native providers whose built-in definition knows the right
+ *   dialect (opencode's per-model api map, mistral's mistral-conversations)
+ *   while the public models.dev API does not. The override changes where
+ *   requests go, never how they are encoded.
  * - Cloud-model attribution: through the peers-only router ids arrive fully
  *   qualified as `<peerId>/<modelId>` (`openrouter/org/model:free`); that peer
  *   prefix is authoritative when present, and bare ids fall back to the suffix
@@ -93,7 +96,7 @@ const { CLOUD_PROVIDERS: CLOUD_PROVIDER_FACTS, PI_NATIVE_CLOUD_IDS } =
 	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
-const { piModel, providerEntry } =
+const { piModel, providerReroute } =
 	/** @type {typeof import("../lib/pi-models.mjs")} */ (
 		await import(`${LIB_DIR}/pi-models.mjs`)
 	);
@@ -109,7 +112,7 @@ setLogTool("coding-agent/generate-cloud-pi-native");
  * @property {(id: string) => boolean} matches
  */
 
-// The pi-native trio, from the shared fact table (docs/d024): facts live once
+// The pi-native set, from the shared fact table (docs/d024): facts live once
 // in lib/, this file only picks the subset it owns.
 /** @type {Record<string, CloudProvider>} */
 const CLOUD_PROVIDERS = Object.fromEntries(
@@ -129,18 +132,27 @@ const CLOUD_PROVIDERS = Object.fromEntries(
 // Cloud providers are attributed by their llama-swap peer id when models are
 // seen through the peers-only router (ids arrive fully qualified as
 // "<peerId>/<modelId>"); bare ids fall back to the same suffix heuristics the
-// peer generators use (":free" -> openrouter, "-free" -> opencode, remainder
-// -> opencode-go minus grok).  ClinePass is deliberately NOT attributed here:
-// pi has no native cline-pass provider, so it is owned solely by the dedicated
-// generate-cloud-alternative-providers.mjs layer (model-015).  See gen-lib.mjs
-// PROVIDERS / d018 for the peer-cloud side.
+// peer generators use (":free" -> openrouter, mistral-family -> mistral,
+// remainder -> opencode-go).  ClinePass
+// is deliberately NOT attributed here: pi has no native cline-pass provider,
+// so it is owned solely by the dedicated generate-cloud-alternative-providers
+// layer (model-015).  See gen-lib.mjs PROVIDERS / d018 for the peer-cloud side.
 const CLOUD_PEER_IDS = PI_NATIVE_CLOUD_IDS;
+
+// Bare-id fallback for Mistral models seen without their "mistral/" peer
+// prefix: Mistral ships several model families (mistral/devstral/codestral/
+// ministral/pixtral/magistral/voxtral plus the open-mistral/open-mixtral
+// archives and the labs- research previews).  Ids matching no family (e.g.
+// partner models like zai-glm-5-2) fall through to the opencode-go branch —
+// they still attribute correctly via their "mistral/" prefix.
+const MISTRAL_BARE_RE =
+	/^(?:labs-|open-)?(?:mistral|mixtral|devstral|codestral|ministral|pixtral|magistral|voxtral|mathstral)(?:[-_]|$)/;
 
 /**
  * Attribute a peer-catalog model id to a cloud provider.
  * @param {string} id
  * @returns {string|undefined} undefined when the id belongs to neither
- *   concern (local GGUF, grok, ...)
+ *   concern (local GGUF, ...)
  */
 function classifyCloud(id) {
 	const slash = id.indexOf("/");
@@ -149,12 +161,8 @@ function classifyCloud(id) {
 	const bare = prefixed ? id.slice(slash + 1) : id;
 	const owner = prefixed ? /** @type {string} */ (head) : undefined;
 	if (bare.endsWith(":free")) return owner ?? "openrouter";
-	if (bare.endsWith("-free")) return owner ?? "opencode";
-	if (
-		!bare.includes("/") &&
-		!id.toLowerCase().includes("grok") &&
-		!id.includes("-GGUF")
-	) {
+	if (MISTRAL_BARE_RE.test(bare)) return owner ?? "mistral";
+	if (!bare.includes("/") && !id.includes("-GGUF")) {
 		return owner ?? "opencode-go";
 	}
 	return undefined;
@@ -224,7 +232,7 @@ async function main() {
 				});
 				continue;
 			}
-			providers[id] = providerEntry(peer.baseUrl, models);
+			providers[id] = providerReroute(peer.baseUrl, models);
 		}
 	}
 

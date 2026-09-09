@@ -156,7 +156,6 @@ function classify(id) {
 	}
 	if (id.includes("-GGUF")) return "local";
 	if (bare.endsWith(":free")) return "openrouter";
-	if (bare.endsWith("-free")) return "opencode";
 	return null;
 }
 

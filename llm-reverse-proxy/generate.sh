@@ -207,8 +207,14 @@ else
 fi
 
 # --- enforce the peer allowlist --------------------------------------------
-# llama-swap cannot proxy google/mistral API shapes, so any such peer is dead
-# config regardless of which generator wrote it.  The list is curated, NOT
+# llama-swap can only proxy API shapes whose inference endpoints are the
+# model-dispatched OpenAI-style paths (see internal/server modelPostJSONRoutes).
+# Mistral qualifies for CHAT: pi's mistral-conversations dialect and Mistral's
+# native wire format both POST /v1/chat/completions — the peer forwards the
+# body verbatim (model-id rewrite + auth swap are shape-agnostic).  Mistral
+# endpoints OUTSIDE that path (fim_completions, agents, conversations, ocr)
+# are NOT proxied and intentionally so.  Google's generative REST shape is
+# path-incompatible and stays excluded.  The list is curated, NOT
 # `Object.keys(PROVIDERS)`: a provider whose entry is added to gen-lib.mjs's
 # map but is not actually proxyable here would still be dropped, so this
 # gate is the single source of truth for "what we serve as a cloud peer".
@@ -216,7 +222,7 @@ if [ -f "$config_d/peer-cloud.yaml" ]; then
 	node_run -e '
 		const fs = require("fs");
 		const f = process.argv[1];
-		const ALLOWED = ["openrouter", "opencode", "opencode-go", "cline-pass"];
+		const ALLOWED = ["openrouter", "opencode", "opencode-go", "cline-pass", "mistral"];
 		let c = {};
 		try { c = JSON.parse(fs.readFileSync(f, "utf8")); } catch { process.exit(0); }
 		const dropped = Object.keys(c.peers || {}).filter((id) => !ALLOWED.includes(id));

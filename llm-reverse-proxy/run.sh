@@ -97,11 +97,12 @@ if [ "$_workload" = 'workload' ]; then
 	# fallback); the provider keys are referenced by ${env.*} in
 	# peer-cloud.yaml.  Values come from load_secrets above — no per-step vault
 	# calls, no ambient host-env forwarding beyond this explicit allowlist.
+	workload_env      CLINE_API_KEY
 	workload_env      HF_TOKEN
+	workload_env      MISTRAL_API_KEY
 	workload_env      OPENCODE_API_KEY
 	workload_env      OPENROUTER_API_KEY
 	workload_env      PEER_API_KEY
-	workload_env      CLINE_API_KEY
 	workload_entrypoint 'llama-swap'
 	workload_cmd      -config-dir /etc/llama-swap/config.d -listen 0.0.0.0:8080
 	# No infisical wrapper here: the keys were loaded once via load_secrets and

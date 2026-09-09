@@ -195824,9 +195824,9 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 2.55,
-					"output": 12.75,
-					"cache_read": 0.256
+					"input": 2.4,
+					"output": 12,
+					"cache_read": 0.24
 				}
 			},
 			"ibm-granite/granite-4.2-8b": {
