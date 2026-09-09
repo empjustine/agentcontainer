@@ -25,8 +25,8 @@ tags:
     </a>
   </div>
     <ul style="margin: 0;">
+    <li>MTP is now available for 1.3-1.7x Faster inference in Unsloth. <a href="https://unsloth.ai/docs/models/qwen3.8-next#mtp-guide">Read Guide</a></li>
     <li>To run, please use llama.cpp or use our <a href="https://unsloth.ai/docs/desktop">Unsloth Desktop</a> app.</li>
-    <li>You can now run Qwen3.8-Flash-Next in our Unsloth Desktop UI!</li>
     <li>See below for Qwen3.8-Flash-Next run in Unsloth Desktop with thinking controls:</li>
 </div>
 

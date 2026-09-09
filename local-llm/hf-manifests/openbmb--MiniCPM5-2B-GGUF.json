@@ -1,0 +1,37 @@
+{
+ "repo": "openbmb/MiniCPM5-2B-GGUF",
+ "commit": "d00c954e5f9a0f2605468f24703ffa7e5cb0c492",
+ "fetched_at": "2026-09-09T18:43:26+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "70ee4314dd1cac85fd42a36ceedcd2248dbc5e17",
+   "size": 1694
+  },
+  {
+   "path": "MiniCPM5-2B-F16.gguf",
+   "oid": "0ffba3682a853295566b98bc38c0ab755d6b2d91b994bc031ed727a08cfcdf25",
+   "size": 5039006688
+  },
+  {
+   "path": "MiniCPM5-2B-Q4_K_M.gguf",
+   "oid": "ec2d5801640099e97d8d7e8003ad4d81f336e757811f03a26173dddf386602fd",
+   "size": 1561318368
+  },
+  {
+   "path": "MiniCPM5-2B-Q8_0.gguf",
+   "oid": "c5415f8989bf88a8288f1b55a3cc371af53c07b0faa220a63bd7a990cfaba078",
+   "size": 2679710688
+  },
+  {
+   "path": "README-cn.md",
+   "oid": "6461f78ae7b9421b15bf73f0ff0284bda440e41f",
+   "size": 108924
+  },
+  {
+   "path": "README.md",
+   "oid": "ddd5db36de07184d9a42f666650e7d0c5ba85ece",
+   "size": 110854
+  }
+ ]
+}

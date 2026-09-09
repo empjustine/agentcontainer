@@ -1,0 +1,137 @@
+{
+ "repo": "unsloth/LFM2.5-VL-3B-GGUF",
+ "commit": "22f063714556bd4daa81c40dc1ff15ca37ae92ea",
+ "fetched_at": "2026-09-09T18:43:26+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "c389f775de4b00ea0e9f295a340711701ebfecf6",
+   "size": 2916
+  },
+  {
+   "path": "LFM2.5-VL-3B-BF16.gguf",
+   "oid": "afc67e40cc5f77cf5deaa9cbd1a04da18d2a6dc56faeaa7a43fd6ef8caf2da5b",
+   "size": 5403158656
+  },
+  {
+   "path": "LFM2.5-VL-3B-IQ4_NL.gguf",
+   "oid": "e25eac4a4eff274d56000c1dfe2061818cef2b69e4222157ff9064b2ba5dcf32",
+   "size": 1593895296
+  },
+  {
+   "path": "LFM2.5-VL-3B-IQ4_XS.gguf",
+   "oid": "6231fa984446011d253b8be6039aba2bbcc577506a1028f43d68d0930070faae",
+   "size": 1517808000
+  },
+  {
+   "path": "LFM2.5-VL-3B-Q3_K_M.gguf",
+   "oid": "33a8178ecf2df6a573f5ab86fa22ac82c7b9e3c4d04b745d70dc2e2fbd0ff832",
+   "size": 1366845824
+  },
+  {
+   "path": "LFM2.5-VL-3B-Q3_K_S.gguf",
+   "oid": "ef0bae4ecf4bb6812c9a8f6b0a458cc8b222797a179ff4ed791a21e7617c26f1",
+   "size": 1270524288
+  },
+  {
+   "path": "LFM2.5-VL-3B-Q4_0.gguf",
+   "oid": "a6c27c994d73bdbdc84dc9f0c510947823429a1efe96644e4155118a42fa837e",
+   "size": 1598024064
+  },
+  {
+   "path": "LFM2.5-VL-3B-Q4_1.gguf",
+   "oid": "7751ebd06f474c83990f9ce58c5ca6dbb1fbc98e14053517f89b5a4b06df2729",
+   "size": 1746069888
+  },
+  {
+   "path": "LFM2.5-VL-3B-Q4_K_M.gguf",
+   "oid": "da7a4e5dd13128fb8f149d6f81114e8d112ce7abf05384b4541bad1dcc058f4e",
+   "size": 1674455424
+  },
+  {
+   "path": "LFM2.5-VL-3B-Q4_K_S.gguf",
+   "oid": "6633ffba710f9331fbdd4f9292d6e66ad0de5b62fe8b6d959b7b15ba8ee5eed5",
+   "size": 1602677120
+  },
+  {
+   "path": "LFM2.5-VL-3B-Q5_K_M.gguf",
+   "oid": "91a55ec20d89de6c8062fd9fc730e95f4ab5508edca661173f948909214673e2",
+   "size": 1939745152
+  },
+  {
+   "path": "LFM2.5-VL-3B-Q5_K_S.gguf",
+   "oid": "e9d284d6d15fcc57f92571d94319800e49da8ac8af840858b325e6920970b615",
+   "size": 1898244480
+  },
+  {
+   "path": "LFM2.5-VL-3B-Q6_K.gguf",
+   "oid": "c71bd9759804026354a3f00533ea2c3ebde3300121c97113b9df291f94385a7e",
+   "size": 2221615488
+  },
+  {
+   "path": "LFM2.5-VL-3B-Q8_0.gguf",
+   "oid": "83f15d20d47b6f81551117921a321e17e2f8393eee95fd4726b5be5183e39710",
+   "size": 2874780032
+  },
+  {
+   "path": "LFM2.5-VL-3B-UD-IQ2_M.gguf",
+   "oid": "286fd713013aa9862c7850c3268841ba9b38bbdceab2b355cbf18de7f202355d",
+   "size": 1008003456
+  },
+  {
+   "path": "LFM2.5-VL-3B-UD-IQ3_XXS.gguf",
+   "oid": "16eab8d0a04ca88df636d59223b7ac5f2c0d824a6ae6ac2433ac77d65bde75db",
+   "size": 1138002304
+  },
+  {
+   "path": "LFM2.5-VL-3B-UD-Q2_K_XL.gguf",
+   "oid": "a309281cefc048a2fd88c8cb69299a33a89a5693eaec96fe9b01e57c550b87be",
+   "size": 1127696768
+  },
+  {
+   "path": "LFM2.5-VL-3B-UD-Q3_K_XL.gguf",
+   "oid": "535966bf41977f3837bd6ec73c52cb41c69a571a3e946046363e6f6f4cf74ee1",
+   "size": 1413147008
+  },
+  {
+   "path": "LFM2.5-VL-3B-UD-Q4_K_XL.gguf",
+   "oid": "376f523d79c26d110c579a0f01da348ad7e11c1a7b7dff597482901ff8838fb1",
+   "size": 1713113472
+  },
+  {
+   "path": "LFM2.5-VL-3B-UD-Q5_K_XL.gguf",
+   "oid": "4e3146ec361f6bef65b1abd3c56d246ef5a44c336486c6a4a2ce3330024cde98",
+   "size": 1941186944
+  },
+  {
+   "path": "LFM2.5-VL-3B-UD-Q6_K_XL.gguf",
+   "oid": "f3ae8a9b2565d829396cd84b6d7bc62541aeee9b17d0e1796feb5bd0e64efe1a",
+   "size": 2403953024
+  },
+  {
+   "path": "LFM2.5-VL-3B-UD-Q8_K_XL.gguf",
+   "oid": "dcfcdee88b63e5ae92401c4f5ad7360c1fceaffe3f06d4080f01336824657756",
+   "size": 3444943232
+  },
+  {
+   "path": "README.md",
+   "oid": "5ee1f4fad6d03d23bc27fcec65a1bdff289bbee3",
+   "size": 18529
+  },
+  {
+   "path": "mmproj-BF16.gguf",
+   "oid": "b6657dab6461aa36d71a716649e2a443ecd68349b650b16477dd56b380e99249",
+   "size": 855763552
+  },
+  {
+   "path": "mmproj-F16.gguf",
+   "oid": "234ce26278f7dbc2339e55614a28cf787424aae205711e5a143ce7ee5e1e0654",
+   "size": 853994080
+  },
+  {
+   "path": "mmproj-F32.gguf",
+   "oid": "38cd487b98272ba1ba268a8aad08c1c0e0f918c468e7952671cefd38bf3d8246",
+   "size": 1705167456
+  }
+ ]
+}

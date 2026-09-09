@@ -128,12 +128,6 @@
 			"__argv": "${laguna}"
 		},
 		{
-			"hf-repo": "byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw",
-			"model": "Devstral-Small-2-24B-Instruct-2512-IQ4_XS-4.04bpw.gguf",
-			"mmproj": "mmproj-bf16.gguf",
-			"__argv": "${devstral}"
-		},
-		{
 			"hf-repo": "unsloth/Muse-Glimmer-30B-GGUF:UD-Q4_K_XL",
 			"model": "Muse-Glimmer-30B-UD-Q4_K_XL.gguf",
 			"__argv": "${museglimmer}"
@@ -396,14 +390,14 @@
 		{
 			"hf-repo": "unsloth/LFM2.5-8B-A1B-GGUF:Q8_0",
 			"model": "LFM2.5-8B-A1B-Q8_0.gguf",
-			"ctx-size": 128000,
+			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${lfm25}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL",
 			"model": "LFM2.5-8B-A1B-UD-Q8_K_XL.gguf",
-			"ctx-size": 128000,
+			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${lfm25}"
 		},
@@ -472,6 +466,21 @@
 			"parallel": 2,
 			"__argv": "${gemma4}",
 			"model-draft": "MTP/mtp-gemma-4-E2B-it-Q8_0.gguf"
+		},
+		{
+			"hf-repo": "openbmb/MiniCPM5-2B-GGUF:Q8_0",
+			"model": "MiniCPM5-2B-Q8_0.gguf",
+			"ctx-size": 131072,
+			"parallel": 2,
+			"__argv": "${minicpm5}"
+		},
+		{
+			"hf-repo": "unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
+			"model": "LFM2.5-VL-3B-UD-Q8_K_XL.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"ctx-size": 32768,
+			"parallel": 2,
+			"__argv": "${lfm25vl}"
 		}
 	]
 }
