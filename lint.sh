@@ -1,5 +1,5 @@
 #!/bin/sh
-# Lint all shell scripts (excluding OLD/). Tools are provisioned ad hoc via
+# Lint all shell scripts. Tools are provisioned ad hoc via
 # mise — no pinned dev deps needed.
 # Runs shellcheck(1) as the gating linter.
 # shfmt(1) -l is advisory only (exit status tolerated): it lists files whose
@@ -21,7 +21,7 @@ cd "$root"
 log_info "shellcheck"
 # -x: follow `source` directives (the generate.sh scripts point at
 # lib/workload-runtime.sh for _termux/node_run/default_run_dir).
-mise exec shellcheck@latest -- find . -path ./OLD -prune -o -type f -name '*.sh' -exec shellcheck -x {} +
+mise exec shellcheck@latest -- find . -type f -name '*.sh' -exec shellcheck -x {} +
 
 # jq compile gate for the workload description filters (lib/workload-*.jq).
 #
@@ -55,4 +55,4 @@ for f in lib/workload-*.jq; do
 done'
 
 log_info "shfmt (advisory)"
-mise exec shfmt@latest -- find . -path ./OLD -prune -o -type f -name '*.sh' -exec shfmt -l {} + || true
+mise exec shfmt@latest -- find . -type f -name '*.sh' -exec shfmt -l {} + || true

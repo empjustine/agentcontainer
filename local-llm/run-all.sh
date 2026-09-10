@@ -14,7 +14,7 @@
 # is read) — never fatal; gated/private repos simply skip auth when no token
 # is available.
 # See docs/hf-cache-upkeep.md. The GGUF size-estimation tools (layer cards,
-# active params, VRAM fits) are archived in OLD/gguf-size-estimation/;
+# active params, VRAM fits) were retired;
 # their replacement is gdevenyi/huggingface-estimate (see
 # docs/gguf-vram-fit-estimates.md).
 #

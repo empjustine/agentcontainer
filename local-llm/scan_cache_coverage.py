@@ -7,7 +7,7 @@ scan_cache_coverage.py  (PoC / MVP)
 ===============================
 
 Diff the local Hugging Face model cache against
-`llm-reverse-proxy/llamacpp-model-data.json`.
+`lib/llamacpp-model-data.json`.
 
 Fills the gap noted in docs/refresh-local-llm-manifest.md (Step 1): the repo has
 no tool that diffs "what is cached" vs "what the manifest serves". This is a
@@ -76,7 +76,7 @@ def resolve_cache(arg):
 
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
-    default_manifest = os.path.join(here, "..", "llm-reverse-proxy", "llamacpp-model-data.json")
+    default_manifest = os.path.join(here, "..", "lib", "llamacpp-model-data.json")
     ap = argparse.ArgumentParser(description="Diff HF cache vs llamacpp-model-data.json (PoC)")
     ap.add_argument("--cache", default=None, help="HF cache root (default $HF_HUB_CACHE or ~/.cache/huggingface/hub)")
     ap.add_argument("--manifest", default=default_manifest, help="path to llamacpp-model-data.json")

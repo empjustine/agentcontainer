@@ -7,8 +7,6 @@
 //
 // `files.includes` is load-bearing, not tidiness: Biome 2.x uses `includes`
 // with `!`-negated globs (the old `files.ignore` key no longer exists).
-//   - OLD/ is the archived scratch tree (gitignored, several hundred findings);
-//     archived code keeps the style it was written in.
 //   - .pi/ and .vscode/ are tool-owned dirs, not repo source.
 //   - the vendored models.dev catalog, the VRAM-fit data file and the HF
 //     manifests are fetched/derived data, not hand-maintained source.
@@ -19,7 +17,6 @@
 	"files": {
 		"includes": [
 			"**",
-			"!OLD",
 			"!.pi",
 			"!.vscode",
 			"!opencode_share",

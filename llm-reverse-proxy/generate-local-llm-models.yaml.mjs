@@ -1,7 +1,7 @@
 /**
  * @fileoverview generate-local-llm-models.yaml.mjs — Emit
  * config.d/10-local-llm-inference.yaml — the local llama.cpp GGUF `models` map. Built from
- * llamacpp-model-data.json; no network access. The `cmd` strings reference macros defined
+ * ../lib/llamacpp-model-data.json (the shared model-data table, docs/d025); no network access. The `cmd` strings reference macros defined
  * in 00-general.yaml (${LLAMA_SERVER}, ${qwen36}, …) which llama-swap resolves after
  * merging config.d/.
  *
@@ -130,8 +130,13 @@ function deriveModelId(m, modeSeg) {
 }
 
 function main() {
+	// The shared model-data table lives in lib/ (moved there to mark it as
+	// explicitly shared with local-llm/ tooling — docs/d025). Same LIB_DIR
+	// convention as gen-lib.mjs.
+	const libDir =
+		process.env.LIB_DIR ?? fileURLToPath(new URL("../lib", import.meta.url));
 	const modelData = JSON.parse(
-		readFileSync(join(scriptDir, "llamacpp-model-data.json"), "utf-8"),
+		readFileSync(join(libDir, "llamacpp-model-data.json"), "utf-8"),
 	);
 
 	const models = {};
@@ -142,14 +147,14 @@ function main() {
 		const modes = m.mmproj ? MMPROJ_MODES : [{ seg: null, vision: false }];
 		for (const mode of modes) {
 			const modalities = mode.vision ? ["text", "image"] : ["text"];
-		// The family macro reference (${qwen38} etc.) and any literal extra flags
-		// live in __argv verbatim; llama-swap expands ${...} at load.  Empty __argv
-		// expands to nothing; shlex collapses the gap.
-		// launch-gguf.sh resolves --model/--mmproj from one HF snapshot dir and
-		// fails loudly if uncached or not co-located in the same snapshot.  The
-		// expanded ${LLAMA_SERVER} must directly follow the `--` separator: its
-		// first token ("llama-server") becomes the launcher's server binary, which
-		// it resolves via PATH + common install dirs before exec'ing.
+			// The family macro reference (${qwen38} etc.) and any literal extra flags
+			// live in __argv verbatim; llama-swap expands ${...} at load.  Empty __argv
+			// expands to nothing; shlex collapses the gap.
+			// launch-gguf.sh resolves --model/--mmproj from one HF snapshot dir and
+			// fails loudly if uncached or not co-located in the same snapshot.  The
+			// expanded ${LLAMA_SERVER} must directly follow the `--` separator: its
+			// first token ("llama-server") becomes the launcher's server binary, which
+			// it resolves via PATH + common install dirs before exec'ing.
 			const r = cacheResolver(m, mode.seg === "0text" ? undefined : m.mmproj);
 			let cmd = `${r.launcherArgs} ${LLAMA_SERVER_MACRO}`;
 			// The mode slug is verbatim llama-swap macro text (\${0text} etc.),

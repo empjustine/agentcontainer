@@ -80,9 +80,10 @@ generator's single-import convention.
 
 - `tests/check-sandbox.sh` and every `lib/workload-*.jq` header still said
   `sandbox-*.jq` (the pre-rename filenames) — corrected to `workload-*`.
-- `biome.jsonc` / `gen-lib.mjs` called `OLD/` "gitignored", but there was no
-  `.gitignore`. Added one (covers `OLD/` and the lowercase `old/` spelling
-  `docs/architecture.md` uses), making the wording true.
+- `biome.jsonc` / `gen-lib.mjs` described an untracked archive tree as
+  "gitignored" before there was a `.gitignore`. One was added, making the
+  wording true. (Since v17 the archive left the worktree entirely; the
+  `.gitignore` entry went with it.)
 
 ## Caller/plumbing updates
 

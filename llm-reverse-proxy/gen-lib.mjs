@@ -69,10 +69,8 @@ export const scriptDir = dirname(fileURLToPath(import.meta.url));
 //     these keys are consumed SERVER-side (llama-swap resolves the ${env.*}
 //     references in config.d/ from its own environment); pi is only a client
 //     of llama-swap and authenticates with the llama-swap bearer key, so it
-//     never sees them.  No `__`-prefix is recognized, ever — the historical
-//     rationale lives in the gitignored archive (OLD/docs/d019-
-//     unified-opencode-key.md) alongside the original problem the prefix was
-//     a workaround for (OLD/docs/d001-proxy-env-and-namespace.md).
+//     never sees them.  No `__`-prefix is recognized, ever — full rationale
+//     in docs/d001.
 //   - ONE unified OPENCODE_API_KEY covers both the Zen and the Go peers.  The
 //     former split (OPENCODE_ZEN_API_KEY / OPENCODE_GO_API_KEY) is retired and
 //     those names are ignored.

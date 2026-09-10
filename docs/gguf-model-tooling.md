@@ -2,7 +2,7 @@
 
 > **Status:** the size-estimation tools — `generate_layer_cards.py`,
 > `estimate_active_params.py`, `fit_analysis.py` — are **archived** to
-> [`OLD/gguf-size-estimation/`](../OLD/gguf-size-estimation/) and no longer
+> retired with the v16 cleanup and no longer
 > maintained. Their replacement is
 > [`gdevenyi/huggingface-estimate`](https://github.com/gdevenyi/huggingface-estimate)
 > (`run-calc.js`), which models per-layer `n_head_kv`, SWA windows, recurrent
@@ -49,7 +49,7 @@ uv run local-llm/<tool>.py ...
 | `gguf_context_length.py` | **PoC/MVP** — read `general.architecture` / `context_length` / `general.name` from a GGUF header via the PyPI `gguf` package (no weights loaded); used to pick `ctx-size` |
 
 All four consume the same canonical model list in
-`openai-completions-gfx1030/llamacpp-model-data.json` that also drives
+`llm-reverse-proxy/` (generator owner; file in `lib/`) that also drives
 `openai-completions-gfx1030/config.d/10-local-llm-inference.yaml` (via
 `generate-local-llm-models.yaml.mjs`).
 
@@ -267,8 +267,7 @@ contains `Q3_K_S[.-]`, was removed after this audit caught it.)
 
 ## gguf-metadata-parser.js
 
-> Archived: moved to `old/agentcontainer/local-llm/huggingface/` with the
-> scrapped "huggingface environment"; no live consumers.
+> Archived with the scrapped "huggingface environment"; no live consumers.
 >
 > A standalone Node script that fetches the header of a remote GGUF file via an
 HTTP Range request (first 100KB, redirects followed, 60s timeout) and extracts

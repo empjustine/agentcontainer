@@ -1,3 +1,13 @@
+---
+id: environments
+type: architecture-design
+status: draft
+title: "Deployment environments and peer variants"
+parent: goal
+references: ["architecture", "llm-reverse-proxy", "coding-agent"]
+tags: ["environments", "matrix"]
+---
+
 # Deployment environments and peer variants
 
 This repo targets several distinct deployment environments. Environments arrive
@@ -82,7 +92,7 @@ layer in `config.d/`.
   `DISABLED_PROVIDERS`. _(The old `__`-prefixed key convention is
   deprecated — generators read plain `apiKeyEnv` names such as
   `OPENCODE_API_KEY` / `CLINE_API_KEY`; the rationale is in
-  [OLD/docs/d019-unified-opencode-key.md](../OLD/docs/d019-unified-opencode-key.md).)_
+  [d001-proxy-env-and-namespace.md](d001-proxy-env-and-namespace.md).)_
 
 ### wsl2 (nonfree-world, peer-only usage)
 No fixed hostname (dynamic). Kernel: `6.18.33.2-microsoft-standard-WSL2`. WSL2 under rootful docker with **no direct cloud access**, so the coding agent
@@ -135,9 +145,8 @@ local GPU/VRAM (generate.sh simply never emits the local layer there).
 > it has no fixed hostname and is instantiated ad-hoc.
 >
 > The previous MikroTik **arm5** (e50ug / RouterOS 7) variant has been
-> archived — see [OLD/docs/environments-arm5-routeros.md](../OLD/docs/environments-arm5-routeros.md)
-> for the row that used to live here (the runner, deploy scripts, and tailscale
-> helper all moved to `OLD/openai-completions-arm5/` / `OLD/tailscale-arm5/`).
+> retired — its environment row, runner, deploy scripts, and tailscale helper
+> live only in the archive.
 
 ## Shared support file
 

@@ -134,10 +134,9 @@ log_info "secrets source" source="${SECRETS_SOURCE:-none}"
 # Complain about key names this pipeline does not read, rather than silently
 # generating a config without peers.  (Universal — harmless on container hosts.)
 # Note: there is intentionally NO `__`-prefix scanner here — the `__`-prefix
-# key-naming convention was retired (see OLD/docs/d019-unified-opencode-key.md
-# for the rationale and the OLD archived generators that still used it).
-# Anything in the environment starting with `__` is not a key this pipeline
-# cares about and is ignored, not warned on.
+# key-naming convention was retired (rationale in docs/d001 §3 and
+# docs/d024).  Anything in the environment starting with `__` is not a key
+# this pipeline cares about and is ignored, not warned on.
 _legacy="$(env | sed -n \
 	's/^\(OPENCODE_ZEN_API_KEY\|OPENCODE_GO_API_KEY\)=.*/\1/p' | tr '\n' ' ')"
 if [ -n "${_legacy# }" ]; then

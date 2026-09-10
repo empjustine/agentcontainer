@@ -44,8 +44,8 @@ Static `settings.json`, copied by `run.sh` into `~/.pi/agent/settings.json`.
 (Default-model pinning is no longer generated dynamically.)
 
 > **Deprecated:** the `OPENCODE_GO_API_KEY` name below is retired — OpenCode
-> now uses the unified `OPENCODE_API_KEY` (see
-> **[d019](../OLD/docs/d019-unified-opencode-key.md)** — archived).
+> now uses the unified `OPENCODE_API_KEY` (rationale in
+> **[d001](d001-proxy-env-and-namespace.md)** §3).
 
 - The default model is pinned to the opencode-go subscription (DeepSeek V4
   Flash) **only** when `OPENCODE_GO_API_KEY` is present. When the key is absent
@@ -62,5 +62,39 @@ Static `settings.json`, copied by `run.sh` into `~/.pi/agent/settings.json`.
   [`d010-opencode-go-pricing.md`](d010-opencode-go-pricing.md) — the older
   full-catalog generation decisions, superseded by the scoped-models approach.
 - `d002-model-id-filters.md` / `d008-api-key-gating.md` — same generation, but
-  they describe code that no longer exists (`MODEL_FILTERS`, `requireApiKey`),
-  so they are archived in `OLD/docs/` (see `OLD/docs/README.md`).
+  they describe code that no longer exists (`MODEL_FILTERS`, `requireApiKey`);
+  their essence is covered below.
+
+## Spirit of the retired notes (survives their removal)
+
+The legacy design notes d004–d015 describe the retired full-catalog pipeline;
+this approach replaced it. The one-line essence of each, kept here so the notes
+can be removed without losing the law they recorded:
+
+- **d004 (provider-id renaming, metadata maps)** — obsolete by construction:
+  generated layers now *override pi-native provider ids* instead of inventing
+  suffixed ones, so there is no collision and no metadata bridge to maintain.
+- **d005 (Google dynamic discovery)** — retired with the client-side catalog:
+  pi's own built-in Google catalog is used (`pi update --models`), not a
+  generated REST-discovered list.
+- **d006 / d010 (virtual cost, documented pricing overrides)** — the cost
+  tracker now reflects pi's built-in catalog pricing; no client-side estimation
+  or pricing tables exist in this repo.
+- **d012 (raw JSON dumps)** — the principle survives in the vendored, committed
+  catalogs: `lib/models.dev.api.json` (models.dev) is the one raw model-id
+  source of truth the current generators read; nothing fetches and filters
+  live `:free` lists client-side any more.
+- **d013 / d014 (remove non-working / paid-only "free" providers)** — moot in
+  the scoped approach: generators enumerate no free tiers at all; provider
+  reachability is probed, not assumed (d021: an unreadable catalog skips a
+  provider rather than aborting the layer).
+- **d015 (api-gateway)** — retired from the tree. Pattern of record
+  for limited-network environments: a basic-auth, UUID-routed API *gateway*
+  (terminating TLS, injecting provider keys) rather than a transparent proxy.
+  Nothing in the current tree implements it; revisit only if a
+  no-direct-cloud host needs key injection again.
+
+Still in force and self-sufficient: `d001` (proxy env / plain key naming /
+`baseUrl` baking — cited directly by `lib/peer-probe.mjs`,
+`lib/refresh-models-dev.mjs`, `gen-lib.mjs`) and `d003` (generation-time
+context-window embedding).

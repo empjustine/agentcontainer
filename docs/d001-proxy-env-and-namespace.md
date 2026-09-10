@@ -45,8 +45,4 @@ was removed: provider keys are read as plain env vars by `gen-lib.mjs`
 **server-side** by llama-swap (which resolves the `${env.*}` references in
 `config.d/` from its own process environment). pi is only a *client* of
 llama-swap and authenticates with the llama-swap bearer key (`PEER_API_KEY`),
-so it never reads these provider keys and the prefix was unnecessary. See
-the historical record in [OLD/docs/d019-unified-opencode-key.md](../OLD/docs/d019-unified-opencode-key.md)
-and [OLD/docs/d001-proxy-env-and-namespace.md](../OLD/docs/d001-proxy-env-and-namespace.md)
-(an earlier version of this file describing the prefix mechanism that has
-since been retired).
+so it never reads these provider keys and the prefix was unnecessary.

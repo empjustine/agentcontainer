@@ -100,12 +100,10 @@ from `llamacpp-model-data.json`) is run by `llm-reverse-proxy/generate.sh`
 models are served by the one multipurpose instance where the hardware allows
 it. Everywhere else the instance is peers-only by construction: no
 `10-local-llm-inference.yaml`, and the `22-peer-gfx1030.yaml` route covers
-reaching a remote local-inference instance instead. (The old fixed-purpose
-`-gfx1030` / `-peer` dirs are under `OLD/openai-completions-gfx1030/` and
-`OLD/openai-completions-peer/`; the MikroTik `-arm5` runner lives at
-`OLD/openai-completions-arm5/` — see
-[OLD/docs/environments-arm5-routeros.md](../OLD/docs/environments-arm5-routeros.md)
-for the row that used to live in the environments table.)
+reaching a remote local-inference instance instead. (The retired
+fixed-purpose `-gfx1030` / `-peer` / MikroTik `-arm5` runners were folded
+into this one multipurpose folder; their environment rows live only in the
+archive.)
 
 Each generator imports the folder's own `gen-lib.mjs`, which re-exports the
 shared `../lib/peer-probe.mjs` probe toolkit and the shared vendored catalog

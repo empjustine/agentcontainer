@@ -1,3 +1,12 @@
+---
+id: lib
+type: module-design
+status: draft
+title: "lib — shared infrastructure: workload runner, logging, fact tables"
+parent: architecture
+tags: ["lib", "workload-runtime", "container-tooling"]
+---
+
 # Container tooling & run scripts
 
 This covers the shared container-runtime detection (`lib/workload-runtime.sh`), the

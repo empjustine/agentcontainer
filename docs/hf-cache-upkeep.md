@@ -85,9 +85,8 @@ value used in the derived model ids — so cards always match the ids.
 ## Related
 
 The containerized "huggingface environment" + `models-local/` flat layout +
-`--model` fallback design were **archived** (scrapped) under
-`old/agentcontainer/docs/` (`d015`, `d016`, `d017`) and
-`old/agentcontainer/local-llm/`. `llama-server` now resolves GGUFs from
+`--model` fallback design were **retired** (scrapped; the d015–d017 notes
+and their tooling live only in the archive). `llama-server` now resolves GGUFs from
 Hugging Face at runtime via `--hf-repo`/`--hf-file`; see
 `openai-completions-gfx1030/generate-local-llm-models.yaml.mjs` and
 `docs/lib/workload-runtimeing.md`.

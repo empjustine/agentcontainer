@@ -1,4 +1,4 @@
-# Refreshing `openai-completions-gfx1030/llamacpp-model-data.json`
+# Refreshing `lib/llamacpp-model-data.json`
 
 This is the operational runbook for keeping the local-llm manifest in sync
 with the Hugging Face cache. Run it whenever a new GGUF model or a new quant of

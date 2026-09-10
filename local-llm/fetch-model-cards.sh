@@ -1,6 +1,6 @@
 #!/bin/sh
 # Refresh the model-card mirrors under local-llm/model-cards/<org>/<repo>.md from
-# Hugging Face (README.md of each repo in ../llm-reverse-proxy/llamacpp-model-data.json).
+# Hugging Face (README.md of each repo in ../lib/llamacpp-model-data.json).
 # File names are the repo id verbatim so cards always match the ids
 # (see docs/hf-cache-upkeep.md).
 #
@@ -21,7 +21,7 @@ def log(level, msg, **fields):
     rec.update(fields)
     print(json.dumps(rec), file=sys.stderr)
 
-data = json.load(open("../llm-reverse-proxy/llamacpp-model-data.json"))
+data = json.load(open("../lib/llamacpp-model-data.json"))
 base = "model-cards"
 ctx = ssl.create_default_context()
 repos = sorted({m["hf-repo"].split(":")[0] for m in data["models"]})

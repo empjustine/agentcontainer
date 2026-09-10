@@ -3,14 +3,14 @@ fd = "latest"
 jq = "latest"
 ripgrep = "latest"
 uv = "latest"
-python = "3.14" # ["3.14", "3.12"]
-"pipx:huggingface-hub" = { version = "latest", uvx_args = "--python 3.14" }
-node = ["24", "22"]
-# No infisical in the image: the launch chain no longer wraps generators in
-# `infisical run` — run.sh loads vault keys on the HOST and forwards them via
-# the sandbox_env allowlist; in-container load_secrets short-circuits via
-# SECRETS_ASSUME=1 (see the canonical definition in container-tool.sh).
-# "pipx:oci-cli" = { version = "latest", uvx_args = "--python 3.12" }
-# "npm:@earendil-works/pi-coding-agent" = { version = "latest", trust_policy_excludes = ["@smithy/core@3.33.0", "@smithy/node-http-handler@4.11.0"] }
-pi = "latest"
-opencode = "latest"
+
+node = ["24"]
+
+python = ["3.14"]
+"pipx:huggingface-hub" = { version = "latest", uvx_args = "--no-python-downloads --python 3.14" }
+#"pipx:oci-cli" = { version = "latest", uvx_args = "--no-python-downloads --python 3.12" }
+
+"npm:cline" = "latest"
+"github:JetBrains/thinkrail" = "latest"
+pi = "latest" # aqua:earendil-works/pi
+opencode = "latest" # aqua:anomalyco/opencode
