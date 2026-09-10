@@ -160,7 +160,7 @@ engine.
 ## 5. References
 
 - `lib/workload-runtime.sh` (repo root) — description-driven workload runner.
-- `docs/lib/workload-runtimeing.md`, `docs/termux-serving.md` — existing environment docs.
+- `docs/container-tooling.md`, `docs/termux-serving.md` — existing environment docs.
 - `89luca89/lilipod` — Go userns engine (rootful/rootless Linux only; not Termux).
 - `termux/proot` — C ptrace workload (the Termux primitive).
 - `termux/proot-distro` — Python OCI-image frontend over `proot`.

@@ -73,7 +73,7 @@ used in a semantically correct minimal-sandbox layout — **verdict:
 plausible**. Full audit (flag table, semantic checks against upstream
 `README.md`, and adoption caveats for a possible `bwrap` workload runtime
 tier — missing `--die-with-parent`, no `--unshare-net`, no device binds):
-see the appendix in `../workload/SANDBOX_PRIMITIVES.md`.
+see [bwrap-runtime-audit.md](bwrap-runtime-audit.md).
 
 Relevance to persistence: a bwrap runtime, if added as a workload runtime
 alternative to podman in `lib/workload-runtime.sh`, would replace

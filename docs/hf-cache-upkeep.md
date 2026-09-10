@@ -89,4 +89,4 @@ The containerized "huggingface environment" + `models-local/` flat layout +
 and their tooling live only in the archive). `llama-server` now resolves GGUFs from
 Hugging Face at runtime via `--hf-repo`/`--hf-file`; see
 `openai-completions-gfx1030/generate-local-llm-models.yaml.mjs` and
-`docs/lib/workload-runtimeing.md`.
+`docs/container-tooling.md`.

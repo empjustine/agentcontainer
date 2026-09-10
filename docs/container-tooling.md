@@ -31,7 +31,12 @@ devices and emits both the local GGUF layer and the cloud-peer layer into
 + HF cache on LAN port 8080 — plus the full `coding-agent/`. Rootless podman
 with SELinux means every writable bind mount gets `:z,U` (or `:Z,U`) relabel +
 chown, and the containers run as the host UID via `--userns=keep-id` +
-`--user $(id -u):$(id -g)`.
+`--user $(id -u):$(id -g)`. Two rootless constraints shape what this env can
+express (full survey in `d020` §1.1): no ports < 1024 (no
+`CAP_NET_BIND_SERVICE` — all publishes are high ports) and no device-node
+creation (no `CAP_MKNOD` — GPUs pass through as *existing* nodes via
+`--device`, requiring group access to `/dev/dri`/`/dev/kfd`, which is what
+`workload_gpu`/`detect_gpu_devs` hand the backend).
 
 ### a50 (termux, peer-only serving)
 

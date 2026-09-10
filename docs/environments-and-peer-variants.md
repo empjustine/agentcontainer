@@ -158,10 +158,10 @@ GPU device passthrough, port publishing, hardening) behind one interface. It is
 the single place that detects the backend and computes `SCRIPT_DIR` / `REPO_ROOT`
 (the only "where do I live" logic), so run scripts never re-detect podman/docker
 or guess their own paths inline. PRoot was removed as a backend (see
-[lib/workload-runtimeing.md](lib/workload-runtimeing.md)); a qemu/libvirt VM backend is
+[container-tooling.md](container-tooling.md)); a qemu/libvirt VM backend is
 assessed in [d020-libvirt-qemu-sandbox.md](d020-libvirt-qemu-sandbox.md).
 
-See [lib/workload-runtimeing.md](lib/workload-runtimeing.md) for the full `workload_*` API.
+See [container-tooling.md](container-tooling.md) for the full `workload_*` API.
 
 ## Image / mode per instance
 

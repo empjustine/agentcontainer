@@ -5,7 +5,7 @@ establishes what it would take to support qemu/libvirt VMs as workload runtimes
 next to the existing podman/docker container backend, for both serving
 (`llm-reverse-proxy/`) and usage (`coding-agent/`). It is the deliberate
 replacement for the retired PRoot backend (see
-[lib/workload-runtimeing.md](lib/workload-runtimeing.md)): where PRoot only *translated
+[container-tooling.md](container-tooling.md), "PRoot backend removed"): where PRoot only *translated
 paths over ptrace* (no namespaces, no cgroups, no real root, no GPU), a
 qemu/KVM VM is a full kernel boundary — real isolation, real devices, at the
 cost of an image + lifecycle surface that containers hide.
@@ -29,6 +29,31 @@ workload **host**" shape (§2 Level 1), not replace them. A full "VM as the
 workload" backend (Level 2) is only worth building for workloads that are
 peers-only/CPU — GPU inference is strictly worse inside a VM on this fleet
 (§4).
+
+### 1.1 Isolation ladder (decision basis for the table above)
+
+Where each available boundary sits, by what it confines and its escape
+risk — this is what "stronger than container, weaker than hardware"
+means concretely:
+
+| Boundary | Security boundary | Escape risk | For untrusted workloads |
+|---|---|---|---|
+| native (bare) | none | n/a | never |
+| proot (retired) | filesystem path translation only | low (ptrace escapes possible) | not isolation |
+| bubblewrap | kernel namespaces | low (namespace escapes rare) | good for most cases |
+| podman rootless | full OCI isolation | low (container escapes rare) | good for most cases |
+| podman rootful | full OCI isolation | medium (container escape = host root) | with restrictions |
+| qemu/KVM VM | hypervisor / separate guest kernel | very low (VM escapes extremely rare) | best isolation |
+
+Two host facts fall out of the same survey and are worth recording here:
+
+- **Termux (a50) cannot reach `/dev/kvm`** (unprivileged app sandbox), so a
+  VM backend is never available on the a50 — its runtime ladder tops out at
+  native execution (see [termux-serving.md](termux-serving.md)).
+- **Rootless podman cannot bind ports < 1024 or create device nodes** (no
+  `CAP_NET_BIND_SERVICE` / `CAP_MKNOD`) — the container backend on bazzite
+  publishes high ports and passes GPUs via `--device`, which only works
+  because device *access* (not creation) is available to the rootless user.
 
 ## 2. Two integration levels
 
@@ -168,6 +193,6 @@ boundary). Requirements beyond Level 1:
 ## References
 
 - `lib/workload-runtime.sh` — current container-only workload runner.
-- [lib/workload-runtimeing.md](lib/workload-runtimeing.md) — `workload_*` API + PRoot removal note.
-- [workload-helper-env-analysis.md](workload-helper-env-analysis.md) — why PRoot is not a workload (§2–3).
+- [container-tooling.md](container-tooling.md) — `workload_*` API + PRoot removal note.
+- [sandbox-helper-env-analysis.md](sandbox-helper-env-analysis.md) — why PRoot is not a workload (§2–3).
 - libvirt domain XML (hostdev/VFIO, filesystem/virtiofs), `virt-install --cloud-init`, `virt-host-validate`.

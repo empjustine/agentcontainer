@@ -50,6 +50,16 @@ hosts that need stronger-than-container isolation, the qemu/libvirt option is
 assessed in [d020-libvirt-qemu-sandbox.md](d020-libvirt-qemu-sandbox.md)
 (not implemented).
 
+**Future supervision option (not implemented):** runit via termux-services
+(`termux-packages`' service daemon) would give the native serving/usage
+processes directory-as-config supervision — a `run` script per service under
+`$PREFIX/var/service/<name>/`, `runsv` per-service restart supervision, and an
+`svc up/down/once <name>` control interface — all userspace, no root, no
+systemd (which Termux lacks). The `once` mode maps to oneshot workloads,
+`runsvdir`'s directory watch is a natural hot-reload pattern. Worth reaching
+for if the bare `run-native.sh` invocation model outgrows manual process
+management.
+
 ## Cross-references
 
 - [environments-and-peer-variants.md](environments-and-peer-variants.md) — the
