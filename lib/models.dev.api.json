@@ -140362,30 +140362,6 @@
 					"cache_read": 0.2
 				}
 			},
-			"spacexai/grok-imagine-video-1.5-preview": {
-				"id": "spacexai/grok-imagine-video-1.5-preview",
-				"name": "Grok Imagine Video 1.5 Preview",
-				"description": "Image model for prompt-driven generation, editing, and visual design workflows",
-				"family": "grok",
-				"attachment": false,
-				"reasoning": false,
-				"tool_call": false,
-				"release_date": "2026-05-30",
-				"last_updated": "2026-05-30",
-				"modalities": {
-					"input": [
-						"text"
-					],
-					"output": [
-						"video"
-					]
-				},
-				"open_weights": false,
-				"limit": {
-					"context": 0,
-					"output": 0
-				}
-			},
 			"spacexai/grok-4.20-multi-agent-beta": {
 				"id": "spacexai/grok-4.20-multi-agent-beta",
 				"name": "Grok 4.20 Multi Agent Beta",
@@ -153867,10 +153843,10 @@
 						"type": "effort",
 						"values": [
 							"none",
-							"minimal",
 							"low",
 							"medium",
-							"high"
+							"high",
+							"xhigh"
 						]
 					}
 				],
@@ -154695,10 +154671,9 @@
 						"type": "effort",
 						"values": [
 							"none",
-							"minimal",
-							"low",
 							"medium",
-							"high"
+							"high",
+							"xhigh"
 						]
 					}
 				],
@@ -154962,10 +154937,10 @@
 						"type": "effort",
 						"values": [
 							"none",
-							"minimal",
 							"low",
 							"medium",
-							"high"
+							"high",
+							"xhigh"
 						]
 					}
 				],
@@ -155278,10 +155253,10 @@
 						"type": "effort",
 						"values": [
 							"none",
-							"minimal",
 							"low",
 							"medium",
-							"high"
+							"high",
+							"xhigh"
 						]
 					}
 				],
@@ -155831,10 +155806,10 @@
 						"type": "effort",
 						"values": [
 							"none",
-							"minimal",
 							"low",
 							"medium",
-							"high"
+							"high",
+							"xhigh"
 						]
 					}
 				],
@@ -186114,7 +186089,7 @@
 				"cost": {
 					"input": 0.44,
 					"output": 1.32,
-					"cache_read": 0.14
+					"cache_read": 0.014
 				}
 			},
 			"deepseek-ai/DeepSeek-V4-Flash-0731": {
@@ -200749,9 +200724,9 @@
 					"output": 131072
 				},
 				"cost": {
-					"input": 0.075,
-					"output": 0.25,
-					"cache_read": 0.015
+					"input": 0.07,
+					"output": 0.2333,
+					"cache_read": 0.014
 				}
 			},
 			"~z-ai/glm-latest": {
@@ -229623,45 +229598,9 @@
 				},
 				"cost": {
 					"input": 3,
-					"output": 15.5,
+					"output": 15,
 					"cache_read": 0.3,
 					"cache_write": 3.75
-				}
-			},
-			"google/gemma-4-31B-it": {
-				"id": "google/gemma-4-31B-it",
-				"name": "Gemma 4 31B IT",
-				"description": "Largest Gemma 4 instruction model for open, self-hosted chat and reasoning",
-				"family": "gemma",
-				"attachment": true,
-				"reasoning": true,
-				"reasoning_options": [
-					{
-						"type": "toggle"
-					}
-				],
-				"tool_call": true,
-				"structured_output": true,
-				"temperature": true,
-				"release_date": "2026-04-02",
-				"last_updated": "2026-04-02",
-				"modalities": {
-					"input": [
-						"text"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": true,
-				"limit": {
-					"context": 262144,
-					"output": 32768
-				},
-				"cost": {
-					"input": 0.13,
-					"output": 0.4,
-					"cache_read": 0.026
 				}
 			},
 			"google/gemini-2.5-flash-lite": {
@@ -229776,43 +229715,6 @@
 					"output": 9,
 					"cache_read": 0.15,
 					"input_audio": 1.5
-				}
-			},
-			"google/gemini-3-pro": {
-				"id": "google/gemini-3-pro",
-				"name": "Gemini 3 Pro Preview",
-				"description": "Preview Gemini flagship for complex reasoning, coding, and rich multimodal prompts",
-				"family": "gemini-pro",
-				"attachment": true,
-				"reasoning": true,
-				"reasoning_options": [],
-				"tool_call": true,
-				"structured_output": true,
-				"temperature": true,
-				"knowledge": "2025-01",
-				"release_date": "2025-11-18",
-				"last_updated": "2025-11-18",
-				"modalities": {
-					"input": [
-						"text",
-						"image",
-						"video",
-						"audio",
-						"pdf"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": false,
-				"limit": {
-					"context": 1048576,
-					"output": 65536
-				},
-				"cost": {
-					"input": 1.25,
-					"output": 15,
-					"cache_read": 0
 				}
 			},
 			"google/gemini-2.5-pro": {
@@ -229937,76 +229839,11 @@
 				"open_weights": true,
 				"limit": {
 					"context": 202752,
-					"output": 131072
+					"output": 16384
 				},
 				"cost": {
-					"input": 0.85,
-					"output": 3.3
-				}
-			},
-			"Qwen/Qwen3-30B-A3B-Instruct-2507": {
-				"id": "Qwen/Qwen3-30B-A3B-Instruct-2507",
-				"name": "Qwen3 30B-A3B Instruct 2507",
-				"description": "Qwen instruction model for multilingual chat, reasoning, and tool use",
-				"family": "qwen",
-				"attachment": false,
-				"reasoning": false,
-				"tool_call": true,
-				"structured_output": true,
-				"temperature": true,
-				"release_date": "2025-07-29",
-				"last_updated": "2025-07-29",
-				"modalities": {
-					"input": [
-						"text"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": true,
-				"limit": {
-					"context": 262144,
-					"output": 32768
-				},
-				"cost": {
-					"input": 0.15,
-					"output": 0.55
-				}
-			},
-			"Qwen/Qwen3.5-122B-A10B": {
-				"id": "Qwen/Qwen3.5-122B-A10B",
-				"name": "Qwen3.5 122B-A10B",
-				"description": "Qwen vision-language model for visual reasoning, documents, and agent tasks",
-				"family": "qwen",
-				"attachment": true,
-				"reasoning": true,
-				"reasoning_options": [
-					{
-						"type": "toggle"
-					}
-				],
-				"tool_call": true,
-				"structured_output": true,
-				"temperature": true,
-				"release_date": "2026-02-23",
-				"last_updated": "2026-02-23",
-				"modalities": {
-					"input": [
-						"text"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": true,
-				"limit": {
-					"context": 131072,
-					"output": 32768
-				},
-				"cost": {
-					"input": 0.4,
-					"output": 3.2
+					"input": 1.4,
+					"output": 4.4
 				}
 			},
 			"Qwen/Qwen3.6-35B-A3B-FP8": {
@@ -230037,7 +229874,7 @@
 				"open_weights": true,
 				"limit": {
 					"context": 262144,
-					"output": 32768
+					"output": 8192
 				},
 				"cost": {
 					"input": 0.17,
@@ -230066,12 +229903,12 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 40960,
+					"context": 32768,
 					"output": 1024
 				},
 				"cost": {
 					"input": 0.01,
-					"output": 0
+					"output": 0.01
 				}
 			},
 			"Qwen/Qwen3-Reranker-0.6B": {
@@ -230126,8 +229963,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 256000,
-					"output": 32768
+					"context": 16384,
+					"output": 8192
 				},
 				"cost": {
 					"input": 0.15,
@@ -230380,7 +230217,7 @@
 				},
 				"cost": {
 					"input": 0.01,
-					"output": 0
+					"output": 0.01
 				}
 			},
 			"openai/gpt-4.1": {
@@ -230554,46 +230391,6 @@
 					"cache_read": 0.025
 				}
 			},
-			"openai/gpt-oss-120b": {
-				"id": "openai/gpt-oss-120b",
-				"name": "GPT-OSS 120B",
-				"description": "Open GPT reasoning model for self-hosted agents and controllable deployments",
-				"family": "gpt-oss",
-				"attachment": false,
-				"reasoning": true,
-				"reasoning_options": [
-					{
-						"type": "effort",
-						"values": [
-							"low",
-							"medium",
-							"high"
-						]
-					}
-				],
-				"tool_call": true,
-				"structured_output": true,
-				"temperature": true,
-				"release_date": "2025-08-05",
-				"last_updated": "2025-08-05",
-				"modalities": {
-					"input": [
-						"text"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": true,
-				"limit": {
-					"context": 131000,
-					"output": 32768
-				},
-				"cost": {
-					"input": 0.15,
-					"output": 0.55
-				}
-			},
 			"openai/gpt-5.2": {
 				"id": "openai/gpt-5.2",
 				"name": "GPT-5.2",
@@ -230635,9 +230432,9 @@
 					"output": 128000
 				},
 				"cost": {
-					"input": 1.8,
-					"output": 15.5,
-					"cache_read": 0.18
+					"input": 1.75,
+					"output": 14,
+					"cache_read": 0.175
 				}
 			},
 			"openai/gpt-5": {
@@ -230890,8 +230687,7 @@
 				"last_updated": "2026-01-14",
 				"modalities": {
 					"input": [
-						"text",
-						"image"
+						"text"
 					],
 					"output": [
 						"image"
@@ -243578,9 +243374,9 @@
 					"output": 131072
 				},
 				"cost": {
-					"input": 0.075,
-					"output": 0.25,
-					"cache_read": 0.015
+					"input": 0.07,
+					"output": 0.2333,
+					"cache_read": 0.014
 				}
 			},
 			"~z-ai/glm-latest": {
@@ -243615,7 +243411,7 @@
 				},
 				"open_weights": false,
 				"limit": {
-					"context": 1048576,
+					"context": 1310720,
 					"output": 128000
 				},
 				"cost": {
@@ -244664,9 +244460,9 @@
 					"output": 131072
 				},
 				"cost": {
-					"input": 0.075,
-					"output": 0.25,
-					"cache_read": 0.015
+					"input": 0.07,
+					"output": 0.2333,
+					"cache_read": 0.014
 				}
 			},
 			"z-ai/glm-4.5": {
@@ -244893,7 +244689,7 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 1048576,
+					"context": 1310720,
 					"output": 943718
 				},
 				"cost": {

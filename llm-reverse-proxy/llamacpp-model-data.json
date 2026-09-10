@@ -148,7 +148,7 @@
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
+			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
 		},
 		{
 			"hf-repo": "unsloth/Muse-Glimmer-30B-GGUF:Q8_0",
@@ -168,7 +168,7 @@
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
+			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q6_K",
@@ -178,7 +178,7 @@
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
+			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-Flash-Next-GGUF:Q2_K_XL",
@@ -335,7 +335,7 @@
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
+			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw",
@@ -345,7 +345,7 @@
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
+			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw",
@@ -355,7 +355,7 @@
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
+			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw",
@@ -365,7 +365,7 @@
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
+			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw",
@@ -375,7 +375,7 @@
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
+			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw",
@@ -385,7 +385,7 @@
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75"
+			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-8B-A1B-GGUF:Q8_0",

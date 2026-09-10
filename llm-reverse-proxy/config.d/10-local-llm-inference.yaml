@@ -1187,7 +1187,7 @@
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_M": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q4_K_M.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q4_K_M.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text"
@@ -1214,7 +1214,7 @@
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_M": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q4_K_M.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q4_K_M.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1243,7 +1243,7 @@
       }
     },
     "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q4_K_M": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q4_K_M.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q4_K_M.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1326,7 +1326,7 @@
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q8_0": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-Q8_0.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-Q8_0.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text"
@@ -1353,7 +1353,7 @@
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q8_0": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-Q8_0.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-Q8_0.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1382,7 +1382,7 @@
       }
     },
     "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q8_0": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-Q8_0.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-Q8_0.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1411,7 +1411,7 @@
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q6_K.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q6_K.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text"
@@ -1438,7 +1438,7 @@
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q6_K.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q6_K.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -1467,7 +1467,7 @@
       }
     },
     "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q6_K": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q6_K.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--Qwen3.8-27B-GGUF unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q6_K.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -2411,7 +2411,7 @@
       }
     },
     "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_M-5.60bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_M-5.60bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text"
@@ -2438,7 +2438,7 @@
       }
     },
     "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_M-5.60bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_M-5.60bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -2467,7 +2467,7 @@
       }
     },
     "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_M-5.60bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_M-5.60bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -2496,7 +2496,7 @@
       }
     },
     "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ3_S-3.44bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ3_S-3.44bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text"
@@ -2523,7 +2523,7 @@
       }
     },
     "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ3_S-3.44bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ3_S-3.44bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -2552,7 +2552,7 @@
       }
     },
     "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ3_S-3.44bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ3_S-3.44bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -2581,7 +2581,7 @@
       }
     },
     "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-3.67bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-3.67bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text"
@@ -2608,7 +2608,7 @@
       }
     },
     "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-3.67bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-3.67bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -2637,7 +2637,7 @@
       }
     },
     "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-3.67bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-3.67bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -2666,7 +2666,7 @@
       }
     },
     "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.00bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.00bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text"
@@ -2693,7 +2693,7 @@
       }
     },
     "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.00bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.00bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -2722,7 +2722,7 @@
       }
     },
     "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.00bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.00bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -2751,7 +2751,7 @@
       }
     },
     "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.40bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.40bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text"
@@ -2778,7 +2778,7 @@
       }
     },
     "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.40bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.40bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -2807,7 +2807,7 @@
       }
     },
     "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.40bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-IQ4_XS-4.40bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -2836,7 +2836,7 @@
       }
     },
     "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_S-4.72bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_S-4.72bpw.gguf - - -- ${LLAMA_SERVER} ${0text} ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text"
@@ -2863,7 +2863,7 @@
       }
     },
     "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_S-4.72bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_S-4.72bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -2892,7 +2892,7 @@
       }
     },
     "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_S-4.72bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp,ngram-mod,ngram-map-k4v --spec-draft-n-max 4 --spec-draft-p-min 0.75 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--byteshape--Qwen3.8-27B-GGUF byteshape/Qwen3.8-27B-GGUF Qwen3.8-27B-Q5_K_S-4.72bpw.gguf mmproj-bf16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8 --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1",
       "capabilities": {
         "in": [
           "text",
@@ -2920,8 +2920,8 @@
         }
       }
     },
-    "01b-ctx125-unsloth/LFM2.5-8B-A1B-GGUF:Q8_0": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--LFM2.5-8B-A1B-GGUF unsloth/LFM2.5-8B-A1B-GGUF LFM2.5-8B-A1B-Q8_0.gguf - - -- ${LLAMA_SERVER} ${lfm25} --cache-type-k f16 --cache-type-v f16 --ctx-size 128000 --n-predict 128000 --parallel 2",
+    "01b-ctx128-unsloth/LFM2.5-8B-A1B-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--LFM2.5-8B-A1B-GGUF unsloth/LFM2.5-8B-A1B-GGUF LFM2.5-8B-A1B-Q8_0.gguf - - -- ${LLAMA_SERVER} ${lfm25} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 2",
       "capabilities": {
         "in": [
           "text"
@@ -2929,16 +2929,16 @@
         "out": [
           "text"
         ],
-        "context": 128000
+        "context": 131072
       },
       "metadata": {
-        "id": "01b-ctx125-unsloth/LFM2.5-8B-A1B-GGUF:Q8_0",
+        "id": "01b-ctx128-unsloth/LFM2.5-8B-A1B-GGUF:Q8_0",
         "reasoning": true,
         "input": [
           "text"
         ],
-        "contextWindow": 128000,
-        "maxTokens": 128000,
+        "contextWindow": 131072,
+        "maxTokens": 131072,
         "cost": {
           "input": 1,
           "output": 1,
@@ -2947,8 +2947,8 @@
         }
       }
     },
-    "01b-ctx125-unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--LFM2.5-8B-A1B-GGUF unsloth/LFM2.5-8B-A1B-GGUF LFM2.5-8B-A1B-UD-Q8_K_XL.gguf - - -- ${LLAMA_SERVER} ${lfm25} --cache-type-k f16 --cache-type-v f16 --ctx-size 128000 --n-predict 128000 --parallel 2",
+    "01b-ctx128-unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--LFM2.5-8B-A1B-GGUF unsloth/LFM2.5-8B-A1B-GGUF LFM2.5-8B-A1B-UD-Q8_K_XL.gguf - - -- ${LLAMA_SERVER} ${lfm25} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 2",
       "capabilities": {
         "in": [
           "text"
@@ -2956,16 +2956,16 @@
         "out": [
           "text"
         ],
-        "context": 128000
+        "context": 131072
       },
       "metadata": {
-        "id": "01b-ctx125-unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL",
+        "id": "01b-ctx128-unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL",
         "reasoning": true,
         "input": [
           "text"
         ],
-        "contextWindow": 128000,
-        "maxTokens": 128000,
+        "contextWindow": 131072,
+        "maxTokens": 131072,
         "cost": {
           "input": 1,
           "output": 1,
@@ -3484,8 +3484,8 @@
         }
       }
     },
-    "02b-ctx064-openbmb/MiniCPM5-2B-GGUF:Q8_0": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--openbmb--MiniCPM5-2B-GGUF openbmb/MiniCPM5-2B-GGUF MiniCPM5-2B-Q8_0.gguf - - -- ${LLAMA_SERVER} ${minicpm5} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 2",
+    "02b-ctx128-openbmb/MiniCPM5-2B-GGUF:Q8_0": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--openbmb--MiniCPM5-2B-GGUF openbmb/MiniCPM5-2B-GGUF MiniCPM5-2B-Q8_0.gguf - - -- ${LLAMA_SERVER} ${minicpm5} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 2",
       "capabilities": {
         "in": [
           "text"
@@ -3493,16 +3493,16 @@
         "out": [
           "text"
         ],
-        "context": 65536
+        "context": 131072
       },
       "metadata": {
-        "id": "02b-ctx064-openbmb/MiniCPM5-2B-GGUF:Q8_0",
+        "id": "02b-ctx128-openbmb/MiniCPM5-2B-GGUF:Q8_0",
         "reasoning": true,
         "input": [
           "text"
         ],
-        "contextWindow": 65536,
-        "maxTokens": 65536,
+        "contextWindow": 131072,
+        "maxTokens": 131072,
         "cost": {
           "input": 1,
           "output": 1,
@@ -3511,8 +3511,8 @@
         }
       }
     },
-    "03b-ctx064-0text-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--LFM2.5-VL-3B-GGUF unsloth/LFM2.5-VL-3B-GGUF LFM2.5-VL-3B-UD-Q8_K_XL.gguf - - -- ${LLAMA_SERVER} ${0text} ${lfm25vl} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 2",
+    "03b-ctx032-0text-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--LFM2.5-VL-3B-GGUF unsloth/LFM2.5-VL-3B-GGUF LFM2.5-VL-3B-UD-Q8_K_XL.gguf - - -- ${LLAMA_SERVER} ${0text} ${lfm25vl} --cache-type-k f16 --cache-type-v f16 --ctx-size 32768 --n-predict 32768 --parallel 2",
       "capabilities": {
         "in": [
           "text"
@@ -3520,16 +3520,16 @@
         "out": [
           "text"
         ],
-        "context": 65536
+        "context": 32768
       },
       "metadata": {
-        "id": "03b-ctx064-0text-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
+        "id": "03b-ctx032-0text-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
         "reasoning": true,
         "input": [
           "text"
         ],
-        "contextWindow": 65536,
-        "maxTokens": 65536,
+        "contextWindow": 32768,
+        "maxTokens": 32768,
         "cost": {
           "input": 1,
           "output": 1,
@@ -3538,8 +3538,8 @@
         }
       }
     },
-    "03b-ctx064-1vision-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--LFM2.5-VL-3B-GGUF unsloth/LFM2.5-VL-3B-GGUF LFM2.5-VL-3B-UD-Q8_K_XL.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${lfm25vl} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 2",
+    "03b-ctx032-1vision-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--LFM2.5-VL-3B-GGUF unsloth/LFM2.5-VL-3B-GGUF LFM2.5-VL-3B-UD-Q8_K_XL.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${1vision} ${lfm25vl} --cache-type-k f16 --cache-type-v f16 --ctx-size 32768 --n-predict 32768 --parallel 2",
       "capabilities": {
         "in": [
           "text",
@@ -3548,17 +3548,17 @@
         "out": [
           "text"
         ],
-        "context": 65536
+        "context": 32768
       },
       "metadata": {
-        "id": "03b-ctx064-1vision-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
+        "id": "03b-ctx032-1vision-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
         "reasoning": true,
         "input": [
           "text",
           "image"
         ],
-        "contextWindow": 65536,
-        "maxTokens": 65536,
+        "contextWindow": 32768,
+        "maxTokens": 32768,
         "cost": {
           "input": 1,
           "output": 1,
@@ -3567,8 +3567,8 @@
         }
       }
     },
-    "03b-ctx064-2mmproj-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL": {
-      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--LFM2.5-VL-3B-GGUF unsloth/LFM2.5-VL-3B-GGUF LFM2.5-VL-3B-UD-Q8_K_XL.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${lfm25vl} --cache-type-k f16 --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 2",
+    "03b-ctx032-2mmproj-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL": {
+      "cmd": "sh /etc/llama-swap/config.d/launch-gguf.sh models--unsloth--LFM2.5-VL-3B-GGUF unsloth/LFM2.5-VL-3B-GGUF LFM2.5-VL-3B-UD-Q8_K_XL.gguf mmproj-BF16.gguf - -- ${LLAMA_SERVER} ${2mmproj} ${lfm25vl} --cache-type-k f16 --cache-type-v f16 --ctx-size 32768 --n-predict 32768 --parallel 2",
       "capabilities": {
         "in": [
           "text",
@@ -3577,17 +3577,17 @@
         "out": [
           "text"
         ],
-        "context": 65536
+        "context": 32768
       },
       "metadata": {
-        "id": "03b-ctx064-2mmproj-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
+        "id": "03b-ctx032-2mmproj-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
         "reasoning": true,
         "input": [
           "text",
           "image"
         ],
-        "contextWindow": 65536,
-        "maxTokens": 65536,
+        "contextWindow": 32768,
+        "maxTokens": 32768,
         "cost": {
           "input": 1,
           "output": 1,
