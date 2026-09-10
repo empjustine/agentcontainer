@@ -10,17 +10,17 @@
         "baseURL": "https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438/v1"
       },
       "models": {
-        "01b-ctx125-unsloth/LFM2.5-8B-A1B-GGUF:Q8_0": {
-          "name": "01b-ctx125-unsloth/LFM2.5-8B-A1B-GGUF:Q8_0"
-        },
-        "01b-ctx125-unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL": {
-          "name": "01b-ctx125-unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL"
-        },
         "01b-ctx128-bartowski/Ling-3.0-tiny-GGUF:Q8_0": {
           "name": "01b-ctx128-bartowski/Ling-3.0-tiny-GGUF:Q8_0"
         },
         "01b-ctx128-bloomer010/Ling-3.0-tiny-GGUF:UD-Q8_K_XL": {
           "name": "01b-ctx128-bloomer010/Ling-3.0-tiny-GGUF:UD-Q8_K_XL"
+        },
+        "01b-ctx128-unsloth/LFM2.5-8B-A1B-GGUF:Q8_0": {
+          "name": "01b-ctx128-unsloth/LFM2.5-8B-A1B-GGUF:Q8_0"
+        },
+        "01b-ctx128-unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL": {
+          "name": "01b-ctx128-unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL"
         },
         "02b-ctx128-0text-unsloth/gemma-4-E2B-it-GGUF:Q8_0": {
           "name": "02b-ctx128-0text-unsloth/gemma-4-E2B-it-GGUF:Q8_0"
@@ -78,6 +78,18 @@
         },
         "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:QAD-Q4_0": {
           "name": "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:QAD-Q4_0"
+        },
+        "02b-ctx128-openbmb/MiniCPM5-2B-GGUF:Q8_0": {
+          "name": "02b-ctx128-openbmb/MiniCPM5-2B-GGUF:Q8_0"
+        },
+        "03b-ctx032-0text-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL": {
+          "name": "03b-ctx032-0text-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL"
+        },
+        "03b-ctx032-1vision-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL": {
+          "name": "03b-ctx032-1vision-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL"
+        },
+        "03b-ctx032-2mmproj-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL": {
+          "name": "03b-ctx032-2mmproj-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL"
         },
         "03b-ctx064-unsloth/GLM-4.7-Flash-GGUF:Q6_K": {
           "name": "03b-ctx064-unsloth/GLM-4.7-Flash-GGUF:Q6_K"
@@ -270,15 +282,6 @@
         },
         "12b-ctx064-2mmproj-unsloth/gemma-4-12b-it-GGUF:Q8_0": {
           "name": "12b-ctx064-2mmproj-unsloth/gemma-4-12b-it-GGUF:Q8_0"
-        },
-        "24b-ctx064-0text-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw": {
-          "name": "24b-ctx064-0text-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw"
-        },
-        "24b-ctx064-1vision-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw": {
-          "name": "24b-ctx064-1vision-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw"
-        },
-        "24b-ctx064-2mmproj-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw": {
-          "name": "24b-ctx064-2mmproj-byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF:IQ4_XS-4.04bpw"
         },
         "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw": {
           "name": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw"
