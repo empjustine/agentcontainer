@@ -3,7 +3,8 @@
  * generators. explanations live in docs/d018-split-config-d.md (merge contract) and
  * docs/d001 (proxy baseUrl / plain-env-var key naming). HTTP probing is delegated to the
  * shared lib/peer-probe.mjs toolkit and re-exported here (docs/d023) — the copy unit for
- * this folder is "the folder + ../lib" (see docs/architecture.md).
+ * this folder is "the folder + ../lib" (see docs/architecture.md), which also owns the
+ * lib/hyper-facts cache this module consumes for the hyper peer.
  */
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -27,6 +28,10 @@ const { fetchModelEntries, DEFAULT_PEER_FALLBACK } =
 const { CLOUD_PROVIDERS } =
 	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
+	);
+const { loadHyperFacts, refreshHyperFacts } =
+	/** @type {typeof import("../lib/hyper-facts.mjs")} */ (
+		await import(`${LIB_DIR}/hyper-facts.mjs`)
 	);
 setLogTool("llm-reverse-proxy/gen-lib");
 
@@ -61,6 +66,7 @@ export const scriptDir = dirname(fileURLToPath(import.meta.url));
 //   | OpenCode Zen | opencode     | OPENCODE_API_KEY   | https://opencode.ai/zen/v1     | models.dev catalog, all       |
 //   | OpenCode Go  | opencode-go  | OPENCODE_API_KEY   | https://opencode.ai/zen/go/v1  | models.dev catalog, all       |
 //   | ClinePass    | cline-pass   | CLINE_API_KEY      | https://api.cline.bot/api/v1   | models.dev catalog, all       |
+//   | Charm Hyper  | hyper        | HYPER_API_KEY      | https://hyper.charm.land/v1    | hyper facts cache → live /models |
 //
 // KEY-NAMING CONTRACT (docs/d001 §3 — plain un-prefixed env var names, the
 // historical `__`-prefix is gone):
@@ -104,6 +110,15 @@ export const PROVIDERS = {
 		...CLOUD_PROVIDERS["cline-pass"],
 		modelsDev: "cline-pass",
 	},
+	hyper: {
+		...CLOUD_PROVIDERS.hyper,
+		// Model ids from the shared lib/hyper-facts cache (the same source the
+		// pi-side layer enriches from — one lineup across both consumers),
+		// falling back to hyper's live /models when the cache is absent. The
+		// live /models listing is thin (id/created/owned_by) but sufficient
+		// here: llama-swap peer entries carry ids only, never metadata.
+		hyperFacts: true,
+	},
 	mistral: {
 		...CLOUD_PROVIDERS.mistral,
 		modelsDev: "mistral",
@@ -132,11 +147,12 @@ function loadModelsDev(
 // is re-exported above, docs/d023.)
 
 // Resolve the model-id list for one provider: from the models.dev catalog
-// when flagged `modelsDev` (filtered by `p.filter` when set), otherwise from
-// the provider's own live /models endpoint filtered by `p.filter`.  Returns
-// null on skip (catalog entry missing / fetch failure) so callers treat it as
-// "no result".  The peer entry written to disk references the env var, never
-// the key value.
+// when flagged `modelsDev` (filtered by `p.filter` when set), from the
+// lib/hyper-facts cache (with a best-effort refresh, then a live /models
+// fallback) when flagged `hyperFacts`, otherwise from the provider's own
+// live /models endpoint filtered by `p.filter`.  Returns null on skip
+// (catalog entry missing / fetch failure) so callers treat it as "no result".
+// The peer entry written to disk references the env var, never the key value.
 export async function fetchPeerModels(p) {
 	if (p.modelsDev) {
 		const provider = loadModelsDev()[p.modelsDev];
@@ -153,6 +169,22 @@ export async function fetchPeerModels(p) {
 		const ids = Object.keys(provider.models);
 		return p.filter ? ids.filter((id) => p.filter({ id })) : ids;
 	}
+	if (p.hyperFacts) {
+		// Same refresh contract as the models.dev catalog: best-effort on every
+		// run when the endpoint answers, stale-tolerant when it does not.
+		await refreshHyperFacts();
+		const facts = loadHyperFacts();
+		if (facts) {
+			logInfo("hyper peer models from facts cache", {
+				models: facts.models.length,
+				fetchedAt: facts.fetchedAt,
+				ageMs: facts.ageMs,
+			});
+			return facts.models.map((l) => l.id);
+		}
+		logWarn("hyper facts cache unavailable — falling back to hyper's live /models (id list may diverge from the pi-side layer)");
+		// fall through to the live /models path below
+	}
 	const apiKey = process.env[p.apiKeyEnv] ?? "";
 	try {
 		const headers = apiKey ? { Authorization: `Bearer ${apiKey}` } : undefined;
@@ -160,7 +192,9 @@ export async function fetchPeerModels(p) {
 		if (data.length === 0) {
 			throw new Error(`GET ${p.baseUrl}/models returned no models`);
 		}
-		return data.filter(p.filter).map((m) => m.id ?? "unknown");
+		return (p.filter ? data.filter(p.filter) : data).map(
+			(m) => m.id ?? "unknown",
+		);
 	} catch (err) {
 		logWarn("fetch for provider failed — skipping", {
 			provider: p.id,

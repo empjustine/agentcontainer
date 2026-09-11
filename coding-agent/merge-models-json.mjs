@@ -19,6 +19,7 @@
  * | `model-010-local-default.json`    | local llama-swap models                            | `generate-local-llama-swap.mjs`                          |
  * | `model-012-cloud-pi-native.json`  | **override** for the pi-native cloud providers (openrouter / opencode / opencode-go) when their default endpoints are unreachable | `generate-cloud-pi-native-providers.mjs`                 |
  * | `model-015-cloud-cline-pass.json` | cloud models off the vendored models.dev catalog   | `generate-cloud-alternative-providers.mjs` (formerly `generate-cline-pass.mjs`) |
+ * | `model-016-cloud-hyper.json`      | Charm Hyper (same generator, PROVIDER_SPECS row)   | `generate-cloud-alternative-providers.mjs` |
  * | `model-020-peer-default.json`     | peer reverse-proxy models                          | *(future)*                                               |
  *
  * Every `model-*.json` is a `models.json`-shaped layer:
@@ -33,6 +34,7 @@
  *   + model-010-local-default.json
  *   + model-012-cloud-pi-native.json
  *   + model-015-cloud-cline-pass.json
+ *   + model-016-cloud-hyper.json
  *   + model-020-peer-default.json   (future)
  *   → models.json
  * ```

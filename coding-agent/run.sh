@@ -159,10 +159,15 @@ workload_ro "$REPO_ROOT/lib/log.mjs" '/opt/lib/log.mjs'
 workload_ro "$REPO_ROOT/lib/peer-probe.mjs" '/opt/lib/peer-probe.mjs'
 workload_ro "$REPO_ROOT/lib/cloud-providers.mjs" '/opt/lib/cloud-providers.mjs'
 workload_ro "$REPO_ROOT/lib/pi-models.mjs" '/opt/lib/pi-models.mjs'
+workload_ro "$REPO_ROOT/lib/hyper-facts.mjs" '/opt/lib/hyper-facts.mjs'
 workload_ro "$REPO_ROOT/lib/refresh-models-dev.mjs" '/opt/lib/refresh-models-dev.mjs'
 # The shared vendored models.dev catalog (read-only in here; generate.sh's
 # best-effort refresh falls back to a scratch copy when it is not writable).
 workload_ro "$REPO_ROOT/lib/models.dev.api.json" '/opt/lib/models.dev.api.json'
+# The shared hyper facts cache (read-only in here; generate.sh stages a
+# writable scratch copy — see its staging loop — so in-container refreshes
+# succeed instead of dying on the ro mount).
+workload_ro_if "$REPO_ROOT/lib/hyper-facts.json" '/opt/lib/hyper-facts.json'
 
 # In-container launch chain: generated shell with no infisical — the host
 # forwards the vault env through the workload_env allowlist instead.
@@ -239,7 +244,7 @@ workload_workdir  "$workspace"
 load_secrets
 log_info "secrets source" source="${SECRETS_SOURCE:-none}"
 for _key in CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY OPENROUTER_API_KEY \
-	OPENCODE_API_KEY HF_TOKEN GEMINI_API_KEY PEER_BASE_URL; do
+	OPENCODE_API_KEY HYPER_API_KEY HF_TOKEN GEMINI_API_KEY PEER_BASE_URL; do
 	_value="$(printenv "$_key" 2>/dev/null || true)"
 	[ -n "$_value" ] && workload_env "$_key"
 done

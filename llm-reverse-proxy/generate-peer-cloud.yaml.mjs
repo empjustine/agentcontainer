@@ -2,10 +2,14 @@
  * @fileoverview generate-peer-cloud.yaml.mjs — Emit config.d/peer-cloud.yaml — one
  * cloud-provider peer per entry in gen-lib's PROVIDERS map (which IS the provider list;
  * adding a provider there is the only change needed). Model-id sources per PROVIDERS flag:
- * - `modelsDev` (opencode, opencode-go): the vendored models.dev catalog, ALL models
- * enumerated unfiltered — the endpoint's own /models listing proved unreliable for
- * tier/availability, and filtering here silently hid models; access is decided at request
- * time by the peer's key. - otherwise (openrouter): the provider's live /models, filtered.
+ * - `modelsDev` (opencode, opencode-go, cline-pass, mistral): the vendored
+ *   models.dev catalog, ALL models enumerated unfiltered — the endpoint's own
+ *   /models listing proved unreliable for tier/availability, and filtering
+ *   here silently hid models; access is decided at request time by the peer's
+ *   key. - `hyperFacts` (hyper): the lib/hyper-facts cache (best-effort
+ *   refreshed, live /models fallback) — the same lineup the pi-side layer
+ *   enriches from. - otherwise (openrouter): the provider's live /models,
+ *   filtered.
  * One generator per concern-family (cloud peers), one output file; each peer is
  * fetched/skipped independently so a single provider outage or missing key never blanks
  * the others (docs/d018). When no provider answers, a STALE peer-cloud.yaml from an

@@ -1,68 +1,121 @@
 /**
  * @fileoverview generate-cloud-alternative-providers.mjs — Emit the pi overlay
- * `model-015-cloud-cline-pass.json`: the ClinePass provider
- * (https://docs.cline.bot/getting-started/clinepass) as a single OpenAI-compatible Chat
- * Completions provider.
- *
- * This is the cloud-ALTERNATIVE generator of the per-merge-semantic split
- * (docs/d022, applied in docs/d024; formerly `generate-cline-pass.mjs`): it
- * owns the providers pi does NOT ship natively, where this layer is the ONLY
- * source of the full provider definition and is therefore always emitted in
- * full — the opposite of the pi-native override-only semantic in
+ * layers for the cloud ALTERNATIVE providers: the providers pi does NOT ship
+ * natively, where this layer is the ONLY source of the full provider
+ * definition and is therefore always emitted in full — the opposite of the
+ * pi-native override-only semantic in
  * `generate-cloud-pi-native-providers.mjs`.
  *
- * Source of truth is the vendored models.dev catalog (models.dev.api.json).
- * ClinePass serves EVERY model over the same /api/v1 OpenAI-compatible endpoint
- * — confirmed by both reference extensions (jellydn/pi-clinepass-provider and
- * maxpaulus43/pi-cline), which each register one provider with
- * `api: "openai-completions"` and vary models only by capability + thinking
- * metadata. So a single provider block covers all models; there is no per-model
- * API divergence (unlike OpenCode Zen/Go, where upstreams keep native protocols).
+ * The set is table-driven (PROVIDER_SPECS below; one row = one emitted layer
+ * file, numbered after model-012 in the merge order of merge-models-json.mjs):
  *
- * The block mirrors the provider/compat settings those extensions register:
+ *   - `cline-pass` (https://docs.cline.bot/getting-started/clinepass) →
+ *     `model-015-cloud-cline-pass.json`
+ *   - `hyper` (Charm Hyper, https://hyper.charm.land, key $HYPER_API_KEY) →
+ *     `model-016-cloud-hyper.json`
+ *
+ * Both serve EVERY model over the same single OpenAI-compatible Chat
+ * Completions endpoint (ClinePass confirmed by the reference extensions
+ * jellydn/pi-clinepass-provider and maxpaulus43/pi-cline, which each register
+ * one provider with `api: "openai-completions"` and vary models only by
+ * capability + thinking metadata; Hyper exposes the same shape at /v1). So a
+ * single provider block covers all models per provider; there is no per-model
+ * API divergence (unlike OpenCode Zen/Go, where upstreams keep native
+ * protocols).
+ *
+ * Each block mirrors the provider/compat settings the upstream references
+ * register, plus the models.dev catalog metadata:
  *   - api: "openai-completions"
- *   - baseUrl: provider.api            (https://api.cline.bot/api/v1)
- *   - apiKey: "$CLINE_API_KEY"         (auth presence gates /model availability)
+ *   - baseUrl: provider.api            (per-provider, from the vendored catalog)
+ *   - apiKey: "$<PROVIDER_KEY_ENV>"    (auth presence gates /model availability)
  *   - authHeader: true                 (Authorization: Bearer)
- *   - compat.supportsDeveloperRole: false
- *       ClinePass rejects the `developer` role pi-ai emits for reasoning models;
- *       both reference extensions set this. Without it, reasoning models 400.
+ *   - compat.supportsDeveloperRole: false — cline-pass ONLY
+ *       ClinePass rejects the `developer` role pi-ai emits for reasoning
+ *       models; both reference extensions set this. Without it, reasoning
+ *       models 400. Hyper is a standard OpenAI-compatible gateway: the
+ *       vendor extension (charmbracelet/pi-hyper-provider) does NOT disable
+ *       the developer role, so no override is emitted here either.
  *   - per-model thinkingLevelMap derived from models.dev reasoning_options
- *       (provider `reasoning_effort` enum values).
+ *       (provider `reasoning_effort` enum values; effort values map through
+ *       EFFORT_TO_PI, so enums that include "minimal" support pi "minimal").
+ *
+ * Hyper additionally mirrors the per-model compat the vendor extension
+ * registers for EVERY model (src/models.ts of
+ * github.com/charmbracelet/pi-hyper-provider, mirrored under
+ * ~/Downloads/references/github/):
+ *   - supportsStore: false           (no OpenAI `store` field)
+ *   - maxTokensField: "max_tokens"   (legacy limit field, not max_completion_tokens)
+ *   - thinkingFormat: "deepseek"     (thinking: {type: enabled|disabled} [+ effort])
+ *   - supportsReasoningEffort: <bool> — true only when the model exposes a
+ *       reasoning-effort enum; effort-less reasoning models (glm-5,
+ *       kimi-k2-thinking, ...) get false plus the extension's ON_OFF
+ *       thinkingLevelMap (off:"off", max:"max", rest null — pi "max" is the
+ *       single representative "on" state), which only makes sense paired
+ *       with the deepseek thinking format: "off" translates to thinking
+ *       disabled, any other level to enabled, with no effort value sent.
+ *   - headers: a static User-Agent, mirroring the extension's
+ *       "pi-hyper-provider/<version>" (models.json headers are static
+ *       literals here; the versioned UA is extension-only).
+ *
+ * Hyper facts cache (lib/hyper-facts.mjs — see its header for why hyper is
+ * the ONLY provider here with a non-models.dev cache): the live /provider
+ * catalog is strictly fresher per capability/price field than the models.dev
+ * snapshot, and pi has no built-in hyper, so this layer is the only metadata
+ * pi ever sees. Direct mode REFRESHES the cache (endpoint reachable) and
+ * enriches every model with it; peer mode CONSUMES it stale-tolerantly (peer
+ * mode means hyper.charm.land itself is unreachable, so the cache is the
+ * only enrichment available). Enrichment is a NARROW per-field whitelist
+ * (reasoning, input, costs incl. cached-in/out, limits, thinkingLevelMap,
+ * compat.supportsReasoningEffort — all derived from the live record);
+ * display names stay models.dev (the catalog's are more descriptive); the
+ * wire compat block and the provider route are never touched. Matched
+ * records are REBUILT through piModel(), so the effort enum → map/compat
+ * derivation and the ON_OFF fallback run on live data.
+ *
+ * Known models.dev ↔ Hyper /provider drift (verified 2026-09 against the
+ * live endpoint, which is the vendor extension's ONLY source): a few
+ * reasoning flags and image-input claims disagree (e.g. minimax-m2.7
+ * reasoning true in the catalog, can_reason false live; several
+ * kimi/glm/qwen models carry catalog image input that live
+ * supports_attachments denies), cache prices sit in different catalog slots
+ * per model, and the live-only model deepseek-v4.1-flash is absent. This
+ * generator stays catalog-driven (the vendored catalog refreshes best-effort
+ * each run); install the vendor extension if you need Hyper's own live view.
  *
  * IMPORTANT — unlike the pi-native trio (openrouter/opencode/opencode-go, see
- * generate-cloud-pi-native-providers.mjs), pi has NO native
- * `cline-pass` provider, so this layer is the ONLY source of the provider
+ * generate-cloud-pi-native-providers.mjs), pi has NO native definition for
+ * any provider in this table, so this layer is the ONLY source of the provider
  * definition.  An override-style "emit only when something differs / is
  * unreachable" reading (docs/d022) does NOT apply here: every run
  * must emit the FULL provider block (baseUrl, api, key/auth, compat AND the
  * complete models list), whether the endpoint is reachable directly or routed
  * through the peer.  The cascade below only decides WHICH baseUrl/key/auth the
  * full block carries, never whether to emit the block at all — except when
- * neither the real endpoint nor any peer route is usable, in which case
- * cline-pass is unreachable and the layer is left untouched.
+ * neither the real endpoint nor any peer route is usable, in which case that
+ * provider is unreachable and its layer is left untouched.
  *
- * Detection cascade (peer-router — same rule as generate-local-llama-swap.mjs,
- * generate-cloud-pi-native-providers.mjs and generate-opencode.jsonc.mjs):
+ * Detection cascade (per provider — peer-router, same rule as
+ * generate-local-llama-swap.mjs, generate-cloud-pi-native-providers.mjs and
+ * generate-opencode.jsonc.mjs):
  *
- *   1. Probe the REAL endpoint (https://api.cline.bot/api/v1). Reachable ⇒
- *      emit the FULL provider routed at the real baseUrl with the complete
- *      models.dev catalog. "Reachable"
- *      is about the NETWORK PATH, not credentials: a 401/403 is what an
+ *   1. Probe the REAL endpoint (per-provider `api` from the vendored
+ *      models.dev catalog). Reachable ⇒ emit the FULL provider routed at the
+ *      real baseUrl with the complete models.dev catalog. "Reachable" is
+ *      about the NETWORK PATH, not credentials: a 401/403 is what an
  *      OpenAI-compatible endpoint returns to any unauthenticated request (this
  *      generator runs without provider keys by design; pi resolves its own key
- *      at request time), and proves routing to ClinePass works — it must NOT
- *      trigger a peer override. Only the absence of ANY http response (DNS
- *      failure, connection refused, TLS failure, timeout) justifies switching
- *      to the peer.
+ *      at request time), and proves routing to the provider works — it must
+ *      NOT trigger a peer override. Only the absence of ANY http response
+ *      (DNS failure, connection refused, TLS failure, timeout) justifies
+ *      switching to the peer.
  *   2. If unreachable, look for the models behind a llama-swap peer router
  *      ($PEER_BASE_URL, then the shared fallback FQDN — lib/peer-probe.mjs
  *      DEFAULT_PEER_FALLBACK, the world-visible FQDN funnel of the LAN :8080
- *      instance). If the peer serves cline-pass models
- *      (ids fully qualified as `cline-pass/<modelId>`, possibly double-prefixed
- *      as `cline-pass/cline-pass/<modelId>` when the peer is itself a relay
- *      chain), emit the same provider routed through the peer: `baseUrl` set to
- *      the winning peer under `/v1`, `apiKey` "$PEER_API_KEY" (the peer's
+ *      instance). If the peer serves the provider's models (ids fully
+ *      qualified as `<providerId>/<modelId>`, possibly double-prefixed as
+ *      `<providerId>/<providerId>/<modelId>` when the peer is itself a relay
+ *      chain), emit the same provider routed through the peer: `baseUrl` set
+ *      to the winning peer under `/v1`, `apiKey` "$PEER_API_KEY" (the peer's
  *      bearer key), with the catalog limited to the models the peer actually
  *      serves — each still enriched with the models.dev metadata
  *      (`thinkingLevelMap`, `input`, costs, ...) via prefix normalization, so
@@ -70,19 +123,22 @@
  *      peer-only model with no models.dev equivalent is published with minimal
  *      fields so it stays usable.
  *   3. If neither the real endpoint nor any peer route is usable, emit nothing
- *      and leave any existing layer untouched (ClinePass is genuinely not
- *      reachable from this host).
+ *      for that provider and leave its existing layer untouched (the provider
+ *      is genuinely not reachable from this host).
  *
- * Extension-only features that models.json cannot replicate (documented, not
- * emitted here — use pi install git:github.com/jellydn/pi-clinepass-provider
- * if you need them):
+ * Extension-only ClinePass features that models.json cannot replicate
+ * (documented, not emitted here — use
+ * pi install git:github.com/jellydn/pi-clinepass-provider if you need them):
  *   - WorkOS device-code OAuth reuse (models.json `oauth` only supports "radius")
  *   - Cline prompt-cache `compat` + before_provider_request normalization
  *   - 403 subscription error surface via a message_end handler
  *
- * Usage: node generate-cloud-alternative-providers.mjs [out]
- *   out defaults to ./model-015-cloud-cline-pass.json.
- *   Env: PEER_BASE_URL (first peer candidate), PEER_API_KEY (peer bearer).
+ * Usage: node generate-cloud-alternative-providers.mjs
+ *   Writes one layer file per PROVIDERS_SPECS row next to this script (the
+ *   generate.sh scratch dir on container/host runs).
+ *   Env: PEER_BASE_URL (first peer candidate), PEER_API_KEY (peer bearer),
+ *   plus each provider's own key var (read only for the direct probe — the
+ *   emitted layer references "$<ENV>" so pi resolves the key at request time).
  */
 
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
@@ -104,10 +160,13 @@ const { bearerHeaders, DEFAULT_PEER_FALLBACK, probeCandidates, probeDirect } =
 	/** @type {typeof import("../lib/peer-probe.mjs")} */ (
 		await import(`${LIB_DIR}/peer-probe.mjs`)
 	);
+const { loadHyperFacts, refreshHyperFacts } =
+	/** @type {typeof import("../lib/hyper-facts.mjs")} */ (
+		await import(`${LIB_DIR}/hyper-facts.mjs`)
+	);
 setLogTool("coding-agent/generate-cloud-alternative");
 
 const OPENAI_COMPLETIONS_API = "openai-completions";
-const PROVIDER_ID = "cline-pass";
 // Catalog lookup order: a models.dev.api.json next to this script wins — when
 // run from generate.sh's scratch dir that entry is a symlink to the vendored
 // catalog which the best-effort refresh replaces with the freshly fetched
@@ -126,14 +185,91 @@ const CLOUD_PEER_CANDIDATES = [
 	DEFAULT_PEER_FALLBACK,
 ].filter(Boolean);
 
+/**
+ * The alternative-provider table: one row per provider pi does not ship
+ * natively. Adding support for a new one is a row here plus a merge-order
+ * row in merge-models-json.mjs's header — everything else (catalog load,
+ * cascade, peer normalization, layer emission) is generic.
+ *
+ * `file` numbers the layer into merge-models-json.mjs's lexical merge order
+ * (zero-padded, after model-015). `envKey` is the provider's own key variable
+ * (from the catalog's `env`) — referenced as `$<envKey>` in the emitted layer
+ * and read here only for the direct probe. `compat` is the provider-level
+ * compat pi cannot infer (null = no override); `modelCompat` builds the
+ * per-model compat mirror (null = none); `onOffThinking` swaps the all-null
+ * effort-less map for the ON_OFF representative map (see header); `headers`
+ * emits provider-level request headers.
+ *
+ * @typedef {object} AlternativeProviderSpec
+ * @property {string} id models.dev provider key AND pi provider id
+ * @property {string} name display name for the pi provider block
+ * @property {string} file output layer filename (relative to this script)
+ * @property {string} envKey env var holding the provider API key
+ * @property {{ supportsDeveloperRole: boolean }|null} compat
+ * @property {((m: ModelsDevModel) => Record<string, unknown>|null)|null} modelCompat
+ * @property {boolean} onOffThinking
+ * @property {boolean} [enrichFromFacts] refresh + consume the lib/hyper-facts
+ *   cache (hyper only — the one provider with a non-models.dev cache)
+ * @property {Record<string, string>} [headers]
+ */
+
+/** @type {AlternativeProviderSpec[]} */
+const PROVIDER_SPECS = [
+	{
+		id: "cline-pass",
+		name: "ClinePass",
+		file: "model-015-cloud-cline-pass.json",
+		envKey: "CLINE_API_KEY",
+		// ClinePass rejects the `developer` role pi-ai emits for reasoning
+		// models (see header): both reference extensions force it off.
+		compat: { supportsDeveloperRole: false },
+		modelCompat: null,
+		onOffThinking: false,
+	},
+	{
+		id: "hyper",
+		name: "Charm Hyper",
+		file: "model-016-cloud-hyper.json",
+		envKey: "HYPER_API_KEY",
+		// Standard OpenAI-compatible gateway: the vendor extension accepts the
+		// default role handling, so no provider-level compat override.
+		compat: null,
+		// Per-model compat mirror of charmbracelet/pi-hyper-provider
+		// src/models.ts (see header): the full block on EVERY model, exactly
+		// like the extension.
+		modelCompat: (m) => ({
+			supportsStore: false,
+			supportsReasoningEffort: effortValues(m).size > 0,
+			thinkingFormat: "deepseek",
+			maxTokensField: "max_tokens",
+		}),
+		// Pair the deepseek thinking format with the extension's ON_OFF map
+		// for effort-less reasoning models — see the header note.
+		onOffThinking: true,
+		// The one non-models.dev enrichment source: refresh + consume
+		// lib/hyper-facts (see header + lib/hyper-facts.mjs).
+		enrichFromFacts: true,
+		headers: {
+			// Mirror of the extension's "pi-hyper-provider/<version>" UA
+			// (models.json headers are static literals; versioning is
+			// extension-only).
+			"User-Agent": "pi-hyper-models-layer/1",
+		},
+	},
+];
+
 // Map models.dev `reasoning_options` effort values onto pi thinking levels
 // (off, minimal, low, medium, high, xhigh, max). ClinePass exposes enums like
-// ["none","low","medium","high","xhigh"]; "none" disables thinking (pi "off"),
-// the rest map 1:1. Levels absent from the provider enum are marked unsupported
-// (null) so they are hidden in /model and pi never sends an out-of-enum value.
+// ["none","low","medium","high","xhigh"] and Hyper (e.g. inkling) like
+// ["none","minimal","low","medium","high","xhigh"]; "none" disables thinking
+// (pi "off"), the rest map 1:1. Levels absent from the provider enum are
+// marked unsupported (null) so they are hidden in /model and pi never sends
+// an out-of-enum value.
 /** @type {Record<string, string>} */
 const EFFORT_TO_PI = {
 	none: "off",
+	off: "off",
+	minimal: "minimal",
 	low: "low",
 	medium: "medium",
 	high: "high",
@@ -141,6 +277,38 @@ const EFFORT_TO_PI = {
 	max: "max",
 };
 const PI_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
+
+// Thinking map for reasoning models that expose NO effort enum (Hyper's
+// glm-5, kimi-k2-thinking, ...): the charmbracelet/pi-hyper-provider
+// ON_OFF_THINKING_LEVEL_MAP — pi "max" is the single representative "on"
+// state, "off" disables thinking. Only valid for providers that pair it
+// with thinkingFormat: "deepseek" + supportsReasoningEffort: false (the
+// wire translation then drops efforts entirely).
+const ON_OFF_THINKING_LEVEL_MAP = Object.freeze({
+	off: "off",
+	minimal: null,
+	low: null,
+	medium: null,
+	high: null,
+	xhigh: null,
+	max: "max",
+});
+
+/**
+ * The model's reasoning-effort enum as a lowercase set (empty when the model
+ * exposes none).
+ * @param {ModelsDevModel} m
+ * @returns {Set<string>}
+ */
+function effortValues(m) {
+	const values = new Set();
+	for (const opt of m?.reasoning_options ?? []) {
+		if (opt?.type === "effort" && Array.isArray(opt.values)) {
+			for (const v of opt.values) values.add(String(v).toLowerCase());
+		}
+	}
+	return values;
+}
 
 /**
  * A models.dev model record — the subset this generator reads.
@@ -158,7 +326,7 @@ const PI_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
  * A pi-shaped model entry as this generator publishes it.  Only the first
  * three fields are guaranteed: peer-served ids with no models.dev equivalent
  * are published minimal (the rest falls back to pi's defaults).
- * @typedef {object} PiClineModel
+ * @typedef {object} PiAlternativeModel
  * @property {string} id
  * @property {boolean} reasoning
  * @property {string[]} input
@@ -167,32 +335,26 @@ const PI_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
  * @property {number} [maxTokens]
  * @property {{ input: number, output: number, cacheRead: number, cacheWrite: number }} [cost]
  * @property {Record<string, string|null>} [thinkingLevelMap]
+ * @property {Record<string, unknown>} [compat]
  */
 
 /**
- * A models.json provider layer for cline-pass.
+ * A models.json provider layer for one alternative provider.
  * @typedef {object} ProviderBlock
- * @property {Record<string, { name: string, baseUrl: string, api: string, apiKey: string, authHeader?: boolean, compat: { supportsDeveloperRole: boolean }, models: PiClineModel[] }>} providers
+ * @property {Record<string, { name: string, baseUrl: string, api: string, apiKey: string, authHeader?: boolean, headers?: Record<string, string>, compat?: { supportsDeveloperRole: boolean }, models: PiAlternativeModel[] }>} providers
  */
 
 /**
  * @param {Array<{ type?: string, values?: string[] }>} [reasoningOptions]
- * @returns {Record<string, string|null>}
+ * @returns {Record<string, string|null>|null} the map, or null when the model
+ *   exposes no effort enum (callers decide the fallback, e.g. ON_OFF thinking)
  */
 function buildThinkingLevelMap(reasoningOptions) {
-	const values = new Set();
-	for (const opt of reasoningOptions ?? []) {
-		if (opt?.type === "effort" && Array.isArray(opt.values)) {
-			for (const v of opt.values) values.add(String(v).toLowerCase());
-		}
-	}
+	const values = effortValues({ reasoning_options: reasoningOptions });
+	if (values.size === 0) return null;
 	/** @type {Record<string, string|null>} */
 	const map = {};
 	for (const level of PI_LEVELS) {
-		if (level === "minimal") {
-			map.minimal = null; // no "minimal" in any ClinePass effort enum
-			continue;
-		}
 		const effort = Object.keys(EFFORT_TO_PI).find(
 			(e) => EFFORT_TO_PI[e] === level,
 		);
@@ -216,7 +378,7 @@ function toInput(modalitiesInput) {
 
 /**
  * @param {ModelsDevModel["cost"]} cost
- * @returns {PiClineModel["cost"]}
+ * @returns {PiAlternativeModel["cost"]}
  */
 function toCost(cost) {
 	if (!cost) return { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
@@ -229,15 +391,18 @@ function toCost(cost) {
 }
 
 /**
- * Build the pi-shaped model entry for one models.dev ClinePass model.
- * `id` is the fully-qualified model id to publish (models.dev catalog ids are
- * already `cline-pass/<modelId>`; a peer may serve a subset of the same ids).
+ * Build the pi-shaped model entry for one models.dev model of provider
+ * `spec.id`.  `id` is the fully-qualified model id to publish; the default
+ * keeps the catalog's own id (ClinePass catalog ids are already
+ * `cline-pass/<modelId>`; Hyper's are bare — both are published verbatim in
+ * direct mode, since pi namespaces them under the provider id itself).
+ * @param {AlternativeProviderSpec} spec the provider spec row
  * @param {ModelsDevModel} m a models.dev model record
- * @param {string} id the id to publish (defaults to the record's own id)
- * @returns {PiClineModel} a pi model entry
+ * @param {string} [id] the id to publish (defaults to the record's own id)
+ * @returns {PiAlternativeModel} a pi model entry
  */
-function piModel(m, id = m.id) {
-	/** @type {PiClineModel} */
+function piModel(spec, m, id = m.id) {
+	/** @type {PiAlternativeModel} */
 	const model = {
 		id,
 		name: m.name ?? id,
@@ -248,64 +413,171 @@ function piModel(m, id = m.id) {
 		cost: toCost(m.cost),
 	};
 	if (model.reasoning) {
-		model.thinkingLevelMap = buildThinkingLevelMap(m.reasoning_options);
+		const map = buildThinkingLevelMap(m.reasoning_options);
+		model.thinkingLevelMap =
+			map ?? (spec.onOffThinking ? { ...ON_OFF_THINKING_LEVEL_MAP } : map);
 	}
+	const compat = spec.modelCompat?.(m);
+	if (compat) model.compat = compat;
 	return model;
 }
 
-function loadProvider() {
+/**
+ * Load one provider's slice of the vendored models.dev catalog.
+ * @param {AlternativeProviderSpec} spec the provider spec row
+ * @returns {{ api: string, models: Record<string, ModelsDevModel> }} the
+ *   models.dev provider record (api endpoint + per-model metadata)
+ */
+function loadProvider(spec) {
 	const catalog = JSON.parse(readFileSync(API_JSON, "utf-8"));
-	const provider = catalog[PROVIDER_ID];
-	if (!provider)
-		throw new Error(`provider ${PROVIDER_ID} not found in ${API_JSON}`);
+	const provider = catalog[spec.id];
+	if (!provider) throw new Error(`provider ${spec.id} not found in ${API_JSON}`);
 	return /** @type {{ api: string, models: Record<string, ModelsDevModel> }} */ (
 		provider
 	);
 }
 
 /**
- * Normalize a peer-served cline-pass id to the models.dev catalog key it
- * corresponds to.  A peer may serve ids fully qualified once
- * (`cline-pass/<modelId>` — matching models.dev) or, when the peer is itself
- * a relay forwarding to another cline-pass peer, doubly qualified
- * (`cline-pass/cline-pass/<modelId>`).  Strip the repeated `cline-pass/`
- * prefix (any number of hops) and re-add it once, so both forms resolve to
- * the models.dev key `cline-pass/<modelId>`.
+ * Strip any number of repeated `<providerId>/` prefixes from a peer-served
+ * id (a peer may serve ids fully qualified once — matching a prefixed
+ * models.dev catalog — or, when the peer is itself a relay forwarding to
+ * another peer of the same family, doubly qualified).
+ * @param {string} providerId
  * @param {string} peerId
- * @returns {string}
+ * @returns {string} the bare model id
  */
-function toCatalogId(peerId) {
+function stripProviderPrefixes(providerId, peerId) {
 	let s = peerId;
-	while (s.startsWith(`${PROVIDER_ID}/`)) s = s.slice(PROVIDER_ID.length + 1);
-	return `${PROVIDER_ID}/${s}`;
+	while (s.startsWith(`${providerId}/`)) s = s.slice(providerId.length + 1);
+	return s;
+}
+
+/**
+ * Resolve a peer-served id to the models.dev catalog key it corresponds to.
+ * Catalog id conventions differ per provider (ClinePass keys are
+ * `cline-pass/<modelId>`, Hyper keys are bare), so both spellings are tried:
+ * the id with prefix normalization applied as-is, then re-prefixed once.
+ * @param {AlternativeProviderSpec} spec the provider spec row
+ * @param {Map<string, ModelsDevModel>} byId the provider's models.dev records, keyed by catalog id
+ * @param {string} peerId the id as the peer serves it
+ * @returns {ModelsDevModel|null} the matching record, or null when the peer id has no catalog equivalent
+ */
+function toCatalogRecord(spec, byId, peerId) {
+	const bare = stripProviderPrefixes(spec.id, peerId);
+	for (const candidate of [bare, `${spec.id}/${bare}`]) {
+		const m = byId.get(candidate);
+		if (m) return m;
+	}
+	return null;
 }
 
 /**
  * Build the provider block routed at `baseUrl` with the given key/auth.
+ * @param {AlternativeProviderSpec} spec the provider spec row
  * @param {string} baseUrl
- * @param {PiClineModel[]} models
+ * @param {PiAlternativeModel[]} models
  * @param {{ apiKey: string, authHeader?: boolean }} auth
- * @returns {ProviderBlock} a models.json provider layer for cline-pass
+ * @returns {ProviderBlock} a models.json provider layer for the provider
  */
-function providerBlock(baseUrl, models, auth) {
+function providerBlock(spec, baseUrl, models, auth) {
 	return {
 		providers: {
-			[PROVIDER_ID]: {
-				name: "ClinePass",
+			[spec.id]: {
+				name: spec.name,
 				baseUrl,
 				api: OPENAI_COMPLETIONS_API,
 				apiKey: auth.apiKey,
 				...(auth.authHeader ? { authHeader: true } : {}),
-				compat: { supportsDeveloperRole: false },
+				...(spec.headers ? { headers: spec.headers } : {}),
+				...(spec.compat ? { compat: spec.compat } : {}),
 				models,
 			},
 		},
 	};
 }
 
-async function main() {
-	const provider = loadProvider();
-	const allModels = Object.values(provider.models).map((m) => piModel(m));
+/**
+ * Run the per-provider detection cascade and emit that provider's layer.
+ * @param {AlternativeProviderSpec} spec the provider spec row
+ * @returns {Promise<void>}
+ */
+/**
+ * Rebuild a raw lib/hyper-facts (live /provider) record as a models.dev-shaped
+ * model record, so the enrichment reuses piModel()'s full derivation (input,
+ * costs, effort-enum → thinkingLevelMap/compat). Fields pi models but the
+ * live record lacks stay undefined → piModel()'s defaults; the display name
+ * is overridden back to the models.dev one by the enricher (names stay
+ * catalog — see the header whitelist note).
+ * @param {import("../lib/hyper-facts.mjs").HyperProviderModel} l a raw live /provider record
+ * @returns {ModelsDevModel} a models.dev-shaped record with live facts
+ */
+function liveToCatalogRecord(l) {
+	const levels = (l.reasoning_levels ?? []).map((v) => String(v).toLowerCase());
+	return {
+		id: l.id,
+		name: l.name ?? l.id,
+		reasoning: l.can_reason === true,
+		modalities: {
+			input: l.supports_attachments === true ? ["text", "image"] : ["text"],
+		},
+		limit: {
+			context: l.context_window,
+			output: l.default_max_tokens,
+		},
+		// Hyper's /provider prices cached INPUT and cached OUTPUT separately;
+		// models.dev files at most one of them per model — the live values win
+		// (docs-consistent: cached-in → cache_write, cached-out → cache_read).
+		cost: {
+			input: l.cost_per_1m_in ?? 0,
+			output: l.cost_per_1m_out ?? 0,
+			cache_read: l.cost_per_1m_out_cached ?? 0,
+			cache_write: l.cost_per_1m_in_cached ?? 0,
+		},
+		reasoning_options: levels.length
+			? [{ type: "effort", values: levels }]
+			: [],
+	};
+}
+
+/**
+ * Enrich pi-shaped models with the hyper facts cache: rebuild every model
+ * whose (prefix-stripped) id is in the live records through piModel() on
+ * LIVE data, keeping the models.dev display name (see the header whitelist).
+ * Models absent from the cache pass through untouched; live-only records are
+ * returned for the caller to append (direct mode appends them, peer mode
+ * appends only ids the peer actually serves).
+ * @param {AlternativeProviderSpec} spec the provider spec row
+ * @param {PiAlternativeModel[]} models the models to enrich
+ * @param {import("../lib/hyper-facts.mjs").LoadedHyperFacts} facts loaded cache
+ * @returns {{ enriched: PiAlternativeModel[], liveOnly: ModelsDevModel[], untouched: PiAlternativeModel[] }}
+ */
+function enrichWithFacts(spec, models, facts) {
+	const live = new Map(
+		facts.models.map((l) => [stripProviderPrefixes(spec.id, l.id), l]),
+	);
+	const enriched = [];
+	const untouched = [];
+	for (const m of models) {
+		const l = live.get(stripProviderPrefixes(spec.id, m.id));
+		if (!l) {
+			untouched.push(m);
+			continue;
+		}
+		const merged = { ...liveToCatalogRecord(l), name: m.name };
+		enriched.push(piModel(spec, merged, m.id));
+	}
+	const servedIds = new Set(
+		models.map((m) => stripProviderPrefixes(spec.id, m.id)),
+	);
+	const liveOnly = facts.models
+		.filter((l) => !servedIds.has(stripProviderPrefixes(spec.id, l.id)))
+		.map((l) => liveToCatalogRecord(l));
+	return { enriched, liveOnly, untouched };
+}
+
+async function emitProvider(spec) {
+	const provider = loadProvider(spec);
+	let allModels = Object.values(provider.models).map((m) => piModel(spec, m));
 
 	// --- 1. real endpoint first -----------------------------------------
 	// Any non-unreachable response proves the network path works — including a
@@ -314,58 +586,86 @@ async function main() {
 	// route.  Only a total absence of http response switches to the peer.
 	const real = await probeDirect(
 		provider.api,
-		bearerHeaders(process.env.CLINE_API_KEY?.trim()),
+		bearerHeaders(process.env[spec.envKey]?.trim()),
 	);
 	if (real.result !== "unreachable") {
-		logInfo("cline-pass reachable — emitting real route", {
+		// Direct mode: the endpoint answers — refresh the facts cache
+		// (best-effort; a failed refresh keeps the last good copy) and enrich
+		// with live records (appends live-only models; keeps catalog-only).
+		let facts = null;
+		if (spec.enrichFromFacts) {
+			await refreshHyperFacts();
+			facts = loadHyperFacts();
+		}
+		let models = allModels;
+		if (facts) {
+			const { enriched, liveOnly, untouched } = enrichWithFacts(
+				spec,
+				allModels,
+				facts,
+			);
+			models = [...enriched, ...untouched];
+			if (liveOnly.length) {
+				models = [...models, ...liveOnly.map((r) => piModel(spec, r))];
+			}
+			logInfo(`${spec.id} enriched from facts cache`, {
+				fetchedAt: facts.fetchedAt,
+				ageMs: facts.ageMs,
+				enriched: enriched.length,
+				liveOnlyAppended: liveOnly.length,
+				catalogOnlyKept: untouched.length,
+			});
+		}
+		logInfo(`${spec.id} reachable — emitting real route`, {
 			baseUrl: provider.api,
-			models: allModels.length,
+			models: models.length,
 			outcome: real.result,
 			...(real.error ? { error: real.error } : {}),
 		});
 		write(
-			providerBlock(provider.api, allModels, {
-				apiKey: "$CLINE_API_KEY",
+			providerBlock(spec, provider.api, models, {
+				apiKey: `$${spec.envKey}`,
 				authHeader: true,
 			}),
+			spec,
 		);
 		return;
 	}
 
 	// --- 2. real endpoint unreachable — try the peer ---------------------
-	logInfo("cline-pass endpoint unreachable — probing peer route", {
+	logInfo(`${spec.id} endpoint unreachable — probing peer route`, {
 		error: real.error,
 	});
 	const peer = await probeCandidates(CLOUD_PEER_CANDIDATES, (ids) =>
-		ids.some((id) => id.startsWith("cline-pass/")),
+		ids.some((id) => id.startsWith(`${spec.id}/`)),
 	);
 	if (!peer) {
 		logWarn(
-			"no cline-pass peer route visible — emitting nothing, leaving layer untouched",
+			`no ${spec.id} peer route visible — emitting nothing, leaving layer untouched`,
 		);
 		return;
 	}
 
 	// Match the peer's served ids against the models.dev catalog to preserve
 	// the rich per-model metadata (thinkingLevelMap, input, costs).  A peer
-	// id is normalized via toCatalogId() (`cline-pass/<modelId>`, single or
-	// repeated prefix) then looked up against the models.dev keys.
-	const byId = new Map(Object.values(provider.models).map((m) => [m.id, m]));
-	const clinePeerEntries = peer.entries.filter((e) =>
-		e.id.startsWith("cline-pass/"),
+	// id is normalized via toCatalogRecord() (repeated-prefix stripping +
+	// bare/prefixed lookup) then looked up against the models.dev keys.
+	const byId = new Map(Object.entries(provider.models));
+	const peerEntries = peer.entries.filter((e) =>
+		e.id.startsWith(`${spec.id}/`),
 	);
 	const mapped =
 		/** @type {{ entry: { id: string }, meta: ModelsDevModel }[]} */ ([]);
 	const unmatched = /** @type {{ entry: { id: string } }[]} */ ([]);
-	for (const e of clinePeerEntries) {
-		const m = byId.get(toCatalogId(e.id));
+	for (const e of peerEntries) {
+		const m = toCatalogRecord(spec, byId, e.id);
 		if (m) mapped.push({ entry: e, meta: m });
 		else unmatched.push({ entry: e });
 	}
 	const models = [
 		// Models with models.dev metadata — publish under the exact peer-returned
 		// id, enriched (name, reasoning, input, limits, costs, thinkingLevelMap).
-		...mapped.map(({ entry: e, meta }) => piModel(meta, e.id)),
+		...mapped.map(({ entry: e, meta }) => piModel(spec, meta, e.id)),
 		// Peer-served ids with no models.dev equivalent — publish minimal fields so
 		// the route stays usable rather than silently dropping the model.
 		...unmatched.map(({ entry: e }) => ({
@@ -375,32 +675,51 @@ async function main() {
 		})),
 	];
 
-	logInfo("cline-pass routed through peer", {
+	// Peer mode CONSUMES the facts cache stale-tolerantly — no refresh here
+	// (peer mode means the provider endpoint itself is unreachable, so the
+	// cache from the last direct run is the only enrichment available).
+	let facts = null;
+	if (spec.enrichFromFacts) facts = loadHyperFacts();
+	let peerModels = models;
+	if (facts) {
+		const { enriched, untouched } = enrichWithFacts(spec, models, facts);
+		peerModels = [...enriched, ...untouched];
+		logInfo(`${spec.id} peer models enriched from facts cache`, {
+			fetchedAt: facts.fetchedAt,
+			ageMs: facts.ageMs,
+			enriched: enriched.length,
+			untouched: untouched.length,
+		});
+	}
+
+	logInfo(`${spec.id} routed through peer`, {
 		baseUrl: `${peer.baseUrl}/v1`,
-		models: models.length,
+		models: peerModels.length,
 	});
 	write(
-		providerBlock(`${peer.baseUrl}/v1`, models, {
+		providerBlock(spec, `${peer.baseUrl}/v1`, peerModels, {
 			apiKey: "$PEER_API_KEY",
 		}),
+		spec,
 	);
 }
 
 /**
  * @param {ProviderBlock} block
+ * @param {AlternativeProviderSpec} spec the provider spec row (owns the filename)
  * @returns {void}
  */
-function write(block) {
-	const out =
-		process.argv[2] ?? join(scriptDir, "model-015-cloud-cline-pass.json");
+function write(block, spec) {
+	const out = join(scriptDir, spec.file);
 	const tmp = `${out}.tmp`;
 	writeFileSync(tmp, `${JSON.stringify(block, null, 2)}\n`);
 	renameSync(tmp, out); // atomic on the same filesystem
-	const id = Object.keys(block.providers)[0];
-	logInfo("wrote ClinePass models", {
+	logInfo(`wrote ${spec.name} models`, {
 		path: out,
-		models: block.providers[id].models.length,
+		models: block.providers[spec.id].models.length,
 	});
 }
 
-await main();
+for (const spec of PROVIDER_SPECS) {
+	await emitProvider(spec);
+}

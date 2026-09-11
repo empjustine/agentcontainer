@@ -18,7 +18,7 @@ file exactly one semantic, with the d022-proposed per-function names:
 |---|---|---|---|
 | `coding-agent/generate-local-llama-swap.mjs` | `model-010-local-default.json` | ADDS the `llama-swap` provider | local half of `generate-models.json.mjs` |
 | `coding-agent/generate-cloud-pi-native-providers.mjs` | `model-012-cloud-pi-native.json` | override-ONLY (empty when every pi-native cloud endpoint is reachable) | cloud half of `generate-models.json.mjs` |
-| `coding-agent/generate-cloud-alternative-providers.mjs` | `model-015-cloud-cline-pass.json` | AUTHORITATIVE full block (pi has no native `cline-pass`) | `generate-cline-pass.mjs` (renamed) |
+| `coding-agent/generate-cloud-alternative-providers.mjs` | `model-015-cloud-cline-pass.json` + `model-016-cloud-hyper.json` | AUTHORITATIVE full block (pi has no native `cline-pass`/`hyper`) | `generate-cline-pass.mjs` (renamed) |
 
 `generate-opencode.jsonc.mjs` keeps its name (d022 explicitly deferred it):
 it is the opencode-format twin of the pi-native generator.

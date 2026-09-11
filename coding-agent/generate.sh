@@ -43,8 +43,10 @@
 #       pi-native cloud override cascade: probes each provider's OWN endpoint
 #       and emits an override only when it is unreachable.
 #   generate-cloud-alternative-providers.mjs -> model-015-cloud-cline-pass.json
-#       derived from the vendored models.dev.api.json; full provider block
-#       (pi has no native cline-pass), real-or-peer cascade decides the route.
+#       + model-016-cloud-hyper.json
+#       derived from the vendored models.dev.api.json; full provider blocks
+#       (pi has no native cline-pass/hyper), per-provider real-or-peer cascade
+#       decides the route.
 #   merge-models-json.mjs      -> models.json
 #   generate-opencode.jsonc.mjs -> opencode config (OPENCODE_CFG_DIR/opencode.json,
 #       or <this dir>/opencode.jsonc for manual host runs; skipped on Termux)
@@ -184,7 +186,7 @@ done
 # that does not exist, so a missing copy here costs every generator instead of
 # one clear line).
 mkdir -p "$_scratch/lib"
-for _lf in log.mjs peer-probe.mjs cloud-providers.mjs pi-models.mjs; do
+for _lf in log.mjs peer-probe.mjs cloud-providers.mjs pi-models.mjs hyper-facts.mjs; do
 	if [ -f "$REPO_ROOT/lib/$_lf" ]; then
 		cp "$REPO_ROOT/lib/$_lf" "$_scratch/lib/$_lf"
 	else
@@ -192,6 +194,14 @@ for _lf in log.mjs peer-probe.mjs cloud-providers.mjs pi-models.mjs; do
 			path="$REPO_ROOT/lib/$_lf"
 	fi
 done
+# The hyper facts cache rides along with its module: staged into the scratch
+# lib (writable) so in-container refreshes succeed instead of failing on the
+# ro-mounted /opt/lib; hyper-facts.mjs's default path (next to the module,
+# under $LIB_DIR) resolves to the scratch copy, so a present snapshot is
+# consumed stale-tolerantly and direct-mode runs refresh it fresh.
+if [ -f "$REPO_ROOT/lib/hyper-facts.json" ]; then
+	cp "$REPO_ROOT/lib/hyper-facts.json" "$_scratch/lib/hyper-facts.json"
+fi
 LIB_DIR="$_scratch/lib"
 export LIB_DIR
 [ -f "$MODELS_DEV_JSON" ] &&
@@ -244,15 +254,17 @@ else
 			"$_scratch/model-012-cloud-pi-native.json" ||
 			log_warn "generate-cloud-pi-native-providers.mjs failed — layer omitted"
 	fi
-	# ClinePass layer: derived from the vendored models.dev.api.json, no
-	# secrets needed.
+	# Cloud-ALTERNATIVE layers (providers pi does not ship natively; see the
+	# generator's PROVIDER_SPECS table): derived from the vendored
+	# models.dev.api.json, no secrets needed.  Writes one layer file per row
+	# next to itself (the scratch dir): model-015-cloud-cline-pass.json and
+	# model-016-cloud-hyper.json.
 	# NOTE: there is intentionally NO google layer here — llama-swap is an
 	# llm-reverse-proxy relay and cannot proxy Google's native API, so Google
 	# always goes through pi's built-in google provider (GEMINI_API_KEY).
 	if [ -f "$_scratch/generate-cloud-alternative-providers.mjs" ] && [ -f "$_scratch/models.dev.api.json" ]; then
-		node_run "$_scratch/generate-cloud-alternative-providers.mjs" \
-			"$_scratch/model-015-cloud-cline-pass.json" ||
-			log_warn "generate-cloud-alternative-providers.mjs failed — layer omitted"
+		node_run "$_scratch/generate-cloud-alternative-providers.mjs" ||
+			log_warn "generate-cloud-alternative-providers.mjs failed — layers omitted"
 	fi
 	if [ -f "$_scratch/merge-models-json.mjs" ]; then
 		node_run "$_scratch/merge-models-json.mjs" "$_scratch/models.json" ||

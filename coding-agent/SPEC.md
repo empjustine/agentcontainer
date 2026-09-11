@@ -31,7 +31,7 @@ scratch dir (`LIB_DIR`), then runs, in order:
 |---|---|---|
 | `generate-local-llama-swap.mjs` | `model-010-local-default.json` | **ADDS** the `llama-swap` provider (peer-routed local GGUF) |
 | `generate-cloud-pi-native-providers.mjs` | `model-012-cloud-pi-native.json` | override-**only** (empty when every pi-native endpoint is reachable) |
-| `generate-cloud-alternative-providers.mjs` | `model-015-cloud-cline-pass.json` | **authoritative** full block (pi has no native `cline-pass`) |
+| `generate-cloud-alternative-providers.mjs` | `model-015-cloud-cline-pass.json` + `model-016-cloud-hyper.json` | **authoritative** full blocks (pi has no native `cline-pass`/`hyper`; one layer per PROVIDER_SPECS row) |
 | `merge-models-json.mjs` | → `models.json` | lexical `model-*.json` order; per-provider deep merge (objects recurse, scalars/arrays replaced by later layer) |
 
 `generate-opencode.jsonc.mjs` is the opencode-format twin (skipped on Termux).

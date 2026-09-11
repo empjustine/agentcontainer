@@ -212,8 +212,10 @@ fi
 # native wire format both POST /v1/chat/completions — the peer forwards the
 # body verbatim (model-id rewrite + auth swap are shape-agnostic).  Mistral
 # endpoints OUTSIDE that path (fim_completions, agents, conversations, ocr)
-# are NOT proxied and intentionally so.  Google's generative REST shape is
-# path-incompatible and stays excluded.  The list is curated, NOT
+# are NOT proxied and intentionally so.  Hyper qualifies the same way (pi's
+# openai-completions dialect POSTs /v1/chat/completions there).  Google's
+# generative REST shape is path-incompatible and stays excluded.  The list is
+# curated, NOT
 # `Object.keys(PROVIDERS)`: a provider whose entry is added to gen-lib.mjs's
 # map but is not actually proxyable here would still be dropped, so this
 # gate is the single source of truth for "what we serve as a cloud peer".
@@ -221,7 +223,7 @@ if [ -f "$config_d/peer-cloud.yaml" ]; then
 	node_run -e '
 		const fs = require("fs");
 		const f = process.argv[1];
-		const ALLOWED = ["openrouter", "opencode", "opencode-go", "cline-pass", "mistral"];
+		const ALLOWED = ["openrouter", "opencode", "opencode-go", "cline-pass", "mistral", "hyper"];
 		let c = {};
 		try { c = JSON.parse(fs.readFileSync(f, "utf8")); } catch { process.exit(0); }
 		const dropped = Object.keys(c.peers || {}).filter((id) => !ALLOWED.includes(id));

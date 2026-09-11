@@ -69,7 +69,9 @@ detected).
 ## Boundary
 
 Copy unit = this folder + `../lib` (`docs/architecture.md`): may import
-`lib/log.mjs`, `lib/peer-probe.mjs`, `lib/cloud-providers.mjs`, and read the
-shared data tables `lib/models.dev.api.json` /
-`lib/llamacpp-model-data.json`. Must not import from sibling runner folders or
-`local-llm/` (no reverse dependency exists).
+`lib/log.mjs`, `lib/peer-probe.mjs`, `lib/cloud-providers.mjs`,
+`lib/hyper-facts.mjs` (the Charm Hyper model-facts cache — shared with the
+pi-side `coding-agent` generator, one lineup across both consumers), and read
+the shared data tables `lib/models.dev.api.json` /
+`lib/llamacpp-model-data.json` / `lib/hyper-facts.json`. Must not import from
+sibling runner folders or `local-llm/` (no reverse dependency exists).
