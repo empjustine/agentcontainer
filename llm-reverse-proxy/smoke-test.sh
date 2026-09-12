@@ -137,21 +137,25 @@ else fail=$((fail+1)); echo "FAIL streaming-unbuffered: first chunk after ${dt}m
 check upstream-4xx-passthrough 'rate limited by upstream itself' "$(curl -s "$B/local/v1/error")"
 
 # RFC 9457 internal errors — transport / DNS
-for spec in 'refused tcp-econnrefused' 'nxdomain dns-nxdomain'; do
+for spec in 'refused econnrefused' 'nxdomain dnserror'; do
   set -- $spec
   r=$(curl -s "$B/$1/v1/models")
-  check "502-$1" "\"code\":\"$2" "$r"
+  check "502-$1" "\"type\":\"$2" "$r"
   check "502-$1-status" '"status":502' "$r"
 done
+r=$(curl -s "$B/nxdomain/v1/models")
+check 502-nxdomain-details '"details":{' "$r"
+check 502-nxdomain-details-isnotfound '"isNotFound":true' "$r"
+check 502-nxdomain-no-urn '0' "$(curl -s "$B/nxdomain/v1/models" | grep -c 'urn:' || true)"
 
 # RFC 9457 internal errors — TLS verification (badssl.com)
 if [ "${BADSSL_DOWN:-0}" = 1 ]; then
   skipif tls-badssl 'badssl.com unreachable (no outbound internet)'
 else
-  check 502-expired      '"code":"tls-cert-expired"'      "$(curl -s "$B/expired/v1/models")"
-  check 502-wronghost    '"code":"tls-hostname-mismatch"' "$(curl -s "$B/wronghost/v1/models")"
-  check 502-selfsigned   '"code":"tls-unknown-authority"' "$(curl -s "$B/selfsigned/v1/models")"
-  check 502-untrustedroot '"code":"tls-unknown-authority"' "$(curl -s "$B/untrustedroot/v1/models")"
+  check 502-expired      '"type":"tls-verification-failed"' "$(curl -s "$B/expired/v1/models")"
+  check 502-wronghost    '"type":"tls-verification-failed"' "$(curl -s "$B/wronghost/v1/models")"
+  check 502-selfsigned   '"type":"tls-verification-failed"' "$(curl -s "$B/selfsigned/v1/models")"
+  check 502-untrustedroot '"type":"tls-verification-failed"' "$(curl -s "$B/untrustedroot/v1/models")"
   for spec in expired wronghost selfsigned untrustedroot; do
     check "502-$spec-status" '"status":502' "$(curl -s "$B/$spec/v1/models")"
   done

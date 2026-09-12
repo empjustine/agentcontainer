@@ -92,29 +92,30 @@ Only failures *inside the proxy* (nothing reached the client yet) produce a
 
 ```json
 {
-  "type": "urn:llm-reverse-proxy:error:tcp-econnrefused",
+  "type": "econnrefused",
   "title": "Nothing is listening on the upstream address (ECONNREFUSED)",
   "status": 502,
   "detail": "while proxying refused/v1/chat/completions to 127.0.0.1:1: dial tcp 127.0.0.1:1: connect: connection refused",
-  "code": "tcp-econnrefused",
-  "upstream_error": "dial tcp 127.0.0.1:1: connect: connection refused",
+  "raw": "dial tcp 127.0.0.1:1: connect: connection refused",
   "instance": "/v1/chat/completions"
 }
 ```
 
-Classification is best-effort but the verbatim Go error is always attached as
-`upstream_error`. Known codes (TLS classes verified against
+The old `type: "urn:…:error:<code>"` URN and the separate `code` member said
+the same thing twice; the type IS the bare cause token now (RFC 9457 resolves
+relative type URIs, so this is a valid problem type). Classification is
+best-effort but the verbatim Go error is always attached as `raw`, and
+error families that have one add a canonical, non-secret dump as `details`
+(operator-known facts only: host names, resolver addresses, flag booleans —
+never keys or request bodies). Known types (TLS classes verified against
 [badssl.com](https://badssl.com) hosts, which the smoke test uses directly):
 
-| code | trigger |
+| type | trigger |
 |---|---|
-| `dns-nxdomain` / `dns-servfail` / `dns-refused` / `dns-timeout` | resolver failures (`*net.DNSError`, resolver address included in detail) |
-| `tcp-econnrefused` / `tcp-econnreset` / `tcp-etimedout` / `tcp-netunreachable` / `tcp-hostunreachable` / `tcp-broken-pipe` | OS-level connect/write failures |
-| `tls-cert-expired` | expired / not-yet-valid cert (`expired.badssl.com`) |
-| `tls-hostname-mismatch` | cert not valid for upstream host (`wrong.host.badssl.com`) |
-| `tls-unknown-authority` | unknown CA — covers both self-signed (`self-signed.badssl.com`) and untrusted root (`untrusted-root.badssl.com`); Go's x509 error text is identical for both |
-| `tls-self-signed-cert` / `tls-verification-failed` | reserved: matched only if the error text says "self-signed certificate", which Go currently never emits |
-| `upstream-timeout` / `upstream-disconnected` / `upstream-error` | transport timeouts, premature close, anything else |
+| `dnserror` | any resolver failure (`*net.DNSError`, via `errors.As`); `details` carries the canonical dump (host, resolver, resolver error, timeout/temporary/not-found flags) |
+| `econnrefused` / `econnreset` / `epipe` / `enetunreach` / `ehostunreach` / `etimedout` | OS-level connect/write failures (the errno name, unprefixed — the errno already says the family; syscall name + number in `raw`) |
+| `tls-verification-failed` | certificate verification failed (`expired.badssl.com`, `wrong.host.badssl.com`, `self-signed.badssl.com`, `untrusted-root.badssl.com`); the x509 sub-cause rides along in `raw` |
+| `timeout` / `disconnected` / `upstream-error` | transport timeouts, premature close, anything else |
 
 Mid-stream upstream disconnects **cannot** produce a 502 (headers already went
 out); the stream is cut the way llama-swap does — the `http.ErrAbortHandler`

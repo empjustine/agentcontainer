@@ -31,8 +31,6 @@ import (
 	"syscall"
 )
 
-const problemTypeBase = "urn:llm-reverse-proxy:error:"
-
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
@@ -109,28 +107,70 @@ func (p *provider) handler() http.Handler {
 // ---------------------------------------------------------------------------
 
 type problem struct {
+	// Type IS the machine-readable cause (dnserror, econnrefused, …).
+	// The old `type: "urn:…:error:<code>"` URN and the separate `code` member
+	// said the same thing twice — one of them had to go, and the bare token
+	// is the one clients and operators actually key on. RFC 9457's
+	// relative-URI type resolution makes this a valid problem type.
 	Type     string `json:"type"`
 	Title    string `json:"title"`
 	Status   int    `json:"status"`
 	Detail   string `json:"detail,omitempty"`
-	Code     string `json:"code,omitempty"`           // extension: machine-readable cause
-	Raw      string `json:"upstream_error,omitempty"` // extension: verbatim Go error
+	Raw      string `json:"raw,omitempty"`     // extension: verbatim Go error
+	Details  any    `json:"details,omitempty"` // extension: canonical dump of the matched error family (errorDetails); never secrets — operator-known facts only
 	Instance string `json:"instance,omitempty"`
 }
 
-func writeProblem(w http.ResponseWriter, r *http.Request, status int, code, title, detail, raw string) {
+func writeProblem(w http.ResponseWriter, r *http.Request, status int, code, title, detail string, err error) {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(problem{
-		Type:     problemTypeBase + code,
+		Type:     code,
 		Title:    title,
 		Status:   status,
 		Detail:   detail,
-		Code:     code,
-		Raw:      raw,
+		Raw:      err.Error(),
+		Details:  errorDetails(err),
 		Instance: r.URL.RequestURI(),
 	})
+}
+
+// dnsErrorDetails is the canonical dump of *net.DNSError — the six public
+// fields the stdlib provides. (The DNS rcode itself is not exposed: Go
+// collapses NXDOMAIN and empty answers into IsNotFound, and the cgo resolver
+// reports through IsTemporary instead of Err strings — any finer split would
+// be resolver-dependent guesswork.)
+type dnsErrorDetails struct {
+	Name        string `json:"name"`        // host that failed to resolve
+	Server      string `json:"server"`      // resolver that answered ("system resolver" when unset)
+	Err         string `json:"err"`         // the resolver's own failure description
+	IsTimeout   bool   `json:"isTimeout"`   // "not all timeouts set this" — stdlib doc
+	IsTemporary bool   `json:"isTemporary"` // cgo/EAI_AGAIN family
+	IsNotFound  bool   `json:"isNotFound"`  // NXDOMAIN ∪ NODATA, collapsed
+}
+
+// errorDetails returns the canonical dump of the matched error family for the
+// RFC 9457 "details" extension member. Classification stays a small, stable
+// vocabulary (code); the dump rides along as diagnostics and never feeds back
+// into the code.
+func errorDetails(err error) any {
+	var dnsErr *net.DNSError
+	if errors.As(err, &dnsErr) {
+		server := dnsErr.Server
+		if server == "" {
+			server = "system resolver"
+		}
+		return dnsErrorDetails{
+			Name:        dnsErr.Name,
+			Server:      server,
+			Err:         dnsErr.Err,
+			IsTimeout:   dnsErr.IsTimeout,
+			IsTemporary: dnsErr.IsTemporary,
+			IsNotFound:  dnsErr.IsNotFound,
+		}
+	}
+	return nil
 }
 
 // classify maps a proxy-side failure to (code, title). The raw error text is
@@ -139,57 +179,37 @@ func writeProblem(w http.ResponseWriter, r *http.Request, status int, code, titl
 func classify(err error) (code, title string) {
 	raw := err.Error()
 
-	// DNS failures (wrap *net.OpError → *net.DNSError).
+	// DNS failures (wrap *net.OpError → *net.DNSError): one code. The
+	// rcode-level split (nxdomain/servfail/…) was string-matching on the wrap
+	// chain and misclassified resolver-transport failures; the actionable
+	// facts ride along in "details" (see errorDetails) instead.
 	var dnsErr *net.DNSError
 	if errors.As(err, &dnsErr) {
-		rcode := "UNKNOWN"
-		switch {
-		case dnsErr.IsNotFound:
-			rcode = "NXDOMAIN"
-		case dnsErr.IsTimeout:
-			rcode = "TIMEOUT"
-		case strings.Contains(raw, "server misbehaving"):
-			rcode = "SERVFAIL"
-		case strings.Contains(raw, "refused"):
-			rcode = "REFUSED"
-		}
-		resolver := dnsErr.Server
-		if resolver == "" {
-			resolver = "system resolver"
-		}
-		return "dns-" + strings.ToLower(rcode),
-			fmt.Sprintf("DNS lookup for upstream host %q failed", dnsErr.Name)
+		return "dnserror", fmt.Sprintf("DNS lookup for upstream host %q failed", dnsErr.Name)
 	}
 
-	// TLS certificate verification failures.
+	// TLS certificate verification failures: the family is the error type
+	// (tls.CertificateVerificationError); the x509 sub-cause rides along in
+	// Raw rather than widening the vocabulary.
 	var verifyErr *tls.CertificateVerificationError
 	if errors.As(err, &verifyErr) {
-		code := "tls-verification-failed"
-		switch {
-		case strings.Contains(raw, "self-signed certificate"):
-			code = "tls-self-signed-cert"
-		case strings.Contains(raw, "certificate has expired"), strings.Contains(raw, "certificate is not yet valid"):
-			code = "tls-cert-expired"
-		case strings.Contains(raw, "certificate is valid for"):
-			code = "tls-hostname-mismatch"
-		case strings.Contains(raw, "signed by unknown authority"):
-			code = "tls-unknown-authority"
-		}
-		return code, "TLS certificate verification of the upstream failed"
+		return "tls-verification-failed", "TLS certificate verification of the upstream failed"
 	}
 
-	// TCP / OS-level connection errors.
+	// TCP / OS-level connection errors: the errno name is the cause — no
+	// tcp- prefix (the errno already says the family). The syscall name and
+	// number ride along in Raw.
 	for _, m := range []struct {
 		errno error
 		code  string
 		title string
 	}{
-		{syscall.ECONNREFUSED, "tcp-econnrefused", "Nothing is listening on the upstream address (ECONNREFUSED)"},
-		{syscall.ECONNRESET, "tcp-econnreset", "The upstream reset the connection (ECONNRESET)"},
-		{syscall.EPIPE, "tcp-broken-pipe", "The upstream connection broke (EPIPE)"},
-		{syscall.ENETUNREACH, "tcp-netunreachable", "The upstream network is unreachable (ENETUNREACH)"},
-		{syscall.EHOSTUNREACH, "tcp-hostunreachable", "The upstream host is unreachable (EHOSTUNREACH)"},
-		{syscall.ETIMEDOUT, "tcp-etimedout", "The upstream connection timed out (ETIMEDOUT)"},
+		{syscall.ECONNREFUSED, "econnrefused", "Nothing is listening on the upstream address (ECONNREFUSED)"},
+		{syscall.ECONNRESET, "econnreset", "The upstream reset the connection (ECONNRESET)"},
+		{syscall.EPIPE, "epipe", "The upstream connection broke (EPIPE)"},
+		{syscall.ENETUNREACH, "enetunreach", "The upstream network is unreachable (ENETUNREACH)"},
+		{syscall.EHOSTUNREACH, "ehostunreach", "The upstream host is unreachable (EHOSTUNREACH)"},
+		{syscall.ETIMEDOUT, "etimedout", "The upstream connection timed out (ETIMEDOUT)"},
 	} {
 		if errors.Is(err, m.errno) {
 			return m.code, m.title
@@ -199,12 +219,12 @@ func classify(err error) (code, title string) {
 	// Transport timeouts.
 	var netErr net.Error
 	if errors.As(err, &netErr) && netErr.Timeout() {
-		return "upstream-timeout", "The upstream timed out"
+		return "timeout", "The upstream timed out"
 	}
 
 	// Upstream hung up before the response completed.
 	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || strings.Contains(raw, "unexpected EOF") {
-		return "upstream-disconnected", "The upstream closed the connection before completing the response"
+		return "disconnected", "The upstream closed the connection before completing the response"
 	}
 
 	return "upstream-error", "The upstream request failed"
@@ -222,7 +242,7 @@ func (p *provider) proxyError(w http.ResponseWriter, r *http.Request, err error)
 	code, title := classify(err)
 	detail := fmt.Sprintf("while proxying %s%s to %s: %s", p.name, r.URL.RequestURI(), p.target.Host, err.Error())
 	log.Printf("[llm-reverse-proxy] 502 %s %s%s → %s: %v", code, p.name, r.URL.RequestURI(), p.target.Host, err)
-	writeProblem(w, r, http.StatusBadGateway, code, title, detail, err.Error())
+	writeProblem(w, r, http.StatusBadGateway, code, title, detail, err)
 }
 
 // ---------------------------------------------------------------------------
