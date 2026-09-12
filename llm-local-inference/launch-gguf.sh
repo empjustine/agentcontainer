@@ -17,8 +17,8 @@
 # Mounted read-only via run.sh (config.d -> /etc/llama-swap/config.d); invoked
 # as `sh <script>` so no exec bit is needed.
 #
-# Source copy lives at the folder root (llm-reverse-proxy/launch-gguf.sh);
-# llm-reverse-proxy/generate.sh copies it into config.d/ alongside
+# Source copy lives at the folder root (llm-local-inference/launch-gguf.sh);
+# llm-local-inference/generate.sh copies it into config.d/ alongside
 # 10-local-llm-inference.yaml when the host supports local inference.
 #
 # usage: launch-gguf.sh <repo-dir> <repo-id> <gguf-file> <mmproj-file|-> <draft-file|-> -- \

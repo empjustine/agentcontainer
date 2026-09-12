@@ -44,7 +44,7 @@ cycles through is pinned by `enabledModels` in
 (`docs/scoped-models-and-proxy-overrides.md`).
 
 `run.sh` launches the container: loads vault secrets **once on the host** via
-`load_secrets` and forwards them through the `workload_env` allowlist — nothing
+lib/environment.sh and forwards them through the `workload_env` allowlist — nothing
 inside the workload runs infisical, and no `auth.json` credential store is
 staged (the host login state stays out of the sandbox). The generator input set is mounted **file
 by file** (never the repo dir): the list in `run.sh` must cover every file
@@ -55,6 +55,11 @@ by file** (never the repo dir): the list in `run.sh` must cover every file
 - **Layer ids carry the merge order** (`010` < `012` < `015`, zero-padded
   lexorank); each generator owns exactly one merge semantic
   (`docs/d024-generators-split-and-provider-facts.md`).
+- **Peer routing is per-provider path-prefix** (docs/d027): cloud peer
+  routes are `<peerBase>/<providerId>` on the simplified cloud router
+  (llm-reverse-proxy, no credential handling — clients carry the provider's
+  own key); the llama-swap `/v1` + model-id-magic face serves LOCAL GGUF
+  only (`$PEER_API_KEY`).
 - **Scoped models, not generated catalogs**: pi's own model catalog is used
   (`pi update --models`); providers are re-routed via `baseUrl` overrides only.
   The retired free-tier pipeline's decisions are distilled in
@@ -70,4 +75,4 @@ by file** (never the repo dir): the list in `run.sh` must cover every file
 Copy unit = this folder + `../lib` (`docs/architecture.md`). Imports
 `lib/log.mjs`, `lib/peer-probe.mjs`, `lib/cloud-providers.mjs`,
 `lib/pi-models.mjs`, reads `lib/models.dev.api.json`. Must not reach into
-`llm-reverse-proxy/` or `local-llm/`.
+`llm-local-inference/` or `local-llm/`.

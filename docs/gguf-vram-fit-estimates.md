@@ -18,7 +18,7 @@ Parameters common to every row:
 
 Rows are ordered by **token generation speed at ctx=131072** (descending);
 preprocessing (prefill) speed breaks ties. The same order drives
-`llm-reverse-proxy/llamacpp-model-data.json` (now `lib/llamacpp-model-data.json`, docs/d025).
+`llm-local-inference/llamacpp-model-data.json` (now `lib/llamacpp-model-data.json`, docs/d025).
 
 ## How to read the tables
 

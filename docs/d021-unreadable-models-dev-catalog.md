@@ -7,7 +7,7 @@ of truth for two providers, and is read by two generators:
 
 | Consumer | Reads | Provides |
 |----------|-------|----------|
-| `llm-reverse-proxy/gen-lib.mjs` → `loadModelsDev()`, called from `fetchPeerModels()` | `llm-reverse-proxy/models.dev.api.json` | model ids for the `modelsDev`-flagged peers: `opencode`, `opencode-go` (all models, unfiltered) |
+| `llm-local-inference/gen-lib.mjs` → `loadModelsDev()`, called from `fetchPeerModels()` | `llm-local-inference/models.dev.api.json` | model ids for the `modelsDev`-flagged peers: `opencode`, `opencode-go` (all models, unfiltered) |
 | `coding-agent/generate-cline-pass.mjs` | `coding-agent/models.dev.api.json` | the `cline-pass` layer (`model-015-cloud-cline-pass.json`) |
 
 Providers *without* the `modelsDev` flag take their ids from their own live
@@ -57,7 +57,7 @@ throw becomes an unhandled rejection (observed on node 24, from a checkout with
 the catalog hidden):
 
 ```
-Error: ENOENT: no such file or directory, open '…/llm-reverse-proxy/models.dev.api.json'
+Error: ENOENT: no such file or directory, open '…/llm-local-inference/models.dev.api.json'
     at readFileSync (node:fs:441)
     at loadModelsDev (gen-lib.mjs:72)
     at fetchPeerModels (gen-lib.mjs:106)
@@ -76,7 +76,7 @@ Consequences, all of them contrary to d018:
 3. **The failure is easy to misread as success** by anything wrapping the
    generator: config.d/ still looks populated. (`generate.sh` prints
    `warning: … failed; using existing config.d/ if present`, which is accurate
-   but easy to skim past; `llm-reverse-proxy/generate.sh` now tracks
+   but easy to skim past; `llm-local-inference/generate.sh` now tracks
    generator failures explicitly and reports `config.d/ NOT regenerated
    (failed: …) — listed files may be stale` for exactly this reason.)
 
@@ -102,7 +102,7 @@ diagnostic is a stack trace instead of a one-line warning.
 
 ## Patch
 
-### 1. `llm-reverse-proxy/gen-lib.mjs` — guard the `modelsDev` branch
+### 1. `llm-local-inference/gen-lib.mjs` — guard the `modelsDev` branch
 
 ```diff
  export async function fetchPeerModels(p) {
@@ -167,7 +167,7 @@ the same on-disk result; the only difference is who logs it.
 W="${TMPDIR:-${PREFIX:-/data/data/com.termux/files/usr}/tmp}/d021"
 rm -rf "$W" && mkdir -p "$W" && git archive origin/main | tar -x -C "$W"
 
-cd "$W/llm-reverse-proxy" && mv models.dev.api.json "$W/catalog.hidden"
+cd "$W/llm-local-inference" && mv models.dev.api.json "$W/catalog.hidden"
 
 node generate-peer-cloud.yaml.mjs; echo "exit=$?"
 #   before: ENOENT stack trace (gen-lib.mjs:72 ← :106 ← generate-peer-cloud.yaml.mjs:29),
@@ -202,7 +202,7 @@ them only if uniform messaging is wanted.
 **Proposed — not applied.** Raised during the Termux realignment: until this
 lands, anything driving these generators must treat a non-zero exit as
 "config.d/ may be stale" rather than reporting the previous peer count as
-current (see `llm-reverse-proxy/generate.sh`).
+current (see `llm-local-inference/generate.sh`).
 
 Related: [`d018-split-config-d.md`](d018-split-config-d.md) (layer + stale-output
 rules), [`termux-serving.md`](termux-serving.md) (Termux serving environment).

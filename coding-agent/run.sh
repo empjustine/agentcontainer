@@ -2,27 +2,28 @@
 # `run.sh` — unified coding-agent launcher (container hosts AND Termux).
 #
 # Merges the former run.sh (container sandbox) and run-termux.sh (native pi).
-# The container branch loads secrets ONCE on the HOST (load_secrets — one
-# cached `infisical secrets --output=dotenv`) and forwards the vault keys
-# through the workload_env allowlist; the spawn chain inside the container is
-# plain generate.sh + interactive bash with no infisical at all (the host
-# login state is NOT staged into the sandbox).
+# The environment is loaded EXPLICITLY, before this script runs:
+#
+#   ./lib/environment.sh ./coding-agent/run.sh
+#
+# That chain (lib/environment.sh — the ONE infisical round-trip, on the host,
+# outside any sandbox) injects the vault into plain environment variables;
+# this script consumes env only — it never loads, fetches or caches secrets
+# itself, and the host login state never leaves the host.
 #
 #   container branch (podman/docker, via ../lib/workload-runtime.sh):
 #     - stage a per-run sandbox dir (agent + opencode config/data)
 #     - ro-mount the generator scripts and a generated launch chain
-#     - host-side load_secrets → workload_env forward of the vault keys;
-#       in-container load_secrets short-circuits via SECRETS_ASSUME=1 (the
-#       "emergency not-infisical loader", defined in lib/workload-runtime.sh)
+#     - forward the (already-loaded) vault env through the workload_env
+#       allowlist; the spawn chain inside the container is plain generate.sh
+#       + interactive bash with no infisical at all
 #     - generate.sh then interactive bash; pi resolves "$VAR" refs in
 #       models.json from the forwarded environment
 #   Termux branch (PREFIX under /data/data/com.termux):
-#     - no container, no mise; secrets via the shared load_secrets — the
-#       Termux build of the infisical CLI ($HOME/Infisical/cli/infisical) is
-#       tried first, and keys already exported into the environment are used
-#       as-is; no .env file is ever read
-#       (the CLI builds on Android with -checklinkname=0; see the repo root
-#       ./build.sh, which is what produces it)
+#     - no container, no mise; the same explicit chain supplies the env
+#       (its infisical resolution prefers the Termux CLI build,
+#       $HOME/Infisical/cli/infisical — built by the repo root ./build.sh
+#       with -checklinkname=0)
 #     - GENERATE=1 ./run.sh regenerates first via ./generate.sh
 #     - exec pi directly
 #
@@ -30,8 +31,9 @@
 #   AGENT_DIR        Termux agent dir (default $HOME/.pi/agent; exported as
 #                    PI_CODING_AGENT_DIR, which pi reads instead of ~/.pi/agent)
 #   GENERATE         Termux: 1 = run ./generate.sh first
-#   PEER_BASE_URL    relay, printed for confirmation only (consumed by the
-#                    generator, not by pi)
+#   PEER_BASE_URL    relay — vault-sourced via the lib/environment.sh chain
+#                    (consumed by the generator, which probes it; never read
+#                    by pi itself)
 #   SKIP_GEN / MODELS_DEV_REFRESH
 #                    forwarded into the container for the in-container
 #                    generate.sh (set them in the host env before running)
@@ -66,13 +68,11 @@ if [ "$_termux" = 1 ]; then
 	fi
 
 	# models.json carries "$VAR" references that pi resolves from its own
-	# environment at request time, so the secrets must be exported here.
-	# load_secrets: infisical via the Termux CLI build when available; keys
-	# already in the environment short-circuit it.  No .env file is ever read.
-	# shellcheck disable=SC1091  # loaded for load_secrets
-	. "$SCRIPT_DIR/../lib/workload-runtime.sh"
-	load_secrets
-	log_info "secrets source" source="${SECRETS_SOURCE:-none}"
+	# environment at request time, so the secrets must be in this shell's env.
+	# They arrive via the explicit chain (./lib/environment.sh ./run.sh) —
+	# this script consumes plain env and never loads anything itself. No .env
+	# file is ever read; a missing var stays missing (pi/generators skip).
+	:
 
 	mkdir -p "$AGENT_DIR"
 	PI_CODING_AGENT_DIR="$AGENT_DIR"
@@ -111,11 +111,12 @@ thinkrail_dir="$workload_stage/thinkrail"
 mkdir -p -- "$agent_dir" "$opencode_cfg_dir" "$opencode_data_dir" "$cline_dir" \
 	"$thinkrail_dir"
 
-# Secrets are NOT staged into the sandbox anymore: the host loads them once
-# via load_secrets (one cached `infisical secrets --output=dotenv`; see
-# ../lib/workload-runtime.sh) and the vault keys are forwarded through the
-# workload_env allowlist below, so no infisical runs inside the container and
-# the host's ~/.infisical login state never leaves the host.
+# Secrets are NOT staged into the sandbox: the host loads them ONCE via the
+# explicit chain (./lib/environment.sh ./run.sh — the one infisical
+# round-trip, outside the sandbox) and the resulting plain environment is
+# forwarded through the workload_env allowlist below, so no infisical runs
+# inside the container and the host's ~/.infisical login state never leaves
+# the host.
 #
 # Fallback base: if the in-container generation fails entirely, the agent
 # still starts with the last committed config (generate.sh overwrites on
@@ -170,19 +171,17 @@ workload_ro "$REPO_ROOT/lib/models.dev.api.json" '/opt/lib/models.dev.api.json'
 workload_ro_if "$REPO_ROOT/lib/hyper-facts.json" '/opt/lib/hyper-facts.json'
 
 # In-container launch chain: generated shell with no infisical — the host
-# forwards the vault env through the workload_env allowlist instead.
+# (lib/environment.sh, outside the sandbox) forwards the vault env through
+# the workload_env allowlist instead.
 cat >"$workload_stage/launch.sh" <<EOF
 #!/bin/sh
 # Generated by coding-agent/run.sh — in-container launch chain.
-# Secrets arrive via the workload_env allowlist (host-side infisical via
-# load_secrets).  SECRETS_ASSUME=1 short-circuts the shared loader — the
-# "emergency not-infisical loader", defined in lib/workload-runtime.sh — so the
-# sandbox never runs infisical.
+# The environment is ALREADY correct here: run.sh's host-side loader
+# (lib/environment.sh) ran before the sandbox was built, and run.sh forwarded
+# the vault keys through the workload_env allowlist.  No loader runs in here.
 # shellcheck disable=SC1091
 . /opt/lib/log.sh
 LOG_TOOL='coding-agent/launch'
-SECRETS_ASSUME=1
-export SECRETS_ASSUME
 AGENT_DIR="/home/${USER}/.pi/agent"
 OPENCODE_CFG_DIR="/home/${USER}/.config/opencode"
 CLINE_DIR="/home/${USER}/.cline"
@@ -237,14 +236,13 @@ workload_rw       "$cline_dir" "/home/${USER}/.cline"
 workload_rw       "$thinkrail_dir" "/home/${USER}/.thinkrail"
 workload_rw       "$workspace" "$workspace"
 workload_workdir  "$workspace"
-# Secrets! Host-side load_secrets (one cached infisical export) provides the
-# vault keys; the allowlist below forwards them into the sandbox like the
-# llm-reverse-proxy run path.  Only non-empty values are forwarded (a bare
-# `--env NAME` with an unset host var would inject an empty value).
-load_secrets
-log_info "secrets source" source="${SECRETS_SOURCE:-none}"
+# Secrets! The host-side loader (lib/environment.sh — run.sh is exec'd through
+# it) put the vault keys in THIS shell's environment; the allowlist below
+# forwards them into the sandbox like the llm-local-inference run path.  Only
+# non-empty values are forwarded (a bare `--env NAME` with an unset host var
+# would inject an empty value).
 for _key in CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY OPENROUTER_API_KEY \
-	OPENCODE_API_KEY HYPER_API_KEY HF_TOKEN GEMINI_API_KEY PEER_BASE_URL; do
+	OPENCODE_API_KEY HYPER_API_KEY HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY PEER_BASE_URL; do
 	_value="$(printenv "$_key" 2>/dev/null || true)"
 	[ -n "$_value" ] && workload_env "$_key"
 done

@@ -19,9 +19,10 @@ copies: capability detection at generation time decides what a host gets.
 
 ## Scope
 
-- **Serving** — `llm-reverse-proxy/` (see `llm-reverse-proxy`): local llama.cpp
+- **Serving** — `llm-local-inference/` (see `llm-local-inference`): local llama.cpp
   GGUF inference where the host can do it, cloud-provider peers everywhere,
-  published on LAN :8080 and reachable through the tailscale FQDN.
+  published on LAN :8101 and reachable through the tailscale funnel (which
+  fronts llm-reverse-proxy on :8080 — docs/d027).
 - **Usage** — `coding-agent/` (see `coding-agent`): the pi coding-agent's
   container image, generated `models.json`/`opencode.jsonc` layers, static
   settings, and credential handling.

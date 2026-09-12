@@ -8,7 +8,7 @@ not yet implemented. Every harness gets a **per-run stage directory** on
 the host (`$HOME/workspace/$container_name/...`) RW-mounted into the container
 at the harness's expected home-relative path, so state written inside the
 sandbox survives the container's death. Secrets never follow this path — they
-are loaded host-side once (`load_secrets`) and forwarded through the
+are loaded host-side once (lib/environment.sh — the explicit chain) and forwarded through the
 `workload_env` allowlist (`CLINE_API_KEY`, `MISTRAL_API_KEY`, `PEER_API_KEY`,
 `OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `HF_TOKEN`, `GEMINI_API_KEY`,
 `PEER_BASE_URL`).

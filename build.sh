@@ -1,29 +1,22 @@
 #!/bin/sh
 # Native-tool provisioning for hosts without official release binaries or
-# package coverage (Termux/Android primarily).  Builds the Infisical CLI from
-# source when the binary is missing, and installs the two tools the rest of the
-# tree needs that Termux can only get from `pkg` (nodejs, jq).
+# package coverage (Termux/Android primarily).  Installs the Infisical CLI and
+# the two tools the rest of the tree needs that Termux can only get from `pkg`
+# (nodejs, jq).
 #
-# WHY SOURCE-BUILT AT ALL: the Infisical CLI has NO official Android release
-# and no Termux package, so on Termux it has to be compiled here.  Run this
-# once after `pkg install golang`, then `infisical login`; afterwards every
-# secret consumer in the tree works unchanged (see load_secrets below).
+# THE CLI — `go install` (upstream ships a main.go at the repo root on main):
 #
-# TERMUX PREREQUISITES handled by this script (see the block below): `pkg
-# install nodejs` and `pkg install jq`, each gated on an -x probe of
-# $PREFIX/bin/<tool>.  golang is deliberately left to the caller — it is only
-# needed when the CLI actually has to be compiled, so a host that already has
-# the binary should not pay for the toolchain.
+#   go install github.com/Infisical/cli@main
 #
-# Same ~/<org>/<repo> + in-checkout-binary convention as the llama-swap Termux
-# branch of llm-reverse-proxy/build.sh:
+# which drops the binary into $GOBIN/$GOPATH/bin/infisical (on GOFLAGS/GOPATH
+# defaults: $HOME/go/bin).  No clone, no checkout refresh, no local build
+# state — this replaced the former clone-into-~/Infisical/cli + `go build .`
+# maintenance (git pull chore, diverged-checkout resets).  Run this once,
+# then `infisical login`; the environment chain (lib/environment.sh) and
+# every secret consumer in the tree work unchanged.
 #
-#   clone https://github.com/Infisical/cli.git ->  ~/Infisical/cli
-#   go build .                                  ->  ~/Infisical/cli/infisical
-#
-# --- WHY THESE BUILD FLAGS (the -checklinkname=0 story) -------------------
-# A plain `go build .` fails at LINK time — compilation succeeds — on
-# Android/arm64 with Go >= 1.23:
+# --- ANDROID EXCEPTION: the checkout build (kept, automatic fallback) ------
+# `go install` FAILS at LINK time on Android/arm64 with Go >= 1.23:
 #
 #   link: github.com/wlynxg/anet: invalid reference to net.zoneCache
 #
@@ -52,30 +45,25 @@
 # so a LINKER FLAG is the fix (the anet README documents the same flag).
 #
 # Verified on Termux/Android (aarch64, bionic libc, no root), Go 1.27.0
-# android/arm64, ~1 GB RAM: `go build -p=1 -mod=mod -ldflags="..." .` produces
-# the root infisical binary, and the same invocation with ./... (full module,
-# incl. packages/gateway) exits 0.
+# android/arm64, ~1 GB RAM: `go build -p=1 -mod=mod -ldflags="..." .` of a
+# checkout produces the working binary.  So on Termux the script falls back
+# to the old checkout build automatically when `go install` fails:
 #
-# If these flags ever need to travel elsewhere: upstream's .goreleaser.yaml,
-# .goreleaser-darwin.yaml and .goreleaser-windows.yaml each carry an `ldflags`
-# list — an Android goreleaser run would need -checklinkname=0 added there
-# too.  Upstream will not hit this on Linux CI, so don't wait for a fix.
+#   clone https://github.com/Infisical/cli.git ->  ~/Infisical/cli
+#   go build -ldflags="-checklinkname=0 …" .    ->  ~/Infisical/cli/infisical
 #
-# The checkout is kept aligned with upstream: every run refreshes an existing
-# checkout (`git pull --ff-only origin main`) so whatever gets built matches
-# upstream.  A failed pull (offline / diverged) is a warning, not a fatal —
-# the existing checkout is still used.  To reset a diverged checkout, delete
-# it (`rm -rf ~/Infisical/cli`) and re-run for a fresh shallow clone.
+# The checkout is kept aligned with upstream (git pull --ff-only on every
+# run; a failed pull is a warning — the existing checkout is still used).
 #
-# CONSUMPTION: load_secrets (lib/workload-runtime.sh) looks for the binary at the
-# resolved location above and every secret consumer
-# (llm-reverse-proxy/generate.sh, run.sh, run-native.sh, coding-agent/…)
-# inherits it from there.  load_secrets is deliberately passive: it only
-# consumes whatever binary this script produced, never builds anything itself,
-# and warns pointing back at this script when the binary is absent.
+# CONSUMPTION: lib/environment.sh (the explicit chain every secret consumer
+# is exec'd through) resolves the binary in this order: $INFISICAL_BIN ›
+# ~/Infisical/cli/infisical (the checkout build below) › PATH › mise.  The
+# chain is deliberately passive: it only consumes whatever binary this script
+# produced, never builds anything itself, and dies with instructions pointing
+# back at this script when no binary is found.
 #
-# Idempotent build: does nothing when the binary is already executable
-# (FORCE=1 to rebuild after a pull).
+# Idempotent: does nothing when a binary is already resolvable
+# (FORCE=1 to (re)build anyway).
 #
 # Env overrides:
 #   INFISICAL_SRC   checkout dir     (default $HOME/Infisical/cli)
@@ -102,11 +90,11 @@ branch="${INFISICAL_BRANCH:-main}"
 # Termux has no mise, so the two tools the rest of the tree needs that cannot
 # be provisioned any other way here come from `pkg`:
 #
-#   nodejs -> node   the .mjs generators (llm-reverse-proxy/generate.sh,
+#   nodejs -> node   the .mjs generators (llm-local-inference/generate.sh,
 #                    coding-agent/generate.sh) run under the SYSTEM node on
 #                    Termux — there is no mise to pin one.
 #   jq               lib/workload-runtime.sh's workload description API is jq-backed
-#                    (lib/workload-*.jq); llm-reverse-proxy/generate.sh calls
+#                    (lib/workload-*.jq); llm-local-inference/generate.sh calls
 #                    sandbox_has on every run.
 #
 # Probed with -x at $PREFIX/bin — the directory `pkg` installs into — so the
@@ -158,7 +146,33 @@ else
 	log_debug "not Termux — skipping pkg provisioning (node/jq come from mise)"
 fi
 
-# --- checkout: clone if absent, otherwise refresh from upstream -----------
+# --- 1. the CLI: go install (checkout build as the Android fallback) -------
+if [ -x "$bin" ] && [ "${FORCE:-0}" != 1 ]; then
+	log_info "infisical binary present — nothing to build" bin="$bin"
+	exit 0
+fi
+
+command -v go >/dev/null 2>&1 || log_die 96 \
+	"go toolchain not found (on Termux: pkg install golang)"
+
+# Primary path: `go install` — upstream ships main.go at the repo root, so
+# this needs NO clone and NO local build state (see the header).  The binary
+# lands in GOBIN/GOPATH bin ($HOME/go/bin by default).
+log_info "go install infisical CLI (primary path)"
+if go install github.com/Infisical/cli@main; then
+	_installed="${GOBIN:-$(go env GOPATH 2>/dev/null)/bin}/infisical"
+	if [ -x "$_installed" ]; then
+		log_info "installed infisical CLI" path="$_installed" how="go install github.com/Infisical/cli@main"
+		exit 0
+	fi
+	log_warn "go install reported success but the binary is not at the expected path" path="$_installed"
+else
+	log_warn "go install failed — falling back to the checkout build (the Android -checklinkname=0 path; see the header)"
+fi
+
+# Fallback (Android-only in practice): the clone + flags build.  Idempotent
+# clone/refresh; a diverged checkout is a warning, not a fatal (delete
+# ~/Infisical/cli and re-run for a fresh one).
 if [ -e "$src" ]; then
 	if [ -d "$src/.git" ]; then
 		log_info "refreshing checkout" src="$src" branch="$branch"
@@ -173,22 +187,14 @@ else
 	git clone --depth=1 --branch "$branch" "$url" "$src"
 fi
 
-if [ -x "$bin" ] && [ "${FORCE:-0}" != 1 ]; then
-	log_info "infisical binary present — nothing to build" bin="$bin"
-	exit 0
-fi
-
-command -v go >/dev/null 2>&1 || log_die 96 \
-	"go toolchain not found (on Termux: pkg install golang)"
-
-# Flags — see "WHY THESE BUILD FLAGS" in this file's header:
+# Flags — see "ANDROID EXCEPTION" in this file's header:
 #   -checklinkname=0  THE fix: re-enables anet's linkname to net.zoneCache,
 #                     which Go >= 1.23 rejects on Android (the only platform
 #                     this source build is needed for in this tree)
 #   -s -w             strip debug info -> less linker RAM on ~1 GB devices
 #   -p=1 / GOGC=50    cap parallelism / GC pressure -> avoid OOM
 #   -mod=mod          tolerate go.mod drift after an upstream pull
-log_info "building infisical CLI" src="$src" bin="$bin"
+log_info "building infisical CLI (checkout fallback)" src="$src" bin="$bin"
 GOGC=50 go build -C "$src" -p=1 -mod=mod \
 	-ldflags="-checklinkname=0 -s -w" -o "$bin" .
 chmod 0755 "$bin"

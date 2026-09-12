@@ -15,16 +15,18 @@
  *
  * Detection cascade:
  *
- *   1. Local inference (provider id `llama-swap`): probe the multipurpose
- *      llama-swap instance — $PEER_BASE_URL, then the shared fallback FQDN
- *      (lib/peer-probe.mjs DEFAULT_PEER_FALLBACK — the world-visible FQDN
- *      funnel that reverse-proxies the LAN :8080 instance, so it serves the
- *      identical catalog).  First candidate serving GGUF models wins; its
+ *   1. Local inference (provider id `llama-swap`): probe the LOCAL GGUF
+ *      llama-swap instance — the vault-sourced peer base (lib/peer-probe.mjs
+ *      peerBaseUrl()), each as the llama-swap
+ *      PATH-ROUTE of the funnel: peerProviderUrl(base, "llama-swap") —
+ *      llm-reverse-proxy (host port 8080, the funnel front, docs/d027)
+ *      strips the `/llama-swap` prefix and forwards to the local instance
+ *      on loopback :8101. First candidate serving GGUF models wins; its
  *      model catalog becomes the `llama-swap` provider (pi-shaped metadata
  *      mirrored from meta.llamaswap).  No localhost candidates are probed:
- *      the LAN :8080 instance is only ever a *local* listen address and the
- *      legacy :18080 local-inference port is DEPRECATED, so a co-located peer
- *      is reached via $PEER_BASE_URL or the fallback FQDN instead.
+ *      the LAN :8080 (proxy) and :8101 (llama-swap) listen addresses are
+ *      only ever *local* listen addresses, so a co-located peer is reached
+ *      via the vault-sourced peer base instead.
  *
  * "Reachable" is about the NETWORK PATH, not about credentials: a 401/403 is
  * what an OpenAI-compatible endpoint returns to any unauthenticated request,
@@ -54,14 +56,14 @@
  *
  * Usage: node generate-local-llama-swap.mjs [out]
  *   out defaults to $PI_MODELS_JSON else ./model-010-local-default.json.
- *   Env: PEER_BASE_URL (first probe candidate), PEER_API_KEY (peer bearer).
+ *   Env: PEER_BASE_URL — vault-sourced peer base (peerBaseUrl(); required),
+ *   PEER_API_KEY (peer bearer).
  *   Typical run, then merge — see merge-models-json.mjs:
  *     node generate-local-llama-swap.mjs        # -> model-010-local-default.json
  *     node generate-cloud-pi-native-providers.mjs
  *     node merge-models-json.mjs                # -> models.json
  */
 
-import { renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -76,7 +78,10 @@ const { logInfo, logWarn, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
-const { DEFAULT_PEER_FALLBACK, probeCandidates } =
+const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
+	await import(`${LIB_DIR}/artifact.mjs`)
+);
+const { peerBaseUrl, peerProviderUrl, probeCandidates } =
 	/** @type {typeof import("../lib/peer-probe.mjs")} */ (
 		await import(`${LIB_DIR}/peer-probe.mjs`)
 	);
@@ -86,16 +91,13 @@ const { piModel, providerEntry } =
 	);
 setLogTool("coding-agent/generate-local-llama-swap");
 
-// Ordered best-first: explicit override, then the remote tailscale proxy.
-// No localhost candidates are probed — the LAN :8080 listen address and the
-// deprecated :18080 local-inference port are not routable from outside the
-// host they serve (docs/d022; see DEFAULT_PEER_FALLBACK).
-const LOCAL_SOURCE_CANDIDATES = /** @type {string[]} */ (
-	[
-		process.env.PEER_BASE_URL?.replace(/\/+$/, ""),
-		DEFAULT_PEER_FALLBACK,
-	].filter(Boolean)
-);
+// Ordered best-first: explicit override, then the remote tailscale proxy —
+// each addressed as the llama-swap PATH-ROUTE of the funnel front
+// The peer's funnel base URL — vault-sourced (peerBaseUrl(); see the
+// header there).  No localhost candidates are probed — the LAN :8080 (proxy)
+// and :8101 (llama-swap) listen addresses are not routable from outside the
+// host they serve (docs/d022).
+const LOCAL_SOURCE_CANDIDATES = [peerProviderUrl(peerBaseUrl(), "llama-swap")];
 
 /** @returns {Promise<void>} */
 async function main() {
@@ -121,13 +123,16 @@ async function main() {
 		return;
 	}
 
-	const tmp = `${out}.tmp`;
-	writeFileSync(tmp, `${JSON.stringify({ providers }, null, 2)}\n`);
-	renameSync(tmp, out); // atomic on the same filesystem
+	// lib/artifact.mjs write contract: atomic tmp+rename, replace by default,
+	// DRY_RUN=1 leaves the layer untouched and writes a preview.
+	const written = writeArtifact(
+		out,
+		`${JSON.stringify({ providers }, null, 2)}\n`,
+	);
 	const summary = Object.entries(providers)
 		.map(([id, p]) => `${id}=${p.baseUrl}(${p.models.length})`)
 		.join(", ");
-	logInfo("wrote models layer", { path: out, providers: summary });
+	logInfo("wrote models layer", { path: written, providers: summary });
 }
 
 await main();

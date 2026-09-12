@@ -1,0 +1,17 @@
+# Containerfile — multi-stage build for llm-reverse-proxy.
+#
+# Stage 1 compiles the static binary; stage 2 is distroless/static, which
+# ships the CA certificate bundle the proxy's TLS verification needs (the
+# proxy verifies upstream certificates and must never skip it — see
+# README.md). Final image is ~10 MB and holds exactly one binary.
+#
+# The image ENTRYPOINT is the proxy itself; run.sh passes -config/-listen as
+# the container command (workload_cmd), mirroring how llama-swap is launched.
+FROM docker.io/library/golang:1.27-alpine AS build
+WORKDIR /src
+COPY go.mod main.go ./
+RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/llm-reverse-proxy .
+
+FROM gcr.io/distroless/static-debian12:nonroot
+COPY --from=build /out/llm-reverse-proxy /llm-reverse-proxy
+ENTRYPOINT ["/llm-reverse-proxy"]

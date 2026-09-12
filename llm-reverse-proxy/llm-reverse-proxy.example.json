@@ -1,0 +1,14 @@
+{
+  "listen": "0.0.0.0:8080",
+  "providers": {
+    "openrouter": "https://openrouter.ai/api",
+    "opencode": "https://opencode.ai/zen",
+    "anthropic": "https://api.anthropic.com",
+    "openai": "https://api.openai.com/v1",
+    "google": "https://generativelanguage.googleapis.com",
+    "models.dev": "https://models.dev",
+    "llama-swap": "http://127.0.0.1:8101",
+    "nvidia": "https://integrate.api.nvidia.com/v1",
+    "catwalk": "https://catwalk.charm.land"
+  }
+}

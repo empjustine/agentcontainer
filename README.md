@@ -2,23 +2,37 @@
 
 A minimal sandbox for [pi](https://github.com/earendil-works/pi) with
 support for local [llama.cpp](https://github.com/ggerganov/llama.cpp)
-GGUF inference and cloud LLM peers proxied through
-[llama-swap](https://github.com/mostlygeek/llama-swap).
+GGUF inference (via
+[llama-swap](https://github.com/mostlygeek/llama-swap)) and a raw
+passthrough reverse proxy for cloud LLM providers.
 
 ## Quick start
 
 ```sh
-# Bazzite (rootless podman) — ONE multipurpose llama-swap instance:
-#   local GGUF inference + cloud peers, published on LAN port 8080
-#   (the world reaches it via the tailscale FQDN reverse proxy)
-cd ~/agentcontainer/llm-reverse-proxy && ./generate.sh && ./run.sh
+# Bazzite (rootless podman) — ONE llama-swap instance for LOCAL GGUF
+# inference, published on LAN port 8101 (the world reaches it via the
+# tailscale funnel → llm-reverse-proxy's /llama-swap route, docs/d027)
+cd ~/agentcontainer/llm-local-inference && ./generate.sh
 #   then the coding agent (uses local models + cloud via auth.json)
-cd ~/agentcontainer/coding-agent && ./run.sh
+cd ~/agentcontainer && ./lib/environment.sh ./coding-agent/run.sh
 
-# a50 / Termux (peers-only serving, native llama-swap binary — alt build/run
-# of llm-reverse-proxy/)
-cd ~/agentcontainer/llm-reverse-proxy && ./build.sh && ./run-native.sh
+# cloud/remote providers — raw passthrough reverse proxy (no model routing,
+# no credential handling; requests must already carry valid provider keys)
+cd ~/agentcontainer/llm-reverse-proxy && ./build.sh && ./generate.sh && ./run.sh
 ```
+
+**Environment/secrets are an EXPLICIT chain step** (`lib/environment.sh` —
+the ONE infisical vault round-trip, on the host, then `exec` of the target):
+`./lib/environment.sh ./coding-agent/run.sh`, `./lib/environment.sh
+./llm-local-inference/run.sh`, etc.  The scripts it wraps consume plain env
+and never load anything themselves; inside sandboxes the vault env is
+forwarded via the `workload_env` allowlist.  Generation steps that need no
+keys (llm-local-inference/generate.sh, llm-reverse-proxy/*) run without the
+chain.  No `.env` files, no in-script loaders, no emergency paths — a failed
+vault round-trip is fatal at the chain, never a silent half-configured run.
+
+There is no Termux/peers-only variant of llm-local-inference anymore —
+cloud relay moved to llm-reverse-proxy.
 
 ### New: Enhanced with Cline and Thinkrail
 
@@ -54,24 +68,30 @@ agentcontainer/
 │   ├── models.dev.api.json             #   → vendored models.dev catalog (shared)
 │   ├── cloud-providers.mjs             #   → the one cloud-provider fact table
 │   ├── refresh-models-dev.mjs          #   → atomic catalog refresh (both generate.sh)
-│   └── workload-*.jq                   #   → jq filters behind the workload_* API
+│   ├── environment.sh                   #   → EXPLICIT env chain: infisical vault → exec <script>
+│   ├── workload-*.jq                   #   → jq filters behind the workload_* API
 │
-├── llm-reverse-proxy/                   # Multipurpose llama-swap (one instance per host)
-│   ├── run.sh                           #   → adapts image/port/GPU/HF to the generated config.d
-│   ├── generate.sh                      #   → capability-gated config.d layers (local LLM / peers)
-│   ├── gen-lib.mjs                      #   → shared generator helpers
+├── llm-local-inference/                   # llama-swap: LOCAL GGUF inference only
+│   ├── run.sh                           #   → unified-vulkan image + GPU + HF mounts on :8101
+│   ├── generate.sh                      #   → capability-gated config.d layers (local GGUF; fails on non-GPU hosts)
+│   ├── gen-lib.mjs                      #   → shared generator helpers (logger, config.d writer)
 │   ├── generate-general.yaml.mjs         #   → 00-general.yaml (globals + macros; always)
 │   ├── generate-local-llm-models.yaml.mjs#   → 10-local-llm-inference.yaml (GGUF; GPU hosts only)
-│   ├── generate-peer-cloud.yaml.mjs      #   → peer-cloud.yaml (cloud peers; opencode via models.dev catalog)
-│   ├── generate-gfx1030-models.mjs      #   → 22-peer-gfx1030.yaml (remote gfx1030 route; non-GPU hosts)
 │   ├── launch-gguf.sh                   #   → HF-snapshot resolver (copied to config.d on GPU hosts)
 │   ├── active-b.json                    #   → activeB table (model-id derivation)
 │   ├── llama-swap-core.json             #   → general-purpose config source
-│   ├── build.sh / run-native.sh         #   → Termux alt build/serve (peers-only); build.sh pre-pulls the image elsewhere
+│   ├── build.sh                         #   → pre-pulls the unified-vulkan image (container hosts only)
 │   └── config.d/                        #   → generated split config (loaded via -config-dir)
 │
+├── llm-reverse-proxy/                   # Raw passthrough reverse proxy for cloud LLMs (Go)
+│   ├── main.go                          #   → http host:port/{provider}/<path> → <base-url>/<path>, streaming as-is
+│   ├── llm-reverse-proxy.example.json   #   → provider slug → base URL map (the whole config surface)
+│   ├── generate.sh                      #   → routing table from lib/cloud-providers.mjs (→ generate-config.mjs)
+│   ├── build.sh / smoke-test.sh         #   → multi-stage image build (no host go); 28 behavioural checks
+│   └── README.md                        #   → RFC 9457 502 error taxonomy, deviations
+│
 ├── coding-agent/                        # Bazzite usage (full pi)
-│   ├── run.sh                           #   → launches pi coding-agent container
+│   ├── run.sh                           #   → launches pi coding-agent container (exec through ../lib/environment.sh)
 │   ├── auth.json                        #   → pi credentials (copied into container by run.sh)
 │   ├── settings.json                    #   → static pi settings (copied by run.sh)
 │   ├── config.toml                       #   → mise configuration (includes cline and thinkrail)
@@ -98,8 +118,10 @@ agentcontainer/
 | [docs/termux-serving.md](docs/termux-serving.md) | a50/Termux native build — map; the build/serve/env detail lives in the code headers |
 | [docs/d018-split-config-d.md](docs/d018-split-config-d.md) | split `config.d/` layout + llama-swap merge contract |
 | [docs/d020-libvirt-qemu-sandbox.md](docs/d020-libvirt-qemu-sandbox.md) | qemu/libvirt VM sandboxes — requirements assessment (not implemented) |
+| [docs/d027-models-dev-relay-fallback.md](docs/d027-models-dev-relay-fallback.md) | models.dev catalog fetch chain (direct → llm-reverse-proxy relay → stale copy) |
+| [docs/d028-provider-extensions-vs-generated-config.md](docs/d028-provider-extensions-vs-generated-config.md) | pi/opencode provider extensions vs generated-config machinery (verified; proposed) |
 | [coding-agent/merge-models-json.mjs](coding-agent/merge-models-json.mjs) | layered pi `models.json` (base + `model-*.json` overlays) — contract is documented in the script header |
-| [docs/peer-variant-work.md](docs/peer-variant-work.md) | coding-agent-peer (work environment; **archived** — folded into coding-agent) |
+| [docs/peer-variant-work.md](docs/peer-variant-work.md) | coding-agent-peer (work environment; **archived** — folded into coding-agent; routing/env superseded by d027 + the vault — see its banner) |
 | [docs/scoped-models-and-proxy-overrides.md](docs/scoped-models-and-proxy-overrides.md) | pi models.json / settings.json scoping |
 | [docs/gguf-model-tooling.md](docs/gguf-model-tooling.md) | GGUF tooling (`fetch_hf_manifests.py` live; size-estimation tools archived) |
 | [docs/gguf-vram-fit-estimates.md](docs/gguf-vram-fit-estimates.md) | VRAM/KV/fit tables for all served models (gdevenyi/huggingface-estimate) |

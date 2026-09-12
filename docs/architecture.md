@@ -17,13 +17,14 @@ the split and the one rule that lets some folders reuse others.
 
 | Side | Responsibility | Instance |
 |------|----------------|----------|
-| **serving** | run llama-swap (`llm-reverse-proxy*`) | `llm-reverse-proxy/` (multipurpose: local GGUF + peers, capability-gated) |
+| **serving** | run llama-swap (`llm-local-inference*`, LOCAL GGUF only) and llm-reverse-proxy (`llm-reverse-proxy/`, cloud relay) | `llm-local-inference/` (local layer, capability-gated) + `llm-reverse-proxy/` (path-prefix cloud router, docs/d027) |
 | **usage** | run the pi coding-agent (`coding-agent*`) | `coding-agent/` |
 
-The serving folder is a **single multipurpose llama-swap instance**: it runs
-local llama.cpp GGUF models on GPU-capable container hosts and proxies cloud
-providers everywhere; `generate.sh` decides per host which `config.d/` layers
-apply (and removes stale ones). The old fixed-purpose split
+The serving side is split by concern (docs/d027): llama-swap
+(`llm-local-inference/`) is a **single local-GGUF instance** on GPU-capable
+container hosts — there is no peers-only llama-swap mode — while cloud
+provider relay is `llm-reverse-proxy/` (the path-prefix cloud router),
+deployable wherever the cloud is reachable. The old fixed-purpose split
 (`openai-completions-gfx1030/` + `openai-completions-peer/`) and the
 `coding-agent-peer/` usage variant were retired — the
 capability-gated generation pattern (pioneered by `coding-agent/`) made the
@@ -47,16 +48,17 @@ source of truth for the catalog-driven providers) and `llamacpp-model-data.json`
 docs/d025). Data reads out of `lib/` do not violate the standalone rule; only
 reaching into a sibling *runner* folder does.
 
-- `llm-reverse-proxy/` is the **multipurpose serving instance**: it owns the
-  local-llm generator (`generate-local-llm-models.yaml.mjs` +
-  `active-b.json` → `config.d/10-local-llm-inference.yaml`, emitted only on
-  GPU-capable container hosts; the model data itself is the shared
+- `llm-local-inference/` is the **local GGUF serving instance** (local
+  inference only): it owns the local-llm generator
+  (`generate-local-llm-models.yaml.mjs` + `active-b.json` →
+  `config.d/10-local-llm-inference.yaml`, emitted only on GPU-capable
+  container hosts; the model data itself is the shared
   `lib/llamacpp-model-data.json`), the `generate-general.yaml.mjs`
-  globals/macros, the peer
-  generators (`generate-peer-cloud.yaml.mjs`, `generate-gfx1030-models.mjs`),
-  `gen-lib.mjs`, `launch-gguf.sh`, `llama-swap-core.json`, `config.d/`,
-  `run.sh` and the Termux alternative build/serve (`build.sh` /
-  `run-native.sh`).
+  globals/macros, `gen-lib.mjs`, `launch-gguf.sh`, `llama-swap-core.json`,
+  `config.d/`, `run.sh` and the container-image `build.sh`. Cloud/remote peer
+  relaying is NOT here — it moved to `llm-reverse-proxy/` (the raw passthrough
+  proxy); the peer generators, Termux build/serve, and peers-only mode were
+  removed with that handoff.
 - `coding-agent/` is the **pi workload baseline generator**: it owns the
   `Containerfile`/`config.toml` image definition and the canonical
   `settings.json`/`auth.json`. Archived runners (`-cloud`, `-peer`) used to
@@ -85,13 +87,18 @@ prohibits (and what was removed):
 
 - `workload-runtime.sh` — container-runtime detection (podman vs docker,
   UID/SELinux flags), the declarative workload description API, structured
-  shell logging, the shared `load_secrets` vault loader, and the
+  shell logging, and the
   profile/runner helpers the generate.sh scripts reuse (`_termux`,
-  `node_run`, `default_run_dir`).
+  `node_run`, `default_run_dir`).  Secrets are NOT part of it: loading is
+  the explicit `lib/environment.sh` chain (below).
+- `environment.sh` — THE environment loader: one in-memory infisical
+  round-trip, then `exec` of the named script
+  (`./lib/environment.sh ./coding-agent/run.sh`).  Consumers read plain env
+  and never load secrets themselves; a failed/empty vault is fatal here.
 - `log.sh` / `log.mjs` / `log.py` — the structured loggers (per language).
 - `peer-probe.mjs` — the shared HTTP probe toolkit for the `.mjs` generators
   (fetch, reachability classification, candidate cascade; docs/d023) plus the
-  `DEFAULT_PEER_FALLBACK` peer candidate constant (docs/d024).
+  vault-sourced peer base accessor `peerBaseUrl()` (docs/d024, d028).
 - `cloud-providers.mjs` — the one cloud-provider fact table (id / label /
   key env / real base URL) every generator family derives from (docs/d024).
 - `pi-models.mjs` — the RawModelEntry → pi model/provider shaping shared by
@@ -106,20 +113,23 @@ Runner run-scripts source lib modules from the fixed `~/agentcontainer` layout.
 lib is intentionally NOT copied into each runner — it is owned by the repo, like
 `AGENTS.md` and `biome.json`.
 
-## Local vs peers (the two layers, one instance)
+## Local vs cloud (two modules, two instances)
 
-**Local llama.cpp (GGUF) model support lives only in the local layer of
-`llm-reverse-proxy/`** — `config.d/10-local-llm-inference.yaml`, generated by
+**Local llama.cpp (GGUF) model support lives only in `llm-local-inference/`** —
+`config.d/10-local-llm-inference.yaml`, generated by
 `generate-local-llm-models.yaml.mjs` from `llamacpp-model-data.json`, and only
-on hosts where `generate.sh` detects a container backend + GPU devices. Every
-other config layer is concern-split:
+on hosts where `generate.sh` detects a container backend + GPU devices.
+`config.d/` carries exactly two layers:
 
 | Layer | Role | Generated by | When |
 |-------|------|--------------|------|
 | `00-general.yaml` | globals + macros | `generate-general.yaml.mjs` | always |
 | `10-local-llm-inference.yaml` + `launch-gguf.sh` | local GGUF `models` | `generate-local-llm-models.yaml.mjs` (from the shared `lib/llamacpp-model-data.json`) | container backend + GPU detected |
-| `peer-cloud.yaml` | cloud peers | `generate-peer-cloud.yaml.mjs` | when any provider answers |
-| `22-peer-gfx1030.yaml` | route to a remote local-inference instance | `generate-gfx1030-models.mjs` | non-GPU hosts only |
+
+Cloud/remote peers are NOT a config layer anymore: `llm-reverse-proxy/` (raw
+passthrough proxy) serves them. The former `peer-cloud.yaml` and
+`22-peer-gfx1030.yaml` layers — and the peer-set snapshot/rollback machinery
+they required — were removed with that handoff.
 
 (The old fixed-purpose `openai-completions-gfx1030/` / `openai-completions-peer/`
 folders and the `coding-agent-cloud/`/`coding-agent-peer/` usage runners are
@@ -128,7 +138,8 @@ the variant folders redundant.)
 
 | Folder | Role | What makes it work |
 |--------|------|--------------------|
-| `llm-reverse-proxy/` | multipurpose serving (local GGUF where capable, peers everywhere) | `gen-lib.mjs`, `generate-general.yaml.mjs`, `generate-local-llm-models.yaml.mjs` + `active-b.json`, `generate-peer-cloud.yaml.mjs`, `generate-gfx1030-models.mjs`, `launch-gguf.sh`, `llama-swap-core.json`, `config.d/` + `run.sh`, `build.sh` (termux-native build or image pull) + `run-native.sh` (Termux) |
+| `llm-local-inference/` | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `gen-lib.mjs`, `generate-general.yaml.mjs`, `generate-local-llm-models.yaml.mjs` + `active-b.json`, `launch-gguf.sh`, `llama-swap-core.json`, `config.d/` + `run.sh`, `build.sh` (image pull) |
+| `llm-reverse-proxy/` | path-prefix cloud router for cloud/remote providers (`/<providerId>` → provider's full real base URL, byte-for-byte, no keys — docs/d027; streaming as-is, RFC 9457 502s) | `main.go`, `generate.sh` → `generate-config.mjs` (routing table from lib/cloud-providers.mjs), `llm-reverse-proxy.example.json`, `build.sh`, `smoke-test.sh` |
 | `coding-agent/` | base pi workload image + artifacts | `Containerfile`, `config.toml`, `build.sh`, `run.sh`, `settings.json`, `auth.json` |
 
 The next planned step — a simplified config-generator system split by concern —

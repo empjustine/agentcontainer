@@ -51,9 +51,9 @@
           "contextWindow": 256000,
           "maxTokens": 25600,
           "cost": {
-            "input": 0.122,
-            "output": 0.42,
-            "cacheRead": 0.061,
+            "input": 0.102,
+            "output": 0.356,
+            "cacheRead": 0.051,
             "cacheWrite": 0
           },
           "thinkingLevelMap": {
@@ -230,9 +230,9 @@
           "contextWindow": 262100,
           "maxTokens": 6553,
           "cost": {
-            "input": 0.404,
-            "output": 1.496,
-            "cacheRead": 0.202,
+            "input": 0.396,
+            "output": 1.464,
+            "cacheRead": 0.198,
             "cacheWrite": 0
           },
           "compat": {
@@ -284,9 +284,9 @@
           "contextWindow": 430000,
           "maxTokens": 43000,
           "cost": {
-            "input": 0.274,
-            "output": 0.8992,
-            "cacheRead": 0.137,
+            "input": 0.255,
+            "output": 0.8365,
+            "cacheRead": 0.1275,
             "cacheWrite": 0
           },
           "thinkingLevelMap": {
@@ -458,6 +458,38 @@
           "compat": {
             "supportsStore": false,
             "supportsReasoningEffort": false,
+            "thinkingFormat": "deepseek",
+            "maxTokensField": "max_tokens"
+          }
+        },
+        {
+          "id": "deepseek-v4.1-flash",
+          "name": "DeepSeek V4.1 Flash",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 26214,
+          "cost": {
+            "input": 0.3,
+            "output": 1.2,
+            "cacheRead": 0.03,
+            "cacheWrite": 0
+          },
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": null,
+            "low": "low",
+            "medium": null,
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": null
+          },
+          "compat": {
+            "supportsStore": false,
+            "supportsReasoningEffort": true,
             "thinkingFormat": "deepseek",
             "maxTokensField": "max_tokens"
           }
@@ -696,7 +728,7 @@
           "maxTokens": 20275,
           "cost": {
             "input": 0.86,
-            "output": 2.784,
+            "output": 2.752,
             "cacheRead": 0.43,
             "cacheWrite": 0
           },
@@ -789,9 +821,9 @@
           "contextWindow": 202750,
           "maxTokens": 3276,
           "cost": {
-            "input": 1.326,
-            "output": 4.22,
-            "cacheRead": 0.663,
+            "input": 1.318,
+            "output": 4.308,
+            "cacheRead": 0.659,
             "cacheWrite": 0
           },
           "thinkingLevelMap": {
@@ -883,9 +915,9 @@
           "contextWindow": 128072,
           "maxTokens": 13107,
           "cost": {
-            "input": 0.178,
-            "output": 0.68,
-            "cacheRead": 0.089,
+            "input": 0.168,
+            "output": 0.66,
+            "cacheRead": 0.084,
             "cacheWrite": 0
           },
           "thinkingLevelMap": {
@@ -1016,38 +1048,6 @@
           "compat": {
             "supportsStore": false,
             "supportsReasoningEffort": false,
-            "thinkingFormat": "deepseek",
-            "maxTokensField": "max_tokens"
-          }
-        },
-        {
-          "id": "deepseek-v4.1-flash",
-          "name": "DeepSeek V4.1 Flash",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 1048576,
-          "maxTokens": 26214,
-          "cost": {
-            "input": 0.3,
-            "output": 1.2,
-            "cacheRead": 0.03,
-            "cacheWrite": 0
-          },
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": null,
-            "low": "low",
-            "medium": null,
-            "high": "high",
-            "xhigh": "xhigh",
-            "max": null
-          },
-          "compat": {
-            "supportsStore": false,
-            "supportsReasoningEffort": true,
             "thinkingFormat": "deepseek",
             "maxTokensField": "max_tokens"
           }

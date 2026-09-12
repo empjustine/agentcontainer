@@ -8,24 +8,23 @@
 #
 #   Termux (PREFIX under /data/data/com.termux):
 #     - system node (>= 22.19, checked) — no mise
-#     - secrets via load_secrets: the Termux build of the infisical CLI
-#       ($HOME/Infisical/cli/infisical — built with -checklinkname=0 by the
-#       repo root ./build.sh) is used when available; keys already exported
-#       into the environment are used as-is (no .env file is ever read)
+#     - secrets arrive as plain environment, via the explicit chain
+#       (./lib/environment.sh ./generate.sh — its infisical resolution
+#       prefers the Termux CLI build; no .env file is ever read)
 #     - vendored models.dev catalog by default (no refetch over mobile data)
 #   Everywhere else (host or inside the coding-agent container):
 #     - node_run from ../lib/workload-runtime.sh (system node on Termux, mise
 #       exec node@24 elsewhere — mise pinned via ../mise.toml / image config)
-#     - secrets expected ALREADY INJECTED by the caller: run.sh loads them on
-#       the HOST (load_secrets — one cached infisical export) and forwards
-#       them through the workload_env allowlist, so the in-container
-#       generators never run infisical.  Manual host runs just call
-#       load_secrets below.
+#     - secrets expected ALREADY IN the environment by the caller: run.sh is
+#       exec'd through lib/environment.sh (the HOST-side chain — one
+#       infisical round-trip outside any sandbox) and forwards the vault env
+#       through the workload_env allowlist, so the in-container generators
+#       never run infisical.  Manual host runs go through the same chain:
+#       ./lib/environment.sh ./generate.sh
 #     - models.dev catalog refreshed best-effort
-#     - peer routing goes through $PEER_BASE_URL / the bazzite tailscale
-#       FQDN only — no localhost:8080 or localhost:18080 candidates (the
-#       relay-drop / filter-relays.mjs machinery that cleaned those up is
-#       gone; the cascade never emits a localhost override anymore)
+#     - peer routing goes through the vault-sourced $PEER_BASE_URL (the
+#       bazzite tailscale FQDN) only — no localhost:8080 or localhost:8101
+#       candidates (the
 #
 # Logging: structured JSON on stderr (LOG_FORMAT=logfmt to switch; see
 # lib/log.sh) — stdout is never used for logs.  Every failure is a structured
@@ -41,12 +40,16 @@
 #       the `llama-swap` provider (pi-shaped, meta.llamaswap mirrored).
 #   generate-cloud-pi-native-providers.mjs -> model-012-cloud-pi-native.json
 #       pi-native cloud override cascade: probes each provider's OWN endpoint
-#       and emits an override only when it is unreachable.
+#       and emits a reroute override only when it is unreachable — routing it
+#       through its peer path-route on the simplified cloud router
+#       (<peerBase>/<providerId>, docs/d027; includes google, whose native
+#       generative-ai dialect the path-forwarding proxy carries byte-for-byte).
 #   generate-cloud-alternative-providers.mjs -> model-015-cloud-cline-pass.json
 #       + model-016-cloud-hyper.json
 #       derived from the vendored models.dev.api.json; full provider blocks
-#       (pi has no native cline-pass/hyper), per-provider real-or-peer cascade
-#       decides the route.
+#       (pi has no native cline-pass/hyper), per-provider real-or-peer
+#       path-route cascade decides the route (same key in both modes — the
+#       proxy forwards credentials untouched, docs/d027).
 #   merge-models-json.mjs      -> models.json
 #   generate-opencode.jsonc.mjs -> opencode config (OPENCODE_CFG_DIR/opencode.json,
 #       or <this dir>/opencode.jsonc for manual host runs; skipped on Termux)
@@ -64,16 +67,28 @@
 #
 # Env overrides:
 #   AGENT_DIR        install dir (default ${PI_CODING_AGENT_DIR:-$HOME/.pi/agent})
+#   DRY_RUN          1 = generators do NOT replace their artifacts (models.json
+#                    layers, opencode.json, the vendored catalog refresh) —
+#                    each write lands in a sibling <name>.dry-run preview
+#                    (repo-wide generator standard, lib/artifact.mjs)
 #   OPENCODE_CFG_DIR write opencode.json here instead of this dir (Termux: unset
 #                    skips the opencode stage)
 #   SKIP_GEN         1 = install the committed <this dir>/models.json instead of
-#                    generating (no network at all)
+#                    generating (no network at all). ORTHOGONAL to DRY_RUN:
+#                    SKIP_GEN chooses the artifact SOURCE (committed snapshot,
+#                    generators do not run); DRY_RUN suppresses the artifact
+#                    WRITE (generators run, computed output lands in .dry-run
+#                    previews). SKIP_GEN=1 short-circuits before DRY_RUN could
+#                    matter.
 #   RUN_DIR          scratch dir for intermediate layers (default $TMPDIR,
 #                    falling back to $PREFIX/tmp on Termux, /tmp elsewhere) —
 #                    this script's dir may be a read-only mount
 #   MODELS_DEV_JSON  models.dev catalog (default ../lib/models.dev.api.json —
 #                    the shared vendored catalog, see docs/d023)
 #   MODELS_DEV_REFRESH 1 = force catalog refresh on Termux too
+#   MODELS_DEV_RELAY_URL  catalog relay fallback (llm-reverse-proxy
+#                    passthrough; default http://127.0.0.1:8080/models.dev/
+#                    api.json, empty disables — fetch chain in docs/d027)
 
 set -eu
 # shellcheck source-path=SCRIPTDIR source=../lib/workload-runtime.sh  # _termux, node_run, default_run_dir, log_**
@@ -116,9 +131,8 @@ log_info "profile" \
 	profile="$([ "$_termux" = 1 ] && printf termux || printf container-host)" \
 	agentDir="$AGENT_DIR" runDir="$RUN_DIR"
 
-# --- secrets (single call; see load_secrets in ../lib/workload-runtime.sh) --------
-load_secrets
-log_debug "secrets loaded" secrets="$SECRETS_SOURCE"
+# --- environment: arrive from the explicit chain (lib/environment.sh); this
+# script consumes plain env and never loads anything itself -------------------
 
 # --- node ------------------------------------------------------------------
 node_run() {
@@ -186,7 +200,7 @@ done
 # that does not exist, so a missing copy here costs every generator instead of
 # one clear line).
 mkdir -p "$_scratch/lib"
-for _lf in log.mjs peer-probe.mjs cloud-providers.mjs pi-models.mjs hyper-facts.mjs; do
+for _lf in log.mjs artifact.mjs peer-probe.mjs cloud-providers.mjs pi-models.mjs hyper-facts.mjs; do
 	if [ -f "$REPO_ROOT/lib/$_lf" ]; then
 		cp "$REPO_ROOT/lib/$_lf" "$_scratch/lib/$_lf"
 	else
@@ -241,7 +255,7 @@ else
 		fi
 	fi
 
-	log_info "generating models.json (peer-router cascades + models.dev)"
+	log_info "generating models.json (direct-vs-peer path-route cascades + models.dev)"
 	if [ -f "$_scratch/generate-local-llama-swap.mjs" ]; then
 		node_run "$_scratch/generate-local-llama-swap.mjs" \
 			"$_scratch/model-010-local-default.json" ||
@@ -259,9 +273,6 @@ else
 	# models.dev.api.json, no secrets needed.  Writes one layer file per row
 	# next to itself (the scratch dir): model-015-cloud-cline-pass.json and
 	# model-016-cloud-hyper.json.
-	# NOTE: there is intentionally NO google layer here — llama-swap is an
-	# llm-reverse-proxy relay and cannot proxy Google's native API, so Google
-	# always goes through pi's built-in google provider (GEMINI_API_KEY).
 	if [ -f "$_scratch/generate-cloud-alternative-providers.mjs" ] && [ -f "$_scratch/models.dev.api.json" ]; then
 		node_run "$_scratch/generate-cloud-alternative-providers.mjs" ||
 			log_warn "generate-cloud-alternative-providers.mjs failed — layers omitted"
@@ -331,4 +342,4 @@ fi
 
 [ -d "${_scratch:-}" ] && rm -rf "$_scratch"
 
-log_info "done" secrets="$SECRETS_SOURCE" agentDir="$AGENT_DIR"
+log_info "done" agentDir="$AGENT_DIR"

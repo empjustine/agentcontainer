@@ -4,7 +4,7 @@
 > de-interweaving cleanup. It is **not** implemented; this page only records the
 > intended shape so it can be picked up later.
 
-Today each serving dir (`llm-reverse-proxy*`) owns a *copy* of the split
+Today each serving dir (`llm-local-inference*`) owns a *copy* of the split
 generators, and each `coding-agent*` runner owns/copies static pi JSON. That
 works but duplicates a lot of logic and makes the "base" folders the source of
 copied artifacts rather than the system that drives them.

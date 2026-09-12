@@ -9,10 +9,10 @@
 # Steps 1-2 are hard prerequisites for anything reading model files; steps
 # 3-4 are mutually independent but ordered for a deterministic run. All
 # python tools use PEP 723 inline metadata via `uv run` — no venv needed.
-# Secrets (HF_TOKEN etc.) are loaded once via ../lib/workload-runtime.sh's
-# load_secrets (infisical, or keys already in the environment — no .env file
-# is read) — never fatal; gated/private repos simply skip auth when no token
-# is available.
+# Secrets (HF_TOKEN etc.) arrive as plain environment, loaded by the explicit
+# chain: ./lib/environment.sh ./run-all.sh (the ONE infisical round-trip —
+# no .env file is read).  Never fatal inside: gated/private repos simply skip
+# auth when no token is in the environment.
 # See docs/hf-cache-upkeep.md. The GGUF size-estimation tools (layer cards,
 # active params, VRAM fits) were retired;
 # their replacement is gdevenyi/huggingface-estimate (see
@@ -23,13 +23,11 @@
 set -eu
 
 here="$(CDPATH='' cd "$(dirname "$0")" && pwd)"
-# shellcheck disable=SC1091  # loads log.sh + load_secrets
+# shellcheck disable=SC1091  # loads log.sh + the workload_* API
 . "$here/../lib/workload-runtime.sh"
 LOG_TOOL='local-llm/run-all'
 export LOG_TOOL
 cd "$here"
-load_secrets
-log_info "secrets source" source="${SECRETS_SOURCE:-none}"
 
 if ! command -v uv >/dev/null 2>&1; then
 	log_die 90 "uv not found (https://docs.astral.sh/uv/)"

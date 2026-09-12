@@ -120,7 +120,7 @@ llama.cpp catalog" pattern (`docs/extensions.md` line 1766):
 pi.registerProvider("llama-swap", {
   baseUrl: "http://127.0.0.1:8080/v1",   // bazzite llama-swap endpoint (env-configurable)
   apiKey: "$LLAMASWAP_API_KEY",          // or "$LLAMACPP_API_KEY"
-  api: "llm-reverse-proxy",
+  api: "llm-local-inference",
   async refreshModels({ signal }) {
     const res = await fetch("http://127.0.0.1:8080/v1/models", { signal });
     const { data } = await res.json();

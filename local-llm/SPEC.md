@@ -7,7 +7,7 @@ parent: architecture
 depends-on:
   - lib
 references:
-  - llm-reverse-proxy
+  - llm-local-inference
 tags:
   - cache
   - hf
@@ -40,7 +40,7 @@ through `lib/log.py`; operational detail lives in each script header.
 ## Boundary
 
 - The canonical model list is the shared `lib/llamacpp-model-data.json` —
-  **content owned by `llm-reverse-proxy/`** (its manifest-refresh workflow,
+  **content owned by `llm-local-inference/`** (its manifest-refresh workflow,
   `docs/refresh-local-llm-manifest.md`), consumed read-only here
   (`docs/d025-shared-model-data-to-lib.md`). local-llm must not edit it as part
   of pipeline work (the `--update-model-data` reorder in

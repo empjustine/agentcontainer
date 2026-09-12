@@ -1,6 +1,6 @@
 # d023 — Generator code-flow audit: findings and consolidation
 
-The generator pipelines (`llm-reverse-proxy/generate.sh` + its `.mjs`
+The generator pipelines (`llm-local-inference/generate.sh` + its `.mjs`
 generators, `coding-agent/generate.sh` + its `.mjs` generators) grew
 organically: helpers were copy-pasted between files as new generators were
 added, and a few retired mechanisms left debris behind. This document records
@@ -17,13 +17,13 @@ Findings were classified as:
 
 | #  | Item | Where | Evidence |
 |----|------|-------|----------|
-| a1 | `logDebug` re-export | `llm-reverse-proxy/gen-lib.mjs` | No `.mjs` consumer anywhere. |
+| a1 | `logDebug` re-export | `llm-local-inference/gen-lib.mjs` | No `.mjs` consumer anywhere. |
 | a2 | `logDie` export | `lib/log.mjs` | Zero JS consumers (shell has its own `log_die` in `lib/log.sh`). |
 | a3 | Duplicated paragraph | `gen-lib.mjs` KEY-NAMING CONTRACT | The "PLAIN environment variable names / `__`-prefix" bullet block was pasted twice verbatim. |
 | a4 | `lib/sandbox-*.jq` mount loop | `coding-agent/run.sh` | The glob never matches (filters were renamed `workload-*.jq`); nothing was ever mounted, and the justifying comment was stale anyway — the in-container launch chain never calls `workload_*`. |
 | a5 | `00-model-base.json` staging | `coding-agent/generate.sh`, `coding-agent/run.sh` | The file does not exist anywhere in the repo; both guarded lines never fire. `merge-models-json.mjs`'s optional base-file handling was simplified away with it. |
-| a6 | Stale references | `gen-lib.mjs`, `llm-reverse-proxy/generate.sh` (pointers into the gitignored archive, itself since removed), `lib/workload-runtime.sh` (`tests/check-workload.sh` → actually `tests/check-sandbox.sh`; `docs/d020-libvirt-qemu-workload.md` → actually `…-sandbox.md`) | Archived/renamed targets. |
-| a7 | Stale probe-cascade comment | `llm-reverse-proxy/generate.sh` gfx1030 section | Claims the probe still tries `localhost:18080`; the localhost candidates were removed (docs/d022). |
+| a6 | Stale references | `gen-lib.mjs`, `llm-local-inference/generate.sh` (pointers into the gitignored archive, itself since removed), `lib/workload-runtime.sh` (`tests/check-workload.sh` → actually `tests/check-sandbox.sh`; `docs/d020-libvirt-qemu-workload.md` → actually `…-sandbox.md`) | Archived/renamed targets. |
+| a7 | Stale probe-cascade comment | `llm-local-inference/generate.sh` gfx1030 section | Claims the probe still tries `localhost:18080`; the localhost candidates were removed (docs/d022). |
 | a8 | `filter-relays.mjs` in `tsconfig.json` | removed file still listed in `include` | The relay-drop machinery is gone (see the `coding-agent/generate.sh` header); `lint.sh`'s jq gate had the same stale `lib/sandbox-*.jq` glob. |
 | a9 | `loadModelsDev` exported | `gen-lib.mjs` | Only called inside `gen-lib.mjs` itself — un-exported. |
 | a10 | `_render_container` call | `tests/check-sandbox.sh` | The lib renamed the renderer to `_render_workload` in the sandbox→workload sweep; the test died at its first case (`_render_container: not found`) and reported MISMATCH on every run. Renamed — the suite passes again (3/3 cases). |
@@ -34,7 +34,7 @@ Findings were classified as:
 |----|------|------------|
 | b1 | `gen-lib.mjs: loadCore()` — single consumer (`generate-general.yaml.mjs`) | Kept: trivial, and its export documents the core-file contract. |
 | b2 | `gen-lib.mjs: peerEntry()` — single consumer | **Kept deliberately**: it encodes the `${env.*}` macro convention; inlining would scatter that knowledge. |
-| b3 | `coding-agent/check-node-version.mjs` — single caller (Termux branch) | Kept: it is the only home of the 22.19 rationale, and it is distinct from the llm-reverse-proxy ≥18 floor (different products). |
+| b3 | `coding-agent/check-node-version.mjs` — single caller (Termux branch) | Kept: it is the only home of the 22.19 rationale, and it is distinct from the llm-local-inference ≥18 floor (different products). |
 | b4 | `count-providers.mjs` + `list-providers.mjs` — one caller each | Kept for now (separate staging entries are cheap); merging them is a possible follow-up. |
 
 ## (c) Duplicated across files — consolidated into `lib/`
@@ -49,7 +49,7 @@ alone — `docs/architecture.md` was amended accordingly.
 
 The two copies differed only in the `LOG_TOOL` name and which providers the
 catalog payload is validated against — and the split had already caused a
-latent bug: the llm-reverse-proxy copy validated `opencode` + `opencode-go`
+latent bug: the llm-local-inference copy validated `opencode` + `opencode-go`
 but **not** `cline-pass`, although `gen-lib.PROVIDERS` fetches cline-pass
 models from that very catalog. The unified `lib/refresh-models-dev.mjs`
 validates the union (`opencode`, `opencode-go`, `cline-pass`). Callers pass
@@ -87,12 +87,12 @@ Both `generate.sh` scripts repeated, verbatim-ish:
 - the `RUN_DIR` default derivation (`${TMPDIR:-${PREFIX}/tmp}` on Termux,
   `${TMPDIR:-/tmp}` elsewhere) — now `default_run_dir`.
 
-The differing node *floors* stay per-caller (18 for the llm-reverse-proxy
+The differing node *floors* stay per-caller (18 for the llm-local-inference
 generators, 22.19 for pi — different products' requirements).
 
 ### c6. One vendored models.dev catalog
 
-`llm-reverse-proxy/models.dev.api.json` and
+`llm-local-inference/models.dev.api.json` and
 `coding-agent/models.dev.api.json` were two ~6.3 MB copies that had **already
 diverged** (different checksums) — a silent staleness hazard. There is now a
 single `lib/models.dev.api.json`; both `generate.sh` scripts default
@@ -144,7 +144,7 @@ at HEAD since the sandbox→workload rename.
 - `./lint.sh` (shellcheck -x + jq compile gate + shfmt advisory) — green.
 - `biome check` — green.
 - `./tests/check-sandbox.sh` — green (3/3 cases; was failing at HEAD, a10).
-- End-to-end: `llm-reverse-proxy/generate.sh` and `coding-agent/generate.sh`
+- End-to-end: `llm-local-inference/generate.sh` and `coding-agent/generate.sh`
   were run on a container-less host; both pipelines completed (catalog
   refresh via `lib/refresh-models-dev.mjs`, capability gate, gfx1030 probe
   sync, shrunken-peer-set rollback, scratch-dir staging with `$LIB_DIR`,

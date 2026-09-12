@@ -4,7 +4,9 @@ This applies the two remaining follow-ups from the d022/d023 audits — the
 "d022 future refactor" (split the `generate-models.json.mjs` grab-bag by
 merge semantics) and the d023 c3/c4 follow-up (unify the `CLOUD_PROVIDERS`
 fact tables) — plus the opportunistic c4 constant (`DEFAULT_PEER_FALLBACK`)
-and the two cosmetic leftovers d023 noted.
+the two cosmetic leftovers d023 noted.  (Rotation note, d028: the c4
+constant was later vault-sourced — it is `PEER_BASE_URL` in infisical's
+/inference path now, not a repo constant; see lib/peer-probe.mjs peerBaseUrl.)
 
 ## 1. The split: one generator per merge semantic (d022 future refactor)
 
@@ -54,7 +56,7 @@ three times with drifting field names:
 
 - `generate-models.json.mjs` `CLOUD_PROVIDERS` (`baseUrl`/`apiKeyEnv`)
 - `generate-opencode.jsonc.mjs` `CLOUD_PROVIDERS` (`realBase`/`keyEnv`/`label`)
-- `llm-reverse-proxy/gen-lib.mjs` `PROVIDERS` (`defaultBaseUrl`/`apiKeyEnv`)
+- `llm-local-inference/gen-lib.mjs` `PROVIDERS` (`defaultBaseUrl`/`apiKeyEnv`)
 
 They now live once in `lib/cloud-providers.mjs` (`CLOUD_PROVIDERS`, field
 name `baseUrl`), plus `PI_NATIVE_CLOUD_IDS` — the pi-native trio — so the
@@ -75,6 +77,10 @@ The bazzite tailscale URL was pasted in four generators as
 the "no localhost candidates" rationale documented once at the definition.
 `gen-lib.mjs` re-exports it for `generate-gfx1030-models.mjs`, keeping that
 generator's single-import convention.
+
+> d028 rotation: the constant is gone — the peer base is vault-sourced
+> (`PEER_BASE_URL` in infisical's /inference path, required at generation
+> time; `peerBaseUrl()` in `lib/peer-probe.mjs` is the single definition).
 
 ## 4. Cosmetic leftovers from the d023 report
 

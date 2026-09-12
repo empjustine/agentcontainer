@@ -58,7 +58,7 @@
  *   Copy the merged models.json into the container's ~/.pi/agent/models.json.
  */
 
-import { readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -69,6 +69,9 @@ const LIB_DIR =
 	join(dirname(fileURLToPath(import.meta.url)), "..", "lib");
 const { logInfo, setLogTool } = /** @type {typeof import("../lib/log.mjs")} */ (
 	await import(`${LIB_DIR}/log.mjs`)
+);
+const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
+	await import(`${LIB_DIR}/artifact.mjs`)
 );
 setLogTool("coding-agent/merge-models-json");
 
@@ -136,10 +139,13 @@ function main() {
 		process.argv[2] ??
 		process.env.PI_MODELS_JSON ??
 		join(scriptDir, "models.json");
-	const tmp = `${out}.tmp`;
-	writeFileSync(tmp, `${JSON.stringify(deepMerge(...layers), null, 2)}\n`);
-	renameSync(tmp, out); // atomic on the same filesystem: a failed merge never clobbers the good artifact
-	logInfo("merged layers", { overlays: overlayNames.length, path: out });
+	// lib/artifact.mjs write contract: atomic tmp+rename, replace by default,
+	// DRY_RUN=1 leaves models.json untouched and writes a preview.
+	const written = writeArtifact(
+		out,
+		`${JSON.stringify(deepMerge(...layers), null, 2)}\n`,
+	);
+	logInfo("merged layers", { overlays: overlayNames.length, path: written });
 }
 
 main();

@@ -7,7 +7,7 @@
       ],
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438/v1"
+        "baseURL": "https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438/llama-swap/v1"
       },
       "models": {
         "01b-ctx128-bartowski/Ling-3.0-tiny-GGUF:Q8_0": {

@@ -4,7 +4,7 @@
 
 The llama.cpp / llama-swap server returns model entries with no context-window
 metadata.  The canonical context windows are defined in
-`lib/llamacpp-model-data.json` (owner: `llm-reverse-proxy/` — the file was moved
+`lib/llamacpp-model-data.json` (owner: `llm-local-inference/` — the file was moved
 to lib to mark it shared, docs/d025) via each model's `ctx-size` field.  The
 local-llm generator reads this field, converts it to a compact `NNNctx` slug for
 the model ID (e.g. 200000 → `200ctx`), and writes `--ctx-size NNNN` (+ the

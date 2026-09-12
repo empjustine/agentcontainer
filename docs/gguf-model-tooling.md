@@ -49,7 +49,7 @@ uv run local-llm/<tool>.py ...
 | `gguf_context_length.py` | **PoC/MVP** — read `general.architecture` / `context_length` / `general.name` from a GGUF header via the PyPI `gguf` package (no weights loaded); used to pick `ctx-size` |
 
 All four consume the same canonical model list in
-`llm-reverse-proxy/` (generator owner; file in `lib/`) that also drives
+`llm-local-inference/` (generator owner; file in `lib/`) that also drives
 `openai-completions-gfx1030/config.d/10-local-llm-inference.yaml` (via
 `generate-local-llm-models.yaml.mjs`).
 

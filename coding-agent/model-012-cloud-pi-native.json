@@ -1,20 +1,10 @@
 {
   "providers": {
     "openrouter": {
-      "baseUrl": "https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438/v1",
-      "api": "openai-completions",
-      "compat": {
-        "supportsStore": false,
-        "supportsDeveloperRole": false,
-        "supportsReasoningEffort": false,
-        "supportsUsageInStreaming": true,
-        "supportsStrictMode": false,
-        "maxTokensField": "max_tokens"
-      },
-      "apiKey": "$PEER_API_KEY",
+      "baseUrl": "https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438/openrouter",
       "models": [
         {
-          "id": "openrouter/cohere/north-mini-code:free",
+          "id": "cohere/north-mini-code:free",
           "reasoning": true,
           "input": [
             "text"
@@ -27,7 +17,7 @@
           }
         },
         {
-          "id": "openrouter/dots-studio/dots-3-note-preview:free",
+          "id": "dots-studio/dots-3-note-preview:free",
           "reasoning": true,
           "input": [
             "text"
@@ -40,7 +30,7 @@
           }
         },
         {
-          "id": "openrouter/google/gemma-4-26b-a4b-it:free",
+          "id": "google/gemma-4-26b-a4b-it:free",
           "reasoning": true,
           "input": [
             "text"
@@ -53,7 +43,7 @@
           }
         },
         {
-          "id": "openrouter/google/gemma-4-31b-it:free",
+          "id": "google/gemma-4-31b-it:free",
           "reasoning": true,
           "input": [
             "text"
@@ -66,7 +56,7 @@
           }
         },
         {
-          "id": "openrouter/inclusionai/ling-3.0-flash-fin:free",
+          "id": "inclusionai/ling-3.0-flash-fin:free",
           "reasoning": true,
           "input": [
             "text"
@@ -79,7 +69,7 @@
           }
         },
         {
-          "id": "openrouter/inclusionai/ling-3.0-flash-sante:free",
+          "id": "inclusionai/ling-3.0-flash-sante:free",
           "reasoning": true,
           "input": [
             "text"
@@ -92,7 +82,7 @@
           }
         },
         {
-          "id": "openrouter/liquid/lfm-2.5-2.6b:free",
+          "id": "liquid/lfm-2.5-2.6b:free",
           "reasoning": true,
           "input": [
             "text"
@@ -105,7 +95,7 @@
           }
         },
         {
-          "id": "openrouter/minimax/minimax-m2.7:free",
+          "id": "minimax/minimax-m2.7:free",
           "reasoning": true,
           "input": [
             "text"
@@ -118,7 +108,7 @@
           }
         },
         {
-          "id": "openrouter/minimax/minimax-m3:free",
+          "id": "minimax/minimax-m3:free",
           "reasoning": true,
           "input": [
             "text"
@@ -131,7 +121,7 @@
           }
         },
         {
-          "id": "openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+          "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
           "reasoning": true,
           "input": [
             "text"
@@ -144,7 +134,7 @@
           }
         },
         {
-          "id": "openrouter/nvidia/nemotron-3-super-120b-a12b:free",
+          "id": "nvidia/nemotron-3-super-120b-a12b:free",
           "reasoning": true,
           "input": [
             "text"
@@ -157,7 +147,7 @@
           }
         },
         {
-          "id": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+          "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
           "reasoning": true,
           "input": [
             "text"
@@ -170,7 +160,7 @@
           }
         },
         {
-          "id": "openrouter/nvidia/nemotron-3.5-content-safety:free",
+          "id": "nvidia/nemotron-3.5-content-safety:free",
           "reasoning": true,
           "input": [
             "text"
@@ -183,7 +173,7 @@
           }
         },
         {
-          "id": "openrouter/nvidia/nemotron-3.5-lightning:free",
+          "id": "nvidia/nemotron-3.5-lightning:free",
           "reasoning": true,
           "input": [
             "text"
@@ -196,7 +186,7 @@
           }
         },
         {
-          "id": "openrouter/poolside/laguna-s-2.1:free",
+          "id": "poolside/laguna-s-2.1:free",
           "reasoning": true,
           "input": [
             "text"
@@ -209,7 +199,7 @@
           }
         },
         {
-          "id": "openrouter/poolside/laguna-xs-2.1:free",
+          "id": "poolside/laguna-xs-2.1:free",
           "reasoning": true,
           "input": [
             "text"
@@ -222,7 +212,7 @@
           }
         },
         {
-          "id": "openrouter/thinkingmachines/inkling-small:free",
+          "id": "thinkingmachines/inkling-small:free",
           "reasoning": true,
           "input": [
             "text"
@@ -235,7 +225,7 @@
           }
         },
         {
-          "id": "openrouter/thinkingmachines/inkling:free",
+          "id": "thinkingmachines/inkling:free",
           "reasoning": true,
           "input": [
             "text"
@@ -248,7 +238,7 @@
           }
         },
         {
-          "id": "openrouter/z-ai/glm-5.2:free",
+          "id": "z-ai/glm-5.2:free",
           "reasoning": true,
           "input": [
             "text"
@@ -263,20 +253,10 @@
       ]
     },
     "opencode": {
-      "baseUrl": "https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438/v1",
-      "api": "openai-completions",
-      "compat": {
-        "supportsStore": false,
-        "supportsDeveloperRole": false,
-        "supportsReasoningEffort": false,
-        "supportsUsageInStreaming": true,
-        "supportsStrictMode": false,
-        "maxTokensField": "max_tokens"
-      },
-      "apiKey": "$PEER_API_KEY",
+      "baseUrl": "https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438/opencode",
       "models": [
         {
-          "id": "opencode/big-pickle",
+          "id": "big-pickle",
           "reasoning": true,
           "input": [
             "text"
@@ -289,7 +269,7 @@
           }
         },
         {
-          "id": "opencode/claude-3-5-haiku",
+          "id": "claude-3-5-haiku",
           "reasoning": true,
           "input": [
             "text"
@@ -302,7 +282,7 @@
           }
         },
         {
-          "id": "opencode/claude-fable-5",
+          "id": "claude-fable-5",
           "reasoning": true,
           "input": [
             "text"
@@ -315,7 +295,7 @@
           }
         },
         {
-          "id": "opencode/claude-fable-5-1",
+          "id": "claude-fable-5-1",
           "reasoning": true,
           "input": [
             "text"
@@ -328,7 +308,7 @@
           }
         },
         {
-          "id": "opencode/claude-haiku-4-5",
+          "id": "claude-haiku-4-5",
           "reasoning": true,
           "input": [
             "text"
@@ -341,7 +321,7 @@
           }
         },
         {
-          "id": "opencode/claude-opus-4-1",
+          "id": "claude-opus-4-1",
           "reasoning": true,
           "input": [
             "text"
@@ -354,7 +334,7 @@
           }
         },
         {
-          "id": "opencode/claude-opus-4-5",
+          "id": "claude-opus-4-5",
           "reasoning": true,
           "input": [
             "text"
@@ -367,7 +347,7 @@
           }
         },
         {
-          "id": "opencode/claude-opus-4-6",
+          "id": "claude-opus-4-6",
           "reasoning": true,
           "input": [
             "text"
@@ -380,7 +360,7 @@
           }
         },
         {
-          "id": "opencode/claude-opus-4-7",
+          "id": "claude-opus-4-7",
           "reasoning": true,
           "input": [
             "text"
@@ -393,7 +373,7 @@
           }
         },
         {
-          "id": "opencode/claude-opus-4-8",
+          "id": "claude-opus-4-8",
           "reasoning": true,
           "input": [
             "text"
@@ -406,7 +386,7 @@
           }
         },
         {
-          "id": "opencode/claude-opus-5",
+          "id": "claude-opus-5",
           "reasoning": true,
           "input": [
             "text"
@@ -419,7 +399,7 @@
           }
         },
         {
-          "id": "opencode/claude-sonnet-4",
+          "id": "claude-sonnet-4",
           "reasoning": true,
           "input": [
             "text"
@@ -432,7 +412,7 @@
           }
         },
         {
-          "id": "opencode/claude-sonnet-4-5",
+          "id": "claude-sonnet-4-5",
           "reasoning": true,
           "input": [
             "text"
@@ -445,7 +425,7 @@
           }
         },
         {
-          "id": "opencode/claude-sonnet-4-6",
+          "id": "claude-sonnet-4-6",
           "reasoning": true,
           "input": [
             "text"
@@ -458,7 +438,7 @@
           }
         },
         {
-          "id": "opencode/claude-sonnet-5",
+          "id": "claude-sonnet-5",
           "reasoning": true,
           "input": [
             "text"
@@ -471,7 +451,7 @@
           }
         },
         {
-          "id": "opencode/deepseek-v4-flash",
+          "id": "deepseek-v4-flash",
           "reasoning": true,
           "input": [
             "text"
@@ -484,7 +464,7 @@
           }
         },
         {
-          "id": "opencode/deepseek-v4-flash-free",
+          "id": "deepseek-v4-flash-free",
           "reasoning": true,
           "input": [
             "text"
@@ -497,7 +477,7 @@
           }
         },
         {
-          "id": "opencode/deepseek-v4-pro",
+          "id": "deepseek-v4-pro",
           "reasoning": true,
           "input": [
             "text"
@@ -510,7 +490,7 @@
           }
         },
         {
-          "id": "opencode/gemini-3-flash",
+          "id": "gemini-3-flash",
           "reasoning": true,
           "input": [
             "text"
@@ -523,7 +503,7 @@
           }
         },
         {
-          "id": "opencode/gemini-3-pro",
+          "id": "gemini-3-pro",
           "reasoning": true,
           "input": [
             "text"
@@ -536,7 +516,7 @@
           }
         },
         {
-          "id": "opencode/gemini-3.1-pro",
+          "id": "gemini-3.1-pro",
           "reasoning": true,
           "input": [
             "text"
@@ -549,7 +529,7 @@
           }
         },
         {
-          "id": "opencode/gemini-3.5-flash",
+          "id": "gemini-3.5-flash",
           "reasoning": true,
           "input": [
             "text"
@@ -562,7 +542,7 @@
           }
         },
         {
-          "id": "opencode/gemini-3.5-flash-lite",
+          "id": "gemini-3.5-flash-lite",
           "reasoning": true,
           "input": [
             "text"
@@ -575,7 +555,7 @@
           }
         },
         {
-          "id": "opencode/gemini-3.6-flash",
+          "id": "gemini-3.6-flash",
           "reasoning": true,
           "input": [
             "text"
@@ -588,7 +568,7 @@
           }
         },
         {
-          "id": "opencode/gemini-3.7-flash",
+          "id": "gemini-3.7-flash",
           "reasoning": true,
           "input": [
             "text"
@@ -601,7 +581,7 @@
           }
         },
         {
-          "id": "opencode/gemini-3.8-flash",
+          "id": "gemini-3.8-flash",
           "reasoning": true,
           "input": [
             "text"
@@ -614,7 +594,7 @@
           }
         },
         {
-          "id": "opencode/glm-4.6",
+          "id": "glm-4.6",
           "reasoning": true,
           "input": [
             "text"
@@ -627,7 +607,7 @@
           }
         },
         {
-          "id": "opencode/glm-4.7",
+          "id": "glm-4.7",
           "reasoning": true,
           "input": [
             "text"
@@ -640,7 +620,7 @@
           }
         },
         {
-          "id": "opencode/glm-4.7-free",
+          "id": "glm-4.7-free",
           "reasoning": true,
           "input": [
             "text"
@@ -653,7 +633,7 @@
           }
         },
         {
-          "id": "opencode/glm-5",
+          "id": "glm-5",
           "reasoning": true,
           "input": [
             "text"
@@ -666,7 +646,7 @@
           }
         },
         {
-          "id": "opencode/glm-5-free",
+          "id": "glm-5-free",
           "reasoning": true,
           "input": [
             "text"
@@ -679,7 +659,7 @@
           }
         },
         {
-          "id": "opencode/glm-5.1",
+          "id": "glm-5.1",
           "reasoning": true,
           "input": [
             "text"
@@ -692,7 +672,7 @@
           }
         },
         {
-          "id": "opencode/glm-5.2",
+          "id": "glm-5.2",
           "reasoning": true,
           "input": [
             "text"
@@ -705,7 +685,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5",
+          "id": "gpt-5",
           "reasoning": true,
           "input": [
             "text"
@@ -718,7 +698,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5-codex",
+          "id": "gpt-5-codex",
           "reasoning": true,
           "input": [
             "text"
@@ -731,7 +711,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5-nano",
+          "id": "gpt-5-nano",
           "reasoning": true,
           "input": [
             "text"
@@ -744,7 +724,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.1",
+          "id": "gpt-5.1",
           "reasoning": true,
           "input": [
             "text"
@@ -757,7 +737,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.1-codex",
+          "id": "gpt-5.1-codex",
           "reasoning": true,
           "input": [
             "text"
@@ -770,7 +750,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.1-codex-max",
+          "id": "gpt-5.1-codex-max",
           "reasoning": true,
           "input": [
             "text"
@@ -783,7 +763,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.1-codex-mini",
+          "id": "gpt-5.1-codex-mini",
           "reasoning": true,
           "input": [
             "text"
@@ -796,7 +776,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.2",
+          "id": "gpt-5.2",
           "reasoning": true,
           "input": [
             "text"
@@ -809,7 +789,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.2-codex",
+          "id": "gpt-5.2-codex",
           "reasoning": true,
           "input": [
             "text"
@@ -822,7 +802,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.3-codex",
+          "id": "gpt-5.3-codex",
           "reasoning": true,
           "input": [
             "text"
@@ -835,7 +815,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.3-codex-spark",
+          "id": "gpt-5.3-codex-spark",
           "reasoning": true,
           "input": [
             "text"
@@ -848,7 +828,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.4",
+          "id": "gpt-5.4",
           "reasoning": true,
           "input": [
             "text"
@@ -861,7 +841,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.4-mini",
+          "id": "gpt-5.4-mini",
           "reasoning": true,
           "input": [
             "text"
@@ -874,7 +854,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.4-nano",
+          "id": "gpt-5.4-nano",
           "reasoning": true,
           "input": [
             "text"
@@ -887,7 +867,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.4-pro",
+          "id": "gpt-5.4-pro",
           "reasoning": true,
           "input": [
             "text"
@@ -900,7 +880,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.5",
+          "id": "gpt-5.5",
           "reasoning": true,
           "input": [
             "text"
@@ -913,7 +893,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.5-pro",
+          "id": "gpt-5.5-pro",
           "reasoning": true,
           "input": [
             "text"
@@ -926,7 +906,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.6-luna",
+          "id": "gpt-5.6-luna",
           "reasoning": true,
           "input": [
             "text"
@@ -939,7 +919,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.6-sol",
+          "id": "gpt-5.6-sol",
           "reasoning": true,
           "input": [
             "text"
@@ -952,7 +932,7 @@
           }
         },
         {
-          "id": "opencode/gpt-5.6-terra",
+          "id": "gpt-5.6-terra",
           "reasoning": true,
           "input": [
             "text"
@@ -965,7 +945,7 @@
           }
         },
         {
-          "id": "opencode/hy3-free",
+          "id": "hy3-free",
           "reasoning": true,
           "input": [
             "text"
@@ -978,7 +958,7 @@
           }
         },
         {
-          "id": "opencode/hy3-preview-free",
+          "id": "hy3-preview-free",
           "reasoning": true,
           "input": [
             "text"
@@ -991,7 +971,7 @@
           }
         },
         {
-          "id": "opencode/kimi-k2",
+          "id": "kimi-k2",
           "reasoning": true,
           "input": [
             "text"
@@ -1004,7 +984,7 @@
           }
         },
         {
-          "id": "opencode/kimi-k2-thinking",
+          "id": "kimi-k2-thinking",
           "reasoning": true,
           "input": [
             "text"
@@ -1017,7 +997,7 @@
           }
         },
         {
-          "id": "opencode/kimi-k2.5",
+          "id": "kimi-k2.5",
           "reasoning": true,
           "input": [
             "text"
@@ -1030,7 +1010,7 @@
           }
         },
         {
-          "id": "opencode/kimi-k2.5-free",
+          "id": "kimi-k2.5-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1043,7 +1023,7 @@
           }
         },
         {
-          "id": "opencode/kimi-k2.6",
+          "id": "kimi-k2.6",
           "reasoning": true,
           "input": [
             "text"
@@ -1056,7 +1036,7 @@
           }
         },
         {
-          "id": "opencode/kimi-k2.7-code",
+          "id": "kimi-k2.7-code",
           "reasoning": true,
           "input": [
             "text"
@@ -1069,7 +1049,7 @@
           }
         },
         {
-          "id": "opencode/kimi-k3",
+          "id": "kimi-k3",
           "reasoning": true,
           "input": [
             "text"
@@ -1082,7 +1062,7 @@
           }
         },
         {
-          "id": "opencode/laguna-s-2.1-free",
+          "id": "laguna-s-2.1-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1095,7 +1075,7 @@
           }
         },
         {
-          "id": "opencode/ling-2.6-flash-free",
+          "id": "ling-2.6-flash-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1108,7 +1088,7 @@
           }
         },
         {
-          "id": "opencode/ling-3.0-flash-fin-free",
+          "id": "ling-3.0-flash-fin-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1121,7 +1101,7 @@
           }
         },
         {
-          "id": "opencode/ling-3.0-flash-free",
+          "id": "ling-3.0-flash-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1134,7 +1114,7 @@
           }
         },
         {
-          "id": "opencode/ling-3.0-tiny-free",
+          "id": "ling-3.0-tiny-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1147,7 +1127,7 @@
           }
         },
         {
-          "id": "opencode/longcat-2.0-free",
+          "id": "longcat-2.0-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1160,7 +1140,7 @@
           }
         },
         {
-          "id": "opencode/mimo-v2-flash-free",
+          "id": "mimo-v2-flash-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1173,7 +1153,7 @@
           }
         },
         {
-          "id": "opencode/mimo-v2-omni-free",
+          "id": "mimo-v2-omni-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1186,7 +1166,7 @@
           }
         },
         {
-          "id": "opencode/mimo-v2-pro-free",
+          "id": "mimo-v2-pro-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1199,7 +1179,7 @@
           }
         },
         {
-          "id": "opencode/mimo-v2.5-free",
+          "id": "mimo-v2.5-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1212,7 +1192,7 @@
           }
         },
         {
-          "id": "opencode/minimax-m2.1",
+          "id": "minimax-m2.1",
           "reasoning": true,
           "input": [
             "text"
@@ -1225,7 +1205,7 @@
           }
         },
         {
-          "id": "opencode/minimax-m2.1-free",
+          "id": "minimax-m2.1-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1238,7 +1218,7 @@
           }
         },
         {
-          "id": "opencode/minimax-m2.5",
+          "id": "minimax-m2.5",
           "reasoning": true,
           "input": [
             "text"
@@ -1251,7 +1231,7 @@
           }
         },
         {
-          "id": "opencode/minimax-m2.5-free",
+          "id": "minimax-m2.5-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1264,7 +1244,7 @@
           }
         },
         {
-          "id": "opencode/minimax-m2.7",
+          "id": "minimax-m2.7",
           "reasoning": true,
           "input": [
             "text"
@@ -1277,7 +1257,7 @@
           }
         },
         {
-          "id": "opencode/minimax-m3",
+          "id": "minimax-m3",
           "reasoning": true,
           "input": [
             "text"
@@ -1290,7 +1270,7 @@
           }
         },
         {
-          "id": "opencode/minimax-m3-free",
+          "id": "minimax-m3-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1303,7 +1283,7 @@
           }
         },
         {
-          "id": "opencode/muse-spark-1.2",
+          "id": "muse-spark-1.2",
           "reasoning": true,
           "input": [
             "text"
@@ -1316,7 +1296,7 @@
           }
         },
         {
-          "id": "opencode/muse-spark-1.2-contributor-free",
+          "id": "muse-spark-1.2-contributor-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1329,7 +1309,7 @@
           }
         },
         {
-          "id": "opencode/muse-spark-1.3-contributor-free",
+          "id": "muse-spark-1.3-contributor-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1342,7 +1322,7 @@
           }
         },
         {
-          "id": "opencode/nemotron-3-super-free",
+          "id": "nemotron-3-super-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1355,7 +1335,7 @@
           }
         },
         {
-          "id": "opencode/nemotron-3-ultra-free",
+          "id": "nemotron-3-ultra-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1368,7 +1348,7 @@
           }
         },
         {
-          "id": "opencode/nemotron-3.5-lightning-free",
+          "id": "nemotron-3.5-lightning-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1381,7 +1361,7 @@
           }
         },
         {
-          "id": "opencode/north-mini-code-free",
+          "id": "north-mini-code-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1394,7 +1374,7 @@
           }
         },
         {
-          "id": "opencode/qwen3-coder",
+          "id": "qwen3-coder",
           "reasoning": true,
           "input": [
             "text"
@@ -1407,7 +1387,7 @@
           }
         },
         {
-          "id": "opencode/qwen3.5-plus",
+          "id": "qwen3.5-plus",
           "reasoning": true,
           "input": [
             "text"
@@ -1420,7 +1400,7 @@
           }
         },
         {
-          "id": "opencode/qwen3.6-plus",
+          "id": "qwen3.6-plus",
           "reasoning": true,
           "input": [
             "text"
@@ -1433,7 +1413,7 @@
           }
         },
         {
-          "id": "opencode/qwen3.6-plus-free",
+          "id": "qwen3.6-plus-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1446,7 +1426,7 @@
           }
         },
         {
-          "id": "opencode/ring-2.6-1t-free",
+          "id": "ring-2.6-1t-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1459,7 +1439,7 @@
           }
         },
         {
-          "id": "opencode/trinity-large-preview-free",
+          "id": "trinity-large-preview-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1472,7 +1452,7 @@
           }
         },
         {
-          "id": "opencode/x-preview-f-free",
+          "id": "x-preview-f-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1487,20 +1467,10 @@
       ]
     },
     "opencode-go": {
-      "baseUrl": "https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438/v1",
-      "api": "openai-completions",
-      "compat": {
-        "supportsStore": false,
-        "supportsDeveloperRole": false,
-        "supportsReasoningEffort": false,
-        "supportsUsageInStreaming": true,
-        "supportsStrictMode": false,
-        "maxTokensField": "max_tokens"
-      },
-      "apiKey": "$PEER_API_KEY",
+      "baseUrl": "https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438/opencode-go",
       "models": [
         {
-          "id": "opencode-go/deepseek-v4-flash",
+          "id": "deepseek-v4-flash",
           "reasoning": true,
           "input": [
             "text"
@@ -1513,7 +1483,7 @@
           }
         },
         {
-          "id": "opencode-go/deepseek-v4-flash-vision-exp",
+          "id": "deepseek-v4-flash-vision-exp",
           "reasoning": true,
           "input": [
             "text"
@@ -1526,7 +1496,7 @@
           }
         },
         {
-          "id": "opencode-go/deepseek-v4-pro",
+          "id": "deepseek-v4-pro",
           "reasoning": true,
           "input": [
             "text"
@@ -1539,7 +1509,7 @@
           }
         },
         {
-          "id": "opencode-go/glm-5",
+          "id": "glm-5",
           "reasoning": true,
           "input": [
             "text"
@@ -1552,7 +1522,7 @@
           }
         },
         {
-          "id": "opencode-go/glm-5.1",
+          "id": "glm-5.1",
           "reasoning": true,
           "input": [
             "text"
@@ -1565,7 +1535,7 @@
           }
         },
         {
-          "id": "opencode-go/glm-5.2",
+          "id": "glm-5.2",
           "reasoning": true,
           "input": [
             "text"
@@ -1578,7 +1548,7 @@
           }
         },
         {
-          "id": "opencode-go/glm-5.3",
+          "id": "glm-5.3",
           "reasoning": true,
           "input": [
             "text"
@@ -1591,7 +1561,7 @@
           }
         },
         {
-          "id": "opencode-go/glm-5.3-flash",
+          "id": "glm-5.3-flash",
           "reasoning": true,
           "input": [
             "text"
@@ -1604,7 +1574,7 @@
           }
         },
         {
-          "id": "opencode-go/gpt-5.6-luna",
+          "id": "gpt-5.6-luna",
           "reasoning": true,
           "input": [
             "text"
@@ -1617,7 +1587,7 @@
           }
         },
         {
-          "id": "opencode-go/hy3",
+          "id": "hy3",
           "reasoning": true,
           "input": [
             "text"
@@ -1630,7 +1600,7 @@
           }
         },
         {
-          "id": "opencode-go/hy4-preview",
+          "id": "hy4-preview",
           "reasoning": true,
           "input": [
             "text"
@@ -1643,7 +1613,7 @@
           }
         },
         {
-          "id": "opencode-go/kimi-k2.5",
+          "id": "kimi-k2.5",
           "reasoning": true,
           "input": [
             "text"
@@ -1656,7 +1626,7 @@
           }
         },
         {
-          "id": "opencode-go/kimi-k2.6",
+          "id": "kimi-k2.6",
           "reasoning": true,
           "input": [
             "text"
@@ -1669,7 +1639,7 @@
           }
         },
         {
-          "id": "opencode-go/kimi-k2.7-code",
+          "id": "kimi-k2.7-code",
           "reasoning": true,
           "input": [
             "text"
@@ -1682,7 +1652,7 @@
           }
         },
         {
-          "id": "opencode-go/kimi-k3",
+          "id": "kimi-k3",
           "reasoning": true,
           "input": [
             "text"
@@ -1695,7 +1665,7 @@
           }
         },
         {
-          "id": "opencode-go/longcat-2.0",
+          "id": "longcat-2.0",
           "reasoning": true,
           "input": [
             "text"
@@ -1708,7 +1678,7 @@
           }
         },
         {
-          "id": "opencode-go/mimo-v2-omni",
+          "id": "mimo-v2-omni",
           "reasoning": true,
           "input": [
             "text"
@@ -1721,7 +1691,7 @@
           }
         },
         {
-          "id": "opencode-go/mimo-v2-pro",
+          "id": "mimo-v2-pro",
           "reasoning": true,
           "input": [
             "text"
@@ -1734,7 +1704,7 @@
           }
         },
         {
-          "id": "opencode-go/mimo-v2.5",
+          "id": "mimo-v2.5",
           "reasoning": true,
           "input": [
             "text"
@@ -1747,7 +1717,7 @@
           }
         },
         {
-          "id": "opencode-go/mimo-v2.5-pro",
+          "id": "mimo-v2.5-pro",
           "reasoning": true,
           "input": [
             "text"
@@ -1760,7 +1730,7 @@
           }
         },
         {
-          "id": "opencode-go/minimax-m2.5",
+          "id": "minimax-m2.5",
           "reasoning": true,
           "input": [
             "text"
@@ -1773,7 +1743,7 @@
           }
         },
         {
-          "id": "opencode-go/minimax-m2.7",
+          "id": "minimax-m2.7",
           "reasoning": true,
           "input": [
             "text"
@@ -1786,7 +1756,7 @@
           }
         },
         {
-          "id": "opencode-go/minimax-m3",
+          "id": "minimax-m3",
           "reasoning": true,
           "input": [
             "text"
@@ -1799,7 +1769,7 @@
           }
         },
         {
-          "id": "opencode-go/muse-spark-1.2-contributor",
+          "id": "muse-spark-1.2-contributor",
           "reasoning": true,
           "input": [
             "text"
@@ -1812,7 +1782,7 @@
           }
         },
         {
-          "id": "opencode-go/muse-spark-1.3-contributor",
+          "id": "muse-spark-1.3-contributor",
           "reasoning": true,
           "input": [
             "text"
@@ -1825,7 +1795,7 @@
           }
         },
         {
-          "id": "opencode-go/omen-alpha",
+          "id": "omen-alpha",
           "reasoning": true,
           "input": [
             "text"
@@ -1838,7 +1808,7 @@
           }
         },
         {
-          "id": "opencode-go/ox-alpha-free",
+          "id": "ox-alpha-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1851,7 +1821,7 @@
           }
         },
         {
-          "id": "opencode-go/qwen3.5-plus",
+          "id": "qwen3.5-plus",
           "reasoning": true,
           "input": [
             "text"
@@ -1864,7 +1834,7 @@
           }
         },
         {
-          "id": "opencode-go/qwen3.6-plus",
+          "id": "qwen3.6-plus",
           "reasoning": true,
           "input": [
             "text"
@@ -1877,7 +1847,7 @@
           }
         },
         {
-          "id": "opencode-go/qwen3.7-max",
+          "id": "qwen3.7-max",
           "reasoning": true,
           "input": [
             "text"
@@ -1890,7 +1860,7 @@
           }
         },
         {
-          "id": "opencode-go/qwen3.7-plus",
+          "id": "qwen3.7-plus",
           "reasoning": true,
           "input": [
             "text"
@@ -1903,7 +1873,7 @@
           }
         },
         {
-          "id": "opencode-go/qwen3.8-flash",
+          "id": "qwen3.8-flash",
           "reasoning": true,
           "input": [
             "text"
@@ -1916,7 +1886,7 @@
           }
         },
         {
-          "id": "opencode-go/qwen3.8-max",
+          "id": "qwen3.8-max",
           "reasoning": true,
           "input": [
             "text"

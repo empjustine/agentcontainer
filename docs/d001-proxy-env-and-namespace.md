@@ -15,14 +15,14 @@ available the moment the env var is detected.
 
 ### 1.  Proxy config lives in the generator's process environment, not the shell
 
-The provider generators (`llm-reverse-proxy/gen-lib.mjs`,
+The provider generators (`llm-local-inference/gen-lib.mjs`,
 `coding-agent/generate-models.json.mjs`) read provider overrides from the
-**process environment** (`process.env`, populated by `load_secrets` on the
-host — Infisical via `load_secrets`, or keys already exported by the caller).
+**process environment** (`process.env`, populated by lib/environment.sh on the
+host — the explicit infisical chain; see [lib/environment.sh](../lib/environment.sh)).
 The shell environment is NOT consulted for `*_BASE_URL` vars directly — the
 scripts read what Node gives it via `process.env`.  No `.env` file or
 `$ENV_FILE` is read by anything in this repo (see
-[load_secrets](../lib/workload-runtime.sh) for the contract).
+[lib/environment.sh](../lib/environment.sh) for the contract).
 
 ### 2.  `baseUrl` is baked as a literal in the generated config
 

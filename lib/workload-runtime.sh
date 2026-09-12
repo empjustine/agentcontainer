@@ -4,8 +4,9 @@
 # Supported backends: rootless podman and rootful docker (the "workload"
 # backend). PRoot was removed as a supported backend — it is a ptrace
 # path-translation shim, not isolation (no namespaces, no cgroups, no real
-# root, no GPU passthrough); the termux/a50 path serves natively via
-# llm-reverse-proxy/run-native.sh instead. A qemu/libvirt VM backend is
+# root, no GPU passthrough); the Termux/a50 path is not served by this repo's
+# sandbox API (local inference is container-only; cloud relay is served by
+# llm-reverse-proxy). A qemu/libvirt VM backend is
 # assessed in docs/d020-libvirt-qemu-sandbox.md (not implemented).
 
 # path resolution (the only "where do I live" logic; run scripts reuse these)
@@ -31,7 +32,7 @@ esac
 
 # node_run [args...] — run node with the repo-pinned version, or the system
 # node on Termux (there is no mise there).  Callers own the version-floor
-# checks, which differ by product (>= 18 for the llm-reverse-proxy
+# checks, which differ by product (>= 18 for the llm-local-inference
 # generators' global fetch, >= 22.19 for pi-coding-agent's engines).
 node_run() {
 	if [ "$_termux" = 1 ]; then
@@ -59,151 +60,18 @@ default_run_dir() {
 # .infisical.json.  Exported so the generate/run scripts (and the in-workload
 # launch chain) reference these instead of duplicating the literal across
 # scripts.  These are routing, NOT secrets — safe to forward via workload_env.
+#
+# SECRETS LIVE IN THE EXPLICIT CHAIN: lib/environment.sh is the ONE loader
+# (./lib/environment.sh ./<script> — one in-memory infisical round-trip,
+# then exec).  Consumers source NOTHING and read plain env; run scripts are
+# exec'd through the chain, and inside sandboxes the vault env is forwarded
+# via the workload_env allowlist.  There is no in-script secret loading and
+# no emergency "already-seeded environment" path: a missing vault var is a
+# missing var, and lib/environment.sh's fatal-on-empty vault contract is what
+# keeps consumers from ever running half-configured.
 INFISICAL_API_URL="${INFISICAL_API_URL:-https://app.infisical.com}"
 INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-628c46b6-a5d5-4671-9435-c205847397ce}"
 export INFISICAL_API_URL INFISICAL_PROJECT_ID
-
-# --- secrets ---------------------------------------------------------------
-# load_secrets — the single place that decides where secrets come from.
-#
-# NO SECRET FILES, EVER.  No script in this repo reads a dotenv file: not
-# `.env`, not `$ENV_FILE`, not a cache file.  The former ENV_FILE override and
-# the `<caller's dir>/.env` last-resort fallback were removed — a file of
-# plaintext keys on disk is the failure mode this loader exists to avoid, and
-# every host that used them has infisical (Termux via the locally built CLI,
-# see ./build.sh).  `llm-reverse-proxy/.env.example` is DOCUMENTATION ONLY:
-# it lists the key names the generators and the server read; nothing sources,
-# copies or loads it.
-#
-# Priority:
-#   1. the caller's environment — the "emergency not-infisical loader": if the
-#      caller has already seeded the environment (or explicitly opts out of the
-#      vault), accept that env as-is and never contact infisical.  Two ways to
-#      trigger it:
-#
-#      * SECRETS_ASSUME=1 — "the environment is already correct; do not
-#        re-derive anything".  Canonical user: the coding-agent workload.  run.sh
-#        (host) forwards the vault env through its workload_env allowlist and the
-#        in-workload launch.sh exports SECRETS_ASSUME=1, so load_secrets inside
-#        the workload only ever consumes that forwarded env — infisical is never
-#        run inside the workload.  This header is the flag's canonical
-#        definition; elsewhere it is only referenced (coding-agent/run.sh,
-#        coding-agent/config.toml).
-#      * any well-known inference key already set (PEER_API_KEY, CLINE_API_KEY,
-#        OPENCODE_API_KEY, OPENROUTER_API_KEY, HF_TOKEN, MISTRAL_API_KEY) —
-#        same short-circuit without the flag.
-#   2. infisical: ONE `infisical secrets --output=dotenv` per call, injected
-#      into the environment IN MEMORY (the dotenv text is only the CLI's wire
-#      format; it is parsed straight out of a here-string and never lands on
-#      disk).  Binary resolution, in order: $INFISICAL_BIN
-#      (explicit) › $HOME/Infisical/cli/infisical (the Termux/Android build —
-#      the CLI now builds there with -checklinkname=0, see
-#      see the repo's root ./build.sh, which is what provisions it and
-#      documents the flags; tried before mise so a Termux host with mise
-#      still uses the locally built CLI, as no official Android release
-#      exists) › `mise x infisical@latest -- infisical` (mise hosts; the
-#      explicit version pins the tool rather than depending on the host's
-#      global config) › `infisical` on PATH.
-#
-# Never fatal: callers must tolerate missing keys (generators skip key-less
-# providers; launchers warn).  Sets SECRETS_SOURCE (none|injected|infisical)
-# for diagnostics.
-_SECRETS_LOADED=0
-load_secrets() {
-	[ "$_SECRETS_LOADED" = 1 ] && return 0
-	_SECRETS_LOADED=1
-	SECRETS_SOURCE=none
-
-	# 1. already-injected environment — the "emergency not-infisical loader"
-	#    (canonical definition in the load_secrets header above)
-	if [ "${SECRETS_ASSUME:-0}" = 1 ] || [ -n "${PEER_API_KEY:-}" ] \
-		|| [ -n "${CLINE_API_KEY:-}" ] || [ -n "${OPENCODE_API_KEY:-}" ] \
-		|| [ -n "${OPENROUTER_API_KEY:-}" ] || [ -n "${HF_TOKEN:-}" ] \
-		|| [ -n "${MISTRAL_API_KEY:-}" ]; then
-		SECRETS_SOURCE=injected
-		return 0
-	fi
-
-	# Dotenv parser for an IN-MEMORY string ($1) — the infisical fetch.  There
-	# is deliberately no file variant of this (no `.env`, no `$ENV_FILE`): the
-	# vault keys must never be materialized on disk, so the CLI's dotenv output
-	# is parsed straight from a here-doc.  The here-doc keeps the `while` loop
-	# in the current shell (exports persist), and parameter expansion yields
-	# literal text (no eval / no re-expansion).
-	# shellcheck disable=SC2163  # intentional dynamic export
-	_secrets_inject() {
-		while IFS= read -r _l || [ -n "$_l" ]; do
-			case "$_l" in ''|\#*) continue ;; esac
-			_l="${_l#export }"
-			case "$_l" in *=*) export "$_l" ;; esac
-		done <<EOF
-$1
-EOF
-	}
-
-	# 2. infisical — all platforms (see header for binary resolution)
-	_secrets_infisical() {
-		if [ -n "${INFISICAL_BIN:-}" ] && [ -x "$INFISICAL_BIN" ]; then
-			"$INFISICAL_BIN" "$@"
-		elif [ -x "$HOME/Infisical/cli/infisical" ]; then
-			# The Termux/Android build (see the repo's root ./build.sh) — tried
-			# before mise so a Termux host with mise installed still uses the
-			# locally built CLI (no official Android release exists).
-			"$HOME/Infisical/cli/infisical" "$@"
-		elif command -v mise >/dev/null 2>&1; then
-			mise x infisical@latest -- infisical "$@"
-		elif command -v infisical >/dev/null 2>&1; then
-			infisical "$@"
-		else
-			return 1
-		fi
-	}
-	_secrets_available=0
-	if { [ -n "${INFISICAL_BIN:-}" ] && [ -x "$INFISICAL_BIN" ]; } \
-		|| [ -x "$HOME/Infisical/cli/infisical" ] \
-		|| command -v mise >/dev/null 2>&1 \
-		|| command -v infisical >/dev/null 2>&1; then
-		_secrets_available=1
-	fi
-	if [ "$_secrets_available" = 1 ]; then
-		# Fetch the vault ONCE and inject it into the environment in memory —
-		# never a cache file on disk.  A prior revision wrote the dotenv
-		# export to $XDG_RUNTIME_DIR/.agentcontainer-secrets.<uid>.env (falling
-		# back to /tmp or $PREFIX/tmp), materializing the vault keys in
-		# persistent storage — including on Termux, where $PREFIX/tmp lives
-		# inside the app's data dir.  Secrets belong in the process environment,
-		# so there is deliberately no cross-invocation cache (SECRETS_ASSUME=1 /
-		# already-set keys still short-circuit above).
-		# Gate the fetch inside an `if` condition: a failing (or empty) vault
-		# call must be non-fatal under the caller's set -e ("never fatal"
-		# contract), not abort the script.  `set -e` is suspended in a condition,
-		# so a non-zero exit is captured here the same way the old cache write
-		# was.
-		if _secrets_dotenv="$(_secrets_infisical secrets --output=dotenv --silent \
-				--domain="${INFISICAL_API_URL:-https://app.infisical.com}" \
-				--projectId="${INFISICAL_PROJECT_ID:-}" \
-				--env=prod --path=/inference)" && [ -n "$_secrets_dotenv" ]; then
-			_secrets_inject "$_secrets_dotenv"
-			SECRETS_SOURCE=infisical
-			return 0
-		fi
-		log_warn "infisical secrets fetch failed — continuing without vault secrets"
-	fi
-
-	if [ "$_secrets_available" != 1 ] && [ "$SECRETS_SOURCE" = none ]; then
-		# No binary anywhere to fetch from — say how to provision one instead of
-		# failing silently (Termux must source-build the CLI; see the repo's
-		# ./build.sh, which builds it).  Keys can also simply be exported into the
-		# environment before the call (see the header).
-		case "${PREFIX:-}" in
-			*/com.termux/*)
-				log_warn "no secrets source and no infisical binary — run the repo's ./build.sh to build the Termux CLI, or export the keys" ;;
-			*)
-				log_warn "no secrets source (no mise/infisical, no keys in the environment)" ;;
-		esac
-	fi
-	return 0
-}
 
 # backend detection
 _workload_tool=''
@@ -227,7 +95,7 @@ detect_workload_tool && _workload='workload'
 
 # workload_has <field> — succeed when a named array of the description is
 # non-empty.  This is how callers ask the description a question without
-# reaching into its internals: llm-reverse-proxy/generate.sh gates the
+# reaching into its internals: llm-local-inference/generate.sh gates the
 # local-inference layer on `workload_has devices` (plus the workload backend).
 # The predicate itself lives in lib/workload-has.jq and is carried by jq's -e
 # exit status (0 = true, 1 = false/null), so there is no string comparison.
@@ -262,8 +130,8 @@ workload_has() {
 # an empty flag).  See lib/workload-render.jq.
 workload_JQDIR="$REPO_ROOT/lib"
 
-# jq is needed only by the workload_* calls.  Scripts that source this file just
-# for log_* or load_secrets (e.g. local-llm/run-all.sh) never touch it, so the
+# jq is needed only by the workload_* calls.  Scripts that source this file
+# just for log_* (e.g. local-llm/run-all.sh) never touch it, so the
 # lookup is lazy: it happens on the first workload_* call that needs it, not at
 # source time.  (The cache below is best-effort: the mutators assign through
 # `$( ... )`, which runs this function in a subshell, so a mutator's lookup

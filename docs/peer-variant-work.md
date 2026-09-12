@@ -1,11 +1,27 @@
 # Work (nonfree-world) peer variant
 
-> **ARCHIVED.** The `coding-agent-peer/` folder is gone from the live tree —
-> the coding-agent squash folded the peers-only usage variant into
-> `coding-agent/` itself (static provider config + layered generation, see
-> `coding-agent/merge-models-json.mjs` for the layer contract and
-> [environments-and-peer-variants.md](environments-and-peer-variants.md)).
-> This note is kept as historical reference.
+> **ARCHIVED, and SUPERSEDED twice over** — read nothing below as current:
+>
+> 1. **Structure.** The `coding-agent-peer/` folder is gone from the live
+>    tree — the coding-agent squash folded the peers-only usage variant into
+>    `coding-agent/` itself (static provider config + layered generation, see
+>    `coding-agent/merge-models-json.mjs` for the layer contract and
+>    [environments-and-peer-variants.md](environments-and-peer-variants.md)).
+> 2. **Routing + environment.** Everything this note says about peer shape
+>    and env is pre-d027/pre-vault and no longer true: peer routes are now
+>    path-prefix routes of llm-reverse-proxy — `<peerBase>/<providerId>` for
+>    cloud (reroute-only overrides, no `apiKey`: pi's built-in auth flows
+>    through), `<peerBase>/llama-swap/v1` for local GGUF (`$PEER_API_KEY`,
+>    llama-swap's own bearer) — and the peer base (`PEER_BASE_URL`) is
+>    vault-sourced (infisical /inference/PEER_BASE_URL, loaded by the
+>    explicit chain `./lib/environment.sh <script>`), not a
+>    hardcoded/informational value. The
+>    `.env`-file mechanism described here was removed earlier still (no
+>    dotenv files anywhere; docs/d001). Current state: docs/d027,
+>    [environments-and-peer-variants.md](environments-and-peer-variants.md),
+>    [container-tooling.md](container-tooling.md).
+>
+> Kept as historical reference.
 
 Implements the **work** environment from
 [environments-and-peer-variants.md](environments-and-peer-variants.md):
@@ -43,6 +59,11 @@ built-in `opencode` and `opencode-go` providers with the peer endpoint:
 }
 ```
 
+> **Superseded shape** — see the banner: this is the old llama-swap-era
+> shared-`/v1` + `PEER_API_KEY` routing. Current: reroute-only
+> `<peerBase>/<providerId>` overrides (cloud, native keys) and
+> `<peerBase>/llama-swap/v1` (local, `$PEER_API_KEY`) behind the proxy.
+
 - **baseUrl** is hardcoded to the peer's address (not sensitive — it's the
   local llama-swap endpoint). The `.env.example` value should match.
 - **apiKey** is `$PEER_API_KEY` — pi resolves this at request time from the
@@ -54,6 +75,10 @@ built-in `opencode` and `opencode-go` providers with the peer endpoint:
 
 ### `.env` — secrets
 
+> **Superseded wholesale** — see the banner. `.env` files are removed from
+> this repo (no dotenv mechanism anywhere; docs/d001): secrets come from the
+> vault via the explicit `./lib/environment.sh` chain.
+
 ```
 PEER_API_KEY=<your-secret-key>
 PEER_BASE_URL=http://10.90.17.20:8080/v1
@@ -64,6 +89,8 @@ PEER_BASE_URL=http://10.90.17.20:8080/v1
 - `PEER_BASE_URL` is **informational** — the peer baseUrl is hardcoded in
   `models.json`. Set it locally for documentation/reference, but changing it
   won't affect pi's behavior until `models.json` is updated.
+  **Superseded** — the peer base is vault-sourced now (see the banner), and
+  the `.env`-file mechanism below is gone with it.
 - To set up: copy the values from your environment and re-run `run.sh`.
 
 ### `settings.json` — pi settings

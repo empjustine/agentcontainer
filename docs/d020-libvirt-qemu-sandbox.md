@@ -3,7 +3,7 @@
 **Status: verified requirements only — nothing implemented.** This note
 establishes what it would take to support qemu/libvirt VMs as workload runtimes
 next to the existing podman/docker container backend, for both serving
-(`llm-reverse-proxy/`) and usage (`coding-agent/`). It is the deliberate
+(`llm-local-inference/`) and usage (`coding-agent/`). It is the deliberate
 replacement for the retired PRoot backend (see
 [container-tooling.md](container-tooling.md), "PRoot backend removed"): where PRoot only *translated
 paths over ptrace* (no namespaces, no cgroups, no real root, no GPU), a
@@ -131,7 +131,7 @@ systemctl --user status virtqemud virtstoraged 2>/dev/null   # user-session daem
   (`container_file_t` / `virtiofs_content_t`) — same class of friction as the
   `:z,U` handling `lib/workload-runtime.sh` already centralizes.
 
-## 4. Serving scenario (`llm-reverse-proxy`) in a VM
+## 4. Serving scenario (`llm-local-inference`) in a VM
 
 - **Peers-only serving (cpu image)**: fully viable at Level 1 or 2. The
   llama-swap container is stateless, outbound-only, one published port; give

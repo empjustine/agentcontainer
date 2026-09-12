@@ -17,18 +17,18 @@ the llama-swap serving container and the pi coding-agent container.
 
 | Name    | Sandbox / runtime                          | Cloud access | Serving dir                     | Usage dir              |
 |---------|--------------------------------------------|--------------|---------------------------------|------------------------|
-| bazzite | rootless podman, SELinux enforced          | direct       | `llm-reverse-proxy/`           | `coding-agent/`        |
-| a50     | rootless termux, restrictive SELinux,      | direct (if   | `llm-reverse-proxy/` (native)  | `coding-agent/`        |
+| bazzite | rootless podman, SELinux enforced          | direct       | `llm-local-inference/`           | `coding-agent/`        |
+| a50     | rootless termux, restrictive SELinux,      | direct (if   | `llm-local-inference/` (native)  | `coding-agent/`        |
 |         | non-standard file paths                    | any)         |                                 |                        |
-| work    | WSL2 rootful docker, no direct cloud       | peers only   | `llm-reverse-proxy/` (peer-only) | `coding-agent/` (static config) |
+| work    | WSL2 rootful docker, no direct cloud       | peers only   | `llm-local-inference/` (peer-only) | `coding-agent/` (static config) |
 
 ### bazzite (full, default)
 
 The reference environment. Runs **one** multipurpose llama-swap instance,
-`llm-reverse-proxy/` — `generate.sh` detects the container backend + GPU
+`llm-local-inference/` — `generate.sh` detects the container backend + GPU
 devices and emits both the local GGUF layer and the cloud-peer layer into
 `config.d/`; `run.sh` launches the `unified-vulkan` image with GPU passthrough
-+ HF cache on LAN port 8080 — plus the full `coding-agent/`. Rootless podman
++ HF cache on LAN port 8101 — plus the full `coding-agent/`. Rootless podman
 with SELinux means every writable bind mount gets `:z,U` (or `:Z,U`) relabel +
 chown, and the containers run as the host UID via `--userns=keep-id` +
 `--user $(id -u):$(id -g)`. Two rootless constraints shape what this env can
@@ -41,7 +41,7 @@ creation (no `CAP_MKNOD` — GPUs pass through as *existing* nodes via
 ### a50 (termux, peer-only serving)
 
 Resource-constrained host (phone/router under Termux). It **cannot run the
-`llm-reverse-proxy` llama-swap container** — Termux has no usable podman/docker
+`llm-local-inference` llama-swap container** — Termux has no usable podman/docker
 and the image is amd64/container-shaped. Instead it needs a termux-specific
 **native build of llama-swap** compiled for the device. Local llama.cpp inference
 is also impossible, so `generate.sh` (which detects no container backend + no
@@ -49,7 +49,7 @@ GPU) emits a **peers-only** `config.d/` — no GGUF layer, no
 `llamacpp-model-data.json` usage.
 
 See [termux-serving.md](termux-serving.md) for the a50/termux map — the
-build/serve/env detail lives in the `llm-reverse-proxy/` script headers it
+build/serve/env detail lives in the `llm-local-inference/` script headers it
 points at.
 
 ### work (nonfree-world, peer-only usage)
@@ -73,7 +73,7 @@ device passthrough, port publishing, hardening) behind one interface. No
 > ptrace-based path translation, not isolation — no kernel namespaces, no
 > cgroups, no real root, no GPU passthrough, no read-only binds — so calling it
 > a "supported workload" was a lie the tree no longer tells. Termux serves
-> natively via `llm-reverse-proxy/run-native.sh` (the binary talks to the
+> natively via `llm-local-inference/run-native.sh` (the binary talks to the
 > network directly; there is nothing to confine that the shell couldn't).
 > For a stronger-than-container option on capable hosts, see
 > [d020-libvirt-qemu-sandbox.md](d020-libvirt-qemu-sandbox.md).
@@ -93,7 +93,7 @@ On source it detects the backend and computes two paths every run script uses
 It also sets `_workload` (`container` › `none`) and, for the container
 backend, `_container_tool` (`podman`/`docker`) — but run scripts should not read
 these directly; they describe intent via the API below. (Capability probing in
-`llm-reverse-proxy/generate.sh` legitimately reuses the internals —
+`llm-local-inference/generate.sh` legitimately reuses the internals —
 `_workload` + `detect_gpu_devs` — to decide which config layers the host can
 run.)
 
@@ -115,10 +115,10 @@ run.)
 | `workload_ro_if <host> <guest>` | optional variant (skipped if host path absent) |
 | `workload_env <NAME...>` | pass these host env vars into the workload (`--env`) |
 | `workload_cmd <args...>` | the command (argv after the image) |
-| `workload_has <field>` | true when a description array is non-empty — e.g. `workload_has devices`, which is how `llm-reverse-proxy/generate.sh` gates the local-inference layer |
+| `workload_has <field>` | true when a description array is non-empty — e.g. `workload_has devices`, which is how `llm-local-inference/generate.sh` gates the local-inference layer |
 | `workload_rm <id>` | remove a prior instance by name |
 | `workload_logs <id>` | tail a running instance's logs |
-| `workload_run [wrapper...]` | render + launch; optional `wrapper` prefixes the launch command. Host-side only — it cannot inject env into the workload; secrets reach the workload via the `workload_env` allowlist (see `coding-agent/run.sh`: host `load_secrets` → forwarded vault keys) |
+| `workload_run [wrapper...]` | render + launch; optional `wrapper` prefixes the launch command. Host-side only — it cannot inject env into the workload; secrets reach the workload via the `workload_env` allowlist (see `coding-agent/run.sh`: host-side `lib/environment.sh` → forwarded vault env) |
 
 Only `workload_ro`/`workload_rw` (required) abort the run if the host path is
 gone; `workload_ro_if` is best-effort. Mount host/guest paths may contain
@@ -170,7 +170,7 @@ header repeats:
   run with `jq -n`**, or it waits on stdin and never produces output.
 
 **Dependency:** jq is required by the `workload_*` calls only — scripts that
-source `lib/workload-runtime.sh` just for `log_*` or `load_secrets` never touch it,
+source `lib/workload-runtime.sh` just for `log_*` never touch it,
 and the lookup is lazy (it fails on first use, not at source time).
 Provisioned in `mise.toml` (host), `coding-agent/config.toml` (image), and
 `pkg install jq` on Termux. `coding-agent/run.sh` bind-mounts every
@@ -188,7 +188,7 @@ the jq compile gate in `./lint.sh` can see them.
 **container** (`podman`/`docker`): renders `container run` with the described
 mounts/ports/env/user/hardening, then launches it (optionally wrapped by a
 host-side command — historically `infisical run … --`; the coding-agent now
-loads vault secrets on the host via `load_secrets` and forwards them through
+loads vault secrets on the host via `lib/environment.sh` and forwards them through
 `workload_env`, so the workload itself never runs infisical). Any other
 `_workload` value is a fatal error — there is no fallback "workload" that isn't
 one.
@@ -198,13 +198,13 @@ one.
 ### Serving run script (one multipurpose instance)
 
 Every host runs ONE llama-swap serving container, launched by
-`llm-reverse-proxy/run.sh` (sources `lib/workload-runtime.sh`). `run.sh` is
+`llm-local-inference/run.sh` (sources `lib/workload-runtime.sh`). `run.sh` is
 serve-only: it mounts the already-generated `config.d/` (read-only) loaded via
-`-config-dir` and adapts to it. Generation lives in `llm-reverse-proxy/generate.sh`.
+`-config-dir` and adapts to it. Generation lives in `llm-local-inference/generate.sh`.
 
-#### `llm-reverse-proxy/generate.sh` (capability-gated layers)
+#### `llm-local-inference/generate.sh` (capability-gated layers)
 
-The llm-reverse-proxy analog of `coding-agent/generate.sh`: generators emit
+The llm-local-inference analog of `coding-agent/generate.sh`: generators emit
 layers, and only the layers that work on the current host land in `config.d/`
 (stale layers from a previous capability set are removed):
 
@@ -220,13 +220,14 @@ layers, and only the layers that work on the current host land in `config.d/`
   is removed when none answer.
 - `22-peer-gfx1030.yaml` — only on hosts that do NOT serve local models
   natively; probes `$PEER_BASE_URL`, then the bazzite tailscale URL (the
-  world-visible FQDN funnel of the LAN :8080 instance) for a live
+  world-visible FQDN funnel — llm-reverse-proxy on LAN :8080, whose
+  `/llama-swap` route points at the local instance) for a live
   local-inference instance. localhost candidates are NOT probed (the legacy
   :18080 local-inference port is deprecated).
 
 See [d018-split-config-d.md](d018-split-config-d.md) for the merge contract.
 
-#### `llm-reverse-proxy/run.sh` (serve-only, adapts to config.d)
+#### `llm-local-inference/run.sh` (serve-only, adapts to config.d)
 
 - **Image**: `ghcr.io/mostlygeek/llama-swap:unified-vulkan` when the local
   layer is present (local llama.cpp needs the GPU/Vulkan runtime); otherwise
@@ -237,9 +238,10 @@ See [d018-split-config-d.md](d018-split-config-d.md) for the merge contract.
 - **GPU**: detects usable dedicated inference devices — any DRM render node
   `/dev/dri/renderD*` (Vulkan) and `/dev/kfd` (ROCm) — and passes each through
   to the container (local mode only).
-- **Port**: LAN **8080** in both modes (`HOST_PORT` overrides). The container
+- **Port**: LAN **8101** in both modes (`HOST_PORT` overrides). The container
   always listens on 8080 internally; the world reaches the same catalog via
-  the tailscale FQDN reverse proxy (normal https port) forwarding to 8080.
+  the tailscale funnel → llm-reverse-proxy (LAN 8080, the funnel front) →
+  its `/llama-swap` route → this instance on loopback 8101 (docs/d027).
   The legacy local-inference port 18080 is deprecated — nothing listens on
   it since the two-instance squash.
 - **SELinux**: all bind mounts are relabeled + chowned to the mapped subuid
@@ -259,7 +261,8 @@ Launches the pi coding-agent container with:
   the in-container `generate.sh` reinstalls it from the same source; a committed
   `models.json`/`opencode.jsonc` are staged as fallback until the in-container
   generation succeeds.
-- **Secrets**: loaded ONCE on the HOST via `load_secrets` (one cached
+- **Secrets**: loaded ONCE on the HOST by the explicit chain
+  (`./lib/environment.sh ./coding-agent/run.sh` — one in-memory
   `infisical secrets --output=dotenv`) and forwarded into the container
   through the `workload_env` allowlist — no infisical runs inside the workload,
   no `~/.infisical` staging; pi resolves the `"$VAR"` api-key references in
@@ -287,7 +290,8 @@ separate `coding-agent-peer/` folder: a static `settings.json` and
 as `$PEER_API_KEY` resolved by pi at request time from the container env).
 
 **Env**: `PEER_API_KEY` and `PEER_BASE_URL`, exported into the process
-environment — Infisical via `load_secrets`, or exported by hand. No `.env`
+environment by the explicit chain (`lib/environment.sh` — Infisical only;
+there is no in-script loader and no emergency path). No `.env`
 file is read any more (the old `ENV_FILE` / `<dir>/.env` fallbacks were
 removed). `PEER_BASE_URL` is informational — the peer baseUrl is hardcoded in
 the static provider config.
@@ -303,8 +307,8 @@ falls out of what `generate.sh` emitted into `config.d/`:
 - **peers-only**: `run.sh` defaults to the lighter
   `ghcr.io/mostlygeek/llama-swap:cpu` image.
 
-Either way the instance publishes LAN port **8080** (`HOST_PORT` overrides).
+Either way the instance publishes LAN port **8101** (`HOST_PORT` overrides;
 
 Either way llama-swap is launched with `-config-dir <dir>/config.d`. The
 a50/termux path has no container at all — it is peers-only by construction
-via `llm-reverse-proxy/run-native.sh`.
+via `llm-local-inference/run-native.sh`.

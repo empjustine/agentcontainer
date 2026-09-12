@@ -142,12 +142,12 @@ case_coding_agent() {
 ( case_coding_agent ) | _norm >"$tmp/got.coding-agent"
 _check coding-agent
 
-# --- case 2: llm-reverse-proxy shape, docker -------------------------------
+# --- case 2: llm-local-inference shape, docker -------------------------------
 # Exercises: --detach, --publish (built from a {host,guest} record, not a
 # pre-formatted string), --device (from the devices array), hardening (a
 # three-word flag group), --entrypoint, docker's "z" mount option, and a
 # command word that STARTS WITH A DASH — the case that needs `--args --`.
-cat >"$tmp/expect.llm-reverse-proxy" <<'EXPECT'
+cat >"$tmp/expect.llm-local-inference" <<'EXPECT'
 ARG[container]
 ARG[run]
 ARG[--detach]
@@ -177,9 +177,9 @@ ARG[ghcr.io/mostlygeek/llama-swap:cpu]
 ARG[-config-dir]
 ARG[/config.d]
 EXPECT
-sed -i "s|<REPO>|$root|g" "$tmp/expect.llm-reverse-proxy"
+sed -i "s|<REPO>|$root|g" "$tmp/expect.llm-local-inference"
 
-case_llm_reverse_proxy() {
+case_llm_local_inferencing() {
 	_workload_tool=docker
 	_userns=''
 	_keep_groups=''
@@ -198,12 +198,12 @@ case_llm_reverse_proxy() {
 	_sb_append devices /dev/kfd /dev/dri/renderD128
 	_render_workload
 }
-( case_llm_reverse_proxy ) | _norm >"$tmp/got.llm-reverse-proxy"
-_check llm-reverse-proxy
+( case_llm_local_inferencing ) | _norm >"$tmp/got.llm-local-inference"
+_check llm-local-inference
 
 # --- case 3: workload_has predicate (jq -e exit status) ----------------------
 # The predicate that replaced `[ -n "$_SB_DEV" ]` in
-# llm-reverse-proxy/generate.sh.  It must be a usable `if` condition: true
+# llm-local-inference/generate.sh.  It must be a usable `if` condition: true
 # for a populated array, false for a missing or empty one.
 cat >"$tmp/expect.has" <<'EXPECT'
 devices: yes

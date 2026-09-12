@@ -4,8 +4,8 @@
 > backend. PRoot has since been **removed** from `lib/workload-runtime.sh` (ptrace
 > path translation is not isolation; `run-proot.sh` and the `workload_native`
 > / `proot_run` API are gone — termux serves natively via
-> `llm-reverse-proxy/run-native.sh`), and the serving tree was squashed into
-> the multipurpose `llm-reverse-proxy/`. Sections 2–3 below remain the
+> `llm-local-inference/run-native.sh`), and the serving tree was squashed into
+> the multipurpose `llm-local-inference/`. Sections 2–3 below remain the
 > definitive record of *why* PRoot is not a workload; sections 1 and 4
 > describe an API that no longer exists. A stronger-than-container backend
 > (qemu/libvirt) is assessed in [d020-libvirt-qemu-sandbox.md](d020-libvirt-qemu-sandbox.md).
