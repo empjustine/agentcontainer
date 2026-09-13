@@ -7,8 +7,11 @@ pi-coding-agent / opencode were pointed at it through `llm-reverse-proxy/`;
 llm-reverse-proxy is the substrate llama-swap itself uses internally
 (`httputil.ReverseProxy`), extracted and stripped of everything else.
 
-Reference code: `~/Downloads/references/github/mostlygeek/llama-swap/`
-(`internal/router/peer.go`, `internal/process/process_command.go`).
+Reference code: upstream llama-swap — github.com/mostlygeek/llama-swap
+(`internal/router/peer.go`, `internal/process/process_command.go`; docs tree
+`docs/kb/` — the canonical source). A local checkout under
+`~/Downloads/references/github/` may exist as a read-only verification cache
+on some hosts; it is an optimization, not the reference.
 
 ## What it does / does not do
 
@@ -53,6 +56,7 @@ $ ./generate.sh                       # -> llm-reverse-proxy.json (REPLACED
     "mistral": "https://api.mistral.ai/v1",
     "cline-pass": "https://api.cline.bot/api/v1",
     "hyper": "https://hyper.charm.land/v1",
+    "inferx": "https://model.inferx.net/endpoints/v1",
     "google": "https://generativelanguage.googleapis.com/v1beta",
     "llama-swap": "http://127.0.0.1:8101",
     "models.dev": "https://models.dev",
@@ -175,6 +179,6 @@ still listens on 8080 internally; `llm-local-inference/run.sh` publishes
 | `/<providerId>` | cloud providers | path prefix → provider's FULL real base URL |
 | `/llama-swap/…` | `http://127.0.0.1:8101` | llama-swap (LOCAL GGUF, model-id routing) — the loopback hop never leaves the host |
 
-`./smoke-test.sh` runs 28 behavioural checks — TLS failure classes come from
+`./smoke-test.sh` runs 32 behavioural checks — TLS failure classes come from
 the badssl.com test hosts, so no bundled cert is needed; that section is
 skipped automatically if there is no outbound internet.

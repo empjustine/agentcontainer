@@ -152,11 +152,15 @@ workload_ro_if "$SCRIPT_DIR/opencode.jsonc" "$_gen_target/opencode.jsonc"
 workload_ro "$REPO_ROOT/lib/workload-runtime.sh" '/opt/lib/workload-runtime.sh'
 workload_ro "$REPO_ROOT/lib/log.sh" '/opt/lib/log.sh'
 # Shared lib/ modules the generators and lib/refresh-models-dev.mjs import
-# (docs/d023, docs/d024): generate.sh stages log.mjs + peer-probe.mjs + the
-# provider-fact table + the pi shaping module into its scratch dir via
-# $LIB_DIR; refresh-models-dev.mjs runs from /opt/lib and imports its sibling
-# log.mjs — all must be mounted.
+# (docs/d023, docs/d024): generate.sh stages log.mjs + artifact.mjs +
+# peer-probe.mjs + the provider-fact table + the pi shaping module into its
+# scratch dir via $LIB_DIR; refresh-models-dev.mjs runs from /opt/lib and
+# statically imports its siblings artifact.mjs, log.mjs and peer-probe.mjs —
+# all must be mounted (artifact.mjs missing here once cost every generator
+# an ERR_MODULE_NOT_FOUND in-container: the staging loop found nothing to
+# copy, so each generator died and only the committed fallbacks survived).
 workload_ro "$REPO_ROOT/lib/log.mjs" '/opt/lib/log.mjs'
+workload_ro "$REPO_ROOT/lib/artifact.mjs" '/opt/lib/artifact.mjs'
 workload_ro "$REPO_ROOT/lib/peer-probe.mjs" '/opt/lib/peer-probe.mjs'
 workload_ro "$REPO_ROOT/lib/cloud-providers.mjs" '/opt/lib/cloud-providers.mjs'
 workload_ro "$REPO_ROOT/lib/pi-models.mjs" '/opt/lib/pi-models.mjs'
@@ -226,6 +230,8 @@ workload_interactive
 workload_init
 workload_network  host
 workload_user
+# Optional local mirror of upstream reference repos (read-only convenience
+# cache; NOT canonical — the upstream repos are the source of truth).
 workload_ro_if    "$HOME/Downloads/references" "$HOME/Downloads/references"
 #workload_ro_if    "$HF_HUB_CACHE" /home/${USER}/.cache/huggingface/hub
 workload_rw       "$agent_dir" "/home/${USER}/.pi/agent"
@@ -242,7 +248,7 @@ workload_workdir  "$workspace"
 # non-empty values are forwarded (a bare `--env NAME` with an unset host var
 # would inject an empty value).
 for _key in CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY OPENROUTER_API_KEY \
-	OPENCODE_API_KEY HYPER_API_KEY HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY PEER_BASE_URL; do
+	OPENCODE_API_KEY HYPER_API_KEY INFERX_API_KEY HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY PEER_BASE_URL; do
 	_value="$(printenv "$_key" 2>/dev/null || true)"
 	[ -n "$_value" ] && workload_env "$_key"
 done

@@ -1,146 +1,18 @@
 /**
  * @fileoverview generate-cloud-alternative-providers.mjs — Emit the pi overlay
- * layers for the cloud ALTERNATIVE providers: the providers pi does NOT ship
- * natively, where this layer is the ONLY source of the full provider
- * definition and is therefore always emitted in full — the opposite of the
- * pi-native override-only semantic in
- * `generate-cloud-pi-native-providers.mjs`.
+ * layers for the cloud ALTERNATIVE providers pi does NOT ship natively
+ * (cline-pass / hyper / inferx). Because pi has no built-in definition for any
+ * of them, this layer is the ONLY source of the full provider block and is
+ * always emitted in full — the opposite of the override-only semantic in
+ * generate-cloud-pi-native-providers.mjs (docs/d024). The table-driven set is
+ * PROVIDER_SPECS below; one row = one emitted layer.
  *
- * The set is table-driven (PROVIDER_SPECS below; one row = one emitted layer
- * file, numbered after model-012 in the merge order of merge-models-json.mjs):
- *
- *   - `cline-pass` (https://docs.cline.bot/getting-started/clinepass) →
- *     `model-015-cloud-cline-pass.json`
- *   - `hyper` (Charm Hyper, https://hyper.charm.land, key $HYPER_API_KEY) →
- *     `model-016-cloud-hyper.json`
- *
- * Both serve EVERY model over the same single OpenAI-compatible Chat
- * Completions endpoint (ClinePass confirmed by the reference extensions
- * jellydn/pi-clinepass-provider and maxpaulus43/pi-cline, which each register
- * one provider with `api: "openai-completions"` and vary models only by
- * capability + thinking metadata; Hyper exposes the same shape at /v1). So a
- * single provider block covers all models per provider; there is no per-model
- * API divergence (unlike OpenCode Zen/Go, where upstreams keep native
- * protocols).
- *
- * Each block mirrors the provider/compat settings the upstream references
- * register, plus the models.dev catalog metadata:
- *   - api: "openai-completions"
- *   - baseUrl: provider.api            (per-provider, from the vendored catalog)
- *   - apiKey: "$<PROVIDER_KEY_ENV>"    (auth presence gates /model availability)
- *   - authHeader: true                 (Authorization: Bearer)
- *   - compat.supportsDeveloperRole: false — cline-pass ONLY
- *       ClinePass rejects the `developer` role pi-ai emits for reasoning
- *       models; both reference extensions set this. Without it, reasoning
- *       models 400. Hyper is a standard OpenAI-compatible gateway: the
- *       vendor extension (charmbracelet/pi-hyper-provider) does NOT disable
- *       the developer role, so no override is emitted here either.
- *   - per-model thinkingLevelMap derived from models.dev reasoning_options
- *       (provider `reasoning_effort` enum values; effort values map through
- *       EFFORT_TO_PI, so enums that include "minimal" support pi "minimal").
- *
- * Hyper additionally mirrors the per-model compat the vendor extension
- * registers for EVERY model (src/models.ts of
- * github.com/charmbracelet/pi-hyper-provider, mirrored under
- * ~/Downloads/references/github/):
- *   - supportsStore: false           (no OpenAI `store` field)
- *   - maxTokensField: "max_tokens"   (legacy limit field, not max_completion_tokens)
- *   - thinkingFormat: "deepseek"     (thinking: {type: enabled|disabled} [+ effort])
- *   - supportsReasoningEffort: <bool> — true only when the model exposes a
- *       reasoning-effort enum; effort-less reasoning models (glm-5,
- *       kimi-k2-thinking, ...) get false plus the extension's ON_OFF
- *       thinkingLevelMap (off:"off", max:"max", rest null — pi "max" is the
- *       single representative "on" state), which only makes sense paired
- *       with the deepseek thinking format: "off" translates to thinking
- *       disabled, any other level to enabled, with no effort value sent.
- *   - headers: a static User-Agent, mirroring the extension's
- *       "pi-hyper-provider/<version>" (models.json headers are static
- *       literals here; the versioned UA is extension-only).
- *
- * Hyper facts cache (lib/hyper-facts.mjs — see its header for why hyper is
- * the ONLY provider here with a non-models.dev cache): the live /provider
- * catalog is strictly fresher per capability/price field than the models.dev
- * snapshot, and pi has no built-in hyper, so this layer is the only metadata
- * pi ever sees. Direct mode REFRESHES the cache (endpoint reachable) and
- * enriches every model with it; peer mode CONSUMES it stale-tolerantly (peer
- * mode means hyper.charm.land itself is unreachable, so the cache is the
- * only enrichment available). Enrichment is a NARROW per-field whitelist
- * (reasoning, input, costs incl. cached-in/out, limits, thinkingLevelMap,
- * compat.supportsReasoningEffort — all derived from the live record);
- * display names stay models.dev (the catalog's are more descriptive); the
- * wire compat block and the provider route are never touched. Matched
- * records are REBUILT through piModel(), so the effort enum → map/compat
- * derivation and the ON_OFF fallback run on live data.
- *
- * Known models.dev ↔ Hyper /provider drift (verified 2026-09 against the
- * live endpoint, which is the vendor extension's ONLY source): a few
- * reasoning flags and image-input claims disagree (e.g. minimax-m2.7
- * reasoning true in the catalog, can_reason false live; several
- * kimi/glm/qwen models carry catalog image input that live
- * supports_attachments denies), cache prices sit in different catalog slots
- * per model, and the live-only model deepseek-v4.1-flash is absent. This
- * generator stays catalog-driven (the vendored catalog refreshes best-effort
- * each run); install the vendor extension if you need Hyper's own live view.
- *
- * IMPORTANT — unlike the pi-native trio (openrouter/opencode/opencode-go, see
- * generate-cloud-pi-native-providers.mjs), pi has NO native definition for
- * any provider in this table, so this layer is the ONLY source of the provider
- * definition.  An override-style "emit only when something differs / is
- * unreachable" reading (docs/d022) does NOT apply here: every run
- * must emit the FULL provider block (baseUrl, api, key/auth, compat AND the
- * complete models list), whether the endpoint is reachable directly or routed
- * through the peer.  The cascade below only decides WHICH baseUrl/key/auth the
- * full block carries, never whether to emit the block at all — except when
- * neither the real endpoint nor any peer route is usable, in which case that
- * provider is unreachable and its layer is left untouched.
- *
- * Detection cascade (per provider — peer-router, same rule as
- * generate-local-llama-swap.mjs, generate-cloud-pi-native-providers.mjs and
- * generate-opencode.jsonc.mjs):
- *
- *   1. Probe the REAL endpoint (per-provider `api` from the vendored
- *      models.dev catalog). Reachable ⇒ emit the FULL provider routed at the
- *      real baseUrl with the complete models.dev catalog. "Reachable" is
- *      about the NETWORK PATH, not credentials: a 401/403 is what an
- *      OpenAI-compatible endpoint returns to any unauthenticated request (this
- *      generator runs without provider keys by design; pi resolves its own key
- *      at request time), and proves routing to the provider works — it must
- *      NOT trigger a peer override. Only the absence of ANY http response
- *      (DNS failure, connection refused, TLS failure, timeout) justifies
- *      switching to the peer.
- *   2. If unreachable, look for the provider's PEER PATH-ROUTE on the
- *      simplified cloud router (llm-reverse-proxy): `<peerBase>/<providerId>`
- *      — the vault-sourced peer base (lib/peer-probe.mjs peerBaseUrl()). The route forwards
- *      byte-for-byte to the provider's FULL real base URL — no model-id
- *      magic, no key injection (docs/d027) — so the emitted block is the
- *      SAME full definition as direct mode with one difference: `baseUrl`
- *      set to `<peerBase>/<providerId>`, while `apiKey` stays the provider's
- *      OWN key reference (`$<envKey>`, forwarded untouched by the proxy —
- *      it performs no credential handling). The model LINEUP is the same
- *      models.dev catalog as direct mode: the proxy does not gate ids (any
- *      id the provider accepts is forwarded — llama-swap's peer model list
- *      used to be the routing truth, which is why peer mode used to match
- *      its listing instead), and the providers' live `/models` listings are
- *      not lineup sources (cline-pass's listing mirrors a passthrough
- *      catalog that does not even contain its own models.dev lineup). The
- *      route probe only decides REACHABILITY.
- *   3. If neither the real endpoint nor any peer route is usable, emit nothing
- *      for that provider and leave its existing layer untouched (the provider
- *      is genuinely not reachable from this host).
- *
- * Extension-only ClinePass features that models.json cannot replicate
- * (documented, not emitted here — use
- * pi install git:github.com/jellydn/pi-clinepass-provider if you need them):
- *   - WorkOS device-code OAuth reuse (models.json `oauth` only supports "radius")
- *   - Cline prompt-cache `compat` + before_provider_request normalization
- *   - 403 subscription error surface via a message_end handler
+ * Detection cascade, reachability rule, the exact emitted field/spec mirrors
+ * (cline-pass/hyper/inferx quirks, hyper facts cache, known models.dev drift,
+ * extension-only features) all live in docs/d033 — this header deliberately
+ * does not duplicate them. Merge contract: merge-models-json.mjs.
  *
  * Usage: node generate-cloud-alternative-providers.mjs
- *   Writes one layer file per PROVIDERS_SPECS row next to this script (the
- *   generate.sh scratch dir on container/host runs).
- *   Env: PEER_BASE_URL (first peer candidate), PEER_API_KEY (peer bearer),
- *   plus each provider's own key var (read only for the direct probe — the
- *   emitted layer references "$<ENV>" so pi resolves the key at request time).
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -161,7 +33,7 @@ const { logInfo, logWarn, setLogTool } =
 const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
 	await import(`${LIB_DIR}/artifact.mjs`)
 );
-const { bearerHeaders, peerBaseUrl, probePeerRoutes, probeDirect } =
+const { bearerHeaders, peerBaseUrl, probePeerRoutes, probeDirect, fetchModelEntries } =
 	/** @type {typeof import("../lib/peer-probe.mjs")} */ (
 		await import(`${LIB_DIR}/peer-probe.mjs`)
 	);
@@ -259,6 +131,21 @@ const PROVIDER_SPECS = [
 			// extension-only).
 			"User-Agent": "pi-hyper-models-layer/1",
 		},
+	},
+	{
+		id: "inferx",
+		name: "InferX",
+		file: "model-017-cloud-inferx.json",
+		envKey: "INFERX_API_KEY",
+		// Plain OpenAI-compatible gateway (models.dev: @ai-sdk/openai-compatible):
+		// no developer-role quirk (unlike cline-pass), no per-model wire-compat
+		// mirror (unlike hyper) — pi's defaults are correct as-is.
+		compat: null,
+		modelCompat: null,
+		// Reasoning models expose only a `toggle` option (no effort enum), so
+		// there is nothing to map: no thinkingLevelMap, no ON_OFF fallback —
+		// pi's default on/off handling covers them.
+		onOffThinking: false,
 	},
 ];
 
@@ -407,6 +294,7 @@ function toCost(cost) {
  * @returns {PiAlternativeModel} a pi model entry
  */
 function piModel(spec, m, id = m.id) {
+	if (m.family === "text-embedding" || id.toLowerCase().includes("embedding")) return null;
 	/** @type {PiAlternativeModel} */
 	const model = {
 		id,
@@ -522,6 +410,37 @@ function liveToCatalogRecord(l) {
 }
 
 /**
+ * Enrich pi-shaped models with the provider's live /models listing.
+ * This is used to prune models no longer served and add new ones found live
+ * but missing from the catalog. Since live entries lack full metadata,
+ * new models are published as minimal entries (pi defaults).
+ * @param {AlternativeProviderSpec} spec
+ * @param {PiAlternativeModel[]} models the current catalog-derived lineup
+ * @param {RawModelEntry[]} liveEntries the listing from the provider's /models endpoint
+ * @returns {PiAlternativeModel[]} the pruned and augmented lineup
+ */
+function enrichWithLiveListing(spec, models, liveEntries) {
+	const liveIds = new Set(liveEntries.map((e) => stripProviderPrefixes(spec.id, e.id)));
+	const catalogIds = new Set(models.map((m) => stripProviderPrefixes(spec.id, m.id)));
+
+	const pruned = models.filter((m) => liveIds.has(stripProviderPrefixes(spec.id, m.id)));
+
+	const liveOnly = liveEntries
+		.filter((e) => !catalogIds.has(stripProviderPrefixes(spec.id, e.id)))
+		.map((e) => {
+			// Create a minimal ModelsDevModel record so piModel can process it
+			const m = {
+				id: e.id,
+				name: e.name ?? e.id,
+			};
+			return piModel(spec, m);
+		})
+		.filter((m) => m !== null);
+
+	return [...pruned, ...liveOnly];
+}
+
+/**
  * Enrich pi-shaped models with the hyper facts cache: rebuild every model
  * whose (prefix-stripped) id is in the live records through piModel() on
  * LIVE data, keeping the models.dev display name (see the header whitelist).
@@ -564,7 +483,9 @@ function enrichWithFacts(spec, models, facts) {
  */
 async function emitProvider(spec) {
 	const provider = loadProvider(spec);
-	const allModels = Object.values(provider.models).map((m) => piModel(spec, m));
+	const allModels = Object.values(provider.models)
+		.map((m) => piModel(spec, m))
+		.filter((m) => m !== null);
 
 	// --- 1. real endpoint first -----------------------------------------
 	// Any non-unreachable response proves the network path works — including a
@@ -576,19 +497,36 @@ async function emitProvider(spec) {
 		bearerHeaders(process.env[spec.envKey]?.trim()),
 	);
 	if (real.result !== "unreachable") {
-		// Direct mode: the endpoint answers — refresh the facts cache
-		// (best-effort; a failed refresh keeps the last good copy) and enrich
-		// with live records (appends live-only models; keeps catalog-only).
-		let facts = null;
+		// Direct mode: the endpoint answers.
+		let models = allModels;
+
+		// Special case: InferX (and potentially others) provide a /models endpoint
+		// that we can use to prune and augment the catalog lineup if the key is available.
+		if (process.env[spec.envKey]) {
+			try {
+				const liveEntries = await fetchModelEntries(
+					provider.api,
+					bearerHeaders(process.env[spec.envKey].trim()),
+				);
+				models = enrichWithLiveListing(spec, models, liveEntries);
+				logInfo(`${spec.id} lineup synchronized with live /models listing`, {
+					liveCount: liveEntries.length,
+					finalCount: models.length,
+				});
+			} catch (err) {
+				logWarn(`${spec.id} live listing fetch failed — falling back to catalog`, {
+					error: err.message,
+				});
+			}
+		}
+
+		// Hyper additionally has a specialized facts cache for detailed metadata
 		if (spec.enrichFromFacts) {
 			await refreshHyperFacts();
-			facts = loadHyperFacts();
-		}
-		let models = allModels;
-		if (facts) {
+			const facts = loadHyperFacts();
 			const { enriched, liveOnly, untouched } = enrichWithFacts(
 				spec,
-				allModels,
+				models,
 				facts,
 			);
 			models = [...enriched, ...untouched];

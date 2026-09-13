@@ -91,8 +91,9 @@ the extension, and supports `/reload`. `coding-agent/run.sh` already stages
 files into the container — staging **one extension directory** replaces
 staging four generated JSON layers.
 
-**Reference implementations in the local mirror** (cursory sweep of
-`~/Downloads/references/github` against the currently handled providers):
+**Reference implementations** (upstream repos on github.com, surveyed via the
+local reference mirror `~/Downloads/references/github` — a cache, not the
+canonical source; cursory sweep against the currently handled providers):
 
 - pi providers: `charmbracelet/pi-hyper-provider`,
   `jellydn/pi-clinepass-provider` (already adopted above), and —

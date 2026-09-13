@@ -126,12 +126,23 @@ check passthrough-auth '"auth":"Bearer sk-t"' "$r"
 check passthrough-body '{\"m\":1}' "$r"
 
 # streaming: first chunk must arrive well before the whole body (~500ms total)
+#
+# The threshold is RELATIVE, not absolute: the SAME first chunk is first
+# fetched straight from the upstream node process (port 19091) — on a slow
+# host (Termux phone: curl+node spawn + scheduler ≈ 300 ms) an absolute
+# threshold misclassifies an unbuffered proxy as buffering.  Observed on the
+# a50 Termux host: direct ≈ 300 ms, through the proxy ≈ 300–330 ms (proxy
+# overhead ≈ 0–15 ms — FlushInterval:-1 confirmed unbuffered).  Allow
+# baseline + 150 ms of proxy overhead.
+t0=$(date +%s%N)
+curl -sN --max-time 2 'http://127.0.0.1:19091/v1/stream' 2>/dev/null | head -1 >/dev/null || true
+base=$(( ($(date +%s%N) - t0) / 1000000 ))
 t0=$(date +%s%N)
 first=$(curl -sN --max-time 2 "$B/local/v1/stream" 2>/dev/null | head -1 || true)
 dt=$(( ($(date +%s%N) - t0) / 1000000 ))
 check streaming-chunk 'data: chunk 0' "$first"
-if [ "$dt" -lt 250 ]; then pass=$((pass+1)); echo "ok   streaming-unbuffered (first chunk after ${dt}ms)"
-else fail=$((fail+1)); echo "FAIL streaming-unbuffered: first chunk after ${dt}ms (buffering?)"; fi
+if [ "$dt" -le $((base + 150)) ]; then pass=$((pass+1)); echo "ok   streaming-unbuffered (first chunk after ${dt}ms; direct baseline ${base}ms)"
+else fail=$((fail+1)); echo "FAIL streaming-unbuffered: first chunk after ${dt}ms vs direct baseline ${base}ms (buffering?)"; fi
 
 # upstream errors pass through untouched
 check upstream-4xx-passthrough 'rate limited by upstream itself' "$(curl -s "$B/local/v1/error")"

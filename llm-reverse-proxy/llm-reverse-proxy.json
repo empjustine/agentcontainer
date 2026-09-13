@@ -6,6 +6,7 @@
     "opencode-go": "https://opencode.ai/zen/go/v1",
     "cline-pass": "https://api.cline.bot/api/v1",
     "hyper": "https://hyper.charm.land/v1",
+    "inferx": "https://model.inferx.net/endpoints/v1",
     "mistral": "https://api.mistral.ai/v1",
     "google": "https://generativelanguage.googleapis.com/v1beta",
     "nvidia": "https://integrate.api.nvidia.com/v1",

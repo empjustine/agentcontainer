@@ -87,7 +87,7 @@ agentcontainer/
 │   ├── main.go                          #   → http host:port/{provider}/<path> → <base-url>/<path>, streaming as-is
 │   ├── llm-reverse-proxy.example.json   #   → provider slug → base URL map (the whole config surface)
 │   ├── generate.sh                      #   → routing table from lib/cloud-providers.mjs (→ generate-config.mjs)
-│   ├── build.sh / smoke-test.sh         #   → multi-stage image build (no host go); 28 behavioural checks
+│   ├── build.sh / smoke-test.sh         #   → multi-stage image build (no host go); 32 behavioural checks
 │   └── README.md                        #   → RFC 9457 502 error taxonomy, deviations
 │
 ├── coding-agent/                        # Bazzite usage (full pi)
@@ -120,11 +120,28 @@ agentcontainer/
 | [docs/d020-libvirt-qemu-sandbox.md](docs/d020-libvirt-qemu-sandbox.md) | qemu/libvirt VM sandboxes — requirements assessment (not implemented) |
 | [docs/d027-models-dev-relay-fallback.md](docs/d027-models-dev-relay-fallback.md) | models.dev catalog fetch chain (direct → llm-reverse-proxy relay → stale copy) |
 | [docs/d028-provider-extensions-vs-generated-config.md](docs/d028-provider-extensions-vs-generated-config.md) | pi/opencode provider extensions vs generated-config machinery (verified; proposed) |
+| [docs/d029-launch-gguf-complexity.md](docs/d029-launch-gguf-complexity.md) | in-container `launch-gguf.sh` path — complexity audit + refactor options (proposal) |
+| [docs/d030-coding-agent-flow-simplification.md](docs/d030-coding-agent-flow-simplification.md) | coding-agent flow — host↔container staging duplication, launch chain, GC, generator consolidation (proposal) |
+| [docs/d031-llm-reverse-proxy-flow-simplification.md](docs/d031-llm-reverse-proxy-flow-simplification.md) | llm-reverse-proxy flow — already minimal; keep-shape notes + two small cleanups (proposal) |
+| [docs/d032-adding-a-cloud-provider.md](docs/d032-adding-a-cloud-provider.md) | adding a cloud provider — the flow + surprises (worked example: inferx; two sources of truth, run.sh key allowlist, toggle-only reasoning) |
+| [docs/d033-generator-cascade.md](docs/d033-generator-cascade.md) | the shared cloud/local generator detection cascade, reachability rule, and each generator's emitted layer shape |
+| [docs/termux-build-audit.md](docs/termux-build-audit.md) | Termux build audit — Infisical CLI `go install` impossibility + llm-reverse-proxy native build verification |
 | [coding-agent/merge-models-json.mjs](coding-agent/merge-models-json.mjs) | layered pi `models.json` (base + `model-*.json` overlays) — contract is documented in the script header |
 | [docs/peer-variant-work.md](docs/peer-variant-work.md) | coding-agent-peer (work environment; **archived** — folded into coding-agent; routing/env superseded by d027 + the vault — see its banner) |
 | [docs/scoped-models-and-proxy-overrides.md](docs/scoped-models-and-proxy-overrides.md) | pi models.json / settings.json scoping |
 | [docs/gguf-model-tooling.md](docs/gguf-model-tooling.md) | GGUF tooling (`fetch_hf_manifests.py` live; size-estimation tools archived) |
 | [docs/gguf-vram-fit-estimates.md](docs/gguf-vram-fit-estimates.md) | VRAM/KV/fit tables for all served models (gdevenyi/huggingface-estimate) |
+
+## Code conventions
+
+Comments are deliberately verbose, but they exist only to explain **WHY** —
+intent, rationale, history, invariants, gotchas, and pointers to the owning
+design doc. They must **not** restate the **HOW**: the mechanics are carried by
+correct, unambiguous names for functions, types, classes, and variables, not by
+comments. If a comment narrates what the code does, fix the name (or move the
+explanation to `docs/`) instead. The authoritative statement and examples live
+in [AGENTS.md](AGENTS.md); design essays belong in `docs/` and are indexed
+above.
 
 ## Cline and Thinkrail Integration
 

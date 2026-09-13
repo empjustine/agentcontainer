@@ -1,0 +1,176 @@
+{
+  "providers": {
+    "inferx": {
+      "name": "InferX",
+      "baseUrl": "https://model.inferx.net/endpoints/v1",
+      "api": "openai-completions",
+      "apiKey": "$INFERX_API_KEY",
+      "authHeader": true,
+      "models": [
+        {
+          "id": "gemma-4-31B-it-fp8",
+          "name": "Gemma 4 31B IT FP8",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 32768,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "Devstral-2-123B-Instruct-2512-int4-AutoRound",
+          "name": "Devstral-2-123B-Instruct-2512-int4-AutoRound",
+          "reasoning": false,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 128000,
+          "maxTokens": 128000,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "Agents-A1",
+          "name": "Agents-A1",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 262000,
+          "maxTokens": 100000,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "Qwen3.6-35B-A3B-FP8",
+          "name": "Qwen3.6 35B A3B FP8",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 262000,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "Qwen3-Coder-Next-FP8",
+          "name": "Qwen3 Coder Next FP8",
+          "reasoning": false,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 256144,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "Qwen3.8-27B-FP8",
+          "name": "Qwen3.8-27B-FP8",
+          "reasoning": false,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 128000,
+          "maxTokens": 16384,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "gpt-oss-20b",
+          "name": "gpt-oss-20b",
+          "reasoning": false,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 128000,
+          "maxTokens": 16384,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "deepseek-v4-flash-0731",
+          "name": "deepseek-v4-flash-0731",
+          "reasoning": false,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 128000,
+          "maxTokens": 16384,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "deepseek-v4.1-flash",
+          "name": "deepseek-v4.1-flash",
+          "reasoning": false,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 128000,
+          "maxTokens": 16384,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "glm-5.3-flash",
+          "name": "glm-5.3-flash",
+          "reasoning": false,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 128000,
+          "maxTokens": 16384,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        }
+      ]
+    }
+  }
+}

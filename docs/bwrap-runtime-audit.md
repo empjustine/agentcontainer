@@ -1,9 +1,12 @@
 # bwrap runtime audit — mirror-tree usage vs upstream bubblewrap
 
-Verified 2026-09-10, flag-by-flag against the upstream source/docs clone at
-`~/Downloads/references/github/containers/bubblewrap` (`bwrap.xml` man page
-and `bubblewrap.c`). Question answered: is the bubblewrap usage found in the
-GitHub mirror tree (`~/Downloads/references/github`) plausible and correct,
+Verified 2026-09-10, flag-by-flag against upstream bubblewrap —
+github.com/containers/bubblewrap (`bwrap.xml` man page and `bubblewrap.c`) —
+read from the local reference clone at
+`~/Downloads/references/github/containers/bubblewrap`; that clone is a
+convenience cache of upstream, not the canonical source. Question answered:
+is the bubblewrap usage found in the GitHub mirror tree
+(`~/Downloads/references/github`) plausible and correct,
 and what would adopting a `bwrap` runtime tier in `lib/workload-runtime.sh`
 entail?
 
@@ -82,6 +85,7 @@ Semantic consistency with upstream `README.md`:
 
 **Verdict: plausible.** The only real bwrap consumer in the mirror
 tree uses exclusively documented, semantically correct flags against
-the containers/bubblewrap reference clone; the usage is a faithful
+the containers/bubblewrap reference clone (upstream
+`github.com/containers/bubblewrap`, read via the local mirror); the usage is a faithful
 minimal-sandbox construction consistent with upstream docs and with
 this repo's own prior-art notes.

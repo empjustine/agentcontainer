@@ -1,53 +1,16 @@
 /**
- * @fileoverview generate-opencode.jsonc.mjs — Emit opencode's overlay config: one
- * `provider` map holding ONLY the providers whose built-in routing does not work from this
- * host, rewritten to route through their PEER PATH-ROUTE on the simplified cloud router.
- * This is opencode's counterpart to pi's generate-cloud-pi-native-providers.mjs — same
- * detection cascade, its provider subset (the shared fact table lib/cloud-providers.mjs,
- * minus cline-pass and hyper which opencode has no built-in entry for), different output schema.
+ * @fileoverview generate-opencode.jsonc.mjs — Emit opencode's overlay config:
+ * one `provider` map holding ONLY the providers whose built-in routing does not
+ * work from this host, rewritten to their peer path-route on the simplified
+ * cloud router. opencode's counterpart to pi's
+ * generate-cloud-pi-native-providers.mjs — same detection cascade, its provider
+ * subset (lib/cloud-providers.mjs minus cline-pass/hyper), different schema.
  *
- * The peer's cloud face is llm-reverse-proxy: a dumb, faithful reverse proxy that routes
- * `/<providerId>/<path>` byte-for-byte to that provider's FULL real base URL — no model
- * routing, no credential handling (docs/d027). So in peer mode a provider's base URL is
- * simply `<peerBase>/<providerId>` (e.g. `<peerBase>/opencode-go`), and the model ids in
- * the emitted config are the provider's OWN bare ids (the listing under the route IS the
- * provider's `/models` — the `<providerId>/` prefixes of the llama-swap era are gone).
- * Auth is the provider's REAL key (env from the shared fact table) forwarded untouched by
- * the proxy — the old PEER_API_KEY gateway-bearer scheme belonged to llama-swap's key
- * injection and has no meaning here.
+ * Detection cascade, reachability rule and emitted shape: docs/d033.
+ * Peer-route mechanics: docs/d027. Merge/write contract: lib/artifact.mjs.
  *
- * The emitted file uses opencode's V1 config schema: the provider map lives
- * under the top-level key `provider` (SINGULAR) — `providers` is only a V2 key
- * and is rejected/ignored by the V1 loader (see opencode
- * packages/core/src/v1/config/config.ts, `provider: Schema.Record(...)`).
- *
- * Detection cascade:
- *   1. Cloud providers: if the REAL default endpoint is reachable, opencode's
- *      built-in provider just works — emit nothing. Unreachable + a usable
- *      peer path-route -> emit an override routing that provider through
- *      `<peerBase>/<providerId>`. The peer is probed per provider and lazily:
- *      no unreachable provider means no peer route is needed, so we never
- *      spend the request (or log its failures).
- *   2. Local GGUF: probe the vault-sourced peer base (lib/peer-probe.mjs
- *      peerBaseUrl()), as the llama-swap
- *      path-route of the same funnel (`<base>/llama-swap`, forwarded by
- *      llm-reverse-proxy to the local instance on loopback :8101); emit an
- *      openai-compatible provider for GGUF models.  No localhost candidates
- *      are probed — the LAN :8080 (proxy) and :8101 (llama-swap) listen
- *      addresses are only reachable on the local host (docs/d022).
- *
- * "Reachable" is about the NETWORK PATH, not about credentials. A 401/403 from
- * e.g. https://api.openai.com/v1/models is what an OpenAI-compatible endpoint
- * returns to any unauthenticated request — this generator runs without
- * provider keys by design (opencode holds its own OAuth login / key at
- * runtime), so such a response proves the endpoint is reachable and says
- * nothing about whether opencode's built-in provider works. Only the absence
- * of ANY http response (DNS failure, connection refused, TLS failure,
- * timeout) is evidence that this host cannot reach the endpoint.
- *
- * opencode-go IS included: the opencode models.dev catalog ships a built-in
- * `opencode-go` provider (env OPENCODE_API_KEY, api
- * https://opencode.ai/zen/go/v1).
+ * GOTCHA: opencode's V1 config puts the provider map under the top-level key
+ * `provider` (**singular**) — `providers` is a V2 key the V1 loader rejects.
  *
  * Usage: node generate-opencode.jsonc.mjs [out]
  *   out defaults to ./opencode.jsonc.

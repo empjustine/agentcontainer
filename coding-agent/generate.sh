@@ -46,6 +46,7 @@
 #       generative-ai dialect the path-forwarding proxy carries byte-for-byte).
 #   generate-cloud-alternative-providers.mjs -> model-015-cloud-cline-pass.json
 #       + model-016-cloud-hyper.json
+#       + model-017-cloud-inferx.json
 #       derived from the vendored models.dev.api.json; full provider blocks
 #       (pi has no native cline-pass/hyper), per-provider real-or-peer
 #       path-route cascade decides the route (same key in both modes — the
@@ -271,8 +272,8 @@ else
 	# Cloud-ALTERNATIVE layers (providers pi does not ship natively; see the
 	# generator's PROVIDER_SPECS table): derived from the vendored
 	# models.dev.api.json, no secrets needed.  Writes one layer file per row
-	# next to itself (the scratch dir): model-015-cloud-cline-pass.json and
-	# model-016-cloud-hyper.json.
+	# next to itself (the scratch dir): model-015-cloud-cline-pass.json,
+	# model-016-cloud-hyper.json and model-017-cloud-inferx.json.
 	if [ -f "$_scratch/generate-cloud-alternative-providers.mjs" ] && [ -f "$_scratch/models.dev.api.json" ]; then
 		node_run "$_scratch/generate-cloud-alternative-providers.mjs" ||
 			log_warn "generate-cloud-alternative-providers.mjs failed — layers omitted"

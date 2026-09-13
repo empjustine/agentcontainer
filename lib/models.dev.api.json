@@ -31586,7 +31586,7 @@
 				"open_weights": true,
 				"limit": {
 					"context": 1048576,
-					"output": 1048576
+					"output": 128000
 				},
 				"cost": {
 					"input": 0.95,
@@ -43019,6 +43019,54 @@
 					"cache_write": 6.875
 				}
 			},
+			"aws-mantle/gpt-6-astra": {
+				"id": "aws-mantle/gpt-6-astra",
+				"name": "GPT-6 Astra (AWS Mantle)",
+				"description": "GPT-6 Astra is OpenAI's most capable model for complex reasoning, coding, computer use, research, and document creation.",
+				"family": "gpt-astra",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"medium",
+							"high",
+							"xhigh",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": false,
+				"knowledge": "2026-04-30",
+				"release_date": "2026-09-04",
+				"last_updated": "2026-09-04",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1050000,
+					"input": 922000,
+					"output": 128000
+				},
+				"cost": {
+					"input": 10,
+					"output": 50,
+					"cache_read": 1,
+					"cache_write": 12.5
+				}
+			},
 			"aws-mantle/gpt-5.6-luna": {
 				"id": "aws-mantle/gpt-5.6-luna",
 				"name": "GPT-5.6 Luna (AWS Mantle)",
@@ -45749,6 +45797,53 @@
 					"cache_write": 0.0375
 				}
 			},
+			"alibaba/kimi-k3": {
+				"id": "alibaba/kimi-k3",
+				"name": "Kimi K3 (Alibaba Cloud)",
+				"description": "Multimodal Kimi model with 1M context and toggleable max-effort thinking for long-horizon agent work",
+				"family": "kimi-k3",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"minimal",
+							"low",
+							"medium",
+							"high",
+							"xhigh",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": false,
+				"release_date": "2026-07-16",
+				"last_updated": "2026-07-16",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 1048576,
+					"output": 1048576
+				},
+				"cost": {
+					"input": 3,
+					"output": 15,
+					"cache_read": 0.3
+				}
+			},
 			"alibaba/qwen3.6-35b-a3b": {
 				"id": "alibaba/qwen3.6-35b-a3b",
 				"name": "Qwen3.6 35B A3B (Alibaba Cloud)",
@@ -46329,6 +46424,53 @@
 					"output": 1.2,
 					"cache_read": 0.08,
 					"cache_write": 0.5
+				}
+			},
+			"runpod/kimi-k3": {
+				"id": "runpod/kimi-k3",
+				"name": "Kimi K3 (Runpod)",
+				"description": "Multimodal Kimi model with 1M context and toggleable max-effort thinking for long-horizon agent work",
+				"family": "kimi-k3",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"minimal",
+							"low",
+							"medium",
+							"high",
+							"xhigh",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": false,
+				"release_date": "2026-07-16",
+				"last_updated": "2026-07-16",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 1048576,
+					"output": 1048576
+				},
+				"cost": {
+					"input": 3,
+					"output": 15,
+					"cache_read": 0.3
 				}
 			},
 			"scx-ai-gp/glm-5.2": {
@@ -160749,6 +160891,7 @@
 					{
 						"type": "effort",
 						"values": [
+							"minimal",
 							"low",
 							"medium",
 							"high",
@@ -163561,8 +163704,11 @@
 						"type": "effort",
 						"values": [
 							"none",
+							"minimal",
 							"low",
-							"high"
+							"medium",
+							"high",
+							"xhigh"
 						]
 					}
 				],
@@ -163585,9 +163731,9 @@
 					"output": 128000
 				},
 				"cost": {
-					"input": 0.14,
-					"output": 0.58,
-					"cache_read": 0.035
+					"input": 0.132,
+					"output": 0.528,
+					"cache_read": 0.033
 				}
 			},
 			"qwen3-coder-next": {
@@ -163773,6 +163919,50 @@
 					"input": 1.25,
 					"output": 10,
 					"cache_read": 0.125
+				}
+			},
+			"hy4-preview": {
+				"id": "hy4-preview",
+				"name": "Hy4 preview",
+				"description": "A next-generation productivity model with significantly enhanced Agent and complex task execution capabilities.",
+				"family": "Hy",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"minimal",
+							"low",
+							"medium",
+							"high",
+							"xhigh",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"temperature": true,
+				"release_date": "2026-08-28",
+				"last_updated": "2026-08-28",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 1000000,
+					"output": 64000
+				},
+				"cost": {
+					"input": 0.834,
+					"output": 2.501,
+					"cache_read": 0.042
 				}
 			},
 			"ernie-4.5-vl-424b-a47b": {
@@ -164070,6 +164260,36 @@
 					"input": 2.5,
 					"output": 10,
 					"cache_read": 1.25
+				}
+			},
+			"hy-mt2-plus": {
+				"id": "hy-mt2-plus",
+				"name": "Hy-MT2 Plus",
+				"description": "Tool-capable chat model for instruction following and agentic application workflows",
+				"family": "Hy",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": false,
+				"temperature": true,
+				"release_date": "2026-05-21",
+				"last_updated": "2026-05-21",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 8192,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.074,
+					"output": 0.295
 				}
 			},
 			"gpt-5.6-luna": {
@@ -166866,6 +167086,49 @@
 					"output": 0.15
 				}
 			},
+			"glm-5-turbo": {
+				"id": "glm-5-turbo",
+				"name": "GLM-5-Turbo",
+				"description": "Faster GLM-5 lane for coding agents that need lower latency",
+				"family": "glm",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"medium",
+							"high",
+							"xhigh",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"release_date": "2026-03-16",
+				"last_updated": "2026-03-16",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 200000,
+					"output": 131072
+				},
+				"cost": {
+					"input": 1.2,
+					"output": 4,
+					"cache_read": 0.24
+				}
+			},
 			"gpt-5-mini": {
 				"id": "gpt-5-mini",
 				"name": "GPT-5 Mini",
@@ -167272,6 +167535,51 @@
 					"input": 1.2,
 					"output": 4,
 					"cache_read": 0.2
+				}
+			},
+			"glm-5v-turbo": {
+				"id": "glm-5v-turbo",
+				"name": "GLM-5V-Turbo",
+				"description": "Fast GLM vision model for screenshots, documents, and multimodal agent tasks",
+				"family": "glm",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"medium",
+							"high",
+							"xhigh",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"temperature": true,
+				"release_date": "2026-04-01",
+				"last_updated": "2026-04-01",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"video",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 200000,
+					"output": 131072
+				},
+				"cost": {
+					"input": 1.2,
+					"output": 4,
+					"cache_read": 0.24
 				}
 			},
 			"gpt-4": {
@@ -192906,7 +193214,7 @@
 			},
 			"~anthropic/claude-haiku-latest": {
 				"id": "~anthropic/claude-haiku-latest",
-				"name": "Anthropic Claude Haiku Latest",
+				"name": "Anthropic: Claude Haiku Latest",
 				"description": "Fast Claude model for responsive assistance, classification, and lightweight agents",
 				"family": "claude-haiku",
 				"attachment": true,
@@ -192949,7 +193257,7 @@
 			},
 			"~anthropic/claude-sonnet-latest": {
 				"id": "~anthropic/claude-sonnet-latest",
-				"name": "Anthropic Claude Sonnet Latest",
+				"name": "Anthropic: Claude Sonnet Latest",
 				"description": "Balanced Claude model for coding, analysis, agent workflows, and cost control",
 				"family": "claude-sonnet",
 				"attachment": true,
@@ -193086,7 +193394,7 @@
 			},
 			"~deepseek/deepseek-v4-flash-latest": {
 				"id": "~deepseek/deepseek-v4-flash-latest",
-				"name": "DeepSeek V4 Flash Latest",
+				"name": "DeepSeek: DeepSeek V4 Flash Latest",
 				"description": "This model always redirects to the latest model in the DeepSeek V4 Flash family.",
 				"family": "deepseek",
 				"attachment": false,
@@ -193121,9 +193429,9 @@
 					"output": 393216
 				},
 				"cost": {
-					"input": 0.05,
-					"output": 0.16,
-					"cache_read": 0.013
+					"input": 0.03,
+					"output": 0.07,
+					"cache_read": 0.003
 				}
 			},
 			"dots-studio/dots-3-note-preview:free": {
@@ -194491,8 +194799,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 204800,
-					"output": 131072
+					"context": 200000,
+					"output": 128000
 				},
 				"cost": {
 					"input": 0.3,
@@ -197236,8 +197544,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 1048576,
-					"output": 32768
+					"context": 524288,
+					"output": 471859
 				},
 				"cost": {
 					"input": 0.95,
@@ -198086,7 +198394,7 @@
 			},
 			"~google/gemini-pro-latest": {
 				"id": "~google/gemini-pro-latest",
-				"name": "Google Gemini Pro Latest",
+				"name": "Google: Gemini Pro Latest",
 				"description": "Advanced Gemini model for complex reasoning, coding, and multimodal analysis",
 				"family": "gemini-pro",
 				"attachment": true,
@@ -198133,7 +198441,7 @@
 			},
 			"~google/gemini-flash-latest": {
 				"id": "~google/gemini-flash-latest",
-				"name": "Google Gemini Flash Latest",
+				"name": "Google: Gemini Flash Latest",
 				"description": "Fast Gemini model balancing multimodal reasoning, tool use, and cost",
 				"family": "gemini-flash",
 				"attachment": true,
@@ -198409,7 +198717,7 @@
 			},
 			"~moonshotai/kimi-latest": {
 				"id": "~moonshotai/kimi-latest",
-				"name": "MoonshotAI Kimi Latest",
+				"name": "MoonshotAI: Kimi Latest",
 				"description": "Kimi multimodal agent model for visual understanding, coding, and planning",
 				"family": "kimi",
 				"attachment": true,
@@ -198446,9 +198754,9 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 2.302729,
-					"output": 11.550195,
-					"cache_read": 0.263169
+					"input": 2.375,
+					"output": 13.3,
+					"cache_read": 0.2755
 				}
 			},
 			"ibm-granite/granite-4.2-8b": {
@@ -198638,8 +198946,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 1048576,
-					"output": 393216
+					"context": 1024000,
+					"output": 384000
 				},
 				"cost": {
 					"input": 1.32,
@@ -199077,8 +199385,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 1024000,
-					"output": 384000
+					"context": 1048576,
+					"output": 393216
 				},
 				"cost": {
 					"input": 1.6,
@@ -199118,7 +199426,7 @@
 			},
 			"~openai/gpt-terra-latest": {
 				"id": "~openai/gpt-terra-latest",
-				"name": "OpenAI GPT Terra Latest",
+				"name": "OpenAI: GPT Terra Latest",
 				"description": "This model always redirects to the latest model in the OpenAI GPT Terra family.",
 				"family": "gpt-terra",
 				"attachment": true,
@@ -199165,7 +199473,7 @@
 			},
 			"~openai/gpt-sol-latest": {
 				"id": "~openai/gpt-sol-latest",
-				"name": "OpenAI GPT Sol Latest",
+				"name": "OpenAI: GPT Sol Latest",
 				"description": "This model always redirects to the latest model in the OpenAI GPT Sol family.",
 				"family": "gpt-sol",
 				"attachment": true,
@@ -199212,7 +199520,7 @@
 			},
 			"~openai/gpt-luna-latest": {
 				"id": "~openai/gpt-luna-latest",
-				"name": "OpenAI GPT Luna Latest",
+				"name": "OpenAI: GPT Luna Latest",
 				"description": "This model always redirects to the latest model in the OpenAI GPT Luna family.",
 				"family": "gpt-luna",
 				"attachment": true,
@@ -199259,7 +199567,7 @@
 			},
 			"~openai/gpt-astra-latest": {
 				"id": "~openai/gpt-astra-latest",
-				"name": "OpenAI GPT Astra Latest ($$$$)",
+				"name": "OpenAI: GPT Astra Latest ($$$$)",
 				"description": "This model always redirects to the latest model in the OpenAI GPT Astra family.",
 				"family": "gpt-astra",
 				"attachment": true,
@@ -199305,7 +199613,7 @@
 			},
 			"~openai/gpt-mini-latest": {
 				"id": "~openai/gpt-mini-latest",
-				"name": "OpenAI GPT Mini Latest",
+				"name": "OpenAI: GPT Mini Latest",
 				"description": "Compact GPT model for low-latency assistance and high-volume workloads",
 				"family": "gpt-mini",
 				"attachment": true,
@@ -200666,7 +200974,7 @@
 				"open_weights": true,
 				"limit": {
 					"context": 131072,
-					"output": 8192
+					"output": 16384
 				},
 				"cost": {
 					"input": 0.4,
@@ -236448,7 +236756,7 @@
 			},
 			"~anthropic/claude-haiku-latest": {
 				"id": "~anthropic/claude-haiku-latest",
-				"name": "Anthropic Claude Haiku Latest",
+				"name": "Claude Haiku Latest",
 				"description": "Fast Claude model for responsive assistance, classification, and lightweight agents",
 				"family": "claude-haiku",
 				"attachment": true,
@@ -236487,7 +236795,7 @@
 			},
 			"~anthropic/claude-sonnet-latest": {
 				"id": "~anthropic/claude-sonnet-latest",
-				"name": "Anthropic Claude Sonnet Latest",
+				"name": "Claude Sonnet Latest",
 				"description": "Balanced Claude model for coding, analysis, agent workflows, and cost control",
 				"family": "claude-sonnet",
 				"attachment": true,
@@ -236664,9 +236972,9 @@
 					"output": 393216
 				},
 				"cost": {
-					"input": 0.05,
-					"output": 0.16,
-					"cache_read": 0.013
+					"input": 0.03,
+					"output": 0.07,
+					"cache_read": 0.003
 				}
 			},
 			"dots-studio/dots-3-note-preview:free": {
@@ -237931,12 +238239,12 @@
 				"open_weights": true,
 				"limit": {
 					"context": 204800,
-					"output": 131072
+					"output": 128000
 				},
 				"cost": {
-					"input": 0.3,
-					"output": 1.2,
-					"cache_read": 0.03
+					"input": 0.27,
+					"output": 1.08,
+					"cache_read": 0.027
 				}
 			},
 			"minimax/minimax-m3": {
@@ -240938,7 +241246,7 @@
 				"open_weights": true,
 				"limit": {
 					"context": 1048576,
-					"output": 32768
+					"output": 471859
 				},
 				"cost": {
 					"input": 1,
@@ -241831,7 +242139,7 @@
 			},
 			"~google/gemini-pro-latest": {
 				"id": "~google/gemini-pro-latest",
-				"name": "Google Gemini Pro Latest",
+				"name": "Gemini Pro Latest",
 				"description": "Advanced Gemini model for complex reasoning, coding, and multimodal analysis",
 				"family": "gemini-pro",
 				"attachment": true,
@@ -241895,7 +242203,7 @@
 			},
 			"~google/gemini-flash-latest": {
 				"id": "~google/gemini-flash-latest",
-				"name": "Google Gemini Flash Latest",
+				"name": "Gemini Flash Latest",
 				"description": "Fast Gemini model balancing multimodal reasoning, tool use, and cost",
 				"family": "gemini-flash",
 				"attachment": true,
@@ -242207,7 +242515,7 @@
 			},
 			"~moonshotai/kimi-latest": {
 				"id": "~moonshotai/kimi-latest",
-				"name": "MoonshotAI Kimi Latest",
+				"name": "Kimi Latest",
 				"description": "Kimi multimodal agent model for visual understanding, coding, and planning",
 				"family": "kimi",
 				"attachment": true,
@@ -242246,9 +242554,9 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 2.302729,
-					"output": 11.550195,
-					"cache_read": 0.263169
+					"input": 2.375,
+					"output": 13.3,
+					"cache_read": 0.2755
 				}
 			},
 			"ibm-granite/granite-4.2-8b": {
@@ -242440,12 +242748,12 @@
 				"open_weights": true,
 				"limit": {
 					"context": 1048576,
-					"output": 393216
+					"output": 384000
 				},
 				"cost": {
-					"input": 0.57816,
-					"output": 1.73448,
-					"cache_read": 0.018396
+					"input": 0.57948,
+					"output": 1.73844,
+					"cache_read": 0.019316
 				}
 			},
 			"deepseek/deepseek-v4-flash-0731": {
@@ -242488,9 +242796,9 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 0.065,
-					"output": 0.18,
-					"cache_read": 0.016
+					"input": 0.04,
+					"output": 0.08,
+					"cache_read": 0.008
 				}
 			},
 			"deepseek/deepseek-v4-flash": {
@@ -242535,9 +242843,9 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.06706,
-					"output": 0.13412,
-					"cache_read": 0.013412
+					"input": 0.06566,
+					"output": 0.13132,
+					"cache_read": 0.013132
 				}
 			},
 			"deepseek/deepseek-v4.1-flash": {
@@ -242867,12 +243175,12 @@
 				"open_weights": true,
 				"limit": {
 					"context": 1048576,
-					"output": 384000
+					"output": 393216
 				},
 				"cost": {
-					"input": 0.849816,
-					"output": 1.699632,
-					"cache_read": 0.070818
+					"input": 1.6,
+					"output": 3.2,
+					"cache_read": 0.135
 				}
 			},
 			"deepseek/deepseek-chat-v3-0324": {
@@ -242908,7 +243216,7 @@
 			},
 			"~openai/gpt-terra-latest": {
 				"id": "~openai/gpt-terra-latest",
-				"name": "OpenAI GPT Terra Latest",
+				"name": "GPT Terra Latest",
 				"description": "GPT model for general reasoning, writing, coding, and tool-assisted tasks",
 				"family": "gpt-terra",
 				"attachment": true,
@@ -242974,7 +243282,7 @@
 			},
 			"~openai/gpt-sol-latest": {
 				"id": "~openai/gpt-sol-latest",
-				"name": "OpenAI GPT Sol Latest",
+				"name": "GPT Sol Latest",
 				"description": "GPT model for general reasoning, writing, coding, and tool-assisted tasks",
 				"family": "gpt-sol",
 				"attachment": true,
@@ -243040,7 +243348,7 @@
 			},
 			"~openai/gpt-luna-latest": {
 				"id": "~openai/gpt-luna-latest",
-				"name": "OpenAI GPT Luna Latest",
+				"name": "GPT Luna Latest",
 				"description": "GPT model for general reasoning, writing, coding, and tool-assisted tasks",
 				"family": "gpt-luna",
 				"attachment": true,
@@ -243106,7 +243414,7 @@
 			},
 			"~openai/gpt-astra-latest": {
 				"id": "~openai/gpt-astra-latest",
-				"name": "OpenAI GPT Astra Latest",
+				"name": "GPT Astra Latest",
 				"description": "GPT model for general reasoning, writing, coding, and tool-assisted tasks",
 				"family": "gpt-astra",
 				"attachment": true,
@@ -243170,7 +243478,7 @@
 			},
 			"~openai/gpt-mini-latest": {
 				"id": "~openai/gpt-mini-latest",
-				"name": "OpenAI GPT Mini Latest",
+				"name": "GPT Mini Latest",
 				"description": "Compact GPT model for low-latency assistance and high-volume workloads",
 				"family": "gpt-mini",
 				"attachment": true,
@@ -244449,11 +244757,11 @@
 				"open_weights": true,
 				"limit": {
 					"context": 131072,
-					"output": 8192
+					"output": 16384
 				},
 				"cost": {
-					"input": 0.72,
-					"output": 0.72
+					"input": 0.4,
+					"output": 0.4
 				}
 			},
 			"meta-llama/llama-3.3-70b-instruct": {
@@ -247472,9 +247780,9 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 2.302729,
-					"output": 11.550195,
-					"cache_read": 0.263169
+					"input": 2.648138,
+					"output": 13.282724,
+					"cache_read": 0.302644
 				}
 			},
 			"moonshotai/kimi-k2": {
@@ -247907,9 +248215,9 @@
 					"output": 128000
 				},
 				"cost": {
-					"input": 0.132,
-					"output": 0.528,
-					"cache_read": 0.033
+					"input": 0.0825,
+					"output": 0.33,
+					"cache_read": 0.020625
 				}
 			},
 			"tencent/hy4-preview": {
@@ -296414,9 +296722,9 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.65,
-					"output": 1.45,
-					"cache_read": 0.13
+					"input": 0.3,
+					"output": 0.7,
+					"cache_read": 0.06
 				}
 			},
 			"gpt-oss-safeguard-120b": {

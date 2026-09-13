@@ -1,82 +1,18 @@
 /**
  * @fileoverview generate-cloud-pi-native-providers.mjs — Emit the pi overlay
- * `model-012-cloud-pi-native.json`: the pi-NATIVE cloud half of the layered
- * models.json (the layer contract — naming, order, merge semantics — lives in
- * merge-models-json.mjs), carrying an override for every pi-native cloud
- * provider whose default routing is NOT usable from this host.
+ * `model-012-cloud-pi-native.json`: a **reroute-only override** for every
+ * pi-native cloud provider (openrouter / opencode / opencode-go / mistral /
+ * google) whose default endpoint is NOT reachable from this host. When nothing
+ * is emitted, pi's built-in providers just work (docs/d024).
  *
- * This is the cloud cascade of the former catch-all `generate-models.json.mjs`,
- * split out so each file has one merge semantic (docs/d022, applied in docs/d024):
- * pi ships openrouter / opencode / opencode-go / mistral / google natively, so
- * this layer is an OPTIONAL override ("swap only baseUrl" — when nothing is
- * emitted, pi's built-in providers just work). The opposite semantic — providers
- * pi does NOT ship natively, where the layer is the ONLY source of the full
- * definition — lives in `generate-cloud-alternative-providers.mjs` (layer
- * `model-015-...`), and the local GGUF cascade in `generate-local-llama-swap.mjs`
- * (layer `model-010-...`). `generate-opencode.jsonc.mjs` is the opencode-format
- * twin of this file: same cascade, its provider subset, opencode's schema.
- *
- * Detection cascade (per provider, independent — docs/d027):
- *
- *   1. Probe the provider's REAL default endpoint (lib/cloud-providers.mjs
- *      `baseUrl`). Reachable ⇒ pi's built-in provider handles it natively,
- *      nothing is emitted. "Reachable" is about the NETWORK PATH, not about
- *      credentials: a 401/403 is what such an endpoint returns to any
- *      unauthenticated request, and this generator legitimately runs without
- *      provider keys (pi resolves its own key / OAuth login at request time).
- *      Only the absence of ANY http response (dns failure, connection
- *      refused, tls failure, timeout) is evidence that this host cannot
- *      reach the endpoint. The canonical wording lives in
- *      lib/peer-probe.mjs's header.
- *   2. Unreachable ⇒ probe the provider's PEER PATH-ROUTE on the simplified
- *      cloud router (llm-reverse-proxy): `<peerBase>/<providerId>` — the
- *      vault-sourced peer base (lib/peer-probe.mjs peerBaseUrl()). The route
- *      delivers `<route>/…` byte-for-byte to the provider's FULL
- *      real base URL — no model-id magic, no key injection (docs/d027) — so
- *      every provider dialect (including mistral's non-completions
- *      endpoints and google's native generative-ai wire format, which
- *      llama-swap's openai-completions peer routing could never carry) is
- *      forwarded untouched. Usable ⇒ emit a reroute-only override:
- *      `baseUrl` = `<peerBase>/<providerId>`, NO `apiKey` (the proxy
- *      forwards pi's own built-in per-provider auth untouched —
- *      lib/pi-models.mjs providerReroute), NO `api`/`compat` (pi's built-in
- *      provider definition supplies the dialect).
- *   3. Neither usable ⇒ nothing is written for that provider and any
- *      existing layer is left untouched.
- *
- * The peer is probed per provider and lazily: no unreachable provider means
- * no peer route is needed, so we never spend the request (or log its
- * failures).
- *
- * Models in the override — the provider's own slice, by source priority:
- *   a. the peer route's live `/models` listing (bare provider-native ids —
- *      the listing IS the provider's; the `<providerId>/` prefixes of the
- *      llama-swap era are gone), scoped by PEER_MODEL_FILTERS below;
- *   b. when the probe proved the route but could not list (401/403 without a
- *      key, or an unexpected answer), the vendored models.dev catalog
- *      (MODELS_DEV_JSON, same filters) — the catalog mirrors what the
- *      provider serves, and the override only reroutes, so its ids must
- *      match pi's built-in provider expectations, which the catalog does.
- *
- * Emitted layer, per provider:
- *
- * - ClinePass and hyper are intentionally NOT here: pi has no native
- *   provider for either and needs the full definition at all times, so they
- *   are owned exclusively by generate-cloud-alternative-providers.mjs
- *   (layers `model-015-...` / `model-016-...`) — see the merge contract in
- *   merge-models-json.mjs.
- * - If nothing usable is detected, nothing is written and any existing layer
- *   is left untouched.
+ * The opposite semantic — providers pi does NOT ship, where the layer is the
+ * sole full definition — is generate-cloud-alternative-providers.mjs.
+ * generate-opencode.jsonc.mjs is the opencode-schema twin. Detection cascade,
+ * reachability rule, model-list source priority and the per-provider filters
+ * live in docs/d033. Merge contract: merge-models-json.mjs.
  *
  * Usage: node generate-cloud-pi-native-providers.mjs [out]
  *   out defaults to $PI_MODELS_JSON else ./model-012-cloud-pi-native.json.
- *   Env: PEER_BASE_URL (first peer candidate), per-provider key envs (direct
- *   AND peer-route probes only; see lib/cloud-providers.mjs),
- *   MODELS_DEV_JSON (catalog fallback for the override's model list).
- *   Typical run, then merge — see merge-models-json.mjs:
- *     node generate-local-llama-swap.mjs         # -> model-010-local-default.json
- *     node generate-cloud-pi-native-providers.mjs # -> model-012-cloud-pi-native.json
- *     node merge-models-json.mjs                  # -> models.json
  */
 
 import { existsSync, readFileSync } from "node:fs";

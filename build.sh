@@ -4,18 +4,33 @@
 # the two tools the rest of the tree needs that Termux can only get from `pkg`
 # (nodejs, jq).
 #
-# THE CLI — `go install` (upstream ships a main.go at the repo root on main):
+# THE CLI — how it is provisioned here (VERIFIED on this Termux/Android host,
+# see docs/termux-build-audit.md):
 #
-#   go install github.com/Infisical/cli@main
+#   1. opportunistic: `go install github.com/Infisical/cli@main`
+#   2. operative:     clone/pull the checkout + `go build` with Android flags
 #
-# which drops the binary into $GOBIN/$GOPATH/bin/infisical (on GOFLAGS/GOPATH
-# defaults: $HOME/go/bin).  No clone, no checkout refresh, no local build
-# state — this replaced the former clone-into-~/Infisical/cli + `go build .`
-# maintenance (git pull chore, diverged-checkout resets).  Run this once,
-# then `infisical login`; the environment chain (lib/environment.sh) and
-# every secret consumer in the tree work unchanged.
+# (1) FAILS TODAY ON EVERY PLATFORM, not just Android: upstream's go.mod
+# carries `replace` directives (github.com/zalando/go-keyring and
+# github.com/pion/turn/v4 -> Infisical forks), and `go install pkg@version`
+# hard-rejects modules whose go.mod has replace directives:
 #
-# --- ANDROID EXCEPTION: the checkout build (kept, automatic fallback) ------
+#   go: github.com/Infisical/cli@main (in github.com/Infisical/cli@v0.43.132):
+#       The go.mod file for the module providing named packages contains one
+#       or more replace directives. It must not contain directives that would
+#       cause it to be interpreted differently than if it were the main module.
+#
+# An earlier revision of this file claimed `go install` had REPLACED the
+# checkout-clone maintenance ("no clone, no checkout refresh, no local build
+# state") — that claim was WRONG and is retracted: (2), the clone + pull +
+# build path, is the only one that produces a binary and therefore the real
+# maintenance surface. (1) is kept only as an opportunistic fast path in case
+# upstream ever drops the replaces; the script falls through to (2) on any
+# (1) failure. Run this once, then `infisical login`; the environment chain
+# (lib/environment.sh) and every secret consumer in the tree work unchanged.
+#
+# --- ANDROID LINK FLAGS (the checkout build is needed on ALL platforms; the
+# --- flags below are the Android-only part) --------------------------------
 # `go install` FAILS at LINK time on Android/arm64 with Go >= 1.23:
 #
 #   link: github.com/wlynxg/anet: invalid reference to net.zoneCache
@@ -155,10 +170,13 @@ fi
 command -v go >/dev/null 2>&1 || log_die 96 \
 	"go toolchain not found (on Termux: pkg install golang)"
 
-# Primary path: `go install` — upstream ships main.go at the repo root, so
-# this needs NO clone and NO local build state (see the header).  The binary
-# lands in GOBIN/GOPATH bin ($HOME/go/bin by default).
-log_info "go install infisical CLI (primary path)"
+# Primary path: `go install` — opportunistic only.  Upstream's go.mod replace
+# directives make it fail on ALL platforms today (see the header); this branch
+# exists so the script needs no attention if upstream ever drops them.  The
+# success signal is the BINARY AT THE EXPECTED PATH, never go install's exit
+# status (an exit 0 without a binary must fall through to the checkout build,
+# and an exit != 0 must merely warn).
+log_info "go install infisical CLI (opportunistic primary path — expected to fail while upstream go.mod has replace directives)"
 if go install github.com/Infisical/cli@main; then
 	_installed="${GOBIN:-$(go env GOPATH 2>/dev/null)/bin}/infisical"
 	if [ -x "$_installed" ]; then
@@ -170,9 +188,9 @@ else
 	log_warn "go install failed — falling back to the checkout build (the Android -checklinkname=0 path; see the header)"
 fi
 
-# Fallback (Android-only in practice): the clone + flags build.  Idempotent
-# clone/refresh; a diverged checkout is a warning, not a fatal (delete
-# ~/Infisical/cli and re-run for a fresh one).
+# Fallback — in practice THE path (works on every platform; see the header).
+# Idempotent clone/refresh; a diverged checkout is a warning, not a fatal
+# (delete ~/Infisical/cli and re-run for a fresh one).
 if [ -e "$src" ]; then
 	if [ -d "$src/.git" ]; then
 		log_info "refreshing checkout" src="$src" branch="$branch"
@@ -187,14 +205,14 @@ else
 	git clone --depth=1 --branch "$branch" "$url" "$src"
 fi
 
-# Flags — see "ANDROID EXCEPTION" in this file's header:
-#   -checklinkname=0  THE fix: re-enables anet's linkname to net.zoneCache,
+# Flags — see "ANDROID LINK FLAGS" in this file's header:
+#   -checklinkname=0  THE Android-only fix: re-enables anet's linkname to net.zoneCache,
 #                     which Go >= 1.23 rejects on Android (the only platform
 #                     this source build is needed for in this tree)
 #   -s -w             strip debug info -> less linker RAM on ~1 GB devices
 #   -p=1 / GOGC=50    cap parallelism / GC pressure -> avoid OOM
 #   -mod=mod          tolerate go.mod drift after an upstream pull
-log_info "building infisical CLI (checkout fallback)" src="$src" bin="$bin"
+log_info "building infisical CLI (checkout build — the operative path)" src="$src" bin="$bin"
 GOGC=50 go build -C "$src" -p=1 -mod=mod \
 	-ldflags="-checklinkname=0 -s -w" -o "$bin" .
 chmod 0755 "$bin"

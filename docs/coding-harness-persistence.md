@@ -49,11 +49,13 @@ Notes:
   `$stage/launch.sh` and ro-mounted as `/opt/agentcontainer-launch.sh`; it is
   not part of preserved state.
 
-Sources verified against reference clones
-(`~/Downloads/references/github/`): Cline
-(`cline/cline/docs/getting-started/config.mdx` — `~/.cline` layout,
+Sources verified against upstream repos (canonical: github.com/cline/cline,
+github.com/JetBrains/thinkrail), read from local reference clones under
+`~/Downloads/references/github/` — a convenience cache, not the canonical
+source: Cline
+(`docs/getting-started/config.mdx` — `~/.cline` layout,
 `CLINE_DATA_DIR` replaces only `~/.cline/data`) and ThinkRail
-(`JetBrains/thinkrail/packages/server/src/persistence/persistence.ts` —
+(`packages/server/src/persistence/persistence.ts` —
 `dataDir()` = `THINKRAIL_DATA_DIR` ?? `~/.thinkrail`; pi agent dir reuse via
 `packages/server/src/agent/piRuntime.ts`).
 
@@ -66,9 +68,10 @@ consumer: **mini-swe-agent**
 (`SWE-agent/mini-swe-agent/src/minisweagent/environments/extra/bubblewrap.py`,
 an experimental, Windows-unsupported sandbox environment). All its flags
 (`--unshare-user-try`, `--ro-bind`, `--bind`, `--chdir`, `--tmpfs`, `--proc`,
-`--dev`, `--new-session`, `--setenv`) were verified flag-by-flag against the
-upstream clone `~/Downloads/references/github/containers/bubblewrap`
-(`bwrap.xml` man page + `bubblewrap.c`) and are all real, documented options
+`--dev`, `--new-session`, `--setenv`) were verified flag-by-flag against
+upstream bubblewrap (github.com/containers/bubblewrap — `bwrap.xml` man page +
+`bubblewrap.c`, read from the local reference clone) and are all real,
+documented options
 used in a semantically correct minimal-sandbox layout — **verdict:
 plausible**. Full audit (flag table, semantic checks against upstream
 `README.md`, and adoption caveats for a possible `bwrap` workload runtime
