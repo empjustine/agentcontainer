@@ -29,6 +29,7 @@ import (
 	"os"
 	"strings"
 	"syscall"
+	"time"
 )
 
 // ---------------------------------------------------------------------------
@@ -230,18 +231,69 @@ func classify(err error) (code, title string) {
 	return "upstream-error", "The upstream request failed"
 }
 
+// ---------------------------------------------------------------------------
+// Combined Log Format logging
+// ---------------------------------------------------------------------------
+
+// loggingResponseWriter wraps http.ResponseWriter to capture the status code
+// and total bytes written — httputil.ReverseProxy writes directly to the
+// ResponseWriter so we need an interceptor to log %>s %b (the standard
+// Combined Log Format fields for status and response size).
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	status int
+	size   int
+}
+
+func (lw *loggingResponseWriter) WriteHeader(status int) {
+	lw.status = status
+	lw.ResponseWriter.WriteHeader(status)
+}
+
+func (lw *loggingResponseWriter) Write(b []byte) (int, error) {
+	n, err := lw.ResponseWriter.Write(b)
+	lw.size += n
+	return n, err
+}
+
+// logCombinedRequest writes one line per request in a format matching nginx /
+// Apache Combined Log Format:
+//
+//	127.0.0.1 - - [10/Oct/2000:13:55:36 -0700] "GET /path HTTP/1.1" 200 1234 "-" "Mozilla/5.0"
+//
+// This makes the proxy's output greppable, parseable, and compatible with
+// standard log analysis tools (GoAccess, ELK, etc.) without a custom parser.
+func logCombinedRequest(r *http.Request, status int, size int) {
+	remoteAddr := r.RemoteAddr
+	if host, _, err := net.SplitHostPort(remoteAddr); err == nil {
+		remoteAddr = host
+	}
+	ts := time.Now().Format("02/Jan/2006:15:04:05 -0700")
+	requestLine := fmt.Sprintf("%s %s %s", r.Method, r.URL.RequestURI(), r.Proto)
+	referrer := r.Referer()
+	if referrer == "" {
+		referrer = "-"
+	}
+	userAgent := r.Header.Get("User-Agent")
+	if userAgent == "" {
+		userAgent = "-"
+	}
+	log.Printf("%s - - [%s] %s %d %d %q %q",
+		remoteAddr, ts, requestLine, status, size, referrer, userAgent)
+}
+
 // proxyError is called by ReverseProxy when the upstream exchange fails before
 // any response bytes reach the client — the one place we may still send a 502.
+// Request logging is handled by server.ServeHTTP after the proxy returns; this
+// method only writes the 502 response body (or nothing, for client cancels).
 func (p *provider) proxyError(w http.ResponseWriter, r *http.Request, err error) {
 	// Client hung up first: nothing to report, and nobody to report to.
 	if r.Context().Err() != nil || errors.Is(err, context.Canceled) {
-		log.Printf("[llm-reverse-proxy] %s%s: client cancelled request: %v", p.name, r.URL.Path, err)
 		return
 	}
 
 	code, title := classify(err)
 	detail := fmt.Sprintf("while proxying %s%s to %s: %s", p.name, r.URL.RequestURI(), p.target.Host, err.Error())
-	log.Printf("[llm-reverse-proxy] 502 %s %s%s → %s: %v", code, p.name, r.URL.RequestURI(), p.target.Host, err)
 	writeProblem(w, r, http.StatusBadGateway, code, title, detail, err)
 }
 
@@ -275,6 +327,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintln(w, "404 page not found")
+		logCombinedRequest(r, http.StatusNotFound, len("404 page not found\n"))
 	}
 	if name == "" {
 		funnel404()
@@ -283,11 +336,16 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	p, ok := s.providers[name]
 	if !ok {
-		log.Printf("[llm-reverse-proxy] 404 %s %s (no provider %q) → funnel-style 404", r.Method, r.URL.RequestURI(), name)
 		funnel404()
 		return
 	}
-	p.handler().ServeHTTP(w, r)
+
+	// Wrap the writer so we can capture the status code and byte count after
+	// ReverseProxy writes (the stdlib proxy writes directly to the provided
+	// ResponseWriter, so we need our own interceptor to log %>s %b).
+	lw := &loggingResponseWriter{ResponseWriter: w}
+	p.handler().ServeHTTP(lw, r)
+	logCombinedRequest(r, lw.status, lw.size)
 }
 
 // ---------------------------------------------------------------------------
@@ -334,6 +392,11 @@ func main() {
 		ReadHeaderTimeout: 30e9,
 		Handler:           s,
 	}
+
+	// Disable Go's default timestamp prefix — the Combined Log Format lines
+	// already carry their own timestamp in brackets, so the log package's
+	// automatic "2009/01/02 15:04:05" header would be redundant noise.
+	log.SetFlags(0)
 
 	log.Printf("[llm-reverse-proxy] listening on %s; %d provider(s):", cfg.Listen, len(s.providers))
 	for _, name := range s.providers {
