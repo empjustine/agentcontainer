@@ -6,7 +6,7 @@ title: d028 — provider extensions (pi/opencode plugins) vs generated-config ma
 parent: architecture
 depends-on:
   - coding-agent
-  - d027b-models-dev-relay-fallback
+  - d027b
 references:
   - environments
 tags:

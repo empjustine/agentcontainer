@@ -6,8 +6,8 @@ title: d027b — models.dev catalog fetch chain (direct → relay → stale copy
 parent: architecture
 depends-on:
   - lib
-  - d023-generators-dedup
-  - d025-shared-model-data-to-lib
+  - d023
+  - d025
 tags:
   - serving
   - llm-reverse-proxy

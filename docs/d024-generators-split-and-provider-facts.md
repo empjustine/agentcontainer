@@ -1,3 +1,12 @@
+---
+id: d024
+type: architecture-design
+status: implemented
+title: "Per-merge-semantic generator split & shared cloud provider facts"
+parent: goal
+tags: ["generators", "provider-facts", "split"]
+---
+
 # d024 — Per-merge-semantic generator split & shared cloud provider facts
 
 This applies the two remaining follow-ups from the d022/d023 audits — the

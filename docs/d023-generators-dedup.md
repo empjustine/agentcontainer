@@ -1,3 +1,12 @@
+---
+id: d023
+type: architecture-design
+status: implemented
+title: "Generator code-flow audit: findings and consolidation"
+parent: goal
+tags: ["generators", "consolidation", "audit"]
+---
+
 # d023 — Generator code-flow audit: findings and consolidation
 
 The generator pipelines (`llm-local-inference/generate.sh` + its `.mjs`

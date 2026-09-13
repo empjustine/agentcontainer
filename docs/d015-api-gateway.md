@@ -1,3 +1,12 @@
+---
+id: d015
+type: architecture-design
+status: implemented
+title: "API gateway"
+parent: goal
+tags: ["api-gateway", "proxy"]
+---
+
 # d015: API gateway
 
 `cloud-llm/api-gateway/server.js` is a lightweight API gateway that proxies

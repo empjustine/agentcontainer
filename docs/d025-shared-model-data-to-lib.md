@@ -1,3 +1,12 @@
+---
+id: d025
+type: architecture-design
+status: accepted
+title: "shared model-data tables live in `lib/`"
+parent: goal
+tags: ["lib", "data-sharing"]
+---
+
 # d025 — shared model-data tables live in `lib/`
 
 ## Problem
