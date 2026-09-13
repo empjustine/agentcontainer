@@ -3,9 +3,9 @@
 ## Context
 
 OpenCode Go is a $10/mo subscription that passes through partner models at
-effective per-1M-token rates (see
-[cloud-llm/README.md](../cloud-llm/README.md) for the canonical
-pricing sources). The `/models` endpoint returns zero pricing
+effective per-1M-token rates (the canonical pricing sources lived in the
+retired `cloud-llm/README.md`, now only in the external archive). The
+`/models` endpoint returns zero pricing
 (subscription-backed), so the virtual cost heuristic (d006) applies by
 default.
 
@@ -26,7 +26,8 @@ A separate JSON file maps each OpenCode Go model to its documented cost:
 }
 ```
 
-The file lives in `cloud-llm/` and is loaded at generation time.
+The file (and its `cloud-llm/` home) is part of the retired full-catalog
+pipeline; see `docs/scoped-models-and-proxy-overrides.md` for what replaced it.
 
 ### Override precedence
 
@@ -41,5 +42,5 @@ stripping any provider namespace prefix (e.g. `opencode-go:grok-4.5`).
 ## Maintenance
 
 Edit `opencode-go-pricing.json` when the OpenCode Go docs change. The refresh
-procedure (canonical repo, local mirror, transcription steps) is documented
-in [cloud-llm/README.md](../cloud-llm/README.md).
+procedure (canonical repo, local mirror, transcription steps) lived in the
+retired `cloud-llm/README.md` (external archive only).

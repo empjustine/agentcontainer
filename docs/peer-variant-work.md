@@ -38,12 +38,7 @@ coding-agent-peer/
 └── .env             # PEER_API_KEY / PEER_BASE_URL (gitignored)
 ```
 
-## How it works
 
-Unlike the bazzite `coding-agent/run.sh`, which dynamically generates
-static `settings.json` and a `models.json` via `coding-agent/generate-models.json.js`,
-the work variant **ships static files**
-that are copied into the container's `~/.pi/agent/` directory.
 
 ### `models.json` — peer endpoint override
 

@@ -15,30 +15,25 @@
  * Usage: node generate-cloud-alternative-providers.mjs
  */
 
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
-const scriptDir = dirname(fileURLToPath(import.meta.url));
+import {
+	bearerHeaders,
+	fetchModelEntries,
+	loadHyperFacts,
+	logInfo,
+	logWarn,
+	modelsDevCatalogPath,
+	peerBaseUrls,
+	probeDirect,
+	probePeerRoutes,
+	refreshHyperFacts,
+	scriptDir,
+	setLogTool,
+	writeArtifact,
+} from "./gen-lib.mjs";
 
-// Shared lib/ helpers (docs/d023): structured logger, artifact writer, HTTP
-// probe toolkit, hyper facts cache — all via the LIB_DIR convention.
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
-const { logInfo, logWarn, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
-		await import(`${LIB_DIR}/log.mjs`)
-	);
-const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
-	await import(`${LIB_DIR}/artifact.mjs`)
-);
-const { bearerHeaders, peerBaseUrl, probePeerRoutes, probeDirect, fetchModelEntries } =
-	/** @type {typeof import("../lib/peer-probe.mjs")} */ (
-		await import(`${LIB_DIR}/peer-probe.mjs`)
-	);
-const { loadHyperFacts, refreshHyperFacts } =
-	/** @type {typeof import("../lib/hyper-facts.mjs")} */ (
-		await import(`${LIB_DIR}/hyper-facts.mjs`)
-	);
 setLogTool("coding-agent/generate-cloud-alternative");
 
 const OPENAI_COMPLETIONS_API = "openai-completions";
@@ -47,17 +42,13 @@ const OPENAI_COMPLETIONS_API = "openai-completions";
 // catalog which the best-effort refresh replaces with the freshly fetched
 // copy, so the generator always reads what this run validated.  Manual
 // in-place runs fall back to the shared vendored catalog (docs/d023).
-const API_JSON =
-	process.env.MODELS_DEV_JSON ??
-	(existsSync(join(scriptDir, "models.dev.api.json"))
-		? join(scriptDir, "models.dev.api.json")
-		: join(LIB_DIR, "models.dev.api.json"));
+const API_JSON = modelsDevCatalogPath();
 
-// Peer base — vault-sourced (peerBaseUrl(); see the header there).  No
-// localhost candidates — the LAN :8080 (llm-reverse-proxy) and :8101
-// (llama-swap) listen addresses are not routable from outside the serving
-// host (docs/d022).
-const CLOUD_PEER_CANDIDATES = [peerBaseUrl()];
+// Peer candidates — vault-sourced (peerBaseUrls(); see lib/peer-probe.mjs).
+// Supports multi-hop proxy chains (PEER_BASE_URLS comma/newline delimited);
+// no localhost candidates — the LAN :8080 (proxy) and :8101 (llama-swap)
+// listen addresses are not routable from outside the serving host (docs/d022).
+const CLOUD_PEER_CANDIDATES = peerBaseUrls();
 
 /**
  * The alternative-provider table: one row per provider pi does not ship
@@ -206,6 +197,7 @@ function effortValues(m) {
  * @typedef {object} ModelsDevModel
  * @property {string} id
  * @property {string} [name]
+ * @property {string} [family]
  * @property {boolean} [reasoning]
  * @property {{ input?: string[] }} [modalities]
  * @property {{ context?: number, output?: number }} [limit]
@@ -290,7 +282,8 @@ function toCost(cost) {
  * @param {AlternativeProviderSpec} spec the provider spec row
  * @param {ModelsDevModel} m a models.dev model record
  * @param {string} [id] the id to publish (defaults to the record's own id)
- * @returns {PiAlternativeModel} a pi model entry
+ * @returns {PiAlternativeModel|null} a pi model entry, or null for an
+ *   embedding model (pi cannot drive one)
  */
 function piModel(spec, m, id = m.id) {
 	if (m.family === "text-embedding" || id.toLowerCase().includes("embedding")) return null;
@@ -316,19 +309,32 @@ function piModel(spec, m, id = m.id) {
 }
 
 /**
- * Load one provider's slice of the vendored models.dev catalog.
+ * Load one provider's slice of the vendored models.dev catalog. Catwalk is
+ * NOT a fallback here: it carries none of the alternative providers
+ * (docs/d028 coverage gap — hyper/cline-pass/inferx are absent).
  * @param {AlternativeProviderSpec} spec the provider spec row
  * @returns {{ api: string, models: Record<string, ModelsDevModel> }} the
- *   models.dev provider record (api endpoint + per-model metadata)
+ *   provider record (api endpoint + per-model metadata)
  */
 function loadProvider(spec) {
-	const catalog = JSON.parse(readFileSync(API_JSON, "utf-8"));
+	/** @type {Record<string, { api: string, models: Record<string, ModelsDevModel> }>} */
+	let catalog;
+	try {
+		catalog = JSON.parse(readFileSync(API_JSON, "utf-8"));
+	} catch (err) {
+		logWarn("models.dev catalog unreadable", {
+			path: API_JSON,
+			error: /** @type {any} */ (err)?.message ?? String(err),
+		});
+		throw new Error(`cannot load ${spec.id}: ${API_JSON} unreadable`);
+	}
 	const provider = catalog[spec.id];
-	if (!provider)
-		throw new Error(`provider ${spec.id} not found in ${API_JSON}`);
-	return /** @type {{ api: string, models: Record<string, ModelsDevModel> }} */ (
-		provider
-	);
+	if (!provider?.models) {
+		throw new Error(
+			`provider ${spec.id} not found in the models.dev catalog (${API_JSON})`,
+		);
+	}
+	return provider;
 }
 
 /**
@@ -415,7 +421,7 @@ function liveToCatalogRecord(l) {
  * new models are published as minimal entries (pi defaults).
  * @param {AlternativeProviderSpec} spec
  * @param {PiAlternativeModel[]} models the current catalog-derived lineup
- * @param {RawModelEntry[]} liveEntries the listing from the provider's /models endpoint
+ * @param {import("../lib/peer-probe.mjs").RawModelEntry[]} liveEntries the listing from the provider's /models endpoint
  * @returns {PiAlternativeModel[]} the pruned and augmented lineup
  */
 function enrichWithLiveListing(spec, models, liveEntries) {
@@ -454,7 +460,9 @@ function enrichWithFacts(spec, models, facts) {
 	const live = new Map(
 		facts.models.map((l) => [stripProviderPrefixes(spec.id, l.id), l]),
 	);
+	/** @type {PiAlternativeModel[]} */
 	const enriched = [];
+	/** @type {PiAlternativeModel[]} */
 	const untouched = [];
 	for (const m of models) {
 		const l = live.get(stripProviderPrefixes(spec.id, m.id));
@@ -463,7 +471,8 @@ function enrichWithFacts(spec, models, facts) {
 			continue;
 		}
 		const merged = { ...liveToCatalogRecord(l), name: m.name };
-		enriched.push(piModel(spec, merged, m.id));
+		const rebuilt = piModel(spec, merged, m.id);
+		if (rebuilt) enriched.push(rebuilt);
 	}
 	const servedIds = new Set(
 		models.map((m) => stripProviderPrefixes(spec.id, m.id)),
@@ -503,7 +512,7 @@ async function emitProvider(spec) {
 			try {
 				const liveEntries = await fetchModelEntries(
 					provider.api,
-					bearerHeaders(process.env[spec.envKey].trim()),
+					bearerHeaders(process.env[spec.envKey]?.trim()),
 				);
 				models = enrichWithLiveListing(spec, models, liveEntries);
 				logInfo(`${spec.id} lineup synchronized with live /models listing`, {
@@ -512,30 +521,39 @@ async function emitProvider(spec) {
 				});
 			} catch (err) {
 				logWarn(`${spec.id} live listing fetch failed — falling back to catalog`, {
-					error: err.message,
+					error: /** @type {any} */ (err).message,
 				});
 			}
 		}
 
 		if (spec.enrichFromFacts) {
-			await refreshHyperFacts();
+			// refreshHyperFacts tries the provider endpoint, then every multi-hop
+			// peer candidate (docs/d034), then falls back to the last good cache.
+			await refreshHyperFacts(provider.api);
 			const facts = loadHyperFacts();
-			const { enriched, liveOnly, untouched } = enrichWithFacts(
-				spec,
-				models,
-				facts,
-			);
-			models = [...enriched, ...untouched];
-			if (liveOnly.length) {
-				models = [...models, ...liveOnly.map((r) => piModel(spec, r))];
+			if (facts) {
+				const { enriched, liveOnly, untouched } = enrichWithFacts(
+					spec,
+					models,
+					facts,
+				);
+				models = [...enriched, ...untouched];
+				if (liveOnly.length) {
+					models = [
+						...models,
+						...liveOnly.map((r) => piModel(spec, r)).filter((m) => m !== null),
+					];
+				}
+				logInfo(`${spec.id} enriched from facts cache`, {
+					fetchedAt: facts.fetchedAt,
+					ageMs: facts.ageMs,
+					enriched: enriched.length,
+					liveOnlyAppended: liveOnly.length,
+					catalogOnlyKept: untouched.length,
+				});
+			} else {
+				logWarn(`${spec.id} facts cache unavailable — using catalog metadata`, {});
 			}
-			logInfo(`${spec.id} enriched from facts cache`, {
-				fetchedAt: facts.fetchedAt,
-				ageMs: facts.ageMs,
-				enriched: enriched.length,
-				liveOnlyAppended: liveOnly.length,
-				catalogOnlyKept: untouched.length,
-			});
 		}
 		logInfo(`${spec.id} reachable — emitting real route`, {
 			baseUrl: provider.api,
@@ -582,21 +600,26 @@ async function emitProvider(spec) {
 	// stay authoritative from the vendored catalog.
 	const peerModels = allModels;
 
-	// Peer mode CONSUMES the facts cache stale-tolerantly — no refresh here
-	// (peer mode means the provider endpoint itself is unreachable DIRECTLY;
-	// the cache from the last direct run is the only enrichment available).
-	let facts = null;
-	if (spec.enrichFromFacts) facts = loadHyperFacts();
+	// Peer mode: the provider endpoint is unreachable directly, so
+	// refreshHyperFacts walks the multi-hop peer candidates (docs/d034) and
+	// falls back to the last good cache; either way the enrichment source is
+	// the facts cache, never the (unreachable) direct endpoint.
 	let models = peerModels;
-	if (facts) {
-		const { enriched, untouched } = enrichWithFacts(spec, models, facts);
-		models = [...enriched, ...untouched];
-		logInfo(`${spec.id} peer models enriched from facts cache`, {
-			fetchedAt: facts.fetchedAt,
-			ageMs: facts.ageMs,
-			enriched: enriched.length,
-			untouched: untouched.length,
-		});
+	if (spec.enrichFromFacts) {
+		await refreshHyperFacts(provider.api);
+		const facts = loadHyperFacts();
+		if (facts) {
+			const { enriched, untouched } = enrichWithFacts(spec, models, facts);
+			models = [...enriched, ...untouched];
+			logInfo(`${spec.id} peer models enriched from facts cache`, {
+				fetchedAt: facts.fetchedAt,
+				ageMs: facts.ageMs,
+				enriched: enriched.length,
+				untouched: untouched.length,
+			});
+		} else {
+			logWarn(`${spec.id} facts cache unavailable — using catalog metadata`, {});
+		}
 	}
 
 	logInfo(`${spec.id} routed through peer path-route`, {
@@ -630,6 +653,18 @@ function write(block, spec) {
 	});
 }
 
-for (const spec of PROVIDER_SPECS) {
-	await emitProvider(spec);
+// Parallelize emitProvider calls — each provider's cascade (direct probe →
+// peer route → catalog fallback → facts enrichment) is self-contained and
+// I/O-bound. Parallelized to reduce unnecessary critical path latency.
+// Rejections are logged: allSettled would otherwise hide a provider whose
+// layer failed to load.
+const results = await Promise.allSettled(
+	PROVIDER_SPECS.map((spec) => emitProvider(spec)),
+);
+for (const [i, r] of results.entries()) {
+	if (r.status === "rejected") {
+		logWarn(`${PROVIDER_SPECS[i].id} layer failed — left untouched`, {
+			error: r.reason?.message ?? String(r.reason),
+		});
+	}
 }

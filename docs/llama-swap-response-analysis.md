@@ -79,24 +79,7 @@ function toPiModel(model, serverUrl) {
 | `meta.n_ctx` / `meta.n_ctx_train` | Context window defaults to `128000` for every model, regardless of its actual capability. `maxTokens` gets clamped to `min(16384, 128000) = 16384`. This may over-allocate context and lead to OOM or under-report available context. |
 | `architecture.input_modalities` | Falls back to `["text"]` for all models. Multimodal vision models will **not** be detected as image-capable. |
 
-## Why refresh still fails (the error you're seeing)
 
-Your response passes `isModelInfo`, so the error `"Could not refresh llama.cpp; showing cached models."` is **not** caused by these missing fields. It means the **HTTP request** to the server itself failed — most likely:
-
-1. **The llama-swap server is not running or not reachable** at the configured URL.
-2. **Network timeout** — the 15-second `AbortSignal.timeout` fired before a response arrived.
-3. **Non-2xx HTTP status** returned by llama-swap.
-4. **The response JSON didn't have a `data` array** at the top level (e.g., if llama-swap returns a plain array or an object without a `data` key).
-
-Check the **top-level response shape** from llama-swap:
-
-```bash
-curl http://your-llama-swap-url:port/models | jq type
-```
-
-pi expects:
-```json
-{ "data": [ ... ] }
 ```
 
 If llama-swap returns:

@@ -115,7 +115,7 @@ stream assistant response (token deltas via message_update events)
 | Errors | Rendered into the observation (exception_info) or a `FormatError` user message | Contract: **throw** on failure → loop catches, wraps as `toolResult` with `isError: true`; `beforeToolCall` can block; `afterToolCall` can patch |
 | Execution mode | Sequential by construction (one step = one action batch) | `parallel` (default) or `sequential`, per-batch or per-tool via `executionMode` |
 
-mini's bash execution is deliberately primitive: `subprocess.Popen(shell=True, ...)` with a timeout that kills the process group, merged stdout/stderr, `start_new_session`. pi's bash tool is a mini-runtime of its own (`harness/utils/shell-output.ts` + `truncate.ts`): cwd/env injection, timeout, abort signal, per-chunk capture with progress callbacks, byte/line truncation with `[Showing lines X-Y of N. Full output: /tmp/...]` pointers.
+
 
 ---
 
@@ -200,4 +200,4 @@ pi's agent package is a *general-purpose agent engine* whose test suite includes
 | Best at | baseline, research (RL/FT), hackability, minimal deps on scaffolding | long-running products, UIs, multi-session/multi-lane services, crash-resilient operation |
 | Worst at | context growth, crash recovery, parallelism | doing anything at "glanceable simplicity" scale |
 
-**Bottom line:** mini-swe-agent is the answer to "how little scaffold can we get away with?" — one tool, one loop, exceptions as control flow, the shell as the interface, and the transcript as the whole state. pi's `packages/agent` is the answer to "how do we build a *reliable, extensible, embeddable* agent engine?" — a minimal event-driven loop at its core, but wrapped in typed tools, hooks, queues, durable sessions, and compaction, because pi (the product) needs long-running, resumable, UI-driven coding sessions rather than a one-shot SWE-bench trajectory.
+

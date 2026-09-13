@@ -16,35 +16,23 @@
  *   out defaults to ./opencode.jsonc.
  */
 
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
-const scriptDir = dirname(fileURLToPath(import.meta.url));
-
-// Shared lib/ helpers (docs/d023): structured logger, artifact writer, HTTP
-// probe toolkit, provider fact table — via the LIB_DIR convention.
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
-const { logInfo, logWarn, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
-		await import(`${LIB_DIR}/log.mjs`)
-	);
-const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
-	await import(`${LIB_DIR}/artifact.mjs`)
-);
-const {
+import {
 	bearerHeaders,
-	peerBaseUrl,
+	CLOUD_PROVIDERS as CLOUD_PROVIDER_FACTS,
+	logInfo,
+	logWarn,
+	peerBaseUrls,
 	peerProviderUrl,
-	probePeerRoutes,
 	probeCandidates,
 	probeDirect,
-} = /** @type {typeof import("../lib/peer-probe.mjs")} */ (
-	await import(`${LIB_DIR}/peer-probe.mjs`)
-);
-const { CLOUD_PROVIDERS: CLOUD_PROVIDER_FACTS } =
-	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
-		await import(`${LIB_DIR}/cloud-providers.mjs`)
-	);
+	probePeerRoutes,
+	scriptDir,
+	setLogTool,
+	writeArtifact,
+} from "./gen-lib.mjs";
+
 setLogTool("coding-agent/generate-opencode");
 
 /**
@@ -82,12 +70,15 @@ const CLOUD_PROVIDERS = Object.fromEntries(
 	CLOUD_PROVIDER_IDS.map((id) => [id, CLOUD_PROVIDER_FACTS[id]]),
 );
 
-// Peer candidates (docs/d027): the single vault-sourced funnel base, for the
-// LOCAL llama-swap path-route and for the CLOUD path-routes. No localhost
-// candidates — the LAN :8080 (proxy) and :8101 (llama-swap) listen addresses
-// are not routable from outside the serving host (docs/d022).
-const LOCAL_SOURCE_CANDIDATES = [peerProviderUrl(peerBaseUrl(), "llama-swap")];
-const CLOUD_PEER_CANDIDATES = [peerBaseUrl()];
+// Peer candidates (docs/d027): vault-sourced peer bases for the LOCAL
+// llama-swap path-route and the CLOUD path-routes. Supports multi-hop proxy
+// chains (PEER_BASE_URLS comma/newline delimited). No localhost candidates —
+// the LAN :8080 (proxy) and :8101 (llama-swap) listen addresses are not
+// routable from outside the serving host (docs/d022).
+const CLOUD_PEER_CANDIDATES = peerBaseUrls();
+const LOCAL_SOURCE_CANDIDATES = CLOUD_PEER_CANDIDATES.map((base) =>
+	peerProviderUrl(base, "llama-swap"),
+);
 
 /**
  * Classify a LOCAL llama-swap catalog model id (docs/d027: cloud ids are no
@@ -153,16 +144,42 @@ async function main() {
 	/** @type {Record<string, OpenCodeProvider>} */
 	const providers = {};
 
-	// --- 1. cloud providers: direct first -------------------------------
+	// --- 1. cloud providers: direct first (parallel) -------------------
 	// Only providers whose real endpoint is genuinely UNREACHABLE are peer
 	// candidates; a 401/403 (or any other http answer) keeps the built-in
-	// routing opencode already has.
+	// routing opencode already has. Parallelized to reduce unnecessary
+	// critical path latency.
+	const cloudResults = await Promise.allSettled(
+		Object.entries(CLOUD_PROVIDERS).map(([id, cfg]) =>
+			probeDirect(
+				cfg.baseUrl,
+				bearerHeaders(process.env[cfg.apiKeyEnv]?.trim()),
+			).then(
+				(r) => ({ id, ...r }),
+				// probeDirect classifies transport failures itself, so a throw is
+				// unexpected — but the id must survive it, or the provider silently
+				// loses its peer path-route probe (the rejection branch used to
+				// push a literal "unknown" instead).
+				(err) => {
+					logWarn("cloud probe threw — will check peer routing", {
+						provider: id,
+						error: /** @type {any} */ (err)?.message ?? String(err),
+					});
+					return {
+						id,
+						result: /** @type {"unreachable"} */ ("unreachable"),
+						error: /** @type {any} */ (err)?.message ?? String(err),
+					};
+				},
+			),
+		),
+	);
+
+	/** @type {string[]} */
 	const needsPeer = [];
-	for (const [id, cfg] of Object.entries(CLOUD_PROVIDERS)) {
-		const { result, error } = await probeDirect(
-			cfg.baseUrl,
-			bearerHeaders(process.env[cfg.apiKeyEnv]?.trim()),
-		);
+	for (const r of cloudResults) {
+		if (r.status !== "fulfilled") continue; // rejection already handled + logged above
+		const { id, result, error } = r.value;
 		if (result !== "unreachable") {
 			if (result === "ok") {
 				logInfo("reachable directly — keeping built-in routing", {
@@ -185,17 +202,35 @@ async function main() {
 
 	// Cloud overrides are decided per provider by their own path-route probes
 	// below — no shared cloud catalog probe gates them (docs/d027).
-	for (const id of needsPeer) {
-		const cfg = CLOUD_PROVIDERS[id];
-		const route = await probePeerRoutes(
-			CLOUD_PEER_CANDIDATES,
-			id,
-			bearerHeaders(process.env[cfg.apiKeyEnv]?.trim()),
-		);
-		if (!route) {
-			logWarn("no usable peer path-route — skipping", { provider: id });
+	const peerResults = await Promise.allSettled(
+		needsPeer.map((id) =>
+			probePeerRoutes(
+				CLOUD_PEER_CANDIDATES,
+				id,
+				bearerHeaders(process.env[CLOUD_PROVIDERS[id].apiKeyEnv]?.trim()),
+			).then(
+				(r) => ({ id, route: r ?? null }),
+				// Same id-preservation rule as the direct phase above.
+				(err) => {
+					logWarn("peer probe threw — skipping", {
+						provider: id,
+						error: /** @type {any} */ (err)?.message ?? String(err),
+					});
+					return { id, route: null };
+				},
+			),
+		),
+	);
+
+	for (const r of peerResults) {
+		if (r.status !== "fulfilled" || !r.value.route) {
+			if (r.status === "fulfilled") {
+				logWarn("no usable peer path-route — skipping", { provider: r.value.id });
+			}
 			continue;
 		}
+		const { id, route } = r.value;
+		const cfg = CLOUD_PROVIDERS[id];
 		const filter = PEER_MODEL_FILTERS[id];
 		const models = route.entries.filter((e) => filter?.(e.id) ?? true);
 		if (models.length === 0) {

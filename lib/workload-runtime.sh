@@ -185,6 +185,19 @@ workload_publish() {
 		log_die 92 "workload_publish failed" host="$1" guest="$2"
 }
 workload_env() { _sb_append env "$@"; }
+
+# workload_env_allowlist <name...> — forward each named host variable into the
+# workload ONLY when it is non-empty.  A bare `--env NAME` with an unset host
+# var injects an EMPTY value (which generators/tools then read as "set"), so
+# every vault-key forwarder — coding-agent/run.sh and llm-local-inference/run.sh
+# — goes through this one implementation instead of a pasted for-loop.
+workload_env_allowlist() {
+	for _wea_key in "$@"; do
+		[ -n "$(printenv "$_wea_key" 2>/dev/null || true)" ] || continue
+		workload_env "$_wea_key"
+	done
+	return 0
+}
 workload_cmd() {
 	[ "$#" -gt 0 ] || return 0
 	# The bare `--` after --args is REQUIRED: jq keeps parsing options after

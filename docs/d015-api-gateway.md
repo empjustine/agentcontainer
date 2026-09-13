@@ -14,14 +14,11 @@ requests to cloud AI providers over Tailscale Funnel. It is **an API
 gateway, not a transparent proxy** (CONNECT/SOCKS): it terminates client
 connections and creates new connections to providers.
 
-Full usage, configuration reference, and the reasoning behind the design live
-with the code:
-- [`cloud-llm/api-gateway/README.md`](../cloud-llm/api-gateway/README.md) —
-  architecture, config, URL structure, streaming, Tailscale Funnel setup,
-  troubleshooting.
-- [`cloud-llm/api-gateway/DECISIONS.md`](../cloud-llm/api-gateway/DECISIONS.md) —
-  the decision record (why gateway not proxy, UUID routing, basic auth, nested
-  credentials, single JSON config, SSE passthrough, endpoint restrictions, etc.).
+Full usage, configuration reference, and the reasoning behind the design lived
+with the code (`cloud-llm/api-gateway/README.md` +
+`cloud-llm/api-gateway/DECISIONS.md`). That folder is **retired** — the
+gateway's role was taken over by `llm-reverse-proxy/` (docs/d027) — so those
+documents now live only in the external archive.
 
 ## Summary
 

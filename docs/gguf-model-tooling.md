@@ -33,11 +33,7 @@ llama.cpp inference. They share two design constraints:
    `estimate_active_params.py` after upgrades (its unknown-type warning doubles
    as the drift canary).
 
-Run them via uv (no venv or manual installs needed):
 
-```sh
-uv run local-llm/<tool>.py ...
-```
 
 | Tool | Purpose |
 |---|---|
@@ -115,15 +111,7 @@ from the header, and writes one **layer card** per repo at
   (`src/llama-model-loader.cpp`) — and a match report (matched layers, bytes
   moved, accidental non-`ffn_*` matches) is appended to the card.
 
-Usage:
 
-```sh
-uv run generate_layer_cards.py                 # all repos with local files
-uv run generate_layer_cards.py --repo unsloth/Qwen3.8-27B-GGUF
-uv run generate_layer_cards.py --json /path/to/llamacpp-model-data.json
-uv run generate_layer_cards.py --gguf path/to/model.gguf --stdout
-uv run generate_layer_cards.py --outdir /tmp/cards
-```
 
 Exit code 0 if at least one card was written, 1 otherwise.
 
@@ -160,12 +148,7 @@ Method, per dense model/quant with a local GGUF file:
    `--override-tensor` pattern) until
    fixed + KV + act + overhead + remaining_blocks ≤ GPU budget.
 
-Usage:
 
-```sh
-uv run fit_analysis.py [--gpu 15] [--ctxs 32768,65536,131072]
-                        [--batch 2048] [--overhead 0.5]
-```
 
 Contexts (tool default): **32768 vs 65536 vs 131072**, KV fixed at f16/f16.
 
@@ -204,14 +187,7 @@ For decode-speed purposes that byte figure is the more honest number: MoE
 quants mix per-tensor types, so "3B active" and the bytes actually streamed per
 token can disagree across quants.
 
-### Usage
 
-```sh
-uv run estimate_active_params.py                  # all entries with local files
-uv run estimate_active_params.py --repo unsloth/GLM-4.7-Flash-GGUF
-uv run estimate_active_params.py --gguf /path/to/model.gguf
-uv run estimate_active_params.py --emit-slugs     # print an active-b.json replacement
-```
 
 The table compares the measured slug against the old `active-b.json` value;
 divergences are flagged `<-- differs`. `--emit-slugs` prints a JSON object with
@@ -249,11 +225,7 @@ per repo and persists it as `local-llm/hf-manifests/<org>--<repo>.json`
 checks every `llamacpp-model-data.json` entry: does the configured `--hf-file`
 match what llama-server would pick implicitly?
 
-```sh
-uv run fetch_hf_manifests.py                # refresh manifests + audit all repos
-uv run fetch_hf_manifests.py --print-plan   # also list ok entries
-uv run fetch_hf_manifests.py --offline      # audit against cached manifests only
-```
+
 
 Network access goes through `huggingface_hub.HfApi` (`repo_info` for the
 resolved `main` commit, `list_repo_tree(recursive=True)` for the tree) —
@@ -277,12 +249,7 @@ length, feed-forward length, rope.* settings, plus estimated parameter counts
 (active/total) and KV-cache bytes-per-token (including MLA and hybrid-attention
 special cases).
 
-Usage:
 
-```sh
-node gguf-metadata-parser.js <gguf-url>
-node gguf-metadata-parser.js <hf-repo> <hf-file>
-```
 
 Output is JSON with a `params` block and a `kvCache` block (with memory at
 quarter/half/full context).

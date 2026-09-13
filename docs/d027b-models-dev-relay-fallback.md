@@ -1,17 +1,11 @@
 ---
 id: d027b
-type: decision
+type: architecture-design
 status: accepted
 title: d027b — models.dev catalog fetch chain (direct → relay → stale copy)
 parent: architecture
-depends-on:
-  - lib
-  - d023
-  - d025
-tags:
-  - serving
-  - llm-reverse-proxy
-  - coding-agent
+depends-on: [lib, d023, d025]
+tags: [serving, llm-reverse-proxy, coding-agent]
 ---
 
 ## Context

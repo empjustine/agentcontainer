@@ -1,18 +1,40 @@
+---
+id: d030
+type: architecture-design
+status: proposed
+title: "d030 — coding-agent flow: complexity audit and simplification options"
+parent: architecture
+---
+
 # d030 — coding-agent flow: complexity audit and simplification options
 
-status: proposal (nothing decided) · parent: architecture · relates-to: d023,
-d024, d027, d029
+status: proposed (nothing decided) · relates-to: d023, d024, d027, d029
+
+## Implementation status (2026-09)
+
+Option 4 (`workload_env_allowlist` in `lib/workload-runtime.sh`, now used by
+both run scripts) and option 5 (`coding-agent/gen-lib.mjs` generator kit) have
+shipped, with a behavioural test for option 4 in `tests/check-workload.sh`.
+Option 3 (prefix GC) was drafted and then REVERTED: the stage dirs under
+`~/workspace/agentcontainer-*` are the mounted agent state (session /
+transcript history) and `workload_rm` also discards container logs, so pruning
+by prefix destroys history — not a simplification. Options 1+2 (host staging +
+slim launch chain) and 6 (unify the two cloud generators) remain open; these
+figures still describe pre-batch sizes for those options.
 
 ## Scope of the flow (as measured)
+
+The sizes below are **order-of-magnitude** figures: they drift as the code
+grows, so read them as "a few hundred lines", not a contract.
 
 The coding-agent flow is the repo's largest machinery:
 
 | Piece | Size | Role |
 |---|---|---|
-| `coding-agent/run.sh` | 252 ln | dual-branch launcher (container sandbox / Termux native) |
-| `coding-agent/generate.sh` | 345 ln | unified generator: staging, probe cascades, install, fallbacks |
-| 5 generators + 3 helpers | ~1,600 ln | models.json layers (010/012/015/016), merge, opencode config |
-| `lib/*.mjs` shared toolkit | 1,221 ln | probe engine, shaping, fact tables, artifact/log contracts |
+| `coding-agent/run.sh` | ~260 ln | dual-branch launcher (container sandbox / Termux native) |
+| `coding-agent/generate.sh` | ~345 ln | unified generator: staging, probe cascades, install, fallbacks |
+| 5 generators + 3 helpers | ~1,450 ln | models.json layers (010/012/015/016), merge, opencode config |
+| `lib/*.mjs` shared toolkit | ~1,250 ln | probe engine, shaping, fact tables, artifact/log contracts |
 
 The good news first: the probe semantics are already centralized
 (`lib/peer-probe.mjs` owns the "reachable ≠ authenticated" rule that used to
@@ -58,16 +80,16 @@ prunes the prefix. On a long-lived GPU host this accumulates one container +
 one stage dir per run, forever. (Hygiene/reliability, not correctness.)
 
 **F5 — the env allowlist is per-runner and hand-copied.** `run.sh` forwards
-10 vault keys in an inline loop; `llm-local-inference/run.sh` forwards 2
+11 vault keys in an inline loop; `llm-local-inference/run.sh` forwards 2
 individually. The key *lists* drift risk; the mechanism (non-empty check,
 `workload_env`) is identical and belongs in `lib/workload-runtime.sh`.
 
 **F6 — near-duplicate cloud generators.** `generate-cloud-pi-native-
-providers.mjs` (292 ln, override-only for providers pi ships) and
-`generate-cloud-alternative-providers.mjs` (703 ln, full blocks for providers
+providers.mjs` (~225 ln, override-only for providers pi ships) and
+`generate-cloud-alternative-providers.mjs` (~635 ln, full blocks for providers
 pi lacks) already share the probe toolkit, the fact tables, the shaping, and
 the direct-vs-peer route cascade; both are table-driven. The *only* semantic
-difference is full-block vs override-only output. ~1,000 lines where ~500
+difference is full-block vs override-only output. ~860 lines where ~500
 might do, at the cost of a wider single file.
 
 **F7 — generator boilerplate ×5.** Every `.mjs` generator re-derives

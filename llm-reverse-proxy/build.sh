@@ -13,15 +13,12 @@
 #     Containerfile (golang builder → distroless/static runtime, which ships
 #     the CA bundle the proxy's upstream TLS verification requires), so the
 #     compile happens INSIDE the image build and this host needs NO go
-#     toolchain, just podman/docker.  The host binary (./llm-reverse-proxy,
-#     used by ./smoke-test.sh and direct runs) is a convenience extra:
-#     compiled only when go happens to be present, skipped with a warning
-#     otherwise (smoke-test.sh builds it itself when go is available).
+#     toolchain, just podman/docker.  The host binary ./smoke-test.sh needs is
+#     built by smoke-test.sh itself (only when go is available).
 #   - Neither (bare host, no container tool): the host binary only — needs go.
 #
 # Idempotent: the image and the android binary are skipped when already
-# present (FORCE=1 rebuilds both); the host binary, when built, is rebuilt
-# every run (seconds, no deps).
+# present (FORCE=1 rebuilds both).
 #
 # Env overrides: IMAGE_TAG / FORCE / GOFLAGS.
 
@@ -55,9 +52,6 @@ _go_ready() {
 	go version >/dev/null 2>&1
 }
 
-script_dir="$SCRIPT_DIR"
-cd "$script_dir"
-
 # shellcheck disable=SC2154  # _termux/_workload/_workload_tool from the sourced lib
 if [ "$_termux" = 1 ]; then
 	# --- Termux: native android/arm64 binary --------------------------------
@@ -80,15 +74,6 @@ elif [ "$_workload" = 'workload' ]; then
 	else
 		"$_workload_tool" build -f "$script_dir/Containerfile" -t "$image" "$script_dir"
 		log_info "built image; serve it with ./run.sh" image="$image"
-	fi
-	# Host binary: convenience extra for smoke-test.sh / direct runs — build
-	# it only when a WORKING go toolchain is around (see _go_ready: a mise
-	# shim with no version set must not crash this branch), never demand it.
-	if _go_ready; then
-		CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o llm-reverse-proxy .
-		log_info "built host binary (smoke-test/direct runs)" path="$script_dir/llm-reverse-proxy"
-	else
-		log_warn "no working go toolchain — host binary skipped (the image build needs none; provision one with 'mise use -g go@1.27' or install go if you want smoke-test/direct runs)"
 	fi
 else
 	# --- bare host, no container tool: the host binary is the product -------

@@ -20,24 +20,7 @@ Rows are ordered by **token generation speed at ctx=131072** (descending);
 preprocessing (prefill) speed breaks ties. The same order drives
 `llm-local-inference/llamacpp-model-data.json` (now `lib/llamacpp-model-data.json`, docs/d025).
 
-## How to read the tables
 
-**"Fits" is almost meaningless here**: llama.cpp can always spill whole layers
-to CPU until VRAM closes, so nearly everything "fits". The informative columns
-are the **layer split**, **RAM spill** and the performance columns:
-
-- **F / H / C** — layers fully on GPU / hybrid (MoE experts on CPU, rest on
-  GPU) / fully spilled to CPU.
-- **RAM spill** — total system-RAM residency after the split (spilled weights,
-  their KV, hybrid expert weights, input embeddings, mmproj when configured).
-- **Gen tok/s / Pre tok/s** — theoretical speed-of-light upper bounds; real
-  llama.cpp typically reaches 40–70% of these. Anything with spilled/hybrid
-  layers is dominated by `cpu-dram-spill`.
-- **Bottleneck** — the upgrade lever named by the tool.
-
-Activations are the tool's conservative all-layer fp32 workspace (llama.cpp
-allocates a single worst-layer buffer instead — treat as an upper bound).
-Speeds are computed on the post-split layer placement shown in the same row.
 
 Raw per-run JSON this document was generated from:
 [`gguf-vram-fit-estimates.data.json`](gguf-vram-fit-estimates.data.json).

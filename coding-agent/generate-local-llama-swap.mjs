@@ -13,29 +13,21 @@
  *   out defaults to $PI_MODELS_JSON else ./model-010-local-default.json.
  */
 
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
-const scriptDir = dirname(fileURLToPath(import.meta.url));
+import {
+	logInfo,
+	logWarn,
+	peerBaseUrl,
+	peerProviderUrl,
+	piModel,
+	probeCandidates,
+	providerEntry,
+	scriptDir,
+	setLogTool,
+	writeArtifact,
+} from "./gen-lib.mjs";
 
-// Shared lib/ helpers (docs/d023): structured logger, artifact writer, HTTP
-// probe toolkit, pi model shaping — via the LIB_DIR convention.
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
-const { logInfo, logWarn, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
-		await import(`${LIB_DIR}/log.mjs`)
-	);
-const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
-	await import(`${LIB_DIR}/artifact.mjs`)
-);
-const { peerBaseUrl, peerProviderUrl, probeCandidates } =
-	/** @type {typeof import("../lib/peer-probe.mjs")} */ (
-		await import(`${LIB_DIR}/peer-probe.mjs`)
-	);
-const { piModel, providerEntry } =
-	/** @type {typeof import("../lib/pi-models.mjs")} */ (
-		await import(`${LIB_DIR}/pi-models.mjs`)
-	);
 setLogTool("coding-agent/generate-local-llama-swap");
 
 // The peer's funnel base URL — vault-sourced (peerBaseUrl(); see the

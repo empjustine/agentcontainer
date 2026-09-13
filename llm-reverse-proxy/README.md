@@ -150,10 +150,8 @@ faithful passthrough; the upstream's own trust decisions are never pre-empted.
   MULTI-STAGE `golang:1.27-alpine` → `distroless/static` — the compile
   happens inside the image build, so no host go toolchain is needed, just
   podman/docker; the image ships the CA bundle upstream TLS verification
-  needs and is ~10 MB final). The host binary (`./llm-reverse-proxy`, used
-  by `smoke-test.sh` and direct runs) is a convenience extra: built only
-  when go happens to be present, skipped with a warning otherwise
-  (`smoke-test.sh` builds it itself when go is available).
+  needs and is ~10 MB final). `smoke-test.sh` builds the host binary
+  (`./llm-reverse-proxy`) itself when go is available.
 - **Bare host without a container tool**: host binary only — go is required,
   it is the only thing this host can build and serve.
 
@@ -163,7 +161,10 @@ HOST NETWORK mode listening on `${HOST_PORT:-8080}` (the funnel front) with
 0.0.0.0:$HOST_PORT` overrides the config, like llama-swap's port model) —
 host networking is what makes the loopback `llama-swap` upstream reachable
 from the container; the native branch execs the binary with
-`${LISTEN:-:8080}`. The proxy holds no secrets — no vault loader, no env
+`${LISTEN:-:8080}`. The config path differs by branch: the native branch
+reads `./llm-reverse-proxy.json`, the container branch mounts the same file
+at `/etc/llm-reverse-proxy/llm-reverse-proxy.json` (both are overridable
+with `CONFIG`). The proxy holds no secrets — no vault loader, no env
 allowlist; requests must already carry valid provider keys.
 
 ### Port model (the conflict with llama-swap, docs/d027)

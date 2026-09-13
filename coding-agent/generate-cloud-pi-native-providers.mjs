@@ -2,8 +2,8 @@
  * @fileoverview generate-cloud-pi-native-providers.mjs — Emit the pi overlay
  * `model-012-cloud-pi-native.json`: a **reroute-only override** for every
  * pi-native cloud provider (openrouter / opencode / opencode-go / mistral /
- * google) whose default endpoint is NOT reachable from this host. When nothing
- * is emitted, pi's built-in providers just work (docs/d024).
+ * google / nvidia) whose default endpoint is NOT reachable from this host. When
+ * nothing is emitted, pi's built-in providers just work (docs/d024).
  *
  * The opposite semantic — providers pi does NOT ship, where the layer is the
  * sole full definition — is generate-cloud-alternative-providers.mjs.
@@ -15,51 +15,41 @@
  *   out defaults to $PI_MODELS_JSON else ./model-012-cloud-pi-native.json.
  */
 
-import { existsSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
-const scriptDir = dirname(fileURLToPath(import.meta.url));
+import {
+	bearerHeaders,
+	CLOUD_PROVIDERS as CLOUD_PROVIDER_FACTS,
+	getCatwalkModels,
+	logInfo,
+	logWarn,
+	modelsDevCatalogPath,
+	peerBaseUrls,
+	piModel,
+	PI_NATIVE_CLOUD_IDS,
+	probeDirect,
+	probePeerRoutes,
+	providerReroute,
+	refreshCatwalkFacts,
+	scriptDir,
+	setLogTool,
+	writeArtifact,
+} from "./gen-lib.mjs";
 
-// Shared lib/ helpers (docs/d023): structured logger, artifact writer, HTTP
-// probe toolkit, provider fact table, pi model shaping — via LIB_DIR.
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
-const { logInfo, logWarn, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
-		await import(`${LIB_DIR}/log.mjs`)
-	);
-const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
-	await import(`${LIB_DIR}/artifact.mjs`)
-);
-const { bearerHeaders, peerBaseUrl, probePeerRoutes, probeDirect } =
-	/** @type {typeof import("../lib/peer-probe.mjs")} */ (
-		await import(`${LIB_DIR}/peer-probe.mjs`)
-	);
-const { CLOUD_PROVIDERS: CLOUD_PROVIDER_FACTS, PI_NATIVE_CLOUD_IDS } =
-	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
-		await import(`${LIB_DIR}/cloud-providers.mjs`)
-	);
-const { piModel, providerReroute } =
-	/** @type {typeof import("../lib/pi-models.mjs")} */ (
-		await import(`${LIB_DIR}/pi-models.mjs`)
-	);
 setLogTool("coding-agent/generate-cloud-pi-native");
 
-// Peer base — vault-sourced (peerBaseUrl(); see the header there).  No
-// localhost candidates — the LAN :8080 (llm-reverse-proxy) and :8101
-// (llama-swap) listen addresses are not routable from outside the serving
-// host (docs/d022).
-const CLOUD_PEER_CANDIDATES = [peerBaseUrl()];
+// Peer candidates — vault-sourced (peerBaseUrls(); see lib/peer-probe.mjs).
+// Supports multi-hop proxy chains (PEER_BASE_URLS comma/newline delimited);
+// no localhost candidates — the LAN :8080 (proxy) and :8101 (llama-swap)
+// listen addresses are not routable from outside the serving host (docs/d022).
+const CLOUD_PEER_CANDIDATES = peerBaseUrls();
 
 // The vendored models.dev catalog (fallback model-list source, docs/d023):
 // next to this script when run from generate.sh's scratch dir, the shared
 // vendored copy for manual in-place runs. Absent ⇒ the (a)-listings above
 // are the only model source.
-const API_JSON =
-	process.env.MODELS_DEV_JSON ??
-	(existsSync(join(scriptDir, "models.dev.api.json"))
-		? join(scriptDir, "models.dev.api.json")
-		: join(LIB_DIR, "models.dev.api.json"));
+const API_JSON = modelsDevCatalogPath();
 
 /**
  * Per-provider scoping of the override's model list, applied to BOTH sources
@@ -86,10 +76,12 @@ const PEER_MODEL_FILTERS = {
 /**
  * The scoped model-id list for one provider from the vendored models.dev
  * catalog, or null when the catalog has no usable slice for it.
+ * Falls back to catwalk when models.dev is stale.
  * @param {string} id provider id (models.dev key)
  * @returns {string[]|null}
  */
 function catalogModelIds(id) {
+	// --- 1. models.dev catalog ------------------------------------------
 	try {
 		const catalog =
 			/** @type {Record<string, { models?: Record<string, unknown> }>} */ (
@@ -98,15 +90,35 @@ function catalogModelIds(id) {
 		const models = catalog[id]?.models ?? {};
 		const filter = PEER_MODEL_FILTERS[id];
 		const ids = Object.keys(models).filter((mid) => filter?.(mid) ?? true);
-		return ids.length ? ids : null;
+		if (ids.length) return ids;
 	} catch (err) {
-		logWarn("models.dev catalog fallback unavailable", {
+		logWarn("models.dev catalog unavailable — trying catwalk fallback", {
 			provider: id,
-			path: API_JSON,
 			error: /** @type {Error} */ (err).message,
 		});
-		return null;
 	}
+
+	// --- 2. catwalk fallback --------------------------------------------
+	// Catwalk provider mapping: openrouter→openrouter, opencode→opencode-zen,
+	// google→gemini. nvidia/mistral have no catwalk entry.
+	const catwalkModels = getCatwalkModels(id);
+	if (catwalkModels) {
+		const filter = PEER_MODEL_FILTERS[id];
+		const ids = catwalkModels
+			.map((m) => m.id)
+			.filter((mid) => filter?.(mid) ?? true);
+		if (ids.length) {
+			logInfo(`${id} model IDs from catwalk fallback`, {
+				models: ids.length,
+			});
+			return ids;
+		}
+	}
+
+	logWarn("no model list available from models.dev or catwalk", {
+		provider: id,
+	});
+	return null;
 }
 
 /**
@@ -130,17 +142,50 @@ async function main() {
 		process.env.PI_MODELS_JSON ??
 		join(scriptDir, "model-012-cloud-pi-native.json");
 
-	// Direct-first: probe each provider's DEFAULT endpoint; only if that fails
-	// do we look for its peer path-route (lazy — no peer probe, no 401 noise,
-	// when every direct endpoint is reachable).
+	// Direct-first: probe each provider's DEFAULT endpoint in parallel; only
+	// providers whose direct endpoint is unreachable get peer path-route probes.
+	// Parallelized to reduce unnecessary critical path latency — each probe
+	// is I/O-bound with an 8s timeout, so running them concurrently avoids
+	// N * 8s sequential wait.
 	/** @type {string[]} */
 	const needsPeer = [];
-	for (const id of PI_NATIVE_CLOUD_IDS) {
-		const { baseUrl, apiKeyEnv } = CLOUD_PROVIDER_FACTS[id];
-		const { result, error } = await probeDirect(
-			baseUrl,
-			bearerHeaders(process.env[apiKeyEnv]?.trim()),
-		);
+	// Refresh catwalk catalog once at the start — best-effort, used as
+	// fallback for providers that catwalk covers (openrouter, opencode-go,
+	// google via gemini). Catwalk is public (no keys needed).
+	await refreshCatwalkFacts();
+
+	// Phase 1: parallel direct probes
+	const directResults = await Promise.allSettled(
+		PI_NATIVE_CLOUD_IDS.map((id) =>
+			probeDirect(
+				CLOUD_PROVIDER_FACTS[id].baseUrl,
+				bearerHeaders(process.env[CLOUD_PROVIDER_FACTS[id].apiKeyEnv]?.trim()),
+			).then(
+				(r) => ({ id, ...r }),
+				// probeDirect classifies transport failures itself, so a throw is
+				// unexpected — but the id must survive it, or the provider silently
+				// loses its peer path-route probe (the rejection branch used to
+				// push a literal "unknown" instead).
+				(err) => {
+					logWarn("direct probe threw — will probe peer path-route", {
+						provider: id,
+						error: /** @type {any} */ (err)?.message ?? String(err),
+					});
+					return {
+						id,
+						result: /** @type {"unreachable"} */ ("unreachable"),
+						error: /** @type {any} */ (err)?.message ?? String(err),
+					};
+				},
+			),
+		),
+	);
+
+	// Classify results: reachable providers keep built-in routing;
+	// unreachable ones need peer probing.
+	for (const r of directResults) {
+		if (r.status !== "fulfilled") continue; // rejection already handled + logged above
+		const { id, result, error } = r.value;
 		if (result !== "unreachable") {
 			if (result === "auth") {
 				// Not a routing problem: the endpoint answered and refused our
@@ -166,44 +211,61 @@ async function main() {
 
 	/** @type {Record<string, import("../lib/pi-models.mjs").PiProvider>} */
 	const providers = {};
-	for (const id of needsPeer) {
-		const { apiKeyEnv } = CLOUD_PROVIDER_FACTS[id];
-		const route = await probePeerRoutes(
-			CLOUD_PEER_CANDIDATES,
-			id,
-			bearerHeaders(process.env[apiKeyEnv]?.trim()),
-		);
-		if (!route) {
-			logWarn("no usable peer path-route — provider left on built-in routing", {
-				provider: id,
-			});
+	// Phase 2: parallel peer path-route probes for providers that need it
+	const peerResults = await Promise.allSettled(
+		needsPeer.map((id) =>
+			probePeerRoutes(
+				CLOUD_PEER_CANDIDATES,
+				id,
+				bearerHeaders(process.env[CLOUD_PROVIDER_FACTS[id].apiKeyEnv]?.trim()),
+			).then(
+				(r) => ({ id, route: r ?? null }),
+				// Same id-preservation rule as the direct phase above.
+				(err) => {
+					logWarn("peer probe threw — provider left on built-in routing", {
+						provider: id,
+						error: /** @type {any} */ (err)?.message ?? String(err),
+					});
+					return { id, route: null };
+				},
+			),
+		),
+	);
+
+	for (const r of peerResults) {
+		if (r.status !== "fulfilled" || !r.value.route) {
+			if (r.status === "fulfilled") {
+				logWarn("no usable peer path-route — provider left on built-in routing", {
+					provider: r.value.id,
+				});
+			}
 			continue;
 		}
+		const { id, route } = r.value;
 		const models = listingModels(route.entries, id);
 		if (models) {
 			logInfo("override models from live peer listing", {
 				provider: id,
 				models: models.length,
 			});
-		} else {
-			// Route proved but not listable (401/403 without a key, or an
-			// unexpected answer): the catalog mirrors the provider's own ids.
-			const ids = catalogModelIds(id);
-			if (!ids) {
-				logWarn("no model list available — skipping", { provider: id });
-				continue;
-			}
-			logInfo("override models from models.dev catalog fallback", {
-				provider: id,
-				models: ids.length,
-			});
-			providers[id] = providerReroute(
-				route.url,
-				ids.map((mid) => piModel({ id: mid })),
-			);
+			providers[id] = providerReroute(route.url, models);
 			continue;
 		}
-		providers[id] = providerReroute(route.url, models);
+		// Route proved but not listable (401/403 without a key, or an
+		// unexpected answer): the catalog mirrors the provider's own ids.
+		const ids = catalogModelIds(id);
+		if (!ids) {
+			logWarn("no model list available — skipping", { provider: id });
+			continue;
+		}
+		logInfo("override models from models.dev catalog fallback", {
+			provider: id,
+			models: ids.length,
+		});
+		providers[id] = providerReroute(
+			route.url,
+			ids.map((mid) => piModel({ id: mid })),
+		);
 	}
 
 	if (Object.keys(providers).length === 0) {

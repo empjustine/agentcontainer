@@ -29,17 +29,16 @@ names.
 
 ## Environments
 
-| Name             | Sandbox / runtime                          | Cloud access | Serving dir(s)                                       | Usage dir              |
-|------------------|--------------------------------------------|--------------|-----------------------------------------------------|------------------------|
-| **bazzite-gfx1030** | rootless podman, SELinux enforced       | direct       | `llm-local-inference/` (local layer) + `llm-reverse-proxy/` (cloud relay) | `coding-agent/`        |
-| **a50-en7562ct**    | rootless **termux**, restrictive SELinux, | direct (if   | `llm-reverse-proxy/` (native build/run, cloud relay)  | `coding-agent/`        |
-|                  | non-standard file paths                    | any)         |                                                     |                        |
-| **wsl2**             | WSL2 **rootful docker**, no direct cloud | peers only   | `llm-reverse-proxy/` (peers only)                   | `coding-agent/` (static config) |
-| **oci-e21micro**     | Oracle OCI Compute (x86), rootless        | peers only   | `llm-reverse-proxy/` (peers only)                   | `coding-agent/` (static config) |
-|                  | podman or docker                           |              |                                                     |                        |
+| Name                    | Sandbox / runtime                    | Cloud access | Serving dir(s)                                       | Usage dir              |
+|-------------------------|--------------------------------------|--------------|-----------------------------------------------------|------------------------|
+| **local-inference-host** | rootless podman, SELinux enforced    | direct       | `llm-local-inference/` (local layer) + `llm-reverse-proxy/` (cloud relay) | `coding-agent/`        |
+| **termux**              | rootless termux, restrictive SELinux, | direct (if   | `llm-reverse-proxy/` (native build/run, cloud relay)  | `coding-agent/`        |
+|                         | non-standard file paths              | any)         |                                                     |                        |
+| **small-cloud-vm**      | rootless podman or docker            | peers only   | `llm-reverse-proxy/` (peers only)                   | `coding-agent/` (static config) |
 
-### bazzite-gfx1030 (full, default)
-Hostname `bazzite.coelacanth-barb.ts.net`. GPU: **gfx1030** (RDNA2 / Navi 21 “Sienna Cichlid”, RX 6900 XT 16 GB). Two serving processes, one concern each (docs/d027):
+### local-inference-host (full, default)
+
+GPU host (local inference only) — two serving processes, one concern each (docs/d027):
 
 - `llm-local-inference/` — `generate.sh` detects the container backend + GPU
   devices and emits the local GGUF layer (`10-local-llm-inference.yaml` +
@@ -68,13 +67,9 @@ peers `localhost:18080` must use the funnel base URL (`$PEER_BASE_URL`).
 The coding agent (`coding-agent/`) uses local models via the llama-swap
 face and cloud providers via the llm-reverse-proxy face (or directly, per
 the generators' direct-first cascades); both faces are also the unified
-peer endpoint for external/peer clients. Rootless podman with SELinux means
-every writable bind mount gets `:z,U` (or `:Z,U`) relabel + chown, and the
-container runs as the host UID via `--userns=keep-id` + `--user
-$(id -u):$(id -g)`. All of that is handled by `lib/workload-runtime.sh`,
-sourced from the run scripts.
+peer endpoint for external/peer clients. 
 
-### a50-en7562ct (termux, peer-only serving)
+### termux (peer-only serving)
 Hostname `hjs0aj87e30.sn.mynetname.net`. SoC: **EN7562CT** (ARM32v5, 512 MB RAM, 128 MB flash). Resource-constrained host (a phone/router under Termux). It **cannot run the
 `llm-local-inference` llama-swap container** at all — Termux has no usable
 podman/docker for this — and local llama.cpp inference is impossible anyway.
@@ -93,7 +88,7 @@ via a **native termux build of llm-reverse-proxy** (compiled for the device).
   The proxy injects no keys; clients (the coding agent on this host, or
   remote peers through the funnel) carry the provider keys themselves.
   See [termux-serving.md](termux-serving.md) for the map of where the
-  a50/Termux documentation now lives.
+  termux serving documentation now lives.
 
 ### wsl2 (nonfree-world, peer-only usage)
 No fixed hostname (dynamic). Kernel: `6.18.33.2-microsoft-standard-WSL2`. WSL2 under rootful docker with **no direct cloud access**, so the coding agent
@@ -115,18 +110,15 @@ resolves from the env at request time — the proxy forwards them untouched).
   (`./build.sh && ./generate.sh && ./run.sh`), as on the other
   non-GPU hosts.
 
-The shared `lib/workload-runtime.sh` makes this work on both bazzite-gfx1030-style podman and
-wsl2-style docker through the same `workload_*` description: `workload_user` emits
+The shared `lib/workload-runtime.sh` makes this work on both local-inference-host-style podman and
+small-cloud-vm-style docker through the same `workload_*` description: `workload_user` emits
 `--userns=keep-id --user uid:gid` (plus `--group-add keep-groups`) on rootless
 podman, and just `--user uid:gid` on rootful docker; SELinux relabeling is
 automatic (`:z,U` on podman, `:z` on docker) with no per-script flags.
 
-### oci-e21micro (Oracle Cloud, peer-only serving)
-Hostname `instancepool-1-instance-1.subnetac1efe80.vcnac1efe.oraclevcn.com`. Shape: **VM.Standard.E2.1.Micro** (1/8 OCPU, 1 GB RAM). Tight memory
-budget means **no local llama.cpp inference** (and no GPU); the host only
-relays cloud providers, just like the `wsl2` variant. The difference from
-`wsl2` is the workload (OCI's rootless podman or docker, rather than WSL2
-rootful docker). The relay is llm-reverse-proxy — one static Go binary,
+### small-cloud-vm (small cloud VM, peer-only serving)
+The host only
+relays cloud providers. The relay is llm-reverse-proxy — one static Go binary,
 ~13 MB RSS, no model routing and no secrets, so the 1 GB budget is not a
 constraint.
 
@@ -135,7 +127,7 @@ constraint.
   the shared fact table (docs/d027) and the proxy listens on LAN
   `${HOST_PORT:-8080}` (host-network container or native binary).
 - **Usage** (`coding-agent/`): static provider config pointing the agent at
-  the peer path-routes, as on `wsl2`.
+  the peer path-routes.
 - **Keys**: the proxy injects nothing — clients carry the provider keys
   (`OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `CLINE_API_KEY`,
   `HYPER_API_KEY`, `GEMINI_API_KEY`, …) themselves, from Infisical via
@@ -146,7 +138,7 @@ the realistic option for hosts that can't afford the `unified-vulkan` image
 or the local GPU/VRAM (llama-swap's generate.sh simply fails there — there
 is no peers-only llama-swap mode anymore).
 
-> Note: `bazzite-gfx1030`, `a50-en7562ct`, and `oci-e21micro` are **static**
+> Note: `local-inference-host`, `termux`, and `small-cloud-vm` are **static**
 > reference hosts with known hostnames and hardware.  `wsl2` is **dynamic** —
 > it has no fixed hostname and is instantiated ad-hoc.
 >
@@ -158,9 +150,7 @@ is no peers-only llama-swap mode anymore).
 
 `lib/workload-runtime.sh` (repo root) is a **description-driven workload runner**: run
 scripts declare *what* they need and the tool renders *how* for the active
-backend — rootless podman or rootful docker — hiding every backend quirk (SELinux
-`:z`/`:U` relabel + chown-to-subuid, `--userns=keep-id` vs rootful `--user`,
-GPU device passthrough, port publishing, hardening) behind one interface. It is
+backend — rootless podman or rootful docker —  It is
 the single place that detects the backend and computes `SCRIPT_DIR` / `REPO_ROOT`
 (the only "where do I live" logic), so run scripts never re-detect podman/docker
 or guess their own paths inline. PRoot was removed as a backend (see
@@ -184,6 +174,6 @@ runs `llm-reverse-proxy/run.sh` instead (docs/d027):
   networking or native, e.g. the termux cross-build), LAN **8080**, no
   secrets mounted — clients carry the provider keys.
 
-llama-swap is launched with `-config-dir <dir>/config.d`; the a50/termux
+llama-swap is launched with `-config-dir <dir>/config.d`; the termux
 path has no container and no llama-swap at all — it runs the native
 llm-reverse-proxy binary (docs/d027).

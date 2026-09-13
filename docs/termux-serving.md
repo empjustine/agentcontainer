@@ -63,8 +63,8 @@ management.
 ## Cross-references
 
 - [environments-and-peer-variants.md](environments-and-peer-variants.md) — the
-  a50-en7562ct (Termux) and oci-e21micro (OCI free tier) environment rows:
-  hostnames, hardware, and what each host runs. The OCI peers-only env layout
+  termux and small-cloud-vm environment rows:
+  hostnames, hardware, and what each host runs. The peers-only env layout
   is identical to Termux's.
 - [d018-split-config-d.md](d018-split-config-d.md) — split `config.d/` layout
   (merge contract, per-layer stale-output rules).

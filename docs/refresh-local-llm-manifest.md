@@ -39,29 +39,7 @@ The file is a flat `{ "models": [ … ] }` array. **The last element has no
 trailing comma** — append before the closing `]`/`}` and add a comma to the
 previous last element.
 
-## Step 1 — Discover what changed in the cache
 
-Run the PoC coverage scanner, which diffs the cache against the manifest
-(`local-llm/scan_cache_coverage.py`, header-free — it only walks filenames):
-
-```sh
-cd openai-completions-gfx1030
-uv run local-llm/scan_cache_coverage.py
-```
-
-It prints three sections:
-
-- **A) repos with ZERO manifest coverage** — entirely new repos to add.
-- **B) listed repos with EXTRA cached quants** — new quants of known repos.
-- **C) ambiguous filenames** — byteshape `bpw` suffixes / multi-quant names and
-  the `<n>BPW` display tag llama.cpp would show for them.
-
-`scan_cache_coverage.py` does not read GGUF headers or load weights. The deeper
-audit of each *served* entry's `model` vs llama.cpp's implicit
-`repo:quant -> file` heuristic is `fetch_hf_manifests.py` (Step 6).
-
-> Manual fallback: `ls -1 "$HF_HUB_CACHE"/models--*/snapshots/*/` lists every
-> cached GGUF, and `node -e "require('./llamacpp-model-data.json').models.forEach(m=>console.log(m['hf-repo'],'->',m.model))"` lists what is served — diff by eye.
 
 ## Step 2 — Gather the fields for each new entry
 

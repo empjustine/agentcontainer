@@ -1,21 +1,12 @@
 ---
 id: d032
-type: decision
+type: architecture-design
 status: implemented
 title: "Adding a cloud provider — the flow and its surprises (worked example: inferx)"
 parent: architecture
-depends-on:
-  - d024
-  - d027
-references:
-  - d022
-  - d028
-  - environments
-tags:
-  - coding-agent
-  - llm-reverse-proxy
-  - generators
-  - models-dev
+depends-on: [d024, d027]
+references: [d022, environments, d028-provider-extensions-vs-generated-config]
+tags: [coding-agent, llm-reverse-proxy, generators, models-dev]
 ---
 
 # d032 — Adding a cloud provider: the flow and its surprises

@@ -137,7 +137,7 @@ cp "$SCRIPT_DIR/settings.json" "$agent_dir/settings.json"
 # settings cp before ANY generation stage ran, leaving the staged fallback
 # config in place and a bare `cp: cannot stat …` as the only clue).
 _gen_target='/opt/coding-agent'
-for _f in generate.sh generate-local-llama-swap.mjs \
+for _f in generate.sh gen-lib.mjs generate-local-llama-swap.mjs \
 	generate-cloud-pi-native-providers.mjs \
 	generate-cloud-alternative-providers.mjs \
 	merge-models-json.mjs generate-opencode.jsonc.mjs \
@@ -165,6 +165,7 @@ workload_ro "$REPO_ROOT/lib/peer-probe.mjs" '/opt/lib/peer-probe.mjs'
 workload_ro "$REPO_ROOT/lib/cloud-providers.mjs" '/opt/lib/cloud-providers.mjs'
 workload_ro "$REPO_ROOT/lib/pi-models.mjs" '/opt/lib/pi-models.mjs'
 workload_ro "$REPO_ROOT/lib/hyper-facts.mjs" '/opt/lib/hyper-facts.mjs'
+workload_ro "$REPO_ROOT/lib/catwalk-facts.mjs" '/opt/lib/catwalk-facts.mjs'
 workload_ro "$REPO_ROOT/lib/refresh-models-dev.mjs" '/opt/lib/refresh-models-dev.mjs'
 # The shared vendored models.dev catalog (read-only in here; generate.sh's
 # best-effort refresh falls back to a scratch copy when it is not writable).
@@ -173,6 +174,9 @@ workload_ro "$REPO_ROOT/lib/models.dev.api.json" '/opt/lib/models.dev.api.json'
 # writable scratch copy — see its staging loop — so in-container refreshes
 # succeed instead of dying on the ro mount).
 workload_ro_if "$REPO_ROOT/lib/hyper-facts.json" '/opt/lib/hyper-facts.json'
+# The shared catwalk fallback catalog gets the same scratch-copy treatment as
+# the hyper facts cache: ro here, staged writable by generate.sh.
+workload_ro_if "$REPO_ROOT/lib/catwalk-facts.json" '/opt/lib/catwalk-facts.json'
 
 # In-container launch chain: generated shell with no infisical — the host
 # (lib/environment.sh, outside the sandbox) forwards the vault env through
@@ -244,14 +248,11 @@ workload_rw       "$workspace" "$workspace"
 workload_workdir  "$workspace"
 # Secrets! The host-side loader (lib/environment.sh — run.sh is exec'd through
 # it) put the vault keys in THIS shell's environment; the allowlist below
-# forwards them into the sandbox like the llm-local-inference run path.  Only
-# non-empty values are forwarded (a bare `--env NAME` with an unset host var
-# would inject an empty value).
-for _key in CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY OPENROUTER_API_KEY \
-	OPENCODE_API_KEY HYPER_API_KEY INFERX_API_KEY HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY PEER_BASE_URL; do
-	_value="$(printenv "$_key" 2>/dev/null || true)"
-	[ -n "$_value" ] && workload_env "$_key"
-done
+# forwards them into the sandbox like the llm-local-inference run path (only
+# non-empty values are forwarded).
+workload_env_allowlist CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY \
+	OPENROUTER_API_KEY OPENCODE_API_KEY HYPER_API_KEY INFERX_API_KEY \
+	HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY PEER_BASE_URL
 # Forwarded only when set in the host env (unset vars are not exported).
 workload_env      SKIP_GEN
 workload_env      MODELS_DEV_REFRESH

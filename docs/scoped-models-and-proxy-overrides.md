@@ -61,9 +61,9 @@ Static `settings.json`, copied by `run.sh` into `~/.pi/agent/settings.json`.
   [`d009-custom-auth-and-prefix.md`](d009-custom-auth-and-prefix.md),
   [`d010-opencode-go-pricing.md`](d010-opencode-go-pricing.md) — the older
   full-catalog generation decisions, superseded by the scoped-models approach.
-- `d002-model-id-filters.md` / `d008-api-key-gating.md` — same generation, but
-  they describe code that no longer exists (`MODEL_FILTERS`, `requireApiKey`);
-  their essence is covered below.
+- the retired `d002`/`d008` notes — same generation, but they describe code
+  that no longer exists (`MODEL_FILTERS`, `requireApiKey`); their essence is
+  covered below (archive only, not in the worktree).
 
 ## Spirit of the retired notes (survives their removal)
 

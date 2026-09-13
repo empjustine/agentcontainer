@@ -103,6 +103,13 @@ prohibits (and what was removed):
   key env / real base URL) every generator family derives from (docs/d024).
 - `pi-models.mjs` — the RawModelEntry → pi model/provider shaping shared by
   the pi-layer generators (docs/d024).
+- `hyper-facts.mjs` (+ the committed `hyper-facts.json` cache) — Charm Hyper's
+  live `/provider` model-facts cache; the one non-models.dev enrichment
+  source, with the same tmp+rename / stale-tolerant contract as the catalog
+  (docs/d033).
+- `catwalk-facts.mjs` (+ the committed `catwalk-facts.json` cache) — Charm's
+  catwalk catalog as a secondary model-list fallback for the generators when
+  models.dev is stale or absent (docs/d028, d033).
 - `refresh-models-dev.mjs` — the one models.dev catalog refresher used by both
   `generate.sh` scripts (docs/d023).
 - `models.dev.api.json` — the single vendored models.dev catalog shared by

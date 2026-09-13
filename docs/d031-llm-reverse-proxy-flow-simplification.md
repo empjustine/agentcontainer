@@ -1,29 +1,46 @@
+---
+id: d031
+type: architecture-design
+status: proposed
+title: "d031 — llm-reverse-proxy flow: complexity audit and simplification options"
+parent: architecture
+---
+
 # d031 — llm-reverse-proxy flow: complexity audit and simplification options
 
-status: proposal (nothing decided) · parent: architecture · relates-to: d027,
-d028, termux-build-audit
+status: proposed (nothing decided) · relates-to: d027, d028, termux-build-audit
+
+## Implementation status (2026-09)
+
+Options 1 (dual-mode `build.sh` — the container-host host-binary convenience
+branch is gone; `smoke-test.sh` builds that binary itself when go is present)
+and 2 (the README now names both config paths and no longer advertises the
+removed convenience branch) have shipped.
 
 ## Scope of the flow (as measured)
+
+The sizes below are **order-of-magnitude** figures: they drift as the code
+grows.
 
 The proxy is deliberately the smallest runner in the tree — and that is its
 maintainability model:
 
 | Piece | Size | Role |
 |---|---|---|
-| `main.go` | 343 ln, **zero deps** | passthrough router: config, provider parse, RFC 9457 problems, error taxonomy, server |
+| `main.go` | ~345 ln, **zero deps** | passthrough router: config, provider parse, RFC 9457 problems, error taxonomy, server |
 | `run.sh` | ~80 ln | dual mode: container (host network) / native binary |
 | `build.sh` | ~100 ln | triple mode: Termux android binary / OCI image / bare host binary |
-| `smoke-test.sh` | ~205 ln | builds binary, node upstream, 32 behavioural checks (incl. badssl TLS taxonomy) |
-| `generate.sh` + `generate-config.mjs` | ~45 + 150 ln | routing table from the shared provider fact table |
+| `smoke-test.sh` | ~215 ln | builds binary, node upstream, 32 behavioural checks (incl. badssl TLS taxonomy) |
+| `generate.sh` + `generate-config.mjs` | ~45 + ~130 ln | routing table from the shared provider fact table |
 
 Findings here are mostly "already at the target shape"; the value of this
 note is to keep it that way and to flag the few mutable spots.
 
 ## Findings
 
-**F1 — `main.go` is the floor, not a refactor target.** 323 lines, stdlib
+**F1 — `main.go` is the floor, not a refactor target.** ~345 lines, stdlib
 only, one concern per type (`provider`, `problem`, `server`), the error
-taxonomy (`classify`, ~56 ln) is the largest function and is a flat
+taxonomy (`classify`, ~52 ln) is the largest function and is a flat
 `errors.As` cascade. This is the shape to *protect*: no new dependencies, no
 model routing, no credential handling (the README table is the contract). Any
 feature request that would add a second concern should be answered with
@@ -70,7 +87,7 @@ anyway.
 2. **README touch-ups** (F3+F4): one config-paths sentence; fix/soften the
    reference pointer.
 3. **Keep-everything-else**: no code changes. The flow's complexity budget is
-   currently well spent — smoke-test's 29 checks are the reason the Termux
+   currently well spent — smoke-test's 32 checks are the reason the Termux
    native build could be verified cold in termux-build-audit.md.
 
 ## Cross-flow notes (shared with d029/d030)

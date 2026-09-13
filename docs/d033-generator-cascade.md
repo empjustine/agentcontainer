@@ -41,7 +41,9 @@ Per provider, independently, direct-first and lazy:
    changes this step.
 2. **Unreachable ⇒ probe the provider's peer path-route** on the simplified
    cloud router (`llm-reverse-proxy`): `<peerBase>/<providerId>`, where
-   `peerBase` is vault-sourced (`lib/peer-probe.mjs peerBaseUrl()`). The route
+   `peerBase` candidates are vault-sourced (`lib/peer-probe.mjs peerBaseUrls()`,
+   `PEER_BASE_URLS`; `peerBaseUrl()` returns the first — docs/d034). Peer
+   routes are probed in candidate order until one is usable. The route
    forwards `<route>/…` byte-for-byte to the provider's FULL real base URL —
    no model-id magic, no key injection (`docs/d027`). Usable ⇒ reroute the
    provider through the route.
@@ -51,6 +53,11 @@ Per provider, independently, direct-first and lazy:
 The peer is probed **per provider and lazily**: when every direct endpoint is
 reachable, no peer route is probed at all, so no request is spent and no
 401/403 noise is logged.
+
+Both probe phases run their providers **concurrently** (`Promise.allSettled`:
+direct first, then only the unreachable providers), so N providers cost one
+probe timeout instead of N; the multi-hop candidate chain itself is walked
+sequentially per provider, in order (docs/d034).
 
 ### Peer-route probe specifics
 
@@ -73,7 +80,7 @@ is usable: the route delivered to the real endpoint.
 | Generator | Layer | Semantic | Subset |
 |---|---|---|---|
 | `generate-local-llama-swap.mjs` | `model-010-local-default.json` | **ADDS** the `llama-swap` provider (pi has no native one) | local GGUF models |
-| `generate-cloud-pi-native-providers.mjs` | `model-012-cloud-pi-native.json` | **override-ONLY** (empty when every pi-native endpoint is reachable) | openrouter / opencode / opencode-go / mistral / google |
+| `generate-cloud-pi-native-providers.mjs` | `model-012-cloud-pi-native.json` | **override-ONLY** (empty when every pi-native endpoint is reachable) | openrouter / opencode / opencode-go / mistral / google / nvidia |
 | `generate-cloud-alternative-providers.mjs` | `model-015/016/017-*.json` | **AUTHORITATIVE full block** (pi has no native provider for any of them) | cline-pass / hyper / inferx |
 | `generate-opencode.jsonc.mjs` | `opencode.jsonc` (opencode V1 schema) | same cascade, opencode's provider subset | opencode / opencode-go / openrouter + local GGUF |
 
@@ -98,7 +105,8 @@ Merge order and semantics are owned by `coding-agent/merge-models-json.mjs`.
 
 ### `generate-cloud-pi-native-providers.mjs`
 
-- pi ships openrouter / opencode / opencode-go / mistral / google natively, so
+- pi ships openrouter / opencode / opencode-go / mistral / google / nvidia
+  natively, so
   a reachable real endpoint emits **nothing**; only an unreachable one emits a
   **reroute-only** override (`baseUrl` = `<peerBase>/<providerId>`, **no**
   `apiKey` — the proxy forwards pi's own built-in auth untouched, **no**
@@ -108,7 +116,11 @@ Merge order and semantics are owned by `coding-agent/merge-models-json.mjs`.
   1. the peer route's live `/models` listing (bare provider-native ids),
      scoped by `PEER_MODEL_FILTERS`;
   2. when the route proved usable but could not list (401/403 without a key,
-     or an unexpected answer), the vendored models.dev catalog (same filters).
+     or an unexpected answer), the vendored models.dev catalog (same filters);
+  3. when the vendored catalog is unreadable or has no usable slice, Charm's
+     catwalk catalog (same filters; docs/d028) — it covers only
+     openrouter / opencode-zen / opencode-go / gemini, so nvidia and mistral
+     fall through to "no list".
 - `PEER_MODEL_FILTERS` are the fleet's usable slices — the llama-swap era
   encoded them on the **serving** side; with per-provider routing the client
   scopes its own override:
@@ -160,8 +172,9 @@ whose own live `/provider` catalog beats the models.dev snapshot per field
 (live reasoning flags, attachment support, per-model cached-input/output
 prices, effort enums) and pi has no built-in hyper, so the emitted layer is
 the only metadata pi ever sees. Direct mode refreshes the cache and enriches
-every model from it; peer mode consumes it stale-tolerantly (peer mode means
-`hyper.charm.land` itself is unreachable). Enrichment is a narrow per-field
+every model from it. Peer mode (where `hyper.charm.land` itself is
+unreachable) first tries the same refresh over the multi-hop peer candidates,
+then consumes the last good cache stale-tolerantly (docs/d034). Enrichment is a narrow per-field
 whitelist (`reasoning`, `input`, costs incl. cached-in/out, limits,
 `thinkingLevelMap`, `compat.supportsReasoningEffort`); display names stay
 models.dev (more descriptive); the wire compat block and the route are never
@@ -206,8 +219,8 @@ All four generators share the same invocation shape: `node <script> [out]`,
 writing next to the script by default (the `generate.sh` scratch dir on
 container/host runs), honoring `DRY_RUN=1` (preview only) via
 `lib/artifact.mjs`. `coding-agent/generate.sh` runs them in layer order and
-then `merge-models-json.mjs`. Environment: `PEER_BASE_URL` (the peer base,
-vault-sourced), `PEER_API_KEY` (local GGUF bearer), each provider's own key
+then `merge-models-json.mjs`. Environment: `PEER_BASE_URLS` / `PEER_BASE_URL` (the peer base chain,
+vault-sourced; docs/d034), `PEER_API_KEY` (local GGUF bearer), each provider's own key
 env (direct and peer-route probes only), `MODELS_DEV_JSON` (catalog path
 override), `PI_MODELS_JSON` (output override), `HYPER_FACTS_JSON` (cache path
 override).

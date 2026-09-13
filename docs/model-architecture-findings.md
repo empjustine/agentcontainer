@@ -1,15 +1,6 @@
 # Model Architecture Findings
 
-## How Architecture Data Was Obtained
 
-All data below was obtained **without downloading any full model files**, using two lightweight approaches:
-
-| Method | When | Works for |
-|--------|------|-----------|
-| **HuggingFace API** (`/raw/main/config.json`) | Public base models | Qwen, Gemma, Laguna, etc. |
-| **GGUF header Range request** (first 100KB via `curl -r 0-100000`) | Any model with a `.gguf` file on HF | Gated models, HF-inaccessible configs |
-
-The GGUF header approach is the universal fallback: GGUF v3 stores all architecture metadata as key-value pairs in the first few KB of the file. The spec is at `/reference/github/ggml-org/ggml/docs/gguf.md`. Strings use `uint64_t` length prefixes. A reusable parser is at `gguf-metadata-parser.js`.
 
 ---
 
@@ -124,11 +115,7 @@ See `gguf-metadata-parser.js` for a reusable Node.js script that:
 - Estimates parameter counts and KV cache memory
 - Outputs JSON
 
-Usage:
-```bash
-node gguf-metadata-parser.js <hf-repo> <hf-file>
-node gguf-metadata-parser.js <full-gguf-url>
-```
+
 
 ---
 

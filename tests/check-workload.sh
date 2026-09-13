@@ -17,8 +17,9 @@
 #     predicate silently returned 4 instead of 0/1.
 # Only an end-to-end render catches either.
 #
-# Two cases, one per backend, because the mount options are the one genuine
-# backend difference (podman "z,U" vs docker "z" — see lib/workload-render.jq).
+# Four cases: two per-backend render shapes (the mount options are the one
+# genuine backend difference — see lib/workload-render.jq), the workload_has
+# predicate, and the workload_env_allowlist non-empty guard.
 #
 # Usage: ./tests/check-workload.sh     (from any directory)
 
@@ -221,5 +222,39 @@ EXPECT
 ) >"$tmp/got.has" 2>&1
 _check has
 
+# --- case 4: workload_env_allowlist ----------------------------------------
+# Only non-empty host vars are forwarded, and in the order named.  SET_ONE and
+# SET_TWO are set, EMPTY_ONE is set-but-empty, UNSET_ONE is unset — the empty
+# and unset names must NOT appear (a bare `--env` with an empty value would
+# read as "set" downstream).
+cat >"$tmp/expect.allowlist" <<'EXPECT'
+ARG[container]
+ARG[run]
+ARG[--name=env-allowlist]
+ARG[--env]
+ARG[SET_ONE]
+ARG[--env]
+ARG[SET_TWO]
+ARG[legacy-registry:latest]
+EXPECT
+case_allowlist() {
+	_workload_tool=docker
+	_userns=''
+	_keep_groups=''
+	workload_name  'env-allowlist'
+	workload_image 'legacy-registry:latest'
+	workload_env_allowlist UNSET_ONE SET_ONE EMPTY_ONE SET_TWO
+	_render_workload
+}
+(
+	SET_ONE=alpha
+	SET_TWO=beta
+	EMPTY_ONE=''
+	export SET_ONE SET_TWO EMPTY_ONE
+	unset UNSET_ONE
+	case_allowlist
+) | _norm >"$tmp/got.allowlist"
+_check allowlist
+
 [ "$_fail" = 0 ] || log_die 1 "check-workload FAILED (see the diffs above)"
-log_info "check-workload passed" cases=3
+log_info "check-workload passed" cases=4

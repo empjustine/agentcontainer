@@ -61,23 +61,16 @@
  */
 
 import { readdirSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
-// Shared lib/ helpers (docs/d023): the structured logger, resolved through the
-// LIB_DIR convention (see the other generators in this folder).
-const LIB_DIR =
-	process.env.LIB_DIR ??
-	join(dirname(fileURLToPath(import.meta.url)), "..", "lib");
-const { logInfo, setLogTool } = /** @type {typeof import("../lib/log.mjs")} */ (
-	await import(`${LIB_DIR}/log.mjs`)
-);
-const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
-	await import(`${LIB_DIR}/artifact.mjs`)
-);
+import {
+	logInfo,
+	scriptDir,
+	setLogTool,
+	writeArtifact,
+} from "./gen-lib.mjs";
+
 setLogTool("coding-agent/merge-models-json");
-
-const scriptDir = dirname(fileURLToPath(import.meta.url));
 
 /**
  * A JSON object node; arrays and scalars are merge leaves (see header).

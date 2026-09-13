@@ -22,7 +22,8 @@
 #       never run infisical.  Manual host runs go through the same chain:
 #       ./lib/environment.sh ./generate.sh
 #     - models.dev catalog refreshed best-effort
-#     - peer routing goes through the vault-sourced $PEER_BASE_URL (the
+#     - peer routing goes through the vault-sourced $PEER_BASE_URL (or
+#       $PEER_BASE_URLS for multi-hop proxy chains — see lib/peer-probe.mjs)
 #       bazzite tailscale FQDN) only — no localhost:8080 or localhost:8101
 #       candidates (the
 #
@@ -47,10 +48,10 @@
 #   generate-cloud-alternative-providers.mjs -> model-015-cloud-cline-pass.json
 #       + model-016-cloud-hyper.json
 #       + model-017-cloud-inferx.json
-#       derived from the vendored models.dev.api.json; full provider blocks
-#       (pi has no native cline-pass/hyper), per-provider real-or-peer
-#       path-route cascade decides the route (same key in both modes — the
-#       proxy forwards credentials untouched, docs/d027).
+#       derived from the vendored models.dev.api.json (with catwalk fallback);
+#       full provider blocks (pi has no native cline-pass/hyper), per-provider
+#       real-or-peer path-route cascade decides the route (same key in both
+#       modes — the proxy forwards credentials untouched, docs/d027).
 #   merge-models-json.mjs      -> models.json
 #   generate-opencode.jsonc.mjs -> opencode config (OPENCODE_CFG_DIR/opencode.json,
 #       or <this dir>/opencode.jsonc for manual host runs; skipped on Termux)
@@ -155,7 +156,55 @@ if [ "$_termux" = 1 ]; then
 	fi
 fi
 
+# --- scratch dir: generators read layers from their own directory, and this
+# script's dir may be a read-only mount (container ro-mount), so stage the
+# generators — plus the lib/ modules they import (log.mjs, peer-probe.mjs,
+# resolved via $LIB_DIR, docs/d023) — there and symlink the big inputs.
+_GEN_STAGE='scratch-stage'
+_scratch="$RUN_DIR/pi-models-gen.$$"
+mkdir -p "$_scratch"
+for _f in gen-lib.mjs generate-local-llama-swap.mjs \
+	generate-cloud-pi-native-providers.mjs \
+	generate-cloud-alternative-providers.mjs \
+	merge-models-json.mjs generate-opencode.jsonc.mjs \
+	generate-default-model.mjs \
+	count-providers.mjs list-providers.mjs; do
+	if [ -f "$SCRIPT_DIR/$_f" ]; then
+		cp "$SCRIPT_DIR/$_f" "$_scratch/$_f"
+	else
+		log_warn "generator missing" path="$SCRIPT_DIR/$_f"
+	fi
+done
+# Structured logging + HTTP probing + the shared fact/shaping modules for the
+# .mjs generators: they import all of these from $LIB_DIR (default ../lib
+# relative to their own file — which from the scratch dir resolves somewhere
+# that does not exist, so a missing copy here costs every generator instead of
+# one clear line).
+mkdir -p "$_scratch/lib"
+for _lf in log.mjs artifact.mjs peer-probe.mjs cloud-providers.mjs pi-models.mjs hyper-facts.mjs catwalk-facts.mjs; do
+	if [ -f "$REPO_ROOT/lib/$_lf" ]; then
+		cp "$REPO_ROOT/lib/$_lf" "$_scratch/lib/$_lf"
+	else
+		log_error "lib module missing — generators cannot log or probe" \
+			path="$REPO_ROOT/lib/$_lf"
+	fi
+done
+# The hyper and catwalk facts caches ride along with their modules: staged
+# into the scratch lib (writable) so in-container refreshes succeed instead
+# of failing on the ro-mounted /opt/lib; both caches are consumed
+# stale-tolerantly and direct-mode runs refresh them fresh.
+for _fc in hyper-facts.json catwalk-facts.json; do
+	if [ -f "$REPO_ROOT/lib/$_fc" ]; then
+		cp "$REPO_ROOT/lib/$_fc" "$_scratch/lib/$_fc"
+	fi
+done
+LIB_DIR="$_scratch/lib"
+export LIB_DIR
+[ -f "$MODELS_DEV_JSON" ] &&
+	ln -s "$MODELS_DEV_JSON" "$_scratch/models.dev.api.json"
+
 # --- settings.json: install FIRST, so it lands even if every stage fails ----
+# (Moved here to ensure $_SETTINGS is defined before default model uses it)
 _GEN_STAGE='settings-install'
 _SETTINGS="$AGENT_DIR/settings.json"
 if [ "$SCRIPT_DIR" != "$AGENT_DIR" ]; then
@@ -176,51 +225,6 @@ if [ "$SCRIPT_DIR" != "$AGENT_DIR" ]; then
 		log_info "settings.json installed" path="$_SETTINGS"
 	fi
 fi
-
-# --- scratch dir: generators read layers from their own directory, and this
-# script's dir may be a read-only mount (container ro-mount), so stage the
-# generators — plus the lib/ modules they import (log.mjs, peer-probe.mjs,
-# resolved via $LIB_DIR, docs/d023) — there and symlink the big inputs.
-_GEN_STAGE='scratch-stage'
-_scratch="$RUN_DIR/pi-models-gen.$$"
-mkdir -p "$_scratch"
-for _f in generate-local-llama-swap.mjs \
-	generate-cloud-pi-native-providers.mjs \
-	generate-cloud-alternative-providers.mjs \
-	merge-models-json.mjs generate-opencode.jsonc.mjs \
-	count-providers.mjs list-providers.mjs; do
-	if [ -f "$SCRIPT_DIR/$_f" ]; then
-		cp "$SCRIPT_DIR/$_f" "$_scratch/$_f"
-	else
-		log_warn "generator missing" path="$SCRIPT_DIR/$_f"
-	fi
-done
-# Structured logging + HTTP probing + the shared fact/shaping modules for the
-# .mjs generators: they import all of these from $LIB_DIR (default ../lib
-# relative to their own file — which from the scratch dir resolves somewhere
-# that does not exist, so a missing copy here costs every generator instead of
-# one clear line).
-mkdir -p "$_scratch/lib"
-for _lf in log.mjs artifact.mjs peer-probe.mjs cloud-providers.mjs pi-models.mjs hyper-facts.mjs; do
-	if [ -f "$REPO_ROOT/lib/$_lf" ]; then
-		cp "$REPO_ROOT/lib/$_lf" "$_scratch/lib/$_lf"
-	else
-		log_error "lib module missing — generators cannot log or probe" \
-			path="$REPO_ROOT/lib/$_lf"
-	fi
-done
-# The hyper facts cache rides along with its module: staged into the scratch
-# lib (writable) so in-container refreshes succeed instead of failing on the
-# ro-mounted /opt/lib; hyper-facts.mjs's default path (next to the module,
-# under $LIB_DIR) resolves to the scratch copy, so a present snapshot is
-# consumed stale-tolerantly and direct-mode runs refresh it fresh.
-if [ -f "$REPO_ROOT/lib/hyper-facts.json" ]; then
-	cp "$REPO_ROOT/lib/hyper-facts.json" "$_scratch/lib/hyper-facts.json"
-fi
-LIB_DIR="$_scratch/lib"
-export LIB_DIR
-[ -f "$MODELS_DEV_JSON" ] &&
-	ln -s "$MODELS_DEV_JSON" "$_scratch/models.dev.api.json"
 
 # --- models.json -----------------------------------------------------------
 _GEN_STAGE='models-json'
@@ -290,6 +294,46 @@ else
 			path="$SCRIPT_DIR/models.json"
 		[ -f "$SCRIPT_DIR/models.json" ] && _models_out="$SCRIPT_DIR/models.json"
 	fi
+fi
+
+# --- default model: pick defaultProvider/defaultModel from the generated
+# models.json (a provider is present only when the cascade emitted a real or
+# peer route for it).  MUST follow the models.json stage: the generator reads
+# $_scratch/models.json, which does not exist before then.  Best-effort, like
+# every other stage — a missing/empty models.json just leaves settings.json
+# without a default. ---------------------------------------------------------
+_GEN_STAGE='default-model'
+if [ "$SKIP_GEN" = 1 ]; then
+	log_info "SKIP_GEN: skipping default model configuration"
+elif [ -z "$_models_out" ] || [ ! -f "$_models_out" ]; then
+	log_warn "no models.json — skipping default model configuration"
+elif [ -f "$_scratch/generate-default-model.mjs" ]; then
+	# The generator reads its own dir's models.json; hand it the chosen layer
+	# whether that came from the scratch dir or the committed fallback.
+	cp "$_models_out" "$_scratch/models.json"
+	if node_run "$_scratch/generate-default-model.mjs" "$_scratch/default-model.json"; then
+		if [ -s "$_scratch/default-model.json" ]; then
+			_default_model_json="$_scratch/default-model.json"
+			_default_settings="$_scratch/settings-with-default.json"
+			node_run -e "
+				const fs = require('fs');
+				const settings = JSON.parse(fs.readFileSync('$_SETTINGS', 'utf-8'));
+				const defaultModel = JSON.parse(fs.readFileSync('$_default_model_json', 'utf-8'));
+				if (defaultModel.defaultProvider) settings.defaultProvider = defaultModel.defaultProvider;
+				if (defaultModel.defaultModel) settings.defaultModel = defaultModel.defaultModel;
+				fs.writeFileSync('$_default_settings', JSON.stringify(settings, null, 2) + '\\n');
+			"
+			if [ -f "$_default_settings" ]; then
+				cp "$_default_settings" "$_SETTINGS"
+				log_info "settings.json updated with default model config" \
+					path="$_SETTINGS"
+			fi
+		fi
+	else
+		log_warn "generate-default-model.mjs failed"
+	fi
+else
+	log_warn "generate-default-model.mjs not staged"
 fi
 
 # --- install models.json into the agent dir --------------------------------

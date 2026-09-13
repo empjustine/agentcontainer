@@ -1,17 +1,12 @@
 ---
 id: d028-provider-extensions-vs-generated-config
-type: decision
+type: architecture-design
 status: proposed
 title: d028 — provider extensions (pi/opencode plugins) vs generated-config machinery
 parent: architecture
-depends-on:
-  - coding-agent
-  - d027b
-references:
-  - environments
-tags:
-  - coding-agent
-  - llm-reverse-proxy
+depends-on: [coding-agent, d027b]
+references: [environments]
+tags: [coding-agent, llm-reverse-proxy]
 ---
 
 ## Context

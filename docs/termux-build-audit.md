@@ -1,6 +1,6 @@
 # Termux build audit — Infisical CLI (`./build.sh`) and `llm-reverse-proxy/`
 
-Findings from verifying, on the a50 Termux host (aarch64, bionic, no root,
+Findings from verifying, on the termux host (aarch64, bionic, no root,
 Go 1.27.1 android/arm64, ~1 GB RAM), whether both build systems actually
 work here and whether `./build.sh`'s `go install` path really removes the
 checkout upkeep it claims to. Every claim below was executed, not inferred.
@@ -80,7 +80,7 @@ The dual-mode `build.sh` detects `$PREFIX` and builds the native
 On this host it measured ~305 ms — but a **direct** fetch of the same first
 chunk from the upstream node process (bypassing the proxy) is also ~300 ms:
 
-| measurement (a50, first chunk, node interval = 100 ms) | time |
+| measurement (termux, first chunk, node interval = 100 ms) | time |
 |---|---|
 | direct: curl → upstream node | 296 / 297 / 317 ms |
 | through proxy | 301 / 316 / 330 ms |

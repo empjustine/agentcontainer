@@ -10,19 +10,19 @@ tags: ["lib", "workload-runtime", "container-tooling"]
 # Container tooling & run scripts
 
 This covers the shared container-runtime detection (`lib/workload-runtime.sh`), the
-deployment environments (bazzite, a50, work), and the run scripts that launch
+deployment environments (local-inference-host, termux, small-cloud-vm), and the run scripts that launch
 the llama-swap serving container and the pi coding-agent container.
 
 ## Environments
 
-| Name    | Sandbox / runtime                          | Cloud access | Serving dir                     | Usage dir              |
-|---------|--------------------------------------------|--------------|---------------------------------|------------------------|
-| bazzite | rootless podman, SELinux enforced          | direct       | `llm-local-inference/`           | `coding-agent/`        |
-| a50     | rootless termux, restrictive SELinux,      | direct (if   | `llm-local-inference/` (native)  | `coding-agent/`        |
-|         | non-standard file paths                    | any)         |                                 |                        |
-| work    | WSL2 rootful docker, no direct cloud       | peers only   | `llm-local-inference/` (peer-only) | `coding-agent/` (static config) |
+| Name                 | Sandbox / runtime                    | Cloud access | Serving dir                     | Usage dir              |
+|----------------------|--------------------------------------|--------------|---------------------------------|------------------------|
+| local-inference-host | rootless podman, SELinux enforced    | direct       | `llm-local-inference/`           | `coding-agent/`        |
+| termux               | rootless termux, restrictive SELinux, | direct (if   | `llm-local-inference/` (native)  | `coding-agent/`        |
+|                      | non-standard file paths              | any)         |                                 |                        |
+| small-cloud-vm       | rootless podman or docker            | peers only   | `llm-local-inference/` (peer-only) | `coding-agent/` (static config) |
 
-### bazzite (full, default)
+### local-inference-host (full, default)
 
 The reference environment. Runs **one** multipurpose llama-swap instance,
 `llm-local-inference/` — `generate.sh` detects the container backend + GPU
@@ -38,7 +38,7 @@ creation (no `CAP_MKNOD` — GPUs pass through as *existing* nodes via
 `--device`, requiring group access to `/dev/dri`/`/dev/kfd`, which is what
 `workload_gpu`/`detect_gpu_devs` hand the backend).
 
-### a50 (termux, peer-only serving)
+### termux (peer-only serving)
 
 Resource-constrained host (phone/router under Termux). It **cannot run the
 `llm-local-inference` llama-swap container** — Termux has no usable podman/docker
@@ -48,23 +48,20 @@ is also impossible, so `generate.sh` (which detects no container backend + no
 GPU) emits a **peers-only** `config.d/` — no GGUF layer, no
 `llamacpp-model-data.json` usage.
 
-See [termux-serving.md](termux-serving.md) for the a50/termux map — the
+See [termux-serving.md](termux-serving.md) for the termux map — the
 build/serve/env detail lives in the `llm-local-inference/` script headers it
 points at.
 
-### work (nonfree-world, peer-only usage)
+### small-cloud-vm (peer-only usage)
 
-WSL2 under rootful docker with **no direct cloud access**, so the coding agent
-only ever talks to a peer endpoint. Covered by `coding-agent/` static config
+The peers-only deployment on small cloud VMs — `coding-agent/` static config
 (see the run-scripts section below).
 
 ## Shared support: lib/workload-runtime.sh (description-driven)
 
 `lib/workload-runtime.sh` (repo root) is a **description-driven workload runner**, not a
 bag of flags. Run scripts declare *what* they need; the tool renders *how* for
-the active backend — podman or docker — hiding every backend quirk (SELinux
-`:z`/`:U` relabel + chown-to-subuid, `--userns=keep-id` vs rootful `--user`, GPU
-device passthrough, port publishing, hardening) behind one interface. No
+the active backend — podman or docker —  No
 `:z${_vol_u}` strings, no inline `podman`/`docker` detection, no
 `cd "$(dirname "$0")"` path-guessing leak into the run scripts.
 
@@ -114,6 +111,7 @@ run.)
 | `workload_rw <host> <guest>` | required read-write bind |
 | `workload_ro_if <host> <guest>` | optional variant (skipped if host path absent) |
 | `workload_env <NAME...>` | pass these host env vars into the workload (`--env`) |
+| `workload_env_allowlist <NAME...>` | like `workload_env`, but skips names whose host value is empty — a bare `--env NAME` on an unset var injects an EMPTY value, which consumers then read as “set”. Both vault-key forwarders (`coding-agent/run.sh`, the llama-swap path) use this one implementation (docs/d030) |
 | `workload_cmd <args...>` | the command (argv after the image) |
 | `workload_has <field>` | true when a description array is non-empty — e.g. `workload_has devices`, which is how `llm-local-inference/generate.sh` gates the local-inference layer |
 | `workload_rm <id>` | remove a prior instance by name |
@@ -244,15 +242,14 @@ See [d018-split-config-d.md](d018-split-config-d.md) for the merge contract.
   its `/llama-swap` route → this instance on loopback 8101 (docs/d027).
   The legacy local-inference port 18080 is deprecated — nothing listens on
   it since the two-instance squash.
-- **SELinux**: all bind mounts are relabeled + chowned to the mapped subuid
-  by `lib/workload-runtime.sh` (`:z,U` on podman, `:z` on docker) — no inline flags.
-- **Termux alternative**: on a50/termux there is no container — use
+
+- **Termux alternative**: there is no container on termux — use
   `build.sh` (native binary on termux, image pull elsewhere) + `run-native.sh` (bare serve) instead,
   and the root `./build.sh` to provision the Infisical CLI there.
   See [termux-serving.md](termux-serving.md) (a map; detail in the script
   headers).
 
-### `coding-agent/run.sh` (bazzite usage)
+### `coding-agent/run.sh` (full, default usage)
 
 Launches the pi coding-agent container with:
 
@@ -307,8 +304,9 @@ falls out of what `generate.sh` emitted into `config.d/`:
 - **peers-only**: `run.sh` defaults to the lighter
   `ghcr.io/mostlygeek/llama-swap:cpu` image.
 
-Either way the instance publishes LAN port **8101** (`HOST_PORT` overrides;
+Either way the instance publishes LAN port **8101** (`HOST_PORT` overrides);
+this is the **local llama-swap** endpoint; `llm-reverse-proxy` is LAN 8080.
 
-Either way llama-swap is launched with `-config-dir <dir>/config.d`. The
-a50/termux path has no container at all — it is peers-only by construction
-via `llm-local-inference/run-native.sh`.
+- **local llama-swap** (`config.d/10-local-llm-inference.yaml`): local inference only, GPU container hosts only
+- **cloud peer relay** (`llm-reverse-proxy/`): `/<providerId>` path prefixes, byte-for-byte
+  proxying to each provider's real base URL (docs/d027)

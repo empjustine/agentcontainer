@@ -63,8 +63,7 @@ workload_rw "$HF_HUB_CACHE" /root/.cache/huggingface/hub
 workload_rw "$HF_HUB_CACHE" /home/ubuntu/.cache/huggingface/hub
 workload_ro       "$config_d" /etc/llama-swap/config.d
 workload_hardening
-workload_env      HF_TOKEN
-workload_env      PEER_API_KEY
+workload_env_allowlist HF_TOKEN PEER_API_KEY
 workload_entrypoint 'llama-swap'
 workload_cmd      -config-dir /etc/llama-swap/config.d -listen 0.0.0.0:8080
 # No infisical wrapper here: the values were loaded by the explicit chain

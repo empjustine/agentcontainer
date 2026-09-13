@@ -16,7 +16,7 @@ whether a specialized Go helper would be the right abstraction for the three
 distinct target environments:
 
 - **rootful docker** (e.g. WSL2 "work" host)
-- **rootless podman** (bazzite, SELinux enforced)
+- **rootless podman** (local-inference-host, SELinux enforced)
 - **rootless bionic Termux** (only semi-usable workloading primitive is proot)
 
 References used: `89luca89/lilipod` (a from-scratch Go container engine),
@@ -60,26 +60,7 @@ Host-side prep *outside* the helper: `coding-agent` runs `generate.sh` + copies
 from `$HOME`; the two serving scripts do `infisical login status` then
 `workload_rm` + `sleep 5; workload_logs | head`.
 
-### How `lib/workload-runtime.sh` handles the three environments today
 
-Backend divergence is small:
-
-- **rootless-podman vs rootful-docker** — detected in `detect_container_tool()`;
-  the only differences are three globals: `--userns=keep-id` +
-  `--group-add keep-groups` (podman) vs none (docker), and the mount label
-  `z,U` (podman) vs `z` (docker) in `_render_mount`
-  (`lib/workload-runtime.sh` `_render_container` / `_render_mount`). That `U` is the
-  one genuinely important rootless detail — without it rootless podman chowns
-  your files into the subuid range.
-- **Termux/proot** — a separate renderer (`_render_proot` → `proot_run`) using
-  `workload_native` (a host binary, not an image), `-b` binds, no
-  GPU/hardening/ports. Three sub-modes: `proot -R <rootfs>` (rootfs present) ›
-  `termux-chroot` › `proot -0` (minimal fake root).
-
-Key finding: **none of the three named scripts exercises the proot path.**
-`workload_native` is only called by `openai-completions-peer/run-proot.sh`, and
-`run-native.sh` does not source the helper at all
-(`exec ~/ls-build/llama-swap-termux …`).
 
 ## 2. The Termux environment is a different class of primitive
 
@@ -99,13 +80,13 @@ So the three targets are not three flavors of one mechanism:
 | Environment | Mechanism | Kernel namespaces/cgroups | Real root | Image model |
 |---|---|---|---|---|
 | rootful docker | real runtime | ✅ | ✅ | OCI |
-| rootless podman (bazzite, SELinux) | real runtime | ✅ | ✅ (keep-id) | OCI |
+| rootless podman (local-inference-host, SELinux) | real runtime | ✅ | ✅ (keep-id) | OCI |
 | rootless bionic Termux | **ptrace + fake-root** | ❌ | ❌ | OCI-via-proot-distro or native binary |
 
 ## 3. Would a specialized Go helper unify the three? — No
 
 1. **Different primitive class.** docker/podman use real kernel namespaces +
-   cgroups (+ SELinux on bazzite). Termux uses ptrace path translation. A Go
+   cgroups (+ SELinux on local-inference-host). Termux uses ptrace path translation. A Go
    binary cannot subsume ptrace-emulation the way it might subsume a userns
    engine on Linux.
 2. **On Termux, Go can only shell out.** `proot` is a mature **C** project
@@ -121,7 +102,7 @@ So the three targets are not three flavors of one mechanism:
    `keepCaps`; see `89luca89/lilipod` `pkg/procutils.EnsureFakeRoot`,
    `cmd/rootless_helper.go`, `containerutils.PivotRoot`). But: (a) it is a
    strategic, large rewrite; (b) it drops podman's native **SELinux** `:z,U`
-   labeling that bazzite relies on; (c) **Termux stays a delegated proot path
+   labeling that local-inference-host relies on; (c) **Termux stays a delegated proot path
    either way**. One Go binary still does not cover all three.
 
 **Verdict: a specialized Go helper is not the right unification primitive for
@@ -140,7 +121,7 @@ backend). Keep it; extend the Termux axis:
    container detection) instead of the current late `workload_run` fatal.
 2. **Add a `proot-distro` tier** so `workload_image` on Termux maps to
    `proot-distro run <image>` (pulls/assembles the OCI image, enters via proot)
-   — giving Termux the same image-based workflow as bazzite/work, instead of
+   — giving Termux the same image-based workflow as local-inference-host/small-cloud-vm, instead of
    the current `workload_native`-only host-binary path (`run-proot.sh`). Caveats
    from proot-distro Limits: no **zstd** layers, ptrace perf cost, no nesting,
    and **no GPU passthrough** → `gfx1030/unified-vulkan` is not viable on

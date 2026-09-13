@@ -47,12 +47,12 @@ means concretely:
 
 Two host facts fall out of the same survey and are worth recording here:
 
-- **Termux (a50) cannot reach `/dev/kvm`** (unprivileged app sandbox), so a
-  VM backend is never available on the a50 — its runtime ladder tops out at
+- **Termux cannot reach `/dev/kvm`** (unprivileged app sandbox), so a
+  VM backend is never available on termux — its runtime ladder tops out at
   native execution (see [termux-serving.md](termux-serving.md)).
 - **Rootless podman cannot bind ports < 1024 or create device nodes** (no
-  `CAP_NET_BIND_SERVICE` / `CAP_MKNOD`) — the container backend on bazzite
-  publishes high ports and passes GPUs via `--device`, which only works
+  `CAP_NET_BIND_SERVICE` / `CAP_MKNOD`) — the container backend on a local
+  inference host publishes high ports and passes GPUs via `--device`, which only works
   because device *access* (not creation) is available to the rootless user.
 
 ## 2. Two integration levels
@@ -62,7 +62,7 @@ Two host facts fall out of the same survey and are worth recording here:
 A libvirt domain boots a cloud image that runs **podman inside the guest**;
 the existing container backend and the whole `workload_*` API then run inside
 the VM unchanged. `lib/workload-runtime.sh` needs no new renderer — the guest
-re-creates the bazzite/work environment (same `lib/workload-runtime.sh`, same
+re-creates the local-inference-host/small-cloud-vm environment (same `lib/workload-runtime.sh`, same
 run scripts) inside a stronger boundary.
 
 What this requires:
@@ -108,7 +108,7 @@ descriptions to domain XML / `virt-install`. The mapping, for the record:
 This is a real backend, not a flag-flip — and only Level-1's gap list (image
 model, sharing, secrets) shrinks. Defer until Level 1 proves insufficient.
 
-## 3. Host prerequisites (verify on bazzite)
+## 3. Host prerequisites (verify on local-inference-host)
 
 ```sh
 # virtualization present + permitted for the user
@@ -121,12 +121,12 @@ libvirt-host-validate 2>/dev/null || virt-host-validate      # TSC/KVM/IOMMU rep
 systemctl --user status virtqemud virtstoraged 2>/dev/null   # user-session daemons
 ```
 
-- **Session vs system daemon**: rootless (bazzite's default posture) wants
+- **Session vs system daemon**: rootless (local-inference-host's default posture) wants
   `qemu:///session` (per-user `virtqemud`); SELinux sVirt confinement of QEMU
   processes is a *system-session* feature, so a system daemon + polkit is the
   choice if guest process labeling matters. Decide per host; the container
   backend keeps its own SELinux story either way.
-- **SELinux on bazzite**: virtiofsd runs confined (`virtiofsd_t`); shared dirs
+- **SELinux on local-inference-host**: virtiofsd runs confined (`virtiofsd_t`); shared dirs
   may need `setsebool -P virtiofs_use_execmem` and proper labels
   (`container_file_t` / `virtiofs_content_t`) — same class of friction as the
   `:z,U` handling `lib/workload-runtime.sh` already centralizes.
@@ -143,7 +143,7 @@ systemctl --user status virtqemud virtstoraged 2>/dev/null   # user-session daem
     (IOMMU group must isolate the GPU: check
     `find /sys/kernel/iommu_groups -type l`, `amd_iommu=on iommu=pt` kernel
     args, `vfio-pci` early-bind) **but transfers the entire GPU to the VM for
-    its lifetime** — on bazzite (single dGPU desktop) that means the host
+    its lifetime** — on a local-inference-host (single dGPU desktop) that means the host
     desktop loses the GPU while serving, and the VM now owns a 16 GB device
     exclusively. Requires `rom-file`/reset handling for AMD Navi21 (vendor
     reset quirk).

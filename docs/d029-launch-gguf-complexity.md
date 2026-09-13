@@ -1,7 +1,14 @@
+---
+id: d029
+type: architecture-design
+status: proposed
+title: "d029 — the in-container `launch-gguf.sh` path: complexity audit and options"
+parent: architecture
+---
+
 # d029 — the in-container `launch-gguf.sh` path: complexity audit and options
 
-status: proposal (nothing decided) · parent: architecture · relates-to: d018,
-d025, termux-build-audit
+status: proposed (nothing decided) · relates-to: d018, d025, termux-build-audit
 
 ## Problem
 
