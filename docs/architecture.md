@@ -140,7 +140,7 @@ the variant folders redundant.)
 |--------|------|--------------------|
 | `llm-local-inference/` | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `gen-lib.mjs`, `generate-general.yaml.mjs`, `generate-local-llm-models.yaml.mjs` + `active-b.json`, `launch-gguf.sh`, `llama-swap-core.json`, `config.d/` + `run.sh`, `build.sh` (image pull) |
 | `llm-reverse-proxy/` | path-prefix cloud router for cloud/remote providers (`/<providerId>` → provider's full real base URL, byte-for-byte, no keys — docs/d027; streaming as-is, RFC 9457 502s) | `main.go`, `generate.sh` → `generate-config.mjs` (routing table from lib/cloud-providers.mjs), `llm-reverse-proxy.example.json`, `build.sh`, `smoke-test.sh` |
-| `coding-agent/` | base pi workload image + artifacts | `Containerfile`, `config.toml`, `build.sh`, `run.sh`, `settings.json`, `auth.json` |
+| `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `Containerfile`, `config.toml`, `build.sh`, `run.sh`, `settings.json`, `auth.json` |
 
 The next planned step — a simplified config-generator system split by concern —
 is sketched in

@@ -22,6 +22,12 @@ every environment consumes. Full generation on capable hosts; static
 config (no generation) on peers-only hosts (`wsl2`, `oci-e21micro` — see
 `environments`).
 
+The image provides a pre-configured development environment including:
+- **pi**: The core coding agent.
+- **opencode**: Alternative coding agent.
+- **Cline CLI**: Official AI development assistant CLI.
+- **Thinkrail**: JetBrains' development workflow enhancement.
+
 ## Shape
 
 `generate.sh` stages the generators + the `lib` modules they need into a
