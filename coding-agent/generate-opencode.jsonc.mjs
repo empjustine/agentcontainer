@@ -21,10 +21,8 @@ import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 
-// Shared lib/ helpers (docs/d023): the structured logger and the HTTP probe
-// toolkit, resolved through the LIB_DIR convention (generate.sh stages them
-// into the scratch dir and points LIB_DIR there; manual in-place runs fall
-// back to the sibling ../lib).
+// Shared lib/ helpers (docs/d023): structured logger, artifact writer, HTTP
+// probe toolkit, provider fact table — via the LIB_DIR convention.
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
 const { logInfo, logWarn, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
@@ -84,16 +82,11 @@ const CLOUD_PROVIDERS = Object.fromEntries(
 	CLOUD_PROVIDER_IDS.map((id) => [id, CLOUD_PROVIDER_FACTS[id]]),
 );
 
-// The peer's funnel base URL — vault-sourced (peerBaseUrl(); see the
-// header there).  No localhost candidates are probed — the LAN :8080 (proxy)
-// and :8101 (llama-swap) listen addresses are not routable from outside the
-// serving host (docs/d022).
+// Peer candidates (docs/d027): the single vault-sourced funnel base, for the
+// LOCAL llama-swap path-route and for the CLOUD path-routes. No localhost
+// candidates — the LAN :8080 (proxy) and :8101 (llama-swap) listen addresses
+// are not routable from outside the serving host (docs/d022).
 const LOCAL_SOURCE_CANDIDATES = [peerProviderUrl(peerBaseUrl(), "llama-swap")];
-
-// Peer candidates for the CLOUD path-routes (docs/d027): the same single
-// vault-sourced base.  No localhost candidates — the LAN :8080
-// (llm-reverse-proxy) and :8101 (llama-swap) listen addresses are not routable
-// from outside the serving host.
 const CLOUD_PEER_CANDIDATES = [peerBaseUrl()];
 
 /**
@@ -176,8 +169,6 @@ async function main() {
 					provider: id,
 				});
 			} else {
-				// Any non-unreachable response (401/403/other) proves the network
-				// path works; only total absence of response means unreachable.
 				logInfo("reachable — keeping built-in routing", {
 					provider: id,
 					error,
@@ -245,9 +236,6 @@ async function main() {
 		return;
 	}
 
-	// opencode V1 config: the provider map key is `provider` (singular).
-	// lib/artifact.mjs write contract: atomic tmp+rename, replace by default,
-	// DRY_RUN=1 leaves the live config untouched and writes a preview.
 	const written = writeArtifact(
 		out,
 		`${JSON.stringify({ provider: providers }, null, 2)}\n`,

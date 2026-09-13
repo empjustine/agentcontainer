@@ -6,7 +6,7 @@ title: d028 — provider extensions (pi/opencode plugins) vs generated-config ma
 parent: architecture
 depends-on:
   - coding-agent
-  - d027-models-dev-relay-fallback
+  - d027b-models-dev-relay-fallback
 references:
   - environments
 tags:
@@ -188,7 +188,7 @@ curated `default_large/small_model_id`; per-model costs (incl. cached),
 (low/medium/high/xhigh/max — pi's exact thinking-level vocabulary),
 `default_reasoning_effort`, sampling `options`. Engineering: ETag
 conditional fetch (304) in the official Go client + a vendored embedded
-fallback — the same direct→stale-copy chain as d027, designed-in. **Coverage
+fallback — the same direct→stale-copy chain as d027b, designed-in. **Coverage
 gap is the verdict:** openrouter/opencode-zen/opencode-go and the big labs
 are present with real endpoints, but hyper, cline-pass, and mistral are
 absent (first-party/subscription products don't ride community catalogs) —

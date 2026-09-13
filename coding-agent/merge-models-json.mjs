@@ -141,8 +141,6 @@ function main() {
 		process.argv[2] ??
 		process.env.PI_MODELS_JSON ??
 		join(scriptDir, "models.json");
-	// lib/artifact.mjs write contract: atomic tmp+rename, replace by default,
-	// DRY_RUN=1 leaves models.json untouched and writes a preview.
 	const written = writeArtifact(
 		out,
 		`${JSON.stringify(deepMerge(...layers), null, 2)}\n`,

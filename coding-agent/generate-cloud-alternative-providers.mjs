@@ -21,10 +21,8 @@ import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 
-// Shared lib/ helpers (docs/d023): the structured logger and the HTTP probe
-// toolkit, resolved through the LIB_DIR convention (generate.sh stages them
-// into the scratch dir and points LIB_DIR there; manual in-place runs fall
-// back to the sibling ../lib).
+// Shared lib/ helpers (docs/d023): structured logger, artifact writer, HTTP
+// probe toolkit, hyper facts cache — all via the LIB_DIR convention.
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
 const { logInfo, logWarn, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
@@ -66,29 +64,25 @@ const CLOUD_PEER_CANDIDATES = [peerBaseUrl()];
  * natively. Adding support for a new one is a row here plus a merge-order
  * row in merge-models-json.mjs's header — everything else (catalog load,
  * cascade, peer normalization, layer emission) is generic.
- *
- * `file` numbers the layer into merge-models-json.mjs's lexical merge order
- * (zero-padded, after model-015). `envKey` is the provider's own key variable
- * (from the catalog's `env`) — referenced as `$<envKey>` in the emitted layer
- * and read here only for the direct probe. `compat` is the provider-level
- * compat pi cannot infer (null = no override); `modelCompat` builds the
- * per-model compat mirror (null = none); `onOffThinking` swaps the all-null
- * effort-less map for the ON_OFF representative map (see header); `headers`
- * emits provider-level request headers.
- *
  * @typedef {object} AlternativeProviderSpec
  * @property {string} id models.dev provider key AND pi provider id
  * @property {string} name display name for the pi provider block
- * @property {string} file output layer filename (relative to this script)
- * @property {string} envKey env var holding the provider API key
- * @property {{ supportsDeveloperRole: boolean }|null} compat
+ * @property {string} file output layer filename (relative to this script);
+ *   numbered into merge-models-json.mjs's lexical merge order (zero-padded,
+ *   after model-015)
+ * @property {string} envKey the provider's own key variable (from the
+ *   catalog's `env`) — referenced as `$<envKey>` in the emitted layer, and
+ *   read here only for the direct probe
+ * @property {{ supportsDeveloperRole: boolean }|null} compat provider-level
+ *   compat pi cannot infer (null = no override)
  * @property {((m: ModelsDevModel) => Record<string, unknown>|null)|null} modelCompat
- * @property {boolean} onOffThinking
+ *   builds the per-model compat mirror (null = none)
+ * @property {boolean} onOffThinking swaps the all-null effort-less map for
+ *   the ON_OFF representative map (see header)
  * @property {boolean} [enrichFromFacts] refresh + consume the lib/hyper-facts
  *   cache (hyper only — the one provider with a non-models.dev cache)
- * @property {Record<string, string>} [headers]
+ * @property {Record<string, string>} [headers] provider-level request headers
  */
-
 /** @type {AlternativeProviderSpec[]} */
 const PROVIDER_SPECS = [
 	{
@@ -149,14 +143,16 @@ const PROVIDER_SPECS = [
 	},
 ];
 
-// Map models.dev `reasoning_options` effort values onto pi thinking levels
-// (off, minimal, low, medium, high, xhigh, max). ClinePass exposes enums like
-// ["none","low","medium","high","xhigh"] and Hyper (e.g. inkling) like
-// ["none","minimal","low","medium","high","xhigh"]; "none" disables thinking
-// (pi "off"), the rest map 1:1. Levels absent from the provider enum are
-// marked unsupported (null) so they are hidden in /model and pi never sends
-// an out-of-enum value.
-/** @type {Record<string, string>} */
+/**
+ * Map models.dev `reasoning_options` effort values onto pi thinking levels
+ * (off, minimal, low, medium, high, xhigh, max). ClinePass exposes enums like
+ * ["none","low","medium","high","xhigh"] and Hyper (e.g. inkling) like
+ * ["none","minimal","low","medium","high","xhigh"]; "none" disables thinking
+ * (pi "off"), the rest map 1:1. Levels absent from the provider enum are
+ * marked unsupported (null) so they are hidden in /model and pi never sends
+ * an out-of-enum value.
+ * @type {Record<string, string>}
+ */
 const EFFORT_TO_PI = {
 	none: "off",
 	off: "off",
@@ -169,12 +165,15 @@ const EFFORT_TO_PI = {
 };
 const PI_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh", "max"];
 
-// Thinking map for reasoning models that expose NO effort enum (Hyper's
-// glm-5, kimi-k2-thinking, ...): the charmbracelet/pi-hyper-provider
-// ON_OFF_THINKING_LEVEL_MAP — pi "max" is the single representative "on"
-// state, "off" disables thinking. Only valid for providers that pair it
-// with thinkingFormat: "deepseek" + supportsReasoningEffort: false (the
-// wire translation then drops efforts entirely).
+/**
+ * Thinking map for reasoning models that expose NO effort enum (Hyper's
+ * glm-5, kimi-k2-thinking, ...): the charmbracelet/pi-hyper-provider
+ * ON_OFF_THINKING_LEVEL_MAP — pi "max" is the single representative "on"
+ * state, "off" disables thinking. Only valid for providers that pair it
+ * with thinkingFormat: "deepseek" + supportsReasoningEffort: false (the
+ * wire translation then drops efforts entirely).
+ * @type {Readonly<Record<string, string|null>>}
+ */
 const ON_OFF_THINKING_LEVEL_MAP = Object.freeze({
 	off: "off",
 	minimal: null,
@@ -428,7 +427,6 @@ function enrichWithLiveListing(spec, models, liveEntries) {
 	const liveOnly = liveEntries
 		.filter((e) => !catalogIds.has(stripProviderPrefixes(spec.id, e.id)))
 		.map((e) => {
-			// Create a minimal ModelsDevModel record so piModel can process it
 			const m = {
 				id: e.id,
 				name: e.name ?? e.id,
@@ -497,7 +495,6 @@ async function emitProvider(spec) {
 		bearerHeaders(process.env[spec.envKey]?.trim()),
 	);
 	if (real.result !== "unreachable") {
-		// Direct mode: the endpoint answers.
 		let models = allModels;
 
 		// Special case: InferX (and potentially others) provide a /models endpoint
@@ -520,7 +517,6 @@ async function emitProvider(spec) {
 			}
 		}
 
-		// Hyper additionally has a specialized facts cache for detailed metadata
 		if (spec.enrichFromFacts) {
 			await refreshHyperFacts();
 			const facts = loadHyperFacts();
@@ -627,8 +623,6 @@ async function emitProvider(spec) {
  */
 function write(block, spec) {
 	const out = join(scriptDir, spec.file);
-	// lib/artifact.mjs write contract: atomic tmp+rename, replace by default,
-	// DRY_RUN=1 leaves the layer untouched and writes a preview.
 	const written = writeArtifact(out, `${JSON.stringify(block, null, 2)}\n`);
 	logInfo(`wrote ${spec.name} models`, {
 		path: written,

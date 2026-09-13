@@ -85,32 +85,17 @@ setLogTool("llm-reverse-proxy/generate-config");
 
 const out = process.argv[2] ?? join(scriptDir, "llm-reverse-proxy.json");
 
-// Overwrite is the default (lib/artifact.mjs); DRY_RUN=1 leaves the deployed
-// config untouched and writes an <out>.dry-run preview instead.
 /** @type {{ listen: string, providers: Record<string, string> }} */
 const cfg = {
 	listen: "0.0.0.0:8080",
-	// id → FULL real base URL (docs/d027). Object.entries order follows
-	// insertion order — the fact table's declaration order, kept for a
-	// stable, reviewable diff. The LOCAL llama-swap peer (LAN 8101, see
-	// the header) is appended last, on loopback, so the local GGUF face
-	// rides the same funnel: <peerBase>/llama-swap/… → 127.0.0.1:8101/….
+	// id → FULL real base URL (docs/d027). Insertion order is kept for a
+	// stable, reviewable diff; the LOCAL llama-swap peer is appended last on
+	// loopback (see header).
 	providers: Object.fromEntries([
 		...Object.values(CLOUD_PROVIDERS).map((p) => [p.id, p.baseUrl]),
 		["llama-swap", process.env.LLAMA_SWAP_BASE_URL ?? "http://127.0.0.1:8101"],
-		// Static catalog passthroughs — public metadata endpoints, no
-		// keys, never fact-table rows:
-		//   models.dev — the CATALOG the relay route serves so
-		//     refresh-models-dev.mjs and the coding-agent generators can
-		//     fall back to the PEER when the vendored catalog is
-		//     stale/absent (docs/d027-models-dev-relay-fallback).
-		//   catwalk — Charm's curated model catalog
-		//     (https://catwalk.charm.land/v2/providers, source
-		//     charmbracelet/catwalk, verified live in docs/d028): the
-		//     metadata tier any catalog-consuming client can ride through
-		//     the peer when the endpoint is unreachable. A complement to
-		//     models.dev (first-party/subscription providers are absent
-		//     from it), never a replacement.
+		// Static catalog passthroughs — public metadata endpoints, no keys,
+		// never fact-table rows (see header).
 		["models.dev", "https://models.dev"],
 		["catwalk", "https://catwalk.charm.land"],
 	]),
@@ -121,7 +106,6 @@ logInfo("wrote llm-reverse-proxy config", {
 	providers: Object.keys(cfg.providers).length,
 });
 
-// Best-effort summary of what is deployed vs what the fact table knows.
 const deployed = existsSync(out)
 	? /** @type {{ providers: Record<string, string> }} */ (
 			JSON.parse(readFileSync(out, "utf-8")).providers ?? {}

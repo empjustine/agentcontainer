@@ -1,8 +1,8 @@
 ---
-id: d027-models-dev-relay-fallback
+id: d027b
 type: decision
 status: accepted
-title: d027 — models.dev catalog fetch chain (direct → relay → stale copy)
+title: d027b — models.dev catalog fetch chain (direct → relay → stale copy)
 parent: architecture
 depends-on:
   - lib

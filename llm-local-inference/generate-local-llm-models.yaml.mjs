@@ -38,9 +38,12 @@ const activeB = JSON.parse(
 // biome-ignore lint/suspicious/noTemplateCurlyInString: llama-swap expands ${LLAMA_SERVER} (and the ${qwen36} family) itself before launching; must stay verbatim text.
 const LLAMA_SERVER_MACRO = "${LLAMA_SERVER}";
 
-// Implicit manifest defaults: entries in llamacpp-model-data.json may omit
-// these keys and the generator fills them in.  Only deviations (e.g. a
-// --parallel 2 model or a non-65536 context) need to be written out.
+/**
+ * Implicit manifest defaults: entries in llamacpp-model-data.json may omit
+ * these keys and the generator fills them in. Only deviations (e.g. a
+ * --parallel 2 model or a non-65536 context) need to be written out.
+ * @type {Record<string, number|string>}
+ */
 const DEFAULTS = {
 	"cache-type-k": "f16",
 	"cache-type-v": "f16",
@@ -48,58 +51,69 @@ const DEFAULTS = {
 	parallel: 1,
 };
 
-// Speculative decoding strategy used when an entry carries a "model-draft"
-// drafter GGUF (unsloth ships MTP sidecars under the repo's MTP/ subdir).
-// --model-draft ALONE is a no-op for speculation when the target model is a
-// local path: the server only auto-infers the spec type on the --hf-repo
-// download path, so --spec-type must be emitted explicitly (and a bare
-// --model-draft would still load the drafter into VRAM, wasted).
+/**
+ * Speculative decoding strategy used when an entry carries a "model-draft"
+ * drafter GGUF (unsloth ships MTP sidecars under the repo's MTP/ subdir).
+ * --model-draft ALONE is a no-op for speculation when the target model is a
+ * local path: the server only auto-infers the spec type on the --hf-repo
+ * download path, so --spec-type must be emitted explicitly (and a bare
+ * --model-draft would still load the drafter into VRAM, wasted).
+ * @type {string}
+ */
 const DEFAULT_SPEC_TYPE = "draft-mtp";
 
 // The in-container HF hub cache path (/home/ubuntu/.cache/huggingface/hub,
 // mounted by llm-local-inference/run.sh; differs from the host's
 // /home/dev/.cache/...) is hardcoded in config.d/launch-gguf.sh, which does
 // the snapshot resolution.
-
-// Resolve a model (and, for multimodal models, its projector) at launch to
-// paths drawn from ONE HF snapshot dir, so the exact same commit backs both
-// --model and --mmproj (a quant/projector mismatch would corrupt vision
-// requests).  This CANNOT be inline shell in the cmd string: llama-swap splits
-// `cmd` with posix shlex and execs argv[0] directly — no shell runs — and a
-// `sh -c '...'` wrapper breaks on the single quotes inside the sampling macros
-// (--chat-template-kwargs '{...}').  config.d/launch-gguf.sh therefore does the
-// dynamic resolution: it picks the first models--<org>--<repo>/snapshots/<hash>
-// dir containing the GGUF (and the projector, when present), aborting the
-// launch if none does, normalizes sharded GGUFs to their 00001 shard (llama.cpp
-// auto-loads sibling shards), appends --model/--mmproj after the caller's flags
-// and execs.  The emitted cmd is plain argv: sh <launcher> <args> -- ${macros}.
 const LAUNCHER = "/etc/llama-swap/config.d/launch-gguf.sh";
 
+/**
+ * Resolve a model (and, for multimodal models, its projector) at launch to
+ * paths drawn from ONE HF snapshot dir, so the exact same commit backs both
+ * --model and --mmproj (a quant/projector mismatch would corrupt vision
+ * requests). This CANNOT be inline shell in the cmd string: llama-swap splits
+ * `cmd` with posix shlex and execs argv[0] directly — no shell runs — and a
+ * `sh -c '...'` wrapper breaks on the single quotes inside the sampling macros
+ * (--chat-template-kwargs '{...}'). config.d/launch-gguf.sh therefore does the
+ * dynamic resolution: it picks the first models--<org>--<repo>/snapshots/<hash>
+ * dir containing the GGUF (and the projector, when present), aborting the
+ * launch if none does, normalizes sharded GGUFs to their 00001 shard (llama.cpp
+ * auto-loads sibling shards), appends --model/--mmproj after the caller's flags
+ * and execs. The emitted cmd is plain argv: sh <launcher> <args> -- ${macros}.
+ * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
+ * @param {string|undefined} mmprojFile projector filename, undefined for the
+ *   0text mode
+ * @returns {{ launcherArgs: string }}
+ */
 function cacheResolver(m, mmprojFile) {
 	const repo = m["hf-repo"].split(":")[0]; // drop :revision; the GGUF filename already pins the quant
 	const repoDir = `models--${repo.split("/").join("--")}`;
 	// repo-id is passed separately (reversing models--<org>--<repo> is ambiguous
 	// when the org itself contains dashes) for launch-gguf.sh's --hf-repo
-	// download fallback.  The launcher args below carry ${…} macros that
-	// llama-swap expands, not JS (see LLAMA_SERVER_MACRO).
-	// The 5th launcher arg is the drafter GGUF ("-" when absent); the launcher
-	// requires it in the SAME snapshot and appends --model-draft itself.
+	// download fallback. The 5th launcher arg is the drafter GGUF ("-" when
+	// absent), which the launcher requires in the SAME snapshot and appends
+	// --model-draft itself. The args carry ${…} macros that llama-swap expands,
+	// not JS (see LLAMA_SERVER_MACRO).
 	return {
 		launcherArgs: `sh ${LAUNCHER} ${repoDir} ${repo} ${m.model} ${mmprojFile ?? "-"} ${m["model-draft"] || "-"} --`,
 	};
 }
 
-// mmproj models are tripled: one llama-swap model per level of commitment to
-// GPU-offloading the vision projector.  The middle slug segment doubles as a
-// llama-swap macro name (llama-swap-core.json):
-//   0text    -> --no-mmproj --ubatch-size 256   (projector never loaded;
-//              also passed as "-" to launch-gguf.sh so the projector file is
-//              not required in the snapshot / downloaded on cache miss)
-//   1vision  -> --no-mmproj-offload --ubatch-size 2048  (projector loaded, stays on CPU)
-//   2mmproj  -> --ubatch-size 2048                        (projector offloaded to GPU)
-// The 1vision/2mmproj variants additionally pass --image-min-tokens/
-// --image-max-tokens from the manifest, and advertise the "image" input
-// modality; 0text and non-mmproj models stay text-only.
+/**
+ * mmproj models are tripled: one llama-swap model per level of commitment to
+ * GPU-offloading the vision projector. The middle slug segment doubles as a
+ * llama-swap macro name (llama-swap-core.json):
+ *   0text    -> --no-mmproj --ubatch-size 256   (projector never loaded; also
+ *              passed as "-" to launch-gguf.sh so the projector file is not
+ *              required in the snapshot / downloaded on cache miss)
+ *   1vision  -> --no-mmproj-offload --ubatch-size 2048  (projector loaded, stays on CPU)
+ *   2mmproj  -> --ubatch-size 2048                      (projector offloaded to GPU)
+ * The 1vision/2mmproj variants additionally pass --image-min-tokens/
+ * --image-max-tokens from the manifest, and advertise the "image" input
+ * modality; 0text and non-mmproj models stay text-only.
+ * @type {readonly { seg: string|null, vision: boolean }[]}
+ */
 const MMPROJ_MODES = [
 	{ seg: "0text", vision: false },
 	{ seg: "1vision", vision: true },
@@ -141,9 +155,9 @@ function main() {
 
 	const models = {};
 	for (const raw of modelData.models) {
-		const m = { ...DEFAULTS, ...raw }; // explicit keys win over the defaults
+		const m = { ...DEFAULTS, ...raw };
 		const ctxSize = m["ctx-size"]; // AUTHORITATIVE --ctx-size (not --fit-ctx)
-		const nPredict = ctxSize; // --n-predict mirrors the context window
+		const nPredict = ctxSize;
 		const modes = m.mmproj ? MMPROJ_MODES : [{ seg: null, vision: false }];
 		for (const mode of modes) {
 			const modalities = mode.vision ? ["text", "image"] : ["text"];

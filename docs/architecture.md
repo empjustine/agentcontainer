@@ -1,7 +1,7 @@
 ---
 id: architecture
 type: architecture-design
-status: draft
+status: accepted
 title: "Architecture: self-contained runners + base config generators"
 parent: goal
 tags: ["topology", "standalone-rule", "generators"]

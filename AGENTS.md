@@ -34,6 +34,28 @@ comment is a naming failure, not documentation. Fix the name.
 A long HOW explanation embedded in a code header is a signal that the content
 belongs in `docs/`, with a short pointer left in the code.
 
+### Prefer metadata over prose comments
+
+A comment that only restates machine-readable facts should become that
+metadata instead — tooling (editor hovers, `tsc`, IDE navigation) can then
+surface it, and it cannot drift out of sync with the signature:
+
+- **Parameter/type invariants → JSDoc.** What a value must be, what it means,
+  or what a caller may rely on belongs in `@param`, `@property`, `@returns`,
+  `@typedef`, or a `@type` annotation — not a `//` beside the argument.
+  A comment above a constant that describes its shape/contract becomes the
+  constant's JSDoc (e.g. `@type {readonly string[]}` plus the invariant).
+- **Whole-file behavior → `@fileoverview`.** What the file is for, its
+  contract, usage, and env surface belong in the ESM `@fileoverview` block at
+  the top, not scattered across a plain header comment.
+- **Trivial HOW is deleted, not rewritten.** If the shape of the code (or the
+  adjacent `@fileoverview`/doc) already says it, remove the comment. Do not
+  replace one redundant comment with another.
+
+WHY comments (intent, history, gotchas, doc pointers) stay — they are the
+reason this repo is comment-verbose. The rule is only that a comment must not
+be a worse rendering of metadata the code can carry itself.
+
 ## Design docs are the home for HOW
 
 `docs/` (especially the numbered `d0XX-*.md` decision records) owns the full

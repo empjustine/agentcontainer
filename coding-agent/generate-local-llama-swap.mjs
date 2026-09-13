@@ -18,10 +18,8 @@ import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 
-// Shared lib/ helpers (docs/d023): the structured logger, the HTTP probe
-// toolkit and the pi model shaping, resolved through the LIB_DIR convention
-// (generate.sh stages them into the scratch dir and points LIB_DIR there;
-// manual in-place runs fall back to the sibling ../lib).
+// Shared lib/ helpers (docs/d023): structured logger, artifact writer, HTTP
+// probe toolkit, pi model shaping — via the LIB_DIR convention.
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
 const { logInfo, logWarn, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
@@ -40,10 +38,8 @@ const { piModel, providerEntry } =
 	);
 setLogTool("coding-agent/generate-local-llama-swap");
 
-// Ordered best-first: explicit override, then the remote tailscale proxy —
-// each addressed as the llama-swap PATH-ROUTE of the funnel front
 // The peer's funnel base URL — vault-sourced (peerBaseUrl(); see the
-// header there).  No localhost candidates are probed — the LAN :8080 (proxy)
+// header there). No localhost candidates are probed — the LAN :8080 (proxy)
 // and :8101 (llama-swap) listen addresses are not routable from outside the
 // host they serve (docs/d022).
 const LOCAL_SOURCE_CANDIDATES = [peerProviderUrl(peerBaseUrl(), "llama-swap")];
@@ -72,8 +68,6 @@ async function main() {
 		return;
 	}
 
-	// lib/artifact.mjs write contract: atomic tmp+rename, replace by default,
-	// DRY_RUN=1 leaves the layer untouched and writes a preview.
 	const written = writeArtifact(
 		out,
 		`${JSON.stringify({ providers }, null, 2)}\n`,

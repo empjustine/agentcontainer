@@ -21,10 +21,8 @@ import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 
-// Shared lib/ helpers (docs/d023): the structured logger, the HTTP probe
-// toolkit, the provider fact table and the pi model shaping, resolved through
-// the LIB_DIR convention (generate.sh stages them into the scratch dir and
-// points LIB_DIR there; manual in-place runs fall back to the sibling ../lib).
+// Shared lib/ helpers (docs/d023): structured logger, artifact writer, HTTP
+// probe toolkit, provider fact table, pi model shaping — via LIB_DIR.
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
 const { logInfo, logWarn, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
@@ -213,8 +211,6 @@ async function main() {
 		return;
 	}
 
-	// lib/artifact.mjs write contract: atomic tmp+rename, replace by default,
-	// DRY_RUN=1 leaves the layer untouched and writes a preview.
 	const written = writeArtifact(
 		out,
 		`${JSON.stringify({ providers }, null, 2)}\n`,

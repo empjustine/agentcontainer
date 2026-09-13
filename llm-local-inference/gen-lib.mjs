@@ -32,14 +32,25 @@ export const scriptDir = dirname(fileURLToPath(import.meta.url));
 
 // --- llama-swap config helpers ---------------------------------------
 
+/**
+ * Read the general-purpose llama-swap config source.
+ * @param {string} [path] defaults to llama-swap-core.json next to this file
+ * @returns {Record<string, unknown>}
+ */
 export function loadCore(path = join(scriptDir, "llama-swap-core.json")) {
 	return JSON.parse(readFileSync(path, "utf-8"));
 }
 
-// Write an object as pretty JSON into config.d/ (the YAML loader accepts JSON
-// content, and JSON-in-.yaml matches the repo's existing config style).
-// lib/artifact.mjs owns the write contract: atomic tmp+rename, replace by
-// default, DRY_RUN=1 leaves the layer untouched and writes a preview.
+/**
+ * Write an object as pretty JSON into config.d/ (the YAML loader accepts JSON
+ * content, and JSON-in-.yaml matches the repo's existing config style). Write
+ * contract: lib/artifact.mjs (atomic tmp+rename, replace by default, DRY_RUN=1
+ * preview).
+ * @param {string} name layer filename (e.g. "10-local-llm-inference.yaml")
+ * @param {unknown} obj config object to serialize
+ * @param {string} [dir] defaults to config.d/ next to this file
+ * @returns {void}
+ */
 export function writeConfigD(name, obj, dir = join(scriptDir, "config.d")) {
 	mkdirSync(dir, { recursive: true });
 	const path = writeArtifact(

@@ -143,6 +143,16 @@ explanation to `docs/`) instead. The authoritative statement and examples live
 in [AGENTS.md](AGENTS.md); design essays belong in `docs/` and are indexed
 above.
 
+Prefer **metadata over prose comments**, so the facts live where tooling can
+surface them and cannot drift from the signature:
+
+- Parameter/type invariants go in JSDoc (`@param`, `@property`, `@returns`,
+  `@typedef`, `@type`), not in a `//` beside the value.
+- Whole-file purpose, contract, usage and env surface go in the top-of-file
+  ESM `@fileoverview` block.
+- Trivial HOW comments that the code (or the adjacent doc) already says are
+  deleted, not rewritten.
+
 ## Cline and Thinkrail Integration
 
 ### Installation via Mise
