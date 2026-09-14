@@ -22,7 +22,7 @@ the next provider is a checklist instead of an archaeology dig.
 | Source | Owns | Consumers |
 |---|---|---|
 | vendored models.dev catalog (`lib/models.dev.api.json`) | model lineup, capabilities, prices, `api` endpoint, `env` key name | generate-cloud-providers.mjs (client layer, one file per full `PROVIDER_SPECS` row) |
-| cloud provider fact table (`lib/cloud-providers.mjs`) | peer id, label, `apiKeyEnv`, real `baseUrl` | `llm-reverse-proxy/generate-config.mjs` (routes), generate-cloud-providers.mjs (pi-native subset, override-only rows), `generate-opencode.jsonc.mjs` (opencode subset), `lib/hyper-facts.mjs` (`.hyper` only) |
+| cloud provider fact table (`lib/cloud-providers.mjs`) | peer id, label, `apiKeyEnv`, real `baseUrl` | `llm-reverse-proxy/generate-config.mjs` (routes), generate-cloud-providers.mjs (pi-native subset, override-only rows), `generate-opencode.jsonc.mjs` (opencode subset), `coding-agent/hyper-facts.mjs` (`.hyper` only, docs/d039) |
 
 A provider pi does NOT ship natively (d022 semantics: the alternative layer is
 the authoritative full block) therefore needs **one row in each source** plus
@@ -48,7 +48,7 @@ the merge-order/doc updates. That is the entire flow:
 ### F1 — a provider models.dev does not know cannot ride this flow at all
 
 The vendored catalog is **regenerated wholesale** by
-`lib/refresh-models-dev.mjs` (direct `https://models.dev/api.json`, relay
+`coding-agent/refresh-models-dev.mjs` (direct `https://models.dev/api.json`, relay
 fallback per d027b-models-dev-relay-fallback) and replaces
 `lib/models.dev.api.json` atomically on every best-effort refresh. A
 hand-added catalog row is therefore **transient** — silently gone after the
@@ -56,7 +56,7 @@ next refresh. The alternative-provider generator's `loadProvider()` throws on
 a missing catalog row, so an upstream-unknown provider fails the layer rather
 than emitting an empty one. InferX worked only because models.dev already
 listed it. Upstream contribution (or a new facts-cache module like
-`lib/hyper-facts.mjs`, the one sanctioned non-models.dev enrichment source) is
+`coding-agent/hyper-facts.mjs`, the one sanctioned non-models.dev enrichment source) is
 the only durable path for a provider absent from models.dev.
 
 ### F2 — the fact table is NOT the client-side source of truth

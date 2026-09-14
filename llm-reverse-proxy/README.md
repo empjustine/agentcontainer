@@ -51,10 +51,11 @@ $ ./generate.sh                       # -> llm-reverse-proxy.json (REPLACED
 ```
 
 The generated table is the UNION of three provider sources with an explicit
-priority (docs/d038) — pi-ai's built-in registry (lib/pi-ai-providers.mjs)
-> the models.dev/ai-sdk catalog (lib/models.dev.api.json, `api` field, with
-lib/ai-sdk-package-endpoints.mjs as the fallback for records without one) >
-crush's catwalk catalog (lib/catwalk-facts.json, `api_endpoint`). Routes are
+priority (docs/d038) — pi-ai's built-in registry (the PI_AI_PROVIDERS table
+in generate-config.mjs; d039 folded it in) > the models.dev/ai-sdk catalog
+(lib/models.dev.api.json, `api` field, with the AI_SDK_PACKAGE_ENDPOINTS
+table as the fallback for records without one) > crush's catwalk catalog
+(lib/catwalk-facts.json, `api_endpoint`). Routes are
 keyed by provider NAME: the same name in several sources resolves by
 priority; distinct names are all served. A representative excerpt (the full
 table is ~220 routes):

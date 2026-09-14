@@ -5,9 +5,9 @@
  * llama-swap provider, so this layer ADDS one; docs/d024).
  *
  * Detection cascade, reachability rule and emitted wrapper shape: docs/d033.
- * Merge contract: merge-models-json.mjs. Probe toolkit: lib/peer-probe.mjs.
+ * Merge contract: merge-models-json.mjs. Probe toolkit: peer-probe.mjs (coding-agent/).
  * The per-model metadata fallback (`meta.llamaswap` → OpenAI-ish fields) lives
- * in lib/pi-models.mjs.
+ * in gen-lib.mjs (folded from the former lib/pi-models.mjs).
  *
  * Usage: node generate-local-llama-swap.mjs [out]
  *   out defaults to $PI_MODELS_JSON else ./model-010-local-default.json.
@@ -46,7 +46,7 @@ async function main() {
 	const local = await probeCandidates(LOCAL_SOURCE_CANDIDATES, (ids) =>
 		ids.some((id) => id.includes("-GGUF")),
 	);
-	/** @type {Record<string, import("../lib/pi-models.mjs").PiProvider>} */
+	/** @type {Record<string, import("./gen-lib.mjs").PiProvider>} */
 	const providers = {};
 	if (local) {
 		const gguf = local.entries.filter((e) => e.id.includes("-GGUF"));

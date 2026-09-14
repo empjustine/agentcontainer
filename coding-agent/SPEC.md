@@ -62,7 +62,7 @@ by file** (never the repo dir): the list in `run.sh` must cover every file
   (`docs/d024-generators-split-and-provider-facts.md`).
 - **Parallel probing + multi-hop peer chains** (docs/d034): a generator's
 direct probes fire concurrently (`Promise.allSettled`), and the peer base is a
-vault-sourced `PEER_BASE_URLS` chain (`lib/peer-probe.mjs peerBaseUrls()`) that
+vault-sourced `PEER_BASE_URLS` chain (`peer-probe.mjs peerBaseUrls()`) that
 `probePeerRoutes`/`refreshHyperFacts` walk in order. A thrown probe keeps its
 provider id so the peer path-route is still attempted.
 - **Peer routing is per-provider path-prefix** (docs/d027): cloud peer
@@ -83,9 +83,12 @@ provider id so the peer path-route is still attempted.
 ## Boundary
 
 Copy unit = this folder + `../lib` (`docs/architecture.md`). `gen-lib.mjs` is
-the shared preamble for the pi-layer generators; it resolves `$LIB_DIR` and
-re-exports the modules they import — `lib/log.mjs`, `lib/peer-probe.mjs`,
-`lib/cloud-providers.mjs`, `lib/pi-models.mjs`, `lib/hyper-facts.mjs`,
-`lib/catwalk-facts.mjs`. It reads `lib/models.dev.api.json` and the
-`lib/*-facts.json` caches. Must not reach into `llm-local-inference/` or
-`local-llm/`.
+the shared preamble for the pi-layer generators: it carries the pi shaping
+helpers (folded from the former `lib/pi-models.mjs`, docs/d039), re-exports
+the shared lib/ modules (`lib/log.mjs`, `lib/cloud-providers.mjs`) via
+`$LIB_DIR`, and its same-dir siblings `peer-probe.mjs`, `hyper-facts.mjs`,
+`catwalk-facts.mjs`, `refresh-models-dev.mjs` (all single-consumer, folded
+out of lib/ by d039). It reads `lib/models.dev.api.json` (shared with
+llm-reverse-proxy) and the caches (`hyper-facts.json` beside its module,
+`lib/catwalk-facts.json` — the proxy reads that one too). Must not reach
+into `llm-local-inference/` or `local-llm/`.

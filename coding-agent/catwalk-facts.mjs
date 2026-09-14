@@ -19,7 +19,7 @@
  * Shape (same contract as hyper-facts.mjs):
  *   { fetchedAt: <ISO>, fetchedFrom: <url>, providers: [{id, models: [...]}] }
  *
- * Lifecycle (mirrors lib/refresh-models-dev.mjs):
+ * Lifecycle (mirrors coding-agent/refresh-models-dev.mjs):
  *   - REFRESH, best-effort, whenever catwalk is reachable — done by
  *     coding-agent/generate-cloud-providers.mjs (fallback id list).
  *     A failed refresh never touches the last good copy.
@@ -33,17 +33,18 @@ import { readFileSync, renameSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+const scriptDir = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR =
-	process.env.LIB_DIR ?? dirname(fileURLToPath(import.meta.url));
+	process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
 const { logInfo, logWarn, setLogTool } =
-	/** @type {typeof import("./log.mjs")} */ (
+	/** @type {typeof import("../lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
-const { useEnvProxy } = /** @type {typeof import("./peer-probe.mjs")} */ (
-	await import(`${LIB_DIR}/peer-probe.mjs`)
-);
+// Proxy-env routing via the same-dir peer-probe module (its top-level calls
+// useEnvProxy(); rationale docs/d001 §1).
+import { useEnvProxy } from "./peer-probe.mjs";
 useEnvProxy();
-setLogTool("lib/catwalk-facts");
+setLogTool("coding-agent/catwalk-facts");
 
 const CATWALK_URL = "https://catwalk.charm.land/v2/providers";
 const REQUEST_TIMEOUT_MS = 10000;
@@ -191,7 +192,7 @@ export function getCatwalkModels(piProviderId) {
 	return provider.models.map((m) => ({ id: m.id, name: m.name ?? m.id }));
 }
 
-// Runnable: node lib/catwalk-facts.mjs [url] — best-effort refresh
+// Runnable: node coding-agent/catwalk-facts.mjs [url] — best-effort refresh
 if (
 	process.argv[1] &&
 	import.meta.url.endsWith(basename(process.argv[1]))

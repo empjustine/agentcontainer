@@ -150,31 +150,30 @@ workload_ro_if "$SCRIPT_DIR/models.json" "$_gen_target/models.json"
 workload_ro_if "$SCRIPT_DIR/opencode.jsonc" "$_gen_target/opencode.jsonc"
 workload_ro "$REPO_ROOT/lib/workload-runtime.sh" '/opt/lib/workload-runtime.sh'
 workload_ro "$REPO_ROOT/lib/log.sh" '/opt/lib/log.sh'
-# Shared lib/ modules the generators and lib/refresh-models-dev.mjs import
-# (docs/d023, docs/d024): generate.sh stages log.mjs + artifact.mjs +
-# peer-probe.mjs + the provider-fact table + the pi shaping module into its
-# scratch dir via $LIB_DIR; refresh-models-dev.mjs runs from /opt/lib and
-# statically imports its siblings artifact.mjs, log.mjs and peer-probe.mjs —
-# all must be mounted (artifact.mjs missing here once cost every generator
-# an ERR_MODULE_NOT_FOUND in-container: the staging loop found nothing to
-# copy, so each generator died and only the committed fallbacks survived).
+# Shared lib/ modules the generators import (docs/d023, docs/d024, d039):
+# generate.sh stages log.mjs + artifact.mjs + cloud-providers.mjs into its
+# scratch dir via $LIB_DIR — all must be mounted (artifact.mjs missing here
+# once cost every generator an ERR_MODULE_NOT_FOUND in-container: the
+# staging loop found nothing to copy, so each generator died and only the
+# committed fallbacks survived).
 workload_ro "$REPO_ROOT/lib/log.mjs" '/opt/lib/log.mjs'
 workload_ro "$REPO_ROOT/lib/artifact.mjs" '/opt/lib/artifact.mjs'
-workload_ro "$REPO_ROOT/lib/peer-probe.mjs" '/opt/lib/peer-probe.mjs'
 workload_ro "$REPO_ROOT/lib/cloud-providers.mjs" '/opt/lib/cloud-providers.mjs'
-workload_ro "$REPO_ROOT/lib/pi-models.mjs" '/opt/lib/pi-models.mjs'
-workload_ro "$REPO_ROOT/lib/hyper-facts.mjs" '/opt/lib/hyper-facts.mjs'
-workload_ro "$REPO_ROOT/lib/catwalk-facts.mjs" '/opt/lib/catwalk-facts.mjs'
-workload_ro "$REPO_ROOT/lib/refresh-models-dev.mjs" '/opt/lib/refresh-models-dev.mjs'
+# The single-consumer helper modules (docs/d039) live in coding-agent/ and
+# ride the generator staging list into _gen_target.
+workload_ro "$SCRIPT_DIR/peer-probe.mjs" "$_gen_target/peer-probe.mjs"
+workload_ro "$SCRIPT_DIR/hyper-facts.mjs" "$_gen_target/hyper-facts.mjs"
+workload_ro "$SCRIPT_DIR/catwalk-facts.mjs" "$_gen_target/catwalk-facts.mjs"
+workload_ro "$SCRIPT_DIR/refresh-models-dev.mjs" "$_gen_target/refresh-models-dev.mjs"
 # The shared vendored models.dev catalog (read-only in here; generate.sh's
 # best-effort refresh falls back to a scratch copy when it is not writable).
 workload_ro "$REPO_ROOT/lib/models.dev.api.json" '/opt/lib/models.dev.api.json'
-# The shared hyper facts cache (read-only in here; generate.sh stages a
-# writable scratch copy — see its staging loop — so in-container refreshes
-# succeed instead of dying on the ro mount).
-workload_ro_if "$REPO_ROOT/lib/hyper-facts.json" '/opt/lib/hyper-facts.json'
+# The hyper facts cache is its module's next-door neighbour (single consumer,
+# docs/d039): ro here, staged writable by generate.sh's scratch loop.
+workload_ro_if "$SCRIPT_DIR/hyper-facts.json" "$_gen_target/hyper-facts.json"
 # The shared catwalk fallback catalog gets the same scratch-copy treatment as
-# the hyper facts cache: ro here, staged writable by generate.sh.
+# the hyper facts cache: ro here (the proxy generator reads it too, so it
+# stays in lib/), staged writable by generate.sh.
 workload_ro_if "$REPO_ROOT/lib/catwalk-facts.json" '/opt/lib/catwalk-facts.json'
 
 # In-container launch chain: generated shell with no infisical — the host

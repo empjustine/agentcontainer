@@ -22,7 +22,7 @@
  * its rendering: pi-shaped entries vs llama-swap peer id lists):
  *   { fetchedAt: <ISO>, fetchedFrom: <url>, models: [...] }
  *
- * Lifecycle (mirrors lib/refresh-models-dev.mjs):
+ * Lifecycle (mirrors coding-agent/refresh-models-dev.mjs):
  *   - REFRESH, best-effort, whenever hyper is reachable directly — done by
  *     coding-agent/generate-cloud-providers.mjs (hyper row, cascade step 1)
  *     and by llm-local-inference's hyper peer fetch. A failed refresh never
@@ -37,43 +37,43 @@
  * collects every /model-.*\.json/ sibling as a merge layer and would
  * silently merge these facts into models.json.
  *
- * Import via the LIB_DIR convention (docs/d023). Path convention: the cache
- * lives NEXT TO THIS FILE (lib/hyper-facts.json — inside the copy unit
- * "folder + ../lib", so it is staged/committed like the vendored catalog);
- * HYPER_FACTS_JSON overrides (generate.sh points it at a writable location
- * when lib is a read-only mount).
+ * Import convention (docs/d023, d039): shared lib/ helpers resolve through
+ * $LIB_DIR (`env ?? "<this dir>/../lib"`); peer-probe.mjs is a same-dir
+ * sibling. Path convention: the cache lives NEXT TO THIS FILE
+ * (coding-agent/hyper-facts.json — single consumer, so the cache lives with
+ * it; docs/d039); HYPER_FACTS_JSON overrides (generate.sh points it at the
+ * staged scratch copy when the repo tree is read-only).
  */
 
 import { readFileSync, renameSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { peerBaseUrls, useEnvProxy } from "./peer-probe.mjs";
+
+const scriptDir = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR =
-	process.env.LIB_DIR ?? dirname(fileURLToPath(import.meta.url));
+	process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
 const { logInfo, logWarn, setLogTool } =
-	/** @type {typeof import("./log.mjs")} */ (
+	/** @type {typeof import("../lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
 const { CLOUD_PROVIDERS } =
-	/** @type {typeof import("./cloud-providers.mjs")} */ (
+	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
 // Proxy-env routing for this module's own fetch (rationale: docs/d001 §1).
 // Importing peer-probe.mjs gives it for free — its module top-level calls
 // useEnvProxy() and its fetches share the global dispatcher contract.
-const { peerBaseUrls, useEnvProxy } =
-	/** @type {typeof import("./peer-probe.mjs")} */ (
-		await import(`${LIB_DIR}/peer-probe.mjs`)
-	);
 useEnvProxy();
-setLogTool("lib/hyper-facts");
+setLogTool("coding-agent/hyper-facts");
 
 const FACTS = CLOUD_PROVIDERS.hyper;
 const REQUEST_TIMEOUT_MS = 8000;
 
 /** Cache location (see header): next to this file unless overridden. */
 const FACTS_PATH =
-	process.env.HYPER_FACTS_JSON ?? join(LIB_DIR, "hyper-facts.json");
+	process.env.HYPER_FACTS_JSON ?? join(scriptDir, "hyper-facts.json");
 
 /**
  * A raw Charm Hyper `/provider` model record — the subset consumers read.
@@ -240,7 +240,7 @@ export function loadHyperFacts() {
 	}
 }
 
-// Runnable as main: node lib/hyper-facts.mjs [baseUrl] — best-effort refresh
+// Runnable as main: node coding-agent/hyper-facts.mjs [baseUrl] — best-effort refresh
 // (the same call the generators make), exit 0 either way.
 if (
 	process.argv[1] &&

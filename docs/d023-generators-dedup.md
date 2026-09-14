@@ -116,10 +116,12 @@ symlink) and falls back to the shared copy for manual in-place runs.
 With shared code living in `lib/`, the per-generator
 `LOG_LIB`-pointing-at-a-copied-`log.mjs` mechanism is replaced by one env
 var: `LIB_DIR` (default `../lib` relative to the importing module).
-`coding-agent/generate.sh` stages `lib/log.mjs` + `lib/peer-probe.mjs` into
-`$_scratch/lib/` and exports `LIB_DIR`; `lib/peer-probe.mjs` and
-`lib/refresh-models-dev.mjs` import their sibling `./log.mjs` statically, so
-the logger module instance is shared per directory.
+`coding-agent/generate.sh` stages the shared lib/ modules (`log.mjs`,
+`artifact.mjs`, `cloud-providers.mjs`) into `$_scratch/lib/`, the
+coding-agent/ helper modules (`peer-probe.mjs`, `hyper-facts.mjs`,
+`catwalk-facts.mjs`, `refresh-models-dev.mjs` — folded out of lib/ by d039)
+into `$_scratch/`, and exports `LIB_DIR`; every lib import resolves through
+it, so the logger module instance is shared per directory.
 
 ## Applied cleanup of (a)
 

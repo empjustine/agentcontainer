@@ -23,7 +23,7 @@
 #       ./lib/environment.sh ./generate.sh
 #     - models.dev catalog refreshed best-effort
 #     - peer routing goes through the vault-sourced $PEER_BASE_URL (or
-#       $PEER_BASE_URLS for multi-hop proxy chains — see lib/peer-probe.mjs)
+#       $PEER_BASE_URLS for multi-hop proxy chains — see coding-agent/peer-probe.mjs)
 #       bazzite tailscale FQDN) only — no localhost:8080 or localhost:8101
 #       candidates (the
 #
@@ -161,8 +161,10 @@ fi
 
 # --- scratch dir: generators read layers from their own directory, and this
 # script's dir may be a read-only mount (container ro-mount), so stage the
-# generators — plus the lib/ modules they import (log.mjs, peer-probe.mjs,
-# resolved via $LIB_DIR, docs/d023) — there and symlink the big inputs.
+# generators — plus the coding-agent/ helper modules they import
+# (peer-probe.mjs, hyper-facts.mjs, catwalk-facts.mjs, docs/d039) and the
+# lib/ modules resolved via $LIB_DIR (log.mjs, artifact.mjs,
+# cloud-providers.mjs, docs/d023) — there and symlink the big inputs.
 _GEN_STAGE='scratch-stage'
 _scratch="$RUN_DIR/pi-models-gen.$$"
 mkdir -p "$_scratch"
@@ -170,6 +172,8 @@ for _f in gen-lib.mjs generate-local-llama-swap.mjs \
 	generate-cloud-providers.mjs \
 	merge-models-json.mjs generate-opencode.jsonc.mjs \
 	generate-default-model.mjs \
+	peer-probe.mjs hyper-facts.mjs catwalk-facts.mjs \
+	refresh-models-dev.mjs \
 	count-providers.mjs list-providers.mjs; do
 	if [ -f "$SCRIPT_DIR/$_f" ]; then
 		cp "$SCRIPT_DIR/$_f" "$_scratch/$_f"
@@ -177,13 +181,12 @@ for _f in gen-lib.mjs generate-local-llama-swap.mjs \
 		log_warn "generator missing" path="$SCRIPT_DIR/$_f"
 	fi
 done
-# Structured logging + HTTP probing + the shared fact/shaping modules for the
-# .mjs generators: they import all of these from $LIB_DIR (default ../lib
-# relative to their own file — which from the scratch dir resolves somewhere
-# that does not exist, so a missing copy here costs every generator instead of
-# one clear line).
+# Structured logging + the shared fact table for the .mjs generators: they
+# import these from $LIB_DIR (default ../lib relative to their own file —
+# which from the scratch dir resolves somewhere that does not exist, so a
+# missing copy here costs every generator instead of one clear line).
 mkdir -p "$_scratch/lib"
-for _lf in log.mjs artifact.mjs peer-probe.mjs cloud-providers.mjs pi-models.mjs hyper-facts.mjs catwalk-facts.mjs; do
+for _lf in log.mjs artifact.mjs cloud-providers.mjs; do
 	if [ -f "$REPO_ROOT/lib/$_lf" ]; then
 		cp "$REPO_ROOT/lib/$_lf" "$_scratch/lib/$_lf"
 	else
@@ -191,15 +194,19 @@ for _lf in log.mjs artifact.mjs peer-probe.mjs cloud-providers.mjs pi-models.mjs
 			path="$REPO_ROOT/lib/$_lf"
 	fi
 done
-# The hyper and catwalk facts caches ride along with their modules: staged
-# into the scratch lib (writable) so in-container refreshes succeed instead
-# of failing on the ro-mounted /opt/lib; both caches are consumed
-# stale-tolerantly and direct-mode runs refresh them fresh.
-for _fc in hyper-facts.json catwalk-facts.json; do
-	if [ -f "$REPO_ROOT/lib/$_fc" ]; then
-		cp "$REPO_ROOT/lib/$_fc" "$_scratch/lib/$_fc"
-	fi
-done
+# The facts caches ride along with their consumers: hyper-facts.json lives
+# next to its module in coding-agent/ (single consumer — docs/d039) and
+# stages into the scratch ROOT; catwalk-facts.json stays in lib/ (the proxy
+# generator reads it too) and stages into the scratch lib. Both are staged
+# writable so in-container refreshes succeed instead of failing on the
+# ro-mounted /opt copies; both are consumed stale-tolerantly and direct-mode
+# runs refresh them fresh.
+if [ -f "$SCRIPT_DIR/hyper-facts.json" ]; then
+	cp "$SCRIPT_DIR/hyper-facts.json" "$_scratch/hyper-facts.json"
+fi
+if [ -f "$REPO_ROOT/lib/catwalk-facts.json" ]; then
+	cp "$REPO_ROOT/lib/catwalk-facts.json" "$_scratch/lib/catwalk-facts.json"
+fi
 LIB_DIR="$_scratch/lib"
 export LIB_DIR
 [ -f "$MODELS_DEV_JSON" ] &&
@@ -254,7 +261,7 @@ else
 		if [ ! -w "$MODELS_DEV_JSON" ]; then
 			_catalog_out="$_scratch/models.dev.api.json"
 		fi
-		if node_run "$REPO_ROOT/lib/refresh-models-dev.mjs" "$_catalog_out"; then
+		if node_run "$_scratch/refresh-models-dev.mjs" "$_catalog_out"; then
 			log_info "models.dev catalog refreshed" path="$_catalog_out"
 		else
 			log_warn "models.dev catalog refresh failed; using vendored copy" \

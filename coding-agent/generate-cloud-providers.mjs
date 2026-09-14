@@ -54,7 +54,7 @@ import {
 
 setLogTool("coding-agent/generate-cloud-providers");
 
-// Peer candidates — vault-sourced (peerBaseUrls(); see lib/peer-probe.mjs).
+// Peer candidates — vault-sourced (peerBaseUrls(); see peer-probe.mjs).
 // Supports multi-hop proxy chains (PEER_BASE_URLS comma/newline delimited);
 // no localhost candidates — the LAN :8080 (proxy) and :8101 (llama-swap)
 // listen addresses are not routable from outside the serving host (docs/d022).
@@ -124,10 +124,39 @@ const PEER_MODEL_FILTERS = {
  *   builds the per-model compat mirror; null = none (full)
  * @property {boolean} onOffThinking swaps the all-null effort-less map for
  *   the ON_OFF representative map (full; see that constant)
- * @property {boolean} [enrichFromFacts] refresh + consume the lib/hyper-facts
+ * @property {boolean} [enrichFromFacts] refresh + consume the hyper-facts
  *   cache (hyper only — the one provider with a non-models.dev cache)
+ * @property {readonly string[]} [modelAllowlist] bare model ids (provider
+ *   prefix stripped) to restrict the catalog lineup to (full; docs/d040)
+ * @property {boolean} [liveSync] when false, direct mode never syncs the
+ *   lineup against the provider's live /models listing (full; docs/d040 —
+ *   cline-pass's listing serves the `cline` provider's data)
  * @property {Record<string, string>} [headers] provider-level request headers
  */
+
+/**
+ * The curated ClinePass lineup, verbatim from Cline's published model table
+ * (~/Downloads/references/github/cline/cline/docs/getting-started/clinepass.mdx,
+ * "Models" section). models.dev's cline-pass slice is a superset (it also
+ * lists deepseek-v4.1-flash and glm-5.3-flash, which the docs do not) — the
+ * published lineup wins until Cline's docs add a model (docs/d040).
+ * @type {readonly string[]}
+ */
+const CLINE_PASS_LINEUP = /** @type {readonly string[]} */ (Object.freeze([
+	"glm-5.3",
+	"glm-5.2",
+	"kimi-k3",
+	"kimi-k2.7-code",
+	"kimi-k2.6",
+	"deepseek-v4-pro",
+	"deepseek-v4-flash",
+	"mimo-v2.5",
+	"mimo-v2.5-pro",
+	"minimax-m3",
+	"qwen3.8-max",
+	"qwen3.7-max",
+	"qwen3.7-plus",
+]));
 
 /** @type {CloudProviderSpec[]} */
 const PROVIDER_SPECS = [
@@ -153,6 +182,12 @@ const PROVIDER_SPECS = [
 		compat: { supportsDeveloperRole: false },
 		modelCompat: null,
 		onOffThinking: false,
+		// The live /models listing at api.cline.bot serves the `cline`
+		// (usage-billing) provider's catalog — a different provider's data, so
+		// syncing against it would prune the real lineup and append 400+ wrong
+		// ids. The published ClinePass table is the contract instead (docs/d040).
+		modelAllowlist: CLINE_PASS_LINEUP,
+		liveSync: false,
 	},
 	{
 		id: "hyper",
@@ -176,7 +211,7 @@ const PROVIDER_SPECS = [
 		// effort-less reasoning models — see ON_OFF_THINKING_LEVEL_MAP.
 		onOffThinking: true,
 		// The one non-models.dev enrichment source: refresh + consume
-		// lib/hyper-facts (docs/d033).
+		// hyper-facts (docs/d033).
 		enrichFromFacts: true,
 		headers: {
 			// Mirror of the extension's "pi-hyper-provider/<version>" UA
@@ -446,13 +481,13 @@ function providerBlock(spec, baseUrl, models, auth) {
 }
 
 /**
- * Rebuild a raw lib/hyper-facts (live /provider) record as a models.dev-shaped
+ * Rebuild a raw hyper-facts (live /provider) record as a models.dev-shaped
  * model record, so the enrichment reuses catalogPiModel()'s full derivation
  * (input, costs, effort-enum → thinkingLevelMap/compat). Fields pi models but
  * the live record lacks stay undefined → catalogPiModel()'s defaults; the
  * display name is overridden back to the models.dev one by the enricher
  * (names stay catalog — see the header whitelist note).
- * @param {import("../lib/hyper-facts.mjs").HyperProviderModel} l a raw live /provider record
+ * @param {import("./hyper-facts.mjs").HyperProviderModel} l a raw live /provider record
  * @returns {ModelsDevModel} a models.dev-shaped record with live facts
  */
 function liveToCatalogRecord(l) {
@@ -490,7 +525,7 @@ function liveToCatalogRecord(l) {
  * new models are published as minimal entries (pi defaults).
  * @param {CloudProviderSpec} spec
  * @param {PiAlternativeModel[]} models the current catalog-derived lineup
- * @param {import("../lib/peer-probe.mjs").RawModelEntry[]} liveEntries the listing from the provider's /models endpoint
+ * @param {import("./peer-probe.mjs").RawModelEntry[]} liveEntries the listing from the provider's /models endpoint
  * @returns {PiAlternativeModel[]} the pruned and augmented lineup
  */
 function enrichWithLiveListing(spec, models, liveEntries) {
@@ -528,7 +563,7 @@ function enrichWithLiveListing(spec, models, liveEntries) {
  * peer mode appends only ids the peer actually serves).
  * @param {CloudProviderSpec} spec
  * @param {PiAlternativeModel[]} models the models to enrich
- * @param {import("../lib/hyper-facts.mjs").LoadedHyperFacts} facts loaded cache
+ * @param {import("./hyper-facts.mjs").LoadedHyperFacts} facts loaded cache
  * @returns {{ enriched: PiAlternativeModel[], liveOnly: ModelsDevModel[], untouched: PiAlternativeModel[] }}
  */
 function enrichWithFacts(spec, models, facts) {
@@ -597,9 +632,9 @@ function catalogModelIds(spec) {
  * The override's models for one row, from the peer route's live listing.
  * Returns null when the listing yields nothing usable (the caller falls back
  * to the catalog).
- * @param {import("../lib/peer-probe.mjs").RawModelEntry[]} entries
+ * @param {import("./peer-probe.mjs").RawModelEntry[]} entries
  * @param {CloudProviderSpec} spec
- * @returns {import("../lib/pi-models.mjs").PiModel[]|null}
+ * @returns {import("./gen-lib.mjs").PiModel[]|null}
  */
 function listingModels(entries, spec) {
 	const filter = spec.filter;
@@ -613,7 +648,7 @@ function listingModels(entries, spec) {
  * is unreachable and a peer path-route is usable. Reachable ⇒ emit NOTHING —
  * pi's built-in provider definition handles the provider as-is (docs/d033).
  * @param {CloudProviderSpec} spec
- * @param {Record<string, import("../lib/pi-models.mjs").PiProvider>} providers
+ * @param {Record<string, import("./gen-lib.mjs").PiProvider>} providers
  * @returns {Promise<void>}
  */
 async function emitOverrideOnly(spec, providers) {
@@ -749,7 +784,10 @@ async function emitFull(spec) {
  * @returns {Promise<void>}
  */
 async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
-	const catalogModels = Object.values(provider.models);
+	const allow = spec.modelAllowlist;
+	const catalogModels = Object.entries(provider.models)
+		.filter(([id]) => !allow || allow.includes(stripProviderPrefixes(spec.id, id)))
+		.map(([, m]) => m);
 	/** @type {PiAlternativeModel[]} */
 	let models = catalogModels
 		.map((m) => catalogPiModel(spec, m))
@@ -760,7 +798,7 @@ async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
 	// ones (minimal entries; the listing carries no metadata). Peer mode has
 	// no lineup source beyond the catalog (the providers' own listings mirror
 	// passthrough catalogs that do not match their models.dev lineups).
-	if (directMode && process.env[spec.envKey]?.trim()) {
+	if (directMode && spec.liveSync !== false && process.env[spec.envKey]?.trim()) {
 		try {
 			const liveEntries = await fetchModelEntries(
 				provider.api,
@@ -847,7 +885,7 @@ async function main() {
 	// walk (docs/d034) stays pointed at the right provider path.
 	await Promise.allSettled([refreshCatwalkFacts()]);
 
-	/** @type {Record<string, import("../lib/pi-models.mjs").PiProvider>} */
+	/** @type {Record<string, import("./gen-lib.mjs").PiProvider>} */
 	const providers = {};
 	const results = await Promise.allSettled(
 		PROVIDER_SPECS.map((spec) =>

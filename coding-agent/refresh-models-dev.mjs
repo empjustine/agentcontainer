@@ -41,18 +41,28 @@
  * Env: MODELS_DEV_RELAY_URL — relay fallback URL (default
  *   http://127.0.0.1:8080/models.dev/api.json; set to empty to disable the
  *   relay hop).
+ *
+ * Lives in coding-agent/ (its only invoker is coding-agent/generate.sh —
+ * docs/d039) but writes the SHARED vendored catalog: ../lib stays the catalog
+ * home because llm-reverse-proxy/generate-config.mjs reads it too.
  */
 
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { writeArtifact } from "./artifact.mjs";
-import { logInfo, logWarn, setLogTool } from "./log.mjs";
 import { useEnvProxy } from "./peer-probe.mjs";
 
-useEnvProxy();
-setLogTool("lib/refresh-models-dev");
-
 const scriptDir = dirname(fileURLToPath(import.meta.url));
+const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
+	await import(`${LIB_DIR}/artifact.mjs`)
+);
+const { logInfo, logWarn, setLogTool } =
+	/** @type {typeof import("../lib/log.mjs")} */ (
+		await import(`${LIB_DIR}/log.mjs`)
+	);
+
+useEnvProxy();
+setLogTool("coding-agent/refresh-models-dev");
 const CATALOG_URL = "https://models.dev/api.json";
 // Relay fallback (docs/d027): the llm-reverse-proxy passthrough for
 // https://models.dev. Default assumes the proxy runs on THIS host (run.sh
@@ -76,6 +86,9 @@ const REQUIRED_PROVIDERS = ["opencode", "opencode-go", "cline-pass", "hyper"];
  */
 const MIN_PROVIDERS = 100;
 
+/**
+ * @param {string} msg
+ */
 function fail(msg) {
 	logWarn("models.dev refresh skipped — keeping existing catalog", {
 		reason: msg,
@@ -109,7 +122,12 @@ async function fetchCatalog(url, { via }) {
 		logWarn("models.dev source unreachable", {
 			via,
 			url,
-			error: err?.cause?.code || err?.message || String(err),
+			error:
+				/** @type {{ cause?: { code?: string }, message?: string }} */ (
+					err
+				)?.cause?.code ||
+				/** @type {{ message?: string }} */ (err)?.message ||
+				String(err),
 		});
 		return null;
 	}
@@ -129,14 +147,14 @@ async function main() {
 	try {
 		text = await res.text();
 	} catch (err) {
-		return fail(`body read failed: ${err.message}`);
+		return fail(`body read failed: ${/** @type {Error} */ (err).message}`);
 	}
 
 	let catalog;
 	try {
 		catalog = JSON.parse(text);
 	} catch (err) {
-		return fail(`invalid JSON: ${err.message}`);
+		return fail(`invalid JSON: ${/** @type {Error} */ (err).message}`);
 	}
 
 	if (

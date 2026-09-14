@@ -7,12 +7,12 @@ the d037 merge of the former pi-native + alternative generators —
 share **one detection cascade**. This document is the single home for that
 cascade and for the shape each generator emits. It exists because the same
 "probe direct, else peer path-route, else emit nothing" narrative was pasted
-into all four code headers (and partly into `lib/peer-probe.mjs` and
+into all four code headers (and partly into `coding-agent/peer-probe.mjs` and
 `docs/d022`); those headers now point here. The WHY-level per-file facts that
 only that file can justify (its merge semantic, provider quirks, field
 mirrors) stay short in the headers.
 
-Related: `lib/peer-probe.mjs` owns the probe toolkit and the canonical
+Related: `coding-agent/peer-probe.mjs` owns the probe toolkit and the canonical
 "reachable ≠ authenticated" wording; `coding-agent/merge-models-json.mjs` owns
 the layered-`models.json` merge contract; `docs/d022` (peer-routing history),
 `docs/d024` (generator split + shared fact table), `docs/d027` (path-prefix
@@ -42,7 +42,7 @@ Per provider, independently, direct-first and lazy:
    changes this step.
 2. **Unreachable ⇒ probe the provider's peer path-route** on the simplified
    cloud router (`llm-reverse-proxy`): `<peerBase>/<providerId>`, where
-   `peerBase` candidates are vault-sourced (`lib/peer-probe.mjs peerBaseUrls()`,
+   `peerBase` candidates are vault-sourced (`coding-agent/peer-probe.mjs peerBaseUrls()`,
    `PEER_BASE_URLS`; `peerBaseUrl()` returns the first — docs/d034). Peer
    routes are probed in candidate order until one is usable. The route
    forwards `<route>/…` byte-for-byte to the provider's FULL real base URL —
@@ -62,7 +62,7 @@ sequentially per provider, in order (docs/d034).
 
 ### Peer-route probe specifics
 
-`lib/peer-probe.mjs probePeerRoute` applies the reachability rule with three
+`coding-agent/peer-probe.mjs probePeerRoute` applies the reachability rule with three
 "the response did not come from the provider" exceptions, which are **not**
 usable:
 
@@ -112,7 +112,7 @@ Merge order and semantics are owned by `coding-agent/merge-models-json.mjs`.
   **reroute-only** override (`baseUrl` = `<peerBase>/<providerId>`, **no**
   `apiKey` — the proxy forwards pi's own built-in auth untouched, **no**
   `api`/`compat` — pi's built-in provider definition supplies the dialect;
-  `lib/pi-models.mjs providerReroute`).
+  the gen-lib `providerReroute` (folded from the former lib/pi-models.mjs, docs/d039)).
 - Override model list, by source priority:
   1. the peer route's live `/models` listing (bare provider-native ids),
      scoped by `PEER_MODEL_FILTERS`;
@@ -168,7 +168,7 @@ Provider-specific mirrors:
   its reasoning models expose only a `toggle`, which pi's default on/off
   handling already covers. No `thinkingLevelMap` is emitted.
 
-**Hyper facts cache** (`lib/hyper-facts.mjs`): hyper is the one provider here
+**Hyper facts cache** (`coding-agent/hyper-facts.mjs`, docs/d039): hyper is the one provider here
 whose own live `/provider` catalog beats the models.dev snapshot per field
 (live reasoning flags, attachment support, per-model cached-input/output
 prices, effort enums) and pi has no built-in hyper, so the emitted layer is

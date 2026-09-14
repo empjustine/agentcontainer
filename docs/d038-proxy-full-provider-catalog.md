@@ -84,6 +84,8 @@ slowly and a stale row is a warn, not a wrong route.
 
 ## Files
 
+- **d039 folded both tables into `generate-config.mjs`** (sole consumer);
+  the paths below describe their authoring location.
 - `lib/pi-ai-providers.mjs` — NEW vendored pi-ai fact table (extracted from
   the installed pi 0.85.1 registry)
 - `lib/ai-sdk-package-endpoints.mjs` — NEW vendored npm-package → endpoint

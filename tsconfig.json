@@ -23,11 +23,11 @@
 		"skipLibCheck": true
 	},
 	"include": [
-		"lib/peer-probe.mjs",
 		"lib/cloud-providers.mjs",
-		"lib/pi-models.mjs",
-		"lib/pi-ai-providers.mjs",
-		"lib/ai-sdk-package-endpoints.mjs",
+		"coding-agent/peer-probe.mjs",
+		"coding-agent/hyper-facts.mjs",
+		"coding-agent/catwalk-facts.mjs",
+		"coding-agent/refresh-models-dev.mjs",
 		"coding-agent/gen-lib.mjs",
 		"coding-agent/generate-local-llama-swap.mjs",
 		"coding-agent/generate-cloud-providers.mjs",

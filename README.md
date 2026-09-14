@@ -65,9 +65,10 @@ agentcontainer/
 ├── lib/                               # Shared infrastructure (docs/architecture.md)
 │   ├── workload-runtime.sh             #   → sandbox-backend detection + workload_* API
 │   ├── llamacpp-model-data.json        #   → canonical GGUF model definitions (shared with local-llm/)
-│   ├── models.dev.api.json             #   → vendored models.dev catalog (shared)
+│   ├── models.dev.api.json             #   → vendored models.dev catalog (coding-agent + llm-reverse-proxy)
+│   ├── catwalk-facts.json              #   → vendored catwalk catalog (coding-agent + llm-reverse-proxy)
 │   ├── cloud-providers.mjs             #   → the one cloud-provider fact table
-│   ├── refresh-models-dev.mjs          #   → atomic catalog refresh (both generate.sh)
+│   ├── log.mjs / artifact.mjs / log.sh #   → shared logger/artifact std (all generators + shell)
 │   ├── environment.sh                   #   → EXPLICIT env chain: infisical vault → exec <script>
 │   ├── workload-*.jq                   #   → jq filters behind the workload_* API
 │
@@ -91,6 +92,13 @@ agentcontainer/
 │
 ├── coding-agent/                        # Bazzite usage (full pi)
 │   ├── run.sh                           #   → launches pi coding-agent container (exec through ../lib/environment.sh)
+│   ├── generate.sh                      #   → layered models.json/opencode.jsonc/default-model generation
+│   ├── gen-lib.mjs                      #   → shared generator preamble (pi shaping folded in, d039)
+│   ├── peer-probe.mjs                   #   → HTTP probe toolkit (folded out of lib/, d039)
+│   ├── hyper-facts.mjs / hyper-facts.json # → Charm Hyper facts cache + enricher (d039)
+│   ├── catwalk-facts.mjs                #   → catwalk catalog refresher (cache stays in lib/, d039)
+│   ├── refresh-models-dev.mjs           #   → atomic models.dev catalog refresh (d039)
+│   ├── generate-cloud-providers.mjs     #   → cloud layers (table-driven, d037; cline-pass lineup d040)
 │   ├── auth.json                        #   → pi credentials (copied into container by run.sh)
 │   ├── settings.json                    #   → static pi settings (copied by run.sh)
 │   ├── config.toml                       #   → mise configuration (includes cline and thinkrail)
@@ -130,6 +138,8 @@ agentcontainer/
 | [docs/d036-operator-hardcoded-default-model.md](docs/d036-operator-hardcoded-default-model.md) | default model is operator-hardcoded in settings.json; the d035 dynamic picker is retired (supersedes d035's selection mechanism) |
 | [docs/d037-generator-merge-verdict.md](docs/d037-generator-merge-verdict.md) | SIMPLE.md merge claim verdict — cloud generators unify into one table-driven generator, the rest stay split (d030 option 6) |
 | [docs/d038-proxy-full-provider-catalog.md](docs/d038-proxy-full-provider-catalog.md) | llm-reverse-proxy routes the full pi-ai ∪ models.dev ∪ catwalk provider catalog (priority pi-ai > models.dev > catwalk) |
+| [docs/d039-fold-single-consumer-lib-modules.md](docs/d039-fold-single-consumer-lib-modules.md) | single-consumer lib/ modules fold back to their owning runner (peer-probe/pi-models/hyper-facts/catwalk-facts.mjs/refresh-models-dev → coding-agent; pi-ai + ai-sdk tables → generate-config) |
+| [docs/d040-cline-pass-curated-lineup.md](docs/d040-cline-pass-curated-lineup.md) | cline-pass lineup is the published 13-model ClinePass table, not Cline's /models catalog (live sync disabled for it) |
 | [docs/termux-build-audit.md](docs/termux-build-audit.md) | Termux build audit — Infisical CLI `go install` impossibility + llm-reverse-proxy native build verification |
 | [coding-agent/merge-models-json.mjs](coding-agent/merge-models-json.mjs) | layered pi `models.json` (base + `model-*.json` overlays) — contract is documented in the script header |
 | [docs/peer-variant-work.md](docs/peer-variant-work.md) | coding-agent-peer (work environment; **archived** — folded into coding-agent; routing/env superseded by d027 + the vault — see its banner) |

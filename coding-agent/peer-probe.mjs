@@ -17,18 +17,26 @@
  * response (dns failure, connection refused, tls failure, timeout) is
  * evidence that the endpoint is unreachable. See docs/d022 for the history.
  *
- * Import via the LIB_DIR convention (see docs/d023): the generators resolve
- * this file through `process.env.LIB_DIR ?? "../lib"`; the logger is the
- * sibling `./log.mjs`, so one directory = one logger instance.
+ * Import convention (docs/d023, d039): this module lives beside its consumers
+ * in coding-agent/ but keeps the LIB_DIR resolution for the shared logger —
+ * `process.env.LIB_DIR ?? "<this dir>/../lib"` — so in-place runs and the
+ * d023 scratch staging (generators at the root, lib in $LIB_DIR) both work.
  */
 
 import { createRequire } from "node:module";
-import { logWarn } from "./log.mjs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const LIB_DIR =
+	process.env.LIB_DIR ?? join(dirname(fileURLToPath(import.meta.url)), "..", "lib");
+const { logWarn } = /** @type {typeof import("../lib/log.mjs")} */ (
+	await import(`${LIB_DIR}/log.mjs`)
+);
 
 /**
  * Route this module's fetch() calls through `http(s)_proxy` when set
  * (rationale: docs/d001 §1). Shared by every fetch here;
- * lib/refresh-models-dev.mjs calls it too. Kept defensive: a missing undici
+ * coding-agent/refresh-models-dev.mjs calls it too. Kept defensive: a missing undici
  * install only drops proxy support.
  */
 export function useEnvProxy() {
