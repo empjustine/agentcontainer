@@ -2,8 +2,8 @@
  * @fileoverview generate-opencode.jsonc.mjs — Emit opencode's overlay config:
  * one `provider` map holding ONLY the providers whose built-in routing does not
  * work from this host, rewritten to their peer path-route on the simplified
- * cloud router. opencode's counterpart to pi's
- * generate-cloud-pi-native-providers.mjs — same detection cascade, its provider
+ * cloud router. opencode's counterpart to pi's generate-cloud-providers.mjs
+ * (override-only rows) — same detection cascade, its provider
  * subset (lib/cloud-providers.mjs minus cline-pass/hyper), different schema.
  *
  * Detection cascade, reachability rule and emitted shape: docs/d033.
@@ -62,7 +62,7 @@ setLogTool("coding-agent/generate-opencode");
 // The providers opencode ships natively, from the shared fact table
 // (docs/d024). ClinePass is deliberately absent: opencode has no built-in
 // cline-pass provider, and the cline-pass layer is owned exclusively by
-// generate-cloud-alternative-providers.mjs (docs/d022).
+// generate-cloud-providers.mjs's full rows (docs/d022).
 const CLOUD_PROVIDER_IDS = ["opencode", "opencode-go", "openrouter"];
 
 /** @type {Record<string, import("../lib/cloud-providers.mjs").CloudProviderFacts>} */

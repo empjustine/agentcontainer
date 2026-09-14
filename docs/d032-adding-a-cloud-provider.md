@@ -21,8 +21,8 @@ the next provider is a checklist instead of an archaeology dig.
 
 | Source | Owns | Consumers |
 |---|---|---|
-| vendored models.dev catalog (`lib/models.dev.api.json`) | model lineup, capabilities, prices, `api` endpoint, `env` key name | `generate-cloud-alternative-providers.mjs` (client layer, one file per `PROVIDER_SPECS` row) |
-| cloud provider fact table (`lib/cloud-providers.mjs`) | peer id, label, `apiKeyEnv`, real `baseUrl` | `llm-reverse-proxy/generate-config.mjs` (routes), `generate-cloud-pi-native-providers.mjs` (pi-native subset), `generate-opencode.jsonc.mjs` (opencode subset), `lib/hyper-facts.mjs` (`.hyper` only) |
+| vendored models.dev catalog (`lib/models.dev.api.json`) | model lineup, capabilities, prices, `api` endpoint, `env` key name | generate-cloud-providers.mjs (client layer, one file per full `PROVIDER_SPECS` row) |
+| cloud provider fact table (`lib/cloud-providers.mjs`) | peer id, label, `apiKeyEnv`, real `baseUrl` | `llm-reverse-proxy/generate-config.mjs` (routes), generate-cloud-providers.mjs (pi-native subset, override-only rows), `generate-opencode.jsonc.mjs` (opencode subset), `lib/hyper-facts.mjs` (`.hyper` only) |
 
 A provider pi does NOT ship natively (d022 semantics: the alternative layer is
 the authoritative full block) therefore needs **one row in each source** plus
@@ -30,7 +30,7 @@ the merge-order/doc updates. That is the entire flow:
 
 1. **Catalog row** — must already exist upstream at models.dev (see finding
    F1); no repo edit. Provides `api`, `env`, and every model record.
-2. **`PROVIDER_SPECS` row** in `generate-cloud-alternative-providers.mjs`
+2. **`PROVIDER_SPECS` row** in `generate-cloud-providers.mjs`
    (id, name, `model-0XX` filename, `envKey`, compat trio). For a plain
    OpenAI-compatible gateway this is `compat: null, modelCompat: null,
    onOffThinking: false` — see F7.
@@ -61,7 +61,7 @@ the only durable path for a provider absent from models.dev.
 
 ### F2 — the fact table is NOT the client-side source of truth
 
-`generate-cloud-alternative-providers.mjs` reads provider facts (endpoint,
+`generate-cloud-providers.mjs` reads provider facts (endpoint,
 key env) from the **catalog**, not from `lib/cloud-providers.mjs`. The
 `baseUrl`/`apiKeyEnv` pair therefore exists in **both** files for every
 OpenAI-compatible provider, kept in sync by convention only. The only drift

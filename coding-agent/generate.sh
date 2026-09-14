@@ -39,19 +39,22 @@
 #   generate-local-llama-swap.mjs -> model-010-local-default.json
 #       local GGUF cascade: probes the llama-swap peer candidates and emits
 #       the `llama-swap` provider (pi-shaped, meta.llamaswap mirrored).
-#   generate-cloud-pi-native-providers.mjs -> model-012-cloud-pi-native.json
-#       pi-native cloud override cascade: probes each provider's OWN endpoint
-#       and emits a reroute override only when it is unreachable — routing it
-#       through its peer path-route on the simplified cloud router
-#       (<peerBase>/<providerId>, docs/d027; includes google, whose native
-#       generative-ai dialect the path-forwarding proxy carries byte-for-byte).
-#   generate-cloud-alternative-providers.mjs -> model-015-cloud-cline-pass.json
-#       + model-016-cloud-hyper.json
-#       + model-017-cloud-inferx.json
-#       derived from the vendored models.dev.api.json (with catwalk fallback);
-#       full provider blocks (pi has no native cline-pass/hyper), per-provider
-#       real-or-peer path-route cascade decides the route (same key in both
-#       modes — the proxy forwards credentials untouched, docs/d027).
+#   generate-cloud-providers.mjs -> model-012-cloud-pi-native.json
+#       + model-015-cloud-cline-pass.json + model-016-cloud-hyper.json
+#       + model-017-cloud-inferx.json (docs/d037 — one table-driven generator
+#       for every cloud layer)
+#       override-only rows (openrouter/opencode/opencode-go/mistral/google/
+#       nvidia): pi-native cloud override cascade — probes each provider's
+#       OWN endpoint and emits a reroute override only when it is
+#       unreachable — routing it through its peer path-route on the
+#       simplified cloud router (<peerBase>/<providerId>, docs/d027; includes
+#       google, whose native generative-ai dialect the path-forwarding proxy
+#       carries byte-for-byte).
+#       full rows (cline-pass/hyper/inferx): derived from the vendored
+#       models.dev.api.json (with catwalk fallback); full provider blocks (pi
+#       has no native cline-pass/hyper), per-provider real-or-peer path-route
+#       cascade decides the route (same key in both modes — the proxy
+#       forwards credentials untouched, docs/d027).
 #   merge-models-json.mjs      -> models.json
 #   generate-opencode.jsonc.mjs -> opencode config (OPENCODE_CFG_DIR/opencode.json,
 #       or <this dir>/opencode.jsonc for manual host runs; skipped on Termux)
@@ -164,8 +167,7 @@ _GEN_STAGE='scratch-stage'
 _scratch="$RUN_DIR/pi-models-gen.$$"
 mkdir -p "$_scratch"
 for _f in gen-lib.mjs generate-local-llama-swap.mjs \
-	generate-cloud-pi-native-providers.mjs \
-	generate-cloud-alternative-providers.mjs \
+	generate-cloud-providers.mjs \
 	merge-models-json.mjs generate-opencode.jsonc.mjs \
 	generate-default-model.mjs \
 	count-providers.mjs list-providers.mjs; do
@@ -266,21 +268,16 @@ else
 			"$_scratch/model-010-local-default.json" ||
 			log_warn "generate-local-llama-swap.mjs failed — layer omitted"
 	fi
-	# Pi-native cloud overrides: probe each provider's own endpoint, override
-	# only when it is unreachable.
-	if [ -f "$_scratch/generate-cloud-pi-native-providers.mjs" ]; then
-		node_run "$_scratch/generate-cloud-pi-native-providers.mjs" \
-			"$_scratch/model-012-cloud-pi-native.json" ||
-			log_warn "generate-cloud-pi-native-providers.mjs failed — layer omitted"
-	fi
-	# Cloud-ALTERNATIVE layers (providers pi does not ship natively; see the
-	# generator's PROVIDER_SPECS table): derived from the vendored
-	# models.dev.api.json, no secrets needed.  Writes one layer file per row
-	# next to itself (the scratch dir): model-015-cloud-cline-pass.json,
+	# Cloud layers (docs/d037 unified generator — override-only AND full rows):
+	# probes each pi-native provider's own endpoint (reroute only when
+	# unreachable) and derives the full alternative provider blocks from the
+	# vendored models.dev.api.json.  Writes the shared pi-native override layer
+	# next to itself (the scratch dir): model-012-cloud-pi-native.json, plus
+	# one layer file per full row: model-015-cloud-cline-pass.json,
 	# model-016-cloud-hyper.json and model-017-cloud-inferx.json.
-	if [ -f "$_scratch/generate-cloud-alternative-providers.mjs" ] && [ -f "$_scratch/models.dev.api.json" ]; then
-		node_run "$_scratch/generate-cloud-alternative-providers.mjs" ||
-			log_warn "generate-cloud-alternative-providers.mjs failed — layers omitted"
+	if [ -f "$_scratch/generate-cloud-providers.mjs" ]; then
+		node_run "$_scratch/generate-cloud-providers.mjs" ||
+			log_warn "generate-cloud-providers.mjs failed — layers omitted"
 	fi
 	if [ -f "$_scratch/merge-models-json.mjs" ]; then
 		node_run "$_scratch/merge-models-json.mjs" "$_scratch/models.json" ||
@@ -296,23 +293,21 @@ else
 	fi
 fi
 
-# --- default model: pick defaultProvider/defaultModel from the generated
-# models.json (a provider is present only when the cascade emitted a real or
-# peer route for it).  MUST follow the models.json stage: the generator reads
-# $_scratch/models.json, which does not exist before then.  Best-effort, like
-# every other stage — a missing/empty models.json just leaves settings.json
-# without a default. ---------------------------------------------------------
+# --- default model: return the operator's hardcoded defaultProvider/
+# defaultModel from the settings source, as is (docs/d036 — the former
+# models.json-probing picker selected unreachable-at-request-time providers;
+# the default is an OPERATOR DECISION, not a probed fact).  Independent of
+# the models.json stage; best-effort like every other stage. ---------------
 _GEN_STAGE='default-model'
 if [ "$SKIP_GEN" = 1 ]; then
 	log_info "SKIP_GEN: skipping default model configuration"
-elif [ -z "$_models_out" ] || [ ! -f "$_models_out" ]; then
-	log_warn "no models.json — skipping default model configuration"
 elif [ -f "$_scratch/generate-default-model.mjs" ]; then
-	# The generator reads its own dir's models.json; hand it the chosen layer
-	# whether that came from the scratch dir or the committed fallback.
-	cp "$_models_out" "$_scratch/models.json"
-	if node_run "$_scratch/generate-default-model.mjs" "$_scratch/default-model.json"; then
-		if [ -s "$_scratch/default-model.json" ]; then
+	# Point the generator at the settings file this script just installed (the
+	# single source of the hardcoded pair — the scratch copy never carries it).
+	PI_SETTINGS="$_SETTINGS"
+	export PI_SETTINGS
+	if node_run "$_scratch/generate-default-model.mjs" "$_scratch/default-model.json" &&
+		[ -s "$_scratch/default-model.json" ]; then
 			_default_model_json="$_scratch/default-model.json"
 			_default_settings="$_scratch/settings-with-default.json"
 			node_run -e "
@@ -328,9 +323,8 @@ elif [ -f "$_scratch/generate-default-model.mjs" ]; then
 				log_info "settings.json updated with default model config" \
 					path="$_SETTINGS"
 			fi
-		fi
 	else
-		log_warn "generate-default-model.mjs failed"
+		log_warn "generate-default-model.mjs failed or empty overlay"
 	fi
 else
 	log_warn "generate-default-model.mjs not staged"

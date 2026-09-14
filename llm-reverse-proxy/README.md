@@ -48,16 +48,32 @@ generate.sh`; it runs `generate-config.mjs` via `node_run` from
 $ ./generate.sh                       # -> llm-reverse-proxy.json (REPLACED
                                       #    by default; DRY_RUN=1 writes a
                                       #    .dry-run preview instead)
+```
+
+The generated table is the UNION of three provider sources with an explicit
+priority (docs/d038) — pi-ai's built-in registry (lib/pi-ai-providers.mjs)
+> the models.dev/ai-sdk catalog (lib/models.dev.api.json, `api` field, with
+lib/ai-sdk-package-endpoints.mjs as the fallback for records without one) >
+crush's catwalk catalog (lib/catwalk-facts.json, `api_endpoint`). Routes are
+keyed by provider NAME: the same name in several sources resolves by
+priority; distinct names are all served. A representative excerpt (the full
+table is ~220 routes):
+
+```json
 { "listen": "0.0.0.0:8080",
   "providers": {
-    "openrouter": "https://openrouter.ai/api/v1",
+    "anthropic": "https://api.anthropic.com",
+    "openai": "https://api.openai.com/v1",
+    "google": "https://generativelanguage.googleapis.com/v1beta",
+    "deepseek": "https://api.deepseek.com",
+    "together": "https://api.together.ai/v1",
+    "togetherai": "https://api.together.xyz/v1",
     "opencode": "https://opencode.ai/zen/v1",
-    "opencode-go": "https://opencode.ai/zen/go/v1",
-    "mistral": "https://api.mistral.ai/v1",
+    "opencode-zen": "https://opencode.ai/zen/v1",
     "cline-pass": "https://api.cline.bot/api/v1",
     "hyper": "https://hyper.charm.land/v1",
     "inferx": "https://model.inferx.net/endpoints/v1",
-    "google": "https://generativelanguage.googleapis.com/v1beta",
+    "mistral": "https://api.mistral.ai",
     "llama-swap": "http://127.0.0.1:8101",
     "models.dev": "https://models.dev",
     "catwalk": "https://catwalk.charm.land"
@@ -65,8 +81,9 @@ $ ./generate.sh                       # -> llm-reverse-proxy.json (REPLACED
 ```
 
 The convention it locks in: **the upstream value is the provider's FULL
-real base URL** (path suffixes included, exactly the `baseUrl` facts in
-lib/cloud-providers.mjs), so a client route is deterministic and trivial —
+real base URL** (path suffixes included — pi's built-in base for pi-ai rows,
+the catalog's `api` URL for models.dev/catwalk rows), so a client route is
+deterministic and trivial —
 `<peerBase>/<providerId>` (e.g. peer-mode hyper is
 `https://…/<funnel-id>/hyper`). The proxy strips `/<providerId>` and
 single-joins the rest onto that base, so every wire dialect the provider

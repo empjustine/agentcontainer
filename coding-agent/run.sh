@@ -138,8 +138,7 @@ cp "$SCRIPT_DIR/settings.json" "$agent_dir/settings.json"
 # config in place and a bare `cp: cannot stat …` as the only clue).
 _gen_target='/opt/coding-agent'
 for _f in generate.sh gen-lib.mjs generate-local-llama-swap.mjs \
-	generate-cloud-pi-native-providers.mjs \
-	generate-cloud-alternative-providers.mjs \
+	generate-cloud-providers.mjs \
 	merge-models-json.mjs generate-opencode.jsonc.mjs \
 	check-node-version.mjs count-providers.mjs list-providers.mjs \
 	settings.json; do

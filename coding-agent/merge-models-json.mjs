@@ -17,10 +17,10 @@
  * |-----------------------------------|----------------------------------------------------|----------------------------------------------------------|
  * | `model-000-cloud-default.json`    | cloud providers                                    | no-op slot reserved for cloud — writes `{}`; cloud config lives in env vars / `auth.json` (pi auto-detects). No generator ships it today |
  * | `model-010-local-default.json`    | local llama-swap models                            | `generate-local-llama-swap.mjs`                          |
- * | `model-012-cloud-pi-native.json`  | **override** for the pi-native cloud providers (openrouter / opencode / opencode-go) when their default endpoints are unreachable | `generate-cloud-pi-native-providers.mjs`                 |
- * | `model-015-cloud-cline-pass.json` | cloud models off the vendored models.dev catalog   | `generate-cloud-alternative-providers.mjs` (formerly `generate-cline-pass.mjs`) |
- * | `model-016-cloud-hyper.json`      | Charm Hyper (same generator, PROVIDER_SPECS row)   | `generate-cloud-alternative-providers.mjs` |
- * | `model-017-cloud-inferx.json`     | InferX (same generator, PROVIDER_SPECS row)        | `generate-cloud-alternative-providers.mjs` |
+ * | `model-012-cloud-pi-native.json`  | **override** for the pi-native cloud providers (openrouter / opencode / opencode-go) when their default endpoints are unreachable | `generate-cloud-providers.mjs` (override-only rows)      |
+ * | `model-015-cloud-cline-pass.json` | cloud models off the vendored models.dev catalog   | `generate-cloud-providers.mjs` (full rows; formerly `generate-cloud-alternative-providers.mjs`) |
+ * | `model-016-cloud-hyper.json`      | Charm Hyper (same generator, PROVIDER_SPECS row)   | `generate-cloud-providers.mjs` |
+ * | `model-017-cloud-inferx.json`     | InferX (same generator, PROVIDER_SPECS row)        | `generate-cloud-providers.mjs` |
  * | `model-020-peer-default.json`     | peer reverse-proxy models                          | *(future)*                                               |
  *
  * Every `model-*.json` is a `models.json`-shaped layer:

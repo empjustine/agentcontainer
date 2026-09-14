@@ -12,5 +12,7 @@
 	"showCacheMissNotices": true,
 	"terminal": {
 		"showTerminalProgress": false
-	}
+	},
+	"defaultProvider": "cline-pass",
+	"defaultModel": "z-ai/glm-5.3-flash"
 }

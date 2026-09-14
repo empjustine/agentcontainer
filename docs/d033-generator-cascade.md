@@ -1,8 +1,9 @@
 # d033 — Cloud/local generator cascade & emitted layer shapes
 
-The four `coding-agent/` model generators
-(`generate-local-llama-swap.mjs`, `generate-cloud-pi-native-providers.mjs`,
-`generate-cloud-alternative-providers.mjs`, `generate-opencode.jsonc.mjs`)
+The three `coding-agent/` model generators
+(`generate-local-llama-swap.mjs`, `generate-cloud-providers.mjs` —
+the d037 merge of the former pi-native + alternative generators —
+`generate-opencode.jsonc.mjs`)
 share **one detection cascade**. This document is the single home for that
 cascade and for the shape each generator emits. It exists because the same
 "probe direct, else peer path-route, else emit nothing" narrative was pasted
@@ -80,8 +81,8 @@ is usable: the route delivered to the real endpoint.
 | Generator | Layer | Semantic | Subset |
 |---|---|---|---|
 | `generate-local-llama-swap.mjs` | `model-010-local-default.json` | **ADDS** the `llama-swap` provider (pi has no native one) | local GGUF models |
-| `generate-cloud-pi-native-providers.mjs` | `model-012-cloud-pi-native.json` | **override-ONLY** (empty when every pi-native endpoint is reachable) | openrouter / opencode / opencode-go / mistral / google / nvidia |
-| `generate-cloud-alternative-providers.mjs` | `model-015/016/017-*.json` | **AUTHORITATIVE full block** (pi has no native provider for any of them) | cline-pass / hyper / inferx |
+| `generate-cloud-providers.mjs` (override-only rows) | `model-012-cloud-pi-native.json` | **override-ONLY** (empty when every pi-native endpoint is reachable) | openrouter / opencode / opencode-go / mistral / google / nvidia |
+| `generate-cloud-providers.mjs` (full rows) | `model-015/016/017-*.json` | **AUTHORITATIVE full block** (pi has no native provider for any of them) | cline-pass / hyper / inferx |
 | `generate-opencode.jsonc.mjs` | `opencode.jsonc` (opencode V1 schema) | same cascade, opencode's provider subset | opencode / opencode-go / openrouter + local GGUF |
 
 Merge order and semantics are owned by `coding-agent/merge-models-json.mjs`.
@@ -103,7 +104,7 @@ Merge order and semantics are owned by `coding-agent/merge-models-json.mjs`.
   (`context_length`, `architecture.input_modalities`, `capabilities.vision`).
   `name` is derived from the id (`<repo-basename> <quant>`) for display.
 
-### `generate-cloud-pi-native-providers.mjs`
+### `generate-cloud-providers.mjs` — override-only rows
 
 - pi ships openrouter / opencode / opencode-go / mistral / google / nvidia
   natively, so
@@ -129,7 +130,7 @@ Merge order and semantics are owned by `coding-agent/merge-models-json.mjs`.
   - `google`: the `gemini-` chat slice (`imagen`/`veo`/`lyria`, embeddings,
     tts, and image-output variants dropped).
 
-### `generate-cloud-alternative-providers.mjs`
+### `generate-cloud-providers.mjs` — full rows
 
 Table-driven (`PROVIDER_SPECS`: one row = one emitted layer). All three serve
 every model over a single OpenAI-compatible Chat Completions endpoint
