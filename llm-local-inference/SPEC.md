@@ -37,10 +37,12 @@ The legacy :18080 port is dead and never probed.
 
 **config.d layers** (merge contract in `docs/d018-split-config-d.md`):
 `00-general.yaml` (globals/macros; always) · `10-local-llm-inference.yaml` +
-`launch-gguf.sh` (only when a container backend **and** GPU devices are
-detected). There is no peers-only mode: a host without the container backend +
-GPU cannot serve local inference and `generate.sh` fails hard (`LOCAL_INFERENCE=1`
-forces generation for debug/parity only).
+its `.paths` staleness manifest (only when a container backend **and** GPU
+devices are detected). There is no peers-only mode: a host without the
+container backend + GPU cannot serve local inference and `generate.sh` fails
+hard (`LOCAL_INFERENCE=1` forces generation for debug only). No shell lives in
+`config.d/` anymore — the former in-container `launch-gguf.sh` resolver was
+replaced by generation-time path baking (`docs/d029` option B).
 
 **Termux leaf**: removed. Termux was peers-only by construction, and with
 peers gone from this module it has no role here — there is no `run-native.sh`,
@@ -53,16 +55,28 @@ no android cross-build in `build.sh`, only the container image pull.
   `lib/llamacpp-model-data.json` (owner of the table's *content*; file lives in
   `lib` — `docs/d025`), model-id slugs derive from `active-b.json`
   (`docs/d003-llamacpp-context-windows.md`).
+- **Generation-time path baking** (`docs/d029` option B): each model is
+  resolved to ONE HF snapshot dir (refs/main first, the revision
+  `../local-llm/download_models.py` pins) and `--model/--mmproj/--model-draft`
+  are emitted as plain absolute args inside the `cmd`. llama-swap splits `cmd`
+  with posix shlex and execs argv directly — no shell runs, so the retired
+  `launch-gguf.sh` in-container resolver (binary lookup, download fallback,
+  positional interface) is gone. A cache miss is a generation error; model
+  provisioning belongs to `../local-llm/download_models.py` and is never
+  duplicated as a launch-time download. `run.sh` re-verifies the baked paths
+  via the generated `.paths` manifest so a cache changed since generation is
+  a loud "re-run ./generate.sh", not a llama-server 127 at swap time.
 - **Offline generation**: the local layer is built from vendored tables
-  (`llamacpp-model-data.json`, `active-b.json`, `llama-swap-core.json`) — the
-  models.dev refresh and every HTTP probe were peer machinery and are gone.
+  (`llamacpp-model-data.json`, `active-b.json`, `llama-swap-core.json`) plus a
+  read of the host HF hub cache directory (no network) — the models.dev
+  refresh and every HTTP probe were peer machinery and are gone.
 - **Inbound bearer auth stays**: `apiKeys: ${env.PEER_API_KEY}` in
   `00-general.yaml` is llama-swap's *own* client-facing key (the historical
   name is kept; `docs/d001` covers the key-naming contract). It is the only
-  secret this module needs besides `HF_TOKEN` (launch-gguf.sh download
-  fallback). Only **run.sh** needs the vault (via lib/environment.sh) —
-  generation is offline and key-free: llama-swap resolves the `${env.*}`
-  reference from its own environment at load time.
+  secret this module needs — `HF_TOKEN` is NOT forwarded into the container
+  anymore (nothing in-container downloads). Only **run.sh** needs the vault
+  (via lib/environment.sh) — generation is offline and key-free: llama-swap
+  resolves the `${env.*}` reference from its own environment at load time.
 
 ## Boundary
 

@@ -27,7 +27,7 @@ that could emit `models`) is never generated.
 | Native android/arm64 build (clone / `git pull --ff-only` / `GOOS=android`), image pre-pull off Termux, `FORCE` | `llm-local-inference/build.sh` |
 | Which `config.d/` layers are generated on which host, merge contract, stale-output policy | `llm-local-inference/generate.sh` |
 | Provider set, key names, base URLs, model-id sources (this is *the* provider list) | `llm-local-inference/gen-lib.mjs` + each `generate-*.mjs` header |
-| Local GGUF layer — GPU-capable container hosts only, **never** here | `llm-local-inference/generate-local-llm-models.yaml.mjs`, `launch-gguf.sh` |
+| Local GGUF layer — GPU-capable container hosts only, **never** here | `llm-local-inference/generate-local-llm-models.yaml.mjs` (+ its generated `.paths` staleness manifest) |
 | Peers-only env key names (documentation only — nothing loads the file; no `LLAMACPP_BASE_URL` / `LLAMA_API_BASE_URL`, there is no local llama.cpp server) | `llm-local-inference/.env.example` |
 | Infisical CLI provisioning on Termux (no official Android release) | repo root `./build.sh`; consumption side: lib/environment.sh (the explicit chain); why `go install` cannot replace the checkout build: [termux-build-audit.md](termux-build-audit.md) |
 | `node` + `jq` — required by `generate.sh` (the `.mjs` generators; and the workload description API in `lib/workload-runtime.sh` is jq-backed, see `lib/workload-*.jq`) | repo root `./build.sh` installs both via `pkg` when `$PREFIX/bin/<tool>` is not executable (`SKIP_PKG=1` to opt out; there is no mise here) |

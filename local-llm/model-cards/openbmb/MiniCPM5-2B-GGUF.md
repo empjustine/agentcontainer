@@ -279,6 +279,13 @@ During **post-training**, we proceed in three steps: **SFT**, **RL**, and **OPD*
 
 ## Quickstart
 
+> [!Tip]
+> We recommend using the following sets of sampling parameters for generation: `temperature=1.0, top_p=0.95, min_p=0.0`.
+>
+> If you encounter repetitive outputs, try: `temperature=1.0, top_p=0.95, min_p=0.0, repetition_penalty=1.05`.
+>
+> Please note that the support for sampling parameters varies according to inference frameworks.
+
 ### vLLM
 
 ```bash
@@ -327,6 +334,26 @@ python -m sglang.launch_server \
   --port 30000
 ```
 
+### Llama.cpp
+
+```bash
+llama-server -m MiniCPM5-2B-F16.gguf -a MiniCPM5-2B --port 8080 -ngl 99 -c 8192 --jinja
+```
+
+`-c 8192` sets the context length. You can adjust this value as needed.
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "MiniCPM5-2B",
+        "messages": [{"role": "user", "content": "1+1=?"}],
+        "temperature": 1.0, "top_p": 0.95, "min_p": 0.0, "max_tokens": 256
+    }'
+```
+
+In llama.cpp, the default `min_p=0.05` can lead to repetitive output: it filters out tokens whose probability is below 5% of the highest-probability token, potentially discarding the exact tokens needed to break out of a repetition loop. To prevent this, we set `min_p=0.0`.
+
 ### Transformers
 
 ```bash
@@ -355,8 +382,6 @@ outputs = model.generate(**inputs, max_new_tokens=128)
 print(tokenizer.decode(outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True))
 ```
 
-Recommended sampling params: `temperature=1.0, top_p=0.95`
-
 ## Tool Calling
 
 For tool / function calling, **SGLang is the recommended backend**. MiniCPM5-2B emits XML-style tool calls and SGLang's built-in `minicpm5` parser converts them to OpenAI-compatible `tool_calls` natively:
@@ -372,17 +397,18 @@ MiniCPM5-2B uses the **standard `LlamaForCausalLM` architecture**, so mainstream
 
 ### Deployment
 
-| Backend      | Model format / use case                                 | Cookbook                                                                                        | Agent Skill                                                                                                               |
-| ------------ | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Transformers | BF16 / FP16 local Python inference, GPU + CPU           | [transformers.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/transformers.md) | [minicpm5-deploy-transformers](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-transformers/SKILL.md) |
-| vLLM         | BF16 / FP16 OpenAI server                               | [vllm.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/vllm.md)                 | [minicpm5-deploy-vllm](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-vllm/SKILL.md)                 |
-| SGLang       | BF16 / FP16 OpenAI server, recommended for tool calling | [sglang.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/sglang.md)             | [minicpm5-deploy-sglang](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-sglang/SKILL.md)             |
-| llama.cpp    | GGUF local inference, CPU/GPU                           | [llama_cpp.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/llama_cpp.md)       | [minicpm5-deploy-llama-cpp](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-llama-cpp/SKILL.md)       |
-| Ollama       | GGUF local on-device runtime                            | [ollama.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/ollama.md)             | [minicpm5-deploy-ollama](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-ollama/SKILL.md)             |
-| LM Studio    | GGUF Mac desktop app and OpenAI server                  | [lmstudio.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/lmstudio.md)         | [minicpm5-deploy-lmstudio](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-lmstudio/SKILL.md)         |
-| MLX          | MLX / 4bit local inference on Apple Silicon             | [mlx.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/mlx.md)                   | [minicpm5-deploy-mlx](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-mlx/SKILL.md)                   |
-| ArcLight     | GGUF local on-device, CPU, Desktop & Server             | [arclight.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/arclight.md)         | [minicpm5-deploy-arclight](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-arclight/SKILL.md)         |
-| vLLM Ascend  | BF16 / FP16 OpenAI server                               | [vllm_ascend.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/vllm_ascend.md)   | [minicpm5-deploy-vllm-ascend](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-vllm-ascend/SKILL.md)   |
+| Backend      | Model format / use case                                                 | Cookbook                                                                                        | Agent Skill                                                                                                               |
+| ------------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Transformers | BF16 / FP16 local Python inference, GPU + CPU                           | [transformers.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/transformers.md) | [minicpm5-deploy-transformers](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-transformers/SKILL.md) |
+| vLLM         | BF16 / FP16 OpenAI server                                               | [vllm.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/vllm.md)                 | [minicpm5-deploy-vllm](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-vllm/SKILL.md)                 |
+| SGLang       | BF16 / FP16 OpenAI server, recommended for tool calling                 | [sglang.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/sglang.md)             | [minicpm5-deploy-sglang](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-sglang/SKILL.md)             |
+| llama.cpp    | GGUF local inference, CPU/GPU                                           | [llama_cpp.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/llama_cpp.md)       | [minicpm5-deploy-llama-cpp](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-llama-cpp/SKILL.md)       |
+| Ollama       | GGUF local on-device runtime                                            | [ollama.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/ollama.md)             | [minicpm5-deploy-ollama](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-ollama/SKILL.md)             |
+| LM Studio    | GGUF Mac desktop app and OpenAI server                                  | [lmstudio.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/lmstudio.md)         | [minicpm5-deploy-lmstudio](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-lmstudio/SKILL.md)         |
+| MLX          | MLX / 4bit local inference on Apple Silicon                             | [mlx.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/mlx.md)                   | [minicpm5-deploy-mlx](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-mlx/SKILL.md)                   |
+| ArcLight     | GGUF local on-device, CPU, Desktop & Server                             | [arclight.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/arclight.md)         | [minicpm5-deploy-arclight](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-arclight/SKILL.md)         |
+| vLLM Ascend  | BF16 / FP16 OpenAI server                                               | [vllm_ascend.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/vllm_ascend.md)   | [minicpm5-deploy-vllm-ascend](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-vllm-ascend/SKILL.md)   |
+| LiteRT-LM    | `.litertlm` on-device runtime: Android / iOS / desktop / IoT, CPU + GPU | [litert.md](https://github.com/OpenBMB/MiniCPM/blob/main/docs/deployment/litert.md)             | [minicpm5-deploy-litert](https://github.com/OpenBMB/MiniCPM/blob/main/skills/minicpm5-deploy-litert/SKILL.md)             |
 
 ### Fine-tuning
 

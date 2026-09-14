@@ -15,11 +15,12 @@ export LOG_TOOL
 
 set -eu
 
-# shellcheck disable=SC2154  # _workload/_workload_tool are set by the sourced lib/workload-runtime.sh
+# shellcheck disable=SC2154  # _workload is set by the sourced lib/workload-runtime.sh
 [ "$_workload" = 'workload' ] || {
 	log_die 91 "no container tool (podman/docker) — local inference requires the container backend"
 }
 
 image="${LLAMA_SWAP_IMAGE:-ghcr.io/mostlygeek/llama-swap:unified-vulkan}"
+# shellcheck disable=SC2154  # set by detect_workload_tool at source time; the gate above guarantees a container backend
 "$_workload_tool" image pull "$image"
 log_info "pulled image; serve it with ./run.sh" image="$image"

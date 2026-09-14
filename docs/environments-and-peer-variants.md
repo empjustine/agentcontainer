@@ -41,8 +41,9 @@ names.
 GPU host (local inference only) — two serving processes, one concern each (docs/d027):
 
 - `llm-local-inference/` — `generate.sh` detects the container backend + GPU
-  devices and emits the local GGUF layer (`10-local-llm-inference.yaml` +
-  `launch-gguf.sh`); `run.sh` launches the `unified-vulkan` image with GPU
+  devices and emits the local GGUF layer (`10-local-llm-inference.yaml` + its
+  `.paths` staleness manifest; snapshot paths baked at generation, docs/d029);
+  `run.sh` launches the `unified-vulkan` image with GPU
   passthrough + the HF cache on LAN port **8101** (container 8080).
   llama-swap serves the LOCAL catalog and nothing else — its peer/proxy
   machinery is no longer exercised.

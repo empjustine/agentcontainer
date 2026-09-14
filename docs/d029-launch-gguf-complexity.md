@@ -1,7 +1,7 @@
 ---
 id: d029
 type: architecture-design
-status: proposed
+status: adopted-in-part (option B implemented; A4/preflight folded in)
 title: "d029 — the in-container `launch-gguf.sh` path: complexity audit and options"
 parent: architecture
 ---
@@ -100,3 +100,30 @@ record if taken.
 - `generate.sh` gains a host-cache read (still offline, still key-free).
 - d018's layer table loses the `launch-gguf.sh` row; the merge contract is
   untouched.
+
+## Resolution (implemented)
+
+Option **B** shipped, with one deliberate deviation and one addition:
+
+- **Deviation — no `--hf-repo/--hf-file` fallback.** The audit's B sketched
+  "generator emits `--hf-repo/--hf-file` on cache miss"; that was dropped
+  because model provisioning already has a single owner
+  (`local-llm/download_models.py`) and a second download path in the
+  generator would re-create exactly the duplication this refactor removes.
+  A cache miss is now a generation error pointing at that script; nothing
+  downloads at launch. `HF_TOKEN` therefore left run.sh's env allowlist and
+  the hub bind went read-only.
+- **Addition — the `.paths` staleness preflight.** The mitigation sketched
+  below is implemented as a generated companion file
+  (`config.d/10-local-llm-inference.paths`, one verified host-side path per
+  line — llama-swap's `-config-dir` loader only reads top-level `*.yml/*.yaml`,
+  so the companion is invisible to it). `run.sh` re-checks every path before
+  starting the container; a cache changed since generation is a loud
+  "re-run ./generate.sh", not a llama-server 127 at swap time.
+- A1/A2/A3 are moot (the launcher they tidy up is deleted); A4
+  (post-generate validation) remains open.
+- Generation resolves **refs/main first** (the revision download_models.py
+  pins, so a healthy cache always hits it), falling back to any snapshot dir
+  that carries the entry — the glob order the retired launcher used. Shard
+  verification is stricter than the launcher: every shard must exist, not
+  just shard 1.

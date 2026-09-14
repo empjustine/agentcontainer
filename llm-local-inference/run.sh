@@ -16,7 +16,8 @@
 #   GENERATE           1 = regenerate config.d first (./generate.sh)
 #   HOST_PORT          container published port (default 8101)
 #   LLAMA_SWAP_IMAGE   container image override
-#   HF_HUB_CACHE       HF cache override (default XDG_CACHE_HOME/huggingface/hub)
+#   HF_HUB_CACHE       HF cache override (default XDG_CACHE_HOME/huggingface/hub;
+#                      must match the cache ./generate.sh baked model paths from)
 
 set -eu
 # shellcheck disable=SC1091
@@ -36,10 +37,27 @@ HOST_PORT="${HOST_PORT:-8101}"
 
 # Secrets: arrive as plain environment — loaded by the explicit chain
 # (./lib/environment.sh ./run.sh, the ONE infisical round-trip) and forwarded
-# through the workload_env allowlist below.  HF_TOKEN is consumed by the
-# container (launch-gguf.sh download fallback); PEER_API_KEY is llama-swap's
+# through the workload_env allowlist below. PEER_API_KEY is llama-swap's
 # inbound bearer key (00-general.yaml apiKeys) — the key clients present, not
-# a provider key.
+# a provider key. HF_TOKEN is deliberately NOT forwarded: model paths are
+# baked into the generated config at generation time (docs/d029 option B), so
+# nothing in-container downloads — provisioning is local-llm/download_models.py
+# on the HOST.
+
+# Staleness preflight (docs/d029 B): the generated cmds bake
+# models--<org>--<repo>/snapshots/<sha>/<file> paths resolved at generation
+# time. A later download/prune cycle (local-llm/upkeep.py) can delete that
+# snapshot — which would otherwise surface as a llama-server 127 only at
+# model-swap time. The generator's .paths manifest lists every host-side file
+# it verified; any miss means the cache changed since generation.
+paths_file="$config_d/10-local-llm-inference.paths"
+if [ -f "$paths_file" ]; then
+	while IFS= read -r baked_path; do
+		[ -n "$baked_path" ] || continue
+		[ -e "$baked_path" ] ||
+			log_die 95 "model file baked into config.d is gone from the HF cache — cache changed since generation; re-run ./generate.sh" path="$baked_path"
+	done <"$paths_file"
+fi
 
 # shellcheck disable=SC2154  # _workload is set by the sourced lib/workload-runtime.sh
 [ "$_workload" = 'workload' ] ||
@@ -59,11 +77,14 @@ workload_init
 workload_publish  "$HOST_PORT" 8080
 workload_user
 workload_gpu
-workload_rw "$HF_HUB_CACHE" /root/.cache/huggingface/hub
-workload_rw "$HF_HUB_CACHE" /home/ubuntu/.cache/huggingface/hub
+# Guest path = the generator's HUB_GUEST constant (generate-local-llm-models
+# bakes cmd paths against it) — changing one means changing both in the same
+# edit. Read-only: nothing in-container writes the cache anymore (no launch-
+# time downloads); provisioning/pruning happen on the host (local-llm/).
+workload_ro       "$HF_HUB_CACHE" /home/ubuntu/.cache/huggingface/hub
 workload_ro       "$config_d" /etc/llama-swap/config.d
 workload_hardening
-workload_env_allowlist HF_TOKEN PEER_API_KEY
+workload_env_allowlist PEER_API_KEY
 workload_entrypoint 'llama-swap'
 workload_cmd      -config-dir /etc/llama-swap/config.d -listen 0.0.0.0:8080
 # No infisical wrapper here: the values were loaded by the explicit chain

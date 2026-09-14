@@ -12,10 +12,16 @@
 #   00-general.yaml              always  (globals + macros)
 #   10-local-llm-inference.yaml  only when local inference is viable (container
 #                                backend AND GPU devices), or LOCAL_INFERENCE=1
-#                                to force (emits container-side paths — parity/
-#                                debug only)
-#   launch-gguf.sh               copied alongside 10-... (static HF-snapshot
-#                                resolver; not generated)
+#                                to force (debug only; the host HF cache must
+#                                carry every configured GGUF)
+#   10-local-llm-inference.paths sibling manifest of the baked host-side model
+#                                paths — run.sh's staleness preflight input
+#
+# There is NO launch-gguf.sh anymore: snapshot paths are resolved HERE
+# (generation-time baking, docs/d029 option B) and emitted as plain args in
+# each model's cmd; a cache miss is a generation error pointing at
+# ../local-llm/download_models.py. Stale launch-gguf.sh copies from older
+# generate.sh versions are removed below.
 #
 # Merge contract for the fragments (llama-swap's -config-dir loader;
 # docs/d018): identity-keyed maps merge additively and a duplicate key across
@@ -61,8 +67,9 @@ fi
 # --- 2. local-inference layer: capability-gated -----------------------------
 # Requires the container backend (the unified-vulkan image runs llama.cpp
 # against the GPU) and at least one dedicated inference device
-# (detect_gpu_devs).  LOCAL_INFERENCE=1 forces the layer regardless (it emits
-# container-side /root/.cache paths — parity/debug only).
+# (detect_gpu_devs).  LOCAL_INFERENCE=1 forces the layer regardless (debug:
+# the generator still requires every configured GGUF in the host HF cache —
+# provision it with ../local-llm/download_models.py first).
 detect_gpu_devs
 # shellcheck disable=SC2154  # _workload is set by the sourced lib/workload-runtime.sh
 # `workload_has devices` — not a peek at an internal: the devices live in the
@@ -71,11 +78,11 @@ if [ "$LOCAL_INFERENCE" = 1 ] || { [ "$_workload" = 'workload' ] && workload_has
 	if ! node_run "$script_dir/generate-local-llm-models.yaml.mjs"; then
 		log_die 94 "local-inference layer generation failed"
 	fi
-	[ -f "$script_dir/launch-gguf.sh" ] &&
-		cp -- "$script_dir/launch-gguf.sh" "$config_d/launch-gguf.sh"
+	rm -f -- "$config_d/launch-gguf.sh"
 	log_info "local-inference layer generated"
 else
-	rm -f -- "$config_d/10-local-llm-inference.yaml" "$config_d/launch-gguf.sh"
+	rm -f -- "$config_d/10-local-llm-inference.yaml" \
+		"$config_d/10-local-llm-inference.paths" "$config_d/launch-gguf.sh"
 	log_die 94 "no container backend + GPU devices — this host cannot serve local inference (LOCAL_INFERENCE=1 forces generation for debug)"
 fi
 

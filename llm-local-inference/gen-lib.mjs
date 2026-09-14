@@ -26,7 +26,9 @@ const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
 );
 setLogTool("llm-local-inference/gen-lib");
 
-export { logError, logInfo, logWarn };
+// Re-exported for generators that write a non-JSON artifact (the local-layer
+// generator's .paths staleness manifest) under the same LIB_DIR convention.
+export { logError, logInfo, logWarn, writeArtifact };
 
 export const scriptDir = dirname(fileURLToPath(import.meta.url));
 

@@ -1,28 +1,44 @@
 /**
  * @fileoverview generate-local-llm-models.yaml.mjs — Emit
- * config.d/10-local-llm-inference.yaml — the local llama.cpp GGUF `models` map. Built from
- * ../lib/llamacpp-model-data.json (the shared model-data table, docs/d025); no network access. The `cmd` strings reference macros defined
- * in 00-general.yaml (${LLAMA_SERVER}, ${qwen36}, …) which llama-swap resolves after
- * merging config.d/.
+ * config.d/10-local-llm-inference.yaml — the local llama.cpp GGUF `models` map —
+ * plus the sibling 10-local-llm-inference.paths manifest (host-side paths the
+ * run.sh staleness preflight re-checks). Built from
+ * ../lib/llamacpp-model-data.json (the shared model-data table, docs/d025); no
+ * network access. The `cmd` strings reference macros defined in 00-general.yaml
+ * (${LLAMA_SERVER}, ${qwen36}, …) which llama-swap resolves after merging
+ * config.d/.
  *
  * Generated ONLY on hosts where local inference is viable (container backend
  * + GPU devices detected by llm-local-inference/generate.sh); peers-only hosts
  * skip this layer and have no 10-local-llm-inference.yaml.
  *
- * GGUFs (and their mmproj projectors) are read straight from the HF hub cache,
- * mounted into the container at /home/ubuntu/.cache/huggingface/hub (see
- * llm-local-inference/run.sh); the generated cmd resolves the snapshot
- * dir at launch via config.d/launch-gguf.sh (mounted ro alongside the yaml),
- * so there is no runtime --hf-repo download and no models-local/ pre-cache
- * step.
+ * GENERATION-TIME PATH BAKING (docs/d029 option B): every model is resolved to
+ * ONE HF snapshot dir — the refs/main revision first (what
+ * ../local-llm/download_models.py pins), falling back to any snapshot dir that
+ * carries the entry — and the resolved paths are baked into the emitted `cmd`
+ * as plain absolute args (`--model <path>`, `--mmproj`, `--model-draft`). No
+ * shell runs at launch: llama-swap splits `cmd` with posix shlex and execs
+ * argv directly (internal/config/commands.go SanitizeCommand), so the previous
+ * config.d/launch-gguf.sh resolver is retired with this. HF paths contain no
+ * spaces/quotes/metacharacters, so baking them into the shlex'd cmd is safe.
+ *
+ * A cache miss is a GENERATION error, not a launch-time download: model
+ * provisioning belongs to ../local-llm/download_models.py and must not be
+ * duplicated here — run that, then re-run ./generate.sh.
+ *
+ * STALENESS: a later download/prune cycle (upkeep.py) can re-point refs/main
+ * or delete the generated snapshot; the .paths manifest lets run.sh fail
+ * loudly with "re-run ./generate.sh" instead of a llama-server 127 at swap
+ * time.
  *
  * Usage: node generate-local-llm-models.yaml.mjs
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { logWarn, writeConfigD } from "./gen-lib.mjs";
+import { logError, logWarn, writeArtifact, writeConfigD } from "./gen-lib.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 
@@ -62,42 +78,122 @@ const DEFAULTS = {
  */
 const DEFAULT_SPEC_TYPE = "draft-mtp";
 
-// The in-container HF hub cache path (/home/ubuntu/.cache/huggingface/hub,
-// mounted by llm-local-inference/run.sh; differs from the host's
-// /home/dev/.cache/...) is hardcoded in config.d/launch-gguf.sh, which does
-// the snapshot resolution.
-const LAUNCHER = "/etc/llama-swap/config.d/launch-gguf.sh";
+// The ONE home of the container-side hub path (docs/d029 F4): run.sh binds the
+// host HF cache here, and the baked cmd paths are written against it. Changing
+// this constant means changing run.sh's bind in the same edit.
+const HUB_GUEST = "/home/ubuntu/.cache/huggingface/hub";
+
+// Host-side mirror of run.sh's HF_HUB_CACHE default (the same env-override
+// chain: HF_HUB_CACHE, else XDG_CACHE_HOME, else ~/.cache). Generation reads
+// the cache the serving container later binds, so both sides must compute the
+// same directory.
+const HUB_HOST =
+	process.env.HF_HUB_CACHE ??
+	join(
+		process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache"),
+		"huggingface",
+		"hub",
+	);
+
+// Sharded GGUF naming, kept in sync with local-llm/download_models.py's
+// SPLIT_RE (that script downloads every shard; the generator verifies it did).
+const SPLIT_RE = /-(\d{5})-of-(\d{5})\.gguf$/;
 
 /**
- * Resolve a model (and, for multimodal models, its projector) at launch to
- * paths drawn from ONE HF snapshot dir, so the exact same commit backs both
- * --model and --mmproj (a quant/projector mismatch would corrupt vision
- * requests). This CANNOT be inline shell in the cmd string: llama-swap splits
- * `cmd` with posix shlex and execs argv[0] directly — no shell runs — and a
- * `sh -c '...'` wrapper breaks on the single quotes inside the sampling macros
- * (--chat-template-kwargs '{...}'). config.d/launch-gguf.sh therefore does the
- * dynamic resolution: it picks the first models--<org>--<repo>/snapshots/<hash>
- * dir containing the GGUF (and the projector, when present), aborting the
- * launch if none does, normalizes sharded GGUFs to their 00001 shard (llama.cpp
- * auto-loads sibling shards), appends --model/--mmproj after the caller's flags
- * and execs. The emitted cmd is plain argv: sh <launcher> <args> -- ${macros}.
- * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
- * @param {string|undefined} mmprojFile projector filename, undefined for the
- *   0text mode
- * @returns {{ launcherArgs: string }}
+ * Normalize a (possibly sharded) GGUF filename to its 00001 shard — llama.cpp
+ * auto-loads sibling shards when pointed at the first one. Tolerates a
+ * non-first shard in the manifest the same way the retired launch-gguf.sh did.
+ * @param {string} filename
+ * @returns {string} the 00001-shard filename
  */
-function cacheResolver(m, mmprojFile) {
+function shardOne(filename) {
+	const m = SPLIT_RE.exec(filename);
+	if (!m) return filename;
+	return `${filename.slice(0, m.index)}-00001-of-${m[2]}.gguf`;
+}
+
+/**
+ * Expand a sharded GGUF filename to ALL of its shards (llama-server needs the
+ * complete set present, not just shard 1 — download_models.py enforces this at
+ * download time, and the generator re-verifies it against the cache).
+ * @param {string} filename
+ * @returns {string[]} every shard filename
+ */
+function allShards(filename) {
+	const first = shardOne(filename);
+	const m = SPLIT_RE.exec(first);
+	if (!m) return [first];
+	const base = first.slice(0, first.length - m[0].length);
+	const width = m[1].length;
+	return Array.from(
+		{ length: Number(m[2]) },
+		(_, i) => `${base}-${String(i + 1).padStart(width, "0")}-of-${m[2]}.gguf`,
+	);
+}
+
+/**
+ * Resolve one manifest entry to ONE HF snapshot dir and bake the final
+ * container-side paths. Candidate snapshots: the refs/main revision first —
+ * the revision download_models.py pins, so a healthy cache always resolves
+ * there — then every snapshot dir (sorted), mirroring the glob order the
+ * retired launch-gguf.sh used. The chosen snapshot must carry ALL required
+ * files (every model shard, plus the projector/drafter when declared) so
+ * --model/--mmproj/--model-draft stay backed by the exact same commit.
+ *
+ * No candidate qualifies ⇒ generation FAILS (exit 1): provisioning is
+ * ../local-llm/download_models.py's job and is not duplicated as a
+ * launch-time download fallback.
+ * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
+ * @returns {{ modelPath: string, mmprojPath: string|null, draftPath: string|null, hostPaths: string[] }}
+ *   container-side paths for the emitted cmd (mmproj/draft null when the entry
+ *   omits them) plus the host-side file list for the .paths staleness manifest
+ */
+function bakeSnapshotPaths(m) {
 	const repo = m["hf-repo"].split(":")[0]; // drop :revision; the GGUF filename already pins the quant
 	const repoDir = `models--${repo.split("/").join("--")}`;
-	// repo-id is passed separately (reversing models--<org>--<repo> is ambiguous
-	// when the org itself contains dashes) for launch-gguf.sh's --hf-repo
-	// download fallback. The 5th launcher arg is the drafter GGUF ("-" when
-	// absent), which the launcher requires in the SAME snapshot and appends
-	// --model-draft itself. The args carry ${…} macros that llama-swap expands,
-	// not JS (see LLAMA_SERVER_MACRO).
-	return {
-		launcherArgs: `sh ${LAUNCHER} ${repoDir} ${repo} ${m.model} ${mmprojFile ?? "-"} ${m["model-draft"] || "-"} --`,
-	};
+	const snapshotsDir = join(HUB_HOST, repoDir, "snapshots");
+
+	const candidates = [];
+	const refPath = join(HUB_HOST, repoDir, "refs", "main");
+	if (existsSync(refPath)) {
+		const sha = readFileSync(refPath, "utf-8").trim();
+		if (sha) candidates.push(sha);
+	}
+	if (existsSync(snapshotsDir)) {
+		candidates.push(...readdirSync(snapshotsDir).sort());
+	}
+
+	const required = allShards(m.model);
+	if (m.mmproj) required.push(m.mmproj);
+	if (m["model-draft"]) required.push(m["model-draft"]);
+
+	for (const sha of candidates) {
+		const snapshot = join(snapshotsDir, sha);
+		const missing = required.filter(
+			(f) => !existsSync(join(snapshot, f)), // follows the blob symlinks
+		);
+		if (missing.length > 0) continue;
+
+		const snapGuest = `${HUB_GUEST}/${repoDir}/snapshots/${sha}`;
+		const snapHost = `${HUB_HOST}/${repoDir}/snapshots/${sha}`;
+		return {
+			modelPath: `${snapGuest}/${shardOne(m.model)}`,
+			mmprojPath: m.mmproj ? `${snapGuest}/${m.mmproj}` : null,
+			draftPath: m["model-draft"] ? `${snapGuest}/${m["model-draft"]}` : null,
+			hostPaths: required.map((f) => `${snapHost}/${f}`),
+		};
+	}
+
+	logError(
+		"no HF snapshot carries this entry — run local-llm/download_models.py, then re-run ./generate.sh",
+		{
+			repo,
+			hub: snapshotsDir,
+			snapshotsChecked: candidates.length,
+			required,
+		},
+	);
+	process.exit(1);
 }
 
 /**
@@ -105,8 +201,7 @@ function cacheResolver(m, mmprojFile) {
  * GPU-offloading the vision projector. The middle slug segment doubles as a
  * llama-swap macro name (llama-swap-core.json):
  *   0text    -> --no-mmproj --ubatch-size 256   (projector never loaded; also
- *              passed as "-" to launch-gguf.sh so the projector file is not
- *              required in the snapshot / downloaded on cache miss)
+ *              emitted without --mmproj so the projector is never required)
  *   1vision  -> --no-mmproj-offload --ubatch-size 2048  (projector loaded, stays on CPU)
  *   2mmproj  -> --ubatch-size 2048                      (projector offloaded to GPU)
  * The 1vision/2mmproj variants additionally pass --image-min-tokens/
@@ -153,36 +248,39 @@ function main() {
 		readFileSync(join(libDir, "llamacpp-model-data.json"), "utf-8"),
 	);
 
+	/** @type {Set<string>} host-side files to re-verify in run.sh's preflight */
+	const bakedHostPaths = new Set();
 	const models = {};
 	for (const raw of modelData.models) {
 		const m = { ...DEFAULTS, ...raw };
 		const ctxSize = m["ctx-size"]; // AUTHORITATIVE --ctx-size (not --fit-ctx)
 		const nPredict = ctxSize;
+		// One snapshot resolution per ENTRY (all three mmproj modes share it):
+		// refs/main carries the model, its every shard, and the mmproj/drafter
+		// at the same commit, or generation fails.
+		const baked = bakeSnapshotPaths(m);
+		for (const p of baked.hostPaths) bakedHostPaths.add(p);
 		const modes = m.mmproj ? MMPROJ_MODES : [{ seg: null, vision: false }];
 		for (const mode of modes) {
 			const modalities = mode.vision ? ["text", "image"] : ["text"];
 			// The family macro reference (${qwen38} etc.) and any literal extra flags
 			// live in __argv verbatim; llama-swap expands ${...} at load.  Empty __argv
-			// expands to nothing; shlex collapses the gap.
-			// launch-gguf.sh resolves --model/--mmproj from one HF snapshot dir and
-			// fails loudly if uncached or not co-located in the same snapshot.  The
-			// expanded ${LLAMA_SERVER} must directly follow the `--` separator: its
-			// first token ("llama-server") becomes the launcher's server binary, which
-			// it resolves via PATH + common install dirs before exec'ing.
-			const r = cacheResolver(m, mode.seg === "0text" ? undefined : m.mmproj);
-			let cmd = `${r.launcherArgs} ${LLAMA_SERVER_MACRO}`;
+			// expands to nothing; shlex collapses the gap.  The expanded
+			// ${LLAMA_SERVER} must be the FIRST cmd token: shlex argv[0] is the
+			// server binary llama-swap resolves on PATH and execs directly.
+			let cmd = LLAMA_SERVER_MACRO;
 			// The mode slug is verbatim llama-swap macro text (\${0text} etc.),
 			// NOT JS interpolation — it expands to the projector-offload flags.
 			if (mode.seg) cmd += ` \${${mode.seg}}`;
 			if (mode.vision && m["image-min-tokens"] !== undefined) {
 				cmd += ` --image-min-tokens ${m["image-min-tokens"]} --image-max-tokens ${m["image-max-tokens"]}`;
 			}
-			if (m["__argv"]) cmd += ` ${m["__argv"]}`;
+			if (m.__argv) cmd += ` ${m.__argv}`;
 			cmd += ` --cache-type-k ${m["cache-type-k"]} --cache-type-v ${m["cache-type-v"]}`;
 			cmd += ` --ctx-size ${ctxSize} --n-predict ${nPredict}`;
-			if (m["model-draft"]) {
-				// explicit: auto-inference only happens on the --hf-repo path, never for
-				// local snapshot paths (see DEFAULT_SPEC_TYPE note above)
+			if (baked.draftPath) {
+				// explicit: auto-inference only happened on the retired --hf-repo
+				// download path, never for local snapshot paths (see DEFAULT_SPEC_TYPE)
 				cmd += ` --spec-type ${m["spec-type"] || DEFAULT_SPEC_TYPE}`;
 			}
 			if (![1, 2].includes(m.parallel)) {
@@ -191,6 +289,14 @@ function main() {
 				);
 			}
 			cmd += ` --parallel ${m.parallel}`;
+			// Baked snapshot paths last (the order the retired launch-gguf.sh
+			// appended them in).  0text omits --mmproj entirely — the projector
+			// must not be required for a text-only serving mode.
+			cmd += ` --model ${baked.modelPath}`;
+			if (mode.seg !== "0text" && baked.mmprojPath) {
+				cmd += ` --mmproj ${baked.mmprojPath}`;
+			}
+			if (baked.draftPath) cmd += ` --model-draft ${baked.draftPath}`;
 
 			const id = deriveModelId(m, mode.seg);
 			if (models[id]) {
@@ -220,6 +326,15 @@ function main() {
 	}
 
 	writeConfigD("10-local-llm-inference.yaml", { models });
+	// The .paths manifest is the run.sh staleness preflight's input (docs/d029
+	// B): pure host-side paths, one per line, re-verified before the serving
+	// container starts. llama-swap ignores non-*.yml/*.yaml files in
+	// -config-dir (internal/config/merge.go listYAMLFiles), so the companion
+	// rides in config.d/ next to the layer it validates.
+	writeArtifact(
+		join(scriptDir, "config.d", "10-local-llm-inference.paths"),
+		`${[...bakedHostPaths].sort().join("\n")}\n`,
+	);
 }
 
 main();

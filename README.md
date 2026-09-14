@@ -76,8 +76,7 @@ agentcontainer/
 │   ├── generate.sh                      #   → capability-gated config.d layers (local GGUF; fails on non-GPU hosts)
 │   ├── gen-lib.mjs                      #   → shared generator helpers (logger, config.d writer)
 │   ├── generate-general.yaml.mjs         #   → 00-general.yaml (globals + macros; always)
-│   ├── generate-local-llm-models.yaml.mjs#   → 10-local-llm-inference.yaml (GGUF; GPU hosts only)
-│   ├── launch-gguf.sh                   #   → HF-snapshot resolver (copied to config.d on GPU hosts)
+│   ├── generate-local-llm-models.yaml.mjs#   → 10-local-llm-inference.yaml + .paths (GGUF; GPU hosts only)
 │   ├── active-b.json                    #   → activeB table (model-id derivation)
 │   ├── llama-swap-core.json             #   → general-purpose config source
 │   ├── build.sh                         #   → pre-pulls the unified-vulkan image (container hosts only)
@@ -121,7 +120,7 @@ agentcontainer/
 | [docs/d027-path-prefix-peer-routing.md](docs/d027-path-prefix-peer-routing.md) | path-prefix peer routing — llm-reverse-proxy replaces llama-swap's model-id magic |
 | [docs/d027b-models-dev-relay-fallback.md](docs/d027b-models-dev-relay-fallback.md) | models.dev catalog fetch chain (direct → llm-reverse-proxy relay → stale copy) |
 | [docs/d028-provider-extensions-vs-generated-config.md](docs/d028-provider-extensions-vs-generated-config.md) | pi/opencode provider extensions vs generated-config machinery (verified; proposed) |
-| [docs/d029-launch-gguf-complexity.md](docs/d029-launch-gguf-complexity.md) | in-container `launch-gguf.sh` path — complexity audit + refactor options (proposal) |
+| [docs/d029-launch-gguf-complexity.md](docs/d029-launch-gguf-complexity.md) | the former in-container `launch-gguf.sh` path — complexity audit; option B (generation-time path baking) IMPLEMENTED |
 | [docs/d030-coding-agent-flow-simplification.md](docs/d030-coding-agent-flow-simplification.md) | coding-agent flow — host↔container staging duplication, launch chain, GC, generator consolidation (proposal) |
 | [docs/d031-llm-reverse-proxy-flow-simplification.md](docs/d031-llm-reverse-proxy-flow-simplification.md) | llm-reverse-proxy flow — already minimal; keep-shape notes + two small cleanups (proposal) |
 | [docs/d032-adding-a-cloud-provider.md](docs/d032-adding-a-cloud-provider.md) | adding a cloud provider — the flow + surprises (worked example: inferx; two sources of truth, run.sh key allowlist, toggle-only reasoning) |

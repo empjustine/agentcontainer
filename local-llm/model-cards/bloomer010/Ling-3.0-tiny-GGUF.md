@@ -16,24 +16,29 @@ tags:
 GGUF conversions of [inclusionAI/Ling-3.0-tiny](https://huggingface.co/inclusionAI/Ling-3.0-tiny),
 converted directly from the released BF16 safetensors.
 
-🔔 2026-08-21: added `reasoning_effort` support (low = thinking off, high = on, default same). 
-If you want `reasoning_effort`, re-download or override with [chat_template.jinja](./chat_template.jinja). 
+## 🦙🚨 llama.cpp 🦙🚨
+Consistent agentic use (tool calling, reasoning split) currently requires two unmerged llama.cpp PRs: 
+- Dedicated Ling parser: [#28682](https://github.com/ggml-org/llama.cpp/pull/28682) 
+- Invalid UTF-8 Handling at the Token Boundary: [#28724](https://github.com/ggml-org/llama.cpp/pull/28724)
 
-🎉 `bailingmoe3` (including the Q-LoRA attention path) is supported in stock llama.cpp since
-[PR #26608](https://github.com/ggml-org/llama.cpp/pull/26608) (merged 2026-08-17, commit
-`3733366720`). Any build from that commit onward loads these files directly:
+Without both, tool calls inside an unclosed think block are dropped and some turns fail with a 500. 
+Will update this note as they merge.
 
+The model does occasionally terminate its response, mid-think, without any sort of closing.  
+This is inherent in the weights, even at full precision.
+
+To run with `llama-server`:
 ```bash
 llama-server -hf bloomer010/Ling-3.0-tiny-GGUF:Q4_K_M
 ```
 
-## Files
+## Quant Sizing
 
 For tiny models, precision is especially crucial.
 
-*Generally...* 
-Larger files = more precision.  
-More compression = more slop and misbehavin'.
+Generally... <BR>
+Larger files = More precision.<BR>
+Smaller files = More compression = More slop and misbehavin'.
 
 Use UD-Q8_K_XL for near-full precision performance. 
 

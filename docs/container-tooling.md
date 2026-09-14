@@ -191,6 +191,38 @@ loads vault secrets on the host via `lib/environment.sh` and forwards them throu
 `_workload` value is a fatal error — there is no fallback "workload" that isn't
 one.
 
+### `bwrap` backend — assessed, NOT implemented
+
+What extending `lib/workload-runtime.sh` to a third backend (bubblewrap,
+mirror `github/containers/bubblewrap`) would take, against the current
+description API (`workload-render.jq` emits podman/docker dialects keyed on
+`$tool`; a bwrap dialect would be a third branch):
+
+| API piece | bwrap translation | Verdict |
+|---|---|---|
+| `workload_image` | no OCI concept — a rootfs dir must be assembled by hand (`--ro-bind / `--bind` per tree) or the unified-vulkan image unpacked to disk first | **structural blocker** — loses the pull/build/layer story `build.sh` owns |
+| `workload_publish` | none: bwrap has `--unshare-net` but no slirp4netns/pasta port forwarding | **hard blocker** — llama-swap must publish LAN 8101 (docs/d027) |
+| `workload_detach` / `workload_logs` / `workload_rm` | no daemon, no named workloads: bwrap is a foreground process; needs setsid+pidfile, stdout redirected to a file for `logs`, and a rm-by-pidfile | feasible but re-implements what podman/docker give for free |
+| `workload_ro`/`workload_rw` | `--ro-bind` / `--bind` (+ `--*-try` variants) | maps 1:1; SELinux `z,U` mount options have no equivalent (bwrap does not relabel; `--exec-label` only sets the process label) — a rootless-podman-on-SELinux host is exactly where this repo runs |
+| `workload_gpu` (`/dev/kfd`, `/dev/dri/renderD*`) | `--dev-bind` per node | maps 1:1; no device-cgroup controller — access control only via the userns |
+| `workload_env_allowlist` | inverted default: bwrap inherits the FULL host env unless `--clearenv` + one `--setenv NAME=value` per var — the renderer must resolve host VALUES at render time (podman takes bare names and forwards values at run time) | feasible; changes the jq filter contract (names → name+value) |
+| `workload_user` (keep-id) | default behavior (runs as the caller under `--unshare-user`; `--uid/--gid` for remaps; `--group-add keep-groups` has no direct analog) | maps well |
+| `workload_hardening` | unprivileged userns is inherently non-root; `--cap-drop`/`--seccomp` optional | comparable-or-stronger, different flag surface |
+| `workload_init` | no built-in init: llama-swap spawns llama-server children, so zombie reaping needs a tini-style shim as cmd prefix (`--die-with-parent` alone doesn't reap) | small shim required |
+| `workload_workdir` | `--chdir` | maps 1:1 |
+| `workload_cmd` | argv passthrough; `--args`/`--args-fd` could even bypass argv-size limits | maps 1:1 |
+
+Net: mounts/user/cmd/hardening translate cleanly, but the **image** and
+**port-publishing** pieces have no bwrap equivalent — the two this repo's
+serving path (`llm-local-inference/run.sh`) depends on. Supporting bwrap
+therefore means either (a) giving up the unified image (hand-assembled
+rootfs) and LAN publishing, or (b) keeping podman/docker for serving and
+adding bwrap only as a restricted no-net backend for non-serving workloads.
+The mirror set needed for that work is present
+(`github/containers/bubblewrap`, `github/containers/crun`); none of the
+runners currently needs it — the Termux leaf that would have benefited most
+was removed with the peers handoff (see module SPECs).
+
 ## Run scripts
 
 ### Serving run script (one multipurpose instance)
@@ -208,11 +240,13 @@ layers, and only the layers that work on the current host land in `config.d/`
 
 - `00-general.yaml` — always (globals + macros; harmless when no local models
   reference them).
-- `10-local-llm-inference.yaml` + `launch-gguf.sh` — only when the container
-  backend is available AND GPU devices (`/dev/kfd`, `/dev/dri/renderD*`) are
-  present. The GGUF layer is built from `llamacpp-model-data.json` by
-  `generate-local-llm-models.yaml.mjs`; the static HF-snapshot resolver is
-  copied from the folder root into `config.d/`.
+- `10-local-llm-inference.yaml` (+ its `.paths` staleness manifest) — only
+  when the container backend is available AND GPU devices (`/dev/kfd`,
+  `/dev/dri/renderD*`) are present. The GGUF layer is built from
+  `llamacpp-model-data.json` by `generate-local-llm-models.yaml.mjs`, which
+  resolves each model to an HF snapshot dir and bakes the absolute paths into
+  each `cmd` (docs/d029 option B; a cache miss is a generation error pointing
+  at `local-llm/download_models.py`).
 - `peer-cloud.yaml` — whenever any cloud provider answers; providers without
   keys or with failing fetches are skipped independently, and a stale output
   is removed when none answer.

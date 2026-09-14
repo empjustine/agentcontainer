@@ -53454,6 +53454,38 @@
 					"cache_read": 0.01
 				}
 			},
+			"consensusprotocol/deepseek-v4.1-flash": {
+				"id": "consensusprotocol/deepseek-v4.1-flash",
+				"name": "DeepSeek V4.1 Flash (Consensus Protocol)",
+				"description": "DeepSeek V4.1 Flash model for reasoning and agentic coding",
+				"family": "deepseek-flash",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": false,
+				"structured_output": false,
+				"temperature": true,
+				"knowledge": "2025-05",
+				"release_date": "2026-09-10",
+				"last_updated": "2026-09-10",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 1048576,
+					"output": 384000
+				},
+				"cost": {
+					"input": 0.2,
+					"output": 1,
+					"cache_read": 0.005
+				}
+			},
 			"consensusprotocol/glm-5.3-flash": {
 				"id": "consensusprotocol/glm-5.3-flash",
 				"name": "GLM-5.3 Flash (Consensus Protocol)",
@@ -85382,6 +85414,10 @@
 					"context": 131072,
 					"output": 32768
 				},
+				"provider": {
+					"npm": "@ai-sdk/openai-compatible",
+					"api": "https://${GOOGLE_VERTEX_ENDPOINT}/v1/projects/${GOOGLE_VERTEX_PROJECT}/locations/${GOOGLE_VERTEX_LOCATION}/endpoints/openapi"
+				},
 				"cost": {
 					"input": 0.09,
 					"output": 0.36
@@ -85422,6 +85458,10 @@
 					"output": 32768
 				},
 				"status": "deprecated",
+				"provider": {
+					"npm": "@ai-sdk/openai-compatible",
+					"api": "https://${GOOGLE_VERTEX_ENDPOINT}/v1/projects/${GOOGLE_VERTEX_PROJECT}/locations/${GOOGLE_VERTEX_LOCATION}/endpoints/openapi"
+				},
 				"cost": {
 					"input": 0.07,
 					"output": 0.25,
@@ -192421,8 +192461,8 @@
 				},
 				"open_weights": false,
 				"limit": {
-					"context": 131072,
-					"output": 8192
+					"context": 40960,
+					"output": 16384
 				},
 				"cost": {
 					"input": 0.2275,
@@ -196405,8 +196445,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 256000,
-					"output": 32768
+					"context": 202800,
+					"output": 182520
 				},
 				"cost": {
 					"input": 0.5,
@@ -204750,7 +204790,7 @@
 				"open_weights": false,
 				"limit": {
 					"context": 1048576,
-					"output": 943718
+					"output": 131072
 				},
 				"cost": {
 					"input": 0.075,
@@ -205897,8 +205937,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 202752,
-					"output": 182476
+					"context": 1048576,
+					"output": 131072
 				},
 				"cost": {
 					"input": 1.4,
@@ -205941,7 +205981,7 @@
 				"open_weights": true,
 				"limit": {
 					"context": 1048576,
-					"output": 943718
+					"output": 131072
 				},
 				"cost": {
 					"input": 0.15,
@@ -206184,8 +206224,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 1048576,
-					"output": 131072
+					"context": 1048575,
+					"output": 943717
 				},
 				"cost": {
 					"input": 1.4,
@@ -235884,11 +235924,11 @@
 				"open_weights": true,
 				"limit": {
 					"context": 131072,
-					"output": 8192
+					"output": 16384
 				},
 				"cost": {
-					"input": 0.2275,
-					"output": 0.91
+					"input": 0.12,
+					"output": 0.24
 				}
 			},
 			"qwen/qwen3.6-plus": {
@@ -239845,12 +239885,12 @@
 				"open_weights": true,
 				"limit": {
 					"context": 262144,
-					"output": 32768
+					"output": 182520
 				},
 				"cost": {
-					"input": 0.625,
-					"output": 3.125,
-					"cache_read": 0.1875
+					"input": 0.6,
+					"output": 2.4,
+					"cache_read": 0.12
 				}
 			},
 			"nvidia/nemotron-3-nano-30b-a3b": {
@@ -243856,9 +243896,9 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.57948,
-					"output": 1.73844,
-					"cache_read": 0.019316
+					"input": 1.05468,
+					"output": 3.16404,
+					"cache_read": 0.035156
 				}
 			},
 			"deepseek/deepseek-v4-flash-0731": {
@@ -243901,9 +243941,9 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 0.04,
-					"output": 0.08,
-					"cache_read": 0.008
+					"input": 0.06,
+					"output": 0.12,
+					"cache_read": 0.012
 				}
 			},
 			"deepseek/deepseek-v4-flash": {
@@ -243948,9 +243988,9 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.04704,
-					"output": 0.09408,
-					"cache_read": 0.009408
+					"input": 0.089866,
+					"output": 0.179732,
+					"cache_read": 0.017973
 				}
 			},
 			"deepseek/deepseek-v4.1-flash": {
@@ -243994,9 +244034,9 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.15,
-					"output": 0.6,
-					"cache_read": 0.003
+					"input": 0.3,
+					"output": 1.2,
+					"cache_read": 0.006
 				}
 			},
 			"deepseek/deepseek-r1": {
@@ -249322,9 +249362,9 @@
 					"output": 128000
 				},
 				"cost": {
-					"input": 0.0825,
-					"output": 0.33,
-					"cache_read": 0.020625
+					"input": 0.132,
+					"output": 0.528,
+					"cache_read": 0.033
 				}
 			},
 			"tencent/hy4-preview": {
@@ -249757,12 +249797,12 @@
 				"open_weights": true,
 				"limit": {
 					"context": 1048576,
-					"output": 182476
+					"output": 131072
 				},
 				"cost": {
-					"input": 0.6,
-					"output": 2,
-					"cache_read": 0.15
+					"input": 0.6832,
+					"output": 2.1472,
+					"cache_read": 0.12688
 				}
 			},
 			"z-ai/glm-5.3-flash": {
@@ -250033,12 +250073,12 @@
 				"open_weights": true,
 				"limit": {
 					"context": 1310720,
-					"output": 131072
+					"output": 943717
 				},
 				"cost": {
-					"input": 1.092,
-					"output": 3.432,
-					"cache_read": 0.2028
+					"input": 1.4,
+					"output": 4.4,
+					"cache_read": 0.26
 				}
 			},
 			"z-ai/glm-5v-turbo": {

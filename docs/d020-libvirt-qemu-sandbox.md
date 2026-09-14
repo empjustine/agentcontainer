@@ -156,8 +156,9 @@ systemctl --user status virtqemud virtstoraged 2>/dev/null   # user-session daem
   a real throughput cost on this 1-GPU host).
 - **HF cache**: mount via virtiofs (rw) works, but weight loading is
   mmap-heavy; a dedicated virtio-blk disk for the cache gives better cold-start
-  than a network-ish FS. Either way the `launch-gguf.sh` resolver is unchanged
-  (it only needs the hub layout at a path).
+  than a network-ish FS. Either way the generation-time path baking
+  (`docs/d029` option B) is unchanged — it only needs the hub layout at a
+  path visible to `generate.sh`.
 
 ## 5. Usage scenario (`coding-agent`) in a VM
 
