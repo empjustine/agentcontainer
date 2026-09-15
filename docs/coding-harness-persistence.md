@@ -1,3 +1,12 @@
+---
+id: coding-harness-persistence
+type: reference
+status: draft
+title: "Coding-harness persistence table — host-side stage dirs per harness"
+parent: coding-agent
+tags: ["reference", "persistence", "workloads"]
+---
+
 # Coding-Harness Persistence Table
 
 How `coding-agent/run.sh` preserves each coding harness's state across
@@ -76,7 +85,7 @@ used in a semantically correct minimal-sandbox layout — **verdict:
 plausible**. Full audit (flag table, semantic checks against upstream
 `README.md`, and adoption caveats for a possible `bwrap` workload runtime
 tier — missing `--die-with-parent`, no `--unshare-net`, no device binds):
-see [bwrap-runtime-audit.md](bwrap-runtime-audit.md).
+see [archive/bwrap-runtime-audit.md](archive/bwrap-runtime-audit.md).
 
 Relevance to persistence: a bwrap runtime, if added as a workload runtime
 alternative to podman in `lib/workload-runtime.sh`, would replace

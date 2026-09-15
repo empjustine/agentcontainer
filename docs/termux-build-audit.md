@@ -1,3 +1,12 @@
+---
+id: termux-build-audit
+type: research
+status: findings
+title: "Termux build audit — Infisical CLI and llm-reverse-proxy native build"
+parent: architecture
+tags: ["research", "termux", "build"]
+---
+
 # Termux build audit — Infisical CLI (`./build.sh`) and `llm-reverse-proxy/`
 
 Findings from verifying, on the termux host (aarch64, bionic, no root,

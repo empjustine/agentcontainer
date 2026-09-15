@@ -1,6 +1,6 @@
 ---
 id: local-llm
-type: module-design
+type: design
 status: draft
 title: local-llm — HF cache provisioning & audit tooling
 parent: architecture
@@ -16,11 +16,14 @@ tags:
 
 ## Responsibility
 
-Provision and audit the HuggingFace cache tree that local GGUF inference serves
-from: download the served models, verify the `repo:quant` manifests against
-what llama.cpp actually resolves, keep the cache healthy (prune/verify), and
-regenerate the VRAM/fit estimate tables. It is **cache tooling, not a base
-generator** — nothing here is consumed by the runners' generation.
+Charter: provision and audit the HuggingFace cache tree that local GGUF
+inference serves from — download the served models, verify the `repo:quant`
+manifests against what llama.cpp actually resolves, keep the cache healthy
+(prune/verify), and regenerate the VRAM/fit estimate tables. The normative
+requirement statement lives in the BRD
+([../docs/requirements.md](../docs/requirements.md), FR-C1–FR-C3). It is
+**cache tooling, not a base generator** — nothing here is consumed by the
+runners' generation.
 
 ## Shape
 

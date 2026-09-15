@@ -1,6 +1,6 @@
 ---
 id: lib
-type: module-design
+type: reference
 status: draft
 title: "lib — shared infrastructure: workload runner, logging, fact tables"
 parent: architecture

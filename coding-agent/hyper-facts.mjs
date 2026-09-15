@@ -24,7 +24,7 @@
  *
  * Lifecycle (mirrors coding-agent/refresh-models-dev.mjs):
  *   - REFRESH, best-effort, whenever hyper is reachable directly — done by
- *     coding-agent/generate-cloud-providers.mjs (hyper row, cascade step 1)
+ *     coding-agent/generate-pi-coding-agent.mjs (hyper row, cascade step 1)
  *     and by llm-local-inference's hyper peer fetch. A failed refresh never
  *     touches the last good copy (tmp+rename).
  *   - CONSUME, stale-tolerant, whenever the facts are needed but the
@@ -33,7 +33,7 @@
  *     enrichment available; llm-local-inference when the refresh failed). The
  *     age is logged, never enforced.
  *
- * The cache file must NOT be named `model-*.json`: merge-models-json.mjs
+ * The cache file must NOT be named `model-*.json`: generate-pi-coding-agent.mjs
  * collects every /model-.*\.json/ sibling as a merge layer and would
  * silently merge these facts into models.json.
  *

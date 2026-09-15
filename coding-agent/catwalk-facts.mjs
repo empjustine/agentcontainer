@@ -21,7 +21,7 @@
  *
  * Lifecycle (mirrors coding-agent/refresh-models-dev.mjs):
  *   - REFRESH, best-effort, whenever catwalk is reachable — done by
- *     coding-agent/generate-cloud-providers.mjs (fallback id list).
+ *     coding-agent/generate-pi-coding-agent.mjs (fallback id list).
  *     A failed refresh never touches the last good copy.
  *   - CONSUME, stale-tolerant, whenever enrichment is needed. The age is
  *     logged, never enforced.

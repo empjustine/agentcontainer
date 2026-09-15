@@ -1,3 +1,11 @@
+---
+id: bwrap-runtime-audit
+type: research
+status: findings
+parent: architecture
+tags: ["research", "findings", "archive"]
+---
+
 # bwrap runtime audit — mirror-tree usage vs upstream bubblewrap
 
 Verified 2026-09-10, flag-by-flag against upstream bubblewrap —

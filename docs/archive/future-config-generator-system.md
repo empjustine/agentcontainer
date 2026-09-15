@@ -1,4 +1,16 @@
+---
+id: future-config-generator-system
+type: research
+status: superseded
+parent: architecture
+tags: ["research", "superseded", "archive"]
+---
+
 # Future work: a simplified config-generator system (NOT yet implemented)
+
+> **Superseded (2026-09-15).** d030/d037 implemented the generator
+> split-by-concern, and d041 the unified root `generate.mjs`/`build.mjs`
+> entrypoints with runners that never generate. Kept for the record.
 
 > **Status: FUTURE / PENDING.** This is the *next* step after the current
 > de-interweaving cleanup. It is **not** implemented; this page only records the

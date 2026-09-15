@@ -67,11 +67,15 @@ Both tools are now included in the container's mise configuration for reliable, 
 agentcontainer/
 ├── generate.sh / generate.mjs          # → run EVERY folder's generator in sequence (d041)
 ├── build.sh / build.mjs                # → build everything for THIS host (images ∥; termux serialized)
-├── docs/                              # Design docs, environment guides, ADRs
-│   ├── environments-and-peer-variants.md   # bazzite / a50 / work matrix
-│   ├── container-tooling.md                # lib/workload-runtime.sh, run scripts
-│   ├── termux-serving.md                   # a50 / Termux map (detail lives in the code headers)
-│   ├── d0XX-*.md                           # numbered design notes
+├── docs/                              # docs tree, typed per docs/d042 (BRD / reference / design)
+│   ├── requirements.md                # → BRD: what the system must do (id: goal)
+│   ├── architecture.md                # → systems reference: split, standalone rule, lib inventory
+│   ├── environments-and-peer-variants.md   # → bazzite / a50 / work matrix
+│   ├── container-tooling.md           # → lib/workload-runtime.sh, run scripts (the lib module doc)
+│   ├── coding-harness-persistence.md  # → per-harness host-side stage dirs
+│   ├── hf-cache-upkeep.md, refresh-local-llm-manifest.md, gguf-*.md   # → runbooks + generated tables
+│   ├── d0XX-*.md                      # → decision log (append-only history)
+│   ├── archive/                       # → research findings + retired docs (index inside)
 │   └── ...
 ├── lib/                               # Shared infrastructure (docs/architecture.md)
 │   ├── workload-runtime.sh             #   → sandbox-backend detection + workload_* API
@@ -98,17 +102,20 @@ agentcontainer/
 │   ├── llm-reverse-proxy.example.json   #   → provider slug → base URL map (the whole config surface)
 │   ├── generate.sh / generate.mjs       #   → routing table from lib/cloud-providers.mjs (d038 catalog)
 │   ├── smoke-test.sh                    #   → 32 behavioural checks against the built binary/image
-│   └── README.md                        #   → RFC 9457 502 error taxonomy, deviations
+│   ├── README.md                        #   → operations: routing table, usage, build, port model
+│   └── DESIGN.md                        #   → routing-convention rationale, 404 anti-oracle, RFC 9457 error taxonomy
 │
 ├── coding-agent/                        # Bazzite usage (full pi)
 │   ├── run.sh                           #   → launches pi coding-agent container (exec through ../lib/environment.sh)
-│   ├── generate.sh / generate.mjs       #   → orchestrates the stage generators below (d041)
+│   ├── generate.sh / generate.mjs       #   → the folder driver: stages + runs the TWO by-agent generators (d041; broad by-agent merge)
+│   ├── generate-pi-coding-agent.mjs     #   → ALL pi config: model-*.json layers → models.json + default-model.json overlay
+│   ├── generate-opencode.mjs            #   → opencode overlay config (provider SINGULAR key; skipped on Termux w/o OPENCODE_CONFIG_DIR)
 │   ├── gen-lib.mjs                      #   → shared generator preamble (pi shaping folded in, d039)
 │   ├── peer-probe.mjs                   #   → HTTP probe toolkit (folded out of lib/, d039)
 │   ├── hyper-facts.mjs / hyper-facts.json # → Charm Hyper facts cache + enricher (d039)
 │   ├── catwalk-facts.mjs                #   → catwalk catalog refresher (cache stays in lib/, d039)
 │   ├── refresh-models-dev.mjs           #   → atomic models.dev catalog refresh (d039)
-│   ├── generate-cloud-providers.mjs     #   → cloud layers (table-driven, d037; cline-pass lineup d040)
+│   ├── peer-probe.mjs                   #   → HTTP probe toolkit (folded out of lib/, d039)
 │   ├── auth.json                        #   → pi credentials (copied into container by run.sh)
 │   ├── settings.json                    #   → static pi settings (copied by run.sh)
 │   ├── config.toml                       #   → mise configuration (includes cline and thinkrail)
@@ -122,17 +129,60 @@ agentcontainer/
 │   ├── fetch-model-cards.sh             #   → refresh model-card mirrors
 │   ├── generate_vram_fit_tables.py      #   → VRAM/KV/fit tables via gdevenyi/huggingface-estimate
 │   └── model-cards/                     #   → GGUF model documentation
+│
+├── git/                                 # Reference-farm tooling (mirrors + search)
+│   ├── -github-clone.sh                 #   → add a non-bare clone (GitHub only; legacy references/github/ layout)
+│   ├── -forge-mirror.sh                 #   → add a BARE mirror from any https forge (github/codeberg/sr.ht/gitlab; idempotent)
+│   ├── audit.mjs                        #   → report anomalies in the reference farm (git/non-bare-issues.md)
+│   ├── migrate-to-bare.mjs              #   → convert full clones to bare mirrors (local hardlink or redownload)
+│   ├── maintain-mirrors.mjs             #   → align mirrors + repack/commit-graph (pickaxe fast)
+│   ├── search-references.mjs            #   → opt-in cross-repo/cross-branch search via Zoekt container (d043)
+│   └── non-bare-issues.md               #   → why bare mirrors, the farm audit, pickaxe notes
 ```
 
 ## Documentation index
 
+Docs are typed per [docs/d042](docs/d042-documentation-taxonomy.md):
+`requirements` (the BRD) / `reference` (systems reference) / `design` (TDD) /
+`research` (one-time findings) + the append-only `d0XX` decision log.
+Frontmatter `type:` is the machine signal; this index is the human map.
+
+### Requirements (BRD)
+
 | Doc | Covers |
 |-----|--------|
+| [docs/requirements.md](docs/requirements.md) | **The BRD** — goal, scope, functional + non-functional requirements, non-goals (id: goal — the parent of the doc tree) |
+
+### Systems reference
+
+| Doc | Covers |
+|-----|--------|
+| [docs/architecture.md](docs/architecture.md) | Self-contained runners vs base config generators, standalone rule, lib inventory, one-generate-one-build |
 | [docs/environments-and-peer-variants.md](docs/environments-and-peer-variants.md) | Environment matrix (bazzite/a50/work), env vars, serving/usage dirs |
-| [docs/architecture.md](docs/architecture.md) | Self-contained runners vs base config generators, standalone rule |
-| [docs/future-config-generator-system.md](docs/future-config-generator-system.md) | NEXT-step (PENDING) config-generator system split by concern |
-| [docs/container-tooling.md](docs/container-tooling.md) | lib/workload-runtime.sh, run scripts, UID/SELinux, PEERS_ONLY |
-| [docs/termux-serving.md](docs/termux-serving.md) | a50/Termux native build — map; the build/serve/env detail lives in the code headers |
+| [docs/container-tooling.md](docs/container-tooling.md) | lib/workload-runtime.sh, run scripts, UID/SELinux, PEERS_ONLY (the `lib` module doc) |
+| [docs/coding-harness-persistence.md](docs/coding-harness-persistence.md) | How each coding harness's state survives ephemeral container runs |
+| [docs/hf-cache-upkeep.md](docs/hf-cache-upkeep.md) | HF cache upkeep runbook (upkeep.py: list/pull/prune/verify) |
+| [docs/refresh-local-llm-manifest.md](docs/refresh-local-llm-manifest.md) | Manifest refresh runbook (repo:quant audits, cache coverage) |
+| [git/non-bare-issues.md](git/non-bare-issues.md) | Reference-farm mirrors: why a checkout is pure overhead (podman `z,U` walk), the farm audit, pickaxe-fast maintenance |
+| [docs/gguf-vram-fit-estimates.md](docs/gguf-vram-fit-estimates.md) | VRAM/KV/fit tables for all served models (gdevenyi/huggingface-estimate) |
+| [docs/gguf-model-tooling.md](docs/gguf-model-tooling.md) | GGUF tooling (`fetch_hf_manifests.py` live; size-estimation tools archived) |
+| [llm-reverse-proxy/README.md](llm-reverse-proxy/README.md) | Proxy operations: routing table, usage, build, port model, smoke test |
+
+### Design (TDD)
+
+| Doc | Covers |
+|-----|--------|
+| [coding-agent/DESIGN.md](coding-agent/DESIGN.md) | pi agent image + by-agent config generation — the two-generator structure, the layered-cake merge contract (single home: the generate-pi-coding-agent.mjs header), stage table, invariants |
+| [llm-local-inference/DESIGN.md](llm-local-inference/DESIGN.md) | llama-swap config.d layers, generation-time path baking, capability gating, bearer auth |
+| [llm-reverse-proxy/DESIGN.md](llm-reverse-proxy/DESIGN.md) | Proxy design rationale: full-real-base-URL convention, 404 anti-oracle, RFC 9457 error taxonomy, deviations |
+| [local-llm/DESIGN.md](local-llm/DESIGN.md) | HF cache pipeline, shared-table boundary, the sanctioned-write rule |
+| [docs/scoped-models-and-proxy-overrides.md](docs/scoped-models-and-proxy-overrides.md) | Why pi uses its own catalog with baseUrl overrides (distilled from the retired free-tier pipeline) |
+| [docs/summarized-thinking.md](docs/summarized-thinking.md) | summarized-reasoning extension — CoT summarization design |
+
+### Decision log (append-only)
+
+| Doc | Covers |
+|-----|--------|
 | [docs/d018-split-config-d.md](docs/d018-split-config-d.md) | split `config.d/` layout + llama-swap merge contract |
 | [docs/d020-libvirt-qemu-sandbox.md](docs/d020-libvirt-qemu-sandbox.md) | qemu/libvirt VM sandboxes — requirements assessment (not implemented) |
 | [docs/d027-path-prefix-peer-routing.md](docs/d027-path-prefix-peer-routing.md) | path-prefix peer routing — llm-reverse-proxy replaces llama-swap's model-id magic |
@@ -151,12 +201,17 @@ agentcontainer/
 | [docs/d039-fold-single-consumer-lib-modules.md](docs/d039-fold-single-consumer-lib-modules.md) | single-consumer lib/ modules fold back to their owning runner (peer-probe/pi-models/hyper-facts/catwalk-facts.mjs/refresh-models-dev → coding-agent; pi-ai + ai-sdk tables → generate-config) |
 | [docs/d040-cline-pass-curated-lineup.md](docs/d040-cline-pass-curated-lineup.md) | cline-pass lineup is the published 13-model ClinePass table, not Cline's /models catalog (live sync disabled for it) |
 | [docs/d041-unified-generate-build-entrypoints.md](docs/d041-unified-generate-build-entrypoints.md) | root `generate.mjs`/`build.mjs` unified entrypoints, `lib/node-run.sh` + `lib/go-build.mjs`, runners never build/generate |
-| [docs/termux-build-audit.md](docs/termux-build-audit.md) | Termux build audit — Infisical CLI `go install` impossibility + llm-reverse-proxy native build verification |
-| [coding-agent/merge-models-json.mjs](coding-agent/merge-models-json.mjs) | layered pi `models.json` (base + `model-*.json` overlays) — contract is documented in the script header |
-| [docs/peer-variant-work.md](docs/peer-variant-work.md) | coding-agent-peer (work environment; **archived** — folded into coding-agent; routing/env superseded by d027 + the vault — see its banner) |
-| [docs/scoped-models-and-proxy-overrides.md](docs/scoped-models-and-proxy-overrides.md) | pi models.json / settings.json scoping |
-| [docs/gguf-model-tooling.md](docs/gguf-model-tooling.md) | GGUF tooling (`fetch_hf_manifests.py` live; size-estimation tools archived) |
-| [docs/gguf-vram-fit-estimates.md](docs/gguf-vram-fit-estimates.md) | VRAM/KV/fit tables for all served models (gdevenyi/huggingface-estimate) |
+| [docs/d042-documentation-taxonomy.md](docs/d042-documentation-taxonomy.md) | the docs taxonomy itself — requirements / reference / design / research + decision log, anchor analysis, the moves |
+| [docs/d043-cross-repo-reference-search.md](docs/d043-cross-repo-reference-search.md) | cross-repo/cross-branch search — Zoekt for regex (opt-in, per repo), blob-addressed chunk embeddings for semantics, host-side serving without the farm bind mount |
+
+### Research & archive
+
+| Doc | Covers |
+|-----|--------|
+| [docs/termux-build-audit.md](docs/termux-build-audit.md) | Termux build audit — Infisical CLI `go install` impossibility + llm-reverse-proxy native build verification (anchored: d029/d031 reference this path) |
+| [docs/sandbox-helper-env-analysis.md](docs/sandbox-helper-env-analysis.md) | PRoot-era sandbox env analysis (superseded; anchored: d020 references this path) |
+| [docs/termux-serving.md](docs/termux-serving.md) | a50/Termux serving map, **archived** (anchored: d020/d021/d041 reference this path) |
+| [docs/archive/](docs/archive/) | research findings + retired docs (peer-variant-work, mini-swe-agent, bwrap audit, endpoint rewiring, future-config-generator-system, …) — index inside |
 
 ## Code conventions
 

@@ -1,3 +1,12 @@
+---
+id: sandbox-helper-env-analysis
+type: research
+status: superseded
+title: "Sandbox helper — environment analysis (PRoot era)"
+parent: architecture
+tags: ["research", "superseded", "sandbox"]
+---
+
 # Sandbox helper — environment analysis
 
 > **SUPERSEDED (2026-08-30).** Written when PRoot was still a supported

@@ -59,14 +59,12 @@ export const { CLOUD_PROVIDERS, PI_NATIVE_CLOUD_IDS } = cloudProviders;
 
 /**
  * pi shaping (folded in from the former lib/pi-models.mjs — docs/d039): shape
- * probe results / catalog records into pi `models.json` entries. The two
- * generators that emit pi layers off a peer catalog
- * (`generate-local-llama-swap.mjs` and `generate-cloud-providers.mjs`) share
- * this shaping: llama-swap serves the SAME metadata shape for local GGUF and
- * for cloud peers routed through it (`meta.llamaswap` on `/v1/models`), so
- * the RawModelEntry → PiModel mapping and the provider wrapper (compat block,
- * `/v1` normalization, the `$PEER_API_KEY` reference) are one implementation
- * (docs/d024).
+ * probe results / catalog records into pi `models.json` entries. The pi
+ * generator's local and cloud stages share this shaping: llama-swap serves
+ * the SAME metadata shape for local GGUF and for cloud peers routed through
+ * it (`meta.llamaswap` on `/v1/models`), so the RawModelEntry → PiModel
+ * mapping and the provider wrapper (compat block, `/v1` normalization, the
+ * `$PEER_API_KEY` reference) are one implementation (docs/d024).
  */
 
 // Shared /models shapes — the types live next to the probe toolkit.

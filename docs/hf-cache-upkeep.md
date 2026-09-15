@@ -1,3 +1,12 @@
+---
+id: hf-cache-upkeep
+type: reference
+status: stable
+title: "Hugging Face cache upkeep — upkeep.py runbook"
+parent: local-llm
+tags: ["reference", "runbook", "hf-cache"]
+---
+
 # Hugging Face cache upkeep
 
 ## upkeep.py

@@ -1,3 +1,12 @@
+---
+id: refresh-local-llm-manifest
+type: reference
+status: stable
+title: "Refreshing the local-llm manifest — runbook"
+parent: local-llm
+tags: ["reference", "runbook", "manifest"]
+---
+
 # Refreshing `lib/llamacpp-model-data.json`
 
 This is the operational runbook for keeping the local-llm manifest in sync
@@ -184,7 +193,7 @@ baked snapshot paths from the `.paths` manifest) so the regenerated
   `10-local-llm-inference.yaml` and how llama-swap merges `config.d/`.
 - `hf-cache-upkeep.md` — `upkeep.py` cache GC/pull/verify; `download_models.py`
   must use the `main` ref (not a pinned SHA) to survive pruning.
-- `coding-agent/merge-models-json.mjs` / `coding-agent/generate-models.json.mjs`
-  — the *coding-agent* model generators and the layered `models.json` contract
-  (separate concern; not this local-llm manifest). Their documentation lives in
-  those scripts' headers.
+- `coding-agent/generate-pi-coding-agent.mjs` — the *coding-agent* model
+  generator and the layered `models.json` contract (separate concern; not
+  this local-llm manifest). The merge contract's single home is that script's
+  header; the module design lives in `coding-agent/DESIGN.md`.

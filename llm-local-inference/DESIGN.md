@@ -1,6 +1,6 @@
 ---
 id: llm-local-inference
-type: module-design
+type: design
 status: draft
 title: llm-local-inference — one llama-swap instance per GPU host, local GGUFs only
 parent: architecture
@@ -15,14 +15,15 @@ tags:
 
 ## Responsibility
 
-Run the GPU host's single llama-swap serving instance for **local GGUF
-inference**: generate the capability-gated `config.d/` layers for *this* host,
-then launch llama-swap against whatever was generated. Remote/cloud relaying
-is explicitly OUT of scope — it is served by `../llm-reverse-proxy` (the raw
-passthrough proxy, no model routing, no credential handling). The former
-cloud-peer layers (`peer-cloud.yaml` from `gen-lib`'s PROVIDERS table) and the
-remote gfx1030 peer route (`22-peer-gfx1030.yaml`) were removed in that
-handoff; llama-swap's peer/proxy machinery is no longer exercised from here.
+Charter: the GPU host's single llama-swap instance for **local GGUF
+inference** — generate the capability-gated `config.d/` layers for *this*
+host, then launch llama-swap against whatever was generated. The normative
+requirement statement lives in the BRD
+([../docs/requirements.md](../docs/requirements.md), FR-S1–FR-S4); this doc
+owns the shape and the non-obvious mechanics. Remote/cloud relaying is OUT of
+scope — the former cloud-peer layers and the remote gfx1030 peer route were
+removed when relaying moved to `../llm-reverse-proxy` (the raw passthrough
+proxy); llama-swap's peer/proxy machinery is no longer exercised from here.
 
 ## Shape
 

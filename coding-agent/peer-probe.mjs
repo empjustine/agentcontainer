@@ -86,7 +86,7 @@ const REQUEST_TIMEOUT_MS = 8000;
  *   - `/llama-swap/…` → http://127.0.0.1:8101, the LOCAL GGUF llama-swap
  *     instance (LAN 8101; its /v1 OpenAI surface and model-id magic are
  *     unchanged behind the prefix — addressed by
- *     generate-local-llama-swap.mjs / generate-opencode.jsonc.mjs's local
+ *     generate-pi-coding-agent.mjs / generate-opencode.mjs's local
  *     probe as peerProviderUrl(peerBase, "llama-swap")).
  *
  * No localhost candidate exists beside it — the LAN :8080 (proxy) and :8101

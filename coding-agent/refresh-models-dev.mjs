@@ -29,7 +29,7 @@
  *     defensive so a missing undici install only drops proxy support.
  *
  * Validation is scoped to what the generators consume from the catalog (see
- * coding-agent/generate-cloud-providers.mjs): every listed
+ * coding-agent/generate-pi-coding-agent.mjs): every listed
  * provider must exist with a models map or the payload is rejected. (The
  * former llm-local-inference peer generators were also consumers until the
  * cloud-relay handoff to llm-reverse-proxy removed them; the required list

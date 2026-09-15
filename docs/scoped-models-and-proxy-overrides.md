@@ -1,3 +1,12 @@
+---
+id: scoped-models-and-proxy-overrides
+type: design
+status: draft
+title: "Scoped models and proxy overrides — the distilled rationale"
+parent: coding-agent
+tags: ["design", "scoped-models", "overrides"]
+---
+
 # Scoped models and proxy overrides
 
 The coding-agent container is configured on the host ahead of pi by

@@ -1,3 +1,11 @@
+---
+id: llama-swap-response-analysis
+type: research
+status: findings
+parent: architecture
+tags: ["research", "findings", "archive"]
+---
+
 # llama-swap Response vs pi Agent Expectations
 
 ## Your current response from llama-swap

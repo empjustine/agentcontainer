@@ -1,3 +1,12 @@
+---
+id: gguf-model-tooling
+type: reference
+status: partially-archived
+title: "GGUF model tooling — live manifest tooling + archived size-estimation tools"
+parent: local-llm
+tags: ["reference", "gguf", "tooling"]
+---
+
 # GGUF model tooling (PARTIALLY ARCHIVED)
 
 > **Status:** the size-estimation tools — `generate_layer_cards.py`,

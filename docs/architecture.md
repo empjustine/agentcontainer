@@ -1,6 +1,6 @@
 ---
 id: architecture
-type: architecture-design
+type: reference
 status: accepted
 title: "Architecture: self-contained runners + base config generators"
 parent: goal
@@ -165,6 +165,9 @@ the variant folders redundant.)
 | `llm-reverse-proxy/` | path-prefix cloud router for cloud/remote providers (`/<providerId>` → provider's full real base URL, byte-for-byte, no keys — docs/d027; streaming as-is, RFC 9457 502s) | `main.go`, `generate.sh`/`generate.mjs` (routing table from lib/cloud-providers.mjs, docs/d038), `llm-reverse-proxy.example.json`, `smoke-test.sh`; built by the root `build.mjs` |
 | `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.sh`/`generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.sh`, `settings.json`, `auth.json`; image built by the root `build.mjs` |
 
-The next planned step — a simplified config-generator system split by concern —
-is sketched in
-[future-config-generator-system.md](future-config-generator-system.md).
+The former "next planned step" sketch (a simplified config-generator system
+split by concern) is archived at
+[archive/future-config-generator-system.md](archive/future-config-generator-system.md)
+— d030/d037 implemented its generator split, d041 the unified entrypoints.
+Document taxonomy (requirements / reference / design + the decision log):
+docs/d042.

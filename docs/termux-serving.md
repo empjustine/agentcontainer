@@ -1,3 +1,12 @@
+---
+id: termux-serving
+type: research
+status: archived
+title: "Termux / a50 serving environment — archived map"
+parent: environments
+tags: ["research", "archived", "termux"]
+---
+
 # Termux / a50 serving environment
 
 > **Archived map (kept for the environment matrix)**: the Termux native

@@ -1,33 +1,67 @@
 /**
- * @fileoverview generate-cloud-providers.mjs — the ONE table-driven generator
- * for every CLOUD provider layer (docs/d037 merged the former
- * generate-cloud-pi-native-providers.mjs + generate-cloud-alternative-
- * providers.mjs; d030 option 6). One PROVIDER_SPECS table, two emission
- * modes:
+ * @fileoverview generate-pi-coding-agent.mjs — THE unified pi coding-agent
+ * generator: the single entry point that produces every pi artifact — the
+ * layered `model-*.json` overlays, the merged `models.json`, and the
+ * operator's default-model overlay.
  *
- *   - `override-only` (the pi-native set): pi ships the provider, so the
- *     layer can only ever REROUTE it. Direct endpoint reachable ⇒ emit
- *     nothing (pi's built-in routing stays). Peer path-route usable ⇒
- *     `providerReroute` with filtered models from the live listing, else
- *     bare catalog ids. All rows land in the ONE layer
- *     `model-012-cloud-pi-native.json`.
- *   - `full` (providers pi does NOT ship — cline-pass/hyper/inferx): the
- *     layer is the sole definition, so a FULL block is always emitted —
- *     direct mode at the real endpoint (with live-listing sync when the
- *     provider's key is in the environment + facts enrichment), peer mode at
- *     the peer route with the catalog lineup. One layer file per row
- *     (model-015/016/017).
+ * Merged by target harness (docs/d037 chose a narrow merge; this is the broad
+ * merge by coding agent that supersedes it). The four former stage generators
+ * are no longer separate processes; their bodies live here in order:
  *
- * Detection cascade, reachability rule ("reachable ≠ authenticated"),
- * model-list source priority and the per-provider quirks live in docs/d033 —
- * this header deliberately does not duplicate them. Merge contract:
- * merge-models-json.mjs (same `model-012/015/016/017` filenames as before).
+ *   1. `generateLocalLlamaSwap`  → `model-010-local-default.json`
+ *      (ADDS the `llama-swap` provider for local GGUF; pi has no built-in one)
+ *   2. `generateCloudProviders`  → `model-012-cloud-pi-native.json`
+ *      (override-only: empty when every pi-native endpoint is reachable) plus
+ *      `model-015/016/017-*.json` (full rows: the sole definition for
+ *      providers pi does not ship; docs/d037/d033)
+ *   3. `mergeModels`             → `models.json` (lexical layer order, deep
+ *      merge)
+ *   4. `generateDefaultModel`    → `default-model.json` (the operator's
+ *      hardcoded pair — an OPERATOR DECISION, not a probed fact; docs/d036)
  *
- * Usage: node generate-cloud-providers.mjs
- *   Layers are written next to this script (the scratch dir when staged).
+ * THE LAYERED CAKE (the merge contract — this header is its single home; the
+ * former merge-models-json.mjs header moved here): every `model-*.json` is a
+ * `models.json`-shaped layer (`{ "providers": { "<id>": {...} } }`, or `{}`
+ * for a no-op), and `mergeModels` reads every `model-*.json` in this script's
+ * dir in **lexical filename order** — the zero-padded lexorank (`010`, `012`,
+ * `015`, `016`, `017`) makes filename sort equal merge order:
+ *
+ * ```text
+ * model-010-local-default.json
+ *   + model-012-cloud-pi-native.json
+ *   + model-015-cloud-cline-pass.json
+ *   + model-016-cloud-hyper.json
+ *   + model-017-cloud-inferx.json
+ *   + model-020-peer-default.json   (future / drop-in)
+ *   → models.json
+ * ```
+ *
+ * Merge semantics: `providers` merge per provider id; within a provider,
+ * objects (e.g. `compat`) recursively merge while scalars and arrays (e.g.
+ * `baseUrl`, `models`) are REPLACED by the later layer. So a later layer
+ * overrides a scalar and adds/replaces models without the earlier layer
+ * knowing about it. A deployment picks its layers simply by placing the files
+ * it wants next to this script — the collector reads whatever is present at
+ * runtime.
+ *
+ * Each stage keeps its own failure domain: `runStage` catches a thrown stage
+ * and the remaining stages still run, preserving the pre-merge behaviour where
+ * `generate.mjs` spawned each stage as a child and warned on non-zero exit.
+ *
+ * `generate.mjs` (the folder driver) stages this file together with its
+ * helper modules into a scratch dir, sets `LIB_DIR`, refreshes the models.dev
+ * catalog, then runs this generator once — followed by the separate
+ * opencode generator. The per-stage docs these bodies were folded from are
+ * `docs/d024`, `docs/d033`, `docs/d037`.
+ *
+ * Usage: node generate-pi-coding-agent.mjs [models.json] [default-model.json]
+ *   models.json defaults to $PI_MODELS_JSON else ./models.json.
+ *   default-model.json defaults to $PI_DEFAULT_MODEL_JSON else
+ *   ./default-model.json.
+ *   Settings source for the default pair: $PI_SETTINGS else ./settings.json.
  */
 
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
@@ -40,10 +74,14 @@ import {
 	logWarn,
 	modelsDevCatalogPath,
 	PI_NATIVE_CLOUD_IDS,
+	peerBaseUrl,
 	peerBaseUrls,
-	piModel as peerModel,
+	peerProviderUrl,
+	piModel,
+	probeCandidates,
 	probeDirect,
 	probePeerRoutes,
+	providerEntry,
 	providerReroute,
 	refreshCatwalkFacts,
 	refreshHyperFacts,
@@ -52,7 +90,7 @@ import {
 	writeArtifact,
 } from "./gen-lib.mjs";
 
-setLogTool("coding-agent/generate-cloud-providers");
+setLogTool("coding-agent/generate-pi-coding-agent");
 
 // Peer candidates — vault-sourced (peerBaseUrls(); see peer-probe.mjs).
 // Supports multi-hop proxy chains (PEER_BASE_URLS comma/newline delimited);
@@ -108,7 +146,7 @@ const PEER_MODEL_FILTERS = {
 /**
  * Provider spec rows for BOTH modes (docs/d037). One row = one emission
  * unit; adding a provider is a row here (full rows also need a merge-order
- * row in merge-models-json.mjs's header — that contract lives there).
+ * row in the layered-cake contract above — that contract lives in this file).
  * @typedef {object} CloudProviderSpec
  * @property {string} id models.dev provider key AND pi provider id
  * @property {'override-only'|'full'} mode emission semantic (see header)
@@ -142,21 +180,23 @@ const PEER_MODEL_FILTERS = {
  * published lineup wins until Cline's docs add a model (docs/d040).
  * @type {readonly string[]}
  */
-const CLINE_PASS_LINEUP = /** @type {readonly string[]} */ (Object.freeze([
-	"glm-5.3",
-	"glm-5.2",
-	"kimi-k3",
-	"kimi-k2.7-code",
-	"kimi-k2.6",
-	"deepseek-v4-pro",
-	"deepseek-v4-flash",
-	"mimo-v2.5",
-	"mimo-v2.5-pro",
-	"minimax-m3",
-	"qwen3.8-max",
-	"qwen3.7-max",
-	"qwen3.7-plus",
-]));
+const CLINE_PASS_LINEUP = /** @type {readonly string[]} */ (
+	Object.freeze([
+		"glm-5.3",
+		"glm-5.2",
+		"kimi-k3",
+		"kimi-k2.7-code",
+		"kimi-k2.6",
+		"deepseek-v4-pro",
+		"deepseek-v4-flash",
+		"mimo-v2.5",
+		"mimo-v2.5-pro",
+		"minimax-m3",
+		"qwen3.8-max",
+		"qwen3.7-max",
+		"qwen3.7-plus",
+	])
+);
 
 /** @type {CloudProviderSpec[]} */
 const PROVIDER_SPECS = [
@@ -384,7 +424,7 @@ function toCost(cost) {
  * keeps the catalog's own id (ClinePass catalog ids are already
  * `cline-pass/<modelId>`; Hyper's are bare — both are published verbatim in
  * direct mode, since pi namespaces them under the provider id itself).
- * Distinct from gen-lib's `peerModel` (renamed import) on purpose: that one
+ * Distinct from gen-lib's `piModel` on purpose: that one
  * mirrors a RAW /models entry, this one derives from a full models.dev
  * record incl. thinkingLevelMap/compat (docs/d033).
  * @param {CloudProviderSpec} spec the provider spec row
@@ -638,7 +678,7 @@ function catalogModelIds(spec) {
  */
 function listingModels(entries, spec) {
 	const filter = spec.filter;
-	const models = entries.filter((e) => filter?.(e.id) ?? true).map(peerModel);
+	const models = entries.filter((e) => filter?.(e.id) ?? true).map(piModel);
 	return models.length ? models : null;
 }
 
@@ -710,7 +750,7 @@ async function emitOverrideOnly(spec, providers) {
 	});
 	providers[spec.id] = providerReroute(
 		route.url,
-		ids.map((mid) => peerModel({ id: mid })),
+		ids.map((mid) => piModel({ id: mid })),
 	);
 }
 
@@ -786,7 +826,9 @@ async function emitFull(spec) {
 async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
 	const allow = spec.modelAllowlist;
 	const catalogModels = Object.entries(provider.models)
-		.filter(([id]) => !allow || allow.includes(stripProviderPrefixes(spec.id, id)))
+		.filter(
+			([id]) => !allow || allow.includes(stripProviderPrefixes(spec.id, id)),
+		)
 		.map(([, m]) => m);
 	/** @type {PiAlternativeModel[]} */
 	let models = catalogModels
@@ -798,7 +840,11 @@ async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
 	// ones (minimal entries; the listing carries no metadata). Peer mode has
 	// no lineup source beyond the catalog (the providers' own listings mirror
 	// passthrough catalogs that do not match their models.dev lineups).
-	if (directMode && spec.liveSync !== false && process.env[spec.envKey]?.trim()) {
+	if (
+		directMode &&
+		spec.liveSync !== false &&
+		process.env[spec.envKey]?.trim()
+	) {
 		try {
 			const liveEntries = await fetchModelEntries(
 				provider.api,
@@ -877,7 +923,7 @@ async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
 }
 
 /** @returns {Promise<void>} */
-async function main() {
+async function generateCloudProviders() {
 	// Best-effort cache refresh before the cascade reads it (order is
 	// irrelevant — it only writes lib caches; a failing refresh must not fail
 	// generation). Hyper's refresh is NOT here: it belongs to the hyper row's
@@ -911,4 +957,210 @@ async function main() {
 	logInfo("pi-native override layer written", { path: written });
 }
 
-main();
+/**
+ * @param {string} out
+ * @returns {Promise<void>}
+ */
+async function generateLocalLlamaSwap(out) {
+	// The peer's funnel base URL — vault-sourced (peerBaseUrl(); see the header
+	// there). No localhost candidates are probed — the LAN :8080 (proxy) and
+	// :8101 (llama-swap) listen addresses are not routable from outside the host
+	// they serve (docs/d022). peerBaseUrl() throws when no peer base is set;
+	// keeping it inside the stage means the other pi stages still run.
+	const LOCAL_SOURCE_CANDIDATES = [
+		peerProviderUrl(peerBaseUrl(), "llama-swap"),
+	];
+
+	const local = await probeCandidates(LOCAL_SOURCE_CANDIDATES, (ids) =>
+		ids.some((id) => id.includes("-GGUF")),
+	);
+	/** @type {Record<string, import("./gen-lib.mjs").PiProvider>} */
+	const providers = {};
+	if (local) {
+		const gguf = local.entries.filter((e) => e.id.includes("-GGUF"));
+		providers["llama-swap"] = providerEntry(local.baseUrl, gguf.map(piModel));
+	} else {
+		logInfo("no local GGUF source reachable — omitting llama-swap provider");
+	}
+
+	if (Object.keys(providers).length === 0) {
+		logWarn("nothing usable detected — output left untouched", { out });
+		return;
+	}
+
+	const written = writeArtifact(
+		out,
+		`${JSON.stringify({ providers }, null, 2)}\n`,
+	);
+	const summary = Object.entries(providers)
+		.map(([id, p]) => `${id}=${p.baseUrl}(${p.models.length})`)
+		.join(", ");
+	logInfo("wrote models layer", { path: written, providers: summary });
+}
+
+/**
+ * A JSON object node; arrays and scalars are merge leaves (see header).
+ * @typedef {Record<string, unknown>} JsonObject
+ */
+
+/**
+ * @param {unknown} value
+ * @returns {value is JsonObject} true for plain objects — arrays and null are
+ *   leaves, not merge targets
+ */
+function isPlainObject(value) {
+	return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+/**
+ * Deep-merge layers left to right: objects recurse, everything else is
+ * replaced by the later layer.
+ * @param {...unknown} layers
+ * @returns {JsonObject}
+ */
+function deepMerge(...layers) {
+	/** @type {JsonObject} */
+	const out = {};
+	for (const layer of layers) {
+		if (!isPlainObject(layer)) continue;
+		for (const [key, value] of Object.entries(layer)) {
+			if (isPlainObject(value) && isPlainObject(out[key])) {
+				out[key] = deepMerge(out[key], value);
+			} else {
+				out[key] = value;
+			}
+		}
+	}
+	return out;
+}
+
+/**
+ * @param {string} path
+ * @returns {unknown} the parsed document (any shape — layers are validated by
+ *   the merge, not here)
+ * @throws {Error} when the file is missing or not valid JSON
+ */
+function readJson(path) {
+	try {
+		return JSON.parse(readFileSync(path, "utf-8"));
+	} catch (error) {
+		throw new Error(
+			`failed to parse ${path}: ${/** @type {Error} */ (error).message}`,
+		);
+	}
+}
+
+/**
+ * @param {string} out
+ * @returns {void}
+ */
+function mergeModels(out) {
+	const overlayNames = readdirSync(scriptDir)
+		.filter((name) => /^model-.*\.json$/.test(name))
+		.sort();
+	const layers = overlayNames.map((name) => readJson(join(scriptDir, name)));
+	const written = writeArtifact(
+		out,
+		`${JSON.stringify(deepMerge(...layers), null, 2)}\n`,
+	);
+	logInfo("merged layers", { overlays: overlayNames.length, path: written });
+}
+
+/**
+ * The settings source whose defaultProvider/defaultModel this generator
+ * returns. generate.sh points $PI_SETTINGS at the file it installs (the
+ * agent dir's settings.json after the settings-install stage); manual runs
+ * read the repo's committed copy.
+ * @returns {string}
+ */
+function settingsPath() {
+	return process.env.PI_SETTINGS ?? join(scriptDir, "settings.json");
+}
+
+/**
+ * @typedef {object} SettingsSource
+ * @property {string} [defaultProvider]
+ * @property {string} [defaultModel]
+ */
+
+/**
+ * @param {string} outPath
+ * @returns {void}
+ */
+function generateDefaultModel(outPath) {
+	let settings = /** @type {SettingsSource} */ ({});
+	try {
+		settings = /** @type {SettingsSource} */ (
+			JSON.parse(readFileSync(settingsPath(), "utf-8"))
+		);
+	} catch (err) {
+		logWarn("settings source unreadable — no default model configuration", {
+			path: settingsPath(),
+			error: /** @type {Error} */ (err).message,
+		});
+	}
+
+	const overlay = {};
+	if (settings.defaultProvider)
+		overlay.defaultProvider = settings.defaultProvider;
+	if (settings.defaultModel) overlay.defaultModel = settings.defaultModel;
+
+	if (overlay.defaultProvider && overlay.defaultModel) {
+		logInfo("default model: operator-hardcoded pair returned as is", {
+			provider: overlay.defaultProvider,
+			model: overlay.defaultModel,
+			from: settingsPath(),
+		});
+	} else {
+		logWarn(
+			"settings source carries no defaultProvider/defaultModel — empty overlay written (pi's own default will apply)",
+			{ path: settingsPath() },
+		);
+	}
+	const written = writeArtifact(
+		outPath,
+		`${JSON.stringify(overlay, null, 2)}\n`,
+	);
+	logInfo("default model configuration written", { path: written });
+}
+
+/**
+ * Run one stage; a thrown stage is logged and the ones after it still run
+ * (pre-merge behaviour: generate.mjs spawned each stage as a child and warned
+ * on non-zero exit). Keeping that isolation in one process is what makes the
+ * broad merge safe.
+ * @param {string} name
+ * @param {() => void|Promise<void>} run
+ * @returns {Promise<void>}
+ */
+async function runStage(name, run) {
+	try {
+		await run();
+	} catch (err) {
+		logWarn("pi stage failed — continuing", {
+			stage: name,
+			error: /** @type {Error} */ (err)?.message ?? String(err),
+		});
+	}
+}
+
+/** @returns {Promise<void>} */
+async function main() {
+	const modelsOut =
+		process.argv[2] ??
+		process.env.PI_MODELS_JSON ??
+		join(scriptDir, "models.json");
+	const defaultOut =
+		process.argv[3] ??
+		process.env.PI_DEFAULT_MODEL_JSON ??
+		join(scriptDir, "default-model.json");
+
+	await runStage("local-llama-swap", () =>
+		generateLocalLlamaSwap(join(scriptDir, "model-010-local-default.json")),
+	);
+	await runStage("cloud-providers", () => generateCloudProviders());
+	await runStage("merge-models", () => mergeModels(modelsOut));
+	await runStage("default-model", () => generateDefaultModel(defaultOut));
+}
+
+await main();

@@ -1,3 +1,11 @@
+---
+id: peer-variant-work
+type: research
+status: archived
+parent: architecture
+tags: ["research", "archived", "archive"]
+---
+
 # Work (nonfree-world) peer variant
 
 > **ARCHIVED, and SUPERSEDED twice over** — read nothing below as current:

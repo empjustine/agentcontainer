@@ -1,3 +1,11 @@
+---
+id: endpoint-runtime-rewiring
+type: research
+status: findings
+parent: architecture
+tags: ["research", "findings", "archive"]
+---
+
 # Endpoint Runtime Rewiring: findings
 
 Consolidated findings from two verification passes:

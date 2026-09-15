@@ -1,3 +1,12 @@
+---
+id: summarized-thinking
+type: design
+status: draft
+title: "summarized-reasoning extension — design note"
+parent: coding-agent
+tags: ["design", "pi-extensions", "reasoning"]
+---
+
 # summarized-reasoning extension
 
 Swap the model's raw chain-of-thought for a concise summary, inline.

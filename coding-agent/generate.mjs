@@ -1,8 +1,9 @@
 /**
- * @fileoverview generate.mjs — unified pi config generator orchestrator
- * (container hosts AND Termux; d041 ported the former generate.sh shell 1:1
- * into node — the d037 stage modules stay separate files and are spawned as
- * child processes).
+ * @fileoverview generate.mjs — the coding-agent folder driver: it stages the
+ * two by-harness generators (pi + opencode) into a writable scratch dir,
+ * installs the static settings.json, refreshes the models.dev catalog, runs
+ * them as child processes, and installs the generated artifacts (container
+ * hosts AND Termux; d041 ported the former generate.sh shell 1:1 into node).
  *
  * Profile, detected at runtime:
  *   Termux (PREFIX under /data/data/com.termux):
@@ -20,14 +21,12 @@
  *     - peer routing goes through the vault-sourced $PEER_BASE_URL (or
  *       $PEER_BASE_URLS for multi-hop proxy chains — see peer-probe.mjs)
  *
- * Stages (each non-fatal on its own; the layered models.json contract these
- * feed is documented in merge-models-json.mjs):
- *   generate-local-llama-swap.mjs -> model-010-local-default.json
- *   generate-cloud-providers.mjs  -> model-012/015/016/017-*.json (docs/d037)
- *   merge-models-json.mjs         -> models.json
- *   generate-default-model.mjs    -> the operator's hardcoded default pair
- *                                    merged into settings.json (docs/d036)
- *   generate-opencode.jsonc.mjs   -> opencode config (skipped on Termux
+ * Generators, one per coding agent (the broad BY-AGENT merge that supersedes
+ * docs/d037's narrow verdict):
+ *   generate-pi-coding-agent.mjs -> all pi artifacts: the model-*.json layers,
+ *                                    merged models.json, and the operator's
+ *                                    hardcoded default pair overlay (docs/d036)
+ *   generate-opencode.mjs        -> opencode config (skipped on Termux
  *                                    without OPENCODE_CONFIG_DIR)
  *
  * Outputs are installed into the pi agent dir (models.json + settings.json,
@@ -129,9 +128,11 @@ const runDir =
 const modelsDevJson =
 	process.env.MODELS_DEV_JSON ?? join(repoRoot, "lib", "models.dev.api.json");
 
-// Stage runner: the stage modules are CLIs (spawned child processes — the
-// d037 narrow-merge verdict keeps layer generation independent), so a stage
+// Generator runner: the two by-harness generators are CLIs (spawned child
+// processes, so one harness's crash never aborts the other), and a stage
 // failure is a warn-and-continue exactly like the shell's `|| log_warn`.
+// Inside the pi generator the former pi stages are isolated in-process by its
+// own runStage, so this spawn is the only cross-process boundary left.
 /**
  * @param {string} script absolute path
  * @param {string[]} [args]
@@ -203,11 +204,8 @@ const scratchLib = join(scratch, "lib");
 mkdirSync(scratchLib, { recursive: true });
 const GENERATORS = [
 	"gen-lib.mjs",
-	"generate-local-llama-swap.mjs",
-	"generate-cloud-providers.mjs",
-	"merge-models-json.mjs",
-	"generate-opencode.jsonc.mjs",
-	"generate-default-model.mjs",
+	"generate-pi-coding-agent.mjs",
+	"generate-opencode.mjs",
 	"peer-probe.mjs",
 	"hyper-facts.mjs",
 	"catwalk-facts.mjs",
@@ -326,18 +324,17 @@ if (process.env.SKIP_GEN === "1") {
 		}
 	}
 
-	logInfo("generating models.json (direct-vs-peer path-route cascades + models.dev)");
-	// Cloud layers (docs/d037 unified generator — override-only AND full rows):
-	// probes each pi-native provider's own endpoint (reroute only when
-	// unreachable) and derives the full alternative provider blocks from the
-	// vendored models.dev.api.json. Writes the shared pi-native override layer
-	// next to itself (the scratch dir), plus one layer file per full row
-	// (model-012/015/016/017).
-	runStage(join(scratch, "generate-local-llama-swap.mjs"), [
-		join(scratch, "model-010-local-default.json"),
-	]);
-	runStage(join(scratch, "generate-cloud-providers.mjs"));
-	runStage(join(scratch, "merge-models-json.mjs"), [join(scratch, "models.json")]);
+	logInfo("generating pi config (layers + merge + default overlay)");
+	// One generator, one process: generate-pi-coding-agent.mjs runs the local
+	// GGUF layer, the cloud layers (docs/d037 override-only + full rows), the
+	// layer merge, and the operator default-model overlay internally, each
+	// stage isolated so one failure does not take the rest down (the same
+	// contract the former per-stage child processes had). Its default stage
+	// reads the settings file installed above ($PI_SETTINGS).
+	process.env.PI_SETTINGS = settingsPath;
+	process.env.PI_MODELS_JSON = join(scratch, "models.json");
+	process.env.PI_DEFAULT_MODEL_JSON = join(scratch, "default-model.json");
+	runStage(join(scratch, "generate-pi-coding-agent.mjs"));
 
 	if (existsSync(join(scratch, "models.json"))) {
 		modelsOut = join(scratch, "models.json");
@@ -353,22 +350,16 @@ if (process.env.SKIP_GEN === "1") {
 
 currentStage = "default-model";
 
-// --- default model: return the operator's hardcoded defaultProvider/
-// defaultModel from the settings source, as is (docs/d036 — the former
-// models.json-probing picker selected unreachable-at-request-time providers;
-// the default is an OPERATOR DECISION, not a probed fact). Independent of
-// the models.json stage; best-effort like every other stage.
+// --- default model: the pi generator's default stage returned the operator's
+// hardcoded defaultProvider/defaultModel from the settings source, as is
+// (docs/d036 — the default is an OPERATOR DECISION, not a probed fact). It ran
+// with the rest of the pi stages; this block merges its overlay into the
+// installed settings.json (independent of the models.json install).
 if (process.env.SKIP_GEN === "1") {
 	logInfo("SKIP_GEN: skipping default model configuration");
-} else if (existsSync(join(scratch, "generate-default-model.mjs"))) {
-	// Point the generator at the settings file this script just installed (the
-	// single source of the hardcoded pair — the scratch copy never carries it).
-	process.env.PI_SETTINGS = settingsPath;
+} else {
 	const overlay = join(scratch, "default-model.json");
-	if (
-		runStage(join(scratch, "generate-default-model.mjs"), [overlay]) &&
-		existsSync(overlay)
-	) {
+	if (existsSync(overlay)) {
 		// DRY_RUN: the overlay landed as a .dry-run preview (lib/artifact.mjs)
 		// and existsSync above already failed — the merge below never runs.
 		const defaultModel = JSON.parse(readFileSync(overlay, "utf-8"));
@@ -386,10 +377,8 @@ if (process.env.SKIP_GEN === "1") {
 			path: settingsPath,
 		});
 	} else {
-		logWarn("generate-default-model.mjs failed or empty overlay");
+		logWarn("pi generator produced no default-model overlay");
 	}
-} else {
-	logWarn("generate-default-model.mjs not staged");
 }
 
 currentStage = "models-install";
@@ -458,9 +447,9 @@ if (process.env.OPENCODE_CONFIG_DIR) {
 } else if (!termux) {
 	ocOut = join(scriptDir, "opencode.jsonc");
 }
-if (ocOut && existsSync(join(scratch, "generate-opencode.jsonc.mjs"))) {
-	if (!runStage(join(scratch, "generate-opencode.jsonc.mjs"), [ocOut])) {
-		logWarn("generate-opencode.jsonc.mjs failed; using existing config if present");
+if (ocOut && existsSync(join(scratch, "generate-opencode.mjs"))) {
+	if (!runStage(join(scratch, "generate-opencode.mjs"), [ocOut])) {
+		logWarn("generate-opencode.mjs failed; using existing config if present");
 	}
 }
 

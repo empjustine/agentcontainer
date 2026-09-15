@@ -1,3 +1,11 @@
+---
+id: mini-swe-agent
+type: research
+status: findings
+parent: architecture
+tags: ["research", "findings", "archive"]
+---
+
 # Two approaches to building a minimal coding agent
 
 A comparison of **mini-swe-agent** (`/reference/github/SWE-agent/mini-swe-agent/`, v2.4.6, Python) and **pi**'s agent core (`/reference/github/earendil-works/pi/packages/agent/`, `@earendil-works/pi-agent-core` 0.84.1, TypeScript), which is the package pi builds its coding agent on. Both solve the same problem — a loop that lets an LLM inspect a repo, run commands, edit files, and finish — but they optimize for opposite things: mini for *radical simplicity and hackability*, pi for *durability, extensibility, and UI-driven control*.

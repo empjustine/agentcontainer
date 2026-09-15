@@ -36,6 +36,11 @@
 #                    and pi's config source are the same path by construction
 #   PEER_BASE_URL    relay — vault-sourced via the lib/environment.sh chain
 #                    (consumed by the GENERATOR, never read by pi itself)
+#   CODING_AGENT_REFERENCES  1 = also ro-mount ~/Downloads/references (the
+#                    optional upstream-reference mirror). OFF by default: the
+#                    tree is ~1.6M files, and podman's z,U mount options walk
+#                    and relabel ALL of it on every launch — tens of seconds of
+#                    silent startup cost for a non-canonical convenience cache.
 
 set -eu
 
@@ -132,17 +137,18 @@ cp "$SCRIPT_DIR/models.json" "$agent_dir/models.json"
 # host-local, untracked files). Mounted for MANUAL in-container regeneration
 # via the generate.sh shim (the runner itself never invokes it — docs/d041):
 # generate.mjs stages the module list below from this ro-mount into its
-# scratch dir, so every module it spawns must be in this list (generate-
-# default-model.mjs used to be missing here: the in-container default-model
-# stage silently degraded to "not staged"). check-node-version stays
-# unmounted — the version gate is Termux-only and runs from the repo dir, and
-# the orchestrator counts providers inline now (the former count-providers/
-# list-providers helpers were pruned with their shell caller — docs/d041).
+# scratch dir, so every module it spawns must be in this list. The generators
+# are now ONE PER CODING AGENT (generate-pi-coding-agent.mjs and
+# generate-opencode.mjs) — the former per-stage pi generators were merged
+# into the pi one, so this list must not reintroduce them.
+# check-node-version stays unmounted — the version gate is Termux-only and
+# runs from the repo dir, and the orchestrator counts providers inline now
+# (the former count-providers/list-providers helpers were pruned with their
+# shell caller — docs/d041).
 _gen_target='/opt/coding-agent'
 for _f in generate.sh generate.mjs gen-lib.mjs \
-	generate-local-llama-swap.mjs generate-cloud-providers.mjs \
-	merge-models-json.mjs generate-opencode.jsonc.mjs \
-	generate-default-model.mjs settings.json; do
+	generate-pi-coding-agent.mjs generate-opencode.mjs \
+	settings.json; do
 	workload_ro "$SCRIPT_DIR/$_f" "$_gen_target/$_f"
 done
 # Committed fallbacks generate.sh installs when the cascade comes up empty or
@@ -227,7 +233,17 @@ workload_network  host
 workload_user
 # Optional local mirror of upstream reference repos (read-only convenience
 # cache; NOT canonical — the upstream repos are the source of truth).
-workload_ro_if    "$HOME/Downloads/references" "$HOME/Downloads/references"
+#
+# OFF BY DEFAULT (CODING_AGENT_REFERENCES=1 to enable): on a populated host
+# this tree is hundreds of GB / >1M files, and every podman mount carries the
+# `z,U` options (lib/workload-render.jq), which RECURSIVELY relabel+idmap the
+# source on EACH launch. That walk is the single largest startup cost in this
+# script — measuring ~39 s for a 1.66M-file mirror while the rest of the
+# mounts (HF cache 823 files, workspace ~hundreds) are noise. The cache is not
+# needed to run pi; enable it only for a session that reads the mirror.
+if [ "${CODING_AGENT_REFERENCES:-0}" = 1 ]; then
+	workload_ro_if "$HOME/Downloads/references" "$HOME/Downloads/references"
+fi
 #workload_ro_if    "$HF_HUB_CACHE" /home/${USER}/.cache/huggingface/hub
 workload_rw       "$agent_dir" "/home/${USER}/.pi/agent"
 workload_rw       "$HF_HUB_CACHE" "/home/${USER}/.cache/huggingface/hub"
@@ -245,4 +261,9 @@ workload_env_allowlist CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY \
 	OPENROUTER_API_KEY OPENCODE_API_KEY HYPER_API_KEY INFERX_API_KEY \
 	HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY PEER_BASE_URL
 workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
+# Everything above this line is host-side argv assembly (jq + filesystem); the
+# next call is where podman creates the container — mount relabel, userns
+# setup and image probes all happen there with no output until the container's
+# own launch.sh logs. This line brackets that gap for the log reader.
+log_info "starting container" container="$container_name"
 workload_run

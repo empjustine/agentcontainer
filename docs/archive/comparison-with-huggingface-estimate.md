@@ -1,3 +1,11 @@
+---
+id: comparison-with-huggingface-estimate
+type: research
+status: findings
+parent: architecture
+tags: ["research", "findings", "archive"]
+---
+
 # Comparison: `gguf-metadata-parser.js` vs `huggingface-estimate`
 
 > Date: 2026-07-25
