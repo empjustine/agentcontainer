@@ -19,6 +19,12 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # shellcheck disable=SC1091
 . "$REPO_ROOT/lib/log.sh"
 
+# interpreter selection (node_run) moved to lib/node-run.sh (docs/d041) — a
+# standalone sh lib any script can source without the container API; sourced
+# here so existing consumers of this file keep it.
+# shellcheck disable=SC1091
+. "$REPO_ROOT/lib/node-run.sh"
+
 # --- profile + runner helpers ----------------------------------------------
 # Shared by every script that sources this file (the generate.sh scripts used
 # to carry their own identical copies — see docs/d023).
@@ -29,18 +35,6 @@ _termux=0
 case "${PREFIX:-}" in
 	*/com.termux/*) _termux=1 ;;
 esac
-
-# node_run [args...] — run node with the repo-pinned version, or the system
-# node on Termux (there is no mise there).  Callers own the version-floor
-# checks, which differ by product (>= 18 for the llm-local-inference
-# generators' global fetch, >= 22.19 for pi-coding-agent's engines).
-node_run() {
-	if [ "$_termux" = 1 ]; then
-		node "$@"
-	else
-		mise exec node@24 -- node "$@"
-	fi
-}
 
 # default_run_dir — the ${RUN_DIR:-...} fallback shared by the generate.sh
 # scripts (scratch dir for intermediate artifacts; the script's own dir may be

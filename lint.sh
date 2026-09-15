@@ -19,8 +19,8 @@ root="${1:-$(CDPATH='' cd "$(dirname "$0")" && pwd)}"
 cd "$root"
 
 log_info "shellcheck"
-# -x: follow `source` directives (the generate.sh scripts point at
-# lib/workload-runtime.sh for _termux/node_run/default_run_dir).
+# -x: follow `source` directives (the generate.sh shims point at
+# lib/node-run.sh for node_run; run scripts point at lib/workload-runtime.sh).
 mise exec shellcheck@latest -- find . -type f -name '*.sh' -exec shellcheck -x {} +
 
 # jq compile gate for the workload description filters (lib/workload-*.jq).

@@ -36,27 +36,26 @@ Every serving/usage folder is **self-contained**: it carries its own copy of any
 shared generator/helper it needs, so it never imports from a sibling runner or
 from `local-llm/`. The one exception is the repo-level `lib/` kernel (below):
 the effective copy unit is **folder + `../lib`**, not the folder alone — the
-folders already hard-depend on `lib/log.sh`, `lib/log.mjs` and
-`lib/workload-runtime.sh`, and since docs/d023 also on `lib/peer-probe.mjs`,
-`lib/refresh-models-dev.mjs` and the shared `lib/models.dev.api.json` catalog
-(since docs/d024 additionally on `lib/cloud-providers.mjs`, the shared cloud
-provider fact table, and `lib/pi-models.mjs`, the pi model/provider shaping).
-Shared **data** tables live in `lib/` too: `models.dev.api.json` (model-id
-source of truth for the catalog-driven providers) and `llamacpp-model-data.json`
+folders already hard-depend on `lib/log.sh`, `lib/log.mjs`,
+`lib/workload-runtime.sh`, `lib/node-run.sh` (docs/d041) and, since
+docs/d024, on `lib/cloud-providers.mjs`, the shared cloud provider fact
+table. Shared **data** tables live in `lib/` too: `models.dev.api.json`
+(model-id source of truth for the catalog-driven providers),
+`catwalk-facts.json` (secondary catalog fallback) and `llamacpp-model-data.json`
 (canonical GGUF model definitions, read by the serving generator and by the
 `local-llm/` cache tooling — moved to lib to mark it explicitly shared;
 docs/d025). Data reads out of `lib/` do not violate the standalone rule; only
 reaching into a sibling *runner* folder does.
 
 - `llm-local-inference/` is the **local GGUF serving instance** (local
-  inference only): it owns the local-llm generator
-  (`generate-local-llm-models.yaml.mjs` + `active-b.json` →
-  `config.d/10-local-llm-inference.yaml` + its `.paths` staleness manifest,
-  emitted only on GPU-capable container hosts; the model data itself is the
-  shared `lib/llamacpp-model-data.json`; snapshot paths are baked at
-  generation — `docs/d029` option B), the `generate-general.yaml.mjs`
-  globals/macros, `gen-lib.mjs`, `llama-swap-core.json`,
-  `config.d/`, `run.sh` and the container-image `build.sh`. Cloud/remote peer
+  inference only): it owns the local-llm generator — since docs/d041 the
+  whole generator (former `gen-lib.mjs`, `generate-general.yaml.mjs`,
+  `generate-local-llm-models.yaml.mjs`) is folded into one
+  `generate.mjs` (`active-b.json` + `lib/llamacpp-model-data.json` →
+  `config.d/00-general.yaml` + `config.d/10-local-llm-inference.yaml` + its
+  `.paths` staleness manifest, emitted only on GPU-capable container hosts;
+  snapshot paths are baked at generation — `docs/d029` option B), plus
+  `llama-swap-core.json`, `config.d/` and `run.sh`. Cloud/remote peer
   relaying is NOT here — it moved to `llm-reverse-proxy/` (the raw passthrough
   proxy); the peer generators, Termux build/serve, and peers-only mode were
   removed with that handoff.
@@ -88,51 +87,67 @@ prohibits (and what was removed):
 
 - `workload-runtime.sh` — container-runtime detection (podman vs docker,
   UID/SELinux flags), the declarative workload description API, structured
-  shell logging, and the
-  profile/runner helpers the generate.sh scripts reuse (`_termux`,
-  `node_run`, `default_run_dir`).  Secrets are NOT part of it: loading is
+  shell logging, and the profile/runner helpers the run scripts reuse
+  (`_termux`, `default_run_dir`).  Secrets are NOT part of it: loading is
   the explicit `lib/environment.sh` chain (below).
+- `node-run.sh` — the standalone `node_run()` sh lib (docs/d041): repo-pinned
+  node for any script (system node on Termux, `mise exec node@24` elsewhere).
+  Sourced here for compatibility and by the `generate.sh` shims directly.
+- `go-build.mjs` — the go toolchain probe + android/host build-env presets
+  (docs/d041): one probe (`go version` must actually EXECUTE — mise shims
+  answer PATH lookups even with no version set) so no builder carries its
+  own copy.
+- `provision-termux.sh` — Termux provisioning (pkg node/jq + the infisical
+  CLI source build; the former root `build.sh`), exec'd by the root
+  `build.mjs` on Termux. Stays shell on purpose — every path in it is
+  Termux-only and untestable from a container host.
 - `environment.sh` — THE environment loader: one in-memory infisical
   round-trip, then `exec` of the named script
   (`./lib/environment.sh ./coding-agent/run.sh`).  Consumers read plain env
   and never load secrets themselves; a failed/empty vault is fatal here.
 - `log.sh` / `log.mjs` / `log.py` — the structured loggers (per language).
-- `peer-probe.mjs` — the shared HTTP probe toolkit for the `.mjs` generators
-  (fetch, reachability classification, candidate cascade; docs/d023) plus the
-  vault-sourced peer base accessor `peerBaseUrl()` (docs/d024, d028).
 - `cloud-providers.mjs` — the one cloud-provider fact table (id / label /
   key env / real base URL) every generator family derives from (docs/d024).
-- `pi-models.mjs` — the RawModelEntry → pi model/provider shaping shared by
-  the pi-layer generators (docs/d024).
-- `hyper-facts.mjs` (+ the committed `hyper-facts.json` cache) — Charm Hyper's
-  live `/provider` model-facts cache; the one non-models.dev enrichment
-  source, with the same tmp+rename / stale-tolerant contract as the catalog
-  (docs/d033).
-- `catwalk-facts.mjs` (+ the committed `catwalk-facts.json` cache) — Charm's
-  catwalk catalog as a secondary model-list fallback for the generators when
-  models.dev is stale or absent (docs/d028, d033).
-- `refresh-models-dev.mjs` — the one models.dev catalog refresher used by both
-  `generate.sh` scripts (docs/d023).
 - `models.dev.api.json` — the single vendored models.dev catalog shared by
-  both generator families (docs/d023).
+  the generator families (docs/d023).
+- `catwalk-facts.json` — the vendored catwalk catalog cache (secondary model
+  fallback; the refresher module lives in `coding-agent/`, docs/d039).
 - `workload-*.jq` — the jq filters behind the workload description API.
+
+The probe/facts/refresh modules that used to sit here (`peer-probe.mjs`,
+`pi-models.mjs`, `hyper-facts.mjs`, `catwalk-facts.mjs`,
+`refresh-models-dev.mjs`) were single-consumer and folded back into
+`coding-agent/` (docs/d039).
 
 Runner run-scripts source lib modules from the fixed `~/agentcontainer` layout.
 lib is intentionally NOT copied into each runner — it is owned by the repo, like
 `AGENTS.md` and `biome.json`.
 
+## One generate, one build (docs/d041)
+
+The root `generate.mjs` (via the `generate.sh` shim) runs every folder's
+generator in sequence — proxy (offline) → local-inference (capability-gated) →
+coding-agent (network-heavy) — reporting failures without stopping the rest.
+The root `build.mjs` (via the root `build.sh` shim) builds everything for
+THIS host: container images in parallel on podman/docker hosts, Termux
+provisioning + the android binary strictly serialized on ~1 GB devices.
+Each folder also keeps its own `generate.sh` shim (a 3-line `node_run`
+interpreter) for standalone use. Runners NEVER build or generate: run.sh
+stages the COMMITTED config and a stale/missing artifact is a loud failure
+pointing at the generator, never an implicit regeneration.
+
 ## Local vs cloud (two modules, two instances)
 
 **Local llama.cpp (GGUF) model support lives only in `llm-local-inference/`** —
-`config.d/10-local-llm-inference.yaml`, generated by
-`generate-local-llm-models.yaml.mjs` from `llamacpp-model-data.json`, and only
-on hosts where `generate.sh` detects a container backend + GPU devices.
+`config.d/10-local-llm-inference.yaml`, generated by the folded
+`llm-local-inference/generate.mjs` (docs/d041) from `llamacpp-model-data.json`,
+and only on hosts where generation detects a container backend + GPU devices.
 `config.d/` carries exactly two layers:
 
 | Layer | Role | Generated by | When |
 |-------|------|--------------|------|
-| `00-general.yaml` | globals + macros | `generate-general.yaml.mjs` | always |
-| `10-local-llm-inference.yaml` (+ `.paths` staleness manifest) | local GGUF `models` | `generate-local-llm-models.yaml.mjs` (from the shared `lib/llamacpp-model-data.json`; snapshot paths baked at generation, `docs/d029` B) | container backend + GPU detected |
+| `00-general.yaml` | globals + macros | `llm-local-inference/generate.mjs` | always |
+| `10-local-llm-inference.yaml` (+ `.paths` staleness manifest) | local GGUF `models` | `llm-local-inference/generate.mjs` (from the shared `lib/llamacpp-model-data.json`; snapshot paths baked at generation, `docs/d029` B) | container backend + GPU detected |
 
 Cloud/remote peers are NOT a config layer anymore: `llm-reverse-proxy/` (raw
 passthrough proxy) serves them. The former `peer-cloud.yaml` and
@@ -146,9 +161,9 @@ the variant folders redundant.)
 
 | Folder | Role | What makes it work |
 |--------|------|--------------------|
-| `llm-local-inference/` | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `gen-lib.mjs`, `generate-general.yaml.mjs`, `generate-local-llm-models.yaml.mjs` + `active-b.json`, `llama-swap-core.json`, `config.d/` + `run.sh`, `build.sh` (image pull) |
-| `llm-reverse-proxy/` | path-prefix cloud router for cloud/remote providers (`/<providerId>` → provider's full real base URL, byte-for-byte, no keys — docs/d027; streaming as-is, RFC 9457 502s) | `main.go`, `generate.sh` → `generate-config.mjs` (routing table from lib/cloud-providers.mjs), `llm-reverse-proxy.example.json`, `build.sh`, `smoke-test.sh` |
-| `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `Containerfile`, `config.toml`, `build.sh`, `run.sh`, `settings.json`, `auth.json` |
+| `llm-local-inference/` | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `generate.sh`/`generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh` |
+| `llm-reverse-proxy/` | path-prefix cloud router for cloud/remote providers (`/<providerId>` → provider's full real base URL, byte-for-byte, no keys — docs/d027; streaming as-is, RFC 9457 502s) | `main.go`, `generate.sh`/`generate.mjs` (routing table from lib/cloud-providers.mjs, docs/d038), `llm-reverse-proxy.example.json`, `smoke-test.sh`; built by the root `build.mjs` |
+| `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.sh`/`generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.sh`, `settings.json`, `auth.json`; image built by the root `build.mjs` |
 
 The next planned step — a simplified config-generator system split by concern —
 is sketched in

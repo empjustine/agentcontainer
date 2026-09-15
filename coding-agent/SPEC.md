@@ -30,10 +30,12 @@ The image provides a pre-configured development environment including:
 
 ## Shape
 
-`generate.sh` stages the generators + the `lib` modules they need into a
-scratch dir (`LIB_DIR`), then runs, in order:
+Since docs/d041 `generate.mjs` (via the `generate.sh` shim) IS the
+orchestrator: it runs the stage generators in-process (spawning each stage
+with the same pinned node; stages stage themselves into a scratch dir), then
+installs the artifacts. In order:
 
-| Generator | Layer | Merge semantic |
+| Stage | Artifact | Merge semantic |
 |---|---|---|
 | `generate-local-llama-swap.mjs` | `model-010-local-default.json` | **ADDS** the `llama-swap` provider (peer-routed local GGUF) |
 | `generate-cloud-providers.mjs` | `model-012-cloud-pi-native.json` (override-only rows) + `model-015-cloud-cline-pass.json` + `model-016-cloud-hyper.json` + `model-017-cloud-inferx.json` (full rows) | override-**only** for the pi-native set (empty when every pi-native endpoint is reachable); **authoritative** full blocks for `cline-pass`/`hyper`/`inferx` (pi ships no native provider for them; one layer per full PROVIDER_SPECS row) — docs/d037 |
@@ -51,9 +53,12 @@ cycles through is pinned by `enabledModels` in
 `run.sh` launches the container: loads vault secrets **once on the host** via
 lib/environment.sh and forwards them through the `workload_env` allowlist — nothing
 inside the workload runs infisical, and no `auth.json` credential store is
-staged (the host login state stays out of the sandbox). The generator input set is mounted **file
-by file** (never the repo dir): the list in `run.sh` must cover every file
-`generate.sh` reads, or in-container generation aborts on first unlisted read.
+staged (the host login state stays out of the sandbox). It stages the
+COMMITTED config and NEVER generates (docs/d041): the generator tree is
+mounted **file by file** (the list in `run.sh` covers every module
+`generate.mjs` stages) only so an in-container session can regenerate
+manually via the `generate.sh` shim; a missing committed artifact is a loud
+failure pointing at the generator, never an implicit regeneration.
 
 ## Decisions & invariants
 
@@ -76,9 +81,9 @@ provider id so the peer path-route is still attempted.
   `docs/scoped-models-and-proxy-overrides.md` ("spirit of the retired notes").
 - **Key naming / baseUrl baking / proxy env**: `docs/d001-proxy-env-and-namespace.md`.
 - A zero-provider merge result is **kept as-is** (never clobbers a good
-  `models.json` with an empty merge); `SKIP_GEN=1` installs the committed
-  artifact instead of generating.
-- pi requires node ≥ 22.19 (Termux gates via `check-node-version.mjs`).
+  `models.json` with an empty merge).
+- pi requires node ≥ 22.19 (Termux gates via `check-node-version.mjs`, run by
+  `generate.mjs` pre-stage — docs/d041).
 
 ## Boundary
 

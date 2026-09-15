@@ -24,6 +24,9 @@
 	},
 	"include": [
 		"lib/cloud-providers.mjs",
+		"lib/go-build.mjs",
+		"generate.mjs",
+		"build.mjs",
 		"coding-agent/peer-probe.mjs",
 		"coding-agent/hyper-facts.mjs",
 		"coding-agent/catwalk-facts.mjs",
@@ -35,8 +38,8 @@
 		"coding-agent/generate-default-model.mjs",
 		"coding-agent/merge-models-json.mjs",
 		"coding-agent/check-node-version.mjs",
-		"coding-agent/count-providers.mjs",
-		"coding-agent/list-providers.mjs",
-		"llm-reverse-proxy/generate-config.mjs"
+		"coding-agent/generate.mjs",
+		"llm-local-inference/generate.mjs",
+		"llm-reverse-proxy/generate.mjs"
 	]
 }

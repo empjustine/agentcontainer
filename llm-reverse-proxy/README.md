@@ -36,13 +36,13 @@ $ ./llm-reverse-proxy -config llm-reverse-proxy.json
 ...
 ```
 
-### Config generation (`generate.sh`)
+### Config generation (`generate.sh` / `generate.mjs`)
 
-When this proxy is the fleet's cloud peer (docs/d027), don't hand-maintain
-the routing table — generate it with the standard wrapper (same invocation
-model as `../coding-agent/generate.sh` and `../llm-local-inference/
-generate.sh`; it runs `generate-config.mjs` via `node_run` from
-`../lib/workload-runtime.sh`):
+Since docs/d041 the whole generator is `generate.mjs` (the former
+`generate-config.mjs`, with the orchestration folded in — docs/d039 had
+already inlined the pi-ai/npm tables); `generate.sh` is its 3-line
+`node_run` interpreter shim (same invocation model as the sibling folders):
+
 
 ```console
 $ ./generate.sh                       # -> llm-reverse-proxy.json (REPLACED
@@ -52,7 +52,7 @@ $ ./generate.sh                       # -> llm-reverse-proxy.json (REPLACED
 
 The generated table is the UNION of three provider sources with an explicit
 priority (docs/d038) — pi-ai's built-in registry (the PI_AI_PROVIDERS table
-in generate-config.mjs; d039 folded it in) > the models.dev/ai-sdk catalog
+in generate.mjs; d039 folded it in) > the models.dev/ai-sdk catalog
 (lib/models.dev.api.json, `api` field, with the AI_SDK_PACKAGE_ENDPOINTS
 table as the fallback for records without one) > crush's catwalk catalog
 (lib/catwalk-facts.json, `api_endpoint`). Routes are
@@ -159,11 +159,14 @@ faithful passthrough; the upstream's own trust decisions are never pre-empted.
 
 ## Build & run
 
-`./build.sh` is dual-mode, detected from the environment (llama-swap style):
+Building is the root `./build.sh` → `build.mjs` (docs/d041 — the per-folder
+`build.sh` files are gone): container images in parallel on podman/docker
+hosts, Termux targets strictly serialized. For THIS folder:
 
 - **Termux**: builds the native `android/arm64` binary
   (`llm-reverse-proxy-android`; `GOOS=android` is required so DNS resolves
-  via Android's resolver). Needs `pkg install golang`.
+  via Android's resolver — flag presets in `lib/go-build.mjs`). Needs
+  `pkg install golang`.
 - **Container hosts**: builds ONLY the OCI image (`Containerfile`:
   MULTI-STAGE `golang:1.27-alpine` → `distroless/static` — the compile
   happens inside the image build, so no host go toolchain is needed, just

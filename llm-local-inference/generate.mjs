@@ -1,46 +1,120 @@
 /**
- * @fileoverview generate-local-llm-models.yaml.mjs — Emit
- * config.d/10-local-llm-inference.yaml — the local llama.cpp GGUF `models` map —
- * plus the sibling 10-local-llm-inference.paths manifest (host-side paths the
- * run.sh staleness preflight re-checks). Built from
- * ../lib/llamacpp-model-data.json (the shared model-data table, docs/d025); no
- * network access. The `cmd` strings reference macros defined in 00-general.yaml
- * (${LLAMA_SERVER}, ${qwen36}, …) which llama-swap resolves after merging
- * config.d/.
+ * @fileoverview generate.mjs — the llm-local-inference generator (d041 folded
+ * the former generate.sh, gen-lib.mjs, generate-general.yaml.mjs and
+ * generate-local-llm-models.yaml.mjs in): (re)generate the llama-swap config
+ * in config.d/ for LOCAL GGUF inference. RUN THIS after a models/args change
+ * (active-b.json, ../lib/llamacpp-model-data.json, llama-swap-core.json
+ * macros) or when a host's capabilities changed (GPU added/removed, container
+ * backend installed).
  *
- * Generated ONLY on hosts where local inference is viable (container backend
- * + GPU devices detected by llm-local-inference/generate.sh); peers-only hosts
- * skip this layer and have no 10-local-llm-inference.yaml.
+ * Cloud/remote peer relaying is NOT generated here (nor anywhere): it is
+ * served by ../llm-reverse-proxy, the raw passthrough proxy. This module
+ * emits only what serves local llama.cpp GGUFs.
  *
- * GENERATION-TIME PATH BAKING (docs/d029 option B): every model is resolved to
- * ONE HF snapshot dir — the refs/main revision first (what
- * ../local-llm/download_models.py pins), falling back to any snapshot dir that
- * carries the entry — and the resolved paths are baked into the emitted `cmd`
- * as plain absolute args (`--model <path>`, `--mmproj`, `--model-draft`). No
- * shell runs at launch: llama-swap splits `cmd` with posix shlex and execs
- * argv directly (internal/config/commands.go SanitizeCommand), so the previous
- * config.d/launch-gguf.sh resolver is retired with this. HF paths contain no
- * spaces/quotes/metacharacters, so baking them into the shlex'd cmd is safe.
+ * Layers emitted:
+ *   00-general.yaml              always  (globals + macros)
+ *   10-local-llm-inference.yaml  only when local inference is viable (container
+ *                                backend AND GPU devices), or LOCAL_INFERENCE=1
+ *                                to force (debug only; the host HF cache must
+ *                                carry every configured GGUF)
+ *   10-local-llm-inference.paths sibling manifest of the baked host-side model
+ *                                paths — run.sh's staleness preflight input
  *
- * A cache miss is a GENERATION error, not a launch-time download: model
- * provisioning belongs to ../local-llm/download_models.py and must not be
- * duplicated here — run that, then re-run ./generate.sh.
+ * There is NO launch-gguf.sh: snapshot paths are resolved HERE
+ * (generation-time baking, docs/d029 option B) and emitted as plain args in
+ * each model's cmd; a cache miss is a generation error pointing at
+ * ../local-llm/download_models.py. Stale launch-gguf.sh copies from older
+ * generate.sh versions are removed below.
  *
- * STALENESS: a later download/prune cycle (upkeep.py) can re-point refs/main
- * or delete the generated snapshot; the .paths manifest lets run.sh fail
- * loudly with "re-run ./generate.sh" instead of a llama-server 127 at swap
- * time.
+ * Merge contract for the fragments (llama-swap's -config-dir loader;
+ * docs/d018): identity-keyed maps merge additively and a duplicate key across
+ * files is a hard error, while `apiKeys` concatenates and macros/scalars must
+ * be single-defined — hence each layer owns a disjoint key set and
+ * 00-general.yaml is the only home of the globals.
  *
- * Usage: node generate-local-llm-models.yaml.mjs
+ * Secrets: none at generation time. This module's generation is fully offline
+ * (vendored tables only) and embeds NO keys — the single ${env.*} reference in
+ * the generated config (PEER_API_KEY, 00-general.yaml apiKeys) is resolved by
+ * llama-swap from ITS OWN environment at load time, which run.sh receives from
+ * the explicit chain (./lib/environment.sh ./run.sh). So generation needs no
+ * vault round-trip at all.
+ *
+ * Env overrides:
+ *   DRY_RUN           1 = generators do NOT replace the config.d layers —
+ *                       each write lands in a sibling <name>.dry-run preview
+ *                       for inspection (repo-wide generator standard,
+ *                       lib/artifact.mjs)
+ *   LOCAL_INFERENCE   1 = force the local-inference layer regardless of the
+ *                       capability gate (emits container-side paths; debug)
  */
 
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { logError, logWarn, writeArtifact, writeConfigD } from "./gen-lib.mjs";
+
+// Structured logger + artifact writer from ../lib (docs/d023), resolved
+// through the LIB_DIR convention (default: this folder's sibling lib/).
+const LIB_DIR =
+	process.env.LIB_DIR ?? fileURLToPath(new URL("../lib", import.meta.url));
+const { logError, logInfo, logWarn } =
+	/** @type {typeof import("../lib/log.mjs")} */ (
+		await import(`${LIB_DIR}/log.mjs`)
+	);
+const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
+	await import(`${LIB_DIR}/artifact.mjs`)
+);
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
+const configD = join(scriptDir, "config.d");
+
+// --- config.d layer writers (folded gen-lib.mjs) ---------------------------
+
+/**
+ * Read the general-purpose llama-swap config source.
+ * @param {string} [path] defaults to llama-swap-core.json next to this file
+ * @returns {Record<string, unknown>}
+ */
+function loadCore(path = join(scriptDir, "llama-swap-core.json")) {
+	return JSON.parse(readFileSync(path, "utf-8"));
+}
+
+/**
+ * Write an object as pretty JSON into config.d/ (the YAML loader accepts JSON
+ * content, and JSON-in-.yaml matches the repo's existing config style). Write
+ * contract: lib/artifact.mjs (atomic tmp+rename, replace by default, DRY_RUN=1
+ * preview).
+ * @param {string} name layer filename (e.g. "10-local-llm-inference.yaml")
+ * @param {unknown} obj config object to serialize
+ * @returns {void}
+ */
+function writeConfigD(name, obj) {
+	mkdirSync(configD, { recursive: true });
+	const path = writeArtifact(
+		join(configD, name),
+		`${JSON.stringify(obj, null, 2)}\n`,
+	);
+	logInfo("wrote config.d layer", { path });
+}
+
+// --- 00-general.yaml (folded generate-general.yaml.mjs) --------------------
+// Per the merge contract (docs/d018) this layer is the ONLY home of scalars /
+// macros / ctxWindows / apiKeys; the model layer must not redefine any.
+function generateGeneral() {
+	const core = loadCore();
+	// models/peers belong to the local-inference layer below.
+	delete core.models;
+	delete core.peers;
+	writeConfigD("00-general.yaml", core);
+}
+
+// --- 10-local-llm-inference.yaml (folded generate-local-llm-models.yaml.mjs)
+// The local llama.cpp GGUF `models` map, plus the sibling .paths manifest
+// (host-side paths the run.sh staleness preflight re-checks). Built from
+// ../lib/llamacpp-model-data.json (the shared model-data table, docs/d025);
+// no network access. The `cmd` strings reference macros defined in
+// 00-general.yaml (${LLAMA_SERVER}, ${qwen36}, …) which llama-swap resolves
+// after merging config.d/.
 
 // The activeB table (model-name slice -> "b" slug) is split out of the
 // generator into its own mini-manifest (active-b.json).
@@ -215,6 +289,10 @@ const MMPROJ_MODES = [
 	{ seg: "2mmproj", vision: true },
 ];
 
+/**
+ * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
+ * @returns {string} the active-B slug ("99b" when no slice matches)
+ */
 function activeSlug(m) {
 	for (const slice in activeB) {
 		if (m["hf-repo"].indexOf(slice) !== -1) return activeB[slice];
@@ -222,6 +300,10 @@ function activeSlug(m) {
 	return "99b";
 }
 
+/**
+ * @param {number} contextWindow
+ * @returns {string} zero-padded context slug for the model id
+ */
 function ctxSlug(contextWindow) {
 	if (contextWindow % 1024 === 0) {
 		return String(contextWindow / 1024).padStart(3, "0");
@@ -234,22 +316,26 @@ function ctxSlug(contextWindow) {
 // kv-quant segment appears in the id anymore — just the active slug, the
 // context window, the mmproj mode segment ("" for non-mmproj models), and the
 // (unique) hf-repo.
+/**
+ * @param {Record<string, any>} m
+ * @param {string|null} modeSeg
+ * @returns {string} the derived llama-swap model id
+ */
 function deriveModelId(m, modeSeg) {
 	return `${activeSlug(m)}-ctx${ctxSlug(m["ctx-size"])}-${modeSeg ? `${modeSeg}-` : ""}${m["hf-repo"]}`;
 }
 
-function main() {
+function generateLocalInference() {
 	// The shared model-data table lives in lib/ (moved there to mark it as
 	// explicitly shared with local-llm/ tooling — docs/d025). Same LIB_DIR
-	// convention as gen-lib.mjs.
-	const libDir =
-		process.env.LIB_DIR ?? fileURLToPath(new URL("../lib", import.meta.url));
+	// convention as the log import above.
 	const modelData = JSON.parse(
-		readFileSync(join(libDir, "llamacpp-model-data.json"), "utf-8"),
+		readFileSync(join(LIB_DIR, "llamacpp-model-data.json"), "utf-8"),
 	);
 
 	/** @type {Set<string>} host-side files to re-verify in run.sh's preflight */
 	const bakedHostPaths = new Set();
+	/** @type {Record<string, unknown>} */
 	const models = {};
 	for (const raw of modelData.models) {
 		const m = { ...DEFAULTS, ...raw };
@@ -332,9 +418,65 @@ function main() {
 	// -config-dir (internal/config/merge.go listYAMLFiles), so the companion
 	// rides in config.d/ next to the layer it validates.
 	writeArtifact(
-		join(scriptDir, "config.d", "10-local-llm-inference.paths"),
+		join(configD, "10-local-llm-inference.paths"),
 		`${[...bakedHostPaths].sort().join("\n")}\n`,
 	);
 }
 
-main();
+// --- orchestration (folded from the former generate.sh) ---------------------
+
+mkdirSync(configD, { recursive: true });
+logInfo("generating config.d", { dir: configD });
+
+// 1. general layer: always.
+generateGeneral();
+
+// 2. local-inference layer: capability-gated. Requires the container backend
+// (the unified-vulkan image runs llama.cpp against the GPU) and at least one
+// dedicated inference device. LOCAL_INFERENCE=1 forces the layer regardless
+// (debug: the generator still requires every configured GGUF in the host HF
+// cache — provision it with ../local-llm/download_models.py first).
+// Container-backend detection ports lib/workload-runtime.sh's
+// detect_workload_tool; GPU detection ports its detect_gpu_devs.
+const containerTool = existsSync("/usr/bin/podman")
+	? "podman"
+	: existsSync("/usr/bin/docker")
+		? "docker"
+		: null;
+const gpuDevices = [
+	existsSync("/dev/kfd") ? "/dev/kfd" : null,
+	...(existsSync("/dev/dri")
+		? readdirSync("/dev/dri")
+				.filter((f) => f.startsWith("renderD"))
+				.map((f) => `/dev/dri/${f}`)
+		: []),
+].filter((d) => d !== null);
+const inferenceViable = containerTool !== null && gpuDevices.length > 0;
+
+if (process.env.LOCAL_INFERENCE === "1" || inferenceViable) {
+	generateLocalInference();
+	// Stale resolver copies from pre-d029 generate.sh versions.
+	rmSync(join(configD, "launch-gguf.sh"), { force: true });
+	logInfo("local-inference layer generated", {
+		containerTool,
+		gpuDevices: gpuDevices.length,
+	});
+} else {
+	rmSync(join(configD, "10-local-llm-inference.yaml"), { force: true });
+	rmSync(join(configD, "10-local-llm-inference.paths"), { force: true });
+	rmSync(join(configD, "launch-gguf.sh"), { force: true });
+	logError(
+		"no container backend + GPU devices — this host cannot serve local inference (LOCAL_INFERENCE=1 forces generation for debug)",
+		{ containerTool, gpuDevices: gpuDevices.length },
+	);
+	process.exit(94);
+}
+
+// --- verify + report ---------------------------------------------------------
+logInfo("config.d ready", {
+	dir: configD,
+	layers: readdirSync(configD).filter((f) => {
+		const st = statSync(join(configD, f));
+		return st.isFile();
+	}),
+});

@@ -15,8 +15,8 @@ are loaded host-side once (lib/environment.sh — the explicit chain) and forwar
 
 | Harness | Host stage dir (per run) | Container mount (RW) | Env pinned in launch.sh | What it preserves |
 |---|---|---|---|---|
-| pi (`pi-coding-agent`) | `$stage/pi/agent` | `/home/$USER/.pi/agent` | `AGENT_DIR` | settings.json, models.json, sessions, skills |
-| OpenCode | `$stage/opencode/config` | `/home/$USER/.config/opencode` | `OPENCODE_CFG_DIR` | opencode.json, global config/cache |
+| pi (`pi-coding-agent`) | `$stage/pi/agent` | `/home/$USER/.pi/agent` | `PI_CODING_AGENT_DIR` | settings.json, models.json, sessions, skills |
+| OpenCode | `$stage/opencode/config` | `/home/$USER/.config/opencode` | `OPENCODE_CONFIG_DIR` | opencode.json, global config/cache |
 | OpenCode | `$stage/opencode/data` | `/home/$USER/.local/share/opencode` | — | auth.json, session/state data |
 | Cline (CLI) | `$stage/cline` | `/home/$USER/.cline` | `CLINE_DIR`, `CLINE_DATA_DIR` | data/settings/providers.json, global-settings.json, cline_mcp_settings.json, sessions/, db/, workflows/, rules/, hooks/, skills/, agents/, plugins/, cron/ |
 | ThinkRail | `$stage/thinkrail` | `/home/$USER/.thinkrail` | `THINKRAIL_DATA_DIR` | projects.json, workspaces.json, terminals.json, installation.json, app config |
@@ -31,7 +31,7 @@ Notes:
 - **pi↔ThinkRail share `~/.pi/agent`**: ThinkRail runs pi in-process and
   resolves the same agent dir (`getAgentDir()` → `~/.pi/agent`), so the single
   pi mount covers both.
-- **Explicit env pins** (`AGENT_DIR`, `OPENCODE_CFG_DIR`, `CLINE_DIR`,
+- **Explicit env pins** (`PI_CODING_AGENT_DIR`, `OPENCODE_CONFIG_DIR`, `CLINE_DIR`,
   `CLINE_DATA_DIR`, `THINKRAIL_DATA_DIR`) are exported by the generated
   in-container launch chain. Most duplicate each harness's built-in default —
   they exist to make the sandbox contract explicit and resilient to upstream

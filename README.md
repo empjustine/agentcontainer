@@ -18,8 +18,16 @@ cd ~/agentcontainer && ./lib/environment.sh ./coding-agent/run.sh
 
 # cloud/remote providers — raw passthrough reverse proxy (no model routing,
 # no credential handling; requests must already carry valid provider keys)
-cd ~/agentcontainer/llm-reverse-proxy && ./build.sh && ./generate.sh && ./run.sh
+cd ~/agentcontainer && ./build.sh && ./generate.sh && ./llm-reverse-proxy/run.sh
 ```
+
+**One build + one generate for the whole repo (docs/d041)**: root `./build.sh`
+(builds everything for THIS host — container images in parallel, the Termux
+provisioning + android binary serialized) and root `./generate.sh` (every
+folder's generator in sequence, continue-on-failure). Each folder's own
+`generate.sh` shim still runs its generator standalone. Runners NEVER build
+or generate: stale/missing artifacts are user issues, and run.sh fails loudly
+pointing at the generator.
 
 **Environment/secrets are an EXPLICIT chain step** (`lib/environment.sh` —
 the ONE infisical vault round-trip, on the host, then `exec` of the target):
@@ -27,9 +35,10 @@ the ONE infisical vault round-trip, on the host, then `exec` of the target):
 ./llm-local-inference/run.sh`, etc.  The scripts it wraps consume plain env
 and never load anything themselves; inside sandboxes the vault env is
 forwarded via the `workload_env` allowlist.  Generation steps that need no
-keys (llm-local-inference/generate.sh, llm-reverse-proxy/*) run without the
-chain.  No `.env` files, no in-script loaders, no emergency paths — a failed
-vault round-trip is fatal at the chain, never a silent half-configured run.
+keys (llm-local-inference/generate.mjs, llm-reverse-proxy/generate.mjs) run
+without the chain.  No `.env` files, no in-script loaders, no emergency
+paths — a failed vault round-trip is fatal at the chain, never a silent
+half-configured run.
 
 There is no Termux/peers-only variant of llm-local-inference anymore —
 cloud relay moved to llm-reverse-proxy.
@@ -56,6 +65,8 @@ Both tools are now included in the container's mise configuration for reliable, 
 
 ```
 agentcontainer/
+├── generate.sh / generate.mjs          # → run EVERY folder's generator in sequence (d041)
+├── build.sh / build.mjs                # → build everything for THIS host (images ∥; termux serialized)
 ├── docs/                              # Design docs, environment guides, ADRs
 │   ├── environments-and-peer-variants.md   # bazzite / a50 / work matrix
 │   ├── container-tooling.md                # lib/workload-runtime.sh, run scripts
@@ -64,6 +75,9 @@ agentcontainer/
 │   └── ...
 ├── lib/                               # Shared infrastructure (docs/architecture.md)
 │   ├── workload-runtime.sh             #   → sandbox-backend detection + workload_* API
+│   ├── node-run.sh                     #   → standalone node_run() (pinned node; termux-aware)
+│   ├── go-build.mjs                    #   → go toolchain probe + android/host flag presets (d041)
+│   ├── provision-termux.sh             #   → termux pkg/infisical provisioning (the former root build.sh)
 │   ├── llamacpp-model-data.json        #   → canonical GGUF model definitions (shared with local-llm/)
 │   ├── models.dev.api.json             #   → vendored models.dev catalog (coding-agent + llm-reverse-proxy)
 │   ├── catwalk-facts.json              #   → vendored catwalk catalog (coding-agent + llm-reverse-proxy)
@@ -74,25 +88,21 @@ agentcontainer/
 │
 ├── llm-local-inference/                   # llama-swap: LOCAL GGUF inference only
 │   ├── run.sh                           #   → unified-vulkan image + GPU + HF mounts on :8101
-│   ├── generate.sh                      #   → capability-gated config.d layers (local GGUF; fails on non-GPU hosts)
-│   ├── gen-lib.mjs                      #   → shared generator helpers (logger, config.d writer)
-│   ├── generate-general.yaml.mjs         #   → 00-general.yaml (globals + macros; always)
-│   ├── generate-local-llm-models.yaml.mjs#   → 10-local-llm-inference.yaml + .paths (GGUF; GPU hosts only)
+│   ├── generate.sh / generate.mjs       #   → capability-gated config.d layers (fails on non-GPU hosts)
 │   ├── active-b.json                    #   → activeB table (model-id derivation)
 │   ├── llama-swap-core.json             #   → general-purpose config source
-│   ├── build.sh                         #   → pre-pulls the unified-vulkan image (container hosts only)
 │   └── config.d/                        #   → generated split config (loaded via -config-dir)
 │
 ├── llm-reverse-proxy/                   # Raw passthrough reverse proxy for cloud LLMs (Go)
 │   ├── main.go                          #   → http host:port/{provider}/<path> → <base-url>/<path>, streaming as-is
 │   ├── llm-reverse-proxy.example.json   #   → provider slug → base URL map (the whole config surface)
-│   ├── generate.sh                      #   → routing table from lib/cloud-providers.mjs (→ generate-config.mjs)
-│   ├── build.sh / smoke-test.sh         #   → multi-stage image build (no host go); 32 behavioural checks
+│   ├── generate.sh / generate.mjs       #   → routing table from lib/cloud-providers.mjs (d038 catalog)
+│   ├── smoke-test.sh                    #   → 32 behavioural checks against the built binary/image
 │   └── README.md                        #   → RFC 9457 502 error taxonomy, deviations
 │
 ├── coding-agent/                        # Bazzite usage (full pi)
 │   ├── run.sh                           #   → launches pi coding-agent container (exec through ../lib/environment.sh)
-│   ├── generate.sh                      #   → layered models.json/opencode.jsonc/default-model generation
+│   ├── generate.sh / generate.mjs       #   → orchestrates the stage generators below (d041)
 │   ├── gen-lib.mjs                      #   → shared generator preamble (pi shaping folded in, d039)
 │   ├── peer-probe.mjs                   #   → HTTP probe toolkit (folded out of lib/, d039)
 │   ├── hyper-facts.mjs / hyper-facts.json # → Charm Hyper facts cache + enricher (d039)
@@ -140,6 +150,7 @@ agentcontainer/
 | [docs/d038-proxy-full-provider-catalog.md](docs/d038-proxy-full-provider-catalog.md) | llm-reverse-proxy routes the full pi-ai ∪ models.dev ∪ catwalk provider catalog (priority pi-ai > models.dev > catwalk) |
 | [docs/d039-fold-single-consumer-lib-modules.md](docs/d039-fold-single-consumer-lib-modules.md) | single-consumer lib/ modules fold back to their owning runner (peer-probe/pi-models/hyper-facts/catwalk-facts.mjs/refresh-models-dev → coding-agent; pi-ai + ai-sdk tables → generate-config) |
 | [docs/d040-cline-pass-curated-lineup.md](docs/d040-cline-pass-curated-lineup.md) | cline-pass lineup is the published 13-model ClinePass table, not Cline's /models catalog (live sync disabled for it) |
+| [docs/d041-unified-generate-build-entrypoints.md](docs/d041-unified-generate-build-entrypoints.md) | root `generate.mjs`/`build.mjs` unified entrypoints, `lib/node-run.sh` + `lib/go-build.mjs`, runners never build/generate |
 | [docs/termux-build-audit.md](docs/termux-build-audit.md) | Termux build audit — Infisical CLI `go install` impossibility + llm-reverse-proxy native build verification |
 | [coding-agent/merge-models-json.mjs](coding-agent/merge-models-json.mjs) | layered pi `models.json` (base + `model-*.json` overlays) — contract is documented in the script header |
 | [docs/peer-variant-work.md](docs/peer-variant-work.md) | coding-agent-peer (work environment; **archived** — folded into coding-agent; routing/env superseded by d027 + the vault — see its banner) |

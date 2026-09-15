@@ -26,7 +26,9 @@ handoff; llama-swap's peer/proxy machinery is no longer exercised from here.
 
 ## Shape
 
-`generate.sh` (generation) and `run.sh` (serve) are strictly separated;
+`generate.mjs` (generation — the former gen-lib.mjs + both emitters folded
+into one file, docs/d041; `generate.sh` is its node_run shim) and `run.sh`
+(serve) are strictly separated;
 `run.sh` mounts the generated `config.d/` read-only into the
 `llama-swap:unified-vulkan` image with GPU passthrough + HF-cache mounts and
 publishes LAN **8101** (`HOST_PORT` overrides; in-container 8080) — host
@@ -39,14 +41,15 @@ The legacy :18080 port is dead and never probed.
 `00-general.yaml` (globals/macros; always) · `10-local-llm-inference.yaml` +
 its `.paths` staleness manifest (only when a container backend **and** GPU
 devices are detected). There is no peers-only mode: a host without the
-container backend + GPU cannot serve local inference and `generate.sh` fails
+container backend + GPU cannot serve local inference and generation fails
 hard (`LOCAL_INFERENCE=1` forces generation for debug only). No shell lives in
 `config.d/` anymore — the former in-container `launch-gguf.sh` resolver was
 replaced by generation-time path baking (`docs/d029` option B).
 
 **Termux leaf**: removed. Termux was peers-only by construction, and with
 peers gone from this module it has no role here — there is no `run-native.sh`,
-no android cross-build in `build.sh`, only the container image pull.
+no android cross-build — the root `build.mjs` (docs/d041) only pre-pulls the
+container image for this folder.
 
 ## Decisions & invariants
 

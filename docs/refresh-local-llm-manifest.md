@@ -5,8 +5,10 @@ with the Hugging Face cache. Run it whenever a new GGUF model or a new quant of
 an existing repo lands in the cache (e.g. a background `upkeep.py pull` or a
 manual `snapshot_download` finished).
 
-The manifest is the single source of truth for
-`openai-completions-gfx1030/config.d/10-local-llm-inference.yaml`:
+The manifest is the single source of truth for the local GGUF layer
+(`llm-local-inference/config.d/10-local-llm-inference.yaml` — the serving
+folder was renamed/consolidated since this runbook was first written; the
+flow is unchanged):
 
 ```
 llamacpp-model-data.json  --(generate-local-llm-models.yaml.mjs)-->  config.d/10-local-llm-inference.yaml
@@ -113,19 +115,16 @@ Family sampling macros live under the `macros` key of `llama-swap-core.json`
 `generate-general.yaml.mjs`. Current families include `qwen38`, `qwen36`,
 `glm47f`, `gemma4`, `devstral`, `ling`, `lfm25`, plus the base `LLAMA_SERVER`
 launcher (check `llama-swap-core.json` for the live list). To add/change a
-macro, edit `llama-swap-core.json` and re-run `generate-general.yaml.mjs`.
+macro, edit `llama-swap-core.json` and re-run generation.
 
 ## Step 5 — Regenerate `config.d/`
 
 ```sh
-cd openai-completions-gfx1030
-node generate-local-llm-models.yaml.mjs     # -> config.d/10-local-llm-inference.yaml  (always)
-node generate-general.yaml.mjs              # -> config.d/00-general.yaml  (only if macros/00-general changed)
-# full pipeline incl. provider secrets (needs infisical login + network):
-./generate.sh
+cd llm-local-inference
+LOCAL_INFERENCE=1 ./generate.sh   # -> both config.d/ layers (00-general + 10-local-llm-inference + .paths)
 ```
 
-Both `node` generators run offline. The generator warns on **duplicate model
+Generation runs offline (no Infisical, no network). The generator warns on **duplicate model
 ids** — fix any collision (usually a `slug`/`ctx-size` clash) before shipping.
 
 ## Step 6 — Validate
@@ -152,7 +151,8 @@ explicit `model` pin.
 ## Step 7 — Reload llama-swap
 
 llama-swap merges `config.d/` files additively at startup. Restart the
-`openai-completions-gfx1030` llama-swap service so the regenerated
+`llm-local-inference` llama-swap service (`./run.sh` — it re-verifies the
+baked snapshot paths from the `.paths` manifest) so the regenerated
 `10-local-llm-inference.yaml` (and `00-general.yaml` if changed) is picked up.
 
 ## Naming rules / gotchas

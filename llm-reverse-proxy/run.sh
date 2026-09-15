@@ -32,7 +32,7 @@ script_dir="$SCRIPT_DIR"
 config="${CONFIG:-$script_dir/llm-reverse-proxy.json}"
 
 [ -f "$config" ] ||
-	log_die 94 "config not found — copy llm-reverse-proxy.example.json to llm-reverse-proxy.json and edit it" path="$config"
+	log_die 94 "config not found — generate it first with ./generate.sh (or copy llm-reverse-proxy.example.json for a hand-written deployment)" path="$config"
 
 # shellcheck disable=SC2154  # _workload/_workload_tool from the sourced lib
 if [ "$_workload" = 'workload' ]; then

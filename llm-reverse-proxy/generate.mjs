@@ -1,5 +1,6 @@
 /**
- * @fileoverview generate-config.mjs — Emit `llm-reverse-proxy.json`, the
+ * @fileoverview generate.mjs — the llm-reverse-proxy generator (d041 folded
+ * the former generate.sh orchestration in): emit `llm-reverse-proxy.json`, the
  * deployed llm-reverse-proxy routing table, as the UNION of THREE provider
  * sources (docs/d038), merged under an explicit priority:
  *
@@ -65,7 +66,7 @@ import { fileURLToPath } from "node:url";
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
-const { logInfo, logWarn, setLogTool } =
+const { logError, logInfo, logWarn, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
@@ -76,7 +77,7 @@ const { CLOUD_PROVIDERS } =
 const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
 	await import(`${LIB_DIR}/artifact.mjs`)
 );
-setLogTool("llm-reverse-proxy/generate-config");
+setLogTool("llm-reverse-proxy/generate");
 
 const out = process.argv[2] ?? join(scriptDir, "llm-reverse-proxy.json");
 const MODELS_DEV_JSON =
@@ -735,3 +736,17 @@ for (const [id, url] of Object.entries(deployed)) {
 		});
 	}
 }
+
+// Orchestration (folded from the former generate.sh, docs/d041): the routing
+// table must exist after generation — a silent no-op here would leave run.sh
+// to die later with a config-missing error pointing back at this script.
+if (!existsSync(join(scriptDir, "llm-reverse-proxy.json"))) {
+	logError(
+		"routing table not generated",
+		{ path: join(scriptDir, "llm-reverse-proxy.json") },
+	);
+	process.exit(1);
+}
+logInfo("routing table ready", {
+	path: join(scriptDir, "llm-reverse-proxy.json"),
+});

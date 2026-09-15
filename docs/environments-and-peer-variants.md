@@ -15,7 +15,7 @@ with different capabilities (GPU or none, container runtime or none, cloud
 access or not) and the tree adapts along those functional lines:
 
 - **LLM serving** is split along its two concerns: local GGUF inference is
-  ONE llama-swap dir, `llm-local-inference/` (`generate.sh` emits only the
+  ONE llama-swap dir, `llm-local-inference/` (generation emits only the
   `config.d/` layers the current host can use — local inference wherever a
   GPU + container backend exist; there is no peers-only llama-swap mode),
   and cloud-provider relay is `llm-reverse-proxy/`, the simplified
@@ -40,14 +40,14 @@ names.
 
 GPU host (local inference only) — two serving processes, one concern each (docs/d027):
 
-- `llm-local-inference/` — `generate.sh` detects the container backend + GPU
-  devices and emits the local GGUF layer (`10-local-llm-inference.yaml` + its
+- `llm-local-inference/` — generation (`generate.mjs`, docs/d041) detects the
+  container backend + GPU devices and emits the local GGUF layer (`10-local-llm-inference.yaml` + its
   `.paths` staleness manifest; snapshot paths baked at generation, docs/d029);
   `run.sh` launches the `unified-vulkan` image with GPU
   passthrough + the HF cache on LAN port **8101** (container 8080).
   llama-swap serves the LOCAL catalog and nothing else — its peer/proxy
   machinery is no longer exercised.
-- `llm-reverse-proxy/` — the simplified cloud router (`build.sh` +
+- `llm-reverse-proxy/` — the simplified cloud router (root `build.sh` +
   `generate.sh` + `run.sh`, LAN **8080**, host networking):
   `/<providerId>` path prefixes forwarded byte-for-byte to each provider's
   real base URL (docs/d027), plus the `llama-swap` route pointing back at
@@ -77,12 +77,13 @@ podman/docker for this — and local llama.cpp inference is impossible anyway.
 So there is no llama-swap here at all: the host serves the cloud relay only,
 via a **native termux build of llm-reverse-proxy** (compiled for the device).
 
-- `llm-reverse-proxy/build.sh` cross-builds the static binary with
-  `CGO_ENABLED=0 GOOS=android GOARCH=arm64` (so the Android resolver is used
-  instead of the missing `/etc/resolv.conf`), and `run.sh`'s native branch
+- The root `./build.sh` (`build.mjs`) cross-builds the static binary with
+  the android preset from `lib/go-build.mjs` (`CGO_ENABLED=0 GOOS=android
+  GOARCH=arm64` — so the Android resolver is used instead of the missing
+  `/etc/resolv.conf`; docs/d041), and `run.sh`'s native branch
   `exec`s it against `llm-reverse-proxy.json` and `${LISTEN:-:8080}` — no
   podman/docker, no GPU detection, no image pull, no build/generate step.
-- `llm-reverse-proxy/generate.sh` (→ `generate-config.mjs`) emits the
+- `llm-reverse-proxy/generate.sh` (→ `generate.mjs`) emits the
   routing table from the shared provider fact table
   (lib/cloud-providers.mjs, docs/d027): one path prefix per provider,
   upstream = the provider's FULL real base URL.
@@ -108,8 +109,8 @@ resolves from the env at request time — the proxy forwards them untouched).
   `PEER_BASE_URL` is currently informational — the peer base is hardcoded
   in the static provider config.
 - **Serving** (`llm-reverse-proxy/`): the peers-only cloud relay
-  (`./build.sh && ./generate.sh && ./run.sh`), as on the other
-  non-GPU hosts.
+  (root `./build.sh && ./generate.sh && ./llm-reverse-proxy/run.sh`), as on
+  the other non-GPU hosts.
 
 The shared `lib/workload-runtime.sh` makes this work on both local-inference-host-style podman and
 small-cloud-vm-style docker through the same `workload_*` description: `workload_user` emits
@@ -123,10 +124,10 @@ relays cloud providers. The relay is llm-reverse-proxy — one static Go binary,
 ~13 MB RSS, no model routing and no secrets, so the 1 GB budget is not a
 constraint.
 
-- **Serving** (`llm-reverse-proxy/`): just `./build.sh &&
-  ./generate.sh && ./run.sh` — the routing table is generated from
-  the shared fact table (docs/d027) and the proxy listens on LAN
-  `${HOST_PORT:-8080}` (host-network container or native binary).
+- **Serving** (`llm-reverse-proxy/`): just root `./build.sh &&
+  ./generate.sh && ./llm-reverse-proxy/run.sh` — the routing table is
+  generated from the shared fact table (docs/d027) and the proxy listens on
+  LAN `${HOST_PORT:-8080}` (host-network container or native binary).
 - **Usage** (`coding-agent/`): static provider config pointing the agent at
   the peer path-routes.
 - **Keys**: the proxy injects nothing — clients carry the provider keys
@@ -136,7 +137,7 @@ constraint.
 
 This is the peers-only deployment documented as a first-class environment —
 the realistic option for hosts that can't afford the `unified-vulkan` image
-or the local GPU/VRAM (llama-swap's generate.sh simply fails there — there
+or the local GPU/VRAM (local-inference generation simply fails there — there
 is no peers-only llama-swap mode anymore).
 
 > Note: `local-inference-host`, `termux`, and `small-cloud-vm` are **static**

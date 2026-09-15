@@ -13,7 +13,6 @@
 # The legacy 18080 port stays dead.
 #
 # Env overrides:
-#   GENERATE           1 = regenerate config.d first (./generate.sh)
 #   HOST_PORT          container published port (default 8101)
 #   LLAMA_SWAP_IMAGE   container image override
 #   HF_HUB_CACHE       HF cache override (default XDG_CACHE_HOME/huggingface/hub;

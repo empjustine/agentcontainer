@@ -26,8 +26,9 @@
 # the emergency "environment is already seeded" short-circuit was removed):
 # infisical only. Binary resolution (first executable wins):
 #   $INFISICAL_BIN › $HOME/Infisical/cli/infisical (the Termux/Android
-#   source build — see the repo root ./build.sh, which also documents the
-#   -checklinkname=0 flags) › `mise x infisical@latest` › `infisical` on PATH.
+#   source build — provisioned by lib/provision-termux.sh via the root
+#   ./build.sh; the -checklinkname=0 flags are documented there) ›
+#   `mise x infisical@latest` › `infisical` on PATH.
 #
 # Identity is pinned (INFISICAL_API_URL / INFISICAL_PROJECT_ID below) so the
 # CLI resolves the correct workspace from any working directory; self-hosted
@@ -89,7 +90,8 @@ _infisical_run() {
 	if [ -n "${INFISICAL_BIN:-}" ] && [ -x "$INFISICAL_BIN" ]; then
 		"$INFISICAL_BIN" "$@"
 	elif [ -x "$HOME/Infisical/cli/infisical" ]; then
-		# The Termux/Android source build (see the repo's ./build.sh) — tried
+		# The Termux/Android source build (lib/provision-termux.sh, via the
+		# root ./build.sh) — tried
 		# before mise so a Termux host with mise installed still uses the
 		# locally built CLI (no official Android release exists).
 		"$HOME/Infisical/cli/infisical" "$@"

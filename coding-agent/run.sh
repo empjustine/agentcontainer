@@ -1,7 +1,6 @@
 #!/bin/sh
 # `run.sh` — unified coding-agent launcher (container hosts AND Termux).
 #
-# Merges the former run.sh (container sandbox) and run-termux.sh (native pi).
 # The environment is loaded EXPLICITLY, before this script runs:
 #
 #   ./lib/environment.sh ./coding-agent/run.sh
@@ -11,32 +10,32 @@
 # this script consumes env only — it never loads, fetches or caches secrets
 # itself, and the host login state never leaves the host.
 #
+# RUNNERS NEVER BUILD OR GENERATE (docs/d041): stale/missing generation is a
+# USER ISSUE. This launcher stages the COMMITTED config (settings.json,
+# models.json, opencode.jsonc — refreshed by ./generate.sh or the root
+# ./generate.sh, which forward the vault env themselves) and serves it; a
+# missing artifact is a loud failure pointing at the generator, never an
+# implicit regeneration.
+#
 #   container branch (podman/docker, via ../lib/workload-runtime.sh):
 #     - stage a per-run sandbox dir (agent + opencode config/data)
-#     - ro-mount the generator scripts and a generated launch chain
+#     - ro-mount the committed config AND the generator tree (an in-container
+#       session can still regenerate manually via the /opt/coding-agent
+#       generate.sh shim — the runner itself never invokes it)
 #     - forward the (already-loaded) vault env through the workload_env
-#       allowlist; the spawn chain inside the container is plain generate.sh
-#       + interactive bash with no infisical at all
-#     - generate.sh then interactive bash; pi resolves "$VAR" refs in
-#       models.json from the forwarded environment
+#       allowlist; the spawn chain inside the container is plain interactive
+#       bash with no infisical at all
 #   Termux branch (PREFIX under /data/data/com.termux):
 #     - no container, no mise; the same explicit chain supplies the env
-#       (its infisical resolution prefers the Termux CLI build,
-#       $HOME/Infisical/cli/infisical — built by the repo root ./build.sh
-#       with -checklinkname=0)
-#     - GENERATE=1 ./run.sh regenerates first via ./generate.sh
-#     - exec pi directly
+#     - exec pi directly against $PI_CODING_AGENT_DIR (the generator's install
+#       target — same var, so they can't diverge)
 #
 # Env overrides:
-#   AGENT_DIR        Termux agent dir (default $HOME/.pi/agent; exported as
-#                    PI_CODING_AGENT_DIR, which pi reads instead of ~/.pi/agent)
-#   GENERATE         Termux: 1 = run ./generate.sh first
+#   PI_CODING_AGENT_DIR  Termux agent dir (default $HOME/.pi/agent) — also the
+#                    var pi itself reads, so the generator's install target
+#                    and pi's config source are the same path by construction
 #   PEER_BASE_URL    relay — vault-sourced via the lib/environment.sh chain
-#                    (consumed by the generator, which probes it; never read
-#                    by pi itself)
-#   SKIP_GEN / MODELS_DEV_REFRESH
-#                    forwarded into the container for the in-container
-#                    generate.sh (set them in the host env before running)
+#                    (consumed by the GENERATOR, never read by pi itself)
 
 set -eu
 
@@ -60,12 +59,11 @@ esac
 
 if [ "$_termux" = 1 ]; then
 	# ----------------------------- Termux -----------------------------------
-	AGENT_DIR="${AGENT_DIR:-${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}}"
-
-	if [ "${GENERATE:-0}" = 1 ]; then
-		AGENT_DIR="$AGENT_DIR" \
-			sh "$SCRIPT_DIR/generate.sh"
-	fi
+	# pi's own env var, honoured directly: the generator (same var) and pi
+	# always target the same dir. The old AGENT_DIR alias was a second name
+	# for this that could silently disagree with what pi reads.
+	PI_CODING_AGENT_DIR="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
+	export PI_CODING_AGENT_DIR
 
 	# models.json carries "$VAR" references that pi resolves from its own
 	# environment at request time, so the secrets must be in this shell's env.
@@ -74,17 +72,16 @@ if [ "$_termux" = 1 ]; then
 	# file is ever read; a missing var stays missing (pi/generators skip).
 	:
 
-	mkdir -p "$AGENT_DIR"
-	PI_CODING_AGENT_DIR="$AGENT_DIR"
-	export PI_CODING_AGENT_DIR
-	if [ ! -f "$AGENT_DIR/models.json" ]; then
-		log_warn "no models.json in agent dir — run with GENERATE=1" \
-			agentDir="$AGENT_DIR"
-	fi
+	mkdir -p "$PI_CODING_AGENT_DIR"
+	# Runners never generate (docs/d041): a missing artifact is a user issue,
+	# not something to fix implicitly.
+	[ -f "$PI_CODING_AGENT_DIR/models.json" ] ||
+		log_die 94 "no models.json in agent dir — run ./generate.sh first" \
+			agentDir="$PI_CODING_AGENT_DIR"
 	[ -n "${PEER_BASE_URL:-}" ] &&
 		log_info "PEER_BASE_URL" value="$PEER_BASE_URL"
 
-	log_info "launching pi" workspace="$workspace" agentDir="$AGENT_DIR"
+	log_info "launching pi" workspace="$workspace" agentDir="$PI_CODING_AGENT_DIR"
 	cd "$workspace"
 	exec pi "$@"
 fi
@@ -118,30 +115,34 @@ mkdir -p -- "$agent_dir" "$opencode_cfg_dir" "$opencode_data_dir" "$cline_dir" \
 # inside the container and the host's ~/.infisical login state never leaves
 # the host.
 #
-# Fallback base: if the in-container generation fails entirely, the agent
-# still starts with the last committed config (generate.sh overwrites on
-# success; the 0-provider guard keeps these when the cascade comes up empty).
+# The committed config IS the runtime config (docs/d041): the generator tree
+# (below) is mounted read-only for MANUAL in-container regeneration, but the
+# runner never invokes it. Missing committed artifacts are a user issue —
+# loud failure pointing at the generator, never an implicit regeneration.
+[ -f "$SCRIPT_DIR/settings.json" ] ||
+	log_die 94 "settings.json missing — the committed config is the runtime config; run ./generate.sh first" path="$SCRIPT_DIR/settings.json"
+[ -f "$SCRIPT_DIR/models.json" ] ||
+	log_die 94 "models.json missing — run ./generate.sh first (or the root ./generate.sh)" path="$SCRIPT_DIR/models.json"
 cp "$SCRIPT_DIR/settings.json" "$agent_dir/settings.json"
-[ -f "$SCRIPT_DIR/models.json" ] &&
-	cp "$SCRIPT_DIR/models.json" "$agent_dir/models.json"
+cp "$SCRIPT_DIR/models.json" "$agent_dir/models.json"
 [ -f "$SCRIPT_DIR/opencode.jsonc" ] &&
 	cp "$SCRIPT_DIR/opencode.jsonc" "$opencode_cfg_dir/opencode.json"
 
-# Generator scripts + every other input generate.sh reads, read-only (never
-# mount the whole dir: it also carries host-local, untracked files).  Inside the
-# container
-# lib/workload-runtime.sh derives SCRIPT_DIR from $0, which stays
-# /opt/coding-agent/generate.sh — so SCRIPT_DIR is /opt/coding-agent and
-# REPO_ROOT is /opt.  Anything missing from this list aborts the in-container
-# generate.sh on first read (settings.json used to be missing: it died at the
-# settings cp before ANY generation stage ran, leaving the staged fallback
-# config in place and a bare `cp: cannot stat …` as the only clue).
+# Generator tree, read-only (never mount the whole dir: it also carries
+# host-local, untracked files). Mounted for MANUAL in-container regeneration
+# via the generate.sh shim (the runner itself never invokes it — docs/d041):
+# generate.mjs stages the module list below from this ro-mount into its
+# scratch dir, so every module it spawns must be in this list (generate-
+# default-model.mjs used to be missing here: the in-container default-model
+# stage silently degraded to "not staged"). check-node-version stays
+# unmounted — the version gate is Termux-only and runs from the repo dir, and
+# the orchestrator counts providers inline now (the former count-providers/
+# list-providers helpers were pruned with their shell caller — docs/d041).
 _gen_target='/opt/coding-agent'
-for _f in generate.sh gen-lib.mjs generate-local-llama-swap.mjs \
-	generate-cloud-providers.mjs \
+for _f in generate.sh generate.mjs gen-lib.mjs \
+	generate-local-llama-swap.mjs generate-cloud-providers.mjs \
 	merge-models-json.mjs generate-opencode.jsonc.mjs \
-	check-node-version.mjs count-providers.mjs list-providers.mjs \
-	settings.json; do
+	generate-default-model.mjs settings.json; do
 	workload_ro "$SCRIPT_DIR/$_f" "$_gen_target/$_f"
 done
 # Committed fallbacks generate.sh installs when the cascade comes up empty or
@@ -150,6 +151,9 @@ workload_ro_if "$SCRIPT_DIR/models.json" "$_gen_target/models.json"
 workload_ro_if "$SCRIPT_DIR/opencode.jsonc" "$_gen_target/opencode.jsonc"
 workload_ro "$REPO_ROOT/lib/workload-runtime.sh" '/opt/lib/workload-runtime.sh'
 workload_ro "$REPO_ROOT/lib/log.sh" '/opt/lib/log.sh'
+# node-run.sh: the generate.sh shim sources it to resolve the pinned node
+# (docs/d041) — required for manual in-container regeneration.
+workload_ro "$REPO_ROOT/lib/node-run.sh" '/opt/lib/node-run.sh'
 # Shared lib/ modules the generators import (docs/d023, docs/d024, d039):
 # generate.sh stages log.mjs + artifact.mjs + cloud-providers.mjs into its
 # scratch dir via $LIB_DIR — all must be mounted (artifact.mjs missing here
@@ -188,35 +192,24 @@ cat >"$workload_stage/launch.sh" <<EOF
 # shellcheck disable=SC1091
 . /opt/lib/log.sh
 LOG_TOOL='coding-agent/launch'
-AGENT_DIR="/home/${USER}/.pi/agent"
-OPENCODE_CFG_DIR="/home/${USER}/.config/opencode"
+PI_CODING_AGENT_DIR="/home/${USER}/.pi/agent"
+# Upstream's documented custom config directory (config.mdx): loaded after
+# the global config so the peer overlay overrides it. The mounted config dir
+# happens to be the same path as opencode's global default, so both tiers
+# read the same files — idempotent, and the generate.sh shim targets the
+# mount through this exact var.
+OPENCODE_CONFIG_DIR="/home/${USER}/.config/opencode"
 CLINE_DIR="/home/${USER}/.cline"
 CLINE_DATA_DIR="/home/${USER}/.cline/data"
 THINKRAIL_DATA_DIR="/home/${USER}/.thinkrail"
-export AGENT_DIR OPENCODE_CFG_DIR CLINE_DIR CLINE_DATA_DIR THINKRAIL_DATA_DIR
+export PI_CODING_AGENT_DIR OPENCODE_CONFIG_DIR CLINE_DIR CLINE_DATA_DIR THINKRAIL_DATA_DIR
 
-# Run generate.sh with its stderr BOTH streamed (a slow probe cascade must
-# not look like a hang) and teed to a log, so a failure can be reported with
-# the upstream error instead of "something went wrong".  The rc file works
-# around /bin/sh having no PIPESTATUS/pipefail: a pipeline's status is its
-# last command (tee), not generate.sh.
-_gen_log="\${TMPDIR:-/tmp}/pi-generate.\$\$.log"
-_gen_rc_file="\$_gen_log.rc"
-{ { "$_gen_target/generate.sh" 2>&1 >&3 3>&-; echo \$? >"\$_gen_rc_file"; } | \
-	tee "\$_gen_log" >&2; } 3>&1
-_gen_rc="\$(cat "\$_gen_rc_file")"
-rm -f -- "\$_gen_rc_file"
-if [ "\$_gen_rc" = 0 ]; then
-	log_info "generate.sh completed" log="\$_gen_log"
-else
-	# Quote the failure verbatim: the last line generate.sh wrote — its own
-	# structured abort line (see the EXIT trap there), or, failing that, the
-	# raw tool error that killed it — is the actionable part.
-	_gen_last="\$(grep -v '^[[:space:]]*\$' "\$_gen_log" | tail -n 1)"
-	log_error "in-container generate.sh failed — using staged fallback config" \
-		exit="\$_gen_rc" error="\$_gen_last" log="\$_gen_log"
-fi
-log_info "launching interactive bash" agentDir="\$AGENT_DIR"
+# NO generation here (docs/d041): the staged committed config is what pi
+# starts with; an in-container session can regenerate manually via the
+# /opt/coding-agent/generate.sh shim.
+log_info "staged committed config; regenerate manually with /opt/coding-agent/generate.sh if needed" \
+	agentDir="\$PI_CODING_AGENT_DIR"
+log_info "launching interactive bash" agentDir="\$PI_CODING_AGENT_DIR"
 exec bash
 EOF
 chmod 0755 "$workload_stage/launch.sh"
@@ -251,8 +244,5 @@ workload_workdir  "$workspace"
 workload_env_allowlist CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY \
 	OPENROUTER_API_KEY OPENCODE_API_KEY HYPER_API_KEY INFERX_API_KEY \
 	HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY PEER_BASE_URL
-# Forwarded only when set in the host env (unset vars are not exported).
-workload_env      SKIP_GEN
-workload_env      MODELS_DEV_REFRESH
 workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
 workload_run
