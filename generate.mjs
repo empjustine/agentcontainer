@@ -44,7 +44,10 @@ for (const folder of FOLDERS) {
 }
 
 if (failures > 0) {
-	logError("generate finished with failures", { failed: failures, of: FOLDERS.length });
+	logError("generate finished with failures", {
+		failed: failures,
+		of: FOLDERS.length,
+	});
 	process.exit(1);
 }
 logInfo("all folders generated", { folders: FOLDERS.length });

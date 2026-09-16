@@ -250,6 +250,24 @@ func (lw *loggingResponseWriter) WriteHeader(status int) {
 	lw.ResponseWriter.WriteHeader(status)
 }
 
+// Flush and Unwrap keep the underlying writer's streaming capability
+// reachable through this wrapper. httputil.ReverseProxy resolves its flusher
+// via http.NewResponseController, which walks Unwrap and otherwise needs a
+// Flush method on the wrapper itself; embedding the http.ResponseWriter
+// interface promotes neither, so without these the proxy silently falls back
+// to buffered writes and FlushInterval:-1 becomes a no-op — SSE/NDJSON would
+// arrive only when net/http's buffer fills or the body ends (see
+// smoke-test.sh's streaming-unbuffered check).
+func (lw *loggingResponseWriter) Flush() {
+	if f, ok := lw.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+func (lw *loggingResponseWriter) Unwrap() http.ResponseWriter {
+	return lw.ResponseWriter
+}
+
 func (lw *loggingResponseWriter) Write(b []byte) (int, error) {
 	n, err := lw.ResponseWriter.Write(b)
 	lw.size += n

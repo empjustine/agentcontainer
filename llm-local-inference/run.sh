@@ -47,12 +47,15 @@ HOST_PORT="${HOST_PORT:-8101}"
 # models--<org>--<repo>/snapshots/<sha>/<file> paths resolved at generation
 # time. A later download/prune cycle (local-llm/upkeep.py) can delete that
 # snapshot — which would otherwise surface as a llama-server 127 only at
-# model-swap time. The generator's .paths manifest lists every host-side file
-# it verified; any miss means the cache changed since generation.
+# model-swap time. The generator's .paths manifest lists every cache-relative
+# model file it verified (relative so the committed manifest carries no
+# generating-host username); any miss means the cache changed since generation.
 paths_file="$config_d/10-local-llm-inference.paths"
+hub_cache="${HF_HUB_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/huggingface/hub}"
 if [ -f "$paths_file" ]; then
-	while IFS= read -r baked_path; do
-		[ -n "$baked_path" ] || continue
+	while IFS= read -r baked_rel; do
+		[ -n "$baked_rel" ] || continue
+		baked_path="$hub_cache/$baked_rel"
 		[ -e "$baked_path" ] ||
 			log_die 95 "model file baked into config.d is gone from the HF cache — cache changed since generation; re-run ./generate.sh" path="$baked_path"
 	done <"$paths_file"
@@ -62,7 +65,6 @@ fi
 [ "$_workload" = 'workload' ] ||
 	log_die 91 "no container tool (podman/docker) — local inference requires the container backend"
 
-HF_HUB_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/huggingface/hub"
 container_id='llama-swap'
 image="${LLAMA_SWAP_IMAGE:-ghcr.io/mostlygeek/llama-swap:unified-vulkan}"
 
@@ -80,7 +82,7 @@ workload_gpu
 # bakes cmd paths against it) — changing one means changing both in the same
 # edit. Read-only: nothing in-container writes the cache anymore (no launch-
 # time downloads); provisioning/pruning happen on the host (local-llm/).
-workload_ro       "$HF_HUB_CACHE" /home/ubuntu/.cache/huggingface/hub
+workload_ro       "$hub_cache" /home/ubuntu/.cache/huggingface/hub
 workload_ro       "$config_d" /etc/llama-swap/config.d
 workload_hardening
 workload_env_allowlist PEER_API_KEY

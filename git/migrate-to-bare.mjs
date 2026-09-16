@@ -56,7 +56,7 @@
  *   --dry-run             print the plan, touch nothing
  */
 
-import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 
 import {
@@ -153,7 +153,9 @@ function parseArgs(argv) {
 				o.help = true;
 				break;
 			default:
-				throw new Error(`unknown flag: ${a} (try --help)`);
+				throw Object.assign(new Error("unknown flag (try --help)"), {
+					flag: a,
+				});
 		}
 	}
 	return o;
@@ -190,6 +192,42 @@ async function dropRemoteTrackingRefs(repo) {
  */
 function targetFor(clone, o) {
 	return join(o.dest, `${relative(o.root, clone)}.git`);
+}
+
+/**
+ * The filesystem device that owns `path`, walking up to the nearest existing
+ * ancestor (the dest usually does not exist yet). null when even `/` is gone,
+ * which cannot happen in practice.
+ * @param {string} path
+ * @returns {number|null}
+ */
+function deviceOf(path) {
+	let probe = path;
+	while (!existsSync(probe)) {
+		const parent = dirname(probe);
+		if (parent === probe) return null;
+		probe = parent;
+	}
+	return statSync(probe).dev;
+}
+
+/**
+ * `clone --mirror --local` hardlinks objects to make conversion fast and
+ * space-free — but ONLY on one filesystem. The work farm deliberately puts
+ * the dest on Windows NTFS (`/mnt/c/…`, docs/d044) while the clones live on
+ * the WSL2 ext4 root, so the fallback is a full copy. Warn before a run that
+ * would unexpectedly double the disk it was meant to save.
+ * @param {string} root
+ * @param {string} dest
+ */
+function warnIfCrossFilesystem(root, dest) {
+	const rootDev = deviceOf(root);
+	const destDev = deviceOf(dest);
+	if (rootDev === null || destDev === null || rootDev === destDev) return;
+	logWarn(
+		"dest is on a different filesystem — --local mirrors copy objects instead of hardlinking",
+		{ root, dest },
+	);
 }
 
 /**
@@ -253,7 +291,7 @@ async function convertOne(clone, o) {
 	} catch (err) {
 		logWarn("conversion failed", {
 			clone,
-			error: /** @type {Error} */ (err).message,
+			error: err,
 		});
 		return "failed";
 	}
@@ -326,11 +364,22 @@ async function main() {
 		return;
 	}
 	if (!existsSync(o.root)) {
-		throw new Error(`reference root not found: ${o.root}`);
+		throw Object.assign(new Error("reference root not found"), {
+			root: o.root,
+		});
 	}
+	// TODO(d044): this guard is asymmetric — it rejects a dest that CONTAINS
+	// root, but not a dest nested UNDER root. That is safe today only because
+	// findCloneRoots matches non-bare clones and mirrors are bare, so a nested
+	// dest is not rediscovered; it would still put a second farm inside the
+	// walk. Reject `o.dest.startsWith(`${o.root}/`)` too before relying on it.
 	if (o.dest === o.root || o.root.startsWith(`${o.dest}/`)) {
-		throw new Error(`--dest must not overlap --root (${o.dest} vs ${o.root})`);
+		throw Object.assign(new Error("--dest must not overlap --root"), {
+			dest: o.dest,
+			root: o.root,
+		});
 	}
+	warnIfCrossFilesystem(o.root, o.dest);
 
 	const discovered = findCloneRoots(o.root, o.maxDepth);
 	const rels = discovered.map((p) => relative(o.root, p));
@@ -364,7 +413,7 @@ async function main() {
 
 await main().catch((err) => {
 	logError("migration aborted", {
-		error: /** @type {Error} */ (err)?.message ?? String(err),
+		error: err,
 	});
 	process.exit(1);
 });

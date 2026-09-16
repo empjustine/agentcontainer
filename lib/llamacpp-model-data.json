@@ -14,7 +14,7 @@
 			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E2B-it-Q8_0.gguf"
 		},
 		{
@@ -25,7 +25,7 @@
 			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E4B-it-Q8_0.gguf"
 		},
 		{
@@ -35,7 +35,7 @@
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
 			"ctx-size": 131072,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
 		},
 		{
@@ -44,7 +44,7 @@
 			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-12B-it-Q8_0.gguf"
 		},
 		{
@@ -54,7 +54,7 @@
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"ctx-size": 131072,
-			"__argv": "${qwen36}"
+			"__argv": "${qwen36} ${DRAFT_MTP}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0",
@@ -63,7 +63,7 @@
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"ctx-size": 131072,
-			"__argv": "${qwen36}"
+			"__argv": "${qwen36} ${DRAFT_MTP}"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw",
@@ -72,7 +72,7 @@
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"ctx-size": 131072,
-			"__argv": "${qwen36}"
+			"__argv": "${qwen36} ${DRAFT_MTP}"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw",
@@ -81,7 +81,7 @@
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"ctx-size": 131072,
-			"__argv": "${qwen36}"
+			"__argv": "${qwen36} ${DRAFT_MTP}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K",
@@ -90,7 +90,7 @@
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
 			"ctx-size": 131072,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
 		},
 		{
@@ -100,7 +100,7 @@
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
 			"ctx-size": 131072,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
 		},
 		{
@@ -109,7 +109,7 @@
 			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-12b-it-Q8_0.gguf"
 		},
 		{
@@ -118,7 +118,7 @@
 			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-12b-it-Q8_0.gguf"
 		},
 		{
@@ -138,7 +138,27 @@
 			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
-			"__argv": "${qwen36}"
+			"__argv": "${qwen36} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q4_0",
+			"model": "Qwen3.8-27B-Q4_0.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q4_1",
+			"model": "Qwen3.8-27B-Q4_1.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
@@ -148,7 +168,227 @@
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q4_K_S",
+			"model": "Qwen3.8-27B-UD-Q4_K_S.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q4_K_XL",
+			"model": "Qwen3.8-27B-UD-Q4_K_XL.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q5_K_M",
+			"model": "Qwen3.8-27B-UD-Q5_K_M.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q5_K_S",
+			"model": "Qwen3.8-27B-UD-Q5_K_S.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q5_K_XL",
+			"model": "Qwen3.8-27B-UD-Q5_K_XL.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q6_K",
+			"model": "Qwen3.8-27B-UD-Q6_K.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q6_K_L",
+			"model": "Qwen3.8-27B-UD-Q6_K_L.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q6_K_M",
+			"model": "Qwen3.8-27B-UD-Q6_K_M.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q6_K_XL",
+			"model": "Qwen3.8-27B-UD-Q6_K_XL.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q8_0",
+			"model": "Qwen3.8-27B-Q8_0.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q8_K_L",
+			"model": "Qwen3.8-27B-UD-Q8_K_L.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q8_K_XL",
+			"model": "Qwen3.8-27B-UD-Q8_K_XL.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M",
+			"model": "Qwen3.8-27B-UD-IQ1_M.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S",
+			"model": "Qwen3.8-27B-UD-IQ1_S.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S",
+			"model": "Qwen3.8-27B-UD-IQ2_S.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS",
+			"model": "Qwen3.8-27B-UD-IQ2_XXS.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S",
+			"model": "Qwen3.8-27B-UD-IQ3_S.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS",
+			"model": "Qwen3.8-27B-UD-IQ3_XXS.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ4_XS",
+			"model": "Qwen3.8-27B-UD-IQ4_XS.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL",
+			"model": "Qwen3.8-27B-UD-Q2_K_XL.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL",
+			"model": "Qwen3.8-27B-UD-Q3_K_XL.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
+		},
+		{
+			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:BF16",
+			"model": "BF16/Qwen3.8-27B-BF16-00001-of-00002.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}"
 		},
 		{
 			"hf-repo": "unsloth/Muse-Glimmer-30B-GGUF:Q8_0",
@@ -160,33 +400,14 @@
 			"model": "Muse-Glimmer-30B-UD-Q6_K_XL.gguf",
 			"__argv": "${museglimmer}"
 		},
-		{
-			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q8_0",
-			"model": "Qwen3.8-27B-Q8_0.gguf",
-			"mmproj": "mmproj-BF16.gguf",
-			"image-min-tokens": 1024,
-			"image-max-tokens": 1024,
-			"cache-type-k": "q8_0",
-			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
-		},
-		{
-			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q6_K",
-			"model": "Qwen3.8-27B-UD-Q6_K.gguf",
-			"mmproj": "mmproj-BF16.gguf",
-			"image-min-tokens": 1024,
-			"image-max-tokens": 1024,
-			"cache-type-k": "q8_0",
-			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
-		},
+
 		{
 			"hf-repo": "unsloth/Qwen3.8-Flash-Next-GGUF:Q2_K_XL",
 			"model": "UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00001-of-00003.gguf",
 			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
-			"__argv": "${qwen38}"
+			"__argv": "${qwen38} ${DRAFT_MTP}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
@@ -194,7 +415,7 @@
 			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-31B-it-Q8_0.gguf"
 		},
 		{
@@ -213,6 +434,7 @@
 			"hf-repo": "bartowski/Ling-3.0-tiny-GGUF:Q8_0",
 			"model": "Ling-3.0-tiny-Q8_0.gguf",
 			"ctx-size": 131072,
+			"parallel": 2,
 			"__argv": "${ling}"
 		},
 		{
@@ -257,26 +479,7 @@
 			"parallel": 2,
 			"__argv": "${lfm25}"
 		},
-		{
-			"hf-repo": "unsloth/GLM-4.7-Flash-GGUF:Q6_K",
-			"model": "GLM-4.7-Flash-Q6_K.gguf",
-			"__argv": "${glm47f}"
-		},
-		{
-			"hf-repo": "unsloth/GLM-4.7-Flash-GGUF:UD-Q6_K_XL",
-			"model": "GLM-4.7-Flash-UD-Q6_K_XL.gguf",
-			"__argv": "${glm47f}"
-		},
-		{
-			"hf-repo": "unsloth/GLM-4.7-Flash-GGUF:Q8_0",
-			"model": "GLM-4.7-Flash-Q8_0.gguf",
-			"__argv": "${glm47f}"
-		},
-		{
-			"hf-repo": "unsloth/GLM-4.7-Flash-GGUF:UD-Q8_K_XL",
-			"model": "GLM-4.7-Flash-UD-Q8_K_XL.gguf",
-			"__argv": "${glm47f}"
-		},
+
 		{
 			"hf-repo": "unsloth/Muse-Glimmer-30B-GGUF:UD-Q8_K_XL",
 			"model": "Muse-Glimmer-30B-UD-Q8_K_XL.gguf",
@@ -289,7 +492,7 @@
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"ctx-size": 131072,
-			"__argv": "${qwen36}"
+			"__argv": "${qwen36} ${DRAFT_MTP}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL",
@@ -298,7 +501,7 @@
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"ctx-size": 131072,
-			"__argv": "${qwen36}"
+			"__argv": "${qwen36} ${DRAFT_MTP}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL",
@@ -307,7 +510,7 @@
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
 			"ctx-size": 131072,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
 		},
 		{
@@ -317,7 +520,7 @@
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
 			"ctx-size": 131072,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
 		},
 		{
@@ -328,64 +531,54 @@
 			"__argv": "${lfm25}"
 		},
 		{
-			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw",
-			"model": "Qwen3.8-27B-Q5_K_M-5.60bpw.gguf",
+			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw",
+			"model": "Qwen3.8-27B-IQ2_XXS-2.56bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
+			"__argv": "${qwen38} ${DRAFT_MTP}"
 		},
 		{
-			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw",
-			"model": "Qwen3.8-27B-IQ3_S-3.44bpw.gguf",
+			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw",
+			"model": "Qwen3.8-27B-IQ3_S-3.23bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
+			"__argv": "${qwen38} ${DRAFT_MTP}"
 		},
 		{
-			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw",
-			"model": "Qwen3.8-27B-IQ4_XS-3.67bpw.gguf",
+			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw",
+			"model": "Qwen3.8-27B-IQ3_XS-3.01bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
+			"__argv": "${qwen38} ${DRAFT_MTP}"
 		},
 		{
-			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw",
-			"model": "Qwen3.8-27B-IQ4_XS-4.00bpw.gguf",
+			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw",
+			"model": "Qwen3.8-27B-IQ3_XXS-2.88bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
+			"__argv": "${qwen38} ${DRAFT_MTP}"
 		},
 		{
-			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw",
-			"model": "Qwen3.8-27B-IQ4_XS-4.40bpw.gguf",
+			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.84bpw",
+			"model": "Qwen3.8-27B-IQ4_XS-3.84bpw.gguf",
 			"mmproj": "mmproj-bf16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
-		},
-		{
-			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw",
-			"model": "Qwen3.8-27B-Q5_K_S-4.72bpw.gguf",
-			"mmproj": "mmproj-bf16.gguf",
-			"image-min-tokens": 1024,
-			"image-max-tokens": 1024,
-			"cache-type-k": "q8_0",
-			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} --spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8"
+			"__argv": "${qwen38} ${DRAFT_MTP}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-8B-A1B-GGUF:Q8_0",
@@ -409,7 +602,7 @@
 			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E2B-it-Q8_0.gguf"
 		},
 		{
@@ -420,7 +613,29 @@
 			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
+			"model-draft": "MTP/mtp-gemma-4-E4B-it-Q8_0.gguf"
+		},
+		{
+			"hf-repo": "unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+			"model": "gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
+			"ctx-size": 131072,
+			"parallel": 2,
+			"__argv": "${gemma4} ${DRAFT_MTP}",
+			"model-draft": "MTP/mtp-gemma-4-E2B-it-Q8_0.gguf"
+		},
+		{
+			"hf-repo": "unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+			"model": "gemma-4-E4B-it-qat-UD-Q2_K_XL.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
+			"ctx-size": 131072,
+			"parallel": 2,
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E4B-it-Q8_0.gguf"
 		},
 		{
@@ -431,7 +646,7 @@
 			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E4B-it-Q8_0.gguf"
 		},
 		{
@@ -442,7 +657,7 @@
 			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E4B-it-Q8_0.gguf"
 		},
 		{
@@ -453,7 +668,7 @@
 			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E2B-it-Q8_0.gguf"
 		},
 		{
@@ -464,7 +679,7 @@
 			"image-max-tokens": 1120,
 			"ctx-size": 131072,
 			"parallel": 2,
-			"__argv": "${gemma4}",
+			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E2B-it-Q8_0.gguf"
 		},
 		{

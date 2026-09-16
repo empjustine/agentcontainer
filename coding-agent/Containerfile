@@ -25,14 +25,24 @@ ARG USER=dev
 
 # RUN dnf copr enable jdxcode/mise && sudo dnf install mise
 
-RUN apt-get update && \
-apt-get -y --no-install-recommends upgrade && \
-apt-get -y --no-install-recommends install extrepo ca-certificates curl git sudo vim-tiny && \
+# Build-time output is captured line-orientation by build.mjs (docs/d045);
+# every tool in a RUN layer must stay line-appendable in non-tty stdout.
+# -qq drops update/upgrade chatter. The apt.conf.d drop-in below is the ONE
+# edit point for Dpkg::Use-Pty=0: without it apt wraps dpkg in a pty (apt's
+# default), dpkg then renders "(Reading database ... N%)" as raw \r redraw
+# frames that leak into captured build logs — -o= per call was tried and one
+# missed apt-get line (upgrade) leaked anyway. DEBIAN_FRONTEND keeps prompts
+# from stalling layers.
+ENV DEBIAN_FRONTEND=noninteractive
+RUN echo 'Dpkg::Use-Pty "0";' > /etc/apt/apt.conf.d/99-no-dpkg-pty && \
+apt-get update -qq && \
+apt-get -y -qq --no-install-recommends upgrade && \
+apt-get -y -qq --no-install-recommends install extrepo ca-certificates curl git sudo vim-tiny && \
 extrepo enable mise && \
-apt-get update && \
-apt-get -y --no-install-recommends install mise && \
-apt-get autoremove && \
-apt-get clean && \
+apt-get update -qq && \
+apt-get -y -qq --no-install-recommends install mise && \
+apt-get -qq autoremove && \
+apt-get -qq clean && \
 rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --gid ${GID} ${USER} && \
@@ -49,6 +59,13 @@ USER ${USER}
 ENV \
 HOME="/home/${USER}" \
 MISE_MINIMUM_RELEASE_AGE="3d" \
+# Global quiet flag (src/cli/mod.rs: env "MISE_QUIET", `short = 'q', global = true`):
+# mise's multi_progress_report.rs only draws the tty redraw UI when stderr
+# "looks attended" — a recording harness/pty qualifies — and then re-renders
+# frames as overlapping rows in captured logs (upstream comment states this
+# CI failure verbatim). quiet forces the append-only text renderer instead.
+MISE_QUIET="1" \
+NO_COLOR="1" \
 npm_config_ignore_scripts=true \
 npm_config_min_release_age=3 \
 PIP_REQUIRE_VIRTUALENV="true" \

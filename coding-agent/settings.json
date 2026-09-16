@@ -13,6 +13,6 @@
 	"terminal": {
 		"showTerminalProgress": false
 	},
-	"defaultProvider": "cline-pass",
-	"defaultModel": "z-ai/glm-5.3-flash"
+	"defaultProvider": "opencode-go",
+	"defaultModel": "deepseek-v4.1-flash"
 }

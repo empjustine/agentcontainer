@@ -56,8 +56,8 @@ built-in `opencode` and `opencode-go` providers with the peer endpoint:
 ```json
 {
   "providers": {
-    "opencode-go": { "baseUrl": "http://10.90.17.20:8080/v1", "apiKey": "$PEER_API_KEY" },
-    "opencode": { "baseUrl": "http://10.90.17.20:8080/v1", "apiKey": "$PEER_API_KEY" }
+    "opencode-go": { "baseUrl": "http://192.0.2.7:8080/v1", "apiKey": "$PEER_API_KEY" },
+    "opencode": { "baseUrl": "http://192.0.2.7:8080/v1", "apiKey": "$PEER_API_KEY" }
   }
 }
 ```
@@ -84,7 +84,7 @@ built-in `opencode` and `opencode-go` providers with the peer endpoint:
 
 ```
 PEER_API_KEY=<your-secret-key>
-PEER_BASE_URL=http://10.90.17.20:8080/v1
+PEER_BASE_URL=http://192.0.2.7:8080/v1
 ```
 
 - `.env` is gitignored (via the `*.env` pattern in `.gitignore`;

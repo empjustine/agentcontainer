@@ -26,6 +26,7 @@
 	"routing": {},
 	"macros": {
 		"LLAMA_SERVER": "llama-server --port ${PORT} --log-verbosity 4 --threads-http 6 --log-colors off --no-ui --no-warmup --load-mode mmap --cache-idle-slots --kv-unified --cache-ram 8192 --flash-attn on --fit on --fit-target 1024 --no-context-shift --reasoning-preserve",
+		"DRAFT_MTP": "--spec-type draft-mtp --spec-draft-n-max 16 --spec-draft-p-min 0.8",
 		"0text": "--no-mmproj --ubatch-size 512",
 		"1vision": "--no-mmproj-offload --ubatch-size 2048",
 		"2mmproj": "--ubatch-size 2048",

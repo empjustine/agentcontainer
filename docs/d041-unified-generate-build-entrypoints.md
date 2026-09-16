@@ -170,7 +170,7 @@ point at the generator/builder, never to fix state implicitly:
   failure, exit 1 when any failed (here: local-inference 94 — the documented
   gate for this host class). One real bug found and fixed in verification:
   the root `repoRoot` used a double `dirname` (copied from the folder-level
-  pattern), spawning `/home/deck/<folder>/generate.mjs`.
+  pattern), spawning `~/<folder>/generate.mjs`.
 - Root builder: `BUILD_PLAN=1 ./build.sh` logs the chosen target set and
   exits 0 (here: the bare-host `llm-reverse-proxy-native` target, image
   targets skipped with a warn). The native target was exercised for real
@@ -180,7 +180,7 @@ point at the generator/builder, never to fix state implicitly:
   skip) costs nothing and removes the staleness trap.
 - Vault-era live state: the verification run that used the default `AGENT_DIR`
   rewrote `~/.pi/agent/models.json` — restored to the d040-compliant state by
-  re-running generation with `AGENT_DIR=/home/deck/.pi/agent` (13-model
+  re-running generation with `AGENT_DIR=~/.pi/agent` (13-model
   cline-pass; the pre-test live file was the stale 445-model pre-d040 output)
   and re-applying the pi-runtime settings fields (theme/lastChangelogVersion)
   from the installer's own backup.

@@ -29,10 +29,16 @@ import { fileURLToPath } from "node:url";
 
 export const scriptDir = dirname(fileURLToPath(import.meta.url));
 export const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
-const { logError, logInfo, logWarn, setLogTool } =
+const { logError, logInfo, logWarn, setLogStream, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
+
+// Every tool in this folder prints a machine-consumed payload on stdout
+// (audit's JSON report, search-references' results, vbs-har's manifest,
+// local-changes' --json) — logs go to stderr so the two streams stay
+// separable; `2>&1 | jq` still yields one jsonlines stream (docs/d045).
+setLogStream("stderr");
 
 export { logError, logInfo, logWarn, setLogTool };
 

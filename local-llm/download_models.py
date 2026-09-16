@@ -66,6 +66,9 @@ sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
 import log
 
 log.set_tool("local-llm/download-models")
+# This script prints its payload (table/list/report) on stdout — logs go to
+# stderr so the two never interleave (docs/d045).
+log.set_stream(sys.stderr)
 
 HERE = Path(__file__).parent
 MODEL_DATA = HERE.parent / "lib" / "llamacpp-model-data.json"
@@ -162,7 +165,7 @@ def main():
         commit, wanted, errors = resolve(api, repo, entries)
         failures += len(errors)
         for err in errors:
-            log.error("resolution failed", error=str(err))
+            log.error("resolution failed", error=err)
         if not wanted:
             continue
         if args.dry_run:
@@ -191,7 +194,7 @@ def main():
             failed = sorted({fname for fname, _ in wanted})
             failures += len(failed)
             for fname in failed:
-                log.error("file failed", file=fname, error=str(e))
+                log.error("file failed", file=fname, error=e)
 
     if args.dry_run:
         log.info("dry run — nothing downloaded")

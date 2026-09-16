@@ -17,8 +17,11 @@
  *                                backend AND GPU devices), or LOCAL_INFERENCE=1
  *                                to force (debug only; the host HF cache must
  *                                carry every configured GGUF)
- *   10-local-llm-inference.paths sibling manifest of the baked host-side model
- *                                paths — run.sh's staleness preflight input
+ *   10-local-llm-inference.paths sibling manifest of the baked model files,
+ *                                cache-relative — run.sh's staleness preflight
+ *                                input (paths are  relative to the HF cache
+ *                                root so the committed manifest stays readable
+ *                                on any host)
  *
  * There is NO launch-gguf.sh: snapshot paths are resolved HERE
  * (generation-time baking, docs/d029 option B) and emitted as plain args in
@@ -48,9 +51,16 @@
  *                       capability gate (emits container-side paths; debug)
  */
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	statSync,
+} from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Structured logger + artifact writer from ../lib (docs/d023), resolved
@@ -413,13 +423,19 @@ function generateLocalInference() {
 
 	writeConfigD("10-local-llm-inference.yaml", { models });
 	// The .paths manifest is the run.sh staleness preflight's input (docs/d029
-	// B): pure host-side paths, one per line, re-verified before the serving
-	// container starts. llama-swap ignores non-*.yml/*.yaml files in
-	// -config-dir (internal/config/merge.go listYAMLFiles), so the companion
-	// rides in config.d/ next to the layer it validates.
+	// B): one model-file path per line, re-verified before the serving container
+	// starts. Paths are stored relative to the HF cache root — absolute paths
+	// would bake the generating host's username into a committed artifact — and
+	// run.sh re-resolves them against the same cache the serving container
+	// binds. llama-swap ignores non-*.yml/*.yaml files in -config-dir
+	// (internal/config/merge.go listYAMLFiles), so the companion rides in
+	// config.d/ next to the layer it validates.
 	writeArtifact(
 		join(configD, "10-local-llm-inference.paths"),
-		`${[...bakedHostPaths].sort().join("\n")}\n`,
+		`${[...bakedHostPaths]
+			.sort()
+			.map((p) => relative(HUB_HOST, p))
+			.join("\n")}\n`,
 	);
 }
 

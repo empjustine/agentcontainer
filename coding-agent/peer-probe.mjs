@@ -14,8 +14,21 @@
  * their own key / OAuth login at request time). Such a response proves the
  * NETWORK PATH works and says nothing about whether the built-in provider
  * works, so it must NOT trigger a peer override. Only the absence of ANY http
- * response (dns failure, connection refused, tls failure, timeout) is
- * evidence that the endpoint is unreachable. See docs/d022 for the history.
+ * response (dns failure, connection refused, tls failure — a bogus certificate
+ * with verification ON dies BEFORE any status —, timeout) or a 5xx server-error
+ * response (the endpoint saying it cannot serve right now) is evidence that an
+ * endpoint is unusable and a peer fallback is justified.
+ *
+ * TLS verification is REQUIRED for every https route. With verification ON the
+ * handshake refuses a bogus certificate before any request byte (headers
+ * included) is written, so a credentialed probe can never reach an impostor.
+ * With verification OFF (NODE_TLS_REJECT_UNAUTHORIZED=0) the handshake accepts
+ * anything, so an https answer — and any credential sent with it — belongs to
+ * whoever terminated the TLS, never the claimed host: those probes FAIL CLOSED
+ * (tlsUnverifiable — no request, no route certified, docs/d033). Plain-http
+ * peers remain usable as the operator's explicit emergency choice (there is no
+ * TLS to verify; the plaintext-credential risk is theirs to accept). See
+ * docs/d022 for the history and probeDirect for the classification.
  *
  * Import convention (docs/d023, d039): this module lives beside its consumers
  * in coding-agent/ but keeps the LIB_DIR resolution for the shared logger —
@@ -28,7 +41,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const LIB_DIR =
-	process.env.LIB_DIR ?? join(dirname(fileURLToPath(import.meta.url)), "..", "lib");
+	process.env.LIB_DIR ??
+	join(dirname(fileURLToPath(import.meta.url)), "..", "lib");
 const { logWarn } = /** @type {typeof import("../lib/log.mjs")} */ (
 	await import(`${LIB_DIR}/log.mjs`)
 );
@@ -59,7 +73,7 @@ export function useEnvProxy() {
 		} catch (err) {
 			logWarn(
 				"http(s)_proxy set but undici EnvHttpProxyAgent unavailable — fetch requests will NOT use the proxy",
-				{ error: /** @type {Error} */ (err).message },
+				{ error: err },
 			);
 		}
 	}
@@ -115,8 +129,7 @@ export function peerBaseUrl() {
  *   when neither env var is set
  */
 export function peerBaseUrls() {
-	const raw =
-		process.env.PEER_BASE_URLS || process.env.PEER_BASE_URL || "";
+	const raw = process.env.PEER_BASE_URLS || process.env.PEER_BASE_URL || "";
 	return raw
 		.split(/[\n,]/)
 		.map((s) => s.trim().replace(/\/+$/, ""))
@@ -125,8 +138,11 @@ export function peerBaseUrls() {
 
 /**
  * An error that carries the http status when the failure came from a response
- * (vs. a transport-level failure, which has no status at all).
- * @typedef {Error & { status?: number }} HttpError
+ * (vs. a transport-level failure, which has no status at all). The message is
+ * a static label; the dynamic detail (`status`, `statusText`, `url`) lives on
+ * the attached properties so the logger keeps it as structured fields, never
+ * interpolated prose (docs/d045).
+ * @typedef {Error & { status?: number, statusText?: string, url?: string }} HttpError
  */
 
 /**
@@ -176,8 +192,12 @@ export function peerBaseUrls() {
  * - `ok` — 2xx with a parseable model list: built-in routing works.
  * - `auth` — 401/403: reachable, we merely have no usable credentials here.
  * - `reachable` — some other http response: the host answered, so the path is
- *   fine even though the answer was not a model list.
- * - `unreachable` — no http response at all (dns/conn-refused/tls/timeout).
+ *   fine even though the answer was not a model list (other 4xx/429/redirects).
+ * - `unreachable` — no http response at all (dns/conn-refused/tls/timeout), or
+ *   a 5xx server-error response: the endpoint answered but is NOT usable right
+ *   now (outage/overload). Routing a layer at a dead URL just ships errors, so
+ *   a down endpoint must drop into the same peer-fallback bucket — the peer
+ *   route probes already refuse 502/504 the same way (DEAD_ROUTE_STATUSES).
  * Only `unreachable` justifies rerouting a provider through the peer.
  * @typedef {"ok"|"auth"|"reachable"|"unreachable"} ProbeOutcome
  */
@@ -185,7 +205,9 @@ export function peerBaseUrls() {
 /**
  * @typedef {object} ProbeResult
  * @property {ProbeOutcome} result
- * @property {string} [error] cause, present unless `result` is `ok`
+ * @property {HttpError} [error] the failure itself — message is the static
+ *   label, the attached properties (status/statusText/url) carry the detail
+ *   (docs/d045); present unless `result` is `ok`
  */
 
 /**
@@ -203,6 +225,52 @@ export const AUTH_REJECTED_STATUSES = new Set([401, 403]);
  * @type {ReadonlySet<number>}
  */
 export const DEAD_ROUTE_STATUSES = new Set([404, 502, 504]);
+
+// TLS-verification state, decided once and read by every probe: the process
+// either enforces certificates (the default; NODE_TLS_REJECT_UNAUTHORIZED=1
+// re-states it) or accepts any presented one (=0). With verification ON a
+// bogus-cert MITM never completes — the handshake dies before any request byte
+// is written, so a credentialed probe can never reach an impostor. With
+// verification OFF a MITM completes and an https answer — plus any credential
+// sent with it — belongs to whoever terminated the TLS, not the claimed host.
+// That is why unverified https is not a valid reachability scenario
+// (docs/d033): those endpoints are never probed and never certified. Plain-http
+// peers stay usable as the operator's explicit emergency choice — no TLS to
+// verify, plaintext-credential risk accepted by the operator (a LAN
+// llama-swap/funnel front behind an http URL is the common shape).
+const TLS_UNVERIFIED = process.env.NODE_TLS_REJECT_UNAUTHORIZED === "0";
+if (TLS_UNVERIFIED) {
+	logWarn(
+		"TLS verification disabled (NODE_TLS_REJECT_UNAUTHORIZED=0) — https endpoints fail closed; only plain-http emergency peers are used",
+	);
+}
+
+/**
+ * Whether an endpoint URL cannot be trusted under this runtime's TLS state:
+ * true only for https URLs while certificate verification is disabled. http
+ * URLs are never blocked — the operator's explicit emergency peer may be
+ * plaintext.
+ * @param {string} url
+ * @returns {boolean}
+ */
+export function tlsUnverifiable(url) {
+	return TLS_UNVERIFIED && /^https:\/\//i.test(url);
+}
+
+/**
+ * Generation-side peers-only mode (`PEERS_ONLY=1`): the operator declares this
+ * host reaches cloud providers only through the peer funnel, so the generators
+ * skip the direct (cloud API) probe entirely and go straight to the peer
+ * path-route cascade (docs/d033). Saves the per-provider probe timeouts on
+ * exactly the hosts the peer exists for. Distinct from the archived
+ * SERVING-side PEERS_ONLY (docs/archive/peer-variant-work.md — cloud peers
+ * served, no local models): this is the generation-side knob the coding-agent
+ * generators read.
+ * @returns {boolean}
+ */
+export function peersOnly() {
+	return process.env.PEERS_ONLY === "1";
+}
 
 /**
  * Bearer auth headers for a key, or undefined to probe unauthenticated.
@@ -239,10 +307,11 @@ export async function fetchModelEntries(serverUrl, headers) {
 	}
 	if (!res.ok) {
 		throw /** @type {HttpError} */ (
-			Object.assign(
-				new Error(`GET ${url} -> ${res.status} ${res.statusText}`),
-				{ status: res.status },
-			)
+			Object.assign(new Error("models listing answered non-2xx"), {
+				status: res.status,
+				statusText: res.statusText,
+				url,
+			})
 		);
 	}
 	/** @type {unknown} */
@@ -250,7 +319,11 @@ export async function fetchModelEntries(serverUrl, headers) {
 	const container = /** @type {{ data?: unknown, models?: unknown }} */ (body);
 	const data = container.data ?? container.models ?? body;
 	if (!Array.isArray(data)) {
-		throw new Error(`GET ${url} returned no models array`);
+		throw /** @type {HttpError} */ (
+			Object.assign(new Error("models listing returned no models array"), {
+				url,
+			})
+		);
 	}
 	return /** @type {RawModelEntry[]} */ (data)
 		.map((entry) => {
@@ -269,19 +342,94 @@ export async function fetchModelEntries(serverUrl, headers) {
  * @returns {Promise<ProbeResult>}
  */
 export async function probeDirect(baseUrl, headers) {
+	// Unverified https is NOT a reachability scenario at all: with verification
+	// disabled anyone can answer the handshake, so an ok/auth verdict — and the
+	// credentialed request that would produce it — belongs to whoever answered,
+	// never the provider (docs/d033, header). Fail closed with no request, so
+	// the provider key is never handed to an impostor. Plain-http endpoints
+	// (the operator's emergency peers) are unaffected — nothing to verify.
+	if (tlsUnverifiable(baseUrl)) {
+		return {
+			result: "unreachable",
+			error: Object.assign(
+				new Error("TLS verification disabled — https route not trusted"),
+				{ url: baseUrl },
+			),
+		};
+	}
 	try {
 		await fetchModelEntries(baseUrl, headers);
 		return { result: "ok" };
 	} catch (err) {
-		const { message, status } = /** @type {HttpError} */ (err);
-		if (status !== undefined && AUTH_REJECTED_STATUSES.has(status)) {
-			return { result: "auth", error: message };
+		const http = normalizedProbeError(err);
+		if (http.status !== undefined && AUTH_REJECTED_STATUSES.has(http.status)) {
+			return { result: "auth", error: http };
+		}
+		// A 5xx is the endpoint SAYING it cannot serve right now — not a network
+		// gap and not a credential gate. An http response proves reachability,
+		// but a server-error response proves unusability (docs/d022's "dead
+		// endpoint" case): rerouting at a 5xx'ing URL just ships errors instead
+		// of the peer path-route. Same family the peer routes already refuse
+		// (DEAD_ROUTE_STATUSES — 502/504 are llm-reverse-proxy's proxy→upstream
+		// problem detail), and it self-heals: the next generation run re-probes
+		// and returns to direct once the provider answers 2xx again.
+		if (http.status !== undefined && http.status >= 500 && http.status <= 599) {
+			return { result: "unreachable", error: http };
 		}
 		return {
-			result: status === undefined ? "unreachable" : "reachable",
-			error: message,
+			result: http.status === undefined ? "unreachable" : "reachable",
+			error: http,
 		};
 	}
+}
+
+/**
+ * Guarantee a probe failure is always an Error with the HttpError shape: a
+ * non-Error throw (or an error-less classification) must still produce a
+ * structured value, never an undefined `error` field on a non-ok result —
+ * that is exactly the "generic message with no cause" record d045 forbids.
+ * @param {unknown} err
+ * @returns {HttpError}
+ */
+function normalizedProbeError(err) {
+	if (err instanceof Error) return /** @type {HttpError} */ (err);
+	return Object.assign(new Error("probe threw a non-Error value"), {
+		thrown: String(err),
+	});
+}
+
+// SuppressedError (explicit resource management) is missing from some
+// @types/node versions, so checkJs cannot see the global — alias through
+// globalThis with an explicit constructor type; runtime `new` is unchanged.
+const SuppressedErrorCtor =
+	/** @type {new (error: unknown, suppressed: unknown, message?: string) => Error & { error?: unknown, suppressed?: unknown }} */ (
+		/** @type {any} */ (globalThis).SuppressedError
+	);
+
+/**
+ * A probe that did NOT deliver the expected listing, packaged for logging as
+ * a SuppressedError: the expectation is the message label, the probe's
+ * failure is chained as `error`, and the classification rides as an attached
+ * property. Every "expected X but got Y — did Z instead" record composes
+ * this so the log line is self-sufficient — never a generic label with no
+ * cause, even if the probe somehow ends up error-less (docs/d045).
+ * @param {ProbeResult|PeerRouteResult} probe
+ * @param {string} expectation static label of what the caller expected
+ * @returns {Error & { error?: unknown, suppressed?: unknown, result: ProbeOutcome }}
+ */
+export function suppressedProbe(probe, expectation) {
+	const failure =
+		probe.error ??
+		normalizedProbeError(
+			Object.assign(new Error("probe classification without an error object"), {
+				result: probe.result,
+			}),
+		);
+	return /** @type {Error & { error?: unknown, suppressed?: unknown, result: ProbeOutcome }} */ (
+		Object.assign(new SuppressedErrorCtor(failure, undefined, expectation), {
+			result: probe.result,
+		})
+	);
 }
 
 /**
@@ -308,7 +456,7 @@ export function peerProviderUrl(peerBaseUrl, providerId) {
  * @property {RawModelEntry[]} entries the listing (only when `result` is
  *   `ok`; empty otherwise — a 401/403 or an unexpected answer proves the
  *   route but yields no models)
- * @property {string} [error]
+ * @property {HttpError} [error] the failure itself, docs/d045 shape
  */
 
 /**
@@ -344,20 +492,20 @@ export async function probePeerRoute(providerUrl, headers) {
 		const entries = await fetchModelEntries(providerUrl, headers);
 		return { usable: true, result: "ok", entries };
 	} catch (err) {
-		const { message, status } = /** @type {HttpError} */ (err);
-		if (status === undefined || DEAD_ROUTE_STATUSES.has(status)) {
+		const http = normalizedProbeError(err);
+		if (http.status === undefined || DEAD_ROUTE_STATUSES.has(http.status)) {
 			return {
 				usable: false,
 				result: "unreachable",
-				error: message,
+				error: http,
 				entries: [],
 			};
 		}
 		return {
 			usable: true,
-			result: AUTH_REJECTED_STATUSES.has(status) ? "auth" : "reachable",
+			result: AUTH_REJECTED_STATUSES.has(http.status) ? "auth" : "reachable",
 			entries: [],
-			error: message,
+			error: http,
 		};
 	}
 }
@@ -378,9 +526,24 @@ export async function probePeerRoutes(candidates, providerId, headers) {
 	const failures = [];
 	for (const base of candidates) {
 		const url = peerProviderUrl(base, providerId);
+		// Same fail-closed rule as probeDirect: an unverifiable https route is
+		// never probed and never certified — a credentialed probe could leak the
+		// provider key to whoever answered the handshake. https candidates are
+		// skipped; http (emergency) candidates still count.
+		if (tlsUnverifiable(base)) {
+			failures.push({
+				url,
+				result: "unreachable",
+				error: Object.assign(
+					new Error("TLS verification disabled — https route not trusted"),
+					{ url },
+				),
+			});
+			continue;
+		}
 		const route = await probePeerRoute(url, headers);
 		if (route.usable) return { url, ...route };
-		failures.push(`${url}: ${route.error ?? route.result}`);
+		failures.push({ url, result: route.result, error: route.error });
 	}
 	if (failures.length) logWarn("peer provider routes failed", { failures });
 	return null;
@@ -399,6 +562,18 @@ export async function probePeerRoutes(candidates, providerId, headers) {
 export async function probeCandidates(candidates, accept) {
 	const failures = [];
 	for (const baseUrl of candidates) {
+		// Fail closed on unverifiable https bases, same rule as probeDirect;
+		// http (emergency) candidates still count.
+		if (tlsUnverifiable(baseUrl)) {
+			failures.push({
+				baseUrl,
+				error: Object.assign(
+					new Error("TLS verification disabled — https route not trusted"),
+					{ url: baseUrl },
+				),
+			});
+			continue;
+		}
 		try {
 			const entries = await fetchModelEntries(
 				baseUrl,
@@ -408,8 +583,7 @@ export async function probeCandidates(candidates, accept) {
 			if (!accept(ids)) throw new Error("no usable models for this concern");
 			return { baseUrl, entries };
 		} catch (err) {
-			const { message } = /** @type {HttpError} */ (err);
-			failures.push(`${baseUrl}: ${message}`);
+			failures.push({ baseUrl, error: err });
 		}
 	}
 	if (failures.length) logWarn("peer candidate endpoints failed", { failures });

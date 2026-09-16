@@ -87,8 +87,7 @@ import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = dirname(scriptDir);
-const LIB_DIR =
-	process.env.LIB_DIR ?? join(repoRoot, "lib");
+const LIB_DIR = process.env.LIB_DIR ?? join(repoRoot, "lib");
 const { logError, logInfo, logWarn, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
@@ -124,7 +123,9 @@ const agentDir =
 const runDir =
 	process.env.RUN_DIR ??
 	process.env.TMPDIR ??
-	(termux ? join(process.env.PREFIX ?? "/data/data/com.termux/files/usr", "tmp") : tmpdir());
+	(termux
+		? join(process.env.PREFIX ?? "/data/data/com.termux/files/usr", "tmp")
+		: tmpdir());
 const modelsDevJson =
 	process.env.MODELS_DEV_JSON ?? join(repoRoot, "lib", "models.dev.api.json");
 
@@ -143,7 +144,10 @@ function runStage(script, args = []) {
 		stdio: "inherit",
 	});
 	if (r.status !== 0) {
-		logWarn("stage failed", { script: script.split("/").pop(), exit: r.status });
+		logWarn("stage failed", {
+			script: script.split("/").pop(),
+			exit: r.status,
+		});
 		return false;
 	}
 	return true;
@@ -182,9 +186,13 @@ if (termux) {
 		logError("node not found (need >= 22.19 for pi-coding-agent)");
 		process.exit(93);
 	}
-	const gate = spawnSync(process.execPath, [join(scriptDir, "check-node-version.mjs")], {
-		stdio: "inherit",
-	});
+	const gate = spawnSync(
+		process.execPath,
+		[join(scriptDir, "check-node-version.mjs")],
+		{
+			stdio: "inherit",
+		},
+	);
 	if (gate.status !== 0) {
 		logError("node too old (need >= 22.19 for pi-coding-agent)");
 		process.exit(93);
@@ -239,7 +247,10 @@ for (const f of ["log.mjs", "artifact.mjs", "cloud-providers.mjs"]) {
 // ro-mounted /opt copies; both are consumed stale-tolerantly and direct-mode
 // runs refresh them fresh.
 if (existsSync(join(scriptDir, "hyper-facts.json"))) {
-	copyFileSync(join(scriptDir, "hyper-facts.json"), join(scratch, "hyper-facts.json"));
+	copyFileSync(
+		join(scriptDir, "hyper-facts.json"),
+		join(scratch, "hyper-facts.json"),
+	);
 }
 if (existsSync(join(repoRoot, "lib", "catwalk-facts.json"))) {
 	copyFileSync(
@@ -402,7 +413,9 @@ if (modelsOut) {
 			);
 		}
 		copyFileSync(modelsOut, join(agentDir, "models.json"));
-		for (const [id, provider] of Object.entries(providersOf(join(agentDir, "models.json")))) {
+		for (const [id, provider] of Object.entries(
+			providersOf(join(agentDir, "models.json")),
+		)) {
 			logInfo("provider override", {
 				provider: id,
 				models: (provider.models ?? []).length,
@@ -415,7 +428,10 @@ if (modelsOut) {
 			backup: "kept alongside",
 		});
 	}
-} else if (!existsSync(join(agentDir, "models.json")) && existsSync(join(scriptDir, "models.json"))) {
+} else if (
+	!existsSync(join(agentDir, "models.json")) &&
+	existsSync(join(scriptDir, "models.json"))
+) {
 	copyFileSync(join(scriptDir, "models.json"), join(agentDir, "models.json"));
 	logInfo("nothing generated; installed committed models.json", {
 		path: join(agentDir, "models.json"),

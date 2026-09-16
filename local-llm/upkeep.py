@@ -30,6 +30,9 @@ sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
 import log
 
 log.set_tool("local-llm/upkeep")
+# This script prints its payload (table/list/report) on stdout — logs go to
+# stderr so the two never interleave (docs/d045).
+log.set_stream(sys.stderr)
 
 from huggingface_hub import (
     scan_cache_dir,
@@ -78,7 +81,7 @@ def pull_newer(cache_dir: str) -> None:
         try:
             refs = api.list_repo_refs(repo_id=repo.repo_id, repo_type="model")
         except Exception as e:
-            log.warn("cannot read remote refs; skipping", repo=repo.repo_id, error=str(e))
+            log.warn("cannot read remote refs; skipping", repo=repo.repo_id, error=e)
             continue
         remote = {r.name: _commit(r) for r in refs.branches}
         for name, revision in repo.refs.items():
@@ -110,7 +113,7 @@ def pull_newer(cache_dir: str) -> None:
                         ignore_patterns=["*.gguf"],
                     )
             except Exception as e:
-                log.warn("pull failed", repo=repo.repo_id, error=str(e))
+                log.warn("pull failed", repo=repo.repo_id, error=e)
 
 
 def main() -> int:

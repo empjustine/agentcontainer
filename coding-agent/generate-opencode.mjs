@@ -30,11 +30,13 @@ import {
 	logWarn,
 	peerBaseUrls,
 	peerProviderUrl,
+	peersOnly,
 	probeCandidates,
 	probeDirect,
 	probePeerRoutes,
 	scriptDir,
 	setLogTool,
+	suppressedProbe,
 	writeArtifact,
 } from "./gen-lib.mjs";
 
@@ -153,31 +155,46 @@ async function main() {
 	// Only providers whose real endpoint is genuinely UNREACHABLE are peer
 	// candidates; a 401/403 (or any other http answer) keeps the built-in
 	// routing opencode already has. Parallelized to reduce unnecessary
-	// critical path latency.
+	// critical path latency. PEERS_ONLY=1 (docs/d033) skips this phase
+	// entirely — the operator declared the cloud unreachable, so every
+	// provider's result is pre-classified "unreachable" (a blocked cloud
+	// would cost the full 8s probe timeout per provider) and the peer
+	// path-route phase below decides everything.
 	const cloudResults = await Promise.allSettled(
-		Object.entries(CLOUD_PROVIDERS).map(([id, cfg]) =>
-			probeDirect(
-				cfg.baseUrl,
-				bearerHeaders(process.env[cfg.apiKeyEnv]?.trim()),
-			).then(
-				(r) => ({ id, ...r }),
-				// probeDirect classifies transport failures itself, so a throw is
-				// unexpected — but the id must survive it, or the provider silently
-				// loses its peer path-route probe (the rejection branch used to
-				// push a literal "unknown" instead).
-				(err) => {
-					logWarn("cloud probe threw — will check peer routing", {
-						provider: id,
-						error: /** @type {any} */ (err)?.message ?? String(err),
-					});
-					return {
+		peersOnly()
+			? Object.keys(CLOUD_PROVIDERS).map((id) =>
+					Promise.resolve({
 						id,
 						result: /** @type {"unreachable"} */ ("unreachable"),
-						error: /** @type {any} */ (err)?.message ?? String(err),
-					};
-				},
-			),
-		),
+						error: Object.assign(
+							new Error("PEERS_ONLY — direct probe skipped"),
+							{ provider: id },
+						),
+					}),
+				)
+			: Object.entries(CLOUD_PROVIDERS).map(([id, cfg]) =>
+					probeDirect(
+						cfg.baseUrl,
+						bearerHeaders(process.env[cfg.apiKeyEnv]?.trim()),
+					).then(
+						(r) => ({ id, ...r }),
+						// probeDirect classifies transport failures itself, so a throw is
+						// unexpected — but the id must survive it, or the provider silently
+						// loses its peer path-route probe (the rejection branch used to
+						// push a literal "unknown" instead).
+						(err) => {
+							logWarn("cloud probe threw — will check peer routing", {
+								provider: id,
+								error: err,
+							});
+							return {
+								id,
+								result: /** @type {"unreachable"} */ ("unreachable"),
+								error: err,
+							};
+						},
+					),
+				),
 	);
 
 	/** @type {string[]} */
@@ -191,9 +208,14 @@ async function main() {
 					provider: id,
 				});
 			} else {
+				// Same SuppressedError composition as the pi generator's demotion
+				// records (docs/d045): expectation + chained probe failure.
 				logInfo("reachable — keeping built-in routing", {
 					provider: id,
-					error,
+					error: suppressedProbe(
+						{ result, error },
+						"expected a usable /models listing from the default endpoint",
+					),
 				});
 			}
 			continue;
@@ -219,7 +241,7 @@ async function main() {
 				(err) => {
 					logWarn("peer probe threw — skipping", {
 						provider: id,
-						error: /** @type {any} */ (err)?.message ?? String(err),
+						error: err,
 					});
 					return { id, route: null };
 				},
@@ -230,7 +252,9 @@ async function main() {
 	for (const r of peerResults) {
 		if (r.status !== "fulfilled" || !r.value.route) {
 			if (r.status === "fulfilled") {
-				logWarn("no usable peer path-route — skipping", { provider: r.value.id });
+				logWarn("no usable peer path-route — skipping", {
+					provider: r.value.id,
+				});
 			}
 			continue;
 		}

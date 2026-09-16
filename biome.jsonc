@@ -7,11 +7,11 @@
 //
 // `files.includes` is load-bearing, not tidiness: Biome 2.x uses `includes`
 // with `!`-negated globs (the old `files.ignore` key no longer exists).
-//   - .pi/ and .vscode/ are tool-owned dirs, not repo source.
+//   - .pi/, .vscode/ and .thinkrail/ are tool-owned dirs, not repo source.
 //   - the vendored models.dev catalog, the VRAM-fit data file and the HF
 //     manifests are fetched/derived data, not hand-maintained source.
-//   - coding-agent/models.json and model-*.json are WRITTEN by
-//     generate-pi-coding-agent.mjs (JSON.stringify(…, null, 2)) —
+//   - coding-agent/models.json, model-*.json and the fetched caches/routing
+//     tables below are WRITTEN by generate.sh (JSON.stringify(…, null, 2)) —
 //     formatting them here would only be undone by the next generate.sh run.
 {
 	"files": {
@@ -19,12 +19,16 @@
 			"**",
 			"!.pi",
 			"!.vscode",
+			"!.thinkrail",
 			"!opencode_share",
 			"!**/models.dev.api.json",
 			"!**/gguf-vram-fit-estimates.data.json",
+			"!**/catwalk-facts.json",
 			"!local-llm/hf-manifests",
 			"!coding-agent/models.json",
 			"!coding-agent/model-*.json",
+			"!coding-agent/hyper-facts.json",
+			"!llm-reverse-proxy/llm-reverse-proxy.json",
 			// same reasoning, .jsonc extension: written by
 			// generate-opencode.mjs
 			"!coding-agent/opencode.jsonc"

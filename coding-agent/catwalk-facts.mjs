@@ -34,15 +34,16 @@ import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR =
-	process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
 const { logInfo, logWarn, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
+
 // Proxy-env routing via the same-dir peer-probe module (its top-level calls
 // useEnvProxy(); rationale docs/d001 §1).
 import { useEnvProxy } from "./peer-probe.mjs";
+
 useEnvProxy();
 setLogTool("coding-agent/catwalk-facts");
 
@@ -119,11 +120,18 @@ export async function refreshCatwalkFacts(url = CATWALK_URL) {
 			signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 		});
 		if (!res.ok) {
-			throw new Error(`GET ${url} -> ${res.status} ${res.statusText}`);
+			throw Object.assign(new Error("catwalk catalog answered non-2xx"), {
+				status: res.status,
+				statusText: res.statusText,
+				url,
+			});
 		}
 		const payload = /** @type {CatwalkProvider[]} */ (await res.json());
 		if (!Array.isArray(payload) || payload.length === 0) {
-			throw new Error(`GET ${url} returned no providers array`);
+			throw Object.assign(
+				new Error("catwalk catalog returned no providers array"),
+				{ url },
+			);
 		}
 		const facts = /** @type {CatwalkFacts} */ ({
 			fetchedAt: new Date().toISOString(),
@@ -141,7 +149,7 @@ export async function refreshCatwalkFacts(url = CATWALK_URL) {
 	} catch (err) {
 		logWarn("catwalk facts refresh failed — keeping last good cache", {
 			path: FACTS_PATH,
-			error: /** @type {any} */ (err)?.message ?? String(err),
+			error: err,
 		});
 		return false;
 	}
@@ -168,7 +176,7 @@ export function loadCatwalkFacts() {
 	} catch (err) {
 		logWarn("catwalk facts cache unreadable — skipping enrichment", {
 			path: FACTS_PATH,
-			error: /** @type {any} */ (err)?.message ?? String(err),
+			error: err,
 		});
 		return null;
 	}
@@ -193,9 +201,6 @@ export function getCatwalkModels(piProviderId) {
 }
 
 // Runnable: node coding-agent/catwalk-facts.mjs [url] — best-effort refresh
-if (
-	process.argv[1] &&
-	import.meta.url.endsWith(basename(process.argv[1]))
-) {
+if (process.argv[1] && import.meta.url.endsWith(basename(process.argv[1]))) {
 	await refreshCatwalkFacts(process.argv[2]);
 }

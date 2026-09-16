@@ -37,13 +37,13 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 import {
 	androidBuildEnv,
 	commonBuildFlags,
 	goToolchainReady,
 	hostBuildEnv,
 } from "./lib/go-build.mjs";
+import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 
 setLogTool("build");
 
@@ -59,10 +59,39 @@ const containerTool = existsSync("/usr/bin/podman")
 		: null;
 
 /**
- * Run one command to completion, streaming output.
+ * Defense-in-depth line sanitizer (docs/d045). The ROOT cause of tty progress
+ * leak is fixed per-tool at the source, only for tools this repo controls:
+ * the coding-agent Containerfile drops /etc/apt/apt.conf.d/99-no-dpkg-pty
+ * (Dpkg::Use-Pty=0 — apt otherwise wraps dpkg in a pty, so dpkg renders
+ * "(Reading database ... N%)" as raw \r redraw frames) and sets MISE_QUIET
+ * for mise's tty progress UI. But the wrapper cannot reach every arg it
+ * spawns (future Containerfiles, dpkg invoked outside apt, spinner tools not
+ * yet audited), so a redraw chain that survives to this layer collapses to
+ * its final frame rather than logging every intermediate spinner state as
+ * capture noise. A leaked redraw here is a bubble to add a source-side fix,
+ * not a reason to rely on this path.
+ * @param {string} line
+ * @returns {string|null}
+ */
+function collapseRedrawFrames(line) {
+	if (!line.includes("\r")) return line;
+	const frames = line.split("\r").filter((frame) => frame.length > 0);
+	return frames.length > 0 ? (frames.at(-1) ?? null) : null;
+}
+
+/**
+ * Run one command to completion, capturing stdout+stderr LINE BY LINE and
+ * re-emitting each as a structured log record (docs/d045): child processes
+ * are upstreams (buildah, apt, mise) that cannot be made to honor d045
+ * themselves, so the wrapping layer owns the line-boundary. tty progress
+ * redraw is handled at the SOURCE per tool (Containerfile apt Dpkg::Use-Pty
+ * drop-in, MISE_QUIET) with collapseRedrawFrames as wrapper-side
+ * defense-in-depth only. stdio:"inherit"
+ * was what turned parallel container targets into byte-wise interleaved
+ * garbage.
  * @param {string} cmd
  * @param {string[]} args
- * @param {{ cwd?: string, env?: Record<string, string> }} [opts]
+ * @param {{ cwd?: string, env?: Record<string, string>, name?: string }} [opts]
  * @returns {Promise<boolean>} success
  */
 async function run(cmd, args, opts = {}) {
@@ -70,8 +99,48 @@ async function run(cmd, args, opts = {}) {
 		const child = spawn(cmd, args, {
 			cwd: opts.cwd,
 			env: opts.env ?? process.env,
-			stdio: "inherit",
+			stdio: ["ignore", "pipe", "pipe"],
 		});
+		// The union literal (not a bare string[] loop variable) is what makes
+		// child[stream] a known-property index under checkJs.
+		for (const stream of /** @type {("stdout"|"stderr")[]} */ ([
+			"stdout",
+			"stderr",
+		])) {
+			let partial = "";
+			child[stream].setEncoding("utf8");
+			child[stream].on("data", (/** @type {string} */ chunk) => {
+				partial += chunk;
+				const lines = partial.split("\n");
+				// split on a non-empty string never yields an empty tail, so the
+				// undefined side of pop() is unreached; ?? satisfies exactOptional.
+				partial = /** @type {string} */ (lines.pop());
+				for (const line of lines) {
+					// tty-redrawn progress (apt/dpkg spinners) arrives as \r-separated
+					// frames in one line; only the final frame carries information.
+					const keptLine = collapseRedrawFrames(line);
+					if (!keptLine) continue; // null (all-\r) or empty: not a record
+					logInfo("command output", {
+						...(opts.name ? { target: opts.name } : {}),
+						cmd,
+						stream,
+						line: keptLine,
+					});
+				}
+			});
+			child[stream].on("end", () => {
+				// A stream ending in \n leaves an empty partial — not a line.
+				if (!partial) return;
+				const keptPartial = collapseRedrawFrames(partial);
+				if (!keptPartial) return;
+				logInfo("command output", {
+					...(opts.name ? { target: opts.name } : {}),
+					cmd,
+					stream,
+					line: keptPartial,
+				});
+			});
+		}
 		child.on("close", (code) => resolve(code === 0));
 		child.on("error", () => resolve(false));
 	});
@@ -83,27 +152,45 @@ const targets = [];
 // --- coding-agent image (container hosts) ------------------------------------
 // Tagged :<date> and :latest; the compile is the image build itself (no host
 // toolchain involved).
-const codingAgentTag = process.env.CODING_AGENT_TAG ?? "localhost/empjustine/coding-agent";
+const codingAgentTag =
+	process.env.CODING_AGENT_TAG ?? "localhost/empjustine/coding-agent";
 if (containerTool) {
 	targets.push({
 		name: "coding-agent-image",
 		fn: async () => {
 			const buildDate = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+			// --progress=plain (podman/buildah; buildx takes the same flag):
+			// default "auto" is tty-detected, and an agent harness often IS a
+			// pty — which renders buildah's progress as overlapping redraw
+			// frames instead of appendable lines.
 			const buildArgs =
-				containerTool === "podman" ? ["image", "build"] : ["buildx", "build"];
-			return await run(containerTool, [
-				...buildArgs,
-				"--pull",
-				...(force ? ["--no-cache"] : []),
-				"--build-arg", `BUILD_DATE=${buildDate}`,
-				"--build-arg", `UID=${process.env.SUDO_UID ?? process.getuid?.() ?? ""}`,
-				"--build-arg", `GID=${process.env.SUDO_GID ?? process.getgid?.() ?? ""}`,
-				"--build-arg", `USER=${process.env.USER ?? ""}`,
-				"--tag", `${codingAgentTag}:${buildDate}`,
-				"--tag", `${codingAgentTag}:latest`,
-				"-f", join(repoRoot, "coding-agent", "Containerfile"),
-				join(repoRoot, "coding-agent"),
-			]);
+				containerTool === "podman"
+					? ["image", "build", "--progress=plain"]
+					: ["buildx", "build", "--progress=plain"];
+			return await run(
+				containerTool,
+				[
+					...buildArgs,
+					"--pull",
+					...(force ? ["--no-cache"] : []),
+					"--build-arg",
+					`BUILD_DATE=${buildDate}`,
+					"--build-arg",
+					`UID=${process.env.SUDO_UID ?? process.getuid?.() ?? ""}`,
+					"--build-arg",
+					`GID=${process.env.SUDO_GID ?? process.getgid?.() ?? ""}`,
+					"--build-arg",
+					`USER=${process.env.USER ?? ""}`,
+					"--tag",
+					`${codingAgentTag}:${buildDate}`,
+					"--tag",
+					`${codingAgentTag}:latest`,
+					"-f",
+					join(repoRoot, "coding-agent", "Containerfile"),
+					join(repoRoot, "coding-agent"),
+				],
+				{ name: "coding-agent-image" },
+			);
 		},
 	});
 
@@ -113,11 +200,14 @@ if (containerTool) {
 	// served by ../llm-reverse-proxy; this image only ever serves local GGUF
 	// inference — no :cpu peers-only variant, no Termux native cross-build.
 	const llamaSwapImage =
-		process.env.LLAMA_SWAP_IMAGE ?? "ghcr.io/mostlygeek/llama-swap:unified-vulkan";
+		process.env.LLAMA_SWAP_IMAGE ??
+		"ghcr.io/mostlygeek/llama-swap:unified-vulkan";
 	targets.push({
 		name: "llama-swap-image",
 		fn: async () =>
-			await run(containerTool, ["image", "pull", llamaSwapImage]),
+			await run(containerTool, ["image", "pull", llamaSwapImage], {
+				name: "llama-swap-image",
+			}),
 	});
 
 	// --- llm-reverse-proxy image (container hosts) ---------------------------
@@ -127,16 +217,25 @@ if (containerTool) {
 	// Always builds: unchanged inputs are a layer-cache hit; the former
 	// inspect-skip keyed on tag PRESENCE and left a stale image after a
 	// main.go edit (see the module header).
-	const proxyImage = process.env.IMAGE_TAG ?? "localhost/llm-reverse-proxy:latest";
+	const proxyImage =
+		process.env.IMAGE_TAG ?? "localhost/llm-reverse-proxy:latest";
 	targets.push({
 		name: "llm-reverse-proxy-image",
-		fn: async () => await run(containerTool, [
-			"build",
-			...(force ? ["--no-cache"] : []),
-			"-f", join(repoRoot, "llm-reverse-proxy", "Containerfile"),
-			"-t", proxyImage,
-			join(repoRoot, "llm-reverse-proxy"),
-		]),
+		fn: async () =>
+			await run(
+				containerTool,
+				[
+					"build",
+					"--progress=plain",
+					...(force ? ["--no-cache"] : []),
+					"-f",
+					join(repoRoot, "llm-reverse-proxy", "Containerfile"),
+					"-t",
+					proxyImage,
+					join(repoRoot, "llm-reverse-proxy"),
+				],
+				{ name: "llm-reverse-proxy-image" },
+			),
 	});
 }
 
@@ -157,7 +256,7 @@ if (!containerTool) {
 					termux
 						? "no working go toolchain (on Termux: pkg install golang)"
 						: "no working go toolchain (it compiles the host binary — the only thing this host can serve; mise hosts: mise use -g go@1.27)",
-					);
+				);
 				return false;
 			}
 			// Always builds: go's build cache is content-addressed, so an
@@ -169,6 +268,7 @@ if (!containerTool) {
 			return await run("go", ["build", ...flags, "-o", out, "."], {
 				cwd: proxyDir,
 				env,
+				name: "llm-reverse-proxy-native",
 			});
 		},
 	});
@@ -183,7 +283,9 @@ if (termux) {
 	targets.unshift({
 		name: "termux-provisioning",
 		fn: async () =>
-			await run("sh", [join(repoRoot, "lib", "provision-termux.sh")]),
+			await run("sh", [join(repoRoot, "lib", "provision-termux.sh")], {
+				name: "termux-provisioning",
+			}),
 	});
 }
 

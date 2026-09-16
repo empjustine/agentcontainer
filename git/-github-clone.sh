@@ -52,6 +52,7 @@ downloads_dir="$(get_downloads_dir)"
 
 current_clone_dir=""
 
+# shellcheck disable=SC2329  # trap handler — invoked indirectly on INT/TERM/EXIT
 cleanup() {
     if [ -n "$current_clone_dir" ] && [ -d "$current_clone_dir" ]; then
         printf 'Cleaning up partial clone: %s\n' "$current_clone_dir" >&2

@@ -13,6 +13,18 @@ This covers the shared container-runtime detection (`lib/workload-runtime.sh`), 
 deployment environments (local-inference-host, termux, small-cloud-vm), and the run scripts that launch
 the llama-swap serving container and the pi coding-agent container.
 
+> **Threat positions (explicit, not aspirational).** The host is trusted
+> (defending against a malicious host means trusted-hardware attestation
+> chains — a large, dubious-value dependency — and every surveyed tool
+> agrees; see the lens section of
+> [workload-sandboxing-prior-art.md](workload-sandboxing-prior-art.md)).
+> The workload is not adversarial by intent: the boundaries aim at
+> **accidents** (a typo'd `rm` finding a `$HOME` bind mount, cross-repo
+> data streams, a vault secret forwarded one layer too far) and at the
+> *cost-raising* against prompt-injection misalignment — never at becoming
+> a perimeter against a determined, competent adversary, which no naive
+> sandbox short of a VM (docs/d020) honestly is.
+
 ## Environments
 
 | Name                 | Sandbox / runtime                    | Cloud access | Serving dir                     | Usage dir              |
@@ -74,7 +86,12 @@ the active backend — podman or docker —  No
 > serving variant is retired (see the termux-serving.md banner); Termux is a
 > usage environment for the coding agent today.
 > For a stronger-than-container option on capable hosts, see
-> [d020-libvirt-qemu-sandbox.md](d020-libvirt-qemu-sandbox.md).
+> [d020-libvirt-qemu-sandbox.md](d020-libvirt-qemu-sandbox.md). For how the
+> field does the same confinement at finer granularity (bwrap/landlock/
+> seccomp — including unix-socket bridge "port publishing" under
+> `--unshare-net`), see
+> [workload-sandboxing-prior-art.md](workload-sandboxing-prior-art.md)
+> (reference farm survey; prior art, not a security or trust reference).
 
 Source it from any `run*.sh` (it lives one level up, at the repo root):
 
@@ -215,7 +232,11 @@ description API (`workload-render.jq` emits podman/docker dialects keyed on
 
 Net: mounts/user/cmd/hardening translate cleanly, but the **image** and
 **port-publishing** pieces have no bwrap equivalent — the two this repo's
-serving path (`llm-local-inference/run.sh`) depends on. Supporting bwrap
+serving path (`llm-local-inference/run.sh`) depends on. (Prior art found
+since this verdict was written softens the second blocker only: fence and
+srt publish from an isolated netns via per-port unix-socket/socat bridges,
+not from bwrap itself — surveyed in
+[workload-sandboxing-prior-art.md](workload-sandboxing-prior-art.md).) Supporting bwrap
 therefore means either (a) giving up the unified image (hand-assembled
 rootfs) and LAN publishing, or (b) keeping podman/docker for serving and
 adding bwrap only as a restricted no-net backend for non-serving workloads.

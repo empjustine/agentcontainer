@@ -64,7 +64,7 @@ http.createServer((req, res) => {
 EOF
 
 node upstream.mjs >upstream.log 2>&1 &
-for i in $(seq 50); do curl -s -o /dev/null http://127.0.0.1:19091/ && break; sleep 0.1; done
+for _ in $(seq 50); do curl -s -o /dev/null http://127.0.0.1:19091/ && break; sleep 0.1; done
 cat upstream.log
 # a stale node upstream holding 19091 with a DIFFERENT script answers wrong
 # with no error anywhere — detect the bind failure and abort loudly instead
@@ -96,7 +96,7 @@ cat > llm-reverse-proxy.json <<'EOF'
 EOF
 
 "$OLDPWD/llm-reverse-proxy" -config llm-reverse-proxy.json >proxy.log 2>&1 &
-for i in $(seq 50); do curl -s -o /dev/null http://127.0.0.1:18101/ && break; sleep 0.1; done
+for _ in $(seq 50); do curl -s -o /dev/null http://127.0.0.1:18101/ && break; sleep 0.1; done
 cat proxy.log
 # same staleness guard for the proxy port (otherwise every /local check hits
 # whatever old instance holds it and fails with mismatched bodies)
@@ -149,6 +149,8 @@ check upstream-4xx-passthrough 'rate limited by upstream itself' "$(curl -s "$B/
 
 # RFC 9457 internal errors — transport / DNS
 for spec in 'refused econnrefused' 'nxdomain dnserror'; do
+  # Intentional word-split: $spec is a two-field "name type" record.
+  # shellcheck disable=SC2086
   set -- $spec
   r=$(curl -s "$B/$1/v1/models")
   check "502-$1" "\"type\":\"$2" "$r"

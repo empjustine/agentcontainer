@@ -1,17 +1,23 @@
 #!/bin/sh
 # lib/log.sh — structured logging shared by this repo's shell tools.
 #
-# One JSON object per line on stderr:
+# One JSON object per line on stdout (LOG_FORMAT=logfmt for logfmt):
 #   {"ts":"2025-09-02T12:00:00Z","level":"info","tool":"coding-agent/run","msg":"...","key":"value"}
-# Set LOG_FORMAT=logfmt for logfmt instead (key=value pairs).  Stdout stays
-# reserved for machine-consumed output (file contents, lists, redirected
-# artifacts) — never log to it.
+#
+# No level filtering happens here, ever — debug/trace/warn/error all go to the
+# stream; a consumer that wants less noise filters downstream with jsonlines
+# tooling (`jq 'select(.level=="error")'`). docs/d045 owns the policy.
+#
+# Stream: stdout by default; a script whose stdout IS the machine-consumed
+# payload (a report, a list, a manifest) exports LOG_STREAM=stderr so logs
+# cannot interleave with the payload — `2>&1 | jq` still yields one jsonlines
+# stream.
 #
 # Env:
-#   LOG_LEVEL  debug|info|warn|error   (default: info)
-#   LOG_FORMAT json|logfmt             (default: json)
-#   LOG_TOOL   component name          (default: "sh"; each tool overrides,
-#              e.g. LOG_TOOL=coding-agent/generate)
+#   LOG_STREAM  stdout|stderr   (default: stdout)
+#   LOG_FORMAT  json|logfmt     (default: json)
+#   LOG_TOOL    component name  (default: "sh"; each tool overrides, e.g.
+#               LOG_TOOL=coding-agent/generate)
 #
 # Usage:
 #   . /path/to/lib/log.sh
@@ -22,15 +28,16 @@
 # Field args must be key=value; non-conforming args are ignored.  Values are
 # JSON-escaped (\, ", tab, CR; newlines become \n).  Keys are emitted verbatim.
 
-LOG_LEVEL="${LOG_LEVEL:-info}"
 LOG_FORMAT="${LOG_FORMAT:-json}"
+LOG_STREAM="${LOG_STREAM:-stdout}"
 LOG_TOOL="${LOG_TOOL:-sh}"
 
-_log_prio() {
-	case "$1" in
-		debug) printf 0 ;; info) printf 1 ;; warn) printf 2 ;; error) printf 3 ;;
-		*) printf 1 ;;
-	esac
+_log_out() {
+	if [ "$LOG_STREAM" = stderr ]; then
+		printf '%s\n' "$1" >&2
+	else
+		printf '%s\n' "$1"
+	fi
 }
 
 _log_ts() { date -u +%Y-%m-%dT%H:%M:%SZ; }
@@ -53,7 +60,6 @@ _log_json_escape() {
 log_emit() {
 	_l_level="$1"; shift
 	_l_msg="$1"; shift
-	[ "$(_log_prio "$_l_level")" -ge "$(_log_prio "$LOG_LEVEL")" ] || return 0
 
 	_l_fields=""
 	for _l_kv in "$@"; do
@@ -75,13 +81,10 @@ log_emit() {
 					*)       _l_kvout="$_l_kvout $_l_k=$_l_v" ;;
 				esac
 			done
-			printf 'ts=%s level=%s tool=%s msg="%s"%s\n' \
-				"$(_log_ts)" "$_l_level" "$LOG_TOOL" "$_l_msg" "$_l_kvout" >&2
+			_log_out "ts=$(_log_ts) level=$_l_level tool=$LOG_TOOL msg=\"$_l_msg\"$_l_kvout"
 			;;
 		*)
-			printf '{"ts":"%s","level":"%s","tool":"%s","msg":"%s"%s}\n' \
-				"$(_log_ts)" "$_l_level" "$LOG_TOOL" \
-				"$(_log_json_escape "$_l_msg")" "$_l_fields" >&2
+			_log_out "{\"ts\":\"$(_log_ts)\",\"level\":\"$_l_level\",\"tool\":\"$LOG_TOOL\",\"msg\":\"$(_log_json_escape "$_l_msg")\"$_l_fields}"
 			;;
 	esac
 }

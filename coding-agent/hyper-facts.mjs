@@ -49,11 +49,15 @@ import { readFileSync, renameSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { peerBaseUrls, useEnvProxy } from "./peer-probe.mjs";
+import {
+	peerBaseUrls,
+	peersOnly,
+	tlsUnverifiable,
+	useEnvProxy,
+} from "./peer-probe.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR =
-	process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
 const { logInfo, logWarn, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
@@ -118,11 +122,24 @@ const FACTS_PATH =
  * (multi-hop chains — docs/d034) when the direct endpoint is unreachable.
  * This keeps the cache fresh even when the provider's own endpoint is
  * network-isolated but routable through a peer.
+ *
+ * Same fail-closed rule as the probes (peer-probe.mjs): under unverified TLS
+ * (NODE_TLS_REJECT_UNAUTHORIZED=0) https fetches are skipped WITHOUT the
+ * HYPER_API_KEY header — the key belongs to whoever answered the unverified
+ * handshake (docs/d033). The last good cache then stays in place.
+ * `skipDirect` (peer-mode refreshes — docs/d033) skips the direct leg the same
+ * way: the caller already proved the direct endpoint unreachable, so re-probing
+ * it is a wasted timeout; peer candidates only.
  * @param {string} [baseUrl] hyper's OpenAI-compatible endpoint (facts-table
  *   default)
+ * @param {boolean} [skipDirect] peer-mode refresh: never probe the provider's
+ *   own endpoint, peer candidates only
  * @returns {Promise<boolean>} true when the cache was refreshed
  */
-export async function refreshHyperFacts(baseUrl = FACTS.baseUrl) {
+export async function refreshHyperFacts(
+	baseUrl = FACTS.baseUrl,
+	skipDirect = false,
+) {
 	const directUrl = `${baseUrl.replace(/\/+$/, "")}/provider`;
 	const peerUrls = peerBaseUrls().map((base) => `${base}/hyper/provider`);
 
@@ -131,33 +148,54 @@ export async function refreshHyperFacts(baseUrl = FACTS.baseUrl) {
 	let fetchedUrl = null;
 
 	// --- 1. direct endpoint first -----------------------------------------
-	try {
-		/** @type {{ "Content-Type": string, Authorization?: string }} */
-		const headers = { "Content-Type": "application/json" };
-		const key = process.env[FACTS.apiKeyEnv]?.trim();
-		if (key) headers.Authorization = `Bearer ${key}`;
-		const res = await fetch(directUrl, {
-			headers,
-			signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+	// Skipped under PEERS_ONLY=1, by `skipDirect` (peer-mode callers — the
+	// direct endpoint was already proven unreachable) and on unverified TLS
+	// (fail closed, no credentialed fetch — docs/d033).
+	if (peersOnly() || skipDirect || tlsUnverifiable(directUrl)) {
+		const reason = tlsUnverifiable(directUrl)
+			? "unverified TLS — failing closed"
+			: "PEERS_ONLY / peer-mode — direct leg skipped";
+		logWarn(`hyper direct endpoint ${reason}`, {
+			url: directUrl,
 		});
-		if (res.ok) {
-			payload = await res.json();
-			fetchedUrl = directUrl;
-		} else {
-			logWarn("hyper direct endpoint returned non-2xx — trying peer route", {
-				status: res.status,
-				url: directUrl,
+	} else {
+		try {
+			/** @type {{ "Content-Type": string, Authorization?: string }} */
+			const headers = { "Content-Type": "application/json" };
+			const key = process.env[FACTS.apiKeyEnv]?.trim();
+			if (key) headers.Authorization = `Bearer ${key}`;
+			const res = await fetch(directUrl, {
+				headers,
+				signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+			});
+			if (res.ok) {
+				payload = await res.json();
+				fetchedUrl = directUrl;
+			} else {
+				logWarn("hyper direct endpoint returned non-2xx — trying peer route", {
+					status: res.status,
+					url: directUrl,
+				});
+			}
+		} catch (err) {
+			logWarn("hyper direct fetch failed — trying peer route", {
+				error: err,
 			});
 		}
-	} catch (err) {
-		logWarn("hyper direct fetch failed — trying peer route", {
-			error: /** @type {any} */ (err)?.message ?? String(err),
-		});
 	}
 
 	// --- 2. peer route fallback (every candidate, in order) -------------
 	if (!payload) {
 		for (const peerUrl of peerUrls) {
+			if (tlsUnverifiable(peerUrl)) {
+				logWarn(
+					"hyper peer https unverifiable — skipping (TLS verification disabled)",
+					{
+						url: peerUrl,
+					},
+				);
+				continue;
+			}
 			try {
 				const res = await fetch(peerUrl, {
 					signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -173,7 +211,7 @@ export async function refreshHyperFacts(baseUrl = FACTS.baseUrl) {
 				});
 			} catch (err) {
 				logWarn("hyper peer fetch failed", {
-					error: /** @type {any} */ (err)?.message ?? String(err),
+					error: err,
 					url: peerUrl,
 				});
 			}
@@ -181,9 +219,12 @@ export async function refreshHyperFacts(baseUrl = FACTS.baseUrl) {
 	}
 
 	if (!payload) {
-		logWarn("hyper facts refresh failed (all sources exhausted) — keeping last good cache", {
-			path: FACTS_PATH,
-		});
+		logWarn(
+			"hyper facts refresh failed (all sources exhausted) — keeping last good cache",
+			{
+				path: FACTS_PATH,
+			},
+		);
 		return false;
 	}
 
@@ -234,7 +275,7 @@ export function loadHyperFacts() {
 	} catch (err) {
 		logWarn("hyper facts cache unreadable — skipping enrichment", {
 			path: FACTS_PATH,
-			error: /** @type {any} */ (err)?.message ?? String(err),
+			error: err,
 		});
 		return null;
 	}
@@ -242,9 +283,6 @@ export function loadHyperFacts() {
 
 // Runnable as main: node coding-agent/hyper-facts.mjs [baseUrl] — best-effort refresh
 // (the same call the generators make), exit 0 either way.
-if (
-	process.argv[1] &&
-	import.meta.url.endsWith(basename(process.argv[1]))
-) {
+if (process.argv[1] && import.meta.url.endsWith(basename(process.argv[1]))) {
 	await refreshHyperFacts(process.argv[2]);
 }

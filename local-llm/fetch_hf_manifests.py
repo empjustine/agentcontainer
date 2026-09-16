@@ -51,6 +51,9 @@ sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
 import log
 
 log.set_tool("local-llm/fetch-hf-manifests")
+# This script prints its payload (table/list/report) on stdout — logs go to
+# stderr so the two never interleave (docs/d045).
+log.set_stream(sys.stderr)
 
 HERE = Path(__file__).parent
 MODEL_DATA = HERE.parent / "lib" / "llamacpp-model-data.json"

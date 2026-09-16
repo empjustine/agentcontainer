@@ -31,6 +31,11 @@ import {
 	originUrl,
 	setLogTool,
 } from "./git-lib.mjs";
+import {
+	ocdsGlassUrl,
+	ocdsHttpsUrl,
+	parseOcdsRemote,
+} from "./ocds-remotes.mjs";
 
 setLogTool("git/audit");
 
@@ -71,7 +76,9 @@ function parseArgs(argv) {
 				o.help = true;
 				break;
 			default:
-				throw new Error(`unknown flag: ${a} (try --help)`);
+				throw Object.assign(new Error("unknown flag (try --help)"), {
+					flag: a,
+				});
 		}
 	}
 	return o;
@@ -102,7 +109,9 @@ async function main() {
 		return;
 	}
 	if (!existsSync(o.root)) {
-		throw new Error(`reference root not found: ${o.root}`);
+		throw Object.assign(new Error("reference root not found"), {
+			root: o.root,
+		});
 	}
 
 	const repos = findCloneRoots(o.root, o.maxDepth);
@@ -122,6 +131,8 @@ async function main() {
 	const nested = [];
 	/** @type {Map<string, string[]>} */
 	const byOrigin = new Map();
+	/** @type {{ path: string, org: string, project: string, repo: string, glass: string|null, https: string|null }[]} */
+	const ocdsRemotes = [];
 	/** @type {string[]} */
 	const detached = [];
 	/** @type {string[]} */
@@ -144,6 +155,21 @@ async function main() {
 		if (!url) noOrigin.push(rel);
 
 		if (existsSync(`${repo}/.git/shallow`)) shallow.push(rel);
+
+		// The work farm is a single private OCDS tenant whose URLs are not
+		// `host/owner/repo`; decode them so the report shows the identity and the
+		// glass-pane link a human can open (docs/d044).
+		const ocds = parseOcdsRemote(url);
+		if (ocds) {
+			ocdsRemotes.push({
+				path: rel,
+				org: ocds.org,
+				project: ocds.projectSlug ?? ocds.projectId ?? "",
+				repo: ocds.repo,
+				glass: ocdsGlassUrl(ocds),
+				https: ocdsHttpsUrl(ocds),
+			});
+		}
 
 		const m = /^github\/[^/]+\/.+$/.exec(rel);
 		if (!m) nonstandardPath.push(rel);
@@ -193,6 +219,7 @@ async function main() {
 		pathOriginMismatch,
 		nested,
 		duplicateOrigins,
+		ocdsRemotes,
 		...(o.deep ? { detached, dirty } : {}),
 	};
 	process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
@@ -206,6 +233,7 @@ async function main() {
 		pathOriginMismatch: pathOriginMismatch.length,
 		nested: nested.length,
 		duplicateOrigins: duplicateOrigins.length,
+		ocds: ocdsRemotes.length,
 		...(o.deep ? { detached: detached.length, dirty: dirty.length } : {}),
 	});
 
@@ -220,7 +248,7 @@ async function main() {
 
 await main().catch((err) => {
 	logError("audit aborted", {
-		error: /** @type {Error} */ (err)?.message ?? String(err),
+		error: err,
 	});
 	process.exit(1);
 });

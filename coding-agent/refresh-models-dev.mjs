@@ -87,11 +87,13 @@ const REQUIRED_PROVIDERS = ["opencode", "opencode-go", "cline-pass", "hyper"];
 const MIN_PROVIDERS = 100;
 
 /**
- * @param {string} msg
+ * @param {string} msg static label — the structured detail goes in `fields`
+ * @param {Record<string, unknown>} [fields]
  */
-function fail(msg) {
+function fail(msg, fields) {
 	logWarn("models.dev refresh skipped — keeping existing catalog", {
 		reason: msg,
+		...fields,
 	});
 	process.exit(1);
 }
@@ -112,7 +114,8 @@ async function fetchCatalog(url, { via }) {
 			logWarn("models.dev source answered with an error", {
 				via,
 				url,
-				status: `${res.status} ${res.statusText}`,
+				status: res.status,
+				statusText: res.statusText,
 			});
 			return null;
 		}
@@ -122,12 +125,7 @@ async function fetchCatalog(url, { via }) {
 		logWarn("models.dev source unreachable", {
 			via,
 			url,
-			error:
-				/** @type {{ cause?: { code?: string }, message?: string }} */ (
-					err
-				)?.cause?.code ||
-				/** @type {{ message?: string }} */ (err)?.message ||
-				String(err),
+			error: err,
 		});
 		return null;
 	}
@@ -138,8 +136,12 @@ async function main() {
 	// source is validated identically before the atomic rename; the stale
 	// file is only ever touched after a fully validated payload exists.
 	let res = await fetchCatalog(CATALOG_URL, { via: "direct" });
+	let via = "direct";
+	let url = CATALOG_URL;
 	if (!res && RELAY_URL) {
 		res = await fetchCatalog(RELAY_URL, { via: "relay" });
+		via = "relay";
+		url = RELAY_URL;
 	}
 	if (!res) return fail("no source answered (direct and relay both failed)");
 
@@ -147,14 +149,14 @@ async function main() {
 	try {
 		text = await res.text();
 	} catch (err) {
-		return fail(`body read failed: ${/** @type {Error} */ (err).message}`);
+		return fail("body read failed", { via, url, error: err });
 	}
 
 	let catalog;
 	try {
 		catalog = JSON.parse(text);
 	} catch (err) {
-		return fail(`invalid JSON: ${/** @type {Error} */ (err).message}`);
+		return fail("invalid JSON", { via, url, error: err });
 	}
 
 	if (
@@ -198,4 +200,4 @@ async function main() {
 	});
 }
 
-main().catch((err) => fail(err?.message || String(err)));
+main().catch((err) => fail("unhandled failure", { error: err }));

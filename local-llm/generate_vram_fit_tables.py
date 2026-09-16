@@ -54,6 +54,9 @@ sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
 import log
 
 log.set_tool("local-llm/generate-vram-fit-tables")
+# This script prints its payload (table/list/report) on stdout — logs go to
+# stderr so the two never interleave (docs/d045).
+log.set_stream(sys.stderr)
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -197,7 +200,7 @@ def collect(args, estimator_dir):
                 d = run_estimator(estimator_dir, target, fname, ctx, mmproj, args,
                                   is_url=url is not None)
             except RuntimeError as e:
-                log.error("estimator run failed", error=str(e))
+                log.error("estimator run failed", error=e)
                 failures += 1
                 continue
             if cfile:

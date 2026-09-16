@@ -1,15 +1,18 @@
 """Structured logging shared by this repo's python tools — same contract as
-lib/log.sh / lib/log.mjs: one JSON object per line on stderr.
+lib/log.sh / lib/log.mjs: one JSON object per line on stdout.
 
     {"ts":"2025-09-02T12:00:00Z","level":"info","tool":"local-llm/upkeep","msg":"...","key":"value"}
 
 Env:
-    LOG_LEVEL   debug|info|warn|error   (default: info)
-    LOG_FORMAT  json|logfmt             (default: json)
-    LOG_TOOL    component name          (default "python"; set per tool with
-                set_tool(), e.g. log.set_tool("local-llm/upkeep"))
+    LOG_FORMAT  json|logfmt   (default: json)
+    LOG_TOOL    component name (default "python"; set per tool with set_tool(),
+                e.g. log.set_tool("local-llm/upkeep"))
 
-Stdout stays reserved for machine-consumed output — never log to it.
+No level filtering happens here, ever — debug/trace/warn/error all go to the
+stream; a consumer filters downstream with jsonlines tooling (docs/d045).
+Stream is stdout by default; a script whose stdout IS the machine-consumed
+payload calls set_stream(sys.stderr) once at startup so logs cannot interleave
+with the payload (docs/d045).
 
 Usage from a PEP-723 `uv run` script (the script's dir is on sys.path, the
 repo root is not — bootstrap by inserting ../lib):
@@ -25,10 +28,26 @@ import json
 import os
 import re
 import sys
+import traceback
 
-_PRIOS = {"debug": 0, "info": 1, "warn": 2, "error": 3}
-_threshold = _PRIOS.get(os.environ.get("LOG_LEVEL", "info").lower(), 1)
 _tool = os.environ.get("LOG_TOOL", "python")
+_stream = sys.stderr if os.environ.get("LOG_STREAM") == "stderr" else sys.stdout
+
+# Same policy as lib/log.mjs (docs/d045): exceptions in fields serialize as
+# structured objects — name, message, traceback, and the explicit __cause__
+# chain — never as interpolated prose. python's implicit __context__ is left
+# out: it fires for ANY exception raised inside an except block, which would
+# attach unrelated noise to every logged failure.
+def _serialize(obj, depth=0):
+    if isinstance(obj, BaseException):
+        out = {"name": type(obj).__name__, "message": str(obj)}
+        tb = "".join(traceback.format_exception(type(obj), obj, obj.__traceback__))
+        if tb:
+            out["traceback"] = tb
+        if depth < 8 and obj.__cause__ is not None:
+            out["cause"] = _serialize(obj.__cause__, depth + 1)
+        return out
+    return str(obj)
 
 
 def set_tool(name: str) -> None:
@@ -36,9 +55,14 @@ def set_tool(name: str) -> None:
     _tool = name
 
 
+def set_stream(stream) -> None:
+    """Route logs away from stdout when this script's stdout is a
+    machine-consumed payload (docs/d045); pass sys.stderr."""
+    global _stream
+    _stream = stream
+
+
 def emit(level: str, msg: str, **fields) -> None:
-    if _PRIOS.get(level, 1) < _threshold:
-        return
     ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     if os.environ.get("LOG_FORMAT") == "logfmt":
         def val(v) -> str:
@@ -51,8 +75,8 @@ def emit(level: str, msg: str, **fields) -> None:
             line += " " + rest
     else:
         rec = {"ts": ts, "level": level, "tool": _tool, "msg": msg, **fields}
-        line = json.dumps(rec, ensure_ascii=False, default=str)
-    print(line, file=sys.stderr)
+        line = json.dumps(rec, ensure_ascii=False, default=lambda o: _serialize(o))
+    print(line, file=_stream)
 
 
 def debug(msg: str, **fields) -> None:

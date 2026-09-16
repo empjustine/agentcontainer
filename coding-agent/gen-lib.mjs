@@ -23,10 +23,13 @@ import {
 	peerBaseUrl,
 	peerBaseUrls,
 	peerProviderUrl,
+	peersOnly,
 	probeCandidates,
 	probeDirect,
 	probePeerRoutes,
+	suppressedProbe,
 } from "./peer-probe.mjs";
+
 export { getCatwalkModels, refreshCatwalkFacts } from "./catwalk-facts.mjs";
 export { loadHyperFacts, refreshHyperFacts } from "./hyper-facts.mjs";
 
@@ -39,9 +42,10 @@ const logging = /** @type {typeof import("../lib/log.mjs")} */ (
 const artifact = /** @type {typeof import("../lib/artifact.mjs")} */ (
 	await import(`${LIB_DIR}/artifact.mjs`)
 );
-const cloudProviders = /** @type {typeof import("../lib/cloud-providers.mjs")} */ (
-	await import(`${LIB_DIR}/cloud-providers.mjs`)
-);
+const cloudProviders =
+	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
+		await import(`${LIB_DIR}/cloud-providers.mjs`)
+	);
 
 export const { logInfo, logWarn, setLogTool } = logging;
 export const { writeArtifact } = artifact;
@@ -51,9 +55,11 @@ export {
 	peerBaseUrl,
 	peerBaseUrls,
 	peerProviderUrl,
+	peersOnly,
 	probeCandidates,
 	probeDirect,
 	probePeerRoutes,
+	suppressedProbe,
 };
 export const { CLOUD_PROVIDERS, PI_NATIVE_CLOUD_IDS } = cloudProviders;
 

@@ -74,9 +74,10 @@ const { CLOUD_PROVIDERS } =
 	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
-const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
-	await import(`${LIB_DIR}/artifact.mjs`)
-);
+const { writeArtifact, isDryRun } =
+	/** @type {typeof import("../lib/artifact.mjs")} */ (
+		await import(`${LIB_DIR}/artifact.mjs`)
+	);
 setLogTool("llm-reverse-proxy/generate");
 
 const out = process.argv[2] ?? join(scriptDir, "llm-reverse-proxy.json");
@@ -580,6 +581,12 @@ function routableUrl(url) {
 for (const p of Object.values(PI_AI_PROVIDERS)) {
 	candidates.push({ id: p.id, url: p.baseUrl, source: "pi-ai" });
 }
+// The non-routable pi-ai rows are documentation-as-data (header): consume
+// them here so the skip report below carries their reasons, instead of
+// leaving the table as unused weight that lint flags (and could drift).
+for (const p of Object.values(PI_AI_NON_ROUTABLE)) {
+	skipped.push({ source: "pi-ai", id: p.id, reason: p.reason });
+}
 
 // --- source 2: models.dev (ai-sdk / opencode's catalog) ---------------------
 /** @type {Record<string, { api?: string, npm?: string, name?: string }>} */
@@ -739,14 +746,12 @@ for (const [id, url] of Object.entries(deployed)) {
 
 // Orchestration (folded from the former generate.sh, docs/d041): the routing
 // table must exist after generation — a silent no-op here would leave run.sh
-// to die later with a config-missing error pointing back at this script.
-if (!existsSync(join(scriptDir, "llm-reverse-proxy.json"))) {
-	logError(
-		"routing table not generated",
-		{ path: join(scriptDir, "llm-reverse-proxy.json") },
-	);
+// to die later with a config-missing error pointing back at this script. The
+// check follows the ACTUAL output (`out`, the optional argv path) and, under
+// DRY_RUN, the preview writeArtifact produced instead of the live artifact.
+const generatedPath = isDryRun() ? `${out}.dry-run` : out;
+if (!existsSync(generatedPath)) {
+	logError("routing table not generated", { path: generatedPath });
 	process.exit(1);
 }
-logInfo("routing table ready", {
-	path: join(scriptDir, "llm-reverse-proxy.json"),
-});
+logInfo("routing table ready", { path: generatedPath });

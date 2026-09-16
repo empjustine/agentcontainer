@@ -128,7 +128,9 @@ function parseArgs(argv) {
 				o.help = true;
 				break;
 			default:
-				throw new Error(`unknown flag: ${a} (try --help)`);
+				throw Object.assign(new Error("unknown flag (try --help)"), {
+					flag: a,
+				});
 		}
 	}
 	return o;
@@ -175,7 +177,7 @@ async function maintainOne(repo, o) {
 		} catch (err) {
 			logWarn("optimization failed — mirror left as-is", {
 				repo,
-				error: /** @type {Error} */ (err).message,
+				error: err,
 			});
 			return "failed";
 		}
@@ -202,7 +204,9 @@ async function main() {
 		return;
 	}
 	if (!existsSync(o.root)) {
-		throw new Error(`reference root not found: ${o.root}`);
+		throw Object.assign(new Error("reference root not found"), {
+			root: o.root,
+		});
 	}
 	if (!o.fetch && !o.optimize) {
 		throw new Error("both --no-fetch and --no-optimize given — nothing to do");
@@ -241,7 +245,7 @@ async function main() {
 
 await main().catch((err) => {
 	logError("maintenance aborted", {
-		error: /** @type {Error} */ (err)?.message ?? String(err),
+		error: err,
 	});
 	process.exit(1);
 });

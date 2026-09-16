@@ -228,7 +228,9 @@ function parseIndexArgs(argv) {
 				o.dryRun = true;
 				break;
 			default:
-				throw new Error(`unknown flag: ${a} (try --help)`);
+				throw Object.assign(new Error("unknown flag (try --help)"), {
+					flag: a,
+				});
 		}
 	}
 	return o;
@@ -238,7 +240,9 @@ function parseIndexArgs(argv) {
 async function cmdIndex(argv) {
 	const o = parseIndexArgs(argv);
 	if (!existsSync(o.root)) {
-		throw new Error(`reference root not found: ${o.root}`);
+		throw Object.assign(new Error("reference root not found"), {
+			root: o.root,
+		});
 	}
 	// Indexing is OPT-IN, one interesting repo at a time (docs/d043). A blanket
 	// farm index multiplies the whole 73 GB by every branch and is almost never
@@ -323,7 +327,9 @@ function parseServeArgs(argv) {
 				o.dryRun = true;
 				break;
 			default:
-				throw new Error(`unknown flag: ${argv[i]} (try --help)`);
+				throw Object.assign(new Error("unknown flag (try --help)"), {
+					flag: argv[i],
+				});
 		}
 	}
 	return o;
@@ -333,7 +339,9 @@ function parseServeArgs(argv) {
 async function cmdServe(argv) {
 	const o = parseServeArgs(argv);
 	if (!existsSync(o.index)) {
-		throw new Error(`index dir not found: ${o.index} (run index first)`);
+		throw Object.assign(new Error("index dir not found (run index first)"), {
+			index: o.index,
+		});
 	}
 	const tool = containerTool();
 	if (!tool && !o.dryRun) {
@@ -430,7 +438,10 @@ async function queryServer(o) {
 	)}&num=${o.num}`;
 	const res = await fetch(url);
 	if (!res.ok) {
-		throw new Error(`search server ${res.status} ${res.statusText}`);
+		throw Object.assign(new Error("search server answered non-2xx"), {
+			status: res.status,
+			statusText: res.statusText,
+		});
 	}
 	return /** @type {Promise<object>} */ (res.json());
 }
@@ -485,7 +496,7 @@ async function cmdQuery(argv) {
 		} catch (err) {
 			logWarn("search server unreachable — falling back to one-shot", {
 				server: o.server,
-				error: /** @type {Error} */ (err).message,
+				error: err,
 			});
 		}
 	}
@@ -523,13 +534,15 @@ async function main(argv) {
 			await cmdQuery(rest);
 			break;
 		default:
-			throw new Error(`unknown subcommand: ${sub} (try --help)`);
+			throw Object.assign(new Error("unknown subcommand (try --help)"), {
+				sub,
+			});
 	}
 }
 
 await main(process.argv.slice(2)).catch((err) => {
 	logError("search-references aborted", {
-		error: /** @type {Error} */ (err)?.message ?? String(err),
+		error: err,
 	});
 	process.exit(1);
 });

@@ -223,7 +223,7 @@ workload_ro "$workload_stage/launch.sh" '/opt/agentcontainer-launch.sh'
 
 log_info "staged sandbox" container="$container_name" stage="$workload_stage"
 
-HF_HUB_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/huggingface/hub"
+HF_HUB_CACHE="${HF_HUB_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/huggingface/hub}"
 
 workload_name     "$container_name"
 workload_image    'localhost/empjustine/coding-agent:latest'
@@ -259,7 +259,7 @@ workload_workdir  "$workspace"
 # non-empty values are forwarded).
 workload_env_allowlist CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY \
 	OPENROUTER_API_KEY OPENCODE_API_KEY HYPER_API_KEY INFERX_API_KEY \
-	HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY PEER_BASE_URL
+	HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY PEER_BASE_URL PEERS_ONLY
 workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
 # Everything above this line is host-side argv assembly (jq + filesystem); the
 # next call is where podman creates the container — mount relabel, userns

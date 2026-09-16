@@ -77,6 +77,7 @@ import {
 	peerBaseUrl,
 	peerBaseUrls,
 	peerProviderUrl,
+	peersOnly,
 	piModel,
 	probeCandidates,
 	probeDirect,
@@ -87,6 +88,7 @@ import {
 	refreshHyperFacts,
 	scriptDir,
 	setLogTool,
+	suppressedProbe,
 	writeArtifact,
 } from "./gen-lib.mjs";
 
@@ -118,7 +120,7 @@ try {
 } catch (err) {
 	logWarn("models.dev catalog unreadable — full-mode rows cannot load", {
 		path: API_JSON,
-		error: /** @type {Error} */ (err).message,
+		error: err,
 	});
 }
 
@@ -468,12 +470,15 @@ function catalogPiModel(spec, m, id = m.id) {
  */
 function loadProvider(spec) {
 	if (!CATALOG) {
-		throw new Error(`models.dev catalog unreadable (${API_JSON})`);
+		throw Object.assign(new Error("models.dev catalog unreadable"), {
+			path: API_JSON,
+		});
 	}
 	const provider = CATALOG[spec.id];
 	if (!provider?.models) {
-		throw new Error(
-			`provider ${spec.id} not found in the models.dev catalog (${API_JSON})`,
+		throw Object.assign(
+			new Error("provider not found in the models.dev catalog"),
+			{ provider: spec.id, path: API_JSON },
 		);
 	}
 	return /** @type {{ api: string, models: Record<string, ModelsDevModel> }} */ (
@@ -655,7 +660,8 @@ function catalogModelIds(spec) {
 			.map((m) => m.id)
 			.filter((mid) => filter?.(mid) ?? true);
 		if (cids.length) {
-			logInfo(`${spec.id} model IDs from catwalk fallback`, {
+			logInfo("model IDs from catwalk fallback", {
+				provider: spec.id,
 				models: cids.length,
 			});
 			return cids;
@@ -693,35 +699,54 @@ function listingModels(entries, spec) {
  */
 async function emitOverrideOnly(spec, providers) {
 	const facts = CLOUD_PROVIDER_FACTS[spec.id];
-	const direct = await probeDirect(
-		facts.baseUrl,
-		bearerHeaders(process.env[spec.envKey]?.trim()),
-	);
-	if (direct.result !== "unreachable") {
-		if (direct.result === "auth") {
-			// Not a routing problem: the endpoint answered and refused our
-			// (absent) credentials — pi authenticates itself at request time.
-			logInfo(
-				"default endpoint reachable but credential-gated — keeping built-in routing",
-				{ provider: spec.id, error: direct.error },
-			);
-		} else {
-			logWarn(
-				"default endpoint reachable but answered unexpectedly — keeping built-in routing",
-				{ provider: spec.id, error: direct.error },
-			);
+	const headers = bearerHeaders(process.env[spec.envKey]?.trim());
+
+	// PEERS_ONLY=1 (docs/d033): the operator declared the cloud unreachable
+	// from this host — never probe the provider's real endpoint (a blocked
+	// cloud costs the full 8s probe timeout per provider), go straight to the
+	// peer path-route cascade.
+	if (peersOnly()) {
+		logInfo("PEERS_ONLY — skipping direct probe, probing peer path-route", {
+			provider: spec.id,
+		});
+	} else {
+		const direct = await probeDirect(facts.baseUrl, headers);
+		if (direct.result !== "unreachable") {
+			if (direct.result === "auth") {
+				// Not a routing problem: the endpoint answered and refused our
+				// (absent) credentials — pi authenticates itself at request time.
+				logInfo(
+					"default endpoint reachable but credential-gated — keeping built-in routing",
+					{ provider: spec.id, error: direct.error },
+				);
+			} else if (direct.result === "ok") {
+				logInfo("default endpoint reachable — keeping built-in routing", {
+					provider: spec.id,
+				});
+			} else {
+				// The demotion itself carries the evidence: expectation as the
+				// SuppressedError's message label, the probe's failure chained, the
+				// classification attached — the record is self-sufficient
+				// (docs/d045).
+				logWarn(
+					"default endpoint reachable but answered unexpectedly — keeping built-in routing",
+					{
+						provider: spec.id,
+						error: suppressedProbe(
+							direct,
+							"expected a usable /models listing from the default endpoint",
+						),
+					},
+				);
+			}
+			return;
 		}
-		return;
+		logInfo("default endpoint unreachable — probing peer path-route", {
+			provider: spec.id,
+			error: direct.error,
+		});
 	}
-	logInfo("default endpoint unreachable — probing peer path-route", {
-		provider: spec.id,
-		error: direct.error,
-	});
-	const route = await probePeerRoutes(
-		CLOUD_PEER_CANDIDATES,
-		spec.id,
-		bearerHeaders(process.env[spec.envKey]?.trim()),
-	);
+	const route = await probePeerRoutes(CLOUD_PEER_CANDIDATES, spec.id, headers);
 	if (!route) {
 		logWarn("no usable peer path-route — provider left on built-in routing", {
 			provider: spec.id,
@@ -767,33 +792,52 @@ async function emitFull(spec) {
 	const provider = loadProvider(spec);
 	const headers = bearerHeaders(process.env[spec.envKey]?.trim());
 
-	const direct = await probeDirect(provider.api, headers);
-	if (direct.result !== "unreachable") {
-		if (direct.result === "auth") {
-			// Reachable but refusing our probe credentials: the endpoint is
-			// fine — still route direct (pi authenticates at request time).
-			logInfo(
-				"default endpoint reachable but credential-gated — routing direct",
-				{ provider: spec.id, error: direct.error },
-			);
-		} else {
-			logWarn(
-				"default endpoint reachable but answered unexpectedly — routing direct",
-				{ provider: spec.id, error: direct.error },
+	// PEERS_ONLY=1 — same skip as emitOverrideOnly (docs/d033): the full block
+	// is emitted at the peer path-route directly, no cloud probe.
+	if (peersOnly()) {
+		logInfo("PEERS_ONLY — skipping direct probe, probing peer path-route", {
+			provider: spec.id,
+		});
+	} else {
+		const direct = await probeDirect(provider.api, headers);
+		if (direct.result !== "unreachable") {
+			if (direct.result === "auth") {
+				// Reachable but refusing our probe credentials: the endpoint is
+				// fine — still route direct (pi authenticates at request time).
+				logInfo(
+					"default endpoint reachable but credential-gated — routing direct",
+					{ provider: spec.id, error: direct.error },
+				);
+			} else if (direct.result === "ok") {
+				logInfo("default endpoint reachable — routing direct", {
+					provider: spec.id,
+				});
+			} else {
+				// Same SuppressedError composition as the override-only path above.
+				logWarn(
+					"default endpoint reachable but answered unexpectedly — routing direct",
+					{
+						provider: spec.id,
+						error: suppressedProbe(
+							direct,
+							"expected a usable /models listing from the default endpoint",
+						),
+					},
+				);
+			}
+			return emitFullAt(
+				spec,
+				provider,
+				provider.api,
+				{ apiKey: `$${spec.envKey}`, authHeader: true },
+				true,
 			);
 		}
-		return emitFullAt(
-			spec,
-			provider,
-			provider.api,
-			{ apiKey: `$${spec.envKey}`, authHeader: true },
-			true,
-		);
+		logInfo("default endpoint unreachable — probing peer path-route", {
+			provider: spec.id,
+			error: direct.error,
+		});
 	}
-	logInfo("default endpoint unreachable — probing peer path-route", {
-		provider: spec.id,
-		error: direct.error,
-	});
 	const route = await probePeerRoutes(CLOUD_PEER_CANDIDATES, spec.id, headers);
 	if (!route) {
 		logWarn("no usable peer path-route — no layer written", {
@@ -859,7 +903,7 @@ async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
 		} catch (err) {
 			logWarn("live listing fetch failed — falling back to catalog", {
 				provider: spec.id,
-				error: /** @type {Error} */ (err).message,
+				error: err,
 			});
 		}
 	}
@@ -868,8 +912,11 @@ async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
 		// refreshHyperFacts tries the provider endpoint, then every multi-hop
 		// peer candidate (docs/d034), then falls back to the last good cache;
 		// passing the API url keeps the multi-hop walk pointed at the right
-		// provider path even when direct mode already answered.
-		await refreshHyperFacts(provider.api);
+		// provider path. In PEER mode the direct endpoint already proved
+		// unreachable — that is why the cascade routed through the peer — so
+		// re-probing it in the refresh is just a wasted timeout: skip that leg
+		// (peer-only walk).
+		await refreshHyperFacts(provider.api, !directMode);
 		const facts = loadHyperFacts();
 		if (facts) {
 			const { enriched, liveOnly, untouched } = enrichWithFacts(
@@ -942,7 +989,7 @@ async function generateCloudProviders() {
 		if (res.status === "rejected") {
 			logWarn("provider spec failed — layer left untouched", {
 				provider: PROVIDER_SPECS[i].id,
-				error: /** @type {Error} */ (res.reason).message,
+				error: res.reason,
 			});
 		}
 	});
@@ -1044,9 +1091,10 @@ function readJson(path) {
 	try {
 		return JSON.parse(readFileSync(path, "utf-8"));
 	} catch (error) {
-		throw new Error(
-			`failed to parse ${path}: ${/** @type {Error} */ (error).message}`,
-		);
+		throw Object.assign(new Error("layer file is missing or not valid JSON"), {
+			path,
+			cause: error,
+		});
 	}
 }
 
@@ -1096,7 +1144,7 @@ function generateDefaultModel(outPath) {
 	} catch (err) {
 		logWarn("settings source unreadable — no default model configuration", {
 			path: settingsPath(),
-			error: /** @type {Error} */ (err).message,
+			error: err,
 		});
 	}
 
@@ -1139,7 +1187,7 @@ async function runStage(name, run) {
 	} catch (err) {
 		logWarn("pi stage failed — continuing", {
 			stage: name,
-			error: /** @type {Error} */ (err)?.message ?? String(err),
+			error: err,
 		});
 	}
 }

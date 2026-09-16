@@ -31,6 +31,9 @@ sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
 import log
 
 log.set_tool("local-llm/gguf-context-length")
+# This script prints its payload (table/list/report) on stdout — logs go to
+# stderr so the two never interleave (docs/d045).
+log.set_stream(sys.stderr)
 
 def first_cached(repo):
     if os.environ.get("HF_HUB_CACHE"):

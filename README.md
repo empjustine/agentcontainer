@@ -67,6 +67,7 @@ Both tools are now included in the container's mise configuration for reliable, 
 agentcontainer/
 ├── generate.sh / generate.mjs          # → run EVERY folder's generator in sequence (d041)
 ├── build.sh / build.mjs                # → build everything for THIS host (images ∥; termux serialized)
+├── vm-bench.sh                          # → d020 Level-1 VM build bench: provision/drive the libvirt guest that runs nested podman (docs/vm-build-bench.md SOP)
 ├── docs/                              # docs tree, typed per docs/d042 (BRD / reference / design)
 │   ├── requirements.md                # → BRD: what the system must do (id: goal)
 │   ├── architecture.md                # → systems reference: split, standalone rule, lib inventory
@@ -160,6 +161,8 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/architecture.md](docs/architecture.md) | Self-contained runners vs base config generators, standalone rule, lib inventory, one-generate-one-build |
 | [docs/environments-and-peer-variants.md](docs/environments-and-peer-variants.md) | Environment matrix (bazzite/a50/work), env vars, serving/usage dirs |
 | [docs/container-tooling.md](docs/container-tooling.md) | lib/workload-runtime.sh, run scripts, UID/SELinux, PEERS_ONLY (the `lib` module doc) |
+| [docs/workload-sandboxing-prior-art.md](docs/workload-sandboxing-prior-art.md) | sandboxing prior art from the reference farm (bwrap, landlock, seccomp, cgroups, namespaces) — threat model of the runner as the lens, overlap/unique-capability map with cover-cost per gap, per-solution pitfalls on record, the declarative-orchestration + VM/micro-VM layer above/beside the backends, and mirror candidates not yet fetched |
+| [docs/blackboard-and-context-management-prior-art.md](docs/blackboard-and-context-management-prior-art.md) | blackboard / LLM task-context prior art from the reference farm (pelagos blackboard, cline teams, budget+compaction engines, file-plan skills, session persistence, provider-side context editing) — untrusted third-party statements, cross-cutting lessons, and un-mirrored candidates for the next batch |
 | [docs/coding-harness-persistence.md](docs/coding-harness-persistence.md) | How each coding harness's state survives ephemeral container runs |
 | [docs/hf-cache-upkeep.md](docs/hf-cache-upkeep.md) | HF cache upkeep runbook (upkeep.py: list/pull/prune/verify) |
 | [docs/refresh-local-llm-manifest.md](docs/refresh-local-llm-manifest.md) | Manifest refresh runbook (repo:quant audits, cache coverage) |
@@ -185,6 +188,7 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 |-----|--------|
 | [docs/d018-split-config-d.md](docs/d018-split-config-d.md) | split `config.d/` layout + llama-swap merge contract |
 | [docs/d020-libvirt-qemu-sandbox.md](docs/d020-libvirt-qemu-sandbox.md) | qemu/libvirt VM sandboxes — requirements assessment (not implemented) |
+| [docs/vm-build-bench.md](docs/vm-build-bench.md) | vm-bench.sh SOP — d020 Level-1 VM as the nested-podman build bench (rootless session libvirt + cloud-init + slirp; no host podman socket) |
 | [docs/d027-path-prefix-peer-routing.md](docs/d027-path-prefix-peer-routing.md) | path-prefix peer routing — llm-reverse-proxy replaces llama-swap's model-id magic |
 | [docs/d027b-models-dev-relay-fallback.md](docs/d027b-models-dev-relay-fallback.md) | models.dev catalog fetch chain (direct → llm-reverse-proxy relay → stale copy) |
 | [docs/d028-provider-extensions-vs-generated-config.md](docs/d028-provider-extensions-vs-generated-config.md) | pi/opencode provider extensions vs generated-config machinery (verified; proposed) |
@@ -203,6 +207,8 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d041-unified-generate-build-entrypoints.md](docs/d041-unified-generate-build-entrypoints.md) | root `generate.mjs`/`build.mjs` unified entrypoints, `lib/node-run.sh` + `lib/go-build.mjs`, runners never build/generate |
 | [docs/d042-documentation-taxonomy.md](docs/d042-documentation-taxonomy.md) | the docs taxonomy itself — requirements / reference / design / research + decision log, anchor analysis, the moves |
 | [docs/d043-cross-repo-reference-search.md](docs/d043-cross-repo-reference-search.md) | cross-repo/cross-branch search — Zoekt for regex (opt-in, per repo), blob-addressed chunk embeddings for semantics, host-side serving without the farm bind mount |
+| [docs/d044-work-machine-bare-mirrors.md](docs/d044-work-machine-bare-mirrors.md) | work-machine reference farm — OCDS clones to bare mirrors on NTFS, HAR export + manifest seam |
+| [docs/d045-structured-logging-and-error-construct.md](docs/d045-structured-logging-and-error-construct.md) | structured logging and error construction — no interpolation, no level filtering, stdout default stream (payload scripts → stderr), full cause chains |
 
 ### Research & archive
 

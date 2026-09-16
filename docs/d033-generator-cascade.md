@@ -29,12 +29,40 @@ their own key / OAuth login at request time — so such a response proves
 routing to the provider works and must **not** trigger a peer override.
 
 Only the **total absence of an HTTP response** — DNS failure, connection
-refused, TLS failure, timeout — is evidence that the endpoint is unreachable
-from this host.
+refused, TLS failure (a bogus certificate with verification ON dies *before*
+any request byte, so a credentialed probe can never reach an impostor),
+timeout —, or a **5xx server-error response** (the endpoint answered but says
+it cannot serve right now: outage/overload) is evidence that the endpoint is
+unusable from this host.
+
+**Unverified TLS is not a valid reachability scenario.** With
+`NODE_TLS_REJECT_UNAUTHORIZED=0` the handshake accepts any certificate, so an
+https answer — and any credential sent with it — belongs to whoever terminated
+the TLS, never the claimed host. Those probes **fail closed** (`tlsUnverifiable`
+in `coding-agent/peer-probe.mjs`): no request is made (the provider key is
+never handed to an impostor) and no https route is certified. Plain-**http**
+peers remain usable as the operator's explicit emergency choice — there is no
+TLS to verify, and the plaintext-credential risk is theirs to accept.
+
+Routing a layer at a dead/unverifiable URL just ships errors, so these fall
+into the same peer-fallback bucket; the peer path-routes already refuse
+502/504 the same way (`DEAD_ROUTE_STATUSES` in `coding-agent/peer-probe.mjs`).
+The cascade self-heals: the next generation run re-probes and returns to
+direct once the provider answers 2xx again.
 
 ## Detection cascade
 
-Per provider, independently, direct-first and lazy:
+Per provider, independently, direct-first and lazy — unless **`PEERS_ONLY=1`**:
+the operator declares this host reaches cloud providers only through the peer
+funnel, so the generators skip step 1 (the direct cloud probe, a full 8s
+timeout per provider on a blocked host) and go straight to step 2. Layers are
+emitted in peer mode for every provider; direct mode's live-lineup sync and
+live-only appends are never taken (docs/d033's full-row section). On a healthy
+host this knob costs nothing but route variance; it exists for the hosts the
+peer exists for (measured: ~26s → ~2s on a blocked-cloud host). It is the
+GENERATION-side counterpart of the archived serving-side PEERS_ONLY
+(docs/archive/peer-variant-work.md). Env is forwarded into the container by
+`coding-agent/run.sh`'s workload env allowlist.
 
 1. **Probe the real endpoint** (the provider's fact-table `baseUrl`).
    Reachable ⇒ use the built-in routing (pi-native / opencode-native) or emit
@@ -224,4 +252,5 @@ then `merge-models-json.mjs`. Environment: `PEER_BASE_URLS` / `PEER_BASE_URL` (t
 vault-sourced; docs/d034), `PEER_API_KEY` (local GGUF bearer), each provider's own key
 env (direct and peer-route probes only), `MODELS_DEV_JSON` (catalog path
 override), `PI_MODELS_JSON` (output override), `HYPER_FACTS_JSON` (cache path
-override).
+override), `PEERS_ONLY` (skip the direct probes, every provider goes straight
+to the peer path-route cascade — see the cascade section above).

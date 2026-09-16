@@ -71,7 +71,8 @@ the generators' direct-first cascades); both faces are also the unified
 peer endpoint for external/peer clients. 
 
 ### termux (peer-only serving)
-Hostname `hjs0aj87e30.sn.mynetname.net`. SoC: **EN7562CT** (ARM32v5, 512 MB RAM, 128 MB flash). Resource-constrained host (a phone/router under Termux). It **cannot run the
+Hostname `<serial>.sn.mynetname.net` (a Synology/`mynetname` DDNS name — put your
+own here). SoC: **EN7562CT** (ARM32v5, 512 MB RAM, 128 MB flash). Resource-constrained host (a phone/router under Termux). It **cannot run the
 `llm-local-inference` llama-swap container** at all — Termux has no usable
 podman/docker for this — and local llama.cpp inference is impossible anyway.
 So there is no llama-swap here at all: the host serves the cloud relay only,

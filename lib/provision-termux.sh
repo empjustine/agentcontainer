@@ -92,7 +92,7 @@
 set -eu
 
 # shellcheck disable=SC1091
-. "$(dirname "$0")/lib/log.sh"
+. "$(dirname "$0")/log.sh"
 LOG_TOOL='build'
 export LOG_TOOL
 

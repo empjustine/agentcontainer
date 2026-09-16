@@ -28,6 +28,9 @@ set -eu
 LOG_TOOL='llm-reverse-proxy/run'
 export LOG_TOOL
 
+# SCRIPT_DIR is assigned by the sourced lib/workload-runtime.sh (derived from
+# this caller's $0), which shellcheck cannot see across a source boundary.
+# shellcheck disable=SC2153
 script_dir="$SCRIPT_DIR"
 config="${CONFIG:-$script_dir/llm-reverse-proxy.json}"
 
