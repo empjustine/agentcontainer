@@ -30,7 +30,8 @@ or generate: stale/missing artifacts are user issues, and run.sh fails loudly
 pointing at the generator.
 
 **Environment/secrets are an EXPLICIT chain step** (`lib/environment.sh` —
-the ONE infisical vault round-trip, on the host, then `exec` of the target):
+`infisical run` fetches the vault and spawns the target with it as plain
+env, on the host, docs/d046):
 `./lib/environment.sh ./coding-agent/run.sh`, `./lib/environment.sh
 ./llm-local-inference/run.sh`, etc.  The scripts it wraps consume plain env
 and never load anything themselves; inside sandboxes the vault env is
@@ -88,7 +89,7 @@ agentcontainer/
 │   ├── catwalk-facts.json              #   → vendored catwalk catalog (coding-agent + llm-reverse-proxy)
 │   ├── cloud-providers.mjs             #   → the one cloud-provider fact table
 │   ├── log.mjs / artifact.mjs / log.sh #   → shared logger/artifact std (all generators + shell)
-│   ├── environment.sh                   #   → EXPLICIT env chain: infisical vault → exec <script>
+│   ├── environment.sh                   #   → EXPLICIT env chain: `infisical run` spawns <script> (d046)
 │   ├── workload-*.jq                   #   → jq filters behind the workload_* API
 │
 ├── llm-local-inference/                   # llama-swap: LOCAL GGUF inference only
@@ -209,6 +210,7 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d043-cross-repo-reference-search.md](docs/d043-cross-repo-reference-search.md) | cross-repo/cross-branch search — Zoekt for regex (opt-in, per repo), blob-addressed chunk embeddings for semantics, host-side serving without the farm bind mount |
 | [docs/d044-work-machine-bare-mirrors.md](docs/d044-work-machine-bare-mirrors.md) | work-machine reference farm — OCDS clones to bare mirrors on NTFS, HAR export + manifest seam |
 | [docs/d045-structured-logging-and-error-construct.md](docs/d045-structured-logging-and-error-construct.md) | structured logging and error construction — no interpolation, no level filtering, stdout default stream (payload scripts → stderr), full cause chains |
+| [docs/d046-infisical-run.md](docs/d046-infisical-run.md) | the env chain is `infisical run` — the hand-rolled dotenv loader and its empty-vault pre-flight retire; `--expand=false` / `INFISICAL_DOMAIN` pins |
 
 ### Research & archive
 

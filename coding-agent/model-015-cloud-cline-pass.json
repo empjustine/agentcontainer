@@ -49,7 +49,7 @@
             "input": 0.95,
             "output": 4,
             "cacheRead": 0.16,
-            "cacheWrite": 0
+            "cacheWrite": 20
           },
           "thinkingLevelMap": {
             "off": "none",
@@ -74,7 +74,7 @@
             "input": 1.4,
             "output": 4.4,
             "cacheRead": 0.26,
-            "cacheWrite": 0
+            "cacheWrite": 20
           },
           "thinkingLevelMap": {
             "off": "none",
@@ -100,7 +100,7 @@
             "input": 0.3,
             "output": 1.2,
             "cacheRead": 0.06,
-            "cacheWrite": 0
+            "cacheWrite": 20
           },
           "thinkingLevelMap": {
             "off": "none",
@@ -125,7 +125,7 @@
             "input": 0.14,
             "output": 0.28,
             "cacheRead": 0.0028,
-            "cacheWrite": 0
+            "cacheWrite": 20
           },
           "thinkingLevelMap": {
             "off": "none",
@@ -151,7 +151,7 @@
             "input": 0.95,
             "output": 4,
             "cacheRead": 0.19,
-            "cacheWrite": 0
+            "cacheWrite": 20
           },
           "thinkingLevelMap": {
             "off": "none",
@@ -177,7 +177,7 @@
             "input": 3,
             "output": 15,
             "cacheRead": 0.3,
-            "cacheWrite": 0
+            "cacheWrite": 20
           },
           "thinkingLevelMap": {
             "off": "none",
@@ -254,7 +254,7 @@
             "input": 1.74,
             "output": 3.48,
             "cacheRead": 0.0145,
-            "cacheWrite": 0
+            "cacheWrite": 20
           },
           "thinkingLevelMap": {
             "off": "none",
@@ -279,7 +279,7 @@
             "input": 1.4,
             "output": 4.4,
             "cacheRead": 0.26,
-            "cacheWrite": 0
+            "cacheWrite": 20
           },
           "thinkingLevelMap": {
             "off": null,
@@ -305,7 +305,7 @@
             "input": 0.14,
             "output": 0.28,
             "cacheRead": 0.0028,
-            "cacheWrite": 0
+            "cacheWrite": 20
           },
           "thinkingLevelMap": {
             "off": "none",
@@ -330,7 +330,7 @@
             "input": 1.74,
             "output": 3.48,
             "cacheRead": 0.0145,
-            "cacheWrite": 0
+            "cacheWrite": 20
           },
           "thinkingLevelMap": {
             "off": "none",

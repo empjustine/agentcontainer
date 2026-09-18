@@ -1,51 +1,30 @@
 #!/bin/sh
-# lib/environment.sh — THE environment loader: infisical vault chain, made
-# EXPLICIT by invocation.
+# lib/environment.sh — THE explicit env chain: `infisical run` fetches the
+# vault, injects it into the child environment and spawns the target
+# (docs/d046).  One invocation, no dotenv parsing, nothing on disk:
 #
-#   ./lib/environment.sh ./coding-agent/generate.sh [args...]
-#   ./lib/environment.sh ./coding-agent/run.sh
-#   ./lib/environment.sh ./llm-local-inference/run.sh
-#   ./lib/environment.sh ./local-llm/run-all.sh
+#   ./lib/environment.sh ./coding-agent/run.sh [args...]
 #
-# The named script runs with the vault injected into its environment (ONE
-# in-memory infisical round-trip, parsed straight out of a here-string —
-# never a file on disk). The script itself is environment-agnostic: it reads
-# plain env vars and never knows or cares where they came from. That split —
-# WHO loads the environment vs WHO consumes it — is the whole point of the
-# explicit chain:
+# Consumers read plain env and never load secrets themselves; a failing
+# vault aborts here via infisical's own exit code.  The successful-but-empty
+# vault is no longer special-cased (the old exit-96 pre-flight is gone,
+# docs/d046) — the consumers' "tolerate missing keys" contract covers it.
 #
-#   - the loader runs OUTSIDE the container/sandbox (the host login state
-#     never leaves the host); consumers inside a sandbox see plain forwarded
-#     env via the workload_env allowlist
-#   - a consumer can be run WITHOUT the chain when its env is already
-#     correct (CI, another loader) — it has no loader of its own to skip
-#   - testing a consumer is "run it with a stub env"; testing the loader is
-#     "run anything through it and diff `env`"
+# The wrapper keeps only what the CLI does not own:
+#   - binary resolution: $INFISICAL_BIN › $HOME/Infisical/cli/infisical (the
+#     Termux/Android source build — provisioned by lib/provision-termux.sh
+#     via the root ./build.sh; the -checklinkname=0 flags are documented
+#     there) › `infisical` on PATH › `mise x infisical@latest`
+#   - pinned identity: INFISICAL_API_URL / INFISICAL_PROJECT_ID below —
+#     routing, NOT secrets; same defaults as lib/workload-runtime.sh
+#   - the target-exists contract (exit 91)
 #
-# Secrets sourcing (formerly load_secrets's two-path logic, now ONE path —
-# the emergency "environment is already seeded" short-circuit was removed):
-# infisical only. Binary resolution (first executable wins):
-#   $INFISICAL_BIN › $HOME/Infisical/cli/infisical (the Termux/Android
-#   source build — provisioned by lib/provision-termux.sh via the root
-#   ./build.sh; the -checklinkname=0 flags are documented there) ›
-#   `mise x infisical@latest` › `infisical` on PATH.
+# Exit codes: 91 missing target script · 95 no infisical binary; vault
+# errors propagate from the CLI itself.
 #
-# Identity is pinned (INFISICAL_API_URL / INFISICAL_PROJECT_ID below) so the
-# CLI resolves the correct workspace from any working directory; self-hosted
-# instances override INFISICAL_API_URL. These are routing, NOT secrets.
-#
-# Exit codes: 91 missing target script · 95 no infisical binary · 96 vault
-# fetch returned nothing (previously a warn-and-continue — with the emergency
-# path gone there is nothing to fall back TO, so an empty vault is now fatal:
-# the consumer would otherwise run half-configured and fail opaquely
-# downstream). A failing vault CLI propagates its own exit code.
-#
-# NEVER FATAL is gone by design; "generators tolerate missing keys" still
-# holds INSIDE consumers (they see an empty var and skip that provider) —
-# but reaching them at all requires a successful vault round-trip.
-#
-# Env: INFISICAL_BIN (explicit binary) · INFISICAL_API_URL / INFISICAL_PROJECT_ID
-# (identity overrides) · everything else passes through untouched.
+# Env: INFISICAL_BIN (explicit binary) · INFISICAL_API_URL /
+# INFISICAL_PROJECT_ID (identity overrides) · INFISICAL_ENV (vault env,
+# default prod) · everything else passes through untouched.
 
 set -eu
 
@@ -74,79 +53,50 @@ case "$target" in
 esac
 [ -f "$target" ] || log_die 91 "target script not found" target="$target"
 
-# Infisical identity, pinned so `infisical` resolves the correct workspace from
-# any working directory (proposals-upstream.md D). Self-hosted instances override
-# INFISICAL_API_URL; the project id matches the workspaceId in the checked-in
-# .infisical.json.  Exported so the vault CLI (and any child that re-reads them)
-# references these instead of duplicating the literal across scripts.
-# These are routing, NOT secrets.
+# Identity — same pins as lib/workload-runtime.sh (routing, NOT secrets).
+# INFISICAL_DOMAIN, not `run`'s --domain flag: in CLI 0.43.x the run
+# subcommand mis-parses the flag ("Unable to parse domain url") while the
+# env var works, and the flag's default carries an /api suffix the pinned
+# URL deliberately does not (docs/d046).
 INFISICAL_API_URL="${INFISICAL_API_URL:-https://app.infisical.com}"
 INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-628c46b6-a5d5-4671-9435-c205847397ce}"
-export INFISICAL_API_URL INFISICAL_PROJECT_ID
+INFISICAL_DOMAIN="$INFISICAL_API_URL"
+export INFISICAL_API_URL INFISICAL_PROJECT_ID INFISICAL_DOMAIN
 
 # Binary resolution — first executable wins (see the header).
-# $INFISICAL_BIN › Termux/Android source build › mise › PATH.
-_infisical_run() {
-	if [ -n "${INFISICAL_BIN:-}" ] && [ -x "$INFISICAL_BIN" ]; then
-		"$INFISICAL_BIN" "$@"
-	elif [ -x "$HOME/Infisical/cli/infisical" ]; then
-		# The Termux/Android source build (lib/provision-termux.sh, via the
-		# root ./build.sh) — tried
-		# before mise so a Termux host with mise installed still uses the
-		# locally built CLI (no official Android release exists).
-		"$HOME/Infisical/cli/infisical" "$@"
-	elif command -v infisical >/dev/null 2>&1; then
-		"infisical" "$@"
-	elif command -v mise >/dev/null 2>&1; then
-		# mise hosts without a PATH binary: run it through mise's environment.
-		mise x infisical@latest -- "$@"
-	else
-		return 127
-	fi
-}
-_infisical_available() {
-	{ [ -n "${INFISICAL_BIN:-}" ] && [ -x "$INFISICAL_BIN" ]; } \
-		|| [ -x "$HOME/Infisical/cli/infisical" ] \
-		|| command -v infisical >/dev/null 2>&1 \
-		|| command -v mise >/dev/null 2>&1
-}
-_infisical_available ||
+_infisical_bin=''
+_mise_wrap=''
+if [ -n "${INFISICAL_BIN:-}" ] && [ -x "$INFISICAL_BIN" ]; then
+	_infisical_bin="$INFISICAL_BIN"
+elif [ -x "$HOME/Infisical/cli/infisical" ]; then
+	# The Termux/Android source build — tried before mise so a Termux host
+	# with mise installed still uses the locally built CLI (no official
+	# Android release exists).
+	_infisical_bin="$HOME/Infisical/cli/infisical"
+elif command -v infisical >/dev/null 2>&1; then
+	_infisical_bin=infisical
+elif command -v mise >/dev/null 2>&1; then
+	_mise_wrap=1
+else
 	log_die 95 "no infisical binary — run the repo's ./build.sh (Termux: source build; elsewhere: mise x infisical@latest or a release binary on PATH)"
+fi
 
-# Dotenv parser for an IN-MEMORY string ($1) — the infisical fetch.  There is
-# deliberately no file variant of this (no `.env`, no `$ENV_FILE`): the vault
-# keys must never be materialized on disk, so the CLI's dotenv output is
-# parsed straight from a here-doc.  The here-doc keeps the `while` loop in
-# this shell (exports persist into the exec'd target), and parameter expansion
-# yields literal text (no eval / no re-expansion).
-# shellcheck disable=SC2163  # intentional dynamic export
-_inject() {
-	while IFS= read -r _l || [ -n "$_l" ]; do
-		case "$_l" in ''|\#*) continue ;; esac
-		_l="${_l#export }"
-		case "$_l" in *=*) export "$_l" ;; esac
-	done <<EOF
-$1
-EOF
+_vault_exec() {
+	if [ -n "$_mise_wrap" ]; then
+		exec mise x infisical@latest -- "$@"
+	fi
+	exec "$_infisical_bin" "$@"
 }
 
-# ONE vault round-trip, injected into THIS process's environment, then exec —
-# the target replaces this shell (no wrapper process left behind, no env
-# re-marshalling) and sees the vault as plain environment.
-#
-# The fetch is deliberately UNGUARDED (no `if` around it): a failing or empty
-# vault must be fatal now that there is no fallback loader to defer to —
-# see the exit-codes note in the header.
-log_info "loading environment" \
-	target="$target" api="${INFISICAL_API_URL}" project="${INFISICAL_PROJECT_ID}"
-_secrets_dotenv="$(_infisical_run secrets --output=dotenv --silent \
-	--domain="${INFISICAL_API_URL}" \
-	--projectId="${INFISICAL_PROJECT_ID}" \
-	--env=prod --path=/inference)"
-[ -n "$_secrets_dotenv" ] ||
-	log_die 96 "vault returned nothing — refusing to launch '$target' with an empty environment"
-_inject "$_secrets_dotenv"
-unset _secrets_dotenv
+log_info "loading environment (infisical run)" target="$target" \
+	api="${INFISICAL_API_URL}" project="${INFISICAL_PROJECT_ID}"
 
-log_info "environment loaded — exec" target="$target" args="${*:-<none>}"
-exec "$target" "$@"
+# --expand=false keeps secret values literal — the old hand-rolled parser
+# never re-expanded, and `infisical run`'s default WOULD shell-expand them.
+# --projectId stays for machine-identity auth (no .infisical.json is checked
+# in on purpose: it only ever helped commands launched from inside the repo
+# root, and every consumer here is cwd-independent by design).
+_vault_exec run \
+	--env="${INFISICAL_ENV:-prod}" --path=/inference \
+	--projectId="${INFISICAL_PROJECT_ID}" \
+	--expand=false --silent -- "$target" "$@"

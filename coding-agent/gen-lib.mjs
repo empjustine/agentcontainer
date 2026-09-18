@@ -165,7 +165,7 @@ export function piModel(entry) {
 		input,
 		contextWindow,
 		maxTokens: meta?.maxTokens ?? contextWindow,
-		cost: meta?.cost ?? { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+		cost: meta?.cost ?? { input: 10, output: 50, cacheRead: 1, cacheWrite: 20 },
 	};
 }
 

@@ -415,7 +415,7 @@ function generateLocalInference() {
 					input: modalities,
 					contextWindow: ctxSize,
 					maxTokens: Math.min(ctxSize, nPredict),
-					cost: { input: 1, output: 1, cacheRead: 1, cacheWrite: 1 },
+					cost: { input: 10, output: 50, cacheRead: 1, cacheWrite: 20 },
 				},
 			};
 		}

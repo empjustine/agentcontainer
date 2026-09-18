@@ -97,9 +97,10 @@ copies: capability detection at generation time decides what a host gets.
   runner folder; data reads out of `lib/` are allowed, reaching into a sibling
   runner is not. The effective copy unit is **folder + `../lib`**.
 - **FR-L2** — Secrets flow through ONE explicit chain step
-  (`./lib/environment.sh <script>`): one in-memory vault round-trip on the
-  host, then `exec` of the target; consumers read plain env and never load
-  secrets themselves. No `.env` files, no in-script loaders, no fallbacks.
+  (`./lib/environment.sh <script>`): `infisical run` fetches the vault and
+  spawns the target with it as plain env (docs/d046); consumers read plain
+  env and never load secrets themselves. No `.env` files, no in-script
+  loaders, no fallbacks.
 - **FR-L3** — Fact tables have exactly one home: the cloud-provider table, the
   models.dev catalog, the catwalk cache, and the GGUF model definitions each
   exist once (in `lib/` or their owning module) and every consumer derives
@@ -135,8 +136,10 @@ copies: capability detection at generation time decides what a host gets.
   live config is overwrite-by-design (FR-U5), and build idempotence comes
   from caches, not presence-skips (docs/d041).
 - **NFR-2** — Loud failures over silent fallbacks: missing artifacts, stale
-  paths, empty vaults, and unreachable peers surface as errors at the step
-  that owns them.
+  paths, a failing vault, and unreachable peers surface as errors at the
+  step that owns them. (A successful-but-EMPTY vault is the one deliberate
+  exception — the chain no longer detects it, docs/d046; consumers'
+  tolerate-missing-keys contract covers it downstream.)
 - **NFR-3** — Offline where possible: generation that needs no network
   (local serving, the proxy routing table) must work without one.
 - **NFR-4** — Self-contained runners: every serving/usage folder is copyable

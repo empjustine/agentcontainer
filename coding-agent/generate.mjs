@@ -29,15 +29,20 @@
  *   generate-opencode.mjs        -> opencode config (skipped on Termux
  *                                    without OPENCODE_CONFIG_DIR)
  *
- * Outputs are installed into the pi agent dir (models.json + settings.json,
- * backup kept as .bak-<ts>) — there is no separate install step. The agent
- * dir's settings.json/models.json are GENERATED EPHEMERAL files: the default
- * install target is the live dir in every environment (bare host: $HOME/
- * .pi/agent; Termux: same, and run.sh defaults to it too; in-container: the
- * pinned mount), so ./generate.sh → ./run.sh is seamless with no flags.
- * Overwriting whatever pi left there is by design — pi re-persists its own
- * runtime fields (theme, lastChangelogVersion) on the next run; the
- * committed settings.json is the source of truth for everything else.
+ * Outputs are installed into TWO places (there is no separate install step):
+ * the pi agent dir (models.json + settings.json, backup kept as .bak-<ts>)
+ * AND, on container hosts, this dir's own committed snapshot (models.json +
+ * model-*.json) that run.sh's container branch stages — docs/d041's "the
+ * committed config is the runtime config". The agent-dir copies are
+ * GENERATED EPHEMERAL files: the install target is the live dir in every
+ * environment (bare host and Termux: $HOME/.pi/agent; in-container: the
+ * pinned mount), so pi itself always sees the fresh list. Overwriting
+ * whatever pi left there is by design — pi re-persists its own runtime
+ * fields (theme, lastChangelogVersion) on the next run; the committed
+ * settings.json is the source of truth for everything else. The committed
+ * snapshot refresh is container-only because run.sh's Termux branch already
+ * reads the agent dir directly; a read-only scriptDir (in-container
+ * /opt/coding-agent mount) only warns.
  *
  * Env overrides:
  *   PI_CODING_AGENT_DIR  install dir (default ~/.pi/agent) — pi's own
@@ -76,6 +81,7 @@ import {
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
+	readdirSync,
 	readFileSync,
 	rmSync,
 	symlinkSync,
@@ -166,6 +172,39 @@ function providersOf(path) {
 		return JSON.parse(readFileSync(path, "utf-8")).providers ?? {};
 	} catch {
 		return {};
+	}
+}
+
+/**
+ * Mirror the freshly generated models.json and its model-*.json layers into
+ * this script's own dir — the committed snapshot the container branch of
+ * run.sh stages (docs/d041). Without this copy-back `./generate.sh` refreshes
+ * only the agent dir, so the committed coding-agent/models.json stays frozen
+ * while run.sh keeps serving its stale model list. Container hosts only: on
+ * Termux run.sh reads the agent dir, leaving the committed copy a SKIP_GEN
+ * fallback. A read-only scriptDir (in-container /opt/coding-agent) is
+ * expected and only warns.
+ * @param {string} modelsOut the merged models.json just installed
+ * @param {string} scratch the staged generator dir holding the layers
+ * @returns {void}
+ */
+function refreshCommittedSnapshot(modelsOut, scratch) {
+	const committedModels = join(scriptDir, "models.json");
+	try {
+		if (modelsOut !== committedModels) {
+			copyFileSync(modelsOut, committedModels);
+			for (const name of readdirSync(scratch)) {
+				if (/^model-.*\.json$/.test(name)) {
+					copyFileSync(join(scratch, name), join(scriptDir, name));
+				}
+			}
+		}
+		logInfo("committed snapshot refreshed", { path: scriptDir });
+	} catch (err) {
+		logWarn("committed snapshot refresh skipped (read-only dir?)", {
+			path: scriptDir,
+			error: err,
+		});
 	}
 }
 
@@ -427,6 +466,9 @@ if (modelsOut) {
 			providers: count,
 			backup: "kept alongside",
 		});
+		if (!termux && modelsOut !== join(scriptDir, "models.json")) {
+			refreshCommittedSnapshot(modelsOut, scratch);
+		}
 	}
 } else if (
 	!existsSync(join(agentDir, "models.json")) &&

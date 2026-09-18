@@ -318,8 +318,8 @@ Launches the pi coding-agent container with:
   mounted read-only only so an in-container session can regenerate manually
   via the `generate.sh` shim).
 - **Secrets**: loaded ONCE on the HOST by the explicit chain
-  (`./lib/environment.sh ./coding-agent/run.sh` — one in-memory
-  `infisical secrets --output=dotenv`) and forwarded into the container
+  (`./lib/environment.sh ./coding-agent/run.sh` — one `infisical run`
+  round-trip, docs/d046) and forwarded into the container
   through the `workload_env` allowlist — no infisical runs inside the workload,
   no `~/.infisical` staging; pi resolves the `"$VAR"` api-key references in
   the generated `models.json` from the forwarded environment at request time.

@@ -376,12 +376,12 @@ function toInput(modalitiesInput) {
  * @returns {PiAlternativeModel["cost"]}
  */
 function toCost(cost) {
-	if (!cost) return { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
+	if (!cost) return { input: 10, output: 50, cacheRead: 1, cacheWrite: 20 };
 	return {
-		input: cost.input ?? 0,
-		output: cost.output ?? 0,
-		cacheRead: cost.cache_read ?? 0,
-		cacheWrite: cost.cache_write ?? 0,
+		input: cost.input ?? 10,
+		output: cost.output ?? 50,
+		cacheRead: cost.cache_read ?? 1,
+		cacheWrite: cost.cache_write ?? 20,
 	};
 }
 

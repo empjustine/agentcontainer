@@ -101,10 +101,11 @@ prohibits (and what was removed):
   CLI source build; the former root `build.sh`), exec'd by the root
   `build.mjs` on Termux. Stays shell on purpose — every path in it is
   Termux-only and untestable from a container host.
-- `environment.sh` — THE environment loader: one in-memory infisical
-  round-trip, then `exec` of the named script
-  (`./lib/environment.sh ./coding-agent/run.sh`).  Consumers read plain env
-  and never load secrets themselves; a failed/empty vault is fatal here.
+- `environment.sh` — THE environment loader: `infisical run` fetches the
+  vault and spawns the named script with it as plain env
+  (`./lib/environment.sh ./coding-agent/run.sh`, docs/d046).  Consumers
+  read plain env and never load secrets themselves; a failing vault is
+  fatal here via the CLI's own exit code.
 - `log.sh` / `log.mjs` / `log.py` — the structured loggers (per language).
 - `cloud-providers.mjs` — the one cloud-provider fact table (id / label /
   key env / real base URL) every generator family derives from (docs/d024).

@@ -10719,8 +10719,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 262144,
-					"input": 262144,
+					"context": 524288,
+					"input": 524288,
 					"output": 32768
 				},
 				"cost": {
@@ -10752,8 +10752,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 262144,
-					"input": 262144,
+					"context": 524288,
+					"input": 524288,
 					"output": 32768
 				},
 				"cost": {
@@ -11362,8 +11362,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 262144,
-					"input": 262144,
+					"context": 524288,
+					"input": 524288,
 					"output": 32768
 				},
 				"cost": {
@@ -11754,8 +11754,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 262144,
-					"input": 262144,
+					"context": 524288,
+					"input": 524288,
 					"output": 32768
 				},
 				"cost": {
@@ -12416,8 +12416,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 262144,
-					"input": 262144,
+					"context": 524288,
+					"input": 524288,
 					"output": 32768
 				},
 				"cost": {
@@ -12516,8 +12516,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 262144,
-					"input": 262144,
+					"context": 524288,
+					"input": 524288,
 					"output": 32768
 				},
 				"cost": {
@@ -20510,9 +20510,9 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.22,
-					"output": 0.66,
-					"cache_read": 0.007
+					"input": 0.44,
+					"output": 1.32,
+					"cache_read": 0.014
 				}
 			},
 			"deepseek/deepseek-v4-pro-0813": {
@@ -20816,7 +20816,7 @@
 				"cost": {
 					"input": 0.1,
 					"output": 0.4,
-					"cache_read": 0.003
+					"cache_read": 0.006
 				}
 			},
 			"deepseek/deepseek-v4-pro-0813:thinking": {
@@ -20904,7 +20904,7 @@
 				"cost": {
 					"input": 0.1,
 					"output": 0.4,
-					"cache_read": 0.003
+					"cache_read": 0.006
 				}
 			},
 			"deepseek/deepseek-v4-pro:thinking": {
@@ -29091,8 +29091,8 @@
 					"output": 16384
 				},
 				"cost": {
-					"input": 0.2,
-					"output": 0.696
+					"input": 0.25,
+					"output": 0.87
 				}
 			},
 			"llama3.3-70b-instruct": {
@@ -141438,6 +141438,50 @@
 					"cache_write": 0.038
 				}
 			},
+			"alibaba/qwen3.8-omni-flash": {
+				"id": "alibaba/qwen3.8-omni-flash",
+				"name": "Qwen 3.8 Omni Flash",
+				"description": "Qwen omni model for text, vision, audio, and multimodal agent tasks",
+				"family": "qwen",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"minimal",
+							"low",
+							"medium",
+							"high",
+							"xhigh",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"release_date": "2026-09-17",
+				"last_updated": "2026-09-17",
+				"modalities": {
+					"input": [
+						"text",
+						"image"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1000000,
+					"output": 131072
+				},
+				"cost": {
+					"input": 0.15,
+					"output": 0.47,
+					"cache_read": 0.016
+				}
+			},
 			"alibaba/qwen3-max-thinking": {
 				"id": "alibaba/qwen3-max-thinking",
 				"name": "Qwen 3 Max Thinking",
@@ -159291,47 +159335,6 @@
 				},
 				"cost": {
 					"input": 0.15,
-					"output": 0.75
-				}
-			},
-			"mistral-small-2603": {
-				"id": "mistral-small-2603",
-				"name": "Mistral Small 4",
-				"description": "Fast Mistral production model for chat, extraction, and cost-sensitive agents",
-				"family": "mistral-small",
-				"attachment": true,
-				"reasoning": true,
-				"reasoning_options": [
-					{
-						"type": "effort",
-						"values": [
-							"none",
-							"high"
-						]
-					}
-				],
-				"tool_call": true,
-				"structured_output": true,
-				"temperature": true,
-				"knowledge": "2025-06",
-				"release_date": "2026-03-16",
-				"last_updated": "2026-06-11",
-				"modalities": {
-					"input": [
-						"text",
-						"image"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": true,
-				"limit": {
-					"context": 256000,
-					"output": 65536
-				},
-				"cost": {
-					"input": 0.1875,
 					"output": 0.75
 				}
 			},
@@ -194727,6 +194730,37 @@
 					"output": 1.25
 				}
 			},
+			"unbiased/pareto": {
+				"id": "unbiased/pareto",
+				"name": "Pareto",
+				"description": "Pareto is a multimodal composite model built for research, coding, and agentic workflows, while delivering frontier-level performance across a broad range of general-purpose tasks.",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": false,
+				"temperature": true,
+				"release_date": "2026-09-17",
+				"last_updated": "2026-09-17",
+				"modalities": {
+					"input": [
+						"text",
+						"image"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 262144,
+					"output": 131072
+				},
+				"cost": {
+					"input": 2.5,
+					"output": 7.5,
+					"cache_read": 0.25
+				}
+			},
 			"aion-labs/aion-2.0": {
 				"id": "aion-labs/aion-2.0",
 				"name": "AionLabs: Aion-2.0",
@@ -195178,12 +195212,12 @@
 				"open_weights": false,
 				"limit": {
 					"context": 1048576,
-					"output": 393216
+					"output": 943718
 				},
 				"cost": {
-					"input": 0.04,
-					"output": 0.1,
-					"cache_read": 0.01
+					"input": 0.0549,
+					"output": 0.1734,
+					"cache_read": 0.0087
 				}
 			},
 			"~deepseek/deepseek-pro-latest": {
@@ -195220,12 +195254,12 @@
 				"open_weights": false,
 				"limit": {
 					"context": 1048576,
-					"output": 393216
+					"output": 384000
 				},
 				"cost": {
-					"input": 0.57948,
-					"output": 1.73844,
-					"cache_read": 0.018438
+					"input": 0.7,
+					"output": 2.96,
+					"cache_read": 0.033
 				}
 			},
 			"~deepseek/deepseek-flash-latest": {
@@ -195262,8 +195296,8 @@
 				},
 				"open_weights": false,
 				"limit": {
-					"context": 1000000,
-					"output": 393216
+					"context": 1048576,
+					"output": 943718
 				},
 				"cost": {
 					"input": 0.15,
@@ -200697,7 +200731,7 @@
 				"open_weights": false,
 				"limit": {
 					"context": 1048576,
-					"output": 943718
+					"output": 262144
 				},
 				"cost": {
 					"input": 0.44,
@@ -200739,7 +200773,7 @@
 				"open_weights": true,
 				"limit": {
 					"context": 1048576,
-					"output": 393216
+					"output": 384000
 				},
 				"cost": {
 					"input": 1.32,
@@ -200830,6 +200864,48 @@
 					"input": 0.14,
 					"output": 0.28,
 					"cache_read": 0.028
+				}
+			},
+			"deepseek/deepseek-v4-flash-0731:free": {
+				"id": "deepseek/deepseek-v4-flash-0731:free",
+				"name": "DeepSeek: DeepSeek V4 Flash 0731 (free)",
+				"description": "DeepSeek V4 Flash 0731 is a sparse mixture-of-experts model from DeepSeek, with 13B active parameters out of 284B total. This re-post-trained revision is suited for coding, reasoning, and agent workflows....",
+				"family": "deepseek-flash",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"low",
+							"high",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"knowledge": "2025-05",
+				"release_date": "2026-07-31",
+				"last_updated": "2026-07-31",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 1048576,
+					"output": 393216
+				},
+				"cost": {
+					"input": 0,
+					"output": 0
 				}
 			},
 			"deepseek/deepseek-v4.1-flash": {
@@ -204818,7 +204894,7 @@
 				"open_weights": true,
 				"limit": {
 					"context": 131072,
-					"output": 117964
+					"output": 65536
 				},
 				"cost": {
 					"input": 0.03,
@@ -206104,9 +206180,9 @@
 					"output": 128000
 				},
 				"cost": {
-					"input": 0.0825,
-					"output": 0.33,
-					"cache_read": 0.020625
+					"input": 0.14,
+					"output": 0.58,
+					"cache_read": 0.035
 				}
 			},
 			"tencent/hy4-preview": {
@@ -206472,13 +206548,13 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 198000,
-					"output": 16384
+					"context": 202752,
+					"output": 131072
 				},
 				"cost": {
-					"input": 0.43,
-					"output": 1.75,
-					"cache_read": 0.08
+					"input": 0.5,
+					"output": 2,
+					"cache_read": 0.1
 				}
 			},
 			"z-ai/glm-4.6v": {
@@ -207491,37 +207567,6 @@
 					"reasoning": 0,
 					"cache_read": 0.4,
 					"cache_write": 5
-				}
-			},
-			"stealth/union-alpha": {
-				"id": "stealth/union-alpha",
-				"name": "Union Alpha",
-				"description": "Union Alpha is a multimodal model built for research, coding, and agentic workflows, while delivering frontier-level performance across a broad range of general-purpose tasks. Union Alpha is a stealth model....",
-				"family": "alpha",
-				"attachment": true,
-				"reasoning": false,
-				"tool_call": true,
-				"structured_output": false,
-				"temperature": true,
-				"release_date": "2026-09-16",
-				"last_updated": "2026-09-16",
-				"modalities": {
-					"input": [
-						"text",
-						"image"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": false,
-				"limit": {
-					"context": 262144,
-					"output": 131072
-				},
-				"cost": {
-					"input": 0,
-					"output": 0
 				}
 			}
 		}
@@ -233319,39 +233364,6 @@
 					"cache_read": 0
 				}
 			},
-			"union-alpha": {
-				"id": "union-alpha",
-				"name": "Union Alpha Free",
-				"description": "Stealth model built for agentic coding",
-				"attachment": true,
-				"reasoning": true,
-				"reasoning_options": [],
-				"tool_call": true,
-				"release_date": "2026-09-16",
-				"last_updated": "2026-09-16",
-				"modalities": {
-					"input": [
-						"text",
-						"image"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": false,
-				"limit": {
-					"context": 262144,
-					"output": 131072
-				},
-				"provider": {
-					"npm": "@ai-sdk/anthropic"
-				},
-				"cost": {
-					"input": 0,
-					"output": 0,
-					"cache_read": 0
-				}
-			},
 			"gpt-5.4-nano": {
 				"id": "gpt-5.4-nano",
 				"name": "GPT-5.4 Nano",
@@ -238817,6 +238829,37 @@
 					"output": 1.25
 				}
 			},
+			"unbiased/pareto": {
+				"id": "unbiased/pareto",
+				"name": "Pareto",
+				"description": "Multimodal model for analyzing text, images, documents, and rich media",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": false,
+				"temperature": true,
+				"release_date": "2026-09-17",
+				"last_updated": "2026-09-17",
+				"modalities": {
+					"input": [
+						"text",
+						"image"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 262144,
+					"output": 131072
+				},
+				"cost": {
+					"input": 2.5,
+					"output": 7.5,
+					"cache_read": 0.25
+				}
+			},
 			"aion-labs/aion-2.0": {
 				"id": "aion-labs/aion-2.0",
 				"name": "Aion-2.0",
@@ -239251,12 +239294,12 @@
 				"open_weights": false,
 				"limit": {
 					"context": 1310720,
-					"output": 393216
+					"output": 943718
 				},
 				"cost": {
-					"input": 0.04,
-					"output": 0.1,
-					"cache_read": 0.01
+					"input": 0.0549,
+					"output": 0.1734,
+					"cache_read": 0.0087
 				}
 			},
 			"~deepseek/deepseek-pro-latest": {
@@ -239295,12 +239338,12 @@
 				"open_weights": false,
 				"limit": {
 					"context": 1048576,
-					"output": 393216
+					"output": 384000
 				},
 				"cost": {
-					"input": 0.57948,
-					"output": 1.73844,
-					"cache_read": 0.018438
+					"input": 0.7,
+					"output": 2.96,
+					"cache_read": 0.033
 				}
 			},
 			"~deepseek/deepseek-flash-latest": {
@@ -239343,9 +239386,9 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 0.135,
-					"output": 0.54,
-					"cache_read": 0.00405
+					"input": 0.15,
+					"output": 0.6,
+					"cache_read": 0.015
 				}
 			},
 			"dots-studio/dots-3-note-preview:free": {
@@ -245014,12 +245057,12 @@
 				"open_weights": false,
 				"limit": {
 					"context": 1048576,
-					"output": 943718
+					"output": 262144
 				},
 				"cost": {
-					"input": 0.22,
-					"output": 0.66,
-					"cache_read": 0.007
+					"input": 0.2156,
+					"output": 0.6468,
+					"cache_read": 0.00686
 				}
 			},
 			"deepseek/deepseek-v4-pro-0813": {
@@ -245058,12 +245101,12 @@
 				"open_weights": true,
 				"limit": {
 					"context": 1048576,
-					"output": 393216
+					"output": 384000
 				},
 				"cost": {
-					"input": 0.57948,
-					"output": 1.73844,
-					"cache_read": 0.018438
+					"input": 1.32,
+					"output": 3.96,
+					"cache_read": 0.044
 				}
 			},
 			"deepseek/deepseek-v4-flash-0731": {
@@ -245153,9 +245196,53 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.07,
-					"output": 0.14,
-					"cache_read": 0.014
+					"input": 0.088606,
+					"output": 0.177212,
+					"cache_read": 0.017721
+				}
+			},
+			"deepseek/deepseek-v4-flash-0731:free": {
+				"id": "deepseek/deepseek-v4-flash-0731:free",
+				"name": "DeepSeek V4 Flash 0731 (free)",
+				"description": "Fast DeepSeek model for efficient chat, coding help, and agent loops",
+				"family": "deepseek-flash",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "toggle"
+					},
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"high",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"knowledge": "2025-05",
+				"release_date": "2026-07-31",
+				"last_updated": "2026-07-31",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 1048576,
+					"output": 393216
+				},
+				"cost": {
+					"input": 0,
+					"output": 0
 				}
 			},
 			"deepseek/deepseek-v4.1-flash": {
@@ -245199,9 +245286,9 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.15,
-					"output": 0.6,
-					"cache_read": 0.003
+					"input": 0.3,
+					"output": 1.2,
+					"cache_read": 0.006
 				}
 			},
 			"deepseek/deepseek-r1": {
@@ -249254,11 +249341,12 @@
 				"open_weights": true,
 				"limit": {
 					"context": 131072,
-					"output": 117964
+					"output": 65536
 				},
 				"cost": {
-					"input": 0.037,
-					"output": 0.17
+					"input": 0.15,
+					"output": 0.6,
+					"cache_read": 0.075
 				}
 			},
 			"openai/gpt-5.4-pro": {
@@ -250059,9 +250147,9 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 3,
-					"output": 15,
-					"cache_read": 0.3
+					"input": 2.1,
+					"output": 10.95,
+					"cache_read": 0.23
 				}
 			},
 			"moonshotai/kimi-k2": {
@@ -250496,9 +250584,9 @@
 					"output": 128000
 				},
 				"cost": {
-					"input": 0.0825,
-					"output": 0.33,
-					"cache_read": 0.020625
+					"input": 0.132,
+					"output": 0.528,
+					"cache_read": 0.033
 				}
 			},
 			"tencent/hy4-preview": {
@@ -250846,12 +250934,12 @@
 				"open_weights": true,
 				"limit": {
 					"context": 204800,
-					"output": 16384
+					"output": 131072
 				},
 				"cost": {
-					"input": 0.43,
-					"output": 1.75,
-					"cache_read": 0.08
+					"input": 0.5,
+					"output": 2,
+					"cache_read": 0.1
 				}
 			},
 			"z-ai/glm-4.6v": {
@@ -251593,37 +251681,6 @@
 				"cost": {
 					"input": 0.1,
 					"output": 0.2
-				}
-			},
-			"stealth/union-alpha": {
-				"id": "stealth/union-alpha",
-				"name": "Union Alpha",
-				"description": "Multimodal model for analyzing text, images, documents, and rich media",
-				"family": "alpha",
-				"attachment": true,
-				"reasoning": false,
-				"tool_call": true,
-				"structured_output": false,
-				"temperature": true,
-				"release_date": "2026-09-16",
-				"last_updated": "2026-09-16",
-				"modalities": {
-					"input": [
-						"text",
-						"image"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": false,
-				"limit": {
-					"context": 262144,
-					"output": 131072
-				},
-				"cost": {
-					"input": 0,
-					"output": 0
 				}
 			}
 		}
@@ -279567,6 +279624,47 @@
 					"output": 5
 				}
 			},
+			"zai-glm-5-3": {
+				"id": "zai-glm-5-3",
+				"name": "GLM-5.3",
+				"description": "Flagship GLM model for long-horizon coding, agents, and complex project delivery",
+				"family": "glm",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"high",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"release_date": "2026-08-14",
+				"last_updated": "2026-08-14",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 1000000,
+					"output": 131072
+				},
+				"cost": {
+					"input": 1.4,
+					"output": 4.4,
+					"cache_read": 0.14
+				}
+			},
 			"open-mixtral-8x22b": {
 				"id": "open-mixtral-8x22b",
 				"name": "Mixtral 8x22B",
@@ -280144,6 +280242,7 @@
 					{
 						"type": "effort",
 						"values": [
+							"none",
 							"high",
 							"max"
 						]
@@ -299205,39 +299304,6 @@
 					"cache_read": 0.002
 				}
 			},
-			"union-alpha": {
-				"id": "union-alpha",
-				"name": "Union Alpha Free",
-				"description": "Stealth model built for agentic coding",
-				"attachment": true,
-				"reasoning": true,
-				"reasoning_options": [],
-				"tool_call": true,
-				"release_date": "2026-09-16",
-				"last_updated": "2026-09-16",
-				"modalities": {
-					"input": [
-						"text",
-						"image"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": false,
-				"limit": {
-					"context": 262144,
-					"output": 131072
-				},
-				"provider": {
-					"npm": "@ai-sdk/anthropic"
-				},
-				"cost": {
-					"input": 0,
-					"output": 0,
-					"cache_read": 0
-				}
-			},
 			"mimo-v2-pro": {
 				"id": "mimo-v2-pro",
 				"name": "MiMo V2 Pro",
@@ -301353,6 +301419,47 @@
 					"output": 1
 				}
 			},
+			"glm-5-3": {
+				"id": "glm-5-3",
+				"name": "GLM-5.3",
+				"description": "Flagship GLM model for long-horizon coding, agents, and complex project delivery",
+				"family": "glm",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"high",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"release_date": "2026-08-14",
+				"last_updated": "2026-08-14",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 1048576,
+					"output": 131072
+				},
+				"cost": {
+					"input": 1.8,
+					"output": 5.75,
+					"cache_read": 0.45
+				}
+			},
 			"gpt-oss-safeguard-120b": {
 				"id": "gpt-oss-safeguard-120b",
 				"name": "gpt-oss-safeguard-120b",
@@ -302963,38 +303070,6 @@
 					"input": 0.1,
 					"output": 0.3,
 					"cache_read": 0.1
-				}
-			},
-			"nebius/meta-llama/Llama-3.3-70B-Instruct": {
-				"id": "nebius/meta-llama/Llama-3.3-70B-Instruct",
-				"name": "Llama-3.3-70B-Instruct (Nebius)",
-				"description": "Popular open Llama workhorse for multilingual chat, coding, and self-hosting",
-				"family": "llama",
-				"attachment": false,
-				"reasoning": false,
-				"tool_call": true,
-				"structured_output": true,
-				"temperature": true,
-				"knowledge": "2023-12",
-				"release_date": "2024-12-06",
-				"last_updated": "2024-12-06",
-				"modalities": {
-					"input": [
-						"text"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": true,
-				"limit": {
-					"context": 131072,
-					"output": 4096
-				},
-				"cost": {
-					"input": 0.13,
-					"output": 0.4,
-					"cache_read": 0.13
 				}
 			},
 			"nebius/openai/gpt-oss-120b": {
@@ -305255,46 +305330,6 @@
 				"cost": {
 					"input": 0.34443,
 					"output": 0.45924
-				}
-			},
-			"flexai/Nemotron-3-Super-120B-A12B": {
-				"id": "flexai/Nemotron-3-Super-120B-A12B",
-				"name": "Nemotron 3 Super 120B A12B (FlexAI)",
-				"description": "Nemotron middle tier for collaborative agents and high-volume reasoning workloads",
-				"family": "nemotron",
-				"attachment": false,
-				"reasoning": true,
-				"reasoning_options": [
-					{
-						"type": "effort",
-						"values": [
-							"none",
-							"low",
-							"medium"
-						]
-					}
-				],
-				"tool_call": false,
-				"structured_output": false,
-				"temperature": true,
-				"release_date": "2026-03-11",
-				"last_updated": "2026-03-11",
-				"modalities": {
-					"input": [
-						"text"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": true,
-				"limit": {
-					"context": 262144,
-					"output": 262144
-				},
-				"cost": {
-					"input": 0.085,
-					"output": 0.4
 				}
 			},
 			"flexai/Step-3.7-Flash": {
@@ -311070,52 +311105,6 @@
 					"cache_read": 0.04
 				}
 			},
-			"together_ai/thinkingmachines/Inkling-Small": {
-				"id": "together_ai/thinkingmachines/Inkling-Small",
-				"name": "Inkling Small (Together AI)",
-				"description": "Multimodal MoE reasoning model (276B total, 12B active) for text, image, and audio",
-				"family": "ling",
-				"attachment": true,
-				"reasoning": true,
-				"reasoning_options": [
-					{
-						"type": "effort",
-						"values": [
-							"none",
-							"minimal",
-							"low",
-							"medium",
-							"high",
-							"max"
-						]
-					}
-				],
-				"tool_call": true,
-				"structured_output": false,
-				"temperature": true,
-				"release_date": "2026-07-30",
-				"last_updated": "2026-07-30",
-				"modalities": {
-					"input": [
-						"text",
-						"image",
-						"audio"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": true,
-				"limit": {
-					"context": 524288,
-					"output": 1048576
-				},
-				"cost": {
-					"input": 0.5,
-					"output": 1.2,
-					"cache_read": 0.1
-				}
-			},
 			"together_ai/thinkingmachines/Inkling": {
 				"id": "together_ai/thinkingmachines/Inkling",
 				"name": "Inkling (Together AI)",
@@ -311160,46 +311149,6 @@
 					"input": 1,
 					"output": 4.05,
 					"cache_read": 0.17
-				}
-			},
-			"together_ai/openai/gpt-oss-20b": {
-				"id": "together_ai/openai/gpt-oss-20b",
-				"name": "GPT OSS 20B (Together AI)",
-				"description": "Open GPT reasoning model for self-hosted agents and controllable deployments",
-				"family": "gpt-oss",
-				"attachment": false,
-				"reasoning": true,
-				"reasoning_options": [
-					{
-						"type": "effort",
-						"values": [
-							"low",
-							"medium",
-							"high"
-						]
-					}
-				],
-				"tool_call": true,
-				"structured_output": true,
-				"temperature": true,
-				"release_date": "2025-08-05",
-				"last_updated": "2025-08-05",
-				"modalities": {
-					"input": [
-						"text"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": true,
-				"limit": {
-					"context": 131072,
-					"output": 32768
-				},
-				"cost": {
-					"input": 0.05,
-					"output": 0.2
 				}
 			},
 			"together_ai/openai/gpt-oss-120b": {

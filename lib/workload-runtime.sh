@@ -50,19 +50,19 @@ default_run_dir() {
 
 # Infisical identity, pinned so `infisical` resolves the correct workspace from
 # any working directory (proposals-upstream.md D). Self-hosted instances override
-# INFISICAL_API_URL; the project id matches the workspaceId in the checked-in
-# .infisical.json.  Exported so the generate/run scripts (and the in-workload
+# INFISICAL_API_URL. Exported so the generate/run scripts (and the in-workload
 # launch chain) reference these instead of duplicating the literal across
 # scripts.  These are routing, NOT secrets — safe to forward via workload_env.
+# (No .infisical.json is checked in on purpose: it only ever helped commands
+# launched from inside the repo root — see docs/d046.)
 #
 # SECRETS LIVE IN THE EXPLICIT CHAIN: lib/environment.sh is the ONE loader
-# (./lib/environment.sh ./<script> — one in-memory infisical round-trip,
-# then exec).  Consumers source NOTHING and read plain env; run scripts are
-# exec'd through the chain, and inside sandboxes the vault env is forwarded
-# via the workload_env allowlist.  There is no in-script secret loading and
-# no emergency "already-seeded environment" path: a missing vault var is a
-# missing var, and lib/environment.sh's fatal-on-empty vault contract is what
-# keeps consumers from ever running half-configured.
+# (./lib/environment.sh ./<script> — one `infisical run` round-trip, the
+# target runs with the vault as plain env, docs/d046).  Consumers source
+# NOTHING and read plain env; run scripts are exec'd through the chain, and
+# inside sandboxes the vault env is forwarded via the workload_env allowlist.
+# There is no in-script secret loading and no emergency "already-seeded
+# environment" path: a missing vault var is a missing var.
 INFISICAL_API_URL="${INFISICAL_API_URL:-https://app.infisical.com}"
 INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-628c46b6-a5d5-4671-9435-c205847397ce}"
 export INFISICAL_API_URL INFISICAL_PROJECT_ID

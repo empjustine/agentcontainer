@@ -142,6 +142,22 @@
           }
         },
         {
+          "id": "02b-ctx128-0text-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E2B-it-qat-mobile UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
           "id": "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-GGUF:Q8_0",
           "name": "gemma-4-E2B-it Q8_0",
           "reasoning": true,
@@ -210,6 +226,23 @@
           }
         },
         {
+          "id": "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E2B-it-qat-mobile UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
           "id": "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-GGUF:Q8_0",
           "name": "gemma-4-E2B-it Q8_0",
           "reasoning": true,
@@ -263,6 +296,23 @@
         {
           "id": "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL",
           "name": "gemma-4-E2B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E2B-it-qat-mobile UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -448,70 +498,6 @@
           ],
           "contextWindow": 32768,
           "maxTokens": 32768,
-          "cost": {
-            "cacheRead": 1,
-            "cacheWrite": 1,
-            "input": 1,
-            "output": 1
-          }
-        },
-        {
-          "id": "03b-ctx064-unsloth/GLM-4.7-Flash-GGUF:Q6_K",
-          "name": "GLM-4.7-Flash Q6_K",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536,
-          "cost": {
-            "cacheRead": 1,
-            "cacheWrite": 1,
-            "input": 1,
-            "output": 1
-          }
-        },
-        {
-          "id": "03b-ctx064-unsloth/GLM-4.7-Flash-GGUF:Q8_0",
-          "name": "GLM-4.7-Flash Q8_0",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536,
-          "cost": {
-            "cacheRead": 1,
-            "cacheWrite": 1,
-            "input": 1,
-            "output": 1
-          }
-        },
-        {
-          "id": "03b-ctx064-unsloth/GLM-4.7-Flash-GGUF:UD-Q6_K_XL",
-          "name": "GLM-4.7-Flash UD-Q6_K_XL",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536,
-          "cost": {
-            "cacheRead": 1,
-            "cacheWrite": 1,
-            "input": 1,
-            "output": 1
-          }
-        },
-        {
-          "id": "03b-ctx064-unsloth/GLM-4.7-Flash-GGUF:UD-Q8_K_XL",
-          "name": "GLM-4.7-Flash UD-Q8_K_XL",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536,
           "cost": {
             "cacheRead": 1,
             "cacheWrite": 1,
@@ -980,6 +966,22 @@
           }
         },
         {
+          "id": "04b-ctx128-0text-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E4B-it-qat-mobile UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
           "id": "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
           "name": "gemma-4-26B-A4B-it Q8_0",
           "reasoning": true,
@@ -1133,6 +1135,23 @@
           }
         },
         {
+          "id": "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E4B-it-qat-mobile UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
           "id": "04b-ctx128-2mmproj-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
           "name": "gemma-4-26B-A4B-it Q8_0",
           "reasoning": true,
@@ -1271,6 +1290,23 @@
         {
           "id": "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL",
           "name": "gemma-4-E4B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E4B-it-qat-mobile UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -1518,8 +1554,8 @@
           }
         },
         {
-          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw",
-          "name": "Qwen3.8-27B IQ3_S-3.44bpw",
+          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw",
+          "name": "Qwen3.8-27B IQ2_XXS-2.56bpw",
           "reasoning": true,
           "input": [
             "text"
@@ -1534,8 +1570,8 @@
           }
         },
         {
-          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw",
-          "name": "Qwen3.8-27B IQ4_XS-3.67bpw",
+          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw",
+          "name": "Qwen3.8-27B IQ3_S-3.23bpw",
           "reasoning": true,
           "input": [
             "text"
@@ -1550,8 +1586,8 @@
           }
         },
         {
-          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw",
-          "name": "Qwen3.8-27B IQ4_XS-4.00bpw",
+          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw",
+          "name": "Qwen3.8-27B IQ3_XS-3.01bpw",
           "reasoning": true,
           "input": [
             "text"
@@ -1566,8 +1602,8 @@
           }
         },
         {
-          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw",
-          "name": "Qwen3.8-27B IQ4_XS-4.40bpw",
+          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw",
+          "name": "Qwen3.8-27B IQ3_XXS-2.88bpw",
           "reasoning": true,
           "input": [
             "text"
@@ -1582,24 +1618,8 @@
           }
         },
         {
-          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw",
-          "name": "Qwen3.8-27B Q5_K_M-5.60bpw",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536,
-          "cost": {
-            "cacheRead": 1,
-            "cacheWrite": 1,
-            "input": 1,
-            "output": 1
-          }
-        },
-        {
-          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw",
-          "name": "Qwen3.8-27B Q5_K_S-4.72bpw",
+          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.84bpw",
+          "name": "Qwen3.8-27B IQ4_XS-3.84bpw",
           "reasoning": true,
           "input": [
             "text"
@@ -1630,8 +1650,136 @@
           }
         },
         {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:BF16",
+          "name": "Qwen3.8-27B BF16",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_0",
+          "name": "Qwen3.8-27B Q4_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_1",
+          "name": "Qwen3.8-27B Q4_1",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
           "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
           "name": "Qwen3.8-27B Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_S",
+          "name": "Qwen3.8-27B Q4_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_XL",
+          "name": "Qwen3.8-27B Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q5_K_M",
+          "name": "Qwen3.8-27B Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q5_K_S",
+          "name": "Qwen3.8-27B Q5_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q5_K_XL",
+          "name": "Qwen3.8-27B Q5_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -1662,6 +1810,54 @@
           }
         },
         {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K_L",
+          "name": "Qwen3.8-27B Q6_K_L",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K_M",
+          "name": "Qwen3.8-27B Q6_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K_XL",
+          "name": "Qwen3.8-27B Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
           "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q8_0",
           "name": "Qwen3.8-27B Q8_0",
           "reasoning": true,
@@ -1678,8 +1874,184 @@
           }
         },
         {
-          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw",
-          "name": "Qwen3.8-27B IQ3_S-3.44bpw",
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q8_K_L",
+          "name": "Qwen3.8-27B Q8_K_L",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q8_K_XL",
+          "name": "Qwen3.8-27B Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M",
+          "name": "Qwen3.8-27B UD-IQ1_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S",
+          "name": "Qwen3.8-27B UD-IQ1_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S",
+          "name": "Qwen3.8-27B UD-IQ2_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS",
+          "name": "Qwen3.8-27B UD-IQ2_XXS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S",
+          "name": "Qwen3.8-27B UD-IQ3_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS",
+          "name": "Qwen3.8-27B UD-IQ3_XXS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ4_XS",
+          "name": "Qwen3.8-27B UD-IQ4_XS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL",
+          "name": "Qwen3.8-27B UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL",
+          "name": "Qwen3.8-27B UD-Q3_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw",
+          "name": "Qwen3.8-27B IQ2_XXS-2.56bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -1695,8 +2067,8 @@
           }
         },
         {
-          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw",
-          "name": "Qwen3.8-27B IQ4_XS-3.67bpw",
+          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw",
+          "name": "Qwen3.8-27B IQ3_S-3.23bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -1712,8 +2084,8 @@
           }
         },
         {
-          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw",
-          "name": "Qwen3.8-27B IQ4_XS-4.00bpw",
+          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw",
+          "name": "Qwen3.8-27B IQ3_XS-3.01bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -1729,8 +2101,8 @@
           }
         },
         {
-          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw",
-          "name": "Qwen3.8-27B IQ4_XS-4.40bpw",
+          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw",
+          "name": "Qwen3.8-27B IQ3_XXS-2.88bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -1746,25 +2118,8 @@
           }
         },
         {
-          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw",
-          "name": "Qwen3.8-27B Q5_K_M-5.60bpw",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536,
-          "cost": {
-            "cacheRead": 1,
-            "cacheWrite": 1,
-            "input": 1,
-            "output": 1
-          }
-        },
-        {
-          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw",
-          "name": "Qwen3.8-27B Q5_K_S-4.72bpw",
+          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.84bpw",
+          "name": "Qwen3.8-27B IQ4_XS-3.84bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -1797,8 +2152,144 @@
           }
         },
         {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:BF16",
+          "name": "Qwen3.8-27B BF16",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_0",
+          "name": "Qwen3.8-27B Q4_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_1",
+          "name": "Qwen3.8-27B Q4_1",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
           "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
           "name": "Qwen3.8-27B Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_S",
+          "name": "Qwen3.8-27B Q4_K_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_XL",
+          "name": "Qwen3.8-27B Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q5_K_M",
+          "name": "Qwen3.8-27B Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q5_K_S",
+          "name": "Qwen3.8-27B Q5_K_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q5_K_XL",
+          "name": "Qwen3.8-27B Q5_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -1831,6 +2322,57 @@
           }
         },
         {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K_L",
+          "name": "Qwen3.8-27B Q6_K_L",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K_M",
+          "name": "Qwen3.8-27B Q6_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K_XL",
+          "name": "Qwen3.8-27B Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
           "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q8_0",
           "name": "Qwen3.8-27B Q8_0",
           "reasoning": true,
@@ -1848,8 +2390,8 @@
           }
         },
         {
-          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.44bpw",
-          "name": "Qwen3.8-27B IQ3_S-3.44bpw",
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q8_K_L",
+          "name": "Qwen3.8-27B Q8_K_L",
           "reasoning": true,
           "input": [
             "text",
@@ -1865,8 +2407,8 @@
           }
         },
         {
-          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.67bpw",
-          "name": "Qwen3.8-27B IQ4_XS-3.67bpw",
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q8_K_XL",
+          "name": "Qwen3.8-27B Q8_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -1882,8 +2424,8 @@
           }
         },
         {
-          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.00bpw",
-          "name": "Qwen3.8-27B IQ4_XS-4.00bpw",
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M",
+          "name": "Qwen3.8-27B UD-IQ1_M",
           "reasoning": true,
           "input": [
             "text",
@@ -1899,8 +2441,8 @@
           }
         },
         {
-          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-4.40bpw",
-          "name": "Qwen3.8-27B IQ4_XS-4.40bpw",
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S",
+          "name": "Qwen3.8-27B UD-IQ1_S",
           "reasoning": true,
           "input": [
             "text",
@@ -1916,8 +2458,8 @@
           }
         },
         {
-          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:Q5_K_M-5.60bpw",
-          "name": "Qwen3.8-27B Q5_K_M-5.60bpw",
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S",
+          "name": "Qwen3.8-27B UD-IQ2_S",
           "reasoning": true,
           "input": [
             "text",
@@ -1933,8 +2475,178 @@
           }
         },
         {
-          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:Q5_K_S-4.72bpw",
-          "name": "Qwen3.8-27B Q5_K_S-4.72bpw",
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS",
+          "name": "Qwen3.8-27B UD-IQ2_XXS",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S",
+          "name": "Qwen3.8-27B UD-IQ3_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS",
+          "name": "Qwen3.8-27B UD-IQ3_XXS",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ4_XS",
+          "name": "Qwen3.8-27B UD-IQ4_XS",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL",
+          "name": "Qwen3.8-27B UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL",
+          "name": "Qwen3.8-27B UD-Q3_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw",
+          "name": "Qwen3.8-27B IQ2_XXS-2.56bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw",
+          "name": "Qwen3.8-27B IQ3_S-3.23bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw",
+          "name": "Qwen3.8-27B IQ3_XS-3.01bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw",
+          "name": "Qwen3.8-27B IQ3_XXS-2.88bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.84bpw",
+          "name": "Qwen3.8-27B IQ4_XS-3.84bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -1967,8 +2679,144 @@
           }
         },
         {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:BF16",
+          "name": "Qwen3.8-27B BF16",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q4_0",
+          "name": "Qwen3.8-27B Q4_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q4_1",
+          "name": "Qwen3.8-27B Q4_1",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
           "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
           "name": "Qwen3.8-27B Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q4_K_S",
+          "name": "Qwen3.8-27B Q4_K_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q4_K_XL",
+          "name": "Qwen3.8-27B Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q5_K_M",
+          "name": "Qwen3.8-27B Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q5_K_S",
+          "name": "Qwen3.8-27B Q5_K_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q5_K_XL",
+          "name": "Qwen3.8-27B Q5_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2001,8 +2849,246 @@
           }
         },
         {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q6_K_L",
+          "name": "Qwen3.8-27B Q6_K_L",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q6_K_M",
+          "name": "Qwen3.8-27B Q6_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q6_K_XL",
+          "name": "Qwen3.8-27B Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
           "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q8_0",
           "name": "Qwen3.8-27B Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q8_K_L",
+          "name": "Qwen3.8-27B Q8_K_L",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:Q8_K_XL",
+          "name": "Qwen3.8-27B Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M",
+          "name": "Qwen3.8-27B UD-IQ1_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S",
+          "name": "Qwen3.8-27B UD-IQ1_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S",
+          "name": "Qwen3.8-27B UD-IQ2_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS",
+          "name": "Qwen3.8-27B UD-IQ2_XXS",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S",
+          "name": "Qwen3.8-27B UD-IQ3_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS",
+          "name": "Qwen3.8-27B UD-IQ3_XXS",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ4_XS",
+          "name": "Qwen3.8-27B UD-IQ4_XS",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL",
+          "name": "Qwen3.8-27B UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 1,
+            "input": 1,
+            "output": 1
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL",
+          "name": "Qwen3.8-27B UD-Q3_K_XL",
           "reasoning": true,
           "input": [
             "text",
