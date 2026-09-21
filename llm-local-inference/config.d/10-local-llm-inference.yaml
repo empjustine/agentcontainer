@@ -368,7 +368,7 @@
       }
     },
     "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K": {
-      "cmd": "${LLAMA_SERVER} ${0text} ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q6_K.gguf",
+      "cmd": "${LLAMA_SERVER} ${0text} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q6_K.gguf",
       "capabilities": {
         "in": [
           "text"
@@ -395,7 +395,7 @@
       }
     },
     "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K": {
-      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q6_K.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
+      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q6_K.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -424,7 +424,7 @@
       }
     },
     "03b-ctx128-2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K": {
-      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q6_K.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
+      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q6_K.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -453,7 +453,7 @@
       }
     },
     "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0": {
-      "cmd": "${LLAMA_SERVER} ${0text} ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-Q8_0.gguf",
+      "cmd": "${LLAMA_SERVER} ${0text} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-Q8_0.gguf",
       "capabilities": {
         "in": [
           "text"
@@ -480,7 +480,7 @@
       }
     },
     "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0": {
-      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-Q8_0.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
+      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-Q8_0.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -509,7 +509,7 @@
       }
     },
     "03b-ctx128-2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0": {
-      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-Q8_0.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
+      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-Q8_0.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -538,7 +538,7 @@
       }
     },
     "03b-ctx128-0text-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw": {
-      "cmd": "${LLAMA_SERVER} ${0text} ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf",
+      "cmd": "${LLAMA_SERVER} ${0text} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf",
       "capabilities": {
         "in": [
           "text"
@@ -565,7 +565,7 @@
       }
     },
     "03b-ctx128-1vision-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw": {
-      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/mmproj-bf16.gguf",
+      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/mmproj-bf16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -594,7 +594,7 @@
       }
     },
     "03b-ctx128-2mmproj-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw": {
-      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/mmproj-bf16.gguf",
+      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/mmproj-bf16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -623,7 +623,7 @@
       }
     },
     "03b-ctx128-0text-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw": {
-      "cmd": "${LLAMA_SERVER} ${0text} ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf",
+      "cmd": "${LLAMA_SERVER} ${0text} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf",
       "capabilities": {
         "in": [
           "text"
@@ -650,7 +650,7 @@
       }
     },
     "03b-ctx128-1vision-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw": {
-      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/mmproj-bf16.gguf",
+      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/mmproj-bf16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -679,7 +679,7 @@
       }
     },
     "03b-ctx128-2mmproj-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw": {
-      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/mmproj-bf16.gguf",
+      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/mmproj-bf16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -3806,7 +3806,7 @@
       }
     },
     "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL": {
-      "cmd": "${LLAMA_SERVER} ${0text} ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf",
+      "cmd": "${LLAMA_SERVER} ${0text} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf",
       "capabilities": {
         "in": [
           "text"
@@ -3833,7 +3833,7 @@
       }
     },
     "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL": {
-      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
+      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -3862,7 +3862,7 @@
       }
     },
     "03b-ctx128-2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL": {
-      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
+      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -3891,7 +3891,7 @@
       }
     },
     "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL": {
-      "cmd": "${LLAMA_SERVER} ${0text} ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf",
+      "cmd": "${LLAMA_SERVER} ${0text} ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf",
       "capabilities": {
         "in": [
           "text"
@@ -3918,7 +3918,7 @@
       }
     },
     "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL": {
-      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
+      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -3947,7 +3947,7 @@
       }
     },
     "03b-ctx128-2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL": {
-      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} ${DRAFT_MTP} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
+      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-k f16 --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/mmproj-BF16.gguf",
       "capabilities": {
         "in": [
           "text",
