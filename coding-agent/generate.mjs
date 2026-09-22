@@ -227,7 +227,9 @@ logInfo("profile", {
 // version.mjs prints its own reason on stderr and exits non-zero below it.
 // Runs pre-staging: it is read from this dir and writes nothing.
 if (termux) {
-	if (!spawnSync("node", ["--version"], { stdio: "ignore" }).status) {
+	// status is the exit code (0 on success); a missing binary sets `error`
+	// and leaves status null, so test the spawn outcome, not the code.
+	if (spawnSync("node", ["--version"], { stdio: "ignore" }).error) {
 		logError("node not found (need >= 22.19 for pi-coding-agent)");
 		process.exit(93);
 	}
