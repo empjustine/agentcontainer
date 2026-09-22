@@ -119,8 +119,8 @@ const PEER_MODEL_FILTERS = {
 
 /**
  * Build an opencode provider entry routing `label`'s models through the
- * provider's peer path-route on the simplified cloud router (docs/d027):
- * baseURL is `<peerBase>/<providerId>`, auth is the provider's REAL key env
+ * provider's peer host-form route on the cloud router (docs/d047):
+ * baseURL is `<peerBase>/<upstream-host><base-path>`, auth is the provider's REAL key env
  * (the proxy forwards credentials untouched — it performs none), and the
  * model ids are the provider's own bare ids as its `/models` listing under
  * the route served them.
@@ -279,9 +279,10 @@ async function main() {
 			// The LOCAL llama-swap face keeps its own OpenAI surface (/v1) and
 			// its model-id routing — llama-swap is still what swaps GGUFs
 			// (docs/d027) — and llama-swap's own bearer key guards it. The
-			// probed baseUrl is already the funnel's /llama-swap path-route;
+			// probed baseUrl is already the funnel's llama-swap route (the
+			// stable logical name, not a loopback host — docs/d047);
 			// appending /v1 gives <peerBase>/llama-swap/v1, which the proxy
-			// forwards to the local instance as /v1/….
+			// forwards to the local instance as /v1/… (docs/d047).
 			providers.local = peerProvider(
 				"Local LLM",
 				`${local.baseUrl}/v1`,

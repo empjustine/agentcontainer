@@ -139,9 +139,11 @@ still listens on 8080 internally; `llm-local-inference/run.sh` publishes
 
 | path under the funnel | backend | routing |
 |---|---|---|
-| `/<providerId>` | cloud providers | path prefix → provider's FULL real base URL |
-| `/llama-swap/…` | `http://127.0.0.1:8101` | llama-swap (LOCAL GGUF, model-id routing) — the loopback hop never leaves the host |
+| `/<upstream-host>/<path>` | allowlisted hosts only (~36 owner-set rows, docs/d047) | host key → scheme://host root; the client carries the full upstream base path after the host (`<peerBase>/api.cline.bot/api/v1`); every other host is denied by absence |
+| `/llama-swap/…` | `http://127.0.0.1:8101` | llama-swap (LOCAL GGUF, model-id routing) — the loopback hop never leaves the host; the one allowlist row keyed by a logical route name instead of its host, so client URLs stay loopback-free |
 
-`./smoke-test.sh` runs 32 behavioural checks — TLS failure classes come from
-the badssl.com test hosts, so no bundled cert is needed; that section is
-skipped automatically if there is no outbound internet.
+`./smoke-test.sh` runs 34 behavioural checks in the one and only mode —
+the v2 host allowlist (docs/d047) — including the deny-by-absence negatives
+(unknown host, v1 slug form) answer the plain funnel 404. TLS failure
+classes come from the badssl.com test hosts, so no bundled cert is needed;
+that section is skipped automatically if there is no outbound internet.

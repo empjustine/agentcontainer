@@ -16,19 +16,33 @@ they do, and how errors are classified. Operation (usage, build, ports) lives
 in the module reference, [README.md](README.md); the requirement statement is
 FR-S5 in [../docs/requirements.md](../docs/requirements.md).
 
-## The routing convention: full real base URLs
+## The routing convention: host allowlist, client-carried base path (v2, docs/d047)
 
-**The upstream value is the provider's FULL real base URL** (path suffixes
-included — pi's built-in base for pi-ai rows, the catalog's `api` URL for
-models.dev/catwalk rows), so a client route is deterministic and trivial —
-`<peerBase>/<providerId>` (e.g. peer-mode hyper is
-`https://…/<funnel-id>/hyper`). The proxy strips `/<providerId>` and
-single-joins the rest onto that base, so every wire dialect the provider
-speaks (Google's native generative-ai paths, Mistral's non-completions
-endpoints, …) passes through untouched — that is the point of replacing
-llama-swap's openai-completions-shaped peer routing (docs/d027). The
+**The allowlist key is the upstream HOST (DNS name) and the value is its
+scheme://host root** — path suffixes move into the CLIENT's base URL, so a
+client route is `<peerBase>/<upstream-host><full-upstream-base-path>`
+(peer-mode hyper is `https://…/<funnel-id>/hyper.charm.land/v1`). The proxy
+strips `/<host>` and single-joins the rest onto the root, so every wire
+dialect and every base path the provider speaks passes through untouched —
+and hosts that share a DNS name (opencode vs opencode-go on `opencode.ai`,
+minimax's `/anthropic` variants) stay routable under ONE allowlist row,
+because the distinguishing path belongs to the client that owns it. The
 coding-agent generators probe exactly these routes
-(`<peerBase>/<id>/models`) and emit `<peerBase>/<id>` baseUrls.
+(`<peerBase>/<host><base>/models`, peerProviderUrl) and emit the same shape
+as baseUrls. Hosts NOT in the allowlist are denied by absence — the same
+plain funnel 404 as any garbage path; a catalog row can no longer mint a
+routable endpoint.
+
+**One row is the exception: the llama-swap loopback learner.** It is keyed
+by the stable logical route name `llama-swap` (value still
+`http://127.0.0.1:8101`), so client configs never embed a loopback address
+in the request path. `peerProviderUrl` emits the same name for it; every
+other row keeps `key === host`. The generator's drift check re-states this
+exception rather than deriving it from `hostKey` (docs/d047).
+
+There is no other mode: the v1 provider-slug table (`providers`,
+`/<providerId>` addressing) is retired — main.go only reads `allowHosts`,
+and the generator only emits it (docs/d047).
 
 ## The 404 policy: nothing distinctive at the funnel edge
 

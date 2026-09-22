@@ -88,6 +88,10 @@ export const { CLOUD_PROVIDERS, PI_NATIVE_CLOUD_IDS } = cloudProviders;
  * @property {number} [contextWindow]
  * @property {number} [maxTokens]
  * @property {Cost} cost
+ * @property {string} [api] per-model api override (pi docs/models.md) —
+ *   set by the generator when the provider serves a MIXED api surface and
+ *   the provider-wide dialect cannot route every model (opencode-go,
+ *   docs/d048)
  */
 
 /**
@@ -142,6 +146,22 @@ function displayName(id) {
 }
 
 /**
+ * pi's models.json input schema accepts only "text" and "image";
+ * video/audio/... are dropped (the same filter catalogPiModel's
+ * toInput() applies to catalog records — this one guards the RAW
+ * live-listing path, see piModel). Kept in canonical order so the
+ * emitted arrays are always ["text"] or ["text","image"].
+ * @param {string[]} [modalities]
+ * @returns {string[]}
+ */
+function toInput(modalities) {
+	const input = [];
+	if (modalities?.includes("text")) input.push("text");
+	if (modalities?.includes("image")) input.push("image");
+	return input.length ? input : ["text"];
+}
+
+/**
  * Mirror a raw `/models` entry into pi's model shape, preferring llama-swap's
  * own metadata over the llama.cpp fields.
  * @param {RawModelEntry} entry
@@ -154,10 +174,18 @@ export function piModel(entry) {
 		entry.context_length ??
 		entry.meta?.n_ctx ??
 		undefined;
-	const input =
+	// Don't trust raw provider listings to stay inside pi's input schema:
+	// openrouter's /v1/models carries architecture.input_modalities with
+	// video/audio/pdf entries (gemma-4-31b-it:free, inkling:free, ...),
+	// and a 3+ element input array fails the strict models.json schema
+	// (const anyOf ["text","image"]) the moment the file is re-read by
+	// cline/other strict consumers. Filter to text+image here — same
+	// contract as catalogPiModel's toInput().
+	const input = toInput(
 		meta?.input ??
-		entry.architecture?.input_modalities ??
-		(entry.capabilities?.vision ? ["text", "image"] : ["text"]);
+			entry.architecture?.input_modalities ??
+			(entry.capabilities?.vision ? ["text", "image"] : ["text"]),
+	);
 	return {
 		id: entry.id,
 		...(displayName(entry.id) ? { name: displayName(entry.id) } : {}),
@@ -195,8 +223,9 @@ export function providerEntry(baseUrl, models) {
 
 /**
  * A REROUTE-ONLY override for a provider pi ships NATIVELY (the
- * PI_NATIVE_CLOUD_IDS set): carries just the peer path-route `baseUrl`
- * (`<peerBase>/<providerId>`, docs/d027) and the peer-visible models —
+ * PI_NATIVE_CLOUD_IDS set): carries just the peer host-form route `baseUrl`
+ * (`<peerBase>/<upstream-host><base-path>`, peerProviderUrl, docs/d047)
+ * and the peer-visible models —
  * deliberately NO `api`, NO `compat`, and NO `apiKey`.
  *
  * Emitting an `api` compatibility key here would blindly pin the dialect for
@@ -209,8 +238,8 @@ export function providerEntry(baseUrl, models) {
  * lets pi's built-in provider definition supply the api implementation and
  * compat, so the override only changes WHERE requests go, never HOW they are
  * encoded. This is exactly what makes mistral's non-completions endpoints
- * and google's native dialect work through the peer (docs/d027): the
- * simplified proxy forwards every path under `<peerBase>/<providerId>`
+ * and google's native dialect work through the peer (docs/d027/d047): the
+ * host-allowlist proxy forwards every path under the upstream host key
  * byte-for-byte, whatever wire format pi speaks.
  *
  * `apiKey` is likewise omitted: llm-reverse-proxy does NO credential

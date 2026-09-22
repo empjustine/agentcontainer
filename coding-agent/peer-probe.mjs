@@ -46,6 +46,20 @@ const LIB_DIR =
 const { logWarn } = /** @type {typeof import("../lib/log.mjs")} */ (
 	await import(`${LIB_DIR}/log.mjs`)
 );
+// The v2 host-form route (peerProviderUrl) is derived from the SAME
+// fact-table base URLs the llm-reverse-proxy allowlist is generated from —
+// one source of truth for "which upstream does this provider sit on"
+// (docs/d047). Frozen id → baseUrl, resolved once at module load.
+const { CLOUD_PROVIDERS } =
+	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
+		await import(`${LIB_DIR}/cloud-providers.mjs`)
+	);
+/** @type {Readonly<Record<string, string>>} */
+const CLOUD_PROVIDER_BASE_URLS = Object.freeze(
+	Object.fromEntries(
+		Object.entries(CLOUD_PROVIDERS).map(([id, f]) => [id, f.baseUrl]),
+	),
+);
 
 /**
  * Route this module's fetch() calls through `http(s)_proxy` when set
@@ -93,15 +107,20 @@ const REQUEST_TIMEOUT_MS = 8000;
  * The funnel serves the whole `<funnel-id>` route to llm-reverse-proxy on
  * host port 8080 (docs/d027), which path-prefix routes everything behind it:
  *
- *   - `/<providerId>` → that cloud provider's real (full) base URL, byte
- *     for byte — no model-id magic, no key injection (docs/d027). Cloud
- *     providers are addressed as peerProviderUrl(peerBase, id) =
- *     `<peerBase>/<id>`.
+ *   - v2 HOST routing (docs/d047): `/<upstream-host>/<path>` → that host's
+ *     allowlisted upstream root, byte for byte — no model-id magic, no key
+ *     injection. Cloud providers are addressed as peerProviderUrl(peerBase,
+ *     id) = `<peerBase>/<upstream-host><full-upstream-base-path>`; the
+ *     allowlist carries only the owner's stack, everything else is denied by
+ *     absence (the plain funnel 404).
  *   - `/llama-swap/…` → http://127.0.0.1:8101, the LOCAL GGUF llama-swap
  *     instance (LAN 8101; its /v1 OpenAI surface and model-id magic are
- *     unchanged behind the prefix — addressed by
+ *     unchanged behind the route — addressed by
  *     generate-pi-coding-agent.mjs / generate-opencode.mjs's local
- *     probe as peerProviderUrl(peerBase, "llama-swap")).
+ *     probe as peerProviderUrl(peerBase, "llama-swap")). This is the one
+ *     route whose first segment is a logical name, not an upstream host
+ *     (docs/d047): llm-reverse-proxy/generate.mjs keys its allowlist row to
+ *     match, so client configs never carry a loopback address.
  *
  * No localhost candidate exists beside it — the LAN :8080 (proxy) and :8101
  * (llama-swap) listen addresses are only ever *local* listen addresses
@@ -433,18 +452,43 @@ export function suppressedProbe(probe, expectation) {
 }
 
 /**
- * The peer's path-prefix route for ONE provider on the simplified cloud
- * router: `<peerBase>/<providerId>` (docs/d027). The deployed
- * llm-reverse-proxy.json maps each provider id to that provider's FULL real
- * base URL (the `baseUrl` facts in lib/cloud-providers.mjs), so the client
- * route is deterministic — every cloud provider sits one path segment below
- * the peer base, never under a shared `/v1`.
+ * The peer's route for ONE provider on the v2 router (docs/d047):
+ * `<peerBase>/<route-name><full-upstream-base-path>`. The first segment is
+ * the upstream host the llm-reverse-proxy allowlist keys on (a DNS name), or
+ * the stable route name `llama-swap` for the one loopback learner; the
+ * upstream's base path rides in the CLIENT's base URL, because the
+ * allowlisted value is only scheme://host — that is what lets multi-base
+ * hosts (opencode vs opencode-go on opencode.ai, minimax's /anthropic
+ * variants) share one allowlist row while each client keeps its own path
+ * (docs/d047). The provider's real base URL comes from the fact table (the
+ * same lib/cloud-providers.mjs `baseUrl` the proxy's allowlist is generated
+ * from); `llama-swap` is the one non-cloud learner, addressed as the logical
+ * name so client configs never embed its loopback host:port.
  * @param {string} peerBaseUrl peer base candidate (no trailing slash required)
- * @param {string} providerId the provider's peer path segment
- * @returns {string} e.g. `https://…/<uuid>/hyper`
+ * @param {string} providerId fact-table provider id, or "llama-swap"
+ * @returns {string} e.g. `https://…/<uuid>/hyper.charm.land/v1` (the caller
+ *   appends the model path — `/models` for a probe, `/v1/chat/completions`
+ *   for a client)
  */
 export function peerProviderUrl(peerBaseUrl, providerId) {
-	return `${peerBaseUrl.replace(/\/+$/, "")}/${providerId}`;
+	const upstream =
+		providerId === "llama-swap"
+			? (process.env.LLAMA_SWAP_BASE_URL ?? "http://127.0.0.1:8101")
+			: CLOUD_PROVIDER_BASE_URLS[providerId];
+	if (!upstream) {
+		throw new Error(
+			`peerProviderUrl: no fact-table base URL for ${JSON.stringify(providerId)} — the v2 host-form route needs the upstream host (docs/d047)`,
+		);
+	}
+	const u = new URL(upstream);
+	const path = u.pathname.replace(/\/+$/, "");
+	// The route name is the upstream HOST for every cloud provider; the
+	// llama-swap loopback learner is the one exception, addressed by its
+	// stable logical name (docs/d047). llm-reverse-proxy/generate.mjs keys
+	// the allowlist row to match, so client configs never embed a loopback
+	// address in the request path.
+	const routeName = providerId === "llama-swap" ? "llama-swap" : u.host;
+	return `${peerBaseUrl.replace(/\/+$/, "")}/${routeName}${path}`;
 }
 
 /**
@@ -514,10 +558,12 @@ export async function probePeerRoute(providerUrl, headers) {
  * Probe one provider's peer path-route across candidate peer bases in order
  * (the vault-sourced peer base, peerBaseUrl()); the first
  * candidate whose route is usable wins. This is the cloud counterpart of
- * probeCandidates: routing is per provider (`<peerBase>/<id>`), so each
- * provider probes its own route instead of one shared catalog.
+ * probeCandidates: routing is per upstream HOST (peerProviderUrl,
+ * docs/d047), so each provider probes its own route instead of one shared
+ * catalog.
  * @param {string[]} candidates peer base URLs (trailing slashes tolerated)
- * @param {string} providerId the provider's peer path segment
+ * @param {string} providerId fact-table provider id ("llama-swap" for the
+ *   local learner)
  * @param {Record<string, string>} [headers] see probePeerRoute
  * @returns {Promise<({ url: string } & PeerRouteResult)|null>} null when no
  *   candidate route is usable

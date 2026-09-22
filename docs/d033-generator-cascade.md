@@ -109,7 +109,8 @@ is usable: the route delivered to the real endpoint.
 | Generator | Layer | Semantic | Subset |
 |---|---|---|---|
 | `generate-local-llama-swap.mjs` | `model-010-local-default.json` | **ADDS** the `llama-swap` provider (pi has no native one) | local GGUF models |
-| `generate-cloud-providers.mjs` (override-only rows) | `model-012-cloud-pi-native.json` | **override-ONLY** (empty when every pi-native endpoint is reachable) | openrouter / opencode / opencode-go / mistral / google / nvidia |
+| `generate-cloud-providers.mjs` (override-only rows) | `model-012-cloud-pi-native.json` | **override-ONLY** (peer reroutes for unreachable endpoints, minimal
+  models.dev ∪ catwalk id merges otherwise) | openrouter / opencode / opencode-go / mistral / google / nvidia |
 | `generate-cloud-providers.mjs` (full rows) | `model-015/016/017-*.json` | **AUTHORITATIVE full block** (pi has no native provider for any of them) | cline-pass / hyper / inferx |
 | `generate-opencode.jsonc.mjs` | `opencode.jsonc` (opencode V1 schema) | same cascade, opencode's provider subset | opencode / opencode-go / openrouter + local GGUF |
 
@@ -135,9 +136,12 @@ Merge order and semantics are owned by `coding-agent/merge-models-json.mjs`.
 ### `generate-cloud-providers.mjs` — override-only rows
 
 - pi ships openrouter / opencode / opencode-go / mistral / google / nvidia
-  natively, so
-  a reachable real endpoint emits **nothing**; only an unreachable one emits a
-  **reroute-only** override (`baseUrl` = `<peerBase>/<providerId>`, **no**
+  natively, so a reachable real endpoint keeps the built-in routing and
+  emits a **minimal id merge** (fact-table base URL — identical to the
+  built-in, so the built-in dialect and auth carry over — plus the models.dev
+  ∪ catwalk id list as bare records; pi replaces matching built-in ids and
+  adds the rest, the built-in lineup is never pruned); an unreachable one
+  emits a **reroute-only** override (`baseUrl` = `<peerBase>/<providerId>`, **no**
   `apiKey` — the proxy forwards pi's own built-in auth untouched, **no**
   `api`/`compat` — pi's built-in provider definition supplies the dialect;
   the gen-lib `providerReroute` (folded from the former lib/pi-models.mjs, docs/d039)).
@@ -150,13 +154,31 @@ Merge order and semantics are owned by `coding-agent/merge-models-json.mjs`.
      catwalk catalog (same filters; docs/d028) — it covers only
      openrouter / opencode-zen / opencode-go / gemini, so nvidia and mistral
      fall through to "no list".
+- `catalogOnly` (google, and any future provider whose listing the probe
+  cannot authenticate): google's `/v1beta/models` reads an api-key parameter,
+  not the bearer header the probe sends, so the probe verdict is a permanent
+  misleading 403 "credential-gated" — and the peer cascade cannot prove a
+  google route either (it proves routes via the same unauthenticatable
+  listing), so google could never reroute in the first place. The row emits
+  the minimal catalog override straight from the models.dev google slice
+  (the `?type=all` payload the refresh pins), no probes at all, and the
+  catwalk union is skipped — models.dev is the sole lineup source.
 - `PEER_MODEL_FILTERS` are the fleet's usable slices — the llama-swap era
   encoded them on the **serving** side; with per-provider routing the client
   scopes its own override:
   - `openrouter`: the `:free` slice.
   - `mistral`: chat-capable only (`mistral-embed`, `voxtral-*-tts` dropped).
-  - `google`: the `gemini-` chat slice (`imagen`/`veo`/`lyria`, embeddings,
-    tts, and image-output variants dropped).
+  - `google`: a MODALITY allowlist over the models.dev records, not a name
+    denylist: pi drives text chat (its own input schema is text+image), so a
+    model stays iff it takes text in and produces text out. One rule drops
+    every non-chat category at once — imagen/veo/lyria/tts/live/omni/image
+    output (their output modality is not `["text"]`) and the audio-only
+    live-translate — plus one name check the records cannot express
+    (models.dev labels the embedding endpoints out `["text"]`, so
+    `/embedding/` is refused first). The two gemma entries are text-in
+    text-out chat on the same API and pass; the pre-catalogOnly name regex
+    (`^gemini-`) excluded them by accident. No record (the live-listing
+    path, unreachable for a catalogOnly row) falls back to the old regex.
 
 ### `generate-cloud-providers.mjs` — full rows
 

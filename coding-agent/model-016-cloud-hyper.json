@@ -344,7 +344,7 @@
             "text",
             "image"
           ],
-          "contextWindow": 1000000,
+          "contextWindow": 1048576,
           "maxTokens": 32768,
           "cost": {
             "input": 0.3,
@@ -358,8 +358,8 @@
             "low": "low",
             "medium": null,
             "high": "high",
-            "xhigh": null,
-            "max": "max"
+            "xhigh": "xhigh",
+            "max": null
           },
           "compat": {
             "supportsStore": false,

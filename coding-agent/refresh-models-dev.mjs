@@ -63,7 +63,11 @@ const { logInfo, logWarn, setLogTool } =
 
 useEnvProxy();
 setLogTool("coding-agent/refresh-models-dev");
-const CATALOG_URL = "https://models.dev/api.json";
+// ?type=all pins the FULL payload (every provider type): the generators read
+// slices the default view could theoretically drop — google's whole lineup
+// comes from here (catalogOnly, docs/d033). Byte-identical to the bare URL
+// today; the query is the explicit contract, not a behavior change.
+const CATALOG_URL = "https://models.dev/api.json?type=all";
 // Relay fallback (docs/d027): the llm-reverse-proxy passthrough for
 // https://models.dev. Default assumes the proxy runs on THIS host (run.sh
 // listens on HOST_PORT 8080, the funnel front); container-side callers

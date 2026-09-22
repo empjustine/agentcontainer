@@ -51,6 +51,7 @@ import { fileURLToPath } from "node:url";
 
 import {
 	peerBaseUrls,
+	peerProviderUrl,
 	peersOnly,
 	tlsUnverifiable,
 	useEnvProxy,
@@ -118,7 +119,7 @@ const FACTS_PATH =
  * never touched, and the return value is the only signal.
  *
  * Direct first (the provider's real endpoint), then the peer route
- * (<peerBase>/hyper/provider) over EVERY vault-sourced peer base candidate
+ * (peerProviderUrl form, docs/d047) over EVERY vault-sourced peer base candidate
  * (multi-hop chains — docs/d034) when the direct endpoint is unreachable.
  * This keeps the cache fresh even when the provider's own endpoint is
  * network-isolated but routable through a peer.
@@ -141,7 +142,12 @@ export async function refreshHyperFacts(
 	skipDirect = false,
 ) {
 	const directUrl = `${baseUrl.replace(/\/+$/, "")}/provider`;
-	const peerUrls = peerBaseUrls().map((base) => `${base}/hyper/provider`);
+	// v2 host-form peer route (docs/d047): the funnel fronts the
+	// llm-reverse-proxy allowlist, so the peer leg must address the
+	// hyper.charm.land HOST, not a slug.
+	const peerUrls = peerBaseUrls().map(
+		(base) => `${peerProviderUrl(base, "hyper")}/provider`,
+	);
 
 	/** @type {any} */
 	let payload;

@@ -163,7 +163,7 @@ the variant folders redundant.)
 | Folder | Role | What makes it work |
 |--------|------|--------------------|
 | `llm-local-inference/` | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `generate.sh`/`generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh` |
-| `llm-reverse-proxy/` | path-prefix cloud router for cloud/remote providers (`/<providerId>` → provider's full real base URL, byte-for-byte, no keys — docs/d027; streaming as-is, RFC 9457 502s) | `main.go`, `generate.sh`/`generate.mjs` (routing table from lib/cloud-providers.mjs, docs/d038), `llm-reverse-proxy.example.json`, `smoke-test.sh`; built by the root `build.mjs` |
+| `llm-reverse-proxy/` | host-allowlist cloud router (docs/d047, the only mode): `/<upstream-host>/<path>` → the allowlisted scheme://host root, byte-for-byte, no keys — deny-by-absence for everything else (docs/d027's 404 policy); streaming as-is, RFC 9457 502s | `main.go`, `generate.sh`/`generate.mjs` (allowHosts from pi-ai + lib/cloud-providers.mjs, docs/d047), `llm-reverse-proxy.example.json`, `smoke-test.sh`; built by the root `build.mjs` |
 | `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.sh`/`generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.sh`, `settings.json`, `auth.json`; image built by the root `build.mjs` |
 
 The former "next planned step" sketch (a simplified config-generator system

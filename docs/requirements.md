@@ -57,7 +57,8 @@ copies: capability detection at generation time decides what a host gets.
   elsewhere (a `LOCAL_INFERENCE=1` override exists for debug only).
 - **FR-S3** — The instance is published on LAN :8101 and reachable from the
   world only through the tailscale funnel → llm-reverse-proxy :8080 →
-  `/llama-swap/…` → :8101. Port 8080 belongs to the proxy.
+  `/llama-swap/…` → :8101 (the one allowlist alias key, docs/d047). Port 8080
+  belongs to the proxy.
 - **FR-S4** — Model provisioning (downloading GGUFs) is cache tooling's job,
   never the serving module's: serving reads the HF cache read-only; a cache
   miss at generation time is an error, not a download.
@@ -66,7 +67,10 @@ copies: capability detection at generation time decides what a host gets.
   (pi-ai ∪ models.dev ∪ catwalk, priority in that order — docs/d038),
   byte-faithful passthrough (headers, streaming, upstream errors as-is), no
   credential handling, uniform non-distinctive 404s on unknown prefixes,
-  RFC 9457 problem details only for failures inside the proxy.
+  RFC 9457 problem details only for failures inside the proxy. *Host
+  allowlist routing (docs/d047, the only mode): `/<host>/<path>` →
+  scheme://host root, the client carries the upstream base path, ~36
+  owner-set hosts, deny-by-absence for everything else.*
 
 ### Usage — `coding-agent/`
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Behavioural smoke test for llm-reverse-proxy. Builds the binary, spins up a local
+# Behavioural smoke test for llm-reverse-proxy (v2 host-allowlist mode only,
+# docs/d047). Builds the binary, spins up a local
 # upstream (SSE + echo), and checks every documented behaviour. TLS failure
 # classes use the badssl.com test hosts, so no bundled cert is needed
 # (requires outbound internet for the TLS section; it is skipped otherwise).
@@ -76,21 +77,24 @@ fi
 # badssl.com: canonical broken-TLS hosts; Go classifies each deterministically.
 # revoked/pinning are EXPECTED to pass through 200: Go's TLS stack does no
 # revocation or pinning checks, so the proxy streams them like any other site.
+# v2 host-allowlist shape (docs/d047): host[:port] → scheme://host root.
+# The badssl hosts key on their DNS names; the loopback upstream keys on
+# host:port — the first path segment is always the destination host.
 cat > llm-reverse-proxy.json <<'EOF'
 {
   "listen": "127.0.0.1:18101",
-  "providers": {
-    "local": "http://127.0.0.1:19091",
-    "refused": "http://127.0.0.1:1",
-    "nxdomain": "http://no-such-host-llm-reverse-proxy-smoketest.invalid",
-    "expired": "https://expired.badssl.com",
-    "wronghost": "https://wrong.host.badssl.com",
-    "selfsigned": "https://self-signed.badssl.com",
-    "untrustedroot": "https://untrusted-root.badssl.com",
-    "revoked": "https://revoked.badssl.com",
-    "pinning": "https://pinning-test.badssl.com",
+  "allowHosts": {
+    "127.0.0.1:19091": "http://127.0.0.1:19091",
+    "127.0.0.1:1": "http://127.0.0.1:1",
+    "no-such-host-llm-reverse-proxy-smoketest.invalid": "http://no-such-host-llm-reverse-proxy-smoketest.invalid",
+    "expired.badssl.com": "https://expired.badssl.com",
+    "wrong.host.badssl.com": "https://wrong.host.badssl.com",
+    "self-signed.badssl.com": "https://self-signed.badssl.com",
+    "untrusted-root.badssl.com": "https://untrusted-root.badssl.com",
+    "revoked.badssl.com": "https://revoked.badssl.com",
+    "pinning-test.badssl.com": "https://pinning-test.badssl.com",
     "models.dev": "https://models.dev",
-    "catwalk": "https://catwalk.charm.land"
+    "catwalk.charm.land": "https://catwalk.charm.land"
   }
 }
 EOF
@@ -119,7 +123,7 @@ if ! curl -sk --max-time 5 -o /dev/null https://expired.badssl.com; then
 fi
 
 # passthrough: method, path join, query, auth header, body
-r=$(curl -s -X POST "$B/local/v1/chat/completions?beta=true" -H 'Authorization: Bearer sk-t' -d '{"m":1}')
+r=$(curl -s -X POST "$B/127.0.0.1:19091/v1/chat/completions?beta=true" -H 'Authorization: Bearer sk-t' -d '{"m":1}')
 check passthrough-method '"method":"POST"' "$r"
 check passthrough-path '/v1/chat/completions?beta=true' "$r"
 check passthrough-auth '"auth":"Bearer sk-t"' "$r"
@@ -138,17 +142,17 @@ t0=$(date +%s%N)
 curl -sN --max-time 2 'http://127.0.0.1:19091/v1/stream' 2>/dev/null | head -1 >/dev/null || true
 base=$(( ($(date +%s%N) - t0) / 1000000 ))
 t0=$(date +%s%N)
-first=$(curl -sN --max-time 2 "$B/local/v1/stream" 2>/dev/null | head -1 || true)
+first=$(curl -sN --max-time 2 "$B/127.0.0.1:19091/v1/stream" 2>/dev/null | head -1 || true)
 dt=$(( ($(date +%s%N) - t0) / 1000000 ))
 check streaming-chunk 'data: chunk 0' "$first"
 if [ "$dt" -le $((base + 150)) ]; then pass=$((pass+1)); echo "ok   streaming-unbuffered (first chunk after ${dt}ms; direct baseline ${base}ms)"
 else fail=$((fail+1)); echo "FAIL streaming-unbuffered: first chunk after ${dt}ms vs direct baseline ${base}ms (buffering?)"; fi
 
 # upstream errors pass through untouched
-check upstream-4xx-passthrough 'rate limited by upstream itself' "$(curl -s "$B/local/v1/error")"
+check upstream-4xx-passthrough 'rate limited by upstream itself' "$(curl -s "$B/127.0.0.1:19091/v1/error")"
 
 # RFC 9457 internal errors — transport / DNS
-for spec in 'refused econnrefused' 'nxdomain dnserror'; do
+for spec in '127.0.0.1:1 econnrefused' 'no-such-host-llm-reverse-proxy-smoketest.invalid dnserror'; do
   # Intentional word-split: $spec is a two-field "name type" record.
   # shellcheck disable=SC2086
   set -- $spec
@@ -156,25 +160,32 @@ for spec in 'refused econnrefused' 'nxdomain dnserror'; do
   check "502-$1" "\"type\":\"$2" "$r"
   check "502-$1-status" '"status":502' "$r"
 done
-r=$(curl -s "$B/nxdomain/v1/models")
+r=$(curl -s "$B/no-such-host-llm-reverse-proxy-smoketest.invalid/v1/models")
 check 502-nxdomain-details '"details":{' "$r"
 check 502-nxdomain-details-isnotfound '"isNotFound":true' "$r"
-check 502-nxdomain-no-urn '0' "$(curl -s "$B/nxdomain/v1/models" | grep -c 'urn:' || true)"
+check 502-nxdomain-no-urn '0' "$(curl -s "$B/no-such-host-llm-reverse-proxy-smoketest.invalid/v1/models" | grep -c 'urn:' || true)"
 
 # RFC 9457 internal errors — TLS verification (badssl.com)
 if [ "${BADSSL_DOWN:-0}" = 1 ]; then
   skipif tls-badssl 'badssl.com unreachable (no outbound internet)'
 else
-  check 502-expired      '"type":"tls-verification-failed"' "$(curl -s "$B/expired/v1/models")"
-  check 502-wronghost    '"type":"tls-verification-failed"' "$(curl -s "$B/wronghost/v1/models")"
-  check 502-selfsigned   '"type":"tls-verification-failed"' "$(curl -s "$B/selfsigned/v1/models")"
-  check 502-untrustedroot '"type":"tls-verification-failed"' "$(curl -s "$B/untrustedroot/v1/models")"
-  for spec in expired wronghost selfsigned untrustedroot; do
-    check "502-$spec-status" '"status":502' "$(curl -s "$B/$spec/v1/models")"
+  check 502-expired      '"type":"tls-verification-failed"' "$(curl -s "$B/expired.badssl.com/v1/models")"
+  check 502-wronghost    '"type":"tls-verification-failed"' "$(curl -s "$B/wrong.host.badssl.com/v1/models")"
+  check 502-selfsigned   '"type":"tls-verification-failed"' "$(curl -s "$B/self-signed.badssl.com/v1/models")"
+  check 502-untrustedroot '"type":"tls-verification-failed"' "$(curl -s "$B/untrusted-root.badssl.com/v1/models")"
+  # label:host pairs — the $spec split below carries both (a v2 route keys
+  # on the HOST, so the label and the key cannot be the same token).
+  for spec in \
+    "expired:expired.badssl.com" \
+    "wronghost:wrong.host.badssl.com" \
+    "selfsigned:self-signed.badssl.com" \
+    "untrustedroot:untrusted-root.badssl.com"; do
+    label=${spec%%:*}; host=${spec##*:}
+    check "502-$label-status" '"status":502' "$(curl -s "$B/$host/v1/models")"
   done
   # no revocation / pinning enforcement: these must stream through as 200
-  check passthrough-revoked-200 '200' "$(curl -s -o /dev/null -w '%{http_code}' "$B/revoked/")"
-  check passthrough-pinning-200 '200' "$(curl -s -o /dev/null -w '%{http_code}' "$B/pinning/")"
+  check passthrough-revoked-200 '200' "$(curl -s -o /dev/null -w '%{http_code}' "$B/revoked.badssl.com/")"
+  check passthrough-pinning-200 '200' "$(curl -s -o /dev/null -w '%{http_code}' "$B/pinning-test.badssl.com/")"
 fi
 
   # models.dev catalog passthrough (public JSON endpoint via the relay route)
@@ -187,7 +198,7 @@ fi
 
   # catwalk catalog passthrough (public JSON endpoint: /v2/providers is the
   # metadata tier — https://catwalk.charm.land, docs/d028)
-  r=$(curl -s --max-time 15 "$B/catwalk/v2/providers")
+  r=$(curl -s --max-time 15 "$B/catwalk.charm.land/v2/providers")
   if echo "$r" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert isinstance(d,list) and len(d)>=20 and all("models" in p for p in d)' 2>/dev/null; then
     pass=$((pass+1)); echo "ok   passthrough-catwalk"
   else
@@ -198,7 +209,9 @@ fi
 # funnel-style plain-text answer (no JSON, no URN, no provider enumeration:
 # a distinctive body would be a probe oracle for "custom software lives here")
 F404_BODY='404 page not found'
-for path in '/' '/nosuch/v1/models' '/wp-login.php' '/.env' '/api/v1/models'; do
+# v2 negatives included (docs/d047): a v1 slug form (/openrouter/…) and an
+# unknown host are denied by absence exactly like garbage — all one body.
+for path in '/' '/nosuch/v1/models' '/openrouter/v1/models' '/unknown-host.example/v1/models' '/wp-login.php' '/.env' '/api/v1/models'; do
   body=$(curl -s "$B$path")
   code=$(curl -s -o /dev/null -w '%{http_code}' "$B$path")
   ct=$(curl -s -o /dev/null -w '%{content_type}' "$B$path")

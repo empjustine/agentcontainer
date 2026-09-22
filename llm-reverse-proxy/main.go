@@ -1,10 +1,21 @@
 // llm-reverse-proxy — a dumb, faithful reverse proxy for LLM APIs.
 //
-// Requests to  http://<host>:<port>/<provider>/<path>?<query>  are forwarded,
-// byte for byte, to the upstream base URL configured for <provider>. No model
-// routing, no credential handling (callers must already carry valid provider
-// keys), no request or response rewriting. Streaming responses (SSE, NDJSON,
-// raw chunked) are flushed to the client as they arrive from upstream.
+// v2 host-allowlist routing (docs/d047): requests to
+// http://<host>:<port>/<upstream-host>/<path>?<query> are forwarded, byte for
+// byte, to the allowlisted upstream root configured for <upstream-host>. The
+// FIRST PATH SEGMENT is the destination host (a DNS name, or the logical
+// alias "llama-swap" for the one loopback learner; docs/d047); everything after it rides the byte-for-byte
+// passthrough, so a client addresses a provider as
+// <peerBase>/<host><full-upstream-base-path> (peerProviderUrl, docs/d047) and
+// the proxy single-joins the remainder onto scheme://<host>. Hosts NOT in
+// the allowlist are denied BY ABSENCE: they answer the same plain-text 404
+// as any garbage path — a catalog row can no longer mint a routable
+// endpoint (the v1 slug table's inverted-allowlist problem, docs/d047).
+//
+// No model routing, no credential handling (callers must already carry valid
+// provider keys), no request or response rewriting. Streaming responses
+// (SSE, NDJSON, raw chunked) are flushed to the client as they arrive from
+// upstream.
 //
 // Internal failures (bad gateway conditions: DNS failures, refused TCP
 // connections, TLS verification problems, upstream disconnects before the
@@ -37,8 +48,12 @@ import (
 // ---------------------------------------------------------------------------
 
 type config struct {
-	Listen    string            `json:"listen"`
-	Providers map[string]string `json:"providers"`
+	Listen string `json:"listen"`
+	// The host allowlist (docs/d047): route key (an upstream DNS host, e.g.
+	// "api.anthropic.com", or the one logical alias "llama-swap") →
+	// scheme://host root. The proxy never parses the key as a host — it is an
+	// opaque path segment — so the alias needs no special handling here.
+	AllowHosts map[string]string `json:"allowHosts"`
 }
 
 func loadConfig(path string) (*config, error) {
@@ -57,6 +72,9 @@ func loadConfig(path string) (*config, error) {
 // Provider: parsed upstream + its ReverseProxy
 // ---------------------------------------------------------------------------
 
+// provider is one routable allowlist entry: `name` is the upstream HOST
+// (the allowHosts key — a DNS name or host:port), the first path segment a
+// request must carry and the map key the server resolves it by.
 type provider struct {
 	name   string
 	target *url.URL
@@ -96,9 +114,9 @@ func newProvider(name, raw string) (*provider, error) {
 	return p, nil
 }
 
-// stripPrefix returns a handler that removes "/<name>" from the request path
-// before proxying, so /openrouter/v1/chat/completions hits the upstream at
-// <base>/v1/chat/completions.
+// stripPrefix returns a handler that removes "/<host>" from the request path
+// before proxying, so /api.cline.bot/models hits https://api.cline.bot at
+// /models (docs/d047).
 func (p *provider) handler() http.Handler {
 	return http.StripPrefix("/"+p.name, p.proxy)
 }
@@ -382,7 +400,7 @@ func main() {
 		}
 		// No config file: allow pure-flag usage (-listen + provider URLs on
 		// the command line is not supported; require the file).
-		log.Fatalf("[llm-reverse-proxy] config %s not found; create it, e.g. {\"listen\":\":8080\",\"providers\":{\"openrouter\":\"https://openrouter.ai/api\"}}", *configPath)
+		log.Fatalf("[llm-reverse-proxy] config %s not found; create it, e.g. {\"listen\":\":8080\",\"allowHosts\":{\"openrouter.ai\":\"https://openrouter.ai\"}}", *configPath)
 	}
 	if *listen != "" {
 		cfg.Listen = *listen
@@ -391,8 +409,8 @@ func main() {
 		cfg.Listen = ":8080"
 	}
 
-	s := &server{providers: make(map[string]*provider, len(cfg.Providers))}
-	for name, raw := range cfg.Providers {
+	s := &server{providers: make(map[string]*provider, len(cfg.AllowHosts))}
+	for name, raw := range cfg.AllowHosts {
 		p, err := newProvider(name, raw)
 		if err != nil {
 			log.Fatalf("[llm-reverse-proxy] %v", err)
@@ -400,7 +418,7 @@ func main() {
 		s.providers[name] = p
 	}
 	if len(s.providers) == 0 {
-		log.Fatalf("[llm-reverse-proxy] no providers configured in %s", *configPath)
+		log.Fatalf("[llm-reverse-proxy] no allowHosts entries configured in %s", *configPath)
 	}
 
 	srv := &http.Server{
@@ -416,7 +434,7 @@ func main() {
 	// automatic "2009/01/02 15:04:05" header would be redundant noise.
 	log.SetFlags(0)
 
-	log.Printf("[llm-reverse-proxy] listening on %s; %d provider(s):", cfg.Listen, len(s.providers))
+	log.Printf("[llm-reverse-proxy] listening on %s; %d allowlisted host(s):", cfg.Listen, len(s.providers))
 	for _, name := range s.providers {
 		log.Printf("[llm-reverse-proxy]   /%s/ → %s", name.name, name.target)
 	}

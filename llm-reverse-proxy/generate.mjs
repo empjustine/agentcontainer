@@ -1,62 +1,55 @@
 /**
- * @fileoverview generate.mjs — the llm-reverse-proxy generator (d041 folded
- * the former generate.sh orchestration in): emit `llm-reverse-proxy.json`, the
- * deployed llm-reverse-proxy routing table, as the UNION of THREE provider
- * sources (docs/d038), merged under an explicit priority:
+ * @fileoverview generate.mjs — the llm-reverse-proxy generator: emit
+ * `llm-reverse-proxy.json`, the deployed HOST ALLOWLIST (v2, docs/d047 — the
+ * v1 provider-slug table is gone, host routing is the only mode).
  *
- *   1. pi-ai        — the PI_AI_PROVIDERS table below (pi-coding-agent's
- *                     built-in registry, extracted from the installed pi)
- *   2. models.dev   — the vendored + best-effort refreshed
- *                     lib/models.dev.api.json (ai-sdk/opencode's catalog):
- *                     a record's `api` field IS its base URL; records
- *                     without one fall back to the ai-sdk package map
- *                     (AI_SDK_PACKAGE_ENDPOINTS below)
- *   3. catwalk      — the vendored + refreshable lib/catwalk-facts.json
- *                     (crush's catalog): each provider carries
- *                     `api_endpoint`
+ * The allowlist is the defaults of the OWNER's stack — nothing else is
+ * routable (deny-by-absence, docs/d047):
  *
- * Merge rules (docs/d038): the route namespace is the provider NAME. The
- * same name from several sources ⇒ the higher-priority source wins (every
- * win is logged with what it replaced). Different names for the same vendor
- * ⇒ each name is served under its own route (pi's "google" and catwalk's
- * "gemini" both exist; pi's "together" and models.dev's "togetherai" both
- * exist). Rows whose endpoint is not a single fixed public URL are skipped
- * with the reason: env-placeholder / account-scoped URLs (`$VAR`,
- * `{PLACEHOLDER}` — e.g. catwalk's $ANTHROPIC_API_ENDPOINT, the cloudflare
- * gateways), per-region bedrock, per-project vertex, and models.dev records
- * whose npm package has no canonical endpoint.
+ *   1. pi-ai — the PI_AI_PROVIDERS table below (pi-coding-agent's built-in
+ *      registry, extracted from the installed pi): one allowHosts row per
+ *      DISTINCT upstream host, value scheme://host (the HOST ROOT — base
+ *      paths belong to the client, which is what lets multi-base hosts like
+ *      opencode vs opencode-go share one row).
+ *   2. the lib/cloud-providers.mjs fact table (docs/d024) — the hand-added
+ *      rows the catalogs never knew (cline-pass, hyper, inferx) plus the
+ *      pi-native set.
+ *   3. the llama-swap loopback (env LLAMA_SWAP_BASE_URL, default
+ *      http://127.0.0.1:8101) — the ONE alias row, keyed by the stable route
+ *      name `llama-swap` instead of host:port so client configs never put a
+ *      loopback address in the request path. Every other row satisfies
+ *      key === hostKey(value); the drift check below re-states this.
+ *   4. two static metadata passthroughs, `models.dev` and `catwalk`
+ *      (public, no keys, never drift-checked against the catalogs).
  *
- * The path-prefix contract this table serves is unchanged (docs/d027): every
- * entry maps a route name to the upstream's FULL real base URL — path
- * suffixes included — so a client route is deterministic:
- * `<peerBase>/<providerId>` (the peerProviderUrl contract, docs/d027). The proxy
- * strips the leading `/<providerId>` and single-joins the rest onto the
- * configured base. Keys are deliberately NOT consulted: llm-reverse-proxy
- * performs NO credential handling — requests must already carry valid
- * provider keys, so every routable provider is exposed unconditionally.
+ * pi-ai rows with NO single fixed upstream base (per-region bedrock,
+ * per-project vertex, OAuth backends — PI_AI_NON_ROUTABLE below) are
+ * reported as skips with their reason, so a gap in the allowlist is a
+ * decision, never an oversight.
  *
- * The deployed config also carries the hand-added entries the catalogs do
- * not know about: `llama-swap`, the LOCAL GGUF peer (env
- * LLAMA_SWAP_BASE_URL, default http://127.0.0.1:8101 — loopback is
- * deliberate: llama-swap's inbound auth is its bearer key and the loopback
- * hop never leaves the host), plus two static metadata passthroughs,
- * `models.dev` and `catwalk` (public, no keys, never drift-checked).
+ * The address contract this table serves (docs/d047): a client names the
+ * upstream HOST as the first path segment and carries the provider's full
+ * base path after it — `<peerBase>/<host><base-path>` (peerProviderUrl in
+ * coding-agent/peer-probe.mjs, derived from the same fact-table base URLs).
+ * The ONE exception is the `llama-swap` loopback row, named by its stable
+ * route name instead of `127.0.0.1:8101` (header item 3). The proxy strips
+ * the route key and single-joins the rest onto the root. Routes absent from
+ * the table answer the plain funnel 404; keys are deliberately NOT consulted
+ * — llm-reverse-proxy performs NO credential handling.
  *
- * Drift checking is unchanged: lib/cloud-providers.mjs (docs/d024) stays the
- * reference for ITS nine ids — a deployed value that differs from the fact
- * table warns. Those nine resolve through the pi-ai/models.dev rows, which
- * must therefore agree with the fact table.
+ * Drift checking is keyed by host (docs/d047): a fact-table provider whose
+ * upstream host is missing from the deployed allowHosts warns (dead host
+ * route), and a deployed host no owner source claims warns (unreviewed
+ * row). The `llama-swap` alias is claimed explicitly rather than derived.
  *
  * Overwrite semantics follow the repo-wide generator standard
  * (lib/artifact.mjs): a rerun REPLACES the deployed config by default;
  * DRY_RUN=1 writes an inspectable .dry-run preview instead.
  *
  * Usage: ./generate.sh (the standard wrapper — node_run interpreter
- * selection, same as the other environments) or node generate-config.mjs
- * [out]
+ * selection, same as the other environments) or node generate.mjs [out]
  *   out defaults to ./llm-reverse-proxy.json (the path run.sh serves).
- *   Env: LIB_DIR (default ../lib), DRY_RUN, LLAMA_SWAP_BASE_URL,
- *   MODELS_DEV_JSON, CATWALK_FACTS_JSON.
+ *   Env: LIB_DIR (default ../lib), DRY_RUN, LLAMA_SWAP_BASE_URL.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -81,10 +74,6 @@ const { writeArtifact, isDryRun } =
 setLogTool("llm-reverse-proxy/generate");
 
 const out = process.argv[2] ?? join(scriptDir, "llm-reverse-proxy.json");
-const MODELS_DEV_JSON =
-	process.env.MODELS_DEV_JSON ?? join(LIB_DIR, "models.dev.api.json");
-const CATWALK_FACTS_JSON =
-	process.env.CATWALK_FACTS_JSON ?? join(LIB_DIR, "catwalk-facts.json");
 
 // ---------------------------------------------------------------------------
 // Source 1 fact table: pi-ai's BUILT-IN cloud providers (folded in from the
@@ -95,38 +84,34 @@ const CATWALK_FACTS_JSON =
 // drifted route, so re-extract when the host's pi version moves.
 //
 // Only providers with a STABLE, account-independent HTTPS base URL are
-// routable through a path-prefix proxy. Everything else lives in
-// PI_AI_NON_ROUTABLE with the reason — the proxy forwards
-// `<peerBase>/<id>` to one fixed upstream base, so per-region /
+// allowlisted — the proxy forwards to scheme://host, so per-region /
 // per-project / per-account / OAuth endpoints cannot be expressed.
 //
 // `api` is the wire dialect pi-ai speaks against that base (informational:
-// the proxy forwards byte-for-byte whatever the client sends, docs/d027).
-// Multi-dialect providers register several (api, baseUrl) pairs — e.g.
-// opencode speaks four dialects against two bases; the row records the
-// openai-completions base (the one the fact table and models.dev agree on)
-// and lists the rest in `otherApis`, mirroring the single-baseUrl limitation
-// pi's own models.json overrides already accepted (docs/d027).
+// the proxy forwards byte-for-byte whatever the client sends, docs/d047).
 // ---------------------------------------------------------------------------
 
 /**
  * @typedef {object} PiAiProviderFacts
- * @property {string} id pi provider id (the route name)
+ * @property {string} id pi provider id
  * @property {string} label human-readable name
  * @property {string} api the primary wire dialect pi-ai speaks at baseUrl
- * @property {string} baseUrl pi-ai's built-in base URL (FULL; never a peer
- *   route — peer routes are `<peerBase>/<id>` at request time, docs/d027)
+ * @property {string} baseUrl pi-ai's built-in base URL (FULL — the HOST
+ *   feeds the allowlist key, the base PATH documents the client-side form
+ *   peerProviderUrl composes)
  * @property {string} apiKeyEnv env var pi resolves the provider's key from
  *   (informational — the proxy performs no credential handling)
  * @property {Record<string, string>} [otherApis] dialect → base for the
- *   provider's remaining registrations
+ *   provider's remaining registrations (all must share the upstream host —
+ *   peerProviderUrl and d048's per-model `api` overrides handle the dialect
+ *   split client-side)
  */
 
 /**
- * A pi-ai provider that cannot be routed through a path-prefix proxy.
+ * A pi-ai provider that cannot be routed through a host-allowlist proxy.
  * @typedef {object} PiAiNonRoutable
  * @property {string} id pi provider id
- * @property {string} reason why no single fixed upstream base exists
+ * @property {string} reason why no single fixed upstream host exists
  */
 
 /** @type {Readonly<Record<string, PiAiProviderFacts>>} */
@@ -198,9 +183,9 @@ const PI_AI_PROVIDERS = Object.freeze({
 		id: "opencode",
 		label: "OpenCode Zen",
 		api: "openai-completions",
-		// Four dialects against two bases (zen vs zen/v1); the
-		// openai-completions base is the one the fact table and models.dev
-		// already route — see the header's single-base note.
+		// Four dialects against two bases (zen vs zen/v1) — all on the
+		// opencode.ai HOST, so one allowlist row covers them; the client
+		// carries its own base path (peerProviderUrl, docs/d047).
 		baseUrl: "https://opencode.ai/zen/v1",
 		apiKeyEnv: "OPENCODE_API_KEY",
 		otherApis: Object.freeze({
@@ -310,9 +295,6 @@ const PI_AI_PROVIDERS = Object.freeze({
 		id: "vercel-ai-gateway",
 		label: "Vercel AI Gateway",
 		api: "anthropic-messages",
-		// pi-mono providers/vercel-ai-gateway.ts registers WITHOUT /v1; the
-		// dialect supplies it. Distinct NAME from models.dev/catwalk's
-		// "vercel" row — both names are served (docs/d038).
 		baseUrl: "https://ai-gateway.vercel.sh",
 		apiKeyEnv: "AI_GATEWAY_API_KEY",
 	}),
@@ -336,8 +318,8 @@ const PI_AI_PROVIDERS = Object.freeze({
 		id: "qwen-token-plan-individual",
 		label: "Qwen Token Plan (Individual)",
 		api: "openai-completions",
-		// Same base as qwen-token-plan — a distinct NAME at the same endpoint;
-		// served under its own name (docs/d038).
+		// Same upstream as qwen-token-plan — one allowHosts row covers both;
+		// the client's base path distinguishes nothing here (same base too).
 		baseUrl:
 			"https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
 		apiKeyEnv: "QWEN_TOKEN_PLAN_API_KEY",
@@ -373,8 +355,8 @@ const PI_AI_PROVIDERS = Object.freeze({
 });
 
 /**
- * pi-ai providers with NO single fixed upstream base — documented so the
- * gap is a decision, never an oversight (docs/d038).
+ * pi-ai providers with NO single fixed upstream host — reported as skips so
+ * the allowlist gap is a decision, never an oversight (docs/d047).
  * @type {Readonly<Record<string, PiAiNonRoutable>>}
  */
 const PI_AI_NON_ROUTABLE = Object.freeze({
@@ -424,334 +406,145 @@ const PI_AI_NON_ROUTABLE = Object.freeze({
 });
 
 // ---------------------------------------------------------------------------
-// Source 2 fallback: map from the ai-sdk npm package each models.dev provider
-// record names (`npm` field) to the package's canonical public endpoint
-// (folded in from the former lib/ai-sdk-package-endpoints.mjs — docs/d039;
-// rationale docs/d038). Used for records that carry no `api` base URL. Only
-// packages whose endpoint is CANONICAL AND PUBLIC are mapped — the same
-// stable-endpoint rule as the pi-ai table above. Account-scoped or
-// per-deployment packages map to null with a reason, so a gap in the routing
-// table is always a documented decision, never an oversight. Endpoints were
-// verified against the vendors' published API references; a wrong row here
-// silently reroutes every model of a provider, so a row must be able to cite
-// its source in one line.
+// The allowlist: owner-set hosts only (header). One row per DISTINCT
+// upstream host; the value is the host root — base paths belong to the
+// client (peerProviderUrl, docs/d047).
 // ---------------------------------------------------------------------------
 
-/**
- * @typedef {object} AiSdkPackageEndpoint
- * @property {string|null} endpoint the package's canonical public API base,
- *   or null when no single fixed public endpoint exists
- * @property {string} [reason] why endpoint is null (required when null)
+/** @param {string} url a full base URL
+ * @returns {string} host[:port] key form
  */
-
-/** @type {Readonly<Record<string, AiSdkPackageEndpoint>>} */
-const AI_SDK_PACKAGE_ENDPOINTS = Object.freeze({
-	// --- canonical, public (routable) -----------------------------------
-	"@ai-sdk/anthropic": Object.freeze({
-		endpoint: "https://api.anthropic.com/v1",
-	}),
-	"@ai-sdk/openai": Object.freeze({
-		endpoint: "https://api.openai.com/v1",
-	}),
-	"@ai-sdk/google": Object.freeze({
-		endpoint: "https://generativelanguage.googleapis.com/v1beta",
-	}),
-	"@ai-sdk/groq": Object.freeze({
-		endpoint: "https://api.groq.com/openai/v1",
-	}),
-	"@ai-sdk/xai": Object.freeze({
-		endpoint: "https://api.x.ai/v1",
-	}),
-	"@ai-sdk/mistral": Object.freeze({
-		endpoint: "https://api.mistral.ai/v1",
-	}),
-	"@ai-sdk/cerebras": Object.freeze({
-		endpoint: "https://api.cerebras.ai/v1",
-	}),
-	"@ai-sdk/togetherai": Object.freeze({
-		endpoint: "https://api.together.xyz/v1",
-	}),
-	// Cohere's OpenAI-COMPATIBILITY endpoint (the plain v2 dialect is not
-	// OpenAI-shaped; the compat route is what the ai-sdk package speaks).
-	"@ai-sdk/cohere": Object.freeze({
-		endpoint: "https://api.cohere.com/compatibility/v1",
-	}),
-	"@ai-sdk/perplexity": Object.freeze({
-		endpoint: "https://api.perplexity.ai",
-	}),
-	"@ai-sdk/deepinfra": Object.freeze({
-		endpoint: "https://api.deepinfra.com/v1/openai",
-	}),
-	// models.dev's "vercel" record (@ai-sdk/gateway): the public gateway edge.
-	// Distinct NAME from pi's "vercel-ai-gateway" row — both are served
-	// (docs/d038).
-	"@ai-sdk/gateway": Object.freeze({
-		endpoint: "https://ai-gateway.vercel.sh/v1",
-	}),
-	"venice-ai-sdk-provider": Object.freeze({
-		endpoint: "https://api.venice.ai/api/v1",
-	}),
-	"@aihubmix/ai-sdk-provider": Object.freeze({
-		endpoint: "https://api.aihubmix.com/v1",
-	}),
-	"@openrouter/ai-sdk-provider": Object.freeze({
-		endpoint: "https://openrouter.ai/api/v1",
-	}),
-
-	// --- no single fixed public endpoint (skipped, with the reason) ------
-	"@ai-sdk/azure": Object.freeze({
-		endpoint: null,
-		reason: "per-resource endpoints (<resource>.openai.azure.com)",
-	}),
-	"@ai-sdk/amazon-bedrock": Object.freeze({
-		endpoint: null,
-		reason: "per-region SigV4 endpoints",
-	}),
-	"@ai-sdk/google-vertex": Object.freeze({
-		endpoint: null,
-		reason: "per-project + per-location endpoints",
-	}),
-	"@ai-sdk/google-vertex/anthropic": Object.freeze({
-		endpoint: null,
-		reason: "per-project + per-location endpoints",
-	}),
-	"watsonx-ai-provider": Object.freeze({
-		endpoint: null,
-		reason: "per-instance watsonx deployments",
-	}),
-	"@qvac/ai-sdk-provider": Object.freeze({
-		endpoint: null,
-		reason: "no documented public API endpoint",
-	}),
-	"@saladtechnologies-oss/ai-sdk-provider": Object.freeze({
-		endpoint: null,
-		reason: "no canonical public endpoint verified",
-	}),
-	"ai-gateway-provider": Object.freeze({
-		endpoint: null,
-		reason: "per-account Cloudflare gateway URL",
-	}),
-	"merge-gateway-ai-sdk-provider": Object.freeze({
-		endpoint: null,
-		reason: "per-deployment gateway URL",
-	}),
-	"@jerome-benoit/sap-ai-provider-v2": Object.freeze({
-		endpoint: null,
-		reason: "per-subaccount SAP AI Core deployments",
-	}),
-	"gitlab-ai-provider": Object.freeze({
-		endpoint: null,
-		reason: "per-instance GitLab Duo deployments",
-	}),
-});
-
-/**
- * A candidate route before the priority merge.
- * @typedef {object} RouteCandidate
- * @property {string} id route name (the provider's name in ITS source)
- * @property {string} url the FULL real base URL
- * @property {string} source which of the three catalogs supplied it
+function hostKey(url) {
+	return new URL(url).host;
+}
+/** @param {string} url
+ * @returns {string} scheme://host[:port] root
  */
-
-/**
- * A skipped source row — why it is NOT in the routing table.
- * @typedef {object} SkippedRow
- * @property {string} source
- * @property {string} id
- * @property {string} reason
- */
-
-/** @type {RouteCandidate[]} */
-const candidates = [];
-/** @type {SkippedRow[]} */
-const skipped = [];
-
-/**
- * A single fixed public URL is routable; env-placeholder and account-scoped
- * templates (`$VAR`, `{PLACEHOLDER}`) are not — the proxy forwards to one
- * configured base, so a URL that varies per account cannot be expressed.
- * @param {string} url
- * @returns {boolean}
- */
-function routableUrl(url) {
-	return Boolean(url) && !url.startsWith("$") && !url.includes("{");
+function hostRoot(url) {
+	const u = new URL(url);
+	return `${u.protocol}//${u.host}`;
 }
 
-// --- source 1: pi-ai (top priority) -----------------------------------------
+/** @type {Map<string, string>} host key → root */
+const allowHosts = new Map();
+/**
+ * @param {string} id owner-set id, for the collapse log
+ * @param {string} url its full base URL
+ */
+function allowHost(id, url) {
+	const key = hostKey(url);
+	// Same host from several owner rows collapses to one entry — the value
+	// is the host root, so there is nothing to conflict on (docs/d047).
+	if (!allowHosts.has(key)) {
+		allowHosts.set(key, hostRoot(url));
+		return;
+	}
+	logInfo("owner rows share one upstream host — collapsed to one allowlist row", {
+		host: key,
+		id,
+	});
+}
+
+// The allowlist's one logical route name (docs/d047): the llama-swap loopback
+// learner is named for what it is, not for the 127.0.0.1:8101 it happens to
+// live on, so regenerating client configs never embeds a loopback host. This
+// is the ONLY row where the key is not the upstream host — the routing
+// convention's one exception, restated in the drift check below and matched
+// by peerProviderUrl on the client side.
+const LLAMA_SWAP_ROUTE = "llama-swap";
+/**
+ * Add the stable-name exception row: same shape as allowHost, but keyed by a
+ * logical route name rather than the upstream host.
+ * @param {string} name the route name / first path segment
+ * @param {string} url its full base URL
+ */
+function allowHostAlias(name, url) {
+	// A route name colliding with a real host key is the only way this row
+	// could shadow a host route; refuse and let the log surface it rather than
+	// silently re-point an unrelated provider.
+	if (allowHosts.has(name)) {
+		logWarn("allowlist alias collides with an existing row — not overwritten", {
+			alias: name,
+		});
+		return;
+	}
+	allowHosts.set(name, hostRoot(url));
+}
+
 for (const p of Object.values(PI_AI_PROVIDERS)) {
-	candidates.push({ id: p.id, url: p.baseUrl, source: "pi-ai" });
+	allowHost(p.id, p.baseUrl);
 }
-// The non-routable pi-ai rows are documentation-as-data (header): consume
-// them here so the skip report below carries their reasons, instead of
-// leaving the table as unused weight that lint flags (and could drift).
+for (const [id, facts] of Object.entries(CLOUD_PROVIDERS)) {
+	allowHost(id, facts.baseUrl);
+}
+allowHostAlias(
+	LLAMA_SWAP_ROUTE,
+	process.env.LLAMA_SWAP_BASE_URL ?? "http://127.0.0.1:8101",
+);
+allowHost("models.dev", "https://models.dev");
+allowHost("catwalk", "https://catwalk.charm.land");
+
 for (const p of Object.values(PI_AI_NON_ROUTABLE)) {
-	skipped.push({ source: "pi-ai", id: p.id, reason: p.reason });
-}
-
-// --- source 2: models.dev (ai-sdk / opencode's catalog) ---------------------
-/** @type {Record<string, { api?: string, npm?: string, name?: string }>} */
-let modelsDev = {};
-try {
-	modelsDev = /** @type {typeof modelsDev} */ (
-		JSON.parse(readFileSync(MODELS_DEV_JSON, "utf-8"))
-	);
-} catch (err) {
-	logWarn("models.dev catalog unreadable — its layer is skipped", {
-		path: MODELS_DEV_JSON,
-		error: /** @type {any} */ (err)?.message ?? String(err),
-	});
-}
-for (const [id, p] of Object.entries(modelsDev)) {
-	if (routableUrl(p.api ?? "")) {
-		candidates.push({
-			id,
-			url: /** @type {string} */ (p.api),
-			source: "models.dev",
-		});
-		continue;
-	}
-	// No usable `api` URL: defer to the record's ai-sdk package. Only
-	// packages with a canonical public endpoint resolve; the rest are
-	// documented skips (AI_SDK_PACKAGE_ENDPOINTS below).
-	const pkg = AI_SDK_PACKAGE_ENDPOINTS[p.npm ?? ""];
-	if (pkg?.endpoint) {
-		candidates.push({ id, url: pkg.endpoint, source: "models.dev(npm)" });
-	} else if (pkg?.reason) {
-		skipped.push({ source: "models.dev", id, reason: pkg.reason });
-	} else {
-		skipped.push({
-			source: "models.dev",
-			id,
-			reason: "no `api` URL and its npm package is unmapped",
-		});
-	}
-}
-
-// --- source 3: catwalk (crush's catalog) ------------------------------------
-/** @type {{ providers?: Array<{ id?: string, api_endpoint?: string }> }} */
-let catwalk = {};
-try {
-	catwalk = /** @type {typeof catwalk} */ (
-		JSON.parse(readFileSync(CATWALK_FACTS_JSON, "utf-8"))
-	);
-} catch (err) {
-	logWarn("catwalk facts cache unreadable — its layer is skipped", {
-		path: CATWALK_FACTS_JSON,
-		error: /** @type {any} */ (err)?.message ?? String(err),
-	});
-}
-for (const p of catwalk.providers ?? []) {
-	if (!p.id) continue;
-	if (!routableUrl(p.api_endpoint ?? "")) {
-		skipped.push({
-			source: "catwalk",
-			id: p.id,
-			reason: "endpoint is an env/account placeholder or absent",
-		});
-		continue;
-	}
-	candidates.push({
-		id: p.id,
-		url: /** @type {string} */ (p.api_endpoint),
-		source: "catwalk",
+	logInfo("pi-ai row has no fixed upstream host — not allowlisted", {
+		provider: p.id,
+		reason: p.reason,
 	});
 }
 
-// --- priority merge ----------------------------------------------------------
-// First source to claim a NAME owns the route (pi-ai > models.dev > catwalk,
-// docs/d038). Later claims on the same name are logged with what they lost;
-// equal URLs are a quiet cross-catalog agreement, not a conflict.
-/** @type {Map<string, { url: string, source: string }>} */
-const routes = new Map();
-/** @type {Record<string, number>} */
-const perSource = {};
-let overruled = 0;
-for (const c of candidates) {
-	perSource[c.source] = (perSource[c.source] ?? 0) + 1;
-	const held = routes.get(c.id);
-	if (held) {
-		if (held.url === c.url) continue;
-		logWarn(
-			"route kept from the higher-priority source — lower source's endpoint ignored",
-			{
-				route: c.id,
-				winner: `${held.source}: ${held.url}`,
-				ignored: `${c.source}: ${c.url}`,
-			},
-		);
-		overruled++;
-		continue;
-	}
-	routes.set(c.id, { url: c.url, source: c.source });
-}
-
-if (skipped.length) {
-	for (const s of skipped) {
-		logInfo("source row not routable — no proxy route", {
-			source: s.source,
-			provider: s.id,
-			reason: s.reason,
-		});
-	}
-}
-
-/** @type {{ listen: string, providers: Record<string, string> }} */
+/** @type {{ listen: string, allowHosts: Record<string, string> }} */
 const cfg = {
 	listen: "0.0.0.0:8080",
-	// id → FULL real base URL (docs/d027), catalog routes first (insertion
-	// order is kept for a stable, reviewable diff), then the LOCAL llama-swap
-	// peer and the metadata passthroughs (see header).
-	providers: Object.fromEntries([
-		...[...routes.entries()].map(([id, r]) => [id, r.url]),
-		["llama-swap", process.env.LLAMA_SWAP_BASE_URL ?? "http://127.0.0.1:8101"],
-		// Static metadata passthroughs — public endpoints, no keys, never
-		// fact-table rows (see header).
-		["models.dev", "https://models.dev"],
-		["catwalk", "https://catwalk.charm.land"],
-	]),
+	allowHosts: Object.fromEntries(allowHosts),
 };
 const written = writeArtifact(out, `${JSON.stringify(cfg, null, 2)}\n`);
-logInfo("wrote llm-reverse-proxy config", {
+logInfo("wrote llm-reverse-proxy host-allowlist config", {
 	path: written,
-	routes: Object.keys(cfg.providers).length,
-	perSource,
-	overruled,
-	skipped: skipped.length,
+	allowHosts: allowHosts.size,
 });
 
-/** @type {{ providers?: Record<string, string> }} */
+// ---------------------------------------------------------------------------
+// Drift checks, keyed by host (docs/d047): the deployed file is re-read so
+// the report reflects what run.sh will serve, not what this run just held in
+// memory — same contract the former slug-table checks had.
+// ---------------------------------------------------------------------------
+/** @type {{ allowHosts?: Record<string, string> }} */
 const deployedState = existsSync(out)
 	? JSON.parse(readFileSync(out, "utf-8"))
 	: {};
-const deployed = deployedState.providers ?? {};
-const missing = Object.keys(CLOUD_PROVIDERS).filter((id) => !deployed[id]);
-if (missing.length) {
-	logWarn(
-		"providers in the fact table but NOT deployed — their peer path-routes are dead",
-		{
-			missing,
-		},
-	);
-}
-for (const [id, url] of Object.entries(deployed)) {
-	const expected = CLOUD_PROVIDERS[id]?.baseUrl;
-	if (expected && expected !== url) {
-		logWarn("deployed upstream differs from the fact table — drift", {
+const deployedAllowHosts = deployedState.allowHosts ?? {};
+for (const [id, facts] of Object.entries(CLOUD_PROVIDERS)) {
+	if (!(hostKey(facts.baseUrl) in deployedAllowHosts)) {
+		logWarn("fact-table provider's host NOT in the deployed allowHosts", {
 			provider: id,
-			deployed: url,
-			factTable: expected,
+			host: hostKey(facts.baseUrl),
+		});
+	}
+}
+for (const key of Object.keys(deployedAllowHosts)) {
+	// The owner set is pi-ai ∪ fact table ∪ the three hand-added rows
+	// (passthroughs + llama-swap loopback).
+	const known =
+		Object.values(PI_AI_PROVIDERS).some((p) => hostKey(p.baseUrl) === key) ||
+		Object.values(CLOUD_PROVIDERS).some((f) => hostKey(f.baseUrl) === key) ||
+		key === hostKey("https://models.dev") ||
+		key === hostKey("https://catwalk.charm.land") ||
+		key === LLAMA_SWAP_ROUTE;
+	if (!known) {
+		logWarn("deployed allowHosts entry no owner source claims — drift", {
+			host: key,
 		});
 	}
 }
 
-// Orchestration (folded from the former generate.sh, docs/d041): the routing
-// table must exist after generation — a silent no-op here would leave run.sh
-// to die later with a config-missing error pointing back at this script. The
-// check follows the ACTUAL output (`out`, the optional argv path) and, under
-// DRY_RUN, the preview writeArtifact produced instead of the live artifact.
+// Orchestration (folded from the former generate.sh, docs/d041): the
+// allowlist must exist after generation — a silent no-op here would leave
+// run.sh to die later with a config-missing error pointing back at this
+// script. The check follows the ACTUAL output (`out`, the optional argv
+// path) and, under DRY_RUN, the preview writeArtifact produced instead of
+// the live artifact.
 const generatedPath = isDryRun() ? `${out}.dry-run` : out;
 if (!existsSync(generatedPath)) {
-	logError("routing table not generated", { path: generatedPath });
+	logError("host allowlist not generated", { path: generatedPath });
 	process.exit(1);
 }
-logInfo("routing table ready", { path: generatedPath });
+logInfo("host allowlist ready", { path: generatedPath });
