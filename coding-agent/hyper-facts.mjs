@@ -142,9 +142,11 @@ export async function refreshHyperFacts(
 	skipDirect = false,
 ) {
 	const directUrl = `${baseUrl.replace(/\/+$/, "")}/provider`;
-	// v2 host-form peer route (docs/d047): the funnel fronts the
-	// llm-reverse-proxy allowlist, so the peer leg must address the
-	// hyper.charm.land HOST, not a slug.
+	/**
+	 * v2 host-form peer route (docs/d047): the funnel fronts the
+	 * llm-reverse-proxy allowlist, so the peer leg must address the
+	 * hyper.charm.land HOST, not a slug.
+	 */
 	const peerUrls = peerBaseUrls().map(
 		(base) => `${peerProviderUrl(base, "hyper")}/provider`,
 	);

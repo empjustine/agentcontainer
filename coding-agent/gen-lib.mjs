@@ -174,13 +174,15 @@ export function piModel(entry) {
 		entry.context_length ??
 		entry.meta?.n_ctx ??
 		undefined;
-	// Don't trust raw provider listings to stay inside pi's input schema:
-	// openrouter's /v1/models carries architecture.input_modalities with
-	// video/audio/pdf entries (gemma-4-31b-it:free, inkling:free, ...),
-	// and a 3+ element input array fails the strict models.json schema
-	// (const anyOf ["text","image"]) the moment the file is re-read by
-	// cline/other strict consumers. Filter to text+image here — same
-	// contract as catalogPiModel's toInput().
+	/**
+	 * Don't trust raw provider listings to stay inside pi's input schema:
+	 * openrouter's /v1/models carries architecture.input_modalities with
+	 * video/audio/pdf entries (gemma-4-31b-it:free, inkling:free, ...),
+	 * and a 3+ element input array fails the strict models.json schema
+	 * (const anyOf ["text","image"]) the moment the file is re-read by
+	 * cline/other strict consumers. Filter to text+image here — same
+	 * contract as catalogPiModel's toInput().
+	 */
 	const input = toInput(
 		meta?.input ??
 			entry.architecture?.input_modalities ??

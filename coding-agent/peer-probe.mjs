@@ -46,10 +46,12 @@ const LIB_DIR =
 const { logWarn } = /** @type {typeof import("../lib/log.mjs")} */ (
 	await import(`${LIB_DIR}/log.mjs`)
 );
-// The v2 host-form route (peerProviderUrl) is derived from the SAME
-// fact-table base URLs the llm-reverse-proxy allowlist is generated from —
-// one source of truth for "which upstream does this provider sit on"
-// (docs/d047). Frozen id → baseUrl, resolved once at module load.
+/**
+ * The v2 host-form route (peerProviderUrl) is derived from the SAME
+ * fact-table base URLs the llm-reverse-proxy allowlist is generated from —
+ * one source of truth for "which upstream does this provider sit on"
+ * (docs/d047). Frozen id → baseUrl, resolved once at module load.
+ */
 const { CLOUD_PROVIDERS } =
 	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
@@ -75,13 +77,14 @@ export function useEnvProxy() {
 		process.env.HTTPS_PROXY
 	) {
 		try {
-			// nodeRequire cast to (id) => any: undici is optional (bundled with
-			// node but not type-installed in this repo) and the setup is
-			// defensive by design.  (Not named `require`: TS special-cases that
-			// identifier and would try to resolve the module for real.)
-			const nodeRequire = /** @type {(id: string) => any} */ (
-				createRequire(import.meta.url)
-			);
+			/**
+			 * Cast to (id) => any: undici is optional (bundled with node but not
+			 * type-installed in this repo) and the setup is defensive by design.
+			 * (Not named `require`: TS special-cases that identifier and would try
+			 * to resolve the module for real.)
+			 * @type {(id: string) => any}
+			 */
+			const nodeRequire = createRequire(import.meta.url);
 			const { EnvHttpProxyAgent, setGlobalDispatcher } = nodeRequire("undici");
 			setGlobalDispatcher(new EnvHttpProxyAgent());
 		} catch (err) {
@@ -347,7 +350,7 @@ export async function fetchModelEntries(serverUrl, headers) {
 	return /** @type {RawModelEntry[]} */ (data)
 		.map((entry) => {
 			if (entry?.id || !entry?.name) return entry;
-			// Gemini shape: name = "models/<id>" — publish the bare wire id.
+			/** Gemini shape: name = "models/<id>" — publish the bare wire id. */
 			const id = String(entry.name).replace(/^models\//, "");
 			return id ? { ...entry, id } : entry;
 		})
@@ -417,13 +420,13 @@ function normalizedProbeError(err) {
 	});
 }
 
-// SuppressedError (explicit resource management) is missing from some
-// @types/node versions, so checkJs cannot see the global — alias through
-// globalThis with an explicit constructor type; runtime `new` is unchanged.
-const SuppressedErrorCtor =
-	/** @type {new (error: unknown, suppressed: unknown, message?: string) => Error & { error?: unknown, suppressed?: unknown }} */ (
-		/** @type {any} */ (globalThis).SuppressedError
-	);
+/**
+ * SuppressedError (explicit resource management) is missing from some
+ * @types/node versions, so checkJs cannot see the global — alias through
+ * globalThis with an explicit constructor type; runtime `new` is unchanged.
+ * @type {new (error: unknown, suppressed: unknown, message?: string) => Error & { error?: unknown, suppressed?: unknown }}
+ */
+const SuppressedErrorCtor = /** @type {any} */ (globalThis).SuppressedError;
 
 /**
  * A probe that did NOT deliver the expected listing, packaged for logging as
@@ -482,11 +485,14 @@ export function peerProviderUrl(peerBaseUrl, providerId) {
 	}
 	const u = new URL(upstream);
 	const path = u.pathname.replace(/\/+$/, "");
-	// The route name is the upstream HOST for every cloud provider; the
-	// llama-swap loopback learner is the one exception, addressed by its
-	// stable logical name (docs/d047). llm-reverse-proxy/generate.mjs keys
-	// the allowlist row to match, so client configs never embed a loopback
-	// address in the request path.
+	/**
+	 * The route name is the upstream HOST for every cloud provider; the
+	 * llama-swap loopback learner is the one exception, addressed by its
+	 * stable logical name (docs/d047). llm-reverse-proxy/generate.mjs keys
+	 * the allowlist row to match, so client configs never embed a loopback
+	 * address in the request path.
+	 * @type {string}
+	 */
 	const routeName = providerId === "llama-swap" ? "llama-swap" : u.host;
 	return `${peerBaseUrl.replace(/\/+$/, "")}/${routeName}${path}`;
 }
@@ -561,7 +567,7 @@ export async function probePeerRoute(providerUrl, headers) {
  * probeCandidates: routing is per upstream HOST (peerProviderUrl,
  * docs/d047), so each provider probes its own route instead of one shared
  * catalog.
- * @param {string[]} candidates peer base URLs (trailing slashes tolerated)
+ * @param {readonly string[]} candidates peer base URLs (trailing slashes tolerated)
  * @param {string} providerId fact-table provider id ("llama-swap" for the
  *   local learner)
  * @param {Record<string, string>} [headers] see probePeerRoute

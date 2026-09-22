@@ -63,15 +63,21 @@ const { logInfo, logWarn, setLogTool } =
 
 useEnvProxy();
 setLogTool("coding-agent/refresh-models-dev");
-// ?type=all pins the FULL payload (every provider type): the generators read
-// slices the default view could theoretically drop — google's whole lineup
-// comes from here (catalogOnly, docs/d033). Byte-identical to the bare URL
-// today; the query is the explicit contract, not a behavior change.
+/**
+ * ?type=all pins the FULL payload (every provider type): the generators read
+ * slices the default view could theoretically drop — google's whole lineup
+ * comes from here (catalogOnly, docs/d033). Byte-identical to the bare URL
+ * today; the query is the explicit contract, not a behavior change.
+ * @type {string}
+ */
 const CATALOG_URL = "https://models.dev/api.json?type=all";
-// Relay fallback (docs/d027): the llm-reverse-proxy passthrough for
-// https://models.dev. Default assumes the proxy runs on THIS host (run.sh
-// listens on HOST_PORT 8080, the funnel front); container-side callers
-// override via env. An empty value disables the relay hop.
+/**
+ * Relay fallback (docs/d027): the llm-reverse-proxy passthrough for
+ * https://models.dev. Default assumes the proxy runs on THIS host (run.sh
+ * listens on HOST_PORT 8080, the funnel front); container-side callers
+ * override via env. An empty value disables the relay hop.
+ * @type {string}
+ */
 const RELAY_URL =
 	process.env.MODELS_DEV_RELAY_URL ??
 	"http://127.0.0.1:8080/models.dev/api.json";

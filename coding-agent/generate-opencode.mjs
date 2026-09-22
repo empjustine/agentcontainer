@@ -66,10 +66,13 @@ setLogTool("coding-agent/generate-opencode");
  * @property {Record<string, { name: string }>} models
  */
 
-// The providers opencode ships natively, from the shared fact table
-// (docs/d024). ClinePass is deliberately absent: opencode has no built-in
-// cline-pass provider, and the cline-pass layer is owned exclusively by
-// generate-pi-coding-agent.mjs's full rows (docs/d022).
+/**
+ * The providers opencode ships natively, from the shared fact table
+ * (docs/d024). ClinePass is deliberately absent: opencode has no built-in
+ * cline-pass provider, and the cline-pass layer is owned exclusively by
+ * generate-pi-coding-agent.mjs's full rows (docs/d022).
+ * @type {readonly string[]}
+ */
 const CLOUD_PROVIDER_IDS = ["opencode", "opencode-go", "openrouter"];
 
 /** @type {Record<string, import("../lib/cloud-providers.mjs").CloudProviderFacts>} */
@@ -77,11 +80,14 @@ const CLOUD_PROVIDERS = Object.fromEntries(
 	CLOUD_PROVIDER_IDS.map((id) => [id, CLOUD_PROVIDER_FACTS[id]]),
 );
 
-// Peer candidates (docs/d027): vault-sourced peer bases for the LOCAL
-// llama-swap path-route and the CLOUD path-routes. Supports multi-hop proxy
-// chains (PEER_BASE_URLS comma/newline delimited). No localhost candidates —
-// the LAN :8080 (proxy) and :8101 (llama-swap) listen addresses are not
-// routable from outside the serving host (docs/d022).
+/**
+ * Peer candidates (docs/d027): vault-sourced peer bases for the LOCAL
+ * llama-swap path-route and the CLOUD path-routes. Supports multi-hop proxy
+ * chains (PEER_BASE_URLS comma/newline delimited). No localhost candidates —
+ * the LAN :8080 (proxy) and :8101 (llama-swap) listen addresses are not
+ * routable from outside the serving host (docs/d022).
+ * @type {readonly string[]}
+ */
 const CLOUD_PEER_CANDIDATES = peerBaseUrls();
 const LOCAL_SOURCE_CANDIDATES = CLOUD_PEER_CANDIDATES.map((base) =>
 	peerProviderUrl(base, "llama-swap"),

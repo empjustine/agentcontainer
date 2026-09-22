@@ -445,13 +445,17 @@ function allowHost(id, url) {
 	});
 }
 
-// The allowlist's one logical route name (docs/d047): the llama-swap loopback
-// learner is named for what it is, not for the 127.0.0.1:8101 it happens to
-// live on, so regenerating client configs never embeds a loopback host. This
-// is the ONLY row where the key is not the upstream host — the routing
-// convention's one exception, restated in the drift check below and matched
-// by peerProviderUrl on the client side.
+/**
+ * The allowlist's one logical route name (docs/d047): the llama-swap loopback
+ * learner is named for what it is, not for the 127.0.0.1:8101 it happens to
+ * live on, so regenerating client configs never embeds a loopback host. This
+ * is the ONLY row where the key is not the upstream host — the routing
+ * convention's one exception, restated in the drift check below and matched
+ * by peerProviderUrl on the client side.
+ * @type {string}
+ */
 const LLAMA_SWAP_ROUTE = "llama-swap";
+
 /**
  * Add the stable-name exception row: same shape as allowHost, but keyed by a
  * logical route name rather than the upstream host.
@@ -521,8 +525,10 @@ for (const [id, facts] of Object.entries(CLOUD_PROVIDERS)) {
 	}
 }
 for (const key of Object.keys(deployedAllowHosts)) {
-	// The owner set is pi-ai ∪ fact table ∪ the three hand-added rows
-	// (passthroughs + llama-swap loopback).
+	/**
+	 * The owner set is pi-ai ∪ fact table ∪ the three hand-added rows
+	 * (passthroughs + llama-swap loopback).
+	 */
 	const known =
 		Object.values(PI_AI_PROVIDERS).some((p) => hostKey(p.baseUrl) === key) ||
 		Object.values(CLOUD_PROVIDERS).some((f) => hostKey(f.baseUrl) === key) ||

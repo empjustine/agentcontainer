@@ -26,7 +26,10 @@ import { logError, logInfo, setLogTool } from "./lib/log.mjs";
 setLogTool("generate");
 
 const repoRoot = dirname(fileURLToPath(import.meta.url));
-// Cheap/offline first, expensive/network last.
+/**
+ * Cheap/offline first, expensive/network last.
+ * @type {readonly string[]}
+ */
 const FOLDERS = ["llm-reverse-proxy", "llm-local-inference", "coding-agent"];
 
 let failures = 0;

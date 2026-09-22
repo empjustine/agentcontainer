@@ -3458,6 +3458,284 @@
         }
       ]
     },
+    "openrouter": {
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "models": [
+        {
+          "id": "qwen/qwen3.8-27b:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "dots-studio/dots-3-note-preview:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "poolside/laguna-xs-2.1:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "poolside/laguna-s-2.1:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "nvidia/nemotron-3.5-lightning:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "nvidia/nemotron-3-super-120b-a12b:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "nvidia/nemotron-3.5-content-safety:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "google/gemma-4-31b-it:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "google/gemma-4-26b-a4b-it:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "nex-agi/nex-n2.5-mini:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "nex-agi/nex-n2.5-pro:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "thinkingmachines/inkling-small:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "thinkingmachines/inkling:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "inclusionai/ling-3.0-flash-fin:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "inclusionai/ling-3.0-flash-sante:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "inclusionai/ling-3.0-flash-vl:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "cohere/north-mini-code:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "liquid/lfm-2.5-2.6b:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "z-ai/glm-5.2:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        }
+      ]
+    },
     "mistral": {
       "baseUrl": "https://api.mistral.ai/v1",
       "models": [
@@ -5262,6 +5540,550 @@
         }
       ]
     },
+    "opencode-go": {
+      "baseUrl": "https://opencode.ai/zen/go/v1",
+      "models": [
+        {
+          "id": "qwen3.7-max",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "anthropic-messages"
+        },
+        {
+          "id": "longcat-2.0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "deepseek-v4-flash-vision-exp",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "qwen3.6-plus",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "anthropic-messages"
+        },
+        {
+          "id": "muse-spark-1.2-contributor",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-responses"
+        },
+        {
+          "id": "mimo-v2.6-pro",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "minimax-m2.7",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "anthropic-messages"
+        },
+        {
+          "id": "kimi-k2.6",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "glm-5.2",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "minimax-m2.5",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "anthropic-messages"
+        },
+        {
+          "id": "minimax-m3",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "anthropic-messages"
+        },
+        {
+          "id": "deepseek-v4-flash",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "kimi-k2.7-code",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "grok-4.5",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-responses"
+        },
+        {
+          "id": "ox-alpha-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "deepseek-v4.1-flash",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "hy3",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "hy4-preview",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "omen-alpha",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "gpt-5.6-luna",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-responses"
+        },
+        {
+          "id": "kimi-k3",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "glm-5.3-flash",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "muse-spark-1.3-contributor",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-responses"
+        },
+        {
+          "id": "mimo-v2-pro",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "qwen3.8-flash",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "anthropic-messages"
+        },
+        {
+          "id": "mimo-v2.6-flash",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "grok-4.6",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-responses"
+        },
+        {
+          "id": "glm-5",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "mimo-v2-omni",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "qwen3.8-max",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "anthropic-messages"
+        },
+        {
+          "id": "kimi-k2.5",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "glm-5.1",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "qwen3.7-plus",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "anthropic-messages"
+        },
+        {
+          "id": "deepseek-v4-pro",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "glm-5.3",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "grok-4.7",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-responses"
+        },
+        {
+          "id": "mimo-v2.5",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "mimo-v2.5-pro",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
+        },
+        {
+          "id": "qwen3.5-plus",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        }
+      ]
+    },
     "opencode": {
       "baseUrl": "https://opencode.ai/zen/v1",
       "models": [
@@ -6645,826 +7467,6 @@
         },
         {
           "id": "ling-3.0-tiny-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        }
-      ]
-    },
-    "openrouter": {
-      "baseUrl": "https://openrouter.ai/api/v1",
-      "models": [
-        {
-          "id": "qwen/qwen3.8-27b:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "dots-studio/dots-3-note-preview:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "poolside/laguna-xs-2.1:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "poolside/laguna-s-2.1:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "nvidia/nemotron-3.5-lightning:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "nvidia/nemotron-3-super-120b-a12b:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "nvidia/nemotron-3.5-content-safety:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "google/gemma-4-31b-it:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "google/gemma-4-26b-a4b-it:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "nex-agi/nex-n2.5-mini:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "nex-agi/nex-n2.5-pro:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "thinkingmachines/inkling-small:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "thinkingmachines/inkling:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "inclusionai/ling-3.0-flash-fin:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "inclusionai/ling-3.0-flash-sante:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "inclusionai/ling-3.0-flash-vl:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "cohere/north-mini-code:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "liquid/lfm-2.5-2.6b:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "z-ai/glm-5.2:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        }
-      ]
-    },
-    "opencode-go": {
-      "baseUrl": "https://opencode.ai/zen/go/v1",
-      "models": [
-        {
-          "id": "qwen3.7-max",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "anthropic-messages"
-        },
-        {
-          "id": "longcat-2.0",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "deepseek-v4-flash-vision-exp",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "qwen3.6-plus",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "anthropic-messages"
-        },
-        {
-          "id": "muse-spark-1.2-contributor",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-responses"
-        },
-        {
-          "id": "mimo-v2.6-pro",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "minimax-m2.7",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "anthropic-messages"
-        },
-        {
-          "id": "kimi-k2.6",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "glm-5.2",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "minimax-m2.5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "anthropic-messages"
-        },
-        {
-          "id": "minimax-m3",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "anthropic-messages"
-        },
-        {
-          "id": "deepseek-v4-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "kimi-k2.7-code",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "grok-4.5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-responses"
-        },
-        {
-          "id": "ox-alpha-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "deepseek-v4.1-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "hy3",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "hy4-preview",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "omen-alpha",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "gpt-5.6-luna",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-responses"
-        },
-        {
-          "id": "kimi-k3",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "glm-5.3-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "muse-spark-1.3-contributor",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-responses"
-        },
-        {
-          "id": "mimo-v2-pro",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "qwen3.8-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "anthropic-messages"
-        },
-        {
-          "id": "mimo-v2.6-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "grok-4.6",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-responses"
-        },
-        {
-          "id": "glm-5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "mimo-v2-omni",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "qwen3.8-max",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "anthropic-messages"
-        },
-        {
-          "id": "kimi-k2.5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "glm-5.1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "qwen3.7-plus",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "anthropic-messages"
-        },
-        {
-          "id": "deepseek-v4-pro",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "glm-5.3",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "grok-4.7",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-responses"
-        },
-        {
-          "id": "mimo-v2.5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "mimo-v2.5-pro",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          },
-          "api": "openai-completions"
-        },
-        {
-          "id": "qwen3.5-plus",
           "reasoning": true,
           "input": [
             "text"

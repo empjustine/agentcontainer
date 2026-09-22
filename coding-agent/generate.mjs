@@ -116,16 +116,22 @@ process.on("uncaughtException", (err) => {
 
 // --- profile + env ----------------------------------------------------------
 const termux = Boolean(process.env.PREFIX?.includes("com.termux"));
-// pi's own agent-dir env var IS the override: the installer must write
-// exactly the dir a pi launched with this env reads, so the two can't
-// diverge. (A separate AGENT_DIR alias was removed: two names for one
-// target allowed AGENT_DIR≠PI_CODING_AGENT_DIR silent mismatches —
-// config installed where pi never looks.)
+/**
+ * pi's own agent-dir env var IS the override: the installer must write
+ * exactly the dir a pi launched with this env reads, so the two can't
+ * diverge. (A separate AGENT_DIR alias was removed: two names for one
+ * target allowed AGENT_DIR≠PI_CODING_AGENT_DIR silent mismatches —
+ * config installed where pi never looks.)
+ * @type {string}
+ */
 const agentDir =
 	process.env.PI_CODING_AGENT_DIR ??
 	join(process.env.HOME ?? "", ".pi", "agent");
-// default_run_dir port (lib/workload-runtime.sh): the script's own dir may be
-// a read-only mount, so scratch lives in TMPDIR ($PREFIX/tmp on Termux).
+/**
+ * default_run_dir port (lib/workload-runtime.sh): the script's own dir may be
+ * a read-only mount, so scratch lives in TMPDIR ($PREFIX/tmp on Termux).
+ * @type {string}
+ */
 const runDir =
 	process.env.RUN_DIR ??
 	process.env.TMPDIR ??

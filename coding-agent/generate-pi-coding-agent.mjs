@@ -97,17 +97,23 @@ import {
 
 setLogTool("coding-agent/generate-pi-coding-agent");
 
-// Peer candidates — vault-sourced (peerBaseUrls(); see peer-probe.mjs).
-// Supports multi-hop proxy chains (PEER_BASE_URLS comma/newline delimited);
-// no localhost candidates — the LAN :8080 (proxy) and :8101 (llama-swap)
-// listen addresses are not routable from outside the serving host (docs/d022).
+/**
+ * Peer candidates — vault-sourced (peerBaseUrls(); see peer-probe.mjs).
+ * Supports multi-hop proxy chains (PEER_BASE_URLS comma/newline delimited);
+ * no localhost candidates — the LAN :8080 (proxy) and :8101 (llama-swap)
+ * listen addresses are not routable from outside the serving host (docs/d022).
+ * @type {readonly string[]}
+ */
 const CLOUD_PEER_CANDIDATES = peerBaseUrls();
 
-// Catalog lookup order: a models.dev.api.json next to this script wins — when
-// run from generate.sh's scratch dir that entry is a symlink to the vendored
-// catalog which the best-effort refresh replaces with the freshly fetched
-// copy, so the generator always reads what this run validated. Manual
-// in-place runs fall back to the shared vendored catalog (docs/d023).
+/**
+ * Catalog lookup order: a models.dev.api.json next to this script wins — when
+ * run from generate.sh's scratch dir that entry is a symlink to the vendored
+ * catalog which the best-effort refresh replaces with the freshly fetched
+ * copy, so the generator always reads what this run validated. Manual
+ * in-place runs fall back to the shared vendored catalog (docs/d023).
+ * @type {string}
+ */
 const API_JSON = modelsDevCatalogPath();
 
 // The vendored models.dev catalog parsed ONCE and shared by both modes
@@ -187,8 +193,8 @@ const PEER_MODEL_FILTERS = {
  *   the ON_OFF representative map (full; see that constant)
  * @property {boolean} [enrichFromFacts] refresh + consume the hyper-facts
  *   cache (hyper only — the one provider with a non-models.dev cache)
- * @property {readonly string[]} [modelAllowlist] bare model ids (provider
- *   prefix stripped) to restrict the catalog lineup to (full; docs/d040)
+ * @property {readonly string[]} [modelAllowlist] catalog-namespace model ids
+ *   to restrict the catalog lineup to (full; docs/d040)
  * @property {boolean} [catalogOnly] the provider serves no model listing the
  *   probe could ever authenticate (google: /v1beta/models demands its own
  *   api-key parameter, not the bearer the probe sends, so every probe is a
@@ -232,19 +238,19 @@ const CLINE_PASS_ID = "cline-pass";
  */
 const CLINE_PASS_LINEUP = /** @type {readonly string[]} */ (
 	Object.freeze([
-		"glm-5.3",
-		"glm-5.2",
-		"kimi-k3",
-		"kimi-k2.7-code",
-		"kimi-k2.6",
-		"deepseek-v4-pro",
-		"deepseek-v4-flash",
-		"mimo-v2.5",
-		"mimo-v2.5-pro",
-		"minimax-m3",
-		"qwen3.8-max",
-		"qwen3.7-max",
-		"qwen3.7-plus",
+		"cline-pass/glm-5.3",
+		"cline-pass/glm-5.2",
+		"cline-pass/kimi-k3",
+		"cline-pass/kimi-k2.7-code",
+		"cline-pass/kimi-k2.6",
+		"cline-pass/deepseek-v4-pro",
+		"cline-pass/deepseek-v4-flash",
+		"cline-pass/mimo-v2.5",
+		"cline-pass/mimo-v2.5-pro",
+		"cline-pass/minimax-m3",
+		"cline-pass/qwen3.8-max",
+		"cline-pass/qwen3.7-max",
+		"cline-pass/qwen3.7-plus",
 	])
 );
 
@@ -260,7 +266,9 @@ const CLINE_PASS_MATCH_FLOOR = 0.8;
 
 /**
  * Parse the `## Models` GFM table from Cline's published clinepass.mdx and
- * return the bare model ids. Scoped to that section because the later
+ * return the model ids WITH their `cline-pass/` prefix — the catalog
+ * namespace and the id the layer publishes, so no consumer re-derives it.
+ * Scoped to that section because the later
  * `## Reference pricing` table is a different shape (peak/off-peak and
  * token-tier rows with display-only names). Every accepted id must carry the
  * `cline-pass/` prefix — the published table doubles as the API-namespace
@@ -281,7 +289,7 @@ function parseClinePassDocs(mdx) {
 			.map((c) => c.trim());
 		const raw = cells[1]?.replace(/`/g, "");
 		if (raw?.startsWith(`${CLINE_PASS_ID}/`)) {
-			ids.push(stripProviderPrefixes(CLINE_PASS_ID, raw));
+			ids.push(raw);
 		}
 	}
 	return ids;
@@ -368,7 +376,7 @@ function readClinePassDocs() {
  * drops unprefixed ids, so a polluted slice yields no layer rather than a
  * wrong-priced one.
  * @param {Record<string, ModelsDevModel>} modelsDevModels the cline-pass slice
- * @returns {readonly string[]} bare model ids
+ * @returns {readonly string[]} catalog-namespace model ids
  */
 function resolveClinePassAllowlist(modelsDevModels) {
 	const docs = readClinePassDocs();
@@ -379,12 +387,12 @@ function resolveClinePassAllowlist(modelsDevModels) {
 		});
 		return CLINE_PASS_LINEUP;
 	}
-	const catalogBare = new Set(
-		Object.keys(modelsDevModels)
-			.filter((id) => id.startsWith(`${CLINE_PASS_ID}/`))
-			.map((id) => stripProviderPrefixes(CLINE_PASS_ID, id)),
+	const catalogKeys = new Set(
+		Object.keys(modelsDevModels).filter((id) =>
+			id.startsWith(`${CLINE_PASS_ID}/`),
+		),
 	);
-	const matched = docsIds.filter((id) => catalogBare.has(id));
+	const matched = docsIds.filter((id) => catalogKeys.has(id));
 	const ratio = matched.length / docsIds.length;
 	if (ratio < CLINE_PASS_MATCH_FLOOR) {
 		logWarn("cline-pass docs/models.dev disagree — keeping committed allowlist", {
@@ -395,15 +403,17 @@ function resolveClinePassAllowlist(modelsDevModels) {
 		});
 		return CLINE_PASS_LINEUP;
 	}
-	// Union: docs ids first (the published contract), then catalog-only ids
-	// (catalog-first additions the docs table has not caught up to) — the
-	// emitFullAt filter intersects with the catalog anyway, so docs-only ids
-	// simply find no record to emit.
-	const union = [...new Set([...docsIds, ...catalogBare])];
+	/**
+	 * Union: docs ids first (the published contract), then catalog-only ids
+	 * (catalog-first additions the docs table has not caught up to) — the
+	 * emitFullAt filter intersects with the catalog anyway, so docs-only ids
+	 * simply find no record to emit.
+	 */
+	const union = [...new Set([...docsIds, ...catalogKeys])];
 	logInfo("cline-pass lineup adopted as docs ∪ models.dev union", {
 		docs: docsIds.length,
 		matched: matched.length,
-		catalogOnlyAdopted: catalogBare.size - matched.length,
+		catalogOnlyAdopted: catalogKeys.size - matched.length,
 		union: union.length,
 	});
 	return union;
@@ -518,12 +528,8 @@ function resolveOpencodeGoApi(modelsDevModels) {
 		logWarn("opencode-go endpoints table unavailable — every model keeps the provider-wide default api", {});
 		return new Map();
 	}
-	const catalogBare = new Set(
-		Object.keys(modelsDevModels).map((id) =>
-			stripProviderPrefixes(OPENCODE_GO_ID, id),
-		),
-	);
-	const matched = [...docsApi.keys()].filter((id) => catalogBare.has(id));
+	const catalogKeys = new Set(Object.keys(modelsDevModels));
+	const matched = [...docsApi.keys()].filter((id) => catalogKeys.has(id));
 	const ratio = matched.length / docsApi.size;
 	if (ratio < OPENCODE_GO_MATCH_FLOOR) {
 		logWarn("opencode-go docs/models.dev disagree — no per-model api overrides", {
@@ -539,14 +545,13 @@ function resolveOpencodeGoApi(modelsDevModels) {
 	let conflicts = 0;
 	let unmapped = 0;
 	for (const [id, m] of Object.entries(modelsDevModels)) {
-		const bare = stripProviderPrefixes(OPENCODE_GO_ID, id);
 		const npm = m.provider?.npm;
 		const api = npm ? OPENCODE_GO_API_BY_PACKAGE[npm] : undefined;
 		if (npm && !api) unmapped++;
-		if (docsApi.has(bare)) {
-			if (api && api !== docsApi.get(bare)) conflicts++;
+		if (docsApi.has(id)) {
+			if (api && api !== docsApi.get(id)) conflicts++;
 		} else if (api) {
-			apiById.set(bare, api);
+			apiById.set(id, api);
 			catalogOnlyAdopted++;
 		}
 	}
@@ -580,7 +585,7 @@ function applyModelApi(spec, models) {
 	if (!spec.modelApiResolver) return;
 	const apiById = spec.modelApiResolver(CATALOG?.[spec.id]?.models ?? {});
 	for (const m of models) {
-		const api = apiById.get(stripProviderPrefixes(spec.id, m.id));
+		const api = apiById.get(m.id);
 		if (api) m.api = api;
 	}
 }
@@ -889,20 +894,6 @@ function loadProvider(spec) {
 }
 
 /**
- * Strip any number of repeated `<providerId>/` prefixes from an id (defensive
- * normalization shared by the facts-cache matching below; the llama-swap-era
- * FQN spellings motivated it — docs/d027).
- * @param {string} providerId
- * @param {string} peerId
- * @returns {string} the bare model id
- */
-function stripProviderPrefixes(providerId, peerId) {
-	let s = peerId;
-	while (s.startsWith(`${providerId}/`)) s = s.slice(providerId.length + 1);
-	return s;
-}
-
-/**
  * Build the provider block routed at `baseUrl` with the given key/auth.
  * @param {CloudProviderSpec} spec the provider spec row
  * @param {string} baseUrl
@@ -976,19 +967,13 @@ function liveToCatalogRecord(l) {
  * @returns {PiAlternativeModel[]} the pruned and augmented lineup
  */
 function enrichWithLiveListing(spec, models, liveEntries) {
-	const liveIds = new Set(
-		liveEntries.map((e) => stripProviderPrefixes(spec.id, e.id)),
-	);
-	const catalogIds = new Set(
-		models.map((m) => stripProviderPrefixes(spec.id, m.id)),
-	);
+	const liveIds = new Set(liveEntries.map((e) => e.id));
+	const catalogIds = new Set(models.map((m) => m.id));
 
-	const pruned = models.filter((m) =>
-		liveIds.has(stripProviderPrefixes(spec.id, m.id)),
-	);
+	const pruned = models.filter((m) => liveIds.has(m.id));
 
 	const liveOnly = liveEntries
-		.filter((e) => !catalogIds.has(stripProviderPrefixes(spec.id, e.id)))
+		.filter((e) => !catalogIds.has(e.id))
 		.map((e) => {
 			const m = {
 				id: e.id,
@@ -1003,7 +988,7 @@ function enrichWithLiveListing(spec, models, liveEntries) {
 
 /**
  * Enrich pi-shaped models with the hyper facts cache: rebuild every model
- * whose (prefix-stripped) id is in the live records through catalogPiModel()
+ * whose id is in the live records through catalogPiModel()
  * on LIVE data, keeping the models.dev display name (see the header
  * whitelist). Models absent from the cache pass through untouched; live-only
  * records are returned for the caller to append (direct mode appends them,
@@ -1014,15 +999,13 @@ function enrichWithLiveListing(spec, models, liveEntries) {
  * @returns {{ enriched: PiAlternativeModel[], liveOnly: ModelsDevModel[], untouched: PiAlternativeModel[] }}
  */
 function enrichWithFacts(spec, models, facts) {
-	const live = new Map(
-		facts.models.map((l) => [stripProviderPrefixes(spec.id, l.id), l]),
-	);
+	const live = new Map(facts.models.map((l) => [l.id, l]));
 	/** @type {PiAlternativeModel[]} */
 	const enriched = [];
 	/** @type {PiAlternativeModel[]} */
 	const untouched = [];
 	for (const m of models) {
-		const l = live.get(stripProviderPrefixes(spec.id, m.id));
+		const l = live.get(m.id);
 		if (!l) {
 			untouched.push(m);
 			continue;
@@ -1031,11 +1014,9 @@ function enrichWithFacts(spec, models, facts) {
 		const rebuilt = catalogPiModel(spec, merged, m.id);
 		if (rebuilt) enriched.push(rebuilt);
 	}
-	const servedIds = new Set(
-		models.map((m) => stripProviderPrefixes(spec.id, m.id)),
-	);
+	const servedIds = new Set(models.map((m) => m.id));
 	const liveOnly = facts.models
-		.filter((l) => !servedIds.has(stripProviderPrefixes(spec.id, l.id)))
+		.filter((l) => !servedIds.has(l.id))
 		.map((l) => liveToCatalogRecord(l));
 	return { enriched, liveOnly, untouched };
 }
@@ -1056,8 +1037,10 @@ function catalogModelIds(spec) {
 	);
 	if (ids.length) return ids;
 
-	// Catwalk fallback: openrouter→openrouter, opencode→opencode-zen,
-	// google→gemini. nvidia/mistral have no catwalk entry.
+	/**
+	 * Catwalk fallback: openrouter→openrouter, opencode→opencode-zen,
+	 * google→gemini. nvidia/mistral have no catwalk entry.
+	 */
 	const catwalkModels = getCatwalkModels(spec.id);
 	if (catwalkModels) {
 		const cids = catwalkModels
@@ -1231,8 +1214,10 @@ async function emitOverrideOnly(spec, providers) {
 		providers[spec.id] = providerReroute(route.url, models);
 		return;
 	}
-	// Route proved but not listable (401/403 without a key, or an
-	// unexpected answer): the catalog mirrors the provider's own ids.
+	/**
+	 * Route proved but not listable (401/403 without a key, or an unexpected
+	 * answer): the catalog mirrors the provider's own ids.
+	 */
 	const ids = catalogModelIds(spec);
 	if (!ids) {
 		logWarn("no model list available — skipping", { provider: spec.id });
@@ -1343,7 +1328,7 @@ async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
 		.filter(
 			([id]) =>
 				(!spec.modelIdPrefix || id.startsWith(spec.modelIdPrefix)) &&
-				(!allow || allow.includes(stripProviderPrefixes(spec.id, id))),
+				(!allow || allow.includes(id)),
 		)
 		.map(([, m]) => m);
 	/** @type {PiAlternativeModel[]} */
@@ -1481,11 +1466,13 @@ async function generateCloudProviders() {
  * @returns {Promise<void>}
  */
 async function generateLocalLlamaSwap(out) {
-	// The peer's funnel base URL — vault-sourced (peerBaseUrl(); see the header
-	// there). No localhost candidates are probed — the LAN :8080 (proxy) and
-	// :8101 (llama-swap) listen addresses are not routable from outside the host
-	// they serve (docs/d022). peerBaseUrl() throws when no peer base is set;
-	// keeping it inside the stage means the other pi stages still run.
+	/**
+	 * The peer's funnel base URL — vault-sourced (peerBaseUrl(); see the header
+	 * there). No localhost candidates are probed — the LAN :8080 (proxy) and
+	 * :8101 (llama-swap) listen addresses are not routable from outside the host
+	 * they serve (docs/d022). peerBaseUrl() throws when no peer base is set;
+	 * keeping it inside the stage means the other pi stages still run.
+	 */
 	const LOCAL_SOURCE_CANDIDATES = [
 		peerProviderUrl(peerBaseUrl(), "llama-swap"),
 	];

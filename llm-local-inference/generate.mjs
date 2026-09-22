@@ -63,8 +63,11 @@ import { homedir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Structured logger + artifact writer from ../lib (docs/d023), resolved
-// through the LIB_DIR convention (default: this folder's sibling lib/).
+/**
+ * Structured logger + artifact writer from ../lib (docs/d023), resolved
+ * through the LIB_DIR convention (default: this folder's sibling lib/).
+ * @type {string}
+ */
 const LIB_DIR =
 	process.env.LIB_DIR ?? fileURLToPath(new URL("../lib", import.meta.url));
 const { logError, logInfo, logWarn } =
@@ -108,8 +111,11 @@ function writeConfigD(name, obj) {
 }
 
 // --- 00-general.yaml (folded generate-general.yaml.mjs) --------------------
-// Per the merge contract (docs/d018) this layer is the ONLY home of scalars /
-// macros / ctxWindows / apiKeys; the model layer must not redefine any.
+/**
+ * Per the merge contract (docs/d018) this layer is the ONLY home of scalars /
+ * macros / ctxWindows / apiKeys; the model layer must not redefine any.
+ * @returns {void}
+ */
 function generateGeneral() {
 	const core = loadCore();
 	// models/peers belong to the local-inference layer below.
@@ -126,8 +132,11 @@ function generateGeneral() {
 // 00-general.yaml (${LLAMA_SERVER}, ${qwen36}, …) which llama-swap resolves
 // after merging config.d/.
 
-// The activeB table (model-name slice -> "b" slug) is split out of the
-// generator into its own mini-manifest (active-b.json).
+/**
+ * The activeB table (model-name slice -> "b" slug), split out of the generator
+ * into its own mini-manifest (active-b.json).
+ * @type {Record<string, string>}
+ */
 const activeB = JSON.parse(
 	readFileSync(join(scriptDir, "active-b.json"), "utf-8"),
 );
@@ -162,15 +171,21 @@ const DEFAULTS = {
  */
 const DEFAULT_SPEC_TYPE = "draft-mtp";
 
-// The ONE home of the container-side hub path (docs/d029 F4): run.sh binds the
-// host HF cache here, and the baked cmd paths are written against it. Changing
-// this constant means changing run.sh's bind in the same edit.
+/**
+ * The ONE home of the container-side hub path (docs/d029 F4): run.sh binds the
+ * host HF cache here, and the baked cmd paths are written against it. Changing
+ * this constant means changing run.sh's bind in the same edit.
+ * @type {string}
+ */
 const HUB_GUEST = "/home/ubuntu/.cache/huggingface/hub";
 
-// Host-side mirror of run.sh's HF_HUB_CACHE default (the same env-override
-// chain: HF_HUB_CACHE, else XDG_CACHE_HOME, else ~/.cache). Generation reads
-// the cache the serving container later binds, so both sides must compute the
-// same directory.
+/**
+ * Host-side mirror of run.sh's HF_HUB_CACHE default (the same env-override
+ * chain: HF_HUB_CACHE, else XDG_CACHE_HOME, else ~/.cache). Generation reads
+ * the cache the serving container later binds, so both sides must compute the
+ * same directory.
+ * @type {string}
+ */
 const HUB_HOST =
 	process.env.HF_HUB_CACHE ??
 	join(
@@ -179,8 +194,11 @@ const HUB_HOST =
 		"hub",
 	);
 
-// Sharded GGUF naming, kept in sync with local-llm/download_models.py's
-// SPLIT_RE (that script downloads every shard; the generator verifies it did).
+/**
+ * Sharded GGUF naming, kept in sync with local-llm/download_models.py's
+ * SPLIT_RE (that script downloads every shard; the generator verifies it did).
+ * @type {RegExp}
+ */
 const SPLIT_RE = /-(\d{5})-of-(\d{5})\.gguf$/;
 
 /**
@@ -336,9 +354,11 @@ function deriveModelId(m, modeSeg) {
 }
 
 function generateLocalInference() {
-	// The shared model-data table lives in lib/ (moved there to mark it as
-	// explicitly shared with local-llm/ tooling — docs/d025). Same LIB_DIR
-	// convention as the log import above.
+	/**
+	 * The shared model-data table lives in lib/ (moved there to mark it as
+	 * explicitly shared with local-llm/ tooling — docs/d025). Same LIB_DIR
+	 * convention as the log import above.
+	 */
 	const modelData = JSON.parse(
 		readFileSync(join(LIB_DIR, "llamacpp-model-data.json"), "utf-8"),
 	);
@@ -351,19 +371,24 @@ function generateLocalInference() {
 		const m = { ...DEFAULTS, ...raw };
 		const ctxSize = m["ctx-size"]; // AUTHORITATIVE --ctx-size (not --fit-ctx)
 		const nPredict = ctxSize;
-		// One snapshot resolution per ENTRY (all three mmproj modes share it):
-		// refs/main carries the model, its every shard, and the mmproj/drafter
-		// at the same commit, or generation fails.
+		/**
+		 * One snapshot resolution per ENTRY (all three mmproj modes share it):
+		 * refs/main carries the model, its every shard, and the mmproj/drafter
+		 * at the same commit, or generation fails.
+		 */
 		const baked = bakeSnapshotPaths(m);
 		for (const p of baked.hostPaths) bakedHostPaths.add(p);
 		const modes = m.mmproj ? MMPROJ_MODES : [{ seg: null, vision: false }];
 		for (const mode of modes) {
 			const modalities = mode.vision ? ["text", "image"] : ["text"];
-			// The family macro reference (${qwen38} etc.) and any literal extra flags
-			// live in __argv verbatim; llama-swap expands ${...} at load.  Empty __argv
-			// expands to nothing; shlex collapses the gap.  The expanded
-			// ${LLAMA_SERVER} must be the FIRST cmd token: shlex argv[0] is the
-			// server binary llama-swap resolves on PATH and execs directly.
+			/**
+			 * The family macro reference (${qwen38} etc.) and any literal extra flags
+			 * live in __argv verbatim; llama-swap expands ${...} at load. Empty __argv
+			 * expands to nothing; shlex collapses the gap. The expanded
+			 * ${LLAMA_SERVER} must be the FIRST cmd token: shlex argv[0] is the
+			 * server binary llama-swap resolves on PATH and execs directly.
+			 * @type {string}
+			 */
 			let cmd = LLAMA_SERVER_MACRO;
 			// The mode slug is verbatim llama-swap macro text (\${0text} etc.),
 			// NOT JS interpolation — it expands to the projector-offload flags.
