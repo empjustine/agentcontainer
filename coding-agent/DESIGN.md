@@ -79,11 +79,11 @@ only so an in-container session can regenerate manually via the
 `generate.sh` shim; a missing committed artifact is a loud failure pointing
 at the generator, never an implicit regeneration.
 
-Profiles (detected at runtime): **Termux** — system node (≥ 22.19, gated by
-`check-node-version.mjs`), secrets arrive as plain env via the explicit
-chain, the vendored models.dev catalog is used by default (no refetch over
-mobile data), the opencode stage is skipped unless `OPENCODE_CONFIG_DIR` is
-set. **Everywhere else** — repo-pinned node via `lib/node-run.sh`, catalog
+Profiles (detected at runtime): **Termux** — system node (Termux's bionic
+build; pi enforces its own ≥ 22.19 engines floor at launch), secrets arrive
+as plain env via the explicit chain, the vendored models.dev catalog is used
+by default (no refetch over mobile data), the opencode stage is skipped
+unless `OPENCODE_CONFIG_DIR` is set. **Everywhere else** — repo-pinned node via `lib/node-run.sh`, catalog
 refreshed best-effort, peer routing walks the vault-sourced `PEER_BASE_URLS`
 multi-hop chain.
 
@@ -115,8 +115,9 @@ provider id so the peer path-route is still attempted.
 - **Key naming / baseUrl baking / proxy env**: `docs/d001-proxy-env-and-namespace.md`.
 - A zero-provider merge result is **kept as-is** (never clobbers a good
   `models.json` with an empty merge).
-- pi requires node ≥ 22.19 (Termux gates via `check-node-version.mjs`, run by
-  `generate.mjs` pre-stage — docs/d041).
+- pi requires node ≥ 22.19; the floor is enforced by pi's own engines at
+  launch (the Termux pre-stage `check-node-version.mjs` gate was retired —
+  docs/d051).
 
 ## Boundary
 
@@ -133,6 +134,5 @@ into `llm-local-inference/` or `local-llm/`.
 
 `generate.mjs` stages exactly this tree into the scratch dir — the two
 generators + `gen-lib.mjs` + `peer-probe.mjs` + `hyper-facts.mjs` +
-`catwalk-facts.mjs` + `refresh-models-dev.mjs`; `check-node-version.mjs`
-stays unmounted (Termux-only gate, run from the repo dir). `run.sh`'s
-file-by-file mount list mirrors that staging.
+`catwalk-facts.mjs` + `refresh-models-dev.mjs`. `run.sh`'s file-by-file
+mount list mirrors that staging.

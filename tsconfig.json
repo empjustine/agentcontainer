@@ -45,7 +45,6 @@
 		"git/ocds-remotes.mjs",
 		"git/search-references.mjs",
 		"git/vbs-har.mjs",
-		"coding-agent/check-node-version.mjs",
 		"coding-agent/generate.mjs",
 		"llm-local-inference/generate.mjs",
 		"llm-reverse-proxy/generate.mjs"

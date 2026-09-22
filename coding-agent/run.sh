@@ -141,10 +141,9 @@ cp "$SCRIPT_DIR/models.json" "$agent_dir/models.json"
 # are now ONE PER CODING AGENT (generate-pi-coding-agent.mjs and
 # generate-opencode.mjs) — the former per-stage pi generators were merged
 # into the pi one, so this list must not reintroduce them.
-# check-node-version stays unmounted — the version gate is Termux-only and
-# runs from the repo dir, and the orchestrator counts providers inline now
-# (the former count-providers/list-providers helpers were pruned with their
-# shell caller — docs/d041).
+# The orchestrator counts providers inline now (the former
+# count-providers/list-providers helpers were pruned with their shell caller
+# — docs/d041).
 _gen_target='/opt/coding-agent'
 for _f in generate.sh generate.mjs gen-lib.mjs \
 	generate-pi-coding-agent.mjs generate-opencode.mjs \

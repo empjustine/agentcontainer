@@ -12,9 +12,10 @@
 # elsewhere (pinned via mise.toml / the image config).  The profile check is
 # deliberately INSIDE the function: sourcing this file sets no globals, so it
 # cannot collide with a host script's own variables or source order.
-# Callers own the version-floor checks, which differ by product (>= 18 for
-# the llm-local-inference generators' global fetch, >= 22.19 for
-# pi-coding-agent's engines).
+# Product version floors are not enforced here: the llm-local-inference
+# generators need a global fetch (node >= 18), and pi enforces its own
+# >= 22.19 engines at launch (the Termux pre-stage gate was retired —
+# docs/d051).
 node_run() {
 	case "${PREFIX:-}" in
 	*/com.termux/*) node "$@" ;;

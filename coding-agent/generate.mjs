@@ -7,7 +7,8 @@
  *
  * Profile, detected at runtime:
  *   Termux (PREFIX under /data/data/com.termux):
- *     - system node (>= 22.19, checked via check-node-version.mjs) — no mise
+ *     - system node (Termux's bionic build; no mise) — pi's own engines
+ *       enforce the >= 22.19 floor when it launches
  *     - secrets arrive as plain environment, via the explicit chain
  *       (./lib/environment.sh ./generate.sh)
  *     - vendored models.dev catalog by default (no refetch over mobile data)
@@ -221,30 +222,6 @@ logInfo("profile", {
 	agentDir,
 	runDir,
 });
-
-// --- node floor gate (Termux only) ------------------------------------------
-// Real floor is pi-coding-agent's engines (node >= 22.19) — check-node-
-// version.mjs prints its own reason on stderr and exits non-zero below it.
-// Runs pre-staging: it is read from this dir and writes nothing.
-if (termux) {
-	// status is the exit code (0 on success); a missing binary sets `error`
-	// and leaves status null, so test the spawn outcome, not the code.
-	if (spawnSync("node", ["--version"], { stdio: "ignore" }).error) {
-		logError("node not found (need >= 22.19 for pi-coding-agent)");
-		process.exit(93);
-	}
-	const gate = spawnSync(
-		process.execPath,
-		[join(scriptDir, "check-node-version.mjs")],
-		{
-			stdio: "inherit",
-		},
-	);
-	if (gate.status !== 0) {
-		logError("node too old (need >= 22.19 for pi-coding-agent)");
-		process.exit(93);
-	}
-}
 
 currentStage = "scratch-stage";
 
