@@ -75,6 +75,7 @@ import {
 	loadHyperFacts,
 	logInfo,
 	logWarn,
+	modalitiesEligible,
 	modelsDevCatalogPath,
 	PI_NATIVE_CLOUD_IDS,
 	peerBaseUrl,
@@ -92,7 +93,9 @@ import {
 	scriptDir,
 	setLogTool,
 	suppressedProbe,
+	toInput,
 	writeArtifact,
+	writeJsonArtifact,
 } from "./gen-lib.mjs";
 
 setLogTool("coding-agent/generate-pi-coding-agent");
@@ -154,12 +157,27 @@ try {
  *     endpoints out ["text"] (they are not chat), so `/embedding/` is
  *     refused before the modality test. No record (live-listing path —
  *     unreachable for a catalogOnly row) falls back to the old regex.
+ * docs/d049: the modality gate itself moved to gen-lib
+ * (`modalitiesEligible`, the one capability declaration) and runs FIRST at
+ * every record-backed call site — what stays in this table are the
+ * documented name exceptions and the access scopes. google keeps its full
+ * predicate (same rule as the gate) so it stays correct even when called
+ * without the gate composition.
  * @type {Record<string, ((id: string, record?: ModelsDevModel) => boolean)|undefined>}
  */
 const PEER_MODEL_FILTERS = {
+	// Access scope, not a modality rule (d049: price/access stays orthogonal
+	// and runs after the gate) — the slice the peer always served.
 	openrouter: (id) => id.endsWith(":free"),
+	// Documented name exception (d049): models.dev lies about embedding
+	// endpoints' output like google's — `/embed/` papers over it; `/tts/` is
+	// kept as part of the reviewed exception set (redundant with the gate,
+	// which refuses voxtral's [text,audio] output too).
 	mistral: (id) => !/embed|tts/i.test(id),
 	google: (id, record) => {
+		// Documented name exception (d049): the gate trusts models.dev's
+		// `output:["text"]` label on embedding endpoints — this id check is
+		// what drops them.
 		if (/embedding/i.test(id)) return false;
 		const input = record?.modalities?.input;
 		const output = record?.modalities?.output;
@@ -762,19 +780,6 @@ function buildThinkingLevelMap(reasoningOptions) {
 }
 
 /**
- * pi's input schema accepts only "text" and "image"; video/audio/... are dropped.
- * @param {string[]} [modalitiesInput]
- * @returns {string[]}
- */
-function toInput(modalitiesInput) {
-	const set = new Set(modalitiesInput ?? ["text"]);
-	const out = [];
-	if (set.has("text")) out.push("text");
-	if (set.has("image")) out.push("image");
-	return out.length ? out : ["text"];
-}
-
-/**
  * @param {ModelsDevModel["cost"]} cost
  * @returns {PiAlternativeModel["cost"]}
  */
@@ -843,8 +848,15 @@ function toCost(cost) {
  *   embedding model (pi cannot drive one)
  */
 function catalogPiModel(spec, m, id = m.id) {
+	// Documented name exception (d049): models.dev labels the embedding
+	// endpoints output ["text"] — the gate below trusts that label, so the
+	// family/id check is what refuses them (the visible exception set).
 	if (m.family === "text-embedding" || id.toLowerCase().includes("embedding"))
 		return null;
+	// d049 admit-but-trim gate: refuse what the client cannot drive (input
+	// without the drivable core, output beyond text) before any projection.
+	// Unjudgeable dimensions pass — see modalitiesEligible.
+	if (!modalitiesEligible(m.modalities)) return null;
 	/** @type {PiAlternativeModel} */
 	const model = {
 		id,
@@ -1033,7 +1045,10 @@ function catalogModelIds(spec) {
 	const models = CATALOG?.[spec.id]?.models ?? {};
 	const filter = spec.filter;
 	const ids = Object.keys(models).filter(
-		(mid) => filter?.(mid, models[mid]) ?? true,
+		(mid) =>
+			// d049 gate first, then the provider's exception/access checks.
+			modalitiesEligible(models[mid]?.modalities) &&
+			(filter?.(mid, models[mid]) ?? true),
 	);
 	if (ids.length) return ids;
 
@@ -1071,7 +1086,16 @@ function catalogModelIds(spec) {
  */
 function listingModels(entries, spec) {
 	const filter = spec.filter;
-	const models = entries.filter((e) => filter?.(e.id) ?? true).map(piModel);
+	const models = entries
+		.filter(
+			(e) =>
+				// d049: judge the typed input surface when the listing carries
+				// one (RawModelEntry types input only — output is not on this
+				// path's typed surface, so it stays unjudgeable here).
+				modalitiesEligible({ input: e.architecture?.input_modalities }) &&
+				(filter?.(e.id) ?? true),
+		)
+		.map(piModel);
 	return models.length ? models : null;
 }
 
@@ -1093,7 +1117,10 @@ function emitMinimalCatalogOverride(spec, providers) {
 	const modelsDevModels = CATALOG?.[spec.id]?.models ?? {};
 	const ids = new Set(
 		Object.keys(modelsDevModels).filter(
-			(mid) => filter?.(mid, modelsDevModels[mid]) ?? true,
+			(mid) =>
+				// d049 gate first, then the provider's exception/access checks.
+				modalitiesEligible(modelsDevModels[mid]?.modalities) &&
+				(filter?.(mid, modelsDevModels[mid]) ?? true),
 		),
 	);
 	// The catwalk union is skipped for catalogOnly rows: their lineup
@@ -1413,9 +1440,9 @@ async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
 		logWarn("no models resolved — no layer written", { provider: spec.id });
 		return;
 	}
-	const written = writeArtifact(
+	const written = writeJsonArtifact(
 		join(scriptDir, /** @type {string} */ (spec.file)),
-		`${JSON.stringify(providerBlock(spec, baseUrl, models, auth), null, 2)}\n`,
+		providerBlock(spec, baseUrl, models, auth),
 	);
 	logInfo("provider layer written", {
 		provider: spec.id,
@@ -1454,9 +1481,9 @@ async function generateCloudProviders() {
 	if (!Object.keys(providers).length) {
 		logInfo("no override-only reroutes needed — model-012 layer written empty");
 	}
-	const written = writeArtifact(
+	const written = writeJsonArtifact(
 		join(scriptDir, "model-012-cloud-pi-native.json"),
-		`${JSON.stringify({ providers }, null, 2)}\n`,
+		{ providers },
 	);
 	logInfo("pi-native override layer written", { path: written });
 }
@@ -1494,9 +1521,9 @@ async function generateLocalLlamaSwap(out) {
 		return;
 	}
 
-	const written = writeArtifact(
+	const written = writeJsonArtifact(
 		out,
-		`${JSON.stringify({ providers }, null, 2)}\n`,
+		{ providers },
 	);
 	const summary = Object.entries(providers)
 		.map(([id, p]) => `${id}=${p.baseUrl}(${p.models.length})`)
@@ -1566,9 +1593,9 @@ function mergeModels(out) {
 		.filter((name) => /^model-.*\.json$/.test(name))
 		.sort();
 	const layers = overlayNames.map((name) => readJson(join(scriptDir, name)));
-	const written = writeArtifact(
+	const written = writeJsonArtifact(
 		out,
-		`${JSON.stringify(deepMerge(...layers), null, 2)}\n`,
+		deepMerge(...layers),
 	);
 	logInfo("merged layers", { overlays: overlayNames.length, path: written });
 }

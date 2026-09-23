@@ -24,9 +24,13 @@
 	},
 	"include": [
 		"lib/artifact.mjs",
+		"lib/canonical-json.mjs",
 		"lib/cloud-providers.mjs",
 		"lib/go-build.mjs",
 		"lib/log.mjs",
+		"tests/canonical-json.test.mjs",
+		"tests/lib-staging.test.mjs",
+		"tests/modality-allowlist.test.mjs",
 		"generate.mjs",
 		"build.mjs",
 		"coding-agent/peer-probe.mjs",

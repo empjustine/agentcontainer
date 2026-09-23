@@ -2,7 +2,7 @@
 
 Instructions for coding agents (pi and others) operating in this repo.
 `docs/architecture.md` treats this file as repo-owned infrastructure, like
-`biome.json`.
+`biome.jsonc`.
 
 ## Comments: explain WHY, never HOW
 
@@ -75,5 +75,7 @@ the copy unit), and `README.md` indexes the rest.
 - **Environment/secrets are an explicit chain step**: `./lib/environment.sh
   <script>` does the one vault round-trip, then `exec`s the target. Consumers
   read plain env and never load secrets (`lib/environment.sh`).
-- Keep `README.md`'s folder layout and documentation index in sync when
-  adding, moving, or retiring files/folders.
+- `README.md`'s folder layout is an orientation map, not an exhaustive
+  manifest: keep folder-level rows honest when folders are added, moved, or
+  retired, but do not chase file-level churn (agents can `ls`/`find`/`rg`).
+  Keep the documentation index type-grouped and drop rows for retired docs.

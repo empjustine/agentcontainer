@@ -10,8 +10,9 @@ tags: ["design", "scoped-models", "overrides"]
 # Scoped models and proxy overrides
 
 The coding-agent container is configured on the host ahead of pi by
-`./coding-agent/run.sh`, which copies `settings.json` and `auth.json` into the
-agent dir mounted at `~/.pi/agent`. This replaces the earlier, fragile
+`./coding-agent/run.sh`, which copies `settings.json` into the agent dir
+mounted at `~/.pi/agent` (credentials arrive via the explicit env chain — see
+Credentials below). This replaces the earlier, fragile
 "generate a full model list" workflow with a **scoped models** approach.
 
 ## Approach
@@ -39,13 +40,13 @@ matched with minimatch on `provider/modelId`:
 
 `run.sh` pins the active scope to these four opencode-go subscription models.
 
-## auth.json
+## Credentials
 
-`run.sh` copies `auth.json` (pi's canonical credentials store) into
-`~/.pi/agent/auth.json`; pi resolves provider API keys from it at runtime. This
-replaces the old `.env` + generated `models.json` flow (which baked `$VAR`
-api-key references that pi had to resolve from the container env). Credentials
-stay out of `settings.json`; an `example.auth.json` template is provided.
+There is no staged credentials file: the generated `models.json` carries
+`"$VAR"` apiKey references that pi resolves from the container env at request
+time — loaded once on the host by the explicit chain (`lib/environment.sh`,
+`docs/d046-infisical-run.md`) and forwarded through the `workload_env`
+allowlist. Credentials never touch `settings.json`.
 
 ## settings.json
 

@@ -13,7 +13,7 @@ passthrough reverse proxy for cloud LLM providers.
 # inference, published on LAN port 8101 (the world reaches it via the
 # tailscale funnel → llm-reverse-proxy's /llama-swap route, docs/d027)
 cd ~/agentcontainer/llm-local-inference && ./generate.sh
-#   then the coding agent (uses local models + cloud via auth.json)
+#   then the coding agent (local models + cloud; credentials via lib/environment.sh, docs/d046)
 cd ~/agentcontainer && ./lib/environment.sh ./coding-agent/run.sh
 
 # cloud/remote providers — raw passthrough reverse proxy (no model routing,
@@ -64,11 +64,20 @@ Both tools are now included in the container's mise configuration for reliable, 
 
 ## Folder layout
 
+> Orientation map, not an exhaustive manifest: folders and files come and go.
+> Keep folder-level rows honest; use `ls`/`find`/`rg` for current contents
+> rather than chasing file-level churn here.
+
 ```
 agentcontainer/
 ├── generate.sh / generate.mjs          # → run EVERY folder's generator in sequence (d041)
 ├── build.sh / build.mjs                # → build everything for THIS host (images ∥; termux serialized)
 ├── vm-bench.sh                          # → d020 Level-1 VM build bench: provision/drive the libvirt guest that runs nested podman (docs/vm-build-bench.md SOP)
+├── tests/                             # standalone checks (node --test for JS, sh for workload helpers)
+│   ├── check-workload.sh              # → workload_ro / workload_ro_if mount-helper tests
+│   ├── canonical-json.test.mjs        # → canonicalization unit + committed-manifest canonicity guard (d050)
+│   ├── lib-staging.test.mjs           # → guards the hand-maintained lib/ staging lists in generate.mjs + run.sh (d050)
+│   └── modality-allowlist.test.mjs    # → the d049 admit-but-trim gate/projection contract (gen-lib capability constant)
 ├── docs/                              # docs tree, typed per docs/d042 (BRD / reference / design)
 │   ├── requirements.md                # → BRD: what the system must do (id: goal)
 │   ├── architecture.md                # → systems reference: split, standalone rule, lib inventory
@@ -88,7 +97,7 @@ agentcontainer/
 │   ├── models.dev.api.json             #   → vendored models.dev catalog (coding-agent + llm-reverse-proxy)
 │   ├── catwalk-facts.json              #   → vendored catwalk catalog (coding-agent + llm-reverse-proxy)
 │   ├── cloud-providers.mjs             #   → the one cloud-provider fact table
-│   ├── log.mjs / artifact.mjs / log.sh #   → shared logger/artifact std (all generators + shell)
+│   ├── log.mjs / artifact.mjs / canonical-json.mjs / log.sh # → shared logger/artifact std (canonical manifest JSON — d050)
 │   ├── environment.sh                   #   → EXPLICIT env chain: `infisical run` spawns <script> (d046)
 │   ├── workload-*.jq                   #   → jq filters behind the workload_* API
 │
@@ -103,7 +112,7 @@ agentcontainer/
 │   ├── main.go                          #   → http host:port/{provider}/<path> → <base-url>/<path>, streaming as-is
 │   ├── llm-reverse-proxy.example.json   #   → provider slug → base URL map (the whole config surface)
 │   ├── generate.sh / generate.mjs       #   → routing table from lib/cloud-providers.mjs (d038 catalog)
-│   ├── smoke-test.sh                    #   → 32 behavioural checks against the built binary/image
+│   ├── smoke-test.sh                    #   → 34 behavioural checks against the built binary/image
 │   ├── README.md                        #   → operations: routing table, usage, build, port model
 │   └── DESIGN.md                        #   → routing-convention rationale, 404 anti-oracle, RFC 9457 error taxonomy
 │
@@ -117,8 +126,6 @@ agentcontainer/
 │   ├── hyper-facts.mjs / hyper-facts.json # → Charm Hyper facts cache + enricher (d039)
 │   ├── catwalk-facts.mjs                #   → catwalk catalog refresher (cache stays in lib/, d039)
 │   ├── refresh-models-dev.mjs           #   → atomic models.dev catalog refresh (d039)
-│   ├── peer-probe.mjs                   #   → HTTP probe toolkit (folded out of lib/, d039)
-│   ├── auth.json                        #   → pi credentials (copied into container by run.sh)
 │   ├── settings.json                    #   → static pi settings (copied by run.sh)
 │   ├── config.toml                       #   → mise configuration (includes cline and thinkrail)
 │   └── Containerfile                    #   → container image build
@@ -161,7 +168,7 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 |-----|--------|
 | [docs/architecture.md](docs/architecture.md) | Self-contained runners vs base config generators, standalone rule, lib inventory, one-generate-one-build |
 | [docs/environments-and-peer-variants.md](docs/environments-and-peer-variants.md) | Environment matrix (bazzite/a50/work), env vars, serving/usage dirs |
-| [docs/container-tooling.md](docs/container-tooling.md) | lib/workload-runtime.sh, run scripts, UID/SELinux, PEERS_ONLY (the `lib` module doc) |
+| [docs/container-tooling.md](docs/container-tooling.md) | lib/workload-runtime.sh, run scripts, UID/SELinux, environment matrix (the `lib` module doc) |
 | [docs/workload-sandboxing-prior-art.md](docs/workload-sandboxing-prior-art.md) | sandboxing prior art from the reference farm (bwrap, landlock, seccomp, cgroups, namespaces) — threat model of the runner as the lens, overlap/unique-capability map with cover-cost per gap, per-solution pitfalls on record, the declarative-orchestration + VM/micro-VM layer above/beside the backends, and mirror candidates not yet fetched |
 | [docs/blackboard-and-context-management-prior-art.md](docs/blackboard-and-context-management-prior-art.md) | blackboard / LLM task-context prior art from the reference farm (pelagos blackboard, cline teams, budget+compaction engines, file-plan skills, session persistence, provider-side context editing) — untrusted third-party statements, cross-cutting lessons, and un-mirrored candidates for the next batch |
 | [docs/coding-harness-persistence.md](docs/coding-harness-persistence.md) | How each coding harness's state survives ephemeral container runs |
@@ -170,6 +177,7 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [git/non-bare-issues.md](git/non-bare-issues.md) | Reference-farm mirrors: why a checkout is pure overhead (podman `z,U` walk), the farm audit, pickaxe-fast maintenance |
 | [docs/gguf-vram-fit-estimates.md](docs/gguf-vram-fit-estimates.md) | VRAM/KV/fit tables for all served models (gdevenyi/huggingface-estimate) |
 | [docs/gguf-model-tooling.md](docs/gguf-model-tooling.md) | GGUF tooling (`fetch_hf_manifests.py` live; size-estimation tools archived) |
+| [docs/vm-build-bench.md](docs/vm-build-bench.md) | vm-bench.sh SOP — d020 Level-1 VM as the nested-podman build bench (rootless session libvirt + cloud-init + slirp; no host podman socket) |
 | [llm-reverse-proxy/README.md](llm-reverse-proxy/README.md) | Proxy operations: routing table, usage, build, port model, smoke test |
 
 ### Design (TDD)
@@ -185,11 +193,13 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 
 ### Decision log (append-only)
 
+> Curated, not complete: records that no longer represent the tree stay in
+> `docs/` as history and are listed here only while they still shape it.
+
 | Doc | Covers |
 |-----|--------|
 | [docs/d018-split-config-d.md](docs/d018-split-config-d.md) | split `config.d/` layout + llama-swap merge contract |
 | [docs/d020-libvirt-qemu-sandbox.md](docs/d020-libvirt-qemu-sandbox.md) | qemu/libvirt VM sandboxes — requirements assessment (not implemented) |
-| [docs/vm-build-bench.md](docs/vm-build-bench.md) | vm-bench.sh SOP — d020 Level-1 VM as the nested-podman build bench (rootless session libvirt + cloud-init + slirp; no host podman socket) |
 | [docs/d027-path-prefix-peer-routing.md](docs/d027-path-prefix-peer-routing.md) | path-prefix peer routing — llm-reverse-proxy replaces llama-swap's model-id magic |
 | [docs/d027b-models-dev-relay-fallback.md](docs/d027b-models-dev-relay-fallback.md) | models.dev catalog fetch chain (direct → llm-reverse-proxy relay → stale copy) |
 | [docs/d028-provider-extensions-vs-generated-config.md](docs/d028-provider-extensions-vs-generated-config.md) | pi/opencode provider extensions vs generated-config machinery (verified; proposed) |
@@ -201,7 +211,7 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d034-parallel-probing-and-multi-hop-peerBase.md](docs/d034-parallel-probing-and-multi-hop-peerBase.md) | parallel provider probing (`Promise.allSettled`) + multi-hop `PEER_BASE_URLS` peer chains |
 | [docs/d035-dynamic-default-model.md](docs/d035-dynamic-default-model.md) | host-aware `defaultProvider`/`defaultModel` selection from the generated `models.json` |
 | [docs/d036-operator-hardcoded-default-model.md](docs/d036-operator-hardcoded-default-model.md) | default model is operator-hardcoded in settings.json; the d035 dynamic picker is retired (supersedes d035's selection mechanism) |
-| [docs/d037-generator-merge-verdict.md](docs/d037-generator-merge-verdict.md) | SIMPLE.md merge claim verdict — cloud generators unify into one table-driven generator, the rest stay split (d030 option 6) |
+| [docs/d037-generator-merge-verdict.md](docs/d037-generator-merge-verdict.md) | broad generator-merge proposal verdict — cloud generators unify into one table-driven generator, the rest stay split (d030 option 6) |
 | [docs/d038-proxy-full-provider-catalog.md](docs/d038-proxy-full-provider-catalog.md) | llm-reverse-proxy routes the full pi-ai ∪ models.dev ∪ catwalk provider catalog (priority pi-ai > models.dev > catwalk) |
 | [docs/d039-fold-single-consumer-lib-modules.md](docs/d039-fold-single-consumer-lib-modules.md) | single-consumer lib/ modules fold back to their owning runner (peer-probe/pi-models/hyper-facts/catwalk-facts.mjs/refresh-models-dev → coding-agent; pi-ai + ai-sdk tables → generate-config) |
 | [docs/d040-cline-pass-curated-lineup.md](docs/d040-cline-pass-curated-lineup.md) | cline-pass lineup is the published 13-model ClinePass table, not Cline's /models catalog (live sync disabled for it) |
@@ -214,8 +224,8 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d046b-live-listing-input-schema-poisoning.md](docs/d046b-live-listing-input-schema-poisoning.md) | live-listing `input` modality arrays (`video`/`audio`/`pdf`) poisoned `models.json` via `piModel()` verbatim passthrough → strict schemas (cline) rejected the file; fixed with a `toInput()` text+image guard; committed-snapshot writeback amplification |
 | [docs/d047-llm-reverse-proxy-host-allowlist.md](docs/d047-llm-reverse-proxy-host-allowlist.md) | llm-reverse-proxy v2 (implemented, the only mode) — route by HOST allowlist (`/<host>/<path>` → scheme://host root, the client carries the upstream base path), deny-by-absence everything else; 36 owner-set hosts; no v1 slug compatibility; host-form `peerProviderUrl` for all generators; simplifies pi/opencode/charm divergence |
 | [docs/d048-opencode-go-mixed-api-surface.md](docs/d048-opencode-go-mixed-api-surface.md) | opencode-go serves a MIXED api surface behind one base URL (completions/responses/messages per model) — per-model pi `api` overrides resolved from the published go.mdx endpoints table, union with the models.dev per-model `provider.npm`, d040-style agreement floor; empty map = pre-resolver behavior |
-| [docs/d049-input-modality-allowlists.md](docs/d049-input-modality-allowlists.md) | future change (proposed, nothing implemented) — make modality/input capability the uniform allowlist axis for model eligibility (only google does this today); retire the per-provider name denylists, collapse the two `toInput()`s; blocked on models.dev labeling embeddings `output:["text"]` |
-| [docs/d050-deterministic-generated-artifacts.md](docs/d050-deterministic-generated-artifacts.md) | future change (proposed, nothing implemented) — canonical/stable generated manifests: schema-aware sort of provider maps and `models` arrays (not a deep key-sort), one shared `lib/` canonicalizer at the write choke point; fixes `model-012`'s `Promise.allSettled` key-order churn; NDJSON rejected as a manifest format (invalid JSON), one-line-per-model considered; caches (timestamps/upstream order) out of scope |
+| [docs/d049-input-modality-allowlists.md](docs/d049-input-modality-allowlists.md) | implemented — modality/input capability as the uniform allowlist axis for model eligibility: `PI_MODALITY_CAPABILITY` + the `modalitiesEligible` admit-but-trim gate (drivable text in, exactly text out; unjudgeable dimensions pass) in `gen-lib`, composed gate-first at every record-backed site, `toInput` collapsed to one shared projection, name checks demoted to annotated exceptions (google/mistral `/embedding/`, `/embed|tts/`); openrouter `:free` stays an access filter that runs after the gate; metadata-rich sources only, opencode emission out of scope; verified by a regeneration audit (17 drops, all catalog-attributed, no chat model refused) + `tests/modality-allowlist.test.mjs` |
+| [docs/d050-deterministic-generated-artifacts.md](docs/d050-deterministic-generated-artifacts.md) | implemented — canonical/stable generated manifests: schema-aware sort of provider maps and `models` arrays (not a deep key-sort) at the single write choke point (`lib/canonical-json.mjs` + `writeJsonArtifact`, sorted+pretty); fixes `model-012`'s `Promise.allSettled` key-order churn; one-time reformat of all 8 committed manifests + `tests/canonical-json.test.mjs` canonicity guard; NDJSON and one-line-per-model rejected; caches and `default-model.json` out of scope |
 | [docs/d051-retire-termux-node-version-gate.md](docs/d051-retire-termux-node-version-gate.md) | retire the Termux node floor gate — `check-node-version.mjs` deleted (its inverted presence probe false-failed every healthy run); pi self-enforces `>= 22.19` and Termux/mise already guarantee a current node; supersedes d023 b3 |
 
 ### Research & archive

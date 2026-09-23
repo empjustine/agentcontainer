@@ -2,7 +2,7 @@
 id: goal
 type: requirements
 status: draft
-title: agentcontainer — requirements (BRD): personal multi-host LLM serving + coding-agent fleet
+title: "agentcontainer — requirements (BRD): personal multi-host LLM serving + coding-agent fleet"
 tags: ["[root]", "brd", "requirements"]
 ---
 
@@ -76,7 +76,7 @@ copies: capability detection at generation time decides what a host gets.
 
 - **FR-U1** — The pi coding-agent runs in a pre-built container image that
   provides pi, opencode, the Cline CLI, and Thinkrail, configured by committed
-  static inputs (`settings.json`, `auth.json`, `config.toml`, `Containerfile`).
+  static inputs (`settings.json`, `config.toml`, `Containerfile`).
 - **FR-U2** — Model/provider configuration is GENERATED, layered
   (`model-*.json` overlays merged lexically per-provider), and capability
   gated: full generation on capable hosts, static config on peers-only hosts.

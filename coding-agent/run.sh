@@ -159,14 +159,17 @@ workload_ro "$REPO_ROOT/lib/log.sh" '/opt/lib/log.sh'
 # node-run.sh: the generate.sh shim sources it to resolve the pinned node
 # (docs/d041) — required for manual in-container regeneration.
 workload_ro "$REPO_ROOT/lib/node-run.sh" '/opt/lib/node-run.sh'
-# Shared lib/ modules the generators import (docs/d023, docs/d024, d039):
-# generate.sh stages log.mjs + artifact.mjs + cloud-providers.mjs into its
-# scratch dir via $LIB_DIR — all must be mounted (artifact.mjs missing here
-# once cost every generator an ERR_MODULE_NOT_FOUND in-container: the
-# staging loop found nothing to copy, so each generator died and only the
-# committed fallbacks survived).
+# Shared lib/ modules the generators import (docs/d023, docs/d024, d039,
+# d050): generate.sh stages log.mjs + artifact.mjs + canonical-json.mjs +
+# cloud-providers.mjs into its scratch dir via $LIB_DIR — all must be mounted
+# (artifact.mjs missing here once cost every generator an
+# ERR_MODULE_NOT_FOUND in-container: the staging loop found nothing to copy,
+# so each generator died and only the committed fallbacks survived;
+# canonical-json.mjs — artifact.mjs's own import — repeated the same failure
+# on the host). tests/lib-staging.test.mjs guards both lists.
 workload_ro "$REPO_ROOT/lib/log.mjs" '/opt/lib/log.mjs'
 workload_ro "$REPO_ROOT/lib/artifact.mjs" '/opt/lib/artifact.mjs'
+workload_ro "$REPO_ROOT/lib/canonical-json.mjs" '/opt/lib/canonical-json.mjs'
 workload_ro "$REPO_ROOT/lib/cloud-providers.mjs" '/opt/lib/cloud-providers.mjs'
 # The single-consumer helper modules (docs/d039) live in coding-agent/ and
 # ride the generator staging list into _gen_target.

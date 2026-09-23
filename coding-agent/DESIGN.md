@@ -61,7 +61,7 @@ final act patches the installed `settings.json` with the pair from the
 settings source (docs/d036); the overlay is only the plumbing between the
 stage and the install.
 
-Credentials are **not** staged via `auth.json` — vault keys are forwarded
+Credentials are **not** staged as a file — vault keys are forwarded
 through the `workload_env` allowlist (below) and pi resolves the `"$VAR"`
 api-key refs in `models.json` from the forwarded environment. The model scope
 the agent cycles through is pinned by `enabledModels` in `settings.json` —
@@ -70,8 +70,9 @@ generators enumerate **no** model lists
 
 `run.sh` launches the container: loads vault secrets **once on the host** via
 lib/environment.sh and forwards them through the `workload_env` allowlist — nothing
-inside the workload runs infisical, and no `auth.json` credential store is
-staged (the host login state stays out of the sandbox). It stages the
+inside the workload runs infisical, and no credential store file is staged
+(the host login state stays out of the sandbox; the earlier staged-store
+design is tombstoned in `docs/d052`). It stages the
 COMMITTED config and NEVER generates (docs/d041): the generator tree is
 mounted **file by file** (the list in `run.sh` mirrors `generate.mjs`'s
 scratch staging — the two generators + `gen-lib.mjs` + the helper modules)

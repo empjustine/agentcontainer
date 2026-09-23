@@ -30,9 +30,9 @@ the llama-swap serving container and the pi coding-agent container.
 | Name                 | Sandbox / runtime                    | Cloud access | Serving dir                     | Usage dir              |
 |----------------------|--------------------------------------|--------------|---------------------------------|------------------------|
 | local-inference-host | rootless podman, SELinux enforced    | direct       | `llm-local-inference/`           | `coding-agent/`        |
-| termux               | rootless termux, restrictive SELinux, | direct (if   | `llm-local-inference/` (native)  | `coding-agent/`        |
+| termux               | rootless termux, restrictive SELinux, | direct (if   | `llm-reverse-proxy/` (native)   | `coding-agent/`        |
 |                      | non-standard file paths              | any)         |                                 |                        |
-| small-cloud-vm       | rootless podman or docker            | peers only   | `llm-local-inference/` (peer-only) | `coding-agent/` (static config) |
+| small-cloud-vm       | rootless podman or docker            | peers only   | `llm-reverse-proxy/` (relay)    | `coding-agent/` (static config) |
 
 ### local-inference-host (full, default)
 
@@ -51,24 +51,24 @@ creation (no `CAP_MKNOD` — GPUs pass through as *existing* nodes via
 `--device`, requiring group access to `/dev/dri`/`/dev/kfd`, which is what
 `workload_gpu`/`detect_gpu_devs` hand the backend).
 
-### termux (peer-only serving)
+### termux (coding-agent + native cloud relay)
 
 Resource-constrained host (phone/router under Termux). It **cannot run the
 `llm-local-inference` llama-swap container** — Termux has no usable podman/docker
-and the image is amd64/container-shaped. Instead it needs a termux-specific
-**native build of llama-swap** compiled for the device. Local llama.cpp inference
-is also impossible, so generation (which detects no container backend + no
-GPU) emits no GGUF layer — see the termux-serving banner: this serving
-variant is retired.
+and the image is amd64/container-shaped — and there are **no local inference
+capabilities worth using** there, so generation (no container backend, no GPU)
+emits no GGUF layer. What runs on termux is `coding-agent/` (usage) plus a
+native termux build of `llm-reverse-proxy/` serving the cloud relay path — the
+environment matrix in
+[environments-and-peer-variants.md](environments-and-peer-variants.md) is
+authoritative. The former native llama-swap serving variant is retired: see
+the [termux-serving.md](termux-serving.md) archived banner for that history.
 
-See [termux-serving.md](termux-serving.md) for the termux map — the
-build/serve/env detail lives in the `llm-local-inference/` script headers it
-points at.
+### small-cloud-vm (peer-relay usage)
 
-### small-cloud-vm (peer-only usage)
-
-The peers-only deployment on small cloud VMs — `coding-agent/` static config
-(see the run-scripts section below).
+Cloud VMs serve `llm-reverse-proxy/` — the cloud peer relay that replaced the
+former peers-only llama-swap mode — and run `coding-agent/` with static peer
+config (see the run-scripts section below).
 
 ## Shared support: lib/workload-runtime.sh (description-driven)
 
@@ -83,8 +83,8 @@ the active backend — podman or docker —  No
 > ptrace-based path translation, not isolation — no kernel namespaces, no
 > cgroups, no real root, no GPU passthrough, no read-only binds — so calling it
 > a "supported workload" was a lie the tree no longer tells. The native termux
-> serving variant is retired (see the termux-serving.md banner); Termux is a
-> usage environment for the coding agent today.
+> serving variant is retired (see the termux-serving.md banner); termux runs
+> `coding-agent/` plus a native `llm-reverse-proxy/` cloud relay today.
 > For a stronger-than-container option on capable hosts, see
 > [d020-libvirt-qemu-sandbox.md](d020-libvirt-qemu-sandbox.md). For how the
 > field does the same confinement at finer granularity (bwrap/landlock/
@@ -249,7 +249,7 @@ was removed with the peers handoff (see module SPECs).
 
 ### Serving run script (one multipurpose instance)
 
-Every host runs ONE llama-swap serving container, launched by
+Every local-inference-host runs ONE llama-swap serving container, launched by
 `llm-local-inference/run.sh` (sources `lib/workload-runtime.sh`). `run.sh` is
 serve-only: it mounts the already-generated `config.d/` (read-only) loaded via
 `-config-dir` and adapts to it. Generation lives in `llm-local-inference/generate.mjs`
@@ -301,11 +301,11 @@ See [d018-split-config-d.md](d018-split-config-d.md) for the merge contract.
   The legacy local-inference port 18080 is deprecated — nothing listens on
   it since the two-instance squash.
 
-- **Termux alternative (archived)**: the native termux llama-swap serving
+- **Termux (archived serving variant)**: the native termux llama-swap serving
   variant is retired (see the [termux-serving.md](termux-serving.md) banner).
-  What remains real on termux: the root `./build.sh` provisions the Infisical
-  CLI there (via `lib/provision-termux.sh`) and builds the android proxy
-  binary.
+  What runs on termux today: `coding-agent/` plus a native `llm-reverse-proxy/`
+  cloud relay; the root `./build.sh` provisions the Infisical CLI there
+  (via `lib/provision-termux.sh`) and builds that android proxy binary.
 
 ### `coding-agent/run.sh` (full, default usage)
 
@@ -333,7 +333,7 @@ Launches the pi coding-agent container with:
 Uses `--userns=keep-id` + `--user $(id -u):$(id -g)` so files written into
 bind-mounted dirs are owned by the host user.
 
-### `coding-agent/run.sh` (work / peers-only usage)
+### `coding-agent/run.sh` (work / static peer config)
 
 `coding-agent/` covers the work/WSL2 case with static config instead of a
 separate `coding-agent-peer/` folder: a static `settings.json` and
@@ -350,7 +350,7 @@ the static provider config.
 
 ## Image / mode per instance
 
-There is ONE multipurpose serving folder and no `PEERS_ONLY` toggle — the mode
+There is ONE multipurpose serving folder — the mode
 falls out of what generation emitted into `config.d/`:
 
 - **local layer present** (`10-local-llm-inference.yaml`): `run.sh` uses

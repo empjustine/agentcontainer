@@ -1,9 +1,12 @@
 /**
  * @fileoverview gen-lib.mjs — the shared preamble for the coding-agent
  * pi-layer generators: resolves `scriptDir` / `LIB_DIR`, re-exports the lib/
- * helpers they use, and owns the models.dev catalog lookup order. The serving
- * layers' equivalent is ../llm-local-inference/gen-lib.mjs; the LIB_DIR
- * staging convention (and why a scratch copy exists at all) is docs/d023.
+ * helpers they use, owns the models.dev catalog lookup order, and holds
+ * pi's driving-capability declaration — the one allowlist both eligibility
+ * (modalitiesEligible) and emission (toInput) derive from (docs/d049). The
+ * serving layers' equivalent is ../llm-local-inference/gen-lib.mjs; the
+ * LIB_DIR staging convention (and why a scratch copy exists at all) is
+ * docs/d023.
  *
  * This module is staged next to the generators (plus its coding-agent/
  * siblings peer-probe.mjs, hyper-facts.mjs, catwalk-facts.mjs and
@@ -48,7 +51,7 @@ const cloudProviders =
 	);
 
 export const { logInfo, logWarn, setLogTool } = logging;
-export const { writeArtifact } = artifact;
+export const { writeArtifact, writeJsonArtifact } = artifact;
 export {
 	bearerHeaders,
 	fetchModelEntries,
@@ -146,19 +149,69 @@ function displayName(id) {
 }
 
 /**
- * pi's models.json input schema accepts only "text" and "image";
- * video/audio/... are dropped (the same filter catalogPiModel's
- * toInput() applies to catalog records — this one guards the RAW
- * live-listing path, see piModel). Kept in canonical order so the
- * emitted arrays are always ["text"] or ["text","image"].
+ * THE pipeline-wide declaration of what the driving pi client can handle
+ * (docs/d049): the input modal pi's own schema accepts, and the output
+ * modalities it can consume. Eligibility (`modalitiesEligible`) and
+ * projection (`toInput`) both derive from it — admit-but-trim, so the gate
+ * and the emission read one source of truth and cannot drift.
+ * `input[0]` is the drivable core (text): a client originates chat text, so
+ * an input set without it can never be driven whatever else it offers.
+ * @type {Readonly<{ input: readonly string[], output: readonly string[] }>}
+ */
+export const PI_MODALITY_CAPABILITY = Object.freeze({
+	input: Object.freeze(["text", "image"]),
+	output: Object.freeze(["text"]),
+});
+
+/**
+ * docs/d049's admit-but-trim GATE: judge only the dimensions the record
+ * actually carries. A missing/empty dimension is unjudgeable and PASSES —
+ * name exceptions and id-only defaults stay the fallback for records
+ * without metadata (non-rich sources are never enriched to become
+ * judgeable — d049's scope decision).
+ *
+ * - input: must include the drivable core; extra entries (audio, video, …)
+ *   are fine because `toInput` trims them at emission.
+ * - output: every produced modality must be inside the capability — a chat
+ *   client cannot consume audio/video/image out, so one foreign entry
+ *   refuses the model outright (no trim applies to what comes back).
+ * @param {{ input?: string[], output?: string[] }} [modalities]
+ * @returns {boolean} false = the client cannot drive this record; drop it
+ */
+export function modalitiesEligible(modalities) {
+	const input = modalities?.input;
+	const output = modalities?.output;
+	if (input?.length && !input.includes(PI_MODALITY_CAPABILITY.input[0])) {
+		return false;
+	}
+	if (
+		output?.length &&
+		!output.every((o) => PI_MODALITY_CAPABILITY.output.includes(o))
+	) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * The ONE shared projection (docs/d049 item 3): intersect the declared
+ * input with PI_MODALITY_CAPABILITY — deny-by-absence in capability order,
+ * so emitted arrays are always `["text"]` or `["text","image"]`. Covers
+ * both callers that used to carry a copy each (catalog records here, raw
+ * live listings via piModel).
+ *
+ * The `[core]` fallback is for metadata-less records (fabricated minimal
+ * ids, listings without architecture) — where the gate did not judge and
+ * there is nothing to intersect: default to the drivable core rather than
+ * emit an empty array the schema rejects.
  * @param {string[]} [modalities]
  * @returns {string[]}
  */
-function toInput(modalities) {
-	const input = [];
-	if (modalities?.includes("text")) input.push("text");
-	if (modalities?.includes("image")) input.push("image");
-	return input.length ? input : ["text"];
+export function toInput(modalities) {
+	const input = PI_MODALITY_CAPABILITY.input.filter((m) =>
+		modalities?.includes(m),
+	);
+	return input.length ? input : [PI_MODALITY_CAPABILITY.input[0]];
 }
 
 /**
@@ -180,8 +233,8 @@ export function piModel(entry) {
 	 * video/audio/pdf entries (gemma-4-31b-it:free, inkling:free, ...),
 	 * and a 3+ element input array fails the strict models.json schema
 	 * (const anyOf ["text","image"]) the moment the file is re-read by
-	 * cline/other strict consumers. Filter to text+image here — same
-	 * contract as catalogPiModel's toInput().
+	 * cline/other strict consumers — the shared toInput does that filtering
+	 * (d049's one projection; catalogPiModel reads through it too).
 	 */
 	const input = toInput(
 		meta?.input ??

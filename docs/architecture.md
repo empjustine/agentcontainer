@@ -61,7 +61,7 @@ reaching into a sibling *runner* folder does.
   removed with that handoff.
 - `coding-agent/` is the **pi workload baseline generator**: it owns the
   `Containerfile`/`config.toml` image definition and the canonical
-  `settings.json`/`auth.json`. Archived runners (`-cloud`, `-peer`) used to
+  `settings.json`. Archived runners (`-cloud`, `-peer`) used to
   consume that image and copy those artifacts; their concerns are now handled
   by layered generation inside `coding-agent/` itself.
 
@@ -122,7 +122,7 @@ The probe/facts/refresh modules that used to sit here (`peer-probe.mjs`,
 
 Runner run-scripts source lib modules from the fixed `~/agentcontainer` layout.
 lib is intentionally NOT copied into each runner — it is owned by the repo, like
-`AGENTS.md` and `biome.json`.
+`AGENTS.md` and `biome.jsonc`.
 
 ## One generate, one build (docs/d041)
 
@@ -164,7 +164,7 @@ the variant folders redundant.)
 |--------|------|--------------------|
 | `llm-local-inference/` | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `generate.sh`/`generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh` |
 | `llm-reverse-proxy/` | host-allowlist cloud router (docs/d047, the only mode): `/<upstream-host>/<path>` → the allowlisted scheme://host root, byte-for-byte, no keys — deny-by-absence for everything else (docs/d027's 404 policy); streaming as-is, RFC 9457 502s | `main.go`, `generate.sh`/`generate.mjs` (allowHosts from pi-ai + lib/cloud-providers.mjs, docs/d047), `llm-reverse-proxy.example.json`, `smoke-test.sh`; built by the root `build.mjs` |
-| `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.sh`/`generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.sh`, `settings.json`, `auth.json`; image built by the root `build.mjs` |
+| `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.sh`/`generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.sh`, `settings.json`; image built by the root `build.mjs` |
 
 The former "next planned step" sketch (a simplified config-generator system
 split by concern) is archived at

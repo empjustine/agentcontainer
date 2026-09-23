@@ -52,7 +52,10 @@ Findings were classified as:
 `lib/workload-runtime.sh` are hard dependencies of both families; the
 coding-agent container ro-mounts them under `/opt/lib`). The consolidation
 extends that kernel. The copy unit is **folder + `../lib`**, not the folder
-alone — `docs/architecture.md` was amended accordingly.
+alone — `docs/architecture.md` was amended accordingly. The shared artifact
+writer this consolidated (`lib/artifact.mjs`) had its contract later
+extended by d050: canonical serialization at the same write choke point
+(`writeJsonArtifact`).
 
 ### c1. One `refresh-models-dev.mjs` instead of two near-identical copies
 

@@ -1,3 +1,14 @@
+---
+id: d033
+type: architecture-design
+status: active
+title: "d033 — cloud/local generator cascade & emitted layer shapes"
+parent: architecture
+tags: ["generators", "cascade", "probing", "reachability"]
+references: [d022, d024, d027]
+depends-on: [coding-agent]
+---
+
 # d033 — Cloud/local generator cascade & emitted layer shapes
 
 The three `coding-agent/` model generators

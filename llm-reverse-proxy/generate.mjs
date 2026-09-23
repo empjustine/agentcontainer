@@ -67,7 +67,7 @@ const { CLOUD_PROVIDERS } =
 	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
-const { writeArtifact, isDryRun } =
+const { writeJsonArtifact, isDryRun } =
 	/** @type {typeof import("../lib/artifact.mjs")} */ (
 		await import(`${LIB_DIR}/artifact.mjs`)
 	);
@@ -500,7 +500,7 @@ const cfg = {
 	listen: "0.0.0.0:8080",
 	allowHosts: Object.fromEntries(allowHosts),
 };
-const written = writeArtifact(out, `${JSON.stringify(cfg, null, 2)}\n`);
+const written = writeJsonArtifact(out, cfg);
 logInfo("wrote llm-reverse-proxy host-allowlist config", {
 	path: written,
 	allowHosts: allowHosts.size,
@@ -546,7 +546,7 @@ for (const key of Object.keys(deployedAllowHosts)) {
 // allowlist must exist after generation — a silent no-op here would leave
 // run.sh to die later with a config-missing error pointing back at this
 // script. The check follows the ACTUAL output (`out`, the optional argv
-// path) and, under DRY_RUN, the preview writeArtifact produced instead of
+// path) and, under DRY_RUN, the preview writeJsonArtifact produced instead of
 // the live artifact.
 const generatedPath = isDryRun() ? `${out}.dry-run` : out;
 if (!existsSync(generatedPath)) {

@@ -8,7 +8,7 @@ references:
   - d027
   - d024
   - d033
-  - d028
+  - d028-provider-extensions-vs-generated-config
 depends-on:
   - llm-reverse-proxy
 ---

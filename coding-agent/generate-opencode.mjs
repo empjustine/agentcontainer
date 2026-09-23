@@ -37,7 +37,7 @@ import {
 	scriptDir,
 	setLogTool,
 	suppressedProbe,
-	writeArtifact,
+	writeJsonArtifact,
 } from "./gen-lib.mjs";
 
 setLogTool("coding-agent/generate-opencode");
@@ -307,9 +307,9 @@ async function main() {
 		return;
 	}
 
-	const written = writeArtifact(
+	const written = writeJsonArtifact(
 		out,
-		`${JSON.stringify({ provider: providers }, null, 2)}\n`,
+		{ provider: providers },
 	);
 	const summary = Object.entries(providers)
 		.map(

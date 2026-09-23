@@ -34,7 +34,8 @@
 #   VBS_TRANSPORT     ssh|https               (default ssh)
 #   VBS_SSH_USER      userinfo for built ssh clone URLs (the idcs-... identity)
 #   VBS_HTTP_USER     userinfo for built https clone URLs (the email)
-#   VBS_RETRIES       retries per repo after the first failure (default 10)
+#   VBS_RETRIES       retries per repo after the first failure (default 10;
+#                     attempts = retries + 1)
 #   VBS_RETRY_DELAY   base seconds for a transient failure (default 60)
 #   VBS_RATE_DELAY    base seconds once rate limited (default 60)
 #   VBS_BACKOFF_MAX   cap on a single backoff sleep, seconds (default 300)
@@ -77,13 +78,13 @@ VBS_HTTP_USER=${VBS_HTTP_USER:-}
 # A failed clone must not be dropped: bulk-cloning this tenant earns a rate
 # limit, and the fix is to back off, retry, and pace the sweep (docs/d044).
 # All are overridable by env or the matching flag.
-VBS_RETRIES=${VBS_RETRIES:-10}         # retries per repo (attempts = retries + 1)
-VBS_RETRY_DELAY=${VBS_RETRY_DELAY:-60} # base seconds for a transient failure
-VBS_RATE_DELAY=${VBS_RATE_DELAY:-60}   # base seconds once rate limited
+VBS_RETRIES=${VBS_RETRIES:-10}
+VBS_RETRY_DELAY=${VBS_RETRY_DELAY:-60}
+VBS_RATE_DELAY=${VBS_RATE_DELAY:-60}
 VBS_BACKOFF_MAX=${VBS_BACKOFF_MAX:-300}
-VBS_THROTTLE=${VBS_THROTTLE:-60}       # seconds between repositories
-VBS_FAIL_STREAK=${VBS_FAIL_STREAK:-5}  # consecutive failures before a cooldown
-VBS_COOLDOWN=${VBS_COOLDOWN:-60}       # cooldown seconds after that streak
+VBS_THROTTLE=${VBS_THROTTLE:-60}
+VBS_FAIL_STREAK=${VBS_FAIL_STREAK:-5}
+VBS_COOLDOWN=${VBS_COOLDOWN:-60}
 
 # A credential prompt in a non-interactive sweep would hang; fail fast instead.
 export GIT_TERMINAL_PROMPT=0

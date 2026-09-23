@@ -229,7 +229,8 @@ currentStage = "scratch-stage";
 // dir may be a read-only mount (container ro-mount), so stage the generators
 // — plus the helper modules they import (peer-probe.mjs, hyper-facts.mjs,
 // catwalk-facts.mjs, docs/d039) and the lib/ modules resolved via $LIB_DIR
-// (log.mjs, artifact.mjs, cloud-providers.mjs, docs/d023) — there and
+// (log.mjs, artifact.mjs, canonical-json.mjs, cloud-providers.mjs, docs/d023
+// + d050) — there and
 // symlink the big inputs.
 const scratch = mkdtempSync(join(runDir, "pi-models-gen-"));
 const scratchLib = join(scratch, "lib");
@@ -254,7 +255,10 @@ for (const f of GENERATORS) {
 // import these from $LIB_DIR (default ../lib relative to their own file —
 // which from the scratch dir resolves somewhere that does not exist, so a
 // missing copy here costs every generator instead of one clear line).
-for (const f of ["log.mjs", "artifact.mjs", "cloud-providers.mjs"]) {
+// canonical-json.mjs is here as artifact.mjs's runtime dependency (d050);
+// tests/lib-staging.test.mjs fails if either this list or run.sh's mounts
+// drift out of sync with what the generators actually import.
+for (const f of ["log.mjs", "artifact.mjs", "canonical-json.mjs", "cloud-providers.mjs"]) {
 	if (existsSync(join(repoRoot, "lib", f))) {
 		copyFileSync(join(repoRoot, "lib", f), join(scratchLib, f));
 	} else {
