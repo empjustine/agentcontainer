@@ -1,6 +1,6 @@
 #!/bin/sh
 # -vbs-mirror-all.sh — mirror EVERY git repository reachable in a Visual
-# Builder Studio (the rebranded Developer Cloud Service / OCDS) tenant.
+# Builder Studio (VBS) tenant.
 # One input mode, one mirror loop (docs/d044):
 #
 #   manifest  read a JSON inventory produced by git/vbs-har.sh (a HAR export).

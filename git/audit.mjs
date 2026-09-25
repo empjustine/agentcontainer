@@ -32,10 +32,10 @@ import {
 	setLogTool,
 } from "./git-lib.mjs";
 import {
-	ocdsGlassUrl,
-	ocdsHttpsUrl,
-	parseOcdsRemote,
-} from "./ocds-remotes.mjs";
+	parseSoftwareForgeRemote,
+	softwareForgeGlassUrl,
+	softwareForgeHttpsUrl,
+} from "./software-forge-remotes.mjs";
 
 setLogTool("git/audit");
 
@@ -132,7 +132,7 @@ async function main() {
 	/** @type {Map<string, string[]>} */
 	const byOrigin = new Map();
 	/** @type {{ path: string, org: string, project: string, repo: string, glass: string|null, https: string|null }[]} */
-	const ocdsRemotes = [];
+	const softwareForgeRemotes = [];
 	/** @type {string[]} */
 	const detached = [];
 	/** @type {string[]} */
@@ -156,18 +156,18 @@ async function main() {
 
 		if (existsSync(`${repo}/.git/shallow`)) shallow.push(rel);
 
-		// The work farm is a single private OCDS tenant whose URLs are not
+		// The work farm is one private software forge whose URLs are not
 		// `host/owner/repo`; decode them so the report shows the identity and the
 		// glass-pane link a human can open (docs/d044).
-		const ocds = parseOcdsRemote(url);
-		if (ocds) {
-			ocdsRemotes.push({
+		const softwareForge = parseSoftwareForgeRemote(url);
+		if (softwareForge) {
+			softwareForgeRemotes.push({
 				path: rel,
-				org: ocds.org,
-				project: ocds.projectSlug ?? ocds.projectId ?? "",
-				repo: ocds.repo,
-				glass: ocdsGlassUrl(ocds),
-				https: ocdsHttpsUrl(ocds),
+				org: softwareForge.org,
+				project: softwareForge.projectSlug ?? softwareForge.projectId ?? "",
+				repo: softwareForge.repo,
+				glass: softwareForgeGlassUrl(softwareForge),
+				https: softwareForgeHttpsUrl(softwareForge),
 			});
 		}
 
@@ -219,7 +219,7 @@ async function main() {
 		pathOriginMismatch,
 		nested,
 		duplicateOrigins,
-		ocdsRemotes,
+		softwareForgeRemotes,
 		...(o.deep ? { detached, dirty } : {}),
 	};
 	process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
@@ -233,7 +233,7 @@ async function main() {
 		pathOriginMismatch: pathOriginMismatch.length,
 		nested: nested.length,
 		duplicateOrigins: duplicateOrigins.length,
-		ocds: ocdsRemotes.length,
+		softwareForge: softwareForgeRemotes.length,
 		...(o.deep ? { detached: detached.length, dirty: dirty.length } : {}),
 	});
 

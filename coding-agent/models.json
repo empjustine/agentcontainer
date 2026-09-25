@@ -7783,6 +7783,19 @@
           }
         },
         {
+          "id": "space-bunny-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
           "id": "trinity-large-preview-free",
           "reasoning": true,
           "input": [
@@ -7940,6 +7953,20 @@
         },
         {
           "id": "gpt-5.6-luna",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-responses"
+        },
+        {
+          "id": "gpt-6-luna",
           "reasoning": true,
           "input": [
             "text"
@@ -8351,6 +8378,20 @@
             "cacheWrite": 20
           },
           "api": "anthropic-messages"
+        },
+        {
+          "id": "space-bunny-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          },
+          "api": "openai-completions"
         }
       ]
     },
@@ -8424,19 +8465,6 @@
         },
         {
           "id": "inclusionai/ling-3.0-flash-sante:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "inclusionai/ling-3.0-flash-vl:free",
           "reasoning": true,
           "input": [
             "text"

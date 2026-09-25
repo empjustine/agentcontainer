@@ -93,7 +93,8 @@ agentcontainer/
 │   ├── node-run.sh                     #   → standalone node_run() (pinned node; termux-aware)
 │   ├── go-build.mjs                    #   → go toolchain probe + android/host flag presets (d041)
 │   ├── provision-termux.sh             #   → termux pkg/infisical provisioning (the former root build.sh)
-│   ├── llamacpp-model-data.json        #   → canonical GGUF model definitions (shared with local-llm/)
+│   ├── llamacpp-model-data.json        #   → canonical GGUF model definitions + SI-GB footprints (shared; d025/d053)
+│   ├── hf-manifests/                   #   → committed HF repo listings (per-file sizes; size-source for d053)
 │   ├── models.dev.api.json             #   → vendored models.dev catalog (coding-agent + llm-reverse-proxy)
 │   ├── catwalk-facts.json              #   → vendored catwalk catalog (coding-agent + llm-reverse-proxy)
 │   ├── cloud-providers.mjs             #   → the one cloud-provider fact table
@@ -104,6 +105,7 @@ agentcontainer/
 ├── llm-local-inference/                   # llama-swap: LOCAL GGUF inference only
 │   ├── run.sh                           #   → unified-vulkan image + GPU + HF mounts on :8101
 │   ├── generate.sh / generate.mjs       #   → capability-gated config.d layers (fails on non-GPU hosts)
+│   ├── model-sizes.sh / model-sizes.mjs #   → footprint + cheapest-first reorder of lib/llamacpp-model-data.json (d053)
 │   ├── active-b.json                    #   → activeB table (model-id derivation)
 │   ├── llama-swap-core.json             #   → general-purpose config source
 │   └── config.d/                        #   → generated split config (loaded via -config-dir)
@@ -130,7 +132,7 @@ agentcontainer/
 │   ├── config.toml                       #   → mise configuration (includes cline and thinkrail)
 │   └── Containerfile                    #   → container image build
 │
-├── local-llm/                           # Local LLM / HF cache tooling
+├── local-llm/                           # Local LLM / HF cache tooling (mostly deprecated — d053; superseded by llm-local-inference/model-sizes.mjs)
 │   ├── run-all.sh                       #   → full pipeline in dependency order
 │   ├── download_models.py               #   → provision served GGUFs into the HF cache
 │   ├── upkeep.py                        #   → cache list/pull/prune/verify (uv run)
@@ -218,7 +220,7 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d041-unified-generate-build-entrypoints.md](docs/d041-unified-generate-build-entrypoints.md) | root `generate.mjs`/`build.mjs` unified entrypoints, `lib/node-run.sh` + `lib/go-build.mjs`, runners never build/generate |
 | [docs/d042-documentation-taxonomy.md](docs/d042-documentation-taxonomy.md) | the docs taxonomy itself — requirements / reference / design / research + decision log, anchor analysis, the moves |
 | [docs/d043-cross-repo-reference-search.md](docs/d043-cross-repo-reference-search.md) | cross-repo/cross-branch search — Zoekt for regex (opt-in, per repo), blob-addressed chunk embeddings for semantics, host-side serving without the farm bind mount |
-| [docs/d044-work-machine-bare-mirrors.md](docs/d044-work-machine-bare-mirrors.md) | work-machine reference farm — OCDS clones to bare mirrors on NTFS, HAR export + manifest seam |
+| [docs/d044-work-machine-bare-mirrors.md](docs/d044-work-machine-bare-mirrors.md) | work-machine reference farm — software-forge clones to bare mirrors on NTFS, HAR export + manifest seam |
 | [docs/d045-structured-logging-and-error-construct.md](docs/d045-structured-logging-and-error-construct.md) | structured logging and error construction — no interpolation, no level filtering, stdout default stream (payload scripts → stderr), full cause chains |
 | [docs/d046-infisical-run.md](docs/d046-infisical-run.md) | the env chain is `infisical run` — the hand-rolled dotenv loader and its empty-vault pre-flight retire; `--expand=false` / `INFISICAL_DOMAIN` pins |
 | [docs/d046b-live-listing-input-schema-poisoning.md](docs/d046b-live-listing-input-schema-poisoning.md) | live-listing `input` modality arrays (`video`/`audio`/`pdf`) poisoned `models.json` via `piModel()` verbatim passthrough → strict schemas (cline) rejected the file; fixed with a `toInput()` text+image guard; committed-snapshot writeback amplification |
@@ -227,6 +229,7 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d049-input-modality-allowlists.md](docs/d049-input-modality-allowlists.md) | implemented — modality/input capability as the uniform allowlist axis for model eligibility: `PI_MODALITY_CAPABILITY` + the `modalitiesEligible` admit-but-trim gate (drivable text in, exactly text out; unjudgeable dimensions pass) in `gen-lib`, composed gate-first at every record-backed site, `toInput` collapsed to one shared projection, name checks demoted to annotated exceptions (google/mistral `/embedding/`, `/embed|tts/`); openrouter `:free` stays an access filter that runs after the gate; metadata-rich sources only, opencode emission out of scope; verified by a regeneration audit (17 drops, all catalog-attributed, no chat model refused) + `tests/modality-allowlist.test.mjs` |
 | [docs/d050-deterministic-generated-artifacts.md](docs/d050-deterministic-generated-artifacts.md) | implemented — canonical/stable generated manifests: schema-aware sort of provider maps and `models` arrays (not a deep key-sort) at the single write choke point (`lib/canonical-json.mjs` + `writeJsonArtifact`, sorted+pretty); fixes `model-012`'s `Promise.allSettled` key-order churn; one-time reformat of all 8 committed manifests + `tests/canonical-json.test.mjs` canonicity guard; NDJSON and one-line-per-model rejected; caches and `default-model.json` out of scope |
 | [docs/d051-retire-termux-node-version-gate.md](docs/d051-retire-termux-node-version-gate.md) | retire the Termux node floor gate — `check-node-version.mjs` deleted (its inverted presence probe false-failed every healthy run); pi self-enforces `>= 22.19` and Termux/mise already guarantee a current node; supersedes d023 b3 |
+| [docs/d053-model-size-ordering.md](docs/d053-model-size-ordering.md) | footprint data + cheapest-first `lib/llamacpp-model-data.json` — `llm-local-inference/model-sizes.mjs` sums main GGUF (all shards) + mmproj + MTP from committed `lib/hf-manifests` (cache fallback), emits SI-GB, retires the perf reorder; R4 (active-part) TODO |
 
 ### Research & archive
 

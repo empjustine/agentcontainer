@@ -57,7 +57,7 @@ log.set_stream(sys.stderr)
 
 HERE = Path(__file__).parent
 MODEL_DATA = HERE.parent / "lib" / "llamacpp-model-data.json"
-MANIFEST_DIR = HERE / "hf-manifests"
+MANIFEST_DIR = HERE.parent / "lib" / "hf-manifests"
 
 SIDECAR_RE = re.compile(r"(mmproj|imatrix|mtp-|eagle3-|dflash-|dspark-)")
 SPLIT_RE = re.compile(r"-(\d{5})-of-(\d{5})\.gguf$")

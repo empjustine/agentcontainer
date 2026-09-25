@@ -24,7 +24,7 @@
 			"!**/models.dev.api.json",
 			"!**/gguf-vram-fit-estimates.data.json",
 			"!**/catwalk-facts.json",
-			"!local-llm/hf-manifests",
+			"!lib/hf-manifests",
 			"!coding-agent/models.json",
 			"!coding-agent/model-*.json",
 			"!coding-agent/hyper-facts.json",

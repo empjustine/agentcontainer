@@ -14,6 +14,14 @@ tags:
   - tooling
 ---
 
+> **Mostly deprecated (docs/d053).** The audit/table tooling here is
+> superseded: the footprint + cheapest-first order regeneration moved to
+> `llm-local-inference/model-sizes.mjs`, and the committed HF manifests moved
+> to `lib/hf-manifests/` (the runner-boundary rule forbids
+> `llm-local-inference/` reaching into this folder). Only cache provisioning
+> (`download_models.py`) and upkeep (`upkeep.py`) remain load-bearing; the
+> table/manifest/estimator tooling is kept for reference.
+
 ## Responsibility
 
 Charter: provision and audit the HuggingFace cache tree that local GGUF
@@ -30,11 +38,13 @@ runners' generation.
 `run-all.sh` orchestrates the pipeline in dependency order:
 
 1. `download_models.py` — provision served GGUFs into the HF cache.
-2. `fetch_hf_manifests.py` — refresh + audit repo:quant manifests.
+2. `fetch_hf_manifests.py` — refresh + audit repo:quant manifests (writes
+   `lib/hf-manifests/`; deprecated as a *workflow*, still the manifest writer).
 3. `upkeep.py` — cache list/pull/prune/verify.
 4. `generate_vram_fit_tables.py` — VRAM/KV/fit tables via
    gdevenyi/huggingface-estimate → regenerates
-   `docs/gguf-vram-fit-estimates.md` (+ raw-data JSON).
+   `docs/gguf-vram-fit-estimates.md` (+ raw-data JSON). Its
+   `--update-model-data` reorder is **retired** (docs/d053).
 
 Plus PoC/audit helpers (`scan_cache_coverage.py`, `gguf_context_length.py`,
 `fetch-model-cards.sh`). All are self-contained `uv` PEP-723 scripts logging

@@ -1,9 +1,10 @@
 /**
- * @fileoverview ocds-remotes.mjs — parse and normalize Oracle Developer Cloud
- * Service (OCDS) git remotes. The home reference farm (`non-bare-issues.md`)
- * is GitHub-shaped, so `git-lib.mjs` can key it by host; the work farm is one
- * private OCDS tenant whose forge exposes the SAME repository through three
- * different URLs, none of which is a plain `host/owner/repo` path:
+ * @fileoverview software-forge-remotes.mjs — parse and normalize software-forge
+ * git remotes (the work machine's Visual Builder Studio tenant). The home
+ * reference farm (`non-bare-issues.md`) is GitHub-shaped, so `git-lib.mjs`
+ * can key it by host; the work farm is one private software forge that
+ * exposes the SAME repository through three different URLs, none of which is
+ * a plain `host/owner/repo` path:
  *
  *   ssh    ssh://idcs-<id>.<email>@<host>/<projectId>/<repo>.git
  *   https  https://<email>@<host>/<org>/s/<projectId>/scm/<repo>.git
@@ -11,7 +12,7 @@
  *
  * All three carry one identity — `org / project / repo` — and that identity is
  * what the mirror layout and maintenance need. This module is that decoder:
- * `parseOcdsRemote()` (any shape → one struct) and the three rebuilders. It is
+ * `parseSoftwareForgeRemote()` (any shape → one struct) and the three rebuilders. It is
  * pure (no I/O), so it is also the unit the audit uses to show a human the
  * glass-pane link for a mirror (docs/d044).
  *
@@ -22,12 +23,12 @@
  * carries the slug, so the id stays null there.
  */
 
-/** Hosts under this suffix are OCDS tenants; the leading label is the org. */
-const OCDS_HOST_SUFFIX = ".developer.ocp.oraclecloud.com";
+/** Hosts under this suffix are software-forge hosts; the leading label is the org. */
+const SOFTWARE_FORGE_HOST_SUFFIX = ".developer.ocp.oraclecloud.com";
 
 /**
- * One OCDS repository identity, however it was spelled.
- * @typedef {object} OcdsRemote
+ * One software-forge repository identity, however it was spelled.
+ * @typedef {object} SoftwareForgeRemote
  * @property {"ssh"|"https"|"glass"} kind  which URL shape was parsed
  * @property {string} host                 e.g. fabrikam-contoso.developer.ocp.oraclecloud.com
  * @property {string} org                  e.g. fabrikam-contoso
@@ -48,10 +49,10 @@ function stripGitSuffix(value) {
 /**
  * The ssh URL embeds the IDCS identity as `idcs-<hex>.<email>`; the email is
  * the part a credential helper or https URL actually uses.
- * @param {OcdsRemote} remote
+ * @param {SoftwareForgeRemote} remote
  * @returns {string|null}
  */
-export function ocdsUserEmail(remote) {
+export function softwareForgeUserEmail(remote) {
 	if (!remote.user) return null;
 	return remote.user.replace(/^idcs-[0-9a-f]+\./i, "");
 }
@@ -78,19 +79,19 @@ function slugFromProjectId(projectId, org) {
  * @returns {string|null}
  */
 function orgFromHost(host) {
-	if (!host.endsWith(OCDS_HOST_SUFFIX)) return null;
-	const org = host.slice(0, -OCDS_HOST_SUFFIX.length);
+	if (!host.endsWith(SOFTWARE_FORGE_HOST_SUFFIX)) return null;
+	const org = host.slice(0, -SOFTWARE_FORGE_HOST_SUFFIX.length);
 	return org || null;
 }
 
 /**
- * Decode any of the three OCDS URL shapes into one identity. Returns null for
- * a URL that is not an OCDS tenant repo, so callers can fall through to the
- * forge-agnostic path (`-forge-mirror.sh`, `audit.mjs`).
+ * Decode any of the three software-forge URL shapes into one identity.
+ * Returns null for a URL that is not a software-forge repo, so callers can
+ * fall through to the forge-agnostic path (`-forge-mirror.sh`, `audit.mjs`).
  * @param {string|null|undefined} raw
- * @returns {OcdsRemote|null}
+ * @returns {SoftwareForgeRemote|null}
  */
-export function parseOcdsRemote(raw) {
+export function parseSoftwareForgeRemote(raw) {
 	if (!raw) return null;
 	/** @type {URL} */
 	let url;
@@ -170,24 +171,25 @@ export function parseOcdsRemote(raw) {
  * Rebuild the https fetch URL. This is the form that survives an IDCS ssh
  * identity rotation when a credential helper supplies the token, and the form
  * a human can paste into a browser after stripping the userinfo.
- * @param {OcdsRemote} remote
+ * @param {SoftwareForgeRemote} remote
  * @param {string|null} [user] overrides the parsed user (email form)
  * @returns {string|null} null when the project id is unknown (a glass-only parse)
  */
-export function ocdsHttpsUrl(remote, user) {
+export function softwareForgeHttpsUrl(remote, user) {
 	if (!remote.projectId) return null;
-	const who = user ?? ocdsUserEmail(remote);
+	const who = user ?? softwareForgeUserEmail(remote);
 	const auth = who ? `${encodeURIComponent(who)}@` : "";
 	return `https://${auth}${remote.host}/${remote.org}/s/${remote.projectId}/scm/${remote.repo}.git`;
 }
 
 /**
- * Rebuild the ssh fetch URL (the shape OCDS tools and the work clones use).
- * @param {OcdsRemote} remote
+ * Rebuild the ssh fetch URL (the shape the forge's own tooling and the work
+ * clones use).
+ * @param {SoftwareForgeRemote} remote
  * @param {string|null} [user] overrides the parsed user (raw `idcs-…` form)
  * @returns {string|null}
  */
-export function ocdsSshUrl(remote, user) {
+export function softwareForgeSshUrl(remote, user) {
 	if (!remote.projectId) return null;
 	const who = user ?? remote.user;
 	const auth = who ? `${encodeURIComponent(who)}@` : "";
@@ -197,24 +199,25 @@ export function ocdsSshUrl(remote, user) {
 /**
  * The browser link a human opens to see the repo, e.g. for a code review
  * pointer in a report.
- * @param {OcdsRemote} remote
+ * @param {SoftwareForgeRemote} remote
  * @param {string} [revision]
  * @returns {string|null} null when the glass-only slug is unknown
  */
-export function ocdsGlassUrl(remote, revision = "main") {
+export function softwareForgeGlassUrl(remote, revision = "main") {
 	if (!remote.projectSlug) return null;
 	const rev = revision ? `?revision=${encodeURIComponent(revision)}` : "";
 	return `https://${remote.host}/${remote.org}/#projects/${remote.projectSlug}/scm/${remote.repo}.git/tree${rev}`;
 }
 
 /**
- * The mirror-relative path for an OCDS remote: `<org>/<projectSlug>/<repo>.git`,
+ * The mirror-relative path for a software-forge remote:
+ * `<org>/<projectSlug>/<repo>.git`,
  * falling back to the numeric project id when only the ssh form was seen. This
  * is the work-farm analogue of the host-keyed layout `-forge-mirror.sh` builds.
- * @param {OcdsRemote} remote
+ * @param {SoftwareForgeRemote} remote
  * @returns {string}
  */
-export function ocdsMirrorRelPath(remote) {
+export function softwareForgeMirrorRelPath(remote) {
 	const project = remote.projectSlug ?? remote.projectId ?? "unknown";
 	return `${remote.org}/${project}/${remote.repo}.git`;
 }

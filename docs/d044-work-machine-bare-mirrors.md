@@ -2,12 +2,12 @@
 id: d044
 type: decision
 status: implemented
-title: "d044 — work-machine reference farm: OCDS clones to bare mirrors on the NTFS profile"
+title: "d044 — work-machine reference farm: software-forge clones to bare mirrors on the NTFS profile"
 parent: architecture
-tags: ["git", "references", "work", "ocds", "wsl2", "mirrors"]
+tags: ["git", "references", "work", "software-forge", "wsl2", "mirrors"]
 ---
 
-# d044 — work-machine reference farm (OCDS → bare mirrors on NTFS)
+# d044 — work-machine reference farm (software forge → bare mirrors on NTFS)
 
 `git/non-bare-issues.md` and `git/` solve the **home** machine: a farm of
 public-forge full clones under `~/Downloads/references`, converted to bare
@@ -15,8 +15,8 @@ mirrors and kept pickaxe-fast. The **work** machine is a different animal, and
 this record is its equivalent. The short version: the structural tooling
 (`audit`, `migrate-to-bare`, `maintain-mirrors`, `search-references`) already
 does not care which forge it walks, so the work farm reuses it unchanged; what
-is genuinely new is (a) reading Oracle Developer Cloud Service (OCDS) remotes,
-whose URLs are not `host/owner/repo`, and (b) putting the mirror storage
+is genuinely new is (a) reading software-forge remotes, whose URLs are not
+`host/owner/repo`, and (b) putting the mirror storage
 outside WSL2 on the Windows NTFS profile.
 
 ## Problem
@@ -28,7 +28,8 @@ full clones that follow the operator's own layout:
 <clone-root>/fabrikam-contoso/ANY_PROJECT/any_repo
 ```
 
-They all point at one private **OCDS** tenant. Every clone's
+They all point at one private **software forge** — Visual Builder Studio
+(VBS). Every clone's
 `git remote get-url origin` is a rotating IDCS ssh identity, and the tenant
 exposes the same repository through three unrelated URL shapes:
 
@@ -83,34 +84,36 @@ relative path, so `fabrikam-contoso/ANY_PROJECT/any_repo` becomes
 `<dest>/fabrikam-contoso/ANY_PROJECT/any_repo.git`, and it captures the clone's
 real origin URL onto the mirror. No URL rewriting is needed for the bulk path.
 
-### 2. Decode OCDS remotes; acquire by identity
+### 2. Decode software-forge remotes; acquire by identity
 
-The one thing the home tooling cannot do is recognize the OCDS URL family, so
-`git/ocds-remotes.mjs` supplies pure parsers/rebuilders:
+The one thing the home tooling cannot do is recognize the software-forge URL
+family, so
+`git/software-forge-remotes.mjs` supplies pure parsers/rebuilders:
 
-- `parseOcdsRemote(url)` → `{ kind, host, org, projectId, projectSlug, repo, user }`
-  for any of the three shapes (null otherwise, so non-OCDS falls through to the
-  host-keyed path).
-- `ocdsSshUrl` / `ocdsHttpsUrl` / `ocdsGlassUrl` rebuild the canonical spellings
+- `parseSoftwareForgeRemote(url)` → `{ kind, host, org, projectId, projectSlug, repo, user }`
+  for any of the three shapes (null otherwise, so any other URL falls through
+  to the host-keyed path).
+- `softwareForgeSshUrl` / `softwareForgeHttpsUrl` / `softwareForgeGlassUrl` rebuild the canonical spellings
   from an identity, so the same repo is addressable in whichever transport the
   host can authenticate.
-- `ocdsMirrorRelPath` gives `<org>/<projectSlug>/<repo>.git`, the layout used
+- `softwareForgeMirrorRelPath` gives `<org>/<projectSlug>/<repo>.git`, the layout used
   when a repo is acquired from a URL rather than migrated from an existing clone.
 
-`git/ocds-mirror.mjs` (shim `git/-ocds-mirror.sh`, the work sibling of
-`-forge-mirror.sh`) consumes both: it accepts a clone directory or an OCDS fetch
-URL, clones a bare mirror into `--dest`, and aligns an existing one with
+`git/software-forge-mirror.mjs` (shim `git/-software-forge-mirror.sh`, the work sibling of
+`-forge-mirror.sh`) consumes both: it accepts a clone directory or a
+software-forge fetch URL, clones a bare mirror into `--dest`, and aligns an
+existing one with
 `remote update --prune` — idempotent, one repo at a time. It deliberately does
 NOT reimplement the bulk migration: `migrate-to-bare.mjs` is the many-repos
-path, `-ocds-mirror.sh` the one-repo / not-yet-cloned path.
+path, `-software-forge-mirror.sh` the one-repo / not-yet-cloned path.
 
-`audit.mjs` uses `ocds-remotes.mjs` to add an `ocdsRemotes` report section with
+`audit.mjs` uses `software-forge-remotes.mjs` to add an `softwareForgeRemotes` report section with
 each mirror's `org / project / repo` and its glass-pane link, so the work
 operator gets the human pointer the raw idcs URL never showed.
 
 ### 3. Default the work dest to the NTFS profile
 
-`DEFAULT_WORK_DEST` in `ocds-mirror.mjs` is
+`DEFAULT_WORK_DEST` in `software-forge-mirror.mjs` is
 `/mnt/c/Users/<you>/references-bare` (overridable by `$WORK_MIRRORS`
 or `--dest`). `migrate-to-bare.mjs` keeps its generic `<root>-bare` default but
 now warns when root and dest are on different devices, because the WSL2→NTFS
@@ -121,8 +124,8 @@ copy (see caveats).
 
 | concern | home (`git/`) | work (this record) |
 |---------|---------------|--------------------|
-| farm | `~/Downloads/references`, many public hosts | one OCDS tenant, clones under `<root>/<org>/<PROJECT>/<repo>` |
-| acquisition | `-forge-mirror.sh <https-url>` keyed by host | `-ocds-mirror.sh <clone\|url>` keyed by OCDS identity |
+| farm | `~/Downloads/references`, many public hosts | one software forge, clones under `<root>/<org>/<PROJECT>/<repo>` |
+| acquisition | `-forge-mirror.sh <https-url>` keyed by host | `-software-forge-mirror.sh <clone\|url>` keyed by software-forge identity |
 | URL model | `host/owner/repo` | `org / projectSlug / repo` across 3 URL shapes |
 | conversion | `migrate.sh` (unchanged) | `migrate.sh` (unchanged) |
 | upkeep | `maintain.sh` (unchanged) | `maintain.sh --root <NTFS dest>` |
@@ -135,11 +138,11 @@ copy (see caveats).
 situations, and only the second one needs discovery:
 
 **Repos already cloned.** The clone tree *is* the inventory. `migrate-to-bare.mjs`
-walks it structurally (`findCloneRoots`), and `audit.mjs` now emits every OCDS
-identity it finds:
+walks it structurally (`findCloneRoots`), and `audit.mjs` now emits every
+software-forge identity it finds:
 
 ```sh
-./git/audit.sh --root "$REFERENCES_ROOT" | jq -r '.ocdsRemotes[] | [.path, .repo, .https] | @tsv'
+./git/audit.sh --root "$REFERENCES_ROOT" | jq -r '.softwareForgeRemotes[] | [.path, .repo, .https] | @tsv'
 ```
 
 No SSH introspection and no robot are needed for this — it is the whole point
@@ -246,10 +249,10 @@ supported write path for another Git for Windows process).
 
 ## Verification record
 
-- `ocds-remotes.mjs` decodes all three example shapes to the same
-  `org/projectSlug/repo`; `ocdsHttpsUrl`/`ocdsSshUrl`/`ocdsGlassUrl` rebuild the
+- `software-forge-remotes.mjs` decodes all three example shapes to the same
+  `org/projectSlug/repo`; `softwareForgeHttpsUrl`/`softwareForgeSshUrl`/`softwareForgeGlassUrl` rebuild the
   input spellings (checked against the worked example above).
-- `ocds-mirror.mjs` dry-run prints the derived target
+- `software-forge-mirror.mjs` dry-run prints the derived target
   (`<dest>/<org>/<projectSlug>/<repo>.git`), the chosen
   origin, and the glass link; `git clone --mirror` is not exercised against the
   private tenant from here.
@@ -259,8 +262,8 @@ supported write path for another Git for Windows process).
   that fails twice with `429` is retried with backoff and then mirrors (3
   attempts); consecutive failures trigger the cooldown; a `not found` error is
   NOT retried; and `--list` performs no git work.
-- `audit.mjs` emits the `ocdsRemotes` section for an OCDS-shaped origin and an
-  empty one for a GitHub-shaped origin.
+- `audit.mjs` emits the `softwareForgeRemotes` section for a software-forge-
+  shaped origin and an empty one for a GitHub-shaped origin.
 - `-vbs-mirror-all.sh` is exercised end-to-end against a fixture manifest,
   including the empty-field rows that exposed a `read` bug — tab is IFS
   *whitespace*, so an empty clone-URL column collapsed and shifted every later

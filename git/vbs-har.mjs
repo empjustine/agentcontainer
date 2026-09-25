@@ -1,6 +1,6 @@
 /**
  * @fileoverview vbs-har.mjs — build a mirror manifest from a captured Visual
- * Builder Studio (rebranded Developer Cloud Service / OCDS) HAR export — the
+ * Builder Studio (VBS) HAR export — the
  * working extraction path (docs/d044). A HAR exported with response bodies
  * needs no live session, no CSRF, and no rolling-token dance, because the app
  * already made every authenticated call.

@@ -45,12 +45,13 @@
 		"git/local-changes.mjs",
 		"git/migrate-to-bare.mjs",
 		"git/maintain-mirrors.mjs",
-		"git/ocds-mirror.mjs",
-		"git/ocds-remotes.mjs",
+		"git/software-forge-mirror.mjs",
+		"git/software-forge-remotes.mjs",
 		"git/search-references.mjs",
 		"git/vbs-har.mjs",
 		"coding-agent/generate.mjs",
 		"llm-local-inference/generate.mjs",
+		"llm-local-inference/model-sizes.mjs",
 		"llm-reverse-proxy/generate.mjs"
 	]
 }

@@ -119,6 +119,13 @@ MoE, text-only, native ctx):
 (`cache-type-k`/`cache-type-v`/`parallel` are omitted — they equal the implicit
 defaults `f16`/`f16`/`1`; only the non-default `ctx-size: 128000` is written.)
 
+Then regenerate the footprint fields and the cheapest-first order — do not
+hand-write `size-gb`/`size-parts`:
+
+```sh
+./llm-local-inference/model-sizes.sh   # adds size-gb/size-parts, re-sorts, warns on cache-only GGUFs
+```
+
 Family sampling macros live under the `macros` key of `llama-swap-core.json`
 (the source of truth) and are emitted into `config.d/00-general.yaml` by
 `generate-general.yaml.mjs`. Current families include `qwen38`, `qwen36`,
@@ -139,7 +146,9 @@ ids** — fix any collision (usually a `slug`/`ctx-size` clash) before shipping.
 ## Step 6 — Validate
 
 ```sh
-node -e "require('./llamacpp-model-data.json')"        # parses? (no output = ok)
+node -e "require('./lib/llamacpp-model-data.json')"    # parses? (no output = ok)
+
+./llm-local-inference/model-sizes.sh --check           # footprint + order are up to date?
 
 # coverage: re-run the Step 1 scanner and confirm
 #   - every cached repo has >=1 manifest entry (no repo left at zero coverage)

@@ -1,15 +1,16 @@
 /**
- * @fileoverview ocds-mirror.mjs — acquire Oracle Developer Cloud Service
- * (OCDS) repositories into the WORK mirror farm as bare mirrors. This is the
+ * @fileoverview software-forge-mirror.mjs — acquire software-forge
+ * repositories into the WORK mirror farm as bare mirrors. This is the
  * work-machine sibling of `-forge-mirror.sh`: that script keys the home farm
  * by an https forge host, but the work farm is one private tenant whose URLs
- * are not `host/owner/repo` at all (see `ocds-remotes.mjs` for the three
+ * are not `host/owner/repo` at all (see `software-forge-remotes.mjs` for the three
  * shapes). Acquisition here is therefore identity-driven — the same repo is
  * recognized whether it was handed over as an ssh URL, an https URL, or a
  * glass-pane link.
  *
  * Input is either a full clone directory (its `remote.origin.url` is read, the
- * common case when a work repo already exists) or an OCDS fetch URL. The bare
+ * common case when a work repo already exists) or a software-forge fetch URL.
+ * The bare
  * mirror lands at `<dest>/<org>/<projectSlug>/<repo>.git`, the layout that
  * mirrors the human identity in the glass UI. An existing mirror is aligned
  * with `remote update --prune`, so re-runs are idempotent — exactly the
@@ -22,7 +23,7 @@
  * script is for one repo at a time or for a repo not yet cloned.
  *
  * Usage:
- *   ./git/-ocds-mirror.sh <clone-dir|fetch-url>... [--dest DIR]
+ *   ./git/-software-forge-mirror.sh <clone-dir|fetch-url>... [--dest DIR]
  *                         [--transport ssh|https] [--dry-run]
  *
  *   --dest DIR       work mirror root (default $WORK_MIRRORS; --dest or
@@ -43,14 +44,14 @@ import {
 	setLogTool,
 } from "./git-lib.mjs";
 import {
-	ocdsGlassUrl,
-	ocdsHttpsUrl,
-	ocdsMirrorRelPath,
-	ocdsSshUrl,
-	parseOcdsRemote,
-} from "./ocds-remotes.mjs";
+	parseSoftwareForgeRemote,
+	softwareForgeGlassUrl,
+	softwareForgeHttpsUrl,
+	softwareForgeMirrorRelPath,
+	softwareForgeSshUrl,
+} from "./software-forge-remotes.mjs";
 
-setLogTool("git/ocds-mirror");
+setLogTool("git/software-forge-mirror");
 
 /**
  * Where work mirrors go when `--dest` is not given. There is deliberately no
@@ -140,17 +141,17 @@ async function resolveInput(input) {
  * The URL spelling to clone from: the input verbatim unless `--transport`
  * asks for the canonical rebuild (https survives an IDCS ssh rotation,
  * ssh needs no token — docs/d044).
- * @param {import("./ocds-remotes.mjs").OcdsRemote} remote
+ * @param {import("./software-forge-remotes.mjs").SoftwareForgeRemote} remote
  * @param {string} fetchUrl
  * @param {"ssh"|"https"|null} transport
  * @returns {string}
  */
 function chooseFetchUrl(remote, fetchUrl, transport) {
 	if (transport === "https") {
-		return ocdsHttpsUrl(remote) ?? fetchUrl;
+		return softwareForgeHttpsUrl(remote) ?? fetchUrl;
 	}
 	if (transport === "ssh") {
-		return ocdsSshUrl(remote) ?? fetchUrl;
+		return softwareForgeSshUrl(remote) ?? fetchUrl;
 	}
 	return fetchUrl;
 }
@@ -163,10 +164,11 @@ function chooseFetchUrl(remote, fetchUrl, transport) {
 async function mirrorOne(input, o) {
 	const resolved = await resolveInput(input);
 	if (!resolved) return "failed";
-	const remote = parseOcdsRemote(resolved.fetchUrl);
+	const remote = parseSoftwareForgeRemote(resolved.fetchUrl);
 	if (!remote) {
 		logWarn(
-			"not an OCDS remote — use ./git/-forge-mirror.sh for public forges",
+			"not a software-forge remote — use ./git/-forge-mirror.sh for public " +
+				"forges",
 			{
 				input,
 				origin: resolved.fetchUrl,
@@ -179,15 +181,15 @@ async function mirrorOne(input, o) {
 	if (!remote.projectId) {
 		logWarn("glass URL has no project id — pass the ssh or https fetch URL", {
 			input,
-			glass: ocdsGlassUrl(remote) ?? "",
+			glass: softwareForgeGlassUrl(remote) ?? "",
 		});
 		return "failed";
 	}
 
-	const rel = ocdsMirrorRelPath(remote);
+	const rel = softwareForgeMirrorRelPath(remote);
 	const target = `${o.dest}/${rel}`;
 	const fetchUrl = chooseFetchUrl(remote, resolved.fetchUrl, o.transport);
-	const glass = ocdsGlassUrl(remote);
+	const glass = softwareForgeGlassUrl(remote);
 
 	if (existsSync(target)) {
 		if (o.dryRun) {
@@ -245,7 +247,7 @@ async function main() {
 	const o = parseArgs(process.argv.slice(2));
 	if (o.help) {
 		process.stdout.write(
-			"usage: ./git/-ocds-mirror.sh <clone-dir|fetch-url>... [--dest DIR]\n" +
+			"usage: ./git/-software-forge-mirror.sh <clone-dir|fetch-url>... [--dest DIR]\n" +
 				"                            [--transport ssh|https] [--dry-run]\n",
 		);
 		return;
@@ -265,7 +267,7 @@ async function main() {
 		});
 	}
 
-	logInfo("OCDS work-mirror acquisition", {
+	logInfo("software-forge work-mirror acquisition", {
 		dest: o.dest,
 		transport: o.transport ?? "as-given",
 		count: o.inputs.length,
@@ -288,7 +290,7 @@ async function main() {
 }
 
 await main().catch((err) => {
-	logError("ocds-mirror aborted", {
+	logError("software-forge-mirror aborted", {
 		error: err,
 	});
 	process.exit(1);
