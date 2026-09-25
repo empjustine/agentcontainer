@@ -8294,8 +8294,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 65536,
-					"output": 32768
+					"context": 131072,
+					"output": 40960
 				},
 				"cost": {
 					"input": 0.99,
@@ -21760,9 +21760,9 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.22,
-					"output": 0.66,
-					"cache_read": 0.007
+					"input": 0.44,
+					"output": 1.32,
+					"cache_read": 0.014
 				}
 			},
 			"deepseek/deepseek-v3.2:thinking": {
@@ -70542,8 +70542,8 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 1.3,
-					"output": 11.4,
+					"input": 0.8845,
+					"output": 10.5346,
 					"cache_read": 0.3
 				}
 			},
@@ -72512,9 +72512,9 @@
 					"output": 128000
 				},
 				"cost": {
-					"input": 0.0825,
-					"output": 0.33,
-					"cache_read": 0.020625
+					"input": 0.13,
+					"output": 0.53,
+					"cache_read": 0.033
 				}
 			},
 			"tencent/hy-mt2-7b": {
@@ -73449,9 +73449,9 @@
 					"output": 131072
 				},
 				"cost": {
-					"input": 0.4,
-					"output": 1.75,
-					"cache_read": 0.08
+					"input": 0.6,
+					"output": 2.2,
+					"cache_read": 0.11
 				}
 			},
 			"z-ai/glm-5.2": {
@@ -73526,8 +73526,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 200000,
-					"output": 128000
+					"context": 202752,
+					"output": 131072
 				},
 				"cost": {
 					"input": 1.4,
@@ -78375,8 +78375,8 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 3,
-					"output": 15,
+					"input": 0.8845,
+					"output": 10.5346,
 					"cache_read": 0.3
 				}
 			},
@@ -81201,8 +81201,8 @@
 				},
 				"open_weights": false,
 				"limit": {
-					"context": 131072,
-					"output": 32768
+					"context": 262144,
+					"output": 16384
 				},
 				"cost": {
 					"input": 0.13,
@@ -106816,8 +106816,8 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 1.3,
-					"output": 11.4,
+					"input": 0.8845,
+					"output": 10.5346,
 					"cache_read": 0.3
 				}
 			},
@@ -108172,9 +108172,9 @@
 					"output": 393216
 				},
 				"cost": {
-					"input": 0.15,
-					"output": 0.6,
-					"cache_read": 0.003
+					"input": 0.3,
+					"output": 1.2,
+					"cache_read": 0.006
 				}
 			},
 			"deepseek/deepseek-v4-flash-vision-exp": {
@@ -108511,9 +108511,9 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.85173,
-					"output": 1.70346,
-					"cache_read": 0.070978
+					"input": 0.833112,
+					"output": 1.666224,
+					"cache_read": 0.069426
 				}
 			},
 			"deepseek/deepseek-r1-0528": {
@@ -108838,9 +108838,9 @@
 					"output": 128000
 				},
 				"cost": {
-					"input": 0.0825,
-					"output": 0.33,
-					"cache_read": 0.020625
+					"input": 0.132,
+					"output": 0.528,
+					"cache_read": 0.033
 				}
 			},
 			"tencent/hy-mt2-7b": {
@@ -109773,9 +109773,9 @@
 					"output": 131072
 				},
 				"cost": {
-					"input": 0.4,
-					"output": 1.75,
-					"cache_read": 0.08
+					"input": 0.6,
+					"output": 2.2,
+					"cache_read": 0.11
 				}
 			},
 			"z-ai/glm-5.2": {
@@ -109855,12 +109855,12 @@
 				"open_weights": true,
 				"limit": {
 					"context": 204800,
-					"output": 128000
+					"output": 131072
 				},
 				"cost": {
-					"input": 0.966,
-					"output": 3.036,
-					"cache_read": 0.1794
+					"input": 0.9646,
+					"output": 3.0316,
+					"cache_read": 0.17914
 				}
 			},
 			"z-ai/glm-5-turbo": {
@@ -115083,8 +115083,8 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 3,
-					"output": 15,
+					"input": 0.8845,
+					"output": 10.5346,
 					"cache_read": 0.3
 				}
 			},
@@ -117612,11 +117612,11 @@
 				"open_weights": true,
 				"limit": {
 					"context": 262144,
-					"output": 32768
+					"output": 16384
 				},
 				"cost": {
-					"input": 0.13,
-					"output": 0.52
+					"input": 0.15,
+					"output": 0.6
 				}
 			},
 			"qwen/qwen3-235b-a22b-thinking-2507": {
