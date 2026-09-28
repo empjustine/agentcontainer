@@ -41,6 +41,7 @@
 		"laguna": "--temp 1.0 --top-p 1 --top-k 20 --min-p 0.0",
 		"ling": "--temp 1.0 --top-p 0.95 --top-k 20",
 		"museglimmer": "--temp 1.0 --top-p 0.95 --top-k 64",
-		"deepseekv4": "--temp 1.0 --top-p 1.0  --min-p 0.01 --load-mode dio"
+                "northmini": "--temp 1.0 --top-p 0.95",
+		"g9v3": "--temp 0.9 --top-p 0.95 --chat-template-kwargs '{\"enable_thinking\": true}'"
 	}
 }

@@ -430,6 +430,7 @@ const allowHosts = new Map();
 /**
  * @param {string} id owner-set id, for the collapse log
  * @param {string} url its full base URL
+ * @returns {void}
  */
 function allowHost(id, url) {
 	const key = hostKey(url);
@@ -461,6 +462,7 @@ const LLAMA_SWAP_ROUTE = "llama-swap";
  * logical route name rather than the upstream host.
  * @param {string} name the route name / first path segment
  * @param {string} url its full base URL
+ * @returns {void}
  */
 function allowHostAlias(name, url) {
 	// A route name colliding with a real host key is the only way this row

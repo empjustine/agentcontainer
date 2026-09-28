@@ -11,14 +11,21 @@
 # itself, and the host login state never leaves the host.
 #
 # RUNNERS NEVER BUILD OR GENERATE (docs/d041): stale/missing generation is a
-# USER ISSUE. This launcher stages the COMMITTED config (settings.json,
-# models.json, opencode.jsonc — refreshed by ./generate.sh or the root
-# ./generate.sh, which forward the vault env themselves) and serves it; a
-# missing artifact is a loud failure pointing at the generator, never an
-# implicit regeneration.
+# USER ISSUE. This launcher serves the generator's installed config (the host
+# agent dir, mounted as-is) plus the committed opencode.jsonc — refreshed by
+# ./generate.sh or the root ./generate.sh, which forward the vault env
+# themselves. A missing artifact is a loud failure pointing at the generator,
+# never an implicit regeneration.
 #
 #   container branch (podman/docker, via ../lib/workload-runtime.sh):
-#     - stage a per-run sandbox dir (agent + opencode config/data)
+#     - rw-mount the HOST agent dir (PI_CODING_AGENT_DIR) directly — no per-run
+#       config copy, so the generator's install target, the host pi, and the
+#       sandboxed pi are one directory
+#     - stage the pi session store (PI_CODING_AGENT_SESSION_DIR) under the
+#       per-run host stage's pi/ — sessions are per-run audit state (docs/d026),
+#       kept out of the shared config dir and off the host's own ~/.pi
+#     - stage a per-run sandbox dir for the OTHER harnesses (opencode/cline/
+#       thinkrail), which have no equivalent host-backed split
 #     - ro-mount the committed config AND the generator tree (an in-container
 #       session can still regenerate manually via the /opt/coding-agent
 #       generate.sh shim — the runner itself never invokes it)
@@ -31,9 +38,16 @@
 #       target — same var, so they can't diverge)
 #
 # Env overrides:
-#   PI_CODING_AGENT_DIR  Termux agent dir (default $HOME/.pi/agent) — also the
-#                    var pi itself reads, so the generator's install target
-#                    and pi's config source are the same path by construction
+#   PI_CODING_AGENT_DIR  pi's agent/config dir (default $HOME/.pi/agent) —
+#                    also the var pi itself reads, so the generator's install
+#                    target and pi's config source are the same path by
+#                    construction. The container branch mounts THIS HOST DIR
+#                    rw, so config/skills persist across runs (docs/d054)
+#   PI_CODING_AGENT_SESSION_DIR  pinned to the per-run stage by run.sh — NOT
+#                    read from the host env, so a host pi that has it set can
+#                    never make the sandbox share (merge into) the host's own
+#                    session store. The name is still pi's own var, exported
+#                    inside the container (docs/d054; diode target docs/d026)
 #   PEER_BASE_URL    relay — vault-sourced via the lib/environment.sh chain
 #                    (consumed by the GENERATOR, never read by pi itself)
 #   CODING_AGENT_REFERENCES  1 = also ro-mount ~/Downloads/references (the
@@ -104,14 +118,48 @@ fi
 
 container_name="agentcontainer-$(date +'%Y%m%d%H%M%S%3N')"
 workload_stage="$HOME/workspace/$container_name"
-agent_dir="$workload_stage/pi/agent"
+# pi's own env vars name its two mounts. The agent dir is the HOST's real dir
+# (mounted permanent RW): the generator installs the committed config into
+# PI_CODING_AGENT_DIR, and the host pi and the sandboxed pi read that same
+# directory — a per-run copy only adds a drift seam and leaves config garbage
+# under ~/workspace. The session store stays under the per-run stage (pi/),
+# named by PI_CODING_AGENT_SESSION_DIR: pi's NEWER session handling may write
+# sessions straight into that dir rather than the old nested agent/sessions
+# path, so the mount exists to capture them regardless — per-run audit state
+# (docs/d026), not something to merge into the host config dir (docs/d054).
+agent_dir="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
+# Fixed, never taken from PI_CODING_AGENT_SESSION_DIR: unlike the agent dir
+# (whose host env the generator also reads, so target and source agree by
+# construction), a host-set session dir would silently point the mount at the
+# host's own session store and merge the two. The var is set only inside the
+# container, where pi reads it (docs/d054).
+session_dir="$workload_stage/pi/sessions"
 opencode_cfg_dir="$workload_stage/opencode/config"
 opencode_data_dir="$workload_stage/opencode/data"
 cline_dir="$workload_stage/cline"
 thinkrail_dir="$workload_stage/thinkrail"
 
-mkdir -p -- "$agent_dir" "$opencode_cfg_dir" "$opencode_data_dir" "$cline_dir" \
-	"$thinkrail_dir"
+mkdir -p -- "$agent_dir" "$session_dir" "$opencode_cfg_dir" \
+	"$opencode_data_dir" "$cline_dir" "$thinkrail_dir"
+
+# auth.json must not carry CREDENTIALS. pi resolves the "$VAR" api-key
+# references in models.json from the forwarded environment, so a populated
+# credential store is dead state — but the agent dir is now mounted RW, and
+# shipping it into the sandbox is exactly what docs/d052 removed. pi ITSELF
+# materialises an EMPTY store ("{}") on startup, so existence alone proves
+# nothing — only non-empty content is a credential (verified against pi
+# 0.86.0: a bare `pi --list-models` writes "{}"), and only that aborts.
+if [ -e "$agent_dir/auth.json" ]; then
+	_auth_content="$(tr -d '[:space:]' <"$agent_dir/auth.json")" ||
+		log_die 93 "cannot read auth.json in the agent dir" authFile="$agent_dir/auth.json"
+	case "$_auth_content" in
+	'' | '{}' | '[]') ;; # pi's empty store — not a credential
+	*)
+		log_die 93 "auth.json holds credentials in the agent dir — it is retired; keys resolve from the forwarded env. Remove it." \
+			agentDir="$agent_dir" authFile="$agent_dir/auth.json"
+		;;
+	esac
+fi
 
 # Secrets are NOT staged into the sandbox: the host loads them ONCE via the
 # explicit chain (./lib/environment.sh ./run.sh — the one infisical
@@ -120,16 +168,15 @@ mkdir -p -- "$agent_dir" "$opencode_cfg_dir" "$opencode_data_dir" "$cline_dir" \
 # inside the container and the host's ~/.infisical login state never leaves
 # the host.
 #
-# The committed config IS the runtime config (docs/d041): the generator tree
-# (below) is mounted read-only for MANUAL in-container regeneration, but the
-# runner never invokes it. Missing committed artifacts are a user issue —
-# loud failure pointing at the generator, never an implicit regeneration.
-[ -f "$SCRIPT_DIR/settings.json" ] ||
-	log_die 94 "settings.json missing — the committed config is the runtime config; run ./generate.sh first" path="$SCRIPT_DIR/settings.json"
-[ -f "$SCRIPT_DIR/models.json" ] ||
-	log_die 94 "models.json missing — run ./generate.sh first (or the root ./generate.sh)" path="$SCRIPT_DIR/models.json"
-cp "$SCRIPT_DIR/settings.json" "$agent_dir/settings.json"
-cp "$SCRIPT_DIR/models.json" "$agent_dir/models.json"
+# The runtime config is the generator's output installed into the host agent
+# dir, which the sandbox mounts directly — so the committed config is still
+# the runtime config, just not re-copied per run (docs/d054 refines d041(d)).
+# Missing artifacts are a user issue: loud failure pointing at the generator,
+# never an implicit regeneration.
+[ -f "$agent_dir/settings.json" ] ||
+	log_die 94 "no settings.json in the agent dir — run ./generate.sh first" agentDir="$agent_dir"
+[ -f "$agent_dir/models.json" ] ||
+	log_die 94 "no models.json in the agent dir — run ./generate.sh first (or the root ./generate.sh)" agentDir="$agent_dir"
 [ -f "$SCRIPT_DIR/opencode.jsonc" ] &&
 	cp "$SCRIPT_DIR/opencode.jsonc" "$opencode_cfg_dir/opencode.json"
 
@@ -201,6 +248,10 @@ cat >"$workload_stage/launch.sh" <<EOF
 . /opt/lib/log.sh
 LOG_TOOL='coding-agent/launch'
 PI_CODING_AGENT_DIR="/home/${USER}/.pi/agent"
+# The session store lives OUTSIDE the shared agent dir (docs/d054): it is the
+# one session-shaped RW store the sandbox gets, named by pi's own env var
+# (precedence: --session-dir > PI_CODING_AGENT_SESSION_DIR > settings.json).
+PI_CODING_AGENT_SESSION_DIR="/home/${USER}/.pi/sessions"
 # Upstream's documented custom config directory (config.mdx): loaded after
 # the global config so the peer overlay overrides it. The mounted config dir
 # happens to be the same path as opencode's global default, so both tiers
@@ -210,12 +261,12 @@ OPENCODE_CONFIG_DIR="/home/${USER}/.config/opencode"
 CLINE_DIR="/home/${USER}/.cline"
 CLINE_DATA_DIR="/home/${USER}/.cline/data"
 THINKRAIL_DATA_DIR="/home/${USER}/.thinkrail"
-export PI_CODING_AGENT_DIR OPENCODE_CONFIG_DIR CLINE_DIR CLINE_DATA_DIR THINKRAIL_DATA_DIR
+export PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR OPENCODE_CONFIG_DIR CLINE_DIR CLINE_DATA_DIR THINKRAIL_DATA_DIR
 
-# NO generation here (docs/d041): the staged committed config is what pi
-# starts with; an in-container session can regenerate manually via the
-# /opt/coding-agent/generate.sh shim.
-log_info "staged committed config; regenerate manually with /opt/coding-agent/generate.sh if needed" \
+# NO generation here (docs/d041): the host agent dir is mounted as-is; an
+# in-container session can regenerate manually via the /opt/coding-agent/
+# generate.sh shim, and the result lands back in that same host dir.
+log_info "host agent dir mounted; regenerate manually with /opt/coding-agent/generate.sh if needed" \
 	agentDir="\$PI_CODING_AGENT_DIR"
 log_info "launching interactive bash" agentDir="\$PI_CODING_AGENT_DIR"
 exec bash
@@ -247,7 +298,11 @@ if [ "${CODING_AGENT_REFERENCES:-0}" = 1 ]; then
 	workload_ro_if "$HOME/Downloads/references" "$HOME/Downloads/references"
 fi
 #workload_ro_if    "$HF_HUB_CACHE" /home/${USER}/.cache/huggingface/hub
+# pi's two env vars ARE the mount manifest (docs/d054): the host agent dir
+# carries config/skills, and the per-run session stage carries the session
+# JSONL the sandbox emits (the state docs/d026 wants to diode-ise).
 workload_rw       "$agent_dir" "/home/${USER}/.pi/agent"
+workload_rw       "$session_dir" "/home/${USER}/.pi/sessions"
 workload_rw       "$HF_HUB_CACHE" "/home/${USER}/.cache/huggingface/hub"
 workload_rw       "$opencode_cfg_dir" "/home/${USER}/.config/opencode"
 workload_rw       "$opencode_data_dir" "/home/${USER}/.local/share/opencode"

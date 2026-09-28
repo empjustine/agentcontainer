@@ -111,6 +111,16 @@
 			"ctx-size": 65536
 		},
 		{
+			"hf-repo": "bartowski/ai9stars_G9v3-3B-GGUF:Q6_K",
+			"model": "ai9stars_G9v3-3B-Q6_K.gguf",
+			"ctx-size": 131072,
+			"__argv": "${g9v3}",
+			"size-gb": 2.547,
+			"size-parts": {
+				"model": 2.547
+			}
+		},
+		{
 			"hf-repo": "openbmb/MiniCPM5-2B-GGUF:Q8_0",
 			"model": "MiniCPM5-2B-Q8_0.gguf",
 			"ctx-size": 131072,
@@ -219,6 +229,16 @@
 				"model": 3.155
 			},
 			"ctx-size": 65536
+		},
+		{
+			"hf-repo": "bartowski/ai9stars_G9v3-3B-GGUF:Q8_0",
+			"model": "ai9stars_G9v3-3B-Q8_0.gguf",
+			"ctx-size": 131072,
+			"__argv": "${g9v3}",
+			"size-gb": 3.181,
+			"size-parts": {
+				"model": 3.181
+			}
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q4_K_XL",
@@ -631,6 +651,16 @@
 				"model": 5.694
 			},
 			"ctx-size": 65536
+		},
+		{
+			"hf-repo": "bartowski/ai9stars_G9v3-3B-GGUF:BF16",
+			"model": "ai9stars_G9v3-3B-bf16.gguf",
+			"ctx-size": 131072,
+			"__argv": "${g9v3}",
+			"size-gb": 5.983,
+			"size-parts": {
+				"model": 5.983
+			}
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q3_K_XL",
@@ -1218,6 +1248,21 @@
 			}
 		},
 		{
+			"hf-repo": "JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S",
+			"model": "Qwen3.8-3.6-27B-blend-IQ3_S.gguf",
+			"mmproj": "mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}",
+			"size-gb": 13.534,
+			"size-parts": {
+				"model": 12.603,
+				"mmproj": 0.931
+			}
+		},
+		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:IQ4_XS",
 			"model": "gemma-4-26B-A4B-it-UD-IQ4_XS.gguf",
 			"parallel": 1,
@@ -1457,6 +1502,21 @@
 			}
 		},
 		{
+			"hf-repo": "JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q4_K_M",
+			"model": "Qwen3.8-3.6-27B-blend-Q4_K_M.gguf",
+			"mmproj": "mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}",
+			"size-gb": 17.742,
+			"size-parts": {
+				"model": 16.811,
+				"mmproj": 0.931
+			}
+		},
+		{
 			"hf-repo": "unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
 			"model": "Qwen3.6-27B-Q4_K_M.gguf",
 			"mmproj": "mmproj-BF16.gguf",
@@ -1573,6 +1633,21 @@
 			"size-gb": 20.274,
 			"size-parts": {
 				"model": 20.274
+			}
+		},
+		{
+			"hf-repo": "JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q5_K_M",
+			"model": "Qwen3.8-3.6-27B-blend-Q5_K_M.gguf",
+			"mmproj": "mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
+			"image-min-tokens": 1024,
+			"image-max-tokens": 1024,
+			"cache-type-k": "q8_0",
+			"cache-type-v": "q8_0",
+			"__argv": "${qwen38} ${DRAFT_MTP}",
+			"size-gb": 20.467,
+			"size-parts": {
+				"model": 19.536,
+				"mmproj": 0.931
 			}
 		},
 		{
@@ -1924,6 +1999,22 @@
 			}
 		},
 		{
+			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:BF16",
+			"model": "BF16/gemma-4-26B-A4B-it-BF16-00001-of-00002.gguf",
+			"mmproj": "mmproj-BF16.gguf",
+			"image-min-tokens": 1120,
+			"image-max-tokens": 1120,
+			"ctx-size": 131072,
+			"__argv": "${gemma4} ${DRAFT_MTP}",
+			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf",
+			"size-gb": 52.162,
+			"size-parts": {
+				"model": 50.505,
+				"mmproj": 1.195,
+				"model-draft": 0.462
+			}
+		},
+		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:BF16",
 			"model": "BF16/Qwen3.8-27B-BF16-00001-of-00002.gguf",
 			"mmproj": "mmproj-BF16.gguf",
@@ -1936,39 +2027,6 @@
 			"size-parts": {
 				"model": 54.658,
 				"mmproj": 0.931
-			}
-		},
-		{
-			"hf-repo": "unsloth/Qwen3.8-Flash-Next-GGUF:Q2_K_XL",
-			"model": "UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00001-of-00003.gguf",
-			"mmproj": "mmproj-BF16.gguf",
-			"image-min-tokens": 1024,
-			"image-max-tokens": 1024,
-			"__argv": "${qwen38} ${DRAFT_MTP}",
-			"size-gb": 79.777,
-			"size-parts": {
-				"model": 78.869,
-				"mmproj": 0.908
-			}
-		},
-		{
-			"hf-repo": "unsloth/DeepSeek-V4-Flash-0731-GGUF:UD-IQ1_S",
-			"model": "UD-IQ1_S/DeepSeek-V4-Flash-0731-UD-IQ1_S-00001-of-00003.gguf",
-			"ctx-size": 131072,
-			"__argv": "${deepseekv4} --ubatch-size 128",
-			"size-gb": 82.539,
-			"size-parts": {
-				"model": 82.539
-			}
-		},
-		{
-			"hf-repo": "unsloth/DeepSeek-V4-Flash-0731-GGUF:UD-Q8_K_XL",
-			"model": "UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf",
-			"ctx-size": 131072,
-			"__argv": "${deepseekv4} --ubatch-size 128",
-			"size-gb": 161.87,
-			"size-parts": {
-				"model": 161.87
 			}
 		}
 	]

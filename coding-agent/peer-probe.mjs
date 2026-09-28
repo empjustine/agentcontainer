@@ -68,6 +68,7 @@ const CLOUD_PROVIDER_BASE_URLS = Object.freeze(
  * (rationale: docs/d001 §1). Shared by every fetch here;
  * coding-agent/refresh-models-dev.mjs calls it too. Kept defensive: a missing undici
  * install only drops proxy support.
+ * @returns {void}
  */
 export function useEnvProxy() {
 	if (

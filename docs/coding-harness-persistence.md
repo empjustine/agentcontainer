@@ -2,7 +2,7 @@
 id: coding-harness-persistence
 type: reference
 status: draft
-title: "Coding-harness persistence table — host-side stage dirs per harness"
+title: "Coding-harness persistence table — host-side state dirs per harness"
 parent: coding-agent
 tags: ["reference", "persistence", "workloads"]
 ---
@@ -13,18 +13,22 @@ How `coding-agent/run.sh` preserves each coding harness's state across
 ephemeral container runs. For the planned hardening of this mechanism into a
 data diode (state may flow out, but can never be rewritten or deleted from
 inside the container), see `docs/d026-data-diode-audit.md` — design note only,
-not yet implemented. Every harness gets a **per-run stage directory** on
-the host (`$HOME/workspace/$container_name/...`) RW-mounted into the container
-at the harness's expected home-relative path, so state written inside the
-sandbox survives the container's death. Secrets never follow this path — they
+not yet implemented. **pi splits the rule (docs/d054):** its *config* dir is the
+host's own `~/.pi/agent`, mounted directly (no per-run copy), while its
+*sessions* are staged per run under the container's `pi/`. Every other
+harness gets a **per-run stage directory** on the host
+(`$HOME/workspace/$container_name/...`) RW-mounted into the container at the
+harness's expected home-relative path, so state written inside the sandbox
+survives the container's death. Secrets never follow this path — they
 are loaded host-side once (lib/environment.sh — the explicit chain) and forwarded through the
 `workload_env` allowlist (`CLINE_API_KEY`, `MISTRAL_API_KEY`, `PEER_API_KEY`,
 `OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `HF_TOKEN`, `GEMINI_API_KEY`,
 `PEER_BASE_URL`).
 
-| Harness | Host stage dir (per run) | Container mount (RW) | Env pinned in launch.sh | What it preserves |
+| Harness | Host dir | Container mount (RW) | Env pinned in launch.sh | What it preserves |
 |---|---|---|---|---|
-| pi (`pi-coding-agent`) | `$stage/pi/agent` | `/home/$USER/.pi/agent` | `PI_CODING_AGENT_DIR` | settings.json, models.json, sessions, skills |
+| pi (`pi-coding-agent`) config | `$HOME/.pi/agent` (host, permanent) | `/home/$USER/.pi/agent` | `PI_CODING_AGENT_DIR` | settings.json, models.json, skills |
+| pi (`pi-coding-agent`) sessions | `$stage/pi/sessions` (per run) | `/home/$USER/.pi/sessions` | `PI_CODING_AGENT_SESSION_DIR` | sessions (docs/d054) |
 | OpenCode | `$stage/opencode/config` | `/home/$USER/.config/opencode` | `OPENCODE_CONFIG_DIR` | opencode.json, global config/cache |
 | OpenCode | `$stage/opencode/data` | `/home/$USER/.local/share/opencode` | — | auth.json, session/state data |
 | Cline (CLI) | `$stage/cline` | `/home/$USER/.cline` | `CLINE_DIR`, `CLINE_DATA_DIR` | data/settings/providers.json, global-settings.json, cline_mcp_settings.json, sessions/, db/, workflows/, rules/, hooks/, skills/, agents/, plugins/, cron/ |
@@ -36,20 +40,26 @@ Notes:
 - **Workspace project state needs no mount**: project-scoped harness dirs
   (`.cline/`, `.thinkrail/` inside a repo; pi's project config) live under the
   workspace, which is already RW-mounted at its real host path. Only the
-  home-relative *global* state dirs are staged per run.
+  home-relative *global* state dirs are staged per run — except pi's config
+  dir, which is mounted directly (docs/d054).
 - **pi↔ThinkRail share `~/.pi/agent`**: ThinkRail runs pi in-process and
   resolves the same agent dir (`getAgentDir()` → `~/.pi/agent`), so the single
-  pi mount covers both.
-- **Explicit env pins** (`PI_CODING_AGENT_DIR`, `OPENCODE_CONFIG_DIR`, `CLINE_DIR`,
+  pi mount covers ThinkRail's pi config; the session dir follows
+  `PI_CODING_AGENT_SESSION_DIR`, which the launch chain exports.
+- **Explicit env pins** (`PI_CODING_AGENT_DIR`, `PI_CODING_AGENT_SESSION_DIR`,
+  `OPENCODE_CONFIG_DIR`, `CLINE_DIR`,
   `CLINE_DATA_DIR`, `THINKRAIL_DATA_DIR`) are exported by the generated
   in-container launch chain. Most duplicate each harness's built-in default —
   they exist to make the sandbox contract explicit and resilient to upstream
   default changes.
-- **No fallback seeding beyond pi/OpenCode**: run.sh copies committed
-  `settings.json` / `models.json` (pi) and `opencode.jsonc` (OpenCode) into the
-  stage dirs before generation; Cline and ThinkRail have no committed fallback
-  config — they self-initialize on first in-container use (`cline auth`,
-  first ThinkRail launch), and the RW mount persists the result.
+- **Init seeding**: run.sh stages committed `opencode.jsonc` (OpenCode); pi's
+  runtime config is not seeded per run — the generator installs it into
+  `$HOME/.pi/agent` and the sandbox mounts that dir (docs/d054). A populated
+  `auth.json` in that dir aborts the run — pi's own empty `{}` (re-created on
+  every start) is ignored (d052/d054). Cline and ThinkRail have no committed
+  fallback config — they self-initialize on first
+  in-container use (`cline auth`, first ThinkRail launch), and the RW mount
+  persists the result.
 - **VS Code Cline extension state is intentionally out of scope**: the IDE
   extension's globalStorage (`~/.config/Code/User/globalStorage/saoudrizwan.claude-dev`)
   is irrelevant in this headless container; the CLI's `~/.cline` root is the

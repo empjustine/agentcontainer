@@ -1,0 +1,142 @@
+{
+ "repo": "bartowski/ai9stars_G9v3-3B-GGUF",
+ "commit": "11fe5d21c70f1c6f5e66ca433d1a533738998225",
+ "fetched_at": "2026-09-28T16:04:05+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "79e4623cd436e9a75609cb6d5fbb4e024e0f058f",
+   "size": 3133
+  },
+  {
+   "path": "README.md",
+   "oid": "eb187afb8477ac26b4035d563a89cda3e76475c4",
+   "size": 13607
+  },
+  {
+   "path": "ai9stars_G9v3-3B-IQ2_M.gguf",
+   "oid": "db12f0d8ec5e4f84da4f41c29cbd42007a84ec588173573ef72b92d75466f21e",
+   "size": 1233615424
+  },
+  {
+   "path": "ai9stars_G9v3-3B-IQ3_M.gguf",
+   "oid": "9af7a375966bc0af8655d594a47a70e991a165a653f32f703d8914b092ea58bc",
+   "size": 1483176512
+  },
+  {
+   "path": "ai9stars_G9v3-3B-IQ3_XS.gguf",
+   "oid": "4f4191919614299b236f1ba50b4da0ecd81ed32b14ac328c2e72cb268f285f36",
+   "size": 1394768448
+  },
+  {
+   "path": "ai9stars_G9v3-3B-IQ3_XXS.gguf",
+   "oid": "fc763100ad0bb2bbb1ddd7f444848fdef51a0545588c69e35231adc150cf8fa7",
+   "size": 1306860096
+  },
+  {
+   "path": "ai9stars_G9v3-3B-IQ4_NL.gguf",
+   "oid": "124aefe42bb1b59882e43922437ab0b619d260eb8eae0e1e0d09b4925c4172e6",
+   "size": 1791089216
+  },
+  {
+   "path": "ai9stars_G9v3-3B-IQ4_XS.gguf",
+   "oid": "8bfbde5c14ca3311c5260689c662d988a32c1d80be981c43a38e34493bb651ea",
+   "size": 1710316096
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q2_K.gguf",
+   "oid": "7d59f33702802494e2e801f20bfb9f07ed1c838e4c981b1279dc178646ad6339",
+   "size": 1266866752
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q2_K_L.gguf",
+   "oid": "e76126c99cf09cad96b460e01dba1dc6171add17b606d22d0f9a030a53c70d85",
+   "size": 1527986752
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q3_K_L.gguf",
+   "oid": "f442973359e3bd6c6875c36693a2c078bcae44b72a62674a0cdaa8c13cf85ff4",
+   "size": 1641839168
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q3_K_M.gguf",
+   "oid": "f4d5a681674e4ccdc73c98d742f6ced1450f98a264f214aedcfda107e3dd8802",
+   "size": 1563064896
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q3_K_S.gguf",
+   "oid": "a4f2bb4c91688bde651991c2fc50194adb190adbb3c791227cc65a6721b1b3ed",
+   "size": 1437153856
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q3_K_XL.gguf",
+   "oid": "6ad39e3f38fe7ebb89a7acea16e69ed287304dd56f3b512d348084a63d4297cf",
+   "size": 1875802688
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q4_0.gguf",
+   "oid": "66533e2ce242c1ee65e70ead173f683513dbd66b0faebd798ba10073653d1810",
+   "size": 1788779072
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q4_1.gguf",
+   "oid": "be24fada06750ae8eb34c38df510a6d3baf645b77172235af61ad60bed0cefbe",
+   "size": 1947310656
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q4_K_L.gguf",
+   "oid": "c4a165a46a637ae0295be58b9d9dedb3c783476a075a0273c025eb10897a11cd",
+   "size": 2101041728
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q4_K_M.gguf",
+   "oid": "0a14c40b1cb02ec21643fb9f080d8bbfea27bb4b6e1f9f6c9ad87db5051af0a1",
+   "size": 1902590528
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q4_K_S.gguf",
+   "oid": "06047e1d23e9e2226a9aab3cc7acf8c0dfcba8741100660b549f23ac36cf075a",
+   "size": 1795201600
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q5_K_L.gguf",
+   "oid": "a7b099ee04fdd95cd3cda6069274004fd593437e33ea7fddc349892537aa1c36",
+   "size": 2353437248
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q5_K_M.gguf",
+   "oid": "6474b6525aaa96432184bb9d1b887cfef88b92a0d960347a777253d603379339",
+   "size": 2188409408
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q5_K_S.gguf",
+   "oid": "853a167b25e5cd90775309bb547bf1cfd73640d12ed2903138b826012ed0d983",
+   "size": 2110560832
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q6_K.gguf",
+   "oid": "4523544c9d4b2be6d487d1b4751380f654f8041049dfbba995da0359bc4a5c0b",
+   "size": 2546604608
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q6_K_L.gguf",
+   "oid": "a3fdd08fcc2d43f681649788e030903b57369289545ec128ff0927b74e102f9d",
+   "size": 2676120128
+  },
+  {
+   "path": "ai9stars_G9v3-3B-Q8_0.gguf",
+   "oid": "39a98c602941f4a4a8397626692c7ee07bc213b10c0a9812323279a5f175396f",
+   "size": 3181230656
+  },
+  {
+   "path": "ai9stars_G9v3-3B-bf16.gguf",
+   "oid": "0f35f8a8a62bdbff9b14f03ed87907fafe58925931e5ba85f5098714ff27e977",
+   "size": 5982894368
+  },
+  {
+   "path": "ai9stars_G9v3-3B-imatrix.gguf",
+   "oid": "35029cf2758c703ad918e07bd901f01cafc389d57464e361c7a6632c787a8457",
+   "size": 3889856
+  }
+ ]
+}

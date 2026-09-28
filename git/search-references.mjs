@@ -236,7 +236,10 @@ function parseIndexArgs(argv) {
 	return o;
 }
 
-/** @param {string[]} argv */
+/**
+ * @param {string[]} argv
+ * @returns {Promise<void>}
+ */
 async function cmdIndex(argv) {
 	const o = parseIndexArgs(argv);
 	if (!existsSync(o.root)) {
@@ -335,7 +338,10 @@ function parseServeArgs(argv) {
 	return o;
 }
 
-/** @param {string[]} argv */
+/**
+ * @param {string[]} argv
+ * @returns {Promise<void>}
+ */
 async function cmdServe(argv) {
 	const o = parseServeArgs(argv);
 	if (!existsSync(o.index)) {
@@ -466,7 +472,10 @@ async function queryOneShot(tool, o) {
 	return run(argv[0], argv.slice(1));
 }
 
-/** @param {string[]} argv */
+/**
+ * @param {string[]} argv
+ * @returns {Promise<void>}
+ */
 async function cmdQuery(argv) {
 	const o = parseQueryArgs(argv);
 	if (!o.query) throw new Error("empty query");
@@ -508,7 +517,10 @@ async function cmdQuery(argv) {
 	process.exitCode = await queryOneShot(tool, o);
 }
 
-/** @param {string[]} argv */
+/**
+ * @param {string[]} argv
+ * @returns {Promise<void>}
+ */
 async function main(argv) {
 	const [sub, ...rest] = argv;
 	if (!sub || sub === "-h" || sub === "--help") {

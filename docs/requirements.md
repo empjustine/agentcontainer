@@ -91,8 +91,9 @@ copies: capability detection at generation time decides what a host gets.
   opencode.json) is ephemeral and overwritten by design on every generation:
   no merge logic, no preservation contract; pi re-persists its runtime fields.
   *(Operator-confirmed.)*
-- **FR-U6** — Runners never build or generate: `run.sh` stages the COMMITTED
-  config; a stale or missing artifact is a loud failure pointing at the
+- **FR-U6** — Runners never build or generate: `run.sh` mounts the
+  generator-installed config (`PI_CODING_AGENT_DIR` / `PI_CODING_AGENT_SESSION_DIR`,
+  docs/d054); a stale or missing artifact is a loud failure pointing at the
   generator, never an implicit regeneration (docs/d041).
 
 ### Shared infrastructure — `lib/`

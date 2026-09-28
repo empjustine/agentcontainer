@@ -311,19 +311,28 @@ See [d018-split-config-d.md](d018-split-config-d.md) for the merge contract.
 
 Launches the pi coding-agent container with:
 
-- **`settings.json`** (static): copied into `~/.pi/agent/settings.json`
-  (retry config, display settings) and mounted read-only into the workload.
-  The COMMITTED `models.json`/`opencode.jsonc` are what pi runs (docs/d041:
-  runners never generate — the generator tree at `/opt/coding-agent` is
-  mounted read-only only so an in-container session can regenerate manually
-  via the `generate.sh` shim).
+- **`settings.json`** (static): installed into the host agent dir
+  (`PI_CODING_AGENT_DIR`, default `~/.pi/agent`) by the generator and read
+  from there; the sandbox mounts that dir RW (docs/d054). The COMMITTED
+  `models.json`/`opencode.jsonc` are what pi runs (docs/d041: runners never
+  generate — the generator tree at `/opt/coding-agent` is mounted read-only
+  only so an in-container session can regenerate manually via the
+  `generate.sh` shim).
+- **Sessions**: split out of the agent dir to `PI_CODING_AGENT_SESSION_DIR`
+  (per-run `$stage/pi/sessions`), mounted RW as the sandbox's only
+  session-shaped store (docs/d054; the diode target is docs/d026).
+- **`auth.json`**: must not carry credentials — the generator's `"$VAR"`
+  references resolve from the forwarded env, so a populated store is dead state
+  and mounting it RW would ship it into the sandbox. pi itself writes an empty
+  `{}` on startup, so the run aborts only on non-empty content (docs/d052/d054).
 - **Secrets**: loaded ONCE on the HOST by the explicit chain
   (`./lib/environment.sh ./coding-agent/run.sh` — one `infisical run`
   round-trip, docs/d046) and forwarded into the container
   through the `workload_env` allowlist — no infisical runs inside the workload,
   no `~/.infisical` staging; pi resolves the `"$VAR"` api-key references in
   the generated `models.json` from the forwarded environment at request time.
-- **Mounts**: workspace, staged `.pi` agent dir, opencode config/data dirs
+- **Mounts**: workspace, the host `.pi/agent` dir and the per-run
+  `.pi/sessions` stage (writable, docs/d054), staged opencode config/data dirs
   and the HF cache (writable), references dir (read-only), the generator
   tree at `/opt/coding-agent` + `/opt/lib` and the generated launch chain
   (read-only), `--network=host`.  The generator tree is mounted file by

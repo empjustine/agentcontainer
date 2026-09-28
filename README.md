@@ -83,7 +83,7 @@ agentcontainer/
 │   ├── architecture.md                # → systems reference: split, standalone rule, lib inventory
 │   ├── environments-and-peer-variants.md   # → bazzite / a50 / work matrix
 │   ├── container-tooling.md           # → lib/workload-runtime.sh, run scripts (the lib module doc)
-│   ├── coding-harness-persistence.md  # → per-harness host-side stage dirs
+│   ├── coding-harness-persistence.md  # → per-harness persistence mounts (pi: host dirs, d054)
 │   ├── hf-cache-upkeep.md, refresh-local-llm-manifest.md, gguf-*.md   # → runbooks + generated tables
 │   ├── d0XX-*.md                      # → decision log (append-only history)
 │   ├── archive/                       # → research findings + retired docs (index inside)
@@ -230,6 +230,8 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d050-deterministic-generated-artifacts.md](docs/d050-deterministic-generated-artifacts.md) | implemented — canonical/stable generated manifests: schema-aware sort of provider maps and `models` arrays (not a deep key-sort) at the single write choke point (`lib/canonical-json.mjs` + `writeJsonArtifact`, sorted+pretty); fixes `model-012`'s `Promise.allSettled` key-order churn; one-time reformat of all 8 committed manifests + `tests/canonical-json.test.mjs` canonicity guard; NDJSON and one-line-per-model rejected; caches and `default-model.json` out of scope |
 | [docs/d051-retire-termux-node-version-gate.md](docs/d051-retire-termux-node-version-gate.md) | retire the Termux node floor gate — `check-node-version.mjs` deleted (its inverted presence probe false-failed every healthy run); pi self-enforces `>= 22.19` and Termux/mise already guarantee a current node; supersedes d023 b3 |
 | [docs/d053-model-size-ordering.md](docs/d053-model-size-ordering.md) | footprint data + cheapest-first `lib/llamacpp-model-data.json` — `llm-local-inference/model-sizes.mjs` sums main GGUF (all shards) + mmproj + MTP from committed `lib/hf-manifests` (cache fallback), emits SI-GB, retires the perf reorder; R4 (active-part) TODO |
+| [docs/d054-pi-agent-and-session-dir-mounts.md](docs/d054-pi-agent-and-session-dir-mounts.md) | pi mounts its real host agent dir RW (`PI_CODING_AGENT_DIR`) + stages a per-run session dir RW (`PI_CODING_AGENT_SESSION_DIR`); aborts on a non-empty `auth.json` (pi's own empty `{}` ignored); refines d041(d), supersedes d052's pi staging invariant |
+| [docs/d055-mmproj-offload-size-gate.md](docs/d055-mmproj-offload-size-gate.md) | suppress the GPU-projector (`2mmproj`) mmproj variant above 14 GB total footprint (model + mmproj + draft) — a model that large evicts its own weights to make room for the projector, so `2mmproj` runs slower than `1vision`; `MMPROJ_OFFLOAD_MAX_SIZE_GB` in `llm-local-inference/generate.mjs`, takes d029 C1 (36 of 62 mmproj entries gated) |
 
 ### Research & archive
 

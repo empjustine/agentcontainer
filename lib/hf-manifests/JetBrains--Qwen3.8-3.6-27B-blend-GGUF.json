@@ -1,0 +1,62 @@
+{
+ "repo": "JetBrains/Qwen3.8-3.6-27B-blend-GGUF",
+ "commit": "2770acba861928558b9d706cc06462e6a6f30b7b",
+ "fetched_at": "2026-09-28T15:37:36+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "d9ab9dbd923f3470bba31821d19b3a0393eadb86",
+   "size": 1803
+  },
+  {
+   "path": "CHANGES.md",
+   "oid": "3421829edb2d6c8ef5e2f3879b9c9d84f088fab8",
+   "size": 3151
+  },
+  {
+   "path": "LICENSE",
+   "oid": "f938136e3adacfd92be087f6e113b5d6d97f678f",
+   "size": 11544
+  },
+  {
+   "path": "NOTICE",
+   "oid": "618c70853b4aad9ec76d574642501d3dfa938960",
+   "size": 781
+  },
+  {
+   "path": "Qwen3.8-3.6-27B-blend-IQ3_S.gguf",
+   "oid": "94cc60e6ba6150003ae956d5a98c3914e8d9fe18ecafc3fe400e00232c8cecd2",
+   "size": 12602607584
+  },
+  {
+   "path": "Qwen3.8-3.6-27B-blend-Q4_K_M.gguf",
+   "oid": "5f54ded85a78f11ad7a1c02d17564a268238ac8afe9b3d94fb0b614e473006a1",
+   "size": 16810715104
+  },
+  {
+   "path": "Qwen3.8-3.6-27B-blend-Q5_K_M.gguf",
+   "oid": "d095b2807e5b120b57caf6a6c4bfeddf17f3ebf605279a64fe3a0fcb98722ba0",
+   "size": 19535701984
+  },
+  {
+   "path": "README.md",
+   "oid": "28a7b87005581976df9a21d764cc14c72935c66d",
+   "size": 7115
+  },
+  {
+   "path": "conversion-manifest.json",
+   "oid": "41eedca7a630cfe127d3c1c4fa6b8e1b31de03e6",
+   "size": 5840
+  },
+  {
+   "path": "merge-manifest.json",
+   "oid": "3291db9e1b2db37cb18b59ab02f29046c9b20911",
+   "size": 959
+  },
+  {
+   "path": "mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
+   "oid": "4568f7e9f79ef5b942be9acc8be717156482d0659a6fde111df660f57a1875c8",
+   "size": 931146464
+  }
+ ]
+}

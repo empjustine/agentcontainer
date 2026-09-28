@@ -302,7 +302,7 @@ function bakeSnapshotPaths(m) {
  * mmproj models are tripled: one llama-swap model per level of commitment to
  * GPU-offloading the vision projector. The middle slug segment doubles as a
  * llama-swap macro name (llama-swap-core.json):
- *   0text    -> --no-mmproj --ubatch-size 256   (projector never loaded; also
+ *   0text    -> --no-mmproj --ubatch-size 512   (projector never loaded; also
  *              emitted without --mmproj so the projector is never required)
  *   1vision  -> --no-mmproj-offload --ubatch-size 2048  (projector loaded, stays on CPU)
  *   2mmproj  -> --ubatch-size 2048                      (projector offloaded to GPU)
@@ -316,6 +316,31 @@ const MMPROJ_MODES = [
 	{ seg: "1vision", vision: true },
 	{ seg: "2mmproj", vision: true },
 ];
+
+/**
+ * Total entry footprint (model + mmproj + draft, from model-sizes.mjs) above
+ * which the 2mmproj variant is suppressed. A model this large already fills
+ * the GPU, so also placing the projector there forces weight eviction/CPU
+ * offload and 2mmproj ends up slower than 1vision — the mode's premise
+ * (GPU-resident projector) inverts. Product threshold from docs/d029 C1.
+ * @type {number}
+ */
+const MMPROJ_OFFLOAD_MAX_SIZE_GB = 14;
+
+/**
+ * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
+ * @returns {{seg: string|null, vision: boolean}[]} the modes this entry emits;
+ * an unsized entry (`size-gb` not yet computed) keeps 2mmproj rather than guess
+ */
+function mmprojModesFor(m) {
+	const sizeGb = m["size-gb"];
+	return MMPROJ_MODES.filter(
+		(mode) =>
+			mode.seg !== "2mmproj" ||
+			typeof sizeGb !== "number" ||
+			sizeGb <= MMPROJ_OFFLOAD_MAX_SIZE_GB,
+	);
+}
 
 /**
  * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
@@ -353,6 +378,13 @@ function deriveModelId(m, modeSeg) {
 	return `${activeSlug(m)}-ctx${ctxSlug(m["ctx-size"])}-${modeSeg ? `${modeSeg}-` : ""}${m["hf-repo"]}`;
 }
 
+/**
+ * Generate the 10-local-llm-inference layer + the sibling .paths manifest.
+ * Capability-gated by the CALLER (container backend + GPU devices; see the
+ * orchestration block below) — LOCAL_INFERENCE=1 forces generation for debug
+ * and the generator itself never re-checks viability.
+ * @returns {void}
+ */
 function generateLocalInference() {
 	/**
 	 * The shared model-data table lives in lib/ (moved there to mark it as
@@ -378,7 +410,7 @@ function generateLocalInference() {
 		 */
 		const baked = bakeSnapshotPaths(m);
 		for (const p of baked.hostPaths) bakedHostPaths.add(p);
-		const modes = m.mmproj ? MMPROJ_MODES : [{ seg: null, vision: false }];
+		const modes = m.mmproj ? mmprojModesFor(m) : [{ seg: null, vision: false }];
 		for (const mode of modes) {
 			const modalities = mode.vision ? ["text", "image"] : ["text"];
 			/**

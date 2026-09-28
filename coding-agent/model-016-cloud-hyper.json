@@ -331,7 +331,7 @@
             "image"
           ],
           "contextWindow": 1048576,
-          "maxTokens": 32768,
+          "maxTokens": 65536,
           "cost": {
             "input": 1.0888,
             "output": 4.40964,
@@ -339,12 +339,12 @@
             "cacheWrite": 0
           },
           "thinkingLevelMap": {
-            "off": "none",
-            "minimal": "minimal",
+            "off": null,
+            "minimal": null,
             "low": "low",
             "medium": "medium",
             "high": "high",
-            "xhigh": "xhigh",
+            "xhigh": null,
             "max": null
           },
           "compat": {

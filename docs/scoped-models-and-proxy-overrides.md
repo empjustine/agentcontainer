@@ -10,8 +10,9 @@ tags: ["design", "scoped-models", "overrides"]
 # Scoped models and proxy overrides
 
 The coding-agent container is configured on the host ahead of pi by
-`./coding-agent/run.sh`, which copies `settings.json` into the agent dir
-mounted at `~/.pi/agent` (credentials arrive via the explicit env chain — see
+the generator, whose install target is the agent dir that
+`./coding-agent/run.sh` mounts at `~/.pi/agent` (docs/d054; credentials
+arrive via the explicit env chain — see
 Credentials below). This replaces the earlier, fragile
 "generate a full model list" workflow with a **scoped models** approach.
 
@@ -50,7 +51,8 @@ allowlist. Credentials never touch `settings.json`.
 
 ## settings.json
 
-Static `settings.json`, copied by `run.sh` into `~/.pi/agent/settings.json`.
+Static `settings.json`, installed into `~/.pi/agent/settings.json` by the
+generator (`generate.sh`; the runner mounts that dir, docs/d054).
 (Default-model pinning is no longer generated dynamically.)
 
 > **Deprecated:** the `OPENCODE_GO_API_KEY` name below is retired — OpenCode

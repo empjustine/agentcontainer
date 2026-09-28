@@ -71,13 +71,17 @@ generators enumerate **no** model lists
 `run.sh` launches the container: loads vault secrets **once on the host** via
 lib/environment.sh and forwards them through the `workload_env` allowlist — nothing
 inside the workload runs infisical, and no credential store file is staged
-(the host login state stays out of the sandbox; the earlier staged-store
-design is tombstoned in `docs/d052`). It stages the
-COMMITTED config and NEVER generates (docs/d041): the generator tree is
+(the earlier staged-store design is tombstoned in `docs/d052`). It mounts the
+host agent dir RW as `PI_CODING_AGENT_DIR` and stages a per-run session dir RW
+as `PI_CODING_AGENT_SESSION_DIR` (docs/d054): the agent dir is the generator's
+install target, so config/skills persist, and sessions are per-run audit state
+kept out of that shared config store. A populated `auth.json` in the host agent
+dir aborts the run (keys resolve from forwarded env — pi's own empty `{}` is
+ignored; d052/d054). It NEVER generates (docs/d041): the generator tree is
 mounted **file by file** (the list in `run.sh` mirrors `generate.mjs`'s
 scratch staging — the two generators + `gen-lib.mjs` + the helper modules)
 only so an in-container session can regenerate manually via the
-`generate.sh` shim; a missing committed artifact is a loud failure pointing
+`generate.sh` shim; a missing installed artifact is a loud failure pointing
 at the generator, never an implicit regeneration.
 
 Profiles (detected at runtime): **Termux** — system node (Termux's bionic

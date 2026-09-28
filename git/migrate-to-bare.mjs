@@ -219,6 +219,7 @@ function deviceOf(path) {
  * would unexpectedly double the disk it was meant to save.
  * @param {string} root
  * @param {string} dest
+ * @returns {void}
  */
 function warnIfCrossFilesystem(root, dest) {
 	const rootDev = deviceOf(root);

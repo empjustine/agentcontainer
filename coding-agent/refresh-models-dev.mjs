@@ -141,6 +141,13 @@ async function fetchCatalog(url, { via }) {
 	}
 }
 
+/**
+ * One-shot refresh CLI: walk the fallback chain, validate the payload
+ * (REQUIRED_PROVIDERS + MIN_PROVIDERS), write the atomic temp file, and
+ * rename it over CATALOG_PATH. Any validation failure is a `fail()` exit 1
+ * — the previous catalog is never touched (docs/d027's stale-source rule).
+ * @returns {Promise<void>}
+ */
 async function main() {
 	// Fallback chain (docs/d027): direct → relay → stale vendored copy. Each
 	// source is validated identically before the atomic rename; the stale

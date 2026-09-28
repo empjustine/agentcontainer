@@ -76,7 +76,11 @@ const GB = 1e9;
 const GB_DECIMALS = 3;
 /** `<stem>-00001-of-00003.gguf` — the llama.cpp split-GGUF convention. */
 const SHARD_RE = /^(.*)-(\d{5})-of-(\d{5})\.gguf$/i;
-/** Sidecars are never "models" for the R5 cache-only scan (scan_cache_coverage.py's classifier). */
+/**
+ * Sidecars are never "models" for the R5 cache-only scan
+ * (scan_cache_coverage.py's classifier).
+ * @type {readonly string[]}
+ */
 const SIDECAR_PREFIXES = [
 	"mmproj",
 	"mtp-",
@@ -85,7 +89,10 @@ const SIDECAR_PREFIXES = [
 	"dspark-",
 	"imatrix",
 ];
-/** Component keys in the emitted `size-parts`, in footprint order. */
+/**
+ * Component keys in the emitted `size-parts`, in footprint order.
+ * @type {readonly string[]}
+ */
 const COMPONENT_KEYS = ["model", "mmproj", "model-draft"];
 
 /**
@@ -346,6 +353,14 @@ function asModels(value) {
 	return /** @type {Record<string, unknown>[]} */ (value);
 }
 
+/**
+ * CLI entry. Enriches lib/llamacpp-model-data.json in place with `size-gb` /
+ * `size-parts` resolved from the host HF hub cache (download_models.py's
+ * target), sorted, and — unless --check — rewrites the file. --check verifies
+ * every configured component resolves (R5 cache-only scan) and reports, but
+ * never writes; a pending --verbose flag is accepted without effect.
+ * @returns {void}
+ */
 function main() {
 	const flags = new Set(process.argv.slice(2));
 	for (const flag of flags) {

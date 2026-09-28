@@ -1,3 +1,7 @@
+models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/Qwen3.8-3.6-27B-blend-IQ3_S.gguf
+models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/Qwen3.8-3.6-27B-blend-Q4_K_M.gguf
+models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/Qwen3.8-3.6-27B-blend-Q5_K_M.gguf
+models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf
 models--LiquidAI--LFM2.5-2.6B-GGUF/snapshots/e7caca5d835a3901a8e0d63e94009429bafafdfc/LFM2.5-2.6B-BF16.gguf
 models--LiquidAI--LFM2.5-2.6B-GGUF/snapshots/e7caca5d835a3901a8e0d63e94009429bafafdfc/LFM2.5-2.6B-Q4_0.gguf
 models--LiquidAI--LFM2.5-2.6B-GGUF/snapshots/e7caca5d835a3901a8e0d63e94009429bafafdfc/LFM2.5-2.6B-Q4_K_M.gguf
@@ -6,6 +10,9 @@ models--LiquidAI--LFM2.5-2.6B-GGUF/snapshots/e7caca5d835a3901a8e0d63e94009429baf
 models--LiquidAI--LFM2.5-2.6B-GGUF/snapshots/e7caca5d835a3901a8e0d63e94009429bafafdfc/LFM2.5-2.6B-Q8_0.gguf
 models--LiquidAI--LFM2.5-2.6B-GGUF/snapshots/e7caca5d835a3901a8e0d63e94009429bafafdfc/LFM2.5-2.6B-QAD-Q4_0.gguf
 models--bartowski--Ling-3.0-tiny-GGUF/snapshots/ea072726af0d2e8ba325b2f90fc0efa762105a91/Ling-3.0-tiny-Q8_0.gguf
+models--bartowski--ai9stars_G9v3-3B-GGUF/snapshots/11fe5d21c70f1c6f5e66ca433d1a533738998225/ai9stars_G9v3-3B-Q6_K.gguf
+models--bartowski--ai9stars_G9v3-3B-GGUF/snapshots/11fe5d21c70f1c6f5e66ca433d1a533738998225/ai9stars_G9v3-3B-Q8_0.gguf
+models--bartowski--ai9stars_G9v3-3B-GGUF/snapshots/11fe5d21c70f1c6f5e66ca433d1a533738998225/ai9stars_G9v3-3B-bf16.gguf
 models--bloomer010--Ling-3.0-tiny-GGUF/snapshots/9abc60203407b59a4f22eaeeb09b789717643fb0/Ling-3.0-tiny-UD-Q8_K_XL.gguf
 models--byteshape--North-Mini-Code-1.0-GGUF/snapshots/14e9f0f3bdfb05a7374c1742b3c74e8592d976ff/North-Mini-Code-1.0-IQ3_S-3.17bpw.gguf
 models--byteshape--North-Mini-Code-1.0-GGUF/snapshots/14e9f0f3bdfb05a7374c1742b3c74e8592d976ff/North-Mini-Code-1.0-IQ4_XS-4.14bpw.gguf
@@ -22,14 +29,6 @@ models--byteshape--Qwen3.8-27B-GGUF/snapshots/3fdfbd9b4a618303ad36edb151e95d134e
 models--byteshape--Qwen3.8-27B-GGUF/snapshots/3fdfbd9b4a618303ad36edb151e95d134ece8c18/mmproj-bf16.gguf
 models--openbmb--MiniCPM5-2B-GGUF/snapshots/2079a22f3beaa4e306449978533478fe0522f4b3/MiniCPM5-2B-Q8_0.gguf
 models--poolside--Laguna-XS-2.1-GGUF/snapshots/1a37c0a5fb8c7a18e6106decb6be6327d1b63fa6/Laguna-XS-2.1-Q4_K_M.gguf
-models--unsloth--DeepSeek-V4-Flash-0731-GGUF/snapshots/fbbb5b93fb787c21338159b0af3318bb3f4d9768/UD-IQ1_S/DeepSeek-V4-Flash-0731-UD-IQ1_S-00001-of-00003.gguf
-models--unsloth--DeepSeek-V4-Flash-0731-GGUF/snapshots/fbbb5b93fb787c21338159b0af3318bb3f4d9768/UD-IQ1_S/DeepSeek-V4-Flash-0731-UD-IQ1_S-00002-of-00003.gguf
-models--unsloth--DeepSeek-V4-Flash-0731-GGUF/snapshots/fbbb5b93fb787c21338159b0af3318bb3f4d9768/UD-IQ1_S/DeepSeek-V4-Flash-0731-UD-IQ1_S-00003-of-00003.gguf
-models--unsloth--DeepSeek-V4-Flash-0731-GGUF/snapshots/fbbb5b93fb787c21338159b0af3318bb3f4d9768/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00001-of-00005.gguf
-models--unsloth--DeepSeek-V4-Flash-0731-GGUF/snapshots/fbbb5b93fb787c21338159b0af3318bb3f4d9768/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00002-of-00005.gguf
-models--unsloth--DeepSeek-V4-Flash-0731-GGUF/snapshots/fbbb5b93fb787c21338159b0af3318bb3f4d9768/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00003-of-00005.gguf
-models--unsloth--DeepSeek-V4-Flash-0731-GGUF/snapshots/fbbb5b93fb787c21338159b0af3318bb3f4d9768/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00004-of-00005.gguf
-models--unsloth--DeepSeek-V4-Flash-0731-GGUF/snapshots/fbbb5b93fb787c21338159b0af3318bb3f4d9768/UD-Q8_K_XL/DeepSeek-V4-Flash-0731-UD-Q8_K_XL-00005-of-00005.gguf
 models--unsloth--LFM2.5-8B-A1B-GGUF/snapshots/37563684c4a625e9958906fd924e15095cf9c896/LFM2.5-8B-A1B-Q8_0.gguf
 models--unsloth--LFM2.5-8B-A1B-GGUF/snapshots/37563684c4a625e9958906fd924e15095cf9c896/LFM2.5-8B-A1B-UD-Q8_K_XL.gguf
 models--unsloth--LFM2.5-VL-3B-GGUF/snapshots/22f063714556bd4daa81c40dc1ff15ca37ae92ea/LFM2.5-VL-3B-Q8_0.gguf
@@ -76,10 +75,6 @@ models--unsloth--Qwen3.8-27B-GGUF/snapshots/4ca720788d1e01f1bff70c033e0d0028fd02
 models--unsloth--Qwen3.8-27B-GGUF/snapshots/4ca720788d1e01f1bff70c033e0d0028fd02e502/Qwen3.8-27B-UD-Q8_K_L.gguf
 models--unsloth--Qwen3.8-27B-GGUF/snapshots/4ca720788d1e01f1bff70c033e0d0028fd02e502/Qwen3.8-27B-UD-Q8_K_XL.gguf
 models--unsloth--Qwen3.8-27B-GGUF/snapshots/4ca720788d1e01f1bff70c033e0d0028fd02e502/mmproj-BF16.gguf
-models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/38bb39ee97821de2c9009abb7e93950eec396e66/UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00001-of-00003.gguf
-models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/38bb39ee97821de2c9009abb7e93950eec396e66/UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00002-of-00003.gguf
-models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/38bb39ee97821de2c9009abb7e93950eec396e66/UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00003-of-00003.gguf
-models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/38bb39ee97821de2c9009abb7e93950eec396e66/mmproj-BF16.gguf
 models--unsloth--gemma-4-12B-it-qat-GGUF/snapshots/980b060c40a8539ac159e0501a3e0f66a6365af3/MTP/mtp-gemma-4-12B-it-Q8_0.gguf
 models--unsloth--gemma-4-12B-it-qat-GGUF/snapshots/980b060c40a8539ac159e0501a3e0f66a6365af3/gemma-4-12B-it-qat-UD-Q4_K_XL.gguf
 models--unsloth--gemma-4-12B-it-qat-GGUF/snapshots/980b060c40a8539ac159e0501a3e0f66a6365af3/mmproj-BF16.gguf
@@ -106,6 +101,8 @@ models--unsloth--gemma-4-12b-it-GGUF/snapshots/fc034cfff751157913579611efad8462a
 models--unsloth--gemma-4-12b-it-GGUF/snapshots/fc034cfff751157913579611efad8462ac1be606/gemma-4-12b-it-UD-Q6_K_XL.gguf
 models--unsloth--gemma-4-12b-it-GGUF/snapshots/fc034cfff751157913579611efad8462ac1be606/gemma-4-12b-it-UD-Q8_K_XL.gguf
 models--unsloth--gemma-4-12b-it-GGUF/snapshots/fc034cfff751157913579611efad8462ac1be606/mmproj-BF16.gguf
+models--unsloth--gemma-4-26B-A4B-it-GGUF/snapshots/c099eb48e663fd284577b04978a94ffccb261841/BF16/gemma-4-26B-A4B-it-BF16-00001-of-00002.gguf
+models--unsloth--gemma-4-26B-A4B-it-GGUF/snapshots/c099eb48e663fd284577b04978a94ffccb261841/BF16/gemma-4-26B-A4B-it-BF16-00002-of-00002.gguf
 models--unsloth--gemma-4-26B-A4B-it-GGUF/snapshots/c099eb48e663fd284577b04978a94ffccb261841/MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf
 models--unsloth--gemma-4-26B-A4B-it-GGUF/snapshots/c099eb48e663fd284577b04978a94ffccb261841/gemma-4-26B-A4B-it-MXFP4_MOE.gguf
 models--unsloth--gemma-4-26B-A4B-it-GGUF/snapshots/c099eb48e663fd284577b04978a94ffccb261841/gemma-4-26B-A4B-it-Q8_0.gguf
