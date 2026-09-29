@@ -155,22 +155,24 @@ const targets = [];
 const codingAgentTag =
 	process.env.CODING_AGENT_TAG ?? "localhost/empjustine/coding-agent";
 if (containerTool) {
+	// Every image build goes through the explicit subcommand (`image build` /
+	// `buildx build`) rather than the backend-dependent bare `build` alias,
+	// and carries --progress=plain: default progress "auto" is tty-detected,
+	// and an agent harness often IS a pty — which renders buildah/buildx
+	// progress as overlapping redraw frames instead of appendable lines.
+	const imageBuildArgs =
+		containerTool === "podman"
+			? ["image", "build", "--progress=plain"]
+			: ["buildx", "build", "--progress=plain"];
+
 	targets.push({
 		name: "coding-agent-image",
 		fn: async () => {
 			const buildDate = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-			// --progress=plain (podman/buildah; buildx takes the same flag):
-			// default "auto" is tty-detected, and an agent harness often IS a
-			// pty — which renders buildah's progress as overlapping redraw
-			// frames instead of appendable lines.
-			const buildArgs =
-				containerTool === "podman"
-					? ["image", "build", "--progress=plain"]
-					: ["buildx", "build", "--progress=plain"];
 			return await run(
 				containerTool,
 				[
-					...buildArgs,
+					...imageBuildArgs,
 					"--pull",
 					...(force ? ["--no-cache"] : []),
 					"--build-arg",
@@ -217,6 +219,10 @@ if (containerTool) {
 	// Always builds: unchanged inputs are a layer-cache hit; the former
 	// inspect-skip keyed on tag PRESENCE and left a stale image after a
 	// main.go edit (see the module header).
+	// --pull is load-bearing, not hygiene: the omitted-flag default is the
+	// "missing" policy, so a locally-cached golang:1.27 / distroless tag is
+	// reused even after upstream republishes it — the moving tag the build
+	// resolves FROM must be refreshed explicitly (bare --pull = always).
 	const proxyImage =
 		process.env.IMAGE_TAG ?? "localhost/llm-reverse-proxy:latest";
 	targets.push({
@@ -225,8 +231,8 @@ if (containerTool) {
 			await run(
 				containerTool,
 				[
-					"build",
-					"--progress=plain",
+					...imageBuildArgs,
+					"--pull",
 					...(force ? ["--no-cache"] : []),
 					"-f",
 					join(repoRoot, "llm-reverse-proxy", "Containerfile"),
