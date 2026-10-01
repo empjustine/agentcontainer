@@ -257,15 +257,14 @@ const CLINE_PASS_ID = "cline-pass";
 const CLINE_PASS_LINEUP = /** @type {readonly string[]} */ (
 	Object.freeze([
 		"cline-pass/glm-5.3",
-		"cline-pass/glm-5.2",
+		"cline-pass/glm-5.3-flash",
 		"cline-pass/kimi-k3",
-		"cline-pass/kimi-k2.7-code",
-		"cline-pass/kimi-k2.6",
 		"cline-pass/deepseek-v4-pro",
-		"cline-pass/deepseek-v4-flash",
+		"cline-pass/deepseek-v4.1-flash",
 		"cline-pass/mimo-v2.5",
 		"cline-pass/mimo-v2.5-pro",
 		"cline-pass/minimax-m3",
+		"cline-pass/muse-spark-1.3-contributor",
 		"cline-pass/qwen3.8-max",
 		"cline-pass/qwen3.7-max",
 		"cline-pass/qwen3.7-plus",

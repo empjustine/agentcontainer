@@ -1,0 +1,42 @@
+{
+ "repo": "byteshape/North-Mini-Code-1.0-GGUF",
+ "commit": "14e9f0f3bdfb05a7374c1742b3c74e8592d976ff",
+ "fetched_at": "2026-10-01T02:52:37+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "1b1a83578505cd33ec8dcfee7d680e873633f2ab",
+   "size": 1874
+  },
+  {
+   "path": "North-Mini-Code-1.0-IQ3_S-3.17bpw.gguf",
+   "oid": "073cbd782d49b0ae3ec498394f267f29c63a6ec9cc5873c8693629ac52dea178",
+   "size": 12103274528
+  },
+  {
+   "path": "North-Mini-Code-1.0-IQ4_XS-4.14bpw.gguf",
+   "oid": "f57e76a3b67a302d59c25b6fee981ff3e873c8470d3818830d6931665537e163",
+   "size": 15785349152
+  },
+  {
+   "path": "North-Mini-Code-1.0-IQ4_XS-4.27bpw.gguf",
+   "oid": "4455e3bf5dff99ee94d1792bbf614481e6cad7ed8e808288185ee26acf818ca8",
+   "size": 16280277024
+  },
+  {
+   "path": "North-Mini-Code-1.0-IQ4_XS-5.64bpw.gguf",
+   "oid": "9c92a83f8a08300d407c5f9261baab7f454e3251ff78d91cc6a295d532e95bdd",
+   "size": 21507428384
+  },
+  {
+   "path": "README.md",
+   "oid": "bb9614f030c98e9fe0cb0760b51ab26416b28ead",
+   "size": 4019
+  },
+  {
+   "path": "img/RTX4090.png",
+   "oid": "fb291fc83649960f8a20f5f908d2177dec73e8918619719222fa88f56fa9743f",
+   "size": 465466
+  }
+ ]
+}

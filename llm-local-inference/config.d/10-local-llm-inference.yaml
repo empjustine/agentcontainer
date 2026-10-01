@@ -4232,7 +4232,7 @@
       }
     },
     "27b-ctx064-0text-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S": {
-      "cmd": "${LLAMA_SERVER} ${0text} ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/Qwen3.8-3.6-27B-blend-IQ3_S.gguf",
+      "cmd": "${LLAMA_SERVER} ${0text} ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/83e7ddc634dd6debc5b2402db454bdc346eee6a1/Qwen3.8-3.6-27B-blend-IQ3_S.gguf",
       "capabilities": {
         "in": [
           "text"
@@ -4259,7 +4259,7 @@
       }
     },
     "27b-ctx064-1vision-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S": {
-      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/Qwen3.8-3.6-27B-blend-IQ3_S.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
+      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/83e7ddc634dd6debc5b2402db454bdc346eee6a1/Qwen3.8-3.6-27B-blend-IQ3_S.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/83e7ddc634dd6debc5b2402db454bdc346eee6a1/mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -4288,7 +4288,7 @@
       }
     },
     "27b-ctx064-2mmproj-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S": {
-      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/Qwen3.8-3.6-27B-blend-IQ3_S.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
+      "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/83e7ddc634dd6debc5b2402db454bdc346eee6a1/Qwen3.8-3.6-27B-blend-IQ3_S.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/83e7ddc634dd6debc5b2402db454bdc346eee6a1/mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -5062,7 +5062,7 @@
       }
     },
     "27b-ctx064-0text-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q4_K_M": {
-      "cmd": "${LLAMA_SERVER} ${0text} ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/Qwen3.8-3.6-27B-blend-Q4_K_M.gguf",
+      "cmd": "${LLAMA_SERVER} ${0text} ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/83e7ddc634dd6debc5b2402db454bdc346eee6a1/Qwen3.8-3.6-27B-blend-Q4_K_M.gguf",
       "capabilities": {
         "in": [
           "text"
@@ -5089,7 +5089,7 @@
       }
     },
     "27b-ctx064-1vision-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q4_K_M": {
-      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/Qwen3.8-3.6-27B-blend-Q4_K_M.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
+      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/83e7ddc634dd6debc5b2402db454bdc346eee6a1/Qwen3.8-3.6-27B-blend-Q4_K_M.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/83e7ddc634dd6debc5b2402db454bdc346eee6a1/mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
       "capabilities": {
         "in": [
           "text",
@@ -5535,7 +5535,7 @@
       }
     },
     "27b-ctx064-0text-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q5_K_M": {
-      "cmd": "${LLAMA_SERVER} ${0text} ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/Qwen3.8-3.6-27B-blend-Q5_K_M.gguf",
+      "cmd": "${LLAMA_SERVER} ${0text} ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/83e7ddc634dd6debc5b2402db454bdc346eee6a1/Qwen3.8-3.6-27B-blend-Q5_K_M.gguf",
       "capabilities": {
         "in": [
           "text"
@@ -5562,7 +5562,7 @@
       }
     },
     "27b-ctx064-1vision-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q5_K_M": {
-      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/Qwen3.8-3.6-27B-blend-Q5_K_M.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/2770acba861928558b9d706cc06462e6a6f30b7b/mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
+      "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} ${DRAFT_MTP} --cache-type-k q8_0 --cache-type-v q8_0 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/83e7ddc634dd6debc5b2402db454bdc346eee6a1/Qwen3.8-3.6-27B-blend-Q5_K_M.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--JetBrains--Qwen3.8-3.6-27B-blend-GGUF/snapshots/83e7ddc634dd6debc5b2402db454bdc346eee6a1/mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
       "capabilities": {
         "in": [
           "text",

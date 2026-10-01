@@ -5767,19 +5767,6 @@
           }
         },
         {
-          "id": "magistral-small",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
           "id": "ministral-3b-latest",
           "reasoning": true,
           "input": [
@@ -6591,19 +6578,6 @@
           }
         },
         {
-          "id": "moonshotai/kimi-k2-instruct-0905",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
           "id": "moonshotai/kimi-k2.6",
           "reasoning": true,
           "input": [
@@ -7020,19 +6994,6 @@
           }
         },
         {
-          "id": "openai/gpt-oss-120b",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
           "id": "openai/gpt-oss-20b",
           "reasoning": true,
           "input": [
@@ -7429,6 +7390,19 @@
         },
         {
           "id": "claude-sonnet-5",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "claude-sonnet-5-5",
           "reasoning": true,
           "input": [
             "text"
@@ -8014,6 +7988,19 @@
         },
         {
           "id": "gpt-6-sol",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "gpt-6.1-sol",
           "reasoning": true,
           "input": [
             "text"
@@ -9227,19 +9214,6 @@
         },
         {
           "id": "google/gemma-4-31b-it:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "inclusionai/ling-3.0-flash-fin:free",
           "reasoning": true,
           "input": [
             "text"

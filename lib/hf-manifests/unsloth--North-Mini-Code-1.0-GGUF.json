@@ -1,0 +1,137 @@
+{
+ "repo": "unsloth/North-Mini-Code-1.0-GGUF",
+ "commit": "e306bb4bf0df610f5471d97a01de2b6e0b24d356",
+ "fetched_at": "2026-10-01T02:52:37+00:00",
+ "files": [
+  {
+   "path": ".gitattributes",
+   "oid": "6f67321f372076111a4f6161c4ad0044ca549c4e",
+   "size": 3242
+  },
+  {
+   "path": "BF16/North-Mini-Code-1.0-BF16-00001-of-00002.gguf",
+   "oid": "f417602e8bda9fb783f9ebea5860332e0b36e1e1b996ccef9607d788b88086c9",
+   "size": 49783515904
+  },
+  {
+   "path": "BF16/North-Mini-Code-1.0-BF16-00002-of-00002.gguf",
+   "oid": "86c608e8aaed702fd3bec37c5bbbe7be4f8eb32c360a66f12de6e3c3dcf788f8",
+   "size": 11220890912
+  },
+  {
+   "path": "North-Mini-Code-1.0-MXFP4_MOE.gguf",
+   "oid": "d4cd6070cbab02f9f3066d3b3e2d955ecad2b8ffcd5332cbc87c4c548b3feadd",
+   "size": 18662121568
+  },
+  {
+   "path": "North-Mini-Code-1.0-Q8_0.gguf",
+   "oid": "652eeb9932e8020ef7b35374189411848187fa58796ded0ceee258bd9d36426b",
+   "size": 32437264480
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-IQ1_M.gguf",
+   "oid": "3f6d7808b940ad798a837607daea5364dbea32933ad484303821308992b293db",
+   "size": 9379799136
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-IQ2_M.gguf",
+   "oid": "24675158d1920ac3a41bc84f4cc13f280571185825733a49bbec5233ad05eecf",
+   "size": 9863438432
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-IQ2_XXS.gguf",
+   "oid": "cf840071270657f32839398cd03745a6fd901671d2d4574cb799da104cfbdcc8",
+   "size": 9782452320
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-IQ3_S.gguf",
+   "oid": "4d0f6bde22b5c784d01f3f160d4a99d763fd44f56ba5deddb1108d58302672c3",
+   "size": 12765339744
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-IQ3_XXS.gguf",
+   "oid": "029b51f93570c4295680bf6fb138bbc51bba7c377d613f75ac4eaa6913597140",
+   "size": 11708375136
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-IQ4_NL.gguf",
+   "oid": "dcf37cbe54875cf18ad0b472c916127614fa9338e2f4412c672632683def46bd",
+   "size": 15532122208
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-IQ4_XS.gguf",
+   "oid": "34565d2cbce8202e7baacce74845e34852038f95c0f612398c3b794524a945c0",
+   "size": 15230132320
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-Q2_K_XL.gguf",
+   "oid": "3d4687064b2309d79094481ca638b8556d5fa1b720b54d9a3b09cea2f8130ef5",
+   "size": 10480001120
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-Q3_K_M.gguf",
+   "oid": "145e185430e31c43221995ac52aed7efbd91f043dbfcdcf297a986f06f7dcee7",
+   "size": 14213013600
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-Q3_K_XL.gguf",
+   "oid": "6e3a3d769c9b0e369c09fd9fcecd3aace57eafbbfd787f817d47712718801aba",
+   "size": 14343037024
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-Q4_K_M.gguf",
+   "oid": "d59f4cb3abec1bd3e5e185b99cdd811e3be3402cbc2bab8223081a460d5724bf",
+   "size": 19203186784
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-Q4_K_S.gguf",
+   "oid": "b62eee03ca42a69401bc5b17e22ce78cf34469628a3cf7b4cf6ac2406078a28a",
+   "size": 18045558880
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-Q4_K_XL.gguf",
+   "oid": "86ba9cf324a1cf53687872abdda3861e3304bfd25d1f606f92a6641017ecbc6e",
+   "size": 19253518432
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-Q5_K_M.gguf",
+   "oid": "77d04849d0cd1c725db22c560a2c0a39c700f2f6939d125f2419676c9dd3956e",
+   "size": 22946603104
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-Q5_K_S.gguf",
+   "oid": "c6bfe3b270a9a50bd24d7cfa248921bd6a5f4a08d35b8aff92b07df24d22e1a0",
+   "size": 21619105888
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-Q5_K_XL.gguf",
+   "oid": "2a0b6a47228a29c8a61e58d2c0e0c89fc09f0d3f46ecc8890f4e48e8ad4f6b77",
+   "size": 23000080480
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-Q6_K.gguf",
+   "oid": "dd2d9ff23cf4b2930cba116de47d91a711f3b21dffafbcf3ae52013396a37b1a",
+   "size": 25513517152
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-Q6_K_XL.gguf",
+   "oid": "c745f23f0c802bc07a9f3f067cf2ac80f58b415bfc78d7620624bd16eef8d44c",
+   "size": 27853938784
+  },
+  {
+   "path": "North-Mini-Code-1.0-UD-Q8_K_XL.gguf",
+   "oid": "c047252b9f4b969034dd28cf4928cef94479a56d5753166ae836a5685b588ad5",
+   "size": 33209933920
+  },
+  {
+   "path": "README.md",
+   "oid": "ae4f4b1e7cacb5125c4ffa7fad147cacc5ec82e3",
+   "size": 13967
+  },
+  {
+   "path": "imatrix_unsloth.gguf_file",
+   "oid": "43329e7d55d878b3af3b63819f14944877ffd114100da42ca79e731b93562963",
+   "size": 122100032
+  }
+ ]
+}
