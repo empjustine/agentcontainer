@@ -15,7 +15,20 @@
 # agent dir, mounted as-is) plus the committed opencode.jsonc — refreshed by
 # ./generate.sh or the root ./generate.sh, which forward the vault env
 # themselves. A missing artifact is a loud failure pointing at the generator,
-# never an implicit regeneration.
+# never an implicit regeneration. The generator tree is deliberately NOT
+# mounted (docs/d056): an in-container session cannot regenerate.
+#
+# ARGV: [DIRECTORY [DIRECTORY...]]
+#   Each DIRECTORY is a host directory exposed INSIDE the container at its own
+#   path, read-write. CWD is the implicit first DIRECTORY, so extra arguments
+#   ADD mounts without restating the workdir; the first directory is also the
+#   container workdir. `./run.sh ~/Downloads/references` is the whole
+#   replacement for the retired CODING_AGENT_REFERENCES toggle (docs/d043,
+#   docs/d056): the costly z,U relabel walk is paid only for a launch that
+#   names the mirror. A DIRECTORY resolving to $HOME is refused — HOME is host
+#   state and credentials, not a workspace. Termux has no mount boundary, so
+#   there the directories are already visible and only the first (workdir)
+#   changes anything.
 #
 #   container branch (podman/docker, via ../lib/workload-runtime.sh):
 #     - rw-mount the HOST agent dir (PI_CODING_AGENT_DIR) directly — no per-run
@@ -26,9 +39,9 @@
 #       kept out of the shared config dir and off the host's own ~/.pi
 #     - stage a per-run sandbox dir for the OTHER harnesses (opencode/cline/
 #       thinkrail), which have no equivalent host-backed split
-#     - ro-mount the committed config AND the generator tree (an in-container
-#       session can still regenerate manually via the /opt/coding-agent
-#       generate.sh shim — the runner itself never invokes it)
+#     - mount the committed opencode.jsonc and the generated host config only;
+#       the ro generator tree that used to allow in-container regeneration is
+#       gone (docs/d056), leaving just lib/log.sh for the launch chain
 #     - forward the (already-loaded) vault env through the workload_env
 #       allowlist; the spawn chain inside the container is plain interactive
 #       bash with no infisical at all
@@ -48,13 +61,6 @@
 #                    never make the sandbox share (merge into) the host's own
 #                    session store. The name is still pi's own var, exported
 #                    inside the container (docs/d054; diode target docs/d026)
-#   PEER_BASE_URL    relay — vault-sourced via the lib/environment.sh chain
-#                    (consumed by the GENERATOR, never read by pi itself)
-#   CODING_AGENT_REFERENCES  1 = also ro-mount ~/Downloads/references (the
-#                    optional upstream-reference mirror). OFF by default: the
-#                    tree is ~1.6M files, and podman's z,U mount options walk
-#                    and relabel ALL of it on every launch — tens of seconds of
-#                    silent startup cost for a non-canonical convenience cache.
 
 set -eu
 
@@ -64,12 +70,49 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 LOG_TOOL='coding-agent/run'
 export LOG_TOOL
 
-# --- workspace: optional first argument -------------------------------------
-workspace="$(pwd)"
-if [ "${1:-}" != "" ] && [ -d "$1" ]; then
-	workspace="$(cd "$1" && pwd)"
+# --- directories: CWD implicit, extra args append ---------------------------
+# Positional parameters are the directory list from here on: resolve every
+# entry to an absolute path, refuse $HOME, and dedupe while preserving order.
+# CWD is prepended, so it is simply the first list entry — there is no
+# separate workspace argument (docs/d056).
+_home="$(cd "$HOME" 2>/dev/null && pwd -P || printf '%s' "$HOME")"
+_refuse_home() {
+	[ "$1" != "$_home" ] ||
+		log_die 90 "refusing to expose HOME as a DIRECTORY" dir="$1"
+}
+
+set -- "$(pwd -P)" "$@"
+_dir_total=$#
+_dir_processed=0
+_dir_kept=0
+while [ "$_dir_processed" -lt "$_dir_total" ]; do
+	_dir_processed=$((_dir_processed + 1))
+	_arg="$1"
 	shift
-fi
+	[ -d "$_arg" ] || log_die 90 "DIRECTORY is not a directory" dir="$_arg"
+	_resolved="$(cd "$_arg" && pwd -P)" ||
+		log_die 90 "cannot resolve DIRECTORY" dir="$_arg"
+	_refuse_home "$_resolved"
+	# The already-kept resolved entries are the LAST $_dir_kept positional
+	# parameters; the first $#-$_dir_kept are unprocessed arguments. Only the
+	# kept tail is a valid source for a duplicate (an unprocessed match is a
+	# later first occurrence, which must survive).
+	_dir_dup=0
+	_dir_index=0
+	for _seen in "$@"; do
+		_dir_index=$((_dir_index + 1))
+		[ "$_dir_index" -gt "$(($# - _dir_kept))" ] || continue
+		if [ "$_seen" = "$_resolved" ]; then
+			_dir_dup=1
+			break
+		fi
+	done
+	if [ "$_dir_dup" = 0 ]; then
+		set -- "$@" "$_resolved"
+		_dir_kept=$((_dir_kept + 1))
+	fi
+done
+workdir="$1"
 
 case "${PREFIX:-}" in
 	*/com.termux/*) _termux=1 ;;
@@ -97,12 +140,10 @@ if [ "$_termux" = 1 ]; then
 	[ -f "$PI_CODING_AGENT_DIR/models.json" ] ||
 		log_die 94 "no models.json in agent dir — run ./generate.sh first" \
 			agentDir="$PI_CODING_AGENT_DIR"
-	[ -n "${PEER_BASE_URL:-}" ] &&
-		log_info "PEER_BASE_URL" value="$PEER_BASE_URL"
 
-	log_info "launching pi" workspace="$workspace" agentDir="$PI_CODING_AGENT_DIR"
-	cd "$workspace"
-	exec pi "$@"
+	log_info "launching pi" workspace="$workdir" agentDir="$PI_CODING_AGENT_DIR"
+	cd "$workdir"
+	exec pi
 fi
 
 # -------------------------- container branch --------------------------------
@@ -111,10 +152,6 @@ fi
 
 USER="${USER:-$(id -un)}"
 export USER
-
-if [ "$workspace" = "$HOME" ]; then
-	log_die 90 "refusing to run from HOME (workspace must not be HOME)"
-fi
 
 container_name="agentcontainer-$(date +'%Y%m%d%H%M%S%3N')"
 workload_stage="$HOME/workspace/$container_name"
@@ -180,60 +217,10 @@ fi
 [ -f "$SCRIPT_DIR/opencode.jsonc" ] &&
 	cp "$SCRIPT_DIR/opencode.jsonc" "$opencode_cfg_dir/opencode.json"
 
-# Generator tree, read-only (never mount the whole dir: it also carries
-# host-local, untracked files). Mounted for MANUAL in-container regeneration
-# via the generate.sh shim (the runner itself never invokes it — docs/d041):
-# generate.mjs stages the module list below from this ro-mount into its
-# scratch dir, so every module it spawns must be in this list. The generators
-# are now ONE PER CODING AGENT (generate-pi-coding-agent.mjs and
-# generate-opencode.mjs) — the former per-stage pi generators were merged
-# into the pi one, so this list must not reintroduce them.
-# The orchestrator counts providers inline now (the former
-# count-providers/list-providers helpers were pruned with their shell caller
-# — docs/d041).
-_gen_target='/opt/coding-agent'
-for _f in generate.sh generate.mjs gen-lib.mjs \
-	generate-pi-coding-agent.mjs generate-opencode.mjs \
-	settings.json; do
-	workload_ro "$SCRIPT_DIR/$_f" "$_gen_target/$_f"
-done
-# Committed fallbacks generate.sh installs when the cascade comes up empty or
-# SKIP_GEN=1 (ro_if: optional by definition).
-workload_ro_if "$SCRIPT_DIR/models.json" "$_gen_target/models.json"
-workload_ro_if "$SCRIPT_DIR/opencode.jsonc" "$_gen_target/opencode.jsonc"
-workload_ro "$REPO_ROOT/lib/workload-runtime.sh" '/opt/lib/workload-runtime.sh'
+# The only lib/ file the sandbox needs at runtime is the launch chain's logger
+# (the generator tree mount is gone with docs/d056). The generator writes the
+# artifacts above on the host; the container consumes them.
 workload_ro "$REPO_ROOT/lib/log.sh" '/opt/lib/log.sh'
-# node-run.sh: the generate.sh shim sources it to resolve the pinned node
-# (docs/d041) — required for manual in-container regeneration.
-workload_ro "$REPO_ROOT/lib/node-run.sh" '/opt/lib/node-run.sh'
-# Shared lib/ modules the generators import (docs/d023, docs/d024, d039,
-# d050): generate.sh stages log.mjs + artifact.mjs + canonical-json.mjs +
-# cloud-providers.mjs into its scratch dir via $LIB_DIR — all must be mounted
-# (artifact.mjs missing here once cost every generator an
-# ERR_MODULE_NOT_FOUND in-container: the staging loop found nothing to copy,
-# so each generator died and only the committed fallbacks survived;
-# canonical-json.mjs — artifact.mjs's own import — repeated the same failure
-# on the host). tests/lib-staging.test.mjs guards both lists.
-workload_ro "$REPO_ROOT/lib/log.mjs" '/opt/lib/log.mjs'
-workload_ro "$REPO_ROOT/lib/artifact.mjs" '/opt/lib/artifact.mjs'
-workload_ro "$REPO_ROOT/lib/canonical-json.mjs" '/opt/lib/canonical-json.mjs'
-workload_ro "$REPO_ROOT/lib/cloud-providers.mjs" '/opt/lib/cloud-providers.mjs'
-# The single-consumer helper modules (docs/d039) live in coding-agent/ and
-# ride the generator staging list into _gen_target.
-workload_ro "$SCRIPT_DIR/peer-probe.mjs" "$_gen_target/peer-probe.mjs"
-workload_ro "$SCRIPT_DIR/hyper-facts.mjs" "$_gen_target/hyper-facts.mjs"
-workload_ro "$SCRIPT_DIR/catwalk-facts.mjs" "$_gen_target/catwalk-facts.mjs"
-workload_ro "$SCRIPT_DIR/refresh-models-dev.mjs" "$_gen_target/refresh-models-dev.mjs"
-# The shared vendored models.dev catalog (read-only in here; generate.sh's
-# best-effort refresh falls back to a scratch copy when it is not writable).
-workload_ro "$REPO_ROOT/lib/models.dev.api.json" '/opt/lib/models.dev.api.json'
-# The hyper facts cache is its module's next-door neighbour (single consumer,
-# docs/d039): ro here, staged writable by generate.sh's scratch loop.
-workload_ro_if "$SCRIPT_DIR/hyper-facts.json" "$_gen_target/hyper-facts.json"
-# The shared catwalk fallback catalog gets the same scratch-copy treatment as
-# the hyper facts cache: ro here (the proxy generator reads it too, so it
-# stays in lib/), staged writable by generate.sh.
-workload_ro_if "$REPO_ROOT/lib/catwalk-facts.json" '/opt/lib/catwalk-facts.json'
 
 # In-container launch chain: generated shell with no infisical — the host
 # (lib/environment.sh, outside the sandbox) forwards the vault env through
@@ -255,19 +242,15 @@ PI_CODING_AGENT_SESSION_DIR="/home/${USER}/.pi/sessions"
 # Upstream's documented custom config directory (config.mdx): loaded after
 # the global config so the peer overlay overrides it. The mounted config dir
 # happens to be the same path as opencode's global default, so both tiers
-# read the same files — idempotent, and the generate.sh shim targets the
-# mount through this exact var.
+# read the same files — idempotent.
 OPENCODE_CONFIG_DIR="/home/${USER}/.config/opencode"
 CLINE_DIR="/home/${USER}/.cline"
 CLINE_DATA_DIR="/home/${USER}/.cline/data"
 THINKRAIL_DATA_DIR="/home/${USER}/.thinkrail"
 export PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR OPENCODE_CONFIG_DIR CLINE_DIR CLINE_DATA_DIR THINKRAIL_DATA_DIR
 
-# NO generation here (docs/d041): the host agent dir is mounted as-is; an
-# in-container session can regenerate manually via the /opt/coding-agent/
-# generate.sh shim, and the result lands back in that same host dir.
-log_info "host agent dir mounted; regenerate manually with /opt/coding-agent/generate.sh if needed" \
-	agentDir="\$PI_CODING_AGENT_DIR"
+# NO generation here (docs/d041, docs/d056): the host agent dir is mounted
+# as-is and regeneration happens on the host via ./generate.sh.
 log_info "launching interactive bash" agentDir="\$PI_CODING_AGENT_DIR"
 exec bash
 EOF
@@ -284,19 +267,16 @@ workload_interactive
 workload_init
 workload_network  host
 workload_user
-# Optional local mirror of upstream reference repos (read-only convenience
-# cache; NOT canonical — the upstream repos are the source of truth).
-#
-# OFF BY DEFAULT (CODING_AGENT_REFERENCES=1 to enable): on a populated host
-# this tree is hundreds of GB / >1M files, and every podman mount carries the
-# `z,U` options (lib/workload-render.jq), which RECURSIVELY relabel+idmap the
-# source on EACH launch. That walk is the single largest startup cost in this
-# script — measuring ~39 s for a 1.66M-file mirror while the rest of the
-# mounts (HF cache 823 files, workspace ~hundreds) are noise. The cache is not
-# needed to run pi; enable it only for a session that reads the mirror.
-if [ "${CODING_AGENT_REFERENCES:-0}" = 1 ]; then
-	workload_ro_if "$HOME/Downloads/references" "$HOME/Downloads/references"
-fi
+# The DIRECTORY arguments are the mount manifest (CWD first, extras appended);
+# each is exposed at its own host path, rw, and the first is the workdir. This
+# is where ~/Downloads/references rides now — the former
+# CODING_AGENT_REFERENCES toggle is gone (docs/d056). Beware the cost the
+# toggle used to hide: every mount carries podman's z,U (lib/workload-render.jq),
+# which RECURSIVELY relabels+idmaps the source on each launch — ~39 s for that
+# 1.66M-file mirror.
+for _dir in "$@"; do
+	workload_rw "$_dir" "$_dir"
+done
 #workload_ro_if    "$HF_HUB_CACHE" /home/${USER}/.cache/huggingface/hub
 # pi's two env vars ARE the mount manifest (docs/d054): the host agent dir
 # carries config/skills, and the per-run session stage carries the session
@@ -308,15 +288,16 @@ workload_rw       "$opencode_cfg_dir" "/home/${USER}/.config/opencode"
 workload_rw       "$opencode_data_dir" "/home/${USER}/.local/share/opencode"
 workload_rw       "$cline_dir" "/home/${USER}/.cline"
 workload_rw       "$thinkrail_dir" "/home/${USER}/.thinkrail"
-workload_rw       "$workspace" "$workspace"
-workload_workdir  "$workspace"
+workload_workdir  "$workdir"
 # Secrets! The host-side loader (lib/environment.sh — run.sh is exec'd through
 # it) put the vault keys in THIS shell's environment; the allowlist below
 # forwards them into the sandbox like the llm-local-inference run path (only
-# non-empty values are forwarded).
+# non-empty values are forwarded). PEER_BASE_URL / PEERS_ONLY are deliberately
+# absent: only the generator consumed them, and the generator does not run in
+# here (docs/d056).
 workload_env_allowlist CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY \
 	OPENROUTER_API_KEY OPENCODE_API_KEY HYPER_API_KEY INFERX_API_KEY \
-	HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY PEER_BASE_URL PEERS_ONLY
+	HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY
 workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
 # Everything above this line is host-side argv assembly (jq + filesystem); the
 # next call is where podman creates the container — mount relabel, userns

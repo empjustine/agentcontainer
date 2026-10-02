@@ -14,6 +14,7 @@ passthrough reverse proxy for cloud LLM providers.
 # tailscale funnel → llm-reverse-proxy's /llama-swap route, docs/d027)
 cd ~/agentcontainer/llm-local-inference && ./generate.sh
 #   then the coding agent (local models + cloud; credentials via lib/environment.sh, docs/d046)
+#   extra ARGV dirs mount rw too (CWD is implicit first): ./coding-agent/run.sh ~/Downloads/references
 cd ~/agentcontainer && ./lib/environment.sh ./coding-agent/run.sh
 
 # cloud/remote providers — raw passthrough reverse proxy (no model routing,
@@ -76,7 +77,7 @@ agentcontainer/
 ├── tests/                             # standalone checks (node --test for JS, sh for workload helpers)
 │   ├── check-workload.sh              # → workload_ro / workload_ro_if mount-helper tests
 │   ├── canonical-json.test.mjs        # → canonicalization unit + committed-manifest canonicity guard (d050)
-│   ├── lib-staging.test.mjs           # → guards the hand-maintained lib/ staging lists in generate.mjs + run.sh (d050)
+│   ├── lib-staging.test.mjs           # → guards generate.mjs's hand-maintained lib/ staging list (d050; run.sh's mount list retired in d056)
 │   └── modality-allowlist.test.mjs    # → the d049 admit-but-trim gate/projection contract (gen-lib capability constant)
 ├── docs/                              # docs tree, typed per docs/d042 (BRD / reference / design)
 │   ├── requirements.md                # → BRD: what the system must do (id: goal)
@@ -119,7 +120,7 @@ agentcontainer/
 │   └── DESIGN.md                        #   → routing-convention rationale, 404 anti-oracle, RFC 9457 error taxonomy
 │
 ├── coding-agent/                        # Bazzite usage (full pi)
-│   ├── run.sh                           #   → launches pi coding-agent container (exec through ../lib/environment.sh)
+│   ├── run.sh                           #   → launches pi coding-agent container; ARGV = extra dirs to mount rw (CWD implicit, d056)
 │   ├── generate.sh / generate.mjs       #   → the folder driver: stages + runs the TWO by-agent generators (d041; broad by-agent merge)
 │   ├── generate-pi-coding-agent.mjs     #   → ALL pi config: model-*.json layers → models.json + default-model.json overlay
 │   ├── generate-opencode.mjs            #   → opencode overlay config (provider SINGULAR key; skipped on Termux w/o OPENCODE_CONFIG_DIR)
@@ -128,7 +129,7 @@ agentcontainer/
 │   ├── hyper-facts.mjs / hyper-facts.json # → Charm Hyper facts cache + enricher (d039)
 │   ├── catwalk-facts.mjs                #   → catwalk catalog refresher (cache stays in lib/, d039)
 │   ├── refresh-models-dev.mjs           #   → atomic models.dev catalog refresh (d039)
-│   ├── settings.json                    #   → static pi settings (copied by run.sh)
+│   ├── settings.json                    #   → static pi settings (generator installs into PI_CODING_AGENT_DIR)
 │   ├── config.toml                       #   → mise configuration (includes cline and thinkrail)
 │   └── Containerfile                    #   → container image build
 │
@@ -232,6 +233,7 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d053-model-size-ordering.md](docs/d053-model-size-ordering.md) | footprint data + cheapest-first `lib/llamacpp-model-data.json` — `llm-local-inference/model-sizes.mjs` sums main GGUF (all shards) + mmproj + MTP from committed `lib/hf-manifests` (cache fallback), emits SI-GB, retires the perf reorder; R4 (active-part) TODO |
 | [docs/d054-pi-agent-and-session-dir-mounts.md](docs/d054-pi-agent-and-session-dir-mounts.md) | pi mounts its real host agent dir RW (`PI_CODING_AGENT_DIR`) + stages a per-run session dir RW (`PI_CODING_AGENT_SESSION_DIR`); aborts on a non-empty `auth.json` (pi's own empty `{}` ignored); refines d041(d), supersedes d052's pi staging invariant |
 | [docs/d055-mmproj-offload-size-gate.md](docs/d055-mmproj-offload-size-gate.md) | suppress the GPU-projector (`2mmproj`) mmproj variant above 14 GB total footprint (model + mmproj + draft) — a model that large evicts its own weights to make room for the projector, so `2mmproj` runs slower than `1vision`; `MMPROJ_OFFLOAD_MAX_SIZE_GB` in `llm-local-inference/generate.mjs`, takes d029 C1 (36 of 62 mmproj entries gated) |
+| [docs/d056-run-directory-mounts.md](docs/d056-run-directory-mounts.md) | `coding-agent/run.sh` takes `[DIRECTORY [DIRECTORY...]]` (CWD implicit first, each mounted rw at its own path, first is the workdir; `$HOME` refused) — replaces the `CODING_AGENT_REFERENCES` toggle, removes the generator-tree/`/opt/lib` mounts and the `PEER_BASE_URL`/`PEERS_ONLY` forwards so the runner carries zero generator support |
 
 ### Research & archive
 
@@ -240,6 +242,7 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/termux-build-audit.md](docs/termux-build-audit.md) | Termux build audit — Infisical CLI `go install` impossibility + llm-reverse-proxy native build verification (anchored: d029/d031 reference this path) |
 | [docs/sandbox-helper-env-analysis.md](docs/sandbox-helper-env-analysis.md) | PRoot-era sandbox env analysis (superseded; anchored: d020 references this path) |
 | [docs/termux-serving.md](docs/termux-serving.md) | a50/Termux serving map, **archived** (anchored: d020/d021/d041 reference this path) |
+| [docs/we-have-keycloak-at-home.md](docs/we-have-keycloak-at-home.md) | node-oidc-provider as a code-governed Keycloak substitute — verified findings (no admin/env surface, config-frozen-at-construction), gotchas (live-read config, deep-import internals, devInteractions/implicit/PKCE defaults), and the minimal LDAP-federation build cost (~300–600 lines vs Keycloak's ~16k) |
 | [docs/archive/](docs/archive/) | research findings + retired docs (peer-variant-work, mini-swe-agent, bwrap audit, endpoint rewiring, future-config-generator-system, …) — index inside |
 
 ## Code conventions

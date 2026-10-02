@@ -77,12 +77,15 @@ as `PI_CODING_AGENT_SESSION_DIR` (docs/d054): the agent dir is the generator's
 install target, so config/skills persist, and sessions are per-run audit state
 kept out of that shared config store. A populated `auth.json` in the host agent
 dir aborts the run (keys resolve from forwarded env — pi's own empty `{}` is
-ignored; d052/d054). It NEVER generates (docs/d041): the generator tree is
-mounted **file by file** (the list in `run.sh` mirrors `generate.mjs`'s
-scratch staging — the two generators + `gen-lib.mjs` + the helper modules)
-only so an in-container session can regenerate manually via the
-`generate.sh` shim; a missing installed artifact is a loud failure pointing
-at the generator, never an implicit regeneration.
+ignored; d052/d054). It NEVER generates (docs/d041, docs/d056): the generator
+tree is NOT mounted into the container, so an in-container session works
+against the host-generated config mounted above. `run.sh` takes
+`[DIRECTORY [DIRECTORY...]]` instead — CWD is the implicit first directory —
+and exposes each at its own path rw with the first as the workdir; the
+`~/Downloads/references` mirror is passed as just another directory, replacing
+the former `CODING_AGENT_REFERENCES` toggle (docs/d043, docs/d056). A missing
+installed artifact is a loud failure pointing at the generator, never an
+implicit regeneration.
 
 Profiles (detected at runtime): **Termux** — system node (Termux's bionic
 build; pi enforces its own ≥ 22.19 engines floor at launch), secrets arrive
@@ -139,5 +142,5 @@ into `llm-local-inference/` or `local-llm/`.
 
 `generate.mjs` stages exactly this tree into the scratch dir — the two
 generators + `gen-lib.mjs` + `peer-probe.mjs` + `hyper-facts.mjs` +
-`catwalk-facts.mjs` + `refresh-models-dev.mjs`. `run.sh`'s file-by-file
-mount list mirrors that staging.
+`catwalk-facts.mjs` + `refresh-models-dev.mjs`. The staging list is host-only:
+the container mount of this tree was removed in docs/d056.

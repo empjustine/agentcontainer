@@ -331,3 +331,36 @@ export async function originUrl(repo) {
 	const url = r.stdout.trim();
 	return r.code === 0 && url ? url : null;
 }
+
+/**
+ * Serialize gated work and leave `intervalMs` of idle time after each call —
+ * the JS counterpart of `-vbs-mirror-all.sh`'s `sleep $VBS_THROTTLE` between
+ * repos. Serializing matters as much as the gap: a pool worker starting a
+ * fetch while another is still in flight would still be two concurrent
+ * requests to the forge, which is exactly what the software-forge tenant
+ * rate-limits even at `--jobs 1` (docs/d044). `intervalMs <= 0` returns a
+ * pass-through so a public-forge-only sweep pays nothing.
+ *
+ * @param {number} intervalMs idle milliseconds after each gated call
+ * @returns {<T>(fn: () => Promise<T>) => Promise<T>}
+ */
+export function createMinIntervalGate(intervalMs) {
+	if (intervalMs <= 0) return (fn) => fn();
+	let tail = Promise.resolve();
+	return (fn) => {
+		const run = tail.then(async () => {
+			try {
+				return await fn();
+			} finally {
+				await new Promise((resolve) => setTimeout(resolve, intervalMs));
+			}
+		});
+		// `tail` must never reject, or a failing mirror would skip the turn of
+		// every later gate call and the sweep would burst after it.
+		tail = run.then(
+			() => undefined,
+			() => undefined,
+		);
+		return run;
+	};
+}

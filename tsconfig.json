@@ -29,6 +29,7 @@
 		"lib/go-build.mjs",
 		"lib/log.mjs",
 		"tests/canonical-json.test.mjs",
+		"tests/git-pacer.test.mjs",
 		"tests/lib-staging.test.mjs",
 		"tests/modality-allowlist.test.mjs",
 		"generate.mjs",

@@ -67,8 +67,8 @@ the [termux-serving.md](termux-serving.md) archived banner for that history.
 ### small-cloud-vm (peer-relay usage)
 
 Cloud VMs serve `llm-reverse-proxy/` — the cloud peer relay that replaced the
-former peers-only llama-swap mode — and run `coding-agent/` with static peer
-config (see the run-scripts section below).
+former peers-only llama-swap mode — and run `coding-agent/` against the
+config generated on a capable host (the run-scripts section below).
 
 ## Shared support: lib/workload-runtime.sh (description-driven)
 
@@ -315,9 +315,8 @@ Launches the pi coding-agent container with:
   (`PI_CODING_AGENT_DIR`, default `~/.pi/agent`) by the generator and read
   from there; the sandbox mounts that dir RW (docs/d054). The COMMITTED
   `models.json`/`opencode.jsonc` are what pi runs (docs/d041: runners never
-  generate — the generator tree at `/opt/coding-agent` is mounted read-only
-  only so an in-container session can regenerate manually via the
-  `generate.sh` shim).
+  generate). Since docs/d056 the generator tree is NOT mounted, so an
+  in-container session cannot regenerate — regeneration is host-side.
 - **Sessions**: split out of the agent dir to `PI_CODING_AGENT_SESSION_DIR`
   (per-run `$stage/pi/sessions`), mounted RW as the sandbox's only
   session-shaped store (docs/d054; the diode target is docs/d026).
@@ -331,31 +330,18 @@ Launches the pi coding-agent container with:
   through the `workload_env` allowlist — no infisical runs inside the workload,
   no `~/.infisical` staging; pi resolves the `"$VAR"` api-key references in
   the generated `models.json` from the forwarded environment at request time.
-- **Mounts**: workspace, the host `.pi/agent` dir and the per-run
-  `.pi/sessions` stage (writable, docs/d054), staged opencode config/data dirs
-  and the HF cache (writable), references dir (read-only), the generator
-  tree at `/opt/coding-agent` + `/opt/lib` and the generated launch chain
-  (read-only), `--network=host`.  The generator tree is mounted file by
-  file, never as the repo dir, and must cover every module `generate.mjs`
-  stages (docs/d041) — it is there for MANUAL in-container regeneration only.
+- **Directories (`ARGV`)**: `run.sh [DIRECTORY [DIRECTORY...]]`; CWD is the
+  implicit first directory, each is mounted rw at its own host path, and the
+  first is the workdir. `~/Downloads/references` is passed as just another
+  directory — this replaced the former `CODING_AGENT_REFERENCES` toggle
+  (docs/d043/d056) — and a directory resolving to `$HOME` is refused.
+- **Mounts**: the directory arguments, the host `.pi/agent` dir and the
+  per-run `.pi/sessions` stage (writable, docs/d054), staged opencode
+  config/data dirs and the HF cache (writable), the generated launch chain
+  and `lib/log.sh` (read-only), `--network=host`.
 
 Uses `--userns=keep-id` + `--user $(id -u):$(id -g)` so files written into
 bind-mounted dirs are owned by the host user.
-
-### `coding-agent/run.sh` (work / static peer config)
-
-`coding-agent/` covers the work/WSL2 case with static config instead of a
-separate `coding-agent-peer/` folder: a static `settings.json` and
-`models.json`/`opencode.jsonc` overriding the built-in `opencode` /
-`opencode-go` providers with the peer endpoint (`baseUrl` hardcoded, `apiKey`
-as `$PEER_API_KEY` resolved by pi at request time from the container env).
-
-**Env**: `PEER_API_KEY` and `PEER_BASE_URL`, exported into the process
-environment by the explicit chain (`lib/environment.sh` — Infisical only;
-there is no in-script loader and no emergency path). No `.env`
-file is read any more (the old `ENV_FILE` / `<dir>/.env` fallbacks were
-removed). `PEER_BASE_URL` is informational — the peer baseUrl is hardcoded in
-the static provider config.
 
 ## Image / mode per instance
 

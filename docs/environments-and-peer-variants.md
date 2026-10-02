@@ -107,8 +107,9 @@ resolves from the env at request time — the proxy forwards them untouched).
   `OPENCODE_API_KEY`, `CLINE_API_KEY`, `HYPER_API_KEY`, `GEMINI_API_KEY`,
   …), exported into the process environment (Infisical via lib/environment.sh,
   or exported by hand). No `.env` file is read anywhere in the repo.
-  `PEER_BASE_URL` is currently informational — the peer base is hardcoded
-  in the static provider config.
+  `PEER_BASE_URL`/`PEER_BASE_URLS` are read by the generator's peer probing
+  (`peer-probe.mjs`) and baked into the provider `baseUrl` overrides; `run.sh`
+  does not forward them into the sandbox (docs/d056).
 - **Serving** (`llm-reverse-proxy/`): the peers-only cloud relay
   (root `./build.sh && ./generate.sh && ./llm-reverse-proxy/run.sh`), as on
   the other non-GPU hosts.

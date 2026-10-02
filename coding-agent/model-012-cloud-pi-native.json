@@ -742,6 +742,32 @@
           }
         },
         {
+          "id": "deepseek-ai/deepseek-v4.1-flash",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "google/diffusiongemma-26b-a4b-it",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
           "id": "google/gemma-2-2b-it",
           "reasoning": true,
           "input": [
@@ -1418,6 +1444,19 @@
           }
         },
         {
+          "id": "nvidia/nemotron-3.5-content-safety",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
           "id": "nvidia/nemotron-3.5-lightning-30b-a3b",
           "reasoning": true,
           "input": [
@@ -2061,6 +2100,19 @@
         },
         {
           "id": "deepseek-v4.1-flash",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "fledge-alpha-free",
           "reasoning": true,
           "input": [
             "text"
@@ -2867,6 +2919,19 @@
         },
         {
           "id": "ling-3.0-tiny-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "ling-3.1-flash-free",
           "reasoning": true,
           "input": [
             "text"
@@ -3688,8 +3753,7 @@
             "output": 50,
             "cacheRead": 1,
             "cacheWrite": 20
-          },
-          "api": "anthropic-messages"
+          }
         },
         {
           "id": "qwen3.7-max",
@@ -3702,8 +3766,7 @@
             "output": 50,
             "cacheRead": 1,
             "cacheWrite": 20
-          },
-          "api": "anthropic-messages"
+          }
         },
         {
           "id": "qwen3.7-plus",
@@ -3766,6 +3829,19 @@
     "openrouter": {
       "baseUrl": "https://openrouter.ai/api/v1",
       "models": [
+        {
+          "id": "apodex/apodex-1.1-mini:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
         {
           "id": "cohere/north-mini-code:free",
           "reasoning": true,

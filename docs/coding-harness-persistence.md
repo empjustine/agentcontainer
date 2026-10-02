@@ -22,8 +22,7 @@ harness's expected home-relative path, so state written inside the sandbox
 survives the container's death. Secrets never follow this path — they
 are loaded host-side once (lib/environment.sh — the explicit chain) and forwarded through the
 `workload_env` allowlist (`CLINE_API_KEY`, `MISTRAL_API_KEY`, `PEER_API_KEY`,
-`OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `HF_TOKEN`, `GEMINI_API_KEY`,
-`PEER_BASE_URL`).
+`OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `HF_TOKEN`, `GEMINI_API_KEY`).
 
 | Harness | Host dir | Container mount (RW) | Env pinned in launch.sh | What it preserves |
 |---|---|---|---|---|
@@ -42,6 +41,11 @@ Notes:
   workspace, which is already RW-mounted at its real host path. Only the
   home-relative *global* state dirs are staged per run — except pi's config
   dir, which is mounted directly (docs/d054).
+- **Extra directories are explicit mounts**: `run.sh [DIRECTORY [DIRECTORY...]]`
+  mounts each argument rw at its own host path (CWD is the implicit first
+  directory, and the first directory is the workdir). The
+  `~/Downloads/references` mirror is passed this way; the former
+  `CODING_AGENT_REFERENCES` env toggle is retired (docs/d056).
 - **pi↔ThinkRail share `~/.pi/agent`**: ThinkRail runs pi in-process and
   resolves the same agent dir (`getAgentDir()` → `~/.pi/agent`), so the single
   pi mount covers ThinkRail's pi config; the session dir follows

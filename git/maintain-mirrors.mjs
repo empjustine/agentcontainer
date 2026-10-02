@@ -24,7 +24,7 @@
  *
  * Usage:
  *   ./git/maintain.sh [--root DIR] [--jobs N] [--max-depth N]
- *                     [--no-fetch] [--no-optimize] [--dry-run]
+ *                     [--no-fetch] [--no-optimize] [--min-interval S] [--dry-run]
  *
  *   --root DIR        mirror root to maintain (default $REFERENCES_ROOT else
  *                     ~/Downloads/references — the farm itself). Discovery is
@@ -36,16 +36,28 @@
  *   --max-depth N     discovery depth bound (default 5)
  *   --no-fetch        skip phase 1 (optimize only)
  *   --no-optimize     skip phase 2 (fetch only)
+ *   --min-interval S  idle seconds after each upstream fetch before the next
+ *                     starts. Unset: 60 for a software-forge mirror, 0 for a
+ *                     public forge. Passing it explicitly applies it to EVERY
+ *                     fetch, and `--min-interval 0` disables pacing. Env
+ *                     `MIRROR_MIN_INTERVAL` seeds the same value; the flag
+ *                     wins.
  *   --only GLOB       maintain only mirrors whose relative path matches
  *                     (repeatable)
  *   --exclude GLOB    skip mirrors whose relative path matches (repeatable)
  *   --dry-run         print the plan, touch nothing
+ *
+ * The pacing default is host-dependent because the tenants are: public forges
+ * tolerate a burst, while the software-forge (Visual Builder Studio) tenant
+ * rate-limits even a `--jobs 1` sweep (docs/d044). Pacing only the forge that
+ * needs it keeps the home farm's minute-long sweep from becoming hours.
  */
 
 import { existsSync } from "node:fs";
 import { relative } from "node:path";
 
 import {
+	createMinIntervalGate,
 	DEFAULT_MAX_DEPTH,
 	DEFAULT_ROOT,
 	filterByGlobs,
@@ -59,8 +71,16 @@ import {
 	pool,
 	setLogTool,
 } from "./git-lib.mjs";
+import { parseSoftwareForgeRemote } from "./software-forge-remotes.mjs";
 
 setLogTool("git/maintain-mirrors");
+
+/**
+ * Seconds of idle before the next software-forge fetch when `--min-interval`
+ * is unset — the maintainer's counterpart of `-vbs-mirror-all.sh`'s
+ * `VBS_THROTTLE` default (docs/d044).
+ */
+const DEFAULT_SOFTWARE_FORGE_MIN_INTERVAL = 60;
 
 /**
  * @typedef {object} Options
@@ -71,6 +91,9 @@ setLogTool("git/maintain-mirrors");
  * @property {boolean} optimize
  * @property {string[]} only
  * @property {string[]} exclude
+ * @property {number|null} minInterval explicit seconds between upstream
+ *   fetches for EVERY mirror; null means "pace only the software forge, at
+ *   DEFAULT_SOFTWARE_FORGE_MIN_INTERVAL" (docs/d044)
  * @property {boolean} dryRun
  * @property {boolean} help
  */
@@ -93,6 +116,12 @@ function parseArgs(argv) {
 		optimize: true,
 		only: [],
 		exclude: [],
+		// `null` means "pace only the software forge" (see createPacing), not
+		// "unset/disabled" — `--min-interval 0` is the explicit disable.
+		minInterval:
+			process.env.MIRROR_MIN_INTERVAL === undefined
+				? null
+				: Number(process.env.MIRROR_MIN_INTERVAL),
 		dryRun: false,
 		help: false,
 	};
@@ -114,6 +143,9 @@ function parseArgs(argv) {
 			case "--no-optimize":
 				o.optimize = false;
 				break;
+			case "--min-interval":
+				o.minInterval = Number(argv[++i]);
+				break;
 			case "--only":
 				o.only.push(/** @type {string} */ (argv[++i]));
 				break;
@@ -133,34 +165,71 @@ function parseArgs(argv) {
 				});
 		}
 	}
+	if (
+		o.minInterval !== null &&
+		(!Number.isFinite(o.minInterval) || o.minInterval < 0)
+	) {
+		throw new Error("--min-interval must be a non-negative number of seconds");
+	}
 	return o;
+}
+
+/**
+ * @typedef {object} Pacing
+ * @property {<T>(fn: () => Promise<T>) => Promise<T>} gate shared min-interval gate
+ * @property {(url: string) => boolean} shouldPace whether this origin is paced
+ */
+
+/**
+ * The upstream-fetch pacing policy. Public forges tolerate a burst, so they
+ * are not paced by default; the software-forge tenant rate-limits even a
+ * `--jobs 1` sweep, so its fetches are (docs/d044). An explicit `--min-interval`
+ * overrides the scope — the operator who names a number wants it everywhere —
+ * and `0` disables pacing. The gate is shared, so `--jobs 2` still yields one
+ * forge request at a time.
+ * @param {Options} o
+ * @returns {Pacing}
+ */
+function createPacing(o) {
+	const explicit = o.minInterval;
+	const seconds = explicit ?? DEFAULT_SOFTWARE_FORGE_MIN_INTERVAL;
+	return {
+		gate: createMinIntervalGate(seconds * 1000),
+		shouldPace:
+			explicit !== null
+				? () => explicit > 0
+				: (url) => parseSoftwareForgeRemote(url) !== null,
+	};
 }
 
 /**
  * Fetch/align and/or optimize one mirror.
  * @param {string} repo
  * @param {Options} o
+ * @param {Pacing} pacing
  * @returns {Promise<"ok"|"skipped"|"failed">}
  */
-async function maintainOne(repo, o) {
+async function maintainOne(repo, o, pacing) {
 	const url = await originUrl(repo);
 	if (o.fetch && !url) {
 		logWarn("no upstream — cannot align; optimize only", { repo });
 	}
+	const paced = o.fetch && url ? pacing.shouldPace(url) : false;
 	if (o.dryRun) {
 		logInfo("would maintain", {
 			repo,
 			origin: url ?? "",
 			fetch: o.fetch && url ? 1 : 0,
 			optimize: o.optimize ? 1 : 0,
+			paced: paced ? 1 : 0,
 		});
 		return "ok";
 	}
 
 	if (o.fetch && url) {
-		const fetch = await git(repo, ["remote", "update", "--prune"], {
-			must: false,
-		});
+		const runFetch = () =>
+			git(repo, ["remote", "update", "--prune"], { must: false });
+		const fetch = await (paced ? pacing.gate(runFetch) : runFetch());
 		if (fetch.code !== 0) {
 			logWarn("fetch failed — mirror left as-is", {
 				repo,
@@ -188,6 +257,7 @@ async function maintainOne(repo, o) {
 		origin: url ?? "",
 		fetched: o.fetch && url ? 1 : 0,
 		optimized: o.optimize ? 1 : 0,
+		paced: paced ? 1 : 0,
 	});
 	return "ok";
 }
@@ -198,7 +268,7 @@ async function main() {
 	if (o.help) {
 		process.stdout.write(
 			"usage: ./git/maintain.sh [--root DIR] [--jobs N] [--max-depth N]\n" +
-				"                       [--no-fetch] [--no-optimize]\n" +
+				"                       [--no-fetch] [--no-optimize] [--min-interval S]\n" +
 				"                       [--only GLOB]... [--exclude GLOB]... [--dry-run]\n",
 		);
 		return;
@@ -216,6 +286,7 @@ async function main() {
 	const rels = discovered.map((p) => relative(o.root, p));
 	const kept = new Set(filterByGlobs(rels, o.only, o.exclude));
 	const repos = discovered.filter((p) => kept.has(relative(o.root, p)));
+	const pacing = createPacing(o);
 	logInfo("discovered bare mirrors", {
 		root: o.root,
 		count: repos.length,
@@ -223,6 +294,13 @@ async function main() {
 		jobs: o.jobs,
 		fetch: o.fetch ? 1 : 0,
 		optimize: o.optimize ? 1 : 0,
+		paceScope:
+			o.minInterval === null
+				? "software-forge"
+				: o.minInterval > 0
+					? "all"
+					: "off",
+		minInterval: o.minInterval ?? DEFAULT_SOFTWARE_FORGE_MIN_INTERVAL,
 		dryRun: o.dryRun ? 1 : 0,
 	});
 	if (repos.length === 0) {
@@ -230,7 +308,9 @@ async function main() {
 		return;
 	}
 
-	const results = await pool(repos, o.jobs, (repo) => maintainOne(repo, o));
+	const results = await pool(repos, o.jobs, (repo) =>
+		maintainOne(repo, o, pacing),
+	);
 	const tally = { ok: 0, skipped: 0, failed: 0 };
 	for (const r of results) tally[r] += 1;
 

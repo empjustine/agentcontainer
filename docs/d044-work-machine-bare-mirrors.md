@@ -74,7 +74,7 @@ export REFERENCES_ROOT=<work clone root>          # the existing full clones
 export REFERENCES_MIRRORS=/mnt/c/Users/<you>/references-bare
 
 ./git/migrate.sh --delete-originals                # clones -> bare mirrors (NTFS)
-./git/maintain.sh --root "$REFERENCES_MIRRORS"     # align + repack/commit-graph
+./git/maintain.sh --root "$REFERENCES_MIRRORS"     # align + repack/commit-graph (software-forge fetches paced 60 s)
 ./git/audit.sh --root "$REFERENCES_ROOT"           # anomalies before migrating
 ./git/search-references.sh index --root "$REFERENCES_MIRRORS" --only 'fabrikam-contoso/**'
 ```
@@ -128,7 +128,7 @@ copy (see caveats).
 | acquisition | `-forge-mirror.sh <https-url>` keyed by host | `-software-forge-mirror.sh <clone\|url>` keyed by software-forge identity |
 | URL model | `host/owner/repo` | `org / projectSlug / repo` across 3 URL shapes |
 | conversion | `migrate.sh` (unchanged) | `migrate.sh` (unchanged) |
-| upkeep | `maintain.sh` (unchanged) | `maintain.sh --root <NTFS dest>` |
+| upkeep | `maintain.sh --root <farm>` (public hosts unpaced) | `maintain.sh --root <NTFS dest>` (software-forge fetches paced 60 s) |
 | search | `search-references.sh` (unchanged) | `search-references.sh --root <NTFS dest>` |
 | storage | local ext4, `z,U` relabel is the cost | NTFS outside WSL2, disk is the cost |
 
@@ -209,6 +209,12 @@ derivable when `urlId` is absent.
   (404/real auth) is not. Nothing is silently dropped — the final summary
   reports the failure count.
 
+  The same tenant constrains **upkeep**: `maintain.sh` paces software-forge
+  upstream fetches at 60 s and serializes them, so `--jobs N` only
+  parallelizes the local `repack`/`commit-graph` phase. Public hosts are not
+  paced, so the home farm's sweep is unaffected; an explicit `--min-interval S`
+  applies the interval to every upstream fetch.
+
 - **No hardlinks across the WSL2/Windows boundary.** `git clone --mirror
   --local` hardlinks when it can and copies otherwise; ext4 → drvfs is always
   "otherwise". The first migration therefore writes a full second copy onto
@@ -221,7 +227,8 @@ derivable when `urlId` is absent.
   penalty versus ext4. `maintain.sh`'s `repack` + `commit-graph` over an
   NTFS-hosted farm is the price of keeping the objects off the WSL2 disk. Run
   maintenance with the default low `--jobs` (2) and expect it to be the slow
-  step.
+  step (the software-forge pacing above delays only the network fetch, not the
+  repack).
 - **The mirror refspec prunes.** `clone --mirror` makes upstream the source of
   truth; a later `maintain.sh` DELETES refs upstream no longer has — including
   local-only branches on the source clones. These are **work** repos, so verify

@@ -42,8 +42,8 @@
  * fields (theme, lastChangelogVersion) on the next run; the committed
  * settings.json is the source of truth for everything else. The committed
  * snapshot refresh is container-only because run.sh's Termux branch already
- * reads the agent dir directly; a read-only scriptDir (in-container
- * /opt/coding-agent mount) only warns.
+ * reads the agent dir directly; a read-only scriptDir (e.g. a copied folder
+ * mounted ro) only warns.
  *
  * Env overrides:
  *   PI_CODING_AGENT_DIR  install dir (default ~/.pi/agent) — pi's own
@@ -189,7 +189,7 @@ function providersOf(path) {
  * only the agent dir, so the committed coding-agent/models.json stays frozen
  * while run.sh keeps serving its stale model list. Container hosts only: on
  * Termux run.sh reads the agent dir, leaving the committed copy a SKIP_GEN
- * fallback. A read-only scriptDir (in-container /opt/coding-agent) is
+ * fallback. A read-only scriptDir (e.g. a copied folder mounted ro) is
  * expected and only warns.
  * @param {string} modelsOut the merged models.json just installed
  * @param {string} scratch the staged generator dir holding the layers
@@ -297,12 +297,11 @@ currentStage = "settings-install";
 const settingsPath = join(agentDir, "settings.json");
 if (scriptDir !== agentDir) {
 	if (!existsSync(join(scriptDir, "settings.json"))) {
-		// Incomplete generator tree (in-container: a missing ro-mount — run.sh
-		// must stage EVERY input this script reads from its own dir). Reported
-		// at error level because it is never expected, but non-fatal on
-		// purpose: the caller's staged settings.json is already in place and
-		// none of the stages below depend on this file, so aborting here would
-		// cost the whole generation for a static file.
+		// Incomplete generator tree (a consumer copied only some of this dir's
+		// inputs). Reported at error level because it is never expected, but
+		// non-fatal on purpose: the caller's staged settings.json is already in
+		// place and none of the stages below depend on this file, so aborting
+		// here would cost the whole generation for a static file.
 		logError("settings.json source missing — keeping the agent dir's copy", {
 			path: join(scriptDir, "settings.json"),
 			agentSettings: settingsPath,

@@ -143,10 +143,10 @@
             "image"
           ],
           "contextWindow": 1048576,
-          "maxTokens": 32768,
+          "maxTokens": 262144,
           "cost": {
-            "input": 0.3,
-            "output": 1.2,
+            "input": 0.33,
+            "output": 1.31,
             "cacheRead": 0.03,
             "cacheWrite": 0
           },
