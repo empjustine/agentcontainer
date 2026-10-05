@@ -47,7 +47,7 @@ per-concern verdict; the supersession is recorded in the
 
 | Generator | Emits | Scope |
 |---|---|---|
-| `generate-pi-coding-agent.mjs` | the `model-*.json` layers → merged `models.json`, plus the `default-model.json` overlay | ALL pi config — the four former stage generators are its internal stages, in order: `generateLocalLlamaSwap` (`model-010-local-default.json`, **ADDS** the `llama-swap` provider for local GGUF), `generateCloudProviders` (`model-012-cloud-pi-native.json` override-only, empty when every pi-native endpoint is reachable, plus `model-015/016/017-*.json` — authoritative full rows for `cline-pass`/`hyper`/`inferx`, docs/d037/d033), `mergeModels` (models.json), `generateDefaultModel` (`default-model.json` — the operator's hardcoded pair, docs/d036) |
+| `generate-pi-coding-agent.mjs` | the `model-*.json` layers → merged `models.json`, plus the `default-model.json` overlay | ALL pi config — the four former stage generators are its internal stages, in order: `generateLocalLlamaSwap` (`model-010-local-default.json`, **ADDS** the `llama-swap` provider for local GGUF), `generateCloudProviders` (`model-012-cloud-pi-native.json` override-only, empty when every pi-native endpoint is reachable, plus `model-015/016/017/018-*.json` — authoritative full rows for `cline-pass`/`hyper`/`inferx`/`verboo`, docs/d037/d033/d057), `mergeModels` (models.json), `generateDefaultModel` (`default-model.json` — the operator's hardcoded pair, docs/d036) |
 | `generate-opencode.mjs` | `opencode.jsonc` (the committed overlay, refreshed on host runs) or `$OPENCODE_CONFIG_DIR/opencode.json` | the opencode-format twin — different schema and input set, same detection cascade minus cline-pass/hyper (docs/d033); skipped on Termux unless `OPENCODE_CONFIG_DIR` is set |
 
 **The layered cake** — the merge contract's single home is the
@@ -109,7 +109,7 @@ multi-hop chain.
 - **Parallel probing + multi-hop peer chains** (docs/d034): a generator's
 direct probes fire concurrently (`Promise.allSettled`), and the peer base is a
 vault-sourced `PEER_BASE_URLS` chain (`peer-probe.mjs peerBaseUrls()`) that
-`probePeerRoutes`/`refreshHyperFacts` walk in order. A thrown probe keeps its
+`probePeerRoutes`/`refreshProviderFacts` walk in order. A thrown probe keeps its
 provider id so the peer path-route is still attempted.
 - **Peer routing is per-provider path-prefix** (docs/d027): cloud peer
   routes are `<peerBase>/<providerId>` on the simplified cloud router
@@ -133,14 +133,14 @@ Copy unit = this folder + `../lib` (`docs/architecture.md`). `gen-lib.mjs` is
 the shared preamble for the pi-layer stages: it carries the pi shaping
 helpers (folded from the former `lib/pi-models.mjs`, docs/d039), re-exports
 the shared lib/ modules (`lib/log.mjs`, `lib/cloud-providers.mjs`) via
-`$LIB_DIR`, and its same-dir siblings `peer-probe.mjs`, `hyper-facts.mjs`,
+`$LIB_DIR`, and its same-dir siblings `peer-probe.mjs`, `provider-facts.mjs`,
 `catwalk-facts.mjs`, `refresh-models-dev.mjs` (all single-consumer, folded
 out of lib/ by d039). It reads `lib/models.dev.api.json` (shared with
-llm-reverse-proxy) and the caches (`hyper-facts.json` beside its module,
+llm-reverse-proxy) and the caches (`<id>-facts.json` beside its module,
 `lib/catwalk-facts.json` — the proxy reads that one too). Must not reach
 into `llm-local-inference/` or `local-llm/`.
 
 `generate.mjs` stages exactly this tree into the scratch dir — the two
-generators + `gen-lib.mjs` + `peer-probe.mjs` + `hyper-facts.mjs` +
+generators + `gen-lib.mjs` + `peer-probe.mjs` + `provider-facts.mjs` +
 `catwalk-facts.mjs` + `refresh-models-dev.mjs`. The staging list is host-only:
 the container mount of this tree was removed in docs/d056.

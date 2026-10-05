@@ -295,9 +295,17 @@ workload_workdir  "$workdir"
 # non-empty values are forwarded). PEER_BASE_URL / PEERS_ONLY are deliberately
 # absent: only the generator consumed them, and the generator does not run in
 # here (docs/d056).
+#
+# This list is a FOURTH place a provider's key env name has to appear (the
+# catalog `env`, lib/cloud-providers.mjs's apiKeyEnv, the pi generator spec's
+# envKey, and here) — docs/d032 F6. The omission mode is silent and looks like
+# a vault problem: an empty host var is dropped by workload_env_allowlist, so
+# a key that IS in infisical never reaches the sandbox, and the generated
+# models.json's "$<KEY>" reference resolves to nothing inside the container.
+# Add the name here whenever a provider row lands in the fact table.
 workload_env_allowlist CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY \
 	OPENROUTER_API_KEY OPENCODE_API_KEY HYPER_API_KEY INFERX_API_KEY \
-	HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY
+	VERBOO_API_KEY HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY
 workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
 # Everything above this line is host-side argv assembly (jq + filesystem); the
 # next call is where podman creates the container — mount relabel, userns

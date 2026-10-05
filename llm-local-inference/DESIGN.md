@@ -88,5 +88,6 @@ Copy unit = this folder + `../lib` (`docs/architecture.md`): may import
 `lib/log.mjs` and read the shared data tables `lib/llamacpp-model-data.json`.
 Must not import from sibling runner folders or `local-llm/`. The `lib`
 modules this module no longer uses (`peer-probe.mjs`, `cloud-providers.mjs`,
-`hyper-facts.mjs`, `models.dev.api.json`) remain in `lib` because
-`../coding-agent` and `../llm-reverse-proxy` consumers still share them.
+`models.dev.api.json`) remain in `lib` because
+`../coding-agent` and `../llm-reverse-proxy` consumers still share them; the
+facts module left `lib/` for `../coding-agent` in d039.

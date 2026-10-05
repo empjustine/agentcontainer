@@ -55,9 +55,10 @@ hand-added catalog row is therefore **transient** — silently gone after the
 next refresh. The alternative-provider generator's `loadProvider()` throws on
 a missing catalog row, so an upstream-unknown provider fails the layer rather
 than emitting an empty one. InferX worked only because models.dev already
-listed it. Upstream contribution (or a new facts-cache module like
-`coding-agent/hyper-facts.mjs`, the one sanctioned non-models.dev enrichment source) is
-the only durable path for a provider absent from models.dev.
+listed it. Upstream contribution is the preferred durable path; since d057 a
+catalog-less provider no longer needs it — `catalogOptional: true` +
+`coding-agent/provider-facts.mjs` make the provider's own facts cache the
+lineup (worked example: verb oo).
 
 ### F2 — the fact table is NOT the client-side source of truth
 

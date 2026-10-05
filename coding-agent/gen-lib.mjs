@@ -9,7 +9,7 @@
  * docs/d023.
  *
  * This module is staged next to the generators (plus its coding-agent/
- * siblings peer-probe.mjs, hyper-facts.mjs, catwalk-facts.mjs and
+ * siblings peer-probe.mjs, provider-facts.mjs, catwalk-facts.mjs and
  * refresh-models-dev.mjs — docs/d039) and a copy of lib/ (see generate.sh),
  * and mounted into the container by run.sh — both lists must carry them.
  * lib/ imports resolve through $LIB_DIR; the coding-agent/ siblings import
@@ -34,7 +34,7 @@ import {
 } from "./peer-probe.mjs";
 
 export { getCatwalkModels, refreshCatwalkFacts } from "./catwalk-facts.mjs";
-export { loadHyperFacts, refreshHyperFacts } from "./hyper-facts.mjs";
+export { loadProviderFacts, refreshProviderFacts } from "./provider-facts.mjs";
 
 export const scriptDir = dirname(fileURLToPath(import.meta.url));
 export const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");

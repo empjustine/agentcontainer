@@ -227,7 +227,7 @@ currentStage = "scratch-stage";
 
 // --- scratch dir: generators read layers from their own directory, and this
 // dir may be a read-only mount (container ro-mount), so stage the generators
-// — plus the helper modules they import (peer-probe.mjs, hyper-facts.mjs,
+// — plus the helper modules they import (peer-probe.mjs, provider-facts.mjs,
 // catwalk-facts.mjs, docs/d039) and the lib/ modules resolved via $LIB_DIR
 // (log.mjs, artifact.mjs, canonical-json.mjs, cloud-providers.mjs, docs/d023
 // + d050) — there and
@@ -240,7 +240,7 @@ const GENERATORS = [
 	"generate-pi-coding-agent.mjs",
 	"generate-opencode.mjs",
 	"peer-probe.mjs",
-	"hyper-facts.mjs",
+	"provider-facts.mjs",
 	"catwalk-facts.mjs",
 	"refresh-models-dev.mjs",
 ];
@@ -267,18 +267,19 @@ for (const f of ["log.mjs", "artifact.mjs", "canonical-json.mjs", "cloud-provide
 		});
 	}
 }
-// The facts caches ride along with their consumers: hyper-facts.json lives
-// next to its module in coding-agent/ (single consumer — docs/d039) and
-// stages into the scratch ROOT; catwalk-facts.json stays in lib/ (the proxy
-// generator reads it too) and stages into the scratch lib. Both are staged
-// writable so in-container refreshes succeed instead of failing on the
-// ro-mounted /opt copies; both are consumed stale-tolerantly and direct-mode
-// runs refresh them fresh.
-if (existsSync(join(scriptDir, "hyper-facts.json"))) {
-	copyFileSync(
-		join(scriptDir, "hyper-facts.json"),
-		join(scratch, "hyper-facts.json"),
-	);
+// The facts caches ride along with their consumers: each `<id>-facts.json`
+// (provider-facts.mjs's path convention) lives next to the module in
+// coding-agent/ and stages into the scratch ROOT; catwalk-facts.json stays in
+// lib/ (the proxy generator reads it too) and stages into the scratch lib.
+// The caches are discovered by provider-facts.mjs's own naming rule rather
+// than listed per provider, so adding a facts-backed row needs no edit here.
+// All are staged writable so in-container refreshes succeed instead of
+// failing on the ro-mounted /opt copies; all are consumed stale-tolerantly
+// and direct-mode runs refresh them fresh.
+for (const cache of readdirSync(scriptDir).filter((name) =>
+	/^[a-z0-9]+(?:-[a-z0-9]+)*-facts\.json$/.test(name),
+)) {
+	copyFileSync(join(scriptDir, cache), join(scratch, cache));
 }
 if (existsSync(join(repoRoot, "lib", "catwalk-facts.json"))) {
 	copyFileSync(

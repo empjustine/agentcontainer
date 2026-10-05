@@ -126,7 +126,8 @@ agentcontainer/
 │   ├── generate-opencode.mjs            #   → opencode overlay config (provider SINGULAR key; skipped on Termux w/o OPENCODE_CONFIG_DIR)
 │   ├── gen-lib.mjs                      #   → shared generator preamble (pi shaping folded in, d039)
 │   ├── peer-probe.mjs                   #   → HTTP probe toolkit (folded out of lib/, d039)
-│   ├── hyper-facts.mjs / hyper-facts.json # → Charm Hyper facts cache + enricher (d039)
+│   ├── provider-facts.mjs               #   → per-provider facts cache + enricher (`<id>-facts.json`; hyper + catalog-less verb oo, d039/d057)
+│   ├── hyper-facts.json / verboo-facts.json # → committed facts caches (d057: verboo's is its lineup)
 │   ├── catwalk-facts.mjs                #   → catwalk catalog refresher (cache stays in lib/, d039)
 │   ├── refresh-models-dev.mjs           #   → atomic models.dev catalog refresh (d039)
 │   ├── settings.json                    #   → static pi settings (generator installs into PI_CODING_AGENT_DIR)
@@ -234,6 +235,7 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d054-pi-agent-and-session-dir-mounts.md](docs/d054-pi-agent-and-session-dir-mounts.md) | pi mounts its real host agent dir RW (`PI_CODING_AGENT_DIR`) + stages a per-run session dir RW (`PI_CODING_AGENT_SESSION_DIR`); aborts on a non-empty `auth.json` (pi's own empty `{}` ignored); refines d041(d), supersedes d052's pi staging invariant |
 | [docs/d055-mmproj-offload-size-gate.md](docs/d055-mmproj-offload-size-gate.md) | suppress the GPU-projector (`2mmproj`) mmproj variant above 14 GB total footprint (model + mmproj + draft) — a model that large evicts its own weights to make room for the projector, so `2mmproj` runs slower than `1vision`; `MMPROJ_OFFLOAD_MAX_SIZE_GB` in `llm-local-inference/generate.mjs`, takes d029 C1 (36 of 62 mmproj entries gated) |
 | [docs/d056-run-directory-mounts.md](docs/d056-run-directory-mounts.md) | `coding-agent/run.sh` takes `[DIRECTORY [DIRECTORY...]]` (CWD implicit first, each mounted rw at its own path, first is the workdir; `$HOME` refused) — replaces the `CODING_AGENT_REFERENCES` toggle, removes the generator-tree/`/opt/lib` mounts and the `PEER_BASE_URL`/`PEERS_ONLY` forwards so the runner carries zero generator support |
+| [docs/d057-catalog-less-providers.md](docs/d057-catalog-less-providers.md) | a provider models.dev does not carry — `catalogOptional` + the fact-table endpoint make the provider's own facts cache the authoritative lineup in both modes (worked example: verboo; `hyper-facts.mjs` → generic `provider-facts.mjs`; missing prices/output-limit are omitted, not invented) |
 
 ### Research & archive
 

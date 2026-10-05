@@ -1,7 +1,8 @@
 /**
  * @fileoverview catwalk-facts.mjs — Charm's catwalk as a multi-provider
  * fallback catalog (https://catwalk.charm.land/v2/providers). Unlike
- * hyper-facts.mjs (single-provider), this module fetches the full catwalk
+ * hyper's /provider records are provider-specific, so this module fetches
+ * the full catwalk
  * provider listing and exposes per-provider model lookups for generators
  * that need a secondary catalog when models.dev is stale or absent.
  *
@@ -13,10 +14,10 @@
  *   nvidia        → (none — not in catwalk)
  *   mistral       → (none — not in catwalk)
  *   cline-pass    → (none — not in catwalk)
- *   hyper         → (none — not in catwalk; uses hyper-facts.mjs)
+ *   hyper         → (none — not in catwalk; uses provider-facts.mjs)
  *   inferx        → (none — not in catwalk)
  *
- * Shape (same contract as hyper-facts.mjs):
+ * Shape (same contract as provider-facts.mjs):
  *   { fetchedAt: <ISO>, fetchedFrom: <url>, providers: [{id, models: [...]}] }
  *
  * Lifecycle (mirrors coding-agent/refresh-models-dev.mjs):
@@ -104,7 +105,7 @@ export const PROVIDER_MAP = Object.freeze({
 	opencode: "opencode-zen",
 	"opencode-go": "opencode-go",
 	google: "gemini",
-	// nvidia, mistral, cline-pass, hyper, inferx: not in catwalk
+	// nvidia, mistral, cline-pass, hyper, inferx, verboo: not in catwalk
 });
 
 /**

@@ -13,7 +13,7 @@
  *   2. `generateCloudProviders`  → `model-012-cloud-pi-native.json`
  *      (override-only: peer reroutes for unreachable endpoints, minimal
  *      models.dev ∪ catwalk id merges otherwise) plus
- *      `model-015/016/017-*.json` (full rows: the sole definition for
+ *      `model-015/016/017/018-*.json` (full rows: the sole definition for
  *      providers pi does not ship; docs/d037/d033)
  *   3. `mergeModels`             → `models.json` (lexical layer order, deep
  *      merge)
@@ -33,6 +33,7 @@
  *   + model-015-cloud-cline-pass.json
  *   + model-016-cloud-hyper.json
  *   + model-017-cloud-inferx.json
+ *   + model-018-cloud-verboo.json
  *   + model-020-peer-default.json   (future / drop-in)
  *   → models.json
  * ```
@@ -53,7 +54,7 @@
  * helper modules into a scratch dir, sets `LIB_DIR`, refreshes the models.dev
  * catalog, then runs this generator once — followed by the separate
  * opencode generator. The per-stage docs these bodies were folded from are
- * `docs/d024`, `docs/d033`, `docs/d037`.
+ * `docs/d024`, `docs/d033`, `docs/d037`, `docs/d057`.
  *
  * Usage: node generate-pi-coding-agent.mjs [models.json] [default-model.json]
  *   models.json defaults to $PI_MODELS_JSON else ./models.json.
@@ -72,7 +73,7 @@ import {
 	CLOUD_PROVIDERS as CLOUD_PROVIDER_FACTS,
 	fetchModelEntries,
 	getCatwalkModels,
-	loadHyperFacts,
+	loadProviderFacts,
 	logInfo,
 	logWarn,
 	modalitiesEligible,
@@ -89,7 +90,7 @@ import {
 	providerEntry,
 	providerReroute,
 	refreshCatwalkFacts,
-	refreshHyperFacts,
+	refreshProviderFacts,
 	scriptDir,
 	setLogTool,
 	suppressedProbe,
@@ -209,8 +210,23 @@ const PEER_MODEL_FILTERS = {
  *   builds the per-model compat mirror; null = none (full)
  * @property {boolean} onOffThinking swaps the all-null effort-less map for
  *   the ON_OFF representative map (full; see that constant)
- * @property {boolean} [enrichFromFacts] refresh + consume the hyper-facts
- *   cache (hyper only — the one provider with a non-models.dev cache)
+ * @property {{ path: string, listKey?: string }|undefined} [facts] the
+ *   provider's OWN rich model endpoint, relative to its base URL: refreshed
+ *   and cached (provider-facts.mjs), then read back through factsMapper. Two
+ *   roles, distinguished by whether the catalog contributes a lineup
+ *   (catalogOptional): hyper's cache ENRICHES the models.dev lineup
+ *   (docs/d033), while a catalog-less provider's cache IS the lineup in both
+ *   direct and peer mode (docs/d057)
+ * @property {((record: ProviderFactsModel) => ModelsDevModel)|undefined}
+ *   [factsMapper] rebuild one cached record as a models.dev-shaped record so
+ *   it reuses catalogPiModel()'s full derivation; required whenever facts is
+ *   set, and the only place a provider's own record shape is interpreted
+ * @property {boolean} [catalogOptional] the models.dev catalog does not carry
+ *   this provider at all, so loadProvider() must not be the lineup source and
+ *   must not throw: the endpoint comes from the fact table (the same base URL
+ *   the peer route is built from, docs/d047) and the lineup from the facts
+ *   cache. Without it a catalog-less row throws and no layer is written
+ *   (docs/d032 F1, docs/d057)
  * @property {readonly string[]} [modelAllowlist] catalog-namespace model ids
  *   to restrict the catalog lineup to (full; docs/d040)
  * @property {boolean} [catalogOnly] the provider serves no model listing the
@@ -672,9 +688,11 @@ const PROVIDER_SPECS = [
 		// Pair the deepseek thinking format with the ON_OFF map for
 		// effort-less reasoning models — see ON_OFF_THINKING_LEVEL_MAP.
 		onOffThinking: true,
-		// The one non-models.dev enrichment source: refresh + consume
-		// hyper-facts (docs/d033).
-		enrichFromFacts: true,
+		// hyper's own /provider catalog ENRICHES the models.dev lineup (hyper
+		// is in the catalog): live prices, limits and effort enums win over the
+		// catalog's, and live-only ids are appended in direct mode (docs/d033).
+		facts: { path: "/provider" },
+		factsMapper: hyperFactsRecord,
 		headers: {
 			// Mirror of the extension's "pi-hyper-provider/<version>" UA
 			// (models.json headers are static literals; versioning is
@@ -698,6 +716,33 @@ const PROVIDER_SPECS = [
 		// there is nothing to map: no thinkingLevelMap, no ON_OFF fallback —
 		// pi's default on/off handling covers them.
 		onOffThinking: false,
+	},
+	{
+		id: "verboo",
+		mode: "full",
+		name: "Verboo",
+		file: "model-018-cloud-verboo.json",
+		envKey: "VERBOO_API_KEY",
+		// Plain OpenAI-compatible gateway on /router/v1: no developer-role
+		// quirk, no per-model wire-compat mirror — pi's defaults are correct
+		// as-is (the inferx shape, docs/d032 F7).
+		compat: null,
+		modelCompat: null,
+		// The listing publishes effort ENUMS, so buildThinkingLevelMap covers
+		// the reasoning models and no ON_OFF fallback applies. Note the gap
+		// this leaves: only `qwen3.8-27b` lists a disable value ("none"), so
+		// for the other four the map has off=null and pi offers no way to
+		// disable thinking. Synthesizing one would mean inventing a wire value
+		// the listing never advertises, so it stays absent until verb oo
+		// publishes one (docs/d057).
+		onOffThinking: false,
+		// models.dev carries no verboo row and the catalog is replaced
+		// wholesale on refresh, so the lineup cannot come from it
+		// (catalogOptional) and the endpoint comes from the fact table
+		// instead of a catalog `api`.
+		catalogOptional: true,
+		facts: { path: "/models", listKey: "data" },
+		factsMapper: verbooFactsRecord,
 	},
 ];
 
@@ -779,10 +824,13 @@ function buildThinkingLevelMap(reasoningOptions) {
 }
 
 /**
- * @param {ModelsDevModel["cost"]} cost
- * @returns {PiAlternativeModel["cost"]}
+ * @param {ModelsDevModel["cost"]} cost the catalog's price block, or `null`
+ *   for a provider whose listing publishes NO prices
+ * @returns {PiAlternativeModel["cost"]} undefined for `null` — the layer then
+ *   omits `cost` rather than asserting pi's placeholder as if it were fact
  */
 function toCost(cost) {
+	if (cost === null) return undefined;
 	if (!cost) return { input: 10, output: 50, cacheRead: 1, cacheWrite: 20 };
 	return {
 		input: cost.input ?? 10,
@@ -801,7 +849,10 @@ function toCost(cost) {
  * @property {boolean} [reasoning]
  * @property {{ input?: string[], output?: string[] }} [modalities]
  * @property {{ context?: number, output?: number }} [limit]
- * @property {{ input?: number, output?: number, cache_read?: number, cache_write?: number }} [cost]
+ * @property {{ input?: number, output?: number, cache_read?: number, cache_write?: number }|null} [cost]
+ *   `null` = the source publishes no prices at all (a facts-only provider's
+ *   listing), which catalogPiModel() renders as an omitted cost rather than
+ *   the placeholder (see toCost)
  * @property {Array<{ type?: string, values?: string[] }>} [reasoning_options]
  * @property {{ npm?: string }|null} [provider] per-model api surface override
  *   (models.dev mirrors the anomalyco fork's providers/<id>/models/*.toml
@@ -856,6 +907,8 @@ function catalogPiModel(spec, m, id = m.id) {
 	// without the drivable core, output beyond text) before any projection.
 	// Unjudgeable dimensions pass — see modalitiesEligible.
 	if (!modalitiesEligible(m.modalities)) return null;
+	/** @type {PiAlternativeModel["cost"]} */
+	const cost = toCost(m.cost);
 	/** @type {PiAlternativeModel} */
 	const model = {
 		id,
@@ -864,8 +917,11 @@ function catalogPiModel(spec, m, id = m.id) {
 		input: toInput(m.modalities?.input),
 		contextWindow: m.limit?.context ?? 128000,
 		maxTokens: m.limit?.output ?? 16384,
-		cost: toCost(m.cost),
 	};
+	// A record with no published prices (cost: null, docs/d057) publishes no
+	// cost block: pi falls back to its own defaults, and a committed artifact
+	// never carries invented numbers.
+	if (cost) model.cost = cost;
 	if (model.reasoning) {
 		const map = buildThinkingLevelMap(m.reasoning_options);
 		const thinking =
@@ -878,15 +934,42 @@ function catalogPiModel(spec, m, id = m.id) {
 }
 
 /**
+ * The record a facts cache's mapper consumes or produces — one generic view
+ * over the provider-specific shapes (HyperProviderModel, VerbooFactsRecord):
+ * pi-shaped derivation runs through catalogPiModel(), so mappers emit
+ * models.dev-shaped records and every catalog default still applies.
+ * @typedef {import("./provider-facts.mjs").ProviderFactsModel} ProviderFactsModel
+ */
+
+/**
+ * @typedef {import("./provider-facts.mjs").LoadedProviderFacts} LoadedProviderFacts
+ */
+
+/**
  * Load one full-mode provider's slice of the (once-parsed) models.dev
  * catalog. Catwalk is NOT a fallback here: it carries none of the
  * alternative providers (docs/d028 coverage gap — hyper/cline-pass/inferx
  * are absent).
+ *
+ * A `catalogOptional` row returns an EMPTY lineup instead of throwing, and its
+ * endpoint comes from the fact table rather than a catalog `api`: models.dev
+ * does not carry the provider at all, and the vendored catalog is replaced
+ * wholesale on every refresh, so a missing row is this row's normal state,
+ * not a broken catalog (docs/d032 F1, docs/d057). The fact table is also the
+ * base URL its peer route is built from, so direct and peer routing cannot
+ * disagree (docs/d047). Its lineup arrives through the facts cache instead —
+ * an empty `models` map is what tells emitFullAt the cache owns the lineup.
  * @param {CloudProviderSpec} spec the provider spec row
  * @returns {{ api: string, models: Record<string, ModelsDevModel> }} the
  *   provider record (api endpoint + per-model metadata)
  */
 function loadProvider(spec) {
+	if (spec.catalogOptional) {
+		return {
+			api: CLOUD_PROVIDER_FACTS[spec.id].baseUrl,
+			models: {},
+		};
+	}
 	if (!CATALOG) {
 		throw Object.assign(new Error("models.dev catalog unreadable"), {
 			path: API_JSON,
@@ -930,16 +1013,16 @@ function providerBlock(spec, baseUrl, models, auth) {
 }
 
 /**
- * Rebuild a raw hyper-facts (live /provider) record as a models.dev-shaped
+ * Rebuild a raw hyper facts (live `/provider`) record as a models.dev-shaped
  * model record, so the enrichment reuses catalogPiModel()'s full derivation
  * (input, costs, effort-enum → thinkingLevelMap/compat). Fields pi models but
  * the live record lacks stay undefined → catalogPiModel()'s defaults; the
  * display name is overridden back to the models.dev one by the enricher
  * (names stay catalog — see the header whitelist note).
- * @param {import("./hyper-facts.mjs").HyperProviderModel} l a raw live /provider record
+ * @param {HyperFactsRecord} l a raw live /provider record
  * @returns {ModelsDevModel} a models.dev-shaped record with live facts
  */
-function liveToCatalogRecord(l) {
+function hyperFactsRecord(l) {
 	const levels = (l.reasoning_levels ?? []).map((v) => String(v).toLowerCase());
 	return {
 		id: l.id,
@@ -968,10 +1051,76 @@ function liveToCatalogRecord(l) {
 }
 
 /**
- * Enrich pi-shaped models with the provider's live /models listing.
- * This is used to prune models no longer served and add new ones found live
- * but missing from the catalog. Since live entries lack full metadata,
- * new models are published as minimal entries (pi defaults).
+ * A raw Charm Hyper `/provider` model record — the subset its factsMapper
+ * reads. Declared here, next to the mapper, because the record shape is the
+ * mapper's input and nothing else in the generator knows it.
+ * @typedef {object} HyperFactsRecord
+ * @property {string} id
+ * @property {string} [name]
+ * @property {boolean} [can_reason]
+ * @property {string[]} [reasoning_levels]
+ * @property {string} [default_reasoning_effort]
+ * @property {boolean} [supports_attachments]
+ * @property {number} [context_window]
+ * @property {number} [default_max_tokens]
+ * @property {number} [cost_per_1m_in]
+ * @property {number} [cost_per_1m_out]
+ * @property {number} [cost_per_1m_in_cached]
+ * @property {number} [cost_per_1m_out_cached]
+ */
+
+/**
+ * A raw verboo `/models` record — its listing is OpenAI-shaped
+ * (`{object:"list",data:[…]}`) and RICH in capability fields but silent on
+ * money: context_window, a boolean vision flag, and an optional reasoning
+ * object carrying the effort enum. `default_effort` has no home in pi's model
+ * shape (the thinkingLevelMap is a level → wire-value map, not a default), so
+ * it is dropped rather than invented into one.
+ * @typedef {object} VerbooFactsRecord
+ * @property {string} id
+ * @property {number} [context_window]
+ * @property {boolean} [vision]
+ * @property {{ effort_levels?: string[], default_effort?: string }} [reasoning]
+ */
+
+/**
+ * Rebuild a raw verboo `/models` record as a models.dev-shaped record (this is
+ * the provider's factsMapper, so catalogPiModel() derives everything pi reads
+ * from one shape).
+ *
+ * Two absences are deliberate, not oversights:
+ *   - `cost: null` — the listing publishes NO prices, and toCost() would
+ *     otherwise fabricate pi's 10/50/1/20 placeholder into a committed
+ *     artifact. `null` is the marker for "no published price" (see toCost);
+ *     the layer then omits the block rather than asserting a number.
+ *   - no `limit.output` — likewise unpublished. catalogPiModel()'s default
+ *     (16384) is the conservative cap to request, and inventing
+ *     context_window-sized max_tokens against a 1M-context model would send
+ *     max_tokens the upstream may reject.
+ * @param {VerbooFactsRecord} l a raw live /models record
+ * @returns {ModelsDevModel} a models.dev-shaped record with the live facts
+ */
+function verbooFactsRecord(l) {
+	const levels = (l.reasoning?.effort_levels ?? []).map((v) =>
+		String(v).toLowerCase(),
+	);
+	return {
+		id: l.id,
+		reasoning: l.reasoning !== undefined,
+		modalities: { input: l.vision === true ? ["text", "image"] : ["text"] },
+		limit: { context: l.context_window },
+		cost: null,
+		reasoning_options: levels.length ? [{ type: "effort", values: levels }] : [],
+	};
+}
+
+/**
+ * Enrich pi-shaped models with the provider's live /models listing (the
+ * direct-mode liveSync pass): prune models no longer served and add new ones
+ * found live but missing from the catalog. Since live entries lack full
+ * metadata, new models are published as minimal entries (pi defaults). This
+ * path is catalog-only by construction — a catalog-less row skips the sync
+ * (docs/d057).
  * @param {CloudProviderSpec} spec
  * @param {PiAlternativeModel[]} models the current catalog-derived lineup
  * @param {import("./peer-probe.mjs").RawModelEntry[]} liveEntries the listing from the provider's /models endpoint
@@ -985,31 +1134,31 @@ function enrichWithLiveListing(spec, models, liveEntries) {
 
 	const liveOnly = liveEntries
 		.filter((e) => !catalogIds.has(e.id))
-		.map((e) => {
-			const m = {
-				id: e.id,
-				name: e.name ?? e.id,
-			};
-			return catalogPiModel(spec, m);
-		})
+		.map((e) => catalogPiModel(spec, { id: e.id, name: e.name ?? e.id }))
 		.filter((m) => m !== null);
 
 	return [...pruned, ...liveOnly];
 }
 
 /**
- * Enrich pi-shaped models with the hyper facts cache: rebuild every model
- * whose id is in the live records through catalogPiModel()
- * on LIVE data, keeping the models.dev display name (see the header
- * whitelist). Models absent from the cache pass through untouched; live-only
- * records are returned for the caller to append (direct mode appends them,
- * peer mode appends only ids the peer actually serves).
+ * Enrich pi-shaped models with the provider's facts cache: rebuild every model
+ * whose id is in the live records through catalogPiModel() on LIVE data
+ * (via the spec's factsMapper), keeping the models.dev display name (see the
+ * header whitelist). Models absent from the cache pass through untouched;
+ * live-only records are returned for the caller to append (direct mode
+ * appends them, peer mode appends only ids the peer actually serves). Only the
+ * ENRICHING role reaches here — a catalog-less row's cache is consumed as the
+ * whole lineup, without a catalog to reconcile against (docs/d057).
  * @param {CloudProviderSpec} spec
  * @param {PiAlternativeModel[]} models the models to enrich
- * @param {import("./hyper-facts.mjs").LoadedHyperFacts} facts loaded cache
+ * @param {LoadedProviderFacts} facts loaded cache
  * @returns {{ enriched: PiAlternativeModel[], liveOnly: ModelsDevModel[], untouched: PiAlternativeModel[] }}
  */
 function enrichWithFacts(spec, models, facts) {
+	const { factsMapper } = spec;
+	if (!factsMapper) {
+		return { enriched: [], liveOnly: [], untouched: [...models] };
+	}
 	const live = new Map(facts.models.map((l) => [l.id, l]));
 	/** @type {PiAlternativeModel[]} */
 	const enriched = [];
@@ -1021,14 +1170,14 @@ function enrichWithFacts(spec, models, facts) {
 			untouched.push(m);
 			continue;
 		}
-		const merged = { ...liveToCatalogRecord(l), name: m.name };
+		const merged = { ...factsMapper(l), name: m.name };
 		const rebuilt = catalogPiModel(spec, merged, m.id);
 		if (rebuilt) enriched.push(rebuilt);
 	}
 	const servedIds = new Set(models.map((m) => m.id));
 	const liveOnly = facts.models
 		.filter((l) => !servedIds.has(l.id))
-		.map((l) => liveToCatalogRecord(l));
+		.map((l) => factsMapper(l));
 	return { enriched, liveOnly, untouched };
 }
 
@@ -1330,6 +1479,10 @@ async function emitFull(spec) {
 		route.url,
 		{ apiKey: `$${spec.envKey}`, authHeader: true },
 		false,
+		// The route's own listing bounds a facts-sourced lineup when the probe
+		// could authenticate it; empty entries (401/403 without a key) mean the
+		// route proved but says nothing, so nothing is bounded (docs/d033).
+		route.entries.length ? new Set(route.entries.map((e) => e.id)) : null,
 	);
 }
 
@@ -1338,15 +1491,18 @@ async function emitFull(spec) {
  * direct mode syncs the lineup against the live listing (when the provider's
  * key is in the environment) and, for hyper, appends live-only records;
  * peer mode keeps the catalog lineup, restricted to the ids the peer route
- * actually serves.
+ * actually serves. A `catalogOptional` row skips both lineup sources: its
+ * facts cache IS the lineup, in either mode (docs/d057).
  * @param {CloudProviderSpec} spec
  * @param {{ api: string, models: Record<string, ModelsDevModel> }} provider
  * @param {string} baseUrl
  * @param {{ apiKey: string, authHeader?: boolean }} auth
  * @param {boolean} directMode
+ * @param {ReadonlySet<string>|null} [peerIds] the ids the peer route's own
+ *   listing proved it serves, or null when it listed nothing
  * @returns {Promise<void>}
  */
-async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
+async function emitFullAt(spec, provider, baseUrl, auth, directMode, peerIds = null) {
 	const allow = spec.modelAllowlistResolver
 		? spec.modelAllowlistResolver(provider.models)
 		: spec.modelAllowlist;
@@ -1367,8 +1523,13 @@ async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
 	// ones (minimal entries; the listing carries no metadata). Peer mode has
 	// no lineup source beyond the catalog (the providers' own listings mirror
 	// passthrough catalogs that do not match their models.dev lineups).
+	//
+	// Skipped entirely when the catalog contributed nothing: that is the
+	// catalog-less case, where the facts cache below IS the lineup and a
+	// listing sync would strip its metadata down to bare ids.
 	if (
 		directMode &&
+		models.length > 0 &&
 		spec.liveSync !== false &&
 		process.env[spec.envKey]?.trim()
 	) {
@@ -1391,17 +1552,56 @@ async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
 		}
 	}
 
-	if (spec.enrichFromFacts) {
-		// refreshHyperFacts tries the provider endpoint, then every multi-hop
+	if (spec.facts) {
+		// refreshProviderFacts tries the provider endpoint, then every multi-hop
 		// peer candidate (docs/d034), then falls back to the last good cache;
-		// passing the API url keeps the multi-hop walk pointed at the right
-		// provider path. In PEER mode the direct endpoint already proved
+		// passing the resolved endpoint keeps the multi-hop walk pointed at the
+		// right provider path. In PEER mode the direct endpoint already proved
 		// unreachable — that is why the cascade routed through the peer — so
 		// re-probing it in the refresh is just a wasted timeout: skip that leg
 		// (peer-only walk).
-		await refreshHyperFacts(provider.api, !directMode);
-		const facts = loadHyperFacts();
-		if (facts) {
+		await refreshProviderFacts(spec.id, {
+			...spec.facts,
+			baseUrl: provider.api,
+			skipDirect: !directMode,
+		});
+		const facts = loadProviderFacts(spec.id);
+		if (!facts) {
+			logWarn("facts cache unavailable — using catalog metadata", {
+				provider: spec.id,
+			});
+		} else if (models.length === 0 && spec.catalogOptional) {
+			/**
+			 * Catalog-less row: the cache is not an enrichment, it is the only
+			 * lineup there is — so every record is published, in BOTH modes
+			 * (peer mode has no catalog fallback to fall back to). The two
+			 * sources of truth for "may pi ask for this id" still apply: the
+			 * optional allowlist, and — in peer mode — the route's own listing
+			 * when the probe could authenticate it.
+			 */
+			const { factsMapper } = spec;
+			if (!factsMapper) {
+				logWarn("facts row without a mapper — cache unusable", {
+					provider: spec.id,
+				});
+				return;
+			}
+			const served = peerIds
+				? facts.models.filter((l) => peerIds.has(l.id))
+				: facts.models;
+			models = served
+				.filter((l) => !allow || allow.includes(l.id))
+				.map((l) => catalogPiModel(spec, factsMapper(l), l.id))
+				.filter((m) => m !== null);
+			logInfo("lineup taken from the facts cache (no models.dev row)", {
+				provider: spec.id,
+				fetchedAt: facts.fetchedAt,
+				ageMs: facts.ageMs,
+				cached: facts.models.length,
+				published: models.length,
+				peerBounded: peerIds !== null,
+			});
+		} else {
 			const { enriched, liveOnly, untouched } = enrichWithFacts(
 				spec,
 				models,
@@ -1428,10 +1628,6 @@ async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
 				...(directMode ? { liveOnlyAppended: liveOnly.length } : {}),
 				catalogOnlyKept: untouched.length,
 			});
-		} else {
-			logWarn("facts cache unavailable — using catalog metadata", {
-				provider: spec.id,
-			});
 		}
 	}
 
@@ -1456,9 +1652,9 @@ async function emitFullAt(spec, provider, baseUrl, auth, directMode) {
 async function generateCloudProviders() {
 	// Best-effort cache refresh before the cascade reads it (order is
 	// irrelevant — it only writes lib caches; a failing refresh must not fail
-	// generation). Hyper's refresh is NOT here: it belongs to the hyper row's
-	// emit path, which passes the provider's own API url so the multi-hop
-	// walk (docs/d034) stays pointed at the right provider path.
+	// generation). The providers' facts refreshes are NOT here: each belongs to
+	// its own row's emit path, which passes the resolved endpoint so the
+	// multi-hop walk (docs/d034) stays pointed at the right provider path.
 	await Promise.allSettled([refreshCatwalkFacts()]);
 
 	/** @type {Record<string, import("./gen-lib.mjs").PiProvider>} */

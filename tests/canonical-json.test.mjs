@@ -94,6 +94,7 @@ const COMMITTED_MANIFESTS = [
 	"coding-agent/model-015-cloud-cline-pass.json",
 	"coding-agent/model-016-cloud-hyper.json",
 	"coding-agent/model-017-cloud-inferx.json",
+	"coding-agent/model-018-cloud-verboo.json",
 	"coding-agent/models.json",
 	"coding-agent/opencode.jsonc",
 	"llm-reverse-proxy/llm-reverse-proxy.json",

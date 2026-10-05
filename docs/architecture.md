@@ -116,7 +116,7 @@ prohibits (and what was removed):
 - `workload-*.jq` — the jq filters behind the workload description API.
 
 The probe/facts/refresh modules that used to sit here (`peer-probe.mjs`,
-`pi-models.mjs`, `hyper-facts.mjs`, `catwalk-facts.mjs`,
+`pi-models.mjs`, `provider-facts.mjs`, `catwalk-facts.mjs`,
 `refresh-models-dev.mjs`) were single-consumer and folded back into
 `coding-agent/` (docs/d039).
 
