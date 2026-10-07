@@ -1,5 +1,8 @@
 #!/bin/sh
-# `run.sh` — unified coding-agent launcher (container hosts AND Termux).
+# `run.sh` — coding-agent launcher: ALWAYS the container sandbox (docs/d059).
+# A host with no podman/docker has no sandbox to launch, so there is nothing
+# here to fall back to — run pi itself under the same chain instead:
+#   ./lib/environment.sh pi
 #
 # The environment is loaded EXPLICITLY, before this script runs:
 #
@@ -26,11 +29,9 @@
 #   replacement for the retired CODING_AGENT_REFERENCES toggle (docs/d043,
 #   docs/d056): the costly z,U relabel walk is paid only for a launch that
 #   names the mirror. A DIRECTORY resolving to $HOME is refused — HOME is host
-#   state and credentials, not a workspace. Termux has no mount boundary, so
-#   there the directories are already visible and only the first (workdir)
-#   changes anything.
+#   state and credentials, not a workspace.
 #
-#   container branch (podman/docker, via ../lib/workload-runtime.sh):
+#   The launch (podman/docker required, via ../lib/workload-runtime.sh):
 #     - rw-mount the HOST agent dir (PI_CODING_AGENT_DIR) directly — no per-run
 #       config copy, so the generator's install target, the host pi, and the
 #       sandboxed pi are one directory
@@ -45,16 +46,15 @@
 #     - forward the (already-loaded) vault env through the workload_env
 #       allowlist; the spawn chain inside the container is plain interactive
 #       bash with no infisical at all
-#   Termux branch (PREFIX under /data/data/com.termux):
-#     - no container, no mise; the same explicit chain supplies the env
-#     - exec pi directly against $PI_CODING_AGENT_DIR (the generator's install
-#       target — same var, so they can't diverge)
+#
+# There is deliberately no second (host-native) branch: without podman/docker
+# run.sh refuses BEFORE staging anything and names the sandbox-free path above.
 #
 # Env overrides:
 #   PI_CODING_AGENT_DIR  pi's agent/config dir (default $HOME/.pi/agent) —
 #                    also the var pi itself reads, so the generator's install
 #                    target and pi's config source are the same path by
-#                    construction. The container branch mounts THIS HOST DIR
+#                    construction. run.sh mounts THIS HOST DIR
 #                    rw, so config/skills persist across runs (docs/d054)
 #   PI_CODING_AGENT_SESSION_DIR  pinned to the per-run stage by run.sh — NOT
 #                    read from the host env, so a host pi that has it set can
@@ -114,41 +114,20 @@ while [ "$_dir_processed" -lt "$_dir_total" ]; do
 done
 workdir="$1"
 
-case "${PREFIX:-}" in
-	*/com.termux/*) _termux=1 ;;
-	*) _termux=0 ;;
-esac
-
-if [ "$_termux" = 1 ]; then
-	# ----------------------------- Termux -----------------------------------
-	# pi's own env var, honoured directly: the generator (same var) and pi
-	# always target the same dir. The old AGENT_DIR alias was a second name
-	# for this that could silently disagree with what pi reads.
-	PI_CODING_AGENT_DIR="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
-	export PI_CODING_AGENT_DIR
-
-	# models.json carries "$VAR" references that pi resolves from its own
-	# environment at request time, so the secrets must be in this shell's env.
-	# They arrive via the explicit chain (./lib/environment.sh ./run.sh) —
-	# this script consumes plain env and never loads anything itself. No .env
-	# file is ever read; a missing var stays missing (pi/generators skip).
-	:
-
-	mkdir -p "$PI_CODING_AGENT_DIR"
-	# Runners never generate (docs/d041): a missing artifact is a user issue,
-	# not something to fix implicitly.
-	[ -f "$PI_CODING_AGENT_DIR/models.json" ] ||
-		log_die 94 "no models.json in agent dir — run ./generate.sh first" \
-			agentDir="$PI_CODING_AGENT_DIR"
-
-	log_info "launching pi" workspace="$workdir" agentDir="$PI_CODING_AGENT_DIR"
-	cd "$workdir"
-	exec pi
-fi
-
-# -------------------------- container branch --------------------------------
+# ------------------------- sandbox (the only path) ---------------------------
 # shellcheck disable=SC1091
 . "$SCRIPT_DIR/../lib/workload-runtime.sh"
+
+# No backend, no staging: `_workload` is decided when the file above is
+# sourced, whereas workload_run's own check would fire only AFTER the stage
+# dir, launch chain and mount manifest were assembled. Refusing here leaves a
+# backend-less host with nothing half-built and points it at the sandbox-free
+# run path (docs/d059).
+# shellcheck disable=SC2154  # assigned by workload-runtime.sh, whose $SCRIPT_DIR
+# path shellcheck cannot resolve (the source line is SC1091-disabled for the
+# same reason)
+[ "$_workload" = 'workload' ] ||
+	log_die 91 "no workload backend available (need podman or docker) — no sandbox here; run pi directly: ./lib/environment.sh pi"
 
 USER="${USER:-$(id -un)}"
 export USER

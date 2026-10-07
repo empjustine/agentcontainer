@@ -1,7 +1,9 @@
 # d046 — `infisical run` replaces the hand-rolled vault loader
 
 **Date:** 2026-09-18
-**Status:** adopted
+**Status:** adopted · target resolution extended by **d059** — a bare
+command on PATH is a valid target (`./lib/environment.sh pi`), and a PATH hit
+must actually execute to count.
 **Supersedes:** the custom loader mechanics of `lib/environment.sh`
 (exit-96 empty-vault pre-flight, in-process dotenv parser, `secrets
 --output=dotenv` + parse + exec chain); the chain *contract* is unchanged.

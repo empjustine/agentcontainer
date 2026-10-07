@@ -97,11 +97,16 @@ against the host-generated config mounted above. `run.sh` takes
 `[DIRECTORY [DIRECTORY...]]` instead — CWD is the implicit first directory —
 and exposes each at its own path rw with the first as the workdir; the
 `~/Downloads/references` mirror is passed as just another directory, replacing
-the former `CODING_AGENT_REFERENCES` toggle (docs/d043, docs/d056). A missing
+the former `CODING_AGENT_REFERENCES` toggle (docs/d043, docs/d056). `run.sh` is
+container-ONLY (docs/d059): without podman/docker it refuses at the top —
+before staging anything — and names the sandbox-free path
+(`./lib/environment.sh pi`, which spawns a bare PATH command as well as a
+script). A missing
 installed artifact is a loud failure pointing at the generator, never an
 implicit regeneration.
 
-Profiles (detected at runtime): **Termux** — system node (Termux's bionic
+Generation profiles (detected at runtime — generation runs on both kinds of
+host; only container hosts launch, docs/d059): **Termux** — system node (Termux's bionic
 build; pi enforces its own ≥ 22.19 engines floor at launch), secrets arrive
 as plain env via the explicit chain, the vendored models.dev catalog is used
 by default (no refetch over mobile data), the opencode stage is skipped

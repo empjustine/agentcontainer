@@ -20,6 +20,10 @@ generator tree and `/opt/lib` module mounts are gone, as are the
 toggle that used to bind-mount `~/Downloads/references` is gone too — the
 mirror is passed as just another `DIRECTORY`.
 
+Superseded in part by **d059**: the runner is container-only, so the
+container/Termux-branch wording in this record (uniform `$HOME` refusal, "no
+mount boundary on Termux") no longer applies to a launch.
+
 ## Problem
 
 Three separate seams had accumulated in the runner:

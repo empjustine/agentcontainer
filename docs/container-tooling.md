@@ -189,9 +189,10 @@ header repeats:
 source `lib/workload-runtime.sh` just for `log_*` never touch it,
 and the lookup is lazy (it fails on first use, not at source time).
 Provisioned in `mise.toml` (host), `coding-agent/config.toml` (image), and
-`pkg install jq` on Termux. `coding-agent/run.sh` bind-mounts every
-`lib/workload-*.jq` into `/opt/lib`, since inside the container `REPO_ROOT` is
-`/opt`.
+`pkg install jq` on Termux. The filters are evaluated HOST-side
+(`workload_JQDIR` is `$REPO_ROOT/lib`), so nothing about them has to reach
+inside the container — the `/opt/lib` bind-mounts that once carried them were
+retired with the generator-tree mounts (d056).
 
 **Tests:** `./tests/check-workload.sh` renders two full descriptions (one per
 backend) and diffs the argv against the pre-refactor output, plus the

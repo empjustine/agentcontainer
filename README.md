@@ -34,7 +34,9 @@ pointing at the generator.
 `infisical run` fetches the vault and spawns the target with it as plain
 env, on the host, docs/d046):
 `./lib/environment.sh ./coding-agent/run.sh`, `./lib/environment.sh
-./llm-local-inference/run.sh`, etc.  The scripts it wraps consume plain env
+./llm-local-inference/run.sh`, etc.  The target may also be a bare command:
+`./lib/environment.sh pi` runs pi with the vault env and no sandbox — the run
+path for a host with no container backend (docs/d059).  The scripts it wraps consume plain env
 and never load anything themselves; inside sandboxes the vault env is
 forwarded via the `workload_env` allowlist.  Generation steps that need no
 keys (llm-local-inference/generate.mjs, llm-reverse-proxy/generate.mjs) run
@@ -100,7 +102,7 @@ agentcontainer/
 │   ├── catwalk-facts.json              #   → vendored catwalk catalog (coding-agent + llm-reverse-proxy)
 │   ├── cloud-providers.mjs             #   → the one cloud-provider fact table
 │   ├── log.mjs / artifact.mjs / canonical-json.mjs / log.sh # → shared logger/artifact std (canonical manifest JSON — d050)
-│   ├── environment.sh                   #   → EXPLICIT env chain: `infisical run` spawns <script> (d046)
+│   ├── environment.sh                   #   → EXPLICIT env chain: `infisical run` spawns <script-or-command> (d046; bare command = sandbox-free run path, d059)
 │   ├── workload-*.jq                   #   → jq filters behind the workload_* API
 │
 ├── llm-local-inference/                   # llama-swap: LOCAL GGUF inference only
@@ -120,7 +122,7 @@ agentcontainer/
 │   └── DESIGN.md                        #   → routing-convention rationale, 404 anti-oracle, RFC 9457 error taxonomy
 │
 ├── coding-agent/                        # Bazzite usage (full pi)
-│   ├── run.sh                           #   → launches pi coding-agent container; ARGV = extra dirs to mount rw (CWD implicit, d056)
+│   ├── run.sh                           #   → launches the pi coding-agent CONTAINER; no backend → ./lib/environment.sh pi (d059); ARGV = extra dirs to mount rw (CWD implicit, d056)
 │   ├── generate.sh / generate.mjs       #   → the folder driver: stages + runs the TWO by-agent generators (d041; broad by-agent merge)
 │   ├── generate-pi-coding-agent.mjs     #   → ALL pi config: model-*.json layers → models.json + default-model.json overlay
 │   ├── generate-opencode.mjs            #   → opencode overlay config (provider SINGULAR key; skipped on Termux w/o OPENCODE_CONFIG_DIR)
@@ -236,6 +238,8 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d055-mmproj-offload-size-gate.md](docs/d055-mmproj-offload-size-gate.md) | suppress the GPU-projector (`2mmproj`) mmproj variant above 14 GB total footprint (model + mmproj + draft) — a model that large evicts its own weights to make room for the projector, so `2mmproj` runs slower than `1vision`; `MMPROJ_OFFLOAD_MAX_SIZE_GB` in `llm-local-inference/generate.mjs`, takes d029 C1 (36 of 62 mmproj entries gated) |
 | [docs/d056-run-directory-mounts.md](docs/d056-run-directory-mounts.md) | `coding-agent/run.sh` takes `[DIRECTORY [DIRECTORY...]]` (CWD implicit first, each mounted rw at its own path, first is the workdir; `$HOME` refused) — replaces the `CODING_AGENT_REFERENCES` toggle, removes the generator-tree/`/opt/lib` mounts and the `PEER_BASE_URL`/`PEERS_ONLY` forwards so the runner carries zero generator support |
 | [docs/d057-catalog-less-providers.md](docs/d057-catalog-less-providers.md) | a provider models.dev does not carry — `catalogOptional` + the fact-table endpoint make the provider's own facts cache the authoritative lineup in both modes (worked example: verboo; `hyper-facts.mjs` → generic `provider-facts.mjs`; missing prices/output-limit are omitted, not invented) |
+| [docs/d058-retire-simulation-modes.md](docs/d058-retire-simulation-modes.md) | retire simulation modes — generator `DRY_RUN` previews, `BUILD_PLAN=1`, and four `git/` `--dry-run` flags removed; writes are atomic swaps of committed artifacts (`lib/artifact.mjs`), so regenerate + `git diff` IS the review; verifiers asserting about reality (`--check`, `--verify`, `--help`) stay |
+| [docs/d059-container-only-run-sh.md](docs/d059-container-only-run-sh.md) | `coding-agent/run.sh` becomes container-only (Termux branch deleted; fail-fast exit 91 before staging when there is no backend) and `lib/environment.sh` accepts a bare PATH command — `./lib/environment.sh pi` is the sandbox-free run path; also fixes the mise `infisical` wrap and requires a PATH hit to actually execute |
 
 ### Research & archive
 

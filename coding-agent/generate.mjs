@@ -33,16 +33,18 @@
  * Outputs are installed into TWO places (there is no separate install step):
  * the pi agent dir (models.json + settings.json, backup kept as .bak-<ts>)
  * AND, on container hosts, this dir's own committed snapshot (models.json +
- * model-*.json) that run.sh's container branch stages — docs/d041's "the
- * committed config is the runtime config". The agent-dir copies are
+ * model-*.json) — what SKIP_GEN installs and what a regeneration's git diff
+ * reviews (docs/d041's "the committed config is the runtime config"). The
+ * agent-dir copies are
  * GENERATED EPHEMERAL files: the install target is the live dir in every
  * environment (bare host and Termux: $HOME/.pi/agent; in-container: the
  * pinned mount), so pi itself always sees the fresh list. Overwriting
  * whatever pi left there is by design — pi re-persists its own runtime
  * fields (theme, lastChangelogVersion) on the next run; the committed
  * settings.json is the source of truth for everything else. The committed
- * snapshot refresh is container-only because run.sh's Termux branch already
- * reads the agent dir directly; a read-only scriptDir (e.g. a copied folder
+ * snapshot refresh is container-only: on Termux pi reads the agent dir
+ * directly and no runner consumes the committed copy (docs/d059), so it stays
+ * a SKIP_GEN fallback there. A read-only scriptDir (e.g. a copied folder
  * mounted ro) only warns.
  *
  * Env overrides:
@@ -180,12 +182,12 @@ function providersOf(path) {
 
 /**
  * Mirror the freshly generated models.json and its model-*.json layers into
- * this script's own dir — the committed snapshot the container branch of
- * run.sh stages (docs/d041). Without this copy-back `./generate.sh` refreshes
- * only the agent dir, so the committed coding-agent/models.json stays frozen
- * while run.sh keeps serving its stale model list. Container hosts only: on
- * Termux run.sh reads the agent dir, leaving the committed copy a SKIP_GEN
- * fallback. A read-only scriptDir (e.g. a copied folder mounted ro) is
+ * this script's own dir — the committed snapshot SKIP_GEN installs (docs/d041).
+ * Without this copy-back `./generate.sh` refreshes
+ * only the agent dir, so the committed coding-agent/models.json stays frozen:
+ * the list a SKIP_GEN run installs and the diff a regeneration reviews would
+ * both keep an old generation. Container hosts only (docs/d059). A read-only
+ * scriptDir (e.g. a copied folder mounted ro) is
  * expected and only warns.
  * @param {string} modelsOut the merged models.json just installed
  * @param {string} scratch the staged generator dir holding the layers
