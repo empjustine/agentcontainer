@@ -8,14 +8,16 @@ tags: ["[root]", "brd", "requirements"]
 
 ## Goal
 
-Serve LLMs on the owner's own fleet of hosts (bazzite GPU desktop, a50
-phone/router, WSL2, an OCI VM) through **one llama-swap instance per host**, and
-configure the pi coding-agent to consume that catalog — a single-user
-infrastructure setup, not a product. *(User-confirmed.)*
+Serve LLMs on the owner's own fleet of hosts through **one llama-swap
+instance per host**, and configure the pi coding-agent to consume that
+catalog — a single-user infrastructure setup, not a product. *(User-confirmed.)*
 
-The same tree adapts across hosts with wildly different capabilities (GPU or
-none, container runtime or none, cloud access or not) without forking per-host
-copies: capability detection at generation time decides what a host gets.
+The same tree adapts to every host without forking per-host copies. Two
+independent capability axes decide what a host gets: **can the host run LLM
+inference itself?** (if not, it consumes inference served elsewhere in the
+fleet) and **can the host reach cloud LLM APIs directly?** (if not, its cloud
+traffic goes through the fleet's relay). Capability detection at generation
+time turns a host's position on that matrix into its config.
 
 ## Stakeholders & context
 
@@ -32,7 +34,8 @@ copies: capability detection at generation time decides what a host gets.
 ## Scope
 
 - **Serving** — `llm-local-inference/` (see `llm-local-inference`): local llama.cpp
-  GGUF inference where the host can do it, cloud-provider peers everywhere,
+  GGUF inference where the host can do it, cloud providers everywhere else
+  (directly, or relayed for hosts that cannot reach them),
   published on LAN :8101 and reachable through the tailscale funnel (which
   fronts llm-reverse-proxy on :8080 — docs/d027).
 - **Usage** — `coding-agent/` (see `coding-agent`): the pi coding-agent's
@@ -50,11 +53,13 @@ copies: capability detection at generation time decides what a host gets.
 
 ### Serving — `llm-local-inference/`
 
-- **FR-S1** — Each GPU-capable container host runs exactly ONE llama-swap
-  instance serving LOCAL GGUF models; there is no peers-only llama-swap mode.
+- **FR-S1** — Each host that can serve models locally runs exactly ONE
+  llama-swap instance serving LOCAL GGUF models; a host without that
+  capability gets no llama-swap at all — serving is never delegated to
+  another host's instance.
 - **FR-S2** — Local inference config is capability-gated: generated only where
   a container backend AND GPU devices are detected; generation fails hard
-  elsewhere (a `LOCAL_INFERENCE=1` override exists for debug only).
+  elsewhere.
 - **FR-S3** — The instance is published on LAN :8101 and reachable from the
   world only through the tailscale funnel → llm-reverse-proxy :8080 →
   `/llama-swap/…` → :8101 (the one allowlist alias key, docs/d047). Port 8080
@@ -79,7 +84,9 @@ copies: capability detection at generation time decides what a host gets.
   static inputs (`settings.json`, `config.toml`, `Containerfile`).
 - **FR-U2** — Model/provider configuration is GENERATED, layered
   (`model-*.json` overlays merged lexically per-provider), and capability
-  gated: full generation on capable hosts, static config on peers-only hosts.
+  gated: generation emits what the host's capabilities allow (can it serve
+  local inference, can it reach cloud APIs directly); hosts lacking them fall
+  back to the committed static config.
 - **FR-U3** — Scoped models: the agent uses pi's own model catalog, scoped by
   `enabledModels` in static settings; generators emit provider overrides
   (base URLs, key refs), never client-side model catalogs.

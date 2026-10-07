@@ -33,11 +33,15 @@ ARG USER=dev
 # frames that leak into captured build logs — -o= per call was tried and one
 # missed apt-get line (upgrade) leaked anyway. DEBIAN_FRONTEND keeps prompts
 # from stalling layers.
+# libatomic1 is the one runtime debian:13-slim does NOT ship that node 26's
+# binary links (libatomic.so.1) — without it `mise install` fails its
+# post-install version probe with exit 127 (missing shared library). node 24
+# doesn't link libatomic, which is why the omission survived until 26.
 ENV DEBIAN_FRONTEND=noninteractive
 RUN echo 'Dpkg::Use-Pty "0";' > /etc/apt/apt.conf.d/99-no-dpkg-pty && \
 apt-get update -qq && \
 apt-get -y -qq --no-install-recommends upgrade && \
-apt-get -y -qq --no-install-recommends install extrepo ca-certificates curl git sudo vim-tiny && \
+apt-get -y -qq --no-install-recommends install extrepo ca-certificates curl git libatomic1 sudo vim-tiny && \
 extrepo enable mise && \
 apt-get update -qq && \
 apt-get -y -qq --no-install-recommends install mise && \

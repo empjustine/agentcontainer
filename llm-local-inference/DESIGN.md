@@ -20,10 +20,11 @@ inference** — generate the capability-gated `config.d/` layers for *this*
 host, then launch llama-swap against whatever was generated. The normative
 requirement statement lives in the BRD
 ([../docs/requirements.md](../docs/requirements.md), FR-S1–FR-S4); this doc
-owns the shape and the non-obvious mechanics. Remote/cloud relaying is OUT of
-scope — the former cloud-peer layers and the remote gfx1030 peer route were
-removed when relaying moved to `../llm-reverse-proxy` (the raw passthrough
-proxy); llama-swap's peer/proxy machinery is no longer exercised from here.
+owns the shape and the non-obvious mechanics. Serving models *this* host
+cannot run itself is OUT of scope — relaying moved to
+`../llm-reverse-proxy` (the raw passthrough proxy), taking the former relay
+layers and the route to a remote host's GPU with it; llama-swap's own
+peer/proxy machinery is no longer exercised from here.
 
 ## Shape
 
@@ -41,14 +42,16 @@ The legacy :18080 port is dead and never probed.
 **config.d layers** (merge contract in `docs/d018-split-config-d.md`):
 `00-general.yaml` (globals/macros; always) · `10-local-llm-inference.yaml` +
 its `.paths` staleness manifest (only when a container backend **and** GPU
-devices are detected). There is no peers-only mode: a host without the
-container backend + GPU cannot serve local inference and generation fails
-hard (`LOCAL_INFERENCE=1` forces generation for debug only). No shell lives in
+devices are detected). There is no mode where this instance serves another
+host's models: a host without the container backend + GPU cannot serve local
+inference and generation fails hard
+(`LOCAL_INFERENCE=1` forces generation for debug only). No shell lives in
 `config.d/` anymore — the former in-container `launch-gguf.sh` resolver was
 replaced by generation-time path baking (`docs/d029` option B).
 
-**Termux leaf**: removed. Termux was peers-only by construction, and with
-peers gone from this module it has no role here — there is no `run-native.sh`,
+**Termux leaf**: removed. Termux can neither serve local inference (no
+container backend, no GPU) nor reach anything through this module once
+relaying left, so it has no role here — there is no `run-native.sh`,
 no android cross-build — the root `build.mjs` (docs/d041) only pre-pulls the
 container image for this folder.
 

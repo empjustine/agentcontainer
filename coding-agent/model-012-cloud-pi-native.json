@@ -412,6 +412,19 @@
           }
         },
         {
+          "id": "mistral-large-4",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
           "id": "mistral-large-latest",
           "reasoning": true,
           "input": [
@@ -2112,6 +2125,19 @@
           }
         },
         {
+          "id": "exo-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
           "id": "fledge-alpha-free",
           "reasoning": true,
           "input": [
@@ -3126,6 +3152,19 @@
           }
         },
         {
+          "id": "mistral-large-4",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
           "id": "muse-spark-1.2",
           "reasoning": true,
           "input": [
@@ -3811,7 +3850,7 @@
           "api": "anthropic-messages"
         },
         {
-          "id": "space-bunny-free",
+          "id": "space-bunny",
           "reasoning": true,
           "input": [
             "text"
@@ -3823,6 +3862,19 @@
             "cacheWrite": 20
           },
           "api": "openai-completions"
+        },
+        {
+          "id": "space-bunny-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
         }
       ]
     },
@@ -4000,19 +4052,6 @@
         },
         {
           "id": "poolside/laguna-xs-2.1:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "cost": {
-            "input": 10,
-            "output": 50,
-            "cacheRead": 1,
-            "cacheWrite": 20
-          }
-        },
-        {
-          "id": "qwen/qwen3.8-27b:free",
           "reasoning": true,
           "input": [
             "text"

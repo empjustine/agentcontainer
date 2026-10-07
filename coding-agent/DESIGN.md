@@ -18,9 +18,23 @@ tags:
 
 Charter: own the pi coding-agent's container image (`Containerfile` +
 `config.toml` mise manifest) and generate its model/provider configuration —
-the *baseline* every environment consumes. Full generation on capable hosts;
-static config (no generation) on peers-only hosts (`wsl2`, `oci-e21micro` —
-see `environments`). The normative requirement statement lives in the BRD
+the *baseline* every environment consumes.
+
+Configuration is generated rather than written once because every host sits
+somewhere on a two-axis capability matrix, and one config tree must serve all
+of it without per-host forks:
+
+- **local inference** — can the host run LLM inference itself? Hosts that can
+  serve models locally; hosts that can't consume what the rest of the fleet
+  serves.
+- **cloud reachability** — can the host reach cloud LLM APIs on its own?
+  Hosts with direct egress; hosts without, whose cloud traffic goes through
+  the fleet's relay.
+
+Generation produces what the host's capabilities allow; the committed static
+config covers what they don't. Which host lands in which cell is systems-reference
+material, not this doc's job — see `environments`. The normative requirement
+statement lives in the BRD
 ([../docs/requirements.md](../docs/requirements.md), FR-U1–FR-U6); this doc
 owns the shape and the non-obvious mechanics.
 
