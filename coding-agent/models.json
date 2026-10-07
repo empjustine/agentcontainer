@@ -5650,6 +5650,19 @@
       "baseUrl": "https://api.mistral.ai/v1",
       "models": [
         {
+          "id": "codestral-2508",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
           "id": "codestral-latest",
           "reasoning": true,
           "input": [
@@ -5741,7 +5754,33 @@
           }
         },
         {
+          "id": "glm-5-2",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
           "id": "labs-devstral-small-2512",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "labs-leanstral-1-5-1",
           "reasoning": true,
           "input": [
             "text"
@@ -5767,7 +5806,46 @@
           }
         },
         {
+          "id": "ministral-14b-2512",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "ministral-3b-2512",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
           "id": "ministral-3b-latest",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "ministral-8b-2512",
           "reasoning": true,
           "input": [
             "text"
@@ -6015,6 +6093,19 @@
         },
         {
           "id": "pixtral-large-latest",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cacheRead": 1,
+            "cacheWrite": 20
+          }
+        },
+        {
+          "id": "voxtral-small-2507",
           "reasoning": true,
           "input": [
             "text"

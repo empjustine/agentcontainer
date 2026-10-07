@@ -1,7 +1,7 @@
 ---
 id: d058
 type: architecture-design
-status: implemented
+status: implemented · verifier + env-seed clauses superseded by d060
 title: "d058 — retire simulation modes: writes are atomic swaps, review is git diff"
 parent: architecture
 depends-on: [d041, d042, d050]
@@ -11,7 +11,12 @@ tags: [generators, build, git-tooling, dx]
 
 # d058 — Retire simulation modes (dry-run / plan flags)
 
-**Status:** implemented
+**Status:** implemented · superseded in part by **d060** — the two "reality
+verifiers" it kept (`model-sizes --check`, `migrate --verify`) and the env-seeded
+knobs it listed as effect switches (`MODELS_DEV_REFRESH`, `MIRROR_MIN_INTERVAL`,
+the `VBS_*` env surface) are retired as well; the keep-list below now ends at
+scope selectors, real effect switches, `--help`, and reader-side verbosity
+filtering (`jq 'select(.level=="...")'`, d045's rule reaffirmed).
 
 ## Problem
 

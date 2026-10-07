@@ -8,8 +8,12 @@ Env:
     LOG_TOOL    component name (default "python"; set per tool with set_tool(),
                 e.g. log.set_tool("local-llm/upkeep"))
 
-No level filtering happens here, ever — debug/trace/warn/error all go to the
-stream; a consumer filters downstream with jsonlines tooling (docs/d045).
+Level filtering is the consumer's job (docs/d045, reaffirmed by docs/d060):
+nothing is dropped here. A tool logs the useful-but-noisy detail at `debug`
+unconditionally instead of growing a --verbose branch, and whoever reads the
+stream prunes it (`jq 'select(.level!="debug")'`, or one level with
+`jq 'select(.level=="error")'`). docs/d045 owns the rest of the contract
+(static labels, structured fields, full cause chains).
 Stream is stdout by default; a script whose stdout IS the machine-consumed
 payload calls set_stream(sys.stderr) once at startup so logs cannot interleave
 with the payload (docs/d045).

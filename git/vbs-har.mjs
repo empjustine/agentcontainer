@@ -12,7 +12,7 @@
  * Fields are the tenant's own, verified against a real capture: a project is
  * keyed by `identifier` (id) / `urlId` (slug) / `name`; a repository carries
  * `name` (with `.git`), `url` (https clone) and `alternateUrl` (ssh clone,
- * WITHOUT a userinfo — the shell half injects VBS_SSH_USER).
+ * WITHOUT a userinfo — the shell half injects `--ssh-user`).
  *
  * Output is the manifest schema `./git/-vbs-mirror-all.sh --manifest FILE`
  * consumes. Projects the capture never opened are listed under

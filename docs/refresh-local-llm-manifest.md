@@ -148,7 +148,8 @@ ids** — fix any collision (usually a `slug`/`ctx-size` clash) before shipping.
 ```sh
 node -e "require('./lib/llamacpp-model-data.json')"    # parses? (no output = ok)
 
-./llm-local-inference/model-sizes.sh --check           # footprint + order are up to date?
+./llm-local-inference/model-sizes.sh                   # regenerate the footprint/order...
+git diff --exit-code lib/llamacpp-model-data.json      # ...and an empty diff says it was current
 
 # coverage: re-run the Step 1 scanner and confirm
 #   - every cached repo has >=1 manifest entry (no repo left at zero coverage)

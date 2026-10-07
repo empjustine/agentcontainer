@@ -17981,38 +17981,6 @@
 				},
 				"canonical_model_id": "google/gemini-2.5-pro"
 			},
-			"ernie-x1.1-preview": {
-				"id": "ernie-x1.1-preview",
-				"name": "ERNIE X1.1",
-				"description": "Compact GPT model for low-latency assistance and high-volume workloads",
-				"family": "ernie",
-				"attachment": true,
-				"reasoning": false,
-				"tool_call": false,
-				"structured_output": false,
-				"release_date": "2025-09-10",
-				"last_updated": "2025-09-10",
-				"modalities": {
-					"input": [
-						"text",
-						"pdf"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": false,
-				"limit": {
-					"context": 64000,
-					"input": 64000,
-					"output": 8192
-				},
-				"cost": {
-					"input": 0.15,
-					"output": 0.6,
-					"cache_read": 0.075
-				}
-			},
 			"gemini-2.5-flash": {
 				"id": "gemini-2.5-flash",
 				"name": "Gemini 2.5 Flash",
@@ -18156,7 +18124,7 @@
 				"limit": {
 					"context": 1000000,
 					"input": 1000000,
-					"output": 4096
+					"output": 4095
 				},
 				"cost": {
 					"input": 0.2006,
@@ -19772,37 +19740,6 @@
 					"cache_read": 0.2
 				}
 			},
-			"doubao-seed-1-6-250615": {
-				"id": "doubao-seed-1-6-250615",
-				"name": "Doubao Seed 1.6",
-				"description": "Compact GPT model for low-latency assistance and high-volume workloads",
-				"family": "seed",
-				"attachment": false,
-				"reasoning": false,
-				"tool_call": false,
-				"structured_output": false,
-				"release_date": "2024-01-01",
-				"last_updated": "2025-06-15",
-				"modalities": {
-					"input": [
-						"text"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": false,
-				"limit": {
-					"context": 256000,
-					"input": 256000,
-					"output": 16384
-				},
-				"cost": {
-					"input": 0.204,
-					"output": 0.51,
-					"cache_read": 0.102
-				}
-			},
 			"Gemma-4-31B-DarkIdol": {
 				"id": "Gemma-4-31B-DarkIdol",
 				"name": "Gemma 4 31B DarkIdol",
@@ -19873,37 +19810,6 @@
 					"input": 0.75,
 					"output": 3,
 					"cache_read": 0.75
-				}
-			},
-			"doubao-seed-1-6-flash-250615": {
-				"id": "doubao-seed-1-6-flash-250615",
-				"name": "Doubao Seed 1.6 Flash",
-				"description": "Compact GPT model for low-latency assistance and high-volume workloads",
-				"family": "seed",
-				"attachment": false,
-				"reasoning": false,
-				"tool_call": false,
-				"structured_output": false,
-				"release_date": "2024-01-01",
-				"last_updated": "2025-06-15",
-				"modalities": {
-					"input": [
-						"text"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": false,
-				"limit": {
-					"context": 256000,
-					"input": 256000,
-					"output": 16384
-				},
-				"cost": {
-					"input": 0.0374,
-					"output": 0.374,
-					"cache_read": 0.0187
 				}
 			},
 			"mistral-code-agent-latest": {
@@ -22277,6 +22183,51 @@
 				},
 				"canonical_model_id": "deepseek/deepseek-v4-flash-0731"
 			},
+			"deepseek/deepseek-v4-flash-0423": {
+				"id": "deepseek/deepseek-v4-flash-0423",
+				"name": "DeepSeek V4 Flash 0423",
+				"description": "Initial DeepSeek V4 Flash snapshot for economical reasoning, coding, and million-token agent workloads",
+				"family": "deepseek-flash",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"low",
+							"high",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"knowledge": "2025-05",
+				"release_date": "2026-04-23",
+				"last_updated": "2026-04-23",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 1048576,
+					"input": 1048576,
+					"output": 384000
+				},
+				"cost": {
+					"input": 0.14,
+					"output": 0.28,
+					"cache_read": 0.03
+				},
+				"canonical_model_id": "deepseek/deepseek-v4-flash-0423"
+			},
 			"deepseek/deepseek-v4.1-flash": {
 				"id": "deepseek/deepseek-v4.1-flash",
 				"name": "DeepSeek V4.1 Flash",
@@ -22408,9 +22359,9 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.44,
-					"output": 1.32,
-					"cache_read": 0.014
+					"input": 0.22,
+					"output": 0.66,
+					"cache_read": 0.007
 				},
 				"canonical_model_id": "deepseek/deepseek-v4-flash-vision-exp"
 			},
@@ -22491,6 +22442,51 @@
 					"output": 2.5,
 					"cache_read": 0.04
 				}
+			},
+			"deepseek/deepseek-v4-flash-0423:thinking": {
+				"id": "deepseek/deepseek-v4-flash-0423:thinking",
+				"name": "DeepSeek V4 Flash 0423 (Thinking)",
+				"description": "Initial DeepSeek V4 Flash snapshot for economical reasoning, coding, and million-token agent workloads",
+				"family": "deepseek-flash",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"low",
+							"high",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"knowledge": "2025-05",
+				"release_date": "2026-04-23",
+				"last_updated": "2026-04-23",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 1048576,
+					"input": 1048576,
+					"output": 384000
+				},
+				"cost": {
+					"input": 0.14,
+					"output": 0.28,
+					"cache_read": 0.03
+				},
+				"canonical_model_id": "deepseek/deepseek-v4-flash-0423"
 			},
 			"deepseek/deepseek-v4-pro:thinking": {
 				"id": "deepseek/deepseek-v4-pro:thinking",
@@ -30578,14 +30574,15 @@
 			"mistralai/codestral-2508": {
 				"id": "mistralai/codestral-2508",
 				"name": "Codestral 2508",
-				"description": "Mistral coding model for code completion, generation, and developer workflows",
+				"description": "Mistral code model for low-latency completion, fill-in-the-middle, and code generation",
 				"family": "codestral",
 				"attachment": false,
 				"reasoning": false,
 				"tool_call": false,
 				"structured_output": false,
-				"release_date": "2025-08-01",
-				"last_updated": "2025-08-01",
+				"temperature": true,
+				"release_date": "2025-07-30",
+				"last_updated": "2025-07-30",
 				"modalities": {
 					"input": [
 						"text"
@@ -30604,7 +30601,8 @@
 					"input": 0.3,
 					"output": 0.9,
 					"cache_read": 0.15
-				}
+				},
+				"canonical_model_id": "mistral/codestral-2508"
 			},
 			"sakana/fugu-max": {
 				"id": "sakana/fugu-max",
@@ -31194,7 +31192,7 @@
 				"attachment": false,
 				"reasoning": false,
 				"tool_call": true,
-				"structured_output": true,
+				"structured_output": false,
 				"release_date": "2024-01-01",
 				"last_updated": "2025-07-11",
 				"modalities": {
@@ -32585,7 +32583,7 @@
 				"cost": {
 					"input": 0.33,
 					"output": 1.32,
-					"cache_read": 0.165
+					"cache_read": 0.03
 				},
 				"canonical_model_id": "minimax/MiniMax-M2.1"
 			},
@@ -36081,7 +36079,7 @@
 				"cost": {
 					"input": 2,
 					"output": 6,
-					"cache_read": 0.17,
+					"cache_read": 0.25,
 					"cache_write": 2.5
 				},
 				"canonical_model_id": "alibaba/qwen3.8-max-0902"
@@ -51710,7 +51708,8 @@
 				"cost": {
 					"input": 3,
 					"output": 15,
-					"cache_read": 0.3
+					"cache_read": 0.3,
+					"cache_write": 3
 				},
 				"canonical_model_id": "moonshotai/kimi-k3"
 			}
@@ -54563,6 +54562,38 @@
 					"cache_read": 0.19
 				},
 				"canonical_model_id": "moonshotai/kimi-k2.7-code"
+			},
+			"scx-ai-gp/glm-5.3-fast": {
+				"id": "scx-ai-gp/glm-5.3-fast",
+				"name": "GLM 5.3 Fast (SCX.ai)",
+				"description": "Flagship GLM model for long-horizon coding, agents, and complex project delivery",
+				"family": "glm",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": false,
+				"structured_output": false,
+				"temperature": true,
+				"release_date": "2026-08-14",
+				"last_updated": "2026-08-14",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 1000000,
+					"output": 128000
+				},
+				"cost": {
+					"input": 2.8,
+					"output": 8.8,
+					"cache_read": 0.56
+				},
+				"canonical_model_id": "zhipuai/glm-5.3"
 			},
 			"zai/glm-4.6v": {
 				"id": "zai/glm-4.6v",
@@ -60205,6 +60236,47 @@
 					"input": 0.2,
 					"output": 0.7
 				}
+			},
+			"novita/ling-3.1-flash": {
+				"id": "novita/ling-3.1-flash",
+				"name": "Ling 3.1 Flash (NovitaAI)",
+				"description": "Efficient model for low-latency assistance, extraction, and routine automation",
+				"family": "ling",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"low",
+							"medium",
+							"high"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": false,
+				"release_date": "2026-09-29",
+				"last_updated": "2026-09-29",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 262144,
+					"output": 32768
+				},
+				"cost": {
+					"input": 0,
+					"output": 0
+				},
+				"canonical_model_id": "inclusionai/ling-3.1-flash"
 			},
 			"novita/gemma-4-26b-a4b-it": {
 				"id": "novita/gemma-4-26b-a4b-it",
@@ -72928,37 +73000,6 @@
 					"output": 0.85
 				}
 			},
-			"kwaipilot/kat-coder-pro-v2.5": {
-				"id": "kwaipilot/kat-coder-pro-v2.5",
-				"name": "Kwaipilot: KAT-Coder-Pro V2.5",
-				"description": "KAT-Coder-Pro V2.5 is a flagship-level Agentic Coding model that can directly hand over an entire issue or an entire business workflow to it, allowing it to autonomously locate and make...",
-				"family": "kat-coder",
-				"attachment": false,
-				"reasoning": false,
-				"tool_call": true,
-				"structured_output": true,
-				"temperature": true,
-				"release_date": "2026-07-10",
-				"last_updated": "2026-07-10",
-				"modalities": {
-					"input": [
-						"text"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": false,
-				"limit": {
-					"context": 262144,
-					"output": 235929
-				},
-				"cost": {
-					"input": 0.74,
-					"output": 2.96,
-					"cache_read": 0.15
-				}
-			},
 			"stealth/claude-opus-4.6": {
 				"id": "stealth/claude-opus-4.6",
 				"name": "Stealth: Claude Opus 4.6 (20% off)",
@@ -73493,7 +73534,7 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 0.68,
+					"input": 0.49,
 					"output": 13,
 					"cache_read": 0.45
 				}
@@ -74813,8 +74854,8 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 1040000,
-					"output": 393216
+					"context": 1048576,
+					"output": 943718
 				},
 				"cost": {
 					"input": 0.3,
@@ -75499,9 +75540,9 @@
 					"output": 128000
 				},
 				"cost": {
-					"input": 0.13,
-					"output": 0.53,
-					"cache_read": 0.033
+					"input": 0.0825,
+					"output": 0.33,
+					"cache_read": 0.020625
 				},
 				"canonical_model_id": "tencent/hy3"
 			},
@@ -75571,9 +75612,9 @@
 					"output": 64000
 				},
 				"cost": {
-					"input": 0.834,
-					"output": 2.501,
-					"cache_read": 0.042
+					"input": 0.7506,
+					"output": 2.2509,
+					"cache_read": 0.0378
 				},
 				"canonical_model_id": "tencent/hy4-preview"
 			},
@@ -77665,12 +77706,12 @@
 				"open_weights": false,
 				"limit": {
 					"context": 1048576,
-					"output": 943718
+					"output": 131072
 				},
 				"cost": {
-					"input": 0.02354,
-					"output": 0.6875,
-					"cache_read": 0.02354
+					"input": 0.0278,
+					"output": 0.5,
+					"cache_read": 0.0278
 				}
 			},
 			"~z-ai/glm-latest": {
@@ -77709,9 +77750,9 @@
 					"output": 131072
 				},
 				"cost": {
-					"input": 0.06,
-					"output": 4.4,
-					"cache_read": 0.03
+					"input": 0.063,
+					"output": 6.3,
+					"cache_read": 0.0585
 				}
 			},
 			"arcee-ai/trinity-large-thinking": {
@@ -78806,9 +78847,9 @@
 					"output": 393216
 				},
 				"cost": {
-					"input": 0.039,
-					"output": 0.3,
-					"cache_read": 0.012
+					"input": 0.049,
+					"output": 1.2,
+					"cache_read": 0.03
 				}
 			},
 			"~deepseek/deepseek-pro-latest": {
@@ -78848,9 +78889,9 @@
 					"output": 393216
 				},
 				"cost": {
-					"input": 0.3,
+					"input": 0.2917,
 					"output": 4.2,
-					"cache_read": 0.3
+					"cache_read": 0.29
 				}
 			},
 			"~deepseek/deepseek-v4-flash-latest": {
@@ -81070,7 +81111,7 @@
 			},
 			"mistralai/codestral-2508": {
 				"id": "mistralai/codestral-2508",
-				"name": "Mistral: Codestral 2508",
+				"name": "Codestral 25.08",
 				"description": "Mistral coding model for code completion, generation, and developer workflows",
 				"family": "codestral",
 				"attachment": true,
@@ -81078,8 +81119,8 @@
 				"tool_call": true,
 				"structured_output": true,
 				"temperature": true,
-				"release_date": "2025-08-01",
-				"last_updated": "2025-08-01",
+				"release_date": "2025-07-30",
+				"last_updated": "2025-07-30",
 				"modalities": {
 					"input": [
 						"text",
@@ -81098,7 +81139,8 @@
 					"input": 0.3,
 					"output": 0.9,
 					"cache_read": 0.03
-				}
+				},
+				"canonical_model_id": "mistral/codestral-2508"
 			},
 			"sakana/fugu-max": {
 				"id": "sakana/fugu-max",
@@ -81554,9 +81596,9 @@
 					"output": 235929
 				},
 				"cost": {
-					"input": 0.95,
-					"output": 4,
-					"cache_read": 0.16
+					"input": 0.465,
+					"output": 2.45,
+					"cache_read": 0.0975
 				},
 				"canonical_model_id": "moonshotai/kimi-k2.6"
 			},
@@ -82020,12 +82062,11 @@
 				"open_weights": true,
 				"limit": {
 					"context": 262144,
-					"output": 235929
+					"output": 32768
 				},
 				"cost": {
 					"input": 0.05,
-					"output": 0.2,
-					"cache_read": 0.03
+					"output": 0.2
 				},
 				"canonical_model_id": "nvidia/nemotron-3-nano-30b-a3b"
 			},
@@ -82102,7 +82143,7 @@
 				"open_weights": true,
 				"limit": {
 					"context": 262144,
-					"output": 32768
+					"output": 131072
 				},
 				"cost": {
 					"input": 0.039,
@@ -83972,7 +84013,7 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 1000000,
+					"context": 1048576,
 					"output": 131072
 				},
 				"cost": {
@@ -97164,7 +97205,7 @@
 				"structured_output": true,
 				"temperature": true,
 				"release_date": "2026-08-26",
-				"last_updated": "2026-09-01",
+				"last_updated": "2026-09-30",
 				"modalities": {
 					"input": [
 						"text",
@@ -97177,7 +97218,7 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 524288,
+					"context": 1048576,
 					"output": 16384
 				},
 				"cost": {
@@ -110393,37 +110434,6 @@
 					"output": 0.85
 				}
 			},
-			"kwaipilot/kat-coder-pro-v2.5": {
-				"id": "kwaipilot/kat-coder-pro-v2.5",
-				"name": "KAT-Coder-Pro V2.5",
-				"description": "Coding model for repository understanding, refactors, and agentic engineering tasks",
-				"family": "kat-coder",
-				"attachment": false,
-				"reasoning": false,
-				"tool_call": true,
-				"structured_output": true,
-				"temperature": true,
-				"release_date": "2026-07-10",
-				"last_updated": "2026-07-10",
-				"modalities": {
-					"input": [
-						"text"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": false,
-				"limit": {
-					"context": 262144,
-					"output": 235929
-				},
-				"cost": {
-					"input": 0.74,
-					"output": 2.96,
-					"cache_read": 0.15
-				}
-			},
 			"bytedance-seed/seed-1.6-flash": {
 				"id": "bytedance-seed/seed-1.6-flash",
 				"name": "Seed 1.6 Flash",
@@ -110766,7 +110776,7 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 0.68,
+					"input": 0.49,
 					"output": 13,
 					"cache_read": 0.45
 				}
@@ -112155,12 +112165,12 @@
 				"open_weights": true,
 				"limit": {
 					"context": 1048576,
-					"output": 393216
+					"output": 943718
 				},
 				"cost": {
-					"input": 0.039,
-					"output": 0.3,
-					"cache_read": 0.012
+					"input": 0.3,
+					"output": 1.2,
+					"cache_read": 0.006
 				},
 				"canonical_model_id": "deepseek/deepseek-v4.1-flash"
 			},
@@ -112317,9 +112327,9 @@
 					"output": 393216
 				},
 				"cost": {
-					"input": 1.32,
-					"output": 3.96,
-					"cache_read": 0.044
+					"input": 0.66,
+					"output": 1.98,
+					"cache_read": 0.022
 				},
 				"canonical_model_id": "deepseek/deepseek-v4-pro-0813"
 			},
@@ -112829,9 +112839,9 @@
 					"output": 128000
 				},
 				"cost": {
-					"input": 0.132,
-					"output": 0.528,
-					"cache_read": 0.033
+					"input": 0.0825,
+					"output": 0.33,
+					"cache_read": 0.020625
 				},
 				"canonical_model_id": "tencent/hy3"
 			},
@@ -112901,9 +112911,9 @@
 					"output": 64000
 				},
 				"cost": {
-					"input": 0.834,
-					"output": 2.501,
-					"cache_read": 0.042
+					"input": 0.7506,
+					"output": 2.2509,
+					"cache_read": 0.0378
 				},
 				"canonical_model_id": "tencent/hy4-preview"
 			},
@@ -113870,9 +113880,9 @@
 					"output": 131072
 				},
 				"cost": {
-					"input": 0.152,
-					"output": 12,
-					"cache_read": 0.15
+					"input": 0.171,
+					"output": 7.2,
+					"cache_read": 0.162
 				},
 				"canonical_model_id": "zhipuai/glm-5.2"
 			},
@@ -115039,12 +115049,12 @@
 				"open_weights": false,
 				"limit": {
 					"context": 1048576,
-					"output": 943718
+					"output": 131072
 				},
 				"cost": {
-					"input": 0.02354,
-					"output": 0.6875,
-					"cache_read": 0.02354
+					"input": 0.0278,
+					"output": 0.5,
+					"cache_read": 0.0278
 				}
 			},
 			"~z-ai/glm-latest": {
@@ -115083,9 +115093,9 @@
 					"output": 131072
 				},
 				"cost": {
-					"input": 0.06,
-					"output": 4.4,
-					"cache_read": 0.03
+					"input": 0.063,
+					"output": 6.3,
+					"cache_read": 0.0585
 				}
 			},
 			"arcee-ai/trinity-large-thinking": {
@@ -116351,9 +116361,9 @@
 					"output": 393216
 				},
 				"cost": {
-					"input": 0.039,
-					"output": 0.3,
-					"cache_read": 0.012
+					"input": 0.049,
+					"output": 1.2,
+					"cache_read": 0.03
 				}
 			},
 			"~deepseek/deepseek-pro-latest": {
@@ -116395,9 +116405,9 @@
 					"output": 393216
 				},
 				"cost": {
-					"input": 0.3,
+					"input": 0.2917,
 					"output": 4.2,
-					"cache_read": 0.3
+					"cache_read": 0.29
 				}
 			},
 			"~deepseek/deepseek-v4-flash-latest": {
@@ -116945,9 +116955,9 @@
 					"output": 235929
 				},
 				"cost": {
-					"input": 0.0765,
-					"output": 0.255,
-					"cache_read": 0.0425
+					"input": 0.09,
+					"output": 0.3,
+					"cache_read": 0.05
 				},
 				"canonical_model_id": "google/gemma-4-26b-a4b-it"
 			},
@@ -118765,7 +118775,7 @@
 			},
 			"mistralai/codestral-2508": {
 				"id": "mistralai/codestral-2508",
-				"name": "Codestral 2508",
+				"name": "Codestral 25.08",
 				"description": "Mistral coding model for code completion, generation, and developer workflows",
 				"family": "codestral",
 				"attachment": true,
@@ -118773,9 +118783,8 @@
 				"tool_call": true,
 				"structured_output": true,
 				"temperature": true,
-				"knowledge": "2025-03-31",
-				"release_date": "2025-08-01",
-				"last_updated": "2025-08-01",
+				"release_date": "2025-07-30",
+				"last_updated": "2025-07-30",
 				"modalities": {
 					"input": [
 						"text",
@@ -118794,7 +118803,8 @@
 					"input": 0.3,
 					"output": 0.9,
 					"cache_read": 0.03
-				}
+				},
+				"canonical_model_id": "mistral/codestral-2508"
 			},
 			"sakana/fugu-max": {
 				"id": "sakana/fugu-max",
@@ -119222,9 +119232,9 @@
 					"output": 943718
 				},
 				"cost": {
-					"input": 0.69,
+					"input": 0.5,
 					"output": 15,
-					"cache_read": 0.34
+					"cache_read": 0.43
 				},
 				"canonical_model_id": "moonshotai/kimi-k3"
 			},
@@ -119264,9 +119274,9 @@
 					"output": 235929
 				},
 				"cost": {
-					"input": 0.95,
-					"output": 4,
-					"cache_read": 0.16
+					"input": 0.465,
+					"output": 2.45,
+					"cache_read": 0.0975
 				},
 				"canonical_model_id": "moonshotai/kimi-k2.6"
 			},
@@ -119571,12 +119581,11 @@
 				"open_weights": true,
 				"limit": {
 					"context": 262144,
-					"output": 235929
+					"output": 32768
 				},
 				"cost": {
 					"input": 0.05,
-					"output": 0.2,
-					"cache_read": 0.03
+					"output": 0.2
 				},
 				"canonical_model_id": "nvidia/nemotron-3-nano-30b-a3b"
 			},
@@ -119645,12 +119654,12 @@
 				"open_weights": true,
 				"limit": {
 					"context": 262144,
-					"output": 32768
+					"output": 131072
 				},
 				"cost": {
-					"input": 0.06,
-					"output": 0.16,
-					"cache_read": 0.03
+					"input": 0.049,
+					"output": 0.14,
+					"cache_read": 0.0245
 				},
 				"canonical_model_id": "nvidia/nemotron-3.5-lightning"
 			},
@@ -128899,52 +128908,6 @@
 				},
 				"canonical_model_id": "zhipuai/glm-5.3"
 			},
-			"glm-5.3-flash-fp4": {
-				"id": "glm-5.3-flash-fp4",
-				"name": "GLM 5.3 Flash FP4",
-				"description": "Native multimodal GLM model for efficient coding and long-horizon agent tasks",
-				"family": "glm-flash",
-				"attachment": true,
-				"reasoning": true,
-				"reasoning_options": [
-					{
-						"type": "effort",
-						"values": [
-							"low",
-							"high",
-							"max"
-						]
-					}
-				],
-				"tool_call": true,
-				"interleaved": true,
-				"structured_output": true,
-				"temperature": true,
-				"release_date": "2026-08-26",
-				"last_updated": "2026-08-26",
-				"modalities": {
-					"input": [
-						"text",
-						"image",
-						"video"
-					],
-					"output": [
-						"text"
-					]
-				},
-				"open_weights": true,
-				"limit": {
-					"context": 1048576,
-					"output": 131072
-				},
-				"cost": {
-					"input": 0.15,
-					"output": 0.5,
-					"cache_read": 0,
-					"cache_write": 0.23
-				},
-				"canonical_model_id": "zhipuai/glm-5.3-flash"
-			},
 			"deepseek-v4.1-flash-fast": {
 				"id": "deepseek-v4.1-flash-fast",
 				"name": "DeepSeek V4.1 Flash",
@@ -132684,6 +132647,48 @@
 					"output": 0.5
 				}
 			},
+			"grok-4.7": {
+				"id": "grok-4.7",
+				"name": "Grok 4.7",
+				"description": "xAI's frontier model for long-running agents, coding, knowledge work, and visual projects",
+				"family": "grok",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"medium",
+							"high",
+							"xhigh"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"knowledge": "2026-05",
+				"release_date": "2026-09-21",
+				"last_updated": "2026-09-21",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 500000,
+					"output": 500000
+				},
+				"status": "beta",
+				"canonical_model_id": "xai/grok-4.7"
+			},
 			"text-embedding-3-small": {
 				"id": "text-embedding-3-small",
 				"name": "text-embedding-3-small",
@@ -136135,7 +136140,7 @@
 				},
 				"status": "beta",
 				"cost": {
-					"input": 1.25,
+					"input": 2,
 					"output": 6,
 					"cache_read": 0.5
 				},
@@ -145094,8 +145099,8 @@
 					"output": 4096
 				},
 				"cost": {
-					"input": 0.72,
-					"output": 0.72
+					"input": 0.07,
+					"output": 0.16
 				}
 			}
 		}
@@ -170197,6 +170202,56 @@
 				},
 				"canonical_model_id": "anthropic/claude-opus-5"
 			},
+			"anthropic/claude-sonnet-5.5": {
+				"id": "anthropic/claude-sonnet-5.5",
+				"name": "Claude Sonnet 5.5",
+				"description": "Fast Claude model for everyday coding, agents, and knowledge work",
+				"family": "claude-sonnet",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"medium",
+							"high",
+							"xhigh",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"temperature": false,
+				"knowledge": "2026-06",
+				"release_date": "2026-09-28",
+				"last_updated": "2026-09-28",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1000000,
+					"output": 128000
+				},
+				"provider": {
+					"npm": "@ai-sdk/anthropic"
+				},
+				"cost": {
+					"input": 2,
+					"output": 10,
+					"cache_read": 0.2,
+					"cache_write": 2.5
+				},
+				"canonical_model_id": "anthropic/claude-sonnet-5-5"
+			},
 			"anthropic/claude-fable-5.1": {
 				"id": "anthropic/claude-fable-5.1",
 				"name": "Claude Fable 5.1",
@@ -171619,6 +171674,77 @@
 					"cache_read": 0.005
 				},
 				"canonical_model_id": "openai/gpt-5-nano"
+			},
+			"openai/gpt-6.1-sol": {
+				"id": "openai/gpt-6.1-sol",
+				"name": "GPT-6.1 Sol",
+				"description": "Near-Astra performance for complex coding, computer use, and professional work at a lower cost.",
+				"family": "gpt-sol",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"low",
+							"medium",
+							"high",
+							"xhigh",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": false,
+				"knowledge": "2026-04-30",
+				"release_date": "2026-09-29",
+				"last_updated": "2026-09-29",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1050000,
+					"input": 922000,
+					"output": 128000
+				},
+				"provider": {
+					"npm": "@ai-sdk/openai"
+				},
+				"cost": {
+					"input": 2,
+					"output": 10,
+					"cache_read": 0.1,
+					"cache_write": 2.5,
+					"tiers": [
+						{
+							"input": 4,
+							"output": 15,
+							"cache_read": 0.2,
+							"cache_write": 5,
+							"tier": {
+								"type": "context",
+								"size": 272000
+							}
+						}
+					],
+					"context_over_200k": {
+						"input": 4,
+						"output": 15,
+						"cache_read": 0.2,
+						"cache_write": 5
+					}
+				},
+				"canonical_model_id": "openai/gpt-6.1-sol"
 			},
 			"openai/gpt-6-astra": {
 				"id": "openai/gpt-6-astra",
@@ -178836,6 +178962,48 @@
 					"cache_read": 0.3
 				},
 				"canonical_model_id": "moonshotai/kimi-k3"
+			},
+			"mistral-large-4": {
+				"id": "mistral-large-4",
+				"name": "Mistral Large 4",
+				"description": "Mistral's 1T-parameter multimodal MoE for reasoning, coding, and agentic work",
+				"family": "mistral-large",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"high"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"release_date": "2026-10-06",
+				"last_updated": "2026-10-06",
+				"modalities": {
+					"input": [
+						"text",
+						"image"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1048576,
+					"output": 262144
+				},
+				"cost": {
+					"input": 1.36,
+					"output": 4.18,
+					"cache_read": 0.14
+				},
+				"canonical_model_id": "mistral/mistral-large-4"
 			},
 			"deepseek-v4.1-flash": {
 				"id": "deepseek-v4.1-flash",
@@ -196915,6 +197083,32 @@
 				},
 				"canonical_model_id": "openai/gpt-5-pro"
 			},
+			"openai/gpt-6-luna-decisions": {
+				"id": "openai/gpt-6-luna-decisions",
+				"type": "decision",
+				"name": "GPT-6 Luna Decisions",
+				"description": "GPT-6 Luna Decisions evaluates classification and scoring questions against shared text and image input using OpenAI's Decisions API. It supports predicate, choice, and score questions with probabilities and confidence values.",
+				"family": "gpt",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": false,
+				"release_date": "2026-10-06",
+				"last_updated": "2026-10-06",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1050000,
+					"input": 1050000,
+					"output": 0
+				}
+			},
 			"openai/gpt-6.1-sol": {
 				"id": "openai/gpt-6.1-sol",
 				"name": "GPT-6.1 Sol",
@@ -214377,7 +214571,8 @@
 				"cost": {
 					"input": 3,
 					"output": 15,
-					"cache_read": 0.3
+					"cache_read": 0.3,
+					"cache_write": 3
 				},
 				"canonical_model_id": "moonshotai/kimi-k3"
 			},
@@ -238974,9 +239169,9 @@
 					"output": 128000
 				},
 				"cost": {
-					"input": 5,
-					"output": 30,
-					"cache_read": 0.5,
+					"input": 4,
+					"output": 20,
+					"cache_read": 0.4,
 					"cache_write": 5
 				},
 				"canonical_model_id": "openai/gpt-5.6-sol"
@@ -251456,7 +251651,7 @@
 				"cost": {
 					"input": 0.6,
 					"output": 2.4,
-					"cache_read": 0.06,
+					"cache_read": 0.03,
 					"cache_write": 0.375
 				}
 			}
@@ -263308,9 +263503,9 @@
 					"output": 384000
 				},
 				"cost": {
-					"input": 0.45076,
-					"output": 0.90152,
-					"cache_read": 0.090152
+					"input": 0.44708,
+					"output": 0.89416,
+					"cache_read": 0.089416
 				},
 				"canonical_model_id": "deepseek/deepseek-v4-flash-0731"
 			},
@@ -263341,8 +263536,8 @@
 					"output": 4096
 				},
 				"cost": {
-					"input": 1.01421,
-					"output": 1.01421
+					"input": 1.005931,
+					"output": 1.005931
 				},
 				"canonical_model_id": "meta/llama-3.3-70b-instruct"
 			},
@@ -263382,8 +263577,8 @@
 					"output": 32768
 				},
 				"cost": {
-					"input": 0.169035,
-					"output": 0.67614
+					"input": 0.167655,
+					"output": 0.67062
 				},
 				"canonical_model_id": "openai/gpt-oss-120b"
 			},
@@ -263414,8 +263609,8 @@
 					"output": 4096
 				},
 				"cost": {
-					"input": 0.732485,
-					"output": 0.732485
+					"input": 0.726505,
+					"output": 0.726505
 				},
 				"canonical_model_id": "meta/llama-3.3-70b-instruct"
 			},
@@ -263455,8 +263650,8 @@
 					"output": 32768
 				},
 				"cost": {
-					"input": 0.169035,
-					"output": 0.732485
+					"input": 0.167655,
+					"output": 0.726505
 				},
 				"canonical_model_id": "openai/gpt-oss-120b"
 			},
@@ -266884,7 +267079,15 @@
 				"family": "magistral-medium",
 				"attachment": true,
 				"reasoning": true,
-				"reasoning_options": [],
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"high"
+						]
+					}
+				],
 				"tool_call": true,
 				"structured_output": true,
 				"temperature": true,
@@ -267064,6 +267267,39 @@
 					"cache_read": 0.15
 				},
 				"canonical_model_id": "mistral/mistral-medium-2604"
+			},
+			"mistral/codestral-2508": {
+				"id": "mistral/codestral-2508",
+				"name": "Codestral 25.08",
+				"description": "Mistral code model for low-latency completion, fill-in-the-middle, and code generation",
+				"family": "codestral",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"release_date": "2025-07-30",
+				"last_updated": "2025-07-30",
+				"modalities": {
+					"input": [
+						"text",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 256000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.3,
+					"output": 0.9,
+					"cache_read": 0.03
+				},
+				"canonical_model_id": "mistral/codestral-2508"
 			},
 			"mistral/mistral-medium-latest": {
 				"id": "mistral/mistral-medium-latest",
@@ -270073,8 +270309,8 @@
 					"output": 262144
 				},
 				"cost": {
-					"input": 0.33807,
-					"output": 0.45076
+					"input": 0.33531,
+					"output": 0.44708
 				},
 				"canonical_model_id": "mistral/ministral-3-14b-instruct-2512"
 			},
@@ -287806,7 +288042,19 @@
 				"description": "Mistral's 1T-parameter multimodal MoE for reasoning, coding, and agentic work",
 				"family": "mistral-large",
 				"attachment": true,
-				"reasoning": false,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"low",
+							"medium",
+							"high",
+							"max"
+						]
+					}
+				],
 				"tool_call": true,
 				"structured_output": true,
 				"temperature": true,
@@ -287823,8 +288071,8 @@
 				},
 				"open_weights": false,
 				"limit": {
-					"context": 1000000,
-					"output": 1000000
+					"context": 524288,
+					"output": 524288
 				},
 				"cost": {
 					"input": 0.68,
@@ -288276,6 +288524,7 @@
 				"id": "leanstral-1-5@eu",
 				"name": "leanstral-1-5@eu",
 				"description": "Leanstral 1.5 is an updated Lean 4 formal proof engineering model from Mistral AI, optimized for automated theorem proving and autoformalization. It has 119B total parameters with 6.5B active and supports a 256K token context window. It supports native function calling and structured output.",
+				"family": "leanstral",
 				"attachment": false,
 				"reasoning": false,
 				"tool_call": true,
@@ -292956,6 +293205,7 @@
 				"id": "leanstral-1-5",
 				"name": "leanstral-1-5",
 				"description": "Leanstral 1.5 is an updated Lean 4 formal proof engineering model from Mistral AI, optimized for automated theorem proving and autoformalization. It has 119B total parameters with 6.5B active and supports a 256K token context window. It supports native function calling and structured output.",
+				"family": "leanstral",
 				"attachment": false,
 				"reasoning": false,
 				"tool_call": true,
@@ -293607,7 +293857,19 @@
 				"description": "Mistral's 1T-parameter multimodal MoE for reasoning, coding, and agentic work",
 				"family": "mistral-large",
 				"attachment": true,
-				"reasoning": false,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"low",
+							"medium",
+							"high",
+							"max"
+						]
+					}
+				],
 				"tool_call": true,
 				"structured_output": true,
 				"temperature": true,
@@ -293624,8 +293886,8 @@
 				},
 				"open_weights": false,
 				"limit": {
-					"context": 1000000,
-					"output": 1000000
+					"context": 524288,
+					"output": 524288
 				},
 				"cost": {
 					"input": 0.68,
@@ -294336,6 +294598,39 @@
 					"cache_read": 0.015
 				}
 			},
+			"ministral-8b-2512": {
+				"id": "ministral-8b-2512",
+				"name": "Ministral 3 8B",
+				"description": "Compact open vision-language model for edge deployment, instruction following, and tool use",
+				"family": "ministral",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"release_date": "2025-12-02",
+				"last_updated": "2025-12-02",
+				"modalities": {
+					"input": [
+						"text",
+						"image"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 262144,
+					"output": 262144
+				},
+				"cost": {
+					"input": 0.15,
+					"output": 0.15,
+					"cache_read": 0.015
+				},
+				"canonical_model_id": "mistral/ministral-3-8b-instruct-2512"
+			},
 			"zai-glm-5-2": {
 				"id": "zai-glm-5-2",
 				"name": "GLM-5.2",
@@ -294581,14 +294876,93 @@
 				"name": "Magistral Medium (latest)",
 				"description": "Mistral reasoning model for transparent analysis, math, and complex decisions",
 				"family": "magistral-medium",
-				"attachment": false,
+				"attachment": true,
 				"reasoning": true,
-				"reasoning_options": [],
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"high"
+						]
+					}
+				],
 				"tool_call": true,
 				"temperature": true,
 				"knowledge": "2025-06",
 				"release_date": "2025-03-17",
 				"last_updated": "2025-03-20",
+				"modalities": {
+					"input": [
+						"text",
+						"image"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 262144,
+					"output": 16384
+				},
+				"cost": {
+					"input": 2,
+					"output": 5
+				}
+			},
+			"voxtral-small-2507": {
+				"id": "voxtral-small-2507",
+				"name": "Voxtral Small",
+				"description": "Instruct model with native audio input for speech understanding and tool use",
+				"family": "voxtral",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"temperature": true,
+				"release_date": "2025-07-15",
+				"last_updated": "2025-07-15",
+				"modalities": {
+					"input": [
+						"text",
+						"audio"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 32768,
+					"output": 32000
+				},
+				"cost": {
+					"input": 0.1,
+					"output": 0.4
+				}
+			},
+			"glm-5-2": {
+				"id": "glm-5-2",
+				"name": "GLM-5.2",
+				"description": "Open flagship GLM for long-horizon coding agents and million-token context work",
+				"family": "glm",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"high",
+							"max"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"release_date": "2026-06-13",
+				"last_updated": "2026-06-13",
 				"modalities": {
 					"input": [
 						"text"
@@ -294599,12 +294973,55 @@
 				},
 				"open_weights": true,
 				"limit": {
-					"context": 128000,
-					"output": 16384
+					"context": 1048576,
+					"output": 131072
+				},
+				"status": "beta",
+				"cost": {
+					"input": 1.4,
+					"output": 4.4,
+					"cache_read": 0.14
+				},
+				"canonical_model_id": "zhipuai/glm-5.2"
+			},
+			"labs-leanstral-1-5-1": {
+				"id": "labs-leanstral-1-5-1",
+				"name": "Leanstral 1.5",
+				"description": "An updated Lean 4 formal proof engineering model optimised for automated theorem proving and autoformalization. 119B total parameters, 6.5B active.",
+				"family": "leanstral",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"high"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"release_date": "2026-06-30",
+				"last_updated": "2026-06-30",
+				"modalities": {
+					"input": [
+						"text",
+						"image"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 262144,
+					"output": 128000
 				},
 				"cost": {
-					"input": 2,
-					"output": 5
+					"input": 0,
+					"output": 0
 				}
 			},
 			"pixtral-12b": {
@@ -294890,6 +295307,39 @@
 					"output": 2
 				}
 			},
+			"ministral-14b-2512": {
+				"id": "ministral-14b-2512",
+				"name": "Ministral 3 14B",
+				"description": "Open vision-language model for efficient local deployment, instruction following, and tool use",
+				"family": "ministral",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"release_date": "2025-12-02",
+				"last_updated": "2025-12-02",
+				"modalities": {
+					"input": [
+						"text",
+						"image"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 262144,
+					"output": 262144
+				},
+				"cost": {
+					"input": 0.2,
+					"output": 0.2,
+					"cache_read": 0.02
+				},
+				"canonical_model_id": "mistral/ministral-3-14b-instruct-2512"
+			},
 			"devstral-small-2507": {
 				"id": "devstral-small-2507",
 				"name": "Devstral Small",
@@ -295085,6 +295535,39 @@
 				},
 				"canonical_model_id": "zhipuai/glm-5.3"
 			},
+			"ministral-3b-2512": {
+				"id": "ministral-3b-2512",
+				"name": "Ministral 3 3B",
+				"description": "Compact open vision-language model for edge deployment, instruction following, and tool use",
+				"family": "ministral",
+				"attachment": true,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"release_date": "2025-12-02",
+				"last_updated": "2025-12-02",
+				"modalities": {
+					"input": [
+						"text",
+						"image"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 131072,
+					"output": 262144
+				},
+				"cost": {
+					"input": 0.1,
+					"output": 0.1,
+					"cache_read": 0.01
+				},
+				"canonical_model_id": "mistral/ministral-3-3b-instruct-2512"
+			},
 			"mistral-medium-2604": {
 				"id": "mistral-medium-2604",
 				"name": "Mistral Medium 3.5",
@@ -295155,6 +295638,38 @@
 					"input": 0.25,
 					"output": 0.25
 				}
+			},
+			"codestral-2508": {
+				"id": "codestral-2508",
+				"name": "Codestral 25.08",
+				"description": "Mistral code model for low-latency completion, fill-in-the-middle, and code generation",
+				"family": "codestral",
+				"attachment": false,
+				"reasoning": false,
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"release_date": "2025-07-30",
+				"last_updated": "2025-07-30",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 256000,
+					"output": 8192
+				},
+				"cost": {
+					"input": 0.3,
+					"output": 0.9,
+					"cache_read": 0.03
+				},
+				"canonical_model_id": "mistral/codestral-2508"
 			},
 			"ministral-3b-latest": {
 				"id": "ministral-3b-latest",
@@ -308329,6 +308844,46 @@
 					"cache_read": 0.05
 				}
 			},
+			"ling-3.1-flash": {
+				"id": "ling-3.1-flash",
+				"name": "Ling 3.1 Flash",
+				"description": "Efficient model for low-latency assistance, extraction, and routine automation",
+				"family": "ling",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"low",
+							"medium",
+							"high"
+						]
+					}
+				],
+				"tool_call": true,
+				"release_date": "2026-09-29",
+				"last_updated": "2026-09-29",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 262144,
+					"output": 32768
+				},
+				"cost": {
+					"input": 0,
+					"output": 0
+				},
+				"canonical_model_id": "inclusionai/ling-3.1-flash"
+			},
 			"seed-2-0-mini-260428": {
 				"id": "seed-2-0-mini-260428",
 				"name": "Seed 2.0 Mini (260428)",
@@ -313231,6 +313786,39 @@
 					"cache_read": 0.125
 				},
 				"canonical_model_id": "openai/gpt-5"
+			},
+			"glm-5.3-fast": {
+				"id": "glm-5.3-fast",
+				"name": "GLM-5.3",
+				"description": "Flagship GLM model for long-horizon coding, agents, and complex project delivery",
+				"family": "glm",
+				"attachment": false,
+				"reasoning": true,
+				"reasoning_options": [],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"release_date": "2026-08-14",
+				"last_updated": "2026-08-14",
+				"modalities": {
+					"input": [
+						"text"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": true,
+				"limit": {
+					"context": 1000000,
+					"output": 131072
+				},
+				"cost": {
+					"input": 2.8,
+					"output": 8.8,
+					"cache_read": 0.56
+				},
+				"canonical_model_id": "zhipuai/glm-5.3"
 			},
 			"qwen3.7-plus": {
 				"id": "qwen3.7-plus",
@@ -327634,6 +328222,52 @@
 					"output": 0.223
 				}
 			},
+			"claude-sonnet-5.5": {
+				"id": "claude-sonnet-5.5",
+				"name": "Claude Sonnet 5.5",
+				"description": "Fast Claude model for everyday coding, agents, and knowledge work",
+				"family": "claude-sonnet",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"low",
+							"medium",
+							"high"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": false,
+				"knowledge": "2026-06",
+				"release_date": "2026-09-28",
+				"last_updated": "2026-09-28",
+				"modalities": {
+					"input": [
+						"text",
+						"image",
+						"pdf"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1000000,
+					"output": 128000
+				},
+				"cost": {
+					"input": 2.25,
+					"output": 11.249,
+					"cache_read": 0.225,
+					"cache_write": 2.813
+				},
+				"canonical_model_id": "anthropic/claude-sonnet-5-5"
+			},
 			"gpt-oss-20b": {
 				"id": "gpt-oss-20b",
 				"name": "GPT OSS 20B",
@@ -328976,6 +329610,48 @@
 				},
 				"canonical_model_id": "deepseek/deepseek-v4-pro"
 			},
+			"mistral-large-4-0": {
+				"id": "mistral-large-4-0",
+				"name": "Mistral Large 4",
+				"description": "Mistral's 1T-parameter multimodal MoE for reasoning, coding, and agentic work",
+				"family": "mistral-large",
+				"attachment": true,
+				"reasoning": true,
+				"reasoning_options": [
+					{
+						"type": "effort",
+						"values": [
+							"none",
+							"high"
+						]
+					}
+				],
+				"tool_call": true,
+				"structured_output": true,
+				"temperature": true,
+				"release_date": "2026-10-06",
+				"last_updated": "2026-10-06",
+				"modalities": {
+					"input": [
+						"text",
+						"image"
+					],
+					"output": [
+						"text"
+					]
+				},
+				"open_weights": false,
+				"limit": {
+					"context": 1000000,
+					"output": 262144
+				},
+				"cost": {
+					"input": 0.765,
+					"output": 2.351,
+					"cache_read": 0.079
+				},
+				"canonical_model_id": "mistral/mistral-large-4"
+			},
 			"claude-opus-5.5": {
 				"id": "claude-opus-5.5",
 				"name": "Claude Opus 5.5",
@@ -329723,15 +330399,14 @@
 			},
 			"codestral-2508": {
 				"id": "codestral-2508",
-				"name": "Codestral 2508",
+				"name": "Codestral 25.08",
 				"description": "Mistral coding model for code completion, generation, and developer workflows",
-				"family": "mistral",
+				"family": "codestral",
 				"attachment": false,
 				"reasoning": false,
 				"tool_call": true,
 				"structured_output": true,
 				"temperature": true,
-				"knowledge": "2025-03",
 				"release_date": "2025-07-30",
 				"last_updated": "2025-07-30",
 				"modalities": {
@@ -329742,7 +330417,7 @@
 						"text"
 					]
 				},
-				"open_weights": true,
+				"open_weights": false,
 				"limit": {
 					"context": 256000,
 					"output": 256000
@@ -329751,7 +330426,8 @@
 					"input": 0.368,
 					"output": 1.103,
 					"cache_read": 0.037
-				}
+				},
+				"canonical_model_id": "mistral/codestral-2508"
 			},
 			"gpt-6-sol": {
 				"id": "gpt-6-sol",

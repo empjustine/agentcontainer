@@ -26,7 +26,11 @@
  * refs but not submodule objects.
  *
  * Originals are KEPT by default: shrinking disk is a separate, deliberate
- * step (`--delete-originals`), run only after you have verified the mirrors.
+ * step (`--delete-originals`), and it can only fire after the conversion's
+ * own `git fsck --connectivity-only` passed — the clone being deleted is the
+ * only working copy (docs/d044). Every conversion is fsck'd regardless, so
+ * "did it convert?" is answered by the run itself rather than by remembering
+ * to pass a verifier flag (docs/d060).
  *
  * CAVEAT on prune alignment: a mirror's refspec is `+refs/*:refs/*`, so the
  * later `maintain-mirrors.mjs` run treats upstream as the source of truth and
@@ -38,7 +42,6 @@
  * Usage:
  *   ./git/migrate.sh [--root DIR] [--dest DIR] [--jobs N] [--max-depth N]
  *                    [--redownload] [--delete-originals] [--force]
- *                    [--verify]
  *
  *   --root DIR            reference root (default $REFERENCES_ROOT else
  *                         ~/Downloads/references)
@@ -49,7 +52,6 @@
  *   --redownload          clone --mirror from the real upstream (network)
  *   --delete-originals    rm -rf each source clone after a successful convert
  *   --force               replace an existing mirror target
- *   --verify              fsck --connectivity-only each new mirror
  *   --only GLOB           convert only clones whose relative path matches
  *                         (repeatable)
  *   --exclude GLOB        skip clones whose relative path matches (repeatable)
@@ -84,7 +86,6 @@ setLogTool("git/migrate-to-bare");
  * @property {boolean} redownload
  * @property {boolean} deleteOriginals
  * @property {boolean} force
- * @property {boolean} verify
  * @property {string[]} only
  * @property {string[]} exclude
  * @property {boolean} help
@@ -104,7 +105,6 @@ function parseArgs(argv) {
 		redownload: false,
 		deleteOriginals: false,
 		force: false,
-		verify: false,
 		only: [],
 		exclude: [],
 		help: false,
@@ -132,9 +132,6 @@ function parseArgs(argv) {
 				break;
 			case "--force":
 				o.force = true;
-				break;
-			case "--verify":
-				o.verify = true;
 				break;
 			case "--only":
 				o.only.push(/** @type {string} */ (argv[++i]));
@@ -310,17 +307,18 @@ async function convertOne(clone, o) {
 		);
 	}
 
-	if (o.verify) {
-		const fsck = await git(target, ["fsck", "--connectivity-only"], {
-			must: false,
+	// Unconditional: a mirror whose objects do not connect is not a conversion,
+	// and --delete-originals may not have a source clone left to re-derive it
+	// from (docs/d044, docs/d060).
+	const fsck = await git(target, ["fsck", "--connectivity-only"], {
+		must: false,
+	});
+	if (fsck.code !== 0) {
+		logWarn("fsck --connectivity-only reported problems", {
+			target,
+			stderr: fsck.stderr.trim().split("\n").slice(-3).join(" | "),
 		});
-		if (fsck.code !== 0) {
-			logWarn("fsck --connectivity-only reported problems", {
-				target,
-				stderr: fsck.stderr.trim().split("\n").slice(-3).join(" | "),
-			});
-			return "failed";
-		}
+		return "failed";
 	}
 
 	if (o.deleteOriginals) {
@@ -344,7 +342,7 @@ async function main() {
 		process.stdout.write(
 			"usage: ./git/migrate.sh [--root DIR] [--dest DIR] [--jobs N]\n" +
 				"                       [--max-depth N] [--redownload]\n" +
-				"                       [--delete-originals] [--force] [--verify]\n" +
+				"                       [--delete-originals] [--force]\n" +
 				"                       [--only GLOB]... [--exclude GLOB]\n",
 		);
 		return;

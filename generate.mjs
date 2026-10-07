@@ -14,7 +14,7 @@
  * generate.sh shim, so children run under process.execPath (the same pinned
  * node).
  *
- * Env: pass-through — SKIP_GEN, MODELS_DEV_REFRESH, OPENCODE_CONFIG_DIR,
+ * Env: pass-through — SKIP_GEN, OPENCODE_CONFIG_DIR,
  * PI_CODING_AGENT_DIR, LOCAL_INFERENCE all reach the folder generators untouched.
  */
 

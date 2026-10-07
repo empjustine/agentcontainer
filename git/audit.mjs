@@ -12,10 +12,11 @@
  * go to stderr through lib/log.mjs (the repo's stdout/stderr contract).
  *
  * Usage:
- *   ./git/audit.sh [--root DIR] [--max-depth N] [--deep]
+ *   ./git/audit.sh [--root DIR] [--max-depth N]
  *
- *   --deep   also run `git status --porcelain` and HEAD checks per repo
- *            (slow on large working trees; off by default)
+ * Per-repo `git status --porcelain` and a HEAD check always run: a report
+ * that hides dirty/detached trees unless someone remembers a thorough flag is
+ * the report people act on without it (docs/d060).
  */
 
 import { existsSync } from "node:fs";
@@ -43,7 +44,6 @@ setLogTool("git/audit");
  * @typedef {object} Options
  * @property {string} root
  * @property {number} maxDepth
- * @property {boolean} deep
  * @property {boolean} help
  */
 
@@ -56,7 +56,6 @@ function parseArgs(argv) {
 	const o = {
 		root: DEFAULT_ROOT,
 		maxDepth: DEFAULT_MAX_DEPTH,
-		deep: false,
 		help: false,
 	};
 	for (let i = 0; i < argv.length; i += 1) {
@@ -67,9 +66,6 @@ function parseArgs(argv) {
 				break;
 			case "--max-depth":
 				o.maxDepth = Number(argv[++i]);
-				break;
-			case "--deep":
-				o.deep = true;
 				break;
 			case "-h":
 			case "--help":
@@ -104,7 +100,7 @@ async function main() {
 	const o = parseArgs(process.argv.slice(2));
 	if (o.help) {
 		process.stdout.write(
-			"usage: ./git/audit.sh [--root DIR] [--max-depth N] [--deep]\n",
+			"usage: ./git/audit.sh [--root DIR] [--max-depth N]\n",
 		);
 		return;
 	}
@@ -192,16 +188,15 @@ async function main() {
 			byOrigin.set(url, list);
 		}
 
-		if (o.deep) {
-			const head = await git(repo, ["symbolic-ref", "-q", "HEAD"], {
-				must: false,
-			});
-			if (head.code !== 0) detached.push(rel);
-			const status = await git(repo, ["status", "--porcelain"], {
-				must: false,
-			});
-			if (status.stdout.trim()) dirty.push(rel);
-		}
+		// Always on, not a --deep mode: see the usage note (docs/d060).
+		const head = await git(repo, ["symbolic-ref", "-q", "HEAD"], {
+			must: false,
+		});
+		if (head.code !== 0) detached.push(rel);
+		const status = await git(repo, ["status", "--porcelain"], {
+			must: false,
+		});
+		if (status.stdout.trim()) dirty.push(rel);
 	}
 
 	const duplicateOrigins = [...byOrigin.entries()]
@@ -220,7 +215,8 @@ async function main() {
 		nested,
 		duplicateOrigins,
 		softwareForgeRemotes,
-		...(o.deep ? { detached, dirty } : {}),
+		detached,
+		dirty,
 	};
 	process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 
@@ -234,7 +230,8 @@ async function main() {
 		nested: nested.length,
 		duplicateOrigins: duplicateOrigins.length,
 		softwareForge: softwareForgeRemotes.length,
-		...(o.deep ? { detached: detached.length, dirty: dirty.length } : {}),
+		detached: detached.length,
+		dirty: dirty.length,
 	});
 
 	// Non-GitHub hosts are the "non-github-repos inside by mistake" class; call

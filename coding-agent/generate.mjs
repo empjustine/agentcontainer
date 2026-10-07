@@ -66,7 +66,6 @@
  *                    this script's dir may be a read-only mount
  *   MODELS_DEV_JSON  models.dev catalog (default ../lib/models.dev.api.json —
  *                    the shared vendored catalog, see docs/d023)
- *   MODELS_DEV_REFRESH 1 = force catalog refresh on Termux too
  *   MODELS_DEV_RELAY_URL  catalog relay fallback (llm-reverse-proxy
  *                    passthrough; default http://127.0.0.1:8080/models.dev/
  *                    api.json, empty disables — fetch chain in docs/d027)
@@ -337,28 +336,29 @@ if (process.env.SKIP_GEN === "1") {
 	}
 } else {
 	// Best-effort refresh of the vendored models.dev catalog (no secrets
-	// needed). Termux keeps the vendored copy by default (4.3 MB — do not
-	// refetch over mobile data); MODELS_DEV_REFRESH=1 forces it.
-	if (!termux || process.env.MODELS_DEV_REFRESH === "1") {
-		// Refresh into the scratch dir when the catalog itself is not writable
-		// (container hosts: $MODELS_DEV_JSON is a read-only mount, so writing
-		// there fails every single run). The scratch entry is a symlink to the
-		// vendored catalog at this point; the generator's tmp+rename replaces
-		// the symlink with a regular file and never follows it, so the vendored
-		// copy stays untouched either way.
-		let catalogOut = modelsDevJson;
-		try {
-			accessSync(modelsDevJson, constants.W_OK);
-		} catch {
-			catalogOut = join(scratch, "models.dev.api.json");
-		}
-		if (runStage(join(scratch, "refresh-models-dev.mjs"), [catalogOut])) {
-			logInfo("models.dev catalog refreshed", { path: catalogOut });
-		} else {
-			logWarn("models.dev catalog refresh failed; using vendored copy", {
-				path: modelsDevJson,
-			});
-		}
+	// needed). Unconditional: running generate means "I want current data", so
+	// the catalog is refetched on every host and only a failed fetch falls back
+	// to the vendored copy — there is no ambient switch that makes one run
+	// quieter than another (docs/d060).
+	//
+	// Refresh into the scratch dir when the catalog itself is not writable
+	// (container hosts: $MODELS_DEV_JSON is a read-only mount, so writing
+	// there fails every single run). The scratch entry is a symlink to the
+	// vendored catalog at this point; the generator's tmp+rename replaces
+	// the symlink with a regular file and never follows it, so the vendored
+	// copy stays untouched either way.
+	let catalogOut = modelsDevJson;
+	try {
+		accessSync(modelsDevJson, constants.W_OK);
+	} catch {
+		catalogOut = join(scratch, "models.dev.api.json");
+	}
+	if (runStage(join(scratch, "refresh-models-dev.mjs"), [catalogOut])) {
+		logInfo("models.dev catalog refreshed", { path: catalogOut });
+	} else {
+		logWarn("models.dev catalog refresh failed; using vendored copy", {
+			path: modelsDevJson,
+		});
 	}
 
 	logInfo("generating pi config (layers + merge + default overlay)");

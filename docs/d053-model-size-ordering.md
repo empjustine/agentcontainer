@@ -73,7 +73,8 @@ into `lib/llamacpp-model-data.json`.
   filesystem-order dependence. Snapshot commits are walked in sorted order and
   the first occurrence of a path wins.
 - **Idempotent.** A second run over unchanged inputs changes nothing
-  (`--check` asserts this and exits 1 on drift).
+  (`run it` + `git diff` asserts this — the write is byte-identical, so the
+  diff IS the drift report; docs/d060).
 - **Byte-shape preserving.** Tab indentation, trailing newline, record field
   order preserved; only the `models` array order and the two new keys change.
   (The two hand-inserted blank lines in the pre-d053 file are gone — the file
@@ -150,7 +151,9 @@ Default behaviour: **warn, do not write.** Non-fatal, to stderr, exit 0. The
 report is a **summary** (counts per class, with the zero-coverage repos named),
 not one line per extra quant: on the 2026-09 host there are 2 zero-coverage
 repos but 76 extra cached files in 5 listed repos (`unsloth/gemma-4-12b-it-GGUF`
-alone carries 19 unlisted quants). Per-file detail is behind `--verbose`.
+alone carries 19 unlisted quants). Per-file detail is emitted at `debug` and
+  level-tagged, so a reader keeps the summary alone with
+  `jq 'select(.level!="debug")'` (docs/d060; the producer drops no line — d045).
 
 **Auto-adding is not implemented.** The table is hand-curated and owned by
 `llm-local-inference/` (d025); the cache cannot supply an entry's extensive
@@ -213,16 +216,15 @@ is a one-file regeneration, never a hand edit.
 ## Usage
 
 ```sh
-./llm-local-inference/model-sizes.sh            # rewrite the table
-./llm-local-inference/model-sizes.sh --check    # exit 1 if a rerun would differ
-./llm-local-inference/model-sizes.sh --verbose  # list cache-only files
+./llm-local-inference/model-sizes.sh    # rewrite the table (the only mode)
+… | jq 'select(.level!="debug")'        # reader-side prune of per-file detail
 ```
 
 ## Acceptance criteria (met)
 
 - All 77 entries carry `size-gb` (and `size-parts` where sidecars exist).
 - Two consecutive runs produce a byte-identical `lib/llamacpp-model-data.json`;
-  `--check` passes on the committed file.
+  a rerun over the committed file leaves `git diff` clean.
 - The array is ascending by `size-gb`; as of the 2026-09 cache the smallest is
   `LiquidAI/LFM2.5-2.6B-GGUF:Q4_0` (1.594 GB) and the largest is
   `unsloth/DeepSeek-V4-Flash-0731-GGUF:UD-Q8_K_XL` (161.87 GB, 5 shards).

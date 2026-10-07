@@ -39,9 +39,7 @@
  *   --min-interval S  idle seconds after each upstream fetch before the next
  *                     starts. Unset: 60 for a software-forge mirror, 0 for a
  *                     public forge. Passing it explicitly applies it to EVERY
- *                     fetch, and `--min-interval 0` disables pacing. Env
- *                     `MIRROR_MIN_INTERVAL` seeds the same value; the flag
- *                     wins.
+ *                     fetch, and `--min-interval 0` disables pacing.
  *   --only GLOB       maintain only mirrors whose relative path matches
  *                     (repeatable)
  *   --exclude GLOB    skip mirrors whose relative path matches (repeatable)
@@ -50,6 +48,11 @@
  * tolerate a burst, while the software-forge (Visual Builder Studio) tenant
  * rate-limits even a `--jobs 1` sweep (docs/d044). Pacing only the forge that
  * needs it keeps the home farm's minute-long sweep from becoming hours.
+ *
+ * The pacing input is the flag or that default — never an ambient environment
+ * variable. A sweep must be able to say what it is about to do from its own
+ * command line; a timing knob readable from outside would make two identical
+ * runs pace differently (docs/d060).
  */
 
 import { existsSync } from "node:fs";
@@ -77,7 +80,7 @@ setLogTool("git/maintain-mirrors");
 /**
  * Seconds of idle before the next software-forge fetch when `--min-interval`
  * is unset — the maintainer's counterpart of `-vbs-mirror-all.sh`'s
- * `VBS_THROTTLE` default (docs/d044).
+ * between-repositories throttle (docs/d044).
  */
 const DEFAULT_SOFTWARE_FORGE_MIN_INTERVAL = 60;
 
@@ -115,11 +118,9 @@ function parseArgs(argv) {
 		only: [],
 		exclude: [],
 		// `null` means "pace only the software forge" (see createPacing), not
-		// "unset/disabled" — `--min-interval 0` is the explicit disable.
-		minInterval:
-			process.env.MIRROR_MIN_INTERVAL === undefined
-				? null
-				: Number(process.env.MIRROR_MIN_INTERVAL),
+		// "unset/disabled" — `--min-interval 0` is the explicit disable. No env
+		// seed: the flag or the default is the whole input (docs/d060).
+		minInterval: null,
 		help: false,
 	};
 	for (let i = 0; i < argv.length; i += 1) {

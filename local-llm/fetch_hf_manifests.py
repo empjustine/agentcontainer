@@ -27,7 +27,7 @@ configured --model and upstream's current main is caught early.
 Usage:
     uv run fetch_hf_manifests.py                # refresh manifests + audit all repos
     uv run fetch_hf_manifests.py --repo unsloth/Qwen3.8-27B-GGUF
-    uv run fetch_hf_manifests.py --offline      # audit against cached manifests only
+    uv run fetch_hf_manifests.py --offline      # no network: audit cached manifests only
     uv run fetch_hf_manifests.py --print-plan   # show llama.cpp's implicit choice per entry
 
 Exit code 1 if any configured model disagrees with the heuristic pick.
@@ -89,11 +89,16 @@ def manifest_path(repo):
 
 
 def load_manifest(api, repo, offline=False):
+    """Fetch the tree and persist it, unless --offline.
+
+    The cache exists for the offline audit, never as the source of truth for a
+    networked run: this tool's contract is "refresh + audit" (docs/d060), so a
+    run that can reach the Hub re-derives the mapping instead of blessing the
+    committed copy. --offline is the one thing that narrows it to the cache.
+    """
     p = manifest_path(repo)
-    if p.exists():
-        return json.loads(p.read_text())
     if offline:
-        return None
+        return json.loads(p.read_text()) if p.exists() else None
     m = fetch_manifest(api, repo)
     MANIFEST_DIR.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(m, indent=1))
@@ -137,8 +142,7 @@ def quant_tag(repo_full):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", action="append", help="substring filter (repeatable)")
-    ap.add_argument("--offline", action="store_true", help="use cached manifests only")
-    ap.add_argument("--refresh", action="store_true", help="re-fetch even if cached")
+    ap.add_argument("--offline", action="store_true", help="audit against cached manifests only")
     ap.add_argument("--print-plan", action="store_true",
                     help="show the implicit llama.cpp file choice per model entry")
     args = ap.parse_args()
@@ -154,7 +158,7 @@ def main():
     seen = {}
     for m in entries:
         repo = bare_repo(m["hf-repo"])
-        if args.refresh or repo not in seen:
+        if repo not in seen:
             try:
                 seen[repo] = load_manifest(api, repo, args.offline)
             except Exception as e:

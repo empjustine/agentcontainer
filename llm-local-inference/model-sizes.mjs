@@ -36,9 +36,15 @@
  * dependence. A rerun over unchanged inputs is byte-identical.
  *
  * Usage:
- *   ./llm-local-inference/model-sizes.sh            # rewrite the table
- *   ./llm-local-inference/model-sizes.sh --check    # exit 1 if a rerun would differ
- *   ./llm-local-inference/model-sizes.sh --verbose  # list cache-only files
+ *   ./llm-local-inference/model-sizes.sh    # rewrite the table (the only mode)
+ *   … | jq 'select(.level!="debug")'       # reader-side prune of the detail
+ *
+ * There is deliberately no --check and no --verbose (docs/d060): the table is
+ * byte-identical over unchanged inputs (above), so run + `git diff` answers
+ * "is it stale?" and fixes it in the same breath, and the per-file cache
+ * detail is always emitted at `debug` — a level tag for whoever reads the
+ * stream, never a gate the producer checks (d045: the producer drops no line).
+ * A verifier flag could only report what the diff already says, less usefully.
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -53,7 +59,7 @@ import { fileURLToPath } from "node:url";
  */
 const LIB_DIR =
 	process.env.LIB_DIR ?? fileURLToPath(new URL("../lib", import.meta.url));
-const { logError, logInfo, logWarn, setLogStream, setLogTool } =
+const { logDebug, logError, logInfo, logWarn, setLogStream, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
@@ -270,14 +276,15 @@ function toGb(bytes) {
 
 /**
  * Walk the cache and report model GGUFs the table does not reference, split
- * into zero-coverage repos and extra quants in listed repos (R5). A summary
- * is the default because a host can carry dozens of extra quants per repo;
- * `--verbose` lists them.
+ * into zero-coverage repos and extra quants in listed repos (R5). The counts
+ * are always reported — a host can carry dozens of extra quants per repo, so
+ * the per-repo file lists ride at `debug` — emitted unconditionally and
+ * tagged so a reader can take just the summary (`jq 'select(.level!="debug")'`,
+ * docs/d060, d045).
  * @param {Record<string, unknown>[]} models
- * @param {boolean} verbose
  * @returns {void}
  */
-function reportCacheOnly(models, verbose) {
+function reportCacheOnly(models) {
 	/** @type {Map<string, {paths: Set<string>, shards: Set<string>}>} */
 	const referenced = new Map();
 	for (const entry of models) {
@@ -335,10 +342,8 @@ function reportCacheOnly(models, verbose) {
 	if (zeroCoverage.length > 0) {
 		logWarn("repos with zero table coverage", { repos: zeroCoverage });
 	}
-	if (verbose) {
-		for (const { repo, files } of extras) {
-			logInfo("listed repo with extra cached quants", { repo, files });
-		}
+	for (const { repo, files } of extras) {
+		logDebug("listed repo with extra cached quants", { repo, files });
 	}
 }
 
@@ -355,19 +360,20 @@ function asModels(value) {
 /**
  * CLI entry. Enriches lib/llamacpp-model-data.json in place with `size-gb` /
  * `size-parts` resolved from the host HF hub cache (download_models.py's
- * target), sorted, and — unless --check — rewrites the file. --check verifies
- * every configured component resolves (R5 cache-only scan) and reports, but
- * never writes; a pending --verbose flag is accepted without effect.
+ * target), sorted, and rewritten. Staleness is answered by running it and
+ * reading `git diff` (d050 determinism + d060) — a read-only twin of the same
+ * computation would only re-report what the diff already shows.
  * @returns {void}
  */
 function main() {
-	const flags = new Set(process.argv.slice(2));
-	for (const flag of flags) {
-		if (flag !== "--check" && flag !== "--verbose") {
-			throw new Error(`unknown argument: ${flag}`);
-		}
+	// Flags here would be modes over one deterministic write, which is exactly
+	// what d060 retired; refusing beats ignoring, so a stale doc cannot pass.
+	const [extra] = process.argv.slice(2);
+	if (extra !== undefined) {
+		throw new Error(
+			`unknown argument: ${extra} — no flags; run it and read \`git diff\` (docs/d060)`,
+		);
 	}
-	const checkOnly = flags.has("--check");
 
 	const doc = JSON.parse(readFileSync(MODEL_DATA, "utf-8"));
 	const models = asModels(doc.models);
@@ -422,19 +428,7 @@ function main() {
 
 	const text = `${JSON.stringify(doc, null, "\t")}\n`;
 
-	reportCacheOnly(models, flags.has("--verbose"));
-
-	if (checkOnly) {
-		const current = readFileSync(MODEL_DATA, "utf-8");
-		if (current !== text) {
-			logError("model table is stale — rerun without --check", {
-				path: MODEL_DATA,
-			});
-			process.exit(1);
-		}
-		logInfo("model table is up to date", { entries: models.length });
-		return;
-	}
+	reportCacheOnly(models);
 
 	const written = writeArtifact(MODEL_DATA, text);
 	const smallest = models[0];

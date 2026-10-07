@@ -21,34 +21,33 @@
 #
 # Usage:
 #   # export a HAR in the browser, convert it, then mirror from it
-#   ./git/-vbs-mirror-all.sh --manifest vbs-manifest.json
+#   ./git/-vbs-mirror-all.sh --manifest vbs-manifest.json --dest DIR
 #
-# Env:
-#   VBS_MANIFEST      manifest file (same as --manifest)
-#   VBS_MANIFEST_JQ   override the manifest extractor (JSON -> unit-separated id/slug/repo/http/ssh)
-#   VBS_BASE          tenant origin           (no default: set VBS_BASE or a
-#                     manifest with a base field)
-#   VBS_ORG           tenant org path segment (default derived from VBS_BASE)
-#   VBS_DEST          bare-mirror root        (default $WORK_MIRRORS; required —
-#                     no hard-coded operator path)
-#   VBS_TRANSPORT     ssh|https               (default ssh)
-#   VBS_SSH_USER      userinfo for built ssh clone URLs (the idcs-... identity)
-#   VBS_HTTP_USER     userinfo for built https clone URLs (the email)
-#   VBS_RETRIES       retries per repo after the first failure (default 10;
-#                     attempts = retries + 1)
-#   VBS_RETRY_DELAY   base seconds for a transient failure (default 60)
-#   VBS_RATE_DELAY    base seconds once rate limited (default 60)
-#   VBS_BACKOFF_MAX   cap on a single backoff sleep, seconds (default 300)
-#   VBS_THROTTLE      seconds between repositories (default 60)
-#   VBS_FAIL_STREAK   consecutive failures before a cooldown (default 5)
-#   VBS_COOLDOWN      cooldown seconds after that streak (default 60)
+# What a run IS and DOES comes from its argv and its manifest, never from the
+# caller's environment (docs/d060): the manifest carries the tenant (base,
+# org, repos), the mirror root and the clone identity are flags, and the
+# retry/pacing policy is flags-or-constants — so no exported shell variable
+# can re-point a sweep or quietly turn off its rate limiting. $WORK_MIRRORS
+# is the one external read left: this machine's mirror root, the same host
+# state `git/*.mjs` default from (docs/d044). Credentials are the other thing
+# that has to stay in the environment — this script takes none: the HAR
+# capture is the auth, and a username on argv is visible but not secret
+# (docs/d044).
+#
 # Flags:
-#   --manifest FILE   mirror from a vbs-har.sh manifest (no HTTP/auth)
+#   --manifest FILE   mirror from a vbs-har.sh manifest (no HTTP/auth; the
+#                     manifest supplies the tenant origin and org)
+#   --dest DIR        bare-mirror root (default $WORK_MIRRORS; required —
+#                     no hard-coded operator path)
+#   --transport T     ssh|https (default ssh)
+#   --ssh-user USER   userinfo for built ssh clone URLs (the idcs-... identity)
+#   --http-user USER  userinfo for built https clone URLs (the email)
 #   --list            print discovered identity + clone URL, do not touch git
 #   --only GLOB       mirror only repos whose org/slug/name matches (shell case glob)
-#   --throttle N      seconds between repositories (same as VBS_THROTTLE)
-#   --retries N       retries per repo (same as VBS_RETRIES)
-#   --cooldown N      cooldown seconds (same as VBS_COOLDOWN)
+#   --throttle N      seconds between repositories (default 60)
+#   --retries N       retries per repo after the first failure (default 10;
+#                     attempts = retries + 1)
+#   --cooldown N      cooldown seconds after 5 consecutive failures (default 60)
 #   -h, --help
 
 set -eu
@@ -65,51 +64,54 @@ LOG_STREAM=stderr
 
 PROG=${0##*/}
 
-VBS_BASE_GIVEN=${VBS_BASE:-}
-VBS_BASE=${VBS_BASE:-}
-VBS_BASE=${VBS_BASE%/}
-VBS_ORG_GIVEN=${VBS_ORG:-}
-VBS_ORG=${VBS_ORG:-}
-VBS_DEST=${VBS_DEST:-${WORK_MIRRORS:-}}
-VBS_TRANSPORT=${VBS_TRANSPORT:-ssh}
-VBS_SSH_USER=${VBS_SSH_USER:-}
-VBS_HTTP_USER=${VBS_HTTP_USER:-}
+# Run inputs and sweep policy are initialised from constants and flags, never
+# from the caller's environment (docs/d060): the values below are what this
+# script IS. WORK_MIRRORS is the sole external read — the mirror root of this
+# machine, host state no flag can default portably — and the run logs the
+# resolved dest/transport on its first line anyway.
+VBS_BASE=
+VBS_ORG=
+VBS_DEST=${WORK_MIRRORS:-}
+VBS_TRANSPORT=ssh
+VBS_SSH_USER=
+VBS_HTTP_USER=
 
 # A failed clone must not be dropped: bulk-cloning this tenant earns a rate
 # limit, and the fix is to back off, retry, and pace the sweep (docs/d044).
-# All are overridable by env or the matching flag.
-VBS_RETRIES=${VBS_RETRIES:-10}
-VBS_RETRY_DELAY=${VBS_RETRY_DELAY:-60}
-VBS_RATE_DELAY=${VBS_RATE_DELAY:-60}
-VBS_BACKOFF_MAX=${VBS_BACKOFF_MAX:-300}
-VBS_THROTTLE=${VBS_THROTTLE:-60}
-VBS_FAIL_STREAK=${VBS_FAIL_STREAK:-5}
-VBS_COOLDOWN=${VBS_COOLDOWN:-60}
+# This is the tenant's rate-limit contract, so it is fixed policy with three
+# flag overrides for the knobs an operator actually tunes.
+VBS_RETRIES=10
+VBS_RETRY_DELAY=60
+VBS_RATE_DELAY=60
+VBS_BACKOFF_MAX=300
+VBS_THROTTLE=60
+VBS_FAIL_STREAK=5
+VBS_COOLDOWN=60
 
 # A credential prompt in a non-interactive sweep would hang; fail fast instead.
 export GIT_TERMINAL_PROMPT=0
 
 LIST_ONLY=0
 ONLY=
-MANIFEST=${VBS_MANIFEST:-}
+MANIFEST=
 
 usage() {
 	cat <<EOF
-usage: $PROG --manifest FILE [--list] [--only GLOB]
+usage: $PROG --manifest FILE [--dest DIR] [--list] [--only GLOB]
 
 Mirrors every repository in the VBS tenant as a bare repo.
 
-Preferred (no secrets):
+Inputs (flags; the caller's environment is not a config surface — docs/d060):
   # export a HAR capture from the browser, convert it with vbs-har.sh, then
-  # mirror from the manifest
-  $PROG --manifest vbs-manifest.json
+  # mirror from the manifest — it carries the tenant origin and org
+  $PROG --manifest vbs-manifest.json --dest DIR
 
-  VBS_BASE=$VBS_BASE
-  VBS_ORG=$VBS_ORG
-  VBS_DEST=$VBS_DEST
-  VBS_TRANSPORT=$VBS_TRANSPORT
+  --dest DIR        mirror root (default \${WORK_MIRRORS:-unset})
+  --transport T     ${VBS_TRANSPORT} (ssh|https)
+  --ssh-user USER   ${VBS_SSH_USER:-unset}
+  --http-user USER  ${VBS_HTTP_USER:-unset}
 
-Rate limiting:
+Rate limiting (the defaults shown; flags are the only way to move them):
   --throttle N   seconds between repositories (default $VBS_THROTTLE)
   --retries N    retries per repo after the first failure (default $VBS_RETRIES)
   --cooldown N   pause after $VBS_FAIL_STREAK consecutive failures (default ${VBS_COOLDOWN}s)
@@ -134,6 +136,22 @@ while [ $# -gt 0 ]; do
 		ONLY=$2
 		shift
 		;;
+	--dest)
+		VBS_DEST=$2
+		shift
+		;;
+	--transport)
+		VBS_TRANSPORT=$2
+		shift
+		;;
+	--ssh-user)
+		VBS_SSH_USER=$2
+		shift
+		;;
+	--http-user)
+		VBS_HTTP_USER=$2
+		shift
+		;;
 	--throttle)
 		VBS_THROTTLE=$2
 		shift
@@ -156,31 +174,29 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$MANIFEST" ]; then
-	log_die 1 "no manifest: set VBS_MANIFEST or --manifest FILE"
+	log_die 1 "no manifest: --manifest FILE (a vbs-har.sh export carries base + org)"
 fi
 [ -f "$MANIFEST" ] || log_die 1 "manifest not found" manifest="$MANIFEST"
-if [ -z "$VBS_ORG_GIVEN" ]; then
-	_morg=$(jq -r '.org // empty' "$MANIFEST" 2>/dev/null || true)
-	if [ -n "$_morg" ]; then VBS_ORG=$_morg; fi
-fi
-if [ -z "$VBS_BASE_GIVEN" ]; then
-	_mbase=$(jq -r '.base // empty' "$MANIFEST" 2>/dev/null || true)
-	if [ -n "$_mbase" ]; then VBS_BASE=${_mbase%/}; fi
-fi
+# The manifest is the input file, so it — not the environment — is what
+# names the tenant (docs/d060).
+_morg=$(jq -r '.org // empty' "$MANIFEST" 2>/dev/null || true)
+if [ -n "$_morg" ]; then VBS_ORG=$_morg; fi
+_mbase=$(jq -r '.base // empty' "$MANIFEST" 2>/dev/null || true)
+if [ -n "$_mbase" ]; then VBS_BASE=${_mbase%/}; fi
 # Without an origin there is nothing to clone; fail loud rather than half-run.
 if [ -z "$VBS_BASE" ]; then
-	log_die 1 "no tenant origin: set VBS_BASE (or a manifest with a base field)"
+	log_die 1 "no tenant origin: manifest has no base field"
 fi
 # Same policy as the origin: the NTFS profile path was one operator's machine,
 # not a default any other host can use.
 if [ -z "$VBS_DEST" ]; then
-	log_die 1 "no mirror dest: set WORK_MIRRORS or VBS_DEST"
+	log_die 1 "no mirror dest: pass --dest DIR (or set WORK_MIRRORS)"
 fi
 if [ -z "$VBS_ORG" ]; then
 	VBS_ORG=$(vbs_host | cut -d. -f1)
 fi
 if [ "$VBS_TRANSPORT" != ssh ] && [ "$VBS_TRANSPORT" != https ]; then
-	log_die 1 "VBS_TRANSPORT must be ssh or https"
+	log_die 1 "--transport must be ssh or https" transport="$VBS_TRANSPORT"
 fi
 
 # Creating /mnt/... where the drive is not mounted would bury the farm in the
@@ -201,14 +217,15 @@ command -v git >/dev/null 2>&1 || log_die 1 "git not found"
 # A GET config would silently use ssh's default user; the tenant needs the
 # IDCS userinfo, so make the missing credential loud instead of mysterious.
 if [ "$VBS_TRANSPORT" = ssh ] && [ -z "$VBS_SSH_USER" ] && [ "$LIST_ONLY" -eq 0 ]; then
-	log_warn "VBS_SSH_USER is empty — ssh clones may fail; set the idcs-... identity"
+	log_warn "ssh user is empty — ssh clones may fail; pass --ssh-user"
 fi
 
 # --- JSON extraction --------------------------------------------------------
 # The SPA endpoints are undocumented, so the extractor accepts the handful of
 # envelope shapes such shapes use (bare array, repositories, or a name-keyed
-# object map). Callers who see their own shape can override with the matching
-# VBS_MANIFEST_JQ variable rather than editing this file.
+# object map). It is this file's own code rather than an env override, because
+# the shape is a property of the HAR converter's output, not of the caller
+# (docs/d060).
 
 default_manifest_jq() {
 	cat <<'JQ'
@@ -226,7 +243,7 @@ repos[]
 JQ
 }
 
-MANIFEST_JQ=${VBS_MANIFEST_JQ:-$(default_manifest_jq)}
+MANIFEST_JQ=$(default_manifest_jq)
 
 # `projectId` is `<org>_<slug>_<numeric>`; the glass directory is the slug.
 slug_from_project_id() {
@@ -427,7 +444,7 @@ fi
 
 log_info "mirroring from manifest" manifest="$MANIFEST"
 jq -r "$MANIFEST_JQ" "$MANIFEST" >"$TMP/repos.tsv" ||
-	log_die 1 "could not parse manifest (set VBS_MANIFEST_JQ to match your shape)"
+	log_die 1 "could not parse manifest (shape not one the extractor knows)"
 ROWS=$(grep -c . "$TMP/repos.tsv" || true)
 log_info "repositories loaded" rows="$ROWS"
 [ "$ROWS" -gt 0 ] || log_die 1 "manifest has no repositories"

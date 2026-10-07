@@ -120,18 +120,19 @@ the repo-pinned node via `../lib/node-run.sh`.
 ### `./git/audit.sh` — report anomalies
 
 ```sh
-./git/audit.sh [--root DIR] [--max-depth N] [--deep]
+./git/audit.sh [--root DIR] [--max-depth N]
 ```
 
-The JSON report goes to stdout, the summary/warnings to stderr. `--deep` adds
-`git status --porcelain` and detached-HEAD checks per repo (slow; off by
-default).
+The JSON report goes to stdout, the summary/warnings to stderr. Every repo also
+gets `git status --porcelain` and a detached-HEAD check, so `detached`/`dirty`
+are always in the report rather than behind a thorough-flag people forget to
+pass (docs/d060).
 
 ### `./git/migrate.sh` — convert clones to bare mirrors
 
 ```sh
 ./git/migrate.sh [--root DIR] [--dest DIR] [--jobs N] [--max-depth N] \
-                 [--redownload] [--delete-originals] [--force] [--verify] \
+                 [--redownload] [--delete-originals] [--force] \
                  [--only GLOB]... [--exclude GLOB]
 ```
 
@@ -145,7 +146,9 @@ default).
 - Originals are **kept** by default; `--delete-originals` removes each source
   clone after a successful convert. Because mirrors live in `--dest`, that
   delete cannot take a mirror with it (the reason for the parallel root).
-- `--verify` runs `git fsck --connectivity-only` per mirror.
+- Every conversion runs `git fsck --connectivity-only` before it counts as
+  converted — and before `--delete-originals` may remove the only working copy
+  (docs/d060).
 
 ### `./git/maintain.sh` — align + optimize
 

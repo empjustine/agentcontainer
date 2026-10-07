@@ -177,8 +177,8 @@ The manifest is the stable seam:
                       "httpsUrl": "…", "sshUrl": "…" } ] }
 ```
 
-HAR clone URLs are userinfo-less, so `VBS_SSH_USER`/`VBS_HTTP_USER` is
-injected when set.
+HAR clone URLs are userinfo-less, so `--ssh-user`/`--http-user` inject the
+mirrorer's identity when passed (usernames, not secrets — argv is fine).
 
 ## The realistic ladder
 
@@ -186,10 +186,11 @@ injected when set.
 2. **Never-cloned repos** — export the tenant's responses as a HAR (DevTools →
    Network, *Export HAR (with sensitive data)* so response bodies are kept),
    then `./git/vbs-har.sh capture.har --out vbs-manifest.json`.
-3. **Mirror** — `./git/-vbs-mirror-all.sh --manifest vbs-manifest.json`. It
+3. **Mirror** — `./git/-vbs-mirror-all.sh --manifest vbs-manifest.json
+   --dest DIR`. It
    mirrors into `<dest>/<org>/<projectSlug>/<repo>.git`; `--list` prints the
    plan without writing. HAR clone URLs are userinfo-less, so
-   `VBS_SSH_USER`/`VBS_HTTP_USER` is injected when set.
+   `--ssh-user`/`--http-user` inject the identity when passed.
 
 The verified body schema (used by `vbs-har.mjs`):
 `projects/list` is an array whose entries carry `identifier` (id), `urlId`
@@ -201,8 +202,10 @@ derivable when `urlId` is absent.
 ## Caveats
 
 - **The tenant rate-limits bulk cloning.** A failing mirror is retried with
-  exponential backoff + jitter (`VBS_RETRIES`, `VBS_RATE_DELAY`,
-  `VBS_BACKOFF_MAX`), the sweep is paced (`--throttle`, default 60 s), and a run
+  exponential backoff + jitter (retries per repo, base delay and cap are fixed
+  policy — 10 attempts, 60 s bases, 300 s cap — with `--retries` as the one
+  flag that moves them; docs/d060), the sweep is paced (`--throttle`, default
+  60 s), and a run
   of consecutive failures triggers a cooldown (`--cooldown`, default 60 s)
   before it keeps hammering the forge. Rate-limit/blocked signatures (403/429/
   throttled) and transient network/5xx errors are retried; a hard failure
@@ -241,8 +244,9 @@ derivable when `urlId` is absent.
   helper can supply a fresh token for. Neither choice stores a secret — only the
   username.
 - **`--delete-originals` is irreversible.** It frees the WSL2 disk the migration
-  was meant to save, but the source clones are the only working copies. Run it
-  only after verifying the mirrors (`--verify`).
+  was meant to save, but the source clones are the only working copies. It can
+  only fire after that mirror's `git fsck --connectivity-only` passed (every
+  conversion is fsck'd, docs/d060).
 - **podman `z,U` does not apply here.** The home farm's `1.6M files / ~39 s`
   startup cost was a *bind-mount* cost; the work mirrors live on NTFS and are
   never bind-mounted, so that specific pressure is absent.

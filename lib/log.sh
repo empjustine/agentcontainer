@@ -4,9 +4,12 @@
 # One JSON object per line on stdout (LOG_FORMAT=logfmt for logfmt):
 #   {"ts":"2025-09-02T12:00:00Z","level":"info","tool":"coding-agent/run","msg":"...","key":"value"}
 #
-# No level filtering happens here, ever — debug/trace/warn/error all go to the
-# stream; a consumer that wants less noise filters downstream with jsonlines
-# tooling (`jq 'select(.level=="error")'`). docs/d045 owns the policy.
+# Level filtering is the consumer's job (docs/d045, reaffirmed by d060):
+# nothing is dropped here. A script logs the useful-but-noisy detail at
+# `debug` unconditionally instead of growing a --verbose branch, and whoever
+# reads the stream prunes it (`jq 'select(.level!="debug")'`, or takes one
+# level with `jq 'select(.level=="error")'`). docs/d045 owns the rest of the
+# contract (static labels, key=value fields).
 #
 # Stream: stdout by default; a script whose stdout IS the machine-consumed
 # payload (a report, a list, a manifest) exports LOG_STREAM=stderr so logs

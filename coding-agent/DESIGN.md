@@ -108,9 +108,10 @@ implicit regeneration.
 Generation profiles (detected at runtime — generation runs on both kinds of
 host; only container hosts launch, docs/d059): **Termux** — system node (Termux's bionic
 build; pi enforces its own ≥ 22.19 engines floor at launch), secrets arrive
-as plain env via the explicit chain, the vendored models.dev catalog is used
-by default (no refetch over mobile data), the opencode stage is skipped
-unless `OPENCODE_CONFIG_DIR` is set. **Everywhere else** — repo-pinned node via `lib/node-run.sh`, catalog
+as plain env via the explicit chain, the models.dev catalog refresh is
+best-effort like everywhere else (running generate means "I want current
+networked data", docs/d060), the opencode stage is skipped unless
+`OPENCODE_CONFIG_DIR` is set. **Everywhere else** — repo-pinned node via `lib/node-run.sh`, catalog
 refreshed best-effort, peer routing walks the vault-sourced `PEER_BASE_URLS`
 multi-hop chain.
 
