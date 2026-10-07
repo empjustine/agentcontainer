@@ -49,10 +49,6 @@
  *   PI_CODING_AGENT_DIR  install dir (default ~/.pi/agent) — pi's own
  *                        agent-dir env var, so an install target and the pi
  *                        that later reads it can never diverge
- *   DRY_RUN          1 = generators do NOT replace their artifacts (models.json
- *                    layers, opencode.json, the vendored catalog refresh) —
- *                    each write lands in a sibling <name>.dry-run preview
- *                    (repo-wide generator standard, lib/artifact.mjs)
  *   OPENCODE_CONFIG_DIR  set: opencode.json is written here — upstream's
  *                    documented custom config directory (config.mdx:
  *                    searched like `.opencode`, loaded after the global
@@ -60,9 +56,9 @@
  *                    committed opencode.jsonc here; Termux skips the
  *                    opencode stage
  *   SKIP_GEN         1 = install the committed <this dir>/models.json instead of
- *                    generating (no network at all). ORTHOGONAL to DRY_RUN:
- *                    SKIP_GEN chooses the artifact SOURCE; DRY_RUN suppresses
- *                    the artifact WRITE. SKIP_GEN=1 short-circuits first.
+ *                    generating (no network at all) — it chooses the artifact
+ *                    SOURCE; the write itself still replaces atomically
+ *                    (lib/artifact.mjs). SKIP_GEN=1 short-circuits first.
  *   RUN_DIR          scratch dir for intermediate layers (default $TMPDIR,
  *                    falling back to $PREFIX/tmp on Termux, /tmp elsewhere) —
  *                    this script's dir may be a read-only mount
@@ -399,8 +395,6 @@ if (process.env.SKIP_GEN === "1") {
 } else {
 	const overlay = join(scratch, "default-model.json");
 	if (existsSync(overlay)) {
-		// DRY_RUN: the overlay landed as a .dry-run preview (lib/artifact.mjs)
-		// and existsSync above already failed — the merge below never runs.
 		const defaultModel = JSON.parse(readFileSync(overlay, "utf-8"));
 		const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
 		if (defaultModel.defaultProvider) {

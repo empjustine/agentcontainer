@@ -39,7 +39,6 @@
  *   ./llm-local-inference/model-sizes.sh            # rewrite the table
  *   ./llm-local-inference/model-sizes.sh --check    # exit 1 if a rerun would differ
  *   ./llm-local-inference/model-sizes.sh --verbose  # list cache-only files
- *   DRY_RUN=1 ./llm-local-inference/model-sizes.sh  # preview, do not replace
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";

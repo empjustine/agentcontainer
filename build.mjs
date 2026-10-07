@@ -27,9 +27,7 @@
  * forbids. FORCE=1 now means cache-bust: --no-cache for image builds,
  * `-a` (rebuild all packages) for go.
  *
- * BUILD_PLAN=1 logs the chosen target set without executing.
- *
- * Env overrides: FORCE · BUILD_PLAN · IMAGE_TAG / LLAMA_SWAP_IMAGE /
+ * Env overrides: FORCE · IMAGE_TAG / LLAMA_SWAP_IMAGE /
  * CODING_AGENT_TAG · GOFLAGS · plus lib/provision-termux.sh's own set.
  */
 
@@ -50,7 +48,6 @@ setLogTool("build");
 const repoRoot = dirname(fileURLToPath(import.meta.url));
 const termux = Boolean(process.env.PREFIX?.includes("com.termux"));
 const force = process.env.FORCE === "1";
-const plan = process.env.BUILD_PLAN === "1";
 
 const containerTool = existsSync("/usr/bin/podman")
 	? "podman"
@@ -307,13 +304,10 @@ if (!containerTool) {
 }
 logInfo(
 	termux
-		? "build plan (termux — strictly serialized: ~1 GB devices cannot parallelize go builds)"
-		: "build plan (container host — image targets in parallel)",
-	{ targets: targets.map((t) => t.name), force, plan },
+		? "build targets (termux — strictly serialized: ~1 GB devices cannot parallelize go builds)"
+		: "build targets (container host — image targets in parallel)",
+	{ targets: targets.map((t) => t.name), force },
 );
-if (plan) {
-	process.exit(0);
-}
 
 let failed = 0;
 if (termux || !containerTool) {

@@ -43,10 +43,6 @@
  * vault round-trip at all.
  *
  * Env overrides:
- *   DRY_RUN           1 = generators do NOT replace the config.d layers —
- *                       each write lands in a sibling <name>.dry-run preview
- *                       for inspection (repo-wide generator standard,
- *                       lib/artifact.mjs)
  *   LOCAL_INFERENCE   1 = force the local-inference layer regardless of the
  *                       capability gate (emits container-side paths; debug)
  */
@@ -95,8 +91,7 @@ function loadCore(path = join(scriptDir, "llama-swap-core.json")) {
 /**
  * Write an object as pretty JSON into config.d/ (the YAML loader accepts JSON
  * content, and JSON-in-.yaml matches the repo's existing config style). Write
- * contract: lib/artifact.mjs (atomic tmp+rename, replace by default, DRY_RUN=1
- * preview).
+ * contract: lib/artifact.mjs (atomic tmp+rename, replace by default).
  * @param {string} name layer filename (e.g. "10-local-llm-inference.yaml")
  * @param {unknown} obj config object to serialize
  * @returns {void}

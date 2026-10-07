@@ -24,13 +24,12 @@
  *
  * Usage:
  *   ./git/-software-forge-mirror.sh <clone-dir|fetch-url>... [--dest DIR]
- *                         [--transport ssh|https] [--dry-run]
+ *                         [--transport ssh|https]
  *
  *   --dest DIR       work mirror root (default $WORK_MIRRORS; --dest or
  *                    $WORK_MIRRORS is required — no hard-coded path)
  *   --transport      rebuild each remote in this spelling before cloning
  *                    (default: use the URL as handed over)
- *   --dry-run        print the plan, touch nothing
  */
 
 import { existsSync, mkdirSync, rmSync } from "node:fs";
@@ -66,7 +65,6 @@ export const DEFAULT_WORK_DEST = process.env.WORK_MIRRORS ?? "";
  * @typedef {object} Options
  * @property {string} dest
  * @property {"ssh"|"https"|null} transport
- * @property {boolean} dryRun
  * @property {boolean} help
  * @property {string[]} inputs
  */
@@ -80,7 +78,6 @@ function parseArgs(argv) {
 	const o = {
 		dest: DEFAULT_WORK_DEST,
 		transport: null,
-		dryRun: false,
 		help: false,
 		inputs: [],
 	};
@@ -100,9 +97,6 @@ function parseArgs(argv) {
 				o.transport = value;
 				break;
 			}
-			case "--dry-run":
-				o.dryRun = true;
-				break;
 			case "-h":
 			case "--help":
 				o.help = true;
@@ -192,10 +186,6 @@ async function mirrorOne(input, o) {
 	const glass = softwareForgeGlassUrl(remote);
 
 	if (existsSync(target)) {
-		if (o.dryRun) {
-			logInfo("would align existing mirror", { target, glass: glass ?? "" });
-			return "ok";
-		}
 		const r = await git(target, ["remote", "update", "--prune"], {
 			must: false,
 		});
@@ -207,16 +197,6 @@ async function mirrorOne(input, o) {
 			return "failed";
 		}
 		logInfo("aligned mirror", { target, origin: fetchUrl, glass: glass ?? "" });
-		return "ok";
-	}
-
-	if (o.dryRun) {
-		logInfo("would mirror", {
-			source: resolved.source,
-			target,
-			origin: fetchUrl,
-			glass: glass ?? "",
-		});
 		return "ok";
 	}
 
@@ -248,7 +228,7 @@ async function main() {
 	if (o.help) {
 		process.stdout.write(
 			"usage: ./git/-software-forge-mirror.sh <clone-dir|fetch-url>... [--dest DIR]\n" +
-				"                            [--transport ssh|https] [--dry-run]\n",
+				"                            [--transport ssh|https]\n",
 		);
 		return;
 	}
@@ -271,7 +251,6 @@ async function main() {
 		dest: o.dest,
 		transport: o.transport ?? "as-given",
 		count: o.inputs.length,
-		dryRun: o.dryRun ? 1 : 0,
 	});
 
 	const tally = { ok: 0, skipped: 0, failed: 0 };

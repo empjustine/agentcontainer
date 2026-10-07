@@ -279,8 +279,8 @@ cline-pass or hyper built-ins), opencode's output schema.
 
 All four generators share the same invocation shape: `node <script> [out]`,
 writing next to the script by default (the `generate.sh` scratch dir on
-container/host runs), honoring `DRY_RUN=1` (preview only) via
-`lib/artifact.mjs`. `coding-agent/generate.sh` runs them in layer order and
+container/host runs) — always as an atomic swap via `lib/artifact.mjs`, so
+the review of a regeneration is `git diff` (docs/d058). `coding-agent/generate.sh` runs them in layer order and
 then `merge-models-json.mjs`. Environment: `PEER_BASE_URLS` / `PEER_BASE_URL` (the peer base chain,
 vault-sourced; docs/d034), `PEER_API_KEY` (local GGUF bearer), each provider's own key
 env (direct and peer-route probes only), `MODELS_DEV_JSON` (catalog path

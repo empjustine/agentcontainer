@@ -1,7 +1,7 @@
 ---
 id: d041
 type: decision
-status: implemented
+status: implemented · DRY_RUN/BUILD_PLAN later retired by d058
 title: "d041 — unified generate/build entrypoints; runners never build or generate"
 parent: d023
 tags: ["generators", "builders", "runners", "entrypoints"]
@@ -49,7 +49,8 @@ in-container run can only mount its own folder + `../lib`):
 - **`coding-agent/generate.mjs`** (~350 L): 1:1 port of the shell
   orchestration — scratch staging, settings install, stage sequencing,
   default-model merge, models.json install with the 0-provider guard,
-  opencode stage, SKIP_GEN/DRY_RUN semantics. The d037 stage modules stay
+  opencode stage, SKIP_GEN semantics (every write an atomic swap — the
+  former DRY_RUN preview is gone, d058). The d037 stage modules stay
   separate files and are spawned as child processes (the narrow-merge verdict
   holds; layer independence is the point). Stages run via
   `process.execPath` — the orchestrator itself was already resolved through
@@ -106,8 +107,10 @@ only spawns, never imports across runner folders.
   invokes it as the serialized first stage on Termux. The root `./build.sh`
   name becomes the shim into `build.mjs`, so existing references to
   `./build.sh` keep resolving.
-- `BUILD_PLAN=1` logs the chosen target set without executing (the only
-  testable mode from a container host for the Termux branch).
+- The former `BUILD_PLAN=1` target preview is retired (d058): one execution
+  path only. That cost the Termux branch the one mode a container host could
+  exercise without executing — accepted, because a plan path nobody runs
+  rots, and code review is the honest check for that branch.
 
 ### (d) Runners never build or generate
 

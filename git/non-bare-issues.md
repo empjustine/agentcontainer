@@ -132,7 +132,7 @@ default).
 ```sh
 ./git/migrate.sh [--root DIR] [--dest DIR] [--jobs N] [--max-depth N] \
                  [--redownload] [--delete-originals] [--force] [--verify] \
-                 [--only GLOB]... [--exclude GLOB]... [--dry-run]
+                 [--only GLOB]... [--exclude GLOB]
 ```
 
 - Default: **local** conversion, no network — `git clone --mirror --local`
@@ -152,7 +152,7 @@ default).
 ```sh
 ./git/maintain.sh [--root DIR] [--jobs N] [--max-depth N] \
                   [--no-fetch] [--no-optimize] [--min-interval SECONDS] \
-                  [--only GLOB]... [--exclude GLOB]... [--dry-run]
+                  [--only GLOB]... [--exclude GLOB]
 ```
 
 1. **Align**: `git remote update --prune` (mirror refspec ⇒ exact replica).

@@ -43,7 +43,10 @@ at the SAME resolved commit while refs/main keeps the revision attached.
 Usage:
     uv run download_models.py                     # all manifest entries
     uv run download_models.py --repo unsloth/Qwen3.8   # substring filter (repeatable)
-    uv run download_models.py --dry-run           # resolve + validate only
+
+No preview flag: ensuring is idempotent against the HF cache (a file that is
+already present costs no download), so a run IS the review — git status on
+the cache tells you what changed (docs/d058).
 
 Exit code 1 if any configured file is missing from its repo or fails to download.
 """
@@ -145,8 +148,6 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", action="append",
                     help="substring filter on hf-repo (repeatable)")
-    ap.add_argument("--dry-run", action="store_true",
-                    help="resolve and validate only; download nothing")
     args = ap.parse_args()
 
     data = json.loads(MODEL_DATA.read_text())
@@ -168,14 +169,6 @@ def main():
             log.error("resolution failed", error=err)
         if not wanted:
             continue
-        if args.dry_run:
-            seen = set()
-            for fname, label in wanted:
-                if fname in seen:
-                    continue
-                seen.add(fname)
-                log.info("planned file", file=fname, label=label, commit=commit[:8])
-            continue
         try:
             folder = snapshot_download(
                 repo,
@@ -196,11 +189,8 @@ def main():
             for fname in failed:
                 log.error("file failed", file=fname, error=e)
 
-    if args.dry_run:
-        log.info("dry run — nothing downloaded")
-    else:
-        log.info("done", newlyEnsuredGib=round(total_bytes / 2**30, 2),
-                 failures=failures)
+    log.info("done", newlyEnsuredGib=round(total_bytes / 2**30, 2),
+             failures=failures)
     if failures != 0:
         raise SystemExit(1)
 

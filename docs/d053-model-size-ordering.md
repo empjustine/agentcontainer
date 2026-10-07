@@ -1,7 +1,7 @@
 ---
 id: d053
 type: task-spec
-status: active
+status: active · DRY_RUN preview retired by d058
 title: "d053 — model footprint data + cheapest-first `lib/llamacpp-model-data.json`"
 parent: llm-local-inference
 depends-on: [llm-local-inference, lib]
@@ -216,7 +216,6 @@ is a one-file regeneration, never a hand edit.
 ./llm-local-inference/model-sizes.sh            # rewrite the table
 ./llm-local-inference/model-sizes.sh --check    # exit 1 if a rerun would differ
 ./llm-local-inference/model-sizes.sh --verbose  # list cache-only files
-DRY_RUN=1 ./llm-local-inference/model-sizes.sh  # preview, do not replace
 ```
 
 ## Acceptance criteria (met)

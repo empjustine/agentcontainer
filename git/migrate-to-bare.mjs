@@ -38,7 +38,7 @@
  * Usage:
  *   ./git/migrate.sh [--root DIR] [--dest DIR] [--jobs N] [--max-depth N]
  *                    [--redownload] [--delete-originals] [--force]
- *                    [--verify] [--dry-run]
+ *                    [--verify]
  *
  *   --root DIR            reference root (default $REFERENCES_ROOT else
  *                         ~/Downloads/references)
@@ -53,7 +53,6 @@
  *   --only GLOB           convert only clones whose relative path matches
  *                         (repeatable)
  *   --exclude GLOB        skip clones whose relative path matches (repeatable)
- *   --dry-run             print the plan, touch nothing
  */
 
 import { existsSync, mkdirSync, rmSync, statSync } from "node:fs";
@@ -88,7 +87,6 @@ setLogTool("git/migrate-to-bare");
  * @property {boolean} verify
  * @property {string[]} only
  * @property {string[]} exclude
- * @property {boolean} dryRun
  * @property {boolean} help
  */
 
@@ -109,7 +107,6 @@ function parseArgs(argv) {
 		verify: false,
 		only: [],
 		exclude: [],
-		dryRun: false,
 		help: false,
 	};
 	for (let i = 0; i < argv.length; i += 1) {
@@ -144,9 +141,6 @@ function parseArgs(argv) {
 				break;
 			case "--exclude":
 				o.exclude.push(/** @type {string} */ (argv[++i]));
-				break;
-			case "--dry-run":
-				o.dryRun = true;
 				break;
 			case "-h":
 			case "--help":
@@ -263,15 +257,6 @@ async function convertOne(clone, o) {
 		);
 	}
 	const useDownload = o.redownload || shallow || !realUrl;
-	if (o.dryRun) {
-		logInfo("would convert", {
-			clone,
-			target,
-			mode: useDownload && realUrl ? "download" : "local",
-			origin: realUrl ?? "",
-		});
-		return "migrated";
-	}
 
 	mkdirSync(dirname(target), { recursive: true });
 	if (o.force && existsSync(target)) {
@@ -360,7 +345,7 @@ async function main() {
 			"usage: ./git/migrate.sh [--root DIR] [--dest DIR] [--jobs N]\n" +
 				"                       [--max-depth N] [--redownload]\n" +
 				"                       [--delete-originals] [--force] [--verify]\n" +
-				"                       [--only GLOB]... [--exclude GLOB]... [--dry-run]\n",
+				"                       [--only GLOB]... [--exclude GLOB]\n",
 		);
 		return;
 	}
@@ -393,7 +378,6 @@ async function main() {
 		skippedByFilter: discovered.length - clones.length,
 		jobs: o.jobs,
 		mode: o.redownload ? "redownload" : "local",
-		dryRun: o.dryRun ? 1 : 0,
 	});
 	if (clones.length === 0) return;
 

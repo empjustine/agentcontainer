@@ -137,4 +137,6 @@ staging contract is stable.
   correctness feature. Keep.
 - The dual Termux/container profile: already unified into one script pair;
   the remaining branch points are honest environment differences.
-- SKIP_GEN/DRY_RUN orthogonality: documented, coherent, keep.
+- SKIP_GEN vs. the writer's replace-by-default contract: orthogonal (it
+  picks the artifact SOURCE, the writer picks replace), keep — DRY_RUN itself
+  is retired as a simulation mode ([d058](d058-retire-simulation-modes.md)).

@@ -43,13 +43,13 @@
  * row). The `llama-swap` alias is claimed explicitly rather than derived.
  *
  * Overwrite semantics follow the repo-wide generator standard
- * (lib/artifact.mjs): a rerun REPLACES the deployed config by default;
- * DRY_RUN=1 writes an inspectable .dry-run preview instead.
+ * (lib/artifact.mjs): a successful rerun atomically REPLACES the deployed
+ * config — the committed file's git diff is the review surface (docs/d058).
  *
  * Usage: ./generate.sh (the standard wrapper — node_run interpreter
  * selection, same as the other environments) or node generate.mjs [out]
  *   out defaults to ./llm-reverse-proxy.json (the path run.sh serves).
- *   Env: LIB_DIR (default ../lib), DRY_RUN, LLAMA_SWAP_BASE_URL.
+ *   Env: LIB_DIR (default ../lib), LLAMA_SWAP_BASE_URL.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -67,7 +67,7 @@ const { CLOUD_PROVIDERS } =
 	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
-const { writeJsonArtifact, isDryRun } =
+const { writeJsonArtifact } =
 	/** @type {typeof import("../lib/artifact.mjs")} */ (
 		await import(`${LIB_DIR}/artifact.mjs`)
 	);
@@ -548,11 +548,9 @@ for (const key of Object.keys(deployedAllowHosts)) {
 // allowlist must exist after generation — a silent no-op here would leave
 // run.sh to die later with a config-missing error pointing back at this
 // script. The check follows the ACTUAL output (`out`, the optional argv
-// path) and, under DRY_RUN, the preview writeJsonArtifact produced instead of
-// the live artifact.
-const generatedPath = isDryRun() ? `${out}.dry-run` : out;
-if (!existsSync(generatedPath)) {
-	logError("host allowlist not generated", { path: generatedPath });
+// path) — the write is atomic, so `out` exists iff generation succeeded.
+if (!existsSync(out)) {
+	logError("host allowlist not generated", { path: out });
 	process.exit(1);
 }
-logInfo("host allowlist ready", { path: generatedPath });
+logInfo("host allowlist ready", { path: out });

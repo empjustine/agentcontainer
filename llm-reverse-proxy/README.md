@@ -54,9 +54,9 @@ already inlined the pi-ai/npm tables); `generate.sh` is its 3-line
 
 
 ```console
-$ ./generate.sh                       # -> llm-reverse-proxy.json (REPLACED
-                                      #    by default; DRY_RUN=1 writes a
-                                      #    .dry-run preview instead)
+$ ./generate.sh                       # -> llm-reverse-proxy.json (atomically
+                                      #    REPLACED on success — the change
+                                      #    is reviewed with git diff)
 ```
 
 The generated table is the UNION of three provider sources with an explicit

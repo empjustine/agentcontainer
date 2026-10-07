@@ -24,7 +24,7 @@
  *
  * Usage:
  *   ./git/maintain.sh [--root DIR] [--jobs N] [--max-depth N]
- *                     [--no-fetch] [--no-optimize] [--min-interval S] [--dry-run]
+ *                     [--no-fetch] [--no-optimize] [--min-interval S]
  *
  *   --root DIR        mirror root to maintain (default $REFERENCES_ROOT else
  *                     ~/Downloads/references — the farm itself). Discovery is
@@ -45,7 +45,6 @@
  *   --only GLOB       maintain only mirrors whose relative path matches
  *                     (repeatable)
  *   --exclude GLOB    skip mirrors whose relative path matches (repeatable)
- *   --dry-run         print the plan, touch nothing
  *
  * The pacing default is host-dependent because the tenants are: public forges
  * tolerate a burst, while the software-forge (Visual Builder Studio) tenant
@@ -94,7 +93,6 @@ const DEFAULT_SOFTWARE_FORGE_MIN_INTERVAL = 60;
  * @property {number|null} minInterval explicit seconds between upstream
  *   fetches for EVERY mirror; null means "pace only the software forge, at
  *   DEFAULT_SOFTWARE_FORGE_MIN_INTERVAL" (docs/d044)
- * @property {boolean} dryRun
  * @property {boolean} help
  */
 
@@ -122,7 +120,6 @@ function parseArgs(argv) {
 			process.env.MIRROR_MIN_INTERVAL === undefined
 				? null
 				: Number(process.env.MIRROR_MIN_INTERVAL),
-		dryRun: false,
 		help: false,
 	};
 	for (let i = 0; i < argv.length; i += 1) {
@@ -151,9 +148,6 @@ function parseArgs(argv) {
 				break;
 			case "--exclude":
 				o.exclude.push(/** @type {string} */ (argv[++i]));
-				break;
-			case "--dry-run":
-				o.dryRun = true;
 				break;
 			case "-h":
 			case "--help":
@@ -215,16 +209,6 @@ async function maintainOne(repo, o, pacing) {
 		logWarn("no upstream — cannot align; optimize only", { repo });
 	}
 	const paced = o.fetch && url ? pacing.shouldPace(url) : false;
-	if (o.dryRun) {
-		logInfo("would maintain", {
-			repo,
-			origin: url ?? "",
-			fetch: o.fetch && url ? 1 : 0,
-			optimize: o.optimize ? 1 : 0,
-			paced: paced ? 1 : 0,
-		});
-		return "ok";
-	}
 
 	if (o.fetch && url) {
 		const runFetch = () =>
@@ -269,7 +253,7 @@ async function main() {
 		process.stdout.write(
 			"usage: ./git/maintain.sh [--root DIR] [--jobs N] [--max-depth N]\n" +
 				"                       [--no-fetch] [--no-optimize] [--min-interval S]\n" +
-				"                       [--only GLOB]... [--exclude GLOB]... [--dry-run]\n",
+				"                       [--only GLOB]... [--exclude GLOB]\n",
 		);
 		return;
 	}
@@ -301,7 +285,6 @@ async function main() {
 					? "all"
 					: "off",
 		minInterval: o.minInterval ?? DEFAULT_SOFTWARE_FORGE_MIN_INTERVAL,
-		dryRun: o.dryRun ? 1 : 0,
 	});
 	if (repos.length === 0) {
 		logWarn("no bare mirrors found under root", { root: o.root });

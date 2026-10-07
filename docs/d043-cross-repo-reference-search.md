@@ -1,7 +1,7 @@
 ---
 id: d043
 type: decision
-status: proposed
+status: proposed · --dry-run UI retired by d058
 title: "d043 — cross-repo / cross-branch reference search: Zoekt for regex, blob-addressed embeddings for semantics"
 parent: architecture
 tags: ["git", "references", "search", "zoekt", "embeddings", "tooling"]
@@ -247,16 +247,18 @@ subcommands:
 ```sh
 ./git/search-references.sh index [--only GLOB]... [--all] [--root DIR] [--index DIR]
                                  [--jobs N] [--branches REFS] [--max-depth N]
-                                 [--exclude GLOB]... [--dry-run]
+                                 [--exclude GLOB]
 ./git/search-references.sh serve [--index DIR] [--port N]
 ./git/search-references.sh query 'pattern repo:duckdb branch:main' [--server URL] [--json]
 ```
 
 - `index` discovers bare mirrors with `findBareMirrors` (`git-lib.mjs`), then
   runs one `zoekt-git-index` container per SELECTED mirror, `--jobs` wide.
-  Without `--only` (or explicit `--all`) it refuses — opt-in. `--dry-run`
-  prints the exact `podman`/`docker` argv without touching anything, so the
-  command shape is reviewable (and testable) on a host with no container tool.
+  Without `--only` (or explicit `--all`) it refuses — opt-in. The former
+  `--dry-run` argv preview is gone (d058): `index` runs for real and `git diff`
+  is the review. Accepted cost — the only path that exercised this tool on a
+  host with no container tool was the preview, and an argv that never executes
+  can rot silently.
 - `serve` runs `zoekt-webserver` on `--port` (default 6070) over the index dir.
 - `query` queries `<server>/api/search` (GET) when a server is up, else runs a
   one-shot `zoekt` CLI container, and prints JSON or the `repo:path:line:`

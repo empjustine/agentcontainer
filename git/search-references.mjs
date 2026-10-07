@@ -141,7 +141,6 @@ function containerRepoPath(root, repo) {
  * @property {string[]} only
  * @property {string[]} exclude
  * @property {boolean} all
- * @property {boolean} dryRun
  */
 
 /**
@@ -167,10 +166,6 @@ async function indexOne(repo, o, tool) {
 		o.branches,
 		containerRepoPath(o.root, repo),
 	]);
-	if (o.dryRun) {
-		logInfo("would index", { repo, argv: argv.join(" ") });
-		return true;
-	}
 	const code = await run(argv[0], argv.slice(1));
 	if (code !== 0) {
 		logWarn("index failed — shard left as-is", { repo, code });
@@ -195,7 +190,6 @@ function parseIndexArgs(argv) {
 		only: [],
 		exclude: [],
 		all: false,
-		dryRun: false,
 	};
 	for (let i = 0; i < argv.length; i += 1) {
 		const a = argv[i];
@@ -223,9 +217,6 @@ function parseIndexArgs(argv) {
 				break;
 			case "--all":
 				o.all = true;
-				break;
-			case "--dry-run":
-				o.dryRun = true;
 				break;
 			default:
 				throw Object.assign(new Error("unknown flag (try --help)"), {
@@ -259,14 +250,12 @@ async function cmdIndex(argv) {
 		return;
 	}
 	const tool = containerTool();
-	if (!tool && !o.dryRun) {
+	if (!tool) {
 		throw new Error(
 			"no podman or docker on PATH — the engine runs as a container (docs/d043)",
 		);
 	}
-	// dry-run is the review/test path on a host with no container tool: the
-	// argv shape is the thing being inspected, so borrow a placeholder name.
-	const engine = tool ?? "podman";
+	const engine = tool;
 
 	const discovered = findBareMirrors(o.root, o.maxDepth);
 	const rels = discovered.map((p) => relative(o.root, p));
@@ -281,7 +270,6 @@ async function cmdIndex(argv) {
 		branches: o.branches,
 		index: o.index,
 		all: o.all ? 1 : 0,
-		dryRun: o.dryRun ? 1 : 0,
 	});
 	if (repos.length === 0) {
 		logWarn("no bare mirrors found — run ./git/migrate.sh first", {
@@ -290,7 +278,7 @@ async function cmdIndex(argv) {
 		return;
 	}
 
-	if (!o.dryRun) mkdirSync(o.index, { recursive: true });
+	mkdirSync(o.index, { recursive: true });
 
 	const results = await pool(repos, o.jobs, (repo) =>
 		indexOne(repo, o, engine),
@@ -306,14 +294,13 @@ async function cmdIndex(argv) {
 
 /**
  * @param {string[]} argv
- * @returns {{ root: string, index: string, port: number, dryRun: boolean }}
+ * @returns {{ root: string, index: string, port: number }}
  */
 function parseServeArgs(argv) {
 	const o = {
 		root: DEFAULT_ROOT,
 		index: DEFAULT_INDEX,
 		port: 6070,
-		dryRun: false,
 	};
 	for (let i = 0; i < argv.length; i += 1) {
 		switch (argv[i]) {
@@ -325,9 +312,6 @@ function parseServeArgs(argv) {
 				break;
 			case "--port":
 				o.port = Number(argv[++i]);
-				break;
-			case "--dry-run":
-				o.dryRun = true;
 				break;
 			default:
 				throw Object.assign(new Error("unknown flag (try --help)"), {
@@ -350,10 +334,10 @@ async function cmdServe(argv) {
 		});
 	}
 	const tool = containerTool();
-	if (!tool && !o.dryRun) {
+	if (!tool) {
 		throw new Error("no podman or docker on PATH (docs/d043)");
 	}
-	const engine = tool ?? "podman";
+	const engine = tool;
 	// `-p 6070:6070` on the host network namespace is what lets the agent
 	// container (workload_network host) reach the server WITHOUT mounting the
 	// farm — the mount-free property is the reason this layer exists.
@@ -366,10 +350,6 @@ async function cmdServe(argv) {
 		"-listen",
 		`:${o.port}`,
 	]);
-	if (o.dryRun) {
-		process.stdout.write(`${argvOri.join(" ")}\n`);
-		return;
-	}
 	logInfo("serving reference search", {
 		port: o.port,
 		index: o.index,
@@ -527,9 +507,9 @@ async function main(argv) {
 		process.stdout.write(
 			"usage: ./git/search-references.sh <index|serve|query> [flags]\n\n" +
 				"  index [--only GLOB]... [--all] [--root DIR] [--index DIR] [--jobs N]\n" +
-				"        [--max-depth N] [--branches REFS] [--exclude GLOB]... [--dry-run]\n" +
+				"        [--max-depth N] [--branches REFS] [--exclude GLOB]\n" +
 				"        (indexing is opt-in: --only selects repos; --all is the explicit farm-wide build)\n" +
-				"  serve [--root DIR] [--index DIR] [--port N] [--dry-run]\n" +
+				"  serve [--root DIR] [--index DIR] [--port N]\n" +
 				"  query 'PATTERN [repo:...] [branch:...]' [--server URL] [--num N]\n" +
 				"        [--json] [--list] [--root DIR] [--index DIR]\n",
 		);
