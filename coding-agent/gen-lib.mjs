@@ -90,7 +90,7 @@ export const { CLOUD_PROVIDERS, PI_NATIVE_CLOUD_IDS } = cloudProviders;
  * @property {string[]} input
  * @property {number} [contextWindow]
  * @property {number} [maxTokens]
- * @property {Cost} cost
+ * @property {Cost?} cost
  * @property {string} [api] per-model api override (pi docs/models.md) —
  *   set by the generator when the provider serves a MIXED api surface and
  *   the provider-wide dialect cannot route every model (opencode-go,
@@ -248,7 +248,7 @@ export function piModel(entry) {
 		input,
 		contextWindow,
 		maxTokens: meta?.maxTokens ?? contextWindow,
-		cost: meta?.cost ?? { input: 10, output: 50, cacheRead: 1, cacheWrite: 20 },
+		cost: meta?.cost ?? undefined,
 	};
 }
 

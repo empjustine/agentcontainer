@@ -9,13 +9,11 @@
  * Run: node --test   (discovers tests/*.test.mjs from the repo root)
  */
 import assert from "node:assert/strict";
-import { dirname, join } from "node:path";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
 
 import {
-	PI_MODALITY_CAPABILITY,
 	modalitiesEligible,
+	PI_MODALITY_CAPABILITY,
 	toInput,
 } from "../coding-agent/gen-lib.mjs";
 

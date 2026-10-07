@@ -140,6 +140,17 @@ provider id so the peer path-route is still attempted.
   (`pi update --models`); providers are re-routed via `baseUrl` overrides only.
   The retired free-tier pipeline's decisions are distilled in
   `docs/scoped-models-and-proxy-overrides.md` ("spirit of the retired notes").
+- **The prompt and the tool loadout are configured separately**:
+  `settings.json`'s `defaultTools` adds capability (the base four plus
+  `grep`, `find`, `ls`, and the `codemode`/`tool_search` built-in
+  extensions) without touching `SYSTEM.md`/`APPEND_SYSTEM.md`/`AGENTS.md`,
+  and `codemode.mode = "only"` with `inlineBudget: 0` keeps the model's
+  declared tool set down to the codemode tool itself, so the request payload
+  shrinks while every built-in stays active and callable from scripts.
+  Intent lives here; pi owns the mechanics (its `settings.md#tools` and
+  `codemode.md`). Cost accepted: the model drives tools through codemode
+  scripts and must `searchTools()`/`describeTool()` for signatures instead
+  of reading declarations.
 - **Key naming / baseUrl baking / proxy env**: `docs/d001-proxy-env-and-namespace.md`.
 - A zero-provider merge result is **kept as-is** (never clobbers a good
   `models.json` with an empty merge).

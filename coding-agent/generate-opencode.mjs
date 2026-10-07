@@ -307,10 +307,7 @@ async function main() {
 		return;
 	}
 
-	const written = writeJsonArtifact(
-		out,
-		{ provider: providers },
-	);
+	const written = writeJsonArtifact(out, { provider: providers });
 	const summary = Object.entries(providers)
 		.map(
 			([id, p]) =>

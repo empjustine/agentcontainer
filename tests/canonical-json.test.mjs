@@ -15,12 +15,17 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { canonicalizeManifest, serializeArtifact } from "../lib/canonical-json.mjs";
+import {
+	canonicalizeManifest,
+	serializeArtifact,
+} from "../lib/canonical-json.mjs";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 test("providers map keys sort ascending in code-unit order, input untouched", () => {
-	const doc = { providers: { openrouter: {}, Google: {}, mistral: {}, alpha: {} } };
+	const doc = {
+		providers: { openrouter: {}, Google: {}, mistral: {}, alpha: {} },
+	};
 	const out = canonicalizeManifest(doc);
 	assert.deepEqual(Object.keys(/** @type {any} */ (out).providers), [
 		"Google",
@@ -29,7 +34,12 @@ test("providers map keys sort ascending in code-unit order, input untouched", ()
 		"openrouter",
 	]);
 	// source key order unchanged — canonicalization never mutates the builder's doc
-	assert.deepEqual(Object.keys(doc.providers), ["openrouter", "Google", "mistral", "alpha"]);
+	assert.deepEqual(Object.keys(doc.providers), [
+		"openrouter",
+		"Google",
+		"mistral",
+		"alpha",
+	]);
 });
 
 test("models arrays sort by id; record field order stays as constructed", () => {
@@ -43,7 +53,8 @@ test("models arrays sort by id; record field order stays as constructed", () => 
 			},
 		},
 	};
-	const models = /** @type {any} */ (canonicalizeManifest(doc)).providers.x.models;
+	const models = /** @type {any} */ (canonicalizeManifest(doc)).providers.x
+		.models;
 	assert.deepEqual(
 		models.map((/** @type {{ id: string }} */ m) => m.id),
 		["alpha", "zeta"],
@@ -61,24 +72,38 @@ test("opencode shape: provider map and its id-keyed models record both sort", ()
 	};
 	const out = /** @type {any} */ (canonicalizeManifest(doc));
 	assert.deepEqual(Object.keys(out.provider), ["local", "zen"]);
-	assert.deepEqual(Object.keys(out.provider.zen.models), ["01b-a", "glm/y", "qwen/x"]);
+	assert.deepEqual(Object.keys(out.provider.zen.models), [
+		"01b-a",
+		"glm/y",
+		"qwen/x",
+	]);
 });
 
 test("allowHosts sorts; listen and other scalar maps stay put", () => {
-	const doc = { listen: "0.0.0.0:8080", allowHosts: { "zeta.example": "u", "alpha.example": "u" } };
+	const doc = {
+		listen: "0.0.0.0:8080",
+		allowHosts: { "zeta.example": "u", "alpha.example": "u" },
+	};
 	const out = /** @type {any} */ (canonicalizeManifest(doc));
-	assert.deepEqual(Object.keys(out.allowHosts), ["alpha.example", "zeta.example"]);
+	assert.deepEqual(Object.keys(out.allowHosts), [
+		"alpha.example",
+		"zeta.example",
+	]);
 	assert.equal(out.listen, "0.0.0.0:8080");
 });
 
 test("non-manifest values pass through unchanged", () => {
 	assert.equal(canonicalizeManifest(null), null);
 	assert.deepEqual(canonicalizeManifest([2, 1]), [2, 1]);
-	assert.deepEqual(canonicalizeManifest({ defaultProvider: "x" }), { defaultProvider: "x" });
+	assert.deepEqual(canonicalizeManifest({ defaultProvider: "x" }), {
+		defaultProvider: "x",
+	});
 });
 
 test("serializeArtifact: pretty 2-space, trailing newline, valid JSON, idempotent", () => {
-	const s = serializeArtifact({ providers: { b: { models: [{ id: "y" }, { id: "a" }] }, a: {} } });
+	const s = serializeArtifact({
+		providers: { b: { models: [{ id: "y" }, { id: "a" }] }, a: {} },
+	});
 	assert.ok(s.endsWith("}\n"));
 	assert.ok(s.includes('\n  "providers"'));
 	assert.deepEqual(JSON.parse(serializeArtifact(JSON.parse(s))), JSON.parse(s));

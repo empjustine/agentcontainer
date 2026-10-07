@@ -14,5 +14,23 @@
 		"showTerminalProgress": false
 	},
 	"defaultProvider": "opencode-go",
-	"defaultModel": "deepseek-v4.1-flash"
+	"defaultModel": "deepseek-v4.1-flash",
+	"defaultTools": [
+		"+read",
+		"+bash",
+		"+edit",
+		"+write",
+		"+grep",
+		"+find",
+		"+ls",
+		"+codemode",
+		"+tool_search"
+	],
+	"markdown": {
+		"codeBlockIndent": ""
+	},
+	"codemode": {
+		"mode": "only",
+		"inlineBudget": 0
+	}
 }

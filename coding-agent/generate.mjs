@@ -255,7 +255,12 @@ for (const f of GENERATORS) {
 // canonical-json.mjs is here as artifact.mjs's runtime dependency (d050);
 // tests/lib-staging.test.mjs fails if either this list or run.sh's mounts
 // drift out of sync with what the generators actually import.
-for (const f of ["log.mjs", "artifact.mjs", "canonical-json.mjs", "cloud-providers.mjs"]) {
+for (const f of [
+	"log.mjs",
+	"artifact.mjs",
+	"canonical-json.mjs",
+	"cloud-providers.mjs",
+]) {
 	if (existsSync(join(repoRoot, "lib", f))) {
 		copyFileSync(join(repoRoot, "lib", f), join(scratchLib, f));
 	} else {

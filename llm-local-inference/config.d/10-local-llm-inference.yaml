@@ -19,12 +19,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:QAD-Q4_0": {
@@ -46,12 +41,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:Q4_K_M": {
@@ -73,12 +63,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:Q5_K_M": {
@@ -100,12 +85,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:Q6_K": {
@@ -127,12 +107,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:IQ2_M": {
@@ -154,12 +129,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:IQ3_XXS": {
@@ -181,12 +151,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q2_K_XL": {
@@ -208,12 +173,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q3_K_S": {
@@ -235,12 +195,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q3_K_M": {
@@ -262,12 +217,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-bartowski/ai9stars_G9v3-3B-GGUF:Q6_K": {
@@ -289,12 +239,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-openbmb/MiniCPM5-2B-GGUF:Q8_0": {
@@ -316,12 +261,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:Q8_0": {
@@ -343,12 +283,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx064-unsloth/LFM2.5-VL-3B-GGUF:Q8_0": {
@@ -370,12 +305,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q3_K_XL": {
@@ -397,12 +327,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:IQ4_XS": {
@@ -424,12 +349,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:IQ4_NL": {
@@ -451,12 +371,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q4_0": {
@@ -478,12 +393,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q4_K_S": {
@@ -505,12 +415,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q4_K_M": {
@@ -532,12 +437,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q4_1": {
@@ -559,12 +459,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-bartowski/ai9stars_G9v3-3B-GGUF:Q8_0": {
@@ -586,12 +481,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q4_K_XL": {
@@ -613,12 +503,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-0text-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL": {
@@ -640,12 +525,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL": {
@@ -669,12 +549,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL": {
@@ -698,12 +573,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-0text-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL": {
@@ -725,12 +595,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL": {
@@ -754,12 +619,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL": {
@@ -783,12 +643,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q5_K_S": {
@@ -810,12 +665,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q5_K_M": {
@@ -837,12 +687,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:IQ2_M": {
@@ -864,12 +709,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-0text-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL": {
@@ -891,12 +731,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL": {
@@ -920,12 +755,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL": {
@@ -949,12 +779,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:IQ3_XXS": {
@@ -976,12 +801,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q2_K_XL": {
@@ -1003,12 +823,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q3_K_S": {
@@ -1030,12 +845,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q3_K_M": {
@@ -1057,12 +867,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:IQ2_M": {
@@ -1084,12 +889,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q5_K_XL": {
@@ -1111,12 +911,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx032-0text-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL": {
@@ -1138,12 +933,7 @@
         ],
         "contextWindow": 32768,
         "maxTokens": 32768,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx032-1vision-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL": {
@@ -1167,12 +957,7 @@
         ],
         "contextWindow": 32768,
         "maxTokens": 32768,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx032-2mmproj-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL": {
@@ -1196,12 +981,7 @@
         ],
         "contextWindow": 32768,
         "maxTokens": 32768,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-0text-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL": {
@@ -1223,12 +1003,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL": {
@@ -1252,12 +1027,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL": {
@@ -1281,12 +1051,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-0text-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL": {
@@ -1308,12 +1073,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL": {
@@ -1337,12 +1097,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL": {
@@ -1366,12 +1121,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q6_K": {
@@ -1393,12 +1143,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q3_K_XL": {
@@ -1420,12 +1165,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:IQ3_XXS": {
@@ -1447,12 +1187,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q2_K_XL": {
@@ -1474,12 +1209,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q6_K_XL": {
@@ -1501,12 +1231,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:IQ4_XS": {
@@ -1528,12 +1253,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:IQ4_NL": {
@@ -1555,12 +1275,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q4_0": {
@@ -1582,12 +1297,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q4_K_S": {
@@ -1609,12 +1319,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q4_K_M": {
@@ -1636,12 +1341,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q4_1": {
@@ -1663,12 +1363,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q4_K_XL": {
@@ -1690,12 +1385,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q3_K_S": {
@@ -1717,12 +1407,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-0text-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL": {
@@ -1744,12 +1429,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL": {
@@ -1773,12 +1453,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL": {
@@ -1802,12 +1477,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:BF16": {
@@ -1829,12 +1499,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q5_K_S": {
@@ -1856,12 +1521,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q5_K_M": {
@@ -1883,12 +1543,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q3_K_M": {
@@ -1910,12 +1565,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-bartowski/ai9stars_G9v3-3B-GGUF:BF16": {
@@ -1937,12 +1587,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q3_K_XL": {
@@ -1964,12 +1609,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-0text-unsloth/gemma-4-E2B-it-GGUF:Q8_0": {
@@ -1991,12 +1631,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-GGUF:Q8_0": {
@@ -2020,12 +1655,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-GGUF:Q8_0": {
@@ -2049,12 +1679,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-0text-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL": {
@@ -2076,12 +1701,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL": {
@@ -2105,12 +1725,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL": {
@@ -2134,12 +1749,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:IQ4_XS": {
@@ -2161,12 +1771,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q5_K_XL": {
@@ -2188,12 +1793,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:IQ4_NL": {
@@ -2215,12 +1815,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q4_0": {
@@ -2242,12 +1837,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q4_K_S": {
@@ -2269,12 +1859,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q6_K": {
@@ -2296,12 +1881,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q4_K_M": {
@@ -2323,12 +1903,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S": {
@@ -2350,12 +1925,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S": {
@@ -2379,12 +1949,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S": {
@@ -2408,12 +1973,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-0text-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL": {
@@ -2435,12 +1995,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-1vision-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL": {
@@ -2464,12 +2019,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-2mmproj-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL": {
@@ -2493,12 +2043,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q4_K_XL": {
@@ -2520,12 +2065,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q4_1": {
@@ -2547,12 +2087,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q6_K_XL": {
@@ -2574,12 +2109,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M": {
@@ -2601,12 +2131,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M": {
@@ -2630,12 +2155,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M": {
@@ -2659,12 +2179,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS": {
@@ -2686,12 +2201,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS": {
@@ -2715,12 +2225,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS": {
@@ -2744,12 +2249,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q5_K_S": {
@@ -2771,12 +2271,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "01b-ctx128-bartowski/Ling-3.0-tiny-GGUF:Q8_0": {
@@ -2798,12 +2293,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q5_K_M": {
@@ -2825,12 +2315,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q5_K_XL": {
@@ -2852,12 +2337,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "01b-ctx128-unsloth/LFM2.5-8B-A1B-GGUF:Q8_0": {
@@ -2879,12 +2359,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-0text-unsloth/gemma-4-E4B-it-GGUF:Q8_0": {
@@ -2906,12 +2381,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-GGUF:Q8_0": {
@@ -2935,12 +2405,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-GGUF:Q8_0": {
@@ -2964,12 +2429,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S": {
@@ -2991,12 +2451,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S": {
@@ -3020,12 +2475,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S": {
@@ -3049,12 +2499,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:BF16": {
@@ -3076,12 +2521,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "01b-ctx128-unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL": {
@@ -3103,12 +2543,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw": {
@@ -3130,12 +2565,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw": {
@@ -3159,12 +2589,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw": {
@@ -3188,12 +2613,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-0text-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL": {
@@ -3215,12 +2635,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL": {
@@ -3244,12 +2659,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL": {
@@ -3273,12 +2683,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:IQ2_XXS": {
@@ -3300,12 +2705,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:IQ2_M": {
@@ -3327,12 +2727,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-0text-unsloth/gemma-4-12b-it-GGUF:Q6_K": {
@@ -3354,12 +2749,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-1vision-unsloth/gemma-4-12b-it-GGUF:Q6_K": {
@@ -3383,12 +2773,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-2mmproj-unsloth/gemma-4-12b-it-GGUF:Q6_K": {
@@ -3412,12 +2797,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q2_K_XL": {
@@ -3439,12 +2819,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q6_K_XL": {
@@ -3466,12 +2841,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL": {
@@ -3493,12 +2863,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL": {
@@ -3522,12 +2887,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL": {
@@ -3551,12 +2911,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw": {
@@ -3578,12 +2933,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw": {
@@ -3607,12 +2957,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw": {
@@ -3636,12 +2981,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "01b-ctx128-bloomer010/Ling-3.0-tiny-GGUF:UD-Q8_K_XL": {
@@ -3663,12 +3003,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw": {
@@ -3690,12 +3025,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw": {
@@ -3719,12 +3049,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw": {
@@ -3748,12 +3073,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:IQ3_S": {
@@ -3775,12 +3095,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:IQ3_XXS": {
@@ -3802,12 +3117,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS": {
@@ -3829,12 +3139,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS": {
@@ -3858,12 +3163,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS": {
@@ -3887,12 +3187,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw": {
@@ -3914,12 +3209,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw": {
@@ -3943,12 +3233,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw": {
@@ -3972,12 +3257,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx064-byteshape/North-Mini-Code-1.0-GGUF:IQ3_S-3.17BPW": {
@@ -3999,12 +3279,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q3_K_M": {
@@ -4026,12 +3301,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q3_K_XL": {
@@ -4053,12 +3323,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S": {
@@ -4080,12 +3345,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S": {
@@ -4109,12 +3369,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S": {
@@ -4138,12 +3393,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-0text-unsloth/gemma-4-12b-it-GGUF:Q8_0": {
@@ -4165,12 +3415,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-1vision-unsloth/gemma-4-12b-it-GGUF:Q8_0": {
@@ -4194,12 +3439,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-2mmproj-unsloth/gemma-4-12b-it-GGUF:Q8_0": {
@@ -4223,12 +3463,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S": {
@@ -4250,12 +3485,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S": {
@@ -4279,12 +3509,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-2mmproj-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S": {
@@ -4308,12 +3533,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:IQ4_XS": {
@@ -4335,12 +3555,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:IQ4_NL": {
@@ -4362,12 +3577,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q8_K_XL": {
@@ -4389,12 +3599,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.84bpw": {
@@ -4416,12 +3621,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.84bpw": {
@@ -4445,12 +3645,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL": {
@@ -4472,12 +3667,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL": {
@@ -4501,12 +3691,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:BF16": {
@@ -4528,12 +3713,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ4_XS": {
@@ -4555,12 +3735,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ4_XS": {
@@ -4584,12 +3759,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx064-byteshape/North-Mini-Code-1.0-GGUF:IQ4_XS-4.14BPW": {
@@ -4611,12 +3781,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "30b-ctx064-unsloth/Muse-Glimmer-30B-GGUF:UD-Q4_K_XL": {
@@ -4638,12 +3803,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL": {
@@ -4665,12 +3825,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL": {
@@ -4694,12 +3849,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx064-byteshape/North-Mini-Code-1.0-GGUF:IQ4_XS-4.27BPW": {
@@ -4721,12 +3871,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_S": {
@@ -4748,12 +3893,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_S": {
@@ -4777,12 +3917,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q4_K_S": {
@@ -4804,12 +3939,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:MXFP4_MOE": {
@@ -4831,12 +3961,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q4_K_M": {
@@ -4858,12 +3983,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_0": {
@@ -4885,12 +4005,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_0": {
@@ -4914,12 +4029,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q4_K_XL": {
@@ -4941,12 +4051,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-0text-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw": {
@@ -4968,12 +4073,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-1vision-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw": {
@@ -4997,12 +4097,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_M": {
@@ -5024,12 +4119,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_M": {
@@ -5053,12 +4143,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q4_K_M": {
@@ -5080,12 +4165,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q4_K_M": {
@@ -5109,12 +4189,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.6-27B-GGUF:Q4_K_M": {
@@ -5136,12 +4211,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.6-27B-GGUF:Q4_K_M": {
@@ -5165,12 +4235,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_1": {
@@ -5192,12 +4257,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_1": {
@@ -5221,12 +4281,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_XL": {
@@ -5248,12 +4303,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_XL": {
@@ -5277,12 +4327,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q5_K_S": {
@@ -5304,12 +4349,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "31b-ctx064-0text-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL": {
@@ -5331,12 +4371,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "31b-ctx064-1vision-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL": {
@@ -5360,12 +4395,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-0text-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw": {
@@ -5387,12 +4417,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-1vision-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw": {
@@ -5416,12 +4441,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx064-unsloth/North-Mini-Code-1.0-GGUF:Q4_K_XL": {
@@ -5443,12 +4463,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q5_K_S": {
@@ -5470,12 +4485,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q5_K_S": {
@@ -5499,12 +4509,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-poolside/Laguna-XS-2.1-GGUF:Q4_K_M": {
@@ -5526,12 +4531,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q5_K_M": {
@@ -5553,12 +4553,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q5_K_M": {
@@ -5582,12 +4577,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q5_K_M": {
@@ -5609,12 +4599,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q5_K_M": {
@@ -5638,12 +4623,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q5_K_M": {
@@ -5665,12 +4645,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q5_K_XL": {
@@ -5692,12 +4667,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx064-byteshape/North-Mini-Code-1.0-GGUF:IQ4_XS-5.64BPW": {
@@ -5719,12 +4689,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q5_K_XL": {
@@ -5746,12 +4711,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q5_K_XL": {
@@ -5775,12 +4735,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K": {
@@ -5802,12 +4757,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K": {
@@ -5831,12 +4781,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:BF16": {
@@ -5858,12 +4803,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K_M": {
@@ -5885,12 +4825,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K_M": {
@@ -5914,12 +4849,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K": {
@@ -5941,12 +4871,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K": {
@@ -5970,12 +4895,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL": {
@@ -5997,12 +4917,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL": {
@@ -6026,12 +4941,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K_L": {
@@ -6053,12 +4963,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K_L": {
@@ -6082,12 +4987,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K_XL": {
@@ -6109,12 +5009,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K_XL": {
@@ -6138,12 +5033,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "30b-ctx064-unsloth/Muse-Glimmer-30B-GGUF:UD-Q6_K_XL": {
@@ -6165,12 +5055,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx064-unsloth/North-Mini-Code-1.0-GGUF:Q6_K_XL": {
@@ -6192,12 +5077,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0": {
@@ -6219,12 +5099,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0": {
@@ -6248,12 +5123,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q8_K_L": {
@@ -6275,12 +5145,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q8_K_L": {
@@ -6304,12 +5169,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL": {
@@ -6331,12 +5191,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL": {
@@ -6360,12 +5215,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "30b-ctx064-unsloth/Muse-Glimmer-30B-GGUF:Q8_0": {
@@ -6387,12 +5237,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q8_0": {
@@ -6414,12 +5259,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q8_0": {
@@ -6443,12 +5283,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K": {
@@ -6470,12 +5305,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K": {
@@ -6499,12 +5329,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "30b-ctx064-unsloth/Muse-Glimmer-30B-GGUF:UD-Q8_K_XL": {
@@ -6526,12 +5351,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q8_K_XL": {
@@ -6553,12 +5373,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q8_K_XL": {
@@ -6582,12 +5397,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL": {
@@ -6609,12 +5419,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL": {
@@ -6638,12 +5443,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx064-unsloth/North-Mini-Code-1.0-GGUF:Q8_K_XL": {
@@ -6665,12 +5465,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0": {
@@ -6692,12 +5487,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0": {
@@ -6721,12 +5511,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL": {
@@ -6748,12 +5533,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL": {
@@ -6777,12 +5557,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:BF16": {
@@ -6804,12 +5579,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:BF16": {
@@ -6833,12 +5603,7 @@
         ],
         "contextWindow": 131072,
         "maxTokens": 131072,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:BF16": {
@@ -6860,12 +5625,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     },
     "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:BF16": {
@@ -6889,12 +5649,7 @@
         ],
         "contextWindow": 65536,
         "maxTokens": 65536,
-        "cost": {
-          "input": 10,
-          "output": 50,
-          "cacheRead": 1,
-          "cacheWrite": 20
-        }
+        "cost": {}
       }
     }
   }

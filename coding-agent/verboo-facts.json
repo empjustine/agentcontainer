@@ -1,97 +1,74 @@
 {
-  "fetchedAt": "2026-10-04T23:51:00.000Z",
-  "fetchedFrom": "https://code.verboo.ai/router/v1/models",
-  "models": [
-    {
-      "id": "deepseek-v4-flash",
-      "object": "model",
-      "created": 1791157873,
-      "owned_by": "verboo",
-      "context_window": 1048576,
-      "vision": false,
-      "reasoning": {
-        "effort_levels": [
-          "high",
-          "max"
-        ],
-        "default_effort": "high"
-      }
-    },
-    {
-      "id": "deepseek-v4-flash-0731",
-      "object": "model",
-      "created": 1791157873,
-      "owned_by": "verboo",
-      "context_window": 1048576,
-      "vision": false,
-      "reasoning": {
-        "effort_levels": [
-          "high",
-          "max",
-          "low",
-          "medium",
-          "xhigh"
-        ],
-        "default_effort": "low"
-      }
-    },
-    {
-      "id": "deepseek-v4.1-flash",
-      "object": "model",
-      "created": 1791157873,
-      "owned_by": "verboo",
-      "context_window": 1048576,
-      "vision": true,
-      "reasoning": {
-        "effort_levels": [
-          "low",
-          "high",
-          "xhigh",
-          "max"
-        ],
-        "default_effort": "low"
-      }
-    },
-    {
-      "id": "glm-5.3-flash",
-      "object": "model",
-      "created": 1791157873,
-      "owned_by": "verboo",
-      "context_window": 1048576,
-      "vision": true,
-      "reasoning": {
-        "effort_levels": [
-          "low",
-          "high",
-          "max"
-        ],
-        "default_effort": "low"
-      }
-    },
-    {
-      "id": "mimo-v2.5",
-      "object": "model",
-      "created": 1791157873,
-      "owned_by": "verboo",
-      "context_window": 1048576,
-      "vision": true
-    },
-    {
-      "id": "qwen3.8-27b",
-      "object": "model",
-      "created": 1791157873,
-      "owned_by": "verboo",
-      "context_window": 262144,
-      "vision": true,
-      "reasoning": {
-        "effort_levels": [
-          "low",
-          "medium",
-          "xhigh",
-          "none"
-        ],
-        "default_effort": "none"
-      }
-    }
-  ]
+	"fetchedAt": "2026-10-04T23:51:00.000Z",
+	"fetchedFrom": "https://code.verboo.ai/router/v1/models",
+	"models": [
+		{
+			"id": "deepseek-v4-flash",
+			"object": "model",
+			"created": 1791157873,
+			"owned_by": "verboo",
+			"context_window": 1048576,
+			"vision": false,
+			"reasoning": {
+				"effort_levels": ["high", "max"],
+				"default_effort": "high"
+			}
+		},
+		{
+			"id": "deepseek-v4-flash-0731",
+			"object": "model",
+			"created": 1791157873,
+			"owned_by": "verboo",
+			"context_window": 1048576,
+			"vision": false,
+			"reasoning": {
+				"effort_levels": ["high", "max", "low", "medium", "xhigh"],
+				"default_effort": "low"
+			}
+		},
+		{
+			"id": "deepseek-v4.1-flash",
+			"object": "model",
+			"created": 1791157873,
+			"owned_by": "verboo",
+			"context_window": 1048576,
+			"vision": true,
+			"reasoning": {
+				"effort_levels": ["low", "high", "xhigh", "max"],
+				"default_effort": "low"
+			}
+		},
+		{
+			"id": "glm-5.3-flash",
+			"object": "model",
+			"created": 1791157873,
+			"owned_by": "verboo",
+			"context_window": 1048576,
+			"vision": true,
+			"reasoning": {
+				"effort_levels": ["low", "high", "max"],
+				"default_effort": "low"
+			}
+		},
+		{
+			"id": "mimo-v2.5",
+			"object": "model",
+			"created": 1791157873,
+			"owned_by": "verboo",
+			"context_window": 1048576,
+			"vision": true
+		},
+		{
+			"id": "qwen3.8-27b",
+			"object": "model",
+			"created": 1791157873,
+			"owned_by": "verboo",
+			"context_window": 262144,
+			"vision": true,
+			"reasoning": {
+				"effort_levels": ["low", "medium", "xhigh", "none"],
+				"default_effort": "none"
+			}
+		}
+	]
 }

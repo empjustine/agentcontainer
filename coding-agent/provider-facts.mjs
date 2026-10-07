@@ -154,7 +154,9 @@ export async function refreshProviderFacts(id, options) {
 	 * llm-reverse-proxy allowlist, so the peer leg must address the upstream
 	 * HOST, not a slug.
 	 */
-	const peerUrls = peerBaseUrls().map((base) => `${peerProviderUrl(base, id)}${path}`);
+	const peerUrls = peerBaseUrls().map(
+		(base) => `${peerProviderUrl(base, id)}${path}`,
+	);
 
 	/** @type {any} */
 	let payload;
@@ -183,10 +185,10 @@ export async function refreshProviderFacts(id, options) {
 				payload = await res.json();
 				fetchedUrl = directUrl;
 			} else {
-				logWarn(
-					`${id} direct endpoint returned non-2xx — trying peer route`,
-					{ status: res.status, url: directUrl },
-				);
+				logWarn(`${id} direct endpoint returned non-2xx — trying peer route`, {
+					status: res.status,
+					url: directUrl,
+				});
 			}
 		} catch (err) {
 			logWarn(`${id} direct fetch failed — trying peer route`, { error: err });
@@ -223,10 +225,13 @@ export async function refreshProviderFacts(id, options) {
 
 	const records = payload?.[listKey];
 	if (!Array.isArray(records) || records.length === 0) {
-		logWarn(`${id} facts refresh failed (no ${listKey} array) — keeping last good cache`, {
-			path: cachePath,
-			fetchedUrl,
-		});
+		logWarn(
+			`${id} facts refresh failed (no ${listKey} array) — keeping last good cache`,
+			{
+				path: cachePath,
+				fetchedUrl,
+			},
+		);
 		return false;
 	}
 

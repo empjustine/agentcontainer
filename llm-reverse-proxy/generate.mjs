@@ -440,10 +440,13 @@ function allowHost(id, url) {
 		allowHosts.set(key, hostRoot(url));
 		return;
 	}
-	logInfo("owner rows share one upstream host — collapsed to one allowlist row", {
-		host: key,
-		id,
-	});
+	logInfo(
+		"owner rows share one upstream host — collapsed to one allowlist row",
+		{
+			host: key,
+			id,
+		},
+	);
 }
 
 /**

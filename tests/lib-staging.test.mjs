@@ -15,7 +15,7 @@
  * Run: node --test   (discovers tests/*.test.mjs from the repo root)
  */
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -29,7 +29,9 @@ function collectLibDirRefs() {
 	const refs = new Set();
 	const genDir = join(repoRoot, "coding-agent");
 	for (const f of readdirSync(genDir).filter((n) => n.endsWith(".mjs"))) {
-		for (const m of read(join(genDir, f)).matchAll(/\$\{LIB_DIR\}\/([\w.-]+\.mjs)/g)) {
+		for (const m of read(join(genDir, f)).matchAll(
+			/\$\{LIB_DIR\}\/([\w.-]+\.mjs)/g,
+		)) {
 			refs.add(/** @type {string} */ (m[1]));
 		}
 	}
@@ -46,8 +48,8 @@ function collectLibDirRefs() {
 function siblingImports(libFile) {
 	const path = join(repoRoot, "lib", libFile);
 	if (!existsSync(path)) return [];
-	return [...read(path).matchAll(/from\s+["']\.\/([\w.-]+\.mjs)["']/g)].map((m) =>
-		String(m[1]),
+	return [...read(path).matchAll(/from\s+["']\.\/([\w.-]+\.mjs)["']/g)].map(
+		(m) => String(m[1]),
 	);
 }
 

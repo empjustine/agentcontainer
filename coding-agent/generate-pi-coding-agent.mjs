@@ -183,9 +183,13 @@ const PEER_MODEL_FILTERS = {
 		const input = record?.modalities?.input;
 		const output = record?.modalities?.output;
 		if (!input?.length || !output?.length) {
-			return /^gemini-/.test(id) && !/(-image|-tts|-live|-computer-use)/i.test(id);
+			return (
+				/^gemini-/.test(id) && !/(-image|-tts|-live|-computer-use)/i.test(id)
+			);
 		}
-		return input.includes("text") && output.length === 1 && output[0] === "text";
+		return (
+			input.includes("text") && output.length === 1 && output[0] === "text"
+		);
 	},
 };
 
@@ -353,11 +357,11 @@ function readMirrorFile(envMirror, orgRepo, refPath, warnContext) {
 	let lastError;
 	for (const mirror of candidates) {
 		try {
-			return execFileSync(
-				"git",
-				["-C", mirror, "show", `HEAD:${refPath}`],
-				{ encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"], timeout: 15000 },
-			);
+			return execFileSync("git", ["-C", mirror, "show", `HEAD:${refPath}`], {
+				encoding: "utf-8",
+				stdio: ["ignore", "pipe", "ignore"],
+				timeout: 15000,
+			});
 		} catch (err) {
 			lastError = err;
 		}
@@ -384,7 +388,10 @@ function readClinePassDocs() {
 		try {
 			return readFileSync(explicit, "utf-8");
 		} catch (err) {
-			logWarn("cline-pass docs file unreadable", { path: explicit, error: err });
+			logWarn("cline-pass docs file unreadable", {
+				path: explicit,
+				error: err,
+			});
 			return null;
 		}
 	}
@@ -428,12 +435,15 @@ function resolveClinePassAllowlist(modelsDevModels) {
 	const matched = docsIds.filter((id) => catalogKeys.has(id));
 	const ratio = matched.length / docsIds.length;
 	if (ratio < CLINE_PASS_MATCH_FLOOR) {
-		logWarn("cline-pass docs/models.dev disagree — keeping committed allowlist", {
-			docs: docsIds.length,
-			matched: matched.length,
-			ratio,
-			floor: CLINE_PASS_MATCH_FLOOR,
-		});
+		logWarn(
+			"cline-pass docs/models.dev disagree — keeping committed allowlist",
+			{
+				docs: docsIds.length,
+				matched: matched.length,
+				ratio,
+				floor: CLINE_PASS_MATCH_FLOOR,
+			},
+		);
 		return CLINE_PASS_LINEUP;
 	}
 	/**
@@ -526,7 +536,10 @@ function readOpencodeGoDocs() {
 		try {
 			return readFileSync(explicit, "utf-8");
 		} catch (err) {
-			logWarn("opencode-go docs file unreadable", { path: explicit, error: err });
+			logWarn("opencode-go docs file unreadable", {
+				path: explicit,
+				error: err,
+			});
 			return null;
 		}
 	}
@@ -558,19 +571,25 @@ function resolveOpencodeGoApi(modelsDevModels) {
 	const docs = readOpencodeGoDocs();
 	const docsApi = docs ? parseOpencodeGoEndpoints(docs) : null;
 	if (!docsApi?.size) {
-		logWarn("opencode-go endpoints table unavailable — every model keeps the provider-wide default api", {});
+		logWarn(
+			"opencode-go endpoints table unavailable — every model keeps the provider-wide default api",
+			{},
+		);
 		return new Map();
 	}
 	const catalogKeys = new Set(Object.keys(modelsDevModels));
 	const matched = [...docsApi.keys()].filter((id) => catalogKeys.has(id));
 	const ratio = matched.length / docsApi.size;
 	if (ratio < OPENCODE_GO_MATCH_FLOOR) {
-		logWarn("opencode-go docs/models.dev disagree — no per-model api overrides", {
-			docs: docsApi.size,
-			matched: matched.length,
-			ratio,
-			floor: OPENCODE_GO_MATCH_FLOOR,
-		});
+		logWarn(
+			"opencode-go docs/models.dev disagree — no per-model api overrides",
+			{
+				docs: docsApi.size,
+				matched: matched.length,
+				ratio,
+				floor: OPENCODE_GO_MATCH_FLOOR,
+			},
+		);
 		return new Map();
 	}
 	const apiById = new Map(docsApi);
@@ -830,13 +849,19 @@ function buildThinkingLevelMap(reasoningOptions) {
  *   omits `cost` rather than asserting pi's placeholder as if it were fact
  */
 function toCost(cost) {
-	if (cost === null) return undefined;
-	if (!cost) return { input: 10, output: 50, cacheRead: 1, cacheWrite: 20 };
+	if (cost === null || cost === undefined) return undefined;
+	if (
+		(cost.input ?? 0) === 0 &&
+		(cost.output ?? 0) === 0 &&
+		(cost.cache_read ?? 0) === 0 &&
+		(cost.cache_write ?? 0) === 0
+	)
+		return undefined;
 	return {
-		input: cost.input ?? 10,
-		output: cost.output ?? 50,
-		cacheRead: cost.cache_read ?? 1,
-		cacheWrite: cost.cache_write ?? 20,
+		input: cost.input ?? 0,
+		output: cost.output ?? 0,
+		cacheRead: cost.cache_read ?? 0,
+		cacheWrite: cost.cache_write ?? 0,
 	};
 }
 
@@ -849,7 +874,7 @@ function toCost(cost) {
  * @property {boolean} [reasoning]
  * @property {{ input?: string[], output?: string[] }} [modalities]
  * @property {{ context?: number, output?: number }} [limit]
- * @property {{ input?: number, output?: number, cache_read?: number, cache_write?: number }|null} [cost]
+ * @property {{ input: number, output: number, cache_read: number, cache_write: number }|null} [cost]
  *   `null` = the source publishes no prices at all (a facts-only provider's
  *   listing), which catalogPiModel() renders as an omitted cost rather than
  *   the placeholder (see toCost)
@@ -871,7 +896,7 @@ function toCost(cost) {
  * @property {string} [name]
  * @property {number} [contextWindow]
  * @property {number} [maxTokens]
- * @property {{ input: number, output: number, cacheRead: number, cacheWrite: number }} [cost]
+ * @property {{ input?: number, output?: number, cacheRead?: number, cacheWrite?: number }} [cost]
  * @property {Record<string, string|null>} [thinkingLevelMap]
  * @property {Record<string, unknown>} [compat]
  */
@@ -1110,7 +1135,9 @@ function verbooFactsRecord(l) {
 		modalities: { input: l.vision === true ? ["text", "image"] : ["text"] },
 		limit: { context: l.context_window },
 		cost: null,
-		reasoning_options: levels.length ? [{ type: "effort", values: levels }] : [],
+		reasoning_options: levels.length
+			? [{ type: "effort", values: levels }]
+			: [],
 	};
 }
 
@@ -1502,7 +1529,14 @@ async function emitFull(spec) {
  *   listing proved it serves, or null when it listed nothing
  * @returns {Promise<void>}
  */
-async function emitFullAt(spec, provider, baseUrl, auth, directMode, peerIds = null) {
+async function emitFullAt(
+	spec,
+	provider,
+	baseUrl,
+	auth,
+	directMode,
+	peerIds = null,
+) {
 	const allow = spec.modelAllowlistResolver
 		? spec.modelAllowlistResolver(provider.models)
 		: spec.modelAllowlist;
@@ -1716,10 +1750,7 @@ async function generateLocalLlamaSwap(out) {
 		return;
 	}
 
-	const written = writeJsonArtifact(
-		out,
-		{ providers },
-	);
+	const written = writeJsonArtifact(out, { providers });
 	const summary = Object.entries(providers)
 		.map(([id, p]) => `${id}=${p.baseUrl}(${p.models.length})`)
 		.join(", ");
@@ -1788,10 +1819,7 @@ function mergeModels(out) {
 		.filter((name) => /^model-.*\.json$/.test(name))
 		.sort();
 	const layers = overlayNames.map((name) => readJson(join(scriptDir, name)));
-	const written = writeJsonArtifact(
-		out,
-		deepMerge(...layers),
-	);
+	const written = writeJsonArtifact(out, deepMerge(...layers));
 	logInfo("merged layers", { overlays: overlayNames.length, path: written });
 }
 
