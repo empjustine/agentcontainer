@@ -193,6 +193,11 @@ fi
 	log_die 94 "no settings.json in the agent dir — run ./generate.sh first" agentDir="$agent_dir"
 [ -f "$agent_dir/models.json" ] ||
 	log_die 94 "no models.json in the agent dir — run ./generate.sh first (or the root ./generate.sh)" agentDir="$agent_dir"
+# mcp.json is required even though pi runs without it: "every environment has
+# the committed servers" is the check's whole value, and the documented opt-out
+# is `"enabled": false` on the entry (docs/d061), not a deleted file.
+[ -f "$agent_dir/mcp.json" ] ||
+	log_die 94 "no mcp.json in the agent dir — run ./generate.sh first (or the root ./generate.sh)" agentDir="$agent_dir"
 [ -f "$SCRIPT_DIR/opencode.jsonc" ] &&
 	cp "$SCRIPT_DIR/opencode.jsonc" "$opencode_cfg_dir/opencode.json"
 

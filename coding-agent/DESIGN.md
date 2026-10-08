@@ -142,11 +142,14 @@ provider id so the peer path-route is still attempted.
   `docs/scoped-models-and-proxy-overrides.md` ("spirit of the retired notes").
 - **The prompt and the tool loadout are configured separately**:
   `settings.json`'s `defaultTools` adds capability (the base four plus
-  `grep`, `find`, `ls`, and the `codemode`/`tool_search` built-in
-  extensions) without touching `SYSTEM.md`/`APPEND_SYSTEM.md`/`AGENTS.md`,
+  `grep`, `find`, `ls`, and the `codemode` built-in extension) without
+  touching `SYSTEM.md`/`APPEND_SYSTEM.md`/`AGENTS.md`,
   and `codemode.mode = "only"` with `inlineBudget: 0` keeps the model's
   declared tool set down to the codemode tool itself, so the request payload
   shrinks while every built-in stays active and callable from scripts.
+  `tool_search` is left off on purpose: it is the one declared tool whose
+  *use* rewrites the declared tool set mid-session, while `searchTools()`
+  inside codemode already reaches every deferred tool (docs/d061).
   Intent lives here; pi owns the mechanics (its `settings.md#tools` and
   `codemode.md`). Cost accepted: the model drives tools through codemode
   scripts and must `searchTools()`/`describeTool()` for signatures instead

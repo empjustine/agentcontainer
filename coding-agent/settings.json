@@ -14,7 +14,7 @@
 		"showTerminalProgress": false
 	},
 	"defaultProvider": "opencode-go",
-	"defaultModel": "deepseek-v4.1-flash",
+	"defaultModel": "mimo-v2.6-flash",
 	"defaultTools": [
 		"+read",
 		"+bash",
@@ -23,8 +23,7 @@
 		"+grep",
 		"+find",
 		"+ls",
-		"+codemode",
-		"+tool_search"
+		"+codemode"
 	],
 	"markdown": {
 		"codeBlockIndent": ""

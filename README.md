@@ -133,6 +133,7 @@ agentcontainer/
 │   ├── catwalk-facts.mjs                #   → catwalk catalog refresher (cache stays in lib/, d039)
 │   ├── refresh-models-dev.mjs           #   → atomic models.dev catalog refresh (d039)
 │   ├── settings.json                    #   → static pi settings (generator installs into PI_CODING_AGENT_DIR)
+│   ├── mcp.json                         #   → committed default MCP servers, merged into the agent dir (docs/d061)
 │   ├── config.toml                       #   → mise configuration (includes cline and thinkrail)
 │   └── Containerfile                    #   → container image build
 │
@@ -241,6 +242,7 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d058-retire-simulation-modes.md](docs/d058-retire-simulation-modes.md) | retire simulation modes — generator `DRY_RUN` previews, `BUILD_PLAN=1`, and four `git/` `--dry-run` flags removed; writes are atomic swaps of committed artifacts (`lib/artifact.mjs`), so regenerate + `git diff` IS the review; verifiers asserting about reality (`--check`, `--verify`, `--help`) stay — **the verifier and env-seed clauses are superseded by [d060](docs/d060-retire-remaining-flags.md)** |
 | [docs/d059-container-only-run-sh.md](docs/d059-container-only-run-sh.md) | `coding-agent/run.sh` becomes container-only (Termux branch deleted; fail-fast exit 91 before staging when there is no backend) and `lib/environment.sh` accepts a bare PATH command — `./lib/environment.sh pi` is the sandbox-free run path; also fixes the mise `infisical` wrap and requires a PATH hit to actually execute |
 | [docs/d060-retire-remaining-flags.md](docs/d060-retire-remaining-flags.md) | second simplification pass: `--check`/`--verify`/`--refresh`/`--deep`/`--verbose` and `MODELS_DEV_REFRESH` retired (run it + `git diff` IS the review; `audit` always audits, `generate` always networks), ambient env stops being a config surface (`VBS_*` and `MIRROR_MIN_INTERVAL` become flags/constants/manifest — only `$WORK_MIRRORS` host state remains), and verbosity is emitted at `debug` for the reader to prune (`jq`), reaffirming d045's no-filtering rule; supersedes d058's verifier clause |
+| [docs/d061-default-mcp-servers.md](docs/d061-default-mcp-servers.md) | committed `coding-agent/mcp.json` as the default MCP server list (DeepWiki `https://mcp.deepwiki.com/mcp`, Mintlify `https://index.mintlify.com/mcp`, Context7 `https://mcp.context7.com/mcp`, all keyless) with a static per-entry `description` that states the untrusted-content posture — and, for Context7's version-approximate index, that it is only a rough reference; installed by `generate.mjs` into the RW-mounted host agent dir — merged UNDER the operator's own entries, not clobbered, because that dir is shared with the host pi (d054), so a changed default is re-adopted by deleting the agent-dir entry; `run.sh` fails loudly when the artifact is missing; the legacy SSE endpoint is rejected by pi and 410s upstream |
 
 ### Research & archive
 

@@ -31,7 +31,8 @@
  *                                    without OPENCODE_CONFIG_DIR)
  *
  * Outputs are installed into TWO places (there is no separate install step):
- * the pi agent dir (models.json + settings.json, backup kept as .bak-<ts>)
+ * the pi agent dir (models.json + settings.json + the static mcp.json,
+ * models/settings backed up as .bak-<ts>)
  * AND, on container hosts, this dir's own committed snapshot (models.json +
  * model-*.json) — what SKIP_GEN installs and what a regeneration's git diff
  * reviews (docs/d041's "the committed config is the runtime config"). The
@@ -41,7 +42,10 @@
  * pinned mount), so pi itself always sees the fresh list. Overwriting
  * whatever pi left there is by design — pi re-persists its own runtime
  * fields (theme, lastChangelogVersion) on the next run; the committed
- * settings.json is the source of truth for everything else. The committed
+ * settings.json is the source of truth for everything else. mcp.json is the
+ * one exception: it is MERGED, committed servers as defaults UNDER the
+ * operator's own entries, because this dir is shared with the host pi and a
+ * clobber would delete its personal servers (docs/d061). The committed
  * snapshot refresh is container-only: on Termux pi reads the agent dir
  * directly and no runner consumes the committed copy (docs/d059), so it stays
  * a SKIP_GEN fallback there. A read-only scriptDir (e.g. a copied folder
@@ -176,6 +180,26 @@ function providersOf(path) {
 		return JSON.parse(readFileSync(path, "utf-8")).providers ?? {};
 	} catch {
 		return {};
+	}
+}
+
+/**
+ * Read an mcp.json-shaped file, reporting — never throwing — an unreadable or
+ * invalid one. `null` means "leave the file alone": the agent dir is shared
+ * with the host pi, and a merge cannot preserve servers it cannot read
+ * (docs/d061).
+ * @param {string} path
+ * @returns {{ mcpServers?: Record<string, unknown> } | null}
+ */
+function readMcpConfig(path) {
+	try {
+		return JSON.parse(readFileSync(path, "utf-8"));
+	} catch (err) {
+		logError("mcp.json is not valid JSON — leaving it untouched", {
+			path,
+			error: String(err),
+		});
+		return null;
 	}
 }
 
@@ -322,6 +346,44 @@ if (scriptDir !== agentDir) {
 		}
 		copyFileSync(join(scriptDir, "settings.json"), settingsPath);
 		logInfo("settings.json installed", { path: settingsPath });
+	}
+}
+
+currentStage = "mcp-install";
+
+// --- mcp.json: committed default MCP servers, merged UNDER the operator's ----
+// The agent dir is the HOST's real dir, shared with the host pi (docs/d054), so
+// unlike settings.json this file cannot be clobbered: the operator's MCP servers
+// exist only there, and a regeneration would delete them. Committed entries are
+// DEFAULTS — an existing entry with the same name wins, so a hand-written
+// definition or a deliberate `"enabled": false` survives the install (docs/d061).
+const mcpPath = join(agentDir, "mcp.json");
+if (scriptDir !== agentDir) {
+	const mcpSource = join(scriptDir, "mcp.json");
+	if (!existsSync(mcpSource)) {
+		// Same non-fatal contract as the settings source above: a consumer that
+		// copied only part of this dir keeps the mcp.json already in place rather
+		// than dropping MCP config over a missing input.
+		logError("mcp.json source missing — keeping the agent dir's copy", {
+			path: mcpSource,
+			agentMcp: mcpPath,
+		});
+	} else {
+		const defaults = readMcpConfig(mcpSource)?.mcpServers ?? {};
+		const current = existsSync(mcpPath) ? readMcpConfig(mcpPath) : {};
+		if (current !== null) {
+			const mcpServers = { ...defaults, ...(current.mcpServers ?? {}) };
+			// Tabs so the installed copy stays byte-diffable against the committed
+			// file this repo lints (biome; d050's determinism in spirit).
+			writeFileSync(
+				mcpPath,
+				`${JSON.stringify({ ...current, mcpServers }, null, "\t")}\n`,
+			);
+			logInfo("mcp.json installed", {
+				path: mcpPath,
+				servers: Object.keys(mcpServers),
+			});
+		}
 	}
 }
 
