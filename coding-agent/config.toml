@@ -7,13 +7,15 @@ uv = "latest"
 # mise resolves a multi-version array in order, so the FIRST entry is the
 # default `node` on PATH (shims). 24 stays installed because
 # lib/node-run.sh deliberately pins node@24 for repo scripts (docs/d051).
-node = ["26", "24"]
+node = ["26", "24", "22"]
 
 python = ["3.14"]
 "pipx:huggingface-hub" = { version = "latest", uvx_args = "--no-python-downloads --python 3.14" }
 #"pipx:oci-cli" = { version = "latest", uvx_args = "--no-python-downloads --python 3.12" }
 
-"npm:cline" = "latest"
 "github:JetBrains/thinkrail" = "latest"
-pi = "latest" # aqua:earendil-works/pi
+"npm:cline" = "latest"
+
+crush = "latest" # aqua:charmbracelet/crush
 opencode = "latest" # aqua:anomalyco/opencode
+pi = "latest" # aqua:earendil-works/pi

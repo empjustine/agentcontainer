@@ -1881,6 +1881,13 @@
           ]
         },
         {
+          "id": "step-5-preview-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "trinity-large-preview-free",
           "reasoning": true,
           "input": [
@@ -2171,6 +2178,13 @@
         },
         {
           "id": "space-bunny-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "step-5-preview-free",
           "reasoning": true,
           "input": [
             "text"

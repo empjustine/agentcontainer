@@ -8,44 +8,6 @@
       "authHeader": true,
       "models": [
         {
-          "id": "deepseek-v4-flash",
-          "name": "deepseek-v4-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 1048576,
-          "maxTokens": 16384,
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": null,
-            "low": null,
-            "medium": null,
-            "high": "high",
-            "xhigh": null,
-            "max": "max"
-          }
-        },
-        {
-          "id": "deepseek-v4-flash-0731",
-          "name": "deepseek-v4-flash-0731",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 1048576,
-          "maxTokens": 16384,
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": null,
-            "low": "low",
-            "medium": "medium",
-            "high": "high",
-            "xhigh": "xhigh",
-            "max": "max"
-          }
-        },
-        {
           "id": "deepseek-v4.1-flash",
           "name": "deepseek-v4.1-flash",
           "reasoning": true,
