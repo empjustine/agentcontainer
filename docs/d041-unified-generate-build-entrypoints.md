@@ -96,9 +96,11 @@ only spawns, never imports across runner folders.
   staleness trap (caught in review after the first implementation). The
   caches already provide idempotence by CONTENT: a container build on
   unchanged inputs is a layer-cache hit (seconds) and go's build cache is
-  content-addressed, so targets always run and pick up changes without a
-  flag. `FORCE=1` is therefore redefined as cache-bust: `--no-cache` for
-  image builds, `-a` for go.
+  content-addressed, so a registered target always runs and picks up
+  changes without a flag. (A later capability gate —
+  lib/host-capabilities.mjs — conditions which targets REGISTER, keyed on
+  hardware/network facts, never artifact presence.) `FORCE=1` is therefore
+  redefined as cache-bust: `--no-cache` for image builds, `-a` for go.
 - **Root `build.sh` becomes `lib/provision-termux.sh`** (git mv, unchanged
   body): it is environment provisioning — `pkg`, git clone/pull, the infisical
   checkout build — not artifact building. It stays shell on purpose: every

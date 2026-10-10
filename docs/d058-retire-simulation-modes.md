@@ -53,8 +53,9 @@ The modes failed on their own terms:
    is left alone; a *missing* destination is a hard error (the writer exists
    to replace things). No `DRY_RUN`, no `.dry-run` previews, no `isDryRun()`
    export.
-2. **`build.mjs` always builds.** It still logs the resolved target set and
-   `force` level before starting — that log is orientation, not a mode.
+2. **`build.mjs` has no preview mode — it builds.** It still logs the
+   resolved target set and `force` level before starting — that log is
+   orientation, not a mode.
 3. **`git/` tools drop `--dry-run`.** `migrate` (local conversion),
    `maintain` (align + optimize), `-software-forge-mirror` (clone/align) and
    `search-references index/serve` were already idempotent and already leave

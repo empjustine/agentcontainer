@@ -27,6 +27,7 @@
 		"lib/canonical-json.mjs",
 		"lib/cloud-providers.mjs",
 		"lib/go-build.mjs",
+		"lib/host-capabilities.mjs",
 		"lib/log.mjs",
 		"tests/canonical-json.test.mjs",
 		"tests/git-pacer.test.mjs",

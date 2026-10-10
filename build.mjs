@@ -3,10 +3,14 @@
  * d041 also converted the per-folder build.sh shells into this one node
  * builder). Dual mode, detected from the environment — not a flag:
  *
- *   - Container host (podman/docker): all image targets run IN PARALLEL —
- *     every base image at once (coding-agent image build, llama-swap image
- *     pull, llm-reverse-proxy multi-stage image build; the compile for the
- *     proxy happens INSIDE the image, so no host go toolchain is needed).
+ *   - Container host (podman/docker): the REGISTERED image targets run IN
+ *     PARALLEL — coding-agent image build, llama-swap image pull,
+ *     llm-reverse-proxy multi-stage image build (the proxy compile happens
+ *     INSIDE the image, so no host go toolchain is needed). Registration is
+ *     capability-gated (lib/host-capabilities.mjs): the llama-swap pull
+ *     needs inference render devices, the proxy image needs outbound cloud
+ *     networking — a host lacking either skips that target with a loud log
+ *     and still builds the rest.
  *   - Termux (PREFIX under /data/data/com.termux): strictly SERIALIZED —
  *     ~1 GB devices cannot parallelize go builds. Order: provisioning
  *     (lib/provision-termux.sh — node/jq via pkg, the infisical CLI source
@@ -18,9 +22,11 @@
  * Idempotence comes from the CACHES, not from skip checks (docs/d041): a
  * container build on unchanged inputs is a layer-cache hit — seconds, not
  * work — and go's build cache is content-addressed, so an unchanged binary
- * build is near-instant. Targets therefore ALWAYS run and pick up source
- * changes without a flag. The former skip-if-present checks (ported from
- * the old llm-reverse-proxy build.sh) are gone on purpose: they keyed on
+ * build is near-instant. A REGISTERED target therefore always runs and
+ * picks up source changes without a flag; only WHICH targets register
+ * varies per host — the capability gates above, keyed on hardware/network
+ * facts. The former skip-if-present checks (ported from the old
+ * llm-reverse-proxy build.sh) are gone on purpose: they keyed on
  * tag/file PRESENCE, so editing main.go after a build left the stale
  * image/binary in place unless the operator knew FORCE=1 — a silent-
  * staleness trap of exactly the kind the repo's fail-loudly contract
@@ -32,7 +38,6 @@
  */
 
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -41,6 +46,12 @@ import {
 	goToolchainReady,
 	hostBuildEnv,
 } from "./lib/go-build.mjs";
+import {
+	CLOUD_PROBE_CANARY,
+	cloudReachable,
+	detectContainerTool,
+	detectGpuDevices,
+} from "./lib/host-capabilities.mjs";
 import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 
 setLogTool("build");
@@ -49,11 +60,7 @@ const repoRoot = dirname(fileURLToPath(import.meta.url));
 const termux = Boolean(process.env.PREFIX?.includes("com.termux"));
 const force = process.env.FORCE === "1";
 
-const containerTool = existsSync("/usr/bin/podman")
-	? "podman"
-	: existsSync("/usr/bin/docker")
-		? "docker"
-		: null;
+const containerTool = detectContainerTool();
 
 /**
  * Defense-in-depth line sanitizer (docs/d045). The ROOT cause of tty progress
@@ -198,48 +205,71 @@ if (containerTool) {
 	// unified-vulkan image run.sh will use. Cloud/remote peer relaying is
 	// served by ../llm-reverse-proxy; this image only ever serves local GGUF
 	// inference — no :cpu peers-only variant, no Termux native cross-build.
+	//
+	// Gated on inference render devices — the SAME gate
+	// llm-local-inference/generate.mjs puts on its serving layer (shared
+	// probes, lib/host-capabilities.mjs): against a GPU-less host the pull is
+	// a wasted multi-GB download of an image that cannot serve, and run.sh
+	// would refuse to launch anyway (its config.d layer gate dies first).
 	const llamaSwapImage =
 		process.env.LLAMA_SWAP_IMAGE ??
 		"ghcr.io/mostlygeek/llama-swap:unified-vulkan";
-	targets.push({
-		name: "llama-swap-image",
-		fn: async () =>
-			await run(containerTool, ["image", "pull", llamaSwapImage], {
-				name: "llama-swap-image",
-			}),
-	});
+	if (detectGpuDevices().length > 0) {
+		targets.push({
+			name: "llama-swap-image",
+			fn: async () =>
+				await run(containerTool, ["image", "pull", llamaSwapImage], {
+					name: "llama-swap-image",
+				}),
+		});
+	} else {
+		logWarn("skipping target — no inference render devices on this host", {
+			target: "llama-swap-image",
+		});
+	}
 
 	// --- llm-reverse-proxy image (container hosts) ---------------------------
 	// Multi-stage Containerfile (golang builder → distroless/static runtime,
 	// which ships the CA bundle the proxy's upstream TLS verification
 	// requires) — the host needs NO go toolchain for this target.
-	// Always builds: unchanged inputs are a layer-cache hit; the former
-	// inspect-skip keyed on tag PRESENCE and left a stale image after a
-	// main.go edit (see the module header).
+	// Registered only while outbound cloud networking answers the naive probe
+	// (lib/host-capabilities.mjs): the proxy exists to relay to cloud
+	// upstreams, and against a closed network its base-image --pull would
+	// fail anyway — the gate turns that hard failure into a logged skip.
+	// Once registered it always builds: unchanged inputs are a layer-cache
+	// hit, and the retired inspect-skip (tag PRESENCE, stale after a main.go
+	// edit — see the module header) stays retired.
 	// --pull is load-bearing, not hygiene: the omitted-flag default is the
 	// "missing" policy, so a locally-cached golang:1.27 / distroless tag is
 	// reused even after upstream republishes it — the moving tag the build
 	// resolves FROM must be refreshed explicitly (bare --pull = always).
 	const proxyImage =
 		process.env.IMAGE_TAG ?? "localhost/llm-reverse-proxy:latest";
-	targets.push({
-		name: "llm-reverse-proxy-image",
-		fn: async () =>
-			await run(
-				containerTool,
-				[
-					...imageBuildArgs,
-					"--pull",
-					...(force ? ["--no-cache"] : []),
-					"-f",
-					join(repoRoot, "llm-reverse-proxy", "Containerfile"),
-					"-t",
-					proxyImage,
-					join(repoRoot, "llm-reverse-proxy"),
-				],
-				{ name: "llm-reverse-proxy-image" },
-			),
-	});
+	if (await cloudReachable()) {
+		targets.push({
+			name: "llm-reverse-proxy-image",
+			fn: async () =>
+				await run(
+					containerTool,
+					[
+						...imageBuildArgs,
+						"--pull",
+						...(force ? ["--no-cache"] : []),
+						"-f",
+						join(repoRoot, "llm-reverse-proxy", "Containerfile"),
+						"-t",
+						proxyImage,
+						join(repoRoot, "llm-reverse-proxy"),
+					],
+					{ name: "llm-reverse-proxy-image" },
+				),
+		});
+	} else {
+		logWarn(
+			"skipping target — outbound cloud networking unreachable (naive probe)",
+			{ target: "llm-reverse-proxy-image", canary: CLOUD_PROBE_CANARY },
+		);
+	}
 }
 
 // --- llm-reverse-proxy native binary (no container backend available) -------

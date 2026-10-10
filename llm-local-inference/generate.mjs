@@ -504,21 +504,16 @@ generateGeneral();
 // dedicated inference device. LOCAL_INFERENCE=1 forces the layer regardless
 // (debug: the generator still requires every configured GGUF in the host HF
 // cache — provision it with ../local-llm/download_models.py first).
-// Container-backend detection ports lib/workload-runtime.sh's
-// detect_workload_tool; GPU detection ports its detect_gpu_devs.
-const containerTool = existsSync("/usr/bin/podman")
-	? "podman"
-	: existsSync("/usr/bin/docker")
-		? "docker"
-		: null;
-const gpuDevices = [
-	existsSync("/dev/kfd") ? "/dev/kfd" : null,
-	...(existsSync("/dev/dri")
-		? readdirSync("/dev/dri")
-				.filter((f) => f.startsWith("renderD"))
-				.map((f) => `/dev/dri/${f}`)
-		: []),
-].filter((d) => d !== null);
+// Both probes come from ../lib/host-capabilities.mjs — the SAME definitions
+// build.mjs gates its llama-swap pull on (they port
+// workload-runtime.sh's detect_workload_tool/detect_gpu_devs), so this
+// layer's viability and the builder's target set cannot drift apart.
+const { detectContainerTool, detectGpuDevices } =
+	/** @type {typeof import("../lib/host-capabilities.mjs")} */ (
+		await import(`${LIB_DIR}/host-capabilities.mjs`)
+	);
+const containerTool = detectContainerTool();
+const gpuDevices = detectGpuDevices();
 const inferenceViable = containerTool !== null && gpuDevices.length > 0;
 
 if (process.env.LOCAL_INFERENCE === "1" || inferenceViable) {
