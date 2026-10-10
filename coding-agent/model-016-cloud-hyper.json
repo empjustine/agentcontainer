@@ -11,37 +11,6 @@
       },
       "models": [
         {
-          "id": "deepseek-v4-flash",
-          "name": "DeepSeek V4 Flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 1000000,
-          "maxTokens": 384000,
-          "cost": {
-            "input": 0.2,
-            "output": 0.4,
-            "cacheRead": 0.04,
-            "cacheWrite": 0
-          },
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": null,
-            "low": null,
-            "medium": null,
-            "high": "high",
-            "xhigh": "xhigh",
-            "max": null
-          },
-          "compat": {
-            "supportsStore": false,
-            "supportsReasoningEffort": true,
-            "thinkingFormat": "deepseek",
-            "maxTokensField": "max_tokens"
-          }
-        },
-        {
           "id": "deepseek-v4-flash-0731",
           "name": "DeepSeek V4 Flash 0731",
           "reasoning": true,
@@ -64,37 +33,6 @@
             "high": "high",
             "xhigh": null,
             "max": "max"
-          },
-          "compat": {
-            "supportsStore": false,
-            "supportsReasoningEffort": true,
-            "thinkingFormat": "deepseek",
-            "maxTokensField": "max_tokens"
-          }
-        },
-        {
-          "id": "deepseek-v4-pro",
-          "name": "DeepSeek V4 Pro",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 1000000,
-          "maxTokens": 384000,
-          "cost": {
-            "input": 2.4,
-            "output": 4.8,
-            "cacheRead": 0.2,
-            "cacheWrite": 0
-          },
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": null,
-            "low": null,
-            "medium": null,
-            "high": "high",
-            "xhigh": "xhigh",
-            "max": null
           },
           "compat": {
             "supportsStore": false,

@@ -2231,13 +2231,6 @@
           ]
         },
         {
-          "id": "inclusionai/ling-3.0-flash-sante:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "liquid/lfm-2.5-2.6b:free",
           "reasoning": true,
           "input": [
