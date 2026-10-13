@@ -3418,6 +3418,13 @@
           ]
         },
         {
+          "id": "inception/mercury-decide:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "liquid/lfm-2.5-2.6b:free",
           "reasoning": true,
           "input": [
@@ -3468,6 +3475,13 @@
         },
         {
           "id": "poolside/laguna-xs-2.1:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "respan/span-01-lite:free",
           "reasoning": true,
           "input": [
             "text"
