@@ -1,16 +1,17 @@
 /**
  * @fileoverview refresh-models-dev.mjs — refresh the vendored models.dev
- * catalog (lib/models.dev.api.json) from https://models.dev/api.json, with a
- * fallback chain (docs/d027):
+ * catalog (lib/models.dev.api.json) from the reverse-proxy relay chain
+ * (docs/d027, d063 — no direct models.dev leg: outside llm-reverse-proxy,
+ * everything is proxy-only):
  *
- *   1. DIRECT — https://models.dev/api.json (the normal case: generation
- *      hosts have direct egress).
- *   2. RELAY — the llm-reverse-proxy passthrough (default
- *      http://127.0.0.1:8080/models.dev/api.json, MODELS_DEV_RELAY_URL to
- *      override): used when direct egress is blocked/broken but the local
- *      LLM relay is up. The relay forwards models.dev byte-for-byte, so the
- *      response is validated exactly like a direct one.
- *   3. STALE COPY — last resort: any failure above leaves the existing
+ *   1. RELAY — reverse-proxy URLs only (relayCandidates, peer-probe.mjs):
+ *      the operator's MODELS_DEV_RELAY_URL when set (empty = no relay at
+ *      all), else the local llm-reverse-proxy passthrough
+ *      (http://127.0.0.1:8080/models.dev/api.json), then the vault
+ *      peer-base host-form routes. The relay forwards models.dev
+ *      byte-for-byte, so the response is validated exactly like a direct
+ *      one.
+ *   2. STALE COPY — last resort: any failure above leaves the existing
  *      vendored file intact and generation proceeds with it.
  *
  * Designed to be SAFE to call from both generate.sh scripts on every run:
@@ -38,9 +39,9 @@
  * Usage: node refresh-models-dev.mjs [out]
  *   out defaults to ../lib/models.dev.api.json relative to this file
  *   (i.e. the vendored shared catalog itself).
- * Env: MODELS_DEV_RELAY_URL — relay fallback URL (default
- *   http://127.0.0.1:8080/models.dev/api.json; set to empty to disable the
- *   relay hop).
+ * Env: MODELS_DEV_RELAY_URL — operator's relay URL (replaces the default
+ *   chain entirely; set to empty to disable relays — the stale vendored
+ *   copy then always wins).
  *
  * Lives in coding-agent/ (its only invoker is coding-agent/generate.sh —
  * docs/d039) but writes the SHARED vendored catalog: ../lib stays the catalog
@@ -49,7 +50,7 @@
 
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { useEnvProxy } from "./peer-probe.mjs";
+import { relayCandidates, useEnvProxy } from "./peer-probe.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
@@ -70,17 +71,8 @@ setLogTool("coding-agent/refresh-models-dev");
  * today; the query is the explicit contract, not a behavior change.
  * @type {string}
  */
-const CATALOG_URL = "https://models.dev/api.json?type=all";
-/**
- * Relay fallback (docs/d027): the llm-reverse-proxy passthrough for
- * https://models.dev. Default assumes the proxy runs on THIS host (run.sh
- * listens on HOST_PORT 8080, the funnel front); container-side callers
- * override via env. An empty value disables the relay hop.
- * @type {string}
- */
-const RELAY_URL =
-	process.env.MODELS_DEV_RELAY_URL ??
-	"http://127.0.0.1:8080/models.dev/api.json";
+const RELAY_PATH_AND_QUERY = "/api.json?type=all";
+
 const OUT = process.argv[2] ?? join(scriptDir, "models.dev.api.json");
 const REQUEST_TIMEOUT_MS = 15000;
 /**
@@ -149,18 +141,24 @@ async function fetchCatalog(url, { via }) {
  * @returns {Promise<void>}
  */
 async function main() {
-	// Fallback chain (docs/d027): direct → relay → stale vendored copy. Each
-	// source is validated identically before the atomic rename; the stale
-	// file is only ever touched after a fully validated payload exists.
-	let res = await fetchCatalog(CATALOG_URL, { via: "direct" });
-	let via = "direct";
-	let url = CATALOG_URL;
-	if (!res && RELAY_URL) {
-		res = await fetchCatalog(RELAY_URL, { via: "relay" });
+	// Fallback chain (docs/d027, d063): reverse-proxy relay candidates →
+	// stale vendored copy. Each candidate is validated identically before
+	// the atomic rename; the stale file is only ever touched after a fully
+	// validated payload exists.
+	let res = null;
+	let via = "";
+	let url = "";
+	for (const candidate of relayCandidates(
+		"models.dev",
+		RELAY_PATH_AND_QUERY,
+		process.env.MODELS_DEV_RELAY_URL,
+	)) {
+		res = await fetchCatalog(candidate, { via: "relay" });
 		via = "relay";
-		url = RELAY_URL;
+		url = candidate;
+		if (res) break;
 	}
-	if (!res) return fail("no source answered (direct and relay both failed)");
+	if (!res) return fail("no relay source answered");
 
 	let text;
 	try {

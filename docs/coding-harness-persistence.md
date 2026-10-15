@@ -15,8 +15,11 @@ data diode (state may flow out, but can never be rewritten or deleted from
 inside the container), see `docs/d026-data-diode-audit.md` — design note only,
 not yet implemented. **pi splits the rule (docs/d054):** its *config* dir is the
 host's own `~/.pi/agent`, mounted directly (no per-run copy), while its
-*sessions* are staged per run under the container's `pi/`. Every other
-harness gets a **per-run stage directory** on the host
+*sessions* are staged per run under the container's `pi/`. **OpenCode splits
+the same way (docs/d065):** its *config* dir is the host's own
+(`OPENCODE_CONFIG_DIR`, default `~/.config/opencode`), mounted directly,
+while its *data* dir (auth + long-term logs/sessions) stays staged per run.
+Every other harness gets a **per-run stage directory** on the host
 (`$HOME/workspace/$container_name/...`) RW-mounted into the container at the
 harness's expected home-relative path, so state written inside the sandbox
 survives the container's death. Secrets never follow this path — they
@@ -28,11 +31,10 @@ are loaded host-side once (lib/environment.sh — the explicit chain) and forwar
 |---|---|---|---|---|
 | pi (`pi-coding-agent`) config | `$HOME/.pi/agent` (host, permanent) | `/home/$USER/.pi/agent` | `PI_CODING_AGENT_DIR` | settings.json, models.json, skills |
 | pi (`pi-coding-agent`) sessions | `$stage/pi/sessions` (per run) | `/home/$USER/.pi/sessions` | `PI_CODING_AGENT_SESSION_DIR` | sessions (docs/d054) |
-| OpenCode | `$stage/opencode/config` | `/home/$USER/.config/opencode` | `OPENCODE_CONFIG_DIR` | opencode.json, global config/cache |
-| OpenCode | `$stage/opencode/data` | `/home/$USER/.local/share/opencode` | — | auth.json, session/state data |
+| OpenCode config | `$HOME/.config/opencode` (host, permanent; `OPENCODE_CONFIG_DIR` override) | `/home/$USER/.config/opencode` | `OPENCODE_CONFIG_DIR` | opencode.json overlay (generator-installed; a missing overlay is a tolerated partial config, docs/d065) |
+| OpenCode data | `$stage/opencode/data` (per run) | `/home/$USER/.local/share/opencode` | — | auth.json, long-term logs (log/), sessions (project/…/storage) |
 | Cline (CLI) | `$stage/cline` | `/home/$USER/.cline` | `CLINE_DIR`, `CLINE_DATA_DIR` | data/settings/providers.json, global-settings.json, cline_mcp_settings.json, sessions/, db/, workflows/, rules/, hooks/, skills/, agents/, plugins/, cron/ |
 | ThinkRail | `$stage/thinkrail` | `/home/$USER/.thinkrail` | `THINKRAIL_DATA_DIR` | projects.json, workspaces.json, terminals.json, installation.json, app config |
-| Hugging Face | `$HF_HUB_CACHE` (host cache) | `/home/$USER/.cache/huggingface/hub` | — | model hub cache (shared, not per-run staged) |
 
 Notes:
 
@@ -40,12 +42,23 @@ Notes:
   (`.cline/`, `.thinkrail/` inside a repo; pi's project config) live under the
   workspace, which is already RW-mounted at its real host path. Only the
   home-relative *global* state dirs are staged per run — except pi's config
-  dir, which is mounted directly (docs/d054).
+  dir (docs/d054) and opencode's config dir (docs/d065), which are mounted
+  directly.
 - **Extra directories are explicit mounts**: `run.sh [DIRECTORY [DIRECTORY...]]`
-  mounts each argument rw at its own host path (CWD is the implicit first
-  directory, and the first directory is the workdir). The
+  mounts each argument rw — the host side canonical, the container side at
+  the container's home spelling for a home-relative path (CWD is the implicit
+  first directory, and the first directory is the workdir; docs/d068). The
   `~/Downloads/references` mirror is passed this way; the former
   `CODING_AGENT_REFERENCES` env toggle is retired (docs/d056).
+- **No Hugging Face cache mount (docs/d066)**: the host HF cache is no longer
+  bound into the sandbox. That mount was unconditional and existence-unguarded
+  (`workload_rw` aborts the launch when the source dir is missing) and its
+  `z,U` relabel walk scaled with the model store. The image's own
+  `~/.cache/huggingface/hub` is empty and ephemeral, so `hf` still runs
+  there; a launch that wants the warm host cache names it as a DIRECTORY —
+  it lands at the sandbox's own `~/.cache/huggingface/hub`, the path `hf`
+  already reads by default (docs/d068). `llm-local-inference/run.sh` still ro-mounts the cache —
+  that workload serves models straight out of it.
 - **pi↔ThinkRail share `~/.pi/agent`**: ThinkRail runs pi in-process and
   resolves the same agent dir (`getAgentDir()` → `~/.pi/agent`), so the single
   pi mount covers ThinkRail's pi config; the session dir follows
@@ -56,11 +69,16 @@ Notes:
   in-container launch chain. Most duplicate each harness's built-in default —
   they exist to make the sandbox contract explicit and resilient to upstream
   default changes.
-- **Init seeding**: run.sh stages committed `opencode.jsonc` (OpenCode); pi's
-  runtime config is not seeded per run — the generator installs it into
-  `$HOME/.pi/agent` and the sandbox mounts that dir (docs/d054). A populated
-  `auth.json` in that dir aborts the run — pi's own empty `{}` (re-created on
-  every start) is ignored (d052/d054). Cline and ThinkRail have no committed
+- **Init seeding**: run.sh seeds nothing per run for pi or OpenCode anymore —
+  the generator installs pi's config into `$HOME/.pi/agent` (docs/d054) and
+  opencode's `opencode.json` into the host config dir, refreshing the
+  committed `coding-agent/opencode.jsonc` alongside (docs/d065). A missing
+  opencode overlay is only warned about at launch (partial config
+  tolerated); a missing pi artifact aborts. A populated
+  `auth.json` in the pi agent dir aborts the run — pi's own empty `{}`
+  (re-created on every start) is ignored (d052/d054); opencode needs no
+  gate because its `auth.json` lives in the never-host-mounted data dir
+  (d065). Cline and ThinkRail have no committed
   fallback config — they self-initialize on first
   in-container use (`cline auth`, first ThinkRail launch), and the RW mount
   persists the result.

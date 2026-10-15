@@ -22,7 +22,8 @@
  * schedule the fleet owner cannot see. This script is the explicit,
  * observable replacement.
  *
- * Usage:
+ * Usage (one program, two shims — `./git/maintain.sh` for POSIX shells,
+ * `git\maintain.ps1` for native Windows, identical flags; docs/d062):
  *   ./git/maintain.sh [--root DIR] [--jobs N] [--max-depth N]
  *                     [--no-fetch] [--no-optimize] [--min-interval S]
  *
@@ -254,7 +255,9 @@ async function main() {
 		process.stdout.write(
 			"usage: ./git/maintain.sh [--root DIR] [--jobs N] [--max-depth N]\n" +
 				"                       [--no-fetch] [--no-optimize] [--min-interval S]\n" +
-				"                       [--only GLOB]... [--exclude GLOB]\n",
+				"                       [--only GLOB]... [--exclude GLOB]\n" +
+				"       git\\maintain.ps1 takes the same flags — the native Windows\n" +
+				"       entry for non-NTFS / non-local UNC farm roots (docs/d062)\n",
 		);
 		return;
 	}

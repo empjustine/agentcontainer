@@ -456,6 +456,11 @@ function allowHost(id, url) {
  * is the ONLY row where the key is not the upstream host — the routing
  * convention's one exception, restated in the drift check below and matched
  * by peerProviderUrl on the client side.
+ *
+ * KNOWN ISSUE (docs/d064 §3): llama-swap routing through this route is
+ * currently down from outside the host (funnel 502s); the first-class
+ * stale-preserve in the pi/opencode generators keeps client lineups intact
+ * until tsnet-connected proxy instances point at the internal bazzite route.
  * @type {string}
  */
 const LLAMA_SWAP_ROUTE = "llama-swap";

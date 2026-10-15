@@ -6,6 +6,10 @@
  * provider listing and exposes per-provider model lookups for generators
  * that need a secondary catalog when models.dev is stale or absent.
  *
+ * Fetches are reverse-proxy-only (docs/d063): the local llm-reverse-proxy
+ * passthrough, then the vault peer-base host-form routes (relayCandidates).
+ * An explicit url argument (CLI) is the operator's override for the chain.
+ *
  * Provider ID mapping (pi → catwalk):
  *   openrouter    → openrouter
  *   opencode      → opencode-zen
@@ -43,12 +47,12 @@ const { logInfo, logWarn, setLogTool } =
 
 // Proxy-env routing via the same-dir peer-probe module (its top-level calls
 // useEnvProxy(); rationale docs/d001 §1).
-import { useEnvProxy } from "./peer-probe.mjs";
+import { relayCandidates, useEnvProxy } from "./peer-probe.mjs";
 
 useEnvProxy();
 setLogTool("coding-agent/catwalk-facts");
 
-const CATWALK_URL = "https://catwalk.charm.land/v2/providers";
+const CATWALK_PATH_AND_QUERY = "/v2/providers";
 const REQUEST_TIMEOUT_MS = 10000;
 
 /** Cache location: next to this file unless overridden. */
@@ -112,48 +116,58 @@ export const PROVIDER_MAP = Object.freeze({
  * Fetch catwalk's full /v2/providers catalog and (atomically) write the cache.
  * Best-effort by contract: every failure is a warn, the last good cache is
  * never touched, and the return value is the only signal.
- * @param {string} [url] catwalk endpoint (default: public URL)
+ * @param {string} [url] explicit URL = operator override of the relay chain
  * @returns {Promise<boolean>} true when the cache was refreshed
  */
-export async function refreshCatwalkFacts(url = CATWALK_URL) {
-	try {
-		const res = await fetch(url, {
-			signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-		});
-		if (!res.ok) {
-			throw Object.assign(new Error("catwalk catalog answered non-2xx"), {
-				status: res.status,
-				statusText: res.statusText,
-				url,
+export async function refreshCatwalkFacts(url) {
+	// No explicit URL: the reverse-proxy-only chain — local proxy
+	// passthrough, then vault peer-base host-form routes (docs/d063).
+	const candidates = url
+		? [url]
+		: relayCandidates("catwalk.charm.land", CATWALK_PATH_AND_QUERY);
+	let lastError = null;
+	for (const candidate of candidates) {
+		try {
+			const res = await fetch(candidate, {
+				signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 			});
+			if (!res.ok) {
+				throw Object.assign(new Error("catwalk catalog answered non-2xx"), {
+					status: res.status,
+					statusText: res.statusText,
+					url: candidate,
+				});
+			}
+			const payload = /** @type {CatwalkProvider[]} */ (await res.json());
+			if (!Array.isArray(payload) || payload.length === 0) {
+				throw Object.assign(
+					new Error("catwalk catalog returned no providers array"),
+					{ url: candidate },
+				);
+			}
+			const facts = /** @type {CatwalkFacts} */ ({
+				fetchedAt: new Date().toISOString(),
+				fetchedFrom: candidate,
+				providers: payload,
+			});
+			const tmp = `${FACTS_PATH}.tmp`;
+			writeFileSync(tmp, `${JSON.stringify(facts, null, 2)}\n`);
+			renameSync(tmp, FACTS_PATH);
+			logInfo("catwalk facts cache refreshed", {
+				path: FACTS_PATH,
+				providers: payload.length,
+				fetchedFrom: candidate,
+			});
+			return true;
+		} catch (err) {
+			lastError = err;
 		}
-		const payload = /** @type {CatwalkProvider[]} */ (await res.json());
-		if (!Array.isArray(payload) || payload.length === 0) {
-			throw Object.assign(
-				new Error("catwalk catalog returned no providers array"),
-				{ url },
-			);
-		}
-		const facts = /** @type {CatwalkFacts} */ ({
-			fetchedAt: new Date().toISOString(),
-			fetchedFrom: url,
-			providers: payload,
-		});
-		const tmp = `${FACTS_PATH}.tmp`;
-		writeFileSync(tmp, `${JSON.stringify(facts, null, 2)}\n`);
-		renameSync(tmp, FACTS_PATH);
-		logInfo("catwalk facts cache refreshed", {
-			path: FACTS_PATH,
-			providers: payload.length,
-		});
-		return true;
-	} catch (err) {
-		logWarn("catwalk facts refresh failed — keeping last good cache", {
-			path: FACTS_PATH,
-			error: err,
-		});
-		return false;
 	}
+	logWarn("catwalk facts refresh failed — keeping last good cache", {
+		path: FACTS_PATH,
+		error: lastError,
+	});
+	return false;
 }
 
 /**

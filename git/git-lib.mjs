@@ -19,19 +19,28 @@
  *
  * Import convention (docs/d023): the shared logger resolves through `$LIB_DIR`
  * so the same file works in place and under any staged copy.
+ *
+ * This file is also on the native Windows path (the `maintain.ps1` entry,
+ * docs/d062): nothing in it assumes POSIX path separators or bare-path import
+ * specifiers — discovery takes paths opaquely, globs normalize separators,
+ * and the logger import is a file: URL.
  */
 
 import { execFile } from "node:child_process";
 import { readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 export const scriptDir = dirname(fileURLToPath(import.meta.url));
 export const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+// A Windows LIB_DIR (`C:\...\lib`) is not a loadable specifier — the drive
+// letter parses as a URL scheme and the ESM loader rejects it — so the logger
+// is reached through an explicit file: URL, the one spelling valid everywhere
+// (docs/d062).
 const { logError, logInfo, logWarn, setLogStream, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
-		await import(`${LIB_DIR}/log.mjs`)
+		await import(pathToFileURL(join(LIB_DIR, "log.mjs")).href)
 	);
 
 // Every tool in this folder prints a machine-consumed payload on stdout
@@ -249,15 +258,26 @@ export async function pool(items, limit, worker) {
  * segments, `?` = one char) into a predicate over a relative path. Used by the
  * `--only`/`--exclude` filters so a known-bad reference entry can be skipped
  * without editing the farm.
+ *
+ * BOTH sides are read in `/` spelling: `path.relative()` yields `\\`-separated
+ * subjects on Windows while the operator-facing globs are documented in `/`.
+ * A backslash is not this glob's escape character, so normalizing both sides
+ * changes no match a POSIX farm sees — while on Windows an `--exclude` that
+ * never matched would spare nothing, and `migrate-to-bare.mjs
+ * --delete-originals` acts on that answer (docs/d062). Normalization is only
+ * for the test: the caller's strings pass through untouched, so
+ * `filterByGlobs` results still compare equal to the caller's own
+ * `relative()` output.
  * @param {string} glob
  * @returns {(s: string) => boolean}
  */
 export function globMatcher(glob) {
+	const pattern = glob.replaceAll("\\", "/");
 	let re = "";
-	for (let i = 0; i < glob.length; i += 1) {
-		const c = glob[i];
+	for (let i = 0; i < pattern.length; i += 1) {
+		const c = pattern[i];
 		if (c === "*") {
-			if (glob[i + 1] === "*") {
+			if (pattern[i + 1] === "*") {
 				re += ".*";
 				i += 1;
 			} else {
@@ -270,7 +290,7 @@ export function globMatcher(glob) {
 		}
 	}
 	const rx = new RegExp(`^${re}$`);
-	return (s) => rx.test(s);
+	return (s) => rx.test(s.replaceAll("\\", "/"));
 }
 
 /**

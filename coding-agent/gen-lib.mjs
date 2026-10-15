@@ -26,11 +26,8 @@ import {
 	peerBaseUrl,
 	peerBaseUrls,
 	peerProviderUrl,
-	peersOnly,
 	probeCandidates,
-	probeDirect,
 	probePeerRoutes,
-	suppressedProbe,
 } from "./peer-probe.mjs";
 
 export { getCatwalkModels, refreshCatwalkFacts } from "./catwalk-facts.mjs";
@@ -50,7 +47,7 @@ const cloudProviders =
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
 
-export const { logInfo, logWarn, setLogTool } = logging;
+export const { logError, logInfo, logWarn, setLogTool } = logging;
 export const { writeArtifact, writeJsonArtifact } = artifact;
 export {
 	bearerHeaders,
@@ -58,13 +55,14 @@ export {
 	peerBaseUrl,
 	peerBaseUrls,
 	peerProviderUrl,
-	peersOnly,
 	probeCandidates,
-	probeDirect,
 	probePeerRoutes,
-	suppressedProbe,
 };
-export const { CLOUD_PROVIDERS, PI_NATIVE_CLOUD_IDS } = cloudProviders;
+export const {
+	CLOUD_PROVIDERS,
+	PI_NATIVE_CLOUD_IDS,
+	supportTier,
+} = cloudProviders;
 
 /**
  * pi shaping (folded in from the former lib/pi-models.mjs — docs/d039): shape
@@ -90,7 +88,10 @@ export const { CLOUD_PROVIDERS, PI_NATIVE_CLOUD_IDS } = cloudProviders;
  * @property {string[]} input
  * @property {number} [contextWindow]
  * @property {number} [maxTokens]
- * @property {Cost?} cost
+ * @property {Cost} [cost] absent — the key is DROPPED, never null — when
+ *   the listing carries no pricing (committed artifacts contain zero
+ *   `"cost": null` entries; `cost: null` would churn every artifact and may
+ *   trip strict consumers)
  * @property {string} [api] per-model api override (pi docs/models.md) —
  *   set by the generator when the provider serves a MIXED api surface and
  *   the provider-wide dialect cannot route every model (opencode-go,

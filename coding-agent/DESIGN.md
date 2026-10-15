@@ -62,7 +62,7 @@ per-concern verdict; the supersession is recorded in the
 | Generator | Emits | Scope |
 |---|---|---|
 | `generate-pi-coding-agent.mjs` | the `model-*.json` layers → merged `models.json`, plus the `default-model.json` overlay | ALL pi config — the four former stage generators are its internal stages, in order: `generateLocalLlamaSwap` (`model-010-local-default.json`, **ADDS** the `llama-swap` provider for local GGUF), `generateCloudProviders` (`model-012-cloud-pi-native.json` override-only, empty when every pi-native endpoint is reachable, plus `model-015/016/017/018-*.json` — authoritative full rows for `cline-pass`/`hyper`/`inferx`/`verboo`, docs/d037/d033/d057), `mergeModels` (models.json), `generateDefaultModel` (`default-model.json` — the operator's hardcoded pair, docs/d036) |
-| `generate-opencode.mjs` | `opencode.jsonc` (the committed overlay, refreshed on host runs) or `$OPENCODE_CONFIG_DIR/opencode.json` | the opencode-format twin — different schema and input set, same detection cascade minus cline-pass/hyper (docs/d033); skipped on Termux unless `OPENCODE_CONFIG_DIR` is set |
+| `generate-opencode.mjs` | `opencode.json` → BOTH the host config dir (`$OPENCODE_CONFIG_DIR`, default `${XDG_CONFIG_HOME:-$HOME/.config}/opencode` — the sandbox's mount source) and the committed `opencode.jsonc` (docs/d065) | the opencode-format twin — different schema and input set, same detection cascade minus cline-pass/hyper (docs/d033); skipped on Termux unless `OPENCODE_CONFIG_DIR` is set |
 
 **The layered cake** — the merge contract's single home is the
 `generate-pi-coding-agent.mjs` header (the former `merge-models-json.mjs`
@@ -89,13 +89,17 @@ inside the workload runs infisical, and no credential store file is staged
 host agent dir RW as `PI_CODING_AGENT_DIR` and stages a per-run session dir RW
 as `PI_CODING_AGENT_SESSION_DIR` (docs/d054): the agent dir is the generator's
 install target, so config/skills persist, and sessions are per-run audit state
-kept out of that shared config store. A populated `auth.json` in the host agent
+kept out of that shared config store. The host opencode config dir is mounted
+the same way (docs/d065) — the generator's second install target, with a
+missing overlay tolerated as partial config — while opencode's data dir
+(long-term logs/sessions) stays on the per-run stage. A populated `auth.json` in the host agent
 dir aborts the run (keys resolve from forwarded env — pi's own empty `{}` is
 ignored; d052/d054). It NEVER generates (docs/d041, docs/d056): the generator
 tree is NOT mounted into the container, so an in-container session works
 against the host-generated config mounted above. `run.sh` takes
 `[DIRECTORY [DIRECTORY...]]` instead — CWD is the implicit first directory —
-and exposes each at its own path rw with the first as the workdir; the
+and exposes each rw — a home-relative path is spelled `/home/$USER/...` on
+the container side (docs/d068) — with the first as the workdir; the
 `~/Downloads/references` mirror is passed as just another directory, replacing
 the former `CODING_AGENT_REFERENCES` toggle (docs/d043, docs/d056). `run.sh` is
 container-ONLY (docs/d059): without podman/docker it refuses at the top —
@@ -126,11 +130,13 @@ multi-hop chain.
   (stages as functions, documented order). This supersedes d037's process
   split while keeping its per-layer merge verdicts — d037/d033 remain the
   semantic specs for the layers themselves.
-- **Parallel probing + multi-hop peer chains** (docs/d034): a generator's
-direct probes fire concurrently (`Promise.allSettled`), and the peer base is a
-vault-sourced `PEER_BASE_URLS` chain (`peer-probe.mjs peerBaseUrls()`) that
-`probePeerRoutes`/`refreshProviderFacts` walk in order. A thrown probe keeps its
-provider id so the peer path-route is still attempted.
+- **Proxy-only routing + multi-hop peer chains** (docs/d063, superseding
+  d033/d034's route half): every emitted `baseUrl`/`baseURL` is a
+  reverse-proxy route on the vault-sourced `PEER_BASE_URLS` chain
+  (`peer-probe.mjs peerBaseUrls()`, walked in order by `probePeerRoutes` and
+  the facts/catalog refreshers); probes run concurrently
+  (`Promise.allSettled`) and only pick the LINEUP source. A thrown probe
+  keeps its provider id so the route probe is still attempted.
 - **Peer routing is per-provider path-prefix** (docs/d027): cloud peer
   routes are `<peerBase>/<providerId>` on the simplified cloud router
   (llm-reverse-proxy, no credential handling — clients carry the provider's

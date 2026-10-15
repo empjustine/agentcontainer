@@ -93,6 +93,10 @@ prohibits (and what was removed):
 - `node-run.sh` — the standalone `node_run()` sh lib (docs/d041): repo-pinned
   node for any script (system node on Termux, `mise exec node@24` elsewhere).
   Sourced here for compatibility and by the `generate.sh` shims directly.
+- `node-run.ps1` — the PowerShell `node_run()` counterpart (docs/d062): the
+  interpreter-selection lib for Windows shims (`git/maintain.ps1`). Same pin
+  policy, but branches on mise PRESENCE — Windows carries no Termux-style
+  profile signal to key on.
 - `go-build.mjs` — the go toolchain probe + android/host build-env presets
   (docs/d041): one probe (`go version` must actually EXECUTE — mise shims
   answer PATH lookups even with no version set) so no builder carries its

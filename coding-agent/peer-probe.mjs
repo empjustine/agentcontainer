@@ -3,21 +3,30 @@
  * families (pi `models.json` layers, opencode config layers, llama-swap peer
  * layers). Owns everything about "ask an OpenAI-compatible endpoint for its
  * `/models` listing": auth headers, the 8 s timeout, the `/v1/models` retry,
- * status-carrying errors, and the reachability classification that decides
- * whether a provider keeps its built-in routing or must be rerouted through a
- * peer.
+ * status-carrying errors, and the classification that decides WHICH LINEUP
+ * SOURCE a generator may use.
+ *
+ * Routing is no longer a probe decision (docs/d063): outside
+ * llm-reverse-proxy, every URL the generators emit is a reverse-proxy URL
+ * (`peerProviderUrl` over the vault peer bases). A probe only says whether
+ * the live listing behind that URL can be trusted right now — a usable
+ * listing feeds the lineup, anything else drops the lineup to the
+ * catalog/facts cache. There is deliberately no branch that falls back to a
+ * direct endpoint or to pi/opencode built-in routing.
  *
  * The canonical "reachable ≠ authenticated" rule (previously pasted in three
  * generators — this header is now the only copy): a 401/403 is what an
  * OpenAI-compatible endpoint returns to any unauthenticated request, and the
  * generators legitimately run without provider keys (pi/opencode resolve
  * their own key / OAuth login at request time). Such a response proves the
- * NETWORK PATH works and says nothing about whether the built-in provider
- * works, so it must NOT trigger a peer override. Only the absence of ANY http
- * response (dns failure, connection refused, tls failure — a bogus certificate
- * with verification ON dies BEFORE any status —, timeout) or a 5xx server-error
- * response (the endpoint saying it cannot serve right now) is evidence that an
- * endpoint is unusable and a peer fallback is justified.
+ * NETWORK PATH works — enough to emit the route, never enough to drop a
+ * provider (omission would restore built-in direct routing, docs/d063), and
+ * never a reason to fetch anything from a direct endpoint. Only the absence
+ * of ANY http response (dns failure, connection refused, tls failure — a
+ * bogus certificate with verification ON dies BEFORE any status —, timeout)
+ * or a 5xx server-error response means the route cannot deliver at all
+ * (DEAD_ROUTE_STATUSES) — and even then the emitted URL stays on the proxy,
+ * with the stale catalog as lineup.
  *
  * TLS verification is REQUIRED for every https route. With verification ON the
  * handshake refuses a bogus certificate before any request byte (headers
@@ -28,7 +37,8 @@
  * (tlsUnverifiable — no request, no route certified, docs/d033). Plain-http
  * peers remain usable as the operator's explicit emergency choice (there is no
  * TLS to verify; the plaintext-credential risk is theirs to accept). See
- * docs/d022 for the history and probeDirect for the classification.
+ * docs/d022 for the history, docs/d063 for the routing rule, and
+ * probePeerRoute for the classification.
  *
  * Import convention (docs/d023, d039): this module lives beside its consumers
  * in coding-agent/ but keeps the LIB_DIR resolution for the shared logger —
@@ -160,6 +170,39 @@ export function peerBaseUrls() {
 }
 
 /**
+ * The reverse-proxy-only fetch chain for a STATIC upstream's metadata
+ * (docs/d063 §5): models.dev/catwalk refreshes may not fall back to the
+ * upstream's real host — every candidate here is a reverse-proxy URL.
+ *
+ *   - `envOverride` set non-empty → that URL alone (the operator's own
+ *     relay; MODELS_DEV_RELAY_URL keeps its docs/d027 name and meaning);
+ *   - `envOverride` set empty → no relay at all: the consumer keeps its
+ *     stale vendored copy (a file, not a wire URL — always in scope);
+ *   - `envOverride` unset → the LOCAL llm-reverse-proxy listen address
+ *     (127.0.0.1:8080 — the proxy's own port, in scope for the rule), then
+ *     the vault peer-base host-form routes `<peerBase>/<host>/<path>`
+ *     (docs/d047 — the allowlist carries both passthrough hosts).
+ *
+ * @param {string} upstream host the proxy allowlist keys on ("models.dev", …)
+ * @param {string} pathAndQuery path + query under that host (leading slash)
+ * @param {string} [envOverride] full URL, "" (disabled), or undefined (default chain)
+ * @returns {string[]} candidates in probe order; empty = stale copy only
+ */
+export function relayCandidates(upstream, pathAndQuery, envOverride) {
+	if (envOverride !== undefined) {
+		const trimmed = envOverride.trim();
+		return trimmed ? [trimmed] : [];
+	}
+	const suffix = `${upstream}${pathAndQuery.startsWith("/") ? "" : "/"}${pathAndQuery}`;
+	return [
+		`http://127.0.0.1:8080/${suffix}`,
+		...peerBaseUrls().map(
+			(base) => `${base.replace(/\/+$/, "")}/${suffix}`,
+		),
+	];
+}
+
+/**
  * An error that carries the http status when the failure came from a response
  * (vs. a transport-level failure, which has no status at all). The message is
  * a static label; the dynamic detail (`status`, `statusText`, `url`) lives on
@@ -211,26 +254,21 @@ export function peerBaseUrls() {
  */
 
 /**
- * Outcome of probing an endpoint:
- * - `ok` — 2xx with a parseable model list: built-in routing works.
- * - `auth` — 401/403: reachable, we merely have no usable credentials here.
- * - `reachable` — some other http response: the host answered, so the path is
- *   fine even though the answer was not a model list (other 4xx/429/redirects).
+ * Outcome of probing an endpoint (docs/d063: the answer selects the LINEUP
+ * source, never the route):
+ * - `ok` — 2xx with a parseable model list: the live listing may feed the
+ *   lineup.
+ * - `auth` — 401/403: the request reached the endpoint; we merely have no
+ *   usable credentials here (reachable ≠ authenticated) — route probes still
+ *   classify the route usable, the catalog becomes the lineup.
+ * - `reachable` — some other http response: the path is fine even though the
+ *   answer was not a model list (other 4xx/429/redirects).
  * - `unreachable` — no http response at all (dns/conn-refused/tls/timeout), or
- *   a 5xx server-error response: the endpoint answered but is NOT usable right
- *   now (outage/overload). Routing a layer at a dead URL just ships errors, so
- *   a down endpoint must drop into the same peer-fallback bucket — the peer
- *   route probes already refuse 502/504 the same way (DEAD_ROUTE_STATUSES).
- * Only `unreachable` justifies rerouting a provider through the peer.
+ *   a 5xx server-error response: nothing was delivered. Route probes refuse
+ *   the dead-route family (DEAD_ROUTE_STATUSES); the emitted URL still points
+ *   at the proxy — only the lineup falls back to the stale catalog/facts
+ *   cache.
  * @typedef {"ok"|"auth"|"reachable"|"unreachable"} ProbeOutcome
- */
-
-/**
- * @typedef {object} ProbeResult
- * @property {ProbeOutcome} result
- * @property {HttpError} [error] the failure itself — message is the static
- *   label, the attached properties (status/statusText/url) carry the detail
- *   (docs/d045); present unless `result` is `ok`
  */
 
 /**
@@ -278,21 +316,6 @@ if (TLS_UNVERIFIED) {
  */
 export function tlsUnverifiable(url) {
 	return TLS_UNVERIFIED && /^https:\/\//i.test(url);
-}
-
-/**
- * Generation-side peers-only mode (`PEERS_ONLY=1`): the operator declares this
- * host reaches cloud providers only through the peer funnel, so the generators
- * skip the direct (cloud API) probe entirely and go straight to the peer
- * path-route cascade (docs/d033). Saves the per-provider probe timeouts on
- * exactly the hosts the peer exists for. Distinct from the archived
- * SERVING-side PEERS_ONLY (docs/archive/peer-variant-work.md — cloud peers
- * served, no local models): this is the generation-side knob the coding-agent
- * generators read.
- * @returns {boolean}
- */
-export function peersOnly() {
-	return process.env.PEERS_ONLY === "1";
 }
 
 /**
@@ -359,54 +382,6 @@ export async function fetchModelEntries(serverUrl, headers) {
 }
 
 /**
- * Probe an endpoint and classify the outcome (see ProbeOutcome).
- * @param {string} baseUrl
- * @param {Record<string, string>} [headers]
- * @returns {Promise<ProbeResult>}
- */
-export async function probeDirect(baseUrl, headers) {
-	// Unverified https is NOT a reachability scenario at all: with verification
-	// disabled anyone can answer the handshake, so an ok/auth verdict — and the
-	// credentialed request that would produce it — belongs to whoever answered,
-	// never the provider (docs/d033, header). Fail closed with no request, so
-	// the provider key is never handed to an impostor. Plain-http endpoints
-	// (the operator's emergency peers) are unaffected — nothing to verify.
-	if (tlsUnverifiable(baseUrl)) {
-		return {
-			result: "unreachable",
-			error: Object.assign(
-				new Error("TLS verification disabled — https route not trusted"),
-				{ url: baseUrl },
-			),
-		};
-	}
-	try {
-		await fetchModelEntries(baseUrl, headers);
-		return { result: "ok" };
-	} catch (err) {
-		const http = normalizedProbeError(err);
-		if (http.status !== undefined && AUTH_REJECTED_STATUSES.has(http.status)) {
-			return { result: "auth", error: http };
-		}
-		// A 5xx is the endpoint SAYING it cannot serve right now — not a network
-		// gap and not a credential gate. An http response proves reachability,
-		// but a server-error response proves unusability (docs/d022's "dead
-		// endpoint" case): rerouting at a 5xx'ing URL just ships errors instead
-		// of the peer path-route. Same family the peer routes already refuse
-		// (DEAD_ROUTE_STATUSES — 502/504 are llm-reverse-proxy's proxy→upstream
-		// problem detail), and it self-heals: the next generation run re-probes
-		// and returns to direct once the provider answers 2xx again.
-		if (http.status !== undefined && http.status >= 500 && http.status <= 599) {
-			return { result: "unreachable", error: http };
-		}
-		return {
-			result: http.status === undefined ? "unreachable" : "reachable",
-			error: http,
-		};
-	}
-}
-
-/**
  * Guarantee a probe failure is always an Error with the HttpError shape: a
  * non-Error throw (or an error-less classification) must still produce a
  * structured value, never an undefined `error` field on a non-ok result —
@@ -419,40 +394,6 @@ function normalizedProbeError(err) {
 	return Object.assign(new Error("probe threw a non-Error value"), {
 		thrown: String(err),
 	});
-}
-
-/**
- * SuppressedError (explicit resource management) is missing from some
- * @types/node versions, so checkJs cannot see the global — alias through
- * globalThis with an explicit constructor type; runtime `new` is unchanged.
- * @type {new (error: unknown, suppressed: unknown, message?: string) => Error & { error?: unknown, suppressed?: unknown }}
- */
-const SuppressedErrorCtor = /** @type {any} */ (globalThis).SuppressedError;
-
-/**
- * A probe that did NOT deliver the expected listing, packaged for logging as
- * a SuppressedError: the expectation is the message label, the probe's
- * failure is chained as `error`, and the classification rides as an attached
- * property. Every "expected X but got Y — did Z instead" record composes
- * this so the log line is self-sufficient — never a generic label with no
- * cause, even if the probe somehow ends up error-less (docs/d045).
- * @param {ProbeResult|PeerRouteResult} probe
- * @param {string} expectation static label of what the caller expected
- * @returns {Error & { error?: unknown, suppressed?: unknown, result: ProbeOutcome }}
- */
-export function suppressedProbe(probe, expectation) {
-	const failure =
-		probe.error ??
-		normalizedProbeError(
-			Object.assign(new Error("probe classification without an error object"), {
-				result: probe.result,
-			}),
-		);
-	return /** @type {Error & { error?: unknown, suppressed?: unknown, result: ProbeOutcome }} */ (
-		Object.assign(new SuppressedErrorCtor(failure, undefined, expectation), {
-			result: probe.result,
-		})
-	);
 }
 
 /**
@@ -511,9 +452,9 @@ export function peerProviderUrl(peerBaseUrl, providerId) {
  */
 
 /**
- * Probe ONE provider's peer path-route (`<peerProviderUrl>/models`). Same
- * reachability semantics as probeDirect — ANY http response proves the path
- * — with three exceptions, all of them "the response did not come from the
+ * Probe ONE provider's peer path-route (`<peerProviderUrl>/models`). ANY
+ * http response proves the path — with three exceptions, all of them
+ * "the response did not come from the
  * provider's endpoint" rather than "the provider refused us":
  *
  *   - 404 is NOT usable: the funnel's default-404 (llama-swap answering for
@@ -579,8 +520,8 @@ export async function probePeerRoutes(candidates, providerId, headers) {
 	const failures = [];
 	for (const base of candidates) {
 		const url = peerProviderUrl(base, providerId);
-		// Same fail-closed rule as probeDirect: an unverifiable https route is
-		// never probed and never certified — a credentialed probe could leak the
+		// Fail closed on an unverifiable https route: it is never probed and
+		// never certified — a credentialed probe could leak the
 		// provider key to whoever answered the handshake. https candidates are
 		// skipped; http (emergency) candidates still count.
 		if (tlsUnverifiable(base)) {
@@ -615,8 +556,8 @@ export async function probePeerRoutes(candidates, providerId, headers) {
 export async function probeCandidates(candidates, accept) {
 	const failures = [];
 	for (const baseUrl of candidates) {
-		// Fail closed on unverifiable https bases, same rule as probeDirect;
-		// http (emergency) candidates still count.
+		// Fail closed on unverifiable https bases — the rule every probe in
+		// this module applies; http (emergency) candidates still count.
 		if (tlsUnverifiable(baseUrl)) {
 			failures.push({
 				baseUrl,

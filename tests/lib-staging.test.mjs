@@ -80,7 +80,11 @@ test("scratch staging loop carries every module the generators import (transitiv
 	const match = src.match(/for \(const f of (\[[^\]]*\])\) \{/);
 	assert.ok(match, "staging loop with inline array not found in generate.mjs");
 	/** @type {string[]} */
-	const staged = JSON.parse(/** @type {string} */ (match[1]));
+	// JSON has no trailing commas; a biome-formatted array literal does —
+	// strip one before parsing instead of banning it in the source list.
+	const staged = JSON.parse(
+		/** @type {string} */ (match[1]).replace(/,\s*\]$/, "]"),
+	);
 
 	for (const mod of requiredStagedModules()) {
 		assert.ok(

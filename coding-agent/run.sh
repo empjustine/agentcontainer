@@ -14,19 +14,23 @@
 # itself, and the host login state never leaves the host.
 #
 # RUNNERS NEVER BUILD OR GENERATE (docs/d041): stale/missing generation is a
-# USER ISSUE. This launcher serves the generator's installed config (the host
-# agent dir, mounted as-is) plus the committed opencode.jsonc — refreshed by
-# ./generate.sh or the root ./generate.sh, which forward the vault env
-# themselves. A missing artifact is a loud failure pointing at the generator,
-# never an implicit regeneration. The generator tree is deliberately NOT
-# mounted (docs/d056): an in-container session cannot regenerate.
+# USER ISSUE. This launcher serves the generator's installed config — the
+# host agent dir and the host opencode config dir, both mounted as-is —
+# refreshed by ./generate.sh or the root ./generate.sh, which forward the
+# vault env themselves. A missing pi artifact is a loud failure pointing at
+# the generator, never an implicit regeneration; a missing opencode overlay
+# is a TOLERATED partial config (docs/d065 — opencode runs on its
+# built-ins). The generator tree is deliberately NOT mounted (docs/d056): an
+# in-container session cannot regenerate.
 #
 # ARGV: [DIRECTORY [DIRECTORY...]]
 #   Each DIRECTORY is a host directory exposed INSIDE the container at its own
-#   path, read-write. CWD is the implicit first DIRECTORY, so extra arguments
-#   ADD mounts without restating the workdir; the first directory is also the
-#   container workdir. `./run.sh ~/Downloads/references` is the whole
-#   replacement for the retired CODING_AGENT_REFERENCES toggle (docs/d043,
+#   path, read-write — a home-relative path at the CONTAINER's home spelling
+#   (docs/d068), because a host home may sit behind a symlink. CWD is the
+#   implicit first DIRECTORY, so extra arguments ADD mounts without
+#   restating the workdir; the first directory is also the container
+#   workdir. `./run.sh ~/Downloads/references` is the whole replacement for
+#   the retired CODING_AGENT_REFERENCES toggle (docs/d043,
 #   docs/d056): the costly z,U relabel walk is paid only for a launch that
 #   names the mirror. A DIRECTORY resolving to $HOME is refused — HOME is host
 #   state and credentials, not a workspace.
@@ -38,11 +42,16 @@
 #     - stage the pi session store (PI_CODING_AGENT_SESSION_DIR) under the
 #       per-run host stage's pi/ — sessions are per-run audit state (docs/d026),
 #       kept out of the shared config dir and off the host's own ~/.pi
-#     - stage a per-run sandbox dir for the OTHER harnesses (opencode/cline/
-#       thinkrail), which have no equivalent host-backed split
-#     - mount the committed opencode.jsonc and the generated host config only;
-#       the ro generator tree that used to allow in-container regeneration is
-#       gone (docs/d056), leaving just lib/log.sh for the launch chain
+#     - stage a per-run sandbox dir for the harness state that stays audit
+#       trail, not config (opencode's data dir: logs + sessions; cline;
+#       thinkrail)
+#     - NO repo file rides along (docs/d067): the launch chain is
+#       self-contained (env pins + exec bash) and logs nothing, so the
+#       generator-tree mount (docs/d056) and the last lib/log.sh logger mount
+#       are both gone
+#     - the host HF cache is NOT mounted (docs/d066): the old binding was
+#       unconditional and unguarded, and its relabel cost scaled with the
+#       model store. A run that wants it names it as a DIRECTORY
 #     - forward the (already-loaded) vault env through the workload_env
 #       allowlist; the spawn chain inside the container is plain interactive
 #       bash with no infisical at all
@@ -61,6 +70,13 @@
 #                    never make the sandbox share (merge into) the host's own
 #                    session store. The name is still pi's own var, exported
 #                    inside the container (docs/d054; diode target docs/d026)
+#   OPENCODE_CONFIG_DIR  opencode's config dir (default
+#                    ${XDG_CONFIG_HOME:-$HOME/.config}/opencode) — upstream's
+#                    own knob, the generator's install target, and the var
+#                    opencode reads inside the container. run.sh mounts THIS
+#                    HOST DIR rw, so the generated overlay persists across
+#                    runs (docs/d065); a missing opencode.json there is a
+#                    tolerated partial config, not an abort
 
 set -eu
 
@@ -79,6 +95,19 @@ _home="$(cd "$HOME" 2>/dev/null && pwd -P || printf '%s' "$HOME")"
 _refuse_home() {
 	[ "$1" != "$_home" ] ||
 		log_die 90 "refusing to expose HOME as a DIRECTORY" dir="$1"
+}
+# Container-side spelling of a DIRECTORY (docs/d068). WHY the two sides are
+# spelled differently: a host home can sit behind a symlink (Bazzite / Fedora
+# Atomic: /home -> /var/home), so pwd -P spells every home-relative path
+# /var/home/... while the image gives the user /home/$USER as ~. Mounting at
+# the canonical path would park the directory exactly where a session does NOT
+# look for it — and it would be the only mount in this file not spelled
+# /home/$USER.
+guest_path() {
+	case $1 in
+	"$_home"/*) printf '/home/%s%s' "$USER" "${1#"$_home"}" ;;
+	*) printf '%s' "$1" ;;
+	esac
 }
 
 set -- "$(pwd -P)" "$@"
@@ -150,7 +179,15 @@ agent_dir="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
 # host's own session store and merge the two. The var is set only inside the
 # container, where pi reads it (docs/d054).
 session_dir="$workload_stage/pi/sessions"
-opencode_cfg_dir="$workload_stage/opencode/config"
+# pi's agent-dir split, extended to opencode's CONFIG (docs/d065): the
+# host's real config dir (the env override a host opencode also reads, else
+# the XDG default) is mounted permanent RW — the generator's install target,
+# the host opencode and the sandboxed opencode are one directory. opencode
+# has no session-dir knob, so its DATA dir (auth.json + log/ + project/
+# session storage — the long-term logs/sessions persistence) stays on the
+# per-run stage: audit state (docs/d026), kept off the host's own
+# ~/.local/share/opencode.
+opencode_cfg_dir="${OPENCODE_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode}"
 opencode_data_dir="$workload_stage/opencode/data"
 cline_dir="$workload_stage/cline"
 thinkrail_dir="$workload_stage/thinkrail"
@@ -198,13 +235,21 @@ fi
 # is `"enabled": false` on the entry (docs/d061), not a deleted file.
 [ -f "$agent_dir/mcp.json" ] ||
 	log_die 94 "no mcp.json in the agent dir — run ./generate.sh first (or the root ./generate.sh)" agentDir="$agent_dir"
-[ -f "$SCRIPT_DIR/opencode.jsonc" ] &&
-	cp "$SCRIPT_DIR/opencode.jsonc" "$opencode_cfg_dir/opencode.json"
+# PARTIAL opencode config is ACCEPTED at launch (deliberately unlike pi's
+# missing-artifact exit 94): opencode runs fine on its built-in providers, so
+# a missing installed overlay only costs the peer reroute — warn and launch.
+# There is no SKIP_GEN install path for opencode either (docs/d065): the
+# overlay is a generate-time artifact, and regeneration is the only fix.
+[ -f "$opencode_cfg_dir/opencode.json" ] ||
+	log_warn "no opencode.json in the host config dir — opencode launches on built-in (partial) config; run ./generate.sh to install" \
+		configDir="$opencode_cfg_dir"
 
-# The only lib/ file the sandbox needs at runtime is the launch chain's logger
-# (the generator tree mount is gone with docs/d056). The generator writes the
-# artifacts above on the host; the container consumes them.
-workload_ro "$REPO_ROOT/lib/log.sh" '/opt/lib/log.sh'
+# Nothing from the repo tree is mounted (docs/d067). The launch chain below
+# is self-contained, and its one in-container log line is gone: the host-side
+# "starting container" line is the launch marker, because attestation from
+# inside the sandbox was worth less than the repo-tree bind it cost. The
+# generator writes the artifacts above on the host; the container consumes
+# them.
 
 # In-container launch chain: generated shell with no infisical — the host
 # (lib/environment.sh, outside the sandbox) forwards the vault env through
@@ -215,18 +260,15 @@ cat >"$workload_stage/launch.sh" <<EOF
 # The environment is ALREADY correct here: run.sh's host-side loader
 # (lib/environment.sh) ran before the sandbox was built, and run.sh forwarded
 # the vault keys through the workload_env allowlist.  No loader runs in here.
-# shellcheck disable=SC1091
-. /opt/lib/log.sh
-LOG_TOOL='coding-agent/launch'
 PI_CODING_AGENT_DIR="/home/${USER}/.pi/agent"
 # The session store lives OUTSIDE the shared agent dir (docs/d054): it is the
 # one session-shaped RW store the sandbox gets, named by pi's own env var
 # (precedence: --session-dir > PI_CODING_AGENT_SESSION_DIR > settings.json).
 PI_CODING_AGENT_SESSION_DIR="/home/${USER}/.pi/sessions"
 # Upstream's documented custom config directory (config.mdx): loaded after
-# the global config so the peer overlay overrides it. The mounted config dir
-# happens to be the same path as opencode's global default, so both tiers
-# read the same files — idempotent.
+# the global config so the peer overlay overrides it. It names the HOST
+# config dir run.sh mounted (docs/d065) — the same path as opencode's own
+# global default, so both tiers read the same files — idempotent.
 OPENCODE_CONFIG_DIR="/home/${USER}/.config/opencode"
 CLINE_DIR="/home/${USER}/.cline"
 CLINE_DATA_DIR="/home/${USER}/.cline/data"
@@ -234,8 +276,9 @@ THINKRAIL_DATA_DIR="/home/${USER}/.thinkrail"
 export PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR OPENCODE_CONFIG_DIR CLINE_DIR CLINE_DATA_DIR THINKRAIL_DATA_DIR
 
 # NO generation here (docs/d041, docs/d056): the host agent dir is mounted
-# as-is and regeneration happens on the host via ./generate.sh.
-log_info "launching interactive bash" agentDir="\$PI_CODING_AGENT_DIR"
+# as-is and regeneration happens on the host via ./generate.sh. No logger
+# either (docs/d067) — this chain is self-contained, and nothing from the
+# repo tree is bound for it.
 exec bash
 EOF
 chmod 0755 "$workload_stage/launch.sh"
@@ -243,42 +286,57 @@ workload_ro "$workload_stage/launch.sh" '/opt/agentcontainer-launch.sh'
 
 log_info "staged sandbox" container="$container_name" stage="$workload_stage"
 
-HF_HUB_CACHE="${HF_HUB_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/huggingface/hub}"
-
 workload_name     "$container_name"
 workload_image    'localhost/empjustine/coding-agent:latest'
 workload_interactive
 workload_init
 workload_network  host
 workload_user
+# workload_hardening() is deliberately NOT called (docs/d067): its
+# --cap-drop=all --security-opt no-new-privileges pair makes the image's
+# setuid sudo dead (NOPASSWD:ALL, Containerfile), which is how the agent
+# installs a system package at runtime. The other two runners are
+# single-purpose servers with no escalation hatch, and both harden.
 # The DIRECTORY arguments are the mount manifest (CWD first, extras appended);
-# each is exposed at its own host path, rw, and the first is the workdir. This
-# is where ~/Downloads/references rides now — the former
+# each is exposed rw at its guest_path target, and the first is the
+# workdir. This is where ~/Downloads/references rides now — the former
 # CODING_AGENT_REFERENCES toggle is gone (docs/d056). Beware the cost the
 # toggle used to hide: every mount carries podman's z,U (lib/workload-render.jq),
 # which RECURSIVELY relabels+idmaps the source on each launch — ~39 s for that
 # 1.66M-file mirror.
 for _dir in "$@"; do
-	workload_rw "$_dir" "$_dir"
+	workload_rw "$_dir" "$(guest_path "$_dir")"
 done
-#workload_ro_if    "$HF_HUB_CACHE" /home/${USER}/.cache/huggingface/hub
+# The host HF cache is deliberately NOT mounted (docs/d066). The binding
+# this replaces was unconditional and existence-unguarded — workload_rw
+# aborts the whole launch (exit 91) when the source dir is absent — while its
+# z,U walk relabels the entire model store on every launch, the exact cost the
+# ARGV manifest above exists to make opt-in. The image ships its own empty,
+# ephemeral ~/.cache/huggingface/hub (Containerfile), so `hf` still works
+# in-container; a launch that wants the warm host cache names it as a
+# DIRECTORY argument — it lands at ~/.cache/huggingface/hub in the sandbox
+# (docs/d068), the very path hf reads by default, so no in-container
+# HF_HUB_CACHE override is needed to use it.
 # pi's two env vars ARE the mount manifest (docs/d054): the host agent dir
 # carries config/skills, and the per-run session stage carries the session
 # JSONL the sandbox emits (the state docs/d026 wants to diode-ise).
 workload_rw       "$agent_dir" "/home/${USER}/.pi/agent"
 workload_rw       "$session_dir" "/home/${USER}/.pi/sessions"
-workload_rw       "$HF_HUB_CACHE" "/home/${USER}/.cache/huggingface/hub"
+# opencode's config dir joins the pi agent dir as a host-backed permanent
+# mount (docs/d065); its data dir stays on the per-run stage (the
+# long-term logs/sessions audit trail, docs/d026).
 workload_rw       "$opencode_cfg_dir" "/home/${USER}/.config/opencode"
 workload_rw       "$opencode_data_dir" "/home/${USER}/.local/share/opencode"
 workload_rw       "$cline_dir" "/home/${USER}/.cline"
 workload_rw       "$thinkrail_dir" "/home/${USER}/.thinkrail"
-workload_workdir  "$workdir"
+workload_workdir  "$(guest_path "$workdir")"
 # Secrets! The host-side loader (lib/environment.sh — run.sh is exec'd through
 # it) put the vault keys in THIS shell's environment; the allowlist below
 # forwards them into the sandbox like the llm-local-inference run path (only
-# non-empty values are forwarded). PEER_BASE_URL / PEERS_ONLY are deliberately
-# absent: only the generator consumed them, and the generator does not run in
-# here (docs/d056).
+# non-empty values are forwarded). PEER_BASE_URL is deliberately absent: only
+# the generator consumes it (proxy-only generation refuses to run without it,
+# docs/d063), and the generator does not run in here (docs/d056). PEERS_ONLY
+# is retired with the direct-first cascade (docs/d063).
 #
 # This list is a FOURTH place a provider's key env name has to appear (the
 # catalog `env`, lib/cloud-providers.mjs's apiKeyEnv, the pi generator spec's
@@ -293,7 +351,8 @@ workload_env_allowlist CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY \
 workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
 # Everything above this line is host-side argv assembly (jq + filesystem); the
 # next call is where podman creates the container — mount relabel, userns
-# setup and image probes all happen there with no output until the container's
-# own launch.sh logs. This line brackets that gap for the log reader.
+# setup and image probes all happen there. Nothing logs from inside any more
+# (docs/d067), so this line IS the launch marker: the next thing on the
+# terminal is the sandbox's own bash prompt.
 log_info "starting container" container="$container_name"
 workload_run

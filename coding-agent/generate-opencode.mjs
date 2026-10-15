@@ -1,42 +1,53 @@
 /**
- * @fileoverview generate-opencode.mjs — Emit opencode's overlay config: one
- * `provider` map holding ONLY the providers whose built-in routing does not
- * work from this host, rewritten to their peer path-route on the simplified
- * cloud router.
+ * @fileoverview generate-opencode.mjs — Emit opencode's overlay config: a
+ * `provider` map whose every entry routes at the reverse-proxy route of its
+ * upstream (docs/d063) — the shared cloud trio (opencode, opencode-go,
+ * openrouter) is emitted UNCONDITIONALLY, never at a direct URL; a missing
+ * provider would let opencode's built-in DIRECT definition carry the
+ * traffic. The probe only picks each provider's lineup source, and
+ * docs/d064's tiering decides whether a row is probed at all.
  *
  * The opencode-side generator, kept separate from the unified pi generator
  * (`generate-pi-coding-agent.mjs`) because it emits a different schema and
  * consumes a different input set — the merge is BY CODING AGENT: all pi
- * config in one generator, all opencode config in this one. Same detection
- * cascade as the pi generator's override-only rows, its provider subset
- * (lib/cloud-providers.mjs minus cline-pass/hyper), different schema.
+ * config in one generator, all opencode config in this one. Its provider
+ * subset is lib/cloud-providers.mjs minus cline-pass/hyper.
  *
- * Detection cascade, reachability rule and emitted shape: docs/d033.
- * Peer-route mechanics: docs/d027. Merge/write contract: lib/artifact.mjs.
+ * Lineup cascade: route listing → models.dev catalog slice (d049 modality
+ * gate, then the provider's filter) → an empty lineup, still emitted
+ * (docs/d063 §3). Peer-route mechanics: docs/d027. Merge/write contract:
+ * lib/artifact.mjs.
  *
  * GOTCHA: opencode's V1 config puts the provider map under the top-level key
  * `provider` (**singular**) — `providers` is a V2 key the V1 loader rejects.
  *
  * Usage: node generate-opencode.mjs [out]
- *   out defaults to ./opencode.jsonc.
+ *   out defaults to ./opencode.jsonc. generate.mjs passes a SCRATCH copy of
+ *   the committed overlay as out and then installs the result to BOTH the
+ *   host config dir (the sandbox's mount source) and the committed
+ *   opencode.jsonc (docs/d065) — so the d064 local stale-preserve below,
+ *   which reads the previous state through out, sees the last committed
+ *   overlay under generate.mjs and the last out-file standalone.
  */
 
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
 	bearerHeaders,
 	CLOUD_PROVIDERS as CLOUD_PROVIDER_FACTS,
+	logError,
 	logInfo,
 	logWarn,
+	modalitiesEligible,
+	modelsDevCatalogPath,
 	peerBaseUrls,
 	peerProviderUrl,
-	peersOnly,
 	probeCandidates,
-	probeDirect,
 	probePeerRoutes,
 	scriptDir,
 	setLogTool,
-	suppressedProbe,
+	supportTier,
 	writeJsonArtifact,
 } from "./gen-lib.mjs";
 
@@ -124,14 +135,89 @@ const PEER_MODEL_FILTERS = {
 };
 
 /**
+ * The models.dev catalog slice for a provider — the lineup fallback when the
+ * route cannot list (docs/d063 §2): the d049 modality gate first, then the
+ * provider's model filter.
+ * @param {string} id
+ * @param {((id: string) => boolean)|undefined} filter
+ * @returns {ModelEntry[]}
+ */
+function catalogModels(id, filter) {
+	try {
+		const catalog = JSON.parse(readFileSync(modelsDevCatalogPath(), "utf-8"));
+		const models = catalog?.[id]?.models ?? {};
+		return Object.keys(models)
+			.filter((mid) => modalitiesEligible(models[mid]?.modalities))
+			.filter((mid) => filter?.(mid) ?? true)
+			.map((mid) => ({ id: mid }));
+	} catch {
+		return [];
+	}
+}
+
+/**
+ * Decide one cloud provider's route URL and lineup (docs/d063): the probe
+ * picks the lineup source — the route's own listing, else the models.dev
+ * catalog slice — and the URL is the probed route or the first proxy
+ * candidate when nothing proved usable. Superficial rows (docs/d064) never
+ * probe: catalog slice, first candidate.
+ * @param {string} id
+ * @returns {Promise<{ routeUrl: string, models: ModelEntry[] }>}
+ */
+async function resolveCloudProvider(id) {
+	const cfg = CLOUD_PROVIDERS[id];
+	const filter = PEER_MODEL_FILTERS[id];
+	if (supportTier(id) === "superficial") {
+		logInfo(
+			"superficial provider — not route-probed (docs/d064), catalog lineup",
+			{ provider: id },
+		);
+		return {
+			routeUrl: peerProviderUrl(CLOUD_PEER_CANDIDATES[0], id),
+			models: catalogModels(id, filter),
+		};
+	}
+	const route = await probePeerRoutes(
+		CLOUD_PEER_CANDIDATES,
+		id,
+		bearerHeaders(process.env[cfg.apiKeyEnv]?.trim()),
+	);
+	if (!route) {
+		logWarn("no usable peer path-route — proxy reroute at the first candidate", {
+			provider: id,
+		});
+	}
+	// d063 §1: a dead/absent route never reverts to a direct URL — the first
+	// candidate is proxy-only too, only the lineup degrades to the catalog.
+	const routeUrl = route?.url ?? peerProviderUrl(CLOUD_PEER_CANDIDATES[0], id);
+	const listed = (route?.entries ?? []).filter((e) => filter?.(e.id) ?? true);
+	if (listed.length > 0) {
+		return { routeUrl, models: listed };
+	}
+	const models = catalogModels(id, filter);
+	if (models.length > 0) {
+		logInfo("route unlistable — lineup from the models.dev catalog slice", {
+			provider: id,
+			models: models.length,
+		});
+	} else {
+		logWarn("no lineup source resolved — proxy reroute with an empty lineup", {
+			provider: id,
+		});
+	}
+	return { routeUrl, models };
+}
+
+/**
  * Build an opencode provider entry routing `label`'s models through the
  * provider's peer host-form route on the cloud router (docs/d047):
- * baseURL is `<peerBase>/<upstream-host><base-path>`, auth is the provider's REAL key env
- * (the proxy forwards credentials untouched — it performs none), and the
- * model ids are the provider's own bare ids as its `/models` listing under
- * the route served them.
+ * baseURL is `<peerBase>/<upstream-host><base-path>`, auth is the provider's
+ * REAL key env (the proxy forwards credentials untouched — it performs
+ * none), and the model ids are the provider's own bare ids — from the
+ * route's `/models` listing when it served one, else the catalog slice
+ * (docs/d063).
  * @param {string} label
- * @param {string} routeUrl the provider's peer path-route (probePeerRoutes)
+ * @param {string} routeUrl the provider's reverse-proxy path-route
  * @param {string} apiKeyEnv the provider's real key env (shared fact table)
  * @param {ModelEntry[]} models
  * @returns {OpenCodeProvider}
@@ -147,8 +233,39 @@ function peerProvider(label, routeUrl, apiKeyEnv, models) {
 }
 
 /** @returns {Promise<void>} */
+/**
+ * The `local` block from the previous overlay, when readable — the d064
+ * first-class stale-preserve for the local lineup (a fresh lineup comes only
+ * from the live probe; nothing else knows the farm's GGUFs).
+ * @param {string} path the overlay about to be rewritten
+ * @returns {OpenCodeProvider|null}
+ */
+function previousLocalProvider(path) {
+	try {
+		const overlay = JSON.parse(readFileSync(path, "utf-8"));
+		const entry = overlay?.provider?.local;
+		if (typeof entry?.options?.baseURL !== "string" || !entry.models) {
+			return null;
+		}
+		return entry;
+	} catch {
+		return null;
+	}
+}
+
+/** @returns {Promise<void>} */
 async function main() {
 	const out = process.argv[2] ?? join(scriptDir, "opencode.jsonc");
+
+	// d063 fail closed: every emitted URL is a reverse-proxy route, so a
+	// vault peer base is REQUIRED (SKIP_GEN=1 at the generate.mjs level is
+	// the sanctioned bypass for hosts without vault env).
+	if (!CLOUD_PEER_CANDIDATES.length) {
+		logError(
+			"no PEER_BASE_URL / PEER_BASE_URLS — proxy-only generation cannot proceed (docs/d063); load the vault env or set SKIP_GEN=1",
+		);
+		process.exit(1);
+	}
 
 	const local = await probeCandidates(LOCAL_SOURCE_CANDIDATES, (ids) =>
 		ids.some((id) => classify(id) === "local"),
@@ -157,125 +274,42 @@ async function main() {
 	/** @type {Record<string, OpenCodeProvider>} */
 	const providers = {};
 
-	// --- 1. cloud providers: direct first (parallel) -------------------
-	// Only providers whose real endpoint is genuinely UNREACHABLE are peer
-	// candidates; a 401/403 (or any other http answer) keeps the built-in
-	// routing opencode already has. Parallelized to reduce unnecessary
-	// critical path latency. PEERS_ONLY=1 (docs/d033) skips this phase
-	// entirely — the operator declared the cloud unreachable, so every
-	// provider's result is pre-classified "unreachable" (a blocked cloud
-	// would cost the full 8s probe timeout per provider) and the peer
-	// path-route phase below decides everything.
+	// --- 1. cloud providers: reverse-proxy routes, always emitted --------
+	// d063: the trio is emitted UNCONDITIONALLY at proxy routes; the probe
+	// only picks each provider's lineup source, and a dead route falls back
+	// to the first candidate — never to a direct URL. Resolutions run in
+	// parallel (each is one probe timeout at worst).
 	const cloudResults = await Promise.allSettled(
-		peersOnly()
-			? Object.keys(CLOUD_PROVIDERS).map((id) =>
-					Promise.resolve({
-						id,
-						result: /** @type {"unreachable"} */ ("unreachable"),
-						error: Object.assign(
-							new Error("PEERS_ONLY — direct probe skipped"),
-							{ provider: id },
-						),
-					}),
-				)
-			: Object.entries(CLOUD_PROVIDERS).map(([id, cfg]) =>
-					probeDirect(
-						cfg.baseUrl,
-						bearerHeaders(process.env[cfg.apiKeyEnv]?.trim()),
-					).then(
-						(r) => ({ id, ...r }),
-						// probeDirect classifies transport failures itself, so a throw is
-						// unexpected — but the id must survive it, or the provider silently
-						// loses its peer path-route probe (the rejection branch used to
-						// push a literal "unknown" instead).
-						(err) => {
-							logWarn("cloud probe threw — will check peer routing", {
-								provider: id,
-								error: err,
-							});
-							return {
-								id,
-								result: /** @type {"unreachable"} */ ("unreachable"),
-								error: err,
-							};
-						},
-					),
-				),
-	);
-
-	/** @type {string[]} */
-	const needsPeer = [];
-	for (const r of cloudResults) {
-		if (r.status !== "fulfilled") continue; // rejection already handled + logged above
-		const { id, result, error } = r.value;
-		if (result !== "unreachable") {
-			if (result === "ok") {
-				logInfo("reachable directly — keeping built-in routing", {
-					provider: id,
-				});
-			} else {
-				// Same SuppressedError composition as the pi generator's demotion
-				// records (docs/d045): expectation + chained probe failure.
-				logInfo("reachable — keeping built-in routing", {
-					provider: id,
-					error: suppressedProbe(
-						{ result, error },
-						"expected a usable /models listing from the default endpoint",
-					),
-				});
-			}
-			continue;
-		}
-		logInfo("default endpoint unreachable — will check peer routing", {
-			provider: id,
-			error,
-		});
-		needsPeer.push(id);
-	}
-
-	// Cloud overrides are decided per provider by their own path-route probes
-	// below — no shared cloud catalog probe gates them (docs/d027).
-	const peerResults = await Promise.allSettled(
-		needsPeer.map((id) =>
-			probePeerRoutes(
-				CLOUD_PEER_CANDIDATES,
-				id,
-				bearerHeaders(process.env[CLOUD_PROVIDERS[id].apiKeyEnv]?.trim()),
-			).then(
-				(r) => ({ id, route: r ?? null }),
-				// Same id-preservation rule as the direct phase above.
+		CLOUD_PROVIDER_IDS.map((id) =>
+			resolveCloudProvider(id).then(
+				(r) => ({ id, ...r }),
+				// resolveCloudProvider is written not to throw, but the id must
+				// survive any unexpected rejection or the provider silently loses
+				// its reroute.
 				(err) => {
-					logWarn("peer probe threw — skipping", {
-						provider: id,
-						error: err,
-					});
-					return { id, route: null };
+					logWarn(
+						"cloud resolution threw — proxy reroute with an empty lineup",
+						{ provider: id, error: err },
+					);
+					return {
+						id,
+						routeUrl: peerProviderUrl(CLOUD_PEER_CANDIDATES[0], id),
+						models: /** @type {ModelEntry[]} */ ([]),
+					};
 				},
 			),
 		),
 	);
 
-	for (const r of peerResults) {
-		if (r.status !== "fulfilled" || !r.value.route) {
-			if (r.status === "fulfilled") {
-				logWarn("no usable peer path-route — skipping", {
-					provider: r.value.id,
-				});
-			}
-			continue;
-		}
-		const { id, route } = r.value;
-		const cfg = CLOUD_PROVIDERS[id];
-		const filter = PEER_MODEL_FILTERS[id];
-		const models = route.entries.filter((e) => filter?.(e.id) ?? true);
-		if (models.length === 0) {
-			logWarn("no models visible via peer path-route — skipping", {
-				provider: id,
-				routeUrl: route.url,
-			});
-			continue;
-		}
-		providers[id] = peerProvider(cfg.label, route.url, cfg.apiKeyEnv, models);
+	for (const r of cloudResults) {
+		if (r.status !== "fulfilled") continue; // rejection already handled + logged above
+		const { id, routeUrl, models } = r.value;
+		providers[id] = peerProvider(
+			CLOUD_PROVIDERS[id].label,
+			routeUrl,
+			CLOUD_PROVIDERS[id].apiKeyEnv,
+			models,
+		);
 	}
 
 	// --- 2. local GGUF ---------------------------------------------------
@@ -299,12 +333,22 @@ async function main() {
 			logInfo("no local GGUF models visible — omitting local provider");
 		}
 	} else {
-		logInfo("no local GGUF source reachable — omitting local provider");
-	}
-
-	if (Object.keys(providers).length === 0) {
-		logWarn("nothing usable detected — output left untouched", { out });
-		return;
+		// d064 first-class stale-preserve: the local lineup exists nowhere
+		// else, so when the funnel cannot list it the previous entry is
+		// carried forward instead of dropping `local` from the overlay.
+		const previous = previousLocalProvider(out);
+		if (previous) {
+			providers.local = previous;
+			logWarn(
+				"no local GGUF source reachable — carrying the previous local entry forward",
+				{
+					baseURL: previous.options.baseURL,
+					models: Object.keys(previous.models).length,
+				},
+			);
+		} else {
+			logInfo("no local GGUF source reachable — omitting local provider");
+		}
 	}
 
 	const written = writeJsonArtifact(out, { provider: providers });
@@ -317,4 +361,7 @@ async function main() {
 	logInfo("wrote opencode config", { path: written, providers: summary });
 }
 
-await main();
+main().catch((err) => {
+	logError("opencode generator failed — nothing written", { error: err });
+	process.exit(1);
+});

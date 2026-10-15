@@ -66,9 +66,10 @@ with the two-instance squash — nothing listens on it, and code that still
 peers `localhost:18080` must use the funnel base URL (`$PEER_BASE_URL`).
 
 The coding agent (`coding-agent/`) uses local models via the llama-swap
-face and cloud providers via the llm-reverse-proxy face (or directly, per
-the generators' direct-first cascades); both faces are also the unified
-peer endpoint for external/peer clients. 
+face and cloud providers via the llm-reverse-proxy face (ALWAYS via the
+proxy — the generators' proxy-only cascade, docs/d063, retired the
+direct-first one); both faces are also the unified peer endpoint for
+external/peer clients. 
 
 ### termux (peer-only serving)
 Hostname `<serial>.sn.mynetname.net` (a Synology/`mynetname` DDNS name — put your

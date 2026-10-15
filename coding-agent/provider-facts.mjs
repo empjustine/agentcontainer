@@ -12,20 +12,24 @@
  *   - `verboo`  — https://code.verboo.ai/router/v1/models, records under
  *     `data`. models.dev carries no verboo row at all and refresh-models-dev
  *     replaces the vendored catalog wholesale, so a hand-added catalog row is
- *     transient (docs/d032 F1): here the cache IS the lineup, in both direct
- *     and peer mode.
+ *     transient (docs/d032 F1): here the cache IS the lineup, in every mode.
+ *
+ * Fetching is reverse-proxy-only (docs/d063): the endpoint is addressed as a
+ * host-form route over the local llm-reverse-proxy listen address and the
+ * vault peer bases (relayCandidates, peer-probe.mjs) — carrying the
+ * provider's Authorization bearer when the key is present, because the proxy
+ * forwards the request byte-for-byte (docs/d047) and auth-gated listings
+ * (hyper) deliver nothing unauthenticated. There is no direct-endpoint leg
+ * to fall back to, so a proxy that cannot deliver simply leaves the last
+ * good cache in place.
  *
  * Lifecycle (mirrors coding-agent/refresh-models-dev.mjs):
- *   - REFRESH, best-effort, whenever the endpoint is reachable — driven by
- *     generate-pi-coding-agent.mjs's own row (its emit path passes the
- *     resolved endpoint so the multi-hop peer walk stays pointed at the right
- *     provider path). A failed refresh never touches the last good copy
- *     (tmp+rename).
- *   - CONSUME, stale-tolerant, whenever the facts are needed but the endpoint
- *     is not: peer mode means the provider's own host is unreachable, so the
- *     cache is the only enrichment available. The age is logged, never
- *     enforced. A committed cache (hyper-facts.json) is therefore a first
- *     class artifact, not a leftover.
+ *   - REFRESH, best-effort — driven by generate-pi-coding-agent.mjs's own
+ *     row. A failed refresh never touches the last good copy (tmp+rename).
+ *   - CONSUME, stale-tolerant — when no route delivered, the cache is the
+ *     only enrichment available. The age is logged, never enforced. A
+ *     committed cache (hyper-facts.json) is therefore a first class
+ *     artifact, not a leftover.
  *
  * Cache shape — the RAW records, unnormalized, because each consumer owns its
  * rendering (the pi generator's per-provider factsMapper):
@@ -46,9 +50,7 @@ import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-	peerBaseUrls,
-	peerProviderUrl,
-	peersOnly,
+	relayCandidates,
 	tlsUnverifiable,
 	useEnvProxy,
 } from "./peer-probe.mjs";
@@ -122,104 +124,61 @@ function factsPath(id) {
  * Best-effort by contract: every failure is a warn, the last good cache is
  * never touched, and the return value is the only signal.
  *
- * Direct first (the provider's real endpoint), then the peer route
- * (peerProviderUrl form, docs/d047) over EVERY vault-sourced peer base
- * candidate (multi-hop chains — docs/d034) when the direct endpoint is
- * unreachable. This keeps the cache fresh even when the provider's own
- * endpoint is network-isolated but routable through a peer.
- *
- * Same fail-closed rule as the probes (peer-probe.mjs): under unverified TLS
- * (NODE_TLS_REJECT_UNAUTHORIZED=0) https fetches are skipped WITHOUT the
- * provider's key header — the key belongs to whoever answered the unverified
- * handshake (docs/d033). The last good cache then stays in place.
- * `skipDirect` (peer-mode callers) skips the direct leg the same way: the
- * caller already proved the direct endpoint unreachable, so re-probing it is a
- * wasted timeout; peer candidates only.
+ * Reverse-proxy-only candidate chain (docs/d063): the local proxy listen
+ * address, then every vault-sourced peer base candidate (multi-hop chains —
+ * docs/d034), each carrying the provider Authorization bearer when the key
+ * is present. Fail closed on unverified TLS (NODE_TLS_REJECT_UNAUTHORIZED=0):
+ * there the handshake is unauthenticated, so the key is never written to an
+ * impostor (docs/d033) — the last good cache stays in place.
  * @param {string} id fact-table provider id
- * @param {FactsEndpoint & { baseUrl?: string, skipDirect?: boolean }} options
+ * @param {FactsEndpoint} options
  * @returns {Promise<boolean>} true when the cache was refreshed
  */
 export async function refreshProviderFacts(id, options) {
-	const { path, listKey = "models", skipDirect = false } = options;
+	const { path, listKey = "models" } = options;
 	const facts = CLOUD_PROVIDERS[id];
 	if (!facts) {
 		logWarn("no fact-table row — facts refresh skipped", { provider: id });
 		return false;
 	}
-	const baseUrl = options.baseUrl ?? facts.baseUrl;
 	const cachePath = factsPath(id);
-	const directUrl = `${baseUrl.replace(/\/+$/, "")}${path}`;
 	/**
-	 * v2 host-form peer route (docs/d047): the funnel fronts the
-	 * llm-reverse-proxy allowlist, so the peer leg must address the upstream
-	 * HOST, not a slug.
+	 * Host-form route (docs/d047): the funnel fronts the
+	 * llm-reverse-proxy allowlist, so candidates address the upstream HOST
+	 * + base path — the same shape relayCandidates builds for static
+	 * metadata relays.
 	 */
-	const peerUrls = peerBaseUrls().map(
-		(base) => `${peerProviderUrl(base, id)}${path}`,
-	);
+	const upstream = new URL(facts.baseUrl);
+	const basePath = upstream.pathname.replace(/\/+$/, "");
+	const candidates = relayCandidates(upstream.host, `${basePath}${path}`);
+	/** @type {{ "Content-Type": string, Authorization?: string }} */
+	const headers = { "Content-Type": "application/json" };
+	const key = process.env[facts.apiKeyEnv]?.trim();
+	if (key) headers.Authorization = `Bearer ${key}`;
 
 	/** @type {any} */
 	let payload;
 	let fetchedUrl = null;
-
-	// --- 1. direct endpoint first -----------------------------------------
-	// Skipped under PEERS_ONLY=1, by `skipDirect` (peer-mode callers — the
-	// direct endpoint was already proven unreachable) and on unverified TLS
-	// (fail closed, no credentialed fetch — docs/d033).
-	if (peersOnly() || skipDirect || tlsUnverifiable(directUrl)) {
-		const reason = tlsUnverifiable(directUrl)
-			? "unverified TLS — failing closed"
-			: "PEERS_ONLY / peer-mode — direct leg skipped";
-		logWarn(`${id} direct endpoint ${reason}`, { url: directUrl });
-	} else {
+	for (const url of candidates) {
+		if (tlsUnverifiable(url)) {
+			logWarn(`${id} route https unverifiable — skipping (TLS disabled)`, {
+				url,
+			});
+			continue;
+		}
 		try {
-			/** @type {{ "Content-Type": string, Authorization?: string }} */
-			const headers = { "Content-Type": "application/json" };
-			const key = process.env[facts.apiKeyEnv]?.trim();
-			if (key) headers.Authorization = `Bearer ${key}`;
-			const res = await fetch(directUrl, {
+			const res = await fetch(url, {
 				headers,
 				signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 			});
 			if (res.ok) {
 				payload = await res.json();
-				fetchedUrl = directUrl;
-			} else {
-				logWarn(`${id} direct endpoint returned non-2xx — trying peer route`, {
-					status: res.status,
-					url: directUrl,
-				});
+				fetchedUrl = url;
+				break;
 			}
+			logWarn(`${id} route returned non-2xx`, { status: res.status, url });
 		} catch (err) {
-			logWarn(`${id} direct fetch failed — trying peer route`, { error: err });
-		}
-	}
-
-	// --- 2. peer route fallback (every candidate, in order) -------------
-	if (!payload) {
-		for (const peerUrl of peerUrls) {
-			if (tlsUnverifiable(peerUrl)) {
-				logWarn(`${id} peer https unverifiable — skipping (TLS disabled)`, {
-					url: peerUrl,
-				});
-				continue;
-			}
-			try {
-				const res = await fetch(peerUrl, {
-					signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-				});
-				if (res.ok) {
-					payload = await res.json();
-					fetchedUrl = peerUrl;
-					break;
-				}
-				logWarn(`${id} peer route returned non-2xx`, {
-					status: res.status,
-					url: peerUrl,
-				});
-			} catch (err) {
-				logWarn(`${id} peer fetch failed`, { error: err, url: peerUrl });
-			}
+			logWarn(`${id} fetch failed`, { error: err, url });
 		}
 	}
 

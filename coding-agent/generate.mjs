@@ -55,16 +55,21 @@
  *   PI_CODING_AGENT_DIR  install dir (default ~/.pi/agent) — pi's own
  *                        agent-dir env var, so an install target and the pi
  *                        that later reads it can never diverge
- *   OPENCODE_CONFIG_DIR  set: opencode.json is written here — upstream's
+ *   OPENCODE_CONFIG_DIR  opencode's config-dir install target (default
+ *                    ${XDG_CONFIG_HOME:-$HOME/.config}/opencode) — upstream's
  *                    documented custom config directory (config.mdx:
  *                    searched like `.opencode`, loaded after the global
- *                    config so it overrides). Unset: host runs refresh the
- *                    committed opencode.jsonc here; Termux skips the
- *                    opencode stage
+ *                    config so it overrides) and the dir coding-agent/run.sh
+ *                    mounts rw into the sandbox (docs/d065). The install hits
+ *                    BOTH this host dir and the committed opencode.jsonc;
+ *                    Termux skips the opencode stage unless this is set
  *   SKIP_GEN         1 = install the committed <this dir>/models.json instead of
  *                    generating (no network at all) — it chooses the artifact
  *                    SOURCE; the write itself still replaces atomically
  *                    (lib/artifact.mjs). SKIP_GEN=1 short-circuits first.
+ *                    Since docs/d063 it doubles as the SANCTIONED BYPASS for
+ *                    proxy-only generation on a host without vault env
+ *                    (PEER_BASE_URL(S) empty ⇒ the generators refuse to run).
  *   RUN_DIR          scratch dir for intermediate layers (default $TMPDIR,
  *                    falling back to $PREFIX/tmp on Termux, /tmp elsewhere) —
  *                    this script's dir may be a read-only mount
@@ -313,6 +318,18 @@ if (existsSync(join(repoRoot, "lib", "catwalk-facts.json"))) {
 		join(scratchLib, "catwalk-facts.json"),
 	);
 }
+// d063's stale-preserve needs the previous state readable from the scratch
+// dir: the local llama-swap carry-forward (previousLocalProvider) reads the
+// committed model-010 layer, and the layer merge sees whatever is staged
+// here. Every committed model-*.json is staged; the rows regenerate over it
+// each run, so the survivors ARE the previous state. Consequence: retiring
+// a row must delete its committed layer in the same change, or the merge
+// keeps merging it in — stale.
+for (const name of readdirSync(scriptDir)) {
+	if (/^model-.*\.json$/.test(name)) {
+		copyFileSync(join(scriptDir, name), join(scratch, name));
+	}
+}
 process.env.LIB_DIR = scratchLib;
 if (existsSync(modelsDevJson)) {
 	symlinkSync(modelsDevJson, join(scratch, "models.dev.api.json"));
@@ -438,7 +455,15 @@ if (process.env.SKIP_GEN === "1") {
 	process.env.PI_SETTINGS = settingsPath;
 	process.env.PI_MODELS_JSON = join(scratch, "models.json");
 	process.env.PI_DEFAULT_MODEL_JSON = join(scratch, "default-model.json");
-	runStage(join(scratch, "generate-pi-coding-agent.mjs"));
+	// d063 fail closed: a failed pi generator means its layers were not
+	// written — installing the committed artifact anyway would ship direct
+	// baseUrls. SKIP_GEN=1 is the sanctioned bypass (docs/d063 §4).
+	if (!runStage(join(scratch, "generate-pi-coding-agent.mjs"))) {
+		logError("pi generator failed — aborting (nothing merged)", {
+			script: "generate-pi-coding-agent.mjs",
+		});
+		process.exit(1);
+	}
 
 	if (existsSync(join(scratch, "models.json"))) {
 		modelsOut = join(scratch, "models.json");
@@ -486,16 +511,20 @@ if (process.env.SKIP_GEN === "1") {
 currentStage = "models-install";
 
 // --- install models.json into the agent dir --------------------------------
-// An empty provider map is a VALID outcome of the cascade (every provider
-// reachable directly ⇒ nothing to override); writing it would still wipe a
-// working models.json, so keep what is there.
+// d063 §3: a successful generation ALWAYS emits providers (the local
+// llama-swap layer plus the pi-native cloud rows at proxy routes), so an
+// empty map is a broken generation — neither installing it nor keeping a
+// stale direct-routing one is acceptable. Fail instead (SKIP_GEN=1 never
+// reaches here with an empty committed file — the warn below is its own
+// missing-file path).
 if (modelsOut) {
 	const count = Object.keys(providersOf(modelsOut)).length;
 	if (count === 0) {
-		logInfo("0 provider overrides (all reachable directly / no peer router)", {
-			action: "keep",
-			modelsJson: join(agentDir, "models.json"),
+		logError("0 providers generated — refusing to install (docs/d063)", {
+			action: "abort",
+			modelsJson: modelsOut,
 		});
+		process.exit(1);
 	} else {
 		if (existsSync(join(agentDir, "models.json"))) {
 			copyFileSync(
@@ -543,23 +572,68 @@ currentStage = "opencode-config";
 // is silently ignored (probe: file content takes effect, dir value doesn't).
 // NOT XDG_CONFIG_HOME either (first cut here): it works upstream, but it is
 // a standard var every XDG tool reads — scoping the override to opencode's
-// own knob keeps other tools on the host default. When the var is unset the
-// global config dir remains upstream's XDG derivation
-// (${XDG_CONFIG_HOME:-$HOME/.config}/opencode); Termux skips the stage
-// entirely (pi-only path) unless OPENCODE_CONFIG_DIR is set, and on a bare
-// host with the var unset this stage refreshes this dir's committed
-// opencode.jsonc — the runtime input the in-container runner stages
-// (docs/d041's regenerate-manually contract).
+// own knob keeps other tools on the host default.
+//
+// The install mirrors what this script does for pi's settings/models.json
+// (docs/d054, docs/d065): generate into a SCRATCH copy of the committed
+// overlay — that copy is also the d064 stale-preserve input
+// previousLocalProvider reads — and on success install BOTH the host config
+// dir (the dir run.sh mounts rw into the sandbox) and this dir's committed
+// opencode.jsonc. The committed copy is not a SKIP_GEN fallback (opencode
+// has no SKIP_GEN path, docs/d065): it is the reviewed git diff and the next
+// run's stale-preserve input, so it refreshes on every host that runs this
+// stage, Termux included. Termux skips the stage entirely (pi-only path)
+// unless OPENCODE_CONFIG_DIR is set.
+const ocHostDir =
+	process.env.OPENCODE_CONFIG_DIR ??
+	join(
+		process.env.XDG_CONFIG_HOME ?? join(process.env.HOME ?? "", ".config"),
+		"opencode",
+	);
 let ocOut = "";
-if (process.env.OPENCODE_CONFIG_DIR) {
-	mkdirSync(process.env.OPENCODE_CONFIG_DIR, { recursive: true });
-	ocOut = join(process.env.OPENCODE_CONFIG_DIR, "opencode.json");
-} else if (!termux) {
-	ocOut = join(scriptDir, "opencode.jsonc");
+if (!termux || process.env.OPENCODE_CONFIG_DIR) {
+	ocOut = join(scratch, "opencode.json");
+	const ocCommitted = join(scriptDir, "opencode.jsonc");
+	if (existsSync(ocCommitted)) {
+		copyFileSync(ocCommitted, ocOut);
+	}
 }
 if (ocOut && existsSync(join(scratch, "generate-opencode.mjs"))) {
+	// d063 fail closed, same as the pi generator above: a half-written
+	// overlay would leave direct baseUrls in the committed opencode.jsonc.
 	if (!runStage(join(scratch, "generate-opencode.mjs"), [ocOut])) {
-		logWarn("generate-opencode.mjs failed; using existing config if present");
+		logError("opencode generator failed — aborting (nothing written)", {
+			script: "generate-opencode.mjs",
+		});
+		process.exit(1);
+	}
+
+	// Install 1 — the host config dir, the sandbox's mount source (d065).
+	// Best-effort .bak insurance, same as the settings/models installs above:
+	// generated ephemeral files, not a preservation contract.
+	mkdirSync(ocHostDir, { recursive: true });
+	const ocHost = join(ocHostDir, "opencode.json");
+	if (existsSync(ocHost)) {
+		copyFileSync(
+			ocHost,
+			`${ocHost}.bak-${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}`,
+		);
+	}
+	copyFileSync(ocOut, ocHost);
+	logInfo("opencode config installed", { path: ocHost });
+
+	// Install 2 — the committed snapshot (warn-only on a read-only dir, like
+	// refreshCommittedSnapshot).
+	try {
+		copyFileSync(ocOut, join(scriptDir, "opencode.jsonc"));
+		logInfo("committed opencode snapshot refreshed", {
+			path: join(scriptDir, "opencode.jsonc"),
+		});
+	} catch (err) {
+		logWarn("committed opencode snapshot refresh skipped (read-only dir?)", {
+			path: join(scriptDir, "opencode.jsonc"),
+			error: err,
+		});
 	}
 }
 

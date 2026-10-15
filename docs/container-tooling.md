@@ -314,8 +314,11 @@ Launches the pi coding-agent container with:
 
 - **`settings.json`** (static): installed into the host agent dir
   (`PI_CODING_AGENT_DIR`, default `~/.pi/agent`) by the generator and read
-  from there; the sandbox mounts that dir RW (docs/d054). The COMMITTED
-  `models.json`/`opencode.jsonc` are what pi runs (docs/d041: runners never
+  from there; the sandbox mounts that dir RW (docs/d054), and mounts the host
+  opencode config dir the same way (its `opencode.json` is generator-installed;
+  a missing overlay is a tolerated partial config, docs/d065). The generator's
+  INSTALLED copies are what the sandbox runs; the committed `models.json` /
+  `opencode.jsonc` are the generator-side snapshots (docs/d041: runners never
   generate). Since docs/d056 the generator tree is NOT mounted, so an
   in-container session cannot regenerate — regeneration is host-side.
 - **Sessions**: split out of the agent dir to `PI_CODING_AGENT_SESSION_DIR`
@@ -332,14 +335,17 @@ Launches the pi coding-agent container with:
   no `~/.infisical` staging; pi resolves the `"$VAR"` api-key references in
   the generated `models.json` from the forwarded environment at request time.
 - **Directories (`ARGV`)**: `run.sh [DIRECTORY [DIRECTORY...]]`; CWD is the
-  implicit first directory, each is mounted rw at its own host path, and the
-  first is the workdir. `~/Downloads/references` is passed as just another
+  implicit first directory, each is mounted rw — host side canonical,
+  container side spelled from `/home/$USER` when the path is under the home
+  (docs/d068) — and the first is the workdir. `~/Downloads/references` is passed as just another
   directory — this replaced the former `CODING_AGENT_REFERENCES` toggle
   (docs/d043/d056) — and a directory resolving to `$HOME` is refused.
-- **Mounts**: the directory arguments, the host `.pi/agent` dir and the
-  per-run `.pi/sessions` stage (writable, docs/d054), staged opencode
-  config/data dirs and the HF cache (writable), the generated launch chain
-  and `lib/log.sh` (read-only), `--network=host`.
+- **Mounts**: the directory arguments, the host `.pi/agent` dir
+  (docs/d054), the host opencode config dir (docs/d065), and the per-run
+  stages for `.pi/sessions`, opencode's data dir, `.cline` and
+  `.thinkrail` — all writable; plus the generated launch chain (read-only)
+  and `--network=host`. No repo file is mounted (docs/d067) and neither is
+  the host HF cache (docs/d066).
 
 Uses `--userns=keep-id` + `--user $(id -u):$(id -g)` so files written into
 bind-mounted dirs are owned by the host user.

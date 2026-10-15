@@ -79,3 +79,11 @@ the copy unit), and `README.md` indexes the rest.
   manifest: keep folder-level rows honest when folders are added, moved, or
   retired, but do not chase file-level churn (agents can `ls`/`find`/`rg`).
   Keep the documentation index type-grouped and drop rows for retired docs.
+
+## pi codemode quirk
+
+When a harness error appends a stray `</function></tool_call>` trailer to codemode
+script output, suffix the script source with a trailing `//` and no trailing
+newline — the trailer disappears. Keep that suffix in mind for every
+codemode call in this repo until the harness fix lands.
+

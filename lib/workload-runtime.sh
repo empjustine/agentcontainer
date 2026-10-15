@@ -73,10 +73,17 @@ _userns=''
 _keep_groups=''
 
 detect_workload_tool() {
-	if [ -x /usr/bin/podman ]; then
+	# Resolved through PATH because that is how workload_run INVOKES it
+	# ($_workload_tool is a bare name): probing /usr/bin/podman hard made the
+	# two disagree — a backend that exists but is not at that exact path was
+	# reported as "no backend", and a backend that IS there could then be
+	# shadowed by a different PATH hit at launch. Same probe as the call,
+	# single spelling of the answer (docs/d069). It is also what lets a test
+	# drive a runner end-to-end against a stub (tests/check-run-dirs.sh).
+	if command -v podman >/dev/null 2>&1; then
 		_workload_tool='podman'; _userns='--userns=keep-id'
 		_keep_groups='--group-add keep-groups'
-	elif [ -x /usr/bin/docker ]; then
+	elif command -v docker >/dev/null 2>&1; then
 		_workload_tool='docker'; _userns=''; _keep_groups=''
 	else
 		return 1

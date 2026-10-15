@@ -24,6 +24,18 @@ Superseded in part by **d059**: the runner is container-only, so the
 container/Termux-branch wording in this record (uniform `$HOME` refusal, "no
 mount boundary on Termux") no longer applies to a launch.
 
+Superseded in part by **d067**: the `lib/log.sh` mount this record kept "for
+the launch chain's logger" is gone — the launch chain is self-contained and
+logs nothing, so no repo file is mounted.
+
+Superseded in part by **d068**: "mounted at its own host path" is the HOST
+side of the bind. The container side of a home-relative directory is spelled
+from the container's home (`/home/$USER/...`) — on a host whose home sits
+behind a symlink (Bazzite / Fedora Atomic, `/home` → `/var/home`), `pwd -P`
+mounted the folder where the sandbox's `~` does not point, so "the same path
+on both sides" now means *the path the operator named*, not the canonical
+string.
+
 ## Problem
 
 Three separate seams had accumulated in the runner:

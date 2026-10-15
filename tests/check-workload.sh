@@ -88,8 +88,6 @@ ARG[keep-groups]
 ARG[-v]
 ARG[<REPO>/docs:/config.d:z,U,ro]
 ARG[-v]
-ARG[<REPO>/lib/log.sh:/opt/lib/log.sh:z,U,ro]
-ARG[-v]
 ARG[<TMP>/src/a workspace with spaces:/mnt/a guest with spaces:z,U]
 ARG[-v]
 ARG[<REPO>/README.md:/opt/present:z,U,ro]
@@ -128,7 +126,6 @@ case_coding_agent() {
 	workload_network  host
 	workload_user
 	workload_ro       "$root/docs"       /config.d
-	workload_ro       "$root/lib/log.sh" /opt/lib/log.sh
 	workload_rw       "$tmp/src/a workspace with spaces" '/mnt/a guest with spaces'
 	workload_ro_if    "$root/README.md"  /opt/present
 	workload_ro_if    "$root/nope"       /opt/absent
