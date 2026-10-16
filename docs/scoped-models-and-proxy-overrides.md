@@ -107,6 +107,6 @@ can be removed without losing the law they recorded:
   no-direct-cloud host needs key injection again.
 
 Still in force and self-sufficient: `d001` (proxy env / plain key naming /
-`baseUrl` baking — cited directly by `lib/peer-probe.mjs`,
-`lib/refresh-models-dev.mjs`, `gen-lib.mjs`) and `d003` (generation-time
+`baseUrl` baking — cited directly by `coding-agent/route-probe.mjs`,
+`coding-agent/refresh-models-dev.mjs`, `coding-agent/gen-lib.mjs`) and `d003` (generation-time
 context-window embedding).

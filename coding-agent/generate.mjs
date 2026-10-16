@@ -19,8 +19,10 @@
  *       exec'd through lib/environment.sh and forwards the vault env through
  *       the workload_env allowlist)
  *     - models.dev catalog refreshed best-effort
- *     - peer routing goes through the vault-sourced $PEER_BASE_URL (or
- *       $PEER_BASE_URLS for multi-hop proxy chains — see peer-probe.mjs)
+ *     - route probes and install-time substitution go through the
+ *       vault-sourced $REVERSE_PROXY_BASE_URLS (comma/newline multi-hop
+ *       candidates — see route-probe.mjs; the one base env this repo reads,
+ *       docs/d071)
  *
  * Generators, one per coding agent (the broad BY-AGENT merge that supersedes
  * docs/d037's narrow verdict):
@@ -34,9 +36,9 @@
  * the pi agent dir (models.json + settings.json + the static mcp.json,
  * models/settings backed up as .bak-<ts>)
  * AND, on container hosts, this dir's own committed snapshot (models.json +
- * model-*.json) — what SKIP_GEN installs and what a regeneration's git diff
- * reviews (docs/d041's "the committed config is the runtime config"). The
- * agent-dir copies are
+ * model-*.json) — the CANONICAL form (real upstream URLs, docs/d070) that a
+ * regeneration's git diff reviews (docs/d041's "the committed config is the
+ * runtime config"). The agent-dir copies are
  * GENERATED EPHEMERAL files: the install target is the live dir in every
  * environment (bare host and Termux: $HOME/.pi/agent; in-container: the
  * pinned mount), so pi itself always sees the fresh list. Overwriting
@@ -47,8 +49,8 @@
  * operator's own entries, because this dir is shared with the host pi and a
  * clobber would delete its personal servers (docs/d061). The committed
  * snapshot refresh is container-only: on Termux pi reads the agent dir
- * directly and no runner consumes the committed copy (docs/d059), so it stays
- * a SKIP_GEN fallback there. A read-only scriptDir (e.g. a copied folder
+ * directly and no runner consumes the committed copy (docs/d059). A
+ * read-only scriptDir (e.g. a copied folder
  * mounted ro) only warns.
  *
  * Env overrides:
@@ -63,13 +65,15 @@
  *                    mounts rw into the sandbox (docs/d065). The install hits
  *                    BOTH this host dir and the committed opencode.jsonc;
  *                    Termux skips the opencode stage unless this is set
- *   SKIP_GEN         1 = install the committed <this dir>/models.json instead of
- *                    generating (no network at all) — it chooses the artifact
- *                    SOURCE; the write itself still replaces atomically
- *                    (lib/artifact.mjs). SKIP_GEN=1 short-circuits first.
- *                    Since docs/d063 it doubles as the SANCTIONED BYPASS for
- *                    proxy-only generation on a host without vault env
- *                    (PEER_BASE_URL(S) empty ⇒ the generators refuse to run).
+ *   REVERSE_PROXY_BASE_URLS  required for generation (route probes) and
+ *                    for the install-time route substitution (docs/d070 §3/
+ *                    §7): the first candidate's base is what installed
+ *                    artifacts get. Loaded from the vault via the explicit
+ *                    chain (./lib/environment.sh <script>); the vault also
+ *                    sets the retired PEER_BASE_URL(S) for outside
+ *                    compatibility, never read here (docs/d071 §1).
+ *                    settings.json/mcp.json installs need no base and stay
+ *                    unconditional.
  *   RUN_DIR          scratch dir for intermediate layers (default $TMPDIR,
  *                    falling back to $PREFIX/tmp on Termux, /tmp elsewhere) —
  *                    this script's dir may be a read-only mount
@@ -98,12 +102,27 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// Route substitution at install (docs/d070 §3): the same derivation the
+// probes build, keyed by provider id through the shared fact table.
+import {
+	reverseProxyBaseUrl,
+	reverseProxyBaseUrls,
+	routeUrlFromCanonical,
+} from "./route-probe.mjs";
+
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = dirname(scriptDir);
 const LIB_DIR = process.env.LIB_DIR ?? join(repoRoot, "lib");
 const { logError, logInfo, logWarn, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
+	);
+const { serializeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
+	await import(`${LIB_DIR}/artifact.mjs`)
+);
+const { CLOUD_PROVIDERS } =
+	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
+		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
 setLogTool("coding-agent/generate");
 
@@ -208,12 +227,155 @@ function readMcpConfig(path) {
 	}
 }
 
+// --- route substitution (docs/d070) -----------------------------------------
+/**
+ * The canonical-URL detector's upstream prefixes (docs/d070 Consequences,
+ * sharpened during implementation): every fact-table upstream URL, llama-
+ * swap's serve upstream included — the ONE source, same table everything
+ * else here derives from. An installed URL starting with one of these (at a
+ * path boundary) is a canonical URL that escaped substitution. Deliberately
+ * NOT a host-set check: the configured base can share a host with a fact
+ * row (bazzite is both funnel and llama-swap host — d027/d070), which a
+ * host-based detector would false-positive on every install.
+ * @type {readonly string[]}
+ */
+const FACT_UPSTREAMS = Object.freeze(
+	Object.values(CLOUD_PROVIDERS).map((f) => f.baseUrl),
+);
+
+/**
+ * opencode names the local llama-swap farm `local` in its provider map
+ * (consumer-side name); the fact table keys it `llama-swap`. The ONE id
+ * alias in the substitution — everything else maps to itself.
+ * @type {Readonly<Record<string, string>>}
+ */
+const OPENCODE_PROVIDER_FACT_IDS = Object.freeze({ local: "llama-swap" });
+
+/**
+ * @typedef {{ providers?: Record<string, { baseUrl?: string }> }} PiModelsDoc
+ */
+
+/**
+ * @typedef {{ provider?: Record<string, { options?: { baseURL?: string } }> }} OpenCodeConfigDoc
+ */
+
+/**
+ * Rewrite a CANONICAL generated models.json into the installed route form
+ * (d070 §3): each provider's baseUrl goes through routeUrlFromCanonical,
+ * keyed by provider id through the fact table — never by string-matching the
+ * URL. A provider id with no fact-table upstream throws: artifact and fact
+ * table disagreeing must abort the install, not ship one URL's guess.
+ * @param {PiModelsDoc} doc
+ * @param {string} base the FIRST configured reverse-proxy base (d070 §4:
+ *   availability never selects a URL)
+ * @returns {PiModelsDoc} the same doc, mutated to route form
+ */
+function routePiProviders(doc, base) {
+	for (const [id, provider] of Object.entries(doc.providers ?? {})) {
+		if (typeof provider?.baseUrl !== "string") continue;
+		provider.baseUrl = routeUrlFromCanonical(base, id, provider.baseUrl);
+	}
+	return doc;
+}
+
+/**
+ * The opencode twin of routePiProviders (d070 §3): options.baseURL per
+ * provider entry, with the one `local` → `llama-swap` id alias.
+ * @param {OpenCodeConfigDoc} doc
+ * @param {string} base see routePiProviders
+ * @returns {OpenCodeConfigDoc} the same doc, mutated to route form
+ */
+function routeOpenCodeProviders(doc, base) {
+	for (const [id, entry] of Object.entries(doc.provider ?? {})) {
+		const options = entry?.options;
+		const url = options?.baseURL;
+		if (!options || typeof url !== "string") continue;
+		const factId = OPENCODE_PROVIDER_FACT_IDS[id] ?? id;
+		options.baseURL = routeUrlFromCanonical(base, factId, url);
+	}
+	return doc;
+}
+
+/**
+ * d070 §5's install check: zero canonical URLs — every installed provider
+ * URL must live under the configured base, and none may start with a
+ * fact-table upstream (path-boundary prefix — see FACT_UPSTREAMS for why
+ * not a host check). Throws with the offending provider id so a failed
+ * check names the row to fix.
+ * @param {readonly { id: string, url?: string }[]} providerUrls
+ * @param {string} base the configured install base
+ * @param {string} label artifact being verified (error context)
+ * @returns {void}
+ * @throws {Error} on any canonical or un-routed URL
+ */
+function assertInstalledRouted(providerUrls, base, label) {
+	for (const { id, url } of providerUrls) {
+		if (url === undefined) continue;
+		try {
+			new URL(url);
+		} catch {
+			throw new Error(`${label}: provider ${id} has a non-URL baseUrl ${JSON.stringify(url)}`);
+		}
+		const canonical = FACT_UPSTREAMS.find(
+			(upstream) => url === upstream || url.startsWith(`${upstream}/`),
+		);
+		if (canonical !== undefined) {
+			throw new Error(
+				`${label}: provider ${id} still carries canonical upstream ${canonical} — substitution failed or was skipped (docs/d070 §5)`,
+			);
+		}
+		if (!url.startsWith(`${base}/`)) {
+			throw new Error(
+				`${label}: provider ${id} URL is not under the configured base ${base} (docs/d070 §5)`,
+			);
+		}
+	}
+}
+
+/** @param {{ providers?: Record<string, { baseUrl?: string }> }} doc */
+function piProviderUrls(doc) {
+	return Object.entries(doc.providers ?? {}).map(([id, p]) => ({
+		id,
+		url: p?.baseUrl,
+	}));
+}
+
+/** @param {{ provider?: Record<string, { options?: { baseURL?: string } }> }} doc */
+function openCodeProviderUrls(doc) {
+	return Object.entries(doc.provider ?? {}).map(([id, p]) => ({
+		id,
+		url: p?.options?.baseURL,
+	}));
+}
+
+/**
+ * The base installed artifacts are routed under (d070 §3/§4): the FIRST
+ * configured candidate, required — settings/mcp installs above already
+ * happened unconditionally, but a models install without a base cannot
+ * substitute routes and must fail loudly rather than write canonical URLs
+ * into a host config dir.
+ * @param {string} label stage name for the error line
+ * @returns {string} the base, no trailing slash
+ */
+function requireInstallBase(label) {
+	if (!reverseProxyBaseUrls().length) {
+		logError(
+			"no REVERSE_PROXY_BASE_URLS — cannot substitute client routes (docs/d070); load the vault env via ./lib/environment.sh",
+			{ stage: label },
+		);
+		process.exit(1);
+	}
+	return reverseProxyBaseUrl();
+}
+
 /**
  * Mirror the freshly generated models.json and its model-*.json layers into
- * this script's own dir — the committed snapshot SKIP_GEN installs (docs/d041).
- * Without this copy-back `./generate.sh` refreshes
+ * this script's own dir — the committed CANONICAL snapshot (docs/d041 +
+ * d070 §3: the generators emit real upstream URLs, so this copy-back stays
+ * canonical while the agent-dir install gets the routed form). Without this
+ * copy-back `./generate.sh` refreshes
  * only the agent dir, so the committed coding-agent/models.json stays frozen:
- * the list a SKIP_GEN run installs and the diff a regeneration reviews would
+ * the artifact a review reads and the next run's stale-preserve input would
  * both keep an old generation. Container hosts only (docs/d059). A read-only
  * scriptDir (e.g. a copied folder mounted ro) is
  * expected and only warns.
@@ -253,7 +415,7 @@ currentStage = "scratch-stage";
 
 // --- scratch dir: generators read layers from their own directory, and this
 // dir may be a read-only mount (container ro-mount), so stage the generators
-// — plus the helper modules they import (peer-probe.mjs, provider-facts.mjs,
+// — plus the helper modules they import (route-probe.mjs, provider-facts.mjs,
 // catwalk-facts.mjs, docs/d039) and the lib/ modules resolved via $LIB_DIR
 // (log.mjs, artifact.mjs, canonical-json.mjs, cloud-providers.mjs, docs/d023
 // + d050) — there and
@@ -265,7 +427,7 @@ const GENERATORS = [
 	"gen-lib.mjs",
 	"generate-pi-coding-agent.mjs",
 	"generate-opencode.mjs",
-	"peer-probe.mjs",
+	"route-probe.mjs",
 	"provider-facts.mjs",
 	"catwalk-facts.mjs",
 	"refresh-models-dev.mjs",
@@ -409,72 +571,59 @@ currentStage = "models-json";
 // --- models.json ------------------------------------------------------------
 /** @type {string} */
 let modelsOut = "";
-if (process.env.SKIP_GEN === "1") {
-	if (existsSync(join(scriptDir, "models.json"))) {
-		modelsOut = join(scriptDir, "models.json");
-		logInfo("SKIP_GEN: using committed models.json", { path: modelsOut });
-	} else {
-		logWarn("SKIP_GEN=1 but committed models.json missing", {
-			path: join(scriptDir, "models.json"),
-		});
-	}
+// Best-effort refresh of the vendored models.dev catalog (no secrets
+// needed). Unconditional: running generate means "I want current data", so
+// the catalog is refetched on every host and only a failed fetch falls back
+// to the vendored copy — there is no ambient switch that makes one run
+// quieter than another (docs/d060).
+//
+// Refresh into the scratch dir when the catalog itself is not writable
+// (container hosts: $MODELS_DEV_JSON is a read-only mount, so writing
+// there fails every single run). The scratch entry is a symlink to the
+// vendored catalog at this point; the generator's tmp+rename replaces
+// the symlink with a regular file and never follows it, so the vendored
+// copy stays untouched either way.
+let catalogOut = modelsDevJson;
+try {
+	accessSync(modelsDevJson, constants.W_OK);
+} catch {
+	catalogOut = join(scratch, "models.dev.api.json");
+}
+if (runStage(join(scratch, "refresh-models-dev.mjs"), [catalogOut])) {
+	logInfo("models.dev catalog refreshed", { path: catalogOut });
 } else {
-	// Best-effort refresh of the vendored models.dev catalog (no secrets
-	// needed). Unconditional: running generate means "I want current data", so
-	// the catalog is refetched on every host and only a failed fetch falls back
-	// to the vendored copy — there is no ambient switch that makes one run
-	// quieter than another (docs/d060).
-	//
-	// Refresh into the scratch dir when the catalog itself is not writable
-	// (container hosts: $MODELS_DEV_JSON is a read-only mount, so writing
-	// there fails every single run). The scratch entry is a symlink to the
-	// vendored catalog at this point; the generator's tmp+rename replaces
-	// the symlink with a regular file and never follows it, so the vendored
-	// copy stays untouched either way.
-	let catalogOut = modelsDevJson;
-	try {
-		accessSync(modelsDevJson, constants.W_OK);
-	} catch {
-		catalogOut = join(scratch, "models.dev.api.json");
-	}
-	if (runStage(join(scratch, "refresh-models-dev.mjs"), [catalogOut])) {
-		logInfo("models.dev catalog refreshed", { path: catalogOut });
-	} else {
-		logWarn("models.dev catalog refresh failed; using vendored copy", {
-			path: modelsDevJson,
-		});
-	}
+	logWarn("models.dev catalog refresh failed; using vendored copy", {
+		path: modelsDevJson,
+	});
+}
 
-	logInfo("generating pi config (layers + merge + default overlay)");
-	// One generator, one process: generate-pi-coding-agent.mjs runs the local
-	// GGUF layer, the cloud layers (docs/d037 override-only + full rows), the
-	// layer merge, and the operator default-model overlay internally, each
-	// stage isolated so one failure does not take the rest down (the same
-	// contract the former per-stage child processes had). Its default stage
-	// reads the settings file installed above ($PI_SETTINGS).
-	process.env.PI_SETTINGS = settingsPath;
-	process.env.PI_MODELS_JSON = join(scratch, "models.json");
-	process.env.PI_DEFAULT_MODEL_JSON = join(scratch, "default-model.json");
-	// d063 fail closed: a failed pi generator means its layers were not
-	// written — installing the committed artifact anyway would ship direct
-	// baseUrls. SKIP_GEN=1 is the sanctioned bypass (docs/d063 §4).
-	if (!runStage(join(scratch, "generate-pi-coding-agent.mjs"))) {
-		logError("pi generator failed — aborting (nothing merged)", {
-			script: "generate-pi-coding-agent.mjs",
-		});
-		process.exit(1);
-	}
+logInfo("generating pi config (layers + merge + default overlay)");
+// One generator, one process: generate-pi-coding-agent.mjs runs the local
+// GGUF layer, the cloud layers (docs/d037 override-only + full rows), the
+// layer merge, and the operator default-model overlay internally, each
+// stage isolated so one failure does not take the rest down (the same
+// contract the former per-stage child processes had). Its default stage
+// reads the settings file installed above ($PI_SETTINGS).
+process.env.PI_SETTINGS = settingsPath;
+process.env.PI_MODELS_JSON = join(scratch, "models.json");
+process.env.PI_DEFAULT_MODEL_JSON = join(scratch, "default-model.json");
+// d063 fail closed: a failed pi generator means its layers were not
+// written — there is no committed-artifact fallback anymore (d070 §6
+// retired SKIP_GEN; installing one raw would ship canonical URLs).
+if (!runStage(join(scratch, "generate-pi-coding-agent.mjs"))) {
+	logError("pi generator failed — aborting (nothing merged)", {
+		script: "generate-pi-coding-agent.mjs",
+	});
+	process.exit(1);
+}
 
-	if (existsSync(join(scratch, "models.json"))) {
-		modelsOut = join(scratch, "models.json");
-	} else {
-		logWarn("no models.json generated; falling back to committed copy", {
-			path: join(scriptDir, "models.json"),
-		});
-		if (existsSync(join(scriptDir, "models.json"))) {
-			modelsOut = join(scriptDir, "models.json");
-		}
-	}
+if (existsSync(join(scratch, "models.json"))) {
+	modelsOut = join(scratch, "models.json");
+} else {
+	logError("pi generator produced no models.json — aborting (docs/d070 §6)", {
+		path: join(scratch, "models.json"),
+	});
+	process.exit(1);
 }
 
 currentStage = "default-model";
@@ -484,39 +633,38 @@ currentStage = "default-model";
 // (docs/d036 — the default is an OPERATOR DECISION, not a probed fact). It ran
 // with the rest of the pi stages; this block merges its overlay into the
 // installed settings.json (independent of the models.json install).
-if (process.env.SKIP_GEN === "1") {
-	logInfo("SKIP_GEN: skipping default model configuration");
-} else {
-	const overlay = join(scratch, "default-model.json");
-	if (existsSync(overlay)) {
-		const defaultModel = JSON.parse(readFileSync(overlay, "utf-8"));
-		const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
-		if (defaultModel.defaultProvider) {
-			settings.defaultProvider = defaultModel.defaultProvider;
-		}
-		if (defaultModel.defaultModel) {
-			settings.defaultModel = defaultModel.defaultModel;
-		}
-		const merged = join(scratch, "settings-with-default.json");
-		writeFileSync(merged, `${JSON.stringify(settings, null, 2)}\n`);
-		copyFileSync(merged, settingsPath);
-		logInfo("settings.json updated with default model config", {
-			path: settingsPath,
-		});
-	} else {
-		logWarn("pi generator produced no default-model overlay");
+const overlay = join(scratch, "default-model.json");
+if (existsSync(overlay)) {
+	const defaultModel = JSON.parse(readFileSync(overlay, "utf-8"));
+	const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+	if (defaultModel.defaultProvider) {
+		settings.defaultProvider = defaultModel.defaultProvider;
 	}
+	if (defaultModel.defaultModel) {
+		settings.defaultModel = defaultModel.defaultModel;
+	}
+	const merged = join(scratch, "settings-with-default.json");
+	writeFileSync(merged, `${JSON.stringify(settings, null, 2)}\n`);
+	copyFileSync(merged, settingsPath);
+	logInfo("settings.json updated with default model config", {
+		path: settingsPath,
+	});
+} else {
+	logWarn("pi generator produced no default-model overlay");
 }
 
 currentStage = "models-install";
 
 // --- install models.json into the agent dir --------------------------------
 // d063 §3: a successful generation ALWAYS emits providers (the local
-// llama-swap layer plus the pi-native cloud rows at proxy routes), so an
-// empty map is a broken generation — neither installing it nor keeping a
-// stale direct-routing one is acceptable. Fail instead (SKIP_GEN=1 never
-// reaches here with an empty committed file — the warn below is its own
-// missing-file path).
+// llama-swap layer plus the pi-native cloud rows), so an empty map is a
+// broken generation — neither installing it nor keeping a stale
+// direct-routing one is acceptable; fail instead.
+//
+// d070 §3: the generated file is CANONICAL (real upstreams) — the copy that
+// lands in the agent dir is the one rewritten to client routes, under the
+// FIRST configured base (§4), and verified to contain zero canonical URLs
+// (§5) before it is written.
 if (modelsOut) {
 	const count = Object.keys(providersOf(modelsOut)).length;
 	if (count === 0) {
@@ -525,46 +673,43 @@ if (modelsOut) {
 			modelsJson: modelsOut,
 		});
 		process.exit(1);
-	} else {
-		if (existsSync(join(agentDir, "models.json"))) {
-			copyFileSync(
-				join(agentDir, "models.json"),
-				`${join(agentDir, "models.json")}.bak-${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}`,
-			);
-		}
-		copyFileSync(modelsOut, join(agentDir, "models.json"));
-		for (const [id, provider] of Object.entries(
-			providersOf(join(agentDir, "models.json")),
-		)) {
-			logInfo("provider override", {
-				provider: id,
-				models: (provider.models ?? []).length,
-				baseUrl: provider.baseUrl ?? "",
-			});
-		}
-		logInfo("models.json installed", {
-			path: join(agentDir, "models.json"),
-			providers: count,
-			backup: "kept alongside",
-		});
-		if (!termux && modelsOut !== join(scriptDir, "models.json")) {
-			refreshCommittedSnapshot(modelsOut, scratch);
-		}
 	}
-} else if (
-	!existsSync(join(agentDir, "models.json")) &&
-	existsSync(join(scriptDir, "models.json"))
-) {
-	copyFileSync(join(scriptDir, "models.json"), join(agentDir, "models.json"));
-	logInfo("nothing generated; installed committed models.json", {
+	const installBase = requireInstallBase("models-install");
+	const installed = routePiProviders(
+		/** @type {any} */ (JSON.parse(readFileSync(modelsOut, "utf-8"))),
+		installBase,
+	);
+	assertInstalledRouted(piProviderUrls(installed), installBase, "models.json");
+	if (existsSync(join(agentDir, "models.json"))) {
+		copyFileSync(
+			join(agentDir, "models.json"),
+			`${join(agentDir, "models.json")}.bak-${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}`,
+		);
+	}
+	writeFileSync(join(agentDir, "models.json"), serializeArtifact(installed));
+	for (const [id, provider] of Object.entries(
+		providersOf(join(agentDir, "models.json")),
+	)) {
+		logInfo("provider override", {
+			provider: id,
+			models: (provider.models ?? []).length,
+			baseUrl: provider.baseUrl ?? "",
+		});
+	}
+	logInfo("models.json installed", {
 		path: join(agentDir, "models.json"),
+		providers: count,
+		backup: "kept alongside",
 	});
+	if (!termux && modelsOut !== join(scriptDir, "models.json")) {
+		refreshCommittedSnapshot(modelsOut, scratch);
+	}
 }
 
 currentStage = "opencode-config";
 
 // --- opencode config --------------------------------------------------------
-// Upstream generates the peer-mode provider overlay when asked. The consumer
+// Upstream loads the provider overlay when asked. The consumer
 // knob is upstream's documented OPENCODE_CONFIG_DIR (config.mdx "Custom
 // directory"; verified against 1.18.30): a directory loaded AFTER the global
 // config and .opencode, so its settings override theirs. NOT upstream's
@@ -579,8 +724,9 @@ currentStage = "opencode-config";
 // overlay — that copy is also the d064 stale-preserve input
 // previousLocalProvider reads — and on success install BOTH the host config
 // dir (the dir run.sh mounts rw into the sandbox) and this dir's committed
-// opencode.jsonc. The committed copy is not a SKIP_GEN fallback (opencode
-// has no SKIP_GEN path, docs/d065): it is the reviewed git diff and the next
+// opencode.jsonc. The two take different URL forms (docs/d070 §3): the host
+// copy is substituted to client routes and verified canonical-free, while
+// the committed copy stays the CANONICAL reviewed git diff and the next
 // run's stale-preserve input, so it refreshes on every host that runs this
 // stage, Termux included. Termux skips the stage entirely (pi-only path)
 // unless OPENCODE_CONFIG_DIR is set.
@@ -600,7 +746,7 @@ if (!termux || process.env.OPENCODE_CONFIG_DIR) {
 }
 if (ocOut && existsSync(join(scratch, "generate-opencode.mjs"))) {
 	// d063 fail closed, same as the pi generator above: a half-written
-	// overlay would leave direct baseUrls in the committed opencode.jsonc.
+	// overlay would leave a stale provider map in the committed opencode.jsonc.
 	if (!runStage(join(scratch, "generate-opencode.mjs"), [ocOut])) {
 		logError("opencode generator failed — aborting (nothing written)", {
 			script: "generate-opencode.mjs",
@@ -609,8 +755,20 @@ if (ocOut && existsSync(join(scratch, "generate-opencode.mjs"))) {
 	}
 
 	// Install 1 — the host config dir, the sandbox's mount source (d065).
+	// d070 §3: route-form substitution + zero-canonical verification happen
+	// HERE; the committed copy below keeps the canonical scratch file.
 	// Best-effort .bak insurance, same as the settings/models installs above:
 	// generated ephemeral files, not a preservation contract.
+	const ocBase = requireInstallBase("opencode-config");
+	const ocInstalled = routeOpenCodeProviders(
+		/** @type {any} */ (JSON.parse(readFileSync(ocOut, "utf-8"))),
+		ocBase,
+	);
+	assertInstalledRouted(
+		openCodeProviderUrls(ocInstalled),
+		ocBase,
+		"opencode.json",
+	);
 	mkdirSync(ocHostDir, { recursive: true });
 	const ocHost = join(ocHostDir, "opencode.json");
 	if (existsSync(ocHost)) {
@@ -619,7 +777,7 @@ if (ocOut && existsSync(join(scratch, "generate-opencode.mjs"))) {
 			`${ocHost}.bak-${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}`,
 		);
 	}
-	copyFileSync(ocOut, ocHost);
+	writeFileSync(ocHost, serializeArtifact(ocInstalled));
 	logInfo("opencode config installed", { path: ocHost });
 
 	// Install 2 — the committed snapshot (warn-only on a read-only dir, like

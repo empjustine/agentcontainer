@@ -15,7 +15,7 @@
  *
  * Lineup cascade: route listing → models.dev catalog slice (d049 modality
  * gate, then the provider's filter) → an empty lineup, still emitted
- * (docs/d063 §3). Peer-route mechanics: docs/d027. Merge/write contract:
+ * (docs/d063 §3). Route mechanics: docs/d027. Merge/write contract:
  * lib/artifact.mjs.
  *
  * GOTCHA: opencode's V1 config puts the provider map under the top-level key
@@ -41,10 +41,10 @@ import {
 	logWarn,
 	modalitiesEligible,
 	modelsDevCatalogPath,
-	peerBaseUrls,
-	peerProviderUrl,
+	reverseProxyBaseUrls,
+	providerRouteUrl,
 	probeCandidates,
-	probePeerRoutes,
+	probeRoutes,
 	scriptDir,
 	setLogTool,
 	supportTier,
@@ -92,21 +92,23 @@ const CLOUD_PROVIDERS = Object.fromEntries(
 );
 
 /**
- * Peer candidates (docs/d027): vault-sourced peer bases for the LOCAL
- * llama-swap path-route and the CLOUD path-routes. Supports multi-hop proxy
- * chains (PEER_BASE_URLS comma/newline delimited). No localhost candidates —
- * the LAN :8080 (proxy) and :8101 (llama-swap) listen addresses are not
- * routable from outside the serving host (docs/d022).
+ * Reverse-proxy base candidates (docs/d027): vault-sourced bases for the
+ * LOCAL llama-swap route and the CLOUD route probes. Supports multi-hop
+ * proxy chains (REVERSE_PROXY_BASE_URLS comma/newline delimited). No
+ * localhost candidates — the LAN :8080 (proxy) listen address is not
+ * routable from outside the serving host (docs/d022). Emitted URLs never
+ * come from this list (they are canonical, docs/d070): the candidates exist
+ * for PROBES only.
  * @type {readonly string[]}
  */
-const CLOUD_PEER_CANDIDATES = peerBaseUrls();
-const LOCAL_SOURCE_CANDIDATES = CLOUD_PEER_CANDIDATES.map((base) =>
-	peerProviderUrl(base, "llama-swap"),
+const REVERSE_PROXY_BASE_CANDIDATES = reverseProxyBaseUrls();
+const LOCAL_SOURCE_CANDIDATES = REVERSE_PROXY_BASE_CANDIDATES.map((base) =>
+	providerRouteUrl(base, "llama-swap"),
 );
 
 /**
  * Classify a LOCAL llama-swap catalog model id (docs/d027: cloud ids are no
- * longer classified — each cloud provider's peer path-route returns its own
+ * longer classified — each cloud provider's route returns its own
  * models).
  * @param {string} id
  * @returns {ProviderKind|null}
@@ -126,11 +128,11 @@ function classify(id) {
 
 /**
  * Per-provider scoping of the override's model list (same slices the pi-side
- * generator applies — see its PEER_MODEL_FILTERS): openrouter keeps the
+ * generator applies — see its MODEL_SCOPES): openrouter keeps the
  * ":free" slice; opencode / opencode-go take everything their route serves.
  * @type {Record<string, ((id: string) => boolean)|undefined>}
  */
-const PEER_MODEL_FILTERS = {
+const MODEL_SCOPES = {
 	openrouter: (id) => id.endsWith(":free"),
 };
 
@@ -156,43 +158,43 @@ function catalogModels(id, filter) {
 }
 
 /**
- * Decide one cloud provider's route URL and lineup (docs/d063): the probe
- * picks the lineup source — the route's own listing, else the models.dev
- * catalog slice — and the URL is the probed route or the first proxy
- * candidate when nothing proved usable. Superficial rows (docs/d064) never
- * probe: catalog slice, first candidate.
+ * Resolve one cloud provider's emitted URL and lineup (docs/d063 + d070):
+ * the probe picks the lineup source — the route's own listing, else the
+ * models.dev catalog slice — and the URL is always the CANONICAL
+ * fact-table upstream (the install substitutes the route). Superficial rows
+ * (docs/d064) never probe: catalog slice, canonical URL either way.
  * @param {string} id
- * @returns {Promise<{ routeUrl: string, models: ModelEntry[] }>}
+ * @returns {Promise<{ providerUrl: string, models: ModelEntry[] }>}
  */
 async function resolveCloudProvider(id) {
 	const cfg = CLOUD_PROVIDERS[id];
-	const filter = PEER_MODEL_FILTERS[id];
+	const filter = MODEL_SCOPES[id];
 	if (supportTier(id) === "superficial") {
 		logInfo(
 			"superficial provider — not route-probed (docs/d064), catalog lineup",
 			{ provider: id },
 		);
 		return {
-			routeUrl: peerProviderUrl(CLOUD_PEER_CANDIDATES[0], id),
+			providerUrl: cfg.baseUrl,
 			models: catalogModels(id, filter),
 		};
 	}
-	const route = await probePeerRoutes(
-		CLOUD_PEER_CANDIDATES,
+	const route = await probeRoutes(
+		REVERSE_PROXY_BASE_CANDIDATES,
 		id,
 		bearerHeaders(process.env[cfg.apiKeyEnv]?.trim()),
 	);
 	if (!route) {
-		logWarn("no usable peer path-route — proxy reroute at the first candidate", {
+		logWarn("no usable route — lineup degrades to the catalog (docs/d063)", {
 			provider: id,
 		});
 	}
-	// d063 §1: a dead/absent route never reverts to a direct URL — the first
-	// candidate is proxy-only too, only the lineup degrades to the catalog.
-	const routeUrl = route?.url ?? peerProviderUrl(CLOUD_PEER_CANDIDATES[0], id);
+	// d063 §2 + d070 §4: the probe only selects the LINEUP source; the
+	// emitted URL is the canonical fact-table upstream either way.
+	const providerUrl = cfg.baseUrl;
 	const listed = (route?.entries ?? []).filter((e) => filter?.(e.id) ?? true);
 	if (listed.length > 0) {
-		return { routeUrl, models: listed };
+		return { providerUrl, models: listed };
 	}
 	const models = catalogModels(id, filter);
 	if (models.length > 0) {
@@ -201,33 +203,34 @@ async function resolveCloudProvider(id) {
 			models: models.length,
 		});
 	} else {
-		logWarn("no lineup source resolved — proxy reroute with an empty lineup", {
+		logWarn("no lineup source resolved — empty lineup", {
 			provider: id,
 		});
 	}
-	return { routeUrl, models };
+	return { providerUrl, models };
 }
 
 /**
- * Build an opencode provider entry routing `label`'s models through the
- * provider's peer host-form route on the cloud router (docs/d047):
- * baseURL is `<peerBase>/<upstream-host><base-path>`, auth is the provider's
+ * Build an opencode provider entry for `label`'s models on the cloud router
+ * (docs/d047): baseURL is the provider's URL — CANONICAL fact-table upstream
+ * in the committed artifact (docs/d070), rewritten to the client route at
+ * install —, auth is the provider's
  * REAL key env (the proxy forwards credentials untouched — it performs
  * none), and the model ids are the provider's own bare ids — from the
  * route's `/models` listing when it served one, else the catalog slice
  * (docs/d063).
  * @param {string} label
- * @param {string} routeUrl the provider's reverse-proxy path-route
+ * @param {string} providerUrl the provider's canonical upstream URL
  * @param {string} apiKeyEnv the provider's real key env (shared fact table)
  * @param {ModelEntry[]} models
  * @returns {OpenCodeProvider}
  */
-function peerProvider(label, routeUrl, apiKeyEnv, models) {
+function routedProvider(label, providerUrl, apiKeyEnv, models) {
 	return {
-		name: `Peer: ${label}`,
+		name: `Proxy: ${label}`,
 		env: [apiKeyEnv],
 		npm: "@ai-sdk/openai-compatible",
-		options: { baseURL: routeUrl },
+		options: { baseURL: providerUrl },
 		models: Object.fromEntries(models.map((e) => [e.id, { name: e.id }])),
 	};
 }
@@ -257,12 +260,11 @@ function previousLocalProvider(path) {
 async function main() {
 	const out = process.argv[2] ?? join(scriptDir, "opencode.jsonc");
 
-	// d063 fail closed: every emitted URL is a reverse-proxy route, so a
-	// vault peer base is REQUIRED (SKIP_GEN=1 at the generate.mjs level is
-	// the sanctioned bypass for hosts without vault env).
-	if (!CLOUD_PEER_CANDIDATES.length) {
+	// d063 fail closed (d070 §6 removed SKIP_GEN): route probes need a
+	// configured reverse-proxy base, so generation refuses loudly without one.
+	if (!REVERSE_PROXY_BASE_CANDIDATES.length) {
 		logError(
-			"no PEER_BASE_URL / PEER_BASE_URLS — proxy-only generation cannot proceed (docs/d063); load the vault env or set SKIP_GEN=1",
+			"no REVERSE_PROXY_BASE_URLS — proxy-only generation cannot proceed (docs/d063); load the vault env via ./lib/environment.sh",
 		);
 		process.exit(1);
 	}
@@ -288,12 +290,12 @@ async function main() {
 				// its reroute.
 				(err) => {
 					logWarn(
-						"cloud resolution threw — proxy reroute with an empty lineup",
+						"cloud resolution threw — canonical base with an empty lineup",
 						{ provider: id, error: err },
 					);
 					return {
 						id,
-						routeUrl: peerProviderUrl(CLOUD_PEER_CANDIDATES[0], id),
+						providerUrl: CLOUD_PROVIDERS[id].baseUrl,
 						models: /** @type {ModelEntry[]} */ ([]),
 					};
 				},
@@ -303,10 +305,10 @@ async function main() {
 
 	for (const r of cloudResults) {
 		if (r.status !== "fulfilled") continue; // rejection already handled + logged above
-		const { id, routeUrl, models } = r.value;
-		providers[id] = peerProvider(
+		const { id, providerUrl, models } = r.value;
+		providers[id] = routedProvider(
 			CLOUD_PROVIDERS[id].label,
-			routeUrl,
+			providerUrl,
 			CLOUD_PROVIDERS[id].apiKeyEnv,
 			models,
 		);
@@ -319,13 +321,13 @@ async function main() {
 			// The LOCAL llama-swap face keeps its own OpenAI surface (/v1) and
 			// its model-id routing — llama-swap is still what swaps GGUFs
 			// (docs/d027) — and llama-swap's own bearer key guards it. The
-			// probed baseUrl is already the funnel's llama-swap route (the
-			// stable logical name, not a loopback host — docs/d047);
-			// appending /v1 gives <peerBase>/llama-swap/v1, which the proxy
-			// forwards to the local instance as /v1/… (docs/d047).
-			providers.local = peerProvider(
+			// EMITTED URL is canonical (docs/d070): the fact table's llama-swap
+			// upstream (the tsnet serve hostname, rooted — no path prefix) plus
+			// /v1, which install rewrites to `<base>/<host>/v1`. The probe above
+			// only picked the lineup.
+			providers.local = routedProvider(
 				"Local LLM",
-				`${local.baseUrl}/v1`,
+				`${CLOUD_PROVIDER_FACTS["llama-swap"].baseUrl}/v1`,
 				"PEER_API_KEY",
 				models,
 			);

@@ -106,7 +106,7 @@ ARG[HF_TOKEN]
 ARG[--env]
 ARG[GEMINI_API_KEY]
 ARG[--env]
-ARG[PEER_BASE_URL]
+ARG[REVERSE_PROXY_BASE_URLS]
 ARG[--workdir]
 ARG[<TMP>/src/a workspace with spaces]
 ARG[localhost/empjustine/coding-agent:latest]
@@ -130,7 +130,7 @@ case_coding_agent() {
 	workload_ro_if    "$root/README.md"  /opt/present
 	workload_ro_if    "$root/nope"       /opt/absent
 	workload_env      CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY OPENROUTER_API_KEY
-	workload_env      OPENCODE_API_KEY HF_TOKEN GEMINI_API_KEY PEER_BASE_URL
+	workload_env      OPENCODE_API_KEY HF_TOKEN GEMINI_API_KEY REVERSE_PROXY_BASE_URLS
 	workload_workdir  "$tmp/src/a workspace with spaces"
 	workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
 	_render_workload

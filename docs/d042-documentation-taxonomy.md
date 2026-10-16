@@ -34,7 +34,7 @@ the README documentation index is grouped by them:
 | type | role | contents |
 |------|------|----------|
 | `requirements` | the BRD — what the system should do, normative | `docs/requirements.md` (renamed from root `goal-and-requirements.md`, absorbs the per-module requirement statements) |
-| `reference` | the systems reference — structure, components, matrices, runbooks, as the system IS | `docs/architecture.md` (the map), `container-tooling.md`, `environments-and-peer-variants.md`, `coding-harness-persistence.md`, `hf-cache-upkeep.md`, `refresh-local-llm-manifest.md`, `gguf-vram-fit-estimates.md`, `gguf-model-tooling.md`, per-folder `README.md` |
+| `reference` | the systems reference — structure, components, matrices, runbooks, as the system IS | `docs/architecture.md` (the map), `container-tooling.md`, `environments-and-variants.md`, `coding-harness-persistence.md`, `hf-cache-upkeep.md`, `refresh-local-llm-manifest.md`, `gguf-vram-fit-estimates.md`, `gguf-model-tooling.md`, per-folder `README.md` |
 | `design` | TDD — implementation rationale and mechanics not graspable from source at a glance | per-module `DESIGN.md` (renamed from `SPEC.md`), `llm-reverse-proxy/DESIGN.md` (split out of its README), `scoped-models-and-proxy-overrides.md` (the distilled rationale for scoped models + baseUrl overrides), `summarized-thinking.md` |
 | `research` | one-time findings/audits — the record of an investigation, not a statement of current behavior | `docs/archive/*` + the anchored strays below |
 | `decision` | the append-only decision log | `docs/d0XX-*.md` (the d0XX prefix IS the marker; their per-record `type:` fields — architecture-design/bugfix/task-spec — are record flavors, not this taxonomy, and stay untouched) |

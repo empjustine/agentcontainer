@@ -60,13 +60,13 @@ capabilities worth using** there, so generation (no container backend, no GPU)
 emits no GGUF layer. What runs on termux is `coding-agent/` (usage) plus a
 native termux build of `llm-reverse-proxy/` serving the cloud relay path — the
 environment matrix in
-[environments-and-peer-variants.md](environments-and-peer-variants.md) is
+[environments-and-variants.md](environments-and-variants.md) is
 authoritative. The former native llama-swap serving variant is retired: see
 the [termux-serving.md](termux-serving.md) archived banner for that history.
 
-### small-cloud-vm (peer-relay usage)
+### small-cloud-vm (cloud-relay usage)
 
-Cloud VMs serve `llm-reverse-proxy/` — the cloud peer relay that replaced the
+Cloud VMs serve `llm-reverse-proxy/` — the cloud relay that replaced the
 former peers-only llama-swap mode — and run `coding-agent/` against the
 config generated on a capable host (the run-scripts section below).
 
@@ -220,7 +220,7 @@ description API (`workload-render.jq` emits podman/docker dialects keyed on
 | API piece | bwrap translation | Verdict |
 |---|---|---|
 | `workload_image` | no OCI concept — a rootfs dir must be assembled by hand (`--ro-bind / `--bind` per tree) or the unified-vulkan image unpacked to disk first | **structural blocker** — loses the pull/build/layer story `build.sh` owns |
-| `workload_publish` | none: bwrap has `--unshare-net` but no slirp4netns/pasta port forwarding | **hard blocker** — llama-swap must publish LAN 8101 (docs/d027) |
+| `workload_publish` | none from bwrap itself — prior art publishes via host `socat` ⇄ unix-socket bridges (fence) or from an in-ns proxy/firewall supervisor under slirp4netns (`microsoft/mxc`) | **still the blocking row for a dialect** — llama-swap must publish LAN 8101 (docs/d027); bridges make it feasible-not-free (surveyed in [workload-sandboxing-prior-art.md](workload-sandboxing-prior-art.md)) |
 | `workload_detach` / `workload_logs` / `workload_rm` | no daemon, no named workloads: bwrap is a foreground process; needs setsid+pidfile, stdout redirected to a file for `logs`, and a rm-by-pidfile | feasible but re-implements what podman/docker give for free |
 | `workload_ro`/`workload_rw` | `--ro-bind` / `--bind` (+ `--*-try` variants) | maps 1:1; SELinux `z,U` mount options have no equivalent (bwrap does not relabel; `--exec-label` only sets the process label) — a rootless-podman-on-SELinux host is exactly where this repo runs |
 | `workload_gpu` (`/dev/kfd`, `/dev/dri/renderD*`) | `--dev-bind` per node | maps 1:1; no device-cgroup controller — access control only via the userns |
@@ -237,14 +237,20 @@ serving path (`llm-local-inference/run.sh`) depends on. (Prior art found
 since this verdict was written softens the second blocker only: fence and
 srt publish from an isolated netns via per-port unix-socket/socat bridges,
 not from bwrap itself — surveyed in
-[workload-sandboxing-prior-art.md](workload-sandboxing-prior-art.md).) Supporting bwrap
+[workload-sandboxing-prior-art.md](workload-sandboxing-prior-art.md).
+Stronger still: `microsoft/mxc` (mirrored) uses unprivileged bwrap as its
+**default Linux backend**, with slirp4netns + an in-namespace iptables
+supervisor implementing the contract's directional deny-by-default network
+policy — production evidence the policy half is closable without root or a
+daemon, while the LAN-publish row above remains the reason podman stays for
+serving.) Supporting bwrap
 therefore means either (a) giving up the unified image (hand-assembled
 rootfs) and LAN publishing, or (b) keeping podman/docker for serving and
 adding bwrap only as a restricted no-net backend for non-serving workloads.
 The mirror set needed for that work is present
 (`github/containers/bubblewrap`, `github/containers/crun`); none of the
 runners currently needs it — the Termux leaf that would have benefited most
-was removed with the peers handoff (see module SPECs).
+was removed with the relay handoff (see module SPECs).
 
 ## Run scripts
 
@@ -276,7 +282,7 @@ layers, and only the layers that work on the current host land in `config.d/`
   keys or with failing fetches are skipped independently, and a stale output
   is removed when none answer.
 - `22-peer-gfx1030.yaml` — only on hosts that do NOT serve local models
-  natively; probes `$PEER_BASE_URL`, then the bazzite tailscale URL (the
+  natively; probes `$REVERSE_PROXY_BASE_URLS`, then the bazzite tailscale URL (the
   world-visible FQDN funnel — llm-reverse-proxy on LAN :8080, whose
   `/llama-swap` route points at the local instance) for a live
   local-inference instance. localhost candidates are NOT probed (the legacy
@@ -363,5 +369,5 @@ Either way the instance publishes LAN port **8101** (`HOST_PORT` overrides);
 this is the **local llama-swap** endpoint; `llm-reverse-proxy` is LAN 8080.
 
 - **local llama-swap** (`config.d/10-local-llm-inference.yaml`): local inference only, GPU container hosts only
-- **cloud peer relay** (`llm-reverse-proxy/`): `/<providerId>` path prefixes, byte-for-byte
+- **cloud relay** (`llm-reverse-proxy/`): `/<providerId>` path prefixes, byte-for-byte
   proxying to each provider's real base URL (docs/d027)

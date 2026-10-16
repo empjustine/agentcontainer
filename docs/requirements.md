@@ -26,7 +26,7 @@ time turns a host's position on that matrix into its config.
   sandbox runtimes enforce.
 - **The host matrix** (which host gets which capability) is systems-reference
   material, not a requirement: see
-  [environments-and-peer-variants.md](environments-and-peer-variants.md).
+  [environments-and-variants.md](environments-and-variants.md).
 - **How each requirement was implemented** is decided per-change in the
   append-only decision log (`docs/d0XX-*.md`) and explained by the systems
   reference ([architecture.md](architecture.md)) and per-module design docs.
@@ -148,7 +148,7 @@ time turns a host's position on that matrix into its config.
   live config is overwrite-by-design (FR-U5), and build idempotence comes
   from caches, not presence-skips (docs/d041).
 - **NFR-2** — Loud failures over silent fallbacks: missing artifacts, stale
-  paths, a failing vault, and unreachable peers surface as errors at the
+  paths, a failing vault, and unreachable upstreams surface as errors at the
   step that owns them. (A successful-but-EMPTY vault is the one deliberate
   exception — the chain no longer detects it, docs/d046; consumers'
   tolerate-missing-keys contract covers it downstream.)

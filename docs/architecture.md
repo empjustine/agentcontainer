@@ -55,10 +55,10 @@ reaching into a sibling *runner* folder does.
   `config.d/00-general.yaml` + `config.d/10-local-llm-inference.yaml` + its
   `.paths` staleness manifest, emitted only on GPU-capable container hosts;
   snapshot paths are baked at generation — `docs/d029` option B), plus
-  `llama-swap-core.json`, `config.d/` and `run.sh`. Cloud/remote peer
-  relaying is NOT here — it moved to `llm-reverse-proxy/` (the raw passthrough
-  proxy); the peer generators, Termux build/serve, and peers-only mode were
-  removed with that handoff.
+  `llama-swap-core.json`, `config.d/` and `run.sh`. Cloud/remote relaying is
+  NOT here — it moved to `llm-reverse-proxy/` (the raw passthrough
+  proxy); the relay layer generators, Termux build/serve, and peers-only mode
+  were removed with that handoff.
 - `coding-agent/` is the **pi workload baseline generator**: it owns the
   `Containerfile`/`config.toml` image definition and the canonical
   `settings.json`. Archived runners (`-cloud`, `-peer`) used to
@@ -119,8 +119,8 @@ prohibits (and what was removed):
   fallback; the refresher module lives in `coding-agent/`, docs/d039).
 - `workload-*.jq` — the jq filters behind the workload description API.
 
-The probe/facts/refresh modules that used to sit here (`peer-probe.mjs`,
-`pi-models.mjs`, `provider-facts.mjs`, `catwalk-facts.mjs`,
+The probe/facts/refresh modules that used to sit here (`route-probe.mjs`,
+then named `peer-probe.mjs` (docs/d071), `pi-models.mjs`, `provider-facts.mjs`, `catwalk-facts.mjs`,
 `refresh-models-dev.mjs`) were single-consumer and folded back into
 `coding-agent/` (docs/d039).
 
@@ -154,9 +154,9 @@ and only on hosts where generation detects a container backend + GPU devices.
 | `00-general.yaml` | globals + macros | `llm-local-inference/generate.mjs` | always |
 | `10-local-llm-inference.yaml` (+ `.paths` staleness manifest) | local GGUF `models` | `llm-local-inference/generate.mjs` (from the shared `lib/llamacpp-model-data.json`; snapshot paths baked at generation, `docs/d029` B) | container backend + GPU detected |
 
-Cloud/remote peers are NOT a config layer anymore: `llm-reverse-proxy/` (raw
+Cloud providers are NOT a config layer anymore: `llm-reverse-proxy/` (raw
 passthrough proxy) serves them. The former `peer-cloud.yaml` and
-`22-peer-gfx1030.yaml` layers — and the peer-set snapshot/rollback machinery
+`22-peer-gfx1030.yaml` layers — and the layer snapshot/rollback machinery
 they required — were removed with that handoff.
 
 (The old fixed-purpose `openai-completions-gfx1030/` / `openai-completions-peer/`

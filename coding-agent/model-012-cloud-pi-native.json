@@ -102,6 +102,13 @@
           ]
         },
         {
+          "id": "gemini-4-argon",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "gemini-flash-latest",
           "reasoning": true,
           "input": [
@@ -149,231 +156,272 @@
           ]
         },
         {
-          "id": "devstral-2512",
+          "id": "labs-leanstral-1-5",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "devstral-latest",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "devstral-medium-2507",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "devstral-medium-latest",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "devstral-small-2505",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "devstral-small-2507",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "glm-5-2",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "labs-devstral-small-2512",
-          "reasoning": true,
-          "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "labs-leanstral-1-5-1",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "magistral-medium-latest",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "magistral-small-latest",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-14b-2512",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "ministral-14b-latest",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-3b-2512",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-3b-latest",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-8b-2512",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-8b-latest",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
-          "id": "mistral-large-2411",
+          "id": "mistral-code-fim-latest",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "mistral-large-2512",
+          "id": "mistral-code-latest",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "mistral-large-4",
+          "id": "mistral-medium",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistral-large-latest",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistral-medium-2505",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistral-medium-2508",
-          "reasoning": true,
-          "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "mistral-medium-2604",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-medium-3",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-medium-3-5",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-medium-3.5",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
           ]
         },
         {
           "id": "mistral-medium-latest",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
-          "id": "mistral-nemo",
+          "id": "mistral-moderation-2603",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "mistral-small-2506",
+          "id": "mistral-ocr-2512",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-3",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-3-0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-4",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-4-1",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-latest",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
           ]
         },
         {
           "id": "mistral-small-2603",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "mistral-small-latest",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
-          "id": "open-mistral-7b",
+          "id": "mistral-vibe-cli-fast",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-vibe-cli-latest",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-vibe-cli-with-tools",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "voxtral-mini-2602",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "open-mistral-nemo",
+          "id": "voxtral-mini-latest",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "open-mixtral-8x22b",
+          "id": "voxtral-mini-realtime-2602",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "open-mixtral-8x7b",
+          "id": "voxtral-mini-realtime-latest",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "pixtral-12b",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "pixtral-large-latest",
+          "id": "voxtral-mini-transcribe-realtime-2602",
           "reasoning": true,
           "input": [
             "text"
@@ -388,20 +436,6 @@
         },
         {
           "id": "voxtral-small-latest",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "zai-glm-5-2",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "zai-glm-5-3",
           "reasoning": true,
           "input": [
             "text"
@@ -826,13 +860,6 @@
           ]
         },
         {
-          "id": "nvidia/nemotron-3-super-120b-a12b",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "nvidia/nemotron-3-ultra-550b-a55b",
           "reasoning": true,
           "input": [
@@ -848,6 +875,13 @@
         },
         {
           "id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "nvidia/nemotron-3.5-super-vl-120b-a12b",
           "reasoning": true,
           "input": [
             "text"
@@ -1055,6 +1089,13 @@
           ]
         },
         {
+          "id": "cat-jam-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "claude-3-5-haiku",
           "reasoning": true,
           "input": [
@@ -1139,6 +1180,13 @@
           ]
         },
         {
+          "id": "claude-opus-5-5-backup",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "claude-sonnet-4",
           "reasoning": true,
           "input": [
@@ -1209,6 +1257,13 @@
           ]
         },
         {
+          "id": "deepseek-v4.1-flash-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "exo-free",
           "reasoning": true,
           "input": [
@@ -1273,6 +1328,13 @@
         },
         {
           "id": "gemini-3.8-flash",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "gemini-4-argon",
           "reasoning": true,
           "input": [
             "text"
@@ -1818,6 +1880,13 @@
           ]
         },
         {
+          "id": "nemotron-3.5-super-vl-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "north-mini-code-free",
           "reasoning": true,
           "input": [
@@ -1888,6 +1957,13 @@
           ]
         },
         {
+          "id": "test",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "trinity-large-preview-free",
           "reasoning": true,
           "input": [
@@ -1907,28 +1983,19 @@
       "baseUrl": "https://opencode.ai/zen/go/v1",
       "models": [
         {
+          "id": "cat-jam-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "claude-haiku-5-5",
           "reasoning": true,
           "input": [
             "text"
           ],
           "api": "anthropic-messages"
-        },
-        {
-          "id": "deepseek-v4-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "api": "openai-completions"
-        },
-        {
-          "id": "deepseek-v4-flash-vision-exp",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "api": "openai-completions"
         },
         {
           "id": "deepseek-v4-pro",
@@ -1945,6 +2012,20 @@
             "text"
           ],
           "api": "openai-completions"
+        },
+        {
+          "id": "gemini-4-argon-contributor",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "glm-5.1",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
         },
         {
           "id": "glm-5.2",
@@ -1980,14 +2061,6 @@
         },
         {
           "id": "gpt-6-luna",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "api": "openai-responses"
-        },
-        {
-          "id": "grok-4.5",
           "reasoning": true,
           "input": [
             "text"
@@ -2099,6 +2172,13 @@
           "api": "openai-completions"
         },
         {
+          "id": "minimax-m2.5",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "minimax-m2.7",
           "reasoning": true,
           "input": [
@@ -2129,6 +2209,13 @@
             "text"
           ],
           "api": "openai-responses"
+        },
+        {
+          "id": "omen-alpha",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
         },
         {
           "id": "qwen3.6-plus",
@@ -2177,14 +2264,7 @@
           "api": "openai-completions"
         },
         {
-          "id": "space-bunny-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "step-5-preview-free",
+          "id": "step-5-preview",
           "reasoning": true,
           "input": [
             "text"
@@ -2196,123 +2276,147 @@
       "baseUrl": "https://openrouter.ai/api/v1",
       "models": [
         {
-          "id": "apodex/apodex-1.1-mini:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "cohere/north-mini-code:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 256000,
+          "maxTokens": 256000
         },
         {
           "id": "dots-studio/dots-3-note-preview:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 512000,
+          "maxTokens": 512000
         },
         {
           "id": "google/gemma-4-26b-a4b-it:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
         },
         {
           "id": "google/gemma-4-31b-it:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "inception/mercury-decide:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
         },
         {
           "id": "liquid/lfm-2.5-2.6b:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
         },
         {
           "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 256000,
+          "maxTokens": 256000
         },
         {
           "id": "nvidia/nemotron-3-super-120b-a12b:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
         },
         {
           "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 1000000
         },
         {
           "id": "nvidia/nemotron-3.5-content-safety:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 128000,
+          "maxTokens": 128000
         },
         {
           "id": "nvidia/nemotron-3.5-lightning:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 1000000
+        },
+        {
+          "id": "nvidia/nemotron-3.5-super-vl:free",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 1000000
         },
         {
           "id": "poolside/laguna-s-2.1:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
         },
         {
           "id": "poolside/laguna-xs-2.1:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
-        },
-        {
-          "id": "respan/span-01-lite:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
         },
         {
           "id": "thinkingmachines/inkling-small:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 1048576
         },
         {
           "id": "thinkingmachines/inkling:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 1048576
         }
       ]
     }

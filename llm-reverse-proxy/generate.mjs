@@ -12,14 +12,11 @@
  *      paths belong to the client, which is what lets multi-base hosts like
  *      opencode vs opencode-go share one row).
  *   2. the lib/cloud-providers.mjs fact table (docs/d024) — the hand-added
- *      rows the catalogs never knew (cline-pass, hyper, inferx) plus the
- *      pi-native set.
- *   3. the llama-swap loopback (env LLAMA_SWAP_BASE_URL, default
- *      http://127.0.0.1:8101) — the ONE alias row, keyed by the stable route
- *      name `llama-swap` instead of host:port so client configs never put a
- *      loopback address in the request path. Every other row satisfies
- *      key === hostKey(value); the drift check below re-states this.
- *   4. two static metadata passthroughs, `models.dev` and `catwalk`
+ *      rows the catalogs never knew (cline-pass, hyper, inferx), the
+ *      pi-native set, and the local llama-swap farm (since d070 a plain
+ *      row keyed by its tsnet serve hostname like every other host — the
+ *      former `llama-swap` loopback alias is gone).
+ *   3. two static metadata passthroughs, `models.dev` and `catwalk`
  *      (public, no keys, never drift-checked against the catalogs).
  *
  * pi-ai rows with NO single fixed upstream base (per-region bedrock,
@@ -29,10 +26,10 @@
  *
  * The address contract this table serves (docs/d047): a client names the
  * upstream HOST as the first path segment and carries the provider's full
- * base path after it — `<peerBase>/<host><base-path>` (peerProviderUrl in
- * coding-agent/peer-probe.mjs, derived from the same fact-table base URLs).
- * The ONE exception is the `llama-swap` loopback row, named by its stable
- * route name instead of `127.0.0.1:8101` (header item 3). The proxy strips
+ * base path after it — `<base>/<host><base-path>` (providerRouteUrl in
+ * coding-agent/route-probe.mjs, derived from the same fact-table base URLs,
+ * and what committed artifacts' canonical URLs become at install, docs/d070).
+ * The proxy strips
  * the route key and single-joins the rest onto the root. Routes absent from
  * the table answer the plain funnel 404; keys are deliberately NOT consulted
  * — llm-reverse-proxy performs NO credential handling.
@@ -40,7 +37,7 @@
  * Drift checking is keyed by host (docs/d047): a fact-table provider whose
  * upstream host is missing from the deployed allowHosts warns (dead host
  * route), and a deployed host no owner source claims warns (unreviewed
- * row). The `llama-swap` alias is claimed explicitly rather than derived.
+ * row).
  *
  * Overwrite semantics follow the repo-wide generator standard
  * (lib/artifact.mjs): a successful rerun atomically REPLACES the deployed
@@ -49,7 +46,7 @@
  * Usage: ./generate.sh (the standard wrapper — node_run interpreter
  * selection, same as the other environments) or node generate.mjs [out]
  *   out defaults to ./llm-reverse-proxy.json (the path run.sh serves).
- *   Env: LIB_DIR (default ../lib), LLAMA_SWAP_BASE_URL.
+ *   Env: LIB_DIR (default ../lib).
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -98,12 +95,12 @@ const out = process.argv[2] ?? join(scriptDir, "llm-reverse-proxy.json");
  * @property {string} api the primary wire dialect pi-ai speaks at baseUrl
  * @property {string} baseUrl pi-ai's built-in base URL (FULL — the HOST
  *   feeds the allowlist key, the base PATH documents the client-side form
- *   peerProviderUrl composes)
+ *   providerRouteUrl composes)
  * @property {string} apiKeyEnv env var pi resolves the provider's key from
  *   (informational — the proxy performs no credential handling)
  * @property {Record<string, string>} [otherApis] dialect → base for the
  *   provider's remaining registrations (all must share the upstream host —
- *   peerProviderUrl and d048's per-model `api` overrides handle the dialect
+ *   providerRouteUrl and d048's per-model `api` overrides handle the dialect
  *   split client-side)
  */
 
@@ -185,7 +182,7 @@ const PI_AI_PROVIDERS = Object.freeze({
 		api: "openai-completions",
 		// Four dialects against two bases (zen vs zen/v1) — all on the
 		// opencode.ai HOST, so one allowlist row covers them; the client
-		// carries its own base path (peerProviderUrl, docs/d047).
+		// carries its own base path (providerRouteUrl, docs/d047).
 		baseUrl: "https://opencode.ai/zen/v1",
 		apiKeyEnv: "OPENCODE_API_KEY",
 		otherApis: Object.freeze({
@@ -408,7 +405,7 @@ const PI_AI_NON_ROUTABLE = Object.freeze({
 // ---------------------------------------------------------------------------
 // The allowlist: owner-set hosts only (header). One row per DISTINCT
 // upstream host; the value is the host root — base paths belong to the
-// client (peerProviderUrl, docs/d047).
+// client (providerRouteUrl, docs/d047).
 // ---------------------------------------------------------------------------
 
 /** @param {string} url a full base URL
@@ -449,52 +446,16 @@ function allowHost(id, url) {
 	);
 }
 
-/**
- * The allowlist's one logical route name (docs/d047): the llama-swap loopback
- * learner is named for what it is, not for the 127.0.0.1:8101 it happens to
- * live on, so regenerating client configs never embeds a loopback host. This
- * is the ONLY row where the key is not the upstream host — the routing
- * convention's one exception, restated in the drift check below and matched
- * by peerProviderUrl on the client side.
- *
- * KNOWN ISSUE (docs/d064 §3): llama-swap routing through this route is
- * currently down from outside the host (funnel 502s); the first-class
- * stale-preserve in the pi/opencode generators keeps client lineups intact
- * until tsnet-connected proxy instances point at the internal bazzite route.
- * @type {string}
- */
-const LLAMA_SWAP_ROUTE = "llama-swap";
-
-/**
- * Add the stable-name exception row: same shape as allowHost, but keyed by a
- * logical route name rather than the upstream host.
- * @param {string} name the route name / first path segment
- * @param {string} url its full base URL
- * @returns {void}
- */
-function allowHostAlias(name, url) {
-	// A route name colliding with a real host key is the only way this row
-	// could shadow a host route; refuse and let the log surface it rather than
-	// silently re-point an unrelated provider.
-	if (allowHosts.has(name)) {
-		logWarn("allowlist alias collides with an existing row — not overwritten", {
-			alias: name,
-		});
-		return;
-	}
-	allowHosts.set(name, hostRoot(url));
-}
-
 for (const p of Object.values(PI_AI_PROVIDERS)) {
 	allowHost(p.id, p.baseUrl);
 }
+// d070 §2: llama-swap rides in as a plain fact-table row — its tsnet serve
+// hostname keys the allowlist exactly like a cloud host, so no alias row
+// and no LLAMA_SWAP_BASE_URL loopback exception survive (host state
+// precondition: the serve endpoint must exist when this config deploys).
 for (const [id, facts] of Object.entries(CLOUD_PROVIDERS)) {
 	allowHost(id, facts.baseUrl);
 }
-allowHostAlias(
-	LLAMA_SWAP_ROUTE,
-	process.env.LLAMA_SWAP_BASE_URL ?? "http://127.0.0.1:8101",
-);
 allowHost("models.dev", "https://models.dev");
 allowHost("catwalk", "https://catwalk.charm.land");
 
@@ -536,15 +497,13 @@ for (const [id, facts] of Object.entries(CLOUD_PROVIDERS)) {
 }
 for (const key of Object.keys(deployedAllowHosts)) {
 	/**
-	 * The owner set is pi-ai ∪ fact table ∪ the three hand-added rows
-	 * (passthroughs + llama-swap loopback).
+	 * The owner set is pi-ai ∪ fact table ∪ the two static passthroughs.
 	 */
 	const known =
 		Object.values(PI_AI_PROVIDERS).some((p) => hostKey(p.baseUrl) === key) ||
 		Object.values(CLOUD_PROVIDERS).some((f) => hostKey(f.baseUrl) === key) ||
 		key === hostKey("https://models.dev") ||
-		key === hostKey("https://catwalk.charm.land") ||
-		key === LLAMA_SWAP_ROUTE;
+		key === hostKey("https://catwalk.charm.land");
 	if (!known) {
 		logWarn("deployed allowHosts entry no owner source claims — drift", {
 			host: key,

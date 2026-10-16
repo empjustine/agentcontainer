@@ -16,7 +16,7 @@
  *
  * Fetching is reverse-proxy-only (docs/d063): the endpoint is addressed as a
  * host-form route over the local llm-reverse-proxy listen address and the
- * vault peer bases (relayCandidates, peer-probe.mjs) — carrying the
+ * vault-sourced reverse-proxy bases (relayCandidates, route-probe.mjs) — carrying the
  * provider's Authorization bearer when the key is present, because the proxy
  * forwards the request byte-for-byte (docs/d047) and auth-gated listings
  * (hyper) deliver nothing unauthenticated. There is no direct-endpoint leg
@@ -42,7 +42,7 @@
  * a merge layer and would silently merge raw facts into models.json.
  *
  * Import convention (docs/d023, d039): lib/ helpers resolve through $LIB_DIR
- * (`env ?? "<this dir>/../lib"`); peer-probe.mjs is a same-dir sibling.
+ * (`env ?? "<this dir>/../lib"`); route-probe.mjs is a same-dir sibling.
  */
 
 import { readFileSync, renameSync, writeFileSync } from "node:fs";
@@ -53,7 +53,7 @@ import {
 	relayCandidates,
 	tlsUnverifiable,
 	useEnvProxy,
-} from "./peer-probe.mjs";
+} from "./route-probe.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
@@ -66,7 +66,7 @@ const { CLOUD_PROVIDERS } =
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
 // Proxy-env routing for this module's own fetch (rationale: docs/d001 §1).
-// Importing peer-probe.mjs gives it for free — its module top-level calls
+// Importing route-probe.mjs gives it for free — its module top-level calls
 // useEnvProxy() and its fetches share the global dispatcher contract.
 useEnvProxy();
 setLogTool("coding-agent/provider-facts");
@@ -125,7 +125,7 @@ function factsPath(id) {
  * never touched, and the return value is the only signal.
  *
  * Reverse-proxy-only candidate chain (docs/d063): the local proxy listen
- * address, then every vault-sourced peer base candidate (multi-hop chains —
+ * address, then every vault-sourced base candidate (multi-hop chains —
  * docs/d034), each carrying the provider Authorization bearer when the key
  * is present. Fail closed on unverified TLS (NODE_TLS_REJECT_UNAUTHORIZED=0):
  * there the handshake is unauthenticated, so the key is never written to an

@@ -36,7 +36,7 @@
 		"tests/modality-allowlist.test.mjs",
 		"generate.mjs",
 		"build.mjs",
-		"coding-agent/peer-probe.mjs",
+		"coding-agent/route-probe.mjs",
 		"coding-agent/hyper-facts.mjs",
 		"coding-agent/catwalk-facts.mjs",
 		"coding-agent/refresh-models-dev.mjs",

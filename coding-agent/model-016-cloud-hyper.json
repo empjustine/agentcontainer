@@ -433,6 +433,29 @@
           }
         },
         {
+          "id": "prism",
+          "name": "Prism",
+          "reasoning": false,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 16000,
+          "cost": {
+            "input": 3.2664,
+            "output": 16.332,
+            "cacheRead": 0.32664,
+            "cacheWrite": 0
+          },
+          "compat": {
+            "supportsStore": false,
+            "supportsReasoningEffort": false,
+            "thinkingFormat": "deepseek",
+            "maxTokensField": "max_tokens"
+          }
+        },
+        {
           "id": "qwen3.7-flash",
           "name": "Qwen3.7 Flash",
           "reasoning": true,

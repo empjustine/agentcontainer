@@ -4,7 +4,7 @@ type: reference
 status: draft
 title: "Sandboxing prior art — bwrap / landlock / seccomp / cgroups / namespaces in the reference farm"
 parent: architecture
-tags: ["workload-runtime", "sandbox", "bwrap", "landlock", "seccomp", "cgroups", "prior-art"]
+tags: ["workload-runtime", "sandbox", "bwrap", "landlock", "seccomp", "cgroups", "mxc", "prior-art"]
 ---
 
 # Sandboxing prior-art survey (reference farm)
@@ -166,6 +166,99 @@ counter-evidence to our bwrap verdicts in container-tooling.md:
   same parser-shaped problem our workload_cmd words avoid by never being
   a string.
 
+## A containment SDK: microsoft/mxc
+
+Not a wrapper and not a harness config — an **embeddable multi-backend
+containment SDK** (Rust/.NET/Node, in-process backend selection; JSON
+executor binaries as the non-SDK consumption) whose stated target is exactly
+this survey's threat class: "running untrusted code (model output, plugins,
+and tools)". Nine backends behind one versioned, closed policy contract:
+Windows ProcessContainer (default) / windows_sandbox / wslc /
+isolation_session, Linux **bubblewrap (default)** / lxc / Nanvix microVM /
+Hyperlight, macOS seatbelt. The stable contract `1.0.0` is published and
+immutable; dev alphas (`1.1.0-alpha`) carry the experimental backends behind
+`--experimental`. Verified readable at
+`~/Downloads/references/github.com/microsoft/mxc.git` (bare mirror, docs/
+tree read).
+
+The contract shape reads as a design review of our own fail-closed
+generation, at the runtime layer:
+
+- **Closed + versioned + deny-by-default.** Unknown fields — and fields
+  unsupported for the selected phase — are rejected; an omitted `network`
+  section resolves to directional deny (egress, ingress, and host-loopback
+  independently default deny). The policy guide states the honesty clause
+  outright: *"an omitted section is not proof that every backend enforces a
+  restriction"* — support divergence is documented per backend (WSLc accepts
+  only all-deny or all-bridged postures, never mixed; IsolationSession must
+  set all three network actions to `"allow"` and cannot restrict networking
+  at all).
+- **Directional CIDR/port network rules, no hostname filtering.**
+  `egress.allow`/`egress.deny` rules with `to` CIDR + `except`, port/range/
+  protocol selectors; deny wins over allow. Separately,
+  `runtimeConfig.networkProxy` is a caller-managed loopback HTTP/S proxy that
+  REQUIRES egress default-deny with empty rule lists — the proxy is
+  responsible for destination filtering. MXC's own caveat is the runtime
+  twin of our route-verification stance (d070): *"a cooperative proxy
+  setting alone is not a guarantee that arbitrary direct sockets are
+  blocked"* — policy and enforcement are separate claims, both must hold.
+- **The bwrap network stack is the load-bearing prior-art finding.**
+  Network-enabled modes launch slirp4netns and run an unprivileged
+  in-namespace supervisor (caller uid, `CAP_NET_ADMIN` inside its own netns:
+  util-linux `unshare`/`nsenter` + iptables/ip6tables chains — no root, no
+  daemon at rest) that installs the same directional ruleset the contract
+  describes; ruleless default-deny degrades to plain `--unshare-net` and
+  needs none of it. The operational foot-guns are documented the way this
+  survey likes them: iptables must resolve to the **nf_tables** backend
+  (iptables-legacy opens `/run/xtables.lock` before touching tables — an
+  unprivileged supervisor on a stock host cannot take a root-owned lock, so
+  `validate` refuses such a host naming the backend rather than letting the
+  supervisor die at the first rule); slirp4netns is launched without
+  `--enable-ipv6`, so the v6 rules exist only to keep the unmatched family
+  closed, and a kernel without CONFIG_IPV6 downgrades to v4 chains with a
+  warning; the bwrap/dependency probes carry deadlines, process-group
+  SIGKILL on timeout, and cache **successes only** — a failed validation is
+  re-probed at execution time (the capability-detect discipline of our
+  `detect_workload_tool`, at finer grain).
+- **Lifecycle is an SDK surface, not a supervisor.** provision → start →
+  exec → stop → deprovision behind an opaque `ContainerId`, plus one-shot
+  create-and-run; captured / streaming / PTY I/O variants. The contrast row
+  for the orchestration survey above: podenv/quadlet persist a description
+  into the HOST's process model; mxc keeps the lifecycle in-process behind
+  typed APIs.
+- **Learning mode — the deny/audit split nobody else ships.** Two distinct
+  Windows-only capabilities that the docs insist must not be conflated:
+  `learningModeLogging` (deny-and-record: containment unchanged, denied
+  accesses become observable events) vs `permissiveLearningMode` (allow-all
+  audit: enforcement deliberately OFF). The operational answer to
+  "deny-by-default is fragile until every path is enumerated" — a candidate
+  shape if workload denial debugging ever becomes painful; our workload API
+  has no analog of either mode.
+- **MicroVM backends: the E2B-class microVM-per-call world, productized and
+  now on the farm.** Nanvix (KVM on Linux / Windows Hypervisor Platform;
+  ~100 ms spawn-to-guest, ~100 MB resident; WHP snapshot warm-start is
+  Windows-only — Linux cold-boots every run; offline builds deliberately
+  ignore any `snapshots/` shipped in the binary dir because memory images
+  are not covered by checksums — an unverified VM image must never
+  warm-boot against verified binaries). Hyperlight (Unikraft unikernel
+  restored from a warm snapshot per run, driven in-process via the
+  `hyperlight-unikraft` crate — one code path for KVM and WHP). Both
+  experimental; both contrast with d020's long-lived libvirt domain — same
+  "namespaces are not the boundary" tier, different altitude (per-call
+  in-process library vs system VM).
+
+What this means for this repo: the strongest evidence yet that
+bwrap+netns+in-namespace firewall is production-viable as a DEFAULT for
+agent-code workloads — mxc ships exactly that as its default Linux backend.
+Our container-tooling.md "hard blocker" was always about LAN *publishing*,
+not network policy, and mxc closes the policy half the way fence closes the
+publish half (supervising process, not bwrap flags). The omitted≠enforced
+honesty and the cooperative-proxy caveat are the design posture our
+fail-closed generation (d063/d070) already takes at the config layer.
+Nothing here displaces the serving verdict: mxc's Linux backends carry no
+OCI image story either (host-path mounts build the rootfs) — the row
+container-tooling.md named as the reason podman stays.
+
 ## Landlock-centric (no namespaces, no root)
 
 - `multikernel/sandlock` (Rust): Landlock (FS + net TCP + IPC) + seccomp-bpf
@@ -292,10 +385,21 @@ container-tooling.md's "backend dialects" wording already assumes.
   edge of the field).
 - `containers/crun` (the runtime crun-vm plugs), `containers/common`,
   `containers/crun`-adjacent OCR specs — present as needed substrate.
+- `microsoft/mxc` — the microVM-per-call class productized by a
+  hyperscaler and now a primary source on the farm (previously the class
+  existed here only as kern's FAQ naming E2B/Modal/Daytona + d020's
+  assessment): Nanvix microVM (KVM/WHP, ~100 ms cold start, ~100 MB
+  resident, snapshot warm-start Windows-only; offline builds refuse
+  unverified memory images) and Hyperlight (Unikraft unikernel + warm
+  snapshot, driven in-process via the `hyperlight-unikraft` crate). An
+  in-process per-call VM behind an SDK — the altitude contrast to d020's
+  long-lived libvirt domain and to firecracker-containerd's fleet
+  orchestration, same "namespaces are not the boundary" tier. (Full
+  treatment in the mxc section above.)
 - Micro-VM *orchestrators* (E2B-style agent clouds, firecracker fleets,
-  microvm.nix): **NOT on the mirror** — see the warning list; the only
-  farm traces of the micro-VM-per-call world are kern's FAQ (naming E2B/
-  Modal/Daytona as the hosted-class comparison) and d020's assessment.
+  microvm.nix): **NOT on the mirror** — see the warning list; the
+  micro-VM-per-call world itself now has a primary source
+  (`microsoft/mxc`, above) alongside kern's FAQ and `e2b-dev/runtime`.
 
 ### WARN/mirrored — the orchestration/VM-layer repositories
 
@@ -424,6 +528,14 @@ exactly the wrong complexity class for a small host).
 6. **Env sanitation (`LD_*`/`DYLD_*`) and dangerous-path protection**
    (`.git/hooks`, shell rc files, editor dirs) are table stakes in every
    harness-grade tool, on both platforms.
+7. **A closed, versioned, deny-by-default policy contract over
+   heterogeneous backends is the shipped product shape** (mxc, stable
+   `1.0.0`): unknown fields rejected, omitted network = directional deny,
+   and the docs refuse the "omitted section = enforced everywhere" lie
+   (support divergence is stated per backend). The runtime-layer twin of
+   our fail-closed generation (d063/d070); its cooperative-proxy caveat
+   ("a proxy setting alone is not a guarantee that direct sockets are
+   blocked") is the twin of our verify-the-route stance (d070).
 
 ## Overlap map: what everything can do vs what is unique
 
@@ -447,6 +559,11 @@ of that class can honestly provide it (a governor at best, kern's wording).
 | run without root | ✔ userns | ✔ userns+Landlock | ✔ (never needs it) | ✔ | ✔ | ✔ rootless | all unprivileged primitives |
 | default deny (template) profiles | ✔ settings.json | ✔ templates+`extends` | ✔ profiles | ✔ hakoniwa.d | ✔ resource profiles | ✔ (ours: layers) | static config |
 
+`microsoft/mxc` covers this whole core through its bwrap/LXC/Seatbelt
+backends (deny-by-default contract default, rootless userns, `--clearenv`
+env model, pid isolation) — treat its published policy contract as the
+core's most explicit specification.
+
 That core IS the feature set a minimal backend must deliver; everything
 below diverges. Sanity check against our API: `workload_ro`/`workload_rw`,
 `workload_env_allowlist`, `workload_hardening`, and description-driven
@@ -458,7 +575,8 @@ config cover the whole overlap core today for the container backends.
 |---|---|---|---|
 | OCI image as the unit | containers (podman/docker), kern | pull/build/layer store | none — `workload_image` + the root `build.mjs` is this story; stays the default backend |
 | daemon-less runtime, no socket at rest | kern (bwrap-family too, but no runtime) | one static binary | not needed while backend detection runs ephemerally; a third dialect would trade `workload_logs`/`workload_rm` for a pidfile machinery (assessed in container-tooling.md) |
-| domain-level network policy | srt, fence, clampdown (proxy) , sandlock (seccomp-notif) | in-netns HTTP/SOCKS proxy with unix-socket bridges; or Landlock TCP + seccomp rules | high for the container backends (they already get network from the netns — the cost only shows in a bwrap/dialect-less no-net backend, fence needed ~1 proxy + ~1 bridge helper per direction) |
+| domain-level network policy | srt, fence, clampdown (proxy), sandlock (seccomp-notif), mxc (first-party, cross-backend) | in-netns HTTP/SOCKS proxy with unix-socket bridges; Landlock TCP + seccomp rules; or an in-ns iptables firewall under slirp4netns (mxc) | high for the container backends (they already get network from the netns — the cost only shows in a bwrap/dialect-less no-net backend, fence needed ~1 proxy + ~1 bridge helper per direction, mxc an unprivileged supervisor + iptables chains) |
+| deny-audit / learning mode | mxc (`learningModeLogging` deny-and-record vs `permissiveLearningMode` allow-all audit) | OS access-check logging capability (Windows AppContainer lineage) | not exposed by the workload API — candidate shape if denial debugging ever hurts; the Landlock/seccomp stacks have no equivalent (their violation monitors are ad-hoc observers, not OS audit) |
 | per-port publish from isolated netns | fence, sandlock (`allow_bind`) | reverse unix-socket bridge / Landlock BIND_TCP | medium: a `bridge-the-port` path per backend; only worth it if serving ever leaves podman |
 | syscall filtering | kern (moby default, 35 escapes), container runtimes, sandlock, fence, srt | seccomp-bpf | free-ish via containers (already attach runtime default) ; a new filter generator is one more artifact to freeze/verify |
 | argv-level exec policy | fence, clampdown sidecar, deepseek (grants) | `SECCOMP_USER_NOTIF` supervisor + shim | boundary-ish: a supervisor process, a versioned bootstrap plan and a pidfd watcher — the most involved class on the map; the workload API currently has no surface for it (a `workload_exec_policy` would be its hook point) |
@@ -512,6 +630,12 @@ systemic gotchas repeated across the field.
 - **It is a launcher, not a runtime.** kern's FAQ names it: no lifecycle,
   no image handling, no resource profiles; a policy means re-generating
   the full bwrap CLI per command — which is exactly what srt and fence do.
+- **In-ns network policy is a supervising process, not bwrap flags.** mxc's
+  default Linux backend runs slirp4netns + an unprivileged iptables
+  supervisor inside the netns (nf_tables-backend validation, closed-family
+  IPv6 handling, successes-only probe caching — detail in the mxc section);
+  fence's variant is the proxy + unix-socket bridge pair. Both are the
+  production answer to the "no ports, no daemon" bullet above.
 
 ### Landlock (LSM)
 

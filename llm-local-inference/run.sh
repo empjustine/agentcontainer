@@ -2,7 +2,7 @@
 # run.sh — llama-swap launcher for LOCAL GGUF inference (container hosts only;
 # podman/docker via the declarative sandbox API).
 #
-# Cloud/remote peer relaying is served by ../llm-reverse-proxy — this launcher
+# Cloud/remote relaying is served by ../llm-reverse-proxy — this launcher
 # runs the single llama-swap instance that owns local llama.cpp serving.
 #
 # Port model (docs/d027): llama-swap publishes LAN port

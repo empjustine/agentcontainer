@@ -2,13 +2,13 @@
 id: environments
 type: reference
 status: draft
-title: "Deployment environments and peer variants"
+title: "Deployment environments and variants"
 parent: goal
 references: ["architecture", "llm-local-inference", "coding-agent"]
 tags: ["environments", "matrix"]
 ---
 
-# Deployment environments and peer variants
+# Deployment environments and variants
 
 This repo targets several distinct deployment environments. Environments arrive
 with different capabilities (GPU or none, container runtime or none, cloud
@@ -45,15 +45,15 @@ GPU host (local inference only) — two serving processes, one concern each (doc
   `.paths` staleness manifest; snapshot paths baked at generation, docs/d029);
   `run.sh` launches the `unified-vulkan` image with GPU
   passthrough + the HF cache on LAN port **8101** (container 8080).
-  llama-swap serves the LOCAL catalog and nothing else — its peer/proxy
-  machinery is no longer exercised.
+  llama-swap serves the LOCAL catalog and nothing else — its `peers`/proxy
+  config is no longer exercised.
 - `llm-reverse-proxy/` — the simplified cloud router (root `build.sh` +
   `generate.sh` + `run.sh`, LAN **8080**, host networking):
   `/<providerId>` path prefixes forwarded byte-for-byte to each provider's
   real base URL (docs/d027), plus the `llama-swap` route pointing back at
   the local instance on loopback. This is the world-visible face — the
   tailscale funnel serves the `<funnel-id>` route to this port — for this
-  host's own coding agent and for external/peer clients alike.
+  host's own coding agent and for external clients alike.
 
 **Port model (all hosts):** ONE front. The tailscale funnel serves the
 whole `<uuid>` route to llm-reverse-proxy on host port **8080** (normal
@@ -63,15 +63,15 @@ model-id routing — the loopback hop never leaves the host),
 `/<providerId>` → each cloud provider's real base URL. llama-swap holds
 LAN **8101**. The legacy local-inference port **18080** is **deprecated**
 with the two-instance squash — nothing listens on it, and code that still
-peers `localhost:18080` must use the funnel base URL (`$PEER_BASE_URL`).
+probes `localhost:18080` must use the funnel base URL (`$REVERSE_PROXY_BASE_URLS`).
 
 The coding agent (`coding-agent/`) uses local models via the llama-swap
 face and cloud providers via the llm-reverse-proxy face (ALWAYS via the
 proxy — the generators' proxy-only cascade, docs/d063, retired the
-direct-first one); both faces are also the unified peer endpoint for
-external/peer clients. 
+direct-first one); both faces are also the unified endpoint for
+external clients.
 
-### termux (peer-only serving)
+### termux (funnel-only serving)
 Hostname `<serial>.sn.mynetname.net` (a Synology/`mynetname` DDNS name — put your
 own here). SoC: **EN7562CT** (ARM32v5, 512 MB RAM, 128 MB flash). Resource-constrained host (a phone/router under Termux). It **cannot run the
 `llm-local-inference` llama-swap container** at all — Termux has no usable
@@ -90,28 +90,29 @@ via a **native termux build of llm-reverse-proxy** (compiled for the device).
   (lib/cloud-providers.mjs, docs/d027): one path prefix per provider,
   upstream = the provider's FULL real base URL.
   The proxy injects no keys; clients (the coding agent on this host, or
-  remote peers through the funnel) carry the provider keys themselves.
+  remote clients through the funnel) carry the provider keys themselves.
   See [termux-serving.md](termux-serving.md) for the map of where the
   termux serving documentation now lives.
 
-### wsl2 (nonfree-world, peer-only usage)
+### wsl2 (nonfree-world, funnel-only usage)
 No fixed hostname (dynamic). Kernel: `6.18.33.2-microsoft-standard-WSL2`. WSL2 under rootful docker with **no direct cloud access**, so the coding agent
-only ever talks to a peer endpoint. `coding-agent/` covers this via static
+only ever talks through the funnel. `coding-agent/` covers this via static
 config (no Infisical-backed generation; a static pi `settings.json` +
 `models.json`/`opencode.jsonc` that override the built-in providers with
-their peer path-routes — `baseUrl` hardcoded to `<peerBase>/<providerId>`,
+their reverse-proxy path-routes — `baseUrl` hardcoded to `<base>/<providerId>`,
 docs/d027; cloud providers carry their own key env references, which pi
 resolves from the env at request time — the proxy forwards them untouched).
 
 - **Environment** — `PEER_API_KEY` (llama-swap's local bearer only) /
-  `PEER_BASE_URL` and the per-provider keys (`OPENROUTER_API_KEY`,
+  `REVERSE_PROXY_BASE_URLS` and the per-provider keys (`OPENROUTER_API_KEY`,
   `OPENCODE_API_KEY`, `CLINE_API_KEY`, `HYPER_API_KEY`, `GEMINI_API_KEY`,
   …), exported into the process environment (Infisical via lib/environment.sh,
   or exported by hand). No `.env` file is read anywhere in the repo.
-  `PEER_BASE_URL`/`PEER_BASE_URLS` are read by the generator's peer probing
-  (`peer-probe.mjs`) and baked into the provider `baseUrl` overrides; `run.sh`
+  `REVERSE_PROXY_BASE_URLS` is read by the
+  generator's route probing (`route-probe.mjs`) and baked into the provider
+  `baseUrl` overrides; `run.sh`
   does not forward them into the sandbox (docs/d056).
-- **Serving** (`llm-reverse-proxy/`): the peers-only cloud relay
+- **Serving** (`llm-reverse-proxy/`): the cloud relay
   (root `./build.sh && ./generate.sh && ./llm-reverse-proxy/run.sh`), as on
   the other non-GPU hosts.
 
@@ -121,7 +122,7 @@ small-cloud-vm-style docker through the same `workload_*` description: `workload
 podman, and just `--user uid:gid` on rootful docker; SELinux relabeling is
 automatic (`:z,U` on podman, `:z` on docker) with no per-script flags.
 
-### small-cloud-vm (small cloud VM, peer-only serving)
+### small-cloud-vm (small cloud VM, funnel-only serving)
 The host only
 relays cloud providers. The relay is llm-reverse-proxy — one static Go binary,
 ~13 MB RSS, no model routing and no secrets, so the 1 GB budget is not a
@@ -132,13 +133,13 @@ constraint.
   generated from the shared fact table (docs/d027) and the proxy listens on
   LAN `${HOST_PORT:-8080}` (host-network container or native binary).
 - **Usage** (`coding-agent/`): static provider config pointing the agent at
-  the peer path-routes.
+  the reverse-proxy path-routes.
 - **Keys**: the proxy injects nothing — clients carry the provider keys
   (`OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `CLINE_API_KEY`,
   `HYPER_API_KEY`, `GEMINI_API_KEY`, …) themselves, from Infisical via
   lib/environment.sh.
 
-This is the peers-only deployment documented as a first-class environment —
+This is the relay-only deployment documented as a first-class environment —
 the realistic option for hosts that can't afford the `unified-vulkan` image
 or the local GPU/VRAM (local-inference generation simply fails there — there
 is no peers-only llama-swap mode anymore).

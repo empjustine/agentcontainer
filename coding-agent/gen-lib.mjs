@@ -9,7 +9,7 @@
  * docs/d023.
  *
  * This module is staged next to the generators (plus its coding-agent/
- * siblings peer-probe.mjs, provider-facts.mjs, catwalk-facts.mjs and
+ * siblings route-probe.mjs, provider-facts.mjs, catwalk-facts.mjs and
  * refresh-models-dev.mjs — docs/d039) and a copy of lib/ (see generate.sh),
  * and mounted into the container by run.sh — both lists must carry them.
  * lib/ imports resolve through $LIB_DIR; the coding-agent/ siblings import
@@ -23,12 +23,12 @@ import { fileURLToPath } from "node:url";
 import {
 	bearerHeaders,
 	fetchModelEntries,
-	peerBaseUrl,
-	peerBaseUrls,
-	peerProviderUrl,
+	reverseProxyBaseUrl,
+	reverseProxyBaseUrls,
+	providerRouteUrl,
 	probeCandidates,
-	probePeerRoutes,
-} from "./peer-probe.mjs";
+	probeRoutes,
+} from "./route-probe.mjs";
 
 export { getCatwalkModels, refreshCatwalkFacts } from "./catwalk-facts.mjs";
 export { loadProviderFacts, refreshProviderFacts } from "./provider-facts.mjs";
@@ -52,11 +52,11 @@ export const { writeArtifact, writeJsonArtifact } = artifact;
 export {
 	bearerHeaders,
 	fetchModelEntries,
-	peerBaseUrl,
-	peerBaseUrls,
-	peerProviderUrl,
+	reverseProxyBaseUrl,
+	reverseProxyBaseUrls,
+	providerRouteUrl,
 	probeCandidates,
-	probePeerRoutes,
+	probeRoutes,
 };
 export const {
 	CLOUD_PROVIDERS,
@@ -68,16 +68,16 @@ export const {
  * pi shaping (folded in from the former lib/pi-models.mjs — docs/d039): shape
  * probe results / catalog records into pi `models.json` entries. The pi
  * generator's local and cloud stages share this shaping: llama-swap serves
- * the SAME metadata shape for local GGUF and for cloud peers routed through
- * it (`meta.llamaswap` on `/v1/models`), so the RawModelEntry → PiModel
+ * the SAME metadata shape for local GGUF and for cloud providers routed
+ * through it (`meta.llamaswap` on `/v1/models`), so the RawModelEntry → PiModel
  * mapping and the provider wrapper (compat block, `/v1` normalization, the
  * `$PEER_API_KEY` reference) are one implementation (docs/d024).
  */
 
 // Shared /models shapes — the types live next to the probe toolkit.
 // Shared /models shapes — the types live next to the probe toolkit.
-/** @typedef {import("./peer-probe.mjs").RawModelEntry} RawModelEntry */
-/** @typedef {import("./peer-probe.mjs").Cost} Cost */
+/** @typedef {import("./route-probe.mjs").RawModelEntry} RawModelEntry */
+/** @typedef {import("./route-probe.mjs").Cost} Cost */
 
 /**
  * A pi-shaped model entry: what pi needs to route and price a model.
@@ -279,9 +279,9 @@ export function providerEntry(baseUrl, models) {
 
 /**
  * A REROUTE-ONLY override for a provider pi ships NATIVELY (the
- * PI_NATIVE_CLOUD_IDS set): carries just the peer host-form route `baseUrl`
- * (`<peerBase>/<upstream-host><base-path>`, peerProviderUrl, docs/d047)
- * and the peer-visible models —
+ * PI_NATIVE_CLOUD_IDS set): carries just the provider's canonical `baseUrl`
+ * (the fact table's real upstream, docs/d070 — install substitutes the route)
+ * `<base>/<upstream-host><base-path>`, providerRouteUrl, docs/d047) and the models —
  * deliberately NO `api`, NO `compat`, and NO `apiKey`.
  *
  * Emitting an `api` compatibility key here would blindly pin the dialect for
@@ -294,7 +294,7 @@ export function providerEntry(baseUrl, models) {
  * lets pi's built-in provider definition supply the api implementation and
  * compat, so the override only changes WHERE requests go, never HOW they are
  * encoded. This is exactly what makes mistral's non-completions endpoints
- * and google's native dialect work through the peer (docs/d027/d047): the
+ * and google's native dialect work through the route (docs/d027/d047): the
  * host-allowlist proxy forwards every path under the upstream host key
  * byte-for-byte, whatever wire format pi speaks.
  *
@@ -305,9 +305,9 @@ export function providerEntry(baseUrl, models) {
  * `"$PEER_API_KEY"` reference belonged to llama-swap's gateway auth and has
  * no meaning here — PEER_API_KEY now only guards the LOCAL llama-swap /v1
  * route (docs/d027).
- * @param {string} providerUrl the provider's FULL peer path-route
- *   (peerProviderUrl output — used verbatim; the legacy `\`/v1\`` append
- *   was llama-swap's model-id-magic surface and is gone)
+ * @param {string} providerUrl the provider's canonical upstream URL
+ *   (fact table `baseUrl`, docs/d070; install substitutes the client route.
+ *   The legacy `\`/v1\`` append was llama-swap's model-id-magic and is gone)
  * @param {PiModel[]} models
  * @returns {PiProvider}
  */

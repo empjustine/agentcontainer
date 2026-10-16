@@ -94,7 +94,7 @@ The routing convention it locks in — full real base URLs, the 404
 anti-oracle answer, the RFC 9457 error design, and the known deviations
 from "as-is" — is design rationale, kept in [DESIGN.md](DESIGN.md).
 A provider in the fact table but missing from the deployed config is
-reported as a dead peer route (its clients simply keep direct/built-in
+reported as a dead route (its clients simply keep direct/built-in
 routing); a deployed upstream that drifted from the fact table is reported
 as drift.
 
@@ -139,7 +139,7 @@ still listens on 8080 internally; `llm-local-inference/run.sh` publishes
 
 | path under the funnel | backend | routing |
 |---|---|---|
-| `/<upstream-host>/<path>` | allowlisted hosts only (~36 owner-set rows, docs/d047) | host key → scheme://host root; the client carries the full upstream base path after the host (`<peerBase>/api.cline.bot/api/v1`); every other host is denied by absence |
+| `/<upstream-host>/<path>` | allowlisted hosts only (~36 owner-set rows, docs/d047) | host key → scheme://host root; the client carries the full upstream base path after the host (`<base>/api.cline.bot/api/v1`); every other host is denied by absence |
 | `/llama-swap/…` | `http://127.0.0.1:8101` | llama-swap (LOCAL GGUF, model-id routing) — the loopback hop never leaves the host; the one allowlist row keyed by a logical route name instead of its host, so client URLs stay loopback-free |
 
 `./smoke-test.sh` runs 34 behavioural checks in the one and only mode —

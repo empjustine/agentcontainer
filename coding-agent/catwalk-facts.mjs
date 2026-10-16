@@ -7,7 +7,7 @@
  * that need a secondary catalog when models.dev is stale or absent.
  *
  * Fetches are reverse-proxy-only (docs/d063): the local llm-reverse-proxy
- * passthrough, then the vault peer-base host-form routes (relayCandidates).
+ * passthrough, then the vault-sourced host-form routes (relayCandidates).
  * An explicit url argument (CLI) is the operator's override for the chain.
  *
  * Provider ID mapping (pi → catwalk):
@@ -45,9 +45,9 @@ const { logInfo, logWarn, setLogTool } =
 		await import(`${LIB_DIR}/log.mjs`)
 	);
 
-// Proxy-env routing via the same-dir peer-probe module (its top-level calls
+// Proxy-env routing via the same-dir the route-probe module (its top-level calls
 // useEnvProxy(); rationale docs/d001 §1).
-import { relayCandidates, useEnvProxy } from "./peer-probe.mjs";
+import { relayCandidates, useEnvProxy } from "./route-probe.mjs";
 
 useEnvProxy();
 setLogTool("coding-agent/catwalk-facts");
@@ -121,7 +121,7 @@ export const PROVIDER_MAP = Object.freeze({
  */
 export async function refreshCatwalkFacts(url) {
 	// No explicit URL: the reverse-proxy-only chain — local proxy
-	// passthrough, then vault peer-base host-form routes (docs/d063).
+	// passthrough, then vault-sourced host-form routes (docs/d063).
 	const candidates = url
 		? [url]
 		: relayCandidates("catwalk.charm.land", CATWALK_PATH_AND_QUERY);

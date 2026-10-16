@@ -4,11 +4,11 @@
  * (docs/d027, d063 — no direct models.dev leg: outside llm-reverse-proxy,
  * everything is proxy-only):
  *
- *   1. RELAY — reverse-proxy URLs only (relayCandidates, peer-probe.mjs):
+ *   1. RELAY — reverse-proxy URLs only (relayCandidates, route-probe.mjs):
  *      the operator's MODELS_DEV_RELAY_URL when set (empty = no relay at
  *      all), else the local llm-reverse-proxy passthrough
  *      (http://127.0.0.1:8080/models.dev/api.json), then the vault
- *      peer-base host-form routes. The relay forwards models.dev
+ *      reverse-proxy host-form routes. The relay forwards models.dev
  *      byte-for-byte, so the response is validated exactly like a direct
  *      one.
  *   2. STALE COPY — last resort: any failure above leaves the existing
@@ -32,7 +32,7 @@
  * Validation is scoped to what the generators consume from the catalog (see
  * coding-agent/generate-pi-coding-agent.mjs): every listed
  * provider must exist with a models map or the payload is rejected. (The
- * former llm-local-inference peer generators were also consumers until the
+ * former llm-local-inference generators were also consumers until the
  * cloud-relay handoff to llm-reverse-proxy removed them; the required list
  * keeps its UNION shape so a future consumer needs no edit here.)
  *
@@ -50,7 +50,7 @@
 
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { relayCandidates, useEnvProxy } from "./peer-probe.mjs";
+import { relayCandidates, useEnvProxy } from "./route-probe.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");

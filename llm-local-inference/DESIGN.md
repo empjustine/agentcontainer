@@ -24,7 +24,7 @@ owns the shape and the non-obvious mechanics. Serving models *this* host
 cannot run itself is OUT of scope — relaying moved to
 `../llm-reverse-proxy` (the raw passthrough proxy), taking the former relay
 layers and the route to a remote host's GPU with it; llama-swap's own
-peer/proxy machinery is no longer exercised from here.
+relay/proxy machinery is no longer exercised from here.
 
 ## Shape
 
@@ -76,7 +76,7 @@ container image for this folder.
 - **Offline generation**: the local layer is built from vendored tables
   (`llamacpp-model-data.json`, `active-b.json`, `llama-swap-core.json`) plus a
   read of the host HF hub cache directory (no network) — the models.dev
-  refresh and every HTTP probe were peer machinery and are gone.
+  refresh and every HTTP probe went with that handoff and are gone.
 - **Inbound bearer auth stays**: `apiKeys: ${env.PEER_API_KEY}` in
   `00-general.yaml` is llama-swap's *own* client-facing key (the historical
   name is kept; `docs/d001` covers the key-naming contract). It is the only
@@ -90,7 +90,7 @@ container image for this folder.
 Copy unit = this folder + `../lib` (`docs/architecture.md`): may import
 `lib/log.mjs` and read the shared data tables `lib/llamacpp-model-data.json`.
 Must not import from sibling runner folders or `local-llm/`. The `lib`
-modules this module no longer uses (`peer-probe.mjs`, `cloud-providers.mjs`,
+modules this module no longer uses (`route-probe.mjs`, `cloud-providers.mjs`,
 `models.dev.api.json`) remain in `lib` because
 `../coding-agent` and `../llm-reverse-proxy` consumers still share them; the
 facts module left `lib/` for `../coding-agent` in d039.

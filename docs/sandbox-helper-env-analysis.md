@@ -42,7 +42,7 @@ the helper entirely (`openai-completions-peer/run-native.sh`).
 
 ### `workload_*` inventory (the three named scripts)
 
-| API call | `coding-agent/run.sh` | `gfx1030/run.sh` | `peer/run.sh` |
+| API call | `coding-agent/run.sh` | `gfx1030/run.sh` | `openai-completions-peer/run.sh` |
 |---|---|---|---|
 | `workload_rm` | – | ✅ | ✅ |
 | `workload_name` / `workload_image` | ✅ / ✅ | ✅ / ✅ | ✅ / ✅ |

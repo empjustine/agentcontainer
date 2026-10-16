@@ -507,6 +507,13 @@
           ]
         },
         {
+          "id": "gemini-4-argon",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "gemini-flash-latest",
           "reasoning": true,
           "input": [
@@ -969,6 +976,29 @@
           }
         },
         {
+          "id": "prism",
+          "name": "Prism",
+          "reasoning": false,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 16000,
+          "cost": {
+            "input": 3.2664,
+            "output": 16.332,
+            "cacheRead": 0.32664,
+            "cacheWrite": 0
+          },
+          "compat": {
+            "supportsStore": false,
+            "supportsReasoningEffort": false,
+            "thinkingFormat": "deepseek",
+            "maxTokensField": "max_tokens"
+          }
+        },
+        {
           "id": "qwen3.7-flash",
           "name": "Qwen3.7 Flash",
           "reasoning": true,
@@ -1318,6 +1348,4092 @@
         }
       ]
     },
+    "llama-swap": {
+      "baseUrl": "https://bazzite.coelacanth-barb.ts.net/v1",
+      "api": "openai-completions",
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false,
+        "supportsUsageInStreaming": true,
+        "supportsStrictMode": false,
+        "maxTokensField": "max_tokens"
+      },
+      "apiKey": "$PEER_API_KEY",
+      "models": [
+        {
+          "id": "01b-ctx128-bartowski/Ling-3.0-tiny-GGUF:Q8_0",
+          "name": "Ling-3.0-tiny Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "01b-ctx128-bloomer010/Ling-3.0-tiny-GGUF:UD-Q8_K_XL",
+          "name": "Ling-3.0-tiny UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "01b-ctx128-unsloth/LFM2.5-8B-A1B-GGUF:Q8_0",
+          "name": "LFM2.5-8B-A1B Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "01b-ctx128-unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL",
+          "name": "LFM2.5-8B-A1B UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:BF16",
+          "name": "gemma-4-E2B-it BF16",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:IQ2_M",
+          "name": "gemma-4-E2B-it IQ2_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:IQ3_XXS",
+          "name": "gemma-4-E2B-it IQ3_XXS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:IQ4_NL",
+          "name": "gemma-4-E2B-it IQ4_NL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:IQ4_XS",
+          "name": "gemma-4-E2B-it IQ4_XS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q2_K_XL",
+          "name": "gemma-4-E2B-it Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q3_K_M",
+          "name": "gemma-4-E2B-it Q3_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q3_K_S",
+          "name": "gemma-4-E2B-it Q3_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q3_K_XL",
+          "name": "gemma-4-E2B-it Q3_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q4_0",
+          "name": "gemma-4-E2B-it Q4_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q4_1",
+          "name": "gemma-4-E2B-it Q4_1",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q4_K_M",
+          "name": "gemma-4-E2B-it Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q4_K_S",
+          "name": "gemma-4-E2B-it Q4_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q4_K_XL",
+          "name": "gemma-4-E2B-it Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q5_K_M",
+          "name": "gemma-4-E2B-it Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q5_K_S",
+          "name": "gemma-4-E2B-it Q5_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q5_K_XL",
+          "name": "gemma-4-E2B-it Q5_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q6_K",
+          "name": "gemma-4-E2B-it Q6_K",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx064-unsloth/gemma-4-E2B-it-GGUF:Q6_K_XL",
+          "name": "gemma-4-E2B-it Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-0text-unsloth/gemma-4-E2B-it-GGUF:Q8_0",
+          "name": "gemma-4-E2B-it Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-0text-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL",
+          "name": "gemma-4-E2B-it UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-0text-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E2B-it-qat UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-0text-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL",
+          "name": "gemma-4-E2B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-0text-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E2B-it-qat-mobile UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-GGUF:Q8_0",
+          "name": "gemma-4-E2B-it Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL",
+          "name": "gemma-4-E2B-it UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E2B-it-qat UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL",
+          "name": "gemma-4-E2B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-1vision-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E2B-it-qat-mobile UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-GGUF:Q8_0",
+          "name": "gemma-4-E2B-it Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL",
+          "name": "gemma-4-E2B-it UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E2B-it-qat UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL",
+          "name": "gemma-4-E2B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-2mmproj-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E2B-it-qat-mobile UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:BF16",
+          "name": "LFM2.5-2.6B BF16",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:Q4_0",
+          "name": "LFM2.5-2.6B Q4_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:Q4_K_M",
+          "name": "LFM2.5-2.6B Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:Q5_K_M",
+          "name": "LFM2.5-2.6B Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:Q6_K",
+          "name": "LFM2.5-2.6B Q6_K",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:Q8_0",
+          "name": "LFM2.5-2.6B Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-LiquidAI/LFM2.5-2.6B-GGUF:QAD-Q4_0",
+          "name": "LFM2.5-2.6B QAD-Q4_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "02b-ctx128-openbmb/MiniCPM5-2B-GGUF:Q8_0",
+          "name": "MiniCPM5-2B Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx032-0text-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
+          "name": "LFM2.5-VL-3B UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 32768,
+          "maxTokens": 32768,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx032-1vision-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
+          "name": "LFM2.5-VL-3B UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 32768,
+          "maxTokens": 32768,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx032-2mmproj-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
+          "name": "LFM2.5-VL-3B UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 32768,
+          "maxTokens": 32768,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx064-byteshape/North-Mini-Code-1.0-GGUF:IQ3_S-3.17BPW",
+          "name": "North-Mini-Code-1.0 IQ3_S-3.17BPW",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx064-byteshape/North-Mini-Code-1.0-GGUF:IQ4_XS-4.14BPW",
+          "name": "North-Mini-Code-1.0 IQ4_XS-4.14BPW",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx064-byteshape/North-Mini-Code-1.0-GGUF:IQ4_XS-4.27BPW",
+          "name": "North-Mini-Code-1.0 IQ4_XS-4.27BPW",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx064-byteshape/North-Mini-Code-1.0-GGUF:IQ4_XS-5.64BPW",
+          "name": "North-Mini-Code-1.0 IQ4_XS-5.64BPW",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx064-unsloth/LFM2.5-VL-3B-GGUF:Q8_0",
+          "name": "LFM2.5-VL-3B Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx064-unsloth/North-Mini-Code-1.0-GGUF:Q4_K_XL",
+          "name": "North-Mini-Code-1.0 Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx064-unsloth/North-Mini-Code-1.0-GGUF:Q6_K_XL",
+          "name": "North-Mini-Code-1.0 Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx064-unsloth/North-Mini-Code-1.0-GGUF:Q8_K_XL",
+          "name": "North-Mini-Code-1.0 Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-0text-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw",
+          "name": "Qwen3.6-35B-A3B Q4_K_S-3.80bpw",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-0text-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw",
+          "name": "Qwen3.6-35B-A3B Q4_K_S-4.22bpw",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0",
+          "name": "Qwen3.6-35B-A3B Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K",
+          "name": "Qwen3.6-35B-A3B UD-Q6_K",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL",
+          "name": "Qwen3.6-35B-A3B UD-Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL",
+          "name": "Qwen3.6-35B-A3B UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-1vision-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw",
+          "name": "Qwen3.6-35B-A3B Q4_K_S-3.80bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-1vision-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw",
+          "name": "Qwen3.6-35B-A3B Q4_K_S-4.22bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0",
+          "name": "Qwen3.6-35B-A3B Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K",
+          "name": "Qwen3.6-35B-A3B UD-Q6_K",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL",
+          "name": "Qwen3.6-35B-A3B UD-Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL",
+          "name": "Qwen3.6-35B-A3B UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-bartowski/ai9stars_G9v3-3B-GGUF:BF16",
+          "name": "ai9stars_G9v3-3B BF16",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-bartowski/ai9stars_G9v3-3B-GGUF:Q6_K",
+          "name": "ai9stars_G9v3-3B Q6_K",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-bartowski/ai9stars_G9v3-3B-GGUF:Q8_0",
+          "name": "ai9stars_G9v3-3B Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "03b-ctx128-poolside/Laguna-XS-2.1-GGUF:Q4_K_M",
+          "name": "Laguna-XS-2.1 Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:IQ2_M",
+          "name": "gemma-4-26B-A4B-it IQ2_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:IQ2_XXS",
+          "name": "gemma-4-26B-A4B-it IQ2_XXS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:IQ3_S",
+          "name": "gemma-4-26B-A4B-it IQ3_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:IQ3_XXS",
+          "name": "gemma-4-26B-A4B-it IQ3_XXS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:IQ4_NL",
+          "name": "gemma-4-26B-A4B-it IQ4_NL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:IQ4_XS",
+          "name": "gemma-4-26B-A4B-it IQ4_XS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:MXFP4_MOE",
+          "name": "gemma-4-26B-A4B-it MXFP4_MOE",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q2_K_XL",
+          "name": "gemma-4-26B-A4B-it Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q3_K_M",
+          "name": "gemma-4-26B-A4B-it Q3_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q3_K_XL",
+          "name": "gemma-4-26B-A4B-it Q3_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q4_K_M",
+          "name": "gemma-4-26B-A4B-it Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q4_K_S",
+          "name": "gemma-4-26B-A4B-it Q4_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q4_K_XL",
+          "name": "gemma-4-26B-A4B-it Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q5_K_M",
+          "name": "gemma-4-26B-A4B-it Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q5_K_S",
+          "name": "gemma-4-26B-A4B-it Q5_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-26B-A4B-it-GGUF:Q5_K_XL",
+          "name": "gemma-4-26B-A4B-it Q5_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:BF16",
+          "name": "gemma-4-E4B-it BF16",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:IQ2_M",
+          "name": "gemma-4-E4B-it IQ2_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:IQ3_XXS",
+          "name": "gemma-4-E4B-it IQ3_XXS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:IQ4_NL",
+          "name": "gemma-4-E4B-it IQ4_NL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:IQ4_XS",
+          "name": "gemma-4-E4B-it IQ4_XS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q2_K_XL",
+          "name": "gemma-4-E4B-it Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q3_K_M",
+          "name": "gemma-4-E4B-it Q3_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q3_K_S",
+          "name": "gemma-4-E4B-it Q3_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q3_K_XL",
+          "name": "gemma-4-E4B-it Q3_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q4_0",
+          "name": "gemma-4-E4B-it Q4_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q4_1",
+          "name": "gemma-4-E4B-it Q4_1",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q4_K_M",
+          "name": "gemma-4-E4B-it Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q4_K_S",
+          "name": "gemma-4-E4B-it Q4_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q4_K_XL",
+          "name": "gemma-4-E4B-it Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q5_K_M",
+          "name": "gemma-4-E4B-it Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q5_K_S",
+          "name": "gemma-4-E4B-it Q5_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q5_K_XL",
+          "name": "gemma-4-E4B-it Q5_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q6_K",
+          "name": "gemma-4-E4B-it Q6_K",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx064-unsloth/gemma-4-E4B-it-GGUF:Q6_K_XL",
+          "name": "gemma-4-E4B-it Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:BF16",
+          "name": "gemma-4-26B-A4B-it BF16",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
+          "name": "gemma-4-26B-A4B-it Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K",
+          "name": "gemma-4-26B-A4B-it UD-Q6_K",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL",
+          "name": "gemma-4-26B-A4B-it UD-Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL",
+          "name": "gemma-4-26B-A4B-it UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-0text-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
+          "name": "gemma-4-26B-A4B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-0text-unsloth/gemma-4-E4B-it-GGUF:Q8_0",
+          "name": "gemma-4-E4B-it Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-0text-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL",
+          "name": "gemma-4-E4B-it UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-0text-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E4B-it-qat UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-0text-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL",
+          "name": "gemma-4-E4B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-0text-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E4B-it-qat-mobile UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:BF16",
+          "name": "gemma-4-26B-A4B-it BF16",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
+          "name": "gemma-4-26B-A4B-it Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K",
+          "name": "gemma-4-26B-A4B-it UD-Q6_K",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL",
+          "name": "gemma-4-26B-A4B-it UD-Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL",
+          "name": "gemma-4-26B-A4B-it UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-1vision-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
+          "name": "gemma-4-26B-A4B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-GGUF:Q8_0",
+          "name": "gemma-4-E4B-it Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL",
+          "name": "gemma-4-E4B-it UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E4B-it-qat UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL",
+          "name": "gemma-4-E4B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-1vision-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E4B-it-qat-mobile UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-GGUF:Q8_0",
+          "name": "gemma-4-E4B-it Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL",
+          "name": "gemma-4-E4B-it UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E4B-it-qat UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL",
+          "name": "gemma-4-E4B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "04b-ctx128-2mmproj-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+          "name": "gemma-4-E4B-it-qat-mobile UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-0text-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
+          "name": "gemma-4-12B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-0text-unsloth/gemma-4-12b-it-GGUF:Q6_K",
+          "name": "gemma-4-12b-it Q6_K",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-0text-unsloth/gemma-4-12b-it-GGUF:Q8_0",
+          "name": "gemma-4-12b-it Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-1vision-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
+          "name": "gemma-4-12B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-1vision-unsloth/gemma-4-12b-it-GGUF:Q6_K",
+          "name": "gemma-4-12b-it Q6_K",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-1vision-unsloth/gemma-4-12b-it-GGUF:Q8_0",
+          "name": "gemma-4-12b-it Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-2mmproj-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
+          "name": "gemma-4-12B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-2mmproj-unsloth/gemma-4-12b-it-GGUF:Q6_K",
+          "name": "gemma-4-12b-it Q6_K",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-2mmproj-unsloth/gemma-4-12b-it-GGUF:Q8_0",
+          "name": "gemma-4-12b-it Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:BF16",
+          "name": "gemma-4-12b-it BF16",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:IQ2_M",
+          "name": "gemma-4-12b-it IQ2_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:IQ3_XXS",
+          "name": "gemma-4-12b-it IQ3_XXS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:IQ4_NL",
+          "name": "gemma-4-12b-it IQ4_NL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:IQ4_XS",
+          "name": "gemma-4-12b-it IQ4_XS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q2_K_XL",
+          "name": "gemma-4-12b-it Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q3_K_M",
+          "name": "gemma-4-12b-it Q3_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q3_K_S",
+          "name": "gemma-4-12b-it Q3_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q3_K_XL",
+          "name": "gemma-4-12b-it Q3_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q4_0",
+          "name": "gemma-4-12b-it Q4_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q4_1",
+          "name": "gemma-4-12b-it Q4_1",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q4_K_M",
+          "name": "gemma-4-12b-it Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q4_K_S",
+          "name": "gemma-4-12b-it Q4_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q4_K_XL",
+          "name": "gemma-4-12b-it Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q5_K_M",
+          "name": "gemma-4-12b-it Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q5_K_S",
+          "name": "gemma-4-12b-it Q5_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q5_K_XL",
+          "name": "gemma-4-12b-it Q5_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q6_K_XL",
+          "name": "gemma-4-12b-it Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "12b-ctx064-unsloth/gemma-4-12b-it-GGUF:Q8_K_XL",
+          "name": "gemma-4-12b-it Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S",
+          "name": "Qwen3.8-3.6-27B-blend IQ3_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q4_K_M",
+          "name": "Qwen3.8-3.6-27B-blend Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q5_K_M",
+          "name": "Qwen3.8-3.6-27B-blend Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw",
+          "name": "Qwen3.8-27B IQ2_XXS-2.56bpw",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw",
+          "name": "Qwen3.8-27B IQ3_S-3.23bpw",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw",
+          "name": "Qwen3.8-27B IQ3_XS-3.01bpw",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw",
+          "name": "Qwen3.8-27B IQ3_XXS-2.88bpw",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.84bpw",
+          "name": "Qwen3.8-27B IQ4_XS-3.84bpw",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
+          "name": "Qwen3.6-27B Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:BF16",
+          "name": "Qwen3.8-27B BF16",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_0",
+          "name": "Qwen3.8-27B Q4_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_1",
+          "name": "Qwen3.8-27B Q4_1",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
+          "name": "Qwen3.8-27B Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_S",
+          "name": "Qwen3.8-27B Q4_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_XL",
+          "name": "Qwen3.8-27B Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q5_K_M",
+          "name": "Qwen3.8-27B Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q5_K_S",
+          "name": "Qwen3.8-27B Q5_K_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q5_K_XL",
+          "name": "Qwen3.8-27B Q5_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K",
+          "name": "Qwen3.8-27B Q6_K",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K_L",
+          "name": "Qwen3.8-27B Q6_K_L",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K_M",
+          "name": "Qwen3.8-27B Q6_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q6_K_XL",
+          "name": "Qwen3.8-27B Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q8_0",
+          "name": "Qwen3.8-27B Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q8_K_L",
+          "name": "Qwen3.8-27B Q8_K_L",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:Q8_K_XL",
+          "name": "Qwen3.8-27B Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M",
+          "name": "Qwen3.8-27B UD-IQ1_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S",
+          "name": "Qwen3.8-27B UD-IQ1_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S",
+          "name": "Qwen3.8-27B UD-IQ2_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS",
+          "name": "Qwen3.8-27B UD-IQ2_XXS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S",
+          "name": "Qwen3.8-27B UD-IQ3_S",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS",
+          "name": "Qwen3.8-27B UD-IQ3_XXS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ4_XS",
+          "name": "Qwen3.8-27B UD-IQ4_XS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL",
+          "name": "Qwen3.8-27B UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-0text-unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL",
+          "name": "Qwen3.8-27B UD-Q3_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S",
+          "name": "Qwen3.8-3.6-27B-blend IQ3_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q4_K_M",
+          "name": "Qwen3.8-3.6-27B-blend Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q5_K_M",
+          "name": "Qwen3.8-3.6-27B-blend Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw",
+          "name": "Qwen3.8-27B IQ2_XXS-2.56bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw",
+          "name": "Qwen3.8-27B IQ3_S-3.23bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw",
+          "name": "Qwen3.8-27B IQ3_XS-3.01bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw",
+          "name": "Qwen3.8-27B IQ3_XXS-2.88bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.84bpw",
+          "name": "Qwen3.8-27B IQ4_XS-3.84bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
+          "name": "Qwen3.6-27B Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:BF16",
+          "name": "Qwen3.8-27B BF16",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_0",
+          "name": "Qwen3.8-27B Q4_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_1",
+          "name": "Qwen3.8-27B Q4_1",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
+          "name": "Qwen3.8-27B Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_S",
+          "name": "Qwen3.8-27B Q4_K_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_XL",
+          "name": "Qwen3.8-27B Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q5_K_M",
+          "name": "Qwen3.8-27B Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q5_K_S",
+          "name": "Qwen3.8-27B Q5_K_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q5_K_XL",
+          "name": "Qwen3.8-27B Q5_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K",
+          "name": "Qwen3.8-27B Q6_K",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K_L",
+          "name": "Qwen3.8-27B Q6_K_L",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K_M",
+          "name": "Qwen3.8-27B Q6_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K_XL",
+          "name": "Qwen3.8-27B Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q8_0",
+          "name": "Qwen3.8-27B Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q8_K_L",
+          "name": "Qwen3.8-27B Q8_K_L",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:Q8_K_XL",
+          "name": "Qwen3.8-27B Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M",
+          "name": "Qwen3.8-27B UD-IQ1_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S",
+          "name": "Qwen3.8-27B UD-IQ1_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S",
+          "name": "Qwen3.8-27B UD-IQ2_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS",
+          "name": "Qwen3.8-27B UD-IQ2_XXS",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S",
+          "name": "Qwen3.8-27B UD-IQ3_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS",
+          "name": "Qwen3.8-27B UD-IQ3_XXS",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ4_XS",
+          "name": "Qwen3.8-27B UD-IQ4_XS",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL",
+          "name": "Qwen3.8-27B UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-1vision-unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL",
+          "name": "Qwen3.8-27B UD-Q3_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S",
+          "name": "Qwen3.8-3.6-27B-blend IQ3_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw",
+          "name": "Qwen3.8-27B IQ2_XXS-2.56bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw",
+          "name": "Qwen3.8-27B IQ3_S-3.23bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw",
+          "name": "Qwen3.8-27B IQ3_XS-3.01bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw",
+          "name": "Qwen3.8-27B IQ3_XXS-2.88bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M",
+          "name": "Qwen3.8-27B UD-IQ1_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S",
+          "name": "Qwen3.8-27B UD-IQ1_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S",
+          "name": "Qwen3.8-27B UD-IQ2_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS",
+          "name": "Qwen3.8-27B UD-IQ2_XXS",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S",
+          "name": "Qwen3.8-27B UD-IQ3_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS",
+          "name": "Qwen3.8-27B UD-IQ3_XXS",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "27b-ctx064-2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL",
+          "name": "Qwen3.8-27B UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "30b-ctx064-unsloth/Muse-Glimmer-30B-GGUF:Q8_0",
+          "name": "Muse-Glimmer-30B Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "30b-ctx064-unsloth/Muse-Glimmer-30B-GGUF:UD-Q4_K_XL",
+          "name": "Muse-Glimmer-30B UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "30b-ctx064-unsloth/Muse-Glimmer-30B-GGUF:UD-Q6_K_XL",
+          "name": "Muse-Glimmer-30B UD-Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "30b-ctx064-unsloth/Muse-Glimmer-30B-GGUF:UD-Q8_K_XL",
+          "name": "Muse-Glimmer-30B UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "31b-ctx064-0text-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
+          "name": "gemma-4-31B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        },
+        {
+          "id": "31b-ctx064-1vision-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
+          "name": "gemma-4-31B-it-qat UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536,
+          "cost": {
+            "cacheRead": 1,
+            "cacheWrite": 20,
+            "input": 10,
+            "output": 50
+          }
+        }
+      ]
+    },
     "mistral": {
       "baseUrl": "https://api.mistral.ai/v1",
       "models": [
@@ -1336,231 +5452,272 @@
           ]
         },
         {
-          "id": "devstral-2512",
+          "id": "labs-leanstral-1-5",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "devstral-latest",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "devstral-medium-2507",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "devstral-medium-latest",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "devstral-small-2505",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "devstral-small-2507",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "glm-5-2",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "labs-devstral-small-2512",
-          "reasoning": true,
-          "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "labs-leanstral-1-5-1",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "magistral-medium-latest",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "magistral-small-latest",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-14b-2512",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "ministral-14b-latest",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-3b-2512",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-3b-latest",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-8b-2512",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-8b-latest",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
-          "id": "mistral-large-2411",
+          "id": "mistral-code-fim-latest",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "mistral-large-2512",
+          "id": "mistral-code-latest",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "mistral-large-4",
+          "id": "mistral-medium",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistral-large-latest",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistral-medium-2505",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistral-medium-2508",
-          "reasoning": true,
-          "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "mistral-medium-2604",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-medium-3",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-medium-3-5",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-medium-3.5",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
           ]
         },
         {
           "id": "mistral-medium-latest",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
-          "id": "mistral-nemo",
+          "id": "mistral-moderation-2603",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "mistral-small-2506",
+          "id": "mistral-ocr-2512",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-3",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-3-0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-4",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-4-1",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-latest",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
           ]
         },
         {
           "id": "mistral-small-2603",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "mistral-small-latest",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
-          "id": "open-mistral-7b",
+          "id": "mistral-vibe-cli-fast",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-vibe-cli-latest",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-vibe-cli-with-tools",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "voxtral-mini-2602",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "open-mistral-nemo",
+          "id": "voxtral-mini-latest",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "open-mixtral-8x22b",
+          "id": "voxtral-mini-realtime-2602",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "open-mixtral-8x7b",
+          "id": "voxtral-mini-realtime-latest",
           "reasoning": true,
           "input": [
             "text"
           ]
         },
         {
-          "id": "pixtral-12b",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "pixtral-large-latest",
+          "id": "voxtral-mini-transcribe-realtime-2602",
           "reasoning": true,
           "input": [
             "text"
@@ -1575,20 +5732,6 @@
         },
         {
           "id": "voxtral-small-latest",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "zai-glm-5-2",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "zai-glm-5-3",
           "reasoning": true,
           "input": [
             "text"
@@ -2013,13 +6156,6 @@
           ]
         },
         {
-          "id": "nvidia/nemotron-3-super-120b-a12b",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "nvidia/nemotron-3-ultra-550b-a55b",
           "reasoning": true,
           "input": [
@@ -2035,6 +6171,13 @@
         },
         {
           "id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "nvidia/nemotron-3.5-super-vl-120b-a12b",
           "reasoning": true,
           "input": [
             "text"
@@ -2242,6 +6385,13 @@
           ]
         },
         {
+          "id": "cat-jam-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "claude-3-5-haiku",
           "reasoning": true,
           "input": [
@@ -2326,6 +6476,13 @@
           ]
         },
         {
+          "id": "claude-opus-5-5-backup",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "claude-sonnet-4",
           "reasoning": true,
           "input": [
@@ -2396,6 +6553,13 @@
           ]
         },
         {
+          "id": "deepseek-v4.1-flash-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "exo-free",
           "reasoning": true,
           "input": [
@@ -2460,6 +6624,13 @@
         },
         {
           "id": "gemini-3.8-flash",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "gemini-4-argon",
           "reasoning": true,
           "input": [
             "text"
@@ -3005,6 +7176,13 @@
           ]
         },
         {
+          "id": "nemotron-3.5-super-vl-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "north-mini-code-free",
           "reasoning": true,
           "input": [
@@ -3075,6 +7253,13 @@
           ]
         },
         {
+          "id": "test",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "trinity-large-preview-free",
           "reasoning": true,
           "input": [
@@ -3094,28 +7279,19 @@
       "baseUrl": "https://opencode.ai/zen/go/v1",
       "models": [
         {
+          "id": "cat-jam-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "claude-haiku-5-5",
           "reasoning": true,
           "input": [
             "text"
           ],
           "api": "anthropic-messages"
-        },
-        {
-          "id": "deepseek-v4-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "api": "openai-completions"
-        },
-        {
-          "id": "deepseek-v4-flash-vision-exp",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "api": "openai-completions"
         },
         {
           "id": "deepseek-v4-pro",
@@ -3132,6 +7308,20 @@
             "text"
           ],
           "api": "openai-completions"
+        },
+        {
+          "id": "gemini-4-argon-contributor",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "glm-5.1",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
         },
         {
           "id": "glm-5.2",
@@ -3167,14 +7357,6 @@
         },
         {
           "id": "gpt-6-luna",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "api": "openai-responses"
-        },
-        {
-          "id": "grok-4.5",
           "reasoning": true,
           "input": [
             "text"
@@ -3286,6 +7468,13 @@
           "api": "openai-completions"
         },
         {
+          "id": "minimax-m2.5",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "minimax-m2.7",
           "reasoning": true,
           "input": [
@@ -3316,6 +7505,13 @@
             "text"
           ],
           "api": "openai-responses"
+        },
+        {
+          "id": "omen-alpha",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
         },
         {
           "id": "qwen3.6-plus",
@@ -3364,14 +7560,7 @@
           "api": "openai-completions"
         },
         {
-          "id": "space-bunny-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "step-5-preview-free",
+          "id": "step-5-preview",
           "reasoning": true,
           "input": [
             "text"
@@ -3383,123 +7572,147 @@
       "baseUrl": "https://openrouter.ai/api/v1",
       "models": [
         {
-          "id": "apodex/apodex-1.1-mini:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "cohere/north-mini-code:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 256000,
+          "maxTokens": 256000
         },
         {
           "id": "dots-studio/dots-3-note-preview:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 512000,
+          "maxTokens": 512000
         },
         {
           "id": "google/gemma-4-26b-a4b-it:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
         },
         {
           "id": "google/gemma-4-31b-it:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "inception/mercury-decide:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
         },
         {
           "id": "liquid/lfm-2.5-2.6b:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
         },
         {
           "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 256000,
+          "maxTokens": 256000
         },
         {
           "id": "nvidia/nemotron-3-super-120b-a12b:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
         },
         {
           "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 1000000
         },
         {
           "id": "nvidia/nemotron-3.5-content-safety:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 128000,
+          "maxTokens": 128000
         },
         {
           "id": "nvidia/nemotron-3.5-lightning:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 1000000
+        },
+        {
+          "id": "nvidia/nemotron-3.5-super-vl:free",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 1000000
         },
         {
           "id": "poolside/laguna-s-2.1:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
         },
         {
           "id": "poolside/laguna-xs-2.1:free",
           "reasoning": true,
           "input": [
             "text"
-          ]
-        },
-        {
-          "id": "respan/span-01-lite:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
         },
         {
           "id": "thinkingmachines/inkling-small:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 1048576
         },
         {
           "id": "thinkingmachines/inkling:free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 1048576
         }
       ]
     },
@@ -3551,12 +7764,11 @@
           }
         },
         {
-          "id": "mimo-v2.5",
-          "name": "mimo-v2.5",
+          "id": "mimo-v2.6-flash",
+          "name": "mimo-v2.6-flash",
           "reasoning": false,
           "input": [
-            "text",
-            "image"
+            "text"
           ],
           "contextWindow": 1048576,
           "maxTokens": 16384

@@ -48,12 +48,11 @@
           }
         },
         {
-          "id": "mimo-v2.5",
-          "name": "mimo-v2.5",
+          "id": "mimo-v2.6-flash",
+          "name": "mimo-v2.6-flash",
           "reasoning": false,
           "input": [
-            "text",
-            "image"
+            "text"
           ],
           "contextWindow": 1048576,
           "maxTokens": 16384

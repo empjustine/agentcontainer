@@ -11,10 +11,10 @@
  *   1. `generateLocalLlamaSwap`  → `model-010-local-default.json`
  *      (ADDS the `llama-swap` provider for local GGUF; pi has no built-in one)
  *   2. `generateCloudProviders`  → `model-012-cloud-pi-native.json`
- *      (override-only: EVERY pi-native provider rerouted at its
- *      reverse-proxy route — the probe only picks the lineup source, live
- *      listing vs models.dev ∪ catwalk ids, docs/d063 — with
- *      docs/d064's tiering deciding whether a row is probed at all) plus
+ *      (override-only: EVERY pi-native provider emitted at its canonical
+ *      fact-table upstream URL (docs/d070) — the probe only picks the
+ *      lineup source, live listing vs models.dev ∪ catwalk ids, docs/d063 —
+ *      with docs/d064's tiering deciding whether a row is probed at all) plus
  *      `model-015/016/017/018-*.json` (full rows: the sole definition for
  *      providers pi does not ship; docs/d037/d033)
  *   3. `mergeModels`             → `models.json` (lexical layer order, deep
@@ -36,7 +36,7 @@
  *   + model-016-cloud-hyper.json
  *   + model-017-cloud-inferx.json
  *   + model-018-cloud-verboo.json
- *   + model-020-peer-default.json   (future / drop-in)
+ *   + model-020-reverse-proxy-default.json   (future / drop-in)
  *   → models.json
  * ```
  *
@@ -53,7 +53,8 @@
  * fatal by design: an omitted cloud provider would fall back to pi's
  * built-in DIRECT routing, so a failed cloud stage fails the generator and
  * `generate.mjs` treats a non-zero exit as fatal. Generation itself refuses
- * to start without a vault peer base (`PEER_BASE_URL(S)`).
+ * to start without a reverse-proxy base (`REVERSE_PROXY_BASE_URLS`) — the
+ * probes need it (docs/d070 §7).
  *
  * `generate.mjs` (the folder driver) stages this file together with its
  * helper modules into a scratch dir, sets `LIB_DIR`, refreshes the models.dev
@@ -84,12 +85,12 @@ import {
 	modalitiesEligible,
 	modelsDevCatalogPath,
 	PI_NATIVE_CLOUD_IDS,
-	peerBaseUrl,
-	peerBaseUrls,
-	peerProviderUrl,
+	reverseProxyBaseUrl,
+	reverseProxyBaseUrls,
+	providerRouteUrl,
 	piModel,
 	probeCandidates,
-	probePeerRoutes,
+	probeRoutes,
 	providerEntry,
 	providerReroute,
 	refreshCatwalkFacts,
@@ -105,13 +106,15 @@ import {
 setLogTool("coding-agent/generate-pi-coding-agent");
 
 /**
- * Peer candidates — vault-sourced (peerBaseUrls(); see peer-probe.mjs).
- * Supports multi-hop proxy chains (PEER_BASE_URLS comma/newline delimited);
- * no localhost candidates — the LAN :8080 (proxy) and :8101 (llama-swap)
- * listen addresses are not routable from outside the serving host (docs/d022).
+ * Reverse-proxy base candidates — vault-sourced (reverseProxyBaseUrls();
+ * see route-probe.mjs). Supports multi-hop proxy chains
+ * (REVERSE_PROXY_BASE_URLS comma/newline delimited); no localhost candidates
+ * — the LAN :8080 (proxy) listen address is not routable from outside the
+ * serving host (docs/d022). Emitted URLs never come from this list (they are
+ * canonical, docs/d070): the candidates exist for PROBES only.
  * @type {readonly string[]}
  */
-const CLOUD_PEER_CANDIDATES = peerBaseUrls();
+const REVERSE_PROXY_BASE_CANDIDATES = reverseProxyBaseUrls();
 
 /**
  * Catalog lookup order: a models.dev.api.json next to this script wins — when
@@ -142,12 +145,12 @@ try {
 
 /**
  * Per-provider scoping of the override's model list, applied to BOTH sources
- * (live peer listing and catalog fallback). These are the slices this fleet
+ * (the route's live listing and catalog fallback). These are the slices this fleet
  * can actually use — the llama-swap era encoded them on the SERVING side
  * (gen-lib's `filter`); with routing per provider the client scopes its own
  * override (docs/d033).
  *
- *   - openrouter: the ":free" slice (the same scope the peer always served).
+ *   - openrouter: the ":free" slice (the scope the local gateway always served).
  *   - mistral: chat-capable only — the catalog/listing also carries
  *     mistral-embed (embeddings) and voxtral-*-tts (speech).
  *   - google: a MODALITY allowlist, not a name denylist — pi drives text
@@ -169,9 +172,9 @@ try {
  * without the gate composition.
  * @type {Record<string, ((id: string, record?: ModelsDevModel) => boolean)|undefined>}
  */
-const PEER_MODEL_FILTERS = {
+const MODEL_SCOPES = {
 	// Access scope, not a modality rule (d049: price/access stays orthogonal
-	// and runs after the gate) — the slice the peer always served.
+	// and runs after the gate) — the slice the local gateway always served.
 	openrouter: (id) => id.endsWith(":free"),
 	// Documented name exception (d049): models.dev lies about embedding
 	// endpoints' output like google's — `/embed/` papers over it; `/tts/` is
@@ -210,7 +213,7 @@ const PEER_MODEL_FILTERS = {
  * @property {((id: string, record?: ModelsDevModel) => boolean)|undefined} [filter]
  *   model-id scoping (gen-lib's `filter`); the models.dev record is passed
  *   through when the source has one (name-only checks ignore it)
- *   (override-only — see PEER_MODEL_FILTERS below)
+ *   (override-only — see MODEL_SCOPES below)
  * @property {{ supportsDeveloperRole: boolean }|null} compat provider-level
  *   compat pi cannot infer; null = no override (full)
  * @property {((m: ModelsDevModel) => Record<string, unknown>|null)|null} modelCompat
@@ -223,7 +226,7 @@ const PEER_MODEL_FILTERS = {
  *   roles, distinguished by whether the catalog contributes a lineup
  *   (catalogOptional): hyper's cache ENRICHES the models.dev lineup
  *   (docs/d033), while a catalog-less provider's cache IS the lineup in both
- *   direct and peer mode (docs/d057)
+ *   the committed canonical artifact and the installed routed one (docs/d057, d070)
  * @property {((record: ProviderFactsModel) => ModelsDevModel)|undefined}
  *   [factsMapper] rebuild one cached record as a models.dev-shaped record so
  *   it reuses catalogPiModel()'s full derivation; required whenever facts is
@@ -231,7 +234,7 @@ const PEER_MODEL_FILTERS = {
  * @property {boolean} [catalogOptional] the models.dev catalog does not carry
  *   this provider at all, so loadProvider() must not be the lineup source and
  *   must not throw: the endpoint comes from the fact table (the same base URL
- *   the peer route is built from, docs/d047) and the lineup from the facts
+ *   the client route is derived from, docs/d047) and the lineup from the facts
  *   cache. Without it a catalog-less row throws and no layer is written
  *   (docs/d032 F1, docs/d057)
  * @property {readonly string[]} [modelAllowlist] catalog-namespace model ids
@@ -651,7 +654,7 @@ const PROVIDER_SPECS = [
 				id,
 				mode: "override-only",
 				envKey: CLOUD_PROVIDER_FACTS[id].apiKeyEnv,
-				filter: PEER_MODEL_FILTERS[id],
+				filter: MODEL_SCOPES[id],
 				// opencode-go is the one pi-native provider with a MIXED api
 				// surface behind one base URL — it needs per-model api overrides
 				// from the published endpoints table (docs/d048).
@@ -886,7 +889,7 @@ function toCost(cost) {
 
 /**
  * A pi-shaped model entry as the full mode publishes it. Only the first
- * three fields are guaranteed: peer-served ids with no models.dev equivalent
+ * three fields are guaranteed: route-served ids with no models.dev equivalent
  * are published minimal (the rest falls back to pi's defaults).
  * @typedef {object} PiAlternativeModel
  * @property {string} id
@@ -980,8 +983,8 @@ function catalogPiModel(spec, m, id = m.id) {
  * does not carry the provider at all, and the vendored catalog is replaced
  * wholesale on every refresh, so a missing row is this row's normal state,
  * not a broken catalog (docs/d032 F1, docs/d057). The fact table is also the
- * base URL its peer route is built from, so direct and peer routing cannot
- * disagree (docs/d047). Its lineup arrives through the facts cache instead —
+ * base URL its client route is derived from, so the committed and installed
+ * URL forms cannot disagree (docs/d047, d070). Its lineup arrives through the facts cache instead —
  * an empty `models` map is what tells emitFullAt the cache owns the lineup.
  * @param {CloudProviderSpec} spec the provider spec row
  * @returns {{ api: string, models: Record<string, ModelsDevModel> }} the
@@ -1012,9 +1015,11 @@ function loadProvider(spec) {
 }
 
 /**
- * Build the provider block routed at `baseUrl` with the given key/auth.
+ * Build the provider block at `baseUrl` with the given key/auth.
  * @param {CloudProviderSpec} spec the provider spec row
- * @param {string} baseUrl
+ * @param {string} baseUrl the provider's URL — canonical fact-table upstream
+ *   in committed layers (docs/d070), substituted to the client route only at
+ *   install
  * @param {PiAlternativeModel[]} models
  * @param {{ apiKey: string, authHeader?: boolean }} auth
  * @returns {ProviderBlock} a models.json provider layer for the provider
@@ -1179,10 +1184,10 @@ function enrichWithFacts(spec, models, facts) {
 }
 
 /**
- * The override's models for one row, from the peer route's live listing.
+ * The override's models for one row, from the route's live listing.
  * Returns null when the listing yields nothing usable (the caller falls back
  * to the catalog).
- * @param {import("./peer-probe.mjs").RawModelEntry[]} entries
+ * @param {import("./route-probe.mjs").RawModelEntry[]} entries
  * @param {CloudProviderSpec} spec
  * @returns {import("./gen-lib.mjs").PiModel[]|null}
  */
@@ -1202,21 +1207,20 @@ function listingModels(entries, spec) {
 }
 
 /**
- * The minimal override for a pi-native row: a reroute at the REVERSE-PROXY
- * route (docs/d063 — never the fact table's direct base URL) plus the
- * models.dev ∪ catwalk id list as minimal records. pi's merge semantics keep
+ * The minimal override for a pi-native row: a provider at the CANONICAL
+ * fact-table upstream URL (docs/d070 §1 — the route substitution happens at
+ * install) plus the models.dev ∪ catwalk id list as minimal records. pi's
+ * merge semantics keep
  * it safe: a matching id replaces the built-in record, a new id is added,
  * and the rest of the built-in lineup survives. When no lineup resolves the
- * reroute is STILL emitted with `models: []`: omitting the provider would
+ * provider is STILL emitted with `models: []`: omitting the provider would
  * hand routing to pi's built-in DIRECT definition (d063 §3) — a loud empty
  * lineup beats a silent direct URL.
  * @param {CloudProviderSpec} spec
  * @param {Record<string, import("./gen-lib.mjs").PiProvider>} providers
- * @param {string} routeUrl the provider's reverse-proxy route (the probe's
- *   winner, or the first peer candidate when nothing proved usable)
  * @returns {void}
  */
-function emitMinimalCatalogOverride(spec, providers, routeUrl) {
+function emitMinimalCatalogOverride(spec, providers) {
 	const filter = spec.filter;
 	const modelsDevModels = CATALOG?.[spec.id]?.models ?? {};
 	const ids = new Set(
@@ -1237,14 +1241,17 @@ function emitMinimalCatalogOverride(spec, providers, routeUrl) {
 		}
 	}
 	if (!ids.size) {
-		logWarn("no model list available — proxy reroute with an empty lineup", {
+		logWarn("no model list available — canonical reroute with an empty lineup", {
 			provider: spec.id,
 		});
 	}
 	const models = [...ids].map((mid) => piModel({ id: mid }));
 	applyModelApi(spec, models);
-	providers[spec.id] = providerReroute(routeUrl, models);
-	logInfo("minimal catalog override — proxy reroute, ids merged", {
+	providers[spec.id] = providerReroute(
+		CLOUD_PROVIDER_FACTS[spec.id].baseUrl,
+		models,
+	);
+	logInfo("minimal catalog override — canonical base, ids merged", {
 		provider: spec.id,
 		models: ids.size,
 	});
@@ -1252,9 +1259,9 @@ function emitMinimalCatalogOverride(spec, providers, routeUrl) {
 
 /**
  * Run the override-only cascade for one pi-native row and record its entry
- * in `providers`: ALWAYS a proxy reroute (docs/d063) — at the probed
- * route's URL when one answered, else at the first peer candidate. The
- * probe only picks the lineup source (live listing → catalog); superficial
+ * in `providers`: ALWAYS at the canonical fact-table upstream URL (docs/d070
+ * — the route substitution is generate.mjs's install-time job). The probe
+ * only picks the lineup source (live listing → catalog); superficial
  * rows (docs/d064) skip it entirely and take the catalog directly.
  * @param {CloudProviderSpec} spec
  * @param {Record<string, import("./gen-lib.mjs").PiProvider>} providers
@@ -1273,49 +1280,47 @@ async function emitOverrideOnly(spec, providers) {
 		logInfo(
 			spec.catalogOnly
 				? "catalog-only provider — models.dev slice is the lineup source"
-				: "superficial provider — not route-probed (docs/d064), catalog reroute",
+				: "superficial provider — not route-probed (docs/d064), catalog lineup",
 			{ provider: spec.id },
 		);
-		emitMinimalCatalogOverride(
-			spec,
-			providers,
-			peerProviderUrl(CLOUD_PEER_CANDIDATES[0], spec.id),
-		);
+		emitMinimalCatalogOverride(spec, providers);
 		return;
 	}
 
-	const route = await probePeerRoutes(CLOUD_PEER_CANDIDATES, spec.id, headers);
-	// d063 §1: a dead/absent route never reverts to a direct URL — the first
-	// candidate is proxy-only too, only its lineup degrades to the catalog.
-	const routeUrl =
-		route?.url ?? peerProviderUrl(CLOUD_PEER_CANDIDATES[0], spec.id);
+	const route = await probeRoutes(REVERSE_PROXY_BASE_CANDIDATES, spec.id, headers);
+	// d063 §2 / d070 §4: the probe only selects the LINEUP source — the
+	// emitted URL is canonical either way.
 	if (!route) {
 		logWarn(
-			"no usable peer path-route — proxy reroute at the first candidate",
+			"no usable route — lineup degrades to the catalog (docs/d063)",
 			{ provider: spec.id },
 		);
-		emitMinimalCatalogOverride(spec, providers, routeUrl);
+		emitMinimalCatalogOverride(spec, providers);
 		return;
 	}
 	const models = listingModels(route.entries, spec);
 	if (models) {
 		applyModelApi(spec, models);
-		logInfo("override models from live peer listing", {
+		logInfo("override models from the route's live listing", {
 			provider: spec.id,
 			models: models.length,
 		});
-		providers[spec.id] = providerReroute(routeUrl, models);
+		providers[spec.id] = providerReroute(
+			CLOUD_PROVIDER_FACTS[spec.id].baseUrl,
+			models,
+		);
 		return;
 	}
 	// Route proved but not listable (401/403 without a key, or an unexpected
 	// answer — reachable ≠ authenticated): the catalog mirrors the provider's
-	// own ids, and the reroute stands either way.
-	emitMinimalCatalogOverride(spec, providers, routeUrl);
+	// own ids, and the canonical base stands either way.
+	emitMinimalCatalogOverride(spec, providers);
 }
 
 /**
  * Run the full-mode cascade for one row and write its layer file at the
- * REVERSE-PROXY route (docs/d063): the layer IS the provider definition, so
+ * CANONICAL fact-table upstream URL (docs/d070): the layer IS the provider
+ * definition, so
  * it is written every run — even with an empty lineup — because an unwritten
  * layer would leave a stale committed DIRECT block in the merge (d063 §3).
  * The probe only bounds the lineup: the route's own listing when it could be
@@ -1327,18 +1332,16 @@ async function emitOverrideOnly(spec, providers) {
 async function emitFull(spec) {
 	const provider = loadProvider(spec);
 	const headers = bearerHeaders(process.env[spec.envKey]?.trim());
-	const route = await probePeerRoutes(CLOUD_PEER_CANDIDATES, spec.id, headers);
+	const route = await probeRoutes(REVERSE_PROXY_BASE_CANDIDATES, spec.id, headers);
 	if (!route) {
 		logWarn(
-			"no usable peer path-route — layer emitted at the first proxy candidate",
+			"no usable route — lineup degrades to the catalog/facts cascade (docs/d063)",
 			{ provider: spec.id },
 		);
 	}
 	return emitFullAt(
 		spec,
 		provider,
-		// d063 §1: a dead/absent route never reverts to a direct URL.
-		route?.url ?? peerProviderUrl(CLOUD_PEER_CANDIDATES[0], spec.id),
 		{ apiKey: `$${spec.envKey}`, authHeader: true },
 		// The route's own listing bounds a facts-sourced lineup when the probe
 		// could authenticate it; empty entries (401/403 without a key) mean the
@@ -1350,21 +1353,27 @@ async function emitFull(spec) {
 }
 
 /**
- * Write one full-mode layer at the REVERSE-PROXY route `baseUrl` (docs/d063):
- * the catalog lineup bounded by the ids the peer route actually serves. A
+ * Write one full-mode layer at the CANONICAL fact-table upstream URL
+ * (docs/d070 §1):
+ * the catalog lineup bounded by the ids the route actually serves. A
  * `catalogOptional` row skips the catalog entirely: its facts cache IS the
  * lineup (docs/d057). The layer is written even when the lineup resolves
  * empty — an unwritten layer would leave a stale committed DIRECT block in
  * the merge (d063 §3).
  * @param {CloudProviderSpec} spec
  * @param {{ api: string, models: Record<string, ModelsDevModel> }} provider
- * @param {string} baseUrl reverse-proxy route URL
  * @param {{ apiKey: string, authHeader?: boolean }} auth
- * @param {ReadonlySet<string>|null} peerIds the ids the peer route's own
+ * @param {ReadonlySet<string>|null} routeIds the ids the route's own
  *   listing proved it serves, or null when it listed nothing
  * @returns {Promise<void>}
  */
-async function emitFullAt(spec, provider, baseUrl, auth, peerIds = null) {
+async function emitFullAt(spec, provider, auth, routeIds = null) {
+	/**
+	 * The artifact's provider URL (docs/d070 §1): the fact table's real
+	 * upstream, keyed by id — never string-derived from a configured base.
+	 * @type {string}
+	 */
+	const canonicalUrl = CLOUD_PROVIDER_FACTS[spec.id].baseUrl;
 	const allow = spec.modelAllowlistResolver
 		? spec.modelAllowlistResolver(provider.models)
 		: spec.modelAllowlist;
@@ -1405,8 +1414,8 @@ async function emitFullAt(spec, provider, baseUrl, auth, peerIds = null) {
 				});
 				return;
 			}
-			const served = peerIds
-				? facts.models.filter((l) => peerIds.has(l.id))
+			const served = routeIds
+				? facts.models.filter((l) => routeIds.has(l.id))
 				: facts.models;
 			models = served
 				.filter((l) => !allow || allow.includes(l.id))
@@ -1418,7 +1427,7 @@ async function emitFullAt(spec, provider, baseUrl, auth, peerIds = null) {
 				ageMs: facts.ageMs,
 				cached: facts.models.length,
 				published: models.length,
-				peerBounded: peerIds !== null,
+				routeBounded: routeIds !== null,
 			});
 		} else {
 			const { enriched, untouched } = enrichWithFacts(spec, models, facts);
@@ -1442,25 +1451,24 @@ async function emitFullAt(spec, provider, baseUrl, auth, peerIds = null) {
 	}
 	const written = writeJsonArtifact(
 		join(scriptDir, /** @type {string} */ (spec.file)),
-		providerBlock(spec, baseUrl, models, auth),
+		providerBlock(spec, canonicalUrl, models, auth),
 	);
 	logInfo("provider layer written", {
 		provider: spec.id,
 		path: written,
-		baseUrl,
+		baseUrl: canonicalUrl,
 		models: models.length,
 	});
 }
 
 /** @returns {Promise<void>} */
 async function generateCloudProviders() {
-	// d063 §4 fail closed: with no vault peer base there is no proxy route to
-	// emit, and emitting nothing would hand every provider back to pi's
-	// built-in DIRECT definitions. SKIP_GEN=1 (generate.mjs) is the
-	// sanctioned bypass — install the committed artifact, regenerate nothing.
-	if (!CLOUD_PEER_CANDIDATES.length) {
+	// d063 §4 fail closed (d070 §6 removed the SKIP_GEN escape): with no
+	// reverse-proxy base there is no route to probe — the probes are why the
+	// base is required at generate time (docs/d070 §7).
+	if (!REVERSE_PROXY_BASE_CANDIDATES.length) {
 		throw new Error(
-			"no PEER_BASE_URL / PEER_BASE_URLS — refusing to generate (docs/d063); load the vault env or set SKIP_GEN=1",
+			"no REVERSE_PROXY_BASE_URLS — refusing to generate (docs/d063); load the vault env via ./lib/environment.sh",
 		);
 	}
 	// Best-effort cache refresh before the cascade reads it (order is
@@ -1529,14 +1537,16 @@ function previousLocalProvider(path) {
  */
 async function generateLocalLlamaSwap(out) {
 	/**
-	 * The peer's funnel base URL — vault-sourced (peerBaseUrl(); see the header
-	 * there). No localhost candidates are probed — the LAN :8080 (proxy) and
-	 * :8101 (llama-swap) listen addresses are not routable from outside the host
-	 * they serve (docs/d022). peerBaseUrl() throws when no peer base is set;
-	 * main()'s d063 guard already refuses that case before any stage runs.
+	 * The local route's PROBE candidates (lineup only — the emitted URL is
+	 * canonical, docs/d070): the vault-sourced reverse-proxy base
+	 * (reverseProxyBaseUrl()).
+	 * No localhost candidates are probed — the LAN :8080 (proxy) listen
+	 * address is not routable from outside the host it serves (docs/d022).
+	 * reverseProxyBaseUrl() throws when no base is set; main()'s d063 guard
+	 * already refuses that case before any stage runs.
 	 */
 	const LOCAL_SOURCE_CANDIDATES = [
-		peerProviderUrl(peerBaseUrl(), "llama-swap"),
+		providerRouteUrl(reverseProxyBaseUrl(), "llama-swap"),
 	];
 
 	const local = await probeCandidates(LOCAL_SOURCE_CANDIDATES, (ids) =>
@@ -1546,7 +1556,13 @@ async function generateLocalLlamaSwap(out) {
 	const providers = {};
 	if (local) {
 		const gguf = local.entries.filter((e) => e.id.includes("-GGUF"));
-		providers["llama-swap"] = providerEntry(local.baseUrl, gguf.map(piModel));
+		// Canonical emission (docs/d070): providerEntry appends /v1 to the
+		// fact table's llama-swap upstream (the tsnet serve hostname), and
+		// generate.mjs rewrites it to the client route at install.
+		providers["llama-swap"] = providerEntry(
+			CLOUD_PROVIDER_FACTS["llama-swap"].baseUrl,
+			gguf.map(piModel),
+		);
 	} else {
 		// d064 first-class stale-preserve: the local lineup exists nowhere
 		// else, so when the funnel cannot list it (the d064 known issue —
@@ -1731,13 +1747,12 @@ async function main() {
 		process.env.PI_DEFAULT_MODEL_JSON ??
 		join(scriptDir, "default-model.json");
 
-	// d063 fail closed: every emitted URL is a reverse-proxy route, so a
-	// vault peer base is REQUIRED. SKIP_GEN=1 is the sanctioned bypass for
-	// hosts without vault env — generate.mjs installs the committed
-	// artifact without spawning any generator.
-	if (!CLOUD_PEER_CANDIDATES.length) {
+	// d063 fail closed (d070 §6 removed SKIP_GEN): route probes and the
+	// install-time substitution both need a configured reverse-proxy base —
+	// generation refuses loudly without one.
+	if (!REVERSE_PROXY_BASE_CANDIDATES.length) {
 		logError(
-			"no PEER_BASE_URL / PEER_BASE_URLS — proxy-only generation cannot proceed (docs/d063); load the vault env or set SKIP_GEN=1",
+			"no REVERSE_PROXY_BASE_URLS — proxy-only generation cannot proceed (docs/d063); load the vault env via ./lib/environment.sh",
 		);
 		process.exit(1);
 	}

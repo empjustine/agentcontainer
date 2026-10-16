@@ -57,6 +57,6 @@ at. This is that record.
 
 - OpenCode's own `auth.json` under its data dir (third-party storage).
 - The retired peers-only serving mode — covered by
-  `docs/environments-and-peer-variants.md` and the container-tooling
+  `docs/environments-and-variants.md` and the container-tooling
   environment table.
 

@@ -116,8 +116,8 @@ as plain env via the explicit chain, the models.dev catalog refresh is
 best-effort like everywhere else (running generate means "I want current
 networked data", docs/d060), the opencode stage is skipped unless
 `OPENCODE_CONFIG_DIR` is set. **Everywhere else** — repo-pinned node via `lib/node-run.sh`, catalog
-refreshed best-effort, peer routing walks the vault-sourced `PEER_BASE_URLS`
-multi-hop chain.
+refreshed best-effort, route probing walks the vault-sourced
+`REVERSE_PROXY_BASE_URLS` multi-hop chain.
 
 ## Decisions & invariants
 
@@ -130,15 +130,23 @@ multi-hop chain.
   (stages as functions, documented order). This supersedes d037's process
   split while keeping its per-layer merge verdicts — d037/d033 remain the
   semantic specs for the layers themselves.
-- **Proxy-only routing + multi-hop peer chains** (docs/d063, superseding
-  d033/d034's route half): every emitted `baseUrl`/`baseURL` is a
-  reverse-proxy route on the vault-sourced `PEER_BASE_URLS` chain
-  (`peer-probe.mjs peerBaseUrls()`, walked in order by `probePeerRoutes` and
-  the facts/catalog refreshers); probes run concurrently
-  (`Promise.allSettled`) and only pick the LINEUP source. A thrown probe
-  keeps its provider id so the route probe is still attempted.
-- **Peer routing is per-provider path-prefix** (docs/d027): cloud peer
-  routes are `<peerBase>/<providerId>` on the simplified cloud router
+- **Proxy-only routing + multi-hop reverse-proxy chains** (docs/d063,
+  superseding d033/d034's route half; URL form per docs/d070): committed
+  artifacts carry the fact-table canonical upstream, and the reverse-proxy
+  route is substituted at install — always onto the FIRST configured base
+  of the vault-sourced `REVERSE_PROXY_BASE_URLS` chain (`route-probe.mjs
+  reverseProxyBaseUrls()`). The full chain exists for lineup selection:
+  `probeRoutes` walks it in order (together with the facts/catalog
+  refreshers), probes run concurrently (`Promise.allSettled`), and only the
+  LINEUP source is chosen. A thrown probe keeps its provider id so the
+  route probe is still attempted.
+- **URL form is verified, not assumed** (docs/d070):
+  `check-routed-artifacts.mjs` is the one detector — `--committed` requires
+  canonical upstreams over the committed artifacts (guarded by
+  `tests/artifact-urls.test.mjs`), `--installed` rejects canonical URLs in
+  the agent dir and is re-run at launch by `run.sh` (exit 94).
+- **Route building is per-provider path-prefix** (docs/d027): cloud
+  routes are `<base>/<providerId>` on the simplified cloud router
   (llm-reverse-proxy, no credential handling — clients carry the provider's
   own key); the llama-swap `/v1` + model-id-magic face serves LOCAL GGUF
   only (`$PEER_API_KEY`).
@@ -173,7 +181,7 @@ Copy unit = this folder + `../lib` (`docs/architecture.md`). `gen-lib.mjs` is
 the shared preamble for the pi-layer stages: it carries the pi shaping
 helpers (folded from the former `lib/pi-models.mjs`, docs/d039), re-exports
 the shared lib/ modules (`lib/log.mjs`, `lib/cloud-providers.mjs`) via
-`$LIB_DIR`, and its same-dir siblings `peer-probe.mjs`, `provider-facts.mjs`,
+`$LIB_DIR`, and its same-dir siblings `route-probe.mjs`, `provider-facts.mjs`,
 `catwalk-facts.mjs`, `refresh-models-dev.mjs` (all single-consumer, folded
 out of lib/ by d039). It reads `lib/models.dev.api.json` (shared with
 llm-reverse-proxy) and the caches (`<id>-facts.json` beside its module,
@@ -181,6 +189,6 @@ llm-reverse-proxy) and the caches (`<id>-facts.json` beside its module,
 into `llm-local-inference/` or `local-llm/`.
 
 `generate.mjs` stages exactly this tree into the scratch dir — the two
-generators + `gen-lib.mjs` + `peer-probe.mjs` + `provider-facts.mjs` +
+generators + `gen-lib.mjs` + `route-probe.mjs` + `provider-facts.mjs` +
 `catwalk-facts.mjs` + `refresh-models-dev.mjs`. The staging list is host-only:
 the container mount of this tree was removed in docs/d056.

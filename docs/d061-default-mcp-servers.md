@@ -39,12 +39,15 @@ generator that already installs `settings.json`/`models.json` there.
 1. **The server list is committed source: `coding-agent/mcp.json`**, beside
    `settings.json`. It is static (no cascade, no `.paths` staleness manifest,
    out of d050's scope) and holds **no credentials** — DeepWiki's
-   `https://mcp.deepwiki.com/mcp` (3 tools), Mintlify's
-   `https://index.mintlify.com/mcp` (1 tool, `context`) and Context7's
+   `https://mcp.deepwiki.com/mcp` (3 tools) and Context7's
    `https://mcp.context7.com/mcp` (2 tools, `resolve-library-id`/`query-docs`)
    all answer keyless. Context7 *accepts* a key header (`X-Context7-API-Key`,
    per its CORS allow-list) to raise the anonymous limit; a key is an operator
    addendum in the host's own `mcp.json` or a project file, never here.
+   Mintlify's `https://index.mintlify.com/mcp` (1 tool, `context`) was in the
+   committed list originally and has since been dropped from it: generate no
+   longer installs it, and an agent-dir copy survives only because of the
+   merge rule in 3 (delete the entry to retire it on an existing host).
 2. **`generate.mjs` installs it (`currentStage = "mcp-install"`)** directly
    after the settings install, so it lands even when a later (network) stage
    fails.
@@ -93,11 +96,10 @@ generator that already installs `settings.json`/`models.json` there.
    boundary stays the container (egress, credentials), not the sentence. If a
    hard mitigation is ever wanted, the hook is an extension wrapping MCP
    `tool_result`s in an untrusted envelope (pi's `extensions.md#events`).
-8. **Egress grows with the list.** All three endpoints are queried inside the
-   container through `workload_network host`: Mintlify answers from a hosted
-   search index behind a keyless 5,000/day rate limit, and Context7 enforces a
-   smaller anonymous budget than a keyed one. None of them sends credentials,
-   and all three receive whatever the model puts in the query — Context7's own
+8. **Egress grows with the list.** Both endpoints are queried inside the
+   container through `workload_network host`: Context7 enforces a smaller
+   anonymous budget than a keyed one. Neither sends credentials, and both
+   receive whatever the model puts in the query — Context7's own
    schema says not to include secrets, and nothing but the model enforces that.
 
 No runner, image or env-chain change: the mount, `workload_network host` and
@@ -112,8 +114,7 @@ apply here).
   the merge rule keeps it from costing the operator anything.
 - Enabling by default is an **egress** decision: a wiki query sends the repo
   name and the question to `mcp.deepwiki.com`, and public mode only indexes
-  public repositories; a Mintlify `context` call sends its query to
-  `index.mintlify.com`. Remove the entry from `coding-agent/mcp.json` or set it
+  public repositories. Remove the entry from `coding-agent/mcp.json` or set it
   `"enabled": false` to trade it back.
 - Exposure is pi's default `codemode`, and `settings.json`'s `defaultTools`
   already carries `+codemode`, so the servers are reachable from codemode
@@ -134,12 +135,14 @@ PI_CODING_AGENT_DIR="$HOME/.pi/agent" pi mcp list
 ```
 
 Reachability was checked against the endpoints, not assumed: bare `tools/call`
-requests return real answers from `https://index.mintlify.com/mcp` (a cited
-`context` answer — that is the whole tool, `annotations.readOnlyHint`) and
-from `https://mcp.context7.com/mcp` (`resolve-library-id` for Bun resolves to
+requests return real answers from
+`https://mcp.context7.com/mcp` (`resolve-library-id` for Bun resolves to
 `/oven-sh/bun` with its snippet count and indexed versions), `pi mcp list`
-reports all three connected on `codemode`, and DeepWiki's three tools were
-called from a codemode script. A server added *after* a session
+reports all servers connected on `codemode`, and DeepWiki's three tools were
+called from a codemode script. (When Mintlify was still in the list, the same
+check returned a cited `context` answer from `https://index.mintlify.com/mcp`
+— that is the whole tool, `annotations.readOnlyHint`.)
+A server added *after* a session
 starts is not in that session's tool set (`/reload` or a new session picks it
 up), which is why the list is installed by the generator and required by
 `run.sh` rather than added interactively.

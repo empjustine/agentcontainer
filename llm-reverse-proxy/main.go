@@ -3,8 +3,9 @@
 // v2 host-allowlist routing (docs/d047): requests to
 // http://<host>:<port>/<upstream-host>/<path>?<query> are forwarded, byte for
 // byte, to the allowlisted upstream root configured for <upstream-host>. The
-// FIRST PATH SEGMENT is the destination host (a DNS name, or the logical
-// alias "llama-swap" for the one loopback learner; docs/d047); everything after it rides the byte-for-byte
+// FIRST PATH SEGMENT is the destination host (a DNS name; docs/d047 —
+// llama-swap's logical alias left the generated table with docs/d070);
+// everything after it rides the byte-for-byte
 // passthrough, so a client addresses a provider as
 // <peerBase>/<host><full-upstream-base-path> (peerProviderUrl, docs/d047) and
 // the proxy single-joins the remainder onto scheme://<host>. Hosts NOT in
@@ -50,9 +51,10 @@ import (
 type config struct {
 	Listen string `json:"listen"`
 	// The host allowlist (docs/d047): route key (an upstream DNS host, e.g.
-	// "api.anthropic.com", or the one logical alias "llama-swap") →
-	// scheme://host root. The proxy never parses the key as a host — it is an
-	// opaque path segment — so the alias needs no special handling here.
+	// "api.anthropic.com") → scheme://host root. The proxy never parses the
+	// key as a host — it is an opaque path segment (docs/d070 retired the
+	// last non-host key, llama-swap's logical alias, from the generated
+	// table).
 	AllowHosts map[string]string `json:"allowHosts"`
 }
 

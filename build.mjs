@@ -202,7 +202,7 @@ if (containerTool) {
 
 	// --- llama-swap image (container hosts) ----------------------------------
 	// The OCI workflow means there is nothing to compile: pre-pull the
-	// unified-vulkan image run.sh will use. Cloud/remote peer relaying is
+	// unified-vulkan image run.sh will use. Cloud/remote relaying is
 	// served by ../llm-reverse-proxy; this image only ever serves local GGUF
 	// inference — no :cpu peers-only variant, no Termux native cross-build.
 	//

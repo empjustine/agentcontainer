@@ -94,7 +94,7 @@ replacement path for "run pi unsandboxed, with the vault env".
   skip), `lib/provision-termux.sh` and the Termux node policy are untouched.
   The *runner* is container-only, not the generator.
 - **`llm-reverse-proxy/run.sh`'s native Termux branch** is a separate runner
-  with its own record (`docs/environments-and-peer-variants.md`) and stays.
+  with its own record (`docs/environments-and-variants.md`) and stays.
 - **The container-native launcher itself**: no change to mounts, staging,
   `workload_env` forwarding, or the d054 `auth.json` gate.
 

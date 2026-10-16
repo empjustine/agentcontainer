@@ -230,6 +230,16 @@ fi
 	log_die 94 "no settings.json in the agent dir — run ./generate.sh first" agentDir="$agent_dir"
 [ -f "$agent_dir/models.json" ] ||
 	log_die 94 "no models.json in the agent dir — run ./generate.sh first (or the root ./generate.sh)" agentDir="$agent_dir"
+# d070 §5: the installed file must be ROUTE-form — a provider URL carrying a
+# fact-table upstream means pi would talk to upstream directly, bypassing
+# the proxy this fleet routes through (docs/d063). generate verified this at
+# install; re-check at launch because the agent dir is host state a stale or
+# hand-edited copy can sit in, and the fix is always the same: regenerate.
+# shellcheck source-path=SCRIPTDIR source=../lib/node-run.sh
+. "$SCRIPT_DIR/../lib/node-run.sh"
+if ! node_run "$SCRIPT_DIR/check-routed-artifacts.mjs" --installed "$agent_dir/models.json" >/dev/null; then
+	log_die 94 "installed models.json carries canonical provider URLs — run ./generate.sh (docs/d070)" agentDir="$agent_dir"
+fi
 # mcp.json is required even though pi runs without it: "every environment has
 # the committed servers" is the check's whole value, and the documented opt-out
 # is `"enabled": false` on the entry (docs/d061), not a deleted file.
@@ -237,8 +247,8 @@ fi
 	log_die 94 "no mcp.json in the agent dir — run ./generate.sh first (or the root ./generate.sh)" agentDir="$agent_dir"
 # PARTIAL opencode config is ACCEPTED at launch (deliberately unlike pi's
 # missing-artifact exit 94): opencode runs fine on its built-in providers, so
-# a missing installed overlay only costs the peer reroute — warn and launch.
-# There is no SKIP_GEN install path for opencode either (docs/d065): the
+# a missing installed overlay only costs the provider reroute — warn and launch.
+# SKIP_GEN (the committed-artifact install path) is retired with d070 §6: the
 # overlay is a generate-time artifact, and regeneration is the only fix.
 [ -f "$opencode_cfg_dir/opencode.json" ] ||
 	log_warn "no opencode.json in the host config dir — opencode launches on built-in (partial) config; run ./generate.sh to install" \
@@ -266,7 +276,7 @@ PI_CODING_AGENT_DIR="/home/${USER}/.pi/agent"
 # (precedence: --session-dir > PI_CODING_AGENT_SESSION_DIR > settings.json).
 PI_CODING_AGENT_SESSION_DIR="/home/${USER}/.pi/sessions"
 # Upstream's documented custom config directory (config.mdx): loaded after
-# the global config so the peer overlay overrides it. It names the HOST
+# the global config so the provider overlay overrides it. It names the HOST
 # config dir run.sh mounted (docs/d065) — the same path as opencode's own
 # global default, so both tiers read the same files — idempotent.
 OPENCODE_CONFIG_DIR="/home/${USER}/.config/opencode"
@@ -333,10 +343,11 @@ workload_workdir  "$(guest_path "$workdir")"
 # Secrets! The host-side loader (lib/environment.sh — run.sh is exec'd through
 # it) put the vault keys in THIS shell's environment; the allowlist below
 # forwards them into the sandbox like the llm-local-inference run path (only
-# non-empty values are forwarded). PEER_BASE_URL is deliberately absent: only
-# the generator consumes it (proxy-only generation refuses to run without it,
-# docs/d063), and the generator does not run in here (docs/d056). PEERS_ONLY
-# is retired with the direct-first cascade (docs/d063).
+# non-empty values are forwarded). REVERSE_PROXY_BASE_URLS is deliberately
+# absent: only the generator consumes it (generation and the install-time
+# route substitution refuse without it, docs/d063/d070), and the generator
+# does not run in here (docs/d056). PEERS_ONLY is retired with the
+# direct-first cascade (docs/d063).
 #
 # This list is a FOURTH place a provider's key env name has to appear (the
 # catalog `env`, lib/cloud-providers.mjs's apiKeyEnv, the pi generator spec's

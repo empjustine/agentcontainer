@@ -7,7 +7,7 @@
  * macros) or when a host's capabilities changed (GPU added/removed, container
  * backend installed).
  *
- * Cloud/remote peer relaying is NOT generated here (nor anywhere): it is
+ * Cloud/remote relaying is NOT generated here (nor anywhere): it is
  * served by ../llm-reverse-proxy, the raw passthrough proxy. This module
  * emits only what serves local llama.cpp GGUFs.
  *

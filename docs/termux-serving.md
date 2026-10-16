@@ -80,7 +80,7 @@ management.
 
 ## Cross-references
 
-- [environments-and-peer-variants.md](environments-and-peer-variants.md) — the
+- [environments-and-variants.md](environments-and-variants.md) — the
   termux and small-cloud-vm environment rows:
   hostnames, hardware, and what each host runs. The peers-only env layout
   is identical to Termux's.
@@ -90,4 +90,4 @@ management.
   un-prefixed and unified provider key names.
 - [d021-unreadable-models-dev-catalog.md](d021-unreadable-models-dev-catalog.md)
   — proposed (not applied): an unreadable models.dev catalog should skip only
-  the OpenCode peers instead of aborting the whole cloud-peer layer.
+  the OpenCode providers instead of aborting the whole cloud layer.

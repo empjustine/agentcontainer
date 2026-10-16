@@ -20,25 +20,28 @@ FR-S5 in [../docs/requirements.md](../docs/requirements.md).
 
 **The allowlist key is the upstream HOST (DNS name) and the value is its
 scheme://host root** — path suffixes move into the CLIENT's base URL, so a
-client route is `<peerBase>/<upstream-host><full-upstream-base-path>`
-(peer-mode hyper is `https://…/<funnel-id>/hyper.charm.land/v1`). The proxy
+client route is `<base>/<upstream-host><full-upstream-base-path>`
+(hyper via the funnel is `https://…/<funnel-id>/hyper.charm.land/v1`). The proxy
 strips `/<host>` and single-joins the rest onto the root, so every wire
 dialect and every base path the provider speaks passes through untouched —
 and hosts that share a DNS name (opencode vs opencode-go on `opencode.ai`,
 minimax's `/anthropic` variants) stay routable under ONE allowlist row,
 because the distinguishing path belongs to the client that owns it. The
 coding-agent generators probe exactly these routes
-(`<peerBase>/<host><base>/models`, peerProviderUrl) and emit the same shape
-as baseUrls. Hosts NOT in the allowlist are denied by absence — the same
+(`<base>/<host><base>/models`, providerRouteUrl) and emit the same shape
+as installed baseUrls (committed artifacts carry the canonical upstream;
+the route is substituted at install — docs/d070). Hosts NOT in the allowlist are denied by absence — the same
 plain funnel 404 as any garbage path; a catalog row can no longer mint a
 routable endpoint.
 
-**One row is the exception: the llama-swap loopback learner.** It is keyed
-by the stable logical route name `llama-swap` (value still
-`http://127.0.0.1:8101`), so client configs never embed a loopback address
-in the request path. `peerProviderUrl` emits the same name for it; every
-other row keeps `key === host`. The generator's drift check re-states this
-exception rather than deriving it from `hostKey` (docs/d047).
+**Every row keys on its upstream host** — the last exception went with
+docs/d070: llama-swap (the local GGUF farm) now serves a real tailnet
+hostname via `tailscale serve` at the hostname ROOT (loopback :8101
+behind it), so its allowlist row is an ordinary `<tailnet-host>` → root
+entry like every other host, and client configs still never embed a
+loopback address in the request path. No logical alias survives in the
+generated table; `providerRouteUrl` composes llama-swap's route from the
+fact table exactly like every other provider (docs/d070).
 
 There is no other mode: the v1 provider-slug table (`providers`,
 `/<providerId>` addressing) is retired — main.go only reads `allowHosts`,
