@@ -1082,6 +1082,13 @@
       "baseUrl": "https://opencode.ai/zen/v1",
       "models": [
         {
+          "id": "beam-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "big-pickle",
           "reasoning": true,
           "input": [
@@ -1398,6 +1405,13 @@
         },
         {
           "id": "glm-5.3-flash",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "glm-5.3-flash-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1726,6 +1740,13 @@
           ]
         },
         {
+          "id": "ll-alpha-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "longcat-2.0-free",
           "reasoning": true,
           "input": [
@@ -1983,7 +2004,7 @@
       "baseUrl": "https://opencode.ai/zen/go/v1",
       "models": [
         {
-          "id": "cat-jam-free",
+          "id": "beam-free",
           "reasoning": true,
           "input": [
             "text"
@@ -2417,6 +2438,15 @@
           ],
           "contextWindow": 1048576,
           "maxTokens": 1048576
+        },
+        {
+          "id": "xingchen-agi/xing4.0-29b-a4b:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
         }
       ]
     }

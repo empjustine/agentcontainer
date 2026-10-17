@@ -769,6 +769,9 @@
         "baseURL": "https://opencode.ai/zen/v1"
       },
       "models": {
+        "beam-free": {
+          "name": "beam-free"
+        },
         "big-pickle": {
           "name": "big-pickle"
         },
@@ -903,6 +906,9 @@
         },
         "glm-5.3-flash": {
           "name": "glm-5.3-flash"
+        },
+        "glm-5.3-flash-free": {
+          "name": "glm-5.3-flash-free"
         },
         "gpt-5": {
           "name": "gpt-5"
@@ -1042,6 +1048,9 @@
         "ling-3.1-flash-free": {
           "name": "ling-3.1-flash-free"
         },
+        "ll-alpha-free": {
+          "name": "ll-alpha-free"
+        },
         "longcat-2.0-free": {
           "name": "longcat-2.0-free"
         },
@@ -1159,8 +1168,8 @@
         "baseURL": "https://opencode.ai/zen/go/v1"
       },
       "models": {
-        "cat-jam-free": {
-          "name": "cat-jam-free"
+        "beam-free": {
+          "name": "beam-free"
         },
         "claude-haiku-5-5": {
           "name": "claude-haiku-5-5"
@@ -1326,6 +1335,9 @@
         },
         "thinkingmachines/inkling:free": {
           "name": "thinkingmachines/inkling:free"
+        },
+        "xingchen-agi/xing4.0-29b-a4b:free": {
+          "name": "xingchen-agi/xing4.0-29b-a4b:free"
         }
       }
     }
