@@ -228,13 +228,15 @@ export function relayCandidates(upstream, pathAndQuery, envOverride) {
 
 /**
  * Per-model metadata llama-swap mirrors from its own model config (served on
- * `/v1/models` under `meta.llamaswap`, already pi-shaped).
+ * `/v1/models` under `meta.llamaswap`, already pi-shaped). `cost` is Partial
+ * because the mirror is verbatim: the config may carry an empty or partial
+ * price block, which gen-lib's piCost() has to normalize on the way out.
  * @typedef {object} LlamaSwapMeta
  * @property {number} [contextWindow]
  * @property {number} [maxTokens]
  * @property {boolean} [reasoning]
  * @property {string[]} [input]
- * @property {Cost} [cost]
+ * @property {Partial<Cost>} [cost]
  */
 
 /**

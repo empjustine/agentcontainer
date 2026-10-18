@@ -89,7 +89,9 @@ export const {
  * @property {number} [contextWindow]
  * @property {number} [maxTokens]
  * @property {Cost} [cost] absent — the key is DROPPED, never null — when
- *   the listing carries no pricing (committed artifacts contain zero
+ *   the listing carries no pricing, and piCost() refuses an empty, partial
+ *   or all-zero block for the same reason: pi's schema needs all four price
+ *   fields if the key is there at all (committed artifacts contain zero
  *   `"cost": null` entries; `cost: null` would churn every artifact and may
  *   trip strict consumers)
  * @property {string} [api] per-model api override (pi docs/models.md) —
@@ -216,6 +218,35 @@ export function toInput(modalities) {
 }
 
 /**
+ * THE "complete or absent" cost rule for pi model entries, shared by BOTH
+ * price sources (llama-swap metadata through piModel, models.dev records
+ * through toCost): pi's ModelCost schema
+ * (https://pi.dev/schemas/models.schema.json) makes `cost` OPTIONAL but, the
+ * moment it appears, requires all four price fields — so an empty or partial
+ * block is a models.json pi refuses to load (the whole file is dropped, local
+ * lineup and all), and "priced at nothing" is spelled by OMITTING the block.
+ * llama-swap mirrors its config `metadata` verbatim and the local config
+ * shipped `cost: {}` (v22.3, the block that replaced the 10/50/1/20
+ * placeholder), so an upstream block is judged here rather than trusted:
+ * complete the four fields, and publish nothing when no field is priced — an
+ * all-zero block asserts a fact pi already assumes (docs/d057: prices are
+ * absent, not zero).
+ * @param {Partial<Cost>} [cost] the price block, if any
+ * @returns {Cost|undefined} a complete four-field block, or undefined when
+ *   nothing is priced — the caller drops the key
+ */
+export function piCost(cost) {
+	if (!cost) return undefined;
+	const price = {
+		input: cost.input ?? 0,
+		output: cost.output ?? 0,
+		cacheRead: cost.cacheRead ?? 0,
+		cacheWrite: cost.cacheWrite ?? 0,
+	};
+	return Object.values(price).some((value) => value !== 0) ? price : undefined;
+}
+
+/**
  * Mirror a raw `/models` entry into pi's model shape, preferring llama-swap's
  * own metadata over the llama.cpp fields.
  * @param {RawModelEntry} entry
@@ -242,6 +273,9 @@ export function piModel(entry) {
 			entry.architecture?.input_modalities ??
 			(entry.capabilities?.vision ? ["text", "image"] : ["text"]),
 	);
+	// Judged, never copied: an empty/all-zero upstream block becomes NO key
+	// (piCost's rule) instead of an invalid one reaching the artifact.
+	const cost = piCost(meta?.cost);
 	return {
 		id: entry.id,
 		...(displayName(entry.id) ? { name: displayName(entry.id) } : {}),
@@ -249,7 +283,7 @@ export function piModel(entry) {
 		input,
 		contextWindow,
 		maxTokens: meta?.maxTokens ?? contextWindow,
-		cost: meta?.cost ?? undefined,
+		...(cost ? { cost } : {}),
 	};
 }
 

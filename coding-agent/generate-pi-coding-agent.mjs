@@ -88,6 +88,7 @@ import {
 	reverseProxyBaseUrl,
 	reverseProxyBaseUrls,
 	providerRouteUrl,
+	piCost,
 	piModel,
 	probeCandidates,
 	probeRoutes,
@@ -848,23 +849,20 @@ function buildThinkingLevelMap(reasoningOptions) {
  * @param {ModelsDevModel["cost"]} cost the catalog's price block, or `null`
  *   for a provider whose listing publishes NO prices
  * @returns {PiAlternativeModel["cost"]} undefined for `null` — the layer then
- *   omits `cost` rather than asserting pi's placeholder as if it were fact
+ *   omits `cost` rather than asserting pi's placeholder as if it were fact —
+ *   and undefined for an all-zero block, by the shared piCost rule
  */
 function toCost(cost) {
 	if (cost === null || cost === undefined) return undefined;
-	if (
-		(cost.input ?? 0) === 0 &&
-		(cost.output ?? 0) === 0 &&
-		(cost.cache_read ?? 0) === 0 &&
-		(cost.cache_write ?? 0) === 0
-	)
-		return undefined;
-	return {
-		input: cost.input ?? 0,
-		output: cost.output ?? 0,
-		cacheRead: cost.cache_read ?? 0,
-		cacheWrite: cost.cache_write ?? 0,
-	};
+	// Only the field names differ between the two sources (models.dev spells
+	// the cache prices cache_read/cache_write); "complete or absent" is
+	// piCost's rule, shared with the llama-swap path in gen-lib (docs/d057).
+	return piCost({
+		input: cost.input,
+		output: cost.output,
+		cacheRead: cost.cache_read,
+		cacheWrite: cost.cache_write,
+	});
 }
 
 /**

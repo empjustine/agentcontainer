@@ -466,8 +466,7 @@ function generateLocalInference() {
 					reasoning: true,
 					input: modalities,
 					contextWindow: ctxSize,
-					maxTokens: Math.min(ctxSize, nPredict),
-					cost: {},
+					maxTokens: Math.min(ctxSize, nPredict)
 				},
 			};
 		}

@@ -34,6 +34,7 @@
 		"tests/git-pacer.test.mjs",
 		"tests/lib-staging.test.mjs",
 		"tests/modality-allowlist.test.mjs",
+		"tests/pi-cost.test.mjs",
 		"generate.mjs",
 		"build.mjs",
 		"coding-agent/route-probe.mjs",
