@@ -79,7 +79,6 @@ agentcontainer/
 ├── tests/                             # standalone checks (node --test for JS, sh for workload helpers)
 │   ├── check-workload.sh              # → workload_ro / workload_ro_if mount-helper tests
 │   ├── canonical-json.test.mjs        # → canonicalization unit + committed-manifest canonicity guard (d050)
-│   ├── lib-staging.test.mjs           # → guards generate.mjs's hand-maintained lib/ staging list (d050; run.sh's mount list retired in d056)
 │   ├── modality-allowlist.test.mjs    # → the d049 admit-but-trim gate/projection contract (gen-lib capability constant)
 │   └── artifact-urls.test.mjs         # → committed artifacts carry canonical upstreams, installed detector catches escapes (d070)
 ├── docs/                              # docs tree, typed per docs/d042 (BRD / reference / design)
@@ -89,7 +88,7 @@ agentcontainer/
 │   ├── container-tooling.md           # → lib/workload-runtime.sh, run scripts (the lib module doc)
 │   ├── coding-harness-persistence.md  # → per-harness persistence mounts (pi: host dirs, d054)
 │   ├── hf-cache-upkeep.md, refresh-local-llm-manifest.md, gguf-*.md   # → runbooks + generated tables
-│   ├── d0XX-*.md                      # → decision log (append-only history)
+│   ├── d0XX-*.md                      # → decision log (history; kept mechanically accurate, FR-D2)
 │   ├── archive/                       # → research findings + retired docs (index inside)
 │   └── ...
 ├── lib/                               # Shared infrastructure (docs/architecture.md)
@@ -131,9 +130,8 @@ agentcontainer/
 │   ├── gen-lib.mjs                      #   → shared generator preamble (pi shaping folded in, d039)
 │   ├── route-probe.mjs                  #   → HTTP route/probe toolkit (renamed peer-probe.mjs, d071; folded out of lib/, d039)
 │   ├── check-routed-artifacts.mjs       #   → the d070 URL-form verifier — committed = canonical, installed = route-form (run.sh + tests share it)
-│   ├── provider-facts.mjs               #   → per-provider facts cache + enricher (`<id>-facts.json`; hyper + catalog-less verb oo, d039/d057)
+│   ├── catalog-facts.mjs                #   → the two catalog fact caches: per-provider (`<id>-facts.json`, d057) + catwalk (lib/, d039) — d072 merged them
 │   ├── hyper-facts.json / verboo-facts.json # → committed facts caches (d057: verboo's is its lineup)
-│   ├── catwalk-facts.mjs                #   → catwalk catalog refresher (cache stays in lib/, d039)
 │   ├── refresh-models-dev.mjs           #   → atomic models.dev catalog refresh (d039)
 │   ├── settings.json                    #   → static pi settings (generator installs into PI_CODING_AGENT_DIR)
 │   ├── mcp.json                         #   → committed default MCP servers, merged into the agent dir (docs/d061)
@@ -163,7 +161,8 @@ agentcontainer/
 
 Docs are typed per [docs/d042](docs/d042-documentation-taxonomy.md):
 `requirements` (the BRD) / `reference` (systems reference) / `design` (TDD) /
-`research` (one-time findings) + the append-only `d0XX` decision log.
+`research` (one-time findings) + the `d0XX` decision log (history —
+kept mechanically accurate, never rewritten wholesale).
 Frontmatter `type:` is the machine signal; this index is the human map.
 
 ### Requirements (BRD)
@@ -194,21 +193,21 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 
 | Doc | Covers |
 |-----|--------|
-| [coding-agent/DESIGN.md](coding-agent/DESIGN.md) | pi agent image + by-agent config generation — the two-generator structure, the layered-cake merge contract (single home: the generate-pi-coding-agent.mjs header), stage table, invariants |
+| [coding-agent/DESIGN.md](coding-agent/DESIGN.md) | pi agent image + by-agent config generation — the two-generator structure, the **layered-cake merge** (single home: the generate-pi-coding-agent.mjs header) — distinct from llama-swap's config.d layer-merge rules, stage table, invariants |
 | [llm-local-inference/DESIGN.md](llm-local-inference/DESIGN.md) | llama-swap config.d layers, generation-time path baking, capability gating, bearer auth |
 | [llm-reverse-proxy/DESIGN.md](llm-reverse-proxy/DESIGN.md) | Proxy design rationale: full-real-base-URL convention, 404 anti-oracle, RFC 9457 error taxonomy, deviations |
 | [local-llm/DESIGN.md](local-llm/DESIGN.md) | HF cache pipeline, shared-table boundary, the sanctioned-write rule |
 | [docs/scoped-models-and-proxy-overrides.md](docs/scoped-models-and-proxy-overrides.md) | Why pi uses its own catalog with baseUrl overrides (distilled from the retired free-tier pipeline) |
 | [docs/summarized-thinking.md](docs/summarized-thinking.md) | summarized-reasoning extension — CoT summarization design |
 
-### Decision log (append-only)
+### Decision log (history)
 
 > Curated, not complete: records that no longer represent the tree stay in
 > `docs/` as history and are listed here only while they still shape it.
 
 | Doc | Covers |
 |-----|--------|
-| [docs/d018-split-config-d.md](docs/d018-split-config-d.md) | split `config.d/` layout + llama-swap merge contract |
+| [docs/d018-split-config-d.md](docs/d018-split-config-d.md) | split `config.d/` layout + llama-swap's **layer-merge rules** (named apart from pi's layered-cake merge, d072) |
 | [docs/d020-libvirt-qemu-sandbox.md](docs/d020-libvirt-qemu-sandbox.md) | qemu/libvirt VM sandboxes — requirements assessment (not implemented) |
 | [docs/d027-path-prefix-peer-routing.md](docs/d027-path-prefix-peer-routing.md) | path-prefix peer routing — llm-reverse-proxy replaces llama-swap's model-id magic (record vocabulary of the day — current names per [d071](docs/d071-retire-peer-terminology.md)) |
 | [docs/d027b-models-dev-relay-fallback.md](docs/d027b-models-dev-relay-fallback.md) | models.dev catalog fetch chain (direct → llm-reverse-proxy relay → stale copy) |
@@ -262,6 +261,7 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d070-canonical-upstream-urls-and-install-time-routing.md](docs/d070-canonical-upstream-urls-and-install-time-routing.md) | implemented — committed `coding-agent` artifacts (`models.json`, the `model-*.json` layers, `opencode.jsonc`) carry each provider's REAL upstream URL from the `lib/cloud-providers.mjs` fact table (no more funnel-UUID semi-credential in git, and a base rotation stops diffing seven files); the reverse-proxy route is substituted only when generate copies into the agent/opencode host config dir, keyed by provider id, always on the first configured base (probes select the lineup, never the URL — d063 §1 narrowed further); llama-swap gains a real https hostname via `tailscale serve` (tsnet-only), retiring d047's logical-name exception; the installed artifact is verified to contain zero canonical URLs (run.sh re-checks); `SKIP_GEN=1` retired with the design that needed it |
 
 | [docs/d071-retire-peer-terminology.md](docs/d071-retire-peer-terminology.md) | implemented — "peer" is retired as the reverse-proxy vocabulary: the vault env becomes `REVERSE_PROXY_BASE_URLS` (the one base env this repo reads; the vault keeps the retired `PEER_BASE_URL(S)` set for outside compatibility, never read in-tree), `peer-probe.mjs` → `route-probe.mjs` and its identifiers get route/proxy names, live docs are rewritten while historical decision records keep the names of the day; "peer" survives only for the llama-swap peer-provider concept |
+| [docs/d072-maintainability-review.md](docs/d072-maintainability-review.md) | implemented — maintainability review: `catwalk-facts.mjs` + `provider-facts.mjs` → `coding-agent/catalog-facts.mjs`; d023's scratch staging tree deleted (generators run in place into a per-run output dir; install atomicity and the committed layer snapshot kept); FR-D2 relaxed from "bodies are never rewritten" to "no wholesale rewrites, mechanical upkeep in place"; the two "merge contract"s named apart (llama-swap layer-merge rules vs pi's layered-cake merge); BRD Goal/FR-U2/FR-U5 reconciled with d063/d070/d061; single-caller census verdicts; pi-ai as the future source of the provider registry (deferred) |
 
 ### Research & archive
 

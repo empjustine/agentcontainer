@@ -1,5 +1,5 @@
 #!/bin/sh
-# generate.sh — interpreter shim (docs/d041): the whole generator (staging,
+# generate.sh — interpreter shim (docs/d041): the whole generator (output dir,
 # stage sequencing, installs) lives in generate.mjs. Secrets arrive as plain
 # environment — run through the explicit chain: ./lib/environment.sh ./generate.sh
 set -eu

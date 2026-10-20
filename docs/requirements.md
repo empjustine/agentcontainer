@@ -12,12 +12,17 @@ Serve LLMs on the owner's own fleet of hosts through **one llama-swap
 instance per host**, and configure the pi coding-agent to consume that
 catalog — a single-user infrastructure setup, not a product. *(User-confirmed.)*
 
-The same tree adapts to every host without forking per-host copies. Two
-independent capability axes decide what a host gets: **can the host run LLM
-inference itself?** (if not, it consumes inference served elsewhere in the
-fleet) and **can the host reach cloud LLM APIs directly?** (if not, its cloud
-traffic goes through the fleet's relay). Capability detection at generation
-time turns a host's position on that matrix into its config.
+The same tree adapts to every host without forking per-host copies.
+Generation is capability-driven on ONE axis: **can the host run LLM
+inference itself?** — if not, it consumes inference served elsewhere in the
+fleet. The second axis this goal originally named — **can the host reach
+cloud LLM APIs directly?** — no longer changes generated config: since d063
+every host's cloud traffic is routed through the fleet's relay ("routing by
+host", the accepted method; alternatives such as a TLS-level VPN or a
+non-HTTP-proxy transport are under study, docs/d072). The consequence is
+visible in code: capability detection now serves generation only for local
+inference (`llm-local-inference/generate.mjs`), and `cloudReachable()` is
+left answering nothing that generation asks (docs/d072).
 
 ## Stakeholders & context
 
@@ -28,7 +33,7 @@ time turns a host's position on that matrix into its config.
   material, not a requirement: see
   [environments-and-variants.md](environments-and-variants.md).
 - **How each requirement was implemented** is decided per-change in the
-  append-only decision log (`docs/d0XX-*.md`) and explained by the systems
+  decision log (`docs/d0XX-*.md`) and explained by the systems
   reference ([architecture.md](architecture.md)) and per-module design docs.
 
 ## Scope
@@ -84,9 +89,10 @@ time turns a host's position on that matrix into its config.
   static inputs (`settings.json`, `config.toml`, `Containerfile`).
 - **FR-U2** — Model/provider configuration is GENERATED, layered
   (`model-*.json` overlays merged lexically per-provider), and capability
-  gated: generation emits what the host's capabilities allow (can it serve
-  local inference, can it reach cloud APIs directly); hosts lacking them fall
-  back to the committed static config.
+  gated on local inference: generation emits what the host can serve itself,
+  and every other provider routes through the fleet's relay (proxy-only,
+  docs/d063) — a failed generation fails closed rather than falling back to a
+  committed artifact (docs/d070 §6).
 - **FR-U3** — Scoped models: the agent uses pi's own model catalog, scoped by
   `enabledModels` in static settings; generators emit provider overrides
   (base URLs, key refs), never client-side model catalogs.
@@ -97,6 +103,10 @@ time turns a host's position on that matrix into its config.
 - **FR-U5** — Generated runtime config (`~/.pi/agent` settings/models.json,
   opencode.json) is ephemeral and overwritten by design on every generation:
   no merge logic, no preservation contract; pi re-persists its runtime fields.
+  **`mcp.json` is the deliberate, documented exception**: the agent dir is
+  shared with the host pi and an operator's MCP servers exist nowhere else,
+  so committed entries are defaults merged UNDER what is already there
+  (docs/d061; flagged as intentional, docs/d072).
   *(Operator-confirmed.)*
 - **FR-U6** — Runners never build or generate: `run.sh` mounts the
   generator-installed config (`PI_CODING_AGENT_DIR` / `PI_CODING_AGENT_SESSION_DIR`,
@@ -138,9 +148,12 @@ time turns a host's position on that matrix into its config.
 - **FR-D1** — Every doc carries exactly one type from the d042 taxonomy
   (requirements / reference / design / research, plus the `d0XX` decision
   log); README's documentation index groups by type and stays in sync.
-- **FR-D2** — Decision records (`docs/d0XX-*.md`) are append-only history:
-  bodies are never rewritten, superseded records point forward via newer
-  records.
+- **FR-D2** — Decision records (`docs/d0XX-*.md`) are history, not
+  immutable: a record is never rewritten wholesale to change what was decided
+  or why (supersession points forward via a newer record), but mechanical
+  upkeep that keeps it honest — a path rename, a census count, the file list
+  of the refactor that record itself describes — may be edited in place so it
+  never lies about the tree (docs/d072).
 
 ## Non-functional requirements
 

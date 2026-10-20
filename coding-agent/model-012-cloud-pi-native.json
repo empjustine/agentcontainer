@@ -1042,6 +1042,13 @@
           ]
         },
         {
+          "id": "stepfun-ai/step-5-preview",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "thinkingmachines/inkling",
           "reasoning": true,
           "input": [
@@ -1845,6 +1852,13 @@
           ]
         },
         {
+          "id": "minimax-m3.1-flash-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "mistral-large-4",
           "reasoning": true,
           "input": [
@@ -2216,6 +2230,13 @@
           "api": "anthropic-messages"
         },
         {
+          "id": "minimax-m3.1-flash-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "muse-spark-1.2-contributor",
           "reasoning": true,
           "input": [
@@ -2277,14 +2298,6 @@
           "api": "anthropic-messages"
         },
         {
-          "id": "space-bunny",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "api": "openai-completions"
-        },
-        {
           "id": "step-5-preview",
           "reasoning": true,
           "input": [
@@ -2343,6 +2356,16 @@
           ],
           "contextWindow": 65536,
           "maxTokens": 65536
+        },
+        {
+          "id": "minimax/minimax-m3.1-flash:free",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 1000000
         },
         {
           "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",

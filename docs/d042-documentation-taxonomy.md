@@ -37,12 +37,14 @@ the README documentation index is grouped by them:
 | `reference` | the systems reference — structure, components, matrices, runbooks, as the system IS | `docs/architecture.md` (the map), `container-tooling.md`, `environments-and-variants.md`, `coding-harness-persistence.md`, `hf-cache-upkeep.md`, `refresh-local-llm-manifest.md`, `gguf-vram-fit-estimates.md`, `gguf-model-tooling.md`, per-folder `README.md` |
 | `design` | TDD — implementation rationale and mechanics not graspable from source at a glance | per-module `DESIGN.md` (renamed from `SPEC.md`), `llm-reverse-proxy/DESIGN.md` (split out of its README), `scoped-models-and-proxy-overrides.md` (the distilled rationale for scoped models + baseUrl overrides), `summarized-thinking.md` |
 | `research` | one-time findings/audits — the record of an investigation, not a statement of current behavior | `docs/archive/*` + the anchored strays below |
-| `decision` | the append-only decision log | `docs/d0XX-*.md` (the d0XX prefix IS the marker; their per-record `type:` fields — architecture-design/bugfix/task-spec — are record flavors, not this taxonomy, and stay untouched) |
+| `decision` | the decision log (history — kept mechanically accurate, not immutable; d072) | `docs/d0XX-*.md` (the d0XX prefix IS the marker; their per-record `type:` fields — architecture-design/bugfix/task-spec — are record flavors, not this taxonomy, and stay untouched) |
 
 ## The anchor constraint
 
-`docs/d0XX-*.md` bodies are immutable history (same policy that kept d041's
-stale `AGENT_DIR` mentions). Eight non-d0XX docs are referenced **by path**
+`docs/d0XX-*.md` bodies are history: never rewritten wholesale to change a
+verdict, but mechanically kept accurate when they describe the current tree
+(FR-D2, d072 — the old always-append rule only ever preserved rot such as
+d041's stale `AGENT_DIR` mentions). Eight non-d0XX docs are referenced **by path**
 from d0XX bodies, so they are physically anchored at `docs/` root:
 
 `architecture.md`, `container-tooling.md`, `termux-serving.md`,
@@ -91,17 +93,18 @@ replaced. d042's taxonomy now covers every module.
 - The README documentation index is the type map; frontmatter is the machine
   signal. Both must be updated together when a doc changes type (per
   AGENTS.md's index-sync rule).
-- Stale-by-design: paths referenced from d0XX bodies can never move again
-  without breaking history. Any future move of an anchored doc requires
-  editing history first (or accepting dangling pointers), so new docs should
-  pick their type-scoped home immediately.
+- Anchored-by-pointer: a path referenced from a d0XX body moves only if the
+  records naming it are updated too — mechanical upkeep, permitted since
+  d072 (before that, moving a doc meant leaving dangling pointers in
+  history). New docs should still pick their type-scoped home immediately.
 
 ## Verification record
 
 - Frontmatter census over the whole tree: every non-d0XX doc carries exactly
   one taxonomy `type:` (requirements ×1, reference ×10, design ×5, research
-  ×11); the d0XX log stays as-is by policy (the `d0XX` prefix is its type
-  marker; per-record flavor fields are historical). `coding-agent/SPEC.md`
+  ×11); the d0XX log keeps its own shape (the `d0XX` prefix is its type
+  marker; per-record flavor fields are historical) — and since d072 its
+  bodies are maintained rather than frozen (FR-D2). `coding-agent/SPEC.md`
   remains `module-design` — deferred, see above.
 - Stale-link sweep for every moved stem across README, AGENTS.md, all living
   docs, archive index, `lib/`, root scripts: zero hits outside d0XX bodies,

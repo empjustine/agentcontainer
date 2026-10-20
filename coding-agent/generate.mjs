@@ -1,9 +1,11 @@
 /**
- * @fileoverview generate.mjs — the coding-agent folder driver: it stages the
- * two by-harness generators (pi + opencode) into a writable scratch dir,
- * installs the static settings.json, refreshes the models.dev catalog, runs
- * them as child processes, and installs the generated artifacts (container
- * hosts AND Termux; d041 ported the former generate.sh shell 1:1 into node).
+ * @fileoverview generate.mjs — the coding-agent folder driver: it runs the
+ * two by-harness generators (pi + opencode) in place, installs the static
+ * settings.json, refreshes the models.dev catalog, and installs the
+ * generated artifacts (container hosts AND Termux; d041 ported the former
+ * generate.sh shell 1:1 into node). Intermediates live in a per-run output
+ * dir under RUN_DIR; docs/d072 retired the scratch staging of code, lib
+ * modules and caches (see the output-dir block below).
  *
  * Profile, detected at runtime:
  *   Termux (PREFIX under /data/data/com.termux):
@@ -74,7 +76,8 @@
  *                    compatibility, never read here (docs/d071 §1).
  *                    settings.json/mcp.json installs need no base and stay
  *                    unconditional.
- *   RUN_DIR          scratch dir for intermediate layers (default $TMPDIR,
+ *   RUN_DIR          base dir for the per-run output dir the generators write
+ *                    their layers and merged artifacts into (default $TMPDIR,
  *                    falling back to $PREFIX/tmp on Termux, /tmp elsewhere) —
  *                    this script's dir may be a read-only mount
  *   MODELS_DEV_JSON  models.dev catalog (default ../lib/models.dev.api.json —
@@ -95,8 +98,6 @@ import {
 	readdirSync,
 	readFileSync,
 	rmSync,
-	symlinkSync,
-	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -117,9 +118,10 @@ const { logError, logInfo, logWarn, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
-const { serializeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
-	await import(`${LIB_DIR}/artifact.mjs`)
-);
+const { serializeArtifact, writeArtifact } =
+	/** @type {typeof import("../lib/artifact.mjs")} */ (
+		await import(`${LIB_DIR}/artifact.mjs`)
+	);
 const { CLOUD_PROVIDERS } =
 	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
@@ -155,7 +157,7 @@ const agentDir =
 	join(process.env.HOME ?? "", ".pi", "agent");
 /**
  * default_run_dir port (lib/workload-runtime.sh): the script's own dir may be
- * a read-only mount, so scratch lives in TMPDIR ($PREFIX/tmp on Termux).
+ * a read-only mount, so the output dir lives in TMPDIR ($PREFIX/tmp on Termux).
  * @type {string}
  */
 const runDir =
@@ -380,17 +382,18 @@ function requireInstallBase(label) {
  * scriptDir (e.g. a copied folder mounted ro) is
  * expected and only warns.
  * @param {string} modelsOut the merged models.json just installed
- * @param {string} scratch the staged generator dir holding the layers
+ * @param {string} outDir this run's output dir — the only place the fresh
+ *   layers exist before this copy-back
  * @returns {void}
  */
-function refreshCommittedSnapshot(modelsOut, scratch) {
+function refreshCommittedSnapshot(modelsOut, outDir) {
 	const committedModels = join(scriptDir, "models.json");
 	try {
 		if (modelsOut !== committedModels) {
 			copyFileSync(modelsOut, committedModels);
-			for (const name of readdirSync(scratch)) {
+			for (const name of readdirSync(outDir)) {
 				if (/^model-.*\.json$/.test(name)) {
-					copyFileSync(join(scratch, name), join(scriptDir, name));
+					copyFileSync(join(outDir, name), join(scriptDir, name));
 				}
 			}
 		}
@@ -411,91 +414,24 @@ logInfo("profile", {
 	runDir,
 });
 
-currentStage = "scratch-stage";
+currentStage = "output-dir";
 
-// --- scratch dir: generators read layers from their own directory, and this
-// dir may be a read-only mount (container ro-mount), so stage the generators
-// — plus the helper modules they import (route-probe.mjs, provider-facts.mjs,
-// catwalk-facts.mjs, docs/d039) and the lib/ modules resolved via $LIB_DIR
-// (log.mjs, artifact.mjs, canonical-json.mjs, cloud-providers.mjs, docs/d023
-// + d050) — there and
-// symlink the big inputs.
-const scratch = mkdtempSync(join(runDir, "pi-models-gen-"));
-const scratchLib = join(scratch, "lib");
-mkdirSync(scratchLib, { recursive: true });
-const GENERATORS = [
-	"gen-lib.mjs",
-	"generate-pi-coding-agent.mjs",
-	"generate-opencode.mjs",
-	"route-probe.mjs",
-	"provider-facts.mjs",
-	"catwalk-facts.mjs",
-	"refresh-models-dev.mjs",
-];
-for (const f of GENERATORS) {
-	if (existsSync(join(scriptDir, f))) {
-		copyFileSync(join(scriptDir, f), join(scratch, f));
-	} else {
-		logWarn("generator missing", { path: join(scriptDir, f) });
-	}
-}
-// Structured logging + the shared fact table for the .mjs generators: they
-// import these from $LIB_DIR (default ../lib relative to their own file —
-// which from the scratch dir resolves somewhere that does not exist, so a
-// missing copy here costs every generator instead of one clear line).
-// canonical-json.mjs is here as artifact.mjs's runtime dependency (d050);
-// tests/lib-staging.test.mjs fails if either this list or run.sh's mounts
-// drift out of sync with what the generators actually import.
-for (const f of [
-	"log.mjs",
-	"artifact.mjs",
-	"canonical-json.mjs",
-	"cloud-providers.mjs",
-]) {
-	if (existsSync(join(repoRoot, "lib", f))) {
-		copyFileSync(join(repoRoot, "lib", f), join(scratchLib, f));
-	} else {
-		logError("lib module missing — generators cannot log or probe", {
-			path: join(repoRoot, "lib", f),
-		});
-	}
-}
-// The facts caches ride along with their consumers: each `<id>-facts.json`
-// (provider-facts.mjs's path convention) lives next to the module in
-// coding-agent/ and stages into the scratch ROOT; catwalk-facts.json stays in
-// lib/ (the proxy generator reads it too) and stages into the scratch lib.
-// The caches are discovered by provider-facts.mjs's own naming rule rather
-// than listed per provider, so adding a facts-backed row needs no edit here.
-// All are staged writable so in-container refreshes succeed instead of
-// failing on the ro-mounted /opt copies; all are consumed stale-tolerantly
-// and direct-mode runs refresh them fresh.
-for (const cache of readdirSync(scriptDir).filter((name) =>
-	/^[a-z0-9]+(?:-[a-z0-9]+)*-facts\.json$/.test(name),
-)) {
-	copyFileSync(join(scriptDir, cache), join(scratch, cache));
-}
-if (existsSync(join(repoRoot, "lib", "catwalk-facts.json"))) {
-	copyFileSync(
-		join(repoRoot, "lib", "catwalk-facts.json"),
-		join(scratchLib, "catwalk-facts.json"),
-	);
-}
-// d063's stale-preserve needs the previous state readable from the scratch
-// dir: the local llama-swap carry-forward (previousLocalProvider) reads the
-// committed model-010 layer, and the layer merge sees whatever is staged
-// here. Every committed model-*.json is staged; the rows regenerate over it
-// each run, so the survivors ARE the previous state. Consequence: retiring
-// a row must delete its committed layer in the same change, or the merge
-// keeps merging it in — stale.
-for (const name of readdirSync(scriptDir)) {
-	if (/^model-.*\.json$/.test(name)) {
-		copyFileSync(join(scriptDir, name), join(scratch, name));
-	}
-}
-process.env.LIB_DIR = scratchLib;
-if (existsSync(modelsDevJson)) {
-	symlinkSync(modelsDevJson, join(scratch, "models.dev.api.json"));
-}
+// --- per-run output dir ----------------------------------------------------
+// Everything the generators WRITE lands here: the model-*.json layers, the
+// merged models.json, the default-model overlay, opencode.json — PI_LAYER_DIR
+// is how the pi generator learns where the layers belong. They run IN PLACE
+// from scriptDir: docs/d072 retired the d023 scratch staging, which existed
+// for a read-only /opt tree that d056 has already stopped mounting (the
+// runner carries zero generator support), and what generation still writes
+// next to its own sources — the committed layer/snapshot copy-back and the
+// facts caches — is best-effort and warn-only by contract (docs/d021, d039).
+// The dir is per run (mkdtemp) so two generations cannot publish into each
+// other, and it is the only source the committed copy-back reads: every
+// artifact write is tmp+rename inside this dir (lib/artifact.mjs) and the
+// copy-back runs only after the whole generation succeeded, so a failed run
+// publishes nothing.
+const outDir = mkdtempSync(join(runDir, "pi-models-gen-"));
+process.env.PI_LAYER_DIR = outDir;
 
 currentStage = "settings-install";
 
@@ -523,7 +459,7 @@ if (scriptDir !== agentDir) {
 				`${settingsPath}.bak-${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}`,
 			);
 		}
-		copyFileSync(join(scriptDir, "settings.json"), settingsPath);
+		writeArtifact(settingsPath, readFileSync(join(scriptDir, "settings.json"), "utf-8"));
 		logInfo("settings.json installed", { path: settingsPath });
 	}
 }
@@ -554,7 +490,7 @@ if (scriptDir !== agentDir) {
 			const mcpServers = { ...defaults, ...(current.mcpServers ?? {}) };
 			// Tabs so the installed copy stays byte-diffable against the committed
 			// file this repo lints (biome; d050's determinism in spirit).
-			writeFileSync(
+			writeArtifact(
 				mcpPath,
 				`${JSON.stringify({ ...current, mcpServers }, null, "\t")}\n`,
 			);
@@ -577,19 +513,20 @@ let modelsOut = "";
 // to the vendored copy — there is no ambient switch that makes one run
 // quieter than another (docs/d060).
 //
-// Refresh into the scratch dir when the catalog itself is not writable
-// (container hosts: $MODELS_DEV_JSON is a read-only mount, so writing
-// there fails every single run). The scratch entry is a symlink to the
-// vendored catalog at this point; the generator's tmp+rename replaces
-// the symlink with a regular file and never follows it, so the vendored
-// copy stays untouched either way.
+// Refresh into the output dir when the catalog itself is not writable
+// (container hosts: $MODELS_DEV_JSON is a read-only mount, so writing there
+// would fail every single run), and point the generators at the refreshed
+// copy through $MODELS_DEV_JSON — the vendored file stays as it is either
+// way (docs/d072: no symlink into the staged tree anymore, the env override
+// is the whole handoff).
 let catalogOut = modelsDevJson;
 try {
 	accessSync(modelsDevJson, constants.W_OK);
 } catch {
-	catalogOut = join(scratch, "models.dev.api.json");
+	catalogOut = join(outDir, "models.dev.api.json");
 }
-if (runStage(join(scratch, "refresh-models-dev.mjs"), [catalogOut])) {
+if (runStage(join(scriptDir, "refresh-models-dev.mjs"), [catalogOut])) {
+	process.env.MODELS_DEV_JSON = catalogOut;
 	logInfo("models.dev catalog refreshed", { path: catalogOut });
 } else {
 	logWarn("models.dev catalog refresh failed; using vendored copy", {
@@ -605,23 +542,33 @@ logInfo("generating pi config (layers + merge + default overlay)");
 // contract the former per-stage child processes had). Its default stage
 // reads the settings file installed above ($PI_SETTINGS).
 process.env.PI_SETTINGS = settingsPath;
-process.env.PI_MODELS_JSON = join(scratch, "models.json");
-process.env.PI_DEFAULT_MODEL_JSON = join(scratch, "default-model.json");
+process.env.PI_MODELS_JSON = join(outDir, "models.json");
+process.env.PI_DEFAULT_MODEL_JSON = join(outDir, "default-model.json");
+// Seed the run's layer dir ($PI_LAYER_DIR above) from the committed layers:
+// mergeModels globs that dir, and d064's stale-preserve reads the model-010
+// layer from it as it stands BEFORE this run rewrites it — an empty dir would
+// merge the wrong set and drop the farm's previous llama-swap lineup. The
+// retired staging made this copy part of every run too (docs/d072).
+for (const name of readdirSync(scriptDir)) {
+	if (/^model-.*\.json$/.test(name)) {
+		copyFileSync(join(scriptDir, name), join(outDir, name));
+	}
+}
 // d063 fail closed: a failed pi generator means its layers were not
 // written — there is no committed-artifact fallback anymore (d070 §6
 // retired SKIP_GEN; installing one raw would ship canonical URLs).
-if (!runStage(join(scratch, "generate-pi-coding-agent.mjs"))) {
+if (!runStage(join(scriptDir, "generate-pi-coding-agent.mjs"))) {
 	logError("pi generator failed — aborting (nothing merged)", {
 		script: "generate-pi-coding-agent.mjs",
 	});
 	process.exit(1);
 }
 
-if (existsSync(join(scratch, "models.json"))) {
-	modelsOut = join(scratch, "models.json");
+if (existsSync(join(outDir, "models.json"))) {
+	modelsOut = join(outDir, "models.json");
 } else {
 	logError("pi generator produced no models.json — aborting (docs/d070 §6)", {
-		path: join(scratch, "models.json"),
+		path: join(outDir, "models.json"),
 	});
 	process.exit(1);
 }
@@ -633,7 +580,7 @@ currentStage = "default-model";
 // (docs/d036 — the default is an OPERATOR DECISION, not a probed fact). It ran
 // with the rest of the pi stages; this block merges its overlay into the
 // installed settings.json (independent of the models.json install).
-const overlay = join(scratch, "default-model.json");
+const overlay = join(outDir, "default-model.json");
 if (existsSync(overlay)) {
 	const defaultModel = JSON.parse(readFileSync(overlay, "utf-8"));
 	const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
@@ -643,9 +590,7 @@ if (existsSync(overlay)) {
 	if (defaultModel.defaultModel) {
 		settings.defaultModel = defaultModel.defaultModel;
 	}
-	const merged = join(scratch, "settings-with-default.json");
-	writeFileSync(merged, `${JSON.stringify(settings, null, 2)}\n`);
-	copyFileSync(merged, settingsPath);
+	writeArtifact(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
 	logInfo("settings.json updated with default model config", {
 		path: settingsPath,
 	});
@@ -686,7 +631,7 @@ if (modelsOut) {
 			`${join(agentDir, "models.json")}.bak-${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}`,
 		);
 	}
-	writeFileSync(join(agentDir, "models.json"), serializeArtifact(installed));
+	writeArtifact(join(agentDir, "models.json"), serializeArtifact(installed));
 	for (const [id, provider] of Object.entries(
 		providersOf(join(agentDir, "models.json")),
 	)) {
@@ -702,7 +647,7 @@ if (modelsOut) {
 		backup: "kept alongside",
 	});
 	if (!termux && modelsOut !== join(scriptDir, "models.json")) {
-		refreshCommittedSnapshot(modelsOut, scratch);
+		refreshCommittedSnapshot(modelsOut, outDir);
 	}
 }
 
@@ -720,16 +665,16 @@ currentStage = "opencode-config";
 // own knob keeps other tools on the host default.
 //
 // The install mirrors what this script does for pi's settings/models.json
-// (docs/d054, docs/d065): generate into a SCRATCH copy of the committed
-// overlay — that copy is also the d064 stale-preserve input
-// previousLocalProvider reads — and on success install BOTH the host config
-// dir (the dir run.sh mounts rw into the sandbox) and this dir's committed
-// opencode.jsonc. The two take different URL forms (docs/d070 §3): the host
-// copy is substituted to client routes and verified canonical-free, while
-// the committed copy stays the CANONICAL reviewed git diff and the next
-// run's stale-preserve input, so it refreshes on every host that runs this
-// stage, Termux included. Termux skips the stage entirely (pi-only path)
-// unless OPENCODE_CONFIG_DIR is set.
+// (docs/d054, docs/d065): generate into a per-run COPY of the committed
+// overlay — the copy is the write target AND the d064 stale-preserve input
+// previousLocalProvider reads (a fresh output dir carries no history), then
+// on success install BOTH the host config dir (the dir run.sh mounts rw into
+// the sandbox) and this dir's committed opencode.jsonc. The two take
+// different URL forms (docs/d070 §3): the host copy is substituted to client
+// routes and verified canonical-free, while the committed copy stays the
+// CANONICAL reviewed git diff and the next run's stale-preserve input, so it
+// refreshes on every host that runs this stage, Termux included. Termux
+// skips the stage entirely (pi-only path) unless OPENCODE_CONFIG_DIR is set.
 const ocHostDir =
 	process.env.OPENCODE_CONFIG_DIR ??
 	join(
@@ -738,16 +683,16 @@ const ocHostDir =
 	);
 let ocOut = "";
 if (!termux || process.env.OPENCODE_CONFIG_DIR) {
-	ocOut = join(scratch, "opencode.json");
+	ocOut = join(outDir, "opencode.json");
 	const ocCommitted = join(scriptDir, "opencode.jsonc");
 	if (existsSync(ocCommitted)) {
 		copyFileSync(ocCommitted, ocOut);
 	}
 }
-if (ocOut && existsSync(join(scratch, "generate-opencode.mjs"))) {
+if (ocOut && existsSync(join(scriptDir, "generate-opencode.mjs"))) {
 	// d063 fail closed, same as the pi generator above: a half-written
 	// overlay would leave a stale provider map in the committed opencode.jsonc.
-	if (!runStage(join(scratch, "generate-opencode.mjs"), [ocOut])) {
+	if (!runStage(join(scriptDir, "generate-opencode.mjs"), [ocOut])) {
 		logError("opencode generator failed — aborting (nothing written)", {
 			script: "generate-opencode.mjs",
 		});
@@ -756,7 +701,7 @@ if (ocOut && existsSync(join(scratch, "generate-opencode.mjs"))) {
 
 	// Install 1 — the host config dir, the sandbox's mount source (d065).
 	// d070 §3: route-form substitution + zero-canonical verification happen
-	// HERE; the committed copy below keeps the canonical scratch file.
+	// HERE; the committed copy below keeps the canonical file.
 	// Best-effort .bak insurance, same as the settings/models installs above:
 	// generated ephemeral files, not a preservation contract.
 	const ocBase = requireInstallBase("opencode-config");
@@ -777,7 +722,7 @@ if (ocOut && existsSync(join(scratch, "generate-opencode.mjs"))) {
 			`${ocHost}.bak-${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}`,
 		);
 	}
-	writeFileSync(ocHost, serializeArtifact(ocInstalled));
+	writeArtifact(ocHost, serializeArtifact(ocInstalled));
 	logInfo("opencode config installed", { path: ocHost });
 
 	// Install 2 — the committed snapshot (warn-only on a read-only dir, like
@@ -795,5 +740,5 @@ if (ocOut && existsSync(join(scratch, "generate-opencode.mjs"))) {
 	}
 }
 
-rmSync(scratch, { recursive: true, force: true });
+rmSync(outDir, { recursive: true, force: true });
 logInfo("done", { agentDir });

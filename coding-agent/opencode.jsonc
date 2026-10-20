@@ -1093,6 +1093,9 @@
         "minimax-m3-free": {
           "name": "minimax-m3-free"
         },
+        "minimax-m3.1-flash-free": {
+          "name": "minimax-m3.1-flash-free"
+        },
         "mistral-large-4": {
           "name": "mistral-large-4"
         },
@@ -1249,6 +1252,9 @@
         "minimax-m3": {
           "name": "minimax-m3"
         },
+        "minimax-m3.1-flash-free": {
+          "name": "minimax-m3.1-flash-free"
+        },
         "muse-spark-1.2-contributor": {
           "name": "muse-spark-1.2-contributor"
         },
@@ -1272,9 +1278,6 @@
         },
         "qwen3.8-max": {
           "name": "qwen3.8-max"
-        },
-        "space-bunny": {
-          "name": "space-bunny"
         },
         "step-5-preview": {
           "name": "step-5-preview"
@@ -1305,6 +1308,9 @@
         },
         "liquid/lfm-2.5-2.6b:free": {
           "name": "liquid/lfm-2.5-2.6b:free"
+        },
+        "minimax/minimax-m3.1-flash:free": {
+          "name": "minimax/minimax-m3.1-flash:free"
         },
         "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
           "name": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"

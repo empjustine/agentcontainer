@@ -198,6 +198,10 @@ function configuredBase() {
 if (args.length >= 2 && (args[0] === "--installed" || args[0] === "--committed")) {
 	const mode = args[0];
 	const path = args[1];
+	// readonly: both detectors return the frozen no-assignment array they were
+	// given (see their @returns) — widening it to a mutable type here would be
+	// a promise no branch keeps.
+	/** @type {readonly string[]} */
 	let violations = [];
 	try {
 		const doc = JSON.parse(readFileSync(path, "utf-8"));

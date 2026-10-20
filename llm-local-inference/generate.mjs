@@ -29,7 +29,7 @@
  * ../local-llm/download_models.py. Stale launch-gguf.sh copies from older
  * generate.sh versions are removed below.
  *
- * Merge contract for the fragments (llama-swap's -config-dir loader;
+ * Layer-merge rules for the fragments (llama-swap's -config-dir loader;
  * docs/d018): identity-keyed maps merge additively and a duplicate key across
  * files is a hard error, while `apiKeys` concatenates and macros/scalars must
  * be single-defined — hence each layer owns a disjoint key set and
@@ -107,7 +107,7 @@ function writeConfigD(name, obj) {
 
 // --- 00-general.yaml (folded generate-general.yaml.mjs) --------------------
 /**
- * Per the merge contract (docs/d018) this layer is the ONLY home of scalars /
+ * Per d018's layer-merge rules this layer is the ONLY home of scalars /
  * macros / ctxWindows / apiKeys; the model layer must not redefine any.
  * @returns {void}
  */

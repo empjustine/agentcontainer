@@ -70,7 +70,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -105,6 +105,23 @@ import {
 } from "./gen-lib.mjs";
 
 setLogTool("coding-agent/generate-pi-coding-agent");
+
+/**
+ * Where the `model-*.json` layers are written — and, in `mergeModels`, where
+ * they are read from — for THIS run. generate.mjs points $PI_LAYER_DIR at its
+ * per-run output dir; a manual run lands in the module's own dir, which is
+ * where the committed layers live.
+ *
+ * WHY the override exists (docs/d072): the retired d023 scratch staging gave
+ * every run a private layer dir that was committed back only after a fully
+ * successful generation — that is the property this preserves. It matters
+ * twice: `mergeModels` globs the whole dir, and d064's stale-preserve reads
+ * the model-010 layer as it stands BEFORE this run rewrites it, so generate.mjs
+ * seeds the dir from the committed layers first.
+ * @type {string}
+ */
+const layerDir = process.env.PI_LAYER_DIR ?? scriptDir;
+mkdirSync(layerDir, { recursive: true });
 
 /**
  * Reverse-proxy base candidates — vault-sourced (reverseProxyBaseUrls();
@@ -223,7 +240,7 @@ const MODEL_SCOPES = {
  *   the ON_OFF representative map (full; see that constant)
  * @property {{ path: string, listKey?: string }|undefined} [facts] the
  *   provider's OWN rich model endpoint, relative to its base URL: refreshed
- *   and cached (provider-facts.mjs), then read back through factsMapper. Two
+ *   and cached (catalog-facts.mjs), then read back through factsMapper. Two
  *   roles, distinguished by whether the catalog contributes a lineup
  *   (catalogOptional): hyper's cache ENRICHES the models.dev lineup
  *   (docs/d033), while a catalog-less provider's cache IS the lineup in both
@@ -963,11 +980,11 @@ function catalogPiModel(spec, m, id = m.id) {
  * over the provider-specific shapes (HyperProviderModel, VerbooFactsRecord):
  * pi-shaped derivation runs through catalogPiModel(), so mappers emit
  * models.dev-shaped records and every catalog default still applies.
- * @typedef {import("./provider-facts.mjs").ProviderFactsModel} ProviderFactsModel
+ * @typedef {import("./catalog-facts.mjs").ProviderFactsModel} ProviderFactsModel
  */
 
 /**
- * @typedef {import("./provider-facts.mjs").LoadedProviderFacts} LoadedProviderFacts
+ * @typedef {import("./catalog-facts.mjs").LoadedProviderFacts} LoadedProviderFacts
  */
 
 /**
@@ -1448,7 +1465,7 @@ async function emitFullAt(spec, provider, auth, routeIds = null) {
 		});
 	}
 	const written = writeJsonArtifact(
-		join(scriptDir, /** @type {string} */ (spec.file)),
+		join(layerDir, /** @type {string} */ (spec.file)),
 		providerBlock(spec, canonicalUrl, models, auth),
 	);
 	logInfo("provider layer written", {
@@ -1503,7 +1520,7 @@ async function generateCloudProviders() {
 	}
 
 	const written = writeJsonArtifact(
-		join(scriptDir, "model-012-cloud-pi-native.json"),
+		join(layerDir, "model-012-cloud-pi-native.json"),
 		{ providers },
 	);
 	logInfo("pi-native override layer written", { path: written });
@@ -1648,10 +1665,10 @@ function readJson(path) {
  * @returns {void}
  */
 function mergeModels(out) {
-	const overlayNames = readdirSync(scriptDir)
+	const overlayNames = readdirSync(layerDir)
 		.filter((name) => /^model-.*\.json$/.test(name))
 		.sort();
-	const layers = overlayNames.map((name) => readJson(join(scriptDir, name)));
+	const layers = overlayNames.map((name) => readJson(join(layerDir, name)));
 	const written = writeJsonArtifact(out, deepMerge(...layers));
 	logInfo("merged layers", { overlays: overlayNames.length, path: written });
 }
@@ -1756,7 +1773,7 @@ async function main() {
 	}
 
 	await runStage("local-llama-swap", () =>
-		generateLocalLlamaSwap(join(scriptDir, "model-010-local-default.json")),
+		generateLocalLlamaSwap(join(layerDir, "model-010-local-default.json")),
 	);
 	// NOT via runStage: a failed cloud stage must fail the generator — the
 	// merge after it would otherwise install the committed artifact, and an

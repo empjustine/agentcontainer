@@ -1,19 +1,17 @@
 /**
  * @fileoverview gen-lib.mjs — the shared preamble for the coding-agent
  * pi-layer generators: resolves `scriptDir` / `LIB_DIR`, re-exports the lib/
- * helpers they use, owns the models.dev catalog lookup order, and holds
- * pi's driving-capability declaration — the one allowlist both eligibility
- * (modalitiesEligible) and emission (toInput) derive from (docs/d049). The
- * serving layers' equivalent is ../llm-local-inference/gen-lib.mjs; the
- * LIB_DIR staging convention (and why a scratch copy exists at all) is
- * docs/d023.
+ * and coding-agent/ helpers they use, owns the models.dev catalog lookup
+ * order, and holds pi's driving-capability declaration — the one allowlist
+ * both eligibility (modalitiesEligible) and emission (toInput) derive from
+ * (docs/d049).
  *
- * This module is staged next to the generators (plus its coding-agent/
- * siblings route-probe.mjs, provider-facts.mjs, catwalk-facts.mjs and
- * refresh-models-dev.mjs — docs/d039) and a copy of lib/ (see generate.sh),
- * and mounted into the container by run.sh — both lists must carry them.
- * lib/ imports resolve through $LIB_DIR; the coding-agent/ siblings import
- * statically, so the same file works in place and in the scratch dir.
+ * Sibling modules (route-probe.mjs, catalog-facts.mjs) import statically
+ * while lib/ resolves through $LIB_DIR (`env ?? "<this dir>/../lib"`), so
+ * every consumer works in place and under generate.mjs's per-run output dir
+ * with no code copy — docs/d072 retired the d023 scratch staging that used
+ * to make one necessary (a ro-mounted tree only blocks WRITES, and a staged
+ * run never writes next to its own sources).
  */
 
 import { existsSync } from "node:fs";
@@ -30,8 +28,12 @@ import {
 	probeRoutes,
 } from "./route-probe.mjs";
 
-export { getCatwalkModels, refreshCatwalkFacts } from "./catwalk-facts.mjs";
-export { loadProviderFacts, refreshProviderFacts } from "./provider-facts.mjs";
+export {
+	getCatwalkModels,
+	loadProviderFacts,
+	refreshCatwalkFacts,
+	refreshProviderFacts,
+} from "./catalog-facts.mjs";
 
 export const scriptDir = dirname(fileURLToPath(import.meta.url));
 export const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
@@ -74,7 +76,6 @@ export const {
  * `$PEER_API_KEY` reference) are one implementation (docs/d024).
  */
 
-// Shared /models shapes — the types live next to the probe toolkit.
 // Shared /models shapes — the types live next to the probe toolkit.
 /** @typedef {import("./route-probe.mjs").RawModelEntry} RawModelEntry */
 /** @typedef {import("./route-probe.mjs").Cost} Cost */

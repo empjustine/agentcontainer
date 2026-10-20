@@ -352,7 +352,7 @@
             "text"
           ],
           "contextWindow": 1000000,
-          "maxTokens": 65536,
+          "maxTokens": 131072,
           "cost": {
             "input": 2.5,
             "output": 7.5,
@@ -637,8 +637,40 @@
             "low": "low",
             "medium": null,
             "high": "high",
-            "xhigh": "xhigh",
-            "max": null
+            "xhigh": null,
+            "max": "max"
+          },
+          "compat": {
+            "supportsStore": false,
+            "supportsReasoningEffort": true,
+            "thinkingFormat": "deepseek",
+            "maxTokensField": "max_tokens"
+          }
+        },
+        {
+          "id": "deepseek-v4.1-flash-1017",
+          "name": "DeepSeek V4.1 Flash 1017",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 262144,
+          "cost": {
+            "input": 0.33,
+            "output": 1.31,
+            "cacheRead": 0.03,
+            "cacheWrite": 0
+          },
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": null,
+            "low": "low",
+            "medium": null,
+            "high": "high",
+            "xhigh": null,
+            "max": "max"
           },
           "compat": {
             "supportsStore": false,
@@ -4844,6 +4876,13 @@
           ]
         },
         {
+          "id": "stepfun-ai/step-5-preview",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "thinkingmachines/inkling",
           "reasoning": true,
           "input": [
@@ -5647,6 +5686,13 @@
           ]
         },
         {
+          "id": "minimax-m3.1-flash-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "mistral-large-4",
           "reasoning": true,
           "input": [
@@ -6018,6 +6064,13 @@
           "api": "anthropic-messages"
         },
         {
+          "id": "minimax-m3.1-flash-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "muse-spark-1.2-contributor",
           "reasoning": true,
           "input": [
@@ -6079,14 +6132,6 @@
           "api": "anthropic-messages"
         },
         {
-          "id": "space-bunny",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "api": "openai-completions"
-        },
-        {
           "id": "step-5-preview",
           "reasoning": true,
           "input": [
@@ -6145,6 +6190,16 @@
           ],
           "contextWindow": 65536,
           "maxTokens": 65536
+        },
+        {
+          "id": "minimax/minimax-m3.1-flash:free",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 1000000
         },
         {
           "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",

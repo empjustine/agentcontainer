@@ -54,10 +54,12 @@ per-concern verdict; the supersession is recorded in the
 
 1. installs static `settings.json` into the agent dir (`PI_CODING_AGENT_DIR`,
    default `~/.pi/agent`; pre-overwrite backup as `.bak-<ts>`), refreshes the
-   models.dev catalog (docs/d027b fetch chain), stages the generator tree into
-   a writable scratch dir (`RUN_DIR` — the module dir may be a read-only
-   mount), runs each generator as a child process on the same pinned node,
-   then installs the artifacts (there is no separate install step).
+   models.dev catalog (docs/d027b fetch chain), and runs each generator IN
+   PLACE as a child process on the same pinned node, with every intermediate
+   written to a per-run output dir under `RUN_DIR` (docs/d072 retired the
+   scratch staging of the generator tree — d056 already stopped mounting that
+   tree anywhere), then installs the artifacts (there is no separate install
+   step).
 
 | Generator | Emits | Scope |
 |---|---|---|
@@ -181,14 +183,16 @@ Copy unit = this folder + `../lib` (`docs/architecture.md`). `gen-lib.mjs` is
 the shared preamble for the pi-layer stages: it carries the pi shaping
 helpers (folded from the former `lib/pi-models.mjs`, docs/d039), re-exports
 the shared lib/ modules (`lib/log.mjs`, `lib/cloud-providers.mjs`) via
-`$LIB_DIR`, and its same-dir siblings `route-probe.mjs`, `provider-facts.mjs`,
-`catwalk-facts.mjs`, `refresh-models-dev.mjs` (all single-consumer, folded
-out of lib/ by d039). It reads `lib/models.dev.api.json` (shared with
-llm-reverse-proxy) and the caches (`<id>-facts.json` beside its module,
-`lib/catwalk-facts.json` — the proxy reads that one too). Must not reach
-into `llm-local-inference/` or `local-llm/`.
+`$LIB_DIR`, and its same-dir siblings `route-probe.mjs`,
+`catalog-facts.mjs`, `refresh-models-dev.mjs` (all single-consumer, folded
+out of lib/ by d039; the two fact caches merged into one module in d072). It
+reads `lib/models.dev.api.json` (shared with llm-reverse-proxy) and the
+caches (`<id>-facts.json` beside its module, `lib/catwalk-facts.json` — the
+proxy reads that one too). Must not reach into `llm-local-inference/` or
+`local-llm/`.
 
-`generate.mjs` stages exactly this tree into the scratch dir — the two
-generators + `gen-lib.mjs` + `route-probe.mjs` + `provider-facts.mjs` +
-`catwalk-facts.mjs` + `refresh-models-dev.mjs`. The staging list is host-only:
-the container mount of this tree was removed in docs/d056.
+Nothing copies this tree anywhere at generate time (docs/d072): the generators
+run from their own dir, output goes to the per-run `RUN_DIR` dir, and the
+commit-backs to `model-*.json` / `opencode.jsonc` are the only writes that
+touch the source tree — warn-only when it is read-only (docs/d056 removed the
+container mounts, so the tree a generate runs from is a host checkout).

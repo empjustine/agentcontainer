@@ -39,7 +39,8 @@ the local face back here at `http://127.0.0.1:8101`. The world reaches the
 catalog via the tailscale FQDN → :8080 (proxy) → `/llama-swap/…` → :8101.
 The legacy :18080 port is dead and never probed.
 
-**config.d layers** (merge contract in `docs/d018-split-config-d.md`):
+**config.d layers** (layer-merge rules in `docs/d018-split-config-d.md` —
+not pi's layered-cake merge; d072 names the two apart):
 `00-general.yaml` (globals/macros; always) · `10-local-llm-inference.yaml` +
 its `.paths` staleness manifest (only when a container backend **and** GPU
 devices are detected). There is no mode where this instance serves another
