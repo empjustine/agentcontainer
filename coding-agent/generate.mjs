@@ -82,9 +82,10 @@
  *                    this script's dir may be a read-only mount
  *   MODELS_DEV_JSON  models.dev catalog (default ../lib/models.dev.api.json —
  *                    the shared vendored catalog, see docs/d023)
- *   MODELS_DEV_RELAY_URL  catalog relay fallback (llm-reverse-proxy
- *                    passthrough; default http://127.0.0.1:8080/models.dev/
- *                    api.json, empty disables — fetch chain in docs/d027)
+ *   MODELS_DEV_RELAY_URL  catalog relay override (default = the
+ *                    REVERSE_PROXY_BASE_URLS host-form route chain, empty
+ *                    disables — fetch chain in docs/d027, d063 §5 as
+ *                    amended)
  */
 
 import { spawnSync } from "node:child_process";

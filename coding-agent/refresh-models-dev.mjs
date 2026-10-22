@@ -6,11 +6,11 @@
  *
  *   1. RELAY — reverse-proxy URLs only (relayCandidates, route-probe.mjs):
  *      the operator's MODELS_DEV_RELAY_URL when set (empty = no relay at
- *      all), else the local llm-reverse-proxy passthrough
- *      (http://127.0.0.1:8080/models.dev/api.json), then the vault
- *      reverse-proxy host-form routes. The relay forwards models.dev
- *      byte-for-byte, so the response is validated exactly like a direct
- *      one.
+ *      all), else the vault reverse-proxy host-form routes, one candidate
+ *      per configured base in order — no implicit localhost candidate
+ *      (d063 §5 as amended; a local proxy is a listed base entry). The
+ *      relay forwards models.dev byte-for-byte, so the response is
+ *      validated exactly like a direct one.
  *   2. STALE COPY — last resort: any failure above leaves the existing
  *      vendored file intact and generation proceeds with it.
  *
@@ -39,9 +39,9 @@
  * Usage: node refresh-models-dev.mjs [out]
  *   out defaults to ../lib/models.dev.api.json relative to this file
  *   (i.e. the vendored shared catalog itself).
- * Env: MODELS_DEV_RELAY_URL — operator's relay URL (replaces the default
- *   chain entirely; set to empty to disable relays — the stale vendored
- *   copy then always wins).
+ * Env: MODELS_DEV_RELAY_URL — operator's relay URL (replaces the
+ *   REVERSE_PROXY_BASE_URLS chain entirely; set to empty to disable relays
+ *   — the stale vendored copy then always wins).
  *
  * Lives in coding-agent/ (its only invoker is coding-agent/generate.sh —
  * docs/d039) but writes the SHARED vendored catalog: ../lib stays the catalog

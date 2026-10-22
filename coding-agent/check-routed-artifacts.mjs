@@ -29,6 +29,8 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { reverseProxyBaseUrls } from "./route-probe.mjs";
+
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
 const { CLOUD_PROVIDERS } =
@@ -183,16 +185,14 @@ export function committedViolations(doc) {
 // --- CLI ---------------------------------------------------------------------
 const args = process.argv.slice(2);
 /**
- * The first configured base for `--installed` without `--base` — reads the
- * vault env the same way route-probe.mjs does (`REVERSE_PROXY_BASE_URLS`
- * only, docs/d071 §1; the retired names are never read).
+ * The first configured base for `--installed` without `--base` — the
+ * SHARED env reader (route-probe.mjs), so this verifier applies the same
+ * unusable-entry drop as generation and a degenerate base can never turn
+ * the check into a `startsWith("https:/")` pass-everything.
  * @returns {string|undefined}
  */
 function configuredBase() {
-	return (process.env.REVERSE_PROXY_BASE_URLS || "")
-		.split(/[\n,]/)
-		.map((s) => s.trim().replace(/\/+$/, ""))
-		.find(Boolean);
+	return reverseProxyBaseUrls()[0];
 }
 
 if (args.length >= 2 && (args[0] === "--installed" || args[0] === "--committed")) {

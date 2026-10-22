@@ -156,6 +156,26 @@ export function reverseProxyBaseUrl() {
 }
 
 /**
+ * True when a base entry is safe to string-concatenate into a route. The
+ * LITERAL prefix check is the load-bearing half: WHATWG URL parsing
+ * normalizes `https:/models.dev/api.json` to the DIRECT upstream
+ * `https://models.dev/api.json`, so a degenerate `https:/` base would
+ * silently emit the one wire shape d063 forbids — parsing alone can never
+ * catch it. The parse is kept for the cases parsing does catch (no host,
+ * garbage).
+ * @param {string} base slash-trimmed entry
+ * @returns {boolean}
+ */
+function isUsableProxyBase(base) {
+	if (!/^https?:\/\//i.test(base)) return false;
+	try {
+		return new URL(base).host !== "";
+	} catch {
+		return false;
+	}
+}
+
+/**
  * All reverse-proxy base URL candidates — reads `REVERSE_PROXY_BASE_URLS`
  * (comma or newline delimited), THE one env this repo reads for the base
  * (d071 §1; a single base is a single-entry list — no singular fallback, and
@@ -163,7 +183,9 @@ export function reverseProxyBaseUrl() {
  * compatibility, are never read here). Multi-hop proxy chains are why the
  * plural exists: each generator's `REVERSE_PROXY_BASE_CANDIDATES` is
  * populated from this function, and `probeRoutes()` probes them in order
- * until a usable route is found (or all are exhausted).
+ * until a usable route is found (or all are exhausted). Unusable entries
+ * are dropped with a warning, never repaired (see isUsableProxyBase); if
+ * that empties the list, requireInstallBase() fails the generation loudly.
  * @returns {string[]} reverse-proxy base URL candidates, no trailing
  *   slashes, empty when the env var is not set
  */
@@ -171,7 +193,14 @@ export function reverseProxyBaseUrls() {
 	return (process.env.REVERSE_PROXY_BASE_URLS || "")
 		.split(/[\n,]/)
 		.map((s) => s.trim().replace(/\/+$/, ""))
-		.filter(Boolean);
+		.filter((raw) => {
+			if (!raw) return false;
+			if (isUsableProxyBase(raw)) return true;
+			logWarn("base entry dropped — not an absolute http(s) URL with a host", {
+				entry: raw,
+			});
+			return false;
+		});
 }
 
 /**
@@ -183,10 +212,16 @@ export function reverseProxyBaseUrls() {
  *     relay; MODELS_DEV_RELAY_URL keeps its docs/d027 name and meaning);
  *   - `envOverride` set empty → no relay at all: the consumer keeps its
  *     stale vendored copy (a file, not a wire URL — always in scope);
- *   - `envOverride` unset → the LOCAL llm-reverse-proxy listen address
- *     (127.0.0.1:8080 — the proxy's own port, in scope for the rule), then
- *     the vault-sourced base's host-form routes `<base>/<host>/<path>`
- *     (docs/d047 — the allowlist carries both passthrough hosts).
+ *   - `envOverride` unset → the vault-sourced bases' host-form routes
+ *     `<base>/<host>/<path>`, one candidate per configured base, in order
+ *     (docs/d047 — the allowlist carries both passthrough hosts). There is
+ *     deliberately NO implicit 127.0.0.1:8080 candidate (d063 §5 as
+ *     amended): it presumed a same-host proxy, so on every host without
+ *     one it was a guaranteed-refused first probe — and inside the
+ *     agentcontainer loopback can never reach a proxy that runs outside
+ *     it. An operator running llm-reverse-proxy beside the generator
+ *     lists `http://127.0.0.1:8080` as a base entry; a degenerate entry
+ *     is dropped by reverseProxyBaseUrls(), never concatenated.
  *
  * @param {string} upstream host the proxy allowlist keys on ("models.dev", …)
  * @param {string} pathAndQuery path + query under that host (leading slash)
@@ -196,15 +231,15 @@ export function reverseProxyBaseUrls() {
 export function relayCandidates(upstream, pathAndQuery, envOverride) {
 	if (envOverride !== undefined) {
 		const trimmed = envOverride.trim();
-		return trimmed ? [trimmed] : [];
+		if (!trimmed) return [];
+		if (isUsableProxyBase(trimmed)) return [trimmed];
+		logWarn("relay URL dropped — not an absolute http(s) URL with a host", {
+			entry: trimmed,
+		});
+		return [];
 	}
 	const suffix = `${upstream}${pathAndQuery.startsWith("/") ? "" : "/"}${pathAndQuery}`;
-	return [
-		`http://127.0.0.1:8080/${suffix}`,
-		...reverseProxyBaseUrls().map(
-			(base) => `${base.replace(/\/+$/, "")}/${suffix}`,
-		),
-	];
+	return reverseProxyBaseUrls().map((base) => `${base}/${suffix}`);
 }
 
 /**

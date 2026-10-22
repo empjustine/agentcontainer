@@ -138,10 +138,23 @@ One shared helper — `relayCandidates(host, pathAndQuery, envOverride)` in
 
 - env override set non-empty ⇒ that URL only (operator's override);
 - env override set empty ⇒ no relay (stale copy only);
-- env unset ⇒ the LOCAL reverse proxy's own listen address
-  (`http://127.0.0.1:8080/<host><path>` — the llm-reverse-proxy passthrough,
-  itself a reverse-proxy URL and therefore in-scope), then the peer-base
-  host-form routes `<peerBase>/<host><path>`.
+- env unset ⇒ the peer-base host-form routes `<peerBase>/<host><path>`,
+  one candidate per configured base, in order.
+
+**Amended (v22.14):** the unset case originally ALSO carried the LOCAL
+llm-reverse-proxy listen address (`http://127.0.0.1:8080/<host><path>`) as
+its first candidate. That leg presumed the proxy runs on the same host as
+the generator — true of the original single-host deployment, false once the
+relay was split across two VMs (each a peer base): on every host without a
+local proxy the candidate was a guaranteed-refused first probe, and inside a
+container it can never reach a host-loopback proxy at all. An operator who
+runs llm-reverse-proxy beside the generator lists `http://127.0.0.1:8080`
+as a peer base; the code no longer guesses. The same amendment validates
+each base entry as an absolute http(s) URL with a host before use — a
+degenerate entry (`https:/`) would otherwise string-concatenate into a URL
+that WHATWG parsing normalizes to the DIRECT upstream, the one wire shape
+this record forbids; unusable entries are dropped with a warning and an
+emptied list still fails generation (§1).
 
 Applied to: models.dev (`MODELS_DEV_RELAY_URL` keeps its name and its
 set-empty-to-disable semantics; the default gains `?type=all`, the payload
