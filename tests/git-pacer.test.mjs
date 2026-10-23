@@ -3,9 +3,10 @@
  * load-bearing properties, both invisible in a normal single-job run:
  *
  * 1. gated calls are SERIALIZED, not merely spaced. The software-forge (VBS)
- *    tenant rate-limits concurrent requests, so `--jobs 2` must not put two
- *    forge fetches in flight at once even though they are a minute apart
- *    (docs/d044).
+ *    tenant rate-limits concurrent requests, so a host's fetches must never
+ *    overlap even though they are spaced by the interval. The by-host
+ *    scheduler (docs/d076) already guarantees one job per host; this gate is
+ *    the second, fetch-level guarantee on top of it (docs/d044).
  * 2. a rejecting gated call does not poison the chain. A failed mirror must
  *    not make every later caller skip its turn and burst, and the caller still
  *    sees the rejection.
@@ -19,7 +20,7 @@ import { createMinIntervalGate } from "../git/git-lib.mjs";
 /** @param {number} ms @returns {Promise<void>} */
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-test("interval 0 is a pass-through, so public-forge sweeps are not serialized", async () => {
+test("interval 0 is a pass-through, so `--min-interval 0` disables pacing", async () => {
 	const gate = createMinIntervalGate(0);
 	let inFlight = 0;
 	let peak = 0;

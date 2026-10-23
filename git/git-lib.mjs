@@ -93,9 +93,53 @@ export function humanBytes(n) {
 }
 
 /**
+ * The environment every `git()` child inherits — the fail-fast contract for
+ * the whole mirror fleet (docs/d075). Without it a missing credential or a
+ * deleted upstream repo makes git ask for a username on the operator's
+ * terminal, and an unanswered prompt hangs the run: one repo's dead token
+ * would block the other 775 mirrors instead of becoming that repo's logged
+ * fetch failure.
+ *
+ * `GIT_TERMINAL_PROMPT` is the load-bearing entry: verified that
+ * `GIT_ASKPASS=/usr/bin/false` alone does NOT stop the hang — git reports the
+ * dead askpass and falls back to its terminal prompt anyway. The askpass
+ * entries only close the askpass channel, and `GCM_INTERACTIVE` is what stops
+ * Git Credential Manager's GUI dialog on the `maintain.ps1` Windows path
+ * (docs/d062), which `GIT_TERMINAL_PROMPT` never reaches. None of these
+ * disable any already-stored credential (helper/store/manager answers come
+ * first), so a healthy configured host keeps working unchanged.
+ *
+ * `GIT_SSH_COMMAND` fills the UNSET case only — an operator's own value
+ * carries their ssh wiring (identity file, port, jump host) and is not this
+ * library's to clobber. BatchMode is what turns ssh's prompts (host key
+ * confirmation, key passphrase, keyboard-interactive) into failures, since
+ * `GIT_TERMINAL_PROMPT` covers git's https prompts exclusively — so a
+ * first-contact host must be in known_hosts (ssh-keyscan) beforehand.
+ *
+ * `/usr/bin/false` need not exist on the host: a missing askpass binary only
+ * fails the askpass attempt, whose terminal fallback is already disabled —
+ * the net result is a fast error either way.
+ *
+ * Computed at call time, not import time: the fallback must answer "is
+ * GIT_SSH_COMMAND set NOW", whatever set it.
+ * @returns {NodeJS.ProcessEnv}
+ */
+function noninteractiveGitEnv() {
+	return {
+		...process.env,
+		GIT_TERMINAL_PROMPT: "0",
+		GIT_ASKPASS: "/usr/bin/false",
+		SSH_ASKPASS: "/usr/bin/false",
+		GCM_INTERACTIVE: "Never",
+		GIT_SSH_COMMAND: process.env.GIT_SSH_COMMAND ?? "ssh -oBatchMode=yes",
+	};
+}
+
+/**
  * Run `git -C cwd args…`. NEVER throws unless `must` is true: the mirror
  * tooling is a best-effort fleet operation, one broken remote must not abort
- * the other 775 repos.
+ * the other 775 repos. Every child runs with `noninteractiveGitEnv()` — a
+ * fleet sweep must fail one repo, never hang on its prompt (docs/d075).
  *
  * @param {string} cwd
  * @param {string[]} args
@@ -108,7 +152,11 @@ export function git(cwd, args, opts = {}) {
 		execFile(
 			"git",
 			["-C", cwd, ...args],
-			{ encoding: "utf-8", maxBuffer: 256 * 1024 * 1024 },
+			{
+				encoding: "utf-8",
+				maxBuffer: 256 * 1024 * 1024,
+				env: noninteractiveGitEnv(),
+			},
 			(err, stdout, stderr) => {
 				const out = String(stdout ?? "");
 				const errout = String(stderr ?? "");

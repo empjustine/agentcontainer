@@ -52,7 +52,6 @@
  * d023 scratch staging (generators at the root, lib in $LIB_DIR) both work.
  */
 
-import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -79,40 +78,12 @@ const CLOUD_PROVIDER_BASE_URLS = Object.freeze(
 	),
 );
 
-/**
- * Route this module's fetch() calls through `http(s)_proxy` when set
- * (rationale: docs/d001 §1). Shared by every fetch here;
- * coding-agent/refresh-models-dev.mjs calls it too. Kept defensive: a missing undici
- * install only drops proxy support.
- * @returns {void}
- */
-export function useEnvProxy() {
-	if (
-		process.env.http_proxy ||
-		process.env.HTTP_PROXY ||
-		process.env.https_proxy ||
-		process.env.HTTPS_PROXY
-	) {
-		try {
-			/**
-			 * Cast to (id) => any: undici is optional (bundled with node but not
-			 * type-installed in this repo) and the setup is defensive by design.
-			 * (Not named `require`: TS special-cases that identifier and would try
-			 * to resolve the module for real.)
-			 * @type {(id: string) => any}
-			 */
-			const nodeRequire = createRequire(import.meta.url);
-			const { EnvHttpProxyAgent, setGlobalDispatcher } = nodeRequire("undici");
-			setGlobalDispatcher(new EnvHttpProxyAgent());
-		} catch (err) {
-			logWarn(
-				"http(s)_proxy set but undici EnvHttpProxyAgent unavailable — fetch requests will NOT use the proxy",
-				{ error: err },
-			);
-		}
-	}
-}
-useEnvProxy();
+// Proxy env is handled by Node itself: NODE_USE_ENV_PROXY=1 (set by
+// lib/node-run.sh and the coding-agent image, docs/d074) makes global fetch()
+// and http/https honor HTTP(S)_PROXY / NO_PROXY natively. The former undici
+// EnvHttpProxyAgent setGlobalDispatcher monkey-patch is retired — a repo-side
+// dispatcher would only shadow the native one and drift from it. Requires
+// node >= 22.21 / 24 (the versions that added the variable).
 
 const REQUEST_TIMEOUT_MS = 8000;
 

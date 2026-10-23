@@ -26,8 +26,8 @@
  *   - this is why it can run in restricted environments (air-gapped hosts,
  *     behind a reverse proxy that blocks direct egress): the fetches fail
  *     and generation proceeds with the last good vendored copy.
- *   - honors http(s)_proxy via undici's EnvHttpProxyAgent (docs/d001), kept
- *     defensive so a missing undici install only drops proxy support.
+ *   - proxy env is honored natively by Node (NODE_USE_ENV_PROXY=1, set by
+ *     lib/node-run.sh; docs/d074) — no repo-side dispatcher.
  *
  * Validation is scoped to what the generators consume from the catalog (see
  * coding-agent/generate-pi-coding-agent.mjs): every listed
@@ -50,7 +50,7 @@
 
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { relayCandidates, useEnvProxy } from "./route-probe.mjs";
+import { relayCandidates } from "./route-probe.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
@@ -62,7 +62,6 @@ const { logInfo, logWarn, setLogTool } =
 		await import(`${LIB_DIR}/log.mjs`)
 	);
 
-useEnvProxy();
 setLogTool("coding-agent/refresh-models-dev");
 /**
  * ?type=all pins the FULL payload (every provider type): the generators read

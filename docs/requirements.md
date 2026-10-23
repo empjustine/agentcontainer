@@ -54,6 +54,18 @@ left answering nothing that generation asks (docs/d072).
   docs/d042: requirements / reference / design, plus the `d0XX` decision
   log and archived research).
 
+**Proposed, not yet accepted:** a three-mode SSL VPN expansion of
+`llm-reverse-proxy/` — mode A (today's host allowlist), mode B (authenticated
+generic relay whose `${prefix}` is its own capability UUID plus one operator
+credential, with no tenancy), mode C (`CONNECT`-over-WebSocket tunnel with a
+localhost client proxy that validates the target's real certificate
+end-to-end) — is specified in [d073](d073-ssl-vpn-three-modes.md), with
+delivery phased: v2 = mode A + mode C, and mode B deferred to v3. Accepting
+mode B (v3) would add one operator credential (an NFR-5 exception) without
+introducing tenants, and accepting mode C (v2) would need the
+"no TLS termination" note reworded; until a mode is accepted, the requirements
+live in d073 and this BRD is unchanged.
+
 ## Functional requirements
 
 ### Serving — `llm-local-inference/`

@@ -853,6 +853,9 @@
         "fledge-alpha-free": {
           "name": "fledge-alpha-free"
         },
+        "flint-40b-free": {
+          "name": "flint-40b-free"
+        },
         "gemini-3-flash": {
           "name": "gemini-3-flash"
         },
@@ -1111,6 +1114,9 @@
         "muse-spark-1.3-contributor-free": {
           "name": "muse-spark-1.3-contributor-free"
         },
+        "muse-wonder-1.0": {
+          "name": "muse-wonder-1.0"
+        },
         "nemotron-3-super-free": {
           "name": "nemotron-3-super-free"
         },
@@ -1228,9 +1234,6 @@
         "longcat-2.0": {
           "name": "longcat-2.0"
         },
-        "longcat-2.5-preview-free": {
-          "name": "longcat-2.5-preview-free"
-        },
         "mimo-v2.5": {
           "name": "mimo-v2.5"
         },
@@ -1252,8 +1255,8 @@
         "minimax-m3": {
           "name": "minimax-m3"
         },
-        "minimax-m3.1-flash-free": {
-          "name": "minimax-m3.1-flash-free"
+        "minimax-m3.1-flash": {
+          "name": "minimax-m3.1-flash"
         },
         "muse-spark-1.2-contributor": {
           "name": "muse-spark-1.2-contributor"
@@ -1309,9 +1312,6 @@
         "liquid/lfm-2.5-2.6b:free": {
           "name": "liquid/lfm-2.5-2.6b:free"
         },
-        "minimax/minimax-m3.1-flash:free": {
-          "name": "minimax/minimax-m3.1-flash:free"
-        },
         "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": {
           "name": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
         },
@@ -1335,6 +1335,9 @@
         },
         "poolside/laguna-xs-2.1:free": {
           "name": "poolside/laguna-xs-2.1:free"
+        },
+        "recursive/flint-v1.0:free": {
+          "name": "recursive/flint-v1.0:free"
         },
         "thinkingmachines/inkling-small:free": {
           "name": "thinkingmachines/inkling-small:free"

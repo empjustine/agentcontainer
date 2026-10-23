@@ -170,7 +170,7 @@ refreshed best-effort, route probing walks the vault-sourced
   `codemode.md`). Cost accepted: the model drives tools through codemode
   scripts and must `searchTools()`/`describeTool()` for signatures instead
   of reading declarations.
-- **Key naming / baseUrl baking / proxy env**: `docs/d001-proxy-env-and-namespace.md`.
+- **Key naming / baseUrl baking / proxy env**: `docs/d001-proxy-env-and-namespace.md`; native node proxy handling: `docs/d074-native-node-env-proxy.md`.
 - A zero-provider merge result is **kept as-is** (never clobbers a good
   `models.json` with an empty merge).
 - pi requires node ≥ 22.19; the floor is enforced by pi's own engines at

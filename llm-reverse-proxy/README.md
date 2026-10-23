@@ -16,6 +16,12 @@ pi-coding-agent / opencode were pointed at it through `llm-reverse-proxy/`;
 llm-reverse-proxy is the substrate llama-swap itself uses internally
 (`httputil.ReverseProxy`), extracted and stripped of everything else.
 
+> **Proposed expansion (docs/d073):** three modes — A (today's host
+> allowlist), B (authenticated generic relay), C (`CONNECT`-over-WebSocket
+> tunnel plus a localhost client proxy, so clients validate the target's real
+> certificate end-to-end and never trust the proxy). Requirements and a
+> feasibility verdict only; nothing here is implemented.
+
 Reference code: upstream llama-swap — github.com/mostlygeek/llama-swap
 (`internal/router/peer.go`, `internal/process/process_command.go`; docs tree
 `docs/kb/` — the canonical source). A local checkout under

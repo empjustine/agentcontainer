@@ -74,7 +74,7 @@ export REFERENCES_ROOT=<work clone root>          # the existing full clones
 export REFERENCES_MIRRORS=/mnt/c/Users/<you>/references-bare
 
 ./git/migrate.sh --delete-originals                # clones -> bare mirrors (NTFS)
-./git/maintain.sh --root "$REFERENCES_MIRRORS"     # align + repack/commit-graph (software-forge fetches paced 60 s)
+./git/maintain.sh --root "$REFERENCES_MIRRORS"     # align + repack/commit-graph (software-forge fetches paced 30 s)
 ./git/audit.sh --root "$REFERENCES_ROOT"           # anomalies before migrating
 ./git/search-references.sh index --root "$REFERENCES_MIRRORS" --only 'fabrikam-contoso/**'
 ```
@@ -128,7 +128,7 @@ copy (see caveats).
 | acquisition | `-forge-mirror.sh <https-url>` keyed by host | `-software-forge-mirror.sh <clone\|url>` keyed by software-forge identity |
 | URL model | `host/owner/repo` | `org / projectSlug / repo` across 3 URL shapes |
 | conversion | `migrate.sh` (unchanged) | `migrate.sh` (unchanged) |
-| upkeep | `maintain.sh --root <farm>` (public hosts unpaced) | `maintain.sh --root <NTFS dest>` (software-forge fetches paced 60 s) |
+| upkeep | `maintain.sh --root <farm>` (public hosts at 1 s) | `maintain.sh --root <NTFS dest>` (software-forge fetches paced 30 s) |
 | search | `search-references.sh` (unchanged) | `search-references.sh --root <NTFS dest>` |
 | storage | local ext4, `z,U` relabel is the cost | NTFS outside WSL2, disk is the cost |
 
@@ -212,11 +212,13 @@ derivable when `urlId` is absent.
   (404/real auth) is not. Nothing is silently dropped — the final summary
   reports the failure count.
 
-  The same tenant constrains **upkeep**: `maintain.sh` paces software-forge
-  upstream fetches at 60 s and serializes them, so `--jobs N` only
-  parallelizes the local `repack`/`commit-graph` phase. Public hosts are not
-  paced, so the home farm's sweep is unaffected; an explicit `--min-interval S`
-  applies the interval to every upstream fetch.
+  The same tenant constrains **upkeep**: `maintain.sh` schedules by host —
+  one job per host at a time, so two software-forge fetches can never overlap
+  — and paces a software-forge host's upstream fetches at 30 s, half the
+  original 60 s now that the scheduler (not just the interval) rules out
+  same-host overlap (other hosts get 1 s per host by default; an explicit
+  `--min-interval S` applies to every upstream fetch — docs/d076). The local
+  `repack`/`commit-graph` phase of other hosts still runs in parallel.
 
 - **No hardlinks across the WSL2/Windows boundary.** `git clone --mirror
   --local` hardlinks when it can and copies otherwise; ext4 → drvfs is always
@@ -229,9 +231,11 @@ derivable when `urlId` is absent.
 - **`/mnt/c` is slow for many small files.** Git on drvfs pays a 9p-style
   penalty versus ext4. `maintain.sh`'s `repack` + `commit-graph` over an
   NTFS-hosted farm is the price of keeping the objects off the WSL2 disk. Run
-  maintenance with the default low `--jobs` (2) and expect it to be the slow
-  step (the software-forge pacing above delays only the network fetch, not the
-  repack).
+  maintenance with its default — the farm is mixed-host (the software-forge
+  tenant alongside github mirrors), so the by-host scheduler keeps the
+  tenant's own fetches serial while the github ones proceed in parallel — and
+  expect it to be the slow step (the software-forge pacing above delays only
+  the network fetch, not the repack).
 - **The mirror refspec prunes.** `clone --mirror` makes upstream the source of
   truth; a later `maintain.sh` DELETES refs upstream no longer has — including
   local-only branches on the source clones. These are **work** repos, so verify

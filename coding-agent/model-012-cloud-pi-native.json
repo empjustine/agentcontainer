@@ -123,6 +123,13 @@
           ]
         },
         {
+          "id": "gemini-pro-latest",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "gemma-4-26b-a4b-it",
           "reasoning": true,
           "input": [
@@ -421,7 +428,35 @@
           ]
         },
         {
+          "id": "voxtral-mini-transcribe-3",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "voxtral-mini-transcribe-3-0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "voxtral-mini-transcribe-realtime-2602",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "voxtral-mini-transcribe-realtime-3",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "voxtral-mini-transcribe-realtime-3-0",
           "reasoning": true,
           "input": [
             "text"
@@ -440,61 +475,26 @@
           "input": [
             "text"
           ]
+        },
+        {
+          "id": "voxtral-small-transcribe-3",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "voxtral-small-transcribe-3-0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
         }
       ]
     },
     "nvidia": {
       "baseUrl": "https://integrate.api.nvidia.com/v1",
       "models": [
-        {
-          "id": "abacusai/dracarys-llama-3.1-70b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "baai/bge-m3",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "bytedance/seed-oss-36b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "deepseek-ai/deepseek-v4-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "deepseek-ai/deepseek-v4-flash-0731",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "deepseek-ai/deepseek-v4-pro",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "deepseek-ai/deepseek-v4-pro-0813",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
         {
           "id": "deepseek-ai/deepseek-v4.1-flash",
           "reasoning": true,
@@ -504,13 +504,6 @@
         },
         {
           "id": "google/diffusiongemma-26b-a4b-it",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "google/gemma-2-2b-it",
           "reasoning": true,
           "input": [
             "text"
@@ -531,20 +524,6 @@
           ]
         },
         {
-          "id": "google/gemma-3n-e2b-it",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "google/gemma-3n-e4b-it",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "google/gemma-4-31b-it",
           "reasoning": true,
           "input": [
@@ -559,34 +538,6 @@
           ]
         },
         {
-          "id": "meta/esm2-650m",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "meta/esmfold",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "meta/llama-3.1-70b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "meta/llama-3.1-8b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "meta/llama-3.2-11b-vision-instruct",
           "reasoning": true,
           "input": [
@@ -594,35 +545,7 @@
           ]
         },
         {
-          "id": "meta/llama-3.2-1b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "meta/llama-3.2-3b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "meta/llama-3.2-90b-vision-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "meta/llama-3.3-70b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "meta/llama-4-maverick-17b-128e-instruct",
           "reasoning": true,
           "input": [
             "text"
@@ -643,42 +566,7 @@
           ]
         },
         {
-          "id": "microsoft/phi-4-mini-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "microsoft/phi-4-multimodal-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "minimaxai/minimax-m2.7",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "minimaxai/minimax-m3",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "mistralai/magistral-small-2506",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistralai/ministral-14b-instruct-2512",
           "reasoning": true,
           "input": [
             "text"
@@ -692,49 +580,7 @@
           ]
         },
         {
-          "id": "mistralai/mistral-large-3-675b-instruct-2512",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "mistralai/mistral-medium-3-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistralai/mistral-medium-3.5-128b",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistralai/mistral-nemotron",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistralai/mistral-small-4-119b-2603",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistralai/mixtral-8x22b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistralai/mixtral-8x7b-instruct",
           "reasoning": true,
           "input": [
             "text"
@@ -762,28 +608,7 @@
           ]
         },
         {
-          "id": "nvidia/gliner-pii",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "nvidia/llama-3.1-nemotron-70b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/llama-3.1-nemotron-nano-8b-v1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
           "reasoning": true,
           "input": [
             "text"
@@ -804,27 +629,6 @@
           ]
         },
         {
-          "id": "nvidia/llama-3.3-nemotron-super-49b-v1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/llama-3_2-nemoretriever-300m-embed-v1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "nvidia/llama-nemotron-embed-vl-1b-v2",
           "reasoning": true,
           "input": [
@@ -833,20 +637,6 @@
         },
         {
           "id": "nvidia/llama-nemotron-rerank-vl-1b-v2",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/nemotron-3-content-safety",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/nemotron-3-nano-30b-a3b",
           "reasoning": true,
           "input": [
             "text"
@@ -888,49 +678,7 @@
           ]
         },
         {
-          "id": "nvidia/nemotron-content-safety-reasoning-4b",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/nemotron-mini-4b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/nemotron-nano-12b-v2-vl",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "nvidia/nemotron-voicechat",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/nv-embed-v1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/nv-embedcode-7b-v1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/nvidia-nemotron-nano-9b-v2",
           "reasoning": true,
           "input": [
             "text"
@@ -945,13 +693,6 @@
         },
         {
           "id": "nvidia/riva-translate-4b-instruct-v1.1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/studiovoice",
           "reasoning": true,
           "input": [
             "text"
@@ -986,84 +727,7 @@
           ]
         },
         {
-          "id": "qwen/qwen2.5-coder-32b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "qwen/qwen3-coder-480b-a35b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "qwen/qwen3-next-80b-a3b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "qwen/qwen3.5-122b-a10b",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "qwen/qwen3.5-397b-a17b",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "sarvamai/sarvam-m",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "stepfun-ai/step-3.5-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "stepfun-ai/step-3.7-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "stepfun-ai/step-5-preview",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "thinkingmachines/inkling",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "upstage/solar-10.7b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "z-ai/glm-5.2",
           "reasoning": true,
           "input": [
             "text"
@@ -1286,6 +950,13 @@
         },
         {
           "id": "fledge-alpha-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "flint-40b-free",
           "reasoning": true,
           "input": [
             "text"
@@ -1894,6 +1565,13 @@
           ]
         },
         {
+          "id": "muse-wonder-1.0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "nemotron-3-super-free",
           "reasoning": true,
           "input": [
@@ -2029,24 +1707,21 @@
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "anthropic-messages"
+          ]
         },
         {
           "id": "deepseek-v4-pro",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "deepseek-v4.1-flash",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "gemini-4-argon-contributor",
@@ -2067,144 +1742,119 @@
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "glm-5.3",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "glm-5.3-flash",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "gpt-5.6-luna",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-responses"
+          ]
         },
         {
           "id": "gpt-6-luna",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-responses"
+          ]
         },
         {
           "id": "grok-4.6",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-responses"
+          ]
         },
         {
           "id": "grok-4.7",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-responses"
+          ]
         },
         {
           "id": "hy3",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "hy4-preview",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "kimi-k2.6",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "kimi-k2.7-code",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "kimi-k3",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "longcat-2.0",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
-        },
-        {
-          "id": "longcat-2.5-preview-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "mimo-v2.5",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "mimo-v2.5-pro",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "mimo-v2.6-flash",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "mimo-v2.6-pro",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-completions"
+          ]
         },
         {
           "id": "minimax-m2.5",
@@ -2218,19 +1868,17 @@
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "anthropic-messages"
+          ]
         },
         {
           "id": "minimax-m3",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "anthropic-messages"
+          ]
         },
         {
-          "id": "minimax-m3.1-flash-free",
+          "id": "minimax-m3.1-flash",
           "reasoning": true,
           "input": [
             "text"
@@ -2241,16 +1889,14 @@
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-responses"
+          ]
         },
         {
           "id": "muse-spark-1.3-contributor",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "openai-responses"
+          ]
         },
         {
           "id": "omen-alpha",
@@ -2278,24 +1924,21 @@
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "anthropic-messages"
+          ]
         },
         {
           "id": "qwen3.8-flash",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "anthropic-messages"
+          ]
         },
         {
           "id": "qwen3.8-max",
           "reasoning": true,
           "input": [
             "text"
-          ],
-          "api": "anthropic-messages"
+          ]
         },
         {
           "id": "step-5-preview",
@@ -2356,16 +1999,6 @@
           ],
           "contextWindow": 65536,
           "maxTokens": 65536
-        },
-        {
-          "id": "minimax/minimax-m3.1-flash:free",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 1000000,
-          "maxTokens": 1000000
         },
         {
           "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
@@ -2435,6 +2068,15 @@
         },
         {
           "id": "poolside/laguna-xs-2.1:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
+        },
+        {
+          "id": "recursive/flint-v1.0:free",
           "reasoning": true,
           "input": [
             "text"

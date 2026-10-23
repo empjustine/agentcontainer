@@ -16,9 +16,15 @@
 # generators need a global fetch (node >= 18), and pi enforces its own
 # >= 22.19 engines at launch (the Termux pre-stage gate was retired —
 # docs/d051).
+#
+# NODE_USE_ENV_PROXY=1 gives every generator run Node's native HTTP(S)_PROXY /
+# NO_PROXY handling for fetch and http/https (docs/d074). The versions that
+# added it are 22.21/24, so an older system node (Termux) silently ignores the
+# variable rather than failing. Set per-invocation, never exported, so sourcing
+# this file still changes no global state.
 node_run() {
 	case "${PREFIX:-}" in
-	*/com.termux/*) node "$@" ;;
-	*) mise exec node@24 -- node "$@" ;;
+	*/com.termux/*) NODE_USE_ENV_PROXY=1 node "$@" ;;
+	*) NODE_USE_ENV_PROXY=1 mise exec node@24 -- node "$@" ;;
 	esac
 }

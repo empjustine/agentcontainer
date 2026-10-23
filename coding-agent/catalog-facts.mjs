@@ -54,7 +54,7 @@ import { readFileSync, renameSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { relayCandidates, tlsUnverifiable, useEnvProxy } from "./route-probe.mjs";
+import { relayCandidates, tlsUnverifiable } from "./route-probe.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
@@ -67,9 +67,6 @@ const { CLOUD_PROVIDERS } =
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
 
-// Proxy-env routing via route-probe's module top-level useEnvProxy() (why:
-// docs/d001 §1) — both caches are fetched with the same dispatcher contract.
-useEnvProxy();
 setLogTool("coding-agent/catalog-facts");
 
 const CATWALK_PATH_AND_QUERY = "/v2/providers";

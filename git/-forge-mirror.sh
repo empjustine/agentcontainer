@@ -26,6 +26,19 @@
 
 set -eu
 
+# Fail fast, never prompt: a missing credential or deleted upstream makes git
+# answer with a 401 that asks for a username, and an unanswered prompt on the
+# operator's terminal hangs the whole URL loop (docs/d075). GIT_TERMINAL_PROMPT
+# is the load-bearing entry — askpass alone does not stop git's terminal
+# fallback (verified). GIT_SSH_COMMAND fills the unset case only, preserving
+# the operator's own ssh wiring when one is set.
+export GIT_TERMINAL_PROMPT=0
+export GIT_ASKPASS=/usr/bin/false
+export SSH_ASKPASS=/usr/bin/false
+export GCM_INTERACTIVE=Never
+GIT_SSH_COMMAND=${GIT_SSH_COMMAND:-ssh -oBatchMode=yes}
+export GIT_SSH_COMMAND
+
 # --- Resolve downloads directory ---
 
 get_downloads_dir() {

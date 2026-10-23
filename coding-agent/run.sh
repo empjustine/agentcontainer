@@ -356,9 +356,14 @@ workload_workdir  "$(guest_path "$workdir")"
 # a key that IS in infisical never reaches the sandbox, and the generated
 # models.json's "$<KEY>" reference resolves to nothing inside the container.
 # Add the name here whenever a provider row lands in the fact table.
+#
+# The proxy vars are routing, not secrets (docs/d074): forwarded so the image's
+# NODE_USE_ENV_PROXY=1 has something to honor — node's native fetch/http proxy
+# support reads HTTP(S)_PROXY / NO_PROXY (upper- and lowercase) at startup.
 workload_env_allowlist CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY \
 	OPENROUTER_API_KEY OPENCODE_API_KEY HYPER_API_KEY INFERX_API_KEY \
-	VERBOO_API_KEY HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY
+	VERBOO_API_KEY HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY \
+	HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy
 workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
 # Everything above this line is host-side argv assembly (jq + filesystem); the
 # next call is where podman creates the container — mount relabel, userns

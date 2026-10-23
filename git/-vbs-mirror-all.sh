@@ -88,8 +88,22 @@ VBS_THROTTLE=60
 VBS_FAIL_STREAK=5
 VBS_COOLDOWN=60
 
-# A credential prompt in a non-interactive sweep would hang; fail fast instead.
+# Fail fast, never prompt: a credential prompt in a sweep would hang the whole
+# run (docs/d075). GIT_TERMINAL_PROMPT is the load-bearing entry — askpass
+# alone does not stop git's terminal fallback — and the ssh entries are not
+# belt-and-braces here: ssh is this sweep's DEFAULT transport, and
+# BatchMode is what turns its prompts (host key confirmation, key passphrase,
+# IDCS keyboard-interactive) into per-repo failures. GIT_SSH_COMMAND fills the
+# unset case only — it is ssh wiring, not sweep policy, so an operator's own
+# value passes through untouched (docs/d060's argv rule governs the sweep's
+# inputs, not the transport). Consequence: a first-contact tenant host must
+# already be in known_hosts, or BatchMode fails that repo's fetch immediately.
 export GIT_TERMINAL_PROMPT=0
+export GIT_ASKPASS=/usr/bin/false
+export SSH_ASKPASS=/usr/bin/false
+export GCM_INTERACTIVE=Never
+GIT_SSH_COMMAND=${GIT_SSH_COMMAND:-ssh -oBatchMode=yes}
+export GIT_SSH_COMMAND
 
 LIST_ONLY=0
 ONLY=

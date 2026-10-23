@@ -63,6 +63,10 @@ USER ${USER}
 ENV \
 HOME="/home/${USER}" \
 MISE_MINIMUM_RELEASE_AGE="3d" \
+# Native proxy handling for the agent's own fetch/http: Node honors
+# HTTP(S)_PROXY / NO_PROXY when this is set (node >= 22.21/24), replacing the
+# repo's retired undici EnvHttpProxyAgent monkey-patch (docs/d074).
+NODE_USE_ENV_PROXY="1" \
 # Global quiet flag (src/cli/mod.rs: env "MISE_QUIET", `short = 'q', global = true`):
 # mise's multi_progress_report.rs only draws the tty redraw UI when stderr
 # "looks attended" — a recording harness/pty qualifies — and then re-renders

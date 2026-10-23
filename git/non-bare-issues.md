@@ -177,14 +177,23 @@ discovery is by shape, so every forge mirror under it is maintained whatever
 its host (`github.com`, `codeberg.org`, `git.sr.ht`, GitLab subgroups, …).
 `--only 'codeberg.org/**'` narrows a run to one host if wanted.
 
-Upstream fetches are **paced by forge**. The software-forge (VBS) tenant
-rate-limits even a `--jobs 1` sweep (docs/d044), so a software-forge mirror's
-fetch is followed by 60 s of idle and the gated fetches are serialized. Public
-hosts are not paced, so a `github.com`/`codeberg.org` sweep stays as fast as
-before. `--min-interval S` overrides both the number and the scope (it paces
-every upstream fetch), which is the maintainer's counterpart of
+Scheduling is **by host**, not by mirror: mirrors are grouped by the host of
+their `remote.origin.url` (mirrors with no upstream join one local bucket),
+and one worker owns one host at a time, so a host never has two jobs in
+flight — the concurrency shape the software-forge tenant rate-limits anyway
+(docs/d044, docs/d076). `--jobs N` caps how many hosts work at once
+(default: every discovered host); different hosts still run in parallel.
+
+Upstream fetches are **paced per host**. Unset, every fetch is followed by
+1 s of idle before the next fetch on that host; a software-forge host gets
+30 s instead — half the original 60 s, now that by-host scheduling also rules
+out same-host overlap; the tenant still rate-limits even a fully serial sweep
+(docs/d044, docs/d076).
+`--min-interval S` overrides both the number and the scope (it paces every
+upstream fetch), which is the maintainer's counterpart of
 `-vbs-mirror-all.sh`'s `--throttle`. Because the gate only wraps the network
-phase, `--jobs` still parallelizes the local `repack`/`commit-graph` work.
+phase of each host's own queue, the local `repack`/`commit-graph` work of
+other hosts keeps running concurrently.
 
 `git maintenance start` is deliberately not used — it installs a background
 timer the operator cannot see; this script is the explicit replacement.

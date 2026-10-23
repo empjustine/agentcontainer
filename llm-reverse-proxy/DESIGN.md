@@ -106,3 +106,16 @@ faithful passthrough; the upstream's own trust decisions are never pre-empted.
   is not added. LLM providers ignore these.
 - Hop-by-hop headers (`Connection`, `Transfer-Encoding`, …) are managed per
   RFC by ReverseProxy — this is required for correctness, not a rewrite.
+
+## The proposed three-mode SSL VPN (docs/d073)
+
+The requirements for growing this single-mode relay into a three-mode SSL VPN
+— today's allowlist relay, an authenticated generic relay, and a
+`CONNECT`-over-WebSocket tunnel with a localhost client proxy — are owned by
+[d073](../docs/d073-ssl-vpn-three-modes.md), not this file. The feasibility
+verdict there is the load-bearing part for this code: Tailscale Funnel does
+**not** support the HTTP `CONNECT` method as a general tunnel, but it does
+support the WebSocket upgrade (the `httputil.ReverseProxy` path this proxy
+already uses), so the tunnel is `CONNECT`-inside-`wss`. The trust-model
+table in d073 explains why mode C can drop the client's trust in the proxy
+where modes A/B cannot.
