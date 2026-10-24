@@ -4406,6 +4406,13 @@
           ]
         },
         {
+          "id": "minimaxai/minimax-m3.1-flash",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "mistralai/magistral-small-2506",
           "reasoning": true,
           "input": [
@@ -5656,6 +5663,13 @@
         },
         {
           "id": "kimi-k3",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "kimi-k3.1-pro",
           "reasoning": true,
           "input": [
             "text"

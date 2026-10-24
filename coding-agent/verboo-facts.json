@@ -1,11 +1,11 @@
 {
-	"fetchedFrom": "https://code.verboo.ai/router/v1/models",
-  "fetchedAt": "2026-10-22T20:11:43.258Z",
+  "fetchedAt": "2026-10-23T23:16:34.167Z",
+  "fetchedFrom": "https://cihuatecayotl.coelacanth-barb.ts.net/c143d52a-21b2-415f-882c-7523e90b50e5/code.verboo.ai/router/v1/models",
   "models": [
     {
       "id": "deepseek-v4.1-flash",
       "object": "model",
-      "created": 1792699903,
+      "created": 1792797394,
       "owned_by": "verboo",
       "context_window": 1048576,
       "vision": true,
@@ -22,7 +22,7 @@
     {
       "id": "glm-5.3-flash",
       "object": "model",
-      "created": 1792699903,
+      "created": 1792797394,
       "owned_by": "verboo",
       "context_window": 1048576,
       "vision": true,
@@ -38,7 +38,7 @@
     {
       "id": "mimo-v2.6-flash",
       "object": "model",
-      "created": 1792699903,
+      "created": 1792797394,
       "owned_by": "verboo",
       "context_window": 1048576,
       "vision": false
@@ -46,7 +46,7 @@
     {
       "id": "qwen3.8-27b",
       "object": "model",
-      "created": 1792699903,
+      "created": 1792797394,
       "owned_by": "verboo",
       "context_window": 262144,
       "vision": true,

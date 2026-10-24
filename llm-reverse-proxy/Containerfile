@@ -1,17 +1,35 @@
 # Containerfile — multi-stage build for llm-reverse-proxy.
 #
-# Stage 1 compiles the static binary; stage 2 is distroless/static, which
-# ships the CA certificate bundle the proxy's TLS verification needs (the
-# proxy verifies upstream certificates and must never skip it — see
-# README.md). Final image is ~10 MB and holds exactly one binary.
+# Stage 1 compiles the static binary (CGO off — the result is fully
+# static); stage 2 is `scratch`, so the FINAL image is pulled from no
+# registry at all. The only remote FROM in this file is golang:1.27 on
+# docker.io — deliberately: environments that block non-docker.io
+# registries can never pull the gcr.io distroless base this replaced,
+# while scratch resolves locally and a static binary needs nothing else.
+#
+# The CA certificate bundle rides along from the builder: both TLS legs
+# verify against it and neither may ever skip verification — upstream
+# certificates (modes A/C) and the mode C client verifying the Funnel
+# `*.ts.net` certificate (VPN-R28, VPN-R55; docs/d073). Final image is
+# ~7.5 MB: one binary plus that bundle.
+#
+# The whole package is copied, not a hand-listed subset: mode C added five
+# source files, and a stale COPY list builds a subset that no longer
+# compiles (go build ignores *_test.go, so no test code enters the image).
 #
 # The image ENTRYPOINT is the proxy itself; run.sh passes -config/-listen as
 # the container command (workload_cmd), mirroring how llama-swap is launched.
 FROM docker.io/library/golang:1.27 AS build
 WORKDIR /src
-COPY go.mod main.go ./
+COPY go.mod *.go ./
 RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/llm-reverse-proxy .
 
-FROM gcr.io/distroless/static-debian13:nonroot
+# Numeric USER because scratch has no /etc/passwd: the static binary makes
+# no os/user lookups, and 65532 is the distroless "nonroot" uid this image
+# replaces — run.sh's `U` mount flag maps the config read-only to this
+# user, so the same host file permissions keep meaning the same thing.
+FROM scratch
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build /out/llm-reverse-proxy /llm-reverse-proxy
+USER 65532:65532
 ENTRYPOINT ["/llm-reverse-proxy"]

@@ -229,9 +229,12 @@ if (containerTool) {
 	}
 
 	// --- llm-reverse-proxy image (container hosts) ---------------------------
-	// Multi-stage Containerfile (golang builder → distroless/static runtime,
-	// which ships the CA bundle the proxy's upstream TLS verification
-	// requires) — the host needs NO go toolchain for this target.
+	// Multi-stage Containerfile (golang builder → scratch runtime that
+	// ships the CA bundle both TLS legs verify against) — the host needs
+	// NO go toolchain for this target. The final stage is scratch on
+	// purpose: it pulls from NO registry, so the image builds even where
+	// non-docker.io registries are blocked (the gcr.io distroless base
+	// could not); only golang:1.27 on docker.io is fetched.
 	// Registered only while outbound cloud networking answers the naive probe
 	// (lib/host-capabilities.mjs): the proxy exists to relay to cloud
 	// upstreams, and against a closed network its base-image --pull would
@@ -240,9 +243,9 @@ if (containerTool) {
 	// hit, and the retired inspect-skip (tag PRESENCE, stale after a main.go
 	// edit — see the module header) stays retired.
 	// --pull is load-bearing, not hygiene: the omitted-flag default is the
-	// "missing" policy, so a locally-cached golang:1.27 / distroless tag is
-	// reused even after upstream republishes it — the moving tag the build
-	// resolves FROM must be refreshed explicitly (bare --pull = always).
+	// "missing" policy, so a locally-cached golang:1.27 tag is reused even
+	// after upstream republishes it — the moving tag the build resolves
+	// FROM must be refreshed explicitly (bare --pull = always).
 	const proxyImage =
 		process.env.IMAGE_TAG ?? "localhost/llm-reverse-proxy:latest";
 	if (await cloudReachable()) {

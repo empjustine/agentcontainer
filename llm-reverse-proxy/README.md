@@ -115,25 +115,37 @@ hosts, Termux targets strictly serialized. For THIS folder:
   via Android's resolver — flag presets in `lib/go-build.mjs`). Needs
   `pkg install golang`.
 - **Container hosts**: builds ONLY the OCI image (`Containerfile`:
-  MULTI-STAGE `golang:1.27-alpine` → `distroless/static` — the compile
-  happens inside the image build, so no host go toolchain is needed, just
-  podman/docker; the image ships the CA bundle upstream TLS verification
-  needs and is ~10 MB final). `smoke-test.sh` builds the host binary
+  MULTI-STAGE `golang:1.27` → `scratch` — the compile happens inside the
+  image build, so no host go toolchain is needed, just podman/docker.
+  `scratch` is deliberate: the final stage pulls from NO registry, so the
+  image builds where non-docker.io registries are blocked; the image ships
+  the CA bundle both TLS legs (upstream certs, Funnel `*.ts.net`) verify
+  against and is ~7.5 MB final). `smoke-test.sh` builds the host binary
   (`./llm-reverse-proxy`) itself when go is available.
 - **Bare host without a container tool**: host binary only — go is required,
   it is the only thing this host can build and serve.
 
-`./run.sh` picks the matching serve path: the container branch runs in
-HOST NETWORK mode listening on `${HOST_PORT:-8080}` (the funnel front) with
-`./llm-reverse-proxy.json` mounted read-only (in-container `-listen
-0.0.0.0:$HOST_PORT` overrides the config, like llama-swap's port model) —
-host networking is what makes the loopback `llama-swap` upstream reachable
-from the container; the native branch execs the binary with
-`${LISTEN:-:8080}`. The config path differs by branch: the native branch
-reads `./llm-reverse-proxy.json`, the container branch mounts the same file
-at `/etc/llm-reverse-proxy/llm-reverse-proxy.json` (both are overridable
-with `CONFIG`). The proxy holds no secrets — no vault loader, no env
-allowlist; requests must already carry valid provider keys.
+`./run.sh` picks the matching serve path by two selectors. ROLE:
+`PROXY_MODE=server` (default) or `client` (mode C, docs/d073 §7). HOST:
+the container branch runs in HOST NETWORK mode; the native branch execs
+the binary directly. Server role: listening on `${HOST_PORT:-8080}` (the
+funnel front) with `./llm-reverse-proxy.json` mounted read-only
+(in-container `-listen 0.0.0.0:$HOST_PORT` overrides the config, like
+llama-swap's port model) — host networking is what makes the loopback
+`llama-swap` upstream reachable from the container; native uses
+`${LISTEN:-:8080}`. The config path differs by branch: native reads
+`./llm-reverse-proxy.json`, the container mounts it at
+`/etc/llm-reverse-proxy/llm-reverse-proxy.json` (both overridable with
+`CONFIG`). Client role: NO config file — `VPN_TUNNEL_URL` (ws/wss; the
+path carries the capability prefix) and `VPN_OPERATOR_TOKEN` are its whole
+surface, with `VPN_CLIENT_LABEL` optional (defaults to the hostname) and
+`PROXY_LISTEN`/`SOCKS_LISTEN` defaulting to `127.0.0.1:3128`/`1080`;
+host networking is a requirement there too (the loopback listeners must
+be the HOST's loopback — VPN-R23 forbids exposing them — and the tunnel
+URL needs the host's tailnet routes). Secrets: the server holds none —
+requests must already carry valid provider keys; the client's operator
+token reaches the container only through the run.sh env allowlist
+(VPN-R44: env-only credential; run.sh never loads secrets itself).
 
 ### Port model (the conflict with llama-swap, docs/d027)
 

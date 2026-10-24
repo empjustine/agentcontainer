@@ -221,6 +221,11 @@ mode ships (v3). Until then the BRD stands.
 - **VPN-R11** — The tunnel transport MUST be `wss://<proxy>/<prefix>/vpn`
   through the existing Funnel front. It MUST NOT depend on the HTTP `CONNECT`
   method (VPN verdict above).
+  *Transport revision (proposed): [d077](d077-ssl-vpn-transport-ladder.md)
+  amends this requirement's exclusivity — v2's tunnel transport remains this
+  `wss://` shape (its T2), with an h2-POST tier preferred when ALPN offers it
+  and an h1-POST stop-and-wait floor for upgrade-stripping gateways; all
+  non-transport requirements stand. R11 binds until d077 is accepted.*
 - **VPN-R12** — The server MUST authenticate the tunnel before relaying
   anything. The credential rides an `Authorization` header on the WebSocket
   handshake itself — the handshake is HTTPS, so the credential is protected

@@ -39,9 +39,22 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"os/signal"
 	"strings"
 	"syscall"
 	"time"
+)
+
+// Mode C environment surface (docs/d073 §6.3/§7, VPN-R44): capability-class
+// values (prefix, token) arrive ONLY through this path — the
+// lib/environment.sh env chain — never the JSON config, which would become
+// a second, unkeyed copy of a credential. The URL and label are the client
+// role's inputs; they identify, they do not authenticate.
+const (
+	envTunnelPrefix  = "VPN_TUNNEL_PREFIX"
+	envTunnelURL     = "VPN_TUNNEL_URL"
+	envOperatorToken = "VPN_OPERATOR_TOKEN"
+	envClientLabel   = "VPN_CLIENT_LABEL"
 )
 
 // ---------------------------------------------------------------------------
@@ -56,6 +69,22 @@ type config struct {
 	// last non-host key, llama-swap's logical alias, from the generated
 	// table).
 	AllowHosts map[string]string `json:"allowHosts"`
+
+	// Mode C (docs/d073 §6): opt-in tunnel surface. Nil or enabled:false
+	// means the surface does not exist at all — the process behaves exactly
+	// as if d073 had never landed (VPN-R2). The capability prefix and
+	// operator token are deliberately NOT fields here: they arrive only via
+	// the environment chain (enableModeC), because a config file on disk is
+	// a second copy of a credential — and worse, an unkeyed one (VPN-R44).
+	ModeC *modeCConfig `json:"modeC,omitempty"`
+}
+
+// modeCConfig is the mode C config data: the policy halves only. What the
+// operator reviews and commits (egress) lives here; what authenticates
+// (prefix, token) never does.
+type modeCConfig struct {
+	Enabled bool         `json:"enabled"`
+	Egress  egressConfig `json:"egress,omitempty"`
 }
 
 func loadConfig(path string) (*config, error) {
@@ -294,6 +323,14 @@ func (lw *loggingResponseWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
+// recordSwitched notes a status written straight onto a hijacked
+// connection: net/http never routes those through WriteHeader, so without
+// this the CLF line would print a phantom status 0 (docs/d073 VPN-R13).
+func (lw *loggingResponseWriter) recordSwitched(size int) {
+	lw.status = http.StatusSwitchingProtocols
+	lw.size = size
+}
+
 // logCombinedRequest writes one line per request in a format matching nginx /
 // Apache Combined Log Format:
 //
@@ -301,13 +338,17 @@ func (lw *loggingResponseWriter) Write(b []byte) (int, error) {
 //
 // This makes the proxy's output greppable, parseable, and compatible with
 // standard log analysis tools (GoAccess, ELK, etc.) without a custom parser.
-func logCombinedRequest(r *http.Request, status int, size int) {
+// logCombinedRequestURI takes the request URI as an argument instead of
+// reading it off r: callers that must redact (mode C's capability prefix,
+// VPN-R44) do so at exactly one place — the printer never re-derives the
+// secret from the request.
+func logCombinedRequestURI(r *http.Request, uri string, status int, size int) {
 	remoteAddr := r.RemoteAddr
 	if host, _, err := net.SplitHostPort(remoteAddr); err == nil {
 		remoteAddr = host
 	}
 	ts := time.Now().Format("02/Jan/2006:15:04:05 -0700")
-	requestLine := fmt.Sprintf("%s %s %s", r.Method, r.URL.RequestURI(), r.Proto)
+	requestLine := fmt.Sprintf("%s %s %s", r.Method, uri, r.Proto)
 	referrer := r.Referer()
 	if referrer == "" {
 		referrer = "-"
@@ -335,37 +376,64 @@ func (p *provider) proxyError(w http.ResponseWriter, r *http.Request, err error)
 	writeProblem(w, r, http.StatusBadGateway, code, title, detail, err)
 }
 
+// writeFunnel404 answers every 404 this relay can produce the way the
+// tailscale funnel in front of it does: a bare, plain-text Go "404 page not
+// found". This includes unknown provider prefixes, garbage paths, AND mode
+// C's unauthenticated tunnel probes — a JSON error body (even a
+// URN-shaped RFC 9457 one) would act as a probe oracle, confirming
+// "custom software lives here" and inviting more probing. The funnel's
+// prefix filtering already stops most garbage; whatever gets through must
+// learn nothing: no routing table, no provider names, no distinguishable
+// fingerprint between a real route and a dead one, and none between mode A
+// and mode C's namespaces (docs/d073 VPN-R34/R2).
+//
+// RFC 9457 problem details remain only for INTERNAL failures (bad-gateway
+// conditions: DNS, TCP, TLS, upstream disconnects) — those carry provider
+// context the operator already knows, and the request got as far as a
+// configured upstream, so no extra oracle is handed out. Operators debug
+// unknown-prefix mistakes from the proxy logs, not the response.
+//
+// logURI is the already-redacted path for the CLF line: callers holding a
+// capability prefix must scrub it first (VPN-R44 — the printer takes the
+// URI precisely so it can never re-derive the secret from r).
+func writeFunnel404(w http.ResponseWriter, r *http.Request, logURI string) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(http.StatusNotFound)
+	fmt.Fprintln(w, "404 page not found")
+	logCombinedRequestURI(r, logURI, http.StatusNotFound, len("404 page not found\n"))
+}
+
 // ---------------------------------------------------------------------------
 // HTTP surface
 // ---------------------------------------------------------------------------
 
 type server struct {
 	providers map[string]*provider
+	// vpn is nil unless mode C is enabled; nil is not "denied", it is
+	// "this process does not do that" — the tunnel path answers mode A's
+	// 404 either way (docs/d073 VPN-R2/R34).
+	vpn *tunnelServer
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Mode C dispatch is by exact path and happens BEFORE provider parsing
+	// (docs/d073 VPN-R42): the tunnel namespace cannot be confused with a
+	// mode A route, and the prefix is never an allowlist host (checked in
+	// enableModeC), so both dispatch orders would agree — this one keeps the
+	// two modes from ever branching on each other's state.
+	if s.vpn != nil && s.vpn.isTunnelPath(r.URL.Path) {
+		s.vpn.serveTunnel(w, r)
+		return
+	}
+
 	name, _, _ := strings.Cut(strings.TrimPrefix(r.URL.Path, "/"), "/")
 
-	// Every 404 this relay can produce answers the way the tailscale funnel
-	// in front of it does: a bare, plain-text Go "404 page not found". This
-	// includes unknown provider prefixes and garbage paths — a JSON error
-	// body (even a URN-shaped RFC 9457 one) would act as a probe oracle,
-	// confirming "custom software lives here" and inviting more probing. The
-	// funnel's prefix filtering already stops most garbage; whatever gets
-	// through must learn nothing: no routing table, no provider names, no
-	// distinguishable fingerprint between a real route and a dead one.
-	//
-	// RFC 9457 problem details remain only for INTERNAL failures (bad-gateway
-	// conditions: DNS, TCP, TLS, upstream disconnects) — those carry provider
-	// context the operator already knows, and the request got as far as a
-	// configured upstream, so no extra oracle is handed out. Operators debug
-	// unknown-prefix mistakes from the proxy logs, not the response.
+	// writeFunnel404 carries the camouflage-404 contract (shared with mode
+	// C's tunnel path — docs/d073 VPN-R34); the URI is capability-redacted
+	// first so even a 404 line never stores the prefix (VPN-R44).
 	funnel404 := func() {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintln(w, "404 page not found")
-		logCombinedRequest(r, http.StatusNotFound, len("404 page not found\n"))
+		writeFunnel404(w, r, s.redactURI(r.URL.RequestURI()))
 	}
 	if name == "" {
 		funnel404()
@@ -383,7 +451,31 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// ResponseWriter, so we need our own interceptor to log %>s %b).
 	lw := &loggingResponseWriter{ResponseWriter: w}
 	p.handler().ServeHTTP(lw, r)
-	logCombinedRequest(r, lw.status, lw.size)
+	// Upgrade responses (the §4 websocket routes) are written raw on the
+	// hijacked connection and never reach WriteHeader — record the switch so
+	// the CLF line says 101 instead of a phantom status 0 (docs/d073
+	// VPN-R13). Response size is unknowable from here (bytes flow
+	// conn-to-conn after the hijack), so it logs as 0 deliberately.
+	if lw.status == 0 && headerHasToken(r.Header, "Connection", "Upgrade") {
+		lw.recordSwitched(0)
+	}
+	s.logRequest(r, lw.status, lw.size)
+}
+
+// redactURI removes the mode C capability prefix from any URI about to be
+// logged: the prefix is credential-class (d073 VPN-R44), and an access log
+// that echoes it becomes a key store. Mode C off → identity, so mode A
+// logging is byte-for-byte unchanged when the tunnel does not exist.
+func (s *server) redactURI(uri string) string {
+	if s.vpn == nil {
+		return uri
+	}
+	return strings.ReplaceAll(uri, "/"+s.vpn.prefix, "/"+logPathRedaction)
+}
+
+// logRequest is mode A's CLF line with capability segments redacted.
+func (s *server) logRequest(r *http.Request, status, size int) {
+	logCombinedRequestURI(r, s.redactURI(r.URL.RequestURI()), status, size)
 }
 
 // ---------------------------------------------------------------------------
@@ -393,7 +485,35 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func main() {
 	configPath := flag.String("config", "llm-reverse-proxy.json", "path to JSON config")
 	listen := flag.String("listen", "", "override listen address (e.g. :8080)")
+	mode := flag.String("mode", "server", "process role: \"server\" (reverse proxy) or \"client\" (mode C local proxy, docs/d073 §7)")
+	proxyListen := flag.String("proxy-listen", "127.0.0.1:3128", "client mode: loopback HTTP CONNECT listener")
+	socksListen := flag.String("socks-listen", "127.0.0.1:1080", "client mode: loopback SOCKS5 listener")
 	flag.Parse()
+
+	// Disable Go's default timestamp prefix — the Combined Log Format lines
+	// already carry their own timestamp in brackets, so the log package's
+	// automatic "2009/01/02 15:04:05" header would be redundant noise.
+	log.SetFlags(0)
+
+	// Mode C client (docs/d073 §7): a separate role with its own contract —
+	// no allowlist config, and failing BEFORE any bind on bad or missing env
+	// IS the kill switch (VPN-R26): a listener that could start without a
+	// credential would only exist to refuse everything anyway.
+	if *mode == "client" {
+		clientCfg, err := clientConfigFromEnv(*proxyListen, *socksListen)
+		if err != nil {
+			log.Fatalf("[vpn-client] %v", err)
+		}
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		if err := runClient(ctx, clientCfg); err != nil {
+			log.Fatalf("[vpn-client] %v", err)
+		}
+		return
+	}
+	if *mode != "server" {
+		log.Fatalf("[llm-reverse-proxy] unknown -mode %q (want server or client)", *mode)
+	}
 
 	cfg, err := loadConfig(*configPath)
 	if err != nil {
@@ -423,6 +543,12 @@ func main() {
 		log.Fatalf("[llm-reverse-proxy] no allowHosts entries configured in %s", *configPath)
 	}
 
+	if cfg.ModeC != nil && cfg.ModeC.Enabled {
+		if err := s.enableModeC(cfg.ModeC); err != nil {
+			log.Fatalf("[llm-reverse-proxy] mode C: %v", err)
+		}
+	}
+
 	srv := &http.Server{
 		Addr: cfg.Listen,
 		// Only guard against slowloris-style clients. Everything else is left
@@ -430,11 +556,6 @@ func main() {
 		ReadHeaderTimeout: 30e9,
 		Handler:           s,
 	}
-
-	// Disable Go's default timestamp prefix — the Combined Log Format lines
-	// already carry their own timestamp in brackets, so the log package's
-	// automatic "2009/01/02 15:04:05" header would be redundant noise.
-	log.SetFlags(0)
 
 	log.Printf("[llm-reverse-proxy] listening on %s; %d allowlisted host(s):", cfg.Listen, len(s.providers))
 	for _, name := range s.providers {
