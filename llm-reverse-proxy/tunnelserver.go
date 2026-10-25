@@ -1,24 +1,23 @@
-// tunnelserver.go — the tunnel's server role (modes C–E): the `/<prefix>/vpn` namespace
-// (docs/d073 §5: VPN-R11..R22, §8: VPN-R31..R34, §10: VPN-R44).
+// tunnelserver.go — the tunnel's server role (modes C–E): the /vpn namespace
+// (docs/d073 §5: VPN-R11..R22, §8: VPN-R31..R34).
 //
 // Dispatch is by path only (VPN-R42): main's ServeHTTP hands this handler
 // exactly the tunnel path and everything else stays mode A — and since the
-// prefix is checked to never collide with an allowlist host at startup,
-// enabling or disabling the tunnel is invisible from outside (both states answer
-// the same camouflage 404, VPN-R34/R2).
+// reserved path is checked to never collide with an allowlist host at
+// startup, enabling or disabling the tunnel is invisible from outside (both
+// states answer the same camouflage 404, VPN-R34/R2).
 //
 // The 101 is written on the hijacked connection with the logging wrapper
 // kept in the chain (VPN-R13): auth and upgrade validation run BEFORE the
-// hijack, so an unauthenticated upgrade never reaches a 101 (VPN-R39), and
-// the CLF line afterwards carries a redacted path (VPN-R44 — the prefix is
-// a capability, so our own access log never echoes it).
+// hijack, so an unauthenticated upgrade never reaches a 101 (VPN-R39). The
+// capability that names this namespace lives at the Funnel edge and never
+// reaches us (docs/d085) — so there is no path secret left to keep out of
+// the CLF line.
 package main
 
 import (
 	"context"
-	"crypto/sha256"
 	"crypto/subtle"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -40,8 +39,15 @@ const (
 	tunnelDialTimeout = 15 * time.Second
 )
 
-// logPathRedaction replaces the capability segment in logged request URIs.
-const logPathRedaction = "REDACTED"
+// tunnelPath is the tunnel family's single reserved path. The capability
+// that names the namespace lives at the Funnel edge (the mount prefix, which
+// http.StripPrefix removes before a request can reach us — docs/d085); all
+// the proxy needs is one fixed, reserved place to dispatch on.
+const tunnelPath = "/vpn"
+
+// tunnelPathHost is the allowlist-host name that would shadow tunnelPath;
+// enableTunnel refuses it at boot (VPN-R42 in its d085 form).
+const tunnelPathHost = "vpn"
 
 // maxOperatorKeys bounds the principal set (docs/d078 §2): a structural
 // guard, not a performance one — the scan is linear regardless — that keeps
@@ -58,18 +64,16 @@ type operatorKey struct {
 }
 
 type tunnelServer struct {
-	prefix string
 	keys   []operatorKey
 	egress *egressPolicy
 }
 
 // isTunnelPath reports whether this request belongs to the tunnel
-// namespace. Exact-match only: `/<prefix>/anything-else` is not tunnel
-// traffic and falls through to mode A, where the prefix answers the same
-// 404 as any unlisted host (the namespace boundary stays invisible,
-// VPN-R34).
+// namespace. Exact-match only: /vpn/anything-else is not tunnel traffic and
+// falls through to mode A, where it answers the same 404 as any unlisted
+// path (the namespace boundary stays invisible, VPN-R34).
 func (t *tunnelServer) isTunnelPath(path string) bool {
-	return path == "/"+t.prefix+"/vpn"
+	return path == tunnelPath
 }
 
 // matchOperatorKey returns the id of the principal whose bearer credential
@@ -103,7 +107,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	// /<prefix>/vpn exists as a route (VPN-R12: rejected before any 101).
 	keyID := matchOperatorKey(r, t.keys)
 	if keyID == "" {
-		writeFunnel404(w, r, t.redactedURI(r))
+		writeFunnel404(w, r)
 		return
 	}
 	// Mode C arrival (docs/d077 §4): an authenticated POST with no upgrade
@@ -119,7 +123,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	// well-formed key; anything else is not a tunnel request at all.
 	resp, err := wsAccept(r)
 	if err != nil {
-		writeFunnel404(w, r, t.redactedURI(r))
+		writeFunnel404(w, r)
 		return
 	}
 
@@ -137,9 +141,9 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeProblem(lw, r, http.StatusInternalServerError, "hijack-failed",
 			"Could not switch protocols on the tunnel connection", "", err)
-		// Authenticated, but the path still carries the prefix — the CLF line
-		// gets the redacted URI (VPN-R44), and no 101 ever happened.
-		logCombinedRequestURI(r, t.redactedURI(r), http.StatusInternalServerError, lw.size)
+		// Authenticated, but no 101 ever happened — the CLF line records
+		// the failure.
+		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
 		return
 	}
 	if _, err := brw.Write(resp); err != nil {
@@ -154,7 +158,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	// CLF line is honest (the Unwrap chain keeps Hijack reachable,
 	// VPN-R13).
 	lw.recordSwitched(len(resp))
-	logCombinedRequestURI(r, t.redactedURI(r), http.StatusSwitchingProtocols, len(resp))
+	logCombinedRequestURI(r, http.StatusSwitchingProtocols, len(resp))
 
 	// The session outlives ServeHTTP: once hijacked, nothing on this
 	// connection is net/http's business anymore.
@@ -185,7 +189,7 @@ func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, k
 		// hang, which reads as network loss rather than a defect (NFR-2).
 		log.Printf("[llm-reverse-proxy] tunnel mode C: full duplex unavailable: %v", err)
 		lw.WriteHeader(http.StatusInternalServerError)
-		logCombinedRequestURI(r, t.redactedURI(r), http.StatusInternalServerError, lw.size)
+		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
 		return
 	}
 
@@ -193,11 +197,11 @@ func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, k
 	if err := http.NewResponseController(lw).Flush(); err != nil {
 		// Headers never made it out: the session cannot exist. The status
 		// was not committed, so this is the honest CLF outcome.
-		logCombinedRequestURI(r, t.redactedURI(r), http.StatusInternalServerError, lw.size)
+		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
 		return
 	}
 	t.runSession(p)
-	logCombinedRequestURI(r, t.redactedURI(r), http.StatusOK, lw.size)
+	logCombinedRequestURI(r, http.StatusOK, lw.size)
 }
 
 // postStream is mode C's carrier (docs/d077 §3/§5): frames ride the HTTP
@@ -262,18 +266,6 @@ func (p *postStream) Close() error {
 	return nil
 }
 
-// redactedURI is the CLF path for tunnel requests: the capability segment
-// never reaches our access log (VPN-R44; the Funnel edge still sees the
-// real path — accepted here exactly as d070 accepted the edge logging the
-// funnel id).
-func (t *tunnelServer) redactedURI(r *http.Request) string {
-	uri := "/" + logPathRedaction + "/vpn"
-	if r.URL.RawQuery != "" {
-		uri += "?" + r.URL.RawQuery
-	}
-	return uri
-}
-
 // runSession is one tunnel's whole life: HELLO → CONNECT → relay →
 // lifecycle log (VPN-R16's frame set, VPN-R20's remote resolution). It is
 // carrier-agnostic (docs/d077 §5): the same session over the 101 path and
@@ -290,10 +282,9 @@ func (t *tunnelServer) runSession(s tunnelStream) {
 		_ = s.Close()
 		// VPN-R19's contract: who (principal + label), where (target), how
 		// much (bytes/duration), outcome — nothing derivable from reading
-		// the stream, never the credential, prefix only as a digest
-		// (VPN-R44); plus the carrier (docs/d077 §4: transport is
-		// operational debugging data, h2|wss|post).
-		logTunnelLifecycle(t.prefix, label, target, s.transport(), start, stats, outcome)
+		// the stream, never the credential; plus the carrier (docs/d077 §4:
+		// transport is operational debugging data, h2|wss|post).
+		logTunnelLifecycle(label, target, s.transport(), start, stats, outcome)
 	}()
 
 	// Phase 1 — HELLO (VPN-R16): magic, version, client label.
@@ -367,28 +358,18 @@ func (t *tunnelServer) runSession(s tunnelStream) {
 	outcome = stats.outcome
 }
 
-// logTunnelLifecycle renders the one log line per tunnel (VPN-R19/R44).
-// The prefix is reduced to a digest so operators can still tell WHICH
-// capability a session used without the log becoming a key store. transport
-// is the carrier the session actually ran on (docs/d077 §4): at the server
-// that is what arrived — "post" for a mode C session, since a proxy strips
-// the ALPN evidence on the way in.
-func logTunnelLifecycle(prefix, label, target, transport string, start time.Time, stats relayStats, outcome string) {
-	log.Printf("[vpn] who=operator label=%q target=%q tunnel=%s transport=%s bytes_in=%d bytes_out=%d duration_ms=%d outcome=%s",
-		label, target, prefixDigest(prefix), transport, stats.received, stats.sent,
+// logTunnelLifecycle renders the one log line per tunnel (VPN-R19).
+// transport is the carrier the session actually ran on (docs/d077 §4): at
+// the server that is what arrived — "post" for a mode C session, since a
+// proxy strips the ALPN evidence on the way in.
+func logTunnelLifecycle(label, target, transport string, start time.Time, stats relayStats, outcome string) {
+	log.Printf("[vpn] who=operator label=%q target=%q transport=%s bytes_in=%d bytes_out=%d duration_ms=%d outcome=%s",
+		label, target, transport, stats.received, stats.sent,
 		time.Since(start).Milliseconds(), outcome)
 }
 
-// prefixDigest reduces the capability prefix to a comparable short id:
-// lifecycle and startup logs may say WHICH namespace a session used
-// without becoming a store of the value itself (VPN-R44).
-func prefixDigest(prefix string) string {
-	sum := sha256.Sum256([]byte(prefix))
-	return hex.EncodeToString(sum[:4])
-}
-
 // operatorKeysFromEnv builds the principal set from the env chain — the only
-// home credentials have (VPN-R32/R44: never the config file; and no digest
+// home credentials have (VPN-R32: never the config file; and no digest
 // of a token stored beside the plaintext, which would be a second credential
 // copy for zero protection — docs/d078 §2). VPN_OPERATOR_KEYS is the JSON
 // object; VPN_OPERATOR_TOKEN alone is today's single principal ("default"),
@@ -479,9 +460,8 @@ func decodeOperatorKeys(raw string) (map[string]string, error) {
 }
 
 // validOperatorID is the label shape docs/d078 §2 promises: ids reach server
-// logs (§5), so they must be log-safe — and unlike the capability prefix
-// they must never be secret-shaped: an id is a name, not a capability
-// (VPN-R44).
+// logs (§5), so they must be log-safe and must never be secret-shaped: an id
+// is a name, not a capability.
 func validOperatorID(id string) bool {
 	if len(id) < 1 || len(id) > 64 {
 		return false
@@ -499,45 +479,22 @@ func validOperatorID(id string) bool {
 // misconfigured capability that binds anyway is worse than one that refuses
 // to start, because it fails OPEN at the first probe instead of never.
 func (s *server) enableTunnel(tn *tunnelConfig) error {
-	prefix := os.Getenv(envTunnelPrefix)
-	if err := validateCapabilityPrefix(prefix); err != nil {
-		return err
-	}
 	keys, err := operatorKeysFromEnv()
 	if err != nil {
 		return err
 	}
-	// The prefix may never be an allowlist host: /<prefix>/… is the
-	// tunnel's namespace, and a provider carrying that name would make
-	// dispatch a matter of request order — VPN-R42 forbids exactly that
+	// The reserved path may never be an allowlist host: /vpn is the whole
+	// tunnel namespace (docs/d085), and a provider carrying that name would
+	// make dispatch a matter of request order — VPN-R42 forbids exactly that
 	// coupling, and startup is where "never" is enforceable.
-	if _, clash := s.providers[prefix]; clash {
-		return fmt.Errorf("capability prefix collides with allowlist host %q", prefix)
+	if _, clash := s.providers[tunnelPathHost]; clash {
+		return fmt.Errorf("the reserved tunnel path %s collides with allowlist host %q", tunnelPath, tunnelPathHost)
 	}
 	egress, err := newEgressPolicy(tn.Egress)
 	if err != nil {
 		return err
 	}
-	s.vpn = &tunnelServer{prefix: prefix, keys: keys, egress: egress}
-	// The real prefix appears in no log line, here or later (VPN-R44).
-	log.Printf("[llm-reverse-proxy] tunnel (modes C–E): enabled at /%s/ (prefix digest %s)",
-		logPathRedaction, prefixDigest(prefix))
-	return nil
-}
-
-// validateCapabilityPrefix treats the prefix as what it is: a bearer secret
-// in path form. VPN-R44 fixes the shape at ~100+ bits (a UUID's 122 is the
-// recommended shape); the length floor below is the structural half of that
-// claim, and the charset is what a URL path segment needs to survive
-// routing (no separators, no dot-segments).
-func validateCapabilityPrefix(prefix string) error {
-	if len(prefix) < 22 || len(prefix) > 64 {
-		return fmt.Errorf("%s must be 22..64 characters (VPN-R44: UUID-class capability), got %d", envTunnelPrefix, len(prefix))
-	}
-	for _, r := range prefix {
-		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_') {
-			return fmt.Errorf("%s contains %q: only [A-Za-z0-9_-] are safe in a capability path segment", envTunnelPrefix, r)
-		}
-	}
+	s.vpn = &tunnelServer{keys: keys, egress: egress}
+	log.Printf("[llm-reverse-proxy] tunnel (modes C–E): enabled at %s", tunnelPath)
 	return nil
 }

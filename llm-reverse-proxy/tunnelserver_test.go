@@ -15,21 +15,19 @@ import (
 )
 
 const (
-	// These are what the ENV carries; enableTunnel is driven through t.Setenv
+	// This is what the ENV carries; enableTunnel is driven through t.Setenv
 	// so tests exercise the production construction path, not a shortcut.
-	testTunnelPrefix = "cap-abcdefghijklmnopqrst"
-	testTunnelToken  = "operator-token-abcdef1234567890"
+	testTunnelToken = "operator-token-abcdef1234567890"
 )
 
 // newTunnelServer wires a full server with the tunnel on or off through the same
 // code main() uses.
 func newTunnelServer(t *testing.T, enabled bool, egress egressConfig) *server {
 	t.Helper()
-	t.Setenv(envTunnelPrefix, testTunnelPrefix)
 	t.Setenv(envOperatorToken, testTunnelToken)
 	s := &server{providers: map[string]*provider{}}
 	if enabled {
-		if err := s.enableTunnel(&tunnelConfig{Enabled: true, Egress: egress}); err != nil {
+		if err := s.enableTunnel(&tunnelConfig{Egress: egress}); err != nil {
 			t.Fatalf("enableTunnel: %v", err)
 		}
 	}
@@ -154,10 +152,10 @@ func TestTunnelPathCamouflage(t *testing.T) {
 		server *server
 		raw    string
 	}{
-		{"tunnel path, no auth, tunnel on", on, get("/" + testTunnelPrefix + "/vpn")},
-		{"tunnel path, wrong token + upgrade, tunnel on", on, wrongToken("/" + testTunnelPrefix + "/vpn")},
-		{"tunnel path, no auth, tunnel off", off, get("/" + testTunnelPrefix + "/vpn")},
-		{"non-exact prefix path, tunnel on", on, get("/" + testTunnelPrefix + "/other")},
+		{"tunnel path, no auth, tunnel on", on, get(tunnelPath)},
+		{"tunnel path, wrong token + upgrade, tunnel on", on, wrongToken(tunnelPath)},
+		{"tunnel path, no auth, tunnel off", off, get(tunnelPath)},
+		{"non-exact prefix path, tunnel on", on, get(tunnelPath + "/other")},
 		{"garbage path, tunnel on", on, get("/nonsense/xyz")},
 		{"tunnel path shape with other prefix", on, get("/someotherprefix/vpn")},
 	}
@@ -192,7 +190,7 @@ func TestTunnelPathCamouflage(t *testing.T) {
 func TestTunnelHandshakeAuth(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{})
 	proxy := newHTTPServer(t, s)
-	tunnelURL := mustTunnelURL(t, proxy, testTunnelPrefix)
+	tunnelURL := mustTunnelURL(t, proxy)
 
 	t.Run("correct token completes the handshake", func(t *testing.T) {
 		ws, err := dialTunnelForTest(t, tunnelURL, testTunnelToken)
@@ -274,7 +272,7 @@ func TestServerRefusesIPLiteralTargets(t *testing.T) {
 	for _, target := range []string{"1.2.3.4:443", "[::1]:443"} {
 		// One CONNECT per session: v1 is unmuxed (VPN-R17), so every
 		// refusal opens a fresh tunnel — exactly as the client would.
-		ws := openRawTunnel(t, mustTunnelURL(t, proxy, testTunnelPrefix), testTunnelToken)
+		ws := openRawTunnel(t, mustTunnelURL(t, proxy), testTunnelToken)
 		if reason := connectErrReason(t, ws, target); reason != errReasonTargetIP {
 			t.Fatalf("%s: reason = %q, want %q", target, reason, errReasonTargetIP)
 		}
@@ -290,7 +288,7 @@ func TestServerRefusesNonPermittedPorts(t *testing.T) {
 		"example.com:22": errReasonPortDenied,
 		"example.com:":   errReasonInvalid,
 	} {
-		ws := openRawTunnel(t, mustTunnelURL(t, proxy, testTunnelPrefix), testTunnelToken)
+		ws := openRawTunnel(t, mustTunnelURL(t, proxy), testTunnelToken)
 		if reason := connectErrReason(t, ws, target); reason != want {
 			t.Fatalf("%s: reason = %q, want %q", target, reason, want)
 		}
@@ -302,7 +300,7 @@ func TestServerRefusesNonPermittedPorts(t *testing.T) {
 func TestServerRefusesLoopbackResolvingTargetsByDefault(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{Ports: []uint16{65000}})
 	proxy := newHTTPServer(t, s)
-	ws := openRawTunnel(t, mustTunnelURL(t, proxy, testTunnelPrefix), testTunnelToken)
+	ws := openRawTunnel(t, mustTunnelURL(t, proxy), testTunnelToken)
 	if reason := connectErrReason(t, ws, "localhost:65000"); reason != errReasonDenied {
 		t.Fatalf("reason = %q, want %q", reason, errReasonDenied)
 	}
@@ -313,7 +311,7 @@ func TestServerRefusesLoopbackResolvingTargetsByDefault(t *testing.T) {
 func TestServerRequiresHelloFirst(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{})
 	proxy := newHTTPServer(t, s)
-	ws, err := dialTunnelForTest(t, mustTunnelURL(t, proxy, testTunnelPrefix), testTunnelToken)
+	ws, err := dialTunnelForTest(t, mustTunnelURL(t, proxy), testTunnelToken)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -361,7 +359,7 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 		Ports:      []uint16{targetPort},
 	})
 	proxy := newHTTPServer(t, s)
-	ws := openRawTunnel(t, mustTunnelURL(t, proxy, testTunnelPrefix), testTunnelToken)
+	ws := openRawTunnel(t, mustTunnelURL(t, proxy), testTunnelToken)
 
 	targetAddr := "localhost:" + strconv.Itoa(int(targetPort))
 	if err := sendFrame(ws, frameConnect, []byte(targetAddr)); err != nil {
@@ -384,11 +382,8 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 	if strings.Contains(dumped, testTunnelToken) {
 		t.Fatalf("token leaked into the log:\n%s", dumped)
 	}
-	if strings.Contains(dumped, testTunnelPrefix) {
-		t.Fatalf("capability prefix leaked into the log:\n%s", dumped)
-	}
-	if !strings.Contains(dumped, "tunnel="+prefixDigest(testTunnelPrefix)) {
-		t.Fatalf("expected prefix digest in the lifecycle line:\n%s", dumped)
+	if !strings.Contains(dumped, "transport=") {
+		t.Fatalf("expected transport column in the lifecycle line:\n%s", dumped)
 	}
 	if !strings.Contains(dumped, `label="raw-test"`) {
 		t.Fatalf("expected client label:\n%s", dumped)
@@ -406,43 +401,28 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestEnableTunnelValidatesInputs(t *testing.T) {
-	t.Setenv(envTunnelPrefix, testTunnelPrefix)
 	t.Setenv(envOperatorToken, testTunnelToken)
 
-	t.Run("prefix shorter than capability floor", func(t *testing.T) {
-		t.Setenv(envTunnelPrefix, "short")
-		s := &server{providers: map[string]*provider{}}
-		if err := s.enableTunnel(&tunnelConfig{Enabled: true}); err == nil {
-			t.Fatal("expected failure")
-		}
-	})
-	t.Run("prefix with path-hostile characters", func(t *testing.T) {
-		t.Setenv(envTunnelPrefix, "cap-with/slash-aaaaaaaaaaaa")
-		s := &server{providers: map[string]*provider{}}
-		if err := s.enableTunnel(&tunnelConfig{Enabled: true}); err == nil {
-			t.Fatal("expected failure")
-		}
-	})
 	t.Run("missing token", func(t *testing.T) {
 		t.Setenv(envOperatorToken, "")
 		s := &server{providers: map[string]*provider{}}
-		if err := s.enableTunnel(&tunnelConfig{Enabled: true}); err == nil {
+		if err := s.enableTunnel(&tunnelConfig{}); err == nil {
 			t.Fatal("expected failure")
 		}
 	})
-	t.Run("prefix colliding with an allowlist host", func(t *testing.T) {
-		p, err := newProvider(testTunnelPrefix, "https://example.com")
+	t.Run("reserved tunnel path colliding with an allowlist host", func(t *testing.T) {
+		p, err := newProvider(tunnelPathHost, "https://example.com")
 		if err != nil {
 			t.Fatal(err)
 		}
-		s := &server{providers: map[string]*provider{testTunnelPrefix: p}}
-		if err := s.enableTunnel(&tunnelConfig{Enabled: true}); err == nil {
+		s := &server{providers: map[string]*provider{tunnelPathHost: p}}
+		if err := s.enableTunnel(&tunnelConfig{}); err == nil {
 			t.Fatal("expected collision failure")
 		}
 	})
 	t.Run("bad egress config", func(t *testing.T) {
 		s := &server{providers: map[string]*provider{}}
-		if err := s.enableTunnel(&tunnelConfig{Enabled: true, Egress: egressConfig{AllowCidrs: []string{"nope"}}}); err == nil {
+		if err := s.enableTunnel(&tunnelConfig{Egress: egressConfig{AllowCidrs: []string{"nope"}}}); err == nil {
 			t.Fatal("expected failure")
 		}
 	})
@@ -537,7 +517,7 @@ func probeTunnel404(t *testing.T, proxyAddr, token string) string {
 	if token != "" {
 		auth = "Authorization: Bearer " + token + "\r\n"
 	}
-	mustWrite(t, conn, "GET /"+testTunnelPrefix+"/vpn HTTP/1.1\r\nHost: anywhere.example\r\n"+auth+"\r\n")
+	mustWrite(t, conn, "GET "+tunnelPath+" HTTP/1.1\r\nHost: anywhere.example\r\n"+auth+"\r\n")
 	resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
 	if err != nil {
 		t.Fatalf("read probe response: %v", err)
@@ -560,11 +540,10 @@ func probeTunnel404(t *testing.T, proxyAddr, token string) string {
 func TestPrincipalSetAcceptance(t *testing.T) {
 	build := func(keys string) *server {
 		t.Helper()
-		t.Setenv(envTunnelPrefix, testTunnelPrefix)
 		t.Setenv(envOperatorKeys, keys)
 		t.Setenv(envOperatorToken, "")
 		s := &server{providers: map[string]*provider{}}
-		if err := s.enableTunnel(&tunnelConfig{Enabled: true}); err != nil {
+		if err := s.enableTunnel(&tunnelConfig{}); err != nil {
 			t.Fatalf("enableTunnel: %v", err)
 		}
 		return s
@@ -572,7 +551,7 @@ func TestPrincipalSetAcceptance(t *testing.T) {
 
 	full := build(`{"alice":"` + testAliceToken + `","bob":"` + testBobToken + `"}`)
 	proxy := newHTTPServer(t, full)
-	tunnelURL := mustTunnelURL(t, proxy, testTunnelPrefix)
+	tunnelURL := mustTunnelURL(t, proxy)
 	logBuf := captureLog(t)
 
 	for _, k := range []struct{ id, tok string }{{"alice", testAliceToken}, {"bob", testBobToken}} {
@@ -596,7 +575,7 @@ func TestPrincipalSetAcceptance(t *testing.T) {
 	revoked := build(`{"alice":"` + testAliceToken + `"}`)
 	revokedProxy := newHTTPServer(t, revoked)
 	revokedAddr := revokedProxy.Listener.Addr().String()
-	revokedURL := mustTunnelURL(t, revokedProxy, testTunnelPrefix)
+	revokedURL := mustTunnelURL(t, revokedProxy)
 	if ws, err := dialTunnelForTest(t, revokedURL, testBobToken); err == nil {
 		_ = ws.Close()
 		t.Fatal("revoked principal still opens the tunnel")

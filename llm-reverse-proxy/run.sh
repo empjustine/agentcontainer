@@ -20,19 +20,22 @@
 #     fallback)
 #     in the selected role.
 #
-# The SERVER holds NO secrets: requests must already carry valid provider
-# keys (that is the whole design — no credential handling), so that path
-# has no vault round-trip and no env allowlist. The CLIENT is different:
-# VPN_OPERATOR_TOKEN is the one credential this runner ever carries, and
-# per VPN-R44 it exists ONLY in the environment — the allowlist below
-# forwards it from the host; run.sh never loads secrets itself
-# (lib/environment.sh owns the vault round-trip onto the host env). The
-# client has no config file at all: URL + token + optional label are its
-# whole surface.
+# Secrets live ONLY in the environment chain (VPN-R32/d078;
+# lib/environment.sh owns the vault round-trip onto the host env — run.sh
+# never loads secrets itself). Mode A serving holds none: requests must
+# already carry valid provider keys. When the tunnel family arms (docs/d084/
+# d085: the operator keyset env is the opt-in), the server carries the
+# keyset and the client carries VPN_OPERATOR_TOKEN; both reach the
+# container through the env allowlists below. The client has no config file
+# at all: URL + token + optional label are its whole surface. The capability
+# path is the Funnel mount's business (docs/d085): stripped at the edge,
+# never seen here — the tunnel answers the fixed /vpn.
 #
 # Env overrides: PROXY_MODE / HOST_PORT / LISTEN / PROXY_LISTEN /
-# SOCKS_LISTEN / IMAGE_TAG / LLM_PROXY_BIN / CONFIG, and for client mode
-# VPN_TUNNEL_URL / VPN_OPERATOR_TOKEN / VPN_CLIENT_LABEL.
+# SOCKS_LISTEN / IMAGE_TAG / LLM_PROXY_BIN / CONFIG / MODES, and for client
+# mode VPN_TUNNEL_URL (wss://host[/<funnel-mount>]/vpn) /
+# VPN_OPERATOR_TOKEN / VPN_CLIENT_LABEL; for an armed server
+# VPN_OPERATOR_KEYS / VPN_OPERATOR_TOKEN.
 
 set -eu
 # Shared infra arrives through one injectable directory (docs/d082): default
@@ -59,7 +62,7 @@ esac
 # of the server's config gate.
 if [ "$proxy_mode" = client ]; then
 	[ -n "${VPN_TUNNEL_URL:-}" ] ||
-		log_die 94 "client mode needs VPN_TUNNEL_URL (wss://host/<capability-path>)" var=VPN_TUNNEL_URL
+		log_die 94 "client mode needs VPN_TUNNEL_URL (wss://host[/<funnel-mount>]/vpn)" var=VPN_TUNNEL_URL
 	[ -n "${VPN_OPERATOR_TOKEN:-}" ] ||
 		log_die 94 "client mode needs VPN_OPERATOR_TOKEN (env-only credential, VPN-R44)" var=VPN_OPERATOR_TOKEN
 else
@@ -96,9 +99,14 @@ if [ "$_workload" = 'workload' ]; then
 		workload_env_allowlist VPN_TUNNEL_URL VPN_OPERATOR_TOKEN VPN_CLIENT_LABEL MODES
 		workload_cmd -mode client \
 			-proxy-listen "${PROXY_LISTEN:-127.0.0.1:3128}" \
-			-socks-listen "${SOCKS_LISTEN:-127.0.0.1:1080}" \
-			-modes "${MODES:-d}"
+			-socks-listen "${SOCKS_LISTEN:-127.0.0.1:1080}"
+		# No default restated here: the binary's -modes default is the one
+		# source (docs/d084) — MODES overrides it, never echoes it.
+		[ -z "${MODES:-}" ] || workload_cmd -modes "$MODES"
 	else
+		# Forwarded only when set — the same arming contract as native
+		# (docs/d084): a containerized server can carry the tunnel family.
+		workload_env_allowlist VPN_OPERATOR_KEYS VPN_OPERATOR_TOKEN
 		workload_ro       "$config" /etc/llm-reverse-proxy/llm-reverse-proxy.json
 		workload_cmd      -config /etc/llm-reverse-proxy/llm-reverse-proxy.json -listen "0.0.0.0:$HOST_PORT"
 	fi
@@ -121,10 +129,13 @@ else
 
 	if [ "$proxy_mode" = client ]; then
 		log_info "serving (native, tunnel client)" bin="$bin"
-		exec "$bin" -mode client \
+		# set -- (not an array): this file is POSIX sh. MODES follows the same
+		# one-source rule as the container branch (docs/d084).
+		set -- -mode client \
 			-proxy-listen "${PROXY_LISTEN:-127.0.0.1:3128}" \
-			-socks-listen "${SOCKS_LISTEN:-127.0.0.1:1080}" \
-			-modes "${MODES:-d}"
+			-socks-listen "${SOCKS_LISTEN:-127.0.0.1:1080}"
+		[ -z "${MODES:-}" ] || set -- "$@" -modes "$MODES"
+		exec "$bin" "$@"
 	fi
 	log_info "serving (native, server)" bin="$bin" config="$config" listen="${LISTEN:-:8080}"
 	exec "$bin" -config "$config" -listen "${LISTEN:-:8080}"

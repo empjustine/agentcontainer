@@ -18,7 +18,7 @@ llm-reverse-proxy is the substrate llama-swap itself uses internally
 
 > **Expansion (docs/d073, mode family revised by docs/d077):** modes A
 > (today's host allowlist), B (authenticated generic relay — deferred to
-> v3), C (h2 streaming POST — built, default-off behind `-modes`), D
+> v3), C (h2 streaming POST — default-on behind `-modes` since d084), D
 > (`CONNECT`-over-WebSocket tunnel plus a localhost client proxy, so clients
 > validate the target's real certificate end-to-end and never trust the
 > proxy — the deployed v2 shape), E (h1 POST floor — not built). The
@@ -150,17 +150,19 @@ llama-swap's port model) — host networking is what makes the loopback
 `./llm-reverse-proxy.json`, the container mounts it at
 `/etc/llm-reverse-proxy/llm-reverse-proxy.json` (both overridable with
 `CONFIG`). Client role: NO config file — `VPN_TUNNEL_URL` (ws/wss; the
-path carries the capability prefix) and `VPN_OPERATOR_TOKEN` are its core
-surface, with `VPN_CLIENT_LABEL` optional (defaults to the hostname),
-`MODES` (transport letters to offer — `d` by default; `c` is the built h2
-POST mode, off until spike L3 passes, docs/d077 §8) and
+path is the Funnel mount plus the fixed `/vpn` — docs/d085) and
+`VPN_OPERATOR_TOKEN` are its core surface, with `VPN_CLIENT_LABEL` optional (defaults to the hostname),
+`MODES` (transport letters to offer — `cd` by default, docs/d084; `c` is
+the built h2 POST mode) and
 `PROXY_LISTEN`/`SOCKS_LISTEN` defaulting to `127.0.0.1:3128`/`1080`;
 host networking is a requirement there too (the loopback listeners must
 be the HOST's loopback — VPN-R23 forbids exposing them — and the tunnel
-URL needs the host's tailnet routes). Secrets: the server holds none —
-requests must already carry valid provider keys; the client's operator
-token reaches the container only through the run.sh env allowlist
-(VPN-R44: env-only credential; run.sh never loads secrets itself).
+URL needs the host's tailnet routes). Secrets (env-only — VPN-R32/d078;
+run.sh never loads secrets itself): mode A serving holds none — requests
+must already carry valid provider keys. An armed tunnel server
+(docs/d084/d085: armed when the env carries the operator keyset) holds the
+keyset, and the client holds the operator token — all reach the container
+only through the run.sh env allowlists.
 
 ### Port model (the conflict with llama-swap, docs/d027)
 

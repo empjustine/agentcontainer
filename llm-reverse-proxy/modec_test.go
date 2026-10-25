@@ -94,14 +94,13 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
 
-	t.Setenv(envTunnelPrefix, testTunnelPrefix)
 	t.Setenv(envOperatorToken, testTunnelToken)
 	localProvider, err := newProvider("local.test", upstream.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
 	s := &server{providers: map[string]*provider{"local.test": localProvider}}
-	if err := s.enableTunnel(&tunnelConfig{Enabled: true, Egress: egressConfig{
+	if err := s.enableTunnel(&tunnelConfig{Egress: egressConfig{
 		AllowCidrs: []string{"127.0.0.0/8"},
 		Ports:      []uint16{upPort},
 	}}); err != nil {
@@ -117,7 +116,7 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 		t.Fatal(err)
 	}
 	fu.Scheme = "wss"
-	fu.Path = "/" + testTunnelPrefix + "/vpn"
+	fu.Path = tunnelPath
 	t.Setenv(envTunnelURL, fu.String())
 	t.Setenv(envClientLabel, "mode-c-e2e")
 
@@ -183,9 +182,6 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 		if strings.Contains(dumped, testTunnelToken) {
 			t.Fatalf("token leaked into the log:\n%s", dumped)
 		}
-		if strings.Contains(dumped, testTunnelPrefix) {
-			t.Fatalf("capability prefix leaked into the log:\n%s", dumped)
-		}
 	})
 
 	cancel()
@@ -197,7 +193,7 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 func TestModeCArrivalIsAuthenticatedAndCamouflaged(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{AllowCidrs: []string{"127.0.0.0/8"}})
 	backend := newHTTPServer(t, s)
-	target := backend.URL + "/" + testTunnelPrefix + "/vpn"
+	target := backend.URL + tunnelPath
 	logBuf := captureLog(t)
 
 	t.Run("wrong credential on a POST is the camouflage 404", func(t *testing.T) {
@@ -215,8 +211,8 @@ func TestModeCArrivalIsAuthenticatedAndCamouflaged(t *testing.T) {
 		if resp.StatusCode != http.StatusNotFound {
 			t.Fatalf("unauthenticated POST answered %d, want 404 (VPN-R34)", resp.StatusCode)
 		}
-		if strings.Contains(string(body), testTunnelPrefix) {
-			t.Fatalf("404 body echoes the capability: %s", body)
+		if strings.Contains(string(body), tunnelPath) {
+			t.Fatalf("404 body echoes the tunnel path: %s", body)
 		}
 	})
 
@@ -258,7 +254,7 @@ func TestParseClientModes(t *testing.T) {
 		want    string
 		wantErr string
 	}{
-		{in: "d", want: "d"},               // the flag's default: today's only adopted mode
+		{in: "d", want: "d"},               // one built mode on offer
 		{in: "c,d", want: "cd"},            // both built modes on offer
 		{in: "c", want: "c"},               // operator's choice: C only, fail closed if it fails
 		{in: "D,C", want: "cd"},            // case-insensitive, canonical order

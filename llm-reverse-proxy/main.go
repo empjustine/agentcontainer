@@ -45,21 +45,28 @@ import (
 	"time"
 )
 
-// Tunnel environment surface (modes C–E; docs/d073 §6.3/§7, VPN-R44): capability-class
-// values (prefix, credential set) arrive ONLY through this path — the
-// lib/environment.sh env chain — never the JSON config, which would become
-// a second, unkeyed copy of a credential. VPN_OPERATOR_KEYS carries the
-// principal set as a JSON object {"<id>": "<token>"} (docs/d078 §2);
-// VPN_OPERATOR_TOKEN alone stays today's single implicit "default"
-// principal. The URL and label are the client role's inputs; they
-// identify, they do not authenticate.
+// Tunnel environment surface (modes C–E; docs/d073 §6.3/§7): credentials
+// arrive ONLY through this path — the lib/environment.sh env chain — never
+// the JSON config, which would become a second, unkeyed copy of a credential.
+// VPN_OPERATOR_KEYS carries the principal set as a JSON object {"<id>":
+// "<token>"} (docs/d078 §2); VPN_OPERATOR_TOKEN alone stays today's single
+// implicit "default" principal. The URL and label are the client role's
+// inputs; they identify, they do not authenticate. The capability PATH is
+// none of this env's business (docs/d085): it is the Funnel mount's, and the
+// edge strips it before a request can reach us.
 const (
-	envTunnelPrefix  = "VPN_TUNNEL_PREFIX"
 	envTunnelURL     = "VPN_TUNNEL_URL"
 	envOperatorToken = "VPN_OPERATOR_TOKEN"
 	envOperatorKeys  = "VPN_OPERATOR_KEYS"
 	envClientLabel   = "VPN_CLIENT_LABEL"
 )
+
+// operatorCredentialInEnv reports whether the env chain carries an operator
+// keyset — the thing that arms the tunnel (docs/d084 as amended by d085: the
+// credential IS the capability; config can veto or assert, never grant).
+func operatorCredentialInEnv() bool {
+	return os.Getenv(envOperatorToken) != "" || os.Getenv(envOperatorKeys) != ""
+}
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -74,21 +81,37 @@ type config struct {
 	// table).
 	AllowHosts map[string]string `json:"allowHosts"`
 
-	// The tunnel namespace, modes C–E (docs/d073 §6, d077): opt-in surface. Nil or enabled:false
-	// means the surface does not exist at all — the process behaves exactly
-	// as if d073 had never landed (VPN-R2). The capability prefix and
-	// operator token are deliberately NOT fields here: they arrive only via
+	// The tunnel namespace, modes C–E (docs/d073 §6, d077): armed by the
+	// operator keyset env, not by this file (docs/d084/d085) — an unarmed
+	// deployment behaves exactly as if d073 had never landed (VPN-R2). The
+	// operator tokens are deliberately NOT fields here: they arrive only via
 	// the environment chain (enableTunnel), because a config file on disk is
-	// a second copy of a credential — and worse, an unkeyed one (VPN-R44).
+	// a second copy of a credential — and worse, an unkeyed one.
 	Tunnel *tunnelConfig `json:"tunnel,omitempty"`
 }
 
 // tunnelConfig is the tunnel config data: the policy halves only. What the
-// operator reviews and commits (egress) lives here; what authenticates
-// (prefix, token) never does.
+// operator reviews and commits (egress) lives here; what authenticates (the
+// operator keyset) never does.
+//
+// Enabled is tri-state on purpose (docs/d084): absent = the env decides,
+// false = veto even when the env is armed, true = assert armed and let the
+// boot fail loudly if the env is missing. The config can veto or assert —
+// GRANTING the capability is the env chain's job (VPN-R31/R32).
 type tunnelConfig struct {
-	Enabled bool         `json:"enabled"`
+	Enabled *bool        `json:"enabled,omitempty"`
 	Egress  egressConfig `json:"egress,omitempty"`
+}
+
+// shouldArmTunnel resolves the boot-time arming verdict for the tunnel
+// family (docs/d084). An assert with the env unarmed resolves to arm so
+// enableTunnel's validation fails the boot loudly — never a silent
+// degradation to mode A only.
+func shouldArmTunnel(cfg *tunnelConfig, envArmed bool) bool {
+	if cfg != nil && cfg.Enabled != nil {
+		return *cfg.Enabled
+	}
+	return envArmed
 }
 
 func loadConfig(path string) (*config, error) {
@@ -342,17 +365,16 @@ func (lw *loggingResponseWriter) recordSwitched(size int) {
 //
 // This makes the proxy's output greppable, parseable, and compatible with
 // standard log analysis tools (GoAccess, ELK, etc.) without a custom parser.
-// logCombinedRequestURI takes the request URI as an argument instead of
-// reading it off r: callers that must redact (the tunnel's capability prefix,
-// VPN-R44) do so at exactly one place — the printer never re-derives the
-// secret from the request.
-func logCombinedRequestURI(r *http.Request, uri string, status int, size int) {
+// logCombinedRequestURI prints one Combined Log Format line per request; the
+// URI is read off r unmodified — nothing request-shaped is credential-class
+// any more (docs/d085), so there is nothing left to scrub.
+func logCombinedRequestURI(r *http.Request, status int, size int) {
 	remoteAddr := r.RemoteAddr
 	if host, _, err := net.SplitHostPort(remoteAddr); err == nil {
 		remoteAddr = host
 	}
 	ts := time.Now().Format("02/Jan/2006:15:04:05 -0700")
-	requestLine := fmt.Sprintf("%s %s %s", r.Method, uri, r.Proto)
+	requestLine := fmt.Sprintf("%s %s %s", r.Method, r.URL.RequestURI(), r.Proto)
 	referrer := r.Referer()
 	if referrer == "" {
 		referrer = "-"
@@ -396,16 +418,12 @@ func (p *provider) proxyError(w http.ResponseWriter, r *http.Request, err error)
 // context the operator already knows, and the request got as far as a
 // configured upstream, so no extra oracle is handed out. Operators debug
 // unknown-prefix mistakes from the proxy logs, not the response.
-//
-// logURI is the already-redacted path for the CLF line: callers holding a
-// capability prefix must scrub it first (VPN-R44 — the printer takes the
-// URI precisely so it can never re-derive the secret from r).
-func writeFunnel404(w http.ResponseWriter, r *http.Request, logURI string) {
+func writeFunnel404(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(http.StatusNotFound)
 	fmt.Fprintln(w, "404 page not found")
-	logCombinedRequestURI(r, logURI, http.StatusNotFound, len("404 page not found\n"))
+	logCombinedRequestURI(r, http.StatusNotFound, len("404 page not found\n"))
 }
 
 // ---------------------------------------------------------------------------
@@ -423,9 +441,9 @@ type server struct {
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Tunnel dispatch is by exact path and happens BEFORE provider parsing
 	// (docs/d073 VPN-R42): the tunnel namespace cannot be confused with a
-	// mode A route, and the prefix is never an allowlist host (checked in
-	// enableTunnel), so both dispatch orders would agree — this one keeps the
-	// two modes from ever branching on each other's state.
+	// mode A route, and the reserved path is never an allowlist host (checked
+	// in enableTunnel), so both dispatch orders would agree — this one keeps
+	// the two modes from ever branching on each other's state.
 	if s.vpn != nil && s.vpn.isTunnelPath(r.URL.Path) {
 		s.vpn.serveTunnel(w, r)
 		return
@@ -434,10 +452,9 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	name, _, _ := strings.Cut(strings.TrimPrefix(r.URL.Path, "/"), "/")
 
 	// writeFunnel404 carries the camouflage-404 contract (shared with mode
-	// C's tunnel path — docs/d073 VPN-R34); the URI is capability-redacted
-	// first so even a 404 line never stores the prefix (VPN-R44).
+	// C's tunnel path — docs/d073 VPN-R34).
 	funnel404 := func() {
-		writeFunnel404(w, r, s.redactURI(r.URL.RequestURI()))
+		writeFunnel404(w, r)
 	}
 	if name == "" {
 		funnel404()
@@ -463,23 +480,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if lw.status == 0 && headerHasToken(r.Header, "Connection", "Upgrade") {
 		lw.recordSwitched(0)
 	}
-	s.logRequest(r, lw.status, lw.size)
-}
-
-// redactURI removes the tunnel's capability prefix from any URI about to be
-// logged: the prefix is credential-class (d073 VPN-R44), and an access log
-// that echoes it becomes a key store. Tunnel off → identity, so mode A
-// logging is byte-for-byte unchanged when the tunnel does not exist.
-func (s *server) redactURI(uri string) string {
-	if s.vpn == nil {
-		return uri
-	}
-	return strings.ReplaceAll(uri, "/"+s.vpn.prefix, "/"+logPathRedaction)
-}
-
-// logRequest is mode A's CLF line with capability segments redacted.
-func (s *server) logRequest(r *http.Request, status, size int) {
-	logCombinedRequestURI(r, s.redactURI(r.URL.RequestURI()), status, size)
+	logCombinedRequestURI(r, lw.status, lw.size)
 }
 
 // ---------------------------------------------------------------------------
@@ -492,7 +493,7 @@ func main() {
 	mode := flag.String("mode", "server", "process role: \"server\" (reverse proxy) or \"client\" (tunnel client, modes C–E; docs/d073 §7)")
 	proxyListen := flag.String("proxy-listen", "127.0.0.1:3128", "client mode: loopback HTTP CONNECT listener")
 	socksListen := flag.String("socks-listen", "127.0.0.1:1080", "client mode: loopback SOCKS5 listener")
-	modes := flag.String("modes", "d", "client mode: transport letters to offer — c=HTTP/2 streaming POST, d=WebSocket (d077 §4; default d until spike L3 passes)")
+	modes := flag.String("modes", "cd", "client mode: transport letters to offer — c=HTTP/2 streaming POST, d=WebSocket (d077 §4; default cd — the L3-gate flip landed as an operator decision, docs/d084)")
 	flag.Parse()
 
 	// Disable Go's default timestamp prefix — the Combined Log Format lines
@@ -548,8 +549,12 @@ func main() {
 		log.Fatalf("[llm-reverse-proxy] no allowHosts entries configured in %s", *configPath)
 	}
 
-	if cfg.Tunnel != nil && cfg.Tunnel.Enabled {
-		if err := s.enableTunnel(cfg.Tunnel); err != nil {
+	if shouldArmTunnel(cfg.Tunnel, operatorCredentialInEnv()) {
+		tn := cfg.Tunnel
+		if tn == nil {
+			tn = &tunnelConfig{}
+		}
+		if err := s.enableTunnel(tn); err != nil {
 			log.Fatalf("[llm-reverse-proxy] tunnel: %v", err)
 		}
 	}

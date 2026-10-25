@@ -75,14 +75,13 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	upPort := portOf(t, upstream.Listener.Addr().String())
 
 	// Server: provider allowlist + the tunnel through the production path.
-	t.Setenv(envTunnelPrefix, testTunnelPrefix)
 	t.Setenv(envOperatorToken, testTunnelToken)
 	localProvider, err := newProvider("local.test", upstream.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
 	s := &server{providers: map[string]*provider{"local.test": localProvider}}
-	if err := s.enableTunnel(&tunnelConfig{Enabled: true, Egress: egressConfig{
+	if err := s.enableTunnel(&tunnelConfig{Egress: egressConfig{
 		AllowCidrs: []string{"127.0.0.0/8"},
 		Ports:      []uint16{upPort},
 	}}); err != nil {
@@ -91,7 +90,7 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	proxy := newHTTPServer(t, s)
 
 	// Client: env chain + runClient, exactly as -mode client wires it.
-	t.Setenv(envTunnelURL, "ws://"+proxy.Listener.Addr().String()+"/"+testTunnelPrefix+"/vpn")
+	t.Setenv(envTunnelURL, "ws://"+proxy.Listener.Addr().String()+tunnelPath)
 	t.Setenv(envClientLabel, "e2e-label")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
@@ -201,9 +200,6 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 		dumped := logBuf.String()
 		if strings.Contains(dumped, testTunnelToken) {
 			t.Fatalf("token leaked into the log:\n%s", dumped)
-		}
-		if strings.Contains(dumped, testTunnelPrefix) {
-			t.Fatalf("capability prefix leaked into the log:\n%s", dumped)
 		}
 		if !strings.Contains(dumped, `label="e2e-label"`) {
 			t.Fatalf("client label missing from the session line:\n%s", dumped)

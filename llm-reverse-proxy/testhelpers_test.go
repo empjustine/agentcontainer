@@ -109,14 +109,14 @@ func newUpgradeEchoUpstream(t *testing.T) *httptest.Server {
 	}))
 }
 
-func mustTunnelURL(t *testing.T, proxy *httptest.Server, prefix string) *url.URL {
+func mustTunnelURL(t *testing.T, proxy *httptest.Server) *url.URL {
 	t.Helper()
 	u, err := url.Parse(proxy.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
 	u.Scheme = "ws"
-	u.Path = "/" + prefix + "/vpn"
+	u.Path = tunnelPath
 	return u
 }
 

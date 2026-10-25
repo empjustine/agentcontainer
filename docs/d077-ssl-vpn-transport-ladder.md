@@ -1,7 +1,7 @@
 ---
 id: d077
 type: architecture-design
-status: adopted-in-part (mode D deployed; mode C built default-off; mode E unbuilt pending spike L4)
+status: adopted-in-part (mode D deployed; mode C default-on since d084 — L3 default-flip gate superseded; mode E unbuilt pending spike L4)
 title: "d077 — tunnel modes C/D/E (h2 POST → wss → h1.1 POST) trusting external TLS, with SSE-carrier and inner-TLS studies"
 parent: llm-reverse-proxy
 depends-on: [d073, d031]
@@ -85,8 +85,9 @@ edge; the client validates the edge certificate against **system roots** with
 no skip knob; between client and edge, anything that terminates TLS sees the
 bearer credential and the capability path in plaintext. That exposure is
 accepted for v2 today and remains accepted here; the countermeasures are
-VPN-R44 (credential lives only in the environment, prefix never logged —
-digest only) and the camouflage 404 (VPN-R34). What would change this posture
+the env-only credential chain (VPN-R32/d078) and the camouflage 404
+(VPN-R34) — the old prefix-never-logged rule (VPN-R44) died with the
+prefix itself (d085). What would change this posture
 — and why it is deliberately not changed — is §7 (Study B, inner TLS).
 
 ### Mode C — HTTP/2 POST streaming (preferred when ALPN offers h2)

@@ -1,7 +1,7 @@
 ---
 id: d073
 type: architecture-design
-status: adopted-in-part (v2 = mode A + mode D delivered; mode B deferred to v3)
+status: adopted-in-part (v2 = mode A + mode D delivered; mode B deferred to v3; VPN-R44's `${prefix}` clause reversed by d085)
 title: "d073 — llm-reverse-proxy → three-mode SSL VPN: requirements and feasibility"
 parent: llm-reverse-proxy
 depends-on: [llm-reverse-proxy, d027, d047, d070, d071]
@@ -439,6 +439,9 @@ boundary that deny-by-absence used to be for mode A.
   reaches the Funnel's edge logs, which are capability-bearing by the same
   argument as d070). The tunnel's `${prefix}` (modes C–E) MUST satisfy the same rules with its
   own distinct key.
+  **Reversed in part by d085** — the `${prefix}` capability-key clause and the
+  log-redaction duty died with the secret; env-only credential handling
+  survives via VPN-R32/d078.
 
 ## 11. Non-goals
 
@@ -474,6 +477,9 @@ boundary that deny-by-absence used to be for mode A.
   the id is already a semi-credential in the base URL (d070) and is shared by
   all clients; the prefix MUST be its own capability UUID (VPN-R44) and the
   credential a distinct, rotatable secret.
+  **d085 supersedes this shape** — not by reusing the id, but by retiring the
+  proxy-side prefix entirely: the Funnel mount is the edge's capability, the
+  bearer is the credential, and /vpn is a fixed reserved path.
 - **mTLS as the operator credential.** Deferred, not rejected — it would work
   only by shipping client certificates through the env chain (VPN-R32), which
   is unwieldy for one operator; a shared-secret bearer token carries the same

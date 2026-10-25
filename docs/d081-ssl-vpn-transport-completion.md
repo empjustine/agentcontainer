@@ -1,7 +1,7 @@
 ---
 id: d081
 type: architecture-design
-status: accepted
+status: accepted · the -modes default-flip gate (L3) superseded by d084 (operator decision: deploy first, measure in production)
 title: "d081 — completing the tunnel family: Mode C adoption is a spike gate, Mode E builds to spike numbers"
 parent: llm-reverse-proxy
 depends-on: [d073, d077]
@@ -10,7 +10,7 @@ references: [d047, d070, d080]
 
 ## Status
 
-v2 (mode A + mode D) is delivered; mode C is built but default-off; mode E
+v2 (mode A + mode D) is delivered; mode C is built (default-on since d084 — the L3 default-flip gate below is superseded); mode E
 is unbuilt (docs/d077). This record decides **how the family completes and
 in what order** — not what the transports are: d077 owns their mechanics,
 d073 owns their requirements, and this record restates neither.
