@@ -1,7 +1,7 @@
 ---
 id: d078
 type: architecture-design
-status: proposed
+status: implemented
 title: "d078 — SSL-VPN operator keys: a bounded static principal set carried in one JSON env value"
 parent: llm-reverse-proxy
 depends-on: [d073, d077]

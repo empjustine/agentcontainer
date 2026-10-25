@@ -54,18 +54,21 @@ left answering nothing that generation asks (docs/d072).
   docs/d042: requirements / reference / design, plus the `d0XX` decision
   log and archived research).
 
-**Proposed, not yet accepted:** a three-mode SSL VPN expansion of
-`llm-reverse-proxy/` — mode A (today's host allowlist), mode B (authenticated
-generic relay whose `${prefix}` is its own capability UUID plus one operator
-credential, with no tenancy), mode D (`CONNECT`-over-WebSocket tunnel with a
-localhost client proxy that validates the target's real certificate
-end-to-end; d077 splits the tunnel family into modes C/D/E, D the deployed
-shape) — is specified in [d073](d073-ssl-vpn-three-modes.md), with
-delivery phased: v2 = mode A + mode D, and mode B deferred to v3. Accepting
-mode B (v3) would add one operator credential (an NFR-5 exception) without
-introducing tenants, and accepting the tunnel (mode D, v2) would need the
-"no TLS termination" note reworded; until a mode is accepted, the requirements
-live in d073 and this BRD is unchanged.
+**Delivered in phases (docs/d073; the tunnel family lettered C/D/E by
+docs/d077):** the three-mode SSL VPN expansion of `llm-reverse-proxy/` —
+mode A (today's host allowlist), mode B (authenticated generic relay whose
+`${prefix}` is its own capability UUID plus one operator credential, with
+no tenancy), and the tunnel family — is specified in
+[d073](d073-ssl-vpn-three-modes.md): v2 = mode A + mode D (`CONNECT`-
+over-WebSocket tunnel with a localhost client proxy that validates the
+target's real certificate end-to-end) is delivered, mode C is built but
+default-off, mode E is unbuilt pending spike L4, and mode B is deferred to
+v3. The tunnel family's operator keys are the bounded principal set of
+[d078](d078-ssl-vpn-operator-keys.md) (the NFR-5 exception); accepting mode
+B (v3) would add one operator credential on top of it without introducing
+tenants. The fuller requirements (`VPN-R*`) live in d073 and this BRD stays
+mode-A-shaped — the d047 allowlist is mode-A-only by decision
+([d080](d080-forward-proxy-no-host-allowlist.md)).
 
 ## Functional requirements
 
@@ -80,8 +83,9 @@ live in d073 and this BRD is unchanged.
   elsewhere.
 - **FR-S3** — The instance is published on LAN :8101 and reachable from the
   world only through the tailscale funnel → llm-reverse-proxy :8080 →
-  `/llama-swap/…` → :8101 (the one allowlist alias key, docs/d047). Port 8080
-  belongs to the proxy.
+  llama-swap's row in the host allowlist (its tsnet serve hostname — a
+  fact-table row like any other, docs/d047; the `llama-swap` alias key is
+  retired, docs/d070 §2). Port 8080 belongs to the proxy.
 - **FR-S4** — Model provisioning (downloading GGUFs) is cache tooling's job,
   never the serving module's: serving reads the HF cache read-only; a cache
   miss at generation time is an error, not a download.
@@ -91,9 +95,11 @@ live in d073 and this BRD is unchanged.
   byte-faithful passthrough (headers, streaming, upstream errors as-is), no
   credential handling, uniform non-distinctive 404s on unknown prefixes,
   RFC 9457 problem details only for failures inside the proxy. *Host
-  allowlist routing (docs/d047, the only mode): `/<host>/<path>` →
-  scheme://host root, the client carries the upstream base path, ~36
-  owner-set hosts, deny-by-absence for everything else.*
+  allowlist routing (docs/d047 — by decision the only HOST-policy mode,
+  docs/d080): `/<host>/<path>` → scheme://host root, the client carries
+  the upstream base path, ~36 owner-set hosts, deny-by-absence for
+  everything else; the tunnel/forward-proxy surfaces carry egress policy
+  instead (docs/d080).*
 
 ### Usage — `coding-agent/`
 

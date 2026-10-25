@@ -17,7 +17,7 @@ the split and the one rule that lets some folders reuse others.
 
 | Side | Responsibility | Instance |
 |------|----------------|----------|
-| **serving** | run llama-swap (`llm-local-inference*`, LOCAL GGUF only) and llm-reverse-proxy (`llm-reverse-proxy/`, cloud relay) | `llm-local-inference/` (local layer, capability-gated) + `llm-reverse-proxy/` (path-prefix cloud router, docs/d027) |
+| **serving** | run llama-swap (`llm-local-inference*`, LOCAL GGUF only) and llm-reverse-proxy (`llm-reverse-proxy/`, cloud relay + opt-in tunnel family, docs/d073/d077) | `llm-local-inference/` (local layer, capability-gated) + `llm-reverse-proxy/` (host-allowlist router, docs/d047) |
 | **usage** | run the pi coding-agent (`coding-agent*`) | `coding-agent/` |
 
 The serving side is split by concern (docs/d027): llama-swap
@@ -124,8 +124,9 @@ then named `peer-probe.mjs` (docs/d071), `pi-models.mjs`, `provider-facts.mjs`, 
 `refresh-models-dev.mjs`) were single-consumer and folded back into
 `coding-agent/` (docs/d039).
 
-Runner run-scripts source lib modules from the fixed `~/agentcontainer` layout.
-lib is intentionally NOT copied into each runner — it is owned by the repo, like
+Runner run-scripts source lib modules relative to their own location
+(`$SCRIPT_DIR/../lib`), so a checkout may live anywhere. lib is
+intentionally NOT copied into each runner — it is owned by the repo, like
 `AGENTS.md` and `biome.jsonc`.
 
 ## One generate, one build (docs/d041)
@@ -167,7 +168,7 @@ the variant folders redundant.)
 | Folder | Role | What makes it work |
 |--------|------|--------------------|
 | `llm-local-inference/` | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `generate.sh`/`generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh` |
-| `llm-reverse-proxy/` | host-allowlist cloud router (docs/d047, the only mode): `/<upstream-host>/<path>` → the allowlisted scheme://host root, byte-for-byte, no keys — deny-by-absence for everything else (docs/d027's 404 policy); streaming as-is, RFC 9457 502s | `main.go`, `generate.sh`/`generate.mjs` (allowHosts from pi-ai + lib/cloud-providers.mjs, docs/d047), `llm-reverse-proxy.example.json`, `smoke-test.sh`; built by the root `build.mjs` |
+| `llm-reverse-proxy/` | host-allowlist cloud router (docs/d047 — mode A, by decision the only HOST-policy mode, docs/d080): `/<upstream-host>/<path>` → the allowlisted scheme://host root, byte-for-byte, no keys — deny-by-absence for everything else (docs/d027's 404 policy); streaming as-is, RFC 9457 502s; also carries the opt-in tunnel family (modes C–E, docs/d073/d077: tunnel server + `-mode client` loopback CONNECT/SOCKS5 proxies — mode D deployed, C built default-off) | `main.go`, `generate.sh`/`generate.mjs` (allowHosts from pi-ai + lib/cloud-providers.mjs, docs/d047), `llm-reverse-proxy.example.json`, `smoke-test.sh`; the tunnel family: `client.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go`; built by the root `build.mjs` |
 | `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.sh`/`generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.sh`, `settings.json`; image built by the root `build.mjs` |
 
 The former "next planned step" sketch (a simplified config-generator system

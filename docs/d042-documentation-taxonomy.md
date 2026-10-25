@@ -104,8 +104,9 @@ replaced. d042's taxonomy now covers every module.
   one taxonomy `type:` (requirements ×1, reference ×10, design ×5, research
   ×11); the d0XX log keeps its own shape (the `d0XX` prefix is its type
   marker; per-record flavor fields are historical) — and since d072 its
-  bodies are maintained rather than frozen (FR-D2). `coding-agent/SPEC.md`
-  remains `module-design` — deferred, see above.
+  bodies are maintained rather than frozen (FR-D2). At census time
+  `coding-agent/SPEC.md` was still `module-design` — the deferred rename
+  executed later, see "Resolved deferral" above.
 - Stale-link sweep for every moved stem across README, AGENTS.md, all living
   docs, archive index, `lib/`, root scripts: zero hits outside d0XX bodies,
   `.thinkrail/` session state (historical), and d042's own citations.

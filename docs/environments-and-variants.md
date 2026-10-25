@@ -18,9 +18,9 @@ access or not) and the tree adapts along those functional lines:
   ONE llama-swap dir, `llm-local-inference/` (generation emits only the
   `config.d/` layers the current host can use — local inference wherever a
   GPU + container backend exist; there is no peers-only llama-swap mode),
-  and cloud-provider relay is `llm-reverse-proxy/`, the simplified
-  path-prefix router (docs/d027) deployable on every host that can reach
-  the cloud.
+  and cloud-provider relay is `llm-reverse-proxy/`, the host-allowlist
+  router (docs/d047) plus its opt-in tunnel family (docs/d073/d077),
+  deployable on every host that can reach the cloud.
 - **LLM usage** (the coding agent) lives under `coding-agent/`
 - **docs** live here, under `docs/`
 
@@ -34,7 +34,7 @@ names.
 | **local-inference-host** | rootless podman, SELinux enforced    | direct       | `llm-local-inference/` (local layer) + `llm-reverse-proxy/` (cloud relay) | `coding-agent/`        |
 | **termux**              | rootless termux, restrictive SELinux, | direct (if   | `llm-reverse-proxy/` (native build/run, cloud relay)  | `coding-agent/`        |
 |                         | non-standard file paths              | any)         |                                                     |                        |
-| **small-cloud-vm**      | rootless podman or docker            | peers only   | `llm-reverse-proxy/` (peers only)                   | `coding-agent/` (static config) |
+| **small-cloud-vm**      | rootless podman or docker            | relay only   | `llm-reverse-proxy/` (relay)                        | `coding-agent/` (static config) |
 
 ### local-inference-host (full, default)
 
@@ -47,20 +47,24 @@ GPU host (local inference only) — two serving processes, one concern each (doc
   passthrough + the HF cache on LAN port **8101** (container 8080).
   llama-swap serves the LOCAL catalog and nothing else — its `peers`/proxy
   config is no longer exercised.
-- `llm-reverse-proxy/` — the simplified cloud router (root `build.sh` +
+- `llm-reverse-proxy/` — the host-allowlist cloud router (root `build.sh` +
   `generate.sh` + `run.sh`, LAN **8080**, host networking):
-  `/<providerId>` path prefixes forwarded byte-for-byte to each provider's
-  real base URL (docs/d027), plus the `llama-swap` route pointing back at
-  the local instance on loopback. This is the world-visible face — the
-  tailscale funnel serves the `<funnel-id>` route to this port — for this
-  host's own coding agent and for external clients alike.
+  `/<upstream-host>/<path>` forwarded byte-for-byte to the allowlisted
+  scheme://host root, the client carrying the upstream base path
+  (docs/d047) — llama-swap rides the same map as the fact-table row for
+  its tsnet `tailscale serve` hostname (docs/d070 §2, no loopback alias).
+  This is the world-visible face — the tailscale funnel serves the
+  `<funnel-id>` route to this port — for this host's own coding agent and
+  for external clients alike; the opt-in tunnel family (modes C–E,
+  docs/d073/d077) shares the port.
 
 **Port model (all hosts):** ONE front. The tailscale funnel serves the
 whole `<uuid>` route to llm-reverse-proxy on host port **8080** (normal
-https port on the wire); the proxy path-prefix routes behind it:
-`/llama-swap/…` → `http://127.0.0.1:8101` (llama-swap, local GGUF,
-model-id routing — the loopback hop never leaves the host),
-`/<providerId>` → each cloud provider's real base URL. llama-swap holds
+https port on the wire); the proxy host-allowlist routes behind it:
+`/<upstream-host>/<path>` → each allowlisted scheme://host root (the
+client carries the upstream base path), llama-swap included as the
+fact-table row for its tsnet serve hostname (docs/d070 §2 — no loopback
+hop, no alias). llama-swap holds
 LAN **8101**. The legacy local-inference port **18080** is **deprecated**
 with the two-instance squash — nothing listens on it, and code that still
 probes `localhost:18080` must use the funnel base URL (`$REVERSE_PROXY_BASE_URLS`).
@@ -99,9 +103,10 @@ No fixed hostname (dynamic). Kernel: `6.18.33.2-microsoft-standard-WSL2`. WSL2 u
 only ever talks through the funnel. `coding-agent/` covers this via static
 config (no Infisical-backed generation; a static pi `settings.json` +
 `models.json`/`opencode.jsonc` that override the built-in providers with
-their reverse-proxy path-routes — `baseUrl` hardcoded to `<base>/<providerId>`,
-docs/d027; cloud providers carry their own key env references, which pi
-resolves from the env at request time — the proxy forwards them untouched).
+their reverse-proxy routes — `baseUrl` hardcoded to the routed form
+`<base>/<upstream-host><base-path>`, docs/d047/d070; cloud providers
+carry their own key env references, which pi resolves from the env at
+request time — the proxy forwards them untouched).
 
 - **Environment** — `PEER_API_KEY` (llama-swap's local bearer only) /
   `REVERSE_PROXY_BASE_URLS` and the per-provider keys (`OPENROUTER_API_KEY`,

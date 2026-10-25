@@ -32,7 +32,7 @@ the llama-swap serving container and the pi coding-agent container.
 | local-inference-host | rootless podman, SELinux enforced    | direct       | `llm-local-inference/`           | `coding-agent/`        |
 | termux               | rootless termux, restrictive SELinux, | direct (if   | `llm-reverse-proxy/` (native)   | `coding-agent/`        |
 |                      | non-standard file paths              | any)         |                                 |                        |
-| small-cloud-vm       | rootless podman or docker            | peers only   | `llm-reverse-proxy/` (relay)    | `coding-agent/` (static config) |
+| small-cloud-vm       | rootless podman or docker            | relay only   | `llm-reverse-proxy/` (relay)    | `coding-agent/` (static config) |
 
 ### local-inference-host (full, default)
 
@@ -250,7 +250,7 @@ adding bwrap only as a restricted no-net backend for non-serving workloads.
 The mirror set needed for that work is present
 (`github/containers/bubblewrap`, `github/containers/crun`); none of the
 runners currently needs it — the Termux leaf that would have benefited most
-was removed with the relay handoff (see module SPECs).
+was removed with the relay handoff (see the module DESIGN docs).
 
 ## Run scripts
 
@@ -274,37 +274,30 @@ layers, and only the layers that work on the current host land in `config.d/`
 - `10-local-llm-inference.yaml` (+ its `.paths` staleness manifest) — only
   when the container backend is available AND GPU devices (`/dev/kfd`,
   `/dev/dri/renderD*`) are present. The GGUF layer is built from
-  `llamacpp-model-data.json` by `llm-local-inference/generate.mjs` (docs/d041
-  fold), which resolves each model to an HF snapshot dir and bakes the
+  `lib/llamacpp-model-data.json` (docs/d041 fold), which resolves each model to an HF snapshot dir and bakes the
   absolute paths into each `cmd` (docs/d029 option B; a cache miss is a
   generation error pointing at `local-llm/download_models.py`).
-- `peer-cloud.yaml` — whenever any cloud provider answers; providers without
-  keys or with failing fetches are skipped independently, and a stale output
-  is removed when none answer.
-- `22-peer-gfx1030.yaml` — only on hosts that do NOT serve local models
-  natively; probes `$REVERSE_PROXY_BASE_URLS`, then the bazzite tailscale URL (the
-  world-visible FQDN funnel — llm-reverse-proxy on LAN :8080, whose
-  `/llama-swap` route points at the local instance) for a live
-  local-inference instance. localhost candidates are NOT probed (the legacy
-  :18080 local-inference port is deprecated).
-
-See [d018-split-config-d.md](d018-split-config-d.md) for the merge contract.
+Exactly these two layers: the config.d-era cloud layers (`peer-cloud.yaml`,
+`22-peer-gfx1030.yaml`) left with the relay handoff — cloud providers are
+not a config layer (docs/d027); see architecture.md for the layer table and
+docs/d018 for the merge contract this supersedes.
 
 #### `llm-local-inference/run.sh` (serve-only, adapts to config.d)
 
-- **Image**: `ghcr.io/mostlygeek/llama-swap:unified-vulkan` when the local
-  layer is present (local llama.cpp needs the GPU/Vulkan runtime); otherwise
-  the lighter `ghcr.io/mostlygeek/llama-swap:cpu` (override with
-  `LLAMA_SWAP_IMAGE` in both cases).
-- **HF cache**: mounted (rw) only in local mode — `llama-server` resolves and
-  caches GGUF files on demand.
+- **Image**: `ghcr.io/mostlygeek/llama-swap:unified-vulkan` (local llama.cpp
+  needs the GPU/Vulkan runtime; `LLAMA_SWAP_IMAGE` overrides) — and `run.sh`
+  refuses to start without the local layer, so there is no other mode.
+- **HF cache**: mounted read-only — nothing in-container writes it
+  (provisioning/pruning are `local-llm/`'s host-side job, FR-S4), and a
+  model path baked at generation time that no longer exists aborts the
+  launch (docs/d029 B staleness preflight).
 - **GPU**: detects usable dedicated inference devices — any DRM render node
-  `/dev/dri/renderD*` (Vulkan) and `/dev/kfd` (ROCm) — and passes each through
-  to the container (local mode only).
-- **Port**: LAN **8101** in both modes (`HOST_PORT` overrides). The container
-  always listens on 8080 internally; the world reaches the same catalog via
-  the tailscale funnel → llm-reverse-proxy (LAN 8080, the funnel front) →
-  its `/llama-swap` route → this instance on loopback 8101 (docs/d027).
+  `/dev/dri/renderD*` (Vulkan) and `/dev/kfd` (ROCm) — and passes each
+  through to the container.
+- **Port**: LAN **8101** (`HOST_PORT` overrides). The container always
+  listens on 8080 internally; the world reaches the same catalog via the
+  tailscale funnel → llm-reverse-proxy (LAN 8080, the funnel front) → its
+  host-allowlist row for llama-swap's tsnet serve hostname (docs/d070 §2).
   The legacy local-inference port 18080 is deprecated — nothing listens on
   it since the two-instance squash.
 
@@ -316,58 +309,43 @@ See [d018-split-config-d.md](d018-split-config-d.md) for the merge contract.
 
 ### `coding-agent/run.sh` (full, default usage)
 
-Launches the pi coding-agent container with:
+Launches the pi coding-agent container. The ARGV/env contract — directory
+mounts and their container-side spelling (docs/d056/d068), the
+`PI_CODING_AGENT_DIR` / `PI_CODING_AGENT_SESSION_DIR` split (docs/d054),
+the opencode config-dir mount (docs/d065), the per-run audit stages
+(docs/d026), and the loud-failure policy for missing artifacts (docs/d041) —
+is owned by the run script's own header; this page carries only what a
+runbook needs:
 
-- **`settings.json`** (static): installed into the host agent dir
-  (`PI_CODING_AGENT_DIR`, default `~/.pi/agent`) by the generator and read
-  from there; the sandbox mounts that dir RW (docs/d054), and mounts the host
-  opencode config dir the same way (its `opencode.json` is generator-installed;
-  a missing overlay is a tolerated partial config, docs/d065). The generator's
-  INSTALLED copies are what the sandbox runs; the committed `models.json` /
-  `opencode.jsonc` are the generator-side snapshots (docs/d041: runners never
-  generate). Since docs/d056 the generator tree is NOT mounted, so an
-  in-container session cannot regenerate — regeneration is host-side.
-- **Sessions**: split out of the agent dir to `PI_CODING_AGENT_SESSION_DIR`
-  (per-run `$stage/pi/sessions`), mounted RW as the sandbox's only
-  session-shaped store (docs/d054; the diode target is docs/d026).
-- **`auth.json`**: must not carry credentials — the generator's `"$VAR"`
-  references resolve from the forwarded env, so a populated store is dead state
-  and mounting it RW would ship it into the sandbox. pi itself writes an empty
-  `{}` on startup, so the run aborts only on non-empty content (docs/d052/d054).
 - **Secrets**: loaded ONCE on the HOST by the explicit chain
-  (`./lib/environment.sh ./coding-agent/run.sh` — one `infisical run`
-  round-trip, docs/d046) and forwarded into the container
-  through the `workload_env` allowlist — no infisical runs inside the workload,
-  no `~/.infisical` staging; pi resolves the `"$VAR"` api-key references in
-  the generated `models.json` from the forwarded environment at request time.
-- **Directories (`ARGV`)**: `run.sh [DIRECTORY [DIRECTORY...]]`; CWD is the
-  implicit first directory, each is mounted rw — host side canonical,
-  container side spelled from `/home/$USER` when the path is under the home
-  (docs/d068) — and the first is the workdir. `~/Downloads/references` is passed as just another
-  directory — this replaced the former `CODING_AGENT_REFERENCES` toggle
-  (docs/d043/d056) — and a directory resolving to `$HOME` is refused.
-- **Mounts**: the directory arguments, the host `.pi/agent` dir
-  (docs/d054), the host opencode config dir (docs/d065), and the per-run
-  stages for `.pi/sessions`, opencode's data dir, `.cline` and
-  `.thinkrail` — all writable; plus the generated launch chain (read-only)
-  and `--network=host`. No repo file is mounted (docs/d067) and neither is
-  the host HF cache (docs/d066).
+  (`./lib/environment.sh ./coding-agent/run.sh`, docs/d046) and forwarded
+  through the `workload_env` allowlist; pi resolves the `"$VAR"` api-key
+  references at request time. Nothing inside the sandbox touches the vault
+  (FR-U4).
+- **Mounts**: the ARGV directories (rw; a directory resolving to `$HOME` is
+  refused), the host agent + opencode config dirs (rw, generator-installed
+  contents only — runners never generate and regeneration is host-side,
+  docs/d041/d056), the per-run stages (rw), the generated launch chain
+  (ro), `--network=host`. No repo file (docs/d067), no host HF cache
+  (docs/d066).
+- **`auth.json`**: must not carry credentials — `"$VAR"` refs resolve from
+  the forwarded env, so a populated store is dead state; non-empty content
+  aborts the launch (docs/d052/d054).
 
 Uses `--userns=keep-id` + `--user $(id -u):$(id -g)` so files written into
 bind-mounted dirs are owned by the host user.
 
 ## Image / mode per instance
 
-There is ONE multipurpose serving folder — the mode
-falls out of what generation emitted into `config.d/`:
+There is ONE multipurpose serving folder: `llm-local-inference/run.sh` runs
+`ghcr.io/mostlygeek/llama-swap:unified-vulkan` with GPU devices passed
+through and the HF cache tree mounted read-only — the mode is what
+generation emitted into `config.d/`, and without the local layer the run
+aborts.
 
-- **local layer present** (`10-local-llm-inference.yaml`): `run.sh` uses
-  `ghcr.io/mostlygeek/llama-swap:unified-vulkan`, passes GPU devices through,
-  and mounts the HF cache tree.
-
-Either way the instance publishes LAN port **8101** (`HOST_PORT` overrides);
-this is the **local llama-swap** endpoint; `llm-reverse-proxy` is LAN 8080.
-
-- **local llama-swap** (`config.d/10-local-llm-inference.yaml`): local inference only, GPU container hosts only
-- **cloud relay** (`llm-reverse-proxy/`): `/<providerId>` path prefixes, byte-for-byte
-  proxying to each provider's real base URL (docs/d027)
+- **local llama-swap** (`config.d/10-local-llm-inference.yaml`): local
+  inference only, GPU container hosts only; LAN **8101** (`HOST_PORT`
+  overrides), container 8080.
+- **cloud relay** (`llm-reverse-proxy/`): `/<upstream-host>/<path>`
+  host-allowlist routes, byte-for-byte proxying to each allowlisted
+  scheme://host root (docs/d047); LAN 8080.

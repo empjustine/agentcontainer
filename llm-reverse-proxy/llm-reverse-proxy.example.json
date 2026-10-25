@@ -9,6 +9,6 @@
 		"integrate.api.nvidia.com": "https://integrate.api.nvidia.com",
 		"models.dev": "https://models.dev",
 		"catwalk.charm.land": "https://catwalk.charm.land",
-		"llama-swap": "http://127.0.0.1:8101"
+		"my-host.my-tailnet.ts.net": "https://my-host.my-tailnet.ts.net"
 	}
 }

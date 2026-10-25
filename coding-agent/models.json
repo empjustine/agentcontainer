@@ -636,7 +636,7 @@
             "text",
             "image"
           ],
-          "contextWindow": 1000000,
+          "contextWindow": 1048576,
           "maxTokens": 262144,
           "cost": {
             "input": 0.33,
@@ -5571,7 +5571,7 @@
           ]
         },
         {
-          "id": "gemini-4-argon-contributor",
+          "id": "gemini-4-argon",
           "reasoning": true,
           "input": [
             "text"
@@ -5642,6 +5642,13 @@
         },
         {
           "id": "hy4-preview",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "iceman-contributor-free",
           "reasoning": true,
           "input": [
             "text"

@@ -1,7 +1,7 @@
 ---
 id: d077
 type: architecture-design
-status: proposed
+status: adopted-in-part (mode D deployed; mode C built default-off; mode E unbuilt pending spike L4)
 title: "d077 — tunnel modes C/D/E (h2 POST → wss → h1.1 POST) trusting external TLS, with SSE-carrier and inner-TLS studies"
 parent: llm-reverse-proxy
 depends-on: [d073, d031]

@@ -1189,8 +1189,8 @@
         "deepseek-v4.1-flash": {
           "name": "deepseek-v4.1-flash"
         },
-        "gemini-4-argon-contributor": {
-          "name": "gemini-4-argon-contributor"
+        "gemini-4-argon": {
+          "name": "gemini-4-argon"
         },
         "glm-5.1": {
           "name": "glm-5.1"
@@ -1221,6 +1221,9 @@
         },
         "hy4-preview": {
           "name": "hy4-preview"
+        },
+        "iceman-contributor-free": {
+          "name": "iceman-contributor-free"
         },
         "kimi-k2.6": {
           "name": "kimi-k2.6"

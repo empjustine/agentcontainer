@@ -1731,7 +1731,7 @@
           ]
         },
         {
-          "id": "gemini-4-argon-contributor",
+          "id": "gemini-4-argon",
           "reasoning": true,
           "input": [
             "text"
@@ -1802,6 +1802,13 @@
         },
         {
           "id": "hy4-preview",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "iceman-contributor-free",
           "reasoning": true,
           "input": [
             "text"

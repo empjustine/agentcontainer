@@ -1,7 +1,7 @@
 ---
 id: d073
 type: architecture-design
-status: proposed
+status: adopted-in-part (v2 = mode A + mode D delivered; mode B deferred to v3)
 title: "d073 — llm-reverse-proxy → three-mode SSL VPN: requirements and feasibility"
 parent: llm-reverse-proxy
 depends-on: [llm-reverse-proxy, d027, d047, d070, d071]

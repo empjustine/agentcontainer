@@ -5,12 +5,13 @@
 # Cloud/remote relaying is served by ../llm-reverse-proxy — this launcher
 # runs the single llama-swap instance that owns local llama.cpp serving.
 #
-# Port model (docs/d027): llama-swap publishes LAN port
+# Port model (docs/d027, reshaped by d070 §2): llama-swap publishes LAN port
 # ${HOST_PORT:-8101} → in-container 8080. Host port 8080 belongs to
 # ../llm-reverse-proxy — the tailscale funnel serves the whole <funnel-id>
-# route on it, and the proxy points the local face back at this instance on
-# loopback ("llama-swap": "http://127.0.0.1:8101" in its deployed config).
-# The legacy 18080 port stays dead.
+# route on it, and the world reaches this instance through the proxy's
+# host-allowlist row for llama-swap's tsnet `tailscale serve` hostname (the
+# fact-table row in lib/cloud-providers.mjs; the old "llama-swap" loopback
+# alias is retired). The legacy 18080 port stays dead.
 #
 # Env overrides:
 #   HOST_PORT          container published port (default 8101)

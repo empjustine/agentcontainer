@@ -107,9 +107,9 @@ faithful passthrough; the upstream's own trust decisions are never pre-empted.
 - Hop-by-hop headers (`Connection`, `Transfer-Encoding`, …) are managed per
   RFC by ReverseProxy — this is required for correctness, not a rewrite.
 
-## The proposed three-mode SSL VPN (docs/d073)
+## The three-mode SSL VPN (docs/d073, delivered in phases)
 
-The requirements for growing this single-mode relay into a three-mode SSL VPN
+The requirements for the three-mode SSL VPN grown out of this relay
 — today's allowlist relay, an authenticated generic relay, and a
 `CONNECT`-over-WebSocket tunnel with a localhost client proxy — are owned by
 [d073](../docs/d073-ssl-vpn-three-modes.md), not this file. The feasibility
