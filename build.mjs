@@ -9,8 +9,10 @@
  *     INSIDE the image, so no host go toolchain is needed). Registration is
  *     capability-gated (lib/host-capabilities.mjs): the llama-swap pull
  *     needs inference render devices, the proxy image needs outbound cloud
- *     networking — a host lacking either skips that target with a loud log
- *     and still builds the rest.
+ *     networking, the coding-agent image needs free disk headroom (its layer
+ *     churn once exhausted a spike-validation VM mid-build and took the WHOLE
+ *     build down — docs/d083) — a host lacking any of them skips that target
+ *     with a loud log and still builds the rest.
  *   - Termux (PREFIX under /data/data/com.termux): strictly SERIALIZED —
  *     ~1 GB devices cannot parallelize go builds. Order: provisioning
  *     (lib/provision-termux.sh — node/jq via pkg, the infisical CLI source
@@ -33,8 +35,16 @@
  * forbids. FORCE=1 now means cache-bust: --no-cache for image builds,
  * `-a` (rebuild all packages) for go.
  *
+ * argv selects ARTIFACT targets (docs/d083): `./build.sh <target>…` builds
+ * just the named ones, no names builds every registered target — and each
+ * folder's 3-line `build.sh` shim names its unit's targets, so one unit can
+ * be requested on a host (a disk-constrained validation VM) without dragging
+ * the rest of the fleet in. An unknown name is a loud exit 94 with the
+ * catalog; a requested-but-gated name logs the gate and is left out.
+ *
  * Env overrides: FORCE · IMAGE_TAG / LLAMA_SWAP_IMAGE /
- * CODING_AGENT_TAG · GOFLAGS · plus lib/provision-termux.sh's own set.
+ * CODING_AGENT_TAG · CODING_AGENT_IMAGE_MIN_FREE_GIB · GOFLAGS · plus
+ * lib/provision-termux.sh's own set.
  */
 
 import { spawn } from "node:child_process";
@@ -51,6 +61,7 @@ import {
 	cloudReachable,
 	detectContainerTool,
 	detectGpuDevices,
+	freeDiskGiB,
 } from "./lib/host-capabilities.mjs";
 import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 
@@ -153,6 +164,25 @@ async function run(cmd, args, opts = {}) {
 /** @type {{ name: string, fn: () => Promise<boolean> }[]} */
 const targets = [];
 
+/**
+ * Names capability gates kept off THIS host (docs/d083). argv selection
+ * unions this with the registered names so `./build.sh <name>` can tell
+ * "unknown target" from "does not register here" — fail-loudly, not
+ * silent-empty.
+ * @type {Set<string>}
+ */
+const gatedOff = new Set();
+
+/**
+ * A gate said no; the name stays knowable so an explicit request gets the
+ * gate's reason (the logWarn beside each call) instead of a shrug. Probes
+ * themselves stay silent — lib/host-capabilities.mjs's contract.
+ * @type {(...names: string[]) => void}
+ */
+function noteGated(...names) {
+	for (const name of names) gatedOff.add(name);
+}
+
 // --- coding-agent image (container hosts) ------------------------------------
 // Tagged :<date> and :latest; the compile is the image build itself (no host
 // toolchain involved).
@@ -169,36 +199,56 @@ if (containerTool) {
 			? ["image", "build", "--progress=plain"]
 			: ["buildx", "build", "--progress=plain"];
 
-	targets.push({
-		name: "coding-agent-image",
-		fn: async () => {
-			const buildDate = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-			return await run(
-				containerTool,
-				[
-					...imageBuildArgs,
-					"--pull",
-					...(force ? ["--no-cache"] : []),
-					"--build-arg",
-					`BUILD_DATE=${buildDate}`,
-					"--build-arg",
-					`UID=${process.env.SUDO_UID ?? process.getuid?.() ?? ""}`,
-					"--build-arg",
-					`GID=${process.env.SUDO_GID ?? process.getgid?.() ?? ""}`,
-					"--build-arg",
-					`USER=${process.env.USER ?? ""}`,
-					"--tag",
-					`${codingAgentTag}:${buildDate}`,
-					"--tag",
-					`${codingAgentTag}:latest`,
-					"-f",
-					join(repoRoot, "coding-agent", "Containerfile"),
-					join(repoRoot, "coding-agent"),
-				],
-				{ name: "coding-agent-image" },
-			);
-		},
-	});
+	// Free-disk floor for the coding-agent image (docs/d083): its layer churn
+	// exhausted a spike-validation VM's storage mid-write (podman overlay tmp:
+	// "no space left on device"), and the crash took the WHOLE generic build
+	// down — nothing else ran, so neither the proxy nor the new coding-agent
+	// environment could be validated on that host. A loud skip costs one
+	// target; the mid-build crash costs the whole build. Env-tunable for hosts
+	// that know their storage is smaller yet sufficient.
+	const codingAgentMinFreeGiB = Number(
+		process.env.CODING_AGENT_IMAGE_MIN_FREE_GIB ?? 20,
+	);
+	const homeFreeGiB = freeDiskGiB(process.env.HOME ?? "/");
+	if (homeFreeGiB < codingAgentMinFreeGiB) {
+		noteGated("coding-agent-image");
+		logWarn("skipping target — free disk below the coding-agent image floor", {
+			target: "coding-agent-image",
+			freeGiB: homeFreeGiB,
+			minFreeGiB: codingAgentMinFreeGiB,
+		});
+	} else {
+		targets.push({
+			name: "coding-agent-image",
+			fn: async () => {
+				const buildDate = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+				return await run(
+					containerTool,
+					[
+						...imageBuildArgs,
+						"--pull",
+						...(force ? ["--no-cache"] : []),
+						"--build-arg",
+						`BUILD_DATE=${buildDate}`,
+						"--build-arg",
+						`UID=${process.env.SUDO_UID ?? process.getuid?.() ?? ""}`,
+						"--build-arg",
+						`GID=${process.env.SUDO_GID ?? process.getgid?.() ?? ""}`,
+						"--build-arg",
+						`USER=${process.env.USER ?? ""}`,
+						"--tag",
+						`${codingAgentTag}:${buildDate}`,
+						"--tag",
+						`${codingAgentTag}:latest`,
+						"-f",
+						join(repoRoot, "coding-agent", "Containerfile"),
+						join(repoRoot, "coding-agent"),
+					],
+					{ name: "coding-agent-image" },
+				);
+			},
+		});
+	}
 
 	// --- llama-swap image (container hosts) ----------------------------------
 	// The OCI workflow means there is nothing to compile: pre-pull the
@@ -223,6 +273,7 @@ if (containerTool) {
 				}),
 		});
 	} else {
+		noteGated("llama-swap-image");
 		logWarn("skipping target — no inference render devices on this host", {
 			target: "llama-swap-image",
 		});
@@ -268,11 +319,14 @@ if (containerTool) {
 				),
 		});
 	} else {
+		noteGated("llm-reverse-proxy-image");
 		logWarn(
 			"skipping target — outbound cloud networking unreachable (naive probe)",
 			{ target: "llm-reverse-proxy-image", canary: CLOUD_PROBE_CANARY },
 		);
 	}
+} else {
+	noteGated("coding-agent-image", "llama-swap-image", "llm-reverse-proxy-image");
 }
 
 // --- llm-reverse-proxy native binary (no container backend available) -------
@@ -308,6 +362,8 @@ if (!containerTool) {
 			});
 		},
 	});
+} else {
+	noteGated("llm-reverse-proxy-native");
 }
 
 // --- termux provisioning (serialized FIRST stage on Termux) -----------------
@@ -323,11 +379,43 @@ if (termux) {
 				name: "termux-provisioning",
 			}),
 	});
+} else {
+	noteGated("termux-provisioning");
 }
 
 // --- execution ---------------------------------------------------------------
-if (targets.length === 0) {
-	logError("nothing to build: no container tool and no native target applies");
+// argv selects ARTIFACT targets (docs/d083): no names runs every registered
+// one, names run just those. termux-provisioning is NOT selectable — it is
+// environment provisioning (d041), not an artifact, and every Termux go
+// build needs what it installs, so it runs first regardless of selection.
+const requested = process.argv.slice(2);
+const knownNames = new Set([...gatedOff, ...targets.map((t) => t.name)]);
+const unknown = requested.filter((name) => !knownNames.has(name));
+if (unknown.length > 0) {
+	logError("unknown build target", { unknown, known: [...knownNames] });
+	process.exit(94);
+}
+const selected = [
+	...targets.filter((t) => t.name === "termux-provisioning"),
+	...(requested.length > 0
+		? targets.filter(
+				(t) =>
+					t.name !== "termux-provisioning" && requested.includes(t.name),
+			)
+		: targets.filter((t) => t.name !== "termux-provisioning")),
+];
+const unregistered = requested.filter(
+	(name) => !selected.some((t) => t.name === name),
+);
+if (unregistered.length > 0) {
+	logWarn("requested target did not register on this host (gates above)", {
+		targets: unregistered,
+	});
+}
+if (selected.length === 0) {
+	logError(
+		"nothing to build: no registered target (host gates and selection above)",
+	);
 	process.exit(91);
 }
 if (!containerTool) {
@@ -338,15 +426,17 @@ if (!containerTool) {
 logInfo(
 	termux
 		? "build targets (termux — strictly serialized: ~1 GB devices cannot parallelize go builds)"
-		: "build targets (container host — image targets in parallel)",
-	{ targets: targets.map((t) => t.name), force },
+		: containerTool
+			? "build targets (container host — image targets in parallel)"
+			: "build targets (bare host — serialized)",
+	{ targets: selected.map((t) => t.name), force },
 );
 
 let failed = 0;
 if (termux || !containerTool) {
 	// Serialized: Termux capacity (go builds), and the single native target on
 	// a bare host anyway.
-	for (const target of targets) {
+	for (const target of selected) {
 		logInfo("building", { target: target.name });
 		if (!(await target.fn())) {
 			failed += 1;
@@ -356,7 +446,7 @@ if (termux || !containerTool) {
 } else {
 	// Container host: every base image at once.
 	const results = await Promise.all(
-		targets.map(async (target) => {
+		selected.map(async (target) => {
 			logInfo("building", { target: target.name });
 			return { target: target.name, ok: await target.fn() };
 		}),
@@ -372,4 +462,4 @@ if (termux || !containerTool) {
 if (failed > 0) {
 	process.exit(1);
 }
-logInfo("build complete", { targets: targets.length });
+logInfo("build complete", { targets: selected.length });

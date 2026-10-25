@@ -107,6 +107,16 @@ reported as a dead route (its clients simply keep direct/built-in
 routing); a deployed upstream that drifted from the fact table is reported
 as drift.
 
+## Repository boundary (docs/d082)
+
+This folder is the unit that becomes its own repository (docs/d082): code,
+scripts, image, and these two docs travel together. Everything it borrows
+from the parent repo arrives through one injectable directory — `LIB_DIR`,
+default `../lib` (the node runner for generation, the declarative workload
+API for `run.sh`, and the lib modules `generate.mjs` imports) — and the
+build stays the root `./build.mjs`'s (docs/d041) until the split. The
+decision records that travel with the unit are listed in d082 §1.
+
 ## Build & run
 
 Building is the root `./build.sh` → `build.mjs` (docs/d041 — the per-folder

@@ -2,21 +2,22 @@
 # run.sh — serve llm-reverse-proxy, llama-swap style (dual ROLE mode,
 # PROXY_MODE=server|client — docs/d073; plus the usual dual host mode):
 #
-#   container host: run the image build.sh produced, via the declarative
-#     sandbox API — HOST NETWORK mode in both roles. server (the default)
+#   container host: run the image the root ./build.mjs produced (docs/d041)
+#     via the declarative sandbox API — HOST NETWORK mode in both roles.
+#     server (the default)
 #     mirrors llama-swap's port model: the in-container -listen
 #     0.0.0.0:${HOST_PORT:-8080} overrides the config's `listen`, and the
 #     port is what the tailscale funnel serves the <funnel-id> route on.
-#     Host networking is required, not cosmetic: the deployed config routes
-#     llama-swap (the local GGUF peer, LAN 8101) at http://127.0.0.1:8101 —
-#     reachable only from the host's own loopback, so a bridge/slirp
-#     container would see nothing at its own 127.0.0.1. For the client it
-#     is doubly required: the loopback CONNECT/SOCKS5 listeners become the
-#     HOST's loopback (usable by host apps, and VPN-R23 forbids anything
-#     else), and the container inherits the host's tailnet routes the
+#     Host networking is required, not cosmetic: the funnel front dials the
+#     HOST's own loopback :8080 (tailscaled → the serve target), so a
+#     bridge/slirp container would answer a loopback the funnel never sees.
+#     For the client it is doubly required: the loopback CONNECT/SOCKS5
+#     listeners become the HOST's loopback (usable by host apps, and
+#     VPN-R23 forbids anything else), and the container inherits the host's tailnet routes the
 #     tunnel URL needs.
-#   Termux / no container tool: exec the native binary build.sh produced
-#     (llm-reverse-proxy-android on Termux; the host binary as fallback)
+#   Termux / no container tool: exec the native binary the root ./build.mjs
+#     produced (llm-reverse-proxy-android on Termux; the host binary as
+#     fallback)
 #     in the selected role.
 #
 # The SERVER holds NO secrets: requests must already carry valid provider
@@ -34,8 +35,11 @@
 # VPN_TUNNEL_URL / VPN_OPERATOR_TOKEN / VPN_CLIENT_LABEL.
 
 set -eu
+# Shared infra arrives through one injectable directory (docs/d082): default
+# the repo's ../lib, or point LIB_DIR at a vendored copy in a standalone
+# checkout — no other path crosses the unit boundary.
 # shellcheck disable=SC1091
-. "$(dirname "$0")/../lib/workload-runtime.sh"
+. "${LIB_DIR:-$(dirname "$0")/../lib}/workload-runtime.sh"
 LOG_TOOL='llm-reverse-proxy/run'
 export LOG_TOOL
 
