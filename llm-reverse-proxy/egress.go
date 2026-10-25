@@ -1,4 +1,4 @@
-// egress.go — mode C's egress policy: what the tunnel may dial
+// egress.go — the tunnel's egress policy (modes C–E): what it may dial
 // (docs/d073 §9: VPN-R35..R38).
 //
 // WHY this shape: modes A's deny-by-absence no longer covers an
@@ -7,7 +7,7 @@
 // The default-deny set below is the requirement's own list rendered as a
 // table (VPN-R35); operator opt-ins (CIDRs, ports) arrive as config data on
 // top of it. S4 (d073 §13) still owns the artifact's final format and home —
-// until it lands, the table lives here and overrides live in the mode C
+// until it lands, the table lives here and overrides live in the tunnel
 // config block, both of which are diffable data.
 //
 // The pinning rule (VPN-R36) is the load-bearing invariant: resolve ONCE,

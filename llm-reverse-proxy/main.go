@@ -45,7 +45,7 @@ import (
 	"time"
 )
 
-// Mode C environment surface (docs/d073 §6.3/§7, VPN-R44): capability-class
+// Tunnel environment surface (modes C–E; docs/d073 §6.3/§7, VPN-R44): capability-class
 // values (prefix, token) arrive ONLY through this path — the
 // lib/environment.sh env chain — never the JSON config, which would become
 // a second, unkeyed copy of a credential. The URL and label are the client
@@ -70,19 +70,19 @@ type config struct {
 	// table).
 	AllowHosts map[string]string `json:"allowHosts"`
 
-	// Mode C (docs/d073 §6): opt-in tunnel surface. Nil or enabled:false
+	// The tunnel namespace, modes C–E (docs/d073 §6, d077): opt-in surface. Nil or enabled:false
 	// means the surface does not exist at all — the process behaves exactly
 	// as if d073 had never landed (VPN-R2). The capability prefix and
 	// operator token are deliberately NOT fields here: they arrive only via
-	// the environment chain (enableModeC), because a config file on disk is
+	// the environment chain (enableTunnel), because a config file on disk is
 	// a second copy of a credential — and worse, an unkeyed one (VPN-R44).
-	ModeC *modeCConfig `json:"modeC,omitempty"`
+	Tunnel *tunnelConfig `json:"tunnel,omitempty"`
 }
 
-// modeCConfig is the mode C config data: the policy halves only. What the
+// tunnelConfig is the tunnel config data: the policy halves only. What the
 // operator reviews and commits (egress) lives here; what authenticates
 // (prefix, token) never does.
-type modeCConfig struct {
+type tunnelConfig struct {
 	Enabled bool         `json:"enabled"`
 	Egress  egressConfig `json:"egress,omitempty"`
 }
@@ -339,7 +339,7 @@ func (lw *loggingResponseWriter) recordSwitched(size int) {
 // This makes the proxy's output greppable, parseable, and compatible with
 // standard log analysis tools (GoAccess, ELK, etc.) without a custom parser.
 // logCombinedRequestURI takes the request URI as an argument instead of
-// reading it off r: callers that must redact (mode C's capability prefix,
+// reading it off r: callers that must redact (the tunnel's capability prefix,
 // VPN-R44) do so at exactly one place — the printer never re-derives the
 // secret from the request.
 func logCombinedRequestURI(r *http.Request, uri string, status int, size int) {
@@ -385,7 +385,7 @@ func (p *provider) proxyError(w http.ResponseWriter, r *http.Request, err error)
 // prefix filtering already stops most garbage; whatever gets through must
 // learn nothing: no routing table, no provider names, no distinguishable
 // fingerprint between a real route and a dead one, and none between mode A
-// and mode C's namespaces (docs/d073 VPN-R34/R2).
+// and the tunnel's namespace (docs/d073 VPN-R34/R2).
 //
 // RFC 9457 problem details remain only for INTERNAL failures (bad-gateway
 // conditions: DNS, TCP, TLS, upstream disconnects) — those carry provider
@@ -410,17 +410,17 @@ func writeFunnel404(w http.ResponseWriter, r *http.Request, logURI string) {
 
 type server struct {
 	providers map[string]*provider
-	// vpn is nil unless mode C is enabled; nil is not "denied", it is
+	// vpn is nil unless the tunnel is enabled; nil is not "denied", it is
 	// "this process does not do that" — the tunnel path answers mode A's
 	// 404 either way (docs/d073 VPN-R2/R34).
 	vpn *tunnelServer
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Mode C dispatch is by exact path and happens BEFORE provider parsing
+	// Tunnel dispatch is by exact path and happens BEFORE provider parsing
 	// (docs/d073 VPN-R42): the tunnel namespace cannot be confused with a
 	// mode A route, and the prefix is never an allowlist host (checked in
-	// enableModeC), so both dispatch orders would agree — this one keeps the
+	// enableTunnel), so both dispatch orders would agree — this one keeps the
 	// two modes from ever branching on each other's state.
 	if s.vpn != nil && s.vpn.isTunnelPath(r.URL.Path) {
 		s.vpn.serveTunnel(w, r)
@@ -462,9 +462,9 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.logRequest(r, lw.status, lw.size)
 }
 
-// redactURI removes the mode C capability prefix from any URI about to be
+// redactURI removes the tunnel's capability prefix from any URI about to be
 // logged: the prefix is credential-class (d073 VPN-R44), and an access log
-// that echoes it becomes a key store. Mode C off → identity, so mode A
+// that echoes it becomes a key store. Tunnel off → identity, so mode A
 // logging is byte-for-byte unchanged when the tunnel does not exist.
 func (s *server) redactURI(uri string) string {
 	if s.vpn == nil {
@@ -485,7 +485,7 @@ func (s *server) logRequest(r *http.Request, status, size int) {
 func main() {
 	configPath := flag.String("config", "llm-reverse-proxy.json", "path to JSON config")
 	listen := flag.String("listen", "", "override listen address (e.g. :8080)")
-	mode := flag.String("mode", "server", "process role: \"server\" (reverse proxy) or \"client\" (mode C local proxy, docs/d073 §7)")
+	mode := flag.String("mode", "server", "process role: \"server\" (reverse proxy) or \"client\" (tunnel client, modes C–E; docs/d073 §7)")
 	proxyListen := flag.String("proxy-listen", "127.0.0.1:3128", "client mode: loopback HTTP CONNECT listener")
 	socksListen := flag.String("socks-listen", "127.0.0.1:1080", "client mode: loopback SOCKS5 listener")
 	flag.Parse()
@@ -495,7 +495,7 @@ func main() {
 	// automatic "2009/01/02 15:04:05" header would be redundant noise.
 	log.SetFlags(0)
 
-	// Mode C client (docs/d073 §7): a separate role with its own contract —
+	// Tunnel client (docs/d073 §7, modes C–E): a separate role with its own contract —
 	// no allowlist config, and failing BEFORE any bind on bad or missing env
 	// IS the kill switch (VPN-R26): a listener that could start without a
 	// credential would only exist to refuse everything anyway.
@@ -543,9 +543,9 @@ func main() {
 		log.Fatalf("[llm-reverse-proxy] no allowHosts entries configured in %s", *configPath)
 	}
 
-	if cfg.ModeC != nil && cfg.ModeC.Enabled {
-		if err := s.enableModeC(cfg.ModeC); err != nil {
-			log.Fatalf("[llm-reverse-proxy] mode C: %v", err)
+	if cfg.Tunnel != nil && cfg.Tunnel.Enabled {
+		if err := s.enableTunnel(cfg.Tunnel); err != nil {
+			log.Fatalf("[llm-reverse-proxy] tunnel: %v", err)
 		}
 	}
 

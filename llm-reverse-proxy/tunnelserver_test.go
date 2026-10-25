@@ -15,22 +15,22 @@ import (
 )
 
 const (
-	// These are what the ENV carries; enableModeC is driven through t.Setenv
+	// These are what the ENV carries; enableTunnel is driven through t.Setenv
 	// so tests exercise the production construction path, not a shortcut.
 	testTunnelPrefix = "cap-abcdefghijklmnopqrst"
 	testTunnelToken  = "operator-token-abcdef1234567890"
 )
 
-// newModeCServer wires a full server with mode C on or off through the same
+// newTunnelServer wires a full server with the tunnel on or off through the same
 // code main() uses.
-func newModeCServer(t *testing.T, enabled bool, egress egressConfig) *server {
+func newTunnelServer(t *testing.T, enabled bool, egress egressConfig) *server {
 	t.Helper()
 	t.Setenv(envTunnelPrefix, testTunnelPrefix)
 	t.Setenv(envOperatorToken, testTunnelToken)
 	s := &server{providers: map[string]*provider{}}
 	if enabled {
-		if err := s.enableModeC(&modeCConfig{Enabled: true, Egress: egress}); err != nil {
-			t.Fatalf("enableModeC: %v", err)
+		if err := s.enableTunnel(&tunnelConfig{Enabled: true, Egress: egress}); err != nil {
+			t.Fatalf("enableTunnel: %v", err)
 		}
 	}
 	return s
@@ -102,8 +102,8 @@ func TestUpgradeThroughReverseProxy(t *testing.T) {
 
 // TestTunnelPathCamouflage is VPN-R34/R2/R44 as one assertion set: every
 // unauthenticated or misrouted probe at the tunnel shape must be byte-for-
-// byte the Funnel 404 — including when mode C is entirely absent, so
-// enabling mode C changes nothing observable.
+// byte the Funnel 404 — including when the tunnel is entirely absent, so
+// enabling it changes nothing observable.
 func TestTunnelPathCamouflage(t *testing.T) {
 	type resp struct {
 		status int
@@ -138,8 +138,8 @@ func TestTunnelPathCamouflage(t *testing.T) {
 		return resp{status: code, ct: hdr.Get("Content-Type"), xcto: hdr.Get("X-Content-Type-Options"), body: string(body)}
 	}
 
-	on := newModeCServer(t, true, egressConfig{})
-	off := newModeCServer(t, false, egressConfig{})
+	on := newTunnelServer(t, true, egressConfig{})
+	off := newTunnelServer(t, false, egressConfig{})
 
 	get := func(path string) string {
 		return "GET " + path + " HTTP/1.1\r\nHost: anywhere.example\r\nUser-Agent: probe/1\r\n\r\n"
@@ -154,11 +154,11 @@ func TestTunnelPathCamouflage(t *testing.T) {
 		server *server
 		raw    string
 	}{
-		{"tunnel path, no auth, mode C on", on, get("/" + testTunnelPrefix + "/vpn")},
-		{"tunnel path, wrong token + upgrade, mode C on", on, wrongToken("/" + testTunnelPrefix + "/vpn")},
-		{"tunnel path, no auth, mode C off", off, get("/" + testTunnelPrefix + "/vpn")},
-		{"non-exact prefix path, mode C on", on, get("/" + testTunnelPrefix + "/other")},
-		{"garbage path, mode C on", on, get("/nonsense/xyz")},
+		{"tunnel path, no auth, tunnel on", on, get("/" + testTunnelPrefix + "/vpn")},
+		{"tunnel path, wrong token + upgrade, tunnel on", on, wrongToken("/" + testTunnelPrefix + "/vpn")},
+		{"tunnel path, no auth, tunnel off", off, get("/" + testTunnelPrefix + "/vpn")},
+		{"non-exact prefix path, tunnel on", on, get("/" + testTunnelPrefix + "/other")},
+		{"garbage path, tunnel on", on, get("/nonsense/xyz")},
 		{"tunnel path shape with other prefix", on, get("/someotherprefix/vpn")},
 	}
 
@@ -190,7 +190,7 @@ func TestTunnelPathCamouflage(t *testing.T) {
 // credential rides the upgrade header, and only a correct one ever reaches
 // a 101.
 func TestTunnelHandshakeAuth(t *testing.T) {
-	s := newModeCServer(t, true, egressConfig{})
+	s := newTunnelServer(t, true, egressConfig{})
 	proxy := newHTTPServer(t, s)
 	tunnelURL := mustTunnelURL(t, proxy, testTunnelPrefix)
 
@@ -269,7 +269,7 @@ func connectErrReason(t *testing.T, ws *wsConn, target string) string {
 // VPN-R22: the server refuses pre-resolved targets — the enforcement point
 // must hold even against a peer that skips any client-side courtesy check.
 func TestServerRefusesIPLiteralTargets(t *testing.T) {
-	s := newModeCServer(t, true, egressConfig{})
+	s := newTunnelServer(t, true, egressConfig{})
 	proxy := newHTTPServer(t, s)
 	for _, target := range []string{"1.2.3.4:443", "[::1]:443"} {
 		// One CONNECT per session: v1 is unmuxed (VPN-R17), so every
@@ -284,7 +284,7 @@ func TestServerRefusesIPLiteralTargets(t *testing.T) {
 // VPN-R37: port policy applies before any dial — a refused port never even
 // opens a socket toward the target.
 func TestServerRefusesNonPermittedPorts(t *testing.T) {
-	s := newModeCServer(t, true, egressConfig{}) // default ports: 80, 443
+	s := newTunnelServer(t, true, egressConfig{}) // default ports: 80, 443
 	proxy := newHTTPServer(t, s)
 	for target, want := range map[string]string{
 		"example.com:22": errReasonPortDenied,
@@ -300,7 +300,7 @@ func TestServerRefusesNonPermittedPorts(t *testing.T) {
 // VPN-R35: default-deny catches the resolution itself — a permitted port on
 // a loopback-resolving name is still refused with the DENIED vocabulary.
 func TestServerRefusesLoopbackResolvingTargetsByDefault(t *testing.T) {
-	s := newModeCServer(t, true, egressConfig{Ports: []uint16{65000}})
+	s := newTunnelServer(t, true, egressConfig{Ports: []uint16{65000}})
 	proxy := newHTTPServer(t, s)
 	ws := openRawTunnel(t, mustTunnelURL(t, proxy, testTunnelPrefix), testTunnelToken)
 	if reason := connectErrReason(t, ws, "localhost:65000"); reason != errReasonDenied {
@@ -311,7 +311,7 @@ func TestServerRefusesLoopbackResolvingTargetsByDefault(t *testing.T) {
 // VPN-R16 ordering: CONNECT before HELLO is a protocol violation, not a
 // request the server silently repairs.
 func TestServerRequiresHelloFirst(t *testing.T) {
-	s := newModeCServer(t, true, egressConfig{})
+	s := newTunnelServer(t, true, egressConfig{})
 	proxy := newHTTPServer(t, s)
 	ws, err := dialTunnelForTest(t, mustTunnelURL(t, proxy, testTunnelPrefix), testTunnelToken)
 	if err != nil {
@@ -356,7 +356,7 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 
 	logBuf := captureLog(t)
 
-	s := newModeCServer(t, true, egressConfig{
+	s := newTunnelServer(t, true, egressConfig{
 		AllowCidrs: []string{"127.0.0.0/8"},
 		Ports:      []uint16{targetPort},
 	})
@@ -402,31 +402,31 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// enableModeC input validation (NFR-2: fail loudly, never silently)
+// enableTunnel input validation (NFR-2: fail loudly, never silently)
 // ---------------------------------------------------------------------------
 
-func TestEnableModeCValidatesInputs(t *testing.T) {
+func TestEnableTunnelValidatesInputs(t *testing.T) {
 	t.Setenv(envTunnelPrefix, testTunnelPrefix)
 	t.Setenv(envOperatorToken, testTunnelToken)
 
 	t.Run("prefix shorter than capability floor", func(t *testing.T) {
 		t.Setenv(envTunnelPrefix, "short")
 		s := &server{providers: map[string]*provider{}}
-		if err := s.enableModeC(&modeCConfig{Enabled: true}); err == nil {
+		if err := s.enableTunnel(&tunnelConfig{Enabled: true}); err == nil {
 			t.Fatal("expected failure")
 		}
 	})
 	t.Run("prefix with path-hostile characters", func(t *testing.T) {
 		t.Setenv(envTunnelPrefix, "cap-with/slash-aaaaaaaaaaaa")
 		s := &server{providers: map[string]*provider{}}
-		if err := s.enableModeC(&modeCConfig{Enabled: true}); err == nil {
+		if err := s.enableTunnel(&tunnelConfig{Enabled: true}); err == nil {
 			t.Fatal("expected failure")
 		}
 	})
 	t.Run("missing token", func(t *testing.T) {
 		t.Setenv(envOperatorToken, "")
 		s := &server{providers: map[string]*provider{}}
-		if err := s.enableModeC(&modeCConfig{Enabled: true}); err == nil {
+		if err := s.enableTunnel(&tunnelConfig{Enabled: true}); err == nil {
 			t.Fatal("expected failure")
 		}
 	})
@@ -436,13 +436,13 @@ func TestEnableModeCValidatesInputs(t *testing.T) {
 			t.Fatal(err)
 		}
 		s := &server{providers: map[string]*provider{testTunnelPrefix: p}}
-		if err := s.enableModeC(&modeCConfig{Enabled: true}); err == nil {
+		if err := s.enableTunnel(&tunnelConfig{Enabled: true}); err == nil {
 			t.Fatal("expected collision failure")
 		}
 	})
 	t.Run("bad egress config", func(t *testing.T) {
 		s := &server{providers: map[string]*provider{}}
-		if err := s.enableModeC(&modeCConfig{Enabled: true, Egress: egressConfig{AllowCidrs: []string{"nope"}}}); err == nil {
+		if err := s.enableTunnel(&tunnelConfig{Enabled: true, Egress: egressConfig{AllowCidrs: []string{"nope"}}}); err == nil {
 			t.Fatal("expected failure")
 		}
 	})

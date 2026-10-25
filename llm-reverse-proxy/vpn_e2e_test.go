@@ -1,8 +1,8 @@
 package main
 
-// vpn_e2e_test.go — the mode C path in one process: real server, real
+// vpn_e2e_test.go — the tunnel path in one process: real server, real
 // client, real tunnel, a local upstream, and both local listener types.
-// Everything below uses the production construction paths (enableModeC,
+// Everything below uses the production construction paths (enableTunnel,
 // clientConfigFromEnv, runClient) so a test cannot pass while main() wires
 // the pieces differently (d072's drift lesson).
 
@@ -66,7 +66,7 @@ func readHTTPResponse(t *testing.T, br *bufio.Reader) *http.Response {
 	return resp
 }
 
-func TestModeCClientServerEndToEnd(t *testing.T) {
+func TestTunnelClientServerEndToEnd(t *testing.T) {
 	// The origin an allowlisted upstream points at.
 	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Upstream", "yes")
@@ -74,7 +74,7 @@ func TestModeCClientServerEndToEnd(t *testing.T) {
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
 
-	// Server: provider allowlist + mode C through the production path.
+	// Server: provider allowlist + the tunnel through the production path.
 	t.Setenv(envTunnelPrefix, testTunnelPrefix)
 	t.Setenv(envOperatorToken, testTunnelToken)
 	localProvider, err := newProvider("local.test", upstream.URL)
@@ -82,7 +82,7 @@ func TestModeCClientServerEndToEnd(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := &server{providers: map[string]*provider{"local.test": localProvider}}
-	if err := s.enableModeC(&modeCConfig{Enabled: true, Egress: egressConfig{
+	if err := s.enableTunnel(&tunnelConfig{Enabled: true, Egress: egressConfig{
 		AllowCidrs: []string{"127.0.0.0/8"},
 		Ports:      []uint16{upPort},
 	}}); err != nil {

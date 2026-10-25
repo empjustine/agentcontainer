@@ -117,5 +117,5 @@ verdict there is the load-bearing part for this code: Tailscale Funnel does
 **not** support the HTTP `CONNECT` method as a general tunnel, but it does
 support the WebSocket upgrade (the `httputil.ReverseProxy` path this proxy
 already uses), so the tunnel is `CONNECT`-inside-`wss`. The trust-model
-table in d073 explains why mode C can drop the client's trust in the proxy
+table in d073 explains why the tunnel (modes C–E) can drop the client's trust in the proxy
 where modes A/B cannot.

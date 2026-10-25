@@ -1,4 +1,4 @@
-// tunnelproto.go — mode C's application-layer tunnel protocol
+// tunnelproto.go — the tunnel's application-layer protocol (modes C–E)
 // (docs/d073 §5.2: VPN-R15..R19, VPN-R39).
 //
 // The transport under this protocol is one WebSocket per CONNECT (VPN-R17),

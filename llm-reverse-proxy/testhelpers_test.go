@@ -1,6 +1,6 @@
 package main
 
-// testhelpers_test.go — shared scaffolding for the mode C suite. Helpers
+// testhelpers_test.go — shared scaffolding for the tunnel suite (modes C–E). Helpers
 // live in one file so no single test file grows a private dialect of
 // "start a server, poke it, read the log" (d072's drift lesson, applied to
 // tests).

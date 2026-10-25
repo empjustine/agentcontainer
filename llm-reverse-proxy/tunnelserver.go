@@ -1,10 +1,10 @@
-// tunnelserver.go — mode C's server role: the `/<prefix>/vpn` namespace
+// tunnelserver.go — the tunnel's server role (modes C–E): the `/<prefix>/vpn` namespace
 // (docs/d073 §5: VPN-R11..R22, §8: VPN-R31..R34, §10: VPN-R44).
 //
 // Dispatch is by path only (VPN-R42): main's ServeHTTP hands this handler
 // exactly the tunnel path and everything else stays mode A — and since the
 // prefix is checked to never collide with an allowlist host at startup,
-// enabling or disabling mode C is invisible from outside (both states answer
+// enabling or disabling the tunnel is invisible from outside (both states answer
 // the same camouflage 404, VPN-R34/R2).
 //
 // The 101 is written on the hijacked connection with the logging wrapper
@@ -45,7 +45,7 @@ type tunnelServer struct {
 	egress *egressPolicy
 }
 
-// isTunnelPath reports whether this request belongs to the mode C
+// isTunnelPath reports whether this request belongs to the tunnel
 // namespace. Exact-match only: `/<prefix>/anything-else` is not tunnel
 // traffic and falls through to mode A, where the prefix answers the same
 // 404 as any unlisted host (the namespace boundary stays invisible,
@@ -191,7 +191,7 @@ func (t *tunnelServer) runSession(ws *wsConn) {
 	}
 	if _, literal := parseIPLiteral(host); literal {
 		// VPN-R22: pre-resolved targets are refused here, and here is the
-		// only place mode C dials — resolution and pinning stay server-side.
+		// only place the tunnel dials — resolution and pinning stay server-side.
 		failConnect(errReasonTargetIP)
 		return
 	}
@@ -236,11 +236,11 @@ func prefixDigest(prefix string) string {
 	return hex.EncodeToString(sum[:4])
 }
 
-// enableModeC wires the tunnel surface from config data + environment and
+// enableTunnel wires the tunnel surface from config data + environment and
 // fails loudly on any input that would weaken an invariant (NFR-2): a
 // misconfigured capability that binds anyway is worse than one that refuses
 // to start, because it fails OPEN at the first probe instead of never.
-func (s *server) enableModeC(mc *modeCConfig) error {
+func (s *server) enableTunnel(tn *tunnelConfig) error {
 	prefix := os.Getenv(envTunnelPrefix)
 	token := os.Getenv(envOperatorToken)
 	if err := validateCapabilityPrefix(prefix); err != nil {
@@ -259,13 +259,13 @@ func (s *server) enableModeC(mc *modeCConfig) error {
 	if _, clash := s.providers[prefix]; clash {
 		return fmt.Errorf("capability prefix collides with allowlist host %q", prefix)
 	}
-	egress, err := newEgressPolicy(mc.Egress)
+	egress, err := newEgressPolicy(tn.Egress)
 	if err != nil {
 		return err
 	}
 	s.vpn = &tunnelServer{prefix: prefix, token: token, egress: egress}
 	// The real prefix appears in no log line, here or later (VPN-R44).
-	log.Printf("[llm-reverse-proxy] mode C tunnel: enabled at /%s/ (prefix digest %s)",
+	log.Printf("[llm-reverse-proxy] tunnel (modes C–E): enabled at /%s/ (prefix digest %s)",
 		logPathRedaction, prefixDigest(prefix))
 	return nil
 }

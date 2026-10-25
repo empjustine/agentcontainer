@@ -9,11 +9,11 @@
 #
 # The CA certificate bundle rides along from the builder: both TLS legs
 # verify against it and neither may ever skip verification — upstream
-# certificates (modes A/C) and the mode C client verifying the Funnel
+# certificates (modes A/D) and the tunnel client verifying the Funnel
 # `*.ts.net` certificate (VPN-R28, VPN-R55; docs/d073). Final image is
 # ~7.5 MB: one binary plus that bundle.
 #
-# The whole package is copied, not a hand-listed subset: mode C added five
+# The whole package is copied, not a hand-listed subset: the tunnel (mode D) added five
 # source files, and a stale COPY list builds a subset that no longer
 # compiles (go build ignores *_test.go, so no test code enters the image).
 #

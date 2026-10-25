@@ -126,7 +126,7 @@ hosts, Termux targets strictly serialized. For THIS folder:
   it is the only thing this host can build and serve.
 
 `./run.sh` picks the matching serve path by two selectors. ROLE:
-`PROXY_MODE=server` (default) or `client` (mode C, docs/d073 §7). HOST:
+`PROXY_MODE=server` (default) or `client` (tunnel client, modes C–E; docs/d073 §7). HOST:
 the container branch runs in HOST NETWORK mode; the native branch execs
 the binary directly. Server role: listening on `${HOST_PORT:-8080}` (the
 funnel front) with `./llm-reverse-proxy.json` mounted read-only

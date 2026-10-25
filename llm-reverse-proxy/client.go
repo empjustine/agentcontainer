@@ -1,4 +1,4 @@
-// client.go — mode C's client role: the loopback-only local proxy feeding
+// client.go — the tunnel client role (modes C–E): the loopback-only local proxy feeding
 // one authenticated tunnel (docs/d073 §7: VPN-R23..R27, §5.1: VPN-R11).
 //
 // WHY the client never terminates TLS (VPN-R25): it is a byte pump between a
@@ -33,7 +33,7 @@ import (
 	"time"
 )
 
-// The shared mode C env names (envTunnelURL, envOperatorToken,
+// The shared tunnel env names (envTunnelURL, envOperatorToken,
 // envClientLabel) are declared with the rest of the process env surface in
 // main.go; the client consumes them via clientConfigFromEnv.
 

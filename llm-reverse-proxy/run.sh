@@ -71,7 +71,7 @@ if [ "$_workload" = 'workload' ]; then
 	container_id='llm-reverse-proxy'
 
 	if [ "$proxy_mode" = client ]; then
-		log_info "serving (container, host network, mode C client)" image="$image"
+		log_info "serving (container, host network, tunnel client)" image="$image"
 	else
 		HOST_PORT="${HOST_PORT:-8080}"
 		log_info "serving (container, host network, server)" image="$image" port="$HOST_PORT" config="$config"
@@ -115,7 +115,7 @@ else
 		log_die 95 "no proxy binary — run ./build.sh first (on Termux it builds llm-reverse-proxy-android)" bin="${bin:-unset}"
 
 	if [ "$proxy_mode" = client ]; then
-		log_info "serving (native, mode C client)" bin="$bin"
+		log_info "serving (native, tunnel client)" bin="$bin"
 		exec "$bin" -mode client \
 			-proxy-listen "${PROXY_LISTEN:-127.0.0.1:3128}" \
 			-socks-listen "${SOCKS_LISTEN:-127.0.0.1:1080}"
