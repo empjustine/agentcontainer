@@ -1,4 +1,4 @@
-# agentcontainer - Enhanced with Cline and Thinkrail
+# agentcontainer
 
 A minimal sandbox for [pi](https://github.com/earendil-works/pi) with
 support for local [llama.cpp](https://github.com/ggerganov/llama.cpp)
@@ -46,24 +46,6 @@ half-configured run.
 
 There is no Termux/peers-only variant of llm-local-inference anymore —
 cloud relay moved to llm-reverse-proxy.
-
-### New: Enhanced with Cline and Thinkrail
-
-This setup extends the coding agent with additional AI tools:
-
-#### Cline CLI
-Installs the official Cline CLI for AI development assistance:
-```sh
-npm i -g cline
-```
-
-#### Thinkrail.ai
-Installs the JetBrains Thinkrail development tool:
-```sh
-curl -fsSL https://raw.githubusercontent.com/JetBrains/thinkrail/main/install.sh | bash
-```
-
-Both tools are now included in the container's mise configuration for reliable, repeatable installation.
 
 ## Folder layout
 
@@ -268,6 +250,8 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d076-maintain-by-host-scheduling.md](docs/d076-maintain-by-host-scheduling.md) | implemented — `maintain-mirrors.mjs` schedules by host (mirrors grouped by `remote.origin.url` host, one job per host at a time, `--jobs` caps concurrent hosts and defaults to all) and paces per host (default 1 s between one host's fetches, 30 s for the software-forge tenant — halved from 60 s once scheduling removed same-host concurrency — `--min-interval` still the only knob) |
 | [docs/d077-ssl-vpn-transport-ladder.md](docs/d077-ssl-vpn-transport-ladder.md) | proposed — tunnel **modes C/D/E** selected by protocol negotiation, not path (re-letter applied across d073, the BRD note, README, and the tunnel code — d073's tunnel mode C is Mode D, letters in preference order C → D → E): **Mode C** h2 POST streaming (preferred when ALPN offers h2 — Funnel edge probed h2 live 2026-10-24; no `Upgrade` header ever on the wire) → **Mode D** h1 WebSocket (the deployed v2, unchanged) → **Mode E** h1 POST stop-and-wait floor for upgrade-stripping gateways; all three **trust external TLS** (d073 §7 posture kept; §3.0 states the accepted plaintext-at-terminator exposure), one Funnel path for the family (VPN-R42 — dispatch inside the handler), `tunnelproto` frames ride in bodies behind one carrier interface per mode (a `tunnelStream` implementation feeds the same handshake and relay — Mode C built and tested but default-off, `-modes` starts at `d` until L3 passes), W3C `traceparent` as demux (`trace-id` = real stream key on Mode E, cross-hop logging on Mode C), sticky ALPN-driven negotiation tree, unbuilt modes routed around exactly like censored ones; two studies recorded **not adopted** — SSE `text/event-stream` carrier for Mode E (anti-buffering norm, 33 ms pass bar, `Last-Event-ID` resume) and inner pinned-anchor TLS (ISRG-root-only or worthless — defeats post-MITM content-rule inspection, buys fingerprint-and-block instead); spikes L1–L4 gate adoption (Funnel SSE @33 ms, gateway posture with an all-pass working expectation, h2 concurrency N ≥ 6, Mode E timing), L5 watches Study B's trigger |
 | [docs/d078-ssl-vpn-operator-keys.md](docs/d078-ssl-vpn-operator-keys.md) | proposed — SSL-VPN operator keys as a **bounded static principal set**: one independent bearer per security principal, isolation = revocation + log attribution only (identical rights; NFR-5 exception phrased "bounded operator key set", still no tenancy); value shape is one JSON env object in `VPN_OPERATOR_KEYS` (`{"<id>": "<token>"}` — JSON chosen over x-www-form-urlencoded: raw tokens, no percent-encoding burden, repo's existing idiom) with duplicate/empty/oversized sets refusing startup (NFR-2 fail-loudly); `VPN_OPERATOR_TOKEN` remains the implicit `default` principal for back-compat (both merge, collision refuses); VPN-R31/R33 amended (full-set no-early-exit constant-time scan), VPN-R34 unchanged so set size stays non-enumerable, tokens env-only — no config field, hashes-at-rest rejected as a second credential copy; attribution as a side log line keeps CLF standard; per-key scope/egress is a forward hook only |
+| [docs/d079-proxy-first-harness-and-git-sourced-catalogs.md](docs/d079-proxy-first-harness-and-git-sourced-catalogs.md) | draft — two compounding generator-input deltas that fold optional dependencies into existing MUSTs (GitHub, the local tunnel client): **(1)** proxy-first harness transport — harnesses ride the tunnel's loopback CONNECT endpoint via `HTTP(S)_PROXY`, retiring d070's install-time baseUrl substitution, its zero-canonical verification, and the `REVERSE_PROXY_BASE_URLS` refusal guards (the guard is re-homed as a launch-time env-shape check in `run.sh`, loud failure preserved); harness then validates the real provider cert end-to-end (VPN-R28 posture extended); **(2)** git-sourced catalogs — the models.dev and catwalk refresh legs take pinned clones of `github.com/anomalyco/models.dev` and `github.com/charmbracelet/catwalk` (repo already owns `git/` bare-mirror tooling) instead of relay-routed HTTP; verdict per source: catwalk clean win (JSON in-repo), models.dev conditional (repo publishes TOML source, consumed `api.json` is built — assemble-or-keep-HTTP decided by §6 sizing); d027b's best-effort/stale-copy law binds both deltas unchanged; mode A stays fallback so route machinery is demoted, not deleted |
+| [docs/d080-forward-proxy-no-host-allowlist.md](docs/d080-forward-proxy-no-host-allowlist.md) | accepted — the d047 host allowlist is **mode-A-only by decision, not omission**: the forward-proxy surfaces (client loopback CONNECT/SOCKS5, tunnel-server CONNECT phase) intentionally carry NO host-name policy — their boundary is d073 §9's VPN-R35..R38 egress table (default-deny CIDRs, operator ports, resolve-once-and-pin, VPN-R22 hostname-only targets); rationale — mode A is the unauthenticated public edge deny-by-absence protects, while the tunnel path is loopback + operator-key authenticated, so a host allowlist would duplicate VPN-R38's reviewable policy and break the generic-CONNECT transport d079's proxy-first harness needs; the client 405 for absolute-form stands (dangling VPN-R45 cite fixed); egress via forward-proxy modes = any public DNS name on policy ports — the accepted posture |
 
 ### Research & archive
 
@@ -276,7 +260,6 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/termux-build-audit.md](docs/termux-build-audit.md) | Termux build audit — Infisical CLI `go install` impossibility + llm-reverse-proxy native build verification (anchored: d029/d031 reference this path) |
 | [docs/sandbox-helper-env-analysis.md](docs/sandbox-helper-env-analysis.md) | PRoot-era sandbox env analysis (superseded; anchored: d020 references this path) |
 | [docs/termux-serving.md](docs/termux-serving.md) | a50/Termux serving map, **archived** (anchored: d020/d021/d041 reference this path) |
-| [docs/we-have-keycloak-at-home.md](docs/we-have-keycloak-at-home.md) | node-oidc-provider as a code-governed Keycloak substitute — verified findings (no admin/env surface, config-frozen-at-construction), gotchas (live-read config, deep-import internals, devInteractions/implicit/PKCE defaults), and the minimal LDAP-federation build cost (~300–600 lines vs Keycloak's ~16k) |
 | [docs/archive/](docs/archive/) | research findings + retired docs (peer-variant-work, mini-swe-agent, bwrap audit, endpoint rewiring, future-config-generator-system, …) — index inside |
 
 ## Code conventions
@@ -299,47 +282,6 @@ surface them and cannot drift from the signature:
   ESM `@fileoverview` block.
 - Trivial HOW comments that the code (or the adjacent doc) already says are
   deleted, not rewritten.
-
-## Cline and Thinkrail Integration
-
-### Installation via Mise
-
-Both Cline CLI and Thinkrail are now configured through mise for reliable, repeatable installation:
-
-1. **Cline CLI**: `npm i -g cline`
-   - Official AI development assistant CLI
-   - Integrated with the coding agent environment
-
-2. **Thinkrail.ai**: `curl -fsSL https://raw.githubusercontent.com/JetBrains/thinkrail/main/install.sh | bash`
-   - JetBrains' development workflow enhancement
-   - Works seamlessly with the containerized environment
-
-### Container Configuration
-
-The container's `config.toml` now includes:
-```toml
-"npm:cline" = "latest"
-"npm:@jetbrains/thinkrail" = "latest"
-```
-
-### Usage
-
-After running `coding-agent/run.sh`, you can:
-
-```sh
-# Use Cline CLI
-cline
-
-# Use Thinkrail
-thinkrail
-```
-
-### Benefits
-
-- **Reliable Installation**: Both tools are installed via mise, ensuring consistent versions
-- **Container Isolation**: Tools are available within the coding agent container
-- **Repeatable Setup**: Configuration ensures the same tools are available across different environments
-- **No System Pollution**: Global system installation avoided - everything contained within the container
 
 ## License
 

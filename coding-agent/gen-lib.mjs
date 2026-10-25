@@ -14,7 +14,6 @@
  * run never writes next to its own sources).
  */
 
-import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -277,9 +276,10 @@ export function piModel(entry) {
 	// Judged, never copied: an empty/all-zero upstream block becomes NO key
 	// (piCost's rule) instead of an invalid one reaching the artifact.
 	const cost = piCost(meta?.cost);
+	const name = displayName(entry.id);
 	return {
 		id: entry.id,
-		...(displayName(entry.id) ? { name: displayName(entry.id) } : {}),
+		...(name ? { name } : {}),
 		reasoning: meta?.reasoning ?? true,
 		input,
 		contextWindow,
@@ -354,17 +354,14 @@ export function providerReroute(providerUrl, models) {
 }
 
 /**
- * The models.dev catalog to read: a `models.dev.api.json` next to this script
- * wins (when staged, that entry is a symlink the best-effort refresh replaces
- * with the freshly fetched copy), else the shared vendored copy under
- * `LIB_DIR`. `MODELS_DEV_JSON` overrides both.
+ * The models.dev catalog to read: `MODELS_DEV_JSON` when the driver named
+ * this run's refreshed copy (coding-agent/generate.mjs always does), else the
+ * shared vendored catalog under `LIB_DIR` — the only other copy, and the one
+ * a manual in-place run reads (docs/d023).
  * @returns {string}
  */
 export function modelsDevCatalogPath() {
 	return (
-		process.env.MODELS_DEV_JSON ??
-		(existsSync(join(scriptDir, "models.dev.api.json"))
-			? join(scriptDir, "models.dev.api.json")
-			: join(LIB_DIR, "models.dev.api.json"))
+		process.env.MODELS_DEV_JSON ?? join(LIB_DIR, "models.dev.api.json")
 	);
 }

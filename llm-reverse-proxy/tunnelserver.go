@@ -316,7 +316,8 @@ func (t *tunnelServer) runSession(s tunnelStream) {
 	}
 
 	// Phase 2 — CONNECT (VPN-R20..R22): parse, policy-check, resolve once,
-	// pin, dial.
+	// pin, dial. The policy is the egress table only — the d047 host
+	// allowlist is mode-A-only (docs/d080).
 	_ = s.setReadDeadline(time.Now().Add(tunnelHandshakeTimeout))
 	connectMsg, err := readTunnelFrame(s)
 	if err != nil {

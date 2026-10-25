@@ -372,10 +372,9 @@ func (c *vpnClient) openTunnel(ctx context.Context, target string) (tunnelStream
 // ---------------------------------------------------------------------------
 
 // ServeHTTP multiplexes the two loopback surfaces. The 405 for everything
-// else is the deliberate choice d073 VPN-R45 explicitly permits: forwarding
-// absolute-form requests would need the v2 allowlist on this surface too,
-// and there is no use case for it — a documented 405 to an application that
-// already knows where it is talking (no camouflage contract on loopback).
+// else is deliberate (no camouflage contract on loopback): this surface is
+// a byte pump, so it never parses absolute-form requests — and the v2 host
+// allowlist must NOT grow onto it; mode-A-only by decision (docs/d080).
 func (c *vpnClient) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method == http.MethodConnect:

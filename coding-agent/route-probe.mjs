@@ -1,7 +1,7 @@
 /**
  * @fileoverview route-probe.mjs — shared HTTP probe + route toolkit for the
- * generator families (pi `models.json` layers, opencode config layers,
- * llama-swap layers). Owns everything about "ask an OpenAI-compatible
+ * coding-agent generators (pi `models.json` layers, opencode config
+ * layers). Owns everything about "ask an OpenAI-compatible
  * endpoint for its `/models` listing": auth headers, the 8 s timeout, the
  * `/v1/models` retry, status-carrying errors, and the classification that
  * decides WHICH LINEUP SOURCE a generator may use. It also owns the CLIENT
@@ -48,8 +48,8 @@
  *
  * Import convention (docs/d023, d039): this module lives beside its consumers
  * in coding-agent/ but keeps the LIB_DIR resolution for the shared logger —
- * `process.env.LIB_DIR ?? "<this dir>/../lib"` — so in-place runs and the
- * d023 scratch staging (generators at the root, lib in $LIB_DIR) both work.
+ * `process.env.LIB_DIR ?? "<this dir>/../lib"` — so a folder copied out of
+ * this tree (the docs/architecture.md copy unit) still finds `../lib`.
  */
 
 import { dirname, join } from "node:path";
@@ -61,22 +61,14 @@ const LIB_DIR =
 const { logWarn } = /** @type {typeof import("../lib/log.mjs")} */ (
 	await import(`${LIB_DIR}/log.mjs`)
 );
-/**
- * The v2 host-form route (providerRouteUrl) is derived from the SAME
- * fact-table base URLs the llm-reverse-proxy allowlist is generated from —
- * one source of truth for "which upstream does this provider sit on"
- * (docs/d047). Frozen id → baseUrl, resolved once at module load.
- */
-const { CLOUD_PROVIDERS } =
+// The v2 host-form route (providerRouteUrl) is derived from the SAME
+// fact-table base URLs the llm-reverse-proxy allowlist is generated from —
+// one source of truth for "which upstream does this provider sit on"
+// (docs/d047).
+const { PROVIDER_BASE_URLS } =
 	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
-/** @type {Readonly<Record<string, string>>} */
-const CLOUD_PROVIDER_BASE_URLS = Object.freeze(
-	Object.fromEntries(
-		Object.entries(CLOUD_PROVIDERS).map(([id, f]) => [id, f.baseUrl]),
-	),
-);
 
 // Proxy env is handled by Node itself: NODE_USE_ENV_PROXY=1 (set by
 // lib/node-run.sh and the coding-agent image, docs/d074) makes global fetch()
@@ -289,7 +281,7 @@ export function relayCandidates(upstream, pathAndQuery, envOverride) {
  * credentials for it" — see the header note above.
  * @type {ReadonlySet<number>}
  */
-export const AUTH_REJECTED_STATUSES = new Set([401, 403]);
+const AUTH_REJECTED_STATUSES = new Set([401, 403]);
 
 /**
  * Statuses that mean "this route does not deliver to the provider"
@@ -298,7 +290,7 @@ export const AUTH_REJECTED_STATUSES = new Set([401, 403]);
  * proxy→upstream leg failed/timed out (502/504). Never emitted as a route.
  * @type {ReadonlySet<number>}
  */
-export const DEAD_ROUTE_STATUSES = new Set([404, 502, 504]);
+const DEAD_ROUTE_STATUSES = new Set([404, 502, 504]);
 
 // TLS-verification state, decided once and read by every probe: the process
 // either enforces certificates (the default; NODE_TLS_REJECT_UNAUTHORIZED=1
@@ -430,7 +422,7 @@ function normalizedProbeError(err) {
  *   for a client)
  */
 export function providerRouteUrl(base, providerId) {
-	const upstream = CLOUD_PROVIDER_BASE_URLS[providerId];
+	const upstream = PROVIDER_BASE_URLS[providerId];
 	if (!upstream) {
 		throw new Error(
 			`providerRouteUrl: no fact-table base URL for ${JSON.stringify(providerId)} — the v2 host-form route needs the upstream host (docs/d047)`,
@@ -456,7 +448,7 @@ export function providerRouteUrl(base, providerId) {
  * @throws {Error} when the URL is not the fact-table upstream for the id
  */
 export function routeUrlFromCanonical(base, providerId, canonicalUrl) {
-	const upstream = CLOUD_PROVIDER_BASE_URLS[providerId];
+	const upstream = PROVIDER_BASE_URLS[providerId];
 	if (!upstream) {
 		throw new Error(
 			`routeUrlFromCanonical: no fact-table base URL for ${JSON.stringify(providerId)}`,
@@ -516,7 +508,7 @@ export function routeUrlFromCanonical(base, providerId, canonicalUrl) {
  *   401/403, which still classify the route as usable)
  * @returns {Promise<RouteResult>}
  */
-export async function probeRoute(providerUrl, headers) {
+async function probeRoute(providerUrl, headers) {
 	try {
 		const entries = await fetchModelEntries(providerUrl, headers);
 		return { usable: true, result: "ok", entries };

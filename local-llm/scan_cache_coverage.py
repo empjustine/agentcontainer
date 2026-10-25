@@ -30,12 +30,9 @@ Usage:
 """
 import os, re, sys, json, argparse
 
-SKIP_PREFIXES = ("mmproj", "mtp-", "eagle3-", "dflash-", "dspark-", "imatrix")
-
-def is_model_file(name):
-    if not name.endswith(".gguf"):
-        return False
-    return not any(os.path.basename(name).startswith(p) for p in SKIP_PREFIXES)
+# The sidecar filter and cache-root order are shared with the manifest
+# scanner (same directory, so plain import: see _hf_cache.py).
+from _hf_cache import is_model_file, resolve_cache
 
 RE_SPLIT = re.compile(r"^(.+)-(\d{5})-of-(\d{5})$", re.I)
 RE_TAG = re.compile(r"[-.]([A-Z0-9_]+)$", re.I)
@@ -64,15 +61,6 @@ def ambiguity(name):
     if len(set(toks)) >= 2:
         return "multiple quant keywords in filename: " + "/".join(sorted(set(toks)))
     return None
-
-def resolve_cache(arg):
-    if arg:
-        return arg
-    if os.environ.get("HF_HUB_CACHE"):
-        return os.environ["HF_HUB_CACHE"]
-    home = os.environ.get("HF_HOME") or os.path.join(
-        os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "huggingface")
-    return os.path.join(home, "hub")
 
 def main():
     here = os.path.dirname(os.path.abspath(__file__))

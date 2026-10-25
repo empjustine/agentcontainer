@@ -50,7 +50,7 @@
  *   node coding-agent/catalog-facts.mjs <providerId> [listPath]  path defaults to /models
  */
 
-import { readFileSync, renameSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -65,6 +65,10 @@ const { logInfo, logWarn, setLogTool } =
 const { CLOUD_PROVIDERS } =
 	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
+	);
+const { writeArtifact } =
+	/** @type {typeof import("../lib/artifact.mjs")} */ (
+		await import(`${LIB_DIR}/artifact.mjs`)
 	);
 
 setLogTool("coding-agent/catalog-facts");
@@ -188,20 +192,22 @@ async function relayFetch({ candidates, label, timeoutMs, headers }) {
 }
 
 /**
- * Publish a refreshed cache document: tmp + rename so a partial write never
- * lands on the live file. A cache dir that is not writable (the repo tree
- * mounted ro in a container) is a WARN, not a throw — the refresh contract
- * says every failure degrades to the last good copy, and throwing here would
- * take the whole generation down over an enrichment.
+ * Publish a refreshed cache document through the repo's ONE atomic writer
+ * (lib/artifact.mjs's tmp+rename, docs/d050), so a partial write never lands
+ * on the live file. A cache dir that is not writable (the repo tree mounted ro
+ * in a container) is a WARN, not a throw — the refresh contract says every
+ * failure degrades to the last good copy, and throwing here would take the
+ * whole generation down over an enrichment.
  * @param {string} path cache destination
  * @param {unknown} document parsed JSON document to publish
  * @returns {boolean} false when the cache could not be written
  */
 function writeCache(path, document) {
 	try {
-		const tmp = `${path}.tmp`;
-		writeFileSync(tmp, `${JSON.stringify(document, null, 2)}\n`);
-		renameSync(tmp, path); // atomic on the same filesystem
+		// Same bytes the cache files already carry: these are tracked
+		// artifacts, so a formatting switch would churn every refresh diff
+		// (canonical serialization is for the generated manifests, docs/d050).
+		writeArtifact(path, `${JSON.stringify(document, null, 2)}\n`);
 		return true;
 	} catch (err) {
 		logWarn("facts cache not writable — keeping last good copy", {

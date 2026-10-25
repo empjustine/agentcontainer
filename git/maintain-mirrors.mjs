@@ -380,7 +380,7 @@ async function main() {
 	/** @type {Map<string, { repo: string, url: string|null, host: string }[]>} */
 	const groups = new Map();
 	for (const repo of repos) {
-		const url = urlByRepo.get(repo);
+		const url = urlByRepo.get(repo) ?? null;
 		// A mirror with no upstream (or one carrying no host) joins the local
 		// bucket — see LOCAL_HOST.
 		const host = (url && originHost(url)) || LOCAL_HOST;
@@ -432,6 +432,7 @@ async function main() {
 		}
 		return out;
 	});
+	/** @type {Record<string, number>} */
 	const tally = { ok: 0, skipped: 0, failed: 0 };
 	for (const groupResults of results) {
 		for (const r of groupResults) tally[r] += 1;

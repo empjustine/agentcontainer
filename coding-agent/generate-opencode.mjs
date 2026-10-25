@@ -235,7 +235,6 @@ function routedProvider(label, providerUrl, apiKeyEnv, models) {
 	};
 }
 
-/** @returns {Promise<void>} */
 /**
  * The `local` block from the previous overlay, when readable — the d064
  * first-class stale-preserve for the local lineup (a fresh lineup comes only

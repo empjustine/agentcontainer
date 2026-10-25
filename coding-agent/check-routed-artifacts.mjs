@@ -26,41 +26,26 @@
  */
 
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { reverseProxyBaseUrls } from "./route-probe.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
-const { CLOUD_PROVIDERS } =
+const { CLOUD_PROVIDERS, FACT_HOSTS, FACT_UPSTREAMS } =
 	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
 
 /**
- * opencode's one provider-id alias (same mapping generate.mjs substitutes
- * with): its config names the local farm `local`, the fact table
- * `llama-swap`.
+ * opencode's one provider-id alias — the only artifact-side name that does not
+ * match the fact table: its config calls the local farm `local`, the table
+ * calls it `llama-swap`. Substitution and the committed verifier both read it
+ * from here, so a future shape with its own vocabulary has one place to land.
  * @type {Readonly<Record<string, string>>}
  */
-const OPENCODE_PROVIDER_FACT_IDS = Object.freeze({ local: "llama-swap" });
-
-/** @type {readonly string[]} */
-const FACT_UPSTREAMS = Object.freeze(
-	Object.values(CLOUD_PROVIDERS).map((f) => f.baseUrl),
-);
-
-/**
- * The fact upstreams' hostnames — the v2 route form embeds the upstream
- * host as a path segment (`<base>/<host>/…`, docs/d047), so a matching
- * segment is the structural marker that a URL under a colliding base host
- * is routed, not canonical.
- * @type {ReadonlySet<string>}
- */
-const FACT_HOSTS = new Set(
-	FACT_UPSTREAMS.map((u) => new URL(u).host),
-);
+export const OPENCODE_PROVIDER_FACT_IDS = Object.freeze({ local: "llama-swap" });
 
 /**
  * True when any path segment of `url` is a fact-upstream hostname — the
@@ -105,6 +90,37 @@ export function providerUrlsOf(doc) {
 		}));
 	}
 	return [];
+}
+
+/**
+ * d070 §3, the writing half: rewrite every provider URL in a pi or opencode
+ * artifact document in place, keyed by the FACT-TABLE id. Sits beside
+ * providerUrlsOf on purpose — one place decides which field a provider URL
+ * lives in and how an artifact id maps to a table id, so the substitution can
+ * never disagree with the verifiers that guard it.
+ * @param {unknown} doc artifact document, mutated in place
+ * @param {(factId: string, url: string) => string} mapUrl
+ * @returns {unknown} the same doc
+ */
+export function rewriteProviderUrls(doc, mapUrl) {
+	const d = /** @type {any} */ (doc) ?? {};
+	if (d.providers && typeof d.providers === "object") {
+		for (const [id, provider] of Object.entries(d.providers)) {
+			const url = /** @type {any} */ (provider)?.baseUrl;
+			if (typeof url !== "string") continue;
+			/** @type {any} */ (provider).baseUrl = mapUrl(id, url);
+		}
+		return doc;
+	}
+	if (d.provider && typeof d.provider === "object") {
+		for (const [id, provider] of Object.entries(d.provider)) {
+			const options = /** @type {any} */ (provider)?.options;
+			const url = options?.baseURL;
+			if (!options || typeof url !== "string") continue;
+			options.baseURL = mapUrl(OPENCODE_PROVIDER_FACT_IDS[id] ?? id, url);
+		}
+	}
+	return doc;
 }
 
 /**
@@ -183,7 +199,6 @@ export function committedViolations(doc) {
 }
 
 // --- CLI ---------------------------------------------------------------------
-const args = process.argv.slice(2);
 /**
  * The first configured base for `--installed` without `--base` — the
  * SHARED env reader (route-probe.mjs), so this verifier applies the same
@@ -195,12 +210,20 @@ function configuredBase() {
 	return reverseProxyBaseUrls()[0];
 }
 
-if (args.length >= 2 && (args[0] === "--installed" || args[0] === "--committed")) {
+/**
+ * The `node check-routed-artifacts.mjs --installed|--committed <file>` entry.
+ * Only reached when this file IS the process entry point: the detectors are
+ * also imported in-process (generate.mjs's install check, the artifacts
+ * test), and an unguarded top-level dispatch would parse THEIR argv and
+ * could exit out of their middle.
+ * @param {string[]} args argv after the script path
+ * @returns {void}
+ */
+function main(args) {
+	if (args.length < 2 || (args[0] !== "--installed" && args[0] !== "--committed"))
+		return;
 	const mode = args[0];
 	const path = args[1];
-	// readonly: both detectors return the frozen no-assignment array they were
-	// given (see their @returns) — widening it to a mutable type here would be
-	// a promise no branch keeps.
 	/** @type {readonly string[]} */
 	let violations = [];
 	try {
@@ -214,12 +237,15 @@ if (args.length >= 2 && (args[0] === "--installed" || args[0] === "--committed")
 			violations = committedViolations(doc);
 		}
 	} catch (err) {
-		violations = [`unreadable or invalid JSON: ${String(err)}`];
+		violations = ["unreadable or invalid JSON: " + String(err)];
 	}
 	if (violations.length) {
-		for (const v of violations) console.error(`${mode} ${path}: ${v}`);
+		for (const v of violations) console.error(mode + " " + path + ": " + v);
 		process.exit(1);
 	}
-	console.log(`${mode} ${path}: conforming`);
+	console.log(mode + " " + path + ": conforming");
 	process.exit(0);
 }
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]))
+	main(process.argv.slice(2));

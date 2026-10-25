@@ -23,9 +23,9 @@
  *   ./git/vbs-har.sh <har-file> [--out manifest.json] [--base URL] [--org ORG]
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
-import { logError, logInfo, setLogTool } from "./git-lib.mjs";
+import { logError, logInfo, setLogTool, writeArtifact } from "./git-lib.mjs";
 
 setLogTool("git/vbs-har");
 
@@ -121,7 +121,7 @@ function slugFromId(id, org) {
  *   repositories: object[], missingProjects: object[]
  * }}
  */
-export function harToManifest(har, opts = {}) {
+function harToManifest(har, opts = {}) {
 	const entries = har?.log?.entries ?? [];
 	/** @type {Record<string, unknown>[]|null} */
 	let projects = null;
@@ -295,7 +295,7 @@ function main() {
 	const text = `${JSON.stringify(manifest, null, 2)}\n`;
 
 	if (o.out) {
-		writeFileSync(o.out, text);
+		writeArtifact(o.out, text);
 		logInfo("manifest written", {
 			out: o.out,
 			repositories: manifest.repositories.length,

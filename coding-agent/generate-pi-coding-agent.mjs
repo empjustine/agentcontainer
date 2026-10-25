@@ -56,11 +56,12 @@
  * to start without a reverse-proxy base (`REVERSE_PROXY_BASE_URLS`) — the
  * probes need it (docs/d070 §7).
  *
- * `generate.mjs` (the folder driver) stages this file together with its
- * helper modules into a scratch dir, sets `LIB_DIR`, refreshes the models.dev
- * catalog, then runs this generator once — followed by the separate
- * opencode generator. The per-stage docs these bodies were folded from are
- * `docs/d024`, `docs/d033`, `docs/d037`, `docs/d057`.
+ * `generate.mjs` (the folder driver) refreshes the models.dev catalog, then
+ * runs this generator once — followed by the separate opencode generator —
+ * in place, from this directory (docs/d072 retired the d023 scratch staging
+ * that used to copy these sources elsewhere). The per-stage docs these
+ * bodies were folded from are `docs/d024`, `docs/d033`, `docs/d037`,
+ * `docs/d057`.
  *
  * Usage: node generate-pi-coding-agent.mjs [models.json] [default-model.json]
  *   models.json defaults to $PI_MODELS_JSON else ./models.json.
@@ -135,11 +136,10 @@ mkdirSync(layerDir, { recursive: true });
 const REVERSE_PROXY_BASE_CANDIDATES = reverseProxyBaseUrls();
 
 /**
- * Catalog lookup order: a models.dev.api.json next to this script wins — when
- * run from generate.sh's scratch dir that entry is a symlink to the vendored
- * catalog which the best-effort refresh replaces with the freshly fetched
- * copy, so the generator always reads what this run validated. Manual
- * in-place runs fall back to the shared vendored catalog (docs/d023).
+ * The catalog this run validated: generate.mjs points MODELS_DEV_JSON at the
+ * freshly refreshed copy, and a manual in-place run falls back to the shared
+ * vendored catalog. The lookup order itself lives in modelsDevCatalogPath
+ * (gen-lib.mjs, docs/d023).
  * @type {string}
  */
 const API_JSON = modelsDevCatalogPath();
@@ -470,7 +470,7 @@ function resolveClinePassAllowlist(modelsDevModels) {
 	/**
 	 * Union: docs ids first (the published contract), then catalog-only ids
 	 * (catalog-first additions the docs table has not caught up to) — the
-	 * emitFullAt filter intersects with the catalog anyway, so docs-only ids
+	 * emitFull filter intersects with the catalog anyway, so docs-only ids
 	 * simply find no record to emit.
 	 */
 	const union = [...new Set([...docsIds, ...catalogKeys])];
@@ -919,12 +919,6 @@ function toCost(cost) {
  */
 
 /**
- * A models.json provider layer for one full-mode provider.
- * @typedef {object} ProviderBlock
- * @property {Record<string, { name: string, baseUrl: string, api: string, apiKey: string, authHeader?: boolean, headers?: Record<string, string>, compat?: { supportsDeveloperRole: boolean }, models: PiAlternativeModel[] }>} providers
- */
-
-/**
  * Build the pi-shaped model entry for one models.dev model of provider
  * `spec.id`. `id` is the fully-qualified model id to publish; the default
  * keeps the catalog's own id (ClinePass catalog ids are already
@@ -1000,7 +994,7 @@ function catalogPiModel(spec, m, id = m.id) {
  * not a broken catalog (docs/d032 F1, docs/d057). The fact table is also the
  * base URL its client route is derived from, so the committed and installed
  * URL forms cannot disagree (docs/d047, d070). Its lineup arrives through the facts cache instead —
- * an empty `models` map is what tells emitFullAt the cache owns the lineup.
+ * an empty `models` map is what tells emitFull the cache owns the lineup.
  * @param {CloudProviderSpec} spec the provider spec row
  * @returns {{ api: string, models: Record<string, ModelsDevModel> }} the
  *   provider record (api endpoint + per-model metadata)
@@ -1029,32 +1023,6 @@ function loadProvider(spec) {
 	);
 }
 
-/**
- * Build the provider block at `baseUrl` with the given key/auth.
- * @param {CloudProviderSpec} spec the provider spec row
- * @param {string} baseUrl the provider's URL — canonical fact-table upstream
- *   in committed layers (docs/d070), substituted to the client route only at
- *   install
- * @param {PiAlternativeModel[]} models
- * @param {{ apiKey: string, authHeader?: boolean }} auth
- * @returns {ProviderBlock} a models.json provider layer for the provider
- */
-function providerBlock(spec, baseUrl, models, auth) {
-	return {
-		providers: {
-			[spec.id]: {
-				name: /** @type {string} */ (spec.name),
-				baseUrl,
-				api: "openai-completions",
-				apiKey: auth.apiKey,
-				...(auth.authHeader ? { authHeader: true } : {}),
-				...(spec.headers ? { headers: spec.headers } : {}),
-				...(spec.compat ? { compat: spec.compat } : {}),
-				models,
-			},
-		},
-	};
-}
 
 /**
  * Rebuild a raw hyper facts (live `/provider`) record as a models.dev-shaped
@@ -1335,12 +1303,13 @@ async function emitOverrideOnly(spec, providers) {
 /**
  * Run the full-mode cascade for one row and write its layer file at the
  * CANONICAL fact-table upstream URL (docs/d070): the layer IS the provider
- * definition, so
- * it is written every run — even with an empty lineup — because an unwritten
- * layer would leave a stale committed DIRECT block in the merge (d063 §3).
- * The probe only bounds the lineup: the route's own listing when it could be
- * authenticated, else the catalog/facts cascade. Full rows are first-class
- * or best-effort (docs/d064), so they always get the probe.
+ * definition, so it is written every run — even with an empty lineup —
+ * because an unwritten layer would leave a stale committed DIRECT block in
+ * the merge (d063 §3). The probe only bounds the lineup: the route's own
+ * listing when it could be authenticated, else the catalog/facts cascade.
+ * Full rows are first-class or best-effort (docs/d064), so they always get
+ * the probe, and a `catalogOptional` row skips the catalog entirely — its
+ * facts cache IS the lineup (docs/d057).
  * @param {CloudProviderSpec} spec
  * @returns {Promise<void>}
  */
@@ -1354,35 +1323,13 @@ async function emitFull(spec) {
 			{ provider: spec.id },
 		);
 	}
-	return emitFullAt(
-		spec,
-		provider,
-		{ apiKey: `$${spec.envKey}`, authHeader: true },
-		// The route's own listing bounds a facts-sourced lineup when the probe
-		// could authenticate it; empty entries (401/403 without a key) mean the
-		// route proved but says nothing, so nothing is bounded (docs/d033).
+	// The route's own listing bounds a facts-sourced lineup when the probe
+	// could authenticate it; empty entries (401/403 without a key) mean the
+	// route proved but says nothing, so nothing is bounded (docs/d033).
+	const routeIds =
 		route && route.entries.length
 			? new Set(route.entries.map((e) => e.id))
-			: null,
-	);
-}
-
-/**
- * Write one full-mode layer at the CANONICAL fact-table upstream URL
- * (docs/d070 §1):
- * the catalog lineup bounded by the ids the route actually serves. A
- * `catalogOptional` row skips the catalog entirely: its facts cache IS the
- * lineup (docs/d057). The layer is written even when the lineup resolves
- * empty — an unwritten layer would leave a stale committed DIRECT block in
- * the merge (d063 §3).
- * @param {CloudProviderSpec} spec
- * @param {{ api: string, models: Record<string, ModelsDevModel> }} provider
- * @param {{ apiKey: string, authHeader?: boolean }} auth
- * @param {ReadonlySet<string>|null} routeIds the ids the route's own
- *   listing proved it serves, or null when it listed nothing
- * @returns {Promise<void>}
- */
-async function emitFullAt(spec, provider, auth, routeIds = null) {
+			: null;
 	/**
 	 * The artifact's provider URL (docs/d070 §1): the fact table's real
 	 * upstream, keyed by id — never string-derived from a configured base.
@@ -1466,7 +1413,23 @@ async function emitFullAt(spec, provider, auth, routeIds = null) {
 	}
 	const written = writeJsonArtifact(
 		join(layerDir, /** @type {string} */ (spec.file)),
-		providerBlock(spec, canonicalUrl, models, auth),
+		{
+			providers: {
+				[spec.id]: {
+					name: /** @type {string} */ (spec.name),
+					baseUrl: canonicalUrl,
+					api: "openai-completions",
+					// pi resolves the key from the env at request time, and every
+					// full row speaks the upstream's bearer form
+					// (openai-completions — there is no non-bearer full row).
+					apiKey: `$${spec.envKey}`,
+					authHeader: true,
+					...(spec.headers ? { headers: spec.headers } : {}),
+					...(spec.compat ? { compat: spec.compat } : {}),
+					models,
+				},
+			},
+		},
 	);
 	logInfo("provider layer written", {
 		provider: spec.id,

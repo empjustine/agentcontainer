@@ -43,13 +43,21 @@ const { logError, logInfo, logWarn, setLogStream, setLogTool } =
 		await import(pathToFileURL(join(LIB_DIR, "log.mjs")).href)
 	);
 
+// vbs-har's manifest is the one artifact this folder writes: it goes through
+// the repo's atomic writer (tmp+rename, docs/d050) rather than a bare
+// writeFileSync, so a killed run cannot leave a truncated manifest behind.
+const { writeArtifact } =
+	/** @type {typeof import("../lib/artifact.mjs")} */ (
+		await import(pathToFileURL(join(LIB_DIR, "artifact.mjs")).href)
+	);
+
 // Every tool in this folder prints a machine-consumed payload on stdout
 // (audit's JSON report, search-references' results, vbs-har's manifest,
 // local-changes' --json) — logs go to stderr so the two streams stay
 // separable; `2>&1 | jq` still yields one jsonlines stream (docs/d045).
 setLogStream("stderr");
 
-export { logError, logInfo, logWarn, setLogTool };
+export { logError, logInfo, logWarn, setLogTool, writeArtifact };
 
 /**
  * The reference root to operate on when `--root` is not given. Matches the
@@ -76,21 +84,6 @@ export const DEFAULT_DEST =
  * farm (`github/empjustine/agentcontainerOLD/agentcontainer2`).
  */
 export const DEFAULT_MAX_DEPTH = 5;
-
-/**
- * @param {number} n
- * @returns {string}
- */
-export function humanBytes(n) {
-	const units = ["B", "KB", "MB", "GB", "TB"];
-	let v = n;
-	let i = 0;
-	while (v >= 1024 && i < units.length - 1) {
-		v /= 1024;
-		i += 1;
-	}
-	return `${v.toFixed(i === 0 ? 0 : 1)}${units[i]}`;
-}
 
 /**
  * The environment every `git()` child inherits — the fail-fast contract for

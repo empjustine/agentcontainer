@@ -80,12 +80,12 @@ const configD = join(scriptDir, "config.d");
 // --- config.d layer writers (folded gen-lib.mjs) ---------------------------
 
 /**
- * Read the general-purpose llama-swap config source.
- * @param {string} [path] defaults to llama-swap-core.json next to this file
+ * Read the hand-maintained llama-swap core config (scalars, macros,
+ * ctxWindows, apiKeys) that 00-general.yaml is built from.
  * @returns {Record<string, unknown>}
  */
-function loadCore(path = join(scriptDir, "llama-swap-core.json")) {
-	return JSON.parse(readFileSync(path, "utf-8"));
+function loadCore() {
+	return JSON.parse(readFileSync(join(scriptDir, "llama-swap-core.json"), "utf-8"));
 }
 
 /**

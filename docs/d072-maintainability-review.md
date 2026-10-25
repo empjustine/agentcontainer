@@ -159,8 +159,8 @@ pi bundles (pi 1.2.0 declares `^1.2.0`; the registry functions are
 `getBuiltinProviders()` + the per-provider factories carrying `baseUrl`,
 `auth.apiKey.resolve`, and `getModels()`). pi itself is a single compiled
 binary, so it is **not importable from the repo at runtime** — using it means
-adding the package to the repo's `package.json` (which already exists for
-`@opencode/cli`) pinned to the pi version the image installs.
+adding the repo's FIRST `package.json` (there is none today: opencode is
+provisioned via mise, not npm) pinned to the pi version the image installs.
 
 What the swap would look like: derive id/label/api/baseUrl from
 `getBuiltinProviders()` at generate time, and keep a *small* repo-side table
@@ -238,6 +238,38 @@ question is not silently closed.
   asserting every non-d0XX doc carries exactly one d042 `type:` **and** that
   README's index lists every living doc. The ad-hoc sweeps behind this review
   were one-shot scripts, not a guard.
+
+## Follow-up sweep: one d070 verifier, one substitution walker
+
+`coding-agent/generate.mjs` carried a private twin of the URL-shape rule
+(`FACT_UPSTREAMS`, `OPENCODE_PROVIDER_FACT_IDS`, `piProviderUrls`,
+`openCodeProviderUrls`, `assertInstalledRouted`) beside
+`check-routed-artifacts.mjs` — the module whose header calls itself "the ONE
+implementation". It is literally that now: the shared module also owns the
+writing half (`rewriteProviderUrls`, one walker per artifact shape, with the
+opencode `local` → `llama-swap` alias applied in exactly one place), and an
+install is `installRouted()` = rewrite + `installedViolations()` before the
+write. `CLOUD_PROVIDERS`' projections (`PROVIDER_BASE_URLS`,
+`FACT_UPSTREAMS`, `FACT_HOSTS`) moved into `lib/cloud-providers.mjs`, so no
+consumer can check an artifact against a stale copy of the table.
+
+Two prerequisites rode along, because the collapse needed them:
+`check-routed-artifacts.mjs`'s CLI is now behind an entry-point test (its
+top-level dispatch parsed the importing process's argv and could
+`process.exit` it), and the module gained the round-trip tests that pin
+substitution and verification together (`tests/artifact-urls.test.mjs`).
+
+Same sweep, smaller items: `catalog-facts.mjs` publishes its cache through
+`lib/artifact.mjs` instead of its own tmp+rename (same bytes — the caches are
+tracked, so a serialization switch would churn every refresh diff);
+`git/vbs-har.mjs` writes its manifest through the same writer;
+`modelsDevCatalogPath()` lost the next-to-script probe that the retired d023
+staging made look reachable; `emitFullAt` folded back into `emitFull` (its only
+caller — with the constant `auth` bag and the provider literal inlined);
+dead code from earlier folds removed (`humanBytes`, `repo_dir_name`,
+`blob_size`, three internal `route-probe.mjs` exports); and the two HF-cache
+scanners now share `local-llm/_hf_cache.py`, whose sidecar filter they had
+already drifted on.
 
 ## Verification
 

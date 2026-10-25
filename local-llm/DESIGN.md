@@ -47,8 +47,11 @@ runners' generation.
    `--update-model-data` reorder is **retired** (docs/d053).
 
 Plus PoC/audit helpers (`scan_cache_coverage.py`, `gguf_context_length.py`,
-`fetch-model-cards.sh`). All are self-contained `uv` PEP-723 scripts logging
-through `lib/log.py`; operational detail lives in each script header.
+`fetch-model-cards.sh`). All are `uv` PEP-723 scripts (dependencies declared
+inline, no venv) logging through `lib/log.py`. The two cache scanners share
+`local-llm/_hf_cache.py` — the sidecar filter and the cache-root order are
+facts about the HF cache, not about either scanner, and keeping two copies is
+what let them drift; operational detail lives in each script header.
 
 ## Boundary
 

@@ -1,7 +1,7 @@
 ---
 id: d032
 type: architecture-design
-status: implemented
+status: implemented · generator/verifier paths superseded by d037/d041/d071/d072 (mapping below)
 title: "Adding a cloud provider — the flow and its surprises (worked example: inferx)"
 parent: architecture
 depends-on: [d024, d027]
@@ -16,6 +16,20 @@ Worked example: **InferX** (`https://model.inferx.net/endpoints/v1`, key
 route `/inferx`. This doc records what the addition actually touched — and,
 more usefully, the places it *surprisingly* did and did not need to touch, so
 the next provider is a checklist instead of an archaeology dig.
+
+> **Read the mapping first.** The worked example predates the by-agent merge
+> and the two rounds of folds, so its file names no longer resolve. It is
+> kept as the *record* of what the addition touched; for the current shape of
+> each file, follow this table:
+>
+> | d032 names | today |
+> |---|---|
+> | `generate-cloud-providers.mjs`, `merge-models-json.mjs`, `generate-cloud-alternative-providers.mjs` | `coding-agent/generate-pi-coding-agent.mjs` (by-agent merge, docs/d037) |
+> | `generate-opencode.jsonc.mjs` | `coding-agent/generate-opencode.mjs` (docs/d072) |
+> | `coding-agent/hyper-facts.mjs`, `provider-facts.mjs`, `catwalk-facts.mjs` | `coding-agent/catalog-facts.mjs` (docs/d072) |
+> | `llm-reverse-proxy/generate-config.mjs` | `llm-reverse-proxy/generate.mjs` (docs/d041) |
+> | `peer-probe.mjs` | `coding-agent/route-probe.mjs` ("peer" retired, docs/d071) |
+> | `coding-agent/generate.sh` | unchanged (the node-run shim, docs/d041) |
 
 ## The two sources of truth a new provider lives in
 

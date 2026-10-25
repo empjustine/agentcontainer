@@ -14,8 +14,9 @@
  * generate.sh shim, so children run under process.execPath (the same pinned
  * node).
  *
- * Env: pass-through — SKIP_GEN, OPENCODE_CONFIG_DIR,
- * PI_CODING_AGENT_DIR, LOCAL_INFERENCE all reach the folder generators untouched.
+ * Env: pass-through — OPENCODE_CONFIG_DIR, PI_CODING_AGENT_DIR,
+ * LOCAL_INFERENCE reach the folder generators untouched (each is read by the
+ * folder that owns it; `SKIP_GEN` was retired in docs/d070).
  */
 
 import { spawnSync } from "node:child_process";

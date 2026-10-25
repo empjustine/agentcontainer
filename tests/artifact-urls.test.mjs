@@ -17,8 +17,12 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-const { committedViolations, installedViolations, providerUrlsOf } =
-	await import("../coding-agent/check-routed-artifacts.mjs");
+const {
+	committedViolations,
+	installedViolations,
+	providerUrlsOf,
+	rewriteProviderUrls,
+} = await import("../coding-agent/check-routed-artifacts.mjs");
 const { routeUrlFromCanonical } = await import("../coding-agent/route-probe.mjs");
 const { CLOUD_PROVIDERS } = await import("../lib/cloud-providers.mjs");
 
@@ -153,6 +157,46 @@ test("routeUrlFromCanonical composes the d047 host-form route and fails closed",
 			),
 		/is not the fact-table upstream/,
 	);
+});
+
+// Substitution and verification share ONE walker (rewriteProviderUrls +
+// installedViolations), which is what lets generate.mjs own no copy of the
+// rule: a canonical doc rewritten with routeUrlFromCanonical must satisfy the
+// installed detector, in both artifact shapes.
+test("rewriteProviderUrls routes a pi doc through the fact table", () => {
+	const base = "https://proxy.example/bucket";
+	/** @type {any} */
+	const doc = {
+		providers: {
+			"llama-swap": { baseUrl: "https://bazzite.coelacanth-barb.ts.net/v1" },
+			mistral: { baseUrl: CLOUD_PROVIDERS["mistral"]?.baseUrl },
+			unroutable: { models: [] },
+		},
+	};
+	rewriteProviderUrls(doc, (factId, url) => routeUrlFromCanonical(base, factId, url));
+	assert.deepEqual(installedViolations(doc, base), []);
+	assert.equal(
+		doc.providers["llama-swap"].baseUrl,
+		`${base}/bazzite.coelacanth-barb.ts.net/v1`,
+	);
+	assert.equal(doc.providers.unroutable.models.length, 0);
+});
+
+test("rewriteProviderUrls maps opencode's local to the llama-swap fact row", () => {
+	const base = "https://proxy.example/bucket";
+	/** @type {any} */
+	const doc = {
+		provider: {
+			local: { options: { baseURL: "https://bazzite.coelacanth-barb.ts.net/v1" } },
+			blocker: { models: {} },
+		},
+	};
+	rewriteProviderUrls(doc, (factId, url) => routeUrlFromCanonical(base, factId, url));
+	assert.equal(
+		doc.provider.local.options.baseURL,
+		`${base}/bazzite.coelacanth-barb.ts.net/v1`,
+	);
+	assert.deepEqual(installedViolations(doc, base), []);
 });
 
 test("providerUrlsOf reads both pi and opencode artifact shapes", () => {

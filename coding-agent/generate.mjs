@@ -7,24 +7,25 @@
  * dir under RUN_DIR; docs/d072 retired the scratch staging of code, lib
  * modules and caches (see the output-dir block below).
  *
- * Profile, detected at runtime:
- *   Termux (PREFIX under /data/data/com.termux):
- *     - system node (Termux's bionic build; no mise) — pi's own engines
- *       enforce the >= 22.19 floor when it launches
- *     - secrets arrive as plain environment, via the explicit chain
- *       (./lib/environment.sh ./generate.sh)
- *     - vendored models.dev catalog by default (no refetch over mobile data)
- *   Everywhere else (host or inside the coding-agent container):
- *     - the orchestrator itself was resolved through lib/node-run.sh by the
- *       generate.sh shim; stages run via process.execPath (same pinned node)
- *     - secrets expected ALREADY IN the environment by the caller (run.sh is
- *       exec'd through lib/environment.sh and forwards the vault env through
- *       the workload_env allowlist)
- *     - models.dev catalog refreshed best-effort
- *     - route probes and install-time substitution go through the
- *       vault-sourced $REVERSE_PROXY_BASE_URLS (comma/newline multi-hop
- *       candidates — see route-probe.mjs; the one base env this repo reads,
- *       docs/d071)
+ * Profile, detected at runtime — only the committed-snapshot copy-back and
+ * the opencode stage actually branch on it; everything else, the models.dev
+ * refresh included, is identical:
+ *   Termux (PREFIX under /data/data/com.termux): system node (Termux's
+ *     bionic build; pi's own engines enforce the >= 22.19 floor when it
+ *     launches) and secrets arriving as plain environment, via the explicit
+ *     chain (./lib/environment.sh ./generate.sh). The committed snapshot is
+ *     not consumed here — pi reads the agent dir directly, which is why the
+ *     copy-back is container-only (docs/d059).
+ *   Everywhere else (host or inside the coding-agent container): stages run
+ *     via process.execPath (the same pinned node the generate.sh shim
+ *     resolved through lib/node-run.sh), and secrets are expected ALREADY IN
+ *     the environment by the caller (run.sh is exec'd through
+ *     lib/environment.sh and forwards the vault env through the workload_env
+ *     allowlist).
+ *
+ * Route probes and install-time substitution go through the vault-sourced
+ * $REVERSE_PROXY_BASE_URLS (comma/newline multi-hop candidates — see
+ * route-probe.mjs; the one base env this repo reads, docs/d071).
  *
  * Generators, one per coding agent (the broad BY-AGENT merge that supersedes
  * docs/d037's narrow verdict):
@@ -35,25 +36,16 @@
  *                                    without OPENCODE_CONFIG_DIR)
  *
  * Outputs are installed into TWO places (there is no separate install step):
- * the pi agent dir (models.json + settings.json + the static mcp.json,
- * models/settings backed up as .bak-<ts>)
- * AND, on container hosts, this dir's own committed snapshot (models.json +
- * model-*.json) — the CANONICAL form (real upstream URLs, docs/d070) that a
- * regeneration's git diff reviews (docs/d041's "the committed config is the
- * runtime config"). The agent-dir copies are
- * GENERATED EPHEMERAL files: the install target is the live dir in every
- * environment (bare host and Termux: $HOME/.pi/agent; in-container: the
- * pinned mount), so pi itself always sees the fresh list. Overwriting
- * whatever pi left there is by design — pi re-persists its own runtime
- * fields (theme, lastChangelogVersion) on the next run; the committed
- * settings.json is the source of truth for everything else. mcp.json is the
- * one exception: it is MERGED, committed servers as defaults UNDER the
- * operator's own entries, because this dir is shared with the host pi and a
- * clobber would delete its personal servers (docs/d061). The committed
- * snapshot refresh is container-only: on Termux pi reads the agent dir
- * directly and no runner consumes the committed copy (docs/d059). A
- * read-only scriptDir (e.g. a copied folder
- * mounted ro) only warns.
+ * the pi agent dir — the LIVE dir in every environment, bare host and
+ * in-container alike — and, on container hosts, this dir's own committed
+ * snapshot (models.json + model-*.json): the CANONICAL form (real upstream
+ * URLs, docs/d070) that a regeneration's git diff reviews (docs/d041).
+ * Overwriting whatever pi left in the agent dir is deliberate: pi
+ * re-persists its own runtime fields on the next run, and the committed
+ * snapshot is the source of truth for everything else. mcp.json is the one
+ * MERGE rather than a replace — this dir is shared with the host pi, and a
+ * clobber would delete the operator's own servers (docs/d061). A read-only
+ * scriptDir only warns.
  *
  * Env overrides:
  *   PI_CODING_AGENT_DIR  install dir (default ~/.pi/agent) — pi's own
@@ -111,6 +103,12 @@ import {
 	reverseProxyBaseUrls,
 	routeUrlFromCanonical,
 } from "./route-probe.mjs";
+// The artifact walker + d070 verifier: the ONE implementation of the URL-form
+// rule, shared with run.sh's launch check and tests/artifact-urls.test.mjs.
+import {
+	installedViolations,
+	rewriteProviderUrls,
+} from "./check-routed-artifacts.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = dirname(scriptDir);
@@ -122,10 +120,6 @@ const { logError, logInfo, logWarn, setLogTool } =
 const { serializeArtifact, writeArtifact } =
 	/** @type {typeof import("../lib/artifact.mjs")} */ (
 		await import(`${LIB_DIR}/artifact.mjs`)
-	);
-const { CLOUD_PROVIDERS } =
-	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
-		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
 setLogTool("coding-agent/generate");
 
@@ -232,123 +226,28 @@ function readMcpConfig(path) {
 
 // --- route substitution (docs/d070) -----------------------------------------
 /**
- * The canonical-URL detector's upstream prefixes (docs/d070 Consequences,
- * sharpened during implementation): every fact-table upstream URL, llama-
- * swap's serve upstream included — the ONE source, same table everything
- * else here derives from. An installed URL starting with one of these (at a
- * path boundary) is a canonical URL that escaped substitution. Deliberately
- * NOT a host-set check: the configured base can share a host with a fact
- * row (bazzite is both funnel and llama-swap host — d027/d070), which a
- * host-based detector would false-positive on every install.
- * @type {readonly string[]}
- */
-const FACT_UPSTREAMS = Object.freeze(
-	Object.values(CLOUD_PROVIDERS).map((f) => f.baseUrl),
-);
-
-/**
- * opencode names the local llama-swap farm `local` in its provider map
- * (consumer-side name); the fact table keys it `llama-swap`. The ONE id
- * alias in the substitution — everything else maps to itself.
- * @type {Readonly<Record<string, string>>}
- */
-const OPENCODE_PROVIDER_FACT_IDS = Object.freeze({ local: "llama-swap" });
-
-/**
- * @typedef {{ providers?: Record<string, { baseUrl?: string }> }} PiModelsDoc
- */
-
-/**
- * @typedef {{ provider?: Record<string, { options?: { baseURL?: string } }> }} OpenCodeConfigDoc
- */
-
-/**
- * Rewrite a CANONICAL generated models.json into the installed route form
- * (d070 §3): each provider's baseUrl goes through routeUrlFromCanonical,
- * keyed by provider id through the fact table — never by string-matching the
- * URL. A provider id with no fact-table upstream throws: artifact and fact
- * table disagreeing must abort the install, not ship one URL's guess.
- * @param {PiModelsDoc} doc
+ * Canonical artifact in, installed route form out (docs/d070 §3): every
+ * provider URL goes through routeUrlFromCanonical keyed by provider id
+ * through the fact table — never by string-matching the URL — and the result
+ * must pass the SHARED verifier (§5) before anything is written. Walker and
+ * check are check-routed-artifacts.mjs's own, so the substitution cannot
+ * drift from the rule that guards it, and a provider id the fact table does
+ * not know aborts the install instead of shipping one URL's guess.
+ * @param {unknown} doc parsed CANONICAL artifact, rewritten in place
  * @param {string} base the FIRST configured reverse-proxy base (d070 §4:
  *   availability never selects a URL)
- * @returns {PiModelsDoc} the same doc, mutated to route form
- */
-function routePiProviders(doc, base) {
-	for (const [id, provider] of Object.entries(doc.providers ?? {})) {
-		if (typeof provider?.baseUrl !== "string") continue;
-		provider.baseUrl = routeUrlFromCanonical(base, id, provider.baseUrl);
-	}
-	return doc;
-}
-
-/**
- * The opencode twin of routePiProviders (d070 §3): options.baseURL per
- * provider entry, with the one `local` → `llama-swap` id alias.
- * @param {OpenCodeConfigDoc} doc
- * @param {string} base see routePiProviders
- * @returns {OpenCodeConfigDoc} the same doc, mutated to route form
- */
-function routeOpenCodeProviders(doc, base) {
-	for (const [id, entry] of Object.entries(doc.provider ?? {})) {
-		const options = entry?.options;
-		const url = options?.baseURL;
-		if (!options || typeof url !== "string") continue;
-		const factId = OPENCODE_PROVIDER_FACT_IDS[id] ?? id;
-		options.baseURL = routeUrlFromCanonical(base, factId, url);
-	}
-	return doc;
-}
-
-/**
- * d070 §5's install check: zero canonical URLs — every installed provider
- * URL must live under the configured base, and none may start with a
- * fact-table upstream (path-boundary prefix — see FACT_UPSTREAMS for why
- * not a host check). Throws with the offending provider id so a failed
- * check names the row to fix.
- * @param {readonly { id: string, url?: string }[]} providerUrls
- * @param {string} base the configured install base
- * @param {string} label artifact being verified (error context)
+ * @param {string} label artifact being installed (error context)
  * @returns {void}
- * @throws {Error} on any canonical or un-routed URL
+ * @throws {Error} on a fact-table miss or a URL that escaped substitution
  */
-function assertInstalledRouted(providerUrls, base, label) {
-	for (const { id, url } of providerUrls) {
-		if (url === undefined) continue;
-		try {
-			new URL(url);
-		} catch {
-			throw new Error(`${label}: provider ${id} has a non-URL baseUrl ${JSON.stringify(url)}`);
-		}
-		const canonical = FACT_UPSTREAMS.find(
-			(upstream) => url === upstream || url.startsWith(`${upstream}/`),
-		);
-		if (canonical !== undefined) {
-			throw new Error(
-				`${label}: provider ${id} still carries canonical upstream ${canonical} — substitution failed or was skipped (docs/d070 §5)`,
-			);
-		}
-		if (!url.startsWith(`${base}/`)) {
-			throw new Error(
-				`${label}: provider ${id} URL is not under the configured base ${base} (docs/d070 §5)`,
-			);
-		}
+function installRouted(doc, base, label) {
+	rewriteProviderUrls(doc, (factId, url) =>
+		routeUrlFromCanonical(base, factId, url),
+	);
+	const violations = installedViolations(doc, base);
+	if (violations.length) {
+		throw new Error(label + ": " + violations.join("; ") + " (docs/d070 §5)");
 	}
-}
-
-/** @param {{ providers?: Record<string, { baseUrl?: string }> }} doc */
-function piProviderUrls(doc) {
-	return Object.entries(doc.providers ?? {}).map(([id, p]) => ({
-		id,
-		url: p?.baseUrl,
-	}));
-}
-
-/** @param {{ provider?: Record<string, { options?: { baseURL?: string } }> }} doc */
-function openCodeProviderUrls(doc) {
-	return Object.entries(doc.provider ?? {}).map(([id, p]) => ({
-		id,
-		url: p?.options?.baseURL,
-	}));
 }
 
 /**
@@ -621,11 +520,8 @@ if (modelsOut) {
 		process.exit(1);
 	}
 	const installBase = requireInstallBase("models-install");
-	const installed = routePiProviders(
-		/** @type {any} */ (JSON.parse(readFileSync(modelsOut, "utf-8"))),
-		installBase,
-	);
-	assertInstalledRouted(piProviderUrls(installed), installBase, "models.json");
+	const installed = /** @type {any} */ (JSON.parse(readFileSync(modelsOut, "utf-8")));
+	installRouted(installed, installBase, "models.json");
 	if (existsSync(join(agentDir, "models.json"))) {
 		copyFileSync(
 			join(agentDir, "models.json"),
@@ -706,15 +602,8 @@ if (ocOut && existsSync(join(scriptDir, "generate-opencode.mjs"))) {
 	// Best-effort .bak insurance, same as the settings/models installs above:
 	// generated ephemeral files, not a preservation contract.
 	const ocBase = requireInstallBase("opencode-config");
-	const ocInstalled = routeOpenCodeProviders(
-		/** @type {any} */ (JSON.parse(readFileSync(ocOut, "utf-8"))),
-		ocBase,
-	);
-	assertInstalledRouted(
-		openCodeProviderUrls(ocInstalled),
-		ocBase,
-		"opencode.json",
-	);
+	const ocInstalled = /** @type {any} */ (JSON.parse(readFileSync(ocOut, "utf-8")));
+	installRouted(ocInstalled, ocBase, "opencode.json");
 	mkdirSync(ocHostDir, { recursive: true });
 	const ocHost = join(ocHostDir, "opencode.json");
 	if (existsSync(ocHost)) {

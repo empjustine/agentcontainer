@@ -4,30 +4,21 @@
  * (docs/d027, d063 — no direct models.dev leg: outside llm-reverse-proxy,
  * everything is proxy-only):
  *
- *   1. RELAY — reverse-proxy URLs only (relayCandidates, route-probe.mjs):
- *      the operator's MODELS_DEV_RELAY_URL when set (empty = no relay at
- *      all), else the vault reverse-proxy host-form routes, one candidate
- *      per configured base in order — no implicit localhost candidate
- *      (d063 §5 as amended; a local proxy is a listed base entry). The
- *      relay forwards models.dev byte-for-byte, so the response is
- *      validated exactly like a direct one.
- *   2. STALE COPY — last resort: any failure above leaves the existing
- *      vendored file intact and generation proceeds with it.
+ * The chain is relay-only (relayCandidates, route-probe.mjs): the
+ * operator's MODELS_DEV_RELAY_URL when set (empty = no relay at all), else
+ * the vault reverse-proxy host-form routes, one candidate per configured
+ * base in order — no implicit localhost candidate (d063 §5 as amended; a
+ * local proxy is a listed base entry). The relay forwards models.dev
+ * byte-for-byte, so the response is validated exactly like a direct one.
  *
- * Designed to be SAFE to call from both generate.sh scripts on every run:
- * it never clobbers the existing file on failure.
- *
- *   - download is written to a temp file next to the target, validated, then
- *     atomically renamed into place — a failed/partial download never touches
- *     the live catalog.
- *   - any error (network, non-200, invalid JSON, unexpected shape, truncated
- *     payload) just advances to the next source; the current file is left
- *     intact.
- *   - this is why it can run in restricted environments (air-gapped hosts,
- *     behind a reverse proxy that blocks direct egress): the fetches fail
- *     and generation proceeds with the last good vendored copy.
- *   - proxy env is honored natively by Node (NODE_USE_ENV_PROXY=1, set by
- *     lib/node-run.sh; docs/d074) — no repo-side dispatcher.
+ * The stale-copy fallback is why this is safe to call on every run, air-
+ * gapped hosts and egress-blocking proxies included: no failure here is a
+ * precondition for generation, and none can clobber the last good catalog —
+ * a payload is validated in memory and only then renamed over the live file,
+ * so a network error, non-200, invalid JSON, unexpected shape or truncated
+ * download just advances to the next candidate. Proxy env is honored
+ * natively by Node (NODE_USE_ENV_PROXY=1, set by lib/node-run.sh; docs/d074)
+ * — no repo-side dispatcher.
  *
  * Validation is scoped to what the generators consume from the catalog (see
  * coding-agent/generate-pi-coding-agent.mjs): every listed
@@ -43,9 +34,10 @@
  *   REVERSE_PROXY_BASE_URLS chain entirely; set to empty to disable relays
  *   — the stale vendored copy then always wins).
  *
- * Lives in coding-agent/ (its only invoker is coding-agent/generate.sh —
- * docs/d039) but writes the SHARED vendored catalog: ../lib stays the catalog
- * home because llm-reverse-proxy/generate-config.mjs reads it too.
+ * Lives in coding-agent/ (its invoker is coding-agent/generate.mjs, which
+ * points it at this run's catalog path — docs/d039) but writes the SHARED
+ * vendored catalog: ../lib stays the catalog home because
+ * llm-reverse-proxy/generate.mjs reads it too.
  */
 
 import { dirname, join } from "node:path";
@@ -140,10 +132,6 @@ async function fetchCatalog(url, { via }) {
  * @returns {Promise<void>}
  */
 async function main() {
-	// Fallback chain (docs/d027, d063): reverse-proxy relay candidates →
-	// stale vendored copy. Each candidate is validated identically before
-	// the atomic rename; the stale file is only ever touched after a fully
-	// validated payload exists.
 	let res = null;
 	let via = "";
 	let url = "";

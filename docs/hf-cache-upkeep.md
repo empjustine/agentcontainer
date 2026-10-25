@@ -91,6 +91,12 @@ from Hugging Face (the `README.md` of each repo in
 `llamacpp-model-data.json`). File names are the repo id verbatim — the same
 value used in the derived model ids — so cards always match the ids.
 
+The mirrors are the upstream `README.md` byte-for-byte, so their
+repo-relative image links (`./img/…`) dangle locally: images are not
+mirrored on purpose (the cards are read for content, and a picture copy would
+bloat the repo to serve nothing). A broken image in a card is that, not a
+missing fetch — read the diagrams on the Hub.
+
 ## Related
 
 The containerized "huggingface environment" + `models-local/` flat layout +

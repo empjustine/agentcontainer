@@ -13,6 +13,10 @@
 // The pinning rule (VPN-R36) is the load-bearing invariant: resolve ONCE,
 // validate every address, dial a validated address — never re-resolve —
 // so a rebinding DNS answer cannot swap the destination after the check.
+//
+// The d047 host allowlist is deliberately absent from this path: it is mode
+// A's control; this table is the whole policy for the forward-proxy modes
+// (docs/d080).
 package main
 
 import (
