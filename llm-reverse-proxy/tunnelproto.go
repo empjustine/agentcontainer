@@ -7,7 +7,9 @@
 // the codec reads as a byte-stream protocol and survives a future transport
 // change (and makes the mux a field addition, not a redesign — the stream id
 // is reserved from version 1 exactly so VPN-R17's v3 mux is additive).
-// One tunnel frame rides in one WebSocket binary message.
+// Each mode adapts its carrier to the tunnelStream interface below: one
+// frame rides in one WebSocket binary message (mode D), or is delimited by
+// its own length prefix inside an HTTP body (mode C — docs/d077 §5).
 //
 // Authentication does NOT appear here (VPN-R12): credentials ride the
 // WebSocket handshake header, so by the time a HELLO is decoded the peer is
@@ -19,6 +21,8 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
+	"time"
 )
 
 // Tunnel protocol version and HELLO magic (VPN-R15: "a fixed magic/version
@@ -70,6 +74,49 @@ const (
 // tunnel down (there is no in-protocol recovery — one stream, one life).
 var ErrProtocol = errors.New("tunnel protocol error")
 
+// tunnelStream is one session's transport carrier (docs/d077 §5): the
+// WebSocket message pipe of mode D today, the HTTP request/response bodies
+// of mode C. Every phase — HELLO, CONNECT, the relay — speaks only this, so
+// a new mode is an implementation and zero session logic. readTunnelMsg and
+// writeTunnelMsg each carry exactly ONE complete encoded frame; the frame
+// layer decides nothing about message boundaries, so a carrier without them
+// (a plain body) delimits with the length prefix instead.
+type tunnelStream interface {
+	readTunnelMsg() ([]byte, error)
+	writeTunnelMsg(msg []byte) error
+	// setReadDeadline bounds the next read; the zero time clears it
+	// (VPN-R39/R14: the handshake bounds it, the relay owns it after).
+	setReadDeadline(t time.Time) error
+	// protocolViolation aborts the session with the carrier's in-band
+	// signal, if it has one (a WebSocket close frame does; a body does not).
+	protocolViolation()
+	// transport names the carrier for the lifecycle log — h2 | wss | post
+	// (docs/d077 §4).
+	transport() string
+	io.Closer
+}
+
+// readFrameFromStream reads one length-prefixed frame off a carrier that has
+// no message boundary of its own (docs/d077 §5): the header declares the
+// payload, so ReadFull returns exactly one frame. The declared length is
+// checked against the cap BEFORE the allocation (VPN-R39).
+func readFrameFromStream(r io.Reader) ([]byte, error) {
+	var hdr [frameHeaderLen]byte
+	if _, err := io.ReadFull(r, hdr[:]); err != nil {
+		return nil, err
+	}
+	n := binary.BigEndian.Uint32(hdr[0:4])
+	if n > maxFramePayload {
+		return nil, fmt.Errorf("%w: declared payload %d exceeds %d", ErrProtocol, n, maxFramePayload)
+	}
+	msg := make([]byte, frameHeaderLen+int(n))
+	copy(msg, hdr[:])
+	if _, err := io.ReadFull(r, msg[frameHeaderLen:]); err != nil {
+		return nil, err
+	}
+	return msg, nil
+}
+
 // encodeFrame renders one frame: fixed header + payload.
 func encodeFrame(typ byte, stream uint16, payload []byte) ([]byte, error) {
 	if len(payload) > maxFramePayload {
@@ -118,19 +165,12 @@ func definedFrameType(typ byte) bool {
 	return typ >= frameHello && typ <= frameData
 }
 
-// readTunnelFrame reads one WebSocket message carrying exactly one protocol
-// frame. The tunnel protocol is binary-only (VPN-R15); readMessage has
-// already consumed control frames, so anything non-binary here is a peer
-// speaking the wrong protocol.
-func readTunnelFrame(ws *wsConn) ([]byte, error) {
-	opcode, msg, err := ws.readMessage()
-	if err != nil {
-		return nil, err
-	}
-	if opcode != wsOpBinary {
-		return nil, fmt.Errorf("%W: non-binary message in the tunnel", ErrProtocol)
-	}
-	return msg, nil
+// readTunnelFrame reads one complete protocol frame from any carrier; the
+// carrier's own readTunnelMsg enforces its dialect (the tunnel protocol is
+// binary-only — VPN-R15 — which the WebSocket impl checks, and a body needs
+// no check beyond the length prefix).
+func readTunnelFrame(s tunnelStream) ([]byte, error) {
+	return s.readTunnelMsg()
 }
 
 // encodeHello renders the opening HELLO payload: magic, version, then the

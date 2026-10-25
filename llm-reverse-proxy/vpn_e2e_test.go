@@ -95,7 +95,7 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	t.Setenv(envClientLabel, "e2e-label")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := clientConfigFromEnv(httpAddr, socksAddr)
+	cfg, err := clientConfigFromEnv(httpAddr, socksAddr, "d")
 	if err != nil {
 		t.Fatal(err)
 	}

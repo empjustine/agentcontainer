@@ -54,12 +54,17 @@ type clientConfig struct {
 	label     string
 	proxyAddr string // HTTP CONNECT listener (must be loopback, VPN-R23)
 	socksAddr string // SOCKS5 listener (must be loopback, VPN-R23)
+	// modes is the transport offer set — which built modes the negotiation
+	// may choose (docs/d077 §4). A mode that is built but not listed here
+	// is OFF: spikes gate adoption, so shipping the code must not flip
+	// traffic onto a mode whose L3 measurement has not been taken.
+	modes string
 }
 
 // clientConfigFromEnv assembles the config from the flag values and the
 // environment. Nothing else may configure the client (one path, no
 // scattered defaults — d072's lesson applied).
-func clientConfigFromEnv(proxyAddr, socksAddr string) (clientConfig, error) {
+func clientConfigFromEnv(proxyAddr, socksAddr, modes string) (clientConfig, error) {
 	var cfg clientConfig
 	raw := os.Getenv(envTunnelURL)
 	if raw == "" {
@@ -80,6 +85,7 @@ func clientConfigFromEnv(proxyAddr, socksAddr string) (clientConfig, error) {
 	cfg.label = os.Getenv(envClientLabel)
 	cfg.proxyAddr = proxyAddr
 	cfg.socksAddr = socksAddr
+	cfg.modes = modes
 	return cfg, nil
 }
 
@@ -93,6 +99,11 @@ func (cfg *clientConfig) validate() error {
 	if cfg.tunnelURL == nil {
 		return fmt.Errorf("no tunnel URL configured (%s)", envTunnelURL)
 	}
+	modes, err := parseClientModes(cfg.modes)
+	if err != nil {
+		return err
+	}
+	cfg.modes = modes
 	for what, addr := range map[string]string{"http proxy": cfg.proxyAddr, "socks5": cfg.socksAddr} {
 		if err := requireLoopback(addr); err != nil {
 			return fmt.Errorf("%s listener: %w", what, err)
@@ -160,8 +171,10 @@ func runClient(ctx context.Context, cfg clientConfig) error {
 	c := &vpnClient{cfg: cfg}
 	// The log shows WHICH tunnel endpoint (host only): the path embeds the
 	// capability prefix, which must not land in any log (VPN-R44).
-	log.Printf("[vpn-client] listeners http=%s socks5=%s tunnel=%s://%s",
-		proxyLn.Addr(), socksLn.Addr(), cfg.tunnelURL.Scheme, cfg.tunnelURL.Host)
+	// The log shows WHICH carriers are on offer (d077 §4): the mode set is
+	// the operator-visible half of the negotiation story.
+	log.Printf("[vpn-client] listeners http=%s socks5=%s tunnel=%s://%s modes=%s",
+		proxyLn.Addr(), socksLn.Addr(), cfg.tunnelURL.Scheme, cfg.tunnelURL.Host, cfg.modes)
 
 	httpSrv := &http.Server{
 		Handler:           c,
@@ -213,10 +226,80 @@ func deniedReason(reason string) bool {
 // Success returns a live, unmuxed tunnel (VPN-R17: one wss per CONNECT in
 // v2 — no session reuse yet, so every local connection pays one handshake;
 // the v3 mux is what removes that).
-func (c *vpnClient) openTunnel(ctx context.Context, target string) (*wsConn, error) {
+// parseClientModes normalizes -modes into the offer set (docs/d077 §4):
+// exactly which BUILT transports negotiation may choose. Fail loudly
+// (NFR-2): asking for a mode that does not exist — or for none at all — is
+// a config error, never something to route around, because silently
+// dropping a mode changes the traffic shape without telling the operator.
+func parseClientModes(raw string) (string, error) {
+	var hasC, hasD bool
+	for _, r := range strings.ToLower(raw) {
+		switch r {
+		case 'c':
+			hasC = true
+		case 'd':
+			hasD = true
+		case 'e':
+			return "", fmt.Errorf("mode E is not built (d077 §8: spike L4 settles its mechanics)")
+		case ',', ' ':
+		default:
+			return "", fmt.Errorf("unknown mode %q (built modes: c, d — d077 §4)", r)
+		}
+	}
+	if !hasC && !hasD {
+		return "", fmt.Errorf("-modes must name at least one built mode (c, d — d077 §4)")
+	}
+	out := ""
+	if hasC {
+		out += "c"
+	}
+	if hasD {
+		out += "d"
+	}
+	return out, nil
+}
+
+// dialTransport chooses the session's carrier from what the endpoint
+// actually supports (docs/d077 §4, "negotiation, not path"): the offer set
+// is cfg.modes, ALPN decides h2 versus http/1.1, and a mode that fails
+// routes around to the next as if it were censorship — the fallback never
+// retries in a way that would reveal intent, and with nothing left it
+// fails closed (VPN-R26).
+func (c *vpnClient) dialTransport(ctx context.Context) (tunnelStream, error) {
+	var cErr error
+	if strings.ContainsRune(c.cfg.modes, 'c') {
+		proto, err := alpnNegotiate(ctx, c.cfg.tunnelURL, []string{"h2", "http/1.1"})
+		if err == nil && proto == "h2" {
+			s, err := c.openPOST(ctx)
+			if err == nil {
+				log.Printf("[vpn-client] tunnel transport=%s", s.transport())
+				return s, nil
+			}
+			cErr = err
+		}
+		// No h2 landed is the ordinary h1 case — mode D below, logged by
+		// its own transport= line. A failed POST is worth saying out loud:
+		// it means the edge answered h2 but not the session (d077 §4 —
+		// route around it as if it were censorship).
+		if cErr != nil {
+			log.Printf("[vpn-client] mode C failed (%v), falling back to mode D", cErr)
+		}
+	}
 	hdr := make(http.Header)
 	hdr.Set("Authorization", "Bearer "+c.cfg.token)
 	ws, err := wsDial(ctx, c.cfg.tunnelURL, hdr)
+	if err != nil {
+		if cErr != nil {
+			return nil, fmt.Errorf("%w (mode C also failed: %v)", err, cErr)
+		}
+		return nil, err
+	}
+	log.Printf("[vpn-client] tunnel transport=%s", ws.transport())
+	return ws, nil
+}
+
+func (c *vpnClient) openTunnel(ctx context.Context, target string) (tunnelStream, error) {
+	s, err := c.dialTransport(ctx)
 	if err != nil {
 		err = fmt.Errorf("tunnel dial: %w", err)
 		c.noteError(err)
@@ -225,21 +308,21 @@ func (c *vpnClient) openTunnel(ctx context.Context, target string) (*wsConn, err
 	ok := false
 	defer func() {
 		if !ok {
-			_ = ws.Close()
+			_ = s.Close()
 		}
 	}()
 
-	_ = ws.conn.SetReadDeadline(time.Now().Add(tunnelHandshakeTimeout))
+	_ = s.setReadDeadline(time.Now().Add(tunnelHandshakeTimeout))
 	hello, err := encodeHello(c.cfg.label)
 	if err != nil {
 		c.noteError(err)
 		return nil, err
 	}
-	if err := sendFrame(ws, frameHello, hello); err != nil {
+	if err := sendFrame(s, frameHello, hello); err != nil {
 		c.noteError(err)
 		return nil, err
 	}
-	msg, err := readTunnelFrame(ws)
+	msg, err := readTunnelFrame(s)
 	if err != nil {
 		c.noteError(err)
 		return nil, fmt.Errorf("tunnel HELLO: %w", err)
@@ -251,11 +334,11 @@ func (c *vpnClient) openTunnel(ctx context.Context, target string) (*wsConn, err
 		return nil, err
 	}
 
-	if err := sendFrame(ws, frameConnect, []byte(target)); err != nil {
+	if err := sendFrame(s, frameConnect, []byte(target)); err != nil {
 		c.noteError(err)
 		return nil, err
 	}
-	msg, err = readTunnelFrame(ws)
+	msg, err = readTunnelFrame(s)
 	if err != nil {
 		c.noteError(err)
 		return nil, fmt.Errorf("tunnel CONNECT: %w", err)
@@ -278,10 +361,10 @@ func (c *vpnClient) openTunnel(ctx context.Context, target string) (*wsConn, err
 	}
 
 	// The relay owns the deadlines from here (VPN-R14).
-	_ = ws.conn.SetReadDeadline(time.Time{})
+	_ = s.setReadDeadline(time.Time{})
 	c.sessions.Add(1)
 	ok = true
-	return ws, nil
+	return s, nil
 }
 
 // ---------------------------------------------------------------------------

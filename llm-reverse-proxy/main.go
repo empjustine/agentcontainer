@@ -492,6 +492,7 @@ func main() {
 	mode := flag.String("mode", "server", "process role: \"server\" (reverse proxy) or \"client\" (tunnel client, modes C–E; docs/d073 §7)")
 	proxyListen := flag.String("proxy-listen", "127.0.0.1:3128", "client mode: loopback HTTP CONNECT listener")
 	socksListen := flag.String("socks-listen", "127.0.0.1:1080", "client mode: loopback SOCKS5 listener")
+	modes := flag.String("modes", "d", "client mode: transport letters to offer — c=HTTP/2 streaming POST, d=WebSocket (d077 §4; default d until spike L3 passes)")
 	flag.Parse()
 
 	// Disable Go's default timestamp prefix — the Combined Log Format lines
@@ -504,7 +505,7 @@ func main() {
 	// IS the kill switch (VPN-R26): a listener that could start without a
 	// credential would only exist to refuse everything anyway.
 	if *mode == "client" {
-		clientCfg, err := clientConfigFromEnv(*proxyListen, *socksListen)
+		clientCfg, err := clientConfigFromEnv(*proxyListen, *socksListen, *modes)
 		if err != nil {
 			log.Fatalf("[vpn-client] %v", err)
 		}

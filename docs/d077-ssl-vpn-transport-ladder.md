@@ -111,7 +111,11 @@ digest only) and the camouflage 404 (VPN-R34). What would change this posture
   logging (designed-to-be-logged, the mirror image of the scrubbed prefix);
   `span-id` changes per request hop, per W3C semantics. `tracestate`: unused
   initially (every propagated header is another mangle/log surface — YAGNI).
-- **Status:** not built.
+- **Status:** built and tested (mode C suite: a full session through an h2
+  front to an h1.1 backend — E2's shape — plus six concurrent sessions and
+  the camouflage 404s), but **off by default**: the client offers it only
+  when `-modes` includes `c` (the flag defaults to `d`), so spikes gate
+  adoption — L3 decides when Mode C takes traffic (§8).
 
 ### Mode D — HTTP/1.1 WebSocket (the deployed v2, unchanged)
 
@@ -161,13 +165,14 @@ dial TLS ── ALPN ─┬─ h2        → Mode C (upgrade never attempted on 
 
 - **Unbuilt modes are blocked modes.** Routing around an implementation we
   have not built is the same code path as routing around a path that refuses
-  it: the ALPN offer set and the upgrade probe include only built modes, so
+  it: the ALPN offer set — the client's `-modes` flag is that offer, in
+  letters — and the upgrade probe include only built modes, so
   an unbuilt Mode C never surfaces as a failed h2 session and an unbuilt
   Mode E never surfaces as a failed exchange — the client demotes to the next
   built mode exactly as it would for a censored mechanism. Built modes stay
   available throughout; fail-closed (VPN-R26) applies only when no built mode
-  remains. v2 ships Mode D only, so today this is the normal path, not an edge
-  case.
+  remains. The default offer is Mode D only (`-modes` defaults to `d`), so
+  today this is the normal path, not an edge case.
 - Demotion never reverses within a client session; the chosen mode is logged
   as a `transport` outcome field (h2 | wss | post) — transport choice is
   operational debugging data, not a secret.
@@ -196,8 +201,15 @@ Modes are byte-pipes; everything above the pipe is identical:
   `dialValidated` and friends are mode-independent (VPN-R20/21/22/35–R38).
 - **Client surface:** HTTP CONNECT + SOCKS5 listeners, `/healthz`, fail-closed
   refusal (VPN-R23/26/27) — never sees which mode is live.
-- **One `io.ReadWriteCloser` implementation per mode** feeding the same relay
-  pump; that is the whole implementation surface delta between modes.
+- **One carrier implementation per mode** of the session's `tunnelStream`
+  interface — read/write exactly one framed message, a read deadline, a
+  violation signal, a transport tag — feeding the same handshake and relay
+  pump. The interface is message-shaped, not byte-shaped, because a mode's
+  message boundary *is* its transport fact: WS messages arrive framed, body
+  carriers delimit with the length prefix (§3), and `protocolViolation` /
+  `transport()` hold vocabulary the relay must not know (close frame vs.
+  body end; `h2` | `wss` | `post`). That is the whole implementation surface
+  delta between modes.
 
 ## 6. Study A — `text/event-stream` as the Mode E response carrier (recorded; partially adopted)
 
@@ -338,8 +350,9 @@ policy showing path/token-based blocking of this tunnel (L5).
     constrains Funnel configuration, not handler-internal branching (d073
     §10, VPN-R42).
   All other requirements stand as written.
-- Delivery order is not decided here: Mode D exists; Modes C and E build when
-  a deployment environment needs them (L2 first — build the mode the real
-  gateway forces, not all three).
+- Delivery: Mode D shipped with v2; Mode C is now built but opt-in
+  (`-modes` default `d` — L3 gates the default, §8); Mode E still builds
+  when a deployment environment needs it, L4 first. L2 decides which mode
+  the work environment *uses*, not all three (§8).
 - Spikes S1/S2 (d073 §13) remain the Funnel-lifetime/streaming baseline for
   Mode D; L1–L4 are additive and do not replace them.

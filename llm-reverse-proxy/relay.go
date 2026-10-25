@@ -61,7 +61,7 @@ type closeWriter interface {
 // relay runs until both directions have half-closed (outcome "closed"),
 // one side fails, or the idle timer reaps the session. It closes both
 // `ws` and `local` before returning — callers own no cleanup.
-func relay(ws *wsConn, local net.Conn, keepalive, idle time.Duration) (relayStats, error) {
+func relay(s tunnelStream, local net.Conn, keepalive, idle time.Duration) (relayStats, error) {
 	var (
 		stats    relayStats
 		mu       sync.Mutex // first outcome wins; also carries its error
@@ -84,7 +84,7 @@ func relay(ws *wsConn, local net.Conn, keepalive, idle time.Duration) (relayStat
 	stop := func() {
 		stopOnce.Do(func() {
 			close(done)
-			_ = ws.Close()
+			_ = s.Close()
 			_ = local.Close()
 		})
 	}
@@ -111,8 +111,8 @@ func relay(ws *wsConn, local net.Conn, keepalive, idle time.Duration) (relayStat
 	go func() {
 		defer wg.Done()
 		for {
-			_ = ws.conn.SetReadDeadline(time.Now().Add(idle))
-			opcode, msg, err := ws.readMessage()
+			_ = s.setReadDeadline(time.Now().Add(idle))
+			msg, err := s.readTunnelMsg()
 			if err != nil {
 				switch {
 				case aborted():
@@ -127,14 +127,9 @@ func relay(ws *wsConn, local net.Conn, keepalive, idle time.Duration) (relayStat
 				stop()
 				return
 			}
-			if opcode != wsOpBinary {
-				setOutcome(outcomeProtocolError, errors.New("non-binary message outside the handshake"))
-				stop()
-				return
-			}
 			typ, _, payload, err := decodeFrame(msg)
 			if err != nil {
-				_ = ws.writeClose(wsCloseProtocolError)
+				s.protocolViolation()
 				setOutcome(outcomeProtocolError, err)
 				stop()
 				return
@@ -155,7 +150,7 @@ func relay(ws *wsConn, local net.Conn, keepalive, idle time.Duration) (relayStat
 				peerClosed.Store(true)
 				bothClosed()
 			case framePing:
-				if err := sendFrame(ws, framePong, payload); err != nil {
+				if err := sendFrame(s, framePong, payload); err != nil {
 					setOutcome(outcomePeerDisconnect, err)
 					stop()
 					return
@@ -167,7 +162,7 @@ func relay(ws *wsConn, local net.Conn, keepalive, idle time.Duration) (relayStat
 				// HELLO/CONNECT/CONNECTED/CONNECT_ERR belong to the session
 				// preamble (see tunnelserver.go / client.go); a control frame
 				// from the wrong phase is a protocol error.
-				_ = ws.writeClose(wsCloseProtocolError)
+				s.protocolViolation()
 				setOutcome(outcomeProtocolError, errors.New("session control frame during relay"))
 				stop()
 				return
@@ -185,7 +180,7 @@ func relay(ws *wsConn, local net.Conn, keepalive, idle time.Duration) (relayStat
 		for {
 			n, err := local.Read(buf)
 			if n > 0 {
-				if werr := sendFrame(ws, frameData, buf[:n]); werr != nil {
+				if werr := sendFrame(s, frameData, buf[:n]); werr != nil {
 					if !aborted() {
 						setOutcome(outcomePeerDisconnect, werr)
 						stop()
@@ -202,7 +197,7 @@ func relay(ws *wsConn, local net.Conn, keepalive, idle time.Duration) (relayStat
 					// Clean end of our direction: half-close, keep reading
 					// the other direction (VPN-R18's request-body-done,
 					// response-still-coming case).
-					_ = sendFrame(ws, frameClose, nil)
+					_ = sendFrame(s, frameClose, nil)
 					localEOF.Store(true)
 					bothClosed()
 					return
@@ -226,7 +221,7 @@ func relay(ws *wsConn, local net.Conn, keepalive, idle time.Duration) (relayStat
 			case <-done:
 				return
 			case <-ticker.C:
-				if err := sendFrame(ws, framePing, nil); err != nil {
+				if err := sendFrame(s, framePing, nil); err != nil {
 					if !aborted() {
 						setOutcome(outcomePeerDisconnect, err)
 						stop()
@@ -248,14 +243,16 @@ func relay(ws *wsConn, local net.Conn, keepalive, idle time.Duration) (relayStat
 	return stats, errFinal
 }
 
-// sendFrame encodes and writes one protocol frame as a WebSocket binary
-// message (one tunnel frame per message — d073 §5.1's framing choice).
-func sendFrame(ws *wsConn, typ byte, payload []byte) error {
+// sendFrame encodes and writes one protocol frame on any carrier: the
+// frame bytes are identical, the carrier decides how they are delimited —
+// one WebSocket binary message (d073 §5.1) or a length-prefixed span of an
+// HTTP body (docs/d077 §5).
+func sendFrame(s tunnelStream, typ byte, payload []byte) error {
 	msg, err := encodeFrame(typ, tunnelStreamV1, payload)
 	if err != nil {
 		return err
 	}
-	return ws.writeMessage(wsOpBinary, msg)
+	return s.writeTunnelMsg(msg)
 }
 
 // halfCloseWrite shuts the local socket's send direction so the local peer

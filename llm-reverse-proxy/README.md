@@ -16,11 +16,14 @@ pi-coding-agent / opencode were pointed at it through `llm-reverse-proxy/`;
 llm-reverse-proxy is the substrate llama-swap itself uses internally
 (`httputil.ReverseProxy`), extracted and stripped of everything else.
 
-> **Proposed expansion (docs/d073):** three modes — A (today's host
-> allowlist), B (authenticated generic relay), C (`CONNECT`-over-WebSocket
-> tunnel plus a localhost client proxy, so clients validate the target's real
-> certificate end-to-end and never trust the proxy). Requirements and a
-> feasibility verdict only; nothing here is implemented.
+> **Expansion (docs/d073, mode family revised by docs/d077):** modes A
+> (today's host allowlist), B (authenticated generic relay — deferred to
+> v3), C (h2 streaming POST — built, default-off behind `-modes`), D
+> (`CONNECT`-over-WebSocket tunnel plus a localhost client proxy, so clients
+> validate the target's real certificate end-to-end and never trust the
+> proxy — the deployed v2 shape), E (h1 POST floor — not built). The
+> requirements are d073's; negotiation, the framing contract, and adoption
+> gates (spikes) are d077's.
 
 Reference code: upstream llama-swap — github.com/mostlygeek/llama-swap
 (`internal/router/peer.go`, `internal/process/process_command.go`; docs tree
@@ -137,8 +140,10 @@ llama-swap's port model) — host networking is what makes the loopback
 `./llm-reverse-proxy.json`, the container mounts it at
 `/etc/llm-reverse-proxy/llm-reverse-proxy.json` (both overridable with
 `CONFIG`). Client role: NO config file — `VPN_TUNNEL_URL` (ws/wss; the
-path carries the capability prefix) and `VPN_OPERATOR_TOKEN` are its whole
-surface, with `VPN_CLIENT_LABEL` optional (defaults to the hostname) and
+path carries the capability prefix) and `VPN_OPERATOR_TOKEN` are its core
+surface, with `VPN_CLIENT_LABEL` optional (defaults to the hostname),
+`MODES` (transport letters to offer — `d` by default; `c` is the built h2
+POST mode, off until spike L3 passes, docs/d077 §8) and
 `PROXY_LISTEN`/`SOCKS_LISTEN` defaulting to `127.0.0.1:3128`/`1080`;
 host networking is a requirement there too (the loopback listeners must
 be the HOST's loopback — VPN-R23 forbids exposing them — and the tunnel

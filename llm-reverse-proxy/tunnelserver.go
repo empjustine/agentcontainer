@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -105,6 +106,15 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 		writeFunnel404(w, r, t.redactedURI(r))
 		return
 	}
+	// Mode C arrival (docs/d077 §4): an authenticated POST with no upgrade
+	// is a session whose request body is the read half and whose response
+	// body is the write half — no 101, no hijack. The per-request bearer
+	// above is its whole auth (d077 §5: the credential rides every request,
+	// since a body session has no handshake header of its own).
+	if r.Method == http.MethodPost && !headerHasToken(r.Header, "Upgrade", "websocket") {
+		t.serveTunnelPOST(w, r, keyID)
+		return
+	}
 	// Factor 2: the request must actually be a v13 websocket upgrade with a
 	// well-formed key; anything else is not a tunnel request at all.
 	resp, err := wsAccept(r)
@@ -152,6 +162,106 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	go t.runSession(ws)
 }
 
+// serveTunnelPOST runs a mode C session (docs/d077 §3): the response
+// headers are the session-open signal, and unlike the 101 path the handler
+// must stay alive for the whole session — returning would end the response
+// body that carries it. Attribution happens at the same point the 101 path
+// does it: after auth, before any session work (docs/d078 §5).
+func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, keyID string) {
+	log.Printf("[llm-reverse-proxy] tunnel session: authenticated key=%s", keyID)
+
+	lw := &loggingResponseWriter{ResponseWriter: w}
+	p := &postStream{r: r, w: lw}
+	defer p.Close()
+
+	// This response is the session-open signal: it must go out before the
+	// client has sent a single tunnel byte (d077 §5). net/http's h1 default
+	// is to drain the still-open request body first — which deadlocks
+	// against exactly this client, that waits for the response before it
+	// writes (Go Issue 15527). h2 is full duplex by default; this makes h1
+	// the same, and both implementations accept it unconditionally.
+	if err := http.NewResponseController(lw).EnableFullDuplex(); err != nil {
+		// Fail loudly: without full duplex the session would open and then
+		// hang, which reads as network loss rather than a defect (NFR-2).
+		log.Printf("[llm-reverse-proxy] tunnel mode C: full duplex unavailable: %v", err)
+		lw.WriteHeader(http.StatusInternalServerError)
+		logCombinedRequestURI(r, t.redactedURI(r), http.StatusInternalServerError, lw.size)
+		return
+	}
+
+	lw.WriteHeader(http.StatusOK)
+	if err := http.NewResponseController(lw).Flush(); err != nil {
+		// Headers never made it out: the session cannot exist. The status
+		// was not committed, so this is the honest CLF outcome.
+		logCombinedRequestURI(r, t.redactedURI(r), http.StatusInternalServerError, lw.size)
+		return
+	}
+	t.runSession(p)
+	logCombinedRequestURI(r, t.redactedURI(r), http.StatusOK, lw.size)
+}
+
+// postStream is mode C's carrier (docs/d077 §3/§5): frames ride the HTTP
+// request body inbound and the response body outbound. Everything the 101
+// path gets from owning its hijacked connection has to be re-earned here
+// through net/http's controllers — deadlines per read/write (VPN-R39) and a
+// write mutex so the relay's goroutines never interleave frames — while the
+// camouflage contract (VPN-R34) is already spent: an unauthenticated POST
+// never reached this type.
+type postStream struct {
+	r         *http.Request
+	w         http.ResponseWriter
+	wmu       sync.Mutex
+	closeOnce sync.Once
+}
+
+func (p *postStream) readTunnelMsg() ([]byte, error) {
+	return readFrameFromStream(p.r.Body)
+}
+
+func (p *postStream) writeTunnelMsg(msg []byte) error {
+	p.wmu.Lock()
+	defer p.wmu.Unlock()
+	// Same bound the hijacked path takes from its conn write deadline: a
+	// peer that stops draining must surface as an error, not a goroutine
+	// parked in a write (VPN-R39).
+	rc := http.NewResponseController(p.w)
+	_ = rc.SetWriteDeadline(time.Now().Add(tunnelKeepaliveInterval))
+	_, err := p.w.Write(msg)
+	if err == nil {
+		_ = rc.Flush()
+	}
+	_ = rc.SetWriteDeadline(time.Time{})
+	return err
+}
+
+// setReadDeadline reaches the connection under the ResponseWriter: the
+// request body reads from it, so the handshake's and the relay's read
+// bounds apply to the body exactly as they do to a hijacked socket.
+func (p *postStream) setReadDeadline(t time.Time) error {
+	return http.NewResponseController(p.w).SetReadDeadline(t)
+}
+
+// protocolViolation has no in-band signal to send: a body carries no close
+// frame vocabulary, so the teardown itself is the abort — the peer sees the
+// response body end (unambiguous without frames once the session's own
+// rules define it). See docs/d077 §5.
+func (p *postStream) protocolViolation() {}
+
+func (p *postStream) transport() string { return "post" }
+
+func (p *postStream) Close() error {
+	p.closeOnce.Do(func() {
+		// Deadlines must be cleared before the connection goes back to
+		// net/http: a stale write deadline would kill whatever the next
+		// keep-alive request tries to write.
+		rc := http.NewResponseController(p.w)
+		_ = rc.SetReadDeadline(time.Time{})
+		_ = rc.SetWriteDeadline(time.Time{})
+		_ = p.r.Body.Close()
+	})
+	return nil
+}
+
 // redactedURI is the CLF path for tunnel requests: the capability segment
 // never reaches our access log (VPN-R44; the Funnel edge still sees the
 // real path — accepted here exactly as d070 accepted the edge logging the
@@ -165,8 +275,10 @@ func (t *tunnelServer) redactedURI(r *http.Request) string {
 }
 
 // runSession is one tunnel's whole life: HELLO → CONNECT → relay →
-// lifecycle log (VPN-R16's frame set, VPN-R20's remote resolution).
-func (t *tunnelServer) runSession(ws *wsConn) {
+// lifecycle log (VPN-R16's frame set, VPN-R20's remote resolution). It is
+// carrier-agnostic (docs/d077 §5): the same session over the 101 path and
+// over a mode C body.
+func (t *tunnelServer) runSession(s tunnelStream) {
 	start := time.Now()
 	var (
 		label   string
@@ -175,17 +287,18 @@ func (t *tunnelServer) runSession(ws *wsConn) {
 		stats   relayStats
 	)
 	defer func() {
-		_ = ws.Close()
+		_ = s.Close()
 		// VPN-R19's contract: who (principal + label), where (target), how
 		// much (bytes/duration), outcome — nothing derivable from reading
 		// the stream, never the credential, prefix only as a digest
-		// (VPN-R44).
-		logTunnelLifecycle(t.prefix, label, target, start, stats, outcome)
+		// (VPN-R44); plus the carrier (docs/d077 §4: transport is
+		// operational debugging data, h2|wss|post).
+		logTunnelLifecycle(t.prefix, label, target, s.transport(), start, stats, outcome)
 	}()
 
 	// Phase 1 — HELLO (VPN-R16): magic, version, client label.
-	_ = ws.conn.SetReadDeadline(time.Now().Add(tunnelHandshakeTimeout))
-	helloMsg, err := readTunnelFrame(ws)
+	_ = s.setReadDeadline(time.Now().Add(tunnelHandshakeTimeout))
+	helloMsg, err := readTunnelFrame(s)
 	if err != nil {
 		return
 	}
@@ -198,14 +311,14 @@ func (t *tunnelServer) runSession(ws *wsConn) {
 		return
 	}
 	label = helloLabel
-	if err := sendFrame(ws, frameHelloOK, []byte{tunnelVersion}); err != nil {
+	if err := sendFrame(s, frameHelloOK, []byte{tunnelVersion}); err != nil {
 		return
 	}
 
 	// Phase 2 — CONNECT (VPN-R20..R22): parse, policy-check, resolve once,
 	// pin, dial.
-	_ = ws.conn.SetReadDeadline(time.Now().Add(tunnelHandshakeTimeout))
-	connectMsg, err := readTunnelFrame(ws)
+	_ = s.setReadDeadline(time.Now().Add(tunnelHandshakeTimeout))
+	connectMsg, err := readTunnelFrame(s)
 	if err != nil {
 		return
 	}
@@ -215,7 +328,7 @@ func (t *tunnelServer) runSession(ws *wsConn) {
 	}
 	target = string(payload)
 	failConnect := func(reason string) {
-		_ = sendFrame(ws, frameConnectErr, []byte(reason))
+		_ = sendFrame(s, frameConnectErr, []byte(reason))
 		outcome = reason
 	}
 	host, port, err := splitConnectTarget(target)
@@ -241,24 +354,27 @@ func (t *tunnelServer) runSession(ws *wsConn) {
 		return
 	}
 
-	if err := sendFrame(ws, frameConnected, nil); err != nil {
+	if err := sendFrame(s, frameConnected, nil); err != nil {
 		upConn.Close()
 		return
 	}
 	// The relay owns the deadlines from here (VPN-R14).
-	_ = ws.conn.SetReadDeadline(time.Time{})
+	_ = s.setReadDeadline(time.Time{})
 	// The pinned address stays out of the log on purpose: VPN-R19 allows
 	// "where" as the target the operator asked for, not resolver internals.
-	stats, _ = relay(ws, upConn, tunnelKeepaliveInterval, tunnelIdleTimeout)
+	stats, _ = relay(s, upConn, tunnelKeepaliveInterval, tunnelIdleTimeout)
 	outcome = stats.outcome
 }
 
 // logTunnelLifecycle renders the one log line per tunnel (VPN-R19/R44).
 // The prefix is reduced to a digest so operators can still tell WHICH
-// capability a session used without the log becoming a key store.
-func logTunnelLifecycle(prefix, label, target string, start time.Time, stats relayStats, outcome string) {
-	log.Printf("[vpn] who=operator label=%q target=%q tunnel=%s bytes_in=%d bytes_out=%d duration_ms=%d outcome=%s",
-		label, target, prefixDigest(prefix), stats.received, stats.sent,
+// capability a session used without the log becoming a key store. transport
+// is the carrier the session actually ran on (docs/d077 §4): at the server
+// that is what arrived — "post" for a mode C session, since a proxy strips
+// the ALPN evidence on the way in.
+func logTunnelLifecycle(prefix, label, target, transport string, start time.Time, stats relayStats, outcome string) {
+	log.Printf("[vpn] who=operator label=%q target=%q tunnel=%s transport=%s bytes_in=%d bytes_out=%d duration_ms=%d outcome=%s",
+		label, target, prefixDigest(prefix), transport, stats.received, stats.sent,
 		time.Since(start).Milliseconds(), outcome)
 }
 

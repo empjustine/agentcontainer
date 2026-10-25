@@ -89,10 +89,11 @@ if [ "$_workload" = 'workload' ]; then
 		# EMPTY value the client reads as "set" (lib/workload-runtime.sh).
 		# The capability prefix is not forwarded — it is part of the
 		# tunnel URL path, the client's only notion of it.
-		workload_env_allowlist VPN_TUNNEL_URL VPN_OPERATOR_TOKEN VPN_CLIENT_LABEL
+		workload_env_allowlist VPN_TUNNEL_URL VPN_OPERATOR_TOKEN VPN_CLIENT_LABEL MODES
 		workload_cmd -mode client \
 			-proxy-listen "${PROXY_LISTEN:-127.0.0.1:3128}" \
-			-socks-listen "${SOCKS_LISTEN:-127.0.0.1:1080}"
+			-socks-listen "${SOCKS_LISTEN:-127.0.0.1:1080}" \
+			-modes "${MODES:-d}"
 	else
 		workload_ro       "$config" /etc/llm-reverse-proxy/llm-reverse-proxy.json
 		workload_cmd      -config /etc/llm-reverse-proxy/llm-reverse-proxy.json -listen "0.0.0.0:$HOST_PORT"
@@ -118,7 +119,8 @@ else
 		log_info "serving (native, tunnel client)" bin="$bin"
 		exec "$bin" -mode client \
 			-proxy-listen "${PROXY_LISTEN:-127.0.0.1:3128}" \
-			-socks-listen "${SOCKS_LISTEN:-127.0.0.1:1080}"
+			-socks-listen "${SOCKS_LISTEN:-127.0.0.1:1080}" \
+			-modes "${MODES:-d}"
 	fi
 	log_info "serving (native, server)" bin="$bin" config="$config" listen="${LISTEN:-:8080}"
 	exec "$bin" -config "$config" -listen "${LISTEN:-:8080}"

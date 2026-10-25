@@ -369,6 +369,45 @@ func (w *wsConn) writeMessage(opcode byte, payload []byte) error {
 	return w.writeFrame(opcode, payload)
 }
 
+// The tunnelStream surface (docs/d077 §5): for the WebSocket carrier one
+// frame is one binary message, so the message boundary supplies the frame
+// boundary and the tunnel protocol's length prefix only validates.
+
+func (w *wsConn) readTunnelMsg() ([]byte, error) {
+	opcode, msg, err := w.readMessage()
+	if err != nil {
+		return nil, err
+	}
+	// The tunnel protocol is binary-only (VPN-R15); readMessage has already
+	// consumed control frames, so anything else is a peer speaking the
+	// wrong protocol.
+	if opcode != wsOpBinary {
+		return nil, fmt.Errorf("%W: non-binary message in the tunnel", ErrProtocol)
+	}
+	return msg, nil
+}
+
+func (w *wsConn) writeTunnelMsg(msg []byte) error {
+	return w.writeMessage(wsOpBinary, msg)
+}
+
+func (w *wsConn) setReadDeadline(t time.Time) error {
+	return w.conn.SetReadDeadline(t)
+}
+
+// protocolViolation is the close frame the RFC gives WebSocket: an in-band,
+// unambiguous "you framed that wrong" before the teardown (and the one
+// signal a plain HTTP body cannot send — docs/d077 §5).
+func (w *wsConn) protocolViolation() {
+	_ = w.writeClose(wsCloseProtocolError)
+}
+
+// transport is wss for both directions: mode D is the WebSocket carrier
+// (docs/d077 §4's vocabulary), whatever the cleartext test scheme is called.
+func (w *wsConn) transport() string {
+	return "wss"
+}
+
 // writeFrame serializes one frame: client frames masked with fresh random
 // keys (RFC 6455 §5.3), server frames bare. One mutex covers control and
 // data writes so interleaved frames never corrupt each other on the wire.
