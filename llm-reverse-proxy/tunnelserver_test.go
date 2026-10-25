@@ -447,3 +447,169 @@ func TestEnableTunnelValidatesInputs(t *testing.T) {
 		}
 	})
 }
+
+// ---------------------------------------------------------------------------
+// d078 — bounded static principal set (VPN-R31/R33 as amended)
+// ---------------------------------------------------------------------------
+
+const (
+	testAliceToken = "alice-token-0123456789"
+	testBobToken   = "bob-token-0123456789"
+)
+
+// TestOperatorKeysFromEnv drives every refusal d078 §2 lists: the set comes
+// from ONE JSON env object (plus the legacy single token), and any input
+// that would weaken or shadow a principal refuses the tunnel instead of
+// loading (NFR-2 fail-loudly).
+func TestOperatorKeysFromEnv(t *testing.T) {
+	var over strings.Builder
+	over.WriteString("{")
+	for i := 0; i <= maxOperatorKeys; i++ {
+		if i > 0 {
+			over.WriteString(",")
+		}
+		fmt.Fprintf(&over, `"key%02d":"token-0123456789abcdef"`, i)
+	}
+	over.WriteString("}")
+
+	cases := []struct {
+		name    string
+		keys    string
+		token   string
+		wantErr bool
+		wantIDs []string
+	}{
+		{"json set", `{"alice":"alice-token-0123456789","bob":"bob-token-0123456789"}`, "", false, []string{"alice", "bob"}},
+		{"legacy token alone becomes default", "", testTunnelToken, false, []string{"default"}},
+		{"set and legacy token merge", `{"alice":"alice-token-0123456789"}`, testTunnelToken, false, []string{"alice", "default"}},
+		{"no credential at all", "", "", true, nil},
+		{"empty object is an empty set", `{}`, "", true, nil},
+		{"malformed json", `{"alice":`, "", true, nil},
+		{"not an object", `["alice-token-0123456789"]`, "", true, nil},
+		{"trailing content", `{"alice":"alice-token-0123456789"} x`, "", true, nil},
+		{"duplicate id rejected", `{"alice":"alice-token-0123456789","alice":"alice-token-9876543210"}`, "", true, nil},
+		{"non-string value", `{"alice":123}`, "", true, nil},
+		{"token below floor", `{"alice":"short"}`, "", true, nil},
+		{"legacy token below floor", "", "short", true, nil},
+		{"id not label-shaped", `{"ali ce":"alice-token-0123456789"}`, "", true, nil},
+		{"merge colliding on default", `{"default":"default-token-0123456789"}`, testTunnelToken, true, nil},
+		{"over the cap", over.String(), "", true, nil},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv(envOperatorKeys, tc.keys)
+			t.Setenv(envOperatorToken, tc.token)
+			got, err := operatorKeysFromEnv()
+			if tc.wantErr {
+				if err == nil {
+					t.Fatalf("expected refusal, got %d key(s)", len(got))
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected refusal: %v", err)
+			}
+			seen := make(map[string]bool, len(got))
+			for _, k := range got {
+				seen[k.id] = true
+			}
+			if len(seen) != len(tc.wantIDs) {
+				t.Fatalf("ids = %v, want %v", seen, tc.wantIDs)
+			}
+			for _, id := range tc.wantIDs {
+				if !seen[id] {
+					t.Fatalf("ids = %v, missing %q", seen, id)
+				}
+			}
+		})
+	}
+}
+
+// probeTunnel404 asks the tunnel path for a tunnel without one and renders
+// the whole response as one comparable string — status, content type, the
+// no-sniff header, and body — so two failures can be asserted BYTE-identical
+// (VPN-R34), not merely both-404.
+func probeTunnel404(t *testing.T, proxyAddr, token string) string {
+	t.Helper()
+	conn := rawDial(t, proxyAddr)
+	defer conn.Close()
+	auth := ""
+	if token != "" {
+		auth = "Authorization: Bearer " + token + "\r\n"
+	}
+	mustWrite(t, conn, "GET /"+testTunnelPrefix+"/vpn HTTP/1.1\r\nHost: anywhere.example\r\n"+auth+"\r\n")
+	resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
+	if err != nil {
+		t.Fatalf("read probe response: %v", err)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("probe body: %v", err)
+	}
+	return fmt.Sprintf("%d %s %s %q",
+		resp.StatusCode, resp.Header.Get("Content-Type"),
+		resp.Header.Get("X-Content-Type-Options"), body)
+}
+
+// TestPrincipalSetAcceptance walks d078 §8 end to end: both principals open
+// a real handshake on their own key; the success log carries the id and
+// never a token; revoking one principal rejects only that one; and a tampered
+// token for a real id answers byte-identically to no credential at all
+// (VPN-R34 — the response must not distinguish which check failed).
+func TestPrincipalSetAcceptance(t *testing.T) {
+	build := func(keys string) *server {
+		t.Helper()
+		t.Setenv(envTunnelPrefix, testTunnelPrefix)
+		t.Setenv(envOperatorKeys, keys)
+		t.Setenv(envOperatorToken, "")
+		s := &server{providers: map[string]*provider{}}
+		if err := s.enableTunnel(&tunnelConfig{Enabled: true}); err != nil {
+			t.Fatalf("enableTunnel: %v", err)
+		}
+		return s
+	}
+
+	full := build(`{"alice":"` + testAliceToken + `","bob":"` + testBobToken + `"}`)
+	proxy := newHTTPServer(t, full)
+	tunnelURL := mustTunnelURL(t, proxy, testTunnelPrefix)
+	logBuf := captureLog(t)
+
+	for _, k := range []struct{ id, tok string }{{"alice", testAliceToken}, {"bob", testBobToken}} {
+		ws, err := dialTunnelForTest(t, tunnelURL, k.tok)
+		if err != nil {
+			t.Fatalf("%s handshake: %v", k.id, err)
+		}
+		_ = ws.Close()
+	}
+	for _, want := range []string{"key=alice", "key=bob"} {
+		if !strings.Contains(logBuf.String(), want) {
+			t.Errorf("attribution line missing %s:\n%s", want, logBuf.String())
+		}
+	}
+	if strings.Contains(logBuf.String(), testAliceToken) || strings.Contains(logBuf.String(), testBobToken) {
+		t.Fatalf("a credential reached the log:\n%s", logBuf.String())
+	}
+
+	// Revocation: drop bob's entry — only bob is rejected, and alice's key
+	// keeps working without any change on her side (d078 §1).
+	revoked := build(`{"alice":"` + testAliceToken + `"}`)
+	revokedProxy := newHTTPServer(t, revoked)
+	revokedAddr := revokedProxy.Listener.Addr().String()
+	revokedURL := mustTunnelURL(t, revokedProxy, testTunnelPrefix)
+	if ws, err := dialTunnelForTest(t, revokedURL, testBobToken); err == nil {
+		_ = ws.Close()
+		t.Fatal("revoked principal still opens the tunnel")
+	}
+	ws, err := dialTunnelForTest(t, revokedURL, testAliceToken)
+	if err != nil {
+		t.Fatalf("surviving principal: %v", err)
+	}
+	_ = ws.Close()
+
+	baseline := probeTunnel404(t, revokedAddr, "")
+	tampered := probeTunnel404(t, revokedAddr, testAliceToken+"-tampered")
+	if baseline != tampered {
+		t.Errorf("known-id wrong token diverged from no credential:\n baseline %q\n got      %q", baseline, tampered)
+	}
+}

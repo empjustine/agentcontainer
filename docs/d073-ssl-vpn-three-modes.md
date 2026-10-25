@@ -363,6 +363,12 @@ VPN-R29. The table below is per-leg for that reason.
   shared by the B and tunnel namespaces alike) and, in mode B, the `${prefix}` path capability;
   never the upstream. Credentials are the proxy's own, distinct from provider
   keys (which stay client-owned and are never injected).
+  *Auth revision (proposed): [d078](d078-ssl-vpn-operator-keys.md) replaces
+  "one credential" with a bounded static set of operator principals — one
+  independent key per security principal (revocation + log attribution only,
+  identical rights, same bearer on the wire), carried in one JSON env value;
+  R33 gains a full-set no-early-exit rule, R34 explicitly covers ids. R31
+  binds until d078 is accepted.*
 - **VPN-R32** — Secrets MUST arrive through the one explicit chain
   (`./lib/environment.sh`, docs/d046) and be read as plain env. This is a
   real departure from llm-reverse-proxy's current "holds no secrets, no vault

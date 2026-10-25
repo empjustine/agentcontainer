@@ -46,14 +46,18 @@ import (
 )
 
 // Tunnel environment surface (modes C–E; docs/d073 §6.3/§7, VPN-R44): capability-class
-// values (prefix, token) arrive ONLY through this path — the
+// values (prefix, credential set) arrive ONLY through this path — the
 // lib/environment.sh env chain — never the JSON config, which would become
-// a second, unkeyed copy of a credential. The URL and label are the client
-// role's inputs; they identify, they do not authenticate.
+// a second, unkeyed copy of a credential. VPN_OPERATOR_KEYS carries the
+// principal set as a JSON object {"<id>": "<token>"} (docs/d078 §2);
+// VPN_OPERATOR_TOKEN alone stays today's single implicit "default"
+// principal. The URL and label are the client role's inputs; they
+// identify, they do not authenticate.
 const (
 	envTunnelPrefix  = "VPN_TUNNEL_PREFIX"
 	envTunnelURL     = "VPN_TUNNEL_URL"
 	envOperatorToken = "VPN_OPERATOR_TOKEN"
+	envOperatorKeys  = "VPN_OPERATOR_KEYS"
 	envClientLabel   = "VPN_CLIENT_LABEL"
 )
 

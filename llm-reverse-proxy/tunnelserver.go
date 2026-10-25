@@ -19,7 +19,10 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -39,9 +42,23 @@ const (
 // logPathRedaction replaces the capability segment in logged request URIs.
 const logPathRedaction = "REDACTED"
 
+// maxOperatorKeys bounds the principal set (docs/d078 §2): a structural
+// guard, not a performance one — the scan is linear regardless — that keeps
+// the credential model a bounded key set and out of the user-directory
+// business NFR-5 forbids.
+const maxOperatorKeys = 32
+
+// operatorKey is one security principal: an id that is a log-safe LABEL
+// (never a capability — docs/d078 §5 lets it appear in server logs) plus
+// the bearer token it authenticates (VPN-R31 as amended by docs/d078).
+type operatorKey struct {
+	id    string
+	token string
+}
+
 type tunnelServer struct {
 	prefix string
-	token  string
+	keys   []operatorKey
 	egress *egressPolicy
 }
 
@@ -54,18 +71,27 @@ func (t *tunnelServer) isTunnelPath(path string) bool {
 	return path == "/"+t.prefix+"/vpn"
 }
 
-// checkBearer validates the operator credential (VPN-R31): constant-time
-// over the secret itself (VPN-R33) — the "Bearer " scheme prefix is public
-// format, not secret, so an early return on its absence leaks nothing.
-func checkBearer(r *http.Request, token string) bool {
+// matchOperatorKey returns the id of the principal whose bearer credential
+// the request carries, or "" for none (VPN-R31 as amended by docs/d078).
+// Constant-time per entry AND no early exit: the scan visits every key
+// whether or not one already matched, so neither the matched principal's
+// position nor the set's contents leak through timing (VPN-R33). The
+// "Bearer " scheme prefix is public format, not secret, so an early return
+// on its absence leaks nothing.
+func matchOperatorKey(r *http.Request, keys []operatorKey) string {
 	const scheme = "Bearer "
 	auth := r.Header.Get("Authorization")
 	if !strings.HasPrefix(auth, scheme) {
-		return false
+		return ""
 	}
 	got := []byte(auth[len(scheme):])
-	want := []byte(token)
-	return len(got) == len(want) && subtle.ConstantTimeCompare(got, want) == 1
+	matched := ""
+	for _, k := range keys {
+		if subtle.ConstantTimeCompare(got, []byte(k.token)) == 1 {
+			matched = k.id
+		}
+	}
+	return matched
 }
 
 // serveTunnel takes a tunnel-path request to either a live session or
@@ -74,7 +100,8 @@ func checkBearer(r *http.Request, token string) bool {
 func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	// Factor 1 first: an unknown credential must not even learn whether
 	// /<prefix>/vpn exists as a route (VPN-R12: rejected before any 101).
-	if !checkBearer(r, t.token) {
+	keyID := matchOperatorKey(r, t.keys)
+	if keyID == "" {
 		writeFunnel404(w, r, t.redactedURI(r))
 		return
 	}
@@ -85,6 +112,13 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 		writeFunnel404(w, r, t.redactedURI(r))
 		return
 	}
+
+	// Attribution (docs/d078 §5): the matched id is a label, so a success
+	// may say it out loud — as a side line, not inside the CLF, so the
+	// standard access log stays parseable by stock tools. A rejection above
+	// never names an id: the response vocabulary (VPN-R34) and the auth
+	// failure path must not count keys.
+	log.Printf("[llm-reverse-proxy] tunnel session: authenticated key=%s", keyID)
 
 	// From here the peer is authenticated, so a proxy-internal failure may
 	// answer like one (RFC 9457 — the module's internal-error contract).
@@ -236,21 +270,125 @@ func prefixDigest(prefix string) string {
 	return hex.EncodeToString(sum[:4])
 }
 
+// operatorKeysFromEnv builds the principal set from the env chain — the only
+// home credentials have (VPN-R32/R44: never the config file; and no digest
+// of a token stored beside the plaintext, which would be a second credential
+// copy for zero protection — docs/d078 §2). VPN_OPERATOR_KEYS is the JSON
+// object; VPN_OPERATOR_TOKEN alone is today's single principal ("default"),
+// and the two merge so a migration is two vault edits with no window that
+// rejects every client (docs/d078 §2). Every failure here refuses the
+// tunnel rather than weakening it (NFR-2, VPN-R26).
+func operatorKeysFromEnv() ([]operatorKey, error) {
+	byID, err := decodeOperatorKeys(os.Getenv(envOperatorKeys))
+	if err != nil {
+		return nil, err
+	}
+	if token := os.Getenv(envOperatorToken); token != "" {
+		if _, dup := byID["default"]; dup {
+			return nil, fmt.Errorf("%s defines id \"default\" which %s also sets: ids are unique (VPN-R31/docs/d078)", envOperatorKeys, envOperatorKeys)
+		}
+		byID["default"] = token
+	}
+	if len(byID) == 0 {
+		return nil, fmt.Errorf("no operator credential: set %s and/or %s (VPN-R26/R31 fail-closed)", envOperatorKeys, envOperatorToken)
+	}
+	if len(byID) > maxOperatorKeys {
+		return nil, fmt.Errorf("%d operator keys exceed cap %d (docs/d078: a bounded set, not a user directory)", len(byID), maxOperatorKeys)
+	}
+	// Floor, not entropy proof: the vault owns how strong each token is;
+	// this only catches empty or truncated loads BEFORE the surface exists
+	// (VPN-R31/R26 — refuse without a credential, loudly).
+	keys := make([]operatorKey, 0, len(byID))
+	for id, token := range byID {
+		if len(token) < 16 {
+			return nil, fmt.Errorf("operator key %q shorter than 16 bytes (VPN-R26/R31 fail-closed)", id)
+		}
+		keys = append(keys, operatorKey{id: id, token: token})
+	}
+	return keys, nil
+}
+
+// decodeOperatorKeys parses VPN_OPERATOR_KEYS strictly — duplicate ids are
+// rejected, never last-wins: encoding/json would silently keep the final
+// duplicate, and a shadowed principal is a key the operator believes exists
+// but does not (NFR-2 fail-loudly; docs/d078 §2).
+func decodeOperatorKeys(raw string) (map[string]string, error) {
+	if raw == "" {
+		return map[string]string{}, nil
+	}
+	dec := json.NewDecoder(strings.NewReader(raw))
+	open, err := dec.Token()
+	if err != nil {
+		return nil, fmt.Errorf("%s is not a JSON object: %v", envOperatorKeys, err)
+	}
+	if delim, ok := open.(json.Delim); !ok || delim != '{' {
+		return nil, fmt.Errorf("%s must be a JSON object {\"<id>\": \"<token>\"} (docs/d078 §2)", envOperatorKeys)
+	}
+	out := make(map[string]string)
+	for dec.More() {
+		keyTok, err := dec.Token()
+		if err != nil {
+			return nil, fmt.Errorf("%s: %v", envOperatorKeys, err)
+		}
+		id, ok := keyTok.(string)
+		if !ok || !validOperatorID(id) {
+			return nil, fmt.Errorf("%s id %v must be 1..64 chars of [A-Za-z0-9_-] — ids are log-safe labels (docs/d078 §2)", envOperatorKeys, keyTok)
+		}
+		if _, dup := out[id]; dup {
+			return nil, fmt.Errorf("%s repeats id %q: rejected, not last-wins (docs/d078 §2)", envOperatorKeys, id)
+		}
+		var token string
+		if err := dec.Decode(&token); err != nil {
+			return nil, fmt.Errorf("%s value for %q must be a string: %v", envOperatorKeys, id, err)
+		}
+		out[id] = token
+	}
+	// dec.More only PEEKS at the closing brace, so consume it explicitly and
+	// only then decide whether anything followed the object.
+	closeTok, err := dec.Token()
+	if err != nil {
+		return nil, fmt.Errorf("%s is not a complete JSON object: %v", envOperatorKeys, err)
+	}
+	if closeTok != json.Delim('}') {
+		return nil, fmt.Errorf("%s must be one JSON object, nothing else", envOperatorKeys)
+	}
+	// Exactly io.EOF ends a clean object; any other outcome — a returned
+	// token OR a parse error on garbage — is trailing content (invalid JSON
+	// after the object must not be excused just because Token() errored).
+	if _, err := dec.Token(); !errors.Is(err, io.EOF) {
+		return nil, fmt.Errorf("%s has trailing content after the JSON object", envOperatorKeys)
+	}
+	return out, nil
+}
+
+// validOperatorID is the label shape docs/d078 §2 promises: ids reach server
+// logs (§5), so they must be log-safe — and unlike the capability prefix
+// they must never be secret-shaped: an id is a name, not a capability
+// (VPN-R44).
+func validOperatorID(id string) bool {
+	if len(id) < 1 || len(id) > 64 {
+		return false
+	}
+	for _, r := range id {
+		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_') {
+			return false
+		}
+	}
+	return true
+}
+
 // enableTunnel wires the tunnel surface from config data + environment and
 // fails loudly on any input that would weaken an invariant (NFR-2): a
 // misconfigured capability that binds anyway is worse than one that refuses
 // to start, because it fails OPEN at the first probe instead of never.
 func (s *server) enableTunnel(tn *tunnelConfig) error {
 	prefix := os.Getenv(envTunnelPrefix)
-	token := os.Getenv(envOperatorToken)
 	if err := validateCapabilityPrefix(prefix); err != nil {
 		return err
 	}
-	// Floor, not entropy proof: the vault owns how strong the token is;
-	// this only catches empty or truncated loads BEFORE the surface exists
-	// (VPN-R31/R26 — refuse without a credential, loudly).
-	if len(token) < 16 {
-		return fmt.Errorf("%s missing or shorter than 16 bytes (VPN-R26/R31 fail-closed)", envOperatorToken)
+	keys, err := operatorKeysFromEnv()
+	if err != nil {
+		return err
 	}
 	// The prefix may never be an allowlist host: /<prefix>/… is the
 	// tunnel's namespace, and a provider carrying that name would make
@@ -263,7 +401,7 @@ func (s *server) enableTunnel(tn *tunnelConfig) error {
 	if err != nil {
 		return err
 	}
-	s.vpn = &tunnelServer{prefix: prefix, token: token, egress: egress}
+	s.vpn = &tunnelServer{prefix: prefix, keys: keys, egress: egress}
 	// The real prefix appears in no log line, here or later (VPN-R44).
 	log.Printf("[llm-reverse-proxy] tunnel (modes C–E): enabled at /%s/ (prefix digest %s)",
 		logPathRedaction, prefixDigest(prefix))
