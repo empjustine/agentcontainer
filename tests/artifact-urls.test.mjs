@@ -62,8 +62,11 @@ test("installed detector flags a canonical URL that escaped substitution", () =>
 	assert.match(violations[1], /still carries canonical upstream/);
 });
 
+// The funnel mount here is the canonical synthetic one (docs/d086): a real
+// mount is the mode A capability, so it never appears in tracked files —
+// the lint gate enforces the all-zero fixture.
 test("installed detector passes route-form URLs under the configured base", () => {
-	const base = "https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438";
+	const base = "https://bazzite.coelacanth-barb.ts.net/00000000-0000-4000-8000-000000000000";
 	const doc = {
 		providers: {
 			"llama-swap": { baseUrl: `${base}/bazzite.coelacanth-barb.ts.net/v1` },
@@ -105,7 +108,7 @@ test("committed detector rejects an upstream prefix that is not at a path bounda
 // tell a routed URL from a canonical one without being told the base.
 test("installed detector (no base) accepts routes on a base that shares a host with a fact row", () => {
 	const bazziteBase =
-		"https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438";
+		"https://bazzite.coelacanth-barb.ts.net/00000000-0000-4000-8000-000000000000";
 	const doc = {
 		providers: {
 			"llama-swap": { baseUrl: `${bazziteBase}/bazzite.coelacanth-barb.ts.net/v1` },
@@ -127,7 +130,7 @@ test("installed detector (no base) still flags a canonical URL on a colliding ho
 
 test("routeUrlFromCanonical composes the d047 host-form route and fails closed", () => {
 	const base =
-		"https://bazzite.coelacanth-barb.ts.net/8654b72a-de9b-402b-abe6-7201dcb38438";
+		"https://bazzite.coelacanth-barb.ts.net/00000000-0000-4000-8000-000000000000";
 	assert.equal(
 		routeUrlFromCanonical(base, "llama-swap", "https://bazzite.coelacanth-barb.ts.net/v1"),
 		`${base}/bazzite.coelacanth-barb.ts.net/v1`,

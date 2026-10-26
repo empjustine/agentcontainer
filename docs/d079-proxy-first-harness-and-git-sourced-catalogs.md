@@ -193,7 +193,9 @@ logs and advances with the last good snapshot, exactly as today.
   commit SHA; a pinned source means identical inputs for identical
   artifacts — today's live endpoint can change under a generation run
   (reviewable only as an unexplained artifact diff, d072's diff-discipline
-  itch).
+  itch). (d086: the `fetchedFrom` property itself is gone — a live fetch
+  URL is capability-bearing and unstable — and this section's provenance
+  duty lands as the pinned source id + content hash instead.)
 - **One update tool** matching the existing MUST (the premise), including
   its failure semantics — git is already exercised and maintained on every
   host (`git/` farm tooling).

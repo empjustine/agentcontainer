@@ -56,3 +56,15 @@ done'
 
 log_info "shfmt (advisory)"
 mise exec shfmt@latest -- find . -type f -name '*.sh' -exec shfmt -l {} + || true
+
+# Capability-bearing URL gate (docs/d086): a funnel mount path in a tracked
+# file is the mode A credential written down — it leaks the only credential
+# mode A has and churns whenever the mount rotates. Any writer, any shape:
+# the leak is textual, so a plain pattern is the whole detector. Fixtures
+# use the canonical synthetic mount (all-zero UUID); anything else fails.
+log_info "capability URL gate (gating — tracked files)"
+if git grep -nE '[.]ts[.]net/[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}' -- . \
+	| grep -vF '00000000-0000-4000-8000-000000000000'; then
+	echo "capability-bearing funnel URL in tracked files (docs/d086) — see lines above" >&2
+	exit 1
+fi

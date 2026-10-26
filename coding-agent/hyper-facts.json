@@ -1,6 +1,5 @@
 {
-  "fetchedAt": "2026-10-25T14:44:34.342Z",
-  "fetchedFrom": "https://cihuatecayotl.coelacanth-barb.ts.net/c143d52a-21b2-415f-882c-7523e90b50e5/hyper.charm.land/v1/provider",
+  "fetchedAt": "2026-10-26T01:03:09.878Z",
   "models": [
     {
       "id": "prism",
@@ -39,7 +38,7 @@
       "cost_per_1m_out": 1.31,
       "cost_per_1m_in_cached": 0,
       "cost_per_1m_out_cached": 0.03,
-      "context_window": 1000000,
+      "context_window": 1048576,
       "default_max_tokens": 262144,
       "can_reason": true,
       "reasoning_levels": [

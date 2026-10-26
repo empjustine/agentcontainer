@@ -41,8 +41,12 @@
  *
  * Cache documents keep the RAW records, unnormalized: each consumer owns its
  * rendering (the pi generator's per-provider factsMapper, the catwalk id
- * map). Shapes: `{fetchedAt, fetchedFrom, providers: [...]}` for catwalk,
- * `{fetchedAt, fetchedFrom, models: [...]}` for a provider.
+ * map). Shapes: `{fetchedAt, providers: [...]}` for catwalk,
+ * `{fetchedAt, models: [...]}` for a provider. No fetch URL is recorded —
+ * in the document or the logs (docs/d086): the winning relay candidate is
+ * capability-bearing (the funnel mount IS the mode A credential) and
+ * rotates with it, so an exact URL both leaks the credential and churns
+ * the cache. Provenance is fetchedAt plus the file's own identity.
  *
  * Usage (the generators call the functions in-process; the CLI is a
  * maintenance convenience — best-effort, exit 0 either way):
@@ -119,7 +123,6 @@ const CATWALK_CACHE_PATH =
  * The parsed per-provider cache document.
  * @typedef {object} ProviderFacts
  * @property {string} fetchedAt
- * @property {string} fetchedFrom
  * @property {ProviderFactsModel[]} models
  */
 
@@ -127,7 +130,6 @@ const CATWALK_CACHE_PATH =
  * The parsed catwalk cache document.
  * @typedef {object} CatwalkFacts
  * @property {string} fetchedAt
- * @property {string} fetchedFrom
  * @property {CatwalkProvider[]} providers
  */
 
@@ -288,14 +290,12 @@ export async function refreshCatwalkFacts(url) {
 	}
 	const facts = /** @type {CatwalkFacts} */ ({
 		fetchedAt: new Date().toISOString(),
-		fetchedFrom: found.url,
 		providers,
 	});
 	if (!writeCache(CATWALK_CACHE_PATH, facts)) return false;
 	logInfo("catwalk facts cache refreshed", {
 		path: CATWALK_CACHE_PATH,
 		providers: providers.length,
-		fetchedFrom: found.url,
 	});
 	return true;
 }
@@ -382,20 +382,18 @@ export async function refreshProviderFacts(id, options) {
 	if (!found || !Array.isArray(records) || records.length === 0) {
 		logWarn(
 			`${id} facts refresh failed (no ${listKey} array) — keeping last good cache`,
-			{ path: cachePath, fetchedFrom: found?.url ?? null },
+			{ path: cachePath },
 		);
 		return false;
 	}
 	const document = /** @type {ProviderFacts} */ ({
 		fetchedAt: new Date().toISOString(),
-		fetchedFrom: found.url,
 		models: records,
 	});
 	if (!writeCache(cachePath, document)) return false;
 	logInfo(`${id} facts cache refreshed`, {
 		path: cachePath,
 		models: records.length,
-		fetchedFrom: found.url,
 	});
 	return true;
 }
