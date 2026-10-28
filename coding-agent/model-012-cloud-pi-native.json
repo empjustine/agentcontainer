@@ -1738,13 +1738,6 @@
           ]
         },
         {
-          "id": "glm-5.1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "glm-5.2",
           "reasoning": true,
           "input": [
@@ -1780,13 +1773,6 @@
           ]
         },
         {
-          "id": "grok-4.6",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "grok-4.7",
           "reasoning": true,
           "input": [
@@ -1809,13 +1795,6 @@
         },
         {
           "id": "iceman-contributor-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "kimi-k2.6",
           "reasoning": true,
           "input": [
             "text"
@@ -1878,20 +1857,6 @@
           ]
         },
         {
-          "id": "minimax-m2.5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "minimax-m2.7",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "minimax-m3",
           "reasoning": true,
           "input": [
@@ -1914,27 +1879,6 @@
         },
         {
           "id": "muse-spark-1.3-contributor",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "omen-alpha",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "qwen3.6-plus",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "qwen3.7-max",
           "reasoning": true,
           "input": [
             "text"
@@ -2030,15 +1974,6 @@
           ],
           "contextWindow": 256000,
           "maxTokens": 256000
-        },
-        {
-          "id": "nvidia/nemotron-3-super-120b-a12b:free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 262144,
-          "maxTokens": 262144
         },
         {
           "id": "nvidia/nemotron-3-ultra-550b-a55b:free",

@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-26T12:45:17.696Z",
+  "fetchedAt": "2026-10-28T23:47:07.451Z",
   "models": [
     {
       "id": "prism",
@@ -38,7 +38,7 @@
       "cost_per_1m_out": 1.31,
       "cost_per_1m_in_cached": 0,
       "cost_per_1m_out_cached": 0.03,
-      "context_window": 1048576,
+      "context_window": 1000000,
       "default_max_tokens": 262144,
       "can_reason": true,
       "reasoning_levels": [
