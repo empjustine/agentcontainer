@@ -13,7 +13,8 @@ tags: [terminology, generators, reverse-proxy, pi, opencode, docs]
 
 **Status: implemented.** The reverse-proxy base and the machinery around it get
 names that say *reverse proxy*. "Peer" survives only for the local llama-swap
-farm provider concept.
+farm provider concept. The paired bearer rename (`PEER_API_KEY` →
+`REVERSE_PROXY_API_KEY`) landed one change later, under the same decision.
 
 ## Problem
 
@@ -54,11 +55,13 @@ capability (see d070, which moves that capability out of sight entirely).
    day one: no alias read, no warn, no migration window inside the tree
    (a generate under only the old names fails closed on the existing
    missing-base guard). This is not a new ambient config knob (d060): same
-   single vault-sourced value, one spelling. The paired bearer
-   `PEER_API_KEY` still awaits its rename to `REVERSE_PROXY_API_KEY` — it is
-   the one rename that also touches `llm-local-inference/`'s generated
-   llama-swap `apiKeys`, so it may land one change later, but under the
-   same decision.
+   single vault-sourced value, one spelling. The paired bearer rename
+   (`PEER_API_KEY` → `REVERSE_PROXY_API_KEY` — the one rename that also
+   touches `llm-local-inference/`'s generated llama-swap `apiKeys`) landed
+   one change later, under the same decision and the same shape: the repo
+   reads only the new name from its landing change — no alias read, no warn,
+   no migration window — and the vault keeps the retired `PEER_API_KEY` set
+   for outside compatibility.
 3. **Code identifiers and the module rename** (mechanical, one change):
    `peerBaseUrl(s)` → `reverseProxyBaseUrl(s)`, `peerProviderUrl` →
    `providerRouteUrl`, `probePeerRoutes` → `probeRoutes`,

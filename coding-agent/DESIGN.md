@@ -151,7 +151,7 @@ refreshed best-effort, route probing walks the vault-sourced
   routes are `<base>/<providerId>` on the simplified cloud router
   (llm-reverse-proxy, no credential handling — clients carry the provider's
   own key); the llama-swap `/v1` + model-id-magic face serves LOCAL GGUF
-  only (`$PEER_API_KEY`).
+  only (`$REVERSE_PROXY_API_KEY`).
 - **Scoped models, not generated catalogs**: pi's own model catalog is used
   (`pi update --models`); providers are re-routed via `baseUrl` overrides only.
   The retired free-tier pipeline's decisions are distilled in

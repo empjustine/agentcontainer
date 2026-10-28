@@ -139,9 +139,10 @@ THIS host: container images in parallel on podman/docker hosts, Termux
 provisioning + the android binary strictly serialized on ~1 GB devices.
 Target names select subsets (`./build.sh <target>…`; each folder's `build.sh`
 shim selects its unit's — docs/d083), and capability gates key target
-registration on hardware/network facts — free disk included, after the
-coding-agent image's mid-build disk exhaustion took a whole generic build
-down (docs/d083). Each folder also keeps its own `generate.sh` shim (a
+registration on hardware/network facts — the llama-swap pull needs an
+inference endpoint: render devices plus the RAM floor (docs/d087;
+d083's coding-agent free-disk gate retired with the image's shrink). Each
+folder also keeps its own `generate.sh` shim (a
 3-line `node_run` interpreter) for standalone use. Runners NEVER build or generate: run.sh
 stages the COMMITTED config and a stale/missing artifact is a loud failure
 pointing at the generator, never an implicit regeneration.
@@ -172,7 +173,7 @@ the variant folders redundant.)
 | Folder | Role | What makes it work |
 |--------|------|--------------------|
 | `llm-local-inference/` | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `generate.sh`/`generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh` |
-| `llm-reverse-proxy/` | host-allowlist cloud router (docs/d047 — mode A, by decision the only HOST-policy mode, docs/d080): `/<upstream-host>/<path>` → the allowlisted scheme://host root, byte-for-byte, no keys — deny-by-absence for everything else (docs/d027's 404 policy); streaming as-is, RFC 9457 502s; also carries the opt-in tunnel family (modes C–E, docs/d073/d077: tunnel server + `-mode client` loopback CONNECT/SOCKS5 proxies — mode D deployed, C default-on (d084)); standalone-repo boundary defined in docs/d082 | `main.go`, `generate.sh`/`generate.mjs` (allowHosts from pi-ai + lib/cloud-providers.mjs, docs/d047), `llm-reverse-proxy.example.json`, `smoke-test.sh`; the tunnel family: `client.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go`; built by the root `build.mjs` |
+| `llm-reverse-proxy/` | host-allowlist cloud router (docs/d047 — mode A, by decision the only HOST-policy mode, docs/d080): `/<upstream-host>/<path>` → the allowlisted scheme://host root, byte-for-byte, no keys — deny-by-absence for everything else (docs/d027's 404 policy); streaming as-is, RFC 9457 502s; also carries the opt-in tunnel family (modes C–E, docs/d073/d077), whose two deployments are named by network position since docs/d088 — the **exit node** (funnel front + tunnel server, `PROXY_MODE=exit`) and the **relay node** (loopback CONNECT/SOCKS5, `PROXY_MODE=relay`; env values and code speak the same names, d088 phase 2) — mode D deployed, C default-on (d084); standalone-repo boundary defined in docs/d082 (split-time CI findings in `llm-reverse-proxy/CI.md`) | `main.go`, `generate.sh`/`generate.mjs` (allowHosts from pi-ai + lib/cloud-providers.mjs, docs/d047), `llm-reverse-proxy.example.json`, `smoke-test.sh`; the tunnel family: `relaynode.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go`; built by the root `build.mjs` |
 | `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.sh`/`generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.sh`, `settings.json`; image built by the root `build.mjs` |
 
 The former "next planned step" sketch (a simplified config-generator system

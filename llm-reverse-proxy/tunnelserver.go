@@ -360,7 +360,7 @@ func (t *tunnelServer) runSession(s tunnelStream) {
 
 // logTunnelLifecycle renders the one log line per tunnel (VPN-R19).
 // transport is the carrier the session actually ran on (docs/d077 §4): at
-// the server that is what arrived — "post" for a mode C session, since a
+// the exit node that is what arrived — "post" for a mode C session, since a
 // proxy strips the ALPN evidence on the way in.
 func logTunnelLifecycle(label, target, transport string, start time.Time, stats relayStats, outcome string) {
 	log.Printf("[vpn] who=operator label=%q target=%q transport=%s bytes_in=%d bytes_out=%d duration_ms=%d outcome=%s",

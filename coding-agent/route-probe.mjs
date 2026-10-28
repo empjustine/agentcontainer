@@ -85,7 +85,7 @@ const REQUEST_TIMEOUT_MS = 8000;
  * infisical's /inference path (the ONLY base env this repo reads, d071 §1;
  * the vault still sets the retired `PEER_BASE_URL(S)` beside it for
  * outside compatibility — nothing here reads that), injected by
- * lib/environment.sh alongside the key it pairs with (PEER_API_KEY — the
+ * lib/environment.sh alongside the key it pairs with (REVERSE_PROXY_API_KEY — the
  * base URL and the client-facing bearer are one config unit). The funnel serves the whole `<funnel-id>` route to
  * llm-reverse-proxy on host port 8080 (docs/d027), which path-prefix routes
  * everything behind it:
@@ -574,7 +574,7 @@ export async function probeRoutes(candidates, providerId, headers) {
 
 /**
  * Probe candidate base URLs in order; the first one whose catalog passes
- * `accept` wins. Authenticated with $PEER_API_KEY when set — llama-swap's
+ * `accept` wins. Authenticated with $REVERSE_PROXY_API_KEY when set — llama-swap's
  * own client-facing bearer key (used for the LOCAL GGUF /v1 route; the
  * cloud path-routes are probed per provider via probeRoutes instead,
  * docs/d027).
@@ -600,7 +600,7 @@ export async function probeCandidates(candidates, accept) {
 		try {
 			const entries = await fetchModelEntries(
 				baseUrl,
-				bearerHeaders(process.env.PEER_API_KEY?.trim()),
+				bearerHeaders(process.env.REVERSE_PROXY_API_KEY?.trim()),
 			);
 			const ids = entries.map((e) => e.id);
 			if (!accept(ids)) throw new Error("no usable models for this concern");

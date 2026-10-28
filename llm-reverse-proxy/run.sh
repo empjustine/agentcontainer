@@ -1,17 +1,17 @@
 #!/bin/sh
 # run.sh — serve llm-reverse-proxy, llama-swap style (dual ROLE mode,
-# PROXY_MODE=server|client — docs/d073; plus the usual dual host mode):
+# PROXY_MODE=exit|relay — the node names, docs/d088; plus the usual dual host mode):
 #
 #   container host: run the image the root ./build.mjs produced (docs/d041)
 #     via the declarative sandbox API — HOST NETWORK mode in both roles.
-#     server (the default)
+#     exit node (the default)
 #     mirrors llama-swap's port model: the in-container -listen
 #     0.0.0.0:${HOST_PORT:-8080} overrides the config's `listen`, and the
 #     port is what the tailscale funnel serves the <funnel-id> route on.
 #     Host networking is required, not cosmetic: the funnel front dials the
 #     HOST's own loopback :8080 (tailscaled → the serve target), so a
 #     bridge/slirp container would answer a loopback the funnel never sees.
-#     For the client it is doubly required: the loopback CONNECT/SOCKS5
+#     For the relay node it is doubly required: the loopback CONNECT/SOCKS5
 #     listeners become the HOST's loopback (usable by host apps, and
 #     VPN-R23 forbids anything else), and the container inherits the host's tailnet routes the
 #     tunnel URL needs.
@@ -24,17 +24,17 @@
 # lib/environment.sh owns the vault round-trip onto the host env — run.sh
 # never loads secrets itself). Mode A serving holds none: requests must
 # already carry valid provider keys. When the tunnel family arms (docs/d084/
-# d085: the operator keyset env is the opt-in), the server carries the
-# keyset and the client carries VPN_OPERATOR_TOKEN; both reach the
-# container through the env allowlists below. The client has no config file
-# at all: URL + token + optional label are its whole surface. The capability
+# d085: the operator keyset env is the opt-in), the exit node carries the
+# keyset and the relay node carries VPN_OPERATOR_TOKEN; both reach the
+# container through the env allowlists below. The relay node has no config
+# file at all: URL + token + optional label are its whole surface. The capability
 # path is the Funnel mount's business (docs/d085): stripped at the edge,
 # never seen here — the tunnel answers the fixed /vpn.
 #
 # Env overrides: PROXY_MODE / HOST_PORT / LISTEN / PROXY_LISTEN /
-# SOCKS_LISTEN / IMAGE_TAG / LLM_PROXY_BIN / CONFIG / MODES, and for client
-# mode VPN_TUNNEL_URL (wss://host[/<funnel-mount>]/vpn) /
-# VPN_OPERATOR_TOKEN / VPN_CLIENT_LABEL; for an armed server
+# SOCKS_LISTEN / IMAGE_TAG / LLM_PROXY_BIN / CONFIG / MODES, and for the
+# relay node VPN_TUNNEL_URL (wss://host[/<funnel-mount>]/vpn) /
+# VPN_OPERATOR_TOKEN / VPN_CLIENT_LABEL; for an armed exit node
 # VPN_OPERATOR_KEYS / VPN_OPERATOR_TOKEN.
 
 set -eu
@@ -51,20 +51,20 @@ export LOG_TOOL
 # shellcheck disable=SC2153
 script_dir="$SCRIPT_DIR"
 
-proxy_mode="${PROXY_MODE:-server}"
+proxy_mode="${PROXY_MODE:-exit}"
 case "$proxy_mode" in
-server | client) ;;
-*) log_die 94 "unknown PROXY_MODE — want server or client" mode="$proxy_mode" ;;
+exit | relay) ;;
+*) log_die 94 "unknown PROXY_MODE — want exit or relay (docs/d088 node names)" mode="$proxy_mode" ;;
 esac
 
 # Fail the launch HERE, with the missing variable's NAME, instead of inside
 # a detached container whose first log line is the only trace — the mirror
-# of the server's config gate.
-if [ "$proxy_mode" = client ]; then
+# of the exit node's config gate.
+if [ "$proxy_mode" = relay ]; then
 	[ -n "${VPN_TUNNEL_URL:-}" ] ||
-		log_die 94 "client mode needs VPN_TUNNEL_URL (wss://host[/<funnel-mount>]/vpn)" var=VPN_TUNNEL_URL
+		log_die 94 "relay mode needs VPN_TUNNEL_URL (wss://host[/<funnel-mount>]/vpn)" var=VPN_TUNNEL_URL
 	[ -n "${VPN_OPERATOR_TOKEN:-}" ] ||
-		log_die 94 "client mode needs VPN_OPERATOR_TOKEN (env-only credential, VPN-R44)" var=VPN_OPERATOR_TOKEN
+		log_die 94 "relay mode needs VPN_OPERATOR_TOKEN (env-only credential, VPN-R44)" var=VPN_OPERATOR_TOKEN
 else
 	config="${CONFIG:-$script_dir/llm-reverse-proxy.json}"
 	[ -f "$config" ] ||
@@ -77,11 +77,11 @@ if [ "$_workload" = 'workload' ]; then
 	image="${IMAGE_TAG:-localhost/llm-reverse-proxy:latest}"
 	container_id='llm-reverse-proxy'
 
-	if [ "$proxy_mode" = client ]; then
-		log_info "serving (container, host network, tunnel client)" image="$image"
+	if [ "$proxy_mode" = relay ]; then
+		log_info "serving (container, host network, relay node)" image="$image"
 	else
 		HOST_PORT="${HOST_PORT:-8080}"
-		log_info "serving (container, host network, server)" image="$image" port="$HOST_PORT" config="$config"
+		log_info "serving (container, host network, exit node)" image="$image" port="$HOST_PORT" config="$config"
 	fi
 
 	workload_rm "$container_id"
@@ -91,13 +91,13 @@ if [ "$_workload" = 'workload' ]; then
 	workload_init
 	workload_network 'host'
 	workload_hardening
-	if [ "$proxy_mode" = client ]; then
+	if [ "$proxy_mode" = relay ]; then
 		# allowlist, not bare --env: an unset host var would inject an
-		# EMPTY value the client reads as "set" (lib/workload-runtime.sh).
+		# EMPTY value the relay node reads as "set" (lib/workload-runtime.sh).
 		# The capability prefix is not forwarded — it is part of the
-		# tunnel URL path, the client's only notion of it.
+		# tunnel URL path, the relay node's only notion of it.
 		workload_env_allowlist VPN_TUNNEL_URL VPN_OPERATOR_TOKEN VPN_CLIENT_LABEL MODES
-		workload_cmd -mode client \
+		workload_cmd -mode relay \
 			-proxy-listen "${PROXY_LISTEN:-127.0.0.1:3128}" \
 			-socks-listen "${SOCKS_LISTEN:-127.0.0.1:1080}"
 		# No default restated here: the binary's -modes default is the one
@@ -105,7 +105,7 @@ if [ "$_workload" = 'workload' ]; then
 		[ -z "${MODES:-}" ] || workload_cmd -modes "$MODES"
 	else
 		# Forwarded only when set — the same arming contract as native
-		# (docs/d084): a containerized server can carry the tunnel family.
+		# (docs/d084): a containerized exit node can carry the tunnel family.
 		workload_env_allowlist VPN_OPERATOR_KEYS VPN_OPERATOR_TOKEN
 		workload_ro       "$config" /etc/llm-reverse-proxy/llm-reverse-proxy.json
 		workload_cmd      -config /etc/llm-reverse-proxy/llm-reverse-proxy.json -listen "0.0.0.0:$HOST_PORT"
@@ -127,16 +127,16 @@ else
 	[ -n "$bin" ] && [ -x "$bin" ] ||
 		log_die 95 "no proxy binary — run ./build.sh first (on Termux it builds llm-reverse-proxy-android)" bin="${bin:-unset}"
 
-	if [ "$proxy_mode" = client ]; then
-		log_info "serving (native, tunnel client)" bin="$bin"
+	if [ "$proxy_mode" = relay ]; then
+		log_info "serving (native, relay node)" bin="$bin"
 		# set -- (not an array): this file is POSIX sh. MODES follows the same
 		# one-source rule as the container branch (docs/d084).
-		set -- -mode client \
+		set -- -mode relay \
 			-proxy-listen "${PROXY_LISTEN:-127.0.0.1:3128}" \
 			-socks-listen "${SOCKS_LISTEN:-127.0.0.1:1080}"
 		[ -z "${MODES:-}" ] || set -- "$@" -modes "$MODES"
 		exec "$bin" "$@"
 	fi
-	log_info "serving (native, server)" bin="$bin" config="$config" listen="${LISTEN:-:8080}"
+	log_info "serving (native, exit node)" bin="$bin" config="$config" listen="${LISTEN:-:8080}"
 	exec "$bin" -config "$config" -listen "${LISTEN:-:8080}"
 fi

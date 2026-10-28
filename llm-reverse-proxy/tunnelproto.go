@@ -58,11 +58,11 @@ const maxFramePayload = 64 << 10
 // u8 type, u8 reserved flags.
 const frameHeaderLen = 8
 
-// CONNECT_ERR reasons: a small, stable vocabulary so the client (and the
-// connection log) can distinguish policy outcomes from transport outcomes
-// without the server leaking resolver or host internals.
+// CONNECT_ERR reasons: a small, stable vocabulary so the relay node (and
+// the connection log) can distinguish policy outcomes from transport
+// outcomes without the exit node leaking resolver or host internals.
 const (
-	errReasonTargetIP   = "target-ip-literal" // VPN-R22: resolution stays server-side
+	errReasonTargetIP   = "target-ip-literal" // VPN-R22: resolution stays exit-node-side
 	errReasonPortDenied = "port-denied"       // VPN-R37
 	errReasonDenied     = "egress-denied"     // VPN-R35/36
 	errReasonResolve    = "resolve-failed"

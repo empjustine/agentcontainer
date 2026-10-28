@@ -78,9 +78,10 @@ container image for this folder.
   (`llamacpp-model-data.json`, `active-b.json`, `llama-swap-core.json`) plus a
   read of the host HF hub cache directory (no network) — the models.dev
   refresh and every HTTP probe went with that handoff and are gone.
-- **Inbound bearer auth stays**: `apiKeys: ${env.PEER_API_KEY}` in
-  `00-general.yaml` is llama-swap's *own* client-facing key (the historical
-  name is kept; `docs/d001` covers the key-naming contract). It is the only
+- **Inbound bearer auth stays**: `apiKeys: ${env.REVERSE_PROXY_API_KEY}` in
+  `00-general.yaml` is llama-swap's *own* client-facing key (renamed from
+  the historical `PEER_API_KEY` under d071; `docs/d001` covers the
+  key-naming contract). It is the only
   secret this module needs — `HF_TOKEN` is NOT forwarded into the container
   anymore (nothing in-container downloads). Only **run.sh** needs the vault
   (via lib/environment.sh) — generation is offline and key-free: llama-swap

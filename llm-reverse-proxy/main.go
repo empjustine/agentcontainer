@@ -7,8 +7,9 @@
 // llama-swap's logical alias left the generated table with docs/d070);
 // everything after it rides the byte-for-byte
 // passthrough, so a client addresses a provider as
-// <peerBase>/<host><full-upstream-base-path> (peerProviderUrl, docs/d047) and
-// the proxy single-joins the remainder onto scheme://<host>. Hosts NOT in
+// <route-base>/<host><full-upstream-base-path> (the host-form route,
+// docs/d047) and the proxy single-joins the remainder onto scheme://<host>.
+// Hosts NOT in
 // the allowlist are denied BY ABSENCE: they answer the same plain-text 404
 // as any garbage path — a catalog row can no longer mint a routable
 // endpoint (the v1 slug table's inverted-allowlist problem, docs/d047).
@@ -50,8 +51,9 @@ import (
 // the JSON config, which would become a second, unkeyed copy of a credential.
 // VPN_OPERATOR_KEYS carries the principal set as a JSON object {"<id>":
 // "<token>"} (docs/d078 §2); VPN_OPERATOR_TOKEN alone stays today's single
-// implicit "default" principal. The URL and label are the client role's
-// inputs; they identify, they do not authenticate. The capability PATH is
+// implicit "default" principal. The URL and label are the relay node's
+// inputs (docs/d088: the PROXY_MODE=relay deployment); they identify, they
+// do not authenticate. The capability PATH is
 // none of this env's business (docs/d085): it is the Funnel mount's, and the
 // edge strips it before a request can reach us.
 const (
@@ -388,11 +390,12 @@ func logCombinedRequestURI(r *http.Request, status int, size int) {
 }
 
 // proxyError is called by ReverseProxy when the upstream exchange fails before
-// any response bytes reach the client — the one place we may still send a 502.
-// Request logging is handled by server.ServeHTTP after the proxy returns; this
-// method only writes the 502 response body (or nothing, for client cancels).
+// any response bytes reach the HTTP client — the one place we may still send
+// a 502. Request logging is handled by server.ServeHTTP after the proxy
+// returns; this method only writes the 502 response body (or nothing, when
+// the caller hung up first).
 func (p *provider) proxyError(w http.ResponseWriter, r *http.Request, err error) {
-	// Client hung up first: nothing to report, and nobody to report to.
+	// The caller hung up first: nothing to report, and nobody to report to.
 	if r.Context().Err() != nil || errors.Is(err, context.Canceled) {
 		return
 	}
@@ -490,10 +493,13 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func main() {
 	configPath := flag.String("config", "llm-reverse-proxy.json", "path to JSON config")
 	listen := flag.String("listen", "", "override listen address (e.g. :8080)")
-	mode := flag.String("mode", "server", "process role: \"server\" (reverse proxy) or \"client\" (tunnel client, modes C–E; docs/d073 §7)")
-	proxyListen := flag.String("proxy-listen", "127.0.0.1:3128", "client mode: loopback HTTP CONNECT listener")
-	socksListen := flag.String("socks-listen", "127.0.0.1:1080", "client mode: loopback SOCKS5 listener")
-	modes := flag.String("modes", "cd", "client mode: transport letters to offer — c=HTTP/2 streaming POST, d=WebSocket (d077 §4; default cd — the L3-gate flip landed as an operator decision, docs/d084)")
+	// Role values are the node names, not protocol roles (docs/d088): the
+	// process is always a mix of client, server, and both proxy shapes, so
+	// only network position discriminates.
+	mode := flag.String("mode", "exit", "process role: \"exit\" (the exit node: funnel front, allowlist, tunnel server) or \"relay\" (the relay node: loopback CONNECT/SOCKS5 proxy feeding the tunnel, modes C–E; docs/d073 §7, docs/d088)")
+	proxyListen := flag.String("proxy-listen", "127.0.0.1:3128", "relay role: loopback HTTP CONNECT listener")
+	socksListen := flag.String("socks-listen", "127.0.0.1:1080", "relay role: loopback SOCKS5 listener")
+	modes := flag.String("modes", "cd", "relay role: transport letters to offer — c=HTTP/2 streaming POST, d=WebSocket (d077 §4; default cd — the L3-gate flip landed as an operator decision, docs/d084)")
 	flag.Parse()
 
 	// Disable Go's default timestamp prefix — the Combined Log Format lines
@@ -501,24 +507,24 @@ func main() {
 	// automatic "2009/01/02 15:04:05" header would be redundant noise.
 	log.SetFlags(0)
 
-	// Tunnel client (docs/d073 §7, modes C–E): a separate role with its own contract —
-	// no allowlist config, and failing BEFORE any bind on bad or missing env
-	// IS the kill switch (VPN-R26): a listener that could start without a
-	// credential would only exist to refuse everything anyway.
-	if *mode == "client" {
-		clientCfg, err := clientConfigFromEnv(*proxyListen, *socksListen, *modes)
+	// Relay node (docs/d073 §7, modes C–E, docs/d088): a separate role with its
+	// own contract — no allowlist config, and failing BEFORE any bind on bad
+	// or missing env IS the kill switch (VPN-R26): a listener that could
+	// start without a credential would only exist to refuse everything anyway.
+	if *mode == "relay" {
+		relayCfg, err := relayConfigFromEnv(*proxyListen, *socksListen, *modes)
 		if err != nil {
-			log.Fatalf("[vpn-client] %v", err)
+			log.Fatalf("[vpn-relay] %v", err)
 		}
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 		defer stop()
-		if err := runClient(ctx, clientCfg); err != nil {
-			log.Fatalf("[vpn-client] %v", err)
+		if err := runRelayNode(ctx, relayCfg); err != nil {
+			log.Fatalf("[vpn-relay] %v", err)
 		}
 		return
 	}
-	if *mode != "server" {
-		log.Fatalf("[llm-reverse-proxy] unknown -mode %q (want server or client)", *mode)
+	if *mode != "exit" {
+		log.Fatalf("[llm-reverse-proxy] unknown -mode %q (want exit or relay)", *mode)
 	}
 
 	cfg, err := loadConfig(*configPath)

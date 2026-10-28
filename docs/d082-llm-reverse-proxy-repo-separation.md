@@ -85,7 +85,9 @@ still governs this repo.
 2. Extract FR-S5 + `VPN-R*` into the new repo's requirements doc.
 3. Promote the unit's `build.sh` shim (d083) into its own `build.mjs`
    (port `lib/go-build.mjs`'s toolchain probe) and CI running `go test
-   ./...` + the canonical-json check.
+   ./...` + the canonical-json check — findings waiting ahead of the
+   split in `llm-reverse-proxy/CI.md`, so the workflow lands with the
+   move, not after it.
 4. Decide the fact-data story for `generate.mjs` (vendored snapshots vs a
    fetch step) — the one real content decision the split forces.
 5. Trim this repo's docs to pointers: README folder rows, architecture.md's

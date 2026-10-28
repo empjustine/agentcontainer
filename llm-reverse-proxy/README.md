@@ -19,9 +19,9 @@ llm-reverse-proxy is the substrate llama-swap itself uses internally
 > **Expansion (docs/d073, mode family revised by docs/d077):** modes A
 > (today's host allowlist), B (authenticated generic relay — deferred to
 > v3), C (h2 streaming POST — default-on behind `-modes` since d084), D
-> (`CONNECT`-over-WebSocket tunnel plus a localhost client proxy, so clients
-> validate the target's real certificate end-to-end and never trust the
-> proxy — the deployed v2 shape), E (h1 POST floor — not built). The
+> (`CONNECT`-over-WebSocket tunnel plus a localhost CONNECT/SOCKS5 relay,
+> so clients validate the target's real certificate end-to-end and never
+> trust the proxy — the deployed v2 shape), E (h1 POST floor — not built). The
 > requirements are d073's; negotiation, the framing contract, and adoption
 > gates (spikes) are d077's.
 
@@ -110,7 +110,8 @@ as drift.
 ## Repository boundary (docs/d082)
 
 This folder is the unit that becomes its own repository (docs/d082): code,
-scripts, image, and these two docs travel together. Everything it borrows
+scripts, image, and the docs in this folder (README, DESIGN, CI)
+travel together. Everything it borrows
 from the parent repo arrives through one injectable directory — `LIB_DIR`,
 default `../lib` (the node runner for generation, the declarative workload
 API for `run.sh`, and the lib modules `generate.mjs` imports) — and the
@@ -138,10 +139,18 @@ hosts, Termux targets strictly serialized. For THIS folder:
 - **Bare host without a container tool**: host binary only — go is required,
   it is the only thing this host can build and serve.
 
-`./run.sh` picks the matching serve path by two selectors. ROLE:
-`PROXY_MODE=server` (default) or `client` (tunnel client, modes C–E; docs/d073 §7). HOST:
+`./run.sh` picks the matching serve path by two selectors. ROLE —
+per docs/d088 the two deployments are named by network position, not
+protocol role: the **exit node** (`PROXY_MODE=exit`, the default) has
+free, unblocked internet plus tsnet connectivity to the actual LLM
+endpoints, and traffic exits the local environment through it; the
+**relay node** (`PROXY_MODE=relay`, the loopback CONNECT/SOCKS5 proxy
+feeding the tunnel, modes C–E; docs/d073 §7) runs locally on a
+restricted-internet environment, without direct tsnet to the endpoints.
+The env values and the code speak the same names (d088 phase 2 landed).
+HOST:
 the container branch runs in HOST NETWORK mode; the native branch execs
-the binary directly. Server role: listening on `${HOST_PORT:-8080}` (the
+the binary directly. Exit node: listening on `${HOST_PORT:-8080}` (the
 funnel front) with `./llm-reverse-proxy.json` mounted read-only
 (in-container `-listen 0.0.0.0:$HOST_PORT` overrides the config, like
 llama-swap's port model) — host networking is what makes the loopback
@@ -149,7 +158,7 @@ llama-swap's port model) — host networking is what makes the loopback
 `${LISTEN:-:8080}`. The config path differs by branch: native reads
 `./llm-reverse-proxy.json`, the container mounts it at
 `/etc/llm-reverse-proxy/llm-reverse-proxy.json` (both overridable with
-`CONFIG`). Client role: NO config file — `VPN_TUNNEL_URL` (ws/wss; the
+`CONFIG`). Relay node: NO config file — `VPN_TUNNEL_URL` (ws/wss; the
 path is the Funnel mount plus the fixed `/vpn` — docs/d085) and
 `VPN_OPERATOR_TOKEN` are its core surface, with `VPN_CLIENT_LABEL` optional (defaults to the hostname),
 `MODES` (transport letters to offer — `cd` by default, docs/d084; `c` is
@@ -159,10 +168,10 @@ host networking is a requirement there too (the loopback listeners must
 be the HOST's loopback — VPN-R23 forbids exposing them — and the tunnel
 URL needs the host's tailnet routes). Secrets (env-only — VPN-R32/d078;
 run.sh never loads secrets itself): mode A serving holds none — requests
-must already carry valid provider keys. An armed tunnel server
+must already carry valid provider keys. An armed exit node
 (docs/d084/d085: armed when the env carries the operator keyset) holds the
-keyset, and the client holds the operator token — all reach the container
-only through the run.sh env allowlists.
+keyset, and the relay node holds the operator token — all reach the
+container only through the run.sh env allowlists.
 
 ### Port model (the conflict with llama-swap, docs/d027)
 
@@ -182,3 +191,8 @@ the v2 host allowlist (docs/d047) — including the deny-by-absence negatives
 (unknown host, v1 slug form) answer the plain funnel 404. TLS failure
 classes come from the badssl.com test hosts, so no bundled cert is needed;
 that section is skipped automatically if there is no outbound internet.
+
+CI: none exists yet, deliberately — the GitHub Actions findings for
+this unit (required steps, runner friction, gate flake points) live in
+[CI.md](CI.md), deferred until the d082 split moves the unit to its
+own repo.

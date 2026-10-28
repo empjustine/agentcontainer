@@ -154,7 +154,8 @@ pass (docs/d060).
 
 ```sh
 ./git/maintain.sh [--root DIR] [--jobs N] [--max-depth N] \
-                  [--no-fetch] [--no-optimize] [--min-interval SECONDS] \
+                  [--no-fetch] [--no-optimize] [--deep-optimize] \
+                  [--min-interval SECONDS] \
                   [--only GLOB]... [--exclude GLOB]
 ```
 
@@ -171,6 +172,12 @@ Git for Windows outside WSL2 entirely.
    ```
    plus `core.commitGraph`, `gc.writeCommitGraph`, `fetch.writeCommitGraph` so
    later fetches keep the graph current.
+3. **Deep** (opt-in `--deep-optimize`): `git gc --aggressive`, then the
+   Optimize sequence again. The forced delta recomputation (window/depth 250)
+   is the one thing that shrinks slow-moving mirrors on cold storage; delta
+   reuse makes it compose with the routine pass rather than conflict, and the
+   re-run pins the pickaxe accelerators gc alone does not guarantee. Hours per
+   farm — targeted runs, not every sweep (docs/d089).
 
 The default `--root` is the farm itself (`~/Downloads/references`), and
 discovery is by shape, so every forge mirror under it is maintained whatever

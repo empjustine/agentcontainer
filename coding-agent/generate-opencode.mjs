@@ -327,7 +327,7 @@ async function main() {
 			providers.local = routedProvider(
 				"Local LLM",
 				`${CLOUD_PROVIDER_FACTS["llama-swap"].baseUrl}/v1`,
-				"PEER_API_KEY",
+				"REVERSE_PROXY_API_KEY",
 				models,
 			);
 		} else {

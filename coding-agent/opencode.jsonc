@@ -3,7 +3,7 @@
     "local": {
       "name": "Proxy: Local LLM",
       "env": [
-        "PEER_API_KEY"
+        "REVERSE_PROXY_API_KEY"
       ],
       "npm": "@ai-sdk/openai-compatible",
       "options": {

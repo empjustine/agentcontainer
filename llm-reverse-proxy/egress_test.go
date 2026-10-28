@@ -119,8 +119,8 @@ func TestSplitConnectTarget(t *testing.T) {
 	}
 }
 
-// VPN-R22's classification: names pass through to the server's resolver,
-// literals do not go to the server at all.
+// VPN-R22's classification: names pass through to the exit node's resolver,
+// literals do not reach the exit node at all.
 func TestParseIPLiteral(t *testing.T) {
 	for _, s := range []string{"1.2.3.4", "::1", "2001:db8::1"} {
 		if _, ok := parseIPLiteral(s); !ok {

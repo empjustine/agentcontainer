@@ -9,7 +9,7 @@
 #
 # The CA certificate bundle rides along from the builder: both TLS legs
 # verify against it and neither may ever skip verification — upstream
-# certificates (modes A/D) and the tunnel client verifying the Funnel
+# certificates (modes A/D) and the relay node verifying the Funnel
 # `*.ts.net` certificate (VPN-R28, VPN-R55; docs/d073). Final image is
 # ~7.5 MB: one binary plus that bundle.
 #

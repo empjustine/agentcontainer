@@ -1,9 +1,9 @@
 package main
 
 // Mode C acceptance (docs/d077 §3/§8): the session rides one streaming
-// POST over h2 to an edge that forwards h1.1 to the server — evidence E2's
+// POST over h2 to an edge that forwards h1.1 to the exit node — evidence E2's
 // shape, reproduced locally with an HTTP/2 httptest front and a reverse
-// proxy. The client's trust stays what production's is: system roots, no
+// proxy. The relay node's trust stays what production's is: system roots, no
 // override knob (VPN-R28/R55); the test installs the front's self-signed
 // cert as the process root via SSL_CERT_FILE, which the x509 package reads
 // on its first root load — this test must therefore be the first TLS user
@@ -48,7 +48,7 @@ func newHTTP2Front(t *testing.T, backend *httptest.Server) *httptest.Server {
 
 // trustTestCert points x509's system-root load at the test front's cert.
 // Production has exactly no equivalent knob — this is test plumbing, not a
-// client feature (VPN-R28).
+// relay-side TLS override (VPN-R28).
 func trustTestCert(t *testing.T, srv *httptest.Server) {
 	t.Helper()
 	cert := srv.Certificate()
@@ -122,14 +122,14 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := clientConfigFromEnv(httpAddr, socksAddr, "c,d")
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, "c,d")
 	if err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	clientDone := make(chan error, 1)
-	go func() { clientDone <- runClient(ctx, cfg) }()
+	relayDone := make(chan error, 1)
+	go func() { relayDone <- runRelayNode(ctx, cfg) }()
 
 	logBuf := captureLog(t)
 	waitForHealth(t, "http://"+httpAddr+healthPath)
@@ -175,7 +175,7 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 
 	t.Run("both carriers are visible in the logs", func(t *testing.T) {
 		// d077 §4: transport is operational debugging data. The server saw
-		// a POST (the edge stripped the ALPN evidence); the client saw h2.
+		// a POST (the edge stripped the ALPN evidence); the relay node saw h2.
 		waitForLog(t, logBuf, "transport=post")
 		waitForLog(t, logBuf, "transport=h2")
 		dumped := logBuf.String()
@@ -185,8 +185,8 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 	})
 
 	cancel()
-	if err := <-clientDone; err != nil {
-		t.Fatalf("runClient: %v", err)
+	if err := <-relayDone; err != nil {
+		t.Fatalf("runRelayNode: %v", err)
 	}
 }
 
@@ -264,18 +264,18 @@ func TestParseClientModes(t *testing.T) {
 		{in: ",", wantErr: "at least one"},
 	}
 	for _, tc := range tests {
-		got, err := parseClientModes(tc.in)
+		got, err := parseRelayModes(tc.in)
 		if tc.wantErr != "" {
 			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
-				t.Errorf("parseClientModes(%q) err=%v, want containing %q", tc.in, err, tc.wantErr)
+				t.Errorf("parseRelayModes(%q) err=%v, want containing %q", tc.in, err, tc.wantErr)
 			}
 			continue
 		}
 		if err != nil {
-			t.Errorf("parseClientModes(%q) unexpected err: %v", tc.in, err)
+			t.Errorf("parseRelayModes(%q) unexpected err: %v", tc.in, err)
 		}
 		if got != tc.want {
-			t.Errorf("parseClientModes(%q) = %q, want %q", tc.in, got, tc.want)
+			t.Errorf("parseRelayModes(%q) = %q, want %q", tc.in, got, tc.want)
 		}
 	}
 }

@@ -1,7 +1,8 @@
-// client.go — the tunnel client role (modes C–E): the loopback-only local proxy feeding
-// one authenticated tunnel (docs/d073 §7: VPN-R23..R27, §5.1: VPN-R11).
+// relaynode.go — the relay node (docs/d088: the PROXY_MODE=relay deployment),
+// modes C–E: the loopback-only local proxy feeding one authenticated tunnel
+// (docs/d073 §7: VPN-R23..R27, §5.1: VPN-R11).
 //
-// WHY the client never terminates TLS (VPN-R25): it is a byte pump between a
+// WHY the relay node never terminates TLS (VPN-R25): it is a byte pump between a
 // loopback socket and the tunnel — the application's TLS handshake passes
 // through untouched and lands on the target's own certificate, verified by
 // the application itself (VPN-R29). That also means this file must never
@@ -9,10 +10,10 @@
 // see plaintext, so it cannot validate a certificate for it.
 //
 // Fail-closed is structural (VPN-R26): no credential or unparsable config
-// means runClient returns BEFORE binding any listener, every CONNECT opens
-// the tunnel first (there is no code path that dials the target directly),
-// and a refused tunnel answers the application locally — the kill switch is
-// the only behavior.
+// means runRelayNode returns BEFORE binding any listener, every CONNECT
+// opens the tunnel first (there is no code path that dials the target
+// directly), and a refused tunnel answers the application locally — the
+// kill switch is the only behavior.
 package main
 
 import (
@@ -35,7 +36,10 @@ import (
 
 // The shared tunnel env names (envTunnelURL, envOperatorToken,
 // envClientLabel) are declared with the rest of the process env surface in
-// main.go; the client consumes them via clientConfigFromEnv.
+// main.go; the relay node consumes them via relayConfigFromEnv.
+// envClientLabel keeps the tunnel protocol's own name for the HELLO label
+// (the tunnel's client end), not the node name — docs/d088 renames
+// deployments, not wire fields.
 
 const (
 	healthPath   = "/healthz"
@@ -46,9 +50,9 @@ const (
 	socksHandshakeTimeout = 10 * time.Second
 )
 
-// clientConfig is the client's full input surface; validate() is the one
+// relayConfig is the relay node's full input surface; validate() is the one
 // place that decides it is safe to bind.
-type clientConfig struct {
+type relayConfig struct {
 	tunnelURL *url.URL
 	token     string
 	label     string
@@ -61,11 +65,11 @@ type clientConfig struct {
 	modes string
 }
 
-// clientConfigFromEnv assembles the config from the flag values and the
-// environment. Nothing else may configure the client (one path, no
+// relayConfigFromEnv assembles the config from the flag values and the
+// environment. Nothing else may configure the relay node (one path, no
 // scattered defaults — d072's lesson applied).
-func clientConfigFromEnv(proxyAddr, socksAddr, modes string) (clientConfig, error) {
-	var cfg clientConfig
+func relayConfigFromEnv(proxyAddr, socksAddr, modes string) (relayConfig, error) {
+	var cfg relayConfig
 	raw := os.Getenv(envTunnelURL)
 	if raw == "" {
 		return cfg, fmt.Errorf("%s is required", envTunnelURL)
@@ -92,14 +96,14 @@ func clientConfigFromEnv(proxyAddr, socksAddr, modes string) (clientConfig, erro
 // validate enforces the pre-bind invariants. Callers must treat an error as
 // fatal: binding the listeners without a working credential would expose a
 // proxy surface whose every request fails anyway (VPN-R26 fail-closed).
-func (cfg *clientConfig) validate() error {
+func (cfg *relayConfig) validate() error {
 	if cfg.token == "" {
 		return fmt.Errorf("no operator token configured; refusing to start (%s)", envOperatorToken)
 	}
 	if cfg.tunnelURL == nil {
 		return fmt.Errorf("no tunnel URL configured (%s)", envTunnelURL)
 	}
-	modes, err := parseClientModes(cfg.modes)
+	modes, err := parseRelayModes(cfg.modes)
 	if err != nil {
 		return err
 	}
@@ -112,7 +116,7 @@ func (cfg *clientConfig) validate() error {
 	if cfg.label == "" {
 		host, err := os.Hostname()
 		if err != nil || host == "" {
-			host = "client"
+			host = "relay"
 		}
 		cfg.label = host
 	}
@@ -139,14 +143,14 @@ func requireLoopback(addr string) error {
 	return nil
 }
 
-// vpnClient owns the listeners and the health surface (VPN-R27).
-type vpnClient struct {
-	cfg      clientConfig
+// relayNode owns the listeners and the health surface (VPN-R27).
+type relayNode struct {
+	cfg      relayConfig
 	sessions atomic.Int64 // established tunnels (diagnostic, VPN-R27)
 	lastErr  atomic.Value // string: last tunnel failure, for /healthz
 }
 
-func (c *vpnClient) noteError(err error) {
+func (c *relayNode) noteError(err error) {
 	msg := err.Error()
 	if len(msg) > 200 {
 		msg = msg[:200]
@@ -154,8 +158,8 @@ func (c *vpnClient) noteError(err error) {
 	c.lastErr.Store(msg)
 }
 
-// runClient binds the loopback listeners and serves until ctx is done.
-func runClient(ctx context.Context, cfg clientConfig) error {
+// runRelayNode binds the loopback listeners and serves until ctx is done.
+func runRelayNode(ctx context.Context, cfg relayConfig) error {
 	if err := cfg.validate(); err != nil {
 		return err
 	}
@@ -168,12 +172,12 @@ func runClient(ctx context.Context, cfg clientConfig) error {
 		proxyLn.Close()
 		return fmt.Errorf("socks5 listen: %w", err)
 	}
-	c := &vpnClient{cfg: cfg}
+	c := &relayNode{cfg: cfg}
 	// The log shows WHICH tunnel endpoint (host only): the path embeds the
 	// capability prefix, which must not land in any log (VPN-R44).
 	// The log shows WHICH carriers are on offer (d077 §4): the mode set is
 	// the operator-visible half of the negotiation story.
-	log.Printf("[vpn-client] listeners http=%s socks5=%s tunnel=%s://%s modes=%s",
+	log.Printf("[vpn-relay] listeners http=%s socks5=%s tunnel=%s://%s modes=%s",
 		proxyLn.Addr(), socksLn.Addr(), cfg.tunnelURL.Scheme, cfg.tunnelURL.Host, cfg.modes)
 
 	httpSrv := &http.Server{
@@ -202,7 +206,7 @@ func runClient(ctx context.Context, cfg clientConfig) error {
 // Tunnel establishment (VPN-R11/R12/R16)
 // ---------------------------------------------------------------------------
 
-// connectRejectedError carries the server's CONNECT_ERR reason so each
+// connectRejectedError carries the exit node's CONNECT_ERR reason so each
 // local surface can map policy refusals to its own vocabulary.
 type connectRejectedError struct{ reason string }
 
@@ -226,12 +230,12 @@ func deniedReason(reason string) bool {
 // Success returns a live, unmuxed tunnel (VPN-R17: one wss per CONNECT in
 // v2 — no session reuse yet, so every local connection pays one handshake;
 // the v3 mux is what removes that).
-// parseClientModes normalizes -modes into the offer set (docs/d077 §4):
+// parseRelayModes normalizes -modes into the offer set (docs/d077 §4):
 // exactly which BUILT transports negotiation may choose. Fail loudly
 // (NFR-2): asking for a mode that does not exist — or for none at all — is
 // a config error, never something to route around, because silently
 // dropping a mode changes the traffic shape without telling the operator.
-func parseClientModes(raw string) (string, error) {
+func parseRelayModes(raw string) (string, error) {
 	var hasC, hasD bool
 	for _, r := range strings.ToLower(raw) {
 		switch r {
@@ -265,14 +269,14 @@ func parseClientModes(raw string) (string, error) {
 // routes around to the next as if it were censorship — the fallback never
 // retries in a way that would reveal intent, and with nothing left it
 // fails closed (VPN-R26).
-func (c *vpnClient) dialTransport(ctx context.Context) (tunnelStream, error) {
+func (c *relayNode) dialTransport(ctx context.Context) (tunnelStream, error) {
 	var cErr error
 	if strings.ContainsRune(c.cfg.modes, 'c') {
 		proto, err := alpnNegotiate(ctx, c.cfg.tunnelURL, []string{"h2", "http/1.1"})
 		if err == nil && proto == "h2" {
 			s, err := c.openPOST(ctx)
 			if err == nil {
-				log.Printf("[vpn-client] tunnel transport=%s", s.transport())
+				log.Printf("[vpn-relay] tunnel transport=%s", s.transport())
 				return s, nil
 			}
 			cErr = err
@@ -282,7 +286,7 @@ func (c *vpnClient) dialTransport(ctx context.Context) (tunnelStream, error) {
 		// it means the edge answered h2 but not the session (d077 §4 —
 		// route around it as if it were censorship).
 		if cErr != nil {
-			log.Printf("[vpn-client] mode C failed (%v), falling back to mode D", cErr)
+			log.Printf("[vpn-relay] mode C failed (%v), falling back to mode D", cErr)
 		}
 	}
 	hdr := make(http.Header)
@@ -294,11 +298,11 @@ func (c *vpnClient) dialTransport(ctx context.Context) (tunnelStream, error) {
 		}
 		return nil, err
 	}
-	log.Printf("[vpn-client] tunnel transport=%s", ws.transport())
+	log.Printf("[vpn-relay] tunnel transport=%s", ws.transport())
 	return ws, nil
 }
 
-func (c *vpnClient) openTunnel(ctx context.Context, target string) (tunnelStream, error) {
+func (c *relayNode) openTunnel(ctx context.Context, target string) (tunnelStream, error) {
 	s, err := c.dialTransport(ctx)
 	if err != nil {
 		err = fmt.Errorf("tunnel dial: %w", err)
@@ -375,7 +379,7 @@ func (c *vpnClient) openTunnel(ctx context.Context, target string) (tunnelStream
 // else is deliberate (no camouflage contract on loopback): this surface is
 // a byte pump, so it never parses absolute-form requests — and the v2 host
 // allowlist must NOT grow onto it; mode-A-only by decision (docs/d080).
-func (c *vpnClient) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *relayNode) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method == http.MethodConnect:
 		c.handleConnect(w, r)
@@ -390,7 +394,7 @@ func (c *vpnClient) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // handleHealth is VPN-R27: a local, non-secret status surface — tunnel
 // endpoint (host only), session count, last failure. Never the credential.
-func (c *vpnClient) handleHealth(w http.ResponseWriter, r *http.Request) {
+func (c *relayNode) handleHealth(w http.ResponseWriter, r *http.Request) {
 	last, _ := c.lastErr.Load().(string)
 	status := map[string]any{
 		"status":   "ok",
@@ -405,7 +409,7 @@ func (c *vpnClient) handleHealth(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(status)
 }
 
-func (c *vpnClient) handleConnect(w http.ResponseWriter, r *http.Request) {
+func (c *relayNode) handleConnect(w http.ResponseWriter, r *http.Request) {
 	target := connectTarget(r)
 	if _, _, err := splitConnectTarget(target); err != nil {
 		// No port means no protocol target (VPN-R21's ports are explicit);
@@ -454,7 +458,7 @@ func (c *vpnClient) handleConnect(w http.ResponseWriter, r *http.Request) {
 }
 
 // connectTarget extracts the CONNECT authority (r.Host for HTTP/1.1
-// server requests; the URL forms cover quirks of older clients).
+// server requests; the URL forms cover quirks of older HTTP clients).
 func connectTarget(r *http.Request) string {
 	if r.Host != "" {
 		return r.Host
@@ -488,7 +492,7 @@ func httpStatusForTunnelErr(err error) (status int, code, title string) {
 // SOCKS5 listener (VPN-R23)
 // ---------------------------------------------------------------------------
 
-func (c *vpnClient) serveSOCKS(ln net.Listener) {
+func (c *relayNode) serveSOCKS(ln net.Listener) {
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -501,9 +505,9 @@ func (c *vpnClient) serveSOCKS(ln net.Listener) {
 // handleSOCKS speaks just enough RFC 1928: no-auth greeting (the listener
 // is loopback-only, VPN-R23 — a credential check here would be theater),
 // CONNECT command, domain or IP address types. Domain names pass through
-// unresolved; IP literals are refused because the server resolves
+// unresolved; IP literals are refused because the exit node resolves
 // (VPN-R22 — one resolution path, one place the pin happens).
-func (c *vpnClient) handleSOCKS(conn net.Conn) {
+func (c *relayNode) handleSOCKS(conn net.Conn) {
 	defer conn.Close()
 	_ = conn.SetDeadline(time.Now().Add(socksHandshakeTimeout))
 
@@ -545,7 +549,7 @@ func (c *vpnClient) handleSOCKS(conn net.Conn) {
 		if _, err := io.ReadFull(conn, b[:]); err != nil {
 			return
 		}
-		socksReply(conn, 0x08) // server-side resolution only (VPN-R22)
+		socksReply(conn, 0x08) // exit-node-side resolution only (VPN-R22)
 		return
 	case 4: // IPv6 literal
 		var b [16]byte

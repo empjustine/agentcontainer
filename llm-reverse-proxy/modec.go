@@ -1,8 +1,9 @@
 // modec.go — mode C (docs/d077 §3): the long-lived streaming POST over h2.
 //
-// The server never terminates TLS (VPN-R25), so the h2 leg exists only
-// between this client and the edge; what lands on the server is an ordinary
-// h1.1 POST whose bodies carry the session (d077 §5, evidence E2). That is
+// The exit node never terminates TLS (VPN-R25), so the h2 leg exists only
+// between the relay node and the edge; what lands on the exit node is an
+// ordinary h1.1 POST whose bodies carry the session (d077 §5, evidence E2).
+// That is
 // why there is no h2-specific session code here beyond the ALPN offer and
 // stdlib's transport: the frame layer is carrier-agnostic (tunnelStream,
 // d077 §5's "one implementation per mode feeding the same relay pump").
@@ -55,10 +56,10 @@ func alpnNegotiate(ctx context.Context, u *url.URL, offer []string) (string, err
 }
 
 // openPOST starts a mode C session: one POST whose request body carries our
-// frames and whose response body carries the server's. A 200 on h2 is this
+// frames and whose response body carries the exit node's. A 200 on h2 is this
 // mode's session-open (the 101's counterpart); a 404 is the camouflage
 // refusal (VPN-R34) and confirms nothing about whether the path exists.
-func (c *vpnClient) openPOST(ctx context.Context) (tunnelStream, error) {
+func (c *relayNode) openPOST(ctx context.Context) (tunnelStream, error) {
 	u := *c.cfg.tunnelURL
 	if u.Scheme != "wss" {
 		return nil, fmt.Errorf("mode C needs a wss:// tunnel URL, got %q", u.Scheme)
@@ -119,16 +120,16 @@ func (c *vpnClient) openPOST(ctx context.Context) (tunnelStream, error) {
 		tr.CloseIdleConnections()
 		return nil, fmt.Errorf("mode C negotiated %s, not h2", resp.Proto)
 	}
-	return &postClientStream{body: resp.Body, pipe: pw, tr: tr}, nil
+	return &postRelayStream{body: resp.Body, pipe: pw, tr: tr}, nil
 }
 
-// postClientStream is mode C's carrier from the client side (d077 §5):
+// postRelayStream is mode C's carrier on the relay-node side (d077 §5):
 // writes go into the request-body pipe, reads come off the response body.
 // Deadline semantics mirror the wsConn's conn deadlines so the relay needs
 // no mode knowledge: a read past its window tears the session down and
 // reports the idle timeout it was (not a protocol error), and a write that
 // stops moving is bounded too — closing the stream unblocks the pipe.
-type postClientStream struct {
+type postRelayStream struct {
 	body      io.ReadCloser
 	pipe      *io.PipeWriter
 	tr        *http.Transport
@@ -138,7 +139,7 @@ type postClientStream struct {
 	timedOut  atomic.Bool
 }
 
-func (p *postClientStream) readTunnelMsg() ([]byte, error) {
+func (p *postRelayStream) readTunnelMsg() ([]byte, error) {
 	msg, err := readFrameFromStream(p.body)
 	if err != nil && p.timedOut.Load() {
 		return nil, os.ErrDeadlineExceeded
@@ -146,7 +147,7 @@ func (p *postClientStream) readTunnelMsg() ([]byte, error) {
 	return msg, err
 }
 
-func (p *postClientStream) writeTunnelMsg(msg []byte) error {
+func (p *postRelayStream) writeTunnelMsg(msg []byte) error {
 	p.wmu.Lock()
 	defer p.wmu.Unlock()
 	timer := time.AfterFunc(tunnelKeepaliveInterval, func() { _ = p.Close() })
@@ -155,7 +156,7 @@ func (p *postClientStream) writeTunnelMsg(msg []byte) error {
 	return err
 }
 
-func (p *postClientStream) setReadDeadline(t time.Time) error {
+func (p *postRelayStream) setReadDeadline(t time.Time) error {
 	if p.readTimer != nil {
 		p.readTimer.Stop()
 		p.readTimer = nil
@@ -174,13 +175,13 @@ func (p *postClientStream) setReadDeadline(t time.Time) error {
 // protocolViolation has no close frame to send over a body: ending the
 // exchange is the entire vocabulary (d077 §5) — the peer's read hits EOF,
 // which the session's rules already interpret.
-func (p *postClientStream) protocolViolation() { _ = p.Close() }
+func (p *postRelayStream) protocolViolation() { _ = p.Close() }
 
-// transport is h2 — the client can see the ALPN evidence the server can't
-// (a proxy stripped it), which is exactly d077 §4's h2|wss|post split.
-func (p *postClientStream) transport() string { return "h2" }
+// transport is h2 — the relay node can see the ALPN evidence the exit node
+// can't (a proxy stripped it), which is exactly d077 §4's h2|wss|post split.
+func (p *postRelayStream) transport() string { return "h2" }
 
-func (p *postClientStream) Close() error {
+func (p *postRelayStream) Close() error {
 	p.closeOnce.Do(func() {
 		if p.readTimer != nil {
 			p.readTimer.Stop()

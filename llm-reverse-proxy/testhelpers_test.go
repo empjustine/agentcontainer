@@ -132,7 +132,7 @@ func dialTunnelForTest(t *testing.T, u *url.URL, token string) (*wsConn, error) 
 }
 
 // reserveLoopbackAddr picks a concrete port by binding :0 and releasing
-// it. Test-only port pick for runClient, which binds flag-supplied
+// it. Test-only port pick for runRelayNode, which binds flag-supplied
 // addresses directly; the release-then-bind window is a known test race,
 // kept because production ports are fixed and collision-free.
 func reserveLoopbackAddr() string {

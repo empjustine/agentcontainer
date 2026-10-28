@@ -2,12 +2,12 @@
 // session (docs/d073 §5.2: VPN-R16 half-close, VPN-R18 backpressure,
 // VPN-R14 keepalive).
 //
-// The SAME function runs in both roles: server relaying `local` (the
-// target connection) against the tunnel, client relaying `local` (the
-// application's connection) against the tunnel. The frame protocol is
-// direction-symmetric, so one relay means one place where half-close,
-// keepalive, idle reaping, and the no-unbounded-buffering rule live —
-// and the client cannot grow a subtly different copy of them.
+// The SAME function runs on both nodes (docs/d088): on the exit node
+// `local` is the target connection, on the relay node it is the
+// application's connection. The frame protocol is direction-symmetric, so
+// one relay means one place where half-close, keepalive, idle reaping, and
+// the no-unbounded-buffering rule live — and neither node can grow a subtly
+// different copy of them.
 //
 // Backpressure (VPN-R18) falls out of the shape: each direction reads at
 // most one frame-worth of bytes before writing it, so a stalled peer stops
@@ -46,8 +46,8 @@ const (
 // relayStats is exactly the metadata VPN-R19 allows: byte counts by
 // direction and an outcome — never payload, never timing per-frame.
 type relayStats struct {
-	sent     int64 // local → tunnel (server view: bytes received from the client)
-	received int64 // tunnel → local (server view: bytes sent to the client)
+	sent     int64 // local → tunnel (exit-node view: bytes received from the relay node)
+	received int64 // tunnel → local (exit-node view: bytes sent to the relay node)
 	outcome  string
 }
 
@@ -160,7 +160,7 @@ func relay(s tunnelStream, local net.Conn, keepalive, idle time.Duration) (relay
 				// consumed it.
 			default:
 				// HELLO/CONNECT/CONNECTED/CONNECT_ERR belong to the session
-				// preamble (see tunnelserver.go / client.go); a control frame
+				// preamble (see tunnelserver.go / relaynode.go); a control frame
 				// from the wrong phase is a protocol error.
 				s.protocolViolation()
 				setOutcome(outcomeProtocolError, errors.New("session control frame during relay"))

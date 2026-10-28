@@ -1,7 +1,7 @@
 ---
 id: d083
 type: decision
-status: implemented
+status: implemented · §(c) free-disk gate retired by d087 (image shrank; the disk consumer is the inference pull)
 title: "d083 — per-unit build entries return as shims, and the coding-agent image gets a free-disk gate"
 parent: d041
 tags: ["builders", "entrypoints", "spike-validation"]
@@ -55,6 +55,9 @@ Entry ≠ implementation: a per-unit entry that only selects targets cannot
 drift from the builder because it contains nothing to drift.
 
 ### (c) A free-disk registration gate for the coding-agent image
+
+*(Superseded by d087 — the gate is retired; see that record for why the
+floor keyed on the wrong consumer.)*
 
 `lib/host-capabilities.mjs` gains `freeDiskGiB()`; the coding-agent image
 registers only with headroom to spare (floor 20 GiB,

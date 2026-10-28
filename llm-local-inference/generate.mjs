@@ -13,8 +13,9 @@
  *
  * Layers emitted:
  *   00-general.yaml              always  (globals + macros)
- *   10-local-llm-inference.yaml  only when local inference is viable (container
- *                                backend AND GPU devices), or LOCAL_INFERENCE=1
+ *   10-local-llm-inference.yaml  only when this host is an inference endpoint
+ *                                (container backend AND inference devices AND
+ *                                the RAM floor — docs/d087), or LOCAL_INFERENCE=1
  *                                to force (debug only; the host HF cache must
  *                                carry every configured GGUF)
  *   10-local-llm-inference.paths sibling manifest of the baked model files,
@@ -37,7 +38,7 @@
  *
  * Secrets: none at generation time. This module's generation is fully offline
  * (vendored tables only) and embeds NO keys — the single ${env.*} reference in
- * the generated config (PEER_API_KEY, 00-general.yaml apiKeys) is resolved by
+ * the generated config (REVERSE_PROXY_API_KEY, 00-general.yaml apiKeys) is resolved by
  * llama-swap from ITS OWN environment at load time, which run.sh receives from
  * the explicit chain (./lib/environment.sh ./run.sh). So generation needs no
  * vault round-trip at all.
@@ -498,22 +499,33 @@ logInfo("generating config.d", { dir: configD });
 // 1. general layer: always.
 generateGeneral();
 
-// 2. local-inference layer: capability-gated. Requires the container backend
-// (the unified-vulkan image runs llama.cpp against the GPU) and at least one
-// dedicated inference device. LOCAL_INFERENCE=1 forces the layer regardless
+// 2. local-inference layer: capability-gated on being an INFERENCE ENDPOINT
+// (docs/d087): the container backend (the unified-vulkan image runs llama.cpp
+// against the GPU), at least one dedicated inference device, AND the RAM
+// floor — weights plus KV cache do not fit on a low-RAM host no matter what
+// accelerators it has. LOCAL_INFERENCE=1 forces the layer regardless
 // (debug: the generator still requires every configured GGUF in the host HF
 // cache — provision it with ../local-llm/download_models.py first).
-// Both probes come from ../lib/host-capabilities.mjs — the SAME definitions
-// build.mjs gates its llama-swap pull on (they port
+// All probes/thresholds come from ../lib/host-capabilities.mjs — the SAME
+// definitions build.mjs gates its llama-swap pull on (the device probes port
 // workload-runtime.sh's detect_workload_tool/detect_gpu_devs), so this
 // layer's viability and the builder's target set cannot drift apart.
-const { detectContainerTool, detectGpuDevices } =
+const {
+	detectContainerTool,
+	detectGpuDevices,
+	totalMemGiB,
+	INFERENCE_MIN_RAM_GIB,
+} =
 	/** @type {typeof import("../lib/host-capabilities.mjs")} */ (
 		await import(`${LIB_DIR}/host-capabilities.mjs`)
 	);
 const containerTool = detectContainerTool();
 const gpuDevices = detectGpuDevices();
-const inferenceViable = containerTool !== null && gpuDevices.length > 0;
+const hostRamGiB = totalMemGiB();
+const inferenceViable =
+	containerTool !== null &&
+	gpuDevices.length > 0 &&
+	hostRamGiB >= INFERENCE_MIN_RAM_GIB;
 
 if (process.env.LOCAL_INFERENCE === "1" || inferenceViable) {
 	generateLocalInference();
@@ -522,14 +534,20 @@ if (process.env.LOCAL_INFERENCE === "1" || inferenceViable) {
 	logInfo("local-inference layer generated", {
 		containerTool,
 		gpuDevices: gpuDevices.length,
+		ramGiB: hostRamGiB,
 	});
 } else {
 	rmSync(join(configD, "10-local-llm-inference.yaml"), { force: true });
 	rmSync(join(configD, "10-local-llm-inference.paths"), { force: true });
 	rmSync(join(configD, "launch-gguf.sh"), { force: true });
 	logError(
-		"no container backend + GPU devices — this host cannot serve local inference (LOCAL_INFERENCE=1 forces generation for debug)",
-		{ containerTool, gpuDevices: gpuDevices.length },
+		"host is not an inference endpoint (no container backend, no inference devices, or RAM below the floor) — cannot serve local inference (LOCAL_INFERENCE=1 forces generation for debug)",
+		{
+			containerTool,
+			gpuDevices: gpuDevices.length,
+			ramGiB: hostRamGiB,
+			minRamGiB: INFERENCE_MIN_RAM_GIB,
+		},
 	);
 	process.exit(94);
 }

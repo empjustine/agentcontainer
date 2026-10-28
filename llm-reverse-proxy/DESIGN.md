@@ -111,7 +111,7 @@ faithful passthrough; the upstream's own trust decisions are never pre-empted.
 
 The requirements for the three-mode SSL VPN grown out of this relay
 — today's allowlist relay, an authenticated generic relay, and a
-`CONNECT`-over-WebSocket tunnel with a localhost client proxy — are owned by
+`CONNECT`-over-WebSocket tunnel with a localhost CONNECT/SOCKS5 relay — are owned by
 [d073](../docs/d073-ssl-vpn-three-modes.md), not this file. The feasibility
 verdict there is the load-bearing part for this code: Tailscale Funnel does
 **not** support the HTTP `CONNECT` method as a general tunnel, but it does
@@ -119,3 +119,11 @@ support the WebSocket upgrade (the `httputil.ReverseProxy` path this proxy
 already uses), so the tunnel is `CONNECT`-inside-`wss`. The trust-model
 table in d073 explains why the tunnel (modes C–E) can drop the client's trust in the proxy
 where modes A/B cannot.
+
+Roles are named by network position, not protocol role (docs/d088): the
+**exit node** (free internet + tsnet to the LLM endpoints,
+`PROXY_MODE=exit`, the default) and the **relay node** (local
+restricted-internet deployment, `PROXY_MODE=relay`). The env values and
+the code speak the same names (d088 phase 2); inside the tunnel protocol
+itself the ends stay "client"/"server" — wire roles, not deployments —
+and `relay.go`'s byte pump is shared verbatim by both nodes.

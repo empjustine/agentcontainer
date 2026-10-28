@@ -72,7 +72,7 @@ export const {
  * the SAME metadata shape for local GGUF and for cloud providers routed
  * through it (`meta.llamaswap` on `/v1/models`), so the RawModelEntry → PiModel
  * mapping and the provider wrapper (compat block, `/v1` normalization, the
- * `$PEER_API_KEY` reference) are one implementation (docs/d024).
+ * `$REVERSE_PROXY_API_KEY` reference) are one implementation (docs/d024).
  */
 
 // Shared /models shapes — the types live next to the probe toolkit.
@@ -293,11 +293,11 @@ export function piModel(entry) {
  * the openai-completions protocol. The compat block is set EXPLICITLY: these
  * providers are hand-defined, so pi's provider-composer must not auto-inherit
  * the built-in `llama.cpp` provider's compat — only `api`/`baseUrl` are
- * inherited from built-in defaults. `apiKey` is the literal "$PEER_API_KEY",
+ * inherited from built-in defaults. `apiKey` is the literal "$REVERSE_PROXY_API_KEY",
  * llama-swap's own client-facing bearer (the cloud path-routes on the
  * simplified proxy do NOT use it — they forward pi's built-in provider auth,
  * see providerReroute, docs/d027); omitted when the generator's own
- * environment has no PEER_API_KEY at all.
+ * environment has no REVERSE_PROXY_API_KEY at all.
  * @param {string} baseUrl
  * @param {PiModel[]} models
  * @returns {PiProvider}
@@ -307,7 +307,7 @@ export function providerEntry(baseUrl, models) {
 		baseUrl: `${baseUrl}/v1`,
 		api: "openai-completions",
 		compat: LLAMA_SWAP_COMPAT,
-		...(process.env.PEER_API_KEY?.trim() ? { apiKey: "$PEER_API_KEY" } : {}),
+		...(process.env.REVERSE_PROXY_API_KEY?.trim() ? { apiKey: "$REVERSE_PROXY_API_KEY" } : {}),
 		models,
 	};
 }
@@ -338,8 +338,8 @@ export function providerEntry(baseUrl, models) {
  * credentials are pi's own built-in per-provider auth (env key or OAuth,
  * resolved at request time) forwarded untouched. The former
  * `"$PEER_API_KEY"` reference belonged to llama-swap's gateway auth and has
- * no meaning here — PEER_API_KEY now only guards the LOCAL llama-swap /v1
- * route (docs/d027).
+ * no meaning here — REVERSE_PROXY_API_KEY now only guards the LOCAL
+ * llama-swap /v1 route (docs/d027; the key's rename under d071).
  * @param {string} providerUrl the provider's canonical upstream URL
  *   (fact table `baseUrl`, docs/d070; install substitutes the client route.
  *   The legacy `\`/v1\`` append was llama-swap's model-id-magic and is gone)

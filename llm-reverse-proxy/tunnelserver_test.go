@@ -181,7 +181,7 @@ func TestTunnelPathCamouflage(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Authentication (VPN-R12/R31/R33) and server-side policy (R22/R37/R35)
+// Authentication (VPN-R12/R31/R33) and exit-node-side policy (R22/R37/R35)
 // ---------------------------------------------------------------------------
 
 // TestTunnelHandshakeAuth drives the REAL handshake through wsDial: the
@@ -215,7 +215,7 @@ func TestTunnelHandshakeAuth(t *testing.T) {
 
 // openRawTunnel completes handshake + HELLO and leaves CONNECT as the next
 // frame — the low-level driver for server-side protocol tests, bypassing
-// the client's convenience layers on purpose.
+// the relay node's convenience layers on purpose.
 func openRawTunnel(t *testing.T, tunnelURL *url.URL, token string) *wsConn {
 	t.Helper()
 	ws, err := dialTunnelForTest(t, tunnelURL, token)
@@ -264,14 +264,14 @@ func connectErrReason(t *testing.T, ws *wsConn, target string) string {
 	return string(payload)
 }
 
-// VPN-R22: the server refuses pre-resolved targets — the enforcement point
+// VPN-R22: the exit node refuses pre-resolved targets — the enforcement point
 // must hold even against a peer that skips any client-side courtesy check.
 func TestServerRefusesIPLiteralTargets(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{})
 	proxy := newHTTPServer(t, s)
 	for _, target := range []string{"1.2.3.4:443", "[::1]:443"} {
 		// One CONNECT per session: v1 is unmuxed (VPN-R17), so every
-		// refusal opens a fresh tunnel — exactly as the client would.
+		// refusal opens a fresh tunnel — exactly as the relay node would.
 		ws := openRawTunnel(t, mustTunnelURL(t, proxy), testTunnelToken)
 		if reason := connectErrReason(t, ws, target); reason != errReasonTargetIP {
 			t.Fatalf("%s: reason = %q, want %q", target, reason, errReasonTargetIP)
@@ -307,7 +307,7 @@ func TestServerRefusesLoopbackResolvingTargetsByDefault(t *testing.T) {
 }
 
 // VPN-R16 ordering: CONNECT before HELLO is a protocol violation, not a
-// request the server silently repairs.
+// request the exit node silently repairs.
 func TestServerRequiresHelloFirst(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{})
 	proxy := newHTTPServer(t, s)

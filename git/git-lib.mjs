@@ -372,11 +372,50 @@ export function filterByGlobs(rels, only, exclude) {
  * @returns {Promise<void>}
  */
 export async function optimizeMirror(repo) {
+	await setOptimizationConfig(repo);
+	await writePickaxePack(repo);
+}
+
+/**
+ * The pack/commit-graph sequence every optimizing pass ends with — the WHY of
+ * its order and flags lives on optimizeMirror, and docs/d089 keeps the pass
+ * ladder apart.
+ * @param {string} repo absolute path to a bare repo
+ * @returns {Promise<void>}
+ */
+async function writePickaxePack(repo) {
+	await git(repo, ["repack", "-adb", "--write-bitmap-index"]);
+	await git(repo, ["commit-graph", "write", "--reachable", "--changed-paths"]);
+}
+
+/**
+ * Config every optimizing pass sets before its git work: gc.writeCommitGraph
+ * is what makes the deep pass's own gc write a graph at all, and
+ * fetch.writeCommitGraph keeps later plain fetches current (docs/d089).
+ * @param {string} repo absolute path to a bare repo
+ * @returns {Promise<void>}
+ */
+async function setOptimizationConfig(repo) {
 	await git(repo, ["config", "core.commitGraph", "true"]);
 	await git(repo, ["config", "gc.writeCommitGraph", "true"]);
 	await git(repo, ["config", "fetch.writeCommitGraph", "true"]);
-	await git(repo, ["repack", "-adb", "--write-bitmap-index"]);
-	await git(repo, ["commit-graph", "write", "--reachable", "--changed-paths"]);
+}
+
+/**
+ * The deep pass (docs/d089): a forced delta recomputation (window/depth 250) —
+ * the storage win for slow-moving mirrors on constrained cold storage that the
+ * delta-reusing routine pass can never produce on its own. gc's own
+ * commit-graph write carries no --changed-paths guarantee and its bitmap write
+ * is conditional, so the routine sequence re-runs over the fresh pack: noise
+ * against the forced repack, and it pins the end-state every optimizing pass
+ * must leave the mirror in.
+ * @param {string} repo absolute path to a bare repo
+ * @returns {Promise<void>}
+ */
+export async function deepOptimizeMirror(repo) {
+	await setOptimizationConfig(repo);
+	await git(repo, ["gc", "--aggressive"]);
+	await writePickaxePack(repo);
 }
 
 /**

@@ -233,7 +233,7 @@ func isResolutionError(err error) bool {
 
 // egressFailureReason maps a dialValidated error onto the stable
 // CONNECT_ERR reason set (VPN-R20/R35/R37 — reasons are vocabulary the
-// client and log rely on, so they are produced in exactly one place).
+// relay node and the log rely on, so they are produced in exactly one place).
 func egressFailureReason(err error) string {
 	switch {
 	case isEgressDenied(err):

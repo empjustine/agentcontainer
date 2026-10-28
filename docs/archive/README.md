@@ -23,7 +23,7 @@ only record of an investigation, or because history references them.
 | [llama-swap-response-analysis.md](llama-swap-response-analysis.md) | llama-swap response shape vs pi agent expectations | findings |
 | [mini-swe-agent.md](mini-swe-agent.md) | mini-swe-agent vs pi agent-core comparison | findings |
 | [model-architecture-findings.md](model-architecture-findings.md) | model selection numbers (context/active params/KV cache) | findings |
-| [peer-variant-work.md](peer-variant-work.md) | the retired `coding-agent-peer/` work variant | archived, superseded twice (see its banner) |
+| [atuin-litestream-study.md](atuin-litestream-study.md) | litestream backup + best-effort sync for atuinsh/atuin — sync v2 protocol, accounts, OCI MySQL/Oracle 19c verdict | findings |
 
 ## Reading notes
 

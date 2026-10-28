@@ -1,9 +1,9 @@
 package main
 
-// vpn_e2e_test.go — the tunnel path in one process: real server, real
-// client, real tunnel, a local upstream, and both local listener types.
+// vpn_e2e_test.go — the tunnel path in one process: real exit node, real
+// relay node, real tunnel, a local upstream, and both local listener types.
 // Everything below uses the production construction paths (enableTunnel,
-// clientConfigFromEnv, runClient) so a test cannot pass while main() wires
+// relayConfigFromEnv, runRelayNode) so a test cannot pass while main() wires
 // the pieces differently (d072's drift lesson).
 
 import (
@@ -89,19 +89,19 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	}
 	proxy := newHTTPServer(t, s)
 
-	// Client: env chain + runClient, exactly as -mode client wires it.
+	// Relay node: env chain + runRelayNode, exactly as -mode relay wires it.
 	t.Setenv(envTunnelURL, "ws://"+proxy.Listener.Addr().String()+tunnelPath)
 	t.Setenv(envClientLabel, "e2e-label")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := clientConfigFromEnv(httpAddr, socksAddr, "d")
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, "d")
 	if err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	clientDone := make(chan error, 1)
-	go func() { clientDone <- runClient(ctx, cfg) }()
+	relayDone := make(chan error, 1)
+	go func() { relayDone <- runRelayNode(ctx, cfg) }()
 
 	// One process-wide log buffer covers both roles — the credential-free
 	// invariant must hold across ALL lines, not a chosen file's.
@@ -114,7 +114,7 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 		// The GET is written immediately after CONNECT (pipelined): it must
 		// ride the hijacked buffer, not a fresh connection (VPN-R11).
 		// The CONNECT host is resolved by the SERVER (VPN-R22): it must be
-		// a name the server side can resolve. The HTTP Host inside the
+		// a name the exit node can resolve. The HTTP Host inside the
 		// tunnel is independent of that.
 		mustWrite(t, conn, "CONNECT localhost:"+strconv.Itoa(int(upPort))+" HTTP/1.1\r\nHost: localhost\r\n\r\n"+
 			"GET /p?q=1 HTTP/1.1\r\nHost: local.test\r\nConnection: close\r\n\r\n")
@@ -208,11 +208,11 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 
 	cancel()
 	select {
-	case err := <-clientDone:
+	case err := <-relayDone:
 		if err != nil {
-			t.Fatalf("client shutdown: %v", err)
+			t.Fatalf("relay node shutdown: %v", err)
 		}
 	case <-time.After(10 * time.Second):
-		t.Fatal("client did not stop on context cancellation")
+		t.Fatal("relay node did not stop on context cancellation")
 	}
 }

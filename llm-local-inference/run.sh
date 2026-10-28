@@ -37,7 +37,7 @@ HOST_PORT="${HOST_PORT:-8101}"
 
 # Secrets: arrive as plain environment — loaded by the explicit chain
 # (./lib/environment.sh ./run.sh, the ONE infisical round-trip) and forwarded
-# through the workload_env allowlist below. PEER_API_KEY is llama-swap's
+# through the workload_env allowlist below. REVERSE_PROXY_API_KEY is llama-swap's
 # inbound bearer key (00-general.yaml apiKeys) — the key clients present, not
 # a provider key. HF_TOKEN is deliberately NOT forwarded: model paths are
 # baked into the generated config at generation time (docs/d029 option B), so
@@ -86,7 +86,7 @@ workload_gpu
 workload_ro       "$hub_cache" /home/ubuntu/.cache/huggingface/hub
 workload_ro       "$config_d" /etc/llama-swap/config.d
 workload_hardening
-workload_env_allowlist PEER_API_KEY
+workload_env_allowlist REVERSE_PROXY_API_KEY
 workload_entrypoint 'llama-swap'
 workload_cmd      -config-dir /etc/llama-swap/config.d -listen 0.0.0.0:8080
 # No infisical wrapper here: the values were loaded by the explicit chain

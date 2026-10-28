@@ -14,7 +14,7 @@
 		"every": "10s"
 	},
 	"sendLoadingState": false,
-	"apiKeys": ["${env.PEER_API_KEY}"],
+	"apiKeys": ["${env.REVERSE_PROXY_API_KEY}"],
 	"ui": {
 		"activity": {
 			"session_id": ["X-Session-ID", "X-Litellm-Session-Id"]

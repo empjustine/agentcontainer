@@ -1,4 +1,5 @@
-FROM docker.io/library/debian:13-slim
+# FROM docker.io/library/debian:13-slim
+FROM docker.io/library/node:24-trixie
 
 ARG BUILD_DATE
 ARG UID=1000
@@ -49,10 +50,20 @@ apt-get -qq autoremove && \
 apt-get -qq clean && \
 rm -rf /var/lib/apt/lists/*
 
+# node:24-trixie bakes user/group `node` at 1000:1000, and build.mjs forwards
+# the host uid/gid as UID/GID (build.mjs:234) — 1000 on most dev machines — so
+# the dev identities below collide unless node's are removed first. The getent
+# guards keep the layer valid on a debian:13-slim revert, where node does not
+# exist; removal itself is unguarded so a real userdel/groupdel failure still
+# fails the build instead of silently leaving 1000 taken.
+RUN if getent passwd node >/dev/null; then userdel --remove node; fi && \
+    if getent group node >/dev/null; then groupdel node; fi
+
 RUN groupadd --gid ${GID} ${USER} && \
     useradd --uid ${UID} --gid ${GID} --create-home --shell /bin/bash ${USER} && \
     echo "${USER} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USER} && \
-    mkdir -p -- /home/${USER}/.config/mise /home/${USER}/.cache/huggingface/hub /home/${USER}/.pi
+    mkdir -p -- /home/${USER}/.config/mise /home/${USER}/.pi
+# /home/${USER}/.cache/huggingface/hub
 
 COPY config.toml /home/${USER}/.config/mise/config.toml
 

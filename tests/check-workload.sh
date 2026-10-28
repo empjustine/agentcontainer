@@ -96,7 +96,7 @@ ARG[CLINE_API_KEY]
 ARG[--env]
 ARG[MISTRAL_API_KEY]
 ARG[--env]
-ARG[PEER_API_KEY]
+ARG[REVERSE_PROXY_API_KEY]
 ARG[--env]
 ARG[OPENROUTER_API_KEY]
 ARG[--env]
@@ -129,7 +129,7 @@ case_coding_agent() {
 	workload_rw       "$tmp/src/a workspace with spaces" '/mnt/a guest with spaces'
 	workload_ro_if    "$root/README.md"  /opt/present
 	workload_ro_if    "$root/nope"       /opt/absent
-	workload_env      CLINE_API_KEY MISTRAL_API_KEY PEER_API_KEY OPENROUTER_API_KEY
+	workload_env      CLINE_API_KEY MISTRAL_API_KEY REVERSE_PROXY_API_KEY OPENROUTER_API_KEY
 	workload_env      OPENCODE_API_KEY HF_TOKEN GEMINI_API_KEY REVERSE_PROXY_BASE_URLS
 	workload_workdir  "$tmp/src/a workspace with spaces"
 	workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
@@ -170,7 +170,7 @@ ARG[OPENROUTER_API_KEY]
 ARG[--env]
 ARG[OPENCODE_API_KEY]
 ARG[--env]
-ARG[PEER_API_KEY]
+ARG[REVERSE_PROXY_API_KEY]
 ARG[ghcr.io/mostlygeek/llama-swap:cpu]
 ARG[-config-dir]
 ARG[/config.d]
@@ -189,7 +189,7 @@ case_llm_local_inferencing() {
 	workload_entrypoint 'llama-swap'
 	workload_ro         "$root/docs" /config.d
 	workload_rw         "$tmp/src/a workspace with spaces" /cache
-	workload_env        OPENROUTER_API_KEY OPENCODE_API_KEY PEER_API_KEY
+	workload_env        OPENROUTER_API_KEY OPENCODE_API_KEY REVERSE_PROXY_API_KEY
 	workload_cmd        -config-dir /config.d
 	# Devices are populated by detect_gpu_devs on a real GPU host; there is no
 	# /dev/kfd here, so declare them directly.

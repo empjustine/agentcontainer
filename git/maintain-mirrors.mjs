@@ -4,7 +4,8 @@
  * search (git pickaxe) fast. Companion to `migrate-to-bare.mjs`; rationale and
  * the "why bare" argument live in non-bare-issues.md.
  *
- * Two phases per mirror, independently switchable:
+ * Two phases per mirror, independently switchable; phase 2 also has an
+ * opt-in deep form (docs/d089):
  *
  *   1. ALIGN — `git remote update --prune`. The mirror refspec
  *      (`+refs/*:refs/*`, set by `clone --mirror`) makes upstream the source
@@ -17,6 +18,13 @@
  *      path-limited search (`git log -S 'x' -- path`), never an all-history
  *      grep without a pathspec. See optimizeMirror() in git-lib.mjs.
  *
+ *      The deep form (--deep-optimize) runs "git gc --aggressive" first —
+ *      the forced delta recomputation that shrinks slow-moving mirrors on
+ *      cold storage, which delta reuse lets compose with (never be undone
+ *      by) the routine sequence — then re-runs OPTIMIZE so bitmaps and Bloom
+ *      filters are guaranteed over the fresh pack. Hours per farm; the pass
+ *      ladder is docs/d089's.
+ *
  * `git maintenance start` is deliberately NOT used: it installs a per-repo
  * background timer (cron/systemd) and would run these same commands on a
  * schedule the fleet owner cannot see. This script is the explicit,
@@ -25,7 +33,8 @@
  * Usage (one program, two shims — `./git/maintain.sh` for POSIX shells,
  * `git\maintain.ps1` for native Windows, identical flags; docs/d062):
  *   ./git/maintain.sh [--root DIR] [--jobs N] [--max-depth N]
- *                     [--no-fetch] [--no-optimize] [--min-interval S]
+ *                     [--no-fetch] [--no-optimize] [--deep-optimize]
+ *                     [--min-interval S]
  *
  *   --root DIR        mirror root to maintain (default $REFERENCES_ROOT else
  *                     ~/Downloads/references — the farm itself). Discovery is
@@ -67,6 +76,7 @@ import { relative } from "node:path";
 
 import {
 	createMinIntervalGate,
+	deepOptimizeMirror,
 	DEFAULT_MAX_DEPTH,
 	DEFAULT_ROOT,
 	filterByGlobs,
@@ -129,6 +139,8 @@ const ORIGIN_PROBE_JOBS = 8;
  * @property {number} maxDepth
  * @property {boolean} fetch
  * @property {boolean} optimize
+ * @property {boolean} deep run the deep pass before the routine one; implies
+ *   optimize (docs/d089)
  * @property {string[]} only
  * @property {string[]} exclude
  * @property {number|null} minInterval explicit seconds between upstream
@@ -154,6 +166,9 @@ function parseArgs(argv) {
 		maxDepth: DEFAULT_MAX_DEPTH,
 		fetch: true,
 		optimize: true,
+		// Opt-in, never defaulted: a forced repack is an hours-to-days job on
+		// cold storage — docs/d089 owns the ladder and its costs.
+		deep: false,
 		only: [],
 		exclude: [],
 		// `null` means "the per-host defaults" (see createPacing), not
@@ -179,6 +194,9 @@ function parseArgs(argv) {
 				break;
 			case "--no-optimize":
 				o.optimize = false;
+				break;
+			case "--deep-optimize":
+				o.deep = true;
 				break;
 			case "--min-interval":
 				o.minInterval = Number(argv[++i]);
@@ -318,7 +336,7 @@ async function maintainOne(target, o, pacing) {
 
 	if (o.optimize) {
 		try {
-			await optimizeMirror(repo);
+			await (o.deep ? deepOptimizeMirror(repo) : optimizeMirror(repo));
 		} catch (err) {
 			logWarn("optimization failed — mirror left as-is", {
 				repo,
@@ -333,6 +351,7 @@ async function maintainOne(target, o, pacing) {
 		origin: url ?? "",
 		fetched: o.fetch && url ? 1 : 0,
 		optimized: o.optimize ? 1 : 0,
+		deep: o.deep ? 1 : 0,
 		paced: o.fetch && url ? (pacing.intervalFor(host, url) > 0 ? 1 : 0) : 0,
 	});
 	return "ok";
@@ -344,7 +363,8 @@ async function main() {
 	if (o.help) {
 		process.stdout.write(
 			"usage: ./git/maintain.sh [--root DIR] [--jobs N] [--max-depth N]\n" +
-				"                       [--no-fetch] [--no-optimize] [--min-interval S]\n" +
+				"                       [--no-fetch] [--no-optimize] [--deep-optimize]\n" +
+				"                       [--min-interval S]\n" +
 				"                       [--only GLOB]... [--exclude GLOB]\n" +
 				"       git\\maintain.ps1 takes the same flags — the native Windows\n" +
 				"       entry for non-NTFS / non-local UNC farm roots (docs/d062)\n" +
@@ -358,6 +378,11 @@ async function main() {
 		throw Object.assign(new Error("reference root not found"), {
 			root: o.root,
 		});
+	}
+	if (o.deep && !o.optimize) {
+		throw new Error(
+			"--deep-optimize conflicts with --no-optimize — deep implies optimize (docs/d089)",
+		);
 	}
 	if (!o.fetch && !o.optimize) {
 		throw new Error("both --no-fetch and --no-optimize given — nothing to do");
@@ -409,6 +434,7 @@ async function main() {
 		jobs: workers,
 		fetch: o.fetch ? 1 : 0,
 		optimize: o.optimize ? 1 : 0,
+		deep: o.deep ? 1 : 0,
 		paceScope:
 			o.minInterval === null
 				? "default"

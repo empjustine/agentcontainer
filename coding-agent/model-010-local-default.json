@@ -11,7 +11,7 @@
         "supportsStrictMode": false,
         "maxTokensField": "max_tokens"
       },
-      "apiKey": "$PEER_API_KEY",
+      "apiKey": "$REVERSE_PROXY_API_KEY",
       "models": [
         {
           "id": "01b-ctx128-bartowski/Ling-3.0-tiny-GGUF:Q8_0",

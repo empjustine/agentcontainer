@@ -15,7 +15,7 @@
   },
   "sendLoadingState": false,
   "apiKeys": [
-    "${env.PEER_API_KEY}"
+    "${env.REVERSE_PROXY_API_KEY}"
   ],
   "ui": {
     "activity": {

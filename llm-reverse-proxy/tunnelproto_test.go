@@ -93,7 +93,7 @@ func TestHelloRoundTripAndRejections(t *testing.T) {
 	}
 }
 
-// CONNECT_ERR reasons are a vocabulary the client and the log key on —
+// CONNECT_ERR reasons are a vocabulary the relay node and the log key on —
 // pin them so a rename cannot silently split the two.
 func TestConnectErrReasonsAreStable(t *testing.T) {
 	want := map[string]bool{

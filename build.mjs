@@ -8,11 +8,13 @@
  *     llm-reverse-proxy multi-stage image build (the proxy compile happens
  *     INSIDE the image, so no host go toolchain is needed). Registration is
  *     capability-gated (lib/host-capabilities.mjs): the llama-swap pull
- *     needs inference render devices, the proxy image needs outbound cloud
- *     networking, the coding-agent image needs free disk headroom (its layer
- *     churn once exhausted a spike-validation VM mid-build and took the WHOLE
- *     build down — docs/d083) — a host lacking any of them skips that target
- *     with a loud log and still builds the rest.
+ *     needs an inference ENDPOINT — render devices AND the RAM floor
+ *     (docs/d087) — the proxy image needs outbound cloud networking; a host
+ *     lacking a capability skips that target with a loud log and still
+ *     builds the rest. The coding-agent image is deliberately UNGATED:
+ *     d083's free-disk floor retires with the node:24-trixie base (d087) —
+ *     the multi-GB disk consumer on a build host is the llama-swap pull,
+ *     now gated at the source where the waste happens.
  *   - Termux (PREFIX under /data/data/com.termux): strictly SERIALIZED —
  *     ~1 GB devices cannot parallelize go builds. Order: provisioning
  *     (lib/provision-termux.sh — node/jq via pkg, the infisical CLI source
@@ -43,8 +45,7 @@
  * catalog; a requested-but-gated name logs the gate and is left out.
  *
  * Env overrides: FORCE · IMAGE_TAG / LLAMA_SWAP_IMAGE /
- * CODING_AGENT_TAG · CODING_AGENT_IMAGE_MIN_FREE_GIB · GOFLAGS · plus
- * lib/provision-termux.sh's own set.
+ * CODING_AGENT_TAG · GOFLAGS · plus lib/provision-termux.sh's own set.
  */
 
 import { spawn } from "node:child_process";
@@ -58,10 +59,11 @@ import {
 } from "./lib/go-build.mjs";
 import {
 	CLOUD_PROBE_CANARY,
+	INFERENCE_MIN_RAM_GIB,
 	cloudReachable,
 	detectContainerTool,
 	detectGpuDevices,
-	freeDiskGiB,
+	totalMemGiB,
 } from "./lib/host-capabilities.mjs";
 import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 
@@ -199,56 +201,40 @@ if (containerTool) {
 			? ["image", "build", "--progress=plain"]
 			: ["buildx", "build", "--progress=plain"];
 
-	// Free-disk floor for the coding-agent image (docs/d083): its layer churn
-	// exhausted a spike-validation VM's storage mid-write (podman overlay tmp:
-	// "no space left on device"), and the crash took the WHOLE generic build
-	// down — nothing else ran, so neither the proxy nor the new coding-agent
-	// environment could be validated on that host. A loud skip costs one
-	// target; the mid-build crash costs the whole build. Env-tunable for hosts
-	// that know their storage is smaller yet sufficient.
-	const codingAgentMinFreeGiB = Number(
-		process.env.CODING_AGENT_IMAGE_MIN_FREE_GIB ?? 20,
-	);
-	const homeFreeGiB = freeDiskGiB(process.env.HOME ?? "/");
-	if (homeFreeGiB < codingAgentMinFreeGiB) {
-		noteGated("coding-agent-image");
-		logWarn("skipping target — free disk below the coding-agent image floor", {
-			target: "coding-agent-image",
-			freeGiB: homeFreeGiB,
-			minFreeGiB: codingAgentMinFreeGiB,
-		});
-	} else {
-		targets.push({
-			name: "coding-agent-image",
-			fn: async () => {
-				const buildDate = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-				return await run(
-					containerTool,
-					[
-						...imageBuildArgs,
-						"--pull",
-						...(force ? ["--no-cache"] : []),
-						"--build-arg",
-						`BUILD_DATE=${buildDate}`,
-						"--build-arg",
-						`UID=${process.env.SUDO_UID ?? process.getuid?.() ?? ""}`,
-						"--build-arg",
-						`GID=${process.env.SUDO_GID ?? process.getgid?.() ?? ""}`,
-						"--build-arg",
-						`USER=${process.env.USER ?? ""}`,
-						"--tag",
-						`${codingAgentTag}:${buildDate}`,
-						"--tag",
-						`${codingAgentTag}:latest`,
-						"-f",
-						join(repoRoot, "coding-agent", "Containerfile"),
-						join(repoRoot, "coding-agent"),
-					],
-					{ name: "coding-agent-image" },
-				);
-			},
-		});
-	}
+	// Ungated since d087: the node:24-trixie base cut the image's own layer
+	// footprint enough that d083's free-disk floor (20 GiB) no longer buys
+	// survival — the multi-GB consumer on a build host is the llama-swap
+	// pull below, and THAT is now gated on inference-endpoint viability.
+	targets.push({
+		name: "coding-agent-image",
+		fn: async () => {
+			const buildDate = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+			return await run(
+				containerTool,
+				[
+					...imageBuildArgs,
+					"--pull",
+					...(force ? ["--no-cache"] : []),
+					"--build-arg",
+					`BUILD_DATE=${buildDate}`,
+					"--build-arg",
+					`UID=${process.env.SUDO_UID ?? process.getuid?.() ?? ""}`,
+					"--build-arg",
+					`GID=${process.env.SUDO_GID ?? process.getgid?.() ?? ""}`,
+					"--build-arg",
+					`USER=${process.env.USER ?? ""}`,
+					"--tag",
+					`${codingAgentTag}:${buildDate}`,
+					"--tag",
+					`${codingAgentTag}:latest`,
+					"-f",
+					join(repoRoot, "coding-agent", "Containerfile"),
+					join(repoRoot, "coding-agent"),
+				],
+				{ name: "coding-agent-image" },
+			);
+		},
+	});
 
 	// --- llama-swap image (container hosts) ----------------------------------
 	// The OCI workflow means there is nothing to compile: pre-pull the
@@ -256,15 +242,20 @@ if (containerTool) {
 	// served by ../llm-reverse-proxy; this image only ever serves local GGUF
 	// inference — no :cpu peers-only variant, no Termux native cross-build.
 	//
-	// Gated on inference render devices — the SAME gate
-	// llm-local-inference/generate.mjs puts on its serving layer (shared
-	// probes, lib/host-capabilities.mjs): against a GPU-less host the pull is
-	// a wasted multi-GB download of an image that cannot serve, and run.sh
-	// would refuse to launch anyway (its config.d layer gate dies first).
+	// Gated on being an inference ENDPOINT (docs/d087) — render devices AND
+	// the RAM floor — the SAME gate llm-local-inference/generate.mjs puts on
+	// its serving layer (shared probes, lib/host-capabilities.mjs): against
+	// a non-endpoint host the pull is a wasted multi-GB download of an image
+	// that cannot serve (no accelerator to run llama.cpp on, or too little
+	// RAM for weights + KV cache), and run.sh would refuse to launch anyway
+	// (its config.d layer gate dies first). This pull — not the coding-agent
+	// image — is what d083's retired free-disk floor was really protecting.
 	const llamaSwapImage =
 		process.env.LLAMA_SWAP_IMAGE ??
 		"ghcr.io/mostlygeek/llama-swap:unified-vulkan";
-	if (detectGpuDevices().length > 0) {
+	const renderDevices = detectGpuDevices();
+	const hostRamGiB = totalMemGiB();
+	if (renderDevices.length > 0 && hostRamGiB >= INFERENCE_MIN_RAM_GIB) {
 		targets.push({
 			name: "llama-swap-image",
 			fn: async () =>
@@ -274,8 +265,11 @@ if (containerTool) {
 		});
 	} else {
 		noteGated("llama-swap-image");
-		logWarn("skipping target — no inference render devices on this host", {
+		logWarn("skipping target — host is not an inference endpoint", {
 			target: "llama-swap-image",
+			renderDevices: renderDevices.length,
+			ramGiB: hostRamGiB,
+			minRamGiB: INFERENCE_MIN_RAM_GIB,
 		});
 	}
 
