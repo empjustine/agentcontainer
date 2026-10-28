@@ -15,7 +15,7 @@
  *      fact-table upstream URL (docs/d070) — the probe only picks the
  *      lineup source, live listing vs models.dev ∪ catwalk ids, docs/d063 —
  *      with docs/d064's tiering deciding whether a row is probed at all) plus
- *      `model-015/016/017/018-*.json` (full rows: the sole definition for
+ *      `model-015/016/017/018/019-*.json` (full rows: the sole definition for
  *      providers pi does not ship; docs/d037/d033)
  *   3. `mergeModels`             → `models.json` (lexical layer order, deep
  *      merge)
@@ -36,6 +36,7 @@
  *   + model-016-cloud-hyper.json
  *   + model-017-cloud-inferx.json
  *   + model-018-cloud-verboo.json
+ *   + model-019-cloud-synthetic.json
  *   + model-020-reverse-proxy-default.json   (future / drop-in)
  *   → models.json
  * ```
@@ -782,6 +783,22 @@ const PROVIDER_SPECS = [
 		catalogOptional: true,
 		facts: { path: "/models", listKey: "data" },
 		factsMapper: verbooFactsRecord,
+	},
+	{
+		id: "synthetic",
+		mode: "full",
+		name: "Synthetic",
+		file: "model-019-cloud-synthetic.json",
+		envKey: "SYNTHETIC_API_KEY",
+		// Plain OpenAI-compatible gateway (models.dev:
+		// @ai-sdk/openai-compatible) with the full per-model catalog row —
+		// the inferx shape: no developer-role quirk, no per-model wire-compat
+		// mirror, no facts cache. Every reasoning model publishes an effort
+		// enum, so buildThinkingLevelMap covers them and no ON_OFF fallback
+		// applies (docs/d033, d032 F7).
+		compat: null,
+		modelCompat: null,
+		onOffThinking: false,
 	},
 ];
 

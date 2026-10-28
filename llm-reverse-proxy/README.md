@@ -92,6 +92,7 @@ table is ~220 routes):
     "cline-pass": "https://api.cline.bot/api/v1",
     "hyper": "https://hyper.charm.land/v1",
     "inferx": "https://model.inferx.net/endpoints/v1",
+    "synthetic": "https://api.synthetic.new/openai/v1",
     "mistral": "https://api.mistral.ai",
     "llama-swap": "http://127.0.0.1:8101",
     "models.dev": "https://models.dev",

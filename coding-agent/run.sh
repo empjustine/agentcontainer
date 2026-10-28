@@ -362,7 +362,7 @@ workload_workdir  "$(guest_path "$workdir")"
 # support reads HTTP(S)_PROXY / NO_PROXY (upper- and lowercase) at startup.
 workload_env_allowlist CLINE_API_KEY MISTRAL_API_KEY REVERSE_PROXY_API_KEY \
 	OPENROUTER_API_KEY OPENCODE_API_KEY HYPER_API_KEY INFERX_API_KEY \
-	VERBOO_API_KEY HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY \
+	VERBOO_API_KEY SYNTHETIC_API_KEY HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY \
 	HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy
 workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
 # Everything above this line is host-side argv assembly (jq + filesystem); the

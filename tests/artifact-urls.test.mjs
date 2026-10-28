@@ -39,6 +39,7 @@ const COMMITTED = [
 	"model-016-cloud-hyper.json",
 	"model-017-cloud-inferx.json",
 	"model-018-cloud-verboo.json",
+	"model-019-cloud-synthetic.json",
 	"opencode.jsonc",
 ];
 
