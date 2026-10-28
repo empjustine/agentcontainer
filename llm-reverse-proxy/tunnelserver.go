@@ -66,6 +66,9 @@ type operatorKey struct {
 type tunnelServer struct {
 	keys   []operatorKey
 	egress *egressPolicy
+	// sessions is the mode E per-trace-id registry (d077 §3/§4, d081's
+	// amendment): minted by span-1 windows, self-removing on session close.
+	sessions *exchangeSessions
 }
 
 // isTunnelPath reports whether this request belongs to the tunnel
@@ -110,12 +113,18 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 		writeFunnel404(w, r)
 		return
 	}
-	// Mode C arrival (docs/d077 §4): an authenticated POST with no upgrade
-	// is a session whose request body is the read half and whose response
-	// body is the write half — no 101, no hijack. The per-request bearer
-	// above is its whole auth (d077 §5: the credential rides every request,
-	// since a body session has no handshake header of its own).
+	// Mode C/E arrival (docs/d077 §4): an authenticated POST with no
+	// upgrade is a body session — no 101, no hijack — and traceparent
+	// presence is what separates the two shapes: a windowed mode E exchange
+	// carries its demux key (d081's amendment — E built), an unbroken
+	// request does not and gets mode C's long-lived stream. The per-request
+	// bearer above is their whole auth (d077 §5: the credential rides every
+	// request, since a body session has no handshake header of its own).
 	if r.Method == http.MethodPost && !headerHasToken(r.Header, "Upgrade", "websocket") {
+		if r.Header.Get("traceparent") != "" {
+			t.serveTunnelExchange(w, r, keyID)
+			return
+		}
 		t.serveTunnelPOST(w, r, keyID)
 		return
 	}
@@ -494,7 +503,7 @@ func (s *server) enableTunnel(tn *tunnelConfig) error {
 	if err != nil {
 		return err
 	}
-	s.vpn = &tunnelServer{keys: keys, egress: egress}
+	s.vpn = &tunnelServer{keys: keys, egress: egress, sessions: newExchangeSessions()}
 	log.Printf("[llm-reverse-proxy] tunnel (modes C–E): enabled at %s", tunnelPath)
 	return nil
 }

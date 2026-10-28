@@ -255,10 +255,12 @@ func TestParseClientModes(t *testing.T) {
 		wantErr string
 	}{
 		{in: "d", want: "d"},               // one built mode on offer
-		{in: "c,d", want: "cd"},            // both built modes on offer
+		{in: "c,d", want: "cd"},            // both c and d on offer
 		{in: "c", want: "c"},               // operator's choice: C only, fail closed if it fails
 		{in: "D,C", want: "cd"},            // case-insensitive, canonical order
-		{in: "e", wantErr: "not built"},    // the floor mode refuses until L4 (d077 §8)
+		{in: "e", want: "e"},               // the floor alone — a deployment where nothing else works (d081's amendment: E built, L4 demoted)
+		{in: "e,d", want: "de"},            // the E rung joins the ladder in canonical order
+		{in: "cde", want: "cde"},           // the default offer (d084 as amended)
 		{in: "x", wantErr: "unknown mode"}, // typo is loud, not routed around (NFR-2)
 		{in: "", wantErr: "at least one"},
 		{in: ",", wantErr: "at least one"},

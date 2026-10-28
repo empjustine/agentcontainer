@@ -499,7 +499,7 @@ func main() {
 	mode := flag.String("mode", "exit", "process role: \"exit\" (the exit node: funnel front, allowlist, tunnel server) or \"relay\" (the relay node: loopback CONNECT/SOCKS5 proxy feeding the tunnel, modes C–E; docs/d073 §7, docs/d088)")
 	proxyListen := flag.String("proxy-listen", "127.0.0.1:3128", "relay role: loopback HTTP CONNECT listener")
 	socksListen := flag.String("socks-listen", "127.0.0.1:1080", "relay role: loopback SOCKS5 listener")
-	modes := flag.String("modes", "cd", "relay role: transport letters to offer — c=HTTP/2 streaming POST, d=WebSocket (d077 §4; default cd — the L3-gate flip landed as an operator decision, docs/d084)")
+	modes := flag.String("modes", "cde", "relay role: transport letters to offer — c=HTTP/2 streaming POST, d=WebSocket, e=h1.1 per-exchange floor (d077 §4; default cde — d084's arm-by-default law as amended with mode E's build, docs/d081: E is the ladder's last rung and takes traffic only when C and D both fail)")
 	flag.Parse()
 
 	// Disable Go's default timestamp prefix — the Combined Log Format lines

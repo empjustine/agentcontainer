@@ -21,9 +21,12 @@ llm-reverse-proxy is the substrate llama-swap itself uses internally
 > v3), C (h2 streaming POST — default-on behind `-modes` since d084), D
 > (`CONNECT`-over-WebSocket tunnel plus a localhost CONNECT/SOCKS5 relay,
 > so clients validate the target's real certificate end-to-end and never
-> trust the proxy — the deployed v2 shape), E (h1 POST floor — not built). The
+> trust the proxy — the deployed v2 shape), E (h1.1 per-exchange windowing —
+> the floor for upgrade-stripping gateways; built with no spike ahead of it,
+> d081's L4 amendment, and part of the default offer `cde`). The
 > requirements are d073's; negotiation, the framing contract, and adoption
-> gates (spikes) are d077's.
+> gates (spikes) are d077's; L4/L1 now characterize E's provisional
+> constants after the fact, they gate nothing (d081).
 
 Reference code: upstream llama-swap — github.com/mostlygeek/llama-swap
 (`internal/router/peer.go`, `internal/process/process_command.go`; docs tree

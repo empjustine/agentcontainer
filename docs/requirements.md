@@ -62,8 +62,9 @@ credential, with no tenancy), and the tunnel family — is specified in
 [d073](d073-ssl-vpn-three-modes.md): v2 = mode A + mode D (`CONNECT`-
 over-WebSocket tunnel with a localhost client proxy that validates the
 target's real certificate end-to-end) is delivered, mode C is built and
-default-on since d084, mode E is unbuilt pending spike L4, and mode B is
-deferred to v3. The tunnel family's operator keys are the bounded principal set of
+default-on since d084, mode E (the h1 exchange floor) is built with no
+spike ahead of it (d081's L4 amendment — L4 demoted to characterization,
+the default offer is `cde`), and mode B is deferred to v3. The tunnel family's operator keys are the bounded principal set of
 [d078](d078-ssl-vpn-operator-keys.md) (the NFR-5 exception); accepting mode
 B (v3) would add one operator credential on top of it without introducing
 tenants. The fuller requirements (`VPN-R*`) live in d073 and this BRD stays

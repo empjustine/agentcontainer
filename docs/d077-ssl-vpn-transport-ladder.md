@@ -1,7 +1,7 @@
 ---
 id: d077
 type: architecture-design
-status: adopted-in-part (mode D deployed; mode C default-on since d084 — L3 default-flip gate superseded; mode E unbuilt pending spike L4)
+status: adopted-in-part (mode D deployed; mode C default-on since d084 — L3 default-flip gate superseded; mode E built — d081's amendment removed the L4 build gate, L4/L1 demoted to characterization)
 title: "d077 — tunnel modes C/D/E (h2 POST → wss → h1.1 POST) trusting external TLS, with SSE-carrier and inner-TLS studies"
 parent: llm-reverse-proxy
 depends-on: [d073, d031]
@@ -146,10 +146,20 @@ prefix itself (d085). What would change this posture
 - **Failure.** A gateway that buffers until completion or drops the stream
   trips the mode timeout → the client answers locally (502/400) — VPN-R26
   fail-closed, never a direct dial.
-- **Open detail:** the exact exchange mechanics (long-lived request body with
-  streamed response vs. per-exchange request/response windowing) are settled
-  by L4 measurements, not by this record.
-- **Status:** not built.
+- **Exchange mechanics — settled (d081's L4 amendment), not measured:**
+  per-exchange request/response windowing, decided by the hostile model
+  itself — a long-lived body dies with the connection and needs
+  cross-reconnect state exactly where the link is least trustworthy, while
+  each windowed exchange stands alone (a dropped window retries; nothing
+  to resurrect). The window bytes and the idle-poll interval ship as
+  PROVISIONAL constants (the `relay.go` S1 pattern): conservative defaults
+  everywhere, characterized after the fact by L4 — never gated on it.
+  The dispatch discriminator is `traceparent` presence (§4): the first
+  authed POST (span 1) mints per-`trace-id` state; every later window
+  carries the same `trace-id` with the next `span-id`.
+- **Status:** built (mode E suite: e2e over a plain h1.1 path and through a
+  hostile upgrade-refusing gateway, camouflage 404s on unknown
+  `trace-id`/span, parse units).
 
 ## 4. Negotiation — protocol, not path
 
@@ -172,8 +182,12 @@ dial TLS ── ALPN ─┬─ h2        → Mode C (upgrade never attempted on 
   Mode E never surfaces as a failed exchange — the client demotes to the next
   built mode exactly as it would for a censored mechanism. Built modes stay
   available throughout; fail-closed (VPN-R26) applies only when no built mode
-  remains. The default offer is Mode D only (`-modes` defaults to `d`), so
-  today this is the normal path, not an edge case.
+  remains. The default offer history: Mode D only (`-modes` defaults to
+  `d`) when this record landed; `cd` since d084 (deploy-first superseding
+  L3); `cde` with mode E built (d081's amendment — same arm-by-default law:
+  the ladder is the point, so E must be *on offer* to demote into, and it
+  takes traffic only when both C and D probes fail, which makes the normal
+  path unchanged in healthy environments and complete in damaged ones).
 - Demotion never reverses within a client session; the chosen mode is logged
   as a `transport` outcome field (h2 | wss | post) — transport choice is
   operational debugging data, not a secret.
@@ -313,8 +327,10 @@ policy showing path/token-based blocking of this tunnel (L5).
   parallel-connection count — the load this environment's clients actually
   generate.
 - **L4 — Mode E timing.** Measured round-trip cost incl. gateway buffering
-  (buffering judged against L1's 33 ms bar); sets Mode E's exchange mechanics
-  and chunk size.
+  (buffering judged against L1's 33 ms bar). **Demoted by d081's
+  amendment: characterization only** — it validates E's shipped
+  provisional constants and carrier choice after the fact; it gates no
+  code and blocks no build.
 - **L5 — inner-handshake tolerance** (Study B only; fires on §7's trigger).
 
 ## 9. Relationship to d073 and delivery
@@ -351,9 +367,10 @@ policy showing path/token-based blocking of this tunnel (L5).
     constrains Funnel configuration, not handler-internal branching (d073
     §10, VPN-R42).
   All other requirements stand as written.
-- Delivery: Mode D shipped with v2; Mode C is now built but opt-in
-  (`-modes` default `d` — L3 gates the default, §8); Mode E still builds
-  when a deployment environment needs it, L4 first. L2 decides which mode
-  the work environment *uses*, not all three (§8).
+- Delivery: Mode D shipped with v2; Mode C is built and default-on since
+  d084 (L3 superseded); Mode E is built with no spike ahead of it (d081's
+  L4 amendment — characterization after, never a gate) and joins the
+  default offer `cd` → `cde`. L2 decides which mode the work environment
+  *uses*, not all three (§8).
 - Spikes S1/S2 (d073 §13) remain the Funnel-lifetime/streaming baseline for
   Mode D; L1–L4 are additive and do not replace them.

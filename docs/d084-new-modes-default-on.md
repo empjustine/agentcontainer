@@ -1,7 +1,7 @@
 ---
 id: d084
 type: decision
-status: implemented (superseded in part by d085 — the arm env is the operator keyset, not VPN_TUNNEL_PREFIX)
+status: implemented (superseded in part by d085 — the arm env is the operator keyset, not VPN_TUNNEL_PREFIX; superseded in part by d081's mode-E amendment — the default offer cd → cde, same arm-by-default law, decision 1 as amended)
 title: "d084 — the new modes arm by default: -modes starts at cd, and the capability env arms the tunnel family"
 parent: llm-reverse-proxy
 depends-on: [d073, d077, d081]
@@ -32,6 +32,16 @@ The spike's measurement value stands — only its VETO is gone. Revert
 criterion: if concurrent streaming POSTs prove unstable in practice, the
 default returns to `d` — one line, no migration.
 
+**As amended when mode E landed (d081's L4 amendment): the default offer
+is now `cde`.** The same law decides it — a built surface that needs a
+config edit to exist is exactly this record's original problem — and the
+ladder is the point: E must be *on offer* to demote into when the C and D
+probes both fail (§4's invariant, "an unbuilt Mode E never surfaces as a
+failed exchange", becomes "a not-offered E *would* surface as one"). The
+traffic shape does not move: E takes a session only when both built
+probes fail, so healthy deployments never touch it. Revert criterion for
+E matches C's: default back to `cd`, one line.
+
 ### 2. The capability env arms the tunnel family
 
 `tunnelConfig.Enabled` becomes tri-state: **absent = the env decides**
@@ -46,8 +56,10 @@ public-web ports — VPN-R35).
 
 ### 3. What this does NOT change
 
-- Mode E stays unbuilt — d081's L4 gate is untouched and
-  `parseClientModes` still fail-loudly rejects `e`.
+- ~~Mode E stays unbuilt — d081's L4 gate is untouched~~ **SUPERSEDED**
+  (d081's mode-E amendment): mode E is built, `parseRelayModes` accepts
+  `e`, and the default offer carries it (decision 1 as amended).
+  Fail-loudly still rejects *unknown* letters — only `e` stopped being one.
 - Mode A fallback and d080's host policy are untouched (VPN-R2: an
   unarmed deployment behaves exactly as before).
 - The provisioning prerequisite stands: the vault must carry
