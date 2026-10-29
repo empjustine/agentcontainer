@@ -124,7 +124,7 @@ both cases, no NDK, no extra toolchain:
 
 - **GHCR publish**: `permissions: packages: write`, GITHUB_TOKEN
   login, push gated to `push` events (fork PRs get read-only tokens);
-  consumers then slave `run.sh` via its existing `IMAGE_TAG` env.
+  consumers then slave `vpn-exit.sh`/`vpn-relay.sh` via their existing `IMAGE_TAG` env.
 - **`./lint.sh` + `./check-types.sh`** as extra jobs — both hermetic
   (shellcheck via mise; typescript@5.9.3 + @types/node@22 installed by
   check-types.sh itself).

@@ -122,8 +122,9 @@ where modes A/B cannot.
 
 Roles are named by network position, not protocol role (docs/d088): the
 **exit node** (free internet + tsnet to the LLM endpoints,
-`PROXY_MODE=exit`, the default) and the **relay node** (local
-restricted-internet deployment, `PROXY_MODE=relay`). The env values and
-the code speak the same names (d088 phase 2); inside the tunnel protocol
+`vpn-exit.sh`) and the **relay node** (local restricted-internet
+deployment, `vpn-relay.sh` — serve it, or ride it as the chain step that
+points a child at it, docs/d095). The code speaks the same names (d088
+phase 2); inside the tunnel protocol
 itself the ends stay "client"/"server" — wire roles, not deployments —
 and `relay.go`'s byte pump is shared verbatim by both nodes.

@@ -25,6 +25,7 @@
 #                       ""            → no --entrypoint at all
 #                       ""            → no --workdir at all
 #                       "" | "detach" | "interactive" → nothing | --detach | -it
+#                       ""            → no --restart policy at all
 #                       "1"           → pass --init
 #                       "1"           → pass --user $uid:$gid
 #                       "1"           → pass --cap-drop=all
@@ -50,9 +51,9 @@
 # ORDER — byte-for-byte the order the previous shell renderer emitted, because
 # `container run` is order-insensitive for these flags but the argv is captured
 # verbatim by tests and appears in `ps`:
-#   --init, mode flag, --name, --network, --entrypoint, --user (+ rootless
-#   podman extras), --publish, --device, hardening, -v mounts, --env,
-#   --workdir, image, cmd.
+#   --init, mode flag, --restart, --name, --network, --entrypoint, --user
+#   (+ rootless podman extras), --publish, --device, hardening, -v mounts,
+#   --env, --workdir, image, cmd.
 #
 # ---------------------------------------------------------------------------
 # MOUNT OPTIONS — the one genuine backend difference:
@@ -66,6 +67,7 @@
   , if   $mode == "detach"      then "--detach"
     elif $mode == "interactive" then "-it"
     else empty end
+  , (if $restart == "" then empty else "--restart=\($restart)" end)
   , (if $name == "" then empty else "--name=\($name)" end)
   , (if $network == "" then empty else "--network=\($network)" end)
   , (if $entrypoint == "" then empty else "--entrypoint", $entrypoint end)

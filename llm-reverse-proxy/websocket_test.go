@@ -326,7 +326,7 @@ func TestWSDialHandshake(t *testing.T) {
 	hdr := http.Header{"Authorization": {"Bearer tok-1234"}}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	client, err := wsDial(ctx, u, hdr)
+	client, err := wsDial(ctx, u, hdr, nil)
 	if err != nil {
 		t.Fatalf("wsDial: %v", err)
 	}
@@ -372,7 +372,7 @@ func TestWSDialRejectsNon101(t *testing.T) {
 	u, _ := url.Parse("ws://" + ln.Addr().String() + "/secretcap/vpn")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if _, err := wsDial(ctx, u, nil); err == nil {
+	if _, err := wsDial(ctx, u, nil, nil); err == nil {
 		t.Fatal("expected dial failure against a 404")
 	} else if !strings.Contains(err.Error(), "404") {
 		t.Fatalf("error should carry the real status, got %v", err)

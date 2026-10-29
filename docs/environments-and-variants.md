@@ -118,7 +118,7 @@ request time — the proxy forwards them untouched).
   `baseUrl` overrides; `run.sh`
   does not forward them into the sandbox (docs/d056).
 - **Serving** (`llm-reverse-proxy/`): the cloud relay
-  (root `./build.sh && ./generate.sh && ./llm-reverse-proxy/run.sh`), as on
+  (root `./build.sh && ./generate.sh && ./llm-reverse-proxy/vpn-exit.sh`), as on
   the other non-GPU hosts.
 
 The shared `lib/workload-runtime.sh` makes this work on both local-inference-host-style podman and
@@ -134,7 +134,7 @@ relays cloud providers. The relay is llm-reverse-proxy — one static Go binary,
 constraint.
 
 - **Serving** (`llm-reverse-proxy/`): just root `./build.sh &&
-  ./generate.sh && ./llm-reverse-proxy/run.sh` — the routing table is
+  ./generate.sh && ./llm-reverse-proxy/vpn-exit.sh` — the routing table is
   generated from the shared fact table (docs/d027) and the proxy listens on
   LAN `${HOST_PORT:-8080}` (host-network container or native binary).
 - **Usage** (`coding-agent/`): static provider config pointing the agent at
@@ -176,7 +176,7 @@ There is ONE llama-swap serving folder (`llm-local-inference/`) with ONE
 mode: the local GGUF layer. A host without the container backend + GPU
 cannot serve llama-swap at all — `generate.sh` fails hard (`LOCAL_INFERENCE=1`
 forces generation for debug/parity only) — and its cloud relay, when any,
-runs `llm-reverse-proxy/run.sh` instead (docs/d027):
+runs `llm-reverse-proxy/vpn-exit.sh` instead (docs/d027; the `run.sh` name retired with docs/d095):
 
 - llama-swap: `ghcr.io/mostlygeek/llama-swap:unified-vulkan` (local
   llama.cpp needs the GPU/Vulkan runtime), GPU devices passed through, HF

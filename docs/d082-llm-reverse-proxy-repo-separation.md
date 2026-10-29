@@ -37,7 +37,9 @@ it happens.
 
 **Belongs to the unit** (travels at split):
 - `llm-reverse-proxy/**` — the Go module and tests, `Containerfile`,
-  `generate.sh`/`generate.mjs`, `run.sh`, `smoke-test.sh`,
+  `generate.sh`/`generate.mjs`, `vpn-exit.sh`/`vpn-relay.sh`
+  (`run.sh` at the time; split into the two deployment entries by
+  docs/d095), `smoke-test.sh`,
   `README.md`, `DESIGN.md`, `llm-reverse-proxy.example.json`, the
   generated `llm-reverse-proxy.json`;
 - its requirements: the BRD's FR-S5 extract and d073's `VPN-R*` block
@@ -58,9 +60,9 @@ coding-agent), d071/d072 (vocabulary/maintainability).
 |---|---|---|
 | `lib/log.mjs`, `lib/artifact.mjs`, `lib/cloud-providers.mjs` (generate.mjs) | `LIB_DIR` injectable, default `../lib` | vendor the modules + the fact JSONs they read, or fetch them |
 | `lib/node-run.sh` (generate.sh) | `LIB_DIR` injectable after this record | vendor the shim, or plain `node` |
-| `lib/workload-runtime.sh` (run.sh) | `LIB_DIR` injectable after this record | vendor the declarative sandbox API, or rewrite the two run modes |
+| `lib/workload-runtime.sh` (the `vpn-*.sh` entries) | `LIB_DIR` injectable after this record | vendor the declarative sandbox API, or rewrite the two run modes |
 | root `build.mjs` + `lib/go-build.mjs` (image + native/android compile) | root-owned per d041; per-unit `build.sh` selection shim since d083 | the shim becomes the unit's own `build.mjs` entry (go toolchain direct) |
-| `lib/environment.sh` (vault chain) | invoked by the operator, never by the unit — run.sh reads plain env | any env loader; "plain env in" is the whole contract |
+| `lib/environment.sh` (vault chain) | invoked by the operator, never by the unit — the launchers read plain env | any env loader; "plain env in" is the whole contract |
 | `tests/canonical-json.test.mjs` (validates the generated json) | repo harness | travels with the unit |
 
 After this record every seam but the build runs through `LIB_DIR`; the
@@ -69,7 +71,8 @@ still governs this repo.
 
 ## §3 Landed with this record
 
-- `generate.sh` / `run.sh`: the `LIB_DIR` seam
+- `generate.sh` / `run.sh` (the two `vpn-*.sh` entries since
+  docs/d095): the `LIB_DIR` seam
   (`${LIB_DIR:-$SCRIPT_DIR/../lib}`), and run.sh's stale header claims
   corrected — the `build.sh` references to d041's root `./build.mjs`, and
   the retired "llama-swap at http://127.0.0.1:8101" loopback-alias rationale

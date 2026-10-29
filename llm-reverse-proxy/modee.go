@@ -36,7 +36,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -224,16 +223,18 @@ func (c *relayNode) openExchange(ctx context.Context) (tunnelStream, error) {
 			// roots, no override knob (VPN-R28/R55).
 			NextProtos: []string{"http/1.1"},
 		},
-		DialContext:         (&net.Dialer{Timeout: tunnelHandshakeTimeout}).DialContext,
+		// The chain rides the DIAL, not Transport.Proxy (docs/d094) — same
+		// shape as mode C's transport.
+		DialContext:         c.tunnelDial(),
 		TLSHandshakeTimeout: tunnelHandshakeTimeout,
 		// The FIRST window's headers can arrive after the exit node ran a
 		// whole CONNECT dial (drain happens before its 200): budget the
 		// handshake plus the dial, or a slow-but-legal 12 s dial would kill
 		// an E session that modes C/D would have completed.
 		ResponseHeaderTimeout: tunnelHandshakeTimeout + tunnelDialTimeout,
-		// Proxy is nil on purpose (same as mode C): an ambient proxy would
-		// terminate its own TLS in front of us and see the bearer it
-		// forwards.
+		// Proxy stays nil on purpose (same as mode C): an ambient proxy
+		// would become a forwarding proxy for a cleartext URL and read the
+		// bearer — the chain leg exists precisely so it never does.
 	}
 	return &windowStream{
 		url:          u.String(),

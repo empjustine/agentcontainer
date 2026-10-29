@@ -20,7 +20,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha1"
-	"crypto/tls"
 	"encoding/base64"
 	"encoding/binary"
 	"errors"
@@ -133,11 +132,15 @@ func headerHasToken(h http.Header, name, token string) bool {
 
 // wsDial connects to a ws:// or wss:// tunnel URL and completes the client
 // handshake. extraHeaders carries Authorization (VPN-R12 — the credential
-// rides this handshake, protected by the tunnel leg's TLS).
-func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header) (*wsConn, error) {
+// rides this handshake, protected by the tunnel leg's TLS). dial is the
+// relay node's TCP leg — nil/direct, or through the chain proxy when one
+// is configured (docs/d094); TLS stays end-to-end above a chain.
+func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, dial dialFunc) (*wsConn, error) {
 	var raw net.Conn
 	var err error
-	dialer := &net.Dialer{}
+	if dial == nil {
+		dial = directDial
+	}
 	switch tunnelURL.Scheme {
 	case "ws", "wss":
 		scheme := tunnelURL.Scheme
@@ -153,10 +156,9 @@ func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header) (
 			// System roots, ServerName from the URL host, no override knobs:
 			// the Funnel `*.ts.net` certificate must verify as-is (VPN-R28),
 			// and nothing in this module may weaken verification (VPN-R55).
-			td := &tls.Dialer{Config: &tls.Config{MinVersion: tls.VersionTLS12, ServerName: tunnelURL.Hostname()}}
-			raw, err = td.DialContext(ctx, "tcp", addr)
+			raw, err = dialTLS(ctx, dial, addr, tunnelURL.Hostname(), nil)
 		} else {
-			raw, err = dialer.DialContext(ctx, "tcp", addr)
+			raw, err = dial(ctx, "tcp", addr)
 		}
 	default:
 		return nil, fmt.Errorf("tunnel URL scheme must be ws or wss, got %q", tunnelURL.Scheme)

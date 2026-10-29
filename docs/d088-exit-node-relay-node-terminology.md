@@ -54,7 +54,10 @@ Two role names, keyed on position:
   loopback CONNECT/SOCKS5 proxies in front of the tunnel client.
 
 The mapping is fixed: server = exit node, client = relay node. The
-env values and flags stay what the code speaks (see Phases).
+flags stay what the code speaks (see Phases). The `PROXY_MODE` env
+selector itself retired with `run.sh` in [d095](d095-relay-node-host-chain-step.md):
+the deployment identity is now the entry point (`vpn-exit.sh` /
+`vpn-relay.sh`), and `-mode` remains the binary's spelling.
 
 ## Phases — this record lands documentation only
 

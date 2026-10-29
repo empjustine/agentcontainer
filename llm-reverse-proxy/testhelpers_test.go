@@ -100,6 +100,12 @@ func TestMain(m *testing.M) {
 		fmt.Fprintf(os.Stderr, "SSL_CERT_FILE: %v\n", err)
 		os.Exit(1)
 	}
+	// The chain env (docs/d094) is read by relayConfigFromEnv: an ambient
+	// proxy variable on the dev host would silently re-route every e2e
+	// dial through a proxy no fixture owns. The suite owns its routing.
+	for _, v := range chainEnvVars {
+		_ = os.Unsetenv(v)
+	}
 	os.Exit(m.Run())
 }
 
@@ -230,7 +236,7 @@ func dialTunnelForTest(t *testing.T, u *url.URL, token string) (*wsConn, error) 
 	if token != "" {
 		hdr.Set("Authorization", "Bearer "+token)
 	}
-	return wsDial(ctx, u, hdr)
+	return wsDial(ctx, u, hdr, nil)
 }
 
 // reserveLoopbackAddr picks a concrete port by binding :0 and releasing

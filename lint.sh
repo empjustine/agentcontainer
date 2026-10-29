@@ -40,7 +40,7 @@ log_info "jq compile (gating — lib/workload-*.jq)"
 mise exec jq@latest -- sh -c '
 set -- --argjson doc "{}" \
 	--arg field f --arg mode m --arg host h --arg guest g \
-	--arg tool podman --arg image i --arg name n --arg network net \
+	--arg tool podman --arg image i --arg name n --arg network net --arg restart r \
 	--arg entrypoint e --arg workdir w --arg init 1 --arg user 1 \
 	--arg uid 0 --arg gid 0 --arg userns u --arg keepgroups k --arg harden 1 \
 	--args -- dummy

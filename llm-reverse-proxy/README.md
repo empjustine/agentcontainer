@@ -119,7 +119,7 @@ scripts, image, and the docs in this folder (README, DESIGN, CI)
 travel together. Everything it borrows
 from the parent repo arrives through one injectable directory — `LIB_DIR`,
 default `../lib` (the node runner for generation, the declarative workload
-API for `run.sh`, and the lib modules `generate.mjs` imports) — and the
+API for the two `vpn-*.sh` entries, and the lib modules `generate.mjs` imports) — and the
 build stays the root `./build.mjs`'s (docs/d041) until the split. The
 decision records that travel with the unit are listed in d082 §1.
 
@@ -144,16 +144,16 @@ hosts, Termux targets strictly serialized. For THIS folder:
 - **Bare host without a container tool**: host binary only — go is required,
   it is the only thing this host can build and serve.
 
-`./run.sh` picks the matching serve path by two selectors. ROLE —
+Each deployment is its own entry point (docs/d095): `./vpn-exit.sh` serves
+the exit node, `./vpn-relay.sh` serves the relay node — or, given a target,
+acts as the CHAIN STEP that points that target at the relay (below). ROLE —
 per docs/d088 the two deployments are named by network position, not
-protocol role: the **exit node** (`PROXY_MODE=exit`, the default) has
-free, unblocked internet plus tsnet connectivity to the actual LLM
-endpoints, and traffic exits the local environment through it; the
-**relay node** (`PROXY_MODE=relay`, the loopback CONNECT/SOCKS5 proxy
-feeding the tunnel, modes C–E; docs/d073 §7) runs locally on a
+protocol role: the **exit node** has free, unblocked internet plus tsnet
+connectivity to the actual LLM endpoints, and traffic exits the local
+environment through it; the **relay node** (the loopback CONNECT/SOCKS5
+proxy feeding the tunnel, modes C–E; docs/d073 §7) runs locally on a
 restricted-internet environment, without direct tsnet to the endpoints.
-The env values and the code speak the same names (d088 phase 2 landed).
-HOST:
+The code speaks the same names (d088 phase 2 landed). HOST:
 the container branch runs in HOST NETWORK mode; the native branch execs
 the binary directly. Exit node: listening on `${HOST_PORT:-8080}` (the
 funnel front) with `./llm-reverse-proxy.json` mounted read-only
@@ -166,19 +166,33 @@ llama-swap's port model) — host networking is what makes the loopback
 `CONFIG`). Relay node: NO config file — `VPN_TUNNEL_URL` (http(s):// or
 ws(s):// — the URL's honest wire form, normalized to wss internally,
 docs/d090; the path is the Funnel mount plus the fixed `/vpn` —
-docs/d085) and `VPN_OPERATOR_TOKEN` are its core surface, with `VPN_CLIENT_LABEL` optional (defaults to the hostname),
+docs/d085) and `VPN_OPERATOR_TOKEN` are its core surface, with `VPN_CLIENT_LABEL` optional (defaults to the hostname)
+and an OPTIONAL chain proxy via the conventional variables (`SOCKS_SERVER`
+beats a scheme-matched `http_proxy`/`https_proxy`, which beats `ALL_PROXY`;
+`SOCKS_VERSION` must be `5`; `NO_PROXY` deliberately not read — docs/d094:
+the chain is ONE blind TCP tunnel under the tunnel leg only, `Transport.Proxy`
+stays nil, provider requests never touch it),
 the transport ladder rides whole — C → D → E ranked at dial time, no
 `-modes`/`MODES` override (docs/d093) — and `PROXY_LISTEN`/`SOCKS_LISTEN` defaulting to `127.0.0.1:3128`/`1080`;
 host networking is a requirement there too (the loopback listeners must
 be the HOST's loopback — VPN-R23 forbids exposing them — and the tunnel
-URL needs the host's tailnet routes). Secrets (env-only — VPN-R32/d078;
-run.sh never loads secrets itself): mode A serving holds none — requests
+URL needs the host's tailnet routes).
+
+`vpn-relay.sh <target>` is the CHAIN STEP (docs/d095): it ensures the relay
+is serving, waits for a health answer naming *this* tunnel, exports the
+conventional variables pointing at the loopback listeners, and execs the
+target — so `./lib/environment.sh ./llm-reverse-proxy/vpn-relay.sh
+./coding-agent/run.sh` hands the sandbox the loopback spelling while the
+relay itself keeps the host's upstream chain (docs/d094). A relay that is
+not running is started (detached, `--restart=unless-stopped`); an
+unreachable or foreign listener refuses the launch by name. Secrets
+(env-only — VPN-R32/d078; the launchers never load secrets themselves): mode A serving holds none — requests
 must already carry valid provider keys. An armed exit node
 (docs/d084/d085: armed when the env carries the operator keyset) holds the
 keyset (`VPN_OPERATOR_KEYS`), and the relay node holds the operator token
 (`VPN_OPERATOR_TOKEN`) — disjoint since docs/d090, which retired the
 keyset's implicit-`default` merge of the token — and all reach the
-container only through the run.sh env allowlists.
+container only through the launcher env allowlists.
 
 ### Port model (the conflict with llama-swap, docs/d027)
 

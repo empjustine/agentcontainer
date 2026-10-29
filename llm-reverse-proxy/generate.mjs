@@ -45,7 +45,7 @@
  *
  * Usage: ./generate.sh (the standard wrapper — node_run interpreter
  * selection, same as the other environments) or node generate.mjs [out]
- *   out defaults to ./llm-reverse-proxy.json (the path run.sh serves).
+ *   out defaults to ./llm-reverse-proxy.json (the path the exit node serves).
  *   Env: LIB_DIR (default ../lib).
  */
 
@@ -479,7 +479,7 @@ logInfo("wrote llm-reverse-proxy host-allowlist config", {
 
 // ---------------------------------------------------------------------------
 // Drift checks, keyed by host (docs/d047): the deployed file is re-read so
-// the report reflects what run.sh will serve, not what this run just held in
+// the report reflects what the exit node will serve, not what this run just held in
 // memory — same contract the former slug-table checks had.
 // ---------------------------------------------------------------------------
 /** @type {{ allowHosts?: Record<string, string> }} */
@@ -513,7 +513,7 @@ for (const key of Object.keys(deployedAllowHosts)) {
 
 // Orchestration (folded from the former generate.sh, docs/d041): the
 // allowlist must exist after generation — a silent no-op here would leave
-// run.sh to die later with a config-missing error pointing back at this
+// the exit node to die later with a config-missing error pointing back at this
 // script. The check follows the ACTUAL output (`out`, the optional argv
 // path) — the write is atomic, so `out` exists iff generation succeeded.
 if (!existsSync(out)) {

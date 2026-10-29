@@ -1,5 +1,6 @@
-// relaynode.go — the relay node (docs/d088: the PROXY_MODE=relay deployment),
-// modes C–E: the loopback-only local proxy feeding one authenticated tunnel
+// relaynode.go — the relay node (docs/d088; served by vpn-relay.sh since
+// docs/d095 retired the PROXY_MODE selector), modes C–E: the loopback-only
+// local proxy feeding one authenticated tunnel
 // (docs/d073 §7: VPN-R23..R27, §5.1: VPN-R11).
 //
 // WHY the relay node never terminates TLS (VPN-R25): it is a byte pump between a
@@ -56,8 +57,9 @@ type relayConfig struct {
 	tunnelURL *url.URL
 	token     string
 	label     string
-	proxyAddr string // HTTP CONNECT listener (must be loopback, VPN-R23)
-	socksAddr string // SOCKS5 listener (must be loopback, VPN-R23)
+	proxyAddr string      // HTTP CONNECT listener (must be loopback, VPN-R23)
+	socksAddr string      // SOCKS5 listener (must be loopback, VPN-R23)
+	chain     *chainProxy // optional upstream chain for the tunnel leg (docs/d094)
 }
 
 // relayConfigFromEnv assembles the config from the flag values and the
@@ -94,6 +96,12 @@ func relayConfigFromEnv(proxyAddr, socksAddr string) (relayConfig, error) {
 	cfg.label = os.Getenv(envClientLabel)
 	cfg.proxyAddr = proxyAddr
 	cfg.socksAddr = socksAddr
+	// The chain env is read HERE, with the rest of the one config path:
+	// bad proxy config must refuse startup before any bind (VPN-R26).
+	cfg.chain, err = relayChainFromEnv(u)
+	if err != nil {
+		return relayConfig{}, err
+	}
 	return cfg, nil
 }
 
@@ -149,6 +157,16 @@ type relayNode struct {
 	lastErr  atomic.Value // string: last tunnel failure, for /healthz
 }
 
+// tunnelDial is the one TCP leg every carrier's dial rides (docs/d094):
+// direct in the ordinary deployment, through the chain proxy when one is
+// configured — one route, one spelling, no per-transport discretion.
+func (c *relayNode) tunnelDial() dialFunc {
+	if c.cfg.chain != nil {
+		return c.cfg.chain.dial
+	}
+	return directDial
+}
+
 func (c *relayNode) noteError(err error) {
 	msg := err.Error()
 	if len(msg) > 200 {
@@ -178,6 +196,17 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 	// constant (docs/d093), so this line states a fact, not a config.
 	log.Printf("[vpn-relay] listeners http=%s socks5=%s tunnel=%s://%s modes=%s",
 		proxyLn.Addr(), socksLn.Addr(), cfg.tunnelURL.Scheme, cfg.tunnelURL.Host, transportOffer)
+	if cfg.chain != nil {
+		// Host only — userinfo in a proxy URL is a credential (VPN-R44's
+		// law applied to the chain, docs/d094).
+		log.Printf("[vpn-relay] chain proxy kind=%s host=%s (docs/d094)", cfg.chain.kind, cfg.chain.host())
+		if cfg.tunnelURL.Scheme != "wss" {
+			// Accepted, loudly (docs/d094 §3): ws:// already puts the
+			// bearer in front of every on-path observer, and the chain
+			// proxy is exactly that — a blind tunnel, not a reader.
+			log.Printf("[vpn-relay] WARNING: chained cleartext tunnel (%s) — the chain proxy can record the operator token (docs/d094)", cfg.tunnelURL.Scheme)
+		}
+	}
 
 	httpSrv := &http.Server{
 		Handler:           c,
@@ -251,7 +280,8 @@ func (c *relayNode) dialTransport(ctx context.Context) (tunnelStream, error) {
 	record := func(mode string, err error) {
 		attempts = append(attempts, fmt.Sprintf("%s: %v", mode, err))
 	}
-	proto, err := alpnNegotiate(ctx, c.cfg.tunnelURL, []string{"h2", "http/1.1"})
+	dial := c.tunnelDial()
+	proto, err := alpnNegotiate(ctx, c.cfg.tunnelURL, []string{"h2", "http/1.1"}, dial)
 	if err == nil && proto == "h2" {
 		s, err := c.openPOST(ctx)
 		if err == nil {
@@ -276,7 +306,7 @@ func (c *relayNode) dialTransport(ctx context.Context) (tunnelStream, error) {
 	}
 	hdr := make(http.Header)
 	hdr.Set("Authorization", "Bearer "+c.cfg.token)
-	ws, err := wsDial(ctx, c.cfg.tunnelURL, hdr)
+	ws, err := wsDial(ctx, c.cfg.tunnelURL, hdr, dial)
 	if err == nil {
 		log.Printf("[vpn-relay] tunnel transport=%s", ws.transport())
 		return ws, nil
@@ -394,6 +424,9 @@ func (c *relayNode) handleHealth(w http.ResponseWriter, r *http.Request) {
 		"status":   "ok",
 		"tunnel":   c.cfg.tunnelURL.Scheme + "://" + c.cfg.tunnelURL.Host,
 		"sessions": c.sessions.Load(),
+	}
+	if c.cfg.chain != nil {
+		status["chain"] = c.cfg.chain.kind + "://" + c.cfg.chain.host()
 	}
 	if last != "" {
 		status["last_error"] = last

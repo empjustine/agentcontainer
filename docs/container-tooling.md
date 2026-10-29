@@ -119,6 +119,7 @@ to decide which config layers the host can run.)
 | `workload_name <n>` | container / instance name |
 | `workload_image <img>` | OCI image to run |
 | `workload_detach` / `workload_interactive` | `-d` / `-it` |
+| `workload_restart <policy>` | `--restart=<policy>`; empty (default) emits no flag. The relay node's detached launch uses `unless-stopped` so the listener address its consumer was handed survives a crash (docs/d095) |
 | `workload_init` | `--init` |
 | `workload_network <mode>` | e.g. `host` → `--network=host` |
 | `workload_user` | run as the host user: `--userns=keep-id --user uid:gid` (podman) or `--user uid:gid` (docker). Uses `SUDO_UID`/`SUDO_GID` when present. |
@@ -196,9 +197,14 @@ retired with the generator-tree mounts (d056).
 
 **Tests:** `./tests/check-workload.sh` renders two full descriptions (one per
 backend) and diffs the argv against the pre-refactor output, plus the
-`workload_has` predicate. It is a differential test: it exists because the two
-bugs found during this refactor were semantic, and neither the shellcheck nor
-the jq compile gate in `./lint.sh` can see them.
+`workload_has` predicate and the `workload_restart` flag position. It is a
+differential test: it exists because the two bugs found during this refactor
+were semantic, and neither the shellcheck nor the jq compile gate in
+`./lint.sh` can see them. `./tests/check-vpn-relay-chain.sh` is the second
+end-to-end runner test (docs/d095): a stub `curl` answers the relay's
+`/healthz`, a stub `podman` records the launch argv, and the assertions cover
+reuse, the foreign-listener refusal, and the env sequencing that gives the
+relay the host's chain variables and the child the loopback spelling.
 
 ### `workload_run` backend
 

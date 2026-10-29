@@ -28,7 +28,10 @@ import (
 // session dials fresh with the transport that protocol needs (d077 §4:
 // ALPN picks the mode; no upgrade is ever attempted on an h2 connection).
 // A ws:// URL has no TLS leg and therefore no ALPN: "" means mode D's plane.
-func alpnNegotiate(ctx context.Context, u *url.URL, offer []string) (string, error) {
+// dial is the relay node's TCP leg for this probe — direct, or through the
+// chain proxy when one is configured (docs/d094); the TLS handshake is
+// end-to-end either way.
+func alpnNegotiate(ctx context.Context, u *url.URL, offer []string, dial dialFunc) (string, error) {
 	if u.Scheme != "wss" {
 		return "", nil
 	}
@@ -41,12 +44,7 @@ func alpnNegotiate(ctx context.Context, u *url.URL, offer []string) (string, err
 		ctx, cancel = context.WithTimeout(ctx, tunnelHandshakeTimeout)
 		defer cancel()
 	}
-	td := &tls.Dialer{Config: &tls.Config{
-		MinVersion: tls.VersionTLS12,
-		ServerName: u.Hostname(),
-		NextProtos: offer,
-	}}
-	conn, err := td.DialContext(ctx, "tcp", addr)
+	conn, err := dialTLS(ctx, dial, addr, u.Hostname(), offer)
 	if err != nil {
 		return "", err
 	}
@@ -77,11 +75,14 @@ func (c *relayNode) openPOST(ctx context.Context) (tunnelStream, error) {
 			// (VPN-R28/R55).
 			NextProtos: []string{"h2", "http/1.1"},
 		},
-		DialContext:           (&net.Dialer{Timeout: tunnelHandshakeTimeout}).DialContext,
+		// The chain rides the DIAL, not Transport.Proxy (docs/d094): a
+		// blind CONNECT/SOCKS tunnel to the edge, TLS end-to-end above it.
+		DialContext:           c.tunnelDial(),
 		TLSHandshakeTimeout:   tunnelHandshakeTimeout,
 		ResponseHeaderTimeout: tunnelHandshakeTimeout,
-		// Proxy is nil on purpose: an ambient proxy would terminate its own
-		// TLS in front of us and see the bearer credential it forwards.
+		// Proxy stays nil on purpose: an ambient proxy would become a
+		// forwarding proxy for a cleartext URL and read the bearer — the
+		// chain leg exists precisely so it never does.
 	}
 
 	pr, pw := io.Pipe()

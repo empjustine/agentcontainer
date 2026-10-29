@@ -17,9 +17,10 @@
 #     predicate silently returned 4 instead of 0/1.
 # Only an end-to-end render catches either.
 #
-# Four cases: two per-backend render shapes (the mount options are the one
+# Five cases: two per-backend render shapes (the mount options are the one
 # genuine backend difference — see lib/workload-render.jq), the workload_has
-# predicate, and the workload_env_allowlist non-empty guard.
+# predicate, the workload_env_allowlist non-empty guard, and the
+# workload_restart flag position (docs/d095).
 #
 # Usage: ./tests/check-workload.sh     (from any directory)
 
@@ -253,5 +254,36 @@ case_allowlist() {
 ) | _norm >"$tmp/got.allowlist"
 _check allowlist
 
+# --- case 5: workload_restart ------------------------------------------------
+# The restart policy rides immediately after the mode flag, and an unset policy
+# emits NOTHING — cases 1–4 are the empty half of that contract, this is the
+# set half. The order is load-bearing: the argv is captured verbatim by
+# tests/check-run-dirs.sh and appears in ps (docs/d095).
+cat >"$tmp/expect.restart" <<'EXPECT'
+ARG[container]
+ARG[run]
+ARG[--detach]
+ARG[--restart=unless-stopped]
+ARG[--name=relay-ctr]
+ARG[--network=host]
+ARG[localhost/llm-reverse-proxy:latest]
+ARG[-mode]
+ARG[relay]
+EXPECT
+case_restart() {
+	_workload_tool=podman
+	_userns='--userns=keep-id'
+	_keep_groups='--group-add keep-groups'
+	workload_name    'relay-ctr'
+	workload_image   'localhost/llm-reverse-proxy:latest'
+	workload_detach
+	workload_restart unless-stopped
+	workload_network host
+	workload_cmd     -mode relay
+	_render_workload
+}
+( case_restart ) | _norm >"$tmp/got.restart"
+_check restart
+
 [ "$_fail" = 0 ] || log_die 1 "check-workload FAILED (see the diffs above)"
-log_info "check-workload passed" cases=4
+log_info "check-workload passed" cases=5

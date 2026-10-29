@@ -158,6 +158,7 @@ workload_NAME=''
 workload_IMAGE=''
 workload_MODE=''
 workload_NETWORK=''
+workload_RESTART=''
 workload_INIT=0
 workload_USER=0
 workload_GPU=0
@@ -171,6 +172,11 @@ workload_name()     { workload_NAME="$1"; }
 workload_image()    { workload_IMAGE="$1"; }
 workload_detach()   { workload_MODE='detach'; }
 workload_interactive() { workload_MODE='interactive'; }
+# workload_restart <policy> — the container's restart policy.  Only the
+# detached long-lived services use it: a crash-restart keeps the listener
+# address a consumer was handed (docs/d095) alive, which an attached
+# one-shot launch has no use for.  Empty (the default) emits no flag.
+workload_restart()  { workload_RESTART="$1"; }
 workload_init()     { workload_INIT=1; }
 workload_network()  { workload_NETWORK="$1"; }
 workload_user()     { workload_USER=1; }
@@ -277,6 +283,7 @@ _render_argv() {
 		--arg entrypoint "$workload_ENTRYPOINT" \
 		--arg workdir "$workload_WORKDIR" \
 		--arg mode "$workload_MODE" \
+		--arg restart "$workload_RESTART" \
 		--arg init "$workload_INIT" \
 		--arg user "$workload_USER" \
 		--arg uid "${SUDO_UID:-$(id -u)}" \
