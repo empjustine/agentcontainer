@@ -1250,17 +1250,17 @@
             "cacheWrite": 0
           },
           "thinkingLevelMap": {
-            "off": "none",
-            "minimal": "minimal",
-            "low": "low",
-            "medium": "medium",
-            "high": "high",
+            "off": "off",
+            "minimal": null,
+            "low": null,
+            "medium": null,
+            "high": null,
             "xhigh": null,
-            "max": null
+            "max": "max"
           },
           "compat": {
             "supportsStore": false,
-            "supportsReasoningEffort": true,
+            "supportsReasoningEffort": false,
             "thinkingFormat": "deepseek",
             "maxTokensField": "max_tokens"
           }
@@ -4097,6 +4097,22 @@
           ]
         },
         {
+          "id": "mistral-large-4",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-large-4-0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
           "id": "mistral-medium",
           "reasoning": true,
           "input": [
@@ -4699,13 +4715,6 @@
         },
         {
           "id": "claude-opus-5-5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-opus-5-5-backup",
           "reasoning": true,
           "input": [
             "text"
@@ -5517,13 +5526,6 @@
           ]
         },
         {
-          "id": "test",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "trinity-large-preview-free",
           "reasoning": true,
           "input": [
@@ -5663,20 +5665,6 @@
         },
         {
           "id": "longcat-2.0",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mimo-v2.5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mimo-v2.5-pro",
           "reasoning": true,
           "input": [
             "text"

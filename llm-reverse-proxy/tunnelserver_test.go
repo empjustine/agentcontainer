@@ -20,11 +20,22 @@ const (
 	testTunnelToken = "operator-token-abcdef1234567890"
 )
 
+// armTestTunnelEnv sets the credential pair exactly as the d090 migration
+// leaves it: VPN_OPERATOR_KEYS carries the token under the id "default" (the
+// exit node's credential) and the same bytes stay in VPN_OPERATOR_TOKEN (the
+// relay node's bearer — each side reads its own variable; zero-wire,
+// docs/d090).
+func armTestTunnelEnv(t *testing.T) {
+	t.Helper()
+	t.Setenv(envOperatorKeys, fmt.Sprintf(`{"default":%q}`, testTunnelToken))
+	t.Setenv(envOperatorToken, testTunnelToken)
+}
+
 // newTunnelServer wires a full server with the tunnel on or off through the same
 // code main() uses.
 func newTunnelServer(t *testing.T, enabled bool, egress egressConfig) *server {
 	t.Helper()
-	t.Setenv(envOperatorToken, testTunnelToken)
+	armTestTunnelEnv(t)
 	s := &server{providers: map[string]*provider{}}
 	if enabled {
 		if err := s.enableTunnel(&tunnelConfig{Egress: egress}); err != nil {
@@ -401,13 +412,35 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestEnableTunnelValidatesInputs(t *testing.T) {
+	// The relay node's bearer stays set throughout: a shared host running
+	// both roles has it in env, and the exit node must ignore it in favor
+	// of the keyset (docs/d090).
 	t.Setenv(envOperatorToken, testTunnelToken)
 
-	t.Run("missing token", func(t *testing.T) {
+	t.Run("no credential at all", func(t *testing.T) {
+		t.Setenv(envOperatorKeys, "")
 		t.Setenv(envOperatorToken, "")
 		s := &server{providers: map[string]*provider{}}
 		if err := s.enableTunnel(&tunnelConfig{}); err == nil {
 			t.Fatal("expected failure")
+		}
+	})
+	t.Run("relay token alone refuses with the d090 migration hint", func(t *testing.T) {
+		t.Setenv(envOperatorKeys, "")
+		s := &server{providers: map[string]*provider{}}
+		err := s.enableTunnel(&tunnelConfig{})
+		if err == nil {
+			t.Fatal("expected failure")
+		}
+		if !strings.Contains(err.Error(), envOperatorKeys) || !strings.Contains(err.Error(), "default") {
+			t.Fatalf("err=%v, want the zero-wire migration naming %s", err, envOperatorKeys)
+		}
+	})
+	t.Run("keyset alone arms", func(t *testing.T) {
+		t.Setenv(envOperatorKeys, fmt.Sprintf(`{"default":%q}`, testTunnelToken))
+		s := &server{providers: map[string]*provider{}}
+		if err := s.enableTunnel(&tunnelConfig{}); err != nil {
+			t.Fatalf("enableTunnel: %v", err)
 		}
 	})
 	t.Run("reserved tunnel path colliding with an allowlist host", func(t *testing.T) {
@@ -438,9 +471,10 @@ const (
 )
 
 // TestOperatorKeysFromEnv drives every refusal d078 §2 lists: the set comes
-// from ONE JSON env object (plus the legacy single token), and any input
-// that would weaken or shadow a principal refuses the tunnel instead of
-// loading (NFR-2 fail-loudly).
+// from ONE JSON env object — the exit node's credential, disjoint from the
+// relay node's bearer since docs/d090 (TOKEN alone refuses with the
+// migration hint) — and any input that would weaken or shadow a principal
+// refuses the tunnel instead of loading (NFR-2 fail-loudly).
 func TestOperatorKeysFromEnv(t *testing.T) {
 	var over strings.Builder
 	over.WriteString("{")
@@ -460,8 +494,8 @@ func TestOperatorKeysFromEnv(t *testing.T) {
 		wantIDs []string
 	}{
 		{"json set", `{"alice":"alice-token-0123456789","bob":"bob-token-0123456789"}`, "", false, []string{"alice", "bob"}},
-		{"legacy token alone becomes default", "", testTunnelToken, false, []string{"default"}},
-		{"set and legacy token merge", `{"alice":"alice-token-0123456789"}`, testTunnelToken, false, []string{"alice", "default"}},
+		{"relay token alone refuses with the migration hint", "", testTunnelToken, true, nil},
+		{"keyset wins; the relay token is ignored on an exit node", `{"alice":"alice-token-0123456789"}`, testTunnelToken, false, []string{"alice"}},
 		{"no credential at all", "", "", true, nil},
 		{"empty object is an empty set", `{}`, "", true, nil},
 		{"malformed json", `{"alice":`, "", true, nil},
@@ -470,9 +504,9 @@ func TestOperatorKeysFromEnv(t *testing.T) {
 		{"duplicate id rejected", `{"alice":"alice-token-0123456789","alice":"alice-token-9876543210"}`, "", true, nil},
 		{"non-string value", `{"alice":123}`, "", true, nil},
 		{"token below floor", `{"alice":"short"}`, "", true, nil},
-		{"legacy token below floor", "", "short", true, nil},
+		{"short relay token alone still refuses", "", "short", true, nil},
 		{"id not label-shaped", `{"ali ce":"alice-token-0123456789"}`, "", true, nil},
-		{"merge colliding on default", `{"default":"default-token-0123456789"}`, testTunnelToken, true, nil},
+		{"keyset's default id untouched by the relay token", `{"default":"default-token-0123456789"}`, testTunnelToken, false, []string{"default"}},
 		{"over the cap", over.String(), "", true, nil},
 	}
 	for _, tc := range cases {

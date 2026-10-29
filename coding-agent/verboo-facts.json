@@ -1,10 +1,10 @@
 {
-  "fetchedAt": "2026-10-28T23:47:07.270Z",
+  "fetchedAt": "2026-10-29T16:53:24.178Z",
   "models": [
     {
       "id": "deepseek-v4.1-flash",
       "object": "model",
-      "created": 1793231227,
+      "created": 1793292804,
       "owned_by": "verboo",
       "context_window": 1048576,
       "vision": true,
@@ -21,7 +21,7 @@
     {
       "id": "glm-5.3-flash",
       "object": "model",
-      "created": 1793231227,
+      "created": 1793292804,
       "owned_by": "verboo",
       "context_window": 1048576,
       "vision": true,
@@ -37,7 +37,7 @@
     {
       "id": "mimo-v2.6-flash",
       "object": "model",
-      "created": 1793231227,
+      "created": 1793292804,
       "owned_by": "verboo",
       "context_window": 1048576,
       "vision": false
@@ -45,7 +45,7 @@
     {
       "id": "qwen3.8-27b",
       "object": "model",
-      "created": 1793231227,
+      "created": 1793292804,
       "owned_by": "verboo",
       "context_window": 262144,
       "vision": true,

@@ -18,7 +18,8 @@ llm-reverse-proxy is the substrate llama-swap itself uses internally
 
 > **Expansion (docs/d073, mode family revised by docs/d077):** modes A
 > (today's host allowlist), B (authenticated generic relay — deferred to
-> v3), C (h2 streaming POST — default-on behind `-modes` since d084), D
+> v3), C (h2 streaming POST — default-on since d084; the `-modes`/`MODES`
+> knob retired by d093, the offer is the constant full ladder), D
 > (`CONNECT`-over-WebSocket tunnel plus a localhost CONNECT/SOCKS5 relay,
 > so clients validate the target's real certificate end-to-end and never
 > trust the proxy — the deployed v2 shape), E (h1.1 per-exchange windowing —
@@ -162,19 +163,21 @@ llama-swap's port model) — host networking is what makes the loopback
 `${LISTEN:-:8080}`. The config path differs by branch: native reads
 `./llm-reverse-proxy.json`, the container mounts it at
 `/etc/llm-reverse-proxy/llm-reverse-proxy.json` (both overridable with
-`CONFIG`). Relay node: NO config file — `VPN_TUNNEL_URL` (ws/wss; the
-path is the Funnel mount plus the fixed `/vpn` — docs/d085) and
-`VPN_OPERATOR_TOKEN` are its core surface, with `VPN_CLIENT_LABEL` optional (defaults to the hostname),
-`MODES` (transport letters to offer — `cd` by default, docs/d084; `c` is
-the built h2 POST mode) and
-`PROXY_LISTEN`/`SOCKS_LISTEN` defaulting to `127.0.0.1:3128`/`1080`;
+`CONFIG`). Relay node: NO config file — `VPN_TUNNEL_URL` (http(s):// or
+ws(s):// — the URL's honest wire form, normalized to wss internally,
+docs/d090; the path is the Funnel mount plus the fixed `/vpn` —
+docs/d085) and `VPN_OPERATOR_TOKEN` are its core surface, with `VPN_CLIENT_LABEL` optional (defaults to the hostname),
+the transport ladder rides whole — C → D → E ranked at dial time, no
+`-modes`/`MODES` override (docs/d093) — and `PROXY_LISTEN`/`SOCKS_LISTEN` defaulting to `127.0.0.1:3128`/`1080`;
 host networking is a requirement there too (the loopback listeners must
 be the HOST's loopback — VPN-R23 forbids exposing them — and the tunnel
 URL needs the host's tailnet routes). Secrets (env-only — VPN-R32/d078;
 run.sh never loads secrets itself): mode A serving holds none — requests
 must already carry valid provider keys. An armed exit node
 (docs/d084/d085: armed when the env carries the operator keyset) holds the
-keyset, and the relay node holds the operator token — all reach the
+keyset (`VPN_OPERATOR_KEYS`), and the relay node holds the operator token
+(`VPN_OPERATOR_TOKEN`) — disjoint since docs/d090, which retired the
+keyset's implicit-`default` merge of the token — and all reach the
 container only through the run.sh env allowlists.
 
 ### Port model (the conflict with llama-swap, docs/d027)

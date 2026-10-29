@@ -4,63 +4,29 @@ package main
 // POST over h2 to an edge that forwards h1.1 to the exit node — evidence E2's
 // shape, reproduced locally with an HTTP/2 httptest front and a reverse
 // proxy. The relay node's trust stays what production's is: system roots, no
-// override knob (VPN-R28/R55); the test installs the front's self-signed
-// cert as the process root via SSL_CERT_FILE, which the x509 package reads
-// on its first root load — this test must therefore be the first TLS user
-// in the binary, and nothing may load roots before it.
+// override knob (VPN-R28/R55); the fronts present the suite's shared test
+// root, which TestMain installs via SSL_CERT_FILE before the process's first
+// root load (testhelpers_test.go, docs/d090).
 
 import (
 	"bufio"
 	"context"
-	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/http/httputil"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"testing"
-	"time"
 )
 
 // newHTTP2Front is E2 in miniature: TLS + HTTP/2 at the edge, HTTP/1.1 to
-// the backend. FlushInterval is 1ms so the front cannot hide the unbuffered
-// streaming mode C exists for (d077 §5) behind its own buffering.
+// the backend — newTLSFront with the h2 flag (testhelpers_test.go).
 func newHTTP2Front(t *testing.T, backend *httptest.Server) *httptest.Server {
 	t.Helper()
-	bu, err := url.Parse(backend.URL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rp := httputil.NewSingleHostReverseProxy(bu)
-	rp.FlushInterval = time.Millisecond
-	front := httptest.NewUnstartedServer(rp)
-	front.EnableHTTP2 = true
-	front.StartTLS()
-	t.Cleanup(front.Close)
-	return front
-}
-
-// trustTestCert points x509's system-root load at the test front's cert.
-// Production has exactly no equivalent knob — this is test plumbing, not a
-// relay-side TLS override (VPN-R28).
-func trustTestCert(t *testing.T, srv *httptest.Server) {
-	t.Helper()
-	cert := srv.Certificate()
-	pemBytes := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw})
-	if pemBytes == nil {
-		t.Fatal("encode front certificate")
-	}
-	path := filepath.Join(t.TempDir(), "front-cert.pem")
-	if err := os.WriteFile(path, pemBytes, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("SSL_CERT_FILE", path)
+	return newTLSFront(t, backend, true)
 }
 
 // modeCFetch opens a local CONNECT and pulls one response through a tunnel
@@ -94,7 +60,7 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
 
-	t.Setenv(envOperatorToken, testTunnelToken)
+	armTestTunnelEnv(t)
 	localProvider, err := newProvider("local.test", upstream.URL)
 	if err != nil {
 		t.Fatal(err)
@@ -109,7 +75,6 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 	backend := newHTTPServer(t, s)
 
 	front := newHTTP2Front(t, backend)
-	trustTestCert(t, front)
 
 	fu, err := url.Parse(front.URL)
 	if err != nil {
@@ -122,7 +87,7 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, "c,d")
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -246,38 +211,4 @@ func TestModeCArrivalIsAuthenticatedAndCamouflaged(t *testing.T) {
 		waitForLog(t, logBuf, "tunnel session: authenticated key=default")
 		waitForLog(t, logBuf, "transport=post")
 	})
-}
-
-func TestParseClientModes(t *testing.T) {
-	tests := []struct {
-		in      string
-		want    string
-		wantErr string
-	}{
-		{in: "d", want: "d"},               // one built mode on offer
-		{in: "c,d", want: "cd"},            // both c and d on offer
-		{in: "c", want: "c"},               // operator's choice: C only, fail closed if it fails
-		{in: "D,C", want: "cd"},            // case-insensitive, canonical order
-		{in: "e", want: "e"},               // the floor alone — a deployment where nothing else works (d081's amendment: E built, L4 demoted)
-		{in: "e,d", want: "de"},            // the E rung joins the ladder in canonical order
-		{in: "cde", want: "cde"},           // the default offer (d084 as amended)
-		{in: "x", wantErr: "unknown mode"}, // typo is loud, not routed around (NFR-2)
-		{in: "", wantErr: "at least one"},
-		{in: ",", wantErr: "at least one"},
-	}
-	for _, tc := range tests {
-		got, err := parseRelayModes(tc.in)
-		if tc.wantErr != "" {
-			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
-				t.Errorf("parseRelayModes(%q) err=%v, want containing %q", tc.in, err, tc.wantErr)
-			}
-			continue
-		}
-		if err != nil {
-			t.Errorf("parseRelayModes(%q) unexpected err: %v", tc.in, err)
-		}
-		if got != tc.want {
-			t.Errorf("parseRelayModes(%q) = %q, want %q", tc.in, got, tc.want)
-		}
-	}
 }

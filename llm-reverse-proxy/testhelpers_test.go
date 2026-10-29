@@ -8,20 +8,122 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"fmt"
 	"io"
 	"log"
+	"math/big"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
 	"net/textproto"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 )
+
+// ---------------------------------------------------------------------------
+// Suite TLS root — one trust anchor for every TLS fixture (docs/d090)
+// ---------------------------------------------------------------------------
+//
+// The relay trusts system roots with no override knob (VPN-R28/R55), and
+// x509 loads the system roots ONCE per process — so a per-test SSL_CERT_FILE
+// write only reaches fixtures that run before the first handshake. With the
+// generalized https:// tunnel URL (docs/d090) there is more than one TLS
+// fixture, so the whole suite presents certs chaining to ONE self-signed
+// root, installed by TestMain before any test can trigger a load.
+
+var (
+	testTLSOnce     sync.Once
+	testTLSCert     tls.Certificate
+	testTLSErr      error
+	testRootPEMPath string
+)
+
+func initSuiteTLSRoot() error {
+	testTLSOnce.Do(func() {
+		key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		if err != nil {
+			testTLSErr = err
+			return
+		}
+		tmpl := &x509.Certificate{
+			SerialNumber:          big.NewInt(1),
+			Subject:               pkix.Name{CommonName: "llm-reverse-proxy test root"},
+			NotBefore:             time.Now().Add(-time.Hour),
+			NotAfter:              time.Now().Add(24 * time.Hour),
+			KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+			ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+			BasicConstraintsValid: true,
+			IsCA:                  true,
+			DNSNames:              []string{"localhost"},
+			IPAddresses:           []net.IP{net.ParseIP("127.0.0.1"), net.ParseIP("::1")},
+		}
+		der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
+		if err != nil {
+			testTLSErr = err
+			return
+		}
+		testTLSCert = tls.Certificate{Certificate: [][]byte{der}, PrivateKey: key}
+		dir, err := os.MkdirTemp("", "llm-reverse-proxy-test-root")
+		if err != nil {
+			testTLSErr = err
+			return
+		}
+		testRootPEMPath = filepath.Join(dir, "root.pem")
+		pemBytes := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+		testTLSErr = os.WriteFile(testRootPEMPath, pemBytes, 0o644)
+	})
+	return testTLSErr
+}
+
+// TestMain installs the suite TLS root before any test runs — SSL_CERT_FILE
+// must be set before x509's first root load, which any test could trigger.
+func TestMain(m *testing.M) {
+	if err := initSuiteTLSRoot(); err != nil {
+		fmt.Fprintf(os.Stderr, "suite TLS root: %v\n", err)
+		os.Exit(1)
+	}
+	if err := os.Setenv("SSL_CERT_FILE", testRootPEMPath); err != nil {
+		fmt.Fprintf(os.Stderr, "SSL_CERT_FILE: %v\n", err)
+		os.Exit(1)
+	}
+	os.Exit(m.Run())
+}
+
+// newTLSFront is a TLS reverse proxy to backend on the suite root: h2 at the
+// edge when enableHTTP2 (mode C's E2 shape), h1-only otherwise (the
+// upgrade-stripping hostile gateway the demotion ladder needs).
+func newTLSFront(t *testing.T, backend *httptest.Server, enableHTTP2 bool) *httptest.Server {
+	t.Helper()
+	bu, err := url.Parse(backend.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rp := httputil.NewSingleHostReverseProxy(bu)
+	rp.FlushInterval = time.Millisecond
+	front := httptest.NewUnstartedServer(rp)
+	front.EnableHTTP2 = enableHTTP2
+	front.StartTLS()
+	// httptest.StartTLS serves its own localhost cert; the suite root
+	// replaces it in the same *tls.Config the live listener wraps, so the
+	// next handshake picks it up (docs/d090).
+	front.TLS.Certificates = []tls.Certificate{testTLSCert}
+	t.Cleanup(front.Close)
+	return front
+}
 
 // syncBuffer is a log sink tests can read while the server writes: a plain
 // strings.Builder would be a data race the moment log.Printf runs on the

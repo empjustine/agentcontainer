@@ -257,6 +257,22 @@
           ]
         },
         {
+          "id": "mistral-large-4",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-large-4-0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
           "id": "mistral-medium",
           "reasoning": true,
           "input": [
@@ -859,13 +875,6 @@
         },
         {
           "id": "claude-opus-5-5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-opus-5-5-backup",
           "reasoning": true,
           "input": [
             "text"
@@ -1677,13 +1686,6 @@
           ]
         },
         {
-          "id": "test",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "trinity-large-preview-free",
           "reasoning": true,
           "input": [
@@ -1823,20 +1825,6 @@
         },
         {
           "id": "longcat-2.0",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mimo-v2.5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mimo-v2.5-pro",
           "reasoning": true,
           "input": [
             "text"

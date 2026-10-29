@@ -22,6 +22,11 @@
 FROM docker.io/library/golang:1.27 AS build
 WORKDIR /src
 COPY go.mod *.go ./
+# GOTOOLCHAIN=local: a go.mod/toolchain bump that outruns this builder must
+# FAIL the build loudly — cmd/go's automatic toolchain download is the one
+# build-time path that downloads AND executes code, and the only toolchain
+# we trust on this build is the one this image already contains.
+ENV GOTOOLCHAIN=local
 RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/llm-reverse-proxy .
 
 # Numeric USER because scratch has no /etc/passwd: the static binary makes

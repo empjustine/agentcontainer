@@ -75,7 +75,7 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	upPort := portOf(t, upstream.Listener.Addr().String())
 
 	// Server: provider allowlist + the tunnel through the production path.
-	t.Setenv(envOperatorToken, testTunnelToken)
+	armTestTunnelEnv(t)
 	localProvider, err := newProvider("local.test", upstream.URL)
 	if err != nil {
 		t.Fatal(err)
@@ -94,7 +94,7 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	t.Setenv(envClientLabel, "e2e-label")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, "d")
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -32,10 +32,11 @@
 # never seen here — the tunnel answers the fixed /vpn.
 #
 # Env overrides: PROXY_MODE / HOST_PORT / LISTEN / PROXY_LISTEN /
-# SOCKS_LISTEN / IMAGE_TAG / LLM_PROXY_BIN / CONFIG / MODES, and for the
-# relay node VPN_TUNNEL_URL (wss://host[/<funnel-mount>]/vpn) /
-# VPN_OPERATOR_TOKEN / VPN_CLIENT_LABEL; for an armed exit node
-# VPN_OPERATOR_KEYS / VPN_OPERATOR_TOKEN.
+# SOCKS_LISTEN / IMAGE_TAG / LLM_PROXY_BIN / CONFIG, and for the
+# relay node VPN_TUNNEL_URL (http(s):// or ws(s):// host[/<funnel-mount>]/vpn
+# — the URL's wire form, docs/d090) / VPN_OPERATOR_TOKEN / VPN_CLIENT_LABEL;
+# for an armed exit node VPN_OPERATOR_KEYS (the credentials split by node
+# since docs/d090 — TOKEN is the relay's alone).
 
 set -eu
 # Shared infra arrives through one injectable directory (docs/d082): default
@@ -62,7 +63,7 @@ esac
 # of the exit node's config gate.
 if [ "$proxy_mode" = relay ]; then
 	[ -n "${VPN_TUNNEL_URL:-}" ] ||
-		log_die 94 "relay mode needs VPN_TUNNEL_URL (wss://host[/<funnel-mount>]/vpn)" var=VPN_TUNNEL_URL
+		log_die 94 "relay mode needs VPN_TUNNEL_URL (http(s):// or ws(s):// host[/<funnel-mount>]/vpn — docs/d090)" var=VPN_TUNNEL_URL
 	[ -n "${VPN_OPERATOR_TOKEN:-}" ] ||
 		log_die 94 "relay mode needs VPN_OPERATOR_TOKEN (env-only credential, VPN-R44)" var=VPN_OPERATOR_TOKEN
 else
@@ -96,17 +97,18 @@ if [ "$_workload" = 'workload' ]; then
 		# EMPTY value the relay node reads as "set" (lib/workload-runtime.sh).
 		# The capability prefix is not forwarded — it is part of the
 		# tunnel URL path, the relay node's only notion of it.
-		workload_env_allowlist VPN_TUNNEL_URL VPN_OPERATOR_TOKEN VPN_CLIENT_LABEL MODES
+		workload_env_allowlist VPN_TUNNEL_URL VPN_OPERATOR_TOKEN VPN_CLIENT_LABEL
+		# The whole transport ladder rides — selection is the relay node's
+		# per-dial ranking, not a knob (docs/d093).
 		workload_cmd -mode relay \
 			-proxy-listen "${PROXY_LISTEN:-127.0.0.1:3128}" \
 			-socks-listen "${SOCKS_LISTEN:-127.0.0.1:1080}"
-		# No default restated here: the binary's -modes default is the one
-		# source (docs/d084) — MODES overrides it, never echoes it.
-		[ -z "${MODES:-}" ] || workload_cmd -modes "$MODES"
 	else
 		# Forwarded only when set — the same arming contract as native
 		# (docs/d084): a containerized exit node can carry the tunnel family.
-		workload_env_allowlist VPN_OPERATOR_KEYS VPN_OPERATOR_TOKEN
+		# VPN_OPERATOR_TOKEN is deliberately absent: it is the relay node's
+		# credential, and the exit node stopped reading it (docs/d090).
+		workload_env_allowlist VPN_OPERATOR_KEYS
 		workload_ro       "$config" /etc/llm-reverse-proxy/llm-reverse-proxy.json
 		workload_cmd      -config /etc/llm-reverse-proxy/llm-reverse-proxy.json -listen "0.0.0.0:$HOST_PORT"
 	fi
@@ -129,12 +131,10 @@ else
 
 	if [ "$proxy_mode" = relay ]; then
 		log_info "serving (native, relay node)" bin="$bin"
-		# set -- (not an array): this file is POSIX sh. MODES follows the same
-		# one-source rule as the container branch (docs/d084).
+		# set -- (not an array): this file is POSIX sh.
 		set -- -mode relay \
 			-proxy-listen "${PROXY_LISTEN:-127.0.0.1:3128}" \
 			-socks-listen "${SOCKS_LISTEN:-127.0.0.1:1080}"
-		[ -z "${MODES:-}" ] || set -- "$@" -modes "$MODES"
 		exec "$bin" "$@"
 	fi
 	log_info "serving (native, exit node)" bin="$bin" config="$config" listen="${LISTEN:-:8080}"

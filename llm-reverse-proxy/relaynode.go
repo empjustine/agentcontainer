@@ -58,17 +58,17 @@ type relayConfig struct {
 	label     string
 	proxyAddr string // HTTP CONNECT listener (must be loopback, VPN-R23)
 	socksAddr string // SOCKS5 listener (must be loopback, VPN-R23)
-	// modes is the transport offer set — which built modes the negotiation
-	// may choose (docs/d077 §4). A mode that is built but not listed here
-	// is OFF: spikes gate adoption, so shipping the code must not flip
-	// traffic onto a mode whose L3 measurement has not been taken.
-	modes string
 }
 
 // relayConfigFromEnv assembles the config from the flag values and the
 // environment. Nothing else may configure the relay node (one path, no
 // scattered defaults — d072's lesson applied).
-func relayConfigFromEnv(proxyAddr, socksAddr, modes string) (relayConfig, error) {
+//
+// VPN_TUNNEL_URL is accepted in the URL's honest wire form (http/https/
+// ws/wss) and normalized here — the one place — to the canonical ws/wss
+// every carrier and probe branches on; each carrier rewrites to its own
+// wire scheme itself (docs/d090 §1).
+func relayConfigFromEnv(proxyAddr, socksAddr string) (relayConfig, error) {
 	var cfg relayConfig
 	raw := os.Getenv(envTunnelURL)
 	if raw == "" {
@@ -78,8 +78,13 @@ func relayConfigFromEnv(proxyAddr, socksAddr, modes string) (relayConfig, error)
 	if err != nil {
 		return cfg, fmt.Errorf("%s: %w", envTunnelURL, err)
 	}
-	if u.Scheme != "ws" && u.Scheme != "wss" {
-		return cfg, fmt.Errorf("%s must be ws:// or wss://, got %q", envTunnelURL, u.Scheme)
+	switch u.Scheme {
+	case "http", "ws":
+		u.Scheme = "ws"
+	case "https", "wss":
+		u.Scheme = "wss"
+	default:
+		return cfg, fmt.Errorf("%s must be http://, https://, ws:// or wss://, got %q", envTunnelURL, u.Scheme)
 	}
 	if u.Host == "" || u.Path == "" {
 		return cfg, fmt.Errorf("%s must include host and path (d073 §7)", envTunnelURL)
@@ -89,7 +94,6 @@ func relayConfigFromEnv(proxyAddr, socksAddr, modes string) (relayConfig, error)
 	cfg.label = os.Getenv(envClientLabel)
 	cfg.proxyAddr = proxyAddr
 	cfg.socksAddr = socksAddr
-	cfg.modes = modes
 	return cfg, nil
 }
 
@@ -103,11 +107,6 @@ func (cfg *relayConfig) validate() error {
 	if cfg.tunnelURL == nil {
 		return fmt.Errorf("no tunnel URL configured (%s)", envTunnelURL)
 	}
-	modes, err := parseRelayModes(cfg.modes)
-	if err != nil {
-		return err
-	}
-	cfg.modes = modes
 	for what, addr := range map[string]string{"http proxy": cfg.proxyAddr, "socks5": cfg.socksAddr} {
 		if err := requireLoopback(addr); err != nil {
 			return fmt.Errorf("%s listener: %w", what, err)
@@ -175,10 +174,10 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 	c := &relayNode{cfg: cfg}
 	// The log shows WHICH tunnel endpoint (host only): the path embeds the
 	// capability prefix, which must not land in any log (VPN-R44).
-	// The log shows WHICH carriers are on offer (d077 §4): the mode set is
-	// the operator-visible half of the negotiation story.
+	// The log shows WHICH carriers are on offer (d077 §4): the ladder is
+	// constant (docs/d093), so this line states a fact, not a config.
 	log.Printf("[vpn-relay] listeners http=%s socks5=%s tunnel=%s://%s modes=%s",
-		proxyLn.Addr(), socksLn.Addr(), cfg.tunnelURL.Scheme, cfg.tunnelURL.Host, cfg.modes)
+		proxyLn.Addr(), socksLn.Addr(), cfg.tunnelURL.Scheme, cfg.tunnelURL.Host, transportOffer)
 
 	httpSrv := &http.Server{
 		Handler:           c,
@@ -230,102 +229,66 @@ func deniedReason(reason string) bool {
 // Success returns a live, unmuxed tunnel (VPN-R17: one wss per CONNECT in
 // v2 — no session reuse yet, so every local connection pays one handshake;
 // the v3 mux is what removes that).
-// parseRelayModes normalizes -modes into the offer set (docs/d077 §4):
-// exactly which BUILT transports negotiation may choose. Fail loudly
-// (NFR-2): asking for a mode that does not exist — or for none at all — is
-// a config error, never something to route around, because silently
-// dropping a mode changes the traffic shape without telling the operator.
-func parseRelayModes(raw string) (string, error) {
-	var hasC, hasD, hasE bool
-	for _, r := range strings.ToLower(raw) {
-		switch r {
-		case 'c':
-			hasC = true
-		case 'd':
-			hasD = true
-		case 'e':
-			hasE = true
-		case ',', ' ':
-		default:
-			return "", fmt.Errorf("unknown mode %q (built modes: c, d, e — d077 §4)", r)
-		}
-	}
-	if !hasC && !hasD && !hasE {
-		return "", fmt.Errorf("-modes must name at least one built mode (c, d, e — d077 §4)")
-	}
-	out := ""
-	if hasC {
-		out += "c"
-	}
-	if hasD {
-		out += "d"
-	}
-	if hasE {
-		out += "e"
-	}
-	return out, nil
-}
+// transportOffer is the full transport ladder, in rank order (docs/d077
+// §4). It is deliberately a constant: mode selection is the relay node's
+// per-dial ranking of what the endpoint actually offers, and an operator
+// override could only ever degrade the ladder — the -modes/MODES knob
+// retired with docs/d093.
+const transportOffer = "cde"
 
 // dialTransport chooses the session's carrier from what the endpoint
-// actually supports (docs/d077 §4, "negotiation, not path"): the offer set
-// is cfg.modes — every letter gated on it, so an operator asking for one
-// mode gets exactly that mode — ALPN decides h2 versus http/1.1, the
-// upgrade probe separates D from E, and a mode that fails routes around to
-// the next built mode as if it were censorship (d081's amendment: E is the
-// floor, so a refused upgrade is no longer "no mode left" — it demotes).
-// The fallback never retries in a way that would reveal intent, and with
-// nothing left it fails closed (VPN-R26).
+// actually supports (docs/d077 §4, "negotiation, not path"): the whole
+// ladder is offered — the constant transportOffer (docs/d093) — ALPN
+// decides h2 versus http/1.1, the upgrade probe separates D from E, and a
+// mode that fails routes around to the next built mode as if it were
+// censorship (d081's amendment: E is the floor, so a refused upgrade is no
+// longer "no mode left" — it demotes). The fallback never retries in a way
+// that would reveal intent, and with nothing left it fails closed
+// (VPN-R26).
 func (c *relayNode) dialTransport(ctx context.Context) (tunnelStream, error) {
 	var attempts []string
 	var cErr error
 	record := func(mode string, err error) {
 		attempts = append(attempts, fmt.Sprintf("%s: %v", mode, err))
 	}
-	if strings.ContainsRune(c.cfg.modes, 'c') {
-		proto, err := alpnNegotiate(ctx, c.cfg.tunnelURL, []string{"h2", "http/1.1"})
-		if err == nil && proto == "h2" {
-			s, err := c.openPOST(ctx)
-			if err == nil {
-				log.Printf("[vpn-relay] tunnel transport=%s", s.transport())
-				return s, nil
-			}
-			record("mode C", err)
-			cErr = err
-		} else if err != nil {
-			// The ALPN probe itself failed (TLS refused, host down): D and E
-			// share the same endpoint, so recording it costs nothing and the
-			// composite error below stays honest about what was tried.
-			record("mode C ALPN", err)
-		}
-		// No h2 landed is the ordinary h1 case — mode D below, logged by
-		// its own transport= line. A failed POST is worth saying out loud:
-		// it means the edge answered h2 but not the session (d077 §4 —
-		// route around it as if it were censorship).
-		if cErr != nil && strings.ContainsRune(c.cfg.modes, 'd') {
-			log.Printf("[vpn-relay] mode C failed (%v), falling back to mode D", cErr)
-		}
-	}
-	if strings.ContainsRune(c.cfg.modes, 'd') {
-		hdr := make(http.Header)
-		hdr.Set("Authorization", "Bearer "+c.cfg.token)
-		ws, err := wsDial(ctx, c.cfg.tunnelURL, hdr)
-		if err == nil {
-			log.Printf("[vpn-relay] tunnel transport=%s", ws.transport())
-			return ws, nil
-		}
-		record("mode D", err)
-		if strings.ContainsRune(c.cfg.modes, 'e') {
-			log.Printf("[vpn-relay] mode D failed (%v), falling back to mode E", err)
-		}
-	}
-	if strings.ContainsRune(c.cfg.modes, 'e') {
-		s, err := c.openExchange(ctx)
+	proto, err := alpnNegotiate(ctx, c.cfg.tunnelURL, []string{"h2", "http/1.1"})
+	if err == nil && proto == "h2" {
+		s, err := c.openPOST(ctx)
 		if err == nil {
 			log.Printf("[vpn-relay] tunnel transport=%s", s.transport())
 			return s, nil
 		}
-		record("mode E", err)
+		record("mode C", err)
+		cErr = err
+	} else if err != nil {
+		// The ALPN probe itself failed (TLS refused, host down): D and E
+		// share the same endpoint, so recording it costs nothing and the
+		// composite error below stays honest about what was tried.
+		record("mode C ALPN", err)
 	}
+	// No h2 landed is the ordinary h1 case — or a cleartext plane, where
+	// the C rung is unreachable — mode D below, logged by its own
+	// transport= line. A failed POST is worth saying out loud: it means
+	// the edge answered h2 but not the session (d077 §4 — route around
+	// it as if it were censorship).
+	if cErr != nil {
+		log.Printf("[vpn-relay] mode C failed (%v), falling back to mode D", cErr)
+	}
+	hdr := make(http.Header)
+	hdr.Set("Authorization", "Bearer "+c.cfg.token)
+	ws, err := wsDial(ctx, c.cfg.tunnelURL, hdr)
+	if err == nil {
+		log.Printf("[vpn-relay] tunnel transport=%s", ws.transport())
+		return ws, nil
+	}
+	record("mode D", err)
+	log.Printf("[vpn-relay] mode D failed (%v), falling back to mode E", err)
+	s, err := c.openExchange(ctx)
+	if err == nil {
+		log.Printf("[vpn-relay] tunnel transport=%s", s.transport())
+		return s, nil
+	}
+	record("mode E", err)
 	if len(attempts) == 1 {
 		return nil, errors.New(attempts[0])
 	}

@@ -72,13 +72,13 @@ func newHostileGateway(t *testing.T, backend *httptest.Server) *httptest.Server 
 // wireRelayNode starts the relay role exactly as -mode relay wires it
 // (production construction path — d072's drift lesson) and returns the
 // loopback http address plus a shutdown func.
-func wireRelayNode(t *testing.T, tunnelURL, modes string) (string, func()) {
+func wireRelayNode(t *testing.T, tunnelURL string) (string, func()) {
 	t.Helper()
 	t.Setenv(envTunnelURL, tunnelURL)
 	t.Setenv(envClientLabel, "mode-e-e2e")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, modes)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr)
 	if err != nil {
 		t.Fatalf("relayConfigFromEnv: %v", err)
 	}
@@ -105,7 +105,7 @@ func wireRelayNode(t *testing.T, tunnelURL, modes string) (string, func()) {
 func modeETestServer(t *testing.T, upstream *httptest.Server) (*server, *httptest.Server) {
 	t.Helper()
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	t.Setenv(envOperatorToken, testTunnelToken)
+	armTestTunnelEnv(t)
 	localProvider, err := newProvider("local.test", upstream.URL)
 	if err != nil {
 		t.Fatal(err)
@@ -126,9 +126,14 @@ func TestModeEEndToEndOverPlainH1(t *testing.T) {
 		_, _ = io.WriteString(w, "hello-mode-e")
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	_, proxy := modeETestServer(t, upstream)
+	_, backend := modeETestServer(t, upstream)
 
-	httpAddr, stopRelay := wireRelayNode(t, "ws://"+proxy.Listener.Addr().String()+tunnelPath, "e")
+	// The cleartext end of docs/d090's accepted set (an honest http:// URL,
+	// normalized to ws once) behind the upgrade-stripping gateway: with the
+	// whole ladder riding (docs/d093), a plain tunnel server legitimately
+	// carries D — E is what a refused upgrade demotes to, so the gateway is
+	// what pins the carrier under test.
+	httpAddr, stopRelay := wireRelayNode(t, "http://"+newHostileGateway(t, backend).Listener.Addr().String()+tunnelPath)
 	defer stopRelay()
 	logBuf := captureLog(t)
 
@@ -187,11 +192,39 @@ func TestModeEDemotionThroughHostileGateway(t *testing.T) {
 	_, backend := modeETestServer(t, upstream)
 	gateway := newHostileGateway(t, backend)
 
-	// The whole ladder on offer: C has no TLS leg to negotiate (ws:// plane),
-	// D is refused by the gateway, E must carry the session — and the
-	// refusal must be LOGGED as a demotion, never surfacing as failure
-	// (d077 §4's invariant, the amendment's ladder).
-	httpAddr, stopRelay := wireRelayNode(t, "ws://"+gateway.Listener.Addr().String()+tunnelPath, "cde")
+	// The whole ladder rides (docs/d093): on the cleartext plane C is
+	// unreachable, D is refused by the gateway, E must carry the session —
+	// and the refusal must be LOGGED as a demotion, never surfacing as
+	// failure (d077 §4's invariant, the amendment's ladder).
+	httpAddr, stopRelay := wireRelayNode(t, "ws://"+gateway.Listener.Addr().String()+tunnelPath)
+	defer stopRelay()
+	logBuf := captureLog(t)
+
+	modeEFetch(t, httpAddr, "localhost", upPort)
+
+	waitForLog(t, logBuf, "falling back to mode E")
+	waitForLog(t, logBuf, "transport=post")
+	if dumped := logBuf.String(); strings.Contains(dumped, testTunnelToken) {
+		t.Fatalf("token leaked into the log:\n%s", dumped)
+	}
+}
+
+// TestGeneralizedTunnelURLDemotesOverTLS is docs/d090's generalized
+// VPN_TUNNEL_URL end to end: an honest https:// URL against an h1-only TLS
+// gateway that refuses upgrades. The C probe finds no h2 at ALPN (no C
+// session is attempted), the D upgrade is refused and demoted, and E carries
+// the session — the whole ladder on the URL's own wire form, with the
+// normalization and every carrier untouched.
+func TestGeneralizedTunnelURLDemotesOverTLS(t *testing.T) {
+	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Upstream", "yes")
+		_, _ = io.WriteString(w, "hello-mode-e")
+	}))
+	upPort := portOf(t, upstream.Listener.Addr().String())
+	_, backend := modeETestServer(t, upstream)
+	front := newTLSFront(t, newHostileGateway(t, backend), false)
+
+	httpAddr, stopRelay := wireRelayNode(t, front.URL+tunnelPath)
 	defer stopRelay()
 	logBuf := captureLog(t)
 

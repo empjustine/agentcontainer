@@ -377,27 +377,27 @@ func logTunnelLifecycle(label, target, transport string, start time.Time, stats 
 		time.Since(start).Milliseconds(), outcome)
 }
 
-// operatorKeysFromEnv builds the principal set from the env chain — the only
-// home credentials have (VPN-R32: never the config file; and no digest
-// of a token stored beside the plaintext, which would be a second credential
-// copy for zero protection — docs/d078 §2). VPN_OPERATOR_KEYS is the JSON
-// object; VPN_OPERATOR_TOKEN alone is today's single principal ("default"),
-// and the two merge so a migration is two vault edits with no window that
-// rejects every client (docs/d078 §2). Every failure here refuses the
+// operatorKeysFromEnv builds the exit node's principal set from the env
+// chain — the only home credentials have (VPN-R32: never the config file;
+// and no digest of a token stored beside the plaintext, which would be a
+// second credential copy for zero protection — docs/d078 §2). The roles
+// are disjoint since d090: VPN_OPERATOR_KEYS is the exit node's set and
+// VPN_OPERATOR_TOKEN is the relay node's bearer, read nowhere else —
+// d078 §2's back-compat merge is retired, and a TOKEN-only exit node
+// refuses with the zero-wire migration spelled out. When both are set the
+// keyset wins (TOKEN is ignored HERE; it stays the relay credential on a
+// shared-env host running both roles). Every failure here refuses the
 // tunnel rather than weakening it (NFR-2, VPN-R26).
 func operatorKeysFromEnv() ([]operatorKey, error) {
 	byID, err := decodeOperatorKeys(os.Getenv(envOperatorKeys))
 	if err != nil {
 		return nil, err
 	}
-	if token := os.Getenv(envOperatorToken); token != "" {
-		if _, dup := byID["default"]; dup {
-			return nil, fmt.Errorf("%s defines id \"default\" which %s also sets: ids are unique (VPN-R31/docs/d078)", envOperatorKeys, envOperatorKeys)
-		}
-		byID["default"] = token
-	}
 	if len(byID) == 0 {
-		return nil, fmt.Errorf("no operator credential: set %s and/or %s (VPN-R26/R31 fail-closed)", envOperatorKeys, envOperatorToken)
+		if os.Getenv(envOperatorToken) != "" {
+			return nil, fmt.Errorf("%s is the relay node's bearer; the exit node reads %s — the migration is zero-wire: set %s={\"default\": \"<the same token>\"} (docs/d090)", envOperatorToken, envOperatorKeys, envOperatorKeys)
+		}
+		return nil, fmt.Errorf("no operator credential: set %s (VPN-R26/R31 fail-closed)", envOperatorKeys)
 	}
 	if len(byID) > maxOperatorKeys {
 		return nil, fmt.Errorf("%d operator keys exceed cap %d (docs/d078: a bounded set, not a user directory)", len(byID), maxOperatorKeys)
