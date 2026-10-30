@@ -44,7 +44,7 @@ const verboo = CLOUD_PROVIDERS.verboo;
  */
 const row = (overrides) => ({
 	id: "test-model",
-	context_window: 1048576,
+	context_window: 1_048_576,
 	vision: true,
 	reasoning: {
 		effort_levels: ["low", "high", "xhigh", "max"],
@@ -183,10 +183,10 @@ test("NO cost is ever asserted — the listing publishes no prices (docs/d057)",
 test("the manifest publishes no maxTokens; the extension carries the schema default", () => {
 	const [model] = shapeListing([row({})]);
 	assert.equal("maxTokens" in toPiModel(model), false);
-	assert.equal(toExtensionModel(model).maxTokens, 16384);
+	assert.equal(toExtensionModel(model).maxTokens, 16_384);
 	// The context window IS published and carried by both.
-	assert.equal(toPiModel(model).contextWindow, 1048576);
-	assert.equal(toExtensionModel(model).contextWindow, 1048576);
+	assert.equal(toPiModel(model).contextWindow, 1_048_576);
+	assert.equal(toExtensionModel(model).contextWindow, 1_048_576);
 });
 
 test("models are emitted in canonical id order (docs/d050)", () => {

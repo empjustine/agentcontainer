@@ -335,8 +335,8 @@ export function toPiModel(model) {
 		name: model.name,
 		reasoning: model.reasoning,
 		input: model.input,
-		contextWindow: model.contextWindow ?? 128000,
-		maxTokens: model.maxTokens ?? 16384,
+		contextWindow: model.contextWindow ?? 128_000,
+		maxTokens: model.maxTokens ?? 16_384,
 	};
 	if (model.cost) entry.cost = model.cost;
 	if (model.reasoning && model.thinkingLevelMap) {
@@ -377,8 +377,8 @@ export function toExtensionModel(model) {
 	const entry = {
 		id: model.id,
 		name: model.name,
-		contextWindow: model.contextWindow ?? 128000,
-		maxTokens: model.maxTokens ?? 16384,
+		contextWindow: model.contextWindow ?? 128_000,
+		maxTokens: model.maxTokens ?? 16_384,
 		reasoning: model.reasoning,
 		input: model.input,
 		cost: model.cost ?? { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },

@@ -65,7 +65,7 @@ export const HYPER_API_KEY_ENV = HYPER.apiKeyEnv;
 /** @type {string} the provider id pi namespaces model ids under. */
 export const HYPER_PROVIDER_ID = HYPER.id;
 
-const REQUEST_TIMEOUT_MS = 15000;
+const REQUEST_TIMEOUT_MS = 15_000;
 const MODEL_STORE_TTL_MS = 4 * 60 * 60 * 1000;
 
 /**

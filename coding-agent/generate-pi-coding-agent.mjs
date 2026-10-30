@@ -382,7 +382,7 @@ function readMirrorFile(envMirror, orgRepo, refPath, warnContext) {
 			return execFileSync("git", ["-C", mirror, "show", `HEAD:${refPath}`], {
 				encoding: "utf-8",
 				stdio: ["ignore", "pipe", "ignore"],
-				timeout: 15000,
+				timeout: 15_000,
 			});
 		} catch (err) {
 			lastError = err;
@@ -968,8 +968,8 @@ function catalogPiModel(spec, m, id = m.id) {
 		name: m.name ?? id,
 		reasoning: m.reasoning === true,
 		input: toInput(m.modalities?.input),
-		contextWindow: m.limit?.context ?? 128000,
-		maxTokens: m.limit?.output ?? 16384,
+		contextWindow: m.limit?.context ?? 128_000,
+		maxTokens: m.limit?.output ?? 16_384,
 	};
 	// A record with no published prices (cost: null, docs/d057) publishes no
 	// cost block: pi falls back to its own defaults, and a committed artifact

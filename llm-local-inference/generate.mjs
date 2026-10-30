@@ -152,7 +152,7 @@ const LLAMA_SERVER_MACRO = "${LLAMA_SERVER}";
 const DEFAULTS = {
 	"cache-type-k": "f16",
 	"cache-type-v": "f16",
-	"ctx-size": 65536,
+	"ctx-size": 65_536,
 	parallel: 1,
 };
 

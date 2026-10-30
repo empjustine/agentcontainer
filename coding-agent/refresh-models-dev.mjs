@@ -65,7 +65,7 @@ setLogTool("coding-agent/refresh-models-dev");
 const RELAY_PATH_AND_QUERY = "/api.json?type=all";
 
 const OUT = process.argv[2] ?? join(scriptDir, "models.dev.api.json");
-const REQUEST_TIMEOUT_MS = 15000;
+const REQUEST_TIMEOUT_MS = 15_000;
 /**
  * Provider entries the generators read from the catalog; each must exist with
  * a models map or the payload is rejected.

@@ -72,7 +72,7 @@ const OPENCODE_API_KEY_ENV = "OPENCODE_API_KEY";
  */
 const REFRESH_INTERVAL_MS = 4 * 60 * 60 * 1000;
 
-const REQUEST_TIMEOUT_MS = 15000;
+const REQUEST_TIMEOUT_MS = 15_000;
 
 /**
  * What pi hands `refreshModels`, as far as this extension reads it —

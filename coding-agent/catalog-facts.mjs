@@ -79,7 +79,7 @@ setLogTool("coding-agent/catalog-facts");
 
 const CATWALK_PATH_AND_QUERY = "/v2/providers";
 /** The catwalk listing is a large document; provider /models lists are small. */
-const CATWALK_TIMEOUT_MS = 10000;
+const CATWALK_TIMEOUT_MS = 10_000;
 const FACTS_TIMEOUT_MS = 8000;
 
 const CATWALK_CACHE_PATH =

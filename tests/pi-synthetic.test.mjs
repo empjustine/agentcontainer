@@ -52,7 +52,7 @@ const row = (overrides) => ({
 	display_name: "Test Model",
 	input_modalities: ["text"],
 	output_modalities: ["text"],
-	context_length: 128000,
+	context_length: 128_000,
 	max_output_length: 8192,
 	supported_features: ["tools", "reasoning"],
 	reasoning_parameters: { efforts: ["low", "high"] },
@@ -243,7 +243,7 @@ test("prices parse from the provider's mixed number/string wire form", () => {
 		row({
 			pricing: {
 				prompt: "$0.0000006",
-				completion: 0.0000012,
+				completion: 0.000_001_2,
 				input_cache_reads: "$0.00000003",
 				input_cache_writes: "0",
 			},

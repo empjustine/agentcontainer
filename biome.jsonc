@@ -336,6 +336,7 @@
 			"useNodeAssertStrict": "error",
 			"useNodejsImportProtocol": "error",
 			"useNumberNamespace": "error",
+			"useNumericSeparators": "error",
 			"useObjectSpread": "error",
 			"useReactFunctionComponents": "error",
 			"useReadonlyClassProperties": "error",

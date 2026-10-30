@@ -139,7 +139,7 @@ export const CLINE_PASS_LINEUP = Object.freeze([
  */
 export const CLINE_PASS_MATCH_FLOOR = 0.8;
 
-const REQUEST_TIMEOUT_MS = 15000;
+const REQUEST_TIMEOUT_MS = 15_000;
 const MODEL_STORE_TTL_MS = 4 * 60 * 60 * 1000;
 
 /**

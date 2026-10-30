@@ -61,7 +61,7 @@ const record = (overrides = {}) =>
 			modalities: { input: ["text"], output: ["text"] },
 			reasoning: true,
 			cost: { input: 1, output: 2, cache_read: 0.1, cache_write: 0.2 },
-			limit: { context: 200000, output: 64000 },
+			limit: { context: 200_000, output: 64_000 },
 			reasoning_options: [
 				{ type: "effort", values: ["none", "low", "medium", "xhigh"] },
 			],

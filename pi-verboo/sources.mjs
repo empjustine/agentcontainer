@@ -63,7 +63,7 @@ export const VERBOO_API_KEY_ENV = VERBOO.apiKeyEnv;
 /** @type {string} the provider id pi namespaces model ids under. */
 export const VERBOO_PROVIDER_ID = VERBOO.id;
 
-const REQUEST_TIMEOUT_MS = 15000;
+const REQUEST_TIMEOUT_MS = 15_000;
 const MODEL_STORE_TTL_MS = 4 * 60 * 60 * 1000;
 
 /**
