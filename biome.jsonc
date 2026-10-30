@@ -315,6 +315,7 @@
 			"useConsistentBuiltinInstantiation": "error",
 			"useConsistentCurlyBraces": "error",
 			"useConsistentMemberAccessibility": "error",
+			"useConsistentObjectDefinitions": "error",
 			"useConsistentTypeDefinitions": "error",
 			"useConst": "error",
 			"useDefaultParameterLast": "error",

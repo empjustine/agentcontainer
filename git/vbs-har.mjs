@@ -173,7 +173,7 @@ function harToManifest(har, opts = {}) {
 					"__key",
 				);
 				return {
-					id: id,
+					id,
 					slug:
 						pick(project, "urlId", "slug", "projectSlug", "key") ||
 						slugFromId(id, resolvedOrg),
@@ -185,7 +185,7 @@ function harToManifest(har, opts = {}) {
 	if (projectList.length === 0) {
 		for (const id of repoBodies.keys()) {
 			projectList.push({
-				id: id,
+				id,
 				slug: slugFromId(id, resolvedOrg),
 				name: "",
 			});
@@ -241,8 +241,8 @@ function harToManifest(har, opts = {}) {
 		base: opts.base || base || "",
 		org: resolvedOrg,
 		projects: projectList.length,
-		repositories: repositories,
-		missingProjects: missingProjects,
+		repositories,
+		missingProjects,
 	};
 }
 

@@ -205,10 +205,10 @@ async function statusBuckets(repo, includeIgnored) {
 			i += 1; // the next token is the rename source
 		}
 		if (xy[0] !== " " && xy[0] !== "?") {
-			staged.push({ status: xy, path: path });
+			staged.push({ status: xy, path });
 		}
 		if (xy[1] !== " " && xy[1] !== "?") {
-			unstaged.push({ status: xy, path: path });
+			unstaged.push({ status: xy, path });
 		}
 	}
 	return { staged, unstaged, untracked, ignored };
@@ -273,12 +273,12 @@ async function branchInfo(repo) {
 		const [name, upstream, track, object] = line.split("\t");
 		const { ahead, behind, gone } = parseTrack(track);
 		branches.push({
-			name: name,
+			name,
 			upstream: upstream || null,
 			object: object ?? "",
-			ahead: ahead,
-			behind: behind,
-			gone: gone,
+			ahead,
+			behind,
+			gone,
 			onRemote: remoteNames.has(name),
 		});
 	}
@@ -302,7 +302,7 @@ async function stashInfo(repo) {
 			must: false,
 		});
 		stashes.push({
-			ref: ref,
+			ref,
 			date: seconds ? new Date(Number(seconds) * 1000).toISOString() : null,
 			subject: subject ?? "",
 			files: files.stdout.split("\n").filter(Boolean),
@@ -334,9 +334,9 @@ async function inspectRepo(repo, o) {
 	/** @type {RepoInfo} */
 	const info = {
 		path: resolve(repo),
-		bare: bare,
-		head: head,
-		detached: detached,
+		bare,
+		head,
+		detached,
 		upstream: null,
 		ahead: 0,
 		behind: 0,
