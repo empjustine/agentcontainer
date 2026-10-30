@@ -35,6 +35,7 @@ const { CLOUD_PROVIDERS } = await import("../lib/cloud-providers.mjs");
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const verboo = CLOUD_PROVIDERS.verboo;
+assert.ok(verboo, "the fact table must carry the verboo row");
 
 /**
  * One listing row; every field overridable so a test names only its own
@@ -188,6 +189,7 @@ test("NO cost is ever asserted — the listing publishes no prices (docs/d057)",
 
 test("the manifest publishes no maxTokens; the extension carries the schema default", () => {
 	const [model] = shapeListing([row({})]);
+	assert.ok(model);
 	assert.equal("maxTokens" in toPiModel(model), false);
 	assert.equal(toExtensionModel(model).maxTokens, 16_384);
 	// The context window IS published and carried by both.
@@ -260,7 +262,9 @@ test("the extension loads, registers, and every row survives pi's own required f
 				registered.push({ id, config }),
 		});
 		assert.equal(registered.length, 1, "exactly one provider is registered");
-		const [{ id, config }] = registered;
+		const first = registered[0];
+		assert.ok(first);
+		const { id, config } = first;
 		assert.equal(id, VERBOO_PROVIDER_ID);
 		assert.equal(config.baseUrl, verboo.baseUrl);
 		assert.ok(config.models.length > 0);

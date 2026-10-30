@@ -40,6 +40,7 @@ const { CLOUD_PROVIDERS } = await import("../lib/cloud-providers.mjs");
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const synthetic = CLOUD_PROVIDERS.synthetic;
+assert.ok(synthetic, "the fact table must carry the synthetic row");
 
 /**
  * One listing row; every field overridable so a test names only its own
@@ -252,6 +253,7 @@ test("prices parse from the provider's mixed number/string wire form", () => {
 			},
 		}),
 	]);
+	assert.ok(model);
 	assert.deepEqual(model.cost, {
 		input: 0.6,
 		output: 1.2,
@@ -276,6 +278,7 @@ test("the manifest omits an unpublishable cost; the extension fills zeros", () =
 	// model.cost.tiers on every scored turn — so an omitted block throws
 	// instead of streaming. Verified against @earendil-works/pi-ai 1.4.0.
 	const [unpriced] = shapeListing([row({ pricing: { prompt: "0" } })]);
+	assert.ok(unpriced);
 	assert.equal(unpriced.cost, undefined);
 	assert.equal("cost" in toPiModel(unpriced), false);
 	assert.deepEqual(toExtensionModel(unpriced).cost, {
@@ -288,6 +291,7 @@ test("the manifest omits an unpublishable cost; the extension fills zeros", () =
 
 test("every extension key is one pi defines — no folder-specific field rides along", () => {
 	const [model] = shapeListing([row({})]);
+	assert.ok(model);
 	const entry = toExtensionModel(model);
 	assert.deepEqual(Object.keys(entry).sort(), [
 		"compat",
@@ -392,7 +396,9 @@ test("the extension loads, registers, and every row survives pi's own code paths
 				registered.push({ id, config }),
 		});
 		assert.equal(registered.length, 1, "exactly one provider is registered");
-		const [{ id, config }] = registered;
+		const first = registered[0];
+		assert.ok(first);
+		const { id, config } = first;
 		assert.equal(id, SYNTHETIC_PROVIDER_ID);
 		assert.equal(config.baseUrl, synthetic.baseUrl);
 		assert.ok(config.models.length > 0);

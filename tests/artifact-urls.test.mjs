@@ -59,8 +59,8 @@ test("installed detector flags a canonical URL that escaped substitution", () =>
 	};
 	const violations = installedViolations(doc);
 	assert.equal(violations.length, 2, violations.join("\n"));
-	assert.match(violations[0], /still carries canonical upstream/);
-	assert.match(violations[1], /still carries canonical upstream/);
+	assert.match(violations[0] ?? "no violation recorded", /still carries canonical upstream/);
+	assert.match(violations[1] ?? "no second violation recorded", /still carries canonical upstream/);
 });
 
 // The funnel mount here is the canonical synthetic one (docs/d086): a real
@@ -83,7 +83,7 @@ test("installed detector rejects route-form URLs off the configured base", () =>
 	};
 	const violations = installedViolations(doc, "https://proxy.example/bucket");
 	assert.equal(violations.length, 1);
-	assert.match(violations[0], /not under the configured base/);
+	assert.match(violations[0] ?? "no violation recorded", /not under the configured base/);
 });
 
 test("committed detector rejects an id the fact table does not know", () => {
@@ -91,7 +91,7 @@ test("committed detector rejects an id the fact table does not know", () => {
 		providers: { "mystery-corp": { baseUrl: "https://mystery.example/v1" } },
 	});
 	assert.equal(violations.length, 1);
-	assert.match(violations[0], /no fact-table upstream/);
+	assert.match(violations[0] ?? "no violation recorded", /no fact-table upstream/);
 });
 
 test("committed detector rejects an upstream prefix that is not at a path boundary", () => {
@@ -101,7 +101,7 @@ test("committed detector rejects an upstream prefix that is not at a path bounda
 		providers: { mistral: { baseUrl: `${upstream}-suffixed` } },
 	});
 	assert.equal(violations.length, 1);
-	assert.match(violations[0], /path boundary/);
+	assert.match(violations[0] ?? "no violation recorded", /path boundary/);
 });
 
 // The bazzite collision: the funnel base SHARES its host with the
@@ -126,7 +126,7 @@ test("installed detector (no base) still flags a canonical URL on a colliding ho
 		},
 	});
 	assert.equal(violations.length, 1);
-	assert.match(violations[0], /still carries canonical upstream/);
+	assert.match(violations[0] ?? "no violation recorded", /still carries canonical upstream/);
 });
 
 test("routeUrlFromCanonical composes the d047 host-form route and fails closed", () => {

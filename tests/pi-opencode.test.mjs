@@ -37,7 +37,9 @@ const {
 } = await import(entrySpecifier);
 
 const OPENCODE = CLOUD_PROVIDERS.opencode;
+assert.ok(OPENCODE, "the fact table must carry the opencode row");
 const OPENCODE_GO = CLOUD_PROVIDERS["opencode-go"];
+assert.ok(OPENCODE_GO, "the fact table must carry the opencode-go row");
 const FOLDER = new URL("../pi-opencode/", import.meta.url);
 
 /**
@@ -200,7 +202,7 @@ describe("the catalog freshness watchdog", () => {
 				"a list would REPLACE the built-in catalog",
 			);
 			assert.equal(calls.length, 1);
-			assert.equal(calls[0].url, listingUrl);
+			assert.equal(calls[0]?.url, listingUrl);
 		});
 
 		for (const [label, answer] of /** @type {[string, () => unknown][]} */ ([
@@ -302,7 +304,7 @@ describe("the catalog freshness watchdog", () => {
 				force: true,
 			});
 		});
-		assert.equal(calls[0].init.headers.Authorization, "Bearer sk-test-key");
+		assert.equal(calls[0]?.init.headers.Authorization, "Bearer sk-test-key");
 	});
 
 	test("one provider's outage does not silence the other (independent intervals)", async () => {

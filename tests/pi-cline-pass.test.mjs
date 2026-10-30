@@ -47,6 +47,7 @@ const { CLOUD_PROVIDERS } = await import("../lib/cloud-providers.mjs");
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const clinePass = CLOUD_PROVIDERS["cline-pass"];
+assert.ok(clinePass, "the fact table must carry the cline-pass row");
 
 /**
  * One models.dev catalog record (the models.dev wire field names); every
@@ -376,6 +377,7 @@ test("thinking levels come from the published enum only", () => {
 		},
 		undefined,
 	);
+	assert.ok(quiet);
 	assert.equal(quiet.thinkingLevelMap, null);
 	assert.equal("thinkingLevelMap" in toExtensionModel(quiet), false);
 });
@@ -394,6 +396,7 @@ test("a partial price block completes with zeros; an all-zero block is absent", 
 		{ "cline-pass/glm-5.2": record({ cost: null }) },
 		undefined,
 	);
+	assert.ok(unpriced);
 	assert.equal(unpriced.cost, undefined);
 });
 
@@ -407,6 +410,7 @@ test("the manifest omits an unpublishable cost; the extension fills zeros", () =
 		{ "cline-pass/glm-5.2": record({ cost: { input: 0, output: 0 } }) },
 		[`${CLINE_PASS_ID_PREFIX}glm-5.2`],
 	);
+	assert.ok(unpriced);
 	assert.equal("cost" in toPiModel(unpriced), false);
 	assert.deepEqual(toExtensionModel(unpriced).cost, {
 		input: 0,
@@ -423,6 +427,7 @@ test("every extension key is one pi defines — and the compat fact rides per mo
 	const [model] = shapeCatalog({ "cline-pass/glm-5.2": record() }, [
 		`${CLINE_PASS_ID_PREFIX}glm-5.2`,
 	]);
+	assert.ok(model);
 	const entry = toExtensionModel(model);
 	assert.deepEqual(Object.keys(entry).sort(), [
 		"compat",
@@ -535,7 +540,9 @@ test("the extension loads, registers, and every row carries the compat fact", as
 				registered.push({ id, config }),
 		});
 		assert.equal(registered.length, 1, "exactly one provider is registered");
-		const [{ id, config }] = registered;
+		const first = registered[0];
+		assert.ok(first);
+		const { id, config } = first;
 		assert.equal(id, CLINE_PASS_PROVIDER_ID);
 		assert.equal(config.baseUrl, clinePass.baseUrl);
 		assert.equal(config.api, "openai-completions");

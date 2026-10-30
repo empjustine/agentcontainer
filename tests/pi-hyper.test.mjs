@@ -37,6 +37,7 @@ const { CLOUD_PROVIDERS } = await import("../lib/cloud-providers.mjs");
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const hyper = CLOUD_PROVIDERS.hyper;
+assert.ok(hyper, "the fact table must carry the hyper row");
 
 /**
  * One catalog record; every field overridable so a test names only its own
@@ -194,6 +195,7 @@ test("the cached-price pairing looks crossed and is not", () => {
 			cost_per_1m_out_cached: 0.1,
 		}),
 	]);
+	assert.ok(model);
 	assert.deepEqual(model.cost, {
 		input: 1,
 		output: 4,
@@ -257,6 +259,7 @@ test("the manifest omits an unpublishable cost; the extension fills zeros", () =
 			cost_per_1m_out_cached: 0,
 		}),
 	]);
+	assert.ok(free);
 	assert.equal(free.cost, undefined);
 	assert.equal("cost" in toPiModel(free), false);
 	assert.deepEqual(toExtensionModel(free).cost, {
@@ -282,6 +285,7 @@ test("the extension and the manifest offer the SAME thinking levels per model", 
 
 test("every extension key is one pi defines — no folder-specific field rides along", () => {
 	const [model] = shapeCatalog([record({})]);
+	assert.ok(model);
 	const entry = toExtensionModel(model);
 	assert.deepEqual(Object.keys(entry).sort(), [
 		"compat",
@@ -353,7 +357,9 @@ test("the extension loads, registers, and every row survives pi's own required f
 				registered.push({ id, config }),
 		});
 		assert.equal(registered.length, 1, "exactly one provider is registered");
-		const [{ id, config }] = registered;
+		const first = registered[0];
+		assert.ok(first);
+		const { id, config } = first;
 		assert.equal(id, HYPER_PROVIDER_ID);
 		assert.equal(config.baseUrl, hyper.baseUrl);
 		assert.ok(config.models.length > 0);

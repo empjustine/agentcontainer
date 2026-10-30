@@ -57,12 +57,10 @@
 		"lib/go-build.mjs",
 		"lib/host-capabilities.mjs",
 		"lib/log.mjs",
-		"tests/canonical-json.test.mjs",
+
 		"tests/git-glob.test.mjs",
 		"tests/git-pacer.test.mjs",
-		"tests/artifact-urls.test.mjs",
-		"tests/modality-allowlist.test.mjs",
-		"tests/pi-cost.test.mjs",
+
 		"generate.mjs",
 		"build.mjs",
 
@@ -78,15 +76,6 @@
 
 		"llm-reverse-proxy/generate.mjs",
 
-		"tests/pi-synthetic.test.mjs",
-
-		"tests/pi-cline-pass.test.mjs",
-		"tests/pi-opencode.test.mjs",
-
-		"tests/pi-hyper.test.mjs",
-
-		"tests/pi-verboo.test.mjs",
-		"tests/pi-mistral.test.mjs"
 		// NOTE: the extension entries (pi-synthetic/index.ts,
 		// pi-cline-pass/index.ts, pi-hyper/index.ts, pi-verboo/index.ts,
 		// pi-mistral/index.ts, pi-opencode/index.ts) are deliberately

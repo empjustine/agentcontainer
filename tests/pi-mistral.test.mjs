@@ -33,6 +33,7 @@ const { MISTRAL_LISTING_URL, MISTRAL_PROVIDER_ID } = await import(
 );
 
 const MISTRAL = CLOUD_PROVIDERS.mistral;
+assert.ok(MISTRAL, "the fact table must carry the mistral row");
 const FOLDER = new URL("../pi-mistral/", import.meta.url);
 
 /**
@@ -186,8 +187,8 @@ describe("the auth-gated watchdog", () => {
 			"a list would REPLACE the built-in catalog",
 		);
 		assert.equal(calls.length, 1);
-		assert.equal(calls[0].url, MISTRAL_LISTING_URL);
-		assert.equal(calls[0].init.headers.Authorization, "Bearer sk-test-key");
+		assert.equal(calls[0]?.url, MISTRAL_LISTING_URL);
+		assert.equal(calls[0]?.init.headers.Authorization, "Bearer sk-test-key");
 	});
 
 	for (const [label, answer] of /** @type {[string, () => unknown][]} */ ([
