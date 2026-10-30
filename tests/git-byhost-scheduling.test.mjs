@@ -119,7 +119,11 @@ function runMaintain(root, binDir, sshLog, ...args) {
 	// An aborted run also exits 1, so the tally's designed exit code alone
 	// cannot tell "expected fetch failures" from "crashed halfway".
 	const aborted = stderrLines.find((l) => l.level === "error");
-	assert.equal(aborted, undefined, `maintain aborted: ${aborted?.msg} ${aborted?.error?.message ?? ""}`);
+	assert.equal(
+		aborted,
+		undefined,
+		`maintain aborted: ${aborted?.msg} ${aborted?.error?.message ?? ""}`,
+	);
 	return { stderrLines, status: res.status };
 }
 
@@ -136,7 +140,9 @@ function readFetches(sshLog) {
 	const starts = new Map();
 	const intervals = [];
 	for (const line of readFileSync(sshLog, "utf8").split("\n")) {
-		if (!line) continue;
+		if (!line) {
+			continue;
+		}
 		const firstSpace = line.indexOf(" ");
 		const kind = line.slice(0, firstSpace);
 		const rest = line.slice(firstSpace + 1);
@@ -171,8 +177,12 @@ function countOverlaps(intervals, sameHost) {
 		for (let j = i + 1; j < intervals.length; j += 1) {
 			const a = intervals[i];
 			const b = intervals[j];
-			if ((a.host === b.host) !== sameHost) continue;
-			if (a.start < b.end && b.start < a.end) overlaps += 1;
+			if ((a.host === b.host) !== sameHost) {
+				continue;
+			}
+			if (a.start < b.end && b.start < a.end) {
+				overlaps += 1;
+			}
 		}
 	}
 	return overlaps;

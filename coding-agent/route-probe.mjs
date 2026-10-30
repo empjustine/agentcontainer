@@ -130,7 +130,9 @@ export function reverseProxyBaseUrl() {
  * @returns {boolean}
  */
 function isUsableProxyBase(base) {
-	if (!/^https?:\/\//i.test(base)) return false;
+	if (!/^https?:\/\//i.test(base)) {
+		return false;
+	}
 	try {
 		return new URL(base).host !== "";
 	} catch {
@@ -157,8 +159,12 @@ export function reverseProxyBaseUrls() {
 		.split(/[\n,]/)
 		.map((s) => s.trim().replace(/\/+$/, ""))
 		.filter((raw) => {
-			if (!raw) return false;
-			if (isUsableProxyBase(raw)) return true;
+			if (!raw) {
+				return false;
+			}
+			if (isUsableProxyBase(raw)) {
+				return true;
+			}
 			logWarn("base entry dropped — not an absolute http(s) URL with a host", {
 				entry: raw,
 			});
@@ -194,8 +200,12 @@ export function reverseProxyBaseUrls() {
 export function relayCandidates(upstream, pathAndQuery, envOverride) {
 	if (envOverride !== undefined) {
 		const trimmed = envOverride.trim();
-		if (!trimmed) return [];
-		if (isUsableProxyBase(trimmed)) return [trimmed];
+		if (!trimmed) {
+			return [];
+		}
+		if (isUsableProxyBase(trimmed)) {
+			return [trimmed];
+		}
 		logWarn("relay URL dropped — not an absolute http(s) URL with a host", {
 			entry: trimmed,
 		});
@@ -378,7 +388,9 @@ export async function fetchModelEntries(serverUrl, headers) {
 	}
 	return /** @type {RawModelEntry[]} */ (data)
 		.map((entry) => {
-			if (entry?.id || !entry?.name) return entry;
+			if (entry?.id || !entry?.name) {
+				return entry;
+			}
 			/** Gemini shape: name = "models/<id>" — publish the bare wire id. */
 			const id = String(entry.name).replace(/^models\//, "");
 			return id ? { ...entry, id } : entry;
@@ -395,7 +407,9 @@ export async function fetchModelEntries(serverUrl, headers) {
  * @returns {HttpError}
  */
 function normalizedProbeError(err) {
-	if (err instanceof Error) return /** @type {HttpError} */ (err);
+	if (err instanceof Error) {
+		return /** @type {HttpError} */ (err);
+	}
 	return Object.assign(new Error("probe threw a non-Error value"), {
 		thrown: String(err),
 	});
@@ -565,10 +579,14 @@ export async function probeRoutes(candidates, providerId, headers) {
 			continue;
 		}
 		const route = await probeRoute(url, headers);
-		if (route.usable) return { url, ...route };
+		if (route.usable) {
+			return { url, ...route };
+		}
 		failures.push({ url, result: route.result, error: route.error });
 	}
-	if (failures.length > 0) logWarn("reverse-proxy provider routes failed", { failures });
+	if (failures.length > 0) {
+		logWarn("reverse-proxy provider routes failed", { failures });
+	}
 	return null;
 }
 
@@ -603,12 +621,16 @@ export async function probeCandidates(candidates, accept) {
 				bearerHeaders(process.env.REVERSE_PROXY_API_KEY?.trim()),
 			);
 			const ids = entries.map((e) => e.id);
-			if (!accept(ids)) throw new Error("no usable models for this concern");
+			if (!accept(ids)) {
+				throw new Error("no usable models for this concern");
+			}
 			return { baseUrl, entries };
 		} catch (err) {
 			failures.push({ baseUrl, error: err });
 		}
 	}
-	if (failures.length > 0) logWarn("reverse-proxy base candidates failed", { failures });
+	if (failures.length > 0) {
+		logWarn("reverse-proxy base candidates failed", { failures });
+	}
 	return null;
 }

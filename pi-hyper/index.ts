@@ -120,7 +120,9 @@ export default function piHyper(pi: ExtensionAPI): void {
 					context.signal?.throwIfAborted();
 					return withSeed(models);
 				} catch (err) {
-					if (context.signal?.aborted) throw err;
+					if (context.signal?.aborted) {
+						throw err;
+					}
 					// A failed refresh must never cost the user a working provider:
 					// the store, then the seed, stand in.
 				}

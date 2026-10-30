@@ -143,9 +143,13 @@ async function main() {
 		res = await fetchCatalog(candidate, { via: "relay" });
 		via = "relay";
 		url = candidate;
-		if (res) break;
+		if (res) {
+			break;
+		}
 	}
-	if (!res) return fail("no relay source answered");
+	if (!res) {
+		return fail("no relay source answered");
+	}
 
 	let text;
 	try {

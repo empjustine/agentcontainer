@@ -122,7 +122,9 @@ function classify(id) {
 		default:
 			break;
 	}
-	if (id.includes("-GGUF")) return "local";
+	if (id.includes("-GGUF")) {
+		return "local";
+	}
 	return null;
 }
 
@@ -303,7 +305,9 @@ async function main() {
 	);
 
 	for (const r of cloudResults) {
-		if (r.status !== "fulfilled") continue; // rejection already handled + logged above
+		if (r.status !== "fulfilled") {
+			continue; // rejection already handled + logged above
+		}
 		const { id, providerUrl, models } = r.value;
 		providers[id] = routedProvider(
 			CLOUD_PROVIDERS[id].label,

@@ -46,10 +46,9 @@ const { logError, logInfo, logWarn, setLogStream, setLogTool } =
 // vbs-har's manifest is the one artifact this folder writes: it goes through
 // the repo's atomic writer (tmp+rename, docs/d050) rather than a bare
 // writeFileSync, so a killed run cannot leave a truncated manifest behind.
-const { writeArtifact } =
-	/** @type {typeof import("../lib/artifact.mjs")} */ (
-		await import(pathToFileURL(join(LIB_DIR, "artifact.mjs")).href)
-	);
+const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
+	await import(pathToFileURL(join(LIB_DIR, "artifact.mjs")).href)
+);
 
 // Every tool in this folder prints a machine-consumed payload on stdout
 // (audit's JSON report, search-references' results, vbs-har's manifest,
@@ -217,7 +216,9 @@ export function findCloneRoots(root, maxDepth = DEFAULT_MAX_DEPTH) {
 	const out = [];
 	/** @param {string} dir @param {number} depth */
 	const walk = (dir, depth) => {
-		if (depth > maxDepth) return;
+		if (depth > maxDepth) {
+			return;
+		}
 		/** @type {import("node:fs").Dirent[]} */
 		let entries;
 		try {
@@ -225,9 +226,13 @@ export function findCloneRoots(root, maxDepth = DEFAULT_MAX_DEPTH) {
 		} catch {
 			return;
 		}
-		if (hasGitDir(entries)) out.push(dir);
+		if (hasGitDir(entries)) {
+			out.push(dir);
+		}
 		for (const e of entries) {
-			if (!e.isDirectory() || e.name.startsWith(".")) continue;
+			if (!e.isDirectory() || e.name.startsWith(".")) {
+				continue;
+			}
 			walk(join(dir, e.name), depth + 1);
 		}
 	};
@@ -247,7 +252,9 @@ export function findBareMirrors(root, maxDepth = DEFAULT_MAX_DEPTH) {
 	const out = [];
 	/** @param {string} dir @param {number} depth */
 	const walk = (dir, depth) => {
-		if (depth > maxDepth) return;
+		if (depth > maxDepth) {
+			return;
+		}
 		/** @type {import("node:fs").Dirent[]} */
 		let entries;
 		try {
@@ -260,7 +267,9 @@ export function findBareMirrors(root, maxDepth = DEFAULT_MAX_DEPTH) {
 			return;
 		}
 		for (const e of entries) {
-			if (!e.isDirectory() || e.name.startsWith(".")) continue;
+			if (!e.isDirectory() || e.name.startsWith(".")) {
+				continue;
+			}
 			walk(join(dir, e.name), depth + 1);
 		}
 	};
@@ -286,7 +295,9 @@ export async function pool(items, limit, worker) {
 		Array.from({ length: runners }, async () => {
 			for (;;) {
 				const i = next++;
-				if (i >= items.length) return;
+				if (i >= items.length) {
+					return;
+				}
 				results[i] = await worker(items[i], i);
 			}
 		}),
@@ -346,8 +357,12 @@ export function filterByGlobs(rels, only, exclude) {
 	const onlyFns = only.map(globMatcher);
 	const excludeFns = exclude.map(globMatcher);
 	return rels.filter((r) => {
-		if (onlyFns.length > 0&& !onlyFns.some((f) => f(r))) return false;
-		if (excludeFns.some((f) => f(r))) return false;
+		if (onlyFns.length > 0 && !onlyFns.some((f) => f(r))) {
+			return false;
+		}
+		if (excludeFns.some((f) => f(r))) {
+			return false;
+		}
 		return true;
 	});
 }
@@ -445,7 +460,9 @@ export async function originUrl(repo) {
  * @returns {<T>(fn: () => Promise<T>) => Promise<T>}
  */
 export function createMinIntervalGate(intervalMs) {
-	if (intervalMs <= 0) return (fn) => fn();
+	if (intervalMs <= 0) {
+		return (fn) => fn();
+	}
 	let tail = Promise.resolve();
 	return (fn) => {
 		const run = tail.then(async () => {

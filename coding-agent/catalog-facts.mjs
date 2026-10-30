@@ -70,10 +70,9 @@ const { CLOUD_PROVIDERS } =
 	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
-const { writeArtifact } =
-	/** @type {typeof import("../lib/artifact.mjs")} */ (
-		await import(`${LIB_DIR}/artifact.mjs`)
-	);
+const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
+	await import(`${LIB_DIR}/artifact.mjs`)
+);
 
 setLogTool("coding-agent/catalog-facts");
 
@@ -184,7 +183,9 @@ async function relayFetch({ candidates, label, timeoutMs, headers }) {
 				headers,
 				signal: AbortSignal.timeout(timeoutMs),
 			});
-			if (res.ok) return { payload: await res.json(), url };
+			if (res.ok) {
+				return { payload: await res.json(), url };
+			}
 			logWarn(`${label} route returned non-2xx`, { status: res.status, url });
 		} catch (err) {
 			logWarn(`${label} fetch failed`, { error: err, url });
@@ -284,7 +285,9 @@ export async function refreshCatwalkFacts(url) {
 	if (!found || !Array.isArray(providers) || providers.length === 0) {
 		logWarn("catwalk facts refresh failed — keeping last good cache", {
 			path: CATWALK_CACHE_PATH,
-			reason: found ? "catalog answered without a providers array" : "no candidate delivered",
+			reason: found
+				? "catalog answered without a providers array"
+				: "no candidate delivered",
 		});
 		return false;
 	}
@@ -292,7 +295,9 @@ export async function refreshCatwalkFacts(url) {
 		fetchedAt: new Date().toISOString(),
 		providers,
 	});
-	if (!writeCache(CATWALK_CACHE_PATH, facts)) return false;
+	if (!writeCache(CATWALK_CACHE_PATH, facts)) {
+		return false;
+	}
 	logInfo("catwalk facts cache refreshed", {
 		path: CATWALK_CACHE_PATH,
 		providers: providers.length,
@@ -306,7 +311,9 @@ export async function refreshCatwalkFacts(url) {
  */
 export function loadCatwalkFacts() {
 	const cache = loadCache(CATWALK_CACHE_PATH, "providers", "catwalk");
-	if (!cache) return null;
+	if (!cache) {
+		return null;
+	}
 	return {
 		fetchedAt: cache.fetchedAt,
 		ageMs: cache.ageMs,
@@ -322,11 +329,17 @@ export function loadCatwalkFacts() {
  */
 export function getCatwalkModels(piProviderId) {
 	const catwalkId = PROVIDER_MAP[piProviderId];
-	if (!catwalkId) return null;
+	if (!catwalkId) {
+		return null;
+	}
 	const facts = loadCatwalkFacts();
-	if (!facts) return null;
+	if (!facts) {
+		return null;
+	}
 	const provider = facts.providers.find((p) => p.id === catwalkId);
-	if (!provider) return null;
+	if (!provider) {
+		return null;
+	}
 	// `name` is optional in the raw record; fall back to the id so the return
 	// type stays `{id, name}` for display consumers.
 	return provider.models.map((m) => ({ id: m.id, name: m.name ?? m.id }));
@@ -369,7 +382,9 @@ export async function refreshProviderFacts(id, options) {
 	/** @type {{ "Content-Type": string, Authorization?: string }} */
 	const headers = { "Content-Type": "application/json" };
 	const key = process.env[facts.apiKeyEnv]?.trim();
-	if (key) headers.Authorization = `Bearer ${key}`;
+	if (key) {
+		headers.Authorization = `Bearer ${key}`;
+	}
 
 	const found = await relayFetch({
 		candidates: relayCandidates(upstream.host, `${basePath}${path}`),
@@ -390,7 +405,9 @@ export async function refreshProviderFacts(id, options) {
 		fetchedAt: new Date().toISOString(),
 		models: records,
 	});
-	if (!writeCache(cachePath, document)) return false;
+	if (!writeCache(cachePath, document)) {
+		return false;
+	}
 	logInfo(`${id} facts cache refreshed`, {
 		path: cachePath,
 		models: records.length,
@@ -406,7 +423,9 @@ export async function refreshProviderFacts(id, options) {
  */
 export function loadProviderFacts(id) {
 	const cache = loadCache(factsPath(id), "models", id);
-	if (!cache) return null;
+	if (!cache) {
+		return null;
+	}
 	return {
 		fetchedAt: cache.fetchedAt,
 		ageMs: cache.ageMs,

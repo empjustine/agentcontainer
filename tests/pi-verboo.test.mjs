@@ -63,7 +63,9 @@ const row = (overrides) => ({
 const fetchOnce =
 	(payload, init = {}) =>
 	async () => {
-		if (init.reject) throw init.reject;
+		if (init.reject) {
+			throw init.reject;
+		}
 		return /** @type {Response} */ (
 			/** @type {unknown} */ ({
 				ok: init.ok ?? true,
@@ -116,8 +118,11 @@ test("the bearer rides when a key exists — the listing is auth-gated", async (
 		});
 		assert.equal(auth, "Bearer sk-test-key");
 	} finally {
-		if (previousKey === undefined) delete process.env.VERBOO_API_KEY;
-		else process.env.VERBOO_API_KEY = previousKey;
+		if (previousKey === undefined) {
+			delete process.env.VERBOO_API_KEY;
+		} else {
+			process.env.VERBOO_API_KEY = previousKey;
+		}
 	}
 });
 
@@ -276,7 +281,10 @@ test("the extension loads, registers, and every row survives pi's own required f
 			}
 		}
 	} finally {
-		if (previousKey === undefined) delete process.env.VERBOO_API_KEY;
-		else process.env.VERBOO_API_KEY = previousKey;
+		if (previousKey === undefined) {
+			delete process.env.VERBOO_API_KEY;
+		} else {
+			process.env.VERBOO_API_KEY = previousKey;
+		}
 	}
 });

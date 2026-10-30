@@ -71,7 +71,9 @@ const row = (overrides) => ({
 const fetchOnce =
 	(payload, init = {}) =>
 	async () => {
-		if (init.reject) throw init.reject;
+		if (init.reject) {
+			throw init.reject;
+		}
 		return /** @type {Response} */ (
 			/** @type {unknown} */ ({
 				ok: init.ok ?? true,
@@ -413,7 +415,10 @@ test("the extension loads, registers, and every row survives pi's own code paths
 		// The alias mapping reaches the registration as data.
 		assert.deepEqual(config.aliasMap, config.aliasMap);
 	} finally {
-		if (previousKey === undefined) delete process.env.SYNTHETIC_API_KEY;
-		else process.env.SYNTHETIC_API_KEY = previousKey;
+		if (previousKey === undefined) {
+			delete process.env.SYNTHETIC_API_KEY;
+		} else {
+			process.env.SYNTHETIC_API_KEY = previousKey;
+		}
 	}
 });

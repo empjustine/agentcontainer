@@ -88,10 +88,14 @@ function parseArgs(argv) {
  * @returns {string|null}
  */
 function githubSlug(url) {
-	if (!url) return null;
+	if (!url) {
+		return null;
+	}
 	const hostMatch =
 		/^(?:https?:\/\/github\.com\/|git@github\.com:)(.+?)(?:\.git)?$/i.exec(url);
-	if (!hostMatch) return null;
+	if (!hostMatch) {
+		return null;
+	}
 	return hostMatch[1].toLowerCase();
 }
 
@@ -148,9 +152,13 @@ async function main() {
 			}
 		}
 		hosts[host] = (hosts[host] ?? 0) + 1;
-		if (!url) noOrigin.push(rel);
+		if (!url) {
+			noOrigin.push(rel);
+		}
 
-		if (existsSync(`${repo}/.git/shallow`)) shallow.push(rel);
+		if (existsSync(`${repo}/.git/shallow`)) {
+			shallow.push(rel);
+		}
 
 		// The work farm is one private software forge whose URLs are not
 		// `host/owner/repo`; decode them so the report shows the identity and the
@@ -168,7 +176,9 @@ async function main() {
 		}
 
 		const m = /^github\/[^/]+\/.+$/.exec(rel);
-		if (!m) nonstandardPath.push(rel);
+		if (!m) {
+			nonstandardPath.push(rel);
+		}
 		const slug = githubSlug(url);
 		if (slug && m) {
 			const claimed = rel.replace(/^github\//, "").toLowerCase();
@@ -180,7 +190,9 @@ async function main() {
 		// A repo is nested when another discovered repo's relative path is a
 		// strict prefix of it.
 		const parent = rels.find((r) => r !== rel && rel.startsWith(`${r}/`));
-		if (parent) nested.push({ path: rel, nestedIn: parent });
+		if (parent) {
+			nested.push({ path: rel, nestedIn: parent });
+		}
 
 		if (url) {
 			const list = byOrigin.get(url) ?? [];
@@ -192,11 +204,15 @@ async function main() {
 		const head = await git(repo, ["symbolic-ref", "-q", "HEAD"], {
 			must: false,
 		});
-		if (head.code !== 0) detached.push(rel);
+		if (head.code !== 0) {
+			detached.push(rel);
+		}
 		const status = await git(repo, ["status", "--porcelain"], {
 			must: false,
 		});
-		if (status.stdout.trim()) dirty.push(rel);
+		if (status.stdout.trim()) {
+			dirty.push(rel);
+		}
 	}
 
 	const duplicateOrigins = [...byOrigin.entries()]

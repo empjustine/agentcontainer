@@ -86,7 +86,9 @@ const configD = join(scriptDir, "config.d");
  * @returns {Record<string, unknown>}
  */
 function loadCore() {
-	return JSON.parse(readFileSync(join(scriptDir, "llama-swap-core.json"), "utf-8"));
+	return JSON.parse(
+		readFileSync(join(scriptDir, "llama-swap-core.json"), "utf-8"),
+	);
 }
 
 /**
@@ -206,7 +208,9 @@ const SPLIT_RE = /-(\d{5})-of-(\d{5})\.gguf$/;
  */
 function shardOne(filename) {
 	const m = SPLIT_RE.exec(filename);
-	if (!m) return filename;
+	if (!m) {
+		return filename;
+	}
 	return `${filename.slice(0, m.index)}-00001-of-${m[2]}.gguf`;
 }
 
@@ -220,7 +224,9 @@ function shardOne(filename) {
 function allShards(filename) {
 	const first = shardOne(filename);
 	const m = SPLIT_RE.exec(first);
-	if (!m) return [first];
+	if (!m) {
+		return [first];
+	}
 	const base = first.slice(0, first.length - m[0].length);
 	const width = m[1].length;
 	return Array.from(
@@ -255,22 +261,30 @@ function bakeSnapshotPaths(m) {
 	const refPath = join(HUB_HOST, repoDir, "refs", "main");
 	if (existsSync(refPath)) {
 		const sha = readFileSync(refPath, "utf-8").trim();
-		if (sha) candidates.push(sha);
+		if (sha) {
+			candidates.push(sha);
+		}
 	}
 	if (existsSync(snapshotsDir)) {
 		candidates.push(...readdirSync(snapshotsDir).sort());
 	}
 
 	const required = allShards(m.model);
-	if (m.mmproj) required.push(m.mmproj);
-	if (m["model-draft"]) required.push(m["model-draft"]);
+	if (m.mmproj) {
+		required.push(m.mmproj);
+	}
+	if (m["model-draft"]) {
+		required.push(m["model-draft"]);
+	}
 
 	for (const sha of candidates) {
 		const snapshot = join(snapshotsDir, sha);
 		const missing = required.filter(
 			(f) => !existsSync(join(snapshot, f)), // follows the blob symlinks
 		);
-		if (missing.length > 0) continue;
+		if (missing.length > 0) {
+			continue;
+		}
 
 		const snapGuest = `${HUB_GUEST}/${repoDir}/snapshots/${sha}`;
 		const snapHost = `${HUB_HOST}/${repoDir}/snapshots/${sha}`;
@@ -344,7 +358,9 @@ function mmprojModesFor(m) {
  */
 function activeSlug(m) {
 	for (const slice in activeB) {
-		if (m["hf-repo"].indexOf(slice) !== -1) return activeB[slice];
+		if (m["hf-repo"].indexOf(slice) !== -1) {
+			return activeB[slice];
+		}
 	}
 	return "99b";
 }
@@ -405,7 +421,9 @@ function generateLocalInference() {
 		 * at the same commit, or generation fails.
 		 */
 		const baked = bakeSnapshotPaths(m);
-		for (const p of baked.hostPaths) bakedHostPaths.add(p);
+		for (const p of baked.hostPaths) {
+			bakedHostPaths.add(p);
+		}
 		const modes = m.mmproj ? mmprojModesFor(m) : [{ seg: null, vision: false }];
 		for (const mode of modes) {
 			const modalities = mode.vision ? ["text", "image"] : ["text"];
@@ -420,11 +438,15 @@ function generateLocalInference() {
 			let cmd = LLAMA_SERVER_MACRO;
 			// The mode slug is verbatim llama-swap macro text (\${0text} etc.),
 			// NOT JS interpolation — it expands to the projector-offload flags.
-			if (mode.seg) cmd += ` \${${mode.seg}}`;
+			if (mode.seg) {
+				cmd += ` \${${mode.seg}}`;
+			}
 			if (mode.vision && m["image-min-tokens"] !== undefined) {
 				cmd += ` --image-min-tokens ${m["image-min-tokens"]} --image-max-tokens ${m["image-max-tokens"]}`;
 			}
-			if (m.__argv) cmd += ` ${m.__argv}`;
+			if (m.__argv) {
+				cmd += ` ${m.__argv}`;
+			}
 			cmd += ` --cache-type-k ${m["cache-type-k"]} --cache-type-v ${m["cache-type-v"]}`;
 			cmd += ` --ctx-size ${ctxSize} --n-predict ${nPredict}`;
 			if (baked.draftPath) {
@@ -445,7 +467,9 @@ function generateLocalInference() {
 			if (mode.seg !== "0text" && baked.mmprojPath) {
 				cmd += ` --mmproj ${baked.mmprojPath}`;
 			}
-			if (baked.draftPath) cmd += ` --model-draft ${baked.draftPath}`;
+			if (baked.draftPath) {
+				cmd += ` --model-draft ${baked.draftPath}`;
+			}
 
 			const id = deriveModelId(m, mode.seg);
 			if (models[id]) {
@@ -467,7 +491,7 @@ function generateLocalInference() {
 					reasoning: true,
 					input: modalities,
 					contextWindow: ctxSize,
-					maxTokens: Math.min(ctxSize, nPredict)
+					maxTokens: Math.min(ctxSize, nPredict),
 				},
 			};
 		}
@@ -515,10 +539,9 @@ const {
 	detectGpuDevices,
 	totalMemGiB,
 	INFERENCE_MIN_RAM_GIB,
-} =
-	/** @type {typeof import("../lib/host-capabilities.mjs")} */ (
-		await import(`${LIB_DIR}/host-capabilities.mjs`)
-	);
+} = /** @type {typeof import("../lib/host-capabilities.mjs")} */ (
+	await import(`${LIB_DIR}/host-capabilities.mjs`)
+);
 const containerTool = detectContainerTool();
 const gpuDevices = detectGpuDevices();
 const hostRamGiB = totalMemGiB();

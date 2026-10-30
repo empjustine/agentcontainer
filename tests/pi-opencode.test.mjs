@@ -48,16 +48,22 @@ const FOLDER = new URL("../pi-opencode/", import.meta.url);
  */
 async function withEnv(name, value, fn) {
 	const previousKey = process.env[name];
-	if (value === undefined) delete process.env[name];
-	else process.env[name] = value;
+	if (value === undefined) {
+		delete process.env[name];
+	} else {
+		process.env[name] = value;
+	}
 	try {
 		// await, so the env holds for the WHOLE async body — returning the
 		// bare promise would restore the env at the first suspension point
 		// and later calls inside the body would run keyless.
 		return await fn();
 	} finally {
-		if (previousKey === undefined) delete process.env[name];
-		else process.env[name] = previousKey;
+		if (previousKey === undefined) {
+			delete process.env[name];
+		} else {
+			process.env[name] = previousKey;
+		}
 	}
 }
 

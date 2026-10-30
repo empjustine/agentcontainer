@@ -204,7 +204,9 @@ const MODEL_SCOPES = {
 		// Documented name exception (d049): the gate trusts models.dev's
 		// `output:["text"]` label on embedding endpoints — this id check is
 		// what drops them.
-		if (/embedding/i.test(id)) return false;
+		if (/embedding/i.test(id)) {
+			return false;
+		}
 		const input = record?.modalities?.input;
 		const output = record?.modalities?.output;
 		if (!input || input.length === 0 || !output || output.length === 0) {
@@ -337,11 +339,15 @@ const CLINE_PASS_MATCH_FLOOR = 0.8;
  */
 function parseClinePassDocs(mdx) {
 	const section = mdx.split(/^## Models\s*$/m)[1]?.split(/^## /m)[0];
-	if (!section) return null;
+	if (!section) {
+		return null;
+	}
 	const ids = [];
 	for (const line of section.split("\n")) {
 		const trimmed = line.trim();
-		if (!trimmed.startsWith("|")) continue;
+		if (!trimmed.startsWith("|")) {
+			continue;
+		}
 		const cells = trimmed
 			.split("|")
 			.slice(1, -1)
@@ -523,12 +529,16 @@ const OPENCODE_GO_MATCH_FLOOR = 0.8;
  */
 function parseOpencodeGoEndpoints(mdx) {
 	const section = mdx.split(/^## Endpoints\s*$/m)[1]?.split(/^## /m)[0];
-	if (!section) return null;
+	if (!section) {
+		return null;
+	}
 	/** @type {Map<string, string>} */
 	const apiById = new Map();
 	for (const line of section.split("\n")) {
 		const trimmed = line.trim();
-		if (!trimmed.startsWith("|")) continue;
+		if (!trimmed.startsWith("|")) {
+			continue;
+		}
 		const cells = trimmed
 			.split("|")
 			.slice(1, -1)
@@ -537,7 +547,9 @@ function parseOpencodeGoEndpoints(mdx) {
 		const api = cells[3]
 			? OPENCODE_GO_API_BY_PACKAGE[cells[3].replace(/`/g, "")]
 			: undefined;
-		if (id && api) apiById.set(id, api);
+		if (id && api) {
+			apiById.set(id, api);
+		}
 	}
 	return apiById;
 }
@@ -621,9 +633,13 @@ function resolveOpencodeGoApi(modelsDevModels) {
 	for (const [id, m] of Object.entries(modelsDevModels)) {
 		const npm = m.provider?.npm;
 		const api = npm ? OPENCODE_GO_API_BY_PACKAGE[npm] : undefined;
-		if (npm && !api) unmapped++;
+		if (npm && !api) {
+			unmapped++;
+		}
 		if (docsApi.has(id)) {
-			if (api && api !== docsApi.get(id)) conflicts++;
+			if (api && api !== docsApi.get(id)) {
+				conflicts++;
+			}
 		} else if (api) {
 			apiById.set(id, api);
 			catalogOnlyAdopted++;
@@ -656,11 +672,15 @@ function resolveOpencodeGoApi(modelsDevModels) {
  * @returns {void}
  */
 function applyModelApi(spec, models) {
-	if (!spec.modelApiResolver) return;
+	if (!spec.modelApiResolver) {
+		return;
+	}
 	const apiById = spec.modelApiResolver(CATALOG?.[spec.id]?.models ?? {});
 	for (const m of models) {
 		const api = apiById.get(m.id);
-		if (api) m.api = api;
+		if (api) {
+			m.api = api;
+		}
 	}
 }
 
@@ -854,7 +874,9 @@ function effortValues(m) {
 	const values = new Set();
 	for (const opt of m?.reasoning_options ?? []) {
 		if (opt?.type === "effort" && Array.isArray(opt.values)) {
-			for (const v of opt.values) values.add(String(v).toLowerCase());
+			for (const v of opt.values) {
+				values.add(String(v).toLowerCase());
+			}
 		}
 	}
 	return values;
@@ -867,7 +889,9 @@ function effortValues(m) {
  */
 function buildThinkingLevelMap(reasoningOptions) {
 	const values = effortValues({ reasoning_options: reasoningOptions });
-	if (values.size === 0) return null;
+	if (values.size === 0) {
+		return null;
+	}
 	/** @type {Record<string, string|null>} */
 	const map = {};
 	for (const level of PI_LEVELS) {
@@ -887,7 +911,9 @@ function buildThinkingLevelMap(reasoningOptions) {
  *   and undefined for an all-zero block, by the shared piCost rule
  */
 function toCost(cost) {
-	if (cost === null || cost === undefined) return;
+	if (cost === null || cost === undefined) {
+		return;
+	}
 	// Only the field names differ between the two sources (models.dev spells
 	// the cache prices cache_read/cache_write); "complete or absent" is
 	// piCost's rule, shared with the llama-swap path in gen-lib (docs/d057).
@@ -954,12 +980,15 @@ function catalogPiModel(spec, m, id = m.id) {
 	// Documented name exception (d049): models.dev labels the embedding
 	// endpoints output ["text"] — the gate below trusts that label, so the
 	// family/id check is what refuses them (the visible exception set).
-	if (m.family === "text-embedding" || id.toLowerCase().includes("embedding"))
+	if (m.family === "text-embedding" || id.toLowerCase().includes("embedding")) {
 		return null;
+	}
 	// d049 admit-but-trim gate: refuse what the client cannot drive (input
 	// without the drivable core, output beyond text) before any projection.
 	// Unjudgeable dimensions pass — see modalitiesEligible.
-	if (!modalitiesEligible(m.modalities)) return null;
+	if (!modalitiesEligible(m.modalities)) {
+		return null;
+	}
 	/** @type {PiAlternativeModel["cost"]} */
 	const cost = toCost(m.cost);
 	/** @type {PiAlternativeModel} */
@@ -974,15 +1003,21 @@ function catalogPiModel(spec, m, id = m.id) {
 	// A record with no published prices (cost: null, docs/d057) publishes no
 	// cost block: pi falls back to its own defaults, and a committed artifact
 	// never carries invented numbers.
-	if (cost) model.cost = cost;
+	if (cost) {
+		model.cost = cost;
+	}
 	if (model.reasoning) {
 		const map = buildThinkingLevelMap(m.reasoning_options);
 		const thinking =
 			map ?? (spec.onOffThinking ? { ...ON_OFF_THINKING_LEVEL_MAP } : null);
-		if (thinking) model.thinkingLevelMap = thinking;
+		if (thinking) {
+			model.thinkingLevelMap = thinking;
+		}
 	}
 	const compat = spec.modelCompat?.(m);
-	if (compat) model.compat = compat;
+	if (compat) {
+		model.compat = compat;
+	}
 	return model;
 }
 
@@ -1175,7 +1210,9 @@ function enrichWithFacts(spec, models, facts) {
 		}
 		const merged = { ...factsMapper(l), name: m.name };
 		const rebuilt = catalogPiModel(spec, merged, m.id);
-		if (rebuilt) enriched.push(rebuilt);
+		if (rebuilt) {
+			enriched.push(rebuilt);
+		}
 	}
 	return { enriched, untouched };
 }
@@ -1234,7 +1271,9 @@ function emitMinimalCatalogOverride(spec, providers) {
 	// source to union in.
 	if (!spec.catalogOnly) {
 		for (const m of getCatwalkModels(spec.id) ?? []) {
-			if (filter?.(m.id) ?? true) ids.add(m.id);
+			if (filter?.(m.id) ?? true) {
+				ids.add(m.id);
+			}
 		}
 	}
 	if (ids.size === 0) {
@@ -1618,7 +1657,9 @@ function deepMerge(...layers) {
 	/** @type {JsonObject} */
 	const out = {};
 	for (const layer of layers) {
-		if (!isPlainObject(layer)) continue;
+		if (!isPlainObject(layer)) {
+			continue;
+		}
 		for (const [key, value] of Object.entries(layer)) {
 			if (isPlainObject(value) && isPlainObject(out[key])) {
 				out[key] = deepMerge(out[key], value);
@@ -1695,9 +1736,12 @@ function generateDefaultModel(outPath) {
 	}
 
 	const overlay = {};
-	if (settings.defaultProvider)
+	if (settings.defaultProvider) {
 		overlay.defaultProvider = settings.defaultProvider;
-	if (settings.defaultModel) overlay.defaultModel = settings.defaultModel;
+	}
+	if (settings.defaultModel) {
+		overlay.defaultModel = settings.defaultModel;
+	}
 
 	if (overlay.defaultProvider && overlay.defaultModel) {
 		logInfo("default model: operator-hardcoded pair returned as is", {

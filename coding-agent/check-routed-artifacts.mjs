@@ -45,7 +45,9 @@ const { CLOUD_PROVIDERS, FACT_HOSTS, FACT_UPSTREAMS } =
  * from here, so a future shape with its own vocabulary has one place to land.
  * @type {Readonly<Record<string, string>>}
  */
-export const OPENCODE_PROVIDER_FACT_IDS = Object.freeze({ local: "llama-swap" });
+export const OPENCODE_PROVIDER_FACT_IDS = Object.freeze({
+	local: "llama-swap",
+});
 
 /**
  * True when any path segment of `url` is a fact-upstream hostname — the
@@ -55,9 +57,7 @@ export const OPENCODE_PROVIDER_FACT_IDS = Object.freeze({ local: "llama-swap" })
  */
 function hasFactHostSegment(url) {
 	try {
-		return new URL(url)
-			.pathname.split("/")
-			.some((seg) => FACT_HOSTS.has(seg));
+		return new URL(url).pathname.split("/").some((seg) => FACT_HOSTS.has(seg));
 	} catch {
 		return false;
 	}
@@ -107,7 +107,9 @@ export function rewriteProviderUrls(doc, mapUrl) {
 	if (d.providers && typeof d.providers === "object") {
 		for (const [id, provider] of Object.entries(d.providers)) {
 			const url = /** @type {any} */ (provider)?.baseUrl;
-			if (typeof url !== "string") continue;
+			if (typeof url !== "string") {
+				continue;
+			}
 			/** @type {any} */ (provider).baseUrl = mapUrl(id, url);
 		}
 		return doc;
@@ -116,7 +118,9 @@ export function rewriteProviderUrls(doc, mapUrl) {
 		for (const [id, provider] of Object.entries(d.provider)) {
 			const options = /** @type {any} */ (provider)?.options;
 			const url = options?.baseURL;
-			if (!options || typeof url !== "string") continue;
+			if (!options || typeof url !== "string") {
+				continue;
+			}
 			options.baseURL = mapUrl(OPENCODE_PROVIDER_FACT_IDS[id] ?? id, url);
 		}
 	}
@@ -141,7 +145,9 @@ export function rewriteProviderUrls(doc, mapUrl) {
 export function installedViolations(doc, base) {
 	const out = [];
 	for (const { id, url } of providerUrlsOf(doc)) {
-		if (url === undefined) continue;
+		if (url === undefined) {
+			continue;
+		}
 		try {
 			new URL(url);
 		} catch {
@@ -179,7 +185,9 @@ export function installedViolations(doc, base) {
 export function committedViolations(doc) {
 	const out = [];
 	for (const { id, url } of providerUrlsOf(doc)) {
-		if (url === undefined) continue;
+		if (url === undefined) {
+			continue;
+		}
 		const factId = OPENCODE_PROVIDER_FACT_IDS[id] ?? id;
 		const upstream = CLOUD_PROVIDERS[factId]?.baseUrl;
 		if (!upstream) {
@@ -220,8 +228,12 @@ function configuredBase() {
  * @returns {void}
  */
 function main(args) {
-	if (args.length < 2 || (args[0] !== "--installed" && args[0] !== "--committed"))
+	if (
+		args.length < 2 ||
+		(args[0] !== "--installed" && args[0] !== "--committed")
+	) {
 		return;
+	}
 	const mode = args[0];
 	const path = args[1];
 	/** @type {readonly string[]} */
@@ -240,12 +252,18 @@ function main(args) {
 		violations = [`unreadable or invalid JSON: ${String(err)}`];
 	}
 	if (violations.length > 0) {
-		for (const v of violations) console.error(`${mode} ${path}: ${v}`);
+		for (const v of violations) {
+			console.error(`${mode} ${path}: ${v}`);
+		}
 		process.exit(1);
 	}
 	console.log(`${mode} ${path}: conforming`);
 	process.exit(0);
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]))
+if (
+	process.argv[1] &&
+	fileURLToPath(import.meta.url) === resolve(process.argv[1])
+) {
 	main(process.argv.slice(2));
+}

@@ -436,11 +436,7 @@ async function main() {
 		optimize: o.optimize ? 1 : 0,
 		deep: o.deep ? 1 : 0,
 		paceScope:
-			o.minInterval === null
-				? "default"
-				: o.minInterval > 0
-					? "all"
-					: "off",
+			o.minInterval === null ? "default" : o.minInterval > 0 ? "all" : "off",
 		minInterval: o.minInterval ?? DEFAULT_MIN_INTERVAL,
 		softwareForgeMinInterval: o.minInterval ?? SOFTWARE_FORGE_MIN_INTERVAL,
 	});
@@ -461,7 +457,9 @@ async function main() {
 	/** @type {Record<string, number>} */
 	const tally = { ok: 0, skipped: 0, failed: 0 };
 	for (const groupResults of results) {
-		for (const r of groupResults) tally[r] += 1;
+		for (const r of groupResults) {
+			tally[r] += 1;
+		}
 	}
 
 	logInfo("maintenance summary", {
@@ -470,7 +468,9 @@ async function main() {
 		skipped: tally.skipped,
 		failed: tally.failed,
 	});
-	if (tally.failed) process.exitCode = 1;
+	if (tally.failed) {
+		process.exitCode = 1;
+	}
 }
 
 await main().catch((err) => {

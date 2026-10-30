@@ -157,10 +157,11 @@ function parseArgs(argv) {
 				o.help = true;
 				break;
 			default:
-				if (a.startsWith("-"))
+				if (a.startsWith("-")) {
 					throw Object.assign(new Error("unknown flag (try --help)"), {
 						flag: a,
 					});
+				}
 				o.repo = a;
 		}
 	}
@@ -177,7 +178,9 @@ function parseArgs(argv) {
  */
 async function statusBuckets(repo, includeIgnored) {
 	const args = ["status", "--porcelain=v1", "-z", "--untracked-files=all"];
-	if (includeIgnored) args.push("--ignored");
+	if (includeIgnored) {
+		args.push("--ignored");
+	}
 	const r = await git(repo, args, { must: false });
 	const tokens = r.stdout.split("\0");
 	/** @type {StatusEntry[]} */
@@ -190,7 +193,9 @@ async function statusBuckets(repo, includeIgnored) {
 	const ignored = [];
 	for (let i = 0; i < tokens.length; i += 1) {
 		const token = tokens[i];
-		if (!token) continue;
+		if (!token) {
+			continue;
+		}
 		const xy = token.slice(0, 2);
 		const path = token.slice(3);
 		if (xy === "??") {
@@ -219,8 +224,12 @@ async function statusBuckets(repo, includeIgnored) {
  * @returns {{ahead: number, behind: number, gone: boolean}}
  */
 function parseTrack(track) {
-	if (!track) return { ahead: 0, behind: 0, gone: false };
-	if (/gone/.test(track)) return { ahead: 0, behind: 0, gone: true };
+	if (!track) {
+		return { ahead: 0, behind: 0, gone: false };
+	}
+	if (/gone/.test(track)) {
+		return { ahead: 0, behind: 0, gone: true };
+	}
 	const ahead = /ahead (\d+)/.exec(track);
 	const behind = /behind (\d+)/.exec(track);
 	return {
@@ -261,15 +270,21 @@ async function branchInfo(repo) {
 	const remoteNames = new Set();
 	for (const line of remote.stdout.split("\n")) {
 		const name = line.trim();
-		if (!name || name.endsWith("/HEAD")) continue;
+		if (!name || name.endsWith("/HEAD")) {
+			continue;
+		}
 		const slash = name.indexOf("/");
-		if (slash >= 0) remoteNames.add(name.slice(slash + 1));
+		if (slash >= 0) {
+			remoteNames.add(name.slice(slash + 1));
+		}
 	}
 
 	/** @type {BranchEntry[]} */
 	const branches = [];
 	for (const line of local.stdout.split("\n")) {
-		if (!line) continue;
+		if (!line) {
+			continue;
+		}
 		const [name, upstream, track, object] = line.split("\t");
 		const { ahead, behind, gone } = parseTrack(track);
 		branches.push({
@@ -296,7 +311,9 @@ async function stashInfo(repo) {
 	/** @type {StashEntry[]} */
 	const stashes = [];
 	for (const line of r.stdout.split("\n")) {
-		if (!line) continue;
+		if (!line) {
+			continue;
+		}
 		const [ref, seconds, subject] = line.split(UNIT);
 		const files = await git(repo, ["stash", "show", "--name-only", ref], {
 			must: false,
@@ -362,9 +379,15 @@ async function inspectRepo(repo, o) {
 			info.ahead = branch.ahead;
 			info.behind = branch.behind;
 		}
-		if (!branch.onRemote) info.localOnly.push(branch.name);
-		if (branch.ahead > 0) info.aheadBranches.push(branch.name);
-		if (branch.gone) info.goneBranches.push(branch.name);
+		if (!branch.onRemote) {
+			info.localOnly.push(branch.name);
+		}
+		if (branch.ahead > 0) {
+			info.aheadBranches.push(branch.name);
+		}
+		if (branch.gone) {
+			info.goneBranches.push(branch.name);
+		}
 	}
 
 	const u = info.uncommitted;
@@ -387,7 +410,9 @@ async function inspectRepo(repo, o) {
  * @returns {(T|string)[]}
  */
 function capped(list, max) {
-	if (list.length <= max) return list;
+	if (list.length <= max) {
+		return list;
+	}
 	return [...list.slice(0, max), `… ${list.length - max} more`];
 }
 
@@ -417,7 +442,9 @@ function formatRepo(info, o) {
 		["ignored", u.ignored],
 	];
 	for (const [label, entries] of sections) {
-		if (entries.length === 0) continue;
+		if (entries.length === 0) {
+			continue;
+		}
 		lines.push(`  ${label.toUpperCase()} (${entries.length})`);
 		for (const entry of capped(entries, o.maxEntries)) {
 			if (typeof entry === "string") {
@@ -439,8 +466,9 @@ function formatRepo(info, o) {
 
 	if (info.localOnly.length > 0) {
 		lines.push(`  BRANCHES NOT ON ANY REMOTE (${info.localOnly.length})`);
-		for (const name of capped(info.localOnly, o.maxEntries))
+		for (const name of capped(info.localOnly, o.maxEntries)) {
 			lines.push(`    ${name}`);
+		}
 	}
 
 	if (info.aheadBranches.length > 0) {
@@ -455,12 +483,14 @@ function formatRepo(info, o) {
 
 	if (info.goneBranches.length > 0) {
 		lines.push(`  UPSTREAM GONE (${info.goneBranches.length})`);
-		for (const name of capped(info.goneBranches, o.maxEntries))
+		for (const name of capped(info.goneBranches, o.maxEntries)) {
 			lines.push(`    ${name}`);
+		}
 	}
 
-	if (info.findings === 0)
+	if (info.findings === 0) {
 		lines.push("  (clean — nothing local that a remote lacks)");
+	}
 	return lines.join("\n");
 }
 
@@ -479,8 +509,9 @@ async function main() {
 	/** @type {string[]} */
 	let repos;
 	if (o.root) {
-		if (!existsSync(o.root))
+		if (!existsSync(o.root)) {
 			throw Object.assign(new Error("root not found"), { root: o.root });
+		}
 		const discovered = findCloneRoots(o.root, o.maxDepth);
 		const rels = discovered.map((p) => relative(o.root, p));
 		const kept = new Set(filterByGlobs(rels, o.only, o.exclude));
@@ -488,8 +519,9 @@ async function main() {
 		logInfo("discovered clones", { root: o.root, count: repos.length });
 	} else {
 		const repo = resolve(o.repo);
-		if (!existsSync(repo))
+		if (!existsSync(repo)) {
 			throw Object.assign(new Error("repo not found"), { repo });
+		}
 		repos = [repo];
 	}
 

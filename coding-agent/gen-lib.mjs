@@ -139,7 +139,9 @@ const LLAMA_SWAP_COMPAT = Object.freeze({
  */
 function displayName(id) {
 	const m = /^([^-]+)-ctx(\d+)-(.+)$/.exec(id);
-	if (!m) return;
+	if (!m) {
+		return;
+	}
 	const [, , , repoFull] = m;
 	const [repoPath, quant] = repoFull.split(":");
 	const base = (repoPath.split("/").pop() ?? "").replace(/-GGUF$/i, "");
@@ -236,7 +238,9 @@ export function toInput(modalities) {
  *   nothing is priced — the caller drops the key
  */
 export function piCost(cost) {
-	if (!cost) return;
+	if (!cost) {
+		return;
+	}
 	const price = {
 		input: cost.input ?? 0,
 		output: cost.output ?? 0,

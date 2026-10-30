@@ -135,7 +135,9 @@ function watchdog(providerId: string, listingUrl: string) {
 	return {
 		refreshModels: async (context: RefreshContext = {}) => {
 			context.signal?.throwIfAborted();
-			if (context.allowNetwork === false) return;
+			if (context.allowNetwork === false) {
+				return;
+			}
 			if (!context.force && Date.now() - lastAttemptAt < REFRESH_INTERVAL_MS) {
 				return;
 			}
@@ -143,7 +145,9 @@ function watchdog(providerId: string, listingUrl: string) {
 			try {
 				await fetchListingCount(listingUrl, context.signal);
 			} catch (err) {
-				if (context.signal?.aborted) throw err;
+				if (context.signal?.aborted) {
+					throw err;
+				}
 				// Throwing IS the catalog warning: pi records the provider in
 				// ModelsRefreshResult.errors and the UI shows "Could not refresh
 				// <provider>; showing cached models." — and since we returned

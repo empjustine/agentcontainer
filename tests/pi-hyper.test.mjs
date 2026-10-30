@@ -69,7 +69,9 @@ const record = (overrides) => ({
 const fetchOnce =
 	(payload, init = {}) =>
 	async () => {
-		if (init.reject) throw init.reject;
+		if (init.reject) {
+			throw init.reject;
+		}
 		return /** @type {Response} */ (
 			/** @type {unknown} */ ({
 				ok: init.ok ?? true,
@@ -373,7 +375,10 @@ test("the extension loads, registers, and every row survives pi's own required f
 			}
 		}
 	} finally {
-		if (previousKey === undefined) delete process.env.HYPER_API_KEY;
-		else process.env.HYPER_API_KEY = previousKey;
+		if (previousKey === undefined) {
+			delete process.env.HYPER_API_KEY;
+		} else {
+			process.env.HYPER_API_KEY = previousKey;
+		}
 	}
 });

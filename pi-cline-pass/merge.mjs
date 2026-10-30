@@ -129,7 +129,9 @@ function effortValues(record) {
 	const values = [];
 	for (const opt of record?.reasoning_options ?? []) {
 		if (opt?.type === "effort" && Array.isArray(opt.values)) {
-			for (const v of opt.values) values.push(String(v).toLowerCase());
+			for (const v of opt.values) {
+				values.push(String(v).toLowerCase());
+			}
 		}
 	}
 	return values.length > 0 ? values : undefined;
@@ -146,7 +148,9 @@ function effortValues(record) {
  * @returns {ThinkingLevelMap|null}
  */
 export function thinkingLevelMapFor(efforts) {
-	if (!efforts || efforts.length === 0) return null;
+	if (!efforts || efforts.length === 0) {
+		return null;
+	}
 	/** @type {ThinkingLevelMap} */
 	const map = {};
 	for (const level of PI_THINKING_LEVELS) {
@@ -171,7 +175,9 @@ export function thinkingLevelMapFor(efforts) {
  * @returns {Cost|undefined}
  */
 export function piCost(cost) {
-	if (!cost) return;
+	if (!cost) {
+		return;
+	}
 	const price = {
 		input: cost.input ?? 0,
 		output: cost.output ?? 0,
@@ -190,7 +196,9 @@ export function piCost(cost) {
  * @returns {Cost|undefined}
  */
 function toCost(cost) {
-	if (cost === null || cost === undefined) return;
+	if (cost === null || cost === undefined) {
+		return;
+	}
 	return piCost({
 		input: cost.input,
 		output: cost.output,
@@ -208,7 +216,9 @@ function strings(/** @type {unknown} */ value) {
 
 /** A finite number, or undefined. */
 function num(/** @type {unknown} */ value) {
-	if (typeof value !== "number" || !Number.isFinite(value)) return;
+	if (typeof value !== "number" || !Number.isFinite(value)) {
+		return;
+	}
 	return value;
 }
 
@@ -261,7 +271,9 @@ function toInput(input) {
  */
 export function shapeRow(record) {
 	const id = record?.id;
-	if (typeof id !== "string" || id.length === 0) return;
+	if (typeof id !== "string" || id.length === 0) {
+		return;
+	}
 	// Documented family/id exception (docs/d049, fleet parity): models.dev
 	// labels embedding endpoints output ["text"], so the modality gate below
 	// would trust that label — this check is what refuses them.
@@ -275,7 +287,9 @@ export function shapeRow(record) {
 	const output = strings(record.modalities?.output);
 	// Gate BEFORE projecting: trimming first would turn an audio-only input
 	// into the text fallback and admit a model pi cannot drive.
-	if (!laysWithinPiModalities({ input, output })) return;
+	if (!laysWithinPiModalities({ input, output })) {
+		return;
+	}
 	const efforts = effortValues(record);
 	return {
 		id,
@@ -304,13 +318,19 @@ export function shapeCatalog(records, allowlist) {
 	/** @type {MergedModel[]} */
 	const models = [];
 	for (const [key, record] of Object.entries(records ?? {})) {
-		if (!key.startsWith(CLINE_PASS_ID_PREFIX)) continue;
-		if (allowlist && !allowlist.includes(key)) continue;
+		if (!key.startsWith(CLINE_PASS_ID_PREFIX)) {
+			continue;
+		}
+		if (allowlist && !allowlist.includes(key)) {
+			continue;
+		}
 		// The KEY is the prefix-guarded, allowlist-matched identity; a record
 		// body that carries its own id must never replace it — an unprefixed id
 		// published here bills at standard API pricing (docs/d040).
 		const model = shapeRow({ ...record, id: key });
-		if (model) models.push(model);
+		if (model) {
+			models.push(model);
+		}
 	}
 	return models.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
@@ -338,7 +358,9 @@ export function toPiModel(model) {
 		contextWindow: model.contextWindow ?? 128_000,
 		maxTokens: model.maxTokens ?? 16_384,
 	};
-	if (model.cost) entry.cost = model.cost;
+	if (model.cost) {
+		entry.cost = model.cost;
+	}
 	if (model.reasoning && model.thinkingLevelMap) {
 		entry.thinkingLevelMap = model.thinkingLevelMap;
 	}

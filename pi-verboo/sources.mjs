@@ -139,7 +139,9 @@ export async function fetchListing({
 	/** @type {ListingRow[]} */
 	const kept = [];
 	for (const row of rows) {
-		if (typeof row?.id !== "string") continue;
+		if (typeof row?.id !== "string") {
+			continue;
+		}
 		kept.push(/** @type {ListingRow} */ (row));
 	}
 	if (kept.length === 0) {

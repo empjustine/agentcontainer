@@ -196,7 +196,9 @@ function deviceOf(path) {
 	let probe = path;
 	while (!existsSync(probe)) {
 		const parent = dirname(probe);
-		if (parent === probe) return null;
+		if (parent === probe) {
+			return null;
+		}
 		probe = parent;
 	}
 	return statSync(probe).dev;
@@ -215,7 +217,9 @@ function deviceOf(path) {
 function warnIfCrossFilesystem(root, dest) {
 	const rootDev = deviceOf(root);
 	const destDev = deviceOf(dest);
-	if (rootDev === null || destDev === null || rootDev === destDev) return;
+	if (rootDev === null || destDev === null || rootDev === destDev) {
+		return;
+	}
 	logWarn(
 		"dest is on a different filesystem — --local mirrors copy objects instead of hardlinking",
 		{ root, dest },
@@ -291,8 +295,9 @@ async function convertOne(clone, o) {
 
 	if (!(useDownload && realUrl)) {
 		const dropped = await dropRemoteTrackingRefs(target);
-		if (dropped)
+		if (dropped) {
 			logInfo("dropped inherited remote-tracking refs", { target, dropped });
+		}
 	}
 
 	const head = await git(target, ["rev-parse", "--verify", "HEAD"], {
@@ -377,11 +382,15 @@ async function main() {
 		jobs: o.jobs,
 		mode: o.redownload ? "redownload" : "local",
 	});
-	if (clones.length === 0) return;
+	if (clones.length === 0) {
+		return;
+	}
 
 	const results = await pool(clones, o.jobs, (clone) => convertOne(clone, o));
 	const tally = { migrated: 0, skipped: 0, failed: 0 };
-	for (const r of results) tally[r] += 1;
+	for (const r of results) {
+		tally[r] += 1;
+	}
 
 	logInfo("migration summary", {
 		discovered: clones.length,
@@ -391,7 +400,9 @@ async function main() {
 		deletedOriginals: o.deleteOriginals ? tally.migrated : 0,
 		dest: o.dest,
 	});
-	if (tally.failed) process.exitCode = 1;
+	if (tally.failed) {
+		process.exitCode = 1;
+	}
 }
 
 await main().catch((err) => {

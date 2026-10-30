@@ -95,7 +95,9 @@ test("piModel judges the served block instead of copying it", () => {
  */
 function isPublishable(cost) {
 	const prices = PRICE_FIELDS.map((field) => cost[field]);
-	if (!prices.every((price) => typeof price === "number")) return false;
+	if (!prices.every((price) => typeof price === "number")) {
+		return false;
+	}
 	return prices.some((price) => Number(price) !== 0);
 }
 
@@ -110,7 +112,9 @@ test("committed artifacts carry no unpriced or incomplete cost block", () => {
 	const violations = [];
 	for (const path of artifacts) {
 		for (const model of modelsOf(path)) {
-			if (!("cost" in model) || model.cost === undefined) continue;
+			if (!("cost" in model) || model.cost === undefined) {
+				continue;
+			}
 			if (!isPublishable(model.cost)) {
 				violations.push(
 					`${basename(path)} ${model.id}: ${JSON.stringify(model.cost)}`,
@@ -128,12 +132,15 @@ test("committed artifacts carry no unpriced or incomplete cost block", () => {
  * @returns {Array<{ id?: string, cost?: Record<string, unknown> }>}
  */
 function modelsOf(path) {
-	const doc = /** @type {{ providers?: Record<string, { models?: unknown }> }} */ (
-		JSON.parse(readFileSync(path, "utf-8"))
-	);
+	const doc =
+		/** @type {{ providers?: Record<string, { models?: unknown }> }} */ (
+			JSON.parse(readFileSync(path, "utf-8"))
+		);
 	const models = /** @type {unknown[]} */ ([]);
 	for (const provider of Object.values(doc.providers ?? {})) {
-		if (Array.isArray(provider.models)) models.push(...provider.models);
+		if (Array.isArray(provider.models)) {
+			models.push(...provider.models);
+		}
 	}
 	return /** @type {Array<{ id?: string, cost?: Record<string, unknown> }>} */ (
 		models

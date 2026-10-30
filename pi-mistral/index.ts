@@ -125,11 +125,15 @@ export default function piMistral(pi: ExtensionAPI): void {
 		// apiKey/headers (the built-in provider's own). See the fileoverview.
 		refreshModels: async (context: RefreshContext = {}) => {
 			context.signal?.throwIfAborted();
-			if (context.allowNetwork === false) return;
+			if (context.allowNetwork === false) {
+				return;
+			}
 			// The listing is auth-gated, so without a key there is nothing this
 			// watchdog can observe — and nothing to warn about: pi hides an
 			// unconfigured provider from /model already.
-			if (!process.env[MISTRAL_API_KEY_ENV]?.trim()) return;
+			if (!process.env[MISTRAL_API_KEY_ENV]?.trim()) {
+				return;
+			}
 			if (!context.force && Date.now() - lastAttemptAt < REFRESH_INTERVAL_MS) {
 				return;
 			}
@@ -137,7 +141,9 @@ export default function piMistral(pi: ExtensionAPI): void {
 			try {
 				await fetchListingCount(context.signal);
 			} catch (err) {
-				if (context.signal?.aborted) throw err;
+				if (context.signal?.aborted) {
+					throw err;
+				}
 				// Throwing IS the catalog warning: pi records the provider in
 				// ModelsRefreshResult.errors and the UI shows "Could not refresh
 				// mistral; showing cached models." — and since we returned

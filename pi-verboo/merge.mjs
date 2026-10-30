@@ -94,7 +94,9 @@ const EFFORT_TO_PI = Object.freeze({
  */
 export function effortValues(row) {
 	const levels = row?.reasoning?.effort_levels;
-	if (!Array.isArray(levels) || levels.length === 0) return;
+	if (!Array.isArray(levels) || levels.length === 0) {
+		return;
+	}
 	return levels.map((v) => String(v).toLowerCase());
 }
 
@@ -110,7 +112,9 @@ export function effortValues(row) {
  * @returns {ThinkingLevelMap|null}
  */
 export function thinkingLevelMapFor(efforts) {
-	if (!efforts || efforts.length === 0) return null;
+	if (!efforts || efforts.length === 0) {
+		return null;
+	}
 	/** @type {ThinkingLevelMap} */
 	const map = {};
 	for (const level of PI_THINKING_LEVELS) {
@@ -124,7 +128,9 @@ export function thinkingLevelMapFor(efforts) {
 
 /** A finite number, or undefined. */
 function num(/** @type {unknown} */ value) {
-	if (typeof value !== "number" || !Number.isFinite(value)) return;
+	if (typeof value !== "number" || !Number.isFinite(value)) {
+		return;
+	}
 	return value;
 }
 
@@ -147,7 +153,9 @@ function toInput(row) {
  */
 export function shapeRow(row) {
 	const id = row?.id;
-	if (typeof id !== "string" || id.length === 0) return;
+	if (typeof id !== "string" || id.length === 0) {
+		return;
+	}
 	const efforts = effortValues(row);
 	return {
 		id,
@@ -171,7 +179,9 @@ export function shapeListing(rows) {
 	const models = [];
 	for (const row of rows ?? []) {
 		const model = shapeRow(row);
-		if (model) models.push(model);
+		if (model) {
+			models.push(model);
+		}
 	}
 	return models.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }

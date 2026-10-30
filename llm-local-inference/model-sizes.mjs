@@ -123,7 +123,9 @@ const repoOf = (hfRepo) => hfRepo.split(":")[0];
 
 /** @returns {string} HF hub cache root, matching the Python tools' resolution. */
 function cacheRoot() {
-	if (process.env.HF_HUB_CACHE) return process.env.HF_HUB_CACHE;
+	if (process.env.HF_HUB_CACHE) {
+		return process.env.HF_HUB_CACHE;
+	}
 	const home =
 		process.env.HF_HOME ??
 		join(
@@ -164,7 +166,9 @@ function shardSiblingRe(prefix, expected) {
  */
 function manifestIndex(repo) {
 	const file = manifestPath(repo);
-	if (!existsSync(file)) return null;
+	if (!existsSync(file)) {
+		return null;
+	}
 	const doc = JSON.parse(readFileSync(file, "utf-8"));
 	/** @type {Map<string, number>} */
 	const index = new Map();
@@ -187,12 +191,16 @@ function manifestIndex(repo) {
  */
 function cacheIndex(repo) {
 	const snapshots = join(cacheRoot(), cacheDirName(repo), "snapshots");
-	if (!existsSync(snapshots)) return null;
+	if (!existsSync(snapshots)) {
+		return null;
+	}
 	/** @type {Map<string, number>} */
 	const index = new Map();
 	for (const commit of readdirSync(snapshots).sort()) {
 		const root = join(snapshots, commit);
-		if (!statSync(root).isDirectory()) continue;
+		if (!statSync(root).isDirectory()) {
+			continue;
+		}
 		walk(root, "");
 	}
 	return index.size > 0 ? index : null;
@@ -244,7 +252,9 @@ function resolveComponent({ repo, name, manifest, cache }) {
 			["manifest", manifest],
 			["cache", cache],
 		])) {
-			if (!index) continue;
+			if (!index) {
+				continue;
+			}
 			const sizes = [...index]
 				.filter(([path]) => re.test(path))
 				.map(([, size]) => size);
@@ -259,10 +269,13 @@ function resolveComponent({ repo, name, manifest, cache }) {
 		throw new Error(`cannot resolve all shards of ${name} in ${repo}${detail}`);
 	}
 	const fromManifest = manifest?.get(name);
-	if (fromManifest !== undefined)
+	if (fromManifest !== undefined) {
 		return { bytes: fromManifest, source: "manifest" };
+	}
 	const fromCache = cache?.get(name);
-	if (fromCache !== undefined) return { bytes: fromCache, source: "cache" };
+	if (fromCache !== undefined) {
+		return { bytes: fromCache, source: "cache" };
+	}
 	throw new Error(`cannot resolve ${name} in ${repo} from manifest or cache`);
 }
 
@@ -293,10 +306,15 @@ function reportCacheOnly(models) {
 		referenced.set(repo, ref);
 		for (const key of COMPONENT_KEYS) {
 			const name = entry[key];
-			if (typeof name !== "string") continue;
+			if (typeof name !== "string") {
+				continue;
+			}
 			const shard = SHARD_RE.exec(name);
-			if (shard) ref.shards.add(shard[1]);
-			else ref.paths.add(name);
+			if (shard) {
+				ref.shards.add(shard[1]);
+			} else {
+				ref.paths.add(name);
+			}
 		}
 	}
 
@@ -310,12 +328,18 @@ function reportCacheOnly(models) {
 		return;
 	}
 	for (const dir of readdirSync(root).sort()) {
-		if (!dir.startsWith("models--")) continue;
+		if (!dir.startsWith("models--")) {
+			continue;
+		}
 		const repo = dir.slice("models--".length).replace("--", "/");
 		const index = cacheIndex(repo);
-		if (!index) continue;
+		if (!index) {
+			continue;
+		}
 		const files = [...index.keys()].filter(isModelGguf);
-		if (files.length === 0) continue;
+		if (files.length === 0) {
+			continue;
+		}
 		if (!referenced.has(repo)) {
 			zeroCoverage.push(repo);
 			continue;
@@ -324,11 +348,15 @@ function reportCacheOnly(models) {
 			referenced.get(repo)
 		);
 		const missing = files.filter((path) => {
-			if (ref.paths.has(path)) return false;
+			if (ref.paths.has(path)) {
+				return false;
+			}
 			const shard = SHARD_RE.exec(path);
 			return !(shard && ref.shards.has(shard[1]));
 		});
-		if (missing.length > 0) extras.push({ repo, files: missing });
+		if (missing.length > 0) {
+			extras.push({ repo, files: missing });
+		}
 	}
 
 	const extraCount = extras.reduce((sum, e) => sum + e.files.length, 0);
@@ -352,8 +380,9 @@ function reportCacheOnly(models) {
  * @returns {Record<string, unknown>[]}
  */
 function asModels(value) {
-	if (!Array.isArray(value))
+	if (!Array.isArray(value)) {
 		throw new Error("model table has no `models` array");
+	}
 	return /** @type {Record<string, unknown>[]} */ (value);
 }
 
@@ -393,7 +422,9 @@ function main() {
 		let total = 0;
 		for (const key of COMPONENT_KEYS) {
 			const name = entry[key];
-			if (typeof name !== "string") continue;
+			if (typeof name !== "string") {
+				continue;
+			}
 			try {
 				const { bytes, source } = resolveComponent({
 					repo,
@@ -403,19 +434,24 @@ function main() {
 				});
 				parts[key] = toGb(bytes);
 				total += bytes;
-				if (source === "cache") fallbacks.push(`${hfRepo}: ${name}`);
+				if (source === "cache") {
+					fallbacks.push(`${hfRepo}: ${name}`);
+				}
 			} catch (err) {
 				failures.push(err instanceof Error ? err.message : String(err));
 			}
 		}
-		if (Object.keys(parts).length === 0) continue;
+		if (Object.keys(parts).length === 0) {
+			continue;
+		}
 		entry["size-gb"] = toGb(total);
 		entry["size-parts"] = parts;
 	}
 
 	if (failures.length > 0) {
-		for (const failure of failures)
+		for (const failure of failures) {
 			logError("unresolved model file", { detail: failure });
+		}
 		throw new Error(`${failures.length} model file(s) could not be resolved`);
 	}
 

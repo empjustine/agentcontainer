@@ -36,7 +36,9 @@ setLogTool("git/vbs-har");
  * @returns {Record<string, unknown>[]}
  */
 function asArray(data) {
-	if (Array.isArray(data)) return data;
+	if (Array.isArray(data)) {
+		return data;
+	}
 	if (data && typeof data === "object") {
 		const obj = /** @type {Record<string, unknown>} */ (data);
 		for (const key of [
@@ -54,7 +56,7 @@ function asArray(data) {
 		}
 		const entries = Object.entries(obj);
 		if (
-			entries.length > 0&&
+			entries.length > 0 &&
 			entries.every(([, v]) => v && typeof v === "object")
 		) {
 			return entries.map(([key, value]) => ({
@@ -88,7 +90,9 @@ function pick(obj, ...keys) {
  * @returns {string}
  */
 function slugFromId(id, org) {
-	if (!id) return "";
+	if (!id) {
+		return "";
+	}
 	const rest = id.startsWith(`${org}_`) ? id.slice(org.length + 1) : id;
 	const match = /^(.*)_\d+$/.exec(rest);
 	return match ? match[1] : rest;
@@ -141,7 +145,9 @@ function harToManifest(har, opts = {}) {
 		}
 		const content = entry?.response?.content ?? {};
 		let text = content.text;
-		if (typeof text !== "string") continue;
+		if (typeof text !== "string") {
+			continue;
+		}
 		if (content.encoding === "base64") {
 			text = Buffer.from(text, "base64").toString("utf8");
 		}
@@ -153,10 +159,14 @@ function harToManifest(har, opts = {}) {
 		}
 		if (/\/api2\/v2\/projects\/list/.test(url)) {
 			const list = asArray(data);
-			if (list.length > 0) projects = list;
+			if (list.length > 0) {
+				projects = list;
+			}
 		}
 		const match = /\/s2\/([^/]+)\/scm\/api\/repository/.exec(url);
-		if (match) repoBodies.set(decodeURIComponent(match[1]), data);
+		if (match) {
+			repoBodies.set(decodeURIComponent(match[1]), data);
+		}
 	}
 
 	const resolvedOrg = opts.org || org || "";
@@ -217,7 +227,9 @@ function harToManifest(har, opts = {}) {
 				"repo",
 				"__key",
 			);
-			if (!name) continue;
+			if (!name) {
+				continue;
+			}
 			repositories.push({
 				projectId: project.id,
 				projectSlug: project.slug,
@@ -269,10 +281,11 @@ function parseArgs(argv) {
 				o.help = true;
 				break;
 			default:
-				if (a.startsWith("-"))
+				if (a.startsWith("-")) {
 					throw Object.assign(new Error("unknown flag (try --help)"), {
 						flag: a,
 					});
+				}
 				o.file = a;
 		}
 	}
@@ -288,7 +301,9 @@ function main() {
 		);
 		return;
 	}
-	if (!o.file) throw new Error("no HAR file given (try --help)");
+	if (!o.file) {
+		throw new Error("no HAR file given (try --help)");
+	}
 
 	const har = /** @type {Har} */ (JSON.parse(readFileSync(o.file, "utf8")));
 	const manifest = harToManifest(har, { base: o.base, org: o.org });

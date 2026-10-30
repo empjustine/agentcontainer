@@ -146,7 +146,9 @@ export async function fetchCatalog({
 	/** @type {CatalogRecord[]} */
 	const kept = [];
 	for (const row of rows) {
-		if (typeof row?.id !== "string") continue;
+		if (typeof row?.id !== "string") {
+			continue;
+		}
 		kept.push(/** @type {CatalogRecord} */ (row));
 	}
 	if (kept.length === 0) {

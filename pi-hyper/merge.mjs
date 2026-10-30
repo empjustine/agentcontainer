@@ -128,7 +128,9 @@ const ON_OFF_THINKING_LEVEL_MAP = Object.freeze({
  */
 export function effortValues(record) {
 	const levels = record?.reasoning_levels;
-	if (!Array.isArray(levels) || levels.length === 0) return;
+	if (!Array.isArray(levels) || levels.length === 0) {
+		return;
+	}
 	return levels.map((v) => String(v).toLowerCase());
 }
 
@@ -141,7 +143,9 @@ export function effortValues(record) {
  * @returns {ThinkingLevelMap|null}
  */
 export function thinkingLevelMapFor(efforts) {
-	if (!efforts || efforts.length === 0) return null;
+	if (!efforts || efforts.length === 0) {
+		return null;
+	}
 	/** @type {ThinkingLevelMap} */
 	const map = {};
 	for (const level of PI_THINKING_LEVELS) {
@@ -165,7 +169,9 @@ export function thinkingLevelMapFor(efforts) {
  * @returns {{input: number, output: number, cacheRead: number, cacheWrite: number}|undefined}
  */
 export function piCost(cost) {
-	if (!cost) return;
+	if (!cost) {
+		return;
+	}
 	const price = {
 		input: cost.input ?? 0,
 		output: cost.output ?? 0,
@@ -196,7 +202,9 @@ function toCost(record) {
 
 /** A finite number, or undefined. */
 function num(/** @type {unknown} */ value) {
-	if (typeof value !== "number" || !Number.isFinite(value)) return;
+	if (typeof value !== "number" || !Number.isFinite(value)) {
+		return;
+	}
 	return value;
 }
 
@@ -219,7 +227,9 @@ function toInput(record) {
  */
 export function shapeRow(record) {
 	const id = record?.id;
-	if (typeof id !== "string" || id.length === 0) return;
+	if (typeof id !== "string" || id.length === 0) {
+		return;
+	}
 	const efforts = effortValues(record);
 	const reasoning = record.can_reason === true;
 	return {
@@ -248,7 +258,9 @@ export function shapeCatalog(records) {
 	const models = [];
 	for (const record of records ?? []) {
 		const model = shapeRow(record);
-		if (model) models.push(model);
+		if (model) {
+			models.push(model);
+		}
 	}
 	return models.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
@@ -293,7 +305,9 @@ export function toPiModel(model) {
 		maxTokens: model.maxTokens ?? 16_384,
 		compat: compatFor(model),
 	};
-	if (model.cost) entry.cost = model.cost;
+	if (model.cost) {
+		entry.cost = model.cost;
+	}
 	if (model.reasoning && model.thinkingLevelMap) {
 		entry.thinkingLevelMap = model.thinkingLevelMap;
 	}

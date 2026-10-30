@@ -89,7 +89,9 @@ const catalogPayload = (models) => ({ [CLINE_PASS_PROVIDER_ID]: { models } });
 const fetchOnce =
 	(payload, init = {}) =>
 	async (/** @type {unknown} */ _input, /** @type {unknown} */ _init) => {
-		if (init.reject) throw init.reject;
+		if (init.reject) {
+			throw init.reject;
+		}
 		return /** @type {Response} */ (
 			/** @type {unknown} */ ({
 				ok: init.ok ?? true,
@@ -238,15 +240,21 @@ test("CLINE_PASS_MDX overrides the docs read with a local file", async () => {
 	try {
 		assert.deepEqual(await fetchDocsIds(), ["cline-pass/glm-5.2"]);
 	} finally {
-		if (previous === undefined) delete process.env.CLINE_PASS_MDX;
-		else process.env.CLINE_PASS_MDX = previous;
+		if (previous === undefined) {
+			delete process.env.CLINE_PASS_MDX;
+		} else {
+			process.env.CLINE_PASS_MDX = previous;
+		}
 	}
 });
 
 test("a healthy ratio adopts docs ∪ catalog; a rotten one falls back", () => {
 	const docs = ["a", "b", "c", "d", "e"].map((id) => CLINE_PASS_ID_PREFIX + id);
 	const records = Object.fromEntries(
-		["a", "b", "c", "d", "f"].map((id) => [CLINE_PASS_ID_PREFIX + id, record()]),
+		["a", "b", "c", "d", "f"].map((id) => [
+			CLINE_PASS_ID_PREFIX + id,
+			record(),
+		]),
 	);
 	// 4 of 5 docs rows found in the catalog is exactly the floor: adoption.
 	assert.deepEqual(resolveAllowlist(docs, records), [
@@ -276,9 +284,10 @@ test("the shape guard drops every row that would bill wrong or not at all", () =
 	// prefix-guarded key.
 	assert.equal(shapeRow({ ...record() }), undefined, "no id, no model");
 	assert.deepEqual(
-		shapeCatalog({ "cline-pass/glm-5.2": record({ id: "glm-5.2" }) }, undefined).map(
-			(m) => m.id,
-		),
+		shapeCatalog(
+			{ "cline-pass/glm-5.2": record({ id: "glm-5.2" }) },
+			undefined,
+		).map((m) => m.id),
 		["cline-pass/glm-5.2"],
 	);
 	assert.equal(
@@ -326,10 +335,10 @@ test("rich input trims to what pi originates, and id-only records survive", () =
 		},
 		undefined,
 	);
-	assert.deepEqual(models.map((m) => m.id), [
-		"cline-pass/no-metadata",
-		"cline-pass/rich",
-	]);
+	assert.deepEqual(
+		models.map((m) => m.id),
+		["cline-pass/no-metadata", "cline-pass/rich"],
+	);
 	assert.deepEqual(models.find((m) => m.id === "cline-pass/rich")?.input, [
 		"text",
 		"image",
@@ -347,7 +356,11 @@ test("thinking levels come from the published enum only", () => {
 	assert.equal(map?.off, "none", "the provider spells pi's off as none");
 	assert.equal(map?.low, "low");
 	assert.equal(map?.xhigh, "xhigh");
-	assert.equal(map?.high, null, "an unpublished level is hidden, never invented");
+	assert.equal(
+		map?.high,
+		null,
+		"an unpublished level is hidden, never invented",
+	);
 	assert.equal(map?.max, null);
 	// No published enum is not "no reasoning" — it is "the source did not say",
 	// and nothing may be invented from it (the fleet's onOffThinking: false).
@@ -407,10 +420,9 @@ test("every extension key is one pi defines — and the compat fact rides per mo
 	// ProviderConfig has no provider-level compat field (pi 1.4.0), and the
 	// registration overwrites the models layer: the one published fact
 	// (docs/d022/d033) must live on every model or it is silently lost.
-	const [model] = shapeCatalog(
-		{ "cline-pass/glm-5.2": record() },
-		[`${CLINE_PASS_ID_PREFIX}glm-5.2`],
-	);
+	const [model] = shapeCatalog({ "cline-pass/glm-5.2": record() }, [
+		`${CLINE_PASS_ID_PREFIX}glm-5.2`,
+	]);
 	const entry = toExtensionModel(model);
 	assert.deepEqual(Object.keys(entry).sort(), [
 		"compat",
@@ -450,10 +462,10 @@ test("models are emitted sorted, allowlist-filtered, prefix-carrying", () => {
 		},
 		[`${CLINE_PASS_ID_PREFIX}z-last`, `${CLINE_PASS_ID_PREFIX}a-first`],
 	);
-	assert.deepEqual(models.map((m) => m.id), [
-		"cline-pass/a-first",
-		"cline-pass/z-last",
-	]);
+	assert.deepEqual(
+		models.map((m) => m.id),
+		["cline-pass/a-first", "cline-pass/z-last"],
+	);
 });
 
 test("the model store TTL is the refresh gate, not an absolute clock", () => {
@@ -545,7 +557,10 @@ test("the extension loads, registers, and every row carries the compat fact", as
 		const refreshed = await config.refreshModels({ allowNetwork: false });
 		assert.equal(refreshed, undefined);
 	} finally {
-		if (previousKey === undefined) delete process.env.CLINE_API_KEY;
-		else process.env.CLINE_API_KEY = previousKey;
+		if (previousKey === undefined) {
+			delete process.env.CLINE_API_KEY;
+		} else {
+			process.env.CLINE_API_KEY = previousKey;
+		}
 	}
 });

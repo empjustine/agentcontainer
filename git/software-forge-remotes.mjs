@@ -53,7 +53,9 @@ function stripGitSuffix(value) {
  * @returns {string|null}
  */
 export function softwareForgeUserEmail(remote) {
-	if (!remote.user) return null;
+	if (!remote.user) {
+		return null;
+	}
 	return remote.user.replace(/^idcs-[0-9a-f]+\./i, "");
 }
 
@@ -66,7 +68,9 @@ export function softwareForgeUserEmail(remote) {
  */
 function slugFromProjectId(projectId, org) {
 	const prefix = `${org}_`;
-	if (!projectId.startsWith(prefix)) return null;
+	if (!projectId.startsWith(prefix)) {
+		return null;
+	}
 	const rest = projectId.slice(prefix.length);
 	const match = /^(.*)_\d+$/.exec(rest);
 	return match ? match[1] : rest;
@@ -79,7 +83,9 @@ function slugFromProjectId(projectId, org) {
  * @returns {string|null}
  */
 function orgFromHost(host) {
-	if (!host.endsWith(SOFTWARE_FORGE_HOST_SUFFIX)) return null;
+	if (!host.endsWith(SOFTWARE_FORGE_HOST_SUFFIX)) {
+		return null;
+	}
 	const org = host.slice(0, -SOFTWARE_FORGE_HOST_SUFFIX.length);
 	return org || null;
 }
@@ -92,7 +98,9 @@ function orgFromHost(host) {
  * @returns {SoftwareForgeRemote|null}
  */
 export function parseSoftwareForgeRemote(raw) {
-	if (!raw) return null;
+	if (!raw) {
+		return null;
+	}
 	/** @type {URL} */
 	let url;
 	try {
@@ -101,7 +109,9 @@ export function parseSoftwareForgeRemote(raw) {
 		return null;
 	}
 	const host = url.hostname.toLowerCase();
-	if (!orgFromHost(host)) return null;
+	if (!orgFromHost(host)) {
+		return null;
+	}
 
 	const user = url.username ? decodeURIComponent(url.username) : null;
 	const segments = url.pathname.split("/").filter(Boolean);
@@ -176,7 +186,9 @@ export function parseSoftwareForgeRemote(raw) {
  * @returns {string|null} null when the project id is unknown (a glass-only parse)
  */
 export function softwareForgeHttpsUrl(remote, user) {
-	if (!remote.projectId) return null;
+	if (!remote.projectId) {
+		return null;
+	}
 	const who = user ?? softwareForgeUserEmail(remote);
 	const auth = who ? `${encodeURIComponent(who)}@` : "";
 	return `https://${auth}${remote.host}/${remote.org}/s/${remote.projectId}/scm/${remote.repo}.git`;
@@ -190,7 +202,9 @@ export function softwareForgeHttpsUrl(remote, user) {
  * @returns {string|null}
  */
 export function softwareForgeSshUrl(remote, user) {
-	if (!remote.projectId) return null;
+	if (!remote.projectId) {
+		return null;
+	}
 	const who = user ?? remote.user;
 	const auth = who ? `${encodeURIComponent(who)}@` : "";
 	return `ssh://${auth}${remote.host}/${remote.projectId}/${remote.repo}.git`;
@@ -204,7 +218,9 @@ export function softwareForgeSshUrl(remote, user) {
  * @returns {string|null} null when the glass-only slug is unknown
  */
 export function softwareForgeGlassUrl(remote, revision = "main") {
-	if (!remote.projectSlug) return null;
+	if (!remote.projectSlug) {
+		return null;
+	}
 	const rev = revision ? `?revision=${encodeURIComponent(revision)}` : "";
 	return `https://${remote.host}/${remote.org}/#projects/${remote.projectSlug}/scm/${remote.repo}.git/tree${rev}`;
 }

@@ -132,7 +132,9 @@ export default function piClinePass(pi: ExtensionAPI): void {
 						shapeCatalog(records, resolveAllowlist(docsIds, records)),
 					);
 				} catch (err) {
-					if (context.signal?.aborted) throw err;
+					if (context.signal?.aborted) {
+						throw err;
+					}
 					// A failed refresh must never cost the user a working provider:
 					// the store, then the seed, stand in.
 				}

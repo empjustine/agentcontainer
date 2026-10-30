@@ -173,8 +173,12 @@ export async function fetchListing({
 	const kept = [];
 	for (const row of rows) {
 		const id = row?.id;
-		if (typeof id !== "string") continue;
-		if (UNSUPPORTED_ID_PREFIXES.some((p) => id.startsWith(p))) continue;
+		if (typeof id !== "string") {
+			continue;
+		}
+		if (UNSUPPORTED_ID_PREFIXES.some((p) => id.startsWith(p))) {
+			continue;
+		}
 		kept.push(/** @type {ListingRow} */ (row));
 	}
 	if (kept.length === 0) {

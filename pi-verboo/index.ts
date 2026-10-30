@@ -110,7 +110,9 @@ export default function piVerboo(pi: ExtensionAPI): void {
 					context.signal?.throwIfAborted();
 					return withSeed(models);
 				} catch (err) {
-					if (context.signal?.aborted) throw err;
+					if (context.signal?.aborted) {
+						throw err;
+					}
 					// A failed refresh must never cost the user a working provider:
 					// the store, then the seed, stand in. An unconfigured key is
 					// the common case here (the listing is auth-gated), and the

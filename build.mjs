@@ -91,7 +91,9 @@ const containerTool = detectContainerTool();
  * @returns {string|null}
  */
 function collapseRedrawFrames(line) {
-	if (!line.includes("\r")) return line;
+	if (!line.includes("\r")) {
+		return line;
+	}
 	const frames = line.split("\r").filter((frame) => frame.length > 0);
 	return frames.length > 0 ? (frames.at(-1) ?? null) : null;
 }
@@ -136,7 +138,9 @@ async function run(cmd, args, opts = {}) {
 					// tty-redrawn progress (apt/dpkg spinners) arrives as \r-separated
 					// frames in one line; only the final frame carries information.
 					const keptLine = collapseRedrawFrames(line);
-					if (!keptLine) continue; // null (all-\r) or empty: not a record
+					if (!keptLine) {
+						continue; // null (all-\r) or empty: not a record
+					}
 					logInfo("command output", {
 						...(opts.name ? { target: opts.name } : {}),
 						cmd,
@@ -147,9 +151,13 @@ async function run(cmd, args, opts = {}) {
 			});
 			child[stream].on("end", () => {
 				// A stream ending in \n leaves an empty partial — not a line.
-				if (!partial) return;
+				if (!partial) {
+					return;
+				}
 				const keptPartial = collapseRedrawFrames(partial);
-				if (!keptPartial) return;
+				if (!keptPartial) {
+					return;
+				}
 				logInfo("command output", {
 					...(opts.name ? { target: opts.name } : {}),
 					cmd,
@@ -182,7 +190,9 @@ const gatedOff = new Set();
  * @type {(...names: string[]) => void}
  */
 function noteGated(...names) {
-	for (const name of names) gatedOff.add(name);
+	for (const name of names) {
+		gatedOff.add(name);
+	}
 }
 
 // --- coding-agent image (container hosts) ------------------------------------
@@ -320,7 +330,11 @@ if (containerTool) {
 		);
 	}
 } else {
-	noteGated("coding-agent-image", "llama-swap-image", "llm-reverse-proxy-image");
+	noteGated(
+		"coding-agent-image",
+		"llama-swap-image",
+		"llm-reverse-proxy-image",
+	);
 }
 
 // --- llm-reverse-proxy native binary (no container backend available) -------
@@ -393,8 +407,7 @@ const selected = [
 	...targets.filter((t) => t.name === "termux-provisioning"),
 	...(requested.length > 0
 		? targets.filter(
-				(t) =>
-					t.name !== "termux-provisioning" && requested.includes(t.name),
+				(t) => t.name !== "termux-provisioning" && requested.includes(t.name),
 			)
 		: targets.filter((t) => t.name !== "termux-provisioning")),
 ];

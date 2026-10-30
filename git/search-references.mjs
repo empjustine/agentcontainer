@@ -72,7 +72,9 @@ const INDEX_MOUNT = "/data/index";
 
 /** @returns {string|null} the container runtime, or null when none is present. */
 function containerTool() {
-	if (process.env.CONTAINER_TOOL) return process.env.CONTAINER_TOOL;
+	if (process.env.CONTAINER_TOOL) {
+		return process.env.CONTAINER_TOOL;
+	}
 	for (const tool of ["podman", "docker"]) {
 		if (spawnSync(tool, ["--version"], { stdio: "ignore" }).status === 0) {
 			return tool;
@@ -289,7 +291,9 @@ async function cmdIndex(argv) {
 		ok: repos.length - failed,
 		failed,
 	});
-	if (failed) process.exitCode = 1;
+	if (failed) {
+		process.exitCode = 1;
+	}
 }
 
 /**
@@ -458,7 +462,9 @@ async function queryOneShot(tool, o) {
  */
 async function cmdQuery(argv) {
 	const o = parseQueryArgs(argv);
-	if (!o.query) throw new Error("empty query");
+	if (!o.query) {
+		throw new Error("empty query");
+	}
 
 	if (o.server) {
 		// A configured-but-unreachable server should not be fatal when the index
@@ -493,7 +499,9 @@ async function cmdQuery(argv) {
 	// Only the one-shot path needs the engine; a reachable server is queried
 	// with plain fetch and never needs a container tool on this host.
 	const tool = containerTool();
-	if (!tool) throw new Error("no podman or docker on PATH (docs/d043)");
+	if (!tool) {
+		throw new Error("no podman or docker on PATH (docs/d043)");
+	}
 	process.exitCode = await queryOneShot(tool, o);
 }
 

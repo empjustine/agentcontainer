@@ -217,18 +217,24 @@ export async function fetchCatalogSlice({ signal, fetchImpl = fetch } = {}) {
  */
 export function parseClinePassDocs(mdx) {
 	const section = mdx.split(/^## Models\s*$/m)[1]?.split(/^## /m)[0];
-	if (!section) return null;
+	if (!section) {
+		return null;
+	}
 	/** @type {string[]} */
 	const ids = [];
 	for (const line of section.split("\n")) {
 		const trimmed = line.trim();
-		if (!trimmed.startsWith("|")) continue;
+		if (!trimmed.startsWith("|")) {
+			continue;
+		}
 		const cells = trimmed
 			.split("|")
 			.slice(1, -1)
 			.map((c) => c.trim());
 		const raw = cells[1]?.replace(/`/g, "");
-		if (raw?.startsWith(CLINE_PASS_ID_PREFIX)) ids.push(raw);
+		if (raw?.startsWith(CLINE_PASS_ID_PREFIX)) {
+			ids.push(raw);
+		}
 	}
 	return ids.length > 0 ? ids : null;
 }
@@ -254,11 +260,15 @@ export async function fetchDocsIds({ signal, fetchImpl = fetch } = {}) {
 			const res = await fetchImpl(CLINE_PASS_DOCS_URL, {
 				signal: signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 			});
-			if (!res.ok) throw new Error(`docs file answered ${res.status}`);
+			if (!res.ok) {
+				throw new Error(`docs file answered ${res.status}`);
+			}
 			mdx = await res.text();
 		}
 		const ids = parseClinePassDocs(mdx);
-		if (!ids) throw new Error("no ## Models table with prefixed ids");
+		if (!ids) {
+			throw new Error("no ## Models table with prefixed ids");
+		}
 		return ids;
 	} catch (err) {
 		logWarn("cline-pass docs lineup unreadable", { error: err });
