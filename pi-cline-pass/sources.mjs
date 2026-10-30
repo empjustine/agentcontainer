@@ -276,7 +276,7 @@ export async function fetchDocsIds({ signal, fetchImpl = fetch } = {}) {
  * @returns {readonly string[]} the allowlist ids (catalog-namespace)
  */
 export function resolveAllowlist(docsIds, records) {
-	if (!docsIds?.length) {
+	if (docsIds?.length === 0) {
 		logWarn("cline-pass docs lineup unavailable — using committed lineup", {
 			fallback: CLINE_PASS_LINEUP.length,
 		});

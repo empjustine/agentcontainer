@@ -292,9 +292,9 @@ function createPacing(o) {
 		if (!entry) {
 			const seconds =
 				o.minInterval ??
-				(parseSoftwareForgeRemote(url) !== null
-					? SOFTWARE_FORGE_MIN_INTERVAL
-					: DEFAULT_MIN_INTERVAL);
+				(parseSoftwareForgeRemote(url) === null
+					? DEFAULT_MIN_INTERVAL
+					: SOFTWARE_FORGE_MIN_INTERVAL);
 			entry = { seconds, gate: createMinIntervalGate(seconds * 1000) };
 			byHost.set(host, entry);
 		}

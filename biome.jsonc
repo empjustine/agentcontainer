@@ -318,6 +318,7 @@
 			"useDefaultSwitchClause": "error",
 			"useDeprecatedReason": "error",
 			"useEnumInitializers": "error",
+			"useExplicitLengthCheck": "error",
 			"useExponentiationOperator": "error",
 			"useExportType": "error",
 			"useFilenamingConvention": "error",

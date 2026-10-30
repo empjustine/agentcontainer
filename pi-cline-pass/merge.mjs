@@ -223,11 +223,11 @@ function num(/** @type {unknown} */ value) {
 export function laysWithinPiModalities(modalities) {
 	const input = modalities?.input;
 	const output = modalities?.output;
-	if (input?.length && !input.includes(PI_MODALITY_CAPABILITY.input[0])) {
+	if (input?.length > 0&& !input.includes(PI_MODALITY_CAPABILITY.input[0])) {
 		return false;
 	}
 	if (
-		output?.length &&
+		output?.length > 0&&
 		!output.every((o) => PI_MODALITY_CAPABILITY.output.includes(o))
 	) {
 		return false;

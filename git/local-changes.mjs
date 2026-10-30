@@ -417,7 +417,7 @@ function formatRepo(info, o) {
 		["ignored", u.ignored],
 	];
 	for (const [label, entries] of sections) {
-		if (!entries.length) continue;
+		if (entries.length === 0) continue;
 		lines.push(`  ${label.toUpperCase()} (${entries.length})`);
 		for (const entry of capped(entries, o.maxEntries)) {
 			if (typeof entry === "string") {
@@ -428,7 +428,7 @@ function formatRepo(info, o) {
 		}
 	}
 
-	if (info.stashes.length) {
+	if (info.stashes.length > 0) {
 		lines.push(`  STASHES (${info.stashes.length})`);
 		for (const stash of info.stashes) {
 			lines.push(
@@ -437,13 +437,13 @@ function formatRepo(info, o) {
 		}
 	}
 
-	if (info.localOnly.length) {
+	if (info.localOnly.length > 0) {
 		lines.push(`  BRANCHES NOT ON ANY REMOTE (${info.localOnly.length})`);
 		for (const name of capped(info.localOnly, o.maxEntries))
 			lines.push(`    ${name}`);
 	}
 
-	if (info.aheadBranches.length) {
+	if (info.aheadBranches.length > 0) {
 		lines.push(`  AHEAD OF UPSTREAM (${info.aheadBranches.length})`);
 		for (const name of capped(info.aheadBranches, o.maxEntries)) {
 			const branch = info.branches.find((b) => b.name === name);
@@ -453,7 +453,7 @@ function formatRepo(info, o) {
 		}
 	}
 
-	if (info.goneBranches.length) {
+	if (info.goneBranches.length > 0) {
 		lines.push(`  UPSTREAM GONE (${info.goneBranches.length})`);
 		for (const name of capped(info.goneBranches, o.maxEntries))
 			lines.push(`    ${name}`);

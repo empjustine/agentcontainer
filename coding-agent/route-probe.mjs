@@ -568,7 +568,7 @@ export async function probeRoutes(candidates, providerId, headers) {
 		if (route.usable) return { url, ...route };
 		failures.push({ url, result: route.result, error: route.error });
 	}
-	if (failures.length) logWarn("reverse-proxy provider routes failed", { failures });
+	if (failures.length > 0) logWarn("reverse-proxy provider routes failed", { failures });
 	return null;
 }
 
@@ -609,6 +609,6 @@ export async function probeCandidates(candidates, accept) {
 			failures.push({ baseUrl, error: err });
 		}
 	}
-	if (failures.length) logWarn("reverse-proxy base candidates failed", { failures });
+	if (failures.length > 0) logWarn("reverse-proxy base candidates failed", { failures });
 	return null;
 }

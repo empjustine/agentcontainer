@@ -346,7 +346,7 @@ export function filterByGlobs(rels, only, exclude) {
 	const onlyFns = only.map(globMatcher);
 	const excludeFns = exclude.map(globMatcher);
 	return rels.filter((r) => {
-		if (onlyFns.length && !onlyFns.some((f) => f(r))) return false;
+		if (onlyFns.length > 0&& !onlyFns.some((f) => f(r))) return false;
 		if (excludeFns.some((f) => f(r))) return false;
 		return true;
 	});

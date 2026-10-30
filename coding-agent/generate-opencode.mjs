@@ -261,7 +261,7 @@ async function main() {
 
 	// d063 fail closed (d070 §6 removed SKIP_GEN): route probes need a
 	// configured reverse-proxy base, so generation refuses loudly without one.
-	if (!REVERSE_PROXY_BASE_CANDIDATES.length) {
+	if (REVERSE_PROXY_BASE_CANDIDATES.length === 0) {
 		logError(
 			"no REVERSE_PROXY_BASE_URLS — proxy-only generation cannot proceed (docs/d063); load the vault env via ./lib/environment.sh",
 		);

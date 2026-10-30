@@ -245,7 +245,7 @@ function installRouted(doc, base, label) {
 		routeUrlFromCanonical(base, factId, url),
 	);
 	const violations = installedViolations(doc, base);
-	if (violations.length) {
+	if (violations.length > 0) {
 		throw new Error(`${label}: ${violations.join("; ")} (docs/d070 §5)`);
 	}
 }
@@ -260,7 +260,7 @@ function installRouted(doc, base, label) {
  * @returns {string} the base, no trailing slash
  */
 function requireInstallBase(label) {
-	if (!reverseProxyBaseUrls().length) {
+	if (reverseProxyBaseUrls().length === 0) {
 		logError(
 			"no REVERSE_PROXY_BASE_URLS — cannot substitute client routes (docs/d070); load the vault env via ./lib/environment.sh",
 			{ stage: label },
@@ -338,17 +338,7 @@ currentStage = "settings-install";
 // --- settings.json: install FIRST, so it lands even if every stage fails ----
 const settingsPath = join(agentDir, "settings.json");
 if (scriptDir !== agentDir) {
-	if (!existsSync(join(scriptDir, "settings.json"))) {
-		// Incomplete generator tree (a consumer copied only some of this dir's
-		// inputs). Reported at error level because it is never expected, but
-		// non-fatal on purpose: the caller's staged settings.json is already in
-		// place and none of the stages below depend on this file, so aborting
-		// here would cost the whole generation for a static file.
-		logError("settings.json source missing — keeping the agent dir's copy", {
-			path: join(scriptDir, "settings.json"),
-			agentSettings: settingsPath,
-		});
-	} else {
+	if (existsSync(join(scriptDir, "settings.json"))) {
 		// Best-effort pre-overwrite insurance (compare/rollback a bad
 		// generate), NOT a preservation contract: the agent dir's copies are
 		// generated ephemeral files (see the fileoverview) and pi re-persists
@@ -361,6 +351,16 @@ if (scriptDir !== agentDir) {
 		}
 		writeArtifact(settingsPath, readFileSync(join(scriptDir, "settings.json"), "utf-8"));
 		logInfo("settings.json installed", { path: settingsPath });
+	} else {
+		// Incomplete generator tree (a consumer copied only some of this dir's
+		// inputs). Reported at error level because it is never expected, but
+		// non-fatal on purpose: the caller's staged settings.json is already in
+		// place and none of the stages below depend on this file, so aborting
+		// here would cost the whole generation for a static file.
+		logError("settings.json source missing — keeping the agent dir's copy", {
+			path: join(scriptDir, "settings.json"),
+			agentSettings: settingsPath,
+		});
 	}
 }
 
@@ -375,15 +375,7 @@ currentStage = "mcp-install";
 const mcpPath = join(agentDir, "mcp.json");
 if (scriptDir !== agentDir) {
 	const mcpSource = join(scriptDir, "mcp.json");
-	if (!existsSync(mcpSource)) {
-		// Same non-fatal contract as the settings source above: a consumer that
-		// copied only part of this dir keeps the mcp.json already in place rather
-		// than dropping MCP config over a missing input.
-		logError("mcp.json source missing — keeping the agent dir's copy", {
-			path: mcpSource,
-			agentMcp: mcpPath,
-		});
-	} else {
+	if (existsSync(mcpSource)) {
 		const defaults = readMcpConfig(mcpSource)?.mcpServers ?? {};
 		const current = existsSync(mcpPath) ? readMcpConfig(mcpPath) : {};
 		if (current !== null) {
@@ -399,6 +391,14 @@ if (scriptDir !== agentDir) {
 				servers: Object.keys(mcpServers),
 			});
 		}
+	} else {
+		// Same non-fatal contract as the settings source above: a consumer that
+		// copied only part of this dir keeps the mcp.json already in place rather
+		// than dropping MCP config over a missing input.
+		logError("mcp.json source missing — keeping the agent dir's copy", {
+			path: mcpSource,
+			agentMcp: mcpPath,
+		});
 	}
 }
 

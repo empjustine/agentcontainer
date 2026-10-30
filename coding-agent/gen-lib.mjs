@@ -182,11 +182,11 @@ export const PI_MODALITY_CAPABILITY = Object.freeze({
 export function modalitiesEligible(modalities) {
 	const input = modalities?.input;
 	const output = modalities?.output;
-	if (input?.length && !input.includes(PI_MODALITY_CAPABILITY.input[0])) {
+	if (input?.length > 0&& !input.includes(PI_MODALITY_CAPABILITY.input[0])) {
 		return false;
 	}
 	if (
-		output?.length &&
+		output?.length > 0&&
 		!output.every((o) => PI_MODALITY_CAPABILITY.output.includes(o))
 	) {
 		return false;
@@ -212,7 +212,7 @@ export function toInput(modalities) {
 	const input = PI_MODALITY_CAPABILITY.input.filter((m) =>
 		modalities?.includes(m),
 	);
-	return input.length ? input : [PI_MODALITY_CAPABILITY.input[0]];
+	return input.length > 0? input : [PI_MODALITY_CAPABILITY.input[0]];
 }
 
 /**

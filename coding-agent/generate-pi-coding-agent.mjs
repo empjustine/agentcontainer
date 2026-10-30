@@ -207,7 +207,7 @@ const MODEL_SCOPES = {
 		if (/embedding/i.test(id)) return false;
 		const input = record?.modalities?.input;
 		const output = record?.modalities?.output;
-		if (!input?.length || !output?.length) {
+		if (input?.length === 0|| output?.length === 0) {
 			return (
 				/^gemini-/.test(id) && !/(-image|-tts|-live|-computer-use)/i.test(id)
 			);
@@ -443,7 +443,7 @@ function readClinePassDocs() {
 function resolveClinePassAllowlist(modelsDevModels) {
 	const docs = readClinePassDocs();
 	const docsIds = docs ? parseClinePassDocs(docs) : null;
-	if (!docsIds?.length) {
+	if (docsIds?.length === 0) {
 		logWarn("cline-pass docs lineup unavailable — using committed allowlist", {
 			fallback: CLINE_PASS_LINEUP.length,
 		});
@@ -592,7 +592,7 @@ function readOpencodeGoDocs() {
 function resolveOpencodeGoApi(modelsDevModels) {
 	const docs = readOpencodeGoDocs();
 	const docsApi = docs ? parseOpencodeGoEndpoints(docs) : null;
-	if (!docsApi?.size) {
+	if (docsApi?.size === 0) {
 		logWarn(
 			"opencode-go endpoints table unavailable — every model keeps the provider-wide default api",
 			{},
@@ -1073,7 +1073,7 @@ function hyperFactsRecord(l) {
 			cache_read: l.cost_per_1m_out_cached ?? 0,
 			cache_write: l.cost_per_1m_in_cached ?? 0,
 		},
-		reasoning_options: levels.length
+		reasoning_options: levels.length > 0
 			? [{ type: "effort", values: levels }]
 			: [],
 	};
@@ -1139,7 +1139,7 @@ function verbooFactsRecord(l) {
 		modalities: { input: l.vision === true ? ["text", "image"] : ["text"] },
 		limit: { context: l.context_window },
 		cost: null,
-		reasoning_options: levels.length
+		reasoning_options: levels.length > 0
 			? [{ type: "effort", values: levels }]
 			: [],
 	};
@@ -1203,7 +1203,7 @@ function listingModels(entries, spec) {
 				(filter?.(e.id) ?? true),
 		)
 		.map(piModel);
-	return models.length ? models : null;
+	return models.length > 0? models : null;
 }
 
 /**
@@ -1240,7 +1240,7 @@ function emitMinimalCatalogOverride(spec, providers) {
 			if (filter?.(m.id) ?? true) ids.add(m.id);
 		}
 	}
-	if (!ids.size) {
+	if (ids.size === 0) {
 		logWarn("no model list available — canonical reroute with an empty lineup", {
 			provider: spec.id,
 		});
@@ -1344,7 +1344,7 @@ async function emitFull(spec) {
 	// could authenticate it; empty entries (401/403 without a key) mean the
 	// route proved but says nothing, so nothing is bounded (docs/d033).
 	const routeIds =
-		route?.entries.length
+		route?.entries.length > 0
 			? new Set(route.entries.map((e) => e.id))
 			: null;
 	/**
@@ -1421,7 +1421,7 @@ async function emitFull(spec) {
 		}
 	}
 
-	if (!models.length) {
+	if (models.length === 0) {
 		// d063 §3: still written, empty — a stale committed DIRECT block must
 		// never survive a successful regeneration.
 		logWarn("no models resolved — writing an empty lineup", {
@@ -1461,7 +1461,7 @@ async function generateCloudProviders() {
 	// d063 §4 fail closed (d070 §6 removed the SKIP_GEN escape): with no
 	// reverse-proxy base there is no route to probe — the probes are why the
 	// base is required at generate time (docs/d070 §7).
-	if (!REVERSE_PROXY_BASE_CANDIDATES.length) {
+	if (REVERSE_PROXY_BASE_CANDIDATES.length === 0) {
 		throw new Error(
 			"no REVERSE_PROXY_BASE_URLS — refusing to generate (docs/d063); load the vault env via ./lib/environment.sh",
 		);
@@ -1745,7 +1745,7 @@ async function main() {
 	// d063 fail closed (d070 §6 removed SKIP_GEN): route probes and the
 	// install-time substitution both need a configured reverse-proxy base —
 	// generation refuses loudly without one.
-	if (!REVERSE_PROXY_BASE_CANDIDATES.length) {
+	if (REVERSE_PROXY_BASE_CANDIDATES.length === 0) {
 		logError(
 			"no REVERSE_PROXY_BASE_URLS — proxy-only generation cannot proceed (docs/d063); load the vault env via ./lib/environment.sh",
 		);

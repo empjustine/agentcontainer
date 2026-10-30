@@ -54,7 +54,7 @@ function asArray(data) {
 		}
 		const entries = Object.entries(obj);
 		if (
-			entries.length &&
+			entries.length > 0&&
 			entries.every(([, v]) => v && typeof v === "object")
 		) {
 			return entries.map(([key, value]) => ({
@@ -153,7 +153,7 @@ function harToManifest(har, opts = {}) {
 		}
 		if (/\/api2\/v2\/projects\/list/.test(url)) {
 			const list = asArray(data);
-			if (list.length) projects = list;
+			if (list.length > 0) projects = list;
 		}
 		const match = /\/s2\/([^/]+)\/scm\/api\/repository/.exec(url);
 		if (match) repoBodies.set(decodeURIComponent(match[1]), data);
@@ -182,7 +182,7 @@ function harToManifest(har, opts = {}) {
 			})
 			.filter((project) => project.id)
 	);
-	if (!projectList.length) {
+	if (projectList.length === 0) {
 		for (const id of repoBodies.keys()) {
 			projectList.push({
 				id: id,

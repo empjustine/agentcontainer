@@ -154,9 +154,9 @@ export function installedViolations(doc, base) {
 		if (base !== undefined) {
 			if (!url.startsWith(`${base}/`)) {
 				out.push(
-					canonical !== undefined
-						? `${id}: still carries canonical upstream ${canonical}: ${url}`
-						: `${id}: not under the configured base ${base}: ${url}`,
+					canonical === undefined
+						? `${id}: not under the configured base ${base}: ${url}`
+						: `${id}: still carries canonical upstream ${canonical}: ${url}`,
 				);
 			}
 			continue;
@@ -239,7 +239,7 @@ function main(args) {
 	} catch (err) {
 		violations = [`unreadable or invalid JSON: ${String(err)}`];
 	}
-	if (violations.length) {
+	if (violations.length > 0) {
 		for (const v of violations) console.error(`${mode} ${path}: ${v}`);
 		process.exit(1);
 	}
