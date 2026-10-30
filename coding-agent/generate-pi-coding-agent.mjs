@@ -207,7 +207,7 @@ const MODEL_SCOPES = {
 		if (/embedding/i.test(id)) return false;
 		const input = record?.modalities?.input;
 		const output = record?.modalities?.output;
-		if (input?.length === 0|| output?.length === 0) {
+		if (input?.length === 0 || output?.length === 0) {
 			return (
 				/^gemini-/.test(id) && !/(-image|-tts|-live|-computer-use)/i.test(id)
 			);
@@ -887,7 +887,7 @@ function buildThinkingLevelMap(reasoningOptions) {
  *   and undefined for an all-zero block, by the shared piCost rule
  */
 function toCost(cost) {
-	if (cost === null || cost === undefined) return undefined;
+	if (cost === null || cost === undefined) return;
 	// Only the field names differ between the two sources (models.dev spells
 	// the cache prices cache_read/cache_write); "complete or absent" is
 	// piCost's rule, shared with the llama-swap path in gen-lib (docs/d057).
@@ -1040,7 +1040,6 @@ function loadProvider(spec) {
 	);
 }
 
-
 /**
  * Rebuild a raw hyper facts (live `/provider`) record as a models.dev-shaped
  * model record, so the enrichment reuses catalogPiModel()'s full derivation
@@ -1073,9 +1072,8 @@ function hyperFactsRecord(l) {
 			cache_read: l.cost_per_1m_out_cached ?? 0,
 			cache_write: l.cost_per_1m_in_cached ?? 0,
 		},
-		reasoning_options: levels.length > 0
-			? [{ type: "effort", values: levels }]
-			: [],
+		reasoning_options:
+			levels.length > 0 ? [{ type: "effort", values: levels }] : [],
 	};
 }
 
@@ -1139,9 +1137,8 @@ function verbooFactsRecord(l) {
 		modalities: { input: l.vision === true ? ["text", "image"] : ["text"] },
 		limit: { context: l.context_window },
 		cost: null,
-		reasoning_options: levels.length > 0
-			? [{ type: "effort", values: levels }]
-			: [],
+		reasoning_options:
+			levels.length > 0 ? [{ type: "effort", values: levels }] : [],
 	};
 }
 
@@ -1203,7 +1200,7 @@ function listingModels(entries, spec) {
 				(filter?.(e.id) ?? true),
 		)
 		.map(piModel);
-	return models.length > 0? models : null;
+	return models.length > 0 ? models : null;
 }
 
 /**
@@ -1241,9 +1238,12 @@ function emitMinimalCatalogOverride(spec, providers) {
 		}
 	}
 	if (ids.size === 0) {
-		logWarn("no model list available — canonical reroute with an empty lineup", {
-			provider: spec.id,
-		});
+		logWarn(
+			"no model list available — canonical reroute with an empty lineup",
+			{
+				provider: spec.id,
+			},
+		);
 	}
 	const models = [...ids].map((mid) => piModel({ id: mid }));
 	applyModelApi(spec, models);
@@ -1287,14 +1287,17 @@ async function emitOverrideOnly(spec, providers) {
 		return;
 	}
 
-	const route = await probeRoutes(REVERSE_PROXY_BASE_CANDIDATES, spec.id, headers);
+	const route = await probeRoutes(
+		REVERSE_PROXY_BASE_CANDIDATES,
+		spec.id,
+		headers,
+	);
 	// d063 §2 / d070 §4: the probe only selects the LINEUP source — the
 	// emitted URL is canonical either way.
 	if (!route) {
-		logWarn(
-			"no usable route — lineup degrades to the catalog (docs/d063)",
-			{ provider: spec.id },
-		);
+		logWarn("no usable route — lineup degrades to the catalog (docs/d063)", {
+			provider: spec.id,
+		});
 		emitMinimalCatalogOverride(spec, providers);
 		return;
 	}
@@ -1333,7 +1336,11 @@ async function emitOverrideOnly(spec, providers) {
 async function emitFull(spec) {
 	const provider = loadProvider(spec);
 	const headers = bearerHeaders(process.env[spec.envKey]?.trim());
-	const route = await probeRoutes(REVERSE_PROXY_BASE_CANDIDATES, spec.id, headers);
+	const route = await probeRoutes(
+		REVERSE_PROXY_BASE_CANDIDATES,
+		spec.id,
+		headers,
+	);
 	if (!route) {
 		logWarn(
 			"no usable route — lineup degrades to the catalog/facts cascade (docs/d063)",
@@ -1344,9 +1351,7 @@ async function emitFull(spec) {
 	// could authenticate it; empty entries (401/403 without a key) mean the
 	// route proved but says nothing, so nothing is bounded (docs/d033).
 	const routeIds =
-		route?.entries.length > 0
-			? new Set(route.entries.map((e) => e.id))
-			: null;
+		route?.entries.length > 0 ? new Set(route.entries.map((e) => e.id)) : null;
 	/**
 	 * The artifact's provider URL (docs/d070 §1): the fact table's real
 	 * upstream, keyed by id — never string-derived from a configured base.

@@ -57,11 +57,8 @@ export {
 	probeCandidates,
 	probeRoutes,
 };
-export const {
-	CLOUD_PROVIDERS,
-	PI_NATIVE_CLOUD_IDS,
-	supportTier,
-} = cloudProviders;
+export const { CLOUD_PROVIDERS, PI_NATIVE_CLOUD_IDS, supportTier } =
+	cloudProviders;
 
 /**
  * pi shaping (folded in from the former lib/pi-models.mjs — docs/d039): shape
@@ -142,7 +139,7 @@ const LLAMA_SWAP_COMPAT = Object.freeze({
  */
 function displayName(id) {
 	const m = /^([^-]+)-ctx(\d+)-(.+)$/.exec(id);
-	if (!m) return undefined;
+	if (!m) return;
 	const [, , , repoFull] = m;
 	const [repoPath, quant] = repoFull.split(":");
 	const base = (repoPath.split("/").pop() ?? "").replace(/-GGUF$/i, "");
@@ -182,11 +179,11 @@ export const PI_MODALITY_CAPABILITY = Object.freeze({
 export function modalitiesEligible(modalities) {
 	const input = modalities?.input;
 	const output = modalities?.output;
-	if (input?.length > 0&& !input.includes(PI_MODALITY_CAPABILITY.input[0])) {
+	if (input?.length > 0 && !input.includes(PI_MODALITY_CAPABILITY.input[0])) {
 		return false;
 	}
 	if (
-		output?.length > 0&&
+		output?.length > 0 &&
 		!output.every((o) => PI_MODALITY_CAPABILITY.output.includes(o))
 	) {
 		return false;
@@ -212,7 +209,7 @@ export function toInput(modalities) {
 	const input = PI_MODALITY_CAPABILITY.input.filter((m) =>
 		modalities?.includes(m),
 	);
-	return input.length > 0? input : [PI_MODALITY_CAPABILITY.input[0]];
+	return input.length > 0 ? input : [PI_MODALITY_CAPABILITY.input[0]];
 }
 
 /**
@@ -234,7 +231,7 @@ export function toInput(modalities) {
  *   nothing is priced — the caller drops the key
  */
 export function piCost(cost) {
-	if (!cost) return undefined;
+	if (!cost) return;
 	const price = {
 		input: cost.input ?? 0,
 		output: cost.output ?? 0,
@@ -305,7 +302,9 @@ export function providerEntry(baseUrl, models) {
 		baseUrl: `${baseUrl}/v1`,
 		api: "openai-completions",
 		compat: LLAMA_SWAP_COMPAT,
-		...(process.env.REVERSE_PROXY_API_KEY?.trim() ? { apiKey: "$REVERSE_PROXY_API_KEY" } : {}),
+		...(process.env.REVERSE_PROXY_API_KEY?.trim()
+			? { apiKey: "$REVERSE_PROXY_API_KEY" }
+			: {}),
 		models,
 	};
 }
@@ -359,7 +358,5 @@ export function providerReroute(providerUrl, models) {
  * @returns {string}
  */
 export function modelsDevCatalogPath() {
-	return (
-		process.env.MODELS_DEV_JSON ?? join(LIB_DIR, "models.dev.api.json")
-	);
+	return process.env.MODELS_DEV_JSON ?? join(LIB_DIR, "models.dev.api.json");
 }

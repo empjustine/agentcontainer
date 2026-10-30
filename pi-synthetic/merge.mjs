@@ -165,7 +165,7 @@ export function thinkingLevelMapFor(efforts) {
  * @returns {Cost|undefined}
  */
 export function piCost(cost) {
-	if (!cost) return undefined;
+	if (!cost) return;
 	const { input, output, cacheRead, cacheWrite } = cost;
 	if (
 		input === undefined ||
@@ -173,7 +173,7 @@ export function piCost(cost) {
 		cacheRead === undefined ||
 		cacheWrite === undefined
 	) {
-		return undefined;
+		return;
 	}
 	const price = { input, output, cacheRead, cacheWrite };
 	return Object.values(price).some((value) => value !== 0) ? price : undefined;
@@ -190,11 +190,11 @@ export function piCost(cost) {
 export function laysWithinPiModalities(modalities) {
 	const input = modalities?.input;
 	const output = modalities?.output;
-	if (input?.length > 0&& !input.includes(PI_MODALITY_CAPABILITY.input[0])) {
+	if (input?.length > 0 && !input.includes(PI_MODALITY_CAPABILITY.input[0])) {
 		return false;
 	}
 	if (
-		output?.length > 0&&
+		output?.length > 0 &&
 		!output.every((o) => PI_MODALITY_CAPABILITY.output.includes(o))
 	) {
 		return false;
@@ -230,7 +230,7 @@ function strings(/** @type {unknown} */ value) {
 function num(/** @type {unknown} */ value) {
 	const raw =
 		typeof value === "string" ? value.trim().replace(/^\$/, "") : value;
-	if (raw === "" || raw === undefined || raw === null) return undefined;
+	if (raw === "" || raw === undefined || raw === null) return;
 	const n = typeof raw === "number" ? raw : Number(raw);
 	return Number.isFinite(n) ? n : undefined;
 }
@@ -254,7 +254,7 @@ function perMillion(/** @type {unknown} */ value) {
 function aliasTarget(row) {
 	const serves =
 		typeof row.hugging_face_id === "string" ? row.hugging_face_id : "";
-	if (!serves) return undefined;
+	if (!serves) return;
 	const prefixed = `hf:${serves}`;
 	return prefixed === row.id ? undefined : prefixed;
 }
@@ -268,7 +268,7 @@ function aliasTarget(row) {
  */
 function effortsOf(row) {
 	const efforts = strings(row.reasoning_parameters?.efforts);
-	if (!efforts || efforts.length === 0) return undefined;
+	if (!efforts || efforts.length === 0) return;
 	return efforts.map((e) => e.toLowerCase());
 }
 
@@ -279,12 +279,12 @@ function effortsOf(row) {
  * @returns {MergedModel|undefined}
  */
 export function shapeRow(row) {
-	if (typeof row?.id !== "string" || row.id.length === 0) return undefined;
+	if (typeof row?.id !== "string" || row.id.length === 0) return;
 	const input = strings(row.input_modalities);
 	const output = strings(row.output_modalities);
 	// Gate BEFORE projecting: trimming first would turn an audio-only input into
 	// the text fallback and admit a model pi cannot drive.
-	if (!laysWithinPiModalities({ input, output })) return undefined;
+	if (!laysWithinPiModalities({ input, output })) return;
 	const pricing = row.pricing ?? {};
 	const target = aliasTarget(row);
 	return {

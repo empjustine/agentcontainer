@@ -97,7 +97,7 @@ function withSeed(models: MergedModel[]): unknown[] {
 function fromStore(context: RefreshContext): unknown[] | undefined {
 	const stored = context.stored;
 	if (!stored || !Array.isArray(stored.models) || stored.models.length === 0) {
-		return undefined;
+		return;
 	}
 	return stored.models;
 }

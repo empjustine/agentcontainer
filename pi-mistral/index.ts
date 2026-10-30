@@ -125,13 +125,13 @@ export default function piMistral(pi: ExtensionAPI): void {
 		// apiKey/headers (the built-in provider's own). See the fileoverview.
 		refreshModels: async (context: RefreshContext = {}) => {
 			context.signal?.throwIfAborted();
-			if (context.allowNetwork === false) return undefined;
+			if (context.allowNetwork === false) return;
 			// The listing is auth-gated, so without a key there is nothing this
 			// watchdog can observe — and nothing to warn about: pi hides an
 			// unconfigured provider from /model already.
-			if (!process.env[MISTRAL_API_KEY_ENV]?.trim()) return undefined;
+			if (!process.env[MISTRAL_API_KEY_ENV]?.trim()) return;
 			if (!context.force && Date.now() - lastAttemptAt < REFRESH_INTERVAL_MS) {
-				return undefined;
+				return;
 			}
 			lastAttemptAt = Date.now();
 			try {
@@ -152,7 +152,7 @@ export default function piMistral(pi: ExtensionAPI): void {
 			// Success returns undefined on purpose: the fresh lineup is the ids
 			// only, and pi's built-in rows carry names, limits, prices and
 			// thinking maps this file neither has nor could improve.
-			return undefined;
+			return;
 		},
 	});
 }

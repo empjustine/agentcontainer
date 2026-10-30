@@ -380,6 +380,7 @@
 			"noUselessTernary": "error",
 			"noUselessThisAlias": "error",
 			"noUselessTypeConstraint": "error",
+			"noUselessUndefined": "error",
 			"noUselessUndefinedInitialization": "error",
 			"noVoid": "error",
 			"useArrowFunction": "error",

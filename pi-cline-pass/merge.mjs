@@ -171,7 +171,7 @@ export function thinkingLevelMapFor(efforts) {
  * @returns {Cost|undefined}
  */
 export function piCost(cost) {
-	if (!cost) return undefined;
+	if (!cost) return;
 	const price = {
 		input: cost.input ?? 0,
 		output: cost.output ?? 0,
@@ -190,7 +190,7 @@ export function piCost(cost) {
  * @returns {Cost|undefined}
  */
 function toCost(cost) {
-	if (cost === null || cost === undefined) return undefined;
+	if (cost === null || cost === undefined) return;
 	return piCost({
 		input: cost.input,
 		output: cost.output,
@@ -208,7 +208,7 @@ function strings(/** @type {unknown} */ value) {
 
 /** A finite number, or undefined. */
 function num(/** @type {unknown} */ value) {
-	if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
+	if (typeof value !== "number" || !Number.isFinite(value)) return;
 	return value;
 }
 
@@ -223,11 +223,11 @@ function num(/** @type {unknown} */ value) {
 export function laysWithinPiModalities(modalities) {
 	const input = modalities?.input;
 	const output = modalities?.output;
-	if (input?.length > 0&& !input.includes(PI_MODALITY_CAPABILITY.input[0])) {
+	if (input?.length > 0 && !input.includes(PI_MODALITY_CAPABILITY.input[0])) {
 		return false;
 	}
 	if (
-		output?.length > 0&&
+		output?.length > 0 &&
 		!output.every((o) => PI_MODALITY_CAPABILITY.output.includes(o))
 	) {
 		return false;
@@ -256,7 +256,7 @@ function toInput(input) {
  */
 export function shapeRow(record) {
 	const id = record?.id;
-	if (typeof id !== "string" || id.length === 0) return undefined;
+	if (typeof id !== "string" || id.length === 0) return;
 	// Documented family/id exception (docs/d049, fleet parity): models.dev
 	// labels embedding endpoints output ["text"], so the modality gate below
 	// would trust that label — this check is what refuses them.
@@ -264,13 +264,13 @@ export function shapeRow(record) {
 		record.family === "text-embedding" ||
 		id.toLowerCase().includes("embedding")
 	) {
-		return undefined;
+		return;
 	}
 	const input = strings(record.modalities?.input);
 	const output = strings(record.modalities?.output);
 	// Gate BEFORE projecting: trimming first would turn an audio-only input
 	// into the text fallback and admit a model pi cannot drive.
-	if (!laysWithinPiModalities({ input, output })) return undefined;
+	if (!laysWithinPiModalities({ input, output })) return;
 	const efforts = effortValues(record);
 	return {
 		id,

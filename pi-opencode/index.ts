@@ -135,9 +135,9 @@ function watchdog(providerId: string, listingUrl: string) {
 	return {
 		refreshModels: async (context: RefreshContext = {}) => {
 			context.signal?.throwIfAborted();
-			if (context.allowNetwork === false) return undefined;
+			if (context.allowNetwork === false) return;
 			if (!context.force && Date.now() - lastAttemptAt < REFRESH_INTERVAL_MS) {
-				return undefined;
+				return;
 			}
 			lastAttemptAt = Date.now();
 			try {
@@ -158,7 +158,7 @@ function watchdog(providerId: string, listingUrl: string) {
 			// Success returns undefined on purpose: the fresh lineup is the ids
 			// only, and pi's built-in rows carry names, limits, prices, dialects
 			// and thinking maps this file neither has nor could improve.
-			return undefined;
+			return;
 		},
 	};
 }

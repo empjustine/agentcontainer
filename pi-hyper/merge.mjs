@@ -128,7 +128,7 @@ const ON_OFF_THINKING_LEVEL_MAP = Object.freeze({
  */
 export function effortValues(record) {
 	const levels = record?.reasoning_levels;
-	if (!Array.isArray(levels) || levels.length === 0) return undefined;
+	if (!Array.isArray(levels) || levels.length === 0) return;
 	return levels.map((v) => String(v).toLowerCase());
 }
 
@@ -165,7 +165,7 @@ export function thinkingLevelMapFor(efforts) {
  * @returns {{input: number, output: number, cacheRead: number, cacheWrite: number}|undefined}
  */
 export function piCost(cost) {
-	if (!cost) return undefined;
+	if (!cost) return;
 	const price = {
 		input: cost.input ?? 0,
 		output: cost.output ?? 0,
@@ -196,7 +196,7 @@ function toCost(record) {
 
 /** A finite number, or undefined. */
 function num(/** @type {unknown} */ value) {
-	if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
+	if (typeof value !== "number" || !Number.isFinite(value)) return;
 	return value;
 }
 
@@ -219,7 +219,7 @@ function toInput(record) {
  */
 export function shapeRow(record) {
 	const id = record?.id;
-	if (typeof id !== "string" || id.length === 0) return undefined;
+	if (typeof id !== "string" || id.length === 0) return;
 	const efforts = effortValues(record);
 	const reasoning = record.can_reason === true;
 	return {

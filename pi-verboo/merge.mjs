@@ -94,7 +94,7 @@ const EFFORT_TO_PI = Object.freeze({
  */
 export function effortValues(row) {
 	const levels = row?.reasoning?.effort_levels;
-	if (!Array.isArray(levels) || levels.length === 0) return undefined;
+	if (!Array.isArray(levels) || levels.length === 0) return;
 	return levels.map((v) => String(v).toLowerCase());
 }
 
@@ -124,7 +124,7 @@ export function thinkingLevelMapFor(efforts) {
 
 /** A finite number, or undefined. */
 function num(/** @type {unknown} */ value) {
-	if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
+	if (typeof value !== "number" || !Number.isFinite(value)) return;
 	return value;
 }
 
@@ -147,7 +147,7 @@ function toInput(row) {
  */
 export function shapeRow(row) {
 	const id = row?.id;
-	if (typeof id !== "string" || id.length === 0) return undefined;
+	if (typeof id !== "string" || id.length === 0) return;
 	const efforts = effortValues(row);
 	return {
 		id,
