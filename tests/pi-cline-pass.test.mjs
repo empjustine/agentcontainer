@@ -106,7 +106,7 @@ test("the fact table is the only place the upstream and key env are spelled", ()
 	assert.equal(CLINE_PASS_PROVIDER_ID, clinePass.id);
 	assert.equal(CLINE_PASS_NAME, clinePass.label);
 	assert.equal(CLINE_PASS_API_KEY_ENV, clinePass.apiKeyEnv);
-	assert.equal(CLINE_PASS_ID_PREFIX, CLINE_PASS_PROVIDER_ID + "/");
+	assert.equal(CLINE_PASS_ID_PREFIX, `${CLINE_PASS_PROVIDER_ID}/`);
 });
 
 test("the catalog read is one canonical https fetch, whatever else is overridden", async () => {
@@ -220,7 +220,7 @@ test("the docs fetch degrades to null — it never throws", async () => {
 	});
 	assert.ok(
 		seen.startsWith("https://raw.githubusercontent.com/cline/cline/"),
-		seen + " must be the canonical raw file, not a redirectable surface",
+		`${seen} must be the canonical raw file, not a redirectable surface`,
 	);
 });
 
@@ -392,7 +392,7 @@ test("the manifest omits an unpublishable cost; the extension fills zeros", () =
 	// pi-synthetic verified its own.
 	const [unpriced] = shapeCatalog(
 		{ "cline-pass/glm-5.2": record({ cost: { input: 0, output: 0 } }) },
-		[CLINE_PASS_ID_PREFIX + "glm-5.2"],
+		[`${CLINE_PASS_ID_PREFIX}glm-5.2`],
 	);
 	assert.equal("cost" in toPiModel(unpriced), false);
 	assert.deepEqual(toExtensionModel(unpriced).cost, {
@@ -409,7 +409,7 @@ test("every extension key is one pi defines — and the compat fact rides per mo
 	// (docs/d022/d033) must live on every model or it is silently lost.
 	const [model] = shapeCatalog(
 		{ "cline-pass/glm-5.2": record() },
-		[CLINE_PASS_ID_PREFIX + "glm-5.2"],
+		[`${CLINE_PASS_ID_PREFIX}glm-5.2`],
 	);
 	const entry = toExtensionModel(model);
 	assert.deepEqual(Object.keys(entry).sort(), [
@@ -448,7 +448,7 @@ test("models are emitted sorted, allowlist-filtered, prefix-carrying", () => {
 			"cline-pass/not-listed": record(),
 			"wrong-namespace": record(),
 		},
-		[CLINE_PASS_ID_PREFIX + "z-last", CLINE_PASS_ID_PREFIX + "a-first"],
+		[`${CLINE_PASS_ID_PREFIX}z-last`, `${CLINE_PASS_ID_PREFIX}a-first`],
 	);
 	assert.deepEqual(models.map((m) => m.id), [
 		"cline-pass/a-first",
@@ -469,7 +469,7 @@ test("committed models.json carries the fact-table upstream and provider compat"
 	assert.equal(provider.name, CLINE_PASS_NAME);
 	assert.equal(provider.baseUrl, clinePass.baseUrl);
 	assert.equal(provider.api, "openai-completions");
-	assert.equal(provider.apiKey, "$" + clinePass.apiKeyEnv);
+	assert.equal(provider.apiKey, `$${clinePass.apiKeyEnv}`);
 	assert.equal(provider.authHeader, true);
 	// The fleet's shape: the compat fact at the provider level (modelCompat
 	// is null there — nothing per-model in this artifact).
@@ -480,7 +480,7 @@ test("committed models.json carries the fact-table upstream and provider compat"
 	for (const id of ids) {
 		assert.ok(
 			id.startsWith(CLINE_PASS_ID_PREFIX),
-			id + " must carry the billing prefix (docs/d040)",
+			`${id} must carry the billing prefix (docs/d040)`,
 		);
 	}
 });
@@ -499,7 +499,7 @@ test("the committed seed and the committed artifact publish the same lineup", as
 	assert.deepEqual(seedIds, artifactIds);
 	// The seed's rows must satisfy the same mandatory shape pi dereferences.
 	for (const model of seed.CLINE_PASS_MODELS) {
-		assert.notEqual(model.cost, undefined, model.id + " needs a cost block");
+		assert.notEqual(model.cost, undefined, `${model.id} needs a cost block`);
 		assert.deepEqual(model.compat, { supportsDeveloperRole: false });
 	}
 });
@@ -527,17 +527,17 @@ test("the extension loads, registers, and every row carries the compat fact", as
 		assert.equal(id, CLINE_PASS_PROVIDER_ID);
 		assert.equal(config.baseUrl, clinePass.baseUrl);
 		assert.equal(config.api, "openai-completions");
-		assert.equal(config.apiKey, "$" + clinePass.apiKeyEnv);
+		assert.equal(config.apiKey, `$${clinePass.apiKeyEnv}`);
 		assert.equal(config.authHeader, true);
 		assert.ok(config.models.length > 0);
 		assert.equal(typeof config.refreshModels, "function");
 		for (const model of config.models) {
 			assert.ok(model.id.startsWith(CLINE_PASS_ID_PREFIX), model.id);
-			assert.notEqual(model.cost, undefined, model.id + " needs a cost block");
+			assert.notEqual(model.cost, undefined, `${model.id} needs a cost block`);
 			assert.deepEqual(
 				model.compat,
 				{ supportsDeveloperRole: false },
-				model.id + " must carry the published compat fact",
+				`${model.id} must carry the published compat fact`,
 			);
 		}
 		// With no network wanted and no store to fall back on, the refresh

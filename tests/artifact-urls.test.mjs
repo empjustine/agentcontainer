@@ -95,7 +95,7 @@ test("committed detector rejects an id the fact table does not know", () => {
 });
 
 test("committed detector rejects an upstream prefix that is not at a path boundary", () => {
-	const upstream = CLOUD_PROVIDERS["mistral"]?.baseUrl;
+	const upstream = CLOUD_PROVIDERS.mistral?.baseUrl;
 	assert.ok(upstream, "mistral must stay a fact-table row");
 	const violations = committedViolations({
 		providers: { mistral: { baseUrl: `${upstream}-suffixed` } },
@@ -173,7 +173,7 @@ test("rewriteProviderUrls routes a pi doc through the fact table", () => {
 	const doc = {
 		providers: {
 			"llama-swap": { baseUrl: "https://bazzite.coelacanth-barb.ts.net/v1" },
-			mistral: { baseUrl: CLOUD_PROVIDERS["mistral"]?.baseUrl },
+			mistral: { baseUrl: CLOUD_PROVIDERS.mistral?.baseUrl },
 			unroutable: { models: [] },
 		},
 	};

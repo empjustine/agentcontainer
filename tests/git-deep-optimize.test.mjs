@@ -62,11 +62,11 @@ function buildFarm(root) {
  * @param {string} gitLog
  * @returns {void}
  */
-function installGitWrapper(binDir, gitLog) {
+function installGitWrapper(binDir, _gitLog) {
 	mkdirSync(binDir, { recursive: true });
 	writeFileSync(
 		join(binDir, "git"),
-		"#!/bin/sh\nprintf '%s\n' \"$*\" >>\"$GITLOG\"\nexec " + REAL_GIT + ' \"$@\"\n',
+		`#!/bin/sh\nprintf '%s\n' "$*" >>"$GITLOG"\nexec ${REAL_GIT} "$@"\n`,
 		{ mode: 0o755 },
 	);
 }
@@ -110,7 +110,7 @@ function runMaintain(root, binDir, gitLog, ...args) {
 			timeout: 60_000,
 		},
 	);
-	const logs = (res.stdout + "\n" + res.stderr)
+	const logs = `${res.stdout}\n${res.stderr}`
 		.split("\n")
 		.filter(Boolean)
 		.map((line) => {
@@ -181,7 +181,7 @@ test("--deep-optimize runs config, gc --aggressive, then the pickaxe sequence â€
 		const iRepack = deep.indexOf("repack -adb --write-bitmap-index");
 		const iGraph = deep.indexOf("commit-graph write --reachable --changed-paths");
 		for (const [name, i] of [["config", iConfig], ["gc", iGc], ["repack", iRepack], ["commit-graph", iGraph]]) {
-			assert.ok(i !== -1, "the deep pass must run " + name);
+			assert.ok(i !== -1, `the deep pass must run ${name}`);
 		}
 		assert.ok(
 			iConfig < iGc && iGc < iRepack && iRepack < iGraph,

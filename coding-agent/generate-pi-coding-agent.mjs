@@ -1344,7 +1344,7 @@ async function emitFull(spec) {
 	// could authenticate it; empty entries (401/403 without a key) mean the
 	// route proved but says nothing, so nothing is bounded (docs/d033).
 	const routeIds =
-		route && route.entries.length
+		route?.entries.length
 			? new Set(route.entries.map((e) => e.id))
 			: null;
 	/**

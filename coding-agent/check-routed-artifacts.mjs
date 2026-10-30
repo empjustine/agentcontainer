@@ -237,13 +237,13 @@ function main(args) {
 			violations = committedViolations(doc);
 		}
 	} catch (err) {
-		violations = ["unreadable or invalid JSON: " + String(err)];
+		violations = [`unreadable or invalid JSON: ${String(err)}`];
 	}
 	if (violations.length) {
-		for (const v of violations) console.error(mode + " " + path + ": " + v);
+		for (const v of violations) console.error(`${mode} ${path}: ${v}`);
 		process.exit(1);
 	}
-	console.log(mode + " " + path + ": conforming");
+	console.log(`${mode} ${path}: conforming`);
 	process.exit(0);
 }
 

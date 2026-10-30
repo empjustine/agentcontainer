@@ -246,7 +246,7 @@ function installRouted(doc, base, label) {
 	);
 	const violations = installedViolations(doc, base);
 	if (violations.length) {
-		throw new Error(label + ": " + violations.join("; ") + " (docs/d070 §5)");
+		throw new Error(`${label}: ${violations.join("; ")} (docs/d070 §5)`);
 	}
 }
 
