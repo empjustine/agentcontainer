@@ -57,6 +57,29 @@ half the reference docs would split the type across two locations — worse
 than type-scoping them by frontmatter + the README index. Type separation is
 metadata-first; physical moves happen only where no anchor blocks them.
 
+## The numbering constraint
+
+Decision records do not number their sections and do not cite sections by
+number. New records use named headings (`## Problem`, `## Decision`,
+`## Consequences`, `## Alternatives rejected`, `## Acceptance`) and
+reference content by name ("see the Verification status"), never a section
+number — and never one pointing into another record.
+
+The reason is churn: a section number is a pointer maintained by hand.
+Renaming or reordering a section silently breaks every number cite to it,
+and a cross-record number cite turns one record's renumbering into edits
+across every record pointing at it (the log already carries dozens of
+cross-record `§` citations — the cautionary sample, not a pattern to
+extend). Named headings survive reordering — at most one prose reference
+needs updating — and read without the reader counting sections.
+
+Scope, consistent with the anchor constraint above: existing records keep
+their historical numbering; d0XX bodies are never rewritten wholesale
+(d072), so the numbered records stay as history. The constraint binds
+records written or extended after it — new sections in an old record get
+named headings too, and no new `§` reference is added anywhere. Root
+`AGENTS.md` states the operative rule for agents.
+
 ## Moves, renames, splits
 
 | action | from | to |

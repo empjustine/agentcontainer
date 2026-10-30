@@ -56,6 +56,22 @@
 		"coding-agent/generate.mjs",
 		"llm-local-inference/generate.mjs",
 		"llm-local-inference/model-sizes.mjs",
-		"llm-reverse-proxy/generate.mjs"
+		"llm-reverse-proxy/generate.mjs",
+		"pi-synthetic/sources.mjs",
+		"pi-synthetic/merge.mjs",
+		"pi-synthetic/generate.mjs",
+		"tests/pi-synthetic.test.mjs",
+		"pi-cline-pass/sources.mjs",
+		"pi-cline-pass/merge.mjs",
+		"pi-cline-pass/generate.mjs",
+		"tests/pi-cline-pass.test.mjs",
+		"tests/pi-opencode-go.test.mjs"
+		// NOTE: the extension entries (pi-synthetic/index.ts,
+		// pi-cline-pass/index.ts, pi-opencode-go/index.ts) are deliberately
+		// NOT listed. They import
+		// @earendil-works/pi-coding-agent, which this repo does not vendor, so
+		// tsc would report one missing module that is host-provided at runtime.
+		// They are covered better by their tests/*.test.mjs files, which IMPORT
+		// AND RUN the real entry points.
 	]
 }

@@ -1,0 +1,25 @@
+{
+	"name": "@agentcontainer/pi-opencode-go",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"description": "pi extension: opencode-go as a catalog freshness watchdog — no model data of its own, because pi builds this provider in; a failed listing fetch warns and pi's built-in catalog stands (docs/d097)",
+	"keywords": [
+		"pi-package",
+		"pi-extension",
+		"pi"
+	],
+	"pi": {
+		"extensions": [
+			"./index.ts"
+		]
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-coding-agent": ">=1.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@earendil-works/pi-coding-agent": {
+			"optional": true
+		}
+	}
+}

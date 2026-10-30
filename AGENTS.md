@@ -67,6 +67,27 @@ than duplicate it. When a code comment grows into a design essay, move it to
 `docs/architecture.md` describes the standalone rule (folders + `../lib` are
 the copy unit), and `README.md` indexes the rest.
 
+## Decision records: no number indexing
+
+`docs/d0XX-*.md` records must not number their sections (`## 1. Problem`)
+and must not cite sections by number — neither internally (`§2`, "see §5")
+nor into other records (`d079 §2.4`). Use named headings (`## Problem`,
+`## Decision`, `## Consequences`, `## Alternatives rejected`) and
+reference content by name ("see the Verification status", "d042's anchor
+constraint").
+
+Numbers rot silently: a heading rename or reorder breaks every number
+pointer to it, and a section-number cite crossing records turns one record's
+renumbering into edits across the whole tree. Named headings survive
+reordering — at most one prose reference needs updating — and read without
+the reader counting sections.
+
+This binds new records and new text only. Existing records keep their
+historical numbering: never rewrite them wholesale for this (the decision
+log's curated-history rule, d072). When extending a numbered record, add
+named headings and named references; do not add new `§` anywhere.
+`docs/d042-documentation-taxonomy.md` carries the full constraint.
+
 ## Other repo invariants
 
 - **`lib/` is shared infrastructure**, owned by the repo and never copied

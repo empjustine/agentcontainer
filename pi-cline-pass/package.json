@@ -1,0 +1,25 @@
+{
+	"name": "@agentcontainer/pi-cline-pass",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"description": "pi extension: the ClinePass provider, seeded from and reconciled to Cline's published lineup and the models.dev metadata",
+	"keywords": [
+		"pi-package",
+		"pi-extension",
+		"pi"
+	],
+	"pi": {
+		"extensions": [
+			"./index.ts"
+		]
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-coding-agent": ">=1.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@earendil-works/pi-coding-agent": {
+			"optional": true
+		}
+	}
+}

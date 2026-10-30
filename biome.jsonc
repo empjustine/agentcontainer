@@ -10,9 +10,11 @@
 //   - .pi/, .vscode/ and .thinkrail/ are tool-owned dirs, not repo source.
 //   - the vendored models.dev catalog, the VRAM-fit data file and the HF
 //     manifests are fetched/derived data, not hand-maintained source.
-//   - coding-agent/models.json, model-*.json and the fetched caches/routing
-//     tables below are WRITTEN by generate.sh (JSON.stringify(…, null, 2)) —
-//     formatting them here would only be undone by the next generate.sh run.
+//   - coding-agent/models.json, model-*.json, pi-synthetic/models.json and
+//     pi-synthetic/models.js are WRITTEN by their generators
+//     (JSON.stringify(…, null, 2)) — formatting them here would only be undone
+//     by the next generate run, and would show up as churn in the artifact a
+//     regeneration is supposed to be reviewed by.
 {
 	"files": {
 		"includes": [
@@ -27,6 +29,13 @@
 			"!lib/hf-manifests",
 			"!coding-agent/models.json",
 			"!coding-agent/model-*.json",
+			// pi-synthetic's pair of generated artifacts (d096): the pi
+			// models.json-shaped provider block and the extension's model seed.
+			"!pi-synthetic/models.json",
+			"!pi-synthetic/models.js",
+			// pi-cline-pass's generated pair, same reasoning (d040).
+			"!pi-cline-pass/models.json",
+			"!pi-cline-pass/models.js",
 			"!coding-agent/hyper-facts.json",
 			"!llm-reverse-proxy/llm-reverse-proxy.json",
 			// same reasoning, .jsonc extension: written by
