@@ -356,13 +356,13 @@ export function bearerHeaders(key) {
 export async function fetchModelEntries(serverUrl, headers) {
 	let url = `${serverUrl}/models`;
 	let res = await fetch(url, {
-		headers,
+		...(headers ? { headers } : {}),
 		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 	});
 	if (res.status === 404 && !url.endsWith("/v1/models")) {
 		url = `${serverUrl}/v1/models`;
 		res = await fetch(url, {
-			headers,
+			...(headers ? { headers } : {}),
 			signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 		});
 	}

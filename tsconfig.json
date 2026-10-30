@@ -36,6 +36,18 @@
 		"noUncheckedSideEffectImports": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
+		// The finding wave (24 sites, fixed): optional slots that DELIBERATELY
+		// receive undefined ("the source did not publish this") are now typed
+		// T|undefined; fetch headers became conditional spreads; test override
+		// helpers take mapped types that allow explicit undefined.
+		"exactOptionalPropertyTypes": true,
+		// SURVEYED AND REJECTED — noPropertyAccessFromIndexSignature: all 193
+		// findings are process.env dot reads; the flag demands bracket access
+		// for zero typo-safety (an index signature accepts any string either
+		// way), against the d001 env-surface convention, and in direct conflict
+		// with biome's useLiteralKeys (error level), which demands the opposite.
+		// noUncheckedIndexedAccess lands as its own overlay waves (see the
+		// commit log for the wave order).
 		"skipLibCheck": true
 	},
 	"include": [
@@ -65,7 +77,7 @@
 		"git/local-changes.mjs",
 		"git/migrate-to-bare.mjs",
 		"git/maintain-mirrors.mjs",
-		"git/software-forge-mirror.mjs",
+		"git/forge-mirror.mjs",
 		"git/software-forge-remotes.mjs",
 		"git/search-references.mjs",
 		"git/vbs-har.mjs",

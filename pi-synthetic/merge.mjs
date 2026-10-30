@@ -163,7 +163,7 @@ export function thinkingLevelMapFor(efforts) {
  * mandatory and pi dereferences it on every scored turn, so
  * `toExtensionModel` below fills a zero block. That divergence is real and
  * deliberate; see the comment there.
- * @param {Partial<Cost>|undefined} cost
+ * @param {{input?: number|undefined, output?: number|undefined, cacheRead?: number|undefined, cacheWrite?: number|undefined}|undefined} cost
  * @returns {Cost|undefined}
  */
 export function piCost(cost) {
@@ -188,7 +188,7 @@ export function piCost(cost) {
  * only the dimensions the row actually carries — a missing dimension is
  * unjudgeable and passes, so id-only rows are never dropped for lack of
  * metadata.
- * @param {{input?: string[], output?: string[]}} modalities
+ * @param {{input?: string[]|undefined, output?: string[]|undefined}} modalities
  * @returns {boolean}
  */
 export function laysWithinPiModalities(modalities) {

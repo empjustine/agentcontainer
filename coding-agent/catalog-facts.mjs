@@ -180,7 +180,7 @@ async function relayFetch({ candidates, label, timeoutMs, headers }) {
 		}
 		try {
 			const res = await fetch(url, {
-				headers,
+				...(headers ? { headers } : {}),
 				signal: AbortSignal.timeout(timeoutMs),
 			});
 			if (res.ok) {

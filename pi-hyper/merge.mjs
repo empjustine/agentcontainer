@@ -165,7 +165,7 @@ export function thinkingLevelMapFor(efforts) {
  * the block would drop the prices that ARE published. An all-zero (or
  * absent) block still yields undefined: "priced at nothing" is spelled by
  * omitting the block, not by asserting a number pi already assumes.
- * @param {{input?: number, output?: number, cacheRead?: number, cacheWrite?: number}|undefined} cost
+ * @param {{input?: number|undefined, output?: number|undefined, cacheRead?: number|undefined, cacheWrite?: number|undefined}|undefined} cost
  * @returns {{input: number, output: number, cacheRead: number, cacheWrite: number}|undefined}
  */
 export function piCost(cost) {

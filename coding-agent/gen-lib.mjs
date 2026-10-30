@@ -81,8 +81,8 @@ export const { CLOUD_PROVIDERS, PI_NATIVE_CLOUD_IDS, supportTier } =
  * @property {string} [name]
  * @property {boolean} reasoning
  * @property {string[]} input
- * @property {number} [contextWindow]
- * @property {number} [maxTokens]
+ * @property {number|undefined} [contextWindow]
+ * @property {number|undefined} [maxTokens]
  * @property {Cost} [cost] absent — the key is DROPPED, never null — when
  *   the listing carries no pricing, and piCost() refuses an empty, partial
  *   or all-zero block for the same reason: pi's schema needs all four price
@@ -175,7 +175,7 @@ export const PI_MODALITY_CAPABILITY = Object.freeze({
  * - output: every produced modality must be inside the capability — a chat
  *   client cannot consume audio/video/image out, so one foreign entry
  *   refuses the model outright (no trim applies to what comes back).
- * @param {{ input?: string[], output?: string[] }} [modalities]
+ * @param {{ input?: string[]|undefined, output?: string[]|undefined }} [modalities]
  * @returns {boolean} false = the client cannot drive this record; drop it
  */
 export function modalitiesEligible(modalities) {

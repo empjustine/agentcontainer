@@ -51,7 +51,7 @@ const clinePass = CLOUD_PROVIDERS["cline-pass"];
 /**
  * One models.dev catalog record (the models.dev wire field names); every
  * field overridable so a test names only its own concern.
- * @param {Partial<import("../pi-cline-pass/sources.mjs").CatalogRecord>} [overrides]
+ * @param {{[K in keyof import("../pi-cline-pass/sources.mjs").CatalogRecord]?: import("../pi-cline-pass/sources.mjs").CatalogRecord[K] | undefined}} overrides
  * @returns {import("../pi-cline-pass/sources.mjs").CatalogRecord}
  */
 const record = (overrides = {}) =>

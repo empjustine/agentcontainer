@@ -867,7 +867,7 @@ const ON_OFF_THINKING_LEVEL_MAP = Object.freeze({
  * The model's reasoning-effort enum as a lowercase set (empty when the model
  * exposes none). Accepts any record carrying `reasoning_options` (full
  * models.dev records as well as the bare shape buildThinkingLevelMap passes).
- * @param {{ reasoning_options?: Array<{ type?: string, values?: string[] }> }} m
+ * @param {{ reasoning_options?: Array<{ type?: string, values?: string[] }> | undefined }} m
  * @returns {Set<string>}
  */
 function effortValues(m) {
@@ -929,16 +929,16 @@ function toCost(cost) {
  * A models.dev model record — the subset the full mode reads.
  * @typedef {object} ModelsDevModel
  * @property {string} id
- * @property {string} [name]
+ * @property {string|undefined} [name]
  * @property {string} [family]
  * @property {boolean} [reasoning]
- * @property {{ input?: string[], output?: string[] }} [modalities]
- * @property {{ context?: number, output?: number }} [limit]
+ * @property {{ input?: string[]|undefined, output?: string[]|undefined }} [modalities]
+ * @property {{ context?: number|undefined, output?: number|undefined }} [limit]
  * @property {{ input: number, output: number, cache_read: number, cache_write: number }|null} [cost]
  *   `null` = the source publishes no prices at all (a facts-only provider's
  *   listing), which catalogPiModel() renders as an omitted cost rather than
  *   the placeholder (see toCost)
- * @property {Array<{ type?: string, values?: string[] }>} [reasoning_options]
+ * @property {Array<{ type?: string, values?: string[] }>|undefined} [reasoning_options]
  * @property {{ npm?: string }|null} [provider] per-model api surface override
  *   (models.dev mirrors the anomalyco fork's providers/<id>/models/*.toml
  *   `[provider] npm = ...`; the package name is the api-shape vocabulary,

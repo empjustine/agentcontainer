@@ -39,19 +39,20 @@ const verboo = CLOUD_PROVIDERS.verboo;
 /**
  * One listing row; every field overridable so a test names only its own
  * concern.
- * @param {Partial<import("../pi-verboo/sources.mjs").ListingRow>} overrides
+ * @param {{[K in keyof import("../pi-verboo/sources.mjs").ListingRow]?: import("../pi-verboo/sources.mjs").ListingRow[K] | undefined}} overrides
  * @returns {import("../pi-verboo/sources.mjs").ListingRow}
  */
-const row = (overrides) => ({
-	id: "test-model",
-	context_window: 1_048_576,
-	vision: true,
-	reasoning: {
-		effort_levels: ["low", "high", "xhigh", "max"],
-		default_effort: "low",
-	},
-	...overrides,
-});
+const row = (overrides) =>
+	/** @type {import("../pi-verboo/sources.mjs").ListingRow} */ ({
+		id: "test-model",
+		context_window: 1_048_576,
+		vision: true,
+		reasoning: {
+			effort_levels: ["low", "high", "xhigh", "max"],
+			default_effort: "low",
+		},
+		...overrides,
+	});
 
 /**
  * A fetch stub that answers with one payload. Typed through `unknown`

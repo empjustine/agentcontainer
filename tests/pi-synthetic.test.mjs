@@ -44,21 +44,22 @@ const synthetic = CLOUD_PROVIDERS.synthetic;
 /**
  * One listing row; every field overridable so a test names only its own
  * concern.
- * @param {Partial<import("../pi-synthetic/sources.mjs").ListingRow>} overrides
+ * @param {{[K in keyof import("../pi-synthetic/sources.mjs").ListingRow]?: import("../pi-synthetic/sources.mjs").ListingRow[K] | undefined}} overrides
  * @returns {import("../pi-synthetic/sources.mjs").ListingRow}
  */
-const row = (overrides) => ({
-	id: "hf:test/model",
-	display_name: "Test Model",
-	input_modalities: ["text"],
-	output_modalities: ["text"],
-	context_length: 128_000,
-	max_output_length: 8192,
-	supported_features: ["tools", "reasoning"],
-	reasoning_parameters: { efforts: ["low", "high"] },
-	pricing: { prompt: "0.000001", completion: "0.000002" },
-	...overrides,
-});
+const row = (overrides) =>
+	/** @type {import("../pi-synthetic/sources.mjs").ListingRow} */ ({
+		id: "hf:test/model",
+		display_name: "Test Model",
+		input_modalities: ["text"],
+		output_modalities: ["text"],
+		context_length: 128_000,
+		max_output_length: 8192,
+		supported_features: ["tools", "reasoning"],
+		reasoning_parameters: { efforts: ["low", "high"] },
+		pricing: { prompt: "0.000001", completion: "0.000002" },
+		...overrides,
+	});
 
 /**
  * A fetch stub that answers with one payload. Typed through `unknown` because

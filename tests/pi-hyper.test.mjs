@@ -41,23 +41,24 @@ const hyper = CLOUD_PROVIDERS.hyper;
 /**
  * One catalog record; every field overridable so a test names only its own
  * concern.
- * @param {Partial<import("../pi-hyper/sources.mjs").CatalogRecord>} overrides
+ * @param {{[K in keyof import("../pi-hyper/sources.mjs").CatalogRecord]?: import("../pi-hyper/sources.mjs").CatalogRecord[K] | undefined}} overrides
  * @returns {import("../pi-hyper/sources.mjs").CatalogRecord}
  */
-const record = (overrides) => ({
-	id: "test-model",
-	name: "Test Model",
-	can_reason: true,
-	reasoning_levels: ["low", "high", "max"],
-	supports_attachments: false,
-	context_window: 1_000_000,
-	default_max_tokens: 16_000,
-	cost_per_1m_in: 1,
-	cost_per_1m_out: 4,
-	cost_per_1m_in_cached: 0,
-	cost_per_1m_out_cached: 0.1,
-	...overrides,
-});
+const record = (overrides) =>
+	/** @type {import("../pi-hyper/sources.mjs").CatalogRecord} */ ({
+		id: "test-model",
+		name: "Test Model",
+		can_reason: true,
+		reasoning_levels: ["low", "high", "max"],
+		supports_attachments: false,
+		context_window: 1_000_000,
+		default_max_tokens: 16_000,
+		cost_per_1m_in: 1,
+		cost_per_1m_out: 4,
+		cost_per_1m_in_cached: 0,
+		cost_per_1m_out_cached: 0.1,
+		...overrides,
+	});
 
 /**
  * A fetch stub that answers with one payload. Typed through `unknown`

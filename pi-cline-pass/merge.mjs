@@ -171,7 +171,7 @@ export function thinkingLevelMapFor(efforts) {
  * here would drop the price facts that ARE published. An all-zero (or
  * absent) block still yields undefined: "priced at nothing" is spelled by
  * omitting the block, not by asserting a number pi already assumes.
- * @param {{input?: number, output?: number, cacheRead?: number, cacheWrite?: number}|undefined} cost
+ * @param {{input?: number|undefined, output?: number|undefined, cacheRead?: number|undefined, cacheWrite?: number|undefined}|undefined} cost
  * @returns {Cost|undefined}
  */
 export function piCost(cost) {
@@ -227,7 +227,7 @@ function num(/** @type {unknown} */ value) {
  * judge only the dimensions the record actually carries — a missing
  * dimension is unjudgeable and passes, so id-only records are never dropped
  * for lack of metadata.
- * @param {{input?: string[], output?: string[]}} modalities
+ * @param {{input?: string[]|undefined, output?: string[]|undefined}} modalities
  * @returns {boolean}
  */
 export function laysWithinPiModalities(modalities) {

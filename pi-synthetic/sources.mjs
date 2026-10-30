@@ -150,7 +150,7 @@ export async function fetchListing({
 	const headers = key ? { Authorization: `Bearer ${key}` } : undefined;
 	logDebug("fetching model listing", { url: SYNTHETIC_BASE_URL });
 	const res = await fetchImpl(url, {
-		headers,
+		...(headers ? { headers } : {}),
 		signal: signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 	});
 	if (!res.ok) {

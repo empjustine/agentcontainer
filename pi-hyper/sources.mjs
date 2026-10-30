@@ -123,7 +123,7 @@ export async function fetchCatalog({
 	const headers = key ? { Authorization: `Bearer ${key}` } : undefined;
 	logDebug("fetching provider catalog", { url: HYPER_BASE_URL });
 	const res = await fetchImpl(url, {
-		headers,
+		...(headers ? { headers } : {}),
 		signal: signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 	});
 	if (!res.ok) {
