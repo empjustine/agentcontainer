@@ -328,7 +328,9 @@ if (containerTool) {
 // resolver; see the module header). Bare host: the host binary, which
 // smoke-test.sh and direct runs use. Needs a WORKING go toolchain either way.
 const proxyDir = join(repoRoot, "llm-reverse-proxy");
-if (!containerTool) {
+if (containerTool) {
+	noteGated("llm-reverse-proxy-native");
+} else {
 	const androidBinary = join(proxyDir, "llm-reverse-proxy-android");
 	const hostBinary = join(proxyDir, "llm-reverse-proxy");
 	const out = termux ? androidBinary : hostBinary;
@@ -356,8 +358,6 @@ if (!containerTool) {
 			});
 		},
 	});
-} else {
-	noteGated("llm-reverse-proxy-native");
 }
 
 // --- termux provisioning (serialized FIRST stage on Termux) -----------------

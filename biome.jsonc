@@ -288,6 +288,7 @@
 			"noInferrableTypes": "error",
 			"noJsxLiterals": "error",
 			"noNamespace": "error",
+			"noNegationElse": "error",
 			"noNonNullAssertion": "error",
 			"noParameterAssign": "error",
 			"noParameterProperties": "error",
