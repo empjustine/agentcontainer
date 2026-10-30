@@ -26,6 +26,17 @@
 		// Wave 2 (v23.23): the local-inference generator pair — the shard-regex
 		// groups now flow through one narrowing helper instead of bare indexes.
 		"llm-local-inference/generate.mjs",
-		"llm-local-inference/model-sizes.mjs"
+		"llm-local-inference/model-sizes.mjs",
+		// Wave 3 (v23.24): the whole coding-agent folder — the fact-table row
+		// lookups now go through providerFacts() (the table's own loud refusal),
+		// and the drivable core is a named constant instead of a bare [0].
+		"coding-agent/route-probe.mjs",
+		"coding-agent/check-routed-artifacts.mjs",
+		"coding-agent/catalog-facts.mjs",
+		"coding-agent/refresh-models-dev.mjs",
+		"coding-agent/gen-lib.mjs",
+		"coding-agent/generate-pi-coding-agent.mjs",
+		"coding-agent/generate-opencode.mjs",
+		"coding-agent/generate.mjs"
 	]
 }

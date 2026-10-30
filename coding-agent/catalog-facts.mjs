@@ -437,6 +437,11 @@ export function loadProviderFacts(id) {
 // fact-table provider id (see the fileoverview usage block).
 if (process.argv[1] && import.meta.url.endsWith(basename(process.argv[1]))) {
 	const [target, arg] = process.argv.slice(2);
+	if (target === undefined) {
+		throw new Error(
+			"usage: catalog-facts.mjs <provider-id|catwalk> [path] — no target given",
+		);
+	}
 	if (target === "catwalk") {
 		await refreshCatwalkFacts(arg);
 	} else {

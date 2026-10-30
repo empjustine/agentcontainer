@@ -78,7 +78,7 @@ import { join } from "node:path";
 
 import {
 	bearerHeaders,
-	CLOUD_PROVIDERS as CLOUD_PROVIDER_FACTS,
+	providerFacts,
 	getCatwalkModels,
 	loadProviderFacts,
 	logError,
@@ -692,7 +692,7 @@ const PROVIDER_SPECS = [
 			/** @type {CloudProviderSpec} */ ({
 				id,
 				mode: "override-only",
-				envKey: CLOUD_PROVIDER_FACTS[id].apiKeyEnv,
+				envKey: providerFacts(id).apiKeyEnv,
 				filter: MODEL_SCOPES[id],
 				// opencode-go is the one pi-native provider with a MIXED api
 				// surface behind one base URL — it needs per-model api overrides
@@ -1054,7 +1054,7 @@ function catalogPiModel(spec, m, id = m.id) {
 function loadProvider(spec) {
 	if (spec.catalogOptional) {
 		return {
-			api: CLOUD_PROVIDER_FACTS[spec.id].baseUrl,
+			api: providerFacts(spec.id).baseUrl,
 			models: {},
 		};
 	}
@@ -1287,7 +1287,7 @@ function emitMinimalCatalogOverride(spec, providers) {
 	const models = [...ids].map((mid) => piModel({ id: mid }));
 	applyModelApi(spec, models);
 	providers[spec.id] = providerReroute(
-		CLOUD_PROVIDER_FACTS[spec.id].baseUrl,
+		providerFacts(spec.id).baseUrl,
 		models,
 	);
 	logInfo("minimal catalog override — canonical base, ids merged", {
@@ -1348,7 +1348,7 @@ async function emitOverrideOnly(spec, providers) {
 			models: models.length,
 		});
 		providers[spec.id] = providerReroute(
-			CLOUD_PROVIDER_FACTS[spec.id].baseUrl,
+			providerFacts(spec.id).baseUrl,
 			models,
 		);
 		return;
@@ -1398,7 +1398,7 @@ async function emitFull(spec) {
 	 * upstream, keyed by id — never string-derived from a configured base.
 	 * @type {string}
 	 */
-	const canonicalUrl = CLOUD_PROVIDER_FACTS[spec.id].baseUrl;
+	const canonicalUrl = providerFacts(spec.id).baseUrl;
 	const allow = spec.modelAllowlistResolver
 		? spec.modelAllowlistResolver(provider.models)
 		: spec.modelAllowlist;
@@ -1528,10 +1528,16 @@ async function generateCloudProviders() {
 	);
 	let failed = 0;
 	for (const [i, res] of results.entries()) {
+		const spec = PROVIDER_SPECS[i];
+		// results is PROVIDER_SPECS.map()'s settle — the index always names a
+		// spec; the guard is the type gate's form, not a reachable state.
+		if (spec === undefined) {
+			continue;
+		}
 		if (res.status === "rejected") {
 			failed++;
 			logError("provider spec failed — no layer written", {
-				provider: PROVIDER_SPECS[i].id,
+				provider: spec.id,
 				error: res.reason,
 			});
 		}
@@ -1601,7 +1607,7 @@ async function generateLocalLlamaSwap(out) {
 		// fact table's llama-swap upstream (the tsnet serve hostname), and
 		// generate.mjs rewrites it to the client route at install.
 		providers["llama-swap"] = providerEntry(
-			CLOUD_PROVIDER_FACTS["llama-swap"].baseUrl,
+			providerFacts("llama-swap").baseUrl,
 			gguf.map(piModel),
 		);
 	} else {

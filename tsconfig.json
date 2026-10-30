@@ -65,13 +65,7 @@
 		"tests/pi-cost.test.mjs",
 		"generate.mjs",
 		"build.mjs",
-		"coding-agent/route-probe.mjs",
-		"coding-agent/check-routed-artifacts.mjs",
-		"coding-agent/catalog-facts.mjs",
-		"coding-agent/refresh-models-dev.mjs",
-		"coding-agent/gen-lib.mjs",
-		"coding-agent/generate-pi-coding-agent.mjs",
-		"coding-agent/generate-opencode.mjs",
+
 		"git/git-lib.mjs",
 		"git/audit.mjs",
 		"git/local-changes.mjs",
@@ -81,7 +75,6 @@
 		"git/software-forge-remotes.mjs",
 		"git/search-references.mjs",
 		"git/vbs-har.mjs",
-		"coding-agent/generate.mjs",
 
 		"llm-reverse-proxy/generate.mjs",
 

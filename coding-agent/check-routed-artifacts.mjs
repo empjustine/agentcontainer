@@ -236,13 +236,20 @@ function main(args) {
 	}
 	const mode = args[0];
 	const path = args[1];
+	// args.length >= 2 is checked above; the undefined check is the type
+	// gate's form of that same fact.
+	if (path === undefined) {
+		return;
+	}
 	/** @type {readonly string[]} */
 	let violations = [];
 	try {
 		const doc = JSON.parse(readFileSync(path, "utf-8"));
 		if (mode === "--installed") {
+			// --base WITHOUT a value used to pass undefined downstream; the
+			// ?? now falls back to the configured base instead.
 			const flagBase = args.includes("--base")
-				? args[args.indexOf("--base") + 1]
+				? (args[args.indexOf("--base") + 1] ?? configuredBase())
 				: configuredBase();
 			violations = installedViolations(doc, flagBase);
 		} else {

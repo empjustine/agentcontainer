@@ -35,7 +35,7 @@ import { join } from "node:path";
 
 import {
 	bearerHeaders,
-	CLOUD_PROVIDERS as CLOUD_PROVIDER_FACTS,
+	providerFacts,
 	logError,
 	logInfo,
 	logWarn,
@@ -85,11 +85,6 @@ setLogTool("coding-agent/generate-opencode");
  * @type {readonly string[]}
  */
 const CLOUD_PROVIDER_IDS = ["opencode", "opencode-go", "openrouter"];
-
-/** @type {Record<string, import("../lib/cloud-providers.mjs").CloudProviderFacts>} */
-const CLOUD_PROVIDERS = Object.fromEntries(
-	CLOUD_PROVIDER_IDS.map((id) => [id, CLOUD_PROVIDER_FACTS[id]]),
-);
 
 /**
  * Reverse-proxy base candidates (docs/d027): vault-sourced bases for the
@@ -169,7 +164,7 @@ function catalogModels(id, filter) {
  * @returns {Promise<{ providerUrl: string, models: ModelEntry[] }>}
  */
 async function resolveCloudProvider(id) {
-	const cfg = CLOUD_PROVIDERS[id];
+	const cfg = providerFacts(id);
 	const filter = MODEL_SCOPES[id];
 	if (supportTier(id) === "superficial") {
 		logInfo(
@@ -296,7 +291,7 @@ async function main() {
 					);
 					return {
 						id,
-						providerUrl: CLOUD_PROVIDERS[id].baseUrl,
+						providerUrl: providerFacts(id).baseUrl,
 						models: /** @type {ModelEntry[]} */ ([]),
 					};
 				},
@@ -310,9 +305,9 @@ async function main() {
 		}
 		const { id, providerUrl, models } = r.value;
 		providers[id] = routedProvider(
-			CLOUD_PROVIDERS[id].label,
+			providerFacts(id).label,
 			providerUrl,
-			CLOUD_PROVIDERS[id].apiKeyEnv,
+			providerFacts(id).apiKeyEnv,
 			models,
 		);
 	}
@@ -330,7 +325,7 @@ async function main() {
 			// only picked the lineup.
 			providers.local = routedProvider(
 				"Local LLM",
-				`${CLOUD_PROVIDER_FACTS["llama-swap"].baseUrl}/v1`,
+				`${providerFacts("llama-swap").baseUrl}/v1`,
 				"REVERSE_PROXY_API_KEY",
 				models,
 			);

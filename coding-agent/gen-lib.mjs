@@ -57,8 +57,12 @@ export {
 	probeCandidates,
 	probeRoutes,
 };
-export const { CLOUD_PROVIDERS, PI_NATIVE_CLOUD_IDS, supportTier } =
-	cloudProviders;
+export const {
+	CLOUD_PROVIDERS,
+	PI_NATIVE_CLOUD_IDS,
+	providerFacts,
+	supportTier,
+} = cloudProviders;
 
 /**
  * pi shaping (folded in from the former lib/pi-models.mjs — docs/d039): shape
@@ -143,10 +147,19 @@ function displayName(id) {
 		return;
 	}
 	const [, , , repoFull] = m;
-	const [repoPath, quant] = repoFull.split(":");
+	// A matched line carries the group; the guard is the type gate's form.
+	if (repoFull === undefined) {
+		return;
+	}
+	const [repoPathRaw, quant] = repoFull.split(":");
+	// split() always yields the first part; the fallback is unreachable.
+	const repoPath = repoPathRaw ?? repoFull;
 	const base = (repoPath.split("/").pop() ?? "").replace(/-GGUF$/i, "");
 	return [base, quant].filter(Boolean).join(" ");
 }
+
+/** The one input modality every drivable model must accept (docs/d049). */
+const PI_DRIVABLE_CORE = "text";
 
 /**
  * THE pipeline-wide declaration of what the driving pi client can handle
@@ -154,12 +167,12 @@ function displayName(id) {
  * modalities it can consume. Eligibility (`modalitiesEligible`) and
  * projection (`toInput`) both derive from it — admit-but-trim, so the gate
  * and the emission read one source of truth and cannot drift.
- * `input[0]` is the drivable core (text): a client originates chat text, so
+ * PI_DRIVABLE_CORE is the drivable core: a client originates chat text, so
  * an input set without it can never be driven whatever else it offers.
  * @type {Readonly<{ input: readonly string[], output: readonly string[] }>}
  */
 export const PI_MODALITY_CAPABILITY = Object.freeze({
-	input: Object.freeze(["text", "image"]),
+	input: Object.freeze([PI_DRIVABLE_CORE, "image"]),
 	output: Object.freeze(["text"]),
 });
 
@@ -184,7 +197,7 @@ export function modalitiesEligible(modalities) {
 	if (
 		input &&
 		input.length > 0 &&
-		!input.includes(PI_MODALITY_CAPABILITY.input[0])
+		!input.includes(PI_DRIVABLE_CORE)
 	) {
 		return false;
 	}
@@ -216,7 +229,7 @@ export function toInput(modalities) {
 	const input = PI_MODALITY_CAPABILITY.input.filter((m) =>
 		modalities?.includes(m),
 	);
-	return input.length > 0 ? input : [PI_MODALITY_CAPABILITY.input[0]];
+	return input.length > 0 ? input : [PI_DRIVABLE_CORE];
 }
 
 /**
