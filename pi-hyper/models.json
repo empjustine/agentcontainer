@@ -80,7 +80,7 @@
             "text",
             "image"
           ],
-          "contextWindow": 1048576,
+          "contextWindow": 1000000,
           "maxTokens": 262144,
           "compat": {
             "supportsStore": false,
