@@ -109,13 +109,15 @@ const REQUEST_TIMEOUT_MS = 8000;
  *   slash
  */
 export function reverseProxyBaseUrl() {
-	const bases = reverseProxyBaseUrls();
-	if (bases.length === 0) {
+	// The undefined check IS the emptiness check (an empty array indexes to
+	// undefined), and it is the form noUncheckedIndexedAccess can verify.
+	const first = reverseProxyBaseUrls()[0];
+	if (first === undefined) {
 		throw new Error(
 			"REVERSE_PROXY_BASE_URLS is not set — expected from the vault (infisical /inference, loaded by the explicit chain: ./lib/environment.sh <script>)",
 		);
 	}
-	return bases[0];
+	return first;
 }
 
 /**

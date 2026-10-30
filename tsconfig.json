@@ -82,24 +82,15 @@
 		"git/search-references.mjs",
 		"git/vbs-har.mjs",
 		"coding-agent/generate.mjs",
-		"llm-local-inference/generate.mjs",
-		"llm-local-inference/model-sizes.mjs",
+
 		"llm-reverse-proxy/generate.mjs",
 
-
-
 		"tests/pi-synthetic.test.mjs",
-
-
 
 		"tests/pi-cline-pass.test.mjs",
 		"tests/pi-opencode.test.mjs",
 
-
-
 		"tests/pi-hyper.test.mjs",
-
-
 
 		"tests/pi-verboo.test.mjs",
 		"tests/pi-mistral.test.mjs"

@@ -223,15 +223,18 @@ function shardOne(filename) {
  */
 function allShards(filename) {
 	const first = shardOne(filename);
+	// SPLIT_RE's groups are all required, so a match carries them — the guard
+	// below is the noUncheckedIndexedAccess narrowing of that fact.
 	const m = SPLIT_RE.exec(first);
-	if (!m) {
+	const width = m?.[1]?.length;
+	const total = m?.[2];
+	if (m === null || width === undefined || total === undefined) {
 		return [first];
 	}
 	const base = first.slice(0, first.length - m[0].length);
-	const width = m[1].length;
 	return Array.from(
-		{ length: Number(m[2]) },
-		(_, i) => `${base}-${String(i + 1).padStart(width, "0")}-of-${m[2]}.gguf`,
+		{ length: Number(total) },
+		(_, i) => `${base}-${String(i + 1).padStart(width, "0")}-of-${total}.gguf`,
 	);
 }
 
@@ -357,9 +360,9 @@ function mmprojModesFor(m) {
  * @returns {string} the active-B slug ("99b" when no slice matches)
  */
 function activeSlug(m) {
-	for (const slice in activeB) {
+	for (const [slice, slug] of Object.entries(activeB)) {
 		if (m["hf-repo"].indexOf(slice) !== -1) {
-			return activeB[slice];
+			return slug;
 		}
 	}
 	return "99b";

@@ -22,6 +22,10 @@
 		"pi-hyper/generate.mjs",
 		"pi-verboo/sources.mjs",
 		"pi-verboo/merge.mjs",
-		"pi-verboo/generate.mjs"
+		"pi-verboo/generate.mjs",
+		// Wave 2 (v23.23): the local-inference generator pair — the shard-regex
+		// groups now flow through one narrowing helper instead of bare indexes.
+		"llm-local-inference/generate.mjs",
+		"llm-local-inference/model-sizes.mjs"
 	]
 }

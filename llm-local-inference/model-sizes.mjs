@@ -81,6 +81,25 @@ const GB = 1e9;
 const GB_DECIMALS = 3;
 /** `<stem>-00001-of-00003.gguf` — the llama.cpp split-GGUF convention. */
 const SHARD_RE = /^(.*)-(\d{5})-of-(\d{5})\.gguf$/i;
+
+/**
+ * SHARD_RE's three groups are all REQUIRED — a match always carries them —
+ * but noUncheckedIndexedAccess cannot know that about a RegExpExecArray, so
+ * this one helper is where that reasoning lives. Every shard-group reader
+ * below goes through it and gets non-optional strings back.
+ * @param {string} name
+ * @returns {{prefix: string, index: string, total: string}|null}
+ */
+function shardMatch(name) {
+	const m = SHARD_RE.exec(name);
+	const prefix = m?.[1];
+	const index = m?.[2];
+	const total = m?.[3];
+	if (prefix === undefined || index === undefined || total === undefined) {
+		return null;
+	}
+	return { prefix, index, total };
+}
 /**
  * Sidecars are never "models" for the R5 cache-only scan
  * (scan_cache_coverage.py's classifier).
@@ -119,7 +138,7 @@ const manifestPath = (repo) =>
  * @param {string} hfRepo
  * @returns {string}
  */
-const repoOf = (hfRepo) => hfRepo.split(":")[0];
+const repoOf = (hfRepo) => hfRepo.split(":")[0] ?? hfRepo;
 
 /** @returns {string} HF hub cache root, matching the Python tools' resolution. */
 function cacheRoot() {
@@ -241,10 +260,10 @@ function cacheIndex(repo) {
  * @throws {Error} when neither source resolves the file
  */
 function resolveComponent({ repo, name, manifest, cache }) {
-	const shard = SHARD_RE.exec(name);
+	const shard = shardMatch(name);
 	if (shard) {
-		const prefix = shard[1];
-		const expected = Number(shard[3]);
+		const prefix = shard.prefix;
+		const expected = Number(shard.total);
 		const re = shardSiblingRe(prefix, expected);
 		/** @type {string[]} */
 		const partial = [];
@@ -309,9 +328,9 @@ function reportCacheOnly(models) {
 			if (typeof name !== "string") {
 				continue;
 			}
-			const shard = SHARD_RE.exec(name);
+			const shard = shardMatch(name);
 			if (shard) {
-				ref.shards.add(shard[1]);
+				ref.shards.add(shard.prefix);
 			} else {
 				ref.paths.add(name);
 			}
@@ -351,8 +370,8 @@ function reportCacheOnly(models) {
 			if (ref.paths.has(path)) {
 				return false;
 			}
-			const shard = SHARD_RE.exec(path);
-			return !(shard && ref.shards.has(shard[1]));
+			const shard = shardMatch(path);
+			return !(shard && ref.shards.has(shard.prefix));
 		});
 		if (missing.length > 0) {
 			extras.push({ repo, files: missing });
