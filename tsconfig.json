@@ -85,22 +85,22 @@
 		"llm-local-inference/generate.mjs",
 		"llm-local-inference/model-sizes.mjs",
 		"llm-reverse-proxy/generate.mjs",
-		"pi-synthetic/sources.mjs",
-		"pi-synthetic/merge.mjs",
-		"pi-synthetic/generate.mjs",
+
+
+
 		"tests/pi-synthetic.test.mjs",
-		"pi-cline-pass/sources.mjs",
-		"pi-cline-pass/merge.mjs",
-		"pi-cline-pass/generate.mjs",
+
+
+
 		"tests/pi-cline-pass.test.mjs",
 		"tests/pi-opencode.test.mjs",
-		"pi-hyper/sources.mjs",
-		"pi-hyper/merge.mjs",
-		"pi-hyper/generate.mjs",
+
+
+
 		"tests/pi-hyper.test.mjs",
-		"pi-verboo/sources.mjs",
-		"pi-verboo/merge.mjs",
-		"pi-verboo/generate.mjs",
+
+
+
 		"tests/pi-verboo.test.mjs",
 		"tests/pi-mistral.test.mjs"
 		// NOTE: the extension entries (pi-synthetic/index.ts,

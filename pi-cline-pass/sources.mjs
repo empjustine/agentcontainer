@@ -68,6 +68,12 @@ setLogTool("pi-cline-pass/sources");
  * (docs/d070).
  */
 const CLINE_PASS = CLOUD_PROVIDERS["cline-pass"];
+// The fact table is the ONE home for this row (docs/d024) — a missing row is
+// a broken repo, not a runtime state, so the module refuses to load without
+// it instead of shipping undefined facts downstream.
+if (!CLINE_PASS) {
+	throw new Error("lib/cloud-providers.mjs lost the cline-pass row");
+}
 
 /** @type {string} the provider's canonical upstream. */
 export const CLINE_PASS_BASE_URL = CLINE_PASS.baseUrl;

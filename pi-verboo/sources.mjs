@@ -55,6 +55,12 @@ setLogTool("pi-verboo/sources");
  * (docs/d070).
  */
 const VERBOO = CLOUD_PROVIDERS.verboo;
+// The fact table is the ONE home for this row (docs/d024) — a missing row is
+// a broken repo, not a runtime state, so the module refuses to load without
+// it instead of shipping undefined facts downstream.
+if (!VERBOO) {
+	throw new Error("lib/cloud-providers.mjs lost the verboo row");
+}
 
 /** @type {string} the provider's canonical upstream. */
 export const VERBOO_BASE_URL = VERBOO.baseUrl;

@@ -76,6 +76,9 @@ import { CLINE_PASS_ID_PREFIX } from "./sources.mjs";
 export const CLINE_PASS_COMPAT = Object.freeze({
 	supportsDeveloperRole: false,
 });
+/** The one input modality every drivable model must accept (docs/d049). */
+const PI_DRIVABLE_CORE = "text";
+
 /**
  * pi's driving-capability declaration (docs/d049), copied from the repo's
  * shared projection (coding-agent/gen-lib.mjs PI_MODALITY_CAPABILITY —
@@ -85,7 +88,7 @@ export const CLINE_PASS_COMPAT = Object.freeze({
  * @type {Readonly<{input: readonly string[], output: readonly string[]}>}
  */
 const PI_MODALITY_CAPABILITY = Object.freeze({
-	input: Object.freeze(["text", "image"]),
+	input: Object.freeze([PI_DRIVABLE_CORE, "image"]),
 	output: Object.freeze(["text"]),
 });
 
@@ -236,7 +239,7 @@ export function laysWithinPiModalities(modalities) {
 	if (
 		input &&
 		input.length > 0 &&
-		!input.includes(PI_MODALITY_CAPABILITY.input[0])
+		!input.includes(PI_DRIVABLE_CORE)
 	) {
 		return false;
 	}
@@ -258,7 +261,7 @@ export function laysWithinPiModalities(modalities) {
  */
 function toInput(input) {
 	const kept = PI_MODALITY_CAPABILITY.input.filter((m) => input?.includes(m));
-	return kept.length > 0 ? [...kept] : [PI_MODALITY_CAPABILITY.input[0]];
+	return kept.length > 0 ? [...kept] : [PI_DRIVABLE_CORE];
 }
 
 /* ------------------------------- shaping ---------------------------------- */

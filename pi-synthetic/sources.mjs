@@ -58,6 +58,12 @@ setLogTool("pi-synthetic/sources");
  * the source of the canonical URL committed artifacts carry (docs/d070).
  */
 const SYNTHETIC = CLOUD_PROVIDERS.synthetic;
+// The fact table is the ONE home for this row (docs/d024) — a missing row is
+// a broken repo, not a runtime state, so the module refuses to load without
+// it instead of shipping undefined facts downstream.
+if (!SYNTHETIC) {
+	throw new Error("lib/cloud-providers.mjs lost the synthetic row");
+}
 
 /** @type {string} the provider's canonical upstream. */
 export const SYNTHETIC_BASE_URL = SYNTHETIC.baseUrl;

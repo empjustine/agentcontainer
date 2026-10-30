@@ -1,0 +1,27 @@
+{
+	// The noUncheckedIndexedAccess overlay — the flag lands here FIRST, one
+	// directory wave at a time, and a file "graduates" by MOVING here from
+	// tsconfig.json's include list (never by suppression). When the last wave
+	// (tests/) lands, this file folds back into tsconfig.json and disappears.
+	// check-types.sh runs BOTH configs; each must pass.
+	//
+	// Wave 1 (v23.22): the pi extension family's own source files.
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"noUncheckedIndexedAccess": true
+	},
+	"include": [
+		"pi-cline-pass/sources.mjs",
+		"pi-cline-pass/merge.mjs",
+		"pi-cline-pass/generate.mjs",
+		"pi-synthetic/sources.mjs",
+		"pi-synthetic/merge.mjs",
+		"pi-synthetic/generate.mjs",
+		"pi-hyper/sources.mjs",
+		"pi-hyper/merge.mjs",
+		"pi-hyper/generate.mjs",
+		"pi-verboo/sources.mjs",
+		"pi-verboo/merge.mjs",
+		"pi-verboo/generate.mjs"
+	]
+}

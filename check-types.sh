@@ -31,4 +31,9 @@ fi
 log_info "tsc (checkJs, strict)"
 # --typeRoots is explicit because the types are not installed in-tree: tsc has
 # to be told where the scratch-dir @types live.
-exec "$tsdir/node_modules/.bin/tsc" -p tsconfig.json --typeRoots "$tsdir/node_modules/@types"
+"$tsdir/node_modules/.bin/tsc" -p tsconfig.json --typeRoots "$tsdir/node_modules/@types"
+
+# The noUncheckedIndexedAccess overlay: files graduate into tsconfig.strict.json
+# one wave at a time (see its header); both configs must pass on every run.
+log_info "tsc (strict overlay — noUncheckedIndexedAccess, graduated files)"
+"$tsdir/node_modules/.bin/tsc" -p tsconfig.strict.json --typeRoots "$tsdir/node_modules/@types"

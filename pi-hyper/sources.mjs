@@ -57,6 +57,12 @@ setLogTool("pi-hyper/sources");
  * (docs/d070).
  */
 const HYPER = CLOUD_PROVIDERS.hyper;
+// The fact table is the ONE home for this row (docs/d024) — a missing row is
+// a broken repo, not a runtime state, so the module refuses to load without
+// it instead of shipping undefined facts downstream.
+if (!HYPER) {
+	throw new Error("lib/cloud-providers.mjs lost the hyper row");
+}
 
 /** @type {string} the provider's canonical upstream. */
 export const HYPER_BASE_URL = HYPER.baseUrl;
