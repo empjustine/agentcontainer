@@ -290,7 +290,7 @@ async function branchInfo(repo) {
  * @returns {Promise<StashEntry[]>}
  */
 async function stashInfo(repo) {
-	const r = await git(repo, ["stash", "list", `--format=%gd%x1f%ct%x1f%gs`], {
+	const r = await git(repo, ["stash", "list", "--format=%gd%x1f%ct%x1f%gs"], {
 		must: false,
 	});
 	/** @type {StashEntry[]} */

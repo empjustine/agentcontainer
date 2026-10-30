@@ -230,7 +230,7 @@ test("CLINE_PASS_MDX overrides the docs read with a local file", async () => {
 	writeFileSync(
 		file,
 		"## Models\n\n| Model | Model ID |\n| --- | --- |\n| GLM 5.2 | " +
-			`cline-pass/glm-5.2` +
+			"cline-pass/glm-5.2" +
 			" |\n",
 	);
 	const previous = process.env.CLINE_PASS_MDX;

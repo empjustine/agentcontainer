@@ -296,6 +296,7 @@
 			"noRestrictedTypes": "error",
 			"noShoutyConstants": "error",
 			"noSubstr": "error",
+			"noUnusedTemplateLiteral": "error",
 			"noUselessElse": "error",
 			"noValueAtRule": "error",
 			"noYodaExpression": "error",
