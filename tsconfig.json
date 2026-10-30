@@ -24,6 +24,18 @@
 		"checkJs": true,
 		"noEmit": true,
 		"strict": true,
+		// The zero-finding strictness flags (surveyed 2026-10-30: each produces
+		// zero diagnostics over the whole include list, so enabling them changed
+		// nothing the day they landed — the tsc half of the strictness free
+		// wave; the finding-carrying flags land as their own fix-and-enable
+		// waves, one commit per flag):
+		"noImplicitOverride": true,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitReturns": true,
+		"verbatimModuleSyntax": true,
+		"noUncheckedSideEffectImports": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"skipLibCheck": true
 	},
 	"include": [
