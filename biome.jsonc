@@ -96,6 +96,7 @@
 	//   noMisplacedAssertion — assertion helpers and hook-time asserts are idiomatic under node:test; the rule models jest runner semantics where out-of-test asserts silently misbehave.
 	//   useAwait — async-without-await is the CONTRACT at every flagged site: fetch stubs in tests must return a Promise to satisfy the typeof fetch signature, and the one production site keeps the async interface shape.
 	//   useSimplifiedLogicExpression — the repo guard style LISTS the failure modes (!a || !b || empty); the rule rewrites them into negated conjunctions that hide each named condition — semantics equivalent, readability strictly worse.
+	//   noNestedTernary — the flagged sites are the two deliberate idioms — canonical sort comparators (a < b ? -1 : a > b ? 1 : 0) and parse fallback chains; unwinding them into if/else blocks adds lines and removes the shape readers recognize.
 	//   useForOf — the argv parsers consume flag values with a mutating index
 	//     (argv[++i] lookahead); a for-of rewrite would need iterator gymnastics
 	//     to express the same stateful walk.
