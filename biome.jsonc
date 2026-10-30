@@ -301,6 +301,7 @@
 			"noYodaExpression": "error",
 			"useArrayLiterals": "error",
 			"useAsConstAssertion": "error",
+			"useAtIndex": "error",
 			"useCollapsedElseIf": "error",
 			"useCollapsedIf": "error",
 			"useComponentExportOnlyModules": "error",

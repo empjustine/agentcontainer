@@ -432,7 +432,7 @@ function main() {
 
 	const written = writeArtifact(MODEL_DATA, text);
 	const smallest = models[0];
-	const largest = models[models.length - 1];
+	const largest = models.at(-1);
 	logInfo("wrote size-ordered model table", {
 		path: written,
 		entries: models.length,
