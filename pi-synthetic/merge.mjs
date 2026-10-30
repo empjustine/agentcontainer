@@ -301,7 +301,7 @@ export function shapeRow(row) {
 		maxTokens: num(row.max_output_length),
 		reasoning:
 			(strings(row.supported_features)?.includes("reasoning") ?? false) ||
-			!!effortsOf(row)?.some((e) => e !== "none"),
+			Boolean(effortsOf(row)?.some((e) => e !== "none")),
 		efforts: effortsOf(row),
 		thinkingLevelMap: thinkingLevelMapFor(effortsOf(row)),
 		cost: piCost({
@@ -411,7 +411,7 @@ export function toExtensionModel(model) {
 		input: model.input,
 		cost: model.cost ?? { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
 		compat: {
-			supportsReasoningEffort: !!model.efforts?.length,
+			supportsReasoningEffort: Boolean(model.efforts?.length),
 		},
 	};
 	if (model.reasoning && model.thinkingLevelMap) {

@@ -352,6 +352,7 @@
 			"noExtraBooleanCast": "error",
 			"noFlatMapIdentity": "error",
 			"noForEach": "error",
+			"noImplicitCoercions": "error",
 			"noImportantStyles": "error",
 			"noStaticOnlyClass": "error",
 			"noThisInStatic": "error",
