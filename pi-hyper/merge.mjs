@@ -266,7 +266,7 @@ export function shapeCatalog(records) {
 export function compatFor(model) {
 	return {
 		supportsStore: HYPER_WIRE_COMPAT.supportsStore,
-		supportsReasoningEffort: model.efforts?.length > 0,
+		supportsReasoningEffort: (model.efforts?.length ?? 0) > 0,
 		thinkingFormat: HYPER_WIRE_COMPAT.thinkingFormat,
 		maxTokensField: HYPER_WIRE_COMPAT.maxTokensField,
 	};

@@ -189,14 +189,17 @@ export async function fetchCatalogSlice({ signal, fetchImpl = fetch } = {}) {
 		);
 	}
 	const payload = /** @type {unknown} */ (await res.json());
-	const provider = /** @type {{ models?: Record<string, CatalogRecord> }|undefined} */ (
-		/** @type {Record<string, unknown>|undefined} */ (payload)?.[
-			CLINE_PASS_PROVIDER_ID
-		]
-	);
+	const provider =
+		/** @type {{ models?: Record<string, CatalogRecord> }|undefined} */ (
+			/** @type {Record<string, unknown>|undefined} */ (payload)?.[
+				CLINE_PASS_PROVIDER_ID
+			]
+		);
 	const slice = provider?.models;
 	if (!slice || typeof slice !== "object" || Object.keys(slice).length === 0) {
-		throw new Error("models.dev carries no cline-pass models — nothing to publish");
+		throw new Error(
+			"models.dev carries no cline-pass models — nothing to publish",
+		);
 	}
 	logDebug("models.dev catalog answered", { rows: Object.keys(slice).length });
 	return slice;
@@ -276,7 +279,7 @@ export async function fetchDocsIds({ signal, fetchImpl = fetch } = {}) {
  * @returns {readonly string[]} the allowlist ids (catalog-namespace)
  */
 export function resolveAllowlist(docsIds, records) {
-	if (docsIds?.length === 0) {
+	if (!docsIds || docsIds.length === 0) {
 		logWarn("cline-pass docs lineup unavailable — using committed lineup", {
 			fallback: CLINE_PASS_LINEUP.length,
 		});

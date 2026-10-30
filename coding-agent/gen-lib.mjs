@@ -179,11 +179,16 @@ export const PI_MODALITY_CAPABILITY = Object.freeze({
 export function modalitiesEligible(modalities) {
 	const input = modalities?.input;
 	const output = modalities?.output;
-	if (input?.length > 0 && !input.includes(PI_MODALITY_CAPABILITY.input[0])) {
+	if (
+		input &&
+		input.length > 0 &&
+		!input.includes(PI_MODALITY_CAPABILITY.input[0])
+	) {
 		return false;
 	}
 	if (
-		output?.length > 0 &&
+		output &&
+		output.length > 0 &&
 		!output.every((o) => PI_MODALITY_CAPABILITY.output.includes(o))
 	) {
 		return false;

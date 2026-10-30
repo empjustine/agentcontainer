@@ -207,7 +207,7 @@ const MODEL_SCOPES = {
 		if (/embedding/i.test(id)) return false;
 		const input = record?.modalities?.input;
 		const output = record?.modalities?.output;
-		if (input?.length === 0 || output?.length === 0) {
+		if (!input || input.length === 0 || !output || output.length === 0) {
 			return (
 				/^gemini-/.test(id) && !/(-image|-tts|-live|-computer-use)/i.test(id)
 			);
@@ -443,7 +443,7 @@ function readClinePassDocs() {
 function resolveClinePassAllowlist(modelsDevModels) {
 	const docs = readClinePassDocs();
 	const docsIds = docs ? parseClinePassDocs(docs) : null;
-	if (docsIds?.length === 0) {
+	if (!docsIds || docsIds.length === 0) {
 		logWarn("cline-pass docs lineup unavailable — using committed allowlist", {
 			fallback: CLINE_PASS_LINEUP.length,
 		});
@@ -592,7 +592,7 @@ function readOpencodeGoDocs() {
 function resolveOpencodeGoApi(modelsDevModels) {
 	const docs = readOpencodeGoDocs();
 	const docsApi = docs ? parseOpencodeGoEndpoints(docs) : null;
-	if (docsApi?.size === 0) {
+	if (!docsApi || docsApi.size === 0) {
 		logWarn(
 			"opencode-go endpoints table unavailable — every model keeps the provider-wide default api",
 			{},
@@ -1351,7 +1351,9 @@ async function emitFull(spec) {
 	// could authenticate it; empty entries (401/403 without a key) mean the
 	// route proved but says nothing, so nothing is bounded (docs/d033).
 	const routeIds =
-		route?.entries.length > 0 ? new Set(route.entries.map((e) => e.id)) : null;
+		route && route.entries.length > 0
+			? new Set(route.entries.map((e) => e.id))
+			: null;
 	/**
 	 * The artifact's provider URL (docs/d070 §1): the fact table's real
 	 * upstream, keyed by id — never string-derived from a configured base.

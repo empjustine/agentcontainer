@@ -190,11 +190,16 @@ export function piCost(cost) {
 export function laysWithinPiModalities(modalities) {
 	const input = modalities?.input;
 	const output = modalities?.output;
-	if (input?.length > 0 && !input.includes(PI_MODALITY_CAPABILITY.input[0])) {
+	if (
+		input &&
+		input.length > 0 &&
+		!input.includes(PI_MODALITY_CAPABILITY.input[0])
+	) {
 		return false;
 	}
 	if (
-		output?.length > 0 &&
+		output &&
+		output.length > 0 &&
 		!output.every((o) => PI_MODALITY_CAPABILITY.output.includes(o))
 	) {
 		return false;
@@ -411,7 +416,7 @@ export function toExtensionModel(model) {
 		input: model.input,
 		cost: model.cost ?? { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
 		compat: {
-			supportsReasoningEffort: model.efforts?.length > 0,
+			supportsReasoningEffort: (model.efforts?.length ?? 0) > 0,
 		},
 	};
 	if (model.reasoning && model.thinkingLevelMap) {
