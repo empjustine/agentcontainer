@@ -160,6 +160,14 @@ no pi process has ever loaded this extension. `TODO.md` §1 carries the rest.
 
 ## Provenance
 
+Every cross-repo reference this folder makes is either LIVE DATA (the fact
+table, the provider's own listing — self-correcting, the source of truth is
+the source) or an ATTRIBUTION (aliou/pi-synthetic below — read, credited,
+nothing copied). It makes no behavioral copy of any third-party code: every
+wire claim is either the provider's own publication or pi's own schema
+default. That classification is the provenance sanity rule the extension
+family holds itself to (docs/d100); the one behavioral copy in the family
+lives in ../pi-hyper/ and is flagged there.
 - Provider facts: `lib/cloud-providers.mjs` (`synthetic`, docs/d092).
 - The emitted provider block's shape: `coding-agent/model-019-cloud-synthetic.json`.
 - Extension API surface: pi's own docs — `docs/custom-provider.md`,

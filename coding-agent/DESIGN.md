@@ -177,6 +177,43 @@ refreshed best-effort, route probing walks the vault-sourced
   launch (the Termux pre-stage `check-node-version.mjs` gate was retired —
   docs/d051).
 
+## Provenance
+
+The generators reach outside this folder for provider knowledge in exactly
+four ways. Three are DATA legs — self-correcting or validation-pinned — and
+one is a behavioral copy, which is the caveat worth knowing:
+
+- **models.dev + catwalk** (vendored `lib/models.dev.api.json`,
+  `lib/catwalk-facts.json`): live catalogs, refreshed through the relay
+  chain, consumed-shape-validated, stale-copy rule (docs/d027b). A live
+  endpoint can change under a run, but the validation is the tripwire and
+  the committed snapshot is the fallback.
+- **Per-provider facts listings** (hyper `/provider`, verboo `/models` —
+  committed `<id>-facts.json` caches, docs/d057): the providers' own
+  documents. Live data; the cache is the last good copy.
+- **Published docs read from git mirrors** (cline/cline
+  `clinepass.mdx`, anomalyco/opencode `go.mdx`): pinned sources read with
+  `git show` through the reference farm — the opencode mirror's HEAD must
+  be the dev branch, and a stale mirror degrades to the committed fallback
+  (cline-pass) or the historical resolver path (opencode-go), never to a
+  wrong-priced lineup. The @ai-sdk/* package names models.dev records carry
+  are vocabulary (the api-shape enum, docs/d048), not dependencies.
+- **charmbracelet/pi-hyper-provider** `src/models.ts`: the ONE behavioral
+  copy. The hyper row's modelCompat (supportsStore/thinkingFormat/
+  maxTokensField), the ON_OFF thinking map, and the User-Agent convention
+  are transcribed from that repo. Upstream can revise its compat table and
+  this mirror has NO tripwire — a silent rot would ship wrong wire claims
+  to every hyper turn. Mitigations today: the transcription is documented
+  at the spec row, and the standalone projection (pi-hyper/merge.mjs, whose
+  tests pin the values) makes a divergence between the two copies visible
+  as an artifact diff. The honest fix — re-deriving compat from what
+  hyper's own listing publishes, or pinning a tested commit of that repo —
+  is open and recorded in docs/d100.
+
+The same inventory, per extension folder, lives in each `pi-*/README.md`'s
+Provenance section (docs/d100 owns the classification rule: live data,
+attribution, or behavioral copy — and every behavioral copy must be flagged).
+
 ## Boundary
 
 Copy unit = this folder + `../lib` (`docs/architecture.md`). `gen-lib.mjs` is

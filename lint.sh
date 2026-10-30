@@ -57,6 +57,21 @@ done'
 log_info "shfmt (advisory)"
 mise exec shfmt@latest -- find . -type f -name '*.sh' -exec shfmt -l {} + || true
 
+# knip — the dead-code gate (unused files, unused exports). This is the
+# mechanical teeth for the fold discipline (docs/d039/d072): an export no
+# consumer imports is a finding, not a style opinion. The one hand-maintained
+# input is the entry list in knip.jsonc — this repo has no bin/main field, so
+# "which files the shims and the pi host actually execute" is operator
+# knowledge a graph walk cannot derive (the WHY for every entry is in that
+# file). The tool is pinned to an AGED release on purpose, not @latest: the
+# pin is the cooldown (a deliberate human decision, matching the toolchain's
+# minimum_release_age posture), and a moving target would change what the
+# gate means between runs. mise's embedded aube installer runs no dependency
+# lifecycle scripts, so the check itself carries no npm-style install-time
+# code execution.
+log_info "knip (gating — unused files/exports; entry contract in knip.jsonc)"
+mise exec npm:knip@6.41.0 -- knip
+
 # Capability-bearing URL gate (docs/d086): a funnel mount path in a tracked
 # file is the mode A credential written down — it leaks the only credential
 # mode A has and churns whenever the mount rotates. Any writer, any shape:

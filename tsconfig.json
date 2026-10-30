@@ -12,8 +12,12 @@
 		"lib": ["es2023"],
 		"module": "esnext",
 		"moduleResolution": "bundler",
-		// No package.json in this repo: every script is ESM regardless of
-		// extension (.js included), so don't let tsc infer CJS for them.
+		// The root package.json is a MINIMAL, dependency-free manifest (knip's
+		// gate requirement, plus an explicit "type": "module" for the .js
+		// seeds that Node previously handled by syntax detection). It must
+		// stay dependency-free: the repo's tools are provisioned ad hoc
+		// (lint.sh/check-types.sh), never through it. moduleDetection stays
+		// "force" so tsc never leans on manifest discovery for what is ESM.
 		"moduleDetection": "force",
 		"types": ["node"],
 		"allowJs": true,
@@ -65,9 +69,19 @@
 		"pi-cline-pass/merge.mjs",
 		"pi-cline-pass/generate.mjs",
 		"tests/pi-cline-pass.test.mjs",
-		"tests/pi-opencode-go.test.mjs"
+		"tests/pi-opencode.test.mjs",
+		"pi-hyper/sources.mjs",
+		"pi-hyper/merge.mjs",
+		"pi-hyper/generate.mjs",
+		"tests/pi-hyper.test.mjs",
+		"pi-verboo/sources.mjs",
+		"pi-verboo/merge.mjs",
+		"pi-verboo/generate.mjs",
+		"tests/pi-verboo.test.mjs",
+		"tests/pi-mistral.test.mjs"
 		// NOTE: the extension entries (pi-synthetic/index.ts,
-		// pi-cline-pass/index.ts, pi-opencode-go/index.ts) are deliberately
+		// pi-cline-pass/index.ts, pi-hyper/index.ts, pi-verboo/index.ts,
+		// pi-mistral/index.ts, pi-opencode/index.ts) are deliberately
 		// NOT listed. They import
 		// @earendil-works/pi-coding-agent, which this repo does not vendor, so
 		// tsc would report one missing module that is host-provided at runtime.

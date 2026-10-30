@@ -1,0 +1,25 @@
+{
+	"name": "@agentcontainer/pi-hyper",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"description": "pi extension: the Charm Hyper provider, seeded from and refreshed to the provider's own /provider catalog",
+	"keywords": [
+		"pi-package",
+		"pi-extension",
+		"pi"
+	],
+	"pi": {
+		"extensions": [
+			"./index.ts"
+		]
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-coding-agent": ">=1.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@earendil-works/pi-coding-agent": {
+			"optional": true
+		}
+	}
+}

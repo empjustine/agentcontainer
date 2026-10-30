@@ -19,7 +19,6 @@ import { fileURLToPath } from "node:url";
 
 import {
 	bearerHeaders,
-	fetchModelEntries,
 	reverseProxyBaseUrl,
 	reverseProxyBaseUrls,
 	providerRouteUrl,
@@ -35,7 +34,7 @@ export {
 } from "./catalog-facts.mjs";
 
 export const scriptDir = dirname(fileURLToPath(import.meta.url));
-export const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
 
 const logging = /** @type {typeof import("../lib/log.mjs")} */ (
 	await import(`${LIB_DIR}/log.mjs`)
@@ -52,7 +51,6 @@ export const { logError, logInfo, logWarn, setLogTool } = logging;
 export const { writeArtifact, writeJsonArtifact } = artifact;
 export {
 	bearerHeaders,
-	fetchModelEntries,
 	reverseProxyBaseUrl,
 	reverseProxyBaseUrls,
 	providerRouteUrl,
@@ -127,7 +125,7 @@ export const {
  */
 
 /** @type {Readonly<LlmCompat>} */
-export const LLAMA_SWAP_COMPAT = Object.freeze({
+const LLAMA_SWAP_COMPAT = Object.freeze({
 	supportsStore: false,
 	supportsDeveloperRole: false,
 	supportsReasoningEffort: false,

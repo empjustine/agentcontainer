@@ -25,6 +25,13 @@ what is specific here (docs/d040 owns the lineup contract itself).
   table DEGRADES to the committed lineup with a warning (a missing markdown
   file says nothing about whether the subscription still serves its models).
   Do not "unify" the directions.
+- **A third source exists as documentation, not as code** (README:
+  "Candidate third source"): `@cline/llms` bakes Cline's own catalog, but
+  ships it as a minified bundle that needs format-fragile parsing. If it is
+  ever wired in, it enters as a degrading cross-check behind the same floor —
+  never as an authority, never as a throwing fetch, and never by adding a
+  package dependency (text extraction from a pinned, checksummed tarball
+  only).
 
 ## The prefix is money
 

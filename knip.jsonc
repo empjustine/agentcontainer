@@ -1,0 +1,65 @@
+{
+	"$schema": "https://unpkg.com/knip@6.41.0/schema.json",
+	// WHY a hand-maintained entry list: this repo has no bundler and no
+	// bin/main field — the "entry points" are whatever the *.sh shims and
+	// the pi host actually execute, and only the operator knows that list.
+	// Everything NOT listed here is analyzed as a library module reachable
+	// only through imports (gen-lib.mjs, git-lib.mjs, the pi-*/ sources and
+	// merge modules), which is where unused exports are a real finding.
+	//
+	// lib/*.mjs are entries BY CONTRACT, not by reachability: every consumer
+	// imports them through a computed LIB_DIR dynamic import
+	// (await import(`${LIB_DIR}/log.mjs`)), which no static analyzer can
+	// follow — treating them as project files would false-positive the whole
+	// shared surface as unused. Entry status is the honest encoding of "this
+	// is a published surface"; their exports are therefore not
+	// unused-export candidates.
+	"entry": [
+		"generate.mjs",
+		"build.mjs",
+		// the coding-agent runner: the folder driver, its two generator
+		// children, and the standalone CLIs the shims and run.sh execute
+		"coding-agent/generate.mjs",
+		"coding-agent/generate-pi-coding-agent.mjs",
+		"coding-agent/generate-opencode.mjs",
+		"coding-agent/refresh-models-dev.mjs",
+		"coding-agent/catalog-facts.mjs",
+		"coding-agent/route-probe.mjs",
+		"coding-agent/check-routed-artifacts.mjs",
+		// git/ farm tooling: every script the git/*.sh shims run (git-lib
+		// stays a project file — the tools import it)
+		"git/audit.mjs",
+		"git/local-changes.mjs",
+		"git/maintain-mirrors.mjs",
+		"git/migrate-to-bare.mjs",
+		"git/software-forge-mirror.mjs",
+		"git/software-forge-remotes.mjs",
+		"git/search-references.mjs",
+		"git/vbs-har.mjs",
+		"llm-local-inference/generate.mjs",
+		"llm-local-inference/model-sizes.mjs",
+		"llm-reverse-proxy/generate.mjs",
+		// the pi extension family: each folder's generator (run by its
+		// generate.sh) and its runtime entry (loaded by the pi host, which
+		// no import graph can see — entry status encodes that contract)
+		"pi-cline-pass/generate.mjs",
+		"pi-cline-pass/index.ts",
+		"pi-synthetic/generate.mjs",
+		"pi-synthetic/index.ts",
+		"pi-hyper/generate.mjs",
+		"pi-hyper/index.ts",
+		"pi-verboo/generate.mjs",
+		"pi-verboo/index.ts",
+		"pi-mistral/index.ts",
+		"pi-opencode/index.ts",
+		"lib/*.mjs",
+		// node --test discovers and runs these directly
+		"tests/*.test.mjs"
+	],
+	// The pi host package is provided by the runtime environment and is
+	// deliberately never a dependency of this repo (tsconfig.json's NOTE).
+	// The Go toolchain is a system dependency of llm-reverse-proxy's build
+	// (lib/go-build.mjs shells out to it) — a binary, not an npm package.
+	"ignoreBinaries": ["go"],
+	"ignoreDependencies": ["@earendil-works/pi-coding-agent"]
+}

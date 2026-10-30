@@ -95,7 +95,7 @@ const PI_MODALITY_CAPABILITY = Object.freeze({
  * identity.
  * @type {readonly string[]}
  */
-export const PI_THINKING_LEVELS = Object.freeze([
+const PI_THINKING_LEVELS = Object.freeze([
 	"off",
 	"minimal",
 	"low",
@@ -124,7 +124,7 @@ const EFFORT_TO_PI = Object.freeze({
  * @param {CatalogRecord} record
  * @returns {string[]|undefined}
  */
-export function effortValues(record) {
+function effortValues(record) {
 	/** @type {string[]} */
 	const values = [];
 	for (const opt of record?.reasoning_options ?? []) {
@@ -241,7 +241,7 @@ export function laysWithinPiModalities(modalities) {
  * @param {string[]|undefined} input
  * @returns {string[]}
  */
-export function toInput(input) {
+function toInput(input) {
 	const kept = PI_MODALITY_CAPABILITY.input.filter((m) => input?.includes(m));
 	return kept.length > 0 ? [...kept] : [PI_MODALITY_CAPABILITY.input[0]];
 }

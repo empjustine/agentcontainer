@@ -1,58 +1,64 @@
 /**
- * @fileoverview index.ts — the pi extension entry, as a CATALOG
- * FRESHNESS WATCHDOG, not a catalog (docs/d097).
+ * @fileoverview index.ts — the pi extension entry, as a CATALOG FRESHNESS
+ * WATCHDOG, not a catalog (docs/d097's built-in-provider rule, applied to
+ * mistral per docs/d100).
  *
- * opencode-go is built into pi-coding-agent (pi-ai's data/opencode-go.json):
- * the host already carries the per-model api dialects, the per-family base
- * URLs, the session-header wiring and the auth — all of it strictly better
- * data than this folder could re-derive or outlive. So this extension
- * registers NO model data at all, and pi's composer does the rest
- * (core/provider-composer.js applyExtension): an extension layer without
- * `models` passes the built-in catalog through UNTOUCHED, while an extension
- * that returns a model list REPLACES the whole provider catalog — a returned
- * row inherits only api/baseUrl from its built-in twin, not limits, prices or
- * thinking maps. Any "backup" copy here could therefore only be a downgrade.
+ * mistral is built into pi-coding-agent (pi-ai ships the provider), so the
+ * host already carries the catalog, the wire format and the auth — all of it
+ * strictly better data than this folder could re-derive. In pi's composer an
+ * extension layer without `models` passes the built-in catalog through
+ * UNTOUCHED, while a returned model list REPLACES the whole provider catalog
+ * — so any "backup" copy here could only be a downgrade, and there is none.
  *
  * What is left worth doing is the one thing a built-in snapshot cannot do:
- * know whether the lineup it ships is still the provider's live lineup. That
- * is this file:
+ * know whether its lineup is still live. That is this file:
  *
- *   - listing answers → return undefined: pi's defaults stand, because they
- *     are the better data;
- *   - listing fails (network allowed, not aborted) → THROW. pi's refresh
- *     pipeline records the error per provider (ModelsRefreshResult.errors)
- *     and the model selector / mode surfaces it as
- *     "Could not refresh opencode-go; showing cached models." — the catalog
- *     warning, with the built-in rows untouched;
+ *   - listing answers → return undefined: pi's defaults stand;
+ *   - listing fails (network allowed, not aborted) → THROW. Throwing IS the
+ *     catalog warning: pi records the error per provider
+ *     (ModelsRefreshResult.errors) and the model selector surfaces
+ *     "Could not refresh mistral; showing cached models." — with the
+ *     built-in rows untouched;
  *   - allowNetwork=false (offline init) or inside the refresh interval →
  *     return undefined silently: pi already knows it is offline, and a
- *     warning every time the selector opens would be noise.
+ *     warning every model-selector open would be noise. `force` bypasses
+ *     the interval.
+ *
+ * ONE deliberate divergence from the opencode watchdogs (pi-opencode/):
+ * mistral's listing is AUTH-GATED (verified: 401 even before any key is
+ * sent), so a MISSING key returns undefined without a fetch. An unconfigured
+ * provider is hidden by pi anyway — a "could not refresh" warning about a
+ * provider the user cannot use yet would be pure noise. The opencode
+ * listings are public, so there a keyless failure means the endpoint moved
+ * and is worth the warning; here a keyless failure means only "no key".
  *
  * The whole extension is this one file — deliberately with ZERO repo-`lib`
- * imports: the previous design pulled lib/cloud-providers.mjs at runtime,
- * which made a copied package useless outside the repo. The upstream URL is
- * a constant here, and tests/pi-opencode-go.test.mjs pins it against the
- * fact table (docs/d070) so it cannot drift.
+ * imports: a copied package must stand alone. The upstream URL is a constant
+ * here, and tests/pi-mistral.test.mjs pins it against the fact table
+ * (lib/cloud-providers.mjs, docs/d070) so it cannot drift.
  *
  * Network access rides the environment's forward proxy (NODE_USE_ENV_PROXY=1
  * plus the forwarded HTTP(S)_PROXY, docs/d074). Deliberately absent: OAuth
- * flows, quota/status UI, request shaping, and any model data.
+ * flows, quota/status UI, request shaping, and any model data. The fleet's
+ * chat-capable scoping of the lineup (dropping mistral-embed / voxtral-tts)
+ * is the models.json layer's job (model-012), not a watchdog's — this file
+ * never touches models.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 /** pi namespaces the models under this id; it is also the fact-table id. */
-export const OPENCODE_GO_PROVIDER_ID = "opencode-go";
+export const MISTRAL_PROVIDER_ID = "mistral";
 
 /**
  * The provider's live model listing — the fact-table canonical upstream
  * (docs/d070) plus the path the OpenAI surface serves its listing under.
  * tests pin this against lib/cloud-providers.mjs.
  */
-export const OPENCODE_GO_LISTING_URL = "https://opencode.ai/zen/go/v1/models";
+export const MISTRAL_LISTING_URL = "https://api.mistral.ai/v1/models";
 
 /** The env var holding the real key; sent when set, never logged (d086). */
-const OPENCODE_GO_API_KEY_ENV = "OPENCODE_API_KEY";
+const MISTRAL_API_KEY_ENV = "MISTRAL_API_KEY";
 
 /**
  * One warning per interval, not one per model-selector open: the failure is
@@ -66,7 +72,7 @@ const REQUEST_TIMEOUT_MS = 15000;
 /**
  * What pi hands `refreshModels`, as far as this extension reads it —
  * declared structurally and read defensively because @earendil-works/pi-* is
- * host-provided at runtime and is not a dependency of this repo.
+ * host-provided at runtime but is not a dependency of this repo.
  */
 interface RefreshContext {
 	signal?: AbortSignal;
@@ -79,16 +85,16 @@ interface RefreshContext {
 /**
  * One listing probe. The payload check is deliberately shallow: a 2xx whose
  * body is not the OpenAI-shaped {data: [...]} means the upstream changed
- * shape (or answered through an intercepting page), which is exactly the
- * "the live lineup cannot be confirmed" case this watchdog exists to report.
+ * shape, which is exactly the "the live lineup cannot be confirmed" case
+ * this watchdog exists to report.
  * @throws {Error} on transport failure, non-2xx, or an unrecognizable payload
  */
 async function fetchListingCount(
 	signal?: AbortSignal,
 	fetchImpl: typeof fetch = fetch,
 ): Promise<number> {
-	const key = process.env[OPENCODE_GO_API_KEY_ENV]?.trim();
-	const res = await fetchImpl(OPENCODE_GO_LISTING_URL, {
+	const key = process.env[MISTRAL_API_KEY_ENV]?.trim();
+	const res = await fetchImpl(MISTRAL_LISTING_URL, {
 		headers: key ? { Authorization: `Bearer ${key}` } : undefined,
 		signal: signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 	});
@@ -110,16 +116,20 @@ async function fetchListingCount(
 	return ids.length;
 }
 
-export default function piOpencodeGo(pi: ExtensionAPI): void {
+export default function piMistral(pi: ExtensionAPI): void {
 	let lastAttemptAt = 0;
 
-	pi.registerProvider(OPENCODE_GO_PROVIDER_ID, {
+	pi.registerProvider(MISTRAL_PROVIDER_ID, {
 		// ONLY refreshModels: no models (the built-in catalog must survive —
 		// any list we returned would REPLACE it wholesale), no api/baseUrl/
 		// apiKey/headers (the built-in provider's own). See the fileoverview.
 		refreshModels: async (context: RefreshContext = {}) => {
 			context.signal?.throwIfAborted();
 			if (context.allowNetwork === false) return undefined;
+			// The listing is auth-gated, so without a key there is nothing this
+			// watchdog can observe — and nothing to warn about: pi hides an
+			// unconfigured provider from /model already.
+			if (!process.env[MISTRAL_API_KEY_ENV]?.trim()) return undefined;
 			if (!context.force && Date.now() - lastAttemptAt < REFRESH_INTERVAL_MS) {
 				return undefined;
 			}
@@ -130,18 +140,18 @@ export default function piOpencodeGo(pi: ExtensionAPI): void {
 				if (context.signal?.aborted) throw err;
 				// Throwing IS the catalog warning: pi records the provider in
 				// ModelsRefreshResult.errors and the UI shows "Could not refresh
-				// opencode-go; showing cached models." — and since we returned
+				// mistral; showing cached models." — and since we returned
 				// nothing, the built-in rows are exactly what keeps standing.
 				throw new Error(
-					`${OPENCODE_GO_PROVIDER_ID}: live model listing unreachable (${
+					`${MISTRAL_PROVIDER_ID}: live model listing unreachable (${
 						err instanceof Error ? err.message : String(err)
 					}) — keeping pi's built-in catalog`,
 					{ cause: err },
 				);
 			}
 			// Success returns undefined on purpose: the fresh lineup is the ids
-			// only, and pi's built-in rows carry names, limits, prices, dialects
-			// and thinking maps this file neither has nor could improve.
+			// only, and pi's built-in rows carry names, limits, prices and
+			// thinking maps this file neither has nor could improve.
 			return undefined;
 		},
 	});

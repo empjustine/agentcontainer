@@ -32,8 +32,8 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-export const scriptDir = dirname(fileURLToPath(import.meta.url));
-export const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const scriptDir = dirname(fileURLToPath(import.meta.url));
+const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
 // A Windows LIB_DIR (`C:\...\lib`) is not a loadable specifier — the drive
 // letter parses as a URL scheme and the ESM loader rejects it — so the logger
 // is reached through an explicit file: URL, the one spelling valid everywhere

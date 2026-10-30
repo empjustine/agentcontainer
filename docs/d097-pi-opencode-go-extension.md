@@ -104,3 +104,27 @@ invalidate the rule.
   google deliberately unmapped) still degrades silently on current
   mirrors; migrating `model-012` to the tested dual-path resolver — or to
   pi's built-in per-model api — remains deferred.
+
+## Amendment — the opencode unification
+
+**Status: implemented (docs/d100).** The folder this record created as
+`pi-opencode-go/` is now `pi-opencode/` and registers BOTH opencode.ai
+surfaces — `opencode` (zen, the fact table's `opencode` row) and
+`opencode-go` — as two watchdog registrations in one entry. Nothing in the
+rule above changed: each registration still carries ONLY `refreshModels`,
+no model data exists in the folder, and a failed listing fetch still throws
+the catalog warning. What is new:
+
+- **One folder per vendor family, not per provider id**, when the family
+  shares the key env (`OPENCODE_API_KEY`), the watchdog rules and the
+  built-in-provider constraint. Two folders would have duplicated every
+  rule for one provider family.
+- **Per-provider interval state**: one provider's outage must not silence
+  the other's — each watchdog keeps its own clock (`force` bypasses both),
+  pinned by `tests/pi-opencode.test.mjs`'s independence test.
+- The zen listing is PUBLIC (verified: 200 unauthenticated), so the
+  keyless-failure-is-a-warning stance carries over unchanged. The
+  auth-gated contrast (silent without a key) is `../pi-mistral/`'s.
+
+The rename is a `git mv` — history is preserved, and every reference
+(tsconfig, biome, tests, README, this record's amendment) moved with it.

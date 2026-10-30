@@ -36,7 +36,15 @@
 			// pi-cline-pass's generated pair, same reasoning (d040).
 			"!pi-cline-pass/models.json",
 			"!pi-cline-pass/models.js",
+			// pi-hyper's and pi-verboo's generated pairs, same reasoning (d100).
+			"!pi-hyper/models.json",
+			"!pi-hyper/models.js",
+			"!pi-verboo/models.json",
+			"!pi-verboo/models.js",
 			"!coding-agent/hyper-facts.json",
+			// verboo-facts.json is the same class of generated facts cache (d057) —
+			// it was missing from this list while hyper-facts.json had it.
+			"!coding-agent/verboo-facts.json",
 			"!llm-reverse-proxy/llm-reverse-proxy.json",
 			// same reasoning, .jsonc extension: written by
 			// generate-opencode.mjs
