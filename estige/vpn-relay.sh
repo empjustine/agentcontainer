@@ -94,8 +94,9 @@ _want_tunnel() {
 }
 
 # _probe — stdout: the relay's /healthz body. Non-zero means nothing answered
-# HTTP there. curl is the probe client (smoke-test.sh's precedent: the
-# host-side check tool this repo already assumes).
+# HTTP there. curl is the probe client because the launchers are the one
+# shell surface docs/d102 kept: a one-shot HTTP answer needs no go
+# subcommand (the Go smoke suite probes the same way from its own process).
 _probe() {
 	curl -sS --max-time 2 "$health_url" 2>/dev/null
 }

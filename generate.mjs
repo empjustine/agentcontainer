@@ -27,6 +27,7 @@
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { goToolchainReady } from "./lib/go-build.mjs";
 import { logError, logInfo, setLogTool } from "./lib/log.mjs";
 
 setLogTool("generate");
@@ -58,6 +59,18 @@ const FOLDERS = [
 let failures = 0;
 for (const { folder, cmd, args, cwd } of FOLDERS) {
 	logInfo("generating folder", { folder });
+	// The estige leg spawns `go` from the caller's PATH. There is no repo
+	// mise pin (toolchain selection is an explicit `mise exec` at the CLI,
+	// repo-wide), so on a mise host the bare shim errors with "No version is
+	// set" — probe first and say the fix, instead of surfacing a bare exit 1
+	// from the child.
+	if (cmd === "go" && !goToolchainReady()) {
+		failures += 1;
+		logError("no working go toolchain on PATH — run as: mise exec go@1.27 -- ./generate.mjs", {
+			folder,
+		});
+		continue;
+	}
 	const r = spawnSync(cmd, args, { stdio: "inherit", cwd });
 	if (r.status !== 0) {
 		failures += 1;

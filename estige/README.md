@@ -141,8 +141,9 @@ hosts, Termux targets strictly serialized. For THIS folder:
   `scratch` is deliberate: the final stage pulls from NO registry, so the
   image builds where non-docker.io registries are blocked; the image ships
   the CA bundle both TLS legs (upstream certs, Funnel `*.ts.net`) verify
-  against and is ~7.5 MB final). `smoke-test.sh` builds the host binary
-  (`./estige`) itself when go is available.
+  against and is ~7.5 MB final). `estige smoke-test` (smoke-test.go) runs
+  the behavioural suite against that host binary — no node, curl, or
+  python3 on the host (docs/d102).
 - **Bare host without a container tool**: host binary only — go is required,
   it is the only thing this host can build and serve.
 
@@ -209,11 +210,13 @@ still listens on 8080 internally; `llm-local-inference/run.sh` publishes
 | `/<upstream-host>/<path>` | allowlisted hosts only (~36 owner-set rows, docs/d047) | host key → scheme://host root; the client carries the full upstream base path after the host (`<base>/api.cline.bot/api/v1`); every other host is denied by absence |
 | `/bazzite…ts.net/<path>` | `https://bazzite.coelacanth-barb.ts.net` | llama-swap (LOCAL GGUF, model-id routing) rides in as a plain fact-table row keyed by its tsnet `tailscale serve` hostname (docs/d070) — the loopback hop never leaves the host |
 
-`./smoke-test.sh` runs 34 behavioural checks in the one and only mode —
+`./estige smoke-test` runs 34 behavioural checks in the one and only mode —
 the v2 host allowlist (docs/d047) — including the deny-by-absence negatives
 (unknown host, v1 slug form) answer the plain funnel 404. TLS failure
 classes come from the badssl.com test hosts, so no bundled cert is needed;
-that section is skipped automatically if there is no outbound internet.
+that section is skipped automatically if there is no outbound internet,
+and the child process runs with the proxy env stripped so a host chain
+(docs/d094) cannot change what the checks observe.
 
 CI: none exists yet, deliberately — the GitHub Actions findings for
 this unit (required steps, runner friction, gate flake points) live in

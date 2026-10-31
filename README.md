@@ -111,7 +111,7 @@ agentcontainer/
 │   ├── vpn-relay.sh                     #   → the relay node: serve it, or the chain step that points a child at it (docs/d095)
 │   ├── estige.example.json              #   → upstream-host → base URL allowlist (config: listen + allowHosts + optional tunnel policy; credentials are env-only, d078)
 │   ├── generate.go                      #   → estige generate: host allowlist from lib/cloud-providers.json (d038 catalog, d102)
-│   ├── smoke-test.sh                    #   → 34 behavioural checks against the built binary/image
+│   ├── smoke-test.go                    #   → estige smoke-test: 34 behavioural checks (no curl/node/python needed)
 │   ├── README.md                        #   → operations: routing table, usage, build, port model
 │   └── DESIGN.md                        #   → routing-convention rationale, 404 anti-oracle, RFC 9457 error taxonomy
 │

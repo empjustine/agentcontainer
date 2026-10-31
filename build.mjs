@@ -340,7 +340,7 @@ if (containerTool) {
 // --- estige native binary (no container backend available) -------
 // Termux: android/arm64 via the lib/go-build.mjs preset (GOOS=android — DNS
 // resolver; see the module header). Bare host: the host binary, which
-// smoke-test.sh and direct runs use. Needs a WORKING go toolchain either way.
+// `estige smoke-test` and direct runs use. Needs a WORKING go toolchain either way.
 const proxyDir = join(repoRoot, "estige");
 if (containerTool) {
 	noteGated("estige-native");

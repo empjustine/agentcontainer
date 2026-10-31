@@ -341,7 +341,7 @@ func (lw *loggingResponseWriter) WriteHeader(status int) {
 // interface promotes neither, so without these the proxy silently falls back
 // to buffered writes and FlushInterval:-1 becomes a no-op — SSE/NDJSON would
 // arrive only when net/http's buffer fills or the body ends (see
-// smoke-test.sh's streaming-unbuffered check).
+// `estige smoke-test`'s streaming-unbuffered check).
 func (lw *loggingResponseWriter) Flush() {
 	if f, ok := lw.ResponseWriter.(http.Flusher); ok {
 		f.Flush()
@@ -499,14 +499,17 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func main() {
 	// Subcommands (docs/d102): every generator/launcher verb runs before
 	// flag parsing — the proxy's own flags all start with '-', so any bare
-	// first arg is a subcommand by construction. `generate` is the
-	// allowlist generator; see generate.go.
+	// first arg is a subcommand by construction. `generate` builds the
+	// allowlist (generate.go); `smoke-test` runs the behavioural suite
+	// (smoke-test.go).
 	if len(os.Args) > 1 && !strings.HasPrefix(os.Args[1], "-") {
 		switch os.Args[1] {
 		case "generate":
 			os.Exit(runGenerate(os.Args[2:]))
+		case "smoke-test":
+			os.Exit(runSmokeTest(os.Args[2:]))
 		default:
-			log.Fatalf("[estige] unknown subcommand %q (want generate)", os.Args[1])
+			log.Fatalf("[estige] unknown subcommand %q (want generate, smoke-test)", os.Args[1])
 		}
 	}
 

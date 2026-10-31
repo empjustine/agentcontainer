@@ -60,11 +60,22 @@ The unit's generation becomes Go, end to end:
   `generate.mjs` spawns the estige leg as `go run . generate` from the
   folder; the node-based folders keep their generators and shims.
 
-Landing next (same change set, following commits): the smoke test moves
-to Go, and the launcher/`lib/*.sh` surface is assessed explicitly rather than
-assumed (the `vpn-*.sh` entries share the parent repo's declarative
-workload API — `lib/workload-runtime.sh` — with the other folders, and that
-sharing is a docs/d082 split-time question, not a this-commit casualty).
+Landing in this same change set: the smoke test moves to Go —
+`smoke-test.go`, the `estige smoke-test` subcommand — keeping the check
+vocabulary (`ok`/`FAIL`/`skip`, the `passed=N failed=N skipped=N` summary)
+byte-stable so operator-facing output does not change, and running the
+child with the proxy env stripped (the shell script inherited `http_proxy`
+silently — a host chain, docs/d094, could flip non-loopback checks).
+34/34 green against the Go implementation.
+
+The launcher surface is assessed, not converted: `vpn-exit.sh` /
+`vpn-relay.sh` are one-shot launchers whose operational surface (env,
+exit codes, `workload_rm`) is the parent repo's declarative workload API —
+`lib/workload-runtime.sh` — shared with the other folders. Converting them
+here would trade a known, gated shell surface (shellcheck-clean,
+chain-tested by `tests/check-vpn-relay-chain.sh`) for a Go re-implementation
+whose environment plumbing is not yet designed; that trade belongs to the
+docs/d082 split-time question, same as the workload API itself.
 
 ## Consequences
 
