@@ -38,7 +38,7 @@
 		"git/vbs-har.mjs",
 		"llm-local-inference/generate.mjs",
 		"llm-local-inference/model-sizes.mjs",
-		"llm-reverse-proxy/generate.mjs",
+		"estige/generate.mjs",
 		// the pi extension family: each folder's generator (run by its
 		// generate.sh) and its runtime entry (loaded by the pi host, which
 		// no import graph can see — entry status encodes that contract)
@@ -58,7 +58,7 @@
 	],
 	// The pi host package is provided by the runtime environment and is
 	// deliberately never a dependency of this repo (tsconfig.json's NOTE).
-	// The Go toolchain is a system dependency of llm-reverse-proxy's build
+	// The Go toolchain is a system dependency of estige's build
 	// (lib/go-build.mjs shells out to it) — a binary, not an npm package.
 	// xdg-user-dir derives the mirrors-dir fallback in git/forge-mirror.mjs:
 	// host state, the same fact the git/*.sh shims read from the xdg config.

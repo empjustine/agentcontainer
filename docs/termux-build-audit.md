@@ -2,12 +2,12 @@
 id: termux-build-audit
 type: research
 status: findings
-title: "Termux build audit — Infisical CLI and llm-reverse-proxy native build"
+title: "Termux build audit — Infisical CLI and estige native build"
 parent: architecture
 tags: ["research", "termux", "build"]
 ---
 
-# Termux build audit — Infisical CLI (`./build.sh`) and `llm-reverse-proxy/`
+# Termux build audit — Infisical CLI (`./build.sh`) and `estige/`
 
 Findings from verifying, on the termux host (aarch64, bionic, no root,
 Go 1.27.1 android/arm64, ~1 GB RAM), whether both build systems actually
@@ -20,9 +20,9 @@ checkout upkeep it claims to. Every claim below was executed, not inferred.
 |---|---|
 | `./build.sh` go install path | **Never works** — structurally impossible while upstream go.mod has `replace` directives (all platforms) |
 | `./build.sh` checkout build | Works on Termux; verified end-to-end (`git pull --ff-only` + `-checklinkname=0` build, ~50 min) |
-| `llm-reverse-proxy` native build | Works untouched — `GOOS=android` binary builds in seconds |
-| `llm-reverse-proxy` runtime | Works — serves, streams, and reaches real HTTPS upstreams (models.dev 200 through the proxy) |
-| `llm-reverse-proxy` smoke test | Was 28/29 on this host — the one failure was a **harness calibration bug** (absolute timing threshold), fixed; now 29/29 |
+| `estige` native build | Works untouched — `GOOS=android` binary builds in seconds |
+| `estige` runtime | Works — serves, streams, and reaches real HTTPS upstreams (models.dev 200 through the proxy) |
+| `estige` smoke test | Was 28/29 on this host — the one failure was a **harness calibration bug** (absolute timing threshold), fixed; now 29/29 |
 
 ## 1. `./build.sh` — the `go install` primary path is dead
 
@@ -70,10 +70,10 @@ newer release; the checkout build with `-checklinkname=0` is the only fix.
   expected path, never go install's exit status (an exit 0 without a binary
   must fall through; an exit ≠ 0 must merely warn).
 
-## 2. `llm-reverse-proxy` — builds and works on Termux, as designed
+## 2. `estige` — builds and works on Termux, as designed
 
 The dual-mode `build.sh` detects `$PREFIX` and builds the native
-`GOOS=android` binary (`llm-reverse-proxy-android`, ~7 MB, seconds) —
+`GOOS=android` binary (`estige-android`, ~7 MB, seconds) —
 `GOOS=android` is required for Android's system DNS resolver (no
 `/etc/resolv.conf`); that is implemented and correct. Verified:
 
@@ -106,8 +106,8 @@ within baseline + 150 ms. Result: `passed=29 failed=0`, exit 0.
 cd ~/agentcontainer
 FORCE=1 SKIP_PKG=1 ./build.sh                    # infisical CLI (checkout build)
 ~/Infisical/cli/infisical --version              # → infisical version devel
-cd llm-reverse-proxy
-FORCE=1 SKIP_PKG=1 ./build.sh                    # → llm-reverse-proxy-android
+cd estige
+FORCE=1 SKIP_PKG=1 ./build.sh                    # → estige-android
 ./generate.sh && ./run.sh                        # → serves :8080
 ./smoke-test.sh                                  # → passed=29 failed=0
 ```

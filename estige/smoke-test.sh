@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Behavioural smoke test for llm-reverse-proxy (v2 host-allowlist mode only,
+# Behavioural smoke test for estige (v2 host-allowlist mode only,
 # docs/d047). Builds the binary, spins up a local
 # upstream (SSE + echo), and checks every documented behaviour. TLS failure
 # classes use the badssl.com test hosts, so no bundled cert is needed
@@ -30,13 +30,13 @@ done
 # `go version`; without a WORKING go, fail with instructions instead of a
 # cryptic mise error (image hosts do not need this binary at all — only
 # smoke-test and direct runs do).
-if [ ! -x "$OLDPWD/llm-reverse-proxy" ]; then
+if [ ! -x "$OLDPWD/estige" ]; then
 	command -v go >/dev/null 2>&1 || export PATH="$HOME/.local/share/mise/shims:$PATH"
 	if ! go version >/dev/null 2>&1; then
 		echo 'FATAL: no working go toolchain (mise hosts: mise use -g go@1.27; Termux: pkg install golang)' >&2
 		exit 96
 	fi
-	(cd "$OLDPWD" && CGO_ENABLED=0 go build -o llm-reverse-proxy .)
+	(cd "$OLDPWD" && CGO_ENABLED=0 go build -o estige .)
 fi
 
 cat > upstream.mjs <<'EOF'
@@ -80,13 +80,13 @@ fi
 # v2 host-allowlist shape (docs/d047): host[:port] → scheme://host root.
 # The badssl hosts key on their DNS names; the loopback upstream keys on
 # host:port — the first path segment is always the destination host.
-cat > llm-reverse-proxy.json <<'EOF'
+cat > estige.json <<'EOF'
 {
   "listen": "127.0.0.1:18101",
   "allowHosts": {
     "127.0.0.1:19091": "http://127.0.0.1:19091",
     "127.0.0.1:1": "http://127.0.0.1:1",
-    "no-such-host-llm-reverse-proxy-smoketest.invalid": "http://no-such-host-llm-reverse-proxy-smoketest.invalid",
+    "no-such-host-estige-smoketest.invalid": "http://no-such-host-estige-smoketest.invalid",
     "expired.badssl.com": "https://expired.badssl.com",
     "wrong.host.badssl.com": "https://wrong.host.badssl.com",
     "self-signed.badssl.com": "https://self-signed.badssl.com",
@@ -99,13 +99,13 @@ cat > llm-reverse-proxy.json <<'EOF'
 }
 EOF
 
-"$OLDPWD/llm-reverse-proxy" -config llm-reverse-proxy.json >proxy.log 2>&1 &
+"$OLDPWD/estige" -config estige.json >proxy.log 2>&1 &
 for _ in $(seq 50); do curl -s -o /dev/null http://127.0.0.1:18101/ && break; sleep 0.1; done
 cat proxy.log
 # same staleness guard for the proxy port (otherwise every /local check hits
 # whatever old instance holds it and fails with mismatched bodies)
 if grep -q 'bind: address already in use' proxy.log; then
-	echo 'FATAL: port 18101 already bound — a stale llm-reverse-proxy is running; kill it first' >&2
+	echo 'FATAL: port 18101 already bound — a stale estige is running; kill it first' >&2
 	exit 1
 fi
 
@@ -152,7 +152,7 @@ else fail=$((fail+1)); echo "FAIL streaming-unbuffered: first chunk after ${dt}m
 check upstream-4xx-passthrough 'rate limited by upstream itself' "$(curl -s "$B/127.0.0.1:19091/v1/error")"
 
 # RFC 9457 internal errors — transport / DNS
-for spec in '127.0.0.1:1 econnrefused' 'no-such-host-llm-reverse-proxy-smoketest.invalid dnserror'; do
+for spec in '127.0.0.1:1 econnrefused' 'no-such-host-estige-smoketest.invalid dnserror'; do
   # Intentional word-split: $spec is a two-field "name type" record.
   # shellcheck disable=SC2086
   set -- $spec
@@ -160,10 +160,10 @@ for spec in '127.0.0.1:1 econnrefused' 'no-such-host-llm-reverse-proxy-smoketest
   check "502-$1" "\"type\":\"$2" "$r"
   check "502-$1-status" '"status":502' "$r"
 done
-r=$(curl -s "$B/no-such-host-llm-reverse-proxy-smoketest.invalid/v1/models")
+r=$(curl -s "$B/no-such-host-estige-smoketest.invalid/v1/models")
 check 502-nxdomain-details '"details":{' "$r"
 check 502-nxdomain-details-isnotfound '"isNotFound":true' "$r"
-check 502-nxdomain-no-urn '0' "$(curl -s "$B/no-such-host-llm-reverse-proxy-smoketest.invalid/v1/models" | grep -c 'urn:' || true)"
+check 502-nxdomain-no-urn '0' "$(curl -s "$B/no-such-host-estige-smoketest.invalid/v1/models" | grep -c 'urn:' || true)"
 
 # RFC 9457 internal errors — TLS verification (badssl.com)
 if [ "${BADSSL_DOWN:-0}" = 1 ]; then
@@ -222,7 +222,7 @@ for path in '/' '/nosuch/v1/models' '/openrouter/v1/models' '/unknown-host.examp
   fi
 done
 # and no routing-table leak anywhere in those bodies
-leak=$(for path in '/' '/nosuch/v1/models' '/wp-login.php'; do curl -s "$B$path"; done | grep -cE 'openrouter|nvidia|llm-reverse-proxy|urn:' || true)
+leak=$(for path in '/' '/nosuch/v1/models' '/wp-login.php'; do curl -s "$B$path"; done | grep -cE 'openrouter|nvidia|estige|urn:' || true)
 if [ "$leak" -eq 0 ]; then pass=$((pass+1)); echo "ok   404-no-fingerprint-leak"
 else fail=$((fail+1)); echo "FAIL 404-no-fingerprint-leak"; fi
 

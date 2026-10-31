@@ -17,13 +17,13 @@ the split and the one rule that lets some folders reuse others.
 
 | Side | Responsibility | Instance |
 |------|----------------|----------|
-| **serving** | run llama-swap (`llm-local-inference*`, LOCAL GGUF only) and llm-reverse-proxy (`llm-reverse-proxy/`, cloud relay + opt-in tunnel family, docs/d073/d077) | `llm-local-inference/` (local layer, capability-gated) + `llm-reverse-proxy/` (host-allowlist router, docs/d047) |
+| **serving** | run llama-swap (`llm-local-inference*`, LOCAL GGUF only) and estige (`estige/`, cloud relay + opt-in tunnel family, docs/d073/d077) | `llm-local-inference/` (local layer, capability-gated) + `estige/` (host-allowlist router, docs/d047) |
 | **usage** | run the pi coding-agent (`coding-agent*`) | `coding-agent/` |
 
 The serving side is split by concern (docs/d027): llama-swap
 (`llm-local-inference/`) is a **single local-GGUF instance** on GPU-capable
 container hosts — there is no peers-only llama-swap mode — while cloud
-provider relay is `llm-reverse-proxy/` (the path-prefix cloud router),
+provider relay is `estige/` (the path-prefix cloud router),
 deployable wherever the cloud is reachable. The old fixed-purpose split
 (`openai-completions-gfx1030/` + `openai-completions-peer/`) and the
 `coding-agent-peer/` usage variant were retired — the
@@ -56,7 +56,7 @@ reaching into a sibling *runner* folder does.
   `.paths` staleness manifest, emitted only on GPU-capable container hosts;
   snapshot paths are baked at generation — `docs/d029` option B), plus
   `llama-swap-core.json`, `config.d/` and `run.sh`. Cloud/remote relaying is
-  NOT here — it moved to `llm-reverse-proxy/` (the raw passthrough
+  NOT here — it moved to `estige/` (the raw passthrough
   proxy); the relay layer generators, Termux build/serve, and peers-only mode
   were removed with that handoff.
 - `coding-agent/` is the **pi workload baseline generator**: it owns the
@@ -160,7 +160,7 @@ and only on hosts where generation detects a container backend + GPU devices.
 | `00-general.yaml` | globals + macros | `llm-local-inference/generate.mjs` | always |
 | `10-local-llm-inference.yaml` (+ `.paths` staleness manifest) | local GGUF `models` | `llm-local-inference/generate.mjs` (from the shared `lib/llamacpp-model-data.json`; snapshot paths baked at generation, `docs/d029` B) | container backend + GPU detected |
 
-Cloud providers are NOT a config layer anymore: `llm-reverse-proxy/` (raw
+Cloud providers are NOT a config layer anymore: `estige/` (raw
 passthrough proxy) serves them. The former `peer-cloud.yaml` and
 `22-peer-gfx1030.yaml` layers — and the layer snapshot/rollback machinery
 they required — were removed with that handoff.
@@ -173,7 +173,7 @@ the variant folders redundant.)
 | Folder | Role | What makes it work |
 |--------|------|--------------------|
 | `llm-local-inference/` | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `generate.sh`/`generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh` |
-| `llm-reverse-proxy/` | host-allowlist cloud router (docs/d047 — mode A, by decision the only HOST-policy mode, docs/d080): `/<upstream-host>/<path>` → the allowlisted scheme://host root, byte-for-byte, no keys — deny-by-absence for everything else (docs/d027's 404 policy); streaming as-is, RFC 9457 502s; also carries the opt-in tunnel family (modes C–E, docs/d073/d077), whose two deployments are named by network position since docs/d088 — the **exit node** (`vpn-exit.sh`; funnel front + tunnel server) and the **relay node** (`vpn-relay.sh`; loopback CONNECT/SOCKS5 — serve mode, or the chain step that points a child at it, docs/d095; env values and code speak the same names, d088 phase 2) — mode D deployed, C default-on (d084); standalone-repo boundary defined in docs/d082 (split-time CI findings in `llm-reverse-proxy/CI.md`) | `main.go`, `generate.sh`/`generate.mjs` (allowHosts from pi-ai + lib/cloud-providers.mjs, docs/d047), `llm-reverse-proxy.example.json`, `smoke-test.sh`; the tunnel family: `relaynode.go`, `relaychain.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go`, plus the two deployment entries `vpn-exit.sh`/`vpn-relay.sh`; built by the root `build.mjs` |
+| `estige/` | host-allowlist cloud router (docs/d047 — mode A, by decision the only HOST-policy mode, docs/d080): `/<upstream-host>/<path>` → the allowlisted scheme://host root, byte-for-byte, no keys — deny-by-absence for everything else (docs/d027's 404 policy); streaming as-is, RFC 9457 502s; also carries the opt-in tunnel family (modes C–E, docs/d073/d077), whose two deployments are named by network position since docs/d088 — the **exit node** (`vpn-exit.sh`; funnel front + tunnel server) and the **relay node** (`vpn-relay.sh`; loopback CONNECT/SOCKS5 — serve mode, or the chain step that points a child at it, docs/d095; env values and code speak the same names, d088 phase 2) — mode D deployed, C default-on (d084); standalone-repo boundary defined in docs/d082 (split-time CI findings in `estige/CI.md`) | `main.go`, `generate.sh`/`generate.mjs` (allowHosts from pi-ai + lib/cloud-providers.mjs, docs/d047), `estige.example.json`, `smoke-test.sh`; the tunnel family: `relaynode.go`, `relaychain.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go`, plus the two deployment entries `vpn-exit.sh`/`vpn-relay.sh`; built by the root `build.mjs` |
 | `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.sh`/`generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.sh`, `settings.json`; image built by the root `build.mjs` |
 
 The former "next planned step" sketch (a simplified config-generator system

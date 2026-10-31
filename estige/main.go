@@ -1,4 +1,4 @@
-// llm-reverse-proxy — a dumb, faithful reverse proxy for LLM APIs.
+// estige — a dumb, faithful reverse proxy for LLM APIs.
 //
 // v2 host-allowlist routing (docs/d047): requests to
 // http://<host>:<port>/<upstream-host>/<path>?<query> are forwarded, byte for
@@ -497,7 +497,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // ---------------------------------------------------------------------------
 
 func main() {
-	configPath := flag.String("config", "llm-reverse-proxy.json", "path to JSON config")
+	configPath := flag.String("config", "estige.json", "path to JSON config")
 	listen := flag.String("listen", "", "override listen address (e.g. :8080)")
 	// Role values are the node names, not protocol roles (docs/d088): the
 	// process is always a mix of client, server, and both proxy shapes, so
@@ -532,17 +532,17 @@ func main() {
 		return
 	}
 	if *mode != "exit" {
-		log.Fatalf("[llm-reverse-proxy] unknown -mode %q (want exit or relay)", *mode)
+		log.Fatalf("[estige] unknown -mode %q (want exit or relay)", *mode)
 	}
 
 	cfg, err := loadConfig(*configPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			log.Fatalf("[llm-reverse-proxy] %v", err)
+			log.Fatalf("[estige] %v", err)
 		}
 		// No config file: allow pure-flag usage (-listen + provider URLs on
 		// the command line is not supported; require the file).
-		log.Fatalf("[llm-reverse-proxy] config %s not found; create it, e.g. {\"listen\":\":8080\",\"allowHosts\":{\"openrouter.ai\":\"https://openrouter.ai\"}}", *configPath)
+		log.Fatalf("[estige] config %s not found; create it, e.g. {\"listen\":\":8080\",\"allowHosts\":{\"openrouter.ai\":\"https://openrouter.ai\"}}", *configPath)
 	}
 	if *listen != "" {
 		cfg.Listen = *listen
@@ -555,12 +555,12 @@ func main() {
 	for name, raw := range cfg.AllowHosts {
 		p, err := newProvider(name, raw)
 		if err != nil {
-			log.Fatalf("[llm-reverse-proxy] %v", err)
+			log.Fatalf("[estige] %v", err)
 		}
 		s.providers[name] = p
 	}
 	if len(s.providers) == 0 {
-		log.Fatalf("[llm-reverse-proxy] no allowHosts entries configured in %s", *configPath)
+		log.Fatalf("[estige] no allowHosts entries configured in %s", *configPath)
 	}
 
 	if shouldArmTunnel(cfg.Tunnel, operatorCredentialInEnv()) {
@@ -569,7 +569,7 @@ func main() {
 			tn = &tunnelConfig{}
 		}
 		if err := s.enableTunnel(tn); err != nil {
-			log.Fatalf("[llm-reverse-proxy] tunnel: %v", err)
+			log.Fatalf("[estige] tunnel: %v", err)
 		}
 	}
 
@@ -581,9 +581,9 @@ func main() {
 		Handler:           s,
 	}
 
-	log.Printf("[llm-reverse-proxy] listening on %s; %d allowlisted host(s):", cfg.Listen, len(s.providers))
+	log.Printf("[estige] listening on %s; %d allowlisted host(s):", cfg.Listen, len(s.providers))
 	for _, name := range s.providers {
-		log.Printf("[llm-reverse-proxy]   /%s/ → %s", name.name, name.target)
+		log.Printf("[estige]   /%s/ → %s", name.name, name.target)
 	}
 	log.Fatal(srv.ListenAndServe())
 }

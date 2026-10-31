@@ -1,19 +1,19 @@
 ---
-id: llm-reverse-proxy
+id: estige
 type: reference
 status: stable
-title: "llm-reverse-proxy — raw passthrough reverse proxy for cloud LLM providers"
+title: "estige — raw passthrough reverse proxy for cloud LLM providers"
 parent: architecture
 tags: ["serving", "proxy", "go"]
 ---
 
-# llm-reverse-proxy
+# estige
 
 A dumb, faithful reverse proxy for LLM APIs. Zero dependencies, one static Go
 binary, ~13 MB RSS. It exists because llama-swap's routing machinery
 (model swapping, health checks, key injection) accumulated exceptions when
-pi-coding-agent / opencode were pointed at it through `llm-reverse-proxy/`;
-llm-reverse-proxy is the substrate llama-swap itself uses internally
+pi-coding-agent / opencode were pointed at it through `estige/`;
+estige is the substrate llama-swap itself uses internally
 (`httputil.ReverseProxy`), extracted and stripped of everything else.
 
 > **Expansion (docs/d073, mode family revised by docs/d077):** modes A
@@ -51,10 +51,10 @@ on some hosts; it is an optimization, not the reference.
 ## Usage
 
 ```console
-$ cp llm-reverse-proxy.example.json llm-reverse-proxy.json   # edit providers
-$ ./llm-reverse-proxy -config llm-reverse-proxy.json
-[llm-reverse-proxy] listening on 0.0.0.0:8080; 6 provider(s):
-[llm-reverse-proxy]   /anthropic/ → https://api.anthropic.com
+$ cp estige.example.json estige.json   # edit providers
+$ ./estige -config estige.json
+[estige] listening on 0.0.0.0:8080; 6 provider(s):
+[estige]   /anthropic/ → https://api.anthropic.com
 ...
 ```
 
@@ -67,7 +67,7 @@ already inlined the pi-ai/npm tables); `generate.sh` is its 3-line
 
 
 ```console
-$ ./generate.sh                       # -> llm-reverse-proxy.json (atomically
+$ ./generate.sh                       # -> estige.json (atomically
                                       #    REPLACED on success — the change
                                       #    is reviewed with git diff)
 ```
@@ -130,7 +130,7 @@ Building is the root `./build.sh` → `build.mjs` (docs/d041 — the per-folder
 hosts, Termux targets strictly serialized. For THIS folder:
 
 - **Termux**: builds the native `android/arm64` binary
-  (`llm-reverse-proxy-android`; `GOOS=android` is required so DNS resolves
+  (`estige-android`; `GOOS=android` is required so DNS resolves
   via Android's resolver — flag presets in `lib/go-build.mjs`). Needs
   `pkg install golang`.
 - **Container hosts**: builds ONLY the OCI image (`Containerfile`:
@@ -140,7 +140,7 @@ hosts, Termux targets strictly serialized. For THIS folder:
   image builds where non-docker.io registries are blocked; the image ships
   the CA bundle both TLS legs (upstream certs, Funnel `*.ts.net`) verify
   against and is ~7.5 MB final). `smoke-test.sh` builds the host binary
-  (`./llm-reverse-proxy`) itself when go is available.
+  (`./estige`) itself when go is available.
 - **Bare host without a container tool**: host binary only — go is required,
   it is the only thing this host can build and serve.
 
@@ -156,13 +156,13 @@ restricted-internet environment, without direct tsnet to the endpoints.
 The code speaks the same names (d088 phase 2 landed). HOST:
 the container branch runs in HOST NETWORK mode; the native branch execs
 the binary directly. Exit node: listening on `${HOST_PORT:-8080}` (the
-funnel front) with `./llm-reverse-proxy.json` mounted read-only
+funnel front) with `./estige.json` mounted read-only
 (in-container `-listen 0.0.0.0:$HOST_PORT` overrides the config, like
 llama-swap's port model) — host networking is what makes the loopback
 `llama-swap` upstream reachable from the container; native uses
 `${LISTEN:-:8080}`. The config path differs by branch: native reads
-`./llm-reverse-proxy.json`, the container mounts it at
-`/etc/llm-reverse-proxy/llm-reverse-proxy.json` (both overridable with
+`./estige.json`, the container mounts it at
+`/etc/estige/estige.json` (both overridable with
 `CONFIG`). Relay node: NO config file — `VPN_TUNNEL_URL` (http(s):// or
 ws(s):// — the URL's honest wire form, normalized to wss internally,
 docs/d090; the path is the Funnel mount plus the fixed `/vpn` —
@@ -181,7 +181,7 @@ URL needs the host's tailnet routes).
 `vpn-relay.sh <target>` is the CHAIN STEP (docs/d095): it ensures the relay
 is serving, waits for a health answer naming *this* tunnel, exports the
 conventional variables pointing at the loopback listeners, and execs the
-target — so `./lib/environment.sh ./llm-reverse-proxy/vpn-relay.sh
+target — so `./lib/environment.sh ./estige/vpn-relay.sh
 ./coding-agent/run.sh` hands the sandbox the loopback spelling while the
 relay itself keeps the host's upstream chain (docs/d094). A relay that is
 not running is started (detached, `--restart=unless-stopped`); an

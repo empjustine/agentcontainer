@@ -2,12 +2,12 @@
 # run.sh — llama-swap launcher for LOCAL GGUF inference (container hosts only;
 # podman/docker via the declarative sandbox API).
 #
-# Cloud/remote relaying is served by ../llm-reverse-proxy — this launcher
+# Cloud/remote relaying is served by ../estige — this launcher
 # runs the single llama-swap instance that owns local llama.cpp serving.
 #
 # Port model (docs/d027, reshaped by d070 §2): llama-swap publishes LAN port
 # ${HOST_PORT:-8101} → in-container 8080. Host port 8080 belongs to
-# ../llm-reverse-proxy — the tailscale funnel serves the whole <funnel-id>
+# ../estige — the tailscale funnel serves the whole <funnel-id>
 # route on it, and the world reaches this instance through the proxy's
 # host-allowlist row for llama-swap's tsnet `tailscale serve` hostname (the
 # fact-table row in lib/cloud-providers.mjs; the old "llama-swap" loopback

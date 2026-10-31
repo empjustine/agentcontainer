@@ -1,4 +1,4 @@
-# Containerfile — multi-stage build for llm-reverse-proxy.
+# Containerfile — multi-stage build for estige.
 #
 # Stage 1 compiles the static binary (CGO off — the result is fully
 # static); stage 2 is `scratch`, so the FINAL image is pulled from no
@@ -28,7 +28,7 @@ COPY go.mod *.go ./
 # build-time path that downloads AND executes code, and the only toolchain
 # we trust on this build is the one this image already contains.
 ENV GOTOOLCHAIN=local
-RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/llm-reverse-proxy .
+RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/estige .
 
 # Numeric USER because scratch has no /etc/passwd: the static binary makes
 # no os/user lookups, and 65532 is the distroless "nonroot" uid this image
@@ -37,6 +37,6 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/llm-reverse-proxy 
 # host file permissions keep meaning the same thing.
 FROM scratch
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=build /out/llm-reverse-proxy /llm-reverse-proxy
+COPY --from=build /out/estige /estige
 USER 65532:65532
-ENTRYPOINT ["/llm-reverse-proxy"]
+ENTRYPOINT ["/estige"]

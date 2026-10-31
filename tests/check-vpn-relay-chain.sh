@@ -136,7 +136,7 @@ STUB_HEALTHZ="$tmp/healthz.ours"
 export STUB_HEALTHZ
 (cd "$root" && _env VPN_TUNNEL_URL=https://relay.example.test/vpn \
 	HTTPS_PROXY=http://corp.example:3128 \
-	"$root/llm-reverse-proxy/vpn-relay.sh" "$tmp/child-env.sh") >"$tmp/out.reuse" 2>&1 || {
+	"$root/estige/vpn-relay.sh" "$tmp/child-env.sh") >"$tmp/out.reuse" 2>&1 || {
 	printf 'FAIL: chain step exited %s on the reuse path\n' "$?" >&2
 	sed 's/^/  /' "$tmp/out.reuse" >&2
 	exit 1
@@ -157,7 +157,7 @@ rm -f -- "$tmp/ran"
 set +e
 (cd "$root" && _env VPN_TUNNEL_URL=https://relay.example.test/vpn \
 	HTTPS_PROXY=http://corp.example:3128 \
-	"$root/llm-reverse-proxy/vpn-relay.sh" "$tmp/child-ran.sh") >"$tmp/out.foreign" 2>&1
+	"$root/estige/vpn-relay.sh" "$tmp/child-ran.sh") >"$tmp/out.foreign" 2>&1
 _rc=$?
 set -e
 _rc_is 94 "$_rc" 'foreign listener exits 94'
@@ -173,7 +173,7 @@ export STUB_HEALTHZ STUB_FAIL_FIRST
 rm -f -- "$tmp/seen"
 (cd "$root" && _env VPN_TUNNEL_URL=https://relay.example.test/vpn \
 	HTTPS_PROXY=http://corp.example:3128 \
-	"$root/llm-reverse-proxy/vpn-relay.sh" "$tmp/child-env.sh") >"$tmp/out.start" 2>&1 || {
+	"$root/estige/vpn-relay.sh" "$tmp/child-env.sh") >"$tmp/out.start" 2>&1 || {
 	printf 'FAIL: chain step exited %s on the start path\n' "$?" >&2
 	sed 's/^/  /' "$tmp/out.start" >&2
 	exit 1
@@ -197,7 +197,7 @@ set +e
 (cd "$root" && env -i PATH="$tmp/bin:$PATH" HOME="$tmp" \
 	ARGV_OUT="$tmp/argv.out" RM_OUT="$tmp/rm.out" STUB_HEALTHZ="$tmp/healthz.ours" \
 	VPN_TUNNEL_URL=https://relay.example.test/vpn \
-	"$root/llm-reverse-proxy/vpn-relay.sh" "$tmp/child-ran.sh") >"$tmp/out.nocred" 2>&1
+	"$root/estige/vpn-relay.sh" "$tmp/child-ran.sh") >"$tmp/out.nocred" 2>&1
 _rc=$?
 set -e
 _rc_is 94 "$_rc" 'missing token exits 94'

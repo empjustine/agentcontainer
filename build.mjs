@@ -5,7 +5,7 @@
  *
  *   - Container host (podman/docker): the REGISTERED image targets run IN
  *     PARALLEL — coding-agent image build, llama-swap image pull,
- *     llm-reverse-proxy multi-stage image build (the proxy compile happens
+ *     estige multi-stage image build (the proxy compile happens
  *     INSIDE the image, so no host go toolchain is needed). Registration is
  *     capability-gated (lib/host-capabilities.mjs): the llama-swap pull
  *     needs an inference ENDPOINT — render devices AND the RAM floor
@@ -30,7 +30,7 @@
  * picks up source changes without a flag; only WHICH targets register
  * varies per host — the capability gates above, keyed on hardware/network
  * facts. The former skip-if-present checks (ported from the old
- * llm-reverse-proxy build.sh) are gone on purpose: they keyed on
+ * estige build.sh) are gone on purpose: they keyed on
  * tag/file PRESENCE, so editing main.go after a build left the stale
  * image/binary in place unless the operator knew FORCE=1 — a silent-
  * staleness trap of exactly the kind the repo's fail-loudly contract
@@ -249,7 +249,7 @@ if (containerTool) {
 	// --- llama-swap image (container hosts) ----------------------------------
 	// The OCI workflow means there is nothing to compile: pre-pull the
 	// unified-vulkan image run.sh will use. Cloud/remote relaying is
-	// served by ../llm-reverse-proxy; this image only ever serves local GGUF
+	// served by ../estige; this image only ever serves local GGUF
 	// inference — no :cpu peers-only variant, no Termux native cross-build.
 	//
 	// Gated on being an inference ENDPOINT (docs/d087) — render devices AND
@@ -283,7 +283,7 @@ if (containerTool) {
 		});
 	}
 
-	// --- llm-reverse-proxy image (container hosts) ---------------------------
+	// --- estige image (container hosts) ---------------------------
 	// Multi-stage Containerfile (golang builder → scratch runtime that
 	// ships the CA bundle both TLS legs verify against) — the host needs
 	// NO go toolchain for this target. The final stage is scratch on
@@ -305,7 +305,7 @@ if (containerTool) {
 		process.env.IMAGE_TAG ?? "localhost/estige:latest";
 	if (await cloudReachable()) {
 		targets.push({
-			name: "llm-reverse-proxy-image",
+			name: "estige-image",
 			fn: async () =>
 				await run(
 					containerTool,
@@ -314,42 +314,42 @@ if (containerTool) {
 						"--pull",
 						...(force ? ["--no-cache"] : []),
 						"-f",
-						join(repoRoot, "llm-reverse-proxy", "Containerfile"),
+						join(repoRoot, "estige", "Containerfile"),
 						"-t",
 						proxyImage,
-						join(repoRoot, "llm-reverse-proxy"),
+						join(repoRoot, "estige"),
 					],
-					{ name: "llm-reverse-proxy-image" },
+					{ name: "estige-image" },
 				),
 		});
 	} else {
-		noteGated("llm-reverse-proxy-image");
+		noteGated("estige-image");
 		logWarn(
 			"skipping target — outbound cloud networking unreachable (naive probe)",
-			{ target: "llm-reverse-proxy-image", canary: CLOUD_PROBE_CANARY },
+			{ target: "estige-image", canary: CLOUD_PROBE_CANARY },
 		);
 	}
 } else {
 	noteGated(
 		"coding-agent-image",
 		"llama-swap-image",
-		"llm-reverse-proxy-image",
+		"estige-image",
 	);
 }
 
-// --- llm-reverse-proxy native binary (no container backend available) -------
+// --- estige native binary (no container backend available) -------
 // Termux: android/arm64 via the lib/go-build.mjs preset (GOOS=android — DNS
 // resolver; see the module header). Bare host: the host binary, which
 // smoke-test.sh and direct runs use. Needs a WORKING go toolchain either way.
-const proxyDir = join(repoRoot, "llm-reverse-proxy");
+const proxyDir = join(repoRoot, "estige");
 if (containerTool) {
-	noteGated("llm-reverse-proxy-native");
+	noteGated("estige-native");
 } else {
-	const androidBinary = join(proxyDir, "llm-reverse-proxy-android");
-	const hostBinary = join(proxyDir, "llm-reverse-proxy");
+	const androidBinary = join(proxyDir, "estige-android");
+	const hostBinary = join(proxyDir, "estige");
 	const out = termux ? androidBinary : hostBinary;
 	targets.push({
-		name: "llm-reverse-proxy-native",
+		name: "estige-native",
 		fn: async () => {
 			if (!goToolchainReady()) {
 				logError(
@@ -368,7 +368,7 @@ if (containerTool) {
 			return await run("go", ["build", ...flags, "-o", out, "."], {
 				cwd: proxyDir,
 				env,
-				name: "llm-reverse-proxy-native",
+				name: "estige-native",
 			});
 		},
 	});
@@ -427,7 +427,7 @@ if (selected.length === 0) {
 }
 if (!containerTool) {
 	logWarn(
-		"no container tool — image targets skipped (coding-agent image, llama-swap pull, llm-reverse-proxy image)",
+		"no container tool — image targets skipped (coding-agent image, llama-swap pull, estige image)",
 	);
 }
 logInfo(

@@ -68,7 +68,7 @@ they can drift silently: `model-019` carries models the provider has rotated
 away, and misses the `syn:` tiers entirely.
 
 **Blocked on purpose**: the existing generators keep working unchanged until the
-deployment issues with the current `../llm-reverse-proxy/` are solved. Do not
+deployment issues with the current `../estige/` are solved. Do not
 start this until that lands.
 
 Done looks like (either option, plus the doc sync):

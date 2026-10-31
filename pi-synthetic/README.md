@@ -67,7 +67,7 @@ Consequences worth knowing:
   artifacts carry; the request reaches the provider through the environment's
   forward proxy (`NODE_USE_ENV_PROXY=1` plus the forwarded `HTTP(S)_PROXY`,
   docs/d074), which both consumers already have. Third-generation
-  `llm-reverse-proxy` makes that path real, so no client-side relay/probe
+  `estige` makes that path real, so no client-side relay/probe
   machinery lives here.
 
 ## The category tiers (`syn:`), and why their names carry a target
@@ -153,7 +153,7 @@ no pi process has ever loaded this extension. `TODO.md` §1 carries the rest.
   from models.dev alone (its own `PROVIDER_SPECS` entry → layer
   `model-019-cloud-synthetic.json`). Two sources now describe one provider.
   Joining them is a small mechanical change, and it is deliberately blocked —
-  the existing generators stay untouched until the `llm-reverse-proxy`
+  the existing generators stay untouched until the `estige`
   deployment issues land. See `TODO.md` §3.
 - The root `./generate.sh` and `./build.sh` do not know about this folder: it
   has no container image and no root-build target.

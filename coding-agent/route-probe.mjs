@@ -62,7 +62,7 @@ const { logWarn } = /** @type {typeof import("../lib/log.mjs")} */ (
 	await import(`${LIB_DIR}/log.mjs`)
 );
 // The v2 host-form route (providerRouteUrl) is derived from the SAME
-// fact-table base URLs the llm-reverse-proxy allowlist is generated from —
+// fact-table base URLs the estige allowlist is generated from —
 // one source of truth for "which upstream does this provider sit on"
 // (docs/d047).
 const { PROVIDER_BASE_URLS } =
@@ -81,13 +81,13 @@ const REQUEST_TIMEOUT_MS = 8000;
 
 /**
  * The reverse-proxy base URL — the vault-sourced funnel entry point to
- * llm-reverse-proxy (docs/d027), read from `REVERSE_PROXY_BASE_URLS` in
+ * estige (docs/d027), read from `REVERSE_PROXY_BASE_URLS` in
  * infisical's /inference path (the ONLY base env this repo reads, d071 §1;
  * the vault still sets the retired `PEER_BASE_URL(S)` beside it for
  * outside compatibility — nothing here reads that), injected by
  * lib/environment.sh alongside the key it pairs with (REVERSE_PROXY_API_KEY — the
  * base URL and the client-facing bearer are one config unit). The funnel serves the whole `<funnel-id>` route to
- * llm-reverse-proxy on host port 8080 (docs/d027), which path-prefix routes
+ * estige on host port 8080 (docs/d027), which path-prefix routes
  * everything behind it:
  *
  *   - v2 HOST routing (docs/d047): `/<upstream-host>/<path>` → that host's
@@ -190,7 +190,7 @@ export function reverseProxyBaseUrls() {
  *     amended): it presumed a same-host proxy, so on every host without
  *     one it was a guaranteed-refused first probe — and inside the
  *     agentcontainer loopback can never reach a proxy that runs outside
- *     it. An operator running llm-reverse-proxy beside the generator
+ *     it. An operator running estige beside the generator
  *     lists `http://127.0.0.1:8080` as a base entry; a degenerate entry
  *     is dropped by reverseProxyBaseUrls(), never concatenated.
  *
@@ -420,7 +420,7 @@ function normalizedProbeError(err) {
 /**
  * The client route for ONE provider on the v2 router (docs/d047):
  * `<base>/<route-name><full-upstream-base-path>`. The first segment is the
- * upstream host the llm-reverse-proxy allowlist keys on (a DNS name); the
+ * upstream host the estige allowlist keys on (a DNS name); the
  * upstream's base path rides in the CLIENT's base URL, because the
  * allowlisted value is only scheme://host — that is what lets multi-base
  * hosts (opencode vs opencode-go on opencode.ai, minimax's /anthropic
@@ -503,11 +503,11 @@ export function routeUrlFromCanonical(base, providerId, canonicalUrl) {
  * provider's endpoint" rather than "the provider refused us":
  *
  *   - 404 is NOT usable: the funnel's default-404 (llama-swap answering for
- *     an unmanaged prefix) and llm-reverse-proxy's unknown-provider problem
+ *     an unmanaged prefix) and estige's unknown-provider problem
  *     detail both look exactly like this — and so would a misconfigured
  *     upstream base. A route that 404s on `/models` cannot be trusted to
  *     deliver, so it is never emitted.
- *   - 502 is NOT usable: it is llm-reverse-proxy's own RFC 9457 problem
+ *   - 502 is NOT usable: it is estige's own RFC 9457 problem
  *     detail meaning the proxy→upstream leg failed (see its README) — the
  *     provider was not reached.
  *   - 504 is NOT usable: the same leg timed out (funnel/proxy level; a

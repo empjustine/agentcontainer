@@ -42,7 +42,7 @@ left answering nothing that generation asks (docs/d072).
   GGUF inference where the host can do it, cloud providers everywhere else
   (directly, or relayed for hosts that cannot reach them),
   published on LAN :8101 and reachable through the tailscale funnel (which
-  fronts llm-reverse-proxy on :8080 — docs/d027).
+  fronts estige on :8080 — docs/d027).
 - **Usage** — `coding-agent/` (see `coding-agent`): the pi coding-agent's
   container image, generated `models.json`/`opencode.jsonc` layers, static
   settings, and credential handling.
@@ -55,7 +55,7 @@ left answering nothing that generation asks (docs/d072).
   log and archived research).
 
 **Delivered in phases (docs/d073; the tunnel family lettered C/D/E by
-docs/d077):** the three-mode SSL VPN expansion of `llm-reverse-proxy/` —
+docs/d077):** the three-mode SSL VPN expansion of `estige/` —
 mode A (today's host allowlist), mode B (authenticated generic relay whose
 `${prefix}` namespace rides the Funnel mount since d085, one operator
 credential, with no tenancy), and the tunnel family — is specified in
@@ -83,7 +83,7 @@ mode-A-shaped — the d047 allowlist is mode-A-only by decision
   a container backend AND GPU devices are detected; generation fails hard
   elsewhere.
 - **FR-S3** — The instance is published on LAN :8101 and reachable from the
-  world only through the tailscale funnel → llm-reverse-proxy :8080 →
+  world only through the tailscale funnel → estige :8080 →
   llama-swap's row in the host allowlist (its tsnet serve hostname — a
   fact-table row like any other, docs/d047; the `llama-swap` alias key is
   retired, docs/d070 §2). Port 8080 belongs to the proxy.
@@ -91,7 +91,7 @@ mode-A-shaped — the d047 allowlist is mode-A-only by decision
   never the serving module's: serving reads the HF cache read-only; a cache
   miss at generation time is an error, not a download.
 - **FR-S5** — Cloud/remote provider relaying is a separate module
-  (`llm-reverse-proxy/`): path-prefix routing over the FULL provider catalog
+  (`estige/`): path-prefix routing over the FULL provider catalog
   (pi-ai ∪ models.dev ∪ catwalk, priority in that order — docs/d038),
   byte-faithful passthrough (headers, streaming, upstream errors as-is), no
   credential handling, uniform non-distinctive 404s on unknown prefixes,

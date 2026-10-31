@@ -351,7 +351,7 @@ export function providerEntry(baseUrl, models) {
  * host-allowlist proxy forwards every path under the upstream host key
  * byte-for-byte, whatever wire format pi speaks.
  *
- * `apiKey` is likewise omitted: llm-reverse-proxy does NO credential
+ * `apiKey` is likewise omitted: estige does NO credential
  * handling (requests must already carry valid provider keys), so the
  * credentials are pi's own built-in per-provider auth (env key or OAuth,
  * resolved at request time) forwarded untouched. The former

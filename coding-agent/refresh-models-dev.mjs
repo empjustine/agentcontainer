@@ -1,7 +1,7 @@
 /**
  * @fileoverview refresh-models-dev.mjs — refresh the vendored models.dev
  * catalog (lib/models.dev.api.json) from the reverse-proxy relay chain
- * (docs/d027, d063 — no direct models.dev leg: outside llm-reverse-proxy,
+ * (docs/d027, d063 — no direct models.dev leg: outside estige,
  * everything is proxy-only):
  *
  * The chain is relay-only (relayCandidates, route-probe.mjs): the
@@ -24,7 +24,7 @@
  * coding-agent/generate-pi-coding-agent.mjs): every listed
  * provider must exist with a models map or the payload is rejected. (The
  * former llm-local-inference generators were also consumers until the
- * cloud-relay handoff to llm-reverse-proxy removed them; the required list
+ * cloud-relay handoff to estige removed them; the required list
  * keeps its UNION shape so a future consumer needs no edit here.)
  *
  * Usage: node refresh-models-dev.mjs [out]
@@ -37,7 +37,7 @@
  * Lives in coding-agent/ (its invoker is coding-agent/generate.mjs, which
  * points it at this run's catalog path — docs/d039) but writes the SHARED
  * vendored catalog: ../lib stays the catalog home because
- * llm-reverse-proxy/generate.mjs reads it too.
+ * estige/generate.mjs reads it too.
  */
 
 import { dirname, join } from "node:path";

@@ -45,5 +45,5 @@ exactly what a keyed regeneration of that listing produces. The first keyed
 `../coding-agent/generate-pi-coding-agent.mjs` still derives the fleet's
 verboo layer (model-018) from the same facts cache through its own mapper,
 so two shapings of one listing exist and can drift. The join is blocked on
-the same llm-reverse-proxy deployment decision as pi-synthetic's seam
+the same estige deployment decision as pi-synthetic's seam
 (docs/d096, d100) — do not start it independently.

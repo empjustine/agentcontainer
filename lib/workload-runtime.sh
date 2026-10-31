@@ -6,7 +6,7 @@
 # path-translation shim, not isolation (no namespaces, no cgroups, no real
 # root, no GPU passthrough); the Termux/a50 path is not served by this repo's
 # sandbox API (local inference is container-only; cloud relay is served by
-# llm-reverse-proxy). A qemu/libvirt VM backend is
+# estige). A qemu/libvirt VM backend is
 # assessed in docs/d020-libvirt-qemu-sandbox.md (not implemented).
 
 # path resolution (the only "where do I live" logic; run scripts reuse these)

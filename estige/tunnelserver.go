@@ -141,7 +141,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	// standard access log stays parseable by stock tools. A rejection above
 	// never names an id: the response vocabulary (VPN-R34) and the auth
 	// failure path must not count keys.
-	log.Printf("[llm-reverse-proxy] tunnel session: authenticated key=%s", keyID)
+	log.Printf("[estige] tunnel session: authenticated key=%s", keyID)
 
 	// From here the peer is authenticated, so a proxy-internal failure may
 	// answer like one (RFC 9457 — the module's internal-error contract).
@@ -181,7 +181,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 // body that carries it. Attribution happens at the same point the 101 path
 // does it: after auth, before any session work (docs/d078 §5).
 func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, keyID string) {
-	log.Printf("[llm-reverse-proxy] tunnel session: authenticated key=%s", keyID)
+	log.Printf("[estige] tunnel session: authenticated key=%s", keyID)
 
 	lw := &loggingResponseWriter{ResponseWriter: w}
 	p := &postStream{r: r, w: lw}
@@ -196,7 +196,7 @@ func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, k
 	if err := http.NewResponseController(lw).EnableFullDuplex(); err != nil {
 		// Fail loudly: without full duplex the session would open and then
 		// hang, which reads as network loss rather than a defect (NFR-2).
-		log.Printf("[llm-reverse-proxy] tunnel mode C: full duplex unavailable: %v", err)
+		log.Printf("[estige] tunnel mode C: full duplex unavailable: %v", err)
 		lw.WriteHeader(http.StatusInternalServerError)
 		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
 		return
@@ -504,6 +504,6 @@ func (s *server) enableTunnel(tn *tunnelConfig) error {
 		return err
 	}
 	s.vpn = &tunnelServer{keys: keys, egress: egress, sessions: newExchangeSessions()}
-	log.Printf("[llm-reverse-proxy] tunnel (modes C–E): enabled at %s", tunnelPath)
+	log.Printf("[estige] tunnel (modes C–E): enabled at %s", tunnelPath)
 	return nil
 }

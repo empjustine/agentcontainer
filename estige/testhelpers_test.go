@@ -61,7 +61,7 @@ func initSuiteTLSRoot() error {
 		}
 		tmpl := &x509.Certificate{
 			SerialNumber:          big.NewInt(1),
-			Subject:               pkix.Name{CommonName: "llm-reverse-proxy test root"},
+			Subject:               pkix.Name{CommonName: "estige test root"},
 			NotBefore:             time.Now().Add(-time.Hour),
 			NotAfter:              time.Now().Add(24 * time.Hour),
 			KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -77,7 +77,7 @@ func initSuiteTLSRoot() error {
 			return
 		}
 		testTLSCert = tls.Certificate{Certificate: [][]byte{der}, PrivateKey: key}
-		dir, err := os.MkdirTemp("", "llm-reverse-proxy-test-root")
+		dir, err := os.MkdirTemp("", "estige-test-root")
 		if err != nil {
 			testTLSErr = err
 			return

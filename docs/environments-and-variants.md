@@ -18,7 +18,7 @@ access or not) and the tree adapts along those functional lines:
   ONE llama-swap dir, `llm-local-inference/` (generation emits only the
   `config.d/` layers the current host can use — local inference wherever a
   GPU + container backend exist; there is no peers-only llama-swap mode),
-  and cloud-provider relay is `llm-reverse-proxy/`, the host-allowlist
+  and cloud-provider relay is `estige/`, the host-allowlist
   router (docs/d047) plus its opt-in tunnel family (docs/d073/d077),
   deployable on every host that can reach the cloud.
 - **LLM usage** (the coding agent) lives under `coding-agent/`
@@ -31,10 +31,10 @@ names.
 
 | Name                    | Sandbox / runtime                    | Cloud access | Serving dir(s)                                       | Usage dir              |
 |-------------------------|--------------------------------------|--------------|-----------------------------------------------------|------------------------|
-| **local-inference-host** | rootless podman, SELinux enforced    | direct       | `llm-local-inference/` (local layer) + `llm-reverse-proxy/` (cloud relay) | `coding-agent/`        |
-| **termux**              | rootless termux, restrictive SELinux, | direct (if   | `llm-reverse-proxy/` (native build/run, cloud relay)  | `coding-agent/`        |
+| **local-inference-host** | rootless podman, SELinux enforced    | direct       | `llm-local-inference/` (local layer) + `estige/` (cloud relay) | `coding-agent/`        |
+| **termux**              | rootless termux, restrictive SELinux, | direct (if   | `estige/` (native build/run, cloud relay)  | `coding-agent/`        |
 |                         | non-standard file paths              | any)         |                                                     |                        |
-| **small-cloud-vm**      | rootless podman or docker            | relay only   | `llm-reverse-proxy/` (relay)                        | `coding-agent/` (static config) |
+| **small-cloud-vm**      | rootless podman or docker            | relay only   | `estige/` (relay)                        | `coding-agent/` (static config) |
 
 ### local-inference-host (full, default)
 
@@ -47,7 +47,7 @@ GPU host (local inference only) — two serving processes, one concern each (doc
   passthrough + the HF cache on LAN port **8101** (container 8080).
   llama-swap serves the LOCAL catalog and nothing else — its `peers`/proxy
   config is no longer exercised.
-- `llm-reverse-proxy/` — the host-allowlist cloud router (root `build.sh` +
+- `estige/` — the host-allowlist cloud router (root `build.sh` +
   `generate.sh` + `run.sh`, LAN **8080**, host networking):
   `/<upstream-host>/<path>` forwarded byte-for-byte to the allowlisted
   scheme://host root, the client carrying the upstream base path
@@ -59,7 +59,7 @@ GPU host (local inference only) — two serving processes, one concern each (doc
   docs/d073/d077) shares the port.
 
 **Port model (all hosts):** ONE front. The tailscale funnel serves the
-whole `<uuid>` route to llm-reverse-proxy on host port **8080** (normal
+whole `<uuid>` route to estige on host port **8080** (normal
 https port on the wire); the proxy host-allowlist routes behind it:
 `/<upstream-host>/<path>` → each allowlisted scheme://host root (the
 client carries the upstream base path), llama-swap included as the
@@ -70,7 +70,7 @@ with the two-instance squash — nothing listens on it, and code that still
 probes `localhost:18080` must use the funnel base URL (`$REVERSE_PROXY_BASE_URLS`).
 
 The coding agent (`coding-agent/`) uses local models via the llama-swap
-face and cloud providers via the llm-reverse-proxy face (ALWAYS via the
+face and cloud providers via the estige face (ALWAYS via the
 proxy — the generators' proxy-only cascade, docs/d063, retired the
 direct-first one); both faces are also the unified endpoint for
 external clients.
@@ -81,15 +81,15 @@ own here). SoC: **EN7562CT** (ARM32v5, 512 MB RAM, 128 MB flash). Resource-const
 `llm-local-inference` llama-swap container** at all — Termux has no usable
 podman/docker for this — and local llama.cpp inference is impossible anyway.
 So there is no llama-swap here at all: the host serves the cloud relay only,
-via a **native termux build of llm-reverse-proxy** (compiled for the device).
+via a **native termux build of estige** (compiled for the device).
 
 - The root `./build.sh` (`build.mjs`) cross-builds the static binary with
   the android preset from `lib/go-build.mjs` (`CGO_ENABLED=0 GOOS=android
   GOARCH=arm64` — so the Android resolver is used instead of the missing
   `/etc/resolv.conf`; docs/d041), and `run.sh`'s native branch
-  `exec`s it against `llm-reverse-proxy.json` and `${LISTEN:-:8080}` — no
+  `exec`s it against `estige.json` and `${LISTEN:-:8080}` — no
   podman/docker, no GPU detection, no image pull, no build/generate step.
-- `llm-reverse-proxy/generate.sh` (→ `generate.mjs`) emits the
+- `estige/generate.sh` (→ `generate.mjs`) emits the
   routing table from the shared provider fact table
   (lib/cloud-providers.mjs, docs/d027): one path prefix per provider,
   upstream = the provider's FULL real base URL.
@@ -117,8 +117,8 @@ request time — the proxy forwards them untouched).
   generator's route probing (`route-probe.mjs`) and baked into the provider
   `baseUrl` overrides; `run.sh`
   does not forward them into the sandbox (docs/d056).
-- **Serving** (`llm-reverse-proxy/`): the cloud relay
-  (root `./build.sh && ./generate.sh && ./llm-reverse-proxy/vpn-exit.sh`), as on
+- **Serving** (`estige/`): the cloud relay
+  (root `./build.sh && ./generate.sh && ./estige/vpn-exit.sh`), as on
   the other non-GPU hosts.
 
 The shared `lib/workload-runtime.sh` makes this work on both local-inference-host-style podman and
@@ -129,12 +129,12 @@ automatic (`:z,U` on podman, `:z` on docker) with no per-script flags.
 
 ### small-cloud-vm (small cloud VM, funnel-only serving)
 The host only
-relays cloud providers. The relay is llm-reverse-proxy — one static Go binary,
+relays cloud providers. The relay is estige — one static Go binary,
 ~13 MB RSS, no model routing and no secrets, so the 1 GB budget is not a
 constraint.
 
-- **Serving** (`llm-reverse-proxy/`): just root `./build.sh &&
-  ./generate.sh && ./llm-reverse-proxy/vpn-exit.sh` — the routing table is
+- **Serving** (`estige/`): just root `./build.sh &&
+  ./generate.sh && ./estige/vpn-exit.sh` — the routing table is
   generated from the shared fact table (docs/d027) and the proxy listens on
   LAN `${HOST_PORT:-8080}` (host-network container or native binary).
 - **Usage** (`coding-agent/`): static provider config pointing the agent at
@@ -176,15 +176,15 @@ There is ONE llama-swap serving folder (`llm-local-inference/`) with ONE
 mode: the local GGUF layer. A host without the container backend + GPU
 cannot serve llama-swap at all — `generate.sh` fails hard (`LOCAL_INFERENCE=1`
 forces generation for debug/parity only) — and its cloud relay, when any,
-runs `llm-reverse-proxy/vpn-exit.sh` instead (docs/d027; the `run.sh` name retired with docs/d095):
+runs `estige/vpn-exit.sh` instead (docs/d027; the `run.sh` name retired with docs/d095):
 
 - llama-swap: `ghcr.io/mostlygeek/llama-swap:unified-vulkan` (local
   llama.cpp needs the GPU/Vulkan runtime), GPU devices passed through, HF
   cache tree mounted, LAN **8101** (container 8080).
-- llm-reverse-proxy: one static Go binary (containerized with host
+- estige: one static Go binary (containerized with host
   networking or native, e.g. the termux cross-build), LAN **8080**, no
   secrets mounted — clients carry the provider keys.
 
 llama-swap is launched with `-config-dir <dir>/config.d`; the termux
 path has no container and no llama-swap at all — it runs the native
-llm-reverse-proxy binary (docs/d027).
+estige binary (docs/d027).

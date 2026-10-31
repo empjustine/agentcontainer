@@ -8,7 +8,7 @@
  * backend installed).
  *
  * Cloud/remote relaying is NOT generated here (nor anywhere): it is
- * served by ../llm-reverse-proxy, the raw passthrough proxy. This module
+ * served by ../estige, the raw passthrough proxy. This module
  * emits only what serves local llama.cpp GGUFs.
  *
  * Layers emitted:

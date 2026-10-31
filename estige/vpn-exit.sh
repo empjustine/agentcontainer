@@ -15,7 +15,7 @@
 # loopback :8080, so a bridge/slirp container would answer a loopback the
 # funnel never sees. The in-container -listen 0.0.0.0:$HOST_PORT overrides the
 # config's listen (llama-swap's port model, docs/d027). Termux / no container
-# tool: exec the native binary (llm-reverse-proxy-android on Termux; the host
+# tool: exec the native binary (estige-android on Termux; the host
 # binary as fallback).
 #
 # Secrets live ONLY in the environment chain (VPN-R32/d078): lib/environment.sh
@@ -25,7 +25,7 @@
 # VPN_OPERATOR_TOKEN is deliberately absent: it is the relay node's credential
 # and the exit node stopped reading it (docs/d090).
 #
-# Env overrides: HOST_PORT / LISTEN / IMAGE_TAG / LLM_PROXY_BIN / CONFIG /
+# Env overrides: HOST_PORT / LISTEN / IMAGE_TAG / ESTIGE_BIN / CONFIG /
 # EXIT_CONTAINER.
 
 set -eu
@@ -34,7 +34,7 @@ set -eu
 # checkout — no other path crosses the unit boundary.
 # shellcheck disable=SC1091
 . "${LIB_DIR:-$(dirname "$0")/../lib}/workload-runtime.sh"
-LOG_TOOL='llm-reverse-proxy/vpn-exit'
+LOG_TOOL='estige/vpn-exit'
 export LOG_TOOL
 
 # SCRIPT_DIR is assigned by the sourced lib/workload-runtime.sh (derived from
@@ -42,9 +42,9 @@ export LOG_TOOL
 # shellcheck disable=SC2153
 script_dir="$SCRIPT_DIR"
 
-config="${CONFIG:-$script_dir/llm-reverse-proxy.json}"
+config="${CONFIG:-$script_dir/estige.json}"
 [ -f "$config" ] ||
-	log_die 94 "config not found — generate it first with ./generate.sh (or copy llm-reverse-proxy.example.json for a hand-written deployment)" path="$config"
+	log_die 94 "config not found — generate it first with ./generate.sh (or copy estige.example.json for a hand-written deployment)" path="$config"
 
 # shellcheck disable=SC2154  # _workload/_workload_tool from the sourced lib
 if [ "$_workload" = 'workload' ]; then
@@ -52,11 +52,10 @@ if [ "$_workload" = 'workload' ]; then
 	# Same image as the relay node (build.mjs's default tag) — the exit and
 	# relay are the one binary in two network positions (docs/d088).
 	image="${IMAGE_TAG:-localhost/estige:latest}"
-	# estige-exit mirrors the relay's estige-relay (vpn-relay.sh): container
-	# names are runtime identities of the tunnel family, while
-	# llm-reverse-proxy is the (legacy) folder name — and the two deployments
-	# must not share a name, or whichever starts second workload_rm's the
-	# other's container.
+	# estige-exit mirrors the relay's estige-relay (vpn-relay.sh): the
+	# container names are per-role runtime identities of the tunnel family —
+	# the two deployments must not share one, or whichever starts second
+	# workload_rm's the other's container.
 	container_id="${EXIT_CONTAINER:-estige-exit}"
 	HOST_PORT="${HOST_PORT:-8080}"
 	log_info "serving (container, host network, exit node)" image="$image" port="$HOST_PORT" config="$config"
@@ -72,8 +71,8 @@ if [ "$_workload" = 'workload' ]; then
 	# a containerized exit node can carry the tunnel family. VPN_OPERATOR_TOKEN
 	# is deliberately absent (docs/d090).
 	workload_env_allowlist VPN_OPERATOR_KEYS
-	workload_ro       "$config" /etc/llm-reverse-proxy/llm-reverse-proxy.json
-	workload_cmd      -config /etc/llm-reverse-proxy/llm-reverse-proxy.json -listen "0.0.0.0:$HOST_PORT"
+	workload_ro       "$config" /etc/estige/estige.json
+	workload_cmd      -config /etc/estige/estige.json -listen "0.0.0.0:$HOST_PORT"
 	workload_run
 
 	sleep 2
@@ -82,16 +81,16 @@ if [ "$_workload" = 'workload' ]; then
 fi
 
 # ========================= native (Termux or bare host) ==================
-bin="${LLM_PROXY_BIN:-}"
+bin="${ESTIGE_BIN:-}"
 if [ -z "$bin" ]; then
-	if [ -x "$script_dir/llm-reverse-proxy-android" ]; then
-		bin="$script_dir/llm-reverse-proxy-android"
-	elif [ -x "$script_dir/llm-reverse-proxy" ]; then
-		bin="$script_dir/llm-reverse-proxy"
+	if [ -x "$script_dir/estige-android" ]; then
+		bin="$script_dir/estige-android"
+	elif [ -x "$script_dir/estige" ]; then
+		bin="$script_dir/estige"
 	fi
 fi
 [ -n "$bin" ] && [ -x "$bin" ] ||
-	log_die 95 "no proxy binary — run ./build.sh first (on Termux it builds llm-reverse-proxy-android)" bin="${bin:-unset}"
+	log_die 95 "no proxy binary — run ./build.sh first (on Termux it builds estige-android)" bin="${bin:-unset}"
 
 log_info "serving (native, exit node)" bin="$bin" config="$config" listen="${LISTEN:-:8080}"
 exec "$bin" -config "$config" -listen "${LISTEN:-:8080}"

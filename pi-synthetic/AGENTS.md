@@ -72,5 +72,5 @@ they are joined:
   substituted only at install (docs/d070).
 
 That change lands in the repo that owns `coding-agent/`, and it is blocked until
-the `llm-reverse-proxy` deployment issues are solved. Record the decision in
+the `estige` deployment issues are solved. Record the decision in
 `docs/` when it lands — this README is not its home.

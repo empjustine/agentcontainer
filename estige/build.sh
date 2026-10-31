@@ -10,4 +10,4 @@ set -eu
 lib_dir="${LIB_DIR:-$(dirname "$0")/../lib}"
 # shellcheck source-path=SCRIPTDIR source=../lib/node-run.sh
 . "$lib_dir/node-run.sh"
-node_run "$(dirname "$0")/../build.mjs" llm-reverse-proxy-image llm-reverse-proxy-native "$@"
+node_run "$(dirname "$0")/../build.mjs" estige-image estige-native "$@"

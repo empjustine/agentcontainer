@@ -375,7 +375,7 @@ export async function refreshProviderFacts(id, options) {
 		return false;
 	}
 	const cachePath = factsPath(id);
-	// Host-form route (docs/d047): the funnel fronts the llm-reverse-proxy
+	// Host-form route (docs/d047): the funnel fronts the estige
 	// allowlist, so candidates address the upstream HOST + base path.
 	const upstream = new URL(facts.baseUrl);
 	const basePath = upstream.pathname.replace(/\/+$/, "");

@@ -1,6 +1,6 @@
 /**
- * @fileoverview generate.mjs — the llm-reverse-proxy generator: emit
- * `llm-reverse-proxy.json`, the deployed HOST ALLOWLIST (v2, docs/d047 — the
+ * @fileoverview generate.mjs — the estige generator: emit
+ * `estige.json`, the deployed HOST ALLOWLIST (v2, docs/d047 — the
  * v1 provider-slug table is gone, host routing is the only mode).
  *
  * The allowlist is the defaults of the OWNER's stack — nothing else is
@@ -32,7 +32,7 @@
  * The proxy strips
  * the route key and single-joins the rest onto the root. Routes absent from
  * the table answer the plain funnel 404; keys are deliberately NOT consulted
- * — llm-reverse-proxy performs NO credential handling.
+ * — estige performs NO credential handling.
  *
  * Drift checking is keyed by host (docs/d047): a fact-table provider whose
  * upstream host is missing from the deployed allowHosts warns (dead host
@@ -45,7 +45,7 @@
  *
  * Usage: ./generate.sh (the standard wrapper — node_run interpreter
  * selection, same as the other environments) or node generate.mjs [out]
- *   out defaults to ./llm-reverse-proxy.json (the path the exit node serves).
+ *   out defaults to ./estige.json (the path the exit node serves).
  *   Env: LIB_DIR (default ../lib).
  */
 
@@ -68,9 +68,9 @@ const { writeJsonArtifact } =
 	/** @type {typeof import("../lib/artifact.mjs")} */ (
 		await import(`${LIB_DIR}/artifact.mjs`)
 	);
-setLogTool("llm-reverse-proxy/generate");
+setLogTool("estige/generate");
 
-const out = process.argv[2] ?? join(scriptDir, "llm-reverse-proxy.json");
+const out = process.argv[2] ?? join(scriptDir, "estige.json");
 
 // ---------------------------------------------------------------------------
 // Source 1 fact table: pi-ai's BUILT-IN cloud providers (folded in from the
@@ -472,7 +472,7 @@ const cfg = {
 	allowHosts: Object.fromEntries(allowHosts),
 };
 const written = writeJsonArtifact(out, cfg);
-logInfo("wrote llm-reverse-proxy host-allowlist config", {
+logInfo("wrote estige host-allowlist config", {
 	path: written,
 	allowHosts: allowHosts.size,
 });

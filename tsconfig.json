@@ -75,7 +75,7 @@
 		"git/search-references.mjs",
 		"git/forge-mirror.mjs",
 		"git/vbs-har.mjs",
-		"llm-reverse-proxy/generate.mjs",
+		"estige/generate.mjs",
 		"pi-synthetic/sources.mjs",
 		"pi-synthetic/merge.mjs",
 		"pi-synthetic/generate.mjs",

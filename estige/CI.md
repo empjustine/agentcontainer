@@ -1,19 +1,19 @@
 ---
-id: llm-reverse-proxy-ci
+id: estige-ci
 type: reference
 status: deferred (until the d082 standalone-repo split; findings recorded now, no workflow exists)
-title: "GitHub Actions for llm-reverse-proxy — findings, deferred until the split"
-parent: llm-reverse-proxy
+title: "GitHub Actions for estige — findings, deferred until the split"
+parent: estige
 tags: ["ci", "github-actions", "build"]
 ---
 
-# GitHub Actions for llm-reverse-proxy — findings, deferred until the split
+# GitHub Actions for estige — findings, deferred until the split
 
 Findings from a dry-run assessment of building and testing this unit on
 GitHub Actions. **No workflow exists yet, deliberately**: d082 moves the
 unit to its own repository, and a workflow added here would have to be
 migrated with it days later (the `git filter-repo` checklist in d082 §4
-must carry `.github/workflows/llm-reverse-proxy*.yml` when it runs).
+must carry `.github/workflows/estige*.yml` when it runs).
 d082 §4.3 already reserves "CI running `go test ./...` + the
 canonical-json check" as a split step; this file is the working notes
 for that step, recorded before context is lost.
@@ -21,7 +21,7 @@ for that step, recorded before context is lost.
 ## What the workflow must do (verified facts)
 
 1. `actions/checkout`, then Go: `actions/setup-go` with
-   `go-version-file: llm-reverse-proxy/go.mod`. The unit has zero
+   `go-version-file: estige/go.mod`. The unit has zero
    external deps (34-byte go.mod, module + go directive only) and no
    toolchain install step — `lib/go-build.mjs`'s `go build` needs
    nothing but a modern Go.
@@ -34,13 +34,13 @@ for that step, recorded before context is lost.
    for anyone cd-ing into the repo). CI must use `jdx/mise-action` +
    `mise install node@24`, not rely on a checked-in config.
 4. Generator drift gate (cheap, hermetic):
-   `./llm-reverse-proxy/generate.sh` then
-   `git diff --exit-code llm-reverse-proxy/` — generate.mjs is fully
+   `./estige/generate.sh` then
+   `git diff --exit-code estige/` — generate.mjs is fully
    offline (no fetch; static passthroughs of models.dev/catwalk data
    plus vendored PI_AI_PROVIDERS).
 5. `./lib/node-run.sh tests/canonical-json.test.mjs` — the check d082
    §4.3 names.
-6. `./llm-reverse-proxy/build.sh llm-reverse-proxy-image` — **the
+6. `./estige/build.sh estige-image` — **the
    shim, never an inline `podman build -f`** (d041/d083/d087 law: one
    build implementation; inlining `imageBuildArgs`/`--pull`/tag
    logic into the workflow would create a second one to drift).
@@ -82,7 +82,7 @@ both cases, no NDK, no extra toolchain:
   paths instead of the missing `/etc/resolv.conf`. Prerequisites:
   build.mjs selects the preset ONLY via on-device detection
   (`$PREFIX` under `com.termux`), and registers
-  `llm-reverse-proxy-native` only when NO container tool exists — a
+  `estige-native` only when NO container tool exists — a
   docker-equipped runner `noteGated`s it. What's missing is an
   explicitly selectable cross target in the builder (post-split: the
   unit's own build.mjs); the workflow then invokes the target NAME,
@@ -105,7 +105,7 @@ both cases, no NDK, no extra toolchain:
 
 ## Runner friction (must-check on the first real run)
 
-- **Paths filter** must include `llm-reverse-proxy/**`, `lib/**`,
+- **Paths filter** must include `estige/**`, `lib/**`,
   `build.mjs`, and the workflow itself: the shim delegates to the root
   builder, so a `lib/` edit changes whether and how the image builds.
 - **Buildx lands in the daemon store** under the runner's default
@@ -117,7 +117,7 @@ both cases, no NDK, no extra toolchain:
   selection empty → exit 91, red build. No env override exists —
   accepting that flake, or adding a CI-scoped override, is its own
   decision (d087-era capability law: gates key on network facts).
-- **`llm-reverse-proxy-native`'s "target not registered" warning** on
+- **`estige-native`'s "target not registered" warning** on
   a container-capable host is expected and harmless (noteGated).
 
 ## Optional follow-ups (not required for a green build)

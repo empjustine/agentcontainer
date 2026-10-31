@@ -11,7 +11,7 @@ tags: ["research", "archived", "termux"]
 
 > **Archived map (kept for the environment matrix)**: the Termux native
 > serving variant was retired — local GGUF needs a GPU container host
-> (`llm-local-inference/`) and cloud relay is served by `llm-reverse-proxy/`
+> (`llm-local-inference/`) and cloud relay is served by `estige/`
 > (docs/d027). Termux remains a USAGE environment for the coding agent, and
 > the provisioning side is still real: root `./build.sh` → `build.mjs`
 > serializes `lib/provision-termux.sh` (infisical/node/jq) + the android

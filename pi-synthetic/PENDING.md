@@ -117,7 +117,7 @@ Change in `generate.mjs`:
 
 Per the user: this extension should not carry the reverse-proxy handling that
 `coding-agent/generate-pi-coding-agent.mjs` needs for 1st/2nd-gen
-`llm-reverse-proxy` limitations. The 3rd generation has real forward-proxy
+`estige` limitations. The 3rd generation has real forward-proxy
 capability (docs/d073/d077 modes C–E, docs/d094 chain, docs/d095
 `vpn-relay.sh`), so a client can address canonical URLs directly.
 
@@ -334,7 +334,7 @@ behaviour of `withSeed`'s tier re-pointing is not. That still needs a live pi.
    `biome.jsonc`'s ignore list, then §3.3 (make the alias a real field).
 3. Close the `coding-agent` seam (`TODO.md` §3 — currently blocked on the
    user's decision that the existing generators stay untouched until the
-   `llm-reverse-proxy` deployment issues land).
+   `estige` deployment issues land).
 4. Host-side verification (`TODO.md` §1) — still the only thing between
    "artifacts are right" and "it runs".
 

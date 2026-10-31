@@ -122,7 +122,7 @@ const COMMITTED_MANIFESTS = [
 	"coding-agent/model-018-cloud-verboo.json",
 	"coding-agent/models.json",
 	"coding-agent/opencode.jsonc",
-	"llm-reverse-proxy/llm-reverse-proxy.json",
+	"estige/estige.json",
 ];
 
 for (const rel of COMMITTED_MANIFESTS) {

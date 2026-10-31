@@ -22,7 +22,7 @@ requirement statement lives in the BRD
 ([../docs/requirements.md](../docs/requirements.md), FR-S1–FR-S4); this doc
 owns the shape and the non-obvious mechanics. Serving models *this* host
 cannot run itself is OUT of scope — relaying moved to
-`../llm-reverse-proxy` (the raw passthrough proxy), taking the former relay
+`../estige` (the raw passthrough proxy), taking the former relay
 layers and the route to a remote host's GPU with it; llama-swap's own
 relay/proxy machinery is no longer exercised from here.
 
@@ -34,7 +34,7 @@ into one file, docs/d041; `generate.sh` is its node_run shim) and `run.sh`
 `run.sh` mounts the generated `config.d/` read-only into the
 `llama-swap:unified-vulkan` image with GPU passthrough + HF-cache mounts and
 publishes LAN **8101** (`HOST_PORT` overrides; in-container 8080) — host
-port 8080 belongs to ../llm-reverse-proxy, the funnel front, which points
+port 8080 belongs to ../estige, the funnel front, which points
 the local face back here at `http://127.0.0.1:8101`. The world reaches the
 catalog via the tailscale FQDN → :8080 (proxy) → `/llama-swap/…` → :8101.
 The legacy :18080 port is dead and never probed.
@@ -94,5 +94,5 @@ Copy unit = this folder + `../lib` (`docs/architecture.md`): may import
 Must not import from sibling runner folders or `local-llm/`. The `lib`
 modules this module no longer uses (`route-probe.mjs`, `cloud-providers.mjs`,
 `models.dev.api.json`) remain in `lib` because
-`../coding-agent` and `../llm-reverse-proxy` consumers still share them; the
+`../coding-agent` and `../estige` consumers still share them; the
 facts module left `lib/` for `../coding-agent` in d039.

@@ -1,6 +1,6 @@
 /**
  * @fileoverview generate.mjs — generate EVERYTHING at once (docs/d041):
- * spawn each runner folder's generate.mjs in sequence — llm-reverse-proxy
+ * spawn each runner folder's generate.mjs in sequence — estige
  * (offline, fast), llm-local-inference (capability-gated), coding-agent
  * (network-heavy). A folder failure is reported and does NOT stop the others
  * (a GPU-less host failing local-inference must not block the proxy and the
@@ -31,7 +31,7 @@ const repoRoot = dirname(fileURLToPath(import.meta.url));
  * Cheap/offline first, expensive/network last.
  * @type {readonly string[]}
  */
-const FOLDERS = ["llm-reverse-proxy", "llm-local-inference", "coding-agent"];
+const FOLDERS = ["estige", "llm-local-inference", "coding-agent"];
 
 let failures = 0;
 for (const folder of FOLDERS) {

@@ -149,7 +149,7 @@ refreshed best-effort, route probing walks the vault-sourced
   the agent dir and is re-run at launch by `run.sh` (exit 94).
 - **Route building is per-provider path-prefix** (docs/d027): cloud
   routes are `<base>/<providerId>` on the simplified cloud router
-  (llm-reverse-proxy, no credential handling — clients carry the provider's
+  (estige, no credential handling — clients carry the provider's
   own key); the llama-swap `/v1` + model-id-magic face serves LOCAL GGUF
   only (`$REVERSE_PROXY_API_KEY`).
 - **Scoped models, not generated catalogs**: pi's own model catalog is used
@@ -223,7 +223,7 @@ the shared lib/ modules (`lib/log.mjs`, `lib/cloud-providers.mjs`) via
 `$LIB_DIR`, and its same-dir siblings `route-probe.mjs`,
 `catalog-facts.mjs`, `refresh-models-dev.mjs` (all single-consumer, folded
 out of lib/ by d039; the two fact caches merged into one module in d072). It
-reads `lib/models.dev.api.json` (shared with llm-reverse-proxy) and the
+reads `lib/models.dev.api.json` (shared with estige) and the
 caches (`<id>-facts.json` beside its module, `lib/catwalk-facts.json` — the
 proxy reads that one too). Must not reach into `llm-local-inference/` or
 `local-llm/`.

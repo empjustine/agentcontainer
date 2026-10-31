@@ -41,6 +41,6 @@ are in `biome.jsonc`'s ignore list (generated files, same reasoning as
 hyper layer (model-016) from models.dev ∪ the facts cache, so two artifacts
 describe one provider and can drift (observed at landing: the fleet layer
 carries a stale `deepseek-v4.1-flash` context window the live listing has
-since corrected). The join is blocked on the same llm-reverse-proxy
+since corrected). The join is blocked on the same estige
 deployment decision as pi-synthetic's seam (docs/d096, d100) — do not start
 it independently.

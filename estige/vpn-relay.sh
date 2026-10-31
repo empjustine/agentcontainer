@@ -10,7 +10,7 @@
 #   chain (arguments): ensure a relay is serving, gate readiness, export the
 #     conventional proxy variables pointing at it, then exec the target:
 #
-#       ./lib/environment.sh ./llm-reverse-proxy/vpn-relay.sh ./coding-agent/run.sh
+#       ./lib/environment.sh ./estige/vpn-relay.sh ./coding-agent/run.sh
 #
 #     One vault round-trip (docs/d046) buys the relay its credential and the
 #     child its environment; the child never holds VPN_OPERATOR_TOKEN (d090).
@@ -27,7 +27,7 @@
 # env BEFORE the loopback spelling is exported — exporting first would make
 # the relay chain to itself.
 #
-# Env overrides: PROXY_LISTEN / SOCKS_LISTEN / IMAGE_TAG / LLM_PROXY_BIN /
+# Env overrides: PROXY_LISTEN / SOCKS_LISTEN / IMAGE_TAG / ESTIGE_BIN /
 # RELAY_CONTAINER / RELAY_READY_TRIES / RELAY_STATE_DIR, plus the relay node's
 # own surface (VPN_TUNNEL_URL / VPN_OPERATOR_TOKEN / VPN_CLIENT_LABEL,
 # docs/d090) and its optional chain (docs/d094).
@@ -38,7 +38,7 @@ set -eu
 # checkout — no other path crosses the unit boundary.
 # shellcheck disable=SC1091
 . "${LIB_DIR:-$(dirname "$0")/../lib}/workload-runtime.sh"
-LOG_TOOL='llm-reverse-proxy/vpn-relay'
+LOG_TOOL='estige/vpn-relay'
 export LOG_TOOL
 
 # SCRIPT_DIR is assigned by the sourced lib/workload-runtime.sh (derived from
@@ -48,9 +48,9 @@ script_dir="$SCRIPT_DIR"
 
 relay_http="${PROXY_LISTEN:-127.0.0.1:3128}"
 relay_socks="${SOCKS_LISTEN:-127.0.0.1:1080}"
-# Container names ride the estige-* spelling; llm-reverse-proxy is the
-# (legacy) folder/unit name, not a runtime identity. The two deployments
-# workload_rm before launching, so their names must not collide either —
+# Container names ride the per-role estige-* spelling (runtime identities
+# of the tunnel family). The two deployments workload_rm before launching,
+# so their names must not collide either —
 # whichever starts second would force-remove the other's container on a host
 # serving both nodes (same image, different listeners).
 container_id="${RELAY_CONTAINER:-estige-relay}"
@@ -113,16 +113,16 @@ _probe_state() {
 
 # _resolve_bin — the native binary, resolved like every other runner (docs/d059).
 _resolve_bin() {
-	_vr_bin="${LLM_PROXY_BIN:-}"
+	_vr_bin="${ESTIGE_BIN:-}"
 	if [ -z "$_vr_bin" ]; then
-		if [ -x "$script_dir/llm-reverse-proxy-android" ]; then
-			_vr_bin="$script_dir/llm-reverse-proxy-android"
-		elif [ -x "$script_dir/llm-reverse-proxy" ]; then
-			_vr_bin="$script_dir/llm-reverse-proxy"
+		if [ -x "$script_dir/estige-android" ]; then
+			_vr_bin="$script_dir/estige-android"
+		elif [ -x "$script_dir/estige" ]; then
+			_vr_bin="$script_dir/estige"
 		fi
 	fi
 	[ -n "$_vr_bin" ] && [ -x "$_vr_bin" ] ||
-		log_die 95 "no proxy binary — run ./build.sh first (on Termux it builds llm-reverse-proxy-android)" bin="${_vr_bin:-unset}"
+		log_die 95 "no proxy binary — run ./build.sh first (on Termux it builds estige-android)" bin="${_vr_bin:-unset}"
 }
 
 # _describe_relay — the container description both modes share. The env
@@ -185,7 +185,7 @@ _start_relay() {
 # host's chain variables (docs/d094) in the relay's own environment.
 _start_native_relay() {
 	_resolve_bin
-	_vr_state_dir="${RELAY_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/llm-reverse-proxy}"
+	_vr_state_dir="${RELAY_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/estige}"
 	mkdir -p -- "$_vr_state_dir"
 	log_info "starting relay (native, supervised)" bin="$_vr_bin" log="$_vr_state_dir/relay.log"
 	(

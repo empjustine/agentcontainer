@@ -30,9 +30,9 @@ the llama-swap serving container and the pi coding-agent container.
 | Name                 | Sandbox / runtime                    | Cloud access | Serving dir                     | Usage dir              |
 |----------------------|--------------------------------------|--------------|---------------------------------|------------------------|
 | local-inference-host | rootless podman, SELinux enforced    | direct       | `llm-local-inference/`           | `coding-agent/`        |
-| termux               | rootless termux, restrictive SELinux, | direct (if   | `llm-reverse-proxy/` (native)   | `coding-agent/`        |
+| termux               | rootless termux, restrictive SELinux, | direct (if   | `estige/` (native)   | `coding-agent/`        |
 |                      | non-standard file paths              | any)         |                                 |                        |
-| small-cloud-vm       | rootless podman or docker            | relay only   | `llm-reverse-proxy/` (relay)    | `coding-agent/` (static config) |
+| small-cloud-vm       | rootless podman or docker            | relay only   | `estige/` (relay)    | `coding-agent/` (static config) |
 
 ### local-inference-host (full, default)
 
@@ -58,7 +58,7 @@ Resource-constrained host (phone/router under Termux). It **cannot run the
 and the image is amd64/container-shaped — and there are **no local inference
 capabilities worth using** there, so generation (no container backend, no GPU)
 emits no GGUF layer. What runs on termux is `coding-agent/` (usage) plus a
-native termux build of `llm-reverse-proxy/` serving the cloud relay path — the
+native termux build of `estige/` serving the cloud relay path — the
 environment matrix in
 [environments-and-variants.md](environments-and-variants.md) is
 authoritative. The former native llama-swap serving variant is retired: see
@@ -66,7 +66,7 @@ the [termux-serving.md](termux-serving.md) archived banner for that history.
 
 ### small-cloud-vm (cloud-relay usage)
 
-Cloud VMs serve `llm-reverse-proxy/` — the cloud relay that replaced the
+Cloud VMs serve `estige/` — the cloud relay that replaced the
 former peers-only llama-swap mode — and run `coding-agent/` against the
 config generated on a capable host (the run-scripts section below).
 
@@ -84,7 +84,7 @@ the active backend — podman or docker —  No
 > cgroups, no real root, no GPU passthrough, no read-only binds — so calling it
 > a "supported workload" was a lie the tree no longer tells. The native termux
 > serving variant is retired (see the termux-serving.md banner); termux runs
-> `coding-agent/` plus a native `llm-reverse-proxy/` cloud relay today.
+> `coding-agent/` plus a native `estige/` cloud relay today.
 > For a stronger-than-container option on capable hosts, see
 > [d020-libvirt-qemu-sandbox.md](d020-libvirt-qemu-sandbox.md). For how the
 > field does the same confinement at finer granularity (bwrap/landlock/
@@ -302,14 +302,14 @@ docs/d018 for the merge contract this supersedes.
   through to the container.
 - **Port**: LAN **8101** (`HOST_PORT` overrides). The container always
   listens on 8080 internally; the world reaches the same catalog via the
-  tailscale funnel → llm-reverse-proxy (LAN 8080, the funnel front) → its
+  tailscale funnel → estige (LAN 8080, the funnel front) → its
   host-allowlist row for llama-swap's tsnet serve hostname (docs/d070 §2).
   The legacy local-inference port 18080 is deprecated — nothing listens on
   it since the two-instance squash.
 
 - **Termux (archived serving variant)**: the native termux llama-swap serving
   variant is retired (see the [termux-serving.md](termux-serving.md) banner).
-  What runs on termux today: `coding-agent/` plus a native `llm-reverse-proxy/`
+  What runs on termux today: `coding-agent/` plus a native `estige/`
   cloud relay; the root `./build.sh` provisions the Infisical CLI there
   (via `lib/provision-termux.sh`) and builds that android proxy binary.
 
@@ -352,6 +352,6 @@ aborts.
 - **local llama-swap** (`config.d/10-local-llm-inference.yaml`): local
   inference only, GPU container hosts only; LAN **8101** (`HOST_PORT`
   overrides), container 8080.
-- **cloud relay** (`llm-reverse-proxy/`): `/<upstream-host>/<path>`
+- **cloud relay** (`estige/`): `/<upstream-host>/<path>`
   host-allowlist routes, byte-for-byte proxying to each allowlisted
   scheme://host root (docs/d047); LAN 8080.

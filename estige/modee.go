@@ -520,7 +520,7 @@ func (t *tunnelServer) accept(traceID string, span uint64, keyID string) *exchan
 		// Loud, not silent: a full registry means a session leak or an
 		// operator burst, and refusing a NEW session is survivable while a
 		// half-minted one would not be (NFR-2).
-		log.Printf("[llm-reverse-proxy] tunnel mode E: session registry full (%d) — refusing new session", maxExchangeSessions)
+		log.Printf("[estige] tunnel mode E: session registry full (%d) — refusing new session", maxExchangeSessions)
 		return nil
 	}
 	s := newExchangeStream(traceID, t.sessions)
@@ -528,7 +528,7 @@ func (t *tunnelServer) accept(traceID string, span uint64, keyID string) *exchan
 	// Attribution at mint — the same point the 101 and mode C paths take
 	// it: after auth, before any session work (docs/d078 §5). The id is a
 	// label, so saying it out loud is allowed; the credential never is.
-	log.Printf("[llm-reverse-proxy] tunnel session: authenticated key=%s", keyID)
+	log.Printf("[estige] tunnel session: authenticated key=%s", keyID)
 	go t.runSession(s)
 	return s
 }
@@ -686,7 +686,7 @@ func (t *tunnelServer) serveTunnelExchange(w http.ResponseWriter, r *http.Reques
 		// it (one stream, one life) — kill the state rather than leave a
 		// minted session waiting for windows that will never come.
 		_ = s.Close()
-		log.Printf("[llm-reverse-proxy] tunnel mode E: window drain failed: %v", err)
+		log.Printf("[estige] tunnel mode E: window drain failed: %v", err)
 		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
 		return
 	}

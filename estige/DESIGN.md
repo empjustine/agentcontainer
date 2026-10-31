@@ -1,14 +1,14 @@
 ---
-id: llm-reverse-proxy-design
+id: estige-design
 type: design
 status: stable
-title: "llm-reverse-proxy — design: routing convention, 404 policy, error taxonomy"
-parent: llm-reverse-proxy
+title: "estige — design: routing convention, 404 policy, error taxonomy"
+parent: estige
 depends-on: [lib]
 tags: ["serving", "proxy", "design"]
 ---
 
-# llm-reverse-proxy — design rationale
+# estige — design rationale
 
 Implementation rationale that is not graspable from `main.go` at a glance:
 why the routing table looks the way it does, why unknown paths answer the way
