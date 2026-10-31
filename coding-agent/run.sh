@@ -360,10 +360,17 @@ workload_workdir  "$(guest_path "$workdir")"
 # The proxy vars are routing, not secrets (docs/d074): forwarded so the image's
 # NODE_USE_ENV_PROXY=1 has something to honor — node's native fetch/http proxy
 # support reads HTTP(S)_PROXY / NO_PROXY (upper- and lowercase) at startup.
+# ALL_PROXY rides for the NON-node harnesses in this image (docs/d074): python
+# (requests/urllib3) and rust (reqwest) read it natively, go reads only the
+# HTTP(S)_PROXY spelling — dropping it at this boundary made the relay's
+# SOCKS spelling silently unreachable inside the sandbox. NODE_USE_ENV_PROXY
+# forwards as well so a host chain (vpn-relay.sh chain mode defaults it) can
+# override the image's ENV default instead of losing to it.
 workload_env_allowlist CLINE_API_KEY MISTRAL_API_KEY REVERSE_PROXY_API_KEY \
 	OPENROUTER_API_KEY OPENCODE_API_KEY HYPER_API_KEY INFERX_API_KEY \
 	VERBOO_API_KEY SYNTHETIC_API_KEY HF_TOKEN GEMINI_API_KEY NVIDIA_API_KEY \
-	HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy
+	HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy \
+	ALL_PROXY all_proxy NODE_USE_ENV_PROXY
 workload_cmd      /bin/sh /opt/agentcontainer-launch.sh
 # Everything above this line is host-side argv assembly (jq + filesystem); the
 # next call is where podman creates the container — mount relabel, userns

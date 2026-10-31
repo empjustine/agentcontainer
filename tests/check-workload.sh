@@ -266,7 +266,7 @@ ARG[--detach]
 ARG[--restart=unless-stopped]
 ARG[--name=relay-ctr]
 ARG[--network=host]
-ARG[localhost/llm-reverse-proxy:latest]
+ARG[localhost/estige:latest]
 ARG[-mode]
 ARG[relay]
 EXPECT
@@ -275,7 +275,7 @@ case_restart() {
 	_userns='--userns=keep-id'
 	_keep_groups='--group-add keep-groups'
 	workload_name    'relay-ctr'
-	workload_image   'localhost/llm-reverse-proxy:latest'
+	workload_image   'localhost/estige:latest'
 	workload_detach
 	workload_restart unless-stopped
 	workload_network host

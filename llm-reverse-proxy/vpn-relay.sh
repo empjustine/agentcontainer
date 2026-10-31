@@ -48,7 +48,12 @@ script_dir="$SCRIPT_DIR"
 
 relay_http="${PROXY_LISTEN:-127.0.0.1:3128}"
 relay_socks="${SOCKS_LISTEN:-127.0.0.1:1080}"
-container_id="${RELAY_CONTAINER:-llm-reverse-proxy}"
+# Container names ride the estige-* spelling; llm-reverse-proxy is the
+# (legacy) folder/unit name, not a runtime identity. The two deployments
+# workload_rm before launching, so their names must not collide either —
+# whichever starts second would force-remove the other's container on a host
+# serving both nodes (same image, different listeners).
+container_id="${RELAY_CONTAINER:-estige-relay}"
 health_url="http://${relay_http}/healthz"
 
 # Result carriers, not locals: POSIX sh has no "local", and a log_die inside a
@@ -128,7 +133,9 @@ _resolve_bin() {
 # never the child the chain mode execs.
 _describe_relay() {
 	workload_name     "$container_id"
-	workload_image    "${IMAGE_TAG:-localhost/llm-reverse-proxy:latest}"
+	# The default tag must match build.mjs's or a freshly built image is
+	# invisible to a default serve (IMAGE_TAG is the operator's escape hatch).
+	workload_image    "${IMAGE_TAG:-localhost/estige:latest}"
 	workload_init
 	workload_network  'host'
 	workload_hardening
@@ -246,7 +253,15 @@ if [ "$#" -gt 0 ]; then
 	all_proxy="socks5h://$relay_socks"
 	NO_PROXY="$_vr_no_proxy"
 	no_proxy="$_vr_no_proxy"
-	export HTTP_PROXY HTTPS_PROXY http_proxy https_proxy ALL_PROXY all_proxy NO_PROXY no_proxy
+	# Handing out the spelling is only half a contract for a NODE child: node's
+	# native fetch/http ignores HTTP(S)_PROXY unless NODE_USE_ENV_PROXY is set
+	# (docs/d074). The chain is the one place that knows it just handed the
+	# spelling out, so it defaults the flag here — every parent would otherwise
+	# have to know (the image sets it; a host-native node does not). Defaulted,
+	# not forced: an operator's explicit value wins. Non-node children need no
+	# flag (python/rust read ALL_PROXY, go reads HTTP(S)_PROXY, all natively).
+	NODE_USE_ENV_PROXY="${NODE_USE_ENV_PROXY:-1}"
+	export HTTP_PROXY HTTPS_PROXY http_proxy https_proxy ALL_PROXY all_proxy NO_PROXY no_proxy NODE_USE_ENV_PROXY
 	exec "$@"
 fi
 

@@ -25,7 +25,8 @@
 # VPN_OPERATOR_TOKEN is deliberately absent: it is the relay node's credential
 # and the exit node stopped reading it (docs/d090).
 #
-# Env overrides: HOST_PORT / LISTEN / IMAGE_TAG / LLM_PROXY_BIN / CONFIG.
+# Env overrides: HOST_PORT / LISTEN / IMAGE_TAG / LLM_PROXY_BIN / CONFIG /
+# EXIT_CONTAINER.
 
 set -eu
 # Shared infra arrives through one injectable directory (docs/d082): default
@@ -48,8 +49,15 @@ config="${CONFIG:-$script_dir/llm-reverse-proxy.json}"
 # shellcheck disable=SC2154  # _workload/_workload_tool from the sourced lib
 if [ "$_workload" = 'workload' ]; then
 	# ========================= container backend =========================
-	image="${IMAGE_TAG:-localhost/llm-reverse-proxy:latest}"
-	container_id='llm-reverse-proxy'
+	# Same image as the relay node (build.mjs's default tag) — the exit and
+	# relay are the one binary in two network positions (docs/d088).
+	image="${IMAGE_TAG:-localhost/estige:latest}"
+	# estige-exit mirrors the relay's estige-relay (vpn-relay.sh): container
+	# names are runtime identities of the tunnel family, while
+	# llm-reverse-proxy is the (legacy) folder name — and the two deployments
+	# must not share a name, or whichever starts second workload_rm's the
+	# other's container.
+	container_id="${EXIT_CONTAINER:-estige-exit}"
 	HOST_PORT="${HOST_PORT:-8080}"
 	log_info "serving (container, host network, exit node)" image="$image" port="$HOST_PORT" config="$config"
 

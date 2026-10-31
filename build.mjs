@@ -302,7 +302,7 @@ if (containerTool) {
 	// after upstream republishes it — the moving tag the build resolves
 	// FROM must be refreshed explicitly (bare --pull = always).
 	const proxyImage =
-		process.env.IMAGE_TAG ?? "localhost/llm-reverse-proxy:latest";
+		process.env.IMAGE_TAG ?? "localhost/estige:latest";
 	if (await cloudReachable()) {
 		targets.push({
 			name: "llm-reverse-proxy-image",
