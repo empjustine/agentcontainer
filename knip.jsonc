@@ -38,7 +38,6 @@
 		"git/vbs-har.mjs",
 		"llm-local-inference/generate.mjs",
 		"llm-local-inference/model-sizes.mjs",
-		"estige/generate.mjs",
 		// the pi extension family: each folder's generator (run by its
 		// generate.sh) and its runtime entry (loaded by the pi host, which
 		// no import graph can see — entry status encodes that contract)

@@ -132,7 +132,8 @@ intentionally NOT copied into each runner — it is owned by the repo, like
 ## One generate, one build (docs/d041)
 
 The root `generate.mjs` (via the `generate.sh` shim) runs every folder's
-generator in sequence — proxy (offline) → local-inference (capability-gated) →
+generator in sequence — estige (offline, its Go `generate` subcommand since
+d102) → local-inference (capability-gated) →
 coding-agent (network-heavy) — reporting failures without stopping the rest.
 The root `build.mjs` (via the root `build.sh` shim) builds everything for
 THIS host: container images in parallel on podman/docker hosts, Termux
@@ -142,8 +143,10 @@ shim selects its unit's — docs/d083), and capability gates key target
 registration on hardware/network facts — the llama-swap pull needs an
 inference endpoint: render devices plus the RAM floor (docs/d087;
 d083's coding-agent free-disk gate retired with the image's shrink). Each
-folder also keeps its own `generate.sh` shim (a
-3-line `node_run` interpreter) for standalone use. Runners NEVER build or generate: run.sh
+node-based folder also keeps its own `generate.sh` shim (a
+3-line `node_run` interpreter) for standalone use; estige's generator is
+its own binary's `generate` subcommand — no shim, no node (docs/d102).
+Runners NEVER build or generate: run.sh
 stages the COMMITTED config and a stale/missing artifact is a loud failure
 pointing at the generator, never an implicit regeneration.
 
@@ -173,7 +176,7 @@ the variant folders redundant.)
 | Folder | Role | What makes it work |
 |--------|------|--------------------|
 | `llm-local-inference/` | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `generate.sh`/`generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh` |
-| `estige/` | host-allowlist cloud router (docs/d047 — mode A, by decision the only HOST-policy mode, docs/d080): `/<upstream-host>/<path>` → the allowlisted scheme://host root, byte-for-byte, no keys — deny-by-absence for everything else (docs/d027's 404 policy); streaming as-is, RFC 9457 502s; also carries the opt-in tunnel family (modes C–E, docs/d073/d077), whose two deployments are named by network position since docs/d088 — the **exit node** (`vpn-exit.sh`; funnel front + tunnel server) and the **relay node** (`vpn-relay.sh`; loopback CONNECT/SOCKS5 — serve mode, or the chain step that points a child at it, docs/d095; env values and code speak the same names, d088 phase 2) — mode D deployed, C default-on (d084); standalone-repo boundary defined in docs/d082 (split-time CI findings in `estige/CI.md`) | `main.go`, `generate.sh`/`generate.mjs` (allowHosts from pi-ai + lib/cloud-providers.mjs, docs/d047), `estige.example.json`, `smoke-test.sh`; the tunnel family: `relaynode.go`, `relaychain.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go`, plus the two deployment entries `vpn-exit.sh`/`vpn-relay.sh`; built by the root `build.mjs` |
+| `estige/` | host-allowlist cloud router (docs/d047 — mode A, by decision the only HOST-policy mode, docs/d080): `/<upstream-host>/<path>` → the allowlisted scheme://host root, byte-for-byte, no keys — deny-by-absence for everything else (docs/d027's 404 policy); streaming as-is, RFC 9457 502s; also carries the opt-in tunnel family (modes C–E, docs/d073/d077), whose two deployments are named by network position since docs/d088 — the **exit node** (`vpn-exit.sh`; funnel front + tunnel server) and the **relay node** (`vpn-relay.sh`; loopback CONNECT/SOCKS5 — serve mode, or the chain step that points a child at it, docs/d095; env values and code speak the same names, d088 phase 2) — mode D deployed, C default-on (d084); standalone-repo boundary defined in docs/d082 (split-time CI findings in `estige/CI.md`) | `main.go`, `generate.go` (`estige generate`: allowHosts from pi-ai + lib/cloud-providers.json, docs/d047, d102), `estige.example.json`, `smoke-test.sh`; the tunnel family: `relaynode.go`, `relaychain.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go`, plus the two deployment entries `vpn-exit.sh`/`vpn-relay.sh`; built by the root `build.mjs` |
 | `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.sh`/`generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.sh`, `settings.json`; image built by the root `build.mjs` |
 
 The former "next planned step" sketch (a simplified config-generator system

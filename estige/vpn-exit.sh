@@ -44,7 +44,7 @@ script_dir="$SCRIPT_DIR"
 
 config="${CONFIG:-$script_dir/estige.json}"
 [ -f "$config" ] ||
-	log_die 94 "config not found — generate it first with ./generate.sh (or copy estige.example.json for a hand-written deployment)" path="$config"
+	log_die 94 "config not found — generate it first with estige generate (or copy estige.example.json for a hand-written deployment)" path="$config"
 
 # shellcheck disable=SC2154  # _workload/_workload_tool from the sourced lib
 if [ "$_workload" = 'workload' ]; then

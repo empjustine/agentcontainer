@@ -497,6 +497,19 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // ---------------------------------------------------------------------------
 
 func main() {
+	// Subcommands (docs/d102): every generator/launcher verb runs before
+	// flag parsing — the proxy's own flags all start with '-', so any bare
+	// first arg is a subcommand by construction. `generate` is the
+	// allowlist generator; see generate.go.
+	if len(os.Args) > 1 && !strings.HasPrefix(os.Args[1], "-") {
+		switch os.Args[1] {
+		case "generate":
+			os.Exit(runGenerate(os.Args[2:]))
+		default:
+			log.Fatalf("[estige] unknown subcommand %q (want generate)", os.Args[1])
+		}
+	}
+
 	configPath := flag.String("config", "estige.json", "path to JSON config")
 	listen := flag.String("listen", "", "override listen address (e.g. :8080)")
 	// Role values are the node names, not protocol roles (docs/d088): the

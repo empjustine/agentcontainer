@@ -89,8 +89,9 @@ via a **native termux build of estige** (compiled for the device).
   `/etc/resolv.conf`; docs/d041), and `run.sh`'s native branch
   `exec`s it against `estige.json` and `${LISTEN:-:8080}` — no
   podman/docker, no GPU detection, no image pull, no build/generate step.
-- `estige/generate.sh` (→ `generate.mjs`) emits the
-  routing table from the shared provider fact table
+- `cd estige && go run . generate` (`generate.go`, the proxy binary's own
+  subcommand since d102) emits the host allowlist from the shared provider
+  fact table
   (lib/cloud-providers.mjs, docs/d027): one path prefix per provider,
   upstream = the provider's FULL real base URL.
   The proxy injects no keys; clients (the coding agent on this host, or

@@ -40,7 +40,7 @@ on some hosts; it is an optimization, not the reference.
 | | |
 |---|---|
 | ✅ Passes all calls as-is | headers, body, query, method, streaming — byte for byte |
-| ✅ Provider prefix routing | `http://host:port/{provider}/<path>?<q>` → `<base-url>/<path>?<q>` |
+| ✅ Host prefix routing | `http://host:port/{upstream-host}/<path>?<q>` → `scheme://<host>/<path>?<q>`, host allowlisted (docs/d047) |
 | ✅ Streaming as-is | `FlushInterval: -1` → every upstream read is flushed immediately; SSE, NDJSON, chunked all arrive at upstream cadence |
 | ✅ RFC 9457 errors | internal failures → descriptive `application/problem+json` 502 (see below) |
 | ✅ Passthrough of upstream errors | provider 4xx/5xx responses are **not** rewritten |
@@ -53,64 +53,66 @@ on some hosts; it is an optimization, not the reference.
 ```console
 $ cp estige.example.json estige.json   # edit providers
 $ ./estige -config estige.json
-[estige] listening on 0.0.0.0:8080; 6 provider(s):
-[estige]   /anthropic/ → https://api.anthropic.com
+[estige] listening on 0.0.0.0:8080; 36 allowlisted host(s):
+[estige]   /ai-gateway.vercel.sh/ → https://ai-gateway.vercel.sh
 ...
 ```
 
-### Config generation (`generate.sh` / `generate.mjs`)
+### Config generation (`estige generate` — generate.go)
 
-Since docs/d041 the whole generator is `generate.mjs` (the former
-`generate-config.mjs`, with the orchestration folded in — docs/d039 had
-already inlined the pi-ai/npm tables); `generate.sh` is its 3-line
-`node_run` interpreter shim (same invocation model as the sibling folders):
+Since docs/d102 the whole generator is the proxy binary's own `generate`
+subcommand, written in Go like the rest of this folder — no node, no shim,
+no `LIB_DIR` node runner (the fact table is JSON, so the all-Go generator
+and every node generator in the parent repo read the SAME bytes):
 
 
 ```console
-$ ./generate.sh                       # -> estige.json (atomically
-                                      #    REPLACED on success — the change
-                                      #    is reviewed with git diff)
+$ go run . generate                       # → estige.json (atomically
+                                          #    REPLACED on success — the change
+                                          #    is reviewed with git diff)
+$ ./estige generate                       # same, from a built binary
 ```
 
-The generated table is the UNION of three provider sources with an explicit
-priority (docs/d038) — pi-ai's built-in registry (the PI_AI_PROVIDERS table
-in generate.mjs; d039 folded it in) > the models.dev/ai-sdk catalog
-(lib/models.dev.api.json, `api` field, with the AI_SDK_PACKAGE_ENDPOINTS
-table as the fallback for records without one) > crush's catwalk catalog
-(lib/catwalk-facts.json, `api_endpoint`). Routes are
-keyed by provider NAME: the same name in several sources resolves by
-priority; distinct names are all served. A representative excerpt (the full
-table is ~220 routes):
+The generated table is the owner set — nothing else is routable
+(deny-by-absence, docs/d047): pi-ai's built-in registry (the
+`piAiProviders` table in generate.go, extracted from the installed pi —
+docs/d039 had folded it in) ∪ the `lib/cloud-providers.json` fact table
+(docs/d024 — the hand-added rows, the pi-native set, and the local
+llama-swap farm keyed by its tsnet serve hostname) ∪ two static metadata
+passthroughs (models.dev, catwalk). Each row contributes ONE allowlist
+entry per DISTINCT upstream host, key `host[:port]`, value `scheme://host`
+— the host root; base paths belong to the client, which is what lets
+multi-base hosts (opencode vs opencode-go) share a row. pi-ai rows with no
+single fixed upstream (per-region bedrock, per-project vertex, OAuth
+backends) are reported as skips with their reason. A representative
+excerpt:
 
 ```json
 { "listen": "0.0.0.0:8080",
-  "providers": {
-    "anthropic": "https://api.anthropic.com",
-    "openai": "https://api.openai.com/v1",
-    "google": "https://generativelanguage.googleapis.com/v1beta",
-    "deepseek": "https://api.deepseek.com",
-    "together": "https://api.together.ai/v1",
-    "togetherai": "https://api.together.xyz/v1",
-    "opencode": "https://opencode.ai/zen/v1",
-    "opencode-zen": "https://opencode.ai/zen/v1",
-    "cline-pass": "https://api.cline.bot/api/v1",
-    "hyper": "https://hyper.charm.land/v1",
-    "inferx": "https://model.inferx.net/endpoints/v1",
-    "synthetic": "https://api.synthetic.new/openai/v1",
-    "mistral": "https://api.mistral.ai",
-    "llama-swap": "http://127.0.0.1:8101",
+  "allowHosts": {
+    "api.anthropic.com": "https://api.anthropic.com",
+    "api.deepseek.com": "https://api.deepseek.com",
+    "api.openai.com": "https://api.openai.com",
+    "api.cline.bot": "https://api.cline.bot",
+    "api.mistral.ai": "https://api.mistral.ai",
+    "bazzite.coelacanth-barb.ts.net": "https://bazzite.coelacanth-barb.ts.net",
+    "generativelanguage.googleapis.com": "https://generativelanguage.googleapis.com",
+    "hyper.charm.land": "https://hyper.charm.land",
+    "model.inferx.net": "https://model.inferx.net",
+    "opencode.ai": "https://opencode.ai",
+    "openrouter.ai": "https://openrouter.ai",
+    "token-plan.ap-southeast-1.maas.aliyuncs.com": "https://token-plan.ap-southeast-1.maas.aliyuncs.com",
     "models.dev": "https://models.dev",
-    "catwalk": "https://catwalk.charm.land"
+    "catwalk.charm.land": "https://catwalk.charm.land"
   } }
 ```
 
 The routing convention it locks in — full real base URLs, the 404
 anti-oracle answer, the RFC 9457 error design, and the known deviations
 from "as-is" — is design rationale, kept in [DESIGN.md](DESIGN.md).
-A provider in the fact table but missing from the deployed config is
-reported as a dead route (its clients simply keep direct/built-in
-routing); a deployed upstream that drifted from the fact table is reported
-as drift.
+A fact-table provider whose host is missing from the deployed config is
+reported as a dead host route (its clients simply keep direct/built-in
+routing); a deployed host no owner source claims is reported as drift.
 
 ## Repository boundary (docs/d082)
 
@@ -118,8 +120,8 @@ This folder is the unit that becomes its own repository (docs/d082): code,
 scripts, image, and the docs in this folder (README, DESIGN, CI)
 travel together. Everything it borrows
 from the parent repo arrives through one injectable directory — `LIB_DIR`,
-default `../lib` (the node runner for generation, the declarative workload
-API for the two `vpn-*.sh` entries, and the lib modules `generate.mjs` imports) — and the
+default `../lib` (the JSON fact table the Go generator reads, and the
+declarative workload API for the two `vpn-*.sh` entries) — and the
 build stays the root `./build.mjs`'s (docs/d041) until the split. The
 decision records that travel with the unit are listed in d082 §1.
 
@@ -205,7 +207,7 @@ still listens on 8080 internally; `llm-local-inference/run.sh` publishes
 | path under the funnel | backend | routing |
 |---|---|---|
 | `/<upstream-host>/<path>` | allowlisted hosts only (~36 owner-set rows, docs/d047) | host key → scheme://host root; the client carries the full upstream base path after the host (`<base>/api.cline.bot/api/v1`); every other host is denied by absence |
-| `/llama-swap/…` | `http://127.0.0.1:8101` | llama-swap (LOCAL GGUF, model-id routing) — the loopback hop never leaves the host; the one allowlist row keyed by a logical route name instead of its host, so client URLs stay loopback-free |
+| `/bazzite…ts.net/<path>` | `https://bazzite.coelacanth-barb.ts.net` | llama-swap (LOCAL GGUF, model-id routing) rides in as a plain fact-table row keyed by its tsnet `tailscale serve` hostname (docs/d070) — the loopback hop never leaves the host |
 
 `./smoke-test.sh` runs 34 behavioural checks in the one and only mode —
 the v2 host allowlist (docs/d047) — including the deny-by-absence negatives

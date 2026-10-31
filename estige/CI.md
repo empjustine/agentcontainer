@@ -27,17 +27,20 @@ for that step, recorded before context is lost.
    nothing but a modern Go.
 2. `go test ./...` — hermetic: tests are `httptest`-based, no
    `os.Getenv`, no network, no tailnet, no `testing.Short` skips.
-3. Node 24 for the generators and the canonical-json test — the
-   friction point. `lib/node-run.sh` resolves `mise exec node@24`;
+3. Node 24 for the root builder and the canonical-json test — the
+   friction point. Generation itself is Go since d102 and needs no
+   node. `lib/node-run.sh` resolves `mise exec node@24`;
    there is **no repo `mise.toml`** (d051/d082: the pin lives only in
    the shim, deliberately — a root mise.toml would re-pin bare `node`
    for anyone cd-ing into the repo). CI must use `jdx/mise-action` +
    `mise install node@24`, not rely on a checked-in config.
-4. Generator drift gate (cheap, hermetic):
-   `./estige/generate.sh` then
-   `git diff --exit-code estige/` — generate.mjs is fully
-   offline (no fetch; static passthroughs of models.dev/catwalk data
-   plus vendored PI_AI_PROVIDERS).
+4. Generator drift gate (cheap, hermetic, go-only):
+   `cd estige && go run . generate` then
+   `git diff --exit-code estige/` — generate.go is fully
+   offline (no fetch; static passthroughs of models.dev/catwalk data,
+   the vendored pi-ai table in generate.go, and
+   `lib/cloud-providers.json` via the folder-relative `LIB_DIR`
+   default).
 5. `./lib/node-run.sh tests/canonical-json.test.mjs` — the check d082
    §4.3 names.
 6. `./estige/build.sh estige-image` — **the
@@ -47,11 +50,12 @@ for that step, recorded before context is lost.
 
 ## Node.js is a monorepo convenience, not a business requirement
 
-Node@24 is load-bearing three times in this unit's pipeline today: the
-root builder the shim runs (`build.mjs`), `generate.mjs` (the routing
-table emitted from the shared fact tables), and
-`tests/canonical-json.test.mjs`. All three are monorepo structure, not
-unit requirements: the same node is implicitly required for
+Node@24 is load-bearing twice in this unit's pipeline today: the
+root builder the shim runs (`build.mjs`) and
+`tests/canonical-json.test.mjs`. Both are monorepo structure, not
+unit requirements — and the list already shrank: the generator moved
+to Go in d102, taking one node leg (and one lib/ dependency) out of
+the unit's critical path. The same node is implicitly required for
 `./coding-agent/` generation anyway and is present on every host in
 use — but the unit's product is one Go binary plus one JSON config.
 Cross-language dependencies should be minimized where possible.
@@ -63,11 +67,14 @@ decision):
   move into a **path-filtered maintainer job** that runs when the fact
   tables or the generator change — not on every build;
 - the per-change CI-critical path degrades to plain `go build` +
-  `go test ./...` with no node at all;
-- the canonical-json guard stays BESIDE generation rather than getting
-  a go port: it validates the generator's output format (key
-  canonicalization, docs/d050), which the Go binary itself never
-  observes — so it belongs with the job that regenerates.
+  `go test ./...` with no node at all — the generator half of that
+  promise is already kept (d102); what remains is the root builder
+  and the canonical-json test;
+- the canonical-json guard stays BESIDE the node-side generation
+  rather than getting a go port: docs/d050's canonicalizer still
+  governs the sibling node generators, and the Go generator implements
+  the same ordering natively (its port was gated on byte-identical
+  output against the committed artifact, d102).
 
 ## Cross-build artifacts: Termux android/arm64 and arm32v5 — both are plain Go cross-compiles
 

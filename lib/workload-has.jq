@@ -19,7 +19,7 @@
 # callers need no initialisation.
 #
 # WHY THIS EXISTS: it replaces the old `[ -n "$_SB_DEV" ]` test in
-# estige/generate.sh, which reached straight into a space-joined
+# the retired estige generate.sh, which reached straight into a space-joined
 # shell global that this refactor removed.
 #
 # NOTE: a compile error (syntax, or an undefined $var) exits 3, which is
