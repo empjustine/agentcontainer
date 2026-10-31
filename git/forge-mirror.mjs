@@ -108,6 +108,11 @@ function parseArgs(argv) {
 	const o = { dest: DEFAULT_DEST, transport: null, help: false, inputs: [] };
 	for (let i = 0; i < argv.length; i += 1) {
 		const a = argv[i];
+		// The loop condition guarantees a value; the check is the type gate's
+		// form of that fact.
+		if (a === undefined) {
+			break;
+		}
 		switch (a) {
 			case "--dest":
 				o.dest = /** @type {string} */ (argv[++i]);

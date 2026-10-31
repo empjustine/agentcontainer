@@ -73,7 +73,8 @@ function slugFromProjectId(projectId, org) {
 	}
 	const rest = projectId.slice(prefix.length);
 	const match = /^(.*)_\d+$/.exec(rest);
-	return match ? match[1] : rest;
+	// group 1 is optional in the match sense: no _<n> suffix means rest.
+	return match?.[1] ?? rest;
 }
 
 /**
@@ -118,11 +119,15 @@ export function parseSoftwareForgeRemote(raw) {
 
 	// Glass pane: the repo identity lives in the fragment, not the path.
 	if (url.hash) {
-		const fragment = url.hash.replace(/^#/, "").split("?")[0];
+		// split() always yields the first element; the fallback is the type gate's
+		// form of that fact.
+		const fragment = url.hash.replace(/^#/, "").split("?")[0] ?? "";
 		const parts = fragment.split("/").filter(Boolean);
 		if (parts[0] === "projects" && parts[2] === "scm") {
 			const projectSlug = parts[1];
-			const repo = stripGitSuffix(parts[3]);
+			// An absent segment yields an empty repo, which the guard below
+			// rejects — and avoids handing undefined to stripGitSuffix.
+			const repo = stripGitSuffix(parts[3] ?? "");
 			const org = segments[0] || orgFromHost(host);
 			if (projectSlug && repo && org) {
 				return {
@@ -142,7 +147,9 @@ export function parseSoftwareForgeRemote(raw) {
 	if (segments[1] === "s" && segments[3] === "scm") {
 		const org = segments[0];
 		const projectId = segments[2];
-		const repo = stripGitSuffix(segments[4]);
+		// An absent segment yields an empty repo, which the guard below
+		// rejects — and avoids handing undefined to stripGitSuffix.
+		const repo = stripGitSuffix(segments[4] ?? "");
 		if (org && projectId && repo) {
 			return {
 				kind: "https",
@@ -159,7 +166,9 @@ export function parseSoftwareForgeRemote(raw) {
 	// ssh: /<projectId>/<repo>.git
 	if (url.protocol === "ssh:" && segments.length === 2) {
 		const projectId = segments[0];
-		const repo = stripGitSuffix(segments[1]);
+		// An absent segment yields an empty repo, which the guard below
+		// rejects — and avoids handing undefined to stripGitSuffix.
+		const repo = stripGitSuffix(segments[1] ?? "");
 		const org = orgFromHost(host);
 		if (projectId && repo && org) {
 			return {

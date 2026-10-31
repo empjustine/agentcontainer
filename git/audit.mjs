@@ -96,7 +96,8 @@ function githubSlug(url) {
 	if (!hostMatch) {
 		return null;
 	}
-	return hostMatch[1].toLowerCase();
+	// group 1 is required — a match always carries it
+	return (hostMatch[1] ?? "").toLowerCase();
 }
 
 /** @returns {Promise<void>} */
@@ -141,6 +142,11 @@ async function main() {
 	for (let i = 0; i < repos.length; i += 1) {
 		const repo = repos[i];
 		const rel = rels[i];
+		// rels is repos.map(...) — one rel per repo, same order; the guard is
+		// the type gate's form of that invariant.
+		if (repo === undefined || rel === undefined) {
+			continue;
+		}
 		const url = await originUrl(repo);
 
 		let host = "(none)";

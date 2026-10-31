@@ -95,7 +95,8 @@ function slugFromId(id, org) {
 	}
 	const rest = id.startsWith(`${org}_`) ? id.slice(org.length + 1) : id;
 	const match = /^(.*)_\d+$/.exec(rest);
-	return match ? match[1] : rest;
+	// group 1 is optional in the match sense: no _<n> suffix means rest.
+	return match?.[1] ?? rest;
 }
 
 /**
@@ -164,8 +165,10 @@ function harToManifest(har, opts = {}) {
 			}
 		}
 		const match = /\/s2\/([^/]+)\/scm\/api\/repository/.exec(url);
-		if (match) {
-			repoBodies.set(decodeURIComponent(match[1]), data);
+		// group 1 is required — a match always carries it
+		const captured = match?.[1];
+		if (captured !== undefined) {
+			repoBodies.set(decodeURIComponent(captured), data);
 		}
 	}
 
@@ -266,6 +269,11 @@ function parseArgs(argv) {
 	const o = { file: "", out: "", base: "", org: "", help: false };
 	for (let i = 0; i < argv.length; i += 1) {
 		const a = argv[i];
+		// The loop condition guarantees a value; the check is the type gate's
+		// form of that fact.
+		if (a === undefined) {
+			break;
+		}
 		switch (a) {
 			case "--out":
 				o.out = /** @type {string} */ (argv[++i]);

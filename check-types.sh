@@ -28,12 +28,7 @@ if [ ! -x "$tsdir/node_modules/.bin/tsc" ]; then
 	npm i --no-save --no-audit --no-fund --prefix "$tsdir" typescript@5.9.3 @types/node@22
 fi
 
-log_info "tsc (checkJs, strict)"
+log_info "tsc (checkJs, strict, incl. noUncheckedIndexedAccess)"
 # --typeRoots is explicit because the types are not installed in-tree: tsc has
 # to be told where the scratch-dir @types live.
-"$tsdir/node_modules/.bin/tsc" -p tsconfig.json --typeRoots "$tsdir/node_modules/@types"
-
-# The noUncheckedIndexedAccess overlay: files graduate into tsconfig.strict.json
-# one wave at a time (see its header); both configs must pass on every run.
-log_info "tsc (strict overlay — noUncheckedIndexedAccess, graduated files)"
-"$tsdir/node_modules/.bin/tsc" -p tsconfig.strict.json --typeRoots "$tsdir/node_modules/@types"
+exec "$tsdir/node_modules/.bin/tsc" -p tsconfig.json --typeRoots "$tsdir/node_modules/@types"

@@ -41,6 +41,10 @@
 		// T|undefined; fetch headers became conditional spreads; test override
 		// helpers take mapped types that allow explicit undefined.
 		"exactOptionalPropertyTypes": true,
+		// The strictness program is COMPLETE (waves v23.22-v23.27): every file
+		// below carries noUncheckedIndexedAccess, so the tsconfig.strict.json
+		// overlay was folded back here and deleted — one config, one gate run.
+		"noUncheckedIndexedAccess": true,
 		// SURVEYED AND REJECTED — noPropertyAccessFromIndexSignature: all 193
 		// findings are process.env dot reads; the flag demands bracket access
 		// for zero typo-safety (an index signature accepts any string either
@@ -57,13 +61,10 @@
 		"lib/go-build.mjs",
 		"lib/host-capabilities.mjs",
 		"lib/log.mjs",
-
 		"tests/git-glob.test.mjs",
 		"tests/git-pacer.test.mjs",
-
 		"generate.mjs",
 		"build.mjs",
-
 		"git/git-lib.mjs",
 		"git/audit.mjs",
 		"git/local-changes.mjs",
@@ -72,10 +73,41 @@
 		"git/forge-mirror.mjs",
 		"git/software-forge-remotes.mjs",
 		"git/search-references.mjs",
+		"git/forge-mirror.mjs",
 		"git/vbs-har.mjs",
-
 		"llm-reverse-proxy/generate.mjs",
-
+		"pi-synthetic/sources.mjs",
+		"pi-synthetic/merge.mjs",
+		"pi-synthetic/generate.mjs",
+		"pi-cline-pass/sources.mjs",
+		"pi-cline-pass/merge.mjs",
+		"pi-cline-pass/generate.mjs",
+		"pi-hyper/sources.mjs",
+		"pi-hyper/merge.mjs",
+		"pi-hyper/generate.mjs",
+		"pi-verboo/sources.mjs",
+		"pi-verboo/merge.mjs",
+		"pi-verboo/generate.mjs",
+		"tests/canonical-json.test.mjs",
+		"tests/artifact-urls.test.mjs",
+		"tests/modality-allowlist.test.mjs",
+		"tests/pi-cost.test.mjs",
+		"tests/pi-synthetic.test.mjs",
+		"tests/pi-cline-pass.test.mjs",
+		"tests/pi-opencode.test.mjs",
+		"tests/pi-hyper.test.mjs",
+		"tests/pi-verboo.test.mjs",
+		"tests/pi-mistral.test.mjs",
+		"llm-local-inference/generate.mjs",
+		"llm-local-inference/model-sizes.mjs",
+		"coding-agent/route-probe.mjs",
+		"coding-agent/check-routed-artifacts.mjs",
+		"coding-agent/catalog-facts.mjs",
+		"coding-agent/refresh-models-dev.mjs",
+		"coding-agent/gen-lib.mjs",
+		"coding-agent/generate-pi-coding-agent.mjs",
+		"coding-agent/generate-opencode.mjs",
+		"coding-agent/generate.mjs"
 		// NOTE: the extension entries (pi-synthetic/index.ts,
 		// pi-cline-pass/index.ts, pi-hyper/index.ts, pi-verboo/index.ts,
 		// pi-mistral/index.ts, pi-opencode/index.ts) are deliberately

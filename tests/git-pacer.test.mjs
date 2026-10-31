@@ -50,7 +50,9 @@ test("concurrent gated calls never overlap and are spaced by the interval", asyn
 	await Promise.all([gate(op), gate(op), gate(op)]);
 	assert.equal(starts.length, 3);
 	for (let i = 1; i < starts.length; i += 1) {
-		const gap = starts[i] - starts[i - 1];
+		// starts[] is fully populated by the Promise.all above; ?? 0 can only
+		// fail the assertion louder, never pass it falsely.
+		const gap = (starts[i] ?? 0) - (starts[i - 1] ?? 0);
 		assert.ok(
 			gap >= intervalMs - 5,
 			`gap ${gap}ms should be at least ~${intervalMs}ms`,
@@ -79,9 +81,11 @@ test("a rejecting call does not poison the gate for later callers", async () => 
 		results.map((r) => r.status),
 		["fulfilled", "rejected", "fulfilled"],
 	);
-	const a = at.a;
-	const b = at.b;
-	const c = at.c;
+	// The status deepEqual above proves all three keys exist; ?? 0 can only
+	// fail the ordering assertions louder, never pass them falsely.
+	const a = at.a ?? 0;
+	const b = at.b ?? 0;
+	const c = at.c ?? 0;
 	assert.ok(a <= b && b <= c, "later callers must still run, in order");
 	assert.ok(
 		c - b >= intervalMs - 5,

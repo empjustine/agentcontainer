@@ -168,7 +168,13 @@ async function indexOne(repo, o, tool) {
 		o.branches,
 		containerRepoPath(o.root, repo),
 	]);
-	const code = await run(argv[0], argv.slice(1));
+	// containerBase always opens with the container binary; the guard is the
+	// type gate's form of that fact.
+	const [cmd] = argv;
+	if (cmd === undefined) {
+		throw new Error("container command missing");
+	}
+	const code = await run(cmd, argv.slice(1));
 	if (code !== 0) {
 		logWarn("index failed — shard left as-is", { repo, code });
 		return false;
@@ -361,7 +367,11 @@ async function cmdServe(argv) {
 	});
 	// exec-style: the container IS the server process; forwarding signal/exit
 	// keeps `./git/search-references.sh serve` a normal long-running command.
-	const code = await run(argvOri[0], argvOri.slice(1));
+	const [cmdOri] = argvOri;
+	if (cmdOri === undefined) {
+		throw new Error("container command missing");
+	}
+	const code = await run(cmdOri, argvOri.slice(1));
 	process.exitCode = code;
 }
 
@@ -453,7 +463,13 @@ async function queryOneShot(tool, o) {
 		...(o.json ? ["-jsonl"] : []),
 		o.query,
 	]);
-	return run(argv[0], argv.slice(1));
+	// containerBase always opens with the container binary; the guard is the
+	// type gate's form of that fact.
+	const [cmd] = argv;
+	if (cmd === undefined) {
+		throw new Error("container command missing");
+	}
+	return run(cmd, argv.slice(1));
 }
 
 /**

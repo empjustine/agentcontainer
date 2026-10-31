@@ -243,11 +243,13 @@ function parseArgs(argv) {
 function originHost(url) {
 	const scpWithUser = /^[^/@]+@([^/:]+):/.exec(url);
 	if (scpWithUser) {
-		return scpWithUser[1];
+		// group 1 is required — a match always carries it
+		return scpWithUser[1] ?? null;
 	}
 	const scpHostOnly = /^([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+):/.exec(url);
 	if (scpHostOnly) {
-		return scpHostOnly[1];
+		// group 1 is required — a match always carries it
+		return scpHostOnly[1] ?? null;
 	}
 	try {
 		const host = new URL(url).host;
@@ -458,7 +460,7 @@ async function main() {
 	const tally = { ok: 0, skipped: 0, failed: 0 };
 	for (const groupResults of results) {
 		for (const r of groupResults) {
-			tally[r] += 1;
+			tally[r] = (tally[r] ?? 0) + 1;
 		}
 	}
 

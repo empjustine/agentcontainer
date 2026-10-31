@@ -124,6 +124,11 @@ function parseArgs(argv) {
 	};
 	for (let i = 0; i < argv.length; i += 1) {
 		const a = argv[i];
+		// The loop condition guarantees a value; the check is the type gate's
+		// form of that fact.
+		if (a === undefined) {
+			break;
+		}
 		switch (a) {
 			case "--repo":
 				o.repo = /** @type {string} */ (argv[++i]);
@@ -220,7 +225,7 @@ async function statusBuckets(repo, includeIgnored) {
 }
 
 /**
- * @param {string} track `%(upstream:track)` value, e.g. `[ahead 2, behind 1]`
+ * @param {string|undefined} track `%(upstream:track)` value, e.g. `[ahead 2, behind 1]` — absent when the branch has no upstream
  * @returns {{ahead: number, behind: number, gone: boolean}}
  */
 function parseTrack(track) {
@@ -288,7 +293,8 @@ async function branchInfo(repo) {
 		const [name, upstream, track, object] = line.split("\t");
 		const { ahead, behind, gone } = parseTrack(track);
 		branches.push({
-			name,
+			// split() always yields the first element of a non-empty line.
+			name: name ?? line,
 			upstream: upstream || null,
 			object: object ?? "",
 			ahead,
@@ -315,6 +321,11 @@ async function stashInfo(repo) {
 			continue;
 		}
 		const [ref, seconds, subject] = line.split(UNIT);
+		// split() always yields the first element of a non-empty line; the
+		// guard is the type gate's form of that fact.
+		if (ref === undefined) {
+			continue;
+		}
 		const files = await git(repo, ["stash", "show", "--name-only", ref], {
 			must: false,
 		});

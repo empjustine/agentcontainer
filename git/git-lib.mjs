@@ -295,10 +295,13 @@ export async function pool(items, limit, worker) {
 		Array.from({ length: runners }, async () => {
 			for (;;) {
 				const i = next++;
-				if (i >= items.length) {
+				const item = items[i];
+				// i >= items.length is the exit; the undefined check is its
+				// type-gate form (same fact, a shape the flag can verify).
+				if (i >= items.length || item === undefined) {
 					return;
 				}
-				results[i] = await worker(items[i], i);
+				results[i] = await worker(item, i);
 			}
 		}),
 	);
@@ -328,6 +331,11 @@ export function globMatcher(glob) {
 	let re = "";
 	for (let i = 0; i < pattern.length; i += 1) {
 		const c = pattern[i];
+		// The loop condition guarantees a value; the check is the type gate's
+		// form of that fact.
+		if (c === undefined) {
+			break;
+		}
 		if (c === "*") {
 			if (pattern[i + 1] === "*") {
 				re += ".*";
