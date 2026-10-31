@@ -27,7 +27,7 @@
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { goToolchainReady } from "./lib/go-build.mjs";
+import { goToolchainReady, isTermux } from "./lib/go-build.mjs";
 import { logError, logInfo, setLogTool } from "./lib/log.mjs";
 
 setLogTool("generate");
@@ -35,14 +35,20 @@ setLogTool("generate");
 const repoRoot = dirname(fileURLToPath(import.meta.url));
 /**
  * Cheap/offline first, expensive/network last.
- * @type {readonly {folder: string, cmd: string, args: readonly string[], cwd?: string}[]}
+ * @type {readonly {folder: string, cmd: string, args: readonly string[], cwd?: string, env?: Record<string, string | undefined> | undefined}[]}
  */
 const FOLDERS = [
 	{
 		folder: "estige",
 		cmd: "go",
-		args: ["run", ".", "generate"],
+		// The caps are not per-call tuning — they are lib/go-build.mjs's stated
+		// law for EVERY estige go build on Termux (serialized + GOGC, or a
+		// cold stdlib compile OOMs a 512 MB device). Generation is a go
+		// build like any other, and the documented Termux flow runs
+		// ./generate.sh right after ./build.sh.
+		args: ["run", ...(isTermux() ? ["-p=2"] : []), ".", "generate"],
 		cwd: join(repoRoot, "estige"),
+		env: isTermux() ? { ...process.env, GOGC: "50" } : undefined,
 	},
 	{
 		folder: "llm-local-inference",

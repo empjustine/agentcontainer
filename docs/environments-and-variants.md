@@ -48,7 +48,7 @@ GPU host (local inference only) — two serving processes, one concern each (doc
   llama-swap serves the LOCAL catalog and nothing else — its `peers`/proxy
   config is no longer exercised.
 - `estige/` — the host-allowlist cloud router (root `build.sh` +
-  `generate.sh` + `run.sh`, LAN **8080**, host networking):
+  `generate.sh` + `vpn-exit.sh`, LAN **8080**, host networking):
   `/<upstream-host>/<path>` forwarded byte-for-byte to the allowlisted
   scheme://host root, the client carrying the upstream base path
   (docs/d047) — llama-swap rides the same map as the fact-table row for
@@ -86,7 +86,7 @@ via a **native termux build of estige** (compiled for the device).
 - The root `./build.sh` (`build.mjs`) cross-builds the static binary with
   the android preset from `lib/go-build.mjs` (`CGO_ENABLED=0 GOOS=android
   GOARCH=arm64` — so the Android resolver is used instead of the missing
-  `/etc/resolv.conf`; docs/d041), and `run.sh`'s native branch
+  `/etc/resolv.conf`; docs/d041), and `vpn-exit.sh`'s native branch
   `exec`s it against `estige.json` and `${LISTEN:-:8080}` — no
   podman/docker, no GPU detection, no image pull, no build/generate step.
 - `cd estige && go run . generate` (`generate.go`, the proxy binary's own

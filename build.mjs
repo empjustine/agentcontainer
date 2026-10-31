@@ -56,6 +56,7 @@ import {
 	commonBuildFlags,
 	goToolchainReady,
 	hostBuildEnv,
+	isTermux,
 } from "./lib/go-build.mjs";
 import {
 	CLOUD_PROBE_CANARY,
@@ -70,7 +71,7 @@ import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 setLogTool("build");
 
 const repoRoot = dirname(fileURLToPath(import.meta.url));
-const termux = Boolean(process.env.PREFIX?.includes("com.termux"));
+const termux = isTermux();
 const force = process.env.FORCE === "1";
 
 const containerTool = detectContainerTool();
