@@ -74,7 +74,7 @@ export const HYPER_MODELS = [
 	{
 		"id": "deepseek-v4.1-flash",
 		"name": "DeepSeek V4.1 Flash",
-		"contextWindow": 1000000,
+		"contextWindow": 1048576,
 		"maxTokens": 262144,
 		"reasoning": true,
 		"input": [
