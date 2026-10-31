@@ -58,7 +58,6 @@ export {
 	probeRoutes,
 };
 export const {
-	CLOUD_PROVIDERS,
 	PI_NATIVE_CLOUD_IDS,
 	providerFacts,
 	supportTier,

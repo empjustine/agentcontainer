@@ -76,9 +76,9 @@ import { relative } from "node:path";
 
 import {
 	createMinIntervalGate,
-	deepOptimizeMirror,
 	DEFAULT_MAX_DEPTH,
 	DEFAULT_ROOT,
+	deepOptimizeMirror,
 	filterByGlobs,
 	findBareMirrors,
 	git,

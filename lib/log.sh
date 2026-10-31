@@ -45,9 +45,12 @@ _log_out() {
 
 _log_ts() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
-# _log_json_escape string — escape for a JSON string literal (no surrounding
+# log_json_escape string — escape for a JSON string literal (no surrounding
 # quotes).  awk joins records with a literal \n so multi-line values survive.
-_log_json_escape() {
+# Public because the escaping RULE must have exactly one implementation:
+# git/farm-tool-lib.sh builds machine payloads with this same function
+# (logs and payloads must never disagree about what is valid JSON).
+log_json_escape() {
 	printf '%s' "$1" | awk 'BEGIN { ORS = "" }
 	{
 		gsub(/\\/, "\\\\")
@@ -69,7 +72,7 @@ log_emit() {
 		case "$_l_kv" in *=*) ;; *) continue ;; esac
 		_l_k="${_l_kv%%=*}"
 		_l_v="${_l_kv#*=}"
-		_l_fields="$_l_fields,\"$_l_k\":\"$(_log_json_escape "$_l_v")\""
+		_l_fields="$_l_fields,\"$_l_k\":\"$(log_json_escape "$_l_v")\""
 	done
 
 	case "$LOG_FORMAT" in
@@ -87,7 +90,7 @@ log_emit() {
 			_log_out "ts=$(_log_ts) level=$_l_level tool=$LOG_TOOL msg=\"$_l_msg\"$_l_kvout"
 			;;
 		*)
-			_log_out "{\"ts\":\"$(_log_ts)\",\"level\":\"$_l_level\",\"tool\":\"$LOG_TOOL\",\"msg\":\"$(_log_json_escape "$_l_msg")\"$_l_fields}"
+			_log_out "{\"ts\":\"$(_log_ts)\",\"level\":\"$_l_level\",\"tool\":\"$LOG_TOOL\",\"msg\":\"$(log_json_escape "$_l_msg")\"$_l_fields}"
 			;;
 	esac
 }

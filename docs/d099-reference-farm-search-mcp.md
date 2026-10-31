@@ -1,7 +1,7 @@
 ---
 id: d099
 type: decision
-status: proposed · amended: the strictly-read-only posture narrowed to two serialized maintenance verbs (upsert/compact)
+status: implemented in part (the tool surface landed as the POSIX CLI git/farm-tool.sh — capped reads + the two flocked maintenance verbs; the MCP façade, worker pool and Zoekt-backed wide search still to land) · amended: the strictly-read-only posture narrowed to two serialized maintenance verbs (upsert/compact)
 title: "d099 — reference-farm code search as an MCP server: capped read surface, two serialized maintenance verbs, host-side"
 parent: architecture
 depends-on: [d043, d075]
@@ -11,8 +11,15 @@ tags: ["git", "references", "search", "mcp", "tooling", "safety"]
 
 # d099 — reference-farm code search as an MCP server
 
-**Status: proposed — nothing is built yet.** This record is the plan for the
-agent-facing search surface over the reference farm
+**Status: the tool surface is built** — stage one is the POSIX CLI
+`git/farm-tool.sh` (backed by `git/farm-tool-lib.sh`'s safety posture and
+`git/farm-lock.sh`'s farm-wide mutation lock): positional argv, one JSON
+object per call, every cap and refusal enforced in one place. The planned
+MCP façade wraps that same entry verbatim, so the posture never forks into
+two implementations. Still to land: the MCP server itself
+(`git/search-mcp.mjs` + shim), the worker pool, and Zoekt-backed wide
+search. This record remains the plan for the agent-facing search surface
+over the reference farm
 (`~/Downloads/references`): an MCP server that exposes a **safe, capped**
 API for code search over the bare mirrors plus exactly **two maintenance
 verbs** — `upsert_repo` and `compact_repo`, serialized by one shared mutex

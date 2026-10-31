@@ -32,7 +32,7 @@
 		"git/local-changes.mjs",
 		"git/maintain-mirrors.mjs",
 		"git/migrate-to-bare.mjs",
-		"git/software-forge-mirror.mjs",
+		"git/forge-mirror.mjs",
 		"git/software-forge-remotes.mjs",
 		"git/search-references.mjs",
 		"git/vbs-har.mjs",
@@ -60,6 +60,8 @@
 	// deliberately never a dependency of this repo (tsconfig.json's NOTE).
 	// The Go toolchain is a system dependency of llm-reverse-proxy's build
 	// (lib/go-build.mjs shells out to it) — a binary, not an npm package.
-	"ignoreBinaries": ["go"],
+	// xdg-user-dir derives the mirrors-dir fallback in git/forge-mirror.mjs:
+	// host state, the same fact the git/*.sh shims read from the xdg config.
+	"ignoreBinaries": ["go", "xdg-user-dir"],
 	"ignoreDependencies": ["@earendil-works/pi-coding-agent"]
 }
