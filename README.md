@@ -66,6 +66,7 @@ agentcontainer/
 ├── generate.sh / generate.mjs          # → run EVERY folder's generator in sequence (d041)
 ├── build.sh / build.mjs                # → build everything (or the named targets) for THIS host (images ∥; termux serialized; d083)
 ├── vm-bench.sh                          # → d020 Level-1 VM build bench: provision/drive the libvirt guest that runs nested podman (docs/vm-build-bench.md SOP)
+├── package.json / package-lock.json    # → npm dev-tool pins: biome / knip / typescript (d107)
 ├── tests/                             # standalone checks (node --test for JS, sh for workload helpers)
 │   ├── check-workload.sh              # → workload_ro / workload_ro_if mount-helper tests
 │   ├── check-vpn-relay-chain.sh       # → the relay chain step: reuse, refusal, env sequencing (d095)
@@ -86,6 +87,7 @@ agentcontainer/
 │   ├── workload-runtime.sh             #   → sandbox-backend detection + workload_* API
 │   ├── node-run.sh                     #   → standalone node_run() (pinned node; termux-aware)
 │   ├── node-run.ps1                    #   → PowerShell node_run() for the Windows shims (d062)
+│   ├── npm-tools.sh                    #   → npm dev-tool install path: npm ci from package-lock.json (d107)
 │   ├── go-build.mjs                    #   → go toolchain probe + android/host flag presets (d041)
 │   ├── provision-termux.sh             #   → termux pkg/infisical provisioning (the former root build.sh)
 │   ├── llamacpp-model-data.json        #   → canonical GGUF model definitions + SI-GB footprints (shared; d025/d053)
@@ -330,6 +332,7 @@ Frontmatter `type:` is the machine signal; this index is the human map.
 | [docs/d103-relay-cleartext-http-forwarding.md](docs/d103-relay-cleartext-http-forwarding.md) | accepted (documentation-only; the 405 is still live until the implementing change) — the relay's loopback forward-proxy surface may **parse, rewrite, and forward absolute-form cleartext `http`/`ws`** over the same tunnel path `CONNECT` and SOCKS5 use: the "must be a blind TCP pump" requirement is dropped for that surface and replaced by a **party-visibility invariant** — actual bytes visible only to parties that are VPN or localhost (loopback leg stays loopback-only, the relay↔exit leg rides the tunnel's TLS, `https://`/`wss://` still ride `CONNECT` blind); why — Funnel serves prefix-route HTTPS reverse proxying *or* the WebSocket upgrade, never `CONNECT`, so forward traffic of every shape must ride the tunnel's TLS-protected route, and for cleartext a blind pump bought no visibility property a reader in the same process does not already have; unchanged — VPN-R25 no-TLS-termination, VPN-R19 (scoped to framed/TLS payloads), VPN-R26 tunnel-first fail-closed, d080's no-host-set verdict, d094's blind chain, exit egress policy; rejected — SOCKS-only workaround (Go/Node ignore `ALL_PROXY`), absolute-form *with* the d047 allowlist, minting TLS for these routes |
 | [docs/d104-mutual-hmac-exit-relay-credential.md](docs/d104-mutual-hmac-exit-relay-credential.md) | accepted (decision record only — implementing change pending) — the tunnel's shared bearer becomes **mutual time-windowed HMAC-SHA-256 proofs** (`X-Relay-Proof` / `X-Exit-Proof`, relay-to-exit / exit-to-relay domain labels): full 32-byte tags, single flight each way, no challenge round trip, camouflage-404 failure posture unchanged; the secret never crosses the TLS terminator; PKI/mTLS and RFC 9421 rejected; relay-to-exit-to-relay composes as pairwise hops. |
 | [docs/d105-ssl-vpn-transport-names.md](docs/d105-ssl-vpn-transport-names.md) | accepted — SSL-VPN transports are named by mechanism: **allowlist relay**, **authenticated relay**, **h2-POST tunnel**, **WebSocket tunnel**, **h1.1-POST tunnel**; A–E are historical aliases, not names. "three-mode SSL VPN" becomes "SSL-VPN transport family"; "modes C–E" becomes "tunnel transports". Record IDs, `VPN-R*` IDs, and code constants (`transportOffer = "cde"`) keep their spelling — vocabulary only, no obligation changes. |
+| [docs/d107-npm-dev-toolchain.md](docs/d107-npm-dev-toolchain.md) | implemented — the JS/TS gates are root npm `devDependencies` pinned by `package-lock.json` (`@biomejs/biome` 2.6.3, `knip` 6.43.0, `typescript` 6.0.3, `@types/node` 24.19.2), installed on demand by `lib/npm-tools.sh` with `npm ci --ignore-scripts --include=dev`; Termux gets the same versions through Biome/oxc Android arm64 builds; TypeScript is held at 6.0.3 because 7.x is native and has no Android binary; shellcheck/jq/shfmt stay mise-or-pkg. |
 
 ### Research & archive
 

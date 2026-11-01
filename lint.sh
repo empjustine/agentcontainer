@@ -1,6 +1,8 @@
 #!/bin/sh
-# Lint all shell scripts. Tools are provisioned ad hoc via
-# mise — no pinned dev deps needed.
+# Lint shell and JS/TS. The JS tools are npm devDependencies pinned by
+# package-lock.json (docs/d107); shellcheck/jq/shfmt come from mise on hosts
+# that have it, or the host package manager on Termux/mise-less hosts.
+#
 # Runs shellcheck(1) as the gating linter.
 # shfmt(1) -l is advisory only (exit status tolerated): it lists files whose
 # formatting differs from canonical shfmt style. Adopting that style would
@@ -12,16 +14,43 @@ set -eu
 
 # shellcheck disable=SC1091
 . "$(dirname "$0")/lib/log.sh"
+# shellcheck disable=SC1091
+. "$(dirname "$0")/lib/npm-tools.sh"
 LOG_TOOL='lint'
 export LOG_TOOL
 
-root="${1:-$(CDPATH='' cd "$(dirname "$0")" && pwd)}"
+repo_root=$(CDPATH='' cd "$(dirname "$0")" && pwd)
+root="${1:-$repo_root}"
 cd "$root"
+
+case "${PREFIX:-}" in
+	*/com.termux/*) _termux=1 ;;
+	*) _termux=0 ;;
+esac
+
+# The host package manager is the only option on Termux or a mise-less host;
+# elsewhere mise remains the version source for these non-npm tools. The JS
+# gates below deliberately do NOT use this path — their versions are locked.
+run_mise_or_host() {
+	_tool=$1
+	shift
+	if [ "$_termux" = 1 ] || ! command -v mise >/dev/null 2>&1; then
+		command -v "$_tool" >/dev/null 2>&1 ||
+			log_die 96 "missing $_tool — install it with the host package manager" \
+				tool="$_tool" hint="Termux: pkg install $_tool"
+		"$@"
+	else
+		mise exec "$_tool@latest" -- "$@"
+	fi
+}
 
 log_info "shellcheck"
 # -x: follow `source` directives (the generate.sh shims point at
 # lib/node-run.sh for node_run; run scripts point at lib/workload-runtime.sh).
-mise exec shellcheck@latest -- find . -type f -name '*.sh' -exec shellcheck -x {} +
+# node_modules is pruned: npm's dependency tree may carry vendor *.sh files,
+# and this gate owns only this repo's sources.
+run_mise_or_host shellcheck find . -path ./node_modules -prune -o \
+	-type f -name '*.sh' -exec shellcheck -x {} +
 
 # jq compile gate for the workload description filters (lib/workload-*.jq).
 #
@@ -37,7 +66,7 @@ mise exec shellcheck@latest -- find . -type f -name '*.sh' -exec shellcheck -x {
 # compile error.  Semantic mistakes are check-workload.sh's job, not this gate's.
 log_info "jq compile (gating — lib/workload-*.jq)"
 # shellcheck disable=SC2016  # $f is expanded by the inner sh, not by this one
-mise exec jq@latest -- sh -c '
+run_mise_or_host jq sh -c '
 set -- --argjson doc "{}" \
 	--arg field f --arg mode m --arg host h --arg guest g \
 	--arg tool podman --arg image i --arg name n --arg network net --arg restart r \
@@ -55,7 +84,14 @@ for f in lib/workload-*.jq; do
 done'
 
 log_info "shfmt (advisory)"
-mise exec shfmt@latest -- find . -type f -name '*.sh' -exec shfmt -l {} + || true
+run_mise_or_host shfmt find . -path ./node_modules -prune -o \
+	-type f -name '*.sh' -exec shfmt -l {} + || true
+
+npm_tools_ensure "$repo_root"
+[ -x "$repo_root/node_modules/.bin/biome" ] ||
+	log_die 96 "biome missing from the npm dev toolchain" path="$repo_root/node_modules"
+[ -x "$repo_root/node_modules/.bin/knip" ] ||
+	log_die 96 "knip missing from the npm dev toolchain" path="$repo_root/node_modules"
 
 # biome — the JS/TS lint gate. RULES ONLY on purpose (plain `biome lint`, not
 # `check`): the formatter and the import organizer stay host-side manual
@@ -67,8 +103,8 @@ mise exec shfmt@latest -- find . -type f -name '*.sh' -exec shfmt -l {} + || tru
 # is the explicit list in biome.jsonc — new upstream rules do not
 # auto-arrive. --error-on-warnings keeps soft findings from accumulating
 # back to a baseline nobody reviews.
-log_info "biome lint (gating — rule set in biome.jsonc; pinned 2.6.3)"
-mise exec biome@2.6.3 -- biome lint . --error-on-warnings
+log_info "biome lint (gating — rule set in biome.jsonc; pinned by package-lock.json)"
+"$repo_root/node_modules/.bin/biome" lint . --error-on-warnings
 
 # knip — the dead-code gate (unused files, unused exports). This is the
 # mechanical teeth for the fold discipline (docs/d039/d072): an export no
@@ -79,11 +115,10 @@ mise exec biome@2.6.3 -- biome lint . --error-on-warnings
 # file). The tool is pinned to an AGED release on purpose, not @latest: the
 # pin is the cooldown (a deliberate human decision, matching the toolchain's
 # minimum_release_age posture), and a moving target would change what the
-# gate means between runs. mise's embedded aube installer runs no dependency
-# lifecycle scripts, so the check itself carries no npm-style install-time
-# code execution.
+# gate means between runs. `npm ci --ignore-scripts` runs no package
+# lifecycle code, so the check itself carries no install-time code execution.
 log_info "knip (gating — unused files/exports; entry contract in knip.jsonc)"
-mise exec npm:knip@6.43.0 -- knip
+( cd "$repo_root" && "$repo_root/node_modules/.bin/knip" )
 
 # Capability-bearing URL gate (docs/d086): a funnel mount path in a tracked
 # file is the mode A credential written down — it leaks the only credential

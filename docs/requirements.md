@@ -151,8 +151,9 @@ the allowlist relay by decision
   exist once (in `lib/` or their owning module) and every consumer derives
   from them.
 - **FR-L4** — Shared toolchains are provisioned uniformly: one node runner
-  (`lib/node-run.sh`, repo-pinned node) and one go builder
-  (`lib/go-build.mjs`) serve every module; no module carries its own
+  (`lib/node-run.sh`, repo-pinned node), one go builder (`lib/go-build.mjs`),
+  and one npm dev-tool lock (`package.json` + `package-lock.json`, installed
+  by `lib/npm-tools.sh`) serve every module; no module carries its own
   toolchain probe.
 
 ### Cache tooling — `local-llm/`

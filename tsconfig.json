@@ -4,20 +4,17 @@
 // script to `include` once it carries JSDoc types; scripts without them are
 // left out on purpose so the checker stays a gate instead of a backlog.
 //
-// Run it with ./check-types.sh (typescript + @types/node are provisioned ad
-// hoc — no pinned dev deps, same as lint.sh).
+// Run it with ./check-types.sh (typescript + @types/node are root
+// devDependencies pinned by package-lock.json — docs/d107).
 {
 	"compilerOptions": {
 		"target": "es2023",
 		"lib": ["es2023"],
 		"module": "esnext",
 		"moduleResolution": "bundler",
-		// The root package.json is a MINIMAL, dependency-free manifest (knip's
-		// gate requirement, plus an explicit "type": "module" for the .js
-		// seeds that Node previously handled by syntax detection). It must
-		// stay dependency-free: the repo's tools are provisioned ad hoc
-		// (lint.sh/check-types.sh), never through it. moduleDetection stays
-		// "force" so tsc never leans on manifest discovery for what is ESM.
+		// package.json's devDependencies are the JS gate pins (docs/d107); it
+		// has no runtime dependencies. moduleDetection stays "force" so tsc
+		// never leans on manifest discovery for what is ESM.
 		"moduleDetection": "force",
 		"types": ["node"],
 		"allowJs": true,

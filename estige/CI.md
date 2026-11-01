@@ -133,8 +133,8 @@ both cases, no NDK, no extra toolchain:
   login, push gated to `push` events (fork PRs get read-only tokens);
   consumers then slave `vpn-exit.sh`/`vpn-relay.sh` via their existing `IMAGE_TAG` env.
 - **`./lint.sh` + `./check-types.sh`** as extra jobs — both hermetic
-  (shellcheck via mise; typescript@7.0.2 + @types/node@24.19.2 installed by
-  check-types.sh itself).
+  (shellcheck/jq/shfmt via mise or the host package manager; the JS toolchain
+  is installed from `package-lock.json` by `lib/npm-tools.sh`).
 
 ## Verification limits
 

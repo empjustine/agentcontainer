@@ -1,5 +1,19 @@
 {
 	"name": "agentcontainer",
 	"private": true,
-	"type": "module"
+	"type": "module",
+	"engines": {
+		"node": ">=24"
+	},
+	"scripts": {
+		"lint:js": "biome lint . --error-on-warnings",
+		"knip": "knip",
+		"check-types": "tsc -p tsconfig.json"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.6.3",
+		"@types/node": "24.19.2",
+		"knip": "6.43.0",
+		"typescript": "6.0.3"
+	}
 }

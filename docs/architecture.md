@@ -97,6 +97,10 @@ prohibits (and what was removed):
   interpreter-selection lib for Windows shims (`git/maintain.ps1`). Same pin
   policy, but branches on mise PRESENCE — Windows carries no Termux-style
   profile signal to key on.
+- `npm-tools.sh` — the one install path for the npm-pinned JS gates
+  (docs/d107): `npm ci --ignore-scripts` from `package-lock.json` when the
+  lock changes. The same lock carries the Android Biome/oxc builds, so Termux
+  and the container hosts run identical gate versions.
 - `go-build.mjs` — the go toolchain probe + android/host build-env presets
   (docs/d041): one probe (`go version` must actually EXECUTE — mise shims
   answer PATH lookups even with no version set) so no builder carries its

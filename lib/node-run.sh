@@ -9,9 +9,10 @@
 #   node_run ./script.mjs [args...]
 #
 # System node on Termux (there is no mise there), `mise exec node@24`
-# elsewhere (pinned via mise.toml / the image config).  The profile check is
-# deliberately INSIDE the function: sourcing this file sets no globals, so it
-# cannot collide with a host script's own variables or source order.
+# elsewhere (the pin lives here, not in a root mise.toml — estige/CI.md).
+# The profile check is deliberately INSIDE the function: sourcing this file
+# sets no globals, so it cannot collide with a host script's own variables or
+# source order.
 # Product version floors are not enforced here: the llm-local-inference
 # generators need a global fetch (node >= 18), and pi enforces its own
 # >= 22.19 engines at launch (the Termux pre-stage gate was retired —
