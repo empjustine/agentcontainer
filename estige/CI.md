@@ -34,16 +34,11 @@ for that step, recorded before context is lost.
    the shim, deliberately — a root mise.toml would re-pin bare `node`
    for anyone cd-ing into the repo). CI must use `jdx/mise-action` +
    `mise install node@24`, not rely on a checked-in config.
-4. Generator drift gate (cheap, hermetic, go-only):
-   `cd estige && go run . generate` then
-   `git diff --exit-code estige/` — generate.go is fully
-   offline (no fetch; static passthroughs of models.dev/catwalk data,
-   the vendored pi-ai table in generate.go, and
-   `lib/cloud-providers.json` via the folder-relative `LIB_DIR`
-   default).
-5. `./lib/node-run.sh tests/canonical-json.test.mjs` — the check d082
-   §4.3 names.
-6. `./estige/build.sh estige-image` — **the
+4. `./lib/node-run.sh tests/canonical-json.test.mjs` — the check d082
+   §4.3 names. (The generator drift gate — `go run . generate` +
+   `git diff --exit-code` — is gone with `generate.go` itself, docs/d108:
+   the allowlist it emitted no longer exists, so there is nothing to regen.)
+5. `./estige/build.sh estige-image` — **the
    shim, never an inline `podman build -f`** (d041/d083/d087 law: one
    build implementation; inlining `imageBuildArgs`/`--pull`/tag
    logic into the workflow would create a second one to drift).

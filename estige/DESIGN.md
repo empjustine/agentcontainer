@@ -52,8 +52,10 @@ generated table; `providerRouteUrl` composes llama-swap's route from the
 fact table exactly like every other provider (docs/d070).
 
 There is no other mode: the v1 provider-slug table (`providers`,
-`/<providerId>` addressing) is retired — main.go only reads `allowHosts`,
-and the generator only emits it (docs/d047).
+`/<providerId>` addressing) is retired — main.go only reads `allowHosts`
+(docs/d047). The generator that emitted that table is deleted (docs/d108):
+the last `estige.json` is history, and a hand-written file is the only way
+this mode can still be served.
 
 ## The 404 policy: nothing distinctive at the funnel edge
 

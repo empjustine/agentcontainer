@@ -59,69 +59,40 @@ on some hosts; it is an optimization, not the reference.
 
 ## Usage
 
-```console
-$ cp estige.example.json estige.json   # edit providers
-$ ./estige -config estige.json
-[estige] listening on 0.0.0.0:8080; 36 allowlisted host(s):
-[estige]   /ai-gateway.vercel.sh/ → https://ai-gateway.vercel.sh
-...
-```
-
-### Config generation (`estige generate` — generate.go)
-
-Since docs/d102 the whole generator is the proxy binary's own `generate`
-subcommand, written in Go like the rest of this folder — no node, no shim,
-no `LIB_DIR` node runner (the fact table is JSON, so the all-Go generator
-and every node generator in the parent repo read the SAME bytes):
-
+The export face is the tunnel (docs/d073/d104): arm it with the operator
+credential from the env chain and run the exit-node entry point.
 
 ```console
-$ go run . generate                       # → estige.json (atomically
-                                          #    REPLACED on success — the change
-                                          #    is reviewed with git diff)
-$ ./estige generate                       # same, from a built binary
+$ ./lib/environment.sh ./vpn-exit.sh     # exit node; VPN_OPERATOR_KEYS arms the tunnel
+[estige] listening on :8080; 0 legacy allowlisted host(s)
 ```
 
-The generated table is the owner set — nothing else is routable
-(deny-by-absence, docs/d047): pi-ai's built-in registry (the
-`piAiProviders` table in generate.go, extracted from the installed pi —
-docs/d039 had folded it in) ∪ the `lib/cloud-providers.json` fact table
-(docs/d024 — the hand-added rows, the pi-native set, and the local
-llama-swap farm keyed by its tsnet serve hostname) ∪ two static metadata
-passthroughs (models.dev, catwalk). Each row contributes ONE allowlist
-entry per DISTINCT upstream host, key `host[:port]`, value `scheme://host`
-— the host root; base paths belong to the client, which is what lets
-multi-base hosts (opencode vs opencode-go) share a row. pi-ai rows with no
-single fixed upstream (per-region bedrock, per-project vertex, OAuth
-backends) are reported as skips with their reason. A representative
-excerpt:
+The funnel points at that port. The relay node (`./vpn-relay.sh`) dials in
+over the tunnel and serves the loopback CONNECT/SOCKS5 proxies its clients
+use. A node with neither a credential nor an allowlist config refuses to start
+rather than accepting connections and answering 404 to everything.
 
-```json
-{ "listen": "0.0.0.0:8080",
-  "allowHosts": {
-    "api.anthropic.com": "https://api.anthropic.com",
-    "api.deepseek.com": "https://api.deepseek.com",
-    "api.openai.com": "https://api.openai.com",
-    "api.cline.bot": "https://api.cline.bot",
-    "api.mistral.ai": "https://api.mistral.ai",
-    "bazzite.coelacanth-barb.ts.net": "https://bazzite.coelacanth-barb.ts.net",
-    "generativelanguage.googleapis.com": "https://generativelanguage.googleapis.com",
-    "hyper.charm.land": "https://hyper.charm.land",
-    "model.inferx.net": "https://model.inferx.net",
-    "opencode.ai": "https://opencode.ai",
-    "openrouter.ai": "https://openrouter.ai",
-    "token-plan.ap-southeast-1.maas.aliyuncs.com": "https://token-plan.ap-southeast-1.maas.aliyuncs.com",
-    "models.dev": "https://models.dev",
-    "catwalk.charm.land": "https://catwalk.charm.land"
-  } }
-```
+### Configuration: none (docs/d108)
 
-The routing convention it locks in — full real base URLs, the 404
-anti-oracle answer, the RFC 9457 error design, and the known deviations
-from "as-is" — is design rationale, kept in [DESIGN.md](DESIGN.md).
-A fact-table provider whose host is missing from the deployed config is
-reported as a dead host route (its clients simply keep direct/built-in
-routing); a deployed host no owner source claims is reported as drift.
+There is no generated config any more. `estige generate` — the subcommand that
+emitted `estige.json`'s `allowHosts` table from the pi-ai registry and
+`lib/cloud-providers.json` — is deleted with the artifact it wrote: the
+allowlist reverse proxy (legacy "mode A") is deprecated as insecure, because a
+TLS-terminating proxy at the edge sees the client's provider keys and no
+credential scheme fixes that (d073's trust table). Its serving code follows in
+the removal diff; the routing semantics it documented stay in
+[DESIGN.md](DESIGN.md) as the rationale of a mode being retired.
+
+What an operator still supplies:
+
+- **the tunnel credential** — `VPN_OPERATOR_KEYS` (exit node) /
+  `VPN_OPERATOR_TOKEN` (relay node), through the env chain, never through the
+  file (docs/d078/d084/d085/d090);
+- **egress policy** — `tunnel.egress` in a config file, when the default
+  `deny` is not what the deployment wants (docs/d084);
+- **nothing else.** `-config` still accepts a hand-written allowlist file so a
+  not-yet-migrated host keeps serving; absent, the node serves the tunnel
+  alone, which is the supported shape.
 
 ## Repository boundary (docs/d082)
 
@@ -168,14 +139,12 @@ restricted-internet environment, without direct tsnet to the endpoints.
 The code speaks the same names (d088 phase 2 landed). HOST:
 the container branch runs in HOST NETWORK mode; the native branch execs
 the binary directly. Exit node: listening on `${HOST_PORT:-8080}` (the
-funnel front) with `./estige.json` mounted read-only
-(in-container `-listen 0.0.0.0:$HOST_PORT` overrides the config, like
-llama-swap's port model) — host networking is what makes the loopback
-`llama-swap` upstream reachable from the container; native uses
-`${LISTEN:-:8080}`. The config path differs by branch: native reads
-`./estige.json`, the container mounts it at
-`/etc/estige/estige.json` (both overridable with
-`CONFIG`). Relay node: NO config file — `VPN_TUNNEL_URL` (http(s):// or
+funnel front, `-listen 0.0.0.0:$HOST_PORT` for the container, `${LISTEN:-:8080}`
+for native) — host networking is what makes a loopback upstream reachable from
+the container. No config is mounted by default; a file is mounted at
+`/etc/estige/estige.json` (native: the same path, both overridable with
+`CONFIG`) only when one exists on disk, which now means a leftover allowlist
+deployment (docs/d108). Relay node: NO config file — `VPN_TUNNEL_URL` (http(s):// or
 ws(s):// — the URL's honest wire form, normalized to wss internally,
 docs/d090; the path is the Funnel mount plus the fixed `/vpn` —
 docs/d085) and `VPN_OPERATOR_TOKEN` are its core surface, with

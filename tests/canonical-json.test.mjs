@@ -79,19 +79,6 @@ test("opencode shape: provider map and its id-keyed models record both sort", ()
 	]);
 });
 
-test("allowHosts sorts; listen and other scalar maps stay put", () => {
-	const doc = {
-		listen: "0.0.0.0:8080",
-		allowHosts: { "zeta.example": "u", "alpha.example": "u" },
-	};
-	const out = /** @type {any} */ (canonicalizeManifest(doc));
-	assert.deepEqual(Object.keys(out.allowHosts), [
-		"alpha.example",
-		"zeta.example",
-	]);
-	assert.equal(out.listen, "0.0.0.0:8080");
-});
-
 test("non-manifest values pass through unchanged", () => {
 	assert.equal(canonicalizeManifest(null), null);
 	assert.deepEqual(canonicalizeManifest([2, 1]), [2, 1]);
@@ -122,7 +109,6 @@ const COMMITTED_MANIFESTS = [
 	"coding-agent/model-018-cloud-verboo.json",
 	"coding-agent/models.json",
 	"coding-agent/opencode.jsonc",
-	"estige/estige.json",
 ];
 
 for (const rel of COMMITTED_MANIFESTS) {

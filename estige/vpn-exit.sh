@@ -20,8 +20,7 @@
 #
 # Secrets live ONLY in the environment chain (VPN-R32/d078): lib/environment.sh
 # owns the vault round-trip onto the host env — this script never loads secrets
-# itself. Mode A serving holds none (requests must already carry valid provider
-# keys); an armed exit node (docs/d084/d085) carries VPN_OPERATOR_KEYS.
+# itself. An armed exit node (docs/d084/d085) carries VPN_OPERATOR_KEYS.
 # VPN_OPERATOR_TOKEN is deliberately absent: it is the relay node's credential
 # and the exit node stopped reading it (docs/d090).
 #
@@ -42,9 +41,15 @@ export LOG_TOOL
 # shellcheck disable=SC2153
 script_dir="$SCRIPT_DIR"
 
+# No config is the SUPPORTED shape (docs/d108): the export face is the tunnel,
+# armed by the env chain, and the host-allowlist file estige used to require is
+# the deprecated reverse-proxy mode. CONFIG still names one explicitly — a
+# leftover deployment keeps serving its routes until the removal diff.
 config="${CONFIG:-$script_dir/estige.json}"
-[ -f "$config" ] ||
-	log_die 94 "config not found — generate it first with estige generate (or copy estige.example.json for a hand-written deployment)" path="$config"
+if [ ! -f "$config" ]; then
+	log_info "no allowlist config — serving tunnel-only (docs/d108)" path="$config"
+	config=''
+fi
 
 # shellcheck disable=SC2154  # _workload/_workload_tool from the sourced lib
 if [ "$_workload" = 'workload' ]; then
@@ -71,8 +76,12 @@ if [ "$_workload" = 'workload' ]; then
 	# a containerized exit node can carry the tunnel family. VPN_OPERATOR_TOKEN
 	# is deliberately absent (docs/d090).
 	workload_env_allowlist VPN_OPERATOR_KEYS
-	workload_ro       "$config" /etc/estige/estige.json
-	workload_cmd      -config /etc/estige/estige.json -listen "0.0.0.0:$HOST_PORT"
+	if [ -n "$config" ]; then
+		workload_ro   "$config" /etc/estige/estige.json
+		workload_cmd  -config /etc/estige/estige.json -listen "0.0.0.0:$HOST_PORT"
+	else
+		workload_cmd  -listen "0.0.0.0:$HOST_PORT"
+	fi
 	workload_run
 
 	sleep 2
@@ -93,4 +102,7 @@ fi
 	log_die 95 "no proxy binary — run ./build.sh first (on Termux it builds estige-android)" bin="${bin:-unset}"
 
 log_info "serving (native, exit node)" bin="$bin" config="$config" listen="${LISTEN:-:8080}"
-exec "$bin" -config "$config" -listen "${LISTEN:-:8080}"
+if [ -n "$config" ]; then
+	exec "$bin" -config "$config" -listen "${LISTEN:-:8080}"
+fi
+exec "$bin" -listen "${LISTEN:-:8080}"

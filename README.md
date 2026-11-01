@@ -122,9 +122,7 @@ agentcontainer/
 │   ├── main.go                          #   → http host:port/<host>/<path> → scheme://host/<path>, streaming as-is
 │   ├── vpn-exit.sh                      #   → the exit node deployment (funnel front + tunnel server; docs/d095)
 │   ├── vpn-relay.sh                     #   → the relay node: serve it, or the chain step that points a child at it (docs/d095)
-│   ├── estige.example.json              #   → v2 edge config (allowHosts = mode A's host table) — deprecated with mode A; removed via tree-shake — `egress` folds into the role store, the bind dies into env `PORT` (d108, d104, d110)
-│   ├── generate.go                      #   → estige generate: host allowlist from lib/cloud-providers.json (d038 catalog, d102)
-│   ├── smoke-test.go                    #   → estige smoke-test: 34 behavioural checks (no curl/node/python needed)
+│   ├── smoke-test.go                    #   → estige smoke-test: 34 checks for the deprecated allowlist mode (no curl/node/python needed) — deleted with it (d108)
 │   ├── README.md                        #   → operations: routing table, usage, build, port model
 │   └── DESIGN.md                        #   → routing-convention rationale, 404 anti-oracle, RFC 9457 error taxonomy
 │

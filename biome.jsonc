@@ -45,7 +45,6 @@
 			// verboo-facts.json is the same class of generated facts cache (d057) —
 			// it was missing from this list while hyper-facts.json had it.
 			"!coding-agent/verboo-facts.json",
-			"!estige/estige.json",
 			// same reasoning, .jsonc extension: written by
 			// generate-opencode.mjs
 			"!coding-agent/opencode.jsonc"

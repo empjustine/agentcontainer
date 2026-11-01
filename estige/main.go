@@ -497,23 +497,22 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // ---------------------------------------------------------------------------
 
 func main() {
-	// Subcommands (docs/d102): every generator/launcher verb runs before
-	// flag parsing — the proxy's own flags all start with '-', so any bare
-	// first arg is a subcommand by construction. `generate` builds the
-	// allowlist (generate.go); `smoke-test` runs the behavioural suite
-	// (smoke-test.go).
+	// Subcommands (docs/d102): every launcher verb runs before flag parsing —
+	// the proxy's own flags all start with '-', so any bare first arg is a
+	// subcommand by construction. `smoke-test` runs the behavioural suite
+	// (smoke-test.go). `generate` is GONE (docs/d108): the allowlist it
+	// emitted belongs to the deprecated reverse-proxy mode, and a host table
+	// with no generator is a table nobody reviews.
 	if len(os.Args) > 1 && !strings.HasPrefix(os.Args[1], "-") {
 		switch os.Args[1] {
-		case "generate":
-			os.Exit(runGenerate(os.Args[2:]))
 		case "smoke-test":
 			os.Exit(runSmokeTest(os.Args[2:]))
 		default:
-			log.Fatalf("[estige] unknown subcommand %q (want generate, smoke-test)", os.Args[1])
+			log.Fatalf("[estige] unknown subcommand %q (want smoke-test)", os.Args[1])
 		}
 	}
 
-	configPath := flag.String("config", "estige.json", "path to JSON config")
+	configPath := flag.String("config", "estige.json", "path to the LEGACY allowlist config (deprecated, docs/d108; absent = tunnel-only, the supported shape)")
 	listen := flag.String("listen", "", "override listen address (e.g. :8080)")
 	// Role values are the node names, not protocol roles (docs/d088): the
 	// process is always a mix of client, server, and both proxy shapes, so
@@ -556,9 +555,14 @@ func main() {
 		if !os.IsNotExist(err) {
 			log.Fatalf("[estige] %v", err)
 		}
-		// No config file: allow pure-flag usage (-listen + provider URLs on
-		// the command line is not supported; require the file).
-		log.Fatalf("[estige] config %s not found; create it, e.g. {\"listen\":\":8080\",\"allowHosts\":{\"openrouter.ai\":\"https://openrouter.ai\"}}", *configPath)
+		// A MISSING config is the supported shape now (docs/d108): the export
+		// face is the tunnel, armed by the env chain, and the host allowlist
+		// this file used to describe is deprecated as insecure. A file is still
+		// read when an operator points at one — a leftover deployment, or
+		// smoke-test's fixture that exercises the route semantics — so the mode
+		// keeps working until the removal diff deletes it.
+		log.Printf("[estige] no config at %s — serving tunnel-only (docs/d108)", *configPath)
+		cfg = &config{}
 	}
 	if *listen != "" {
 		cfg.Listen = *listen
@@ -576,10 +580,11 @@ func main() {
 		s.providers[name] = p
 	}
 	if len(s.providers) == 0 {
-		log.Fatalf("[estige] no allowHosts entries configured in %s", *configPath)
+		log.Printf("[estige] no allowHosts entries — the deprecated host-allowlist route is off (docs/d108)")
 	}
 
-	if shouldArmTunnel(cfg.Tunnel, operatorCredentialInEnv()) {
+	armed := shouldArmTunnel(cfg.Tunnel, operatorCredentialInEnv())
+	if armed {
 		tn := cfg.Tunnel
 		if tn == nil {
 			tn = &tunnelConfig{}
@@ -587,6 +592,13 @@ func main() {
 		if err := s.enableTunnel(tn); err != nil {
 			log.Fatalf("[estige] tunnel: %v", err)
 		}
+	}
+	// An exit node with neither face configured would accept connections and
+	// answer 404 to everything — indistinguishable from a healthy deployment
+	// behind a broken front. Fail loudly instead (docs/d084's kill-switch law,
+	// kept after the allowlist lost its default table, docs/d108).
+	if !armed && len(s.providers) == 0 {
+		log.Fatalf("[estige] nothing to serve: no operator credential in the env (docs/d084) and no allowlist config (deprecated, docs/d108)")
 	}
 
 	srv := &http.Server{
@@ -597,7 +609,7 @@ func main() {
 		Handler:           s,
 	}
 
-	log.Printf("[estige] listening on %s; %d allowlisted host(s):", cfg.Listen, len(s.providers))
+	log.Printf("[estige] listening on %s; %d legacy allowlisted host(s)", cfg.Listen, len(s.providers))
 	for _, name := range s.providers {
 		log.Printf("[estige]   /%s/ → %s", name.name, name.target)
 	}

@@ -448,7 +448,13 @@ func smokeUpstreamHandler() http.Handler {
 // loopback upstream keys on host:port, dead hosts carry the transport/DNS
 // 502 classes, and the badssl hosts key on their DNS names.
 func writeSmokeConfig(path string) error {
-	doc := generatedConfig{
+	// Anonymous on purpose: the fixture is the only writer of this shape since
+	// the generator that owned it was deleted (docs/d108), and field order is
+	// the contract json.MarshalIndent emits.
+	doc := struct {
+		Listen     string            `json:"listen"`
+		AllowHosts map[string]string `json:"allowHosts"`
+	}{
 		Listen: smokeProxyAddr,
 		AllowHosts: map[string]string{
 			smokeUpstreamAddr:                       smokeUpstreamBase,
