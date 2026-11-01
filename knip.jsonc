@@ -1,5 +1,5 @@
 {
-	"$schema": "https://unpkg.com/knip@6.41.0/schema.json",
+	"$schema": "https://unpkg.com/knip@6.43.0/schema.json",
 	// WHY a hand-maintained entry list: this repo has no bundler and no
 	// bin/main field — the "entry points" are whatever the *.sh shims and
 	// the pi host actually execute, and only the operator knows that list.

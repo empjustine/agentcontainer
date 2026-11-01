@@ -68,7 +68,7 @@
 	//
 	// The enablement floor is the 2.4.4/2.6.3 intersection so the config parses
 	// across the version range this tree has been verified against; the gate
-	// pins biome@2.5.3 in lint.sh (an AGED release — 2.6.x is days old).
+	// pins biome@2.6.3 in lint.sh (the AGED release, not @latest).
 	//
 	// REJECTED rules (surveyed, fired, deliberately NOT enabled — reasons are
 	// decisions, not TODOs; re-litigate only with a record):

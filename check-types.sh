@@ -4,9 +4,9 @@
 # the strictness) — this script only provisions the checker and runs it.
 #
 # Tools are provisioned ad hoc: typescript + @types/node are npm-installed once
-# into a scratch dir outside the repo (the repo has no node_modules and is not
-# gitignoring one, so installing in-tree would dirty every `git status`).
-# Same approach as lint.sh: no pinned dev deps.
+# per pinned set into a scratch dir outside the repo (the repo has no
+# node_modules and is not gitignoring one, so installing in-tree would dirty
+# every `git status`). Same approach as lint.sh: no pinned dev deps.
 #
 # Usage: ./check-types.sh [path]   (default: repo root)
 
@@ -20,12 +20,18 @@ export LOG_TOOL
 root="${1:-$(CDPATH='' cd "$(dirname "$0")" && pwd)}"
 cd "$root"
 
+ts_pin='typescript@7.0.2'
+node_types_pin='@types/node@24.19.2'
 tsdir="${XDG_STATE_HOME:-$HOME/.local/state}/agentcontainer/check-types"
+stamp="$tsdir/pins"
 
-if [ ! -x "$tsdir/node_modules/.bin/tsc" ]; then
-	log_info "installing typescript + @types/node (once)" path="$tsdir"
+# The existence-only check used to keep a bumped pin from ever landing when the
+# scratch dir already had a tsc; the stamp makes the installed set explicit.
+if [ ! -x "$tsdir/node_modules/.bin/tsc" ] || [ "$(cat "$stamp" 2>/dev/null || :)" != "$ts_pin $node_types_pin" ]; then
+	log_info "installing $ts_pin + $node_types_pin" path="$tsdir"
 	mkdir -p "$tsdir"
-	npm i --no-save --no-audit --no-fund --prefix "$tsdir" typescript@5.9.3 @types/node@22
+	npm i --no-save --no-audit --no-fund --prefix "$tsdir" "$ts_pin" "$node_types_pin"
+	printf '%s\n' "$ts_pin $node_types_pin" > "$stamp"
 fi
 
 log_info "tsc (checkJs, strict, incl. noUncheckedIndexedAccess)"

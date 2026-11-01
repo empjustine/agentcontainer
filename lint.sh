@@ -59,16 +59,16 @@ mise exec shfmt@latest -- find . -type f -name '*.sh' -exec shfmt -l {} + || tru
 
 # biome — the JS/TS lint gate. RULES ONLY on purpose (plain `biome lint`, not
 # `check`): the formatter and the import organizer stay host-side manual
-# until the markdown-formatting policy is decided (biome 2.6+ formats
-# markdown, this tree never has), so this stage never fights that open
-# decision. The pin is AGED, not @latest, matching every other gate pin:
-# 2.5.3 is months old where 2.6.x is days old, and a lint pin that moves
-# between runs is a gate whose meaning moves with it. The rule set itself
+# until the markdown-formatting policy is decided (the pinned 2.6.3 can
+# format markdown; this tree never has), so this stage never fights that
+# open decision. The pin is AGED, not @latest, matching every other gate
+# pin: a deliberate cooldown, because a lint pin that moves between runs
+# is a gate whose meaning moves with it. The rule set itself
 # is the explicit list in biome.jsonc — new upstream rules do not
 # auto-arrive. --error-on-warnings keeps soft findings from accumulating
 # back to a baseline nobody reviews.
-log_info "biome lint (gating — rule set in biome.jsonc; pinned 2.5.3)"
-mise exec biome@2.5.3 -- biome lint . --error-on-warnings
+log_info "biome lint (gating — rule set in biome.jsonc; pinned 2.6.3)"
+mise exec biome@2.6.3 -- biome lint . --error-on-warnings
 
 # knip — the dead-code gate (unused files, unused exports). This is the
 # mechanical teeth for the fold discipline (docs/d039/d072): an export no
@@ -83,7 +83,7 @@ mise exec biome@2.5.3 -- biome lint . --error-on-warnings
 # lifecycle scripts, so the check itself carries no npm-style install-time
 # code execution.
 log_info "knip (gating — unused files/exports; entry contract in knip.jsonc)"
-mise exec npm:knip@6.41.0 -- knip
+mise exec npm:knip@6.43.0 -- knip
 
 # Capability-bearing URL gate (docs/d086): a funnel mount path in a tracked
 # file is the mode A credential written down — it leaks the only credential
