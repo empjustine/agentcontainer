@@ -1,0 +1,5 @@
+# Build outputs of the estige unit — the launchers resolve these from
+# the folder (estige-android preferred on Termux), never from git.
+estige/estige
+estige/estige-android
+
