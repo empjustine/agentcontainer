@@ -3,8 +3,8 @@ id: d073
 type: architecture-design
 status: adopted-in-part (v2 = allowlist relay + WebSocket tunnel delivered; the h2-POST tunnel built default-on since d084; the h1.1-POST tunnel built — d081's L4 amendment; the authenticated relay deferred to v3; VPN-R44's `${prefix}` clause reversed by d085; the tunnel namespace's shared-bearer credential superseded by d104 — mutual Ed25519 exit↔relay proofs; the allowlist relay is deprecated as insecure by d108 (legacy "mode A" — estige stops exposing it, the generators stop depending on it, and VPN-R1's allowlist-as-default is superseded))
 title: "d073 — llm-reverse-proxy → SSL-VPN transport family: requirements and feasibility"
-parent: llm-reverse-proxy
-depends-on: [llm-reverse-proxy, d027, d047, d070, d071]
+parent: estige
+depends-on: [estige, d027, d047, d070, d071]
 references: [d031, d038, d063, d064, d072, d077, d081, d084, d085, d104, d105]
 tags: ["serving", "proxy", "vpn", "ssl-vpn", "websocket", "tailscale", "requirements"]
 ---

@@ -1,3 +1,10 @@
+---
+id: d014
+type: module-design
+title: 'd014 — drop paid-only "freeish" providers'
+parent: coding-agent
+---
+
 # d014: drop paid-only "freeish" providers
 
 ## Context

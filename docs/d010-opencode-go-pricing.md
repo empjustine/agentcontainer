@@ -1,3 +1,10 @@
+---
+id: d010
+type: module-design
+title: "d010 — OpenCode Go documented cost overrides"
+parent: coding-agent
+---
+
 # d010: OpenCode Go documented cost overrides
 
 ## Context

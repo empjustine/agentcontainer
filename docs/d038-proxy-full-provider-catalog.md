@@ -8,9 +8,9 @@ references:
   - d027
   - d024
   - d033
-  - d028-provider-extensions-vs-generated-config
+  - d028
 depends-on:
-  - llm-reverse-proxy
+  - estige
 ---
 
 # d038 — llm-reverse-proxy routes the full three-source provider catalog

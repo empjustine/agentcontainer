@@ -1,4 +1,11 @@
-# d020 — qemu/libvirt VM workloades (requirements assessment)
+---
+id: d020
+type: architecture-design
+title: "d020 — qemu/libvirt VM workloads (requirements assessment)"
+parent: architecture
+---
+
+# d020 — qemu/libvirt VM workloads (requirements assessment)
 
 **Status: verified requirements only — nothing implemented.** This note
 establishes what it would take to support qemu/libvirt VMs as workload runtimes

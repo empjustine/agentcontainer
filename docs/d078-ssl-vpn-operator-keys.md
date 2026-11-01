@@ -3,7 +3,7 @@ id: d078
 type: architecture-design
 status: implemented
 title: "d078 — SSL-VPN operator keys: a bounded static principal set carried in one JSON env value"
-parent: llm-reverse-proxy
+parent: estige
 depends-on: [d073, d077]
 references: [d046, d031, d052]
 tags: ["serving", "proxy", "vpn", "ssl-vpn", "auth", "secrets", "json", "proposed"]

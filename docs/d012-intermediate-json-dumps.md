@@ -1,3 +1,10 @@
+---
+id: d012
+type: architecture-design
+title: "d012 — intermediate JSON dumps to ./cloud-llm/"
+parent: architecture
+---
+
 # d012: intermediate JSON dumps to `./cloud-llm/`
 
 ## Context

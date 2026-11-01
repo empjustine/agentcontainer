@@ -5,7 +5,7 @@ status: implemented · generator/verifier paths superseded by d037/d041/d071/d07
 title: "Adding a cloud provider — the flow and its surprises (worked example: inferx)"
 parent: architecture
 depends-on: [d024, d027]
-references: [d022, environments, d028-provider-extensions-vs-generated-config]
+references: [d022, environments, d028]
 tags: [coding-agent, llm-reverse-proxy, generators, models-dev]
 ---
 

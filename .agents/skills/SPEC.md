@@ -3,8 +3,10 @@ id: submodule-workflow-skills
 type: submodule-design
 status: active
 title: skills/ — the workflow family and its meta-layer
-parent: module-thinkrail-workflow
-references: [module-spec-graph]
+# No `parent`/`references` edges: the package-level nodes this file belongs to
+# (`module-thinkrail-workflow`, `module-spec-graph`) ship with the
+# pi-thinkrail-workflow package, not this workspace, so an id link here would
+# dangle. They are cited by name in the prose below instead.
 tags: [workflow-system, skill, brainstorming, setting-up-a-project]
 ---
 

@@ -3,7 +3,7 @@ id: d077
 type: architecture-design
 status: adopted-in-part (WebSocket tunnel deployed; h2-POST tunnel default-on since d084 — L3 default-flip gate superseded; h1.1-POST tunnel built — d081's amendment removed the L4 build gate, L4/L1 demoted to characterization)
 title: "d077 — tunnel transports (h2 POST → wss → h1.1 POST) trusting external TLS, with SSE-carrier and inner-TLS studies"
-parent: llm-reverse-proxy
+parent: estige
 depends-on: [d073, d031]
 references: [d027, d047, d070, d071, d072, d081, d084, d093, d105]
 tags: ["serving", "proxy", "vpn", "ssl-vpn", "http2", "websocket", "sse", "tailscale", "middlebox"]

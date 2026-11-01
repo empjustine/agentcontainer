@@ -3,7 +3,7 @@ id: d084
 type: decision
 status: implemented (superseded in part by d085 — the arm env is the operator keyset, not VPN_TUNNEL_PREFIX; superseded in part by d081's mode-E amendment — the default offer cd → cde, same arm-by-default law, decision 1 as amended)
 title: "d084 — the new modes arm by default: -modes starts at cd, and the capability env arms the tunnel family"
-parent: llm-reverse-proxy
+parent: estige
 depends-on: [d073, d077, d081]
 references: [d078, d080]
 ---

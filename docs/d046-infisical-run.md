@@ -1,3 +1,11 @@
+---
+id: d046
+type: module-design
+status: active
+title: "d046 — infisical run replaces the hand-rolled vault loader"
+parent: lib
+---
+
 # d046 — `infisical run` replaces the hand-rolled vault loader
 
 **Date:** 2026-09-18

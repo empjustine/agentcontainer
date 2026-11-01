@@ -3,8 +3,8 @@ id: d094
 type: decision
 status: implemented (all three phases landed: record + index, relaychain.go code, relaychain_test.go suite)
 title: "d094 — the relay node's tunnel leg chains through the conventional proxy environment variables"
-parent: llm-reverse-proxy
-depends-on: [d073, d088, d090, d093]
+parent: estige
+depends-on: [d073, d088, d090b, d093]
 references: [d046, d079]
 ---
 

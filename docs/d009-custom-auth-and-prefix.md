@@ -1,3 +1,10 @@
+---
+id: d009
+type: module-design
+title: "d009 — custom auth schemes & model ID prefix stripping"
+parent: coding-agent
+---
+
 # d009: custom auth schemes & model ID prefix stripping
 
 ## Context

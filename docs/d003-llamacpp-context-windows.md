@@ -1,3 +1,10 @@
+---
+id: d003
+type: module-design
+title: "d003 — llama.cpp context window resolution"
+parent: llm-local-inference
+---
+
 # d003: llama.cpp context window resolution
 
 ## Context

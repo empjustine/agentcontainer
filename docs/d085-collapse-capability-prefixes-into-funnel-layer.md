@@ -3,7 +3,7 @@ id: d085
 type: decision
 status: accepted
 title: "d085 — collapsing the capability prefixes into the Tailscale Funnel layer"
-parent: llm-reverse-proxy
+parent: estige
 depends-on: [d073, d077, d084]
 references: [d078, d082]
 ---

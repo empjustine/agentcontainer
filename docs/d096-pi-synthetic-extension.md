@@ -5,7 +5,7 @@ status: implemented
 title: "d096 — the pi-synthetic extension: catalog-derived provider config that does not need the fleet's agent dir"
 parent: coding-agent
 depends-on: [d024, d050, d057, d070, d092]
-references: [d028-superseded, d032, d039, d063, d071]
+references: [d028, d032, d039, d063, d071]
 tags: ["providers", "pi", "extensions", "coding-agent", "synthetic", "generators"]
 ---
 

@@ -1,3 +1,10 @@
+---
+id: d001
+type: architecture-design
+title: "d001 — proxy env & baseUrl policy"
+parent: architecture
+---
+
 # d001: proxy env & baseUrl policy
 
 ## Context

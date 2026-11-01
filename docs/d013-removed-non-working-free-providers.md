@@ -1,3 +1,10 @@
+---
+id: d013
+type: module-design
+title: 'd013 — removed non-working "free" providers'
+parent: coding-agent
+---
+
 # d013: removed non-working "free" providers
 
 ## Context

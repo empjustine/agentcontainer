@@ -1,5 +1,5 @@
 ---
-id: d026-data-diode
+id: d026
 type: architecture-design
 status: draft
 parent: lib

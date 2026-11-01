@@ -3,7 +3,7 @@ id: d081
 type: architecture-design
 status: accepted · the -modes default-flip gate (L3) superseded by d084 (operator decision: deploy first, measure in production); the mode-E build gate (L4) superseded by this record's amendment (mode E built without measurements — mechanics settled by the hostile-link model, parameters provisional, L4 demoted to production characterization)
 title: "d081 — completing the tunnel family: Mode C adoption is a spike gate, Mode E builds to spike numbers"
-parent: llm-reverse-proxy
+parent: estige
 depends-on: [d073, d077]
 references: [d047, d070, d080]
 ---

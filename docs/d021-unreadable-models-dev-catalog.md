@@ -1,3 +1,11 @@
+---
+id: d021
+type: module-design
+status: draft
+title: "d021 — an unreadable models.dev catalog must skip providers, not abort the layer"
+parent: coding-agent
+---
+
 # d021: an unreadable models.dev catalog must skip providers, not abort the layer
 
 ## Context

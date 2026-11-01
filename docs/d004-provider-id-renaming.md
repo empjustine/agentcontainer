@@ -1,3 +1,10 @@
+---
+id: d004
+type: module-design
+title: "d004 — provider ID renaming & metadata mapping"
+parent: coding-agent
+---
+
 # d004: provider ID renaming & metadata mapping
 
 ## Context

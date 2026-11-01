@@ -1,3 +1,10 @@
+---
+id: d005
+type: module-design
+title: "d005 — Google model discovery approach"
+parent: coding-agent
+---
+
 # d005: Google model discovery approach
 
 ## Context

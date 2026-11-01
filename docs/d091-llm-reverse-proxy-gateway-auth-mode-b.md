@@ -3,7 +3,7 @@ id: d091
 type: decision
 status: deprecated (superseded in direction by d108: the serving edge it guards retires to tunnel-only, so the funnel-front gateway auth has no public surface left to guard; per-session authentication became d104's mutual Ed25519 proofs; stage 2's llama-swap bearer retirement rides d087's pause) — kept as the staged spec it was, not extended
 title: "d091 — llm-reverse-proxy gateway auth (d073 mode B): the funnel front authenticates; llama-swap's bearer retires behind it"
-parent: llm-reverse-proxy
+parent: estige
 depends-on: [d071, d073, d077, d078, d084, d085, d088, d090]
 references: [d001, d027, d047, d050, d063, d070, d079]
 tags: [gateway-auth, mode-b, reverse-proxy, llama-swap, secrets, pi]

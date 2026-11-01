@@ -11,7 +11,7 @@ references:
   - d025
 depends-on:
   - coding-agent
-  - llm-reverse-proxy
+  - estige
 ---
 
 # d039 — fold single-consumer lib/ modules back to their owning runner

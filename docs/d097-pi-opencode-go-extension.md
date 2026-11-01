@@ -5,7 +5,7 @@ status: implemented
 title: "d097 — the pi-opencode-go extension: for a provider pi builds in, the extension is a catalog freshness watchdog, not a catalog"
 parent: coding-agent
 depends-on: [d048, d070, d074, d096]
-references: [d028-superseded, d032, d039, d064, d092]
+references: [d028, d032, d039, d064, d092]
 tags: ["providers", "pi", "extensions", "coding-agent", "opencode"]
 ---
 

@@ -1,5 +1,5 @@
 ---
-id: d028-provider-extensions-vs-generated-config
+id: d028
 type: architecture-design
 status: proposed
 title: d028 — provider extensions (pi/opencode plugins) vs generated-config machinery

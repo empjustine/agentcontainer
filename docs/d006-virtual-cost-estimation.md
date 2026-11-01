@@ -1,3 +1,10 @@
+---
+id: d006
+type: module-design
+title: "d006 — virtual cost estimation"
+parent: coding-agent
+---
+
 # d006: virtual cost estimation
 
 ## Context

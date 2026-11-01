@@ -3,7 +3,7 @@ id: d088
 type: decision
 status: implemented (phase 1 documentation; phase 2 code rename landed in-place ahead of the still-undated d082 split; protocol-layer extension — exit/relay inside the wire — added by d104, code rename pending)
 title: "d088 — exit node and relay node: name the SSL VPN deployments by network position, not protocol role"
-parent: llm-reverse-proxy
+parent: estige
 depends-on: [d071, d073, d082]
 references: [d080, d084, d104]
 ---
