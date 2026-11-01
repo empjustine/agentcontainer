@@ -12,10 +12,10 @@
 #
 # Container hosts run the image the root ./build.mjs produced (docs/d041) in
 # HOST NETWORK mode: the tailscale funnel serves this route on the HOST's own
-# loopback :8080, so a bridge/slirp container would answer a loopback the
-# funnel never sees. The in-container -listen 0.0.0.0:$HOST_PORT overrides the
-# config's listen (llama-swap's port model, docs/d027). Termux / no container
-# tool: exec the native binary (estige-android on Termux; the host
+# loopback port, so a bridge/slirp container would answer a loopback the funnel
+# never sees — and host networking is also what makes the container's bind the
+# host's bind, so one PORT reaches both paths (docs/d110). Termux / no
+# container tool: exec the native binary (estige-android on Termux; the host
 # binary as fallback).
 #
 # Secrets live ONLY in the environment chain (VPN-R32/d078): lib/environment.sh
@@ -24,9 +24,10 @@
 # VPN_OPERATOR_TOKEN is deliberately absent: it is the relay node's credential
 # and the exit node stopped reading it (docs/d090).
 #
-# Env overrides: HOST_PORT / LISTEN / IMAGE_TAG / ESTIGE_BIN / CONFIG /
-# EXIT_CONTAINER. CONFIG has no default: the tree carries no config file to
-# point at (docs/d108/d110), so absent means "serve the defaults".
+# Env overrides: PORT / IMAGE_TAG / ESTIGE_BIN / CONFIG / EXIT_CONTAINER.
+# PORT is the bind, and it is the only spelling of it — no flag, no launcher
+# variable of our own (docs/d110). CONFIG has no default: the tree carries no
+# config file to point at (docs/d108), so absent means "serve the defaults".
 
 set -eu
 # Shared infra arrives through one injectable directory (docs/d082): default
@@ -63,8 +64,8 @@ if [ "$_workload" = 'workload' ]; then
 	# the two deployments must not share one, or whichever starts second
 	# workload_rm's the other's container.
 	container_id="${EXIT_CONTAINER:-estige-exit}"
-	HOST_PORT="${HOST_PORT:-8080}"
-	log_info "serving (container, host network, exit node)" image="$image" port="$HOST_PORT" config="$config"
+	port="${PORT:-8080}"
+	log_info "serving (container, host network, exit node)" image="$image" port="$port" config="$config"
 
 	workload_rm "$container_id"
 	workload_name     "$container_id"
@@ -76,12 +77,14 @@ if [ "$_workload" = 'workload' ]; then
 	# Forwarded only when set — the same arming contract as native (docs/d084):
 	# a containerized exit node can carry the tunnel family. VPN_OPERATOR_TOKEN
 	# is deliberately absent (docs/d090).
-	workload_env_allowlist VPN_OPERATOR_KEYS
+	# PORT rides in by the same allowlist machinery: the container's bind must be
+	# the host's bind, and the standard name is the only one to forward (d110).
+	workload_env_allowlist VPN_OPERATOR_KEYS PORT
 	if [ -n "$config" ]; then
 		workload_ro   "$config" /etc/estige/tunnel-policy.json
-		workload_cmd  -config /etc/estige/tunnel-policy.json -listen "0.0.0.0:$HOST_PORT"
+		workload_cmd  -mode exit -config /etc/estige/tunnel-policy.json
 	else
-		workload_cmd  -listen "0.0.0.0:$HOST_PORT"
+		workload_cmd  -mode exit
 	fi
 	workload_run
 
@@ -102,8 +105,9 @@ fi
 [ -n "$bin" ] && [ -x "$bin" ] ||
 	log_die 95 "no proxy binary — run ./build.sh first (on Termux it builds estige-android)" bin="${bin:-unset}"
 
-log_info "serving (native, exit node)" bin="$bin" config="$config" listen="${LISTEN:-:8080}"
+port="${PORT:-8080}"
+log_info "serving (native, exit node)" bin="$bin" config="$config" port="$port"
 if [ -n "$config" ]; then
-	exec "$bin" -config "$config" -listen "${LISTEN:-:8080}"
+	exec "$bin" -config "$config"
 fi
-exec "$bin" -listen "${LISTEN:-:8080}"
+exec "$bin"

@@ -43,6 +43,7 @@ The exit node, armed by the env chain:
 ```console
 $ ./lib/environment.sh ./vpn-exit.sh      # VPN_OPERATOR_KEYS arms the tunnel
 [estige] listening on :8080; tunnel at /vpn
+$ PORT=8443 ./lib/environment.sh ./vpn-exit.sh   # the one port knob (docs/d110)
 ```
 
 The funnel points at that port. The relay node (`./vpn-relay.sh`) dials in and
@@ -51,7 +52,7 @@ refuses to start — there is no other face left to serve (docs/d084's
 kill-switch law, docs/d108).
 
 ```console
-$ ./estige -mode exit -listen :8080            # tunnel policy from defaults
+$ ./estige -mode exit                          # binds :8080 (PORT overrides)
 $ ./estige -mode exit -config tunnel.json      # optional policy file
 $ ./estige -mode relay                         # relay node, env-driven
 ```
@@ -62,8 +63,9 @@ $ ./estige -mode relay                         # relay node, env-driven
 allowlist the exit enforces, default `deny`) and `tunnel.enabled` (a tri-state
 veto/assert, docs/d084). It cannot grant the capability and cannot hold a
 credential: arming is the env chain's job, and a file on disk holding a
-credential would be a second, unkeyed copy of it (VPN-R32). The bind is the
-`-listen` flag; the allowlist and its generator are gone (docs/d108).
+credential would be a second, unkeyed copy of it (VPN-R32). The bind is not in
+the file — it is env `PORT` (docs/d110); the allowlist and its generator are
+gone (docs/d108).
 
 ## Build & run
 
@@ -97,10 +99,10 @@ proxy feeding the tunnel transports; docs/d073 §7) runs locally on a
 restricted-internet environment, without direct tsnet to the endpoints.
 The code speaks the same names (d088 phase 2 landed). HOST:
 the container branch runs in HOST NETWORK mode; the native branch execs
-the binary directly. Exit node: listening on `${HOST_PORT:-8080}` (the
-funnel front, `-listen 0.0.0.0:$HOST_PORT` for the container, `${LISTEN:-:8080}`
-for native) — host networking is what makes a loopback upstream reachable from
-the container. No config is mounted by default; `CONFIG` names a policy file
+the binary directly. Exit node: listening on `${PORT:-8080}` in both branches
+(env `PORT` is the only bind spelling, docs/d110) — host networking is what
+makes a loopback upstream reachable from the container, and what makes the
+container's bind the host's bind. No config is mounted by default; `CONFIG` names a policy file
 (native: that path; container: mounted at `/etc/estige/tunnel-policy.json`) and
 the launcher fails if it cannot be read — the file carries `tunnel.egress`
 alone (docs/d108). Relay node: NO config file — `VPN_TUNNEL_URL` (http(s):// or
@@ -148,9 +150,10 @@ serve is down to one mount:
 | `/vpn` (the mount prefix, stripped at the edge, docs/d085) | the tunnel namespace — the only face |
 | anything else | the plain funnel 404, byte for byte (VPN-R34) |
 
-How the bind is spelled today (the `-listen` flag in both branches,
-`HOST_PORT`/`LISTEN` in the launchers) is the subject of d110: one port,
-one knob, env `PORT`.
+The bind has exactly one knob (docs/d110): env `PORT`, unset → `8080`, bound
+on all interfaces. No `-listen` flag, no config field, no launcher variable of
+our own — the standard name is the only spelling, so a coordinator that speaks
+`PORT` steers the exit node without editing files or argv.
 
 The suite that used to run against this table (`estige smoke-test`, 34 checks
 including the badssl TLS taxonomy) is deleted with it (docs/d108). What

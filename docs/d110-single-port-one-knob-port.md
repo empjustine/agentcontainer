@@ -1,7 +1,7 @@
 ---
 id: d110
 type: decision
-status: accepted (implementing change pending — the binary and launchers still spell the bind)
+status: accepted (implementing change landed — the binary reads `PORT`; the `listen` field, `-listen` argv and `LISTEN`/`HOST_PORT` launcher variables are removed)
 title: "d110 — a single-port bind has exactly one knob: env PORT; the listen spellings (config field, argv, launcher env) are removed"
 parent: estige
 depends-on: [d073, d088, d090, d104, d108]

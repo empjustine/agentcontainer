@@ -102,6 +102,29 @@ func shouldArmTunnel(cfg *tunnelConfig, envArmed bool) bool {
 	return envArmed
 }
 
+// portFromEnv resolves the exit node's single-port bind (docs/d110): env
+// PORT, unset → 8080 on all interfaces. The convention's whole value is that
+// process managers already speak it, so a VPN_-prefixed shadow would re-create
+// the second spelling d090 forbids — here the standard name IS the spelling.
+// No flag and no config field: a tool that binds one port is steered by one
+// knob, and a host half is not part of the fact.
+//
+// A value that is not a bare port number is refused by name: "0.0.0.0:8080"
+// or "8080/tcp" would otherwise reach ListenAndServe as a garbled address
+// whose error names the socket, not the variable the operator set.
+func portFromEnv() string {
+	port := os.Getenv("PORT")
+	if port == "" {
+		return ":8080"
+	}
+	for _, r := range port {
+		if r < '0' || r > '9' {
+			log.Fatalf("[estige] PORT=%q is not a port number (docs/d110)", port)
+		}
+	}
+	return ":" + port
+}
+
 func loadConfig(path string) (*config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -317,7 +340,6 @@ func main() {
 	// (docs/d108) — each was a verb for a mode that no longer exists. Role
 	// selection is `-mode`, and the launchers own every other verb.
 	configPath := flag.String("config", "", "path to the tunnel policy file (optional; absent = the defaults, docs/d108)")
-	listen := flag.String("listen", "", "listen address (default :8080)")
 	// Role values are the node names, not protocol roles (docs/d088): the
 	// process is always a mix of client, server, and both proxy shapes, so
 	// only network position discriminates.
@@ -369,10 +391,7 @@ func main() {
 		}
 		cfg = loaded
 	}
-	bind := ":8080"
-	if *listen != "" {
-		bind = *listen
-	}
+	bind := portFromEnv()
 
 	s := &server{}
 	armed := shouldArmTunnel(cfg.Tunnel, operatorCredentialInEnv())

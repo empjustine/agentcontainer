@@ -301,11 +301,13 @@ docs/d018 for the merge contract this supersedes.
   `/dev/dri/renderD*` (Vulkan) and `/dev/kfd` (ROCm) — and passes each
   through to the container.
 - **Port**: LAN **8101** (`HOST_PORT` overrides). The container always
-  listens on 8080 internally; the world reaches the same catalog via the
-  tailscale funnel → estige (LAN 8080, the funnel front) → its
-  host-allowlist row for llama-swap's tsnet serve hostname (docs/d070 §2).
-  The legacy local-inference port 18080 is deprecated — nothing listens on
-  it since the two-instance squash.
+  listens on 8080 internally. The world used to reach the same catalog via
+  the tailscale funnel → estige's host-allowlist row for llama-swap's tsnet
+  serve hostname (docs/d070 §2) — that route is deleted with the reverse
+  proxy (docs/d108); estige (env `PORT`, default 8080, docs/d110) is the
+  funnel front for the tunnel namespace only. The legacy local-inference
+  port 18080 is deprecated — nothing listens on it since the two-instance
+  squash.
 
 - **Termux (archived serving variant)**: the native termux llama-swap serving
   variant is retired (see the [termux-serving.md](termux-serving.md) banner).
@@ -352,6 +354,7 @@ aborts.
 - **local llama-swap** (`config.d/10-local-llm-inference.yaml`): local
   inference only, GPU container hosts only; LAN **8101** (`HOST_PORT`
   overrides), container 8080.
-- **cloud relay** (`estige/`): `/<upstream-host>/<path>`
-  host-allowlist routes, byte-for-byte proxying to each allowlisted
-  scheme://host root (docs/d047); LAN 8080.
+- **cloud relay** (`estige/`): the SSL-VPN tunnel namespace at `/vpn`
+  (docs/d073/d077/d105), LAN 8080 by default, env `PORT` when steered
+  (docs/d110). The `/<upstream-host>/<path>` allowlist routes are deleted
+  (docs/d108).

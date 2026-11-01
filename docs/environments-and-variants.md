@@ -90,8 +90,8 @@ So there is no llama-swap here at all: the host serves the tunnel only, via a
   the android preset from `lib/go-build.mjs` (`CGO_ENABLED=0 GOOS=android
   GOARCH=arm64` — so the Android resolver is used instead of the missing
   `/etc/resolv.conf`; docs/d041), and `vpn-exit.sh`'s native branch
-  `exec`s it against `${LISTEN:-:8080}` — no podman/docker, no GPU
-  detection, no image pull, no generation step.
+  `exec`s it against `${PORT:-8080}` (the only bind spelling, docs/d110) — no
+  podman/docker, no GPU detection, no image pull, no generation step.
 - `./estige/vpn-exit.sh` serves the tunnel; there is no allowlist to
   generate any more (docs/d108 — `estige generate` and the shared provider
   fact table's allowlist role are gone). Neither node injects keys; clients
@@ -134,12 +134,13 @@ relays cloud providers. The relay is estige — one static Go binary,
 ~13 MB RSS, no model routing and no secrets, so the 1 GB budget is not a
 constraint.
 
-- **Serving** (`estige/`): just root `./build.sh &&
-  ./generate.sh && ./estige/vpn-exit.sh` — the routing table is
-  generated from the shared fact table (docs/d027) and the proxy listens on
-  LAN `${HOST_PORT:-8080}` (host-network container or native binary).
-- **Usage** (`coding-agent/`): static provider config pointing the agent at
-  the reverse-proxy path-routes.
+- **Serving** (`estige/`): just root `./build.sh && ./generate.sh &&
+  ./estige/vpn-exit.sh` — the exit node serves the tunnel namespace on LAN
+  `${PORT:-8080}` (host-network container or native binary; one port, one knob,
+  docs/d110). The allowlist route table it used to generate is gone with the
+  reverse proxy (docs/d108).
+- **Usage** (`coding-agent/`): static provider config; there are no
+  path-routes to point at any more (docs/d108).
 - **Keys**: the proxy injects nothing — clients carry the provider keys
   (`OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `CLINE_API_KEY`,
   `HYPER_API_KEY`, `GEMINI_API_KEY`, …) themselves, from Infisical via

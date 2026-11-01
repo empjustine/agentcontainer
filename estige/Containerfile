@@ -17,9 +17,10 @@
 # source files, and a stale COPY list builds a subset that no longer
 # compiles (go build ignores *_test.go, so no test code enters the image).
 #
-# The image ENTRYPOINT is the proxy itself; the deployment entry points
-# (`vpn-exit.sh`/`vpn-relay.sh`, docs/d095) pass -config/-listen as the
-# container command (workload_cmd), mirroring how llama-swap is launched.
+# The image ENTRYPOINT is the binary itself; the deployment entry points
+# (`vpn-exit.sh`/`vpn-relay.sh`, docs/d095) pass -mode and (for an exit with a
+# policy file) -config as the container command (workload_cmd). The bind is not
+# argv and not a file: it is env PORT, forwarded by the launcher (docs/d110).
 FROM docker.io/library/golang:1.27 AS build
 WORKDIR /src
 COPY go.mod *.go ./
