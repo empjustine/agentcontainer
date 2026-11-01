@@ -3,18 +3,22 @@
 // local proxy feeding one authenticated tunnel
 // (docs/d073 §7: VPN-R23..R27, §5.1: VPN-R11).
 //
-// WHY the relay node never terminates TLS (VPN-R25): it is a byte pump between a
-// loopback socket and the tunnel — the application's TLS handshake passes
-// through untouched and lands on the target's own certificate, verified by
-// the application itself (VPN-R29). That also means this file must never
-// grow a "trust the proxy" or certificate-parsing feature: the proxy cannot
-// see plaintext, so it cannot validate a certificate for it.
+// WHY the relay node never terminates TLS (VPN-R25): TLS payloads are
+// byte pumped between a loopback socket and the tunnel — the application's
+// TLS handshake passes through untouched and lands on the target's own
+// certificate, verified by the application itself (VPN-R29). The one
+// payload class the relay does parse is cleartext http/ws at the loopback
+// surface (forward.go, docs/d103): there is no TLS in it to pass through.
+// Nothing here may grow a "trust the proxy" or certificate-parsing feature
+// for the classes that DO carry TLS — the relay holds no certificate for
+// any target and validates none (VPN-R25's fence, d103's terms).
 //
 // Fail-closed is structural (VPN-R26): no credential or unparsable config
-// means runRelayNode returns BEFORE binding any listener, every CONNECT
-// opens the tunnel first (there is no code path that dials the target
-// directly), and a refused tunnel answers the application locally — the
-// kill switch is the only behavior.
+// means runRelayNode returns BEFORE binding any listener, every tunnel use
+// — CONNECT, the SOCKS command, the cleartext forward — opens the tunnel
+// first (no surface has a code path that dials the target directly), and a
+// refused tunnel answers the application locally — the kill switch is the
+// only behavior.
 package main
 
 import (
@@ -399,15 +403,21 @@ func (c *relayNode) openTunnel(ctx context.Context, target string) (tunnelStream
 // HTTP CONNECT listener (VPN-R24)
 // ---------------------------------------------------------------------------
 
-// ServeHTTP multiplexes the two loopback surfaces. The 405 for everything
-// else is deliberate (no camouflage contract on loopback): this surface is
-// a byte pump, so it never parses absolute-form requests — and the v2 host
-// allowlist must NOT grow onto it; mode-A-only by decision (docs/d080).
+// ServeHTTP multiplexes the loopback surface: CONNECT tunnels (the byte
+// pump), d103's cleartext forward branch, and health — the 405 for
+// everything else stays deliberate (no camouflage contract on loopback).
+// https/wss absolute-form requests fall through to it on purpose: those
+// still ride CONNECT as opaque bytes (VPN-R25), and no branch consults a
+// host set — mode-A-only by decision (docs/d080 as narrowed by d103).
 func (c *relayNode) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method == http.MethodConnect:
 		c.handleConnect(w, r)
-	case r.Method == http.MethodGet && r.URL.Path == healthPath:
+	case r.URL.IsAbs() && (r.URL.Scheme == "http" || r.URL.Scheme == "ws"):
+		c.handleForward(w, r)
+	// Health is this surface's own origin-form endpoint; an absolute-form
+	// request is an address, not a question about the relay (d103).
+	case r.Method == http.MethodGet && !r.URL.IsAbs() && r.URL.Path == healthPath:
 		c.handleHealth(w, r)
 	default:
 		w.Header().Set("Allow", "CONNECT, GET /healthz")

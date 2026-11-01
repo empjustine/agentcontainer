@@ -9,6 +9,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"strconv"
@@ -45,6 +46,25 @@ func waitForHealth(t *testing.T, healthURL string) {
 	t.Fatalf("health endpoint %s never came up", healthURL)
 }
 
+// healthSessions reads the relay's tunnel-session counter — d103's
+// "answered from the tunnel" is proven by this number moving, not by the
+// response alone (a direct dial would answer just as well).
+func healthSessions(t *testing.T, healthURL string) int64 {
+	t.Helper()
+	resp, err := http.Get(healthURL)
+	if err != nil {
+		t.Fatalf("healthz: %v", err)
+	}
+	defer resp.Body.Close()
+	var status struct {
+		Sessions int64 `json:"sessions"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&status); err != nil {
+		t.Fatalf("healthz body: %v", err)
+	}
+	return status.Sessions
+}
+
 func readHTTPResponse(t *testing.T, br *bufio.Reader) *http.Response {
 	t.Helper()
 	// The CONNECT acceptance conventionally ends with a blank line, and
@@ -67,9 +87,19 @@ func readHTTPResponse(t *testing.T, br *bufio.Reader) *http.Response {
 }
 
 func TestTunnelClientServerEndToEnd(t *testing.T) {
-	// The origin an allowlisted upstream points at.
+	// The origin an allowlisted upstream points at. Upgrade dispatch feeds
+	// d103's cleartext ws branch; the X-Seen-* headers echo exactly what
+	// the origin received, so a forward subtest can assert the rewrite
+	// contract (Host preserved, no proxy-layer headers) instead of
+	// trusting the relay's own view of it.
 	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if headerHasToken(r.Header, "Upgrade", "websocket") {
+			upgradeEchoHandler(w, r)
+			return
+		}
 		w.Header().Set("X-Upstream", "yes")
+		w.Header().Set("X-Seen-Host", r.Host)
+		w.Header().Set("X-Seen-Proxy-Auth", r.Header.Get("Proxy-Authorization"))
 		_, _ = io.WriteString(w, "hello-upstream")
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
@@ -165,6 +195,122 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 		}
 	})
 
+	t.Run("cleartext absolute-form http is answered from the tunnel (d103)", func(t *testing.T) {
+		healthURL := "http://" + httpAddr + healthPath
+		before := healthSessions(t, healthURL)
+		conn := rawDial(t, httpAddr)
+		defer conn.Close()
+		target := "localhost:" + strconv.Itoa(int(upPort))
+		// No CONNECT anywhere: the request itself must open a tunnel
+		// session (before/after on /healthz) — a 405 means d103 is not
+		// implemented, an answer without a new session means a direct
+		// dial, which VPN-R26 forbids.
+		mustWrite(t, conn, "GET http://"+target+"/fwd HTTP/1.1\r\n"+
+			"Host: "+target+"\r\n"+
+			"Proxy-Connection: keep-alive\r\n"+
+			"Proxy-Authorization: Basic bogus\r\n"+
+			"Connection: close\r\n\r\n")
+		br := bufio.NewReader(conn)
+		resp := readHTTPResponse(t, br)
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK || string(body) != "hello-upstream" {
+			t.Fatalf("status=%d body=%q", resp.StatusCode, body)
+		}
+		// The addressed host must reach the origin exactly — and NOT be
+		// re-derived as the relay's own loopback listener. (An absolute-
+		// form client cannot spell Host differently from the URL: Go's
+		// server ignores the Host line for absolute-form, RFC 9112.)
+		if got := resp.Header.Get("X-Seen-Host"); got != target {
+			t.Fatalf("Host not preserved: the origin saw %q", got)
+		}
+		if got := resp.Header.Get("X-Seen-Proxy-Auth"); got != "" {
+			t.Fatalf("Proxy-* headers reached the origin: %q", got)
+		}
+		if resp.Header.Get("Proxy-Connection") != "" {
+			t.Fatalf("hop-by-hop Proxy-Connection echoed back: %v", resp.Header)
+		}
+		if !resp.Close {
+			t.Fatal("response must force Connection: close — one tunneled exchange per client connection (d103)")
+		}
+		if after := healthSessions(t, healthURL); after <= before {
+			t.Fatalf("request never opened a tunnel: sessions before=%d after=%d", before, after)
+		}
+		// The pinned tunnel is single-use: a second request on this
+		// client connection must find it closed, not answer from host A's
+		// tunnel on host B's behalf.
+		mustWrite(t, conn, "GET http://"+target+"/second HTTP/1.1\r\nHost: "+target+"\r\nConnection: close\r\n\r\n")
+		if _, err := br.ReadString('\n'); err == nil {
+			t.Fatal("second request on the same connection was answered — a pinned tunnel must never be reused")
+		}
+	})
+
+	t.Run("cleartext forward answers with the tunnel's policy verdict, never a direct dial (d103)", func(t *testing.T) {
+		// Port 1 is outside the exit's egress port set: the refusal must
+		// arrive as the tunnel's 403 verdict — a direct dial would have
+		// produced a connection error, not a policy.
+		conn := rawDial(t, httpAddr)
+		defer conn.Close()
+		mustWrite(t, conn, "GET http://localhost:1/fwd HTTP/1.1\r\nHost: localhost:1\r\nConnection: close\r\n\r\n")
+		resp := readHTTPResponse(t, bufio.NewReader(conn))
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		if resp.StatusCode != http.StatusForbidden || !strings.Contains(string(body), "tunnel-denied") {
+			t.Fatalf("policy refusal must come from the tunnel: status=%d body=%q", resp.StatusCode, body)
+		}
+	})
+
+	t.Run("IP-literal absolute-form target is refused by the exit's verdict (VPN-R22, d103)", func(t *testing.T) {
+		conn := rawDial(t, httpAddr)
+		defer conn.Close()
+		addr := "127.0.0.1:" + strconv.Itoa(int(upPort))
+		mustWrite(t, conn, "GET http://"+addr+"/fwd HTTP/1.1\r\nHost: "+addr+"\r\nConnection: close\r\n\r\n")
+		resp := readHTTPResponse(t, bufio.NewReader(conn))
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		if resp.StatusCode != http.StatusForbidden || !strings.Contains(string(body), "tunnel-denied") {
+			t.Fatalf("IP literals must be the exit's policy verdict, not a dial: status=%d body=%q", resp.StatusCode, body)
+		}
+	})
+
+	t.Run("absolute-form https:// still rides CONNECT (405, bytes unopened)", func(t *testing.T) {
+		conn := rawDial(t, httpAddr)
+		defer conn.Close()
+		mustWrite(t, conn, "GET https://localhost:"+strconv.Itoa(int(upPort))+"/x HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
+		resp := readHTTPResponse(t, bufio.NewReader(conn))
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		if resp.StatusCode != http.StatusMethodNotAllowed || !strings.Contains(string(body), "only CONNECT tunnels") {
+			t.Fatalf("https must keep riding CONNECT, unparsed: status=%d body=%q", resp.StatusCode, body)
+		}
+	})
+
+	t.Run("ws:// upgrade answers 101 and pumps bytes (d103)", func(t *testing.T) {
+		conn := rawDial(t, httpAddr)
+		defer conn.Close()
+		target := "localhost:" + strconv.Itoa(int(upPort))
+		mustWrite(t, conn, "GET ws://"+target+"/echo HTTP/1.1\r\n"+
+			"Host: "+target+"\r\n"+
+			"Connection: Upgrade\r\nUpgrade: websocket\r\n"+
+			"Sec-WebSocket-Key: dGVzdGtleTEyMzQ1Ng==\r\nSec-WebSocket-Version: 13\r\n\r\n")
+		br := bufio.NewReader(conn)
+		resp := readHTTPResponse(t, br)
+		if resp.StatusCode != http.StatusSwitchingProtocols {
+			body, _ := io.ReadAll(resp.Body)
+			t.Fatalf("upgrade refused: status=%d body=%q", resp.StatusCode, body)
+		}
+		// Past the 101 the client connection is a raw pump: the echo
+		// fixture answers one read, then closes.
+		mustWrite(t, conn, "hello-ws")
+		echo := make([]byte, len("hello-ws"))
+		if _, err := io.ReadFull(br, echo); err != nil {
+			t.Fatalf("upgrade pump did not deliver: %v", err)
+		}
+		if string(echo) != "hello-ws" {
+			t.Fatalf("echo=%q", echo)
+		}
+	})
+
 	t.Run("healthz reports the tunnel endpoint", func(t *testing.T) {
 		resp, err := http.Get("http://" + httpAddr + healthPath)
 		if err != nil {
@@ -205,6 +351,48 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 			t.Fatalf("client label missing from the session line:\n%s", dumped)
 		}
 	})
+
+	cancel()
+	select {
+	case err := <-relayDone:
+		if err != nil {
+			t.Fatalf("relay node shutdown: %v", err)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("relay node did not stop on context cancellation")
+	}
+}
+
+// TestCleartextForwardFailsClosedWithoutTunnel pins d103's second
+// verification point with the tunnel dead: the absolute-form request gets a
+// LOCAL problem detail in the tunnel's vocabulary — not a 405, and not an
+// answer that could only come from a direct dial.
+func TestCleartextForwardFailsClosedWithoutTunnel(t *testing.T) {
+	dead := reserveLoopbackAddr() // released: connecting to it must be refused
+	t.Setenv(envTunnelURL, "ws://"+dead+tunnelPath)
+	t.Setenv(envOperatorToken, testTunnelToken)
+	t.Setenv(envClientLabel, "dead-tunnel-fwd")
+	httpAddr := freeLoopbackAddr(t)
+	socksAddr := freeLoopbackAddr(t)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	relayDone := make(chan error, 1)
+	go func() { relayDone <- runRelayNode(ctx, cfg) }()
+	waitForHealth(t, "http://"+httpAddr+healthPath)
+
+	conn := rawDial(t, httpAddr)
+	defer conn.Close()
+	mustWrite(t, conn, "GET http://localhost:9/fwd HTTP/1.1\r\nHost: localhost:9\r\nConnection: close\r\n\r\n")
+	resp := readHTTPResponse(t, bufio.NewReader(conn))
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusBadGateway || !strings.Contains(string(body), "tunnel-unavailable") {
+		t.Fatalf("dead tunnel must answer locally in the tunnel's vocabulary: status=%d body=%q", resp.StatusCode, body)
+	}
 
 	cancel()
 	select {

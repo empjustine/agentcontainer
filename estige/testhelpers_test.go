@@ -180,41 +180,47 @@ func newHTTPServer(t *testing.T, h http.Handler) *httptest.Server {
 	return srv
 }
 
-// newUpgradeEchoUpstream is the mode A-side S3 fixture: a backend that
-// accepts an upgrade and echoes raw bytes until EOF — everything the tunnel
+// upgradeEchoHandler is the mode A-side S3 fixture: a backend that accepts
+// an upgrade and echoes raw bytes until EOF — everything the tunnel
 // transport needs from a WebSocket-capable upstream, without a library.
+// Exported as a handler (not only a server) so the e2e upstream can
+// dispatch to it for d103's cleartext ws branch.
+func upgradeEchoHandler(w http.ResponseWriter, r *http.Request) {
+	if !headerHasToken(r.Header, "Upgrade", "websocket") {
+		http.Error(w, "expected upgrade", http.StatusBadRequest)
+		return
+	}
+	conn, brw, err := http.NewResponseController(w).Hijack()
+	if err != nil {
+		return
+	}
+	if _, err := brw.WriteString("HTTP/1.1 101 Switching Protocols\r\n" +
+		"Upgrade: websocket\r\nConnection: Upgrade\r\n" +
+		"Sec-WebSocket-Accept: " + wsAcceptKey(r.Header.Get("Sec-WebSocket-Key")) + "\r\n\r\n"); err != nil {
+		conn.Close()
+		return
+	}
+	if err := brw.Flush(); err != nil {
+		conn.Close()
+		return
+	}
+	// One-shot echo, then return: net/http closes the conn, the
+	// requesting relay observes a clean upstream EOF, and its handler
+	// (with the VPN-R13 CLF line) can complete. A fixture that kept
+	// echoing would hold that relay open forever.
+	buf := make([]byte, 4096)
+	n, err := brw.Reader.Read(buf)
+	if err == nil && n > 0 {
+		_, _ = conn.Write(buf[:n])
+	}
+	conn.Close()
+}
+
 func newUpgradeEchoUpstream(t *testing.T) *httptest.Server {
 	t.Helper()
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !headerHasToken(r.Header, "Upgrade", "websocket") {
-			http.Error(w, "expected upgrade", http.StatusBadRequest)
-			return
-		}
-		conn, brw, err := http.NewResponseController(w).Hijack()
-		if err != nil {
-			return
-		}
-		if _, err := brw.WriteString("HTTP/1.1 101 Switching Protocols\r\n" +
-			"Upgrade: websocket\r\nConnection: Upgrade\r\n" +
-			"Sec-WebSocket-Accept: " + wsAcceptKey(r.Header.Get("Sec-WebSocket-Key")) + "\r\n\r\n"); err != nil {
-			conn.Close()
-			return
-		}
-		if err := brw.Flush(); err != nil {
-			conn.Close()
-			return
-		}
-		// One-shot echo, then return: net/http closes the conn, the
-		// requesting relay observes a clean upstream EOF, and its handler
-		// (with the VPN-R13 CLF line) can complete. A fixture that kept
-		// echoing would hold that relay open forever.
-		buf := make([]byte, 4096)
-		n, err := brw.Reader.Read(buf)
-		if err == nil && n > 0 {
-			_, _ = conn.Write(buf[:n])
-		}
-		conn.Close()
-	}))
+	srv := httptest.NewServer(http.HandlerFunc(upgradeEchoHandler))
+	t.Cleanup(srv.Close)
+	return srv
 }
 
 func mustTunnelURL(t *testing.T, proxy *httptest.Server) *url.URL {
