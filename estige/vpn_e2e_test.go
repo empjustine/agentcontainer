@@ -100,6 +100,11 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 		w.Header().Set("X-Upstream", "yes")
 		w.Header().Set("X-Seen-Host", r.Host)
 		w.Header().Set("X-Seen-Proxy-Auth", r.Header.Get("Proxy-Authorization"))
+		w.Header().Set("X-Seen-Forwarded", r.Header.Get("Forwarded"))
+		w.Header().Set("X-Seen-Xff", r.Header.Get("X-Forwarded-For"))
+		w.Header().Set("X-Seen-Xfh", r.Header.Get("X-Forwarded-Host"))
+		w.Header().Set("X-Seen-Xfp", r.Header.Get("X-Forwarded-Proto"))
+		w.Header().Set("X-Seen-Via", r.Header.Get("Via"))
 		_, _ = io.WriteString(w, "hello-upstream")
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
@@ -209,6 +214,11 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 			"Host: "+target+"\r\n"+
 			"Proxy-Connection: keep-alive\r\n"+
 			"Proxy-Authorization: Basic bogus\r\n"+
+			"Forwarded: for=9.9.9.9\r\n"+
+			"X-Forwarded-For: 9.9.9.9\r\n"+
+			"X-Forwarded-Host: evil.example\r\n"+
+			"X-Forwarded-Proto: https\r\n"+
+			"Via: 1.1 probe\r\n"+
 			"Connection: close\r\n\r\n")
 		br := bufio.NewReader(conn)
 		resp := readHTTPResponse(t, br)
@@ -226,6 +236,18 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 		}
 		if got := resp.Header.Get("X-Seen-Proxy-Auth"); got != "" {
 			t.Fatalf("Proxy-* headers reached the origin: %q", got)
+		}
+		// The four spoofable forwarding headers never reach the origin
+		// (stdlib Rewrite-mode strip — the proxy also never synthesizes
+		// any of them); Via passes through verbatim: neither generated
+		// hop evidence nor deletion (d103's pass-through terms).
+		for _, h := range []string{"X-Seen-Forwarded", "X-Seen-Xff", "X-Seen-Xfh", "X-Seen-Xfp"} {
+			if got := resp.Header.Get(h); got != "" {
+				t.Fatalf("%s reached the origin: %q", h, got)
+			}
+		}
+		if got := resp.Header.Get("X-Seen-Via"); got != "1.1 probe" {
+			t.Fatalf("Via pass-through: got %q", got)
 		}
 		if resp.Header.Get("Proxy-Connection") != "" {
 			t.Fatalf("hop-by-hop Proxy-Connection echoed back: %v", resp.Header)
