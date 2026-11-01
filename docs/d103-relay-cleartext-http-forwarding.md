@@ -27,8 +27,8 @@ Two constraints of this deployment collide on one loopback port.
   reason the tunnel exists.
 - **Where the exit runs, the edge cannot serve both surfaces at once.**
   Tailscale Funnel is the TLS terminator, and what it serves is
-  prefix-route-based HTTPS reverse proxying (mode A's shape — the property
-  that keeps the internal network from being scanned "for free" and drops
+  prefix-route-based HTTPS reverse proxying (the allowlist relay's shape — the
+  property that keeps the internal network from being scanned "for free" and drops
   undesirable internet radiation at the edge). It does not support the HTTP
   `CONNECT` method as a forward-proxy surface, and the one dynamic upgrade it
   does support is the WebSocket the tunnel rides (d073's feasibility verdict,
@@ -156,8 +156,8 @@ pump cannot give:
   rejected alternative stands in full: the coupling of every request to a
   generated route row is what was rejected, not the parsing.
 - **Giving these routes TLS termination instead** (relay- or edge-minted
-  certificates) — that is mode A's property, where the proxy sees plaintext
-  the client believes protected; for the tunnel family the client validates
+  certificates) — that is the allowlist relay's property, where the proxy sees
+  plaintext the client believes protected; for the tunnel family the client validates
   the payload's own certificate, and a proxy-minted certificate is the MITM
   VPN-R25 forbids. It would also ask the funnel edge for exactly the
   capability this deployment's starting constraint says it does not have.

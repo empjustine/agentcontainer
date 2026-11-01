@@ -38,7 +38,7 @@ The proxy-side capability prefix is retired (VPN-R44's `${prefix}` clause
 reversed):
 
 - The tunnel family lives at one fixed reserved path, **`/vpn`** — VPN-R42's
-  "one Funnel path for the family" taken literally. Mode dispatch inside the
+  "one Funnel path for the family" taken literally. Transport dispatch inside the
   family stays protocol negotiation (d077 §4), unchanged.
 - `enableTunnel` keeps VPN-R42's collision rule in its new form: the
   reserved name `vpn` may never be an allowlist host (startup is where
@@ -53,7 +53,7 @@ reversed):
 
 Several Funnel mounts may target the same server (longest-prefix match, one
 StripPrefix per mount) — so edge-side capability rotation, per-purpose
-mounts, or a future mode B namespace are all just more mounts on one
+mounts, or a future authenticated-relay namespace are all just more mounts on one
 backend. The proxy sees none of it and needs none of it.
 
 ## 3. Why one layer is enough — the calculus that changed
@@ -85,7 +85,7 @@ gate the rest, and tailnet ACLs remain available to the operator.
 | VPN-R34 camouflage 404 (a probe learns nothing) | the `/<prefix>/…` namespace construction |
 | VPN-R42 namespace dispatch — now on the fixed reserved path | URI redaction + the lifecycle `tunnel=` digest |
 | d084's tri-state `tunnel.enabled` | d084's arm env (`VPN_TUNNEL_PREFIX` → operator keyset) |
-| egress policy, demotion, d081's mode E plan | mode B's deferred `${prefix}` namespace — it rides a Funnel mount |
+| egress policy, demotion, d081's h1.1-POST plan | the authenticated relay's deferred `${prefix}` namespace — it rides a Funnel mount |
 
 ## 5. Consequences
 
@@ -93,7 +93,8 @@ gate the rest, and tailnet ACLs remain available to the operator.
   READMEs). A deployment that had set it to the Funnel mount now works with
   no proxy-side config at all; one that had set a distinct segment simply
   stops using it.
-- The boot fingerprint shrinks to `tunnel (modes C–E): enabled at /vpn`.
+- The boot fingerprint shrinks to `tunnel (modes C–E): enabled at /vpn` (the log
+  string keeps the historical letters until the code rename, d105).
 - d081's completion work is untouched: `/vpn` dispatch precedes provider
   parsing exactly as before.
 

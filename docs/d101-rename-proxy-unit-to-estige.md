@@ -15,9 +15,10 @@ tags: [proxy, terminology, naming, estige, forward-proxy]
 
 The unit's name stopped being true. It was named for what it did in v1
 (a reverse proxy in front of provider APIs). By v3 it is a forward proxy
-in the operator's sense: the SSL-VPN tunnel family (modes C–E) lets clients
-ride loopback CONNECT/SOCKS5 through it to the cloud (docs/d073, d077,
-d095), and the runtime names had already drifted halfway — the image tag
+in the operator's sense: the SSL-VPN tunnel transports (h2-POST, WebSocket,
+and h1.1-POST) let clients ride loopback CONNECT/SOCKS5 through it to the
+cloud (docs/d073, d077, d095), and the runtime names had already drifted
+halfway — the image tag
 (`localhost/estige:latest`), the container names (`estige-exit`/
 `estige-relay`), and the relay state dir said `estige` since d088's
 vocabulary work, while the folder, module, binary, config, log prefixes,

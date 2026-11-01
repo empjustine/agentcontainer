@@ -121,8 +121,8 @@ change.
 
 ### Failure posture — unchanged camouflage
 
-Wrong, missing, expired, or malformed proof → mode A's byte-identical
-camouflage 404 (VPN-R34): no 401, no challenge, no distinct body, no proof
+Wrong, missing, expired, or malformed proof → the allowlist relay's
+byte-identical camouflage 404 (VPN-R34): no 401, no challenge, no distinct body, no proof
 or key bytes in logs or error bodies (VPN-R33), full-width constant-time
 compare over the bounded principal set. The success signal (a `101`) is
 unavoidably distinguishable from failure; nothing else is.
@@ -132,22 +132,22 @@ unavoidably distinguishable from failure; nothing else is.
 Env presence remains the tri-state arm: the tunnel surface exists iff the
 exit's keyset env carries v1 keys; absent = today's byte-identical unarmed
 behavior. The scheme is namespace-scoped to the tunnel handshake (VPN-R2's
-separation): mode A is untouched, and the gateway namespace (d091) keeps
-its staged bearer until a separate decision extends proofs there.
+separation): the allowlist relay is untouched, and the gateway namespace
+(d091) keeps its staged bearer until a separate decision extends proofs there.
 
 ## Requirement deltas (restated with citations)
 
 - **VPN-R31 (amended for the tunnel namespace)** — the tunnel's operator
   credential becomes the mutual proofs above; the literal bearer retires
   from the `Authorization` handshake header when the implementing change
-  lands. Mode B's gateway credential (d091) is untouched.
+  lands. The authenticated relay's gateway credential (d091) is untouched.
 - **VPN-R12 (amended)** — the tunnel handshake still carries its credential
   in a header; the content becomes `X-Relay-Proof` plus the principal id,
   never a bearer.
 - **VPN-R33 (unchanged, applied)** — 32-byte tags compare full-width,
   constant-time; proofs and keys are log-forbidden like every credential.
 - **VPN-R34 (unchanged, applied)** — proof failures answer the camouflage
-  404, byte-identical to mode A garbage.
+  404, byte-identical to the allowlist relay's garbage response.
 - **VPN-R44 (raised for keys)** — capability keys keep the ~100-bit floor;
   HMAC keys are exactly 32 raw bytes (256 bits), fail-closed at decode.
 - **VPN-R32 (unchanged)** — keys arrive env-only through the one chain
@@ -163,8 +163,8 @@ its staged bearer until a separate decision extends proofs there.
   never the secret: exposure degrades from "permanent credential in a third
   process" to "windowed replay against the intended endpoint".
 - No topology change: still the CLI funnel, plain-HTTP estige behind
-  loopback; no tsnet embedding, no TLS front door, no mode A regression,
-  no CA, no certificate lifecycle.
+  loopback; no tsnet embedding, no TLS front door, no allowlist-relay
+  regression, no CA, no certificate lifecycle.
 - The hub-and-spoke future (relay-to-exit-to-relay) composes as pairwise
   hops with zero new crypto; multi-exit means one keyset per exit plus one
   relay key per exit it dials — the pairing `VPN_TUNNEL_URL` already
@@ -209,8 +209,8 @@ its staged bearer until a separate decision extends proofs there.
   (accept bearer OR proof for one release) only if a deployed relay
   cannot be vault-updated in lockstep.
 - **Namespace scope** — this record gates the tunnel handshake only.
-  Whether mode A's public face or d091's gateway later adopt per-request
-  proofs (method+path+step, never the body) is a separate decision.
+  Whether the allowlist relay's public face or d091's gateway later adopt
+  per-request proofs (method+path+step, never the body) is a separate decision.
 - **Step/window on the relay host** — 30s/±1 is the assumed default;
   confirm the restricted host's clock source and record the measured drift
   before widening.

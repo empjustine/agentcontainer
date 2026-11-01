@@ -1,21 +1,23 @@
 ---
 id: d073
 type: architecture-design
-status: adopted-in-part (v2 = mode A + mode D delivered; mode C built default-on since d084; mode E built — d081's L4 amendment; mode B deferred to v3; VPN-R44's `${prefix}` clause reversed by d085; the tunnel namespace's shared-bearer credential superseded by d104 — mutual HMAC exit↔relay proofs)
-title: "d073 — llm-reverse-proxy → three-mode SSL VPN: requirements and feasibility"
+status: adopted-in-part (v2 = allowlist relay + WebSocket tunnel delivered; the h2-POST tunnel built default-on since d084; the h1.1-POST tunnel built — d081's L4 amendment; the authenticated relay deferred to v3; VPN-R44's `${prefix}` clause reversed by d085; the tunnel namespace's shared-bearer credential superseded by d104 — mutual HMAC exit↔relay proofs)
+title: "d073 — llm-reverse-proxy → SSL-VPN transport family: requirements and feasibility"
 parent: llm-reverse-proxy
 depends-on: [llm-reverse-proxy, d027, d047, d070, d071]
-references: [d031, d038, d063, d064, d072]
-tags: ["serving", "proxy", "vpn", "ssl-vpn", "websocket", "tailscale", "requirements", "proposed"]
+references: [d031, d038, d063, d064, d072, d077, d081, d084, d085, d104, d105]
+tags: ["serving", "proxy", "vpn", "ssl-vpn", "websocket", "tailscale", "requirements"]
 ---
 
-# d073 — llm-reverse-proxy → three-mode SSL VPN: requirements and feasibility
+# d073 — llm-reverse-proxy → SSL-VPN transport family: requirements and feasibility
 
-**Status:** proposed — requirements and feasibility only; no code is decided by
-this record. It exists so the question d072 deliberately left open ("a TLS-level
-VPN (ssl-vpn style) or a non-HTTP-proxy transport") has a written, checkable
-target instead of a sentence in a review. Normative language is RFC 2119
-(MUST / SHOULD / MAY). Requirement IDs are `VPN-R*`; when a mode is accepted
+**Status:** adopted-in-part (see the frontmatter) — this began as requirements
+and feasibility only, and the parts that shipped are amended forward by
+d077/d081/d084/d085/d104; the transport names are d105's. It exists so the
+question d072 deliberately left open ("a TLS-level VPN (ssl-vpn style) or a
+non-HTTP-proxy transport") had a written, checkable target instead of a
+sentence in a review. Normative language is RFC 2119
+(MUST / SHOULD / MAY). Requirement IDs are `VPN-R*`; when a transport is accepted
 they fold into the BRD (docs/requirements.md) as `FR-S*` rows and this record
 stays the history of the decision.
 
@@ -26,7 +28,7 @@ stays the history of the decision.
   `ipn/ipnlocal/serve.go`); `CONNECT` appears in tailscale/tailscale only in
   internal contexts (the Windows log proxy in `ipnserver/proxyconnect.go`,
   `derper`'s control-plane ACE handling), never as a general user-tunnel
-  mechanism. A tunnel mode built on the `CONNECT` method would depend on an
+  mechanism. A tunnel transport built on the `CONNECT` method would depend on an
   undocumented behaviour.
 - **`CONNECT`-inside-WebSocket is feasible, and is the right shape.** The outer
   hop is an ordinary HTTP `GET` with `Upgrade: websocket` — the one upgrade
@@ -40,7 +42,7 @@ stays the history of the decision.
   between the client and the target host. The local proxy is a blind TCP relay
   for TLS payloads: it never holds a certificate for the target, never MITMs,
   and therefore never has to be trusted. That is the whole point of the tunnel
-  over mode B. (Cleartext `http`/`ws` requests are the one payload class with
+  over the authenticated relay. (Cleartext `http`/`ws` requests are the one payload class with
   no TLS to relay: the loopback proxy may parse and forward them — d103 — and
   none of those three properties depends on it not doing so.)
 
@@ -63,13 +65,13 @@ an IP-layer tunnel. This record fixes the vocabulary:
 Non-goals (see §11): IPsec, IP-layer tunnels, exit-node replacement, a
 multi-tenant SaaS control plane.
 
-## 2. The three modes
+## 2. The transport family
 
 One binary, one listener (the Funnel front on :8080, docs/d027), three
-independently enabled modes. Mode A is today's behaviour and MUST keep working
-unchanged; modes B–E are additive and MUST default OFF.
+independently enabled route namespaces. The allowlist relay is today's behaviour and MUST keep working
+unchanged; the other transports are additive and MUST default OFF.
 
-| | Mode A — allowlist relay (today) | Mode B — authenticated open relay (v3) | Mode D — tunnelled VPN (CONNECT-over-WSS) |
+| | Allowlist relay (today) | Authenticated relay (v3) | WebSocket tunnel (CONNECT-over-WSS) |
 |---|---|---|---|
 | Shape | `/<upstream-host>/<path>` | `https://<proxy>/<prefix>/<schema>/<host><path>` | `wss://<proxy>/<prefix>/vpn` + localhost proxy |
 | Client software | none | none | a localhost proxy (same binary, client mode) |
@@ -79,12 +81,14 @@ unchanged; modes B–E are additive and MUST default OFF.
 | Termination of client TLS | at the Funnel edge (proxy sees plaintext) | at the Funnel edge (proxy sees plaintext) | **at the target** (proxy sees ciphertext) |
 | Certificate the client validates | Funnel `*.ts.net` | Funnel `*.ts.net` | Funnel `*.ts.net` for the tunnel **+ the target's real cert end-to-end** |
 
-Delivery is phased (**this revision**): **v2 = mode A + mode D**; mode B is
-specified here in full but deferred to **v3**, so the first implementation
-carries one protocol and two roles, not three modes.
+Delivery is phased (**this revision**): **v2 = allowlist relay + WebSocket
+tunnel**; the authenticated relay is specified here in full but deferred to
+**v3**, so the first implementation carries one protocol and two roles, not
+three transports.
 
-The trust column is the reason the tunnel exists. In A and B the Funnel edge
-terminates the client's TLS and hands the proxy plaintext on loopback, so the
+The trust column is the reason the tunnel exists. In the allowlist and
+authenticated relays, the Funnel edge terminates the client's TLS and hands the
+proxy plaintext on loopback, so the
 proxy necessarily sees provider keys (it still does not *store* or *inject*
 them — the "no credential handling" invariant is about injection, not
 visibility). The tunnel removes that property entirely: the proxy sees ciphertext.
@@ -93,32 +97,35 @@ column cannot be their story: d103 owns the rule for those bytes — the
 party-visibility invariant (visible only to VPN or localhost parties) — while
 VPN-R25's certificate and no-MITM properties stay exactly as written.
 
-**Mode letters (d077).** [d077](d077-ssl-vpn-transport-ladder.md) splits the
-tunnel into a protocol-negotiated family on this one path: **Mode C** (h2
-POST, preferred), **Mode D** (the `wss://` shape specified here, deployed as
-v2), **Mode E** (h1.1 POST stop-and-wait floor) — letters in preference order
-C → D → E. This record has been re-lettered to match: what earlier drafts
-called mode C is mode D now. Requirements below that govern the *namespace*
-(prefix, auth, egress, client, trust) scope the whole C–E family; the
-transport-shaped VPN-R11–R14 bind Mode D as written (d077 §9). Modes C and E
-are unbuilt and, like mode B, MUST default OFF.
+**Transport names (d077, d105).** [d077](d077-ssl-vpn-transport-ladder.md)
+splits the tunnel into a protocol-negotiated family on this one path: the
+**h2-POST tunnel** (HTTP/2 streaming POST, preferred), the **WebSocket
+tunnel** (the `wss://` shape specified here, deployed as v2), and the
+**h1.1-POST tunnel** (HTTP/1.1 POST stop-and-wait floor) — transports in
+preference order h2-POST → WebSocket → h1.1-POST. This record's vocabulary
+follows that ladder: the tunnel it originally specified is the WebSocket
+tunnel, with the h2-POST tunnel preferred and the h1.1-POST tunnel as the
+floor. Requirements below that govern the *namespace* (prefix, auth, egress,
+client, trust) scope the whole tunnel-transport family; the transport-shaped
+VPN-R11–R14 bind the WebSocket tunnel as written (d077 §9).
 
-## 3. Mode A — the allowlist relay (unchanged)
+## 3. Allowlist relay (unchanged)
 
-Mode A is docs/d047 and MUST NOT regress.
+The allowlist relay is docs/d047 and MUST NOT regress.
 
-- **VPN-R1** — Mode A MUST remain the default, MUST require no authentication,
+- **VPN-R1** — The allowlist relay MUST remain the default, MUST require no authentication,
   and MUST keep deny-by-absence: every non-allowlisted host and every garbage
   path answers the identical plain-text `404 page not found` (no route table,
   no route names, no fingerprint — llm-reverse-proxy/DESIGN.md's 404
   camouflage policy).
-- **VPN-R2** — Enabling modes B–E MUST NOT widen mode A's reachability or
-  change its 404 body; A, B, and the tunnel (C–E) are separate route namespaces.
-- **VPN-R3** — Mode A's smoke-test surface (llm-reverse-proxy/smoke-test.sh,
-  the deny-by-absence 404 negatives included) MUST stay green with modes B–E
+- **VPN-R2** — Enabling the added transports MUST NOT widen the allowlist
+  relay's reachability or change its 404 body; the allowlist relay,
+  authenticated relay, and tunnel transports are separate route namespaces.
+- **VPN-R3** — The allowlist relay's smoke-test surface (llm-reverse-proxy/smoke-test.sh,
+  the deny-by-absence 404 negatives included) MUST stay green with the added transports
   enabled.
 
-## 4. Mode B — the authenticated generic relay (deferred to v3)
+## 4. Authenticated relay (deferred to v3)
 
 Grammar, with every segment's contract:
 
@@ -126,7 +133,7 @@ Grammar, with every segment's contract:
 https://${reverse-proxy}/${prefix}/${schema}/${host}${path}
 ```
 
-Authentication is **two factors for the whole mode-B namespace**: the
+Authentication is **two factors for the whole authenticated-relay namespace**: the
 `${prefix}` UUID (a path capability, checked first) plus one operator
 credential — a shared-secret bearer token. mTLS is not impossible (it would
 mean shipping client certificates through the env chain, VPN-R32) but it is
@@ -134,13 +141,13 @@ unwieldy for one operator, so it is deferred until a reason appears. There is
 no tenant principal — the path is
 the only selector, so there is nothing to enumerate.
 
-- `${prefix}` — a high-entropy UUID capability of the mode A funnel-id kind
+- `${prefix}` — a high-entropy UUID capability of the allowlist relay's funnel-id kind
   (docs/d070), NOT a readable version namespace. It MUST be a distinct UUID
   from the Funnel id, MUST be vault-sourced and never committed, and it is the
-  FIRST authentication factor: an unknown prefix answers mode A's camouflage
+  FIRST authentication factor: an unknown prefix answers the allowlist relay's camouflage
   404 (VPN-R34) before credential validation or DNS.
 - `${schema}` — `http` or `https`: the scheme the proxy uses for the
-  **upstream** leg only. Both are allowed: mode B is authenticated, so the
+  **upstream** leg only. Both are allowed: the relay authenticates the operator, so the
   scheme is an explicit client choice, not a downgrade an attacker can force.
   The client→Funnel leg is always TLS regardless. A request that uses `http`
   MUST still be logged with its scheme, because the upstream leg (headers,
@@ -149,23 +156,23 @@ the only selector, so there is nothing to enumerate.
   MUST be validated (no `@`, no `%2F` tricks, length-bounded, IDN via
   punycode), and it MUST be the SNI/`Host` presented upstream.
 - `${path}` — everything after the host segment, byte-for-byte (query and
-  body included), the same passthrough contract as mode A.
+  body included), the same passthrough contract as the allowlist relay.
 
 Requirements:
 
-- **VPN-R4** — Every mode B request MUST be authenticated before any upstream
+- **VPN-R4** — Every authenticated relay request MUST be authenticated before any upstream
   DNS resolution or dial: the `${prefix}` capability first, then the operator
   credential. Failure of either MUST produce the same uniform answer
   (VPN-R34).
-- **VPN-R5** — Mode B MUST apply the egress policy (§9) before dialing:
+- **VPN-R5** — The authenticated relay MUST apply the egress policy (§9) before dialing:
   `${schema}` MUST be one of `http`/`https` (both allowed), and the port and
   every resolved address of `${host}` MUST pass.
-- **VPN-R6** — Mode B MUST NOT forward the client's proxy credential upstream;
+- **VPN-R6** — The authenticated relay MUST NOT forward the client's proxy credential upstream;
   it MUST strip `Proxy-Authorization`/`Proxy-Connection` and the
-  spoofable `Forwarded`/`X-Forwarded-*` headers (the mode A anti-spoofing
+  spoofable `Forwarded`/`X-Forwarded-*` headers (the allowlist relay's anti-spoofing
   rule), while preserving the upstream `Authorization` (the provider key the
   client owns).
-- **VPN-R7** — Mode B MUST rewrite upstream `Location` headers into mode B
+- **VPN-R7** — The authenticated relay MUST rewrite upstream `Location` headers into its own
   proxy URLs (the same `<prefix>/<schema>/<host><path>` form), so a redirect
   cannot make the client leave the proxy. Absolute URLs are re-encoded; relative
   values are resolved against the upstream URL reconstructed from the
@@ -173,65 +180,67 @@ Requirements:
   the path), then re-encoded in proxy form. The
   upstream scheme is preserved (an `https` target stays `https`; VPN-R37).
   `Location` is the first member of the compatibility set (VPN-R53).
-- **VPN-R8** — Mode B MUST strip `Alt-Svc` from responses (an origin can
+- **VPN-R8** — The authenticated relay MUST strip `Alt-Svc` from responses (an origin can
   advertise a direct alternate route that bypasses the proxy).
-- **VPN-R9** — Mode B MUST keep the RFC 9457 internal-failure taxonomy for
+- **VPN-R9** — The authenticated relay MUST keep the RFC 9457 internal-failure taxonomy for
   proxy-side errors (docs/DESIGN.md), and MUST pass upstream 4xx/5xx through
   untouched.
-- **VPN-R10** — Mode B MUST log one Combined-Log-Format line per request
+- **VPN-R10** — The authenticated relay MUST log one Combined-Log-Format line per request
   carrying the resolved upstream host and the scheme (never the credential or
   the prefix, VPN-R44).
-- **VPN-R55** — Mode B's `https` upstream leg MUST verify chain and hostname
-  and MUST fail closed with the RFC 9457 taxonomy (VPN-R9) on verification
-  failure. `InsecureSkipVerify` (or any equivalent skip) MUST NOT appear in
-  any mode: in A and B the client already trusts this front with plaintext —
-  the one party who *can* verify the upstream MUST NOT skip it.
+- **VPN-R55** — The authenticated relay's `https` upstream leg MUST verify
+  chain and hostname and MUST fail closed with the RFC 9457 taxonomy (VPN-R9)
+  on verification failure. `InsecureSkipVerify` (or any equivalent skip) MUST
+  NOT appear in any transport: in the allowlist and authenticated relays the
+  client already trusts this front with plaintext — the one party who *can*
+  verify the upstream MUST NOT skip it.
 
 ### Compatibility rewrites (the replay-proxy set)
 
-Mode B terminates the client's TLS, so — unlike mode A (byte-faithful) and the tunnel
-(mode D, opaque) — it can and must rewrite the headers that would otherwise leak the
-client back to the origin or break through the proxy. The reference set is what
+The authenticated relay terminates the client's TLS, so — unlike the allowlist
+relay (byte-faithful) and the tunnel (WebSocket, opaque) — it can and must
+rewrite the headers that would otherwise leak the client back to the origin or
+break through the proxy. The reference set is what
 archive-replay proxies (pywb, wabac.js/replayweb.page) do to keep a proxied
 page working; the table takes the applicable subset and rejects the
 archive-specific rest. `Location` rewriting (VPN-R7) is the first member.
 
-| Header | Replay-proxy behaviour (pywb / wabac.js) | Mode B v2 decision |
+| Header | Replay-proxy behaviour (pywb / wabac.js) | Authenticated relay v2 decision |
 |---|---|---|
-| `Location` | rewritten to the replay URL | **rewrite** to the mode B URL (VPN-R7) |
+| `Location` | rewritten to the replay URL | **rewrite** to the authenticated relay URL (VPN-R7) |
 | `Refresh` | redirect-equivalent | **rewrite** the header; `<meta http-equiv=refresh>` is body-level (v3) |
 | `Content-Location` | set/rewritten for fuzzy matches | **drop** (no archive/fuzzy semantics) |
 | `Link` (preload/preconnect/dns-prefetch) | Memento links added | **strip** the origin hints — they point the client at the origin |
 | `Alt-Svc` | — | **strip** (VPN-R8) |
 | `Set-Cookie` `Domain`/`Path` | rewritten by the cookie tracker | **rewrite** `Domain` to the proxy host and prefix `Path`, so auth cookies attach through the proxy |
 | `Content-Security-Policy` (+ `-Report-Only`) | rewritten / hardened (replay adds its own) | **strip** — origin-locked CSP blocks proxied subresources and its `report-uri` leaks to the origin |
-| `X-Frame-Options`, CSP `frame-ancestors` | removed so replay can frame | **strip** (embedding through the proxy is a mode B use) |
+| `X-Frame-Options`, CSP `frame-ancestors` | removed so replay can frame | **strip** (embedding through the proxy is an authenticated-relay use) |
 | `Strict-Transport-Security` | — | **strip** — pins the ORIGIN host; wrong and harmful through the proxy |
 | `Cross-Origin-Opener-Policy` / `-Embedder-Policy` / `-Resource-Policy` | CORP forced to `cross-origin` in proxy mode | **strip** COOP/COEP; **set** CORP `cross-origin` (matches pywb's proxy mode) |
 | `Service-Worker-Allowed` | — | **strip** (scope is origin-relative; SW scripts are body-level, v3) |
 | `Access-Control-Allow-Origin` / `-Credentials` / `-Methods` / `-Headers` | `add_access_control_headers` in proxy mode | **handle**: echo the request `Origin`, add `Vary: Origin`, allow credentials |
 | `Content-Encoding` / `Transfer-Encoding` | forced decompression when the client cannot accept the encoding (`is_content_rw`) | **no change** for pass-through (ReverseProxy already decodes/streams); **forced decompression** only once body rewriting lands (v3) |
 | `WWW-Authenticate` / `Proxy-Authenticate` | deliberately NOT rewritten | **pass through** |
-| HTML `href`/`src`/`srcset`/`action`/`poster`, CSS `url()`/`@import`, JS `import()`/string literals, `<base href>`, `document.write`, importmaps | the wabac.js/pywb body rewriter | **deferred to v3** (VPN-R54) — inert for JSON LLM APIs, needed only if mode B ever serves HTML |
+| HTML `href`/`src`/`srcset`/`action`/`poster`, CSS `url()`/`@import`, JS `import()`/string literals, `<base href>`, `document.write`, importmaps | the wabac.js/pywb body rewriter | **deferred to v3** (VPN-R54) — inert for JSON LLM APIs, needed only if the authenticated relay ever serves HTML |
 
-- **VPN-R53** — Mode B MUST apply the header-level set above. It MUST NOT apply
+- **VPN-R53** — The authenticated relay MUST apply the header-level set above. It MUST NOT apply
   archive-replay semantics (Memento `Link`, fuzzy-match `Content-Location`,
   replay banners): this is a proxy, not a replay.
 - **VPN-R54 (v3)** — Body-level URL rewriting (HTML/CSS/JS) is deferred; it is
-  required only if mode B ever serves HTML, and it needs forced decompression
+  required only if the authenticated relay ever serves HTML, and it needs forced decompression
   (the pywb `is_content_rw` precedent) to see decoded text.
 
-### Mode B is a BRD-scope change (authentication, not tenancy)
+### The authenticated relay is a BRD-scope change (authentication, not tenancy)
 
-Mode B introduces a path-capability UUID and **one operator credential**,
+The authenticated relay introduces a path-capability UUID and **one operator credential**,
 touching NFR-5 ("no rate limiting, tenancy, or hardening"); rate limiting
 itself is deferred to v3 (§16). It does **not** introduce accounts or tenants,
 so the Stakeholders "no accounts, no tenants, no trust boundaries" sentence
 stays true. It is still a deliberate scope expansion (the current proxy is
-unauthenticated), argued here; accepting mode B means amending NFR-5 when the
-mode ships (v3). Until then the BRD stands.
+unauthenticated), argued here; accepting the authenticated relay means amending NFR-5 when the
+authenticated relay ships (v3). Until then the BRD stands.
 
-## 5. Mode D — the tunnelled VPN (CONNECT-over-WebSocket)
+## 5. WebSocket tunnel (CONNECT-over-WebSocket)
 
 ### 5.1 Transport
 
@@ -240,15 +249,15 @@ mode ships (v3). Until then the BRD stands.
   method (VPN verdict above).
   *Transport revision (proposed): [d077](d077-ssl-vpn-transport-ladder.md)
   refines this requirement — v2's tunnel transport remains this `wss://`
-  shape (its Mode D), with Mode C (h2 POST) preferred when ALPN offers it
-  and Mode E (h1.1 POST) as the stop-and-wait floor for upgrade-stripping
-  gateways, the mode chosen by protocol negotiation rather than by path.
+  shape (its WebSocket tunnel), with the h2-POST tunnel preferred when ALPN offers it
+  and the h1.1-POST tunnel as the stop-and-wait floor for upgrade-stripping
+  gateways, the transport chosen by protocol negotiation rather than by path.
   All non-transport requirements stand. R11 binds until d077 is accepted.*
 - **VPN-R12** — The server MUST authenticate the tunnel before relaying
   anything. The credential rides an `Authorization` header on the WebSocket
   handshake itself — the handshake is HTTPS, so the credential is protected
   in transit, and an upgrade without valid credentials is rejected with
-  mode A's camouflage 404 (VPN-R34) before any `101`. There is no in-protocol
+  the allowlist relay's camouflage 404 (VPN-R34) before any `101`. There is no in-protocol
   auth exchange in v2: the client-side proxy is ours, so the browser-client
   and first-frame-auth variants are deliberately out (§12). This also
   satisfies VPN-R39's cheap-rejection rule for the tunnel — an
@@ -314,7 +323,7 @@ mode ships (v3). Until then the BRD stands.
   form) MUST be rejected with `CONNECT_ERR`: resolution and pinning stay
   server-side, and there is no second path that dials an unchecked address.
 
-## 6. Tunnel client (Modes C–E) — the localhost proxy
+## 6. Tunnel client (tunnel transports) — the localhost proxy
 
 - **VPN-R23** — The client is the same binary in a client mode (`-mode client`
   / a `llm-reverse-proxy-client` entry point — one static Go artifact, same
@@ -346,11 +355,11 @@ should present safe, valid certificates" resolves into two independent
 certificates, not one: the **tunnel** leg presents Funnel's valid Let's Encrypt
 `*.ts.net` certificate (so no custom trust anchor), and the **payload**
 presents the *target's own* valid certificate, validated end-to-end by the
-client because the proxy never terminates it. A tunnel mode that presented a
+client because the proxy never terminates it. A tunnel transport that presented a
 proxy-minted certificate for the target would be a MITM and would violate
 VPN-R29. The table below is per-leg for that reason.
 
-| Leg | Mode A | Mode B | Modes C–E (tunnel) |
+| Leg | Allowlist relay | Authenticated relay | Tunnel transports |
 |---|---|---|---|
 | client → Funnel edge | TLS, `*.ts.net` (public CA) | TLS, `*.ts.net` | TLS, `*.ts.net` |
 | Funnel edge → proxy (loopback) | plaintext HTTP | plaintext HTTP | plaintext HTTP |
@@ -358,21 +367,22 @@ VPN-R29. The table below is per-leg for that reason.
 | client validates | Funnel cert | Funnel cert | Funnel cert **and** the target's real cert |
 | client trusts the proxy? | yes | yes | **no** |
 
-- **VPN-R28** — The tunnel modes (C–E) MUST NOT require the client to install any CA or trust
+- **VPN-R28** — The tunnel transports MUST NOT require the client to install any CA or trust
   anchor beyond the public one Funnel already presents. The tunnel leg uses
   Funnel's Let's Encrypt certificate.
-- **VPN-R29** — The tunnel modes (C–E) MUST preserve end-to-end certificate validation: a
+- **VPN-R29** — The tunnel transports MUST preserve end-to-end certificate validation: a
   target with an invalid certificate (e.g. `self-signed.badssl.com`) MUST fail
   **at the client**, not at the proxy. This is the acceptance test that proves
   no MITM.
-- **VPN-R30** — The proxy MUST NOT need to terminate TLS for any mode. The
+- **VPN-R30** — The proxy MUST NOT need to terminate TLS for any transport. The
   current "no TLS termination" property of llm-reverse-proxy
   (README) is preserved by all of them.
 
 ## 8. Authentication and secrets
 
-- **VPN-R31** — Modes B–E MUST authenticate the *operator* (one credential,
-  shared by the B and tunnel namespaces alike) and, in mode B, the `${prefix}` path capability;
+- **VPN-R31** — The added transports MUST authenticate the *operator* (one
+  credential, shared by the authenticated relay and tunnel namespaces alike)
+  and, in the authenticated relay, the `${prefix}` path capability;
   never the upstream. Credentials are the proxy's own, distinct from provider
   keys (which stay client-owned and are never injected).
   *Auth revision (proposed): [d078](d078-ssl-vpn-operator-keys.md) replaces
@@ -383,31 +393,33 @@ VPN-R29. The table below is per-leg for that reason.
   binds until d078 is accepted.*
   *Superseded for the tunnel namespace by d104* — the tunnel's operator
   credential becomes mutual HMAC proofs (relay-to-exit / exit-to-relay,
-  d104), not a shared bearer on the wire; mode B's gateway credential
+  d104), not a shared bearer on the wire; the authenticated relay's gateway credential
   (d091) is untouched.
 - **VPN-R32** — Secrets MUST arrive through the one explicit chain
   (`./lib/environment.sh`, docs/d046) and be read as plain env. This is a
   real departure from llm-reverse-proxy's current "holds no secrets, no vault
-  loader, no env allowlist" stance (d031/d052): accepting B–E means adding the
+  loader, no env allowlist" stance (d031/d052): accepting the added transports means adding the
   proxy to the env-consumer set, with the same allowlist discipline as every
   other runner. The record MUST NOT pretend the stance survives.
 - **VPN-R33** — Credential comparison MUST be constant-time; credentials MUST
   NOT appear in logs, the Combined Log Format line, or error bodies.
-- **VPN-R34** — An unauthenticated request to the B or tunnel namespace — wrong
+- **VPN-R34** — An unauthenticated request to the authenticated-relay or tunnel namespace — wrong
   prefix, missing credential, an unauthenticated tunnel upgrade, or any mix —
-  MUST answer mode A's camouflage 404: the identical plain-text body, status,
+  MUST answer the allowlist relay's camouflage 404: the identical plain-text body, status,
   and Content-Type (VPN-R1). There is deliberately no 401: a uniform 401
   confirms that a second service lives behind the front, which is exactly the
   existence leak the 404 camouflage exists to deny. Uniformity still does the
-  anti-oracle work — A, B, and the tunnel are indistinguishable from outside, and the
-  namespace boundary is invisible (a B-shaped path with a wrong prefix is
-  byte-identical to mode A garbage). Supersedes the draft review's 401
+  anti-oracle work — the allowlist relay, authenticated relay, and tunnel are
+  indistinguishable from outside, and the namespace boundary is invisible (an
+  authenticated-relay-shaped path with a wrong prefix is byte-identical to the
+  allowlist relay's garbage). Supersedes the draft review's 401
   resolution (§15).
 
 ## 9. Egress policy (SSRF and abuse)
 
-Mode B and the tunnel modes accept arbitrary targets by design, so the policy is the security
-boundary that deny-by-absence used to be for mode A.
+The authenticated relay and the tunnel transports accept arbitrary targets by
+design, so the policy is the security boundary that deny-by-absence used to be
+for the allowlist relay.
 
 - **VPN-R35** — Default-deny egress: loopback (`127.0.0.0/8`, `::1`),
   link-local (`169.254.0.0/16`, `fe80::/10`), cloud metadata
@@ -418,8 +430,9 @@ boundary that deny-by-absence used to be for mode A.
   every resolved address; the dial uses a validated address, not a fresh
   lookup; redirects/rebinds MUST NOT be able to escape the validated set.
 - **VPN-R37** — Ports MUST be policy-controlled (default: 80/443). Both
-  `${schema}` values are allowed: `http` is not downgrade-gated, because mode
-  B is authenticated (VPN-R5) and the client→Funnel leg is TLS in every case.
+  `${schema}` values are allowed: `http` is not downgrade-gated, because the
+  authenticated relay authenticates the operator (VPN-R5) and the client→Funnel
+  leg is TLS in every case.
 - **VPN-R38** — The policy MUST be data, not code: the same generated-table
   discipline as `allowHosts` (a reviewed config diff, not a code path).
 - **VPN-R39** — Abuse bounds that are not rate limiting: the Funnel front is
@@ -432,18 +445,20 @@ boundary that deny-by-absence used to be for mode A.
 ## 10. Interaction with existing invariants
 
 - **VPN-R40** — The proxy still MUST NOT store or inject provider credentials
-  in any mode. The tunnel strengthens this (payload is opaque); modes A/B forward
-  client-supplied keys as-is.
-- **VPN-R41** — Deny-by-absence (d047) remains mode A's contract; modes B–E
-  replace it with authenticated egress policy for their own namespaces only.
-  A single config MUST be able to run A-only (today), A+B, A+D, or A+B+D.
-- **VPN-R42** — All modes share the one Funnel front / one listener; mode
-  dispatch is by PATH for namespaces (A's `/<host>/…`, B's
+  in any transport. The tunnel strengthens this (payload is opaque); the
+  allowlist and authenticated relays forward client-supplied keys as-is.
+- **VPN-R41** — Deny-by-absence (d047) remains the allowlist relay's contract;
+  the added transports replace it with authenticated egress policy for their
+  own namespaces only. A single config MUST be able to run allowlist-only
+  (today), allowlist+authenticated, allowlist+WebSocket, or all three
+  namespaces.
+- **VPN-R42** — All transports share the one Funnel front / one listener; transport
+  dispatch is by PATH for namespaces (the allowlist relay's `/<host>/…`, the authenticated relay's
   `/<prefix>/<schema>/<host><path>`, the tunnel's `/<prefix>/vpn` — which
-  serves modes C–E, separated from each other by protocol negotiation, not by
+  serves tunnel transports, separated from each other by protocol negotiation, not by
   path: d077 §4). No new hostname, DNS record, or certificate is required. The port model (proxy owns :8080,
   llama-swap on 8101) is unchanged.
-- **VPN-R43** — Mode B MUST use the existing single Funnel host: its only
+- **VPN-R43** — The authenticated relay MUST use the existing single Funnel host: its only
   selector is the `${prefix}` path capability, so no wildcard DNS, wildcard
   certificate, or per-tenant hostname is required. The grammar fits inside the
   route the Funnel already serves to :8080 (docs/d027).
@@ -453,7 +468,7 @@ boundary that deny-by-absence used to be for mode A.
   same chain step (VPN-R32), and never committed. Because it is part of
   authentication, the proxy's own access log MUST redact it (the request still
   reaches the Funnel's edge logs, which are capability-bearing by the same
-  argument as d070). The tunnel's `${prefix}` (modes C–E) MUST satisfy the same rules with its
+  argument as d070). The tunnel's `${prefix}` (tunnel transports) MUST satisfy the same rules with its
   own distinct key.
   **Reversed in part by d085** — the `${prefix}` capability-key clause and the
   log-redaction duty died with the secret; env-only credential handling
@@ -464,10 +479,10 @@ boundary that deny-by-absence used to be for mode A.
 - Not IPsec, not an IP-layer tunnel, not a TUN device, not an exit-node
   replacement (Tailscale already owns that).
 - Not a UDP tunnel in v2 (assessment in §17).
-- Not a multi-tenant SaaS control plane: mode B uses one operator credential
+- Not a multi-tenant SaaS control plane: the authenticated relay uses one operator credential
   and one path capability, like every other credential in this repo — no
   accounts, no signup.
-- Not a general web proxy for unauthenticated traffic: modes B–E are
+- Not a general web proxy for unauthenticated traffic: the added transports are
   authenticated-only, full stop.
 - Not a way to make the proxy hold provider keys: it never does.
 
@@ -489,7 +504,7 @@ boundary that deny-by-absence used to be for mode A.
   not compose with the existing Funnel front.
 - **One `wss` per CONNECT vs a muxed tunnel.** Both viable; VPN-R17 picks
   per-CONNECT for v1 and reserves a stream id for the mux.
-- **Reusing the Funnel id as the mode B or tunnel prefix or credential.** Rejected —
+- **Reusing the Funnel id as the authenticated relay or tunnel prefix or credential.** Rejected —
   the id is already a semi-credential in the base URL (d070) and is shared by
   all clients; the prefix MUST be its own capability UUID (VPN-R44) and the
   credential a distinct, rotatable secret.
@@ -518,7 +533,7 @@ boundary that deny-by-absence used to be for mode A.
   buffering for a tunneled LLM stream against a direct one; confirm the
   `FlushInterval: -1` cadence survives WebSocket framing, and record the
   numbers. There is no performance bar — feasibility, not speed, is the v2
-  requirement (§14) — and mode A is the fallback if the numbers are terrible.
+  requirement (§14) — and the allowlist relay is the fallback if the numbers are terrible.
 - **S3 — 101 hijack through `loggingResponseWriter`.** Prove the wrapper
   lets `ReverseProxy` hijack the connection (VPN-R13) on the pinned Go
   version.
@@ -534,27 +549,28 @@ boundary that deny-by-absence used to be for mode A.
 
 ## 14. Acceptance criteria (how we know it works)
 
-Acceptance here is the feasibility and correctness of the v2 shape (A + D),
-not a performance bar: S2's numbers are recorded as data, and if tunneled
-performance proves terrible in practice, mode A remains the fallback
-transport for the same traffic (VPN-R3 keeps it working).
+Acceptance here is the feasibility and correctness of the v2 shape (the
+allowlist relay + the WebSocket tunnel), not a performance bar: S2's numbers
+are recorded as data, and if tunneled performance proves terrible in practice,
+the allowlist relay remains the fallback transport for the same traffic (VPN-R3
+keeps it working).
 
-Mode A (regression): the llm-reverse-proxy smoke test stays green, including
+Allowlist relay (regression): the llm-reverse-proxy smoke test stays green, including
 the 404 camouflage negatives (VPN-R3).
 
-Mode B (v3 — acceptance applies when the mode ships):
-- no credential or wrong prefix → mode A's camouflage 404, byte-identical to
-  mode A garbage (VPN-R34);
+Authenticated relay (v3 — acceptance applies when the authenticated relay ships):
+- no credential or wrong prefix → the allowlist relay's camouflage 404, byte-identical to
+  the allowlist relay's garbage (VPN-R34);
 - `169.254.169.254`, `127.0.0.1`, RFC 1918, and a rebinding name are
   refused (VPN-R35/36);
-- `http` to a public host is allowed (authenticated mode B) and reaches
+- `http` to a public host is allowed (the authenticated relay) and reaches
   the upstream; `https` verifies the upstream certificate and fails closed
   on an invalid one (VPN-R55); the request log records which scheme was
   used;
 - `Alt-Svc` absent from the response; `Proxy-Authorization` never reaches
   the upstream (VPN-R6/8).
 
-Mode D (tunnel; Modes C/E share this client surface — d077 §5):
+WebSocket tunnel (all tunnel transports share this client surface — d077 §5):
 - `curl -x http://127.0.0.1:<port> https://api.anthropic.com/v1/models`
   returns the provider's response and
   `openssl s_client -proxy 127.0.0.1:<port> -connect api.anthropic.com:443`
@@ -575,9 +591,9 @@ Mode D (tunnel; Modes C/E share this client surface — d077 §5):
 Resolved in the v2 draft review (the requirements above are the record; the
 first bullet is superseded by this revision, below):
 
-- **Unauthenticated B–E answers 401** — superseded: the camouflage 404 won
+- **Unauthenticated requests to the added transports answer 401** — superseded: the camouflage 404 won
   (VPN-R34).
-- **Mode B rewrites `Location`** into its own proxied URLs, and takes the
+- **The authenticated relay rewrites `Location`** into its own proxied URLs, and takes the
   applicable replay-proxy compatibility rewrites (§4, VPN-R53).
 - **v2 is unmuxed** — one `wss` per `CONNECT` (VPN-R17); the mux is v3.
 - **The client proxy lives in `llm-reverse-proxy/`** for v2 — same project,
@@ -585,11 +601,12 @@ first bullet is superseded by this revision, below):
 
 Resolved in this revision:
 
-- **Uniform camouflage 404 for unauthenticated B–E** — one byte-string for
+- **Uniform camouflage 404 for the added transports** — one byte-string for
   the whole front; a uniform 401 would confirm that a second service lives
   behind it (VPN-R34).
-- **Mode B is deferred to v3** — v2 is A + D, so the first implementation is
-  one protocol and two roles (§2, §18).
+- **The authenticated relay is deferred to v3** — v2 is the allowlist relay +
+  the WebSocket tunnel, so the first implementation is one protocol and two
+  roles (§2, §18).
 - **The operator credential is a shared-secret bearer token** — mTLS deferred
   as unwieldy, not impossible (§4, §12). **Superseded by d104** — the
   tunnel credential is now mutual HMAC proofs, not a shared bearer.
@@ -608,25 +625,25 @@ Resolved in this revision:
 - **Pre-resolved targets are detectable and rejected** — a literal-IP
   `CONNECT` target fails closed (VPN-R22).
 - **Acceptance is feasibility, not performance** — S2's numbers are data; if
-  they are terrible, mode A is the fallback (§14).
+  they are terrible, the allowlist relay is the fallback (§14).
 
 Still open:
 
 - Does the per-CONNECT model hold up under a coding agent's many short
-  connections? Measured by S2, judged with mode A as the fallback (§14); the
+  connections? Measured by S2, judged with the allowlist relay as the fallback (§14); the
   muxed tunnel (VPN-R17) is the v3 answer if it does not.
-- Body-level URL rewriting (§4, VPN-R54) — needed only if mode B ever serves
+- Body-level URL rewriting (§4, VPN-R54) — needed only if the authenticated relay ever serves
   HTML; the header set is enough for the LLM-API use.
 - The rename (§18) — decided later, not in this record.
 
 ## 16. Deferred to v3: rate limiting and abuse budgets
 
-**Version note:** delivery generations: v2 = mode A (shipped, d047) + mode D
-(this record's implementation target); v3 = mode B plus everything deferred
+**Version note:** delivery generations: v2 = the allowlist relay (shipped, d047) + the WebSocket tunnel
+(this record's implementation target); v3 = the authenticated relay plus everything deferred
 here (mux, body rewriting, rate limiting, UDP). Tunnel-protocol versions are
 named explicitly in VPN-R17.
 
-v2 does **not** rate-limit the tunnel modes C–E (v3's mode B is born the same way). The
+v2 does **not** rate-limit the tunnel transports (v3's authenticated relay is born the same way). The
 public front is authenticated, the model is single-user economy (NFR-5), and
 no throughput/latency baseline
 exists until S2 (streaming through the tunnel) is measured — shipping an
@@ -636,7 +653,7 @@ frame size, idle timeout — VPN-R39), not throughput quotas.
 
 The deferred requirements, recorded so they are not lost:
 
-- **VPN-R45 (v3)** — Mode B MUST be rate-limited on requests and bytes (one
+- **VPN-R45 (v3)** — The authenticated relay MUST be rate-limited on requests and bytes (one
   global budget for the operator credential).
 - **VPN-R46 (v3)** — Authenticated traffic MUST be capped on concurrent
   tunnels, streams per tunnel, and connect rate.
@@ -714,9 +731,10 @@ appears.
 ## 18. Scope and naming
 
 Everything stays in `llm-reverse-proxy/` — same project, same folder, one
-protocol with two roles (VPN-R23): v2 adds the tunnel's client role; v3 adds mode
-B. But the module's name no longer describes it. A host allowlist relay, an
-authenticated generic relay, and a CONNECT-over-WebSocket tunnel with a
+protocol with two roles (VPN-R23): v2 adds the tunnel's client role; v3 adds
+the authenticated relay. But the module's name no longer describes it. A host
+allowlist relay, an authenticated generic relay, and a
+CONNECT-over-WebSocket tunnel with a
 localhost client proxy are a small SSL VPN, not "a reverse proxy". A rename is
 expected when the work lands (candidates: a gateway/tunnel name, not a proxy
 name); it is deliberately not decided here so the v2 MVP ships under the
@@ -725,19 +743,19 @@ existing name and the docs/links churn once.
 ## Consequences
 
 - If accepted, this record's requirement IDs move into the BRD as `FR-S*`
-  rows. The tunnel modes (C–E, v2) update the "no TLS termination" note to "the proxy never
+  rows. The tunnel transports (v2) update the "no TLS termination" note to "the proxy never
   terminates client TLS — the Funnel edge does, for the tunnel leg, and the
-  payload TLS is end-to-end". Mode B (v3) adds NFR-5's authentication
+  payload TLS is end-to-end". The authenticated relay (v3) adds NFR-5's authentication
   exception when it is accepted for delivery, and keeps the Stakeholders "no
   tenants" sentence as written.
 - llm-reverse-proxy's dependency-free, single-concern shape (d031 F1) is the
-  property at risk. Deferring mode B to v3 halves the first increment, but a
+  property at risk. Deferring the authenticated relay to v3 halves the first increment, but a
   tunnel protocol and a client role are still more than one router. The
   mitigation this record proposes is **one protocol, two roles, one folder**,
-  with the mode split in config and the tunnel protocol in its own file — but
+  with the transport split in config and the tunnel protocol in its own file — but
   the decision to grow the binary at all is exactly what is being asked here.
-- The egress policy (§9) becomes the new security surface. Mode A's
-  deny-by-absence is untouched, and the unauthenticated face of B–E is the
+- The egress policy (§9) becomes the new security surface. The allowlist relay's
+  deny-by-absence is untouched, and the unauthenticated face of the added transports is the
   same 404 (VPN-R34); what changes is that an authenticated arbitrary-egress
   namespace exists behind the front, bounded by §9 instead of by
   deny-by-absence.

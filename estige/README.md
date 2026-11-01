@@ -16,18 +16,20 @@ pi-coding-agent / opencode were pointed at it through `estige/`;
 estige is the substrate llama-swap itself uses internally
 (`httputil.ReverseProxy`), extracted and stripped of everything else.
 
-> **Expansion (docs/d073, mode family revised by docs/d077):** modes A
-> (today's host allowlist), B (authenticated generic relay — deferred to
-> v3), C (h2 streaming POST — default-on since d084; the `-modes`/`MODES`
-> knob retired by d093, the offer is the constant full ladder), D
-> (`CONNECT`-over-WebSocket tunnel plus a localhost CONNECT/SOCKS5 relay,
-> so clients validate the target's real certificate end-to-end and never
-> trust the proxy — the deployed v2 shape), E (h1.1 per-exchange windowing —
-> the floor for upgrade-stripping gateways; built with no spike ahead of it,
-> d081's L4 amendment, and part of the default offer `cde`). The
-> requirements are d073's; negotiation, the framing contract, and adoption
-> gates (spikes) are d077's; L4/L1 now characterize E's provisional
-> constants after the fact, they gate nothing (d081).
+> **Expansion (docs/d073; transports and names in docs/d077/d105):** the
+> allowlist relay (today's host-allowlist front), the authenticated relay
+> (generic prefix-route relay — deferred to v3), and the tunnel transports:
+> the h2-POST tunnel (HTTP/2 streaming POST — default-on since d084; the
+> `-modes`/`MODES` knob retired by d093, the offer is the constant full
+> ladder), the WebSocket tunnel (`CONNECT`-over-WebSocket plus a localhost
+> CONNECT/SOCKS5 relay, so clients validate the target's real certificate
+> end-to-end and never trust the proxy — the deployed v2 shape), and the
+> h1.1-POST tunnel (per-exchange windowing — the floor for
+> upgrade-stripping gateways; built with no spike ahead of it, d081's L4
+> amendment, and part of the default offer `cde`). The requirements are
+> d073's; negotiation, framing, and adoption gates are d077's; the names are
+> d105's. L4/L1 characterize the h1.1-POST tunnel's provisional constants
+> after the fact; they gate nothing (d081).
 
 Reference code: upstream llama-swap — github.com/mostlygeek/llama-swap
 (`internal/router/peer.go`, `internal/process/process_command.go`; docs tree
@@ -154,7 +156,7 @@ per docs/d088 the two deployments are named by network position, not
 protocol role: the **exit node** has free, unblocked internet plus tsnet
 connectivity to the actual LLM endpoints, and traffic exits the local
 environment through it; the **relay node** (the loopback CONNECT/SOCKS5
-proxy feeding the tunnel, modes C–E; docs/d073 §7) runs locally on a
+proxy feeding the tunnel transports; docs/d073 §7) runs locally on a
 restricted-internet environment, without direct tsnet to the endpoints.
 The code speaks the same names (d088 phase 2 landed). HOST:
 the container branch runs in HOST NETWORK mode; the native branch execs
@@ -169,14 +171,16 @@ llama-swap's port model) — host networking is what makes the loopback
 `CONFIG`). Relay node: NO config file — `VPN_TUNNEL_URL` (http(s):// or
 ws(s):// — the URL's honest wire form, normalized to wss internally,
 docs/d090; the path is the Funnel mount plus the fixed `/vpn` —
-docs/d085) and `VPN_OPERATOR_TOKEN` are its core surface, with `VPN_CLIENT_LABEL` optional (defaults to the hostname)
-and an OPTIONAL chain proxy via the conventional variables (`SOCKS_SERVER`
+docs/d085) and `VPN_OPERATOR_TOKEN` are its core surface, with
+`VPN_CLIENT_LABEL` optional (defaults to the hostname) and an OPTIONAL chain
+proxy via the conventional variables (`SOCKS_SERVER`
 beats a scheme-matched `http_proxy`/`https_proxy`, which beats `ALL_PROXY`;
 `SOCKS_VERSION` must be `5`; `NO_PROXY` deliberately not read — docs/d094:
 the chain is ONE blind TCP tunnel under the tunnel leg only, `Transport.Proxy`
 stays nil, provider requests never touch it),
-the transport ladder rides whole — C → D → E ranked at dial time, no
-`-modes`/`MODES` override (docs/d093) — and `PROXY_LISTEN`/`SOCKS_LISTEN` defaulting to `127.0.0.1:3128`/`1080`;
+the transport ladder rides whole — h2-POST → WebSocket → h1.1-POST ranked at
+dial time, no `-modes`/`MODES` override (docs/d093) — and
+`PROXY_LISTEN`/`SOCKS_LISTEN` defaulting to `127.0.0.1:3128`/`1080`;
 host networking is a requirement there too (the loopback listeners must
 be the HOST's loopback — VPN-R23 forbids exposing them — and the tunnel
 URL needs the host's tailnet routes).
@@ -189,9 +193,10 @@ target — so `./lib/environment.sh ./estige/vpn-relay.sh
 relay itself keeps the host's upstream chain (docs/d094). A relay that is
 not running is started (detached, `--restart=unless-stopped`); an
 unreachable or foreign listener refuses the launch by name. Secrets
-(env-only — VPN-R32/d078; the launchers never load secrets themselves): mode A serving holds none — requests
-must already carry valid provider keys. An armed exit node
-(docs/d084/d085: armed when the env carries the operator keyset) holds the
+(env-only — VPN-R32/d078; the launchers never load secrets themselves): the
+allowlist relay holds none — requests must already carry valid provider keys.
+An armed exit node (docs/d084/d085: armed when the env carries the operator
+keyset) holds the
 keyset (`VPN_OPERATOR_KEYS`), and the relay node holds the operator token
 (`VPN_OPERATOR_TOKEN`) — disjoint since docs/d090, which retired the
 keyset's implicit-`default` merge of the token — and all reach the

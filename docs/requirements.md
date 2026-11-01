@@ -54,21 +54,24 @@ left answering nothing that generation asks (docs/d072).
   docs/d042: requirements / reference / design, plus the `d0XX` decision
   log and archived research).
 
-**Delivered in phases (docs/d073; the tunnel family lettered C/D/E by
-docs/d077):** the three-mode SSL VPN expansion of `estige/` —
-mode A (today's host allowlist), mode B (authenticated generic relay whose
+**Delivered in phases (docs/d073; transport names in docs/d077/d105):**
+the SSL-VPN transport family in `estige/` — the allowlist relay (today's
+host allowlist), the authenticated relay (generic prefix-route relay whose
 `${prefix}` namespace rides the Funnel mount since d085, one operator
-credential, with no tenancy), and the tunnel family — is specified in
-[d073](d073-ssl-vpn-three-modes.md): v2 = mode A + mode D (`CONNECT`-
-over-WebSocket tunnel with a localhost client proxy that validates the
-target's real certificate end-to-end) is delivered, mode C is built and
-default-on since d084, mode E (the h1 exchange floor) is built with no
-spike ahead of it (d081's L4 amendment — L4 demoted to characterization,
-the default offer is `cde`), and mode B is deferred to v3. The tunnel family's operator keys are the bounded principal set of
-[d078](d078-ssl-vpn-operator-keys.md) (the NFR-5 exception); accepting mode
-B (v3) would add one operator credential on top of it without introducing
-tenants. The fuller requirements (`VPN-R*`) live in d073 and this BRD stays
-mode-A-shaped — the d047 allowlist is mode-A-only by decision
+credential, no tenancy), and the tunnel transports (h2-POST, WebSocket,
+h1.1-POST) — is specified in [d073](d073-ssl-vpn-three-modes.md): v2 = the
+allowlist relay + the WebSocket tunnel (`CONNECT`-over-WebSocket with a
+localhost client proxy that validates the target's real certificate
+end-to-end) is delivered; the h2-POST tunnel is built and default-on since
+d084; the h1.1-POST tunnel is built with no spike ahead of it (d081's L4
+amendment — L4 demoted to characterization; the default client offer remains
+the code string `cde`); and the authenticated relay is deferred to v3. The
+tunnel transports' operator keys are the bounded principal set of
+[d078](d078-ssl-vpn-operator-keys.md) (the NFR-5 exception); accepting the
+authenticated relay (v3) would add one operator credential on top of them
+without introducing tenants. The fuller requirements (`VPN-R*`) live in
+d073 and this BRD stays allowlist-shaped — the d047 allowlist is scoped to
+the allowlist relay by decision
 ([d080](d080-forward-proxy-no-host-allowlist.md)).
 
 ## Functional requirements
@@ -96,7 +99,7 @@ mode-A-shaped — the d047 allowlist is mode-A-only by decision
   byte-faithful passthrough (headers, streaming, upstream errors as-is), no
   credential handling, uniform non-distinctive 404s on unknown prefixes,
   RFC 9457 problem details only for failures inside the proxy. *Host
-  allowlist routing (docs/d047 — by decision the only HOST-policy mode,
+  allowlist routing (docs/d047 — by decision the only HOST-policy transport,
   docs/d080): `/<host>/<path>` → scheme://host root, the client carries
   the upstream base path, ~36 owner-set hosts, deny-by-absence for
   everything else; the tunnel/forward-proxy surfaces carry egress policy

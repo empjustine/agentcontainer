@@ -55,8 +55,8 @@ GPU host (local inference only) — two serving processes, one concern each (doc
   its tsnet `tailscale serve` hostname (docs/d070 §2, no loopback alias).
   This is the world-visible face — the tailscale funnel serves the
   `<funnel-id>` route to this port — for this host's own coding agent and
-  for external clients alike; the opt-in tunnel family (modes C–E,
-  docs/d073/d077) shares the port.
+  for external clients alike; the opt-in tunnel transports (h2-POST,
+  WebSocket, h1.1-POST; docs/d073/d077/d105) share the port.
 
 **Port model (all hosts):** ONE front. The tailscale funnel serves the
 whole `<uuid>` route to estige on host port **8080** (normal

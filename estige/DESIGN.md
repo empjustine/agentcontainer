@@ -107,18 +107,19 @@ faithful passthrough; the upstream's own trust decisions are never pre-empted.
 - Hop-by-hop headers (`Connection`, `Transfer-Encoding`, …) are managed per
   RFC by ReverseProxy — this is required for correctness, not a rewrite.
 
-## The three-mode SSL VPN (docs/d073, delivered in phases)
+## The SSL-VPN transport family (docs/d073, delivered in phases)
 
-The requirements for the three-mode SSL VPN grown out of this relay
-— today's allowlist relay, an authenticated generic relay, and a
-`CONNECT`-over-WebSocket tunnel with a localhost CONNECT/SOCKS5 relay — are owned by
+The requirements for the SSL-VPN transport family grew out of this relay —
+today's allowlist relay, an authenticated generic relay, and the tunnel
+transports (h2-POST, WebSocket, and h1.1-POST, with a localhost
+CONNECT/SOCKS5 relay on the client side) — and are owned by
 [d073](../docs/d073-ssl-vpn-three-modes.md), not this file. The feasibility
 verdict there is the load-bearing part for this code: Tailscale Funnel does
 **not** support the HTTP `CONNECT` method as a general tunnel, but it does
 support the WebSocket upgrade (the `httputil.ReverseProxy` path this proxy
 already uses), so the tunnel is `CONNECT`-inside-`wss`. The trust-model
-table in d073 explains why the tunnel (modes C–E) can drop the client's trust in the proxy
-where modes A/B cannot.
+table in d073 explains why the tunnel transports can drop the client's
+trust in the proxy where the allowlist and authenticated relays cannot.
 
 Roles are named by network position, not protocol role (docs/d088): the
 **exit node** (free internet + tsnet to the LLM endpoints,
