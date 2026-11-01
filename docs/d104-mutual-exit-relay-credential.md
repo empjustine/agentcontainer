@@ -386,8 +386,9 @@ artifact remains. The chain step's gate becomes `estige key check` (d095's rewor
 test `tests/check-vpn-relay-chain.sh` is updated by the implementing
 change). The scheme stays namespace-scoped to the tunnel (VPN-R2's
 separation): the allowlist relay is untouched, and the gateway namespace
-(d091) keeps its staged bearer until a separate decision extends proofs
-there.
+(d091, now deprecated) keeps its staged bearer — out of scope here and
+no longer planned anywhere: extending proofs there would be a separate
+decision.
 
 ### Rotation — staged, zero-gap (considered; CLI deferred)
 

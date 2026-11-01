@@ -622,9 +622,28 @@ because the issues above are claims about code and about other projects:
   `_peerToJson` and `node/Node.cpp`'s events,
   Pritunl `clients/clients.py`, `server/instance_com.py`,
   `logger/entry.py`.
-- Not verified: anything about a real deployment's log volume, rotation, or
-  the behaviour of the Funnel edge toward an unknown request header. The
-  last one is the riskiest assumption in the proposal.
+- Verified 2026-11-01 against a **`tailscale serve` front reached over the
+  tailnet** — tsnet-to-tsnet, so the flow exercised was serve, not funnel:
+  an undeclared request header passes **intact** — the proposed
+  `X-Estige-Session: <32 hex>` arrived with name and value unchanged. A Go
+  hop canonicalized sibling header names to MIME title case
+  (`X-Zzz-CaseTest` → `X-Zzz-Casetest`), so consumers compare names
+  case-insensitively, as HTTP already requires; the proposed spelling is
+  already canonical and survives verbatim. The front also **injects**
+  headers of its own: `X-Forwarded-For`/`-Host`/`-Proto` plus, because the
+  visitor was tailnet-authenticated, `Tailscale-Headers-Info` and
+  `Tailscale-User-Login`/`-Name`/`-Profile-Pic`. That identity set is a
+  serve-flow artifact and does not transfer: d073's production topology is
+  the funnel flow with a public-internet visitor, which carries no tailnet
+  identity to attest. The pass-through and the name canonicalization come
+  from the serve proxy the two flows share, so they do transfer. Whatever
+  the flow, the tunnel server ignores every injected header (VPN-R12
+  authenticates; edge courtesy headers are not an input, not even a logged
+  one) and none joins this proposal's field vocabulary.
+- Still not verified: anything about a real deployment's log volume or
+  rotation, and the header set of the **funnel flow itself** — the test
+  visitor arrived over the tailnet carrying a tailnet identity, so the
+  public-internet leg remains untested.
 
 Implementation would have to show: two records per session with matching
 `id`, one record per refusal with a reason, no credential and no query string
@@ -645,7 +664,9 @@ to the exit's on `via=connect`.
 - **Is an undeclared request header an acceptable wire surface?** If the
   header is adopted it becomes part of the tunnel's contract and belongs in
   d077's wire description, not only in the code. The alternative is the
-  CONNECT-payload version bump this record defers.
+  CONNECT-payload version bump this record defers. Pass-through is now
+  verified (see Verification status) — what remains is the adoption
+  decision itself, which also makes it d077's wire surface to describe.
 - **Does the exit need its own health surface?** Not for VPN-R27's letter;
   possibly for symmetry with the relay.
 - **Retention and rotation.** Privoxy ships logging off because a URL log is a
