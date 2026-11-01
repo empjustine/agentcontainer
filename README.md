@@ -135,7 +135,7 @@ agentcontainer/
 │   ├── generate-opencode.mjs            #   → opencode overlay config (provider SINGULAR key; skipped on Termux w/o OPENCODE_CONFIG_DIR)
 │   ├── gen-lib.mjs                      #   → shared generator preamble (pi shaping folded in, d039)
 │   ├── route-probe.mjs                  #   → HTTP route/probe toolkit (renamed peer-probe.mjs, d071; folded out of lib/, d039)
-│   ├── check-routed-artifacts.mjs       #   → the d070 URL-form verifier — committed = canonical, installed = route-form (run.sh + tests share it)
+│   ├── check-canonical-artifacts.mjs    #   → the d070 URL-form verifier — canonical only, over committed artifacts and the installed models.json (run.sh + tests share it)
 │   ├── catalog-facts.mjs                #   → the two catalog fact caches: per-provider (`<id>-facts.json`, d057) + catwalk (lib/, d039) — d072 merged them
 │   ├── hyper-facts.json / verboo-facts.json # → committed facts caches (d057: verboo's is its lineup)
 │   ├── refresh-models-dev.mjs           #   → atomic models.dev catalog refresh (d039)

@@ -97,7 +97,7 @@
 		"llm-local-inference/generate.mjs",
 		"llm-local-inference/model-sizes.mjs",
 		"coding-agent/route-probe.mjs",
-		"coding-agent/check-routed-artifacts.mjs",
+		"coding-agent/check-canonical-artifacts.mjs",
 		"coding-agent/catalog-facts.mjs",
 		"coding-agent/refresh-models-dev.mjs",
 		"coding-agent/gen-lib.mjs",

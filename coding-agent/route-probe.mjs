@@ -18,12 +18,6 @@
  * a direct endpoint bypassing the configured proxy env or to pi/opencode
  * built-in routing.
  *
- * What still derives URLs here is the LEGACY install-time substitution
- * (`providerRouteUrl`, `routeUrlFromCanonical`, docs/d070) and the
- * vault-sourced base list it reads. That is the reverse proxy's remaining
- * client-side dependency, scheduled for removal (docs/d108); nothing in the
- * probe or catalog-fetch path touches it.
- *
  * The canonical "reachable ≠ authenticated" rule (previously pasted in three
  * generators — this header is now the only copy): a 401/403 is what an
  * OpenAI-compatible endpoint returns to any unauthenticated request, and the
@@ -66,15 +60,6 @@ const LIB_DIR =
 const { logWarn } = /** @type {typeof import("../lib/log.mjs")} */ (
 	await import(`${LIB_DIR}/log.mjs`)
 );
-// The v2 host-form route (providerRouteUrl) is derived from the SAME
-// fact-table base URLs the estige allowlist is generated from —
-// one source of truth for "which upstream does this provider sit on"
-// (docs/d047).
-const { PROVIDER_BASE_URLS } =
-	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
-		await import(`${LIB_DIR}/cloud-providers.mjs`)
-	);
-
 // Proxy env is handled by Node itself: NODE_USE_ENV_PROXY=1 (set by
 // lib/node-run.sh and the coding-agent image, docs/d074) makes global fetch()
 // and http/https honor HTTP(S)_PROXY / NO_PROXY natively. The former undici
@@ -85,88 +70,23 @@ const { PROVIDER_BASE_URLS } =
 const REQUEST_TIMEOUT_MS = 8000;
 
 /**
- * The reverse-proxy base URL — the vault-sourced funnel entry point to
- * estige (docs/d027), read from `REVERSE_PROXY_BASE_URLS` in
- * infisical's /inference path (d071 §1; the vault still sets the retired
- * `PEER_BASE_URL(S)` beside it for outside compatibility — nothing here
- * reads that), injected by lib/environment.sh alongside the key it pairs
- * with (REVERSE_PROXY_API_KEY — the base URL and the client-facing bearer
- * are one config unit).
- *
- * LEGACY, and being removed (docs/d108): its ONLY remaining consumer is the
- * install-time route substitution in generate.mjs — the client-side half of
- * the deprecated host-allowlist reverse proxy (mode A). Probes no longer read
- * it; they address canonical upstreams through the environment proxy. When
- * the removal diff lands, this whole family (base list, `providerRouteUrl`,
- * `routeUrlFromCanonical`) goes with the reverse proxy it exists to
- * address.
- *
- * @returns {string} reverse-proxy base URL (first candidate), no trailing
- *   slash
- */
-export function reverseProxyBaseUrl() {
-	// The undefined check IS the emptiness check (an empty array indexes to
-	// undefined), and it is the form noUncheckedIndexedAccess can verify.
-	const first = reverseProxyBaseUrls()[0];
-	if (first === undefined) {
-		throw new Error(
-			"REVERSE_PROXY_BASE_URLS is not set — expected from the vault (infisical /inference, loaded by the explicit chain: ./lib/environment.sh <script>)",
-		);
-	}
-	return first;
-}
-
-/**
- * True when a base entry is safe to string-concatenate into a route. The
- * LITERAL prefix check is the load-bearing half: WHATWG URL parsing
- * normalizes `https:/models.dev/api.json` to the DIRECT upstream
- * `https://models.dev/api.json`, so a degenerate `https:/` base would
- * silently be treated as a proxy base and pass the d070 §5 verifier's
- * prefix check while pointing at the upstream itself.
- * @param {string} base slash-trimmed entry
+ * True when an operator-supplied URL is safe to use verbatim. The LITERAL
+ * prefix check is the load-bearing half: WHATWG URL parsing normalizes
+ * `https:/models.dev/api.json` to the DIRECT upstream
+ * `https://models.dev/api.json`, so a degenerate `https:/` override would
+ * silently become a same-host URL the operator did not write.
+ * @param {string} url trimmed override
  * @returns {boolean}
  */
-function isUsableProxyBase(base) {
-	if (!/^https?:\/\//i.test(base)) {
+function isUsableUpstreamUrl(url) {
+	if (!/^https?:\/\//i.test(url)) {
 		return false;
 	}
 	try {
-		return new URL(base).host !== "";
+		return new URL(url).host !== "";
 	} catch {
 		return false;
 	}
-}
-
-/**
- * All reverse-proxy base URL candidates — reads `REVERSE_PROXY_BASE_URLS`
- * (comma or newline delimited), THE one env this repo reads for the base
- * (d071 §1; a single base is a single-entry list — no singular fallback, and
- * the retired `PEER_BASE_URL(S)` names, still set in the vault for outside
- * compatibility, are never read here). The plural is load-bearing only for
- * the d070 §5 install verifier, which accepts the installed URL under ANY
- * configured base; the substitution itself is under the FIRST entry (d070
- * §4: availability never selects a URL). Unusable entries are dropped with a
- * warning, never repaired (see isUsableProxyBase); if that empties the list,
- * the install-time substitution fails the generation loudly.
- * @returns {string[]} reverse-proxy base URL candidates, no trailing
- *   slashes, empty when the env var is not set
- */
-export function reverseProxyBaseUrls() {
-	return (process.env.REVERSE_PROXY_BASE_URLS || "")
-		.split(/[\n,]/)
-		.map((s) => s.trim().replace(/\/+$/, ""))
-		.filter((raw) => {
-			if (!raw) {
-				return false;
-			}
-			if (isUsableProxyBase(raw)) {
-				return true;
-			}
-			logWarn("base entry dropped — not an absolute http(s) URL with a host", {
-				entry: raw,
-			});
-			return false;
-		});
 }
 
 /**
@@ -196,7 +116,7 @@ export function upstreamCandidates(upstream, pathAndQuery, envOverride) {
 		if (!trimmed) {
 			return [];
 		}
-		if (isUsableProxyBase(trimmed)) {
+		if (isUsableUpstreamUrl(trimmed)) {
 			return [trimmed];
 		}
 		logWarn("relay URL dropped — not an absolute http(s) URL with a host", {
@@ -409,73 +329,6 @@ function normalizedProbeError(err) {
 }
 
 /**
- * The client route for ONE provider on the v2 router (docs/d047):
- * `<base>/<route-name><full-upstream-base-path>`. The first segment is the
- * upstream host the estige allowlist keys on (a DNS name); the
- * upstream's base path rides in the CLIENT's base URL, because the
- * allowlisted value is only scheme://host — that is what lets multi-base
- * hosts (opencode vs opencode-go on opencode.ai, minimax's /anthropic
- * variants) share one allowlist row while each client keeps its own path
- * (docs/d047). The provider's real base URL comes from the fact table (the
- * same lib/cloud-providers.mjs `baseUrl` the proxy's allowlist is generated
- * from AND committed artifacts carry verbatim, docs/d070) — llama-swap's
- * tsnet serve hostname is a fact-table row like any other, so there is no
- * logical-name or loopback exception anywhere in the derivation.
- * @param {string} base reverse-proxy base candidate (no trailing slash
- *   required)
- * @param {string} providerId fact-table provider id
- * @returns {string} e.g. `https://…/<uuid>/hyper.charm.land/v1` (the caller
- *   appends the model path — `/models` for a probe, `/v1/chat/completions`
- *   for a client)
- */
-export function providerRouteUrl(base, providerId) {
-	const upstream = PROVIDER_BASE_URLS[providerId];
-	if (!upstream) {
-		throw new Error(
-			`providerRouteUrl: no fact-table base URL for ${JSON.stringify(providerId)} — the v2 host-form route needs the upstream host (docs/d047)`,
-		);
-	}
-	const u = new URL(upstream);
-	const path = u.pathname.replace(/\/+$/, "");
-	return `${base.replace(/\/+$/, "")}/${u.host}${path}`;
-}
-
-/**
- * The install-time rewrite (docs/d070): a committed CANONICAL upstream URL →
- * the reverse-proxy client route. The canonical URL must be exactly the
- * fact-table upstream (plus an optional client-side suffix such as llama-
- * swap's `/v1`); anything else is an artifact/fact-table disagreement and
- * fails closed rather than emitting a URL that is neither canonical nor
- * routed.
- * @param {string} base reverse-proxy base to substitute under
- * @param {string} providerId fact-table provider id (the artifact's provider
- *   key, already mapped — opencode's `local` maps to `llama-swap`)
- * @param {string} canonicalUrl the committed artifact's provider URL
- * @returns {string} the client route for the same upstream
- * @throws {Error} when the URL is not the fact-table upstream for the id
- */
-export function routeUrlFromCanonical(base, providerId, canonicalUrl) {
-	const upstream = PROVIDER_BASE_URLS[providerId];
-	if (!upstream) {
-		throw new Error(
-			`routeUrlFromCanonical: no fact-table base URL for ${JSON.stringify(providerId)}`,
-		);
-	}
-	if (canonicalUrl.startsWith(`${base}/`)) {
-		throw new Error(
-			`routeUrlFromCanonical: ${JSON.stringify(canonicalUrl)} is already under the configured base ${JSON.stringify(base)} — refusing to substitute twice (docs/d070)`,
-		);
-	}
-	if (!canonicalUrl.startsWith(upstream)) {
-		throw new Error(
-			`routeUrlFromCanonical: ${JSON.stringify(canonicalUrl)} is not the fact-table upstream ${JSON.stringify(upstream)} for ${JSON.stringify(providerId)} — refusing to substitute (docs/d070)`,
-		);
-	}
-	const suffix = canonicalUrl.slice(upstream.length);
-	return `${providerRouteUrl(base, providerId)}${suffix}`;
-}
-
-/**
  * A single endpoint probe result. `usable` is the generator-facing
  * verdict: did the endpoint answer, and may its listing be trusted?
  * @typedef {object} RouteResult
@@ -593,7 +446,7 @@ export async function probeCandidates(candidates, accept) {
 		}
 	}
 	if (failures.length > 0) {
-		logWarn("reverse-proxy base candidates failed", { failures });
+		logWarn("no probe candidate answered", { failures });
 	}
 	return null;
 }

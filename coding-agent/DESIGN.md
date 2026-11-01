@@ -132,28 +132,24 @@ through the environment proxy.
   (stages as functions, documented order). This supersedes d037's process
   split while keeping its per-layer merge verdicts — d037/d033 remain the
   semantic specs for the layers themselves.
-- **Canonical probes, legacy install substitution** (docs/d108 supersedes
-  d063's route half; URL form per docs/d070): committed artifacts carry the
-  fact-table canonical upstream, and probes fetch each provider's canonical
-  `<baseUrl>/models` through the environment proxy (`NODE_USE_ENV_PROXY=1`,
-  docs/d074) — no base URL and no per-provider prefixed route in the probe
-  path. Probes run concurrently (`Promise.allSettled`) and only the LINEUP
-  source is chosen; a thrown probe keeps its provider id so the remaining
-  rows still probe. The deprecated reverse proxy's install-time substitution
-  (first `REVERSE_PROXY_BASE_URLS` entry) still rewrites the installed copy
-  and goes with it in the removal diff.
+- **Canonical URLs everywhere** (docs/d108 supersedes d063's route half;
+  URL form per docs/d070): committed and installed artifacts both carry the
+  fact-table canonical upstream, probes fetch each provider's canonical
+  `<baseUrl>/models`, and both reach the edge through the environment proxy
+  (`NODE_USE_ENV_PROXY=1`, docs/d074) — no base URL, no per-provider
+  prefixed route, and no install-time rewrite anywhere in this folder.
+  Probes run concurrently (`Promise.allSettled`) and only the LINEUP source
+  is chosen; a thrown probe keeps its provider id so the remaining rows still
+  probe.
 - **URL form is verified, not assumed** (docs/d070):
-  `check-routed-artifacts.mjs` is the one detector — `--committed` requires
-  canonical upstreams over the committed artifacts (guarded by
-  `tests/artifact-urls.test.mjs`), `--installed` rejects canonical URLs in
-  the agent dir and is re-run at launch by `run.sh` (exit 94).
-- **Route building is per-provider path-prefix — LEGACY** (docs/d027,
-  deprecated as insecure by docs/d108): cloud routes are
-  `<base>/<providerId>` on the reverse proxy (estige, no credential
-  handling — clients carry the provider's own key); the llama-swap `/v1` +
-  model-id-magic face serves LOCAL GGUF only (`$REVERSE_PROXY_API_KEY`).
-  Both are being removed server-side; clients reach upstreams through the
-  tunnel's proxy env instead (v3 transports, d104 proofs).
+  `check-canonical-artifacts.mjs` is the one detector — canonical upstreams
+  over the committed artifacts (guarded by `tests/artifact-urls.test.mjs`)
+  and re-run at launch over the agent dir by `run.sh` (exit 94), which is
+  what catches a route-form leftover from the reverse-proxy generation.
+- **Route building is gone** (docs/d027, removed as insecure by docs/d108):
+  cloud routes were `<base>/<upstream-host>` on the reverse proxy; clients
+  reach upstreams through the tunnel's proxy env instead (v3 transports, d104
+  proofs). What remains on the estige side is the server removal diff.
 - **Scoped models, not generated catalogs**: pi's own model catalog is used
   (`pi update --models`); providers are re-routed via `baseUrl` overrides only.
   The retired free-tier pipeline's decisions are distilled in

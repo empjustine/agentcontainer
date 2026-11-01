@@ -25,7 +25,7 @@
 		"coding-agent/refresh-models-dev.mjs",
 		"coding-agent/catalog-facts.mjs",
 		"coding-agent/route-probe.mjs",
-		"coding-agent/check-routed-artifacts.mjs",
+		"coding-agent/check-canonical-artifacts.mjs",
 		// git/ farm tooling: every script the git/*.sh shims run (git-lib
 		// stays a project file — the tools import it)
 		"git/audit.mjs",

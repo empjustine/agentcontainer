@@ -19,9 +19,6 @@ import { fileURLToPath } from "node:url";
 
 import {
 	bearerHeaders,
-	reverseProxyBaseUrl,
-	reverseProxyBaseUrls,
-	providerRouteUrl,
 	probeCandidates,
 	probeEndpoint,
 } from "./route-probe.mjs";
@@ -49,14 +46,7 @@ const cloudProviders =
 
 export const { logError, logInfo, logWarn, setLogTool } = logging;
 export const { writeArtifact, writeJsonArtifact } = artifact;
-export {
-	bearerHeaders,
-	reverseProxyBaseUrl,
-	reverseProxyBaseUrls,
-	providerRouteUrl,
-	probeCandidates,
-	probeEndpoint,
-};
+export { bearerHeaders, probeCandidates, probeEndpoint };
 export const {
 	PI_NATIVE_CLOUD_IDS,
 	providerFacts,

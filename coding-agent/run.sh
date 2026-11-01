@@ -230,15 +230,16 @@ fi
 	log_die 94 "no settings.json in the agent dir — run ./generate.sh first" agentDir="$agent_dir"
 [ -f "$agent_dir/models.json" ] ||
 	log_die 94 "no models.json in the agent dir — run ./generate.sh first (or the root ./generate.sh)" agentDir="$agent_dir"
-# d070 §5: the installed file must be ROUTE-form — a provider URL carrying a
-# fact-table upstream means pi would talk to upstream directly, bypassing
-# the proxy this fleet routes through (docs/d063). generate verified this at
-# install; re-check at launch because the agent dir is host state a stale or
-# hand-edited copy can sit in, and the fix is always the same: regenerate.
+# The installed file must carry the fact-table upstreams (docs/d070) — the
+# canonical form generation emits. What that catches now is a leftover from an
+# older reverse-proxy generation: a route-form URL there points at a proxy
+# this fleet no longer runs (docs/d108). Re-check at launch because the agent
+# dir is host state a stale or hand-edited copy can sit in, and the fix is
+# always the same: regenerate.
 # shellcheck source-path=SCRIPTDIR source=../lib/node-run.sh
 . "$SCRIPT_DIR/../lib/node-run.sh"
-if ! node_run "$SCRIPT_DIR/check-routed-artifacts.mjs" --installed "$agent_dir/models.json" >/dev/null; then
-	log_die 94 "installed models.json carries canonical provider URLs — run ./generate.sh (docs/d070)" agentDir="$agent_dir"
+if ! node_run "$SCRIPT_DIR/check-canonical-artifacts.mjs" "$agent_dir/models.json" >/dev/null; then
+	log_die 94 "installed models.json does not carry canonical provider URLs — run ./generate.sh (docs/d108)" agentDir="$agent_dir"
 fi
 # mcp.json is required even though pi runs without it: "every environment has
 # the committed servers" is the check's whole value, and the documented opt-out

@@ -23,11 +23,10 @@
  *     lib/environment.sh and forwards the vault env through the workload_env
  *     allowlist).
  *
- * Probes and catalog fetches address each upstream's canonical URL and reach
- * the edge through the environment proxy (NODE_USE_ENV_PROXY + HTTP(S)_PROXY,
- * docs/d074/d108) — no base URL is involved. The install-time substitution
- * is the one remaining consumer of the vault-sourced $REVERSE_PROXY_BASE_URLS
- * (the legacy reverse proxy, docs/d070/d108).
+ * Probes, catalog fetches, and the artifacts themselves all address each
+ * upstream's canonical URL and reach the edge through the environment proxy
+ * (NODE_USE_ENV_PROXY + HTTP(S)_PROXY, docs/d074/d108) — no base URL is
+ * involved anywhere in generation or installation.
  * @see route-probe.mjs for the probe/candidate plumbing.
  *
  * Generators, one per coding agent (the broad BY-AGENT merge that supersedes
@@ -62,16 +61,10 @@
  *                    mounts rw into the sandbox (docs/d065). The install hits
  *                    BOTH this host dir and the committed opencode.jsonc;
  *                    Termux skips the opencode stage unless this is set
- *   REVERSE_PROXY_BASE_URLS  required ONLY for the legacy install-time
- *                    route substitution (docs/d070 §3/§7, deprecated by
- *                    docs/d108): the first candidate's base is what installed
- *                    artifacts get. Generation itself no longer reads it.
- *                    Loaded from the vault via the explicit
- *                    chain (./lib/environment.sh <script>); the vault also
- *                    sets the retired PEER_BASE_URL(S) for outside
- *                    compatibility, never read here (docs/d071 §1).
- *                    settings.json/mcp.json installs need no base and stay
- *                    unconditional.
+ *   (no URL-shaping env: artifacts carry the fact-table upstream verbatim,
+ *   docs/d070/d108 — reachability is the proxy env's job; the vault still
+ *   sets the retired PEER_BASE_URL(S) and REVERSE_PROXY_BASE_URLS for
+ *   outside compatibility, never read here, docs/d071 §1)
  *   RUN_DIR          base dir for the per-run output dir the generators write
  *                    their layers and merged artifacts into (default $TMPDIR,
  *                    falling back to $PREFIX/tmp on Termux, /tmp elsewhere) —
@@ -99,19 +92,6 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Route substitution at install (docs/d070 §3): the same derivation the
-// probes build, keyed by provider id through the shared fact table.
-import {
-	reverseProxyBaseUrl,
-	reverseProxyBaseUrls,
-	routeUrlFromCanonical,
-} from "./route-probe.mjs";
-// The artifact walker + d070 verifier: the ONE implementation of the URL-form
-// rule, shared with run.sh's launch check and tests/artifact-urls.test.mjs.
-import {
-	installedViolations,
-	rewriteProviderUrls,
-} from "./check-routed-artifacts.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = dirname(scriptDir);
@@ -227,57 +207,11 @@ function readMcpConfig(path) {
 	}
 }
 
-// --- route substitution (docs/d070) -----------------------------------------
-/**
- * Canonical artifact in, installed route form out (docs/d070 §3): every
- * provider URL goes through routeUrlFromCanonical keyed by provider id
- * through the fact table — never by string-matching the URL — and the result
- * must pass the SHARED verifier (§5) before anything is written. Walker and
- * check are check-routed-artifacts.mjs's own, so the substitution cannot
- * drift from the rule that guards it, and a provider id the fact table does
- * not know aborts the install instead of shipping one URL's guess.
- * @param {unknown} doc parsed CANONICAL artifact, rewritten in place
- * @param {string} base the FIRST configured reverse-proxy base (d070 §4:
- *   availability never selects a URL)
- * @param {string} label artifact being installed (error context)
- * @returns {void}
- * @throws {Error} on a fact-table miss or a URL that escaped substitution
- */
-function installRouted(doc, base, label) {
-	rewriteProviderUrls(doc, (factId, url) =>
-		routeUrlFromCanonical(base, factId, url),
-	);
-	const violations = installedViolations(doc, base);
-	if (violations.length > 0) {
-		throw new Error(`${label}: ${violations.join("; ")} (docs/d070 §5)`);
-	}
-}
-
-/**
- * The base installed artifacts are routed under (d070 §3/§4): the FIRST
- * configured candidate, required — settings/mcp installs above already
- * happened unconditionally, but a models install without a base cannot
- * substitute routes and must fail loudly rather than write canonical URLs
- * into a host config dir.
- * @param {string} label stage name for the error line
- * @returns {string} the base, no trailing slash
- */
-function requireInstallBase(label) {
-	if (reverseProxyBaseUrls().length === 0) {
-		logError(
-			"no REVERSE_PROXY_BASE_URLS — cannot substitute client routes (docs/d070); load the vault env via ./lib/environment.sh",
-			{ stage: label },
-		);
-		process.exit(1);
-	}
-	return reverseProxyBaseUrl();
-}
-
 /**
  * Mirror the freshly generated models.json and its model-*.json layers into
- * this script's own dir — the committed CANONICAL snapshot (docs/d041 +
- * d070 §3: the generators emit real upstream URLs, so this copy-back stays
- * canonical while the agent-dir install gets the routed form). Without this
+ * this script's own dir — the committed snapshot, identical in URL form to
+ * what the agent dir gets (docs/d041/d070/d108: generation emits real
+ * upstream URLs and no install-time rewrite exists). Without this
  * copy-back `./generate.sh` refreshes
  * only the agent dir, so the committed coding-agent/models.json stays frozen:
  * the artifact a review reads and the next run's stale-preserve input would
@@ -509,10 +443,10 @@ currentStage = "models-install";
 // broken generation — neither installing it nor keeping a stale
 // direct-routing one is acceptable; fail instead.
 //
-// d070 §3: the generated file is CANONICAL (real upstreams) — the copy that
-// lands in the agent dir is the one rewritten to client routes, under the
-// FIRST configured base (§4), and verified to contain zero canonical URLs
-// (§5) before it is written.
+// The generated file is canonical (real upstreams, docs/d070) and the copy
+// that lands in the agent dir is byte-identical in meaning: the reverse proxy
+// that used to require a route form there is deprecated as insecure
+// (docs/d108), so there is no install-time rewrite left to run.
 if (modelsOut) {
 	const count = Object.keys(providersOf(modelsOut)).length;
 	if (count === 0) {
@@ -522,9 +456,7 @@ if (modelsOut) {
 		});
 		process.exit(1);
 	}
-	const installBase = requireInstallBase("models-install");
 	const installed = /** @type {any} */ (JSON.parse(readFileSync(modelsOut, "utf-8")));
-	installRouted(installed, installBase, "models.json");
 	if (existsSync(join(agentDir, "models.json"))) {
 		copyFileSync(
 			join(agentDir, "models.json"),
@@ -570,10 +502,10 @@ currentStage = "opencode-config";
 // previousLocalProvider reads (a fresh output dir carries no history), then
 // on success install BOTH the host config dir (the dir run.sh mounts rw into
 // the sandbox) and this dir's committed opencode.jsonc. The two take
-// different URL forms (docs/d070 §3): the host copy is substituted to client
-// routes and verified canonical-free, while the committed copy stays the
-// CANONICAL reviewed git diff and the next run's stale-preserve input, so it
-// refreshes on every host that runs this stage, Termux included. Termux
+// same canonical URL form (docs/d070/d108): the host copy is what the
+// sandbox mounts, the committed copy is the reviewed git diff and the next
+// run's stale-preserve input, so it refreshes on every host that runs this
+// stage, Termux included. Termux
 // skips the stage entirely (pi-only path) unless OPENCODE_CONFIG_DIR is set.
 const ocHostDir =
 	process.env.OPENCODE_CONFIG_DIR ??
@@ -600,13 +532,11 @@ if (ocOut && existsSync(join(scriptDir, "generate-opencode.mjs"))) {
 	}
 
 	// Install 1 — the host config dir, the sandbox's mount source (d065).
-	// d070 §3: route-form substitution + zero-canonical verification happen
-	// HERE; the committed copy below keeps the canonical file.
+	// Canonical URL form, same as the committed copy below (docs/d108 retired
+	// the reverse-proxy route form, which was the only reason the two differed).
 	// Best-effort .bak insurance, same as the settings/models installs above:
 	// generated ephemeral files, not a preservation contract.
-	const ocBase = requireInstallBase("opencode-config");
 	const ocInstalled = /** @type {any} */ (JSON.parse(readFileSync(ocOut, "utf-8")));
-	installRouted(ocInstalled, ocBase, "opencode.json");
 	mkdirSync(ocHostDir, { recursive: true });
 	const ocHost = join(ocHostDir, "opencode.json");
 	if (existsSync(ocHost)) {
