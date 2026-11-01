@@ -37,9 +37,12 @@ stays the history of the decision.
 - **The certificate property the request asks for holds.** Funnel terminates the
   `wss` leg with its Let's Encrypt `*.ts.net` certificate (a public CA, so
   the client needs no custom trust store), and the *payload* TLS is end-to-end
-  between the client and the target host. The local proxy is a blind TCP relay:
-  it never holds a certificate for the target, never MITMs, and therefore never
-  has to be trusted. That is the whole point of the tunnel over mode B.
+  between the client and the target host. The local proxy is a blind TCP relay
+  for TLS payloads: it never holds a certificate for the target, never MITMs,
+  and therefore never has to be trusted. That is the whole point of the tunnel
+  over mode B. (Cleartext `http`/`ws` requests are the one payload class with
+  no TLS to relay: the loopback proxy may parse and forward them — d103 — and
+  none of those three properties depends on it not doing so.)
 
 ## 1. What "SSL VPN" means here — and what it does not
 
@@ -85,6 +88,10 @@ terminates the client's TLS and hands the proxy plaintext on loopback, so the
 proxy necessarily sees provider keys (it still does not *store* or *inject*
 them — the "no credential handling" invariant is about injection, not
 visibility). The tunnel removes that property entirely: the proxy sees ciphertext.
+For `http://`/`ws://` targets there is no end-to-end TLS to speak of, so that
+column cannot be their story: d103 owns the rule for those bytes — the
+party-visibility invariant (visible only to VPN or localhost parties) — while
+VPN-R25's certificate and no-MITM properties stay exactly as written.
 
 **Mode letters (d077).** [d077](d077-ssl-vpn-transport-ladder.md) splits the
 tunnel into a protocol-negotiated family on this one path: **Mode C** (h2
@@ -285,7 +292,11 @@ mode ships (v3). Until then the BRD stands.
   label, never the credential) and **where** (the `CONNECT` target
   `host:port`, the tunnel/prefix, bytes in/out, duration, and outcome).
   Nothing in that log may require reading the stream; this is deliberately
-  lower-level data that survives the no-MITM property.
+  lower-level data that survives the no-MITM property. (Scope, per d103: this
+  binds the tunnel's framing relay and every TLS payload. The loopback
+  surface's own parsing of cleartext `http`/`ws` requests — which happens
+  before framing — is permitted, and those bytes are bounded by d103's
+  party-visibility invariant instead.)
 
 ### 5.3 The target connection
 
@@ -313,7 +324,8 @@ mode ships (v3). Until then the BRD stands.
   `CONNECT host:port` (for `HTTPS_PROXY`), and MUST offer SOCKS5 with
   remote-name resolution (`SOCKS5h`, for `ALL_PROXY` and non-HTTP TCP).
   Plain-HTTP absolute-URI requests MAY be translated into a tunneled HTTP
-  exchange; they are not required in v2.
+  exchange; they are not required in v2. (The MAY is taken: d103 records the
+  decision, and the implementing change retires the 405 for those requests.)
 - **VPN-R25** — The client MUST NOT terminate TLS, MUST NOT hold a certificate
   for any target, and MUST NOT be a MITM. Its loopback listener is plaintext
   (an HTTP proxy on `127.0.0.1` needs no certificate; a locally-trusted cert
