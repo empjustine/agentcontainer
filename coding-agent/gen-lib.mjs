@@ -23,7 +23,7 @@ import {
 	reverseProxyBaseUrls,
 	providerRouteUrl,
 	probeCandidates,
-	probeRoutes,
+	probeEndpoint,
 } from "./route-probe.mjs";
 
 export {
@@ -55,7 +55,7 @@ export {
 	reverseProxyBaseUrls,
 	providerRouteUrl,
 	probeCandidates,
-	probeRoutes,
+	probeEndpoint,
 };
 export const {
 	PI_NATIVE_CLOUD_IDS,

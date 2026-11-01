@@ -2,7 +2,7 @@
 id: llm-local-inference
 type: design
 status: draft
-title: llm-local-inference — one llama-swap instance per GPU host, local GGUFs only
+title: llm-local-inference — one llama-swap instance per GPU host, local GGUFs only (deprecated for now, d108)
 parent: architecture
 depends-on:
   - lib
@@ -14,6 +14,11 @@ tags:
 ---
 
 ## Responsibility
+
+> **Deprecated for now (docs/d108).** No new clients or features; existing
+> deployments keep working. This document stays as the description of the
+> paused shape.
+
 
 Charter: the GPU host's single llama-swap instance for **local GGUF
 inference** — generate the capability-gated `config.d/` layers for *this*

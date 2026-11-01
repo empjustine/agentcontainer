@@ -118,8 +118,8 @@ as plain env via the explicit chain, the models.dev catalog refresh is
 best-effort like everywhere else (running generate means "I want current
 networked data", docs/d060), the opencode stage is skipped unless
 `OPENCODE_CONFIG_DIR` is set. **Everywhere else** — repo-pinned node via `lib/node-run.sh`, catalog
-refreshed best-effort, route probing walks the vault-sourced
-`REVERSE_PROXY_BASE_URLS` multi-hop chain.
+refreshed best-effort, probes addressing each provider's canonical upstream
+through the environment proxy.
 
 ## Decisions & invariants
 
@@ -132,26 +132,28 @@ refreshed best-effort, route probing walks the vault-sourced
   (stages as functions, documented order). This supersedes d037's process
   split while keeping its per-layer merge verdicts — d037/d033 remain the
   semantic specs for the layers themselves.
-- **Proxy-only routing + multi-hop reverse-proxy chains** (docs/d063,
-  superseding d033/d034's route half; URL form per docs/d070): committed
-  artifacts carry the fact-table canonical upstream, and the reverse-proxy
-  route is substituted at install — always onto the FIRST configured base
-  of the vault-sourced `REVERSE_PROXY_BASE_URLS` chain (`route-probe.mjs
-  reverseProxyBaseUrls()`). The full chain exists for lineup selection:
-  `probeRoutes` walks it in order (together with the facts/catalog
-  refreshers), probes run concurrently (`Promise.allSettled`), and only the
-  LINEUP source is chosen. A thrown probe keeps its provider id so the
-  route probe is still attempted.
+- **Canonical probes, legacy install substitution** (docs/d108 supersedes
+  d063's route half; URL form per docs/d070): committed artifacts carry the
+  fact-table canonical upstream, and probes fetch each provider's canonical
+  `<baseUrl>/models` through the environment proxy (`NODE_USE_ENV_PROXY=1`,
+  docs/d074) — no base URL and no per-provider prefixed route in the probe
+  path. Probes run concurrently (`Promise.allSettled`) and only the LINEUP
+  source is chosen; a thrown probe keeps its provider id so the remaining
+  rows still probe. The deprecated reverse proxy's install-time substitution
+  (first `REVERSE_PROXY_BASE_URLS` entry) still rewrites the installed copy
+  and goes with it in the removal diff.
 - **URL form is verified, not assumed** (docs/d070):
   `check-routed-artifacts.mjs` is the one detector — `--committed` requires
   canonical upstreams over the committed artifacts (guarded by
   `tests/artifact-urls.test.mjs`), `--installed` rejects canonical URLs in
   the agent dir and is re-run at launch by `run.sh` (exit 94).
-- **Route building is per-provider path-prefix** (docs/d027): cloud
-  routes are `<base>/<providerId>` on the simplified cloud router
-  (estige, no credential handling — clients carry the provider's
-  own key); the llama-swap `/v1` + model-id-magic face serves LOCAL GGUF
-  only (`$REVERSE_PROXY_API_KEY`).
+- **Route building is per-provider path-prefix — LEGACY** (docs/d027,
+  deprecated as insecure by docs/d108): cloud routes are
+  `<base>/<providerId>` on the reverse proxy (estige, no credential
+  handling — clients carry the provider's own key); the llama-swap `/v1` +
+  model-id-magic face serves LOCAL GGUF only (`$REVERSE_PROXY_API_KEY`).
+  Both are being removed server-side; clients reach upstreams through the
+  tunnel's proxy env instead (v3 transports, d104 proofs).
 - **Scoped models, not generated catalogs**: pi's own model catalog is used
   (`pi update --models`); providers are re-routed via `baseUrl` overrides only.
   The retired free-tier pipeline's decisions are distilled in

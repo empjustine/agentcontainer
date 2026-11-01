@@ -2,13 +2,21 @@
 id: estige-design
 type: design
 status: stable
-title: "estige — design: routing convention, 404 policy, error taxonomy"
+title: "estige — design: routing convention, 404 policy, error taxonomy (reverse-proxy mode deprecated in direction, d108)"
 parent: estige
 depends-on: [lib]
 tags: ["serving", "proxy", "design"]
 ---
 
 # estige — design rationale
+
+> **Deprecated (docs/d108).** The routing convention below is the reverse-proxy
+> (allowlist relay, legacy "mode A") mode, deprecated as insecure: the edge
+> terminates the client's TLS and therefore sees provider keys. estige stops
+> exposing it — `allowHosts`, host-form routing, the generated allowlist — and
+> the route-rewriting generator machinery it requires is deleted as the
+> coding-agent moves to the tunnel transports.
+
 
 Implementation rationale that is not graspable from `main.go` at a glance:
 why the routing table looks the way it does, why unknown paths answer the way

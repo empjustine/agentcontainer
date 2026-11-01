@@ -10,7 +10,9 @@ tags: ["[root]", "brd", "requirements"]
 
 Serve LLMs on the owner's own fleet of hosts through **one llama-swap
 instance per host**, and configure the pi coding-agent to consume that
-catalog — a single-user infrastructure setup, not a product. *(User-confirmed.)*
+catalog — a single-user infrastructure setup, not a product. *(User-confirmed;
+the local-serving half is deprecated for now by docs/d108, and the goal text
+is kept as the original statement.)*
 
 The same tree adapts to every host without forking per-host copies.
 Generation is capability-driven on ONE axis: **can the host run LLM
@@ -38,7 +40,8 @@ left answering nothing that generation asks (docs/d072).
 
 ## Scope
 
-- **Serving** — `llm-local-inference/` (see `llm-local-inference`): local llama.cpp
+- **Serving** — `llm-local-inference/` (deprecated for now, docs/d108; see
+  `llm-local-inference`): local llama.cpp
   GGUF inference where the host can do it, cloud providers everywhere else
   (directly, or relayed for hosts that cannot reach them),
   published on LAN :8101 and reachable through the tailscale funnel (which
@@ -75,6 +78,15 @@ the allowlist relay by decision
 ([d080](d080-forward-proxy-no-host-allowlist.md)).
 
 ## Functional requirements
+
+> **Deprecated in direction (docs/d108).** FR-S1–FR-S4 (the llama-swap serving
+> path) are paused *for now*: the code keeps working, but no new clients or
+> features. FR-S5's reverse-proxy mode (legacy "mode A") and FR-U2's route
+> substitution are **deprecated as insecure and being removed** — a
+> TLS-terminating edge sees plaintext provider keys, and the route-rewriting
+> generator machinery goes with it; the SSL-VPN tunnel transports replace
+> both. FR-U4's env allowlist remains for the coding-agent. The requirement
+> text below is unchanged, so the record of what was required stays readable.
 
 ### Serving — `llm-local-inference/`
 

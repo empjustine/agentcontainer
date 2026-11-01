@@ -1,7 +1,7 @@
 ---
 id: d070
 type: decision
-status: implemented
+status: implemented (the install-time route substitution it specifies is deprecated by d108 and is to be deleted with the allowlist relay)
 title: "d070 — canonical upstream URLs in committed artifacts; the reverse-proxy route is substituted at install time; SKIP_GEN retired"
 parent: coding-agent
 depends-on: [d047, d050, d054, d057, d063, d071]

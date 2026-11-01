@@ -1,11 +1,12 @@
 /**
  * @fileoverview generate-opencode.mjs — Emit opencode's overlay config: a
- * `provider` map whose every entry routes at the reverse-proxy route of its
- * upstream (docs/d063) — the shared cloud trio (opencode, opencode-go,
- * openrouter) is emitted UNCONDITIONALLY, never at a direct URL; a missing
- * provider would let opencode's built-in DIRECT definition carry the
- * traffic. The probe only picks each provider's lineup source, and
- * docs/d064's tiering decides whether a row is probed at all.
+ * `provider` map whose every entry addresses its upstream's canonical URL
+ * (docs/d070/d108) — the shared cloud trio (opencode, opencode-go,
+ * openrouter) is emitted UNCONDITIONALLY; a missing provider would let
+ * opencode's built-in DIRECT definition carry the traffic. The probe only
+ * picks each provider's lineup source, and docs/d064's tiering decides
+ * whether a row is probed at all. Reachability comes from the environment
+ * proxy (docs/d074).
  *
  * The opencode-side generator, kept separate from the unified pi generator
  * (`generate-pi-coding-agent.mjs`) because it emits a different schema and
@@ -13,9 +14,9 @@
  * config in one generator, all opencode config in this one. Its provider
  * subset is lib/cloud-providers.mjs minus cline-pass/hyper.
  *
- * Lineup cascade: route listing → models.dev catalog slice (d049 modality
+ * Lineup cascade: live listing → models.dev catalog slice (d049 modality
  * gate, then the provider's filter) → an empty lineup, still emitted
- * (docs/d063 §3). Route mechanics: docs/d027. Merge/write contract:
+ * (docs/d063 §3). Probe mechanics: route-probe.mjs. Merge/write contract:
  * lib/artifact.mjs.
  *
  * GOTCHA: opencode's V1 config puts the provider map under the top-level key
@@ -41,10 +42,8 @@ import {
 	logWarn,
 	modalitiesEligible,
 	modelsDevCatalogPath,
-	reverseProxyBaseUrls,
-	providerRouteUrl,
 	probeCandidates,
-	probeRoutes,
+	probeEndpoint,
 	scriptDir,
 	setLogTool,
 	supportTier,
@@ -87,19 +86,13 @@ setLogTool("coding-agent/generate-opencode");
 const CLOUD_PROVIDER_IDS = ["opencode", "opencode-go", "openrouter"];
 
 /**
- * Reverse-proxy base candidates (docs/d027): vault-sourced bases for the
- * LOCAL llama-swap route and the CLOUD route probes. Supports multi-hop
- * proxy chains (REVERSE_PROXY_BASE_URLS comma/newline delimited). No
- * localhost candidates — the LAN :8080 (proxy) listen address is not
- * routable from outside the serving host (docs/d022). Emitted URLs never
- * come from this list (they are canonical, docs/d070): the candidates exist
- * for PROBES only.
+ * The LOCAL row's probe candidate: its canonical fact-table upstream (the
+ * tsnet serve hostname), reached over the tailnet directly (docs/d108) —
+ * the LAN :8080 proxy listen address is not routable from outside the
+ * serving host (docs/d022) and is not what clients address any more.
  * @type {readonly string[]}
  */
-const REVERSE_PROXY_BASE_CANDIDATES = reverseProxyBaseUrls();
-const LOCAL_SOURCE_CANDIDATES = REVERSE_PROXY_BASE_CANDIDATES.map((base) =>
-	providerRouteUrl(base, "llama-swap"),
-);
+const LOCAL_SOURCE_CANDIDATES = [providerFacts("llama-swap").baseUrl];
 
 /**
  * Classify a LOCAL llama-swap catalog model id (docs/d027: cloud ids are no
@@ -155,10 +148,10 @@ function catalogModels(id, filter) {
 }
 
 /**
- * Resolve one cloud provider's emitted URL and lineup (docs/d063 + d070):
- * the probe picks the lineup source — the route's own listing, else the
- * models.dev catalog slice — and the URL is always the CANONICAL
- * fact-table upstream (the install substitutes the route). Superficial rows
+ * Resolve one cloud provider's emitted URL and lineup (docs/d108):
+ * the probe picks the lineup source — the live listing, else the models.dev
+ * catalog slice — and the URL is always the CANONICAL fact-table upstream.
+ * Superficial rows
  * (docs/d064) never probe: catalog slice, canonical URL either way.
  * @param {string} id
  * @returns {Promise<{ providerUrl: string, models: ModelEntry[] }>}
@@ -176,20 +169,20 @@ async function resolveCloudProvider(id) {
 			models: catalogModels(id, filter),
 		};
 	}
-	const route = await probeRoutes(
-		REVERSE_PROXY_BASE_CANDIDATES,
-		id,
+	const route = await probeEndpoint(
+		cfg.baseUrl,
 		bearerHeaders(process.env[cfg.apiKeyEnv]?.trim()),
 	);
-	if (!route) {
-		logWarn("no usable route — lineup degrades to the catalog (docs/d063)", {
-			provider: id,
-		});
+	if (!route.usable) {
+		logWarn(
+			"no usable endpoint — lineup degrades to the catalog (docs/d108)",
+			{ provider: id },
+		);
 	}
-	// d063 §2 + d070 §4: the probe only selects the LINEUP source; the
-	// emitted URL is the canonical fact-table upstream either way.
+	// The probe only selects the LINEUP source; the emitted URL is the
+	// canonical fact-table upstream either way.
 	const providerUrl = cfg.baseUrl;
-	const listed = (route?.entries ?? []).filter((e) => filter?.(e.id) ?? true);
+	const listed = route.entries.filter((e) => filter?.(e.id) ?? true);
 	if (listed.length > 0) {
 		return { providerUrl, models: listed };
 	}
@@ -255,15 +248,6 @@ function previousLocalProvider(path) {
 /** @returns {Promise<void>} */
 async function main() {
 	const out = process.argv[2] ?? join(scriptDir, "opencode.jsonc");
-
-	// d063 fail closed (d070 §6 removed SKIP_GEN): route probes need a
-	// configured reverse-proxy base, so generation refuses loudly without one.
-	if (REVERSE_PROXY_BASE_CANDIDATES.length === 0) {
-		logError(
-			"no REVERSE_PROXY_BASE_URLS — proxy-only generation cannot proceed (docs/d063); load the vault env via ./lib/environment.sh",
-		);
-		process.exit(1);
-	}
 
 	const local = await probeCandidates(LOCAL_SOURCE_CANDIDATES, (ids) =>
 		ids.some((id) => classify(id) === "local"),

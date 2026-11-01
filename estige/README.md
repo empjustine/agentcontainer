@@ -2,12 +2,19 @@
 id: estige
 type: reference
 status: stable
-title: "estige — raw passthrough reverse proxy for cloud LLM providers"
+title: "estige — reverse proxy (deprecated in direction) + SSL-VPN tunnel transports"
 parent: architecture
 tags: ["serving", "proxy", "go"]
 ---
 
 # estige
+
+> **Deprecated (docs/d108):** the reverse-proxy (allowlist relay, legacy
+> "mode A") is deprecated as insecure — a TLS-terminating edge sees plaintext
+> provider keys — and estige will stop exposing it (`allowHosts`, host-form
+> routing, the generated allowlist). The tunnel transports are the supported
+> shape. The reference below describes mode A while the removal diff is
+> pending; treat it as a description, not an option.
 
 A dumb, faithful reverse proxy for LLM APIs. Zero dependencies, one static Go
 binary, ~13 MB RSS. It exists because llama-swap's routing machinery
@@ -42,7 +49,7 @@ on some hosts; it is an optimization, not the reference.
 | | |
 |---|---|
 | ✅ Passes all calls as-is | headers, body, query, method, streaming — byte for byte |
-| ✅ Host prefix routing | `http://host:port/{upstream-host}/<path>?<q>` → `scheme://<host>/<path>?<q>`, host allowlisted (docs/d047) |
+| ⚠️ Host prefix routing | `http://host:port/{upstream-host}/<path>?<q>` → `scheme://<host>/<path>?<q>`, host allowlisted (docs/d047) — legacy "mode A", **deprecated as insecure** (docs/d108) and being removed |
 | ✅ Streaming as-is | `FlushInterval: -1` → every upstream read is flushed immediately; SSE, NDJSON, chunked all arrive at upstream cadence |
 | ✅ RFC 9457 errors | internal failures → descriptive `application/problem+json` 502 (see below) |
 | ✅ Passthrough of upstream errors | provider 4xx/5xx responses are **not** rewritten |
@@ -193,7 +200,9 @@ target — so `./lib/environment.sh ./estige/vpn-relay.sh
 relay itself keeps the host's upstream chain (docs/d094). A relay that is
 not running is started (detached, `--restart=unless-stopped`); an
 unreachable or foreign listener refuses the launch by name. Secrets
-(env-only — VPN-R32/d078; the launchers never load secrets themselves): the
+(env-only — VPN-R32/d078; the launchers never load secrets themselves; the
+in-progress d104 credential redesign already moves the tunnel keys into the
+on-disk key store): the
 allowlist relay holds none — requests must already carry valid provider keys.
 An armed exit node (docs/d084/d085: armed when the env carries the operator
 keyset) holds the
@@ -215,8 +224,8 @@ still listens on 8080 internally; `llm-local-inference/run.sh` publishes
 | `/<upstream-host>/<path>` | allowlisted hosts only (~36 owner-set rows, docs/d047) | host key → scheme://host root; the client carries the full upstream base path after the host (`<base>/api.cline.bot/api/v1`); every other host is denied by absence |
 | `/bazzite…ts.net/<path>` | `https://bazzite.coelacanth-barb.ts.net` | llama-swap (LOCAL GGUF, model-id routing) rides in as a plain fact-table row keyed by its tsnet `tailscale serve` hostname (docs/d070) — the loopback hop never leaves the host |
 
-`./estige smoke-test` runs 34 behavioural checks in the one and only mode —
-the v2 host allowlist (docs/d047) — including the deny-by-absence negatives
+`./estige smoke-test` runs 34 behavioural checks against the v2 host allowlist
+(docs/d047) while that code is still present — including the deny-by-absence negatives
 (unknown host, v1 slug form) answer the plain funnel 404. TLS failure
 classes come from the badssl.com test hosts, so no bundled cert is needed;
 that section is skipped automatically if there is no outbound internet,

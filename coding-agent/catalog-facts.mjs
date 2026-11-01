@@ -20,11 +20,11 @@
  *      id-derived `<ID>_FACTS_JSON`. It must NOT be named `model-*.json`:
  *      generate-pi-coding-agent.mjs collects that pattern as merge layers.
  *
- * Both fetches are reverse-proxy-only (docs/d063): host-form routes over
- * relayCandidates, carrying the provider Authorization bearer when the key is
- * present (the proxy forwards byte-for-byte, docs/d047). There is no
- * direct-endpoint leg to fall back to, so a proxy that cannot deliver simply
- * leaves the last good cache in place.
+ * Both fetches address the canonical upstream (upstreamCandidates) and reach
+ * the edge through the environment proxy (docs/d074, d108), carrying the
+ * provider Authorization bearer when the key is present. There is no
+ * prefixed-route leg any more and no candidate chain to walk, so an edge that
+ * cannot deliver simply leaves the last good cache in place.
  *
  * Contracts that hold for BOTH caches:
  *   - REFRESH is best-effort: every failure — fetch, validation, or a cache
@@ -58,7 +58,7 @@ import { readFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { relayCandidates, tlsUnverifiable } from "./route-probe.mjs";
+import { tlsUnverifiable, upstreamCandidates } from "./route-probe.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
@@ -160,10 +160,10 @@ const CATWALK_CACHE_PATH =
 // --- shared plumbing --------------------------------------------------------
 
 /**
- * Walk a relay candidate chain and return the first usable payload.
+ * Walk a candidate chain and return the first usable payload.
  * @param {object} options
- * @param {readonly string[]} options.candidates host-form routes in preference
- *   order (relayCandidates)
+ * @param {readonly string[]} options.candidates URLs in preference order
+ *   (upstreamCandidates)
  * @param {string} options.label log context — the cache name / provider id
  * @param {number} options.timeoutMs per-caller fetch budget
  * @param {Record<string, string>} [options.headers] provider bearer when present
@@ -275,7 +275,7 @@ export const PROVIDER_MAP = Object.freeze({
 export async function refreshCatwalkFacts(url) {
 	const candidates = url
 		? [url]
-		: relayCandidates("catwalk.charm.land", CATWALK_PATH_AND_QUERY);
+		: upstreamCandidates("catwalk.charm.land", CATWALK_PATH_AND_QUERY);
 	const found = await relayFetch({
 		candidates,
 		label: "catwalk",
@@ -387,7 +387,7 @@ export async function refreshProviderFacts(id, options) {
 	}
 
 	const found = await relayFetch({
-		candidates: relayCandidates(upstream.host, `${basePath}${path}`),
+		candidates: upstreamCandidates(upstream.host, `${basePath}${path}`),
 		label: id,
 		timeoutMs: FACTS_TIMEOUT_MS,
 		headers,

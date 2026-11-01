@@ -1,15 +1,13 @@
 /**
  * @fileoverview refresh-models-dev.mjs — refresh the vendored models.dev
- * catalog (lib/models.dev.api.json) from the reverse-proxy relay chain
- * (docs/d027, d063 — no direct models.dev leg: outside estige,
- * everything is proxy-only):
+ * catalog (lib/models.dev.api.json) from the canonical upstream
+ * (docs/d108; the prefixed reverse-proxy relay chain of d027/d063 is gone):
  *
- * The chain is relay-only (relayCandidates, route-probe.mjs): the
- * operator's MODELS_DEV_RELAY_URL when set (empty = no relay at all), else
- * the vault reverse-proxy host-form routes, one candidate per configured
- * base in order — no implicit localhost candidate (d063 §5 as amended; a
- * local proxy is a listed base entry). The relay forwards models.dev
- * byte-for-byte, so the response is validated exactly like a direct one.
+ * The chain is upstreamCandidates (route-probe.mjs): the operator's
+ * MODELS_DEV_RELAY_URL when set (empty = no fetch at all), else the ONE
+ * canonical models.dev URL, reached through the environment proxy
+ * (NODE_USE_ENV_PROXY=1, docs/d074). models.dev answers byte-for-byte, so
+ * the response is validated exactly like any other catalog download.
  *
  * The stale-copy fallback is why this is safe to call on every run, air-
  * gapped hosts and egress-blocking proxies included: no failure here is a
@@ -30,9 +28,9 @@
  * Usage: node refresh-models-dev.mjs [out]
  *   out defaults to ../lib/models.dev.api.json relative to this file
  *   (i.e. the vendored shared catalog itself).
- * Env: MODELS_DEV_RELAY_URL — operator's relay URL (replaces the
- *   REVERSE_PROXY_BASE_URLS chain entirely; set to empty to disable relays
- *   — the stale vendored copy then always wins).
+ * Env: MODELS_DEV_RELAY_URL — operator's override URL (replaces the
+ *   canonical candidate entirely; set to empty to disable the fetch — the
+ *   stale vendored copy then always wins).
  *
  * Lives in coding-agent/ (its invoker is coding-agent/generate.mjs, which
  * points it at this run's catalog path — docs/d039) but writes the SHARED
@@ -42,7 +40,7 @@
 
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { relayCandidates } from "./route-probe.mjs";
+import { upstreamCandidates } from "./route-probe.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
@@ -135,20 +133,20 @@ async function main() {
 	let res = null;
 	let via = "";
 	let url = "";
-	for (const candidate of relayCandidates(
+	for (const candidate of upstreamCandidates(
 		"models.dev",
 		RELAY_PATH_AND_QUERY,
 		process.env.MODELS_DEV_RELAY_URL,
 	)) {
-		res = await fetchCatalog(candidate, { via: "relay" });
-		via = "relay";
+		res = await fetchCatalog(candidate, { via: "upstream" });
+		via = "upstream";
 		url = candidate;
 		if (res) {
 			break;
 		}
 	}
 	if (!res) {
-		return fail("no relay source answered");
+		return fail("no catalog source answered");
 	}
 
 	let text;

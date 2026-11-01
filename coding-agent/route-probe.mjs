@@ -4,20 +4,25 @@
  * layers). Owns everything about "ask an OpenAI-compatible
  * endpoint for its `/models` listing": auth headers, the 8 s timeout, the
  * `/v1/models` retry, status-carrying errors, and the classification that
- * decides WHICH LINEUP SOURCE a generator may use. It also owns the CLIENT
- * ROUTE derivation: `providerRouteUrl` (the d047 host-form
- * `<base>/<upstream-host><base-path>`) and `routeUrlFromCanonical`, the
- * install-time rewrite from a committed canonical upstream URL to that route
- * (docs/d070).
+ * decides WHICH LINEUP SOURCE a generator may use.
  *
- * Routing is no longer a probe decision (docs/d063, narrowed further by
- * d070): committed artifacts carry each provider's REAL upstream URL (the
- * fact table), and generate.mjs substitutes the reverse-proxy route only when
- * copying an artifact into a host config dir. A probe says whether the live
- * listing behind a route can be trusted right now — a usable listing feeds
- * the lineup, anything else drops the lineup to the catalog/facts cache.
- * There is deliberately no branch that falls back to a direct endpoint or to
- * pi/opencode built-in routing.
+ * Probes address each provider's CANONICAL upstream (the fact table) and
+ * reach the serving edge through the environment proxy — NODE_USE_ENV_PROXY=1
+ * plus HTTP(S)_PROXY, both set by lib/node-run.sh and the image (docs/d074),
+ * so node's own fetch honors them and no repo-side dispatcher exists. The
+ * prefixed reverse-proxy probe (`<base>/<upstream-host>/…`, d047/d063) is
+ * gone from this path with the tunnel migration (docs/d108): a probe says
+ * whether the live listing is trustworthy at the canonical endpoint right
+ * now — a usable listing feeds the lineup, anything else drops the lineup to
+ * the catalog/facts cache. There is deliberately no branch that falls back to
+ * a direct endpoint bypassing the configured proxy env or to pi/opencode
+ * built-in routing.
+ *
+ * What still derives URLs here is the LEGACY install-time substitution
+ * (`providerRouteUrl`, `routeUrlFromCanonical`, docs/d070) and the
+ * vault-sourced base list it reads. That is the reverse proxy's remaining
+ * client-side dependency, scheduled for removal (docs/d108); nothing in the
+ * probe or catalog-fetch path touches it.
  *
  * The canonical "reachable ≠ authenticated" rule (previously pasted in three
  * generators — this header is now the only copy): a 401/403 is what an
@@ -82,28 +87,19 @@ const REQUEST_TIMEOUT_MS = 8000;
 /**
  * The reverse-proxy base URL — the vault-sourced funnel entry point to
  * estige (docs/d027), read from `REVERSE_PROXY_BASE_URLS` in
- * infisical's /inference path (the ONLY base env this repo reads, d071 §1;
- * the vault still sets the retired `PEER_BASE_URL(S)` beside it for
- * outside compatibility — nothing here reads that), injected by
- * lib/environment.sh alongside the key it pairs with (REVERSE_PROXY_API_KEY — the
- * base URL and the client-facing bearer are one config unit). The funnel serves the whole `<funnel-id>` route to
- * estige on host port 8080 (docs/d027), which path-prefix routes
- * everything behind it:
+ * infisical's /inference path (d071 §1; the vault still sets the retired
+ * `PEER_BASE_URL(S)` beside it for outside compatibility — nothing here
+ * reads that), injected by lib/environment.sh alongside the key it pairs
+ * with (REVERSE_PROXY_API_KEY — the base URL and the client-facing bearer
+ * are one config unit).
  *
- *   - v2 HOST routing (docs/d047): `/<upstream-host>/<path>` → that host's
- *     allowlisted upstream root, byte for byte — no model-id magic, no key
- *     injection. Providers are addressed as providerRouteUrl(base, id) =
- *     `<base>/<upstream-host><full-upstream-base-path>`; the allowlist
- *     carries only the owner's stack, everything else is denied by absence
- *     (the plain funnel 404).
- *   - llama-swap (the local GGUF farm, LAN 8101) is served on its own
- *     tsnet-only `tailscale serve` hostname and is a fact-table row like any
- *     other provider (docs/d070): its route is
- *     providerRouteUrl(base, "llama-swap"), no loopback and no logical-name
- *     exception anywhere in client configs.
- *
- * No localhost candidate exists beside it — the LAN :8080 (proxy) listen
- * address is only ever a *local* listen address (docs/d022).
+ * LEGACY, and being removed (docs/d108): its ONLY remaining consumer is the
+ * install-time route substitution in generate.mjs — the client-side half of
+ * the deprecated host-allowlist reverse proxy (mode A). Probes no longer read
+ * it; they address canonical upstreams through the environment proxy. When
+ * the removal diff lands, this whole family (base list, `providerRouteUrl`,
+ * `routeUrlFromCanonical`) goes with the reverse proxy it exists to
+ * address.
  *
  * @returns {string} reverse-proxy base URL (first candidate), no trailing
  *   slash
@@ -125,9 +121,8 @@ export function reverseProxyBaseUrl() {
  * LITERAL prefix check is the load-bearing half: WHATWG URL parsing
  * normalizes `https:/models.dev/api.json` to the DIRECT upstream
  * `https://models.dev/api.json`, so a degenerate `https:/` base would
- * silently emit the one wire shape d063 forbids — parsing alone can never
- * catch it. The parse is kept for the cases parsing does catch (no host,
- * garbage).
+ * silently be treated as a proxy base and pass the d070 §5 verifier's
+ * prefix check while pointing at the upstream itself.
  * @param {string} base slash-trimmed entry
  * @returns {boolean}
  */
@@ -147,12 +142,12 @@ function isUsableProxyBase(base) {
  * (comma or newline delimited), THE one env this repo reads for the base
  * (d071 §1; a single base is a single-entry list — no singular fallback, and
  * the retired `PEER_BASE_URL(S)` names, still set in the vault for outside
- * compatibility, are never read here). Multi-hop proxy chains are why the
- * plural exists: each generator's `REVERSE_PROXY_BASE_CANDIDATES` is
- * populated from this function, and `probeRoutes()` probes them in order
- * until a usable route is found (or all are exhausted). Unusable entries
- * are dropped with a warning, never repaired (see isUsableProxyBase); if
- * that empties the list, requireInstallBase() fails the generation loudly.
+ * compatibility, are never read here). The plural is load-bearing only for
+ * the d070 §5 install verifier, which accepts the installed URL under ANY
+ * configured base; the substitution itself is under the FIRST entry (d070
+ * §4: availability never selects a URL). Unusable entries are dropped with a
+ * warning, never repaired (see isUsableProxyBase); if that empties the list,
+ * the install-time substitution fails the generation loudly.
  * @returns {string[]} reverse-proxy base URL candidates, no trailing
  *   slashes, empty when the env var is not set
  */
@@ -175,31 +170,27 @@ export function reverseProxyBaseUrls() {
 }
 
 /**
- * The reverse-proxy-only fetch chain for a STATIC upstream's metadata
- * (docs/d063 §5): models.dev/catwalk refreshes may not fall back to the
- * upstream's real host — every candidate here is a reverse-proxy URL.
+ * The fetch chain for a STATIC upstream's metadata (models.dev, catwalk):
+ * the canonical upstream URL, or the operator's explicit relay override.
  *
  *   - `envOverride` set non-empty → that URL alone (the operator's own
  *     relay; MODELS_DEV_RELAY_URL keeps its docs/d027 name and meaning);
- *   - `envOverride` set empty → no relay at all: the consumer keeps its
+ *   - `envOverride` set empty → no fetch at all: the consumer keeps its
  *     stale vendored copy (a file, not a wire URL — always in scope);
- *   - `envOverride` unset → the vault-sourced bases' host-form routes
- *     `<base>/<host>/<path>`, one candidate per configured base, in order
- *     (docs/d047 — the allowlist carries both passthrough hosts). There is
- *     deliberately NO implicit 127.0.0.1:8080 candidate (d063 §5 as
- *     amended): it presumed a same-host proxy, so on every host without
- *     one it was a guaranteed-refused first probe — and inside the
- *     agentcontainer loopback can never reach a proxy that runs outside
- *     it. An operator running estige beside the generator
- *     lists `http://127.0.0.1:8080` as a base entry; a degenerate entry
- *     is dropped by reverseProxyBaseUrls(), never concatenated.
+ *   - `envOverride` unset → the ONE canonical URL for that upstream. It
+ *     reaches the edge through the environment proxy (NODE_USE_ENV_PROXY=1,
+ *     docs/d074), which is the tunnel's job; the generator carries no route.
+ *     The prefixed host-form candidates (`<base>/<host>/<path>`) are gone
+ *     with the tunnel migration (docs/d108) — a fetch with no proxy env
+ *     simply fails to the stale copy, never silently to a URL this repo
+ *     derived.
  *
- * @param {string} upstream host the proxy allowlist keys on ("models.dev", …)
+ * @param {string} upstream host of the canonical upstream ("models.dev", …)
  * @param {string} pathAndQuery path + query under that host (leading slash)
- * @param {string} [envOverride] full URL, "" (disabled), or undefined (default chain)
+ * @param {string} [envOverride] full URL, "" (disabled), or undefined (canonical)
  * @returns {string[]} candidates in probe order; empty = stale copy only
  */
-export function relayCandidates(upstream, pathAndQuery, envOverride) {
+export function upstreamCandidates(upstream, pathAndQuery, envOverride) {
 	if (envOverride !== undefined) {
 		const trimmed = envOverride.trim();
 		if (!trimmed) {
@@ -213,8 +204,8 @@ export function relayCandidates(upstream, pathAndQuery, envOverride) {
 		});
 		return [];
 	}
-	const suffix = `${upstream}${pathAndQuery.startsWith("/") ? "" : "/"}${pathAndQuery}`;
-	return reverseProxyBaseUrls().map((base) => `${base}/${suffix}`);
+	const suffix = `${pathAndQuery.startsWith("/") ? "" : "/"}${pathAndQuery}`;
+	return [`https://${upstream}${suffix}`];
 }
 
 /**
@@ -485,48 +476,63 @@ export function routeUrlFromCanonical(base, providerId, canonicalUrl) {
 }
 
 /**
- * A single route probe result. `usable` is the generator-facing
- * verdict: does the route exist and deliver to the provider?
+ * A single endpoint probe result. `usable` is the generator-facing
+ * verdict: did the endpoint answer, and may its listing be trusted?
  * @typedef {object} RouteResult
  * @property {boolean} usable
  * @property {ProbeOutcome} result
  * @property {RawModelEntry[]} entries the listing (only when `result` is
  *   `ok`; empty otherwise — a 401/403 or an unexpected answer proves the
- *   route but yields no models)
+ *   endpoint but yields no models)
  * @property {HttpError} [error] the failure itself, docs/d045 shape
  */
 
 /**
- * Probe ONE provider's client route (`<providerRouteUrl>/models`). ANY
- * http response proves the path — with three exceptions, all of them
- * "the response did not come from the
- * provider's endpoint" rather than "the provider refused us":
+ * Probe ONE provider's canonical upstream (`<fact baseUrl>/models`), reached
+ * through whatever the environment proxy resolves to (docs/d074, d108). ANY
+ * http response proves the wire path — with three exceptions, all of them
+ * "the response did not come from the provider's endpoint" rather than "the
+ * provider refused us":
  *
- *   - 404 is NOT usable: the funnel's default-404 (llama-swap answering for
- *     an unmanaged prefix) and estige's unknown-provider problem
- *     detail both look exactly like this — and so would a misconfigured
- *     upstream base. A route that 404s on `/models` cannot be trusted to
- *     deliver, so it is never emitted.
- *   - 502 is NOT usable: it is estige's own RFC 9457 problem
- *     detail meaning the proxy→upstream leg failed (see its README) — the
+ *   - 404 is NOT usable: a stale provider path, or an edge detail for an
+ *     upstream it does not carry, looks exactly like this — and so would a
+ *     misconfigured base URL. An endpoint that 404s on `/models` cannot be
+ *     trusted to deliver, so its lineup is never used.
+ *   - 502 is NOT usable: it is the relay's own RFC 9457 problem detail
+ *     meaning the proxy→upstream leg failed (see estige/README) — the
  *     provider was not reached.
- *   - 504 is NOT usable: the same leg timed out (funnel/proxy level; a
- *     provider that times out a GET /models is not delivering either).
+ *   - 504 is NOT usable: the same leg timed out (a provider that times out a
+ *     GET /models is not delivering either).
  *
  * Everything else — 401/403 credential gates and any other provider answer —
- * is `usable`: the route delivered to the real endpoint; the generator
- * legitimately probes without provider keys, and pi resolves its own key at
- * request time. 200 with a parseable listing additionally yields the
- * provider's live model entries.
- * @param {string} providerUrl the provider's client route (providerRouteUrl)
+ * is `usable`: the endpoint answered; the generator legitimately probes
+ * without provider keys, and pi resolves its own key at request time. 200
+ * with a parseable listing additionally yields the provider's live model
+ * entries.
+ *
+ * TLS verification is required (tlsUnverifiable): with verification OFF no
+ * https probe runs at all — a credentialed probe could hand the provider key
+ * to whoever answered the handshake (docs/d033).
+ * @param {string} url canonical upstream base (fact table)
  * @param {Record<string, string>} [headers] the provider's real bearer when
  *   the caller has the key, else undefined (unauthenticated probes get
- *   401/403, which still classify the route as usable)
+ *   401/403, which still classify the endpoint as usable)
  * @returns {Promise<RouteResult>}
  */
-async function probeRoute(providerUrl, headers) {
+export async function probeEndpoint(url, headers) {
+	if (tlsUnverifiable(url)) {
+		return {
+			usable: false,
+			result: "unreachable",
+			entries: [],
+			error: Object.assign(
+				new Error("TLS verification disabled — https endpoint not trusted"),
+				{ url },
+			),
+		};
+	}
 	try {
-		const entries = await fetchModelEntries(providerUrl, headers);
+		const entries = await fetchModelEntries(url, headers);
 		return { usable: true, result: "ok", entries };
 	} catch (err) {
 		const http = normalizedProbeError(err);
@@ -548,57 +554,12 @@ async function probeRoute(providerUrl, headers) {
 }
 
 /**
- * Probe one provider's client route across candidate reverse-proxy bases in
- * order (the vault-sourced base list, reverseProxyBaseUrls()); the first
- * candidate whose route is usable wins. This is the cloud counterpart of
- * probeCandidates: routing is per upstream HOST (providerRouteUrl,
- * docs/d047), so each provider probes its own route instead of one shared
- * catalog.
- * @param {readonly string[]} candidates reverse-proxy base URLs (trailing slashes tolerated)
- * @param {string} providerId fact-table provider id ("llama-swap" for the
- *   local learner)
- * @param {Record<string, string>} [headers] see probeRoute
- * @returns {Promise<({ url: string } & RouteResult)|null>} null when no
- *   candidate route is usable
- */
-export async function probeRoutes(candidates, providerId, headers) {
-	const failures = [];
-	for (const base of candidates) {
-		const url = providerRouteUrl(base, providerId);
-		// Fail closed on an unverifiable https route: it is never probed and
-		// never certified — a credentialed probe could leak the
-		// provider key to whoever answered the handshake. https candidates are
-		// skipped; http (emergency) candidates still count.
-		if (tlsUnverifiable(base)) {
-			failures.push({
-				url,
-				result: "unreachable",
-				error: Object.assign(
-					new Error("TLS verification disabled — https route not trusted"),
-					{ url },
-				),
-			});
-			continue;
-		}
-		const route = await probeRoute(url, headers);
-		if (route.usable) {
-			return { url, ...route };
-		}
-		failures.push({ url, result: route.result, error: route.error });
-	}
-	if (failures.length > 0) {
-		logWarn("reverse-proxy provider routes failed", { failures });
-	}
-	return null;
-}
-
-/**
  * Probe candidate base URLs in order; the first one whose catalog passes
- * `accept` wins. Authenticated with $REVERSE_PROXY_API_KEY when set — llama-swap's
- * own client-facing bearer key (used for the LOCAL GGUF /v1 route; the
- * cloud path-routes are probed per provider via probeRoutes instead,
- * docs/d027).
- * @param {string[]} candidates
+ * `accept` wins. Authenticated with $REVERSE_PROXY_API_KEY when set —
+ * llama-swap's own client-facing bearer key, the one row whose listing is
+ * still keyed by a shared fleet secret (docs/d027). The cloud providers go
+ * through probeEndpoint with their own key instead.
+ * @param {readonly string[]} candidates
  * @param {(ids: string[]) => boolean} accept does this catalog serve our concern?
  * @returns {Promise<ProbeSource|null>} null when no candidate is usable
  */
@@ -606,7 +567,7 @@ export async function probeCandidates(candidates, accept) {
 	const failures = [];
 	for (const baseUrl of candidates) {
 		// Fail closed on unverifiable https bases — the rule every probe in
-		// this module applies; http (emergency) candidates still count.
+		// this module applies; plain-http rows (the LAN llama-swap) still count.
 		if (tlsUnverifiable(baseUrl)) {
 			failures.push({
 				baseUrl,

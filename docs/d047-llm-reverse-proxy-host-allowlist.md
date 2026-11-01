@@ -1,7 +1,7 @@
 ---
 id: d047
 type: architecture-design
-status: implemented
+status: implemented (superseded in currency by d108: the allowlist relay is deprecated as insecure, and estige is to stop exposing it)
 title: "d047 — llm-reverse-proxy v2: route by host allowlist, not provider slug"
 parent: architecture
 depends-on: [llm-reverse-proxy, lib, coding-agent, d038]

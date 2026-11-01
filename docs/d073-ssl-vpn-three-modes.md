@@ -1,7 +1,7 @@
 ---
 id: d073
 type: architecture-design
-status: adopted-in-part (v2 = allowlist relay + WebSocket tunnel delivered; the h2-POST tunnel built default-on since d084; the h1.1-POST tunnel built — d081's L4 amendment; the authenticated relay deferred to v3; VPN-R44's `${prefix}` clause reversed by d085; the tunnel namespace's shared-bearer credential superseded by d104 — mutual HMAC exit↔relay proofs)
+status: adopted-in-part (v2 = allowlist relay + WebSocket tunnel delivered; the h2-POST tunnel built default-on since d084; the h1.1-POST tunnel built — d081's L4 amendment; the authenticated relay deferred to v3; VPN-R44's `${prefix}` clause reversed by d085; the tunnel namespace's shared-bearer credential superseded by d104 — mutual Ed25519 exit↔relay proofs; the allowlist relay is deprecated as insecure by d108 (legacy "mode A" — estige stops exposing it, the generators stop depending on it, and VPN-R1's allowlist-as-default is superseded))
 title: "d073 — llm-reverse-proxy → SSL-VPN transport family: requirements and feasibility"
 parent: llm-reverse-proxy
 depends-on: [llm-reverse-proxy, d027, d047, d070, d071]
@@ -348,6 +348,39 @@ authenticated relay ships (v3). Until then the BRD stands.
   (tunnel state, last error) so a coding agent's tooling can tell "proxy down"
   from "upstream down".
 
+### The loopback proxy is HTTP/1.1 on purpose
+
+h2/h2c on the loopback listener is out of scope, and the refusal is recorded
+here because "just turn on h2" reads as cheap and is not. That listener is a
+plain `http.Server{Handler, ReadHeaderTimeout}` served on a raw TCP listener
+(`relaynode.go`), and the module carries no `golang.org/x/net` dependency
+at all, so nothing negotiates HTTP/2 there; an h2 client's preface arrives as
+a malformed HTTP/1.1 request and never reaches a handler.
+
+Even with h2c wired, the `CONNECT` path would still fail. It takes the
+connection over with `http.NewResponseController(w).Hijack()`, and an h2
+response writer implements no `Hijacker` — so every CONNECT would answer
+`hijack-failed` through the 500 mapping that already exists. Serving CONNECT
+over an h2 stream is a second byte pump over `r.Body`/`ResponseWriter`
+(full duplex, no hijack), not a parser setting.
+
+Nothing on the client side asks for it either. curl speaks h2 to a proxy only
+with `--proxy-http2`, and only to a TLS-terminating proxy — the one shape
+this listener must never be (VPN-R25). Go's `http.Transport` never uses h2
+to a proxy (`ForceAttemptHTTP2` covers direct TLS only) and
+`http2.Transport` has no proxy support at all; Node, Python, Java and
+browsers all speak HTTP/1.1 `CONNECT` against proxies. RFC 8441
+extended CONNECT — the WebSocket-over-h2 shape — is separately disabled by
+default in Go's HTTP/2 server (`disableExtendedConnectProtocol`, Go issue
+#71128; enabling it made browsers attempt WebSockets over h2 against servers
+that cannot serve them), reachable only through
+`GODEBUG=http2xconnect=1`, which this project sets nowhere.
+
+Revisit only if a client that speaks HTTP/2 to a proxy must be supported: that
+work is a duplex CONNECT relay, and extended CONNECT stays a separate opt-in
+on top of it. The wss and h2-POST *tunnel* legs are unaffected — this refusal
+is about the app -> client hop, which is loopback and plaintext.
+
 ## 7. Certificates and the trust model
 
 This is the requirement the request centres on. The phrase "the `CONNECT`
@@ -392,7 +425,7 @@ VPN-R29. The table below is per-leg for that reason.
   R33 gains a full-set no-early-exit rule, R34 explicitly covers ids. R31
   binds until d078 is accepted.*
   *Superseded for the tunnel namespace by d104* — the tunnel's operator
-  credential becomes mutual HMAC proofs (relay-to-exit / exit-to-relay,
+  credential becomes mutual Ed25519 proofs (relay-to-exit / exit-to-relay,
   d104), not a shared bearer on the wire; the authenticated relay's gateway credential
   (d091) is untouched.
 - **VPN-R32** — Secrets MUST arrive through the one explicit chain
@@ -478,7 +511,10 @@ for the allowlist relay.
 
 - Not IPsec, not an IP-layer tunnel, not a TUN device, not an exit-node
   replacement (Tailscale already owns that).
-- Not a UDP tunnel in v2 (assessment in §17).
+- Not a UDP tunnel in v2 (assessment in §17), and not MASQUE /
+  CONNECT-UDP conformance in any version: the datagram frames on the
+  relay -> exit hop are ours to define (VPN-R48), and the app -> relay hop is
+  SOCKS5's (VPN-R49).
 - Not a multi-tenant SaaS control plane: the authenticated relay uses one operator credential
   and one path capability, like every other credential in this repo — no
   accounts, no signup.
@@ -516,7 +552,7 @@ for the allowlist relay.
   is unwieldy for one operator; a shared-secret bearer token carries the same
   single-principal model with none of the transport.
    **Superseded by d104** — the deferred second-factor question is answered
-   by mutual HMAC proofs, not certificates: no env-chain certificate
+   by mutual Ed25519 proofs, not certificates: no env-chain certificate
    shipping at all, and the terminator never sees the secret.
 - **In-protocol / browser-client tunnel auth** (first-frame `AUTH` with a
   grace window, or a bearer `Sec-WebSocket-Protocol` subprotocol). Rejected —
@@ -609,7 +645,7 @@ Resolved in this revision:
   roles (§2, §18).
 - **The operator credential is a shared-secret bearer token** — mTLS deferred
   as unwieldy, not impossible (§4, §12). **Superseded by d104** — the
-  tunnel credential is now mutual HMAC proofs, not a shared bearer.
+  tunnel credential is now mutual named-key proofs, not a shared bearer.
 - **Tunnel auth rides the WebSocket handshake header** — the client is our
   localhost proxy, so the browser-client and first-frame-auth variants are
   out (VPN-R12).
@@ -710,12 +746,48 @@ an implementation detail.
 ### Alternatives, all blocked at the edge
 
 - **MASQUE CONNECT-UDP / HTTP/2 extended CONNECT** — not implemented by the
-  Funnel ingress.
+  Funnel ingress, and not the right shape inside the tunnel even if it were
+  (see "Why MASQUE would still be the wrong shape without the edge"
+  below).
 - **QUIC as the tunnel transport** (RFC 9221 datagrams) — no HTTP/3/UDP
   ingress on Funnel.
 - **`funnel --tcp` / Tun-mode L3** — Tun mode is L3 forwarding, not a
   Funnel-exposed UDP relay, and it would reintroduce proxy TLS/certificate
   custody (VPN-R30).
+
+### Why MASQUE would still be the wrong shape without the edge
+
+The edge is the smaller half of the refusal. RFC 9298 conformance could only
+pay for itself on a hop shared with a third party, and estige has none:
+
+- **App -> relay is loopback**, where the datagram idiom applications
+  actually implement is SOCKS5 `UDP ASSOCIATE` (VPN-R49), not an HTTP/2
+  proxy front end. The MASQUE client would have to be the application itself,
+  and nothing in the harness's client set speaks it.
+- **Relay -> exit is `tunnelproto`**, our own versioned framing with exactly
+  two peers, both ours. Conformance would interoperate with nobody: VPN-R48's
+  datagram frames are simpler, versioned alongside the rest of the protocol,
+  and authenticated by the same operator keys (d078). MASQUE there would be a
+  second framing nested inside the first — our own dialect, spelled to a
+  spec.
+- **The mismatch MASQUE exists to escape is one we would keep.** MASQUE rides
+  QUIC (HTTP/3) precisely to preserve loss and ordering signals; as capsules
+  on an h2 or `wss` carrier its datagrams sit on a reliable ordered stream,
+  i.e. the head-of-line problem VPN-R52 already legislates against.
+  Conformance would import the ceremony without the property.
+- **The cost lives in the egress policy, not the protocol** (VPN-R51:
+  connect-per-socket, reply matching, byte caps, rate limits). No capsule
+  format discharges it.
+
+There is an independent refusal in our own code as well: the exit is a Go
+`net/http` server, and `net/http`'s HTTP/2 leaves extended CONNECT disabled
+by default (`disableExtendedConnectProtocol`, Go issue #71128), so a
+`:protocol` pseudo-header is a stream-level `PROTOCOL_ERROR` before any
+handler is reached — and this program sets `GODEBUG=http2xconnect` nowhere.
+Revisit only if estige is to serve arbitrary third-party software that
+expects a MASQUE proxy: that is a product decision, not a transport one, and
+neither Funnel gaining UDP ingress nor Go enabling extended CONNECT would
+change the relay -> exit hop.
 
 ### Value assessment
 

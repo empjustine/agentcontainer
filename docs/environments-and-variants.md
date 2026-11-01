@@ -15,7 +15,8 @@ with different capabilities (GPU or none, container runtime or none, cloud
 access or not) and the tree adapts along those functional lines:
 
 - **LLM serving** is split along its two concerns: local GGUF inference is
-  ONE llama-swap dir, `llm-local-inference/` (generation emits only the
+  ONE llama-swap dir, `llm-local-inference/` — **deprecated for now**,
+  docs/d108 (generation emits only the
   `config.d/` layers the current host can use — local inference wherever a
   GPU + container backend exist; there is no peers-only llama-swap mode),
   and cloud-provider relay is `estige/`, the host-allowlist
@@ -23,6 +24,12 @@ access or not) and the tree adapts along those functional lines:
   deployable on every host that can reach the cloud.
 - **LLM usage** (the coding agent) lives under `coding-agent/`
 - **docs** live here, under `docs/`
+
+> **Direction (docs/d108).** The llama-swap provider is deprecated for now; the
+> reverse-proxy mode (legacy "mode A", the allowlist relay) is deprecated as
+> insecure and is being removed — the SSL-VPN tunnel transports replace it, so
+> no host should be newly set up allowlist-shaped. Hosts keep running the
+> shapes below until the implementing changes land.
 
 We avoid the old ambiguous "provider" naming in favour of these functional
 names.

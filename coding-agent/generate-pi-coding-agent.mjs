@@ -53,9 +53,10 @@
  * default-model stage and the remaining stages run — but the CLOUD stage is
  * fatal by design: an omitted cloud provider would fall back to pi's
  * built-in DIRECT routing, so a failed cloud stage fails the generator and
- * `generate.mjs` treats a non-zero exit as fatal. Generation itself refuses
- * to start without a reverse-proxy base (`REVERSE_PROXY_BASE_URLS`) — the
- * probes need it (docs/d070 §7).
+ * `generate.mjs` treats a non-zero exit as fatal. Generation needs no
+ * reverse-proxy base (docs/d108): probes address canonical upstreams, and a
+ * probe that cannot answer only degrades that row's lineup to the
+ * catalog/facts cache.
  *
  * `generate.mjs` (the folder driver) refreshes the models.dev catalog, then
  * runs this generator once — followed by the separate opencode generator —
@@ -87,13 +88,10 @@ import {
 	modalitiesEligible,
 	modelsDevCatalogPath,
 	PI_NATIVE_CLOUD_IDS,
-	reverseProxyBaseUrl,
-	reverseProxyBaseUrls,
-	providerRouteUrl,
 	piCost,
 	piModel,
 	probeCandidates,
-	probeRoutes,
+	probeEndpoint,
 	providerEntry,
 	providerReroute,
 	refreshCatwalkFacts,
@@ -126,17 +124,6 @@ const layerDir = process.env.PI_LAYER_DIR ?? scriptDir;
 mkdirSync(layerDir, { recursive: true });
 
 /**
- * Reverse-proxy base candidates — vault-sourced (reverseProxyBaseUrls();
- * see route-probe.mjs). Supports multi-hop proxy chains
- * (REVERSE_PROXY_BASE_URLS comma/newline delimited); no localhost candidates
- * — the LAN :8080 (proxy) listen address is not routable from outside the
- * serving host (docs/d022). Emitted URLs never come from this list (they are
- * canonical, docs/d070): the candidates exist for PROBES only.
- * @type {readonly string[]}
- */
-const REVERSE_PROXY_BASE_CANDIDATES = reverseProxyBaseUrls();
-
-/**
  * The catalog this run validated: generate.mjs points MODELS_DEV_JSON at the
  * freshly refreshed copy, and a manual in-place run falls back to the shared
  * vendored catalog. The lookup order itself lives in modelsDevCatalogPath
@@ -164,7 +151,7 @@ try {
 
 /**
  * Per-provider scoping of the override's model list, applied to BOTH sources
- * (the route's live listing and catalog fallback). These are the slices this fleet
+ * (the live listing and catalog fallback). These are the slices this fleet
  * can actually use — the llama-swap era encoded them on the SERVING side
  * (gen-lib's `filter`); with routing per provider the client scopes its own
  * override (docs/d033).
@@ -255,8 +242,9 @@ const MODEL_SCOPES = {
  * @property {boolean} [catalogOptional] the models.dev catalog does not carry
  *   this provider at all, so loadProvider() must not be the lineup source and
  *   must not throw: the endpoint comes from the fact table (the same base URL
- *   the client route is derived from, docs/d047) and the lineup from the facts
- *   cache. Without it a catalog-less row throws and no layer is written
+ *   the legacy install-time route is derived from, docs/d047/d108) and the
+ *   lineup from the facts cache. Without it a catalog-less row throws and no
+ *   layer is written
  *   (docs/d032 F1, docs/d057)
  * @property {readonly string[]} [modelAllowlist] catalog-namespace model ids
  *   to restrict the catalog lineup to (full; docs/d040)
@@ -1326,24 +1314,21 @@ async function emitOverrideOnly(spec, providers) {
 		return;
 	}
 
-	const route = await probeRoutes(
-		REVERSE_PROXY_BASE_CANDIDATES,
-		spec.id,
-		headers,
-	);
-	// d063 §2 / d070 §4: the probe only selects the LINEUP source — the
-	// emitted URL is canonical either way.
-	if (!route) {
-		logWarn("no usable route — lineup degrades to the catalog (docs/d063)", {
-			provider: spec.id,
-		});
+	const route = await probeEndpoint(providerFacts(spec.id).baseUrl, headers);
+	// The probe only selects the LINEUP source — the emitted URL is canonical
+	// either way (docs/d108).
+	if (!route.usable) {
+		logWarn(
+			"no usable endpoint — lineup degrades to the catalog (docs/d108)",
+			{ provider: spec.id },
+		);
 		emitMinimalCatalogOverride(spec, providers);
 		return;
 	}
 	const models = listingModels(route.entries, spec);
 	if (models) {
 		applyModelApi(spec, models);
-		logInfo("override models from the route's live listing", {
+		logInfo("override models from the live listing", {
 			provider: spec.id,
 			models: models.length,
 		});
@@ -1364,7 +1349,7 @@ async function emitOverrideOnly(spec, providers) {
  * CANONICAL fact-table upstream URL (docs/d070): the layer IS the provider
  * definition, so it is written every run — even with an empty lineup —
  * because an unwritten layer would leave a stale committed DIRECT block in
- * the merge (d063 §3). The probe only bounds the lineup: the route's own
+ * the merge (d063 §3). The probe only bounds the lineup: the endpoint's own
  * listing when it could be authenticated, else the catalog/facts cascade.
  * Full rows are first-class or best-effort (docs/d064), so they always get
  * the probe, and a `catalogOptional` row skips the catalog entirely — its
@@ -1375,22 +1360,18 @@ async function emitOverrideOnly(spec, providers) {
 async function emitFull(spec) {
 	const provider = loadProvider(spec);
 	const headers = bearerHeaders(process.env[spec.envKey]?.trim());
-	const route = await probeRoutes(
-		REVERSE_PROXY_BASE_CANDIDATES,
-		spec.id,
-		headers,
-	);
-	if (!route) {
+	const route = await probeEndpoint(providerFacts(spec.id).baseUrl, headers);
+	if (!route.usable) {
 		logWarn(
-			"no usable route — lineup degrades to the catalog/facts cascade (docs/d063)",
+			"no usable endpoint — lineup degrades to the catalog/facts cascade (docs/d108)",
 			{ provider: spec.id },
 		);
 	}
-	// The route's own listing bounds a facts-sourced lineup when the probe
+	// The endpoint's own listing bounds a facts-sourced lineup when the probe
 	// could authenticate it; empty entries (401/403 without a key) mean the
-	// route proved but says nothing, so nothing is bounded (docs/d033).
+	// endpoint answered but says nothing, so nothing is bounded (docs/d033).
 	const routeIds =
-		route && route.entries.length > 0
+		route.usable && route.entries.length > 0
 			? new Set(route.entries.map((e) => e.id))
 			: null;
 	/**
@@ -1504,19 +1485,15 @@ async function emitFull(spec) {
 
 /** @returns {Promise<void>} */
 async function generateCloudProviders() {
-	// d063 §4 fail closed (d070 §6 removed the SKIP_GEN escape): with no
-	// reverse-proxy base there is no route to probe — the probes are why the
-	// base is required at generate time (docs/d070 §7).
-	if (REVERSE_PROXY_BASE_CANDIDATES.length === 0) {
-		throw new Error(
-			"no REVERSE_PROXY_BASE_URLS — refusing to generate (docs/d063); load the vault env via ./lib/environment.sh",
-		);
-	}
+	// No reverse-proxy base is required any more (docs/d108): probes address
+	// each provider's canonical upstream and reach the edge through the
+	// environment proxy. A probe that cannot answer only narrows the lineup to
+	// the catalog/facts cache — the emitted URL is canonical either way.
+	//
 	// Best-effort cache refresh before the cascade reads it (order is
 	// irrelevant — it only writes lib caches; a failing refresh must not fail
-	// generation: a stale catalog is a file, not a wire URL, so it stays
-	// proxy-compliant). The providers' facts refreshes are NOT here: they
-	// belong to each row's emit path and walk the proxy routes (docs/d063).
+	// generation: a stale catalog is a file, not a wire URL). The providers'
+	// facts refreshes are NOT here: they belong to each row's emit path.
 	await Promise.allSettled([refreshCatwalkFacts()]);
 
 	/** @type {Record<string, import("./gen-lib.mjs").PiProvider>} */
@@ -1584,17 +1561,13 @@ function previousLocalProvider(path) {
  */
 async function generateLocalLlamaSwap(out) {
 	/**
-	 * The local route's PROBE candidates (lineup only — the emitted URL is
-	 * canonical, docs/d070): the vault-sourced reverse-proxy base
-	 * (reverseProxyBaseUrl()).
-	 * No localhost candidates are probed — the LAN :8080 (proxy) listen
-	 * address is not routable from outside the host it serves (docs/d022).
-	 * reverseProxyBaseUrl() throws when no base is set; main()'s d063 guard
-	 * already refuses that case before any stage runs.
+	 * The local row's probe candidate: its canonical fact-table upstream (the
+	 * tsnet serve hostname), reached over the tailnet directly — the LAN
+	 * :8080 proxy listen address is not routable from outside the host it
+	 * serves (docs/d022) and is not what clients address any more
+	 * (docs/d108). Lineup only: the emitted URL is canonical either way.
 	 */
-	const LOCAL_SOURCE_CANDIDATES = [
-		providerRouteUrl(reverseProxyBaseUrl(), "llama-swap"),
-	];
+	const LOCAL_SOURCE_CANDIDATES = [providerFacts("llama-swap").baseUrl];
 
 	const local = await probeCandidates(LOCAL_SOURCE_CANDIDATES, (ids) =>
 		ids.some((id) => id.includes("-GGUF")),
@@ -1798,16 +1771,6 @@ async function main() {
 		process.argv[3] ??
 		process.env.PI_DEFAULT_MODEL_JSON ??
 		join(scriptDir, "default-model.json");
-
-	// d063 fail closed (d070 §6 removed SKIP_GEN): route probes and the
-	// install-time substitution both need a configured reverse-proxy base —
-	// generation refuses loudly without one.
-	if (REVERSE_PROXY_BASE_CANDIDATES.length === 0) {
-		logError(
-			"no REVERSE_PROXY_BASE_URLS — proxy-only generation cannot proceed (docs/d063); load the vault env via ./lib/environment.sh",
-		);
-		process.exit(1);
-	}
 
 	await runStage("local-llama-swap", () =>
 		generateLocalLlamaSwap(join(layerDir, "model-010-local-default.json")),

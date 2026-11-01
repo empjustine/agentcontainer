@@ -23,9 +23,12 @@
  *     lib/environment.sh and forwards the vault env through the workload_env
  *     allowlist).
  *
- * Route probes and install-time substitution go through the vault-sourced
- * $REVERSE_PROXY_BASE_URLS (comma/newline multi-hop candidates — see
- * route-probe.mjs; the one base env this repo reads, docs/d071).
+ * Probes and catalog fetches address each upstream's canonical URL and reach
+ * the edge through the environment proxy (NODE_USE_ENV_PROXY + HTTP(S)_PROXY,
+ * docs/d074/d108) — no base URL is involved. The install-time substitution
+ * is the one remaining consumer of the vault-sourced $REVERSE_PROXY_BASE_URLS
+ * (the legacy reverse proxy, docs/d070/d108).
+ * @see route-probe.mjs for the probe/candidate plumbing.
  *
  * Generators, one per coding agent (the broad BY-AGENT merge that supersedes
  * docs/d037's narrow verdict):
@@ -59,10 +62,11 @@
  *                    mounts rw into the sandbox (docs/d065). The install hits
  *                    BOTH this host dir and the committed opencode.jsonc;
  *                    Termux skips the opencode stage unless this is set
- *   REVERSE_PROXY_BASE_URLS  required for generation (route probes) and
- *                    for the install-time route substitution (docs/d070 §3/
- *                    §7): the first candidate's base is what installed
- *                    artifacts get. Loaded from the vault via the explicit
+ *   REVERSE_PROXY_BASE_URLS  required ONLY for the legacy install-time
+ *                    route substitution (docs/d070 §3/§7, deprecated by
+ *                    docs/d108): the first candidate's base is what installed
+ *                    artifacts get. Generation itself no longer reads it.
+ *                    Loaded from the vault via the explicit
  *                    chain (./lib/environment.sh <script>); the vault also
  *                    sets the retired PEER_BASE_URL(S) for outside
  *                    compatibility, never read here (docs/d071 §1).
@@ -74,10 +78,9 @@
  *                    this script's dir may be a read-only mount
  *   MODELS_DEV_JSON  models.dev catalog (default ../lib/models.dev.api.json —
  *                    the shared vendored catalog, see docs/d023)
- *   MODELS_DEV_RELAY_URL  catalog relay override (default = the
- *                    REVERSE_PROXY_BASE_URLS host-form route chain, empty
- *                    disables — fetch chain in docs/d027, d063 §5 as
- *                    amended)
+ *   MODELS_DEV_RELAY_URL  catalog fetch override (default = the canonical
+ *                    models.dev URL via the environment proxy, empty
+ *                    disables — docs/d108)
  */
 
 import { spawnSync } from "node:child_process";
