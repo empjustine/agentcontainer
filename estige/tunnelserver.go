@@ -479,20 +479,54 @@ func validOperatorID(id string) bool {
 	return true
 }
 
-// enableTunnel wires the tunnel surface from config data + environment and
-// fails loudly on any input that would weaken an invariant (NFR-2): a
-// misconfigured capability that binds anyway is worse than one that refuses
-// to start, because it fails OPEN at the first probe instead of never.
-func (s *server) enableTunnel(tn *tunnelConfig) error {
+// enableTunnel wires the tunnel surface from the credential set + the caller's
+// egress policy and fails loudly on any input that would weaken an invariant
+// (NFR-2): a misconfigured capability that binds anyway is worse than one that
+// refuses to start, because it fails OPEN at the first probe instead of never.
+// The egress policy is a parameter, not a lookup, so the tests drive the same
+// construction the boot does without touching the environment.
+func (s *server) enableTunnel(egress egressConfig) error {
 	keys, err := operatorKeysFromEnv()
 	if err != nil {
 		return err
 	}
-	egress, err := newEgressPolicy(tn.Egress)
+	policy, err := newEgressPolicy(egress)
 	if err != nil {
 		return err
 	}
-	s.vpn = &tunnelServer{keys: keys, egress: egress, sessions: newExchangeSessions()}
+	s.vpn = &tunnelServer{keys: keys, egress: policy, sessions: newExchangeSessions()}
 	log.Printf("[estige] tunnel (modes C–E): enabled at %s", tunnelPath)
 	return nil
+}
+
+// egressFromEnv reads the exit node's operator opt-ins (VPN-R38) off the env
+// chain: VPN_TUNNEL_EGRESS, a JSON object {"allowCidrs": [...], "ports": [...]}.
+// Unset means the requirement's own defaults — deny the RFC 1918 / metadata /
+// loopback table, allow 80 and 443 — so a plain deployment configures nothing.
+//
+// WHY env rather than the file it used to be: d108 deleted the config file
+// outright (the allowlist was the only reason a file ever existed), and the
+// policy's permanent home is d104's role store, whose exit.json carries
+// egress beside the admitted relays. Until that store lands, the env chain is
+// the whole surface, which is also where the credential already lives.
+//
+// Parsing is strict (unknown fields and trailing content refused) because a
+// typo'd "allowCidr" would otherwise silently enforce the default deny: the
+// operator would believe a range is reachable while every dial to it fails
+// (NFR-2 fail-loudly, the same rule decodeOperatorKeys follows).
+func egressFromEnv() (egressConfig, error) {
+	raw := os.Getenv(envTunnelEgress)
+	if raw == "" {
+		return egressConfig{}, nil
+	}
+	var cfg egressConfig
+	dec := json.NewDecoder(strings.NewReader(raw))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&cfg); err != nil {
+		return egressConfig{}, fmt.Errorf("%s must be a JSON object {\"allowCidrs\": [\"10.0.0.0/8\"], \"ports\": [443]}: %v", envTunnelEgress, err)
+	}
+	if _, err := dec.Token(); !errors.Is(err, io.EOF) {
+		return egressConfig{}, fmt.Errorf("%s has content after the JSON object", envTunnelEgress)
+	}
+	return cfg, nil
 }

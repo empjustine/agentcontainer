@@ -62,10 +62,10 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 
 	armTestTunnelEnv(t)
 	s := &server{}
-	if err := s.enableTunnel(&tunnelConfig{Egress: egressConfig{
+	if err := s.enableTunnel(egressConfig{
 		AllowCidrs: []string{"127.0.0.0/8"},
 		Ports:      []uint16{upPort},
-	}}); err != nil {
+	}); err != nil {
 		t.Fatal(err)
 	}
 	backend := newHTTPServer(t, s)

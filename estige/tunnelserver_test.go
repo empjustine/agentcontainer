@@ -30,6 +30,49 @@ func armTestTunnelEnv(t *testing.T) {
 	t.Setenv(envOperatorToken, testTunnelToken)
 }
 
+// egressFromEnv is the exit node's policy input (VPN-R38), so its parsing is
+// pinned the way the wire formats are: unset means the requirement's defaults,
+// a strict object is accepted, and every near-miss a typo produces is refused
+// instead of silently enforcing default-deny under a name the operator thinks
+// they configured (NFR-2).
+func TestEgressFromEnv(t *testing.T) {
+	t.Run("unset means the defaults", func(t *testing.T) {
+		t.Setenv(envTunnelEgress, "")
+		cfg, err := egressFromEnv()
+		if err != nil {
+			t.Fatalf("egressFromEnv: %v", err)
+		}
+		if len(cfg.AllowCidrs) != 0 || len(cfg.Ports) != 0 {
+			t.Fatalf("want zero config, got %+v", cfg)
+		}
+	})
+	t.Run("both halves", func(t *testing.T) {
+		t.Setenv(envTunnelEgress, `{"allowCidrs": ["127.0.0.0/8"], "ports": [8443]}`)
+		cfg, err := egressFromEnv()
+		if err != nil {
+			t.Fatalf("egressFromEnv: %v", err)
+		}
+		if len(cfg.AllowCidrs) != 1 || cfg.AllowCidrs[0] != "127.0.0.0/8" || len(cfg.Ports) != 1 || cfg.Ports[0] != 8443 {
+			t.Fatalf("got %+v", cfg)
+		}
+	})
+	// Each of these is a plausible typo whose silent reading would be
+	// "configured, and the default deny still applies".
+	for _, raw := range []string{
+		`{"allowCidr": ["127.0.0.0/8"]}`,
+		`{"ports": ["443"]}`,
+		`{"allowCidrs": []} `,
+		`not json`,
+	} {
+		t.Run("refused: "+raw, func(t *testing.T) {
+			t.Setenv(envTunnelEgress, raw)
+			if _, err := egressFromEnv(); err == nil {
+				t.Fatalf("egressFromEnv(%q) = nil error, want refusal", raw)
+			}
+		})
+	}
+}
+
 // newTunnelServer wires a full server with the tunnel on or off through the same
 // code main() uses.
 func newTunnelServer(t *testing.T, enabled bool, egress egressConfig) *server {
@@ -37,7 +80,7 @@ func newTunnelServer(t *testing.T, enabled bool, egress egressConfig) *server {
 	armTestTunnelEnv(t)
 	s := &server{}
 	if enabled {
-		if err := s.enableTunnel(&tunnelConfig{Egress: egress}); err != nil {
+		if err := s.enableTunnel(egress); err != nil {
 			t.Fatalf("enableTunnel: %v", err)
 		}
 	}
@@ -360,14 +403,14 @@ func TestEnableTunnelValidatesInputs(t *testing.T) {
 		t.Setenv(envOperatorKeys, "")
 		t.Setenv(envOperatorToken, "")
 		s := &server{}
-		if err := s.enableTunnel(&tunnelConfig{}); err == nil {
+		if err := s.enableTunnel(egressConfig{}); err == nil {
 			t.Fatal("expected failure")
 		}
 	})
 	t.Run("relay token alone refuses with the d090 migration hint", func(t *testing.T) {
 		t.Setenv(envOperatorKeys, "")
 		s := &server{}
-		err := s.enableTunnel(&tunnelConfig{})
+		err := s.enableTunnel(egressConfig{})
 		if err == nil {
 			t.Fatal("expected failure")
 		}
@@ -378,13 +421,13 @@ func TestEnableTunnelValidatesInputs(t *testing.T) {
 	t.Run("keyset alone arms", func(t *testing.T) {
 		t.Setenv(envOperatorKeys, fmt.Sprintf(`{"default":%q}`, testTunnelToken))
 		s := &server{}
-		if err := s.enableTunnel(&tunnelConfig{}); err != nil {
+		if err := s.enableTunnel(egressConfig{}); err != nil {
 			t.Fatalf("enableTunnel: %v", err)
 		}
 	})
 	t.Run("bad egress config", func(t *testing.T) {
 		s := &server{}
-		if err := s.enableTunnel(&tunnelConfig{Egress: egressConfig{AllowCidrs: []string{"nope"}}}); err == nil {
+		if err := s.enableTunnel(egressConfig{AllowCidrs: []string{"nope"}}); err == nil {
 			t.Fatal("expected failure")
 		}
 	})
@@ -506,7 +549,7 @@ func TestPrincipalSetAcceptance(t *testing.T) {
 		t.Setenv(envOperatorKeys, keys)
 		t.Setenv(envOperatorToken, "")
 		s := &server{}
-		if err := s.enableTunnel(&tunnelConfig{}); err != nil {
+		if err := s.enableTunnel(egressConfig{}); err != nil {
 			t.Fatalf("enableTunnel: %v", err)
 		}
 		return s

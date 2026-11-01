@@ -53,19 +53,27 @@ kill-switch law, docs/d108).
 
 ```console
 $ ./estige -mode exit                          # binds :8080 (PORT overrides)
-$ ./estige -mode exit -config tunnel.json      # optional policy file
 $ ./estige -mode relay                         # relay node, env-driven
 ```
 
-### Configuration: policy only
+### Configuration: none — the env chain is the whole surface
 
-`-config` names an **optional** file carrying `tunnel.egress` (the CIDR/port
-allowlist the exit enforces, default `deny`) and `tunnel.enabled` (a tri-state
-veto/assert, docs/d084). It cannot grant the capability and cannot hold a
-credential: arming is the env chain's job, and a file on disk holding a
-credential would be a second, unkeyed copy of it (VPN-R32). The bind is not in
-the file — it is env `PORT` (docs/d110); the allowlist and its generator are
-gone (docs/d108).
+There is **no config file** (docs/d108 slice 5: the last one, the policy file,
+died with the allowlist). Every fact the exit node needs comes from its
+environment, which the launcher already owns:
+
+| fact | spelling |
+|---|---|
+| arming credential (the capability) | `VPN_OPERATOR_KEYS` — no credential, no tunnel, no boot (docs/d084) |
+| egress opt-ins (VPN-R38) | `VPN_TUNNEL_EGRESS`, JSON `{"allowCidrs": ["10.0.0.0/8"], "ports": [443]}`; unset = the requirement's defaults (deny RFC 1918/metadata/loopback, allow 80/443) |
+| bind | `PORT` (docs/d110) |
+
+Why no file: a file holding a credential is a second, unkeyed copy of it
+(VPN-R32), and with the allowlist gone there was nothing else a file needed to
+say. The policy half's permanent home is docs/d104's role store — its
+`exit.json` carries egress beside the admitted relays — and until that store
+lands, the env chain carries it. Nothing here can *grant* the capability: only
+the credential does.
 
 ## Build & run
 
@@ -102,10 +110,10 @@ the container branch runs in HOST NETWORK mode; the native branch execs
 the binary directly. Exit node: listening on `${PORT:-8080}` in both branches
 (env `PORT` is the only bind spelling, docs/d110) — host networking is what
 makes a loopback upstream reachable from the container, and what makes the
-container's bind the host's bind. No config is mounted by default; `CONFIG` names a policy file
-(native: that path; container: mounted at `/etc/estige/tunnel-policy.json`) and
-the launcher fails if it cannot be read — the file carries `tunnel.egress`
-alone (docs/d108). Relay node: NO config file — `VPN_TUNNEL_URL` (http(s):// or
+container's bind the host's bind. No config file is mounted or named at all
+(docs/d108): `VPN_OPERATOR_KEYS`, `PORT` and — when the operator opens an
+egress range — `VPN_TUNNEL_EGRESS` are forwarded from the host env.
+Relay node: likewise no config file — `VPN_TUNNEL_URL` (http(s):// or
 ws(s):// — the URL's honest wire form, normalized to wss internally,
 docs/d090; the path is the Funnel mount plus the fixed `/vpn` —
 docs/d085) and `VPN_OPERATOR_TOKEN` are its core surface, with

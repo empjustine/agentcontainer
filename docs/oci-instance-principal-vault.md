@@ -119,9 +119,10 @@ Oracle's own documentation, not from a successful fetch on this host.
      --query 'data."secret-bundle-content".content' --raw-output | base64 -d
    ```
    and writes the result to a `0600` file (or to a tmpfs path) that the
-   estige config references.
-2. `estige.json` holds the non-secret structure; the secret-bearing fields
-   are either merged in by the render step or referenced by path.
+   launcher points the env chain at.
+2. The non-secret structure has no file of its own: estige reads no config
+   file since d108's tree-shake, and docs/d104's role store (`exit.json` +
+   `prv/<role>/`) is where the policy and the key material will live.
 3. A startup guard refuses a group/world-readable config.
 
 Why not resolve inside estige:

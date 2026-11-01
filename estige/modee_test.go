@@ -107,10 +107,10 @@ func modeETestServer(t *testing.T, upstream *httptest.Server) (*server, *httptes
 	upPort := portOf(t, upstream.Listener.Addr().String())
 	armTestTunnelEnv(t)
 	s := &server{}
-	if err := s.enableTunnel(&tunnelConfig{Egress: egressConfig{
+	if err := s.enableTunnel(egressConfig{
 		AllowCidrs: []string{"127.0.0.0/8"},
 		Ports:      []uint16{upPort},
-	}}); err != nil {
+	}); err != nil {
 		t.Fatal(err)
 	}
 	return s, newHTTPServer(t, s)

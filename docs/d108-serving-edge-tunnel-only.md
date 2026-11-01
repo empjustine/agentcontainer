@@ -1,7 +1,7 @@
 ---
 id: d108
 type: decision
-status: accepted (direction of record; slices 1–4 of the removal landed — the tree-shake of `estige.json` waits for d104's store)
+status: accepted (direction of record; all five removal slices landed — the tree is tunnel-only and the binary reads no config file)
 title: "d108 — the serving edge moves to tunnel-only: the bazzite llama-swap provider is deprecated for now, the allowlist reverse proxy (legacy mode A) is deprecated as insecure"
 parent: estige
 depends-on: [d027, d047, d063, d070, d073, d077, d080, d105]
@@ -164,11 +164,14 @@ implementing changes (see *Open items*); this record changes no code.
   forward investment. The file itself is **removed, not shrunk**: with
   mode A gone it holds nothing but exit-role facts, and tree-shaking
   moves them where role facts live — `tunnel.enabled` dissolves into
-  d104's helper-presence arming, `tunnel.egress` lands in d104's
-  `exit.json` (d104 owns the store's schema), and `listen` dies: a
-  single-port bind is configured by env `PORT` alone (d110) — until
-  `loadConfig`, the tracked `estige.json`, and `estige.example.json`
-  have no reader left and die with the removal diffs.
+  credential-presence arming (the file-side veto/assert had no fact of its
+  own: wanting the tunnel off is spelled by not loading the credential),
+  `tunnel.egress` lands in d104's `exit.json` (d104 owns the store's
+  schema; until that store lands it arrives as `VPN_TUNNEL_EGRESS` on the
+  env chain), and `listen` dies: a single-port bind is configured by env
+  `PORT` alone (d110) — until `loadConfig`, the tracked `estige.json`,
+  and `estige.example.json` have no reader left and die with the removal
+  diffs.
 - External clients that use `<funnel>/<host>/<path>` keep working until the
   removal diff, but are not the supported onboarding path and will not be
   carried forward.
@@ -207,11 +210,20 @@ implementing changes (see *Open items*); this record changes no code.
   gone), (4) the reverse-proxy code and its smoke-test checks (landed:
   `provider`/host-form routing/proxy error classification/`smoke-test.go`
   deleted, leaving the shared funnel-404 and CLF plumbing the tunnels
-  always used), (5) tree-shake `estige.json` out of the tree — still
-  pending, sequenced with d104's store, since `egress` needs its new home
-  (`exit.json`) before the file can die (`listen` needs none — d110).
-  What remains of the file after slice 4 is the tunnel policy alone, so
-  slice 5 is a rename plus a schema move, not a shrinking exercise.
+  always used), (5) tree-shake `estige.json` out of the tree (landed:
+  `loadConfig`, the `config`/`tunnelConfig` types, `shouldArmTunnel`, the
+  `-config` argv, the launcher's `CONFIG` and its container mount are all
+  gone; the binary reads no file, `egress` arrives as `VPN_TUNNEL_EGRESS`
+  until d104's `exit.json` owns it, and arming is credential presence
+  alone).
+  Slice 5 was sequenced after d104's store because `egress` needs a home
+  before the file can die; the store is not built yet, so the interim home
+  is the env chain — the one place the exit node already reads credentials —
+  rather than a new file that would have to be deleted again.
+- d084's tri-state `tunnel.enabled` is **superseded**: the file that carried
+  it is gone with slice 5, and the env is now the only arming signal. d084
+  and d085 keep their text as history; the file-side veto/assert is not a
+  live contract.
 - Where the v2/v3/v4 generation vocabulary lives. d105 owns transport names,
   not generations; until that record is amended, this table is the reference.
 - What, if anything, serves local models after the llama-swap pause.

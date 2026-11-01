@@ -52,7 +52,8 @@ unit requirements — and the list already shrank: the generator moved
 to Go in d102, taking one node leg (and one lib/ dependency) out of
 the unit's critical path. The same node is implicitly required for
 `./coding-agent/` generation anyway and is present on every host in
-use — but the unit's product is one Go binary plus one JSON config.
+use — but the unit's product is now one Go binary and no config file at
+all (docs/d108's tree-shake), which only strengthened the case.
 Cross-language dependencies should be minimized where possible.
 
 Post-split shape this points at (it feeds d082 §4 step 4's fact-data

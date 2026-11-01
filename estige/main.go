@@ -3,9 +3,10 @@
 // One binary, two network positions (docs/d088): the EXIT node terminates
 // tunnels at the edge and opens egress under the policy the operator reviews;
 // the RELAY node dials in and serves localhost CONNECT/SOCKS5 proxies to
-// unmodified clients. Credentials arrive only through the env chain
-// (docs/d078/d084/d085/d090) and never through the config file, which carries
-// policy alone.
+// unmodified clients. Every input arrives through the env chain
+// (docs/d078/d084/d085/d090 + docs/d108's tree-shake): there is no config
+// file, so nothing about a deployment can live outside the environment the
+// launcher hands it.
 //
 // The v2 host-allowlist reverse proxy (docs/d047, legacy "mode A") is gone
 // (docs/d108): a TLS-terminating edge sees plaintext provider keys, and no
@@ -31,8 +32,9 @@ import (
 )
 
 // Tunnel environment surface (modes C–E; docs/d073 §6.3/§7): credentials
-// arrive ONLY through this path — the lib/environment.sh env chain — never
-// the JSON config, which would become a second, unkeyed copy of a credential.
+// arrive ONLY through this path — the lib/environment.sh env chain. A file
+// would be a second, unkeyed copy of a credential (VPN-R32), and d108 removed
+// the last file the binary read rather than keep a policy-shaped exception.
 // The roles are disjoint (docs/d090): VPN_OPERATOR_KEYS is the EXIT node's
 // principal set, a JSON object {"<id>": "<token>"} (docs/d078 §2);
 // VPN_OPERATOR_TOKEN is the RELAY node's bearer and is read nowhere else.
@@ -47,59 +49,22 @@ const (
 	envOperatorToken = "VPN_OPERATOR_TOKEN"
 	envOperatorKeys  = "VPN_OPERATOR_KEYS"
 	envClientLabel   = "VPN_CLIENT_LABEL"
+	// envTunnelEgress is the exit node's policy half (VPN-R38): parsed by
+	// egressFromEnv, unset meaning the requirement's defaults.
+	envTunnelEgress = "VPN_TUNNEL_EGRESS"
 )
 
 // operatorCredentialInEnv reports whether the env chain carries an operator
 // credential — the thing that arms the tunnel (docs/d084 as amended by d085:
-// the credential IS the capability; config can veto or assert, never grant).
+// the credential IS the capability). The file-side veto/assert is gone with
+// the file (docs/d108 slice 5): wanting the tunnel off is spelled by not
+// loading the credential, which is one spelling instead of three.
 // Either variable marks the operator's INTENT to arm; which variable each
 // node actually READS is enforced at enable time (docs/d090): the exit node
 // refuses TOKEN-only with the migration hint, the relay node refuses in
 // relayConfig.validate().
 func operatorCredentialInEnv() bool {
 	return os.Getenv(envOperatorToken) != "" || os.Getenv(envOperatorKeys) != ""
-}
-
-// ---------------------------------------------------------------------------
-// Configuration
-// ---------------------------------------------------------------------------
-
-// config is the tunnel POLICY file — the only thing a file may say. The
-// allowlist half (docs/d047) is deleted with the reverse proxy (docs/d108),
-// and the bind half is a flag (docs/d110): a config field that duplicates a
-// CLI/env fact is a second spelling of one fact (docs/d090).
-type config struct {
-	// The tunnel namespace, modes C–E (docs/d073 §6, d077): armed by the
-	// operator keyset env, not by this file (docs/d084/d085) — an unarmed
-	// deployment behaves exactly as if d073 had never landed (VPN-R2). The
-	// operator tokens are deliberately NOT fields here: they arrive only via
-	// the environment chain (enableTunnel), because a config file on disk is
-	// a second copy of a credential — and worse, an unkeyed one.
-	Tunnel *tunnelConfig `json:"tunnel,omitempty"`
-}
-
-// tunnelConfig is the tunnel config data: the policy halves only. What the
-// operator reviews and commits (egress) lives here; what authenticates (the
-// operator keyset) never does.
-//
-// Enabled is tri-state on purpose (docs/d084): absent = the env decides,
-// false = veto even when the env is armed, true = assert armed and let the
-// boot fail loudly if the env is missing. The config can veto or assert —
-// GRANTING the capability is the env chain's job (VPN-R31/R32).
-type tunnelConfig struct {
-	Enabled *bool        `json:"enabled,omitempty"`
-	Egress  egressConfig `json:"egress,omitempty"`
-}
-
-// shouldArmTunnel resolves the boot-time arming verdict for the tunnel
-// family (docs/d084). An assert with the env unarmed resolves to arm so
-// enableTunnel's validation fails the boot loudly — never a silent
-// degradation to mode A only.
-func shouldArmTunnel(cfg *tunnelConfig, envArmed bool) bool {
-	if cfg != nil && cfg.Enabled != nil {
-		return *cfg.Enabled
-	}
-	return envArmed
 }
 
 // portFromEnv resolves the exit node's single-port bind (docs/d110): env
@@ -123,18 +88,6 @@ func portFromEnv() string {
 		}
 	}
 	return ":" + port
-}
-
-func loadConfig(path string) (*config, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var cfg config
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("parse %s: %w", path, err)
-	}
-	return &cfg, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -339,7 +292,6 @@ func main() {
 	// and `smoke-test` went with the reverse-proxy behaviour it checked
 	// (docs/d108) — each was a verb for a mode that no longer exists. Role
 	// selection is `-mode`, and the launchers own every other verb.
-	configPath := flag.String("config", "", "path to the tunnel policy file (optional; absent = the defaults, docs/d108)")
 	// Role values are the node names, not protocol roles (docs/d088): the
 	// process is always a mix of client, server, and both proxy shapes, so
 	// only network position discriminates.
@@ -376,31 +328,21 @@ func main() {
 		log.Fatalf("[estige] unknown -mode %q (want exit or relay)", *mode)
 	}
 
-	// The policy file is OPTIONAL and carries policy only: no allowlist (that
-	// mode is gone), no credentials (env chain only, docs/d084), no bind (the
-	// flag is the bind, docs/d110). Setting no file is a complete instruction;
-	// NAMING one that cannot be read is a typo, and fails loudly rather than
-	// silently serving the defaults the operator did not ask for.
-	cfg := &config{}
-	if *configPath == "" {
-		log.Printf("[estige] no -config — tunnel policy defaults (docs/d108)")
-	} else {
-		loaded, err := loadConfig(*configPath)
-		if err != nil {
-			log.Fatalf("[estige] %v", err)
-		}
-		cfg = loaded
-	}
+	// There is no config FILE (docs/d108's tree-shake): every fact the exit
+	// node needs arrives on the env chain — the credential set that arms the
+	// tunnel (docs/d084/d085), the egress opt-ins (VPN-R38), and the bind
+	// (env PORT, docs/d110). d104's role store becomes the home for the
+	// policy half; until it lands, the env is the whole surface.
 	bind := portFromEnv()
 
 	s := &server{}
-	armed := shouldArmTunnel(cfg.Tunnel, operatorCredentialInEnv())
+	armed := operatorCredentialInEnv()
 	if armed {
-		tn := cfg.Tunnel
-		if tn == nil {
-			tn = &tunnelConfig{}
+		egress, err := egressFromEnv()
+		if err != nil {
+			log.Fatalf("[estige] %v", err)
 		}
-		if err := s.enableTunnel(tn); err != nil {
+		if err := s.enableTunnel(egress); err != nil {
 			log.Fatalf("[estige] tunnel: %v", err)
 		}
 	}

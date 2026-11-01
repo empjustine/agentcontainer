@@ -18,9 +18,10 @@
 # compiles (go build ignores *_test.go, so no test code enters the image).
 #
 # The image ENTRYPOINT is the binary itself; the deployment entry points
-# (`vpn-exit.sh`/`vpn-relay.sh`, docs/d095) pass -mode and (for an exit with a
-# policy file) -config as the container command (workload_cmd). The bind is not
-# argv and not a file: it is env PORT, forwarded by the launcher (docs/d110).
+# (`vpn-exit.sh`/`vpn-relay.sh`, docs/d095) pass -mode as the container command
+# (workload_cmd) and everything else through the env allowlist: the bind is env
+# PORT (docs/d110) and the egress policy is VPN_TUNNEL_EGRESS (docs/d108
+# removed the last config file, so nothing is mounted for the binary to read).
 FROM docker.io/library/golang:1.27 AS build
 WORKDIR /src
 COPY go.mod *.go ./
@@ -33,9 +34,8 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/estige .
 
 # Numeric USER because scratch has no /etc/passwd: the static binary makes
 # no os/user lookups, and 65532 is the distroless "nonroot" uid this image
-# replaces — the entry point mounts the config read-only (workload_ro,
-# whose `U` option workload-render.jq emits for rootless podman), so the same
-# host file permissions keep meaning the same thing.
+# replaces (the launcher's workload_ro mounts use that uid, via the `U` option
+# workload-render.jq emits for rootless podman).
 FROM scratch
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build /out/estige /estige
