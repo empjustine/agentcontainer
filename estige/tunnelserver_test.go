@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"net"
@@ -36,7 +35,7 @@ func armTestTunnelEnv(t *testing.T) {
 func newTunnelServer(t *testing.T, enabled bool, egress egressConfig) *server {
 	t.Helper()
 	armTestTunnelEnv(t)
-	s := &server{providers: map[string]*provider{}}
+	s := &server{}
 	if enabled {
 		if err := s.enableTunnel(&tunnelConfig{Egress: egress}); err != nil {
 			t.Fatalf("enableTunnel: %v", err)
@@ -46,67 +45,7 @@ func newTunnelServer(t *testing.T, enabled bool, egress egressConfig) *server {
 }
 
 // ---------------------------------------------------------------------------
-// Spike S3: ReverseProxy upgrade passthrough (d073 §13)
-// ---------------------------------------------------------------------------
-
-// TestUpgradeThroughReverseProxy answers the d073 S3 question empirically:
-// does stdlib ReverseProxy in Rewrite mode, behind our logging wrapper,
-// carry a WebSocket upgrade end to end? If handleUpgradeResponse's hijack
-// failed to survive the Unwrap chain, this is where it breaks.
-func TestUpgradeThroughReverseProxy(t *testing.T) {
-	upstream := newUpgradeEchoUpstream(t)
-
-	proxyProvider, err := newProvider("wstest.example", upstream.URL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	s := &server{providers: map[string]*provider{"wstest.example": proxyProvider}}
-	proxy := newHTTPServer(t, s)
-	logBuf := captureLog(t)
-
-	conn := rawDial(t, proxy.Listener.Addr().String())
-	defer conn.Close()
-	key := base64.StdEncoding.EncodeToString([]byte("0123456789abcdef"))
-	mustWrite(t, conn, "GET /wstest.example/rt HTTP/1.1\r\n"+
-		"Host: wstest.example\r\n"+
-		"Upgrade: websocket\r\n"+
-		"Connection: Upgrade\r\n"+
-		"Sec-WebSocket-Key: "+key+"\r\n"+
-		"Sec-WebSocket-Version: 13\r\n\r\n")
-
-	br := bufio.NewReader(conn)
-	status, err := br.ReadString('\n')
-	if err != nil {
-		t.Fatalf("reading status: %v", err)
-	}
-	if !strings.Contains(status, "101") {
-		t.Fatalf("S3 verdict: upgrade did NOT pass through, status line %q", strings.TrimRight(status, "\r\n"))
-	}
-	hdr, err := readHeaders(br)
-	if err != nil {
-		t.Fatalf("reading upgrade headers: %v", err)
-	}
-	if got := hdr.Get("Sec-WebSocket-Accept"); got != wsAcceptKey(key) {
-		t.Fatalf("accept header not preserved end to end: %q", got)
-	}
-
-	mustWrite(t, conn, "tunnel-bytes")
-	echo := make([]byte, len("tunnel-bytes"))
-	if _, err := io.ReadFull(br, echo); err != nil {
-		t.Fatalf("reading echo: %v", err)
-	}
-	if string(echo) != "tunnel-bytes" {
-		t.Fatalf("echo = %q", echo)
-	}
-
-	// The handler logs only when it returns, and it returns when the
-	// hijacked conn closes — close first (VPN-R13: CLF says 101, not 0).
-	_ = conn.Close()
-	waitForLog(t, logBuf, " 101 ")
-}
-
-// ---------------------------------------------------------------------------
-// Camouflage: the tunnel namespace answers exactly mode A's 404
+// Camouflage: the tunnel namespace answers exactly the funnel's 404
 // ---------------------------------------------------------------------------
 
 // TestTunnelPathCamouflage is VPN-R34/R2/R44 as one assertion set: every
@@ -420,14 +359,14 @@ func TestEnableTunnelValidatesInputs(t *testing.T) {
 	t.Run("no credential at all", func(t *testing.T) {
 		t.Setenv(envOperatorKeys, "")
 		t.Setenv(envOperatorToken, "")
-		s := &server{providers: map[string]*provider{}}
+		s := &server{}
 		if err := s.enableTunnel(&tunnelConfig{}); err == nil {
 			t.Fatal("expected failure")
 		}
 	})
 	t.Run("relay token alone refuses with the d090 migration hint", func(t *testing.T) {
 		t.Setenv(envOperatorKeys, "")
-		s := &server{providers: map[string]*provider{}}
+		s := &server{}
 		err := s.enableTunnel(&tunnelConfig{})
 		if err == nil {
 			t.Fatal("expected failure")
@@ -438,23 +377,13 @@ func TestEnableTunnelValidatesInputs(t *testing.T) {
 	})
 	t.Run("keyset alone arms", func(t *testing.T) {
 		t.Setenv(envOperatorKeys, fmt.Sprintf(`{"default":%q}`, testTunnelToken))
-		s := &server{providers: map[string]*provider{}}
+		s := &server{}
 		if err := s.enableTunnel(&tunnelConfig{}); err != nil {
 			t.Fatalf("enableTunnel: %v", err)
 		}
 	})
-	t.Run("reserved tunnel path colliding with an allowlist host", func(t *testing.T) {
-		p, err := newProvider(tunnelPathHost, "https://example.com")
-		if err != nil {
-			t.Fatal(err)
-		}
-		s := &server{providers: map[string]*provider{tunnelPathHost: p}}
-		if err := s.enableTunnel(&tunnelConfig{}); err == nil {
-			t.Fatal("expected collision failure")
-		}
-	})
 	t.Run("bad egress config", func(t *testing.T) {
-		s := &server{providers: map[string]*provider{}}
+		s := &server{}
 		if err := s.enableTunnel(&tunnelConfig{Egress: egressConfig{AllowCidrs: []string{"nope"}}}); err == nil {
 			t.Fatal("expected failure")
 		}
@@ -576,7 +505,7 @@ func TestPrincipalSetAcceptance(t *testing.T) {
 		t.Helper()
 		t.Setenv(envOperatorKeys, keys)
 		t.Setenv(envOperatorToken, "")
-		s := &server{providers: map[string]*provider{}}
+		s := &server{}
 		if err := s.enableTunnel(&tunnelConfig{}); err != nil {
 			t.Fatalf("enableTunnel: %v", err)
 		}

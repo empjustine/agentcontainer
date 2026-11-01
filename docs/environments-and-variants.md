@@ -19,17 +19,17 @@ access or not) and the tree adapts along those functional lines:
   docs/d108 (generation emits only the
   `config.d/` layers the current host can use — local inference wherever a
   GPU + container backend exist; there is no peers-only llama-swap mode),
-  and cloud-provider relay is `estige/`, the host-allowlist
-  router (docs/d047) plus its opt-in tunnel family (docs/d073/d077),
-  deployable on every host that can reach the cloud.
+  and cloud-provider relay is `estige/` — the SSL-VPN tunnel family
+  (`vpn-exit.sh` / `vpn-relay.sh`, docs/d073/d077), deployable on every host
+  that can reach the cloud.
 - **LLM usage** (the coding agent) lives under `coding-agent/`
 - **docs** live here, under `docs/`
 
-> **Direction (docs/d108).** The llama-swap provider is deprecated for now; the
-> reverse-proxy mode (legacy "mode A", the allowlist relay) is deprecated as
-> insecure and is being removed — the SSL-VPN tunnel transports replace it, so
-> no host should be newly set up allowlist-shaped. Hosts keep running the
-> shapes below until the implementing changes land.
+> **Direction (docs/d108).** The llama-swap provider is deprecated for now. The
+> reverse-proxy mode (legacy "mode A", the allowlist relay) is **gone** — it
+> was deprecated as insecure and has been deleted, allowlist and generator
+> included; the SSL-VPN tunnel transports replace it. A host still serving
+> the old shapes below is running a deployment that predates this tree.
 
 We avoid the old ambiguous "provider" naming in favour of these functional
 names.
@@ -54,24 +54,20 @@ GPU host (local inference only) — two serving processes, one concern each (doc
   passthrough + the HF cache on LAN port **8101** (container 8080).
   llama-swap serves the LOCAL catalog and nothing else — its `peers`/proxy
   config is no longer exercised.
-- `estige/` — the host-allowlist cloud router (root `build.sh` +
-  `generate.sh` + `vpn-exit.sh`, LAN **8080**, host networking):
-  `/<upstream-host>/<path>` forwarded byte-for-byte to the allowlisted
-  scheme://host root, the client carrying the upstream base path
-  (docs/d047) — llama-swap rides the same map as the fact-table row for
-  its tsnet `tailscale serve` hostname (docs/d070 §2, no loopback alias).
-  This is the world-visible face — the tailscale funnel serves the
-  `<funnel-id>` route to this port — for this host's own coding agent and
-  for external clients alike; the opt-in tunnel transports (h2-POST,
-  WebSocket, h1.1-POST; docs/d073/d077/d105) share the port.
+- `estige/` — the SSL-VPN tunnel node (root `build.sh` + `vpn-exit.sh`,
+  LAN **8080**, host networking): the tunnel transports (h2-POST, WebSocket,
+  h1.1-POST; docs/d073/d077/d105) under the single reserved path `/vpn`.
+  This is the world-visible port — the tailscale funnel serves the
+  `<funnel-id>` route to it — and every other path answers the funnel's
+  plain 404: the allowlist `/<upstream-host>/<path>` router that shared it
+  is deleted (docs/d108), so there is no provider route left to reach.
 
 **Port model (all hosts):** ONE front. The tailscale funnel serves the
 whole `<uuid>` route to estige on host port **8080** (normal
-https port on the wire); the proxy host-allowlist routes behind it:
-`/<upstream-host>/<path>` → each allowlisted scheme://host root (the
-client carries the upstream base path), llama-swap included as the
-fact-table row for its tsnet serve hostname (docs/d070 §2 — no loopback
-hop, no alias). llama-swap holds
+https port on the wire); behind it sits the tunnel namespace `/vpn` and
+nothing else — the host-allowlist route map is deleted (docs/d108), so the
+funnel is no longer a cloud-provider front for external clients.
+llama-swap holds
 LAN **8101**. The legacy local-inference port **18080** is **deprecated**
 with the two-instance squash — nothing listens on it, and code that still
 probes `localhost:18080` must use the funnel base URL (`$REVERSE_PROXY_BASE_URLS`).
@@ -87,22 +83,19 @@ Hostname `<serial>.sn.mynetname.net` (a Synology/`mynetname` DDNS name — put y
 own here). SoC: **EN7562CT** (ARM32v5, 512 MB RAM, 128 MB flash). Resource-constrained host (a phone/router under Termux). It **cannot run the
 `llm-local-inference` llama-swap container** at all — Termux has no usable
 podman/docker for this — and local llama.cpp inference is impossible anyway.
-So there is no llama-swap here at all: the host serves the cloud relay only,
-via a **native termux build of estige** (compiled for the device).
+So there is no llama-swap here at all: the host serves the tunnel only, via a
+**native termux build of estige** (compiled for the device).
 
 - The root `./build.sh` (`build.mjs`) cross-builds the static binary with
   the android preset from `lib/go-build.mjs` (`CGO_ENABLED=0 GOOS=android
   GOARCH=arm64` — so the Android resolver is used instead of the missing
   `/etc/resolv.conf`; docs/d041), and `vpn-exit.sh`'s native branch
-  `exec`s it against `estige.json` and `${LISTEN:-:8080}` — no
-  podman/docker, no GPU detection, no image pull, no build/generate step.
-- `cd estige && go run . generate` (`generate.go`, the proxy binary's own
-  subcommand since d102) emits the host allowlist from the shared provider
-  fact table
-  (lib/cloud-providers.mjs, docs/d027): one path prefix per provider,
-  upstream = the provider's FULL real base URL.
-  The proxy injects no keys; clients (the coding agent on this host, or
-  remote clients through the funnel) carry the provider keys themselves.
+  `exec`s it against `${LISTEN:-:8080}` — no podman/docker, no GPU
+  detection, no image pull, no generation step.
+- `./estige/vpn-exit.sh` serves the tunnel; there is no allowlist to
+  generate any more (docs/d108 — `estige generate` and the shared provider
+  fact table's allowlist role are gone). Neither node injects keys; clients
+  keep the provider keys themselves.
   See [termux-serving.md](termux-serving.md) for the map of where the
   termux serving documentation now lives.
 

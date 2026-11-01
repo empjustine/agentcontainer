@@ -180,11 +180,10 @@ func newHTTPServer(t *testing.T, h http.Handler) *httptest.Server {
 	return srv
 }
 
-// upgradeEchoHandler is the mode A-side S3 fixture: a backend that accepts
-// an upgrade and echoes raw bytes until EOF — everything the tunnel
-// transport needs from a WebSocket-capable upstream, without a library.
-// Exported as a handler (not only a server) so the e2e upstream can
-// dispatch to it for d103's cleartext ws branch.
+// upgradeEchoHandler is the tunnel's cleartext-ws fixture (d103): a backend
+// that accepts an upgrade and echoes raw bytes until EOF — everything the
+// tunnel transport needs from a WebSocket-capable upstream, without a
+// library.
 func upgradeEchoHandler(w http.ResponseWriter, r *http.Request) {
 	if !headerHasToken(r.Header, "Upgrade", "websocket") {
 		http.Error(w, "expected upgrade", http.StatusBadRequest)
@@ -214,13 +213,6 @@ func upgradeEchoHandler(w http.ResponseWriter, r *http.Request) {
 		_, _ = conn.Write(buf[:n])
 	}
 	conn.Close()
-}
-
-func newUpgradeEchoUpstream(t *testing.T) *httptest.Server {
-	t.Helper()
-	srv := httptest.NewServer(http.HandlerFunc(upgradeEchoHandler))
-	t.Cleanup(srv.Close)
-	return srv
 }
 
 func mustTunnelURL(t *testing.T, proxy *httptest.Server) *url.URL {

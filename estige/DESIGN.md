@@ -2,7 +2,7 @@
 id: estige-design
 type: design
 status: stable
-title: "estige — design: routing convention, 404 policy, error taxonomy (reverse-proxy mode deprecated in direction, d108)"
+title: "estige — design: tunnel transports, the 404 policy, error taxonomy"
 parent: estige
 depends-on: [lib]
 tags: ["serving", "proxy", "design"]
@@ -10,132 +10,95 @@ tags: ["serving", "proxy", "design"]
 
 # estige — design rationale
 
-> **Deprecated (docs/d108).** The routing convention below is the reverse-proxy
-> (allowlist relay, legacy "mode A") mode, deprecated as insecure: the edge
-> terminates the client's TLS and therefore sees provider keys. estige stops
-> exposing it — `allowHosts`, host-form routing, the generated allowlist — and
-> the route-rewriting generator machinery it requires is deleted as the
-> coding-agent moves to the tunnel transports.
+Rationale that is not graspable from `main.go` at a glance: why the funnel
+answers the way it does for everything that is not a tunnel, how tunnel-side
+failures are reported, and what the deleted reverse proxy left behind.
+Operation (usage, build, ports) lives in [README.md](README.md); the
+requirement statement is FR-S5 in [../docs/requirements.md](../docs/requirements.md);
+the transport requirements are [d073](../docs/d073-ssl-vpn-three-modes.md)'s.
 
+> **The reverse proxy is gone (docs/d108).** The v2 host-allowlist routing
+> convention — host-key table, client-carried base path, the generated
+> `allowHosts` — is deleted, not deprecated in place: a TLS-terminating edge
+> sees plaintext provider keys, and d073's trust table shows no credential
+> scheme fixes that. The mode's history (and why the shape forced
+> route-rewriting generator machinery) is [d047](../docs/d047-llm-reverse-proxy-host-allowlist.md)
+> and [d108](../docs/d108-serving-edge-tunnel-only.md); nothing below depends
+> on it.
 
-Implementation rationale that is not graspable from `main.go` at a glance:
-why the routing table looks the way it does, why unknown paths answer the way
-they do, and how errors are classified. Operation (usage, build, ports) lives
-in the module reference, [README.md](README.md); the requirement statement is
-FR-S5 in [../docs/requirements.md](../docs/requirements.md).
+## One reserved path, everything else is the funnel 404
 
-## The routing convention: host allowlist, client-carried base path (v2, docs/d047)
+The tunnel family owns exactly one path, `/vpn` (docs/d085 — the Funnel mount
+prefix is stripped at the edge, so the process only needs one fixed place to
+dispatch on). Dispatch is an exact-path test, not a prefix table: there is one
+namespace and no ordering question left to get wrong (VPN-R42).
 
-**The allowlist key is the upstream HOST (DNS name) and the value is its
-scheme://host root** — path suffixes move into the CLIENT's base URL, so a
-client route is `<base>/<upstream-host><full-upstream-base-path>`
-(hyper via the funnel is `https://…/<funnel-id>/hyper.charm.land/v1`). The proxy
-strips `/<host>` and single-joins the rest onto the root, so every wire
-dialect and every base path the provider speaks passes through untouched —
-and hosts that share a DNS name (opencode vs opencode-go on `opencode.ai`,
-minimax's `/anthropic` variants) stay routable under ONE allowlist row,
-because the distinguishing path belongs to the client that owns it. The
-coding-agent generators probe exactly these routes
-(`<base>/<host><base>/models`, providerRouteUrl) and emit the same shape
-as installed baseUrls (committed artifacts carry the canonical upstream;
-the route is substituted at install — docs/d070). Hosts NOT in the allowlist are denied by absence — the same
-plain funnel 404 as any garbage path; a catalog row can no longer mint a
-routable endpoint.
-
-**Every row keys on its upstream host** — the last exception went with
-docs/d070: llama-swap (the local GGUF farm) now serves a real tailnet
-hostname via `tailscale serve` at the hostname ROOT (loopback :8101
-behind it), so its allowlist row is an ordinary `<tailnet-host>` → root
-entry like every other host, and client configs still never embed a
-loopback address in the request path. No logical alias survives in the
-generated table; `providerRouteUrl` composes llama-swap's route from the
-fact table exactly like every other provider (docs/d070).
-
-There is no other mode: the v1 provider-slug table (`providers`,
-`/<providerId>` addressing) is retired — main.go only reads `allowHosts`
-(docs/d047). The generator that emitted that table is deleted (docs/d108):
-the last `estige.json` is history, and a hand-written file is the only way
-this mode can still be served.
-
-## The 404 policy: nothing distinctive at the funnel edge
-
-**Every 404 — `/`, unknown provider prefix, garbage path — is the identical
-tailscale-funnel answer**: plain-text `404 page not found` (Go-default body,
-`text/plain; charset=utf-8`, `nosniff`). No JSON, no URN, no provider names:
-a distinctive body would be a probe oracle confirming custom software lives
-here. Known provider prefixes forward normally; internal failures still
-return RFC 9457 problem details (below). Unknown-prefix mistakes are
-debugged from the proxy log, which records each such request.
+**Every other path answers the identical tailscale-funnel 404** — plain-text
+`404 page not found` (Go-default body, `text/plain; charset=utf-8`, `nosniff`).
+That includes `/`, garbage, a stale reverse-proxy route from an older
+deployment, and mode C's unauthenticated tunnel probes. No JSON, no URN, no
+distinctive header: a differential body would confirm to a prober that custom
+software lives here, and a client from the deleted deployment learns nothing
+about why its old route stopped working. Mistakes are debugged from the
+Combined Log Format line, which records each request.
 
 ## Error reporting (RFC 9457)
 
-Only failures *inside the proxy* (nothing reached the client yet) produce a
-502 problem detail. Example for a dead upstream port:
+Only failures *inside* the tunnel produce a problem detail, and only to a
+caller that already authenticated: a bad-gateway condition during the egress
+exchange, a hijack that failed, a malformed CONNECT target. The same body
+shape serves both nodes:
 
 ```json
 {
-  "type": "econnrefused",
-  "title": "Nothing is listening on the upstream address (ECONNREFUSED)",
-  "status": 502,
-  "detail": "while proxying refused/v1/chat/completions to 127.0.0.1:1: dial tcp 127.0.0.1:1: connect: connection refused",
-  "raw": "dial tcp 127.0.0.1:1: connect: connection refused",
-  "instance": "/v1/chat/completions"
+  "type": "hijack-failed",
+  "title": "…",
+  "status": 500,
+  "raw": "the verbatim Go error",
+  "instance": "/vpn"
 }
 ```
 
-The old `type: "urn:…:error:<code>"` URN and the separate `code` member said
-the same thing twice; the type IS the bare cause token now (RFC 9457 resolves
+The old `type: "urn:…:error:<code>"` URN and a separate `code` member said the
+same thing twice; the type IS the bare cause token now (RFC 9457 resolves
 relative type URIs, so this is a valid problem type). Classification is
-best-effort but the verbatim Go error is always attached as `raw`, and
-error families that have one add a canonical, non-secret dump as `details`
-(operator-known facts only: host names, resolver addresses, flag booleans —
-never keys or request bodies). Known types (TLS classes verified against
-[badssl.com](https://badssl.com) hosts, which the smoke test uses directly):
+best-effort but the verbatim error is always attached as `raw`, and families
+that have one add a canonical, non-secret dump as `details` (operator-known
+facts only: host names, resolver addresses, flags — never keys or request
+bodies). Unknown-path probes are answered by the funnel 404 above, never by a
+problem detail: the distinction between "internal failure" and "not a tunnel
+path" is exactly the oracle the 404 policy exists to remove.
 
-| type | trigger |
-|---|---|
-| `dnserror` | any resolver failure (`*net.DNSError`, via `errors.As`); `details` carries the canonical dump (host, resolver, resolver error, timeout/temporary/not-found flags) |
-| `econnrefused` / `econnreset` / `epipe` / `enetunreach` / `ehostunreach` / `etimedout` | OS-level connect/write failures (the errno name, unprefixed — the errno already says the family; syscall name + number in `raw`) |
-| `tls-verification-failed` | certificate verification failed (`expired.badssl.com`, `wrong.host.badssl.com`, `self-signed.badssl.com`, `untrusted-root.badssl.com`); the x509 sub-cause rides along in `raw` |
-| `timeout` / `disconnected` / `upstream-error` | transport timeouts, premature close, anything else |
+## What the tunnel does not do to the exchange
 
-Mid-stream upstream disconnects **cannot** produce a 502 (headers already went
-out); the stream is cut the way llama-swap does — the `http.ErrAbortHandler`
-panic is recovered and logged. Client-side cancels are logged, never answered.
-
-Go's TLS stack performs no revocation (CRL/OCSP) or pinning checks, so
-`revoked.badssl.com` and `pinning-test.badssl.com` stream through with 200 —
-faithful passthrough; the upstream's own trust decisions are never pre-empted.
-
-## Known deviations from "as-is"
-
-- Outbound `Host` header is the upstream host (required for SNI/virtual
-  hosting).
-- Inbound `Forwarded` / `X-Forwarded-*` headers are stripped by
-  `httputil.ReverseProxy`'s Rewrite mode (anti-spoofing) and `X-Forwarded-For`
-  is not added. LLM providers ignore these.
-- Hop-by-hop headers (`Connection`, `Transfer-Encoding`, …) are managed per
-  RFC by ReverseProxy — this is required for correctness, not a rewrite.
+- No request or response rewriting beyond what the transport requires; the
+  relay node's localhost CONNECT/SOCKS5 proxies hand the target's own
+  certificate to the client, so TLS verification is end-to-end and the nodes
+  are never in the trust path.
+- No credential handling for the target: the client's provider keys ride
+  inside the tunnel's TLS and are never seen by the exit node's policy layer.
+- No egress without policy: the exit node resolves and pins the target and
+  enforces `tunnel.egress` (default `deny`, docs/d084) before the first byte
+  leaves.
+- No silent degradation: a node that is not armed refuses to boot rather than
+  binding a port that answers 404 to everything (docs/d084's kill-switch law).
 
 ## The SSL-VPN transport family (docs/d073, delivered in phases)
 
-The requirements for the SSL-VPN transport family grew out of this relay —
-today's allowlist relay, an authenticated generic relay, and the tunnel
-transports (h2-POST, WebSocket, and h1.1-POST, with a localhost
-CONNECT/SOCKS5 relay on the client side) — and are owned by
-[d073](../docs/d073-ssl-vpn-three-modes.md), not this file. The feasibility
-verdict there is the load-bearing part for this code: Tailscale Funnel does
+The requirements for the family grew out of the reverse-proxy era and are
+owned by [d073](../docs/d073-ssl-vpn-three-modes.md), not this file. The
+feasibility verdict there is the load-bearing part: Tailscale Funnel does
 **not** support the HTTP `CONNECT` method as a general tunnel, but it does
-support the WebSocket upgrade (the `httputil.ReverseProxy` path this proxy
-already uses), so the tunnel is `CONNECT`-inside-`wss`. The trust-model
-table in d073 explains why the tunnel transports can drop the client's
-trust in the proxy where the allowlist and authenticated relays cannot.
+support the WebSocket upgrade, so the tunnel is `CONNECT`-inside-`wss`. The
+trust-model table in d073 explains why the tunnel transports can drop the
+client's trust in the middle where the allowlist and authenticated relays
+cannot — and that table is the reason the reverse proxy is now deleted
+(docs/d108).
 
 Roles are named by network position, not protocol role (docs/d088): the
-**exit node** (free internet + tsnet to the LLM endpoints,
-`vpn-exit.sh`) and the **relay node** (local restricted-internet
-deployment, `vpn-relay.sh` — serve it, or ride it as the chain step that
-points a child at it, docs/d095). The code speaks the same names (d088
-phase 2); inside the tunnel protocol
-itself the ends stay "client"/"server" — wire roles, not deployments —
-and `relay.go`'s byte pump is shared verbatim by both nodes.
+**exit node** (free internet + tsnet to the LLM endpoints, `vpn-exit.sh`) and
+the **relay node** (local restricted-internet deployment, `vpn-relay.sh` —
+serve it, or ride it as the chain step that points a child at it, docs/d095).
+Inside the tunnel protocol itself the ends stay "client"/"server" — wire
+roles, not deployments — and `relay.go`'s byte pump is shared verbatim by
+both nodes.

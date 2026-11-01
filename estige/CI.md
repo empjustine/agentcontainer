@@ -100,8 +100,8 @@ both cases, no NDK, no extra toolchain:
   deploy story, not a CI story.
 - **CI-side verification**: qemu-user-static on the runner can execute
   both artifacts (armv5, arm64-linux) for a boot/`-version` smoke —
-  not wired today; the full smoke-test (ports, funnel, badssl)
-  stays a same-arch affair.
+  not wired today; the full tunnel suite (`go test ./...`) stays a
+  same-arch affair.
 - Artifacts land via `actions/upload-artifact`; the OCI image build
   stays amd64 (the Containerfile has no cross TARGETPLATFORM wiring).
 

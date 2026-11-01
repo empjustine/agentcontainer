@@ -109,13 +109,10 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
 
-	// Server: provider allowlist + the tunnel through the production path.
+	// Server: the tunnel through the production path — no allowlist, no
+	// second face (docs/d108).
 	armTestTunnelEnv(t)
-	localProvider, err := newProvider("local.test", upstream.URL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	s := &server{providers: map[string]*provider{"local.test": localProvider}}
+	s := &server{}
 	if err := s.enableTunnel(&tunnelConfig{Egress: egressConfig{
 		AllowCidrs: []string{"127.0.0.0/8"},
 		Ports:      []uint16{upPort},

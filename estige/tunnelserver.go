@@ -45,10 +45,6 @@ const (
 // the proxy needs is one fixed, reserved place to dispatch on.
 const tunnelPath = "/vpn"
 
-// tunnelPathHost is the allowlist-host name that would shadow tunnelPath;
-// enableTunnel refuses it at boot (VPN-R42 in its d085 form).
-const tunnelPathHost = "vpn"
-
 // maxOperatorKeys bounds the principal set (docs/d078 §2): a structural
 // guard, not a performance one — the scan is linear regardless — that keeps
 // the credential model a bounded key set and out of the user-directory
@@ -491,13 +487,6 @@ func (s *server) enableTunnel(tn *tunnelConfig) error {
 	keys, err := operatorKeysFromEnv()
 	if err != nil {
 		return err
-	}
-	// The reserved path may never be an allowlist host: /vpn is the whole
-	// tunnel namespace (docs/d085), and a provider carrying that name would
-	// make dispatch a matter of request order — VPN-R42 forbids exactly that
-	// coupling, and startup is where "never" is enforceable.
-	if _, clash := s.providers[tunnelPathHost]; clash {
-		return fmt.Errorf("the reserved tunnel path %s collides with allowlist host %q", tunnelPath, tunnelPathHost)
 	}
 	egress, err := newEgressPolicy(tn.Egress)
 	if err != nil {

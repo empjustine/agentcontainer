@@ -1,7 +1,7 @@
 ---
 id: d108
 type: decision
-status: accepted (direction of record; removal pending implementing changes)
+status: accepted (direction of record; slices 1–4 of the removal landed — the tree-shake of `estige.json` waits for d104's store)
 title: "d108 — the serving edge moves to tunnel-only: the bazzite llama-swap provider is deprecated for now, the allowlist reverse proxy (legacy mode A) is deprecated as insecure"
 parent: estige
 depends-on: [d027, d047, d063, d070, d073, d077, d080, d105]
@@ -199,13 +199,19 @@ implementing changes (see *Open items*); this record changes no code.
 ## Open items
 
 - Removal sequencing, as separate implementing changes: (1) documentation
-  stops presenting mode A (done by this record), (2)
-  move the coding-agent to the tunnel transport and delete the
-  route-substitution input, (3) remove `allowHosts` + `estige generate`'s
-  allowlist emission, (4) delete the reverse-proxy code and its smoke-test
-  checks, (5) tree-shake `estige.json` out of the tree — sequenced after
-  (3) and with d104's store, since `egress` needs its new home
+  stops presenting mode A (landed), (2) the coding-agent loses the
+  route-substitution input (`REVERSE_PROXY_BASE_URLS`, `installRouted()`,
+  the installed-route verifier — landed), (3) `allowHosts` +
+  `estige generate`'s allowlist emission (landed: the subcommand, its
+  artifact, its examples, and the canonical-JSON sorting it needed are
+  gone), (4) the reverse-proxy code and its smoke-test checks (landed:
+  `provider`/host-form routing/proxy error classification/`smoke-test.go`
+  deleted, leaving the shared funnel-404 and CLF plumbing the tunnels
+  always used), (5) tree-shake `estige.json` out of the tree — still
+  pending, sequenced with d104's store, since `egress` needs its new home
   (`exit.json`) before the file can die (`listen` needs none — d110).
+  What remains of the file after slice 4 is the tunnel policy alone, so
+  slice 5 is a rename plus a schema move, not a shrinking exercise.
 - Where the v2/v3/v4 generation vocabulary lives. d105 owns transport names,
   not generations; until that record is amended, this table is the reference.
 - What, if anything, serves local models after the llama-swap pause.

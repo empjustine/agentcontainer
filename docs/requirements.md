@@ -79,14 +79,15 @@ the allowlist relay by decision
 
 ## Functional requirements
 
-> **Deprecated in direction (docs/d108).** FR-S1–FR-S4 (the llama-swap serving
-> path) are paused *for now*: the code keeps working, but no new clients or
+> **Direction changed (docs/d108).** FR-S1–FR-S4 (the llama-swap serving path)
+> are paused *for now*: the code keeps working, but no new clients or
 > features. FR-S5's reverse-proxy mode (legacy "mode A") and FR-U2's route
-> substitution are **deprecated as insecure and being removed** — a
-> TLS-terminating edge sees plaintext provider keys, and the route-rewriting
-> generator machinery goes with it; the SSL-VPN tunnel transports replace
-> both. FR-U4's env allowlist remains for the coding-agent. The requirement
-> text below is unchanged, so the record of what was required stays readable.
+> substitution are **gone**: a TLS-terminating edge sees plaintext provider
+> keys, so the allowlist relay and the client-side route form were removed
+> outright — generators emit canonical upstream URLs only, and the SSL-VPN
+> tunnel transports replace the mode. FR-U4's env allowlist remains for the
+> coding-agent. The requirement text below is unchanged, so the record of what
+> was required stays readable; the implementation status is d108's.
 
 ### Serving — `llm-local-inference/`
 

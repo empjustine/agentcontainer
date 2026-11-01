@@ -2,108 +2,68 @@
 id: estige
 type: reference
 status: stable
-title: "estige — reverse proxy (deprecated in direction) + SSL-VPN tunnel transports"
+title: "estige — SSL-VPN tunnel transports (exit node + relay node)"
 parent: architecture
 tags: ["serving", "proxy", "go"]
 ---
 
 # estige
 
-> **Deprecated (docs/d108):** the reverse-proxy (allowlist relay, legacy
-> "mode A") is deprecated as insecure — a TLS-terminating edge sees plaintext
-> provider keys — and estige will stop exposing it (`allowHosts`, host-form
-> routing, the generated allowlist). The tunnel transports are the supported
-> shape. The reference below describes mode A while the removal diff is
-> pending; treat it as a description, not an option.
+One static Go binary, two network positions: an **exit node** at the edge that
+terminates tunnels and opens egress under a reviewed policy, and a **relay
+node** on a restricted network that dials in and serves localhost CONNECT/SOCKS5
+proxies to unmodified clients. Clients validate the target's real certificate
+end to end and never trust the node in the middle.
 
-A dumb, faithful reverse proxy for LLM APIs. Zero dependencies, one static Go
-binary, ~13 MB RSS. It exists because llama-swap's routing machinery
-(model swapping, health checks, key injection) accumulated exceptions when
-pi-coding-agent / opencode were pointed at it through `estige/`;
-estige is the substrate llama-swap itself uses internally
-(`httputil.ReverseProxy`), extracted and stripped of everything else.
+> **What left (docs/d108):** the v2 host-allowlist reverse proxy — legacy
+> "mode A", docs/d047 — is deleted. A TLS-terminating edge sees plaintext
+> provider keys and no credential scheme fixes that (docs/d073's trust table).
+> Gone with it: `allowHosts`/host-form routing, the generated allowlist,
+> `estige generate`, the smoke-test suite, and the install-time route
+> substitution it forced on the generators. What remains of that shape is the
+> funnel's plain 404, which every non-tunnel path still answers.
 
-> **Expansion (docs/d073; transports and names in docs/d077/d105):** the
-> allowlist relay (today's host-allowlist front), the authenticated relay
-> (generic prefix-route relay — deferred to v3), and the tunnel transports:
-> the h2-POST tunnel (HTTP/2 streaming POST — default-on since d084; the
-> `-modes`/`MODES` knob retired by d093, the offer is the constant full
-> ladder), the WebSocket tunnel (`CONNECT`-over-WebSocket plus a localhost
-> CONNECT/SOCKS5 relay, so clients validate the target's real certificate
-> end-to-end and never trust the proxy — the deployed v2 shape), and the
-> h1.1-POST tunnel (per-exchange windowing — the floor for
-> upgrade-stripping gateways; built with no spike ahead of it, d081's L4
-> amendment, and part of the default offer `cde`). The requirements are
-> d073's; negotiation, framing, and adoption gates are d077's; the names are
-> d105's. L4/L1 characterize the h1.1-POST tunnel's provisional constants
-> after the fact; they gate nothing (d081).
+> **Transport family (docs/d073/d077/d105):** the h2-POST tunnel (HTTP/2
+> streaming POST — default-on since d084), the WebSocket tunnel
+> (`CONNECT`-over-WebSocket, the deployed v2 shape), and the h1.1-POST tunnel
+> (per-exchange windowing — the floor under an upgrade-stripping gateway). The
+> offer is always the whole ladder, ranked per dial by the relay node; the
+> `-modes`/`MODES` knob retired with docs/d093. Requirements are d073's,
+> negotiation/framing d077's, names d105's, the credential redesign d104's.
 
-Reference code: upstream llama-swap — github.com/mostlygeek/llama-swap
-(`internal/router/peer.go`, `internal/process/process_command.go`; docs tree
-`docs/kb/` — the canonical source). A local checkout under
-`~/Downloads/references/github/` may exist as a read-only verification cache
-on some hosts; it is an optimization, not the reference.
-
-## What it does / does not do
-
-| | |
-|---|---|
-| ✅ Passes all calls as-is | headers, body, query, method, streaming — byte for byte |
-| ⚠️ Host prefix routing | `http://host:port/{upstream-host}/<path>?<q>` → `scheme://<host>/<path>?<q>`, host allowlisted (docs/d047) — legacy "mode A", **deprecated as insecure** (docs/d108) and being removed |
-| ✅ Streaming as-is | `FlushInterval: -1` → every upstream read is flushed immediately; SSE, NDJSON, chunked all arrive at upstream cadence |
-| ✅ RFC 9457 errors | internal failures → descriptive `application/problem+json` 502 (see below) |
-| ✅ Passthrough of upstream errors | provider 4xx/5xx responses are **not** rewritten |
-| ❌ No model routing | the path decides; nothing else |
-| ❌ No credential handling | requests must already carry valid provider keys; the proxy never touches `Authorization` |
-| ❌ No TLS termination | serve plain HTTP; put it on loopback / tailscale |
+Historical reference for the deleted proxy: llama-swap,
+github.com/mostlygeek/llama-swap (`internal/router/peer.go`) — estige was
+that substrate (`httputil.ReverseProxy`) with everything else stripped. The
+rationale stays in [DESIGN.md](DESIGN.md).
 
 ## Usage
 
-The export face is the tunnel (docs/d073/d104): arm it with the operator
-credential from the env chain and run the exit-node entry point.
+The exit node, armed by the env chain:
 
 ```console
-$ ./lib/environment.sh ./vpn-exit.sh     # exit node; VPN_OPERATOR_KEYS arms the tunnel
-[estige] listening on :8080; 0 legacy allowlisted host(s)
+$ ./lib/environment.sh ./vpn-exit.sh      # VPN_OPERATOR_KEYS arms the tunnel
+[estige] listening on :8080; tunnel at /vpn
 ```
 
-The funnel points at that port. The relay node (`./vpn-relay.sh`) dials in
-over the tunnel and serves the loopback CONNECT/SOCKS5 proxies its clients
-use. A node with neither a credential nor an allowlist config refuses to start
-rather than accepting connections and answering 404 to everything.
+The funnel points at that port. The relay node (`./vpn-relay.sh`) dials in and
+serves the loopback proxies its clients use. A node with no operator credential
+refuses to start — there is no other face left to serve (docs/d084's
+kill-switch law, docs/d108).
 
-### Configuration: none (docs/d108)
+```console
+$ ./estige -mode exit -listen :8080            # tunnel policy from defaults
+$ ./estige -mode exit -config tunnel.json      # optional policy file
+$ ./estige -mode relay                         # relay node, env-driven
+```
 
-There is no generated config any more. `estige generate` — the subcommand that
-emitted `estige.json`'s `allowHosts` table from the pi-ai registry and
-`lib/cloud-providers.json` — is deleted with the artifact it wrote: the
-allowlist reverse proxy (legacy "mode A") is deprecated as insecure, because a
-TLS-terminating proxy at the edge sees the client's provider keys and no
-credential scheme fixes that (d073's trust table). Its serving code follows in
-the removal diff; the routing semantics it documented stay in
-[DESIGN.md](DESIGN.md) as the rationale of a mode being retired.
+### Configuration: policy only
 
-What an operator still supplies:
-
-- **the tunnel credential** — `VPN_OPERATOR_KEYS` (exit node) /
-  `VPN_OPERATOR_TOKEN` (relay node), through the env chain, never through the
-  file (docs/d078/d084/d085/d090);
-- **egress policy** — `tunnel.egress` in a config file, when the default
-  `deny` is not what the deployment wants (docs/d084);
-- **nothing else.** `-config` still accepts a hand-written allowlist file so a
-  not-yet-migrated host keeps serving; absent, the node serves the tunnel
-  alone, which is the supported shape.
-
-## Repository boundary (docs/d082)
-
-This folder is the unit that becomes its own repository (docs/d082): code,
-scripts, image, and the docs in this folder (README, DESIGN, CI)
-travel together. Everything it borrows
-from the parent repo arrives through one injectable directory — `LIB_DIR`,
-default `../lib` (the JSON fact table the Go generator reads, and the
-declarative workload API for the two `vpn-*.sh` entries) — and the
-build stays the root `./build.mjs`'s (docs/d041) until the split. The
-decision records that travel with the unit are listed in d082 §1.
+`-config` names an **optional** file carrying `tunnel.egress` (the CIDR/port
+allowlist the exit enforces, default `deny`) and `tunnel.enabled` (a tri-state
+veto/assert, docs/d084). It cannot grant the capability and cannot hold a
+credential: arming is the env chain's job, and a file on disk holding a
+credential would be a second, unkeyed copy of it (VPN-R32). The bind is the
+`-listen` flag; the allowlist and its generator are gone (docs/d108).
 
 ## Build & run
 
@@ -121,9 +81,8 @@ hosts, Termux targets strictly serialized. For THIS folder:
   `scratch` is deliberate: the final stage pulls from NO registry, so the
   image builds where non-docker.io registries are blocked; the image ships
   the CA bundle both TLS legs (upstream certs, Funnel `*.ts.net`) verify
-  against and is ~7.5 MB final). `estige smoke-test` (smoke-test.go) runs
-  the behavioural suite against that host binary — no node, curl, or
-  python3 on the host (docs/d102).
+  against and is ~7.5 MB final). The behavioural suite is `go test ./...`
+  in this folder — no node, curl, or python3 on the host (docs/d102).
 - **Bare host without a container tool**: host binary only — go is required,
   it is the only thing this host can build and serve.
 
@@ -141,10 +100,10 @@ the container branch runs in HOST NETWORK mode; the native branch execs
 the binary directly. Exit node: listening on `${HOST_PORT:-8080}` (the
 funnel front, `-listen 0.0.0.0:$HOST_PORT` for the container, `${LISTEN:-:8080}`
 for native) — host networking is what makes a loopback upstream reachable from
-the container. No config is mounted by default; a file is mounted at
-`/etc/estige/estige.json` (native: the same path, both overridable with
-`CONFIG`) only when one exists on disk, which now means a leftover allowlist
-deployment (docs/d108). Relay node: NO config file — `VPN_TUNNEL_URL` (http(s):// or
+the container. No config is mounted by default; `CONFIG` names a policy file
+(native: that path; container: mounted at `/etc/estige/tunnel-policy.json`) and
+the launcher fails if it cannot be read — the file carries `tunnel.egress`
+alone (docs/d108). Relay node: NO config file — `VPN_TUNNEL_URL` (http(s):// or
 ws(s):// — the URL's honest wire form, normalized to wss internally,
 docs/d090; the path is the Funnel mount plus the fixed `/vpn` —
 docs/d085) and `VPN_OPERATOR_TOKEN` are its core surface, with
@@ -170,36 +129,33 @@ relay itself keeps the host's upstream chain (docs/d094). A relay that is
 not running is started (detached, `--restart=unless-stopped`); an
 unreachable or foreign listener refuses the launch by name. Secrets
 (env-only — VPN-R32/d078; the launchers never load secrets themselves; the
-in-progress d104 credential redesign already moves the tunnel keys into the
-on-disk key store): the
-allowlist relay holds none — requests must already carry valid provider keys.
-An armed exit node (docs/d084/d085: armed when the env carries the operator
-keyset) holds the
+in-progress d104 credential redesign moves the tunnel keys into the on-disk
+key store): an armed exit node (docs/d084/d085: armed when the env carries
+the operator keyset) holds the
 keyset (`VPN_OPERATOR_KEYS`), and the relay node holds the operator token
 (`VPN_OPERATOR_TOKEN`) — disjoint since docs/d090, which retired the
 keyset's implicit-`default` merge of the token — and all reach the
 container only through the launcher env allowlists.
 
-### Port model (the conflict with llama-swap, docs/d027)
+### Port model (the single knob, docs/d110)
 
-The tailscale funnel serves the whole `https://bazzite…/<funnel-id>` route
-on host port **8080**, so the proxy must own 8080 — the port llama-swap
-historically held. The swap: llama-swap moves to **8101** (its container
-still listens on 8080 internally; `llm-local-inference/run.sh` publishes
-`8101 → 8080`), and the deployed config routes it on loopback:
+The tailscale funnel serves the whole `https://bazzite…/<funnel-id>` route on
+host port **8080**, so the exit node must own 8080. The path table it used to
+serve is down to one mount:
 
-| path under the funnel | backend | routing |
-|---|---|---|
-| `/<upstream-host>/<path>` | allowlisted hosts only (~36 owner-set rows, docs/d047) | host key → scheme://host root; the client carries the full upstream base path after the host (`<base>/api.cline.bot/api/v1`); every other host is denied by absence |
-| `/bazzite…ts.net/<path>` | `https://bazzite.coelacanth-barb.ts.net` | llama-swap (LOCAL GGUF, model-id routing) rides in as a plain fact-table row keyed by its tsnet `tailscale serve` hostname (docs/d070) — the loopback hop never leaves the host |
+| path under the funnel | backend |
+|---|---|
+| `/vpn` (the mount prefix, stripped at the edge, docs/d085) | the tunnel namespace — the only face |
+| anything else | the plain funnel 404, byte for byte (VPN-R34) |
 
-`./estige smoke-test` runs 34 behavioural checks against the v2 host allowlist
-(docs/d047) while that code is still present — including the deny-by-absence negatives
-(unknown host, v1 slug form) answer the plain funnel 404. TLS failure
-classes come from the badssl.com test hosts, so no bundled cert is needed;
-that section is skipped automatically if there is no outbound internet,
-and the child process runs with the proxy env stripped so a host chain
-(docs/d094) cannot change what the checks observe.
+How the bind is spelled today (the `-listen` flag in both branches,
+`HOST_PORT`/`LISTEN` in the launchers) is the subject of d110: one port,
+one knob, env `PORT`.
+
+The suite that used to run against this table (`estige smoke-test`, 34 checks
+including the badssl TLS taxonomy) is deleted with it (docs/d108). What
+survives is the in-process tunnel suite — `go test ./...`, hermetic, no
+outbound internet required.
 
 CI: none exists yet, deliberately — the GitHub Actions findings for
 this unit (required steps, runner friction, gate flake points) live in

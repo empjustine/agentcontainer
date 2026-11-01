@@ -17,7 +17,7 @@ the split and the one rule that lets some folders reuse others.
 
 | Side | Responsibility | Instance |
 |------|----------------|----------|
-| **serving** | run llama-swap (`llm-local-inference*`, LOCAL GGUF only; **deprecated for now**, d108) and estige (`estige/`, cloud relay + tunnel family, docs/d073/d077; the **reverse-proxy mode is deprecated as insecure and being removed**, d108) | `llm-local-inference/` (local layer, capability-gated) + `estige/` (host-allowlist router, docs/d047; tunnel transports are the target) |
+| **serving** | run llama-swap (`llm-local-inference*`, LOCAL GGUF only; **deprecated for now**, d108) and estige (`estige/`, SSL-VPN tunnel family only — the reverse proxy is deleted, d108; docs/d073/d077) | `llm-local-inference/` (local layer, capability-gated) + `estige/` (exit node + relay node) |
 | **usage** | run the pi coding-agent (`coding-agent*`) | `coding-agent/` |
 
 The serving side is split by concern (docs/d027): llama-swap
@@ -32,11 +32,12 @@ retired — the capability-gated generation pattern (pioneered by
 `coding-agent/`) made the variant folders redundant.
 
 Direction (docs/d108): the local llama-swap provider is deprecated for now,
-and the reverse-proxy mode (legacy "mode A", the allowlist relay) is deprecated
-as insecure and being removed — a TLS-terminating edge sees plaintext provider
-keys, and the shape drags route-rewriting generator machinery behind it. The
-tunnel transports are the only supported shape going forward. The prose above
-describes the current, still-working shape.
+and the reverse-proxy mode (legacy "mode A", the allowlist relay) is **deleted**
+— it was deprecated as insecure (a TLS-terminating edge sees plaintext provider
+keys) and the shape dragged route-rewriting generator machinery behind it. The
+tunnel transports are the only serving shape left; the prose above that
+describes an allowlist route is history, kept because the records it points at
+keep their verdicts.
 
 ## Standalone rule (self-contained runners)
 
@@ -188,7 +189,7 @@ the variant folders redundant.)
 | Folder | Role | What makes it work |
 |--------|------|--------------------|
 | `llm-local-inference/` (deprecated for now, d108) | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `generate.sh`/`generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh` |
-| `estige/` (reverse-proxy mode deprecated as insecure, being removed; tunnel replaces it, d108) | host-allowlist cloud router (docs/d047 — the allowlist relay, by decision the only HOST-policy transport, docs/d080): `/<upstream-host>/<path>` → the allowlisted scheme://host root, byte-for-byte, no keys — deny-by-absence for everything else (docs/d027's 404 policy); streaming as-is, RFC 9457 502s; also carries the opt-in tunnel transports (h2-POST, WebSocket, h1.1-POST; docs/d073/d077/d105), whose two deployments are named by network position since docs/d088 — the **exit node** (`vpn-exit.sh`; funnel front + tunnel server) and the **relay node** (`vpn-relay.sh`; loopback CONNECT/SOCKS5 — serve mode, or the chain step that points a child at it, docs/d095; env values and code speak the same names, d088 phase 2) — WebSocket tunnel deployed; h2-POST tunnel default-on (d084); standalone-repo boundary defined in docs/d082 (split-time CI findings in `estige/CI.md`) | `main.go`, `smoke-test.go` (`estige smoke-test`: 34 behavioural checks for the deprecated mode; `generate.go`, `estige.json` and `estige.example.json` are deleted with the allowlist, docs/d108); the tunnel family: `relaynode.go`, `relaychain.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go`, plus the two deployment entries `vpn-exit.sh`/`vpn-relay.sh`; built by the root `build.mjs` |
+| `estige/` (tunnel-only since d108) | the SSL-VPN tunnel transports (h2-POST, WebSocket, h1.1-POST; docs/d073/d077/d105) in one binary in two network positions (docs/d088): the **exit node** (`vpn-exit.sh`; funnel front + tunnel server, egress enforced from `tunnel.egress`) and the **relay node** (`vpn-relay.sh`; loopback CONNECT/SOCKS5 — serve mode, or the chain step that points a child at it, docs/d095). One reserved path (`/vpn`) serves the tunnels; **every other path answers the plain funnel 404** (d073 VPN-R34) — the allowlist reverse proxy that used to serve those paths (docs/d047/d063/d070) is deleted, not disabled (d108). WebSocket tunnel deployed; h2-POST tunnel default-on (d084); the config file carries policy alone (no allowlist, no credential); standalone-repo boundary defined in docs/d082 (split-time CI findings in `estige/CI.md`) | `main.go`, the tunnel family — `relaynode.go`, `relaychain.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go` — plus the two deployment entries `vpn-exit.sh`/`vpn-relay.sh`; `generate.go`, `estige.json`, `estige.example.json` and `smoke-test.go` are deleted with the allowlist (docs/d108); built by the root `build.mjs` |
 | `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.sh`/`generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.sh`, `settings.json`; image built by the root `build.mjs` |
 
 The former "next planned step" sketch (a simplified config-generator system

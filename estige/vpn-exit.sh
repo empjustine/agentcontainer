@@ -25,7 +25,8 @@
 # and the exit node stopped reading it (docs/d090).
 #
 # Env overrides: HOST_PORT / LISTEN / IMAGE_TAG / ESTIGE_BIN / CONFIG /
-# EXIT_CONTAINER.
+# EXIT_CONTAINER. CONFIG has no default: the tree carries no config file to
+# point at (docs/d108/d110), so absent means "serve the defaults".
 
 set -eu
 # Shared infra arrives through one injectable directory (docs/d082): default
@@ -43,12 +44,12 @@ script_dir="$SCRIPT_DIR"
 
 # No config is the SUPPORTED shape (docs/d108): the export face is the tunnel,
 # armed by the env chain, and the host-allowlist file estige used to require is
-# the deprecated reverse-proxy mode. CONFIG still names one explicitly — a
-# leftover deployment keeps serving its routes until the removal diff.
-config="${CONFIG:-$script_dir/estige.json}"
-if [ ! -f "$config" ]; then
-	log_info "no allowlist config — serving tunnel-only (docs/d108)" path="$config"
-	config=''
+# deleted with the reverse-proxy mode. CONFIG still names a tunnel POLICY file
+# explicitly (egress rules, the arming veto/assert — docs/d084): a file the
+# operator names but cannot read is an error, not a silent default.
+config="${CONFIG:-}"
+if [ -n "$config" ] && [ ! -f "$config" ]; then
+	log_die 94 "CONFIG names a policy file that does not exist" path="$config"
 fi
 
 # shellcheck disable=SC2154  # _workload/_workload_tool from the sourced lib
@@ -77,8 +78,8 @@ if [ "$_workload" = 'workload' ]; then
 	# is deliberately absent (docs/d090).
 	workload_env_allowlist VPN_OPERATOR_KEYS
 	if [ -n "$config" ]; then
-		workload_ro   "$config" /etc/estige/estige.json
-		workload_cmd  -config /etc/estige/estige.json -listen "0.0.0.0:$HOST_PORT"
+		workload_ro   "$config" /etc/estige/tunnel-policy.json
+		workload_cmd  -config /etc/estige/tunnel-policy.json -listen "0.0.0.0:$HOST_PORT"
 	else
 		workload_cmd  -listen "0.0.0.0:$HOST_PORT"
 	fi
