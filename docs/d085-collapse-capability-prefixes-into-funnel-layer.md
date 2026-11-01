@@ -105,5 +105,8 @@ gate the rest, and tailnet ACLs remain available to the operator.
 - **A custom header as the second factor.** Rejected — one secret in a
   different place is still one secret; mTLS remains d073's deferred option
   if a genuine second factor is ever wanted.
+  **Superseded by d104** — the genuine second factor is mutual HMAC
+  (relay-to-exit / exit-to-relay proofs), not certificates: same bearer,
+  but time-windowed and never on the wire.
 - **Freeze, change nothing.** Rejected — the current shape is a documented
   trap that already misled the operator.

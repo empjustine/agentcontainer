@@ -1,11 +1,11 @@
 ---
 id: d088
 type: decision
-status: implemented (phase 1 documentation; phase 2 code rename landed in-place ahead of the still-undated d082 split)
+status: implemented (phase 1 documentation; phase 2 code rename landed in-place ahead of the still-undated d082 split; protocol-layer extension — exit/relay inside the wire — added by d104, code rename pending)
 title: "d088 — exit node and relay node: name the SSL VPN deployments by network position, not protocol role"
 parent: llm-reverse-proxy
 depends-on: [d071, d073, d082]
-references: [d080, d084]
+references: [d080, d084, d104]
 ---
 
 # d088 — exit node and relay node: name the SSL VPN deployments by network position, not protocol role
@@ -80,6 +80,26 @@ the deployment identity is now the entry point (`vpn-exit.sh` /
 3. **History:** untouched, by d071's law. Decision records (d070, d073,
    d077, d080, d084, d085) and README index rows that describe them
    keep the names those records used.
+
+## Protocol-layer vocabulary (extended by d104)
+
+The original scope stopped at the docs: the tunnel protocol's inner ends
+kept "client"/"server" as wire senses (the Phases text above records that
+day's decision). d104 extends the vocabulary into the wire — the mutual
+credential layer lives precisely there — so the wire speaks deployment
+roles too:
+
+- The tunnel handshake's label field and `VPN_CLIENT_LABEL` name the
+  speaking node's deployment identity (its principal id), not a wire role;
+  the credential headers are `X-Relay-Proof` / `X-Exit-Proof`, and the
+  MAC domain-separation labels are `relay-to-exit` / `exit-to-relay`.
+- Two senses stay RFC/role-neutral, deliberately: RFC 6455's WebSocket
+  mask polarity (the RFC's word for who masks — renaming it would fight
+  the standard, not the vocabulary) and `relay.go`'s "peer", which names
+  the other end of the byte pump from either side and carries no position.
+- The code-field rename itself belongs to d104's implementing change; this
+  record's original documentation-then-code phase split still holds, with
+  the wire rename as its new second phase.
 
 ## Collisions and disambiguation (checked, honest)
 

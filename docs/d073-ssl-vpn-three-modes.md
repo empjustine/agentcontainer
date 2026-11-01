@@ -1,7 +1,7 @@
 ---
 id: d073
 type: architecture-design
-status: adopted-in-part (v2 = mode A + mode D delivered; mode C built default-on since d084; mode E built — d081's L4 amendment; mode B deferred to v3; VPN-R44's `${prefix}` clause reversed by d085)
+status: adopted-in-part (v2 = mode A + mode D delivered; mode C built default-on since d084; mode E built — d081's L4 amendment; mode B deferred to v3; VPN-R44's `${prefix}` clause reversed by d085; the tunnel namespace's shared-bearer credential superseded by d104 — mutual HMAC exit↔relay proofs)
 title: "d073 — llm-reverse-proxy → three-mode SSL VPN: requirements and feasibility"
 parent: llm-reverse-proxy
 depends-on: [llm-reverse-proxy, d027, d047, d070, d071]
@@ -381,6 +381,10 @@ VPN-R29. The table below is per-leg for that reason.
   identical rights, same bearer on the wire), carried in one JSON env value;
   R33 gains a full-set no-early-exit rule, R34 explicitly covers ids. R31
   binds until d078 is accepted.*
+  *Superseded for the tunnel namespace by d104* — the tunnel's operator
+  credential becomes mutual HMAC proofs (relay-to-exit / exit-to-relay,
+  d104), not a shared bearer on the wire; mode B's gateway credential
+  (d091) is untouched.
 - **VPN-R32** — Secrets MUST arrive through the one explicit chain
   (`./lib/environment.sh`, docs/d046) and be read as plain env. This is a
   real departure from llm-reverse-proxy's current "holds no secrets, no vault
@@ -496,6 +500,9 @@ boundary that deny-by-absence used to be for mode A.
   only by shipping client certificates through the env chain (VPN-R32), which
   is unwieldy for one operator; a shared-secret bearer token carries the same
   single-principal model with none of the transport.
+   **Superseded by d104** — the deferred second-factor question is answered
+   by mutual HMAC proofs, not certificates: no env-chain certificate
+   shipping at all, and the terminator never sees the secret.
 - **In-protocol / browser-client tunnel auth** (first-frame `AUTH` with a
   grace window, or a bearer `Sec-WebSocket-Protocol` subprotocol). Rejected —
   the v2 client is our own localhost proxy and can set a handshake header, so
@@ -584,7 +591,8 @@ Resolved in this revision:
 - **Mode B is deferred to v3** — v2 is A + D, so the first implementation is
   one protocol and two roles (§2, §18).
 - **The operator credential is a shared-secret bearer token** — mTLS deferred
-  as unwieldy, not impossible (§4, §12).
+  as unwieldy, not impossible (§4, §12). **Superseded by d104** — the
+  tunnel credential is now mutual HMAC proofs, not a shared bearer.
 - **Tunnel auth rides the WebSocket handshake header** — the client is our
   localhost proxy, so the browser-client and first-frame-auth variants are
   out (VPN-R12).
