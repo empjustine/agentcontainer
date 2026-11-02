@@ -1180,17 +1180,11 @@
         "beam-free": {
           "name": "beam-free"
         },
-        "claude-haiku-5-5": {
-          "name": "claude-haiku-5-5"
-        },
         "deepseek-v4-pro": {
           "name": "deepseek-v4-pro"
         },
         "deepseek-v4.1-flash": {
           "name": "deepseek-v4.1-flash"
-        },
-        "gemini-4-argon": {
-          "name": "gemini-4-argon"
         },
         "glm-5.2": {
           "name": "glm-5.2"
@@ -1200,15 +1194,6 @@
         },
         "glm-5.3-flash": {
           "name": "glm-5.3-flash"
-        },
-        "gpt-5.6-luna": {
-          "name": "gpt-5.6-luna"
-        },
-        "gpt-6-luna": {
-          "name": "gpt-6-luna"
-        },
-        "grok-4.7": {
-          "name": "grok-4.7"
         },
         "hy3": {
           "name": "hy3"
@@ -1302,12 +1287,6 @@
         },
         "nvidia/nemotron-3.5-super-vl:free": {
           "name": "nvidia/nemotron-3.5-super-vl:free"
-        },
-        "poolside/laguna-s-2.1:free": {
-          "name": "poolside/laguna-s-2.1:free"
-        },
-        "poolside/laguna-xs-2.1:free": {
-          "name": "poolside/laguna-xs-2.1:free"
         },
         "recursive/flint-v1.0:free": {
           "name": "recursive/flint-v1.0:free"
