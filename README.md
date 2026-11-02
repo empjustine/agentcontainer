@@ -186,6 +186,11 @@ agentcontainer/
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules (the opencode watchdog deltas) · install + provenance
 │
+├── pi-summarized-thinking/              # end-of-turn reasoning summaries as a pi package (human-facing only): a `custom` entry per completed turn — never in the model's context
+│   ├── README.md                        #   → install + usage: the `custom` entry (not `custom_message`), the two deliveries, the model chain, the commands, the invariants
+│   ├── FINDINGS.md                      #   → the pi 1.5.0 + ThinkRail contracts it rests on, cited by symbol · the cache arithmetic · the superseded claims
+│   ├── AGENTS.md / TODO.md              #   → folder rules (this extension never touches the context) · the open worklist, unbuilt (the `why` is coding-agent/summarized-thinking.md)
+│
 ├── git/                                 # Reference-farm tooling (mirrors + search); shell is interpreter shims only (d121)
 │   ├── README.md                        #   → the module doc: the farm's three jobs, boundary, entry points
 │   ├── -forge-mirror.sh                 #   → add a BARE mirror from any forge: https public forges + the software-forge tenant (idempotent; farm-wide flock, d099)
@@ -291,7 +296,7 @@ Frontmatter `type:` and `status:` are the machine signal; this index is the huma
 | [estige/DESIGN.md](estige/DESIGN.md) | Deployment boundary — the binary starts, the service manager supervises, the package owns host integration — plus tunnel rationale, the 404 anti-oracle, RFC 9457 error taxonomy |
 | [llm-local-inference/CACHE-DESIGN.md](llm-local-inference/CACHE-DESIGN.md) | HF cache pipeline, table-write rule, and the fold that made it a submodule of this folder (the former `local-llm/`, docs/d113) |
 | [coding-agent/scoped-models-and-proxy-overrides.md](coding-agent/scoped-models-and-proxy-overrides.md) | Why pi uses its own catalog with baseUrl overrides (distilled from the retired free-tier pipeline) |
-| [coding-agent/summarized-thinking.md](coding-agent/summarized-thinking.md) | summarized-reasoning extension — CoT summarization design |
+| [coding-agent/summarized-thinking.md](coding-agent/summarized-thinking.md) | summarized-reasoning extension — human-facing turn summaries as a `custom` entry, never in the model's context: the cache rule and the reversals ([package](pi-summarized-thinking/)) |
 
 #### Decision records (history)
 
