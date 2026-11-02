@@ -65,6 +65,8 @@
 		"git/tests/git-glob.test.mjs",
 		"git/tests/git-pacer.test.mjs",
 		"git/tests/git-cli.test.mjs",
+		"git/tests/git-retry.test.mjs",
+		"git/tests/git-farm-lock.test.mjs",
 		"git/audit.mjs",
 		"git/local-changes.mjs",
 		"git/migrate-to-bare.mjs",

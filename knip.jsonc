@@ -72,6 +72,9 @@
 	// (lib/go-build.mjs shells out to it) — a binary, not an npm package.
 	// xdg-user-dir derives the mirrors-dir fallback in git/forge-mirror.mjs:
 	// host state, the same fact the git/*.sh shims read from the xdg config.
-	"ignoreBinaries": ["go", "xdg-user-dir"],
+	// flock(1) is the farm mutation mutex in both halves of git/ — the shell
+	// wrapper that takes it (farm-lock.sh) and the node probe that reports it
+	// (lib/farm-lock.mjs); like go, it is a host binary, not an npm package.
+	"ignoreBinaries": ["go", "xdg-user-dir", "flock"],
 	"ignoreDependencies": ["@earendil-works/pi-coding-agent"]
 }
