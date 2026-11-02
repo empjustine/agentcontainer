@@ -1,47 +1,52 @@
 {
 	"repo": "byteshape/Qwen3.8-27B-GGUF",
-	"commit": "ed2050c1bcdade91a10fbfd7799c70085d15d549",
-	"fetched_at": "2026-08-30T18:56:00+00:00",
+	"commit": "3fdfbd9b4a618303ad36edb151e95d134ece8c18",
+	"fetched_at": "2026-11-02T18:24:21+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
-			"oid": "039392d9bde49b8a2ac88eaf3f5e3de0dd3aa985",
-			"size": 1979
+			"oid": "53b2c7b9f918294e7f92216dcbdd0c36d1323fb2",
+			"size": 2436
 		},
 		{
-			"path": "Qwen3.8-27B-IQ3_S-3.44bpw.gguf",
-			"oid": "71f083c98cbee160bccc578f1483b4cf3ae125a681ec7fe32f7a73e8de90ba01",
-			"size": 11771581056
+			"path": "Qwen3.8-27B-IQ2_XXS-2.56bpw.gguf",
+			"oid": "901905c4b623d78a5e06421bba0c2ccd1a9acbb3d2643f5b6a611f00da2f1615",
+			"size": 8843953536
 		},
 		{
-			"path": "Qwen3.8-27B-IQ4_XS-3.67bpw.gguf",
-			"oid": "1a432e0401423f554103233afadca43da3f7683f0250da72900c5c66bc42665e",
-			"size": 12556912896
+			"path": "Qwen3.8-27B-IQ3_S-3.23bpw.gguf",
+			"oid": "40171062abb191d5fb8a04b19efea377a16daebf1fd17d5e8b25808537aa782f",
+			"size": 11035354496
 		},
 		{
-			"path": "Qwen3.8-27B-IQ4_XS-4.00bpw.gguf",
-			"oid": "d5193a4981982d384550bf0eb26032d32b7f9a0dc2be300b4bf421eaf87d6235",
-			"size": 13663372416
+			"path": "Qwen3.8-27B-IQ3_XS-3.01bpw.gguf",
+			"oid": "830eec2d0fff9ed82ca54a2e2557bfba26ec888fca473acb2c8e9a75b4021a0d",
+			"size": 10353001856
 		},
 		{
-			"path": "Qwen3.8-27B-IQ4_XS-4.40bpw.gguf",
-			"oid": "fa360d9e6c109074b15fd29d92405f45b832084b5c588c0ed11cb49e3c23a46d",
-			"size": 15040742016
+			"path": "Qwen3.8-27B-IQ3_XXS-2.88bpw.gguf",
+			"oid": "8f230e79ed04775bb0999fdf7687d795ffea1dfff80638297f87d30b09241055",
+			"size": 9919481216
 		},
 		{
-			"path": "Qwen3.8-27B-Q5_K_M-5.60bpw.gguf",
-			"oid": "30c7d4b44550ceab4caf114ccb2af6c726f0e5da86a9f564a49cd4ba63f032dc",
-			"size": 19135190016
-		},
-		{
-			"path": "Qwen3.8-27B-Q5_K_S-4.72bpw.gguf",
-			"oid": "95eb408c3e7ceb1fa9fa269789bf7c538044bb006f0ca9e38d78b7fe50a3020d",
-			"size": 16142116736
+			"path": "Qwen3.8-27B-IQ4_XS-3.84bpw.gguf",
+			"oid": "89434f23dc89c5f990894e3fe9fdad19d88c370f0d3638a176f29933f218b78b",
+			"size": 13083052416
 		},
 		{
 			"path": "README.md",
-			"oid": "406e2a0458ff026ca35aede84c661ed4b3332a83",
-			"size": 6110
+			"oid": "a3ef6b9f7404d811ab53d85b73ff0d87be087286",
+			"size": 10667
+		},
+		{
+			"path": "img/RTX5090-speculative.png",
+			"oid": "5d75d5bb4655b894f3cfb043d9a4532c7d1127edff2aaaeec03a6e95053d02e5",
+			"size": 536771
+		},
+		{
+			"path": "img/RTX5090.png",
+			"oid": "08796ab19f7c2c5321fddf8ca2a1f4a2a76ec022970e97084c9ece5e8a116946",
+			"size": 699662
 		},
 		{
 			"path": "mmproj-bf16.gguf",

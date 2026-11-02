@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/LFM2.5-8B-A1B-GGUF",
 	"commit": "37563684c4a625e9958906fd924e15095cf9c896",
-	"fetched_at": "2026-08-30T18:56:00+00:00",
+	"fetched_at": "2026-11-02T18:24:21+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

@@ -65,3 +65,33 @@ The Quantization-Aware Distillation (QAD) checkpoint is available as
 
 This is distinct from the post-training-quantized `LFM2.5-2.6B-Q4_0.gguf`;
 both use the GGUF Q4_0 format.
+
+## QAD source weights (safetensors)
+
+The original FP32 QAD source checkpoint is available in
+[`qad/`](https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF/tree/main/qad), with its model config,
+tokenizer, generation defaults, and the same chat template as the released QAD GGUF.
+It can be loaded in Transformers by passing `subfolder="qad"`:
+
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+repo_id = "LiquidAI/LFM2.5-2.6B-GGUF"
+tokenizer = AutoTokenizer.from_pretrained(repo_id, subfolder="qad")
+model = AutoModelForCausalLM.from_pretrained(
+    repo_id, subfolder="qad", dtype="auto", device_map="auto"
+)
+
+inputs = tokenizer.apply_chat_template(
+    [{"role": "user", "content": "What is 2 + 2?"}],
+    tokenize=True, add_generation_prompt=True, return_dict=True, return_tensors="pt",
+).to(model.device)
+outputs = model.generate(**inputs, max_new_tokens=128)
+print(tokenizer.decode(outputs[0, inputs["input_ids"].shape[-1]:], skip_special_tokens=True))
+```
+
+These weights are intended for fine-tuning and experimentation. Published QAD
+results apply to the Q4_0 GGUF; direct FP32/BF16 inference and other quantization
+formats may behave differently. See the [source checkpoint documentation](qad/README.md)
+for validation details and the license.
+

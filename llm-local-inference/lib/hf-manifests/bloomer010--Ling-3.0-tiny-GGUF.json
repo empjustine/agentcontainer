@@ -1,7 +1,7 @@
 {
 	"repo": "bloomer010/Ling-3.0-tiny-GGUF",
-	"commit": "56a85ebe2d6d9d2ad6ad00a5014b13667153e236",
-	"fetched_at": "2026-08-23T03:56:28+00:00",
+	"commit": "9abc60203407b59a4f22eaeeb09b789717643fb0",
+	"fetched_at": "2026-11-02T18:24:22+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
@@ -10,148 +10,148 @@
 		},
 		{
 			"path": "Ling-3.0-tiny-BF16.gguf",
-			"oid": "1230f0f5765d010a073c9145056ffc536f6cd438",
+			"oid": "4606ccd7772f3fa6860da30729e2c4a94819a5e4c2913bfca6a8a451fd977ded",
 			"size": 15803475456
 		},
 		{
 			"path": "Ling-3.0-tiny-IQ1_M.gguf",
-			"oid": "789a5ba6d41a0545a09f739a3c7890c6b4a51a1c",
+			"oid": "2cbf44462ce109ec4b83c62b8c038e8b897854eacd698ba6f5cb72d938fb4222",
 			"size": 1928455520
 		},
 		{
 			"path": "Ling-3.0-tiny-IQ1_S.gguf",
-			"oid": "229b42c0d6c447d89f4115ab707af3982857608c",
+			"oid": "705204b5e98cb333740d8005fa39410a9c4132ba4a0ceb5a64ea2c299f39a181",
 			"size": 1760678240
 		},
 		{
 			"path": "Ling-3.0-tiny-IQ2_M.gguf",
-			"oid": "c8ee421047cf5103db2f38d80c273a7c8cdbfad2",
+			"oid": "d7175990cb296bb942bacfa21b87fdc9f2ca25b4a92191305918fb02735e5343",
 			"size": 2704009568
 		},
 		{
 			"path": "Ling-3.0-tiny-IQ2_S.gguf",
-			"oid": "825610e9c217b7b3a883bfa90f127d2c73df18b1",
+			"oid": "a98967f50bd4efde69a294646a3fd6371ce5374e0b9678ff530e2a08f7cc0e78",
 			"size": 2480306528
 		},
 		{
 			"path": "Ling-3.0-tiny-IQ2_XS.gguf",
-			"oid": "beaca2fb56c1a9396109b4b8e477d3b9629e45b0",
+			"oid": "760133f72e2c4633a03bb35c585b071d55dee964cde0248980f809f999a6f69e",
 			"size": 2434146656
 		},
 		{
 			"path": "Ling-3.0-tiny-IQ2_XXS.gguf",
-			"oid": "a446453322fe2272dca16ca3da8cb4269f1cd7d3",
+			"oid": "7d064056a3989a8ee7a6e39520c53d65ca14b207efe32452245442616048a3c5",
 			"size": 2208084320
 		},
 		{
 			"path": "Ling-3.0-tiny-IQ3_S.gguf",
-			"oid": "214d7d1c4f6cef37831dd41e9200aeba44470842",
+			"oid": "a0d92fa4adfdcf5e9dd363777d1762f9afce3cf35daaccbf781834036f3b8d72",
 			"size": 3511515488
 		},
 		{
 			"path": "Ling-3.0-tiny-IQ3_XXS.gguf",
-			"oid": "71a17de1277516bce1144a4bf129e28d2d595222",
+			"oid": "ef1c986bf0b5797c5750080985c5a9bc2013ab71430690b8e3c501cfd75d66ce",
 			"size": 3129076064
 		},
 		{
 			"path": "Ling-3.0-tiny-IQ4_XS.gguf",
-			"oid": "18ce5b1c317230e8967706b1a2d87955b52138f2",
+			"oid": "c49b4e2bfe7dab6939f1fc3dfe9e2288ee68b4f683c65bf976575ff6504eeb14",
 			"size": 4287511904
 		},
 		{
 			"path": "Ling-3.0-tiny-MXFP4_MOE.gguf",
-			"oid": "a94850ac3acb24ccbe534f93f37e44729027ff24",
+			"oid": "133868cd55329c3dbf1b9b8b47e75489f012d6319b1c05a04a4fc8abb1c71f6f",
 			"size": 4718249024
 		},
 		{
 			"path": "Ling-3.0-tiny-Q1_0.gguf",
-			"oid": "5042ead97883795c13f45d6a54facee710d78957",
+			"oid": "f06aab7dd2b5feb2e60e52f01ba4f9c83f932a7fd1680a7dcd7244f5b00ba606",
 			"size": 1300255808
 		},
 		{
 			"path": "Ling-3.0-tiny-Q2_K.gguf",
-			"oid": "3dca93ffe4416b98ac37f5bb604660177e74aa29",
+			"oid": "165c3b4a4bbd18bbfb80ba469527354e25504f6c3ac54d9622a1cb70bad81e31",
 			"size": 2986636352
 		},
 		{
 			"path": "Ling-3.0-tiny-Q3_K_M.gguf",
-			"oid": "63630a6651db2276dc63b9f2fa1fe2e7dbb1d4d1",
+			"oid": "f2e88f405618654a077882216c4f65f56a5af33997203a10da24e2f946601972",
 			"size": 3841570880
 		},
 		{
 			"path": "Ling-3.0-tiny-Q3_K_S.gguf",
-			"oid": "8e85756cfa66ff6c0d12f56c6d37bca4f47c6841",
+			"oid": "5eb62ea8b1807cedb87cae725c6983c53bf3f6047893760042aced70479ec4df",
 			"size": 3511515200
 		},
 		{
 			"path": "Ling-3.0-tiny-Q4_0.gguf",
-			"oid": "d0b1c6cc913be26813638dc1e8ba7661a49628d7",
+			"oid": "f4d993793e4afb3706e0572801bc7a51a5656f2146e33fec2cbc57abcdc8d0b1",
 			"size": 4526279744
 		},
 		{
 			"path": "Ling-3.0-tiny-Q4_K_M.gguf",
-			"oid": "2e34a735017c28d014d766dba8e7b764f3f0c539",
+			"oid": "a21f717779203d86b53996239c4903941858b938c50e85b03e6a981132b5621a",
 			"size": 4823895104
 		},
 		{
 			"path": "Ling-3.0-tiny-Q4_K_S.gguf",
-			"oid": "f5a8452f94b2616575d9913ce780a7f1d87bef3b",
+			"oid": "8566b871f280f3d3c0b950391b873581a8ea596a35e6c9157a5e949a26e71e14",
 			"size": 4554886208
 		},
 		{
 			"path": "Ling-3.0-tiny-Q5_0.gguf",
-			"oid": "6fbab472c26d21993d2104eb773a31c3f54b7b4a",
+			"oid": "5e6b1d493a93ff36fecce3d58bb82bce3d9573d8e550d77c398a160a3c5b0e2d",
 			"size": 5482138688
 		},
 		{
 			"path": "Ling-3.0-tiny-Q5_K_M.gguf",
-			"oid": "b6df5bc693533928cad16d527d478762f0e8a9a1",
+			"oid": "42e20684cb7fd928f0d777c21edbe825102cf8f917e4c32566a2a126eed96fed",
 			"size": 5635443776
 		},
 		{
 			"path": "Ling-3.0-tiny-Q5_K_S.gguf",
-			"oid": "050f0fd6834c22d1e5c81b4f55f0af4453a3f115",
+			"oid": "04ddf2e4e434c074f9ea8b8b1851abdd8b0f66394c3ee4f02f23553185f93c8d",
 			"size": 5482531904
 		},
 		{
 			"path": "Ling-3.0-tiny-Q6_K.gguf",
-			"oid": "26b5bc59db8397ee1ba88768d01db68564277c64",
+			"oid": "f9698dcc5801274ac7b33fd287081811525e9fac326700d08c2b40c761b92e63",
 			"size": 6499262528
 		},
 		{
 			"path": "Ling-3.0-tiny-Q8_0.gguf",
-			"oid": "f5ca038fa0efd4fdbd7d256fb8475cb354652f96",
+			"oid": "ee5ecf3241602f4f8ba8486a2cb4645ab35349a616869a4fcd1bb72a4a5037e6",
 			"size": 8408187968
 		},
 		{
 			"path": "Ling-3.0-tiny-UD-Q4_K_XL.gguf",
-			"oid": "51cd10f3c9e9815cbb0b01b974c5a9f0a9baebdc",
+			"oid": "7faee4091379ce1c644e09dd88848a8f0bc3348a216d2ee1c90a5388de6a5b13",
 			"size": 5340611552
 		},
 		{
 			"path": "Ling-3.0-tiny-UD-Q6_K_XL.gguf",
-			"oid": "7dd99b41dcf4dc63bbf3964a6c9a45ccef5fd256",
+			"oid": "a31376fc9c56309046cff6c43888adf180c5c40fa48228ef644937ee9bd5d64b",
 			"size": 7274546528
 		},
 		{
 			"path": "Ling-3.0-tiny-UD-Q8_K_XL.gguf",
-			"oid": "a92c1de0753b7e25478fe39b4ff90768236250a3",
+			"oid": "ab041da9664d927db6594d051be6c17cffa386cf91f545eba0479fcadc9cdc9f",
 			"size": 11188839488
 		},
 		{
 			"path": "Ling-3.0-tiny-f16.gguf",
-			"oid": "ad53a4c87f2d470564ff996a5d2a22b5dd244605",
+			"oid": "511c2baafa80e58b7e037c2d0a6dd3a3c951e3165545d456c1c66ec430913263",
 			"size": 15803475456
 		},
 		{
 			"path": "Ling-3.0-tiny-imatrix.gguf",
-			"oid": "77074138cf34edea9610c80f7adf8e19b0679a39",
+			"oid": "566f65b22c6f45f4b46c23982a35fd04a0b093fa3577647d476bb9c7472c37c9",
 			"size": 44016704
 		},
 		{
 			"path": "README.md",
-			"oid": "99ca85545ab1e0393ef07b8bc01ca0f78aad5f81",
-			"size": 4458
+			"oid": "20c6f9048cf7b3fa6af71afab526e5cdc0bf68a5",
+			"size": 4705
 		},
 		{
 			"path": "chat_template.jinja",

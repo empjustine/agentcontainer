@@ -1,7 +1,7 @@
 {
 	"repo": "poolside/Laguna-XS-2.1-GGUF",
 	"commit": "1a37c0a5fb8c7a18e6106decb6be6327d1b63fa6",
-	"fetched_at": "2026-08-23T03:56:24+00:00",
+	"fetched_at": "2026-11-02T18:24:25+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
@@ -15,12 +15,12 @@
 		},
 		{
 			"path": "Laguna-XS-2.1-BF16.gguf",
-			"oid": "013eb1eb5fc91cebd4a87bf428385b8a18d15aba",
+			"oid": "d1d99abe30c37749ec1b1ae2681cec74caa550ac6243d2ea70b61b1ff9d187ca",
 			"size": 66930226304
 		},
 		{
 			"path": "Laguna-XS-2.1-Q4_K_M.gguf",
-			"oid": "d0c139f17d2e0ded51574bd890d6e6643e418f31",
+			"oid": "1ac7079101fca5a6df8c5a7523a3c30ea7d1c0e4b1258090e7d6d4039287f6cb",
 			"size": 20274300032
 		},
 		{

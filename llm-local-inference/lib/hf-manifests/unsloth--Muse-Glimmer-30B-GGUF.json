@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/Muse-Glimmer-30B-GGUF",
 	"commit": "faa5b025c584459c13febfa5c59883516710ae39",
-	"fetched_at": "2026-08-23T03:56:28+00:00",
+	"fetched_at": "2026-11-02T18:24:23+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
@@ -10,82 +10,82 @@
 		},
 		{
 			"path": "BF16/Muse-Glimmer-30B-BF16-00001-of-00002.gguf",
-			"oid": "44c68729c02b89c77824e3f56abaea32d640d567",
+			"oid": "9ed3c904ca80be99e787d95cc430c5b1ce3a44cb7acc012fda63c8e1649df7e5",
 			"size": 29805191936
 		},
 		{
 			"path": "BF16/Muse-Glimmer-30B-BF16-00002-of-00002.gguf",
-			"oid": "5b44cd66ef13b621162d0933b84bdf05b42b8e9a",
+			"oid": "bbec2aef54b01bff34977a7da2a6e9e73c3edc063fabf0ae4bd62817b7efe1ae",
 			"size": 25920319232
 		},
 		{
 			"path": "Muse-Glimmer-30B-Q8_0.gguf",
-			"oid": "66683d043ccf2a7f24566f99c8ef92d20c63b790",
+			"oid": "f2c087d694ca8242a4a436076df7c041703ab051ac4b72bb1bfe2698299b0e86",
 			"size": 29612957984
 		},
 		{
 			"path": "Muse-Glimmer-30B-UD-IQ2_M.gguf",
-			"oid": "a1874d8a38559d63ad31b4bd784d0a6dc3f2d645",
+			"oid": "b849a2640f621ae494b641d3a69e953694402d34920122fafa5ac980006047ad",
 			"size": 12255421472
 		},
 		{
 			"path": "Muse-Glimmer-30B-UD-IQ2_XS.gguf",
-			"oid": "df10d824bcba3b9ead105c1356c248fe5a922e6a",
+			"oid": "37a31a168234eaf95aa49035860bceec30422a8a27baf35146b939f56752899b",
 			"size": 11513104416
 		},
 		{
 			"path": "Muse-Glimmer-30B-UD-IQ2_XXS.gguf",
-			"oid": "afce1e2cd470ba842a8d8c649f4d3dd9e87d7bf3",
+			"oid": "3e9bd0e609df9d0121ba18c6556de496e7be880184cf22c5dbafbc0600875ad9",
 			"size": 10746373152
 		},
 		{
 			"path": "Muse-Glimmer-30B-UD-IQ3_M.gguf",
-			"oid": "de2bd77b615a2da1ab685d24e4a5f39a3d9ff36a",
+			"oid": "e72805b554afab0da6969fab979769122c129c74e53e9a3e8b60e5211ae0c397",
 			"size": 14122705696
 		},
 		{
 			"path": "Muse-Glimmer-30B-UD-IQ3_XXS.gguf",
-			"oid": "a27fea042b917af0453169ad13d152482fba1226",
+			"oid": "97897bb6d1d756339eb75fc4af5181ac9cf0b2e7ba1b6346ab82117d9e76800f",
 			"size": 13130658848
 		},
 		{
 			"path": "Muse-Glimmer-30B-UD-Q2_K_XL.gguf",
-			"oid": "dfea13d9b1248ca18a817bcc687263ac05c935b0",
+			"oid": "3d63a1daff23fdc2a6927316151e855cacffe89b5cb9b9397a5aec0c412ec08d",
 			"size": 12444212256
 		},
 		{
 			"path": "Muse-Glimmer-30B-UD-Q3_K_XL.gguf",
-			"oid": "0cd1ac539fab6cf43a9d97c6946c6b9e2126c2f2",
+			"oid": "820d18e00c59376331eba62dd716a6bcdcaa305c2316f5da3a2fab36c7c37e15",
 			"size": 13360983072
 		},
 		{
 			"path": "Muse-Glimmer-30B-UD-Q4_K_XL.gguf",
-			"oid": "b4e1e882459fd7136a2cced315d0fcb0b50c5247",
+			"oid": "82bece304887a313ece08400bc030f6066c7bff5b906b0cd40308ec8a409fd38",
 			"size": 15878222368
 		},
 		{
 			"path": "Muse-Glimmer-30B-UD-Q5_K_L.gguf",
-			"oid": "bee03d369acd915114cea512f2fffd6a0ce225c9",
+			"oid": "227f042dacecc6eb492603849ed4490663b30dd90f7da968cbb4ba30a159fcd2",
 			"size": 19768527904
 		},
 		{
 			"path": "Muse-Glimmer-30B-UD-Q5_K_M.gguf",
-			"oid": "8ead38e4d1eb82b866de8edabfd0260f17c45559",
+			"oid": "27c27bc0cc2591344a9ef977d57aa79a9d36ddebee59660bd2abbf738f940f5b",
 			"size": 19194274848
 		},
 		{
 			"path": "Muse-Glimmer-30B-UD-Q5_K_XL.gguf",
-			"oid": "0a170ac99a6c35f2eaf518c8a9c1160322f7ebd0",
+			"oid": "97a66c4b41d9e778af7cdfa43508e08dbf765fb5049b740c69ad815e5191c637",
 			"size": 21789618976
 		},
 		{
 			"path": "Muse-Glimmer-30B-UD-Q6_K_XL.gguf",
-			"oid": "4bc23b8a4b0e87c9a68718794b07b2a1abd16ce7",
+			"oid": "fb5f80d110c4fa932cc652e70873c0bd12c0954009038aa675e65086104c2739",
 			"size": 26265362976
 		},
 		{
 			"path": "Muse-Glimmer-30B-UD-Q8_K_XL.gguf",
-			"oid": "01604ad92355e56fc5b35f6f0e6e851778b92210",
+			"oid": "e63bf23b7710ecdea2579e4b1de58980c4a2b446e8ecf48b782cfcefd2e31770",
 			"size": 32300651040
 		},
 		{
@@ -95,22 +95,22 @@
 		},
 		{
 			"path": "dflash-kquant.gguf",
-			"oid": "f04ef1bd29bbc376600e5fa8935e564a6b065fbb",
+			"oid": "27d9a805fa29b943cfb6ad4843367cd4eaaaf06bd452d8cc3e00a2cd18a677bc",
 			"size": 1631205312
 		},
 		{
 			"path": "mmproj-Muse-Glimmer-30B-BF16.gguf",
-			"oid": "64600cdb47ef81dda9aaba9a43ba632722a4cfc3",
+			"oid": "d08cdcfa0b41d8e20554b52df404ba4f7b440d0bc502a90038508b6407df8ee1",
 			"size": 3849173728
 		},
 		{
 			"path": "mmproj-Muse-Glimmer-30B-Q8_0.gguf",
-			"oid": "01d28bb15d6e9b509a44da6ba28e7325d2d2a10f",
+			"oid": "01ff73c95108e1754a4c145176c6d3ba44338942285cb87dcac7f4f193192ea2",
 			"size": 2051685088
 		},
 		{
 			"path": "mmproj-kquant.gguf",
-			"oid": "2280b3a26dfc331226638d1acea270d01a1c1d27",
+			"oid": "f48b452316f9b213758e8659444029b961a24a07f99a1abb2a9f88b06f7c00c6",
 			"size": 1400328928
 		}
 	]

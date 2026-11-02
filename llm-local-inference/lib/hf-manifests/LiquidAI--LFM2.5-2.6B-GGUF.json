@@ -1,12 +1,12 @@
 {
 	"repo": "LiquidAI/LFM2.5-2.6B-GGUF",
-	"commit": "84022ce711b28455e8c4fc364ce68c00cf995875",
-	"fetched_at": "2026-08-30T18:56:00+00:00",
+	"commit": "e7caca5d835a3901a8e0d63e94009429bafafdfc",
+	"fetched_at": "2026-11-02T18:24:17+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
-			"oid": "2e28586260c99319ff623f31a8adcb565700230e",
-			"size": 1990
+			"oid": "1e9221e2430c441ea7d850c00f0da5e984b1284b",
+			"size": 2045
 		},
 		{
 			"path": "LFM2.5-2.6B-BF16.gguf",
@@ -55,8 +55,8 @@
 		},
 		{
 			"path": "README.md",
-			"oid": "ae3f1e82d4d8cc3762f480c5971749f38034883e",
-			"size": 1797
+			"oid": "733a489478d33bfdb7d0265744c3eb33a76de273",
+			"size": 3068
 		},
 		{
 			"path": "leap/Q4_0.json",
@@ -77,6 +77,51 @@
 			"path": "leap/Q8_0.json",
 			"oid": "e1d5b11441719408e238bf0feef124fcc2a1be85",
 			"size": 1798
+		},
+		{
+			"path": "qad/LICENSE",
+			"oid": "2a513f17eb4b8008fb100349fd2b7551d009fed0",
+			"size": 10574
+		},
+		{
+			"path": "qad/README.md",
+			"oid": "b9b0994aa884b7431b52f08ebaa30ca45013f015",
+			"size": 3098
+		},
+		{
+			"path": "qad/chat_template.jinja",
+			"oid": "d63583bce992413df713a04cc14b6a3bfe31617a",
+			"size": 5443
+		},
+		{
+			"path": "qad/config.json",
+			"oid": "f493cbbe53ef57510d01bf3d37782b17c8371f34",
+			"size": 1553
+		},
+		{
+			"path": "qad/generation_config.json",
+			"oid": "f7fa1ba9c1615d195965fc239520f209fc4b6617",
+			"size": 327
+		},
+		{
+			"path": "qad/model.safetensors",
+			"oid": "b81e17164b0c05fc1dfcfc3bd2b39b8cb95c77c00b20f068880ce0e547a70be8",
+			"size": 10788824456
+		},
+		{
+			"path": "qad/provenance.json",
+			"oid": "cbf64246e997799a87c0cd45a44fe7375cc35295",
+			"size": 936
+		},
+		{
+			"path": "qad/tokenizer.json",
+			"oid": "695be7802a0e4b8a81048f0ff5ebb7fc811a0ba5a6be63dbb24deb5a81096f41",
+			"size": 17905598
+		},
+		{
+			"path": "qad/tokenizer_config.json",
+			"oid": "e3eefcd570bd438293cf1e1819c016077d5aa842",
+			"size": 363
 		}
 	]
 }

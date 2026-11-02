@@ -101,7 +101,7 @@ def load_manifest(api, repo, offline=False):
         return json.loads(p.read_text()) if p.exists() else None
     m = fetch_manifest(api, repo)
     MANIFEST_DIR.mkdir(parents=True, exist_ok=True)
-    p.write_text(json.dumps(m, indent=1))
+    p.write_text(json.dumps(m, indent="\t"))
     return m
 
 

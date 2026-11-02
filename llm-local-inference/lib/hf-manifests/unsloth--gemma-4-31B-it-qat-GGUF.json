@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/gemma-4-31B-it-qat-GGUF",
 	"commit": "43cc1aeb31adf47ec06a854507ce552cd9862e6f",
-	"fetched_at": "2026-08-23T03:56:27+00:00",
+	"fetched_at": "2026-11-02T18:24:24+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
@@ -15,22 +15,22 @@
 		},
 		{
 			"path": "MTP/mtp-gemma-4-31B-it-BF16.gguf",
-			"oid": "2354f3341b1ed666376a0e5e73ac6a7ebdce618f",
+			"oid": "1ea5895dc0e82207c58886e7bf8a80dc3e3445c8d7219407c506a5946048098e",
 			"size": 954862080
 		},
 		{
 			"path": "MTP/mtp-gemma-4-31B-it-F16.gguf",
-			"oid": "4506cb1cfcf3a5341dd6bfe3fb83c0744f7b3e08",
+			"oid": "cbb3fde9fef201af9506c80eb9f5baa9840dfddf8dc94d83d1b9a24aa4b95b17",
 			"size": 954862080
 		},
 		{
 			"path": "MTP/mtp-gemma-4-31B-it-Q4_0.gguf",
-			"oid": "c26569a104c29056fac46d6f04d264e6c59601ef",
+			"oid": "3a5e99fd8d0b23afb1fccd1ee0c9ebd1f571d00399c2dae2292d217feeec0f6b",
 			"size": 279955968
 		},
 		{
 			"path": "MTP/mtp-gemma-4-31B-it-Q8_0.gguf",
-			"oid": "18e1fda8a24b00adfa9f4aa1e84c4390a681dc81",
+			"oid": "e6e88dea4fcf79a0a71cd7732e61632355126dbbda9b72a08d6301fa06fbaf22",
 			"size": 514705920
 		},
 		{
@@ -45,27 +45,27 @@
 		},
 		{
 			"path": "gemma-4-31B-it-qat-UD-Q4_K_XL.gguf",
-			"oid": "7ba36a8d3a2ffc23114d0abb5afb9b8f3a6a9bbe",
+			"oid": "00b5a7c497f0c8934033088c10a7fa9a4c015e46ee6d89e9c6890650ba5d0e71",
 			"size": 17287670048
 		},
 		{
 			"path": "mmproj-BF16.gguf",
-			"oid": "a848feb0104170423e55a9379778e036c408b6ba",
+			"oid": "d904b3579a9fbfbd50bc9bf40cb7384909edbd69fa9276db5ddc853e80f0edca",
 			"size": 1200726496
 		},
 		{
 			"path": "mmproj-F16.gguf",
-			"oid": "85830f222fedbecb3203fc055450929cade6fde7",
+			"oid": "4775e1bf6ef6f8df94caed2d672c74432f0722565e5225a170c72949ebe4cf23",
 			"size": 1198957024
 		},
 		{
 			"path": "mmproj-F32.gguf",
-			"oid": "198b566766be9358cdd8b3d12e69e8b8523375b1",
+			"oid": "7a890d25bbc0a2ce70c3723ad57092d4a5ad98bb2115ed80561f990003c6e88a",
 			"size": 2302996960
 		},
 		{
 			"path": "mtp-gemma-4-31B-it.gguf",
-			"oid": "c26569a104c29056fac46d6f04d264e6c59601ef",
+			"oid": "3a5e99fd8d0b23afb1fccd1ee0c9ebd1f571d00399c2dae2292d217feeec0f6b",
 			"size": 279955968
 		}
 	]

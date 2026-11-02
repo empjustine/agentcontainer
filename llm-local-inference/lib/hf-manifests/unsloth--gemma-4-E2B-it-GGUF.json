@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/gemma-4-E2B-it-GGUF",
 	"commit": "0314792d7f1f7e229411f620751375812bb9faf2",
-	"fetched_at": "2026-08-30T18:56:01+00:00",
+	"fetched_at": "2026-11-02T18:24:17+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

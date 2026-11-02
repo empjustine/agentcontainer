@@ -1,7 +1,7 @@
 {
 	"repo": "bartowski/Ling-3.0-tiny-GGUF",
 	"commit": "ea072726af0d2e8ba325b2f90fc0efa762105a91",
-	"fetched_at": "2026-08-30T18:55:59+00:00",
+	"fetched_at": "2026-11-02T18:24:21+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
