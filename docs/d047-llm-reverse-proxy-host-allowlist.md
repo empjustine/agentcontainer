@@ -3,7 +3,7 @@ id: d047
 type: module-design
 status: deprecated
 title: "d047 — llm-reverse-proxy v2: route by host allowlist, not provider slug"
-parent: architecture
+parent: estige
 depends-on: [estige, lib, coding-agent, d038]
 references: [d027, d038, d031, d040, d045]
 tags: ["serving", "proxy", "routing", "host-allowlist"]

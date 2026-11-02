@@ -3,7 +3,7 @@ id: environments
 type: architecture-design
 status: draft
 title: "Deployment environments and variants"
-parent: goal
+parent: architecture
 references: ["architecture", "llm-local-inference", "coding-agent"]
 tags: ["environments", "matrix"]
 ---

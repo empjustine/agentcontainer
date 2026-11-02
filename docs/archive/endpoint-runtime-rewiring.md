@@ -4,6 +4,7 @@ type: architecture-design
 status: done
 parent: architecture
 tags: ["research", "findings", "archive"]
+title: "Endpoint Runtime Rewiring: findings"
 ---
 
 # Endpoint Runtime Rewiring: findings

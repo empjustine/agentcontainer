@@ -4,6 +4,8 @@ type: module-design
 status: done
 parent: architecture
 tags: ["research", "findings", "archive"]
+title: "Model Architecture Findings"
+---
 
 # Model Architecture Findings
 

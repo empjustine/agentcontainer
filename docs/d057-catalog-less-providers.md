@@ -3,7 +3,7 @@ id: d057
 type: module-design
 status: active
 title: "d057 — a provider models.dev does not carry: the facts cache as the lineup (worked example: verboo)"
-parent: architecture
+parent: coding-agent
 depends-on: [d021, d023, d024, d032, d033]
 references: [d047, d049, d050, environments]
 tags: [coding-agent, llm-reverse-proxy, generators, models-dev]

@@ -4,6 +4,7 @@ type: architecture-design
 status: done
 parent: architecture
 tags: ["research", "findings", "archive"]
+title: "Two approaches to building a minimal coding agent"
 ---
 
 # Two approaches to building a minimal coding agent

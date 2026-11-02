@@ -3,7 +3,7 @@ id: d080
 type: module-design
 status: active
 title: "d080 — the d047 host allowlist is mode-A-only: the forward-proxy modes carry the egress policy instead"
-parent: d047
+parent: estige
 depends-on: [d047, d073, d077]
 references: [d074, d078, d079]
 tags: ["proxy", "tunnel", "egress", "host-allowlist", "security"]

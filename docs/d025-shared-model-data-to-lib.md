@@ -3,7 +3,7 @@ id: d025
 type: architecture-design
 status: active
 title: "shared model-data tables live in `lib/`"
-parent: goal
+parent: architecture
 tags: ["lib", "data-sharing"]
 ---
 

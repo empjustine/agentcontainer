@@ -3,7 +3,7 @@ id: d024
 type: architecture-design
 status: active
 title: "Per-merge-semantic generator split & shared cloud provider facts"
-parent: goal
+parent: architecture
 tags: ["generators", "provider-facts", "split"]
 ---
 

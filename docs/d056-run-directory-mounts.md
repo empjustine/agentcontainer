@@ -3,8 +3,8 @@ id: d056
 type: module-design
 status: active
 title: "d056 — coding-agent/run.sh: directory mounts replace the generator tree and CODING_AGENT_REFERENCES"
-parent: d041
-depends-on: [coding-agent]
+parent: coding-agent
+depends-on: [coding-agent, d041]
 references: [d026, d041, d043, d052, d054]
 tags: ["coding-agent", "runner", "mounts", "generators", "references"]
 ---

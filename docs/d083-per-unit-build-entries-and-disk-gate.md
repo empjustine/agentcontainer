@@ -3,8 +3,9 @@ id: d083
 type: architecture-design
 status: active
 title: "d083 — per-unit build entries return as shims, and the coding-agent image gets a free-disk gate"
-parent: d041
+parent: architecture
 tags: ["builders", "entrypoints", "spike-validation"]
+depends-on: [d041]
 ---
 
 # d083 — per-unit build entries return as shims, and the coding-agent image gets a free-disk gate

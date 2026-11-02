@@ -3,15 +3,9 @@ id: d039
 type: architecture-design
 status: active
 title: "d039 — fold single-consumer lib/ modules back to their owning runner"
-parent: d023
-references:
-  - d023
-  - d037
-  - d038
-  - d025
-depends-on:
-  - coding-agent
-  - estige
+parent: architecture
+references: [d023, d037, d038, d025]
+depends-on: [coding-agent, estige, d023]
 ---
 
 # d039 — fold single-consumer lib/ modules back to their owning runner

@@ -3,7 +3,7 @@ id: d072
 type: architecture-design
 status: active
 title: "d072 — maintainability review: what was folded, what was kept, what is deferred"
-parent: goal
+parent: architecture
 depends-on: [d023, d039, d042, d063, d070]
 references: [d018, d021, d024, d030, d037, d047, d056, d061, d071]
 tags: [maintainability, refactor, generators, docs, review]

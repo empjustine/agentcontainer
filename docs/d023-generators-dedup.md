@@ -3,7 +3,7 @@ id: d023
 type: architecture-design
 status: active
 title: "Generator code-flow audit: findings and consolidation"
-parent: goal
+parent: architecture
 tags: ["generators", "consolidation", "audit"]
 ---
 

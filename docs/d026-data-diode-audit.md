@@ -2,7 +2,7 @@
 id: d026
 type: architecture-design
 status: draft
-parent: lib
+parent: architecture
 title: "d026 — data-diode audit trail for harness state (design note)"
 tags: ["security", "audit", "persistence", "design-only"]
 ---

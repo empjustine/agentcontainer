@@ -1,9 +1,9 @@
 ---
 id: d063
-type: module-design
+type: architecture-design
 status: deprecated
 title: "d063 — proxy-only routing: every emitted URL is a reverse-proxy URL; the direct fallbacks are deleted"
-parent: d033
+parent: architecture
 depends-on: [d027, d033, d047, d060]
 references: [d022, d024, d034, d037, d041, d045, d056, d060, d064]
 tags: [generators, routing, reverse-proxy, compliance, pi, opencode, cascade]

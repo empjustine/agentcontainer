@@ -4,6 +4,7 @@ type: module-design
 status: done
 parent: architecture
 tags: ["research", "findings", "archive"]
+title: "llama-swap Response vs pi Agent Expectations"
 ---
 
 # llama-swap Response vs pi Agent Expectations

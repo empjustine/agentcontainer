@@ -3,7 +3,7 @@ id: d064
 type: architecture-design
 status: active
 title: "d064 — LLM provider support tiers: first-class / best-effort / superficial"
-parent: d063
+parent: architecture
 depends-on: [d027, d033, d063]
 references: [d038, d040, d047, d057, d063]
 tags: [providers, support-tiers, generators, reverse-proxy, policy]

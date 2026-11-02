@@ -1,9 +1,9 @@
 ---
 id: d089
-type: architecture-design
+type: module-design
 status: active
 title: "d089 — maintenance passes: align, optimize (default), deep"
-parent: d044
+parent: git
 depends-on: [d044, d060, d076]
 references: [d043, d044, d060, d076]
 tags: ["git", "references", "mirrors", "storage", "gc"]

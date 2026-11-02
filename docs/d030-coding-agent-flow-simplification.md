@@ -3,7 +3,7 @@ id: d030
 type: module-design
 status: draft
 title: "d030 — coding-agent flow: complexity audit and simplification options"
-parent: architecture
+parent: coding-agent
 references: [d023, d024, d027, d029]
 ---
 

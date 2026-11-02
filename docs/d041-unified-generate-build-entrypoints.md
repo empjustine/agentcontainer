@@ -3,8 +3,9 @@ id: d041
 type: architecture-design
 status: active
 title: "d041 — unified generate/build entrypoints; runners never build or generate"
-parent: d023
+parent: architecture
 tags: ["generators", "builders", "runners", "entrypoints"]
+depends-on: [d023]
 ---
 
 # d041 — unified generate/build entrypoints; runners never build or generate

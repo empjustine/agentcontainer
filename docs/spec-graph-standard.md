@@ -5,7 +5,7 @@ status: active
 title: "The spec-graph standard: frontmatter contract, five types, five lifecycle statuses"
 parent: architecture
 depends-on: [d042]
-references: [d111, d072]
+references: [d111, d072, d112]
 tags: ["docs", "spec-graph", "contract", "taxonomy"]
 ---
 
@@ -22,25 +22,30 @@ The vocabulary is not this repository's invention (d111; the bespoke
 requirements/reference/design taxonomy it replaces is d042's, kept there as
 history). Writing the contract down here has one purpose: **a checkout with no
 ThinkRail tooling — or an agent with none of its skills loaded — still knows
-the shape a document must have.** The tooling checks the graph; this file
-defines it. When the two disagree, this file is what a reader without the
-tooling has, so keep it exact.
+the shape a document must have.** The tooling does not check the whole
+contract: `spec_validate` reports duplicate ids, dangling links and parent
+cycles, and nothing else. The vocabulary, `title`, and the nesting rules are
+this file's job (see [What the tooling checks, and what it does
+not](#what-the-tooling-checks-and-what-it-does-not)). When the two disagree,
+this file is what a reader without the tooling has, so keep it exact.
 
 ## The contract
 
 A document is part of the graph when its file starts with a `---` frontmatter
-block that carries **`id`** and **`type`**. Nothing else is mandatory, and a
-markdown file without frontmatter is simply not a node (vendored model cards,
-skill files).
+block that carries **`id`** and **`type`**. Nothing else makes a file a node,
+and a markdown file whose frontmatter lacks either field is simply not one —
+`local-llm/model-cards/*.md` are notes, not specs. Being a node is not the same
+as meeting the contract below, and the validator only sees part of it.
 
 | field | required | rule |
 | --- | --- | --- |
 | `id` | yes | Unique across the whole tree. Lowercase kebab-case (`gguf-model-tooling`) or a `dNNN` record handle (`d104`, `d027b`). **Stable** — never renumber, never reuse; every link in the tree points at it. |
 | `type` | yes | One of the five types below. Nothing else ever. |
-| `title` | recommended | One line, human sentence. |
+| `title` | yes | One line, human sentence. The ThinkRail contract requires it (`spec_create` will not write a spec without one) even though `spec_validate` stays silent when it is missing. |
 | `status` | recommended | One of the five lifecycle values below. Nothing else ever. |
 | `parent` | for living docs | One id — the tree edge. A **code unit** only: `goal`, `architecture`, a module node, a submodule node (see [Nesting](#nesting-the-expected-shape)). |
-| `depends-on`, `references`, `implements`, `covers` | optional | Lists of **ids**, not paths: `[d073, d077]`. They must resolve to an `id` that exists. |
+| `depends-on`, `references`, `implements` | optional | Lists of **ids**, not paths: `[d073, d077]`. The validator reports every value here that resolves to no id. |
+| `covers` | optional | A list of ids the tooling writes but **never resolves**: a `covers` value pointing at nothing is silent drift (`spec_get` lists no such edge). Unused in this tree — prefer `references` for the edge you actually mean. |
 | `tags` | optional | Free-form list. Genre words live here, not in `type` (`bugfix`, `research`). |
 
 Two hard rules that a graph walker cannot forgive:
@@ -103,37 +108,12 @@ Depth is not a quality in itself. Two levels (`architecture → module → doc`)
 the whole tree here; what matters is that each document hangs off the unit whose
 behavior it describes, not off the document that happens to precede it.
 
-### What the tree has instead
-
-A snapshot taken with d111's alignment pass (2026-11-01), over the 135 specs in
-this repository (the vendored `.agents/skills/SPEC.md` belongs to the workflow
-package and is excluded). It is recorded here because the drift is invisible to
-the validator — every edge below resolves, so `spec_validate` is happy and only
-a subtree walk shows the loss. **Once checks 5–7 come back clean — 5 and 6
-print nothing, 7 prints only archived investigations — delete this subsection**:
-it is a to-do, not history (d111 keeps the history).
-
-| class | n | what it is |
-| --- | --- | --- |
-| nests as the rules expect | 101 | the root pair (`goal`, then `architecture`), 5 module nodes, 60 specs under their module node, 34 system-wide docs at `architecture` — 24 cross-cutting reference docs and 10 archived investigations, which legitimately have no module left to hang from |
-| **A — a record as parent** | 13 | decision chains encoded as containment: `d039 d041 d051 d056 d083 d087 → d023/d041/d083`; `d040 → d037`; `d062 d089 → d044`; `d063`, then `d064 → d063`; `d080 → d047`; `d103 → d073` |
-| **B — parked under `goal`** | 9 | 8 records (`d015 d022 d023 d024 d025 d027 d035 d072`) and `environments` hang off the BRD, skipping the `architecture` level |
-| **C — module scope at `architecture`** | 10 | 9 records that describe one module (`d029 d030 d031 d036 d047 d057 d058 d059 d060`) plus `git-non-bare-issues` |
-| **E — a level inversion** | 1 | `d026` is `architecture-design` but parents to `lib` |
-| **F — a doc under a doc** | 1 | `termux-serving` parents to `environments`, which is a reference doc, not a code unit |
-
-Two absences the table cannot show: **`git/` has no node at all** (its only
-spec, `git-non-bare-issues`, is one of the ten in class C, and the mirror
-records `d062`/`d089` have no module to land under), and the module nodes are
-carried by different *files* from folder to folder — `README.md` for `estige`,
-`DESIGN.md` for `coding-agent`/`local-llm`/`llm-local-inference`, and
-`docs/container-tooling.md` for `lib`. That inconsistency is harmless (R2 asks
-for one node per unit, not one filename); the missing `git` node is not.
-
-Class A is the drift that actually costs an agent something, because the chain
-edges already carry the same information on `depends-on`: nothing is lost by
-re-pointing the `parent`, and a subtree rooted at `coding-agent` or `estige`
-then stops silently omitting the records that shaped it.
+Drift against these rules survives a green validation run: every misplaced edge
+still resolves, so only a subtree walk shows the loss. d111's pass left one such
+snapshot in this file as a to-do; d112 closed it — no record is a parent, every
+module-scoped spec hangs off its module node, and `git/` has a node — and the
+snapshot is gone with it, because the nesting checks below now say the same
+thing without a hand-maintained table.
 
 ## Types
 
@@ -145,7 +125,7 @@ then stops silently omitting the records that shaped it.
 | `architecture-design` | spans the repository or crosses module boundaries: the map, the shared rules, prior art, system-wide decisions | `docs/architecture.md`, `docs/environments-and-variants.md`, prior-art and audit docs, the d0XX records that change the layout or a shared contract |
 | `module-design` | confined to one runner folder or one module (`coding-agent/`, `estige/`, `lib/`, `git/`, `local-llm/`, `llm-local-inference/`) | each module's `README.md` + `DESIGN.md`, the module-scoped decision records |
 | `submodule-design` | a directory-level subsystem inside a package | `estige/CI.md` |
-| `task-spec` | one piece of work with acceptance criteria | none yet — one-off work stays in the chat plan |
+| `task-spec` | one piece of work with acceptance criteria | temporary by definition — the ThinkRail tools write them to `.thinkrail/context/TASK-*.md` and the work's landing removes them. Nothing durable belongs here; a finished decision becomes a record |
 
 Choosing between the first two is the only judgement call: **would the decision
 still hold if the module were deleted?** Yes → `architecture-design`. No →
@@ -196,6 +176,27 @@ Rules that keep the value parseable:
 | `docs/archive/` | investigations that finished, plus retired operational docs | same two types, `status: done` / `deprecated` |
 | `<module>/README.md` + `DESIGN.md` | one module: what it is and why it is shaped that way | `module-design` |
 | `<module>/<subsystem>.md` | a subsystem inside a package | `submodule-design` |
+| `.thinkrail/context/TASK-*.md` | the tool's working task-specs — real nodes in the graph, outside this tree's hierarchy | `task-spec` |
+| `.agents/skills/SPEC.md` | the vendored spec of the workflow skill family (id `submodule-workflow-skills`) | `submodule-design`, no `parent` |
+
+Two locations are indexed but sit outside the docs tree, and both are
+load-bearing rather than incidental:
+
+- **`.thinkrail/context/TASK-*.md`** are genuine `task-spec` nodes: the graph
+  tools index them, `spec_grep` finds them, and that is intended — they are the
+  work-in-flight layer. They stand outside the durable tree (some carry
+  `parent: architecture` because the session that started them wrote it; no
+  archive of the tree depends on that edge) and they disappear when the work
+  lands. A checkout without the tooling has no such folder: skip it rather than
+  treating those files as docs, which is why the checks below exclude it.
+- **`.agents/skills/SPEC.md`** is the one vendored node. It keeps `id` + `type`
+  and deliberately has no `parent`: the package nodes it belongs to
+  (`module-thinkrail-workflow`, `module-spec-graph`) ship with the workflow
+  package, not this workspace, so an edge here would dangle (d111). The tools
+  have **no exclude list** — every id-bearing file in the checkout is a node —
+  so a second copy of that file is an immediate duplicate-id failure. Keep
+  exactly one, and delete stale copies of the workflow package instead of
+  adding them beside it.
 
 Deliberately **not** the standard layout, and not drift to fix (d111's
 rejected alternative): module docs are `README.md` + `DESIGN.md`, not
@@ -234,54 +235,81 @@ Two constraints from d042 bind the placement and outrank tidiness:
 - Adding a record under an existing one → no: a record joins its module node
   (or `architecture`) and takes `depends-on` for the record it answers.
 
+## What the tooling checks, and what it does not
+
+`spec_validate` reports exactly three failures: duplicate ids, `parent` /
+`depends-on` / `references` / `implements` values that resolve to no node, and
+parent cycles. Everything else in this contract is silent to it (measured
+against this tree in d112):
+
+| the tooling | the contract |
+| --- | --- |
+| reports duplicate ids, dangling links and cycles — run it after any structural change | nothing extra: the same failures |
+| writes and indexes any `type:` / `status:` value | the five types and five statuses; nobody else checks them |
+| accepts a missing `title` | a title on every node |
+| writes `covers` but never resolves it | `references` for an edge you mean |
+| accepts a record as a parent, or a module-scoped spec at `architecture` | the nesting rules above |
+| has no exclude list — every id-bearing file is a node | exactly one copy of a vendored spec |
+
+That gap is the reason the checks below exist: they are the part the tooling
+does not do, and skipping them is how this tree carried 33 misplaced nodes
+through a dozen green validation runs (d112).
+
 ## Checking the graph without the tooling
 
-The ThinkRail validator (`spec_validate`) does this properly when it is
-available. Without it, these four checks over the tree catch the failures that
-actually happen — an off-standard value, a duplicated id, and a link that
-resolves to nothing:
+Run these over the tree after a docs change; a check that prints something is a
+finding, not a warning — fix the value, the id, or the link before adding
+anything on top of it. `SPECS` excludes the tool-owned `.thinkrail/` scratch
+folder. `.agents/` stays in on purpose: its vendored spec is a node.
 
 ```sh
 SPECS=(-r --include='*.md' --exclude-dir=.git --exclude-dir=.thinkrail --exclude-dir=node_modules .)
+```
 
-# 1. the types in use — every line must be one of the five
+### Contract checks
+
+```sh
+# the types in use — every line must be one of the five
 grep -rh '^type: '   "${SPECS[@]}" | sed 's/^type: *//'   | sort | uniq -c
 
-# 2. the statuses in use — every line must be one of the five
+# the statuses in use — every line must be one of the five
 grep -rh '^status: ' "${SPECS[@]}" | sed 's/^status: *//' | sort | uniq -c
 
-# 3. duplicate ids — must print nothing
+# nodes without a title — must print nothing
+for f in $(grep -rl '^id: ' "${SPECS[@]}"); do grep -q '^title: ' "$f" || echo "$f"; done
+
+# duplicate ids — must print nothing
 grep -rh '^id: ' "${SPECS[@]}" | sed 's/^id: *//; s/"//g' | sort | uniq -d
 
-# 4. link targets that resolve to no id — must print nothing
+# link targets that resolve to no id — must print nothing
 comm -23 \
   <(grep -rh -E '^(parent|depends-on|references|implements|covers):' "${SPECS[@]}" \
       | sed 's/^[a-z-]*: *//; s/[][]//g; s/"//g' | tr ',' '\n' | tr -s ' ' '\n' \
       | grep -v '^$' | sort -u) \
   <(grep -rh '^id: ' "${SPECS[@]}" | sed 's/^id: *//; s/"//g' | grep -v '^$' | sort -u)
+```
 
-# 5. parents that are not a code unit — keep this roster equal to the module nodes
+### Nesting checks
+
+```sh
+# parents that are not a code unit — keep this roster equal to the module nodes
 comm -23 \
   <(grep -rh '^parent: ' "${SPECS[@]}" | sed 's/^parent: *//; s/"//g' | sort -u) \
   <(printf '%s\n' goal architecture coding-agent estige lib git local-llm llm-local-inference \
       | sort)
 
-# 6. a record used as a parent — must print nothing
+# a record used as a parent — must print nothing
 grep -rl '^parent: d' "${SPECS[@]}"
-```
 
-A check that prints something is a finding, not a warning: fix the value, the
-id, or the link before adding anything on top of it. Checks 5 and 6 cover the
-nesting rules; **check 7 is the one no script can make** —
-
-```sh
-# 7. module-design specs parked at the system level (read the list, judge each)
+# module-design specs parked at the system level — read the list, judge each
 grep -rl '^type: module-design' "${SPECS[@]}" \
   | xargs grep -l '^parent: architecture' \
   | xargs grep -L -E '^(id: (coding-agent|estige|lib|git|local-llm|llm-local-inference))$'
 ```
 
-Output there is not automatically wrong — an archived investigation, or a
-record that genuinely spans several modules, legitimately sits at
-`architecture`. The question to ask of each line is the one from the snapshot:
-*which folder's behavior does this describe?*
+The last one needs a reader. Output is not automatically wrong — an archived
+investigation has no module left to hang from — but the question for each line
+is the scope test from [Types](#types): *which folder's behavior does this
+describe?* If the answer is one folder, `parent` is that module node; if it is
+several, the record is `architecture-design` and parents to `architecture`.
+

@@ -2,14 +2,11 @@
 id: d035
 type: module-design
 title: Dynamic default model selection for pi-coding-agent
-parent: goal
+parent: coding-agent
 tags: [default-model, pi-agent, provider-selection]
 status: active
-references:
-  - d024
-  - d027b
-depends-on:
-  - coding-agent
+references: [d024, d027b]
+depends-on: [coding-agent]
 ---
 
 ## Problem

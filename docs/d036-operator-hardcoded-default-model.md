@@ -3,12 +3,9 @@ id: d036
 type: module-design
 status: active
 title: "d036 — default model is operator-hardcoded; the dynamic picker is retired"
-parent: architecture
-references:
-  - d035
-  - d024
-depends-on:
-  - coding-agent
+parent: coding-agent
+references: [d035, d024]
+depends-on: [coding-agent]
 ---
 
 # d036 — default model is operator-hardcoded; the dynamic picker is retired

@@ -4,6 +4,7 @@ type: module-design
 status: done
 parent: architecture
 tags: ["research", "findings", "archive"]
+title: "Comparison: gguf-metadata-parser.js vs huggingface-estimate"
 ---
 
 # Comparison: `gguf-metadata-parser.js` vs `huggingface-estimate`

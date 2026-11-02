@@ -4,6 +4,7 @@ type: architecture-design
 status: done
 parent: architecture
 tags: ["research", "findings", "archive"]
+title: "bwrap runtime audit — mirror-tree usage vs upstream bubblewrap"
 ---
 
 # bwrap runtime audit — mirror-tree usage vs upstream bubblewrap

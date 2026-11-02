@@ -9,9 +9,9 @@ uv = "latest"
 # lib/node-run.sh deliberately pins node@24 for repo scripts (docs/d051).
 # node = ["26", "24"] #"22"
 
-python = ["3.14"]
+# python = ["3.14"]
 
-"pipx:mistral-vibe" = { version = "latest", uvx_args = "--no-python-downloads --python 3.14" }
+# "pipx:mistral-vibe" = { version = "latest", uvx_args = "--no-python-downloads --python 3.14" }
 # "pipx:huggingface-hub" = { version = "latest", uvx_args = "--no-python-downloads --python 3.14" }
 # "pipx:oci-cli" = { version = "latest", uvx_args = "--no-python-downloads --python 3.12" }
 

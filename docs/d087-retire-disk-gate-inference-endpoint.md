@@ -3,7 +3,7 @@ id: d087
 type: module-design
 status: active
 title: "d087 — retire the coding-agent free-disk gate; the disk budget lives at the inference pull"
-parent: d083
+parent: llm-local-inference
 depends-on: [d041, d083]
 tags: ["builders", "capability-gates", "spike-validation"]
 ---

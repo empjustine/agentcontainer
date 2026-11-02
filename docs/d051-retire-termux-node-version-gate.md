@@ -3,8 +3,8 @@ id: d051
 type: module-design
 status: active
 title: "d051 — retire the Termux node floor gate (check-node-version.mjs)"
-parent: d023
-depends-on: [coding-agent, lib]
+parent: coding-agent
+depends-on: [coding-agent, lib, d023]
 references: [d023, d041]
 tags: ["coding-agent", "node", "termux", "gate", "maintainability", bugfix]
 ---

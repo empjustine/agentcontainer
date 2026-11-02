@@ -3,7 +3,7 @@ id: d059
 type: module-design
 status: active
 title: "d059 — coding-agent/run.sh goes container-only; the sandbox-free run path is lib/environment.sh <command>"
-parent: architecture
+parent: coding-agent
 depends-on: [d041, d046, d054, d056]
 references: [d018, d030, d041, d043, d046, d051, d054, d056]
 tags: [runner, env-chain, termux, dx]

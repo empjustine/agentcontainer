@@ -3,7 +3,7 @@ id: d022
 type: module-design
 status: active
 title: "ClinePass peer-routing fix & localhost peer simplification"
-parent: goal
+parent: coding-agent
 tags: ["peer-routing", "generators", "simplification"]
 ---
 

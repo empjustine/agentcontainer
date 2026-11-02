@@ -4,6 +4,7 @@ type: module-design
 status: deprecated
 parent: architecture
 tags: ["research", "superseded", "archive"]
+title: "Future work: a simplified config-generator system (NOT yet implemented)"
 ---
 
 # Future work: a simplified config-generator system (NOT yet implemented)

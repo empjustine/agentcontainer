@@ -3,7 +3,7 @@ id: d029
 type: module-design
 status: active
 title: "d029 — the in-container `launch-gguf.sh` path: complexity audit and options"
-parent: architecture
+parent: local-llm
 references: [d018, d025, termux-build-audit]
 ---
 

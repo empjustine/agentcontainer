@@ -100,7 +100,7 @@ five types (`goal-and-requirements`, `architecture-design`, `module-design`,
 That file is the repository-owned copy of the contract on purpose: an agent
 without the ThinkRail tooling or its workflow skills must still be able to
 keep the graph valid, so read it before adding, retyping, or retitling a doc,
-and run its four checks when a docs change touches more than one file. The
+and run the checks it lists when a docs change touches more than one file. The
 tooling (and d104, the record that adopted the standard) is the faster path
 when it is available; it is not a prerequisite.
 

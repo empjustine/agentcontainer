@@ -4,6 +4,7 @@ type: module-design
 status: deprecated
 parent: architecture
 tags: ["research", "archived", "archive"]
+title: "Work (nonfree-world) peer variant"
 ---
 
 # Work (nonfree-world) peer variant

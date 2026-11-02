@@ -1,6 +1,6 @@
 ---
 id: d058
-type: module-design
+type: architecture-design
 status: active
 title: "d058 — retire simulation modes: writes are atomic swaps, review is git diff"
 parent: architecture

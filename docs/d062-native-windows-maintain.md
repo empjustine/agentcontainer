@@ -1,9 +1,9 @@
 ---
 id: d062
-type: architecture-design
+type: module-design
 status: active
 title: "d062 — native Windows mirror maintenance: git/maintain.ps1 + a Windows-portable maintain-mirrors.mjs"
-parent: d044
+parent: git
 depends-on: [d041, d044]
 references: [d044, d060]
 tags: [git, references, work, windows, powershell, wsl2, mirrors]

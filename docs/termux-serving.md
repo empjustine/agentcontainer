@@ -3,8 +3,9 @@ id: termux-serving
 type: architecture-design
 status: deprecated
 title: "Termux / a50 serving environment — archived map"
-parent: environments
+parent: architecture
 tags: ["research", "archived", "termux"]
+references: [environments]
 ---
 
 # Termux / a50 serving environment

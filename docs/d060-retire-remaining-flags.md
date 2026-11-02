@@ -1,6 +1,6 @@
 ---
 id: d060
-type: module-design
+type: architecture-design
 status: active
 title: "d060 — retire the remaining flags: the run is the review, argv is the config, the reader filters"
 parent: architecture

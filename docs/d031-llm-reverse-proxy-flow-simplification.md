@@ -3,7 +3,7 @@ id: d031
 type: module-design
 status: draft
 title: "d031 — llm-reverse-proxy flow: complexity audit and simplification options"
-parent: architecture
+parent: estige
 references: [d027, d028, termux-build-audit]
 ---
 

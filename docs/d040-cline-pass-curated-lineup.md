@@ -3,14 +3,9 @@ id: d040
 type: module-design
 status: active
 title: "d040 — cline-pass lineup is the curated ClinePass list, not Cline's catalog"
-parent: d037
-references:
-  - d033
-  - d037
-  - d046b
-  - d047
-depends-on:
-  - coding-agent
+parent: coding-agent
+references: [d033, d037, d046b, d047]
+depends-on: [coding-agent, d037]
 tags: [bugfix]
 ---
 
