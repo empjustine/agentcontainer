@@ -1,7 +1,7 @@
 ---
 id: d027b
 type: architecture-design
-status: accepted
+status: active
 title: d027b — models.dev catalog fetch chain (direct → relay → stale copy)
 parent: architecture
 depends-on: [lib, d023, d025]

@@ -1,6 +1,7 @@
 ---
 id: d001
 type: architecture-design
+status: active
 title: "d001 — proxy env & baseUrl policy"
 parent: architecture
 ---

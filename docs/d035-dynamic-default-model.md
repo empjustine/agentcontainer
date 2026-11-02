@@ -1,6 +1,6 @@
 ---
 id: d035
-type: task-spec
+type: module-design
 title: Dynamic default model selection for pi-coding-agent
 parent: goal
 tags: [default-model, pi-agent, provider-selection]

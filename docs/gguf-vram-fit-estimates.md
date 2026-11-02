@@ -1,7 +1,7 @@
 ---
 id: gguf-vram-fit-estimates
-type: reference
-status: stable
+type: module-design
+status: active
 title: "GGUF VRAM fit + performance estimates — generated tables"
 parent: local-llm
 tags: ["reference", "tables", "vram"]

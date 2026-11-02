@@ -1,7 +1,7 @@
 ---
 id: d068
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d068 — a home-relative DIRECTORY mounts at the container's home, not at the canonical host path"
 parent: coding-agent
 depends-on: [d056]

@@ -1,6 +1,6 @@
 ---
 id: environments
-type: reference
+type: architecture-design
 status: draft
 title: "Deployment environments and variants"
 parent: goal

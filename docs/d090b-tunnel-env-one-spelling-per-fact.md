@@ -1,6 +1,6 @@
 ---
 id: d090b
-type: architecture-design
+type: module-design
 status: active
 title: "d090b — tunnel env, one spelling per fact: VPN_TUNNEL_URL speaks the ladder's wire forms, operator credentials split by node"
 parent: estige

@@ -1,7 +1,7 @@
 ---
 id: d094
-type: decision
-status: implemented (all three phases landed: record + index, relaychain.go code, relaychain_test.go suite)
+type: module-design
+status: active
 title: "d094 — the relay node's tunnel leg chains through the conventional proxy environment variables"
 parent: estige
 depends-on: [d073, d088, d090b, d093]
@@ -9,6 +9,10 @@ references: [d046, d079]
 ---
 
 # d094 — the relay node's tunnel leg chains through the conventional proxy env
+
+## Status
+
+All three phases landed: record + index, relaychain.go code, relaychain_test.go suite.
 
 ## Problem
 

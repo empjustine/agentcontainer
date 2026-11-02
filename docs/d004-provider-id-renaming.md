@@ -1,6 +1,7 @@
 ---
 id: d004
 type: module-design
+status: active
 title: "d004 — provider ID renaming & metadata mapping"
 parent: coding-agent
 ---

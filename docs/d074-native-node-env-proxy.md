@@ -1,7 +1,7 @@
 ---
 id: d074
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d074 — retire the fetch proxy monkey-patch; rely on NODE_USE_ENV_PROXY"
 parent: coding-agent
 depends-on: [d001, d023, d071]

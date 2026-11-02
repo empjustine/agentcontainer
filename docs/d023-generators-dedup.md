@@ -1,7 +1,7 @@
 ---
 id: d023
 type: architecture-design
-status: implemented
+status: active
 title: "Generator code-flow audit: findings and consolidation"
 parent: goal
 tags: ["generators", "consolidation", "audit"]

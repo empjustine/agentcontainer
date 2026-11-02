@@ -1,15 +1,19 @@
 ---
 id: d105
-type: decision
-status: accepted
+type: module-design
+status: active
 title: "d105 — SSL-VPN transports are named by mechanism; A–E are historical labels"
-parent: llm-reverse-proxy
+parent: estige
 depends-on: [d073, d077]
 references: [d072, d093, d101]
 tags: ["serving", "proxy", "vpn", "ssl-vpn", "naming", "tunnel"]
 ---
 
 # d105 — SSL-VPN transports are named by mechanism
+
+## Status
+
+Accepted — vocabulary only, no obligation changes.
 
 ## Problem
 

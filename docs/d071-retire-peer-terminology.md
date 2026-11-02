@@ -1,7 +1,7 @@
 ---
 id: d071
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d071 — retire the 'peer' term: REVERSE_PROXY_BASE_URLS and its vocabulary"
 parent: coding-agent
 depends-on: [d027, d047, d063]

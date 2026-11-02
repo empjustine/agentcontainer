@@ -1,7 +1,7 @@
 ---
 id: d095
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d095 — the relay node is a host service, and vpn-relay.sh is its chain step"
 parent: estige
 depends-on: [d046, d088, d093, d094]

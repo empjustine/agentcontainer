@@ -1,7 +1,7 @@
 ---
 id: d045
 type: architecture-design
-status: implemented
+status: active
 title: "d045 — structured logging and error construction: no interpolation, no level filtering, full cause chains"
 parent: architecture
 depends-on:

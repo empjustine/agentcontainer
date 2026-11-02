@@ -1,7 +1,7 @@
 ---
 id: d075
-type: decision
-status: implemented
+type: architecture-design
+status: active
 title: "d075 — no mirror run may stop on a prompt: the non-interactive git env"
 parent: architecture
 depends-on: [d044, d060, d062]

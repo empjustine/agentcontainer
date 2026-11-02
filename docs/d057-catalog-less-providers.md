@@ -1,7 +1,7 @@
 ---
 id: d057
-type: architecture-design
-status: implemented
+type: module-design
+status: active
 title: "d057 — a provider models.dev does not carry: the facts cache as the lineup (worked example: verboo)"
 parent: architecture
 depends-on: [d021, d023, d024, d032, d033]

@@ -1,6 +1,7 @@
 ---
 id: d012
 type: architecture-design
+status: active
 title: "d012 — intermediate JSON dumps to ./cloud-llm/"
 parent: architecture
 ---

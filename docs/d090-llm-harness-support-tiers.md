@@ -1,7 +1,7 @@
 ---
 id: d090
-type: decision
-status: accepted (policy; enforced at each generator/client change that touches a tiered surface)
+type: module-design
+status: active
 title: "d090 — LLM harness support tiers: pi first-class (with its descendants), opencode/mistral-vibe best-effort, crush superficial"
 parent: coding-agent
 depends-on: [d064]
@@ -10,6 +10,10 @@ tags: [harnesses, support-tiers, generators, policy]
 ---
 
 # d090 — LLM harness support tiers (first-class / best-effort / superficial)
+
+## Status
+
+Policy; enforced at each generator/client change that touches a tiered surface.
 
 ## Problem
 

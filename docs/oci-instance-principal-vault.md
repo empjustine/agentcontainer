@@ -1,15 +1,20 @@
 ---
 id: oci-instance-principal-vault
-type: research
-status: findings — mechanism confirmed in Oracle documentation; live test blocked (this host is not an OCI instance and has no OCI CLI or Go toolchain)
+type: architecture-design
+status: done
 title: "OCI instance principals + Vault: viability for removing credential files from instances"
 parent: architecture
 depends-on: [d046, d078]
 references: [d108]
-tags: ["secrets", "oci", "vault", "instance-principal", "security"]
+tags: ["research", "secrets", "oci", "vault", "instance-principal", "security"]
 ---
 
 # OCI instance principals + Vault
+
+## Status
+
+Findings: the mechanism is confirmed in Oracle documentation; a live test is
+blocked — this host is not an OCI instance and has no OCI CLI or Go toolchain.
 
 Assessment requested for the fleet's cloud instances: if an instance must
 hold provider or tunnel keys at rest, can it obtain them without a hardcoded

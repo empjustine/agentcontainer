@@ -1,7 +1,7 @@
 ---
 id: architecture
-type: reference
-status: accepted
+type: architecture-design
+status: active
 title: "Architecture: self-contained runners + base config generators"
 parent: goal
 tags: ["topology", "standalone-rule", "generators"]
@@ -205,5 +205,8 @@ The former "next planned step" sketch (a simplified config-generator system
 split by concern) is archived at
 [archive/future-config-generator-system.md](archive/future-config-generator-system.md)
 — d030/d037 implemented its generator split, d041 the unified entrypoints.
-Document taxonomy (requirements / reference / design + the decision log):
-docs/d042.
+Document typing follows the spec-graph standard
+(`docs/spec-graph-standard.md`): every doc carries one type
+(goal-and-requirements / architecture-design / module-design /
+submodule-design / task-spec) and one lifecycle status; the `d0XX` decision log
+is the history (d042 for the anchor and numbering constraints that still bind).

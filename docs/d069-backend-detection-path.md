@@ -1,7 +1,7 @@
 ---
 id: d069
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d069 — the workload backend is detected through PATH, the way it is invoked"
 parent: lib
 depends-on: [d059]

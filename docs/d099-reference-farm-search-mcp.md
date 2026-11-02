@@ -1,7 +1,7 @@
 ---
 id: d099
-type: decision
-status: implemented in part (the tool surface landed as the POSIX CLI git/farm-tool.sh — capped reads + the two flocked maintenance verbs; the MCP façade, worker pool and Zoekt-backed wide search still to land) · amended: the strictly-read-only posture narrowed to two serialized maintenance verbs (upsert/compact)
+type: architecture-design
+status: active
 title: "d099 — reference-farm code search as an MCP server: capped read surface, two serialized maintenance verbs, host-side"
 parent: architecture
 depends-on: [d043, d075]
@@ -10,6 +10,10 @@ tags: ["git", "references", "search", "mcp", "tooling", "safety"]
 ---
 
 # d099 — reference-farm code search as an MCP server
+
+## Status
+
+The tool surface landed as the POSIX CLI git/farm-tool.sh — capped reads + the two flocked maintenance verbs; the MCP façade, worker pool and Zoekt-backed wide search still to land; amended: the strictly-read-only posture narrowed to two serialized maintenance verbs (upsert/compact).
 
 **Status: the tool surface is built** — stage one is the POSIX CLI
 `git/farm-tool.sh` (backed by `git/farm-tool-lib.sh`'s safety posture and

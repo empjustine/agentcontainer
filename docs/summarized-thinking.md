@@ -1,6 +1,6 @@
 ---
 id: summarized-thinking
-type: design
+type: module-design
 status: draft
 title: "summarized-reasoning extension — design note"
 parent: coding-agent

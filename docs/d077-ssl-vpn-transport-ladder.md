@@ -1,7 +1,7 @@
 ---
 id: d077
-type: architecture-design
-status: adopted-in-part (WebSocket tunnel deployed; h2-POST tunnel default-on since d084 — L3 default-flip gate superseded; h1.1-POST tunnel built — d081's amendment removed the L4 build gate, L4/L1 demoted to characterization)
+type: module-design
+status: active
 title: "d077 — tunnel transports (h2 POST → wss → h1.1 POST) trusting external TLS, with SSE-carrier and inner-TLS studies"
 parent: estige
 depends-on: [d073, d031]
@@ -11,7 +11,9 @@ tags: ["serving", "proxy", "vpn", "ssl-vpn", "http2", "websocket", "sse", "tails
 
 # d077 — Tunnel transports, trusting external TLS
 
-**Status:** adopted-in-part (see the frontmatter). This record refines d073
+## Status
+
+Adopted in part. This record refines d073
 §5.1's single-transport choice (`wss://` only) into three sibling tunnel
 transports selected by protocol negotiation — the h2-POST tunnel (HTTP/2
 streaming POST), the WebSocket tunnel (the deployed v2), and the h1.1-POST

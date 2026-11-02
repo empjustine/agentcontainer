@@ -1,15 +1,21 @@
 ---
 id: self-hosted-workload-identity
-type: research
-status: findings — mechanisms confirmed in vendor/kernel/project documentation; nothing implemented or exercised (this workstation has no TPM device and no `swtpm`/`qemu`/`tailscale`)
+type: architecture-design
+status: done
 title: "Self-hosted workload identity: granting credentials because a VM lives on a trusted hypervisor in a trusted network"
 parent: architecture
 depends-on: [d046, d078]
 references: [d108]
-tags: ["secrets", "attestation", "tpm", "vtpm", "confidential-computing", "self-hosted", "security"]
+tags: ["research", "secrets", "attestation", "tpm", "vtpm", "confidential-computing", "self-hosted", "security"]
 ---
 
 # Self-hosted workload identity
+
+## Status
+
+Findings: the mechanisms are confirmed in vendor/kernel/project documentation;
+nothing is implemented or exercised — this workstation has no TPM device and no
+`swtpm`/`qemu`/`tailscale`.
 
 ## Question
 

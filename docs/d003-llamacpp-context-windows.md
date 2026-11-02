@@ -1,6 +1,7 @@
 ---
 id: d003
 type: module-design
+status: active
 title: "d003 — llama.cpp context window resolution"
 parent: llm-local-inference
 ---

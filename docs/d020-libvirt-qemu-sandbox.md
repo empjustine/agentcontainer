@@ -1,6 +1,7 @@
 ---
 id: d020
 type: architecture-design
+status: active
 title: "d020 — qemu/libvirt VM workloads (requirements assessment)"
 parent: architecture
 ---

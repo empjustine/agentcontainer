@@ -1,12 +1,16 @@
 ---
 id: d082
-type: architecture-design
-status: accepted (logic-only boundary landed with this record; git split deferred)
+type: module-design
+status: active
 title: "d082 — llm-reverse-proxy toward its own repository: logic-only boundary now, git split later"
 parent: estige
 depends-on: [d041, d042]
 references: [d015, d027, d027b, d031, d032, d038, d047, d070, d073, d077, d078, d080, d081]
 ---
+
+## Status
+
+The logic-only boundary landed with this record; the git split is deferred.
 
 ## Decision
 

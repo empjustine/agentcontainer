@@ -1,7 +1,7 @@
 ---
 id: future-config-generator-system
-type: research
-status: superseded
+type: module-design
+status: deprecated
 parent: architecture
 tags: ["research", "superseded", "archive"]
 ---

@@ -1,7 +1,7 @@
 ---
 id: d027
 type: architecture-design
-status: implemented
+status: active
 title: "Path-prefix peer routing — llm-reverse-proxy replaces llama-swap's model-id magic"
 parent: goal
 references: ["d022", "d024", "d015", "environments"]

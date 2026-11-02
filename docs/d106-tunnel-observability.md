@@ -1,9 +1,9 @@
 ---
 id: d106
-type: decision
+type: module-design
 status: draft
 title: "d106 — tunnel observability: two session records, one correlation id, and a snapshot surface"
-parent: d073
+parent: estige
 depends-on: [d073, d077, d103, d105]
 references: [d045, d078, d080, d081, d085, d088, d093, d094, d104]
 tags: ["serving", "proxy", "vpn", "ssl-vpn", "tunnel", "observability", "logging"]

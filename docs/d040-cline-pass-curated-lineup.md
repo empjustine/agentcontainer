@@ -1,7 +1,7 @@
 ---
 id: d040
-type: bugfix
-status: implemented
+type: module-design
+status: active
 title: "d040 — cline-pass lineup is the curated ClinePass list, not Cline's catalog"
 parent: d037
 references:
@@ -11,6 +11,7 @@ references:
   - d047
 depends-on:
   - coding-agent
+tags: [bugfix]
 ---
 
 # d040 — cline-pass lineup is the curated ClinePass list, not Cline's catalog

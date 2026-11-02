@@ -1,7 +1,7 @@
 ---
 id: d086
-type: decision
-status: accepted (fetchedFrom removal, capability URL gate, and the churn recipe's generator work landed; layer separation deferred)
+type: module-design
+status: active
 title: "d086 — fact-table provenance, churn discipline, and capability hygiene"
 parent: coding-agent
 depends-on: [d047, d072, d079, d085]
@@ -9,6 +9,12 @@ references: [d021, d027b, d033]
 ---
 
 # d086 — fact-table provenance, churn discipline, and capability hygiene
+
+## Status
+
+The `fetchedFrom` removal, the capability URL gate, and the churn recipe's
+generator work have landed; layer separation is deferred — see the
+[Implementation status](#implementation-status).
 
 ## 1. Context
 

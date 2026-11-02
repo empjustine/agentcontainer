@@ -1,7 +1,7 @@
 ---
 id: d093
-type: decision
-status: accepted
+type: module-design
+status: active
 title: "d093 — the offer is the whole ladder: -modes and MODES retire; mode selection is the relay node's per-dial ranking"
 parent: estige
 depends-on: [d073, d077, d081, d084, d090b]

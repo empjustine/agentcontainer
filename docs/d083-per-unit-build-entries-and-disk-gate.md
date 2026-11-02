@@ -1,13 +1,17 @@
 ---
 id: d083
-type: decision
-status: implemented · §(c) free-disk gate retired by d087 (image shrank; the disk consumer is the inference pull)
+type: architecture-design
+status: active
 title: "d083 — per-unit build entries return as shims, and the coding-agent image gets a free-disk gate"
 parent: d041
 tags: ["builders", "entrypoints", "spike-validation"]
 ---
 
 # d083 — per-unit build entries return as shims, and the coding-agent image gets a free-disk gate
+
+## Status
+
+§(c) free-disk gate retired by d087 (image shrank; the disk consumer is the inference pull).
 
 ## Problem
 

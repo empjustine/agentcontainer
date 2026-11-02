@@ -1,7 +1,7 @@
 ---
 id: d061
-type: architecture-design
-status: implemented
+type: module-design
+status: active
 title: "d061 — default MCP servers: commit the list, install it merged into the shared agent dir"
 parent: coding-agent
 depends-on: [coding-agent]

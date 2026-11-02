@@ -1,14 +1,17 @@
 ---
 id: d031
-type: architecture-design
-status: proposed
+type: module-design
+status: draft
 title: "d031 — llm-reverse-proxy flow: complexity audit and simplification options"
 parent: architecture
+references: [d027, d028, termux-build-audit]
 ---
 
 # d031 — llm-reverse-proxy flow: complexity audit and simplification options
 
-status: proposed (nothing decided) · relates-to: d027, d028, termux-build-audit
+## Status
+
+Proposed; options 1 and 2 shipped — see below.
 
 ## Implementation status (2026-09)
 

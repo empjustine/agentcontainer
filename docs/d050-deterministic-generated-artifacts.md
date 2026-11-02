@@ -1,7 +1,7 @@
 ---
 id: d050
-type: architecture-design
-status: implemented
+type: module-design
+status: active
 title: "d050 — deterministic (canonical) generated artifacts: stable ordering for manifests and caches"
 parent: coding-agent
 depends-on: [coding-agent, lib]
@@ -11,8 +11,9 @@ tags: ["generators", "artifacts", "canonical-json", "determinism", "models.json"
 
 # d050 — deterministic (canonical) generated artifacts
 
-status: implemented 2026-09-23 (decisions recorded below) · relates-to:
-d023, d024, d033, d041
+## Status
+
+Implemented 2026-09-23; the decisions are recorded below.
 
 ## Motivation
 

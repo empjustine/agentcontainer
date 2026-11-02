@@ -1,7 +1,7 @@
 ---
 id: d037
 type: architecture-design
-status: implemented
+status: active
 title: "d037 — generator merge verdict: cloud generators unify, the rest stay split"
 parent: architecture
 references:

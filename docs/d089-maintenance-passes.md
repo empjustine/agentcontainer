@@ -1,7 +1,7 @@
 ---
 id: d089
-type: decision
-status: implemented
+type: architecture-design
+status: active
 title: "d089 — maintenance passes: align, optimize (default), deep"
 parent: d044
 depends-on: [d044, d060, d076]

@@ -1,7 +1,7 @@
 ---
 id: d063
-type: decision
-status: implemented (the reverse-proxy route it emits is deprecated by d108: the allowlist relay is being removed, and the generators are to stop depending on it)
+type: module-design
+status: deprecated
 title: "d063 — proxy-only routing: every emitted URL is a reverse-proxy URL; the direct fallbacks are deleted"
 parent: d033
 depends-on: [d027, d033, d047, d060]
@@ -11,7 +11,11 @@ tags: [generators, routing, reverse-proxy, compliance, pi, opencode, cascade]
 
 # d063 — proxy-only routing (direct fallbacks deleted)
 
-**Status:** implemented
+## Status
+
+Implemented. **The reverse-proxy route it emits is deprecated by d108**: the
+allowlist relay is being removed, and the generators are to stop depending on
+it.
 
 ## Problem
 

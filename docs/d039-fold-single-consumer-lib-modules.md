@@ -1,7 +1,7 @@
 ---
 id: d039
 type: architecture-design
-status: implemented
+status: active
 title: "d039 — fold single-consumer lib/ modules back to their owning runner"
 parent: d023
 references:

@@ -1,7 +1,7 @@
 ---
 id: termux-build-audit
-type: research
-status: findings
+type: architecture-design
+status: done
 title: "Termux build audit — Infisical CLI and estige native build"
 parent: architecture
 tags: ["research", "termux", "build"]

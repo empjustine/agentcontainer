@@ -1,7 +1,7 @@
 ---
 id: d070
-type: decision
-status: implemented (the install-time route substitution it specifies is deprecated by d108 and is to be deleted with the allowlist relay)
+type: module-design
+status: deprecated
 title: "d070 — canonical upstream URLs in committed artifacts; the reverse-proxy route is substituted at install time; SKIP_GEN retired"
 parent: coding-agent
 depends-on: [d047, d050, d054, d057, d063, d071]
@@ -11,13 +11,17 @@ tags: [generators, routing, reverse-proxy, determinism, pi, opencode, security]
 
 # d070 — canonical upstream URLs in; the reverse-proxy route at install
 
-**Status: implemented.** Committed `coding-agent` artifacts (`models.json`, the
+## Status
+
+Implemented. Committed `coding-agent` artifacts (`models.json`, the
 `model-*.json` layers, `opencode.jsonc`) carry each provider's REAL upstream
 URL. The reverse-proxy route is derived and substituted only at the moment
 generate copies an artifact into a host's canonical config dir (`~/.pi/agent`,
 `~/.config/opencode`, …). `SKIP_GEN=1` is retired with the design that made it
 necessary. Terminology for the substituted base is owned by
 [d071](d071-retire-peer-terminology.md); this record uses its vocabulary.
+**The install-time route substitution it specifies is deprecated by d108** and
+is to be deleted with the allowlist relay.
 
 ## Problem
 

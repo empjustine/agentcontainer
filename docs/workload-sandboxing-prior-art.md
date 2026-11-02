@@ -1,6 +1,6 @@
 ---
 id: workload-sandboxing-prior-art
-type: reference
+type: architecture-design
 status: draft
 title: "Sandboxing prior art — bwrap / landlock / seccomp / cgroups / namespaces in the reference farm"
 parent: architecture

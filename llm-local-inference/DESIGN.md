@@ -1,6 +1,6 @@
 ---
 id: llm-local-inference
-type: design
+type: module-design
 status: draft
 title: llm-local-inference — one llama-swap instance per GPU host, local GGUFs only (deprecated for now, d108)
 parent: architecture

@@ -1,7 +1,7 @@
 ---
 id: gguf-model-tooling
-type: reference
-status: partially-archived
+type: module-design
+status: active
 title: "GGUF model tooling — live manifest tooling + archived size-estimation tools"
 parent: local-llm
 tags: ["reference", "gguf", "tooling"]

@@ -1,6 +1,6 @@
 ---
 id: goal
-type: requirements
+type: goal-and-requirements
 status: draft
 title: "agentcontainer — requirements (BRD): personal multi-host LLM serving + coding-agent fleet"
 tags: ["[root]", "brd", "requirements"]
@@ -53,9 +53,10 @@ left answering nothing that generation asks (docs/d072).
   runner, structured logging, the provider/model fact tables.
 - **Cache tooling** — `local-llm/` (see `local-llm`): provision and audit the
   HuggingFace cache that local inference serves from.
-- **Docs & decision records** — `docs/` (the three-type taxonomy of
-  docs/d042: requirements / reference / design, plus the `d0XX` decision
-  log and archived research).
+- **Docs & decision records** — `docs/` (typed per
+  `docs/spec-graph-standard.md`: goal-and-requirements / architecture-design /
+  module-design / submodule-design / task-spec, plus the `d0XX` decision log
+  and archived research).
 
 **Delivered in phases (docs/d073; transport names in docs/d077/d105):**
 the SSL-VPN transport family in `estige/` — the allowlist relay (today's
@@ -182,9 +183,11 @@ the allowlist relay by decision
 
 ### Documentation
 
-- **FR-D1** — Every doc carries exactly one type from the d042 taxonomy
-  (requirements / reference / design / research, plus the `d0XX` decision
-  log); README's documentation index groups by type and stays in sync.
+- **FR-D1** — Every doc carries exactly one type from the spec-graph
+  standard (`docs/spec-graph-standard.md`: goal-and-requirements /
+  architecture-design / module-design / submodule-design / task-spec) and one
+  lifecycle status (`draft` / `active` / `stale` / `done` / `deprecated`);
+  README's documentation index groups by type and stays in sync.
 - **FR-D2** — Decision records (`docs/d0XX-*.md`) are history, not
   immutable: a record is never rewritten wholesale to change what was decided
   or why (supersession points forward via a newer record), but mechanical

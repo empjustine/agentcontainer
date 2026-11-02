@@ -1,7 +1,7 @@
 ---
 id: d060
-type: architecture-design
-status: implemented
+type: module-design
+status: active
 title: "d060 — retire the remaining flags: the run is the review, argv is the config, the reader filters"
 parent: architecture
 depends-on: [d045, d050, d058]

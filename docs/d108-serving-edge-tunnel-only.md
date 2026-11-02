@@ -1,7 +1,7 @@
 ---
 id: d108
-type: decision
-status: accepted (direction of record; all five removal slices landed — the tree is tunnel-only and the binary reads no config file)
+type: module-design
+status: active
 title: "d108 — the serving edge moves to tunnel-only: the bazzite llama-swap provider is deprecated for now, the allowlist reverse proxy (legacy mode A) is deprecated as insecure"
 parent: estige
 depends-on: [d027, d047, d063, d070, d073, d077, d080, d105]
@@ -10,6 +10,11 @@ tags: ["serving", "proxy", "llama-swap", "deprecation", "tunnel", "estige", "mod
 ---
 
 # d108 — retire the serving edge toward tunnel-only
+
+## Status
+
+Direction of record; all five removal slices landed — the tree is tunnel-only
+and the binary reads no config file.
 
 ## Problem
 

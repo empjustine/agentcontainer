@@ -1,7 +1,7 @@
 ---
 id: d034
 type: architecture-design
-status: implemented
+status: active
 title: "d034 — parallel probing and multi-hop peerBase chains"
 parent: architecture
 depends-on:

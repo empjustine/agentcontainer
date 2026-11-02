@@ -1,7 +1,7 @@
 ---
 id: d049
-type: architecture-design
-status: implemented
+type: module-design
+status: active
 title: "d049 — modality/input capability as allowlists everywhere, not name filters/denylists"
 parent: coding-agent
 depends-on: [coding-agent, lib]
@@ -11,9 +11,11 @@ tags: ["coding-agent", "modalities", "allowlist", "filter", "models.json"]
 
 # d049 — modality/input capability as allowlists everywhere
 
-status: implemented (2026-09-23) — pipeline-wide constant, metadata-rich
-sources only, opencode out of scope, documented name exception for the
-embedding gap, admit-but-trim · relates-to: d033, d046b, d047
+## Status
+
+Implemented 2026-09-23 — pipeline-wide constant, metadata-rich sources only,
+opencode out of scope, documented name exception for the embedding gap,
+admit-but-trim.
 
 ## Change (implemented 2026-09-23)
 

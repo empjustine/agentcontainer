@@ -1,7 +1,7 @@
 ---
 id: d073
-type: architecture-design
-status: adopted-in-part (v2 = allowlist relay + WebSocket tunnel delivered; the h2-POST tunnel built default-on since d084; the h1.1-POST tunnel built — d081's L4 amendment; the authenticated relay deferred to v3; VPN-R44's `${prefix}` clause reversed by d085; the tunnel namespace's shared-bearer credential superseded by d104 — mutual Ed25519 exit↔relay proofs; the allowlist relay is deprecated as insecure by d108 (legacy "mode A" — estige stops exposing it, the generators stop depending on it, and VPN-R1's allowlist-as-default is superseded))
+type: module-design
+status: active
 title: "d073 — llm-reverse-proxy → SSL-VPN transport family: requirements and feasibility"
 parent: estige
 depends-on: [estige, d027, d047, d070, d071]
@@ -11,7 +11,9 @@ tags: ["serving", "proxy", "vpn", "ssl-vpn", "websocket", "tailscale", "requirem
 
 # d073 — llm-reverse-proxy → SSL-VPN transport family: requirements and feasibility
 
-**Status:** adopted-in-part (see the frontmatter) — this began as requirements
+## Status
+
+Adopted in part — this began as requirements
 and feasibility only, and the parts that shipped are amended forward by
 d077/d081/d084/d085/d104; the transport names are d105's. It exists so the
 question d072 deliberately left open ("a TLS-level VPN (ssl-vpn style) or a

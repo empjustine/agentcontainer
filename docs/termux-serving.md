@@ -1,7 +1,7 @@
 ---
 id: termux-serving
-type: research
-status: archived
+type: architecture-design
+status: deprecated
 title: "Termux / a50 serving environment — archived map"
 parent: environments
 tags: ["research", "archived", "termux"]

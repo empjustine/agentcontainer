@@ -1,7 +1,7 @@
 ---
 id: d080
-type: architecture-design
-status: accepted
+type: module-design
+status: active
 title: "d080 — the d047 host allowlist is mode-A-only: the forward-proxy modes carry the egress policy instead"
 parent: d047
 depends-on: [d047, d073, d077]

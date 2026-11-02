@@ -1,6 +1,6 @@
 ---
 id: coding-agent
-type: design
+type: module-design
 status: draft
 title: coding-agent — pi agent image + by-agent layered config generation
 parent: architecture

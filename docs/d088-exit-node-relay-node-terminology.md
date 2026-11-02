@@ -1,7 +1,7 @@
 ---
 id: d088
-type: decision
-status: implemented (phase 1 documentation; phase 2 code rename landed in-place ahead of the still-undated d082 split; protocol-layer extension — exit/relay inside the wire — added by d104, code rename pending)
+type: module-design
+status: active
 title: "d088 — exit node and relay node: name the SSL VPN deployments by network position, not protocol role"
 parent: estige
 depends-on: [d071, d073, d082]
@@ -9,6 +9,12 @@ references: [d080, d084, d104]
 ---
 
 # d088 — exit node and relay node: name the SSL VPN deployments by network position, not protocol role
+
+## Status
+
+Phase 1 documentation and the phase 2 code rename landed in place ahead of the
+still-undated d082 split; the protocol-layer extension — exit/relay inside the
+wire — was added by d104, code rename pending.
 
 ## Problem
 

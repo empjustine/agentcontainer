@@ -1,7 +1,7 @@
 ---
 id: d044
-type: decision
-status: implemented
+type: architecture-design
+status: active
 title: "d044 — work-machine reference farm: software-forge clones to bare mirrors on the NTFS profile"
 parent: architecture
 tags: ["git", "references", "work", "software-forge", "wsl2", "mirrors"]

@@ -1,13 +1,17 @@
 ---
 id: estige-ci
-type: reference
-status: deferred (until the d082 standalone-repo split; findings recorded now, no workflow exists)
+type: submodule-design
+status: draft
 title: "GitHub Actions for estige — findings, deferred until the split"
 parent: estige
 tags: ["ci", "github-actions", "build"]
 ---
 
 # GitHub Actions for estige — findings, deferred until the split
+
+## Status
+
+Until the d082 standalone-repo split; findings recorded now, no workflow exists.
 
 Findings from a dry-run assessment of building and testing this unit on
 GitHub Actions. **No workflow exists yet, deliberately**: d082 moves the

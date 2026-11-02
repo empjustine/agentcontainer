@@ -1,6 +1,7 @@
 ---
 id: d006
 type: module-design
+status: active
 title: "d006 — virtual cost estimation"
 parent: coding-agent
 ---

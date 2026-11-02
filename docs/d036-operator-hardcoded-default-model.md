@@ -1,7 +1,7 @@
 ---
 id: d036
-type: architecture-design
-status: implemented
+type: module-design
+status: active
 title: "d036 — default model is operator-hardcoded; the dynamic picker is retired"
 parent: architecture
 references:

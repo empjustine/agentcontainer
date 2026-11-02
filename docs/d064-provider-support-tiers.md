@@ -1,7 +1,7 @@
 ---
 id: d064
-type: decision
-status: implemented
+type: architecture-design
+status: active
 title: "d064 — LLM provider support tiers: first-class / best-effort / superficial"
 parent: d063
 depends-on: [d027, d033, d063]

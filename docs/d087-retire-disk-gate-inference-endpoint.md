@@ -1,7 +1,7 @@
 ---
 id: d087
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d087 — retire the coding-agent free-disk gate; the disk budget lives at the inference pull"
 parent: d083
 depends-on: [d041, d083]

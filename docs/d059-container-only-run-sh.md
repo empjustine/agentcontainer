@@ -1,7 +1,7 @@
 ---
 id: d059
-type: architecture-design
-status: implemented
+type: module-design
+status: active
 title: "d059 — coding-agent/run.sh goes container-only; the sandbox-free run path is lib/environment.sh <command>"
 parent: architecture
 depends-on: [d041, d046, d054, d056]

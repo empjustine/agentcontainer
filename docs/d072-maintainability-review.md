@@ -1,7 +1,7 @@
 ---
 id: d072
 type: architecture-design
-status: implemented
+status: active
 title: "d072 — maintainability review: what was folded, what was kept, what is deferred"
 parent: goal
 depends-on: [d023, d039, d042, d063, d070]

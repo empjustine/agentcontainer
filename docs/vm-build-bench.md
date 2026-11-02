@@ -1,6 +1,6 @@
 ---
 id: vm-build-bench
-type: reference
+type: architecture-design
 status: draft
 title: "VM build bench — d020 Level-1 SOP (vm-bench.sh runbook)"
 parent: architecture

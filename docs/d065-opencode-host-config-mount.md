@@ -1,6 +1,6 @@
 ---
 id: d065
-type: architecture-design
+type: module-design
 status: active
 title: "d065 — opencode mounts its real config dir, keeps its data dir on the per-run stage"
 parent: coding-agent

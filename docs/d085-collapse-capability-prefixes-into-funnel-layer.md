@@ -1,7 +1,7 @@
 ---
 id: d085
-type: decision
-status: accepted
+type: module-design
+status: active
 title: "d085 — collapsing the capability prefixes into the Tailscale Funnel layer"
 parent: estige
 depends-on: [d073, d077, d084]

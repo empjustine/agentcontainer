@@ -1,7 +1,7 @@
 ---
 id: llama-swap-response-analysis
-type: research
-status: findings
+type: module-design
+status: done
 parent: architecture
 tags: ["research", "findings", "archive"]
 ---

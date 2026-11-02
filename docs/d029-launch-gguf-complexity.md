@@ -1,14 +1,18 @@
 ---
 id: d029
-type: architecture-design
-status: adopted-in-part (option B implemented; A4/preflight folded in)
+type: module-design
+status: active
 title: "d029 — the in-container `launch-gguf.sh` path: complexity audit and options"
 parent: architecture
+references: [d018, d025, termux-build-audit]
 ---
 
 # d029 — the in-container `launch-gguf.sh` path: complexity audit and options
 
-status: proposed (nothing decided) · relates-to: d018, d025, termux-build-audit
+## Status
+
+Option B is implemented and A4/preflight is folded in; the remaining options
+were not adopted.
 
 ## Problem
 

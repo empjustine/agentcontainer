@@ -1,13 +1,17 @@
 ---
 id: d041
-type: decision
-status: implemented · DRY_RUN/BUILD_PLAN later retired by d058 · per-folder build.sh entries return as selection shims (d083)
+type: architecture-design
+status: active
 title: "d041 — unified generate/build entrypoints; runners never build or generate"
 parent: d023
 tags: ["generators", "builders", "runners", "entrypoints"]
 ---
 
 # d041 — unified generate/build entrypoints; runners never build or generate
+
+## Status
+
+DRY_RUN/BUILD_PLAN later retired by d058 · per-folder build.sh entries return as selection shims (d083).
 
 Follow-up to the d039 lib/ fold-back. Four moves, registered together because
 they reshape the same surface: who can invoke generation/building, from where,

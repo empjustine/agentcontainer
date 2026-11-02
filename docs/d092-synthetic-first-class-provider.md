@@ -1,7 +1,7 @@
 ---
 id: d092
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d092 — synthetic.new joins the fleet as a first-class provider"
 parent: coding-agent
 depends-on: [d024, d027, d032, d033, d057, d064, d070]

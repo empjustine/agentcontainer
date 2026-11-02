@@ -1,7 +1,7 @@
 ---
 id: d066
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d066 — coding-agent/run.sh stops mounting the host Hugging Face cache"
 parent: coding-agent
 depends-on: [coding-agent]

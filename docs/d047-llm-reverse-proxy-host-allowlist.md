@@ -1,7 +1,7 @@
 ---
 id: d047
-type: architecture-design
-status: implemented (superseded in currency by d108: the allowlist relay is deprecated as insecure, and estige is to stop exposing it)
+type: module-design
+status: deprecated
 title: "d047 — llm-reverse-proxy v2: route by host allowlist, not provider slug"
 parent: architecture
 depends-on: [estige, lib, coding-agent, d038]
@@ -11,9 +11,12 @@ tags: ["serving", "proxy", "routing", "host-allowlist"]
 
 # d047 — llm-reverse-proxy v2: route by host allowlist, not provider slug
 
-**Status:** implemented (main.go host mode + the `allowHosts` table in
-`generate.mjs` + host-form `peerProviderUrl` in coding-agent/peer-probe.mjs
-+ the v2 smoke section — 46 checks green)
+## Status
+
+Implemented (main.go host mode + the `allowHosts` table in `generate.mjs` +
+host-form `peerProviderUrl` in coding-agent/peer-probe.mjs + the v2 smoke
+section — 46 checks green). **Superseded in currency by d108**: the allowlist
+relay is deprecated as insecure, and estige is to stop exposing it.
 
 ## Problem
 

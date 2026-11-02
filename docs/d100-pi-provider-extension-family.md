@@ -1,7 +1,7 @@
 ---
 id: d100
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d100 — the pi provider extension family: every important provider as a pi package, forward-proxy only, provenance documented"
 parent: coding-agent
 depends-on: [d064, d090, d096, d097]

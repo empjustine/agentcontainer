@@ -1,15 +1,21 @@
 ---
 id: d110
-type: decision
-status: accepted (implementing change landed — the binary reads `PORT`; the `listen` field, `-listen` argv and `LISTEN`/`HOST_PORT` launcher variables are removed)
+type: module-design
+status: active
 title: "d110 — a single-port bind has exactly one knob: env PORT; the listen spellings (config field, argv, launcher env) are removed"
 parent: estige
-depends-on: [d073, d088, d090, d104, d108]
+depends-on: [d073, d088, d090b, d104, d108]
 references: [d095]
 tags: ["estige", "runtime", "config", "ports", "12-factor", "cli"]
 ---
 
 # d110 — a single-port bind has one knob: env PORT
+
+## Status
+
+Accepted — the implementing change landed: the binary reads `PORT`, and the
+`listen` field, the `-listen` argv and the `LISTEN`/`HOST_PORT` launcher
+variables are removed.
 
 ## Problem
 
@@ -38,7 +44,7 @@ spelling of that bind is removed:
 
 `PORT` is deliberately unprefixed: the convention's entire value is that
 coordinators already speak it; a `VPN_`-prefixed shadow would defeat the
-interop and re-create a second spelling (d090's law, generalized: one fact, one
+interop and re-create a second spelling (d090b's law, generalized: one fact, one
 spelling — here the spelling is the standard env).
 
 A tool binding several ports is exempt — today the relay, one listener per proxy
@@ -67,7 +73,7 @@ single-port binds precisely so that `PORT` stays meaningful.
 
 - **Keep `listen` in the config and let `PORT` override the port part** — two
   spellings that can drift, plus precedence rules to document and test: the
-  exact disease d090 names for the env surface.
+  exact disease d090b names for the env surface.
 - **A prefixed name (`VPN_EXIT_PORT`)** — no coordinator speaks it; the
   interop is the point.
 - **`PORT` for the relay too** — nonsense at two listeners; the scope rule

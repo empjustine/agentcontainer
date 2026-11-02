@@ -1,7 +1,7 @@
 ---
 id: d102
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "All-golang estige tooling: Go generator, JSON fact table, subcommand dispatch"
 parent: estige
 depends-on: [d023, d024, d038, d039, d041, d047, d050, d058, d070, d101]

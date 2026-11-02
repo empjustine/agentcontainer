@@ -1,15 +1,19 @@
 ---
 id: d104
-type: decision
-status: accepted (decision record only — the implementing change is pending)
+type: module-design
+status: active
 title: "d104 — mutual exit↔relay credential: time-windowed Ed25519 proofs with named principal keys replace the tunnel bearer"
-parent: llm-reverse-proxy
-depends-on: [d073, d078, d084, d085, d088, d090]
+parent: estige
+depends-on: [d073, d078, d084, d085, d088, d090b]
 references: [d071, d077, d080, d091, d095]
 tags: ["serving", "proxy", "vpn", "auth", "ed25519", "secrets", "tunnel", "tunnel-auth"]
 ---
 
 # d104 — mutual exit↔relay credential
+
+## Status
+
+Accepted — decision record only; the implementing change is pending.
 
 ## Problem
 
@@ -214,7 +218,7 @@ constant cost:
   basename is the principal name — on the wire, in the signed-message
   inputs, and in peers' admitted lists: one identity spelling, from disk
   to wire. Zero or two-plus files refuse loudly. A dual-role host
-  (d090's shared-env case) simply has one file in each role directory,
+  (d090b's shared-env case) simply has one file in each role directory,
   and each role process reads its own. A `VPN_PRINCIPAL`-style selector
   is rejected as a second spelling of the same fact.
 - **Private keys: PKCS#8 Ed25519, DER only.** PEM-format private keys are
@@ -331,7 +335,7 @@ constant cost:
 - **The env surface shrinks to nothing secret.** `VPN_TUNNEL_URL` moves
   to `relay.json`; the bearer-era `VPN_OPERATOR_*` spellings retire;
   no `VPN_PRINCIPAL` ever exists; the four-env cardinality law never
-  lands. d090's one-spelling-per-fact is satisfied **structurally** —
+  lands. d090b's one-spelling-per-fact is satisfied **structurally** —
   role = directory, identity = filename, pairing = one line — instead of
   by naming discipline, and env keeps only non-secret runtime knobs.
 - **Fail-closed, all of it**: a role helper present but unparseable;
@@ -460,7 +464,7 @@ implemented yet.
   `~/.local/share/estige/` is the one secret surface, and env carries
   only non-secret runtime knobs. The chain step no longer transports key
   material — it validates the store (`estige key check`) before exec.
-- **d090 (applied, then satisfied structurally)** — one spelling per fact:
+- **d090b (applied, then satisfied structurally)** — one spelling per fact:
   role = directory, identity = filename, pairing = one JSON object. The
   bearer-era spellings (`VPN_OPERATOR_TOKEN`, `VPN_OPERATOR_KEYS`,
   `VPN_TUNNEL_URL`) retire with the implementing change; the four-env

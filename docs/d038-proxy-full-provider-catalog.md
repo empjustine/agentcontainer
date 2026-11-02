@@ -1,7 +1,7 @@
 ---
 id: d038
 type: architecture-design
-status: implemented
+status: active
 title: "d038 — llm-reverse-proxy routes the full three-source provider catalog"
 parent: architecture
 references:

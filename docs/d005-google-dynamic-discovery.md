@@ -1,6 +1,7 @@
 ---
 id: d005
 type: module-design
+status: active
 title: "d005 — Google model discovery approach"
 parent: coding-agent
 ---

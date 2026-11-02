@@ -1,7 +1,7 @@
 ---
 id: d058
-type: architecture-design
-status: implemented · verifier + env-seed clauses superseded by d060
+type: module-design
+status: active
 title: "d058 — retire simulation modes: writes are atomic swaps, review is git diff"
 parent: architecture
 depends-on: [d041, d042, d050]
@@ -10,6 +10,10 @@ tags: [generators, build, git-tooling, dx]
 ---
 
 # d058 — Retire simulation modes (dry-run / plan flags)
+
+## Status
+
+Verifier + env-seed clauses superseded by d060.
 
 **Status:** implemented · superseded in part by **d060** — the two "reality
 verifiers" it kept (`model-sizes --check`, `migrate --verify`) and the env-seeded

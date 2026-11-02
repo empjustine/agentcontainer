@@ -1,7 +1,7 @@
 ---
 id: d053
-type: task-spec
-status: active · DRY_RUN preview retired by d058
+type: module-design
+status: active
 title: "d053 — model footprint data + cheapest-first `lib/llamacpp-model-data.json`"
 parent: llm-local-inference
 depends-on: [llm-local-inference, lib]
@@ -10,6 +10,10 @@ tags: [gguf, manifest, ordering, determinism, footprint, size]
 ---
 
 # d053 — model footprint data + cheapest-first `lib/llamacpp-model-data.json`
+
+## Status
+
+DRY_RUN preview retired by d058.
 
 **Status: active (landed).** `llm-local-inference/model-sizes.mjs` (shim
 `model-sizes.sh`) derives each entry's footprint and orders

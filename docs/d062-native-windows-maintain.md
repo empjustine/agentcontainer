@@ -1,7 +1,7 @@
 ---
 id: d062
-type: decision
-status: implemented
+type: architecture-design
+status: active
 title: "d062 — native Windows mirror maintenance: git/maintain.ps1 + a Windows-portable maintain-mirrors.mjs"
 parent: d044
 depends-on: [d041, d044]

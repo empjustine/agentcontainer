@@ -1,6 +1,7 @@
 ---
 id: d009
 type: module-design
+status: active
 title: "d009 — custom auth schemes & model ID prefix stripping"
 parent: coding-agent
 ---

@@ -1,7 +1,7 @@
 ---
 id: mini-swe-agent
-type: research
-status: findings
+type: architecture-design
+status: done
 parent: architecture
 tags: ["research", "findings", "archive"]
 ---

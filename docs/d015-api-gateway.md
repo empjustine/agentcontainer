@@ -1,7 +1,7 @@
 ---
 id: d015
 type: architecture-design
-status: implemented
+status: active
 title: "API gateway"
 parent: goal
 tags: ["api-gateway", "proxy"]

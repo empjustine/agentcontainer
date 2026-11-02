@@ -1,7 +1,7 @@
 ---
 id: d076
-type: decision
-status: implemented
+type: architecture-design
+status: active
 title: "d076 — maintain schedules by host and paces per host"
 parent: architecture
 depends-on: [d044, d060]

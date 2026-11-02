@@ -1,7 +1,7 @@
 ---
 id: d048
-type: architecture-design
-status: implemented
+type: module-design
+status: active
 title: "d048 — opencode-go's mixed api surface: per-model api overrides from the published endpoints table"
 parent: coding-agent
 depends-on: [coding-agent, lib]

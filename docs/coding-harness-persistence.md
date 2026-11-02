@@ -1,6 +1,6 @@
 ---
 id: coding-harness-persistence
-type: reference
+type: module-design
 status: draft
 title: "Coding-harness persistence table — host-side state dirs per harness"
 parent: coding-agent

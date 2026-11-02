@@ -1,7 +1,7 @@
 ---
 
 id: d098
-type: decision
+type: module-design
 status: draft
 title: "d098 — hiding models from a builtin pi provider: the filterModels seam, and what the shadow costs"
 parent: coding-agent

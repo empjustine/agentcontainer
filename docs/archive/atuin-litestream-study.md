@@ -1,7 +1,7 @@
 ---
 id: atuin-litestream-study
-type: research
-status: current
+type: architecture-design
+status: done
 title: "Study: benbjohnson/litestream backup + best-effort sync for atuinsh/atuin (incl. OCI MySQL / Oracle 19c verdict)"
 parent: architecture
 tags: ["atuin", "litestream", "sqlite", "backup", "sync", "oci"]

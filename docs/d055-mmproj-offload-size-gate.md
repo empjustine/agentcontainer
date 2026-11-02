@@ -1,7 +1,7 @@
 ---
 id: d055
-type: design
-status: implemented
+type: module-design
+status: active
 title: "d055 — suppress the GPU-projector (`2mmproj`) mode above 14 GB"
 parent: llm-local-inference
 depends-on: [llm-local-inference]

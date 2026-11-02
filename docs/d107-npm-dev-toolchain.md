@@ -1,9 +1,9 @@
 ---
 id: d107
-type: decision
-status: implemented
+type: architecture-design
+status: active
 title: "d107 — the JS dev toolchain is npm devDependencies, locked by package-lock.json"
-parent: goal
+parent: architecture
 depends-on: [d041, d051]
 references: [d072]
 tags: ["tooling", "termux", "npm", "biome", "typescript", "knip", "lockfile"]

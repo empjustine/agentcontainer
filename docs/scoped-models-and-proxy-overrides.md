@@ -1,6 +1,6 @@
 ---
 id: scoped-models-and-proxy-overrides
-type: design
+type: module-design
 status: draft
 title: "Scoped models and proxy overrides — the distilled rationale"
 parent: coding-agent

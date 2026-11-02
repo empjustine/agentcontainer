@@ -1,7 +1,7 @@
 ---
 id: d103
-type: architecture-design
-status: accepted
+type: module-design
+status: active
 title: "d103 — the relay may parse cleartext HTTP/WS: byte visibility is the invariant, not the blind-pump shape"
 parent: d073
 depends-on: [d073, d080, d094, d095]

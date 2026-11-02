@@ -1,6 +1,6 @@
 ---
 id: git-non-bare-issues
-type: reference
+type: module-design
 status: active
 title: "Non-bare reference clones: costs, migration, and pickaxe-fast mirrors"
 parent: architecture

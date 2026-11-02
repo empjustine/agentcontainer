@@ -1,7 +1,7 @@
 ---
 id: estige
-type: reference
-status: stable
+type: module-design
+status: active
 title: "estige — SSL-VPN tunnel transports (exit node + relay node)"
 parent: architecture
 tags: ["serving", "proxy", "go"]

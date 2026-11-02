@@ -1,6 +1,7 @@
 ---
 id: d018
 type: module-design
+status: active
 title: "d018 — split llama-swap config (config.d/) per functionality"
 parent: llm-local-inference
 ---

@@ -1,6 +1,7 @@
 ---
 id: d013
 type: module-design
+status: active
 title: 'd013 — removed non-working "free" providers'
 parent: coding-agent
 ---

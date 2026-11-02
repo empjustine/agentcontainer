@@ -1,10 +1,9 @@
 ---
 id: model-architecture-findings
-type: research
-status: findings
+type: module-design
+status: done
 parent: architecture
 tags: ["research", "findings", "archive"]
----
 
 # Model Architecture Findings
 

@@ -1,6 +1,6 @@
 ---
 id: d079
-type: architecture-design
+type: module-design
 status: draft
 title: "d079 — generator inputs: proxy-first harness transport, git-sourced catalogs"
 parent: coding-agent

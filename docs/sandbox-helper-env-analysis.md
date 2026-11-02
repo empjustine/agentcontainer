@@ -1,7 +1,7 @@
 ---
 id: sandbox-helper-env-analysis
-type: research
-status: superseded
+type: architecture-design
+status: deprecated
 title: "Sandbox helper — environment analysis (PRoot era)"
 parent: architecture
 tags: ["research", "superseded", "sandbox"]

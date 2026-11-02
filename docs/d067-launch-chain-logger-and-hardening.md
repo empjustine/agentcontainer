@@ -1,7 +1,7 @@
 ---
 id: d067
-type: architecture-design
-status: implemented
+type: module-design
+status: active
 title: "d067 — coding-agent/run.sh: self-contained launch chain (no logger mount), hardening deliberately off"
 parent: coding-agent
 depends-on: [coding-agent]

@@ -1,7 +1,7 @@
 ---
 id: refresh-local-llm-manifest
-type: reference
-status: stable
+type: module-design
+status: active
 title: "Refreshing the local-llm manifest — runbook"
 parent: local-llm
 tags: ["reference", "runbook", "manifest"]

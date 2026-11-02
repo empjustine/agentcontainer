@@ -1,7 +1,7 @@
 ---
 id: d022
-type: architecture-design
-status: implemented
+type: module-design
+status: active
 title: "ClinePass peer-routing fix & localhost peer simplification"
 parent: goal
 tags: ["peer-routing", "generators", "simplification"]

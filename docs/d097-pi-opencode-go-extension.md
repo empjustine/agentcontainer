@@ -1,7 +1,7 @@
 ---
 id: d097
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d097 — the pi-opencode-go extension: for a provider pi builds in, the extension is a catalog freshness watchdog, not a catalog"
 parent: coding-agent
 depends-on: [d048, d070, d074, d096]

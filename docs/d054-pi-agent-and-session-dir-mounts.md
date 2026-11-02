@@ -1,6 +1,6 @@
 ---
 id: d054
-type: architecture-design
+type: module-design
 status: active
 title: "d054 — pi mounts its real agent dir, stages a per-run session dir (PI_CODING_AGENT_DIR / PI_CODING_AGENT_SESSION_DIR)"
 parent: coding-agent

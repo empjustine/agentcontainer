@@ -1,14 +1,17 @@
 ---
 id: d030
-type: architecture-design
-status: proposed
+type: module-design
+status: draft
 title: "d030 — coding-agent flow: complexity audit and simplification options"
 parent: architecture
+references: [d023, d024, d027, d029]
 ---
 
 # d030 — coding-agent flow: complexity audit and simplification options
 
-status: proposed (nothing decided) · relates-to: d023, d024, d027, d029
+## Status
+
+Proposed; options 4 and 5 shipped and option 3 was reverted — see below.
 
 ## Implementation status (2026-09)
 

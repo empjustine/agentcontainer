@@ -88,6 +88,22 @@ log's curated-history rule, d072). When extending a numbered record, add
 named headings and named references; do not add new `§` anywhere.
 `docs/d042-documentation-taxonomy.md` carries the full constraint.
 
+## Doc frontmatter: the spec-graph standard
+
+Every markdown file here whose frontmatter carries `id` + `type` is a node in
+the spec graph, and its shape is fixed by **`docs/spec-graph-standard.md`**:
+five types (`goal-and-requirements`, `architecture-design`, `module-design`,
+`submodule-design`, `task-spec`), five statuses (`draft`, `active`, `stale`,
+`done`, `deprecated`), ids as link targets, and a qualifier in a body
+`## Status` section rather than inside the status value.
+
+That file is the repository-owned copy of the contract on purpose: an agent
+without the ThinkRail tooling or its workflow skills must still be able to
+keep the graph valid, so read it before adding, retyping, or retitling a doc,
+and run its four checks when a docs change touches more than one file. The
+tooling (and d104, the record that adopted the standard) is the faster path
+when it is available; it is not a prerequisite.
+
 ## Other repo invariants
 
 - **`lib/` is shared infrastructure**, owned by the repo and never copied

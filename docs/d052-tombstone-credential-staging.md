@@ -1,6 +1,6 @@
 ---
 id: d052
-type: architecture-design
+type: module-design
 status: active
 title: "d052 — tombstone: no staged credentials file (auth.json retired)"
 parent: coding-agent

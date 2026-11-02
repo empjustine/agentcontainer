@@ -1,7 +1,7 @@
 ---
 id: d101
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d101 — rename the proxy unit llm-reverse-proxy → estige (the name of what v3 became)"
 parent: estige
 depends-on: [d071, d073, d077, d088]

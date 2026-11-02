@@ -1,6 +1,6 @@
 ---
 id: blackboard-and-context-management-prior-art
-type: reference
+type: architecture-design
 status: draft
 title: "Blackboard systems and LLM task/context management prior art — reference farm survey"
 parent: architecture

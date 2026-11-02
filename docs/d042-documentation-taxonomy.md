@@ -1,13 +1,26 @@
 ---
 id: d042
-type: decision
-status: implemented
+type: architecture-design
+status: active
 title: "d042 — documentation taxonomy: requirements / reference / design, plus the decision log"
 parent: architecture
 tags: ["docs", "taxonomy", "brd", "srd", "tdd"]
+references: [d111]
 ---
 
 # d042 — documentation taxonomy (BRD / systems reference / TDD)
+
+## Status
+
+The `type:` half of this taxonomy is **retired** (d111): every living document
+now carries one of the five ThinkRail spec-graph types
+(`goal-and-requirements`, `architecture-design`, `module-design`,
+`submodule-design`, `task-spec`), and lifecycle is a separate `status:` field
+(`draft`/`active`/`stale`/`done`/`deprecated`). The taxonomy table below is
+kept as history — it records the vocabulary this tree used before d111, and
+how each kind of writing maps onto the standard types. Still binding: the
+**anchor constraint**, the **numbering constraint**, and the habit of one
+document per purpose.
 
 ## Motivation
 
@@ -26,10 +39,10 @@ are implementation notes frozen at the moment they were written:
 - one-time research/audit findings and self-archived operational docs sat
   beside live ones with only prose banners to tell them apart.
 
-## The taxonomy
+## The taxonomy (retired by d111)
 
-Every document carries exactly one of these `type:` values (frontmatter), and
-the README documentation index is grouped by them:
+Every document carried exactly one of these `type:` values (frontmatter), and
+the README documentation index was grouped by them:
 
 | type | role | contents |
 |------|------|----------|
@@ -37,7 +50,15 @@ the README documentation index is grouped by them:
 | `reference` | the systems reference — structure, components, matrices, runbooks, as the system IS | `docs/architecture.md` (the map), `container-tooling.md`, `environments-and-variants.md`, `coding-harness-persistence.md`, `hf-cache-upkeep.md`, `refresh-local-llm-manifest.md`, `gguf-vram-fit-estimates.md`, `gguf-model-tooling.md`, per-folder `README.md` |
 | `design` | TDD — implementation rationale and mechanics not graspable from source at a glance | per-module `DESIGN.md` (renamed from `SPEC.md`), `llm-reverse-proxy/DESIGN.md` (split out of its README), `scoped-models-and-proxy-overrides.md` (the distilled rationale for scoped models + baseUrl overrides), `summarized-thinking.md` |
 | `research` | one-time findings/audits — the record of an investigation, not a statement of current behavior | `docs/archive/*` + the anchored strays below |
-| `decision` | the decision log (history — kept mechanically accurate, not immutable; d072) | `docs/d0XX-*.md` (the d0XX prefix IS the marker; their per-record `type:` fields — architecture-design/bugfix/task-spec — are record flavors, not this taxonomy, and stay untouched) |
+| `decision` | the decision log (history — kept mechanically accurate, not immutable; d072) | `docs/d0XX-*.md` (the d0XX prefix IS the marker; their records now carry the standard `architecture-design` / `module-design` types plus a `bugfix` tag where the genre matters) |
+
+The rows above are the pre-d111 reading of the tree. Under the standard
+vocabulary: `requirements` → `goal-and-requirements`; `reference`, `design`
+and `research` → `architecture-design` or `module-design` depending on scope
+(system-wide vs. one runner folder), with `research` docs additionally
+`status: done`; `decision` → per-record `architecture-design`/`module-design`,
+with a `bugfix` tag where the genre matters. `docs/spec-graph-standard.md`
+states the vocabulary that binds now.
 
 ## The anchor constraint
 

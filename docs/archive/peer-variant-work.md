@@ -1,7 +1,7 @@
 ---
 id: peer-variant-work
-type: research
-status: archived
+type: module-design
+status: deprecated
 parent: architecture
 tags: ["research", "archived", "archive"]
 ---

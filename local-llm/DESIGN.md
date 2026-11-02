@@ -1,6 +1,6 @@
 ---
 id: local-llm
-type: design
+type: module-design
 status: draft
 title: local-llm — HF cache provisioning & audit tooling
 parent: architecture

@@ -1,7 +1,7 @@
 ---
 id: d056
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d056 — coding-agent/run.sh: directory mounts replace the generator tree and CODING_AGENT_REFERENCES"
 parent: d041
 depends-on: [coding-agent]

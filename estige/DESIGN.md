@@ -1,7 +1,7 @@
 ---
 id: estige-design
-type: design
-status: stable
+type: module-design
+status: active
 title: "estige — design: tunnel transports, the 404 policy, error taxonomy"
 parent: estige
 depends-on: [lib]

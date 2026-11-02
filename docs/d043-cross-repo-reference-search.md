@@ -1,13 +1,17 @@
 ---
 id: d043
-type: decision
-status: proposed · --dry-run UI retired by d058
+type: architecture-design
+status: draft
 title: "d043 — cross-repo / cross-branch reference search: Zoekt for regex, blob-addressed embeddings for semantics"
 parent: architecture
 tags: ["git", "references", "search", "zoekt", "embeddings", "tooling"]
 ---
 
 # d043 — cross-repo / cross-branch reference search
+
+## Status
+
+--dry-run UI retired by d058.
 
 Follow-up to `git/non-bare-issues.md` (the reference-farm mirror work). The
 farm is now **775 bare mirrors** under
