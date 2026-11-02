@@ -50,7 +50,7 @@ checklist, which this addition touched as follows:
    deny-by-absence; F4).
 5. **Doc sync** (F8): generator header merge-order diagram, `DESIGN.md`'s
    stage table, the proxy README's example excerpt, and the d070 committed
-   verifier's artifact list (`tests/artifact-urls.test.mjs`).
+   verifier's artifact list (`coding-agent/tests/artifact-urls.test.mjs`).
 
 Layer order: `model-019` merges after `model-018` (verboo), before the
 reserved `model-020` drop-in slot — merge order is filename-lexical and

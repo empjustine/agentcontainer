@@ -3,7 +3,7 @@ id: d069
 type: module-design
 status: active
 title: "d069 — the workload backend is detected through PATH, the way it is invoked"
-parent: lib
+parent: workload-api
 depends-on: [d059]
 references: [d056, d059, d068]
 tags: [workload, podman, docker, testing, lib]
@@ -28,12 +28,12 @@ probe, meanwhile, only ever looked at /usr/bin. Consequences:
 - a backend installed outside /usr/bin produced `no workload backend
   available` (exit 91) on a host where the launch would have worked;
 - **no test could drive a runner end-to-end.** A stubbed tool on PATH is
-  invisible to the probe, so `tests/check-run-dirs.sh` — which needs
+  invisible to the probe, so `coding-agent/tests/check-run-dirs.sh` — which needs
   `coding-agent/run.sh` to run all the way to `workload_run` to see the
   container argv — had nothing legal to hang the stub on. That gap is why
   the d068 class of bug (folders mounted at the wrong in-container path) had
   no gate: shellcheck cannot resolve `$_home`, lint.sh only compiles the
-  renderer, and `tests/check-workload.sh` renders host==guest pairs by
+  renderer, and `coding-agent/tests/check-workload.sh` renders host==guest pairs by
   construction.
 
 ## Decisions
@@ -49,7 +49,7 @@ probe, meanwhile, only ever looked at /usr/bin. Consequences:
 - Every host that satisfied the old probe still satisfies this one (/usr/bin
   is on PATH), so the change is additive: it can only find more backends.
 - Detection now picks up PATH-provided stubs, which is exactly what
-  `tests/check-run-dirs.sh` relies on — a stub is a backend as far as the
+  `coding-agent/tests/check-run-dirs.sh` relies on — a stub is a backend as far as the
   launcher is concerned, and the test proves the launcher's argv without
   touching a real container.
 - `lib/host-capabilities.mjs` still probes `/usr/bin/podman` for capability
@@ -73,6 +73,6 @@ probe, meanwhile, only ever looked at /usr/bin. Consequences:
 ## References
 
 - `lib/workload-runtime.sh` — `detect_workload_tool()`, `workload_run()`.
-- `tests/check-run-dirs.sh` — the argv gate this makes possible.
+- `coding-agent/tests/check-run-dirs.sh` — the argv gate this makes possible.
 - `docs/d059-container-only-run-sh.md` — the fail-fast exit 91 this keeps.
 - `docs/d068-home-relative-mount-targets.md` — the bug the argv gate pins.

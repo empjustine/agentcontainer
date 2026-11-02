@@ -170,7 +170,7 @@ restate what the code already knows.
 - The relay container's argv: `--detach --restart=unless-stopped
   --network=host`, the chain variable *names* forwarded (d094), the
   loopback spelling nowhere in its own chain env.
-- `tests/check-vpn-relay-chain.sh` pins all four; `tests/check-workload.sh`
+- `estige/tests/check-vpn-relay-chain.sh` pins all four; `coding-agent/tests/check-workload.sh`
   pins the `--restart` flag position.
 
 ## Not in this record

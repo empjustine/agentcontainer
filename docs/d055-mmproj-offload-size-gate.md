@@ -5,7 +5,7 @@ status: active
 title: "d055 — suppress the GPU-projector (`2mmproj`) mode above 14 GB"
 parent: llm-local-inference
 depends-on: [llm-local-inference]
-references: [d029, d053, refresh-local-llm-manifest]
+references: [d029, d053, refresh-llm-local-inference-manifest]
 tags: ["gguf", "mmproj", "multimodal", "vram", "generator"]
 ---
 

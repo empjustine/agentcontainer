@@ -16,7 +16,7 @@
 # construction and no port < 1024 is ever promised.
 #
 # Whatever runs INSIDE the guest is operator-managed environment, not part of
-# the workload API: lib/workload-runtime.sh gets NO libvirt backend (d020 §6
+# the workload API: workload-runtime.sh gets NO libvirt backend (d020 §6
 # decision 1) — this script exists so that stays true.
 #
 # Commands:
@@ -31,12 +31,12 @@
 # Env overrides: VM_NAME · CPUS · MEMORY_MIB · DISK_GIB · FEDORA_RELEASE ·
 #   SSH_PORT · GUEST_USER · SSH_KEY · SYSPAD
 #
-# Logging: lib/log.sh (docs/d045) — jsonlines, no level filtering.
+# Logging: ./log.sh (docs/d045) — jsonlines, no level filtering.
 
 set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"
-# shellcheck source=lib/log.sh
-. "${SCRIPT_DIR}/lib/log.sh"
+# shellcheck source=log.sh
+. "${SCRIPT_DIR}/log.sh"
 LOG_TOOL="vm-bench"
 
 # --- config ------------------------------------------------------------------

@@ -1,0 +1,68 @@
+---
+id: local-llm
+type: module-design
+status: draft
+title: local-llm — HF cache provisioning & audit tooling
+parent: architecture
+depends-on:
+  - lib
+references:
+  - llm-local-inference
+tags:
+  - cache
+  - hf
+  - tooling
+---
+
+> **Mostly deprecated (docs/d053).** The audit/table tooling here is
+> superseded: the footprint + cheapest-first order regeneration moved to
+> `llm-local-inference/model-sizes.mjs`, and the committed HF manifests moved
+> to `lib/hf-manifests/` (the runner-boundary rule forbids
+> `llm-local-inference/` reaching into this folder). Only cache provisioning
+> (`download_models.py`) and upkeep (`upkeep.py`) remain load-bearing; the
+> table/manifest/estimator tooling is kept for reference.
+
+## Responsibility
+
+Charter: provision and audit the HuggingFace cache tree that local GGUF
+inference serves from — download the served models, verify the `repo:quant`
+manifests against what llama.cpp actually resolves, keep the cache healthy
+(prune/verify), and regenerate the VRAM/fit estimate tables. The normative
+requirement statement lives in the BRD
+([../docs/requirements.md](../docs/requirements.md), FR-C1–FR-C3). It is
+**cache tooling, not a base generator** — nothing here is consumed by the
+runners' generation.
+
+## Shape
+
+`run-all.sh` orchestrates the pipeline in dependency order:
+
+1. `download_models.py` — provision served GGUFs into the HF cache.
+2. `fetch_hf_manifests.py` — refresh + audit repo:quant manifests (writes
+   `lib/hf-manifests/`; deprecated as a *workflow*, still the manifest writer).
+3. `upkeep.py` — cache list/pull/prune/verify.
+4. `generate_vram_fit_tables.py` — VRAM/KV/fit tables via
+   gdevenyi/huggingface-estimate → regenerates
+   `docs/gguf-vram-fit-estimates.md` (+ raw-data JSON). Its
+   `--update-model-data` reorder is **retired** (docs/d053).
+
+Plus PoC/audit helpers (`scan_cache_coverage.py`, `gguf_context_length.py`,
+`fetch-model-cards.sh`). All are `uv` PEP-723 scripts (dependencies declared
+inline, no venv) logging through `lib/log.py`. The two cache scanners share
+`local-llm/_hf_cache.py` — the sidecar filter and the cache-root order are
+facts about the HF cache, not about either scanner, and keeping two copies is
+what let them drift; operational detail lives in each script header.
+
+## Boundary
+
+- The canonical model list is the shared `lib/llamacpp-model-data.json` —
+  **content owned by `llm-local-inference/`** (its manifest-refresh workflow,
+  `docs/refresh-local-llm-manifest.md`), consumed read-only here
+  (`docs/d025-shared-model-data-to-lib.md`). local-llm must not edit it as part
+  of pipeline work (the `--update-model-data` reorder in
+  `generate_vram_fit_tables.py` is the one sanctioned write, done explicitly).
+- Copy unit = this folder + `../lib`; must not import code from sibling runner
+  folders.
+
+*(Boundary inferred from the d025 move and the code's current reads — the
+sanctioned-write rule above is the only judgment call here, unconfirmed.)*

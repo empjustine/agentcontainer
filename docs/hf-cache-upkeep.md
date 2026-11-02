@@ -3,7 +3,7 @@ id: hf-cache-upkeep
 type: module-design
 status: active
 title: "Hugging Face cache upkeep — upkeep.py runbook"
-parent: local-llm
+parent: llm-local-inference-cache
 tags: ["reference", "runbook", "hf-cache"]
 ---
 

@@ -4,7 +4,7 @@ type: module-design
 status: active
 title: "d050 — deterministic (canonical) generated artifacts: stable ordering for manifests and caches"
 parent: coding-agent
-depends-on: [coding-agent, lib]
+depends-on: [coding-agent, workload-api]
 references: [d023, d024, d033, d037, d040, d041, d048]
 tags: ["generators", "artifacts", "canonical-json", "determinism", "models.json"]
 ---
@@ -208,9 +208,9 @@ stable today; only the provider and model orders inside the merge are not.
   `serializeArtifact`: 6 reordered, `model-010` and `opencode.jsonc` were
   already canonical; per-file content-preservation (canonical-vs-canonical
   deep-equal) and idempotency were checked before each write.
-- Tests: `tests/canonical-json.test.mjs` (`node --test`) — the unit
-  test for `canonicalizeManifest` plus a **committed-manifest canonicity
-  guard** over the 8 files. The guard supersedes the golden double-run this
+- Tests: the unit test for `canonicalizeManifest` plus a **committed-manifest
+  canonicity guard** over the 8 files (`coding-agent/tests/canonical-json.test.mjs`
+  and, after docs/d104 split it, the guard at `tests/committed-manifests.test.mjs`). The guard supersedes the golden double-run this
   doc originally proposed: it needs no pinned `MODELS_DEV_JSON` and still
   fails loudly when a write path bypasses the choke point or a hand edit
   reorders a manifest.
@@ -248,8 +248,9 @@ stable today; only the provider and model orders inside the merge are not.
 - `lib/canonical-json.mjs` — the canonicalizer (rules in code).
 - `lib/artifact.mjs` — the atomic-write + `writeJsonArtifact` contract
   (d023) this extends.
-- `tests/canonical-json.test.mjs` — unit rules + committed-manifest
-  canonicity guard.
+- `coding-agent/tests/canonical-json.test.mjs` — unit rules; the
+  committed-manifest canonicity guard moved to `tests/committed-manifests.test.mjs`
+  (docs/d104: the guard spans more than one unit).
 - `tests/lib-staging.test.mjs` — staging-list drift guard (see Migration).
 - `docs/d023-generators-dedup.md`, `docs/d024-generators-split-and-provider-facts.md`
   — the generator/artifact standards.

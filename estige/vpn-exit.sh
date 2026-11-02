@@ -18,7 +18,7 @@
 # container tool: exec the native binary (estige-android on Termux; the host
 # binary as fallback).
 #
-# Secrets live ONLY in the environment chain (VPN-R32/d078): lib/environment.sh
+# Secrets live ONLY in the environment chain (VPN-R32/d078): ./environment.sh
 # owns the vault round-trip onto the host env — this script never loads secrets
 # itself. An armed exit node (docs/d084/d085) carries VPN_OPERATOR_KEYS.
 # VPN_OPERATOR_TOKEN is deliberately absent: it is the relay node's credential
@@ -31,11 +31,10 @@
 # the env chain, beside the credential.
 
 set -eu
-# Shared infra arrives through one injectable directory (docs/d082): default
-# the repo's ../lib, or point LIB_DIR at a vendored copy in a standalone
-# checkout — no other path crosses the unit boundary.
+# The workload API is this folder's own copy (docs/d104): estige carries no
+# cross-folder dependency, so a split-out checkout is complete as it stands.
 # shellcheck disable=SC1091
-. "${LIB_DIR:-$(dirname "$0")/../lib}/workload-runtime.sh"
+. "${WORKLOAD_LIB_DIR:-$(dirname "$0")/lib}/workload-runtime.sh"
 LOG_TOOL='estige/vpn-exit'
 export LOG_TOOL
 

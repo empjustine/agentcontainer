@@ -98,7 +98,8 @@ artifact rather than a leftover.
   `<id>-facts.json`).
 - `coding-agent/generate.mjs` discovers caches by that naming rule instead of
   listing them per provider.
-- `tests/canonical-json.test.mjs` guards `model-018-cloud-verboo.json` like
+- the canonicity guard (`tests/committed-manifests.test.mjs`, d104) covers
+  `model-018-cloud-verboo.json` like
   every other committed layer.
 - `refresh-models-dev.mjs`'s `REQUIRED_PROVIDERS` deliberately does NOT list
   catalog-less providers: it validates what the generators read from the

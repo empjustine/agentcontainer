@@ -30,21 +30,21 @@
  *     because the catalog needs it.
  *   - No fetch URL is ever recorded (docs/d086).
  *
- * Env: LIB_DIR (lib/ resolution override, docs/d023). Nothing else.
+ * Env: nothing (docs/d104).
  */
 
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const LIB_DIR = join(scriptDir, "lib");
 
 const { logDebug, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
+	/** @type {typeof import("./lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
 const { CLOUD_PROVIDERS } =
-	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
+	/** @type {typeof import("./lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
 

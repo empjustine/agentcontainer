@@ -60,7 +60,7 @@ LOG_TOOL='git/-vbs-mirror-all'
 # shellcheck disable=SC2034  # read by lib/log.sh at source time
 LOG_STREAM=stderr
 # shellcheck disable=SC1091  # path is relative to this script's dir
-. "$(dirname "$0")/../lib/log.sh"
+. "$(dirname "$0")/lib/log.sh"
 
 PROG=${0##*/}
 

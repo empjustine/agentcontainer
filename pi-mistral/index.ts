@@ -34,8 +34,8 @@
  *
  * The whole extension is this one file — deliberately with ZERO repo-`lib`
  * imports: a copied package must stand alone. The upstream URL is a constant
- * here, and tests/pi-mistral.test.mjs pins it against the fact table
- * (lib/cloud-providers.mjs, docs/d070) so it cannot drift.
+ * here, and tests/pi-mistral.test.mjs pins it against this folder's own
+ * fact-table row (lib/cloud-providers.mjs, docs/d070/d104) so it cannot drift.
  *
  * Network access rides the environment's forward proxy (NODE_USE_ENV_PROXY=1
  * plus the forwarded HTTP(S)_PROXY, docs/d074). Deliberately absent: OAuth

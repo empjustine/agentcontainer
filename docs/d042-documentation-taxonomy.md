@@ -47,7 +47,7 @@ the README documentation index was grouped by them:
 | type | role | contents |
 |------|------|----------|
 | `requirements` | the BRD — what the system should do, normative | `docs/requirements.md` (renamed from root `goal-and-requirements.md`, absorbs the per-module requirement statements) |
-| `reference` | the systems reference — structure, components, matrices, runbooks, as the system IS | `docs/architecture.md` (the map), `container-tooling.md`, `environments-and-variants.md`, `coding-harness-persistence.md`, `hf-cache-upkeep.md`, `refresh-local-llm-manifest.md`, `gguf-vram-fit-estimates.md`, `gguf-model-tooling.md`, per-folder `README.md` |
+| `reference` | the systems reference — structure, components, matrices, runbooks, as the system IS | `docs/architecture.md` (the map), `container-tooling.md`, `environments-and-variants.md`, `coding-harness-persistence.md`, `hf-cache-upkeep.md`, `refresh-llm-local-inference-manifest.md`, `gguf-vram-fit-estimates.md`, `gguf-model-tooling.md`, per-folder `README.md` |
 | `design` | TDD — implementation rationale and mechanics not graspable from source at a glance | per-module `DESIGN.md` (renamed from `SPEC.md`), `llm-reverse-proxy/DESIGN.md` (split out of its README), `scoped-models-and-proxy-overrides.md` (the distilled rationale for scoped models + baseUrl overrides), `summarized-thinking.md` |
 | `research` | one-time findings/audits — the record of an investigation, not a statement of current behavior | `docs/archive/*` + the anchored strays below |
 | `decision` | the decision log (history — kept mechanically accurate, not immutable; d072) | `docs/d0XX-*.md` (the d0XX prefix IS the marker; their records now carry the standard `architecture-design` / `module-design` types plus a `bugfix` tag where the genre matters) |
@@ -70,7 +70,7 @@ from d0XX bodies, so they are physically anchored at `docs/` root:
 
 `architecture.md`, `container-tooling.md`, `termux-serving.md`,
 `termux-build-audit.md`, `sandbox-helper-env-analysis.md`,
-`scoped-models-and-proxy-overrides.md`, `refresh-local-llm-manifest.md`,
+`scoped-models-and-proxy-overrides.md`, `refresh-llm-local-inference-manifest.md`,
 `coding-harness-persistence.md`.
 
 Consequence: **no `docs/reference/` or `docs/design/` subdirectory.** Moving
@@ -176,5 +176,5 @@ replaced. d042's taxonomy now covers every module.
   are referenced by NO living doc; the deferred `coding-agent/SPEC.md` →
   `DESIGN.md` split executed (Shape rewritten to the two-generator structure,
   d037-supersession noted); README layout rows + the doc-index row for
-  `merge-models-json.mjs` replaced; `docs/refresh-local-llm-manifest.md`
+  `merge-models-json.mjs` replaced; `docs/refresh-llm-local-inference-manifest.md`
   pointer updated to `generate-pi-coding-agent.mjs`.

@@ -32,7 +32,7 @@
  *   --check verifies the committed artifacts match a fresh generation and
  *   exits non-zero on drift (the CI-shaped form; without it the run writes).
  *
- * Env: LIB_DIR (docs/d023) and CLINE_PASS_MDX (a plain local copy of Cline's
+ * Env: CLINE_PASS_MDX (a plain local copy of Cline's
  * docs file — see sources.mjs). Network rides the environment's forward
  * proxy (NODE_USE_ENV_PROXY=1, docs/d074); no vault, no relay ladder.
  */
@@ -57,14 +57,14 @@ import {
 } from "./sources.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const LIB_DIR = join(scriptDir, "lib");
 
 const { logInfo, logError, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
+	/** @type {typeof import("./lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
 const { writeArtifact, writeJsonArtifact } =
-	/** @type {typeof import("../lib/artifact.mjs")} */ (
+	/** @type {typeof import("./lib/artifact.mjs")} */ (
 		await import(`${LIB_DIR}/artifact.mjs`)
 	);
 

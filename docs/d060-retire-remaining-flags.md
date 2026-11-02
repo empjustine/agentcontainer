@@ -169,7 +169,7 @@ written as part of this pass and backed out. Reasons:
 | `git/-vbs-mirror-all.sh` | env-init split into policy constants (hard) and host state, then host state moved to flags too (`--dest`, `--transport`, `--ssh-user`, `--http-user`); manifest/base/org resolution simplified; usage rewritten; extractor override dropped; trailing newline added so `shfmt -d` is clean |
 | `git/vbs-har.mjs`, `docs/d044` | the two places that named `VBS_SSH_USER`/`VBS_HTTP_USER` now name the flags |
 | `lib/log.mjs`, `lib/log.sh`, `lib/log.py` | no gate: policy paragraphs now say filtering is the reader's job and name the `jq` selection (d045 reaffirmed) |
-| Docs | usage surfaces updated in `git/non-bare-issues.md`, `docs/d053`, `docs/d044`, `docs/refresh-local-llm-manifest.md`, `coding-agent/DESIGN.md`, README rows |
+| Docs | usage surfaces updated in `git/non-bare-issues.md`, `docs/d053`, `docs/d044`, `docs/refresh-llm-local-inference-manifest.md`, `coding-agent/DESIGN.md`, README rows |
 | Records | status-line forward pointer added to **d058** (verifier + env-seed clauses); **d045** untouched and reaffirmed |
 
 ## Superseded mentions

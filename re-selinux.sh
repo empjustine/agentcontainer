@@ -5,7 +5,7 @@
 # container_file_t.  No-op (silently skipped) on non-SELinux systems.
 
 # shellcheck disable=SC1091
-. "$(dirname "$0")/lib/log.sh"
+. "$(dirname "$0")/log.sh"
 LOG_TOOL='re-selinux'
 export LOG_TOOL
 

@@ -1,0 +1,9 @@
+[
+	{
+		"id": "cline-pass",
+		"label": "ClinePass",
+		"apiKeyEnv": "CLINE_API_KEY",
+		"baseUrl": "https://api.cline.bot/api/v1",
+		"support": "first-class"
+	}
+]

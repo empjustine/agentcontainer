@@ -110,7 +110,7 @@ Consequences the tooling must respect:
 
 All three are standalone: the copy unit is `git/` + `../lib`
 (`docs/architecture.md`), they use the shared logger, and the `.sh` shims run
-the repo-pinned node via `../lib/node-run.sh`.
+the repo-pinned node via `lib/node-run.sh`.
 
 ### `./git/audit.sh` — report anomalies
 

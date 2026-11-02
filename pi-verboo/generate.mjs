@@ -25,7 +25,7 @@
  *   exits non-zero on drift (the CI-shaped form; without it the run writes).
  *   Both forms need VERBOO_API_KEY — the listing is auth-gated.
  *
- * Env: LIB_DIR (docs/d023) and VERBOO_API_KEY (the listing bearer). Nothing
+ * Env: VERBOO_API_KEY (the listing bearer). Nothing
  * else — no relay base, no catalog path.
  */
 
@@ -42,14 +42,14 @@ import {
 } from "./sources.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const LIB_DIR = join(scriptDir, "lib");
 
 const { logInfo, logError, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
+	/** @type {typeof import("./lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
 const { writeArtifact, writeJsonArtifact } =
-	/** @type {typeof import("../lib/artifact.mjs")} */ (
+	/** @type {typeof import("./lib/artifact.mjs")} */ (
 		await import(`${LIB_DIR}/artifact.mjs`)
 	);
 

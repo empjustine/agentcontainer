@@ -3,7 +3,7 @@ id: gguf-vram-fit-estimates
 type: module-design
 status: active
 title: "GGUF VRAM fit + performance estimates — generated tables"
-parent: local-llm
+parent: llm-local-inference-cache
 tags: ["reference", "tables", "vram"]
 ---
 

@@ -106,12 +106,14 @@ when it is available; it is not a prerequisite.
 
 ## Other repo invariants
 
-- **`lib/` is shared infrastructure**, owned by the repo and never copied
-  into a runner folder. Data reads out of `lib/` are allowed; reaching into a
-  sibling runner is not (`docs/architecture.md`).
-- **Environment/secrets are an explicit chain step**: `./lib/environment.sh
-  <script>` does the one vault round-trip, then `exec`s the target. Consumers
-  read plain env and never load secrets (`lib/environment.sh`).
+- **A folder is a copy unit** (docs/d104): each unit carries its own pruned
+  `lib/` copy of the shared kernels it uses, so it can be copied out whole.
+  Reaching into a sibling unit is not allowed (`docs/architecture.md`); only
+  `tests/` (the repo-wide harness) reads across units.
+- **Environment/secrets are an explicit chain step**: the repo-root
+  `./environment.sh <script>` does the one vault round-trip, then `exec`s the
+  target. Consumers read plain env and never load secrets; there is exactly
+  one loader and no unit owns it (`./environment.sh`).
 - `README.md`'s folder layout is an orientation map, not an exhaustive
   manifest: keep folder-level rows honest when folders are added, moved, or
   retired, but do not chase file-level churn (agents can `ls`/`find`/`rg`).

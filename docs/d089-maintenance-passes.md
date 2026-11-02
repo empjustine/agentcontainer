@@ -105,7 +105,7 @@ the reader can see what a sweep chose (`jq` pruning is the d045 contract).
 
 ## Verification
 
-`tests/git-deep-optimize.test.mjs` builds a throwaway farm and runs the real
+`git/tests/git-deep-optimize.test.mjs` builds a throwaway farm and runs the real
 program with a `git` wrapper on `PATH` that records argv before exec'ing the
 real git. Asserted: the default sweep never spawns `gc`; `--deep-optimize`
 produces, per mirror, `gc --aggressive` followed by

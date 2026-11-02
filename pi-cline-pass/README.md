@@ -1,7 +1,7 @@
 # pi-cline-pass — the ClinePass provider as a pi package
 
 Registers the **ClinePass** gateway (`https://api.cline.bot/api/v1`, the fact
-table's canonical upstream — `../lib/cloud-providers.mjs`) with
+table's canonical upstream — `lib/cloud-providers.mjs`) with
 [pi](https://github.com/earendil-works/pi), seeded from committed artifacts
 and reconcilable at refresh time against the same two published sources the
 generator uses (docs/d040 owns the lineup contract).
@@ -132,7 +132,7 @@ here so nobody debugs it as one.
 ## Tests
 
 ```sh
-sh -c '. ../lib/node-run.sh && node_run --test ../tests/pi-cline-pass.test.mjs'
+sh -c '. lib/node-run.sh && node_run --test tests/pi-cline-pass.test.mjs'
 ```
 
 Network-free (injected fetch, `CLINE_PASS_MDX` for the docs file) and

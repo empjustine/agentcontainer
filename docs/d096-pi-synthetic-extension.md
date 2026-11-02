@@ -199,7 +199,7 @@ exists to prevent.
 
 ## Verification
 
-- `node --test tests/pi-synthetic.test.mjs` — 19 tests over the shaping rules
+- `node --test pi-synthetic/tests/pi-synthetic.test.mjs` — 19 tests over the shaping rules
   (modality gate, cost rule, thinking maps, canonical order, alias-name
   round-trip, the alias map, price parsing), the source (`fetchListing` against
   an injected fetch, the id-family filter, the throw-on-failure rule, the tier

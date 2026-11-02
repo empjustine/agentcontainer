@@ -1,0 +1,91 @@
+[
+	{
+		"id": "openrouter",
+		"label": "OpenRouter",
+		"apiKeyEnv": "OPENROUTER_API_KEY",
+		"baseUrl": "https://openrouter.ai/api/v1",
+		"support": "best-effort"
+	},
+	{
+		"id": "opencode",
+		"label": "OpenCode Zen",
+		"apiKeyEnv": "OPENCODE_API_KEY",
+		"baseUrl": "https://opencode.ai/zen/v1",
+		"support": "superficial"
+	},
+	{
+		"id": "opencode-go",
+		"label": "OpenCode Go",
+		"apiKeyEnv": "OPENCODE_API_KEY",
+		"baseUrl": "https://opencode.ai/zen/go/v1",
+		"support": "first-class"
+	},
+	{
+		"id": "cline-pass",
+		"label": "ClinePass",
+		"apiKeyEnv": "CLINE_API_KEY",
+		"baseUrl": "https://api.cline.bot/api/v1",
+		"support": "first-class"
+	},
+	{
+		"id": "hyper",
+		"label": "Charm Hyper",
+		"apiKeyEnv": "HYPER_API_KEY",
+		"baseUrl": "https://hyper.charm.land/v1",
+		"support": "first-class"
+	},
+	{
+		"id": "inferx",
+		"label": "InferX",
+		"apiKeyEnv": "INFERX_API_KEY",
+		"baseUrl": "https://model.inferx.net/endpoints/v1",
+		"support": "best-effort"
+	},
+	{
+		"id": "verboo",
+		"label": "Verboo",
+		"apiKeyEnv": "VERBOO_API_KEY",
+		"baseUrl": "https://code.verboo.ai/router/v1",
+		"support": "first-class",
+		"note": "The FULL real base, path suffix included (docs/d027): the upstream serves its OpenAI surface under /router/v1, and the client route carries that path client-side (providerRouteUrl, docs/d047) — the allowlist row itself is the host root only. Also the ONE fact-table provider with no models.dev catalog row at all, and catwalk does not carry it either — the vendored catalog is replaced wholesale on every refresh, so a hand-added row would be transient (docs/d032 F1). Its lineup therefore comes from coding-agent/catalog-facts.mjs's cache of the provider's own `<base>/models` listing, which also makes this row the one whose baseUrl — not a catalog `api` — is the facts endpoint (catalogOptional, docs/d057)."
+	},
+	{
+		"id": "synthetic",
+		"label": "Synthetic",
+		"apiKeyEnv": "SYNTHETIC_API_KEY",
+		"baseUrl": "https://api.synthetic.new/openai/v1",
+		"support": "first-class",
+		"note": "The FULL real base, path suffix included (docs/d027): the upstream serves its OpenAI surface under /openai/v1 and both catalogs (models.dev `api`, catwalk `api_endpoint`) agree with it, so no drift whitelist (docs/d032 F3) applies. Unlike verboo, BOTH catalogs carry this provider (models.dev with the full per-model records, catwalk with live prices), so the lineup rides the standard catalog cascade — no catalogOptional facts-cache needed (docs/d057). First-class: its hf:-prefixed lineup is the fleet's main non-subscription reasoning source."
+	},
+	{
+		"id": "mistral",
+		"label": "Mistral",
+		"apiKeyEnv": "MISTRAL_API_KEY",
+		"baseUrl": "https://api.mistral.ai/v1",
+		"support": "best-effort"
+	},
+	{
+		"id": "google",
+		"label": "Google Gemini",
+		"apiKeyEnv": "GEMINI_API_KEY",
+		"baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+		"support": "best-effort",
+		"note": "The catalog lists GOOGLE_API_KEY / GOOGLE_GENERATIVE_AI_API_KEY / GEMINI_API_KEY; GEMINI_API_KEY is the name coding-agent/run.sh forwards into the container (and what ./environment.sh exports). pi's native google provider appends `models/<id>:generateContent` and friends directly under /v1beta — this is the FULL base, so the client route `<base>/google` carries the native generative-ai wire format byte-for-byte (impossible through llama-swap's openai-completions-only routing — docs/d027). NOTE: /v1beta/models itself authenticates via an api-key parameter, not the bearer the generator's probe sends, so google is a catalogOnly row — the models.dev slice is its lineup source, no probes (docs/d033)."
+	},
+	{
+		"id": "nvidia",
+		"label": "NVIDIA NIM",
+		"apiKeyEnv": "NVIDIA_API_KEY",
+		"baseUrl": "https://integrate.api.nvidia.com/v1",
+		"support": "superficial",
+		"note": "build.nvidia.com cloud NIM endpoint — OpenAI-compatible, no local hardware involved (docs/d028). pi ships it natively (packages/ai/src/providers/nvidia.ts: openai-completions, NVIDIA_API_KEY, NVCF-POLL-SECONDS header). Note: NIM's GET /v1/models is a stale bare listing (EOL models included, zero capability flags) — model metadata comes from models.dev + pi's generated compat table, never from the API's listing."
+	},
+	{
+		"id": "llama-swap",
+		"label": "Local LLM",
+		"apiKeyEnv": "REVERSE_PROXY_API_KEY",
+		"baseUrl": "https://bazzite.coelacanth-barb.ts.net",
+		"support": "first-class",
+		"note": "The LOCAL GGUF farm — first-class (docs/d064), and since d070 a fact-table row LIKE ANY OTHER: its upstream is the llama-swap host's tsnet-only `tailscale serve` hostname, ROOTED at the hostname itself (no path prefix — the serve endpoint maps the host root onto llama-swap's LAN :8101), so the v2 host-form route, the allowlist row and the canonical artifact URL all derive the same way as for cloud providers — no loopback or logical-name exception anywhere (docs/d070 §2, precondition: that serve endpoint must exist in the same change that regenerates the local layer; the hostname resolves only for tailnet machines — tsnet-only, same visibility class as the funnel). The client-facing bearer is llama-swap's own REVERSE_PROXY_API_KEY (renamed from PEER_API_KEY, docs/d071 §2) — cloud path-routes never use it."
+	}
+]

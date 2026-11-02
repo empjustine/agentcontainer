@@ -21,7 +21,7 @@
 
 set -eu
 # shellcheck disable=SC1091
-. "$(dirname "$0")/../lib/workload-runtime.sh"
+. "$(dirname "$0")/lib/workload-runtime.sh"
 LOG_TOOL='llm-local-inference/run'
 export LOG_TOOL
 
@@ -36,17 +36,17 @@ HOST_PORT="${HOST_PORT:-8101}"
 	log_die 94 "no local-inference layer in config.d — this host cannot serve local inference (run ./generate.sh on a GPU-capable container host)" dir="$config_d"
 
 # Secrets: arrive as plain environment — loaded by the explicit chain
-# (./lib/environment.sh ./run.sh, the ONE infisical round-trip) and forwarded
+# (./environment.sh ./run.sh, the ONE infisical round-trip) and forwarded
 # through the workload_env allowlist below. REVERSE_PROXY_API_KEY is llama-swap's
 # inbound bearer key (00-general.yaml apiKeys) — the key clients present, not
 # a provider key. HF_TOKEN is deliberately NOT forwarded: model paths are
 # baked into the generated config at generation time (docs/d029 option B), so
-# nothing in-container downloads — provisioning is local-llm/download_models.py
+# nothing in-container downloads — provisioning is ./download_models.py
 # on the HOST.
 
 # Staleness preflight (docs/d029 B): the generated cmds bake
 # models--<org>--<repo>/snapshots/<sha>/<file> paths resolved at generation
-# time. A later download/prune cycle (local-llm/upkeep.py) can delete that
+# time. A later download/prune cycle (./upkeep.py) can delete that
 # snapshot — which would otherwise surface as a llama-server 127 only at
 # model-swap time. The generator's .paths manifest lists every cache-relative
 # model file it verified (relative so the committed manifest carries no
@@ -82,7 +82,7 @@ workload_gpu
 # Guest path = the generator's HUB_GUEST constant (generate-local-llm-models
 # bakes cmd paths against it) — changing one means changing both in the same
 # edit. Read-only: nothing in-container writes the cache anymore (no launch-
-# time downloads); provisioning/pruning happen on the host (local-llm/).
+# time downloads); provisioning/pruning happen on the host (./run-all.sh).
 workload_ro       "$hub_cache" /home/ubuntu/.cache/huggingface/hub
 workload_ro       "$config_d" /etc/llama-swap/config.d
 workload_hardening
@@ -90,7 +90,7 @@ workload_env_allowlist REVERSE_PROXY_API_KEY
 workload_entrypoint 'llama-swap'
 workload_cmd      -config-dir /etc/llama-swap/config.d -listen 0.0.0.0:8080
 # No infisical wrapper here: the values were loaded by the explicit chain
-# (./lib/environment.sh ./run.sh) and are forwarded through the workload_env
+# (./environment.sh ./run.sh) and are forwarded through the workload_env
 # allowlist above.
 workload_run
 

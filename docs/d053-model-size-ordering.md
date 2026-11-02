@@ -4,8 +4,8 @@ type: module-design
 status: active
 title: "d053 — model footprint data + cheapest-first `lib/llamacpp-model-data.json`"
 parent: llm-local-inference
-depends-on: [llm-local-inference, lib]
-references: [d025, d050, gguf-model-tooling, refresh-local-llm-manifest, gguf-vram-fit-estimates]
+depends-on: [llm-local-inference, workload-api]
+references: [d025, d050, gguf-model-tooling, refresh-llm-local-inference-manifest, gguf-vram-fit-estimates]
 tags: [gguf, manifest, ordering, determinism, footprint, size]
 ---
 
@@ -257,7 +257,7 @@ the table (R5's motivating data).
   targeting `lib/hf-manifests/`.
 - `docs/gguf-model-tooling.md` — schema contract, tool inventory, and the
   archived `estimate_active_params.py` (R4's semantics).
-- `docs/refresh-local-llm-manifest.md` — the add-a-model runbook (now calls
+- `docs/refresh-llm-local-inference-manifest.md` — the add-a-model runbook (now calls
   `model-sizes.sh`).
 - `docs/gguf-vram-fit-estimates.md` — the estimator's KV/activation/active
   numbers (what this footprint deliberately is *not*).

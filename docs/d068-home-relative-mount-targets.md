@@ -92,7 +92,7 @@ Two facts make it a regression rather than a papercut:
   collapse / are refused.
 - **A mount's two sides may now differ** for home-relative paths; anything
   asserting `source == target` must drop that assumption
-  (`tests/check-run-dirs.sh` pins the real argv).
+  (`coding-agent/tests/check-run-dirs.sh` pins the real argv).
 
 ## Alternatives considered
 
@@ -117,13 +117,13 @@ Two facts make it a regression rather than a papercut:
 ## References
 
 - `coding-agent/run.sh` — `guest_path()`, the ARGV loop and the workdir.
-- `tests/check-run-dirs.sh` — the argv that pins this spelling.
+- `coding-agent/tests/check-run-dirs.sh` — the argv that pins this spelling.
 - `docs/d056-run-directory-mounts.md` — the ARGV-as-manifest contract this
   record refines (host side unchanged).
 - `docs/d066-hf-cache-mount-removal.md` — the cache-as-DIRECTORY flow this
   record makes usable without an in-container `HF_HUB_CACHE`.
 - `docs/d069-backend-detection-path.md` — the PATH-resolved backend probe that
-  lets `tests/check-run-dirs.sh` stub the container tool and pin this record's
+  lets `coding-agent/tests/check-run-dirs.sh` stub the container tool and pin this record's
   argv end-to-end.
 - `docs/d054-pi-agent-and-session-dir-mounts.md` /
   `docs/d065-opencode-host-config-mount.md` — the mounts that were already

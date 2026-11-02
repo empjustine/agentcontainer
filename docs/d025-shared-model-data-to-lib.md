@@ -29,7 +29,7 @@ there; a folder reading from `lib/` is always within its copy unit.
 
 Ownership is unchanged: `llm-local-inference/` still *owns* the table (its
 generator and the manifest-refresh workflow drive its content — see
-`docs/refresh-local-llm-manifest.md`); `local-llm/` is a consumer. The move only
+`docs/refresh-llm-local-inference-manifest.md`); `local-llm/` is a consumer. The move only
 changes *where the bytes live*, not who edits them.
 
 `active-b.json` stays in `llm-local-inference/` — it is an implementation detail

@@ -4,7 +4,7 @@ type: module-design
 status: active
 title: "d048 — opencode-go's mixed api surface: per-model api overrides from the published endpoints table"
 parent: coding-agent
-depends-on: [coding-agent, lib]
+depends-on: [coding-agent, workload-api]
 references: [d033, d040, d046b]
 tags: ["coding-agent", "opencode-go", "models.json", "api-shape", "resolver"]
 ---

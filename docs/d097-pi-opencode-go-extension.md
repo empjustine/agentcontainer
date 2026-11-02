@@ -121,7 +121,7 @@ the catalog warning. What is new:
   rule for one provider family.
 - **Per-provider interval state**: one provider's outage must not silence
   the other's — each watchdog keeps its own clock (`force` bypasses both),
-  pinned by `tests/pi-opencode.test.mjs`'s independence test.
+  pinned by `pi-opencode/tests/pi-opencode.test.mjs`'s independence test.
 - The zen listing is PUBLIC (verified: 200 unauthenticated), so the
   keyless-failure-is-a-warning stance carries over unchanged. The
   auth-gated contrast (silent without a key) is `../pi-mistral/`'s.

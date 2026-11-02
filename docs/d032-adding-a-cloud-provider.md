@@ -31,16 +31,17 @@ the next provider is a checklist instead of an archaeology dig.
 > | `generate-cloud-providers.mjs`, `merge-models-json.mjs`, `generate-cloud-alternative-providers.mjs` | `coding-agent/generate-pi-coding-agent.mjs` (by-agent merge, docs/d037) |
 > | `generate-opencode.jsonc.mjs` | `coding-agent/generate-opencode.mjs` (docs/d072) |
 > | `coding-agent/hyper-facts.mjs`, `provider-facts.mjs`, `catwalk-facts.mjs` | `coding-agent/catalog-facts.mjs` (docs/d072) |
-> | `llm-reverse-proxy/generate-config.mjs` | `llm-reverse-proxy/generate.mjs` (docs/d041) |
+> | `llm-reverse-proxy/generate-config.mjs` | `estige/generate.go` — the `generate` subcommand of the proxy binary (docs/d101/d102) |
 > | `peer-probe.mjs` | `coding-agent/route-probe.mjs` ("peer" retired, docs/d071) |
 > | `coding-agent/generate.sh` | unchanged (the node-run shim, docs/d041) |
+> | `lib/*` (every path into it) | `<unit>/lib/*` — each folder's own pruned copy (docs/d104) |
 
 ## The two sources of truth a new provider lives in
 
 | Source | Owns | Consumers |
 |---|---|---|
-| vendored models.dev catalog (`lib/models.dev.api.json`) | model lineup, capabilities, prices, `api` endpoint, `env` key name | generate-cloud-providers.mjs (client layer, one file per full `PROVIDER_SPECS` row) |
-| cloud provider fact table (`lib/cloud-providers.mjs`) | peer id, label, `apiKeyEnv`, real `baseUrl` | `llm-reverse-proxy/generate-config.mjs` (routes), generate-cloud-providers.mjs (pi-native subset, override-only rows), `generate-opencode.jsonc.mjs` (opencode subset), `coding-agent/hyper-facts.mjs` (`.hyper` only, docs/d039) |
+| vendored models.dev catalog (`coding-agent/lib/models.dev.api.json`) | model lineup, capabilities, prices, `api` endpoint, `env` key name | generate-cloud-providers.mjs (client layer, one file per full `PROVIDER_SPECS` row) |
+| cloud provider fact table (`<unit>/lib/cloud-providers.mjs` — one copy per serving unit, docs/d104) | provider id, label, `apiKeyEnv`, real `baseUrl` | `estige/generate.go` (routes), generate-cloud-providers.mjs (pi-native subset, override-only rows), `generate-opencode.jsonc.mjs` (opencode subset), `coding-agent/catalog-facts.mjs` (`.hyper` only, docs/d039), every `pi-*` extension (its own row only) |
 
 A provider pi does NOT ship natively (d022 semantics: the alternative layer is
 the authoritative full block) therefore needs **one row in each source** plus
@@ -52,14 +53,19 @@ the merge-order/doc updates. That is the entire flow:
    (id, name, `model-0XX` filename, `envKey`, compat trio). For a plain
    OpenAI-compatible gateway this is `compat: null, modelCompat: null,
    onOffThinking: false` — see F7.
-3. **Fact-table row** in `lib/cloud-providers.mjs` (id, label, `apiKeyEnv`,
-   `baseUrl`). Rerun `llm-reverse-proxy/generate-config.mjs` → the
-   `<peerBase>/<id>` route exists; zero proxy code (F4).
+3. **Fact-table row** — a provider is now served by several units, and
+   **each copy is owned by the folder that reads it** (docs/d104: hand copies,
+   pruned, never synced): the full row lands in `coding-agent/lib/
+   cloud-providers.mjs` + `.json` (the reference vocabulary this record is
+   the checklist for), one row in `estige/lib/cloud-providers.json` (its
+   allowlist host), and exactly that provider's row in each `pi-*` that pins
+   it. Rerun `estige/generate.sh` → the `<proxyBase>/<id>` route exists; zero
+   proxy code (F4).
 4. **Key forwarding** — add the key var to the allowlist loop in
    `coding-agent/run.sh` (F6).
 5. **Doc sync** — `merge-models-json.mjs` header table + merge-order diagram,
    `coding-agent/SPEC.md`, `coding-agent/generate.sh` prose,
-   `llm-reverse-proxy/README.md` example (F8).
+   `estige/README.md` example (F8).
 
 ## Surprising findings
 
@@ -68,7 +74,7 @@ the merge-order/doc updates. That is the entire flow:
 The vendored catalog is **regenerated wholesale** by
 `coding-agent/refresh-models-dev.mjs` (direct `https://models.dev/api.json`, relay
 fallback per d027b-models-dev-relay-fallback) and replaces
-`lib/models.dev.api.json` atomically on every best-effort refresh. A
+`coding-agent/lib/models.dev.api.json` atomically on every best-effort refresh. A
 hand-added catalog row is therefore **transient** — silently gone after the
 next refresh. The alternative-provider generator's `loadProvider()` throws on
 a missing catalog row, so an upstream-unknown provider fails the layer rather
@@ -81,7 +87,7 @@ lineup (worked example: verb oo).
 ### F2 — the fact table is NOT the client-side source of truth
 
 `generate-cloud-providers.mjs` reads provider facts (endpoint,
-key env) from the **catalog**, not from `lib/cloud-providers.mjs`. The
+key env) from the **catalog**, not from the fact table. The
 `baseUrl`/`apiKeyEnv` pair therefore exists in **both** files for every
 OpenAI-compatible provider, kept in sync by convention only. The only drift
 check in the repo compares the fact table against the *deployed proxy config*
@@ -106,7 +112,7 @@ naive "sync check" per F2 must whitelist both patterns, not flag them.
 
 ### F4 — the proxy needs zero code; the route is a data row
 
-`llm-reverse-proxy/main.go` is a fully generic config-driven StripPrefix
+`estige/main.go` (then `llm-reverse-proxy/main.go`) is a fully generic config-driven StripPrefix
 reverse proxy — a new provider's route exists the moment
 `generate-config.mjs` reruns with the new fact-table row. Nothing in the
 binary, the smoke test (own throwaway config), or `peer-probe.mjs` is
@@ -129,7 +135,7 @@ full-base convention.
 A provider's key env var name appears in **four** convention-linked places:
 catalog `env`, fact-table `apiKeyEnv`, the generator spec's `envKey`, and the
 hardcoded forwarding loop in `coding-agent/run.sh`. The vault loader
-(`lib/environment.sh`) injects the whole vault round-trip unfiltered — the
+(`./environment.sh`) injects the whole vault round-trip unfiltered — the
 filter is only in run.sh. Missing the run.sh row is silent: the layer
 references `$INFERX_API_KEY`, the probe passes (it runs host-side, where the
 vault set the var), and pi inside the container still never sees the key.

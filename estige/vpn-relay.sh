@@ -10,7 +10,7 @@
 #   chain (arguments): ensure a relay is serving, gate readiness, export the
 #     conventional proxy variables pointing at it, then exec the target:
 #
-#       ./lib/environment.sh ./estige/vpn-relay.sh ./coding-agent/run.sh
+#       ./environment.sh ./estige/vpn-relay.sh ./coding-agent/run.sh
 #
 #     One vault round-trip (docs/d046) buys the relay its credential and the
 #     child its environment; the child never holds VPN_OPERATOR_TOKEN (d090).
@@ -33,11 +33,10 @@
 # docs/d090) and its optional chain (docs/d094).
 
 set -eu
-# Shared infra arrives through one injectable directory (docs/d082): default
-# the repo's ../lib, or point LIB_DIR at a vendored copy in a standalone
-# checkout — no other path crosses the unit boundary.
+# The workload API is this folder's own copy (docs/d104): estige carries no
+# cross-folder dependency, so a split-out checkout is complete as it stands.
 # shellcheck disable=SC1091
-. "${LIB_DIR:-$(dirname "$0")/../lib}/workload-runtime.sh"
+. "${WORKLOAD_LIB_DIR:-$(dirname "$0")/lib}/workload-runtime.sh"
 LOG_TOOL='estige/vpn-relay'
 export LOG_TOOL
 

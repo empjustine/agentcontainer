@@ -73,7 +73,7 @@ The launcher surface is assessed, not converted: `vpn-exit.sh` /
 exit codes, `workload_rm`) is the parent repo's declarative workload API —
 `lib/workload-runtime.sh` — shared with the other folders. Converting them
 here would trade a known, gated shell surface (shellcheck-clean,
-chain-tested by `tests/check-vpn-relay-chain.sh`) for a Go re-implementation
+chain-tested by `estige/tests/check-vpn-relay-chain.sh`) for a Go re-implementation
 whose environment plumbing is not yet designed; that trade belongs to the
 docs/d082 split-time question, same as the workload API itself.
 
@@ -83,7 +83,8 @@ docs/d082 split-time question, same as the workload API itself.
   toolchain building it needs. `estige/CI.md`'s drift gate is go-only
   (`cd estige && go run . generate` + `git diff --exit-code estige/`).
 - The unit's remaining node@24 surface shrinks to the root builder the shim
-  runs and `tests/canonical-json.test.mjs` (docs/d050's canonicalizer still
+  runs and the canonicity guard (`tests/committed-manifests.test.mjs` since
+  docs/d104; docs/d050's canonicalizer still
   governs the node generators — the Go generator implements the same
   ordering natively). The per-change CI-critical path is plain
   `go build` + `go test ./...`.

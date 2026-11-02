@@ -84,7 +84,7 @@ POSIX-shaped, and both belong in the shared file:
   original separators, because callers match them back against their own
   `relative()` output).
 
-`tests/git-glob.test.mjs` pins the separator contract with literal Windows
+`git/tests/git-glob.test.mjs` pins the separator contract with literal Windows
 subjects, so the guard runs on any host — the failure it protects against
 cannot be observed from Linux by running the tool.
 
@@ -134,7 +134,7 @@ needs a Windows entry, its shim is three lines over the same
 
 ## Verification
 
-- `node --test` — the new `tests/git-glob.test.mjs` (4 cases: `/` glob vs
+- `node --test` — the new `git/tests/git-glob.test.mjs` (4 cases: `/` glob vs
   `\` subject, `\` glob spelling, `*`/`**` segment semantics on both
   spellings, original-spelling preservation in `filterByGlobs`); the suite's
   other failure (`lib-staging.test.mjs`) reproduces unchanged at HEAD and is

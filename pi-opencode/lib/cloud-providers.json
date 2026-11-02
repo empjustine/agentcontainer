@@ -1,0 +1,16 @@
+[
+	{
+		"id": "opencode",
+		"label": "OpenCode Zen",
+		"apiKeyEnv": "OPENCODE_API_KEY",
+		"baseUrl": "https://opencode.ai/zen/v1",
+		"support": "superficial"
+	},
+	{
+		"id": "opencode-go",
+		"label": "OpenCode Go",
+		"apiKeyEnv": "OPENCODE_API_KEY",
+		"baseUrl": "https://opencode.ai/zen/go/v1",
+		"support": "first-class"
+	}
+]

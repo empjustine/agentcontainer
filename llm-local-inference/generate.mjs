@@ -3,7 +3,7 @@
  * the former generate.sh, gen-lib.mjs, generate-general.yaml.mjs and
  * generate-local-llm-models.yaml.mjs in): (re)generate the llama-swap config
  * in config.d/ for LOCAL GGUF inference. RUN THIS after a models/args change
- * (active-b.json, ../lib/llamacpp-model-data.json, llama-swap-core.json
+ * (active-b.json, lib/llamacpp-model-data.json, llama-swap-core.json
  * macros) or when a host's capabilities changed (GPU added/removed, container
  * backend installed).
  *
@@ -27,7 +27,7 @@
  * There is NO launch-gguf.sh: snapshot paths are resolved HERE
  * (generation-time baking, docs/d029 option B) and emitted as plain args in
  * each model's cmd; a cache miss is a generation error pointing at
- * ../local-llm/download_models.py. Stale launch-gguf.sh copies from older
+ * ./download_models.py. Stale launch-gguf.sh copies from older
  * generate.sh versions are removed below.
  *
  * Layer-merge rules for the fragments (llama-swap's -config-dir loader;
@@ -40,7 +40,7 @@
  * (vendored tables only) and embeds NO keys — the single ${env.*} reference in
  * the generated config (REVERSE_PROXY_API_KEY, 00-general.yaml apiKeys) is resolved by
  * llama-swap from ITS OWN environment at load time, which run.sh receives from
- * the explicit chain (./lib/environment.sh ./run.sh). So generation needs no
+ * the explicit chain (./environment.sh ./run.sh). So generation needs no
  * vault round-trip at all.
  *
  * Env overrides:
@@ -65,13 +65,12 @@ import { fileURLToPath } from "node:url";
  * through the LIB_DIR convention (default: this folder's sibling lib/).
  * @type {string}
  */
-const LIB_DIR =
-	process.env.LIB_DIR ?? fileURLToPath(new URL("../lib", import.meta.url));
+const LIB_DIR = fileURLToPath(new URL("lib", import.meta.url));
 const { logError, logInfo, logWarn } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
+	/** @type {typeof import("./lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
-const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
+const { writeArtifact } = /** @type {typeof import("./lib/artifact.mjs")} */ (
 	await import(`${LIB_DIR}/artifact.mjs`)
 );
 
@@ -125,7 +124,7 @@ function generateGeneral() {
 // --- 10-local-llm-inference.yaml (folded generate-local-llm-models.yaml.mjs)
 // The local llama.cpp GGUF `models` map, plus the sibling .paths manifest
 // (host-side paths the run.sh staleness preflight re-checks). Built from
-// ../lib/llamacpp-model-data.json (the shared model-data table, docs/d025);
+// lib/llamacpp-model-data.json (this folder's copy of the table, d025/d104);
 // no network access. The `cmd` strings reference macros defined in
 // 00-general.yaml (${LLAMA_SERVER}, ${qwen36}, …) which llama-swap resolves
 // after merging config.d/.
@@ -193,7 +192,7 @@ const HUB_HOST =
 	);
 
 /**
- * Sharded GGUF naming, kept in sync with local-llm/download_models.py's
+ * Sharded GGUF naming, kept in sync with download_models.py's
  * SPLIT_RE (that script downloads every shard; the generator verifies it did).
  * @type {RegExp}
  */
@@ -248,7 +247,7 @@ function allShards(filename) {
  * --model/--mmproj/--model-draft stay backed by the exact same commit.
  *
  * No candidate qualifies ⇒ generation FAILS (exit 1): provisioning is
- * ../local-llm/download_models.py's job and is not duplicated as a
+ * download_models.py's job and is not duplicated as a
  * launch-time download fallback.
  * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
  * @returns {{ modelPath: string, mmprojPath: string|null, draftPath: string|null, hostPaths: string[] }}
@@ -300,7 +299,7 @@ function bakeSnapshotPaths(m) {
 	}
 
 	logError(
-		"no HF snapshot carries this entry — run local-llm/download_models.py, then re-run ./generate.sh",
+		"no HF snapshot carries this entry — run ./download_models.py, then re-run ./generate.sh",
 		{
 			repo,
 			hub: snapshotsDir,
@@ -402,8 +401,8 @@ function deriveModelId(m, modeSeg) {
  */
 function generateLocalInference() {
 	/**
-	 * The shared model-data table lives in lib/ (moved there to mark it as
-	 * explicitly shared with local-llm/ tooling — docs/d025). Same LIB_DIR
+	 * The model-data table lives in this folder's own lib/ (docs/d104: the
+	 * copy is owned here, not shared through a repo-level lib/). Same LIB_DIR
 	 * convention as the log import above.
 	 */
 	const modelData = JSON.parse(
@@ -532,8 +531,8 @@ generateGeneral();
 // floor — weights plus KV cache do not fit on a low-RAM host no matter what
 // accelerators it has. LOCAL_INFERENCE=1 forces the layer regardless
 // (debug: the generator still requires every configured GGUF in the host HF
-// cache — provision it with ../local-llm/download_models.py first).
-// All probes/thresholds come from ../lib/host-capabilities.mjs — the SAME
+// cache — provision it with ./download_models.py first).
+// All probes/thresholds come from lib/host-capabilities.mjs — the SAME
 // definitions build.mjs gates its llama-swap pull on (the device probes port
 // workload-runtime.sh's detect_workload_tool/detect_gpu_devs), so this
 // layer's viability and the builder's target set cannot drift apart.
@@ -542,7 +541,7 @@ const {
 	detectGpuDevices,
 	totalMemGiB,
 	INFERENCE_MIN_RAM_GIB,
-} = /** @type {typeof import("../lib/host-capabilities.mjs")} */ (
+} = /** @type {typeof import("./lib/host-capabilities.mjs")} */ (
 	await import(`${LIB_DIR}/host-capabilities.mjs`)
 );
 const containerTool = detectContainerTool();

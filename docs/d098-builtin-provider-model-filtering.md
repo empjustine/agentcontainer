@@ -5,7 +5,7 @@ type: module-design
 status: draft
 title: "d098 — hiding models from a builtin pi provider: the filterModels seam, and what the shadow costs"
 parent: coding-agent
-depends-on: [d090, d096, d097]
+depends-on: [d096, d097, d105]
 references: [d028, d032, d049]
 tags: ["providers", "pi", "extensions", "openrouter", "model-catalog", "draft"]
 ---
@@ -181,7 +181,7 @@ Remaining consequences:
   forwarded beside the base's in `composeModelProvider`, would make the
   whole request a ten-line overlay: no shadow, no catalog loss, no
   re-declaration. pi is the first-class harness whose config semantics
-  define the contract (d090), so shaping this need into an upstream
+  define the contract (d105), so shaping this need into an upstream
   contribution is the legitimate route rather than growing a local
   workaround; preferred over the shadow route whenever the work is undertaken.
 - **C — do nothing.** openrouter's personalization already narrows to what

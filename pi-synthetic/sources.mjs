@@ -32,21 +32,21 @@
  *     a secret, but logs that echo a URL are how a rotatable capability ends up
  *     in a log stream. Provenance is the source id and the row counts.
  *
- * Env: LIB_DIR (lib/ resolution override, docs/d023). Nothing else.
+ * Env: nothing (docs/d104).
  */
 
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const LIB_DIR = join(scriptDir, "lib");
 
 const { logDebug, logWarn, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
+	/** @type {typeof import("./lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
 const { CLOUD_PROVIDERS } =
-	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
+	/** @type {typeof import("./lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
 

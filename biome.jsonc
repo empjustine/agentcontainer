@@ -26,7 +26,7 @@
 			"!**/models.dev.api.json",
 			"!**/gguf-vram-fit-estimates.data.json",
 			"!**/catwalk-facts.json",
-			"!lib/hf-manifests",
+			"!**/lib/hf-manifests",
 			"!coding-agent/models.json",
 			"!coding-agent/model-*.json",
 			// pi-synthetic's pair of generated artifacts (d096): the pi

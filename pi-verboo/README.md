@@ -1,7 +1,7 @@
 # pi-verboo — the Verboo provider as a pi package
 
 Registers the **Verboo** gateway (`https://code.verboo.ai/router/v1`, the fact
-table's canonical upstream — `../lib/cloud-providers.mjs`) with
+table's canonical upstream — `lib/cloud-providers.mjs`) with
 [pi](https://github.com/earendil-works/pi), seeded from committed artifacts
 and refreshed at runtime from the provider's own `/models` listing.
 
@@ -63,7 +63,7 @@ AGENTS.md (the fleet's facts cache of the same listing).
 ## Tests
 
 ```sh
-sh -c '. ../lib/node-run.sh && node_run --test ../tests/pi-verboo.test.mjs'
+sh -c '. lib/node-run.sh && node_run --test tests/pi-verboo.test.mjs'
 ```
 
 Network-free (injected fetch) and rule-pinning: the source contract, the

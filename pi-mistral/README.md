@@ -36,7 +36,7 @@ worth the warning.
 | `package.json` | `pi.package`, `pi.extensions: ["./index.ts"]`; optional peerDep on `@earendil-works/pi-coding-agent` (host-provided, never vendored)          |
 
 There are no generated artifacts, no `generate.sh`, no `--check` — the
-folder has nothing to regenerate. `tests/pi-mistral.test.mjs` pins the rules
+folder has nothing to regenerate. `tests/pi-mistral.test.mjs` (in this folder) pins the rules
 (all fetches injected — no network in `node --test`).
 
 ## Provenance

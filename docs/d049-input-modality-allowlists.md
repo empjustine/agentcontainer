@@ -4,7 +4,7 @@ type: module-design
 status: active
 title: "d049 — modality/input capability as allowlists everywhere, not name filters/denylists"
 parent: coding-agent
-depends-on: [coding-agent, lib]
+depends-on: [coding-agent, workload-api]
 references: [d033, d046b, d047, d040]
 tags: ["coding-agent", "modalities", "allowlist", "filter", "models.json"]
 ---
@@ -49,7 +49,7 @@ admit-but-trim.
   projections really were behavior-identical, as d046b guessed. The
   catalog's known lie (embeddings labeled `output:["text"]`) is covered by
   the name exceptions, as decided.
-- **Contract test:** `tests/modality-allowlist.test.mjs` pins the gate's
+- **Contract test:** `coding-agent/tests/modality-allowlist.test.mjs` pins the gate's
   three halves (refuse / admit-and-trim / pass-unjudgeable), the
   capability-order projection, and the agree-by-construction property.
 - Not written back: the real regeneration lands with the next full
@@ -231,6 +231,6 @@ fields. — DONE 2026-09-23 with the implementation: see the Change section
   `catalogPiModel`), `coding-agent/gen-lib.mjs` (`PI_MODALITY_CAPABILITY`,
   `modalitiesEligible`, `toInput` — the landed declaration, gate, and
   shared projection).
-- `tests/modality-allowlist.test.mjs` — the contract the implementation
+- `coding-agent/tests/modality-allowlist.test.mjs` — the contract the implementation
   must keep (refuse / admit-and-trim / pass-unjudgeable /
   agree-by-construction).

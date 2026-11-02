@@ -38,7 +38,7 @@
  *     the subscription still serves its models.
  * Neither fetch URL is recorded in logs (docs/d086).
  *
- * Env: LIB_DIR (lib/ resolution override, docs/d023) and CLINE_PASS_MDX —
+ * Env: CLINE_PASS_MDX —
  * a plain local copy of the docs file, the fleet's git-mirror override
  * kept here because the docs source is published markdown, not an API.
  */
@@ -48,14 +48,14 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const LIB_DIR = join(scriptDir, "lib");
 
 const { logDebug, logInfo, logWarn, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
+	/** @type {typeof import("./lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
 const { CLOUD_PROVIDERS } =
-	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
+	/** @type {typeof import("./lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
 

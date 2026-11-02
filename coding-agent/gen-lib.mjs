@@ -6,12 +6,12 @@
  * both eligibility (modalitiesEligible) and emission (toInput) derive from
  * (docs/d049).
  *
- * Sibling modules (route-probe.mjs, catalog-facts.mjs) import statically
- * while lib/ resolves through $LIB_DIR (`env ?? "<this dir>/../lib"`), so
- * every consumer works in place and under generate.mjs's per-run output dir
- * with no code copy — docs/d072 retired the d023 scratch staging that used
- * to make one necessary (a ro-mounted tree only blocks WRITES, and a staged
- * run never writes next to its own sources).
+ * Sibling modules import statically; `LIB_DIR` is this folder's own copy
+ * (docs/d104), resolved from THIS file so a generator run in any cwd — or
+ * under generate.mjs's per-run output dir — finds the same modules. docs/d072
+ * retired the d023 scratch staging that once made an env-injected lib
+ * directory necessary (a ro-mounted tree only blocks WRITES, and a staged run
+ * never writes next to its own sources).
  */
 
 import { dirname, join } from "node:path";
@@ -31,16 +31,16 @@ export {
 } from "./catalog-facts.mjs";
 
 export const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const LIB_DIR = join(scriptDir, "lib");
 
-const logging = /** @type {typeof import("../lib/log.mjs")} */ (
+const logging = /** @type {typeof import("./lib/log.mjs")} */ (
 	await import(`${LIB_DIR}/log.mjs`)
 );
-const artifact = /** @type {typeof import("../lib/artifact.mjs")} */ (
+const artifact = /** @type {typeof import("./lib/artifact.mjs")} */ (
 	await import(`${LIB_DIR}/artifact.mjs`)
 );
 const cloudProviders =
-	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
+	/** @type {typeof import("./lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
 

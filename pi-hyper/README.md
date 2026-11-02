@@ -1,7 +1,7 @@
 # pi-hyper — the Charm Hyper provider as a pi package
 
 Registers the **Charm Hyper** gateway (`https://hyper.charm.land/v1`, the fact
-table's canonical upstream — `../lib/cloud-providers.mjs`) with
+table's canonical upstream — `lib/cloud-providers.mjs`) with
 [pi](https://github.com/earendil-works/pi), seeded from committed artifacts
 and refreshed at runtime from the provider's own `/provider` catalog.
 
@@ -61,7 +61,7 @@ properties:
   ON_OFF thinking map are transcribed from that repo, exactly as the fleet's
   modelCompat mirror is (docs/d033). **This is the provenance risk to
   know about**: upstream can revise its compat table and this mirror has no
-  tripwire — `tests/pi-hyper.test.mjs` pins today's values so a silent LOCAL
+  tripwire — `tests/pi-hyper.test.mjs` (in this folder) pins today's values so a silent LOCAL
   edit is caught, but an upstream change is caught only by a human
   re-deriving against the repo. Re-derive before changing any value.
   The client-identity header (`User-Agent: npm:@agentcontainer/pi-hyper`)
@@ -73,7 +73,7 @@ properties:
 ## Tests
 
 ```sh
-sh -c '. ../lib/node-run.sh && node_run --test ../tests/pi-hyper.test.mjs'
+sh -c '. lib/node-run.sh && node_run --test tests/pi-hyper.test.mjs'
 ```
 
 Network-free (injected fetch) and rule-pinning: the source contract, the

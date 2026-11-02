@@ -5,7 +5,7 @@ status: active
 title: "d034 — parallel probing and multi-hop peerBase chains"
 parent: architecture
 depends-on:
-  - lib
+  - workload-api
   - coding-agent
 references:
   - d024

@@ -11,6 +11,6 @@
 $ErrorActionPreference = 'Stop'
 # '/'-spelled paths resolve on every PowerShell host — the shim itself stays
 # testable off Windows (docs/d062).
-. "$PSScriptRoot/../lib/node-run.ps1"
+. "$PSScriptRoot/lib/node-run.ps1"
 node_run "$PSScriptRoot/maintain-mirrors.mjs" @args
 exit $LASTEXITCODE

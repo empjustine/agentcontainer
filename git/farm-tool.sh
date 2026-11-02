@@ -21,8 +21,8 @@ LOG_TOOL='git/farm-tool'
 # (maintain.sh, -forge-mirror.sh) are found relative to it, never relative
 # to the caller's cwd.
 FG_DIR=$(CDPATH='' cd "$(dirname "$0")" && pwd)
-# shellcheck source-path=SCRIPTDIR source=../lib/log.sh
-. "$FG_DIR/../lib/log.sh"
+# shellcheck source-path=SCRIPTDIR source=lib/log.sh
+. "$FG_DIR/lib/log.sh"
 # shellcheck source-path=SCRIPTDIR source=farm-lock.sh
 . "$FG_DIR/farm-lock.sh"
 # shellcheck source-path=SCRIPTDIR source=farm-tool-lib.sh
@@ -381,7 +381,7 @@ tool_search_history() {
 # is a shell glob that is expanded AGAINST THE DIFF'S OWN NAME LIST, and the
 # matching names go back to git as literal pathspecs — the glob itself never
 # reaches an argv, and an unmatched glob yields an EMPTY patch rather than
-# the whole repo (the keep-all trap, tests/git-glob.test.mjs).
+# the whole repo (the keep-all trap, git/tests/git-glob.test.mjs).
 tool_diff() {
 	if [ $# -lt 3 ] || [ $# -gt 5 ]; then
 		fg_error 2 "usage: diff REPO REV_A REV_B [PATH] [MAX]"

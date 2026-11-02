@@ -4,7 +4,7 @@
  * `lib/llamacpp-model-data.json` cheapest-first (docs/d053).
  *
  * Why this exists: the table's order used to come from
- * `local-llm/generate_vram_fit_tables.py --update-model-data`, a measured
+ * `llm-local-inference/generate_vram_fit_tables.py --update-model-data`, a measured
  * decode-speed sort. That sort depends on the external
  * `gdevenyi/huggingface-estimate` checkout, a GPU preset, a VRAM budget and
  * the ctx/batch set — none of which are properties of a model — so the
@@ -57,13 +57,12 @@ import { fileURLToPath } from "node:url";
  * script works both in place and when staged next to the generators.
  * @type {string}
  */
-const LIB_DIR =
-	process.env.LIB_DIR ?? fileURLToPath(new URL("../lib", import.meta.url));
+const LIB_DIR = fileURLToPath(new URL("lib", import.meta.url));
 const { logDebug, logError, logInfo, logWarn, setLogStream, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
+	/** @type {typeof import("./lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
-const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
+const { writeArtifact } = /** @type {typeof import("./lib/artifact.mjs")} */ (
 	await import(`${LIB_DIR}/artifact.mjs`)
 );
 

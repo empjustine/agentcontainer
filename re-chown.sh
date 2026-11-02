@@ -4,7 +4,7 @@
 # podman is available, else "sudo chown".
 
 # shellcheck disable=SC1091
-. "$(dirname "$0")/lib/log.sh"
+. "$(dirname "$0")/log.sh"
 LOG_TOOL='re-chown'
 export LOG_TOOL
 

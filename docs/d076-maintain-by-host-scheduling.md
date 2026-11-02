@@ -69,7 +69,7 @@ real farm:
 
 ## Verification
 
-`tests/git-byhost-scheduling.test.mjs` builds a throwaway farm (two fake
+`git/tests/git-byhost-scheduling.test.mjs` builds a throwaway farm (two fake
 hosts plus one upstream-less mirror), puts a fake `ssh` on `PATH` that
 timestamps its own invocations, and asserts from those timestamps: no
 same-host overlap ever, at least the interval between one host's consecutive

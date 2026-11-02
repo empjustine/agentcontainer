@@ -7,8 +7,8 @@
 # behind an agent-driven compact_repo (and vice versa) so the farm never has
 # two repacks or a fetch-beside-repack in flight — see farm-lock.sh.
 set -eu
-# shellcheck source-path=SCRIPTDIR source=../lib/node-run.sh
-. "$(dirname "$0")/../lib/node-run.sh"
+# shellcheck source-path=SCRIPTDIR source=lib/node-run.sh
+. "$(dirname "$0")/lib/node-run.sh"
 # shellcheck source-path=SCRIPTDIR source=farm-lock.sh
 . "$(dirname "$0")/farm-lock.sh"
 with_farm_mutation_lock node_run "$(dirname "$0")/maintain-mirrors.mjs" "$@"

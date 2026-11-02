@@ -33,20 +33,20 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const LIB_DIR = join(scriptDir, "lib");
 // A Windows LIB_DIR (`C:\...\lib`) is not a loadable specifier — the drive
 // letter parses as a URL scheme and the ESM loader rejects it — so the logger
 // is reached through an explicit file: URL, the one spelling valid everywhere
 // (docs/d062).
 const { logError, logInfo, logWarn, setLogStream, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
+	/** @type {typeof import("./lib/log.mjs")} */ (
 		await import(pathToFileURL(join(LIB_DIR, "log.mjs")).href)
 	);
 
 // vbs-har's manifest is the one artifact this folder writes: it goes through
 // the repo's atomic writer (tmp+rename, docs/d050) rather than a bare
 // writeFileSync, so a killed run cannot leave a truncated manifest behind.
-const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
+const { writeArtifact } = /** @type {typeof import("./lib/artifact.mjs")} */ (
 	await import(pathToFileURL(join(LIB_DIR, "artifact.mjs")).href)
 );
 

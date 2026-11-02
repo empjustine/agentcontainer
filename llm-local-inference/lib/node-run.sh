@@ -1,0 +1,30 @@
+#!/bin/sh
+# lib/node-run.sh — run node with the repo-pinned version, standalone.
+#
+# This is a general-purpose sh lib (docs/d041): any shell script — including
+# ones that never touch the container API — sources just this file to get the
+# repo's interpreter selection:
+#
+#   . "$(dirname "$0")/lib/node-run.sh"
+#   node_run ./script.mjs [args...]
+#
+# System node on Termux (there is no mise there), `mise exec node@24`
+# elsewhere (pinned via mise.toml / the image config).  The profile check is
+# deliberately INSIDE the function: sourcing this file sets no globals, so it
+# cannot collide with a host script's own variables or source order.
+# Product version floors are not enforced here: the llm-local-inference
+# generators need a global fetch (node >= 18), and pi enforces its own
+# >= 22.19 engines at launch (the Termux pre-stage gate was retired —
+# docs/d051).
+#
+# NODE_USE_ENV_PROXY=1 gives every generator run Node's native HTTP(S)_PROXY /
+# NO_PROXY handling for fetch and http/https (docs/d074). The versions that
+# added it are 22.21/24, so an older system node (Termux) silently ignores the
+# variable rather than failing. Set per-invocation, never exported, so sourcing
+# this file still changes no global state.
+node_run() {
+	case "${PREFIX:-}" in
+	*/com.termux/*) NODE_USE_ENV_PROXY=1 node "$@" ;;
+	*) NODE_USE_ENV_PROXY=1 mise exec node@24 -- node "$@" ;;
+	esac
+}

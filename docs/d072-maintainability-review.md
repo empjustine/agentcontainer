@@ -58,7 +58,7 @@ removed at the end. What was **not** given up:
 - **Atomicity of the install** — unchanged. Artifacts are still written with
   tmp+rename (`lib/artifact.mjs`), the tree is still swapped only after the
   whole cascade succeeds, the run still fails on a missing installed
-  artifact (`requireInstallBase`), and `tests/artifact-urls.test.mjs` still
+  artifact (`requireInstallBase`), and `coding-agent/tests/artifact-urls.test.mjs` still
   covers the installed-direction escape detector.
 - **The committed layer snapshot** (d037) — unchanged, with one deliberate
   difference: `generate.mjs` seeds `PI_LAYER_DIR` with the *committed*
@@ -257,7 +257,7 @@ Two prerequisites rode along, because the collapse needed them:
 `check-routed-artifacts.mjs`'s CLI is now behind an entry-point test (its
 top-level dispatch parsed the importing process's argv and could
 `process.exit` it), and the module gained the round-trip tests that pin
-substitution and verification together (`tests/artifact-urls.test.mjs`).
+substitution and verification together (`coding-agent/tests/artifact-urls.test.mjs`).
 
 Same sweep, smaller items: `catalog-facts.mjs` publishes its cache through
 `lib/artifact.mjs` instead of its own tmp+rename (same bytes — the caches are

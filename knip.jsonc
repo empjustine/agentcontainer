@@ -7,16 +7,20 @@
 	// only through imports (gen-lib.mjs, git-lib.mjs, the pi-*/ sources and
 	// merge modules), which is where unused exports are a real finding.
 	//
-	// lib/*.mjs are entries BY CONTRACT, not by reachability: every consumer
-	// imports them through a computed LIB_DIR dynamic import
+	// */lib/*.mjs are entries BY CONTRACT, not by reachability: a unit imports
+	// its own copy through a computed LIB_DIR dynamic import
 	// (await import(`${LIB_DIR}/log.mjs`)), which no static analyzer can
 	// follow — treating them as project files would false-positive the whole
-	// shared surface as unused. Entry status is the honest encoding of "this
-	// is a published surface"; their exports are therefore not
-	// unused-export candidates.
+	// per-unit surface as unused. Entry status is the honest encoding of "this
+	// is a published surface"; their exports are therefore not unused-export
+	// candidates. Since docs/d104 replaced the one shared lib/ with per-unit
+	// copies, the glob is per folder and the root has no lib at all.
 	"entry": [
-		"generate.mjs",
-		"build.mjs",
+		// each unit's own build entry (docs/d083/d104: there is no root
+		// builder or generator any more)
+		"estige/build.mjs",
+		"coding-agent/build.mjs",
+		"llm-local-inference/build.mjs",
 		// the coding-agent runner: the folder driver, its two generator
 		// children, and the standalone CLIs the shims and run.sh execute
 		"coding-agent/generate.mjs",
@@ -51,9 +55,11 @@
 		"pi-verboo/index.ts",
 		"pi-mistral/index.ts",
 		"pi-opencode/index.ts",
-		"lib/*.mjs",
-		// node --test discovers and runs these directly
-		"tests/*.test.mjs"
+		"*/lib/*.mjs",
+		// ./test.sh runs every unit's tests plus the repo-level guard, which
+		// nothing else imports (docs/d104)
+		"tests/*.test.mjs",
+		"*/tests/*.test.mjs"
 	],
 	// The pi host package is provided by the runtime environment and is
 	// deliberately never a dependency of this repo (tsconfig.json's NOTE).

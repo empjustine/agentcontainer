@@ -70,7 +70,7 @@ unlocks.
   gateway-gated — one credential per namespace, no coupling.
 
 **Client contract** (models.json — pi first-class per
-[d090](d090-llm-harness-support-tiers.md); the contract other tiers follow):
+[d105](d105-llm-harness-support-tiers.md); the contract other tiers follow):
 
 - pi already supports it (pi `models-configuration.md`): provider-level
   `headers`, values resolve like `apiKey` — `$NAME`/`${NAME}` env
@@ -106,7 +106,7 @@ unlocks.
   the container; host-side provisioning keeps its own separate chain).
 - coding-agent: `providerEntry`'s `apiKey` goes, the gateway header stays;
   the probe (`route-probe.mjs`) presents the gateway header instead of the
-  llama-swap bearer; `tests/check-workload.sh` fixtures follow.
+  llama-swap bearer; `coding-agent/tests/check-workload.sh` fixtures follow.
 - The vault keeps the retired `REVERSE_PROXY_API_KEY` set for outside
   compatibility; this repo reads only `REVERSE_PROXY_TOKEN` — no alias
   read, no warn, no migration window (d071's law).
@@ -124,7 +124,7 @@ unlocks.
   rotation/revocation story available to it.
 - llama-swap simplifies: its config loses the only `${env.*}` indirection;
   its launcher loses its only secret.
-- Best-effort/superficial harnesses (d090): opencode needs its own
+- Best-effort/superficial harnesses (d105): opencode needs its own
   headers-capability check before stage 1 works for it; mistral-vibe and
   crush simply have no generated surface — the proxy works for any HTTP
   client that can send one header.

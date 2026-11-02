@@ -4,7 +4,7 @@ type: module-design
 status: active
 title: "d046b — live-listing input schema poisoning and the committed-snapshot writeback"
 parent: coding-agent
-depends-on: [lib, coding-agent]
+depends-on: [workload-api, coding-agent]
 references: [d040, d033, d027, d045]
 tags: ["coding-agent", "gen-lib", "models.json", "schema", "input-modalities", bugfix]
 ---

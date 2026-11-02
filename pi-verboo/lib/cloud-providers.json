@@ -1,0 +1,10 @@
+[
+	{
+		"id": "verboo",
+		"label": "Verboo",
+		"apiKeyEnv": "VERBOO_API_KEY",
+		"baseUrl": "https://code.verboo.ai/router/v1",
+		"support": "first-class",
+		"note": "The FULL real base, path suffix included (docs/d027): the upstream serves its OpenAI surface under /router/v1, and the client route carries that path client-side (providerRouteUrl, docs/d047) — the allowlist row itself is the host root only. Also the ONE fact-table provider with no models.dev catalog row at all, and catwalk does not carry it either — the vendored catalog is replaced wholesale on every refresh, so a hand-added row would be transient (docs/d032 F1). Its lineup therefore comes from coding-agent/catalog-facts.mjs's cache of the provider's own `<base>/models` listing, which also makes this row the one whose baseUrl — not a catalog `api` — is the facts endpoint (catalogOptional, docs/d057)."
+	}
+]
