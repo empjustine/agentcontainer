@@ -183,7 +183,6 @@ agentcontainer/
 ├── pi-mistral/                           # mistral as a pi package (d100): an AUTH-GATED watchdog — no model data (pi builds it in), silent without a key
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package, and there is nothing to generate
 │   ├── tests/                           #   → this folder's own tests — and the only home of its fact-table row (d118)
-│   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules (the opencode watchdog deltas) · install + provenance
 │
 ├── pi-summarized-thinking/              # end-of-turn reasoning summaries as a pi package (human-facing only): a `custom` entry per completed turn — never in the model's context
