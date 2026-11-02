@@ -14,7 +14,9 @@
 	// per-unit surface as unused. Entry status is the honest encoding of "this
 	// is a published surface"; their exports are therefore not unused-export
 	// candidates. Since docs/d113 replaced the one shared lib/ with per-unit
-	// copies, the glob is per folder and the root has no lib at all.
+	// copies, the glob is per folder and the root has no lib at all; the pi
+	// extension folders carry no lib/ either, so their folder-root log.mjs is
+	// an ordinary project file reached by static import.
 	"entry": [
 		// each unit's own build entry (docs/d083/d113: there is no root
 		// builder or generator any more)
@@ -30,6 +32,9 @@
 		"coding-agent/catalog-facts.mjs",
 		"coding-agent/route-probe.mjs",
 		"coding-agent/check-canonical-artifacts.mjs",
+		// the launcher the run.sh shim executes (run.sh is the operator's
+		// entry, so nothing imports run.mjs's main)
+		"coding-agent/run.mjs",
 		// git/ farm tooling: every script the git/*.sh shims run (git-lib
 		// stays a project file — the tools import it)
 		"git/audit.mjs",
@@ -42,9 +47,10 @@
 		"git/vbs-har.mjs",
 		"llm-local-inference/generate.mjs",
 		"llm-local-inference/model-sizes.mjs",
-		// the pi extension family: each folder's generator (run by its
-		// generate.sh) and its runtime entry (loaded by the pi host, which
-		// no import graph can see — entry status encodes that contract)
+		// the pi extension family: each folder's generator (run by that
+		// folder's package.json script, via the root ./npm-run.sh) and its
+		// runtime entry (loaded by the pi host, which no import graph can
+		// see — entry status encodes that contract)
 		"pi-cline-pass/generate.mjs",
 		"pi-cline-pass/index.ts",
 		"pi-synthetic/generate.mjs",

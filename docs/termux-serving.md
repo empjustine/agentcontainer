@@ -16,7 +16,8 @@ references: [environments]
 > (docs/d027). Termux remains a USAGE environment for the coding agent, and
 > the provisioning side is still real: `./estige/build.sh` → `estige/build.mjs`
 > serializes the repo-root `provision-termux.sh` (infisical/node/jq) + the
-> android proxy binary on Termux (docs/d041/d113). The table below describes the retired
+> android payload and its `.deb` on Termux (docs/d041/d113/d120). The table
+> below describes the retired
 > variant's files; several no longer exist.
 
 Orientation for the **termux** variant of the llama-swap serving layer
@@ -49,7 +50,7 @@ that could emit `models`) is never generated.
 | Local GGUF layer — GPU-capable container hosts only, **never** here | `llm-local-inference/generate-local-llm-models.yaml.mjs` (+ its generated `.paths` staleness manifest) |
 | Peers-only env key names (documentation only — nothing loads the file; no `LLAMACPP_BASE_URL` / `LLAMA_API_BASE_URL`, there is no local llama.cpp server) | `llm-local-inference/.env.example` |
 | Infisical CLI provisioning on Termux (no official Android release) | `./estige/build.sh`; consumption side: ./environment.sh (the explicit chain); why `go install` cannot replace the checkout build: [termux-build-audit.md](termux-build-audit.md) |
-| `node` + `jq` — required by `generate.sh` (the `.mjs` generators; and the workload description API in the unit's own `lib/workload-runtime.sh` is jq-backed, see `lib/workload-*.jq`) | `./estige/build.sh` installs both via `pkg` when `$PREFIX/bin/<tool>` is not executable (`SKIP_PKG=1` to opt out; there is no mise here) |
+| `node` + `jq` — `node` for the `.mjs` generators; `jq` for the shell workload description API (`lib/workload-runtime.sh` + `lib/workload-*.jq`), whose only remaining copy is `llm-local-inference/`'s. `coding-agent/` needs no jq (its workload API is a node module, docs/d119) and estige's package needs neither (docs/d120) | `./estige/build.sh` installs both via `pkg` when `$PREFIX/bin/<tool>` is not executable (`SKIP_PKG=1` to opt out; there is no mise here) — for the *other* Termux units, not for the estige package |
 
 > Naming note: older revisions of this file listed `LLAMASWAP_API_KEY` as the
 > client auth key. The generated `apiKeys` reference `${env.PEER_API_KEY}`

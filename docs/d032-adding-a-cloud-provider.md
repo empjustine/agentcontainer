@@ -41,7 +41,7 @@ the next provider is a checklist instead of an archaeology dig.
 | Source | Owns | Consumers |
 |---|---|---|
 | vendored models.dev catalog (`coding-agent/lib/models.dev.api.json`) | model lineup, capabilities, prices, `api` endpoint, `env` key name | generate-cloud-providers.mjs (client layer, one file per full `PROVIDER_SPECS` row) |
-| cloud provider fact table (`<unit>/lib/cloud-providers.mjs` — one copy per serving unit, docs/d113) | provider id, label, `apiKeyEnv`, real `baseUrl` | `estige/generate.go` (routes), generate-cloud-providers.mjs (pi-native subset, override-only rows), `generate-opencode.jsonc.mjs` (opencode subset), `coding-agent/catalog-facts.mjs` (`.hyper` only, docs/d039), every `pi-*` extension (its own row only) |
+| cloud provider fact table (`<unit>/lib/cloud-providers.mjs` — one copy per serving unit, docs/d113; a **frozen literal** in each `pi-*` folder, docs/d118) | provider id, label, `apiKeyEnv`, real `baseUrl` | generate-cloud-providers.mjs (pi-native subset, override-only rows), `generate-opencode.jsonc.mjs` (opencode subset), `coding-agent/catalog-facts.mjs` (`.hyper` only, docs/d039), every `pi-*` extension (its own row only) |
 
 A provider pi does NOT ship natively (d022 semantics: the alternative layer is
 the authoritative full block) therefore needs **one row in each source** plus
@@ -57,12 +57,16 @@ the merge-order/doc updates. That is the entire flow:
    **each copy is owned by the folder that reads it** (docs/d113: hand copies,
    pruned, never synced): the full row lands in `coding-agent/lib/
    cloud-providers.mjs` + `.json` (the reference vocabulary this record is
-   the checklist for), one row in `estige/lib/cloud-providers.json` (its
-   allowlist host), and exactly that provider's row in each `pi-*` that pins
-   it. Rerun `estige/generate.sh` → the `<proxyBase>/<id>` route exists; zero
-   proxy code (F4).
-4. **Key forwarding** — add the key var to the allowlist loop in
-   `coding-agent/run.sh` (F6).
+   the checklist for), and exactly that provider's row lands in each `pi-*`
+   that pins it — there as a **frozen literal at its one consumer**
+   (`sources.mjs` in the generating folders, the folder's own test in the
+   `pi-mistral`/`pi-opencode` watchdogs, docs/d118), never as a shared table.
+   `estige/` carries no fact-table row any more (its allowlist edge is deleted,
+   docs/d108).
+4. **Key forwarding** — add the key var to `vaultEnv` in
+   `coding-agent/run.mjs` (F6): the launcher forwards only the names it lists
+   there into the sandbox, through `workload_env_allowlist`
+   (`lib/workload-runtime.mjs`).
 5. **Doc sync** — `merge-models-json.mjs` header table + merge-order diagram,
    `coding-agent/SPEC.md`, `coding-agent/generate.sh` prose,
    `estige/README.md` example (F8).

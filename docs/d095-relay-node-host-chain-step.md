@@ -10,6 +10,16 @@ references: [d059, d070, d079, d082, d084, d090]
 
 # d095 — the relay node is a host service, and vpn-relay.sh is its chain step
 
+> **Superseded in part (docs/d120).** `vpn-relay.sh` is gone: the relay node
+> is an installed service (`estige-relay.service`, or the Termux runit
+> service), and the chain step is the binary's own `estige proxy-env`, which
+> prints the loopback spelling for `eval` and starts nothing. The parts of
+> this record that still bind are the ones about *why* the relay is a host
+> service and *who may hold which credential*; the launcher mechanics below
+> (two argv modes, the readiness probe, the supervisor loop) belong to the
+> retired script and stay only as the record of what it did. The self-chain
+> refusal moved into `relayConfigFromEnv` with the launcher's exit status 94.
+
 ## Problem
 
 d094 gave the relay node a route through the conventional proxy variables.
@@ -170,7 +180,7 @@ restate what the code already knows.
 - The relay container's argv: `--detach --restart=unless-stopped
   --network=host`, the chain variable *names* forwarded (d094), the
   loopback spelling nowhere in its own chain env.
-- `estige/tests/check-vpn-relay-chain.sh` pins all four; `coding-agent/tests/check-workload.sh`
+- `estige/tests/check-vpn-relay-chain.sh` pins all four; `coding-agent/tests/check-workload.test.mjs`
   pins the `--restart` flag position.
 
 ## Not in this record

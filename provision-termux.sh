@@ -108,9 +108,10 @@ branch="${INFISICAL_BRANCH:-main}"
 #   nodejs -> node   the .mjs generators (llm-local-inference/generate.sh,
 #                    coding-agent/generate.sh) run under the SYSTEM node on
 #                    Termux — there is no mise to pin one.
-#   jq               each unit's workload-runtime.sh API is jq-backed
-#                    (its lib/workload-*.jq); llm-local-inference/generate.sh calls
-#                    sandbox_has on every run.
+#   jq               the SHELL workload-runtime.sh copies are jq-backed (their
+#                    lib/workload-*.jq), and llm-local-inference/generate.sh calls
+#                    sandbox_has on every run. `coding-agent/` no longer needs it:
+#                    its workload API is a node module (docs/d119).
 #
 # Probed with -x at $PREFIX/bin — the directory `pkg` installs into — so the
 # test answers the question that matters here ("is the pkg-provided tool
@@ -156,7 +157,7 @@ _ensure_pkg() {
 
 if [ "$_termux" = 1 ]; then
 	_ensure_pkg node nodejs 'the .mjs generators run under the system node here'
-	_ensure_pkg jq jq 'workload-runtime.sh workload_* API (lib/workload-*.jq)'
+	_ensure_pkg jq jq 'shell workload-runtime.sh workload_* API (lib/workload-*.jq)'
 else
 	log_debug "not Termux — skipping pkg provisioning (node/jq come from mise)"
 fi

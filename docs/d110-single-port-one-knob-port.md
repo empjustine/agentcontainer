@@ -68,6 +68,9 @@ single-port binds precisely so that `PORT` stays meaningful.
 - The implementing change covers the binary (`-listen` removal, `PORT` read),
   both `vpn-exit.sh` paths, the chain step (d095 — whatever launches an exit
   passes `PORT` through untouched), and the tests pinning the old spellings.
+  Since docs/d120 the same two paths are the packaged service units, which
+  carry `PORT` in `EnvironmentFile` and pass it through untouched by
+  construction.
 
 ## Alternatives rejected
 

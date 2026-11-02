@@ -77,6 +77,12 @@ chain-tested by `estige/tests/check-vpn-relay-chain.sh`) for a Go re-implementat
 whose environment plumbing is not yet designed; that trade belongs to the
 docs/d082 split-time question, same as the workload API itself.
 
+> **Superseded in part (docs/d120).** The trade was then made — on terms this
+> paragraph held back: not a Go re-implementation of the workload API but the
+> deletion of it. The launchers, the shell API and the chain test are gone;
+> the package and the service manager own what they did, and the "undesigned"
+> environment plumbing is `proxy-env` plus the units' `EnvironmentFile`.
+
 ## Consequences
 
 - Regenerating the estige unit needs only the go toolchain — the same

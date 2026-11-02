@@ -44,7 +44,10 @@ keep their verdicts.
 Every serving/usage folder is **self-contained**, and since **docs/d113** the
 copy unit is the folder **alone**: each unit carries its own `lib/` — a hand
 copy of the kernels it actually uses — plus its own `build.sh`/`generate.sh`
-and its own `tests/`. Nothing one level up is implied by a folder, so
+and its own `tests/`. The `pi-*` extension family carries no `lib/` at all
+(docs/d118): their kernels are folder-root modules imported statically by the
+folder's own files, because an extension is loaded by the pi host rather than
+bootstrapped by a shell script. Nothing one level up is implied by a folder, so
 `estige/` can be copied out whole when it becomes its own repository
 (docs/d082) and `git filter-repo` carries everything it needs.
 
@@ -100,19 +103,29 @@ don't exist.
 ## Each unit's own `lib/`, and what stays at the repo root
 
 There is **no repo-level `lib/`** (docs/d113). Every kernel below exists as one
-hand copy per unit that uses it, inside that unit's `lib/`:
+hand copy per unit that uses it — inside that unit's `lib/`, or at the folder
+root where the unit is a pi extension (docs/d118):
 
-- `workload-runtime.sh` — container-runtime detection (podman vs docker,
+- `workload-runtime.sh` / `workload-runtime.mjs` — the two implementations of
+  the same API (spec id `workload-api`, contract in
+  `docs/container-tooling.md`): container-runtime detection (podman vs docker,
   UID/SELinux flags), the declarative workload description API, structured
   shell logging, and the profile/runner helpers the run scripts reuse
-  (`_termux`, `default_run_dir`). Its copies resolve their siblings from the
-  **sourcing script's** `SCRIPT_DIR` + `lib`, honoring `WORKLOAD_LIB_DIR` when
-  the caller is not the unit's own run script (POSIX sh cannot self-locate a
-  sourced file). Secrets are NOT part of it: loading is the explicit
-  `./environment.sh` chain (below). The API contract is `docs/container-tooling.md`
-  (spec id `workload-api`); this is the one kernel with more than one consumer,
-  so its copies are the ones most likely to diverge — deliberately (d113).
-- `log.sh` / `log.mjs` / `log.py` — the structured loggers (per language).
+  (`_termux`, `default_run_dir`). The `.sh` copies — only
+  `llm-local-inference/`'s now, with the `workload-*.jq` filters beside it
+  (`estige/` retired its pair with the packaging change, docs/d120) —
+  resolve their siblings from the **sourcing script's** `SCRIPT_DIR` + `lib`,
+  honoring `WORKLOAD_LIB_DIR` when the caller is not the unit's own run script
+  (POSIX sh cannot self-locate a sourced file). `coding-agent/` has the `.mjs`
+  one: a description in, a `container run` argv out, which is why that unit
+  needs no `jq` on the host (docs/d119). Secrets are NOT part of either:
+  loading is the explicit `./environment.sh` chain (below). This is the one
+  kernel with more than one consumer, so its copies are the ones most likely
+  to diverge — deliberately (d113).
+- `log.sh` / `log.mjs` / `log.py` — the structured loggers (per language). In
+  the `pi-*` folders the logger sits at the folder root (`<unit>/log.mjs`,
+  docs/d118), pruned to the level functions that folder calls; there is no
+  `lib/` around it.
 - `node-run.sh` — the standalone `node_run()` sh lib (docs/d041): repo-pinned
   node for any script (system node on Termux, `mise exec node@24` elsewhere).
 - `node-run.ps1` — the PowerShell `node_run()` counterpart (docs/d062), carried
@@ -125,13 +138,19 @@ hand copy per unit that uses it, inside that unit's `lib/`:
 - `artifact.mjs` / `canonical-json.mjs` — the write choke point and the
   canonical serialization it applies (docs/d050). They travel together: an
   `artifact.mjs` copy without its `canonical-json.mjs` sibling cannot write.
+  The four generating `pi-*` folders fold both into `generate.mjs` instead
+  (docs/d118) — one writer, one file, no module whose only job is to re-export
+  another.
 - `fact-table.mjs` — the fact-table publisher (docs/d086): canonical order,
   `_meta` provenance and the skip-when-unchanged rule in one place. It has
   exactly one consumer (`coding-agent/catalog-facts.mjs` and
   `coding-agent/refresh-models-dev.mjs`), so it lives in `coding-agent/lib/`
   and nowhere else (docs/d113).
 - `cloud-providers.mjs` — the cloud-provider fact table (id / label / key env /
-  real base URL), pruned per unit as above (docs/d024, amended by d113).
+  real base URL), pruned per unit as above (docs/d024, amended by d113). No
+  `pi-*` folder carries the loader or its JSON any more: the row is a frozen
+  literal at its single consumer — `sources.mjs` in the four generating
+  folders, the folder's own test in `pi-mistral`/`pi-opencode` (docs/d118).
 - `models.dev.api.json`, `catwalk-facts.json`, `llamacpp-model-data.json`,
   `hf-manifests/` — the vendored data tables, each in the unit that reads it.
   The first two live in `coding-agent/lib/` (the models.dev mirror carries no
@@ -139,8 +158,11 @@ hand copy per unit that uses it, inside that unit's `lib/`:
   docs/d086); the GGUF footprint data and HF listings live in
   `llm-local-inference/lib/`, their only consumer since docs/d113 folded the
   `local-llm/` pipeline in.
-- `workload-*.jq` — the jq filters behind the workload description API, one
-  copy per unit whose run scripts use the API.
+- `workload-*.jq` — the jq filters behind the shell implementation of the
+  workload description API, one copy per unit that still uses it — today only
+  `llm-local-inference/`. `coding-agent/` deleted its copy with the node port
+  (docs/d119) and `estige/` with the packaged service (docs/d120); `jq` is
+  therefore no longer a host prerequisite for either.
 
 What stays at the repo root is **not importable by any unit**: the operator
 files and the QA sweep.
@@ -155,7 +177,11 @@ files and the QA sweep.
   CLI source build; the former root `build.sh`), exec'd by `estige/build.mjs`
   for the Termux target. Stays shell on purpose — every path in it is
   Termux-only and untestable from a container host.
-- `node-run.sh`, `log.sh` — the sweep's own copies of the same kernels.
+- `node-run.sh`, `log.sh`, `npm-run.sh` — the sweep's own copies of the same
+  kernels, plus `npm-run.sh`'s `npm_run <unit> <script>`: it runs a unit's
+  `package.json` script under the pinned node without ever putting `npm` on the
+  path, which is how the `pi-*` family — whose folders ship no shell — is built
+  and generated (docs/d118).
 - `npm-tools.sh` — the one install path for the npm-pinned JS gates
   (docs/d107): `npm ci --ignore-scripts` from `package-lock.json` when the
   lock changes. The same lock carries the Android Biome/oxc builds, so Termux
@@ -166,7 +192,9 @@ files and the QA sweep.
   in `<unit>/tests/` beside the code it exercises (docs/d113), including
   docs/d050's committed-manifest guard, which followed its manifests into
   `coding-agent/tests/` once d108 left it a single unit. `test.sh`'s globs
-  (`*/tests/*.test.mjs`, `*/tests/*.sh`) are the contract.
+  (`*/tests/*.test.mjs`, `*/tests/*.sh`) are the contract; a glob that matches
+  nothing is skipped, not an error, because no unit has to ship a shell test
+  (docs/d118 turned the last two into `*.test.mjs`).
 
 The probe/facts/refresh modules that used to sit in a shared lib
 (`route-probe.mjs`, then named `peer-probe.mjs` (docs/d071), `pi-models.mjs`,
@@ -185,10 +213,12 @@ are working on.
 
 - `./llm-local-inference/generate.sh` (capability-gated: emits both config.d
   layers only on an inference endpoint), `./coding-agent/generate.sh`
-  (network-heavy: catalogs + model layers), `./pi-*/generate.sh` (one provider
-  each; a unit with nothing to generate has none), and `./estige/build.sh` —
-  estige has **no generator** since docs/d108 deleted `estige generate` with
-  the allowlist.
+  (network-heavy: catalogs + model layers), and `./estige/build.sh` — estige
+  has **no generator** since docs/d108 deleted `estige generate` with the
+  allowlist.
+- The `pi-*` family generates one provider each through its own
+  `package.json` script (`. ./npm-run.sh && npm_run <unit> generate`, docs/d118)
+  rather than a `generate.sh`; a unit with nothing to generate has no script.
 - `./estige/build.sh`, `./coding-agent/build.sh` and
   `./llm-local-inference/build.sh` build for THIS host: container images in
   parallel on podman/docker hosts, Termux provisioning + the android binary
@@ -236,7 +266,7 @@ the variant folders redundant.)
 | Folder | Role | What makes it work |
 |--------|------|--------------------|
 | `llm-local-inference/` (deprecated for now, d108) | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `generate.sh`/`generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh` |
-| `estige/` (tunnel-only since d108) | the SSL-VPN tunnel transports (h2-POST, WebSocket, h1.1-POST; docs/d073/d077/d105) in one binary in two network positions (docs/d088): the **exit node** (`vpn-exit.sh`; funnel front + tunnel server, egress enforced from `tunnel.egress`) and the **relay node** (`vpn-relay.sh`; loopback CONNECT/SOCKS5 — serve mode, or the chain step that points a child at it, docs/d095). One reserved path (`/vpn`) serves the tunnels; **every other path answers the plain funnel 404** (d073 VPN-R34) — the allowlist reverse proxy that used to serve those paths (docs/d047/d063/d070) is deleted, not disabled (d108). WebSocket tunnel deployed; h2-POST tunnel default-on (d084); **no config file at all** (d108's tree-shake) — the arming credential, the bind (`PORT`, d110) and the egress opt-ins all arrive on the env chain, with d104's role store slated to own the policy half; standalone-repo boundary defined in docs/d082 (split-time CI findings in `estige/CI.md`) | `main.go`, the tunnel family — `relaynode.go`, `relaychain.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go` — plus the two deployment entries `vpn-exit.sh`/`vpn-relay.sh`; `generate.go`, `estige.json`, `estige.example.json` and `smoke-test.go` are deleted with the allowlist (docs/d108); built by its own `build.mjs` |
+| `estige/` (tunnel-only since d108) | the SSL-VPN tunnel transports (h2-POST, WebSocket, h1.1-POST; docs/d073/d077/d105) in one binary in two network positions (docs/d088): the **exit node** (funnel front + tunnel server, egress enforced from `tunnel.egress`) and the **relay node** (loopback CONNECT/SOCKS5, served as a host service; the chain step that points a child at it is the binary's own `estige proxy-env`, docs/d095) — each installed as a service by the deb/rpm package (docs/d120). One reserved path (`/vpn`) serves the tunnels; **every other path answers the plain funnel 404** (d073 VPN-R34) — the allowlist reverse proxy that used to serve those paths (docs/d047/d063/d070) is deleted, not disabled (d108). WebSocket tunnel deployed; h2-POST tunnel default-on (d084); **no config file at all** (d108's tree-shake) — the arming credential, the bind (`PORT`, d110) and the egress opt-ins all arrive on the env chain, with d104's role store slated to own the policy half; standalone-repo boundary defined in docs/d082 (split-time CI findings in `estige/CI.md`) | `main.go`, the tunnel family — `relaynode.go`, `relaychain.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go` — plus the `packaging/` tree (pure-Go deb/rpm writers + the Termux and Oracle Linux service inputs, docs/d120); the POSIX launchers and the shell+jq workload library are deleted (docs/d120), as are `generate.go`, `estige.json`, `estige.example.json` and `smoke-test.go` with the allowlist (docs/d108); built by its own `build.mjs` |
 | `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.sh`/`generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.sh`, `settings.json`; image built by its own `build.mjs` |
 
 The former "next planned step" sketch (a simplified config-generator system

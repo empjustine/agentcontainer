@@ -290,7 +290,7 @@ as the `output` field instead of an indented stderr dump.
   run-config, repository-count, per-repo failure (`step failed` with
   `phase`/`url`/`output` fields), and summary lines are structured JSON on
   stderr; `sh -n` clean.
-- `./coding-agent/tests/check-workload.sh` — all 4 cases pass after the log.sh stream
+- `./coding-agent/tests/check-workload.test.mjs` — all 4 cases pass after the log.sh stream
   change.
 - `python3 -m py_compile` clean on all touched py files; log.py error-chain
   serialization verified live (traceback + `__cause__` recursion).

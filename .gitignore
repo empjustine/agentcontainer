@@ -1,5 +1,6 @@
-# Build outputs of the estige unit — the launchers resolve these from
-# the folder (estige-android preferred on Termux), never from git.
+# Build outputs of the estige unit — build.mjs resolves these inside the
+# folder (estige-android preferred on Termux), never from git; the packaged
+# artifacts under estige/packaging/out/ are ignored by that folder's own file.
 estige/estige
 estige/estige-android
 

@@ -63,7 +63,10 @@ The mapping is fixed: server = exit node, client = relay node. The
 flags stay what the code speaks (see Phases). The `PROXY_MODE` env
 selector itself retired with `run.sh` in [d095](d095-relay-node-host-chain-step.md):
 the deployment identity is now the entry point (`vpn-exit.sh` /
-`vpn-relay.sh`), and `-mode` remains the binary's spelling.
+`vpn-relay.sh`), and `-mode` remains the binary's spelling. The entry points
+are since the packaged service units (`estige.service`, `estige-relay.service`,
+docs/d120); the naming rule is unchanged — the identity is what gets deployed,
+not what the binary calls itself.
 
 ## Phases — this record lands documentation only
 

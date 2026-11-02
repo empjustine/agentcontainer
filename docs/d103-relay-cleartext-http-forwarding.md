@@ -142,7 +142,9 @@ pump cannot give:
   renumbered and no requirement number changes (d072's curated history).
 - Unchanged by this decision: `vpn-relay.sh`, `vpn-exit.sh`, the tunnel
   framing, `tunnelserver.go`'s CONNECT phase, `egress.go`, the transport
-  ladder, d094's chain, and d095's chain step.
+  ladder, d094's chain, and d095's chain step. (The two launchers were later
+  deleted by docs/d120; the loopback forwarding surface this record decides
+  is unchanged by that too — the packaged relay service runs the same code.)
 
 ## Alternatives rejected
 

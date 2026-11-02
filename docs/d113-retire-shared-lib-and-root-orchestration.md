@@ -140,6 +140,17 @@ it is the answer to "why does this folder have a `lib/` at all?":
 | `git/` | `log.mjs`/`log.sh`, `artifact.mjs`, `canonical-json.mjs`, `node-run.sh`, `node-run.ps1` (`docs/d062`) |
 | repo root | nothing importable: `environment.sh`, `provision-termux.sh`, `log.sh`, `node-run.sh`, `npm-tools.sh` (`docs/d107`) + the QA sweep |
 
+This table is the state d113 landed. Two later records thin it further without
+reopening the copy-unit rule: `docs/d118` deletes the `pi-*` family's `lib/`
+entirely (folder-root modules, the fact row as a literal, `package.json` as the
+entrypoint table) and adds the root `npm-run.sh`; `docs/d119` replaces
+`coding-agent/`'s shell workload runtime with `lib/workload-runtime.mjs`, which
+retires its `workload-*.jq` filters and makes `jq` no longer a host
+prerequisite for that unit; `docs/d120` does the same to `estige/`'s row by
+retiring the shell runtime entirely behind a packaged service, leaving that
+`lib/` build-only (`go-build.mjs`, `host-capabilities.mjs`, `log.mjs`). A
+unit's `lib/` is still its own — what changed is how much of one it needs.
+
 ## Alternatives rejected
 
 - **Vendor `lib/` as a submodule or a published package.** Turns a copy-unit

@@ -43,7 +43,8 @@ it happens.
 - `llm-reverse-proxy/**` — the Go module and tests, `Containerfile`,
   `generate.sh`/`generate.mjs`, `vpn-exit.sh`/`vpn-relay.sh`
   (`run.sh` at the time; split into the two deployment entries by
-  docs/d095), `smoke-test.sh`,
+  docs/d095, both since replaced by `packaging/` and the two service units,
+  docs/d120), `smoke-test.sh`,
   `README.md`, `DESIGN.md`, `llm-reverse-proxy.example.json`, the
   generated `llm-reverse-proxy.json`;
 - its requirements: the BRD's FR-S5 extract and d073's `VPN-R*` block

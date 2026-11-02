@@ -31,8 +31,12 @@ cd "$root"
 log_info "unit tests (node --test: every */tests/)"
 node_run --test ./*/tests/*.test.mjs
 
-log_info "shell checks (every */tests/*.sh)"
+# The sweep owns no test of its own and no unit has to ship a shell one: a
+# folder that moved its checks into *.test.mjs leaves this glob unmatched, and
+# an unmatched glob is a literal path, not a test — skip it rather than dying.
+log_info "shell checks (every */tests/*.sh, if any)"
 for t in ./*/tests/*.sh; do
+	[ -e "$t" ] || continue
 	log_info "run" script="$t"
 	sh "$t"
 done

@@ -105,7 +105,7 @@ not a flag combination. The choice made here is the hatch, recorded in
   no `no-new-privileges` + `--network=host` is what the coding sandbox
   grants; a reader of `run.sh` sees all four, with the reason for the first
   three.
-- **The test fixture follows the code**: `tests/check-workload.sh` case 1
+- **The test fixture follows the code**: `tests/check-workload.test.mjs` case 1
   ("coding-agent shape") no longer mounts `lib/log.sh`; it still exercises
   both mount modes and `workload_ro_if` via its other entries.
 
@@ -172,5 +172,5 @@ pre-provisioning alternative above covers.
   the removed line obeyed; unchanged by this record.
 - `docs/container-tooling.md` / `coding-agent/coding-harness-persistence.md` — the
   mount and persistence references updated alongside.
-- `tests/check-workload.sh` — the argv differential test whose coding-agent
+- `tests/check-workload.test.mjs` — the argv differential test whose coding-agent
   fixture drops the logger mount.

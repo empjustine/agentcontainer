@@ -75,7 +75,7 @@ capability (see d070, which moves that capability out of sight entirely).
    README rows, `architecture.md`, both `DESIGN.md` files,
    `environments-and-peer-variants.md` (renamed
    `environments-and-variants.md`), code comments and fileoverview headers,
-   log/error strings, `coding-agent/tests/check-workload.sh`'s `workload_env` lists.
+   log/error strings, `coding-agent/tests/check-workload.test.mjs`'s `workload_env` lists.
    Out of scope: the bodies of d022/d027/d033/d034/d047/d063 and
    `docs/archive/` — a decision record keeps the names of the day;
    misleading README index rows point at this record instead. d063 stays

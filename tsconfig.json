@@ -54,8 +54,11 @@
 	"include": [
 		// The per-unit lib/ copies (docs/d113 folded the one shared lib/ into
 		// the folders that consume it), plus each unit's own build entry —
-		// there is no root build.mjs or generate.mjs any more.
+		// there is no root build.mjs or generate.mjs any more. The pi
+		// extension folders carry no lib/ at all: their logger sits at the
+		// folder root, imported statically by the folder's own modules.
 		"*/lib/*.mjs",
+		"pi-*/log.mjs",
 		"estige/build.mjs",
 		"coding-agent/build.mjs",
 		"llm-local-inference/build.mjs",
@@ -98,6 +101,10 @@
 		"pi-mistral/tests/pi-mistral.test.mjs",
 		"llm-local-inference/generate.mjs",
 		"llm-local-inference/model-sizes.mjs",
+		"coding-agent/run.mjs",
+		"coding-agent/tests/check-workload.test.mjs",
+		"coding-agent/tests/check-run-dirs.test.mjs",
+		"coding-agent/tests/jq-free.test.mjs",
 		"coding-agent/route-probe.mjs",
 		"coding-agent/check-canonical-artifacts.mjs",
 		"coding-agent/catalog-facts.mjs",

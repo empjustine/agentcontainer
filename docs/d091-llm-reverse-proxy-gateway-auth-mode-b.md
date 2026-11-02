@@ -106,7 +106,7 @@ unlocks.
   the container; host-side provisioning keeps its own separate chain).
 - coding-agent: `providerEntry`'s `apiKey` goes, the gateway header stays;
   the probe (`route-probe.mjs`) presents the gateway header instead of the
-  llama-swap bearer; `coding-agent/tests/check-workload.sh` fixtures follow.
+  llama-swap bearer; `coding-agent/tests/check-workload.test.mjs` fixtures follow.
 - The vault keeps the retired `REVERSE_PROXY_API_KEY` set for outside
   compatibility; this repo reads only `REVERSE_PROXY_TOKEN` — no alias
   read, no warn, no migration window (d071's law).

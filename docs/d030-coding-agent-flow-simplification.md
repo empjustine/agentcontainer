@@ -17,7 +17,7 @@ Proposed; options 4 and 5 shipped and option 3 was reverted — see below.
 
 Option 4 (`workload_env_allowlist` in `lib/workload-runtime.sh`, now used by
 both run scripts) and option 5 (`coding-agent/gen-lib.mjs` generator kit) have
-shipped, with a behavioural test for option 4 in `coding-agent/tests/check-workload.sh`.
+shipped, with a behavioural test for option 4 in `coding-agent/tests/check-workload.test.mjs`.
 Option 3 (prefix GC) was drafted and then REVERTED: the stage dirs under
 `~/workspace/agentcontainer-*` are the mounted agent state (session /
 transcript history) and `workload_rm` also discards container logs, so pruning

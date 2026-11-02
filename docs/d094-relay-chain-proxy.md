@@ -109,14 +109,16 @@ bind (docs/d046).
 
 1. **This record + index** (this file; README index row; unit README's
    relay-node surface sentence; the relay launcher's header/allowlist —
-   `run.sh` at the time, since replaced by `vpn-relay.sh`, docs/d095).
+   `run.sh` at the time, then `vpn-relay.sh` (docs/d095), now deleted with
+   the packaged service and `estige proxy-env`, docs/d120).
 2. **Code** — relaychain.go (parse + chainProxy.dial: CONNECT + SOCKS5
    clients, bounded handshakes, buffered-conn wrapper); relaynode.go
    (config field, tunnelDial() threading into dialTransport, startup
    chain/warning log lines, /healthz chain); modec.go/websocket.go
    (alpnNegotiate/wsDial take the dial func; shared dialTLS); modee.go
    (transport dial); the relay launcher forwards the proxy vars to the
-   relay container (`run.sh` then; `vpn-relay.sh` since docs/d095).
+   relay container (`run.sh` then; `vpn-relay.sh` since docs/d095; today the
+   service's `EnvironmentFile` and `proxy-env`, docs/d120).
 3. **Tests** — relaychain_test.go: precedence/version/scheme table on
    relayChainFromEnv; a CONNECT-chain e2e (mode D rides the chain, the
    proxy records the tunnel CONNECT and never a credential); a

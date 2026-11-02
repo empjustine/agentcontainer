@@ -388,7 +388,7 @@ tri-state dissolve into this rule — with mode A gone (d108's
 tree-shake) the store is the whole config surface, no other config
 artifact remains. The chain step's gate becomes `estige key check` (d095's rework; its pinned
 test `tests/check-vpn-relay-chain.sh` is updated by the implementing
-change). The scheme stays namespace-scoped to the tunnel (VPN-R2's
+change — that shell test is gone since docs/d120, replaced by the Go suite). The scheme stays namespace-scoped to the tunnel (VPN-R2's
 separation): the allowlist relay is untouched, and the gateway namespace
 (d091, now deprecated) keeps its staged bearer — out of scope here and
 no longer planned anywhere: extending proofs there would be a separate
@@ -477,7 +477,8 @@ implemented yet.
   it" to "keygen owns it, the loader enforces shape and size".
 - **d095 (reworked by the implementing change)** — the chain step's
   credential gate becomes `estige key check`; the pinning test
-  `tests/check-vpn-relay-chain.sh` is updated with it.
+  `tests/check-vpn-relay-chain.sh` is updated with it (then deleted with the
+  launchers, docs/d120).
 - **d084/d085 (kept, re-based)** — the tri-state arming contract holds:
   helper presence is intent, absence is byte-identical unarmed,
   presence-with-a-broken-store is loud refusal.
@@ -668,5 +669,5 @@ implemented yet.
 - `keygen` creates `prv/` at 0700 and keys at 0600;
 - `estige key check` fails loud before any bind for every refusal above
   (the chain-step gate; `tests/check-vpn-relay-chain.sh` updated with
-  the implementing change);
+  the implementing change, and replaced by the Go tests in docs/d120);
 - no store at all → byte-identical unarmed behavior (d084 smoke).

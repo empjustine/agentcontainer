@@ -45,15 +45,20 @@ run_mise_or_host() {
 }
 
 log_info "shellcheck"
-# -x: follow `source` directives (the generate.sh shims point at their own
-# folder's lib/node-run.sh; run scripts point at its lib/workload-runtime.sh).
+# -x: follow `source` directives (the generate.sh/build.sh shims point at their
+# own folder's lib/node-run.sh and lib/npm-run.sh; the shell run scripts point
+# at their lib/workload-runtime.sh — coding-agent's launcher is a node module,
+# docs/d119).
 # node_modules is pruned: npm's dependency tree may carry vendor *.sh files,
 # and this gate owns only this repo's sources.
 run_mise_or_host shellcheck find . -path ./node_modules -prune -o \
 	-type f -name '*.sh' -exec shellcheck -x {} +
 
-# jq compile gate for the workload description filters (every unit's own
-# lib/workload-*.jq copy — docs/d113: there is no repo-level lib/ any more).
+# jq compile gate for the workload description filters. One copy is left:
+# llm-local-inference/ — there is no repo-level lib/ (docs/d113), coding-agent
+# ported its runtime to node (docs/d119) and estige became a package (docs/d120).
+# The glob stays `*/lib/workload-*.jq` so a future shell copy is gated the day it
+# lands rather than the day someone remembers this line.
 #
 # jq resolves --arg/--argjson names at COMPILE time, so this catches a typo'd
 # filter variable as well as a syntax error.  The catch: a filter that uses
@@ -64,7 +69,8 @@ run_mise_or_host shellcheck find . -path ./node_modules -prune -o \
 #
 # Exit 3 is the compile-error code, tested specifically: a valid filter that
 # merely fails when run against -n's null input exits 5, which is not a
-# compile error.  Semantic mistakes are check-workload.sh's job, not this gate's.
+# compile error.  Semantic mistakes are
+# coding-agent/tests/check-workload.test.mjs's job, not this gate's.
 log_info "jq compile (gating — */lib/workload-*.jq)"
 # shellcheck disable=SC2016  # $f is expanded by the inner sh, not by this one
 run_mise_or_host jq sh -c '

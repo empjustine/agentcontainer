@@ -9,8 +9,10 @@ tags: ["workload-runtime", "container-tooling", "copy-units"]
 
 # Container tooling & run scripts
 
-This covers the container-runtime detection (`lib/workload-runtime.sh`, one hand
-copy per unit that runs workloads — docs/d113), the
+This covers the container-runtime detection (one hand copy per unit that runs
+workloads — `lib/workload-runtime.sh` with its `workload-*.jq` filters in
+`llm-local-inference/`, or `lib/workload-runtime.mjs` in `coding-agent/` —
+docs/d113, docs/d118, docs/d119), the
 deployment environments (local-inference-host, termux, small-cloud-vm), and the run scripts that launch
 the llama-swap serving container and the pi coding-agent container.
 
@@ -31,9 +33,10 @@ the llama-swap serving container and the pi coding-agent container.
 | Name                 | Sandbox / runtime                    | Cloud access | Serving dir                     | Usage dir              |
 |----------------------|--------------------------------------|--------------|---------------------------------|------------------------|
 | local-inference-host | rootless podman, SELinux enforced    | direct       | `llm-local-inference/`           | `coding-agent/`        |
-| termux               | rootless termux, restrictive SELinux, | direct (if   | `estige/` (native)   | `coding-agent/`        |
+| termux               | rootless termux, restrictive SELinux, | direct (if   | `estige/` (deb,      | `coding-agent/`        |
 |                      | non-standard file paths              | any)         |                                 |                        |
-| small-cloud-vm       | rootless podman or docker            | relay only   | `estige/` (relay)    | `coding-agent/` (static config) |
+| small-cloud-vm       | rootless podman or docker            | relay only   | `estige/` (rpm,      | `coding-agent/` (static config) |
+|                      |                                      |              | relay service)       |                        |
 
 ### local-inference-host (full, default)
 
@@ -52,14 +55,15 @@ creation (no `CAP_MKNOD` — GPUs pass through as *existing* nodes via
 `--device`, requiring group access to `/dev/dri`/`/dev/kfd`, which is what
 `workload_gpu`/`detect_gpu_devs` hand the backend).
 
-### termux (coding-agent + native cloud relay)
+### termux (coding-agent + packaged cloud relay)
 
 Resource-constrained host (phone/router under Termux). It **cannot run the
 `llm-local-inference` llama-swap container** — Termux has no usable podman/docker
 and the image is amd64/container-shaped — and there are **no local inference
 capabilities worth using** there, so generation (no container backend, no GPU)
 emits no GGUF layer. What runs on termux is `coding-agent/` (usage) plus a
-native termux build of `estige/` serving the cloud relay path — the
+native termux `.deb` of `estige/`, its service serving the tunnel
+path (`sv-enable estige`, docs/d120) — the
 environment matrix in
 [environments-and-variants.md](environments-and-variants.md) is
 authoritative. The former native llama-swap serving variant is retired: see
@@ -67,13 +71,14 @@ the [termux-serving.md](termux-serving.md) archived banner for that history.
 
 ### small-cloud-vm (cloud-relay usage)
 
-Cloud VMs serve `estige/` — the cloud relay that replaced the
-former peers-only llama-swap mode — and run `coding-agent/` against the
+Cloud VMs serve `estige/` — the relay node's service, installed from the
+`.rpm` (docs/d120), the shape that replaced the former peers-only llama-swap
+mode — and run `coding-agent/` against the
 config generated on a capable host (the run-scripts section below).
 
-## The workload runner: `<unit>/lib/workload-runtime.sh` (description-driven)
+## The workload runner: `<unit>/lib/workload-runtime.{sh,mjs}` (description-driven)
 
-`<unit>/lib/workload-runtime.sh` is a **description-driven workload runner**, not a
+The runner is a **description-driven workload runner**, not a
 bag of flags. Run scripts declare *what* they need; the tool renders *how* for
 the active backend — podman or docker —  No
 `:z${_vol_u}` strings, no inline `podman`/`docker` detection, no
@@ -85,7 +90,7 @@ the active backend — podman or docker —  No
 > cgroups, no real root, no GPU passthrough, no read-only binds — so calling it
 > a "supported workload" was a lie the tree no longer tells. The native termux
 > serving variant is retired (see the termux-serving.md banner); termux runs
-> `coding-agent/` plus a native `estige/` cloud relay today.
+> `coding-agent/` plus estige's installed service today (docs/d120).
 > For a stronger-than-container option on capable hosts, see
 > [d020-libvirt-qemu-sandbox.md](d020-libvirt-qemu-sandbox.md). For how the
 > field does the same confinement at finer granularity (bwrap/landlock/
@@ -102,11 +107,23 @@ its copy in `<unit>/lib/`, docs/d113):
 ```
 
 The copy lives in the unit, but it must still be **locatable from the sourcing
-script**, and POSIX sh cannot self-locate a file it is being run from. Each copy
-therefore resolves its siblings (`workload-*.jq`, `log.sh`) from the sourcing
-script's `SCRIPT_DIR` + `lib`, and honors `WORKLOAD_LIB_DIR` when the caller is
-not the unit's own run script (that variable is the seam: it names the `lib/`
-whose filters and loggers the caller wants).
+script**, and POSIX sh cannot self-locate a file it is being run from. Each
+`.sh` copy therefore resolves its siblings (`workload-*.jq`, `log.sh`) from the
+sourcing script's `SCRIPT_DIR` + `lib`, and honors `WORKLOAD_LIB_DIR` when the
+caller is not the unit's own run script (that variable is the seam: it names the
+`lib/` whose filters and loggers the caller wants). The `.mjs` copy is imported
+by path from the unit's own `run.mjs`, so it has no such seam and needs none
+(docs/d119).
+
+**Two implementations, one contract.** The rest of this document describes the
+contract in the shell vocabulary (`workload_*` mutators, one jq filter per
+list). `coding-agent/lib/workload-runtime.mjs` implements the same contract in
+node: same mutator names, same flag order out, one in-memory description instead
+of a JSON document filtered per mutator — which is why that unit needs no `jq`
+on the host (docs/d119). `estige/` retired its pair with the packaging change
+(docs/d120: a package installs the relay as a service, so nothing renders a
+container argv), which leaves `llm-local-inference/` as the shell
+implementation's only consumer.
 
 On source it detects the backend and computes two paths every run script uses
 (instead of recomputing them per script):
@@ -195,25 +212,28 @@ header repeats:
 - any filter that takes its input from `--argjson` rather than stdin **must be
   run with `jq -n`**, or it waits on stdin and never produces output.
 
-**Dependency:** jq is required by the `workload_*` calls only — scripts that
-source `<unit>/lib/workload-runtime.sh` just for `log_*` never touch it,
-and the lookup is lazy (it fails on first use, not at source time).
-Provisioned in `mise.toml` (host), `coding-agent/config.toml` (image), and
-`pkg install jq` on Termux. The filters are evaluated HOST-side
-(`workload_JQDIR` is `$REPO_ROOT/lib`), so nothing about them has to reach
-inside the container — the `/opt/lib` bind-mounts that once carried them were
-retired with the generator-tree mounts (d056).
+**Dependency:** jq is required by the `workload_*` calls of the **shell**
+implementation only — scripts that source `<unit>/lib/workload-runtime.sh` just
+for `log_*` never touch it, and the lookup is lazy (it fails on first use, not
+at source time). Provisioned in `mise.toml` (host), `coding-agent/config.toml`
+(the image's own mise, where it stays even though the unit no longer needs it
+host-side, docs/d119), and `pkg install jq` on Termux. The filters are evaluated
+HOST-side (`workload_JQDIR` is the unit's own `lib/`), so nothing about them has
+to reach inside the container — the `/opt/lib` bind-mounts that once carried
+them were retired with the generator-tree mounts (d056).
 
-**Tests:** `./tests/check-workload.sh` renders two full descriptions (one per
-backend) and diffs the argv against the pre-refactor output, plus the
-`workload_has` predicate and the `workload_restart` flag position. It is a
-differential test: it exists because the two bugs found during this refactor
-were semantic, and neither the shellcheck nor the jq compile gate in
-`./lint.sh` can see them. `./tests/check-vpn-relay-chain.sh` is the second
-end-to-end runner test (docs/d095): a stub `curl` answers the relay's
-`/healthz`, a stub `podman` records the launch argv, and the assertions cover
-reuse, the foreign-listener refusal, and the env sequencing that gives the
-relay the host's chain variables and the child the loopback spelling.
+**Tests:** `coding-agent/tests/check-workload.test.mjs` renders full
+descriptions (one per backend) and diffs the argv against the pre-refactor
+output, plus the `workload_has` predicate and the `workload_restart` flag
+position — the differential fixture is `tests/expect-run-dirs.txt`, captured
+from the retired shell renderer (docs/d119). It is a differential test: it
+exists because the two bugs found during this refactor were semantic, and
+neither the shellcheck nor the jq compile gate in `./lint.sh` can see them.
+The relay half of that surface is now Go-side: `estige/proxyenv_test.go` pins
+the `proxy-env` export shape, quoting and `NO_PROXY` merge, and
+`estige/relaynode_selfchain_test.go` pins the self-chain refusal (exit 94) and
+the foreign-chain accept — the chain-step test that used a stub `curl` and a
+stub `podman` retired with the launchers (docs/d095/d120).
 
 ### `workload_run` backend
 
@@ -312,17 +332,19 @@ docs/d018 for the merge contract this supersedes.
 - **Port**: LAN **8101** (`HOST_PORT` overrides). The container always
   listens on 8080 internally. The world used to reach the same catalog via
   the tailscale funnel → estige's host-allowlist row for llama-swap's tsnet
-  serve hostname (docs/d070 §2) — that route is deleted with the reverse
-  proxy (docs/d108); estige (env `PORT`, default 8080, docs/d110) is the
-  funnel front for the tunnel namespace only. The legacy local-inference
+  serve hostname (docs/d070) — that route is deleted with the reverse proxy
+  (docs/d108); estige (env `PORT`, default 8080, docs/d110) is the funnel
+  front for the tunnel namespace only. The legacy local-inference
   port 18080 is deprecated — nothing listens on it since the two-instance
   squash.
 
 - **Termux (archived serving variant)**: the native termux llama-swap serving
   variant is retired (see the [termux-serving.md](termux-serving.md) banner).
-  What runs on termux today: `coding-agent/` plus a native `estige/`
-  cloud relay; `./estige/build.sh` provisions the Infisical CLI there
-  (via the repo-root `provision-termux.sh`) and builds that android proxy binary.
+  What runs on termux today: `coding-agent/` plus `estige/`'s installed
+  service, from the `.deb` (`dpkg -i … && sv-enable estige`, docs/d120);
+  `./estige/build.sh` provisions the Infisical CLI there (via the repo-root
+  `provision-termux.sh`) and builds the android payload plus that package. The
+  package itself needs neither `node` nor `jq`.
 
 ### `coding-agent/run.sh` (full, default usage)
 
@@ -363,7 +385,8 @@ aborts.
 - **local llama-swap** (`config.d/10-local-llm-inference.yaml`): local
   inference only, GPU container hosts only; LAN **8101** (`HOST_PORT`
   overrides), container 8080.
-- **cloud relay** (`estige/`): the SSL-VPN tunnel namespace at `/vpn`
-  (docs/d073/d077/d105), LAN 8080 by default, env `PORT` when steered
-  (docs/d110). The `/<upstream-host>/<path>` allowlist routes are deleted
-  (docs/d108).
+- **cloud relay** (`estige/`, installed as a service — docs/d120): the
+  SSL-VPN tunnel namespace at `/vpn` (docs/d073/d077/d105), LAN 8080 by
+  default, env `PORT` when steered (docs/d110). The `/<upstream-host>/<path>`
+  allowlist routes are deleted (docs/d108); nothing renders a container argv
+  for this unit any more.
