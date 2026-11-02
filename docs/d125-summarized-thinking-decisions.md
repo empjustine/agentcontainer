@@ -5,7 +5,7 @@ status: active
 title: "d125 — pi-summarized-thinking: human-facing turn summaries, and the context is never touched"
 parent: coding-agent
 depends-on: [d100, d117]
-references: [d042, d096, d116]
+references: [d042, d096, d116, d124]
 tags: ["pi-extensions", "reasoning", "cache", "sessions", "thinkrail"]
 ---
 
@@ -122,10 +122,12 @@ thin: an in-chat `custom` entry (TUI renderer + one ThinkRail web row) and a
 sidecar `<session>.reasoning.jsonl` for backfill, re-summarization with another
 model, and audit. The sidecar reads pi JSONL through `SessionManager.open()`,
 walks to a leaf, and writes **beside** the session — never into a file a live
-session has open, because the in-memory leaf and the file would diverge and the
-entry tree would be corrupted. The same boundary that stops one session from
-steering another makes the sidecar the only place a second writer can live: beside
-the file, never inside a live tree.
+session has open, because there is no channel to the session holding it: d124
+finds that sessions share only disk state, never control, so a second writer
+cannot learn the live leaf before writing it and the entry tree would be
+corrupted. Being able to read a session is not permission to write into it — the
+sidecar is the only place a second writer can live, beside the file and never
+inside a live tree.
 
 ### Configuration precedence and a three-command surface
 
