@@ -27,7 +27,7 @@ from gguf import GGUFReader
 # reserved for machine-consumed output.
 import pathlib as _pl
 
-sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
+sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
 import log
 
 log.set_tool("llm-local-inference/gguf-context-length")

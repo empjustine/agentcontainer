@@ -138,3 +138,18 @@ if git grep -nE '[.]ts[.]net/[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}'
 	echo "capability-bearing funnel URL in tracked files (docs/d086) — see lines above" >&2
 	exit 1
 fi
+
+# Retired-root-lib gate (docs/d113): after the fold every unit owns its own
+# `lib/`, so a reference that climbs out of the unit to reach one points at a
+# folder that no longer exists. Nothing notices at lint time and nothing runs
+# python in the sweep, which is how six llm-local-inference tools kept
+# resolving `<repo-root>/lib` long after it was gone: `import log` only failed
+# once an operator ran the script. Textual, like the gate above, because the
+# break is a path, not a type. `*/tests/` is excluded on purpose — a test in
+# `<unit>/tests/` climbing one level reaches its own unit's lib.
+log_info "retired-root-lib gate (gating — tracked sources)"
+if git grep -nE 'parent[.]parent|HERE[.]parent' -- '*.py' \
+	|| git grep -nE '[.][.]/lib/' -- '*.mjs' '*.sh' '*.jq' '*.ts' ':(exclude)*/tests/*'; then
+	echo "reference to a lib/ outside the unit's own (docs/d113) — see lines above" >&2
+	exit 1
+fi

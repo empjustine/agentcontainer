@@ -18,11 +18,11 @@ Stream is stdout by default; a script whose stdout IS the machine-consumed
 payload calls set_stream(sys.stderr) once at startup so logs cannot interleave
 with the payload (docs/d045).
 
-Usage from a PEP-723 `uv run` script (the script's dir is on sys.path, the
-repo root is not — bootstrap by inserting ../lib):
+Usage from a PEP-723 `uv run` script (the script's dir is on sys.path, its
+`lib/` is not — bootstrap by inserting this folder's own lib):
 
     import pathlib, sys
-    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "lib"))
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "lib"))
     import log
     log.set_tool("llm-local-inference/upkeep")
     log.info("pulled repo", repo="org/name", revision="abc123")

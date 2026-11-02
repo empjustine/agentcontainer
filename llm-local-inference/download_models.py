@@ -65,7 +65,7 @@ from huggingface_hub.hf_api import RepoFile
 # reserved for machine-consumed output.
 import pathlib as _pl
 
-sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
+sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
 import log
 
 log.set_tool("llm-local-inference/download-models")
@@ -74,7 +74,7 @@ log.set_tool("llm-local-inference/download-models")
 log.set_stream(sys.stderr)
 
 HERE = Path(__file__).parent
-MODEL_DATA = HERE.parent / "lib" / "llamacpp-model-data.json"
+MODEL_DATA = HERE / "lib" / "llamacpp-model-data.json"
 
 SPLIT_RE = re.compile(r"-(\d{5})-of-(\d{5})\.gguf$")
 

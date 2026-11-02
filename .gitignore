@@ -7,3 +7,8 @@ estige/estige-android
 # npm dev tooling (docs/d107) — package-lock.json is the tracked lock; the
 # installed tree is disposable and recreated on demand by ./npm-tools.sh.
 node_modules/
+
+# Python bytecode — the llm-local-inference tools run through `uv run`, which
+# writes __pycache__ beside every imported module (the unit's own lib/
+# included). Disposable by definition: no .pyc is ever an input.
+__pycache__/

@@ -50,7 +50,7 @@ import tempfile
 # reserved for machine-consumed output.
 import pathlib as _pl
 
-sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
+sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
 import log
 
 log.set_tool("llm-local-inference/generate-vram-fit-tables")
@@ -61,10 +61,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).parent
-MODEL_DATA = HERE.parent / "lib" / "llamacpp-model-data.json"
+MODEL_DATA = HERE / "lib" / "llamacpp-model-data.json"
 DEFAULT_ESTIMATOR = os.environ.get("HUGGINGFACE_ESTIMATE_DIR") or "~/Downloads/references/github/gdevenyi/huggingface-estimate"
-OUT_MD = HERE.parent / "docs" / "gguf-vram-fit-estimates.md"
-OUT_JSON = HERE.parent / "docs" / "gguf-vram-fit-estimates.data.json"
+OUT_MD = HERE / "gguf-vram-fit-estimates.md"
+OUT_JSON = HERE / "gguf-vram-fit-estimates.data.json"
 
 CTXS = [32768, 65536, 131072]
 GIB = 2 ** 30

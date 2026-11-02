@@ -47,7 +47,7 @@ from huggingface_hub.hf_api import RepoFile
 # reserved for machine-consumed output.
 import pathlib as _pl
 
-sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
+sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
 import log
 
 log.set_tool("llm-local-inference/fetch-hf-manifests")
@@ -56,8 +56,8 @@ log.set_tool("llm-local-inference/fetch-hf-manifests")
 log.set_stream(sys.stderr)
 
 HERE = Path(__file__).parent
-MODEL_DATA = HERE.parent / "lib" / "llamacpp-model-data.json"
-MANIFEST_DIR = HERE.parent / "lib" / "hf-manifests"
+MODEL_DATA = HERE / "lib" / "llamacpp-model-data.json"
+MANIFEST_DIR = HERE / "lib" / "hf-manifests"
 
 SIDECAR_RE = re.compile(r"(mmproj|imatrix|mtp-|eagle3-|dflash-|dspark-)")
 SPLIT_RE = re.compile(r"-(\d{5})-of-(\d{5})\.gguf$")

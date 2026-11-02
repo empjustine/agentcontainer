@@ -38,14 +38,14 @@ from pathlib import Path
 # Structured logging (JSON lines on stderr).
 import pathlib as _pl
 
-sys.path.insert(0, str(_pl.Path(__file__).resolve().parent.parent / "lib"))
+sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
 import log
 
 log.set_tool("llm-local-inference/scan-cache-for-manifest")
 log.set_stream(sys.stderr)
 
 HERE = Path(__file__).parent
-MODEL_DATA = HERE.parent / "lib" / "llamacpp-model-data.json"
+MODEL_DATA = HERE / "lib" / "llamacpp-model-data.json"
 
 # The sidecar filter and cache-root order are shared with the coverage
 # scanner (same directory, so plain import: see _hf_cache.py).
