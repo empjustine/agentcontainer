@@ -37,15 +37,17 @@ session warns once per provider, not on every model-selector open.
 There are no generated artifacts, no `generate.sh`, no `--check` — the
 folder has nothing to regenerate. `tests/pi-opencode.test.mjs` pins the
 rules: each config carries only `refreshModels`, no model data exists in
-the folder, the upstream URLs match the fact table
-(`lib/cloud-providers.mjs`), and every failure path leaves pi's defaults in
-place (all fetches injected — no network in `node --test`).
+the folder, the upstream URLs match this folder's fact-table row literals,
+and every failure path leaves pi's defaults in place. Run it with
+`. ./npm-run.sh && npm_run pi-opencode test` from the repo root (all fetches
+injected — no network in `node --test`).
 
 ## Provenance
 
 Everything this folder knows about the providers comes from two places: the
-fact table (`lib/cloud-providers.mjs` — the canonical upstream URLs and the
-key env, docs/d024/d070) and the live listings themselves. It carries no
+folder's fact-table row literals in `tests/pi-opencode.test.mjs` (the
+canonical upstream URLs and the key env, docs/d024/d070) and the live
+listings themselves. It carries no
 catalog, so it makes no behavioral copy of anything — the watchdog observes
 and warns, nothing else. The one upstream-design debt recorded against the
 FAMILY (not this folder): pi-ai's built-in opencode-go catalog was verified

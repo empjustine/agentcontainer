@@ -1,7 +1,7 @@
 # AGENTS.md — pi-synthetic
 
 Folder-local rules. Repo-wide rules are in `../AGENTS.md`; the standalone rule
-and the `lib/` contract are in `../docs/architecture.md`. What follows is only
+(a folder is a copy unit) is in `../docs/architecture.md`. What follows is only
 what is specific here.
 
 ## One source of truth, and it is the provider
@@ -12,9 +12,9 @@ what is specific here.
   state the three-source ladder was deleted for (see `PENDING.md`).
 - **A failure throws.** No stale-copy branch, no lineup floor. The committed
   artifact is the offline fallback, and a failed run must never write a worse
-  one — the atomic writer (`lib/artifact.mjs`) is what makes that true.
-- **No invented facts.** The only literals are the provider's identity (from
-  `lib/cloud-providers.mjs`), `api: "openai-completions"` (a claim about the
+  one — the atomic writer in `generate.mjs` is what makes that true.
+- **No invented facts.** The only literals are the provider's identity (the
+  frozen row in `sources.mjs`), `api: "openai-completions"` (a claim about the
   wire, not a model), and pi's own schema defaults for a limit the listing did
   not publish.
 - **`cost`** follows docs/d057 in the manifest (omit a partial block) and fills
@@ -42,15 +42,17 @@ read as an alias target. So:
 ## Generated artifacts
 
 `models.json` and `models.js` are written by `generate.mjs`. Hand-editing
-them is erased by the next `./generate.sh` — fix the shaping instead. Both are
+them is erased by the next generation run — fix the shaping instead. Both are
 in `biome.jsonc`'s ignore list (generated files, same reasoning as
-`coding-agent/model-*.json`). `./generate.sh --check` is the drift gate;
-prefer it over eyeballing a diff when you only need to know "is this current".
+`coding-agent/model-*.json`). `. ./npm-run.sh && npm_run pi-synthetic generate
+--check` is the drift gate; prefer it over eyeballing a diff when you only need
+to know "is this current".
 
 ## The folder is the package
 
-`index.ts`, `sources.mjs`, `merge.mjs`, `models.js` and `package.json` at this
-level ARE the pi package. If a change seems to need a subfolder, a copy step, or
+`index.ts`, `sources.mjs`, `merge.mjs`, `log.mjs`, `models.js` and
+`package.json` at this level ARE the pi package (`log.mjs` included: it is what
+`sources.mjs`, and therefore the loaded extension, writes its log lines with). If a change seems to need a subfolder, a copy step, or
 two module trees kept in sync with `cmp`, it is rebuilding machinery that was
 already deleted once — find out why before doing it.
 

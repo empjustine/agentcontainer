@@ -1,9 +1,0 @@
-[
-	{
-		"id": "mistral",
-		"label": "Mistral",
-		"apiKeyEnv": "MISTRAL_API_KEY",
-		"baseUrl": "https://api.mistral.ai/v1",
-		"support": "best-effort"
-	}
-]

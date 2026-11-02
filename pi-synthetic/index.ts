@@ -4,8 +4,8 @@
  * upstream) with pi, seeded from the generated catalog and refreshed from the
  * provider's own listing at runtime.
  *
- * This file, sources.mjs, merge.mjs, models.js and package.json ARE the pi
- * package (docs/d096): `pi install ./pi-synthetic -l`, a copy into
+ * This file, sources.mjs, merge.mjs, log.mjs, models.js and package.json ARE
+ * the pi package (docs/d096): `pi install ./pi-synthetic -l`, a copy into
  * `~/.pi/agent/extensions/pi-synthetic/`, or `pi -e ./pi-synthetic/index.ts`.
  * There is no subfolder and no copy step — the folder is the unit.
  *

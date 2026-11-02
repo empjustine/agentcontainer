@@ -33,11 +33,10 @@
  * family. The contrast case is pi-mistral (also a watchdog, different
  * auth-gating rule, its own folder).
  *
- * The whole extension is this one file — deliberately with ZERO repo-`lib`
- * imports: a copied package must stand alone. The upstream URLs are
- * constants here, and tests/pi-opencode.test.mjs pins them against this
- * folder's own fact-table rows (lib/cloud-providers.mjs, docs/d070/d104) so they
- * cannot drift.
+ * The whole extension is this one file, deliberately with no sibling module:
+ * a copied package must stand alone. The upstream URLs are constants here,
+ * and tests/pi-opencode.test.mjs pins them against this folder's own
+ * fact-table row literals (docs/d070/d104) so they cannot drift.
  *
  * Network access rides the environment's forward proxy (NODE_USE_ENV_PROXY=1
  * plus the forwarded HTTP(S)_PROXY, docs/d074). Deliberately absent: OAuth
@@ -53,10 +52,10 @@ export const OPENCODE_GO_PROVIDER_ID = "opencode-go";
 /**
  * The providers' live model listings — the fact-table canonical upstreams
  * (docs/d070) plus the path each surface serves its listing under. tests pin
- * both against lib/cloud-providers.mjs. Both are PUBLIC (verified: 200
- * unauthenticated), which is why a keyless listing failure is a warning
- * worth raising here — unlike pi-mistral's auth-gated listing, where
- * keyless means only "no key".
+ * both against the row literals in tests/pi-opencode.test.mjs. Both are
+ * PUBLIC (verified: 200 unauthenticated), which is why a keyless listing
+ * failure is a warning worth raising here — unlike pi-mistral's auth-gated
+ * listing, where keyless means only "no key".
  */
 export const OPENCODE_LISTING_URL = "https://opencode.ai/zen/v1/models";
 export const OPENCODE_GO_LISTING_URL = "https://opencode.ai/zen/go/v1/models";

@@ -27,9 +27,9 @@ could become one:
   catalog stands. Never substitute rows on failure.
 - **Per-provider interval state**: one provider's outage must not silence
   the other's — each watchdog keeps its own clock (`force` bypasses both).
-- `index.ts` deliberately has zero `../lib` imports: a copied package must
-  stand alone. The upstream URLs are pinned constants (fact table:
-  `lib/cloud-providers.mjs`, docs/d070); the tests assert the pins.
+- `index.ts` deliberately has no sibling module: a copied package must stand
+  alone. The upstream URLs are pinned constants (fact table: the row literals
+  in `tests/pi-opencode.test.mjs`, docs/d070); the tests assert the pins.
 - Network access rides the environment's forward proxy
   (`NODE_USE_ENV_PROXY=1`, docs/d074). Keys are read from
   `OPENCODE_API_KEY` (the built-ins' own env — the shared client-side

@@ -3,6 +3,10 @@
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
+	"scripts": {
+		"generate": "node ./generate.mjs",
+		"test": "node --test tests/*.test.mjs"
+	},
 	"description": "pi extension: the Charm Hyper provider, seeded from and refreshed to the provider's own /provider catalog",
 	"keywords": [
 		"pi-package",

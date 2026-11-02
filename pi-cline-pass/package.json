@@ -3,6 +3,10 @@
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
+	"scripts": {
+		"generate": "node ./generate.mjs",
+		"test": "node --test tests/*.test.mjs"
+	},
 	"description": "pi extension: the ClinePass provider, seeded from and reconciled to Cline's published lineup and the models.dev metadata",
 	"keywords": [
 		"pi-package",

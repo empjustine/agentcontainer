@@ -4,8 +4,8 @@
  * The catalog the extension registers when it cannot read the provider's
  * listing: the same shaping that produced pi-hyper/models.json, rendered with
  * the pi-ai model field names (mandatory cost block — the one deliberate
- * divergence, see merge.mjs). Regenerate with ./generate.sh; the git diff
- * is the review.
+ * divergence, see merge.mjs). Regenerate with npm_run pi-hyper generate
+ * (source ./npm-run.sh at the repo root first); the git diff is the review.
  */
 
 export const HYPER_MODELS = [

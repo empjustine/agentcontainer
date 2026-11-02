@@ -32,10 +32,10 @@
  * listings are public, so there a keyless failure means the endpoint moved
  * and is worth the warning; here a keyless failure means only "no key".
  *
- * The whole extension is this one file — deliberately with ZERO repo-`lib`
- * imports: a copied package must stand alone. The upstream URL is a constant
- * here, and tests/pi-mistral.test.mjs pins it against this folder's own
- * fact-table row (lib/cloud-providers.mjs, docs/d070/d104) so it cannot drift.
+ * The whole extension is this one file, deliberately with no sibling module:
+ * a copied package must stand alone. The upstream URL is a constant here, and
+ * tests/pi-mistral.test.mjs pins it against this folder's own fact-table row
+ * literal (docs/d070/d104) so it cannot drift.
  *
  * Network access rides the environment's forward proxy (NODE_USE_ENV_PROXY=1
  * plus the forwarded HTTP(S)_PROXY, docs/d074). Deliberately absent: OAuth
@@ -53,7 +53,7 @@ export const MISTRAL_PROVIDER_ID = "mistral";
 /**
  * The provider's live model listing — the fact-table canonical upstream
  * (docs/d070) plus the path the OpenAI surface serves its listing under.
- * tests pin this against lib/cloud-providers.mjs.
+ * tests pin this against the row literal in tests/pi-mistral.test.mjs.
  */
 export const MISTRAL_LISTING_URL = "https://api.mistral.ai/v1/models";
 

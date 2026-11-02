@@ -1,7 +1,7 @@
 # AGENTS.md — pi-cline-pass
 
 Folder-local rules. Repo-wide rules are in `../AGENTS.md`; the standalone rule
-and the `lib/` contract are in `../docs/architecture.md`. What follows is only
+(a folder is a copy unit) is in `../docs/architecture.md`. What follows is only
 what is specific here (docs/d040 owns the lineup contract itself).
 
 ## Two sources, one floor — and never the provider's own listing
@@ -44,7 +44,7 @@ billing selector.
 
 ## No invented facts, spelled for this folder
 
-- Provider identity comes only from `lib/cloud-providers.mjs`; the only other
+- Provider identity comes only from `sources.mjs`'s frozen row; the only other
   literals are `api: "openai-completions"` and pi's schema defaults for a
   limit the catalog did not publish.
 - **cost** completes a partial block with zeros (models.dev routinely omits
@@ -69,10 +69,10 @@ billing selector.
 ## Generated artifacts
 
 `models.json` and `models.js` are written by `generate.mjs`. Hand-editing
-them is erased by the next `./generate.sh` — fix the shaping instead. Both
-are in `biome.jsonc`'s ignore list (generated files). `./generate.sh --check`
-is the drift gate; prefer it over eyeballing a diff when you only need to
-know "is this current".
+them is erased by the next generation run — fix the shaping instead. Both
+are in `biome.jsonc`'s ignore list (generated files). `. ./npm-run.sh &&
+npm_run pi-cline-pass generate --check` is the drift gate; prefer it over
+eyeballing a diff when you only need to know "is this current".
 
 `CLINE_PASS_LINEUP` (the committed fallback) is transcribed from the same
 published docs table the fleet's constant carries — siblings by provenance.
@@ -81,8 +81,9 @@ A deliberate lineup contraction must land in BOTH this folder and
 
 ## The folder is the package
 
-`index.ts`, `sources.mjs`, `merge.mjs`, `models.js` and `package.json` at
-this level ARE the pi package. If a change seems to need a subfolder, a copy
+`index.ts`, `sources.mjs`, `merge.mjs`, `log.mjs`, `models.js` and
+`package.json` at this level ARE the pi package (`log.mjs` included: it is what
+`sources.mjs`, and therefore the loaded extension, writes its log lines with). If a change seems to need a subfolder, a copy
 step, or two module trees kept in sync, it is rebuilding machinery that was
 already deleted once in pi-synthetic — find out why before doing it.
 

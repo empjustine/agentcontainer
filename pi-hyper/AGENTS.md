@@ -1,7 +1,7 @@
 # AGENTS.md — pi-hyper
 
 Folder-local rules. Repo-wide rules are in `../AGENTS.md`; the standalone rule
-and the `lib/` contract are in `../docs/architecture.md`. What follows is only
+(a folder is a copy unit) is in `../docs/architecture.md`. What follows is only
 what is specific here. The folder contract is `../pi-synthetic/AGENTS.md`'s,
 applied to this provider (docs/d096/d100) — read that one first; only the
 hyper-specific deltas are below.
@@ -13,7 +13,7 @@ hyper-specific deltas are below.
   models.dev fallback "to be safe": the catalog carries hyper too, but a
   second source can only lag or contradict the provider's own document.
 - **A failure throws.** The committed artifact is the offline fallback;
-  the atomic writer (`lib/artifact.mjs`) is what makes that true.
+  the atomic writer in `generate.mjs` is what makes that true.
 - **The compat mirror is a TRANSCRIPTION, not a published fact.**
   `merge.mjs`'s `HYPER_WIRE_COMPAT` copies charmbracelet/pi-hyper-provider
   `src/models.ts` (the same transcription the fleet's modelCompat makes,
@@ -31,9 +31,10 @@ hyper-specific deltas are below.
 ## Generated artifacts
 
 `models.json` and `models.js` are written by `generate.mjs`. Hand-editing
-them is erased by the next `./generate.sh` — fix the shaping instead. Both
+them is erased by the next generation run — fix the shaping instead. Both
 are in `biome.jsonc`'s ignore list (generated files, same reasoning as
-`coding-agent/model-*.json`). `./generate.sh --check` is the drift gate.
+`coding-agent/model-*.json`). `. ./npm-run.sh && npm_run pi-hyper generate
+--check` is the drift gate.
 
 ## The fleet seam (the one open piece)
 

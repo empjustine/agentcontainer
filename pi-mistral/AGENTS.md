@@ -16,6 +16,6 @@ below:
   unconfigured provider is hidden by pi anyway, and a "could not refresh"
   warning about it would be noise. With a key, the opencode rules apply
   unchanged (failure throws the catalog warning).
-- `index.ts` deliberately has zero `../lib` imports: a copied package must
-  stand alone. The upstream URL is a pinned constant; the tests assert the
-  pin against the fact table.
+- `index.ts` deliberately has no sibling module: a copied package must stand
+  alone. The upstream URL is a pinned constant; the test asserts the pin
+  against the fact-table row literal it carries.

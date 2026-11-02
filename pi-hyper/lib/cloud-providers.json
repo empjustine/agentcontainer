@@ -1,9 +1,0 @@
-[
-	{
-		"id": "hyper",
-		"label": "Charm Hyper",
-		"apiKeyEnv": "HYPER_API_KEY",
-		"baseUrl": "https://hyper.charm.land/v1",
-		"support": "first-class"
-	}
-]

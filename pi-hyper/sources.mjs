@@ -14,17 +14,17 @@
  * The route machinery never existed here. This reads the fact table's
  * CANONICAL upstream (docs/d070) directly and relies on the environment's
  * forward proxy — `NODE_USE_ENV_PROXY=1` is set for every generator run
- * (`lib/node-run.sh`) and `coding-agent/run.sh` forwards `HTTP(S)_PROXY`
- * (docs/d074) — so the third-generation tunnel carries the request with no
- * client-side routing code at all (docs/d100).
+ * (the repo root's `node-run.sh`) and `coding-agent/run.sh` forwards
+ * `HTTP(S)_PROXY` (docs/d074) — so the third-generation tunnel carries the
+ * request with no client-side routing code at all (docs/d100).
  *
  * Contracts:
  *   - `fetchCatalog` is the ONLY network call. It takes an injectable fetch
  *     so tests exercise the parse with no network, and no environment
  *     variable exists to redirect it.
  *   - A failure THROWS. There is no stale-copy branch: the committed
- *     artifact is the offline fallback, and the atomic writer
- *     (`lib/artifact.mjs`) means a failed run leaves it untouched.
+ *     artifact is the offline fallback, and the atomic writer (in this
+ *     folder's `generate.mjs`) means a failed run leaves it untouched.
  *   - The listing is PUBLIC (verified: 200 unauthenticated). The bearer is
  *     sent when a key exists for parity with the fleet's facts refresh, not
  *     because the catalog needs it.
@@ -33,36 +33,35 @@
  * Env: nothing (docs/d113).
  */
 
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = join(scriptDir, "lib");
-
-const { logDebug, setLogTool } =
-	/** @type {typeof import("./lib/log.mjs")} */ (
-		await import(`${LIB_DIR}/log.mjs`)
-	);
-const { CLOUD_PROVIDERS } =
-	/** @type {typeof import("./lib/cloud-providers.mjs")} */ (
-		await import(`${LIB_DIR}/cloud-providers.mjs`)
-	);
+import { logDebug, setLogTool } from "./log.mjs";
 
 setLogTool("pi-hyper/sources");
 
 /**
- * The fact-table row this folder exists for (lib/cloud-providers.mjs,
- * docs/d024): the ONE place the upstream URL and the key env are declared,
- * and the source of the canonical URL the committed artifact carries
- * (docs/d070).
+ * The provider facts this folder exists for (docs/d024): the ONE place the
+ * upstream URL and the key env are declared, and the source of the canonical
+ * URL the committed artifact carries (docs/d070).
+ *
+ * A frozen literal rather than a loaded fact table: an extension serves
+ * exactly one provider, so a row here cannot be missing and nothing has to
+ * guard for that. `support` is docs/d064's tier for this row — how much
+ * lineup/liveness work the generators do for it — carried with the data so
+ * the folder still states it.
+ * @type {Readonly<{
+ *   id: string,
+ *   label: string,
+ *   apiKeyEnv: string,
+ *   baseUrl: string,
+ *   support: string,
+ * }>}
  */
-const HYPER = CLOUD_PROVIDERS.hyper;
-// The fact table is the ONE home for this row (docs/d024) — a missing row is
-// a broken repo, not a runtime state, so the module refuses to load without
-// it instead of shipping undefined facts downstream.
-if (!HYPER) {
-	throw new Error("lib/cloud-providers.mjs lost the hyper row");
-}
+export const HYPER = Object.freeze({
+	id: "hyper",
+	label: "Charm Hyper",
+	apiKeyEnv: "HYPER_API_KEY",
+	baseUrl: "https://hyper.charm.land/v1",
+	support: "first-class",
+});
 
 /** @type {string} the provider's canonical upstream. */
 export const HYPER_BASE_URL = HYPER.baseUrl;

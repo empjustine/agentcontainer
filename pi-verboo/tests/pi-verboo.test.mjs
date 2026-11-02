@@ -28,14 +28,19 @@ const {
 	fetchListing,
 	listingUrl,
 	storeIsFresh,
+	VERBOO_API_KEY_ENV,
 	VERBOO_BASE_URL,
 	VERBOO_PROVIDER_ID,
 } = await import("../sources.mjs");
-const { CLOUD_PROVIDERS } = await import("../lib/cloud-providers.mjs");
-
 const unitDir = join(dirname(fileURLToPath(import.meta.url)), "..");
-const verboo = CLOUD_PROVIDERS.verboo;
-assert.ok(verboo, "the fact table must carry the verboo row");
+
+// The fact-table row now lives in ../sources.mjs (one row per folder, docs/d113).
+// These three literals are the independent copy every consumer is pinned
+// against, so a base-url or key-env edit there cannot pass silently
+// (docs/d024/d070).
+const VERBOO_FACT_ID = "verboo";
+const VERBOO_FACT_BASE_URL = "https://code.verboo.ai/router/v1";
+const VERBOO_FACT_API_KEY_ENV = "VERBOO_API_KEY";
 
 /**
  * One listing row; every field overridable so a test names only its own
@@ -78,10 +83,10 @@ const fetchOnce =
 	};
 
 test("the fact table is the only place the upstream and key env are spelled", () => {
-	assert.equal(VERBOO_BASE_URL, "https://code.verboo.ai/router/v1");
-	assert.equal(VERBOO_BASE_URL, verboo.baseUrl);
-	assert.equal(VERBOO_PROVIDER_ID, verboo.id);
-	assert.equal(listingUrl(), `${VERBOO_BASE_URL}/models`);
+	assert.equal(VERBOO_BASE_URL, VERBOO_FACT_BASE_URL);
+	assert.equal(VERBOO_PROVIDER_ID, VERBOO_FACT_ID);
+	assert.equal(VERBOO_API_KEY_ENV, VERBOO_FACT_API_KEY_ENV);
+	assert.equal(listingUrl(), `${VERBOO_FACT_BASE_URL}/models`);
 });
 
 test("the listing is fetched from the canonical upstream, with no redirect surface", async () => {
@@ -98,7 +103,7 @@ test("the listing is fetched from the canonical upstream, with no redirect surfa
 			);
 		},
 	});
-	assert.equal(seen, `${verboo.baseUrl}/models`);
+	assert.equal(seen, `${VERBOO_FACT_BASE_URL}/models`);
 });
 
 test("the bearer rides when a key exists — the listing is auth-gated", async () => {
@@ -213,9 +218,9 @@ test("committed models.json carries the fact-table canonical upstream, not a rou
 		readFileSync(join(unitDir, "models.json"), "utf-8"),
 	);
 	const provider = doc.providers[VERBOO_PROVIDER_ID];
-	assert.equal(provider.baseUrl, verboo.baseUrl);
+	assert.equal(provider.baseUrl, VERBOO_FACT_BASE_URL);
 	assert.equal(provider.api, "openai-completions");
-	assert.equal(provider.apiKey, `$${verboo.apiKeyEnv}`);
+	assert.equal(provider.apiKey, `$${VERBOO_FACT_API_KEY_ENV}`);
 	assert.equal(provider.authHeader, true);
 	for (const retired of ["compat", "headers"]) {
 		assert.equal(
@@ -266,7 +271,7 @@ test("the extension loads, registers, and every row survives pi's own required f
 		assert.ok(first);
 		const { id, config } = first;
 		assert.equal(id, VERBOO_PROVIDER_ID);
-		assert.equal(config.baseUrl, verboo.baseUrl);
+		assert.equal(config.baseUrl, VERBOO_FACT_BASE_URL);
 		assert.ok(config.models.length > 0);
 		for (const model of config.models) {
 			for (const field of [

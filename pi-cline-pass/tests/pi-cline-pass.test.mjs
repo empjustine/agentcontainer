@@ -20,6 +20,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const {
+	CLINE_PASS,
 	CLINE_PASS_API_KEY_ENV,
 	CLINE_PASS_BASE_URL,
 	CLINE_PASS_ID_PREFIX,
@@ -43,11 +44,11 @@ const {
 	toExtensionModel,
 	toPiModel,
 } = await import("../merge.mjs");
-const { CLOUD_PROVIDERS } = await import("../lib/cloud-providers.mjs");
 
 const unitDir = join(dirname(fileURLToPath(import.meta.url)), "..");
-const clinePass = CLOUD_PROVIDERS["cline-pass"];
-assert.ok(clinePass, "the fact table must carry the cline-pass row");
+// The folder's own row: the one place the upstream and the key env are spelled
+// (sources.mjs), so the exports above are only believable if they match it.
+const clinePass = CLINE_PASS;
 
 /**
  * One models.dev catalog record (the models.dev wire field names); every
@@ -103,7 +104,7 @@ const fetchOnce =
 		);
 	};
 
-test("the fact table is the only place the upstream and key env are spelled", () => {
+test("the folder's row is the only place the upstream and key env are spelled", () => {
 	assert.equal(CLINE_PASS_BASE_URL, "https://api.cline.bot/api/v1");
 	assert.equal(CLINE_PASS_BASE_URL, clinePass.baseUrl);
 	assert.equal(CLINE_PASS_PROVIDER_ID, clinePass.id);

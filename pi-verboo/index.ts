@@ -4,8 +4,8 @@
  * upstream) with pi, seeded from the generated catalog and refreshed from
  * the provider's own `/models` listing at runtime.
  *
- * This file, sources.mjs, merge.mjs, models.js and package.json ARE the pi
- * package (docs/d096's folder contract, applied here): `pi install
+ * This file, sources.mjs, log.mjs, merge.mjs, models.js and package.json ARE
+ * the pi package (docs/d096's folder contract, applied here): `pi install
  * ./pi-verboo -l`, a copy into `~/.pi/agent/extensions/pi-verboo/`, or
  * `pi -e ./pi-verboo/index.ts`. There is no subfolder and no copy step —
  * the folder is the unit.

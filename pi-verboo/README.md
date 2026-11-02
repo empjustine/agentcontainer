@@ -1,9 +1,9 @@
 # pi-verboo — the Verboo provider as a pi package
 
-Registers the **Verboo** gateway (`https://code.verboo.ai/router/v1`, the fact
-table's canonical upstream — `lib/cloud-providers.mjs`) with
-[pi](https://github.com/earendil-works/pi), seeded from committed artifacts
-and refreshed at runtime from the provider's own `/models` listing.
+Registers the **Verboo** gateway (`https://code.verboo.ai/router/v1`, the
+fact-table row `sources.mjs` carries) with
+[pi](https://github.com/earendil-works/pi), seeded from committed artifacts and
+refreshed at runtime from the provider's own `/models` listing.
 
 ## Install
 
@@ -32,8 +32,8 @@ effort enums) but NO prices and NO output limits, so the committed artifacts
 assert neither: the manifest omits `cost` and `maxTokens` entirely
 (docs/d057), and the extension fills the mandatory zero cost and the schema's
 own 16384 default. The committed pair was seeded from the fleet's facts cache
-of the same listing (see AGENTS.md); `./generate.sh --check` is the drift
-gate, and both forms need the key.
+of the same listing (see AGENTS.md); `npm_run pi-verboo generate --check` is
+the drift gate, and both forms need the key.
 
 ## Files
 
@@ -42,16 +42,18 @@ gate, and both forms need the key.
 | `index.ts`                     | the extension entry: `registerProvider` + `refreshModels` (the listing at runtime) |
 | `sources.mjs`                  | the ONE source read: the provider's `/models` listing at the canonical upstream    |
 | `merge.mjs`                    | the ONE shaping step + both projections (manifest entry, registered-model entry)   |
-| `generate.mjs` / `generate.sh` | one fetch in, two artifacts out; `--check` verifies without writing                |
+| `log.mjs`                      | the JSONL logger both halves share (docs/d045)                                     |
+| `generate.mjs`                 | one fetch in, two artifacts out; `--check` verifies without writing                |
 | `models.json`                  | GENERATED: the pi-`models.json`-shaped verboo block (canonical upstream, d070)     |
 | `models.js`                    | GENERATED: the extension's offline seed                                            |
 
-Regenerate with `./generate.sh` (the git diff is the review).
+Regenerate with `. ./npm-run.sh && npm_run pi-verboo generate` from the repo
+root (the git diff is the review).
 
 ## Provenance
 
-Everything this folder knows comes from two places, both live data: the fact
-table (`lib/cloud-providers.mjs` — the canonical upstream and key env,
+Everything this folder knows comes from two places, both live data: the
+fact-table row in `sources.mjs` (the canonical upstream and key env,
 docs/d024/d070) and the provider's own listing, fetched at generation and at
 refresh. It makes NO behavioral copy of any third-party repo — no compat
 flags, no transcribed tables: a plain OpenAI-compatible gateway where pi's
@@ -63,7 +65,7 @@ AGENTS.md (the fleet's facts cache of the same listing).
 ## Tests
 
 ```sh
-sh -c '. lib/node-run.sh && node_run --test tests/pi-verboo.test.mjs'
+. ./npm-run.sh && npm_run pi-verboo test     # from the repo root
 ```
 
 Network-free (injected fetch) and rule-pinning: the source contract, the

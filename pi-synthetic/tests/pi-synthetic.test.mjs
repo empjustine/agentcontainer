@@ -33,14 +33,14 @@ const {
 	fetchListing,
 	listingUrl,
 	storeIsFresh,
+	SYNTHETIC,
 	SYNTHETIC_BASE_URL,
 	SYNTHETIC_PROVIDER_ID,
 } = await import("../sources.mjs");
-const { CLOUD_PROVIDERS } = await import("../lib/cloud-providers.mjs");
-
 const unitDir = join(dirname(fileURLToPath(import.meta.url)), "..");
-const synthetic = CLOUD_PROVIDERS.synthetic;
-assert.ok(synthetic, "the fact table must carry the synthetic row");
+// The folder's own row: the one place the upstream and the key env are spelled
+// (sources.mjs), so the exports above are only believable if they match it.
+const synthetic = SYNTHETIC;
 
 /**
  * One listing row; every field overridable so a test names only its own
@@ -85,7 +85,7 @@ const fetchOnce =
 		);
 	};
 
-test("the fact table is the only place the upstream and key env are spelled", () => {
+test("the folder's row is the only place the upstream and key env are spelled", () => {
 	assert.equal(SYNTHETIC_BASE_URL, "https://api.synthetic.new/openai/v1");
 	assert.equal(SYNTHETIC_BASE_URL, synthetic.baseUrl);
 	assert.equal(SYNTHETIC_PROVIDER_ID, synthetic.id);

@@ -3,8 +3,9 @@
  *
  * The catalog the extension registers when it cannot read the provider's
  * listing: the same shaping that produced pi-synthetic/models.json, rendered
- * with the pi-ai model field names. Regenerate with ./generate.sh; the git diff
- * is the review.
+ * with the pi-ai model field names. Regenerate with npm_run pi-synthetic
+ * generate (source ./npm-run.sh at the repo root first); the git diff is the
+ * review.
  */
 
 export const SYNTHETIC_MODELS = [

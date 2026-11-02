@@ -31,8 +31,8 @@
  *
  * Failure contract, mirroring the fleet and pi-synthetic:
  *   - a failed catalog fetch THROWS: the committed artifacts (written
- *     atomically, lib/artifact.mjs) are the offline fallback, and a run
- *     with no metadata source has nothing to publish;
+ *     atomically by this folder's generator) are the offline fallback, and a
+ *     run with no metadata source has nothing to publish;
  *   - an unreadable docs table degrades to the committed fallback lineup
  *     with a warning: a missing markdown file says nothing about whether
  *     the subscription still serves its models.
@@ -44,36 +44,36 @@
  */
 
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 
-const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = join(scriptDir, "lib");
-
-const { logDebug, logInfo, logWarn, setLogTool } =
-	/** @type {typeof import("./lib/log.mjs")} */ (
-		await import(`${LIB_DIR}/log.mjs`)
-	);
-const { CLOUD_PROVIDERS } =
-	/** @type {typeof import("./lib/cloud-providers.mjs")} */ (
-		await import(`${LIB_DIR}/cloud-providers.mjs`)
-	);
+import { logDebug, logInfo, logWarn, setLogTool } from "./log.mjs";
 
 setLogTool("pi-cline-pass/sources");
 
 /**
- * The fact-table row this folder exists for (lib/cloud-providers.mjs,
- * docs/d024): the ONE place the upstream URL and the key env are declared,
- * and the source of the canonical URL the committed artifact carries
- * (docs/d070).
+ * The provider facts this folder exists for (docs/d024): the ONE place the
+ * upstream URL and the key env are declared, and the source of the canonical
+ * URL the committed artifact carries (docs/d070).
+ *
+ * A frozen literal rather than a loaded fact table: an extension serves
+ * exactly one provider, so a row here cannot be missing and nothing has to
+ * guard for that. `support` is docs/d064's tier for this row — how much
+ * lineup/liveness work the generators do for it — carried with the data so
+ * the folder still states it.
+ * @type {Readonly<{
+ *   id: string,
+ *   label: string,
+ *   apiKeyEnv: string,
+ *   baseUrl: string,
+ *   support: string,
+ * }>}
  */
-const CLINE_PASS = CLOUD_PROVIDERS["cline-pass"];
-// The fact table is the ONE home for this row (docs/d024) — a missing row is
-// a broken repo, not a runtime state, so the module refuses to load without
-// it instead of shipping undefined facts downstream.
-if (!CLINE_PASS) {
-	throw new Error("lib/cloud-providers.mjs lost the cline-pass row");
-}
+export const CLINE_PASS = Object.freeze({
+	id: "cline-pass",
+	label: "ClinePass",
+	apiKeyEnv: "CLINE_API_KEY",
+	baseUrl: "https://api.cline.bot/api/v1",
+	support: "first-class",
+});
 
 /** @type {string} the provider's canonical upstream. */
 export const CLINE_PASS_BASE_URL = CLINE_PASS.baseUrl;
@@ -81,7 +81,7 @@ export const CLINE_PASS_BASE_URL = CLINE_PASS.baseUrl;
 export const CLINE_PASS_API_KEY_ENV = CLINE_PASS.apiKeyEnv;
 /** @type {string} the provider id pi namespaces model ids under. */
 export const CLINE_PASS_PROVIDER_ID = CLINE_PASS.id;
-/** @type {string} the display name (the fact table's label, docs/d024). */
+/** @type {string} the display name (the row's label, docs/d024). */
 export const CLINE_PASS_NAME = CLINE_PASS.label;
 
 /**

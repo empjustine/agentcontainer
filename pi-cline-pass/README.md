@@ -1,7 +1,7 @@
 # pi-cline-pass — the ClinePass provider as a pi package
 
-Registers the **ClinePass** gateway (`https://api.cline.bot/api/v1`, the fact
-table's canonical upstream — `lib/cloud-providers.mjs`) with
+Registers the **ClinePass** gateway (`https://api.cline.bot/api/v1`, the
+frozen provider row in `sources.mjs`) with
 [pi](https://github.com/earendil-works/pi), seeded from committed artifacts
 and reconcilable at refresh time against the same two published sources the
 generator uses (docs/d040 owns the lineup contract).
@@ -22,7 +22,7 @@ pi -e ./pi-cline-pass/index.ts
 
 Network rides the environment's forward proxy
 (`NODE_USE_ENV_PROXY=1` + the forwarded `HTTP(S)_PROXY`, docs/d074) — the
-same path for the extension's refresh and `./generate.sh`. No relay ladder,
+same path for the extension's refresh and the generator. No relay ladder,
 no route files.
 
 ## The lineup contract in one screen
@@ -88,12 +88,15 @@ execution of their code — with these caveats:
 | `index.ts` | the extension entry: `registerProvider` + `refreshModels` (the reconciliation at runtime) |
 | `sources.mjs` | the two source reads, the reconciliation floor, the committed fallback lineup |
 | `merge.mjs` | the one shaping step and both projections (manifest entry, registered-model entry) |
-| `generate.mjs` / `generate.sh` | two sources in, two artifacts out; `--check` verifies without writing |
+| `generate.mjs` | two sources in, two artifacts out; `--check` verifies without writing |
+| `log.mjs` | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045) |
 | `models.json` | GENERATED: the pi-`models.json`-shaped cline-pass block (fleet parity: provider-level compat, canonical upstream) |
 | `models.js` | GENERATED: the extension's offline seed (registered before any fresher store exists) |
 
-Regenerate with `./generate.sh` (the git diff is the review); the committed
-artifacts are the offline fallback a network-less host reads.
+Regenerate with `. ./npm-run.sh && npm_run pi-cline-pass generate` from the
+repo root (the git diff is the review); the committed artifacts are the
+offline fallback a network-less host reads. `--check` verifies them without
+writing.
 
 ## Provenance
 
@@ -102,7 +105,7 @@ ATTRIBUTION — never a code dependency (the only package dependency is the
 host itself, @earendil-works/pi-coding-agent, an optional peerDep that is
 never vendored):
 
-- **The fact table** (lib/cloud-providers.mjs) — the canonical upstream
+- **The provider row** (`sources.mjs`, frozen) — the canonical upstream
   and key env (docs/d024/d070). Live data, one home.
 - **models.dev** (https://models.dev/api.json) — the METADATA source:
   prices, limits, modalities, effort enums. Live data, public, no key, and
@@ -132,7 +135,7 @@ here so nobody debugs it as one.
 ## Tests
 
 ```sh
-sh -c '. lib/node-run.sh && node_run --test tests/pi-cline-pass.test.mjs'
+. ./npm-run.sh && npm_run pi-cline-pass test    # from the repo root
 ```
 
 Network-free (injected fetch, `CLINE_PASS_MDX` for the docs file) and

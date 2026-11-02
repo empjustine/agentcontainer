@@ -36,14 +36,15 @@ worth the warning.
 | `package.json` | `pi.package`, `pi.extensions: ["./index.ts"]`; optional peerDep on `@earendil-works/pi-coding-agent` (host-provided, never vendored)          |
 
 There are no generated artifacts, no `generate.sh`, no `--check` — the
-folder has nothing to regenerate. `tests/pi-mistral.test.mjs` (in this folder) pins the rules
-(all fetches injected — no network in `node --test`).
+folder has nothing to regenerate. `tests/pi-mistral.test.mjs` (in this folder)
+pins the rules; run it with `. ./npm-run.sh && npm_run pi-mistral test` from
+the repo root (all fetches injected — no network in `node --test`).
 
 ## Provenance
 
-Everything this folder knows comes from two places: the fact table
-(`lib/cloud-providers.mjs` — the canonical upstream and the key env,
-docs/d024/d070) and the live listing itself. It carries no catalog, so it
+Everything this folder knows comes from two places: the folder's fact-table
+row literal in `tests/pi-mistral.test.mjs` (the canonical upstream and the key
+env, docs/d024/d070) and the live listing itself. It carries no catalog, so it
 makes no behavioral copy of anything. The same family-wide caveat as
 `../pi-opencode/` applies: pi-ai's built-in mistral catalog was never
 row-verified by this repo, and the watchdog catches outages, not drift

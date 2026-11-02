@@ -17,9 +17,10 @@ read as source and never installed — see "Provenance".
 
 | Path                                   | Role                                                                                                                      |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `sources.mjs`                          | the ONE data source: the provider's `/models` listing, fetched from the fact table's canonical upstream                   |
+| `sources.mjs`                          | the ONE data source: the provider's `/models` listing, fetched from the folder's own canonical-upstream row           |
 | `merge.mjs`                            | the ONE shaping step (`shapeListing`/`shapeRow`) plus the two projections — pi `models.json` entry, pi-ai extension entry |
-| `generate.mjs` / `generate.sh`         | one fetch in, two committed artifacts out; `--check` verifies them without writing                                        |
+| `generate.mjs`                         | one fetch in, two committed artifacts out; `--check` verifies them without writing                                        |
+| `log.mjs`                              | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045)                                                     |
 | `index.ts`                             | the pi extension entry (provider registration + `refreshModels`)                                                          |
 | `models.json`                          | **generated** — a pi `models.json`-shaped manifest with the `synthetic` provider block (canonical upstream, docs/d070)    |
 | `models.js`                            | **generated** — the extension's offline seed: `SYNTHETIC_MODELS` + `SYNTHETIC_ALIASES`                                    |
@@ -34,13 +35,15 @@ three-source ladder that caused them.
 ## Generate
 
 ```sh
-./generate.sh            # fetch, shape, write both artifacts
-./generate.sh --check    # verify the committed artifacts are current (no write)
+. ./npm-run.sh                    # from the repo root
+npm_run pi-synthetic generate         # fetch, shape, write both artifacts
+npm_run pi-synthetic generate --check # verify the committed artifacts are current (no write)
 ```
 
-The root `./generate.sh` does not run this folder yet (see "Not wired in"),
-so run the folder shim. `--check` is the CI-shaped form: it exits non-zero when
-a committed artifact differs from a fresh generation.
+There is no root-level generator any more (docs/d113): this folder's
+`package.json` is the only entrypoint table, and `--check` is the CI-shaped
+form — it exits non-zero when a committed artifact differs from a fresh
+generation.
 
 ## One source, deliberately
 
@@ -60,7 +63,7 @@ Consequences worth knowing:
 
 - **A failed fetch is a failed run.** There is no stale-copy branch and no
   lineup floor: a bogus or unreachable source means the provider is unreachable,
-  and the committed artifact — written atomically (`lib/artifact.mjs`) — is what
+  and the committed artifact — written atomically by `generate.mjs` — is what
   a network-less host falls back to. That also makes the drift "did anyone
   regenerate lately", stated plainly instead of hidden behind a fallback.
 - **Routing is not this folder's business.** The canonical URL is what the
@@ -155,8 +158,9 @@ no pi process has ever loaded this extension. `TODO.md` §1 carries the rest.
   Joining them is a small mechanical change, and it is deliberately blocked —
   the existing generators stay untouched until the `estige`
   deployment issues land. See `TODO.md` §3.
-- The root `./generate.sh` and `./build.sh` do not know about this folder: it
-  has no container image and no root-build target.
+- No repo-level build or generate step knows about this folder: it has no
+  container image and no `build.mjs`, and its own `package.json` script is the
+  only way it is rebuilt.
 
 ## Provenance
 
@@ -168,7 +172,7 @@ wire claim is either the provider's own publication or pi's own schema
 default. That classification is the provenance sanity rule the extension
 family holds itself to (docs/d100); the one behavioral copy in the family
 lives in ../pi-hyper/ and is flagged there.
-- Provider facts: `lib/cloud-providers.mjs` (`synthetic`, docs/d092).
+- Provider facts: the frozen row in `sources.mjs` (`synthetic`, docs/d092).
 - The emitted provider block's shape: `coding-agent/model-019-cloud-synthetic.json`.
 - Extension API surface: pi's own docs — `docs/custom-provider.md`,
   `docs/extensions.md` — and the installed packages (see above).

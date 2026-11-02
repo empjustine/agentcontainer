@@ -13,10 +13,10 @@
  *
  * The route machinery is gone with it. This reads the fact table's CANONICAL
  * upstream (docs/d070) directly and relies on the environment's forward proxy
- * — `NODE_USE_ENV_PROXY=1` is set for every generator run (`lib/node-run.sh`)
- * and in the coding-agent image, and `coding-agent/run.sh` forwards
- * `HTTP(S)_PROXY` (docs/d074) — so the third-generation tunnel carries the
- * request with no client-side routing code at all. That is why there is no
+ * — `NODE_USE_ENV_PROXY=1` is set for every generator run (the repo root's
+ * `node-run.sh`) and in the coding-agent image, and `coding-agent/run.sh`
+ * forwards `HTTP(S)_PROXY` (docs/d074) — so the third-generation tunnel
+ * carries the request with no client-side routing code at all. That is why there is no
  * `REVERSE_PROXY_BASE_URLS`/relay-candidate handling here: this folder is not a
  * third hand-rolled client of the proxy.
  *
@@ -26,8 +26,8 @@
  *     environment variable exists to redirect it.
  *   - A failure THROWS. There is no stale-copy fallback because there is no
  *     second copy: the committed artifact is the fallback for a host that
- *     cannot reach the network, and the generator's atomic write
- *     (`lib/artifact.mjs`) means a failed run leaves it untouched.
+ *     cannot reach the network, and the generator's atomic write (in this
+ *     folder's `generate.mjs`) means a failed run leaves it untouched.
  *   - No fetch URL is ever recorded (docs/d086): the canonical upstream is not
  *     a secret, but logs that echo a URL are how a rotatable capability ends up
  *     in a log stream. Provenance is the source id and the row counts.
@@ -35,35 +35,38 @@
  * Env: nothing (docs/d113).
  */
 
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = join(scriptDir, "lib");
-
-const { logDebug, logWarn, setLogTool } =
-	/** @type {typeof import("./lib/log.mjs")} */ (
-		await import(`${LIB_DIR}/log.mjs`)
-	);
-const { CLOUD_PROVIDERS } =
-	/** @type {typeof import("./lib/cloud-providers.mjs")} */ (
-		await import(`${LIB_DIR}/cloud-providers.mjs`)
-	);
+import { logDebug, logWarn, setLogTool } from "./log.mjs";
 
 setLogTool("pi-synthetic/sources");
 
 /**
- * The fact-table row this folder exists for (lib/cloud-providers.mjs,
- * docs/d024): the ONE place the upstream URL and the key env are declared, and
- * the source of the canonical URL committed artifacts carry (docs/d070).
+ * The provider facts this folder exists for (docs/d024): the ONE place the
+ * upstream URL and the key env are declared, and the source of the canonical
+ * URL committed artifacts carry (docs/d070).
+ *
+ * A frozen literal rather than a loaded fact table: an extension serves
+ * exactly one provider, so a row here cannot be missing and nothing has to
+ * guard for that. `support` is docs/d064's tier for this row — how much
+ * lineup/liveness work the generators do for it — carried with the data so
+ * the folder still states it. (The fact table's per-row `note` is not carried:
+ * it argued for the multi-catalog cascade this folder deleted in docs/d096.)
+ * @type {Readonly<{
+ *   id: string,
+ *   label: string,
+ *   apiKeyEnv: string,
+ *   baseUrl: string,
+ *   support: string,
+ * }>}
  */
-const SYNTHETIC = CLOUD_PROVIDERS.synthetic;
-// The fact table is the ONE home for this row (docs/d024) — a missing row is
-// a broken repo, not a runtime state, so the module refuses to load without
-// it instead of shipping undefined facts downstream.
-if (!SYNTHETIC) {
-	throw new Error("lib/cloud-providers.mjs lost the synthetic row");
-}
+export const SYNTHETIC = Object.freeze({
+	id: "synthetic",
+	label: "Synthetic",
+	apiKeyEnv: "SYNTHETIC_API_KEY",
+	// The FULL base, path suffix included (docs/d027): the upstream serves its
+	// OpenAI surface under /openai/v1, so no drift whitelist applies.
+	baseUrl: "https://api.synthetic.new/openai/v1",
+	support: "first-class",
+});
 
 /** @type {string} the provider's canonical upstream. */
 export const SYNTHETIC_BASE_URL = SYNTHETIC.baseUrl;

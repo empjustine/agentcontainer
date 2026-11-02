@@ -4,8 +4,8 @@
  * upstream) with pi, seeded from the generated catalog and refreshed from
  * the provider's own `/provider` document at runtime.
  *
- * This file, sources.mjs, merge.mjs, models.js and package.json ARE the pi
- * package (docs/d096's folder contract, applied here): `pi install
+ * This file, sources.mjs, merge.mjs, log.mjs, models.js and package.json ARE
+ * the pi package (docs/d096's folder contract, applied here): `pi install
  * ./pi-hyper -l`, a copy into `~/.pi/agent/extensions/pi-hyper/`, or
  * `pi -e ./pi-hyper/index.ts`. There is no subfolder and no copy step —
  * the folder is the unit.

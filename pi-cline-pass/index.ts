@@ -4,8 +4,8 @@
  * upstream) with pi, seeded from the generated catalog and reconciled at
  * refresh time against the SAME two published sources the generator uses.
  *
- * This file, sources.mjs, merge.mjs, models.js and package.json ARE the pi
- * package (docs/d096): `pi install ./pi-cline-pass -l`, a copy into
+ * This file, sources.mjs, merge.mjs, log.mjs, models.js and package.json ARE
+ * the pi package (docs/d096): `pi install ./pi-cline-pass -l`, a copy into
  * `~/.pi/agent/extensions/pi-cline-pass/`, or `pi -e ./pi-cline-pass/index.ts`.
  *
  * What this extension deliberately does NOT do: sync the provider's own

@@ -1,7 +1,7 @@
 # pi-hyper — the Charm Hyper provider as a pi package
 
-Registers the **Charm Hyper** gateway (`https://hyper.charm.land/v1`, the fact
-table's canonical upstream — `lib/cloud-providers.mjs`) with
+Registers the **Charm Hyper** gateway (`https://hyper.charm.land/v1`, the
+frozen provider row in `sources.mjs`) with
 [pi](https://github.com/earendil-works/pi), seeded from committed artifacts
 and refreshed at runtime from the provider's own `/provider` catalog.
 
@@ -19,7 +19,7 @@ pi -e ./pi-hyper/index.ts
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `HYPER_API_KEY` | the key pi sends as `Authorization: Bearer` (an unset key leaves the provider unconfigured — pi hides its models from `/model`) |
 
-The catalog itself is PUBLIC — a keyless `./generate.sh` regenerates the same
+The catalog itself is PUBLIC — a keyless generator run regenerates the same
 artifacts. Network rides the environment's forward proxy
 (`NODE_USE_ENV_PROXY=1` + the forwarded `HTTP(S)_PROXY`, docs/d074). No relay
 ladder, no route files.
@@ -28,7 +28,8 @@ ladder, no route files.
 
 One source: the provider's own `/provider` document — lineup, metadata and
 prices together. A failed fetch fails the run (the committed artifact is the
-offline fallback); `./generate.sh --check` is the drift gate. The one
+offline fallback); `. ./npm-run.sh && npm_run pi-hyper generate --check` (from
+the repo root) is the drift gate. The one
 transcribed fact is the wire-compat mirror (see Provenance below) — everything
 else (prices, limits, effort enums, attachment support) comes from the
 document.
@@ -40,18 +41,20 @@ document.
 | `index.ts`                     | the extension entry: `registerProvider` + `refreshModels` (the listing at runtime) |
 | `sources.mjs`                  | the ONE source read: the provider's `/provider` catalog at the canonical upstream  |
 | `merge.mjs`                    | the ONE shaping step + both projections (manifest entry, registered-model entry)   |
-| `generate.mjs` / `generate.sh` | one fetch in, two artifacts out; `--check` verifies without writing                |
+| `generate.mjs`                 | one fetch in, two artifacts out; `--check` verifies without writing                |
+| `log.mjs`                      | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045)             |
 | `models.json`                  | GENERATED: the pi-`models.json`-shaped hyper block (canonical upstream, d070)      |
 | `models.js`                    | GENERATED: the extension's offline seed                                            |
 
-Regenerate with `./generate.sh` (the git diff is the review).
+Regenerate with `. ./npm-run.sh && npm_run pi-hyper generate` from the repo
+root (the git diff is the review).
 
 ## Provenance
 
 Everything this folder knows comes from three places, with different trust
 properties:
 
-- **The fact table** (`lib/cloud-providers.mjs`) — the canonical upstream and
+- **The provider row** (`sources.mjs`, frozen) — the canonical upstream and
   key env (docs/d024/d070). Live data, one home.
 - **The provider's own `/provider` document** — fetched live at generation
   and at refresh. Self-correcting: the source of truth is the source.
@@ -73,7 +76,7 @@ properties:
 ## Tests
 
 ```sh
-sh -c '. lib/node-run.sh && node_run --test tests/pi-hyper.test.mjs'
+. ./npm-run.sh && npm_run pi-hyper test    # from the repo root
 ```
 
 Network-free (injected fetch) and rule-pinning: the source contract, the

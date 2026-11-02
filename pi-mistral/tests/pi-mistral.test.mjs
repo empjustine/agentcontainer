@@ -20,7 +20,19 @@ import assert from "node:assert/strict";
 import { readdirSync } from "node:fs";
 import test, { after, before, describe } from "node:test";
 
-import { CLOUD_PROVIDERS } from "../lib/cloud-providers.mjs";
+/**
+ * This folder's own row of the provider fact table (docs/d113), as a literal
+ * because the test is its ONLY consumer: `index.ts` keeps the upstream URL as
+ * its own pinned constant, and this row is what pins it (docs/d024/d070/d104).
+ * Editing the URL in `index.ts` alone must fail here.
+ */
+const FACT_ROW = Object.freeze({
+	id: "mistral",
+	label: "Mistral",
+	apiKeyEnv: "MISTRAL_API_KEY",
+	baseUrl: "https://api.mistral.ai/v1",
+	support: "best-effort",
+});
 
 // A computed specifier on purpose: a literal ".ts" path would pull the
 // extension entry into the tsc program, where pi's host-provided imports
@@ -32,8 +44,6 @@ const { MISTRAL_LISTING_URL, MISTRAL_PROVIDER_ID } = await import(
 	entrySpecifier
 );
 
-const MISTRAL = CLOUD_PROVIDERS.mistral;
-assert.ok(MISTRAL, "the fact table must carry the mistral row");
 const FOLDER = new URL("../", import.meta.url);
 
 /**
@@ -122,10 +132,10 @@ describe("the built-in-provider rule (docs/d097)", () => {
 	});
 });
 
-describe("fact-table parity (this folder's own lib/cloud-providers.mjs)", () => {
+describe("fact-table parity (the row literal above)", () => {
 	test("provider id and listing URL come from the fact table only", () => {
-		assert.equal(MISTRAL_PROVIDER_ID, MISTRAL.id);
-		assert.equal(MISTRAL_LISTING_URL, `${MISTRAL.baseUrl}/models`);
+		assert.equal(MISTRAL_PROVIDER_ID, FACT_ROW.id);
+		assert.equal(MISTRAL_LISTING_URL, `${FACT_ROW.baseUrl}/models`);
 	});
 });
 

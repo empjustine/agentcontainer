@@ -22,8 +22,8 @@ in-flight change had not closed.**
 > is reported, not invented. The `syn:*` tiers and their target-bearing display
 > names were an explicit user requirement, so they stay in whatever the listing
 > serves. §1.4's stated consequence is now the design's honest position: a fresh
-> checkout ages until someone regenerates, and `./generate.sh --check` is the
-> gate that says so.
+> checkout ages until someone regenerates, and `npm_run pi-synthetic generate
+> --check` (via the repo root's `npm-run.sh`) is the gate that says so.
 >
 > **UPDATE (same day). `§3`'s four defects are all CLOSED**, by the session that
 > owned the in-flight change, after this review arrived:
@@ -44,7 +44,7 @@ State at the time of writing (2026-10-29 23:07Z, `v23.0: ssl vpn`):
 | `merge.mjs` / `sources.mjs` vs their `extension/` copies | **in sync** (`cmp`)                                                                         |
 | `./check-types.sh`                                       | **8 errors** in `generate.mjs`, `merge.mjs`, the test file                                  |
 | `biome check pi-synthetic`                               | **4 format errors** (`TODO.md`, `extension/index.ts`, `extension/models.js`, `models.json`) |
-| `./generate.sh` twice, offline                           | **byte-identical** (idempotent), 16 rows, `resolved: 4`                                     |
+| generate twice, offline (`./generate.sh` then; `npm_run pi-synthetic generate` now) | **byte-identical** (idempotent), 16 rows, `resolved: 4`                                     |
 
 ---
 
@@ -123,7 +123,7 @@ capability (docs/d073/d077 modes C–E, docs/d094 chain, docs/d095
 
 Both consumers already have this path, so no new code is needed:
 
-- `lib/node-run.sh` sets `NODE_USE_ENV_PROXY=1` per invocation, so
+- `node-run.sh` (repo root) sets `NODE_USE_ENV_PROXY=1` per invocation, so
   `fetch(process.env.SYNTHETIC_BASE_URL + "/models")` rides the tunnel with zero
   code (docs/d074);
 - `coding-agent/run.sh:303` uses `workload_network host` and forwards

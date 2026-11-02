@@ -21,7 +21,26 @@ import assert from "node:assert/strict";
 import { readdirSync } from "node:fs";
 import test, { after, before, describe } from "node:test";
 
-import { CLOUD_PROVIDERS } from "../lib/cloud-providers.mjs";
+/**
+ * This folder's own rows of the provider fact table (docs/d113), as literals
+ * because the test is their ONLY consumer: `index.ts` keeps the upstream URLs
+ * as its own pinned constants, and these rows are what pin them
+ * (docs/d024/d070/d104). Editing a URL in `index.ts` alone must fail here.
+ */
+const OPENCODE = Object.freeze({
+	id: "opencode",
+	label: "OpenCode Zen",
+	apiKeyEnv: "OPENCODE_API_KEY",
+	baseUrl: "https://opencode.ai/zen/v1",
+	support: "superficial",
+});
+const OPENCODE_GO = Object.freeze({
+	id: "opencode-go",
+	label: "OpenCode Go",
+	apiKeyEnv: "OPENCODE_API_KEY",
+	baseUrl: "https://opencode.ai/zen/go/v1",
+	support: "first-class",
+});
 
 // A computed specifier on purpose: a literal ".ts" path would pull the
 // extension entry into the tsc program, where pi's host-provided imports
@@ -36,10 +55,6 @@ const {
 	OPENCODE_PROVIDER_ID,
 } = await import(entrySpecifier);
 
-const OPENCODE = CLOUD_PROVIDERS.opencode;
-assert.ok(OPENCODE, "the fact table must carry the opencode row");
-const OPENCODE_GO = CLOUD_PROVIDERS["opencode-go"];
-assert.ok(OPENCODE_GO, "the fact table must carry the opencode-go row");
 const FOLDER = new URL("../", import.meta.url);
 
 /**
@@ -141,7 +156,7 @@ describe("the built-in-provider rule (docs/d097)", () => {
 	});
 });
 
-describe("fact-table parity (this folder's own lib/cloud-providers.mjs)", () => {
+describe("fact-table parity (the row literals above)", () => {
 	test("provider ids and listing URLs come from the fact table only", () => {
 		assert.equal(OPENCODE_PROVIDER_ID, OPENCODE.id);
 		assert.equal(OPENCODE_LISTING_URL, `${OPENCODE.baseUrl}/models`);

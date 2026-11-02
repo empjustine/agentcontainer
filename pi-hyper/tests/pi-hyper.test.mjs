@@ -29,15 +29,15 @@ const {
 const {
 	catalogUrl,
 	fetchCatalog,
+	HYPER,
 	HYPER_BASE_URL,
 	HYPER_PROVIDER_ID,
 	storeIsFresh,
 } = await import("../sources.mjs");
-const { CLOUD_PROVIDERS } = await import("../lib/cloud-providers.mjs");
-
 const unitDir = join(dirname(fileURLToPath(import.meta.url)), "..");
-const hyper = CLOUD_PROVIDERS.hyper;
-assert.ok(hyper, "the fact table must carry the hyper row");
+// The folder's own row: the one place the upstream and the key env are spelled
+// (sources.mjs), so the exports above are only believable if they match it.
+const hyper = HYPER;
 
 /**
  * One catalog record; every field overridable so a test names only its own
@@ -83,7 +83,7 @@ const fetchOnce =
 		);
 	};
 
-test("the fact table is the only place the upstream and key env are spelled", () => {
+test("the folder's row is the only place the upstream and key env are spelled", () => {
 	assert.equal(HYPER_BASE_URL, "https://hyper.charm.land/v1");
 	assert.equal(HYPER_BASE_URL, hyper.baseUrl);
 	assert.equal(HYPER_PROVIDER_ID, hyper.id);
