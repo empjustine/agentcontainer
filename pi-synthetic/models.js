@@ -39,35 +39,6 @@ export const SYNTHETIC_MODELS = [
 		}
 	},
 	{
-		"id": "hf:deepseek-ai/DeepSeek-V4.1-Flash",
-		"name": "DeepSeek V4.1 Flash",
-		"contextWindow": 524288,
-		"maxTokens": 65536,
-		"reasoning": true,
-		"input": [
-			"text",
-			"image"
-		],
-		"cost": {
-			"input": 0.6,
-			"output": 1.2,
-			"cacheRead": 0.03,
-			"cacheWrite": 0
-		},
-		"compat": {
-			"supportsReasoningEffort": true
-		},
-		"thinkingLevelMap": {
-			"off": "none",
-			"minimal": null,
-			"low": "low",
-			"medium": null,
-			"high": "high",
-			"xhigh": "xhigh",
-			"max": "max"
-		}
-	},
-	{
 		"id": "hf:deepseek-ai/DeepSeek-V4.1-Flash-1017",
 		"name": "DeepSeek V4.1 Flash 10/17",
 		"contextWindow": 524288,
@@ -123,34 +94,6 @@ export const SYNTHETIC_MODELS = [
 			"high": "high",
 			"xhigh": null,
 			"max": "max"
-		}
-	},
-	{
-		"id": "hf:nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4",
-		"name": "Nemotron 3 Super 120B (hf:nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-FP8)",
-		"contextWindow": 262144,
-		"maxTokens": 65536,
-		"reasoning": true,
-		"input": [
-			"text"
-		],
-		"cost": {
-			"input": 0.3,
-			"output": 1,
-			"cacheRead": 0.06,
-			"cacheWrite": 0
-		},
-		"compat": {
-			"supportsReasoningEffort": true
-		},
-		"thinkingLevelMap": {
-			"off": "none",
-			"minimal": null,
-			"low": "low",
-			"medium": "medium",
-			"high": "high",
-			"xhigh": null,
-			"max": null
 		}
 	},
 	{
