@@ -1,4 +1,12 @@
 {
+  "_meta": {
+    "schema": "fact-cache/1",
+    "source": "verboo",
+    "contentSha256": "c5c18a1bf84e493a7d143ad4f86daa566ed21b44bbaddb3b54248a31da33b4c5",
+    "generator": "coding-agent/catalog-facts.mjs",
+    "regen": "node coding-agent/generate-pi-coding-agent.mjs",
+    "decision": "docs/d086"
+  },
   "fetchedAt": "2026-10-29T16:53:24.178Z",
   "models": [
     {

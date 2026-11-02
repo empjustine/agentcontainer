@@ -14,7 +14,9 @@
  * precondition for generation, and none can clobber the last good catalog —
  * a payload is validated in memory and only then renamed over the live file,
  * so a network error, non-200, invalid JSON, unexpected shape or truncated
- * download just advances to the next candidate. Proxy env is honored
+ * download just advances to the next candidate. A payload that validates but
+ * carries the same facts as the file already there is not written at all
+ * (lib/fact-table.mjs, docs/d086). Proxy env is honored
  * natively by Node (NODE_USE_ENV_PROXY=1, set by lib/node-run.sh; docs/d074)
  * — no repo-side dispatcher.
  *
@@ -44,9 +46,10 @@ import { upstreamCandidates } from "./route-probe.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
-const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
-	await import(`${LIB_DIR}/artifact.mjs`)
-);
+const { publishProviderMirror } =
+	/** @type {typeof import("../lib/fact-table.mjs")} */ (
+		await import(`${LIB_DIR}/fact-table.mjs`)
+	);
 const { logInfo, logWarn, setLogTool } =
 	/** @type {typeof import("../lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
@@ -62,7 +65,8 @@ setLogTool("coding-agent/refresh-models-dev");
  */
 const RELAY_PATH_AND_QUERY = "/api.json?type=all";
 
-const OUT = process.argv[2] ?? join(scriptDir, "models.dev.api.json");
+const OUT =
+	process.argv[2] ?? join(scriptDir, "..", "lib", "models.dev.api.json");
 const REQUEST_TIMEOUT_MS = 15_000;
 /**
  * Provider entries the generators read from the catalog; each must exist with
@@ -188,20 +192,23 @@ async function main() {
 	}
 
 	// Re-serialize the VALIDATED catalog instead of writing the raw response
-	// body: models.dev serves the whole catalog as one ~4 MB minified line,
-	// and a single-line file makes every refresh an unreviewable whole-file
-	// diff (`--stat` helpfully reports "1 insertion(+), 1 deletion(-)" — those
-	// two lines are the entire file). Tab-indented is also biome's canonical
-	// JSON output (verified: `biome format` is a no-op on it), so the file
-	// stays formatter-clean without biome ever touching it.
-	const written = writeArtifact(
-		OUT,
-		`${JSON.stringify(catalog, null, "\t")}\n`,
+	// body: models.dev serves the whole catalog as one ~4 MB minified line, and
+	// it emits providers (and their models maps) in its own iteration order,
+	// which differs between two fetches of identical data — so a raw body write
+	// turns a routine refresh into a ~416k-line diff of nothing. Canonical
+	// ordering plus the skip-when-unchanged rule (lib/fact-table.mjs, docs/d086)
+	// reduce the same refresh to the lines that actually moved.
+	const published = publishProviderMirror(OUT, catalog);
+	logInfo(
+		published.written
+			? "refreshed models.dev catalog"
+			: "models.dev catalog unchanged — not rewritten",
+		{
+			path: OUT,
+			providers: providerCount,
+			contentSha256: published.contentSha256,
+		},
 	);
-	logInfo("refreshed models.dev catalog", {
-		path: written,
-		providers: providerCount,
-	});
 }
 
 main().catch((err) => fail("unhandled failure", { error: err }));

@@ -29,7 +29,10 @@
  * Contracts that hold for BOTH caches:
  *   - REFRESH is best-effort: every failure — fetch, validation, or a cache
  *     dir that is not writable (ro-mounted tree) — is a warn, the last good
- *     copy survives (tmp+rename), the return value is the only signal.
+ *     copy survives (tmp+rename), the return value is the only signal. A
+ *     refresh that finds unchanged facts still returns true: the cache holds
+ *     current data either way, and the log line is what separates
+ *     `refreshed` from `unchanged — not rewritten`.
  *   - CONSUME is stale-tolerant (docs/d021): an absent/unreadable cache
  *     skips the enrichment, never aborts the run. The age is logged, never
  *     enforced — so a committed cache is a first-class artifact, not a
@@ -41,12 +44,16 @@
  *
  * Cache documents keep the RAW records, unnormalized: each consumer owns its
  * rendering (the pi generator's per-provider factsMapper, the catwalk id
- * map). Shapes: `{fetchedAt, providers: [...]}` for catwalk,
- * `{fetchedAt, models: [...]}` for a provider. No fetch URL is recorded —
- * in the document or the logs (docs/d086): the winning relay candidate is
- * capability-bearing (the funnel mount IS the mode A credential) and
- * rotates with it, so an exact URL both leaks the credential and churns
- * the cache. Provenance is fetchedAt plus the file's own identity.
+ * map). Shapes: `{_meta, fetchedAt, providers: [...]}` for catwalk,
+ * `{_meta, fetchedAt, models: [...]}` for a provider — the `_meta` block, the
+ * canonical ordering and the skip-when-unchanged rule are lib/fact-table.mjs's
+ * contract (docs/d086), which is also why a refresh that finds the same facts
+ * leaves the file — and its `fetchedAt` — alone. `fetchedAt` is therefore when
+ * the DATA last moved, not when the last fetch ran: the age below is the
+ * freshness of the facts, never of the run. No fetch URL is recorded — in the
+ * document or the logs (docs/d086): the winning relay candidate is
+ * capability-bearing (the funnel mount IS the mode A credential) and rotates
+ * with it, so an exact URL both leaks the credential and churns the cache.
  *
  * Usage (the generators call the functions in-process; the CLI is a
  * maintenance convenience — best-effort, exit 0 either way):
@@ -70,9 +77,10 @@ const { CLOUD_PROVIDERS } =
 	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
-const { writeArtifact } = /** @type {typeof import("../lib/artifact.mjs")} */ (
-	await import(`${LIB_DIR}/artifact.mjs`)
-);
+const { publishFactCache } =
+	/** @type {typeof import("../lib/fact-table.mjs")} */ (
+		await import(`${LIB_DIR}/fact-table.mjs`)
+	);
 
 setLogTool("coding-agent/catalog-facts");
 
@@ -116,20 +124,6 @@ const CATWALK_CACHE_PATH =
  * @property {string} id
  * @property {string} [name]
  * @property {CatwalkModel[]} models
- */
-
-/**
- * The parsed per-provider cache document.
- * @typedef {object} ProviderFacts
- * @property {string} fetchedAt
- * @property {ProviderFactsModel[]} models
- */
-
-/**
- * The parsed catwalk cache document.
- * @typedef {object} CatwalkFacts
- * @property {string} fetchedAt
- * @property {CatwalkProvider[]} providers
  */
 
 /**
@@ -195,22 +189,54 @@ async function relayFetch({ candidates, label, timeoutMs, headers }) {
 }
 
 /**
- * Publish a refreshed cache document through the repo's ONE atomic writer
- * (lib/artifact.mjs's tmp+rename, docs/d050), so a partial write never lands
- * on the live file. A cache dir that is not writable (the repo tree mounted ro
- * in a container) is a WARN, not a throw — the refresh contract says every
- * failure degrades to the last good copy, and throwing here would take the
- * whole generation down over an enrichment.
+ * The command that reproduces a cache — recorded as `_meta.regen` so a reader
+ * can rebuild a file they do not trust. Catwalk has a standalone CLI entry;
+ * a per-provider cache is refreshed inside generation, whose provider rows
+ * carry the endpoint shape (`path`, `listKey`) the generic CLI cannot know,
+ * so its reproducer is the generator itself.
+ * @param {string} source cache source ID
+ * @returns {string}
+ */
+function regenCommand(source) {
+	return source === "catwalk"
+		? "node coding-agent/catalog-facts.mjs catwalk"
+		: "node coding-agent/generate-pi-coding-agent.mjs";
+}
+
+/**
+ * Publish a refreshed cache through the docs/d086 churn recipe
+ * (lib/fact-table.mjs): canonical order, `_meta` provenance, and no write at
+ * all when the facts did not move. A cache dir that is not writable (the repo
+ * tree mounted ro in a container) is a WARN, not a throw — the refresh
+ * contract says every failure degrades to the last good copy, and throwing
+ * here would take the whole generation down over an enrichment.
  * @param {string} path cache destination
- * @param {unknown} document parsed JSON document to publish
+ * @param {object} cache
+ * @param {string} cache.source cache source ID (`catwalk` / provider id)
+ * @param {string} cache.listKey member holding the record list
+ * @param {unknown[]} cache.records raw records as fetched
  * @returns {boolean} false when the cache could not be written
  */
-function writeCache(path, document) {
+function publishCache(path, { source, listKey, records }) {
 	try {
-		// Same bytes the cache files already carry: these are tracked
-		// artifacts, so a formatting switch would churn every refresh diff
-		// (canonical serialization is for the generated manifests, docs/d050).
-		writeArtifact(path, `${JSON.stringify(document, null, 2)}\n`);
+		const published = publishFactCache(path, {
+			source,
+			listKey,
+			records,
+			generator: "coding-agent/catalog-facts.mjs",
+			regen: regenCommand(source),
+		});
+		logInfo(
+			published.changed
+				? `${source} facts cache refreshed`
+				: `${source} facts cache unchanged — not rewritten`,
+			{
+				path,
+				[listKey]: records.length,
+				fetchedAt: published.fetchedAt,
+				contentSha256: published.contentSha256,
+			},
+		);
 		return true;
 	} catch (err) {
 		logWarn("facts cache not writable — keeping last good copy", {
@@ -224,7 +250,10 @@ function writeCache(path, document) {
 /**
  * Read a cache document and stamp its age — the stale-tolerant half of the
  * refresh contract: absent, unreadable, empty or malformed all reduce to
- * `null` (skip the enrichment) rather than an error.
+ * `null` (skip the enrichment) rather than an error. `ageMs` is the age of the
+ * FACTS: `fetchedAt` advances only when the content moves (docs/d086), so a
+ * cache checked daily against a stable upstream reports its real data age
+ * rather than resetting to zero every run.
  * @param {string} path cache file
  * @param {string} listKey key holding the records array (`providers` / `models`)
  * @param {string} label log context
@@ -291,18 +320,11 @@ export async function refreshCatwalkFacts(url) {
 		});
 		return false;
 	}
-	const facts = /** @type {CatwalkFacts} */ ({
-		fetchedAt: new Date().toISOString(),
-		providers,
+	return publishCache(CATWALK_CACHE_PATH, {
+		source: "catwalk",
+		listKey: "providers",
+		records: /** @type {CatwalkProvider[]} */ (providers),
 	});
-	if (!writeCache(CATWALK_CACHE_PATH, facts)) {
-		return false;
-	}
-	logInfo("catwalk facts cache refreshed", {
-		path: CATWALK_CACHE_PATH,
-		providers: providers.length,
-	});
-	return true;
 }
 
 /**
@@ -401,18 +423,11 @@ export async function refreshProviderFacts(id, options) {
 		);
 		return false;
 	}
-	const document = /** @type {ProviderFacts} */ ({
-		fetchedAt: new Date().toISOString(),
-		models: records,
+	return publishCache(cachePath, {
+		source: id,
+		listKey,
+		records,
 	});
-	if (!writeCache(cachePath, document)) {
-		return false;
-	}
-	logInfo(`${id} facts cache refreshed`, {
-		path: cachePath,
-		models: records.length,
-	});
-	return true;
 }
 
 /**
