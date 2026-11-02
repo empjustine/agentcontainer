@@ -2,9 +2,11 @@
 
 Open items, in the order they can be worked. Nothing is implemented: the package
 is a skeleton validated against pi and ThinkRail source, not a running extension.
-The design rationale is [`../coding-agent/summarized-thinking.md`](../coding-agent/summarized-thinking.md);
-the contracts are [`FINDINGS.md`](FINDINGS.md). Each item says what "done" looks
-like and what is already settled, so a future session does not re-derive it.
+The design rationale is [`../coding-agent/summarized-thinking.md`](../coding-agent/summarized-thinking.md),
+the decisions are [`../docs/d125-summarized-thinking-decisions.md`](../docs/d125-summarized-thinking-decisions.md)
+(settled — an item below that needs one of them changed says so), and the
+contracts are [`FINDINGS.md`](FINDINGS.md). Each item says what "done" looks like
+and what is already settled, so a future session does not re-derive it.
 
 ## 1. The core, with no pi in the tests
 
@@ -54,6 +56,11 @@ The live event is thin — `sessionEventProjection.ts` emits `entry_appended` wi
 **Done** = a turn's card appears in the web transcript, survives reload, and the
 entry is not double-rendered by both the entry path and the message path.
 
+Also unresolved by docs/d125 on purpose: whether the card is worth this web change
+at all, or the sidecar delivery (item 5) is enough for the audit use it serves. If
+the answer is "not worth it", this item closes as rejected and docs/d125's `Open
+decisions` shrinks by one — a re-plan, not a new record.
+
 Decide: `packages/server/src/extensions/catalog.ts` records tool names through an
 inert proxy, so a command-only extension has nothing to catalog — confirm it
 still appears sensibly in Settings → Extensions, or ship it as a plain package
@@ -89,17 +96,3 @@ the canonical `hf:…` row. Either the alias should be emitted too (a generator
 change, with its own tests) or the alias-first order is permanently a miss and
 should be documented as such. **Do not** hand-edit the generated
 `model-019-cloud-synthetic.json`.
-
-## 8. A decision record, if this pivot deserves one
-
-This rework reverses the previous note on two counts — summaries are human-facing
-rather than fed back to the model, and the extension no longer rewrites thinking
-blocks at `message_end`. That reasoning now lives in
-`../coding-agent/summarized-thinking.md`, a living doc under docs/d117, which may
-be enough on its own: docs/d096 (pi-synthetic) argues its design from a record
-because it had no living doc to hold it, and this one does.
-
-**Decide** whether a `d1XX` record is still wanted (the cache rule is arguably
-repo-level policy, not this extension's business). If yes, take the next free
-number at the time of writing — `d124` already exists in one checkout, so a free
-number from a static listing is not proof of a free number.

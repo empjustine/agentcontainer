@@ -82,6 +82,11 @@ design note (a node with `parent: coding-agent`, where docs/d117 places a living
 doc for this unit), and this folder's `README.md` is a package README, not a
 graph node — the same split `../pi-synthetic/` uses with docs/d096.
 
+The decisions are `../docs/d125-summarized-thinking-decisions.md`, and they are
+not advisory. If a change here needs one of them reversed, the record is edited
+first (or amended), with the reason — the folder docs and the note follow it, not
+the other way around.
+
 Nothing is implemented yet — this folder is the design of record, so a change
 that adds code also updates `README.md`'s "Where the summary goes" and `TODO.md`
 in the same pass.

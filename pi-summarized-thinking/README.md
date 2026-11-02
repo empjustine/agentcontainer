@@ -7,6 +7,8 @@ loaded hands the provider exactly the same bytes as one without it.
 
 Design rationale, the reversals that produced it, and the cache arithmetic live
 in [`../coding-agent/summarized-thinking.md`](../coding-agent/summarized-thinking.md);
+the decisions a build must not re-litigate are
+[`../docs/d125-summarized-thinking-decisions.md`](../docs/d125-summarized-thinking-decisions.md);
 the pi/ThinkRail contracts it rests on (with the symbols to check them against) are
 in [`FINDINGS.md`](FINDINGS.md). Nothing is implemented yet — `TODO.md` owns the
 build order and `AGENTS.md` the folder rules.

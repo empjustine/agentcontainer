@@ -17,7 +17,9 @@ extension sends the provider exactly the same bytes as one that does not.
 This note owns the *why* and the reversals. The package itself —
 layout, the summarizer's model chain, commands, configuration, the invariants as
 folder rules — is `../pi-summarized-thinking/`, and the pi/ThinkRail contracts
-this rests on are `../pi-summarized-thinking/FINDINGS.md`.
+this rests on are `../pi-summarized-thinking/FINDINGS.md`. The **decisions** that
+constrain a build are `../docs/d125-summarized-thinking-decisions.md`: this note
+argues, that record decides, and a build must not re-litigate it.
 
 ## Problem
 

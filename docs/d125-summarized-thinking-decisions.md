@@ -5,7 +5,7 @@ status: active
 title: "d125 — pi-summarized-thinking: human-facing turn summaries, and the context is never touched"
 parent: coding-agent
 depends-on: [d100, d117]
-references: [d042, d096, d116, d124]
+references: [d042, d096, d116]
 tags: ["pi-extensions", "reasoning", "cache", "sessions", "thinkrail"]
 ---
 
@@ -123,8 +123,9 @@ sidecar `<session>.reasoning.jsonl` for backfill, re-summarization with another
 model, and audit. The sidecar reads pi JSONL through `SessionManager.open()`,
 walks to a leaf, and writes **beside** the session — never into a file a live
 session has open, because the in-memory leaf and the file would diverge and the
-entry tree would be corrupted (docs/d124 covers the sibling boundary that makes
-cross-session steering impossible in the first place).
+entry tree would be corrupted. The same boundary that stops one session from
+steering another makes the sidecar the only place a second writer can live: beside
+the file, never inside a live tree.
 
 ### Configuration precedence and a three-command surface
 
