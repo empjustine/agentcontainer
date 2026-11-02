@@ -129,8 +129,9 @@ needs a Windows entry, its shim is three lines over the same
   of C:.
 - **The fix is scoped to the Windows path.** The remaining
   `${LIB_DIR}/log.mjs` template importers (the generators) are
-  Linux/Termux/container hosts only and stay as they are; `git-lib.mjs` is
-  the one lib on the Windows chain.
+  Linux/Termux/container hosts only and stay as they are; `git-lib.mjs` —
+  `git/lib/git-core.mjs` since docs/d121 — is the one lib on the Windows
+  chain.
 
 ## Verification
 

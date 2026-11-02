@@ -9,6 +9,15 @@ tags: ["git", "references", "work", "software-forge", "wsl2", "mirrors"]
 
 # d044 — work-machine reference farm (software forge → bare mirrors on NTFS)
 
+> **Superseded in part (docs/d121).** The program this record teaches —
+> `./git/-vbs-mirror-all.sh --manifest FILE` — is now a nine-line interpreter
+> shim over `git/vbs-mirror-all.mjs`. Its argv, manifest fields, pacing, retry
+> policy, `--list` TSV on stdout and exit codes are unchanged, and the parity
+> run that gated the deletion is recorded in docs/d121; what changed is that
+> the `jq` extractor became node, so `jq` is no longer a `git/` prerequisite.
+> Read `-vbs-mirror-all.sh` below as the shim's name, and its behaviour as the
+> module's.
+
 `git/non-bare-issues.md` and `git/` solve the **home** machine: a farm of
 public-forge full clones under `~/Downloads/references`, converted to bare
 mirrors and kept pickaxe-fast. The **work** machine is a different animal, and
@@ -273,13 +282,16 @@ supported write path for another Git for Windows process).
   private tenant from here.
 - `migrate-to-bare.mjs` `warnIfCrossFilesystem` fires on a synthetic
   same-host root/dest pair and stays silent for same-device paths.
-- `-vbs-mirror-all.sh --manifest` is exercised against a fake `git`: a repo
-  that fails twice with `429` is retried with backoff and then mirrors (3
-  attempts); consecutive failures trigger the cooldown; a `not found` error is
-  NOT retried; and `--list` performs no git work.
+- `-vbs-mirror-all.sh --manifest` is exercised against a fake `git` — the
+  shell version by a fake-`git` PATH stub, since docs/d121 the retry policy by
+  `git/tests/git-retry.test.mjs`: a repo that fails twice with `429` is retried
+  with backoff and then mirrors (3 attempts); consecutive failures trigger the
+  cooldown; a `not found` error is NOT retried; and `--list` performs no git
+  work.
 - `audit.mjs` emits the `softwareForgeRemotes` section for a software-forge-
   shaped origin and an empty one for a GitHub-shaped origin.
-- `-vbs-mirror-all.sh` is exercised end-to-end against a fixture manifest,
+- `-vbs-mirror-all.sh` (and, since docs/d121, `git/tests/git-vbs-mirror.test.mjs`)
+  is exercised end-to-end against a fixture manifest,
   including the empty-field rows that exposed a `read` bug — tab is IFS
   *whitespace*, so an empty clone-URL column collapsed and shifted every later
   field; the extractors and loops now use the ASCII Unit Separator, which is

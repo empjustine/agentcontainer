@@ -14,6 +14,14 @@ references:
 
 # d045 — Structured logging and error construction
 
+> **Superseded in part (docs/d121).** Two of the shell consumers named below
+> are gone: `git/-vbs-mirror-all.sh` and `git/farm-tool.sh` are interpreter
+> shims now, their logic in `git/vbs-mirror-all.mjs` and `git/farm-tool.mjs`
+> using this record's `lib/log.mjs` face, and `git/lib/log.sh` was deleted with
+> its last consumer. The contract itself is unchanged — one JSONL emitter, no
+> level filtering, `LOG_STREAM=stderr` when stdout carries a payload, which is
+> exactly why `--list`'s TSV stays unambiguous.
+
 **Status:** implemented
 **Date:** 2026-09-16
 **Owner:** pi-coding-agent fleet

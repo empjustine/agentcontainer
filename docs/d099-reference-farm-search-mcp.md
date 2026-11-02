@@ -5,7 +5,7 @@ status: active
 title: "d099 — reference-farm code search as an MCP server: capped read surface, two serialized maintenance verbs, host-side"
 parent: architecture
 depends-on: [d043, d075]
-references: [git-non-bare-issues, d044, d115, d061, d076]
+references: [git-non-bare-issues, d044, d115, d061, d076, d121]
 tags: ["git", "references", "search", "mcp", "tooling", "safety"]
 ---
 
@@ -13,14 +13,19 @@ tags: ["git", "references", "search", "mcp", "tooling", "safety"]
 
 ## Status
 
-The tool surface landed as the POSIX CLI git/farm-tool.sh — capped reads + the two flocked maintenance verbs; the MCP façade, worker pool and Zoekt-backed wide search still to land; amended: the strictly-read-only posture narrowed to two serialized maintenance verbs (upsert/compact).
+The tool surface landed as the CLI git/farm-tool.sh — capped reads + the two flocked maintenance verbs; since docs/d121 a shim over `git/farm-tool.mjs`; the MCP façade, worker pool and Zoekt-backed wide search still to land; amended: the strictly-read-only posture narrowed to two serialized maintenance verbs (upsert/compact).
 
-**Status: the tool surface is built** — stage one is the POSIX CLI
-`git/farm-tool.sh` (backed by `git/farm-tool-lib.sh`'s safety posture and
-`git/farm-lock.sh`'s farm-wide mutation lock): positional argv, one JSON
-object per call, every cap and refusal enforced in one place. The planned
-MCP façade wraps that same entry verbatim, so the posture never forks into
-two implementations. Still to land: the MCP server itself
+**Status: the tool surface is built, and it is node** — stage one is the CLI
+`git/farm-tool.sh`, a twelve-line shim over `git/farm-tool.mjs` (docs/d121). The
+safety posture this record specifies lives in one module,
+`git/lib/farm-posture.mjs` (caps, the scrubbed `git` choke point, the
+allowlist validators, farm discovery, the collect window, the byte window
+`read_file` cuts), and the entry holds only argv shapes, envelopes and exit
+codes; `git/farm-lock.sh` still holds the farm-wide mutation lock and
+`git/lib/farm-lock.mjs` names and probes it. Positional argv, one JSON object
+per call, every cap and refusal enforced in one place — now enforced where the
+façade can import it. The planned MCP façade wraps that same entry verbatim,
+so the posture never forks into two implementations. Still to land: the MCP server itself
 (`git/search-mcp.mjs` + shim), the worker pool, and Zoekt-backed wide
 search. This record remains the plan for the agent-facing search surface
 over the reference farm

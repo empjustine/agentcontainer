@@ -13,6 +13,12 @@ tags: [dx, git-tooling, generators, logging, env-chain]
 
 **Status:** implemented
 
+> **Superseded in part (docs/d121).** The two flag surfaces this record
+> retired or fixed — `-vbs-mirror-all.sh`'s `VBS_*` env and `farm-tool.sh`'s
+> argv — are now `git/vbs-mirror-all.mjs` and `git/farm-tool.mjs` behind
+> their shims. The argv law holds in both: a ported tool's `--help` still
+> names the shim (`./git/farm-tool.sh`), never the module behind it.
+
 ## Problem
 
 d058 cut the *simulation* modes (dry-run/plan previews) and drew a line:
@@ -105,6 +111,11 @@ written as part of this pass and backed out. Reasons:
 | `VBS_RETRIES`, `VBS_RETRY_DELAY`, `VBS_RATE_DELAY`, `VBS_BACKOFF_MAX`, `VBS_THROTTLE`, `VBS_FAIL_STREAK`, `VBS_COOLDOWN` as env | `git/-vbs-mirror-all.sh` | constants (the d044 rate-limit contract), with `--throttle`/`--retries`/`--cooldown` as the flags that move them. |
 | `VBS_DEST`, `VBS_TRANSPORT`, `VBS_SSH_USER`, `VBS_HTTP_USER` as env | `git/-vbs-mirror-all.sh` | flags: `--dest DIR` (default `$WORK_MIRRORS`), `--transport ssh\|https`, `--ssh-user USER`, `--http-user USER`. They are not secrets — a username on argv is visible and that is fine (d044: "neither choice stores a secret — only the username"). |
 | `--verbose` as a concept | `lib/log.mjs`, `lib/log.sh`, `lib/log.py` | no gate; the fileoverview/header policy now points readers at the `jq` selection above. |
+
+The two `VBS_*` rows and the extractor clause are now `git/vbs-mirror-all.mjs`
+(docs/d121), where the policy is one frozen `POLICY` object and the manifest
+extractor is `extractRepos` — the retired env names stay retired, and the flags
+below still move the constants.
 
 ## Tradeoffs accepted
 

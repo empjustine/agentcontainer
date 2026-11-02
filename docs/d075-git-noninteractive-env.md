@@ -13,6 +13,14 @@ tags: ["git", "references", "mirrors", "credentials", "ssh", "prompts", "fail-fa
 
 **Status: implemented.**
 
+> **Superseded in part (docs/d121).** The environment this record specifies
+> now has two spellings, one per language: the shell exports listed below, and
+> `git/lib/farm-posture.mjs`'s `farmGit()` for every node entry — one choke
+> point that spawns `git` with the same scrub (`GIT_TERMINAL_PROMPT=0`,
+> `GIT_ASKPASS`, `GIT_CONFIG_NOSYSTEM`, a scratch `HOME`) plus the per-call
+> deadline. `-vbs-mirror-all.sh` and `farm-tool.sh` name node entries now.
+> Nothing about the posture changed; it stopped having a third spelling.
+
 ## Problem
 
 A reference-farm run is a *fleet* operation: one sweep touches hundreds of
@@ -64,14 +72,19 @@ One env contract, applied at the two places where git is spawned — the shared
 Node choke point and the three shell acquisition sweeps:
 
 1. **`git/git-lib.mjs` — `noninteractiveGitEnv()`** passed as `execFile`'s
-   `env` on every `git()` call. This is the single spawn site for Node
+   `env` on every `git()` call (the file is `git/lib/git-core.mjs` since
+   docs/d121; `git/lib/farm-posture.mjs`'s `farmGit()` is the second node
+   spawn site and applies the same block plus a deadline). This is the single spawn site for Node
    (verified: the only `execFile("git")` in the folder), so it covers
    `maintain`, `migrate`, `-software-forge-mirror` and any future tool
    using `git()`, on POSIX and on the `maintain.ps1` Windows path alike.
 2. **`git/-forge-mirror.sh`, `git/-github-clone.sh`** — the same block
    exported right after `set -eu`, before any loop iteration can spawn git.
 3. **`git/-vbs-mirror-all.sh`** — its existing `GIT_TERMINAL_PROMPT` export
-   extended to the full block.
+   extended to the full block. Since docs/d121 the program is
+   `git/vbs-mirror-all.mjs`, and its exports became
+   `git/lib/farm-posture.mjs`'s `farmGit()` — the block, plus a scratch `HOME`,
+   a per-call deadline, and `GIT_OPTIONAL_LOCKS=0`.
 
 The contract:
 
@@ -107,7 +120,7 @@ and passes through untouched — it is transport, not sweep policy, so d060's
 - No change for the local-only tools: `audit.mjs`, `local-changes.mjs`,
   `vbs-har.mjs`, `search-references.mjs` spawn no network git, and the
   pure shims (`audit.sh`, `maintain.sh`, `migrate.sh`, …) inherit the
-  contract from `git-lib.mjs` at call time.
+  contract from `git/lib/git-core.mjs` at call time.
 - Failure *reporting* changes shape: `maintain-mirrors.mjs` /
   `software-forge-mirror.mjs` fetch failures now carry the fail-fast stderr
   lines quoted in their `fetch failed`/`align failed` logs.
@@ -117,7 +130,8 @@ and passes through untouched — it is transport, not sweep policy, so d060's
 - Reproduced the hang under a pseudo-TTY with idle stdin (no env: killed at
   12 s still prompting; `GIT_ASKPASS` only: same hang; `GIT_TERMINAL_PROMPT=0`:
   instant exit 128).
-- `sh -n` on the three edited scripts; `node --check` on `git-lib.mjs`;
-  `node --test` (the `git-lib` tests import only the pure helpers).
+- `sh -n` on the three edited scripts; `node --check` on `git-lib.mjs` (now
+  `git/lib/git-core.mjs`); `node --test` (the `git-lib` tests import only the
+  pure helpers).
 - Fallback behaviour: `GIT_SSH_COMMAND` set → the run's git children see the
   caller's value; unset → `ssh -oBatchMode=yes`.

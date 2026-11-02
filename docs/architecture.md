@@ -163,6 +163,16 @@ root where the unit is a pi extension (docs/d118):
   `llm-local-inference/`. `coding-agent/` deleted its copy with the node port
   (docs/d119) and `estige/` with the packaged service (docs/d120); `jq` is
   therefore no longer a host prerequisite for either.
+- **`git/` has one more layer than a copy unit needs** (docs/d121): its `lib/`
+  is a *core library* — beside this folder's hand copies of the kernels above,
+  it holds the floor every `git/` entry runs on (`git-core.mjs`'s
+  non-interactive `git`, `forge-remotes.mjs`'s tenant URL normalization) and
+  the plumbing they share (`cli.mjs` argv tables + the report tail,
+  `retry.mjs`'s backoff policy with an injected clock, `farm-lock.mjs`'s view
+  of the mutation lock, `farm-posture.mjs`'s caps and scrubbed spawn). The
+  same record left every top-level `.sh` in that folder an interpreter shim,
+  so `farm-lock.sh` — `flock` in fd mode around `node_run`, because a shell
+  function is invisible to `exec` — is the only shell there that holds logic.
 
 What stays at the repo root is **not importable by any unit**: the operator
 files and the QA sweep.
@@ -194,7 +204,8 @@ files and the QA sweep.
   `coding-agent/tests/` once d108 left it a single unit. `test.sh`'s globs
   (`*/tests/*.test.mjs`, `*/tests/*.sh`) are the contract; a glob that matches
   nothing is skipped, not an error, because no unit has to ship a shell test
-  (docs/d118 turned the last two into `*.test.mjs`).
+  (docs/d118 turned the last two into `*.test.mjs`, and docs/d121 left the
+  repository with no shell test at all — the globs stay as the contract).
 
 The probe/facts/refresh modules that used to sit in a shared lib
 (`route-probe.mjs`, then named `peer-probe.mjs` (docs/d071), `pi-models.mjs`,

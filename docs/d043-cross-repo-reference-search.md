@@ -119,7 +119,7 @@ trees*, not repo size. Indexing all heads of all 775 mirrors — including the
 kernel and IntelliJ — is neither the default nor normally wanted. The posture
 is **opt-in, per repo**: pick a repo that looks interesting, then choose its
 branch scope. The `--only`/`--exclude` globs (the same filter language as
-`migrate`/`maintain`, via `git-lib.mjs`) are the selection mechanism:
+`migrate`/`maintain`, via `git/lib/git-core.mjs` (docs/d121 renamed it from `git-lib.mjs`)) are the selection mechanism:
 
 - no selector — **nothing is indexed** (the tool refuses and says so).
 - `--only 'github.com/duckdb/**'` (repeatable) — index exactly the interesting
@@ -256,7 +256,7 @@ subcommands:
 ./git/search-references.sh query 'pattern repo:duckdb branch:main' [--server URL] [--json]
 ```
 
-- `index` discovers bare mirrors with `findBareMirrors` (`git-lib.mjs`), then
+- `index` discovers bare mirrors with `findBareMirrors` (`git/lib/git-core.mjs`), then
   runs one `zoekt-git-index` container per SELECTED mirror, `--jobs` wide.
   Without `--only` (or explicit `--all`) it refuses — opt-in. The former
   `--dry-run` argv preview is gone (d058): `index` runs for real and `git diff`

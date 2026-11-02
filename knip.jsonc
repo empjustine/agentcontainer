@@ -72,8 +72,9 @@
 	// deliberately never a dependency of this repo (tsconfig.json's NOTE).
 	// The Go toolchain is a system dependency of estige's build
 	// (lib/go-build.mjs shells out to it) — a binary, not an npm package.
-	// xdg-user-dir derives the mirrors-dir fallback in git/forge-mirror.mjs:
-	// host state, the same fact the git/*.sh shims read from the xdg config.
+	// xdg-user-dir derives the mirrors-dir fallback in git/forge-mirror.mjs and
+	// git/lib/farm-posture.mjs's farmRoot(): host state, the same fact the
+	// git/*.sh shims read from the xdg config.
 	// flock(1) is the farm mutation mutex in both halves of git/ — the shell
 	// wrapper that takes it (farm-lock.sh) and the node probe that reports it
 	// (lib/farm-lock.mjs); like go, it is a host binary, not an npm package.
