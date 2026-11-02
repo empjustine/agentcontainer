@@ -139,7 +139,7 @@ short form, and each one is a bill:
 
 | File | Role |
 | --- | --- |
-| `index.ts`, `package.json` | the extension entry and its `pi.extensions` manifest — the folder IS the package | 
+| `index.ts`, `package.json` | the extension entry and its `pi.extensions` manifest — the folder IS the package |
 | `README.md` | this file: what it is, how it runs, the model chain, the commands |
 | `FINDINGS.md` | pi/ThinkRail contracts with citations, the cache rule, the superseded claims |
 | `AGENTS.md`, `TODO.md` | folder rules · the build order, unbuilt |
