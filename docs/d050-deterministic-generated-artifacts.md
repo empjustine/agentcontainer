@@ -210,7 +210,10 @@ stable today; only the provider and model orders inside the merge are not.
   deep-equal) and idempotency were checked before each write.
 - Tests: the unit test for `canonicalizeManifest` plus a **committed-manifest
   canonicity guard** over the 8 files (`coding-agent/tests/canonical-json.test.mjs`
-  and, after docs/d113 split it, the guard at `tests/committed-manifests.test.mjs`). The guard supersedes the golden double-run this
+  and, after docs/d113 split it, the guard at
+  `coding-agent/tests/committed-manifests.test.mjs`, which sits beside the
+  manifests it checks since docs/d108 left it a single unit). The guard
+  supersedes the golden double-run this
   doc originally proposed: it needs no pinned `MODELS_DEV_JSON` and still
   fails loudly when a write path bypasses the choke point or a hand edit
   reorders a manifest.
@@ -221,7 +224,9 @@ stable today; only the provider and model orders inside the merge are not.
   `run.sh`'s comment already records for `artifact.mjs` itself, repeated).
   `tests/lib-staging.test.mjs` derives what must be staged from the code
   (`${LIB_DIR}` refs ∪ transitive sibling imports) and fails if either list
-  drifts.
+  drifts. **Superseded, never built**: docs/d072 retired the scratch staging
+  that needed the lists, and docs/d113 removed the last of it — a unit's `lib/`
+  is simply its own folder now, so there is nothing to enumerate.
 - Pointers: `lib/artifact.mjs`'s `@fileoverview` CANONICAL bullet → this
   doc; this doc → `lib/canonical-json.mjs` and the test in References.
 
@@ -249,9 +254,10 @@ stable today; only the provider and model orders inside the merge are not.
 - `lib/artifact.mjs` — the atomic-write + `writeJsonArtifact` contract
   (d023) this extends.
 - `coding-agent/tests/canonical-json.test.mjs` — unit rules; the
-  committed-manifest canonicity guard moved to `tests/committed-manifests.test.mjs`
-  (docs/d113: the guard spans more than one unit).
-- `tests/lib-staging.test.mjs` — staging-list drift guard (see Migration).
+  committed-manifest canonicity guard moved to
+  `coding-agent/tests/committed-manifests.test.mjs` (docs/d113).
+- `tests/lib-staging.test.mjs` — staging-list drift guard, planned and never
+  built: docs/d072/d113 retired the staging lists it guarded (see Migration).
 - `docs/d023-generators-dedup.md`, `docs/d024-generators-split-and-provider-facts.md`
   — the generator/artifact standards.
 - `docs/d033-generator-cascade.md`, `docs/d034-parallel-probing-and-multi-hop-peerBase.md`

@@ -2,8 +2,8 @@
  * @fileoverview canonical-json.test.mjs — the unit half of docs/d050: the
  * canonicalization rules that coding-agent/lib/canonical-json.mjs implements
  * (docs/d113 moved the committed-manifest drift guard to
- * tests/committed-manifests.test.mjs at the repo root, because its subject is
- * the whole unit set rather than this folder).
+ * tests/committed-manifests.test.mjs beside this file, because its subject is
+ * this folder's committed manifests).
  *
  * Run: . ./lib/node-run.sh && node_run --test tests/*.test.mjs   (this folder)
  */

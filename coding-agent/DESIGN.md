@@ -218,7 +218,9 @@ attribution, or behavioral copy — and every behavioral copy must be flagged).
 
 Copy unit = **this folder alone** (`docs/architecture.md`, docs/d113): its own
 `lib/`, its own `build.sh`/`generate.sh`, its own `tests/`. Nothing one level
-up is implied.
+up is implied — and nothing below is shared either: `tests/committed-manifests.test.mjs`
+(docs/d050's canonicity guard) lives here because this folder owns every
+manifest it asserts on.
 
 `lib/` here is a hand copy, owned outright — no sync step, no upstream to keep
 in step with, and this folder may retune any of it without touching a sibling.

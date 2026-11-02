@@ -82,9 +82,9 @@
 		"pi-verboo/sources.mjs",
 		"pi-verboo/merge.mjs",
 		"pi-verboo/generate.mjs",
-		// Every test lives with the code it tests (docs/d113); tests/ at the
-		// repo root keeps only the guard whose subject is the whole unit set.
-		"tests/committed-manifests.test.mjs",
+		// Every test lives with the code it tests (docs/d113) — the repo root
+		// has no tests/ folder.
+		"coding-agent/tests/committed-manifests.test.mjs",
 		"coding-agent/tests/canonical-json.test.mjs",
 		"coding-agent/tests/fact-table.test.mjs",
 		"coding-agent/tests/artifact-urls.test.mjs",

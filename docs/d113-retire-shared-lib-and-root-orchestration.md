@@ -59,16 +59,18 @@ the folder is implied by it. `lib/` at the repo root is deleted.
 - **Pruning is the point**, not an accident of the copy. `cloud-providers.mjs`
   / `cloud-providers.json` copies carry only the rows that unit serves:
   `coding-agent/` holds the full table because it is the reference vocabulary
-  `docs/d032` writes its checklist against (and the one copy `tests/` reads),
+  `docs/d032` writes its checklist against,
   each `pi-*` extension holds exactly the one row it pins, and
   `llm-local-inference/` carries no `cloud-providers.*` at all — it serves no
   cloud provider. `estige/` carries none either: with `docs/d108`, the
   allowlist edge is gone, so the unit that was the table's second consumer
   serves no provider route and reads no provider row.
 - **Tests travel with their subject.** Each `<unit>/tests/` exercises that
-  unit's code and runs standalone from the folder. Only the guard whose subject
-  is the whole unit set — `tests/committed-manifests.test.mjs` (`docs/d050`) —
-  stays at the repo root, and only that harness may read across units.
+  unit's code and runs standalone from the folder, reading only its own copy of
+  whatever it needs. Nothing is left at the repo root: the one guard that first
+  seemed to need it (`docs/d050`'s committed-manifest canonicity check) followed
+  its manifests into `coding-agent/tests/`, because after `docs/d108` deleted
+  `estige/estige.json` every file it asserts on belonged to that single unit.
 
 ### The root keeps operator files and the QA sweep, nothing importable
 

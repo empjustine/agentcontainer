@@ -160,12 +160,13 @@ files and the QA sweep.
   (docs/d107): `npm ci --ignore-scripts` from `package-lock.json` when the
   lock changes. The same lock carries the Android Biome/oxc builds, so Termux
   and the container hosts run identical gate versions.
-- `lint.sh`, `check-types.sh`, `test.sh`, `vm-bench.sh`, `tests/` — the
-  repo-wide QA sweep: QA is the maintainer's view *across* units, so it lives
-  outside all of them and no unit imports it. `test.sh`'s globs
-  (`*/tests/*.test.mjs`, `*/tests/*.sh`) are the contract, and
-  `tests/committed-manifests.test.mjs` is the one harness whose subject is the
-  whole unit set (docs/d050/d113).
+- `lint.sh`, `check-types.sh`, `test.sh`, `vm-bench.sh` — the repo-wide QA
+  sweep: QA is the maintainer's view *across* units, so it lives outside all of
+  them and no unit imports it. It owns **no test of its own** — every test sits
+  in `<unit>/tests/` beside the code it exercises (docs/d113), including
+  docs/d050's committed-manifest guard, which followed its manifests into
+  `coding-agent/tests/` once d108 left it a single unit. `test.sh`'s globs
+  (`*/tests/*.test.mjs`, `*/tests/*.sh`) are the contract.
 
 The probe/facts/refresh modules that used to sit in a shared lib
 (`route-probe.mjs`, then named `peer-probe.mjs` (docs/d071), `pi-models.mjs`,
@@ -201,8 +202,9 @@ are working on.
   always.
 - The repo-wide sweep stays at the root and is the only cross-unit view:
   `./lint.sh` (biome + knip + jq + the capability-URL pattern),
-  `./check-types.sh` (tsc over every unit's JS), `./test.sh` (every
-  `<unit>/tests/` + the cross-unit guard), `./vm-bench.sh` (docs/vm-build-bench.md).
+  `./check-types.sh` (tsc over every unit's JS), `./test.sh` (runs every
+  `<unit>/tests/` and owns none of them), `./vm-bench.sh`
+  (docs/vm-build-bench.md).
 
 Runners NEVER build or generate: run.sh stages the COMMITTED config and a
 stale/missing artifact is a loud failure pointing at the generator, never an

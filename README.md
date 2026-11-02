@@ -69,8 +69,7 @@ agentcontainer/
 ├── environment.sh                       # → EXPLICIT env chain: `infisical run` spawns <script-or-command> (d046; a bare command = the sandbox-free run path, d059)
 ├── provision-termux.sh                  # → termux pkg/infisical provisioning (the former root build.sh)
 ├── log.sh / node-run.sh / npm-tools.sh  # → operator-level shell, never imported by a unit: structured logger · standalone node_run() (pinned node; termux-aware) · on-demand npm devDependency install (d107)
-├── lint.sh / check-types.sh / test.sh / vm-bench.sh # → the repo-wide QA sweep (d113): biome+knip+jq gates · tsc · every unit's tests, driven from the root because no unit imports them (test.sh's globs are the contract)
-├── tests/                               # → cross-unit checks only: committed-manifests.test.mjs spans the WHOLE unit set (d050/d113), so it is the one harness allowed to read across units
+├── lint.sh / check-types.sh / test.sh / vm-bench.sh # → the repo-wide QA sweep (d113): biome+knip+jq gates · tsc · every unit's tests, driven from the root because no unit imports them (test.sh's globs are the contract; the sweep owns no test of its own)
 ├── docs/                                # docs tree, typed per docs/spec-graph-standard.md
 │   ├── requirements.md                  # → BRD: what the system must do (id: goal)
 │   ├── architecture.md                  # → systems reference: the copy unit, per-unit lib, root QA sweep
@@ -123,7 +122,7 @@ agentcontainer/
 │   ├── config.toml                      #   → mise configuration (includes cline and thinkrail)
 │   ├── Containerfile                    #   → container image build
 │   ├── lib/                             #   → THIS FOLDER's own copy (d113), the largest: workload-runtime.sh + workload-*.jq, node-run.sh, log.mjs/log.sh, artifact.mjs, canonical-json.mjs, fact-table.mjs, host-capabilities.mjs, cloud-providers.mjs/.json (the full table), models.dev.api.json, catwalk-facts.json
-│   └── tests/                           #   → this folder's own tests (canonicalization, fact table, URL forms, modality gate, cost map, run-dir/workload checks)
+│   └── tests/                           #   → this folder's own tests (canonicalization, committed-manifest guard (d050), fact table, URL forms, modality gate, cost map, run-dir/workload checks)
 │
 ├── pi-synthetic/                        # Synthetic as a pi package (d096): ONE generator + ONE loadable extension, in this folder
 │   ├── sources.mjs                      #   → the ONE data source: the provider's /models listing, at the fact table's canonical upstream (d070)

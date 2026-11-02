@@ -56,9 +56,8 @@
 		"pi-mistral/index.ts",
 		"pi-opencode/index.ts",
 		"*/lib/*.mjs",
-		// ./test.sh runs every unit's tests plus the repo-level guard, which
-		// nothing else imports (docs/d113)
-		"tests/*.test.mjs",
+		// ./test.sh runs every unit's tests, which nothing else imports
+		// (docs/d113)
 		"*/tests/*.test.mjs"
 	],
 	// The pi host package is provided by the runtime environment and is

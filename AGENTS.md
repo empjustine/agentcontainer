@@ -108,8 +108,9 @@ when it is available; it is not a prerequisite.
 
 - **A folder is a copy unit** (docs/d113): each unit carries its own pruned
   `lib/` copy of the shared kernels it uses, so it can be copied out whole.
-  Reaching into a sibling unit is not allowed (`docs/architecture.md`); only
-  `tests/` (the repo-wide harness) reads across units.
+  Reaching into a sibling unit is not allowed (`docs/architecture.md`). Tests
+  live in `<unit>/tests/` and read only their own folder; the repo-wide sweep
+  (`test.sh`) runs them all but contributes none.
 - **Environment/secrets are an explicit chain step**: the repo-root
   `./environment.sh <script>` does the one vault round-trip, then `exec`s the
   target. Consumers read plain env and never load secrets; there is exactly

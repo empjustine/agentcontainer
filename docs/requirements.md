@@ -159,7 +159,8 @@ the allowlist relay by decision
   own `build.sh`/`generate.sh` and `tests/`, so it can be copied out whole.
   There is no repo-level `lib/`. Copies are owned outright, not vendored: no
   sync step, no hash gate, no shared upstream. Reaching into a sibling unit is
-  not allowed; only the repo-wide QA harness (`tests/`) reads across units.
+  not allowed: a unit's tests exercise that unit and read only its own folder,
+  and the repo-wide sweep exists to run them all, not to add its own.
 - **FR-L2** — Secrets flow through ONE explicit chain step
   (`./environment.sh <script>` at the repo root): `infisical run` fetches the
   vault and spawns the target with it as plain env (docs/d046); consumers read
