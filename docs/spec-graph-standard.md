@@ -200,10 +200,11 @@ Rules that keep the value parseable:
 | location | what it is | type |
 | --- | --- | --- |
 | `docs/requirements.md` | the BRD, root of the living tree | `goal-and-requirements` |
-| `docs/*.md` | system-wide reference, prior art, module docs that are referenced by path from d0XX bodies | `architecture-design` / `module-design` |
+| `docs/*.md` | cross-cutting reference and prior art — a doc whose `parent` is `architecture` or `goal`, because it spans units or describes the repo itself | `architecture-design` / `module-design` |
 | `docs/dNNN-*.md` | the decision log (history) | `architecture-design` / `module-design` by scope |
 | `docs/archive/` | investigations that finished, plus retired operational docs | same two types, `status: done` / `deprecated` |
 | `<module>/README.md` + `DESIGN.md` | one module: what it is and why it is shaped that way | `module-design` |
+| `<module>/<topic>.md` | a living doc that guides exactly one module — a runbook, a generated table, per-harness reference — with `parent` naming that module (d117) | `module-design` / `submodule-design` |
 | `<module>/<subsystem>.md` | a subsystem inside a package | `submodule-design` |
 | `.thinkrail/context/TASK-*.md` | the tool's working task-specs — real nodes in the graph, outside this tree's hierarchy | `task-spec` |
 | `.agents/skills/SPEC.md` | the vendored spec of the workflow skill family (id `submodule-workflow-skills`) | `submodule-design`, no `parent` |
@@ -230,10 +231,16 @@ load-bearing rather than incidental:
 Deliberately **not** the standard layout, and not drift to fix (d111's
 rejected alternative): module docs are `README.md` + `DESIGN.md`, not
 `SPEC.md`, and there is no `docs/reference/` or `docs/design/` subdirectory.
-Two constraints from d042 bind the placement and outrank tidiness:
+Three constraints bind the placement, and the first one decides:
 
-- the **anchor constraint** — eight living docs are referenced by path from
-  d0XX bodies, so they stay at `docs/` root;
+- the **parent-edge rule** (d117) — a living doc's file sits beside the node its
+  `parent` names. A doc that guides one unit lives in that unit's folder; a
+  cross-cutting doc lives here. The edge and the path must agree, and when they
+  disagree the **edge wins**: it carries the scope judgement, the path only
+  carries habit.
+- the **anchor constraint** — a doc cited by path from a d0XX body may still
+  move: since d072 the records naming it are updated in the same change. Keep
+  the cite true; do not let it freeze a doc in the wrong folder.
 - the **numbering constraint** — no numbered sections and no `§` cites in
   records; use named headings.
 

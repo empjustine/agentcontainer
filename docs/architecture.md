@@ -247,4 +247,8 @@ Document typing follows the spec-graph standard
 (`docs/spec-graph-standard.md`): every doc carries one type
 (goal-and-requirements / architecture-design / module-design /
 submodule-design / task-spec) and one lifecycle status; the `d0XX` decision log
-is the history (d042 for the anchor and numbering constraints that still bind).
+is the history (d042 for the numbering constraint that still binds). Placement
+follows the parent edge (docs/d117): a living doc that guides one unit lives in
+that unit's folder — `llm-local-inference/`'s runbooks and generated tables,
+`coding-agent/`'s harness persistence and proxy-override notes — and `docs/`
+holds only what spans units or describes the repo itself.

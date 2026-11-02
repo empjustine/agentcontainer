@@ -157,5 +157,5 @@ single mount rather than a podman duplicate-destination error.
 - `docs/d054-pi-agent-and-session-dir-mounts.md` — the agent-dir / session-dir
   mounts that remain.
 - `docs/d052-tombstone-credential-staging.md` — no credential file is staged.
-- `docs/coding-harness-persistence.md` — the persistence table this record
+- `coding-agent/coding-harness-persistence.md` — the persistence table this record
   updates with the directory mounts.

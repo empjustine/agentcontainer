@@ -30,7 +30,7 @@ Already-mandatory, per repo evidence:
   mirrors (`git/-forge-mirror.sh` — bare mirrors from any https forge,
   idempotent; `git/maintain-mirrors.mjs`; legacy `git/-github-clone.sh`)
   and `~/Downloads/references/github` as a convenience cache, never the
-  canonical (`docs/coding-harness-persistence.md:95`, `docs/d028`).
+  canonical (`coding-agent/coding-harness-persistence.md:95`, `docs/d028`).
 - **The tunnel client.** Loopback-only listeners (`d073` VPN-R23, built),
   CONNECT that terminates at the real origin (`d073` §5.1).
 - **The secrets chain.** Unchanged (`d046`, d073 VPN-R32).

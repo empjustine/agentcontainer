@@ -18,7 +18,7 @@
  * storage/network, not RAM (docs/d053). The same bytes are what a runner must
  * load, so it doubles as a rough RAM/VRAM figure; it is NOT the resident set
  * (KV cache + activations remain the estimator's job,
- * docs/gguf-vram-fit-estimates.md).
+ * llm-local-inference/gguf-vram-fit-estimates.md).
  *
  * Sources: committed `lib/hf-manifests/<org>--<repo>.json` first (host
  * independent, but can be stale), the local HF cache second (exact for what

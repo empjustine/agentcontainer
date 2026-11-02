@@ -48,7 +48,7 @@ never anything produced by this pipeline.
 3. `upkeep.py` — cache list/pull/prune/verify.
 4. `generate_vram_fit_tables.py` — VRAM/KV/fit tables via
    gdevenyi/huggingface-estimate → regenerates
-   `docs/gguf-vram-fit-estimates.md` (+ raw-data JSON). Its
+   `llm-local-inference/gguf-vram-fit-estimates.md` (+ raw-data JSON). Its
    `--update-model-data` reorder is **retired** (docs/d053).
 
 Plus PoC/audit helpers (`scan_cache_coverage.py`, `gguf_context_length.py`,
@@ -62,7 +62,7 @@ what let them drift; operational detail lives in each script header.
 
 - The canonical model list is `lib/llamacpp-model-data.json` — **this folder's
   own copy** (its manifest-refresh workflow is
-  `docs/refresh-llm-local-inference-manifest.md`). The pipeline must not edit
+  `llm-local-inference/refresh-llm-local-inference-manifest.md`). The pipeline must not edit
   it as a side effect (`generate_vram_fit_tables.py`'s `--update-model-data`
   reorder is the one sanctioned write, done explicitly).
 - The folder boundary that used to separate this pipeline from its consumer is

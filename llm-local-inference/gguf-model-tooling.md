@@ -55,7 +55,7 @@ llama.cpp inference. They share two design constraints:
 | `estimate_active_params.py` | Measure total and per-token ACTIVE parameter counts / bytes from the GGUF header |
 | `fetch_hf_manifests.py` | Persist HF repo file listings (to `llm-local-inference/lib/hf-manifests/`) and audit each configured `--hf-file` against llama.cpp's implicit `repo:quant` → file heuristic |
 | `llm-local-inference/model-sizes.mjs` | Derive each entry's SI-GB footprint from the committed manifests (cache fallback) and order `llamacpp-model-data.json` cheapest-first; warns on cache-only GGUFs, never adds (docs/d053) |
-| `scan_cache_coverage.py` | **PoC/MVP** — diff the HF cache against `llamacpp-model-data.json`: repos with zero coverage, listed repos with extra cached quants, ambiguous `bpw`/multi-quant filenames (header-free; see `docs/refresh-llm-local-inference-manifest.md`) |
+| `scan_cache_coverage.py` | **PoC/MVP** — diff the HF cache against `llamacpp-model-data.json`: repos with zero coverage, listed repos with extra cached quants, ambiguous `bpw`/multi-quant filenames (header-free; see `llm-local-inference/refresh-llm-local-inference-manifest.md`) |
 | `gguf_context_length.py` | **PoC/MVP** — read `general.architecture` / `context_length` / `general.name` from a GGUF header via the PyPI `gguf` package (no weights loaded); used to pick `ctx-size` |
 
 All four consume the same canonical model list in

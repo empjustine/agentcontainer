@@ -78,6 +78,26 @@ half the reference docs would split the type across two locations — worse
 than type-scoping them by frontmatter + the README index. Type separation is
 metadata-first; physical moves happen only where no anchor blocks them.
 
+## Placement follows the parent edge (d117)
+
+The anchor constraint above prices a move, it does not forbid one: it names the
+records that must be edited, and since d072 those edits are permitted (history
+is kept mechanically accurate, not frozen). d117 spends that price and replaces
+the anchoring habit with a placement rule — **a living doc's file sits beside
+the node its `parent` edge names**. A doc that guides exactly one unit moves
+into that unit's folder, and its citing records are retargeted in the same
+change; a doc that spans units stays at `docs/` root with `parent: architecture`.
+
+So the list above is now a list of *candidates*, judged one at a time:
+`scoped-models-and-proxy-overrides.md`, `coding-harness-persistence.md` and
+`refresh-llm-local-inference-manifest.md` described a single unit and moved
+(under `coding-agent/` and `llm-local-inference/`); `architecture.md`,
+`container-tooling.md` and `environments-and-variants.md` stayed because they
+genuinely span folders; `termux-serving.md`, `termux-build-audit.md` and
+`sandbox-helper-env-analysis.md` stayed as host-level audits and archived maps.
+`docs/` keeps a second thing the rule never moves: the `dNNN` decision log, one
+chronological set whose readers arrive by number, not by folder.
+
 ## The numbering constraint
 
 Decision records do not number their sections and do not cite sections by
@@ -154,7 +174,7 @@ replaced. d042's taxonomy now covers every module.
 - Stale-link sweep for every moved stem across README, AGENTS.md, all living
   docs, archive index, `lib/`, root scripts: zero hits outside d0XX bodies,
   `.thinkrail/` session state (historical), and d042's own citations.
-- Living-doc link fixes applied: `docs/coding-harness-persistence.md` →
+- Living-doc link fixes applied: `coding-agent/coding-harness-persistence.md` →
   `archive/bwrap-runtime-audit.md`; `docs/architecture.md` trailing pointer →
   archive with supersession note.
 - Supersession banner added to `archive/future-config-generator-system.md`
@@ -176,5 +196,5 @@ replaced. d042's taxonomy now covers every module.
   are referenced by NO living doc; the deferred `coding-agent/SPEC.md` →
   `DESIGN.md` split executed (Shape rewritten to the two-generator structure,
   d037-supersession noted); README layout rows + the doc-index row for
-  `merge-models-json.mjs` replaced; `docs/refresh-llm-local-inference-manifest.md`
+  `merge-models-json.mjs` replaced; `llm-local-inference/refresh-llm-local-inference-manifest.md`
   pointer updated to `generate-pi-coding-agent.mjs`.

@@ -27,7 +27,7 @@ at. This is that record.
   start + layout, FR-U1 in `docs/requirements.md`, `docs/architecture.md`
   ×2) while DESIGN.md and the code said the opposite — a ghost that kept
   resurfacing in audits.
-- `docs/scoped-models-and-proxy-overrides.md` even advertised an
+- `coding-agent/scoped-models-and-proxy-overrides.md` even advertised an
   `example.auth.json` template that never existed.
 
 ## Decisions
@@ -39,7 +39,7 @@ at. This is that record.
   apiKey references in the generated `models.json` at request time.
 - **Only this record, the immutable d0XX bodies, and `docs/archive/` may name
   `auth.json`.** Live docs and code must not cite it. (The one other
-  occurrence — the OpenCode row of `docs/coding-harness-persistence.md` — is
+  occurrence — the OpenCode row of `coding-agent/coding-harness-persistence.md` — is
   OpenCode's own `~/.local/share/opencode/auth.json`, a third-party file, and
   stays.)
 - Older mentions are history, not re-adoptable design: `d020` (cloud-init

@@ -17,7 +17,7 @@ The pull happens BEFORE the prune on purpose: pruning stale revisions first
 could race an interrupted pull and delete the only complete revision behind a
 ref (see main() below).
 
-Env: HF_HUB_CACHE, HF_HOME, HF_TOKEN (see ./docs/hf-cache-upkeep.md).
+Env: HF_HUB_CACHE, HF_HOME, HF_TOKEN (see hf-cache-upkeep.md).
 """
 import os
 import sys
@@ -57,7 +57,7 @@ def _commit(ref) -> str | None:
 
 def prune(cache_info) -> None:
     """Prune detached (unreferenced) revisions and their orphan blobs (see
-    docs/hf-cache-upkeep.md for the 0.23+ GC semantics)."""
+    hf-cache-upkeep.md for the 0.23+ GC semantics)."""
     detached = {
         rev.commit_hash
         for repo in cache_info.repos

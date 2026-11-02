@@ -35,7 +35,7 @@ A separate JSON file maps each OpenCode Go model to its documented cost:
 ```
 
 The file (and its `cloud-llm/` home) is part of the retired full-catalog
-pipeline; see `docs/scoped-models-and-proxy-overrides.md` for what replaced it.
+pipeline; see `coding-agent/scoped-models-and-proxy-overrides.md` for what replaced it.
 
 ### Override precedence
 

@@ -70,7 +70,7 @@ unlocks.
   gateway-gated — one credential per namespace, no coupling.
 
 **Client contract** (models.json — pi first-class per
-[d105](d105-llm-harness-support-tiers.md); the contract other tiers follow):
+[d116](d116-llm-harness-support-tiers.md); the contract other tiers follow):
 
 - pi already supports it (pi `models-configuration.md`): provider-level
   `headers`, values resolve like `apiKey` — `$NAME`/`${NAME}` env

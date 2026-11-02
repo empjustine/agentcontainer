@@ -170,7 +170,7 @@ pre-provisioning alternative above covers.
   CWD-mount open point this record leaves standing.
 - `docs/d045-structured-logging-and-error-construct.md` — the log contract
   the removed line obeyed; unchanged by this record.
-- `docs/container-tooling.md` / `docs/coding-harness-persistence.md` — the
+- `docs/container-tooling.md` / `coding-agent/coding-harness-persistence.md` — the
   mount and persistence references updated alongside.
 - `tests/check-workload.sh` — the argv differential test whose coding-agent
   fixture drops the logger mount.

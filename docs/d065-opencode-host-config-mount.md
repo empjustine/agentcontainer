@@ -126,7 +126,7 @@ removed for pi, for the same reasons:
 
 - `docs/d054-pi-agent-and-session-dir-mounts.md` — the pi-side twin this
   mirrors (host config mount + per-run session stage).
-- `docs/coding-harness-persistence.md` — the persistence table this record
+- `coding-agent/coding-harness-persistence.md` — the persistence table this record
   updates (opencode config row becomes host, permanent).
 - `docs/d026-data-diode-audit.md` — the data dir is its audit-trail model.
 - `docs/d063-proxy-only-routing.md` / `docs/d064-provider-support-tiers.md`

@@ -78,4 +78,4 @@ The affected providers:
 ## Related
 
 - [d013-removed-non-working-free-providers.md](d013-removed-non-working-free-providers.md) — prior cleanup of providers that never worked
-- [`lib/cloud-providers.mjs`](../lib/cloud-providers.mjs) — the fact table where a provider is registered today; `openai-completions-peer/generate-config.yaml.js` (the generator these rows originally lived in) is gone with the folder, folded into the by-agent generators by docs/d037/d041
+- [`cloud-providers.mjs`](../coding-agent/lib/cloud-providers.mjs) — the fact table where a provider is registered today (this folder's own copy since docs/d113; the full table lives in `coding-agent/`); `openai-completions-peer/generate-config.yaml.js` (the generator these rows originally lived in) is gone with the folder, folded into the by-agent generators by docs/d037/d041

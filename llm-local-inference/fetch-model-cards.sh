@@ -2,7 +2,7 @@
 # Refresh the model-card mirrors under llm-local-inference/model-cards/<org>/<repo>.md from
 # Hugging Face (README.md of each repo in lib/llamacpp-model-data.json).
 # File names are the repo id verbatim so cards always match the ids
-# (see docs/hf-cache-upkeep.md).
+# (see llm-local-inference/hf-cache-upkeep.md).
 #
 # Usage: ./fetch-model-cards.sh
 set -eu

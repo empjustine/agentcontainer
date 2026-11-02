@@ -82,7 +82,7 @@ through the `workload_env` allowlist (below) and pi resolves the `"$VAR"`
 api-key refs in `models.json` from the forwarded environment. The model scope
 the agent cycles through is pinned by `enabledModels` in `settings.json` —
 generators enumerate **no** model lists
-(`docs/scoped-models-and-proxy-overrides.md`).
+(`coding-agent/scoped-models-and-proxy-overrides.md`).
 
 `run.sh` launches the container: loads vault secrets **once on the host** via
 ./environment.sh and forwards them through the `workload_env` allowlist — nothing
@@ -153,7 +153,7 @@ through the environment proxy.
 - **Scoped models, not generated catalogs**: pi's own model catalog is used
   (`pi update --models`); providers are re-routed via `baseUrl` overrides only.
   The retired free-tier pipeline's decisions are distilled in
-  `docs/scoped-models-and-proxy-overrides.md` ("spirit of the retired notes").
+  `coding-agent/scoped-models-and-proxy-overrides.md` ("spirit of the retired notes").
 - **The prompt and the tool loadout are configured separately**:
   `settings.json`'s `defaultTools` adds capability (the base four plus
   `grep`, `find`, `ls`, and the `codemode` built-in extension) without

@@ -88,7 +88,7 @@ for the reference mirror. Here it stayed a hidden default.
   inside the container land in the container layer; a container that is
   removed takes them with it.
 - **`HF_HUB_CACHE` is no longer read by `run.sh`.** It remains a real
-  variable for the HF tooling (docs/hf-cache-upkeep.md,
+  variable for the HF tooling (llm-local-inference/hf-cache-upkeep.md,
   `llm-local-inference/run.sh`, the archived `local-llm/` scanners) and for
   the in-container opt-in above — it simply stops being a mount control here.
 - **Relabel cost drops** for launches that never wanted the cache; the
@@ -124,7 +124,7 @@ for the reference mirror. Here it stayed a hidden default.
 - `docs/d054-pi-agent-and-session-dir-mounts.md` /
   `docs/d065-opencode-host-config-mount.md` — the host-backed mounts that
   remain, and why they are harness contracts rather than conveniences.
-- `docs/coding-harness-persistence.md` — the persistence table this record
+- `coding-agent/coding-harness-persistence.md` — the persistence table this record
   updates (the Hugging Face row is gone).
 - `docs/d026-data-diode-audit.md` — the direction-of-flow concern the rw
   host mount violated.

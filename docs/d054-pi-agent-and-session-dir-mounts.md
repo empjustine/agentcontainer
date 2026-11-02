@@ -132,7 +132,7 @@ independent of it. The runner was ignoring the session mechanism.
 
 ## References
 
-- `docs/coding-harness-persistence.md` — the persistence table this record
+- `coding-agent/coding-harness-persistence.md` — the persistence table this record
   updates (pi config host dir + per-run session stage).
 - `docs/d026-data-diode-audit.md` — the per-run session stage is its diode
   target.

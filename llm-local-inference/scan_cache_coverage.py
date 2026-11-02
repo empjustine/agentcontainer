@@ -9,7 +9,7 @@ scan_cache_coverage.py  (PoC / MVP)
 Diff the local Hugging Face model cache against
 `lib/llamacpp-model-data.json`.
 
-Fills the gap noted in docs/refresh-llm-local-inference-manifest.md (Step 1): the repo has
+Fills the gap noted in llm-local-inference/refresh-llm-local-inference-manifest.md (Step 1): the repo has
 no tool that diffs "what is cached" vs "what the manifest serves". This is a
 minimal viable version -- it walks filenames only (no GGUF headers are read, no
 weights loaded) and reports three things:

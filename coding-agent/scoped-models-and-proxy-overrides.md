@@ -57,7 +57,7 @@ generator (`generate.sh`; the runner mounts that dir, docs/d054).
 
 > **Deprecated:** the `OPENCODE_GO_API_KEY` name below is retired — OpenCode
 > now uses the unified `OPENCODE_API_KEY` (rationale in
-> **[d001](d001-proxy-env-and-namespace.md)** §3).
+> **[d001](../docs/d001-proxy-env-and-namespace.md)** §3).
 
 - The default model is pinned to the opencode-go subscription (DeepSeek V4
   Flash) **only** when `OPENCODE_GO_API_KEY` is present. When the key is absent
@@ -67,11 +67,11 @@ generator (`generate.sh`; the runner mounts that dir, docs/d054).
 
 ## Related decision records
 
-- [`d001-proxy-env-and-namespace.md`](d001-proxy-env-and-namespace.md) — proxy
+- [`d001-proxy-env-and-namespace.md`](../docs/d001-proxy-env-and-namespace.md) — proxy
   env vars, plain un-prefixed key naming, `baseUrl` baking.
-- [`d006-virtual-cost-estimation.md`](d006-virtual-cost-estimation.md),
-  [`d009-custom-auth-and-prefix.md`](d009-custom-auth-and-prefix.md),
-  [`d010-opencode-go-pricing.md`](d010-opencode-go-pricing.md) — the older
+- [`d006-virtual-cost-estimation.md`](../docs/d006-virtual-cost-estimation.md),
+  [`d009-custom-auth-and-prefix.md`](../docs/d009-custom-auth-and-prefix.md),
+  [`d010-opencode-go-pricing.md`](../docs/d010-opencode-go-pricing.md) — the older
   full-catalog generation decisions, superseded by the scoped-models approach.
 - the retired `d002`/`d008` notes — same generation, but they describe code
   that no longer exists (`MODEL_FILTERS`, `requireApiKey`); their essence is

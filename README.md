@@ -75,8 +75,7 @@ agentcontainer/
 │   ├── architecture.md                  # → systems reference: the copy unit, per-unit lib, root QA sweep
 │   ├── environments-and-variants.md     # → bazzite / a50 / work matrix
 │   ├── container-tooling.md             # → workload-runtime.sh — the workload-api spec every unit's own copy implements
-│   ├── coding-harness-persistence.md    # → per-harness persistence mounts (pi: host dirs, d054)
-│   ├── hf-cache-upkeep.md, refresh-llm-local-inference-manifest.md, gguf-*.md # → runbooks + generated tables
+│   │   # cross-cutting docs only (d117): a living doc that guides ONE unit lives in that unit's folder
 │   ├── d0XX-*.md                        # → decision log (history; kept mechanically accurate, FR-D2)
 │   ├── archive/                         # → research findings + retired docs (index inside)
 │   └── ...
@@ -92,7 +91,8 @@ agentcontainer/
 │   ├── lib/                             #   → THIS FOLDER's own copy (d113): workload-runtime.sh + workload-*.jq, node-run.sh, log.mjs/log.sh/log.py, artifact.mjs, canonical-json.mjs, host-capabilities.mjs, llamacpp-model-data.json, hf-manifests/ (size source for d053)
 │   ├── tests/                           #   → this folder's own tests, standalone-runnable
 │   ├── CACHE-DESIGN.md                  #   → HF cache pipeline (the folded local-llm/ tooling, flat here since d113), table-write rule
-│   └── DESIGN.md                        #   → llama-swap config.d layers, generation-time path baking, capability gating, bearer auth
+│   ├── DESIGN.md                        #   → llama-swap config.d layers, generation-time path baking, capability gating, bearer auth
+│   └── *.md                             #   → this unit's own living docs (d117): hf-cache-upkeep / refresh-...-manifest runbooks, gguf-model-tooling + its generated gguf-vram-fit-estimates tables
 │
 ├── estige/                              # Host-allowlist reverse proxy for cloud LLMs (Go) + opt-in SSL VPN tunnel (d073/d077)
 │   ├── main.go                          #   → http host:port/<host>/<path> → scheme://host/<path>, streaming as-is
@@ -121,6 +121,7 @@ agentcontainer/
 │   ├── mcp.json                         #   → committed default MCP servers, merged into the agent dir (docs/d061)
 │   ├── config.toml                      #   → mise configuration (includes cline and thinkrail)
 │   ├── Containerfile                    #   → container image build
+│   ├── *.md                             #   → this unit's own living docs (d117): DESIGN, plus coding-harness-persistence / scoped-models-and-proxy-overrides / summarized-thinking
 │   ├── lib/                             #   → THIS FOLDER's own copy (d113), the largest: workload-runtime.sh + workload-*.jq, node-run.sh, log.mjs/log.sh, artifact.mjs, canonical-json.mjs, fact-table.mjs, host-capabilities.mjs, cloud-providers.mjs/.json (the full table), models.dev.api.json, catwalk-facts.json
 │   └── tests/                           #   → this folder's own tests (canonicalization, committed-manifest guard (d050), fact table, URL forms, modality gate, cost map, run-dir/workload checks)
 │
@@ -191,6 +192,8 @@ agentcontainer/
 
 Docs are typed per the spec-graph standard ([docs/spec-graph-standard.md](docs/spec-graph-standard.md); adopted in [docs/d111](docs/d111-spec-graph-standard-alignment.md)): `goal-and-requirements` (the BRD) / `architecture-design` (system-wide) / `module-design` (one runner folder) / `submodule-design` (a subsystem inside a package) / `task-spec` (one piece of work). Lifecycle is the frontmatter `status:` field — `draft` / `active` / `stale` / `done` / `deprecated` — and `docs/archive/` holds the investigations that reached `done`.
 
+Placement follows the parent edge ([docs/d117](docs/d117-living-docs-beside-their-unit.md)): a living doc that guides exactly one unit lives in that unit's folder, so rows below point into `coding-agent/` and `llm-local-inference/`; `docs/` holds what spans units, what describes the repo itself, and the decision log.
+
 Frontmatter `type:` and `status:` are the machine signal; this index is the human map. The `d0XX` log is history: kept mechanically accurate (d072), never rewritten wholesale, and listed below only where a record still shapes the tree.
 
 ### Requirements
@@ -260,20 +263,20 @@ Frontmatter `type:` and `status:` are the machine signal; this index is the huma
 | Doc | Covers |
 | --- | --- |
 | [docs/container-tooling.md](docs/container-tooling.md) | workload-runtime.sh, run scripts, UID/SELinux, environment matrix (the `workload-api` module doc — every unit carries its own copy, d113) |
-| [docs/coding-harness-persistence.md](docs/coding-harness-persistence.md) | How each coding harness's state survives ephemeral container runs |
-| [docs/hf-cache-upkeep.md](docs/hf-cache-upkeep.md) | HF cache upkeep runbook (upkeep.py: list/pull/prune/verify) |
-| [docs/refresh-llm-local-inference-manifest.md](docs/refresh-llm-local-inference-manifest.md) | Manifest refresh runbook (repo:quant audits, cache coverage) |
+| [coding-agent/coding-harness-persistence.md](coding-agent/coding-harness-persistence.md) | How each coding harness's state survives ephemeral container runs |
+| [llm-local-inference/hf-cache-upkeep.md](llm-local-inference/hf-cache-upkeep.md) | HF cache upkeep runbook (upkeep.py: list/pull/prune/verify) |
+| [llm-local-inference/refresh-llm-local-inference-manifest.md](llm-local-inference/refresh-llm-local-inference-manifest.md) | Manifest refresh runbook (repo:quant audits, cache coverage) |
 | [git/README.md](git/README.md) | The reference farm as a module: host-side bare mirrors, their upkeep, and search over them — the three jobs and their entry points, the farm-`flock`/pacing rules, and what the folder deliberately does not depend on (the `git` module doc) |
 | [git/non-bare-issues.md](git/non-bare-issues.md) | Reference-farm mirrors: why a checkout is pure overhead (podman `z,U` walk), the farm audit, pickaxe-fast maintenance |
-| [docs/gguf-vram-fit-estimates.md](docs/gguf-vram-fit-estimates.md) | VRAM/KV/fit tables for all served models (gdevenyi/huggingface-estimate) |
-| [docs/gguf-model-tooling.md](docs/gguf-model-tooling.md) | GGUF tooling (`fetch_hf_manifests.py` live; size-estimation tools archived) |
+| [llm-local-inference/gguf-vram-fit-estimates.md](llm-local-inference/gguf-vram-fit-estimates.md) | VRAM/KV/fit tables for all served models (gdevenyi/huggingface-estimate) |
+| [llm-local-inference/gguf-model-tooling.md](llm-local-inference/gguf-model-tooling.md) | GGUF tooling (`fetch_hf_manifests.py` live; size-estimation tools archived) |
 | [estige/README.md](estige/README.md) | Proxy operations: routing table, usage, build, port model, smoke test (SSL-VPN transport family, phased: the WebSocket tunnel delivered, the h2-POST tunnel default-on (d084), the h1.1-POST tunnel built with no spike gate and the default offer at `cde` (d081's L4 amendment) — [docs/d073](docs/d073-ssl-vpn-three-modes.md), [docs/d077](docs/d077-ssl-vpn-transport-ladder.md), names in [docs/d105](docs/d105-ssl-vpn-transport-names.md)) |
 | [coding-agent/DESIGN.md](coding-agent/DESIGN.md) | pi agent image + by-agent config generation — the two-generator structure, the **layered-cake merge** (single home: the generate-pi-coding-agent.mjs header) — distinct from llama-swap's config.d layer-merge rules, stage table, invariants |
 | [llm-local-inference/DESIGN.md](llm-local-inference/DESIGN.md) | llama-swap config.d layers, generation-time path baking, capability gating, bearer auth |
 | [estige/DESIGN.md](estige/DESIGN.md) | Proxy design rationale: full-real-base-URL convention, 404 anti-oracle, RFC 9457 error taxonomy, deviations |
 | [llm-local-inference/CACHE-DESIGN.md](llm-local-inference/CACHE-DESIGN.md) | HF cache pipeline, table-write rule, and the fold that made it a submodule of this folder (the former `local-llm/`, docs/d113) |
-| [docs/scoped-models-and-proxy-overrides.md](docs/scoped-models-and-proxy-overrides.md) | Why pi uses its own catalog with baseUrl overrides (distilled from the retired free-tier pipeline) |
-| [docs/summarized-thinking.md](docs/summarized-thinking.md) | summarized-reasoning extension — CoT summarization design |
+| [coding-agent/scoped-models-and-proxy-overrides.md](coding-agent/scoped-models-and-proxy-overrides.md) | Why pi uses its own catalog with baseUrl overrides (distilled from the retired free-tier pipeline) |
+| [coding-agent/summarized-thinking.md](coding-agent/summarized-thinking.md) | summarized-reasoning extension — CoT summarization design |
 
 #### Decision records (history)
 
@@ -322,6 +325,7 @@ Frontmatter `type:` and `status:` are the machine signal; this index is the huma
 | [docs/d086-fact-table-provenance-and-capability-hygiene.md](docs/d086-fact-table-provenance-and-capability-hygiene.md) | fact tables: the capability-bearing `fetchedFrom` URL is removed (the Funnel mount IS the allowlist relay credential; a gating lint pattern now forbids mount URLs in tracked files) and the churn recipe landed (`lib/fact-table.mjs`: canonical serialization + hash short-circuit + `_meta` provenance, so an unchanged refresh writes nothing and `fetchedAt` means the content's age; the raw models.dev mirror is exempt from `_meta` and keeps only canonical order; `tests/fact-table.test.mjs` guards the committed caches), with layer separation deferred and standalone regen commits as process; the leaked mounts in git history need rotation |
 | [docs/d087-retire-disk-gate-inference-endpoint.md](docs/d087-retire-disk-gate-inference-endpoint.md) | d083's free-disk gate retires: the coding-agent image is ungated again (node:24-trixie shrank it; `freeDiskGiB` + `CODING_AGENT_IMAGE_MIN_FREE_GIB` removed) and the disk budget moves to where the multi-GB consumer is — the llama-swap pull now gates on being an **inference endpoint**: render devices AND RAM ≥ 16 GiB (`INFERENCE_MIN_RAM_GIB` + `totalMemGiB()` in lib/host-capabilities.mjs, shared with the generate-side serving-layer gate so builder/generator cannot drift) |
 | [docs/d116-llm-harness-support-tiers.md](docs/d116-llm-harness-support-tiers.md) | LLM harness support tiers in d064's vocabulary: **first-class** earendil-works/pi (+ direct descendants itayinbarr/little-coder, JetBrains/thinkrail — lineage, not repo surface; the coding-agent runner is the supported one and pi's config semantics DEFINE the contract), **best-effort** anomalyco/opencode and mistralai/mistral-vibe (cheap generated surfaces, no verification, never blocks a pi-first design), **superficial** charmbracelet/crush (proxy reachability only); tier moves are record edits |
+| [docs/d117-living-docs-beside-their-unit.md](docs/d117-living-docs-beside-their-unit.md) | a living doc **lives beside the node its `parent` edge names**: single-unit docs move into `coding-agent/` + `llm-local-inference/` (7 moved), `docs/` keeps cross-cutting docs, the decision log and `archive/`; the edge outranks d042's anchor constraint |
 | [docs/d091-llm-reverse-proxy-gateway-auth-mode-b.md](docs/d091-llm-reverse-proxy-gateway-auth-mode-b.md) | **deprecated** (superseded in direction by d108 — the serving edge it guards retires to tunnel-only, per-session auth became d113's mutual Ed25519 proofs, and llama-swap bearer retirement rides d087's pause) — was d073's authenticated relay specced: the funnel front authenticates via env-only `REVERSE_PROXY_KEYS`/`REVERSE_PROXY_TOKEN` riding `X-Reverse-Proxy-Key` (scheme-orthogonal — works for OAuth providers; stripped by the proxy before forwarding, armed or not; failure answers the camouflage 404, never a 401 — VPN-R34 extended), arming = credential like d084/d085; clients carry it in pi's `headers` ($VAR interpolation, never literals — d050) beside their provider keys; stage 2 retires llama-swap's `apiKeys` + `REVERSE_PROXY_API_KEY` behind it (zero-secret `llm-local-inference` serving, loopback publish + tailnet ACL on the direct surfaces, d071's no-alias law); dropping the bearer before the authenticated relay rejected — the funnel leg would leave the GPU farm internet-reachable behind a path prefix |
 | [docs/d092-synthetic-first-class-provider.md](docs/d092-synthetic-first-class-provider.md) | synthetic.new joins the fleet as a **first-class** provider via d032's checklist: fact-table row (`SYNTHETIC_API_KEY`, full `/openai/v1` base) + full `PROVIDER_SPECS` row → `model-019-cloud-synthetic.json` (inferx shape — plain openai-compat gateway, effort-enum thinkingLevelMap, no ON_OFF fallback) + run.sh key forwarding + regenerated proxy allowlist host row; doc-sync spots listed; `hf:` ids published verbatim, deprecated catalog records deliberately unfiltered |
 | [docs/d097-pi-opencode-go-extension.md](docs/d097-pi-opencode-go-extension.md) | `pi-opencode/` (formerly pi-opencode-go; unified with opencode zen by d100): the built-in-provider rule. pi 1.4.0 builds opencode-go in (pi-ai's 29-row catalog: all four api dialects, per-model family bases, the `x-opencode-session` wrappers, env auth — the complete d048 table in the host), so the extension carries **no model data at all**: any returned list REPLACES the whole provider catalog in pi's composer (inheriting only `api`/`baseUrl`), so a committed seed could only downgrade pi's own rows. `registerProvider("opencode-go", { refreshModels })` only — a catalog freshness watchdog: listing reachable → `undefined` (pi defaults stand); listing fails → **throw**, which pi surfaces as "Could not refresh opencode-go; showing cached models."; offline init or inside the 4h interval → silent (`force` bypasses). Zero `../lib` runtime deps (a copied package stands alone); the upstream URL is a constant pinned by tests against the fact table. Rule recorded: a built-in provider's extension must not SUBSTITUTE model data for pi's — no backup catalog, no silent fallback on fetch failure; contribution that can only *enrich* pi's rows stays welcome, and is freshness signalling today only because pi's composer turns any returned list into a wholesale replacement (contrast d096's synthetic, which pi does not build in) |

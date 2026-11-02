@@ -8,7 +8,7 @@ gguf_context_length.py  (PoC / MVP)
 
 Read `general.architecture`, `general.name` and `<arch>.context_length` from a
 GGUF header -- no tensor weights are loaded (GGUFReader is memory-mapped and
-only touches metadata). Used by docs/refresh-llm-local-inference-manifest.md (Step 2) to
+only touches metadata). Used by llm-local-inference/refresh-llm-local-inference-manifest.md (Step 2) to
 pick the authoritative `ctx-size` for a new manifest entry.
 
 This is the minimal, policy-compliant replacement for the hand-rolled struct

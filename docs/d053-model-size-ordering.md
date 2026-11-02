@@ -115,7 +115,7 @@ the rounded GB value is stored.
 This is the **disk footprint**. Because those same bytes must be resident to
 run the model, it doubles as a rough **RAM/VRAM** footprint. It is explicitly
 *not* the runtime resident set: the KV cache and activation workspace are added
-at serve time and remain the estimator's job (`docs/gguf-vram-fit-estimates.md`).
+at serve time and remain the estimator's job (`llm-local-inference/gguf-vram-fit-estimates.md`).
 
 ### R3 — ordering
 
@@ -134,7 +134,7 @@ A future `active-gb`: the weight bytes read per generated token.
 - **Dense model** — active = all weights.
 - **MoE model** — active = non-expert weights + (expert weights ×
   `expert_used_count` / `expert_count`), matching the archived
-  `estimate_active_params.py` semantics (`docs/gguf-model-tooling.md`).
+  `estimate_active_params.py` semantics (`llm-local-inference/gguf-model-tooling.md`).
 - The MTP drafter and mmproj are *resident* but not part of the base per-token
   active stream unless engaged; report them separately.
 
@@ -213,7 +213,7 @@ fallback covers all five — these are the 5 `cache_fallbacks` the run reports.
 Adding keys to an entry is backward-compatible with both consumers: the JS
 generator spreads `{ ...DEFAULTS, ...raw }` and ignores unknown keys, and the
 Python tools read named keys. The contract is documented in
-`docs/gguf-model-tooling.md` (the `llamacpp-model-data.json` key table) — both
+`llm-local-inference/gguf-model-tooling.md` (the `llamacpp-model-data.json` key table) — both
 new rows live there. Field names follow the existing kebab-case. A size change
 is a one-file regeneration, never a hand edit.
 
@@ -255,11 +255,11 @@ the table (R5's motivating data).
   performance reorder.
 - `local-llm/fetch_hf_manifests.py` — the (deprecated) manifest writer, now
   targeting `lib/hf-manifests/`.
-- `docs/gguf-model-tooling.md` — schema contract, tool inventory, and the
+- `llm-local-inference/gguf-model-tooling.md` — schema contract, tool inventory, and the
   archived `estimate_active_params.py` (R4's semantics).
-- `docs/refresh-llm-local-inference-manifest.md` — the add-a-model runbook (now calls
+- `llm-local-inference/refresh-llm-local-inference-manifest.md` — the add-a-model runbook (now calls
   `model-sizes.sh`).
-- `docs/gguf-vram-fit-estimates.md` — the estimator's KV/activation/active
+- `llm-local-inference/gguf-vram-fit-estimates.md` — the estimator's KV/activation/active
   numbers (what this footprint deliberately is *not*).
 - `docs/d025-shared-model-data-to-lib.md` — table ownership and the
   shared-vs-runner boundary (the manifest move follows it).

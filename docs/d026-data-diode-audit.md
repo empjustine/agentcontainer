@@ -10,7 +10,7 @@ tags: ["security", "audit", "persistence", "design-only"]
 # d026 — Data-Diode Audit Trail for Harness State (design note)
 
 Status: **design only — no implementation.** Complements
-`docs/coding-harness-persistence.md`, which documents the *current* per-run
+`coding-agent/coding-harness-persistence.md`, which documents the *current* per-run
 RW-mount staging that this design would replace.
 
 ## Problem

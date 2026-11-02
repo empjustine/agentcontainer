@@ -13,10 +13,10 @@
 # chain: ./environment.sh ./run-all.sh (the ONE infisical round-trip —
 # no .env file is read).  Never fatal inside: gated/private repos simply skip
 # auth when no token is in the environment.
-# See docs/hf-cache-upkeep.md. The GGUF size-estimation tools (layer cards,
+# See llm-local-inference/hf-cache-upkeep.md. The GGUF size-estimation tools (layer cards,
 # active params, VRAM fits) were retired;
 # their replacement is gdevenyi/huggingface-estimate (see
-# docs/gguf-vram-fit-estimates.md).
+# llm-local-inference/gguf-vram-fit-estimates.md).
 #
 # Usage: ./run-all.sh [step ...]        # subset by script name, default all
 
