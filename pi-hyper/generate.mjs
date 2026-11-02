@@ -23,7 +23,7 @@
  *   --check verifies the committed artifacts match a fresh generation and
  *   exits non-zero on drift (the CI-shaped form; without it the run writes).
  *
- * Env: nothing — no relay base, no catalog path (docs/d104).
+ * Env: nothing — no relay base, no catalog path (docs/d113).
  */
 
 import { existsSync, readFileSync } from "node:fs";

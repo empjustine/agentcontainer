@@ -13,9 +13,9 @@
 set -eu
 
 # shellcheck disable=SC1091
-. "$(dirname "$0")/lib/log.sh"
+. "$(dirname "$0")/log.sh"
 # shellcheck disable=SC1091
-. "$(dirname "$0")/lib/npm-tools.sh"
+. "$(dirname "$0")/npm-tools.sh"
 LOG_TOOL='lint'
 export LOG_TOOL
 
@@ -45,14 +45,15 @@ run_mise_or_host() {
 }
 
 log_info "shellcheck"
-# -x: follow `source` directives (the generate.sh shims point at
-# lib/node-run.sh for node_run; run scripts point at lib/workload-runtime.sh).
+# -x: follow `source` directives (the generate.sh shims point at their own
+# folder's lib/node-run.sh; run scripts point at its lib/workload-runtime.sh).
 # node_modules is pruned: npm's dependency tree may carry vendor *.sh files,
 # and this gate owns only this repo's sources.
 run_mise_or_host shellcheck find . -path ./node_modules -prune -o \
 	-type f -name '*.sh' -exec shellcheck -x {} +
 
-# jq compile gate for the workload description filters (lib/workload-*.jq).
+# jq compile gate for the workload description filters (every unit's own
+# lib/workload-*.jq copy — docs/d113: there is no repo-level lib/ any more).
 #
 # jq resolves --arg/--argjson names at COMPILE time, so this catches a typo'd
 # filter variable as well as a syntax error.  The catch: a filter that uses
@@ -64,7 +65,7 @@ run_mise_or_host shellcheck find . -path ./node_modules -prune -o \
 # Exit 3 is the compile-error code, tested specifically: a valid filter that
 # merely fails when run against -n's null input exits 5, which is not a
 # compile error.  Semantic mistakes are check-workload.sh's job, not this gate's.
-log_info "jq compile (gating — lib/workload-*.jq)"
+log_info "jq compile (gating — */lib/workload-*.jq)"
 # shellcheck disable=SC2016  # $f is expanded by the inner sh, not by this one
 run_mise_or_host jq sh -c '
 set -- --argjson doc "{}" \
@@ -73,7 +74,7 @@ set -- --argjson doc "{}" \
 	--arg entrypoint e --arg workdir w --arg init 1 --arg user 1 \
 	--arg uid 0 --arg gid 0 --arg userns u --arg keepgroups k --arg harden 1 \
 	--args -- dummy
-for f in lib/workload-*.jq; do
+for f in */lib/workload-*.jq; do
 	[ -f "$f" ] || continue
 	jq -n --from-file "$f" "$@" >/dev/null 2>&1
 	if [ $? -eq 3 ]; then

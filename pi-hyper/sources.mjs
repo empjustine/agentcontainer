@@ -30,7 +30,7 @@
  *     because the catalog needs it.
  *   - No fetch URL is ever recorded (docs/d086).
  *
- * Env: nothing (docs/d104).
+ * Env: nothing (docs/d113).
  */
 
 import { dirname, join } from "node:path";

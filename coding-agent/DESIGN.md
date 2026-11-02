@@ -5,7 +5,7 @@ status: draft
 title: coding-agent — pi agent image + by-agent layered config generation
 parent: architecture
 depends-on:
-  - lib
+  - workload-api
 references:
   - environments
 tags:
@@ -85,7 +85,7 @@ generators enumerate **no** model lists
 (`docs/scoped-models-and-proxy-overrides.md`).
 
 `run.sh` launches the container: loads vault secrets **once on the host** via
-lib/environment.sh and forwards them through the `workload_env` allowlist — nothing
+./environment.sh and forwards them through the `workload_env` allowlist — nothing
 inside the workload runs infisical, and no credential store file is staged
 (the earlier staged-store design is tombstoned in `docs/d052`). It mounts the
 host agent dir RW as `PI_CODING_AGENT_DIR` and stages a per-run session dir RW
@@ -106,7 +106,7 @@ the container side (docs/d068) — with the first as the workdir; the
 the former `CODING_AGENT_REFERENCES` toggle (docs/d043, docs/d056). `run.sh` is
 container-ONLY (docs/d059): without podman/docker it refuses at the top —
 before staging anything — and names the sandbox-free path
-(`./lib/environment.sh pi`, which spawns a bare PATH command as well as a
+(`./environment.sh pi`, which spawns a bare PATH command as well as a
 script). A missing
 installed artifact is a loud failure pointing at the generator, never an
 implicit regeneration.
@@ -117,7 +117,7 @@ build; pi enforces its own ≥ 22.19 engines floor at launch), secrets arrive
 as plain env via the explicit chain, the models.dev catalog refresh is
 best-effort like everywhere else (running generate means "I want current
 networked data", docs/d060), the opencode stage is skipped unless
-`OPENCODE_CONFIG_DIR` is set. **Everywhere else** — repo-pinned node via `lib/node-run.sh`, catalog
+`OPENCODE_CONFIG_DIR` is set. **Everywhere else** — repo-pinned node via this folder's own `lib/node-run.sh`, catalog
 refreshed best-effort, probes addressing each provider's canonical upstream
 through the environment proxy.
 
@@ -178,7 +178,9 @@ through the environment proxy.
 ## Provenance
 
 The generators reach outside this folder for provider knowledge in exactly
-four ways. Three are DATA legs — self-correcting or validation-pinned — and
+four ways, and since docs/d113 every one of them is a **read**: this folder
+owns its copies of the facts (below), so a sibling's file cannot change what
+a generate here emits. Three are DATA legs — self-correcting or validation-pinned — and
 one is a behavioral copy, which is the caveat worth knowing:
 
 - **models.dev + catwalk** (vendored `lib/models.dev.api.json`,
@@ -214,18 +216,36 @@ attribution, or behavioral copy — and every behavioral copy must be flagged).
 
 ## Boundary
 
-Copy unit = this folder + `../lib` (`docs/architecture.md`). `gen-lib.mjs` is
-the shared preamble for the pi-layer stages: it carries the pi shaping
-helpers (folded from the former `lib/pi-models.mjs`, docs/d039), re-exports
-the shared lib/ modules (`lib/log.mjs`, `lib/cloud-providers.mjs`) via
-`$LIB_DIR`, and its same-dir siblings `route-probe.mjs`,
-`catalog-facts.mjs`, `refresh-models-dev.mjs` (all single-consumer, folded
-out of lib/ by d039; the two fact caches merged into one module in d072). It
-reads `lib/models.dev.api.json` (shared with estige) and the
-caches (`<id>-facts.json` beside its module, `lib/catwalk-facts.json` — the
-proxy reads that one too), both published through `lib/fact-table.mjs`
-(`_meta` provenance, no write when the facts are unchanged — docs/d086).
-Must not reach into `llm-local-inference/` or `local-llm/`.
+Copy unit = **this folder alone** (`docs/architecture.md`, docs/d113): its own
+`lib/`, its own `build.sh`/`generate.sh`, its own `tests/`. Nothing one level
+up is implied.
+
+`lib/` here is a hand copy, owned outright — no sync step, no upstream to keep
+in step with, and this folder may retune any of it without touching a sibling.
+It carries what this unit actually uses:
+
+| Copy | Why it is here |
+|---|---|
+| `log.mjs` | structured logging, same shape as every unit's |
+| `artifact.mjs` + `canonical-json.mjs` | the atomic write choke point and the canonical serialization it applies (docs/d050) — they only work as a pair |
+| `cloud-providers.mjs` | **the full** provider fact table: this folder is the reference vocabulary docs/d032's checklist and the tests read |
+| `models.dev.api.json` | the vendored catalog, read by every catalog-driven stage |
+| `catwalk-facts.json` | the secondary catalog fallback cache |
+| `fact-table.mjs` | the fact-table publisher (docs/d086) — exactly one consumer, so it lives here and nowhere else (docs/d113) |
+| `host-capabilities.mjs` | the capability gates the build registers targets on |
+| `node-run.sh` | the `node_run()` interpreter pin |
+| `workload-runtime.sh` + `workload-*.jq` | the workload API `run.sh` describes the container with (`docs/container-tooling.md`) |
+
+`gen-lib.mjs` is the shared preamble for the pi-layer stages: it carries the pi
+shaping helpers (folded from the former `lib/pi-models.mjs`, docs/d039),
+re-exports this folder's `lib/log.mjs` and `lib/cloud-providers.mjs` via
+`$LIB_DIR`, and its same-dir siblings `route-probe.mjs`, `catalog-facts.mjs`,
+`refresh-models-dev.mjs` (all single-consumer, folded out of the old repo-level
+lib by d039; the two fact caches merged into one module in d072). It reads
+`lib/models.dev.api.json` and the caches (`<id>-facts.json` beside its module,
+`lib/catwalk-facts.json`), both published through `lib/fact-table.mjs` (`_meta`
+provenance, no write when the facts are unchanged — docs/d086). Must not reach
+into `llm-local-inference/`, `estige/` or any `pi-*` sibling.
 
 Nothing copies this tree anywhere at generate time (docs/d072): the generators
 run from their own dir, output goes to the per-run `RUN_DIR` dir, and the

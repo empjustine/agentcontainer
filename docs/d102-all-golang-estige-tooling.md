@@ -84,7 +84,7 @@ docs/d082 split-time question, same as the workload API itself.
   (`cd estige && go run . generate` + `git diff --exit-code estige/`).
 - The unit's remaining node@24 surface shrinks to the root builder the shim
   runs and the canonicity guard (`tests/committed-manifests.test.mjs` since
-  docs/d104; docs/d050's canonicalizer still
+  docs/d113; docs/d050's canonicalizer still
   governs the node generators — the Go generator implements the same
   ordering natively). The per-change CI-critical path is plain
   `go build` + `go test ./...`.

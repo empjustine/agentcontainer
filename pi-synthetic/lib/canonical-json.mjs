@@ -4,7 +4,7 @@
  * (docs/d086). Serialization half only: the atomic-write contract (and
  * `writeJsonArtifact`, which combines the two) lives in lib/artifact.mjs, the
  * write choke point. The d086 hash short-circuit that consumes these forms is
- * lib/fact-table.mjs.
+ * coding-agent/lib/fact-table.mjs (docs/d086).
  *
  * Why this exists: generators are the source of truth (docs/d023), but a
  * rerun over unchanged inputs used to emit different *bytes* because key and
@@ -163,7 +163,7 @@ export function canonicalizeProviderCatalog(catalog) {
  * Order-insensitivity is the whole point: the same facts arriving in a
  * different upstream order must produce the same bytes, because "did the
  * content move?" is the question the writer answers before it touches the
- * file (lib/fact-table.mjs).
+ * file (coding-agent/lib/fact-table.mjs (docs/d086)).
  *
  * @param {unknown} doc parsed fact-cache document
  * @param {string} listKey member holding the record list (`providers`, `models`)

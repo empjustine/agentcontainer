@@ -68,17 +68,17 @@ import { fileURLToPath } from "node:url";
 import { tlsUnverifiable, upstreamCandidates } from "./route-probe.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "lib");
 const { logInfo, logWarn, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
+	/** @type {typeof import("./lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
 const { CLOUD_PROVIDERS } =
-	/** @type {typeof import("../lib/cloud-providers.mjs")} */ (
+	/** @type {typeof import("./lib/cloud-providers.mjs")} */ (
 		await import(`${LIB_DIR}/cloud-providers.mjs`)
 	);
 const { publishFactCache } =
-	/** @type {typeof import("../lib/fact-table.mjs")} */ (
+	/** @type {typeof import("./lib/fact-table.mjs")} */ (
 		await import(`${LIB_DIR}/fact-table.mjs`)
 	);
 

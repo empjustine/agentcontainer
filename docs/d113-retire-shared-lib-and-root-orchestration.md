@@ -1,15 +1,15 @@
 ---
-id: d104
+id: d113
 type: decision
 status: implemented
-title: "d104 — retire the shared lib/ and the root orchestrators: a folder is a copy unit"
+title: "d113 — retire the shared lib/ and the root orchestrators: a folder is a copy unit"
 parent: architecture
-depends-on: [d024, d039, d041, d082, d083, d101, d102]
+depends-on: [d024, d039, d041, d082, d083, d086, d101, d102, d107, d108]
 references: [d025, d032, d042, d050, d087]
 tags: [architecture, copy-unit, lib, builders, generators, tests]
 ---
 
-# d104 — retire the shared lib/ and the root orchestrators
+# d113 — retire the shared lib/ and the root orchestrators
 
 ## Problem
 
@@ -24,9 +24,12 @@ Both premises expired:
 
 - `lib/`'s consumer set collapsed. `docs/d039` folded the single-consumer node
   modules back into `coding-agent/`, `docs/d101`/`docs/d102` moved the proxy's
-  fact table into the estige unit's own Go-readable JSON, and the remaining
-  "shared" modules were each read by two or three folders that happened to
-  need slightly different rows of the same table.
+  fact table into the estige unit's own Go-readable JSON, and `docs/d108`
+  deleted the allowlist edge and its generator outright — which deleted the
+  proxy's only fact-table consumer, leaving the table shared with nobody.
+  What remained "shared" were modules read by two or three folders that
+  happened to need slightly different rows of the same table (`lib/fact-table.mjs`,
+  `docs/d086`, has one consumer and belongs to it).
 - `estige/` is becoming its own repository (`docs/d082`). A folder that must be
   copyable out whole cannot depend on a parent directory one level up, and
   `git filter-repo` cannot carry `../lib` with it.
@@ -57,9 +60,11 @@ the folder is implied by it. `lib/` at the repo root is deleted.
   / `cloud-providers.json` copies carry only the rows that unit serves:
   `coding-agent/` holds the full table because it is the reference vocabulary
   `docs/d032` writes its checklist against (and the one copy `tests/` reads),
-  `estige/` holds the rows its allowlist needs, and each `pi-*` extension holds
-  exactly the one row it pins. `llm-local-inference/` carries no
-  `cloud-providers.*` at all — it serves no cloud provider.
+  each `pi-*` extension holds exactly the one row it pins, and
+  `llm-local-inference/` carries no `cloud-providers.*` at all — it serves no
+  cloud provider. `estige/` carries none either: with `docs/d108`, the
+  allowlist edge is gone, so the unit that was the table's second consumer
+  serves no provider route and reads no provider row.
 - **Tests travel with their subject.** Each `<unit>/tests/` exercises that
   unit's code and runs standalone from the folder. Only the guard whose subject
   is the whole unit set — `tests/committed-manifests.test.mjs` (`docs/d050`) —
@@ -81,14 +86,17 @@ The repo root is **not a unit** and no unit imports from it:
 ### Per-unit entrypoints only
 
 The root `build.mjs`, `build.sh`, `generate.mjs` and `generate.sh` are deleted.
-Each folder owns its entrypoints — `./estige/build.sh` + `./estige/generate.sh`,
+Each folder owns its entrypoints — `./estige/build.sh`,
 `./coding-agent/build.sh` + `./coding-agent/generate.sh`,
 `./llm-local-inference/build.sh` + `./llm-local-inference/generate.sh`, and
 `./pi-*/generate.sh` — and each `build.mjs` carries the capability gates its
 targets already had (`docs/d087`: the llama-swap pull needs an inference
-endpoint; coding-agent's image build is ungated; `estige`'s image still needs
-cloud reachability). `docs/d083`'s per-unit shims become the only entrypoints
-rather than a selection layer over a root builder.
+endpoint; coding-agent's image build is ungated; estige's container targets
+register only while outbound cloud networking is reachable, its native target
+always). `docs/d083`'s per-unit shims become the only entrypoints rather than a
+selection layer over a root builder. A unit with nothing to generate has no
+`generate.sh` (`pi-opencode/`, `pi-mistral/`), and `estige/` has none since
+`docs/d108` deleted `estige generate` with the allowlist.
 
 ### Consequences for the playbooks and the docs
 
@@ -113,7 +121,22 @@ rather than a selection layer over a root builder.
   keeps pointing at a real node.
 - **Prose law.** A unit's copy is described as "this folder's own `lib/`" —
   never `../lib`, never "the shared lib". The retired builders are described as
-  "this folder's own `build.mjs` (`docs/d083`/`docs/d104`)".
+  "this folder's own `build.mjs` (`docs/d083`/`docs/d113`)".
+
+### What each unit ended up carrying
+
+The copies are pruned per consumer, so the inventory is part of the decision —
+it is the answer to "why does this folder have a `lib/` at all?":
+
+| Unit | Its own `lib/` |
+| --- | --- |
+| `coding-agent/` | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`, `artifact.mjs`, `canonical-json.mjs`, `fact-table.mjs`, `host-capabilities.mjs`, `cloud-providers.mjs`+`.json` (the full table), `models.dev.api.json`, `catwalk-facts.json` |
+| `estige/` | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`, `go-build.mjs`, `host-capabilities.mjs` |
+| `llm-local-inference/` | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`/`log.py`, `artifact.mjs`, `canonical-json.mjs`, `host-capabilities.mjs`, `llamacpp-model-data.json`, `hf-manifests/` |
+| `pi-cline-pass/`, `pi-hyper/`, `pi-synthetic/`, `pi-verboo/` | `cloud-providers.mjs`+`.json` (its one row), `canonical-json.mjs`, `artifact.mjs`, `log.mjs`, `node-run.sh` |
+| `pi-opencode/`, `pi-mistral/` | `cloud-providers.mjs`+`.json` (its rows), `node-run.sh` |
+| `git/` | `log.mjs`/`log.sh`, `artifact.mjs`, `canonical-json.mjs`, `node-run.sh`, `node-run.ps1` (`docs/d062`) |
+| repo root | nothing importable: `environment.sh`, `provision-termux.sh`, `log.sh`, `node-run.sh`, `npm-tools.sh` (`docs/d107`) + the QA sweep |
 
 ## Alternatives rejected
 
@@ -132,8 +155,25 @@ rather than a selection layer over a root builder.
 
 ## Verification
 
-`git diff --exit-code` after every per-unit `generate.sh` (no generated bytes
-change), `go test ./...` for estige, `node --test` over every `<unit>/tests/`
-plus `tests/committed-manifests.test.mjs` (via `./test.sh`), and
-`./lint.sh` / `./check-types.sh` for the sweep. Search gate: no `../lib/`
-outside `docs/` archive entries.
+- **Generated bytes**: `./pi-cline-pass/generate.sh` and `./pi-hyper/generate.sh`
+  leave `git diff` empty. `./pi-synthetic/generate.sh` reproduces exactly the
+  same live-catalog drift `main`'s own regeneration produces (the provider
+  dropped a model since the snapshot — one diff, same 108 lines, on both
+  trees), so the move changed no bytes of its own; `./pi-verboo/generate.sh`
+  fails closed on an unkeyed listing with the committed artifacts untouched
+  (its documented behaviour). The coding-agent
+  run reproduces `main`'s own regeneration drift **file for file** — the live
+  catalogs have moved since the committed snapshots — with the one intended
+  difference that the refreshed `catwalk-facts.json` / `models.dev.api.json`
+  land in `coding-agent/lib/` instead of the deleted root `lib/`. `estige` has
+  no generator to diff since `docs/d108`.
+- **Tests**: `./test.sh` (161 tests, plus every `*/tests/*.sh`) passes, each
+  unit's own `tests/` passes standalone from its folder, `git` and the six
+  `pi-*` units included.
+- **Gates**: `./lint.sh` (biome + knip + jq + the capability-URL pattern) and
+  `./check-types.sh` are green.
+- **estige**: `./estige/build.sh` builds the native binary;
+  `go test ./...` has one **pre-existing** failure (`TestEgressFromEnv`) that
+  reproduces unchanged on `main`.
+- **Search gate**: no `../lib/` reference remains outside `docs/archive/` and
+  the per-unit `lib/` itself.

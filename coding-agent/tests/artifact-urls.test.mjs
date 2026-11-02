@@ -19,12 +19,12 @@ import { fileURLToPath } from "node:url";
 const {
 	canonicalViolations,
 	providerUrlsOf,
-} = await import("../coding-agent/check-canonical-artifacts.mjs");
+} = await import("../check-canonical-artifacts.mjs");
 const { CLOUD_PROVIDERS } = await import("../lib/cloud-providers.mjs");
 
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+const unitRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const readDoc = (/** @type {string} */ p) =>
-	JSON.parse(readFileSync(join(repoRoot, "coding-agent", p), "utf-8"));
+	JSON.parse(readFileSync(join(unitRoot, p), "utf-8"));
 
 /** Every committed artifact that carries provider URLs (d070 §1). */
 const COMMITTED = [

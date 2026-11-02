@@ -32,7 +32,7 @@
  *     a secret, but logs that echo a URL are how a rotatable capability ends up
  *     in a log stream. Provenance is the source id and the row counts.
  *
- * Env: nothing (docs/d104).
+ * Env: nothing (docs/d113).
  */
 
 import { dirname, join } from "node:path";

@@ -28,9 +28,10 @@ paths can disagree with the origins they point at (`non-bare-issues.md`).
 - **Host-side only.** No runner, container image, or `./build.sh` target
   depends on this folder. The read path is a host loopback façade (d099), never
   something a workload reaches directly.
-- **Consumes `lib/`, owns nothing there.** Logging is `lib/log.mjs` /
-  `lib/log.sh`, so farm output is structured like the rest of the tree; the
-  folder contributes no shared infrastructure of its own.
+- **Owns its `lib/`.** `lib/log.mjs` / `lib/log.sh` are this folder's own hand
+  copies (docs/d113), so farm output is structured like the rest of the tree;
+  the copies are pruned to what the farm uses — logging, the canonical JSON
+  helper, and the node runner.
 - **Reads upstreams, never writes them.** Every mutation is local to the mirror
   (fetch, repack, commit-graph, hardlink or redownload). Nothing here pushes.
 - **`tests/` exercises the helpers, not the farm.** `tests/git-pacer.test.mjs`

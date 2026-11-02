@@ -56,8 +56,8 @@ import { fileURLToPath } from "node:url";
 
 const LIB_DIR =
 	process.env.LIB_DIR ??
-	join(dirname(fileURLToPath(import.meta.url)), "..", "lib");
-const { logWarn } = /** @type {typeof import("../lib/log.mjs")} */ (
+	join(dirname(fileURLToPath(import.meta.url)), "lib");
+const { logWarn } = /** @type {typeof import("./lib/log.mjs")} */ (
 	await import(`${LIB_DIR}/log.mjs`)
 );
 // Proxy env is handled by Node itself: NODE_USE_ENV_PROXY=1 (set by

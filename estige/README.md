@@ -41,9 +41,9 @@ rationale stays in [DESIGN.md](DESIGN.md).
 The exit node, armed by the env chain:
 
 ```console
-$ ./lib/environment.sh ./vpn-exit.sh      # VPN_OPERATOR_KEYS arms the tunnel
+$ ./environment.sh ./vpn-exit.sh      # VPN_OPERATOR_KEYS arms the tunnel
 [estige] listening on :8080; tunnel at /vpn
-$ PORT=8443 ./lib/environment.sh ./vpn-exit.sh   # the one port knob (docs/d110)
+$ PORT=8443 ./environment.sh ./vpn-exit.sh   # the one port knob (docs/d110)
 ```
 
 The funnel points at that port. The relay node (`./vpn-relay.sh`) dials in and
@@ -77,13 +77,14 @@ the credential does.
 
 ## Build & run
 
-Building is the root `./build.sh` → `build.mjs` (docs/d041 — the per-folder
-`build.sh` files are gone): container images in parallel on podman/docker
-hosts, Termux targets strictly serialized. For THIS folder:
+Building is **this folder's own** `./build.sh` → `build.mjs` (docs/d083/d113 —
+there is no root builder any more; each folder is a copy unit). Targets:
+container images on podman/docker hosts, the Termux/Android target serialized.
+For THIS folder:
 
 - **Termux**: builds the native `android/arm64` binary
   (`estige-android`; `GOOS=android` is required so DNS resolves
-  via Android's resolver — flag presets in `lib/go-build.mjs`). Needs
+  via Android's resolver — flag presets in this folder's own `lib/go-build.mjs`). Needs
   `pkg install golang`.
 - **Container hosts**: builds ONLY the OCI image (`Containerfile`:
   MULTI-STAGE `golang:1.27` → `scratch` — the compile happens inside the
@@ -132,7 +133,7 @@ URL needs the host's tailnet routes).
 `vpn-relay.sh <target>` is the CHAIN STEP (docs/d095): it ensures the relay
 is serving, waits for a health answer naming *this* tunnel, exports the
 conventional variables pointing at the loopback listeners, and execs the
-target — so `./lib/environment.sh ./estige/vpn-relay.sh
+target — so `./environment.sh ./estige/vpn-relay.sh
 ./coding-agent/run.sh` hands the sandbox the loopback spelling while the
 relay itself keeps the host's upstream chain (docs/d094). A relay that is
 not running is started (detached, `--restart=unless-stopped`); an

@@ -1,6 +1,6 @@
 /**
  * @fileoverview build.mjs — build the coding-agent image for THIS host
- * (docs/d041; d083 made the build entry per-unit, docs/d104 folded the root
+ * (docs/d041; d083 made the build entry per-unit, docs/d113 folded the root
  * builder away — this folder now owns the target it builds).
  *
  * The compile is the image build itself: no host toolchain is involved, and

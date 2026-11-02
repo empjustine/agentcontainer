@@ -1,6 +1,6 @@
 #!/bin/sh
 # build.sh — interpreter shim (docs/d041, d083): estige's build lives in its
-# own build.mjs (docs/d104 folded the root builder into the units), which
+# own build.mjs (docs/d113 folded the root builder into the units), which
 # builds the target THIS host can use — the image on a container host, the
 # native binary otherwise. Extra args are build.mjs target names.
 # Secrets: none — builds are keyless.

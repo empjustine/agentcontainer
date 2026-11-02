@@ -3,23 +3,23 @@ id: d046
 type: module-design
 status: active
 title: "d046 — infisical run replaces the hand-rolled vault loader"
-parent: lib
+parent: architecture
 ---
 
 # d046 — `infisical run` replaces the hand-rolled vault loader
 
 **Date:** 2026-09-18
 **Status:** adopted · target resolution extended by **d059** — a bare
-command on PATH is a valid target (`./lib/environment.sh pi`), and a PATH hit
+command on PATH is a valid target (`./environment.sh pi`), and a PATH hit
 must actually execute to count.
-**Supersedes:** the custom loader mechanics of `lib/environment.sh`
+**Supersedes:** the custom loader mechanics of `./environment.sh`
 (exit-96 empty-vault pre-flight, in-process dotenv parser, `secrets
 --output=dotenv` + parse + exec chain); the chain *contract* is unchanged.
 
 ## Context
 
-`lib/environment.sh` was the repo's explicit env chain:
-`./lib/environment.sh <script>` — fetch the vault, inject it into the
+`./environment.sh` was the repo's explicit env chain:
+`./environment.sh <script>` — fetch the vault, inject it into the
 environment, `exec` the target. The *contract* (consumers read plain env,
 never load secrets, no `.env` files, fatal on failure) was repo policy; but
 the *mechanism* — an `infisical secrets --output=dotenv` round-trip captured
@@ -85,7 +85,7 @@ Everything else is deleted with the mechanism:
 
 ## Consequences
 
-- `lib/environment.sh`: ~160 lines → ~100, of which ~60 are the header
+- `./environment.sh`: ~160 lines → ~100, of which ~60 are the header
   contract. Mechanism prose ("in-memory here-string parse", "never a file
   on disk", "no wrapper process left behind") is gone from the header and
   from every doc that narrated it (architecture, requirements FR-L2,

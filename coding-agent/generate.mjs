@@ -13,14 +13,14 @@
  *   Termux (PREFIX under /data/data/com.termux): system node (Termux's
  *     bionic build; pi's own engines enforce the >= 22.19 floor when it
  *     launches) and secrets arriving as plain environment, via the explicit
- *     chain (./lib/environment.sh ./generate.sh). The committed snapshot is
+ *     chain (./environment.sh ./generate.sh). The committed snapshot is
  *     not consumed here — pi reads the agent dir directly, which is why the
  *     copy-back is container-only (docs/d059).
  *   Everywhere else (host or inside the coding-agent container): stages run
  *     via process.execPath (the same pinned node the generate.sh shim
  *     resolved through lib/node-run.sh), and secrets are expected ALREADY IN
  *     the environment by the caller (run.sh is exec'd through
- *     lib/environment.sh and forwards the vault env through the workload_env
+ *     ./environment.sh and forwards the vault env through the workload_env
  *     allowlist).
  *
  * Probes, catalog fetches, and the artifacts themselves all address each
@@ -69,7 +69,7 @@
  *                    their layers and merged artifacts into (default $TMPDIR,
  *                    falling back to $PREFIX/tmp on Termux, /tmp elsewhere) —
  *                    this script's dir may be a read-only mount
- *   MODELS_DEV_JSON  models.dev catalog (default ../lib/models.dev.api.json —
+ *   MODELS_DEV_JSON  models.dev catalog (default ./lib/models.dev.api.json —
  *                    the shared vendored catalog, see docs/d023)
  *   MODELS_DEV_RELAY_URL  catalog fetch override (default = the canonical
  *                    models.dev URL via the environment proxy, empty
@@ -94,14 +94,13 @@ import { fileURLToPath } from "node:url";
 
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const repoRoot = dirname(scriptDir);
-const LIB_DIR = process.env.LIB_DIR ?? join(repoRoot, "lib");
+const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "lib");
 const { logError, logInfo, logWarn, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
+	/** @type {typeof import("./lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
 const { serializeArtifact, writeArtifact } =
-	/** @type {typeof import("../lib/artifact.mjs")} */ (
+	/** @type {typeof import("./lib/artifact.mjs")} */ (
 		await import(`${LIB_DIR}/artifact.mjs`)
 	);
 setLogTool("coding-agent/generate");
@@ -145,7 +144,7 @@ const runDir =
 		? join(process.env.PREFIX ?? "/data/data/com.termux/files/usr", "tmp")
 		: tmpdir());
 const modelsDevJson =
-	process.env.MODELS_DEV_JSON ?? join(repoRoot, "lib", "models.dev.api.json");
+	process.env.MODELS_DEV_JSON ?? join(LIB_DIR, "models.dev.api.json");
 
 // Generator runner: the two by-harness generators are CLIs (spawned child
 // processes, so one harness's crash never aborts the other), and a stage

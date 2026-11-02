@@ -1,6 +1,6 @@
 /**
  * @fileoverview build.mjs — build this unit's serving artifact for THIS host
- * (docs/d041; d083 made the build entry per-unit, docs/d104 folded the root
+ * (docs/d041; d083 made the build entry per-unit, docs/d113 folded the root
  * builder away). There is nothing to compile: the OCI workflow means llama-swap
  * arrives as a pre-pulled image, so the target is one pull of the image run.sh
  * will use.

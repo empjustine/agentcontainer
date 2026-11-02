@@ -124,7 +124,7 @@ function generateGeneral() {
 // --- 10-local-llm-inference.yaml (folded generate-local-llm-models.yaml.mjs)
 // The local llama.cpp GGUF `models` map, plus the sibling .paths manifest
 // (host-side paths the run.sh staleness preflight re-checks). Built from
-// lib/llamacpp-model-data.json (this folder's copy of the table, d025/d104);
+// lib/llamacpp-model-data.json (this folder's copy of the table, d025/d113);
 // no network access. The `cmd` strings reference macros defined in
 // 00-general.yaml (${LLAMA_SERVER}, ${qwen36}, …) which llama-swap resolves
 // after merging config.d/.
@@ -401,7 +401,7 @@ function deriveModelId(m, modeSeg) {
  */
 function generateLocalInference() {
 	/**
-	 * The model-data table lives in this folder's own lib/ (docs/d104: the
+	 * The model-data table lives in this folder's own lib/ (docs/d113: the
 	 * copy is owned here, not shared through a repo-level lib/). Same LIB_DIR
 	 * convention as the log import above.
 	 */

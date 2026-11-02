@@ -4,7 +4,7 @@
  * relay to cloud upstreams, so building its image against a closed network is
  * work the host cannot use).
  *
- * Pruned to the two probes this unit's build gates on (docs/d104): the
+ * Pruned to the two probes this unit's build gates on (docs/d113): the
  * container-backend probe (which target is even buildable here) and outbound
  * cloud reachability (whether the image is work this host can use). A copy is
  * a copy unit's own code — the render-device and RAM-floor probes stayed with

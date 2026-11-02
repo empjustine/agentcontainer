@@ -1,8 +1,8 @@
 #!/bin/sh
-# test.sh — the repo-wide test sweep (docs/d104).
+# test.sh — the repo-wide test sweep (docs/d113).
 #
 # WHAT IT IS: the maintainer's view across the copy units, not a library any
-# unit consumes. Since docs/d104 every test lives with the code it tests —
+# unit consumes. Since docs/d113 every test lives with the code it tests —
 # `<unit>/tests/` — and each of those runs standalone from its own folder
 # (`. ./<unit>/lib/node-run.sh && node_run --test <unit>/tests/*.test.mjs`).
 # This script exists for the one thing a single unit cannot do: run them all,

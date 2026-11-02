@@ -30,7 +30,7 @@ source of the secret-bearing estige config. It removes long-lived API keys
 from instances entirely: the instance authenticates as itself, and a policy
 lets it read only the named secrets.
 
-It is **not** a universal replacement for `lib/environment.sh` (Infisical)
+It is **not** a universal replacement for `./environment.sh` (Infisical)
 because it only works on OCI instances. The portable contract stays "a
 `0600` file appears on the instance"; OCI Vault is one way to produce it.
 
@@ -105,9 +105,9 @@ Oracle's own documentation, not from a successful fetch on this host.
   reason the fetch is a separate step rather than an in-process call.
 - **coding-agent provider keys.** The same mechanism could materialize
   provider-key env or a keys file, but that would change the coding-agent's
-  key path (`lib/environment.sh`/Infisical); treat it as a separate
+  key path (`./environment.sh`/Infisical); treat it as a separate
   decision, not a rider on this one.
-- **Non-OCI hosts.** Keep `lib/environment.sh`/`infisical run` for those;
+- **Non-OCI hosts.** Keep `./environment.sh`/`infisical run` for those;
   the output contract is still "owner-only file, then exec".
 - **Which render shape** (see next section) matters because the repo's
   constraint is that estige is a small, dependency-free Go binary.

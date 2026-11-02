@@ -13,7 +13,7 @@
  *
  * Everything runs on plain records in temp dirs — no network, no repo writes.
  *
- * Run: node --test   (discovers tests/*.test.mjs from the repo root)
+ * Run: . ./lib/node-run.sh && node_run --test tests/*.test.mjs   (this folder)
  */
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
@@ -31,7 +31,7 @@ import {
 	publishProviderMirror,
 } from "../lib/fact-table.mjs";
 
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+const unitRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const workDir = mkdtempSync(join(tmpdir(), "fact-table-"));
 let caseNo = 0;
 
@@ -258,13 +258,13 @@ test("mirror: canonical, tab-indented, no _meta, not rewritten when identical", 
 // the recorded `_meta.regen` command, never to reformat by hand.
 const COMMITTED_CACHES = [
 	{ path: "lib/catwalk-facts.json", source: "catwalk" },
-	{ path: "coding-agent/hyper-facts.json", source: "hyper" },
-	{ path: "coding-agent/verboo-facts.json", source: "verboo" },
+	{ path: "hyper-facts.json", source: "hyper" },
+	{ path: "verboo-facts.json", source: "verboo" },
 ];
 
 for (const { path: rel, source } of COMMITTED_CACHES) {
 	test(`committed cache is canonical: ${rel}`, () => {
-		const text = readFileSync(join(repoRoot, rel), "utf-8");
+		const text = readFileSync(join(unitRoot, rel), "utf-8");
 		const doc = JSON.parse(text);
 		assert.equal(doc._meta?.decision, "docs/d086", `${rel} has no d086 provenance`);
 		const copy = tempPath("committed.json");
@@ -288,7 +288,7 @@ for (const { path: rel, source } of COMMITTED_CACHES) {
 
 test("committed mirror is canonical: lib/models.dev.api.json", () => {
 	const rel = "lib/models.dev.api.json";
-	const text = readFileSync(join(repoRoot, rel), "utf-8");
+	const text = readFileSync(join(unitRoot, rel), "utf-8");
 	const copy = tempPath("committed-mirror.json");
 	writeFileSync(copy, text, "utf-8");
 	const result = publishProviderMirror(copy, JSON.parse(text));

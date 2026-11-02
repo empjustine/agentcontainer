@@ -52,17 +52,15 @@
 		"skipLibCheck": true
 	},
 	"include": [
-		"lib/artifact.mjs",
-		"lib/canonical-json.mjs",
-		"lib/cloud-providers.mjs",
-		"lib/fact-table.mjs",
-		"lib/go-build.mjs",
-		"lib/host-capabilities.mjs",
-		"lib/log.mjs",
-		"tests/git-glob.test.mjs",
-		"tests/git-pacer.test.mjs",
-		"generate.mjs",
-		"build.mjs",
+		// The per-unit lib/ copies (docs/d113 folded the one shared lib/ into
+		// the folders that consume it), plus each unit's own build entry —
+		// there is no root build.mjs or generate.mjs any more.
+		"*/lib/*.mjs",
+		"estige/build.mjs",
+		"coding-agent/build.mjs",
+		"llm-local-inference/build.mjs",
+		"git/tests/git-glob.test.mjs",
+		"git/tests/git-pacer.test.mjs",
 		"git/git-lib.mjs",
 		"git/audit.mjs",
 		"git/local-changes.mjs",
@@ -71,7 +69,6 @@
 		"git/forge-mirror.mjs",
 		"git/software-forge-remotes.mjs",
 		"git/search-references.mjs",
-		"git/forge-mirror.mjs",
 		"git/vbs-har.mjs",
 		"pi-synthetic/sources.mjs",
 		"pi-synthetic/merge.mjs",
@@ -85,17 +82,20 @@
 		"pi-verboo/sources.mjs",
 		"pi-verboo/merge.mjs",
 		"pi-verboo/generate.mjs",
-		"tests/canonical-json.test.mjs",
-		"tests/fact-table.test.mjs",
-		"tests/artifact-urls.test.mjs",
-		"tests/modality-allowlist.test.mjs",
-		"tests/pi-cost.test.mjs",
-		"tests/pi-synthetic.test.mjs",
-		"tests/pi-cline-pass.test.mjs",
-		"tests/pi-opencode.test.mjs",
-		"tests/pi-hyper.test.mjs",
-		"tests/pi-verboo.test.mjs",
-		"tests/pi-mistral.test.mjs",
+		// Every test lives with the code it tests (docs/d113); tests/ at the
+		// repo root keeps only the guard whose subject is the whole unit set.
+		"tests/committed-manifests.test.mjs",
+		"coding-agent/tests/canonical-json.test.mjs",
+		"coding-agent/tests/fact-table.test.mjs",
+		"coding-agent/tests/artifact-urls.test.mjs",
+		"coding-agent/tests/modality-allowlist.test.mjs",
+		"coding-agent/tests/pi-cost.test.mjs",
+		"pi-synthetic/tests/pi-synthetic.test.mjs",
+		"pi-cline-pass/tests/pi-cline-pass.test.mjs",
+		"pi-opencode/tests/pi-opencode.test.mjs",
+		"pi-hyper/tests/pi-hyper.test.mjs",
+		"pi-verboo/tests/pi-verboo.test.mjs",
+		"pi-mistral/tests/pi-mistral.test.mjs",
 		"llm-local-inference/generate.mjs",
 		"llm-local-inference/model-sizes.mjs",
 		"coding-agent/route-probe.mjs",
@@ -112,7 +112,7 @@
 		// NOT listed. They import
 		// @earendil-works/pi-coding-agent, which this repo does not vendor, so
 		// tsc would report one missing module that is host-provided at runtime.
-		// They are covered better by their tests/*.test.mjs files, which IMPORT
-		// AND RUN the real entry points.
+		// They are covered better by their <folder>/tests/*.test.mjs files,
+		// which IMPORT AND RUN the real entry points.
 	]
 }

@@ -4,7 +4,7 @@
 # the strictness) — this script only runs the checker.
 #
 # The checker is a root devDependency pinned by package-lock.json (docs/d107);
-# lib/npm-tools.sh installs it on demand. TypeScript is held at 6.0.3 on
+# ./npm-tools.sh installs it on demand. TypeScript is held at 6.0.3 on
 # purpose: 7.x is the native compiler and publishes no android-arm64 binary,
 # so it cannot run on Termux.
 #
@@ -13,9 +13,9 @@
 set -eu
 
 # shellcheck disable=SC1091
-. "$(dirname "$0")/lib/log.sh"
+. "$(dirname "$0")/log.sh"
 # shellcheck disable=SC1091
-. "$(dirname "$0")/lib/npm-tools.sh"
+. "$(dirname "$0")/npm-tools.sh"
 LOG_TOOL='check-types'
 export LOG_TOOL
 

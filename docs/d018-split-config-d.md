@@ -76,7 +76,7 @@ The dynamic HF-snapshot resolution used to live in a `config.d/launch-gguf.sh`
 resolver invoked as the cmd's argv head; it was retired by generation-time
 path baking (`docs/d029` option B): `generate-local-llm-models.yaml.mjs`
 resolves each entry to ONE snapshot dir (refs/main first — the revision
-`llm-local-inference/download_models.py` pins, flat in the unit root since d104), verifies every shard plus the
+`llm-local-inference/download_models.py` pins, flat in the unit root since d113), verifies every shard plus the
 mmproj/drafter in that snapshot, and emits the absolute paths as plain args.
 A cache miss is a generation error pointing at the provisioner; nothing
 downloads at launch, and `run.sh` preflights the generated `.paths` manifest

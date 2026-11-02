@@ -66,7 +66,7 @@ coding-agent), d071/d072 (vocabulary/maintainability).
 | `lib/node-run.sh` (generate.sh) | `LIB_DIR` injectable after this record | vendor the shim, or plain `node` |
 | `lib/workload-runtime.sh` (the `vpn-*.sh` entries) | `LIB_DIR` injectable after this record | vendor the declarative sandbox API, or rewrite the two run modes |
 | root `build.mjs` + `lib/go-build.mjs` (image + native/android compile) | root-owned per d041; per-unit `build.sh` selection shim since d083 | the shim becomes the unit's own `build.mjs` entry (go toolchain direct) |
-| `lib/environment.sh` (vault chain) | invoked by the operator, never by the unit — the launchers read plain env | any env loader; "plain env in" is the whole contract |
+| `./environment.sh` (vault chain) | invoked by the operator, never by the unit — the launchers read plain env | any env loader; "plain env in" is the whole contract |
 | `tests/canonical-json.test.mjs` (validates the generated json) | repo harness | travels with the unit |
 
 After this record every seam but the build runs through `LIB_DIR`; the

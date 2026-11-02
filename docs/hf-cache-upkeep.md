@@ -86,7 +86,7 @@ because `snapshot_download` resolves the branch to a single commit per call.
 
 ## fetch-model-cards.sh
 
-Refreshes the model-card mirrors under `local-llm/model-cards/<org>/<repo>.md`
+Refreshes the model-card mirrors under `llm-local-inference/model-cards/<org>/<repo>.md`
 from Hugging Face (the `README.md` of each repo in
 `llamacpp-model-data.json`). File names are the repo id verbatim — the same
 value used in the derived model ids — so cards always match the ids.

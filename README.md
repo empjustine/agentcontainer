@@ -14,40 +14,43 @@ passthrough reverse proxy for cloud LLM providers.
 # tailscale funnel → estige's host-allowlist route to
 # llama-swap's tsnet serve hostname, docs/d047/d070)
 cd ~/agentcontainer/llm-local-inference && ./generate.sh
-#   then the coding agent (local models + cloud; credentials via lib/environment.sh, docs/d046)
+#   then the coding agent (local models + cloud; credentials via ./environment.sh, docs/d046)
 #   extra ARGV dirs mount rw too (CWD is implicit first): ./coding-agent/run.sh ~/Downloads/references
-cd ~/agentcontainer && ./lib/environment.sh ./coding-agent/run.sh
+cd ~/agentcontainer && ./environment.sh ./coding-agent/run.sh
 
 # cloud/remote providers — raw passthrough reverse proxy (no model routing,
 # no credential handling; requests must already carry valid provider keys)
-cd ~/agentcontainer && ./build.sh && ./generate.sh && ./estige/vpn-exit.sh
+cd ~/agentcontainer && ./estige/build.sh && ./estige/vpn-exit.sh
 # relay node (restricted network, docs/d095): serve it, or ride it as the
 # chain step that points a local consumer at its loopback proxy
-#   ./lib/environment.sh ./estige/vpn-relay.sh
-#   ./lib/environment.sh ./estige/vpn-relay.sh ./coding-agent/run.sh
+#   ./environment.sh ./estige/vpn-relay.sh
+#   ./environment.sh ./estige/vpn-relay.sh ./coding-agent/run.sh
 ```
 
-**One build + one generate for the whole repo (docs/d041)**: root `./build.sh`
-(builds everything for THIS host — container images in parallel, the Termux
-provisioning + android binary serialized; `./build.sh <target>…` selects
-targets and each folder's `build.sh` shim selects its unit's — docs/d083)
-and root `./generate.sh` (every folder's generator in sequence,
-continue-on-failure). Each node-based folder's own `generate.sh` shim still
-runs its generator standalone; estige's is the Go binary's own `generate`
-subcommand (docs/d102). Runners NEVER build
-or generate: stale/missing artifacts are user issues, and run.sh fails loudly
-pointing at the generator.
+**Every folder is a copy unit, and it is built from that folder (docs/d113)**:
+each carries its own `lib/`, its own `build.sh` (where it builds something),
+its own `generate.sh` (where it generates something), and its own `tests/`.
+There is **no root build or generate entry point** — you invoke the unit you
+are building: `./estige/build.sh`, `./coding-agent/generate.sh`,
+`./llm-local-inference/generate.sh`, `./pi-hyper/generate.sh`. That holds
+because a folder has to survive being copied out of this tree on its own
+(docs/architecture.md), and a root sequencer would make every folder
+reference a parent that no longer exists in the copy. `./lint.sh`,
+`./check-types.sh`, `./test.sh` and `./vm-bench.sh` are the repo-wide **QA
+sweep**: the maintainer's view across units, which no unit imports. Runners
+NEVER build or generate: stale/missing artifacts are user issues, and run.sh
+fails loudly pointing at the generator.
 
-**Environment/secrets are an EXPLICIT chain step** (`lib/environment.sh` —
+**Environment/secrets are an EXPLICIT chain step** (`./environment.sh` —
 `infisical run` fetches the vault and spawns the target with it as plain
 env, on the host, docs/d046):
-`./lib/environment.sh ./coding-agent/run.sh`, `./lib/environment.sh
+`./environment.sh ./coding-agent/run.sh`, `./environment.sh
 ./llm-local-inference/run.sh`, etc. The target may also be a bare command:
-`./lib/environment.sh pi` runs pi with the vault env and no sandbox — the run
+`./environment.sh pi` runs pi with the vault env and no sandbox — the run
 path for a host with no container backend (docs/d059). The scripts it wraps consume plain env
 and never load anything themselves; inside sandboxes the vault env is
 forwarded via the `workload_env` allowlist. Generation steps that need no
-keys (llm-local-inference/generate.mjs, estige/generate.mjs) run
+keys (llm-local-inference/generate.mjs, every `pi-*/generate.mjs`) run
 without the chain. No `.env` files, no in-script loaders, no emergency
 paths — a failed vault round-trip is fatal at the chain, never a silent
 half-configured run.
@@ -63,73 +66,64 @@ cloud relay moved to estige.
 
 ```
 agentcontainer/
-├── generate.sh / generate.mjs          # → run EVERY folder's generator in sequence (d041)
-├── build.sh / build.mjs                # → build everything (or the named targets) for THIS host (images ∥; termux serialized; d083)
-├── vm-bench.sh                          # → d020 Level-1 VM build bench: provision/drive the libvirt guest that runs nested podman (docs/vm-build-bench.md SOP)
-├── tests/                             # standalone checks (node --test for JS, sh for workload helpers)
-│   ├── check-workload.sh              # → workload_ro / workload_ro_if mount-helper tests
-│   ├── check-vpn-relay-chain.sh       # → the relay chain step: reuse, refusal, env sequencing (d095)
-│   ├── canonical-json.test.mjs        # → canonicalization unit + committed-manifest canonicity guard (d050)
-│   ├── modality-allowlist.test.mjs    # → the d049 admit-but-trim gate/projection contract (gen-lib capability constant)
-│   └── artifact-urls.test.mjs         # → committed artifacts carry canonical upstreams, installed detector catches escapes (d070)
-├── docs/                              # docs tree, typed per docs/spec-graph-standard.md (goal-and-requirements / architecture-design / module-design)
-│   ├── requirements.md                # → BRD: what the system must do (id: goal)
-│   ├── architecture.md                # → systems reference: split, standalone rule, lib inventory
-│   ├── environments-and-variants.md   # → bazzite / a50 / work matrix
-│   ├── container-tooling.md           # → lib/workload-runtime.sh, run scripts (the lib module doc)
-│   ├── coding-harness-persistence.md  # → per-harness persistence mounts (pi: host dirs, d054)
-│   ├── hf-cache-upkeep.md, refresh-local-llm-manifest.md, gguf-*.md   # → runbooks + generated tables
-│   ├── d0XX-*.md                      # → decision log (history; kept mechanically accurate, FR-D2)
-│   ├── archive/                       # → research findings + retired docs (index inside)
+├── environment.sh                       # → EXPLICIT env chain: `infisical run` spawns <script-or-command> (d046; a bare command = the sandbox-free run path, d059)
+├── provision-termux.sh                  # → termux pkg/infisical provisioning (the former root build.sh)
+├── log.sh / node-run.sh / npm-tools.sh  # → operator-level shell, never imported by a unit: structured logger · standalone node_run() (pinned node; termux-aware) · on-demand npm devDependency install (d107)
+├── lint.sh / check-types.sh / test.sh / vm-bench.sh # → the repo-wide QA sweep (d113): biome+knip+jq gates · tsc · every unit's tests, driven from the root because no unit imports them (test.sh's globs are the contract)
+├── tests/                               # → cross-unit checks only: committed-manifests.test.mjs spans the WHOLE unit set (d050/d113), so it is the one harness allowed to read across units
+├── docs/                                # docs tree, typed per docs/spec-graph-standard.md
+│   ├── requirements.md                  # → BRD: what the system must do (id: goal)
+│   ├── architecture.md                  # → systems reference: the copy unit, per-unit lib, root QA sweep
+│   ├── environments-and-variants.md     # → bazzite / a50 / work matrix
+│   ├── container-tooling.md             # → workload-runtime.sh — the workload-api spec every unit's own copy implements
+│   ├── coding-harness-persistence.md    # → per-harness persistence mounts (pi: host dirs, d054)
+│   ├── hf-cache-upkeep.md, refresh-llm-local-inference-manifest.md, gguf-*.md # → runbooks + generated tables
+│   ├── d0XX-*.md                        # → decision log (history; kept mechanically accurate, FR-D2)
+│   ├── archive/                         # → research findings + retired docs (index inside)
 │   └── ...
-├── lib/                               # Shared infrastructure (docs/architecture.md)
-│   ├── workload-runtime.sh             #   → sandbox-backend detection + workload_* API
-│   ├── node-run.sh                     #   → standalone node_run() (pinned node; termux-aware)
-│   ├── node-run.ps1                    #   → PowerShell node_run() for the Windows shims (d062)
-│   ├── go-build.mjs                    #   → go toolchain probe + android/host flag presets (d041)
-│   ├── provision-termux.sh             #   → termux pkg/infisical provisioning (the former root build.sh)
-│   ├── llamacpp-model-data.json        #   → canonical GGUF model definitions + SI-GB footprints (shared; d025/d053)
-│   ├── hf-manifests/                   #   → committed HF repo listings (per-file sizes; size-source for d053)
-│   ├── models.dev.api.json             #   → vendored models.dev catalog (coding-agent + estige)
-│   ├── catwalk-facts.json              #   → vendored catwalk catalog (coding-agent + estige)
-│   ├── cloud-providers.mjs             #   → the one cloud-provider fact table
-│   ├── log.mjs / artifact.mjs / canonical-json.mjs / log.sh # → shared logger/artifact std (canonical manifest JSON — d050)
-│   ├── environment.sh                   #   → EXPLICIT env chain: `infisical run` spawns <script-or-command> (d046; bare command = sandbox-free run path, d059)
-│   ├── workload-*.jq                   #   → jq filters behind the workload_* API
 │
-├── llm-local-inference/                   # llama-swap: LOCAL GGUF inference only
+├── llm-local-inference/                 # llama-swap: LOCAL GGUF inference only
 │   ├── run.sh                           #   → unified-vulkan image + GPU + HF mounts on :8101
 │   ├── generate.sh / generate.mjs       #   → capability-gated config.d layers (fails on non-GPU hosts)
-│   ├── model-sizes.sh / model-sizes.mjs #   → footprint + cheapest-first reorder of lib/llamacpp-model-data.json (d053)
+│   ├── build.sh / build.mjs             #   → pulls the llama-swap image (inference-endpoint gate, d087)
+│   ├── model-sizes.sh / model-sizes.mjs #   → footprint + cheapest-first reorder of its own lib/llamacpp-model-data.json (d053)
 │   ├── active-b.json                    #   → activeB table (model-id derivation)
 │   ├── llama-swap-core.json             #   → general-purpose config source
-│   └── config.d/                        #   → generated split config (loaded via -config-dir)
+│   ├── config.d/                        #   → generated split config (loaded via -config-dir)
+│   ├── lib/                             #   → THIS FOLDER's own copy (d113): workload-runtime.sh + workload-*.jq, node-run.sh, log.mjs/log.sh/log.py, artifact.mjs, canonical-json.mjs, host-capabilities.mjs, llamacpp-model-data.json, hf-manifests/ (size source for d053)
+│   ├── tests/                           #   → this folder's own tests, standalone-runnable
+│   ├── CACHE-DESIGN.md                  #   → HF cache pipeline (the folded local-llm/ tooling, flat here since d113), table-write rule
+│   └── DESIGN.md                        #   → llama-swap config.d layers, generation-time path baking, capability gating, bearer auth
 │
 ├── estige/                              # Host-allowlist reverse proxy for cloud LLMs (Go) + opt-in SSL VPN tunnel (d073/d077)
 │   ├── main.go                          #   → http host:port/<host>/<path> → scheme://host/<path>, streaming as-is
 │   ├── vpn-exit.sh                      #   → the exit node deployment (funnel front + tunnel server; docs/d095)
 │   ├── vpn-relay.sh                     #   → the relay node: serve it, or the chain step that points a child at it (docs/d095)
-│   ├── estige.example.json              #   → upstream-host → base URL allowlist (config: listen + allowHosts + optional tunnel policy; credentials are env-only, d078)
-│   ├── generate.go                      #   → estige generate: host allowlist from lib/cloud-providers.json (d038 catalog, d102)
-│   ├── smoke-test.go                    #   → estige smoke-test: 34 behavioural checks (no curl/node/python needed)
+│   ├── build.sh / build.mjs             #   → this folder's own build (d083/d113): go-build probe + target selection, no root builder
+│   ├── *.go / *_test.go                 #   → egress policy, tunnel transports, relay node, VPN end-to-end tests (go test ./...)
+│   ├── lib/                             #   → THIS FOLDER's own copy (d113): workload-runtime.sh + workload-*.jq, node-run.sh, go-build.mjs, host-capabilities.mjs, log.mjs/log.sh
+│   ├── tests/                           #   → this folder's own shell check (check-vpn-relay-chain.sh)
 │   ├── README.md                        #   → operations: routing table, usage, build, port model
 │   └── DESIGN.md                        #   → routing-convention rationale, 404 anti-oracle, RFC 9457 error taxonomy
 │
 ├── coding-agent/                        # Bazzite usage (full pi)
-│   ├── run.sh                           #   → launches the pi coding-agent CONTAINER; no backend → ./lib/environment.sh pi (d059); ARGV = extra dirs to mount rw (CWD implicit, d056)
+│   ├── run.sh                           #   → launches the pi coding-agent CONTAINER; no backend → ./environment.sh pi (d059); ARGV = extra dirs to mount rw (CWD implicit, d056)
 │   ├── generate.sh / generate.mjs       #   → the folder driver: stages + runs the TWO by-agent generators (d041; broad by-agent merge)
+│   ├── build.sh / build.mjs             #   → this folder's own image build (d083/d113)
 │   ├── generate-pi-coding-agent.mjs     #   → ALL pi config: model-*.json layers → models.json + default-model.json overlay
 │   ├── generate-opencode.mjs            #   → opencode overlay config (provider SINGULAR key; skipped on Termux w/o OPENCODE_CONFIG_DIR)
 │   ├── gen-lib.mjs                      #   → shared generator preamble (pi shaping folded in, d039)
-│   ├── route-probe.mjs                  #   → HTTP route/probe toolkit (renamed peer-probe.mjs, d071; folded out of lib/, d039)
-│   ├── check-routed-artifacts.mjs       #   → the d070 URL-form verifier — committed = canonical, installed = route-form (run.sh + tests share it)
+│   ├── route-probe.mjs                  #   → HTTP route/probe toolkit (renamed peer-probe.mjs, d071; folded out of the root lib, d039)
+│   ├── check-canonical-artifacts.mjs    #   → committed artifacts carry canonical upstreams, installed ones carry routes (d070)
 │   ├── catalog-facts.mjs                #   → the two catalog fact caches: per-provider (`<id>-facts.json`, d057) + catwalk (lib/, d039) — d072 merged them
 │   ├── hyper-facts.json / verboo-facts.json # → committed facts caches (d057: verboo's is its lineup)
-│   ├── refresh-models-dev.mjs           #   → atomic models.dev catalog refresh (d039)
+│   ├── refresh-models-dev.mjs           #   → atomic models.dev catalog refresh (d039/d086)
 │   ├── settings.json                    #   → static pi settings (generator installs into PI_CODING_AGENT_DIR)
 │   ├── mcp.json                         #   → committed default MCP servers, merged into the agent dir (docs/d061)
-│   ├── config.toml                       #   → mise configuration (includes cline and thinkrail)
-│   └── Containerfile                    #   → container image build
+│   ├── config.toml                      #   → mise configuration (includes cline and thinkrail)
+│   ├── Containerfile                    #   → container image build
+│   ├── lib/                             #   → THIS FOLDER's own copy (d113), the largest: workload-runtime.sh + workload-*.jq, node-run.sh, log.mjs/log.sh, artifact.mjs, canonical-json.mjs, fact-table.mjs, host-capabilities.mjs, cloud-providers.mjs/.json (the full table), models.dev.api.json, catwalk-facts.json
+│   └── tests/                           #   → this folder's own tests (canonicalization, fact table, URL forms, modality gate, cost map, run-dir/workload checks)
 │
 ├── pi-synthetic/                        # Synthetic as a pi package (d096): ONE generator + ONE loadable extension, in this folder
 │   ├── sources.mjs                      #   → the ONE data source: the provider's /models listing, at the fact table's canonical upstream (d070)
@@ -137,10 +131,14 @@ agentcontainer/
 │   ├── generate.mjs / generate.sh       #   → one fetch in, two artifacts out; --check verifies them without writing
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json / models.js          #   → GENERATED pi models.json-shaped block (canonical upstream, d070) · the extension's seed
+│   ├── lib/                             #   → THIS FOLDER's own copy: cloud-providers.mjs/.json (its one provider row), canonical-json.mjs, artifact.mjs, log.mjs, node-run.sh
+│   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md / TODO.md / PENDING.md #   → folder rules · install + open items · the review that collapsed the design
 │
 ├── pi-opencode/                         # opencode + opencode-go as ONE pi package (d097, unified by d100): catalog FRESHNESS WATCHDOGS — no model data, because pi builds both providers in
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package, and there is nothing to generate
+│   ├── lib/                             #   → THIS FOLDER's own copy: cloud-providers.mjs/.json (its rows), node-run.sh
+│   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · the built-in-provider rule + install + provenance
 │
 ├── pi-cline-pass/                       # ClinePass as a pi package (d040): the reconciled lineup (Cline's docs table ∪ models.dev) as ONE generator + ONE loadable extension
@@ -149,6 +147,8 @@ agentcontainer/
 │   ├── generate.mjs / generate.sh       #   → two sources in, two artifacts out; --check verifies them without writing
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json / models.js          #   → GENERATED pi models.json-shaped block (canonical upstream, d070) · the extension's seed
+│   ├── lib/                             #   → THIS FOLDER's own copy: cloud-providers.mjs/.json (its one provider row), canonical-json.mjs, artifact.mjs, log.mjs, node-run.sh
+│   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the lineup contract
 │
 ├── pi-hyper/                            # Charm Hyper as a pi package (d100): ONE generator + ONE loadable extension — the provider's /provider catalog is PUBLIC
@@ -156,6 +156,8 @@ agentcontainer/
 │   ├── generate.mjs / generate.sh       #   → one fetch in, two artifacts out; --check verifies them without writing
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json / models.js          #   → GENERATED pi models.json-shaped block (canonical upstream, d070) · the extension's seed
+│   ├── lib/                             #   → THIS FOLDER's own copy: cloud-providers.mjs/.json (its one provider row), canonical-json.mjs, artifact.mjs, log.mjs, node-run.sh
+│   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the behavioral-copy provenance flag
 │
 ├── pi-verboo/                           # Verboo as a pi package (d100): same shape against the AUTH-GATED /models listing — no prices ever asserted (d057)
@@ -163,20 +165,15 @@ agentcontainer/
 │   ├── generate.mjs / generate.sh       #   → one keyed fetch in, two artifacts out; --check verifies them without writing
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json / models.js          #   → GENERATED pi models.json-shaped block (canonical upstream, d070) · the extension's seed
+│   ├── lib/                             #   → THIS FOLDER's own copy: cloud-providers.mjs/.json (its one provider row), canonical-json.mjs, artifact.mjs, log.mjs, node-run.sh
+│   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the seeding provenance + the fleet seam
 │
-├── pi-mistral/                          # mistral as a pi package (d100): an AUTH-GATED watchdog — no model data (pi builds it in), silent without a key
+├── pi-mistral/                           # mistral as a pi package (d100): an AUTH-GATED watchdog — no model data (pi builds it in), silent without a key
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package, and there is nothing to generate
+│   ├── lib/                             #   → THIS FOLDER's own copy: cloud-providers.mjs/.json (its one provider row), node-run.sh
+│   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules (the opencode watchdog deltas) · install + provenance
-│
-├── local-llm/                           # Local LLM / HF cache tooling (mostly deprecated — d053; superseded by llm-local-inference/model-sizes.mjs)
-│   ├── run-all.sh                       #   → full pipeline in dependency order
-│   ├── download_models.py               #   → provision served GGUFs into the HF cache
-│   ├── upkeep.py                        #   → cache list/pull/prune/verify (uv run)
-│   ├── fetch_hf_manifests.py            #   → refresh + audit repo:quant manifests
-│   ├── fetch-model-cards.sh             #   → refresh model-card mirrors
-│   ├── generate_vram_fit_tables.py      #   → VRAM/KV/fit tables via gdevenyi/huggingface-estimate
-│   └── model-cards/                     #   → GGUF model documentation
 │
 ├── git/                                 # Reference-farm tooling (mirrors + search)
 │   ├── README.md                        #   → the module doc: the farm's three jobs, boundary, entry points
@@ -186,6 +183,8 @@ agentcontainer/
 │   ├── migrate-to-bare.mjs              #   → convert full clones to bare mirrors (local hardlink or redownload)
 │   ├── maintain-mirrors.mjs             #   → align mirrors + repack/commit-graph (pickaxe fast; --deep-optimize adds gc --aggressive, d089)
 │   ├── search-references.mjs            #   → opt-in cross-repo/cross-branch search via Zoekt container (d043)
+│   ├── lib/                             #   → THIS FOLDER's own copy: node-run.sh (POSIX + PowerShell, d062), log.mjs/log.sh, artifact.mjs, canonical-json.mjs
+│   ├── tests/                           #   → this folder's own tests (glob, by-host scheduling, pacer, deep-optimize)
 │   └── non-bare-issues.md               #   → why bare mirrors, the farm audit, pickaxe notes
 ```
 
@@ -241,7 +240,7 @@ Frontmatter `type:` and `status:` are the machine signal; this index is the huma
 | [docs/d043-cross-repo-reference-search.md](docs/d043-cross-repo-reference-search.md) | cross-repo/cross-branch search — Zoekt for regex (opt-in, per repo), blob-addressed chunk embeddings for semantics, host-side serving without the farm bind mount |
 | [docs/d044-work-machine-bare-mirrors.md](docs/d044-work-machine-bare-mirrors.md) | work-machine reference farm — software-forge clones to bare mirrors on NTFS, HAR export + manifest seam |
 | [docs/d045-structured-logging-and-error-construct.md](docs/d045-structured-logging-and-error-construct.md) | structured logging and error construction — no interpolation, no level filtering, stdout default stream (payload scripts → stderr), full cause chains |
-| [docs/d062-native-windows-maintain.md](docs/d062-native-windows-maintain.md) | native Windows mirror maintenance — `git/maintain.ps1` + `lib/node-run.ps1` for farm roots WSL2 mishandles (non-NTFS and non-local UNC; d044's local-NTFS `/mnt/c` arrangement untouched, and each farm root is owned by WSL2 git XOR Windows git); no `maintain-mirrors.mjs` fork — the shared program gains a `pathToFileURL()` logger import and `/`-normalized `--only`/`--exclude` globs (guarded by `tests/git-glob.test.mjs`) |
+| [docs/d062-native-windows-maintain.md](docs/d062-native-windows-maintain.md) | native Windows mirror maintenance — `git/maintain.ps1` + `git/lib/node-run.ps1` for farm roots WSL2 mishandles (non-NTFS and non-local UNC; d044's local-NTFS `/mnt/c` arrangement untouched, and each farm root is owned by WSL2 git XOR Windows git); no `maintain-mirrors.mjs` fork — the shared program gains a `pathToFileURL()` logger import and `/`-normalized `--only`/`--exclude` globs (guarded by `tests/git-glob.test.mjs`) |
 | [docs/d063-proxy-only-routing.md](docs/d063-proxy-only-routing.md) | proxy-only routing: outside `estige/` no generated config may emit a direct provider URL; every `baseUrl`/`baseURL` is a vault-sourced reverse-proxy route (a route is emitted unconditionally, even with an empty lineup; the probe only picks the lineup source), generation fails closed without the reverse-proxy base (`PEER_BASE_URL(S)` of the day — `REVERSE_PROXY_BASE_URLS` now, [d071](docs/d071-retire-peer-terminology.md); the `SKIP_GEN=1` bypass is retired by [d070](docs/d070-canonical-upstream-urls-and-install-time-routing.md)), metadata refresh chains are relay-only; deletes the direct-probe surface (`probeDirect`/`peersOnly`/`suppressedProbe`/live-sync); supersedes d033/d034/d045's direct-first cascade for the route decision |
 | [docs/d064-provider-support-tiers.md](docs/d064-provider-support-tiers.md) | LLM provider support tiers in `lib/cloud-providers.mjs` (`support` field + `supportTier()`): first-class (cline-pass, hyper, verboo, opencode-go, llama-swap) / best-effort (google, mistral, inferx, openrouter) / superficial (opencode zen, nvidia — proxy-routed + metadata presence only, not smoke-tested); superficial rows skip route probing, first-class rows get stale-preserve (previous-layer carry-forward); records the llama-swap-routing-down known issue and the documented (not applied) tsnet repoint |
 | [docs/d072-maintainability-review.md](docs/d072-maintainability-review.md) | maintainability review: `catwalk-facts.mjs` + `provider-facts.mjs` → `coding-agent/catalog-facts.mjs`; d023's scratch staging tree deleted (generators run in place into a per-run output dir; install atomicity and the committed layer snapshot kept); FR-D2 relaxed from "bodies are never rewritten" to "no wholesale rewrites, mechanical upkeep in place"; the two "merge contract"s named apart (llama-swap layer-merge rules vs pi's layered-cake merge); BRD Goal/FR-U2/FR-U5 reconciled with d063/d070/d061; single-caller census verdicts; pi-ai as the future source of the provider registry (deferred) |
@@ -250,9 +249,10 @@ Frontmatter `type:` and `status:` are the machine signal; this index is the huma
 | [docs/d083-per-unit-build-entries-and-disk-gate.md](docs/d083-per-unit-build-entries-and-disk-gate.md) | per-unit build entries return **as shims** (3-line `build.sh` per folder selecting its unit's targets in the root builder — d041 deleted the duplicated build LOGIC and it stays deleted; entry ≠ implementation) + argv target selection (`./build.sh <target>…`, unknown name = exit 94 with the catalog) + a free-disk registration gate for the coding-agent image (**gate since retired by [d087](docs/d087-retire-disk-gate-inference-endpoint.md)** — the image shrank; the disk consumer is the inference pull) — triggered by the spike-VM disk exhaustion that killed a whole generic build; argv selection + shims remain the load-bearing parts |
 | [docs/d089-maintenance-passes.md](docs/d089-maintenance-passes.md) | maintenance passes for the mirror farm: align / optimize (default) / deep (`--deep-optimize` = `git gc --aggressive` then the routine sequence re-run); forced delta recomputation is the cold-storage size win the delta-reusing routine pass can never get on its own, and delta reuse (repack reuses deltas unless forced) makes deep and routine compose — so no plain-gc rung; the proposed "normal gc as default" rung rejected as a downgrade of optimize (d044 keeps pickaxe the default), `--deep-optimize --no-optimize` rejected at parse, `git maintenance start` still out |
 | [docs/d099-reference-farm-search-mcp.md](docs/d099-reference-farm-search-mcp.md) | **CLI stage landed · MCP façade pending** — reference-farm code search as an MCP server: the tool surface exists today as the POSIX CLI `git/farm-tool.sh` (+ `git/farm-tool-lib.sh`, `git/farm-lock.sh`; positional argv, one JSON object per call, capped reads + the two flocked maintenance verbs), which the planned host-side loopback streamable-HTTP façade (`git/search-mcp.mjs` + shim, placed in `git/` beside the `git-lib.mjs` discovery it needs) wraps verbatim over the bare mirrors — read-only search by construction (allowlisted git plumbing verbs, argv-only spawning with `--end-of-options`/`grep -e`/`--literal-pathspecs`, scrubbed git env so repo config can execute nothing; zero network on the read surface), plus two **serialized** maintenance verbs — `upsert_repo` (wraps `git/-forge-mirror.sh`) and `compact_repo` (wraps `git/maintain.sh` on one repo) behind one shared mutex whose cross-process half is a farm-level `flock` both script entries take; bounded on every axis (worker pool, deadlines with process-group kill, match/byte caps, cursors + `truncated` flags, fixed-strings default, wide fan-out refused unless `wide: true`) with SHA-pinned agent-shaped results; live `git grep` for scoped queries, d043's Zoekt for wide/cross-branch, pickaxe in phase 3; precondition: the farm is now uniformly bare mirrors (legacy `github/webrecorder/*` checkouts re-mirrored via `-forge-mirror.sh` and deleted); PDF/ZIM corpora, the semantic layer, a third mutation verb, and non-loopback exposure are explicitly out |
-| [docs/d107-npm-dev-toolchain.md](docs/d107-npm-dev-toolchain.md) | the JS/TS gates are root npm `devDependencies` pinned by `package-lock.json` (`@biomejs/biome` 2.6.3, `knip` 6.43.0, `typescript` 6.0.3, `@types/node` 24.19.2), installed on demand by `lib/npm-tools.sh` with `npm ci --ignore-scripts --include=dev`; Termux gets the same versions through Biome/oxc Android arm64 builds; TypeScript is held at 6.0.3 because 7.x is native and has no Android binary; shellcheck/jq/shfmt stay mise-or-pkg. |
+| [docs/d107-npm-dev-toolchain.md](docs/d107-npm-dev-toolchain.md) | the JS/TS gates are root npm `devDependencies` pinned by `package-lock.json` (`@biomejs/biome` 2.6.3, `knip` 6.43.0, `typescript` 6.0.3, `@types/node` 24.19.2), installed on demand by `./npm-tools.sh` at the repo root with `npm ci --ignore-scripts --include=dev`; Termux gets the same versions through Biome/oxc Android arm64 builds; TypeScript is held at 6.0.3 because 7.x is native and has no Android binary; shellcheck/jq/shfmt stay mise-or-pkg. |
 | [docs/d111-spec-graph-standard-alignment.md](docs/d111-spec-graph-standard-alignment.md) | adopting the spec-graph standard: five scope types + five lifecycle statuses replace d042's bespoke vocabulary, the link graph is repaired (1 duplicate id + 44 dangling links → 0), qualifiers a legacy status carried move into `## Status` prose, and the file layout is deliberately NOT migrated — why each call was made |
 | [docs/d112-spec-graph-nesting-and-tooling-scope.md](docs/d112-spec-graph-nesting-and-tooling-scope.md) | the standard states what the tooling actually enforces (`spec_validate` reports only duplicate ids, dangling links, cycles — never the type/status vocabulary, a missing `title`, or a bad `parent`) and the nesting drift is closed: no record is a parent, module-scoped records live on their module node, `git/` gets its node, and the hand-maintained drift snapshot is deleted |
+| [docs/d113-retire-shared-lib-and-root-orchestration.md](docs/d113-retire-shared-lib-and-root-orchestration.md) | a folder is a **copy unit**: the repo-level `lib/` dissolves into per-unit copies (each owned outright — divergence is ownership, not drift, so there is no sync step and no stale gate) and the root `build.mjs`/`generate.mjs` orchestrators retire, leaving each unit's own `build.sh`/`generate.sh` as the only entry points (d083's shims become the implementations); copies are **pruned to their consumers** (`cloud-providers.*` carries only the rows a unit serves, the pi-* extensions one row each, llm-local-inference none) and estige's generator copy goes with d108's allowlist; `environment.sh`/`provision-termux.sh`/`log.sh`/`node-run.sh`/`npm-tools.sh` stay at the repo root as operator-invoked files while `lint.sh`/`check-types.sh`/`test.sh`/`tests/` become the repo-wide QA sweep (the maintainer's view across units, imported by no unit — only `committed-manifests.test.mjs` may read across them); tests travel with their subject into `<unit>/tests/` and run standalone; retires d024's one-edit law (a fact edit is one edit per consumer) and d041's root entrypoints |
 
 ### Module design
 
@@ -260,10 +260,10 @@ Frontmatter `type:` and `status:` are the machine signal; this index is the huma
 
 | Doc | Covers |
 | --- | --- |
-| [docs/container-tooling.md](docs/container-tooling.md) | lib/workload-runtime.sh, run scripts, UID/SELinux, environment matrix (the `lib` module doc) |
+| [docs/container-tooling.md](docs/container-tooling.md) | workload-runtime.sh, run scripts, UID/SELinux, environment matrix (the `workload-api` module doc — every unit carries its own copy, d113) |
 | [docs/coding-harness-persistence.md](docs/coding-harness-persistence.md) | How each coding harness's state survives ephemeral container runs |
 | [docs/hf-cache-upkeep.md](docs/hf-cache-upkeep.md) | HF cache upkeep runbook (upkeep.py: list/pull/prune/verify) |
-| [docs/refresh-local-llm-manifest.md](docs/refresh-local-llm-manifest.md) | Manifest refresh runbook (repo:quant audits, cache coverage) |
+| [docs/refresh-llm-local-inference-manifest.md](docs/refresh-llm-local-inference-manifest.md) | Manifest refresh runbook (repo:quant audits, cache coverage) |
 | [git/README.md](git/README.md) | The reference farm as a module: host-side bare mirrors, their upkeep, and search over them — the three jobs and their entry points, the farm-`flock`/pacing rules, and what the folder deliberately does not depend on (the `git` module doc) |
 | [git/non-bare-issues.md](git/non-bare-issues.md) | Reference-farm mirrors: why a checkout is pure overhead (podman `z,U` walk), the farm audit, pickaxe-fast maintenance |
 | [docs/gguf-vram-fit-estimates.md](docs/gguf-vram-fit-estimates.md) | VRAM/KV/fit tables for all served models (gdevenyi/huggingface-estimate) |
@@ -272,7 +272,7 @@ Frontmatter `type:` and `status:` are the machine signal; this index is the huma
 | [coding-agent/DESIGN.md](coding-agent/DESIGN.md) | pi agent image + by-agent config generation — the two-generator structure, the **layered-cake merge** (single home: the generate-pi-coding-agent.mjs header) — distinct from llama-swap's config.d layer-merge rules, stage table, invariants |
 | [llm-local-inference/DESIGN.md](llm-local-inference/DESIGN.md) | llama-swap config.d layers, generation-time path baking, capability gating, bearer auth |
 | [estige/DESIGN.md](estige/DESIGN.md) | Proxy design rationale: full-real-base-URL convention, 404 anti-oracle, RFC 9457 error taxonomy, deviations |
-| [local-llm/DESIGN.md](local-llm/DESIGN.md) | HF cache pipeline, shared-table boundary, the sanctioned-write rule |
+| [llm-local-inference/CACHE-DESIGN.md](llm-local-inference/CACHE-DESIGN.md) | HF cache pipeline, table-write rule, and the fold that made it a submodule of this folder (the former `local-llm/`, docs/d113) |
 | [docs/scoped-models-and-proxy-overrides.md](docs/scoped-models-and-proxy-overrides.md) | Why pi uses its own catalog with baseUrl overrides (distilled from the retired free-tier pipeline) |
 | [docs/summarized-thinking.md](docs/summarized-thinking.md) | summarized-reasoning extension — CoT summarization design |
 
@@ -300,7 +300,7 @@ Frontmatter `type:` and `status:` are the machine signal; this index is the huma
 | [docs/d056-run-directory-mounts.md](docs/d056-run-directory-mounts.md) | `coding-agent/run.sh` takes `[DIRECTORY [DIRECTORY...]]` (CWD implicit first, each mounted rw at its own path, first is the workdir; `$HOME` refused) — replaces the `CODING_AGENT_REFERENCES` toggle, removes the generator-tree/`/opt/lib` mounts and the `PEER_BASE_URL`/`PEERS_ONLY` env forwards (base now `REVERSE_PROXY_BASE_URLS`, [d071](docs/d071-retire-peer-terminology.md)) so the runner carries zero generator support — **the container side of a home-relative directory is spelled from the sandbox's home by [d068](docs/d068-home-relative-mount-targets.md)** |
 | [docs/d057-catalog-less-providers.md](docs/d057-catalog-less-providers.md) | a provider models.dev does not carry — `catalogOptional` + the fact-table endpoint make the provider's own facts cache the authoritative lineup in both modes (worked example: verboo; `hyper-facts.mjs` → generic `provider-facts.mjs`; missing prices/output-limit are omitted, not invented) |
 | [docs/d058-retire-simulation-modes.md](docs/d058-retire-simulation-modes.md) | retire simulation modes — generator `DRY_RUN` previews, `BUILD_PLAN=1`, and four `git/` `--dry-run` flags removed; writes are atomic swaps of committed artifacts (`lib/artifact.mjs`), so regenerate + `git diff` IS the review; verifiers asserting about reality (`--check`, `--verify`, `--help`) stay — **the verifier and env-seed clauses are superseded by [d060](docs/d060-retire-remaining-flags.md)** |
-| [docs/d059-container-only-run-sh.md](docs/d059-container-only-run-sh.md) | `coding-agent/run.sh` becomes container-only (Termux branch deleted; fail-fast exit 91 before staging when there is no backend) and `lib/environment.sh` accepts a bare PATH command — `./lib/environment.sh pi` is the sandbox-free run path; also fixes the mise `infisical` wrap and requires a PATH hit to actually execute |
+| [docs/d059-container-only-run-sh.md](docs/d059-container-only-run-sh.md) | `coding-agent/run.sh` becomes container-only (Termux branch deleted; fail-fast exit 91 before staging when there is no backend) and `./environment.sh` accepts a bare PATH command — `./environment.sh pi` is the sandbox-free run path; also fixes the mise `infisical` wrap and requires a PATH hit to actually execute |
 | [docs/d060-retire-remaining-flags.md](docs/d060-retire-remaining-flags.md) | second simplification pass: `--check`/`--verify`/`--refresh`/`--deep`/`--verbose` and `MODELS_DEV_REFRESH` retired (run it + `git diff` IS the review; `audit` always audits, `generate` always networks), ambient env stops being a config surface (`VBS_*` and `MIRROR_MIN_INTERVAL` become flags/constants/manifest — only `$WORK_MIRRORS` host state remains), and verbosity is emitted at `debug` for the reader to prune (`jq`), reaffirming d045's no-filtering rule; supersedes d058's verifier clause |
 | [docs/d061-default-mcp-servers.md](docs/d061-default-mcp-servers.md) | committed `coding-agent/mcp.json` as the default MCP server list (DeepWiki `https://mcp.deepwiki.com/mcp`, Context7 `https://mcp.context7.com/mcp`, both keyless; the Mintlify `https://index.mintlify.com/mcp` entry was later dropped from the committed list, so generate no longer installs it) with a static per-entry `description` that states the untrusted-content posture — and, for Context7's version-approximate index, that it is only a rough reference; installed by `generate.mjs` into the RW-mounted host agent dir — merged UNDER the operator's own entries, not clobbered, because that dir is shared with the host pi (d054), so a changed default is re-adopted by deleting the agent-dir entry; `run.sh` fails loudly when the artifact is missing; the legacy SSE endpoint is rejected by pi and 410s upstream |
 | [docs/d065-opencode-host-config-mount.md](docs/d065-opencode-host-config-mount.md) | opencode mounts its real host config dir (`$OPENCODE_CONFIG_DIR`, default XDG) instead of a per-run staged copy; the generator installs `opencode.json` to BOTH the host dir and the committed `opencode.jsonc` (scratch-copy-then-install, mirroring pi's d054 pattern; no SKIP_GEN path); a missing overlay is a tolerated partial config at launch (unlike pi's exit-94 abort); opencode's data dir — auth.json + long-term logs/sessions — stays on the per-run stage as audit state (d026) |
@@ -323,7 +323,7 @@ Frontmatter `type:` and `status:` are the machine signal; this index is the huma
 | [docs/d086-fact-table-provenance-and-capability-hygiene.md](docs/d086-fact-table-provenance-and-capability-hygiene.md) | fact tables: the capability-bearing `fetchedFrom` URL is removed (the Funnel mount IS the allowlist relay credential; a gating lint pattern now forbids mount URLs in tracked files) and the churn recipe landed (`lib/fact-table.mjs`: canonical serialization + hash short-circuit + `_meta` provenance, so an unchanged refresh writes nothing and `fetchedAt` means the content's age; the raw models.dev mirror is exempt from `_meta` and keeps only canonical order; `tests/fact-table.test.mjs` guards the committed caches), with layer separation deferred and standalone regen commits as process; the leaked mounts in git history need rotation |
 | [docs/d087-retire-disk-gate-inference-endpoint.md](docs/d087-retire-disk-gate-inference-endpoint.md) | d083's free-disk gate retires: the coding-agent image is ungated again (node:24-trixie shrank it; `freeDiskGiB` + `CODING_AGENT_IMAGE_MIN_FREE_GIB` removed) and the disk budget moves to where the multi-GB consumer is — the llama-swap pull now gates on being an **inference endpoint**: render devices AND RAM ≥ 16 GiB (`INFERENCE_MIN_RAM_GIB` + `totalMemGiB()` in lib/host-capabilities.mjs, shared with the generate-side serving-layer gate so builder/generator cannot drift) |
 | [docs/d090-llm-harness-support-tiers.md](docs/d090-llm-harness-support-tiers.md) | LLM harness support tiers in d064's vocabulary: **first-class** earendil-works/pi (+ direct descendants itayinbarr/little-coder, JetBrains/thinkrail — lineage, not repo surface; the coding-agent runner is the supported one and pi's config semantics DEFINE the contract), **best-effort** anomalyco/opencode and mistralai/mistral-vibe (cheap generated surfaces, no verification, never blocks a pi-first design), **superficial** charmbracelet/crush (proxy reachability only); tier moves are record edits |
-| [docs/d091-llm-reverse-proxy-gateway-auth-mode-b.md](docs/d091-llm-reverse-proxy-gateway-auth-mode-b.md) | **deprecated** (superseded in direction by d108 — the serving edge it guards retires to tunnel-only, per-session auth became d104's mutual Ed25519 proofs, and llama-swap bearer retirement rides d087's pause) — was d073's authenticated relay specced: the funnel front authenticates via env-only `REVERSE_PROXY_KEYS`/`REVERSE_PROXY_TOKEN` riding `X-Reverse-Proxy-Key` (scheme-orthogonal — works for OAuth providers; stripped by the proxy before forwarding, armed or not; failure answers the camouflage 404, never a 401 — VPN-R34 extended), arming = credential like d084/d085; clients carry it in pi's `headers` ($VAR interpolation, never literals — d050) beside their provider keys; stage 2 retires llama-swap's `apiKeys` + `REVERSE_PROXY_API_KEY` behind it (zero-secret `llm-local-inference` serving, loopback publish + tailnet ACL on the direct surfaces, d071's no-alias law); dropping the bearer before the authenticated relay rejected — the funnel leg would leave the GPU farm internet-reachable behind a path prefix |
+| [docs/d091-llm-reverse-proxy-gateway-auth-mode-b.md](docs/d091-llm-reverse-proxy-gateway-auth-mode-b.md) | **deprecated** (superseded in direction by d108 — the serving edge it guards retires to tunnel-only, per-session auth became d113's mutual Ed25519 proofs, and llama-swap bearer retirement rides d087's pause) — was d073's authenticated relay specced: the funnel front authenticates via env-only `REVERSE_PROXY_KEYS`/`REVERSE_PROXY_TOKEN` riding `X-Reverse-Proxy-Key` (scheme-orthogonal — works for OAuth providers; stripped by the proxy before forwarding, armed or not; failure answers the camouflage 404, never a 401 — VPN-R34 extended), arming = credential like d084/d085; clients carry it in pi's `headers` ($VAR interpolation, never literals — d050) beside their provider keys; stage 2 retires llama-swap's `apiKeys` + `REVERSE_PROXY_API_KEY` behind it (zero-secret `llm-local-inference` serving, loopback publish + tailnet ACL on the direct surfaces, d071's no-alias law); dropping the bearer before the authenticated relay rejected — the funnel leg would leave the GPU farm internet-reachable behind a path prefix |
 | [docs/d092-synthetic-first-class-provider.md](docs/d092-synthetic-first-class-provider.md) | synthetic.new joins the fleet as a **first-class** provider via d032's checklist: fact-table row (`SYNTHETIC_API_KEY`, full `/openai/v1` base) + full `PROVIDER_SPECS` row → `model-019-cloud-synthetic.json` (inferx shape — plain openai-compat gateway, effort-enum thinkingLevelMap, no ON_OFF fallback) + run.sh key forwarding + regenerated proxy allowlist host row; doc-sync spots listed; `hf:` ids published verbatim, deprecated catalog records deliberately unfiltered |
 | [docs/d097-pi-opencode-go-extension.md](docs/d097-pi-opencode-go-extension.md) | `pi-opencode/` (formerly pi-opencode-go; unified with opencode zen by d100): the built-in-provider rule. pi 1.4.0 builds opencode-go in (pi-ai's 29-row catalog: all four api dialects, per-model family bases, the `x-opencode-session` wrappers, env auth — the complete d048 table in the host), so the extension carries **no model data at all**: any returned list REPLACES the whole provider catalog in pi's composer (inheriting only `api`/`baseUrl`), so a committed seed could only downgrade pi's own rows. `registerProvider("opencode-go", { refreshModels })` only — a catalog freshness watchdog: listing reachable → `undefined` (pi defaults stand); listing fails → **throw**, which pi surfaces as "Could not refresh opencode-go; showing cached models."; offline init or inside the 4h interval → silent (`force` bypasses). Zero `../lib` runtime deps (a copied package stands alone); the upstream URL is a constant pinned by tests against the fact table. Rule recorded: a built-in provider's extension must not SUBSTITUTE model data for pi's — no backup catalog, no silent fallback on fetch failure; contribution that can only *enrich* pi's rows stays welcome, and is freshness signalling today only because pi's composer turns any returned list into a wholesale replacement (contrast d096's synthetic, which pi does not build in) |
 | [docs/d100-pi-provider-extension-family.md](docs/d100-pi-provider-extension-family.md) | the pi provider extension family completed per the operator's directive: **pi-hyper/** (catalog-carrying, the PUBLIC `/provider` listing, transcribed compat mirror + ON_OFF map, landing parity with model-016 except one live-fresh context window), **pi-verboo/** (catalog-carrying, auth-gated `/models` listing, NO prices ever asserted, committed pair seeded from the fleet's facts cache through the real generate path), **pi-mistral/** (watchdog with the auth-gated divergence: silent without a key), and **pi-opencode/** (the former pi-opencode-go, unified with opencode zen — per-provider interval clocks); pi-llama-swap deliberately deferred (tailnet-only upstream is outside the d080 forward-proxy posture — a deployment decision, not a code one). Every folder is third-generation transport only (canonical URLs, `NODE_USE_ENV_PROXY` + forwarded `HTTP(S)_PROXY`, zero relay machinery), and every `pi-*/README.md` + `coding-agent/DESIGN.md` now carries a **Provenance section** classifying cross-repo references as live data / attribution / behavioral copy — the tree's one behavioral copy (the hyper compat mirror from charmbracelet/pi-hyper-provider) is flagged with its rot risk, and cline-pass's outside-the-fact-table sources carry the allowlist-relay egress caveat. Three fleet seams (synthetic, hyper, verboo) now exist, all blocked on the same estige deployment decision |
@@ -340,7 +340,7 @@ Frontmatter `type:` and `status:` are the machine signal; this index is the huma
 | [docs/d104-mutual-exit-relay-credential.md](docs/d104-mutual-exit-relay-credential.md) | the tunnel shared bearer becomes **mutual time-windowed Ed25519 proofs** (estige tunnel credential generation **v2**, v1 = the shipped bearer): **two principals, two keys, two names** — `sig_r` minted under the relay’s private key (`X-Relay-Proof: v2.<relay-key-name>.<step>.<sig>`, verified against the relay public key embedded in `relay.json`’s `exit` entry), `sig_e` under the exit’s (verified against the public key embedded in `exit.json`); each envelope names its minter and both names are signed, so neither side can forge the other direction — verifiers hold only public keys; nodes **index by name and compute exactly one verify per proof** regardless of set size (constant-time no-early-exit name scan — VPN-R33); keys live in a **role-scoped store** (`~/.local/share/estige/`: singular system dirs `prv/relay/`, `prv/exit/` — exactly one PKCS#8 DER key each, name = filename = wire name; the two helpers `relay.json` + `exit.json` (strictly parsed stdlib JSON — unknown fields refuse) hold the embedded public keys, one `"name"`/`"public"` entry per admitted principal — the pairing binding in one object; `exit.json` also carries `egress`, which retires `estige.json` with mode A (d108's tree-shake); the exit's bind is stored nowhere — env `PORT` alone (d110)), env retiring `VPN_OPERATOR_TOKEN`/`VPN_OPERATOR_KEYS`/`VPN_TUNNEL_URL` with nothing secret left in env (VPN-R32 amended); full 64-byte signatures, single flight each way, no challenge round trip, camouflage-404 failure posture unchanged (unknown key name and direction swap included); staged zero-gap rotation reserved in the format (≤2 entries per principal), with `estige key` CLI and the `estige key check` chain gate as design intent; the secret never crosses the TLS terminator; PKI/mTLS, RFC 9421, and shared-secret HMAC schemes rejected; relay-to-exit-to-relay composes as pairwise hops. |
 | [docs/d105-ssl-vpn-transport-names.md](docs/d105-ssl-vpn-transport-names.md) | SSL-VPN transports are named by mechanism: **allowlist relay**, **authenticated relay**, **h2-POST tunnel**, **WebSocket tunnel**, **h1.1-POST tunnel**; A–E are historical aliases, not names. "three-mode SSL VPN" becomes "SSL-VPN transport family"; "modes C–E" becomes "tunnel transports". Record IDs, `VPN-R*` IDs, and code constants (`transportOffer = "cde"`) keep their spelling — vocabulary only, no obligation changes. |
 | [docs/d106-tunnel-observability.md](docs/d106-tunnel-observability.md) | nothing implemented; proposes per-session **`open` + `close` records** (plus a `refused` record) on **both** nodes instead of the exit-only end-of-session line, joined by a **correlation id** (free for mode E via the existing wire `traceparent` trace-id, an additive `X-Estige-Session` header for C/D), `role=relay|exit` + `ts=`/`key=` on every record, `bytes_up`/`bytes_down` in place of the viewpoint-relative `bytes_in`/`bytes_out`, in-flight numbers pulled from a fixed `/healthz` (its `sessions` gauge is increment-only today) rather than periodic lines, query strings stripped from `url=` on the cleartext branch; surveys Squid/Privoxy/OpenVPN/Tailscale/Nebula/ZeroTier/Pritunl logging + records the **discarded** points (end-only, open-only, periodic snapshots, `overlay=`, `ws`, log flags, CLF extension, `tunnelVersion=2`, id-in-label, scheme inference, `who=operator`, MITM naming, metrics endpoint) — [estige/README.md](estige/README.md) |
-| [docs/d108-serving-edge-tunnel-only.md](docs/d108-serving-edge-tunnel-only.md) | the serving edge moved to tunnel-only: the bazzite llama-swap provider is **deprecated for now** (no new clients/features, no removal date, code stays), and the allowlist reverse proxy — legacy **mode A** — is **deprecated as insecure** now that the first v3 tunnel deployments work: a TLS-terminating proxy sees plaintext provider keys (d073's trust table), and the shape forces route-rewriting generator magic (`REVERSE_PROXY_BASE_URLS`, `providerRouteUrl()`, d063/d070 install-time substitution). estige must stop exposing mode A (`allowHosts`, host-form routing, `estige generate` allowlist) and the generators must stop depending on it; the record keeps the v2 (allowlist) / v3 (tunnels, shared bearer, working) / v4 (tunnels under d104's Ed25519 proofs, in progress) generations apart, and supersedes d073's VPN-R1; `estige.json` itself is **removed by tree-shake**, not shrunk — surviving role facts (`egress`) fold into d104's `exit.json`, arming into helper presence, the bind into env `PORT` (d110), leaving the key store as the whole config surface. |
+| [docs/d108-serving-edge-tunnel-only.md](docs/d108-serving-edge-tunnel-only.md) | the serving edge moved to tunnel-only: the bazzite llama-swap provider is **deprecated for now** (no new clients/features, no removal date, code stays), and the allowlist reverse proxy — legacy **mode A** — is **deprecated as insecure** now that the first v3 tunnel deployments work: a TLS-terminating proxy sees plaintext provider keys (d073's trust table), and the shape forces route-rewriting generator magic (`REVERSE_PROXY_BASE_URLS`, `providerRouteUrl()`, d063/d070 install-time substitution). estige must stop exposing mode A (`allowHosts`, host-form routing, `estige generate` allowlist) and the generators must stop depending on it; the record keeps the v2 (allowlist) / v3 (tunnels, shared bearer, working) / v4 (tunnels under d113's Ed25519 proofs, in progress) generations apart, and supersedes d073's VPN-R1; `estige.json` itself is **removed by tree-shake**, not shrunk — surviving role facts (`egress`) fold into d113's `exit.json`, arming into helper presence, the bind into env `PORT` (d110), leaving the key store as the whole config surface. |
 | [docs/d110-single-port-one-knob-port.md](docs/d110-single-port-one-knob-port.md) | a tool that binds exactly one TCP port (the exit) has exactly one port knob: the optional env var `PORT` (unset → code default 8080, all interfaces); the `listen` config field, the `-listen` argv, and the launcher's `LISTEN`/`HOST_PORT`-driven spellings are all removed — `PORT` deliberately unprefixed because coordinators already speak it (12-factor/Procfile), and `exit.json` never stores a bind; the relay is exempt (one listener per proxy protocol — `PROXY_LISTEN`/`SOCKS_LISTEN` stay), and the external funnel front follows the steer from the steering side. |
 
 ### Submodule design

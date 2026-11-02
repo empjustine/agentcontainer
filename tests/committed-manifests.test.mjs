@@ -4,9 +4,9 @@
  * edit in a review means someone bypassed the write choke point.
  *
  * WHY IT IS AT THE REPO ROOT and not beside the canonicalizer: the subject is
- * the WHOLE unit set (coding-agent's manifests AND estige's Go-generated
- * estige.json), which no single copy unit can assert — the one test this sweep
- * keeps after docs/d104 moved every unit-owned test into its unit. It reads
+ * the WHOLE unit set (coding-agent's manifests, which no single copy unit can
+ * assert on its own) — the one test this sweep
+ * keeps after docs/d113 moved every unit-owned test into its unit. It reads
  * coding-agent/lib/canonical-json.mjs (the node canonicalizer; estige/go
  * implements the same ordering natively, docs/d102) as the reference.
  *
@@ -34,7 +34,6 @@ const COMMITTED_MANIFESTS = [
 	"coding-agent/model-018-cloud-verboo.json",
 	"coding-agent/models.json",
 	"coding-agent/opencode.jsonc",
-	"estige/estige.json",
 ];
 
 for (const rel of COMMITTED_MANIFESTS) {

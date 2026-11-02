@@ -69,7 +69,7 @@ restate what the code already knows.
      the target:
 
      ```
-     ./lib/environment.sh ./llm-reverse-proxy/vpn-relay.sh ./coding-agent/run.sh
+     ./environment.sh ./llm-reverse-proxy/vpn-relay.sh ./coding-agent/run.sh
      ```
 
      One vault round-trip (d046) buys the relay its credential and the child
@@ -159,7 +159,7 @@ restate what the code already knows.
 
 ## Acceptance
 
-- On a host with the vault: `./lib/environment.sh
+- On a host with the vault: `./environment.sh
   ./llm-reverse-proxy/vpn-relay.sh ./coding-agent/run.sh` starts or reuses
   the relay, and the sandbox's proxy env is the loopback spelling.
 - Relay absent → started, then the child runs; relay unreachable after the

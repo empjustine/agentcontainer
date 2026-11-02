@@ -92,7 +92,7 @@ The server is **started explicitly and runs in the foreground** —
 `./git/search-mcp.sh` — like every operator-visible service here. No
 background timer installs itself (the `git maintenance start` rejection,
 non-bare-issues.md). One program, two fronts is a later option: a stdio
-transport for the bare-host `pi` path (`./lib/environment.sh pi`) shares
+transport for the bare-host `pi` path (`./environment.sh pi`) shares
 everything but the transport.
 
 ### Tool surface

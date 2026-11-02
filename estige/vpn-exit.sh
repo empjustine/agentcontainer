@@ -31,7 +31,7 @@
 # the env chain, beside the credential.
 
 set -eu
-# The workload API is this folder's own copy (docs/d104): estige carries no
+# The workload API is this folder's own copy (docs/d113): estige carries no
 # cross-folder dependency, so a split-out checkout is complete as it stands.
 # shellcheck disable=SC1091
 . "${WORKLOAD_LIB_DIR:-$(dirname "$0")/lib}/workload-runtime.sh"

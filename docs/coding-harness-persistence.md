@@ -23,7 +23,7 @@ Every other harness gets a **per-run stage directory** on the host
 (`$HOME/workspace/$container_name/...`) RW-mounted into the container at the
 harness's expected home-relative path, so state written inside the sandbox
 survives the container's death. Secrets never follow this path — they
-are loaded host-side once (lib/environment.sh — the explicit chain) and forwarded through the
+are loaded host-side once (./environment.sh — the explicit chain) and forwarded through the
 `workload_env` allowlist (`CLINE_API_KEY`, `MISTRAL_API_KEY`, `PEER_API_KEY`,
 `OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `HF_TOKEN`, `GEMINI_API_KEY`).
 
@@ -120,7 +120,8 @@ tier — missing `--die-with-parent`, no `--unshare-net`, no device binds):
 see [archive/bwrap-runtime-audit.md](archive/bwrap-runtime-audit.md).
 
 Relevance to persistence: a bwrap runtime, if added as a workload runtime
-alternative to podman in `lib/workload-runtime.sh`, would replace
+alternative to podman in the workload runner (each unit's own
+`lib/workload-runtime.sh`, docs/d113), would replace
 `workload_rw`/`workload_ro` bind mounts with equivalent `--bind`/`--ro-bind`
 flags — the harness persistence table above is the mount manifest that such
 a bwrap runtime must reproduce 1:1 (note bwrap has no named-volume or

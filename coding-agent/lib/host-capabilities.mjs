@@ -2,7 +2,7 @@
  * @fileoverview host-capabilities.mjs — the host-capability probes the
  * coding-agent build needs: which container backend this host has, if any.
  *
- * Pruned to that one probe (docs/d104): this folder is a copy unit and carries
+ * Pruned to that one probe (docs/d113): this folder is a copy unit and carries
  * what its unit calls. The render-device / RAM-floor probes live with the unit
  * that gates local inference on them; the cloud-reachability probe with the
  * proxy that relays to cloud upstreams.

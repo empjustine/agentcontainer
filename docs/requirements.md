@@ -49,10 +49,12 @@ left answering nothing that generation asks (docs/d072).
 - **Usage** — `coding-agent/` (see `coding-agent`): the pi coding-agent's
   container image, generated `models.json`/`opencode.jsonc` layers, static
   settings, and credential handling.
-- **Shared infrastructure** — `lib/` (see `lib`): backend-agnostic workload
-  runner, structured logging, the provider/model fact tables.
-- **Cache tooling** — `local-llm/` (see `local-llm`): provision and audit the
-  HuggingFace cache that local inference serves from.
+- **Per-unit infrastructure** — each folder's own `lib/` (see `workload-api`):
+  backend-agnostic workload runner, structured logging, the provider/model
+  fact tables, pruned to what that folder serves (docs/d113).
+- **Cache tooling** — flat inside `llm-local-inference/` (see
+  `llm-local-inference-cache`): provision and audit the HuggingFace cache that
+  local inference serves from (folded in by docs/d113).
 - **Docs & decision records** — `docs/` (typed per
   `docs/spec-graph-standard.md`: goal-and-requirements / architecture-design /
   module-design / submodule-design / task-spec, plus the `d0XX` decision log
@@ -134,7 +136,7 @@ the allowlist relay by decision
   `enabledModels` in static settings; generators emit provider overrides
   (base URLs, key refs), never client-side model catalogs.
 - **FR-U4** — Credentials: vault secrets are loaded ONCE on the host (the
-  explicit `lib/environment.sh` chain) and forwarded into sandboxes through a
+  explicit `./environment.sh` chain) and forwarded into sandboxes through a
   declared `workload_env` allowlist; nothing inside a sandbox touches the
   vault, and the host login state is never staged into it.
 - **FR-U5** — Generated runtime config (`~/.pi/agent` settings/models.json,
@@ -150,36 +152,32 @@ the allowlist relay by decision
   docs/d054); a stale or missing artifact is a loud failure pointing at the
   generator, never an implicit regeneration (docs/d041).
 
-### Shared infrastructure — `lib/`
+### Copy units and per-unit infrastructure
 
-- **FR-L1** — `lib/` is repo-owned shared infrastructure, never copied into a
-  runner folder; data reads out of `lib/` are allowed, reaching into a sibling
-  runner is not. The effective copy unit is **folder + `../lib`**.
+- **FR-L1** — A folder is the copy unit (docs/d113): every serving/usage
+  folder carries its own `lib/` — a hand copy of the kernels it uses — plus its
+  own `build.sh`/`generate.sh` and `tests/`, so it can be copied out whole.
+  There is no repo-level `lib/`. Copies are owned outright, not vendored: no
+  sync step, no hash gate, no shared upstream. Reaching into a sibling unit is
+  not allowed; only the repo-wide QA harness (`tests/`) reads across units.
 - **FR-L2** — Secrets flow through ONE explicit chain step
-  (`./lib/environment.sh <script>`): `infisical run` fetches the vault and
-  spawns the target with it as plain env (docs/d046); consumers read plain
-  env and never load secrets themselves. No `.env` files, no in-script
-  loaders, no fallbacks.
-- **FR-L3** — Fact tables have exactly one home: the cloud-provider table, the
-  models.dev catalog, the catwalk cache, and the GGUF model definitions each
-  exist once (in `lib/` or their owning module) and every consumer derives
-  from them.
-- **FR-L4** — Shared toolchains are provisioned uniformly: one node runner
-  (`lib/node-run.sh`, repo-pinned node), one go builder (`lib/go-build.mjs`),
-  and one npm dev-tool lock (`package.json` + `package-lock.json`, installed
-  by `lib/npm-tools.sh`) serve every module; no module carries its own
-  toolchain probe.
-
-### Cache tooling — `local-llm/`
-
-- **FR-C1** — The HF cache is provisioned, verified, pruned, and re-estimated
-  by self-contained scripts; the served model list derives from the shared
-  GGUF model table (content owned by `llm-local-inference/`, consumed
-  read-only here).
-- **FR-C2** — Manifests (`repo:quant`) are verified against what llama.cpp
-  actually resolves; drift is reported, never silently accepted.
-- **FR-C3** — Cache tooling is not a base generator: nothing in the runners'
-  generation depends on it.
+  (`./environment.sh <script>` at the repo root): `infisical run` fetches the
+  vault and spawns the target with it as plain env (docs/d046); consumers read
+  plain env and never load secrets themselves. No `.env` files, no in-script
+  loaders, no fallbacks, no second loader.
+- **FR-L3** — Fact-table copies are **pruned per consumer** (docs/d113): the
+  cloud-provider table, the models.dev catalog, the catwalk cache and the GGUF
+  model definitions exist only in folders that read them, carrying only the
+  rows that folder serves. `coding-agent/lib/cloud-providers.mjs` is the full
+  reference table; each `pi-*` extension carries its own row; the serving units
+  carry none. A fact edit is one edit per consumer (retiring docs/d024's
+  one-edit law), and the rows stay byte-comparable (docs/d050) so divergence is
+  visible in a diff.
+- **FR-L4** — Toolchains are provisioned uniformly without a shared dependency:
+  the node runner (`node_run()`), the go builder probe and the npm dev-tool
+  lock exist as per-unit copies of one kernel, and every copy pins the same
+  versions (repo-pinned node, docs/d041; `./npm-tools.sh` from
+  `package-lock.json`, docs/d107), so no unit drags a toolchain of its own.
 
 ### Documentation
 
@@ -207,9 +205,10 @@ the allowlist relay by decision
   tolerate-missing-keys contract covers it downstream.)
 - **NFR-3** — Offline where possible: generation that needs no network
   (local serving, the proxy routing table) must work without one.
-- **NFR-4** — Self-contained runners: every serving/usage folder is copyable
-  to a host with folder + `../lib` alone (FR-L1); retired variants are
-  removed from the worktree, recorded only in docs.
+- **NFR-4** — Self-contained units: every serving/usage folder is copyable to
+  a host on its own (FR-L1) — including a `git filter-repo` extraction into
+  its own repository (docs/d082) — and each builds and generates itself;
+  retired variants are removed from the worktree, recorded only in docs.
 - **NFR-5** — Single-user economy: no rate limiting, tenancy, or hardening
   beyond what the underlying tools ship (see Non-goals).
 

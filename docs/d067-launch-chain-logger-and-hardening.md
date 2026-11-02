@@ -5,7 +5,7 @@ status: active
 title: "d067 — coding-agent/run.sh: self-contained launch chain (no logger mount), hardening deliberately off"
 parent: coding-agent
 depends-on: [coding-agent]
-references: [d026, d041, d045, d054, d056, d065, d066, coding-harness-persistence, lib]
+references: [d026, d041, d045, d054, d056, d065, d066, coding-harness-persistence, workload-api]
 tags: [coding-agent, mounts, logging, hardening, sudo, sandbox]
 ---
 

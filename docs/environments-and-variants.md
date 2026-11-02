@@ -86,8 +86,8 @@ podman/docker for this — and local llama.cpp inference is impossible anyway.
 So there is no llama-swap here at all: the host serves the tunnel only, via a
 **native termux build of estige** (compiled for the device).
 
-- The root `./build.sh` (`build.mjs`) cross-builds the static binary with
-  the android preset from `lib/go-build.mjs` (`CGO_ENABLED=0 GOOS=android
+- `./estige/build.sh` (its own `build.mjs`) cross-builds the static binary with
+  the android preset from the folder's own `lib/go-build.mjs` (`CGO_ENABLED=0 GOOS=android
   GOARCH=arm64` — so the Android resolver is used instead of the missing
   `/etc/resolv.conf`; docs/d041), and `vpn-exit.sh`'s native branch
   `exec`s it against `${PORT:-8080}` (the only bind spelling, docs/d110) — no
@@ -112,17 +112,17 @@ request time — the proxy forwards them untouched).
 - **Environment** — `PEER_API_KEY` (llama-swap's local bearer only) /
   `REVERSE_PROXY_BASE_URLS` and the per-provider keys (`OPENROUTER_API_KEY`,
   `OPENCODE_API_KEY`, `CLINE_API_KEY`, `HYPER_API_KEY`, `GEMINI_API_KEY`,
-  …), exported into the process environment (Infisical via lib/environment.sh,
+  …), exported into the process environment (Infisical via ./environment.sh,
   or exported by hand). No `.env` file is read anywhere in the repo.
   `REVERSE_PROXY_BASE_URLS` is read by the
   generator's route probing (`route-probe.mjs`) and baked into the provider
   `baseUrl` overrides; `run.sh`
   does not forward them into the sandbox (docs/d056).
 - **Serving** (`estige/`): the cloud relay
-  (root `./build.sh && ./generate.sh && ./estige/vpn-exit.sh`), as on
-  the other non-GPU hosts.
+  (`./estige/build.sh && ./estige/vpn-exit.sh` — each folder builds itself,
+  docs/d113), as on the other non-GPU hosts.
 
-The shared `lib/workload-runtime.sh` makes this work on both local-inference-host-style podman and
+Each unit's own `lib/workload-runtime.sh` copy makes this work on both local-inference-host-style podman and
 small-cloud-vm-style docker through the same `workload_*` description: `workload_user` emits
 `--userns=keep-id --user uid:gid` (plus `--group-add keep-groups`) on rootless
 podman, and just `--user uid:gid` on rootful docker; SELinux relabeling is
@@ -134,8 +134,9 @@ relays cloud providers. The relay is estige — one static Go binary,
 ~13 MB RSS, no model routing and no secrets, so the 1 GB budget is not a
 constraint.
 
-- **Serving** (`estige/`): just root `./build.sh && ./generate.sh &&
-  ./estige/vpn-exit.sh` — the exit node serves the tunnel namespace on LAN
+- **Serving** (`estige/`): just `./estige/build.sh && ./estige/vpn-exit.sh`
+  (no generate step — estige has no generator since docs/d108) — the exit
+  node serves the tunnel namespace on LAN
   `${PORT:-8080}` (host-network container or native binary; one port, one knob,
   docs/d110). The allowlist route table it used to generate is gone with the
   reverse proxy (docs/d108).
@@ -144,7 +145,7 @@ constraint.
 - **Keys**: the proxy injects nothing — clients carry the provider keys
   (`OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `CLINE_API_KEY`,
   `HYPER_API_KEY`, `GEMINI_API_KEY`, …) themselves, from Infisical via
-  lib/environment.sh.
+  ./environment.sh.
 
 This is the relay-only deployment documented as a first-class environment —
 the realistic option for hosts that can't afford the `unified-vulkan` image
@@ -161,7 +162,7 @@ is no peers-only llama-swap mode anymore).
 
 ## Shared support file
 
-`lib/workload-runtime.sh` (repo root) is a **description-driven workload runner**: run
+`<unit>/lib/workload-runtime.sh` (one hand copy per unit, docs/d113) is a **description-driven workload runner**: run
 scripts declare *what* they need and the tool renders *how* for the active
 backend — rootless podman or rootful docker —  It is
 the single place that detects the backend and computes `SCRIPT_DIR` / `REPO_ROOT`

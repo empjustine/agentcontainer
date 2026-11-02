@@ -108,9 +108,10 @@ Consequences the tooling must respect:
 
 ## Tooling
 
-All three are standalone: the copy unit is `git/` + `../lib`
-(`docs/architecture.md`), they use the shared logger, and the `.sh` shims run
-the repo-pinned node via `lib/node-run.sh`.
+All three are standalone: the copy unit is `git/` alone
+(`docs/architecture.md`, docs/d113), they log through this folder's own
+`lib/log.mjs`/`lib/log.sh`, and the `.sh` shims run the repo-pinned node via
+`lib/node-run.sh`.
 
 ### `./git/audit.sh` — report anomalies
 

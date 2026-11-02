@@ -1,6 +1,6 @@
 /**
  * @fileoverview build.mjs — build estige for THIS host (docs/d041; d083 made
- * the build entry per-unit, docs/d104 folded the root builder away).
+ * the build entry per-unit, docs/d113 folded the root builder away).
  *
  * Two targets, and which one registers is a host fact, not a flag:
  *
@@ -255,7 +255,7 @@ if (containerTool) {
 // pkg-installs node/jq and source-builds the infisical CLI. It stays shell on
 // purpose — every path in it is Termux-only and cannot be regression-tested
 // from a container host (docs/d041) — and it stays at the REPO root because it
-// provisions the DEVICE, not this unit (d104): a standalone estige checkout on
+// provisions the DEVICE, not this unit (d113): a standalone estige checkout on
 // Termux must bring that script along, so a missing one is a loud error rather
 // than a silently unprovisioned build.
 if (termux) {

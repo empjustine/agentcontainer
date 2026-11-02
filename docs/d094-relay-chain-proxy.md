@@ -32,7 +32,7 @@ That refusal is right about the wrong thing: the fear was a *forwarding*
 proxy that an ambient setting silently hands the bearer to (a cleartext
 hop, a credential-visible MITM). It answered that fear by removing the
 route, which also removed the deployment. What was missing is the repo's
-standing answer to "ambient configuration": the lib/environment.sh law —
+standing answer to "ambient configuration": the ./environment.sh law —
 an explicit chain step, parsed once, owned here, fail-closed before any
 bind (docs/d046).
 

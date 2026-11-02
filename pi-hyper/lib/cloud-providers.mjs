@@ -1,6 +1,6 @@
 /**
  * @fileoverview cloud-providers.mjs — loader for THIS extension's own row of
- * the provider fact table (docs/d104): the row lives in the sibling
+ * the provider fact table (docs/d113): the row lives in the sibling
  * `cloud-providers.json`, pruned to the one provider this unit serves.
  *
  * Why a copy instead of a shared table: the table used to be repo-wide

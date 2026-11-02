@@ -32,7 +32,7 @@ import (
 )
 
 // Tunnel environment surface (modes C–E; docs/d073 §6.3/§7): credentials
-// arrive ONLY through this path — the lib/environment.sh env chain. A file
+// arrive ONLY through this path — the ./environment.sh env chain. A file
 // would be a second, unkeyed copy of a credential (VPN-R32), and d108 removed
 // the last file the binary read rather than keep a policy-shaped exception.
 // The roles are disjoint (docs/d090): VPN_OPERATOR_KEYS is the EXIT node's

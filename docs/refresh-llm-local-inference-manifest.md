@@ -1,15 +1,15 @@
 ---
-id: refresh-local-llm-manifest
+id: refresh-llm-local-inference-manifest
 type: module-design
 status: active
-title: "Refreshing the local-llm manifest — runbook"
-parent: local-llm
+title: "Refreshing the GGUF model manifest — runbook"
+parent: llm-local-inference-cache
 tags: ["reference", "runbook", "manifest"]
 ---
 
-# Refreshing `lib/llamacpp-model-data.json`
+# Refreshing `llm-local-inference/lib/llamacpp-model-data.json`
 
-This is the operational runbook for keeping the local-llm manifest in sync
+This is the operational runbook for keeping the GGUF model manifest in sync
 with the Hugging Face cache. Run it whenever a new GGUF model or a new quant of
 an existing repo lands in the cache (e.g. a background `upkeep.py pull` or a
 manual `snapshot_download` finished).
@@ -65,11 +65,11 @@ previous last element.
 - **`cache-type-k` / `cache-type-v`**: omit (the implicit default is `f16`/`f16`); set only for a non-f16 KV cache.
 - **`ctx-size`** = the model's native `context_length` from the GGUF header,
   capped to fit VRAM. Read it without loading weights — the PoC header reader
-  (`local-llm/gguf_context_length.py`) uses the PyPI `gguf` package and is
+  (`llm-local-inference/gguf_context_length.py`) uses the PyPI `gguf` package and is
   header-only (memory-mapped, no tensor weights):
 
   ```sh
-  uv run local-llm/gguf_context_length.py --repo ORG/REPO
+  uv run llm-local-inference/gguf_context_length.py --repo ORG/REPO
   # or pass one or more explicit file paths / globs instead of --repo
   ```
 
@@ -98,7 +98,7 @@ so insert a more specific key *before* a generic one:
 "LFM2.5":         "03b",
 ```
 
-Use `estimate_active_params.py --emit-slugs` (in `local-llm/`) to (re)derive
+Use `estimate_active_params.py --emit-slugs` (in `llm-local-inference/`) to (re)derive
 slugs from real header shapes and review the diff before overwriting
 `active-b.json`.
 
@@ -137,7 +137,7 @@ macro, edit `llama-swap-core.json` and re-run generation.
 
 ```sh
 cd llm-local-inference
-LOCAL_INFERENCE=1 ./generate.sh   # -> both config.d/ layers (00-general + 10-local-llm-inference + .paths)
+LOCAL_INFERENCE=1 ./llm-local-inference/generate.sh   # -> both config.d/ layers (00-general + 10-local-llm-inference + .paths)
 ```
 
 Generation runs offline (no Infisical, no network). The generator warns on **duplicate model
@@ -146,16 +146,16 @@ ids** — fix any collision (usually a `slug`/`ctx-size` clash) before shipping.
 ## Step 6 — Validate
 
 ```sh
-node -e "require('./lib/llamacpp-model-data.json')"    # parses? (no output = ok)
+node -e "require('./llm-local-inference/lib/llamacpp-model-data.json')"   # parses? (no output = ok)
 
 ./llm-local-inference/model-sizes.sh                   # regenerate the footprint/order...
-git diff --exit-code lib/llamacpp-model-data.json      # ...and an empty diff says it was current
+git diff --exit-code llm-local-inference/lib/llamacpp-model-data.json    # ...and an empty diff says it was current
 
 # coverage: re-run the Step 1 scanner and confirm
 #   - every cached repo has >=1 manifest entry (no repo left at zero coverage)
 #   - no listed repo has a cached .gguf whose quant is absent from the manifest
 
-uv run local-llm/fetch_hf_manifests.py --offline       # audits each entry's
+uv run llm-local-inference/fetch_hf_manifests.py --offline   # audits each entry's
                                                        # model vs llama.cpp's
                                                        # implicit repo:quant->file
                                                        # heuristic (exit 1 on mismatch)

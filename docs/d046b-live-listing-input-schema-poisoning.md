@@ -101,7 +101,7 @@ raw `input_modalities`) now yields **0 schema-invalid outputs**.
 - The WSL2 box's already-generated `~/.pi/agent/models.json` (and the
   committed snapshot it wrote back to that host) still carry the invalid
   arrays for that one run — **re-run `./generate.sh` (via
-  `./lib/environment.sh ./generate.sh`) with the fixed generator**; the
+  `./environment.sh ./generate.sh`) with the fixed generator**; the
   next generation emits only `["text"]`/`["text","image"]`.
 - The `uploads/logs.txt` file is the WSL2 run's structured log — it pins
   the `models.json installed ... providers 7` + `committed snapshot

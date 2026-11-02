@@ -16,17 +16,18 @@ tags: ["reference", "gguf", "tooling"]
 > [`gdevenyi/huggingface-estimate`](https://github.com/gdevenyi/huggingface-estimate)
 > (`run-calc.js`), which models per-layer `n_head_kv`, SWA windows, recurrent
 > state, MTP heads and MoE hybrid fits that the archived tools never handled.
-> The estimator is invoked by `local-llm/generate_vram_fit_tables.py`, which
+> The estimator is invoked by `llm-local-inference/generate_vram_fit_tables.py`, which
 > regenerates [`gguf-vram-fit-estimates.md`](gguf-vram-fit-estimates.md) and its
 > raw-data JSON. Point it at a checkout via `--estimator-dir` or
 > `$HUGGINGFACE_ESTIMATE_DIR` (a read-only checkout is copied and `npm install`
 >ed automatically).
 >
-> Only `fetch_hf_manifests.py` remains live in `local-llm/`. The sections below
-> are kept for reference on the archived tools. `local-llm/` is otherwise
+> Only `fetch_hf_manifests.py` remains live, in `llm-local-inference/` (the
+> cache pipeline, flat there since docs/d113). The sections below
+> are kept for reference on the archived tools. The rest of that pipeline is
 > deprecated (docs/d053): the footprint/order regeneration moved to
 > `llm-local-inference/model-sizes.mjs`, which reads the committed manifests
-> (now `lib/hf-manifests/`) and the local HF cache.
+> (now `llm-local-inference/lib/hf-manifests/`) and the local HF cache.
 
 This repository contains tools for working with GGUF model files for local
 llama.cpp inference. They share two design constraints:
@@ -52,7 +53,7 @@ llama.cpp inference. They share two design constraints:
 | `generate_layer_cards.py` | Extract per-tensor (layer) names/sizes and render markdown "layer cards" |
 | `fit_analysis.py` | Compute how many layers must be evicted to CPU to fit a GPU budget |
 | `estimate_active_params.py` | Measure total and per-token ACTIVE parameter counts / bytes from the GGUF header |
-| `fetch_hf_manifests.py` | Persist HF repo file listings (to `lib/hf-manifests/`) and audit each configured `--hf-file` against llama.cpp's implicit `repo:quant` → file heuristic |
+| `fetch_hf_manifests.py` | Persist HF repo file listings (to `llm-local-inference/lib/hf-manifests/`) and audit each configured `--hf-file` against llama.cpp's implicit `repo:quant` → file heuristic |
 | `llm-local-inference/model-sizes.mjs` | Derive each entry's SI-GB footprint from the committed manifests (cache fallback) and order `llamacpp-model-data.json` cheapest-first; warns on cache-only GGUFs, never adds (docs/d053) |
 | `scan_cache_coverage.py` | **PoC/MVP** — diff the HF cache against `llamacpp-model-data.json`: repos with zero coverage, listed repos with extra cached quants, ambiguous `bpw`/multi-quant filenames (header-free; see `docs/refresh-llm-local-inference-manifest.md`) |
 | `gguf_context_length.py` | **PoC/MVP** — read `general.architecture` / `context_length` / `general.name` from a GGUF header via the PyPI `gguf` package (no weights loaded); used to pick `ctx-size` |
@@ -115,7 +116,7 @@ For every model entry with a locally cached GGUF file it resolves the file in
 the local HF cache (`HF_HUB_CACHE` / `~/.cache/huggingface/hub`, in the
 `models--org--repo` layout), extracts each tensor's name/shape/quant type/size
 from the header, and writes one **layer card** per repo at
-`local-llm/model-cards/<org>/<repo>.layers.md`.
+`llm-local-inference/model-cards/<org>/<repo>.layers.md`.
 
 - Tensor names are **architecture-level and identical across quants**, so quants
   of the same repo are grouped into one card; per-tensor sizes are listed per
@@ -235,7 +236,7 @@ picks a GGUF by a pure filename heuristic (`find_best_model`,
 
 Because that is fragile (duplicate quants at different bpw, tag strings that
 don't appear verbatim in filenames), this tool downloads the tree listing once
-per repo and persists it as `lib/hf-manifests/<org>--<repo>.json`
+per repo and persists it as `llm-local-inference/lib/hf-manifests/<org>--<repo>.json`
 (including the resolved commit), then re-implements the heuristic offline and
 checks every `llamacpp-model-data.json` entry: does the configured `--hf-file`
 match what llama-server would pick implicitly?

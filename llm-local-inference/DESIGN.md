@@ -58,7 +58,7 @@ replaced by generation-time path baking (`docs/d029` option B).
 **Termux leaf**: removed. Termux can neither serve local inference (no
 container backend, no GPU) nor reach anything through this module once
 relaying left, so it has no role here — there is no `run-native.sh`,
-no android cross-build — this folder's own `build.mjs` (docs/d083/d104) only
+no android cross-build — this folder's own `build.mjs` (docs/d083/d113) only
 pre-pulls the container image, and only on a host that is an inference
 endpoint.
 
@@ -95,7 +95,7 @@ endpoint.
 
 ## Boundary
 
-Copy unit = this folder alone (`docs/architecture.md`, docs/d104): it carries
+Copy unit = this folder alone (`docs/architecture.md`, docs/d113): it carries
 its own `lib/` copy — `log.mjs`/`log.py`, `artifact.mjs` +
 `canonical-json.mjs`, `host-capabilities.mjs`, `workload-runtime.sh` +
 `workload-*.jq`, `node-run.sh`, and the data tables it reads
@@ -106,4 +106,4 @@ cache unit to reach into. It does NOT carry `cloud-providers.mjs`,
 `models.dev.api.json` or `route-probe.mjs` — the modules this unit no longer
 uses; they live only in the folders that still consume them
 (`../coding-agent` took the probe/facts modules in d039, the JSON fact table in
-d104). Must not import from a sibling runner folder.
+d113). Must not import from a sibling runner folder.

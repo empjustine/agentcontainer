@@ -101,12 +101,12 @@ That file is the repository-owned copy of the contract on purpose: an agent
 without the ThinkRail tooling or its workflow skills must still be able to
 keep the graph valid, so read it before adding, retyping, or retitling a doc,
 and run the checks it lists when a docs change touches more than one file. The
-tooling (and d104, the record that adopted the standard) is the faster path
+tooling (and d111, the record that adopted the standard) is the faster path
 when it is available; it is not a prerequisite.
 
 ## Other repo invariants
 
-- **A folder is a copy unit** (docs/d104): each unit carries its own pruned
+- **A folder is a copy unit** (docs/d113): each unit carries its own pruned
   `lib/` copy of the shared kernels it uses, so it can be copied out whole.
   Reaching into a sibling unit is not allowed (`docs/architecture.md`); only
   `tests/` (the repo-wide harness) reads across units.

@@ -12,15 +12,15 @@ tags: ["workload-runtime", "sandbox", "bwrap", "landlock", "seccomp", "cgroups",
 A **prior-art / what-others-do survey**, not a security or trust assessment:
 the mechanism each tool claims and how it is shaped in code, as a reference
 frame for the workload backend work. Our own statements live in
-[container-tooling.md](container-tooling.md) (`lib/workload-runtime.sh` module
-doc: podman/docker backends, the removed PRoot backend, and the bwrap
-backend assessment), [d020](d020-libvirt-qemu-sandbox.md) (VM backend,
+[container-tooling.md](container-tooling.md) (the `lib/workload-runtime.sh`
+module, one hand copy per unit since docs/d113: podman/docker backends, the
+removed PRoot backend, and the bwrap backend assessment), [d020](d020-libvirt-qemu-sandbox.md) (VM backend,
 assessed) and [d043](d043-cross-repo-reference-search.md) (the farm itself).
 Paths below are bare mirrors under `~/Downloads/references/`.
 
 ## Threat model of OUR runner (the lens this survey is read through)
 
-The workload API in `lib/workload-runtime.sh` is built on explicit trust
+The workload API in `lib/workload-runtime.sh` (each unit carries its own copy) is built on explicit trust
 positions, chosen on cost/benefit — record them once so the survey below
 (and any future backend work) cannot silently drift into a different war:
 
@@ -573,7 +573,7 @@ config cover the whole overlap core today for the container backends.
 
 | Capability | Only (first-party shape) | Mechanism | Cost for this repo to cover |
 |---|---|---|---|
-| OCI image as the unit | containers (podman/docker), kern | pull/build/layer store | none — `workload_image` + each unit's own `build.mjs` (docs/d104) is this story; stays the default backend |
+| OCI image as the unit | containers (podman/docker), kern | pull/build/layer store | none — `workload_image` + each unit's own `build.mjs` (docs/d113) is this story; stays the default backend |
 | daemon-less runtime, no socket at rest | kern (bwrap-family too, but no runtime) | one static binary | not needed while backend detection runs ephemerally; a third dialect would trade `workload_logs`/`workload_rm` for a pidfile machinery (assessed in container-tooling.md) |
 | domain-level network policy | srt, fence, clampdown (proxy), sandlock (seccomp-notif), mxc (first-party, cross-backend) | in-netns HTTP/SOCKS proxy with unix-socket bridges; Landlock TCP + seccomp rules; or an in-ns iptables firewall under slirp4netns (mxc) | high for the container backends (they already get network from the netns — the cost only shows in a bwrap/dialect-less no-net backend, fence needed ~1 proxy + ~1 bridge helper per direction, mxc an unprivileged supervisor + iptables chains) |
 | deny-audit / learning mode | mxc (`learningModeLogging` deny-and-record vs `permissiveLearningMode` allow-all audit) | OS access-check logging capability (Windows AppContainer lineage) | not exposed by the workload API — candidate shape if denial debugging ever hurts; the Landlock/seccomp stacks have no equivalent (their violation monitors are ad-hoc observers, not OS audit) |

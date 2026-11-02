@@ -33,7 +33,7 @@ at. This is that record.
 ## Decisions
 
 - **No staged credentials file, ever.** The explicit chain
-  (`lib/environment.sh`, `docs/d046-infisical-run.md`) does the single
+  (`./environment.sh`, `docs/d046-infisical-run.md`) does the single
   `infisical run` round-trip on the host; plain env is forwarded into the
   workload via the `workload_env` allowlist, and pi resolves the `"$VAR"`
   apiKey references in the generated `models.json` at request time.

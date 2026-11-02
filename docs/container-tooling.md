@@ -1,15 +1,16 @@
 ---
-id: lib
-type: module-design
+id: workload-api
+type: architecture-design
 status: draft
-title: "lib — shared infrastructure: workload runner, logging, fact tables"
+title: "The workload API — per-unit workload runner, logging, fact tables"
 parent: architecture
-tags: ["lib", "workload-runtime", "container-tooling"]
+tags: ["workload-runtime", "container-tooling", "copy-units"]
 ---
 
 # Container tooling & run scripts
 
-This covers the shared container-runtime detection (`lib/workload-runtime.sh`), the
+This covers the container-runtime detection (`lib/workload-runtime.sh`, one hand
+copy per unit that runs workloads — docs/d113), the
 deployment environments (local-inference-host, termux, small-cloud-vm), and the run scripts that launch
 the llama-swap serving container and the pi coding-agent container.
 
@@ -70,9 +71,9 @@ Cloud VMs serve `estige/` — the cloud relay that replaced the
 former peers-only llama-swap mode — and run `coding-agent/` against the
 config generated on a capable host (the run-scripts section below).
 
-## Shared support: lib/workload-runtime.sh (description-driven)
+## The workload runner: `<unit>/lib/workload-runtime.sh` (description-driven)
 
-`lib/workload-runtime.sh` (repo root) is a **description-driven workload runner**, not a
+`<unit>/lib/workload-runtime.sh` is a **description-driven workload runner**, not a
 bag of flags. Run scripts declare *what* they need; the tool renders *how* for
 the active backend — podman or docker —  No
 `:z${_vol_u}` strings, no inline `podman`/`docker` detection, no
@@ -93,17 +94,25 @@ the active backend — podman or docker —  No
 > [workload-sandboxing-prior-art.md](workload-sandboxing-prior-art.md)
 > (reference farm survey; prior art, not a security or trust reference).
 
-Source it from any `run*.sh` (it lives one level up, at the repo root):
+Source it from the unit's own `run*.sh` (each unit that runs workloads carries
+its copy in `<unit>/lib/`, docs/d113):
 
 ```sh
-. "$(dirname "$0")/../lib/workload-runtime.sh"
+. "$(dirname "$0")/lib/workload-runtime.sh"
 ```
+
+The copy lives in the unit, but it must still be **locatable from the sourcing
+script**, and POSIX sh cannot self-locate a file it is being run from. Each copy
+therefore resolves its siblings (`workload-*.jq`, `log.sh`) from the sourcing
+script's `SCRIPT_DIR` + `lib`, and honors `WORKLOAD_LIB_DIR` when the caller is
+not the unit's own run script (that variable is the seam: it names the `lib/`
+whose filters and loggers the caller wants).
 
 On source it detects the backend and computes two paths every run script uses
 (instead of recomputing them per script):
 
 - `SCRIPT_DIR` — directory of the sourcing run script (from `$0`)
-- `REPO_ROOT`  — its parent (the repo root)
+- `REPO_ROOT`  — its parent, which for a unit's run script is the repo root
 
 It also sets `_workload` (`container` › `none`) and, for the container
 backend, `_container_tool` (`podman`/`docker`) — but run scripts should not read
@@ -135,7 +144,7 @@ to decide which config layers the host can run.)
 | `workload_has <field>` | true when a description array is non-empty — e.g. `workload_has devices`, which is how `llm-local-inference/generate.mjs` gates the local-inference layer |
 | `workload_rm <id>` | remove a prior instance by name |
 | `workload_logs <id>` | tail a running instance's logs |
-| `workload_run [wrapper...]` | render + launch; optional `wrapper` prefixes the launch command. Host-side only — it cannot inject env into the workload; secrets reach the workload via the `workload_env` allowlist (see `coding-agent/run.sh`: host-side `lib/environment.sh` → forwarded vault env) |
+| `workload_run [wrapper...]` | render + launch; optional `wrapper` prefixes the launch command. Host-side only — it cannot inject env into the workload; secrets reach the workload via the `workload_env` allowlist (see `coding-agent/run.sh`: host-side `./environment.sh` → forwarded vault env) |
 
 Only `workload_ro`/`workload_rw` (required) abort the run if the host path is
 gone; `workload_ro_if` is best-effort. Mount host/guest paths may contain
@@ -165,7 +174,7 @@ The description is held in two halves:
   behaves identically whichever shell called it, and `--arg` carries values
   with no shell quoting at all.
 
-Each list mutator is one small jq filter in `lib/`, and **each filter's header
+Each list mutator is one small jq filter in the unit's own `lib/`, and **each filter's header
 is its specification** — expected inputs, output shape, and why it exists:
 
 | Filter | Called by | Contract |
@@ -187,7 +196,7 @@ header repeats:
   run with `jq -n`**, or it waits on stdin and never produces output.
 
 **Dependency:** jq is required by the `workload_*` calls only — scripts that
-source `lib/workload-runtime.sh` just for `log_*` never touch it,
+source `<unit>/lib/workload-runtime.sh` just for `log_*` never touch it,
 and the lookup is lazy (it fails on first use, not at source time).
 Provisioned in `mise.toml` (host), `coding-agent/config.toml` (image), and
 `pkg install jq` on Termux. The filters are evaluated HOST-side
@@ -211,14 +220,14 @@ relay the host's chain variables and the child the loopback spelling.
 **container** (`podman`/`docker`): renders `container run` with the described
 mounts/ports/env/user/hardening, then launches it (optionally wrapped by a
 host-side command — historically `infisical run … --`; the coding-agent now
-loads vault secrets on the host via `lib/environment.sh` and forwards them through
+loads vault secrets on the host via `./environment.sh` and forwards them through
 `workload_env`, so the workload itself never runs infisical). Any other
 `_workload` value is a fatal error — there is no fallback "workload" that isn't
 one.
 
 ### `bwrap` backend — assessed, NOT implemented
 
-What extending `lib/workload-runtime.sh` to a third backend (bubblewrap,
+What extending a unit's `lib/workload-runtime.sh` to a third backend (bubblewrap,
 mirror `github/containers/bubblewrap`) would take, against the current
 description API (`workload-render.jq` emits podman/docker dialects keyed on
 `$tool`; a bwrap dialect would be a third branch):
@@ -263,7 +272,7 @@ was removed with the relay handoff (see the module DESIGN docs).
 ### Serving run script (one multipurpose instance)
 
 Every local-inference-host runs ONE llama-swap serving container, launched by
-`llm-local-inference/run.sh` (sources `lib/workload-runtime.sh`). `run.sh` is
+`llm-local-inference/run.sh` (sources `./lib/workload-runtime.sh`). `run.sh` is
 serve-only: it mounts the already-generated `config.d/` (read-only) loaded via
 `-config-dir` and adapts to it. Generation lives in `llm-local-inference/generate.mjs`
 (docs/d041).
@@ -280,9 +289,9 @@ layers, and only the layers that work on the current host land in `config.d/`
 - `10-local-llm-inference.yaml` (+ its `.paths` staleness manifest) — only
   when the container backend is available AND GPU devices (`/dev/kfd`,
   `/dev/dri/renderD*`) are present. The GGUF layer is built from
-  `lib/llamacpp-model-data.json` (docs/d041 fold), which resolves each model to an HF snapshot dir and bakes the
+  its own `lib/llamacpp-model-data.json` (docs/d041 fold), which resolves each model to an HF snapshot dir and bakes the
   absolute paths into each `cmd` (docs/d029 option B; a cache miss is a
-  generation error pointing at `local-llm/download_models.py`).
+  generation error pointing at `llm-local-inference/download_models.py`).
 Exactly these two layers: the config.d-era cloud layers (`peer-cloud.yaml`,
 `22-peer-gfx1030.yaml`) left with the relay handoff — cloud providers are
 not a config layer (docs/d027); see architecture.md for the layer table and
@@ -294,7 +303,7 @@ docs/d018 for the merge contract this supersedes.
   needs the GPU/Vulkan runtime; `LLAMA_SWAP_IMAGE` overrides) — and `run.sh`
   refuses to start without the local layer, so there is no other mode.
 - **HF cache**: mounted read-only — nothing in-container writes it
-  (provisioning/pruning are `local-llm/`'s host-side job, FR-S4), and a
+  (provisioning/pruning are the cache pipeline's host-side job, FR-S4), and a
   model path baked at generation time that no longer exists aborts the
   launch (docs/d029 B staleness preflight).
 - **GPU**: detects usable dedicated inference devices — any DRM render node
@@ -312,8 +321,8 @@ docs/d018 for the merge contract this supersedes.
 - **Termux (archived serving variant)**: the native termux llama-swap serving
   variant is retired (see the [termux-serving.md](termux-serving.md) banner).
   What runs on termux today: `coding-agent/` plus a native `estige/`
-  cloud relay; the root `./build.sh` provisions the Infisical CLI there
-  (via `lib/provision-termux.sh`) and builds that android proxy binary.
+  cloud relay; `./estige/build.sh` provisions the Infisical CLI there
+  (via the repo-root `provision-termux.sh`) and builds that android proxy binary.
 
 ### `coding-agent/run.sh` (full, default usage)
 
@@ -326,7 +335,7 @@ is owned by the run script's own header; this page carries only what a
 runbook needs:
 
 - **Secrets**: loaded ONCE on the HOST by the explicit chain
-  (`./lib/environment.sh ./coding-agent/run.sh`, docs/d046) and forwarded
+  (`./environment.sh ./coding-agent/run.sh`, docs/d046) and forwarded
   through the `workload_env` allowlist; pi resolves the `"$VAR"` api-key
   references at request time. Nothing inside the sandbox touches the vault
   (FR-U4).

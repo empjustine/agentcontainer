@@ -34,7 +34,7 @@ this file is what a reader without the tooling has, so keep it exact.
 A document is part of the graph when its file starts with a `---` frontmatter
 block that carries **`id`** and **`type`**. Nothing else makes a file a node,
 and a markdown file whose frontmatter lacks either field is simply not one —
-`local-llm/model-cards/*.md` are notes, not specs. Being a node is not the same
+`llm-local-inference/model-cards/*.md` are notes, not specs. Being a node is not the same
 as meeting the contract below, and the validator only sees part of it.
 
 | field | required | rule |
@@ -79,10 +79,18 @@ goal                        goal-and-requirements — the graph root
     ├── estige
     │   └── estige-ci       submodule-design — a subsystem inside the package (estige/CI.md)
     ├── git
-    ├── lib                 (anchored at docs/container-tooling.md — d042's anchor constraint)
-    ├── local-llm
     └── llm-local-inference
+        └── llm-local-inference-cache   (the folded cache pipeline, CACHE-DESIGN.md)
 ```
+
+The `lib` and `local-llm` nodes are gone with their folders (docs/d113): the
+repo-level `lib/` dissolved into per-unit copies, so the workload API it
+anchored (`docs/container-tooling.md`, id `workload-api`) now describes a
+contract that **crosses** units and is an `architecture-design` document — the
+scope test below says so, since it still holds when any one unit is deleted.
+The cache pipeline kept its own spec but became a submodule of the unit it
+feeds (`llm-local-inference-cache`), which is what folding the folder flat
+made it.
 
 Three rules follow, and they are mechanical enough to apply without judgement:
 
@@ -92,8 +100,8 @@ Three rules follow, and they are mechanical enough to apply without judgement:
   the real relation is "this record decided, that one followed", it belongs on
   `depends-on` — where every one of this tree's decision chains already is.
 - **One node per code unit.** Each module folder owns exactly one spec whose id
-  is the folder name (`coding-agent`, `estige`, `lib`, `git`, `local-llm`,
-  `llm-local-inference`), and that node parents to `architecture` — it is the
+  is the folder name (`coding-agent`, `estige`, `git`, `llm-local-inference`),
+  and that node parents to `architecture` — it is the
   module's front door, not something inside the module. Every other spec about
   that folder parents to the node, wherever its *file* physically sits: `docs/`
   is a file layout, not the graph.
@@ -123,8 +131,8 @@ thing without a hand-maintained table.
 | --- | --- | --- |
 | `goal-and-requirements` | what the system must do — normative, one document | `docs/requirements.md` (id `goal`, the root of the living tree) |
 | `architecture-design` | spans the repository or crosses module boundaries: the map, the shared rules, prior art, system-wide decisions | `docs/architecture.md`, `docs/environments-and-variants.md`, prior-art and audit docs, the d0XX records that change the layout or a shared contract |
-| `module-design` | confined to one runner folder or one module (`coding-agent/`, `estige/`, `lib/`, `git/`, `local-llm/`, `llm-local-inference/`) | each module's `README.md` + `DESIGN.md`, the module-scoped decision records |
-| `submodule-design` | a directory-level subsystem inside a package | `estige/CI.md` |
+| `module-design` | confined to one runner folder or one module (`coding-agent/`, `estige/`, `git/`, `llm-local-inference/`) | each module's `README.md` + `DESIGN.md`, the module-scoped decision records |
+| `submodule-design` | a directory-level subsystem inside a package | `estige/CI.md`, `llm-local-inference/CACHE-DESIGN.md` |
 | `task-spec` | one piece of work with acceptance criteria | temporary by definition — the ThinkRail tools write them to `.thinkrail/context/TASK-*.md` and the work's landing removes them. Nothing durable belongs here; a finished decision becomes a record |
 
 Choosing between the first two is the only judgement call: **would the decision
@@ -295,7 +303,7 @@ comm -23 \
 # parents that are not a code unit — keep this roster equal to the module nodes
 comm -23 \
   <(grep -rh '^parent: ' "${SPECS[@]}" | sed 's/^parent: *//; s/"//g' | sort -u) \
-  <(printf '%s\n' goal architecture coding-agent estige lib git local-llm llm-local-inference \
+  <(printf '%s\n' goal architecture coding-agent estige git llm-local-inference \
       | sort)
 
 # a record used as a parent — must print nothing
@@ -304,7 +312,7 @@ grep -rl '^parent: d' "${SPECS[@]}"
 # module-design specs parked at the system level — read the list, judge each
 grep -rl '^type: module-design' "${SPECS[@]}" \
   | xargs grep -l '^parent: architecture' \
-  | xargs grep -L -E '^(id: (coding-agent|estige|lib|git|local-llm|llm-local-inference))$'
+  | xargs grep -L -E '^(id: (coding-agent|estige|git|llm-local-inference))$'
 ```
 
 The last one needs a reader. Output is not automatically wrong — an archived

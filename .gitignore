@@ -4,5 +4,5 @@ estige/estige
 estige/estige-android
 
 # npm dev tooling (docs/d107) — package-lock.json is the tracked lock; the
-# installed tree is disposable and recreated on demand by lib/npm-tools.sh.
+# installed tree is disposable and recreated on demand by ./npm-tools.sh.
 node_modules/

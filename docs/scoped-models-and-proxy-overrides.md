@@ -45,7 +45,7 @@ matched with minimatch on `provider/modelId`:
 
 There is no staged credentials file: the generated `models.json` carries
 `"$VAR"` apiKey references that pi resolves from the container env at request
-time — loaded once on the host by the explicit chain (`lib/environment.sh`,
+time — loaded once on the host by the explicit chain (`./environment.sh`,
 `docs/d046-infisical-run.md`) and forwarded through the `workload_env`
 allowlist. Credentials never touch `settings.json`.
 

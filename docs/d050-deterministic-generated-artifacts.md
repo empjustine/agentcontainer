@@ -210,7 +210,7 @@ stable today; only the provider and model orders inside the merge are not.
   deep-equal) and idempotency were checked before each write.
 - Tests: the unit test for `canonicalizeManifest` plus a **committed-manifest
   canonicity guard** over the 8 files (`coding-agent/tests/canonical-json.test.mjs`
-  and, after docs/d104 split it, the guard at `tests/committed-manifests.test.mjs`). The guard supersedes the golden double-run this
+  and, after docs/d113 split it, the guard at `tests/committed-manifests.test.mjs`). The guard supersedes the golden double-run this
   doc originally proposed: it needs no pinned `MODELS_DEV_JSON` and still
   fails loudly when a write path bypasses the choke point or a hand edit
   reorders a manifest.
@@ -250,7 +250,7 @@ stable today; only the provider and model orders inside the merge are not.
   (d023) this extends.
 - `coding-agent/tests/canonical-json.test.mjs` — unit rules; the
   committed-manifest canonicity guard moved to `tests/committed-manifests.test.mjs`
-  (docs/d104: the guard spans more than one unit).
+  (docs/d113: the guard spans more than one unit).
 - `tests/lib-staging.test.mjs` — staging-list drift guard (see Migration).
 - `docs/d023-generators-dedup.md`, `docs/d024-generators-split-and-provider-facts.md`
   — the generator/artifact standards.

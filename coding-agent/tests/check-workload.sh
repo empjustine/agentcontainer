@@ -26,7 +26,7 @@
 
 set -eu
 
-# NOTE: since docs/d104 the API has no repo-level copy, so the test carries the
+# NOTE: since docs/d113 the API has no repo-level copy, so the test carries the
 # unit it exercises — it lives in coding-agent/tests/ and sources THAT unit's
 # lib/workload-runtime.sh through the WORKLOAD_LIB_DIR seam, which is exactly
 # what that seam exists for. $repo is only a fixture root (real directories to

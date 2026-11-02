@@ -7,7 +7,7 @@
  * (docs/d049).
  *
  * Sibling modules import statically; `LIB_DIR` is this folder's own copy
- * (docs/d104), resolved from THIS file so a generator run in any cwd — or
+ * (docs/d113), resolved from THIS file so a generator run in any cwd — or
  * under generate.mjs's per-run output dir — finds the same modules. docs/d072
  * retired the d023 scratch staging that once made an env-injected lib
  * directory necessary (a ro-mounted tree only blocks WRITES, and a staged run

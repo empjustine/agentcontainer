@@ -13,10 +13,10 @@
 	// follow — treating them as project files would false-positive the whole
 	// per-unit surface as unused. Entry status is the honest encoding of "this
 	// is a published surface"; their exports are therefore not unused-export
-	// candidates. Since docs/d104 replaced the one shared lib/ with per-unit
+	// candidates. Since docs/d113 replaced the one shared lib/ with per-unit
 	// copies, the glob is per folder and the root has no lib at all.
 	"entry": [
-		// each unit's own build entry (docs/d083/d104: there is no root
+		// each unit's own build entry (docs/d083/d113: there is no root
 		// builder or generator any more)
 		"estige/build.mjs",
 		"coding-agent/build.mjs",
@@ -57,7 +57,7 @@
 		"pi-opencode/index.ts",
 		"*/lib/*.mjs",
 		// ./test.sh runs every unit's tests plus the repo-level guard, which
-		// nothing else imports (docs/d104)
+		// nothing else imports (docs/d113)
 		"tests/*.test.mjs",
 		"*/tests/*.test.mjs"
 	],

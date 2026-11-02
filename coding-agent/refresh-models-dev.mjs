@@ -28,7 +28,7 @@
  * keeps its UNION shape so a future consumer needs no edit here.)
  *
  * Usage: node refresh-models-dev.mjs [out]
- *   out defaults to ../lib/models.dev.api.json relative to this file
+ *   out defaults to ./lib/models.dev.api.json in this folder
  *   (i.e. the vendored shared catalog itself).
  * Env: MODELS_DEV_RELAY_URL — operator's override URL (replaces the
  *   canonical candidate entirely; set to empty to disable the fetch — the
@@ -45,13 +45,13 @@ import { fileURLToPath } from "node:url";
 import { upstreamCandidates } from "./route-probe.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "..", "lib");
+const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "lib");
 const { publishProviderMirror } =
-	/** @type {typeof import("../lib/fact-table.mjs")} */ (
+	/** @type {typeof import("./lib/fact-table.mjs")} */ (
 		await import(`${LIB_DIR}/fact-table.mjs`)
 	);
 const { logInfo, logWarn, setLogTool } =
-	/** @type {typeof import("../lib/log.mjs")} */ (
+	/** @type {typeof import("./lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
 
@@ -66,7 +66,7 @@ setLogTool("coding-agent/refresh-models-dev");
 const RELAY_PATH_AND_QUERY = "/api.json?type=all";
 
 const OUT =
-	process.argv[2] ?? join(scriptDir, "..", "lib", "models.dev.api.json");
+	process.argv[2] ?? join(scriptDir, "lib", "models.dev.api.json");
 const REQUEST_TIMEOUT_MS = 15_000;
 /**
  * Provider entries the generators read from the catalog; each must exist with

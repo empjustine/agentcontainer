@@ -431,7 +431,7 @@ VPN-R29. The table below is per-leg for that reason.
   d104), not a shared bearer on the wire; the authenticated relay's gateway credential
   (d091) is untouched.
 - **VPN-R32** — Secrets MUST arrive through the one explicit chain
-  (`./lib/environment.sh`, docs/d046) and be read as plain env. This is a
+  (`./environment.sh`, docs/d046) and be read as plain env. This is a
   real departure from llm-reverse-proxy's current "holds no secrets, no vault
   loader, no env allowlist" stance (d031/d052): accepting the added transports means adding the
   proxy to the env-consumer set, with the same allowlist discipline as every

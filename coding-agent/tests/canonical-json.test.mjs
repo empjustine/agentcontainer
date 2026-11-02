@@ -1,26 +1,20 @@
 /**
- * @fileoverview canonical-json.test.mjs — unit + canonicity guard for the
- * docs/d050 canonicalization (lib/canonical-json.mjs).
+ * @fileoverview canonical-json.test.mjs — the unit half of docs/d050: the
+ * canonicalization rules that coding-agent/lib/canonical-json.mjs implements
+ * (docs/d113 moved the committed-manifest drift guard to
+ * tests/committed-manifests.test.mjs at the repo root, because its subject is
+ * the whole unit set rather than this folder).
  *
- * Run: node --test   (discovers tests/*.test.mjs from the repo root)
- *
- * The committed-manifest guard is the drift detector d050 asks for: any
- * generator write path that bypasses writeJsonArtifact (or a hand edit)
- * re-introduces order churn, and this test names the exact file that went
- * non-canonical instead of letting it hide until the next diff review.
+ * Run: . ./lib/node-run.sh && node_run --test tests/*.test.mjs   (this folder)
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
 import { test } from "node:test";
-import { fileURLToPath } from "node:url";
 
 import {
 	canonicalizeManifest,
 	serializeArtifact,
 } from "../lib/canonical-json.mjs";
 
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 test("providers map keys sort ascending in code-unit order, input untouched", () => {
 	const doc = {
@@ -97,27 +91,3 @@ test("serializeArtifact: pretty 2-space, trailing newline, valid JSON, idempoten
 	assert.equal(serializeArtifact(JSON.parse(s)), s);
 });
 
-// --- committed-manifest canonicity guard (docs/d050 migration contract) ----
-// Order-only edits to these files in a review now mean someone bypassed the
-// write choke point — the whole point of d050 is that reruns are byte-stable.
-const COMMITTED_MANIFESTS = [
-	"coding-agent/model-010-local-default.json",
-	"coding-agent/model-012-cloud-pi-native.json",
-	"coding-agent/model-015-cloud-cline-pass.json",
-	"coding-agent/model-016-cloud-hyper.json",
-	"coding-agent/model-017-cloud-inferx.json",
-	"coding-agent/model-018-cloud-verboo.json",
-	"coding-agent/models.json",
-	"coding-agent/opencode.jsonc",
-];
-
-for (const rel of COMMITTED_MANIFESTS) {
-	test(`committed manifest is canonical: ${rel}`, () => {
-		const text = readFileSync(join(repoRoot, rel), "utf-8");
-		assert.equal(
-			serializeArtifact(JSON.parse(text)),
-			text,
-			`${rel} is not in canonical form — regenerate through writeJsonArtifact (docs/d050)`,
-		);
-	});
-}

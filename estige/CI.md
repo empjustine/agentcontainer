@@ -27,18 +27,18 @@ for that step, recorded before context is lost.
 1. `actions/checkout`, then Go: `actions/setup-go` with
    `go-version-file: estige/go.mod`. The unit has zero
    external deps (34-byte go.mod, module + go directive only) and no
-   toolchain install step — `lib/go-build.mjs`'s `go build` needs
+   toolchain install step — the folder's own `lib/go-build.mjs` `go build` needs
    nothing but a modern Go.
 2. `go test ./...` — hermetic: tests are `httptest`-based, no
    `os.Getenv`, no network, no tailnet, no `testing.Short` skips.
-3. Node 24 for the root builder and the canonical-json test — the
+3. Node 24 for the folder's own builder and the canonical-json test — the
    friction point. Generation itself is Go since d102 and needs no
-   node. `lib/node-run.sh` resolves `mise exec node@24`;
+   node. The folder's own `lib/node-run.sh` resolves `mise exec node@24`;
    there is **no repo `mise.toml`** (d051/d082: the pin lives only in
    the shim, deliberately — a root mise.toml would re-pin bare `node`
    for anyone cd-ing into the repo). CI must use `jdx/mise-action` +
    `mise install node@24`, not rely on a checked-in config.
-4. `./lib/node-run.sh tests/canonical-json.test.mjs` — the check d082
+4. `./lib/node-run.sh tests/canonical-json.test.mjs` (from inside `estige/`) — the check d082
    §4.3 names. (The generator drift gate — `go run . generate` +
    `git diff --exit-code` — is gone with `generate.go` itself, docs/d108:
    the allowlist it emitted no longer exists, so there is nothing to regen.)
@@ -49,8 +49,8 @@ for that step, recorded before context is lost.
 
 ## Node.js is a monorepo convenience, not a business requirement
 
-Node@24 is load-bearing twice in this unit's pipeline today: the
-root builder the shim runs (`build.mjs`) and
+Node@24 is load-bearing twice in this unit's pipeline today: this
+folder's own builder (`estige/build.mjs`, docs/d083/d113) and
 `tests/canonical-json.test.mjs`. Both are monorepo structure, not
 unit requirements — and the list already shrank: the generator moved
 to Go in d102, taking one node leg (and one lib/ dependency) out of
@@ -68,7 +68,7 @@ decision):
   tables or the generator change — not on every build;
 - the per-change CI-critical path degrades to plain `go build` +
   `go test ./...` with no node at all — the generator half of that
-  promise is already kept (d102); what remains is the root builder
+  promise is already kept (d102); what remains is `build.mjs`
   and the canonical-json test;
 - the canonical-json guard stays BESIDE the node-side generation
   rather than getting a go port: docs/d050's canonicalizer still
@@ -82,7 +82,7 @@ Both build on any linux/amd64 runner with nothing but Go — CGO off in
 both cases, no NDK, no extra toolchain:
 
 - **Termux android/arm64** — the preset already exists
-  (`androidBuildEnv`, lib/go-build.mjs):
+  (`androidBuildEnv`, the folder's own `lib/go-build.mjs`):
   `CGO_ENABLED=0 GOOS=android GOARCH=arm64`. It is NOT bionic-linked,
   despite being a "Termux binary": the output is static, no libc —
   GOOS=android only switches the stdlib DNS resolver to Android's
@@ -112,14 +112,14 @@ both cases, no NDK, no extra toolchain:
 
 ## Runner friction (must-check on the first real run)
 
-- **Paths filter** must include `estige/**`, `lib/**`,
-  `build.mjs`, and the workflow itself: the shim delegates to the root
-  builder, so a `lib/` edit changes whether and how the image builds.
+- **Paths filter** must include `estige/**` — the whole folder, since the
+  split unit carries its own `lib/`, `build.mjs`, `build.sh`, `tests/` and
+  workflow (docs/d113). There is no root builder to delegate to.
 - **Buildx lands in the daemon store** under the runner's default
   docker driver (`docker buildx build` without `--load`); verify with
   `docker image ls` on the first run before adding any push step.
 - **`cloudReachable()` gate** (models.dev HEAD canary via
-  `lib/host-capabilities.mjs`) registers the image target only when
+  the folder's own `lib/host-capabilities.mjs`) registers the image target only when
   outbound cloud answers: a models.dev outage makes the target
   selection empty → exit 91, red build. No env override exists —
   accepting that flake, or adding a CI-scoped override, is its own
@@ -134,7 +134,7 @@ both cases, no NDK, no extra toolchain:
   consumers then slave `vpn-exit.sh`/`vpn-relay.sh` via their existing `IMAGE_TAG` env.
 - **`./lint.sh` + `./check-types.sh`** as extra jobs — both hermetic
   (shellcheck/jq/shfmt via mise or the host package manager; the JS toolchain
-  is installed from `package-lock.json` by `lib/npm-tools.sh`).
+  is installed from `package-lock.json` by the repo-root `./npm-tools.sh`).
 
 ## Verification limits
 

@@ -183,7 +183,7 @@ Present state: no TPM device on the workstation (`/dev/tpm*` absent), no
 below are documentation-verified only.
 
 - **Tier 0 — do nothing new.** Cloud hosts use instance principals (the other
-  study). Self-hosted hosts keep the `lib/environment.sh` vault chain: one
+  study). Self-hosted hosts keep the `./environment.sh` vault chain: one
   vault round-trip, plain env to the child. This is a standing credential, and
   it is the current baseline.
 - **Tier 1 — one-shot bootstrap + short-lived credential.** Requires: a
