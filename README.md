@@ -45,8 +45,11 @@ That holds because a folder has to survive being copied out of this tree on its 
 (docs/architecture.md), and a root sequencer would make every folder
 reference a parent that no longer exists in the copy. `./lint.sh`,
 `./check-types.sh`, `./test.sh` and `./vm-bench.sh` are the repo-wide **QA
-sweep**: the maintainer's view across units, which no unit imports. Runners
-NEVER build or generate: stale/missing artifacts are user issues, and run.sh
+sweep**: the maintainer's view across units, which no unit imports. The first
+three are offline by contract; `./freshness.sh` is the fourth and the only one
+that touches the network, because "is this committed cache still what upstream
+serves?" cannot be answered offline ([docs/d122](docs/d122-data-freshness-gate.md)).
+Runners NEVER build or generate: stale/missing artifacts are user issues, and run.sh
 fails loudly pointing at the generator.
 
 **Environment/secrets are an EXPLICIT chain step** (`./environment.sh` —
@@ -79,6 +82,7 @@ agentcontainer/
 ├── log.sh / node-run.sh / npm-tools.sh  # → operator-level shell, never imported by a unit: structured logger · standalone node_run() (pinned node; termux-aware) · on-demand npm devDependency install (d107)
 ├── npm-run.sh                           # → `npm_run <unit> <script>`: runs a unit's package.json script under the pinned node, never shelling out to `npm` (d118)
 ├── lint.sh / check-types.sh / test.sh / vm-bench.sh # → the repo-wide QA sweep (d113): biome+knip+jq gates · tsc · every unit's tests, driven from the root because no unit imports them (test.sh's globs are the contract; the sweep owns no test of its own)
+├── freshness.sh                         # → the QA sweep's one NETWORK gate (d122): every pi-* `generate --check` + the offline HF manifest audit, so a stale committed cache fails a gate instead of a review; key-gated listings skip loudly, run it via ./environment.sh to include them
 ├── docs/                                # docs tree, typed per docs/spec-graph-standard.md
 │   ├── requirements.md                  # → BRD: what the system must do (id: goal)
 │   ├── architecture.md                  # → systems reference: the copy unit, per-unit lib, root QA sweep
@@ -359,6 +363,7 @@ Frontmatter `type:` and `status:` are the machine signal; this index is the huma
 | [docs/d106-tunnel-observability.md](docs/d106-tunnel-observability.md) | nothing implemented; proposes per-session **`open` + `close` records** (plus a `refused` record) on **both** nodes instead of the exit-only end-of-session line, joined by a **correlation id** (free for mode E via the existing wire `traceparent` trace-id, an additive `X-Estige-Session` header for C/D), `role=relay|exit` + `ts=`/`key=` on every record, `bytes_up`/`bytes_down` in place of the viewpoint-relative `bytes_in`/`bytes_out`, in-flight numbers pulled from a fixed `/healthz` (its `sessions` gauge is increment-only today) rather than periodic lines, query strings stripped from `url=` on the cleartext branch; surveys Squid/Privoxy/OpenVPN/Tailscale/Nebula/ZeroTier/Pritunl logging + records the **discarded** points (end-only, open-only, periodic snapshots, `overlay=`, `ws`, log flags, CLF extension, `tunnelVersion=2`, id-in-label, scheme inference, `who=operator`, MITM naming, metrics endpoint) — [estige/README.md](estige/README.md) |
 | [docs/d108-serving-edge-tunnel-only.md](docs/d108-serving-edge-tunnel-only.md) | the serving edge moved to tunnel-only: the bazzite llama-swap provider is **deprecated for now** (no new clients/features, no removal date, code stays), and the allowlist reverse proxy — legacy **mode A** — is **deprecated as insecure** now that the first v3 tunnel deployments work: a TLS-terminating proxy sees plaintext provider keys (d073's trust table), and the shape forces route-rewriting generator magic (`REVERSE_PROXY_BASE_URLS`, `providerRouteUrl()`, d063/d070 install-time substitution). estige must stop exposing mode A (`allowHosts`, host-form routing, `estige generate` allowlist) and the generators must stop depending on it; the record keeps the v2 (allowlist) / v3 (tunnels, shared bearer, working) / v4 (tunnels under d113's Ed25519 proofs, in progress) generations apart, and supersedes d073's VPN-R1; `estige.json` itself is **removed by tree-shake**, not shrunk — surviving role facts (`egress`) fold into d113's `exit.json`, arming into helper presence, the bind into env `PORT` (d110), leaving the key store as the whole config surface. |
 | [docs/d110-single-port-one-knob-port.md](docs/d110-single-port-one-knob-port.md) | a tool that binds exactly one TCP port (the exit) has exactly one port knob: the optional env var `PORT` (unset → code default 8080, all interfaces); the `listen` config field, the `-listen` argv, and the launcher's `LISTEN`/`HOST_PORT`-driven spellings are all removed — `PORT` deliberately unprefixed because coordinators already speak it (12-factor/Procfile), and `exit.json` never stores a bind; the relay is exempt (one listener per proxy protocol — `PROXY_LISTEN`/`SOCKS_LISTEN` stay), and the external funnel front follows the steer from the steering side. |
+| [docs/d122-data-freshness-gate.md](docs/d122-data-freshness-gate.md) | data freshness is a **gate, not a review catch**: `./freshness.sh` is the repo-wide sweep's one network gate (a stale committed cache is *valid* — it parses, its tests pass, plain `generate` would happily rewrite it — so the offline sweep could never see it); each unit answers with its own contract (pi-* `generate --check`, llm-local-inference's offline HF manifest audit), a key-gated listing without its key skips loudly instead of failing the gate, and `coding-agent` stays out because its generator's per-source fallbacks make byte-equality a property of the host, not of the data; `./lint.sh`/`./test.sh` remain offline by contract |
 
 ### Submodule design
 

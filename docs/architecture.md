@@ -206,6 +206,17 @@ files and the QA sweep.
   nothing is skipped, not an error, because no unit has to ship a shell test
   (docs/d118 turned the last two into `*.test.mjs`, and docs/d121 left the
   repository with no shell test at all — the globs stay as the contract).
+- `freshness.sh` — the sweep's one **network** gate (docs/d122). The offline
+  gates cannot see a stale cache: it parses, its tests pass, and plain
+  `generate` would rewrite it without complaint, so staleness used to be a
+  review catch and was in practice nothing at all. Each unit answers with its
+  own contract (`<unit>/package.json` `generate --check` for the `pi-*`
+  extensions, the offline HF manifest audit for llm-local-inference); a
+  key-gated listing without its key is skipped loudly rather than failing the
+  gate, and `coding-agent` stays out because its generator's per-source
+  fallbacks make byte-equality a property of the host. `lint.sh` and `test.sh`
+  remain offline by contract — lint and test must survive a host with no
+  network, freshness is the one question that cannot.
 
 The probe/facts/refresh modules that used to sit in a shared lib
 (`route-probe.mjs`, then named `peer-probe.mjs` (docs/d071), `pi-models.mjs`,
@@ -242,10 +253,12 @@ are working on.
   register only while outbound cloud networking is reachable, its native target
   always.
 - The repo-wide sweep stays at the root and is the only cross-unit view:
-  `./lint.sh` (biome + knip + jq + the capability-URL pattern),
-  `./check-types.sh` (tsc over every unit's JS), `./test.sh` (runs every
-  `<unit>/tests/` and owns none of them), `./vm-bench.sh`
-  (docs/vm-build-bench.md).
+  `./lint.sh` (biome + knip + jq + the capability-URL and retired-root-lib
+  patterns), `./check-types.sh` (tsc over every unit's JS), `./test.sh` (runs
+  every `<unit>/tests/` and owns none of them), `./vm-bench.sh`
+  (docs/vm-build-bench.md), and `./freshness.sh` (docs/d122) — the one sweep
+  that needs the network, because a stale committed cache is otherwise a valid
+  artifact that only review could catch.
 
 Runners NEVER build or generate: run.sh stages the COMMITTED config and a
 stale/missing artifact is a loud failure pointing at the generator, never an
