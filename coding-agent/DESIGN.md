@@ -84,7 +84,8 @@ the agent cycles through is pinned by `enabledModels` in `settings.json` —
 generators enumerate **no** model lists
 (`coding-agent/scoped-models-and-proxy-overrides.md`).
 
-`run.sh` launches the container: loads vault secrets **once on the host** via
+`run.sh` (a shim over `run.mjs`, which does the work) launches the container:
+loads vault secrets **once on the host** via
 ./environment.sh and forwards them through the `workload_env` allowlist — nothing
 inside the workload runs infisical, and no credential store file is staged
 (the earlier staged-store design is tombstoned in `docs/d052`). It mounts the
@@ -99,7 +100,9 @@ dir aborts the run (keys resolve from forwarded env — pi's own empty `{}` is
 ignored; d052/d054). It NEVER generates (docs/d041, docs/d056): the generator
 tree is NOT mounted into the container, so an in-container session works
 against the host-generated config mounted above. `run.sh` takes
-`[DIRECTORY [DIRECTORY...]]` instead — CWD is the implicit first directory —
+`[DIRECTORY [DIRECTORY...]]` instead — CWD is the implicit first directory,
+assembled by `run.mjs`'s pure `buildLaunch(argv, env)` so the mount manifest is
+a value the tests assert instead of a second run of the whole launcher —
 and exposes each rw — a home-relative path is spelled `/home/$USER/...` on
 the container side (docs/d068) — with the first as the workdir; the
 `~/Downloads/references` mirror is passed as just another directory, replacing
@@ -141,6 +144,16 @@ through the environment proxy.
   Probes run concurrently (`Promise.allSettled`) and only the LINEUP source
   is chosen; a thrown probe keeps its provider id so the remaining rows still
   probe.
+- **The shell surface is bootstrap only** (`node-scripts` port): every
+  entrypoint is an npm script over `build.mjs`/`generate.mjs`/`run.mjs`, and the
+  two `.sh` files that remain only pick the interpreter (`lib/node-run.sh`) and
+  start a script under it (`lib/npm-run.sh`, so `npm` itself never lands on an
+  entrypoint's path). The launcher's argv assembly is a pure `buildLaunch` — the
+  mount manifest is asserted, not incidentally produced — and the workload
+  description is a JS module, so this folder needs **no `jq`** on the host
+  (`estige/` and `llm-local-inference/` still ship their own jq copies,
+  docs/d113). `lib/log.sh` went with the shell: `lib/log.mjs` was already the
+  same contract.
 - **URL form is verified, not assumed** (docs/d070):
   `check-canonical-artifacts.mjs` is the one detector — canonical upstreams
   over the committed artifacts (guarded by `tests/artifact-urls.test.mjs`)
@@ -235,8 +248,9 @@ It carries what this unit actually uses:
 | `catwalk-facts.json` | the secondary catalog fallback cache |
 | `fact-table.mjs` | the fact-table publisher (docs/d086) — exactly one consumer, so it lives here and nowhere else (docs/d113) |
 | `host-capabilities.mjs` | the capability gates the build registers targets on |
-| `node-run.sh` | the `node_run()` interpreter pin |
-| `workload-runtime.sh` + `workload-*.jq` | the workload API `run.sh` describes the container with (`docs/container-tooling.md`) |
+| `node-run.sh` | the `node_run()` interpreter pin — the bootstrap every shell shim sources |
+| `npm-run.sh` | `npm_run <script>`: runs this folder's `package.json` script under the SAME pinned node, so `build.sh`/`generate.sh` need no `npm` on PATH |
+| `workload-runtime.mjs` | the workload API `run.mjs` describes the container with (`docs/container-tooling.md`) — description in, `container run` argv out. Replaced `workload-runtime.sh` + the six `workload-*.jq` filters, which is why this unit needs no `jq` on the host |
 
 `gen-lib.mjs` is the shared preamble for the pi-layer stages: it carries the pi
 shaping helpers (folded from the former `lib/pi-models.mjs`, docs/d039),

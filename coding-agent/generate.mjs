@@ -133,8 +133,9 @@ const agentDir =
 	process.env.PI_CODING_AGENT_DIR ??
 	join(process.env.HOME ?? "", ".pi", "agent");
 /**
- * default_run_dir port (lib/workload-runtime.sh): the script's own dir may be
- * a read-only mount, so the output dir lives in TMPDIR ($PREFIX/tmp on Termux).
+ * default_run_dir port (the retired lib/workload-runtime.sh's helper): the
+ * script's own dir may be a read-only mount, so the output dir lives in TMPDIR
+ * ($PREFIX/tmp on Termux).
  * @type {string}
  */
 const runDir =

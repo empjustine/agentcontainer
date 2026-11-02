@@ -120,8 +120,9 @@ tier — missing `--die-with-parent`, no `--unshare-net`, no device binds):
 see [archive/bwrap-runtime-audit.md](../docs/archive/bwrap-runtime-audit.md).
 
 Relevance to persistence: a bwrap runtime, if added as a workload runtime
-alternative to podman in the workload runner (each unit's own
-`lib/workload-runtime.sh`, docs/d113), would replace
+alternative to podman in the workload runner (each unit's own workload
+runtime — `coding-agent/lib/workload-runtime.mjs` here; `estige/` and
+`llm-local-inference/` keep their `lib/workload-runtime.sh` copies, docs/d113), would replace
 `workload_rw`/`workload_ro` bind mounts with equivalent `--bind`/`--ro-bind`
 flags — the harness persistence table above is the mount manifest that such
 a bwrap runtime must reproduce 1:1 (note bwrap has no named-volume or
