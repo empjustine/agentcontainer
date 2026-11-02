@@ -25,8 +25,9 @@
  * The route derivation and the proxy allowlist that also read this table are
  * gone with the reverse proxy (docs/d108).
  *
- * Import via the LIB_DIR convention (docs/d023): the generators resolve this
- * file through `process.env.LIB_DIR ?? "../lib"`.
+ * Import via the LIB_DIR convention (docs/d023/d113): consumers resolve this
+ * file through `process.env.LIB_DIR ?? <their own dir>/lib`, so a folder
+ * copied out of this tree reads its own copy, not a sibling's.
  */
 
 import { readFileSync } from "node:fs";

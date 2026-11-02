@@ -35,9 +35,9 @@
  *   stale vendored copy then always wins).
  *
  * Lives in coding-agent/ (its invoker is coding-agent/generate.mjs, which
- * points it at this run's catalog path — docs/d039) but writes the SHARED
- * vendored catalog: ../lib stays the catalog home because
- * estige/generate.mjs reads it too.
+ * points it at this run's catalog path — docs/d039) and writes this folder's
+ * own vendored catalog: lib/ is the catalog home, and the copy carries it
+ * (docs/d113 — estige has had no fact table since docs/d108).
  */
 
 import { dirname, join } from "node:path";

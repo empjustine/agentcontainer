@@ -45,10 +45,10 @@
  * the canonical-URL contract, docs/d071 for the vocabulary, and probeRoute
  * for the classification.
  *
- * Import convention (docs/d023, d039): this module lives beside its consumers
- * in coding-agent/ but keeps the LIB_DIR resolution for the shared logger —
- * `process.env.LIB_DIR ?? "<this dir>/../lib"` — so a folder copied out of
- * this tree (the docs/architecture.md copy unit) still finds `../lib`.
+ * Import convention (docs/d023, d039, d113): this module lives beside its
+ * consumers in coding-agent/ and resolves its logger as
+ * `process.env.LIB_DIR ?? <this dir>/lib` — this folder's own copy, since the
+ * copy unit is the folder plus its lib/ (docs/architecture.md).
  */
 
 import { dirname, join } from "node:path";

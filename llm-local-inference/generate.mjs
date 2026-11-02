@@ -61,8 +61,9 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * Structured logger + artifact writer from ../lib (docs/d023), resolved
- * through the LIB_DIR convention (default: this folder's sibling lib/).
+ * Structured logger + artifact writer from this folder's own lib/
+ * (docs/d023/d113), resolved through the LIB_DIR convention so a copied-out
+ * folder still finds its copy.
  * @type {string}
  */
 const LIB_DIR = fileURLToPath(new URL("lib", import.meta.url));
