@@ -81,6 +81,13 @@ stable and in a deliberate human order (`id`, `name`, `reasoning`, …).
 `ageMs` and mirror upstream order, so they can never be byte-stable and are
 not targets of this change (a cache that reorders is still the same cache).
 
+docs/d086 later took the caches on by a different route, and its writer
+(`lib/fact-table.mjs`) is where their ordering now lives: the reason they were
+excluded here — that `fetchedAt` moves on every refresh — is exactly what its
+hash short-circuit removes, so the ordering rules are shared
+(`canonicalizeProviderCatalog` / `canonicalizeFactsCache`) but the stability
+guarantee is enforced per cache rather than per generated manifest.
+
 ## What "canonical" means here
 
 Two concerns that must not be conflated:
@@ -183,8 +190,9 @@ here means "a rerun over unchanged inputs is byte-identical", not
 `llm-reverse-proxy/llm-reverse-proxy.json`.
 
 **Out:** the provenance caches (`catwalk-facts.json`, `hyper-facts.json`,
-`models.dev.api.json`) and `refresh-models-dev.mjs`'s catalog dump, which
-should mirror upstream rather than be reordered; `default-model.json`
+`models.dev.api.json`) and `refresh-models-dev.mjs`'s catalog dump — canonical
+order came to them later via docs/d086's writer, not this record's manifest
+path; `default-model.json`
 (**decided: out of scope** — it has no collections, so nothing to sort);
 and `llm-local-inference/`'s config.d layers (never in scope; candidate
 follow-up if their ordering churns).
@@ -223,8 +231,9 @@ stable today; only the provider and model orders inside the merge are not.
 - **Format.** Sorted + pretty. One-line-per-model discarded.
 - **Field order.** Left as constructed (the recommendation) — `id` stays
   first in every model record.
-- **Caches.** Confirmed out — they carry timestamps and mirror upstream
-  order regardless.
+- **Caches.** Confirmed out here — they carry timestamps and mirror upstream
+  order regardless. docs/d086 revisited the question once the timestamp churn
+  itself was being deleted.
 - **Sort key.** Plain code-unit `id` sort, no natural/semver awareness.
 - **`models.json` provider order.** Sorted; the "pi does not treat provider
   order as meaningful" assumption was accepted as the decision rather than

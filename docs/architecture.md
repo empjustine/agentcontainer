@@ -127,9 +127,18 @@ prohibits (and what was removed):
 - `cloud-providers.mjs` — the one cloud-provider fact table (id / label /
   key env / real base URL) every generator family derives from (docs/d024).
 - `models.dev.api.json` — the single vendored models.dev catalog shared by
-  the generator families (docs/d023).
+  the generator families (docs/d023). Written in canonical order by
+  `fact-table.mjs`; it carries no `_meta` block because the document itself
+  is the provider namespace (docs/d086).
 - `catwalk-facts.json` — the vendored catwalk catalog cache (secondary model
-  fallback; the refresher module lives in `coding-agent/`, docs/d039).
+  fallback; the refresher module lives in `coding-agent/`, docs/d039), with
+  the `_meta` provenance block every wrapped fact cache carries (docs/d086).
+- `fact-table.mjs` — the fact-table publisher (docs/d086): canonical order,
+  `_meta` provenance and the skip-when-unchanged rule in one place, called by
+  `coding-agent/catalog-facts.mjs` and `coding-agent/refresh-models-dev.mjs`.
+  Shared rather than folded into `coding-agent/` because it is the write
+  contract for every fact table, not one runner's helper — the d039 rule is
+  about single-consumer modules.
 - `workload-*.jq` — the jq filters behind the workload description API.
 
 The probe/facts/refresh modules that used to sit here (`route-probe.mjs`,

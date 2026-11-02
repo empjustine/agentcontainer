@@ -223,8 +223,9 @@ the shared lib/ modules (`lib/log.mjs`, `lib/cloud-providers.mjs`) via
 out of lib/ by d039; the two fact caches merged into one module in d072). It
 reads `lib/models.dev.api.json` (shared with estige) and the
 caches (`<id>-facts.json` beside its module, `lib/catwalk-facts.json` — the
-proxy reads that one too). Must not reach into `llm-local-inference/` or
-`local-llm/`.
+proxy reads that one too), both published through `lib/fact-table.mjs`
+(`_meta` provenance, no write when the facts are unchanged — docs/d086).
+Must not reach into `llm-local-inference/` or `local-llm/`.
 
 Nothing copies this tree anywhere at generate time (docs/d072): the generators
 run from their own dir, output goes to the per-run `RUN_DIR` dir, and the
