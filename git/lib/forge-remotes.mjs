@@ -1,7 +1,7 @@
 /**
- * @fileoverview software-forge-remotes.mjs — parse and normalize software-forge
+ * @fileoverview forge-remotes.mjs — parse and normalize software-forge
  * git remotes (the work machine's Visual Builder Studio tenant). The home
- * reference farm (`non-bare-issues.md`) is GitHub-shaped, so `git-lib.mjs`
+ * reference farm (`non-bare-issues.md`) is GitHub-shaped, so `git-core.mjs`
  * can key it by host; the work farm is one private software forge that
  * exposes the SAME repository through three different URLs, none of which is
  * a plain `host/owner/repo` path:

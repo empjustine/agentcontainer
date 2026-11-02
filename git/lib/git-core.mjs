@@ -1,9 +1,14 @@
 /**
- * @fileoverview git-lib.mjs — shared helpers for the reference-mirror tooling
- * in this folder (`migrate-to-bare.mjs`, `maintain-mirrors.mjs`). It owns the
- * three things both scripts must agree on: how to run git without throwing the
- * run away, how to DISCOVER repos under a reference root, and the exact
- * optimization sequence that makes deep history search (git pickaxe) fast.
+ * @fileoverview git-core.mjs — the shared floor of the reference-mirror
+ * tooling: what every entry in this folder agrees on. It owns how to run git
+ * without throwing the run away, how to DISCOVER repos under a reference root,
+ * the exact optimization sequence that makes deep history search (git
+ * pickaxe) fast, and the by-host pacing gate the mutating sweeps share.
+ *
+ * It sits inside `lib/` because everything else in the folder is an entry:
+ * each top-level `.mjs`/`.sh` is a shim, and the logic they share with each
+ * other (and with `farm-tool.mjs`) is here. Logic that only one entry needs
+ * stays in that entry.
  *
  * Discovery is structural, not manifest-driven: a non-bare clone is any
  * directory that contains a `.git/` directory, and a bare mirror is any
@@ -17,38 +22,21 @@
  * short version is that a working tree is pure overhead for search and it is
  * what makes podman's `z,U` relabel walk take ~39 s.
  *
- * Import convention (docs/d023): the shared logger resolves through `$LIB_DIR`
- * so the same file works in place and under any staged copy.
- *
  * This file is also on the native Windows path (the `maintain.ps1` entry,
  * docs/d062): nothing in it assumes POSIX path separators or bare-path import
- * specifiers — discovery takes paths opaquely, globs normalize separators,
- * and the logger import is a file: URL.
+ * specifiers — discovery takes paths opaquely, globs normalize separators, and
+ * the sibling imports are relative specifiers (`./log.mjs`), which the ESM
+ * loader accepts on every host. The file: URL dance d062 needed existed only
+ * while the logger sat in a `join()`-built `lib/` path, whose drive letter
+ * parses as a URL scheme; from inside `lib/` the specifier is relative.
  */
 
 import { execFile } from "node:child_process";
 import { readdirSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
-
-const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = join(scriptDir, "lib");
-// A Windows LIB_DIR (`C:\...\lib`) is not a loadable specifier — the drive
-// letter parses as a URL scheme and the ESM loader rejects it — so the logger
-// is reached through an explicit file: URL, the one spelling valid everywhere
-// (docs/d062).
-const { logError, logInfo, logWarn, setLogStream, setLogTool } =
-	/** @type {typeof import("./lib/log.mjs")} */ (
-		await import(pathToFileURL(join(LIB_DIR, "log.mjs")).href)
-	);
-
-// vbs-har's manifest is the one artifact this folder writes: it goes through
-// the repo's atomic writer (tmp+rename, docs/d050) rather than a bare
-// writeFileSync, so a killed run cannot leave a truncated manifest behind.
-const { writeArtifact } = /** @type {typeof import("./lib/artifact.mjs")} */ (
-	await import(pathToFileURL(join(LIB_DIR, "artifact.mjs")).href)
-);
+import { join } from "node:path";
+import { writeArtifact } from "./artifact.mjs";
+import { logError, logInfo, logWarn, setLogStream, setLogTool } from "./log.mjs";
 
 // Every tool in this folder prints a machine-consumed payload on stdout
 // (audit's JSON report, search-references' results, vbs-har's manifest,

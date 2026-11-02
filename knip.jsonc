@@ -35,14 +35,14 @@
 		// the launcher the run.sh shim executes (run.sh is the operator's
 		// entry, so nothing imports run.mjs's main)
 		"coding-agent/run.mjs",
-		// git/ farm tooling: every script the git/*.sh shims run (git-lib
-		// stays a project file — the tools import it)
+		// git/ farm tooling: every script the git/*.sh shims run. The shared
+		// floor (lib/git-core.mjs, lib/cli.mjs, …) stays a project file — the
+		// entries import it.
 		"git/audit.mjs",
 		"git/local-changes.mjs",
 		"git/maintain-mirrors.mjs",
 		"git/migrate-to-bare.mjs",
 		"git/forge-mirror.mjs",
-		"git/software-forge-remotes.mjs",
 		"git/search-references.mjs",
 		"git/vbs-har.mjs",
 		"llm-local-inference/generate.mjs",

@@ -5,7 +5,7 @@
  *
  * Three subcommands, one engine (Zoekt in the official container image):
  *
- *   index  — discover bare mirrors (git-lib.mjs), run one `zoekt-git-index`
+ *   index  — discover bare mirrors (lib/git-core.mjs), run one `zoekt-git-index`
  *            container per mirror, --jobs wide, into an index dir that is a
  *            SIBLING of the farm (never inside it: a shard written under a
  *            mirror's working tree is exactly the layout the mirror work
@@ -39,6 +39,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, relative } from "node:path";
 
+import { parseFlags, runEntry } from "./lib/cli.mjs";
 import {
 	DEFAULT_MAX_DEPTH,
 	DEFAULT_ROOT,
@@ -49,7 +50,7 @@ import {
 	logWarn,
 	pool,
 	setLogTool,
-} from "./git-lib.mjs";
+} from "./lib/git-core.mjs";
 
 setLogTool("git/search-references");
 
@@ -188,51 +189,27 @@ async function indexOne(repo, o, tool) {
  * @returns {IndexOptions}
  */
 function parseIndexArgs(argv) {
+	const { values: v } = parseFlags(argv, {
+		root: { default: DEFAULT_ROOT },
+		index: { default: DEFAULT_INDEX },
+		jobs: { kind: "number", default: 4 },
+		"max-depth": { kind: "number", default: DEFAULT_MAX_DEPTH },
+		branches: { default: "HEAD" },
+		only: { kind: "list" },
+		exclude: { kind: "list" },
+		all: { kind: "bool" },
+	});
 	/** @type {IndexOptions} */
-	const o = {
-		root: DEFAULT_ROOT,
-		index: DEFAULT_INDEX,
-		jobs: 4,
-		maxDepth: DEFAULT_MAX_DEPTH,
-		branches: "HEAD",
-		only: [],
-		exclude: [],
-		all: false,
+	return {
+		root: v.root,
+		index: v.index,
+		jobs: v.jobs,
+		maxDepth: v["max-depth"],
+		branches: v.branches,
+		only: v.only,
+		exclude: v.exclude,
+		all: v.all,
 	};
-	for (let i = 0; i < argv.length; i += 1) {
-		const a = argv[i];
-		switch (a) {
-			case "--root":
-				o.root = /** @type {string} */ (argv[++i]);
-				break;
-			case "--index":
-				o.index = /** @type {string} */ (argv[++i]);
-				break;
-			case "--jobs":
-				o.jobs = Number(argv[++i]);
-				break;
-			case "--max-depth":
-				o.maxDepth = Number(argv[++i]);
-				break;
-			case "--branches":
-				o.branches = /** @type {string} */ (argv[++i]);
-				break;
-			case "--only":
-				o.only.push(/** @type {string} */ (argv[++i]));
-				break;
-			case "--exclude":
-				o.exclude.push(/** @type {string} */ (argv[++i]));
-				break;
-			case "--all":
-				o.all = true;
-				break;
-			default:
-				throw Object.assign(new Error("unknown flag (try --help)"), {
-					flag: a,
-				});
-		}
-	}
-	return o;
 }
 
 /**
@@ -307,29 +284,12 @@ async function cmdIndex(argv) {
  * @returns {{ root: string, index: string, port: number }}
  */
 function parseServeArgs(argv) {
-	const o = {
-		root: DEFAULT_ROOT,
-		index: DEFAULT_INDEX,
-		port: 6070,
-	};
-	for (let i = 0; i < argv.length; i += 1) {
-		switch (argv[i]) {
-			case "--root":
-				o.root = /** @type {string} */ (argv[++i]);
-				break;
-			case "--index":
-				o.index = /** @type {string} */ (argv[++i]);
-				break;
-			case "--port":
-				o.port = Number(argv[++i]);
-				break;
-			default:
-				throw Object.assign(new Error("unknown flag (try --help)"), {
-					flag: argv[i],
-				});
-		}
-	}
-	return o;
+	const { values: v } = parseFlags(argv, {
+		root: { default: DEFAULT_ROOT },
+		index: { default: DEFAULT_INDEX },
+		port: { kind: "number", default: 6070 },
+	});
+	return { root: v.root, index: v.index, port: v.port };
 }
 
 /**
@@ -381,46 +341,34 @@ async function cmdServe(argv) {
  *   server: string, port: number, num: number, json: boolean, list: boolean }}
  */
 function parseQueryArgs(argv) {
-	const o = {
-		root: DEFAULT_ROOT,
-		index: DEFAULT_INDEX,
-		query: "",
-		server: process.env.ZOEKT_SERVER ?? "",
-		port: Number(process.env.ZOEKT_PORT ?? 6070),
-		num: 50,
-		json: false,
-		list: false,
+	const { values: v, positionals } = parseFlags(
+		argv,
+		{
+			root: { default: DEFAULT_ROOT },
+			index: { default: DEFAULT_INDEX },
+			server: { default: process.env.ZOEKT_SERVER ?? "" },
+			port: {
+				kind: "number",
+				default: Number(process.env.ZOEKT_PORT ?? 6070),
+			},
+			num: { kind: "number", default: 50 },
+			json: { kind: "bool" },
+			list: { kind: "bool" },
+		},
+		// The query is every non-flag token, in the shell's own order: an
+		// unquoted multi-word query still searches for all of it as one query.
+		"join",
+	);
+	return {
+		root: v.root,
+		index: v.index,
+		query: positionals.join(" "),
+		server: v.server,
+		port: v.port,
+		num: v.num,
+		json: v.json,
+		list: v.list,
 	};
-	const positional = [];
-	for (let i = 0; i < argv.length; i += 1) {
-		switch (argv[i]) {
-			case "--root":
-				o.root = /** @type {string} */ (argv[++i]);
-				break;
-			case "--index":
-				o.index = /** @type {string} */ (argv[++i]);
-				break;
-			case "--server":
-				o.server = /** @type {string} */ (argv[++i]);
-				break;
-			case "--port":
-				o.port = Number(argv[++i]);
-				break;
-			case "--num":
-				o.num = Number(argv[++i]);
-				break;
-			case "--json":
-				o.json = true;
-				break;
-			case "--list":
-				o.list = true;
-				break;
-			default:
-				positional.push(argv[i]);
-		}
-	}
-	o.query = positional.join(" ");
-	return o;
 }
 
 /**
@@ -521,22 +469,32 @@ async function cmdQuery(argv) {
 	process.exitCode = await queryOneShot(tool, o);
 }
 
+const USAGE =
+	"usage: ./git/search-references.sh <index|serve|query> [flags]\n\n" +
+	"  index [--only GLOB]... [--all] [--root DIR] [--index DIR] [--jobs N]\n" +
+	"        [--max-depth N] [--branches REFS] [--exclude GLOB]\n" +
+	"        (indexing is opt-in: --only selects repos; --all is the explicit farm-wide build)\n" +
+	"  serve [--root DIR] [--index DIR] [--port N]\n" +
+	"  query 'PATTERN [repo:...] [branch:...]' [--server URL] [--num N]\n" +
+	"        [--json] [--list] [--root DIR] [--index DIR]\n";
+
+/** @param {string[]} argv */
+function asksForHelp(argv) {
+	return argv.includes("-h") || argv.includes("--help");
+}
+
 /**
  * @param {string[]} argv
  * @returns {Promise<void>}
  */
 async function main(argv) {
 	const [sub, ...rest] = argv;
-	if (!sub || sub === "-h" || sub === "--help") {
-		process.stdout.write(
-			"usage: ./git/search-references.sh <index|serve|query> [flags]\n\n" +
-				"  index [--only GLOB]... [--all] [--root DIR] [--index DIR] [--jobs N]\n" +
-				"        [--max-depth N] [--branches REFS] [--exclude GLOB]\n" +
-				"        (indexing is opt-in: --only selects repos; --all is the explicit farm-wide build)\n" +
-				"  serve [--root DIR] [--index DIR] [--port N]\n" +
-				"  query 'PATTERN [repo:...] [branch:...]' [--server URL] [--num N]\n" +
-				"        [--json] [--list] [--root DIR] [--index DIR]\n",
-		);
+	// One usage block for all three subcommands, and one place that answers
+	// `--help`. Before the shared parser, `index --help` was an unknown-flag
+	// error and `query --help` was a search for the literal string "--help":
+	// both told the operator to try the flag they had just tried (docs/d121).
+	if (!sub || sub === "-h" || sub === "--help" || asksForHelp(rest)) {
+		process.stdout.write(USAGE);
 		return;
 	}
 	switch (sub) {
@@ -556,9 +514,4 @@ async function main(argv) {
 	}
 }
 
-await main(process.argv.slice(2)).catch((err) => {
-	logError("search-references aborted", {
-		error: err,
-	});
-	process.exit(1);
-});
+await runEntry("search-references", () => main(process.argv.slice(2)));

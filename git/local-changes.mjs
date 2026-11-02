@@ -8,7 +8,7 @@
  * archived, migrated to a bare mirror (docs/d044), or deleted.
  *
  * Default is one repo (`.`); `--root DIR` sweeps a tree of clones, reusing the
- * structural discovery from git-lib.mjs (docs/git/non-bare-issues.md), and
+ * structural discovery from lib/git-core.mjs (git/non-bare-issues.md), and
  * shows only the repos with findings unless `--all` is given.
  *
  * Human-readable text goes to stdout (the viewer); `--json` emits the same
@@ -32,16 +32,16 @@
 import { existsSync } from "node:fs";
 import { relative, resolve } from "node:path";
 
+import { parseFlags, runEntry } from "./lib/cli.mjs";
 import {
 	DEFAULT_MAX_DEPTH,
 	filterByGlobs,
 	findCloneRoots,
 	git,
-	logError,
 	logInfo,
 	pool,
 	setLogTool,
-} from "./git-lib.mjs";
+} from "./lib/git-core.mjs";
 
 setLogTool("git/local-changes");
 
@@ -109,68 +109,37 @@ const UNIT = "\x1f";
  * @returns {Options}
  */
 function parseArgs(argv) {
-	/** @type {Options} */
-	const o = {
-		repo: ".",
-		root: "",
-		json: false,
-		all: false,
-		maxDepth: DEFAULT_MAX_DEPTH,
-		maxEntries: 200,
-		ignored: true,
-		only: [],
-		exclude: [],
-		help: false,
+	const { values: v, positionals, help } = parseFlags(
+		argv,
+		{
+			// `--repo` and a bare positional are the same knob, so both land in
+			// `repo`; the positional is the hand-typed spelling.
+			repo: { default: "." },
+			root: { default: "" },
+			json: { kind: "bool" },
+			all: { kind: "bool" },
+			"max-depth": { kind: "number", default: DEFAULT_MAX_DEPTH },
+			"max-entries": { kind: "number", default: 200 },
+			"no-ignored": { kind: "bool" },
+			// `--no-ignored` is the only spelling; the option is `ignored`.
+			ignored: { names: ["--ignored"], kind: "bool", default: true },
+			only: { kind: "list" },
+			exclude: { kind: "list" },
+		},
+		"last",
+	);
+	return {
+		repo: positionals.at(-1) ?? v.repo,
+		root: v.root,
+		json: v.json,
+		all: v.all,
+		maxDepth: v["max-depth"],
+		maxEntries: v["max-entries"],
+		ignored: v["no-ignored"] ? false : v.ignored,
+		only: v.only,
+		exclude: v.exclude,
+		help,
 	};
-	for (let i = 0; i < argv.length; i += 1) {
-		const a = argv[i];
-		// The loop condition guarantees a value; the check is the type gate's
-		// form of that fact.
-		if (a === undefined) {
-			break;
-		}
-		switch (a) {
-			case "--repo":
-				o.repo = /** @type {string} */ (argv[++i]);
-				break;
-			case "--root":
-				o.root = /** @type {string} */ (argv[++i]);
-				break;
-			case "--json":
-				o.json = true;
-				break;
-			case "--all":
-				o.all = true;
-				break;
-			case "--max-depth":
-				o.maxDepth = Number(argv[++i]);
-				break;
-			case "--max-entries":
-				o.maxEntries = Number(argv[++i]);
-				break;
-			case "--no-ignored":
-				o.ignored = false;
-				break;
-			case "--only":
-				o.only.push(/** @type {string} */ (argv[++i]));
-				break;
-			case "--exclude":
-				o.exclude.push(/** @type {string} */ (argv[++i]));
-				break;
-			case "-h":
-			case "--help":
-				o.help = true;
-				break;
-			default:
-				if (a.startsWith("-")) {
-					throw Object.assign(new Error("unknown flag (try --help)"), {
-						flag: a,
-					});
-				}
-				o.repo = a;
-		}
-	}
-	return o;
 }
 
 /**
@@ -558,9 +527,4 @@ async function main() {
 	});
 }
 
-await main().catch((err) => {
-	logError("local-changes aborted", {
-		error: err,
-	});
-	process.exit(1);
-});
+await runEntry("local-changes", main);

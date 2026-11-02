@@ -34,7 +34,7 @@
  *   const { logInfo, logWarn } = await import(`${LIB_DIR}/log.mjs`);
  * A lib that must also load on Windows imports through pathToFileURL()
  * instead — a `C:\...` specifier parses as a URL scheme and is rejected by
- * the ESM loader (git/git-lib.mjs, docs/d062).
+ * the ESM loader (docs/d062).
  */
 
 let tool = process.env.LOG_TOOL ?? "node";

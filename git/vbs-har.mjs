@@ -25,7 +25,8 @@
 
 import { readFileSync } from "node:fs";
 
-import { logError, logInfo, setLogTool, writeArtifact } from "./git-lib.mjs";
+import { parseFlags, runEntry } from "./lib/cli.mjs";
+import { logInfo, setLogTool, writeArtifact } from "./lib/git-core.mjs";
 
 setLogTool("git/vbs-har");
 
@@ -266,38 +267,20 @@ function harToManifest(har, opts = {}) {
  * @returns {{ file: string, out: string, base: string, org: string, help: boolean }}
  */
 function parseArgs(argv) {
-	const o = { file: "", out: "", base: "", org: "", help: false };
-	for (let i = 0; i < argv.length; i += 1) {
-		const a = argv[i];
-		// The loop condition guarantees a value; the check is the type gate's
-		// form of that fact.
-		if (a === undefined) {
-			break;
-		}
-		switch (a) {
-			case "--out":
-				o.out = /** @type {string} */ (argv[++i]);
-				break;
-			case "--base":
-				o.base = /** @type {string} */ (argv[++i]);
-				break;
-			case "--org":
-				o.org = /** @type {string} */ (argv[++i]);
-				break;
-			case "-h":
-			case "--help":
-				o.help = true;
-				break;
-			default:
-				if (a.startsWith("-")) {
-					throw Object.assign(new Error("unknown flag (try --help)"), {
-						flag: a,
-					});
-				}
-				o.file = a;
-		}
-	}
-	return o;
+	const { values: v, positionals, help } = parseFlags(
+		argv,
+		{ out: {}, base: {}, org: {} },
+		// The manifest source is a bare positional (the last one wins); a
+		// flag-shaped path is a mistake, and parseFlags already refuses it.
+		"last",
+	);
+	return {
+		file: positionals.at(-1) ?? "",
+		out: v.out ?? "",
+		base: v.base ?? "",
+		org: v.org ?? "",
+		help,
+	};
 }
 
 /** @returns {void} */
@@ -335,11 +318,4 @@ function main() {
 	});
 }
 
-try {
-	main();
-} catch (err) {
-	logError("vbs-har aborted", {
-		error: err,
-	});
-	process.exit(1);
-}
+await runEntry("vbs-har", main);

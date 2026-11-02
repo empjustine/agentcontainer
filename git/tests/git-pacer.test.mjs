@@ -15,7 +15,7 @@
  */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createMinIntervalGate } from "../git-lib.mjs";
+import { createMinIntervalGate } from "../lib/git-core.mjs";
 
 /** @param {number} ms @returns {Promise<void>} */
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

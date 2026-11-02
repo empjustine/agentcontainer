@@ -10,7 +10,7 @@
  *     the work tenant's URLs are not `host/owner/repo` at all (docs/d044).
  *     Their one genuine difference — the IDENTITY-keyed layout — is now a
  *     branch here, decided by `parseSoftwareForgeRemote()` in
- *     `software-forge-remotes.mjs`, which stays the single home of the three
+ *     `lib/forge-remotes.mjs`, which stays the single home of the three
  *     URL shapes.
  *
  * Two layouts, one per URL shape:
@@ -43,21 +43,21 @@ import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
+import { parseFlags, runEntry } from "./lib/cli.mjs";
 import {
 	git,
-	logError,
 	logInfo,
 	logWarn,
 	originUrl,
 	setLogTool,
-} from "./git-lib.mjs";
+} from "./lib/git-core.mjs";
 import {
 	parseSoftwareForgeRemote,
 	softwareForgeGlassUrl,
 	softwareForgeHttpsUrl,
 	softwareForgeMirrorRelPath,
 	softwareForgeSshUrl,
-} from "./software-forge-remotes.mjs";
+} from "./lib/forge-remotes.mjs";
 
 setLogTool("git/forge-mirror");
 
@@ -104,46 +104,25 @@ function downloadsDir() {
  * @returns {Options}
  */
 function parseArgs(argv) {
-	/** @type {Options} */
-	const o = { dest: DEFAULT_DEST, transport: null, help: false, inputs: [] };
-	for (let i = 0; i < argv.length; i += 1) {
-		const a = argv[i];
-		// The loop condition guarantees a value; the check is the type gate's
-		// form of that fact.
-		if (a === undefined) {
-			break;
-		}
-		switch (a) {
-			case "--dest":
-				o.dest = /** @type {string} */ (argv[++i]);
-				break;
-			case "--transport": {
-				const value = /** @type {string} */ (argv[++i]);
-				if (value !== "ssh" && value !== "https") {
-					throw Object.assign(new Error("--transport must be ssh or https"), {
-						value,
-					});
-				}
-				o.transport = value;
-				break;
-			}
-			case "-h":
-			case "--help":
-				o.help = true;
-				break;
-			default:
-				// Anything flag-shaped is rejected rather than guessed at: this
-				// script is d099's upsert_repo boundary, and an option-shaped URL
-				// must die here, never in git's argv.
-				if (a.startsWith("-")) {
-					throw Object.assign(new Error("unknown flag (try --help)"), {
-						flag: a,
-					});
-				}
-				o.inputs.push(a);
-		}
+	const { values: v, positionals, help } = parseFlags(
+		argv,
+		{
+			dest: { default: DEFAULT_DEST },
+			transport: {},
+		},
+		// Anything flag-shaped is rejected rather than guessed at: this script
+		// is d099's upsert_repo boundary, and an option-shaped URL must die
+		// here, never in git's argv. The policy above gives that for free.
+		"list",
+	);
+	const transport = v.transport ?? null;
+	if (transport !== null && transport !== "ssh" && transport !== "https") {
+		throw Object.assign(new Error("--transport must be ssh or https"), {
+			value: transport,
+		});
 	}
-	return o;
+	/** @type {Options} */
+	return { dest: v.dest, transport, help, inputs: positionals };
 }
 
 /**
@@ -369,10 +348,9 @@ async function main() {
 	}
 }
 
-await main().catch((err) => {
-	logError("forge-mirror aborted", {
+await runEntry("forge-mirror", main, {
+	report: (err) => ({
 		error: err instanceof Error ? err.message : String(err),
 		detail: err instanceof Error && "stderr" in err ? String(err.stderr) : "",
-	});
-	process.exit(1);
+	}),
 });

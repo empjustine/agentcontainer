@@ -60,6 +60,7 @@
 import { existsSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 
+import { parseFlags, runEntry } from "./lib/cli.mjs";
 import {
 	DEFAULT_DEST,
 	DEFAULT_MAX_DEPTH,
@@ -67,13 +68,12 @@ import {
 	filterByGlobs,
 	findCloneRoots,
 	git,
-	logError,
 	logInfo,
 	logWarn,
 	originUrl,
 	pool,
 	setLogTool,
-} from "./git-lib.mjs";
+} from "./lib/git-core.mjs";
 
 setLogTool("git/migrate-to-bare");
 
@@ -96,60 +96,30 @@ setLogTool("git/migrate-to-bare");
  * @returns {Options}
  */
 function parseArgs(argv) {
+	const { values: v, help } = parseFlags(argv, {
+		root: { default: DEFAULT_ROOT },
+		dest: { default: DEFAULT_DEST },
+		jobs: { kind: "number", default: 4 },
+		"max-depth": { kind: "number", default: DEFAULT_MAX_DEPTH },
+		redownload: { kind: "bool" },
+		"delete-originals": { kind: "bool" },
+		force: { kind: "bool" },
+		only: { kind: "list" },
+		exclude: { kind: "list" },
+	});
 	/** @type {Options} */
-	const o = {
-		root: DEFAULT_ROOT,
-		dest: DEFAULT_DEST,
-		jobs: 4,
-		maxDepth: DEFAULT_MAX_DEPTH,
-		redownload: false,
-		deleteOriginals: false,
-		force: false,
-		only: [],
-		exclude: [],
-		help: false,
+	return {
+		root: v.root,
+		dest: v.dest,
+		jobs: v.jobs,
+		maxDepth: v["max-depth"],
+		redownload: v.redownload,
+		deleteOriginals: v["delete-originals"],
+		force: v.force,
+		only: v.only,
+		exclude: v.exclude,
+		help,
 	};
-	for (let i = 0; i < argv.length; i += 1) {
-		const a = argv[i];
-		switch (a) {
-			case "--root":
-				o.root = /** @type {string} */ (argv[++i]);
-				break;
-			case "--dest":
-				o.dest = /** @type {string} */ (argv[++i]);
-				break;
-			case "--jobs":
-				o.jobs = Number(argv[++i]);
-				break;
-			case "--max-depth":
-				o.maxDepth = Number(argv[++i]);
-				break;
-			case "--redownload":
-				o.redownload = true;
-				break;
-			case "--delete-originals":
-				o.deleteOriginals = true;
-				break;
-			case "--force":
-				o.force = true;
-				break;
-			case "--only":
-				o.only.push(/** @type {string} */ (argv[++i]));
-				break;
-			case "--exclude":
-				o.exclude.push(/** @type {string} */ (argv[++i]));
-				break;
-			case "-h":
-			case "--help":
-				o.help = true;
-				break;
-			default:
-				throw Object.assign(new Error("unknown flag (try --help)"), {
-					flag: a,
-				});
-		}
-	}
-	return o;
 }
 
 /**
@@ -405,9 +375,4 @@ async function main() {
 	}
 }
 
-await main().catch((err) => {
-	logError("migration aborted", {
-		error: err,
-	});
-	process.exit(1);
-});
+await runEntry("migration", main);

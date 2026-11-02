@@ -16,7 +16,7 @@
  *      `commit-graph write --reachable --changed-paths`. The commit-graph
  *      Bloom filters are the real pickaxe accelerator, but they only help a
  *      path-limited search (`git log -S 'x' -- path`), never an all-history
- *      grep without a pathspec. See optimizeMirror() in git-lib.mjs.
+ *      grep without a pathspec. See optimizeMirror() in lib/git-core.mjs.
  *
  *      The deep form (--deep-optimize) runs "git gc --aggressive" first —
  *      the forced delta recomputation that shrinks slow-moving mirrors on
@@ -74,6 +74,7 @@
 import { existsSync } from "node:fs";
 import { relative } from "node:path";
 
+import { parseFlags, runEntry } from "./lib/cli.mjs";
 import {
 	createMinIntervalGate,
 	DEFAULT_MAX_DEPTH,
@@ -82,15 +83,14 @@ import {
 	filterByGlobs,
 	findBareMirrors,
 	git,
-	logError,
 	logInfo,
 	logWarn,
 	optimizeMirror,
 	originUrl,
 	pool,
 	setLogTool,
-} from "./git-lib.mjs";
-import { parseSoftwareForgeRemote } from "./software-forge-remotes.mjs";
+} from "./lib/git-core.mjs";
+import { parseSoftwareForgeRemote } from "./lib/forge-remotes.mjs";
 
 setLogTool("git/maintain-mirrors");
 
@@ -154,69 +154,40 @@ const ORIGIN_PROBE_JOBS = 8;
  * @returns {Options}
  */
 function parseArgs(argv) {
+	const { values: v, help } = parseFlags(argv, {
+		root: { default: DEFAULT_ROOT },
+		// null = the by-host default: one worker per discovered host.
+		jobs: { kind: "number" },
+		"max-depth": { kind: "number", default: DEFAULT_MAX_DEPTH },
+		"no-fetch": { kind: "bool" },
+		"no-optimize": { kind: "bool" },
+		// Opt-in, never defaulted: a forced repack is an hours-to-days job on
+		// cold storage — docs/d089 owns the ladder and its costs.
+		"deep-optimize": { kind: "bool" },
+		// `null` means "the per-host defaults" (see createPacing), not
+		// "unset/disabled" — `--min-interval 0` is the explicit disable. No env
+		// seed: the flag or the default is the whole input (docs/d060).
+		"min-interval": { kind: "number" },
+		only: { kind: "list" },
+		exclude: { kind: "list" },
+	});
 	/** @type {Options} */
 	const o = {
 		// The live farm holds the mirrors IN PLACE (git/non-bare-issues.md), not at
 		// the `-bare` sibling migrate defaults to, so maintain targets the farm
 		// root. Forge hosts (github.com, codeberg.org, git.sr.ht, …) are just
 		// directories under it; findBareMirrors covers them all by shape.
-		root: DEFAULT_ROOT,
-		// null = the by-host default: one worker per discovered host.
-		jobs: null,
-		maxDepth: DEFAULT_MAX_DEPTH,
-		fetch: true,
-		optimize: true,
-		// Opt-in, never defaulted: a forced repack is an hours-to-days job on
-		// cold storage — docs/d089 owns the ladder and its costs.
-		deep: false,
-		only: [],
-		exclude: [],
-		// `null` means "the per-host defaults" (see createPacing), not
-		// "unset/disabled" — `--min-interval 0` is the explicit disable. No env
-		// seed: the flag or the default is the whole input (docs/d060).
-		minInterval: null,
-		help: false,
+		root: v.root,
+		jobs: v.jobs ?? null,
+		maxDepth: v["max-depth"],
+		fetch: !v["no-fetch"],
+		optimize: !v["no-optimize"],
+		deep: v["deep-optimize"],
+		only: v.only,
+		exclude: v.exclude,
+		minInterval: v["min-interval"] ?? null,
+		help,
 	};
-	for (let i = 0; i < argv.length; i += 1) {
-		const a = argv[i];
-		switch (a) {
-			case "--root":
-				o.root = /** @type {string} */ (argv[++i]);
-				break;
-			case "--jobs":
-				o.jobs = Number(argv[++i]);
-				break;
-			case "--max-depth":
-				o.maxDepth = Number(argv[++i]);
-				break;
-			case "--no-fetch":
-				o.fetch = false;
-				break;
-			case "--no-optimize":
-				o.optimize = false;
-				break;
-			case "--deep-optimize":
-				o.deep = true;
-				break;
-			case "--min-interval":
-				o.minInterval = Number(argv[++i]);
-				break;
-			case "--only":
-				o.only.push(/** @type {string} */ (argv[++i]));
-				break;
-			case "--exclude":
-				o.exclude.push(/** @type {string} */ (argv[++i]));
-				break;
-			case "-h":
-			case "--help":
-				o.help = true;
-				break;
-			default:
-				throw Object.assign(new Error("unknown flag (try --help)"), {
-					flag: a,
-				});
-		}
-	}
 	if (
 		o.minInterval !== null &&
 		(!Number.isFinite(o.minInterval) || o.minInterval < 0)
@@ -475,9 +446,4 @@ async function main() {
 	}
 }
 
-await main().catch((err) => {
-	logError("maintenance aborted", {
-		error: err,
-	});
-	process.exit(1);
-});
+await runEntry("maintenance", main);

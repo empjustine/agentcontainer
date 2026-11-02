@@ -22,21 +22,21 @@
 import { existsSync } from "node:fs";
 import { relative } from "node:path";
 
+import { parseFlags, runEntry } from "./lib/cli.mjs";
 import {
 	DEFAULT_MAX_DEPTH,
 	DEFAULT_ROOT,
 	findCloneRoots,
 	git,
-	logError,
 	logInfo,
 	originUrl,
 	setLogTool,
-} from "./git-lib.mjs";
+} from "./lib/git-core.mjs";
 import {
 	parseSoftwareForgeRemote,
 	softwareForgeGlassUrl,
 	softwareForgeHttpsUrl,
-} from "./software-forge-remotes.mjs";
+} from "./lib/forge-remotes.mjs";
 
 setLogTool("git/audit");
 
@@ -52,32 +52,11 @@ setLogTool("git/audit");
  * @returns {Options}
  */
 function parseArgs(argv) {
-	/** @type {Options} */
-	const o = {
-		root: DEFAULT_ROOT,
-		maxDepth: DEFAULT_MAX_DEPTH,
-		help: false,
-	};
-	for (let i = 0; i < argv.length; i += 1) {
-		const a = argv[i];
-		switch (a) {
-			case "--root":
-				o.root = /** @type {string} */ (argv[++i]);
-				break;
-			case "--max-depth":
-				o.maxDepth = Number(argv[++i]);
-				break;
-			case "-h":
-			case "--help":
-				o.help = true;
-				break;
-			default:
-				throw Object.assign(new Error("unknown flag (try --help)"), {
-					flag: a,
-				});
-		}
-	}
-	return o;
+	const { values, help } = parseFlags(argv, {
+		root: { default: DEFAULT_ROOT },
+		"max-depth": { kind: "number", default: DEFAULT_MAX_DEPTH },
+	});
+	return { root: values.root, maxDepth: values["max-depth"], help };
 }
 
 /**
@@ -265,9 +244,4 @@ async function main() {
 	}
 }
 
-await main().catch((err) => {
-	logError("audit aborted", {
-		error: err,
-	});
-	process.exit(1);
-});
+await runEntry("audit", main);

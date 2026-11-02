@@ -12,7 +12,7 @@
  */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { filterByGlobs, globMatcher } from "../git-lib.mjs";
+import { filterByGlobs, globMatcher } from "../lib/git-core.mjs";
 
 const WINDOWS_RELS = [
 	"github.com\\owner\\repo.git",
