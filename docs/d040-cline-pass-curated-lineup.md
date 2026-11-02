@@ -4,7 +4,7 @@ type: module-design
 status: active
 title: "d040 — cline-pass lineup is the curated ClinePass list, not Cline's catalog"
 parent: coding-agent
-references: [d033, d037, d046b, d047]
+references: [d033, d037, d115, d047]
 depends-on: [coding-agent, d037]
 tags: [bugfix]
 ---
@@ -99,7 +99,7 @@ The same live-listing surface bit the *openrouter* override later: the raw
 `/models` listing's `architecture.input_modalities` (with `video`/`audio`/
 `pdf`) was emitted verbatim by `piModel()`, producing 3+ element `input`
 arrays that strict models.json schemas (cline) rejected wholesale — see
-[docs/d046b-live-listing-input-schema-poisoning.md](d046b-live-listing-input-schema-poisoning.md).
+[docs/d115-live-listing-input-schema-poisoning.md](d115-live-listing-input-schema-poisoning.md).
 Fixed with the `toInput()` text+image guard in `coding-agent/gen-lib.mjs`.
 The two bugs share the same root: live listings are untrusted input the
 generators must schema-guard before publishing in cline-consumed artifacts.

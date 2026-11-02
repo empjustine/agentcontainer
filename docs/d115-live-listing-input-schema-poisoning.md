@@ -1,15 +1,15 @@
 ---
-id: d046b
+id: d115
 type: module-design
 status: active
-title: "d046b — live-listing input schema poisoning and the committed-snapshot writeback"
+title: "d115 — live-listing input schema poisoning and the committed-snapshot writeback"
 parent: coding-agent
 depends-on: [workload-api, coding-agent]
 references: [d040, d033, d027, d045]
 tags: ["coding-agent", "gen-lib", "models.json", "schema", "input-modalities", bugfix]
 ---
 
-# d046b — live-listing input schema poisoning and the committed-snapshot writeback
+# d115 — live-listing input schema poisoning and the committed-snapshot writeback
 
 **Status:** implemented (the `piModel()`/`toInput()` guard in
 `coding-agent/gen-lib.mjs`); the WSL2 machine's already-generated

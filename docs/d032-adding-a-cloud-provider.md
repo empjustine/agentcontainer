@@ -73,7 +73,7 @@ the merge-order/doc updates. That is the entire flow:
 
 The vendored catalog is **regenerated wholesale** by
 `coding-agent/refresh-models-dev.mjs` (direct `https://models.dev/api.json`, relay
-fallback per d027b-models-dev-relay-fallback) and replaces
+fallback per d114-models-dev-relay-fallback) and replaces
 `coding-agent/lib/models.dev.api.json` atomically on every best-effort refresh. A
 hand-added catalog row is therefore **transient** — silently gone after the
 next refresh. The alternative-provider generator's `loadProvider()` throws on

@@ -4,8 +4,8 @@ type: module-design
 status: active
 title: "d100 — the pi provider extension family: every important provider as a pi package, forward-proxy only, provenance documented"
 parent: coding-agent
-depends-on: [d064, d090, d096, d097]
-references: [d028, d033, d040, d046b, d049, d057, d070, d074, d080, d092]
+depends-on: [d064, d116, d096, d097]
+references: [d028, d033, d040, d115, d049, d057, d070, d074, d080, d092]
 tags: [providers, pi, extensions, coding-agent, hyper, verboo, mistral, opencode, provenance, forward-proxy]
 ---
 

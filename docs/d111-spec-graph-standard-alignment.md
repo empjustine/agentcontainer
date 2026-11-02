@@ -78,15 +78,23 @@ the rules survive without the tooling that motivated them.
 
 ## What changed
 
-- Graph repair: frontmatter written for the 14 bare records, `d090` split into
-  `d090` (harness tiers) + `d090b` (tunnel env, renamed on disk with all 14
-  references retargeted), ids restored to filename stems on d026/d028,
+- Graph repair: frontmatter written for the 14 bare records, the `d090`
+  collision split into `d090` (tunnel env) + `d116` (harness tiers), ids
+  restored to filename stems on d026/d028,
   `container-tooling` references repointed to `lib`, and `llm-reverse-proxy`
   edges repointed to `estige` across 14 files.
+- Suffix retirement (later pass): the interim `b` handles this repair invented
+  for the three colliding numbers — `d090b`, `d027b`, `d046b` — are gone. The
+  id rule in `docs/spec-graph-standard.md` now settles a collision by moving
+  the *least-cited* record to the next free number, so `d116` (harness tiers),
+  `d114` (models.dev relay fallback) and `d115` (live-listing input schema)
+  took the tail and the plain numbers went to the survivors. Renumbering is
+  the churn the rule minimizes, not a free action: it is allowed only when two
+  records already share a number.
 - Type retype: `requirements` → `goal-and-requirements`; `reference` and
   `design` → `architecture-design` or `module-design` by scope; `research` →
   the same two types with `status: done`; `decision` → `architecture-design` /
-  `module-design` per record, with `bugfix` kept as a tag on d040/d046b/d051
+  `module-design` per record, with `bugfix` kept as a tag on d040/d115/d051
   where the genre still matters.
 - Status normalization: `implemented`/`accepted`/`adopted*`/`stable`/`current`
   → `active`, `proposed`/`deferred` → `draft`, `findings` → `done`,

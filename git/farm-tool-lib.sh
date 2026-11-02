@@ -21,7 +21,7 @@
 #   - every output axis carries a cap, and capping is visible (truncated +
 #     cursor), never silent (d099's result contract).
 #   - repo bytes reach stdout only as JSON-escaped data — never as
-#     instructions (d046b's posture; lib/log.sh owns the escaping rule).
+#     instructions (d115's posture; lib/log.sh owns the escaping rule).
 #
 # Sourced by farm-tool.sh (which sets FG_DIR first), never executed.
 

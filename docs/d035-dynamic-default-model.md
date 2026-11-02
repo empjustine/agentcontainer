@@ -5,7 +5,7 @@ title: Dynamic default model selection for pi-coding-agent
 parent: coding-agent
 tags: [default-model, pi-agent, provider-selection]
 status: active
-references: [d024, d027b]
+references: [d024, d114]
 depends-on: [coding-agent]
 ---
 
@@ -80,6 +80,6 @@ Modified the generation flow to:
 ## Related
 
 - `docs/d024` - Providers split and provider facts
-- `docs/d027b` - Path-prefix peer routing
+- `docs/d114` - Path-prefix peer routing
 - `docs/d033` - Generator cascade
 - `docs/d034` - Parallel probing and multi-hop peer chains

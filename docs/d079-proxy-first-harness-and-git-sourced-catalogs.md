@@ -5,7 +5,7 @@ status: draft
 title: "d079 — generator inputs: proxy-first harness transport, git-sourced catalogs"
 parent: coding-agent
 depends-on: [d063, d070, d073, d077]
-references: [d027b, d028, d038, d052, d065, d072, d074]
+references: [d114, d028, d038, d052, d065, d072, d074]
 tags: ["generators", "routing", "proxy", "tunnel", "catalogs", "git", "draft"]
 ---
 
@@ -38,11 +38,11 @@ Already-mandatory, per repo evidence:
 Currently carried *in addition*: install-time base-URL substitution and
 its verification (`d070`), the relay base chain
 (`REVERSE_PROXY_BASE_URLS`, `d063` §5), and two live catalog endpoints
-fetched through that chain (`d027b`). Each is an extra failure class with
+fetched through that chain (`d114`). Each is an extra failure class with
 its own code, env, and prose (DESIGN.md's "cloud reachability" matrix axis
 exists mostly to route *around* them).
 
-**The counter-law stays in force:** `d027b` finding 2 — a
+**The counter-law stays in force:** `d114` finding 2 — a
 generation-time transient must never become a hard generation failure
 ("generation is how you fix things"). Consolidation here changes *where
 inputs come from*, never *whether missing inputs stop generation*: both
@@ -116,7 +116,7 @@ listener. Without this, the failure mode silently degrades from
   is only the probe path).
 - Generation-time reachability precondition changes from "relay bases
   reachable" to "tunnel client running" — no boot-order regression: probes
-  still skip-and-log on failure (`d027b` finding 4's probe-failure
+  still skip-and-log on failure (`d114` finding 4's probe-failure
   semantics preserved).
 
 ## 3. Delta 2 — git-sourced catalogs (models.dev, catwalk)
@@ -183,7 +183,7 @@ acceptable — but if §6's sizing says the assembler is not a simplification,
 ### 3.4 What does not simplify (by law, not oversight)
 
 Validation, atomic rename, stale-copy fallback, and provenance stamping
-stay for *both* sources — `d027b` finding 2 binds unchanged. The clones
+stay for *both* sources — `d114` finding 2 binds unchanged. The clones
 are the update path, never a generation precondition: clone fetch failure
 logs and advances with the last good snapshot, exactly as today.
 
@@ -208,15 +208,15 @@ logs and advances with the last good snapshot, exactly as today.
   and can leave the generation env entirely (lineup probes remaining —
   which §2.3 retargets).
 
-### 3.6 Why this is not the proposal `d027b` rejected
+### 3.6 Why this is not the proposal `d114` rejected
 
-`d027b` rejected routing the fetch through the relay: it "would replace
+`d114` rejected routing the fetch through the relay: it "would replace
 one HTTP endpoint with another, not delete the file handling" (finding 5),
 and warned against coupling generation to live liveness (finding 2). This
 record differs only where it actually **deletes machinery** — catwalk's
 chain, and models.dev's only under option (c) — while inheriting finding 2
 verbatim (§3.4). Where upstream publishes source instead of the consumed
-artifact (models.dev option (a)/(c) territory) it risks being `d027b`'s
+artifact (models.dev option (a)/(c) territory) it risks being `d114`'s
 trap with git branding; §6's sizing check is the guard against that, and
 "a clean win for one source, status quo for the other" is an acceptable
 outcome for this record.
@@ -232,7 +232,7 @@ outcome for this record.
   "refresh is git-source-first"; the relay chain survives only for a
   catalog with no usable git source (today: models.dev, provisionally).
   Harness routing obeys §2, not base chains.
-- **`d027b` (accepted)** → unchanged; finding 2 (best-effort, stale copy,
+- **`d114` (accepted)** → unchanged; finding 2 (best-effort, stale copy,
   never clobber) and finding 4 (probe failure skips, never aborts) bind
   both deltas verbatim (§1, §3.4).
 - **`d073`/`d077`** → unchanged; they *provide* what §2 rides (VPN-R23

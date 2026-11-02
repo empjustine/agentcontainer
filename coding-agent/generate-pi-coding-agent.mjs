@@ -160,7 +160,7 @@ try {
  *   - mistral: chat-capable only — the catalog/listing also carries
  *     mistral-embed (embeddings) and voxtral-*-tts (speech).
  *   - google: a MODALITY allowlist, not a name denylist — pi drives text
- *     chat (its own input schema is text+image, docs/d046b), so a model
+ *     chat (its own input schema is text+image, docs/d115), so a model
  *     stays iff it takes text in and produces text out. That one rule drops
  *     the image-output generators (out [text,image]), tts/live/lyria
  *     (out [text,audio]), veo/omni (out [video]) and the live-translate

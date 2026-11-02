@@ -5,7 +5,7 @@ status: active
 title: "d049 — modality/input capability as allowlists everywhere, not name filters/denylists"
 parent: coding-agent
 depends-on: [coding-agent, workload-api]
-references: [d033, d046b, d047, d040]
+references: [d033, d115, d047, d040]
 tags: ["coding-agent", "modalities", "allowlist", "filter", "models.json"]
 ---
 
@@ -46,7 +46,7 @@ admit-but-trim.
   detection/cosmos/sparsedrive lines; image or audio out: flux,
   qwen-image, magpie-tts), **zero chat-capable models refused**, and
   **zero input-array changes** against the committed manifests — the two
-  projections really were behavior-identical, as d046b guessed. The
+  projections really were behavior-identical, as d115 guessed. The
   catalog's known lie (embeddings labeled `output:["text"]`) is covered by
   the name exceptions, as decided.
 - **Contract test:** `coding-agent/tests/modality-allowlist.test.mjs` pins the gate's
@@ -83,7 +83,7 @@ The `google` rule is not a google fact. It is the general rule: "does this
 model deliver a modality set the client can actually drive?" Every other
 provider only approximates it with a name regex over its own id dialect.
 The two `toInput()` implementations (`coding-agent/gen-lib.mjs` and
-`coding-agent/generate-pi-coding-agent.mjs`, contract-identical per d046b)
+`coding-agent/generate-pi-coding-agent.mjs`, contract-identical per d115)
 are the same rule expressed a third time, as a hard schema projection rather
 than an eligibility gate.
 
@@ -98,7 +98,7 @@ The projections already agree. The **eligibility** gate does not: it is
 per-provider, name-shaped, and mixes a modality allowlist (google) with a
 name denylist (mistral) and a name allowlist (openrouter). A new non-chat
 category on a denylist provider has to be discovered after it leaks into a
-generated `models.json` (d046b's failure mode).
+generated `models.json` (d115's failure mode).
 
 Scope note (decided 2026-09-23): `generate-opencode.mjs` carries its own
 `PEER_MODEL_FILTERS` (openrouter `:free` only) and is **out of scope** —
@@ -124,7 +124,7 @@ checks demoted to declared, named exceptions:
    for google, below), so the exceptions are the visible set and everything
    else is allowlist-driven.
 3. **`toInput()` collapses to one shared projection** derived from the same
-   declaration the eligibility gate reads (d046b already flags the two
+   declaration the eligibility gate reads (d115 already flags the two
    implementations as "possible future cleanup"). **Decided:
    admit-but-trim** — one declaration, two defined roles (the gate admits
    what is drivable after trim, the projection performs the trim), so
@@ -221,7 +221,7 @@ fields. — DONE 2026-09-23 with the implementation: see the Change section
 
 - `docs/d033-generator-cascade.md` — the filter rationale and the leaked-id
   history; google's modality allowlist.
-- `docs/d046b-live-listing-input-schema-poisoning.md` — the schema-projection
+- `docs/d115-live-listing-input-schema-poisoning.md` — the schema-projection
   guard and the two-`toInput` note.
 - `docs/d047-llm-reverse-proxy-host-allowlist.md` — deny-by-absence as the
   repo's house philosophy.

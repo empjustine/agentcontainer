@@ -9,7 +9,7 @@ depends-on:
   - coding-agent
 references:
   - d024
-  - d027b
+  - d114
 ---
 
 # d034 — Parallel probing and multi-hop peerBase chains

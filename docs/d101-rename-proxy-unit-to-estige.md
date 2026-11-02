@@ -23,7 +23,7 @@ halfway — the image tag
 `estige-relay`), and the relay state dir said `estige` since d088's
 vocabulary work, while the folder, module, binary, config, log prefixes,
 env overrides and every doc said `llm-reverse-proxy`. Two spellings for
-one unit is exactly the one-fact/one-name drift d090b legislates against,
+one unit is exactly the one-fact/one-name drift d090 legislates against,
 and every new document had to keep explaining the mismatch.
 
 ## Decision
@@ -38,7 +38,7 @@ The unit is **estige** — every live spelling renames in one pass:
   log tools `estige/…`; the relay state dir `…/estige`; the smoke test's
   `.invalid` host label.
 - env override `LLM_PROXY_BIN` → `ESTIGE_BIN` — the last old-spelling
-  knob (one vocabulary per fact, d090b).
+  knob (one vocabulary per fact, d090).
 - container names and the image tag were already estige-*; they stay, and
   now they are simply the unit's name in runtime roles rather than a
   second vocabulary that needed explaining.

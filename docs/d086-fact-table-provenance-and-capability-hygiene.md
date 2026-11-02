@@ -5,7 +5,7 @@ status: active
 title: "d086 — fact-table provenance, churn discipline, and capability hygiene"
 parent: coding-agent
 depends-on: [d047, d072, d079, d085]
-references: [d021, d027b, d033]
+references: [d021, d114, d033]
 ---
 
 # d086 — fact-table provenance, churn discipline, and capability hygiene

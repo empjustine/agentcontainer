@@ -1,8 +1,8 @@
 ---
-id: d027b
+id: d114
 type: architecture-design
 status: active
-title: d027b — models.dev catalog fetch chain (direct → relay → stale copy)
+title: d114 — models.dev catalog fetch chain (direct → relay → stale copy)
 parent: architecture
 depends-on: [workload-api, d023, d025]
 tags: [serving, llm-reverse-proxy, coding-agent]

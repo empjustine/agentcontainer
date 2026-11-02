@@ -4,7 +4,7 @@ type: module-design
 status: deprecated
 title: "d091 — llm-reverse-proxy gateway auth (d073 mode B): the funnel front authenticates; llama-swap's bearer retires behind it"
 parent: estige
-depends-on: [d071, d073, d077, d078, d084, d085, d088, d090b]
+depends-on: [d071, d073, d077, d078, d084, d085, d088, d090]
 references: [d001, d027, d047, d050, d063, d070, d079]
 tags: [gateway-auth, mode-b, reverse-proxy, llama-swap, secrets, pi]
 ---

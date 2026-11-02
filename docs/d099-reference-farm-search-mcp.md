@@ -5,7 +5,7 @@ status: active
 title: "d099 — reference-farm code search as an MCP server: capped read surface, two serialized maintenance verbs, host-side"
 parent: architecture
 depends-on: [d043, d075]
-references: [git-non-bare-issues, d044, d046b, d061, d076]
+references: [git-non-bare-issues, d044, d115, d061, d076]
 tags: ["git", "references", "search", "mcp", "tooling", "safety"]
 ---
 
@@ -240,7 +240,7 @@ named: the script's checks (https-only, domain host, `owner/repo` shape, no
 `..`/fragment/query) are what kill `ext::`, `ssh://`, `file://` and option-shaped
 payloads before git ever sees them.
 
-**Tool descriptions are static; results are data.** Per the d046b posture:
+**Tool descriptions are static; results are data.** Per the d115 posture:
 descriptions are operator-authored constants (never derived from repo
 content), and tool output never contains instructions — mirrored READMEs and
 commit messages arriving via `read_file` are untrusted third-party text, the

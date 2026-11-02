@@ -75,7 +75,7 @@ npm package), never a silent omission.
 
 ## Why vendored tables instead of generation-time scraping
 
-Same lifecycle as every other catalog in this repo (docs/d027b, d033):
+Same lifecycle as every other catalog in this repo (docs/d114, d033):
 vendored copy is the floor, a best-effort refresher keeps it current, and a
 failed refresh never touches the last good copy. Scraping pi's binary or the
 ai-sdk packages' source at generation time would make the routing table

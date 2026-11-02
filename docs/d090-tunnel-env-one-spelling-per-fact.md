@@ -1,14 +1,14 @@
 ---
-id: d090b
+id: d090
 type: module-design
 status: active
-title: "d090b — tunnel env, one spelling per fact: VPN_TUNNEL_URL speaks the ladder's wire forms, operator credentials split by node"
+title: "d090 — tunnel env, one spelling per fact: VPN_TUNNEL_URL speaks the ladder's wire forms, operator credentials split by node"
 parent: estige
 depends-on: [d073, d077, d078, d081, d084, d085, d088]
 references: [d071, d080]
 ---
 
-# d090b — tunnel env: one spelling per fact
+# d090 — tunnel env: one spelling per fact
 
 ## Problem
 

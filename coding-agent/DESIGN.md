@@ -54,7 +54,7 @@ per-concern verdict; the supersession is recorded in the
 
 1. installs static `settings.json` into the agent dir (`PI_CODING_AGENT_DIR`,
    default `~/.pi/agent`; pre-overwrite backup as `.bak-<ts>`), refreshes the
-   models.dev catalog (docs/d027b fetch chain), and runs each generator IN
+   models.dev catalog (docs/d114 fetch chain), and runs each generator IN
    PLACE as a child process on the same pinned node, with every intermediate
    written to a per-run output dir under `RUN_DIR` (docs/d072 retired the
    scratch staging of the generator tree — d056 already stopped mounting that
@@ -185,7 +185,7 @@ one is a behavioral copy, which is the caveat worth knowing:
 
 - **models.dev + catwalk** (vendored `lib/models.dev.api.json`,
   `lib/catwalk-facts.json`): live catalogs, refreshed through the relay
-  chain, consumed-shape-validated, stale-copy rule (docs/d027b). A live
+  chain, consumed-shape-validated, stale-copy rule (docs/d114). A live
   endpoint can change under a run, but the validation is the tripwire and
   the committed snapshot is the fallback.
 - **Per-provider facts listings** (hyper `/provider`, verboo `/models` —

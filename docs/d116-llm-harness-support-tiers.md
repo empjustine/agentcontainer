@@ -1,15 +1,15 @@
 ---
-id: d090
+id: d116
 type: module-design
 status: active
-title: "d090 — LLM harness support tiers: pi first-class (with its descendants), opencode/mistral-vibe best-effort, crush superficial"
+title: "d116 — LLM harness support tiers: pi first-class (with its descendants), opencode/mistral-vibe best-effort, crush superficial"
 parent: coding-agent
 depends-on: [d064]
 references: [d001, d047, d048, d064, d079]
 tags: [harnesses, support-tiers, generators, policy]
 ---
 
-# d090 — LLM harness support tiers (first-class / best-effort / superficial)
+# d116 — LLM harness support tiers (first-class / best-effort / superficial)
 
 ## Status
 

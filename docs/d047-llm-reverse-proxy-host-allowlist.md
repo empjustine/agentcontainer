@@ -35,7 +35,7 @@ classes fall out of that design:
    edge accepts traffic to hosts the operator never intended to reach.
 
 2. **Schema poisoning hit the fleet through a slug-routed listing.** The
-   WSL2 `models.json` failure (docs/d046b; the
+   WSL2 `models.json` failure (docs/d115; the
    `providers.openrouter.models.<0|5|10>.input.2 must be equal to constant`
    errors) was not a routing bug per se — it was a *live-listing content*
    bug: `piModel()` emitted `architecture.input_modalities`
@@ -230,7 +230,7 @@ contracts") are keyed by host in v2: a fact-table host missing from
   `<peerBase>/api.cline.bot/api/v1` for cline-pass,
   `<peerBase>/llama-swap` for llama-swap, instead of
   `<peerBase>/<slug>`.
-- The `models.dev` relay path (docs/d027b — `MODELS_DEV_RELAY_URL`,
+- The `models.dev` relay path (docs/d114 — `MODELS_DEV_RELAY_URL`,
   default `http://127.0.0.1:8080/models.dev/api.json`) becomes
   `http://127.0.0.1:8080/models.dev/api.json` under the same rule: the
   **host** `models.dev` is allowlisted, the path is intact.

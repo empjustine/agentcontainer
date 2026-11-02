@@ -39,7 +39,7 @@ as meeting the contract below, and the validator only sees part of it.
 
 | field | required | rule |
 | --- | --- | --- |
-| `id` | yes | Unique across the whole tree. Lowercase kebab-case (`gguf-model-tooling`) or a `dNNN` record handle (`d104`, `d027b`). **Stable** — never renumber, never reuse; every link in the tree points at it. |
+| `id` | yes | Unique across the whole tree. Lowercase kebab-case (`gguf-model-tooling`) or a `dNNN` record handle (`d104`, `d114`). **Stable** — never renumber, never reuse; every link in the tree points at it. A bare `dNNN` only: no suffixed variants, ever (see [Colliding numbers](#colliding-numbers)). |
 | `type` | yes | One of the five types below. Nothing else ever. |
 | `title` | yes | One line, human sentence. The ThinkRail contract requires it (`spec_create` will not write a spec without one) even though `spec_validate` stays silent when it is missing. |
 | `status` | recommended | One of the five lifecycle values below. Nothing else ever. |
@@ -60,6 +60,27 @@ Two hard rules that a graph walker cannot forgive:
   → `lib`), because d0XX bodies reference the *path*. Renaming a file does not
   change its id, and an id must never be silently re-spelled — retarget every
   reference instead.
+
+## Colliding numbers
+
+Two records that claim the same number are two identities wearing one name, and
+a letter suffix (`d090b`) is worse than the collision: it invents a second
+namespace nobody designed, that no index lists, that sorts after the record it
+collides with, and that reads as a subsection of it. The `b` handles this tree
+once carried are gone for that reason (d111).
+
+The rule that replaces them: **rename the least-cited of the colliding records
+to the next free number, and leave the plain number to the survivor.** Citation
+count decides, because the rename's cost *is* the number of references to
+retarget — moving the rarely-named record keeps the churn near zero and keeps
+every existing `dNNN` pointer meaning what it always meant. "Next free" means
+one past the highest number in use, never a backfilled hole: the number is a
+creation-order marker, and filling a gap would date the record wrongly.
+
+Renumbering is permitted **only** for an actual collision. A record that is
+merely misfiled, poorly scoped, or superseded keeps its number and earns a
+`status:` change instead — this is the one carve-out from the stability rule in
+the frontmatter table, and it is bounded by it.
 
 ## Nesting: the expected shape
 

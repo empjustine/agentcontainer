@@ -5,7 +5,7 @@ status: active
 title: "d095 — the relay node is a host service, and vpn-relay.sh is its chain step"
 parent: estige
 depends-on: [d046, d088, d093, d094]
-references: [d059, d070, d079, d082, d084, d090b]
+references: [d059, d070, d079, d082, d084, d090]
 ---
 
 # d095 — the relay node is a host service, and vpn-relay.sh is its chain step
@@ -73,7 +73,7 @@ restate what the code already knows.
      ```
 
      One vault round-trip (d046) buys the relay its credential and the child
-     its environment; the child never holds `VPN_OPERATOR_TOKEN` (d090b).
+     its environment; the child never holds `VPN_OPERATOR_TOKEN` (d090).
 
 4. **The chain step's contract — four steps, in order:**
 
@@ -84,7 +84,7 @@ restate what the code already knows.
    2. **Probe, and never trust an answer that is not ours.** The probe is
       `GET /healthz` on the loopback listener, and the identity check is
       the `tunnel` field compared against the URL normalized exactly as the
-      binary normalizes it (d090b: http(s) → ws(s)). Three outcomes:
+      binary normalizes it (d090: http(s) → ws(s)). Three outcomes:
       *ours* → reuse; *nothing answered* → start; *something else
       answered* → refuse by name. A foreign listener squatting on the port
       must never become the child's silent proxy, and a second relay must

@@ -4,7 +4,7 @@ type: module-design
 status: active
 title: "d094 — the relay node's tunnel leg chains through the conventional proxy environment variables"
 parent: estige
-depends-on: [d073, d088, d090b, d093]
+depends-on: [d073, d088, d090, d093]
 references: [d046, d079]
 ---
 

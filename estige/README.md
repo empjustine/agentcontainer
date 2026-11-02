@@ -116,7 +116,7 @@ container's bind the host's bind. No config file is mounted or named at all
 egress range — `VPN_TUNNEL_EGRESS` are forwarded from the host env.
 Relay node: likewise no config file — `VPN_TUNNEL_URL` (http(s):// or
 ws(s):// — the URL's honest wire form, normalized to wss internally,
-docs/d090b; the path is the Funnel mount plus the fixed `/vpn` —
+docs/d090; the path is the Funnel mount plus the fixed `/vpn` —
 docs/d085) and `VPN_OPERATOR_TOKEN` are its core surface, with `VPN_CLIENT_LABEL` optional (defaults to the hostname)
 and an OPTIONAL chain proxy via the conventional variables (`SOCKS_SERVER`
 beats a scheme-matched `http_proxy`/`https_proxy`, which beats `ALL_PROXY`;
@@ -143,7 +143,7 @@ in-progress d104 credential redesign moves the tunnel keys into the on-disk
 key store): an armed exit node (docs/d084/d085: armed when the env carries
 the operator keyset) holds the
 keyset (`VPN_OPERATOR_KEYS`), and the relay node holds the operator token
-(`VPN_OPERATOR_TOKEN`) — disjoint since docs/d090b, which retired the
+(`VPN_OPERATOR_TOKEN`) — disjoint since docs/d090, which retired the
 keyset's implicit-`default` merge of the token — and all reach the
 container only through the launcher env allowlists.
 
