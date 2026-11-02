@@ -5,7 +5,7 @@ status: active
 title: "d077 — tunnel transports (h2 POST → wss → h1.1 POST) trusting external TLS, with SSE-carrier and inner-TLS studies"
 parent: estige
 depends-on: [d073, d031]
-references: [d027, d047, d070, d071, d072, d081, d084, d093, d105]
+references: [d027, d047, d070, d071, d072, d081, d084, d093, d105, d128]
 tags: ["serving", "proxy", "vpn", "ssl-vpn", "http2", "websocket", "sse", "tailscale", "middlebox"]
 ---
 
@@ -386,3 +386,70 @@ policy showing path/token-based blocking of this tunnel (L5).
   *uses*, not all three (§8).
 - Spikes S1/S2 (d073 §13) remain the Funnel-lifetime/streaming baseline for
   the WebSocket tunnel; L1–L4 are additive and do not replace them.
+
+## Amendment — what the edge's h2c gate means (gRPC, Connect RPC, WebSocket-over-h2)
+
+Upstream evidence added after this record was written, checked at drafting and
+third-party throughout (not measured here). None of it moves the transport
+family; it settles three questions the record left implicit and closes one that
+would otherwise be re-proposed every year.
+
+**The gate in the evidence base has a reason: gRPC.** The edge proxies a request
+to a plaintext backend over h2c only when its content type is `application/grpc*`,
+and that special case exists precisely to make gRPC work — upstream
+`ipn/ipnlocal: proxy gRPC requests over h2c if needed` (tailscale/tailscale#9847,
+merged 2023-10) added it so gRPC services can be published through
+serve/funnel at all. So gRPC is a *supported* Funnel workload, not a lucky
+accident, and the backend hop is HTTP/1.1 for every other content type.
+
+**The gate is gRPC-only, and already known to be too narrow.** Connect RPC is
+also HTTP/2-only and is not covered by the sniff (`application/connect+proto`,
+`application/connect+json`) — an open upstream issue, tailscale/tailscale#18483 —
+and an open upstream change, tailscale/tailscale#18871, proposes deleting the
+content-type sniff so any HTTP/2 request to a plaintext backend is proxied as
+h2c.
+
+**Nothing in the family moves today.** The h2-POST tunnel's multiplexing lives on
+the public leg, and the server is built to receive ordinary streaming HTTP/1.1
+handlers — the shape every spike and the deployed h2 front validated. Backend h2c
+is also not reachable any other way: the server never terminates TLS (VPN-R25),
+so h2c would be its only route to h2 on that hop, and no transport needs it.
+
+**If #18871 lands, one thing becomes possible and worth characterizing, not
+building on.** An exit node could accept prior-knowledge h2c on its loopback
+listener and get real per-stream multiplexing on the backend leg, collapsing
+"one backend connection per tunnel stream". That is a follow-on decision gated on
+an unmerged upstream change; it is recorded here so the next reader does not have
+to re-derive why the family refuses backend h2 today.
+
+**gRPC as a transport is rejected on merit, and the rejection is the point of
+this amendment.** The gate above proves gRPC traverses Funnel, which makes it
+look attractive on feasibility alone — feasibility is not the question. Against
+the h2-POST tunnel it buys nothing: identical public leg, irrelevant backend h2c,
+and typed framing/codegen irrelevant to an opaque byte pump. It costs three
+things that matter here: `content-type: application/grpc` is a first-class DPI
+signature, the opposite of what a hostile-path transport is for; gRPC requires
+request trailers, unproven across the edge's proxy hop where the `CLOSE` frame is
+measured; and it adds a protobuf toolchain to a family that needs none.
+
+**WebSocket-over-h2 (RFC 8441) is now refused structurally, not just
+observationally.** The WebSocket transport already declined to assume it exists
+anywhere on the path; the stronger statement holds: for a byte pump it cannot
+beat h2 streaming POST, because it *is* an h2 stream plus a handshake plus a
+framing layer over h2's own, and it needs extended-`CONNECT` support on every
+hop that h2 POST does not. Upstream behavior (an upgrade is not proxied once the
+client negotiates h2) points the same way. The operational consequence stands
+wherever the WebSocket transport runs: it is HTTP/1.1 and its dial must keep ALPN
+at `http/1.1` — true today by construction, since Go's WebSocket dialers speak
+h1.1, and load-bearing the moment a client library starts offering h2.
+
+**One confirmed trap for the WebSocket transport's credential placement.** The
+edge strips the query string on an upgrade request (tailscale/tailscale#18651),
+so VPN-R12's handshake-header credential is not a preference: a query-string
+credential would silently arrive empty and the tunnel would authenticate nothing.
+
+**Throughput is not a transport property.** The edge's bandwidth is capped and
+the cap is neither configurable nor published, so it is a constant across the
+family — no spike should report a per-transport bandwidth win, and the L-series
+bars stay latency/streaming bars.
+
