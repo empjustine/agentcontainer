@@ -99,8 +99,10 @@ question that cannot.
   second run changes that field in every file. The gate therefore audits the
   cached tree instead of re-fetching, and a future strict mode would have to
   ignore that field explicitly.
-- The Go suite is still outside the sweep; `estige`'s egress test is the pending
-  case for a fourth gate (`go test ./...`), not a freshness one.
+- The Go suite is outside the sweep no longer: `./test.sh` runs
+  `go test ./...` in `estige/` and skips loudly when no toolchain is installed
+  ([docs/d123](d123-go-suite-in-the-sweep.md)). The freshness gate stays
+  network-only; the two do not overlap.
 
 ## Verification status
 

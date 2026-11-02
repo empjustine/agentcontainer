@@ -62,6 +62,7 @@ func TestEgressFromEnv(t *testing.T) {
 		`{"allowCidr": ["127.0.0.0/8"]}`,
 		`{"ports": ["443"]}`,
 		`{"allowCidrs": []} `,
+		`{}`,
 		`not json`,
 	} {
 		t.Run("refused: "+raw, func(t *testing.T) {

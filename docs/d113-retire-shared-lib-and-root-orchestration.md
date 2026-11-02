@@ -187,6 +187,7 @@ unit's `lib/` is still its own — what changed is how much of one it needs.
   `./check-types.sh` are green.
 - **estige**: `./estige/build.sh` builds the native binary;
   `go test ./...` has one **pre-existing** failure (`TestEgressFromEnv`) that
-  reproduces unchanged on `main`.
+  reproduces unchanged on `main`. *(Since fixed, and the suite is now part of
+  `./test.sh` — docs/d122.)*
 - **Search gate**: no `../lib/` reference remains outside `docs/archive/` and
   the per-unit `lib/` itself.

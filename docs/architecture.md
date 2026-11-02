@@ -206,6 +206,8 @@ files and the QA sweep.
   nothing is skipped, not an error, because no unit has to ship a shell test
   (docs/d118 turned the last two into `*.test.mjs`, and docs/d121 left the
   repository with no shell test at all — the globs stay as the contract).
+  estige is the one suite the globs cannot see (Go, in-package), so `test.sh`
+  runs it explicitly and skips loudly on a host with no toolchain (docs/d123).
 - `freshness.sh` — the sweep's one **network** gate (docs/d122). The offline
   gates cannot see a stale cache: it parses, its tests pass, and plain
   `generate` would rewrite it without complaint, so staleness used to be a
@@ -255,10 +257,10 @@ are working on.
 - The repo-wide sweep stays at the root and is the only cross-unit view:
   `./lint.sh` (biome + knip + jq + the capability-URL and retired-root-lib
   patterns), `./check-types.sh` (tsc over every unit's JS), `./test.sh` (runs
-  every `<unit>/tests/` and owns none of them), `./vm-bench.sh`
-  (docs/vm-build-bench.md), and `./freshness.sh` (docs/d122) — the one sweep
-  that needs the network, because a stale committed cache is otherwise a valid
-  artifact that only review could catch.
+  every `<unit>/tests/` plus estige's in-package Go suite, and owns none of
+  them), `./vm-bench.sh` (docs/vm-build-bench.md), and `./freshness.sh`
+  (docs/d122) — the one sweep that needs the network, because a stale committed
+  cache is otherwise a valid artifact that only review could catch.
 
 Runners NEVER build or generate: run.sh stages the COMMITTED config and a
 stale/missing artifact is a loud failure pointing at the generator, never an

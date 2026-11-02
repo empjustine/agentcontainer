@@ -528,5 +528,13 @@ func egressFromEnv() (egressConfig, error) {
 	if _, err := dec.Token(); !errors.Is(err, io.EOF) {
 		return egressConfig{}, fmt.Errorf("%s has content after the JSON object", envTunnelEgress)
 	}
+	// An all-empty object decodes cleanly but configures nothing: unset already
+	// means the default deny table, so a blob that names neither a range nor a
+	// port is a typo whose silent reading is "configured" (the same fail-loudly
+	// rule as the unknown-field check above). Naming only one half is fine —
+	// d104's defaults fill the other.
+	if len(cfg.AllowCidrs) == 0 && len(cfg.Ports) == 0 {
+		return egressConfig{}, fmt.Errorf("%s names neither a CIDR nor a port — unset it for the defaults", envTunnelEgress)
+	}
 	return cfg, nil
 }
