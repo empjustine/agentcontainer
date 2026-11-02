@@ -45,6 +45,7 @@
 		"git/forge-mirror.mjs",
 		"git/search-references.mjs",
 		"git/vbs-har.mjs",
+		"git/vbs-mirror-all.mjs",
 		"llm-local-inference/generate.mjs",
 		"llm-local-inference/model-sizes.mjs",
 		// the pi extension family: each folder's generator (run by that

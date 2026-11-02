@@ -364,6 +364,55 @@ export function filterByGlobs(rels, only, exclude) {
 }
 
 /**
+ * A shell `case` glob, for the IDENTITIES this folder filters
+ * (`org/slug/repo`) — deliberately not `globMatcher`, which is path-relative
+ * and stops `*` at a `/`. A `case` pattern lets `*` and `?` cross slashes, and
+ * `[abc]`/`[!abc]` classes work there too, so an operator's `--only` pattern
+ * with a `*` in a middle segment matched before the node port moved the shell
+ * glob into this function and must keep matching after it (docs/d121).
+ *
+ * A trailing `[` with no closing bracket is a literal, as `case` treats it.
+ * A backslash is a literal too, NOT `case`'s escape: no caller in this folder
+ * passes an escaped pattern (the farm tool's glob validator refuses `\`), so
+ * carrying the escape would have meant carrying a second, unreachable rule.
+ * @param {string} pattern
+ * @returns {(s: string) => boolean}
+ */
+export function caseGlob(pattern) {
+	let re = "";
+	for (let i = 0; i < pattern.length; i += 1) {
+		const c = pattern[i];
+		// The loop condition guarantees a value; the check is the type gate's
+		// form of that fact.
+		if (c === undefined) {
+			break;
+		}
+		if (c === "*") {
+			re += ".*";
+			continue;
+		}
+		if (c === "?") {
+			re += ".";
+			continue;
+		}
+		if (c === "[") {
+			// Stop before a `]` that would close an empty class (`[]`), which
+			// `case` reads as a literal `[]`.
+			const close = pattern.indexOf("]", i + 2);
+			if (close > i + 1) {
+				const body = pattern.slice(i + 1, close);
+				re += `[${body.startsWith("!") ? `^${body.slice(1)}` : body}]`;
+				i = close;
+				continue;
+			}
+		}
+		re += c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	}
+	const rx = new RegExp(`^${re}$`);
+	return (s) => rx.test(s);
+}
+
+/**
  * The pickaxe optimizations, in the one order that is correct:
  *
  *   1. `repack -adb --write-bitmap-index` — collapse to one pack, drop
