@@ -2,7 +2,7 @@
  * @fileoverview build.mjs — build estige for THIS host (docs/d041; d083 made
  * the build entry per-unit, docs/d113 folded the root builder away).
  *
- * Two targets, and which one registers is a host fact, not a flag:
+ * Three targets, and which one registers is a host fact, not a flag:
  *
  *   - Container host (podman/docker): `estige-image` — the multi-stage
  *     Containerfile (golang builder → scratch runtime that ships the CA
@@ -15,10 +15,14 @@
  *     relay to cloud upstreams, and against a closed network its base-image
  *     --pull would fail anyway — the gate turns that hard failure into a
  *     logged skip.
- *   - No container backend: `estige-native` — the host binary, which
- *     `estige smoke-test` and direct runs use; on Termux the android/arm64
- *     binary through lib/go-build.mjs's preset (GOOS=android — DNS resolver;
- *     see that module's header). Needs a WORKING go toolchain.
+ *   - No container backend: `estige-native` — the host binary direct runs
+ *     use; on Termux the android/arm64 binary through lib/go-build.mjs's
+ *     preset (GOOS=android — DNS resolver; see that module's header). Needs a
+ *     WORKING go toolchain.
+ *   - Every host with a working go toolchain: `estige-packages` — the pure-Go
+ *     Termux .deb and Oracle Linux .rpm into packaging/out/. It cross-compiles
+ *     the two payload binaries (android/arm64 and linux/amd64), so it does not
+ *     depend on this host's OS; no packaging tool is invoked.
  *
  * --pull is load-bearing, not hygiene: the omitted-flag default is the
  * "missing" policy, so a locally-cached golang:1.27 tag is reused even after
@@ -44,11 +48,13 @@
  */
 
 import { spawn } from "node:child_process";
+import { mkdirSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
 	androidBuildEnv,
 	commonBuildFlags,
+	estigeVersion,
 	goToolchainReady,
 	hostBuildEnv,
 	isTermux,
@@ -251,11 +257,76 @@ if (containerTool) {
 	});
 }
 
+// --- packages (any host with a working go toolchain) ------------------------
+if (goToolchainReady()) {
+	const outDir = join(estigeRoot, "packaging", "out");
+	const staging = join(outDir, ".build");
+	targets.push({
+		name: "estige-packages",
+		fn: async () => {
+			// The payload binaries are throwaway build inputs; the artifacts are
+			// the target's only output. Clear stale staging so a failed run cannot
+			// package yesterday's binary.
+			rmSync(staging, { recursive: true, force: true });
+			mkdirSync(staging, { recursive: true });
+			const flags = [...(force ? ["-a"] : []), ...commonBuildFlags(termux)];
+			const base = termux ? androidBuildEnv(termux) : hostBuildEnv();
+			const debBinary = join(staging, "estige-android-arm64");
+			const rpmBinary = join(staging, "estige-linux-amd64");
+			const debEnv = { ...base, CGO_ENABLED: "0", GOOS: "android", GOARCH: "arm64" };
+			const rpmEnv = { ...base, CGO_ENABLED: "0", GOOS: "linux", GOARCH: "amd64" };
+
+			const debBuilt = await run(
+				"go",
+				["build", ...flags, "-o", debBinary, "."],
+				{ cwd: estigeRoot, env: debEnv, name: "estige-packages" },
+			);
+			if (!debBuilt) {
+				return false;
+			}
+			const rpmBuilt = await run(
+				"go",
+				["build", ...flags, "-o", rpmBinary, "."],
+				{ cwd: estigeRoot, env: rpmEnv, name: "estige-packages" },
+			);
+			if (!rpmBuilt) {
+				return false;
+			}
+
+			const packaged = await run(
+				"go",
+				[
+					"run",
+					...(force ? ["-a"] : []),
+					"./packaging",
+					"-version",
+					estigeVersion(),
+					"-deb-binary",
+					debBinary,
+					"-rpm-binary",
+					rpmBinary,
+					"-out",
+					outDir,
+				],
+				{ cwd: estigeRoot, env: hostBuildEnv(), name: "estige-packages" },
+			);
+			if (packaged) {
+				rmSync(staging, { recursive: true, force: true });
+			}
+			return packaged;
+		},
+	});
+} else {
+	noteGated("estige-packages");
+}
+
 // --- termux provisioning (serialized FIRST stage on Termux) ------------------
-// pkg-installs node/jq and source-builds the infisical CLI. It stays shell on
+// Provisions the DEVICE: the infisical CLI (the operator-run env chain), and
+// nothing estige itself needs — the binary is self-contained Go and the
+// packages carry no node/jq dependency (this change). It stays shell on
 // purpose — every path in it is Termux-only and cannot be regression-tested
 // from a container host (docs/d041) — and it stays at the REPO root because it
-// provisions the DEVICE, not this unit (d113): a standalone estige checkout on
+// provisions the device, not this unit (d113): a standalone estige checkout on
 // Termux must bring that script along, so a missing one is a loud error rather
 // than a silently unprovisioned build.
 if (termux) {
@@ -272,8 +343,10 @@ if (termux) {
 // --- execution ---------------------------------------------------------------
 // target selection (docs/d083): no names runs every registered one, names run
 // just those. termux-provisioning is NOT selectable — it is environment
-// provisioning (d041), not an artifact, and the go build needs what it
-// installs, so it runs first regardless of selection. Serialized throughout:
+// provisioning (d041), not an artifact, and it is the shared Termux
+// environment the on-device build runs under, so it runs first regardless of
+// selection; packaged artifacts themselves need neither node nor jq.
+// Serialized throughout:
 // Termux cannot parallelize ~1 GB go builds, and on a container host the image
 // is the only registered target anyway.
 const requested = process.argv.slice(2);

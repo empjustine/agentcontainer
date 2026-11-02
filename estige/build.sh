@@ -5,6 +5,12 @@
 # native binary otherwise. Extra args are build.mjs target names.
 # Secrets: none — builds are keyless.
 set -eu
-# shellcheck source-path=SCRIPTDIR source=lib/node-run.sh
-. "$(dirname "$0")/lib/node-run.sh"
+# The node pin lives here, not in a root mise.toml (docs/d051/d082): system
+# node on Termux (there is no mise there), `mise exec node@24` elsewhere.
+node_run() {
+	case "${PREFIX:-}" in
+	*/com.termux/*) NODE_USE_ENV_PROXY=1 node "$@" ;;
+	*) NODE_USE_ENV_PROXY=1 mise exec node@24 -- node "$@" ;;
+	esac
+}
 node_run "$(dirname "$0")/build.mjs" "$@"

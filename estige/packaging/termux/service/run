@@ -1,0 +1,14 @@
+#!/data/data/com.termux/files/usr/bin/sh
+# estige exit node under runit/termux-services.
+#
+# The package ships `down` beside this file: installing does not start the
+# service. `sv-enable estige` removes it and `sv start estige` runs this.
+# Keep the env read here, not in the binary: a packaged service's owner is the
+# service manager's EnvironmentFile equivalent (docs/d108/d110).
+set -eu
+
+PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+# shellcheck disable=SC1091  # absolute path only exists on the installed device
+. "$PREFIX/etc/estige/env"
+
+exec "$PREFIX/bin/estige" -mode exit

@@ -1,0 +1,18 @@
+# estige exit node — Termux package env file.
+#
+# Sourced by $PREFIX/var/service/estige/run before it execs the binary. The
+# file is the env chain for a packaged service: the binary reads no file.
+# Keep it mode 0600; fill it by hand or with an operator-run chain step.
+#
+# Arm the tunnel (docs/d084/d085): a JSON object {"<id>": "<token>"}.
+# Without it the exit node refuses to start (the kill-switch law, docs/d084).
+# Single-quote JSON and any value carrying shell metacharacters.
+# VPN_OPERATOR_KEYS='{"<id>":"<token>"}'
+#
+# Bind (docs/d110): a bare port number, unset = 8080 on all interfaces.
+# PORT=8080
+#
+# Egress opt-ins (VPN-R38): JSON {"allowCidrs": [...], "ports": [...]}.
+# Unset = the requirement's defaults (deny RFC 1918/metadata/loopback,
+# allow 80/443). Single-quote it: a bare JSON value loses its quotes in sh.
+# VPN_TUNNEL_EGRESS='{"allowCidrs":["10.0.0.0/8"],"ports":[443]}'

@@ -15,8 +15,12 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+/** The unit root (this file lives in <unit>/lib). */
+const unitRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 
 /**
  * Termux identifies itself through $PREFIX — one spelling for every caller
@@ -71,8 +75,8 @@ export function androidBuildEnv(termux) {
 }
 
 /**
- * Go build env for a plain host binary (the binary the launchers exec;
- * nothing Android-specific).
+ * Go build env for a plain host binary (the packaged systemd service execs
+ * it; nothing Android-specific).
  * @returns {Record<string, string>}
  */
 export function hostBuildEnv() {
@@ -85,13 +89,38 @@ export function hostBuildEnv() {
 }
 
 /**
+ * The one version spelling: -version output and both package versions. The
+ * committed VERSION file is the source; ESTIGE_VERSION exists for a release
+ * build that has not bumped the file yet. Dashes are rejected because RPM
+ * splits version/release on them and Debian uses them for a revision.
+ * @returns {string}
+ */
+export function estigeVersion() {
+	const raw = (
+		process.env.ESTIGE_VERSION?.trim() ||
+		readFileSync(join(unitRoot, "packaging", "VERSION"), "utf8").trim()
+	);
+	if (!/^[0-9][0-9A-Za-z.+~_]*$/.test(raw)) {
+		throw new Error(
+			`estige version ${JSON.stringify(raw)} must match ^[0-9][0-9A-Za-z.+~_]*$`,
+		);
+	}
+	return raw;
+}
+
+/**
  * Build args shared by every go build: strip debug info (less linker RAM on
- * ~1 GB devices) and make paths reproducible.
+ * ~1 GB devices), make paths reproducible, and inject the version (-version,
+ * ldflags) so the binary and the packages cannot disagree.
  * @param {boolean} termux cap parallelism (-p=2) on Termux; the infisical
  *   provisioning build (lib/provision-termux.sh) goes further (-p=1) because
  *   it compiles a much larger dependency tree.
  * @returns {string[]}
  */
 export function commonBuildFlags(termux) {
-	return [...(termux ? ["-p=2"] : []), "-trimpath", "-ldflags=-s -w"];
+	return [
+		...(termux ? ["-p=2"] : []),
+		"-trimpath",
+		`-ldflags=-s -w -X main.version=${estigeVersion()}`,
+	];
 }

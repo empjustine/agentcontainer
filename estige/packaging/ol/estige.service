@@ -1,0 +1,43 @@
+# estige exit node. The role's credential is VPN_OPERATOR_KEYS in the env
+# file; the bind is PORT (docs/d110), so this unit has no -port flag.
+[Unit]
+Description=estige exit node (SSL-VPN tunnel server)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=estige
+Group=estige
+EnvironmentFile=-/etc/estige/estige.env
+ExecStart=/usr/bin/estige -mode exit
+Restart=on-failure
+RestartSec=2s
+
+NoNewPrivileges=yes
+UMask=0077
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+RemoveIPC=yes
+ProcSubset=pid
+ProtectProc=invisible
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target

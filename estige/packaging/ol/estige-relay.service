@@ -1,0 +1,44 @@
+# estige relay node. Disjoint from estige.service by credential (this role
+# reads VPN_OPERATOR_TOKEN, never VPN_OPERATOR_KEYS) and by listener (loopback
+# CONNECT/SOCKS5 only; it binds no funnel port). docs/d090.
+[Unit]
+Description=estige relay node (loopback CONNECT/SOCKS5 proxy)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=estige
+Group=estige
+EnvironmentFile=-/etc/estige/estige-relay.env
+ExecStart=/usr/bin/estige -mode relay -proxy-listen 127.0.0.1:3128 -socks-listen 127.0.0.1:1080
+Restart=on-failure
+RestartSec=2s
+
+NoNewPrivileges=yes
+UMask=0077
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+RemoveIPC=yes
+ProcSubset=pid
+ProtectProc=invisible
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+#!/data/data/com.termux/files/usr/bin/sh
+# The runit service ships `down`, so the package never starts a process with
+# an unedited credential file. Print the two-step enable instead.
+set -eu
+
+PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+printf '%s\n' \
+	"estige installed. Edit $PREFIX/etc/estige/env (mode 0600), then:" \
+	"  sv-enable estige && sv start estige"
+exit 0

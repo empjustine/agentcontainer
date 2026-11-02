@@ -4,7 +4,6 @@ type: module-design
 status: active
 title: "estige — design: tunnel transports, the 404 policy, error taxonomy"
 parent: estige
-depends-on: [workload-api]
 tags: ["serving", "proxy", "design"]
 ---
 
@@ -97,9 +96,42 @@ cannot — and that table is the reason the reverse proxy is now deleted
 (docs/d108).
 
 Roles are named by network position, not protocol role (docs/d088): the
-**exit node** (free internet + tsnet to the LLM endpoints, `vpn-exit.sh`) and
-the **relay node** (local restricted-internet deployment, `vpn-relay.sh` —
-serve it, or ride it as the chain step that points a child at it, docs/d095).
-Inside the tunnel protocol itself the ends stay "client"/"server" — wire
-roles, not deployments — and `relay.go`'s byte pump is shared verbatim by
-both nodes.
+**exit node** (free internet + tsnet to the LLM endpoints, installed as
+`estige.service` on Oracle Linux or the Termux runit service) and the
+**relay node** (local restricted-internet deployment, installed as
+`estige-relay.service`; `estige proxy-env` prints the chain-step spelling for a
+child, docs/d095). Inside the tunnel protocol itself the ends stay
+"client"/"server" — wire roles, not deployments — and `relay.go`'s byte pump
+is shared verbatim by both nodes.
+
+## Deployment boundary: packages, not launchers
+
+The deployment used to be two POSIX launchers plus a 328-line workload
+description library and six jq filters. That surface did jobs the service
+manager already does better — select a container or native shape, start a
+process, restart it, wait for readiness, hand it an environment — while
+putting a second copy of the workload API in this unit, making `node`/`jq`
+prerequisites for a Go service, and forcing the operator to read shell to
+learn which credential a role reads.
+
+The boundary is now: the binary starts, the service manager supervises, the
+package owns host integration. `vpn-exit.sh`, `vpn-relay.sh`,
+`lib/workload-runtime.sh` and `lib/workload-*.jq` are deleted, not wrapped. No
+config file grew in their place: the Termux runit `run` script sources
+`$PREFIX/etc/estige/env`, systemd reads `/etc/estige/estige.env` through
+`EnvironmentFile=`, and the binary still sees only environment variables
+(docs/d108/d110).
+
+Two units, not one `estige@.service`: the roles carry disjoint credentials
+(`VPN_OPERATOR_KEYS` vs `VPN_OPERATOR_TOKEN`) and disjoint listeners (the
+funnel port vs loopback CONNECT/SOCKS5). A template would need per-instance
+credential indirection and would still ship two different `ExecStart=` shapes;
+two readable units state the boundary directly (docs/d090). The env files are
+`%config(noreplace)` / conffiles, so upgrades do not overwrite credentials, and
+both units ship an empty `CapabilityBoundingSet` — a low port is an explicit
+operator drop-in, not a silent grant.
+
+The container image survives (it is still the artifact for a container host)
+but the in-process launch does not: the operator runs it with their own
+`podman run`, service manager, or systemd unit. That is why the workload API is
+no longer a dependency of this unit — the frontmatter edge is gone.

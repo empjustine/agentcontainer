@@ -6,7 +6,9 @@
 // unmodified clients. Every input arrives through the env chain
 // (docs/d078/d084/d085/d090 + docs/d108's tree-shake): there is no config
 // file, so nothing about a deployment can live outside the environment the
-// launcher hands it.
+// service manager or operator hands it. A packaged runit/systemd unit sources
+// its env file and execs this binary; `proxy-env` is the only verb left for
+// the operator's shell (docs/d095).
 //
 // The v2 host-allowlist reverse proxy (docs/d047, legacy "mode A") is gone
 // (docs/d108): a TLS-terminating edge sees plaintext provider keys, and no
@@ -287,14 +289,25 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // main
 // ---------------------------------------------------------------------------
 
+// version is injected by lib/go-build.mjs's commonBuildFlags through
+// `-ldflags=-X main.version=...`; the committed source reads "dev".
+var version = "dev"
+
 func main() {
-	// No subcommands: `generate` went with the allowlist it emitted (docs/d108)
-	// and `smoke-test` went with the reverse-proxy behaviour it checked
-	// (docs/d108) — each was a verb for a mode that no longer exists. Role
-	// selection is `-mode`, and the launchers own every other verb.
+	// `proxy-env` is the one subcommand (docs/d095): it prints the loopback
+	// proxy spelling for the operator's shell and exits. `generate` went with
+	// the allowlist it emitted (docs/d108) and `smoke-test` went with the
+	// reverse-proxy behaviour it checked; the installed service units own
+	// everything else. Role selection stays `-mode`.
+	if len(os.Args) > 1 && os.Args[1] == "proxy-env" {
+		runProxyEnv(os.Args[2:])
+		return
+	}
+
 	// Role values are the node names, not protocol roles (docs/d088): the
 	// process is always a mix of client, server, and both proxy shapes, so
 	// only network position discriminates.
+	showVersion := flag.Bool("version", false, "print the version and exit")
 	mode := flag.String("mode", "exit", "process role: \"exit\" (the exit node: funnel front + tunnel server) or \"relay\" (the relay node: loopback CONNECT/SOCKS5 proxy feeding the tunnel, modes C–E; docs/d073 §7, docs/d088)")
 	proxyListen := flag.String("proxy-listen", "127.0.0.1:3128", "relay role: loopback HTTP CONNECT listener")
 	socksListen := flag.String("socks-listen", "127.0.0.1:1080", "relay role: loopback SOCKS5 listener")
@@ -302,6 +315,11 @@ func main() {
 	// is the relay node's per-dial ranking of the endpoint (docs/d093) — a
 	// knob here could only ever degrade it.
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Printf("estige %s\n", version)
+		return
+	}
 
 	// Disable Go's default timestamp prefix — the Combined Log Format lines
 	// already carry their own timestamp in brackets, so the log package's
@@ -315,6 +333,10 @@ func main() {
 	if *mode == "relay" {
 		relayCfg, err := relayConfigFromEnv(*proxyListen, *socksListen)
 		if err != nil {
+			if errors.Is(err, errSelfChained) {
+				log.Printf("[vpn-relay] %v", err)
+				os.Exit(exitSelfChain)
+			}
 			log.Fatalf("[vpn-relay] %v", err)
 		}
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

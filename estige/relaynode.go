@@ -1,6 +1,7 @@
-// relaynode.go — the relay node (docs/d088; served by vpn-relay.sh since
-// docs/d095 retired the PROXY_MODE selector), modes C–E: the loopback-only
-// local proxy feeding one authenticated tunnel
+// relaynode.go — the relay node (docs/d088; installed as
+// estige-relay.service or the Termux runit service since the packaging change
+// retired the POSIX launchers), modes C–E: the loopback-only local proxy
+// feeding one authenticated tunnel
 // (docs/d073 §7: VPN-R23..R27, §5.1: VPN-R11).
 //
 // WHY the relay node never terminates TLS (VPN-R25): TLS payloads are
@@ -106,7 +107,36 @@ func relayConfigFromEnv(proxyAddr, socksAddr string) (relayConfig, error) {
 	if err != nil {
 		return relayConfig{}, err
 	}
+	// The chain and the listeners share one env surface: an ambient spelling
+	// already naming the listener we are about to bind would dial a loop.
+	// Refuse before any bind, with the old launcher's exit status (docs/d095).
+	if err := refuseSelfChain(cfg.proxyAddr, cfg.socksAddr); err != nil {
+		return relayConfig{}, err
+	}
 	return cfg, nil
+}
+
+// exitSelfChain is the launcher's documented status for a self-chained relay
+// (docs/d095); the binary keeps it so callers/scripts do not need a new code.
+const exitSelfChain = 94
+
+// errSelfChained is the sentinel main maps to exitSelfChain. The relay's own
+// upstream chain is read from the ambient env, so a value naming this
+// process's listener is always a loop, never a legitimate upstream.
+var errSelfChained = errors.New("the ambient proxy env already points at the relay's own listener — refusing to start a self-chained relay")
+
+func refuseSelfChain(proxyAddr, socksAddr string) error {
+	for _, name := range chainEnvVars {
+		value := os.Getenv(name)
+		if value == "" {
+			continue
+		}
+		if strings.Contains(value, proxyAddr) || strings.Contains(value, socksAddr) {
+			// Never echo value: a proxy URL may carry credentials.
+			return fmt.Errorf("%w (%s names this listener; http=%q, socks=%q)", errSelfChained, name, proxyAddr, socksAddr)
+		}
+	}
+	return nil
 }
 
 // validate enforces the pre-bind invariants. Callers must treat an error as

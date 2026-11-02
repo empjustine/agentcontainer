@@ -1,0 +1,9 @@
+#!/data/data/com.termux/files/usr/bin/sh
+# svlogd collects the Combined Log Format lines (docs/d106). The binary logs
+# to stdout unpiped; svlogd is the service manager's log owner, not a filter.
+set -eu
+
+PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+logdir="$PREFIX/var/log/sv/estige"
+mkdir -p -- "$logdir"
+exec svlogd -tt "$logdir"
