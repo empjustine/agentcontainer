@@ -126,17 +126,105 @@ const exitSelfChain = 94
 var errSelfChained = errors.New("the ambient proxy env already points at the relay's own listener — refusing to start a self-chained relay")
 
 func refuseSelfChain(proxyAddr, socksAddr string) error {
+	listeners := []string{proxyAddr, socksAddr}
 	for _, name := range chainEnvVars {
 		value := os.Getenv(name)
 		if value == "" {
 			continue
 		}
-		if strings.Contains(value, proxyAddr) || strings.Contains(value, socksAddr) {
-			// Never echo value: a proxy URL may carry credentials.
-			return fmt.Errorf("%w (%s names this listener; http=%q, socks=%q)", errSelfChained, name, proxyAddr, socksAddr)
+		// Compare as ADDRESSES, not as text: `http://localhost:3128`,
+		// `http://127.0.0.1:3128`, `http://[::1]:3128` and the scheme-less
+		// spellings all name a listener we are about to bind, while a
+		// substring test sees none of them collide with `127.0.0.1:3128`.
+		// A missed collision is a self-chained relay: a proxy loop that spins
+		// the tunnel dial against itself (docs/d095).
+		for _, listener := range listeners {
+			if proxyValueNamesListener(name, value, listener) {
+				// Never echo value: a proxy URL may carry credentials.
+				return fmt.Errorf("%w (%s names this listener; http=%q, socks=%q)", errSelfChained, name, proxyAddr, socksAddr)
+			}
 		}
 	}
 	return nil
+}
+
+// proxyValueNamesListener reports whether one chain env value addresses the
+// given listener. The value goes through parseChainProxy — the same parser the
+// dialer uses — so the check cannot disagree with what would actually be
+// dialed, including the scheme-less spellings each variable family defaults.
+func proxyValueNamesListener(envName, value, listener string) bool {
+	chain, err := parseChainProxy(normalizeProxyValue(envName, value))
+	if err != nil {
+		// An unparseable value is not a chain at all; the dialer refuses it
+		// later with a message that names the real problem.
+		return false
+	}
+	wantHost, wantPort, err := net.SplitHostPort(listener)
+	if err != nil {
+		return false
+	}
+	gotHost, gotPort, err := net.SplitHostPort(chain.addr)
+	if err != nil {
+		return false
+	}
+	// Ports and destinations must both match. IPv4 and IPv6 loopback are
+	// deliberately NOT collapsed into one another: a listener bound to
+	// 127.0.0.1:3128 and a chain to [::1]:3128 are different sockets, so
+	// treating them as a self-chain would refuse a legitimate configuration.
+	// Only the `localhost` alias is collapsed, because the resolver is what
+	// makes it ambiguous — see loopbackAddr.
+	return gotPort == wantPort && sameDestination(gotHost, wantHost)
+}
+
+// normalizeProxyValue applies the defaults relayChainFromEnv applies, so the
+// self-chain check sees the value the dialer would see: SOCKS_* values are a
+// bare host:port (libproxy/GNOME convention) and everything else follows
+// curl's scheme-less-means-http rule.
+func normalizeProxyValue(envName, value string) string {
+	if strings.Contains(value, "://") {
+		return value
+	}
+	// The variable's own convention picks the scheme, exactly as
+	// relayChainFromEnv does: SOCKS_SERVER is a bare host:port (libproxy/
+	// GNOME), everything else follows curl's scheme-less-means-http rule.
+	// Without this the socks port default (1080) would never be applied and a
+	// bare `localhost:1080` would read as an http:// chain on port 1080.
+	if strings.HasPrefix(strings.ToUpper(envName), "SOCKS_SERVER") {
+		return "socks5://" + value
+	}
+	return "http://" + value
+}
+
+// sameDestination compares two host spellings a listener could be reached
+// under. Only the `localhost` alias is collapsed onto an address; two literal
+// loopback addresses are compared as themselves.
+func sameDestination(a, b string) bool {
+	if a == b {
+		return true
+	}
+	aAddr, aErr := loopbackHost(a)
+	bAddr, bErr := loopbackHost(b)
+	if aErr == nil && bErr == nil {
+		return aAddr == bAddr
+	}
+	// DNS names are case-insensitive.
+	return strings.EqualFold(a, b)
+}
+
+// loopbackHost resolves the one host spelling that is an alias rather than an
+// address. `localhost` maps to IPv4 loopback explicitly instead of consulting
+// the resolver: estige must not let a hosts-file or resolver rewrite decide
+// whether its own listener is self-chained, and 127.0.0.1 is what a
+// `localhost` listener binds in the configuration this guards.
+func loopbackHost(host string) (netip.Addr, error) {
+	if strings.EqualFold(host, "localhost") {
+		return netip.MustParseAddr("127.0.0.1"), nil
+	}
+	addr, err := netip.ParseAddr(host)
+	if err != nil {
+		return netip.Addr{}, err
+	}
+	return addr.Unmap(), nil
 }
 
 // validate enforces the pre-bind invariants. Callers must treat an error as
