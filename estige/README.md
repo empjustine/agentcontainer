@@ -135,6 +135,16 @@ say. The policy half's permanent home is docs/d104's role store — its
 lands, the env chain carries it. Nothing here can *grant* the capability: only
 the credential does.
 
+**This env surface is v3's, and `VPN_*` is deprecated.** docs/d104's deployment
+generation v4 keeps the tunnel wire exactly as designed and moves credential
+material — and egress, into `exit.json` — from the env chain into the
+role-scoped store (`~/.local/share/estige/`). So `VPN_OPERATOR_KEYS`,
+`VPN_OPERATOR_TOKEN`, `VPN_TUNNEL_URL`, `VPN_TUNNEL_EGRESS` and
+`VPN_CLIENT_LABEL` retire with v4 (VPN-R32's amendment in docs/d073), leaving
+`PORT` and non-secret runtime knobs. Until v4 lands this table is the whole
+surface, and the v3/v4 pair upgrade fails closed in both directions rather
+than downgrading.
+
 ## Build & run
 
 Building is **this folder's own** `./build.sh` → `build.mjs` (docs/d083/d113 —

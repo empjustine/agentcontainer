@@ -436,6 +436,14 @@ VPN-R29. The table below is per-leg for that reason.
   loader, no env allowlist" stance (d031/d052): accepting the added transports means adding the
   proxy to the env-consumer set, with the same allowlist discipline as every
   other runner. The record MUST NOT pretend the stance survives.
+  *Superseded for tunnel key material by d104 (deployment v4)* — the tunnel's
+  credential material stops travelling through the env chain: v4 keeps
+  d104's envelope and signatures unchanged and moves their keys into files in
+  the role-scoped store (`~/.local/share/estige/`), leaving env holding only
+  non-secret runtime knobs. The `VPN_*` tunnel variables are therefore
+  deprecated with v4 and retire when it lands; until then they remain this
+  requirement's live transport, and the other secrets on the env chain (the
+  relay's gateway credential, provider keys) are untouched by the amendment.
 - **VPN-R33** — Credential comparison MUST be constant-time; credentials MUST
   NOT appear in logs, the Combined Log Format line, or error bodies.
 - **VPN-R34** — An unauthenticated request to the authenticated-relay or tunnel namespace — wrong

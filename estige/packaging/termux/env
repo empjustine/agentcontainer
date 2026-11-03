@@ -4,6 +4,12 @@
 # file is the env chain for a packaged service: the binary reads no file.
 # Keep it mode 0600; fill it by hand or with an operator-run chain step.
 #
+# DEPRECATED with docs/d104's deployment generation v4: the VPN_* variables
+# below are v3's surface. v4 keeps the tunnel wire unchanged and moves the
+# credential (and egress) into the role-scoped store under
+# ~/.local/share/estige/, so this file shrinks to PORT and non-secret knobs
+# when v4 lands. Nothing here is a fallback for v4 — a mixed pair fails closed.
+#
 # Arm the tunnel (docs/d084/d085): a JSON object {"<id>": "<token>"}.
 # Without it the exit node refuses to start (the kill-switch law, docs/d084).
 # Single-quote JSON and any value carrying shell metacharacters.

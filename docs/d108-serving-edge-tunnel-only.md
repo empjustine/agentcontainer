@@ -54,21 +54,35 @@ longer needs mode A to be reachable at all.
 
 ## Generations, and which two axes are in play
 
-The rollouts are named by generation. These are the generations this record
-refers to:
+The rollouts are named by generation, and **this table is the one vocabulary**
+for the whole tree: no other record renumbers these. d104's credential
+generations were renumbered onto it (its "v1 bearer / v2 Ed25519" reading is
+retired — see the history note below).
 
 | Generation | Edge | Operator credential | State |
 | --- | --- | --- | --- |
-| **v2** | allowlist relay (legacy name **mode A**) | none at the edge; provider keys traverse it | deployed, in use |
-| **v3** | tunnel transports — h2-POST / WebSocket / h1.1-POST (d073/d077) | shared bearer, injected as env | deployed, working |
-| **v4** | the same tunnel transports | d104's mutual single-use nonce-bound Ed25519 proofs | in progress, not yet exercised |
+| **v1** | a trusted reverse proxy with allowlisted hostnames | none at the edge; provider keys traverse it in plaintext | historical — previously deployed |
+| **v2** | the same trusted reverse proxy, with symmetric auth credentials | symmetric credential at the edge | never implemented or deployed — skipped for simplicity in favour of v3 |
+| **v3** | tunnel transports — h2-POST / WebSocket / h1.1-POST (d073/d077) | shared bearer, injected as env (`VPN_*`) | deployed, working |
+| **v4** | the same tunnel transports | d104's mutual single-use nonce-bound Ed25519 proofs, with key material in files under `~/.local/share/estige/` rather than env | in progress, not yet exercised |
 
-Two older vocabularies must not be read across into that table. d073/d077
-number **delivery** generations (their v2 bundles the allowlist relay *and*
-the WebSocket tunnel; their v3 is the authenticated relay, still unadopted),
-and d104 numbers **credential** generations (its v1 is the shipped bearer, its
-v2 is the Ed25519 scheme). "v3" below always means the deployed tunnel
-generation; "v4" always means that generation under d104.
+Two things this table settles that were previously scattered or ambiguous:
+
+- **v1 and v2 both mean a trusted reverse proxy**, differing only in whether the
+  edge authenticates anyone. v2 was designed and then skipped: v3 arrived first
+  and made a symmetric-credential proxy not worth building. Recording it keeps
+  "v2" from being re-invented to mean something else.
+- **v4 changes where credentials LIVE, not what crosses the wire.** The
+  envelope, both signatures and the replay discipline are d104's as designed;
+  what moves is the material's home (files, not `VPN_*` env). The `VPN_*`
+  tunnel variables are deprecated with v4 and retire when it lands (VPN-R32's
+  amendment).
+
+A third vocabulary exists and must still not be read across: d073/d077 number
+**delivery** generations, where their v2 bundles the allowlist relay *and* the
+WebSocket tunnel and their v3 is the authenticated relay (unadopted). Where
+this record and d073/d077 disagree on a number, this record wins — d073/d077
+keep their text as history with the supersession noted at the point of use.
 
 The point of the distinction: **v3 is not the security end state.** It proves
 the tunnel shape works, and it already removes the plaintext-key problem,
@@ -229,7 +243,9 @@ implementing changes (see *Open items*); this record changes no code.
   it is gone with slice 5, and the env is now the only arming signal. d084
   and d085 keep their text as history; the file-side veto/assert is not a
   live contract.
-- Where the v2/v3/v4 generation vocabulary lives. d105 owns transport names,
-  not generations; until that record is amended, this table is the reference.
+- ~~Where the v2/v3/v4 generation vocabulary lives.~~ **Closed by this record's
+  own generation table**: it now spans v1–v4 and is the one vocabulary, with
+  d104's credential numbering renumbered onto it. d105 owns transport *names*,
+  not generations.
 - What, if anything, serves local models after the llama-swap pause.
 - How external (non-fleet) clients are onboarded onto the tunnel.
