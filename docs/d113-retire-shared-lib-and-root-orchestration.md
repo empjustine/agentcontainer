@@ -56,6 +56,27 @@ the folder is implied by it. `lib/` at the repo root is deleted.
   Each unit owns its copy outright: it may rename a function, prune a branch,
   or pin a different default without touching its siblings. Divergence between
   copies is ownership, not drift.
+- **Inline first; re-split only on proven repetition.** A unit's `lib/` is a
+  staging post, not the destination. The destination is the module having no
+  `lib/` at all where it can: the code a unit actually uses lives in that
+  unit's own sources, so the folder is standalone in the strongest sense — it
+  keeps working when copied out whole, which is the whole point of the copy
+  unit (and the reason a unit that is heading for its own repository benefits
+  most). A shared module is then created the other way round: only once the
+  unit uses it *many* times, or several units genuinely need the same
+  behaviour, is it extracted into a real library with a real public surface —
+  one that would make sense to a reader who has never heard of this repo.
+  `estige/lib/log.mjs` is the worked example: its one consumer needed four
+  functions, so they were inlined into `build.mjs` and the copy was deleted
+  rather than pruned to a smaller copy.
+
+  WHY the direction matters: a copy that exists "because it was convenient in
+  the overall project" ages into a copy nobody dares change, and it drags the
+  parent tree's concerns into a unit meant to stand alone. Inlining costs a few
+  duplicated lines today and buys a unit that has no library at all until it
+  has earned one. The trigger to re-split is repetition inside the unit or a
+  second genuine consumer — never tidiness, and never "the other units have a
+  `lib/` too".
 - **Pruning is the point**, not an accident of the copy. `cloud-providers.mjs`
   / `cloud-providers.json` copies carry only the rows that unit serves:
   `coding-agent/` holds the full table because it is the reference vocabulary
@@ -148,8 +169,10 @@ entrypoint table) and adds the root `npm-run.sh`; `docs/d119` replaces
 retires its `workload-*.jq` filters and makes `jq` no longer a host
 prerequisite for that unit; `docs/d120` does the same to `estige/`'s row by
 retiring the shell runtime entirely behind a packaged service, leaving that
-`lib/` build-only (`go-build.mjs`, `host-capabilities.mjs`, `log.mjs`). A
-unit's `lib/` is still its own — what changed is how much of one it needs.
+`lib/` build-only (`go-build.mjs`, `host-capabilities.mjs`). A unit's `lib/` is
+still its own — what changed is how much of one it needs, and the inline-first
+rule above pushes that down further: `log.mjs` left estige's `lib/` entirely,
+inlined into its single consumer (`build.mjs`) rather than pruned in place.
 
 ## Alternatives rejected
 
@@ -159,6 +182,15 @@ unit's `lib/` is still its own — what changed is how much of one it needs.
   extension) is impossible against a single upstream table.
 - **Keep `lib/` with a generated sync step.** A sync step is the stale gate the
   copies exist to avoid, and it would still leave `../lib` in every path.
+- **A `lib/` hash gate that flags divergence between copies** (re-proposed
+  after this record landed, from an observed comment-only divergence in
+  `log.mjs`/`canonical-json.mjs`). Rejected on the same ground as the sync
+  step, restated because the proposal recurs: a unit that is about to live in
+  its own repository must be free to evolve a copy until it no longer resembles
+  its sibling. That is the copy unit working, not drift, and the alternative
+  (make them agree) is exactly the coupling this record deleted. The remedy for
+  "this copy carries more than it needs" is **inlining**, not a gate that
+  keeps the extra copies honest.
 - **Keep the root sequencer but per-unit-ify the builders.** The sequencer is
   precisely the root dependency a folder cannot carry; `docs/d083` had already
   shown the per-unit entrypoint is what operators actually reach for.
