@@ -61,7 +61,7 @@ refers to:
 | --- | --- | --- | --- |
 | **v2** | allowlist relay (legacy name **mode A**) | none at the edge; provider keys traverse it | deployed, in use |
 | **v3** | tunnel transports — h2-POST / WebSocket / h1.1-POST (d073/d077) | shared bearer, injected as env | deployed, working |
-| **v4** | the same tunnel transports | d104's mutual time-windowed Ed25519 proofs | in progress, not yet exercised |
+| **v4** | the same tunnel transports | d104's mutual single-use nonce-bound Ed25519 proofs | in progress, not yet exercised |
 
 Two older vocabularies must not be read across into that table. d073/d077
 number **delivery** generations (their v2 bundles the allowlist relay *and*

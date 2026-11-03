@@ -108,6 +108,6 @@ gate the rest, and tailnet ACLs remain available to the operator.
   if a genuine second factor is ever wanted.
   **Superseded by d104** — the genuine second factor is mutual Ed25519
   (relay-to-exit / exit-to-relay proofs), not certificates: same bearer,
-  but time-windowed and never on the wire.
+  but single-use nonce-bound and never on the wire as secret.
 - **Freeze, change nothing.** Rejected — the current shape is a documented
   trap that already misled the operator.
