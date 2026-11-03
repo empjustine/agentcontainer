@@ -64,7 +64,157 @@ import {
 	cloudReachable,
 	detectContainerTool,
 } from "./lib/host-capabilities.mjs";
-import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
+
+// ---------------------------------------------------------------------------
+// Structured logging (docs/d045)
+// ---------------------------------------------------------------------------
+//
+// Inlined from the repo's log kernel rather than imported (docs/d113 as
+// amended): a copy unit owns what it uses, and this build has exactly one
+// consumer shape — four level functions, no stream switching, no debug level.
+// The full kernel lives in each unit that needs more of it; when a second
+// consumer here wants setLogStream or logDebug, the right move is to extract a
+// real library again, not to re-grow a vendored copy.
+//
+// One JSON object per line on stdout (LOG_FORMAT=logfmt for logfmt). Level
+// filtering is the consumer's job (docs/d045): no line is ever dropped here.
+// Messages are stable labels; fields carry the metadata.
+
+let tool = process.env.LOG_TOOL ?? "node";
+/**
+ * @param {string} name
+ * @returns {void}
+ */
+function setLogTool(name) {
+	tool = name;
+}
+
+function ts() {
+	return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
+/**
+ * Cause/suppressed chains are user data; a cyclic one must not hang the emit.
+ * No real chain here is deeper than a wrapped fetch → wrapped parse → cause.
+ * @type {number}
+ */
+const MAX_SERIALIZATION_DEPTH = 8;
+
+/**
+ * Serialize a log field value. Errors become structured objects (name,
+ * message, stack, own enumerable properties, plus the explicitly walked
+ * non-enumerable `cause`/`errors`/`error`/`suppressed`); plain objects and
+ * arrays recurse; primitives pass through.
+ * @param {unknown} v
+ * @param {number} depth
+ * @returns {unknown}
+ */
+function serialize(v, depth) {
+	if (depth >= MAX_SERIALIZATION_DEPTH) {
+		return v instanceof Error
+			? { name: v.name, message: v.message }
+			: Array.isArray(v)
+				? "[max depth]"
+				: { "[max depth]": true };
+	}
+	if (v instanceof Error) {
+		return serializeError(v, depth);
+	}
+	if (Array.isArray(v)) {
+		return v.map((item) => serialize(item, depth + 1));
+	}
+	if (v !== null && typeof v === "object") {
+		return Object.fromEntries(
+			Object.entries(v).map(([k, item]) => [k, serialize(item, depth + 1)]),
+		);
+	}
+	return v;
+}
+
+/**
+ * `cause`, AggregateError's `errors`, and SuppressedError's `error`/`suppressed`
+ * are all NON-enumerable own properties (verified on node 24) — Object.entries
+ * misses them, so they are walked explicitly. Attached properties from
+ * `Object.assign(err, {...})` ARE enumerable and flow through the general pass.
+ * @param {Error} err
+ * @param {number} depth
+ * @returns {unknown}
+ */
+function serializeError(err, depth) {
+	/** @type {Record<string, unknown>} */
+	const out = { name: err.name, message: err.message };
+	if (typeof err.stack === "string") {
+		out.stack = err.stack;
+	}
+	for (const [k, v] of Object.entries(err)) {
+		out[k] = serialize(v, depth + 1);
+	}
+	for (const k of ["cause", "errors", "error", "suppressed"]) {
+		if (k in out || !(k in err)) {
+			continue;
+		}
+		const v = /** @type {Record<string, unknown>} */ (
+			/** @type {unknown} */ (err)
+		)[k];
+		out[k] = serialize(v, depth + 1);
+	}
+	return out;
+}
+
+/**
+ * Logfmt escaping for a field value: objects/arrays (post-serialization) are
+ * JSON-encoded inline; scalars are quoted only when whitespace/quotes/`=`/
+ * backslashes or empty would otherwise corrupt the line format.
+ * @param {unknown} v
+ * @returns {string}
+ */
+function fmtLogfmtValue(v) {
+	// Structured fields may be objects/arrays/errors after serialization —
+	// JSON-encode those instead of leaking "[object Object]".
+	if (v !== null && typeof v === "object") {
+		return JSON.stringify(v);
+	}
+	const s = String(v);
+	return /[\s"=\\]/.test(s) || s === "" ? JSON.stringify(s) : s;
+}
+
+function emit(level, msg, fields = {}) {
+	const base = { ts: ts(), level, tool, msg };
+	if (process.env.LOG_FORMAT === "logfmt") {
+		const rest = Object.entries(
+			/** @type {Record<string, unknown>} */ (serialize(fields, 0)),
+		)
+			.map(([k, v]) => `${k}=${fmtLogfmtValue(v)}`)
+			.join(" ");
+		const msgv = /[\s"=\\]/.test(msg) ? JSON.stringify(msg) : msg;
+		process.stdout.write(
+			`ts=${base.ts} level=${level} tool=${tool} msg=${msgv}${rest ? ` ${rest}` : ""}\n`,
+		);
+		return;
+	}
+	process.stdout.write(
+		`${JSON.stringify({
+			...base,
+			.../** @type {Record<string, unknown>} */ (serialize(fields, 0)),
+		})}\n`,
+	);
+}
+
+/**
+ * @param {string} msg
+ * @param {Record<string, unknown>} [fields]
+ */
+const logInfo = (msg, fields) => emit("info", msg, fields);
+/**
+ * @param {string} msg
+ * @param {Record<string, unknown>} [fields]
+ */
+const logWarn = (msg, fields) => emit("warn", msg, fields);
+/**
+ * @param {string} msg
+ * @param {Record<string, unknown>} [fields]
+ */
+const logError = (msg, fields) => emit("error", msg, fields);
 
 setLogTool("estige/build");
 
@@ -273,8 +423,18 @@ if (goToolchainReady()) {
 			const base = termux ? androidBuildEnv(termux) : hostBuildEnv();
 			const debBinary = join(staging, "estige-android-arm64");
 			const rpmBinary = join(staging, "estige-linux-amd64");
-			const debEnv = { ...base, CGO_ENABLED: "0", GOOS: "android", GOARCH: "arm64" };
-			const rpmEnv = { ...base, CGO_ENABLED: "0", GOOS: "linux", GOARCH: "amd64" };
+			const debEnv = {
+				...base,
+				CGO_ENABLED: "0",
+				GOOS: "android",
+				GOARCH: "arm64",
+			};
+			const rpmEnv = {
+				...base,
+				CGO_ENABLED: "0",
+				GOOS: "linux",
+				GOARCH: "amd64",
+			};
 
 			const debBuilt = await run(
 				"go",
