@@ -232,12 +232,29 @@ func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, d
 
 // readLine reads one CRLF-terminated line without the terminator (the
 // response status line of the client handshake).
+//
+// Bounded on purpose: the handshake deadline bounds the TIME a peer may take,
+// not the memory one line may occupy, so a peer that streams bytes without a
+// newline could otherwise grow the buffer until the deadline fires (VPN-R39).
+// A status line is a few dozen bytes; this cap is orders of magnitude above any
+// real one and still refuses the unbounded case.
+const maxStatusLine = 8 << 10
+
 func readLine(br *bufio.Reader) (string, error) {
-	line, err := br.ReadString('\n')
-	if err != nil {
-		return "", err
+	var line []byte
+	for {
+		chunk, err := br.ReadSlice('\n')
+		line = append(line, chunk...)
+		if len(line) > maxStatusLine {
+			return "", fmt.Errorf("%w: status line exceeds %d bytes", ErrProtocol, maxStatusLine)
+		}
+		if err == nil {
+			return strings.TrimRight(string(line), "\r\n"), nil
+		}
+		if !errors.Is(err, bufio.ErrBufferFull) {
+			return "", err
+		}
 	}
-	return strings.TrimRight(line, "\r\n"), nil
 }
 
 func hasPort(host string) bool {

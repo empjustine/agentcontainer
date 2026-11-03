@@ -463,3 +463,26 @@ func TestWSDialRejectsNon101(t *testing.T) {
 		t.Fatalf("error should carry the real status, got %v", err)
 	}
 }
+
+// A handshake peer may not spend memory on an unbounded status line: the
+// handshake deadline bounds time, not bytes, so a peer that never sends '\n'
+// would otherwise grow the read buffer until the deadline fired (VPN-R39).
+func TestReadLineRefusesUnboundedStatusLine(t *testing.T) {
+	t.Run("an oversized line is refused, not buffered", func(t *testing.T) {
+		br := bufio.NewReaderSize(strings.NewReader(strings.Repeat("x", maxStatusLine+1024)+"\r\n"), 256)
+		if _, err := readLine(br); !errors.Is(err, ErrProtocol) {
+			t.Fatalf("expected ErrProtocol for an oversized status line, got %v", err)
+		}
+	})
+
+	t.Run("a normal line still reads", func(t *testing.T) {
+		br := bufio.NewReader(strings.NewReader("HTTP/1.1 200 Connection established\r\nrest"))
+		got, err := readLine(br)
+		if err != nil {
+			t.Fatalf("readLine: %v", err)
+		}
+		if got != "HTTP/1.1 200 Connection established" {
+			t.Fatalf("readLine = %q", got)
+		}
+	})
+}

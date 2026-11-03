@@ -116,14 +116,55 @@ func writeProblem(w http.ResponseWriter, r *http.Request, status int, code, titl
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(problem{
-		Type:     code,
-		Title:    title,
-		Status:   status,
-		Detail:   detail,
-		Raw:      err.Error(),
-		Details:  errorDetails(err),
-		Instance: r.URL.RequestURI(),
+		Type:    code,
+		Title:   title,
+		Status:  status,
+		Detail:  detail,
+		Raw:     rawErrorText(err),
+		Details: errorDetails(err),
+		// The instance is a diagnostic for the operator reading a LOOPBACK
+		// surface, where the whole request is their own. On the exit node the
+		// URI arrives from the network, and echoing it back turns a fixed-path
+		// tunnel into a reflector for whatever the caller put on the wire —
+		// post-auth today, but worth nothing to the client, which already knows
+		// what it asked for.
+		Instance: instanceOf(r),
 	})
+}
+
+// nodeRole is the process's network position (docs/d088). One process serves
+// one role, so a package-level copy is the role, not a parameter threaded
+// through every handler for one diagnostic field.
+var nodeRole = roleExit
+
+const (
+	roleExit  = "exit"
+	roleRelay = "relay"
+)
+
+// rawErrorText bounds the verbatim Go error a problem body carries. The
+// texts here are already operator-facing and never secrets, but an unbounded
+// echo is still attacker-shaped input on the one surface that reflects it.
+const maxRawError = 512
+
+func rawErrorText(err error) string {
+	if err == nil {
+		return ""
+	}
+	text := err.Error()
+	if len(text) <= maxRawError {
+		return text
+	}
+	return text[:maxRawError] + "… (truncated)"
+}
+
+// instanceOf returns the request URI only on the relay node (a loopback
+// surface serving its own operator); the exit node omits it.
+func instanceOf(r *http.Request) string {
+	if nodeRole != roleExit {
+		return r.URL.RequestURI()
+	}
+	return ""
 }
 
 // dnsErrorDetails is the canonical dump of *net.DNSError — the six public
@@ -320,6 +361,7 @@ func main() {
 		fmt.Printf("estige %s\n", version)
 		return
 	}
+	nodeRole = *mode
 
 	// Disable Go's default timestamp prefix — the Combined Log Format lines
 	// already carry their own timestamp in brackets, so the log package's
@@ -381,7 +423,14 @@ func main() {
 		// Only guard against slowloris-style clients. Everything else is left
 		// unlimited: LLM streams can legitimately run for many minutes.
 		ReadHeaderTimeout: 30e9,
-		Handler:           s,
+		// IdleTimeout is the one terminator that is safe to enable: it bounds
+		// how long a connection may sit with NO request in flight, so it never
+		// touches a live session (which is always either reading a window or
+		// flushing one) and it reaps the half-open sockets ReadHeaderTimeout
+		// alone leaves parked between requests. Deliberately generous for the
+		// same reason the other knobs are unset.
+		IdleTimeout: 5 * time.Minute,
+		Handler:     s,
 	}
 
 	log.Printf("[estige] listening on %s; tunnel at %s", bind, tunnelPath)
