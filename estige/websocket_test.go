@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/binary"
 	"errors"
 	"io"
 	"net"
@@ -13,6 +14,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -158,10 +160,75 @@ func TestWSFragmentationReassembly(t *testing.T) {
 	}
 }
 
+// A fragmented message may not grow past the same cap one frame has: the
+// per-frame limit alone lets a peer keep the heap growing by never setting
+// FIN (VPN-R39). The refusal must come at the append that would cross the
+// cap, not after a final FIN that never arrives.
+func TestWSFragmentationRespectsMessageCap(t *testing.T) {
+	client, server := wsPair(t)
+	defer client.Close()
+	defer server.Close()
+
+	// Every frame here is legal on its own — half the message cap plus a
+	// byte — so only the RUNNING total can refuse. That is the whole point:
+	// a per-frame cap alone never fires, and this loop would otherwise keep
+	// the heap growing for as long as the peer keeps writing.
+	half := int(wsMaxMessage)/2 + 1
+	var writes atomic.Int64
+	stop := make(chan struct{})
+	defer close(stop)
+	go func() {
+		if err := client.writeRawFrame(wsOpBinary, false, make([]byte, half)); err != nil {
+			return
+		}
+		writes.Add(1)
+		for {
+			select {
+			case <-stop:
+				return
+			default:
+			}
+			if err := client.writeRawFrame(wsOpContinuation, false, make([]byte, half)); err != nil {
+				return // the reader refused and closed: expected
+			}
+			writes.Add(1)
+		}
+	}()
+
+	// Bounded on purpose: without the cap the reader never returns at all
+	// (it keeps assembling), so a blocking call would hang the whole suite
+	// instead of reporting the bug. The deferred Close then unblocks the
+	// writer.
+	done := make(chan error, 1)
+	go func() {
+		_, _, err := server.readMessage()
+		done <- err
+	}()
+	var err error
+	select {
+	case err = <-done:
+	case <-time.After(10 * time.Second):
+		t.Fatalf("readMessage kept assembling past the cap after %d fragments (unbounded growth)", writes.Load())
+	}
+	if !errors.Is(err, ErrProtocol) {
+		t.Fatalf("expected ErrProtocol once the assembled total crosses the cap, got %v", err)
+	}
+	// The refusal must be the CAP, not some unrelated framing complaint, and
+	// it must arrive at the third frame (2 halves + 1 > cap), not later.
+	if !strings.Contains(err.Error(), "assembled message exceeds the cap") {
+		t.Fatalf("expected the message-cap refusal, got %v", err)
+	}
+	if got := writes.Load(); got > 3 {
+		t.Fatalf("assembler accepted %d fragments past the cap (expected refusal at 3)", got)
+	}
+}
+
 // writeRawFrame is the test-only escape hatch for frames the production
 // writer never emits (non-FIN, control opcodes with custom payloads). It
-// mirrors writeFrame's masking exactly — the server's polarity check (and
-// the tests that assert it) depend on a client-role frame being masked.
+// mirrors writeFrame's masking AND its extended-length encoding exactly: the
+// server's polarity check, the payload lengths above 125 bytes, and every
+// test that asserts on them depend on both halves being faithful. It does
+// not mask a server-role conn (writeFrame's polarity rule, same as there).
 func (w *wsConn) writeRawFrame(opcode byte, fin bool, payload []byte) error {
 	w.writeMu.Lock()
 	defer w.writeMu.Unlock()
@@ -177,16 +244,34 @@ func (w *wsConn) writeRawFrame(opcode byte, fin bool, payload []byte) error {
 			body[i] = payload[i] ^ maskKey[i%4]
 		}
 	}
-	// Header byte 1 = FIN|opcode; byte 2 = mask bit | payload length.
-	head := byte(len(body))
-	if masked {
-		head |= 0x80
+	// Header byte 1 = FIN|opcode; byte 2 = mask bit | payload length, with
+	// 126/127 selecting the 2- and 8-byte extended length that follows.
+	var head [10]byte
+	n := len(body)
+	var hn int
+	switch {
+	case n < 126:
+		head[1] = byte(n)
+		hn = 2
+	case n <= 0xffff:
+		head[1] = 126
+		binary.BigEndian.PutUint16(head[2:4], uint16(n))
+		hn = 4
+	default:
+		head[1] = 127
+		binary.BigEndian.PutUint64(head[2:10], uint64(n))
+		hn = 10
 	}
+	if masked {
+		head[1] |= 0x80
+	}
+	// Header byte 1's FIN bit and opcode.
 	first := opcode
 	if fin {
 		first |= 0x80
 	}
-	if _, err := w.bw.Write([]byte{first, head}); err != nil {
+	head[0] = first
+	if _, err := w.bw.Write(head[:hn]); err != nil {
 		return err
 	}
 	if masked {

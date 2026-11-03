@@ -351,6 +351,14 @@ func (w *wsConn) readMessage() (opcode byte, payload []byte, err error) {
 			if !inFragment {
 				return 0, nil, fmt.Errorf("%w: continuation without a start frame", ErrProtocol)
 			}
+			// The cap must hold at every append, not just at FIN (VPN-R39):
+			// readFrame caps ONE frame, so without a running-total check an
+			// authenticated peer streams unlimited continuation frames inside
+			// the idle window and the heap grows without bound. Checked
+			// before the append so a hostile total never materializes.
+			if int64(len(assembled))+int64(len(frame)) > wsMaxMessage {
+				return 0, nil, fmt.Errorf("%w: assembled message exceeds the cap", ErrProtocol)
+			}
 			assembled = append(assembled, frame...)
 			inFragment = !fin
 		default:
