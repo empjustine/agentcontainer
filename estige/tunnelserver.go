@@ -2,10 +2,12 @@
 // (docs/d073 §5: VPN-R11..R22, §8: VPN-R31..R34).
 //
 // Dispatch is by path only (VPN-R42): main's ServeHTTP hands this handler
-// exactly the tunnel path and everything else stays mode A — and since the
-// reserved path is checked to never collide with an allowlist host at
-// startup, enabling or disabling the tunnel is invisible from outside (both
-// states answer the same camouflage 404, VPN-R34/R2).
+// exactly the tunnel path and answers the camouflage 404 to everything else —
+// the namespace is the whole edge now that d108 retired the allowlist reverse
+// proxy (legacy "mode A"), so there is no second surface to stay
+// indistinguishable from; what remains is that enabling or disabling the
+// tunnel is invisible from outside (both states answer the same 404,
+// VPN-R34/R2).
 //
 // The 101 is written on the hijacked connection with the logging wrapper
 // kept in the chain (VPN-R13): auth and upgrade validation run BEFORE the
@@ -69,8 +71,8 @@ type tunnelServer struct {
 
 // isTunnelPath reports whether this request belongs to the tunnel
 // namespace. Exact-match only: /vpn/anything-else is not tunnel traffic and
-// falls through to mode A, where it answers the same 404 as any unlisted
-// path (the namespace boundary stays invisible, VPN-R34).
+// answers the same camouflage 404 as any other unlisted path (the namespace
+// boundary stays invisible, VPN-R34).
 func (t *tunnelServer) isTunnelPath(path string) bool {
 	return path == tunnelPath
 }

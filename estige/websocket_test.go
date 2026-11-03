@@ -285,6 +285,13 @@ func (w *wsConn) writeRawFrame(opcode byte, fin bool, payload []byte) error {
 	return w.bw.Flush()
 }
 
+// wsCloseNormal is the RFC 6455 §10.1 "normal closure" code. It lives here
+// rather than with the carrier's own codes because nothing in the carrier
+// ever SENDS it: the tunnel ends by closing the session, and only a peer's
+// orderly close is modelled on the read path. A test that wants to be closed
+// politely has to say so itself.
+const wsCloseNormal = 1000
+
 // Control frames flow inside readMessage: pings are answered transparently,
 // a close surfaces as errWSClosed (the orderly end, VPN-R16).
 func TestWSControlFrames(t *testing.T) {

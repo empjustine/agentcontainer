@@ -48,15 +48,15 @@ const (
 	wsOpPong         byte = 0xa
 )
 
-// Close codes the tunnel emits (§10.1 registry).
+// Close codes the tunnel emits (§10.1 registry). Only the codes the carrier
+// actually sends are named: an unused constant is a claim about behaviour that
+// nothing enforces, and 1001/1011 in particular suggested a graceful-shutdown
+// and an internal-error path this carrier does not have.
 const (
-	wsCloseNormal              = 1000
-	wsCloseProtocolError       = 1002
-	wsCloseUnsupported         = 1003
-	wsCloseInternalErr         = 1011
-	wsCloseGoingAway           = 1001
-	wsMaxControlPayload        = 125 // RFC 6455 §5.5 control frames
-	wsMaxMessage         int64 = 1 << 20
+	wsCloseProtocolError = 1002
+	wsCloseUnsupported   = 1003
+	wsMaxControlPayload  = 125 // RFC 6455 §5.5 control frames
+	wsMaxMessage   int64 = 1 << 20
 )
 
 // errWSClosed reports an orderly or peer-initiated close; io.EOF is used for
