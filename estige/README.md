@@ -203,6 +203,17 @@ relay and waits for no health answer: the service manager already owns the
 relay, and the relay's own upstream chain is read from the ambient env before
 that spelling is exported.
 
+Every conventional variable is printed in **both cases**, with equal values —
+`HTTP_PROXY` and `http_proxy`, and so on — because clients disagree about which
+one they read (curl prefers the lowercase for `http://`, GNU wget reads only
+the lowercase), and a child reading the case that was not exported dials the
+internet **direct**, past the tunnel (VPN-R26). `ALL_PROXY` names
+`socks5h://`, not `socks5://`: the relay's SOCKS5 listener refuses a
+literal-address target because the exit node owns resolution and pinning
+(VPN-R22), so the client must keep the name on the wire (VPN-R24). Both rules
+are docs/d130's, pinned by `estige/proxyenv_test.go` and an end-to-end SOCKS
+case.
+
 Secrets (env-only — VPN-R32/d078; the service manager loads the env file, the
 binary never does; the in-progress d104 credential redesign moves the tunnel
 keys into the on-disk key store): an armed exit node (docs/d084/d085: armed

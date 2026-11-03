@@ -5,7 +5,7 @@ status: implemented
 title: "d120 — estige ships as OS packages, and its POSIX launchers retire"
 parent: estige
 depends-on: [d041, d083, d088, d090, d095, d102, d106, d108, d110, d113]
-references: [d046, d073, d094]
+references: [d046, d073, d094, d130]
 tags: ["estige", "packaging", "systemd", "runit", "shell-retirement"]
 ---
 
@@ -48,7 +48,7 @@ build needs: `go-build.mjs`, `host-capabilities.mjs`, `log.mjs`.
 | supervised restart (`--restart unless-stopped`, native supervisor loop) | the service manager (`Restart=on-failure`, runit's `runsv`) |
 | readiness probe before handing out the proxy spelling | the service manager; the chain step no longer starts anything |
 | refusing a self-chained relay (ambient proxy env naming its own listener) | **the binary** — `relayConfigFromEnv` refuses before any bind, exit 94 unchanged (docs/d095) |
-| exporting the loopback proxy spelling to a child | `estige proxy-env`, printing `export KEY='value'` lines for `eval` |
+| exporting the loopback proxy spelling to a child | `estige proxy-env`, printing `export KEY='value'` lines for `eval` (both cases of every variable, `socks5h` for `ALL_PROXY` — docs/d130) |
 | `termux-provisioning`'s `pkg install node jq` | nothing estige needs; the provisioner keeps both for the units that still do |
 
 ### The packages are written by pure Go
@@ -130,6 +130,11 @@ uninstalled.
 - `docs/d095`'s chain-step mechanics are superseded in part: the chain step is
   a binary verb and starts no relay. Its "the relay node is a host service"
   half is unaffected — a package is that host service.
+- The rewrite changed two exported values without deciding to: the SOCKS
+  scheme lost its `h` and the lowercase spellings were dropped. docs/d130
+  records both regressions, the live evidence, and the restored contract —
+  the export is now a test-pinned contract with the listener, not a
+  transcription of the old script.
 - Verified here: both artifacts build; the deb's fields, contents and modes
   are inspected; the rpm is queryable, its four digests verify
   (`rpmkeys --checksig`), and a fake-root `unshare -r` install/upgrade/erase

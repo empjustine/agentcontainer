@@ -19,6 +19,12 @@ references: [d059, d070, d079, d082, d084, d090]
 > (two argv modes, the readiness probe, the supervisor loop) belong to the
 > retired script and stay only as the record of what it did. The self-chain
 > refusal moved into `relayConfigFromEnv` with the launcher's exit status 94.
+>
+> **The export contract of step 4 still binds, and was briefly broken.**
+> d120's rewrite to Go shipped `ALL_PROXY=socks5://` and dropped the lowercase
+> spellings; docs/d130 records the two regressions, why the `h` in `socks5h`
+> is the difference between a name and an address on the wire (VPN-R22), and
+> that both cases of every variable are again exported.
 
 ## Problem
 
@@ -108,7 +114,9 @@ restate what the code already knows.
       `NO_PROXY`/`no_proxy` is `127.0.0.1,localhost,::1` **merged with the
       host's list**: loopback stays direct — the relay itself, and any
       host-local service, must not depend on the tunnel being up — while an
-      operator's internal suffixes keep their meaning.
+      operator's internal suffixes keep their meaning. Both cases of every
+      variable, and the `h` in `socks5h`, are load-bearing: docs/d130 records
+      what each buys and what a regression costs.
 
 5. **The env sequencing is the whole point, and it is pinned.** The relay's
    own upstream chain (d094) is read from the HOST environment, so the chain
