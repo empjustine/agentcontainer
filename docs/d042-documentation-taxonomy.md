@@ -154,9 +154,16 @@ replaced. d042's taxonomy now covers every module.
   answers "what is it and how do I operate it", design answers "why is it
   built this way", archive answers "what did we learn and discard", d0XX
   answers "what did we decide and when".
-- The README documentation index is the type map; frontmatter is the machine
-  signal. Both must be updated together when a doc changes type (per
-  AGENTS.md's index-sync rule).
+- The README documentation index states the type map; frontmatter is the
+  machine signal, and it is the one that must stay right.
+  **Amended: the index no longer enumerates documents.** It describes the five
+  `type` patterns and a short reading path, and a doc's specifics live in its
+  own frontmatter and body. The amendment is the churn lesson: a row per doc
+  (130+ of them, ~75 % of README) had to be re-edited on nearly every doc
+  landing, still drifted from the graph, and each edit was a chance for the
+  prose to rot. Enumerating a searchable metadata set in a hand-kept list is
+  work with no reader, and agents can search the data far better than they can
+  maintain the index.
 - Anchored-by-pointer: a path referenced from a d0XX body moves only if the
   records naming it are updated too — mechanical upkeep, permitted since
   d072 (before that, moving a doc meant leaving dangling pointers in

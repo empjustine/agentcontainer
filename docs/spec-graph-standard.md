@@ -252,9 +252,15 @@ Three constraints bind the placement, and the first one decides:
    as **ids**. The `parent` is the code unit the document belongs to — the
    module it describes, or `architecture` when it spans modules — never the
    record it happens to follow from (that is `depends-on`).
-3. Give it a home per the table above, and add a row to the README
-   documentation index **in its type section** — the index is grouped by type
-   and must not drift from the graph.
+3. Give it a home per the table above. **Do not add an index row.** The README
+   documentation index describes the five `type` patterns and a short reading
+   path; it deliberately does not enumerate documents, because a row per doc
+   meant the index was re-edited on nearly every doc landing and still drifted
+   from the graph. Discovery is the frontmatter: `id`, `type`, `status`,
+   `parent` and the links are the machine-readable map, and a search over them
+   is more accurate than any hand-kept list. A new doc that nothing links to is
+   still reachable by search and by its `parent` edge — that is the intended
+   state, not an orphan to be repaired by adding a row.
 4. If it changes a boundary, contract, or invariant, update the owning spec in
    the same change.
 

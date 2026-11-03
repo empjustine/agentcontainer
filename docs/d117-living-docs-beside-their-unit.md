@@ -104,9 +104,11 @@ repo itself.
 - Reversible: a doc that turns out to serve two units moves back to `docs/` and
   its `parent` becomes `architecture`. The rule is not "unit folders own
   everything"; it is "the edge and the path say the same thing".
-- The README index stays **type-grouped** (its section is the doc's `type`, not
-  its folder). Only the row's path changes; a reader looking for a runbook still
-  finds it under `module-design`, one hop from the unit it belongs to.
+- The README index stays **type-first** in what it does describe (a pattern a
+  type owns, not a folder's inventory), so a reader looking for a runbook still
+  starts under the module-design pattern. It no longer carries a row per doc
+  (see the amendment in [d042](d042-documentation-taxonomy.md)); where a moved
+  doc *is* named — the start-here path — the path simply changes.
 
 ## Alternatives rejected
 
