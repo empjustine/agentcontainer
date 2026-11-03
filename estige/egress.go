@@ -221,24 +221,20 @@ type dialError struct {
 func (e dialError) Error() string { return "dial " + e.addr.String() + ": " + e.err.Error() }
 func (e dialError) Unwrap() error { return e.err }
 
-func isEgressDenied(err error) bool {
-	var e errEgressDenied
-	return errors.As(err, &e)
-}
-
-func isResolutionError(err error) bool {
-	var e resolutionError
-	return errors.As(err, &e)
-}
-
 // egressFailureReason maps a dialValidated error onto the stable
 // CONNECT_ERR reason set (VPN-R20/R35/R37 — reasons are vocabulary the
 // relay node and the log rely on, so they are produced in exactly one place).
+//
+// The As checks are inline on purpose: each family is classified here and
+// nowhere else, so a named predicate would be a second spelling of the same
+// question with only this switch, plus tests, as callers.
 func egressFailureReason(err error) string {
+	var denied errEgressDenied
+	var resolve resolutionError
 	switch {
-	case isEgressDenied(err):
+	case errors.As(err, &denied):
 		return errReasonDenied
-	case isResolutionError(err):
+	case errors.As(err, &resolve):
 		return errReasonResolve
 	default:
 		return errReasonDial
