@@ -325,6 +325,59 @@ func TestModeEWindowsAreAuthenticatedAndCamouflaged(t *testing.T) {
 	}
 }
 
+// A window the exit cannot drain must FAIL on the wire, not just in the log.
+// The drain-failure path used to return without writing a status, so net/http
+// emitted an empty 200 while the CLF line recorded 500 — the client saw a
+// healthy session and the log disagreed with it (VPN-R26 mid-session
+// semantics: a broken window means a dead session, and the peer must be able
+// to tell).
+func TestModeEDrainFailureAnswersAnError(t *testing.T) {
+	s := newTunnelServer(t, true, egressConfig{AllowCidrs: []string{"127.0.0.0/8"}})
+	backend := newHTTPServer(t, s)
+	target := backend.URL + tunnelPath
+
+	// The registry admits a window until inboundWindowCap bytes are queued;
+	// maxFramePayload-sized frames cross it on the third one
+	// (inboundWindowCap is exchangeWindowBytes + maxFramePayload, i.e. two
+	// frame payloads). The relay reads nothing here, so the queue fills.
+	var body []byte
+	for i := 0; i < 3; i++ {
+		frame, err := encodeFrame(frameData, tunnelStreamV1, make([]byte, maxFramePayload))
+		if err != nil {
+			t.Fatal(err)
+		}
+		body = append(body, frame...)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, target, bytes.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Authorization", "Bearer "+testTunnelToken)
+	req.Header.Set("traceparent", buildTraceparent("000000000000000000000000000000cc", firstWindowSpan))
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		t.Fatal("a window the exit could not drain answered 200 — the client cannot see the dead session")
+	}
+	if resp.StatusCode != http.StatusInternalServerError {
+		t.Fatalf("drain failure answered %d, want 500", resp.StatusCode)
+	}
+	// The body must actually be written, not merely the status: an empty
+	// problem body is the same silent-success shape one layer up.
+	payload, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(payload) == 0 {
+		t.Fatal("drain failure wrote a status with an empty body")
+	}
+}
+
 func TestParseTraceparent(t *testing.T) {
 	trace := "0123456789abcdef0123456789abcdef"
 	tests := []struct {

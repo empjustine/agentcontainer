@@ -687,6 +687,13 @@ func (t *tunnelServer) serveTunnelExchange(w http.ResponseWriter, r *http.Reques
 		// minted session waiting for windows that will never come.
 		_ = s.Close()
 		log.Printf("[estige] tunnel mode E: window drain failed: %v", err)
+		// The status must reach the peer: answering nothing here would let
+		// net/http emit an empty 200 while the CLF line records 500, so a
+		// dead session would look healthy to the client and the log would
+		// disagree with the wire. This is post-auth, so a real problem body
+		// leaks no oracle (VPN-R34 governs the unauthenticated funnel only).
+		writeProblem(lw, r, http.StatusInternalServerError, "tunnel-window-failed",
+			"The tunnel could not read this window", "", err)
 		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
 		return
 	}
