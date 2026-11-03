@@ -504,33 +504,56 @@ func newExchangeSessions() *exchangeSessions {
 // state), a fresh trace-id mints iff the span says it is the first window.
 // A nil return means "not a serveable window" — the caller answers the
 // camouflage 404.
-func (t *tunnelServer) accept(traceID string, span uint64, keyID string) *exchangeStream {
+//
+// The session is bound to the key that MINTED it: a window bearing a
+// different (but individually valid) operator key is refused, and the refusal
+// is indistinguishable from every other one (VPN-R34). Without the binding any
+// operator key that learned a trace-id could drive — or destroy — a session it
+// never authenticated for. This is a session-authentication rule, not a
+// per-key right: d078 §1 keeps scopes, egress policy and namespaces out of
+// scope, and this adds none of them.
+//
+// The third return says the refusal was an AUTHENTICATION event on a live
+// session rather than a routing one, and hands that session back so the caller
+// can destroy it OUTSIDE this lock (Close takes the registry lock). It is
+// non-nil only for the key-mismatch case: a desynced span or an unknown
+// trace-id is a misrouted window, not evidence that someone else holds the
+// carrier.
+func (t *tunnelServer) accept(traceID string, span uint64, keyID string) (session *exchangeStream, compromised *exchangeStream) {
 	t.sessions.mu.Lock()
 	defer t.sessions.mu.Unlock()
 	if s := t.sessions.byTrace[traceID]; s != nil {
-		return s
+		if s.keyID != keyID {
+			// Attribution side only: the arriving key is named in the log (it
+			// authenticated), never in the response, and the session's own key
+			// is deliberately NOT logged here — a refusal must not report who
+			// else holds the trace-id.
+			log.Printf("[estige] tunnel mode E: AUTH FAILURE — window authenticated as key=%s, but this session was minted by another principal; killing the session", keyID)
+			return nil, s
+		}
+		return s, nil
 	}
 	if span != firstWindowSpan {
 		// A continuation without state: unknown trace-id is camouflage
 		// 404 by decision (d077 §3, VPN-R34) — the answer must not tell a
 		// prober that minting works.
-		return nil
+		return nil, nil
 	}
 	if len(t.sessions.byTrace) >= maxExchangeSessions {
 		// Loud, not silent: a full registry means a session leak or an
 		// operator burst, and refusing a NEW session is survivable while a
 		// half-minted one would not be (NFR-2).
 		log.Printf("[estige] tunnel mode E: session registry full (%d) — refusing new session", maxExchangeSessions)
-		return nil
+		return nil, nil
 	}
-	s := newExchangeStream(traceID, t.sessions)
+	s := newExchangeStream(traceID, t.sessions, keyID)
 	t.sessions.byTrace[traceID] = s
 	// Attribution at mint — the same point the 101 and mode C paths take
 	// it: after auth, before any session work (docs/d078 §5). The id is a
 	// label, so saying it out loud is allowed; the credential never is.
 	log.Printf("[estige] tunnel session: authenticated key=%s", keyID)
 	go t.runSession(s)
-	return s
+	return s, nil
 }
 
 // exchangeStream is mode E's tunnelStream on the exit-node side: reads pop
@@ -541,6 +564,12 @@ func (t *tunnelServer) accept(traceID string, span uint64, keyID string) *exchan
 type exchangeStream struct {
 	traceID  string
 	sessions *exchangeSessions
+	// keyID is the principal whose credential minted this session. Every
+	// later window must authenticate as the same key (accept enforces it), so
+	// the session is as bound to one authentication as a mode D carrier is to
+	// its handshake — the per-connection authentication d104 states as a
+	// security bound, expressed for a multi-request carrier.
+	keyID string
 
 	// mu guards the sequence state AND the one-window-at-a-time contract:
 	// beginWindow is the only mutator, so response writers are serialized
@@ -561,10 +590,11 @@ type exchangeStream struct {
 
 // newExchangeStream builds an unstarted session carrier (runSession is
 // spawned by accept once the registry holds it).
-func newExchangeStream(traceID string, sessions *exchangeSessions) *exchangeStream {
+func newExchangeStream(traceID string, sessions *exchangeSessions, keyID string) *exchangeStream {
 	return &exchangeStream{
 		traceID:  traceID,
 		sessions: sessions,
+		keyID:    keyID,
 		nextSpan: firstWindowSpan,
 		// Small on purpose: a handler blocks on a full queue instead of the
 		// queue growing, and the relay consumer is always running — during
@@ -670,7 +700,18 @@ func (t *tunnelServer) serveTunnelExchange(w http.ResponseWriter, r *http.Reques
 		writeFunnel404(lw, r)
 		return
 	}
-	s := t.accept(traceID, span, keyID)
+	s, compromised := t.accept(traceID, span, keyID)
+	if compromised != nil {
+		// Every tunnel session exists only under authentication, and a failed
+		// authentication interrupts the tunnel rather than merely declining
+		// this request (the user-facing rule this enforces). Closing here —
+		// outside accept's lock — is what the relay observes as a dead
+		// carrier on its next window, and the lifecycle line records the kill
+		// on this side so both ends have a trace.
+		_ = compromised.Close()
+		writeFunnel404(lw, r)
+		return
+	}
 	if s == nil {
 		writeFunnel404(lw, r)
 		return

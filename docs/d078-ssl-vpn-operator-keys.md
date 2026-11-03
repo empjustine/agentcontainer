@@ -142,6 +142,23 @@ exists).
 
 ## 6. Boundary and forward hook
 
+**Session authentication is not a per-key right.** One rule this record DOES
+state, because leaving it unstated was a real gap: a multi-request session
+carrier is bound to the principal whose credential opened it. A window
+bearing a different (individually valid) key is refused with the same
+camouflage 404 as any other refusal, and — because every tunnel session must
+exist only under authentication — the failed authentication interrupts the
+tunnel: the session is destroyed, the relay observes a dead carrier on its
+next exchange, and both sides log the failure (the arriving side names the key
+that authenticated, never the session's key, VPN-R33). Without this, any
+operator key that learned a trace-id could drive or destroy a session it never
+authenticated for.
+
+This adds none of the per-key *rights* listed as out of scope: no scope, no
+egress policy, no namespace, no quota. Two principals remain identical in
+rights; the binding says only that a session belongs to whoever authenticated
+for it.
+
 Per-key *rights* (scope, egress, namespace) are explicitly out of scope. The
 hook is structural only: the per-principal struct introduced by this record
 may later carry a scope field, so if access isolation is ever wanted it is a
