@@ -26,20 +26,16 @@ catalog for each provider (kept fresh via `pi update --models`), simply
 re-routed through the configured proxy/endpoint.
 
 The specific models the agent actually uses are **not enumerated** by the
-generator. They are the "scoped models" set, configured via the
-`enabledModels` setting in `settings.json` — the set cycled by Ctrl+P and
-matched with minimatch on `provider/modelId`:
+generator. The agent cycles pi's own catalog.
 
-```json
-"enabledModels": [
-  "opencode-go/deepseek-v4-flash",
-  "opencode-go/deepseek-v4-pro",
-  "opencode-go/mimo-v2.5",
-  "opencode-go/hy3"
-]
-```
-
-`run.sh` pins the active scope to these four opencode-go subscription models.
+> **Deprecated: the `enabledModels` setting.** No coding-agent tooling sets it
+> — the generators do not emit it, `run.sh` does not pin it, and the committed
+> `settings.json` carries no such key (docs/requirements.md FR-U3). Earlier
+> revisions of this document described a four-model opencode-go scope written
+> into `settings.json`; that was never implemented and is no longer expected.
+> An operator who wants a personal scope can still set the key in their own
+> agent dir — pi honours it, and it is then operator state rather than this
+> repo's contract.
 
 ## Credentials
 
@@ -63,7 +59,7 @@ generator (`generate.sh`; the runner mounts that dir, docs/d054).
   Flash) **only** when `OPENCODE_GO_API_KEY` is present. When the key is absent
   the default fields are omitted so pi falls back to its built-in default
   model selection instead of failing on an unconfigured provider.
-- `enabledModels` is the "scoped models" set described above.
+- `enabledModels` is **deprecated** — see the note above; no tooling sets it.
 
 ## Related decision records
 

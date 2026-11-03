@@ -79,10 +79,11 @@ stage and the install.
 
 Credentials are **not** staged as a file — vault keys are forwarded
 through the `workload_env` allowlist (below) and pi resolves the `"$VAR"`
-api-key refs in `models.json` from the forwarded environment. The model scope
-the agent cycles through is pinned by `enabledModels` in `settings.json` —
-generators enumerate **no** model lists
-(`coding-agent/scoped-models-and-proxy-overrides.md`).
+api-key refs in `models.json` from the forwarded environment. The generators
+enumerate **no** model lists: the agent cycles pi's own catalog
+(`coding-agent/scoped-models-and-proxy-overrides.md`). The `enabledModels`
+setting is **deprecated** — no tooling here sets it (see `docs/requirements.md`
+FR-U3).
 
 `run.sh` (a shim over `run.mjs`, which does the work) launches the container:
 loads vault secrets **once on the host** via

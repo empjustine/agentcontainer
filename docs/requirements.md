@@ -132,9 +132,17 @@ the allowlist relay by decision
   and every other provider routes through the fleet's relay (proxy-only,
   docs/d063) — a failed generation fails closed rather than falling back to a
   committed artifact (docs/d070 §6).
-- **FR-U3** — Scoped models: the agent uses pi's own model catalog, scoped by
-  `enabledModels` in static settings; generators emit provider overrides
-  (base URLs, key refs), never client-side model catalogs.
+- **FR-U3** — Scoped models: the agent uses pi's own model catalog; generators
+  emit provider overrides (base URLs, key refs), never client-side model
+  catalogs.
+
+  *Deprecated: the `enabledModels` setting.* No coding-agent tooling is
+  expected to set it — not the generators, not the launcher, not a committed
+  `settings.json`. The requirement that survives is the second half of FR-U3
+  (generators emit overrides only); how an operator scopes their own model
+  list, if they choose to, is operator state in their own settings file and
+  nobody's contract. `settings.json` as committed today carries no such key,
+  which is correct, not an omission.
 - **FR-U4** — Credentials: vault secrets are loaded ONCE on the host (the
   explicit `./environment.sh` chain) and forwarded into sandboxes through a
   declared `workload_env` allowlist; nothing inside a sandbox touches the
@@ -218,7 +226,7 @@ the allowlist relay by decision
 - Not a product or multi-user platform: no account model, no tenant isolation,
   no rate-limiting beyond what llama-swap ships.
 - No client-side free-tier catalog scraping: the agent uses pi's own model
-  catalog, scoped by `enabledModels` (see `coding-agent`).
+  catalog (see `coding-agent`).
 - PRoot is not a supported backend; Termux serves natively (see
   `docs/container-tooling.md`). A qemu/libvirt backend is assessed but not
   implemented (`docs/d020-libvirt-qemu-sandbox.md`).
