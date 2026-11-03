@@ -400,11 +400,16 @@ func operatorKeysFromEnv() ([]operatorKey, error) {
 	}
 	// Floor, not entropy proof: the vault owns how strong each token is;
 	// this only catches empty or truncated loads BEFORE the surface exists
-	// (VPN-R31/R26 — refuse without a credential, loudly).
+	// (VPN-R31/R26 — refuse without a credential, loudly). The same check
+	// refuses control characters, which is what keeps a token from injecting
+	// headers in the hand-rolled mode D handshake (validOperatorToken).
 	keys := make([]operatorKey, 0, len(byID))
 	for id, token := range byID {
 		if len(token) < 16 {
 			return nil, fmt.Errorf("operator key %q shorter than 16 bytes (VPN-R26/R31 fail-closed)", id)
+		}
+		if !validOperatorToken(token) {
+			return nil, fmt.Errorf("operator key %q contains a control character: a bearer token may not carry header framing (RFC 9110 field-value; VPN-R26 fail-closed)", id)
 		}
 		keys = append(keys, operatorKey{id: id, token: token})
 	}
@@ -473,6 +478,33 @@ func validOperatorID(id string) bool {
 	}
 	for _, r := range id {
 		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_') {
+			return false
+		}
+	}
+	return true
+}
+
+// validOperatorToken rejects a credential that could not ride a header intact.
+//
+// WHY this is a load-time refusal and not an escaping problem: mode D's
+// handshake writes the Authorization header with fmt.Fprintf into a hand-rolled
+// request (websocket.go wsDial), so a token containing CR/LF closes the header
+// and opens one of the peer's choosing — the transport is being handed
+// structure it should never interpret. Modes C and E build the header through
+// net/http, which rejects such a value at Send time, so the same token would
+// fail late and inconsistently there instead of never at all.
+//
+// The rule is RFC 9110 field-value (VCHAR plus SP/HTAB): a bearer token is
+// opaque, but it is not allowed to bring framing with it. Length is a separate
+// floor — the vault owns entropy, this only catches truncated loads
+// (VPN-R31/R26).
+func validOperatorToken(token string) bool {
+	if len(token) < 16 {
+		return false
+	}
+	for i := 0; i < len(token); i++ {
+		c := token[i]
+		if c < 0x20 || c == 0x7f {
 			return false
 		}
 	}

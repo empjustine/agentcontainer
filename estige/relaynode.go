@@ -234,6 +234,14 @@ func (cfg *relayConfig) validate() error {
 	if cfg.token == "" {
 		return fmt.Errorf("no operator token configured; refusing to start (%s)", envOperatorToken)
 	}
+	// The relay is the side that WRITES this token into a header — mode D's
+	// hand-rolled handshake interpolates it with fmt.Fprintf (websocket.go
+	// wsDial), so a CR/LF here would inject headers into our own request.
+	// The length floor and the control-character refusal are the same rule the
+	// exit applies to its key set (validOperatorToken, VPN-R26 fail-closed).
+	if !validOperatorToken(cfg.token) {
+		return fmt.Errorf("operator token must be at least 16 bytes and free of control characters — a credential may not carry header framing (%s; VPN-R26 fail-closed)", envOperatorToken)
+	}
 	if cfg.tunnelURL == nil {
 		return fmt.Errorf("no tunnel URL configured (%s)", envTunnelURL)
 	}
