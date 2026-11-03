@@ -197,6 +197,32 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 		}
 	})
 
+	t.Run("SOCKS5 refuses a literal-IP target, so the spelling must stay socks5h (d130)", func(t *testing.T) {
+		// The other half of docs/d130: `ALL_PROXY=socks5://…` makes a client
+		// resolve the name itself and send this ATYP=IPv4/6 form, which the
+		// listener refuses because the exit node owns resolution and pinning
+		// (VPN-R22). The spelling and this refusal are one contract — a
+		// socks5:// value exported by proxy-env breaks every hostname target.
+		conn := rawDial(t, socksAddr)
+		defer conn.Close()
+
+		mustWrite(t, conn, string([]byte{socksVersion, 1, socksNoAuth}))
+		greet := make([]byte, 2)
+		if _, err := io.ReadFull(conn, greet); err != nil || greet[1] != socksNoAuth {
+			t.Fatalf("greeting reply %v err=%v", greet, err)
+		}
+
+		req := []byte{socksVersion, 1, 0, 1, 127, 0, 0, 1, byte(upPort >> 8), byte(upPort)}
+		mustWrite(t, conn, string(req))
+		reply := make([]byte, 10)
+		if _, err := io.ReadFull(conn, reply); err != nil {
+			t.Fatalf("socks reply: %v", err)
+		}
+		if reply[1] != 0x08 {
+			t.Fatalf("literal target refused with rep=%#x, want 0x08 (address type not supported, VPN-R22)", reply[1])
+		}
+	})
+
 	t.Run("cleartext absolute-form http is answered from the tunnel (d103)", func(t *testing.T) {
 		healthURL := "http://" + httpAddr + healthPath
 		before := healthSessions(t, healthURL)
