@@ -34,17 +34,36 @@ func runProxyEnv(args []string) {
 // proxyEnvLines returns `export KEY='value'` lines: evaluated in the operator's
 // shell, the spelling must reach the child process, and a plain assignment
 // would not. Values are single-quoted so a URL never undergoes shell expansion.
+//
+// WHY every conventional variable is printed in BOTH cases (docs/d130): there
+// is no agreed case for them — curl and wget disagree on which they read for
+// an http:// URL — so exporting one spelling hands any child reading the other
+// a DIRECT dial past the kill switch (VPN-R26). The table below is the one
+// source of both spellings, so they cannot drift apart.
 func proxyEnvLines(proxyAddr, socksAddr string) []string {
 	httpURL := "http://" + proxyAddr
-	return []string{
-		shellAssignment("HTTP_PROXY", httpURL),
-		shellAssignment("HTTPS_PROXY", httpURL),
-		shellAssignment("ALL_PROXY", "socks5://"+socksAddr),
-		shellAssignment("NO_PROXY", mergeNoProxy(os.Getenv("NO_PROXY"))),
-		// Node ignores the conventional variables unless this switch is on;
-		// it is part of the spelling, not an extra knob (docs/d095).
-		shellAssignment("NODE_USE_ENV_PROXY", "1"),
+	noProxy := mergeNoProxy(os.Getenv("NO_PROXY"))
+
+	// WHY socks5h and not socks5 (docs/d130): the relay's SOCKS listener
+	// refuses a literal-IP target because the exit node owns resolution and
+	// pinning (VPN-R22), and socks5:// is exactly the spelling that makes a
+	// client resolve first and send the refused ATYP. socks5h keeps the name
+	// on the wire, which is also what VPN-R24 asks the client to offer.
+	conventional := []struct{ name, value string }{
+		{"HTTP_PROXY", httpURL},
+		{"HTTPS_PROXY", httpURL},
+		{"ALL_PROXY", "socks5h://" + socksAddr},
+		{"NO_PROXY", noProxy},
 	}
+
+	lines := make([]string, 0, 2*len(conventional)+1)
+	for _, v := range conventional {
+		lines = append(lines, shellAssignment(v.name, v.value), shellAssignment(strings.ToLower(v.name), v.value))
+	}
+	// NODE_USE_ENV_PROXY is node's own switch, not a conventional variable: it
+	// has no lowercase form, and node ignores the proxy variables entirely
+	// without it — so it is part of the spelling, not an extra knob (docs/d095).
+	return append(lines, shellAssignment("NODE_USE_ENV_PROXY", "1"))
 }
 
 // mergeNoProxy keeps loopback direct and appends the host's existing entries
