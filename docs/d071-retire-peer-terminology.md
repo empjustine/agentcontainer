@@ -62,6 +62,17 @@ capability (see d070, which moves that capability out of sight entirely).
    reads only the new name from its landing change — no alias read, no warn,
    no migration window — and the vault keeps the retired `PEER_API_KEY` set
    for outside compatibility.
+
+   **Both names are now dead env, and this paragraph is the whole of their
+   documentation.** With the allowlist reverse proxy retired (d108), nothing
+   in the tree reads `REVERSE_PROXY_BASE_URLS` either — the route form it
+   existed to build has no producer. Verified rather than assumed: no `.mjs`,
+   `.sh`, or `.go` source reads either name, and the only occurrences left are
+   this record, a comment in `coding-agent/generate.mjs` describing the
+   retirement, and a fixture string in `coding-agent/tests/check-workload.test.mjs`.
+   Nothing is deleted: the vault's `/inference` path still sets them for
+   outside consumers, exactly as this decision intended, and that is an
+   out-of-repo concern this tree neither reads nor breaks.
 3. **Code identifiers and the module rename** (mechanical, one change):
    `peerBaseUrl(s)` → `reverseProxyBaseUrl(s)`, `peerProviderUrl` →
    `providerRouteUrl`, `probePeerRoutes` → `probeRoutes`,
