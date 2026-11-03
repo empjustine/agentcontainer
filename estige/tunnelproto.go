@@ -31,7 +31,6 @@ const (
 	tunnelVersion  = 1
 	tunnelMagic    = "lrpx"
 	tunnelLabelMax = 64
-	tunnelErrMax   = 128
 )
 
 // Frame types (VPN-R16's required control set, plus the data frame).
