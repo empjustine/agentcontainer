@@ -10,8 +10,8 @@
 # ../estige — the tailscale funnel serves the whole <funnel-id>
 # route on it, and the world reaches this instance through the proxy's
 # host-allowlist row for llama-swap's tsnet `tailscale serve` hostname (the
-# fact-table row in lib/cloud-providers.mjs; the old "llama-swap" loopback
-# alias is retired). The legacy 18080 port stays dead.
+# fact-table row in ../coding-agent/lib/cloud-providers.json; the old
+# "llama-swap" loopback alias is retired). The legacy 18080 port stays dead.
 #
 # Env overrides:
 #   HOST_PORT          container published port (default 8101)

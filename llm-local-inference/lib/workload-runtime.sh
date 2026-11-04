@@ -15,9 +15,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # POSIX sh cannot locate a SOURCED file — $0 is the caller's script — so this
 # copy's own directory is derived from the caller by contract: the unit's lib/
-# sits next to the run scripts that source it. WORKLOAD_LIB_DIR is the seam for
-# a caller that does not (coding-agent/tests/check-workload.sh exercises the API from the
-# repo harness).
+# sits next to the run scripts that source it. WORKLOAD_LIB_DIR is the seam
+# for a caller the contract does not fit: it names the lib/ whose filters and
+# loggers that caller wants (contract: docs/container-tooling.md).
 WORKLOAD_LIB_DIR="${WORKLOAD_LIB_DIR:-$SCRIPT_DIR/lib}"
 
 # structured logging (see lib/log.sh) — every tool sourcing this file inherits
@@ -84,7 +84,7 @@ detect_workload_tool() {
 	# reported as "no backend", and a backend that IS there could then be
 	# shadowed by a different PATH hit at launch. Same probe as the call,
 	# single spelling of the answer (docs/d069). It is also what lets a test
-	# drive a runner end-to-end against a stub (coding-agent/tests/check-run-dirs.sh).
+	# drive a runner end-to-end against a stub instead of the real tool.
 	if command -v podman >/dev/null 2>&1; then
 		_workload_tool='podman'; _userns='--userns=keep-id'
 		_keep_groups='--group-add keep-groups'
@@ -155,8 +155,8 @@ _sb_jq() {
 
 # _wrapper is the host-side command `workload_run [wrapper...]` prefixes the
 # launch with (historically `infisical run … --`).  Initialised here so
-# _render_workload is also callable on its own — coding-agent/tests/check-workload.sh does
-# exactly that, and an unset global would trip `set -u`.
+# _render_workload is also callable on its own: in that standalone use an
+# unset global would trip `set -u`.
 _wrapper=''
 
 workload_NAME=''

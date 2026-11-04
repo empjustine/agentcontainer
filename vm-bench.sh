@@ -48,8 +48,8 @@ MEMORY_MIB="${MEMORY_MIB:-4096}"
 # coding-agent image build's unpacked layers (~6 GiB) and its layer cache.
 DISK_GIB="${DISK_GIB:-20}"
 # Stay on the host's Fedora release lane (the bench's toolchain should match
-# what build.mjs targets at compile time); a FEDORA_RELEASE bump is a
-# provision-from-scratch event, not a guest in-place upgrade.
+# what coding-agent/build.mjs targets at compile time); a FEDORA_RELEASE bump
+# is a provision-from-scratch event, not a guest in-place upgrade.
 FEDORA_RELEASE="${FEDORA_RELEASE:-43}"
 SSH_PORT="${SSH_PORT:-2222}"
 GUEST_USER="${GUEST_USER:-bench}"
@@ -237,10 +237,11 @@ cmd_sync() {
 # --- bench -------------------------------------------------------------------
 
 # The test the bench exists for: the guest's rootless podman builds the
-# coding-agent image — the exact Containerfile build.mjs would build — with
-# the FULL kernel surface. --progress=plain is mandatory here (build.mjs's
-# comment: default "auto" is tty-detected and renders overlapping redraw into
-# captured logs) and NO_COLOR/MISE_QUIET come from the Containerfile's own ENV.
+# coding-agent image — the exact Containerfile coding-agent/build.mjs would
+# build — with the FULL kernel surface. --progress=plain is mandatory here
+# (coding-agent/build.mjs's comment: default "auto" is tty-detected and
+# renders overlapping redraw into captured logs) and NO_COLOR/MISE_QUIET come
+# from the Containerfile's own ENV.
 cmd_bench() {
 	cmd_sync
 	log_info "nested podman bench" phase="build"

@@ -2,7 +2,7 @@
 # farm-lock.sh — ONE home for the farm mutation lock: its path and the
 # advisory-lock wrapper (d099's maintenance surface, the cross-process half).
 # Sourced by the two mutating entries (git/-forge-mirror.sh, git/maintain.sh)
-# and by git/farm-tool-lib.sh.
+# and by git/tests/git-farm-lock.test.mjs, which pins the path rule.
 #
 # WHY the lock exists: a session-driven mutation (d099's upsert_repo /
 # compact_repo) and a hand-run ./git/maintain.sh sweep must never fetch or

@@ -1,12 +1,12 @@
 #!/bin/sh
-# lib/npm-tools.sh — install the npm-pinned JS/TS dev toolchain on demand.
+# npm-tools.sh — install the npm-pinned JS/TS dev toolchain on demand.
 #
 # WHY a lockfile instead of mise: Termux has no mise, and the JS gates are npm
 # packages with Android builds. package.json + package-lock.json are the one
 # version source; this helper is the one install path so lint.sh and
 # check-types.sh cannot drift (docs/d107).
 #
-# Source lib/log.sh first: this file uses log_info/log_die. The cksum stamp
+# Source log.sh first: this file uses log_info/log_die. The cksum stamp
 # lives UNDER node_modules, so `npm ci` replacing the tree invalidates it by
 # construction rather than by a second bookkeeping file to keep in sync.
 #

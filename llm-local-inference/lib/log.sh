@@ -48,8 +48,8 @@ _log_ts() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 # log_json_escape string — escape for a JSON string literal (no surrounding
 # quotes).  awk joins records with a literal \n so multi-line values survive.
 # Public because the escaping RULE must have exactly one implementation:
-# git/farm-tool-lib.sh builds machine payloads with this same function
-# (logs and payloads must never disagree about what is valid JSON).
+# logs and any JSON a script builds with this function must never disagree
+# about what is valid JSON.
 log_json_escape() {
 	printf '%s' "$1" | awk 'BEGIN { ORS = "" }
 	{
