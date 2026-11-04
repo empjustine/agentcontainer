@@ -230,15 +230,31 @@ fi
 	log_die 94 "no settings.json in the agent dir — run ./generate.sh first" agentDir="$agent_dir"
 [ -f "$agent_dir/models.json" ] ||
 	log_die 94 "no models.json in the agent dir — run ./generate.sh first (or the root ./generate.sh)" agentDir="$agent_dir"
-# d070 §5: the installed file must be ROUTE-form — a provider URL carrying a
-# fact-table upstream means pi would talk to upstream directly, bypassing
-# the proxy this fleet routes through (docs/d063). generate verified this at
-# install; re-check at launch because the agent dir is host state a stale or
-# hand-edited copy can sit in, and the fix is always the same: regenerate.
+# URL form at launch (docs/d070, docs/d079). TWO installed shapes are legal
+# because this fleet runs both deployments: the ROUTE form is what generate
+# substitutes while the reverse proxy is the harness's egress (docs/d063),
+# and the CANONICAL form is what a proxy-first host installs — there the
+# harness reaches upstreams through the tunnel's loopback proxy instead (the
+# image's NODE_USE_ENV_PROXY, docs/d074, exported by the chain step in
+# docs/d095). Canonical is legal ONLY with that proxy env set: without it pi
+# would talk to upstream directly, which is the very regression d070 exists
+# to prevent. That is d079's launch-time guard, re-homed here because the
+# artifact shape alone no longer says which deployment is intended, and it
+# cannot live at generate time because the agent dir is host state a stale or
+# hand-edited copy can sit in.
 # shellcheck source-path=SCRIPTDIR source=../lib/node-run.sh
 . "$SCRIPT_DIR/../lib/node-run.sh"
 if ! node_run "$SCRIPT_DIR/check-routed-artifacts.mjs" --installed "$agent_dir/models.json" >/dev/null; then
-	log_die 94 "installed models.json carries canonical provider URLs — run ./generate.sh (docs/d070)" agentDir="$agent_dir"
+	if ! node_run "$SCRIPT_DIR/check-routed-artifacts.mjs" --committed "$agent_dir/models.json" >/dev/null; then
+		log_die 94 "installed models.json is in neither URL form — run ./generate.sh (docs/d070)" agentDir="$agent_dir"
+	fi
+	# Presence only: the chain step (docs/d095) is where these are known-good
+	# and aimed at the tunnel listener, and proving that here would duplicate
+	# its refusals; what this guard adds is that canonical never rides a
+	# launch with no proxy at all.
+	if [ -z "${HTTP_PROXY:-}${HTTPS_PROXY:-}${ALL_PROXY:-}${http_proxy:-}${https_proxy:-}${all_proxy:-}" ]; then
+		log_die 94 "installed models.json carries canonical upstreams but no proxy env — the harness would egress direct; launch through the tunnel chain step (docs/d095) or regenerate with a reverse-proxy base" agentDir="$agent_dir"
+	fi
 fi
 # mcp.json is required even though pi runs without it: "every environment has
 # the committed servers" is the check's whole value, and the documented opt-out

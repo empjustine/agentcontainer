@@ -152,6 +152,19 @@ neither.
   artifact; rejected together with decision 4 — availability never selects
   URLs.
 
+## Amendment — what the launch gate asks now
+
+The launch check this record introduced ("the installed artifact is verified
+to contain zero canonical URLs") described one deployment. A second one is
+live: the harness reaches upstreams through the tunnel's loopback proxy
+(d074's native env-proxy support, the chain step in d095), where the correct
+installed form IS the canonical upstream. The gate therefore asks both
+directions — `--installed` first, `--committed` on rejection — and refuses a
+canonical agent dir that launched with no proxy env, which is the
+direct-egress state this record exists to forbid. That is d079's launch-time
+guard, re-homed; the install-time substitution described above stays as it
+is on this line and is retired wholesale only in estige-v4's d108.
+
 ## References
 
 - `coding-agent/generate.mjs` — install paths, snapshot copy-backs, the

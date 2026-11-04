@@ -1,9 +1,9 @@
 /**
  * @fileoverview artifact-urls.test.mjs — the static half of d070's
  * Verification triad: every COMMITTED artifact must carry fact-table
- * canonical upstream URLs (route form belongs to installed copies only),
- * and the installed-direction detector must actually catch a canonical URL
- * that escaped route substitution.
+ * canonical upstream URLs (route form belongs to an installed copy of the
+ * reverse-proxy deployment only), and the installed-direction detector must
+ * actually catch a canonical URL that escaped route substitution.
  *
  * Both directions go through check-routed-artifacts.mjs — the same module
  * run.sh guards launches with — so a detector regression fails here rather
@@ -61,6 +61,30 @@ test("installed detector flags a canonical URL that escaped substitution", () =>
 	assert.equal(violations.length, 2, violations.join("\n"));
 	assert.match(violations[0] ?? "no violation recorded", /still carries canonical upstream/);
 	assert.match(violations[1] ?? "no second violation recorded", /still carries canonical upstream/);
+});
+
+// run.sh's launch gate (docs/d079) asks BOTH directions: `--installed`
+// first, because a routed agent dir is a reverse-proxy deployment, and on
+// rejection `--committed`, because a canonical agent dir is proxy-first and
+// legal only when that launch carries the proxy env. What makes the second
+// question worth asking is that the two directions are mutually exclusive —
+// pinned here, with the mixed file a hand-edit leaves behind: it matches
+// NEITHER, which is the gate's third, loud outcome.
+test("the URL-form directions are exclusive, so a mixed agent dir matches neither", () => {
+	const base = "https://proxy.example/bucket";
+	const routed = /** @type {any} */ ({
+		providers: { mistral: { baseUrl: `${base}/api.mistral.ai/v1` } },
+	});
+	const mixed = /** @type {any} */ ({
+		providers: {
+			mistral: { baseUrl: `${base}/api.mistral.ai/v1` },
+			openrouter: { baseUrl: CLOUD_PROVIDERS.openrouter?.baseUrl },
+		},
+	});
+	assert.deepEqual(installedViolations(routed), []);
+	assert.notDeepEqual(committedViolations(routed), []);
+	assert.notDeepEqual(installedViolations(mixed), []);
+	assert.notDeepEqual(committedViolations(mixed), []);
 });
 
 // The funnel mount here is the canonical synthetic one (docs/d086): a real

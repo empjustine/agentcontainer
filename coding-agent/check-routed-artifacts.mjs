@@ -17,6 +17,10 @@
  *     opposite direction, used by tests/artifact-urls.test.mjs over the
  *     committed artifacts.
  *
+ * run.sh asks BOTH directions at launch: a routed agent dir is the
+ * reverse-proxy deployment, a canonical one is proxy-first — which is legal
+ * only when that launch carries the proxy env (docs/d079).
+ *
  * Both modes are exact structural checks keyed by provider id through the
  * fact table — never substring guesses over the file (d070 Verification).
  * Exit 0 = every URL conforming; exit 1 = violations listed on stderr.

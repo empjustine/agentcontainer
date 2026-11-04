@@ -145,8 +145,14 @@ refreshed best-effort, route probing walks the vault-sourced
 - **URL form is verified, not assumed** (docs/d070):
   `check-routed-artifacts.mjs` is the one detector — `--committed` requires
   canonical upstreams over the committed artifacts (guarded by
-  `tests/artifact-urls.test.mjs`), `--installed` rejects canonical URLs in
-  the agent dir and is re-run at launch by `run.sh` (exit 94).
+  `tests/artifact-urls.test.mjs`), `--installed` requires routes in the
+  agent dir. At launch `run.sh` accepts EITHER installed form, because both
+  deployments exist and only the surrounding environment tells them apart: a
+  route form is the reverse-proxy egress (docs/d063), while the canonical
+  form is proxy-first (docs/d074/d095) and is legal only with the proxy env
+  set — canonical with no proxy is the direct-egress regression d070 was
+  written to prevent, which is d079's launch-time guard. A file in neither
+  form exits 94.
 - **Route building is per-provider path-prefix** (docs/d027): cloud
   routes are `<base>/<providerId>` on the simplified cloud router
   (llm-reverse-proxy, no credential handling — clients carry the provider's
