@@ -1,15 +1,20 @@
 ---
 id: d123
-type: decision
-status: implemented
+type: architecture-design
+status: active
 title: "d123 — the sweep runs the Go suite, and an empty egress config is refused"
-parent: estige
+parent: architecture
 depends-on: [d108, d113, d122]
 references: [d084, d102, d104]
 tags: [estige, testing, sweep, egress, fail-loudly]
 ---
 
 # d123 — the sweep runs the Go suite, and an empty egress config is refused
+
+> **Superseded in part (docs/d139).** The Go leg acquires the pinned toolchain
+> through `./dev-tools.sh` on a dev host now, instead of never downloading one.
+> The skip-loudly rule and the reason for a real probe (a mise shim is not proof
+> of a toolchain) stand.
 
 ## Problem
 

@@ -1,7 +1,7 @@
 ---
 id: d119
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d119 — coding-agent's workload runtime is a node module: the unit needs no jq and no shell but a shim"
 parent: coding-agent
 depends-on: [d041, d045, d046, d056, d059, d068, d083, d113, d118]

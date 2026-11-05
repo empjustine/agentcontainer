@@ -1,6 +1,6 @@
 ---
 id: d046
-type: module-design
+type: architecture-design
 status: active
 title: "d046 — infisical run replaces the hand-rolled vault loader"
 parent: architecture

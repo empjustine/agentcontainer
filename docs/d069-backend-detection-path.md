@@ -1,9 +1,9 @@
 ---
 id: d069
-type: module-design
+type: architecture-design
 status: active
 title: "d069 — the workload backend is detected through PATH, the way it is invoked"
-parent: workload-api
+parent: architecture
 depends-on: [d059]
 references: [d056, d059, d068]
 tags: [workload, podman, docker, testing, lib]

@@ -1,7 +1,7 @@
 ---
 id: d118
-type: decision
-status: implemented
+type: architecture-design
+status: active
 title: "d118 — a pi extension folder carries no lib/: folder-root modules and a script table are its whole surface"
 parent: architecture
 depends-on: [d024, d045, d060, d070, d113]

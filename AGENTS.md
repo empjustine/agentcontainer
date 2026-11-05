@@ -106,6 +106,14 @@ and run the checks it lists when a docs change touches more than one file. The
 tooling (and d111, the record that adopted the standard) is the faster path
 when it is available; it is not a prerequisite.
 
+The checks that file lists are **mechanical now**: `./node-run.sh
+docs/spec-check.mjs` (also a `./lint.sh` leg) decides the closed vocabularies,
+the required fields, the id spelling, the nesting rules and the d117 file/edge
+agreement, and prints `path: [code] sentence` per finding — the codes are
+documented in the standard (docs/d140). The standard's _Rulings_ section is
+where the points it used to leave to implication are settled; read it before
+arguing with the gate.
+
 ## Other repo invariants
 
 - **A folder is a copy unit** (docs/d113): each unit carries its own pruned

@@ -1,7 +1,7 @@
 ---
 id: d121
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d121 — git/ takes the copy-unit fold last: a core lib, shim entries, and the farm tool in node"
 parent: git
 depends-on: [d043, d044, d062, d075, d076, d089, d099, d113]

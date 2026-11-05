@@ -1,7 +1,7 @@
 ---
 id: d120
-type: decision
-status: implemented
+type: module-design
+status: active
 title: "d120 — estige ships as OS packages, and its POSIX launchers retire"
 parent: estige
 depends-on: [d041, d083, d088, d090, d095, d102, d106, d108, d110, d113]

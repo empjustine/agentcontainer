@@ -1,7 +1,7 @@
 ---
 id: d122
-type: decision
-status: implemented
+type: architecture-design
+status: active
 title: "d122 — data freshness is a gate, not a review catch: ./freshness.sh"
 parent: architecture
 depends-on: [d023, d050, d086, d113]

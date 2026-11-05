@@ -1,7 +1,7 @@
 ---
 id: d113
-type: decision
-status: implemented
+type: architecture-design
+status: active
 title: "d113 — retire the shared lib/ and the root orchestrators: a folder is a copy unit"
 parent: architecture
 depends-on: [d024, d039, d041, d082, d083, d086, d101, d102, d107, d108]

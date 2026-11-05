@@ -29,6 +29,16 @@ this file's job (see [What the tooling checks, and what it does
 not](#what-the-tooling-checks-and-what-it-does-not)). When the two disagree,
 this file is what a reader without the tooling has, so keep it exact.
 
+**Which rules are whose.** The tooling's own requirement set is narrower, and
+the difference is deliberate. ThinkRail requires `id`, `type` and `title`,
+treats `status`, `parent` and the link lists as optional, and validates three
+failure classes. Everything this file demands beyond that — `status` and
+`parent` as required fields, the closed vocabularies, the id spelling, the
+nesting levels, d117's file/edge agreement — is required by _this repository_
+and enforced by `docs/spec-check.mjs`, the gate `./lint.sh` runs. So read a rule
+here as "this tree requires it" unless it names the tooling, and where the two
+differ obey the stricter one: the gate is the one that can fail a build.
+
 ## The contract
 
 A document is part of the graph when its file starts with a `---` frontmatter
@@ -37,16 +47,19 @@ and a markdown file whose frontmatter lacks either field is simply not one —
 `llm-local-inference/model-cards/*.md` are notes, not specs. Being a node is not the same
 as meeting the contract below, and the validator only sees part of it.
 
-| field                                    | required        | rule                                                                                                                                                                                                                                                                                               |
-| ---------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`                                     | yes             | Unique across the whole tree. Lowercase kebab-case (`gguf-model-tooling`) or a `dNNN` record handle (`d104`, `d114`). **Stable** — never renumber, never reuse; every link in the tree points at it. A bare `dNNN` only: no suffixed variants, ever (see [Colliding numbers](#colliding-numbers)). |
-| `type`                                   | yes             | One of the five types below. Nothing else ever.                                                                                                                                                                                                                                                    |
-| `title`                                  | yes             | One line, human sentence. The ThinkRail contract requires it (`spec_create` will not write a spec without one) even though `spec_validate` stays silent when it is missing.                                                                                                                        |
-| `status`                                 | recommended     | One of the five lifecycle values below. Nothing else ever.                                                                                                                                                                                                                                         |
-| `parent`                                 | for living docs | One id — the tree edge. A **code unit** only: `goal`, `architecture`, a module node, a submodule node (see [Nesting](#nesting-the-expected-shape)).                                                                                                                                                |
-| `depends-on`, `references`, `implements` | optional        | Lists of **ids**, not paths: `[d073, d077]`. The validator reports every value here that resolves to no id.                                                                                                                                                                                        |
-| `covers`                                 | optional        | A list of ids the tooling writes but **never resolves**: a `covers` value pointing at nothing is silent drift (`spec_get` lists no such edge). Unused in this tree — prefer `references` for the edge you actually mean.                                                                           |
-| `tags`                                   | optional        | Free-form list. Genre words live here, not in `type` (`bugfix`, `research`).                                                                                                                                                                                                                       |
+The `required` column is this tree's requirement, enforced by the gate — not the
+tooling's, which asks for less (see above).
+
+| field                                    | required         | rule                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                                     | yes              | Unique across the whole tree. Lowercase kebab-case (`gguf-model-tooling`) or a `dNNN` record handle (`d104`, `d114`). **Stable** — never renumber, never reuse; every link in the tree points at it. A bare `dNNN` only: no suffixed variants, ever (see [Colliding numbers](#colliding-numbers)).                                                                                    |
+| `type`                                   | yes              | One of the five types below. Nothing else ever.                                                                                                                                                                                                                                                                                                                                       |
+| `title`                                  | yes              | One line, human sentence. Required by ThinkRail's own skill and by this tree, but enforced by neither tool: `spec_validate` is silent when it is missing, and `spec_create`'s mandatory `title` argument still writes no `title:` field when handed an empty string. The gate is what enforces this.                                                                                  |
+| `status`                                 | yes              | One of the five lifecycle values below. Nothing else ever. Absence is drift, not a default — the gate reports it (ThinkRail treats the field as optional).                                                                                                                                                                                                                            |
+| `parent`                                 | all but the root | One id — the tree edge. A **code unit** only: `goal`, `architecture`, a module node, a submodule node (see [Nesting](#nesting-the-expected-shape)). Exempt by design: the graph root, and any node under `.agents/` — the vendored spec's package nodes ship with the workflow package, so an edge there would dangle (d111; see [Where specs live](#where-specs-live-in-this-tree)). |
+| `depends-on`, `references`, `implements` | optional         | Lists of **ids**, not paths: `[d073, d077]`. The validator reports every value here that resolves to no id.                                                                                                                                                                                                                                                                           |
+| `covers`                                 | optional         | A list of ids the tooling writes but **never resolves**: a `covers` value pointing at nothing is silent drift (`spec_get` lists no such edge). Unused in this tree — prefer `references` for the edge you actually mean.                                                                                                                                                              |
+| `tags`                                   | optional         | Free-form list. Genre words live here, not in `type` (`bugfix`, `research`).                                                                                                                                                                                                                                                                                                          |
 
 Two hard rules that a graph walker cannot forgive:
 
@@ -55,11 +68,11 @@ Two hard rules that a graph walker cannot forgive:
   the second colon and the whole node silently leaves the graph. Quote it or,
   better, pick a standard status and move the sentence into the body.
 - **An id is an identity, not a filename.** The stem usually equals the id
-  (`docs/architecture.md` → `architecture`), but not always: the `docs/` root
-  holds path-anchored docs whose ids are module names (`container-tooling.md`
-  → `lib`), because d0XX bodies reference the _path_. Renaming a file does not
-  change its id, and an id must never be silently re-spelled — retarget every
-  reference instead.
+  (`docs/architecture.md` → `architecture`), but not always:
+  `docs/container-tooling.md` carries the id `workload-api`, because the bodies
+  that cite it name the CONTRACT — the workload API every unit implements — not
+  the file. Renaming a file does not change its id, and an id must never be
+  silently re-spelled — retarget every reference instead.
 
 ## Colliding numbers
 
@@ -100,6 +113,8 @@ goal                        goal-and-requirements — the graph root
     ├── estige
     │   └── estige-ci       submodule-design — a subsystem inside the package (estige/CI.md)
     ├── git
+    ├── pi-hyper            module-design — one node per `pi-*` package, id = its folder (d141)
+    │   └── summarized-thinking.md      (pi-summarized-thinking's design note, d117)
     └── llm-local-inference
         └── llm-local-inference-cache   (the folded cache pipeline, CACHE-DESIGN.md)
 ```
@@ -125,7 +140,15 @@ Three rules follow, and they are mechanical enough to apply without judgement:
   and that node parents to `architecture` — it is the
   module's front door, not something inside the module. Every other spec about
   that folder parents to the node, wherever its _file_ physically sits: `docs/`
-  is a file layout, not the graph.
+  is a file layout, not the graph. **Which file carries the front door is the
+  unit's choice** — `README.md` in `estige/` and `git/`, `DESIGN.md` in
+  `coding-agent/` and `llm-local-inference/` — because the id and the edge, not
+  the filename, are what the graph reads; the other file of the pair is an
+  ordinary `module-design` doc parented to that node. The `pi-*` packages carry
+  one too, their `README.md` being the front door and their folder rules staying
+  in `AGENTS.md` (d141 — until then the whole family was node-less prose). A
+  folder with nothing to declare still has no node: the rule binds units that
+  own specs, not every directory.
 - **The parent's level matches the spec's `type`.** `architecture-design` →
   `architecture`; `module-design` → its module node; `submodule-design` → its
   package node; `goal-and-requirements` → no parent. A module-design record
@@ -148,13 +171,13 @@ thing without a hand-maintained table.
 
 `type` answers **scope**, not genre: how far the document's authority reaches.
 
-| type                    | scope                                                                                                          | in this tree                                                                                                                                                                                       |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `goal-and-requirements` | what the system must do — normative, one document                                                              | `docs/requirements.md` (id `goal`, the root of the living tree)                                                                                                                                    |
-| `architecture-design`   | spans the repository or crosses module boundaries: the map, the shared rules, prior art, system-wide decisions | `docs/architecture.md`, `docs/environments-and-variants.md`, prior-art and audit docs, the d0XX records that change the layout or a shared contract                                                |
-| `module-design`         | confined to one runner folder or one module (`coding-agent/`, `estige/`, `git/`, `llm-local-inference/`)       | each module's `README.md` + `DESIGN.md`, the module-scoped decision records                                                                                                                        |
-| `submodule-design`      | a directory-level subsystem inside a package                                                                   | `estige/CI.md`, `llm-local-inference/CACHE-DESIGN.md`                                                                                                                                              |
-| `task-spec`             | one piece of work with acceptance criteria                                                                     | temporary by definition — the ThinkRail tools write them to `.thinkrail/context/TASK-*.md` and the work's landing removes them. Nothing durable belongs here; a finished decision becomes a record |
+| type                    | scope                                                                                                                         | in this tree                                                                                                                                                                                       |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `goal-and-requirements` | what the system must do — normative, one document                                                                             | `docs/requirements.md` (id `goal`, the root of the living tree)                                                                                                                                    |
+| `architecture-design`   | spans the repository or crosses module boundaries: the map, the shared rules, prior art, system-wide decisions                | `docs/architecture.md`, `docs/environments-and-variants.md`, prior-art and audit docs, the d0XX records that change the layout or a shared contract                                                |
+| `module-design`         | confined to one runner folder or one module (`coding-agent/`, `estige/`, `git/`, `llm-local-inference/`, or a `pi-*` package) | each module's `README.md` + `DESIGN.md`, a `pi-*` package's `README.md`, the module-scoped decision records                                                                                        |
+| `submodule-design`      | a directory-level subsystem inside a package                                                                                  | `estige/CI.md`, `llm-local-inference/CACHE-DESIGN.md`                                                                                                                                              |
+| `task-spec`             | one piece of work with acceptance criteria                                                                                    | temporary by definition — the ThinkRail tools write them to `.thinkrail/context/TASK-*.md` and the work's landing removes them. Nothing durable belongs here; a finished decision becomes a record |
 
 Choosing between the first two is the only judgement call: **would the decision
 still hold if the module were deleted?** Yes → `architecture-design`. No →
@@ -165,13 +188,13 @@ scope test, and the `d0XX` filename prefix is what marks them as history.
 
 `status` is the record's position in its life, and it is separate from `type`.
 
-| status       | meaning                                                             |
-| ------------ | ------------------------------------------------------------------- |
-| `draft`      | proposed, not in force; nothing in the tree has to obey it yet      |
-| `active`     | in force — the code and docs are expected to match it               |
-| `stale`      | still in force but known to lag the tree; needs a keeper            |
-| `done`       | the work it describes is complete, or the investigation is finished |
-| `deprecated` | superseded or retired; kept as history, pointed at by its successor |
+| status       | meaning                                                                         |
+| ------------ | ------------------------------------------------------------------------------- |
+| `draft`      | being written or proposed, not in force; nothing in the tree has to obey it yet |
+| `active`     | in force — the code and docs are expected to match it                           |
+| `stale`      | still in force but known to lag the tree; needs a keeper                        |
+| `done`       | the work it describes is complete, or the investigation is finished             |
+| `deprecated` | superseded or retired; kept as history, pointed at by its successor             |
 
 Rules that keep the value parseable:
 
@@ -222,11 +245,15 @@ load-bearing rather than incidental:
 - **`.agents/skills/SPEC.md`** is the one vendored node. It keeps `id` + `type`
   and deliberately has no `parent`: the package nodes it belongs to
   (`module-thinkrail-workflow`, `module-spec-graph`) ship with the workflow
-  package, not this workspace, so an edge here would dangle (d111). The tools
-  have **no exclude list** — every id-bearing file in the checkout is a node —
-  so a second copy of that file is an immediate duplicate-id failure. Keep
-  exactly one, and delete stale copies of the workflow package instead of
-  adding them beside it.
+  package, not this workspace, so an edge here would dangle (d111). Which trees
+  the tools index matters here, because it is narrower than "the tree" and wider
+  than git: they skip `node_modules/` (an id-bearing file there is invisible to
+  `spec_grep`, `spec_get` and `spec_validate`) and index **everything else,
+  including trees `.gitignore` hides** — `.venv/`, `__pycache__/` and
+  `.thinkrail/context/` all answer to a search. So a second copy of that file
+  anywhere outside `node_modules/` is an immediate duplicate-id failure: keep
+  exactly one, and delete stale copies of the workflow package instead of adding
+  them beside it.
 
 Deliberately **not** the standard layout, and not drift to fix (d111's
 rejected alternative): module docs are `README.md` + `DESIGN.md`, not
@@ -251,7 +278,10 @@ Three constraints bind the placement, and the first one decides:
 2. Write the frontmatter: `id`, `type`, `status`, `title`, `parent`, and links
    as **ids**. The `parent` is the code unit the document belongs to — the
    module it describes, or `architecture` when it spans modules — never the
-   record it happens to follow from (that is `depends-on`).
+   record it happens to follow from (that is `depends-on`). `spec_create`
+   scaffolds only `id` and `type`, so a node taken straight from it fails the
+   gate three times over (`parent-missing`, `status-missing`, `title-missing`):
+   add the rest with `spec_update` in the same sitting.
 3. Give it a home per the table above. **Do not add an index row.** The README
    documentation index describes the five `type` patterns and a short reading
    path; it deliberately does not enumerate documents, because a row per doc
@@ -282,30 +312,133 @@ Three constraints bind the placement, and the first one decides:
 `spec_validate` reports exactly three failures: duplicate ids, `parent` /
 `depends-on` / `references` / `implements` values that resolve to no node, and
 parent cycles. Everything else in this contract is silent to it (measured
-against this tree in d112):
+against this tree in d112, and re-measured on the tooling itself in d140's
+amendment):
 
-| the tooling                                                                           | the contract                                              |
-| ------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| reports duplicate ids, dangling links and cycles — run it after any structural change | nothing extra: the same failures                          |
-| writes and indexes any `type:` / `status:` value                                      | the five types and five statuses; nobody else checks them |
-| accepts a missing `title`                                                             | a title on every node                                     |
-| writes `covers` but never resolves it                                                 | `references` for an edge you mean                         |
-| accepts a record as a parent, or a module-scoped spec at `architecture`               | the nesting rules above                                   |
-| has no exclude list — every id-bearing file is a node                                 | exactly one copy of a vendored spec                       |
+| the tooling                                                                           | the contract                                                         |
+| ------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| reports duplicate ids, dangling links and cycles — run it after any structural change | nothing extra: the same failures                                     |
+| requires only `id`, `type`, `title`                                                   | `status` and `parent` required as well (see _Which rules are whose_) |
+| writes and indexes any `type:` / `status:` value                                      | the five types and five statuses; nobody else checks them            |
+| accepts a missing `title`                                                             | a title on every node                                                |
+| writes `covers` but never resolves it                                                 | `references` for an edge you mean                                    |
+| accepts a record as a parent, or a module-scoped spec at `architecture`               | the nesting rules above                                              |
+| skips `node_modules/` and indexes every other tree, `.gitignore` or not               | exactly one copy of a vendored spec                                  |
+| indexes `.venv/` and `.thinkrail/` — the gate skips both                              | no durable node in either; nothing to check there                    |
 
 That gap is the reason the checks below exist: they are the part the tooling
 does not do, and skipping them is how this tree carried 33 misplaced nodes
 through a dozen green validation runs (d112).
 
+## Mechanical enforcement
+
+`./docs/spec-check.mjs` is the executable half of this contract (adopted by
+d140). Every rule above that a machine can decide is checked by `./lint.sh`'s
+`spec graph` leg, so "is the graph valid?" no longer depends on somebody
+remembering a grep pipeline. It needs node and nothing else — no network, no
+ThinkRail tooling, no YAML package — and it walks the whole tree except `.git`,
+`node_modules`, `.venv` and `.thinkrail` (the blind spot the tooling table above
+names: the last two are trees ThinkRail does index, so nothing durable may live
+in either). Its own suite, `docs/tests/spec-check.test.mjs`, is run by
+`./test.sh` and pins every finding code below, the walk's skip list, and the
+committed tree's cleanliness — a rule added here without a fixture there is
+unpinned.
+
+Run it alone as `./node-run.sh docs/spec-check.mjs [root]`: exit 0 clean, 1
+findings, 2 unreadable tree. A finding prints as `path: [code] sentence`, and
+the code is the vocabulary of the gate:
+
+| code                       | the rule it enforces                                                         |
+| -------------------------- | ---------------------------------------------------------------------------- |
+| `frontmatter-unterminated` | an opening `---` with no closing `---` — every reader would eat the document |
+| `value-unquoted`           | a frontmatter value containing `: ` and no quotes (the truncation trap)      |
+| `half-node`                | `id` without `type`, or `type` without `id`                                  |
+| `type-unknown`             | a type outside the five                                                      |
+| `status-missing`           | no `status` — the lifecycle is part of the contract                          |
+| `status-unknown`           | a status outside the five                                                    |
+| `title-missing`            | no `title`                                                                   |
+| `id-spelling`              | neither a bare `dNNN` handle nor lowercase kebab-case                        |
+| `id-duplicate`             | two files claiming one id                                                    |
+| `edge-unresolved`          | `depends-on` / `references` / `implements` naming no node                    |
+| `parent-missing`           | no `parent` on a node that is not the root and not under `.agents/`          |
+| `parent-unresolved`        | a `parent` naming no node                                                    |
+| `parent-not-a-unit`        | a `parent` that is a record or a plain doc, not a code unit                  |
+| `parent-level`             | the parent's level does not match the child's `type`                         |
+| `parent-cycle`             | the chain returns to a node it already visited                               |
+| `module-node`              | a front door whose id is not its folder name                                 |
+| `placement`                | a record outside `docs/`, or a living doc outside its parent's folder (d117) |
+
+What it deliberately does **not** decide: whether the chosen `type` is the right
+scope judgement, whether an id deserves its name, whether a record's prose still
+matches the code, or whether a body's `## Status` qualifier is honest. Those are
+reading work, and a gate that guessed them would be wrong loudly.
+
+## Rulings: the points the contract left to implication
+
+Reading this file end to end without the tooling turned up the questions below,
+each answered only by implication before (d140's audit). They are decided here
+rather than in a chat, because a contract two readers must interpret is two
+contracts — the first six are enforced by the gate.
+
+- **`status` is required.** The field table used to say "recommended" while the
+  lifecycle section said "one of the five, nothing else ever"; nothing said what
+  absence meant. Absence now means drift, and the gate reports it. An empty
+  lifecycle is not a default, it is a node nobody can classify.
+- **The legal-parent roster is derived, not listed.** The nesting check printed
+  a hand-maintained `printf` of module ids, which had already gone stale: a
+  submodule node may parent (the contract says so, the roster did not), so
+  `llm-local-inference-cache`'s docs looked illegal. A legal parent is `goal`,
+  `architecture`, or any node the graph itself types as a module front door or
+  a submodule.
+- **One front door per unit, and its filename is the unit's choice.** See the
+  nesting rules: `README.md` carries it in two units, `DESIGN.md` in the other
+  two. What makes a file the front door is `type: module-design` +
+  `parent: architecture` + `id` equal to its folder name, at the folder root —
+  not the filename.
+- **A half node is a finding.** "A file that carries `id` without `type` is
+  simply not a node" described the symptom, not the rule: it still claims an
+  identity that other docs may link to, so the gate refuses it.
+- **`parent` is required except for the graph root and the `.agents/` subtree.**
+  The vendored spec's package nodes ship with the workflow package, so an edge
+  there would dangle (d111); every node in that subtree inherits the exemption
+  rather than the one file, because a vendored package may add a node of its own.
+  "For living docs" left the archive and the node-less folders ambiguous; neither
+  is exempt.
+- **Records are the one exemption from the file/edge agreement.** A record's
+  file lives in `docs/` (or `docs/archive/`) whatever its `parent` says,
+  because the log is one chronological shelf. The archived `module-design`
+  parked at `architecture` is allowed only with `status: done` or
+  `deprecated`: a finished investigation has no module left to hang from, a
+  live one always does.
+- **A record that decides two things at different scopes is typed by the higher
+  scope.** The contract assumed one decision per record; d123 is two (the Go leg
+  of the sweep, and an egress refusal in estige). Typing it `module-design`
+  would file a sweep-wide rule inside `estige/`; it is `architecture-design`
+  and the body carries both halves. Split the record when the halves stop
+  sharing a reason.
+- **A node-less folder is legal.** The rule that each unit has exactly one node
+  binds units that own specs. The `pi-*` packages were the example here — prose
+  only, installed by path — until d141 gave each of them a front door, on the
+  ground that a folder owning an entry, a generator, a committed artifact and a
+  test suite owns behaviour worth a node. The principle is unchanged, only the
+  example: a directory with no contract to state carries no frontmatter, and
+  that is not drift.
+- **`covers` stays unenforced.** The gate ignores it, matching the validator:
+  an edge nothing resolves is worse to "fix" mechanically than to leave alone
+  until someone means it.
+
 ## Checking the graph without the tooling
 
-Run these over the tree after a docs change; a check that prints something is a
-finding, not a warning — fix the value, the id, or the link before adding
-anything on top of it. `SPECS` excludes the tool-owned `.thinkrail/` scratch
-folder. `.agents/` stays in on purpose: its vendored spec is a node.
+These greps are the fallback for a checkout with no node at all — the gate
+above runs the same rules. A check that prints something is a finding, not a
+warning: fix the value, the id, or the link before adding anything on top of it.
+`SPECS` excludes the tool-owned `.thinkrail/` scratch folder, the installed npm
+and python trees, and `.git` — the same set the gate skips, so a finding here is
+a finding it would report too. `.agents/` stays in on purpose: its vendored spec
+is a node.
 
 ```sh
-SPECS=(-r --include='*.md' --exclude-dir=.git --exclude-dir=.thinkrail --exclude-dir=node_modules .)
+SPECS=(-r --include='*.md' --exclude-dir=.git --exclude-dir=.thinkrail --exclude-dir=node_modules --exclude-dir=.venv .)
 ```
 
 ### Contract checks
@@ -334,10 +467,16 @@ comm -23 \
 ### Nesting checks
 
 ```sh
-# parents that are not a code unit — keep this roster equal to the module nodes
+# parents that are not a code unit. The second list must hold every id that may
+# parent: the two roots, each module front door, and each submodule node. The
+# gate derives it from `type:` + `parent:`; the hand list here is the coarse
+# stand-in, so re-read it when a unit is added.
 comm -23 \
   <(grep -rh '^parent: ' "${SPECS[@]}" | sed 's/^parent: *//; s/"//g' | sort -u) \
   <(printf '%s\n' goal architecture coding-agent estige git llm-local-inference \
+      llm-local-inference-cache estige-ci \
+      pi-hyper pi-verboo pi-synthetic pi-cline-pass pi-mistral pi-opencode \
+      pi-summarized-thinking \
       | sort)
 
 # a record used as a parent — must print nothing
