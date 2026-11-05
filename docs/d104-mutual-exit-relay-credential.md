@@ -24,8 +24,8 @@ designed below.
 
 Amended before any implementation shipped: the proof's time-step window
 (`step` = floor(unix/30), accepted ±1) is replaced by single-use nonces
-with an exit-side replay cache — no clock anywhere in the auth path —
-and the session bound (one authentication = one connection = one
+with a single-use replay cache at each end — no clock anywhere in the auth
+path — and the session bound (one authentication = one connection = one
 CONNECT) is stated as a security bound instead of left as an
 implementation accident. Nothing was ever deployed on the step shape,
 so the amendment is in-place, not a generation bump; the retired shape
@@ -129,7 +129,7 @@ consequences, and the alternatives rejected.
 - **VPN-R44 (restated for signatures)** — capability keys keep the
   ~100-bit floor; the tunnel identity is Ed25519 with fixed sizes (32-byte
   seed, 32-byte public key, 44-byte SPKI, 16-byte nonce), validated by
-  parse and consumed by the replay cache, fail-closed.
+  parse and consumed by the replay caches, fail-closed.
 - **VPN-R32 (AMENDED — the transport of keys changes)** — key material
   and tunnel pairing configuration **never enter env**; the key store at
   `~/.local/share/estige/` is the one secret surface, and env carries
@@ -164,9 +164,13 @@ consequences, and the alternatives rejected.
   elsewhere (TLS validity, log ordering), never a weakened or widened
   authentication decision — the restricted relay host's NTP question
   retires with the step shape.
-- **The exit's replay cache is attack-inert**: only verified proofs enter
-  it, so its growth is bounded by genuine handshakes alone and its
-  memory by the cap, regardless of traffic.
+- **Replay protection is symmetric, and each end owns its cache**: the
+  exit consumes the relay proof's `nonce_r`, the relay consumes the exit proof's
+  `nonce_e` (d131). Both are attack-inert — only verified proofs enter either,
+  so growth is bounded by genuine authentications and memory by the cap,
+  regardless of traffic — and a repeated nonce at the relay is treated as what
+  it is, a peer replaying a proof: the exchange is refused and the session is
+  torn down.
 - **One authentication admits one connection, one CONNECT**: no
   renegotiation, no chained CONNECT, a session dies with its carrier —
   the bound mTLS buys from record keys is bought here from single-use
@@ -202,9 +206,9 @@ consequences, and the alternatives rejected.
   refusal at boot), never a downgrade to bearer.
 - Code deltas — the tunnel handshake on both nodes, the store
   loader/validator, the `estige key` CLI, the launchers' intent
-  detection, the chain step's gate and its pinned test, and the relay's
-  dialer — are all pending; this record is decision-only, per the
-  instruction that landed it.
+  detection, the chain step's gate, and the relay's dialer — are all
+  pending; this record is decision-only. [Implementation
+  order](#implementation-order) below is that whole change, sequenced.
 
 ## Alternatives rejected
 
@@ -315,16 +319,55 @@ consequences, and the alternatives rejected.
   permanently replayable and plaintext in the terminator; strictly
   dominated.
 
+## Implementation order
+
+The change d131/d132/d133 describe, sequenced. The first two steps are
+**inert**: the store is invisible to the bearer binary, so they can land, be
+provisioned fleet-wide, and be rolled back without touching the wire — which is
+also why they come first, and what makes the cut-over a binary swap rather than
+a flag day.
+
+- **Store and loader** — role-scoped directories, PKCS#8 Ed25519 DER private
+  keys, the two strict-JSON helpers, and the permission and grammar refusals, all
+  at load and before any bind (d132). Nothing authenticates against it yet.
+- **The `estige key` CLI** — one parser shared by `keygen`, the CRUD verbs,
+  `check` and the runtime's boot load, so validation never forks from use
+  (d132/d133). `keygen` + `export-pub` + `import-pub` are what makes fleet
+  provisioning possible, which is what the cut-over needs.
+- **Proof mint and verify** — envelope construction and the pinned grammar, the
+  two signatures over their labelled messages, and both replay rings with the
+  camouflage 404 on every failure path (d131). Test-hookable without a network:
+  the ring and the verify are ordinary functions.
+- **Wire it into the three modes** — the handshake headers in mode D and the
+  per-request headers in modes C and E (d131), with the bearer gone from the
+  tunnel namespace in the same change so no build can speak both.
+- **Arming by helper presence** — `relay.json` / `exit.json` presence replaces
+  env intent; absence stays byte-identical unarmed, and presence-with-a-broken-
+  store refuses loudly at boot (d133; d084/d085's contract re-based, not changed).
+- **Cut-over** — the store provisioned on every host while the bearer binary
+  still runs, then the binary; pairs upgrade in lockstep and a mixed generation
+  fails closed in both directions (the note in Open questions).
+- **Retire the env surface** — `VPN_OPERATOR_TOKEN`, `VPN_OPERATOR_KEYS`,
+  `VPN_TUNNEL_URL` and `VPN_CLIENT_LABEL` deleted with the code that reads them,
+  `environment.sh`'s vault round-trip no longer carrying tunnel key material, and
+  `estige key check` standing in as the chain step's gate (VPN-R32's amendment,
+  d095's rework).
+- **Tests** — the Verification list below, in the Go suite; `./lint.sh`'s
+  golangci leg stays green through every step (d137).
+
+Each step is independently reviewable and leaves the tree working: that is the
+point of doing the inert half first.
+
 ## Open questions
 
-- **Migration** — recommended: store-first, one cut. `keygen` runs on
-  each host and the helpers are provisioned while the old binary still
-  runs on the bearer env (the store is inert to it); then the binary
-  lands (old names alone refuse loudly with the rename spelled out;
-  helpers present = armed; the wire change means a pairing upgrades in
-  lockstep — mixed generations fail closed). The HMAC-era env design was
-  never implemented and never ships: production goes bearer →
-  store+proofs directly.
+- **Migration** — store-first, one cut (the **cut-over** step of
+  [Implementation order](#implementation-order)). `keygen` runs on each host and the helpers are
+  provisioned while the old binary still runs on the bearer env (the store is
+  inert to it); then the binary lands (old names alone refuse loudly with the
+  rename spelled out; helpers present = armed; the wire change means a pairing
+  upgrades in lockstep — mixed generations fail closed). The HMAC-era env design
+  was never implemented and never ships: production goes bearer → store+proofs
+  directly.
 - **Namespace scope** — this record gates the tunnel namespace only.
   Whether the allowlist relay's public face or d091's gateway later adopt
   per-request proofs (the envelope, never the body) is a separate
@@ -359,12 +402,16 @@ consequences, and the alternatives rejected.
   that does not bind the connection's own `nonce_r` → 404;
 - a proof replayed after its genuine exchange (the same nonce presented
   a second time) → 404 — the cache consumes the nonce on first verify;
+- an **exit** proof presented a second time → 404 at the relay _and_ the session
+  is torn down, with no retry and no fallback to another exit (the `nonce_e`
+  ring); the same proof shape replayed under a different `nonce_r` never
+  verifies at all, which is the `nonce_r` tie doing its job;
 - the declared residual, pinned: a proof whose genuine first flight was
   blocked is accepted exactly once and opens exactly one CONNECT — a
   second CONNECT frame on the live session is a protocol violation, and
   the session dies with its carrier;
-- the replay cache never grows on attack traffic: forged proofs and
-  unknown names never enter it (cap test-hooked);
+- neither replay cache grows on attack traffic: forged proofs and
+  unknown names never enter either (both caps test-hooked);
 - staged rotation (format-level): two entries for one principal both
   verify; a third same-name entry refuses at load;
 - an `exit.json` at the cap of 32 relays authenticates a named
@@ -374,6 +421,6 @@ consequences, and the alternatives rejected.
   in the success-path attribution only;
 - `keygen` creates `prv/` at 0700 and keys at 0600;
 - `estige key check` fails loud before any bind for every refusal above
-  (the chain-step gate; `tests/check-vpn-relay-chain.sh` updated with
-  the implementing change, and replaced by the Go tests in docs/d120);
+  (the chain-step gate — pinned in the Go suite, which replaced
+  `tests/check-vpn-relay-chain.sh` when the launchers went, docs/d120);
 - no store at all → byte-identical unarmed behavior (d084 smoke).

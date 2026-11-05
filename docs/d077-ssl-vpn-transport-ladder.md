@@ -197,9 +197,20 @@ dial TLS ── ALPN ─┬─ h2        → h2-POST (upgrade never attempted on
 - Demotion never reverses within a client session; the chosen transport is logged
   as a `transport` outcome field (h2 | wss | post) — transport choice is
   operational debugging data, not a secret.
-- **Re-probe policy on network change** is open (a laptop crossing networks
-  should not latch a demotion from a bad network for the process's life; the
-  cheap version is restart-latched, the good version is per-gateway-identity).
+- **Re-probe policy: one session, one decision — and the next session starts
+  over.** A client session here is one tunnel session (VPN-R17: one carrier per
+  CONNECT, no mux), so the client re-runs the ALPN probe and the upgrade probe
+  for **every local connection**, and the process keeps no transport state
+  between them: no rung can be latched off for the process's life, which is the
+  failure this bullet used to worry about. The cost of that choice falls on a
+  _persistently_ broken higher rung — every connection re-pays its probe (a TLS
+  dial for ALPN, plus a failed POST in the h2 case) instead of skipping it. A
+  **circuit breaker** — N consecutive failures of a rung, a cooldown, then one
+  half-open trial — is neither implemented nor specified: it would buy that
+  per-connection cost back, at the price of a heuristic that has to decay
+  correctly once the edge is repaired, and it must never let a skipped rung
+  become a trusted one (fail-closed, VPN-R26, stays the only verdict either
+  way).
 - **Why not one path per transport.** A distinct path per transport would turn the
   transport choice into a route the edge config must expose and a filterable
   handle, and would split the camouflage namespace. Funnel keeps mapping

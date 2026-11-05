@@ -49,7 +49,7 @@ must not conflate them:
 
 **What v4 changes, and what it does not.** The wire shape is this record's as
 designed: same envelopes, same both-directions signatures, same single-flight
-exchange, same replay cache and session bound. What v4 changes relative to v3
+exchange, same replay caches (one per end) and session bound. What v4 changes relative to v3
 is where credential material LIVES — files under the role-scoped store, not
 `VPN_*` environment variables. That is why the `VPN_*` tunnel surface is
 deprecated with this generation (VPN-R32's amendment) instead of surviving as
@@ -67,22 +67,61 @@ rather than a generation bump.
 ## Mechanism — single-flight mutual Ed25519 proofs
 
 Single-use nonce-bound signatures: no clock, no window, no TOTP-style
-digit truncation, no shared secret. Each side computes its proof before
-the exchange; one message each direction; no challenge round trip (a
-challenge needs a pre-auth response — an oracle, which VPN-R34 forbids,
-and a wasted round trip for a client that can compute its proof up
-front — a client-drawn nonce riding the existing first message needs no
-extra flight). Freshness comes from the nonces and from the exit
-consuming them.
+digit truncation, no shared secret. The relay draws its nonce and
+computes its proof before the exchange; the exit computes its own inside the
+response it was going to send anyway — one message each direction, no challenge
+round trip (a challenge needs a pre-auth response — an oracle, which VPN-R34
+forbids — and a wasted round trip for a peer that can compute its proof up
+front: a client-drawn nonce riding the existing first message needs no extra
+flight). Freshness comes from the nonces, and each end consumes its own.
 
 ```
-relay → exit:  X-Relay-Proof: v2.<relay-key-name>.<nonce_r>.<base64url(sig_r)>
+relay → exit:  X-Relay-Proof: v2.<relay-key-name>.<nonce_r>.<sig_r>
                sig_r   = Sign(sk_relay, "estige/v2/relay-to-exit" ‖ nonce_r ‖ relay-key-name ‖ exit-key-name)
                nonce_r = 16 random bytes (crypto/rand), drawn fresh for every authenticated connection
-exit → relay:  X-Exit-Proof:  v2.<exit-key-name>.<nonce_e>.<base64url(sig_e)>
+exit → relay:  X-Exit-Proof:  v2.<exit-key-name>.<nonce_e>.<sig_e>
                sig_e   = Sign(sk_exit,  "estige/v2/exit-to-relay" ‖ nonce_e ‖ nonce_r ‖ exit-key-name ‖ relay-key-name)
                nonce_e = 16 random bytes (crypto/rand), drawn fresh for every proof-bearing response
 ```
+
+- **The envelope grammar is pinned, and it is d132's convention on the wire**
+  — one encoding, so no field is hex on one side of the seam and base64url on
+  the other. `v2.<name>.<nonce>.<sig>` is exactly four dot-separated segments:
+  the token literal `v2`; the minter's name under d132's `[A-Za-z0-9_-]{1,64}`
+  charset (which has no dot, and that is what makes four segments parse); the
+  nonce as **unpadded base64url, 22 characters** (16 raw bytes); the signature
+  as **unpadded base64url, 86 characters** (64 raw bytes). A header that is not
+  four segments, a field of the wrong length, or base64url that decodes to the
+  wrong byte count is malformed and never repaired — it answers the camouflage
+  404 (VPN-R34) before any name scan or verify. Unpadded on purpose: `=`
+  padding is a second spelling of the same bytes, and a parser with two accepted
+  spellings is a parser with two ways to disagree.
+
+  **The encoding carries the exact byte count and nothing else.** Each field has
+  one legal content: the canonical unpadded base64url spelling of the precise
+  number of bytes the verifier needs — 16 for a nonce, 64 for a signature. Three
+  checks, in this order, and none of them is a repair: the field's **length** is
+  bounded first, so an over-long value (anything that could not encode exactly
+  16 or 64 bytes) is refused before a decoder ever sees it and a hostile
+  multi-kilobyte header costs neither memory nor CPU; then the decode must
+  produce exactly that many bytes; then **re-encoding the result must reproduce
+  the input byte for byte**, which is the one check that rejects non-canonical
+  trailing bits, the standard alphabet's `+` and `/` where base64url has `-` and
+  `_`, embedded whitespace or newlines, and any other spelling of the same
+  bytes. Canonicality is not pedantry here: a signature that can be spelled two
+  ways is a signature two implementations can disagree about, which is exactly
+  the drift the store side already refuses (d132).
+
+  **Failure is a camouflage break, never a correction.** A malformed, over-long
+  or non-canonical field is answered with the same byte-identical response the
+  allowlist relay gives garbage (VPN-R34) **and the connection is broken there**:
+  mode D closes without a WebSocket, modes C and E fail that exchange with no
+  reuse of the carrier. Nothing is re-encoded, trimmed, re-padded or retried, and
+  the relay never "repairs" a proof — a broken field is indistinguishable from
+  a wrong signature, an unknown name or a replayed nonce, which is the whole
+  point. It is also **not a dial failure**: a credential the exit refused does
+  not demote the transport ladder (d077's ladder is about carriers, not
+  credentials), so the same target is not re-attempted on the next rung.
 
 - **Two principals, two keys, two names — each envelope names its
   minter, and the verifier holds only the minter's public key.** The
@@ -128,31 +167,47 @@ exit → relay:  X-Exit-Proof:  v2.<exit-key-name>.<nonce_e>.<base64url(sig_e)>
   rendezvous the restricted network is unlikely to ever allow: not
   designed for, not excluded.
 - **The exit's proof binds `nonce_r` and answers with `nonce_e`** — the
-  pair belongs to exactly one exchange. The relay drew `nonce_r` itself
-  and never reuses it, so an exit proof captured on an earlier exchange
-  cannot verify against a later connection: the relay needs no replay
-  cache of its own. The relay verifies it and fails closed (VPN-R26's
-  spirit): an exit
+  pair belongs to exactly one exchange, and each field has a job. `nonce_r` is
+  the binding that carries the weight: the relay drew it itself and never reuses
+  it, so an exit proof captured on an earlier exchange cannot verify against a
+  later connection — a verifier that checked only the signature would accept the
+  capture, one that also checks this tie cannot. `nonce_e` is the exit's own
+  freshness field: signed into `sig_e` and consumed by the relay's replay cache
+  (below), so it is live rather than decorative, and it is what makes a replayed
+  exit proof detectable _independently_ of the `nonce_r` tie. The relay verifies
+  it and fails closed (VPN-R26's spirit): an exit
   whose key is not the one embedded in the relay's pairing is refused at
   the handshake, beyond VPN-R28's hostname pinning. Today's
   `Sec-WebSocket-Accept` check proves nothing about server identity —
   anyone can compute it from the client's own key.
-- **Freshness = a single-use nonce, consumed at the exit.** After a
-  relay proof verifies, its `nonce_r` enters the exit's replay cache; a
-  second presentation of the same nonce answers the camouflage 404. The
-  cache only grows with genuine handshakes — a forged proof never
-  verifies and never enters it, and an attacker without the private key
-  cannot mint valid proofs to fill it — so it is one LRU ring with a
-  64 Ki-entry cap (≈2 MiB at 16 bytes per nonce) whose eviction horizon
-  is 64 Ki _genuine_ authentications: practically forever, and no clock
-  is read anywhere in the auth path — a drifting host can cause an
-  outage elsewhere, never a weakened or widened auth decision. What a
-  captured proof buys an attacker is exactly one thing: _block_ the
-  genuine exchange first (otherwise the genuine flight consumes the
-  nonce), then present the captured proof once — one CONNECT on one
-  connection (the session bound below) and nothing more. That is the
-  declared residual, strictly smaller than any time-window: a window
-  admits unlimited replays for its duration; the cache admits one.
+- **Freshness = a single-use nonce, and each end consumes its own.** After a
+  relay proof verifies, the exit puts its `nonce_r` in a replay cache; a second
+  presentation of the same nonce answers the camouflage 404. After an exit proof
+  verifies, the relay puts its `nonce_e` in a cache of the same shape and
+  refuses the repeat — a repeat is not a request to retry, it is a peer
+  presenting a proof that was already accepted, so the exchange answers the
+  camouflage 404 **and the relay tears that session down** (mode D: the tunnel's
+  WebSocket; modes C and E: the request fails and the next exchange must present
+  a fresh proof), with no retry and no fallback to another exit. Each cache
+  grows only on proofs that verified — a forged or unknown-name proof never
+  reaches one, and an attacker without a principal's private key cannot mint
+  valid proofs to fill that side's cache — so each is one LRU ring with a 64
+  Ki-entry cap (≈2 MiB at 16 bytes per nonce) whose eviction horizon is 64 Ki
+  _genuine_ authentications: practically forever, and no clock is read anywhere
+  in the auth path — a drifting host can cause an outage elsewhere, never a
+  weakened or widened auth decision.
+
+  The `nonce_r` tie above already stops a captured exit proof from verifying, so
+  the relay's ring makes that property redundant rather than load-bearing: a
+  future refactor that loses the tie degrades to "one replayed exchange, refused
+  and disconnected" instead of "unlimited". What a captured _relay_ proof buys
+  an attacker is exactly one thing: _block_ the genuine exchange first
+  (otherwise the genuine flight consumes the nonce), then present the captured
+  proof once — one CONNECT on one connection (the session bound below) and
+  nothing more. That is the declared residual, strictly smaller than any
+  time-window: a window admits unlimited replays for its duration; the cache
+  admits one.
+
 - **One authentication buys one connection, one CONNECT — nothing
   chained.** The protocol already carries the shape structurally
   (VPN-R17: one WebSocket per CONNECT; any control frame during the
@@ -209,10 +264,12 @@ constant cost:
   negligible at handshake rates, a few percent of a core at a few hundred
   per-request authentications per second (modes C/E) — recorded in the
   consequences with its DoS arithmetic.
-- **The replay cache costs one map probe per _verified_ proof** — forged
-  and unknown-name proofs never reach it — and its memory is the cap,
-  independent of attack traffic: an attacker cannot grow it without the
-  relay's private key.
+- **Each replay cache costs one map probe per _verified_ proof** — forged
+  and unknown-name proofs never reach either — and its memory is the cap,
+  independent of attack traffic: the exit's ring grows only on genuine
+  handshakes, the relay's only on exit proofs it accepted, so an attacker
+  without a principal's private key cannot grow that side's ring. Two rings at
+  ≈2 MiB each is the whole memory cost of replay protection in both directions.
 - The residual timing delta — an unknown name skips its one verify,
   tens of microseconds — is below network jitter and against a name that
   is a log-safe label the operator's logs already print; the load-bearing

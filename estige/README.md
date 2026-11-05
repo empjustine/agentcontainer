@@ -140,7 +140,7 @@ generation v4 keeps the tunnel wire exactly as designed and moves credential
 material — and egress, into `exit.json` — from the env chain into the
 role-scoped store (`~/.local/share/estige/`). So `VPN_OPERATOR_KEYS`,
 `VPN_OPERATOR_TOKEN`, `VPN_TUNNEL_URL`, `VPN_TUNNEL_EGRESS` and
-`VPN_CLIENT_LABEL` retire with v4 (VPN-R32's amendment in docs/d073), leaving
+`VPN_CLIENT_LABEL` retire with v4 (VPN-R32's amendment, docs/d104), leaving
 `PORT` and non-secret runtime knobs. Until v4 lands this table is the whole
 surface, and the v3/v4 pair upgrade fails closed in both directions rather
 than downgrading.

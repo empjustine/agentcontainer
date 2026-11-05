@@ -126,8 +126,9 @@ need to implement or audit the store itself.
   `exit` (an array of key entries — required, exactly one entry today,
   a second only as same-name staging); `exit.json` takes `relays` (an
   array — ≥1 entries, unique names, cap 32) plus `egress` (d080's
-  VPN-R38 opt-in data, inner shape owned there) — the fold that retires
-  `estige.json` (d108's tree-shake) — while the exit's _bind_ is no
+  VPN-R38 opt-in data, inner shape owned there), the fold that makes the store
+  the whole config surface — `estige.json` went with d108's tree-shake, so there
+  is nothing else left to fold — while the exit's _bind_ is no
   config fact at all: exactly one knob, env `PORT` (d110), never in the
   store; entry names match
   `[A-Za-z0-9_-]{1,64}`; `public` is unpadded base64url decoding to a

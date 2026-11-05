@@ -4,7 +4,7 @@ type: module-design
 status: draft
 title: "d133 — the v4 credential in operation: arming, naming, failure posture and rotation"
 parent: estige
-depends-on: [d104, d132]
+depends-on: [d104, d131, d132]
 references: [d073, d077, d084, d085]
 tags: ["serving", "proxy", "vpn", "auth", "operations", "rotation", "mechanics"]
 ---
@@ -28,13 +28,14 @@ credential headers, signed-message labels, principal names, store paths
 log fields speak exit/relay, never client/server. Two senses are exempt
 because they are not this repo's to rename: RFC 6455's WebSocket mask
 polarity (the RFC's word for who masks) and `relay.go`'s role-neutral
-"peer". d088 is amended accordingly; the code-field rename belongs to the
-implementing change.
+"peer". d088 takes the same vocabulary extension when the implementing
+change lands, and the code-field rename belongs to it.
 
 ## Failure posture — unchanged camouflage
 
-Wrong, missing, malformed, or replayed proof (a nonce the exit has
-already consumed) — and now also an **unknown key
+Wrong, missing, malformed, over-long or non-canonical proof (a `nonce_r` the
+exit has already consumed, or a `nonce_e` the relay has already seen — the
+second also tears the session down, d131) — and now also an **unknown key
 name** in either envelope, a direction-swapped proof (a relay signature
 presented as an exit's), a name whose signature does not verify under
 the embedded key, or an exit proof that does not bind the relay
@@ -48,30 +49,34 @@ distinguishable from failure; nothing else is.
 ## Arming — the d084/d085 contract, via helper presence
 
 The tri-state arm moves from env presence to helper presence, keeping the
-contract: **the role's helper file is the intent signal.** No
-`relay.json` → the relay tunnel surface does not exist (byte-identical
-unarmed behavior); `relay.json` present → the surface is intended and
-the chain step must validate the whole role store (`prv/relay/` exactly
-one key, JSON decodes strictly, `endpoint` and `exit` well-formed) or
-refuse loudly before any bind — never silently unarmed, never
-armed-but-broken. The exit side is symmetric on `exit.json` +
-`prv/exit/`. `estige.json`'s `-config` file and `tunnel.enabled`
-tri-state dissolve into this rule — with mode A gone (d108's
-tree-shake) the store is the whole config surface, no other config
-artifact remains. The chain step's gate becomes `estige key check` (d095's rework; its pinned
-test `tests/check-vpn-relay-chain.sh` is updated by the implementing
-change — that shell test is gone since docs/d120, replaced by the Go suite). The scheme stays namespace-scoped to the tunnel (VPN-R2's
-separation): the allowlist relay is untouched, and the gateway namespace
-(d091, now deprecated) keeps its staged bearer — out of scope here and
-no longer planned anywhere: extending proofs there would be a separate
+contract: **the role's helper file is the intent signal.** No `relay.json` → the
+relay tunnel surface does not exist (byte-identical unarmed behavior);
+`relay.json` present → the surface is intended and the chain step must validate
+the whole role store (`prv/relay/` exactly one key, JSON decodes strictly,
+`endpoint` and `exit` well-formed) or refuse loudly before any bind — never
+silently unarmed, never armed-but-broken. The exit side is symmetric on
+`exit.json` + `prv/exit/`.
+
+There is no `estige.json` and no `tunnel.enabled` tri-state here to inherit:
+d108's tree-shake deleted the config file with mode A, so the store is already
+the whole config surface and this rule adds no second artifact — it moves the one
+intent signal from env presence to helper presence. The chain step's gate becomes
+`estige key check` (d095's rework), and its assertion moves into the Go suite:
+the pinned shell test `tests/check-vpn-relay-chain.sh` went with the launchers
+(docs/d120), so the implementing change adds a Go test rather than editing a file
+that no longer exists.
+
+The scheme stays namespace-scoped to the tunnel (VPN-R2's separation): the
+allowlist relay is untouched, and the gateway namespace (d091, now deprecated)
+keeps its staged bearer — out of scope here and no longer planned anywhere:
+extending proofs there would be a separate
 decision.
 
 ## Rotation — staged, zero-gap (considered; CLI deferred)
 
 Rotation is the operation the store exists to make easy; the design below
 is **recorded as considerations for the implementing change, not as
-requirements of this record** — per instruction, nothing here is
-implemented yet.
+requirements of this record**. Nothing here is implemented yet.
 
 - **The format reserves the room for zero-gap rotation**: an admitted set
   may carry **up to two entries for the same principal** during a

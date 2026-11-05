@@ -71,14 +71,17 @@ localhost client proxy that validates the target's real certificate
 end-to-end) is delivered; the h2-POST tunnel is built and default-on since
 d084; the h1.1-POST tunnel is built with no spike ahead of it (d081's L4
 amendment — L4 demoted to characterization; the default client offer remains
-the code string `cde`); and the authenticated relay is deferred to v3. The
+the code string `cde`); and the authenticated relay is deferred to v3, while deployment **v4**
+replaces the tunnel's shared bearer with mutual per-principal proofs — decided
+but not implemented (FR-E1, d104). The
 tunnel transports' operator keys are the bounded principal set of
 [d078](d078-ssl-vpn-operator-keys.md) (the NFR-5 exception); accepting the
 authenticated relay (v3) would add one operator credential on top of them
 without introducing tenants. The fuller requirements (`VPN-R*`) live in
-d073 and this BRD stays allowlist-shaped — the d047 allowlist is scoped to
+d073 and this BRD otherwise stays allowlist-shaped — the d047 allowlist is scoped to
 the allowlist relay by decision
-([d080](d080-forward-proxy-no-host-allowlist.md)).
+([d080](d080-forward-proxy-no-host-allowlist.md)) — FR-E1 is the one row about
+the tunnel credential itself.
 
 ## Functional requirements
 
@@ -160,6 +163,22 @@ the allowlist relay by decision
   generator-installed config (`PI_CODING_AGENT_DIR` / `PI_CODING_AGENT_SESSION_DIR`,
   docs/d054); a stale or missing artifact is a loud failure pointing at the
   generator, never an implicit regeneration (docs/d041).
+
+### Edge — `estige/`
+
+- **FR-E1** — The tunnel's operator credential is **mutual**: each direction is
+  signed by its own principal's Ed25519 private key, the verifier holds only
+  public keys, and no shared secret exists — so neither end can mint the other's
+  direction, and a verifier cannot impersonate the peer it authenticates
+  (docs/d104). Key material lives in a role-scoped store on the host that holds
+  it (0700, PKCS#8 DER, never in env, never in git, never through the vault
+  chain step) with public keys embedded in the pairing helpers, and freshness is
+  a single-use nonce, both ends consuming what they verify — no clock anywhere in
+  the auth path (docs/d131, docs/d132). Failures are indistinguishable from the
+  allowlist relay's camouflage 404, and every configuration ambiguity refuses at
+  boot rather than guessing (VPN-R26/R33/R34). The transport requirements
+  themselves stay d073's (`VPN-R*`), amended forward by d077/d081/d084/d085/d104;
+  this row is the BRD's claim, and d133 owns operating it.
 
 ### Copy units and per-unit infrastructure
 
