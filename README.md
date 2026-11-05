@@ -92,6 +92,7 @@ agentcontainer/
 │   │   # cross-cutting docs only (d117): a living doc that guides ONE unit lives in that unit's folder
 │   ├── d0XX-*.md                        # → decision log (history; kept mechanically accurate, FR-D2)
 │   ├── archive/                         # → research findings + retired docs (index inside)
+│   ├── docs/                            # → VENDORED writing references, outside the spec graph (no id/type): Google style guide + Technical Writing One/Two (clipped), Microsoft Writing Style Guide (source Markdown). CC BY 4.0, NOT this repo's license — read the README there
 │   └── ...
 │
 ├── llm-local-inference/                 # llama-swap: LOCAL GGUF inference only

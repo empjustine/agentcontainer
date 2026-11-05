@@ -1,0 +1,5 @@
+# Vendor: third-party reference text copied verbatim (docs/docs/README.md).
+# oxfmt reads .prettierignore by default, and reformatting someone else's prose
+# would both churn the diff against upstream and make the "is our own docs
+# drifting" signal unreadable.
+docs/docs/
