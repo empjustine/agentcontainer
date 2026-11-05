@@ -67,7 +67,7 @@ What this means for reading the rest of this document:
 - Consequence for scope if this threat model ever changes: domain-level
   network policy, argv-level exec policy and credential-decoy plumbing
   (the non-overlap rows below, each high-cost) only earn their keep
-  against an *adversarial* workload; under the accidental-error model
+  against an _adversarial_ workload; under the accidental-error model
   they stay out, and the overlap core (tree-scoped writes, read-only
   mounts, env allowlist, isolation of pids/filesystems) carries almost
   all of the actual value.
@@ -81,12 +81,12 @@ exec-time policy, and a loopback proxy + unix-socket bridge for domain-split
 networking** — with cgroups used only when resource limits matter, and often
 replaced by rlimits/seccomp-notif shims.
 
-| Technique | Harder boundary | Fine-grained control | Notable in-mirror examples |
-|---|---|---|---|
-| mount/userns via bwrap | yes (ns) | path allow/deny via binds (coarse; symlink traps) | `anthropics/sandbox-runtime`, `fencesandbox/fence`, `didvc/{opencode,ai}-bwrap`, `cyunrei/opencode-bwrap` |
-| Landlock (LSM) | no — same mount view | path RO/RW, TCP bind/connect (ABI v4), IPC scope (ABI v6) | `multikernel/sandlock`, `fencesandbox/fence`, `89luca89/clampdown`, `deepseek-ai/deepseek-harness`, `landlock-lsm/rust-landlock` |
-| seccomp + `SECCOMP_RET_USER_NOTIF` | syscall filter | argv-level `execve` inspection, /proc and IP virtualization, pseudo-rlimits | `fencesandbox/fence`, `89luca89/clampdown` (sidecar), `multikernel/sandlock`, `souk4711/hakoniwa` |
-| cgroups v2 | resource caps | memory/CPU/io | `souk4711/hakoniwa` (via systemd), `getkern/kern`; elsewhere replaced (fence→rlimits+notif, clampdown→seccomp-notif) |
+| Technique                          | Harder boundary      | Fine-grained control                                                        | Notable in-mirror examples                                                                                                       |
+| ---------------------------------- | -------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| mount/userns via bwrap             | yes (ns)             | path allow/deny via binds (coarse; symlink traps)                           | `anthropics/sandbox-runtime`, `fencesandbox/fence`, `didvc/{opencode,ai}-bwrap`, `cyunrei/opencode-bwrap`                        |
+| Landlock (LSM)                     | no — same mount view | path RO/RW, TCP bind/connect (ABI v4), IPC scope (ABI v6)                   | `multikernel/sandlock`, `fencesandbox/fence`, `89luca89/clampdown`, `deepseek-ai/deepseek-harness`, `landlock-lsm/rust-landlock` |
+| seccomp + `SECCOMP_RET_USER_NOTIF` | syscall filter       | argv-level `execve` inspection, /proc and IP virtualization, pseudo-rlimits | `fencesandbox/fence`, `89luca89/clampdown` (sidecar), `multikernel/sandlock`, `souk4711/hakoniwa`                                |
+| cgroups v2                         | resource caps        | memory/CPU/io                                                               | `souk4711/hakoniwa` (via systemd), `getkern/kern`; elsewhere replaced (fence→rlimits+notif, clampdown→seccomp-notif)             |
 
 ## bwrap-only wrappers (agent harnesses)
 
@@ -108,7 +108,7 @@ Implementation lessons worth keeping (all from `anthropics/sandbox-runtime`
 farm):
 
 - **Symlink handling is the whole game.** bwrap follows symlink destinations
-  at resolve time, so allow/deny evaluation must run over *resolved* paths
+  at resolve time, so allow/deny evaluation must run over _resolved_ paths
   with every raw spelling tracked (`dir` vs `dir/` bind differently);
   `--ro-bind /dev/null <symlink>` aborts startup, so deny actions are
   rewritten to bind `/dev/null` onto the first non-existent/symlink
@@ -135,7 +135,7 @@ farm):
 (Seatbelt) on macOS, plus an HTTP proxy inside the netns for domain
 allow/deny; MITM for observability; seccomp from a generated filter; a
 violation monitor. Explicitly documents that `--unshare-net` is
-all-or-nothing and domain filtering *happens at the proxy*, not in bwrap.
+all-or-nothing and domain filtering _happens at the proxy_, not in bwrap.
 
 `fencesandbox/fence` (Go; also a library) — the closest architectural match
 to a "bwrap third backend" for this repo, and the strongest source of
@@ -147,7 +147,7 @@ counter-evidence to our bwrap verdicts in container-tooling.md:
   monitoring, violation monitoring; mandatory dangerous-path protection
   (`~/.shellrc`, nested `.git/hooks`, editor dirs) and `LD_*` sanitization.
 - **`workload_publish` is NOT a hard blocker for bwrap after all.** Fence
-  publishes an in-sandbox server via a *reverse unix-socket bridge*: host
+  publishes an in-sandbox server via a _reverse unix-socket bridge_: host
   `socat TCP-LISTEN` ⇄ shared unix socket (bind-mounted into the sandbox)
   ⇄ in-sandbox bridge helper ⇒ app port. Outbound host-loopback access
   (`--unshare-net` gives the sandbox its own loopback) uses the mirror-image
@@ -160,7 +160,7 @@ counter-evidence to our bwrap verdicts in container-tooling.md:
   an honest failure mode our backend detection would have to model too.
 - Exec-time policy: `path` mode (bind-mask the executable) vs Linux-only
   `argv` mode — host supervisor + in-sandbox shim installing a
-  `SECCOMP_USER_NOTIF` filter on `execve`/`execveat` so the *argv* of child
+  `SECCOMP_USER_NOTIF` filter on `execve`/`execveat` so the _argv_ of child
   execs is policy-checked. Preflight parsing understands `&&`, `||`, `;`,
   pipes and nested `sh -c` so command chains cannot bypass policy — the
   same parser-shaped problem our workload_cmd words avoid by never being
@@ -188,8 +188,8 @@ generation, at the runtime layer:
   unsupported for the selected phase — are rejected; an omitted `network`
   section resolves to directional deny (egress, ingress, and host-loopback
   independently default deny). The policy guide states the honesty clause
-  outright: *"an omitted section is not proof that every backend enforces a
-  restriction"* — support divergence is documented per backend (WSLc accepts
+  outright: _"an omitted section is not proof that every backend enforces a
+  restriction"_ — support divergence is documented per backend (WSLc accepts
   only all-deny or all-bridged postures, never mixed; IsolationSession must
   set all three network actions to `"allow"` and cannot restrict networking
   at all).
@@ -199,9 +199,9 @@ generation, at the runtime layer:
   `runtimeConfig.networkProxy` is a caller-managed loopback HTTP/S proxy that
   REQUIRES egress default-deny with empty rule lists — the proxy is
   responsible for destination filtering. MXC's own caveat is the runtime
-  twin of our route-verification stance (d070): *"a cooperative proxy
+  twin of our route-verification stance (d070): _"a cooperative proxy
   setting alone is not a guarantee that arbitrary direct sockets are
-  blocked"* — policy and enforcement are separate claims, both must hold.
+  blocked"_ — policy and enforcement are separate claims, both must hold.
 - **The bwrap network stack is the load-bearing prior-art finding.**
   Network-enabled modes launch slirp4netns and run an unprivileged
   in-namespace supervisor (caller uid, `CAP_NET_ADMIN` inside its own netns:
@@ -250,7 +250,7 @@ generation, at the runtime layer:
 What this means for this repo: the strongest evidence yet that
 bwrap+netns+in-namespace firewall is production-viable as a DEFAULT for
 agent-code workloads — mxc ships exactly that as its default Linux backend.
-Our container-tooling.md "hard blocker" was always about LAN *publishing*,
+Our container-tooling.md "hard blocker" was always about LAN _publishing_,
 not network policy, and mxc closes the policy half the way fence closes the
 publish half (supervising process, not bwrap flags). The omitted≠enforced
 honesty and the cooperative-proxy caveat are the design posture our
@@ -262,11 +262,11 @@ container-tooling.md named as the reason podman stays.
 ## Landlock-centric (no namespaces, no root)
 
 - `multikernel/sandlock` (Rust): Landlock (FS + net TCP + IPC) + seccomp-bpf
-  + seccomp user notif for everything cgroups would do (memory limits,
-  IP enforcement, /proc virtualization); COW via seccomp; kernel matrix is
-  documented landlock-ABI-version-driven (`6.12+` for ABI v6). Ships an OCI
-  runtime shim (`sandlock-oci`) pitching "namespace-less containers".
-- `souk4711/hakoniwa` (Rust): the *full* puzzle in one tool — namespaces +
+  - seccomp user notif for everything cgroups would do (memory limits,
+    IP enforcement, /proc virtualization); COW via seccomp; kernel matrix is
+    documented landlock-ABI-version-driven (`6.12+` for ABI v6). Ships an OCI
+    runtime shim (`sandlock-oci`) pitching "namespace-less containers".
+- `souk4711/hakoniwa` (Rust): the _full_ puzzle in one tool — namespaces +
   pivot_root from an empty mount ns, `setrlimit`, systemd cgroups v2,
   Landlock, seccomp; network via pasta (pasta for usernet slirp work);
   ships desktop-app profiles in a separate `hakoniwa.d` repo.
@@ -278,8 +278,8 @@ container-tooling.md named as the reason podman stays.
   Landlock rulesets applied per container for FS/egress-TCP (443/53 only on
   the auth proxy); API keys live only in a scratch-sidecar auth proxy with
   dummy keys presented to the agent. Model responsibility split between
-  *runtime-provided* isolation (seccomp, iptables, namespace) and
-  *in-process* Landlock rulesets applied before the agent starts.
+  _runtime-provided_ isolation (seccomp, iptables, namespace) and
+  _in-process_ Landlock rulesets applied before the agent starts.
 - `deepseek-ai/deepseek-harness` — `sandbox-local` Linux chain: probe bwrap,
   else `@deepseek-ai/node-addon-landlock-run` (Landlock launcher with
   per-process read-only / workspace-write grants, mapping `/tmp` into a VFS
@@ -298,7 +298,7 @@ container-tooling.md named as the reason podman stays.
 
 ## Container-shaped but daemon-less: kern and ruri
 
-- `getkern/kern` (Rust, static binary): a full *runtime* (OCI pull, box,
+- `getkern/kern` (Rust, static binary): a full _runtime_ (OCI pull, box,
   lifecycle, SDK, compose) in one process, no daemon; kernel-enforced
   container in ~3.5 ms; seccomp deny-by-default allowlist; cgroup v2 for
   resources; macOS via Linux VM only. Its own `FAQ` positions itself
@@ -313,7 +313,7 @@ container-tooling.md named as the reason podman stays.
 - `sandbox-utils/sandbox-run` / `sandbox-venv` — pure-bash sandbox wrappers
   (whitelist pids/syscalls/caps world); the "least machinery" end of the
   spectrum, and a reminder that our own `lib/` already sits close to it.
-- `DavHau/nix-portable` — runtime *selection* pre-run: userns → proot
+- `DavHau/nix-portable` — runtime _selection_ pre-run: userns → proot
   fallback per host capability, same probe-chain shape as fence/deepseek.
 
 ## The PRoot corner (cross-check against our backend removal)
@@ -322,7 +322,7 @@ Our PRoot backend removal ("ptrace path translation, not isolation") matches
 the farm's own characterizations:
 
 - `bubbleroot` (`codeberg.org/valpackett`) — a cursed-by-choice bwrap→proot
-  translation script whose *reason to exist* is exactly hosts where
+  translation script whose _reason to exist_ is exactly hosts where
   namespaces are unavailable (unprivileged Docker, Termux): ptrace as the
   reachability fallback, never the guardrail.
 - `rootless-containers/runrootless` — proot + runc for rootless-without-
@@ -332,7 +332,7 @@ the farm's own characterizations:
 
 ## cgroups prior-art corner
 
-Nothing on the farm restricts *agent workloads* with plain cgroups alone;
+Nothing on the farm restricts _agent workloads_ with plain cgroups alone;
 it always appears as one layer:
 
 - `hakoniwa`: cgroup v2 via systemd - the classic topology (and a hint that
@@ -346,23 +346,23 @@ it always appears as one layer:
 ## The layer above the backend: declarative workload orchestration, VMs, micro-VMs
 
 The survey so far lives at the granularity of ONE launch command. The field
-also has the layer above it — describing *sets* of workloads declaratively —
+also has the layer above it — describing _sets_ of workloads declaratively —
 and the layer beside it — VM/micro-VM substrates. Both were swept for in the
 farm; this section records what is present, warns about what is missing, and
 maps the finding onto our description-driven runner.
 
 ### Declarative orchestration — on the mirror
 
-| Repo (present) | Shape | Prior art it offers vs `lib/workload-runtime.sh` |
-|---|---|---|
-| `podenv/podenv` (Haskell, Dhall config) | the **closest architectural cousin of our description API**: a capability schema toggles (wayland/audio/dbus/network), smart volumes, runtime selection (podman, bwrap-like, nix flakes) — a *typed* description rendered to backend flags, which is exactly our scalars+`workload_LISTS`+renderer split with schema-level typing | the argument for one typed description rendered into ANY backend (the user-namespace model podenv applies to daemon-LESS runtimes: rootless podman AND non-containerized commands); its isolation-by-default capability checklist is a design review for our `workload_hardening` defaults |
-| `containers/podlet` | generates Podman **Quadlet** (systemd unit) files from podman CLI, compose files, or existing objects | the "declarative-ize the imperative renderer" inverse of our `_render_container`: quadlet/classical systemd-merged units are the host-native way to persist a workload description — the tool our run scripts already walk around (run.sh is imperative render + launch), kept as the "if/when systemd owns the workloads" candidate |
-| `containers/podman-compose`, `compose-spec` shape | compose-spec over podman, daemonless process model | the standard multi-service declarative shape (deps, volumes, networks, healthchecks). Our model covers single-service; llama-swap + estige + coding-agent run on the same host but do NOT share a lifecycle — that is exactly the point where compose would buy something, and we are deliberately not there (each workload has its own run.sh + reload semantics in d041) |
-| `F1bonacc1/process-compose` | declarative YAML scheduler/orchestrator for NON-containerized processes (single Go binary, no daemon) | the declarative orchestration that fits the retired termux-native serving world (and any future no-container backend): deps, health probes, restart policy WITHOUT a container stack — the shape a non-backend process supervisor would take if ever needed |
-| `devcontainers/cli` | devcontainer.json → build/up/exec lifecycle + features/lockfiles | the ecosystem-standard declarative dev-container contract; our `coding-agent/` generator tree deliberately IS the role devcontainer features play elsewhere — comparing shows our generator emits CONTENT (models.json, auth files), not a dev-tool spec, so adopting devcontainer.json would buy interop at the cost of losing the generated-state model (the thing d041 pinned: runners never generate) |
-| `containers/toolbox`, `89luca89/distrobox` | interactive container dev environments over podman | container-as-CLI-environment UX; shows what a "workload" means when the user IS the workload (shell-first, home-shared) — the opposite end of prio from our serve-side parameters |
-| `systemd/mkosi` | declarative bootable OS disk images (mkosi config, systemd-initrd, VM/QEMU integration) | declarative IMAGE building for the VM path — the shape `build.mjs` would take for guests; complementary to crun-vm below |
-| `NixOS/nix` (+ `nixfmt`) | the fully declarative configuration/package end | not a runner, but the substrate every declarative Nix-based runtime (podenv flakes, microvm.nix — see WARN) sits on |
+| Repo (present)                                    | Shape                                                                                                                                                                                                                                                                                                                             | Prior art it offers vs `lib/workload-runtime.sh`                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `podenv/podenv` (Haskell, Dhall config)           | the **closest architectural cousin of our description API**: a capability schema toggles (wayland/audio/dbus/network), smart volumes, runtime selection (podman, bwrap-like, nix flakes) — a _typed_ description rendered to backend flags, which is exactly our scalars+`workload_LISTS`+renderer split with schema-level typing | the argument for one typed description rendered into ANY backend (the user-namespace model podenv applies to daemon-LESS runtimes: rootless podman AND non-containerized commands); its isolation-by-default capability checklist is a design review for our `workload_hardening` defaults                                                                                                                |
+| `containers/podlet`                               | generates Podman **Quadlet** (systemd unit) files from podman CLI, compose files, or existing objects                                                                                                                                                                                                                             | the "declarative-ize the imperative renderer" inverse of our `_render_container`: quadlet/classical systemd-merged units are the host-native way to persist a workload description — the tool our run scripts already walk around (run.sh is imperative render + launch), kept as the "if/when systemd owns the workloads" candidate                                                                      |
+| `containers/podman-compose`, `compose-spec` shape | compose-spec over podman, daemonless process model                                                                                                                                                                                                                                                                                | the standard multi-service declarative shape (deps, volumes, networks, healthchecks). Our model covers single-service; llama-swap + estige + coding-agent run on the same host but do NOT share a lifecycle — that is exactly the point where compose would buy something, and we are deliberately not there (each workload has its own run.sh + reload semantics in d041)                                |
+| `F1bonacc1/process-compose`                       | declarative YAML scheduler/orchestrator for NON-containerized processes (single Go binary, no daemon)                                                                                                                                                                                                                             | the declarative orchestration that fits the retired termux-native serving world (and any future no-container backend): deps, health probes, restart policy WITHOUT a container stack — the shape a non-backend process supervisor would take if ever needed                                                                                                                                               |
+| `devcontainers/cli`                               | devcontainer.json → build/up/exec lifecycle + features/lockfiles                                                                                                                                                                                                                                                                  | the ecosystem-standard declarative dev-container contract; our `coding-agent/` generator tree deliberately IS the role devcontainer features play elsewhere — comparing shows our generator emits CONTENT (models.json, auth files), not a dev-tool spec, so adopting devcontainer.json would buy interop at the cost of losing the generated-state model (the thing d041 pinned: runners never generate) |
+| `containers/toolbox`, `89luca89/distrobox`        | interactive container dev environments over podman                                                                                                                                                                                                                                                                                | container-as-CLI-environment UX; shows what a "workload" means when the user IS the workload (shell-first, home-shared) — the opposite end of prio from our serve-side parameters                                                                                                                                                                                                                         |
+| `systemd/mkosi`                                   | declarative bootable OS disk images (mkosi config, systemd-initrd, VM/QEMU integration)                                                                                                                                                                                                                                           | declarative IMAGE building for the VM path — the shape `build.mjs` would take for guests; complementary to crun-vm below                                                                                                                                                                                                                                                                                  |
+| `NixOS/nix` (+ `nixfmt`)                          | the fully declarative configuration/package end                                                                                                                                                                                                                                                                                   | not a runner, but the substrate every declarative Nix-based runtime (podenv flakes, microvm.nix — see WARN) sits on                                                                                                                                                                                                                                                                                       |
 
 Verdict on the orchestration layer: our two-halves description (shell
 scalars + jq filters) is the same idea as podenv's typed schema and
@@ -396,7 +396,7 @@ container-tooling.md's "backend dialects" wording already assumes.
   long-lived libvirt domain and to firecracker-containerd's fleet
   orchestration, same "namespaces are not the boundary" tier. (Full
   treatment in the mxc section above.)
-- Micro-VM *orchestrators* (E2B-style agent clouds, firecracker fleets,
+- Micro-VM _orchestrators_ (E2B-style agent clouds, firecracker fleets,
   microvm.nix): **NOT on the mirror** — see the warning list; the
   micro-VM-per-call world itself now has a primary source
   (`microsoft/mxc`, above) alongside kern's FAQ and `e2b-dev/runtime`.
@@ -457,7 +457,7 @@ found where the survey previously had no source and hand-drawn rows:
   capability table for the VM layer** — and it directly sharpens the
   d020 workspace-share row: firecracker and cloud-hypervisor ship no
   9p/virtiofs (the entire micro-VM tier supports only
-  block-device/overlay roots), so a rw *workspace share* (d020 §5,
+  block-device/overlay roots), so a rw _workspace share_ (d020 §5,
   virtiofs + idmap) is a **QEMU/libvirt-tier capability**, not a micro-VM
   one — micro-VMs take a full in-guest clone + push-back instead.
 - **e2b runtime (`docs/ARCHITECTURE.md`)** — the agent-VM-as-a-service
@@ -505,7 +505,7 @@ exactly the wrong complexity class for a small host).
 ## Convergence summary (what to take from it)
 
 1. **Networking via proxy + unix-socket bridges** is the consensus answer
-   to bwrap/netns + domain policy, and it *also* solves publishing from an
+   to bwrap/netns + domain policy, and it _also_ solves publishing from an
    isolated netns. Mechanism worth a d-doc before any bwrap work:
    fence's reverse bridge removes the hard-blocker status of
    `workload_publish` (feasibility only — podman's `-p` remains the right
@@ -517,7 +517,7 @@ exactly the wrong complexity class for a small host).
    not-just-static syscall policy** (argv exec checks, /proc virtualization,
    soft memory limits) without root/cgroups — kernel 5.6+.
 4. **Landlock granularity is bounded by ABI version**, and every serious
-   user keeps namespaces as the real boundary; Landlock is the *second*
+   user keeps namespaces as the real boundary; Landlock is the _second_
    line. Landlock cannot police `mount()` (clampdown's whole sidecar design
    exists because of that).
 5. **bwrap foot-guns documented repeatedly**: symlink dest-resolution,
@@ -549,15 +549,15 @@ of that class can honestly provide it (a governor at best, kern's wording).
 
 ### The overlap core (everything surveyed can do this)
 
-| Capability | srt | fence | sandlock | hakoniwa | kern | containers (podman/docker) | Mechanism under it |
-|---|---|---|---|---|---|---|---|
-| restrict FS writes to a tree | ✔ binds | ✔ binds+Landlock | ✔ Landlock | ✔ Landlock | ✔ rootfs | ✔ rootfs/bind | mount or LSM ruleset |
-| read-only tree / path masking | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | same |
-| process isolation (no peer pids/signals) | ✔ (`--unshare-pid`) | ✔ | ✔ (SignalScope v6) | ✔ pid ns | ✔ pid ns | ✔ pid ns | namespace or net-notif scoping |
-| clean env allowlist | ✔ `--clearenv`+setenv | ✔ sanitize + setenv | ✔ builder | ✔ | ✔ | ✔ `--env` | env table |
-| deny-by-default posture | ✔ | ✔ | ✔ (refuses on missing protection) | ✔ | ✔ seccomp | ✔ cap-drop/seccomp | config default |
-| run without root | ✔ userns | ✔ userns+Landlock | ✔ (never needs it) | ✔ | ✔ | ✔ rootless | all unprivileged primitives |
-| default deny (template) profiles | ✔ settings.json | ✔ templates+`extends` | ✔ profiles | ✔ hakoniwa.d | ✔ resource profiles | ✔ (ours: layers) | static config |
+| Capability                               | srt                   | fence                 | sandlock                          | hakoniwa     | kern                | containers (podman/docker) | Mechanism under it             |
+| ---------------------------------------- | --------------------- | --------------------- | --------------------------------- | ------------ | ------------------- | -------------------------- | ------------------------------ |
+| restrict FS writes to a tree             | ✔ binds               | ✔ binds+Landlock      | ✔ Landlock                        | ✔ Landlock   | ✔ rootfs            | ✔ rootfs/bind              | mount or LSM ruleset           |
+| read-only tree / path masking            | ✔                     | ✔                     | ✔                                 | ✔            | ✔                   | ✔                          | same                           |
+| process isolation (no peer pids/signals) | ✔ (`--unshare-pid`)   | ✔                     | ✔ (SignalScope v6)                | ✔ pid ns     | ✔ pid ns            | ✔ pid ns                   | namespace or net-notif scoping |
+| clean env allowlist                      | ✔ `--clearenv`+setenv | ✔ sanitize + setenv   | ✔ builder                         | ✔            | ✔                   | ✔ `--env`                  | env table                      |
+| deny-by-default posture                  | ✔                     | ✔                     | ✔ (refuses on missing protection) | ✔            | ✔ seccomp           | ✔ cap-drop/seccomp         | config default                 |
+| run without root                         | ✔ userns              | ✔ userns+Landlock     | ✔ (never needs it)                | ✔            | ✔                   | ✔ rootless                 | all unprivileged primitives    |
+| default deny (template) profiles         | ✔ settings.json       | ✔ templates+`extends` | ✔ profiles                        | ✔ hakoniwa.d | ✔ resource profiles | ✔ (ours: layers)           | static config                  |
 
 `microsoft/mxc` covers this whole core through its bwrap/LXC/Seatbelt
 backends (deny-by-default contract default, rootless userns, `--clearenv`
@@ -571,19 +571,19 @@ config cover the whole overlap core today for the container backends.
 
 ### The non-overlap (where each wants to sit)
 
-| Capability | Only (first-party shape) | Mechanism | Cost for this repo to cover |
-|---|---|---|---|
-| OCI image as the unit | containers (podman/docker), kern | pull/build/layer store | none — `workload_image` + each unit's own `build.mjs` (docs/d113) is this story; stays the default backend |
-| daemon-less runtime, no socket at rest | kern (bwrap-family too, but no runtime) | one static binary | not needed while backend detection runs ephemerally; a third dialect would trade `workload_logs`/`workload_rm` for a pidfile machinery (assessed in container-tooling.md) |
-| domain-level network policy | srt, fence, clampdown (proxy), sandlock (seccomp-notif), mxc (first-party, cross-backend) | in-netns HTTP/SOCKS proxy with unix-socket bridges; Landlock TCP + seccomp rules; or an in-ns iptables firewall under slirp4netns (mxc) | high for the container backends (they already get network from the netns — the cost only shows in a bwrap/dialect-less no-net backend, fence needed ~1 proxy + ~1 bridge helper per direction, mxc an unprivileged supervisor + iptables chains) |
-| deny-audit / learning mode | mxc (`learningModeLogging` deny-and-record vs `permissiveLearningMode` allow-all audit) | OS access-check logging capability (Windows AppContainer lineage) | not exposed by the workload API — candidate shape if denial debugging ever hurts; the Landlock/seccomp stacks have no equivalent (their violation monitors are ad-hoc observers, not OS audit) |
-| per-port publish from isolated netns | fence, sandlock (`allow_bind`) | reverse unix-socket bridge / Landlock BIND_TCP | medium: a `bridge-the-port` path per backend; only worth it if serving ever leaves podman |
-| syscall filtering | kern (moby default, 35 escapes), container runtimes, sandlock, fence, srt | seccomp-bpf | free-ish via containers (already attach runtime default) ; a new filter generator is one more artifact to freeze/verify |
-| argv-level exec policy | fence, clampdown sidecar, deepseek (grants) | `SECCOMP_USER_NOTIF` supervisor + shim | boundary-ish: a supervisor process, a versioned bootstrap plan and a pidfd watcher — the most involved class on the map; the workload API currently has no surface for it (a `workload_exec_policy` would be its hook point) |
-| resource ceilings (honest memory limit) | containers (cgroups v2), kern (profiles), hakoniwa (systemd) | cgroups | free in containers; governor-at-best in the Landlock/seccomp-notif stacks (sandlock: notif + SIGSTOP accounting) — the tradeoff sandlock/fence both called out |
-| GPU passthrough | containers (`--device`), bwrap (`--dev-bind`) | device nodes | our `workload_gpu` already maps 1:1 for both; Sandlock-style Landlock/seccomp stacks have **no GPU story** (kern: no VRAM cap in userspace is a boundary) |
-| SELinux relabel of mounts | containers (podman `z,U`) | kernel labeling | boundary — no bwrap/Landlock equivalent (`--exec-label` sets a process label at most); the static-binary runtimes sidestep relabeling entirely. Corroborates, not challenges, the container-tooling.md verdict that podman stays for serving |
-| agent-policy plumbing (MCP whitelists, hooks, config import) | srt, fence, clampdown | config plumbing, agent side | out of scope for a sh workload layer — it lives above the runtime, in the agent config |
+| Capability                                                   | Only (first-party shape)                                                                  | Mechanism                                                                                                                               | Cost for this repo to cover                                                                                                                                                                                                                      |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| OCI image as the unit                                        | containers (podman/docker), kern                                                          | pull/build/layer store                                                                                                                  | none — `workload_image` + each unit's own `build.mjs` (docs/d113) is this story; stays the default backend                                                                                                                                       |
+| daemon-less runtime, no socket at rest                       | kern (bwrap-family too, but no runtime)                                                   | one static binary                                                                                                                       | not needed while backend detection runs ephemerally; a third dialect would trade `workload_logs`/`workload_rm` for a pidfile machinery (assessed in container-tooling.md)                                                                        |
+| domain-level network policy                                  | srt, fence, clampdown (proxy), sandlock (seccomp-notif), mxc (first-party, cross-backend) | in-netns HTTP/SOCKS proxy with unix-socket bridges; Landlock TCP + seccomp rules; or an in-ns iptables firewall under slirp4netns (mxc) | high for the container backends (they already get network from the netns — the cost only shows in a bwrap/dialect-less no-net backend, fence needed ~1 proxy + ~1 bridge helper per direction, mxc an unprivileged supervisor + iptables chains) |
+| deny-audit / learning mode                                   | mxc (`learningModeLogging` deny-and-record vs `permissiveLearningMode` allow-all audit)   | OS access-check logging capability (Windows AppContainer lineage)                                                                       | not exposed by the workload API — candidate shape if denial debugging ever hurts; the Landlock/seccomp stacks have no equivalent (their violation monitors are ad-hoc observers, not OS audit)                                                   |
+| per-port publish from isolated netns                         | fence, sandlock (`allow_bind`)                                                            | reverse unix-socket bridge / Landlock BIND_TCP                                                                                          | medium: a `bridge-the-port` path per backend; only worth it if serving ever leaves podman                                                                                                                                                        |
+| syscall filtering                                            | kern (moby default, 35 escapes), container runtimes, sandlock, fence, srt                 | seccomp-bpf                                                                                                                             | free-ish via containers (already attach runtime default) ; a new filter generator is one more artifact to freeze/verify                                                                                                                          |
+| argv-level exec policy                                       | fence, clampdown sidecar, deepseek (grants)                                               | `SECCOMP_USER_NOTIF` supervisor + shim                                                                                                  | boundary-ish: a supervisor process, a versioned bootstrap plan and a pidfd watcher — the most involved class on the map; the workload API currently has no surface for it (a `workload_exec_policy` would be its hook point)                     |
+| resource ceilings (honest memory limit)                      | containers (cgroups v2), kern (profiles), hakoniwa (systemd)                              | cgroups                                                                                                                                 | free in containers; governor-at-best in the Landlock/seccomp-notif stacks (sandlock: notif + SIGSTOP accounting) — the tradeoff sandlock/fence both called out                                                                                   |
+| GPU passthrough                                              | containers (`--device`), bwrap (`--dev-bind`)                                             | device nodes                                                                                                                            | our `workload_gpu` already maps 1:1 for both; Sandlock-style Landlock/seccomp stacks have **no GPU story** (kern: no VRAM cap in userspace is a boundary)                                                                                        |
+| SELinux relabel of mounts                                    | containers (podman `z,U`)                                                                 | kernel labeling                                                                                                                         | boundary — no bwrap/Landlock equivalent (`--exec-label` sets a process label at most); the static-binary runtimes sidestep relabeling entirely. Corroborates, not challenges, the container-tooling.md verdict that podman stays for serving     |
+| agent-policy plumbing (MCP whitelists, hooks, config import) | srt, fence, clampdown                                                                     | config plumbing, agent side                                                                                                             | out of scope for a sh workload layer — it lives above the runtime, in the agent config                                                                                                                                                           |
 
 Reading of the map: on the rows our serving path needs (image, publishing,
 GPU, SELinux, resources) the **container backend is the superset**, while a
@@ -605,7 +605,7 @@ systemic gotchas repeated across the field.
 
 - **Symlinks defeat naive allow/deny.** bwrap resolves bind destinations at
   mount time and binds `dir` and `dir/` differently; srt had to
-  re-evaluate every rule over *resolved* paths while tracking all raw
+  re-evaluate every rule over _resolved_ paths while tracking all raw
   spellings, and rewrite "deny" to "bind `/dev/null` onto the first
   non-existent/symlinked component path" (straight `--ro-bind /dev/null
   <symlink>` aborts startup).
@@ -701,6 +701,7 @@ systemic gotchas repeated across the field.
   lives OUTSIDE the namespace (srt/fence proxies) or in Landlock's
   BIND_TCP rules (TCP only — no UDP-bind ACL in any ABI); nothing on the
   field does per-domain UDP policy without a proxy.
+
 ### Dynamic-loader env (repeated across every stack)
 
 - **`LD_*` / `DYLD_*` sanitization is universal in harness-grade tools**
@@ -787,7 +788,7 @@ agent-sandbox side.)
   surface bugs names the whole class).
 - `lxc/incus` / `systemd` `systemd-nspawn` docs — namespace-based but
   managed; only if a cgroup/systemd-slice backend is ever considered.
-- `Netflix/bpfmon`-grade eBPF monitors — fence references the *idea*
+- `Netflix/bpfmon`-grade eBPF monitors — fence references the _idea_
   (ebpf monitoring) without shipping much; a kernel-BPF-policy reference if
   violation monitoring is ever wanted.
 

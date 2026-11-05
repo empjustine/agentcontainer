@@ -40,21 +40,21 @@ The modes failed on their own terms:
 
 - **The preview is not the artifact.** Ordering (d050 canonical JSON), merge
   effects, and the stale-layer removal only show up in the real write, so the
-  preview had to be read *and* the real run had to happen anyway.
+  preview had to be read _and_ the real run had to happen anyway.
 - **Two execution paths per tool.** The path nobody runs is the path that
-  rots; `search-references --dry-run` was explicitly documented as *the*
+  rots; `search-references --dry-run` was explicitly documented as _the_
   test path on a host with no container tool, i.e. a simulation of testing.
 - **Every consumer re-implemented the mode**, which is how the writer's
   contract leaked into orchestration code and README prose.
 - **The repo already has a review surface.** Generated artifacts are
   committed and ordering is deterministic (d050): regenerate, `git diff`, and
-  the diff *is* the preview — against real inputs, not a simulation of them.
+  the diff _is_ the preview — against real inputs, not a simulation of them.
 
 ## Decision
 
 1. **`lib/artifact.mjs` writes only by atomic substitution**: sorted tmp
    file, then `rename(2)` over the destination. A byte-identical destination
-   is left alone; a *missing* destination is a hard error (the writer exists
+   is left alone; a _missing_ destination is a hard error (the writer exists
    to replace things). No `DRY_RUN`, no `.dry-run` previews, no `isDryRun()`
    export.
 2. **`build.mjs` has no preview mode — it builds.** It still logs the
@@ -83,13 +83,13 @@ The modes failed on their own terms:
 
 ## What was NOT removed (and why)
 
-Flags that select *what work happens* or change its inputs are not
+Flags that select _what work happens_ or change its inputs are not
 simulation modes, and stay:
 
 - **Scope/selectors**: `--only`, `--exclude`, `--jobs`, `--max-depth`,
   `--no-fetch`, `--no-optimize`, `--min-interval`, `--branches`, `--port`.
 - **Effect switches with real semantics**: `FORCE` (cache-bust),
-  `SKIP_PKG`, `SKIP_GEN` (artifact *source*: committed file vs. fresh
+  `SKIP_PKG`, `SKIP_GEN` (artifact _source_: committed file vs. fresh
   generation), `MODELS_DEV_REFRESH`, `LOCAL_INFERENCE=1`, `PEERS_ONLY`,
   `BADSSL_DOWN`, `--redownload`, `--delete-originals`, `--force`.
 - **Verifiers that assert about reality instead of previewing an
@@ -98,17 +98,17 @@ simulation modes, and stay:
 
 ## Mechanical change list
 
-| Surface | Change |
-| --- | --- |
-| `lib/artifact.mjs` | `DRY_RUN` branch, `isDryRun()` export, `<out>.dry-run` previews removed; writer is always tmp + rename |
-| `build.mjs` | `BUILD_PLAN` read/exit removed; target log reworded to "build targets" |
-| `coding-agent/generate.mjs`, `llm-reverse-proxy/generate.mjs`, `llm-local-inference/generate.mjs`, `model-sizes.mjs`, root `generate.mjs` | `DRY_RUN` env docs and `.dry-run` orchestration branches removed |
-| `git/maintain-mirrors.mjs`, `git/migrate-to-bare.mjs`, `git/software-forge-mirror.mjs`, `git/search-references.mjs` | `--dry-run` flag, "would …" branches, and no-container-tool placeholder paths removed |
-| `llm-reverse-proxy/README.md`, `git/non-bare-issues.md` | usage surfaces updated |
+| Surface                                                                                                                                   | Change                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `lib/artifact.mjs`                                                                                                                        | `DRY_RUN` branch, `isDryRun()` export, `<out>.dry-run` previews removed; writer is always tmp + rename |
+| `build.mjs`                                                                                                                               | `BUILD_PLAN` read/exit removed; target log reworded to "build targets"                                 |
+| `coding-agent/generate.mjs`, `llm-reverse-proxy/generate.mjs`, `llm-local-inference/generate.mjs`, `model-sizes.mjs`, root `generate.mjs` | `DRY_RUN` env docs and `.dry-run` orchestration branches removed                                       |
+| `git/maintain-mirrors.mjs`, `git/migrate-to-bare.mjs`, `git/software-forge-mirror.mjs`, `git/search-references.mjs`                       | `--dry-run` flag, "would …" branches, and no-container-tool placeholder paths removed                  |
+| `llm-reverse-proxy/README.md`, `git/non-bare-issues.md`                                                                                   | usage surfaces updated                                                                                 |
 
 ## Superseded mentions (left as record, not rewritten)
 
-Past-tense verification/evidence lines keep their history; the *living*
+Past-tense verification/evidence lines keep their history; the _living_
 usage surfaces above were updated in place and point here: d030
 (SKIP_GEN/DRY_RUN orthogonality bullet), d033 (usage), d041 (BUILD_PLAN
 bullet; evidence sections), d043 (usage + preview bullet), d044 (dry-run

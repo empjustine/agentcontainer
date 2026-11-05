@@ -61,8 +61,8 @@ drift from the builder because it contains nothing to drift.
 
 ### (c) A free-disk registration gate for the coding-agent image
 
-*(Superseded by d087 — the gate is retired; see that record for why the
-floor keyed on the wrong consumer.)*
+_(Superseded by d087 — the gate is retired; see that record for why the
+floor keyed on the wrong consumer.)_
 
 `lib/host-capabilities.mjs` gains `freeDiskGiB()`; the coding-agent image
 registers only with headroom to spare (floor 20 GiB,

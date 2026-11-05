@@ -34,7 +34,7 @@ d073 owns their requirements, and this record restates neither.
    gate.** The original gate misfired on three counts, and the amendment
    records why so it is not re-imposed:
    - **The measurement does not transfer.** L4 ran against the work ingress,
-     but E's trigger is *any* damaged link (this record's decision 4 says
+     but E's trigger is _any_ damaged link (this record's decision 4 says
      the work env is "the expected E trigger, not the only one"). Numbers
      from one gateway posture cannot set the parameters of a mode that by
      premise runs where gateways are hostile and links unreliable — a mode
@@ -43,7 +43,7 @@ d073 owns their requirements, and this record restates neither.
      everywhere.
    - **The mechanics are decidable without data.** The one fork L4 was to
      settle — long-lived request body vs. per-exchange windowing — is
-     decided *by the hostile model itself*: a long-lived body dies with the
+     decided _by the hostile model itself_: a long-lived body dies with the
      connection and needs cross-reconnect session state exactly where the
      link is least trustworthy, while windowed exchanges each stand alone
      (a dropped window retries; nothing to resurrect). d077 already marked
@@ -52,7 +52,7 @@ d073 owns their requirements, and this record restates neither.
      parameters are what this repo already ships provisional (S1's
      keepalive/reap constants in `relay.go`: measured after, not before).
    - **The gate protected nothing.** Spike-gating exists so shipped code
-     cannot *silently flip traffic* onto an unmeasured mode — C's default
+     cannot _silently flip traffic_ onto an unmeasured mode — C's default
      flip, and d084 already superseded even that with deploy-first. E never
      enters traffic by default-participation: it is the last rung of the
      C → D → E ladder, reached only when both built probes fail, and the
@@ -64,7 +64,8 @@ d073 owns their requirements, and this record restates neither.
    deployment environment wants E's numbers, to validate the shipped
    provisional constants and the carrier choice — never to unblock code.
    The mode stays media-type-neutral in spec (Study A's SSE carrier keeps
-   its adopted-*in-intent* status, d077 §6).
+   its adopted-_in-intent_ status, d077 §6).
+
 3. **The Mode E shape is decided now; its parameters ship provisional
    (the S1 pattern — the amendment to decision 2).** The build is:
    - **client** — a stop-and-wait `tunnelStream` implementation feeding
@@ -84,7 +85,7 @@ d073 owns their requirements, and this record restates neither.
      not a mode.
 4. **Spike L2 reorders, never vetoes.** L2 (work-ingress posture: ALPN
    offer, upgrade pass-through, streaming flush) decides which mode the
-   restricted work environment *uses*; a deviation from the all-pass
+   restricted work environment _uses_; a deviation from the all-pass
    expectation reorders the work along the environment instead of C → E
    (d077 §8). The work environment is the expected E trigger, not the only
    one: E builds when a deployment needs it — no spike ahead of it (the
@@ -96,13 +97,13 @@ d073 owns their requirements, and this record restates neither.
 
 ## Work breakdown
 
-| Gate | Runs where | Decides | Unblocks |
-|---|---|---|---|
-| L1 | anywhere with funnel access | the 33 ms streaming bar | E's response carrier |
-| L2 | the work ingress env only | which mode that env uses | order of the C default flip vs the E build |
-| L3 | anywhere with funnel access | E2's overlapping-body claim live | `-modes` default → `cd` |
-| L4 | the work ingress env (gateway buffering is the question) | *nothing — post-hoc characterization of E's shipped provisional constants (amendment to decision 2)* | nothing (originally: every line of E code — gate removed) |
-| L5 | Study B trigger only (d077 §7) | whether inner TLS re-opens | nothing today |
+| Gate | Runs where                                               | Decides                                                                                              | Unblocks                                                  |
+| ---- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| L1   | anywhere with funnel access                              | the 33 ms streaming bar                                                                              | E's response carrier                                      |
+| L2   | the work ingress env only                                | which mode that env uses                                                                             | order of the C default flip vs the E build                |
+| L3   | anywhere with funnel access                              | E2's overlapping-body claim live                                                                     | `-modes` default → `cd`                                   |
+| L4   | the work ingress env (gateway buffering is the question) | _nothing — post-hoc characterization of E's shipped provisional constants (amendment to decision 2)_ | nothing (originally: every line of E code — gate removed) |
+| L5   | Study B trigger only (d077 §7)                           | whether inner TLS re-opens                                                                           | nothing today                                             |
 
 Spike definitions and pass bars are d077 §8's; where this table
 paraphrases, d077 wins.

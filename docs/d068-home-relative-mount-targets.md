@@ -60,7 +60,7 @@ Two facts make it a regression rather than a papercut:
 
 1. **Two spellings, one rule.** The host side of a mount stays canonical
    (that is what the dedupe and the `$HOME` refusal compare — d056 decision
-   c); the container side of a path *under the resolved home* is rewritten to
+   c); the container side of a path _under the resolved home_ is rewritten to
    `/home/USER` + `path minus the home prefix`. Paths outside the home are
    untouched: a `/srv/data` DIRECTORY mounts at `/srv/data`, as before.
 2. **The container side follows the image, not the host env.** The rule is
@@ -74,7 +74,7 @@ Two facts make it a regression rather than a papercut:
    rewrite — `--workdir /home/$USER/agentcontainer` instead of a
    `/var/home/...` path that exists only because of how the shell got there.
 4. **The policy lives in the launcher, not in the workload API.**
-   `workload_rw host guest` already accepts any pair; *which* guest a
+   `workload_rw host guest` already accepts any pair; _which_ guest a
    directory deserves is a launcher contract, so `run.sh` owns the mapping and
    `lib/` stays mechanism.
 

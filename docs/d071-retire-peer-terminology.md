@@ -12,7 +12,7 @@ tags: [terminology, generators, reverse-proxy, pi, opencode, docs]
 # d071 — retire "peer" for the reverse-proxy vocabulary
 
 **Status: implemented.** The reverse-proxy base and the machinery around it get
-names that say *reverse proxy*. "Peer" survives only for the local llama-swap
+names that say _reverse proxy_. "Peer" survives only for the local llama-swap
 farm provider concept. The paired bearer rename (`PEER_API_KEY` →
 `REVERSE_PROXY_API_KEY`) landed one change later, under the same decision.
 
@@ -73,6 +73,7 @@ capability (see d070, which moves that capability out of sight entirely).
    Nothing is deleted: the vault's `/inference` path still sets them for
    outside consumers, exactly as this decision intended, and that is an
    out-of-repo concern this tree neither reads nor breaks.
+
 3. **Code identifiers and the module rename** (mechanical, one change):
    `peerBaseUrl(s)` → `reverseProxyBaseUrl(s)`, `peerProviderUrl` →
    `providerRouteUrl`, `probePeerRoutes` → `probeRoutes`,
@@ -90,7 +91,7 @@ capability (see d070, which moves that capability out of sight entirely).
    Out of scope: the bodies of d022/d027/d033/d034/d047/d063 and
    `docs/archive/` — a decision record keeps the names of the day;
    misleading README index rows point at this record instead. d063 stays
-   authoritative for the routing *rules*; this record owns the *vocabulary*.
+   authoritative for the routing _rules_; this record owns the _vocabulary_.
 5. **The kept carve-out:** "peer" remains only for the llama-swap farm
    provider concept ("the llama-swap peer provider"). Honest etymology for
    the record: that usage also came from sense 1 — what is actually meant is

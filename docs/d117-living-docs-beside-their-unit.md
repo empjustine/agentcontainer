@@ -67,15 +67,15 @@ the path carries only habit.
 
 ## The moves this record makes
 
-| from | to | why it is single-unit |
-|---|---|---|
-| `docs/coding-harness-persistence.md` | `coding-agent/coding-harness-persistence.md` | the per-harness state dirs `coding-agent/run.sh` mounts |
-| `docs/scoped-models-and-proxy-overrides.md` | `coding-agent/scoped-models-and-proxy-overrides.md` | the coding-agent container's generated config |
-| `docs/summarized-thinking.md` | `coding-agent/summarized-thinking.md` | one pi extension's design note |
-| `docs/gguf-model-tooling.md` | `llm-local-inference/gguf-model-tooling.md` | this unit's manifest tooling |
-| `docs/gguf-vram-fit-estimates.md` (+ `.data.json`) | `llm-local-inference/` | tables this unit's tooling generates |
-| `docs/hf-cache-upkeep.md` | `llm-local-inference/hf-cache-upkeep.md` | this unit's cache upkeep runbook |
-| `docs/refresh-llm-local-inference-manifest.md` | `llm-local-inference/refresh-llm-local-inference-manifest.md` | this unit's manifest refresh runbook |
+| from                                               | to                                                            | why it is single-unit                                   |
+| -------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------- |
+| `docs/coding-harness-persistence.md`               | `coding-agent/coding-harness-persistence.md`                  | the per-harness state dirs `coding-agent/run.sh` mounts |
+| `docs/scoped-models-and-proxy-overrides.md`        | `coding-agent/scoped-models-and-proxy-overrides.md`           | the coding-agent container's generated config           |
+| `docs/summarized-thinking.md`                      | `coding-agent/summarized-thinking.md`                         | one pi extension's design note                          |
+| `docs/gguf-model-tooling.md`                       | `llm-local-inference/gguf-model-tooling.md`                   | this unit's manifest tooling                            |
+| `docs/gguf-vram-fit-estimates.md` (+ `.data.json`) | `llm-local-inference/`                                        | tables this unit's tooling generates                    |
+| `docs/hf-cache-upkeep.md`                          | `llm-local-inference/hf-cache-upkeep.md`                      | this unit's cache upkeep runbook                        |
+| `docs/refresh-llm-local-inference-manifest.md`     | `llm-local-inference/refresh-llm-local-inference-manifest.md` | this unit's manifest refresh runbook                    |
 
 Ids are unchanged: an id is an identity, not a filename
 (`docs/spec-graph-standard.md`), and every stem stays equal to its id, so the
@@ -96,7 +96,7 @@ repo itself.
 
 - A unit checkout is complete in prose as well as in code (d113): the runbook
   for a tool ships inside the folder that holds the tool.
-- `docs/` becomes a *cross-cutting* tree, so its index rows stop competing with
+- `docs/` becomes a _cross-cutting_ tree, so its index rows stop competing with
   unit READMEs for "where do I read about X".
 - Every path cite in a d0XX body is maintained by hand (d072 permits it) — the
   cost is paid once per move and the alternative is a permanently two-homed
@@ -108,7 +108,7 @@ repo itself.
   type owns, not a folder's inventory), so a reader looking for a runbook still
   starts under the module-design pattern. It no longer carries a row per doc
   (see the amendment in [d042](d042-documentation-taxonomy.md)); where a moved
-  doc *is* named — the start-here path — the path simply changes.
+  doc _is_ named — the start-here path — the path simply changes.
 
 ## Alternatives rejected
 

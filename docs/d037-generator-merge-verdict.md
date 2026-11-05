@@ -29,14 +29,14 @@ the two cloud generators merge at ~48% line reduction with low risk.
 **Broad merge: does not hold.** The five generators produce four different
 output schemas and consume disjoint inputs:
 
-| Generator | Output schema | Input |
-|---|---|---|
-| generate-local-llama-swap | pi layer, llama-swap peer entries (`meta.llamaswap`, PEER_API_KEY bearer) | llama-swap /v1 listing |
-| generate-cloud-*(pi-native + alternative) | pi layers ×2 shapes (reroute-only override / full blocks) | live /models listings, models.dev + catwalk + hyper catalogs |
-| generate-opencode.jsonc | opencode V1 config (different schema entirely) | models.dev catalog |
-| generate-default-model | settings.json overlay (d036: operator-hardcoded) | settings source only |
+| Generator                                 | Output schema                                                             | Input                                                        |
+| ----------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| generate-local-llama-swap                 | pi layer, llama-swap peer entries (`meta.llamaswap`, PEER_API_KEY bearer) | llama-swap /v1 listing                                       |
+| generate-cloud-*(pi-native + alternative) | pi layers ×2 shapes (reroute-only override / full blocks)                 | live /models listings, models.dev + catwalk + hyper catalogs |
+| generate-opencode.jsonc                   | opencode V1 config (different schema entirely)                            | models.dev catalog                                           |
+| generate-default-model                    | settings.json overlay (d036: operator-hardcoded)                          | settings source only                                         |
 
-The shared machinery is *already* extracted (`gen-lib.mjs`, `lib/peer-probe.mjs`,
+The shared machinery is _already_ extracted (`gen-lib.mjs`, `lib/peer-probe.mjs`,
 `lib/pi-models.mjs`, the fact tables). Merging the remaining per-concern
 bodies would couple unrelated failure domains (a llama-swap probe hiccup
 killing opencode-config emission) for zero dedup. SIMPLE.md's own "not
@@ -49,7 +49,7 @@ probing, catalog read with fallback, per-layer artifact writes. They merge
 into **one table-driven generator** (`generate-cloud-providers.mjs`) with a
 `mode: "override-only" | "full"` column (d030 option 6):
 
-- `override-only` (pi-native set): direct-reachable ⇒ emit *nothing* (pi's
+- `override-only` (pi-native set): direct-reachable ⇒ emit _nothing_ (pi's
   built-in routing stays); peer-usable ⇒ `providerReroute` with filtered
   models from the live listing, else bare catalog ids.
 - `full` (alternative set): direct-reachable ⇒ full block at the real

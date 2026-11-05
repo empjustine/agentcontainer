@@ -25,7 +25,7 @@ is the self-hosted half.
 
 ## Verdict
 
-**Viable and recommended**, for OCI-hosted instances, as the *at-rest*
+**Viable and recommended**, for OCI-hosted instances, as the _at-rest_
 source of the secret-bearing estige config. It removes long-lived API keys
 from instances entirely: the instance authenticates as itself, and a policy
 lets it read only the named secrets.
@@ -59,17 +59,17 @@ Oracle's own documentation, not from a successful fetch on this host.
 
 ## Verified facts
 
-| Fact | Status | Source |
-|---|---|---|
-| Instance principals use automatically created and rotated certificates; no user credentials or config file on the instance | confirmed | Oracle, *Calling Services from an Instance* |
-| A dynamic group is defined by matching rules over `instance.compartment.id`, `instance.id`, or `tag.<namespace>.<key>.value`; syntax `any\|all { <cond>, ... }` | confirmed | Oracle, *Managing Dynamic Groups* / *Writing Matching Rules* |
-| Policy can grant `read secret-bundles` scoped to a secret OCID with `where target.secret.id = ...` | confirmed | Oracle, *Calling Services from an Instance* (Vault example) |
-| CLI supports `--auth instance_principal` and `OCI_CLI_AUTH=instance_principal` | confirmed | Oracle, *Calling Services from an Instance* |
-| Go SDK supports `auth.InstancePrincipalConfigurationProvider()`; region can be read from IMDS | confirmed | Oracle SDK docs / examples |
-| IMDS v2 requires the header `Authorization: Bearer Oracle`; instance document at `/opc/v2/instance/` | confirmed | Oracle, *Getting Instance Metadata* |
-| Dynamic-group/policy changes take about one hour to propagate | confirmed | Oracle, *Managing Dynamic Groups* |
-| An instance can belong to at most 5 dynamic groups; a tenancy can have at most 50 | confirmed | Oracle, *Managing Dynamic Groups* |
-| A live end-to-end fetch succeeds on this repo's hosts | **not testable here** | host is not an OCI instance |
+| Fact                                                                                                                                                            | Status                | Source                                                       |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------ |
+| Instance principals use automatically created and rotated certificates; no user credentials or config file on the instance                                      | confirmed             | Oracle, _Calling Services from an Instance_                  |
+| A dynamic group is defined by matching rules over `instance.compartment.id`, `instance.id`, or `tag.<namespace>.<key>.value`; syntax `any\|all { <cond>, ... }` | confirmed             | Oracle, _Managing Dynamic Groups_ / _Writing Matching Rules_ |
+| Policy can grant `read secret-bundles` scoped to a secret OCID with `where target.secret.id = ...`                                                              | confirmed             | Oracle, _Calling Services from an Instance_ (Vault example)  |
+| CLI supports `--auth instance_principal` and `OCI_CLI_AUTH=instance_principal`                                                                                  | confirmed             | Oracle, _Calling Services from an Instance_                  |
+| Go SDK supports `auth.InstancePrincipalConfigurationProvider()`; region can be read from IMDS                                                                   | confirmed             | Oracle SDK docs / examples                                   |
+| IMDS v2 requires the header `Authorization: Bearer Oracle`; instance document at `/opc/v2/instance/`                                                            | confirmed             | Oracle, _Getting Instance Metadata_                          |
+| Dynamic-group/policy changes take about one hour to propagate                                                                                                   | confirmed             | Oracle, _Managing Dynamic Groups_                            |
+| An instance can belong to at most 5 dynamic groups; a tenancy can have at most 50                                                                               | confirmed             | Oracle, _Managing Dynamic Groups_                            |
+| A live end-to-end fetch succeeds on this repo's hosts                                                                                                           | **not testable here** | host is not an OCI instance                                  |
 
 ## What it buys, and what it does not
 
@@ -88,7 +88,7 @@ Oracle's own documentation, not from a successful fetch on this host.
 - Portability. A laptop, a Termux device, or a non-OCI VPS has no instance
   principal; those hosts need another materialization source.
 - Protection from a compromised instance. The instance can read the
-  secrets it is entitled to; the mechanism removes *standing credentials*,
+  secrets it is entitled to; the mechanism removes _standing credentials_,
   not the instance's authority.
 - A file on disk by itself. The fetch must write the file (or the process
   must hold it in memory), so the file needs `0600` and, where available,
@@ -203,4 +203,3 @@ credentials.
   `docker` on `PATH`; only `curl` was available.
 - Consequently the commands above are transcribed from Oracle's docs and
   syntax-checked by reading, not executed end to end.
-

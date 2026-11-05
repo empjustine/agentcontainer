@@ -52,10 +52,10 @@ host**, over the bare mirrors, and are reached by the agent over the network
 server is reachable at `127.0.0.1:<port>` with **no bind mount and no `z,U`
 walk**).
 
-| layer | engine | answers | index shape |
-|---|---|---|---|
-| lexical | **Zoekt** | regex / literal / symbol, `repo:` `branch:` `file:` filters | trigram + positional index, per-repo shards |
-| semantic | **blob-addressed chunk embeddings** | "code shaped like this", natural-language intent | vector index keyed by git blob SHA, deduped across refs |
+| layer    | engine                              | answers                                                     | index shape                                             |
+| -------- | ----------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------- |
+| lexical  | **Zoekt**                           | regex / literal / symbol, `repo:` `branch:` `file:` filters | trigram + positional index, per-repo shards             |
+| semantic | **blob-addressed chunk embeddings** | "code shaped like this", natural-language intent            | vector index keyed by git blob SHA, deduped across refs |
 
 The lexical layer is the priority and is implemented (`git/search-references.*`);
 the semantic layer is specified here but not yet built — its frontmatter
@@ -68,16 +68,17 @@ index build. `index` refuses to run without an explicit `--only GLOB` (or the
 demand" — see the scope ladder under Layer 1.
 
 Implementation status: **Layer 1 (lexical/Zoekt) built** — `git/search-references.mjs`
-+ shim (opt-in indexing), plus `git/-forge-mirror.sh` for acquiring a bare
-mirror from any https forge; dry-run-verified and type/lint-clean. **Layer 2
-(semantic) designed only**.
+
+- shim (opt-in indexing), plus `git/-forge-mirror.sh` for acquiring a bare
+  mirror from any https forge; dry-run-verified and type/lint-clean. **Layer 2
+  (semantic) designed only**.
 
 ## Layer 1 — lexical: Zoekt
 
 [Zoekt](https://github.com/sourcegraph/zoekt) is Sourcegraph's search engine:
 a trigram index plus regex verification, with first-class git support. It reads
 **bare** repos directly (`zoekt-git-index`), indexes each requested ref as a
-separate *branch*, and exposes filters (`repo:`, `branch:`, `file:`,
+separate _branch_, and exposes filters (`repo:`, `branch:`, `file:`,
 `lang:`, `sym:`) that map exactly onto cross-repo / cross-branch search.
 
 ### Engine source: the official image, not a host Go install
@@ -114,8 +115,8 @@ only**. Cross-branch requires naming the refs:
 -branches 'HEAD,refs/heads/*'      # every local branch (mirrors have all upstream heads)
 ```
 
-An indexed branch is stored, so index size scales with *sum of indexed branch
-trees*, not repo size. Indexing all heads of all 775 mirrors — including the
+An indexed branch is stored, so index size scales with _sum of indexed branch
+trees_, not repo size. Indexing all heads of all 775 mirrors — including the
 kernel and IntelliJ — is neither the default nor normally wanted. The posture
 is **opt-in, per repo**: pick a repo that looks interesting, then choose its
 branch scope. The `--only`/`--exclude` globs (the same filter language as
@@ -147,10 +148,10 @@ container runtime available.
 - **Hound** — trigram index, but indexes one checkout/ref; no branch model.
 - **livegrep** — fast, but a service you configure per-repo and it has no
   branch-aware shard model as clean as Zoekt's.
-- **`git log -S`/`-G` pickaxe** — this is *history* search, not branch-tree
+- **`git log -S`/`-G` pickaxe** — this is _history_ search, not branch-tree
   search; it is the right tool for "when did this string change", accelerated
   by the commit-graph Bloom filters `maintain` writes, and is complementary.
-  Zoekt holds one *snapshot per indexed ref*; pickaxe holds every commit.
+  Zoekt holds one _snapshot per indexed ref_; pickaxe holds every commit.
 
 ## Layer 2 — semantic: blob-addressed chunk embeddings
 
@@ -188,7 +189,7 @@ is new need embedding, and a blob that merely moved branch or path does not.
    - `chunk(blob_sha, start_line, end_line, text, embedding)` — `vec0` virtual
      table for ANN + a plain `chunks_fts` FTS5 table for BM25
    - `occurrence(blob_sha, repo, ref, path)` — where a blob shows up
-   A single file, no server, and BM25 + vectors + metadata in one query.
+     A single file, no server, and BM25 + vectors + metadata in one query.
 
 ### Query flow (hybrid)
 
@@ -296,7 +297,7 @@ subcommands:
 - Farm shape re-audited during this design: 775 bare mirrors discovered by
   `findBareMirrors` under `~/Downloads/references`; `git rev-parse
   --is-bare-repository` = true; `remote.origin.url` present. Note the mirrors
-  land *in place* with a `.git` suffix, not at `maintain`'s default
+  land _in place_ with a `.git` suffix, not at `maintain`'s default
   `references-bare` root — discovery by shape (`HEAD`+`objects/`+`refs/`) is
   layout-agnostic, which is why it already works.
 - Measured: single-repo cross-tip `git grep` 0.4 s (ripgrep, 273 refs);

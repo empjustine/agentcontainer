@@ -164,11 +164,11 @@ point at the generator/builder, never to fix state implicitly:
 ## Verification record
 
 - Static: `tsc --strict` clean (tsconfig includes the four new `generate.mjs`
-  + `build.mjs` + `lib/go-build.mjs`); biome 0 findings; `node --check` on
-  every `.mjs`; shellcheck on every `.sh` — only pre-existing findings remain
-  (`llm-reverse-proxy/run.sh` SC2153 ×2, `smoke-test.sh` SC2034/SC2086, all
-  present at HEAD); `coding-agent/tests/check-workload.test.mjs` 4/4 (the `node_run` extraction
-  did not disturb the description API).
+  - `build.mjs` + `lib/go-build.mjs`); biome 0 findings; `node --check` on
+    every `.mjs`; shellcheck on every `.sh` — only pre-existing findings remain
+    (`llm-reverse-proxy/run.sh` SC2153 ×2, `smoke-test.sh` SC2034/SC2086, all
+    present at HEAD); `coding-agent/tests/check-workload.test.mjs` 4/4 (the `node_run` extraction
+    did not disturb the description API).
 - Proxy: `llm-reverse-proxy/generate.mjs` output is byte-equivalent to the
   committed `llm-reverse-proxy.json` (ex `fetchedAt`): 220 routes,
   `perSource: {pi-ai:31, models.dev:182, models.dev(npm):14, catwalk:34}`,

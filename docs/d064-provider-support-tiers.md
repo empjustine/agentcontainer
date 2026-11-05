@@ -39,11 +39,11 @@ superficial). One table, because [d024](d024-generators-split-and-provider-facts
 already made this file the single place provider facts live; per-generator
 tier lists would be the duplicated decision the repo forbids.
 
-| Tier | Providers | Contract |
-|------|-----------|----------|
-| **first-class** | `cline-pass`, `hyper`, `verboo`, `opencode-go`, `llama-swap` (local) | fully computed lineups (live/facts/catalog cascade); regressions are fix priorities; outages preserve the last good artifact (stale-preserve) rather than dropping models |
-| **best-effort** | `google` (ai studio), `mistral`, `inferx`, `openrouter` | same cascade, still route-probed wherever a probe can mean something; fixed when convenient, never a priority |
-| **superficial** | `opencode` (zen), `nvidia` | supported at the REVERSE-PROXY level (d047 allowlist row) and present as metadata; NOT smoke-tested; lineup = catalog slice only; metadata may be stale or wrong and that is accepted; not a fix priority |
+| Tier            | Providers                                                            | Contract                                                                                                                                                                                                  |
+| --------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **first-class** | `cline-pass`, `hyper`, `verboo`, `opencode-go`, `llama-swap` (local) | fully computed lineups (live/facts/catalog cascade); regressions are fix priorities; outages preserve the last good artifact (stale-preserve) rather than dropping models                                 |
+| **best-effort** | `google` (ai studio), `mistral`, `inferx`, `openrouter`              | same cascade, still route-probed wherever a probe can mean something; fixed when convenient, never a priority                                                                                             |
+| **superficial** | `opencode` (zen), `nvidia`                                           | supported at the REVERSE-PROXY level (d047 allowlist row) and present as metadata; NOT smoke-tested; lineup = catalog slice only; metadata may be stale or wrong and that is accepted; not a fix priority |
 
 "Superficial" is deliberately honest about [d063](d063-proxy-only-routing.md)'s
 machinery: the row still emits a proxy-routed entry (never omitted — d063 §3

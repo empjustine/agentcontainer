@@ -21,28 +21,28 @@ not the generated ones.
 
 ## Decisions
 
-### 1.  Generated providers use suffixed IDs
+### 1. Generated providers use suffixed IDs
 
-| Built-in pi name   | Generated provider ID |
-|--------------------|-----------------------|
-| `openrouter`       | `openrouter-free`     |
-| `opencode`         | `opencode-zen-free`   |
-| `opencode-go`      | `opencode-go-sub`     |
-| `google`           | `google-free`         |
-| `mistral`          | `mistral-free`        |
+| Built-in pi name | Generated provider ID |
+| ---------------- | --------------------- |
+| `openrouter`     | `openrouter-free`     |
+| `opencode`       | `opencode-zen-free`   |
+| `opencode-go`    | `opencode-go-sub`     |
+| `google`         | `google-free`         |
+| `mistral`        | `mistral-free`        |
 
 This prevents the generated config from overriding pi's built-in providers
 and makes the tier/filter explicit in the name.
 
-### 2.  `METADATA_PROVIDER_MAP` bridges the gap
+### 2. `METADATA_PROVIDER_MAP` bridges the gap
 
 ```js
 const METADATA_PROVIDER_MAP = {
-  "openrouter-free":   "openrouter",
+  "openrouter-free": "openrouter",
   "opencode-zen-free": "opencode",
-  "opencode-go-sub":  "opencode-go",
-  "google-free":       "google",
-  "mistral-free":      "mistral",
+  "opencode-go-sub": "opencode-go",
+  "google-free": "google",
+  "mistral-free": "mistral",
 };
 ```
 

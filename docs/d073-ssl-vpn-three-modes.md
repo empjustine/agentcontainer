@@ -35,12 +35,12 @@ stays the history of the decision.
 - **`CONNECT`-inside-WebSocket is feasible, and is the right shape.** The outer
   hop is an ordinary HTTP `GET` with `Upgrade: websocket` — the one upgrade
   Go's `httputil.ReverseProxy` (and therefore Funnel's serve handler) supports
-  natively — and the `CONNECT` semantics ride *inside* the tunnel as an
+  natively — and the `CONNECT` semantics ride _inside_ the tunnel as an
   application-level control frame, not as the HTTP method. Verified against the
   tailscale/tailscale source via DeepWiki (third-party reading; the spikes re-confirm it on the deployed tailnet before implementation).
 - **The certificate property the request asks for holds.** Funnel terminates the
   `wss` leg with its Let's Encrypt `*.ts.net` certificate (a public CA, so
-  the client needs no custom trust store), and the *payload* TLS is end-to-end
+  the client needs no custom trust store), and the _payload_ TLS is end-to-end
   between the client and the target host. The local proxy is a blind TCP relay
   for TLS payloads: it never holds a certificate for the target, never MITMs,
   and therefore never has to be trusted. That is the whole point of the tunnel
@@ -73,15 +73,15 @@ One binary, one listener (the Funnel front on :8080, docs/d027), three
 independently enabled route namespaces. The allowlist relay is today's behaviour and MUST keep working
 unchanged; the other transports are additive and MUST default OFF.
 
-| | Allowlist relay (today) | Authenticated relay (v3) | WebSocket tunnel (CONNECT-over-WSS) |
-|---|---|---|---|
-| Shape | `/<upstream-host>/<path>` | `https://<proxy>/<prefix>/<schema>/<host><path>` | `wss://<proxy>/<prefix>/vpn` + localhost proxy |
-| Client software | none | none | a localhost proxy (same binary, client mode) |
-| Upstream set | ~36 allowlisted hosts, deny-by-absence (d047) | any host allowed by egress policy | any host allowed by egress policy |
-| Auth | the Funnel id is the capability (d070) | path-capability UUID + operator credential | path capability + operator credential on the tunnel |
-| Client trusts the proxy with plaintext? | **yes** | **yes** | **no** — blind relay, end-to-end TLS |
-| Termination of client TLS | at the Funnel edge (proxy sees plaintext) | at the Funnel edge (proxy sees plaintext) | **at the target** (proxy sees ciphertext) |
-| Certificate the client validates | Funnel `*.ts.net` | Funnel `*.ts.net` | Funnel `*.ts.net` for the tunnel **+ the target's real cert end-to-end** |
+|                                         | Allowlist relay (today)                       | Authenticated relay (v3)                         | WebSocket tunnel (CONNECT-over-WSS)                                      |
+| --------------------------------------- | --------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------ |
+| Shape                                   | `/<upstream-host>/<path>`                     | `https://<proxy>/<prefix>/<schema>/<host><path>` | `wss://<proxy>/<prefix>/vpn` + localhost proxy                           |
+| Client software                         | none                                          | none                                             | a localhost proxy (same binary, client mode)                             |
+| Upstream set                            | ~36 allowlisted hosts, deny-by-absence (d047) | any host allowed by egress policy                | any host allowed by egress policy                                        |
+| Auth                                    | the Funnel id is the capability (d070)        | path-capability UUID + operator credential       | path capability + operator credential on the tunnel                      |
+| Client trusts the proxy with plaintext? | **yes**                                       | **yes**                                          | **no** — blind relay, end-to-end TLS                                     |
+| Termination of client TLS               | at the Funnel edge (proxy sees plaintext)     | at the Funnel edge (proxy sees plaintext)        | **at the target** (proxy sees ciphertext)                                |
+| Certificate the client validates        | Funnel `*.ts.net`                             | Funnel `*.ts.net`                                | Funnel `*.ts.net` for the tunnel **+ the target's real cert end-to-end** |
 
 Delivery is phased (**this revision**): **v2 = allowlist relay + WebSocket
 tunnel**; the authenticated relay is specified here in full but deferred to
@@ -91,7 +91,7 @@ three transports.
 The trust column is the reason the tunnel exists. In the allowlist and
 authenticated relays, the Funnel edge terminates the client's TLS and hands the
 proxy plaintext on loopback, so the
-proxy necessarily sees provider keys (it still does not *store* or *inject*
+proxy necessarily sees provider keys (it still does not _store_ or _inject_
 them — the "no credential handling" invariant is about injection, not
 visibility). The tunnel removes that property entirely: the proxy sees ciphertext.
 For `http://`/`ws://` targets there is no end-to-end TLS to speak of, so that
@@ -107,7 +107,7 @@ tunnel** (the `wss://` shape specified here, deployed as v2), and the
 preference order h2-POST → WebSocket → h1.1-POST. This record's vocabulary
 follows that ladder: the tunnel it originally specified is the WebSocket
 tunnel, with the h2-POST tunnel preferred and the h1.1-POST tunnel as the
-floor. Requirements below that govern the *namespace* (prefix, auth, egress,
+floor. Requirements below that govern the _namespace_ (prefix, auth, egress,
 client, trust) scope the whole tunnel-transport family; the transport-shaped
 VPN-R11–R14 bind the WebSocket tunnel as written (d077 §9).
 
@@ -194,7 +194,7 @@ Requirements:
   chain and hostname and MUST fail closed with the RFC 9457 taxonomy (VPN-R9)
   on verification failure. `InsecureSkipVerify` (or any equivalent skip) MUST
   NOT appear in any transport: in the allowlist and authenticated relays the
-  client already trusts this front with plaintext — the one party who *can*
+  client already trusts this front with plaintext — the one party who _can_
   verify the upstream MUST NOT skip it.
 
 ### Compatibility rewrites (the replay-proxy set)
@@ -207,23 +207,23 @@ archive-replay proxies (pywb, wabac.js/replayweb.page) do to keep a proxied
 page working; the table takes the applicable subset and rejects the
 archive-specific rest. `Location` rewriting (VPN-R7) is the first member.
 
-| Header | Replay-proxy behaviour (pywb / wabac.js) | Authenticated relay v2 decision |
-|---|---|---|
-| `Location` | rewritten to the replay URL | **rewrite** to the authenticated relay URL (VPN-R7) |
-| `Refresh` | redirect-equivalent | **rewrite** the header; `<meta http-equiv=refresh>` is body-level (v3) |
-| `Content-Location` | set/rewritten for fuzzy matches | **drop** (no archive/fuzzy semantics) |
-| `Link` (preload/preconnect/dns-prefetch) | Memento links added | **strip** the origin hints — they point the client at the origin |
-| `Alt-Svc` | — | **strip** (VPN-R8) |
-| `Set-Cookie` `Domain`/`Path` | rewritten by the cookie tracker | **rewrite** `Domain` to the proxy host and prefix `Path`, so auth cookies attach through the proxy |
-| `Content-Security-Policy` (+ `-Report-Only`) | rewritten / hardened (replay adds its own) | **strip** — origin-locked CSP blocks proxied subresources and its `report-uri` leaks to the origin |
-| `X-Frame-Options`, CSP `frame-ancestors` | removed so replay can frame | **strip** (embedding through the proxy is an authenticated-relay use) |
-| `Strict-Transport-Security` | — | **strip** — pins the ORIGIN host; wrong and harmful through the proxy |
-| `Cross-Origin-Opener-Policy` / `-Embedder-Policy` / `-Resource-Policy` | CORP forced to `cross-origin` in proxy mode | **strip** COOP/COEP; **set** CORP `cross-origin` (matches pywb's proxy mode) |
-| `Service-Worker-Allowed` | — | **strip** (scope is origin-relative; SW scripts are body-level, v3) |
-| `Access-Control-Allow-Origin` / `-Credentials` / `-Methods` / `-Headers` | `add_access_control_headers` in proxy mode | **handle**: echo the request `Origin`, add `Vary: Origin`, allow credentials |
-| `Content-Encoding` / `Transfer-Encoding` | forced decompression when the client cannot accept the encoding (`is_content_rw`) | **no change** for pass-through (ReverseProxy already decodes/streams); **forced decompression** only once body rewriting lands (v3) |
-| `WWW-Authenticate` / `Proxy-Authenticate` | deliberately NOT rewritten | **pass through** |
-| HTML `href`/`src`/`srcset`/`action`/`poster`, CSS `url()`/`@import`, JS `import()`/string literals, `<base href>`, `document.write`, importmaps | the wabac.js/pywb body rewriter | **deferred to v3** (VPN-R54) — inert for JSON LLM APIs, needed only if the authenticated relay ever serves HTML |
+| Header                                                                                                                                          | Replay-proxy behaviour (pywb / wabac.js)                                          | Authenticated relay v2 decision                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `Location`                                                                                                                                      | rewritten to the replay URL                                                       | **rewrite** to the authenticated relay URL (VPN-R7)                                                                                 |
+| `Refresh`                                                                                                                                       | redirect-equivalent                                                               | **rewrite** the header; `<meta http-equiv=refresh>` is body-level (v3)                                                              |
+| `Content-Location`                                                                                                                              | set/rewritten for fuzzy matches                                                   | **drop** (no archive/fuzzy semantics)                                                                                               |
+| `Link` (preload/preconnect/dns-prefetch)                                                                                                        | Memento links added                                                               | **strip** the origin hints — they point the client at the origin                                                                    |
+| `Alt-Svc`                                                                                                                                       | —                                                                                 | **strip** (VPN-R8)                                                                                                                  |
+| `Set-Cookie` `Domain`/`Path`                                                                                                                    | rewritten by the cookie tracker                                                   | **rewrite** `Domain` to the proxy host and prefix `Path`, so auth cookies attach through the proxy                                  |
+| `Content-Security-Policy` (+ `-Report-Only`)                                                                                                    | rewritten / hardened (replay adds its own)                                        | **strip** — origin-locked CSP blocks proxied subresources and its `report-uri` leaks to the origin                                  |
+| `X-Frame-Options`, CSP `frame-ancestors`                                                                                                        | removed so replay can frame                                                       | **strip** (embedding through the proxy is an authenticated-relay use)                                                               |
+| `Strict-Transport-Security`                                                                                                                     | —                                                                                 | **strip** — pins the ORIGIN host; wrong and harmful through the proxy                                                               |
+| `Cross-Origin-Opener-Policy` / `-Embedder-Policy` / `-Resource-Policy`                                                                          | CORP forced to `cross-origin` in proxy mode                                       | **strip** COOP/COEP; **set** CORP `cross-origin` (matches pywb's proxy mode)                                                        |
+| `Service-Worker-Allowed`                                                                                                                        | —                                                                                 | **strip** (scope is origin-relative; SW scripts are body-level, v3)                                                                 |
+| `Access-Control-Allow-Origin` / `-Credentials` / `-Methods` / `-Headers`                                                                        | `add_access_control_headers` in proxy mode                                        | **handle**: echo the request `Origin`, add `Vary: Origin`, allow credentials                                                        |
+| `Content-Encoding` / `Transfer-Encoding`                                                                                                        | forced decompression when the client cannot accept the encoding (`is_content_rw`) | **no change** for pass-through (ReverseProxy already decodes/streams); **forced decompression** only once body rewriting lands (v3) |
+| `WWW-Authenticate` / `Proxy-Authenticate`                                                                                                       | deliberately NOT rewritten                                                        | **pass through**                                                                                                                    |
+| HTML `href`/`src`/`srcset`/`action`/`poster`, CSS `url()`/`@import`, JS `import()`/string literals, `<base href>`, `document.write`, importmaps | the wabac.js/pywb body rewriter                                                   | **deferred to v3** (VPN-R54) — inert for JSON LLM APIs, needed only if the authenticated relay ever serves HTML                     |
 
 - **VPN-R53** — The authenticated relay MUST apply the header-level set above. It MUST NOT apply
   archive-replay semantics (Memento `Link`, fuzzy-match `Content-Location`,
@@ -249,12 +249,12 @@ authenticated relay ships (v3). Until then the BRD stands.
 - **VPN-R11** — The tunnel transport MUST be `wss://<proxy>/<prefix>/vpn`
   through the existing Funnel front. It MUST NOT depend on the HTTP `CONNECT`
   method (VPN verdict above).
-  *Transport revision (proposed): [d077](d077-ssl-vpn-transport-ladder.md)
+  _Transport revision (proposed): [d077](d077-ssl-vpn-transport-ladder.md)
   refines this requirement — v2's tunnel transport remains this `wss://`
   shape (its WebSocket tunnel), with the h2-POST tunnel preferred when ALPN offers it
   and the h1.1-POST tunnel as the stop-and-wait floor for upgrade-stripping
   gateways, the transport chosen by protocol negotiation rather than by path.
-  All non-transport requirements stand. R11 binds until d077 is accepted.*
+  All non-transport requirements stand. R11 binds until d077 is accepted._
 - **VPN-R12** — The server MUST authenticate the tunnel before relaying
   anything. The credential rides an `Authorization` header on the WebSocket
   handshake itself — the handshake is HTTPS, so the credential is protected
@@ -286,7 +286,7 @@ authenticated relay ships (v3). Until then the BRD stands.
   authentication already happened at the handshake, VPN-R12), `CONNECT`
   (host, port), `CONNECTED`, `CONNECT_ERR`, `CLOSE` (with a half-close
   distinction), `PING`/`PONG`. Data frames carry opaque bytes. The client
-  label exists so the connection log can attribute *who* (VPN-R19).
+  label exists so the connection log can attribute _who_ (VPN-R19).
 - **VPN-R17** — Multiplexing: the v2 MVP opens one `wss` per `CONNECT` (the
   literal "CONNECT-over-WebSocket" shape — simplest to reason about and to
   audit; unmuxed is the accepted v2 choice). A stream-multiplexed single tunnel
@@ -340,7 +340,7 @@ authenticated relay ships (v3). Until then the BRD stands.
 - **VPN-R25** — The client MUST NOT terminate TLS, MUST NOT hold a certificate
   for any target, and MUST NOT be a MITM. Its loopback listener is plaintext
   (an HTTP proxy on `127.0.0.1` needs no certificate; a locally-trusted cert
-  is explicitly *not* required).
+  is explicitly _not_ required).
 - **VPN-R26** — The client MUST authenticate to the server with the operator
   credential (from plain env, never a file it manages) and MUST fail closed:
   no credential, no tunnel; no tunnel, no proxying. A "kill switch" behaviour
@@ -380,7 +380,7 @@ that cannot serve them), reachable only through
 
 Revisit only if a client that speaks HTTP/2 to a proxy must be supported: that
 work is a duplex CONNECT relay, and extended CONNECT stays a separate opt-in
-on top of it. The wss and h2-POST *tunnel* legs are unaffected — this refusal
+on top of it. The wss and h2-POST _tunnel_ legs are unaffected — this refusal
 is about the app -> client hop, which is loopback and plaintext.
 
 ## 7. Certificates and the trust model
@@ -389,18 +389,18 @@ This is the requirement the request centres on. The phrase "the `CONNECT`
 should present safe, valid certificates" resolves into two independent
 certificates, not one: the **tunnel** leg presents Funnel's valid Let's Encrypt
 `*.ts.net` certificate (so no custom trust anchor), and the **payload**
-presents the *target's own* valid certificate, validated end-to-end by the
+presents the _target's own_ valid certificate, validated end-to-end by the
 client because the proxy never terminates it. A tunnel transport that presented a
 proxy-minted certificate for the target would be a MITM and would violate
 VPN-R29. The table below is per-leg for that reason.
 
-| Leg | Allowlist relay | Authenticated relay | Tunnel transports |
-|---|---|---|---|
-| client → Funnel edge | TLS, `*.ts.net` (public CA) | TLS, `*.ts.net` | TLS, `*.ts.net` |
-| Funnel edge → proxy (loopback) | plaintext HTTP | plaintext HTTP | plaintext HTTP |
-| proxy → upstream | TLS, proxy verifies | TLS, proxy verifies | **payload TLS is client↔upstream** |
-| client validates | Funnel cert | Funnel cert | Funnel cert **and** the target's real cert |
-| client trusts the proxy? | yes | yes | **no** |
+| Leg                            | Allowlist relay             | Authenticated relay | Tunnel transports                          |
+| ------------------------------ | --------------------------- | ------------------- | ------------------------------------------ |
+| client → Funnel edge           | TLS, `*.ts.net` (public CA) | TLS, `*.ts.net`     | TLS, `*.ts.net`                            |
+| Funnel edge → proxy (loopback) | plaintext HTTP              | plaintext HTTP      | plaintext HTTP                             |
+| proxy → upstream               | TLS, proxy verifies         | TLS, proxy verifies | **payload TLS is client↔upstream**         |
+| client validates               | Funnel cert                 | Funnel cert         | Funnel cert **and** the target's real cert |
+| client trusts the proxy?       | yes                         | yes                 | **no**                                     |
 
 - **VPN-R28** — The tunnel transports MUST NOT require the client to install any CA or trust
   anchor beyond the public one Funnel already presents. The tunnel leg uses
@@ -415,18 +415,18 @@ VPN-R29. The table below is per-leg for that reason.
 
 ## 8. Authentication and secrets
 
-- **VPN-R31** — The added transports MUST authenticate the *operator* (one
+- **VPN-R31** — The added transports MUST authenticate the _operator_ (one
   credential, shared by the authenticated relay and tunnel namespaces alike)
   and, in the authenticated relay, the `${prefix}` path capability;
   never the upstream. Credentials are the proxy's own, distinct from provider
   keys (which stay client-owned and are never injected).
-  *Auth revision (proposed): [d078](d078-ssl-vpn-operator-keys.md) replaces
+  _Auth revision (proposed): [d078](d078-ssl-vpn-operator-keys.md) replaces
   "one credential" with a bounded static set of operator principals — one
   independent key per security principal (revocation + log attribution only,
   identical rights, same bearer on the wire), carried in one JSON env value;
   R33 gains a full-set no-early-exit rule, R34 explicitly covers ids. R31
-  binds until d078 is accepted.*
-  *Superseded for the tunnel namespace by d104* — the tunnel's operator
+  binds until d078 is accepted._
+  _Superseded for the tunnel namespace by d104_ — the tunnel's operator
   credential becomes mutual Ed25519 proofs (relay-to-exit / exit-to-relay,
   d104), not a shared bearer on the wire; the authenticated relay's gateway credential
   (d091) is untouched.
@@ -436,7 +436,7 @@ VPN-R29. The table below is per-leg for that reason.
   loader, no env allowlist" stance (d031/d052): accepting the added transports means adding the
   proxy to the env-consumer set, with the same allowlist discipline as every
   other runner. The record MUST NOT pretend the stance survives.
-  *Superseded for tunnel key material by d104 (deployment v4)* — the tunnel's
+  _Superseded for tunnel key material by d104 (deployment v4)_ — the tunnel's
   credential material stops travelling through the env chain: v4 keeps
   d104's envelope and signatures unchanged and moves their keys into files in
   the role-scoped store (`~/.local/share/estige/`), leaving env holding only
@@ -561,9 +561,9 @@ for the allowlist relay.
   only by shipping client certificates through the env chain (VPN-R32), which
   is unwieldy for one operator; a shared-secret bearer token carries the same
   single-principal model with none of the transport.
-   **Superseded by d104** — the deferred second-factor question is answered
-   by mutual Ed25519 proofs, not certificates: no env-chain certificate
-   shipping at all, and the terminator never sees the secret.
+  **Superseded by d104** — the deferred second-factor question is answered
+  by mutual Ed25519 proofs, not certificates: no env-chain certificate
+  shipping at all, and the terminator never sees the secret.
 - **In-protocol / browser-client tunnel auth** (first-frame `AUTH` with a
   grace window, or a bearer `Sec-WebSocket-Protocol` subprotocol). Rejected —
   the v2 client is our own localhost proxy and can set a handshake header, so
@@ -605,6 +605,7 @@ Allowlist relay (regression): the llm-reverse-proxy smoke test stays green, incl
 the 404 camouflage negatives (VPN-R3).
 
 Authenticated relay (v3 — acceptance applies when the authenticated relay ships):
+
 - no credential or wrong prefix → the allowlist relay's camouflage 404, byte-identical to
   the allowlist relay's garbage (VPN-R34);
 - `169.254.169.254`, `127.0.0.1`, RFC 1918, and a rebinding name are
@@ -617,6 +618,7 @@ Authenticated relay (v3 — acceptance applies when the authenticated relay ship
   the upstream (VPN-R6/8).
 
 WebSocket tunnel (all tunnel transports share this client surface — d077 §5):
+
 - `curl -x http://127.0.0.1:<port> https://api.anthropic.com/v1/models`
   returns the provider's response and
   `openssl s_client -proxy 127.0.0.1:<port> -connect api.anthropic.com:443`

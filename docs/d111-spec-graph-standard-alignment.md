@@ -18,7 +18,7 @@ d042 gave this tree a documentation taxonomy — `requirements`, `reference`,
 taxonomy was this repository's own invention. The tooling that reads these
 files (the spec-graph validator, the workflow skills, anything that walks
 `id` + `type` frontmatter) speaks a different, standard vocabulary: five
-*nesting* types that say how a document relates to the code it describes, plus
+_nesting_ types that say how a document relates to the code it describes, plus
 a lifecycle `status`. Two vocabularies for one job means a reader has to hold
 both, and the validator can only see the one it was written for.
 
@@ -41,7 +41,7 @@ before this record found:
   ×3, `superseded` ×2, `archived` ×2 — many carrying long free-text
   qualifiers that made the value unparseable as a lifecycle state).
 
-A bespoke vocabulary is not the problem by itself; a bespoke vocabulary *plus*
+A bespoke vocabulary is not the problem by itself; a bespoke vocabulary _plus_
 tooling that cannot read it is. The failure mode is silent: nothing breaks
 until someone needs the graph, and then a third of the links resolve to
 nothing.
@@ -53,13 +53,13 @@ layout exactly as it is.
 
 **Types** — every spec is one of five, chosen by scope:
 
-| type | scope |
-| --- | --- |
-| `goal-and-requirements` | what the system must do, normative (one document, `docs/requirements.md`) |
-| `architecture-design` | a decision or description that spans the repository or crosses module boundaries |
-| `module-design` | a decision or description confined to one runner folder (`coding-agent/`, `estige/`, `lib/`, …) |
-| `submodule-design` | a directory-level subsystem inside a package (e.g. `estige/CI.md`) |
-| `task-spec` | a single piece of work, with acceptance criteria — none exist in this tree today |
+| type                    | scope                                                                                           |
+| ----------------------- | ----------------------------------------------------------------------------------------------- |
+| `goal-and-requirements` | what the system must do, normative (one document, `docs/requirements.md`)                       |
+| `architecture-design`   | a decision or description that spans the repository or crosses module boundaries                |
+| `module-design`         | a decision or description confined to one runner folder (`coding-agent/`, `estige/`, `lib/`, …) |
+| `submodule-design`      | a directory-level subsystem inside a package (e.g. `estige/CI.md`)                              |
+| `task-spec`             | a single piece of work, with acceptance criteria — none exist in this tree today                |
 
 **Lifecycle** — `status:` is one of `draft`, `active`, `stale`, `done`,
 `deprecated`, and nothing else. Detail that a legacy status used to carry
@@ -70,7 +70,7 @@ own body, where it can be read as prose and cannot break the parser.
 renames, no `docs/reference/` or `docs/design/` subdirectories. d042's anchor
 constraint (eight living docs referenced by path from d0XX bodies) and its
 numbering constraint (no section numbers, no `§` cites) both still bind — they
-are about *history and pointers*, not about the type vocabulary, and they were
+are about _history and pointers_, not about the type vocabulary, and they were
 not the part that drifted.
 
 `docs/spec-graph-standard.md` restates the contract that binds from now on, so
@@ -86,7 +86,7 @@ the rules survive without the tooling that motivated them.
 - Suffix retirement (later pass): the interim `b` handles this repair invented
   for the three colliding numbers — `d090b`, `d027b`, `d046b` — are gone. The
   id rule in `docs/spec-graph-standard.md` now settles a collision by moving
-  the *least-cited* record to the next free number, so `d116` (harness tiers),
+  the _least-cited_ record to the next free number, so `d116` (harness tiers),
   `d114` (models.dev relay fallback) and `d115` (live-listing input schema)
   took the tail and the plain numbers went to the survivors. Renumbering is
   the churn the rule minimizes, not a free action: it is allowed only when two

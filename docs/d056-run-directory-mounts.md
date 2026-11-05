@@ -33,7 +33,7 @@ side of the bind. The container side of a home-relative directory is spelled
 from the container's home (`/home/$USER/...`) — on a host whose home sits
 behind a symlink (Bazzite / Fedora Atomic, `/home` → `/var/home`), `pwd -P`
 mounted the folder where the sandbox's `~` does not point, so "the same path
-on both sides" now means *the path the operator named*, not the canonical
+on both sides" now means _the path the operator named_, not the canonical
 string.
 
 ## Problem
@@ -65,7 +65,7 @@ Three separate seams had accumulated in the runner:
 
 ### (a) No generator support in the runner
 
-`run.sh` mounts only what a *runtime* needs: the host agent dir, the per-run
+`run.sh` mounts only what a _runtime_ needs: the host agent dir, the per-run
 session stage, the other harness state dirs, and `lib/log.sh` for the launch
 chain's logger. The `/opt/coding-agent` tree and the `/opt/lib` module list
 are removed. An in-container session works against the host-generated config;
@@ -127,7 +127,7 @@ single mount rather than a podman duplicate-destination error.
   ro-mount is now an rw mount when named — the mirror's read-only posture was
   a property of the retired special case, not a new guarantee.
 - **`$HOME` under a different symlink spelling is still refused** because both
-  sides are resolved with `pwd -P`; a directory *under* `$HOME` (a project in
+  sides are resolved with `pwd -P`; a directory _under_ `$HOME` (a project in
   `~/code/...`) is allowed.
 - **`docs/d043`'s description of the toggle is historical.** That record's
   body is not rewritten (d042); this record is the tombstone for the env var.

@@ -207,6 +207,7 @@ agentcontainer/
 │   ├── tests/                           #   → this folder's own tests (pacer, globs, argv, retry, lock probe, and both ports end to end)
 │   └── non-bare-issues.md               #   → why bare mirrors, the farm audit, pickaxe notes
 ```
+
 ## Documentation index
 
 Docs are **typed and self-describing**: every Markdown file in this tree whose frontmatter carries `id` + `type` is a node in the spec graph, shaped by [docs/spec-graph-standard.md](docs/spec-graph-standard.md) (adopted in [docs/d111](docs/d111-spec-graph-standard-alignment.md)).
@@ -215,13 +216,13 @@ Docs are **typed and self-describing**: every Markdown file in this tree whose f
 
 ### The five types
 
-| `type` | Scope — one sentence each | Where they live |
-| --- | --- | --- |
-| `goal-and-requirements` | What the product must do: goal, scope, functional + non-functional requirements, non-goals. Normative. | [docs/requirements.md](docs/requirements.md) (id `goal`, the root of the tree) |
-| `architecture-design` | System-wide decisions, the reference map, topology, and prior-art studies that drive a cross-module call. | `docs/` — the record files (`dNNN-*.md`) and the reference docs beside them |
-| `module-design` | One runner folder or one module: its responsibilities, boundary, invariants and the *why* behind its shape. | the unit's own folder under [d117](docs/d117-living-docs-beside-their-unit.md) (`README.md` = what it is, `DESIGN.md` = why), plus `docs/` for cross-cutting module records |
-| `submodule-design` | A subsystem inside a package — narrower than a module, still independently describable. | beside its subject |
-| `task-spec` | One piece of work in flight: request, product, design, deferrals. Temporary — its durable content moves into the owning spec. | `.thinkrail/context/TASK-*.md` (gitignored) |
+| `type`                  | Scope — one sentence each                                                                                                     | Where they live                                                                                                                                                             |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `goal-and-requirements` | What the product must do: goal, scope, functional + non-functional requirements, non-goals. Normative.                        | [docs/requirements.md](docs/requirements.md) (id `goal`, the root of the tree)                                                                                              |
+| `architecture-design`   | System-wide decisions, the reference map, topology, and prior-art studies that drive a cross-module call.                     | `docs/` — the record files (`dNNN-*.md`) and the reference docs beside them                                                                                                 |
+| `module-design`         | One runner folder or one module: its responsibilities, boundary, invariants and the _why_ behind its shape.                   | the unit's own folder under [d117](docs/d117-living-docs-beside-their-unit.md) (`README.md` = what it is, `DESIGN.md` = why), plus `docs/` for cross-cutting module records |
+| `submodule-design`      | A subsystem inside a package — narrower than a module, still independently describable.                                       | beside its subject                                                                                                                                                          |
+| `task-spec`             | One piece of work in flight: request, product, design, deferrals. Temporary — its durable content moves into the owning spec. | `.thinkrail/context/TASK-*.md` (gitignored)                                                                                                                                 |
 
 **Lifecycle** is the frontmatter `status:` field: `draft` / `active` / `stale` / `done` / `deprecated`. A qualifier ("proposed", "design only", "landed, unverified") belongs in the body's `## Status` section, never inside the status value. `docs/archive/` holds investigations that reached `done`.
 

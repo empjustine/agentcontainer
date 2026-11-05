@@ -12,7 +12,7 @@ tags: ["serving", "proxy", "vpn", "auth", "ed25519", "mechanics"]
 # d131 — v4 credential mechanics: envelopes, verification, versions
 
 **Mechanics companion to [d104](d104-mutual-exit-relay-credential.md).**
-Everything here is subordinate to that record's decision: d104 owns *what* the
+Everything here is subordinate to that record's decision: d104 owns _what_ the
 v4 credential is and why; this record owns the shape of the proofs, how a node
 verifies one, what the version counters mean, and what a verify costs. Read d104
 first — nothing in this file makes sense as a decision on its own.
@@ -110,7 +110,7 @@ exit → relay:  X-Exit-Proof:  v2.<exit-key-name>.<nonce_e>.<base64url(sig_e)>
   a security control.
 - **Algorithm: Ed25519, stdlib `crypto/ed25519`.** Deterministic
   (identical message → identical signature: no signing-time RNG) — which
-  is exactly why the nonce is *in* the signed message: a message with no
+  is exactly why the nonce is _in_ the signed message: a message with no
   per-exchange entropy makes every proof of a step byte-identical (the
   retired shape's weakness, carried in the alternatives); the nonce makes
   every exchange's signatures unique while signing stays deterministic
@@ -144,10 +144,10 @@ exit → relay:  X-Exit-Proof:  v2.<exit-key-name>.<nonce_e>.<base64url(sig_e)>
   verifies and never enters it, and an attacker without the private key
   cannot mint valid proofs to fill it — so it is one LRU ring with a
   64 Ki-entry cap (≈2 MiB at 16 bytes per nonce) whose eviction horizon
-  is 64 Ki *genuine* authentications: practically forever, and no clock
+  is 64 Ki _genuine_ authentications: practically forever, and no clock
   is read anywhere in the auth path — a drifting host can cause an
   outage elsewhere, never a weakened or widened auth decision. What a
-  captured proof buys an attacker is exactly one thing: *block* the
+  captured proof buys an attacker is exactly one thing: _block_ the
   genuine exchange first (otherwise the genuine flight consumes the
   nonce), then present the captured proof once — one CONNECT on one
   connection (the session bound below) and nothing more. That is the
@@ -162,7 +162,7 @@ exit → relay:  X-Exit-Proof:  v2.<exit-key-name>.<nonce_e>.<base64url(sig_e)>
   authenticated carrier, and a mode E session — whose trace-id registry
   outlives individual POST exchanges — complies by authenticating every
   exchange afresh. This is the honest mTLS-equivalence: mTLS makes a
-  captured handshake worthless *and* keys the session traffic with the
+  captured handshake worthless _and_ keys the session traffic with the
   negotiated record keys; a signature is not a key agreement, so this
   scheme buys the same admission guarantee with bounds instead — the
   handshake is single-use, and what it admits is one connection's one
@@ -209,7 +209,7 @@ constant cost:
   negligible at handshake rates, a few percent of a core at a few hundred
   per-request authentications per second (modes C/E) — recorded in the
   consequences with its DoS arithmetic.
-- **The replay cache costs one map probe per *verified* proof** — forged
+- **The replay cache costs one map probe per _verified_ proof** — forged
   and unknown-name proofs never reach it — and its memory is the cap,
   independent of attack traffic: an attacker cannot grow it without the
   relay's private key.

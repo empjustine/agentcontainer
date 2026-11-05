@@ -16,7 +16,7 @@ tags: [architecture, copy-unit, lib, builders, generators, tests]
 > Narrowed by [d138](d138-sh-interpreter-trampolines.md): the interpreter
 > runners (`node-run.sh`, `npm-run.sh`, `node-run.ps1`) are one copy each at
 > the repo root, executed by every unit's shim. Copy-unit applies to a unit's
-> *code*; a pin is a single fact, not a per-folder artifact.
+> _code_; a pin is a single fact, not a per-folder artifact.
 
 The tree was organised as **`folder + ../lib`**: a unit's folder carried its
 own code, and everything it shared — loggers, the artifact standard, the
@@ -40,7 +40,7 @@ Both premises expired:
   `git filter-repo` cannot carry `../lib` with it.
 
 The deeper problem was the copy unit itself. `folder + ../lib` meant the unit
-of reuse was *the repository*: you could not take `coding-agent/` anywhere,
+of reuse was _the repository_: you could not take `coding-agent/` anywhere,
 `lib/` could not be pruned because every row had some consumer, and the fact
 table forced every unit to ship every provider's credentials vocabulary even
 where it served one provider. The root `build.mjs`/`generate.mjs` compounded
@@ -68,7 +68,7 @@ the folder is implied by it. `lib/` at the repo root is deleted.
   keeps working when copied out whole, which is the whole point of the copy
   unit (and the reason a unit that is heading for its own repository benefits
   most). A shared module is then created the other way round: only once the
-  unit uses it *many* times, or several units genuinely need the same
+  unit uses it _many_ times, or several units genuinely need the same
   behaviour, is it extracted into a real library with a real public surface —
   one that would make sense to a reader who has never heard of this repo.
   `estige/lib/log.mjs` is the worked example: its one consumer needed four
@@ -82,6 +82,7 @@ the folder is implied by it. `lib/` at the repo root is deleted.
   has earned one. The trigger to re-split is repetition inside the unit or a
   second genuine consumer — never tidiness, and never "the other units have a
   `lib/` too".
+
 - **Pruning is the point**, not an accident of the copy. `cloud-providers.mjs`
   / `cloud-providers.json` copies carry only the rows that unit serves:
   `coding-agent/` holds the full table because it is the reference vocabulary
@@ -107,7 +108,7 @@ The repo root is **not a unit** and no unit imports from it:
   `provision-termux.sh`, `log.sh` and `node-run.sh` stay because the operator
   scripts and the sweep below invoke them.
 - `lint.sh`, `check-types.sh`, `test.sh` and `vm-bench.sh` stay because QA is
-  the maintainer's view *across* units. The sweep is allowed to read unit files
+  the maintainer's view _across_ units. The sweep is allowed to read unit files
   (it is a harness); it is not a unit's dependency, and `tests/` is documented
   as the one test directory whose subject is the whole set.
 
@@ -156,15 +157,15 @@ selection layer over a root builder. A unit with nothing to generate has no
 The copies are pruned per consumer, so the inventory is part of the decision —
 it is the answer to "why does this folder have a `lib/` at all?":
 
-| Unit | Its own `lib/` |
-| --- | --- |
-| `coding-agent/` | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`, `artifact.mjs`, `canonical-json.mjs`, `fact-table.mjs`, `host-capabilities.mjs`, `cloud-providers.mjs`+`.json` (the full table), `models.dev.api.json`, `catwalk-facts.json` |
-| `estige/` | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`, `go-build.mjs`, `host-capabilities.mjs` |
-| `llm-local-inference/` | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`/`log.py`, `artifact.mjs`, `canonical-json.mjs`, `host-capabilities.mjs`, `llamacpp-model-data.json`, `hf-manifests/` |
-| `pi-cline-pass/`, `pi-hyper/`, `pi-synthetic/`, `pi-verboo/` | `cloud-providers.mjs`+`.json` (its one row), `canonical-json.mjs`, `artifact.mjs`, `log.mjs`, `node-run.sh` |
-| `pi-opencode/`, `pi-mistral/` | `cloud-providers.mjs`+`.json` (its rows), `node-run.sh` |
-| `git/` | `log.mjs`/`log.sh`, `artifact.mjs`, `canonical-json.mjs`, `node-run.sh`, `node-run.ps1` (`docs/d062`) |
-| repo root | nothing importable: `environment.sh`, `provision-termux.sh`, `log.sh`, `node-run.sh`, `npm-tools.sh` (`docs/d107`) + the QA sweep |
+| Unit                                                         | Its own `lib/`                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `coding-agent/`                                              | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`, `artifact.mjs`, `canonical-json.mjs`, `fact-table.mjs`, `host-capabilities.mjs`, `cloud-providers.mjs`+`.json` (the full table), `models.dev.api.json`, `catwalk-facts.json` |
+| `estige/`                                                    | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`, `go-build.mjs`, `host-capabilities.mjs`                                                                                                                                      |
+| `llm-local-inference/`                                       | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`/`log.py`, `artifact.mjs`, `canonical-json.mjs`, `host-capabilities.mjs`, `llamacpp-model-data.json`, `hf-manifests/`                                                          |
+| `pi-cline-pass/`, `pi-hyper/`, `pi-synthetic/`, `pi-verboo/` | `cloud-providers.mjs`+`.json` (its one row), `canonical-json.mjs`, `artifact.mjs`, `log.mjs`, `node-run.sh`                                                                                                                                              |
+| `pi-opencode/`, `pi-mistral/`                                | `cloud-providers.mjs`+`.json` (its rows), `node-run.sh`                                                                                                                                                                                                  |
+| `git/`                                                       | `log.mjs`/`log.sh`, `artifact.mjs`, `canonical-json.mjs`, `node-run.sh`, `node-run.ps1` (`docs/d062`)                                                                                                                                                    |
+| repo root                                                    | nothing importable: `environment.sh`, `provision-termux.sh`, `log.sh`, `node-run.sh`, `npm-tools.sh` (`docs/d107`) + the QA sweep                                                                                                                        |
 
 This table is the state d113 landed. Two later records thin it further without
 reopening the copy-unit rule: `docs/d118` deletes the `pi-*` family's `lib/`
@@ -224,7 +225,7 @@ inlined into its single consumer (`build.mjs`) rather than pruned in place.
   `./check-types.sh` are green.
 - **estige**: `./estige/build.sh` builds the native binary;
   `go test ./...` has one **pre-existing** failure (`TestEgressFromEnv`) that
-  reproduces unchanged on `main`. *(Since fixed, and the suite is now part of
-  `./test.sh` — docs/d122.)*
+  reproduces unchanged on `main`. _(Since fixed, and the suite is now part of
+  `./test.sh` — docs/d122.)_
 - **Search gate**: no `../lib/` reference remains outside `docs/archive/` and
   the per-unit `lib/` itself.

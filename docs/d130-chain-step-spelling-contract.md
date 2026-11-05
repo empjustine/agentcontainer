@@ -33,7 +33,7 @@ against `estige/proxyenv.go`:
 - **The SOCKS scheme lost its `h`.** v3 exported
   `ALL_PROXY="socks5h://$relay_socks"`; `proxyEnvLines` exported
   `ALL_PROXY='socks5://…'`. The `h` is not cosmetic: it is the difference
-  between a client sending the target's *name* and a client resolving it
+  between a client sending the target's _name_ and a client resolving it
   first and sending an address. The relay's SOCKS5 listener refuses a literal
   target address (`socksReply(conn, 0x08)`) because resolution and pinning
   belong to the exit node (VPN-R22) — so the two halves of a `socks5://`

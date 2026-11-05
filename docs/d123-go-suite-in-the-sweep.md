@@ -23,8 +23,8 @@ somebody else's tree and never re-read.
 
 The failing subtest was `refused: {"allowCidrs": []} ` — one of four cases
 added with `e58abb5` (d108's slice 5, "estige reads no config file"), each a
-plausible typo whose silent reading would be *"configured, and the default deny
-still applies"*. The parser answered `nil`: `egressFromEnv` (d108) refuses
+plausible typo whose silent reading would be _"configured, and the default deny
+still applies"_. The parser answered `nil`: `egressFromEnv` (d108) refuses
 unknown fields and trailing content, but an all-empty object decodes cleanly
 and returns a zero `egressConfig`, which `newEgressPolicy` then reads as
 "nothing configured" and replaces with the default deny table plus ports 80/443.
@@ -36,7 +36,7 @@ was right.
 **`./test.sh` runs the Go suite.** It is the one leg the globs cannot discover,
 so it is invoked explicitly, with the same three-step toolchain probe as
 `estige/lib/go-build.mjs` (PATH, the mise shims dir, and `mise where go` — which
-answers only for an *installed* toolchain, so a sweep never downloads one).
+answers only for an _installed_ toolchain, so a sweep never downloads one).
 A host with no Go **skips loudly** with the reason and the install hint rather
 than failing: the suite is real, but a laptop with no toolchain cannot be asked
 to run it. A failing Go test fails the sweep — verified by planting one.

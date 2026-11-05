@@ -20,7 +20,7 @@ tags: ["reference", "gguf", "tooling"]
 > regenerates [`gguf-vram-fit-estimates.md`](gguf-vram-fit-estimates.md) and its
 > raw-data JSON. Point it at a checkout via `--estimator-dir` or
 > `$HUGGINGFACE_ESTIMATE_DIR` (a read-only checkout is copied and `npm install`
->ed automatically).
+> ed automatically).
 >
 > Only `fetch_hf_manifests.py` remains live, in `llm-local-inference/` (the
 > cache pipeline, flat there since docs/d113). The sections below
@@ -46,17 +46,15 @@ llama.cpp inference. They share two design constraints:
    `estimate_active_params.py` after upgrades (its unknown-type warning doubles
    as the drift canary).
 
-
-
-| Tool | Purpose |
-|---|---|
-| `generate_layer_cards.py` | Extract per-tensor (layer) names/sizes and render markdown "layer cards" |
-| `fit_analysis.py` | Compute how many layers must be evicted to CPU to fit a GPU budget |
-| `estimate_active_params.py` | Measure total and per-token ACTIVE parameter counts / bytes from the GGUF header |
-| `fetch_hf_manifests.py` | Persist HF repo file listings (to `llm-local-inference/lib/hf-manifests/`) and audit each configured `--hf-file` against llama.cpp's implicit `repo:quant` → file heuristic |
-| `llm-local-inference/model-sizes.mjs` | Derive each entry's SI-GB footprint from the committed manifests (cache fallback) and order `llamacpp-model-data.json` cheapest-first; warns on cache-only GGUFs, never adds (docs/d053) |
-| `scan_cache_coverage.py` | **PoC/MVP** — diff the HF cache against `llamacpp-model-data.json`: repos with zero coverage, listed repos with extra cached quants, ambiguous `bpw`/multi-quant filenames (header-free; see `llm-local-inference/refresh-llm-local-inference-manifest.md`) |
-| `gguf_context_length.py` | **PoC/MVP** — read `general.architecture` / `context_length` / `general.name` from a GGUF header via the PyPI `gguf` package (no weights loaded); used to pick `ctx-size` |
+| Tool                                  | Purpose                                                                                                                                                                                                                                                     |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `generate_layer_cards.py`             | Extract per-tensor (layer) names/sizes and render markdown "layer cards"                                                                                                                                                                                    |
+| `fit_analysis.py`                     | Compute how many layers must be evicted to CPU to fit a GPU budget                                                                                                                                                                                          |
+| `estimate_active_params.py`           | Measure total and per-token ACTIVE parameter counts / bytes from the GGUF header                                                                                                                                                                            |
+| `fetch_hf_manifests.py`               | Persist HF repo file listings (to `llm-local-inference/lib/hf-manifests/`) and audit each configured `--hf-file` against llama.cpp's implicit `repo:quant` → file heuristic                                                                                 |
+| `llm-local-inference/model-sizes.mjs` | Derive each entry's SI-GB footprint from the committed manifests (cache fallback) and order `llamacpp-model-data.json` cheapest-first; warns on cache-only GGUFs, never adds (docs/d053)                                                                    |
+| `scan_cache_coverage.py`              | **PoC/MVP** — diff the HF cache against `llamacpp-model-data.json`: repos with zero coverage, listed repos with extra cached quants, ambiguous `bpw`/multi-quant filenames (header-free; see `llm-local-inference/refresh-llm-local-inference-manifest.md`) |
+| `gguf_context_length.py`              | **PoC/MVP** — read `general.architecture` / `context_length` / `general.name` from a GGUF header via the PyPI `gguf` package (no weights loaded); used to pick `ctx-size`                                                                                   |
 
 All four consume the same canonical model list in
 `llm-local-inference/` (generator owner; file in `lib/`) that also drives
@@ -83,18 +81,18 @@ The flat, llama.cpp-shaped schema is consumed by the JS generator
 (`llm-local-inference/generate.mjs`) and, until they retire, the Python tools
 (this directory). Keys:
 
-| Key | Meaning | Generator flag |
-|---|---|---|
-| `hf-repo` | `org/repo:revision` (revision = quant tag) | `--hf-repo` |
-| `hf-file` | exact GGUF filename (load-bearing: see `fetch_hf_manifests.py`) | `--hf-file` |
-| `mmproj` | optional vision projector file | `--mmproj` |
-| `model-draft` | optional MTP/drafter sidecar GGUF (same snapshot as `model`); generator emits `--model-draft` via the launcher plus an explicit `--spec-type draft-mtp` (auto-inference of the spec type only happens on the `--hf-repo` path) | `--model-draft` |
-| `cache-type-k` / `cache-type-v` | KV cache quant (`f32 f16 bf16 q8_0 q4_0 q4_1 iq4_nl q5_0 q5_1`); optional, default `f16`/`f16` | `--cache-type-k/-v` |
-| `ctx-size` | AUTHORITATIVE context window (no `--fit-ctx`); optional, default `65536` | `--ctx-size` |
-| `parallel` | 1 or 2; optional, default `1` | `--parallel` |
-| `__argv` | family macro reference (`${qwen36}` …) + literal extra flags; llama-swap expands `${…}` at load; omit when empty | verbatim |
-| `size-gb` | on-disk footprint in **SI GB** (decimal 1e9): main GGUF (all shards) + `mmproj` + `model-draft`. DERIVED — regenerate with `llm-local-inference/model-sizes.mjs`, never hand-edit | (none) |
-| `size-parts` | per-component breakdown of `size-gb` (`model`/`mmproj`/`model-draft`, each SI GB); DERIVED alongside it | (none) |
+| Key                             | Meaning                                                                                                                                                                                                                        | Generator flag      |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------- |
+| `hf-repo`                       | `org/repo:revision` (revision = quant tag)                                                                                                                                                                                     | `--hf-repo`         |
+| `hf-file`                       | exact GGUF filename (load-bearing: see `fetch_hf_manifests.py`)                                                                                                                                                                | `--hf-file`         |
+| `mmproj`                        | optional vision projector file                                                                                                                                                                                                 | `--mmproj`          |
+| `model-draft`                   | optional MTP/drafter sidecar GGUF (same snapshot as `model`); generator emits `--model-draft` via the launcher plus an explicit `--spec-type draft-mtp` (auto-inference of the spec type only happens on the `--hf-repo` path) | `--model-draft`     |
+| `cache-type-k` / `cache-type-v` | KV cache quant (`f32 f16 bf16 q8_0 q4_0 q4_1 iq4_nl q5_0 q5_1`); optional, default `f16`/`f16`                                                                                                                                 | `--cache-type-k/-v` |
+| `ctx-size`                      | AUTHORITATIVE context window (no `--fit-ctx`); optional, default `65536`                                                                                                                                                       | `--ctx-size`        |
+| `parallel`                      | 1 or 2; optional, default `1`                                                                                                                                                                                                  | `--parallel`        |
+| `__argv`                        | family macro reference (`${qwen36}` …) + literal extra flags; llama-swap expands `${…}` at load; omit when empty                                                                                                               | verbatim            |
+| `size-gb`                       | on-disk footprint in **SI GB** (decimal 1e9): main GGUF (all shards) + `mmproj` + `model-draft`. DERIVED — regenerate with `llm-local-inference/model-sizes.mjs`, never hand-edit                                              | (none)              |
+| `size-parts`                    | per-component breakdown of `size-gb` (`model`/`mmproj`/`model-draft`, each SI GB); DERIVED alongside it                                                                                                                        | (none)              |
 
 Companion manifests: `active-b.json` (repo-basename → active-params slug,
 consumed by `deriveModelId`; regenerate with
@@ -106,7 +104,6 @@ consumed by `deriveModelId`; regenerate with
 **zero-padded integer billions, `NNb`** (e.g. `3.45B active → "03b"`, `≥100B →
 "NNNb"`), combined as `<slug>-ctx<ctxSlug>-<hf-repo>`. Keep both sides in sync;
 this is the single documented reference.
-
 
 ---
 
@@ -127,12 +124,10 @@ from the header, and writes one **layer card** per repo at
   (`src/llama-model-loader.cpp`) — and a match report (matched layers, bytes
   moved, accidental non-`ffn_*` matches) is appended to the card.
 
-
-
 Exit code 0 if at least one card was written, 1 otherwise.
 
 Headers are read via `gguf.GGUFReader` from the PyPI `gguf` package
-(memory-mapped). A small subclass skips ARRAY field *contents* (tokenizer
+(memory-mapped). A small subclass skips ARRAY field _contents_ (tokenizer
 vocab/merges — seconds per element-wise view otherwise); scalar fields and
 tensor infos use the base reader untouched. Per-tensor byte sizes come from
 `gguf.constants.GGML_QUANT_SIZES` (`type_size/blck_size` per element), the
@@ -164,8 +159,6 @@ Method, per dense model/quant with a local GGUF file:
    `--override-tensor` pattern) until
    fixed + KV + act + overhead + remaining_blocks ≤ GPU budget.
 
-
-
 Contexts (tool default): **32768 vs 65536 vs 131072**, KV fixed at f16/f16.
 
 MoE models are skipped (architecture string contains `moe` or any `_exps`
@@ -186,11 +179,11 @@ A tensor counts toward the per-token active weight iff the decoder graph reads
 it on every generated token. Classification mirrors llama.cpp's expert naming
 (and `gdevenyi/huggingface-estimate` `calculations.js` `buildMoe` predicates):
 
-| Tensor class | Match | Active contribution |
-|---|---|---|
-| Routed experts | name contains `_exps.` | elements × `expert_used_count / expert_count` (from GGUF metadata, not model-card claims) |
-| Everything else | attention, norms, router (`ffn_gate_inp*`), shared experts (`*_shexp.*`/`*_chexp.*`), dense-layer FFN of leading-dense MoE archs, `token_embd`, output head, routing biases (`exp_probs_b`) | 100% |
-| MTP tail blocks | `blk.N` with `N ≥ block_count − nextn_predict_layers` | 0% — resident in memory but only executed by speculative decoding; reported separately |
+| Tensor class    | Match                                                                                                                                                                                       | Active contribution                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Routed experts  | name contains `_exps.`                                                                                                                                                                      | elements × `expert_used_count / expert_count` (from GGUF metadata, not model-card claims) |
+| Everything else | attention, norms, router (`ffn_gate_inp*`), shared experts (`*_shexp.*`/`*_chexp.*`), dense-layer FFN of leading-dense MoE archs, `token_embd`, output head, routing biases (`exp_probs_b`) | 100%                                                                                      |
+| MTP tail blocks | `blk.N` with `N ≥ block_count − nextn_predict_layers`                                                                                                                                       | 0% — resident in memory but only executed by speculative decoding; reported separately    |
 
 Leading dense layers need no special-casing: their plain `ffn_{gate,up,down}.weight`
 tensors simply contain no `_exps.` and are counted fully. The same applies to
@@ -202,8 +195,6 @@ quantization** (using the same GGML type table as `generate_layer_cards.py`).
 For decode-speed purposes that byte figure is the more honest number: MoE
 quants mix per-tensor types, so "3B active" and the bytes actually streamed per
 token can disagree across quants.
-
-
 
 The table compares the measured slug against the old `active-b.json` value;
 divergences are flagged `<-- differs`. `--emit-slugs` prints a JSON object with
@@ -241,8 +232,6 @@ per repo and persists it as `llm-local-inference/lib/hf-manifests/<org>--<repo>.
 checks every `llamacpp-model-data.json` entry: does the configured `--hf-file`
 match what llama-server would pick implicitly?
 
-
-
 Network access goes through `huggingface_hub.HfApi` (`repo_info` for the
 resolved `main` commit, `list_repo_tree(recursive=True)` for the tree) —
 pagination, `HF_TOKEN` auth and retries included; `HF_ENDPOINT` overrides apply
@@ -258,14 +247,12 @@ contains `Q3_K_S[.-]`, was removed after this audit caught it.)
 > Archived with the scrapped "huggingface environment"; no live consumers.
 >
 > A standalone Node script that fetches the header of a remote GGUF file via an
-HTTP Range request (first 100KB, redirects followed, 60s timeout) and extracts
-architecture metadata relevant for model selection: architecture, block count,
-embedding length, head_dim, attention head counts, expert counts, context
-length, feed-forward length, rope.* settings, plus estimated parameter counts
-(active/total) and KV-cache bytes-per-token (including MLA and hybrid-attention
-special cases).
-
-
+> HTTP Range request (first 100KB, redirects followed, 60s timeout) and extracts
+> architecture metadata relevant for model selection: architecture, block count,
+> embedding length, head_dim, attention head counts, expert counts, context
+> length, feed-forward length, rope.* settings, plus estimated parameter counts
+> (active/total) and KV-cache bytes-per-token (including MLA and hybrid-attention
+> special cases).
 
 Output is JSON with a `params` block and a `kvCache` block (with memory at
 quarter/half/full context).

@@ -19,13 +19,12 @@ tags:
 > deployments keep working. This document stays as the description of the
 > paused shape.
 
-
 Charter: the GPU host's single llama-swap instance for **local GGUF
-inference** — generate the capability-gated `config.d/` layers for *this*
+inference** — generate the capability-gated `config.d/` layers for _this_
 host, then launch llama-swap against whatever was generated. The normative
 requirement statement lives in the BRD
 ([../docs/requirements.md](../docs/requirements.md), FR-S1–FR-S4); this doc
-owns the shape and the non-obvious mechanics. Serving models *this* host
+owns the shape and the non-obvious mechanics. Serving models _this_ host
 cannot run itself is OUT of scope — relaying moved to
 `../estige` (the raw passthrough proxy), taking the former relay
 layers and the route to a remote host's GPU with it; llama-swap's own
@@ -68,7 +67,7 @@ endpoint.
 - **Generation-time, not runtime**: context windows are embedded into each
   model's `cmd` as `--ctx-size/--n-predict` at generation time from
   `lib/llamacpp-model-data.json` — this folder's own copy, which it also owns
-  the *content* of (`docs/d025`, `CACHE-DESIGN.md`); model-id slugs derive from
+  the _content_ of (`docs/d025`, `CACHE-DESIGN.md`); model-id slugs derive from
   `active-b.json` (`docs/d003-llamacpp-context-windows.md`).
 - **Generation-time path baking** (`docs/d029` option B): each model is
   resolved to ONE HF snapshot dir (refs/main first, the revision
@@ -87,7 +86,7 @@ endpoint.
   read of the host HF hub cache directory (no network) — the models.dev
   refresh and every HTTP probe went with that handoff and are gone.
 - **Inbound bearer auth stays**: `apiKeys: ${env.REVERSE_PROXY_API_KEY}` in
-  `00-general.yaml` is llama-swap's *own* client-facing key (renamed from
+  `00-general.yaml` is llama-swap's _own_ client-facing key (renamed from
   the historical `PEER_API_KEY` under d071; `docs/d001` covers the
   key-naming contract). It is the only
   secret this module needs — `HF_TOKEN` is NOT forwarded into the container

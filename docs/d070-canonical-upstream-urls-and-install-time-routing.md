@@ -44,8 +44,8 @@ are wrong with that:
   because the committed artifact is proxy-routed. The leak and the escape
   hatch are one design.
 
-The URL has exactly two moments that matter: it is *probed* at generate time
-(lineup selection) and *emitted* at install time. Committing it serves
+The URL has exactly two moments that matter: it is _probed_ at generate time
+(lineup selection) and _emitted_ at install time. Committing it serves
 neither.
 
 ## Decision

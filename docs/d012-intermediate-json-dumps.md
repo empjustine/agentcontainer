@@ -20,16 +20,16 @@ server actually returned.
 
 ### All endpoint-fetching tools must dump raw JSON
 
-| Tool                     | Data to dump                                    | Filename pattern              | Persisted?             |
-|--------------------------|-------------------------------------------------|-------------------------------|------------------------|
-| `dump-provider-models.mjs` | pi's internal `.models.js` definitions         | `pi-models.ndjson`            | yes                    |
-| `generate-config.yaml.js`  | Raw `/models` response per provider             | `<provider>-raw-models.json`  | no (re-fetched via API)|
-| `apply-models.js`        | Raw `/models` response from llama.cpp           | `llamacpp-raw-models.json`    | no (re-fetched via API)|
-| `apply-pi-settings.js`   | Raw `/models` response from llama.cpp           | `llamacpp-raw-models.json`    | no (re-fetched via API)|
-| `coding-agent/models.sh`| Raw `/models` response (via curl) *(removed — superseded by generate-config.yaml.js)* | `llamacpp-raw-models.json`    | no (re-fetched via API)|
+| Tool                       | Data to dump                                                                          | Filename pattern             | Persisted?              |
+| -------------------------- | ------------------------------------------------------------------------------------- | ---------------------------- | ----------------------- |
+| `dump-provider-models.mjs` | pi's internal `.models.js` definitions                                                | `pi-models.ndjson`           | yes                     |
+| `generate-config.yaml.js`  | Raw `/models` response per provider                                                   | `<provider>-raw-models.json` | no (re-fetched via API) |
+| `apply-models.js`          | Raw `/models` response from llama.cpp                                                 | `llamacpp-raw-models.json`   | no (re-fetched via API) |
+| `apply-pi-settings.js`     | Raw `/models` response from llama.cpp                                                 | `llamacpp-raw-models.json`   | no (re-fetched via API) |
+| `coding-agent/models.sh`   | Raw `/models` response (via curl) _(removed — superseded by generate-config.yaml.js)_ | `llamacpp-raw-models.json`   | no (re-fetched via API) |
 
 > **Transient raw dumps:** the `<provider>-raw-models.json` and
-> `llamacpp-raw-models.json` files are *not* persisted or committed. They are
+> `llamacpp-raw-models.json` files are _not_ persisted or committed. They are
 > intermediate working artifacts that every tool above re-fetches from the live
 > provider `/models` API on each run (given the relevant credentials, or a
 > running llama.cpp server), so they can always be regenerated on demand. Only
@@ -47,8 +47,8 @@ Scripts in `cloud-llm/` write cloud-provider dumps to the `cloud-llm/` data
 directory (`scriptDir`), and route the local llama.cpp dump to `../local-llm/`
 via `join(scriptDir, "..", "local-llm")`.
 
-*(Removed during the v13 refactor — llama.cpp `/models` is now fetched inline by
-`generate-config.yaml.js` / `apply-models.js` when `LLAMACPP_BASE_URL` is set.)*
+_(Removed during the v13 refactor — llama.cpp `/models` is now fetched inline by
+`generate-config.yaml.js` / `apply-models.js` when `LLAMACPP_BASE_URL` is set.)_
 The `coding-agent/models.sh` script writes to `local-llm/llamacpp-raw-models.json`.
 
 ### Format
@@ -61,7 +61,7 @@ Two dump formats are used:
   `provider` field, so the single file preserves the per-provider grouping that
   previously lived in separate `<provider>-models.json` files. The trailing
   newline terminates the final record.
-- **Endpoint raw dumps (`generate-config.yaml.js`, `apply-*.js` *(`models.sh` removed)*):**
+- **Endpoint raw dumps (`generate-config.yaml.js`, `apply-*.js` _(`models.sh` removed)_):**
   pretty-printed JSON files with a trailing newline. The content is the
   **exact** response body `data` array (or the raw body if not an expected
   shape), before any filtering or transformation.
@@ -74,6 +74,7 @@ It never makes network calls.
 ## Rationale
 
 Raw snapshots make it possible to:
+
 - Verify what the server actually returned vs what the filter produced
 - Detect upstream API changes (new model naming conventions, removed fields)
 - Compare pi's built-in catalogue with the live API catalogue

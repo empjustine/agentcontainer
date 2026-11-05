@@ -33,7 +33,7 @@ that runs with the fleet's generated agent dir mounted.** It does not cover a
 bare host, a plain `pi -e` try-out, or a container that mounts only a work
 directory — there, the provider simply does not exist.
 
-`docs/d028` (status: *proposed*, nothing implemented) argued that runtime
+`docs/d028` (status: _proposed_, nothing implemented) argued that runtime
 provider extensions could replace the generated-config machinery wholesale. That
 argument is not adopted here — the generated layers carry install-time route
 substitution, multi-source fact caches and the whole fleet's provider set, and

@@ -13,11 +13,11 @@ title: "Future work: a simplified config-generator system (NOT yet implemented)"
 > split-by-concern, and d041 the unified root `generate.mjs`/`build.mjs`
 > entrypoints with runners that never generate. Kept for the record.
 
-> **Status: FUTURE / PENDING.** This is the *next* step after the current
+> **Status: FUTURE / PENDING.** This is the _next_ step after the current
 > de-interweaving cleanup. It is **not** implemented; this page only records the
 > intended shape so it can be picked up later.
 
-Today each serving dir (`llm-local-inference*`) owns a *copy* of the split
+Today each serving dir (`llm-local-inference*`) owns a _copy_ of the split
 generators, and each `coding-agent*` runner owns/copies static pi JSON. That
 works but duplicates a lot of logic and makes the "base" folders the source of
 copied artifacts rather than the system that drives them.
@@ -42,12 +42,12 @@ maps (`models`, `peers`, `groups`, `profiles`, `selectors`, `matrix`), while
 concatenating `apiKeys` (see [d018](d018-split-config-d.md)). A generator system
 would emit, per concern, a small file into a host-specific `config.d/` overlay:
 
-- `00-general.yaml`   — globals + macros + ctxWindows (one, canonical)
+- `00-general.yaml` — globals + macros + ctxWindows (one, canonical)
 - `10-local-llm-*.yaml` — local GGUF models (full hosts only)
 - `peer-cloud.yaml` — cloud peers (OpenRouter + OpenCode Zen/Go)
 - `22-peer-gfx1030.yaml` — gfx1030 local-inference peer route
 
-A host picks *which* concern-files it wants (e.g. a peer-only termux host
+A host picks _which_ concern-files it wants (e.g. a peer-only termux host
 omits the local-llm file), and llama-swap does the rest. No generator needs to
 know about any other concern, and no file is copied wholesale.
 
@@ -66,14 +66,14 @@ in a fixed order: canonical base < environment < local overrides.
 
 ## Proposed split (one generator per concern)
 
-| Concern | Artifact | Where it lands |
-|---------|----------|----------------|
+| Concern                    | Artifact                | Where it lands            |
+| -------------------------- | ----------------------- | ------------------------- |
 | pi retry/terminal settings | `settings.json` overlay | `coding-agent*/.pi/agent` |
-| provider keys | `auth.json` overlay | `coding-agent*/.pi/agent` |
-| provider `baseUrl`/models | `models.json` overlay | `coding-agent*/.pi/agent` |
-| llama-swap globals/macros | `00-general.yaml` | serving `config.d/` |
-| local GGUF model list | `10-local-llm-*.yaml` | serving `config.d/` |
-| peer model lists | `20-*`, `21-*` | serving `config.d/` |
+| provider keys              | `auth.json` overlay     | `coding-agent*/.pi/agent` |
+| provider `baseUrl`/models  | `models.json` overlay   | `coding-agent*/.pi/agent` |
+| llama-swap globals/macros  | `00-general.yaml`       | serving `config.d/`       |
+| local GGUF model list      | `10-local-llm-*.yaml`   | serving `config.d/`       |
+| peer model lists           | `20-*`, `21-*`          | serving `config.d/`       |
 
 Each generator is standalone and environment-agnostic; a thin runner (or
 `generate.sh`) selects the set for the deployment and merges/emits the result.

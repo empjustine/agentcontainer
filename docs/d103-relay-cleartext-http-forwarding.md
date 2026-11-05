@@ -131,7 +131,7 @@ pump cannot give:
   tunnel once implemented; the exported `HTTP_PROXY` spelling (d095) becomes
   true for cleartext URLs instead of 405-ing them. Until then this record
   states intent, not behavior — said rather than papered over.
-- The relay process becomes a *reader* of cleartext provider credentials and
+- The relay process becomes a _reader_ of cleartext provider credentials and
   bodies for `http://` targets. The visibility class is unchanged (they were
   already plaintext in that process's memory and at the origin), but the code
   change must never let the reader role grow TLS-adjacent duties: VPN-R25 is
@@ -154,7 +154,7 @@ pump cannot give:
   `ALL_PROXY`, so the chain step's most common children still fail. It would
   make the one env spelling the restricted network speaks depend on which
   language the child is written in.
-- **Absolute-form forwarding *with* the d047 host allowlist** — d080's
+- **Absolute-form forwarding _with_ the d047 host allowlist** — d080's
   rejected alternative stands in full: the coupling of every request to a
   generated route row is what was rejected, not the parsing.
 - **Giving these routes TLS termination instead** (relay- or edge-minted

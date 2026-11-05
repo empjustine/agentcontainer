@@ -1,16 +1,17 @@
 ---
 base_model:
-- CohereLabs/North-Mini-Code-1.0
+  - CohereLabs/North-Mini-Code-1.0
 inference: false
 library_name: transformers
 license: apache-2.0
 tags:
-- conversational
-- unsloth
-- chat
-- code
-- agent
+  - conversational
+  - unsloth
+  - chat
+  - code
+  - agent
 ---
+
 <div>
 <p style="margin-top: 0;margin-bottom: 0;">
     <em><a href="https://docs.unsloth.ai/basics/unsloth-dynamic-v2.0-gguf">Unsloth Dynamic 2.0</a> achieves superior accuracy & outperforms other leading quants.</em>
@@ -27,7 +28,6 @@ tags:
     </a>
   </div>
 </div>
-
 
 ## Run these GGUFs with llama.cpp
 
@@ -112,13 +112,13 @@ North Mini Code is an open weights research release of a 30B-A3B parameter model
 
 Developed by: [Cohere](https://cohere.com/) and [Cohere Labs](https://cohere.com/research)
 
-* Point of Contact: [**Cohere Labs**](https://cohere.com/research)  
-* License: Apache 2.0
-* Model: North Mini Code  
-* Model Size: 30B total; 3B active  
-* Context length: 256K & 64K max output
+- Point of Contact: [**Cohere Labs**](https://cohere.com/research)
+- License: Apache 2.0
+- Model: North Mini Code
+- Model Size: 30B total; 3B active
+- Context length: 256K & 64K max output
 
-For more details about this model, please check out our [blog post](https://huggingface.co/blog/CohereLabs/introducing-north-mini-code). 
+For more details about this model, please check out our [blog post](https://huggingface.co/blog/CohereLabs/introducing-north-mini-code).
 
 **Try North Mini Code**
 
@@ -133,6 +133,7 @@ You can try out North Mini Code before downloading the weights in OpenCode and o
 
 - <span style="font-size: 80%;">We used SWE-Bench Verified, SWE-Bench Pro, Terminal-Bench v2, and Terminal-Bench Hard to benchmark North Mini Code's agentic coding capabilities. For evaluation harnesses, we used the Swe-Agent harness v1.1.0 for SWE-Bench, and a simple ReAct harness employing a single terminal-use tool based on Harbor's Tmux session implementation for Terminal-Bench v2. For Terminal Bench Hard, we directly used Terminus-2, following the same methodology as the Artificial Analysis Intelligence Index to compare North-Mini-Code-1.0 with the other models. Additionally, we used SciCode and LiveCodeBench v6 as complex code-generation benchmarks outside of tool use.</span>
 - <span style="font-size: 80%;">We run each benchmark with 3 different seeds and report the average benchmark performance, using temperature=1.0 and top\_p=0.95. We used publicly reported scores for competitor models, either from original reports or the Artificial Analysis Intelligence Index, where available. Additionally, Gemma4’s scores for agentic coding tasks were reported by [Qwen team](https://qwen.ai/blog?id=qwen3.6-35b-a3b). For benchmark results that any public report is missing, denoted by (\*) in the figure, we run them internally using the recommended model configuration.</span>
+
 </details>
 
 **Usage**
@@ -159,9 +160,9 @@ input_ids = tokenizer.apply_chat_template(
 )
 
 gen_tokens = model.generate(
-    **input_ids, 
-    max_new_tokens=1024, 
-    do_sample=True, 
+    **input_ids,
+    max_new_tokens=1024,
+    do_sample=True,
     temperature=1.0,
     top_p=0.95
 )
@@ -203,7 +204,7 @@ text = tokenizer.apply_chat_template(
 outputs = pipe(
     messages,
     max_new_tokens=1024,
-    do_sample=True, 
+    do_sample=True,
     temperature=1.0,
     top_p=0.95
 
@@ -217,9 +218,9 @@ print(outputs[0]["generated_text"][-1])
 
 **Input**: Text only.
 
-**Output**: Model generates text. 
+**Output**: Model generates text.
 
-**Model Architecture**: North-Mini-Code-1.0 is a decoder-only Transformer-based sparse Mixture-of-Experts model. It uses an efficient attention implementation, interleaved between sliding-window attention with RoPE and global attention with no positional embeddings, in a 3:1 ratio. The feed-forward block is an MoE block with 128 experts, of which 8 are activated per token. Each expert block is an FFN block with SwiGLU activation. The router applies a sigmoid activation function to the logits before the top-k selection. We also use a single dense layer before the sparse layers. North-Mini-Code-1.0 was post-trained using a two-stage cascaded supervised fine-tuning (SFT) followed by reinforcement learning with verifiable rewards (RLVR), focusing on agentic coding.  For more technical details, please check out our [blog post](https://huggingface.co/blog/CohereLabs/introducing-north-mini-code). 
+**Model Architecture**: North-Mini-Code-1.0 is a decoder-only Transformer-based sparse Mixture-of-Experts model. It uses an efficient attention implementation, interleaved between sliding-window attention with RoPE and global attention with no positional embeddings, in a 3:1 ratio. The feed-forward block is an MoE block with 128 experts, of which 8 are activated per token. Each expert block is an FFN block with SwiGLU activation. The router applies a sigmoid activation function to the logits before the top-k selection. We also use a single dense layer before the sparse layers. North-Mini-Code-1.0 was post-trained using a two-stage cascaded supervised fine-tuning (SFT) followed by reinforcement learning with verifiable rewards (RLVR), focusing on agentic coding. For more technical details, please check out our [blog post](https://huggingface.co/blog/CohereLabs/introducing-north-mini-code).
 
 **Context Length:** North-Mini-Code-1.0 supports a context length of 256K & 64K output length.
 
@@ -229,7 +230,7 @@ North-Mini-Code-1.0 has been specifically trained with tool-use capabilities for
 
 Tool use with North-Mini-Code-1.0 is supported through [chat templates](https://huggingface.co/docs/transformers/main/en/chat_templating#advanced-tool-use--function-calling) in Transformers. We recommend providing tool descriptions using JSON schema.
 
-**Tool Use Example \[CLICK TO EXPAND\]** 
+**Tool Use Example \[CLICK TO EXPAND\]**
 
 ```py
 # Define tools
@@ -280,7 +281,7 @@ and then call the tool and append the result, as a dictionary, with the tool rol
 
 ```py
 # This needs to be a dictionary
-tool_result = {"stdout": "test.json\ntest.py", "return_code": "0"} 
+tool_result = {"stdout": "test.json\ntest.py", "return_code": "0"}
 
 # Append tool results
 conversation.append({"role": "tool", "tool_call_id": "0", "content": tool_result})
@@ -364,7 +365,6 @@ To use locally deployed North Mini Code in Opencode, please use this config whic
     }
   }
 }
-
 ```
 
 ## **Model Card Contact**

@@ -21,6 +21,7 @@ The naive default model picker in pi-coding-agent was selecting `minimax-m2.7` a
    - `cline-pass`, `cline-pass/z-ai/glm-5.3-flash`
 
 The default model should be one that:
+
 - Is actually available and callable
 
 ## Solution
@@ -41,6 +42,7 @@ Implemented a dynamic default model selection mechanism that:
 ### New Generator: `generate-default-model.mjs`
 
 A new generator that:
+
 - Loads the generated `models.json` (from its own directory) to see the emitted providers and models
 - Checks if `opencode-go`'s layer has `deepseek-v4.1-flash`
 - Checks if `cline-pass`'s layer has `cline-pass/glm-5.3-flash`
@@ -51,6 +53,7 @@ A new generator that:
 ### Updated `generate.sh`
 
 Modified the generation flow to:
+
 - Stage `generate-default-model.mjs` alongside other generators
 - Run the generator **after** the models.json stage (settings-install → models.json → default model, docs/d034's parallel cascades feed it), copying the chosen models.json into the scratch dir first
 - Merge the default model configuration into settings.json

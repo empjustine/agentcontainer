@@ -27,13 +27,13 @@ That shape is invisible to `exec`, and everything downstream paid for it:
 - **No shim could replace itself.** `coding-agent/run.sh` had to stay resident
   under `set -e` purely to carry node's status back, because
   `exec node_run …` cannot resolve a function.
-- **The farm lock carried a workaround.** `git/farm-lock.sh` used flock's *fd*
+- **The farm lock carried a workaround.** `git/farm-lock.sh` used flock's _fd_
   mode, not `flock LOCKFILE CMD`, because the guarded command was
   `node_run` — a function `flock` could not execvp (`failed to execute
   node_run`). docs/d121 records the workaround as if it were a property of
   flock.
 - **`lib/npm-run.sh` could not locate its own sibling.** POSIX sh cannot
-  self-locate a *sourced* file, so it recovered the caller's folder from
+  self-locate a _sourced_ file, so it recovered the caller's folder from
   `dirname "$0"` — a convention every shim had to honour, and the reason
   `workload-runtime.sh` needs its `WORKLOAD_LIB_DIR` seam.
 - **Nothing outside a shell could use the pin.** `flock`, an IDE task, a future
@@ -76,7 +76,7 @@ What survives as shell, and why:
   `flock` (d099/d121). That is behavior node cannot express, not indirection:
   the lock is taken before the node process exists and released when the holder
   dies. They call `with_farm_mutation_lock "$repo/node-run.sh" …`.
-- **`llm-local-inference/run.sh`** — the llama-swap launcher: it *uses* the
+- **`llm-local-inference/run.sh`** — the llama-swap launcher: it _uses_ the
   workload API (`lib/workload-runtime.sh`) to render a container argv. Real
   logic, unchanged by this record.
 - **`./environment.sh`** — the one credentials chain step, and deliberately a
@@ -84,7 +84,7 @@ What survives as shell, and why:
   target with the result as plain environment (docs/d046). Its argument is a
   command, so the chain reads `./environment.sh ./node-run.sh coding-agent/run.mjs`.
 - **`lib/log.sh`, `lib/npm-tools.sh`, `lib/workload-runtime.sh`,
-  `git/farm-lock.sh`** — libraries: sets of functions a *sourcing* script calls
+  `git/farm-lock.sh`** — libraries: sets of functions a _sourcing_ script calls
   repeatedly, which is what sourcing is for.
 
 **Two rounds, one conclusion.** The first pass kept a per-entry shim whose whole
@@ -100,7 +100,7 @@ remembered to shim.
 docs/d113 made a folder a **copy unit** that survives being copied out of the
 tree, and that is why the pin was a byte-copy per unit (`coding-agent/lib/`,
 `git/lib/`, `llm-local-inference/lib/`, `estige/lib/`). One file per unit buys
-nothing the other kernels do not: those are *pruned* copies (a unit carries the
+nothing the other kernels do not: those are _pruned_ copies (a unit carries the
 exports it calls), while this one is the same 40 lines in every folder — a
 transcription of a single fact. The bill arrived as drift, not as theory:
 `estige/build.sh` had stopped copying and inlined its own variant of the
@@ -160,19 +160,19 @@ every tracked file and grouping by content and by basename:
 - **Python** — no runner to duplicate. `run-all.sh` calls `uv run` per step and
   the `.py` tools carry their own PEP 723 metadata; there is no `python-run`
   wrapper and no copy of one.
-- **Go** — no runner either. `estige/lib/go-build.mjs` is a *module* (toolchain
+- **Go** — no runner either. `estige/lib/go-build.mjs` is a _module_ (toolchain
   probe + build presets), not a bootstrap command, and it has one copy. Its
   probe logic is re-spelled in `test.sh` and `lint.sh` (each needs the probe
   without a unit's module) — logic duplication, not a same-named file, and
   d123 owns that shape.
 - **Node** — `artifact.mjs` (3 copies) and `log.mjs` (2 byte-identical, more
   pruned variants) are genuine hand copies, but they are libraries a unit
-  *imports* and prunes (d113), not runners; nothing to collapse here.
+  _imports_ and prunes (d113), not runners; nothing to collapse here.
 - **Shell** — `log.sh` has exactly two copies (root for the sweep,
   `llm-local-inference/lib/` for its run scripts). It is a logger a script
-  *sources*, so the d113 rule applies unchanged.
+  _sources_, so the d113 rule applies unchanged.
 
-Only the interpreter runners were same-content duplicates of a *command*; only
+Only the interpreter runners were same-content duplicates of a _command_; only
 they were pruned. And only shell entries that were pure indirection were
 deleted — the flock pair, the llama-swap launcher and the QA sweep carry
 behavior and stay.
@@ -188,7 +188,7 @@ behavior and stay.
   sniff decides the mode; it works, but every reader then has to reason about
   which mode is live, and the call sites it would save are two lines each.
 - **Keep the per-unit copies and only add the runner-copy gate.** The copies
-  *are* the drift; gating them would forbid the shape the tree shipped with.
+  _are_ the drift; gating them would forbid the shape the tree shipped with.
 - **Leave the shims sourcing and only fix the docs.** The flock workaround, the
   resident shim and the `dirname` conventions would all stay, and the tree would
   still have no way to reach the pin from a non-shell caller.

@@ -43,7 +43,7 @@ Combined Log Format line, which records each request.
 
 ## Error reporting (RFC 9457)
 
-Only failures *inside* the tunnel produce a problem detail, and only to a
+Only failures _inside_ the tunnel produce a problem detail, and only to a
 caller that already authenticated: a bad-gateway condition during the egress
 exchange, a hijack that failed, a malformed CONNECT target. The same body
 shape serves both nodes:

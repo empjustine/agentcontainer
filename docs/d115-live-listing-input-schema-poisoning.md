@@ -31,7 +31,7 @@ Error: models.json error: Invalid models.json schema:
 ```
 
 The same three paths (`models.0`, `models.5`, `models.10`) repeat →
-*three* models carried a 3+ element `input` array whose 3rd element
+_three_ models carried a 3+ element `input` array whose 3rd element
 (`input.2`) was `"video"`/`"audio"`/`"pdf"` — a value the strict schema
 does not allow (its `input` items are a const `anyOf` of `"text"`/`"image"`).
 
@@ -58,7 +58,7 @@ does not allow (its `input` items are a const `anyOf` of `"text"`/`"image"`).
    /home/CS423512/agentcontainer/coding-agent`) — so a generation run that
    happened to emit invalid `input` arrays also rewrote the repo's
    committed artifact, which the next host read. The schema failure on one
-   model invalidates the *entire* `models.json` for strict consumers
+   model invalidates the _entire_ `models.json` for strict consumers
    (cline's validator rejects the whole file).
 
 Why pi/opencode themselves did not hit it: pi rebroadcasts the file

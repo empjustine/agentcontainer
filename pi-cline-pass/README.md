@@ -16,8 +16,8 @@ pi -e ./pi-cline-pass/index.ts
 
 ## Environment
 
-| Var | Meaning |
-| --- | --- |
+| Var             | Meaning                                                                                                                                   |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `CLINE_API_KEY` | the ClinePass key pi sends as `Authorization: Bearer` (an unset key leaves the provider unconfigured — pi hides its models from `/model`) |
 
 Network rides the environment's forward proxy
@@ -53,7 +53,7 @@ Cline publishes its own machine-readable catalog inside its SDK,
 generated `cline-pass` section carrying lineup, context/output limits,
 capabilities (incl. `prompt-cache`), effort enums (`reasoningOptions`) and
 zero-filled subscription pricing — plus the recommended/free/clinePass
-group snapshot, the machine twin of the docs table. It runs *ahead* of
+group snapshot, the machine twin of the docs table. It runs _ahead_ of
 models.dev (e.g. `cline-pass/kimi-k3.1-pro`, video input, exists there
 first), which makes it the best candidate for a third, independent
 cross-check opinion in the reconciliation.
@@ -83,15 +83,15 @@ execution of their code — with these caveats:
 
 ## Files
 
-| File | Role |
-| --- | --- |
-| `index.ts` | the extension entry: `registerProvider` + `refreshModels` (the reconciliation at runtime) |
-| `sources.mjs` | the two source reads, the reconciliation floor, the committed fallback lineup |
-| `merge.mjs` | the one shaping step and both projections (manifest entry, registered-model entry) |
-| `generate.mjs` | two sources in, two artifacts out; `--check` verifies without writing |
-| `log.mjs` | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045) |
-| `models.json` | GENERATED: the pi-`models.json`-shaped cline-pass block (fleet parity: provider-level compat, canonical upstream) |
-| `models.js` | GENERATED: the extension's offline seed (registered before any fresher store exists) |
+| File           | Role                                                                                                              |
+| -------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `index.ts`     | the extension entry: `registerProvider` + `refreshModels` (the reconciliation at runtime)                         |
+| `sources.mjs`  | the two source reads, the reconciliation floor, the committed fallback lineup                                     |
+| `merge.mjs`    | the one shaping step and both projections (manifest entry, registered-model entry)                                |
+| `generate.mjs` | two sources in, two artifacts out; `--check` verifies without writing                                             |
+| `log.mjs`      | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045)                                             |
+| `models.json`  | GENERATED: the pi-`models.json`-shaped cline-pass block (fleet parity: provider-level compat, canonical upstream) |
+| `models.js`    | GENERATED: the extension's offline seed (registered before any fresher store exists)                              |
 
 Regenerate with `./npm-run.sh pi-cline-pass generate` from the
 repo root (the git diff is the review); the committed artifacts are the

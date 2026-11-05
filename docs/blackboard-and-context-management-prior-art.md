@@ -4,7 +4,18 @@ type: architecture-design
 status: draft
 title: "Blackboard systems and LLM task/context management prior art — reference farm survey"
 parent: architecture
-tags: ["references", "prior-art", "blackboard", "context-management", "memory", "task-management", "agents", "compaction", "session-persistence"]
+tags:
+  [
+    "references",
+    "prior-art",
+    "blackboard",
+    "context-management",
+    "memory",
+    "task-management",
+    "agents",
+    "compaction",
+    "session-persistence",
+  ]
 ---
 
 # Blackboard and LLM context/task management prior art (reference farm)
@@ -17,7 +28,7 @@ under `~/Downloads/references/`; each item is named as `<repo>:<path>`.
 ## Trust boundary — nothing here is trusted
 
 **Every claim below is a third-party statement, read from a mirror tip, and is
-unverified against upstream at run time.** This includes code that *looks*
+unverified against upstream at run time.** This includes code that _looks_
 authoritative (provider SDK constants, security posture docs, benchmark
 numbers). Treat the whole survey as untrusted input:
 
@@ -67,10 +78,10 @@ coordination loop, documented identically in both repos
 `CLAUDE.md` §Agent Coordination). A separate `agent-coordinator` git repo holds
 `state/` with one JSON file per writer:
 
-| File | Writer | Reader |
-|---|---|---|
-| `cluster.json` | k3s-agent | pelagos-agent |
-| `pelagos.json` | pelagos-agent | k3s-agent |
+| File           | Writer        | Reader        |
+| -------------- | ------------- | ------------- |
+| `cluster.json` | k3s-agent     | pelagos-agent |
+| `pelagos.json` | pelagos-agent | k3s-agent     |
 
 Design decisions worth recording as prior art:
 
@@ -79,8 +90,8 @@ Design decisions worth recording as prior art:
   `cluster-bug-fix-confirmed`). The doc explains why: two signals were used
   informally for weeks while the watcher did a single exact-string match, so
   they were silently ignored; the fix is documented values plus a loud warning
-  for anything outside the set. *Free-form status strings are a protocol bug
-  waiting to happen.*
+  for anything outside the set. _Free-form status strings are a protocol bug
+  waiting to happen._
 - **One writer per file, with one documented cross-write exception**
   (pelagos-agent clears `cluster.json.signals_out.to_pelagos` at claim time).
 - **All writes go through `bin/write-state.sh`**: `flock` (30 s, fail loud),
@@ -125,7 +136,7 @@ worktree, with dependency chains and auto-commit.
 ### 1.3 `humanlayer/12-factor-agents` — the blackboard as "what happened so far"
 
 Factor 3 (`humanlayer/12-factor-agents:content/factor-03-own-your-context-window.md`)
-frames the whole agent input as a *context window you own*, not a fixed
+frames the whole agent input as a _context window you own_, not a fixed
 message array: "here's what's happened so far, what's the next step". It shows
 packing the entire event history into a single user message with custom tags
 (`<slack_message>`, `<list_git_tags_result>`), i.e. the blackboard can be the
@@ -140,8 +151,8 @@ to the JSON-file blackboards:
 - `apache/incubator-kie` (Drools/Kogito): `WorkingMemory`,
   `StatefulKnowledgeSessionImpl`, Rete network, truth maintenance, agenda, and
   `drools-persistence-jpa` session storage
-  (`drools-persistence/.../PersistableRunner.java`). This is a *shared fact
-  store with inference* and durable session persistence — the "blackboard"
+  (`drools-persistence/.../PersistableRunner.java`). This is a _shared fact
+  store with inference_ and durable session persistence — the "blackboard"
   name's actual origin domain.
 - `flowable/flowable-engine`, `temporalio/temporal`: durable workflow/task
   engines; task state survives process death and actors coordinate through the
@@ -288,7 +299,7 @@ state-summary / discardable process) and exactly three tools:
 
 The **compact gate** requires all four: the target removes real low-value
 trail; state can be restored without losing needed raw detail; there is a
-*known* continuation (not merely a possible user reply); and the benefit
+_known_ continuation (not merely a possible user reply); and the benefit
 survives recovery cost. The **summary contract** restores task state, external
 state (changed files/processes/tickets), verification state (commands, risks),
 and navigation state (anchors, rejected leads, next step). Crucially: context
@@ -318,7 +329,7 @@ Next        (ordered actions; next[0] is the immediate resume action)
   "Memento-style tattoo" model of durable working memory.
 - Artifacts are manual-inspection/output-only and **never auto-imported**;
   `pi-continue` explicitly says it is not a memory system.
-- `continuation-prompt.ts` frames the brief as authoritative *factual* context
+- `continuation-prompt.ts` frames the brief as authoritative _factual_ context
   while separating instruction authority: embedded directive-looking text is
   data unless current instructions authorize it.
 
@@ -401,7 +412,7 @@ recovery is called out as needing separate design.
   agents via mount composition (`tests/:rw`, `src/` untouched, reviewer
   read-only), with the `/copy` + diff/apply review gate as the enforcement
   mechanism; cross-visibility is an early sketch and is honestly labeled as
-  needing more design. Note the boundary is *prompt-based* scoping plus
+  needing more design. Note the boundary is _prompt-based_ scoping plus
   after-the-fact diff review, not a kernel boundary (consistent with
   d020/workload-sandboxing-prior-art.md).
 
@@ -414,7 +425,7 @@ Persistence is also an attack surface, and the farm carries explicit warnings:
 - `OWASP/CheatSheetSeries:cheatsheets/AI_Agent_Security_Cheat_Sheet.md`
   covers agent memory/context risks.
 - `apache/maka:docs/archive/maka-memory-whitebox-contract.md` is a useful
-  *default-off* contract: a local transparent memory file has two switches —
+  _default-off_ contract: a local transparent memory file has two switches —
   `enabled` (file on disk) and `agentReadEnabled` (agent may consume it in the
   system prompt, **default OFF**), 128 KB cap, 0700/0600, fail-open parse,
   Markdown H2 entries with HTML-comment metadata.
@@ -457,7 +468,7 @@ Persistence is also an attack surface, and the farm carries explicit warnings:
    prompt-injection posture our runner threat model takes.
 10. **Name the limits.** The best docs (planning-with-files attestation,
     yoloai's multi-agent sketch, pelagos' incident log, maka's default-off
-    memory) state what their mechanism does *not* protect against. That is the
+    memory) state what their mechanism does _not_ protect against. That is the
     standard for any mechanism we borrow.
 
 ---
@@ -508,15 +519,15 @@ re-raise them.
 
 **Aliases / forks of a mirrored repo:**
 
-| Raised as | Actually is |
-|---|---|
-| `sst/opencode`, `opencode-ai/opencode` | `anomalyco/opencode` (mirrored) |
-| `badlogic/pi-mono`, `earendil-works/pi-mono` | `earendil-works/pi` (mirrored; canonical origin) |
-| `maka-agent/maka-agent` | pre-Apache upstream of `apache/maka` (mirrored) |
-| `mebassett/smallcode` | fork of `Doorman11991/smallcode` (mirrored) |
-| `svkozak/pi-acp` | `georgeharker/pi-acp` / `victor-software-house/pi-acp` (both mirrored) |
-| `gotgenes/pi-subagents` | package inside `gotgenes/pi-packages` (mirrored) |
-| `googlecloudplatform/gemini-cli` | `google-gemini/gemini-cli` (same project; old org) |
+| Raised as                                    | Actually is                                                            |
+| -------------------------------------------- | ---------------------------------------------------------------------- |
+| `sst/opencode`, `opencode-ai/opencode`       | `anomalyco/opencode` (mirrored)                                        |
+| `badlogic/pi-mono`, `earendil-works/pi-mono` | `earendil-works/pi` (mirrored; canonical origin)                       |
+| `maka-agent/maka-agent`                      | pre-Apache upstream of `apache/maka` (mirrored)                        |
+| `mebassett/smallcode`                        | fork of `Doorman11991/smallcode` (mirrored)                            |
+| `svkozak/pi-acp`                             | `georgeharker/pi-acp` / `victor-software-house/pi-acp` (both mirrored) |
+| `gotgenes/pi-subagents`                      | package inside `gotgenes/pi-packages` (mirrored)                       |
+| `googlecloudplatform/gemini-cli`             | `google-gemini/gemini-cli` (same project; old org)                     |
 
 **Excluded on purpose:** `anthropics/claude-code` — proprietary; the repo is
 an issue/docs surface, not source. Referenced behavior is documented well
@@ -525,17 +536,17 @@ mirrored).
 
 **Now mirrored in the batch** (verified non-empty, ref counts at sweep time):
 
-| Repository | refs |
-|---|---|
-| `openai/codex` | 22,571 |
-| `openhands/openhands` | 13,863 |
-| `continuedev/continue` | 7,563 |
-| `boundaryml/baml` | 5,630 |
-| `modelcontextprotocol/servers` | 3,982 |
-| `moonshotai/kimi-code` | 3,241 |
-| `anthropics/skills` | 2,257 |
-| `agentclientprotocol/agent-client-protocol` | 2,163 |
-| `moonshotai/kimi-cli` | 1,859 |
+| Repository                                  | refs   |
+| ------------------------------------------- | ------ |
+| `openai/codex`                              | 22,571 |
+| `openhands/openhands`                       | 13,863 |
+| `continuedev/continue`                      | 7,563  |
+| `boundaryml/baml`                           | 5,630  |
+| `modelcontextprotocol/servers`              | 3,982  |
+| `moonshotai/kimi-code`                      | 3,241  |
+| `anthropics/skills`                         | 2,257  |
+| `agentclientprotocol/agent-client-protocol` | 2,163  |
+| `moonshotai/kimi-cli`                       | 1,859  |
 
 ### 8.2 Still missing — on-topic (corrected)
 
@@ -545,60 +556,60 @@ then re-run the matching survey section.
 
 **Agent harnesses / context management**
 
-| Repository | Why it matters | Cited by |
-|---|---|---|
-| `swe-agent/swe-agent` | Full SWE-agent loop; only `SWE-agent/mini-swe-agent` is mirrored | `yoloai:.../research/agents.md` |
-| `aider-ai/aider` | Repo-map context construction + history files | `yoloai`, `hazmat` |
-| `google-gemini/gemini-cli` | Gemini CLI context/session surfaces (canonical org) | `yoloai`, `apache/maka`, `hazmat` |
-| `nousresearch/hermes-agent` | Agent referenced as comparison/alternative | `planning-with-files`, `apache/maka`, `hazmat` |
-| `openclaw/openclaw` | Agent harness evaluated by hazmat | `hazmat:...openclaw-harness-evaluation.md` |
-| `openai/openai-agents-js` | Agent framework (message/history management) | `apache/maka` (third-party notices) |
-| `pydantic/pydantic-ai` | Agent framework with message-history management | `hazmat:docs/integrations.md` |
-| `microsoft/autogen` | Multi-agent conversation framework | `huggingface/smolagents` |
-| `langchain-ai/langchain` | Memory/retriever modules the field builds on | `getkern/kern:bindings/python/LANGCHAIN-SHELL.md` |
-| `mozilla-ai/any-llm` | Provider-abstraction layer | `mozilla-ai/cq` ecosystem |
-| `got-agents/agents` | Agent framework named by 12-factor | `humanlayer/12-factor-agents:README.md` |
-| `dexhorthy/mailcrew` | Humanlayer's agent-mailbox example | `humanlayer/12-factor-agents:README.md` |
+| Repository                  | Why it matters                                                   | Cited by                                          |
+| --------------------------- | ---------------------------------------------------------------- | ------------------------------------------------- |
+| `swe-agent/swe-agent`       | Full SWE-agent loop; only `SWE-agent/mini-swe-agent` is mirrored | `yoloai:.../research/agents.md`                   |
+| `aider-ai/aider`            | Repo-map context construction + history files                    | `yoloai`, `hazmat`                                |
+| `google-gemini/gemini-cli`  | Gemini CLI context/session surfaces (canonical org)              | `yoloai`, `apache/maka`, `hazmat`                 |
+| `nousresearch/hermes-agent` | Agent referenced as comparison/alternative                       | `planning-with-files`, `apache/maka`, `hazmat`    |
+| `openclaw/openclaw`         | Agent harness evaluated by hazmat                                | `hazmat:...openclaw-harness-evaluation.md`        |
+| `openai/openai-agents-js`   | Agent framework (message/history management)                     | `apache/maka` (third-party notices)               |
+| `pydantic/pydantic-ai`      | Agent framework with message-history management                  | `hazmat:docs/integrations.md`                     |
+| `microsoft/autogen`         | Multi-agent conversation framework                               | `huggingface/smolagents`                          |
+| `langchain-ai/langchain`    | Memory/retriever modules the field builds on                     | `getkern/kern:bindings/python/LANGCHAIN-SHELL.md` |
+| `mozilla-ai/any-llm`        | Provider-abstraction layer                                       | `mozilla-ai/cq` ecosystem                         |
+| `got-agents/agents`         | Agent framework named by 12-factor                               | `humanlayer/12-factor-agents:README.md`           |
+| `dexhorthy/mailcrew`        | Humanlayer's agent-mailbox example                               | `humanlayer/12-factor-agents:README.md`           |
 
 **Context / plan / memory tooling**
 
-| Repository | Why it matters | Cited by |
-|---|---|---|
-| `badlogic/cchistory` | Claude Code history extraction (session persistence) | `earendil-works/pi:packages/ai/src/api/anthropic-messages.ts` |
-| `tintinweb/pi-subagents` | Upstream of `gotgenes/pi-subagents` | `gotgenes/pi-packages:.pi/skills/package-pi-subagents/SKILL.md` |
-| `nicobailon/pi-subagents` | Alternative pi sub-agent fork | `gotgenes/pi-packages` |
-| `hazat/pi-interactive-subagents` | pi interactive sub-agents | `earendil-works/pi`, `gotgenes/pi-packages` |
-| `elidickinson/pi-claude-bridge` | pi ↔ Claude bridge | `gotgenes/pi-packages` |
-| `earendil-works/pi-chat` | pi chat surface | `earendil-works/pi:README.md` |
-| `doorman11991/marrowscript` | The language behind smallcode's memory/context modules | `Doorman11991/smallcode:README.md` |
-| `doorman11991/bonescript` | Sibling language/runtime | `Doorman11991/smallcode:README.md` |
-| `doorman11991/budget-aware-mcp` | Budget-aware MCP — context budgeting as a protocol concern | `Doorman11991/smallcode:README.md` |
-| `kmichels/multi-manus-planning` | Parallel-Manus planning variant | `OthmanAdi/planning-with-files:CONTRIBUTORS.md` |
-| `lincolnwan/planning-with-files-copilot-agent` | planning-with-files port | `OthmanAdi/planning-with-files:README.md` |
-| `taoidle/plan-cascade` | Cascaded planning | `OthmanAdi/planning-with-files:README.md` |
-| `Ataraxy-Labs/inspect` | Semantic code review from the `sem`/`weave` stack | `Ataraxy-Labs/sem`, `Ataraxy-Labs/weave` |
-| `Ataraxy-Labs/opensessions` | tmux sidebar for coding agents (session visibility) | `Ataraxy-Labs/sem`, `Ataraxy-Labs/weave` |
-| `arize-ai/phoenix` | LLM tracing/inspection (observing agent memory/runs) | `huggingface/smolagents:docs/.../inspect_runs.md` |
-| `brexhq/prompt-engineering` | Prompt/context engineering reference | `humanlayer/12-factor-agents` |
-| `tursodatabase/agentfs` | Agent filesystem — durable agent state | `swival/swival:swival/sandbox_agentfs.py` |
-| `SAIL-Research-Lab/cheetahclaws` | Original Python agent substrate behind `little-coder` (memory/checkpoint/sub-agent design). Old name `SafeRL-Lab/clawspring` redirects to the same HEAD (`ec5d091b…`, verified via `git ls-remote`) | `itayinbarr/little-coder:NOTICE` (links `SafeRL-Lab/clawspring`) |
-| `co-l/cache-hunter` | Cache/KV tooling referenced alongside compaction | `itayinbarr/little-coder:CHANGELOG.md` |
+| Repository                                     | Why it matters                                                                                                                                                                                      | Cited by                                                         |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `badlogic/cchistory`                           | Claude Code history extraction (session persistence)                                                                                                                                                | `earendil-works/pi:packages/ai/src/api/anthropic-messages.ts`    |
+| `tintinweb/pi-subagents`                       | Upstream of `gotgenes/pi-subagents`                                                                                                                                                                 | `gotgenes/pi-packages:.pi/skills/package-pi-subagents/SKILL.md`  |
+| `nicobailon/pi-subagents`                      | Alternative pi sub-agent fork                                                                                                                                                                       | `gotgenes/pi-packages`                                           |
+| `hazat/pi-interactive-subagents`               | pi interactive sub-agents                                                                                                                                                                           | `earendil-works/pi`, `gotgenes/pi-packages`                      |
+| `elidickinson/pi-claude-bridge`                | pi ↔ Claude bridge                                                                                                                                                                                  | `gotgenes/pi-packages`                                           |
+| `earendil-works/pi-chat`                       | pi chat surface                                                                                                                                                                                     | `earendil-works/pi:README.md`                                    |
+| `doorman11991/marrowscript`                    | The language behind smallcode's memory/context modules                                                                                                                                              | `Doorman11991/smallcode:README.md`                               |
+| `doorman11991/bonescript`                      | Sibling language/runtime                                                                                                                                                                            | `Doorman11991/smallcode:README.md`                               |
+| `doorman11991/budget-aware-mcp`                | Budget-aware MCP — context budgeting as a protocol concern                                                                                                                                          | `Doorman11991/smallcode:README.md`                               |
+| `kmichels/multi-manus-planning`                | Parallel-Manus planning variant                                                                                                                                                                     | `OthmanAdi/planning-with-files:CONTRIBUTORS.md`                  |
+| `lincolnwan/planning-with-files-copilot-agent` | planning-with-files port                                                                                                                                                                            | `OthmanAdi/planning-with-files:README.md`                        |
+| `taoidle/plan-cascade`                         | Cascaded planning                                                                                                                                                                                   | `OthmanAdi/planning-with-files:README.md`                        |
+| `Ataraxy-Labs/inspect`                         | Semantic code review from the `sem`/`weave` stack                                                                                                                                                   | `Ataraxy-Labs/sem`, `Ataraxy-Labs/weave`                         |
+| `Ataraxy-Labs/opensessions`                    | tmux sidebar for coding agents (session visibility)                                                                                                                                                 | `Ataraxy-Labs/sem`, `Ataraxy-Labs/weave`                         |
+| `arize-ai/phoenix`                             | LLM tracing/inspection (observing agent memory/runs)                                                                                                                                                | `huggingface/smolagents:docs/.../inspect_runs.md`                |
+| `brexhq/prompt-engineering`                    | Prompt/context engineering reference                                                                                                                                                                | `humanlayer/12-factor-agents`                                    |
+| `tursodatabase/agentfs`                        | Agent filesystem — durable agent state                                                                                                                                                              | `swival/swival:swival/sandbox_agentfs.py`                        |
+| `SAIL-Research-Lab/cheetahclaws`               | Original Python agent substrate behind `little-coder` (memory/checkpoint/sub-agent design). Old name `SafeRL-Lab/clawspring` redirects to the same HEAD (`ec5d091b…`, verified via `git ls-remote`) | `itayinbarr/little-coder:NOTICE` (links `SafeRL-Lab/clawspring`) |
+| `co-l/cache-hunter`                            | Cache/KV tooling referenced alongside compaction                                                                                                                                                    | `itayinbarr/little-coder:CHANGELOG.md`                           |
 
 **Skill / spec / protocol ecosystem (context and tool exchange)**
 
-| Repository | Why it matters | Cited by |
-|---|---|---|
-| `agentskills/agentskills` | Agent-skills packaging spec | `vercel/ai` |
-| `modelcontextprotocol/modelcontextprotocol` | The MCP spec repo itself (only the TS SDK is mirrored) | `modelcontextprotocol` ecosystem |
-| `modelcontextprotocol/registry` | MCP server registry | `Ataraxy-Labs/sem` |
-| `modelcontextprotocol/go-sdk`, `modelcontextprotocol/sdk-go`, `modelcontextprotocol/ext-auth`, `modelcontextprotocol/conformance` | MCP SDKs/conformance (Go side, auth, tests) | MCP ecosystem |
-| `agentclientprotocol/typescript-sdk` | ACP TypeScript SDK | `vercel/ai`, `hazmat` |
-| `mark3labs/mcp-go` | Widely used MCP Go SDK | `mozilla-ai/cq` |
-| `nvidia/skills`, `trailofbits/skills`, `skillmatic-ai/awesome-agent-skills`, `buzhangsan/skill-manager` | Skill packaging/management ecosystem | `NVIDIA/SkillSpector`, `Anbeeld/PROMPTING.md` |
-| `cline/plugins` | Cline plugin surface | `cline/cline` |
-| `deepseek-ai/awesome-deepseek-agent` | Agent-harness index | `deepseek-ai/deepseek-harness` |
-| `chromedevtools/chrome-devtools-mcp` | Browser context as an MCP tool | MCP ecosystem |
-| `datasette/datasette-agent-charts`, `datasette/datasette-agent-openai-imagegen` | datasette-agent plugin surfaces | `datasette/datasette-agent` |
+| Repository                                                                                                                        | Why it matters                                         | Cited by                                      |
+| --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------- |
+| `agentskills/agentskills`                                                                                                         | Agent-skills packaging spec                            | `vercel/ai`                                   |
+| `modelcontextprotocol/modelcontextprotocol`                                                                                       | The MCP spec repo itself (only the TS SDK is mirrored) | `modelcontextprotocol` ecosystem              |
+| `modelcontextprotocol/registry`                                                                                                   | MCP server registry                                    | `Ataraxy-Labs/sem`                            |
+| `modelcontextprotocol/go-sdk`, `modelcontextprotocol/sdk-go`, `modelcontextprotocol/ext-auth`, `modelcontextprotocol/conformance` | MCP SDKs/conformance (Go side, auth, tests)            | MCP ecosystem                                 |
+| `agentclientprotocol/typescript-sdk`                                                                                              | ACP TypeScript SDK                                     | `vercel/ai`, `hazmat`                         |
+| `mark3labs/mcp-go`                                                                                                                | Widely used MCP Go SDK                                 | `mozilla-ai/cq`                               |
+| `nvidia/skills`, `trailofbits/skills`, `skillmatic-ai/awesome-agent-skills`, `buzhangsan/skill-manager`                           | Skill packaging/management ecosystem                   | `NVIDIA/SkillSpector`, `Anbeeld/PROMPTING.md` |
+| `cline/plugins`                                                                                                                   | Cline plugin surface                                   | `cline/cline`                                 |
+| `deepseek-ai/awesome-deepseek-agent`                                                                                              | Agent-harness index                                    | `deepseek-ai/deepseek-harness`                |
+| `chromedevtools/chrome-devtools-mcp`                                                                                              | Browser context as an MCP tool                         | MCP ecosystem                                 |
+| `datasette/datasette-agent-charts`, `datasette/datasette-agent-openai-imagegen`                                                   | datasette-agent plugin surfaces                        | `datasette/datasette-agent`                   |
 
 ### 8.3 Scope triage (harness / platform specificity)
 
@@ -624,7 +635,7 @@ harness; classify before spending a mirror slot.
   relevant to this survey's context-file question), `elidickinson/pi-claude-bridge`,
   `nvidia/skills`, `trailofbits/skills`, `skillmatic-ai/awesome-agent-skills`,
   `buzhangsan/skill-manager`; also the `tintinweb/pi-subagents` /
-  `hazat/pi-interactive-subagents` pi extensions (Claude-Code-*style*, but
+  `hazat/pi-interactive-subagents` pi extensions (Claude-Code-_style_, but
   cross-platform pi packages).
 - **`nousresearch/hermes-agent` — clone failed** on this host, but the repo is
   live (`git ls-remote` resolves); retry rather than treating it as missing.
@@ -634,7 +645,7 @@ harness; classify before spending a mirror slot.
   macOS/Linux or are Linux-first.
 
 **Belongs to the sandboxing survey, not here.** The same sweep surfaced a
-cluster of Claude/agent *sandbox* repos (`boxlite-ai/claudebox`,
+cluster of Claude/agent _sandbox_ repos (`boxlite-ai/claudebox`,
 `neko-kai/claude-code-sandbox`, `eugene1g/agent-safehouse`,
 `michaelneale/agent-seatbelt-sandbox`, `rivet-dev/sandbox-agent`,
 `lasso-security/claude-hooks`, `trailofbits/claude-code-devcontainer`,

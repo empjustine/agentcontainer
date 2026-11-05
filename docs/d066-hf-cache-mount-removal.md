@@ -43,7 +43,7 @@ in the runner. Three properties compounded:
    write access to the operator's cache — on the reference host 2.4 TB under
    `~/.cache/huggingface/hub` — so an in-container `hf` invocation could
    modify or delete host models that the llm-local-inference workload serves
-   from that same directory. A cache the sandbox only ever needed to *read*
+   from that same directory. A cache the sandbox only ever needed to _read_
    was mounted rw by default.
 
 The cache also rode along on the `z,U` relabel path
@@ -73,7 +73,7 @@ for the reference mirror. Here it stayed a hidden default.
    re-introducing a special case: argv is the mount manifest (docs/d056,
    docs/d060).
 4. **`llm-local-inference/run.sh` keeps its mount.** That workload's
-   `llama-server` commands are generated with paths *inside*
+   `llama-server` commands are generated with paths _inside_
    `/home/ubuntu/.cache/huggingface/hub`, so the cache is load-bearing
    there, and it is already mounted read-only (`workload_ro`). This record
    changes only the coding-agent sandbox.

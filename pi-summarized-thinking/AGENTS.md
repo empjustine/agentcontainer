@@ -77,7 +77,7 @@ package, like `../pi-synthetic/`. `index.ts` stays out of `tsconfig.json` for th
 same reason it is there: it imports `@earendil-works/pi-coding-agent`, which this
 repo does not vendor.
 
-The *why* is not written here: `../coding-agent/summarized-thinking.md` is the
+The _why_ is not written here: `../coding-agent/summarized-thinking.md` is the
 design note (a node with `parent: coding-agent`, where docs/d117 places a living
 doc for this unit), and this folder's `README.md` is a package README, not a
 graph node — the same split `../pi-synthetic/` uses with docs/d096.

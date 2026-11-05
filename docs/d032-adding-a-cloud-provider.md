@@ -18,30 +18,30 @@ Generator/verifier paths superseded by d037/d041/d071/d072 (mapping below).
 Worked example: **InferX** (`https://model.inferx.net/endpoints/v1`, key
 `$INFERX_API_KEY`), added as alternative-provider layer `model-017` and proxy
 route `/inferx`. This doc records what the addition actually touched — and,
-more usefully, the places it *surprisingly* did and did not need to touch, so
+more usefully, the places it _surprisingly_ did and did not need to touch, so
 the next provider is a checklist instead of an archaeology dig.
 
 > **Read the mapping first.** The worked example predates the by-agent merge
 > and the two rounds of folds, so its file names no longer resolve. It is
-> kept as the *record* of what the addition touched; for the current shape of
+> kept as the _record_ of what the addition touched; for the current shape of
 > each file, follow this table:
 >
-> | d032 names | today |
-> |---|---|
-> | `generate-cloud-providers.mjs`, `merge-models-json.mjs`, `generate-cloud-alternative-providers.mjs` | `coding-agent/generate-pi-coding-agent.mjs` (by-agent merge, docs/d037) |
-> | `generate-opencode.jsonc.mjs` | `coding-agent/generate-opencode.mjs` (docs/d072) |
-> | `coding-agent/hyper-facts.mjs`, `provider-facts.mjs`, `catwalk-facts.mjs` | `coding-agent/catalog-facts.mjs` (docs/d072) |
-> | `llm-reverse-proxy/generate-config.mjs` | `estige/generate.go` — the `generate` subcommand of the proxy binary (docs/d101/d102) |
-> | `peer-probe.mjs` | `coding-agent/route-probe.mjs` ("peer" retired, docs/d071) |
-> | `coding-agent/generate.sh` | unchanged (the node-run shim, docs/d041) |
-> | `lib/*` (every path into it) | `<unit>/lib/*` — each folder's own pruned copy (docs/d113) |
+> | d032 names                                                                                          | today                                                                                 |
+> | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+> | `generate-cloud-providers.mjs`, `merge-models-json.mjs`, `generate-cloud-alternative-providers.mjs` | `coding-agent/generate-pi-coding-agent.mjs` (by-agent merge, docs/d037)               |
+> | `generate-opencode.jsonc.mjs`                                                                       | `coding-agent/generate-opencode.mjs` (docs/d072)                                      |
+> | `coding-agent/hyper-facts.mjs`, `provider-facts.mjs`, `catwalk-facts.mjs`                           | `coding-agent/catalog-facts.mjs` (docs/d072)                                          |
+> | `llm-reverse-proxy/generate-config.mjs`                                                             | `estige/generate.go` — the `generate` subcommand of the proxy binary (docs/d101/d102) |
+> | `peer-probe.mjs`                                                                                    | `coding-agent/route-probe.mjs` ("peer" retired, docs/d071)                            |
+> | `coding-agent/generate.sh`                                                                          | unchanged (the node-run shim, docs/d041)                                              |
+> | `lib/*` (every path into it)                                                                        | `<unit>/lib/*` — each folder's own pruned copy (docs/d113)                            |
 
 ## The two sources of truth a new provider lives in
 
-| Source | Owns | Consumers |
-|---|---|---|
-| vendored models.dev catalog (`coding-agent/lib/models.dev.api.json`) | model lineup, capabilities, prices, `api` endpoint, `env` key name | generate-cloud-providers.mjs (client layer, one file per full `PROVIDER_SPECS` row) |
-| cloud provider fact table (`<unit>/lib/cloud-providers.mjs` — one copy per serving unit, docs/d113; a **frozen literal** in each `pi-*` folder, docs/d118) | provider id, label, `apiKeyEnv`, real `baseUrl` | generate-cloud-providers.mjs (pi-native subset, override-only rows), `generate-opencode.jsonc.mjs` (opencode subset), `coding-agent/catalog-facts.mjs` (`.hyper` only, docs/d039), every `pi-*` extension (its own row only) |
+| Source                                                                                                                                                     | Owns                                                               | Consumers                                                                                                                                                                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| vendored models.dev catalog (`coding-agent/lib/models.dev.api.json`)                                                                                       | model lineup, capabilities, prices, `api` endpoint, `env` key name | generate-cloud-providers.mjs (client layer, one file per full `PROVIDER_SPECS` row)                                                                                                                                          |
+| cloud provider fact table (`<unit>/lib/cloud-providers.mjs` — one copy per serving unit, docs/d113; a **frozen literal** in each `pi-*` folder, docs/d118) | provider id, label, `apiKeyEnv`, real `baseUrl`                    | generate-cloud-providers.mjs (pi-native subset, override-only rows), `generate-opencode.jsonc.mjs` (opencode subset), `coding-agent/catalog-facts.mjs` (`.hyper` only, docs/d039), every `pi-*` extension (its own row only) |
 
 A provider pi does NOT ship natively (d022 semantics: the alternative layer is
 the authoritative full block) therefore needs **one row in each source** plus
@@ -94,7 +94,7 @@ lineup (worked example: verb oo).
 key env) from the **catalog**, not from the fact table. The
 `baseUrl`/`apiKeyEnv` pair therefore exists in **both** files for every
 OpenAI-compatible provider, kept in sync by convention only. The only drift
-check in the repo compares the fact table against the *deployed proxy config*
+check in the repo compares the fact table against the _deployed proxy config_
 (`generate-config.mjs`'s summary) — never fact table vs catalog. Today they
 agree for all seven catalog-syncable rows (openrouter, opencode, opencode-go,
 cline-pass, hyper, inferx, nvidia); a catalog `api` change would have to be
@@ -108,7 +108,7 @@ Two fact-table rows have **no** catalog `api` to drift from: `mistral` and
 `google` are SDK-native in models.dev (`npm: "@ai-sdk/mistral"`,
 `@ai-sdk/google`) — the catalog deliberately omits `api` because the SDK
 carries the endpoint, and both speak non-OpenAI wire dialects. The fact table
-is the *only* place their base URLs exist. Related: the catalog's `env` for
+is the _only_ place their base URLs exist. Related: the catalog's `env` for
 google lists three names (`GOOGLE_API_KEY`,
 `GOOGLE_GENERATIVE_AI_API_KEY`, `GEMINI_API_KEY`); the fact table picks
 `GEMINI_API_KEY` because that is what `coding-agent/run.sh` forwards. Any
@@ -150,7 +150,7 @@ This was initially missed for inferx; fixed by adding it to the loop.
 models.dev `reasoning_options` can be `{"type": "toggle"}` (no effort enum) —
 InferX's reasoning models are all toggle-shaped. The effort-enum machinery
 (`EFFORT_TO_PI`, `buildThinkingLevelMap`, the hyper ON_OFF fallback) then
-correctly produces *nothing*: no `thinkingLevelMap`, no compat overrides, pi's
+correctly produces _nothing_: no `thinkingLevelMap`, no compat overrides, pi's
 default on/off thinking handling covers the model. Do not assume a new
 provider needs a compat block or a thinking map — the cline-pass
 (`supportsDeveloperRole: false`) and hyper (per-model wire-compat mirror +

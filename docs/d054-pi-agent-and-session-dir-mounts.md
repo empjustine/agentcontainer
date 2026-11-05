@@ -29,7 +29,7 @@ That had two costs:
   copy under `~/workspace` whose only durable content was session JSONL; the
   copied config was throwaway. The generator's install target
   (`PI_CODING_AGENT_DIR`) and the dir pi actually read were deliberately the
-  same path by construction, but the runner then copied a *second* snapshot
+  same path by construction, but the runner then copied a _second_ snapshot
   into a different dir — a second thing to keep in sync (the class of bug the
   `AGENT_DIR` alias retirement in `generate.mjs` removed).
 - **Two kinds of state shared one directory.** Durable config (settings,
@@ -58,13 +58,13 @@ independent of it. The runner was ignoring the session mechanism.
    `PI_CODING_AGENT_SESSION_DIR` set must not silently point the mount at the
    host's own store and merge the two. Sessions are **per-run audit state**
    (docs/d026: host-retained, not reused across runs), kept out of the shared
-   config dir so their churn cannot rewrite it. pi's *newer* session handling
+   config dir so their churn cannot rewrite it. pi's _newer_ session handling
    may write sessions directly into this dir rather than the old nested
    `agent/sessions` path — the mount is the explicit sink either way, so we do
    not depend on pi's internal nesting.
 3. **A non-empty `auth.json` is a hard abort.** pi resolves the `"$VAR"`
    api-key references in `models.json` from the forwarded environment, so a
-   *populated* credential file is dead state. Since the agent dir is now
+   _populated_ credential file is dead state. Since the agent dir is now
    mounted RW, shipping it into the sandbox is exactly what docs/d052 removed.
    pi itself materialises an **empty** store (`{}`) whenever it starts (verified
    against pi 0.86.0: a bare `pi --list-models` against a fresh agent dir writes
@@ -76,7 +76,7 @@ independent of it. The runner was ignoring the session mechanism.
    `~/workspace`.
 5. **Termux is unchanged.** The Termux branch `exec`s pi against
    `PI_CODING_AGENT_DIR` directly and keeps pi's default session store
-   (`<agentDir>/sessions`). The split exists to give the *sandbox* a
+   (`<agentDir>/sessions`). The split exists to give the _sandbox_ a
    single-purpose session mount; Termux has no mount boundary to split.
 
 ## Invariants and consequences
@@ -87,7 +87,7 @@ independent of it. The runner was ignoring the session mechanism.
 - **d052's staging invariant is mechanically superseded for pi.** d052 says
   `run.sh` stages exactly `settings.json`, `models.json`, `opencode.jsonc`;
   pi config is now mounted, not staged, so `run.sh` stages neither pi config
-  file (it does stage the per-run session dir). d052's *decision* — never
+  file (it does stage the per-run session dir). d052's _decision_ — never
   stage a credentials file — is not just untouched but now enforced by the
   `auth.json` abort.
 - **Host agent state is exposed to the sandbox.** `~/.pi/agent` also carries

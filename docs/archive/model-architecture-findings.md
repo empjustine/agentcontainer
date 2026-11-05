@@ -9,8 +9,6 @@ title: "Model Architecture Findings"
 
 # Model Architecture Findings
 
-
-
 ---
 
 ## Model Selection Matrix
@@ -24,16 +22,16 @@ For model selection, the four critical numbers are:
 
 ### All Models
 
-| Model | Arch | Native Ctx | Active Params | Total Params | KV Cache / token (fp16) | KV @ full ctx | Vision |
-|---|---|---|---|---|---|---|---|
-| **Qwen3.6-35B-A3B** | qwen35moe | 262K | **~3B** | ~35B | 20 KB (hybrid¹) | **5.4 GB** | ✅ |
-| **Qwen3.6-27B** | qwen35 | 262K | **~27B** (dense) | ~27B | 64 KB (hybrid¹) | **17.2 GB** | ✅ |
-| **GLM-4.7-Flash** | deepseek2 (MLA) | 203K | **~2.6B** | ~4.7B | 53 KB (MLA²) | **10.7 GB** | ❌ |
-| **Gemma-4-26B-A4B** | gemma4 | 262K | **~4B** | ~26B | 120 KB | **31 GB** | ✅ |
-| **Gemma-4-12B** | gemma4_unified | 262K | **~?B** | ~12B | 192 KB | **50 GB** | ✅ |
-| **Gemma-4-31B** | gemma4 | 262K | **~?B** | ~31B | 480 KB³ | **126 GB** | ✅ |
-| **Devstral-24B** | mistral3 | 393K | **~24B** (dense) | ~24B | 80 KB | **31 GB** | ❌ |
-| **Laguna-XS-2.1** | laguna | 262K | **~2.1B** | ~24.5B | 80 KB | **21 GB** | ❌ |
+| Model               | Arch            | Native Ctx | Active Params    | Total Params | KV Cache / token (fp16) | KV @ full ctx | Vision |
+| ------------------- | --------------- | ---------- | ---------------- | ------------ | ----------------------- | ------------- | ------ |
+| **Qwen3.6-35B-A3B** | qwen35moe       | 262K       | **~3B**          | ~35B         | 20 KB (hybrid¹)         | **5.4 GB**    | ✅     |
+| **Qwen3.6-27B**     | qwen35          | 262K       | **~27B** (dense) | ~27B         | 64 KB (hybrid¹)         | **17.2 GB**   | ✅     |
+| **GLM-4.7-Flash**   | deepseek2 (MLA) | 203K       | **~2.6B**        | ~4.7B        | 53 KB (MLA²)            | **10.7 GB**   | ❌     |
+| **Gemma-4-26B-A4B** | gemma4          | 262K       | **~4B**          | ~26B         | 120 KB                  | **31 GB**     | ✅     |
+| **Gemma-4-12B**     | gemma4_unified  | 262K       | **~?B**          | ~12B         | 192 KB                  | **50 GB**     | ✅     |
+| **Gemma-4-31B**     | gemma4          | 262K       | **~?B**          | ~31B         | 480 KB³                 | **126 GB**    | ✅     |
+| **Devstral-24B**    | mistral3        | 393K       | **~24B** (dense) | ~24B         | 80 KB                   | **31 GB**     | ❌     |
+| **Laguna-XS-2.1**   | laguna          | 262K       | **~2.1B**        | ~24.5B       | 80 KB                   | **21 GB**     | ❌     |
 
 > **Footnotes:** ① **Hybrid attention**: Qwen3.6 models use `full_attention_interval=4` — only 1/4 of layers have KV cache (10/40 for 35B, 16/64 for 27B). The other 3/4 are recurrent/linear. ② **MLA**: GLM-4.7-Flash uses DeepSeek2-style MLA with `kv_lora_rank=512`. The KV cache is compressed — only K is stored (no separate V). Dimension = kv_lora_rank + rope.dim_count = 512 + 64. ③ **Gemma-4-31B**: Appears to use ISWA (interleaved sliding window attention), which may reduce effective KV cache. Needs GGUF verification.
 
@@ -43,7 +41,7 @@ For model selection, the four critical numbers are:
 
 **MoE models dominate**: 6 of 8 models are MoE. Only Qwen3.6-27B and Devstral-24B are dense.
 
-**KV cache is the real bottleneck**: Even with aggressive quantization (q4_1 = 0.5 B/value), filling the full context window requires GB of RAM. For example, Gemma-4-31B at full 262K context needs ~126 GB *in fp16* — with q4_1 that's still ~63 GB just for KV cache.
+**KV cache is the real bottleneck**: Even with aggressive quantization (q4_1 = 0.5 B/value), filling the full context window requires GB of RAM. For example, Gemma-4-31B at full 262K context needs ~126 GB _in fp16_ — with q4_1 that's still ~63 GB just for KV cache.
 
 **MLA dramatically reduces KV cache**: GLM-4.7-Flash uses DeepSeek2-style Multi-head Latent Attention with `kv_lora_rank=512`, compressing KV by ~20× vs a standard 20-head model. Its 53 KB/token KV cache is the smallest per-token among visionless models. Verified via GGUF header: only K is stored (no separate V), dimension = kv_lora_rank + rope.dim.
 
@@ -54,6 +52,7 @@ For model selection, the four critical numbers are:
 ## Architecture Deep Dive
 
 ### Qwen3.6-35B-A3B (`qwen3_5_moe`)
+
 - **MoE**: 256 experts, 8 active per token
 - **Layers**: 40, **Hidden**: 2048, **Head dim**: 256
 - **Attention**: 16 heads, 2 KV heads (8:1 GQA)
@@ -63,6 +62,7 @@ For model selection, the four critical numbers are:
 **Hybrid attention**: `full_attention_interval=4` → only 10/40 layers have KV cache. This 4× reduction is critical for context scaling — at full 262K context, KV cache is only 5.4 GB (fp16) instead of 21.5 GB.
 
 ### Qwen3.6-27B (`qwen35` dense)
+
 - **MoE**: No (dense)
 - **Layers**: 64, **Hidden**: 5120, **Head dim**: 256
 - **Attention**: 24 heads, 4 KV heads (6:1 GQA)
@@ -72,6 +72,7 @@ For model selection, the four critical numbers are:
 **Hybrid attention**: Same `full_attention_interval=4` — only 16/64 layers have KV cache. At full 262K context: 17.2 GB (fp16) instead of 68.7 GB.
 
 ### GLM-4.7-Flash (`deepseek2`)
+
 - **MoE**: 64 experts, **4 active** per token, 1 shared expert
 - **Layers**: 47 blocks + 1 leading dense block
 - **Hidden**: 2048, **Expert FF**: 1536, **Dense FF**: 10240
@@ -80,6 +81,7 @@ For model selection, the four critical numbers are:
 - **Note**: The most KV-cache-efficient model in the list. MLA means: (a) no separate V cache (absorbed into the latent), (b) dimension = kv_lora_rank + rope.dim_count. At 47 layers × 576 dims × 2 bytes = 53 KB/token in fp16. This is ~6× smaller than a comparable 20-head standard model. Native context is 202,752 tokens (slightly below the 256K ceiling).
 
 ### Gemma-4-26B-A4B (`gemma4`)
+
 - **MoE**: 128 experts (active count unknown from available data)
 - **Layers**: 30, **Hidden**: 2816, **Head dim**: 256
 - **Attention**: 16 heads, 8 KV heads (2:1 GQA)
@@ -87,6 +89,7 @@ For model selection, the four critical numbers are:
 - **Note**: Relatively shallow (30 layers) but each layer has 128 experts. The `A4B` suggests ~4B active.
 
 ### Gemma-4-12B (`gemma4_unified`)
+
 - **MoE**: Yes (exact expert count needs GGUF header check)
 - **Layers**: 48, **Hidden**: 3840, **Head dim**: 256
 - **Attention**: 16 heads, 8 KV heads
@@ -94,6 +97,7 @@ For model selection, the four critical numbers are:
 - **Note**: Unified vision-language — weights are shared between vision and text.
 
 ### Gemma-4-31B (`gemma4`)
+
 - **MoE**: Yes (exact expert count needs GGUF header check)
 - **Layers**: 60, **Hidden**: 5376, **Head dim**: 256
 - **Attention**: 32 heads, 16 KV heads
@@ -101,6 +105,7 @@ For model selection, the four critical numbers are:
 - **Note**: Largest memory footprint for KV cache: 480 KB/token in fp16. At 262K context, that's 126 GB just for cache.
 
 ### Devstral-Small-2-24B (`mistral3`)
+
 - **MoE**: No — **dense** model
 - **Layers**: 40, **Hidden**: 5120, **FF**: 32768, **Head dim**: 128
 - **Attention**: 32 heads, 8 KV heads (4:1 GQA)
@@ -108,6 +113,7 @@ For model selection, the four critical numbers are:
 - **Note**: Despite "Small-2-24B" name suggesting MoE, it's dense. Largest native context (393K).
 
 ### Laguna-XS-2.1 (`laguna`)
+
 - **MoE**: 256 experts, 8 active per token
 - **Layers**: 40, **Hidden**: 2048, **Head dim**: 128
 - **Attention**: 48 heads, 8 KV heads (6:1 GQA)
@@ -118,13 +124,12 @@ For model selection, the four critical numbers are:
 ## GGUF Header Parser
 
 See `gguf-metadata-parser.js` for a reusable Node.js script that:
+
 - Fetches GGUF headers via HTTP Range (first 100KB)
 - Parses all metadata per the v3 spec
 - Extracts architecture-relevant fields
 - Estimates parameter counts and KV cache memory
 - Outputs JSON
-
-
 
 ---
 
@@ -149,6 +154,7 @@ See `gguf-metadata-parser.js` for a reusable Node.js script that:
    - `{arch}.rope.scaling.*` — context extension method
 
 Alternatively, for **non-gated** models, query the HuggingFace config.json:
+
 ```bash
 curl -s "https://huggingface.co/{HF_ID}/raw/main/config.json" | jq '.'
 ```

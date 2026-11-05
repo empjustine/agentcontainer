@@ -27,7 +27,7 @@ removed now, preemptively, while their behavior is still a choice rather than
 an incident.
 
 The generators were built by [d033](d033-generator-cascade.md) as a
-*direct-first cascade*: probe the provider's real endpoint; reachable ⇒ keep
+_direct-first cascade_: probe the provider's real endpoint; reachable ⇒ keep
 (or omit in opencode's case) the built-in DIRECT routing; unreachable ⇒
 reroute through the peer. Every layer of that design re-introduces a direct
 URL the moment conditions change:
@@ -101,8 +101,8 @@ cascade branch now EMITS:
   emits the reroute with `models: []` plus a loud warn instead of returning
   without an entry;
 - every full row writes its layer file each run (empty lineup ⇒ `models: []`
-  + warn, never "no layer written"), so a stale committed layer with a
-  direct URL cannot survive a successful regeneration;
+  - warn, never "no layer written"), so a stale committed layer with a
+    direct URL cannot survive a successful regeneration;
 - the opencode generator emits `opencode`, `opencode-go` and `openrouter`
   unconditionally; its lineup cascade is route listing → models.dev catalog
   slice (filtered by the same access filters + the [d049](d049-input-modality-allowlists.md)

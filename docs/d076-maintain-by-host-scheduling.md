@@ -35,7 +35,7 @@ real farm:
   job starts (an upstream-URL probe phase — the work farm's path layout
   carries no host segment, so the URL is the only honest source of "host"). A
   group is never split across workers: one worker owns one host at a time, so
-  *a host never has two jobs in flight*, for any `--jobs N`. Mirrors with no
+  _a host never has two jobs in flight_, for any `--jobs N`. Mirrors with no
   upstream (or a URL carrying no host) share one `(local)` bucket rather
   than each becoming its own unbounded parallel lane.
 - `--jobs N` now caps how many HOSTS work at once; the default is every
@@ -45,7 +45,7 @@ real farm:
   (and `0`) still applies to every fetch, unset gives every host **1 s** of
   idle between its fetches, and a software-forge host gets **30 s** — halved
   from the original 60 s now that the scheduler itself rules out same-host
-  overlap, so the gap only has to bound the request *rate* (that tenant
+  overlap, so the gap only has to bound the request _rate_ (that tenant
   rate-limits even a fully serial sweep — d044). A single global gate would
   now serialize different hosts against each other, which pacing never needed
   to do.

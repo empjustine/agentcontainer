@@ -20,12 +20,12 @@ name, on exactly one side.
 `https` and `http`.** The scheme has been a canonical form since d077: each
 carrier rewrites it internally (`openPOST` requires `wss` and rewrites to
 `https`; `openExchange` maps `ws→http`, `wss→https`; `wsDial` speaks
-`ws`/`wss` directly). So the config *works* for modes C/D/E — but only if the
+`ws`/`wss` directly). So the config _works_ for modes C/D/E — but only if the
 operator writes a deliberate fiction: an h2-only or h1-only endpoint with no
 WebSocket support at all must still be configured `wss://`, and the README
 and `run.sh` gate teach that fiction as the whole story. Worse, the fiction's
 one real inconsistency is caught lazily: mode C cannot run without a TLS leg,
-so `ws://` + `-modes c` fails per-CONNECT with an *empty*
+so `ws://` + `-modes c` fails per-CONNECT with an _empty_
 `no offered mode survived (fail-closed VPN-R26):` — a config error routed
 around like censorship instead of refused at startup (NFR-2).
 
@@ -48,11 +48,11 @@ migration a two-step vault edit; the migration is done.
 `http→ws`, `https→wss`. Everything downstream (`wsDial`, `alpnNegotiate`,
 `openPOST`, `openExchange`, `validate`, `/healthz`, the startup log) keeps
 speaking the canonical two and is untouched. One spelling per fact lives
-*inside* the binary; the honest spelling lives at the boundary the operator
+_inside_ the binary; the honest spelling lives at the boundary the operator
 crosses.
 
 This is not d071's alias violation: d071's law is one spelling per env
-**name**. A URL scheme is part of a standardized *value* space, and the
+**name**. A URL scheme is part of a standardized _value_ space, and the
 normalization point is exactly one function — there is still precisely one
 internal spelling, and no second env var, no per-mode URL fields, no carrier
 change.

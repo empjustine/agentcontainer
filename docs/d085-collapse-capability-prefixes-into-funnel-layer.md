@@ -29,7 +29,7 @@ against Tailscale's code:
    reachability.
 
 The designed construction did work around fact 2 — VPN-R44 demanded a
-*second* path segment beyond the mount — but the two-secret shape bred
+_second_ path segment beyond the mount — but the two-secret shape bred
 exactly the confusion above, and its security marginality is thin (§3).
 
 ## 2. The decision
@@ -59,7 +59,7 @@ backend. The proxy sees none of it and needs none of it.
 ## 3. Why one layer is enough — the calculus that changed
 
 d073's options list explicitly rejected "reusing the Funnel id as the tunnel
-prefix". That rejection stands for *reusing the id* (it is shared by all
+prefix". That rejection stands for _reusing the id_ (it is shared by all
 clients and semi-credential in edge logs, d070) — but the two-layer design's
 claimed second factor does not survive the deployment model:
 
@@ -79,13 +79,13 @@ gate the rest, and tailnet ACLs remain available to the operator.
 
 ## 4. What survives, what is reversed
 
-| Unchanged | Reversed |
-|---|---|
-| VPN-R31 bearer, VPN-R32 env-only, d078 principal set | VPN-R44's `${prefix}` capability-key clause |
-| VPN-R34 camouflage 404 (a probe learns nothing) | the `/<prefix>/…` namespace construction |
-| VPN-R42 namespace dispatch — now on the fixed reserved path | URI redaction + the lifecycle `tunnel=` digest |
-| d084's tri-state `tunnel.enabled` | d084's arm env (`VPN_TUNNEL_PREFIX` → operator keyset) |
-| egress policy, demotion, d081's h1.1-POST plan | the authenticated relay's deferred `${prefix}` namespace — it rides a Funnel mount |
+| Unchanged                                                   | Reversed                                                                           |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| VPN-R31 bearer, VPN-R32 env-only, d078 principal set        | VPN-R44's `${prefix}` capability-key clause                                        |
+| VPN-R34 camouflage 404 (a probe learns nothing)             | the `/<prefix>/…` namespace construction                                           |
+| VPN-R42 namespace dispatch — now on the fixed reserved path | URI redaction + the lifecycle `tunnel=` digest                                     |
+| d084's tri-state `tunnel.enabled`                           | d084's arm env (`VPN_TUNNEL_PREFIX` → operator keyset)                             |
+| egress policy, demotion, d081's h1.1-POST plan              | the authenticated relay's deferred `${prefix}` namespace — it rides a Funnel mount |
 
 ## 5. Consequences
 

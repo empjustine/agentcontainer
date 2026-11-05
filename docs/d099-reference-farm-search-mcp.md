@@ -37,22 +37,22 @@ verbs** — `upsert_repo` and `compact_repo`, serialized by one shared mutex
 "no writes outside the two verbs, never more than one mutation in flight".
 `git/non-bare-issues.md`
 owns why the farm is bare mirrors,
-[d043](d043-cross-repo-reference-search.md) owns the search *engines*
-(Zoekt lexical, planned embeddings); this record owns the *tool surface* an
+[d043](d043-cross-repo-reference-search.md) owns the search _engines_
+(Zoekt lexical, planned embeddings); this record owns the _tool surface_ an
 agent actually calls.
 
 A precondition landed alongside this plan: the farm is now **uniformly bare
 mirrors**. The four legacy non-bare checkouts (`github/webrecorder/*`, the
 `-github-clone.sh` era layout) were re-acquired with `./git/-forge-mirror.sh`
 into `github.com/webrecorder/*.git` and deleted, so discovery never meets a
-working tree again. (The old clones remembered a handful of upstream-*deleted*
+working tree again. (The old clones remembered a handful of upstream-_deleted_
 branches — merged PR, dependabot and a rewritten `gh-pages` — which the
 mirror prunes by design; nothing un-pushed was lost.)
 
 ## Problem
 
-The agent's recurring research question is *"where is X implemented / named /
-shaped, anywhere in my references?"* — over ~1,174 bare mirrors spanning a
+The agent's recurring research question is _"where is X implemented / named /
+shaped, anywhere in my references?"_ — over ~1,174 bare mirrors spanning a
 dozen forges (`github.com`, `codeberg.org`, `git.sr.ht`, GitLab subgroups,
 Savannah, …), offline. None of the available answers is acceptable:
 
@@ -62,7 +62,7 @@ Savannah, …), offline. None of the available answers is acceptable:
 - **Live `git grep` farm-wide does not finish**: d043 measured a
   16-way-parallel all-ref-tip grep not completing in 300 s against this farm
   (intellij-community alone is 6.2 GB). Single-repo greps are fast (0.4 s);
-  the *scope* is the problem, not the tool.
+  the _scope_ is the problem, not the tool.
 - **Raw Zoekt HTTP is not an agent API**: its JSON is index-shaped, uncapped,
   and only covers repos somebody bothered to index (indexing is opt-in by
   design — d043's scope ladder). An LLM hand-building query strings against
@@ -107,15 +107,15 @@ Seven read tools — read-only and capped — plus the maintenance surface
 stripped — `github.com/webrecorder/browsertrix` — the namespace
 `-forge-mirror.sh` already keys the farm by.
 
-| tool | answers | backed by |
-|---|---|---|
-| `list_repos(filter?)` | what exists: repo id, upstream URL (`remote.origin.url`), default branch, ref count | farm scan (`git-lib.mjs` discovery) + process-lifetime cache |
-| `list_refs(repo)` | which branches/tags to pin | `git for-each-ref` |
-| `search_code(query, repos?, path_glob?, fixed_string?, max_matches?)` | where is this text/regex | `git grep` (scoped) → Zoekt (wide, indexed) |
-| `search_paths(glob, repos?)` | which files exist by name | `git ls-tree -r` |
-| `read_file(repo, rev, path, offset?, limit?)` | what the code says | `git cat-file` |
-| `search_history(query, repos?, path_glob?, since?)` | when/where did this change | `git log -S/-G` (phase 3) |
-| `diff(repo, rev_a, rev_b, path_glob?)` | what changed between | `git diff` (phase 3) |
+| tool                                                                  | answers                                                                             | backed by                                                    |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `list_repos(filter?)`                                                 | what exists: repo id, upstream URL (`remote.origin.url`), default branch, ref count | farm scan (`git-lib.mjs` discovery) + process-lifetime cache |
+| `list_refs(repo)`                                                     | which branches/tags to pin                                                          | `git for-each-ref`                                           |
+| `search_code(query, repos?, path_glob?, fixed_string?, max_matches?)` | where is this text/regex                                                            | `git grep` (scoped) → Zoekt (wide, indexed)                  |
+| `search_paths(glob, repos?)`                                          | which files exist by name                                                           | `git ls-tree -r`                                             |
+| `read_file(repo, rev, path, offset?, limit?)`                         | what the code says                                                                  | `git cat-file`                                               |
+| `search_history(query, repos?, path_glob?, since?)`                   | when/where did this change                                                          | `git log -S/-G` (phase 3)                                    |
+| `diff(repo, rev_a, rev_b, path_glob?)`                                | what changed between                                                                | `git diff` (phase 3)                                         |
 
 **Result contract** — what makes the output agent-shaped rather than
 index-shaped:
@@ -138,11 +138,11 @@ mechanics stay in one home each — the scripts' URL validation, cleanup
 traps, fetch pacing and d089's deep sequence are not worth a second
 implementation that can drift:
 
-| tool | runs | notes |
-|---|---|---|
-| `upsert_repo(url)` | `./git/-forge-mirror.sh <url>` | add OR align: a new mirror is cloned, an existing one gets `remote update --prune` — the script is already idempotent, https-only, path-safe and non-interactive (d075) |
-| `compact_repo(repo, mode?)` | `./git/maintain.sh --only '<repo>.git' --no-fetch` + `--deep-optimize` when mode is `deep` | exactly one repo per call; `optimize` = repack `-adb --write-bitmap-index` + commit-graph write, `deep` = d089's `gc --aggressive` then the optimize re-run |
-| `maintenance_status()` | — | observability for the queue: what holds the mutex, since when, what is queued behind it |
+| tool                        | runs                                                                                       | notes                                                                                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `upsert_repo(url)`          | `./git/-forge-mirror.sh <url>`                                                             | add OR align: a new mirror is cloned, an existing one gets `remote update --prune` — the script is already idempotent, https-only, path-safe and non-interactive (d075) |
+| `compact_repo(repo, mode?)` | `./git/maintain.sh --only '<repo>.git' --no-fetch` + `--deep-optimize` when mode is `deep` | exactly one repo per call; `optimize` = repack `-adb --write-bitmap-index` + commit-graph write, `deep` = d089's `gc --aggressive` then the optimize re-run             |
+| `maintenance_status()`      | —                                                                                          | observability for the queue: what holds the mutex, since when, what is queued behind it                                                                                 |
 
 Three properties carry the weight:
 
@@ -166,7 +166,7 @@ Three properties carry the weight:
   rate-limit lesson, d076.
 
 Mutation calls deliberately diverge from the read deadline (the safety posture): a deep
-repack of a 6 GB mirror is hours-scale *by nature*, so they carry a separate
+repack of a 6 GB mirror is hours-scale _by nature_, so they carry a separate
 generous budget and stay cancellable — killing the child process group is
 safe because git's mutation primitives are crash-safe: a killed repack or
 fetch leaves the mirror valid and the next run redoes the work.
@@ -191,9 +191,9 @@ The tool names are stable; which engine answers is a scope decision:
 "Safe" means: **nothing executed, nothing sent except the one sanctioned
 fetch, no write outside two serialized verbs, bounded on every axis.** Each
 rule below exists because the opposite has a concrete failure mode against a
-farm of *mirrored third-party code*.
+farm of _mirrored third-party code_.
 
-**Read-only *search*; mutation is exactly two verbs.** The argv builder
+**Read-only _search_; mutation is exactly two verbs.** The argv builder
 allowlists read-only plumbing verbs — `grep`, `ls-tree`, `cat-file`, `log`,
 `diff`, `for-each-ref`, `rev-parse` — for everything the seven read tools
 touch. The mutating verbs (`clone`, `remote update`, `repack`, `gc`,
@@ -225,7 +225,7 @@ run code named inside the data it searches.
 `git` must not wedge the server); a fixed worker pool over mirrors (fan-out
 is never one process per repo); per-repo and global match caps; byte caps on
 reads; a concurrent-call limit per client. Regex DoS is the one axis a cap
-cannot catch *after* the fact, hence fixed-strings as the default and
+cannot catch _after_ the fact, hence fixed-strings as the default and
 vetted-regex as the opt-in. The one deliberate exception is the mutation
 budget (the maintenance surface): bounded but generous, cancellable, and never concurrent.
 

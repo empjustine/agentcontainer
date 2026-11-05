@@ -19,7 +19,7 @@ HF manifests and model cards. Nothing in the repo could tell a maintainer
 whether those committed bytes were still what upstream serves.
 
 The offline sweep could not, and could not be taught to: a stale cache is
-*valid*. It parses, its shape is right, its unit tests pass, biome and knip are
+_valid_. It parses, its shape is right, its unit tests pass, biome and knip are
 happy, and `generate` (not `--check`) would happily rewrite it — the artifact is
 only wrong relative to a listing nobody looked at. So staleness was caught by
 review, or by a user, or not at all. It was in fact caught by not at all: the
@@ -35,7 +35,7 @@ network, because the claim it checks is about the outside world.
 
 Each unit answers with its own contract; the script knows no payload formats:
 
-- **pi-* extensions**: `./npm-run.sh <unit> generate --check`. The generator re-reads
+- _*pi-* extensions_*: `./npm-run.sh <unit> generate --check`. The generator re-reads
   its listing and exits nonzero when the committed artifacts no longer match.
 - **llm-local-inference**: `fetch_hf_manifests.py --offline`, an offline audit
   that every configured `--model` still resolves inside the cached manifest
@@ -52,7 +52,7 @@ when upstream is unreachable — the tailnet API, an auth-gated listing, the
 opencode docs mirror — so byte-equality against the committed snapshot is a
 property of the host, not of the data. A check that fails on every box without
 a tailnet is not a freshness check. Its offline guarantees stay in
-`./check-types.sh` and `coding-agent/tests/`, and a *refresh* stays a deliberate
+`./check-types.sh` and `coding-agent/tests/`, and a _refresh_ stays a deliberate
 maintainer act.
 
 `./lint.sh` and `./test.sh` remain offline by contract: linting and testing must
@@ -67,7 +67,7 @@ question that cannot.
   discovers `pi-*/package.json` `generate` scripts rather than listing units.
 - Skipping is loud (a `warn` line with the reason) and counted in the summary,
   so "passed 4, skipped 1" cannot be mistaken for "checked everything".
-- A committed cache that is *regenerable* is still committed (d023): the gate
+- A committed cache that is _regenerable_ is still committed (d023): the gate
   checks the copy, it never rewrites it. `--check` is where a generator's write
   path stays off.
 
@@ -79,8 +79,8 @@ question that cannot.
 - **Run plain `generate` and `git diff --exit-code`.** Destroys uncommitted work
   in the same paths and makes the gate's own failure mode a dirty tree.
 - **Compare against a recorded hash of the upstream listing.** Hashes of a
-  moving listing pin the wrong thing (d086's short-circuit hashes the *rendered
-  artifact*); a hash of upstream bytes would fail on every cosmetic upstream
+  moving listing pin the wrong thing (d086's short-circuit hashes the _rendered
+  artifact_); a hash of upstream bytes would fail on every cosmetic upstream
   change that never reaches a committed file.
 - **Treat the missing `VERBOO_API_KEY` as a failure.** See above — the gate
   would be permanently red on every unvaulted host.

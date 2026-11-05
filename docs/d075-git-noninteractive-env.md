@@ -23,7 +23,7 @@ tags: ["git", "references", "mirrors", "credentials", "ssh", "prompts", "fail-fa
 
 ## Problem
 
-A reference-farm run is a *fleet* operation: one sweep touches hundreds of
+A reference-farm run is a _fleet_ operation: one sweep touches hundreds of
 mirrors. Git's failure mode for "I have no credential" or "that repo no longer
 exists" is not an error — it is an **interactive prompt** on the operator's
 terminal (`Username for 'https://…':`, an ssh host-key `yes/no?`, an ssh
@@ -35,11 +35,11 @@ instead of becoming that repo's logged fetch failure.
 Measured on this repo (pseudo-TTY, idle stdin, missing repo so the forge
 answers 401 — `git ls-remote` as a stand-in for any fetch/clone):
 
-| env | result |
-|-----|--------|
-| none | **hangs** at `Username for 'https://github.com':` until killed |
-| `GIT_ASKPASS=/usr/bin/false` only | **still hangs** — git reports the dead askpass, then falls back to its *terminal* prompt anyway |
-| `GIT_TERMINAL_PROMPT=0` | instant fatal: `could not read Username … terminal prompts disabled` |
+| env                               | result                                                                                          |
+| --------------------------------- | ----------------------------------------------------------------------------------------------- |
+| none                              | **hangs** at `Username for 'https://github.com':` until killed                                  |
+| `GIT_ASKPASS=/usr/bin/false` only | **still hangs** — git reports the dead askpass, then falls back to its _terminal_ prompt anyway |
+| `GIT_TERMINAL_PROMPT=0`           | instant fatal: `could not read Username … terminal prompts disabled`                            |
 
 Two consequences shaped the decision:
 
@@ -47,7 +47,7 @@ Two consequences shaped the decision:
    Askpass only closes one channel (the `GIT_ASKPASS`/ `SSH_ASKPASS` helper);
    the terminal fallback behind it stays open.
 2. **Channels are per-transport.** `GIT_TERMINAL_PROMPT` governs git's own
-   https credential prompt *only*. ssh prompts (host key confirmation, key
+   https credential prompt _only_. ssh prompts (host key confirmation, key
    passphrase, keyboard-interactive) are opened by ssh directly on the tty —
    `SSH_ASKPASS` is consulted only when there is no tty — so the ssh guard is
    `BatchMode=yes`. Git Credential Manager's GUI dialog (the
@@ -61,7 +61,7 @@ network git through `git-lib.mjs`'s `git()` — `maintain.sh`/`maintain.ps1`,
 `migrate.sh` (`--redownload`/shallow), `-software-forge-mirror.sh` — had
 no guard at all.
 
-Rate limits are deliberately *not* part of this problem: a 403/429 is text,
+Rate limits are deliberately _not_ part of this problem: a 403/429 is text,
 not a prompt. `-vbs-mirror-all.sh` already retries/backoffs/cools down
 (d044), and `maintain-mirrors.mjs` logs a failed fetch and moves on. The
 interactive hang was the only failure mode that could stop the entire run.
@@ -88,19 +88,19 @@ Node choke point and the three shell acquisition sweeps:
 
 The contract:
 
-| variable | closes |
-|----------|--------|
-| `GIT_TERMINAL_PROMPT=0` | git's terminal credential prompt (missing credential, deleted repo → 401) — **the load-bearing entry** |
-| `GIT_ASKPASS=/usr/bin/false` | the askpass channel (a GUI askpass helper configured via `core.askPass`/env) |
-| `SSH_ASKPASS=/usr/bin/false` | ssh's askpass channel where ssh has no tty (sweeps run from cron/CI) |
-| `GCM_INTERACTIVE=Never` | Git Credential Manager's GUI dialog on Windows (d062) |
-| `GIT_SSH_COMMAND=${GIT_SSH_COMMAND:-ssh -oBatchMode=yes}` | every ssh interactive prompt — host key confirmation, key passphrase, keyboard-interactive |
+| variable                                                  | closes                                                                                                 |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `GIT_TERMINAL_PROMPT=0`                                   | git's terminal credential prompt (missing credential, deleted repo → 401) — **the load-bearing entry** |
+| `GIT_ASKPASS=/usr/bin/false`                              | the askpass channel (a GUI askpass helper configured via `core.askPass`/env)                           |
+| `SSH_ASKPASS=/usr/bin/false`                              | ssh's askpass channel where ssh has no tty (sweeps run from cron/CI)                                   |
+| `GCM_INTERACTIVE=Never`                                   | Git Credential Manager's GUI dialog on Windows (d062)                                                  |
+| `GIT_SSH_COMMAND=${GIT_SSH_COMMAND:-ssh -oBatchMode=yes}` | every ssh interactive prompt — host key confirmation, key passphrase, keyboard-interactive             |
 
 **`GIT_SSH_COMMAND` is fallback-if-not-set, evaluated at call time**: an
 operator's own value carries their ssh wiring (identity file, port, jump host)
 and passes through untouched — it is transport, not sweep policy, so d060's
 "argv, never env" rule does not apply to it (that rule governs what a run
-*does*, and the default below still makes the unset case fail fast).
+_does_, and the default below still makes the unset case fail fast).
 
 ## Consequences
 
@@ -121,7 +121,7 @@ and passes through untouched — it is transport, not sweep policy, so d060's
   `vbs-har.mjs`, `search-references.mjs` spawn no network git, and the
   pure shims (`audit.sh`, `maintain.sh`, `migrate.sh`, …) inherit the
   contract from `git/lib/git-core.mjs` at call time.
-- Failure *reporting* changes shape: `maintain-mirrors.mjs` /
+- Failure _reporting_ changes shape: `maintain-mirrors.mjs` /
   `software-forge-mirror.mjs` fetch failures now carry the fail-fast stderr
   lines quoted in their `fetch failed`/`align failed` logs.
 

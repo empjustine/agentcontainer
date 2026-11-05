@@ -24,6 +24,7 @@ The generated config fetches the Gemini models via REST
 consistency with all other providers (which also use REST `/models` endpoints).
 
 This means:
+
 - When Google adds a new Gemini model, it appears automatically after the next
   generation run.
 - No need to update `google.models.js` or depend on the SDK for discovery.
@@ -38,6 +39,7 @@ smaller context windows). These are covered by `PI_MODEL_METADATA`.
 ### Filtering
 
 The `google-free` filter keeps:
+
 - All Gemma 4 variants (always free)
 - Gemini Flash models excluding Pro/Enterprise/Preview variants
 

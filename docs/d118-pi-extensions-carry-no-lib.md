@@ -13,21 +13,21 @@ tags: [pi-extensions, lib, entrypoints, copy-unit]
 
 ## Problem
 
-d113 gave every folder its own `lib/` hand copy, sized for the *container
-runner* shape: a `run.sh` sourced a workload API out of it and a generator
+d113 gave every folder its own `lib/` hand copy, sized for the _container
+runner_ shape: a `run.sh` sourced a workload API out of it and a generator
 wrote artifacts through it. The six `pi-*` folders are not that shape. They are
 **pi extensions** — a `index.ts` the pi host loads, plus (in four of them) a
 generator that refreshes a committed catalog — and the copy they inherited was
 mostly dead weight:
 
-| file | lines | used by the folder |
-|---|---|---|
-| `lib/log.mjs` | 200 | 4 of 6 exports, in 2 files |
-| `lib/canonical-json.mjs` | 192 | 1 of 4 exports (`serializeArtifact`) |
-| `lib/artifact.mjs` | 62 | only through `generate.mjs` |
-| `lib/cloud-providers.mjs` | 78 | a *loader* for a 9–16 line JSON holding **one row** |
-| `lib/node-run.sh` (retired by d138) | — | a pinned-node bootstrap; the runner is now repo-root |
-| `lib/workload-runtime.sh` + `workload-*.jq` | — | absent (never needed here) |
+| file                                        | lines | used by the folder                                   |
+| ------------------------------------------- | ----- | ---------------------------------------------------- |
+| `lib/log.mjs`                               | 200   | 4 of 6 exports, in 2 files                           |
+| `lib/canonical-json.mjs`                    | 192   | 1 of 4 exports (`serializeArtifact`)                 |
+| `lib/artifact.mjs`                          | 62    | only through `generate.mjs`                          |
+| `lib/cloud-providers.mjs`                   | 78    | a _loader_ for a 9–16 line JSON holding **one row**  |
+| `lib/node-run.sh` (retired by d138)         | —     | a pinned-node bootstrap; the runner is now repo-root |
+| `lib/workload-runtime.sh` + `workload-*.jq` | —     | absent (never needed here)                           |
 
 2533 lines across the six folders to serve about five functions each. Two of
 those files exist only to be imported: the loader to read one JSON row, and
@@ -67,7 +67,7 @@ folder root, imported statically by the folder's own files.
   (npm is itself a node program; letting PATH choose its interpreter would
   defeat the pin, `docs/d107`).
 - **No bootstrap shell in the folder.** `node-run.sh` is not copied here: the
-  pin is a *repo* fact, the folder ships no `.sh` to run it from (docs/d138), and
+  pin is a _repo_ fact, the folder ships no `.sh` to run it from (docs/d138), and
   its own shell surface is empty.
 
 `coding-agent/lib/npm-run.sh` was a per-unit copy of `./npm-run.sh`; it went

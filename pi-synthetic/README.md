@@ -17,7 +17,7 @@ read as source and never installed — see "Provenance".
 
 | Path                                   | Role                                                                                                                      |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `sources.mjs`                          | the ONE data source: the provider's `/models` listing, fetched from the folder's own canonical-upstream row           |
+| `sources.mjs`                          | the ONE data source: the provider's `/models` listing, fetched from the folder's own canonical-upstream row               |
 | `merge.mjs`                            | the ONE shaping step (`shapeListing`/`shapeRow`) plus the two projections — pi `models.json` entry, pi-ai extension entry |
 | `generate.mjs`                         | one fetch in, two committed artifacts out; `--check` verifies them without writing                                        |
 | `log.mjs`                              | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045)                                                     |
@@ -171,6 +171,7 @@ wire claim is either the provider's own publication or pi's own schema
 default. That classification is the provenance sanity rule the extension
 family holds itself to (docs/d100); the one behavioral copy in the family
 lives in ../pi-hyper/ and is flagged there.
+
 - Provider facts: the frozen row in `sources.mjs` (`synthetic`, docs/d092).
 - The emitted provider block's shape: `coding-agent/model-019-cloud-synthetic.json`.
 - Extension API surface: pi's own docs — `docs/custom-provider.md`,

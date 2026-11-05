@@ -10,9 +10,9 @@ tags: ["[root]", "brd", "requirements"]
 
 Serve LLMs on the owner's own fleet of hosts through **one llama-swap
 instance per host**, and configure the pi coding-agent to consume that
-catalog — a single-user infrastructure setup, not a product. *(User-confirmed;
+catalog — a single-user infrastructure setup, not a product. _(User-confirmed;
 the local-serving half is deprecated for now by docs/d108, and the goal text
-is kept as the original statement.)*
+is kept as the original statement.)_
 
 The same tree adapts to every host without forking per-host copies.
 Generation is capability-driven on ONE axis: **can the host run LLM
@@ -83,7 +83,7 @@ the allowlist relay by decision
 ## Functional requirements
 
 > **Direction changed (docs/d108).** FR-S1–FR-S4 (the llama-swap serving path)
-> are paused *for now*: the code keeps working, but no new clients or
+> are paused _for now_: the code keeps working, but no new clients or
 > features. FR-S5's reverse-proxy mode (legacy "mode A") and FR-U2's route
 > substitution are **gone**: a TLS-terminating edge sees plaintext provider
 > keys, so the allowlist relay and the client-side route form were removed
@@ -114,12 +114,12 @@ the allowlist relay by decision
   (pi-ai ∪ models.dev ∪ catwalk, priority in that order — docs/d038),
   byte-faithful passthrough (headers, streaming, upstream errors as-is), no
   credential handling, uniform non-distinctive 404s on unknown prefixes,
-  RFC 9457 problem details only for failures inside the proxy. *Host
+  RFC 9457 problem details only for failures inside the proxy. _Host
   allowlist routing (docs/d047 — by decision the only HOST-policy transport,
   docs/d080): `/<host>/<path>` → scheme://host root, the client carries
   the upstream base path, ~36 owner-set hosts, deny-by-absence for
   everything else; the tunnel/forward-proxy surfaces carry egress policy
-  instead (docs/d080).*
+  instead (docs/d080)._
 
 ### Usage — `coding-agent/`
 
@@ -136,13 +136,14 @@ the allowlist relay by decision
   emit provider overrides (base URLs, key refs), never client-side model
   catalogs.
 
-  *Deprecated: the `enabledModels` setting.* No coding-agent tooling is
+  _Deprecated: the `enabledModels` setting._ No coding-agent tooling is
   expected to set it — not the generators, not the launcher, not a committed
   `settings.json`. The requirement that survives is the second half of FR-U3
   (generators emit overrides only); how an operator scopes their own model
   list, if they choose to, is operator state in their own settings file and
   nobody's contract. `settings.json` as committed today carries no such key,
   which is correct, not an omission.
+
 - **FR-U4** — Credentials: vault secrets are loaded ONCE on the host (the
   explicit `./environment.sh` chain) and forwarded into sandboxes through a
   declared `workload_env` allowlist; nothing inside a sandbox touches the
@@ -154,7 +155,7 @@ the allowlist relay by decision
   shared with the host pi and an operator's MCP servers exist nowhere else,
   so committed entries are defaults merged UNDER what is already there
   (docs/d061; flagged as intentional, docs/d072).
-  *(Operator-confirmed.)*
+  _(Operator-confirmed.)_
 - **FR-U6** — Runners never build or generate: `run.sh` mounts the
   generator-installed config (`PI_CODING_AGENT_DIR` / `PI_CODING_AGENT_SESSION_DIR`,
   docs/d054); a stale or missing artifact is a loud failure pointing at the

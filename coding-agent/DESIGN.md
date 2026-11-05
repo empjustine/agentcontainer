@@ -18,7 +18,7 @@ tags:
 
 Charter: own the pi coding-agent's container image (`Containerfile` +
 `config.toml` mise manifest) and generate its model/provider configuration —
-the *baseline* every environment consumes.
+the _baseline_ every environment consumes.
 
 Configuration is generated rather than written once because every host sits
 somewhere on a two-axis capability matrix, and one config tree must serve all
@@ -39,6 +39,7 @@ statement lives in the BRD
 owns the shape and the non-obvious mechanics.
 
 The image provides a pre-configured development environment including:
+
 - **pi**: The core coding agent.
 - **opencode**: Alternative coding agent.
 - **Cline CLI**: Official AI development assistant CLI.
@@ -61,10 +62,10 @@ per-concern verdict; the supersession is recorded in the
    tree anywhere), then installs the artifacts (there is no separate install
    step).
 
-| Generator | Emits | Scope |
-|---|---|---|
-| `generate-pi-coding-agent.mjs` | the `model-*.json` layers → merged `models.json`, plus the `default-model.json` overlay | ALL pi config — the four former stage generators are its internal stages, in order: `generateLocalLlamaSwap` (`model-010-local-default.json`, **ADDS** the `llama-swap` provider for local GGUF), `generateCloudProviders` (`model-012-cloud-pi-native.json` override-only, empty when every pi-native endpoint is reachable, plus `model-015/016/017/018/019-*.json` — authoritative full rows for `cline-pass`/`hyper`/`inferx`/`verboo`/`synthetic`, docs/d037/d033/d057), `mergeModels` (models.json), `generateDefaultModel` (`default-model.json` — the operator's hardcoded pair, docs/d036) |
-| `generate-opencode.mjs` | `opencode.json` → BOTH the host config dir (`$OPENCODE_CONFIG_DIR`, default `${XDG_CONFIG_HOME:-$HOME/.config}/opencode` — the sandbox's mount source) and the committed `opencode.jsonc` (docs/d065) | the opencode-format twin — different schema and input set, same detection cascade minus cline-pass/hyper (docs/d033); skipped on Termux unless `OPENCODE_CONFIG_DIR` is set |
+| Generator                      | Emits                                                                                                                                                                                                 | Scope                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `generate-pi-coding-agent.mjs` | the `model-*.json` layers → merged `models.json`, plus the `default-model.json` overlay                                                                                                               | ALL pi config — the four former stage generators are its internal stages, in order: `generateLocalLlamaSwap` (`model-010-local-default.json`, **ADDS** the `llama-swap` provider for local GGUF), `generateCloudProviders` (`model-012-cloud-pi-native.json` override-only, empty when every pi-native endpoint is reachable, plus `model-015/016/017/018/019-*.json` — authoritative full rows for `cline-pass`/`hyper`/`inferx`/`verboo`/`synthetic`, docs/d037/d033/d057), `mergeModels` (models.json), `generateDefaultModel` (`default-model.json` — the operator's hardcoded pair, docs/d036) |
+| `generate-opencode.mjs`        | `opencode.json` → BOTH the host config dir (`$OPENCODE_CONFIG_DIR`, default `${XDG_CONFIG_HOME:-$HOME/.config}/opencode` — the sandbox's mount source) and the committed `opencode.jsonc` (docs/d065) | the opencode-format twin — different schema and input set, same detection cascade minus cline-pass/hyper (docs/d033); skipped on Termux unless `OPENCODE_CONFIG_DIR` is set                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 **The layered cake** — the merge contract's single home is the
 `generate-pi-coding-agent.mjs` header (the former `merge-models-json.mjs`
@@ -176,7 +177,7 @@ through the environment proxy.
   declared tool set down to the codemode tool itself, so the request payload
   shrinks while every built-in stays active and callable from scripts.
   `tool_search` is left off on purpose: it is the one declared tool whose
-  *use* rewrites the declared tool set mid-session, while `searchTools()`
+  _use_ rewrites the declared tool set mid-session, while `searchTools()`
   inside codemode already reaches every deferred tool (docs/d061).
   Intent lives here; pi owns the mechanics (its `settings.md#tools` and
   `codemode.md`). Cost accepted: the model drives tools through codemode
@@ -240,17 +241,17 @@ manifest it asserts on.
 in step with, and this folder may retune any of it without touching a sibling.
 It carries what this unit actually uses:
 
-| Copy | Why it is here |
-|---|---|
-| `log.mjs` | structured logging, same shape as every unit's |
-| `artifact.mjs` + `canonical-json.mjs` | the atomic write choke point and the canonical serialization it applies (docs/d050) — they only work as a pair |
-| `cloud-providers.mjs` | **the full** provider fact table: this folder is the reference vocabulary docs/d032's checklist and the tests read |
-| `models.dev.api.json` | the vendored catalog, read by every catalog-driven stage |
-| `catwalk-facts.json` | the secondary catalog fallback cache |
-| `fact-table.mjs` | the fact-table publisher (docs/d086) — exactly one consumer, so it lives here and nowhere else (docs/d113) |
-| `host-capabilities.mjs` | the capability gates the build registers targets on |
-| `…/node-run.sh`, `…/npm-run.sh` | NOT here: both runners are one copy each at the repo root (docs/d138), and this folder ships **no `.sh` at all** — its entries are `./node-run.sh coding-agent/run.mjs` and `./npm-run.sh coding-agent {build,generate}`. `npm-run.sh` runs this folder's `package.json` script under the same pinned node, so no `npm` lands on an entrypoint's PATH |
-| `workload-runtime.mjs` | the workload API `run.mjs` describes the container with (`docs/container-tooling.md`) — description in, `container run` argv out. Replaced `workload-runtime.sh` + the six `workload-*.jq` filters, which is why this unit needs no `jq` on the host |
+| Copy                                  | Why it is here                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `log.mjs`                             | structured logging, same shape as every unit's                                                                                                                                                                                                                                                                                                        |
+| `artifact.mjs` + `canonical-json.mjs` | the atomic write choke point and the canonical serialization it applies (docs/d050) — they only work as a pair                                                                                                                                                                                                                                        |
+| `cloud-providers.mjs`                 | **the full** provider fact table: this folder is the reference vocabulary docs/d032's checklist and the tests read                                                                                                                                                                                                                                    |
+| `models.dev.api.json`                 | the vendored catalog, read by every catalog-driven stage                                                                                                                                                                                                                                                                                              |
+| `catwalk-facts.json`                  | the secondary catalog fallback cache                                                                                                                                                                                                                                                                                                                  |
+| `fact-table.mjs`                      | the fact-table publisher (docs/d086) — exactly one consumer, so it lives here and nowhere else (docs/d113)                                                                                                                                                                                                                                            |
+| `host-capabilities.mjs`               | the capability gates the build registers targets on                                                                                                                                                                                                                                                                                                   |
+| `…/node-run.sh`, `…/npm-run.sh`       | NOT here: both runners are one copy each at the repo root (docs/d138), and this folder ships **no `.sh` at all** — its entries are `./node-run.sh coding-agent/run.mjs` and `./npm-run.sh coding-agent {build,generate}`. `npm-run.sh` runs this folder's `package.json` script under the same pinned node, so no `npm` lands on an entrypoint's PATH |
+| `workload-runtime.mjs`                | the workload API `run.mjs` describes the container with (`docs/container-tooling.md`) — description in, `container run` argv out. Replaced `workload-runtime.sh` + the six `workload-*.jq` filters, which is why this unit needs no `jq` on the host                                                                                                  |
 
 `gen-lib.mjs` is the shared preamble for the pi-layer stages: it carries the pi
 shaping helpers (folded from the former `lib/pi-models.mjs`, docs/d039),

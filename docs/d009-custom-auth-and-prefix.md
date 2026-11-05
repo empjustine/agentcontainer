@@ -18,23 +18,24 @@ IDs prefixed with `models/` (e.g. `models/gemini-2.0-flash`), but
 
 ## Decisions
 
-### 1.  Per-provider `fetchAuth` option
+### 1. Per-provider `fetchAuth` option
 
 The `fetchProviderModels()` helper accepts an optional `opts.fetchAuth`
 parameter:
 
-| Value            | Behaviour                                 |
-|------------------|-------------------------------------------|
-| `"bearer"`       | `Authorization: Bearer ${apiKey}` (default)|
-| `"x-goog-api-key"` | `X-Goog-Api-Key: ${apiKey}`             |
-| `"none"`         | No auth header                            |
+| Value              | Behaviour                                   |
+| ------------------ | ------------------------------------------- |
+| `"bearer"`         | `Authorization: Bearer ${apiKey}` (default) |
+| `"x-goog-api-key"` | `X-Goog-Api-Key: ${apiKey}`                 |
+| `"none"`           | No auth header                              |
 
 Set per-provider in `BUILDIN_PROVIDERS`:
+
 ```js
 { id: "google-free", fetchAuth: "x-goog-api-key", ... }
 ```
 
-### 2.  Per-provider `modelIdPrefix` stripping
+### 2. Per-provider `modelIdPrefix` stripping
 
 When set, the prefix is stripped from every model ID returned by the `/models`
 endpoint before any further processing:

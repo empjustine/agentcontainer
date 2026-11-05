@@ -64,7 +64,7 @@ comments should stay short and point at the owning doc (`docs/dNNN`) rather
 than duplicate it. When a code comment grows into a design essay, move it to
 `docs/` and refer to it from the owning spec (`docs/dNNN` in a body, or the
 `references` edge in frontmatter) — `README.md`'s documentation index states
-the *patterns* and does not list documents.
+the _patterns_ and does not list documents.
 
 `docs/architecture.md` describes the whole-folder stand-alone rule, and
 `README.md` carries the type patterns plus a short reading path.
@@ -117,9 +117,15 @@ when it is available; it is not a prerequisite.
   `./environment.sh <script>` does the one vault round-trip, then `exec`s the
   target. Consumers read plain env and never load secrets; there is exactly
   one loader and no unit owns it (`./environment.sh`).
+- **Markdown is oxfmt-canonical.** `./lint.sh` gates it (pinned in the shim,
+  d137's rule for a gate whose output is its meaning) and
+  `oxfmt --write '**/*.md'` is the fix. One one-shot reformat took the whole
+  tree there, vendored text included, so a formatted diff now means somebody
+  wrote markdown the formatter disagrees with — not that the sweep is noisy.
+  Write the prose, then let the formatter place it.
 - `README.md` is an orientation map, not a manifest, and **neither of its
   tables enumerates files**: keep folder-layout rows honest when folders are
-  added, moved, or retired, and keep the documentation index to *patterns*
+  added, moved, or retired, and keep the documentation index to _patterns_
   (the five `type`s + a short reading path). Do not add a doc's row — its
   frontmatter (`id`/`type`/`status`/`parent`/links) is the searchable map.
   This is a churn rule, not tidiness: the old 130-row index was three quarters
@@ -131,4 +137,3 @@ When a harness error appends a stray `</function></tool_call>` trailer to codemo
 script output, suffix the script source with a trailing `//` and no trailing
 newline — the trailer disappears. Keep that suffix in mind for every
 codemode call in this repo until the harness fix lands.
-

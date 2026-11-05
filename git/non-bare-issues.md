@@ -87,13 +87,13 @@ At the time of writing: **778 repos**, **777 from github.com**, **1 with no
 origin**. The tree is not a clean two-level layout — the audit surfaces five
 classes of anomaly:
 
-| Class | Count | Examples |
-|---|---|---|
-| Nested repos (a repo inside another repo's working tree) | 37 | `github/duckdb/duckdb`, … (the `duckdb` "owner" dir is itself a repo) |
-| Nonstandard path (not `github/<owner>/<repo>`) | 2 | `github/duckdb`, `github/duckdb-web` |
-| Path/origin mismatch | 2 | `github/empjustine/agentcontainerOLD/agentcontainer{2,3}` → both point at `empjustine/agentcontainer` |
-| No upstream | 1 | `github/empjustine/temporary-previous-workspace` |
-| Duplicate origins | 3 | `duckdb/duckdb`, `duckdb/duckdb-web`, `empjustine/agentcontainer` each present twice |
+| Class                                                    | Count | Examples                                                                                              |
+| -------------------------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------- |
+| Nested repos (a repo inside another repo's working tree) | 37    | `github/duckdb/duckdb`, … (the `duckdb` "owner" dir is itself a repo)                                 |
+| Nonstandard path (not `github/<owner>/<repo>`)           | 2     | `github/duckdb`, `github/duckdb-web`                                                                  |
+| Path/origin mismatch                                     | 2     | `github/empjustine/agentcontainerOLD/agentcontainer{2,3}` → both point at `empjustine/agentcontainer` |
+| No upstream                                              | 1     | `github/empjustine/temporary-previous-workspace`                                                      |
+| Duplicate origins                                        | 3     | `duckdb/duckdb`, `duckdb/duckdb-web`, `empjustine/agentcontainer` each present twice                  |
 
 Consequences the tooling must respect:
 
@@ -203,8 +203,8 @@ timer the operator cannot see; this script is the explicit replacement.
 
 ## Pickaxe: how to actually get the speedup
 
-The Bloom filters written by `--changed-paths` answer *"did this commit touch
-path P?"*. They accelerate a **path-limited** search:
+The Bloom filters written by `--changed-paths` answer _"did this commit touch
+path P?"_. They accelerate a **path-limited** search:
 
 ```sh
 git -C repo.git log --all -S'needle' -- path/to/file     # filters apply

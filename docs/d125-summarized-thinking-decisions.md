@@ -26,7 +26,7 @@ Two separate needs, and they are why this is a record rather than a longer note.
 The first is ordinary: a new `pi-*` package joined the family that docs/d100
 describes, and the family's members each have a decision record that argues their
 shape (docs/d096 for `pi-synthetic`, docs/d097 for `pi-opencode`). This one has a
-harder job than its siblings, because its subject is *invisible* when it goes
+harder job than its siblings, because its subject is _invisible_ when it goes
 wrong — a summary that leaked into the model context would still render
 correctly, still look right in a transcript, and only show up as an unexplained
 bill.
@@ -135,7 +135,7 @@ inside a live tree.
 explicit `provider` + `model_id` replaces the candidate chain. The commands are
 `/reasoning-summary` (toggle, default on), `/reasoning-summary-test` (one call,
 prints, writes nothing) and `/reasoning-summary-model <provider/modelId>` (pin;
-empty args reset). Toggling is a *rendering* decision — it can change what a human
+empty args reset). Toggling is a _rendering_ decision — it can change what a human
 sees and can stop new writes, but it can never change what the model sees, because
 nothing this extension writes is model-visible.
 
@@ -144,7 +144,7 @@ nothing this extension writes is model-visible.
 `coding-agent/summarized-thinking.md` keeps its id and its `parent: coding-agent`
 edge and stays where docs/d117 requires a single-unit living doc to sit; the new
 folder carries a plain package README, no frontmatter — the split docs/d096 uses
-for `pi-synthetic`. This record is the decision home that the note is *not* (a
+for `pi-synthetic`. This record is the decision home that the note is _not_ (a
 living doc argues; a record decides), which is why the two do not duplicate each
 other and both point here.
 

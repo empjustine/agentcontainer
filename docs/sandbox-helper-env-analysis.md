@@ -15,7 +15,7 @@ tags: ["research", "superseded", "sandbox"]
 > / `proot_run` API are gone — termux serves natively via
 > `llm-local-inference/run-native.sh`), and the serving tree was squashed into
 > the multipurpose `llm-local-inference/`. Sections 2–3 below remain the
-> definitive record of *why* PRoot is not a workload; sections 1 and 4
+> definitive record of _why_ PRoot is not a workload; sections 1 and 4
 > describe an API that no longer exists. A stronger-than-container backend
 > (qemu/libvirt) is assessed in [d020-libvirt-qemu-sandbox.md](d020-libvirt-qemu-sandbox.md).
 
@@ -42,34 +42,32 @@ the helper entirely (`openai-completions-peer/run-native.sh`).
 
 ### `workload_*` inventory (the three named scripts)
 
-| API call | `coding-agent/run.sh` | `gfx1030/run.sh` | `openai-completions-peer/run.sh` |
-|---|---|---|---|
-| `workload_rm` | – | ✅ | ✅ |
-| `workload_name` / `workload_image` | ✅ / ✅ | ✅ / ✅ | ✅ / ✅ |
-| `workload_interactive` | ✅ | – | – |
-| `workload_detach` | – | ✅ | ✅ |
-| `workload_init` | ✅ | ✅ | ✅ |
-| `workload_network host` | ✅ | – | – |
-| `workload_user` | ✅ | ✅ | ✅ |
-| `workload_gpu` | – | ✅ | – |
-| `workload_publish` | – | ✅ `18080:8080` | ✅ `8080:8080` |
-| `workload_ro` | – (ro_if only) | ✅ config.d | ✅ config.d |
-| `workload_rw` | ✅ ×3 (HF, agent, workspace) | ✅ ×2 (HF `/root`+`/home/ubuntu`) | – |
-| `workload_ro_if` | ✅ references | – | – |
-| `workload_workdir` | ✅ | – | – |
-| `workload_hardening` | – | ✅ | ✅ |
-| `workload_env` | ✅ ×5 keys | ✅ ×5 keys | ✅ ×3 keys |
-| `workload_entrypoint` | – | ✅ `llama-swap` | ✅ `llama-swap` |
-| `workload_cmd` | ✅ `bash` | ✅ `-config-dir …` | ✅ `-config-dir …` |
-| `workload_logs` | – | ✅ | ✅ |
-| `workload_run [wrapper]` | ✅ infisical | ✅ infisical | ✅ infisical |
+| API call                           | `coding-agent/run.sh`        | `gfx1030/run.sh`                  | `openai-completions-peer/run.sh` |
+| ---------------------------------- | ---------------------------- | --------------------------------- | -------------------------------- |
+| `workload_rm`                      | –                            | ✅                                | ✅                               |
+| `workload_name` / `workload_image` | ✅ / ✅                      | ✅ / ✅                           | ✅ / ✅                          |
+| `workload_interactive`             | ✅                           | –                                 | –                                |
+| `workload_detach`                  | –                            | ✅                                | ✅                               |
+| `workload_init`                    | ✅                           | ✅                                | ✅                               |
+| `workload_network host`            | ✅                           | –                                 | –                                |
+| `workload_user`                    | ✅                           | ✅                                | ✅                               |
+| `workload_gpu`                     | –                            | ✅                                | –                                |
+| `workload_publish`                 | –                            | ✅ `18080:8080`                   | ✅ `8080:8080`                   |
+| `workload_ro`                      | – (ro_if only)               | ✅ config.d                       | ✅ config.d                      |
+| `workload_rw`                      | ✅ ×3 (HF, agent, workspace) | ✅ ×2 (HF `/root`+`/home/ubuntu`) | –                                |
+| `workload_ro_if`                   | ✅ references                | –                                 | –                                |
+| `workload_workdir`                 | ✅                           | –                                 | –                                |
+| `workload_hardening`               | –                            | ✅                                | ✅                               |
+| `workload_env`                     | ✅ ×5 keys                   | ✅ ×5 keys                        | ✅ ×3 keys                       |
+| `workload_entrypoint`              | –                            | ✅ `llama-swap`                   | ✅ `llama-swap`                  |
+| `workload_cmd`                     | ✅ `bash`                    | ✅ `-config-dir …`                | ✅ `-config-dir …`               |
+| `workload_logs`                    | –                            | ✅                                | ✅                               |
+| `workload_run [wrapper]`           | ✅ infisical                 | ✅ infisical                      | ✅ infisical                     |
 
-Host-side prep *outside* the helper: `coding-agent` runs `generate.sh` + copies
+Host-side prep _outside_ the helper: `coding-agent` runs `generate.sh` + copies
 `settings.json`/`models.json` into the mounted `~/.pi/agent` and refuses to run
 from `$HOME`; the two serving scripts do `infisical login status` then
 `workload_rm` + `sleep 5; workload_logs | head`.
-
-
 
 ## 2. The Termux environment is a different class of primitive
 
@@ -86,11 +84,11 @@ Limitations section (`termux/proot-distro/README.md`) is decisive:
 
 So the three targets are not three flavors of one mechanism:
 
-| Environment | Mechanism | Kernel namespaces/cgroups | Real root | Image model |
-|---|---|---|---|---|
-| rootful docker | real runtime | ✅ | ✅ | OCI |
-| rootless podman (local-inference-host, SELinux) | real runtime | ✅ | ✅ (keep-id) | OCI |
-| rootless bionic Termux | **ptrace + fake-root** | ❌ | ❌ | OCI-via-proot-distro or native binary |
+| Environment                                     | Mechanism              | Kernel namespaces/cgroups | Real root    | Image model                           |
+| ----------------------------------------------- | ---------------------- | ------------------------- | ------------ | ------------------------------------- |
+| rootful docker                                  | real runtime           | ✅                        | ✅           | OCI                                   |
+| rootless podman (local-inference-host, SELinux) | real runtime           | ✅                        | ✅ (keep-id) | OCI                                   |
+| rootless bionic Termux                          | **ptrace + fake-root** | ❌                        | ❌           | OCI-via-proot-distro or native binary |
 
 ## 3. Would a specialized Go helper unify the three? — No
 
@@ -106,7 +104,7 @@ So the three targets are not three flavors of one mechanism:
 3. **proot-distro already provides the Termux image workflow** as a C/Python
    tool. A Go helper would just re-orchestrate `proot`/`proot-distro`, which is
    exactly what `lib/workload-runtime.sh` already does via `proot_run()`.
-4. The only place a Go helper *might* help is the **Linux** axis — a
+4. The only place a Go helper _might_ help is the **Linux** axis — a
    lilipod-style userns engine (`unshare`+`pivot_root`+`newuidmap`,
    `keepCaps`; see `89luca89/lilipod` `pkg/procutils.EnsureFakeRoot`,
    `cmd/rootless_helper.go`, `containerutils.PivotRoot`). But: (a) it is a

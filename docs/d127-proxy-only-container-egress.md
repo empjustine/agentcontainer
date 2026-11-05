@@ -26,7 +26,7 @@ sibling containers, no resolver, no direct internet. Every byte of TCP the
 workload emits must pass a process that can see it (credentials injected,
 policy applied, traffic logged).
 
-What the repo has today is the *spelling* of that, not the boundary:
+What the repo has today is the _spelling_ of that, not the boundary:
 `HTTPS_PROXY`/`ALL_PROXY`/`NO_PROXY` handed to the child
 ([d001](d001-proxy-env-and-namespace.md), [d074](d074-native-node-env-proxy.md),
 estige's `proxy-env`, [d094](d094-relay-chain-proxy.md) for the chain's own
@@ -53,7 +53,7 @@ workload's first instruction.
 
 **Enforcement is a netns property, installed at container creation, and the
 proxy is the only permitted destination.** Environment variables stay as the
-*convention* that makes well-behaved clients work; the rule is what makes the
+_convention_ that makes well-behaved clients work; the rule is what makes the
 convention binding.
 
 Four invariants:
@@ -94,7 +94,7 @@ table inet workload_egress {
 Three things in that block are deliberate and each has a reason:
 
 - **No DNS rule.** Port 53 is dropped like everything else, and that is a
-  feature: an HTTP proxy carries the *hostname* in `CONNECT host:port`, so the
+  feature: an HTTP proxy carries the _hostname_ in `CONNECT host:port`, so the
   workload never needs to resolve anything — the proxy resolves, at its own
   position in the chain. A workload that cannot resolve cannot name a
   destination it was not given, and a leak through a DNS resolver (or DoH on
@@ -105,7 +105,7 @@ Three things in that block are deliberate and each has a reason:
   is what kills QUIC/HTTP3 and UDP-based DNS. An HTTP-proxy-only egress is
   TCP-only by construction; making that explicit beats discovering it when a
   client silently retries over QUIC.
-- **ICMP is carved out, not allowed.** Dropping *all* ICMP breaks PMTU
+- **ICMP is carved out, not allowed.** Dropping _all_ ICMP breaks PMTU
   discovery and produces the classic "big uploads hang" bug; allowing the
   control types above while dropping echo keeps the workload unable to probe
   reachability.
@@ -132,7 +132,7 @@ gotchas, both from Docker's own packet-filtering documentation:
   match the container's internal address/port (or use the `conntrack`
   extension to match the original destination);
 - public ports are easier than egress: an `--internal` network has no gateway
-  route out at all, which is a *cleaner* starting point than a firewall rule —
+  route out at all, which is a _cleaner_ starting point than a firewall rule —
   put the proxy on an internal network with the workload and the only reachable
   address is the proxy's, by routing rather than by policy.
 
@@ -180,7 +180,7 @@ recipe demonstrates the three properties that make this the right mechanism:
 
 The important corollary: in rootless **bridge** (netavark) mode the same hook
 still binds the app, because the app's packets still traverse its own netns
-first. What changes is the *other* half — cross-container traffic and ingress —
+first. What changes is the _other_ half — cross-container traffic and ingress —
 which is decided in the shared **rootless netns**
 (`podman unshare --rootless-netns nft …`), and that namespace belongs to the
 invoking uid. So rootless-netns rules are **not** a boundary against the user's
@@ -192,12 +192,13 @@ What voids it: `--cap-add NET_ADMIN`, `--privileged`, `--network=host`,
 install the rule — this is the shape that silently disables the hook), and
 `pasta`'s opt-in host-loopback mapping described below.
 
-| backend | rule lives in | enforced by | undone by |
-| --- | --- | --- | --- |
-| docker rootful | host netns (`DOCKER-USER`, or `--internal` routing) | dockerd/root | root or the socket |
-| podman rootful | host netns (own chain before netavark, or `--internal`) | podman/root | root or the socket |
-| podman rootless, usernet | container netns (`output`) | `createContainer` OCI hook | only `CAP_NET_ADMIN` in that netns (i.e. nothing) |
-| podman rootless, bridge | container netns (`output`) **+** shared rootless netns (forward/ingress) | OCI hook (+ `isolate=true` / `--internal`) | the hook's half: nothing; the rootless-netns half: the invoking uid |
+| backend                  | rule lives in                                                            | enforced by                                | undone by                                                           |
+| ------------------------ | ------------------------------------------------------------------------ | ------------------------------------------ | ------------------------------------------------------------------- |
+| docker rootful           | host netns (`DOCKER-USER`, or `--internal` routing)                      | dockerd/root                               | root or the socket                                                  |
+| podman rootful           | host netns (own chain before netavark, or `--internal`)                  | podman/root                                | root or the socket                                                  |
+| podman rootless, usernet | container netns (`output`)                                               | `createContainer` OCI hook                 | only `CAP_NET_ADMIN` in that netns (i.e. nothing)                   |
+| podman rootless, bridge  | container netns (`output`) **+** shared rootless netns (forward/ingress) | OCI hook (+ `isolate=true` / `--internal`) | the hook's half: nothing; the rootless-netns half: the invoking uid |
+
 ## Which proxy, and why it is agent-vault and not the estige relay
 
 **Moved to [d135](d135-container-proxy-choice.md)** — the constraint analysis
@@ -218,7 +219,7 @@ one of them is not a flag at all:
 - `--privileged`, `--cap-add NET_ADMIN`, `--cap-add SYS_ADMIN` — restore the
   ability to flush, or to reach the host netns.
 - The engine socket mounted into the workload (`podman.sock`/`docker.sock`) —
-  equivalent to root, and it starts a *new* container that is not locked down;
+  equivalent to root, and it starts a _new_ container that is not locked down;
   this voids the guarantee even when the running container is perfect.
 - Adding a second network to the workload after creation (`podman network
   connect`), and any `--publish` that lands the workload on a shared bridge
@@ -227,7 +228,7 @@ one of them is not a flag at all:
 - Daemon-level `iptables: false` / `--iptables=false`, which leaves the engine's
   own rules out of the picture and, worse, makes them easy to reason about
   wrongly.
-- Running the workload as the *host* uid with access to the rootless netns
+- Running the workload as the _host_ uid with access to the rootless netns
   (i.e. not a container boundary at all) — the reason the rootless-bridge half
   of the table above is not the guarantee.
 
@@ -249,7 +250,7 @@ also "blocks the bad thing":
 - Ingress: from a sibling container on the same network, connect to a port the
   workload listens on → refused; then repeat with `isolate=true` /
   `--internal` to confirm which of the two is doing the work.
-- The proxy itself: `curl -x` from a *second* container without the credential →
+- The proxy itself: `curl -x` from a _second_ container without the credential →
   `407`. A proxy that accepts anonymous clients is an open relay behind the
   rule, and the rule still "passes".
 
@@ -263,7 +264,7 @@ also "blocks the bad thing":
   rootless-bridge, and rootful take three different mechanics, so the detection
   table has to answer which one it is rather than just which binary exists.
 - `docs/container-tooling.md` records the rootless constraints it currently
-  lists only two of (sub-1024 ports, `mknod`) — the third is that the *engine*
+  lists only two of (sub-1024 ports, `mknod`) — the third is that the _engine_
   cannot firewall a rootless container from the host netns, so the hook is the
   only route.
 - The VM/micro-VM backend ([d020](d020-libvirt-qemu-sandbox.md)) needs none of
@@ -279,15 +280,15 @@ also "blocks the bad thing":
   must reach a proxy).
 - **Enforce only in the rootless bridge netns.** It is owned by the invoking
   uid, so it does not survive the threat model that motivates all of this —
-  a workload that is not privileged but whose *host* is the same user.
+  a workload that is not privileged but whose _host_ is the same user.
 - **Firewall inside the image.** The workload has (or can be given) the
   capability to flush, and by definition it controls its own entrypoint.
 - **Rely on the MITM proxy as the boundary.** A MITM is a policy engine; the
-  vault's `netguard` protects *the vault's* legs (its own SSRF surface), not
+  vault's `netguard` protects _the vault's_ legs (its own SSRF surface), not
   the container's. Without the kernel rule the container simply dials around it.
 - **eBPF cgroup socket-redirect / `connect()` filtering.** The one mechanism
   that could cover all three backends uniformly and also bind non-netns shapes;
-  rejected *for now* only because it is kernel- and daemon-dependent
+  rejected _for now_ only because it is kernel- and daemon-dependent
   (`cgroup/connect4` support, a loader in the loop before the workload starts)
   and nothing in this repo loads BPF today. This is the natural next step, not
   a wrong answer.

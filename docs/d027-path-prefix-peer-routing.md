@@ -44,10 +44,10 @@ One peer base URL, one funnel front: the tailscale funnel serves the whole
 `<peerBase>` route to **llm-reverse-proxy on host port 8080**, which
 path-prefix routes everything behind it:
 
-| Path under `<peerBase>` | Backend | Routing |
-|---|---|---|
-| `/<providerId>` | cloud providers | path prefix → provider's FULL real base URL |
-| `/llama-swap/…` | llama-swap (LAN **8101**, via `http://127.0.0.1:8101`) | model-id magic, LOCAL GGUF only |
+| Path under `<peerBase>` | Backend                                                | Routing                                     |
+| ----------------------- | ------------------------------------------------------ | ------------------------------------------- |
+| `/<providerId>`         | cloud providers                                        | path prefix → provider's FULL real base URL |
+| `/llama-swap/…`         | llama-swap (LAN **8101**, via `http://127.0.0.1:8101`) | model-id magic, LOCAL GGUF only             |
 
 The port conflict this settles: llama-swap historically held host port 8080
 and the funnel path-dispatched `/v1` → llama-swap :8080, `/<providerId>` →
@@ -117,7 +117,7 @@ Consequences, per generator family:
 ### Probe semantics (lib/peer-probe.mjs)
 
 `probePeerRoute` / `probePeerRoutes(candidates, providerId, headers)`: a
-route is **usable** when any http response other than a *dead-route status*
+route is **usable** when any http response other than a _dead-route status_
 arrives — 401/403 credential gates included (the canonical "reachable ≠
 authenticated" rule, docs/d022, now applied per route). Dead-route statuses
 `404 / 502 / 504` mean the path does not deliver (funnel default-404,

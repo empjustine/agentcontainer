@@ -26,7 +26,7 @@ if (!spawnSync("node", ["--version"], { stdio: "ignore" }).status) { … }
 ```
 
 `spawnSync(...).status` is the **exit code** (`0` on success), so `!status`
-was `true` whenever node *worked* — every Termux run with a healthy node
+was `true` whenever node _worked_ — every Termux run with a healthy node
 exited 93 with "node not found". It only distinguished a binary that ran and
 exited non-zero (near-impossible for `node --version`), never the missing
 case it was meant to catch.

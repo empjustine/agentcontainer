@@ -147,4 +147,3 @@ source), so a bump there re-runs the survey.
 issues** (golangci-lint 2.15.0, go 1.27.3); `gofmt -l .` empty;
 `CGO_ENABLED=0 go build ./...` and `go test ./...` green; the full
 `./test.sh` sweep green (264 node checks + the Go suite).
-

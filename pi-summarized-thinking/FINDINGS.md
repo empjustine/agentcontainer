@@ -18,13 +18,13 @@ the same tree:
 
 `packages/coding-agent/src/core/session-manager.ts`
 
-| Entry | Persisted by | Projected into the model context |
-| --- | --- | --- |
-| `type: "custom"` | `appendCustomEntry(customType, data)` | **no** — `sessionEntryToContextMessages()` returns `[]` |
-| `type: "custom_message"` | `appendCustomMessageEntry(customType, content, display, details)` | yes — becomes a `CustomMessage`, `role: "custom"` |
-| `type: "message"` | normal turns | yes |
-| `type: "context_edit"` | `appendContextEdit(targetId, replacement)` | applies `replacement` to the target at read time |
-| `type: "compaction"` | `appendCompaction(...)` | becomes the compaction summary message |
+| Entry                    | Persisted by                                                      | Projected into the model context                        |
+| ------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------- |
+| `type: "custom"`         | `appendCustomEntry(customType, data)`                             | **no** — `sessionEntryToContextMessages()` returns `[]` |
+| `type: "custom_message"` | `appendCustomMessageEntry(customType, content, display, details)` | yes — becomes a `CustomMessage`, `role: "custom"`       |
+| `type: "message"`        | normal turns                                                      | yes                                                     |
+| `type: "context_edit"`   | `appendContextEdit(targetId, replacement)`                        | applies `replacement` to the target at read time        |
+| `type: "compaction"`     | `appendCompaction(...)`                                           | becomes the compaction summary message                  |
 
 `convertToLlm()` (`core/messages.ts`) is the last step before a provider call and
 turns **`custom` → `role: "user"`** with its content; `display` is not consulted
@@ -64,8 +64,8 @@ compaction-aware view both the agent and `prepareCompaction` read.
 
 `packages/coding-agent/src/core/extensions/types.ts`
 
-- `appendEntry<T>(customType, data)` — doc comment: *"Append a custom entry to
-  the session for state persistence (not sent to LLM)."*
+- `appendEntry<T>(customType, data)` — doc comment: _"Append a custom entry to
+  the session for state persistence (not sent to LLM)."_
 - `registerEntryRenderer<T>(customType, renderer)` — renders those entries in
   the TUI; `EntryRenderer` gets the entry and the theme.
 - `ctx.ui` — `select`/`confirm`/`input`/`editor`/`notify`/`setStatus`/…; commands
@@ -83,7 +83,7 @@ re-prefill of everything after it, every turn.
 
 - The **terminal** assistant message of a turn was output, never input → rewriting
   it at `turn_end` is free. (This is why the rejected `context_edit` design
-  *could* have replaced the last block safely.)
+  _could_ have replaced the last block safely.)
 - Rounds 1…N-1 of a tool chain **were** input in later rounds of the same turn →
   rewriting them diverges the prefix at round 1 and re-prefills the whole chain,
   every turn, for as long as the chain stays in the window.
@@ -102,8 +102,8 @@ editing is never free.
 
 The extension model three rings deep: `packages/server/src/extensions/registry.ts`
 lists the server halves (`ext-visualize`, `ext-ask-user-question`,
-`ext-web-access`), `apps/web/src/extensions/registry.ts` lists only web *tool
-renderers*, and `packages/server/src/extensions/catalog.ts` produces the
+`ext-web-access`), `apps/web/src/extensions/registry.ts` lists only web _tool
+renderers_, and `packages/server/src/extensions/catalog.ts` produces the
 Settings → Extensions list (it records tool names through an inert proxy, so a
 command-only extension has nothing to record).
 
@@ -111,7 +111,7 @@ command-only extension has nothing to record).
   `DefaultResourceLoader` with `additionalExtensionPaths` and gates on
   `ctx.trusted`; `projects.ts` seeds trust from pi's own. A package installed in
   the host's extension dir is discovered and relabelled there. ThinkRail's own
-  `thinkrail-extensions/<name>` wrapper is only needed to ship a *bundled*
+  `thinkrail-extensions/<name>` wrapper is only needed to ship a _bundled_
   default; a `pi-*` package loaded from the agent dir needs no wrapper.
 - **Commands:** `agentSessionManager.ts` exposes `getSessionCommands` and runs
   them under `notifyingCommandContext`, which proxies `ctx.ui.notify` to the web.
@@ -161,36 +161,36 @@ command-only extension has nothing to record).
   favour of the synthetic pair.
 - `ModelRegistry.getApiKey(model)` was **removed in the 0.62/0.63 era**; the
   current surface is `getApiKeyAndHeaders(model) → { ok, apiKey, headers, baseUrl }`.
-  ThinkRail pins 1.5.0, so the new name is the one to code against. *(Reported by
+  ThinkRail pins 1.5.0, so the new name is the one to code against. _(Reported by
   upstream release notes during this recon; verify against the installed 1.5.0
-  typings before relying on a field name.)*
+  typings before relying on a field name.)_
 
 ## Superseded claims in the previous draft
 
 The previous revision of this note (`coding-agent/summarized-thinking.md`)
 asserted things that no longer hold:
 
-| Previous claim | Now |
-| --- | --- |
-| Replace the stored `thinking` block at `message_end` | Summaries are `custom` entries; thinking blocks are never touched |
-| `hide_thinking_fallback` resolves a clash with `hideThinkingBlock` | Key retired — no thinking rewrite, no clash |
-| `opencode-go/mimo-v2.5` as the cloud emergency | `synthetic/syn:small:text`, then `synthetic/hf:zai-org/GLM-4.7-Flash` |
-| The summary is what the model sees next turn | The model sees nothing new; the summary is for the human |
-| Built-in behaviour "pulls from the live llama-swap catalogue" | Still true as one rung, but it is rung 2 behind an explicit pin, and the chain now ends at the host's cheap tier |
+| Previous claim                                                     | Now                                                                                                              |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Replace the stored `thinking` block at `message_end`               | Summaries are `custom` entries; thinking blocks are never touched                                                |
+| `hide_thinking_fallback` resolves a clash with `hideThinkingBlock` | Key retired — no thinking rewrite, no clash                                                                      |
+| `opencode-go/mimo-v2.5` as the cloud emergency                     | `synthetic/syn:small:text`, then `synthetic/hf:zai-org/GLM-4.7-Flash`                                            |
+| The summary is what the model sees next turn                       | The model sees nothing new; the summary is for the human                                                         |
+| Built-in behaviour "pulls from the live llama-swap catalogue"      | Still true as one rung, but it is rung 2 behind an explicit pin, and the chain now ends at the host's cheap tier |
 
 ## Verified, and not
 
-| Question | Status |
-| --- | --- |
-| `custom` entries never enter the model context | verified in source (`sessionEntryToContextMessages`, `convertToLlm`) |
-| `custom_message` becomes a `user` message | verified (`convertToLlm`) |
-| `turn_end` accepts a `custom` draft and persists it | verified (`_applyBoundaryDrafts`) |
-| Boundary commit rebuilds `agent.state.messages` | verified (`_refreshFinalizedContext`) |
-| Compaction reads the projection | verified (`prepareCompaction` + `buildSessionProjection`) |
-| `appendEntry` is documented as "not sent to LLM" | verified (types.ts doc comment) |
-| ThinkRail hides `entry_appended` payloads | verified (`sessionEventProjection.ts`) |
-| ThinkRail's transcript includes `custom` messages | verified (`TRANSCRIPT_MESSAGE_ROLES`) |
-| Cache invalidation semantics and price ratios | provider-generic; not re-measured here |
-| `getApiKeyAndHeaders` shape on 1.5.0 | reported upstream; verify on the installed typings |
+| Question                                                        | Status                                                                                |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `custom` entries never enter the model context                  | verified in source (`sessionEntryToContextMessages`, `convertToLlm`)                  |
+| `custom_message` becomes a `user` message                       | verified (`convertToLlm`)                                                             |
+| `turn_end` accepts a `custom` draft and persists it             | verified (`_applyBoundaryDrafts`)                                                     |
+| Boundary commit rebuilds `agent.state.messages`                 | verified (`_refreshFinalizedContext`)                                                 |
+| Compaction reads the projection                                 | verified (`prepareCompaction` + `buildSessionProjection`)                             |
+| `appendEntry` is documented as "not sent to LLM"                | verified (types.ts doc comment)                                                       |
+| ThinkRail hides `entry_appended` payloads                       | verified (`sessionEventProjection.ts`)                                                |
+| ThinkRail's transcript includes `custom` messages               | verified (`TRANSCRIPT_MESSAGE_ROLES`)                                                 |
+| Cache invalidation semantics and price ratios                   | provider-generic; not re-measured here                                                |
+| `getApiKeyAndHeaders` shape on 1.5.0                            | reported upstream; verify on the installed typings                                    |
 | Whether pi merges consecutive `user` messages deterministically | **unverified** — matters only for the retired digest design, not for `custom` entries |
-| ThinkRail's own row for a `custom` summary | not built; one web change either way |
+| ThinkRail's own row for a `custom` summary                      | not built; one web change either way                                                  |

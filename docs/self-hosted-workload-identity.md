@@ -6,7 +6,17 @@ title: "Self-hosted workload identity: granting credentials because a VM lives o
 parent: architecture
 depends-on: [d046, d078]
 references: [d108]
-tags: ["research", "secrets", "attestation", "tpm", "vtpm", "confidential-computing", "self-hosted", "security"]
+tags:
+  [
+    "research",
+    "secrets",
+    "attestation",
+    "tpm",
+    "vtpm",
+    "confidential-computing",
+    "self-hosted",
+    "security",
+  ]
 ---
 
 # Self-hosted workload identity
@@ -41,7 +51,7 @@ has a hardware root.**
 - A **trusted network is not an identity.** Reachability (VLAN, route, IP, MAC,
   802.1X port) is a property of the path, not of the workload: any VM that can
   reach the broker can claim any address it is allowed to configure. Network
-  position can *scope* a grant; it cannot *be* the grant.
+  position can _scope_ a grant; it cannot _be_ the grant.
 - A **trusted hypervisor is the real root** — but its strength is exactly the
   strength of what it refuses to lie about: a vTPM's state, a measured boot, a
   TEE measurement. Without one of those, "this VM is on my hypervisor" is a
@@ -59,7 +69,7 @@ Every scheme — cloud or self-hosted — is the same four pieces:
 
 1. **An identity root** the issuer can name: a TPM endorsement key, a TEE
    measurement, a certificate, a node key.
-2. **A proof** the requester holds that root *now*: a TPM quote over fresh
+2. **A proof** the requester holds that root _now_: a TPM quote over fresh
    nonces, an attestation report, a signature.
 3. **A verifier** with reference values and a policy: which roots are
    admitted, which measurements are current.
@@ -78,8 +88,8 @@ The guest asks the platform for a signed report over its own measurement:
 the SEV-SNP firmware via `SNP_GUEST_REQUEST`, with certificate data supplied
 by the hypervisor through `SNP_SET_EXT_CONFIG`), `TDX_CMD_GET_REPORT0` for a
 TDREPORT on TDX. The report verifies against AMD/Intel roots; the measurement
-covers the launched image, so the verifier learns *which code* is asking, not
-just *which VM*.
+covers the launched image, so the verifier learns _which code_ is asking, not
+just _which VM_.
 
 This is the strongest anchor and the most expensive: it needs the CPU
 generation, firmware, and a verifier that fetches vendor collateral. It is
@@ -120,7 +130,7 @@ The hypervisor can hand the guest a secret at first boot (cloud-init user-data,
 for a short-lived credential, then discards. The hypervisor's own config
 becomes the secret store.
 
-What it buys: no *standing* credential inside the VM, and a place to revoke.
+What it buys: no _standing_ credential inside the VM, and a place to revoke.
 What it costs: a secret still exists at provisioning, renewal needs a channel
 (the guest agent, or re-injection and a reboot), and the hypervisor's config
 handling is now security-critical. It is strictly better than a long-lived key
@@ -145,7 +155,7 @@ already the trust boundary, not when the goal is "no keys on the box".
 ### Not identity at all
 
 MAC address, IP, hostname, DMI/system serial, `machine-id`, SSH host key,
-cloud-init metadata *as a claim of provenance*: all are either spoofable by the
+cloud-init metadata _as a claim of provenance_: all are either spoofable by the
 guest or clonable with the disk. They are labels and routing hints. A design
 that says "trusted network ⇒ trusted workload" has quietly promoted one of
 these to a credential.
@@ -154,7 +164,7 @@ these to a credential.
 
 SPIFFE/SPIRE shows the shape of a good answer and its limit: it issues
 short-lived SVIDs, but its node attestors still need a root — `tpm_devid`
-requires DevID certificates provisioned out of band *and* a TPM manufacturer CA
+requires DevID certificates provisioned out of band _and_ a TPM manufacturer CA
 trust bundle, `join_token` is a bootstrap secret, `x509pop` takes a
 provisioned certificate. Attestation frameworks move the root; they do not
 remove it.
@@ -165,14 +175,14 @@ Every mechanism above terminates in the operator's willingness to be held to
 its own configuration:
 
 - the hypervisor can read or clone a `swtpm` state file;
-- it chooses the image it launches (SNP/TDX measurement is honest about *what*
+- it chooses the image it launches (SNP/TDX measurement is honest about _what_
   was launched, not about whether that was the right thing);
 - it supplies the SNP certificate blob and the TDX collateral path;
 - it holds the bootstrap secret in the cheap tier.
 
-So the requirement is real but should be stated honestly: *credentials are
+So the requirement is real but should be stated honestly: _credentials are
 granted to a VM whose boot the platform can prove, on a hypervisor whose
-operator is trusted not to re-point that proof at another VM.* Hardware roots
+operator is trusted not to re-point that proof at another VM._ Hardware roots
 (vendor EK, SEV-SNP, TDX) narrow what the operator can fake; nothing removes
 the operator from the trust set.
 
@@ -224,11 +234,11 @@ anchor, and even then the operator stays in the trust set.
 
 ## Sources
 
-- Linux kernel, *SEV-SNP guest API* — `SNP_GET_REPORT`, `SNP_GET_EXT_REPORT`,
+- Linux kernel, _SEV-SNP guest API_ — `SNP_GET_REPORT`, `SNP_GET_EXT_REPORT`,
   `SNP_SET_EXT_CONFIG` (`docs.kernel.org/virt/coco/sev-guest.html`).
-- Linux kernel, *TDX guest API* — `TDX_CMD_GET_REPORT0` / TDREPORT
+- Linux kernel, _TDX guest API_ — `TDX_CMD_GET_REPORT0` / TDREPORT
   (`docs.kernel.org/virt/coco/tdx-guest.html`).
-- libvirt, *Domain XML format — TPM device* — `<backend type='emulator'
+- libvirt, _Domain XML format — TPM device_ — `<backend type='emulator'
   version='2.0'>`, `encryption secret=`, `active_pcr_banks`
   (`libvirt.org/formatdomain.html`).
 - Keylime — Registrar / Verifier / Agent, TPM 2.0, PCR policies, IMA runtime
@@ -240,7 +250,7 @@ anchor, and even then the operator stays in the trust set.
   **at-rest** protection for a secret you already have, not as an issuer: it
   binds ciphertext to a TPM/host key, which on a vTPM still means the
   hypervisor can decrypt.
-- Tailscale, *tsnet* — node creation, auth key or interactive login, state dir
+- Tailscale, _tsnet_ — node creation, auth key or interactive login, state dir
   (`tailscale.com/docs/features/tsnet`); `tailscale whois` for source-address
   identity.
 - SPIFFE/SPIRE node attestors — `tpm_devid` prerequisites (DevID CA + TPM
@@ -250,13 +260,13 @@ anchor, and even then the operator stays in the trust set.
 
 ## Verified status
 
-| Claim | Status |
-| --- | --- |
-| SEV-SNP/TDX expose guest report ioctls usable by an in-guest verifier client | confirmed in kernel docs |
-| libvirt can attach an emulated TPM 2.0 (`swtpm`) to a QEMU guest | confirmed in libvirt docs |
-| Keylime verifies PCR policies and releases an encrypted payload on trust | confirmed in project docs/README |
-| `swtpm` EK certificates can be locally created (operator-rooted) | confirmed in `swtpm_setup(8)` |
-| `systemd-creds` binds ciphertext to TPM2 and/or host key, with PCR binding | confirmed in `systemd-creds(1)` |
-| Tailscale nodes authenticate with an auth key or login and keep node state on disk | confirmed in Tailscale docs |
-| SPIRE's TPM node attestor requires out-of-band DevID provisioning + vendor CA | confirmed in SPIRE plugin docs |
-| Any of the above running on this fleet's hardware | **not tested** — no `/dev/tpm*`, no `swtpm`/`qemu`/`tailscale` here |
+| Claim                                                                              | Status                                                              |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| SEV-SNP/TDX expose guest report ioctls usable by an in-guest verifier client       | confirmed in kernel docs                                            |
+| libvirt can attach an emulated TPM 2.0 (`swtpm`) to a QEMU guest                   | confirmed in libvirt docs                                           |
+| Keylime verifies PCR policies and releases an encrypted payload on trust           | confirmed in project docs/README                                    |
+| `swtpm` EK certificates can be locally created (operator-rooted)                   | confirmed in `swtpm_setup(8)`                                       |
+| `systemd-creds` binds ciphertext to TPM2 and/or host key, with PCR binding         | confirmed in `systemd-creds(1)`                                     |
+| Tailscale nodes authenticate with an auth key or login and keep node state on disk | confirmed in Tailscale docs                                         |
+| SPIRE's TPM node attestor requires out-of-band DevID provisioning + vendor CA      | confirmed in SPIRE plugin docs                                      |
+| Any of the above running on this fleet's hardware                                  | **not tested** — no `/dev/tpm*`, no `swtpm`/`qemu`/`tailscale` here |

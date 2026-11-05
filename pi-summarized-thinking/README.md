@@ -16,22 +16,22 @@ build order and `AGENTS.md` the folder rules.
 ## What it is not
 
 - Not a thinking-block replacement. The thinking block of the message that
-  produced the answer *is* the reasoning that produced the answer; a paraphrase
+  produced the answer _is_ the reasoning that produced the answer; a paraphrase
   standing in for it is worse input, not cheaper input.
 - Not a context rewrite. Anything that edits a message already inside a cached
   prefix re-prefills the whole suffix on every turn.
 - Not a `custom_message` digest fed to the model. The summary is for a human;
-  `custom_message` is the one entry type that *does* become a `user` message.
+  `custom_message` is the one entry type that _does_ become a `user` message.
 
 ## The entry that makes it safe
 
-| Entry | Written by | In the model context? |
-| --- | --- | --- |
-| `custom_message` | `appendCustomMessageEntry` / `sendMessage` | **yes** — `convertToLlm` makes it a `user` message |
-| `custom` | `appendCustomEntry` / `pi.appendEntry` | **no** — `sessionEntryToContextMessages` returns `[]` |
+| Entry            | Written by                                 | In the model context?                                 |
+| ---------------- | ------------------------------------------ | ----------------------------------------------------- |
+| `custom_message` | `appendCustomMessageEntry` / `sendMessage` | **yes** — `convertToLlm` makes it a `user` message    |
+| `custom`         | `appendCustomEntry` / `pi.appendEntry`     | **no** — `sessionEntryToContextMessages` returns `[]` |
 
-pi's own doc comment on `appendEntry` says it: *"Append a custom entry to the
-session for state persistence (not sent to LLM)."* The card is
+pi's own doc comment on `appendEntry` says it: _"Append a custom entry to the
+session for state persistence (not sent to LLM)."_ The card is
 `customType: "reasoning-summary"`; the context is untouched by construction, not
 by discipline.
 
@@ -59,10 +59,10 @@ tokens are not the session's tokens and there is no thinking to suppress.
 
 Two deliveries over one dependency-free core (`entries → summary text`):
 
-| Delivery | What it does | What it costs |
-| --- | --- | --- |
-| In-chat, `custom` entry | live card in the transcript; TUI via `registerEntryRenderer`, ThinkRail via one row type | one web change in ThinkRail (below) |
-| Sidecar, `<session>.reasoning.jsonl` | backfill over existing sessions, re-summarize with another model, audit trail | a viewer or a host endpoint that reads it |
+| Delivery                             | What it does                                                                             | What it costs                             |
+| ------------------------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------- |
+| In-chat, `custom` entry              | live card in the transcript; TUI via `registerEntryRenderer`, ThinkRail via one row type | one web change in ThinkRail (below)       |
+| Sidecar, `<session>.reasoning.jsonl` | backfill over existing sessions, re-summarize with another model, audit trail            | a viewer or a host endpoint that reads it |
 
 The sidecar reader opens pi JSONL with `SessionManager.open(path)`, walks to a
 leaf, and writes **beside** the session — never into a file a live session has
@@ -94,10 +94,10 @@ never a failed turn.
 
 ## Commands
 
-| Command | Purpose |
-| --- | --- |
-| `/reasoning-summary` | Toggle the card (default ON). OFF stops writing entries; existing ones stay. |
-| `/reasoning-summary-test` | One summarizer call over the current turn, printed inline, nothing written. |
+| Command                                       | Purpose                                                                                 |
+| --------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `/reasoning-summary`                          | Toggle the card (default ON). OFF stops writing entries; existing ones stay.            |
+| `/reasoning-summary-test`                     | One summarizer call over the current turn, printed inline, nothing written.             |
 | `/reasoning-summary-model <provider/modelId>` | Pin the summarizer; empty args reset to env/file/builtin. Must resolve in the registry. |
 
 In ThinkRail these arrive through `getSessionCommands` and the bridged `ctx.ui`
@@ -139,12 +139,12 @@ short form, and each one is a bill:
 
 ## Layout
 
-| File | Role |
-| --- | --- |
+| File                       | Role                                                                             |
+| -------------------------- | -------------------------------------------------------------------------------- |
 | `index.ts`, `package.json` | the extension entry and its `pi.extensions` manifest — the folder IS the package |
-| `README.md` | this file: what it is, how it runs, the model chain, the commands |
-| `FINDINGS.md` | pi/ThinkRail contracts with citations, the cache rule, the superseded claims |
-| `AGENTS.md`, `TODO.md` | folder rules · the build order, unbuilt |
+| `README.md`                | this file: what it is, how it runs, the model chain, the commands                |
+| `FINDINGS.md`              | pi/ThinkRail contracts with citations, the cache rule, the superseded claims     |
+| `AGENTS.md`, `TODO.md`     | folder rules · the build order, unbuilt                                          |
 
 `index.ts` stays out of `tsconfig.json`, like `../pi-synthetic/index.ts`: it
 imports `@earendil-works/pi-coding-agent`, which this repo does not vendor.

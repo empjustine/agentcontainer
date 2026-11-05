@@ -24,9 +24,9 @@ server, a reverse proxy, and a forward proxy**, so none of the four
 words discriminates.
 
 - "server"/"client" name per-connection roles, and both deployments hold
-  both at once: the funnel-side deployment serves the tunnel *and* is
+  both at once: the funnel-side deployment serves the tunnel _and_ is
   an HTTP client to the LLM providers; the local deployment is a tunnel
-  client *and* a server in front of the local apps (loopback :3128
+  client _and_ a server in front of the local apps (loopback :3128
   CONNECT / :1080 SOCKS5). Every use in docs needed a qualifier —
   "tunnel server", "localhost client proxy" — which is the tell that
   the bare words carry no position (d071 retired the same failure mode
@@ -112,7 +112,7 @@ roles too:
 
 ## Collisions and disambiguation (checked, honest)
 
-- **d073 §1/§11 "not an exit node"** is the *Tailscale* exit-node
+- **d073 §1/§11 "not an exit node"** is the _Tailscale_ exit-node
   sense — IP routing, TUN/TAP, an exit-node replacement. That non-goal
   stays true and unchanged. Within llm-reverse-proxy docs, "exit node"
   now means the d088 deployment role; the IP-layer sense appears only
@@ -121,7 +121,7 @@ roles too:
   the metadata-relay chain (d063's `MODELS_DEV_RELAY_URL`,
   `relayCandidates` — the reason d071 rejected `RELAY_BASE_URL(S)`),
   and `relay.go`'s bidirectional byte pump, which by design runs
-  identically in *both* roles ("The SAME function runs in both roles").
+  identically in _both_ roles ("The SAME function runs in both roles").
   "relay node" is a deployment name and never an env identifier, so it
   cannot collide with either; the byte-pump sense actually reinforces
   the vocabulary — the pump describes what both nodes do, the node
@@ -140,4 +140,4 @@ roles too:
   closed", RFC 9459 framing).
 - **edge node / gateway node** — "edge" is unclaimed but vague about
   which edge; "gateway" describes a mix (accurate) without saying
-  *where* (the point of this record).
+  _where_ (the point of this record).

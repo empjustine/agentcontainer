@@ -1,5 +1,4 @@
 ---
-
 id: d098
 type: module-design
 status: draft
@@ -61,6 +60,7 @@ All line numbers cite the pin above.
   subscription-aware, not just id-pattern-aware. The interface contract is
   explicit: `getModels()` stays the complete catalog; the filter is an
   availability policy.
+
 - **The type trap:** `Models.getAllAvailable()` (`models.ts:744-751`)
   uses `filterAllModels` when present; **without it, only chat rows are
   intersected with `filterModels` and every other model type passes
@@ -103,17 +103,16 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { builtinProviders } from "@earendil-works/pi-ai/providers/all";
 
 export default function (pi: ExtensionAPI) {
-	const base = builtinProviders().find((p) => p.id === "openrouter");
-	if (!base) return;
+  const base = builtinProviders().find((p) => p.id === "openrouter");
+  if (!base) return;
 
-	const hidden = (m: { id: string; type?: string }) =>
-		m.type === "image" || m.id.endsWith(":free"); // the actual criteria
+  const hidden = (m: { id: string; type?: string }) => m.type === "image" || m.id.endsWith(":free"); // the actual criteria
 
-	pi.registerProvider({
-		...base,
-		filterModels: (models, credential) => models.filter((m) => !hidden(m)),
-		filterAllModels: (models, credential) => models.filter((m) => !hidden(m)),
-	});
+  pi.registerProvider({
+    ...base,
+    filterModels: (models, credential) => models.filter((m) => !hidden(m)),
+    filterAllModels: (models, credential) => models.filter((m) => !hidden(m)),
+  });
 }
 ```
 

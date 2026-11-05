@@ -28,13 +28,13 @@ grows.
 The proxy is deliberately the smallest runner in the tree — and that is its
 maintainability model:
 
-| Piece | Size | Role |
-|---|---|---|
-| `main.go` | ~345 ln, **zero deps** | passthrough router: config, provider parse, RFC 9457 problems, error taxonomy, server |
-| `run.sh` | ~80 ln | dual mode: container (host network) / native binary |
-| `build.sh` | ~100 ln | triple mode: Termux android binary / OCI image / bare host binary |
-| `smoke-test.sh` | ~215 ln | builds binary, node upstream, 32 behavioural checks (incl. badssl TLS taxonomy) |
-| `generate.sh` + `generate-config.mjs` | ~45 + ~130 ln | routing table from the shared provider fact table |
+| Piece                                 | Size                   | Role                                                                                  |
+| ------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
+| `main.go`                             | ~345 ln, **zero deps** | passthrough router: config, provider parse, RFC 9457 problems, error taxonomy, server |
+| `run.sh`                              | ~80 ln                 | dual mode: container (host network) / native binary                                   |
+| `build.sh`                            | ~100 ln                | triple mode: Termux android binary / OCI image / bare host binary                     |
+| `smoke-test.sh`                       | ~215 ln                | builds binary, node upstream, 32 behavioural checks (incl. badssl TLS taxonomy)       |
+| `generate.sh` + `generate-config.mjs` | ~45 + ~130 ln          | routing table from the shared provider fact table                                     |
 
 Findings here are mostly "already at the target shape"; the value of this
 note is to keep it that way and to flag the few mutable spots.
@@ -44,7 +44,7 @@ note is to keep it that way and to flag the few mutable spots.
 **F1 — `main.go` is the floor, not a refactor target.** ~345 lines, stdlib
 only, one concern per type (`provider`, `problem`, `server`), the error
 taxonomy (`classify`, ~52 ln) is the largest function and is a flat
-`errors.As` cascade. This is the shape to *protect*: no new dependencies, no
+`errors.As` cascade. This is the shape to _protect_: no new dependencies, no
 model routing, no credential handling (the README table is the contract). Any
 feature request that would add a second concern should be answered with
 "another proxy, not a flag".
@@ -106,5 +106,5 @@ anyway.
 ## Recommendation
 
 1 and 2 whenever convenient; otherwise leave this flow alone. Its role in
-future work is the *donor* of patterns (zero-dep, table-driven config,
+future work is the _donor_ of patterns (zero-dep, table-driven config,
 behavioural smoke test), not a refactor target.

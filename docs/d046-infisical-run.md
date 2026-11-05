@@ -14,15 +14,15 @@ command on PATH is a valid target (`./environment.sh pi`), and a PATH hit
 must actually execute to count.
 **Supersedes:** the custom loader mechanics of `./environment.sh`
 (exit-96 empty-vault pre-flight, in-process dotenv parser, `secrets
---output=dotenv` + parse + exec chain); the chain *contract* is unchanged.
+--output=dotenv` + parse + exec chain); the chain _contract_ is unchanged.
 
 ## Context
 
 `./environment.sh` was the repo's explicit env chain:
 `./environment.sh <script>` — fetch the vault, inject it into the
-environment, `exec` the target. The *contract* (consumers read plain env,
+environment, `exec` the target. The _contract_ (consumers read plain env,
 never load secrets, no `.env` files, fatal on failure) was repo policy; but
-the *mechanism* — an `infisical secrets --output=dotenv` round-trip captured
+the _mechanism_ — an `infisical secrets --output=dotenv` round-trip captured
 into a shell variable, a hand-rolled here-doc dotenv parser (`_inject`,
 `export "$_l"`, no re-expansion), then `exec` — re-implemented what the
 Infisical CLI itself ships as `infisical run`:

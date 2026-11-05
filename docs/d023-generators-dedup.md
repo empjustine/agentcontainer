@@ -24,27 +24,27 @@ Findings were classified as:
 
 ## (a) Never used / dead
 
-| #  | Item | Where | Evidence |
-|----|------|-------|----------|
-| a1 | `logDebug` re-export | `llm-local-inference/gen-lib.mjs` | No `.mjs` consumer anywhere. |
-| a2 | `logDie` export | `lib/log.mjs` | Zero JS consumers (shell has its own `log_die` in `lib/log.sh`). |
-| a3 | Duplicated paragraph | `gen-lib.mjs` KEY-NAMING CONTRACT | The "PLAIN environment variable names / `__`-prefix" bullet block was pasted twice verbatim. |
-| a4 | `lib/sandbox-*.jq` mount loop | `coding-agent/run.sh` | The glob never matches (filters were renamed `workload-*.jq`); nothing was ever mounted, and the justifying comment was stale anyway — the in-container launch chain never calls `workload_*`. |
-| a5 | `00-model-base.json` staging | `coding-agent/generate.sh`, `coding-agent/run.sh` | The file does not exist anywhere in the repo; both guarded lines never fire. `merge-models-json.mjs`'s optional base-file handling was simplified away with it. |
-| a6 | Stale references | `gen-lib.mjs`, `llm-local-inference/generate.sh` (pointers into the gitignored archive, itself since removed), `lib/workload-runtime.sh` (`coding-agent/tests/check-workload.sh` → actually `tests/check-sandbox.sh`; `docs/d020-libvirt-qemu-workload.md` → actually `…-sandbox.md`) | Archived/renamed targets. |
-| a7 | Stale probe-cascade comment | `llm-local-inference/generate.sh` gfx1030 section | Claims the probe still tries `localhost:18080`; the localhost candidates were removed (docs/d022). |
-| a8 | `filter-relays.mjs` in `tsconfig.json` | removed file still listed in `include` | The relay-drop machinery is gone (see the `coding-agent/generate.sh` header); `lint.sh`'s jq gate had the same stale `lib/sandbox-*.jq` glob. |
-| a9 | `loadModelsDev` exported | `gen-lib.mjs` | Only called inside `gen-lib.mjs` itself — un-exported. |
-| a10 | `_render_container` call | `tests/check-sandbox.sh` | The lib renamed the renderer to `_render_workload` in the sandbox→workload sweep; the test died at its first case (`_render_container: not found`) and reported MISMATCH on every run. Renamed — the suite passes again (3/3 cases). |
+| #   | Item                                   | Where                                                                                                                                                                                                                                                                                 | Evidence                                                                                                                                                                                                                             |
+| --- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| a1  | `logDebug` re-export                   | `llm-local-inference/gen-lib.mjs`                                                                                                                                                                                                                                                     | No `.mjs` consumer anywhere.                                                                                                                                                                                                         |
+| a2  | `logDie` export                        | `lib/log.mjs`                                                                                                                                                                                                                                                                         | Zero JS consumers (shell has its own `log_die` in `lib/log.sh`).                                                                                                                                                                     |
+| a3  | Duplicated paragraph                   | `gen-lib.mjs` KEY-NAMING CONTRACT                                                                                                                                                                                                                                                     | The "PLAIN environment variable names / `__`-prefix" bullet block was pasted twice verbatim.                                                                                                                                         |
+| a4  | `lib/sandbox-*.jq` mount loop          | `coding-agent/run.sh`                                                                                                                                                                                                                                                                 | The glob never matches (filters were renamed `workload-*.jq`); nothing was ever mounted, and the justifying comment was stale anyway — the in-container launch chain never calls `workload_*`.                                       |
+| a5  | `00-model-base.json` staging           | `coding-agent/generate.sh`, `coding-agent/run.sh`                                                                                                                                                                                                                                     | The file does not exist anywhere in the repo; both guarded lines never fire. `merge-models-json.mjs`'s optional base-file handling was simplified away with it.                                                                      |
+| a6  | Stale references                       | `gen-lib.mjs`, `llm-local-inference/generate.sh` (pointers into the gitignored archive, itself since removed), `lib/workload-runtime.sh` (`coding-agent/tests/check-workload.sh` → actually `tests/check-sandbox.sh`; `docs/d020-libvirt-qemu-workload.md` → actually `…-sandbox.md`) | Archived/renamed targets.                                                                                                                                                                                                            |
+| a7  | Stale probe-cascade comment            | `llm-local-inference/generate.sh` gfx1030 section                                                                                                                                                                                                                                     | Claims the probe still tries `localhost:18080`; the localhost candidates were removed (docs/d022).                                                                                                                                   |
+| a8  | `filter-relays.mjs` in `tsconfig.json` | removed file still listed in `include`                                                                                                                                                                                                                                                | The relay-drop machinery is gone (see the `coding-agent/generate.sh` header); `lint.sh`'s jq gate had the same stale `lib/sandbox-*.jq` glob.                                                                                        |
+| a9  | `loadModelsDev` exported               | `gen-lib.mjs`                                                                                                                                                                                                                                                                         | Only called inside `gen-lib.mjs` itself — un-exported.                                                                                                                                                                               |
+| a10 | `_render_container` call               | `tests/check-sandbox.sh`                                                                                                                                                                                                                                                              | The lib renamed the renderer to `_render_workload` in the sandbox→workload sweep; the test died at its first case (`_render_container: not found`) and reported MISMATCH on every run. Renamed — the suite passes again (3/3 cases). |
 
 ## (b) Used once — assessed, mostly kept
 
-| #  | Item | Assessment |
-|----|------|------------|
-| b1 | `gen-lib.mjs: loadCore()` — single consumer (`generate-general.yaml.mjs`) | Kept: trivial, and its export documents the core-file contract. |
-| b2 | `gen-lib.mjs: peerEntry()` — single consumer | **Kept deliberately**: it encodes the `${env.*}` macro convention; inlining would scatter that knowledge. |
-| b3 | `coding-agent/check-node-version.mjs` — single caller (Termux branch) | Kept: it is the only home of the 22.19 rationale, and it is distinct from the llm-local-inference ≥18 floor (different products). |
-| b4 | `count-providers.mjs` + `list-providers.mjs` — one caller each | Kept for now (separate staging entries are cheap); merging them is a possible follow-up. |
+| #   | Item                                                                      | Assessment                                                                                                                        |
+| --- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| b1  | `gen-lib.mjs: loadCore()` — single consumer (`generate-general.yaml.mjs`) | Kept: trivial, and its export documents the core-file contract.                                                                   |
+| b2  | `gen-lib.mjs: peerEntry()` — single consumer                              | **Kept deliberately**: it encodes the `${env.*}` macro convention; inlining would scatter that knowledge.                         |
+| b3  | `coding-agent/check-node-version.mjs` — single caller (Termux branch)     | Kept: it is the only home of the 22.19 rationale, and it is distinct from the llm-local-inference ≥18 floor (different products). |
+| b4  | `count-providers.mjs` + `list-providers.mjs` — one caller each            | Kept for now (separate staging entries are cheap); merging them is a possible follow-up.                                          |
 
 ## (c) Duplicated across files — consolidated into `lib/`
 
@@ -99,7 +99,7 @@ Both `generate.sh` scripts repeated, verbatim-ish:
 - the `RUN_DIR` default derivation (`${TMPDIR:-${PREFIX}/tmp}` on Termux,
   `${TMPDIR:-/tmp}` elsewhere) — now `default_run_dir`.
 
-The differing node *floors* stay per-caller (18 for the llm-local-inference
+The differing node _floors_ stay per-caller (18 for the llm-local-inference
 generators, 22.19 for pi — different products' requirements).
 
 ### c6. One vendored models.dev catalog
@@ -144,8 +144,8 @@ at HEAD since the sandbox→workload rename.
 - **Merging the two `CLOUD_PROVIDERS` logics** (`generate-models.json.mjs` vs
   `generate-opencode.jsonc.mjs`): their override-vs-builtin semantics
   legitimately differ (pi-shaped vs opencode-shaped output). Only the shared
-  *probe mechanics* were unified; the provider tables themselves remain
-  per-family (unifying the provider *facts* into one table is a possible
+  _probe mechanics_ were unified; the provider tables themselves remain
+  per-family (unifying the provider _facts_ into one table is a possible
   follow-up — see the audit's c3/c4).
 - **Inlining `peerEntry()` / `check-node-version.mjs`** (b2/b3): see (b).
 - **A shared `BAZZITE_ROUTER_TAILSCALE_URL` constant** (audit c4): still

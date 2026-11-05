@@ -41,7 +41,7 @@ environment:
 - One transport assumption per client means a support call per environment;
   an ordered family makes the fallback a code path.
 
-The order h2-POST → WebSocket → h1.1-POST makes *compatibility probability and performance agree*:
+The order h2-POST → WebSocket → h1.1-POST makes _compatibility probability and performance agree_:
 the mechanism modern gateways pass is also the fastest, and the floor
 degrades last.
 
@@ -104,7 +104,7 @@ prefix itself (d085). What would change this posture
   (§1).
 - **Server-side reality (E2).** Funnel's edge→localhost hop delivers h1.1
   requests regardless of what the public leg negotiated. The server therefore
-  implements the h2-POST tunnel as *concurrent streaming HTTP handlers* — one goroutine per
+  implements the h2-POST tunnel as _concurrent streaming HTTP handlers_ — one goroutine per
   request, bodies forwarded unbuffered — and the h2 benefit (multiplexing, no
   head-of-line blocking, no upgrade) lives purely on the public leg. Direct-h2
   serving (no Funnel) would need no server change: `net/http` negotiates h2
@@ -142,7 +142,7 @@ prefix itself (d085). What would change this posture
   target connection) under the same bounded-idle discipline as v2 (VPN-R39:
   reap, never leak). Unknown `trace-id` → camouflage 404.
 - **Response direction** is streamed; media type `text/event-stream` is the
-  *preferred* framing for the anti-buffering and resume reasons in §6 —
+  _preferred_ framing for the anti-buffering and resume reasons in §6 —
   pending L1/L4, so the transport is specified media-type-neutral today.
 - **Cost (accepted).** One round trip per exchange on a latency-accumulating
   path (Funnel edge + gateway buffer policy). This transport exists for
@@ -191,7 +191,7 @@ dial TLS ── ALPN ─┬─ h2        → h2-POST (upgrade never attempted on
   h2-POST + WebSocket (`cd`) since d084 (deploy-first superseding L3); all
   three (`cde`) with the h1.1-POST tunnel built (d081's amendment — same
   arm-by-default law: the ladder is the point, so the h1.1-POST tunnel must be
-  *on offer* to demote into, and it takes traffic only when both the h2 and
+  _on offer_ to demote into, and it takes traffic only when both the h2 and
   WebSocket probes fail, which makes the normal path unchanged in healthy
   environments and complete in damaged ones).
 - Demotion never reverses within a client session; the chosen transport is logged
@@ -204,15 +204,15 @@ dial TLS ── ALPN ─┬─ h2        → h2-POST (upgrade never attempted on
   transport choice into a route the edge config must expose and a filterable
   handle, and would split the camouflage namespace. Funnel keeps mapping
   **one path** to the tunnel (VPN-R42 intact); the handler branches on
-  ALPN/method/`Upgrade`/`traceparent` presence. R42 constrains *Funnel
-  configuration*, not handler-internal dispatch.
+  ALPN/method/`Upgrade`/`traceparent` presence. R42 constrains _Funnel
+  configuration_, not handler-internal dispatch.
 
 ## 5. What every transport shares (the non-transport contract)
 
 Transports are byte-pipes; everything above the pipe is identical:
 
 - **Auth:** per-request constant-time bearer on every HTTP request of every
-  transport (VPN-R12's *intent* — R12's handshake-header wording applies to the
+  transport (VPN-R12's _intent_ — R12's handshake-header wording applies to the
   WebSocket tunnel);
   camouflage 404 before anything is hijacked or opened (VPN-R31–R34).
 - **Framing:** `tunnelproto` frames in request/response bodies (the h2-POST and
@@ -228,7 +228,7 @@ Transports are byte-pipes; everything above the pipe is identical:
   interface — read/write exactly one framed message, a read deadline, a
   violation signal, a transport tag — feeding the same handshake and relay
   pump. The interface is message-shaped, not byte-shaped, because a transport's
-  message boundary *is* its transport fact: WS messages arrive framed, body
+  message boundary _is_ its transport fact: WS messages arrive framed, body
   carriers delimit with the length prefix (§3), and `protocolViolation` /
   `transport()` hold vocabulary the relay must not know (close frame vs.
   body end; `h2` | `wss` | `post`). That is the whole implementation surface
@@ -236,11 +236,11 @@ Transports are byte-pipes; everything above the pipe is identical:
 
 ## 6. Study A — `text/event-stream` as the h1.1-POST response carrier (recorded; partially adopted)
 
-**Thesis:** The h1.1-POST tunnel's response direction should *declare* SSE rather than
+**Thesis:** The h1.1-POST tunnel's response direction should _declare_ SSE rather than
 anonymous `chunked`.
 
 - **Gain 1 — the anti-buffering norm.** SSE is the one streaming content type
-  gateways are *expected* to pass unbuffered (`Cache-Control: no-cache`,
+  gateways are _expected_ to pass unbuffered (`Cache-Control: no-cache`,
   `X-Accel-Buffering: no` are conventions, not hacks; dashboards/chats/tickers
   run on it). Gateways that buffer anonymous chunked bodies often have an
   explicit SSE passthrough mode. This may decide whether the h1.1-POST tunnel works at all.
@@ -253,36 +253,36 @@ anonymous `chunked`.
   event id gives the h1.1-POST tunnel's stateful continuation for free, with bearer re-auth
   on every request as today.
 - **Costs:** `data:` framing forces base64 (~33% — acceptable, the h1.1-POST tunnel is the
-  slow transport); the stream must be *conformant* (a malformed SSE stream is its
+  slow transport); the stream must be _conformant_ (a malformed SSE stream is its
   own signature); and SSE is framing, not concealment — under a
   TLS-terminating interceptor the content is plaintext regardless (§3.0).
 - **Evidence status:** E2 establishes Funnel's ReverseProxy streams bodies;
   it cites no SSE-specific test. Funnel-carrier SSE is spike **L1**.
-- **Verdict:** preferred response media type for the h1.1-POST tunnel, adopted in *intent*
+- **Verdict:** preferred response media type for the h1.1-POST tunnel, adopted in _intent_
   only; h2-POST/WebSocket framing is untouched (h2 DATA frames and WS frames need no
   media-type norm).
 
 ## 7. Study B — TLS inside the family's TLS (recorded; NOT adopted)
 
 **Thesis:** splice an inner TLS session across the family's byte-pipe, so a
-middlebox that terminates the *outer* TLS still cannot read the tunnel —
+middlebox that terminates the _outer_ TLS still cannot read the tunnel —
 and, because the inner session authenticates the real server, cannot
 transparently substitute itself either.
 
 **Layering:** outer = any transport as carrier (SSE/POST byte-pipe); inner = a TLS
 session carried as payload bytes, exposed locally as a `net.Conn`; tunnel
-protocols (even the WebSocket tunnel's upgrade) then negotiate *inside* the inner
+protocols (even the WebSocket tunnel's upgrade) then negotiate _inside_ the inner
 session where no gateway parses them. The capability path and bearer travel
 only inside inner TLS.
 
 **Adversary matrix** (the framing question: "if outer TLS is broken, the
 traffic is suspect anyway — should it just be broken?"):
 
-| interceptor posture | family (§3) alone | + inner TLS |
-|---|---|---|
-| arbitrary rule-blocks (path/token/keyword matching — the named threat) | **exposed** — plaintext post-MITM, rule-matchable | **defeats it** — zero inspectable content |
-| active DPI (payload fingerprinting) | classifiable | TLS-in-TLS fingerprint → classify-and-block |
-| destination-layer (SNI/DNS of `*.ts.net`) | dead | dead |
+| interceptor posture                                                    | family (§3) alone                                 | + inner TLS                                 |
+| ---------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------- |
+| arbitrary rule-blocks (path/token/keyword matching — the named threat) | **exposed** — plaintext post-MITM, rule-matchable | **defeats it** — zero inspectable content   |
+| active DPI (payload fingerprinting)                                    | classifiable                                      | TLS-in-TLS fingerprint → classify-and-block |
+| destination-layer (SNI/DNS of `*.ts.net`)                              | dead                                              | dead                                        |
 
 **The non-negotiable condition:** inner TLS must validate against a **pinned
 trust anchor** (the Funnel chain — e.g. ISRG Root X1 only), **never system
@@ -293,12 +293,12 @@ harmless); MITM → inner fails → fail-closed (VPN-R26), unless the intercepto
 forwards blindly, in which case it works and reads nothing.
 
 **Costs:** (a) an inner ClientHello inside POST/SSE payloads is a known
-fingerprint an *active* DPI drops — but that adversary could equally drop the
+fingerprint an _active_ DPI drops — but that adversary could equally drop the
 capability path today, so the trade is "readable + rule-matchable" →
 "opaque + classifiable", which is the right direction for arbitrary blocks;
 (b) +1 RTT per tunnel setup (resumption amortizes); (c) the carrier's physics
 do not improve — inner TLS carries records over stop-and-wait as-is;
-(d) under a corp-CA MITM the inner handshake *fails closed*, turning today's
+(d) under a corp-CA MITM the inner handshake _fails closed_, turning today's
 transparent-but-readable tunnel into a blocked one — a deliberate policy
 choice, consistent with the framing question above.
 
@@ -327,7 +327,7 @@ policy showing path/token-based blocking of this tunnel (L5).
   restricted work environment is expected to offer h2 and pass the upgrade,
   so the h2-POST and WebSocket tunnels are both reachable there and L2 confirms rather than
   discovers; a deviation reorders §9's build order. L2 decides which transport the
-  work environment will *use* (and therefore which to build first), not which
+  work environment will _use_ (and therefore which to build first), not which
   transport is preferred.
 - **L3 — h2-POST concurrency.** N ≥ 6 concurrent streaming POSTs through
   Funnel → N concurrent h1.1 backend requests with bodies streamed and
@@ -373,17 +373,17 @@ policy showing path/token-based blocking of this tunnel (L5).
     §5.1, VPN-R12). The rule itself is unchanged: authenticate before relaying
     anything, camouflage 404 otherwise (VPN-R12, VPN-R34).
   - **Dispatch** — VPN-R42's "mode dispatch is by PATH only" keeps its
-    meaning for *namespace* selection (allowlist relay vs authenticated relay
+    meaning for _namespace_ selection (allowlist relay vs authenticated relay
     vs the tunnel path); the transport split inside that path is protocol
     negotiation, not path (§4). R42 constrains Funnel configuration, not
     handler-internal branching (d073 §10, VPN-R42).
-  All other requirements stand as written.
+    All other requirements stand as written.
 - Delivery: the WebSocket tunnel shipped with v2; the h2-POST tunnel is built
   and default-on since d084 (L3 superseded); the h1.1-POST tunnel is built with
   no spike ahead of it (d081's
   L4 amendment — characterization after, never a gate) and joins the
   default offer `cd` → `cde`. L2 decides which transport the work environment
-  *uses*, not all three (§8).
+  _uses_, not all three (§8).
 - Spikes S1/S2 (d073 §13) remain the Funnel-lifetime/streaming baseline for
   the WebSocket tunnel; L1–L4 are additive and do not replace them.
 
@@ -399,7 +399,7 @@ to a plaintext backend over h2c only when its content type is `application/grpc*
 and that special case exists precisely to make gRPC work — upstream
 `ipn/ipnlocal: proxy gRPC requests over h2c if needed` (tailscale/tailscale#9847,
 merged 2023-10) added it so gRPC services can be published through
-serve/funnel at all. So gRPC is a *supported* Funnel workload, not a lucky
+serve/funnel at all. So gRPC is a _supported_ Funnel workload, not a lucky
 accident, and the backend hop is HTTP/1.1 for every other content type.
 
 **The gate is gRPC-only, and already known to be too narrow.** Connect RPC is
@@ -435,7 +435,7 @@ measured; and it adds a protobuf toolchain to a family that needs none.
 **WebSocket-over-h2 (RFC 8441) is now refused structurally, not just
 observationally.** The WebSocket transport already declined to assume it exists
 anywhere on the path; the stronger statement holds: for a byte pump it cannot
-beat h2 streaming POST, because it *is* an h2 stream plus a handshake plus a
+beat h2 streaming POST, because it _is_ an h2 stream plus a handshake plus a
 framing layer over h2's own, and it needs extended-`CONNECT` support on every
 hop that h2 POST does not. Upstream behavior (an upgrade is not proxied once the
 client negotiates h2) points the same way. The operational consequence stands
@@ -452,4 +452,3 @@ credential would silently arrive empty and the tunnel would authenticate nothing
 the cap is neither configurable nor published, so it is a constant across the
 family — no spike should report a per-transport bandwidth win, and the L-series
 bars stay latency/streaming bars.
-

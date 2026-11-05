@@ -31,7 +31,7 @@ It was wrong in three ways:
   `EnvHttpProxyAgent`).
 - **It silently degraded.** A missing/unresolvable `undici` dropped proxy
   support with only a warning; the native path has no optional dependency to
- miss.
+  miss.
 - **It shadowed the native dispatcher.** A repo `setGlobalDispatcher`
   replaces the process-global dispatcher `NODE_USE_ENV_PROXY` would install,
   so the two can never be combined and the repo copy can drift from Node's.
@@ -62,7 +62,7 @@ It was wrong in three ways:
 - The old failure mode ("proxy set but undici unavailable") is gone; the new
   one is a silent no-op on pre-22.21 node, recorded here.
 - docs/d001 §1 (proxy config in the generator's process env) still governs how
-  *base URLs* are baked; only the fetch-dispatcher mechanism changed.
+  _base URLs_ are baked; only the fetch-dispatcher mechanism changed.
 - d023's "the undici `EnvHttpProxyAgent` setup moved here too" and d071's
   mention of `useEnvProxy()` are historical; this record supersedes the
   mechanism they describe.

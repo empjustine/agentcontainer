@@ -13,7 +13,7 @@ This applies the two remaining follow-ups from the d022/d023 audits — the
 "d022 future refactor" (split the `generate-models.json.mjs` grab-bag by
 merge semantics) and the d023 c3/c4 follow-up (unify the `CLOUD_PROVIDERS`
 fact tables) — plus the opportunistic c4 constant (`DEFAULT_PEER_FALLBACK`)
-the two cosmetic leftovers d023 noted.  (Rotation note, d028: the c4
+the two cosmetic leftovers d023 noted. (Rotation note, d028: the c4
 constant was later vault-sourced — it is `PEER_BASE_URL` in infisical's
 /inference path now, not a repo constant; see lib/peer-probe.mjs peerBaseUrl.)
 
@@ -25,11 +25,11 @@ semantics (the local layer ADDS a provider pi doesn't ship; the cloud layer
 is an override-ONLY emission that is usually empty). The split gives each
 file exactly one semantic, with the d022-proposed per-function names:
 
-| New file | Emits | Semantic | Was |
-|---|---|---|---|
-| `coding-agent/generate-local-llama-swap.mjs` | `model-010-local-default.json` | ADDS the `llama-swap` provider | local half of `generate-models.json.mjs` |
-| `coding-agent/generate-cloud-pi-native-providers.mjs` | `model-012-cloud-pi-native.json` | override-ONLY (empty when every pi-native cloud endpoint is reachable) | cloud half of `generate-models.json.mjs` |
-| `coding-agent/generate-cloud-alternative-providers.mjs` | `model-015-cloud-cline-pass.json` + `model-016-cloud-hyper.json` | AUTHORITATIVE full block (pi has no native `cline-pass`/`hyper`) | `generate-cline-pass.mjs` (renamed) |
+| New file                                                | Emits                                                            | Semantic                                                               | Was                                      |
+| ------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------- |
+| `coding-agent/generate-local-llama-swap.mjs`            | `model-010-local-default.json`                                   | ADDS the `llama-swap` provider                                         | local half of `generate-models.json.mjs` |
+| `coding-agent/generate-cloud-pi-native-providers.mjs`   | `model-012-cloud-pi-native.json`                                 | override-ONLY (empty when every pi-native cloud endpoint is reachable) | cloud half of `generate-models.json.mjs` |
+| `coding-agent/generate-cloud-alternative-providers.mjs` | `model-015-cloud-cline-pass.json` + `model-016-cloud-hyper.json` | AUTHORITATIVE full block (pi has no native `cline-pass`/`hyper`)       | `generate-cline-pass.mjs` (renamed)      |
 
 `generate-opencode.jsonc.mjs` keeps its name (d022 explicitly deferred it):
 it is the opencode-format twin of the pi-native generator.

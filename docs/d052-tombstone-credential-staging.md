@@ -59,4 +59,3 @@ at. This is that record.
 - The retired peers-only serving mode — covered by
   `docs/environments-and-variants.md` and the container-tooling
   environment table.
-

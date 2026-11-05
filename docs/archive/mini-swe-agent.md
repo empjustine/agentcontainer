@@ -9,7 +9,7 @@ title: "Two approaches to building a minimal coding agent"
 
 # Two approaches to building a minimal coding agent
 
-A comparison of **mini-swe-agent** (`/reference/github/SWE-agent/mini-swe-agent/`, v2.4.6, Python) and **pi**'s agent core (`/reference/github/earendil-works/pi/packages/agent/`, `@earendil-works/pi-agent-core` 0.84.1, TypeScript), which is the package pi builds its coding agent on. Both solve the same problem — a loop that lets an LLM inspect a repo, run commands, edit files, and finish — but they optimize for opposite things: mini for *radical simplicity and hackability*, pi for *durability, extensibility, and UI-driven control*.
+A comparison of **mini-swe-agent** (`/reference/github/SWE-agent/mini-swe-agent/`, v2.4.6, Python) and **pi**'s agent core (`/reference/github/earendil-works/pi/packages/agent/`, `@earendil-works/pi-agent-core` 0.84.1, TypeScript), which is the package pi builds its coding agent on. Both solve the same problem — a loop that lets an LLM inspect a repo, run commands, edit files, and finish — but they optimize for opposite things: mini for _radical simplicity and hackability_, pi for _durability, extensibility, and UI-driven control_.
 
 ---
 
@@ -85,7 +85,7 @@ while True:
 
 - **Exceptions are control flow.** `exceptions.py` defines `InterruptAgentFlow` with subclasses `Submitted` (task done), `LimitsExceeded`/`TimeExceeded`, `UserInterruption`, `FormatError`. Anything that should end or redirect the loop raises a message-bearing exception.
 - **One model call per step**, then all actions execute, then observations are appended. No streaming, no abort signal, no parallelism.
-- **Termination is a magic string.** The prompt instructs the model to `echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT`. The environment (`local.py`, `docker.py`) sniffs the first output line; on match it raises `Submitted` with the remainder as the submission. Works with *any* model — no structural "end of turn" needed.
+- **Termination is a magic string.** The prompt instructs the model to `echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT`. The environment (`local.py`, `docker.py`) sniffs the first output line; on match it raises `Submitted` with the remainder as the submission. Works with _any_ model — no structural "end of turn" needed.
 - **Format errors are conversational.** `parse_toolcall_actions` raises `FormatError` with a rendered `format_error_template` (e.g. "Your response MUST include at least one tool call"); the agent injects it as a user message and lets the model recover, capped at `max_consecutive_format_errors`.
 - **Limits**: `step_limit`, `cost_limit` (litellm cost calculator), `wall_time_limit_seconds`, plus a process-wide `GLOBAL_MODEL_STATS` with env-configured cost/call caps.
 
@@ -114,28 +114,28 @@ stream assistant response (token deltas via message_update events)
 
 ## 4. The tool model
 
-| | mini-swe-agent | pi agent core |
-|---|---|---|
-| Number of tools | **1**: bash. File edits happen *inside* bash (sed/cat). Deliberate: "no custom tools for every specific thing — tell the LM to figure it out" | Many: bash, read, write, edit-diff, image, plus app-defined tools |
-| Tool schema | One hardcoded `BASH_TOOL` OpenAI-style function schema in `actions_toolcall.py` | Per-tool TypeBox JSON schemas, validated with `validateToolArguments` before execution |
-| Tool-calling requirement | **None.** Two model families: tool-calling (`mini.yaml`, litellm) and text-format (`default.yaml`: parse ```mswea_bash_command blocks from free text) — "you can run it with literally any model" | Native tool-calling only; `convertToLlm` bridges message types, not action formats |
-| Action shape | Plain dicts: `{"command": "...", "tool_call_id": ...}` | `AgentToolCall` content blocks + `AgentToolResult<T>` = `{content[], details, usage, addedToolNames?, terminate?}` |
-| Result formatting | Jinja2 `observation_template` renders returncode/output/exception_info into the next user/tool message; truncation to 10k chars with head/tail + `elided_chars` | Tool returns structured `{content, details}`; bash tool truncates (last N lines / KB) *and saves the full output to a temp file*, pointing the model at it; streaming `onUpdate` partials throttled at 100 ms |
-| Errors | Rendered into the observation (exception_info) or a `FormatError` user message | Contract: **throw** on failure → loop catches, wraps as `toolResult` with `isError: true`; `beforeToolCall` can block; `afterToolCall` can patch |
-| Execution mode | Sequential by construction (one step = one action batch) | `parallel` (default) or `sequential`, per-batch or per-tool via `executionMode` |
-
-
+|                          | mini-swe-agent                                                                                                                                                                                    | pi agent core                                                                                                                                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Number of tools          | **1**: bash. File edits happen _inside_ bash (sed/cat). Deliberate: "no custom tools for every specific thing — tell the LM to figure it out"                                                     | Many: bash, read, write, edit-diff, image, plus app-defined tools                                                                                                                                             |
+| Tool schema              | One hardcoded `BASH_TOOL` OpenAI-style function schema in `actions_toolcall.py`                                                                                                                   | Per-tool TypeBox JSON schemas, validated with `validateToolArguments` before execution                                                                                                                        |
+| Tool-calling requirement | **None.** Two model families: tool-calling (`mini.yaml`, litellm) and text-format (`default.yaml`: parse ```mswea_bash_command blocks from free text) — "you can run it with literally any model" | Native tool-calling only; `convertToLlm` bridges message types, not action formats                                                                                                                            |
+| Action shape             | Plain dicts: `{"command": "...", "tool_call_id": ...}`                                                                                                                                            | `AgentToolCall` content blocks + `AgentToolResult<T>` = `{content[], details, usage, addedToolNames?, terminate?}`                                                                                            |
+| Result formatting        | Jinja2 `observation_template` renders returncode/output/exception_info into the next user/tool message; truncation to 10k chars with head/tail + `elided_chars`                                   | Tool returns structured `{content, details}`; bash tool truncates (last N lines / KB) _and saves the full output to a temp file_, pointing the model at it; streaming `onUpdate` partials throttled at 100 ms |
+| Errors                   | Rendered into the observation (exception_info) or a `FormatError` user message                                                                                                                    | Contract: **throw** on failure → loop catches, wraps as `toolResult` with `isError: true`; `beforeToolCall` can block; `afterToolCall` can patch                                                              |
+| Execution mode           | Sequential by construction (one step = one action batch)                                                                                                                                          | `parallel` (default) or `sequential`, per-batch or per-tool via `executionMode`                                                                                                                               |
 
 ---
 
 ## 5. Messages and history
 
 **mini — "completely linear history" (a stated feature).**
+
 - `self.messages` is a plain list of dicts; every step appends the assistant message and the observation messages. The trajectory you save (`serialize()`, `.traj.json`, format `mini-swe-agent-1.1`) **is** the exact prompt history. There is no hidden state, no pruning, no compaction.
 - The README calls this out as a feature for debugging and for RL/fine-tuning: what you see is what the model saw, no transcript/context divergence.
 - Context overflow is handled by... the model's format-error template (`finish_reason == "length"` → "your response was cut off, respond more concisely"). There is no summarization.
 
 **pi — transcript ≠ provider context.**
+
 - `AgentMessage` is a union of standard LLM messages plus **custom message types** (declaration-merging extension point: `role: "notification"`, `role: "artifact"`, etc.).
 - Every LLM call passes through `transformContext()` (prune/inject at the AgentMessage level) and then `convertToLlm()` (map/filter to provider-visible `user`/`assistant`/`toolResult`). Custom messages never leak to the provider unless explicitly converted.
 - Context pressure is managed: the `harness/compaction/` module does token estimation, `shouldCompact`, `compact` with summary generation, and `branch-summarization`; the harness spec adds durable compaction (auto at thresholds, manual, and overflow-triggered retry) and an append-only context invariant (mid-turn writes defer to checkpoints to preserve provider KV-cache hits).
@@ -144,28 +144,29 @@ stream assistant response (token deltas via message_update events)
 
 ## 6. State, durability, and session management
 
-**mini:** everything lives in RAM. `save()`/`serialize()` dump the trajectory to JSON if an `output_path` is configured. There is no resume, no session store, no compaction, no multi-turn persistence. The `InteractiveAgent` can be steered at runtime (human/confirm/yolo modes), but the *history* is still just the message list.
+**mini:** everything lives in RAM. `save()`/`serialize()` dump the trajectory to JSON if an `output_path` is configured. There is no resume, no session store, no compaction, no multi-turn persistence. The `InteractiveAgent` can be steered at runtime (human/confirm/yolo modes), but the _history_ is still just the message list.
 
 **pi:** a whole durability layer. `harness/session/` models a session as:
+
 - an append-only **tree** of entries (messages + config changes + summaries),
 - **lanes** (named positions in the tree, like git branches; `main` plus app-defined lanes that run operations in parallel),
 - per-lane **operation logs** of records (intent-before-effect: `operation_started`, `step_attempt`, `tool_started`, `queue_enqueued`, `usage`, … with provisioned entry ids),
 - **global facts** (name, labels).
 
-`docs/harness-v2.md` specifies crash recovery/resume (restore reduces the log to a state; unfinished steps retry with durable attempt counts; tools re-execute only if replay-safe), deferred provider requests (batch APIs), abort reconciliation, and queue durability. Storage backends: memory, JSONL, SQLite (`session-backends` package). This is the *platform* answer to "what if the process dies mid-task?" — mini's answer is "re-run the task."
+`docs/harness-v2.md` specifies crash recovery/resume (restore reduces the log to a state; unfinished steps retry with durable attempt counts; tools re-execute only if replay-safe), deferred provider requests (batch APIs), abort reconciliation, and queue durability. Storage backends: memory, JSONL, SQLite (`session-backends` package). This is the _platform_ answer to "what if the process dies mid-task?" — mini's answer is "re-run the task."
 
 ---
 
 ## 7. Model/provider layer
 
-| | mini (litellm_model.py) | pi (pi-ai + stream-fn) |
-|---|---|---|
-| Provider breadth | litellm (hundreds of providers), plus openrouter/portkey/requesty wrappers and text-based variants that skip tool-calling entirely | Explicit provider registry (`Models.setProvider`); `Models.streamSimple` is the default `StreamFn` |
-| Stream contract | n/a — `litellm.completion` returns a full response | `StreamFn` **must not throw**; failures are encoded as protocol events + a final message with `stopReason: "error" | "aborted"` |
-| Cost | litellm cost calculator per call; `GLOBAL_MODEL_STATS` with thread-safe cost/call limits; Anthropic cache-control markers | Per-message `usage` (input/output/cacheRead/cacheWrite/cost); harness keeps a durable `usage` record ledger so retried/discarded responses are still billed |
-| Retry | tenacity loop with an abort-exception allowlist (auth errors, context overflow, …) | Configurable `RetryPolicy` with `maxRetryDelayMs`; durable attempt counts in the harness |
-| Thinking | Interleaved thinking support + `_reorder_anthropic_thinking_blocks` | First-class `ThinkingLevel` ("off"…"max") + `thinkingBudgets` token caps |
-| Auth/keys | dotenv global config file (`~/.config/mini-swe-agent/.env`) | Dynamic `getApiKey(provider)` per call (for expiring OAuth tokens), `sessionId` forwarded to providers for cache-aware backends |
+|                  | mini (litellm_model.py)                                                                                                            | pi (pi-ai + stream-fn)                                                                                                                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Provider breadth | litellm (hundreds of providers), plus openrouter/portkey/requesty wrappers and text-based variants that skip tool-calling entirely | Explicit provider registry (`Models.setProvider`); `Models.streamSimple` is the default `StreamFn`                                                          |
+| Stream contract  | n/a — `litellm.completion` returns a full response                                                                                 | `StreamFn` **must not throw**; failures are encoded as protocol events + a final message with `stopReason: "error"                                          | "aborted"` |
+| Cost             | litellm cost calculator per call; `GLOBAL_MODEL_STATS` with thread-safe cost/call limits; Anthropic cache-control markers          | Per-message `usage` (input/output/cacheRead/cacheWrite/cost); harness keeps a durable `usage` record ledger so retried/discarded responses are still billed |
+| Retry            | tenacity loop with an abort-exception allowlist (auth errors, context overflow, …)                                                 | Configurable `RetryPolicy` with `maxRetryDelayMs`; durable attempt counts in the harness                                                                    |
+| Thinking         | Interleaved thinking support + `_reorder_anthropic_thinking_blocks`                                                                | First-class `ThinkingLevel` ("off"…"max") + `thinkingBudgets` token caps                                                                                    |
+| Auth/keys        | dotenv global config file (`~/.config/mini-swe-agent/.env`)                                                                        | Dynamic `getApiKey(provider)` per call (for expiring OAuth tokens), `sessionId` forwarded to providers for cache-aware backends                             |
 
 ---
 
@@ -173,15 +174,15 @@ stream assistant response (token deltas via message_update events)
 
 **mini** ships an interactive mode in the box (`agents/interactive.py`): `human` (user types commands, executed immediately), `confirm` (LM commands need Enter), `yolo`; `whitelist_actions` regexes skip confirmation; `/y /c /u /m /h` slash commands; rich console rendering of each step with running cost. The loop is synchronous, so "steering" is a blocking prompt between turns.
 
-**pi** separates concerns: the agent core emits events and exposes queues; the interactive surface lives in other packages (the `tui` package, keybindings, the coding-agent CLI). `Agent.steer()` injects a user message *while a tool is running* (queued, durable in the harness); `followUp()` queues work for after the agent would stop; `steeringMode`/`followUpMode` control drain granularity. The harness spec even describes a Slack-thread/email-thread lane model where one session serves many parallel conversations.
+**pi** separates concerns: the agent core emits events and exposes queues; the interactive surface lives in other packages (the `tui` package, keybindings, the coding-agent CLI). `Agent.steer()` injects a user message _while a tool is running_ (queued, durable in the harness); `followUp()` queues work for after the agent would stop; `steeringMode`/`followUpMode` control drain granularity. The harness spec even describes a Slack-thread/email-thread lane model where one session serves many parallel conversations.
 
 ---
 
 ## 9. Benchmarks, tests, and "minimal" as a research position
 
-mini-swe-agent's second audience is *research*: `run/benchmarks/` contains SWE-bench, single-instance, and ProgramBench runners with batch progress and a stable trajectory JSON format, and the project's identity is "a baseline that puts the LM, not the scaffold, in the middle" (SWE-bench bash-only leaderboard). It scores >74% on SWE-bench verified with a single bash tool. The `minimal-agent.com` tutorial exists to teach the ~100-line pattern.
+mini-swe-agent's second audience is _research_: `run/benchmarks/` contains SWE-bench, single-instance, and ProgramBench runners with batch progress and a stable trajectory JSON format, and the project's identity is "a baseline that puts the LM, not the scaffold, in the middle" (SWE-bench bash-only leaderboard). It scores >74% on SWE-bench verified with a single bash tool. The `minimal-agent.com` tutorial exists to teach the ~100-line pattern.
 
-pi's agent package is a *general-purpose agent engine* whose test suite includes harness conformance tests (`harness/session/testing/`, `vitest.harness.config.ts`) and a "deterministic stepping" goal (drive mode that parks before every effect so tests can stop, inject, or crash-restart at any boundary). Benchmarks live in a separate `evals` package.
+pi's agent package is a _general-purpose agent engine_ whose test suite includes harness conformance tests (`harness/session/testing/`, `vitest.harness.config.ts`) and a "deterministic stepping" goal (drive mode that parks before every effect so tests can stop, inject, or crash-restart at any boundary). Benchmarks live in a separate `evals` package.
 
 ---
 
@@ -195,18 +196,16 @@ pi's agent package is a *general-purpose agent engine* whose test suite includes
 
 ## 11. The honest trade-off table
 
-| Dimension | mini-swe-agent | pi agent core |
-|---|---|---|
-| Core loop size | ~190 lines (Python) | ~800 lines `agent-loop.ts` + 590 lines `Agent` (TS) |
-| Tools | 1 (bash) | open set with schemas/validation/hooks |
-| History | linear, == transcript, in memory | typed messages ≠ provider context; pruned/compacted; durable session tree |
-| Crash safety | none (re-run) | durable operations, intent records, resume |
-| Streaming/abort | no | yes (deltas, AbortSignal everywhere) |
-| Parallel tool calls | no | yes (default), with sequential opt-out |
-| User steering mid-run | blocking prompt between turns | async steer/follow-up queues (durable in harness) |
-| Model compatibility | any model incl. non-tool-calling (text format) | tool-calling models via providers |
-| Cost/limits | step/cost/wall-time + global stats | usage ledgers, retry budgets, token-based compaction |
-| Best at | baseline, research (RL/FT), hackability, minimal deps on scaffolding | long-running products, UIs, multi-session/multi-lane services, crash-resilient operation |
-| Worst at | context growth, crash recovery, parallelism | doing anything at "glanceable simplicity" scale |
-
-
+| Dimension             | mini-swe-agent                                                       | pi agent core                                                                            |
+| --------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Core loop size        | ~190 lines (Python)                                                  | ~800 lines `agent-loop.ts` + 590 lines `Agent` (TS)                                      |
+| Tools                 | 1 (bash)                                                             | open set with schemas/validation/hooks                                                   |
+| History               | linear, == transcript, in memory                                     | typed messages ≠ provider context; pruned/compacted; durable session tree                |
+| Crash safety          | none (re-run)                                                        | durable operations, intent records, resume                                               |
+| Streaming/abort       | no                                                                   | yes (deltas, AbortSignal everywhere)                                                     |
+| Parallel tool calls   | no                                                                   | yes (default), with sequential opt-out                                                   |
+| User steering mid-run | blocking prompt between turns                                        | async steer/follow-up queues (durable in harness)                                        |
+| Model compatibility   | any model incl. non-tool-calling (text format)                       | tool-calling models via providers                                                        |
+| Cost/limits           | step/cost/wall-time + global stats                                   | usage ledgers, retry budgets, token-based compaction                                     |
+| Best at               | baseline, research (RL/FT), hackability, minimal deps on scaffolding | long-running products, UIs, multi-session/multi-lane services, crash-resilient operation |
+| Worst at              | context growth, crash recovery, parallelism                          | doing anything at "glanceable simplicity" scale                                          |

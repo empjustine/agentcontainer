@@ -41,7 +41,7 @@ The env surface grows by exactly one variable, `VPN_OPERATOR_KEYS`, whose
 value is a **JSON object** mapping principal id → token:
 
 ```json
-{"ops": "<token>", "laptop": "<token>", "ci": "<token>"}
+{ "ops": "<token>", "laptop": "<token>", "ci": "<token>" }
 ```
 
 Encoding choices, considered:
@@ -85,7 +85,7 @@ Clients do not change at all: each machine already holds its own vaulted
 token; its token simply becomes one of N.
 
 **Why not hashed at rest.** Hashes-at-rest (config JSON holding per-key
-digests) were considered and rejected: the env chain (VPN-R32) *is* the
+digests) were considered and rejected: the env chain (VPN-R32) _is_ the
 secret store, so a digest written beside the plaintext it hashes would be a
 second copy of credential material adding zero protection — precisely the
 second-copy problem VPN-R44 exists to prevent. Tokens stay env-only; the
@@ -93,8 +93,8 @@ committed config gains **no new field**.
 
 ## 3. Requirement deltas (restated with citations)
 
-- **VPN-R31 (amended)** — Modes B–E MUST authenticate *an operator principal
-  from a bounded static set* (one independent credential per principal,
+- **VPN-R31 (amended)** — Modes B–E MUST authenticate _an operator principal
+  from a bounded static set_ (one independent credential per principal,
   shared across the B and tunnel namespaces alike), and, in mode B, the
   `${prefix}` path capability; never the upstream. Provider keys stay
   client-owned and are never injected (VPN-R6/R40 — untouched).
@@ -107,7 +107,7 @@ committed config gains **no new field**.
 - **VPN-R34 (unchanged, load-bearing)** — Wrong token, unknown id, missing
   prefix, missing header: all answer mode A's camouflage 404, byte-identical,
   with no signal distinguishing which check failed. This is what makes the
-  *size* of the key set non-enumerable: nothing in the response vocabulary
+  _size_ of the key set non-enumerable: nothing in the response vocabulary
   counts the keys.
 - **VPN-R26/R31 (restated)** — Fail-closed per §2: empty, unparsable,
   duplicate-id, undersized-token, or over-cap input means no tunnel, loud, at
@@ -115,8 +115,8 @@ committed config gains **no new field**.
 - **VPN-R44 (unchanged)** — Tokens arrive only through the env chain, never
   the config file. Ids are labels, not capabilities; they are logged, the
   tokens are not.
-- **NFR-5 (exception, phrased)** — The exception granted here is a *bounded
-  operator key set*: still no accounts, no signup, no tenancy, no isolation
+- **NFR-5 (exception, phrased)** — The exception granted here is a _bounded
+  operator key set_: still no accounts, no signup, no tenancy, no isolation
   between principals beyond revocation and attribution.
 
 ## 4. Matching, without early exit
@@ -124,7 +124,7 @@ committed config gains **no new field**.
 `checkBearer`'s single-secret constant-time compare becomes a full-set scan
 that returns the matched id (or none): hash/compare discipline per VPN-R33,
 every entry visited, result = the id, timing ≈ (set size × one compare). With
-plaintext tokens in env there is nothing to hash *for* — see §2's
+plaintext tokens in env there is nothing to hash _for_ — see §2's
 rejected-hash rationale — so the comparison stays a direct constant-time
 byte-compare, exactly today's primitive, looped.
 
@@ -154,12 +154,12 @@ that authenticated, never the session's key, VPN-R33). Without this, any
 operator key that learned a trace-id could drive or destroy a session it never
 authenticated for.
 
-This adds none of the per-key *rights* listed as out of scope: no scope, no
+This adds none of the per-key _rights_ listed as out of scope: no scope, no
 egress policy, no namespace, no quota. Two principals remain identical in
 rights; the binding says only that a session belongs to whoever authenticated
 for it.
 
-Per-key *rights* (scope, egress, namespace) are explicitly out of scope. The
+Per-key _rights_ (scope, egress, namespace) are explicitly out of scope. The
 hook is structural only: the per-principal struct introduced by this record
 may later carry a scope field, so if access isolation is ever wanted it is a
 field fill plus its own decision record — not another credential-model

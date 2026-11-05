@@ -36,15 +36,14 @@ The pi agent processes each entry in the `data` array through two functions:
 
 ```js
 function isModelInfo(value) {
-    return typeof candidate.id === "string"
-        && typeof candidate.status?.value === "string";
+  return typeof candidate.id === "string" && typeof candidate.status?.value === "string";
 }
 ```
 
-| Field | Your response | Status |
-|-------|--------------|--------|
-| `id` (string) | `"03a-4q2-8k08v0-200ctx-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S"` | ✅ Present |
-| `status.value` (string) | `"unloaded"` | ✅ Present |
+| Field                   | Your response                                                   | Status     |
+| ----------------------- | --------------------------------------------------------------- | ---------- |
+| `id` (string)           | `"03a-4q2-8k08v0-200ctx-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S"` | ✅ Present |
+| `status.value` (string) | `"unloaded"`                                                    | ✅ Present |
 
 **Your response passes this check.** It would not trigger the "not in router mode" error.
 
@@ -52,49 +51,48 @@ function isModelInfo(value) {
 
 ```js
 function toPiModel(model, serverUrl) {
-    const reportedContextWindow = model.meta?.n_ctx ?? model.meta?.n_ctx_train;
-    const contextWindow = reportedContextWindow && reportedContextWindow > 0
-        ? reportedContextWindow : 128000;
-    return {
-        id: model.id,
-        name: model.id,
-        api: "openai-completions",
-        provider: LLAMA_PROVIDER_ID,
-        baseUrl: llamaInferenceUrl(serverUrl),
-        reasoning: false,
-        input: model.architecture?.input_modalities?.includes("image")
-            ? ["text", "image"] : ["text"],
-        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-        contextWindow,
-        maxTokens: Math.min(16384, contextWindow),
-        compat: { /* ... */ },
-    };
+  const reportedContextWindow = model.meta?.n_ctx ?? model.meta?.n_ctx_train;
+  const contextWindow =
+    reportedContextWindow && reportedContextWindow > 0 ? reportedContextWindow : 128000;
+  return {
+    id: model.id,
+    name: model.id,
+    api: "openai-completions",
+    provider: LLAMA_PROVIDER_ID,
+    baseUrl: llamaInferenceUrl(serverUrl),
+    reasoning: false,
+    input: model.architecture?.input_modalities?.includes("image") ? ["text", "image"] : ["text"],
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    contextWindow,
+    maxTokens: Math.min(16384, contextWindow),
+    compat: {/* ... */},
+  };
 }
 ```
 
 ## Missing fields
 
-| Expected field | Purpose | Your llama-swap response |
-|---------------|---------|--------------------------|
-| `meta.n_ctx` | Configured context window size | ❌ **Missing** — `meta` only contains `{"llamaswap": {"type": "model"}}` |
-| `meta.n_ctx_train` | Fallback native context window size | ❌ **Missing** |
-| `architecture` | Object describing model capabilities | ❌ **Missing entirely** |
-| `architecture.input_modalities` | Array like `["text"]` or `["text", "image"]` | ❌ **Missing entirely** |
+| Expected field                  | Purpose                                      | Your llama-swap response                                                 |
+| ------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------ |
+| `meta.n_ctx`                    | Configured context window size               | ❌ **Missing** — `meta` only contains `{"llamaswap": {"type": "model"}}` |
+| `meta.n_ctx_train`              | Fallback native context window size          | ❌ **Missing**                                                           |
+| `architecture`                  | Object describing model capabilities         | ❌ **Missing entirely**                                                  |
+| `architecture.input_modalities` | Array like `["text"]` or `["text", "image"]` | ❌ **Missing entirely**                                                  |
 
 ## Impact of missing fields
 
-| Missing field | Consequence |
-|---------------|------------|
+| Missing field                     | Consequence                                                                                                                                                                                                                           |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `meta.n_ctx` / `meta.n_ctx_train` | Context window defaults to `128000` for every model, regardless of its actual capability. `maxTokens` gets clamped to `min(16384, 128000) = 16384`. This may over-allocate context and lead to OOM or under-report available context. |
-| `architecture.input_modalities` | Falls back to `["text"]` for all models. Multimodal vision models will **not** be detected as image-capable. |
+| `architecture.input_modalities`   | Falls back to `["text"]` for all models. Multimodal vision models will **not** be detected as image-capable.                                                                                                                          |
 
-
-```
+````
 
 If llama-swap returns:
 ```json
 [ { "id": "...", "status": { "value": "..." } } ]
-```
+````
+
 (i.e., a bare array without the `{ data: ... }` wrapper), then the `Array.isArray(payload.data)` check in `list()` will fail and throw `"llama.cpp returned an invalid model catalog"`, which surfaces as the "Could not refresh" error.
 
 ## Summary for llama-swap compatibility

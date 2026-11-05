@@ -37,16 +37,16 @@ and a markdown file whose frontmatter lacks either field is simply not one —
 `llm-local-inference/model-cards/*.md` are notes, not specs. Being a node is not the same
 as meeting the contract below, and the validator only sees part of it.
 
-| field | required | rule |
-| --- | --- | --- |
-| `id` | yes | Unique across the whole tree. Lowercase kebab-case (`gguf-model-tooling`) or a `dNNN` record handle (`d104`, `d114`). **Stable** — never renumber, never reuse; every link in the tree points at it. A bare `dNNN` only: no suffixed variants, ever (see [Colliding numbers](#colliding-numbers)). |
-| `type` | yes | One of the five types below. Nothing else ever. |
-| `title` | yes | One line, human sentence. The ThinkRail contract requires it (`spec_create` will not write a spec without one) even though `spec_validate` stays silent when it is missing. |
-| `status` | recommended | One of the five lifecycle values below. Nothing else ever. |
-| `parent` | for living docs | One id — the tree edge. A **code unit** only: `goal`, `architecture`, a module node, a submodule node (see [Nesting](#nesting-the-expected-shape)). |
-| `depends-on`, `references`, `implements` | optional | Lists of **ids**, not paths: `[d073, d077]`. The validator reports every value here that resolves to no id. |
-| `covers` | optional | A list of ids the tooling writes but **never resolves**: a `covers` value pointing at nothing is silent drift (`spec_get` lists no such edge). Unused in this tree — prefer `references` for the edge you actually mean. |
-| `tags` | optional | Free-form list. Genre words live here, not in `type` (`bugfix`, `research`). |
+| field                                    | required        | rule                                                                                                                                                                                                                                                                                               |
+| ---------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                                     | yes             | Unique across the whole tree. Lowercase kebab-case (`gguf-model-tooling`) or a `dNNN` record handle (`d104`, `d114`). **Stable** — never renumber, never reuse; every link in the tree points at it. A bare `dNNN` only: no suffixed variants, ever (see [Colliding numbers](#colliding-numbers)). |
+| `type`                                   | yes             | One of the five types below. Nothing else ever.                                                                                                                                                                                                                                                    |
+| `title`                                  | yes             | One line, human sentence. The ThinkRail contract requires it (`spec_create` will not write a spec without one) even though `spec_validate` stays silent when it is missing.                                                                                                                        |
+| `status`                                 | recommended     | One of the five lifecycle values below. Nothing else ever.                                                                                                                                                                                                                                         |
+| `parent`                                 | for living docs | One id — the tree edge. A **code unit** only: `goal`, `architecture`, a module node, a submodule node (see [Nesting](#nesting-the-expected-shape)).                                                                                                                                                |
+| `depends-on`, `references`, `implements` | optional        | Lists of **ids**, not paths: `[d073, d077]`. The validator reports every value here that resolves to no id.                                                                                                                                                                                        |
+| `covers`                                 | optional        | A list of ids the tooling writes but **never resolves**: a `covers` value pointing at nothing is silent drift (`spec_get` lists no such edge). Unused in this tree — prefer `references` for the edge you actually mean.                                                                           |
+| `tags`                                   | optional        | Free-form list. Genre words live here, not in `type` (`bugfix`, `research`).                                                                                                                                                                                                                       |
 
 Two hard rules that a graph walker cannot forgive:
 
@@ -57,7 +57,7 @@ Two hard rules that a graph walker cannot forgive:
 - **An id is an identity, not a filename.** The stem usually equals the id
   (`docs/architecture.md` → `architecture`), but not always: the `docs/` root
   holds path-anchored docs whose ids are module names (`container-tooling.md`
-  → `lib`), because d0XX bodies reference the *path*. Renaming a file does not
+  → `lib`), because d0XX bodies reference the _path_. Renaming a file does not
   change its id, and an id must never be silently re-spelled — retarget every
   reference instead.
 
@@ -71,7 +71,7 @@ once carried are gone for that reason (d111).
 
 The rule that replaces them: **rename the least-cited of the colliding records
 to the next free number, and leave the plain number to the survivor.** Citation
-count decides, because the rename's cost *is* the number of references to
+count decides, because the rename's cost _is_ the number of references to
 retarget — moving the rarely-named record keeps the churn near zero and keeps
 every existing `dNNN` pointer meaning what it always meant. "Next free" means
 one past the highest number in use, never a backfilled hole: the number is a
@@ -124,7 +124,7 @@ Three rules follow, and they are mechanical enough to apply without judgement:
   is the folder name (`coding-agent`, `estige`, `git`, `llm-local-inference`),
   and that node parents to `architecture` — it is the
   module's front door, not something inside the module. Every other spec about
-  that folder parents to the node, wherever its *file* physically sits: `docs/`
+  that folder parents to the node, wherever its _file_ physically sits: `docs/`
   is a file layout, not the graph.
 - **The parent's level matches the spec's `type`.** `architecture-design` →
   `architecture`; `module-design` → its module node; `submodule-design` → its
@@ -148,13 +148,13 @@ thing without a hand-maintained table.
 
 `type` answers **scope**, not genre: how far the document's authority reaches.
 
-| type | scope | in this tree |
-| --- | --- | --- |
-| `goal-and-requirements` | what the system must do — normative, one document | `docs/requirements.md` (id `goal`, the root of the living tree) |
-| `architecture-design` | spans the repository or crosses module boundaries: the map, the shared rules, prior art, system-wide decisions | `docs/architecture.md`, `docs/environments-and-variants.md`, prior-art and audit docs, the d0XX records that change the layout or a shared contract |
-| `module-design` | confined to one runner folder or one module (`coding-agent/`, `estige/`, `git/`, `llm-local-inference/`) | each module's `README.md` + `DESIGN.md`, the module-scoped decision records |
-| `submodule-design` | a directory-level subsystem inside a package | `estige/CI.md`, `llm-local-inference/CACHE-DESIGN.md` |
-| `task-spec` | one piece of work with acceptance criteria | temporary by definition — the ThinkRail tools write them to `.thinkrail/context/TASK-*.md` and the work's landing removes them. Nothing durable belongs here; a finished decision becomes a record |
+| type                    | scope                                                                                                          | in this tree                                                                                                                                                                                       |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `goal-and-requirements` | what the system must do — normative, one document                                                              | `docs/requirements.md` (id `goal`, the root of the living tree)                                                                                                                                    |
+| `architecture-design`   | spans the repository or crosses module boundaries: the map, the shared rules, prior art, system-wide decisions | `docs/architecture.md`, `docs/environments-and-variants.md`, prior-art and audit docs, the d0XX records that change the layout or a shared contract                                                |
+| `module-design`         | confined to one runner folder or one module (`coding-agent/`, `estige/`, `git/`, `llm-local-inference/`)       | each module's `README.md` + `DESIGN.md`, the module-scoped decision records                                                                                                                        |
+| `submodule-design`      | a directory-level subsystem inside a package                                                                   | `estige/CI.md`, `llm-local-inference/CACHE-DESIGN.md`                                                                                                                                              |
+| `task-spec`             | one piece of work with acceptance criteria                                                                     | temporary by definition — the ThinkRail tools write them to `.thinkrail/context/TASK-*.md` and the work's landing removes them. Nothing durable belongs here; a finished decision becomes a record |
 
 Choosing between the first two is the only judgement call: **would the decision
 still hold if the module were deleted?** Yes → `architecture-design`. No →
@@ -165,12 +165,12 @@ scope test, and the `d0XX` filename prefix is what marks them as history.
 
 `status` is the record's position in its life, and it is separate from `type`.
 
-| status | meaning |
-| --- | --- |
-| `draft` | proposed, not in force; nothing in the tree has to obey it yet |
-| `active` | in force — the code and docs are expected to match it |
-| `stale` | still in force but known to lag the tree; needs a keeper |
-| `done` | the work it describes is complete, or the investigation is finished |
+| status       | meaning                                                             |
+| ------------ | ------------------------------------------------------------------- |
+| `draft`      | proposed, not in force; nothing in the tree has to obey it yet      |
+| `active`     | in force — the code and docs are expected to match it               |
+| `stale`      | still in force but known to lag the tree; needs a keeper            |
+| `done`       | the work it describes is complete, or the investigation is finished |
 | `deprecated` | superseded or retired; kept as history, pointed at by its successor |
 
 Rules that keep the value parseable:
@@ -183,12 +183,12 @@ Rules that keep the value parseable:
 - **No synonyms.** If you are reaching for one of these, use the standard value
   and let the body carry the nuance:
 
-  | tempting | standard |
-  | --- | --- |
-  | `implemented`, `accepted`, `adopted`, `adopted-in-part`, `stable`, `current` | `active` |
-  | `proposed`, `deferred` | `draft` |
-  | `findings` | `done` |
-  | `superseded`, `archived`, `partially-archived` | `deprecated` |
+  | tempting                                                                     | standard     |
+  | ---------------------------------------------------------------------------- | ------------ |
+  | `implemented`, `accepted`, `adopted`, `adopted-in-part`, `stable`, `current` | `active`     |
+  | `proposed`, `deferred`                                                       | `draft`      |
+  | `findings`                                                                   | `done`       |
+  | `superseded`, `archived`, `partially-archived`                               | `deprecated` |
 
 - **A status is not a decision.** Superseding a record is done by writing a new
   record that says so and pointing the old one at it (d072: records stay
@@ -197,17 +197,17 @@ Rules that keep the value parseable:
 
 ## Where specs live in this tree
 
-| location | what it is | type |
-| --- | --- | --- |
-| `docs/requirements.md` | the BRD, root of the living tree | `goal-and-requirements` |
-| `docs/*.md` | cross-cutting reference and prior art — a doc whose `parent` is `architecture` or `goal`, because it spans units or describes the repo itself | `architecture-design` / `module-design` |
-| `docs/dNNN-*.md` | the decision log (history) | `architecture-design` / `module-design` by scope |
-| `docs/archive/` | investigations that finished, plus retired operational docs | same two types, `status: done` / `deprecated` |
-| `<module>/README.md` + `DESIGN.md` | one module: what it is and why it is shaped that way | `module-design` |
-| `<module>/<topic>.md` | a living doc that guides exactly one module — a runbook, a generated table, per-harness reference — with `parent` naming that module (d117) | `module-design` / `submodule-design` |
-| `<module>/<subsystem>.md` | a subsystem inside a package | `submodule-design` |
-| `.thinkrail/context/TASK-*.md` | the tool's working task-specs — real nodes in the graph, outside this tree's hierarchy | `task-spec` |
-| `.agents/skills/SPEC.md` | the vendored spec of the workflow skill family (id `submodule-workflow-skills`) | `submodule-design`, no `parent` |
+| location                           | what it is                                                                                                                                    | type                                             |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `docs/requirements.md`             | the BRD, root of the living tree                                                                                                              | `goal-and-requirements`                          |
+| `docs/*.md`                        | cross-cutting reference and prior art — a doc whose `parent` is `architecture` or `goal`, because it spans units or describes the repo itself | `architecture-design` / `module-design`          |
+| `docs/dNNN-*.md`                   | the decision log (history)                                                                                                                    | `architecture-design` / `module-design` by scope |
+| `docs/archive/`                    | investigations that finished, plus retired operational docs                                                                                   | same two types, `status: done` / `deprecated`    |
+| `<module>/README.md` + `DESIGN.md` | one module: what it is and why it is shaped that way                                                                                          | `module-design`                                  |
+| `<module>/<topic>.md`              | a living doc that guides exactly one module — a runbook, a generated table, per-harness reference — with `parent` naming that module (d117)   | `module-design` / `submodule-design`             |
+| `<module>/<subsystem>.md`          | a subsystem inside a package                                                                                                                  | `submodule-design`                               |
+| `.thinkrail/context/TASK-*.md`     | the tool's working task-specs — real nodes in the graph, outside this tree's hierarchy                                                        | `task-spec`                                      |
+| `.agents/skills/SPEC.md`           | the vendored spec of the workflow skill family (id `submodule-workflow-skills`)                                                               | `submodule-design`, no `parent`                  |
 
 Two locations are indexed but sit outside the docs tree, and both are
 load-bearing rather than incidental:
@@ -284,14 +284,14 @@ Three constraints bind the placement, and the first one decides:
 parent cycles. Everything else in this contract is silent to it (measured
 against this tree in d112):
 
-| the tooling | the contract |
-| --- | --- |
-| reports duplicate ids, dangling links and cycles — run it after any structural change | nothing extra: the same failures |
-| writes and indexes any `type:` / `status:` value | the five types and five statuses; nobody else checks them |
-| accepts a missing `title` | a title on every node |
-| writes `covers` but never resolves it | `references` for an edge you mean |
-| accepts a record as a parent, or a module-scoped spec at `architecture` | the nesting rules above |
-| has no exclude list — every id-bearing file is a node | exactly one copy of a vendored spec |
+| the tooling                                                                           | the contract                                              |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| reports duplicate ids, dangling links and cycles — run it after any structural change | nothing extra: the same failures                          |
+| writes and indexes any `type:` / `status:` value                                      | the five types and five statuses; nobody else checks them |
+| accepts a missing `title`                                                             | a title on every node                                     |
+| writes `covers` but never resolves it                                                 | `references` for an edge you mean                         |
+| accepts a record as a parent, or a module-scoped spec at `architecture`               | the nesting rules above                                   |
+| has no exclude list — every id-bearing file is a node                                 | exactly one copy of a vendored spec                       |
 
 That gap is the reason the checks below exist: they are the part the tooling
 does not do, and skipping them is how this tree carried 33 misplaced nodes
@@ -351,7 +351,6 @@ grep -rl '^type: module-design' "${SPECS[@]}" \
 
 The last one needs a reader. Output is not automatically wrong — an archived
 investigation has no module left to hang from — but the question for each line
-is the scope test from [Types](#types): *which folder's behavior does this
-describe?* If the answer is one folder, `parent` is that module node; if it is
+is the scope test from [Types](#types): _which folder's behavior does this
+describe?_ If the answer is one folder, `parent` is that module node; if it is
 several, the record is `architecture-design` and parents to `architecture`.
-

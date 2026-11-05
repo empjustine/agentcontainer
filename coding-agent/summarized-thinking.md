@@ -14,7 +14,7 @@ One summarizer call at the end of a completed turn, written into the session as 
 the transcript**. The model's context is never touched, so a session running this
 extension sends the provider exactly the same bytes as one that does not.
 
-This note owns the *why* and the reversals. The package itself —
+This note owns the _why_ and the reversals. The package itself —
 layout, the summarizer's model chain, commands, configuration, the invariants as
 folder rules — is `../pi-summarized-thinking/`, and the pi/ThinkRail contracts
 this rests on are `../pi-summarized-thinking/FINDINGS.md`. The **decisions** that
@@ -31,7 +31,7 @@ up one level away.
 mechanically: pi rewrites the finalized assistant message in place before
 subscribers and before `SessionManager` persists it, so a summary really does
 replace the CoT end to end. What it gets wrong is meaning. The thinking block of
-the message that produced the answer *is* the reasoning that produced the answer;
+the message that produced the answer _is_ the reasoning that produced the answer;
 replacing it substitutes a lossy paraphrase for the thing the model needed, and
 every later turn re-reads the paraphrase as if it were the model's own reasoning.
 A summary is an overlay on the transcript, not a substitute inside it.
@@ -41,7 +41,7 @@ CoT (it drives the tool calls) and replace the rest with their share of the
 summary. This preserves meaning and shrinks the context — and pays for it on
 every single turn. See the cache rule.
 
-Both variants also shared the deeper defect: they made the summary *the model's*
+Both variants also shared the deeper defect: they made the summary _the model's_
 input. That is backwards. The model needs its own reasoning to produce correct
 output; the summary exists so a human can audit a long turn without reading raw
 CoT. Everything below follows from separating those two audiences.
@@ -55,7 +55,7 @@ reads run ≈0.1× input price, cache writes ≈1.25×).
 > **You may only edit a message that has never been sent to the provider.**
 
 The terminal assistant message of a turn was output, never input — so rewriting
-*it* is free (which is why mistake two could have safely replaced the last block,
+_it_ is free (which is why mistake two could have safely replaced the last block,
 and nothing else). Every earlier round of a tool chain was input to a later round
 of the same turn: editing round 1 diverges the prefix immediately and re-prefills
 the entire chain, on every turn, for as long as the chain stays in the window.
@@ -93,7 +93,7 @@ something this extension manages and becomes something it cannot express.
 
 - **Rounds 1…N-1 keep their folded thinking cards** for the rest of the window;
   only the final answer's card becomes the chain summary. Accepted: folding
-  several cards per turn is a *rendering* problem worth zero tokens, whereas
+  several cards per turn is a _rendering_ problem worth zero tokens, whereas
   rewriting them costs the cache (this note's rule).
 - The summarizer's tokens never surface as thinking: it is a `complete()` call with
   reasoning off, not an agent turn.

@@ -37,15 +37,15 @@ the drift gate, and both forms need the key.
 
 ## Files
 
-| File                           | Role                                                                               |
-| ------------------------------ | ---------------------------------------------------------------------------------- |
-| `index.ts`                     | the extension entry: `registerProvider` + `refreshModels` (the listing at runtime) |
-| `sources.mjs`                  | the ONE source read: the provider's `/models` listing at the canonical upstream    |
-| `merge.mjs`                    | the ONE shaping step + both projections (manifest entry, registered-model entry)   |
-| `log.mjs`                      | the JSONL logger both halves share (docs/d045)                                     |
-| `generate.mjs`                 | one fetch in, two artifacts out; `--check` verifies without writing                |
-| `models.json`                  | GENERATED: the pi-`models.json`-shaped verboo block (canonical upstream, d070)     |
-| `models.js`                    | GENERATED: the extension's offline seed                                            |
+| File           | Role                                                                               |
+| -------------- | ---------------------------------------------------------------------------------- |
+| `index.ts`     | the extension entry: `registerProvider` + `refreshModels` (the listing at runtime) |
+| `sources.mjs`  | the ONE source read: the provider's `/models` listing at the canonical upstream    |
+| `merge.mjs`    | the ONE shaping step + both projections (manifest entry, registered-model entry)   |
+| `log.mjs`      | the JSONL logger both halves share (docs/d045)                                     |
+| `generate.mjs` | one fetch in, two artifacts out; `--check` verifies without writing                |
+| `models.json`  | GENERATED: the pi-`models.json`-shaped verboo block (canonical upstream, d070)     |
+| `models.js`    | GENERATED: the extension's offline seed                                            |
 
 Regenerate with `./npm-run.sh pi-verboo generate` from the repo
 root (the git diff is the review).

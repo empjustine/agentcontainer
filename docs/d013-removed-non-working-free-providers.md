@@ -10,7 +10,7 @@ parent: coding-agent
 
 ## Context
 
-`generate-config.yaml.js` registers a set of providers that are *supposed* to
+`generate-config.yaml.js` registers a set of providers that are _supposed_ to
 expose usable free (or free-tier) models via the generated `models.json`.
 During use it turned out that several of these do **not** actually offer any
 working free models through this flow, so they only contribute dead entries,
@@ -18,13 +18,13 @@ extra fetch attempts, and confusion.
 
 The affected providers:
 
-| Provider ID         | State in script before removal                         | Why it doesn't work                                              |
-|---------------------|--------------------------------------------------------|------------------------------------------------------------------|
-| `groq-free`         | active override (`requireApiKey: true`)                | Groq is built into pi already and exposes no usable free models via this flow |
-| `xai-free`          | active override (`requireApiKey: true`)                | xAI/Grok is built into pi already and exposes no usable free models via this flow |
-| `cerebras-free`     | active override (`requireApiKey: true`)                | Cerebras exposes no usable free models through the generated list |
-| `huggingface-free`  | commented-out entry + `fetchHuggingFaceModels` fn      | Non-standard `/models` endpoint (`pipeline_tag` filter); commented out and never wired up |
-| `bai-free`          | commented-out entry                                    | Dead/commented-out gateway entry; no real free model catalogue exposed |
+| Provider ID        | State in script before removal                    | Why it doesn't work                                                                       |
+| ------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `groq-free`        | active override (`requireApiKey: true`)           | Groq is built into pi already and exposes no usable free models via this flow             |
+| `xai-free`         | active override (`requireApiKey: true`)           | xAI/Grok is built into pi already and exposes no usable free models via this flow         |
+| `cerebras-free`    | active override (`requireApiKey: true`)           | Cerebras exposes no usable free models through the generated list                         |
+| `huggingface-free` | commented-out entry + `fetchHuggingFaceModels` fn | Non-standard `/models` endpoint (`pipeline_tag` filter); commented out and never wired up |
+| `bai-free`         | commented-out entry                               | Dead/commented-out gateway entry; no real free model catalogue exposed                    |
 
 ## Decision
 

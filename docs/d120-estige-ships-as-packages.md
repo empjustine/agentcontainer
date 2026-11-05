@@ -42,14 +42,14 @@ build needs: `go-build.mjs`, `host-capabilities.mjs`, `log.mjs`.
 
 ### What each launcher responsibility became
 
-| Launcher job | Now owned by |
-| --- | --- |
-| container launch with host networking, init, hardening | the image's documented `podman run` recipe; no code in the repo |
-| supervised restart (`--restart unless-stopped`, native supervisor loop) | the service manager (`Restart=on-failure`, runit's `runsv`) |
-| readiness probe before handing out the proxy spelling | the service manager; the chain step no longer starts anything |
-| refusing a self-chained relay (ambient proxy env naming its own listener) | **the binary** — `relayConfigFromEnv` refuses before any bind, exit 94 unchanged (docs/d095) |
-| exporting the loopback proxy spelling to a child | `estige proxy-env`, printing `export KEY='value'` lines for `eval` (both cases of every variable, `socks5h` for `ALL_PROXY` — docs/d130) |
-| `termux-provisioning`'s `pkg install node jq` | nothing estige needs; the provisioner keeps both for the units that still do |
+| Launcher job                                                              | Now owned by                                                                                                                             |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| container launch with host networking, init, hardening                    | the image's documented `podman run` recipe; no code in the repo                                                                          |
+| supervised restart (`--restart unless-stopped`, native supervisor loop)   | the service manager (`Restart=on-failure`, runit's `runsv`)                                                                              |
+| readiness probe before handing out the proxy spelling                     | the service manager; the chain step no longer starts anything                                                                            |
+| refusing a self-chained relay (ambient proxy env naming its own listener) | **the binary** — `relayConfigFromEnv` refuses before any bind, exit 94 unchanged (docs/d095)                                             |
+| exporting the loopback proxy spelling to a child                          | `estige proxy-env`, printing `export KEY='value'` lines for `eval` (both cases of every variable, `socks5h` for `ALL_PROXY` — docs/d130) |
+| `termux-provisioning`'s `pkg install node jq`                             | nothing estige needs; the provisioner keeps both for the units that still do                                                             |
 
 ### The packages are written by pure Go
 

@@ -17,7 +17,7 @@ tags: ["peer-routing", "generators", "simplification"]
 `generate-models.json.mjs` / `generate-opencode.jsonc.mjs`. It is the **only**
 source of the `cline-pass` provider definition: pi-coding-agent has **no native
 `cline-pass` provider**, so the overlay layer it emits
-(`model-015-cloud-cline-pass.json`) must carry the *full* provider block —
+(`model-015-cloud-cline-pass.json`) must carry the _full_ provider block —
 `baseUrl`, `api`, key/auth, `compat` and the complete models list — regardless
 of reachability.
 
@@ -45,7 +45,7 @@ the dead endpoint.
 
 "Reachable" is the **network path**, not credentials: a 401/403 (or any http
 response) proves the path works and keeps the real route; pi authenticates at
-request time. Only the absence of *any* http response justifies a peer switch.
+request time. Only the absence of _any_ http response justifies a peer switch.
 
 In **peer mode** the emitted block carries:
 
@@ -75,7 +75,7 @@ with minimal fields so it stays usable rather than silently dropped.
 
 `generate-models.json.mjs` previously carried a dormant `cline-pass` entry in
 its cloud cascade (`CLOUD_PEER_IDS` / `CLOUD_PROVIDERS`). Because pi needs the
-*full* cline-pass provider at all times, that responsibility belongs
+_full_ cline-pass provider at all times, that responsibility belongs
 exclusively to `generate-cline-pass.mjs`. The entry was removed from
 `generate-models.json.mjs` so there is exactly one owner and no competing
 layer. (The layer merge in `merge-models-json.mjs` takes the later
@@ -93,7 +93,7 @@ All coding-agent generators previously probed two localhost candidates:
 - `http://localhost:8080` — the co-located LAN serving instance;
 - `http://localhost:18080` — the legacy local-inference port (deprecated).
 
-Both are only reachable *on the serving host itself* and, on a peers-only
+Both are only reachable _on the serving host itself_ and, on a peers-only
 host, a `localhost:8080` probe is a self-hit on the router the agent is already
 bypassing. Those two candidates plus the `filter-relays.mjs` cleanup machinery
 (`LOCAL_INFERENCE` / `SELF_RELAY`) existed to drop such localhost overrides
@@ -143,8 +143,8 @@ generate-opencode.jsonc.mjs    # emits opencode config
 
 `generate-models.json.mjs` is a catch-all: it handles BOTH the local
 llama-swap layer AND the pi-native cloud providers (opencode / opencode-go /
-openrouter). `generate-opencode.jsonc.mjs` is named after its *output format*
-(jsonc) rather than its *function*. Neither name hints at the shared,
+openrouter). `generate-opencode.jsonc.mjs` is named after its _output format_
+(jsonc) rather than its _function_. Neither name hints at the shared,
 now-standardized behavior — the direct-first / peer-router cascade each one
 runs.
 
@@ -174,8 +174,8 @@ generate-local-llama-swap.mjs
 Rationale for the split:
 
 - **pi-native vs non-native is the real axis.** For the native set the layer is
-  *optional* (an override; pi has a working default). For the alternative set
-  the layer is *authoritative* (pi has no default — it must always be emitted in
+  _optional_ (an override; pi has a working default). For the alternative set
+  the layer is _authoritative_ (pi has no default — it must always be emitted in
   full). These have opposite merge semantics, so they should live in differently
   named files rather than share one catch-all.
 - **The two cloud generators that already share the cascade have the same
@@ -191,7 +191,7 @@ Notes to carry into the refactor:
 
 - Output **layer ids are unchanged** — `model-010-local-default.json` and
   `model-015-cloud-cline-pass.json` are referenced by `generate.sh` and the
-  merge contract in `merge-models-json.mjs`; renaming the *scripts* must not
+  merge contract in `merge-models-json.mjs`; renaming the _scripts_ must not
   renumber the layers. Keep the `model-` / `00-` prefixes stable so merge order
   and the doc table in `merge-models-json.mjs` stay correct.
 - Update every caller: `generate.sh`'s stage list and invocation lines, and the
@@ -200,6 +200,6 @@ Notes to carry into the refactor:
   models.json layers; if naming symmetry is desired later it can become
   `generate-opencode-config.mjs` or fold into the pi-native group via a shared
   catalog builder, but it is NOT a candidates change for the first pass.
-- Keep the header doc-strings on each script: the *cascade rule* is now shared
+- Keep the header doc-strings on each script: the _cascade rule_ is now shared
   (already documented in all three) and the per-group difference to document is
   the pi-native override-only vs. alternative-authoritative semantic above.

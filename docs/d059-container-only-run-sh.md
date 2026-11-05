@@ -39,7 +39,7 @@ branch bought very little and cost a great deal of surface:
 - d056's decisions were written as "uniform across the container and Termux
   branches", a uniformity that would have to be re-proved on every change;
 - a host with **no** podman/docker did not fail fast: it fell through to
-  `workload_run`'s backend check, i.e. *after* the stage dir, launch chain and
+  `workload_run`'s backend check, i.e. _after_ the stage dir, launch chain and
   mount manifest had been assembled.
 
 The blocker to dropping the branch was that `./environment.sh` could only
@@ -60,12 +60,12 @@ replacement path for "run pi unsandboxed, with the vault env".
    sandbox-free run path: same chain, same exit codes, same "consumers read
    plain env" contract, and no second copy of pi's launch logic in the repo.
 3. **Two binary-resolution fixes found while enabling (2)** — both would have
-   made the new path fail *after* target resolution, which is exactly where a
+   made the new path fail _after_ target resolution, which is exactly where a
    regression here hides:
    - the mise fallback execs `infisical` **explicitly**
      (`mise x infisical@latest -- infisical "$@"`): `mise x tool -- cmd`
      execs `cmd` with the tool env, so the previous bare `run` subcommand was
-     looked up as a *program* and died with "couldn't exec process";
+     looked up as a _program_ and died with "couldn't exec process";
    - a `PATH` hit counts as the CLI only if it **executes**
      (`infisical --version`): a mise shim answers `command -v` yet dies with
      "No version is set for shim" when the tool has no default version, so an
@@ -92,7 +92,7 @@ replacement path for "run pi unsandboxed, with the vault env".
 - **Generation keeps its Termux profile**: `coding-agent/generate.mjs` still
   branches on Termux (system node, vendored models.dev catalog, opencode
   skip), `lib/provision-termux.sh` and the Termux node policy are untouched.
-  The *runner* is container-only, not the generator.
+  The _runner_ is container-only, not the generator.
 - **`llm-reverse-proxy/run.sh`'s native Termux branch** is a separate runner
   with its own record (`docs/environments-and-variants.md`) and stays.
 - **The container-native launcher itself**: no change to mounts, staging,
@@ -100,15 +100,15 @@ replacement path for "run pi unsandboxed, with the vault env".
 
 ## Mechanical changes
 
-| File | Change |
-|------|--------|
-| `coding-agent/run.sh` | Termux case/block deleted; header rewritten (container-only + the `environment.sh pi` pointer); fail-fast `_workload` guard after sourcing `lib/workload-runtime.sh` |
-| `./environment.sh` | target = file **or** `PATH` command; usage + exit-91 message updated; `_vault_exec` names `infisical` in the mise wrap; PATH hit gated on actually executing |
-| `coding-agent/generate.mjs` | `@fileoverview` no longer cites run.sh's Termux branch for the container-only committed-snapshot refresh (the reason is now "no Termux runner consumes the committed copy") |
-| `coding-agent/DESIGN.md` | `run.sh` paragraph states container-only; the runtime profile paragraph is labelled a *generation* profile |
-| `README.md` | env-chain prose documents `./environment.sh pi`; folder rows for `environment.sh`/`coding-agent/run.sh`; index rows for d058 (missed then) and d059 |
+| File                        | Change                                                                                                                                                                                                                           |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `coding-agent/run.sh`       | Termux case/block deleted; header rewritten (container-only + the `environment.sh pi` pointer); fail-fast `_workload` guard after sourcing `lib/workload-runtime.sh`                                                             |
+| `./environment.sh`          | target = file **or** `PATH` command; usage + exit-91 message updated; `_vault_exec` names `infisical` in the mise wrap; PATH hit gated on actually executing                                                                     |
+| `coding-agent/generate.mjs` | `@fileoverview` no longer cites run.sh's Termux branch for the container-only committed-snapshot refresh (the reason is now "no Termux runner consumes the committed copy")                                                      |
+| `coding-agent/DESIGN.md`    | `run.sh` paragraph states container-only; the runtime profile paragraph is labelled a _generation_ profile                                                                                                                       |
+| `README.md`                 | env-chain prose documents `./environment.sh pi`; folder rows for `environment.sh`/`coding-agent/run.sh`; index rows for d058 (missed then) and d059                                                                              |
 | `docs/container-tooling.md` | pre-existing staleness fixed while touching the runner story: `run.sh` no longer bind-mounts `lib/workload-*.jq` into `/opt/lib` — filters render host-side (`workload_JQDIR` = `$REPO_ROOT/lib`), and d056 removed those mounts |
-| `docs/d046`, `docs/d056` | status-line forward pointers to this record |
+| `docs/d046`, `docs/d056`    | status-line forward pointers to this record                                                                                                                                                                                      |
 
 ## Superseded mentions
 
@@ -122,7 +122,7 @@ record what was true when written.
 ## Verification
 
 - `./coding-agent/run.sh` on a host with neither podman nor docker →
-  `exit 91` with the backend message *and* `./environment.sh pi`
+  `exit 91` with the backend message _and_ `./environment.sh pi`
   pointer, before any staging (no `~/…` workspace created).
 - `./environment.sh not-a-thing` → `exit 91` ("not a file and not on
   PATH"); `./environment.sh pi --version` resolves the pi binary first

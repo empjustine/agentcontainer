@@ -43,15 +43,15 @@ missing half of that contract: the same inputs should mean the same bytes.
 
 ### Provider-map key order
 
-| Artifact | How the provider map is built | Deterministic? |
-|---|---|---|
-| `model-012-cloud-pi-native.json` | shared `providers` object mutated by concurrent `emitOverrideOnly` tasks under `Promise.allSettled` | **No — completion-order, can permute per run** |
-| `model-010/015/016/017-*.json` | `providerBlock()` writes a single-provider object | Yes (one key) |
-| `models.json` (merged) | `deepMerge()` over filename-sorted layers; key order = first layer that defines it | Yes, but reflects layer order, not any intent |
-| `coding-agent/opencode.jsonc` | provider object built during the opencode cascade | Yes, insertion order |
-| `llm-reverse-proxy/llm-reverse-proxy.json` | `allowHosts` follows the `CLOUD_PROVIDERS` fact-table order (plus hand-added rows) | Yes, but not sorted |
+| Artifact                                   | How the provider map is built                                                                       | Deterministic?                                 |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `model-012-cloud-pi-native.json`           | shared `providers` object mutated by concurrent `emitOverrideOnly` tasks under `Promise.allSettled` | **No — completion-order, can permute per run** |
+| `model-010/015/016/017-*.json`             | `providerBlock()` writes a single-provider object                                                   | Yes (one key)                                  |
+| `models.json` (merged)                     | `deepMerge()` over filename-sorted layers; key order = first layer that defines it                  | Yes, but reflects layer order, not any intent  |
+| `coding-agent/opencode.jsonc`              | provider object built during the opencode cascade                                                   | Yes, insertion order                           |
+| `llm-reverse-proxy/llm-reverse-proxy.json` | `allowHosts` follows the `CLOUD_PROVIDERS` fact-table order (plus hand-added rows)                  | Yes, but not sorted                            |
 
-The `model-012` row is the only *genuinely nondeterministic* one: the
+The `model-012` row is the only _genuinely nondeterministic_ one: the
 assembly is parallel by design (d034), and `emitOverrideOnly` writes into a
 shared object, so the key order is the order the promises happened to settle.
 An otherwise identical run can emit `google, openrouter, mistral, …` or any
@@ -62,16 +62,16 @@ permutation of it.
 Every `models` array is a projection of whichever source won the cascade,
 and none of the sources promise an order:
 
-| Path | Array order inherited from |
-|---|---|
-| catalog path (`catalogPiModel`, `emitFullAt`) | `Object.entries(provider.models)` — the models.dev JSON key order |
-| live listing (`enrichWithLiveListing`, `listingModels`) | the provider's `/models` listing order |
-| facts cache (`enrichWithFacts`) | upstream `/provider` order |
-| minimal override (`emitMinimalCatalogOverride`, `catalogModelIds`) | models.dev keys then catwalk ids (`Set` insertion) |
-| d040 union (`resolveClinePassAllowlist`) | docs order then catalog-only ids |
-| local GGUF (`generateLocalLlamaSwap`) | the peer listing order |
+| Path                                                               | Array order inherited from                                        |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| catalog path (`catalogPiModel`, `emitFullAt`)                      | `Object.entries(provider.models)` — the models.dev JSON key order |
+| live listing (`enrichWithLiveListing`, `listingModels`)            | the provider's `/models` listing order                            |
+| facts cache (`enrichWithFacts`)                                    | upstream `/provider` order                                        |
+| minimal override (`emitMinimalCatalogOverride`, `catalogModelIds`) | models.dev keys then catwalk ids (`Set` insertion)                |
+| d040 union (`resolveClinePassAllowlist`)                           | docs order then catalog-only ids                                  |
+| local GGUF (`generateLocalLlamaSwap`)                              | the peer listing order                                            |
 
-Field order *inside* a model record is not a problem: records are built by
+Field order _inside_ a model record is not a problem: records are built by
 object literals in `catalogPiModel`/`piModel`, so their keys are already
 stable and in a deliberate human order (`id`, `name`, `reasoning`, …).
 
@@ -96,8 +96,8 @@ Two concerns that must not be conflated:
 1. **Serialization stability** — whitespace and object-key order. This is
    mechanical and safe: `JSON.stringify` is already deterministic for a
    given object; the only instability is insertion order.
-2. **Semantic collection order** — which arrays are *sets* (order carries no
-   meaning) versus *sequences* (order does). This is schema-aware. A generic
+2. **Semantic collection order** — which arrays are _sets_ (order carries no
+   meaning) versus _sequences_ (order does). This is schema-aware. A generic
    recursive "sort all arrays" rewrite would silently reorder `modalities.
    input` (`["text","image"]`) and `thinkingLevelMap` value arrays, so it is
    rejected.
@@ -128,14 +128,14 @@ export function writeJsonArtifact(out, value) {
 
 ### 2. Rules
 
-| Location | Rule |
-|---|---|
-| `doc.providers` keys (pi/opencode manifests) | sort ascending |
-| `doc.provider` keys (opencode's outer shape) **and each entry's `models` record keys** | sort ascending |
-| `doc.allowHosts` keys (`llm-reverse-proxy.json`) | sort ascending |
-| `providers[*].models` arrays | sort by `id` |
-| `default-model.json` (`{defaultProvider, defaultModel}`) | no collection — unchanged |
-| everything else (record fields, modality/effort arrays, `headers`) | untouched |
+| Location                                                                               | Rule                      |
+| -------------------------------------------------------------------------------------- | ------------------------- |
+| `doc.providers` keys (pi/opencode manifests)                                           | sort ascending            |
+| `doc.provider` keys (opencode's outer shape) **and each entry's `models` record keys** | sort ascending            |
+| `doc.allowHosts` keys (`llm-reverse-proxy.json`)                                       | sort ascending            |
+| `providers[*].models` arrays                                                           | sort by `id`              |
+| `default-model.json` (`{defaultProvider, defaultModel}`)                               | no collection — unchanged |
+| everything else (record fields, modality/effort arrays, `headers`)                     | untouched                 |
 
 Use a **code-unit comparator** (`a < b`), not `localeCompare`, so the result
 does not depend on the host locale.
@@ -199,7 +199,7 @@ and `llm-local-inference/`'s config.d layers (never in scope; candidate
 follow-up if their ordering churns).
 
 Note the existing partial determinism this builds on: `mergeModels` already
-discovers layers through `readdirSync(...).sort()`, so layer *precedence* is
+discovers layers through `readdirSync(...).sort()`, so layer _precedence_ is
 stable today; only the provider and model orders inside the merge are not.
 
 ## Migration (landed 2026-09-23)

@@ -29,13 +29,13 @@ could exist:
 1. **Does a routine non-aggressive gc undo an aggressive pass's gains?** No.
    `git repack` reuses the deltas already in the packs unless forced (`-f`),
    and neither plain `git gc` nor `repack -adb` is forced. Only another forced
-   repack recomputes deltas. The passes therefore *compose*: aggressive
+   repack recomputes deltas. The passes therefore _compose_: aggressive
    rarely, routine between, with only newly fetched packs carrying weak
    deltas until the next deep pass.
 2. **Which rungs are real?** A four-rung proposal — fetch/prune only, normal
    gc as the new default, aggressive gc, aggressive gc + pickaxe optimization
    — collapses on inspection:
-   - "normal gc as default" is a *downgrade* of the existing optimize pass:
+   - "normal gc as default" is a _downgrade_ of the existing optimize pass:
      partial pack consolidation (`repack -d -l -A`, not `-a`), a conditional
      bitmap write, no changed-paths guarantee — and it would silently change
      what every existing invocation does.
@@ -51,18 +51,18 @@ could exist:
 Three rungs, one new flag on the existing program, and the routine pass stays
 the default:
 
-| rung | selection | work |
-|------|-----------|------|
-| align | default (`--no-optimize` keeps only this) | `git remote update --prune` |
-| optimize | default | config + `repack -adb --write-bitmap-index` + `commit-graph write --reachable --changed-paths` |
-| deep | `--deep-optimize` | config + `git gc --aggressive` + the full optimize sequence re-run |
+| rung     | selection                                 | work                                                                                           |
+| -------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| align    | default (`--no-optimize` keeps only this) | `git remote update --prune`                                                                    |
+| optimize | default                                   | config + `repack -adb --write-bitmap-index` + `commit-graph write --reachable --changed-paths` |
+| deep     | `--deep-optimize`                         | config + `git gc --aggressive` + the full optimize sequence re-run                             |
 
 `--deep-optimize` implies the optimize pass and conflicts with
 `--no-optimize` (rejected at argument parsing): deep without optimize repacks
 and then leaves no guaranteed pickaxe accelerators — exactly the footgun the
 collapsed rung avoids.
 
-Why the optimize sequence re-runs *after* `gc --aggressive`: gc's own
+Why the optimize sequence re-runs _after_ `gc --aggressive`: gc's own
 commit-graph write (via `gc.writeCommitGraph`, already set by the config step)
 carries no `--changed-paths` guarantee, and its bitmap write is conditional
 (full repack of a bare repo, `repack.writeBitmaps`). Re-running the sequence

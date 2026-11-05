@@ -17,7 +17,7 @@ The canonical GGUF model definitions (`llamacpp-model-data.json`) lived in
 `fetch-model-cards.sh`) reads it directly via `../llm-local-inference/…` — a data
 edge that reaches into a sibling runner folder, outside the documented
 "folder + `../lib`" standalone rule (docs/architecture.md). The rule prohibits
-reaching into sibling *runners*; a file that is genuinely shared needs a home
+reaching into sibling _runners_; a file that is genuinely shared needs a home
 that doesn't look like one runner reaching into another.
 
 ## Decision
@@ -27,10 +27,10 @@ infrastructure folder, alongside `models.dev.api.json` and
 `cloud-providers.mjs`). Shared **data** tables and shared **code** both live
 there; a folder reading from `lib/` is always within its copy unit.
 
-Ownership is unchanged: `llm-local-inference/` still *owns* the table (its
+Ownership is unchanged: `llm-local-inference/` still _owns_ the table (its
 generator and the manifest-refresh workflow drive its content — see
 `llm-local-inference/refresh-llm-local-inference-manifest.md`); `local-llm/` is a consumer. The move only
-changes *where the bytes live*, not who edits them.
+changes _where the bytes live_, not who edits them.
 
 `active-b.json` stays in `llm-local-inference/` — it is an implementation detail
 of that folder's model-id derivation (`docs/d003`), not shared.

@@ -28,7 +28,7 @@ ranks transports, not routes, and no rank survives a refused TCP connect.
 
 The obvious fix — http.Transport.Proxy = http.ProxyFromEnvironment —
 was deliberately refused (modec.go/modee.go: "Proxy is nil on purpose").
-That refusal is right about the wrong thing: the fear was a *forwarding*
+That refusal is right about the wrong thing: the fear was a _forwarding_
 proxy that an ambient setting silently hands the bearer to (a cleartext
 hop, a credential-visible MITM). It answered that fear by removing the
 route, which also removed the deployment. What was missing is the repo's
@@ -94,7 +94,7 @@ bind (docs/d046).
   forwarding request. The chain belongs in one dial function with one
   parse, not three transports' worth of implicit behavior.
 - **A VPN_CHAIN_PROXY-style new spelling** — the point of the chain
-  is that the *network* dictates it, and every tool on such a network
+  is that the _network_ dictates it, and every tool on such a network
   already speaks the conventional variables; inventing a repo-private
   name would guarantee the deployment that works with curl fails with
   us (and d079's proxy-first harnesses depend on the same vars).

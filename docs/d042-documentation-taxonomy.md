@@ -26,7 +26,7 @@ document per purpose.
 
 The docs tree accumulated three kinds of writing inside the same flat
 directory, and several single documents mix all three. Working from the same
-source, an operator cannot tell which document is *the* statement of what the
+source, an operator cannot tell which document is _the_ statement of what the
 system must do, which documents describe the system as it exists, and which
 are implementation notes frozen at the moment they were written:
 
@@ -44,13 +44,13 @@ are implementation notes frozen at the moment they were written:
 Every document carried exactly one of these `type:` values (frontmatter), and
 the README documentation index was grouped by them:
 
-| type | role | contents |
-|------|------|----------|
-| `requirements` | the BRD — what the system should do, normative | `docs/requirements.md` (renamed from root `goal-and-requirements.md`, absorbs the per-module requirement statements) |
-| `reference` | the systems reference — structure, components, matrices, runbooks, as the system IS | `docs/architecture.md` (the map), `container-tooling.md`, `environments-and-variants.md`, `coding-harness-persistence.md`, `hf-cache-upkeep.md`, `refresh-llm-local-inference-manifest.md`, `gguf-vram-fit-estimates.md`, `gguf-model-tooling.md`, per-folder `README.md` |
-| `design` | TDD — implementation rationale and mechanics not graspable from source at a glance | per-module `DESIGN.md` (renamed from `SPEC.md`), `llm-reverse-proxy/DESIGN.md` (split out of its README), `scoped-models-and-proxy-overrides.md` (the distilled rationale for scoped models + baseUrl overrides), `summarized-thinking.md` |
-| `research` | one-time findings/audits — the record of an investigation, not a statement of current behavior | `docs/archive/*` + the anchored strays below |
-| `decision` | the decision log (history — kept mechanically accurate, not immutable; d072) | `docs/d0XX-*.md` (the d0XX prefix IS the marker; their records now carry the standard `architecture-design` / `module-design` types plus a `bugfix` tag where the genre matters) |
+| type           | role                                                                                           | contents                                                                                                                                                                                                                                                                  |
+| -------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requirements` | the BRD — what the system should do, normative                                                 | `docs/requirements.md` (renamed from root `goal-and-requirements.md`, absorbs the per-module requirement statements)                                                                                                                                                      |
+| `reference`    | the systems reference — structure, components, matrices, runbooks, as the system IS            | `docs/architecture.md` (the map), `container-tooling.md`, `environments-and-variants.md`, `coding-harness-persistence.md`, `hf-cache-upkeep.md`, `refresh-llm-local-inference-manifest.md`, `gguf-vram-fit-estimates.md`, `gguf-model-tooling.md`, per-folder `README.md` |
+| `design`       | TDD — implementation rationale and mechanics not graspable from source at a glance             | per-module `DESIGN.md` (renamed from `SPEC.md`), `llm-reverse-proxy/DESIGN.md` (split out of its README), `scoped-models-and-proxy-overrides.md` (the distilled rationale for scoped models + baseUrl overrides), `summarized-thinking.md`                                |
+| `research`     | one-time findings/audits — the record of an investigation, not a statement of current behavior | `docs/archive/*` + the anchored strays below                                                                                                                                                                                                                              |
+| `decision`     | the decision log (history — kept mechanically accurate, not immutable; d072)                   | `docs/d0XX-*.md` (the d0XX prefix IS the marker; their records now carry the standard `architecture-design` / `module-design` types plus a `bugfix` tag where the genre matters)                                                                                          |
 
 The rows above are the pre-d111 reading of the tree. Under the standard
 vocabulary: `requirements` → `goal-and-requirements`; `reference`, `design`
@@ -88,7 +88,7 @@ the node its `parent` edge names**. A doc that guides exactly one unit moves
 into that unit's folder, and its citing records are retargeted in the same
 change; a doc that spans units stays at `docs/` root with `parent: architecture`.
 
-So the list above is now a list of *candidates*, judged one at a time:
+So the list above is now a list of _candidates_, judged one at a time:
 `scoped-models-and-proxy-overrides.md`, `coding-harness-persistence.md` and
 `refresh-llm-local-inference-manifest.md` described a single unit and moved
 (under `coding-agent/` and `llm-local-inference/`); `architecture.md`,
@@ -123,16 +123,16 @@ named headings too, and no new `§` reference is added anywhere. Root
 
 ## Moves, renames, splits
 
-| action | from | to |
-|--------|------|----|
-| rename (BRD) | `goal-and-requirements.md` (root) | `docs/requirements.md`, `type: requirements`, absorbs per-module requirements from the SPECs + normative invariants; keeps `id: goal` so existing `parent: goal` pointers stay valid |
-| rename | `llm-local-inference/SPEC.md` | `llm-local-inference/DESIGN.md` (`type: design`; responsibility statement condensed, requirements live in the BRD) |
-| rename | `local-llm/SPEC.md` | `local-llm/DESIGN.md` (same treatment) |
-| split | `llm-reverse-proxy/README.md` | reference entry stays in README; design rationale (three-source union, full-real-base-URL convention, 404 anti-oracle, RFC 9457 type design, known deviations) moves to new `llm-reverse-proxy/DESIGN.md` |
-| archive | `peer-variant-work.md`, `mini-swe-agent.md`, `model-architecture-findings.md`, `bwrap-runtime-audit.md`, `comparison-with-huggingface-estimate.md`, `endpoint-runtime-rewiring.md`, `llama-swap-response-analysis.md` | `docs/archive/` (research findings + self-archived ops docs; none anchored by d0XX) |
-| archive | `future-config-generator-system.md` | `docs/archive/` — superseded: d030/d037 implemented the generator split-by-concern and d041 the unified entrypoints; `architecture.md`'s trailing pointer updated |
-| retype | all living docs listed in the taxonomy table | frontmatter normalized (`type:` value + `status:`); untyped living docs get frontmatter for the first time |
-| anchored in place | `termux-serving.md` (archived banner, d041), `termux-build-audit.md`, `sandbox-helper-env-analysis.md` | stay at `docs/` root, typed `research` — d0XX records reference their paths |
+| action            | from                                                                                                                                                                                                                  | to                                                                                                                                                                                                        |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| rename (BRD)      | `goal-and-requirements.md` (root)                                                                                                                                                                                     | `docs/requirements.md`, `type: requirements`, absorbs per-module requirements from the SPECs + normative invariants; keeps `id: goal` so existing `parent: goal` pointers stay valid                      |
+| rename            | `llm-local-inference/SPEC.md`                                                                                                                                                                                         | `llm-local-inference/DESIGN.md` (`type: design`; responsibility statement condensed, requirements live in the BRD)                                                                                        |
+| rename            | `local-llm/SPEC.md`                                                                                                                                                                                                   | `local-llm/DESIGN.md` (same treatment)                                                                                                                                                                    |
+| split             | `llm-reverse-proxy/README.md`                                                                                                                                                                                         | reference entry stays in README; design rationale (three-source union, full-real-base-URL convention, 404 anti-oracle, RFC 9457 type design, known deviations) moves to new `llm-reverse-proxy/DESIGN.md` |
+| archive           | `peer-variant-work.md`, `mini-swe-agent.md`, `model-architecture-findings.md`, `bwrap-runtime-audit.md`, `comparison-with-huggingface-estimate.md`, `endpoint-runtime-rewiring.md`, `llama-swap-response-analysis.md` | `docs/archive/` (research findings + self-archived ops docs; none anchored by d0XX)                                                                                                                       |
+| archive           | `future-config-generator-system.md`                                                                                                                                                                                   | `docs/archive/` — superseded: d030/d037 implemented the generator split-by-concern and d041 the unified entrypoints; `architecture.md`'s trailing pointer updated                                         |
+| retype            | all living docs listed in the taxonomy table                                                                                                                                                                          | frontmatter normalized (`type:` value + `status:`); untyped living docs get frontmatter for the first time                                                                                                |
+| anchored in place | `termux-serving.md` (archived banner, d041), `termux-build-audit.md`, `sandbox-helper-env-analysis.md`                                                                                                                | stay at `docs/` root, typed `research` — d0XX records reference their paths                                                                                                                               |
 
 ## Resolved deferral
 
@@ -144,9 +144,10 @@ header — it supersedes d037's process split; d037's per-layer merge verdicts
 stand), plus `generate-opencode.mjs` (former `generate-opencode.jsonc.mjs`).
 With the folder quiet again, the deferred work was executed: `SPEC.md` →
 `DESIGN.md` (renamed, typed `design`, responsibility condensed to a charter
-+ BRD pointer) with its Shape section rewritten to the two-generator
-reality, and the README layout/index rows for the deleted stage files
-replaced. d042's taxonomy now covers every module.
+
+- BRD pointer) with its Shape section rewritten to the two-generator
+  reality, and the README layout/index rows for the deleted stage files
+  replaced. d042's taxonomy now covers every module.
 
 ## Consequences
 

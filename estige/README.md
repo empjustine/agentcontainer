@@ -122,17 +122,17 @@ service manager; that is the same environment surface, not a second one. Every
 fact the exit node needs comes from its environment, which the service manager
 or operator already owns:
 
-| fact | spelling |
-|---|---|
-| arming credential (the capability) | `VPN_OPERATOR_KEYS` — no credential, no tunnel, no boot (docs/d084) |
-| egress opt-ins (VPN-R38) | `VPN_TUNNEL_EGRESS`, JSON `{"allowCidrs": ["10.0.0.0/8"], "ports": [443]}`; unset = the requirement's defaults (deny RFC 1918/metadata/loopback, allow 80/443) |
-| bind | `PORT` (docs/d110) |
+| fact                               | spelling                                                                                                                                                       |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| arming credential (the capability) | `VPN_OPERATOR_KEYS` — no credential, no tunnel, no boot (docs/d084)                                                                                            |
+| egress opt-ins (VPN-R38)           | `VPN_TUNNEL_EGRESS`, JSON `{"allowCidrs": ["10.0.0.0/8"], "ports": [443]}`; unset = the requirement's defaults (deny RFC 1918/metadata/loopback, allow 80/443) |
+| bind                               | `PORT` (docs/d110)                                                                                                                                             |
 
 Why no file: a file holding a credential is a second, unkeyed copy of it
 (VPN-R32), and with the allowlist gone there was nothing else a file needed to
 say. The policy half's permanent home is docs/d104's role store — its
 `exit.json` carries egress beside the admitted relays — and until that store
-lands, the env chain carries it. Nothing here can *grant* the capability: only
+lands, the env chain carries it. Nothing here can _grant_ the capability: only
 the credential does.
 
 **This env surface is v3's, and `VPN_*` is deprecated.** docs/d104's deployment
@@ -165,7 +165,7 @@ there is no root builder any more; each folder is a copy unit). Targets:
   final.
 - `termux-provisioning` — the repo-root device provisioner, run first on
   Termux. It installs the infisical CLI (the operator's env chain) plus the
-  `node`/`jq` the *other* Termux units still need (`llm-local-inference`'s
+  `node`/`jq` the _other_ Termux units still need (`llm-local-inference`'s
   generators and its shell workload runtime). estige needs neither: the binary
   is self-contained Go and the packages carry no runtime dependency. Not
   selectable: it is environment provisioning, not an artifact.
@@ -240,10 +240,10 @@ The tailscale funnel serves the whole `https://bazzite…/<funnel-id>` route on
 host port **8080**, so the exit node must own 8080. The path table it used to
 serve is down to one mount:
 
-| path under the funnel | backend |
-|---|---|
-| `/vpn` (the mount prefix, stripped at the edge, docs/d085) | the tunnel namespace — the only face |
-| anything else | the plain funnel 404, byte for byte (VPN-R34) |
+| path under the funnel                                      | backend                                       |
+| ---------------------------------------------------------- | --------------------------------------------- |
+| `/vpn` (the mount prefix, stripped at the edge, docs/d085) | the tunnel namespace — the only face          |
+| anything else                                              | the plain funnel 404, byte for byte (VPN-R34) |
 
 The bind has exactly one knob (docs/d110): env `PORT`, unset → `8080`, bound
 on all interfaces. No `-listen`/`-port` flag and no config field of our own —

@@ -22,15 +22,15 @@ consistency, not against a local build).
 
 ## Verdict summary
 
-| Goal | Feasible | How |
-|------|----------|-----|
-| Litestream backup of atuin client DBs | **Yes** | All six client DBs are SQLite/WAL; one `dbs:` entry each |
-| Litestream backup of self-hosted `atuin-server` DB | **Yes, if SQLite** | `db_uri = sqlite://…`; single-file, single-writer — ideal Litestream workload |
-| Best-effort multi-machine sync via Litestream | **Marginal** | One-way only: primary replicates, followers `restore -f`; follower writes are lost on next restore |
-| Multi-machine sync done right | **Yes** | Atuin's native sync (Sync v2) — hosted or self-hosted server; Litestream then only backs up the server DB |
-| Oracle MySQL as atuin-server DB | **Yes (tier-two)** | Supported since v18.21.0 via sqlx-mysql; issues deprioritized |
-| Oracle Database 19c as atuin-server DB | **No** | sqlx has no Oracle backend; `DbUrl` enum = {Sqlite, Postgres, Mysql} only |
-| Litestream with MySQL/Oracle | **No** | Litestream is SQLite-only by design (source: SQLite WAL; targets: object/file storage) |
+| Goal                                               | Feasible           | How                                                                                                       |
+| -------------------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------- |
+| Litestream backup of atuin client DBs              | **Yes**            | All six client DBs are SQLite/WAL; one `dbs:` entry each                                                  |
+| Litestream backup of self-hosted `atuin-server` DB | **Yes, if SQLite** | `db_uri = sqlite://…`; single-file, single-writer — ideal Litestream workload                             |
+| Best-effort multi-machine sync via Litestream      | **Marginal**       | One-way only: primary replicates, followers `restore -f`; follower writes are lost on next restore        |
+| Multi-machine sync done right                      | **Yes**            | Atuin's native sync (Sync v2) — hosted or self-hosted server; Litestream then only backs up the server DB |
+| Oracle MySQL as atuin-server DB                    | **Yes (tier-two)** | Supported since v18.21.0 via sqlx-mysql; issues deprioritized                                             |
+| Oracle Database 19c as atuin-server DB             | **No**             | sqlx has no Oracle backend; `DbUrl` enum = {Sqlite, Postgres, Mysql} only                                 |
+| Litestream with MySQL/Oracle                       | **No**             | Litestream is SQLite-only by design (source: SQLite WAL; targets: object/file storage)                    |
 
 ## Litestream facts (verified against the codebase)
 
@@ -40,7 +40,7 @@ consistency, not against a local build).
   not multi-master sync.
 - **Targets**: `s3://` (AWS + R2/B2/MinIO/Spaces auto-detected), `gs://`,
   `abs://`, `oss://`, `file://`, `sftp://`, `webdav://`,
-  `nats://` (JetStream object store). Notably *not* any SQL RDBMS.
+  `nats://` (JetStream object store). Notably _not_ any SQL RDBMS.
 - **Cadence defaults**: 24h snapshots; L1/L2/L3 compaction at 30s/5min/1h; L0
   retention 5min (checked every 15s). All configurable in `litestream.yml`.
 - **Daemon**: `litestream replicate` (server mode; `-once` for one-shot
@@ -85,12 +85,12 @@ expect occasional churn. Avoid NFS for both DB and replica staging.
 
 Sync v2, client-server, end-to-end encrypted; the server is a ciphertext relay.
 
-- **Data model**: everything (history, kv, scripts) is a *record* in
+- **Data model**: everything (history, kv, scripts) is a _record_ in
   `records.db`, belonging to a series keyed by `(HostId, RecordTag)` with a
   monotonically increasing `RecordIdx` (sync version).
 - **Flow**: client reads its local `RecordStatus` (highest `RecordIdx` per
   series), fetches the server's, and diffs per series into
-  `Upload`/`Download`/`Noop`. Bulk transfers use compressed *packfiles*.
+  `Upload`/`Download`/`Noop`. Bulk transfers use compressed _packfiles_.
   Key endpoint: `/api/v0/record/next` (+ `/api/v0/me`, `/api/v0/store`).
 - **Encryption**: `paseto_v4`; root key (BIP39 mnemonic or raw entropy, at
   `key_path`) wraps a random per-record content-encryption key; record
@@ -150,10 +150,10 @@ must run on the same host as the DB file (mounted data dir for containers).
 
 ## Recommendation matrix
 
-| Deployment | Sync | Backup |
-|-----------|------|--------|
-| Multi-machine, minimal effort | Atuin native sync (hosted api.atuin.sh) | none needed (server-side copies exist) |
-| Self-hosted server, small scale | Atuin native sync | **Litestream** → object store (`sqlite://` backend) |
-| Self-hosted server, larger scale | Atuin native sync | PostgreSQL + pgBackRest/WAL-g (Litestream N/A) |
-| Server forced onto OCI MySQL | Atuin native sync | managed MySQL backups (Litestream N/A) |
-| Single machine, no server, sync "via Litestream" | best-effort only: primary replicates, followers `restore -f`, **follower writes lost on restore** | Litestream over all six client DBs |
+| Deployment                                       | Sync                                                                                              | Backup                                              |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Multi-machine, minimal effort                    | Atuin native sync (hosted api.atuin.sh)                                                           | none needed (server-side copies exist)              |
+| Self-hosted server, small scale                  | Atuin native sync                                                                                 | **Litestream** → object store (`sqlite://` backend) |
+| Self-hosted server, larger scale                 | Atuin native sync                                                                                 | PostgreSQL + pgBackRest/WAL-g (Litestream N/A)      |
+| Server forced onto OCI MySQL                     | Atuin native sync                                                                                 | managed MySQL backups (Litestream N/A)              |
+| Single machine, no server, sync "via Litestream" | best-effort only: primary replicates, followers `restore -f`, **follower writes lost on restore** | Litestream over all six client DBs                  |

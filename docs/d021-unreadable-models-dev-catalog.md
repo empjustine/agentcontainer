@@ -13,12 +13,12 @@ parent: coding-agent
 The vendored `models.dev` catalog (`models.dev.api.json`) is the model-id source
 of truth for two providers, and is read by two generators:
 
-| Consumer | Reads | Provides |
-|----------|-------|----------|
+| Consumer                                                                               | Reads                                     | Provides                                                                                        |
+| -------------------------------------------------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `llm-local-inference/gen-lib.mjs` → `loadModelsDev()`, called from `fetchPeerModels()` | `llm-local-inference/models.dev.api.json` | model ids for the `modelsDev`-flagged peers: `opencode`, `opencode-go` (all models, unfiltered) |
-| `coding-agent/generate-cline-pass.mjs` | `coding-agent/models.dev.api.json` | the `cline-pass` layer (`model-015-cloud-cline-pass.json`) |
+| `coding-agent/generate-cline-pass.mjs`                                                 | `coding-agent/models.dev.api.json`        | the `cline-pass` layer (`model-015-cloud-cline-pass.json`)                                      |
 
-Providers *without* the `modelsDev` flag take their ids from their own live
+Providers _without_ the `modelsDev` flag take their ids from their own live
 `/models` endpoint — today that is `openrouter`, filtered to `:free`. So a
 catalog problem should only ever cost the OpenCode peers.
 
@@ -29,7 +29,7 @@ catalog problem should only ever cost the OpenCode peers.
 > one outage never blanks the others.
 
 Note the distinction baked into that sentence: "catalog **lacks the OpenCode
-entries**" is a handled condition, while an *unreadable* catalog is not handled
+entries**" is a handled condition, while an _unreadable_ catalog is not handled
 at all — and that is the bug. `refresh-models-dev.mjs` is atomic
 (tmp + validate + rename), so **refreshing** can never corrupt the catalog; the
 catalog can still be missing or unreadable for reasons refresh does not cover:
@@ -42,12 +42,12 @@ catalog can still be missing or unreadable for reasons refresh does not cover:
 ## Failure mode
 
 `loadModelsDev()` is a bare read, and `fetchPeerModels()` wraps only the
-*live-endpoint* branch in `try/catch` — the `modelsDev` branch is unprotected:
+_live-endpoint_ branch in `try/catch` — the `modelsDev` branch is unprotected:
 
 ```js
 export async function fetchPeerModels(p) {
   if (p.modelsDev) {
-    const provider = loadModelsDev()[p.modelsDev];          // ← throws (ENOENT / EACCES / SyntaxError)
+    const provider = loadModelsDev()[p.modelsDev]; // ← throws (ENOENT / EACCES / SyntaxError)
     if (!provider || typeof provider.models !== "object" || provider.models === null) {
       console.warn(`  warning: models.dev catalog has no provider "${p.modelsDev}" — skipping`);
       return null;
@@ -55,8 +55,11 @@ export async function fetchPeerModels(p) {
     return Object.keys(provider.models);
   }
   const apiKey = process.env[p.apiKeyEnv] ?? "";
-  try { /* live /models fetch — guarded */ }
-  catch (err) { /* warn + null — granular skip, as documented */ }
+  try {
+    /* live /models fetch — guarded */
+  } catch (err) {
+    /* warn + null — granular skip, as documented */
+  }
 }
 ```
 
@@ -103,10 +106,10 @@ diagnostic is a stack trace instead of a one-line warning.
 
 ## Impact
 
-| Consumer | Today | After the patch |
-|----------|-------|-----------------|
-| `generate-peer-cloud.yaml.mjs` | aborts the entire layer; stale `peer-cloud.yaml` kept; `openrouter` lost with it | warns per provider, skips `opencode` / `opencode-go`, still emits `openrouter`; if *no* provider answers, the generator's own write-or-remove rule applies |
-| `generate-cline-pass.mjs` | stack trace, exit 1; caller keeps the existing layer (correct outcome, noisy log) | one-line warning, exit 0, no write; identical outcome, legible log |
+| Consumer                       | Today                                                                             | After the patch                                                                                                                                            |
+| ------------------------------ | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `generate-peer-cloud.yaml.mjs` | aborts the entire layer; stale `peer-cloud.yaml` kept; `openrouter` lost with it  | warns per provider, skips `opencode` / `opencode-go`, still emits `openrouter`; if _no_ provider answers, the generator's own write-or-remove rule applies |
+| `generate-cline-pass.mjs`      | stack trace, exit 1; caller keeps the existing layer (correct outcome, noisy log) | one-line warning, exit 0, no write; identical outcome, legible log                                                                                         |
 
 ## Patch
 

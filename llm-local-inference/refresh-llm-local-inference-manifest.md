@@ -26,20 +26,20 @@ active-b.json             --(consumed by deriveModelId)----------->  the <slug> 
 ```
 
 No part of this needs Infisical or the network — the two `node` generators read
-local files only. (`generate.sh` wraps them in `infisical run` and *does* need
+local files only. (`generate.sh` wraps them in `infisical run` and _does_ need
 `infisical login` + network; use it only when you also need provider secrets.)
 
 ## Schema (one manifest entry)
 
-| Key | Meaning |
-|---|---|
-| `hf-repo` | `org/repo:quant` — `quant` is the **trailing filename token** of the GGUF (see naming rules below) |
-| `model` | exact cached GGUF filename. For sharded files, the `00001-of-NNNNN` shard (llama.cpp resolves the prefix) |
-| `mmproj` | optional vision projector file; **omit entirely** if no projector is cached |
-| `model-draft` | optional MTP/drafter sidecar GGUF (unsloth ships these under the repo's `MTP/` subdir — the subdir prefix is part of the filename); must live in the SAME snapshot as `model`. Requires `--spec-type` at launch, which the generator emits (`draft-mtp` by default) — a bare `--model-draft` on a local-path model enables no speculative impl and just wastes VRAM |
-| `cache-type-k` / `cache-type-v` | KV-cache quant; optional, **default `f16`/`f16`** |
-| `ctx-size` | **authoritative** context window; optional, **default `65536`**. The generator never applies `--fit-ctx` |
-| `parallel` | `1` or `2`; optional, **default `1`** |
+| Key                             | Meaning                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hf-repo`                       | `org/repo:quant` — `quant` is the **trailing filename token** of the GGUF (see naming rules below)                                                                                                                                                                                                                                                                  |
+| `model`                         | exact cached GGUF filename. For sharded files, the `00001-of-NNNNN` shard (llama.cpp resolves the prefix)                                                                                                                                                                                                                                                           |
+| `mmproj`                        | optional vision projector file; **omit entirely** if no projector is cached                                                                                                                                                                                                                                                                                         |
+| `model-draft`                   | optional MTP/drafter sidecar GGUF (unsloth ships these under the repo's `MTP/` subdir — the subdir prefix is part of the filename); must live in the SAME snapshot as `model`. Requires `--spec-type` at launch, which the generator emits (`draft-mtp` by default) — a bare `--model-draft` on a local-path model enables no speculative impl and just wastes VRAM |
+| `cache-type-k` / `cache-type-v` | KV-cache quant; optional, **default `f16`/`f16`**                                                                                                                                                                                                                                                                                                                   |
+| `ctx-size`                      | **authoritative** context window; optional, **default `65536`**. The generator never applies `--fit-ctx`                                                                                                                                                                                                                                                            |
+| `parallel`                      | `1` or `2`; optional, **default `1`**                                                                                                                                                                                                                                                                                                                               |
 
 Keys with an implicit default are filled in by `generate-local-llm-models.yaml.mjs`
 (`DEFAULTS` map) — omit them unless the entry deviates, e.g. `parallel: 2` or a
@@ -49,8 +49,6 @@ cap other than `65536`.
 The file is a flat `{ "models": [ … ] }` array. **The last element has no
 trailing comma** — append before the closing `]`/`}` and add a comma to the
 previous last element.
-
-
 
 ## Step 2 — Gather the fields for each new entry
 
@@ -76,6 +74,7 @@ previous last element.
   Policy applied so far: Qwen3.8 / GLM-4.7 capped to `65536`; LFM2.5 kept at
   native (`131072` / `128000`); others at native or `65536` when VRAM-bound.
   Write the key only when the cap is **not** the `65536` default.
+
 - **`parallel`**: omit (the implicit default is `1`); write `2` only when VRAM allows.
 - **`model-draft`** = the repo's `MTP/mtp-<model>-<QUANT>.gguf` sidecar, when it
   ships one (all unsloth gemma-4 repos do). Pick `Q8_0` when available — half
@@ -84,14 +83,14 @@ previous last element.
   flags (`--spec-draft-n-max …`) via `__argv`.
 - **`__argv`** = the family sampling macro (next step) or omit.
 
-## Step 3 — New model *family*? update `active-b.json` (slug)
+## Step 3 — New model _family_? update `active-b.json` (slug)
 
 `deriveModelId()` builds each id as `<slug>-ctx<ctxSlug>-<hf-repo>`, where
 `ctxSlug = round(ctx-size/1024)` and `<slug>` comes from `active-b.json`.
 
 `active-b.json` maps a **substring** of `hf-repo` → zero-padded `NNb` slug
 (`3.45B active → 03b`, `≥100B → NNNb`). The **first matching substring wins**,
-so insert a more specific key *before* a generic one:
+so insert a more specific key _before_ a generic one:
 
 ```json
 "LFM2.5-8B-A1B": "01b",   // specific — must precede the generic line below
@@ -179,7 +178,7 @@ baked snapshot paths from the `.paths` manifest) so the regenerated
 - **Extensive quant specifiers.** byteshape files carry a bpw suffix
   (`Q4_K_S-3.80bpw`, `Q5_K_M-5.60bpw`) and Unsloth uses a `UD-` dynamic-quant
   prefix (`UD-Q8_K_XL`). Keep these in `hf-repo` — never collapse to a bare
-  `Q4_K_S`. llama.cpp's cached-list display only shows the *trailing* filename
+  `Q4_K_S`. llama.cpp's cached-list display only shows the _trailing_ filename
   token (so it prints `:80BPW`, `:22BPW`, `:04BPW`); the `:quant` you put in
   `hf-repo` is what `find_best_model` matches via the `TAG[.-]` regex, so the
   extensive name selects the right file.
@@ -203,7 +202,7 @@ baked snapshot paths from the `.paths` manifest) so the regenerated
   `10-local-llm-inference.yaml` and how llama-swap merges `config.d/`.
 - `hf-cache-upkeep.md` — `upkeep.py` cache GC/pull/verify; `download_models.py`
   must use the `main` ref (not a pinned SHA) to survive pruning.
-- `coding-agent/generate-pi-coding-agent.mjs` — the *coding-agent* model
+- `coding-agent/generate-pi-coding-agent.mjs` — the _coding-agent_ model
   generator and the layered `models.json` contract (separate concern; not
   this local-llm manifest). The merge contract's single home is that script's
   header; the module design lives in `coding-agent/DESIGN.md`.

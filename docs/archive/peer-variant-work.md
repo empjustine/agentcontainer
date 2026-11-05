@@ -47,8 +47,6 @@ coding-agent-peer/
 └── .env             # PEER_API_KEY / PEER_BASE_URL (gitignored)
 ```
 
-
-
 ### `models.json` — peer endpoint override
 
 A static pi `models.json` (Custom Models provider config) that overrides the
@@ -138,13 +136,13 @@ copies `settings.json` and `models.json` into it, and launches the container:
 
 Key differences from bazzite `coding-agent/run.sh`:
 
-| Aspect | bazzite (`coding-agent/`) | work (`coding-agent-peer/`) |
-|--------|--------------------------|-----------------------------|
-| Config generation | dynamic (`generate-pi-*.js`) | static files |
-| Models source | live `/models` fetches | peer endpoint only |
-| Container network | `--network=host` | `--network=host` |
-| HF cache mount | yes (read-only) | no (no local models) |
-| Env file | `coding-agent/.env` | `coding-agent-peer/.env` |
+| Aspect            | bazzite (`coding-agent/`)    | work (`coding-agent-peer/`) |
+| ----------------- | ---------------------------- | --------------------------- |
+| Config generation | dynamic (`generate-pi-*.js`) | static files                |
+| Models source     | live `/models` fetches       | peer endpoint only          |
+| Container network | `--network=host`             | `--network=host`            |
+| HF cache mount    | yes (read-only)              | no (no local models)        |
+| Env file          | `coding-agent/.env`          | `coding-agent-peer/.env`    |
 
 ## Relationship to PEERS_ONLY=1
 

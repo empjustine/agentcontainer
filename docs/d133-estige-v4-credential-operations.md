@@ -80,7 +80,7 @@ implemented yet.
   grammar now so adding it later cannot break parsing.
 - **The safe order has peers accept before the principal switches**:
   (1) the principal generates a new keypair and exports fingerprint +
-  PEM; (2) each peer imports the new key *alongside* the old — both
+  PEM; (2) each peer imports the new key _alongside_ the old — both
   verify, no gap; (3) the principal rotates — the old private key is
   destroyed (rotate, not moved); (4) peers prune the stale entry. There
   is no moment where a valid key is rejected.

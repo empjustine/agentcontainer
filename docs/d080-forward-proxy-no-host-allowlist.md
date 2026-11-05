@@ -44,10 +44,10 @@ forward-proxy surfaces carry no host-name policy and must never gain one:**
 
 - the client's loopback HTTP surface answers only `CONNECT` and
   `GET /healthz` (405 otherwise) — it stays a byte pump that never parses an
-  absolute-form request and never consults a host set *(narrowed by d103:
+  absolute-form request and never consults a host set _(narrowed by d103:
   never-consults-a-host-set is the half that stands; the never-parses half is
   superseded — cleartext `http`/`ws` absolute-form forwarding may parse, and
-  no host set arrives with it)*;
+  no host set arrives with it)_;
 - the tunnel server's CONNECT phase applies exactly the d073 §9 policy:
   parse, refuse IP literals (VPN-R22), port check (VPN-R37),
   resolve-once-and-pin dial (VPN-R36, VPN-R20) — no `allowHosts` table, no
@@ -102,19 +102,19 @@ forward-proxy surfaces carry no host-name policy and must never gain one:**
 - **Absolute-form forward-proxy support on the client surface, with the
   allowlist** — the same coupling cost plus the client would have to become
   an HTTP client instead of a byte pump; no use case once env-proxy
-  dispatch exists (d074). *(Scope narrowed by d103: the allowlist coupling
+  dispatch exists (d074). _(Scope narrowed by d103: the allowlist coupling
   stays rejected exactly as argued; the "would have to become an HTTP
   client" cost and the no-use-case claim are superseded — d103 records the
   use case and drops the blind-pump requirement for cleartext forwarding,
-  with no host set involved.)*
+  with no host set involved.)_
 
 ## Verification
 
 - `client.go`'s loopback HTTP surface: CONNECT and `/healthz` only, 405
-  otherwise — no code path that could carry a host policy. *(The 405 clause
+  otherwise — no code path that could carry a host policy. _(The 405 clause
   is superseded by d103, which lets cleartext absolute-form requests through;
   what this verifies is the invariant both records keep — no host policy on
-  the surface.)*
+  the surface.)_
 - `tunnelserver.go`'s CONNECT phase: parse, VPN-R22 refusal, VPN-R37 port
   check, VPN-R36 pinned dial — no host-name set consulted.
 - `egress.go` owns the only egress data on the tunnel path (default-deny

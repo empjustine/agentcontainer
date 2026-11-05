@@ -15,46 +15,45 @@ Every tensor (layer) name read from the GGUF **tensor-info header** — no weigh
 
 ## Summary
 
-| field | value |
-|---|---|
-| architecture | `muse-glimmer` |
-| block count | 52 (`blk.0` … `blk.51`) |
-| context length | 131072 |
-| embedding length | 6656 |
-| total tensors | 731 |
-| non-layer tensors | 3 |
-| attention blocks | 52 — 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51 |
-| quants analyzed | Q8_0, UD-Q4_K_XL, UD-Q6_K_XL |
+| field             | value                                                                                                                                                                                                     |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| architecture      | `muse-glimmer`                                                                                                                                                                                            |
+| block count       | 52 (`blk.0` … `blk.51`)                                                                                                                                                                                   |
+| context length    | 131072                                                                                                                                                                                                    |
+| embedding length  | 6656                                                                                                                                                                                                      |
+| total tensors     | 731                                                                                                                                                                                                       |
+| non-layer tensors | 3                                                                                                                                                                                                         |
+| attention blocks  | 52 — 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51 |
+| quants analyzed   | Q8_0, UD-Q4_K_XL, UD-Q6_K_XL                                                                                                                                                                              |
 
 ## Non-layer tensors
 
-| tensor | shape | MiB (Q8_0) | MiB (UD-Q4_K_XL) | MiB (UD-Q6_K_XL) |
-|---|---|---|---|---|
-| `output.weight` | [6656 x 202048] | 1362.7 | 881.7 | 1362.7 |
-| `output_norm.weight` | [6656] | 0.0 | 0.0 | 0.0 |
-| `token_embd.weight` | [6656 x 202048] | 1362.7 | 721.4 | 1362.7 |
+| tensor               | shape           | MiB (Q8_0) | MiB (UD-Q4_K_XL) | MiB (UD-Q6_K_XL) |
+| -------------------- | --------------- | ---------- | ---------------- | ---------------- |
+| `output.weight`      | [6656 x 202048] | 1362.7     | 881.7            | 1362.7           |
+| `output_norm.weight` | [6656]          | 0.0        | 0.0              | 0.0              |
+| `token_embd.weight`  | [6656 x 202048] | 1362.7     | 721.4            | 1362.7           |
 
 ## Block layout
 
 ### attention blocks — 52 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51)
 
-| tensor | shape | MiB (Q8_0) | MiB (UD-Q4_K_XL) | MiB (UD-Q6_K_XL) |
-|---|---|---|---|---|
-| `attn_gate.weight` | [6656 x 4096] | 27.6 | 14.6 | 27.6 |
-| `attn_k.weight` | [6656 x 256] | 1.7 | 0.9 | 1.7 |
-| `attn_k_norm.weight` | [128] | 0.0 | 0.0 | 0.0 |
-| `attn_norm.weight` | [6656] | 0.0 | 0.0 | 0.0 |
-| `attn_output.weight` | [4096 x 6656] | 27.6 | 14.6 | 27.6 |
-| `attn_q.weight` | [6656 x 4096] | 27.6 | 14.6 | 27.6 |
-| `attn_q_norm.weight` | [128] | 0.0 | 0.0 | 0.0 |
-| `attn_v.weight` | [6656 x 256] | 1.7 | 0.9 | 1.7 |
-| `ffn_down.weight` | [19968 x 6656] | 134.7 | 71.3 | 134.7 |
-| `ffn_gate.weight` | [6656 x 19968] | 134.7 | 71.3 | 104.0 |
-| `ffn_norm.weight` | [6656] | 0.0 | 0.0 | 0.0 |
-| `ffn_up.weight` | [6656 x 19968] | 134.7 | 71.3 | 104.0 |
-| `post_attention_norm.weight` | [6656] | 0.0 | 0.0 | 0.0 |
-| `post_ffw_norm.weight` | [6656] | 0.0 | 0.0 | 0.0 |
-
+| tensor                       | shape          | MiB (Q8_0) | MiB (UD-Q4_K_XL) | MiB (UD-Q6_K_XL) |
+| ---------------------------- | -------------- | ---------- | ---------------- | ---------------- |
+| `attn_gate.weight`           | [6656 x 4096]  | 27.6       | 14.6             | 27.6             |
+| `attn_k.weight`              | [6656 x 256]   | 1.7        | 0.9              | 1.7              |
+| `attn_k_norm.weight`         | [128]          | 0.0        | 0.0              | 0.0              |
+| `attn_norm.weight`           | [6656]         | 0.0        | 0.0              | 0.0              |
+| `attn_output.weight`         | [4096 x 6656]  | 27.6       | 14.6             | 27.6             |
+| `attn_q.weight`              | [6656 x 4096]  | 27.6       | 14.6             | 27.6             |
+| `attn_q_norm.weight`         | [128]          | 0.0        | 0.0              | 0.0              |
+| `attn_v.weight`              | [6656 x 256]   | 1.7        | 0.9              | 1.7              |
+| `ffn_down.weight`            | [19968 x 6656] | 134.7      | 71.3             | 134.7            |
+| `ffn_gate.weight`            | [6656 x 19968] | 134.7      | 71.3             | 104.0            |
+| `ffn_norm.weight`            | [6656]         | 0.0        | 0.0              | 0.0              |
+| `ffn_up.weight`              | [6656 x 19968] | 134.7      | 71.3             | 104.0            |
+| `post_attention_norm.weight` | [6656]         | 0.0        | 0.0              | 0.0              |
+| `post_ffw_norm.weight`       | [6656]         | 0.0        | 0.0              | 0.0              |
 
 ## All tensors by block
 
@@ -81,7 +80,6 @@ blk.0.post_attention_norm.weight
 blk.0.post_ffw_norm.weight
 ```
 
-
 ### blk.1 (attention)
 
 ```text
@@ -100,7 +98,6 @@ blk.1.ffn_up.weight
 blk.1.post_attention_norm.weight
 blk.1.post_ffw_norm.weight
 ```
-
 
 ### blk.2 (attention)
 
@@ -121,7 +118,6 @@ blk.2.post_attention_norm.weight
 blk.2.post_ffw_norm.weight
 ```
 
-
 ### blk.3 (attention)
 
 ```text
@@ -140,7 +136,6 @@ blk.3.ffn_up.weight
 blk.3.post_attention_norm.weight
 blk.3.post_ffw_norm.weight
 ```
-
 
 ### blk.4 (attention)
 
@@ -161,7 +156,6 @@ blk.4.post_attention_norm.weight
 blk.4.post_ffw_norm.weight
 ```
 
-
 ### blk.5 (attention)
 
 ```text
@@ -180,7 +174,6 @@ blk.5.ffn_up.weight
 blk.5.post_attention_norm.weight
 blk.5.post_ffw_norm.weight
 ```
-
 
 ### blk.6 (attention)
 
@@ -201,7 +194,6 @@ blk.6.post_attention_norm.weight
 blk.6.post_ffw_norm.weight
 ```
 
-
 ### blk.7 (attention)
 
 ```text
@@ -220,7 +212,6 @@ blk.7.ffn_up.weight
 blk.7.post_attention_norm.weight
 blk.7.post_ffw_norm.weight
 ```
-
 
 ### blk.8 (attention)
 
@@ -241,7 +232,6 @@ blk.8.post_attention_norm.weight
 blk.8.post_ffw_norm.weight
 ```
 
-
 ### blk.9 (attention)
 
 ```text
@@ -260,7 +250,6 @@ blk.9.ffn_up.weight
 blk.9.post_attention_norm.weight
 blk.9.post_ffw_norm.weight
 ```
-
 
 ### blk.10 (attention)
 
@@ -281,7 +270,6 @@ blk.10.post_attention_norm.weight
 blk.10.post_ffw_norm.weight
 ```
 
-
 ### blk.11 (attention)
 
 ```text
@@ -300,7 +288,6 @@ blk.11.ffn_up.weight
 blk.11.post_attention_norm.weight
 blk.11.post_ffw_norm.weight
 ```
-
 
 ### blk.12 (attention)
 
@@ -321,7 +308,6 @@ blk.12.post_attention_norm.weight
 blk.12.post_ffw_norm.weight
 ```
 
-
 ### blk.13 (attention)
 
 ```text
@@ -340,7 +326,6 @@ blk.13.ffn_up.weight
 blk.13.post_attention_norm.weight
 blk.13.post_ffw_norm.weight
 ```
-
 
 ### blk.14 (attention)
 
@@ -361,7 +346,6 @@ blk.14.post_attention_norm.weight
 blk.14.post_ffw_norm.weight
 ```
 
-
 ### blk.15 (attention)
 
 ```text
@@ -380,7 +364,6 @@ blk.15.ffn_up.weight
 blk.15.post_attention_norm.weight
 blk.15.post_ffw_norm.weight
 ```
-
 
 ### blk.16 (attention)
 
@@ -401,7 +384,6 @@ blk.16.post_attention_norm.weight
 blk.16.post_ffw_norm.weight
 ```
 
-
 ### blk.17 (attention)
 
 ```text
@@ -420,7 +402,6 @@ blk.17.ffn_up.weight
 blk.17.post_attention_norm.weight
 blk.17.post_ffw_norm.weight
 ```
-
 
 ### blk.18 (attention)
 
@@ -441,7 +422,6 @@ blk.18.post_attention_norm.weight
 blk.18.post_ffw_norm.weight
 ```
 
-
 ### blk.19 (attention)
 
 ```text
@@ -460,7 +440,6 @@ blk.19.ffn_up.weight
 blk.19.post_attention_norm.weight
 blk.19.post_ffw_norm.weight
 ```
-
 
 ### blk.20 (attention)
 
@@ -481,7 +460,6 @@ blk.20.post_attention_norm.weight
 blk.20.post_ffw_norm.weight
 ```
 
-
 ### blk.21 (attention)
 
 ```text
@@ -500,7 +478,6 @@ blk.21.ffn_up.weight
 blk.21.post_attention_norm.weight
 blk.21.post_ffw_norm.weight
 ```
-
 
 ### blk.22 (attention)
 
@@ -521,7 +498,6 @@ blk.22.post_attention_norm.weight
 blk.22.post_ffw_norm.weight
 ```
 
-
 ### blk.23 (attention)
 
 ```text
@@ -540,7 +516,6 @@ blk.23.ffn_up.weight
 blk.23.post_attention_norm.weight
 blk.23.post_ffw_norm.weight
 ```
-
 
 ### blk.24 (attention)
 
@@ -561,7 +536,6 @@ blk.24.post_attention_norm.weight
 blk.24.post_ffw_norm.weight
 ```
 
-
 ### blk.25 (attention)
 
 ```text
@@ -580,7 +554,6 @@ blk.25.ffn_up.weight
 blk.25.post_attention_norm.weight
 blk.25.post_ffw_norm.weight
 ```
-
 
 ### blk.26 (attention)
 
@@ -601,7 +574,6 @@ blk.26.post_attention_norm.weight
 blk.26.post_ffw_norm.weight
 ```
 
-
 ### blk.27 (attention)
 
 ```text
@@ -620,7 +592,6 @@ blk.27.ffn_up.weight
 blk.27.post_attention_norm.weight
 blk.27.post_ffw_norm.weight
 ```
-
 
 ### blk.28 (attention)
 
@@ -641,7 +612,6 @@ blk.28.post_attention_norm.weight
 blk.28.post_ffw_norm.weight
 ```
 
-
 ### blk.29 (attention)
 
 ```text
@@ -660,7 +630,6 @@ blk.29.ffn_up.weight
 blk.29.post_attention_norm.weight
 blk.29.post_ffw_norm.weight
 ```
-
 
 ### blk.30 (attention)
 
@@ -681,7 +650,6 @@ blk.30.post_attention_norm.weight
 blk.30.post_ffw_norm.weight
 ```
 
-
 ### blk.31 (attention)
 
 ```text
@@ -700,7 +668,6 @@ blk.31.ffn_up.weight
 blk.31.post_attention_norm.weight
 blk.31.post_ffw_norm.weight
 ```
-
 
 ### blk.32 (attention)
 
@@ -721,7 +688,6 @@ blk.32.post_attention_norm.weight
 blk.32.post_ffw_norm.weight
 ```
 
-
 ### blk.33 (attention)
 
 ```text
@@ -740,7 +706,6 @@ blk.33.ffn_up.weight
 blk.33.post_attention_norm.weight
 blk.33.post_ffw_norm.weight
 ```
-
 
 ### blk.34 (attention)
 
@@ -761,7 +726,6 @@ blk.34.post_attention_norm.weight
 blk.34.post_ffw_norm.weight
 ```
 
-
 ### blk.35 (attention)
 
 ```text
@@ -780,7 +744,6 @@ blk.35.ffn_up.weight
 blk.35.post_attention_norm.weight
 blk.35.post_ffw_norm.weight
 ```
-
 
 ### blk.36 (attention)
 
@@ -801,7 +764,6 @@ blk.36.post_attention_norm.weight
 blk.36.post_ffw_norm.weight
 ```
 
-
 ### blk.37 (attention)
 
 ```text
@@ -820,7 +782,6 @@ blk.37.ffn_up.weight
 blk.37.post_attention_norm.weight
 blk.37.post_ffw_norm.weight
 ```
-
 
 ### blk.38 (attention)
 
@@ -841,7 +802,6 @@ blk.38.post_attention_norm.weight
 blk.38.post_ffw_norm.weight
 ```
 
-
 ### blk.39 (attention)
 
 ```text
@@ -860,7 +820,6 @@ blk.39.ffn_up.weight
 blk.39.post_attention_norm.weight
 blk.39.post_ffw_norm.weight
 ```
-
 
 ### blk.40 (attention)
 
@@ -881,7 +840,6 @@ blk.40.post_attention_norm.weight
 blk.40.post_ffw_norm.weight
 ```
 
-
 ### blk.41 (attention)
 
 ```text
@@ -900,7 +858,6 @@ blk.41.ffn_up.weight
 blk.41.post_attention_norm.weight
 blk.41.post_ffw_norm.weight
 ```
-
 
 ### blk.42 (attention)
 
@@ -921,7 +878,6 @@ blk.42.post_attention_norm.weight
 blk.42.post_ffw_norm.weight
 ```
 
-
 ### blk.43 (attention)
 
 ```text
@@ -940,7 +896,6 @@ blk.43.ffn_up.weight
 blk.43.post_attention_norm.weight
 blk.43.post_ffw_norm.weight
 ```
-
 
 ### blk.44 (attention)
 
@@ -961,7 +916,6 @@ blk.44.post_attention_norm.weight
 blk.44.post_ffw_norm.weight
 ```
 
-
 ### blk.45 (attention)
 
 ```text
@@ -980,7 +934,6 @@ blk.45.ffn_up.weight
 blk.45.post_attention_norm.weight
 blk.45.post_ffw_norm.weight
 ```
-
 
 ### blk.46 (attention)
 
@@ -1001,7 +954,6 @@ blk.46.post_attention_norm.weight
 blk.46.post_ffw_norm.weight
 ```
 
-
 ### blk.47 (attention)
 
 ```text
@@ -1020,7 +972,6 @@ blk.47.ffn_up.weight
 blk.47.post_attention_norm.weight
 blk.47.post_ffw_norm.weight
 ```
-
 
 ### blk.48 (attention)
 
@@ -1041,7 +992,6 @@ blk.48.post_attention_norm.weight
 blk.48.post_ffw_norm.weight
 ```
 
-
 ### blk.49 (attention)
 
 ```text
@@ -1060,7 +1010,6 @@ blk.49.ffn_up.weight
 blk.49.post_attention_norm.weight
 blk.49.post_ffw_norm.weight
 ```
-
 
 ### blk.50 (attention)
 
@@ -1081,7 +1030,6 @@ blk.50.post_attention_norm.weight
 blk.50.post_ffw_norm.weight
 ```
 
-
 ### blk.51 (attention)
 
 ```text
@@ -1100,5 +1048,3 @@ blk.51.ffn_up.weight
 blk.51.post_attention_norm.weight
 blk.51.post_ffw_norm.weight
 ```
-
-

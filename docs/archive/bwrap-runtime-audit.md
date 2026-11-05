@@ -22,7 +22,7 @@ entail?
 ## Usage found in the mirror tree
 
 1. **mini-swe-agent** (`SWE-agent/mini-swe-agent`) — the only in-tree
-   *code* consumer: `src/minisweagent/environments/extra/bubblewrap.py`
+   _code_ consumer: `src/minisweagent/environments/extra/bubblewrap.py`
    implements a `BubblewrapEnvironment` that wraps every agent command
    in `bwrap`, invoked as:
 
@@ -52,17 +52,17 @@ Every flag mini-swe-agent passes is a real, documented option in the
 upstream man page (`bwrap.xml`) and parsed in `bubblewrap.c`
 (occurrence counts man page/source):
 
-| Flag | bwrap.xml | bubblewrap.c | Notes |
-|---|---|---|---|
-| `--unshare-user-try` | 2 | 3 | unshare user ns only if permitted — the right *try* form for heterogeneous hosts |
-| `--ro-bind` | 4 | 11 | 4× system dirs; keeps base OS read-only |
-| `--bind` | 14 | 63 | 1× per-run workspace cwd (RW) |
-| `--chdir` | 2 | 23 | enters the bound workspace |
-| `--tmpfs` | 16 | 22 | private `/tmp` |
-| `--proc` | 25 | 95 | fresh `/proc` |
-| `--dev` | 6 | 29 | minimal `/dev` |
-| `--new-session` | 2 | 2 | new TTY session; upstream man page explicitly recommends it "in a general sandbox" |
-| `--setenv` | 4 | 9 | PATH + per-var env injection |
+| Flag                 | bwrap.xml | bubblewrap.c | Notes                                                                              |
+| -------------------- | --------- | ------------ | ---------------------------------------------------------------------------------- |
+| `--unshare-user-try` | 2         | 3            | unshare user ns only if permitted — the right _try_ form for heterogeneous hosts   |
+| `--ro-bind`          | 4         | 11           | 4× system dirs; keeps base OS read-only                                            |
+| `--bind`             | 14        | 63           | 1× per-run workspace cwd (RW)                                                      |
+| `--chdir`            | 2         | 23           | enters the bound workspace                                                         |
+| `--tmpfs`            | 16        | 22           | private `/tmp`                                                                     |
+| `--proc`             | 25        | 95           | fresh `/proc`                                                                      |
+| `--dev`              | 6         | 29           | minimal `/dev`                                                                     |
+| `--new-session`      | 2         | 2            | new TTY session; upstream man page explicitly recommends it "in a general sandbox" |
+| `--setenv`           | 4         | 9            | PATH + per-var env injection                                                       |
 
 Semantic consistency with upstream `README.md`:
 

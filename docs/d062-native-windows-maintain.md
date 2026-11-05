@@ -16,7 +16,7 @@ tags: [git, references, work, windows, powershell, wsl2, mirrors]
 ## Problem
 
 [d044](d044-work-machine-bare-mirrors.md) put the work farm on the Windows
-NTFS profile and reached it *through* WSL2 (`/mnt/c/Users/<you>/…`). That
+NTFS profile and reached it _through_ WSL2 (`/mnt/c/Users/<you>/…`). That
 works for exactly one storage class: a **local NTFS** volume. The work
 machine's mirror roots also live elsewhere — non-NTFS filesystems, and
 non-local UNC paths (`\\server\share\…`: SMB shares and non-disk targets
@@ -38,7 +38,7 @@ Two things stood in the way:
    - `git-lib.mjs` loaded the shared logger with
      ``import(`${LIB_DIR}/log.mjs`)``. On Windows `LIB_DIR` is
      `C:\…\lib`, a drive letter parses as a URL scheme, and the ESM loader
-     rejects the specifier — *every* `git/` tool importing git-lib would die
+     rejects the specifier — _every_ `git/` tool importing git-lib would die
      at startup.
    - `--only`/`--exclude` globs were matched against `path.relative()`
      output, which spells separators `\` on Windows. No glob would match
@@ -66,7 +66,7 @@ secrets. The BRANCH differs because the signal does: sh keys on the Termux
 profile — the one place the mise manager is absent — and Windows carries no
 profile signal, so the PowerShell arm asks the capability itself: `mise` on
 PATH → `mise x node@24 -- node`, otherwise bare `node` (same standing as
-sh's Termux arm). It is the interpreter-selection lib for *any* future
+sh's Termux arm). It is the interpreter-selection lib for _any_ future
 Windows shim, not a maintain-private helper — it lives in `lib/` for the same
 reason node-run.sh does (d041).
 
@@ -91,7 +91,7 @@ cannot be observed from Linux by running the tool.
 
 ### 4. File ownership per farm: WSL2 git XOR Windows git
 
-d044 lists Windows-side access to the mirrors as *not handled* ("WSL `git`
+d044 lists Windows-side access to the mirrors as _not handled_ ("WSL `git`
 owns the files"). That stays true for the local-NTFS farm. For UNC/non-NTFS
 roots the ownership flips: the Windows-native run is the maintainer of record.
 The rule is per farm root, and it is exclusive — two gits (one from WSL2, one
@@ -111,7 +111,7 @@ needs a Windows entry, its shim is three lines over the same
 - **Flags and pacing are identical** on both entrypoints: same
   `--root`/`--jobs`/`--only`/`--exclude` surface, software-forge fetches
   paced 60 s by the shared gate, `--min-interval` still the only knob (d060).
-  The Windows run changes *where git executes*, never *what maintenance does*.
+  The Windows run changes _where git executes_, never _what maintenance does_.
 - **`--root` is a Windows path** (`\\server\share\refs`); `--only`/
   `--exclude` globs keep their documented `/` spelling, now with `\` also
   accepted from a Windows command line.

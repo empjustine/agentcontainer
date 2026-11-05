@@ -48,10 +48,10 @@ d040's cline-pass resolver:
 The ai-sdk package name is the shared vocabulary of both sources; one table
 maps it to pi's api types:
 
-| package | pi `api` |
-|---|---|
-| `@ai-sdk/anthropic` | `anthropic-messages` |
-| `@ai-sdk/openai` | `openai-responses` |
+| package                     | pi `api`             |
+| --------------------------- | -------------------- |
+| `@ai-sdk/anthropic`         | `anthropic-messages` |
+| `@ai-sdk/openai`            | `openai-responses`   |
 | `@ai-sdk/openai-compatible` | `openai-completions` |
 
 ## Decision

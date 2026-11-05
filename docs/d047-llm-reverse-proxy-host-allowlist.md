@@ -26,8 +26,8 @@ table is the union of the pi-ai built-in registry, the models.dev catalog,
 and catwalk — ~228 routes today, 200 distinct upstream hosts. Three failure
 classes fall out of that design:
 
-1. **The allowlist is inverted.** Every provider *slug* the three catalogs
-   know is routable; only unknown *prefixes* are denied (a bare
+1. **The allowlist is inverted.** Every provider _slug_ the three catalogs
+   know is routable; only unknown _prefixes_ are denied (a bare
    `404 page not found`). The proxy therefore forwards byte-for-byte to any
    host a catalog row names — including 164 hosts (of 200) this fleet would
    never touch, and any future catalog row the operator has not reviewed.
@@ -37,25 +37,25 @@ classes fall out of that design:
 2. **Schema poisoning hit the fleet through a slug-routed listing.** The
    WSL2 `models.json` failure (docs/d115; the
    `providers.openrouter.models.<0|5|10>.input.2 must be equal to constant`
-   errors) was not a routing bug per se — it was a *live-listing content*
+   errors) was not a routing bug per se — it was a _live-listing content_
    bug: `piModel()` emitted `architecture.input_modalities`
    (`["text","image","video"]` …) verbatim, and strict consumers (cline)
-   rejected the whole file. But the *surface* that delivered the bad
+   rejected the whole file. But the _surface_ that delivered the bad
    listing was the slug-route probe (`<peerBase>/openrouter/models`). The
    fix landed in `coding-agent/gen-lib.mjs` (a `toInput()` guard). Host
-   routing does not change which *listing data* flows, but it narrows what
+   routing does not change which _listing data_ flows, but it narrows what
    a probe can ever reach to the hosts the fleet actually defaults to, so a
    stray catalog row can never become a routable endpoint.
 
 3. **Client divergence is per-host, not per-slug.** pi, opencode, and the
-   vendor extensions disagree on how to address the *same* vendor
+   vendor extensions disagree on how to address the _same_ vendor
    (opencode speaks four dialects against two bases of `opencode.ai`;
-   `open.bigmodel.cn` is zai *and* zhipu with three different path
+   `open.bigmodel.cn` is zai _and_ zhipu with three different path
    layouts; `api.minimax.io` is minimax and minimax-coding-plan at
    `/anthropic` vs `/anthropic/v1`). A slug-keyed table forces one URL per
    slug (the proxy strips the slug and single-joins), so every such
    divergence needs a second slug row and the clients must pick the right
-   slug — the divergence is *encoded in the route namespace* instead of
+   slug — the divergence is _encoded in the route namespace_ instead of
    being handled by the client's own base URL.
 
 A **host allowlist** (route by `Host`/upstream hostname, deny everything
@@ -72,29 +72,33 @@ Replace the deployed `llm-reverse-proxy.json` shape:
 
 ```jsonc
 // v1 (today)
-{ "listen": "0.0.0.0:8080",
+{
+  "listen": "0.0.0.0:8080",
   "providers": {
-    "anthropic":       "https://api.anthropic.com",
-    "cline-pass":      "https://api.cline.bot/api/v1",
-    "llama-swap":      "http://127.0.0.1:8101",
-    "models.dev":      "https://models.dev",
-    "catwalk":         "https://catwalk.charm.land",
-    "...":             "..."
-  } }
+    "anthropic": "https://api.anthropic.com",
+    "cline-pass": "https://api.cline.bot/api/v1",
+    "llama-swap": "http://127.0.0.1:8101",
+    "models.dev": "https://models.dev",
+    "catwalk": "https://catwalk.charm.land",
+    "...": "...",
+  },
+}
 ```
 
 ```jsonc
 // v2 (proposed)
-{ "listen": "0.0.0.0:8080",
+{
+  "listen": "0.0.0.0:8080",
   "allowHosts": {
-    "api.anthropic.com":   "https://api.anthropic.com",
-    "api.cline.bot":       "https://api.cline.bot",      // HOST ROOT, not the base
-    "opencode.ai":         "https://opencode.ai",        // one row for zen AND go
-    "llama-swap":         "http://127.0.0.1:8101",     // loopback learner, named not host-keyed
-    "models.dev":          "https://models.dev",
-    "catwalk.charm.land":  "https://catwalk.charm.land",
-    "...":                 "..."                        // the 36-row owner set
-  } }
+    "api.anthropic.com": "https://api.anthropic.com",
+    "api.cline.bot": "https://api.cline.bot", // HOST ROOT, not the base
+    "opencode.ai": "https://opencode.ai", // one row for zen AND go
+    "llama-swap": "http://127.0.0.1:8101", // loopback learner, named not host-keyed
+    "models.dev": "https://models.dev",
+    "catwalk.charm.land": "https://catwalk.charm.land",
+    "...": "...", // the 36-row owner set
+  },
+}
 ```
 
 Semantics:
@@ -120,7 +124,7 @@ Semantics:
   host, kept as the hand-added convenience the catwalks will never carry
   (docs/d038's "hand-added entries" clause, now route-shaped).
 
-The allowlist is the *defaults of the owner's stack* — pi-ai's routable
+The allowlist is the _defaults of the owner's stack_ — pi-ai's routable
 rows + the `lib/cloud-providers.mjs` fact table (the hand-added
 cline-pass/hyper/inferx rows) + the llama-swap loopback + the two metadata
 passthroughs — **36 allowlist rows** (verified: the generated table is
@@ -147,8 +151,8 @@ point of the raw passthrough, docs/d027). The multi-slug hosts that needed
 separate v1 rows — `opencode.ai`, `open.bigmodel.cn`, `api.minimax.io`,
 `api.fireworks.ai`, `api.kimi.com`, `ai-gateway.vercel.sh`,
 `api.together.xyz`, `api.cohere.com`, `api.perplexity.ai` — need **one**
-allowlisted host each. The proxy removes the last reason the *route
-namespace* had to encode per-client path prefixes; it is the client's own
+allowlisted host each. The proxy removes the last reason the _route
+namespace_ had to encode per-client path prefixes; it is the client's own
 base URL that decides, e.g., `api.minimax.io/anthropic` vs
 `api.minimax.io/anthropic/v1`.
 
@@ -169,9 +173,9 @@ base URL that decides, e.g., `api.minimax.io/anthropic` vs
 
 ### Why host routing also hardens the schema-poisoning class
 
-The WSL2 failure delivered bad *data* through a slug-route probe. v2 does
+The WSL2 failure delivered bad _data_ through a slug-route probe. v2 does
 not filter listing payloads (it cannot — it never sees bodies), but it
-removes the *reachability* half of the attack surface: a probe (or a client)
+removes the _reachability_ half of the attack surface: a probe (or a client)
 can only ever reach the hosts the operator allowlists. A catalog row for a
 never-reviewed host no longer creates a routable endpoint at the funnel the
 moment the catalog refreshes; adding a host is a deliberate allowlist edit,
@@ -184,13 +188,13 @@ record; see the bugfix record below.)
 
 The allowlist derivation stays fully generated, exactly like d038:
 
-| Source | Row type today (slug) | Row type in v2 (host) | Priority |
-|---|---|---|---|
-| pi-ai built-in registry (`llm-reverse-proxy/generate.mjs` `PI_AI_PROVIDERS; 31 routable) | `/<providerId>` | one host per winning URL | 1 (wins) |
-| models.dev catalog + `AI_SDK_PACKAGE_ENDPOINTS` npm fallback | `/<providerId>` | one host per winning URL | 2 |
-| catwalk (`lib/catwalk-facts.json`, `api_endpoint`) | `/<providerId>` | one host per winning URL | 3 |
-| hand-added facts (`lib/cloud-providers.mjs` cline-pass/hyper/inferx) + `llama-swap` loopback + `models.dev`/`catwalk` passthroughs | hand-added rows | hand-added hosts | — |
-| **operator overrides** | `providers:` hand edits | `allowHosts` hand edits (same file, same review) | — |
+| Source                                                                                                                             | Row type today (slug)   | Row type in v2 (host)                            | Priority |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------ | -------- |
+| pi-ai built-in registry (`llm-reverse-proxy/generate.mjs` `PI_AI_PROVIDERS; 31 routable)                                           | `/<providerId>`         | one host per winning URL                         | 1 (wins) |
+| models.dev catalog + `AI_SDK_PACKAGE_ENDPOINTS` npm fallback                                                                       | `/<providerId>`         | one host per winning URL                         | 2        |
+| catwalk (`lib/catwalk-facts.json`, `api_endpoint`)                                                                                 | `/<providerId>`         | one host per winning URL                         | 3        |
+| hand-added facts (`lib/cloud-providers.mjs` cline-pass/hyper/inferx) + `llama-swap` loopback + `models.dev`/`catwalk` passthroughs | hand-added rows         | hand-added hosts                                 | —        |
+| **operator overrides**                                                                                                             | `providers:` hand edits | `allowHosts` hand edits (same file, same review) | —        |
 
 The drift checks (dead route warn for fact-table members missing from the
 deployed table; deployed-vs-fact-table drift warn — d038's "Unchanged
@@ -234,11 +238,11 @@ contracts") are keyed by host in v2: a fact-table host missing from
   default `http://127.0.0.1:8080/models.dev/api.json`) becomes
   `http://127.0.0.1:8080/models.dev/api.json` under the same rule: the
   **host** `models.dev` is allowlisted, the path is intact.
-- The 404-camouflage surface *grows*: unknown hosts now answer 404 rather
+- The 404-camouflage surface _grows_: unknown hosts now answer 404 rather
   than being routable — a strict improvement for the anti-oracle contract
   (docs/d027's funnel edge).
 - The owner's allowlist is `lib/cloud-providers.mjs` + the fact table +
-  the hand-added hosts; a *new* provider the operator adopts is a one-line
+  the hand-added hosts; a _new_ provider the operator adopts is a one-line
   host allowlist edit (plus its fact-table row) — no slug-namespace
   ceremony.
 
@@ -247,7 +251,7 @@ contracts") are keyed by host in v2: a fact-table host missing from
 - **Keep slug routing; prune the table to the owner set.** Same allowlist
   intent, but slugs keep double-encoding the client divergence (the `zai`
   vs `zhipu` vs `zai-coding-cn` problem stays), and a slug row still says
-  nothing about *which host* it unlocks. Host routing is the minimal
+  nothing about _which host_ it unlocks. Host routing is the minimal
   primitive the slug table was approximating.
 - **Host header routing (SNI/VirtualHost).** The funnel already terminates
   at one peer base; letting clients set arbitrary `Host:` headers would

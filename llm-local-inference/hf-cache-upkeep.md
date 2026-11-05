@@ -27,11 +27,11 @@ predecessor gets deleted.
 
 Env:
 
-| Variable     | Meaning                                                       |
-|--------------|---------------------------------------------------------------|
-| `HF_HUB_CACHE` | cache dir (default `~/.cache/huggingface/hub`)              |
-| `HF_HOME`      | falls back to `XDG_CACHE_HOME/huggingface`                  |
-| `HF_TOKEN`     | token for gated models (optional; auto-read from cache)     |
+| Variable       | Meaning                                                 |
+| -------------- | ------------------------------------------------------- |
+| `HF_HUB_CACHE` | cache dir (default `~/.cache/huggingface/hub`)          |
+| `HF_HOME`      | falls back to `XDG_CACHE_HOME/huggingface`              |
+| `HF_TOKEN`     | token for gated models (optional; auto-read from cache) |
 
 ### API note (huggingface_hub ≥ 0.23)
 
@@ -41,7 +41,7 @@ per-repo `.delete_revisions`, `.commits`, or `.warnings`). Revisions are
 pruned via `HFCacheInfo.delete_revisions(*hashes)`, which returns a
 `DeleteCacheStrategy` you `.execute()`. In this model refs always point at a
 present revision, so a ref whose commit is missing now makes the whole repo
-*corrupted* (reported in `HFCacheInfo.warnings`) rather than being silently
+_corrupted_ (reported in `HFCacheInfo.warnings`) rather than being silently
 prunable. The closest safe GC to the old "prune dangling refs + orphan blobs"
 step is to drop revisions that no ref points at (detached), which also
 reclaims the blobs those revisions were the sole user of.

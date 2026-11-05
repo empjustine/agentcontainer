@@ -4,29 +4,29 @@ license: other
 license_name: lfm1.0
 license_link: LICENSE
 language:
-- ar
-- zh
-- en
-- fr
-- de
-- hi
-- id
-- it
-- ja
-- ko
-- pl
-- pt
-- ru
-- es
-- th
-- vi
+  - ar
+  - zh
+  - en
+  - fr
+  - de
+  - hi
+  - id
+  - it
+  - ja
+  - ko
+  - pl
+  - pt
+  - ru
+  - es
+  - th
+  - vi
 pipeline_tag: text-generation
 base_model: LiquidAI/LFM2.5-2.6B
 tags:
-- liquid
-- lfm2.5
-- gguf
-- llama.cpp
+  - liquid
+  - lfm2.5
+  - gguf
+  - llama.cpp
 ---
 
 <div align="center">
@@ -94,4 +94,3 @@ These weights are intended for fine-tuning and experimentation. Published QAD
 results apply to the Q4_0 GGUF; direct FP32/BF16 inference and other quantization
 formats may behave differently. See the [source checkpoint documentation](qad/README.md)
 for validation details and the license.
-

@@ -14,17 +14,17 @@ behavior**: one-time research/audit findings, and operational docs whose
 subject was retired from the live tree. They are kept because they are the
 only record of an investigation, or because history references them.
 
-| Doc | What it is | Status |
-|-----|-----------|--------|
-| [bwrap-runtime-audit.md](bwrap-runtime-audit.md) | bubblewrap usage audit against upstream (does a bwrap runtime tier make sense?) | `done` |
-| [comparison-with-huggingface-estimate.md](comparison-with-huggingface-estimate.md) | our GGUF metadata parser vs gdevenyi/huggingface-estimate | `done` |
-| [endpoint-runtime-rewiring.md](endpoint-runtime-rewiring.md) | can pi extensions switch endpoints at runtime? (vs generation-time config) | `done` |
-| [future-config-generator-system.md](future-config-generator-system.md) | the "simplified config-generator system" sketch | `deprecated` — d030/d037/d041 implemented its substance |
-| [llama-swap-response-analysis.md](llama-swap-response-analysis.md) | llama-swap response shape vs pi agent expectations | `done` |
-| [mini-swe-agent.md](mini-swe-agent.md) | mini-swe-agent vs pi agent-core comparison | `done` |
-| [peer-variant-work.md](peer-variant-work.md) | serving a peer variant outside the primary lineup (shelved) | `deprecated` |
-| [model-architecture-findings.md](model-architecture-findings.md) | model selection numbers (context/active params/KV cache) | `done` |
-| [atuin-litestream-study.md](atuin-litestream-study.md) | litestream backup + best-effort sync for atuinsh/atuin — sync v2 protocol, accounts, OCI MySQL/Oracle 19c verdict | `done` |
+| Doc                                                                                | What it is                                                                                                        | Status                                                  |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| [bwrap-runtime-audit.md](bwrap-runtime-audit.md)                                   | bubblewrap usage audit against upstream (does a bwrap runtime tier make sense?)                                   | `done`                                                  |
+| [comparison-with-huggingface-estimate.md](comparison-with-huggingface-estimate.md) | our GGUF metadata parser vs gdevenyi/huggingface-estimate                                                         | `done`                                                  |
+| [endpoint-runtime-rewiring.md](endpoint-runtime-rewiring.md)                       | can pi extensions switch endpoints at runtime? (vs generation-time config)                                        | `done`                                                  |
+| [future-config-generator-system.md](future-config-generator-system.md)             | the "simplified config-generator system" sketch                                                                   | `deprecated` — d030/d037/d041 implemented its substance |
+| [llama-swap-response-analysis.md](llama-swap-response-analysis.md)                 | llama-swap response shape vs pi agent expectations                                                                | `done`                                                  |
+| [mini-swe-agent.md](mini-swe-agent.md)                                             | mini-swe-agent vs pi agent-core comparison                                                                        | `done`                                                  |
+| [peer-variant-work.md](peer-variant-work.md)                                       | serving a peer variant outside the primary lineup (shelved)                                                       | `deprecated`                                            |
+| [model-architecture-findings.md](model-architecture-findings.md)                   | model selection numbers (context/active params/KV cache)                                                          | `done`                                                  |
+| [atuin-litestream-study.md](atuin-litestream-study.md)                             | litestream backup + best-effort sync for atuinsh/atuin — sync v2 protocol, accounts, OCI MySQL/Oracle 19c verdict | `done`                                                  |
 
 ## Reading notes
 

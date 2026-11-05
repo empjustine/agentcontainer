@@ -42,10 +42,10 @@ They all point at one private **software forge** — Visual Builder Studio
 `git remote get-url origin` is a rotating IDCS ssh identity, and the tenant
 exposes the same repository through three unrelated URL shapes:
 
-| shape | URL |
-|-------|-----|
-| ssh | `ssh://idcs-<id>.<email>@<host>/<projectId>/<repo>.git` |
-| https | `https://<email>@<host>/<org>/s/<projectId>/scm/<repo>.git` |
+| shape | URL                                                                       |
+| ----- | ------------------------------------------------------------------------- |
+| ssh   | `ssh://idcs-<id>.<email>@<host>/<projectId>/<repo>.git`                   |
+| https | `https://<email>@<host>/<org>/s/<projectId>/scm/<repo>.git`               |
 | glass | `https://<host>/<org>/#projects/<slug>/scm/<repo>.git/tree?revision=main` |
 
 Worked example (illustrative only — real shape, fictional tenant):
@@ -131,22 +131,22 @@ copy (see caveats).
 
 ## Mapping home ↔ work
 
-| concern | home (`git/`) | work (this record) |
-|---------|---------------|--------------------|
-| farm | `~/Downloads/references`, many public hosts | one software forge, clones under `<root>/<org>/<PROJECT>/<repo>` |
-| acquisition | `-forge-mirror.sh <https-url>` keyed by host | `-software-forge-mirror.sh <clone\|url>` keyed by software-forge identity |
-| URL model | `host/owner/repo` | `org / projectSlug / repo` across 3 URL shapes |
-| conversion | `migrate.sh` (unchanged) | `migrate.sh` (unchanged) |
-| upkeep | `maintain.sh --root <farm>` (public hosts at 1 s) | `maintain.sh --root <NTFS dest>` (software-forge fetches paced 30 s) |
-| search | `search-references.sh` (unchanged) | `search-references.sh --root <NTFS dest>` |
-| storage | local ext4, `z,U` relabel is the cost | NTFS outside WSL2, disk is the cost |
+| concern     | home (`git/`)                                     | work (this record)                                                        |
+| ----------- | ------------------------------------------------- | ------------------------------------------------------------------------- |
+| farm        | `~/Downloads/references`, many public hosts       | one software forge, clones under `<root>/<org>/<PROJECT>/<repo>`          |
+| acquisition | `-forge-mirror.sh <https-url>` keyed by host      | `-software-forge-mirror.sh <clone\|url>` keyed by software-forge identity |
+| URL model   | `host/owner/repo`                                 | `org / projectSlug / repo` across 3 URL shapes                            |
+| conversion  | `migrate.sh` (unchanged)                          | `migrate.sh` (unchanged)                                                  |
+| upkeep      | `maintain.sh --root <farm>` (public hosts at 1 s) | `maintain.sh --root <NTFS dest>` (software-forge fetches paced 30 s)      |
+| search      | `search-references.sh` (unchanged)                | `search-references.sh --root <NTFS dest>`                                 |
+| storage     | local ext4, `z,U` relabel is the cost             | NTFS outside WSL2, disk is the cost                                       |
 
 ## Enumerating the work tenant
 
 "Initial mirroring" needs an inventory. There are two very different
 situations, and only the second one needs discovery:
 
-**Repos already cloned.** The clone tree *is* the inventory. `migrate-to-bare.mjs`
+**Repos already cloned.** The clone tree _is_ the inventory. `migrate-to-bare.mjs`
 walks it structurally (`findCloneRoots`), and `audit.mjs` now emits every
 software-forge identity it finds:
 
@@ -181,9 +181,14 @@ it to a manifest, and mirror from the manifest. No shell replay, no secrets.
 The manifest is the stable seam:
 
 ```json
-{ "generatedAt": "…", "base": "https://…", "org": "…",
-  "repositories": [ { "projectId": "…", "projectSlug": "…", "repo": "…",
-                      "httpsUrl": "…", "sshUrl": "…" } ] }
+{
+  "generatedAt": "…",
+  "base": "https://…",
+  "org": "…",
+  "repositories": [
+    { "projectId": "…", "projectSlug": "…", "repo": "…", "httpsUrl": "…", "sshUrl": "…" }
+  ]
+}
 ```
 
 HAR clone URLs are userinfo-less, so `--ssh-user`/`--http-user` inject the
@@ -193,7 +198,7 @@ mirrorer's identity when passed (usernames, not secrets — argv is fine).
 
 1. **Existing clones** — `./git/migrate.sh` (nothing else required).
 2. **Never-cloned repos** — export the tenant's responses as a HAR (DevTools →
-   Network, *Export HAR (with sensitive data)* so response bodies are kept),
+   Network, _Export HAR (with sensitive data)_ so response bodies are kept),
    then `./git/vbs-har.sh capture.har --out vbs-manifest.json`.
 3. **Mirror** — `./git/-vbs-mirror-all.sh --manifest vbs-manifest.json
    --dest DIR`. It
@@ -261,7 +266,7 @@ derivable when `urlId` is absent.
   only fire after that mirror's `git fsck --connectivity-only` passed (every
   conversion is fsck'd, docs/d060).
 - **podman `z,U` does not apply here.** The home farm's `1.6M files / ~39 s`
-  startup cost was a *bind-mount* cost; the work mirrors live on NTFS and are
+  startup cost was a _bind-mount_ cost; the work mirrors live on NTFS and are
   never bind-mounted, so that specific pressure is absent.
 
 ## Not handled
@@ -293,7 +298,7 @@ supported write path for another Git for Windows process).
 - `-vbs-mirror-all.sh` (and, since docs/d121, `git/tests/git-vbs-mirror.test.mjs`)
   is exercised end-to-end against a fixture manifest,
   including the empty-field rows that exposed a `read` bug — tab is IFS
-  *whitespace*, so an empty clone-URL column collapsed and shifted every later
+  _whitespace_, so an empty clone-URL column collapsed and shifted every later
   field; the extractors and loops now use the ASCII Unit Separator, which is
   not whitespace. `shellcheck -x` is clean.
 - `vbs-har.mjs` is exercised against a captured HAR (535 entries, all

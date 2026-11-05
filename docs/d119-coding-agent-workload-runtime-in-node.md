@@ -69,7 +69,7 @@ module in the language the unit already needs can express.
   launcher's allowlist already listed the name, and the image's own `ENV` has
   the same value — so forwarding it is a no-op inside the container and is
   recorded in the fixture with that reason.
-- **`config.toml` keeps its `jq` entry.** That file describes the *in-image*
+- **`config.toml` keeps its `jq` entry.** That file describes the _in-image_
   mise configuration (`Containerfile` copies it); jq stops being a **host**
   prerequisite, it does not stop existing in the image.
 - **Refusal stays late.** Required mounts are recorded when the description is
@@ -81,7 +81,7 @@ module in the language the unit already needs can express.
   rewrites PATH, so a stubbed `node` earlier in PATH loses).
 - **`jq`-freedom is proven, not asserted.** The static scan catches an
   invocation anywhere in the unit's non-test shell and JS; the runtime half
-  launches under a PATH with every jq-providing directory *filtered out*
+  launches under a PATH with every jq-providing directory _filtered out_
   (filtered, not prefixed — `mise exec` prepends its own tool directories).
   Both halves were mutation-tested by injecting a `jq` call.
 

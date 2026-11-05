@@ -31,19 +31,19 @@ machinery, and make direct→peer fallback logic simpler?
 **pi `registerProvider` has exactly the semantics the generated layers
 emulate** (`docs/extensions.md` §registerProvider):
 
-- *reroute-only override*: `pi.registerProvider("anthropic", { baseUrl })`
+- _reroute-only override_: `pi.registerProvider("anthropic", { baseUrl })`
   — overrides the endpoint for an **existing** provider and **keeps all
   models**. That is layer `model-012` as one line of runtime code.
-- *live catalog*: a `refreshModels({ signal })` callback (the docs' own
+- _live catalog_: a `refreshModels({ signal })` callback (the docs' own
   example registers a live llama.cpp catalog from `GET /v1/models` without
   persisting). That is `generate-local-llama-swap.mjs` + its probe as a
   callback.
-- *full form*: `createProvider({ auth, models, fetchModels, api })` from
+- _full form_: `createProvider({ auth, models, fetchModels, api })` from
   `@earendil-works/pi-ai` — what both reference extensions use — for
   providers pi does not ship natively (cline-pass, hyper).
-- *composition preserved*: "`models.json` overrides still apply above it"
+- _composition preserved_: "`models.json` overrides still apply above it"
   (community-registered providers can still be rerouted by config).
-- *immediate effect*: registrations after the load phase take effect without
+- _immediate effect_: registrations after the load phase take effect without
   `/reload` — runtime re-routing mid-session is a supported operation.
 
 **Reference extensions (source-verified):** `pi-hyper-provider` =
@@ -61,7 +61,7 @@ or `plugin` array).
 directly available here):** pi ships a built-in `llama.cpp` extension
 (`packages/coding-agent/src/extensions/llama/`, plus `docs/llama-cpp.md`)
 that connects to a llama-server **router-mode** endpoint (`LLAMA_BASE_URL`,
-default `http://127.0.0.1:8080`) — it *connects, never supervises*: the
+default `http://127.0.0.1:8080`) — it _connects, never supervises_: the
 docs' start command is the operator's own `llama-server --models-dir …`.
 It also filters the catalog to `loaded`/`sleeping` (unloaded presets only
 when llama-server router autoload is enabled), which is wrong for llama-swap,
@@ -75,7 +75,7 @@ llama-swap already publishes each `config.d/` entry's `metadata` block on
 current contract — `generate-local-llama-swap.mjs` is a field-by-field
 mirror, not a metadata computer; the `lib/llamacpp-model-data.json` context
 windows flow into llama-swap's `config.d/` at llama-swap config generation
-time). Porting the *catalog* mechanics is thus unnecessary: the extension's
+time). Porting the _catalog_ mechanics is thus unnecessary: the extension's
 `refreshModels` only needs the mirroring logic (copy `meta.llamaswap` fields,
 keep loaded AND unloaded, `openai-completions` dialect) — option (b) "the
 metadata bundling works as intended" holds.
@@ -126,7 +126,7 @@ the coding-agent container):
   Charm's own customers).
 - **Third-party — reference material only:** `jellydn/pi-clinepass-provider`,
   `tejasa97/pi-cline-provider`, `haconglinh1990/opencode-clinepass-provider`
-  are maintained by unaffiliated individuals. Their *current* source is a
+  are maintained by unaffiliated individuals. Their _current_ source is a
   useful reference for the ClinePass auth flows (WorkOS refresh, credential
   extraction from Cline CLI stores) and model curation, but long-term trust
   is unwarranted: an npm-installed extension auto-updates inside the agent
@@ -135,9 +135,9 @@ the coding-agent container):
   to depend on.
 
 **Provider facts sourcing (opencode-sdk-js question, resolved):**
-`@opencode-ai/sdk` is a typed client for a *running* opencode server
+`@opencode-ai/sdk` is a typed client for a _running_ opencode server
 (`server.provider` / `server.model` endpoint groups — source-verified in
-`packages/client/src/contract.ts`), so it can read opencode's *effective*
+`packages/client/src/contract.ts`), so it can read opencode's _effective_
 provider view including built-ins — but that view is itself resolved from
 **models.dev** (`packages/core/src/models-dev.ts` fetches
 `models.dev/api.json`; provider `npm` = the `@ai-sdk/*` compatibility
@@ -267,7 +267,7 @@ per-run freshness is still a strict improvement over per-generation.
   in infisical's /inference path, required at generation time — one
   definition, no second copy) and the `PEER_MODEL_FILTERS` env surface
 - most of `run.sh`'s layer staging (one extension dir + auth.json instead)
-- the generation-time reachability *decision* itself — the class of bug where
+- the generation-time reachability _decision_ itself — the class of bug where
   a transient probe failure at generate time froze a wrong route into config
   until the next regeneration
 
@@ -310,7 +310,7 @@ a generated lineup).
   reworked by a parallel effort (provider targets moving to the relay);
   introducing the extension path mid-rework would create two competing
   routing mechanisms in one module. This note is the verification record;
-  implementation should land as one coherent replacement commit *after* (or
+  implementation should land as one coherent replacement commit _after_ (or
   as part of) that rework, deleting the generators it replaces.
 - **Not reimplementing WorkOS/OAuth or curated model lists** — that is
   exactly what the reference extensions maintain upstream.

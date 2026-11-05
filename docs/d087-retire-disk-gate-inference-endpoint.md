@@ -31,21 +31,21 @@ generic build down. Two things changed since:
 ## Decision
 
 - **The coding-agent image registers ungated on container hosts.**
-   `lib/host-capabilities.mjs` loses `freeDiskGiB()` (its only consumer)
-   and `CODING_AGENT_IMAGE_MIN_FREE_GIB` is retired with it. d083(a)/(b)
-   — argv target selection, per-unit shims — are untouched.
+  `lib/host-capabilities.mjs` loses `freeDiskGiB()` (its only consumer)
+  and `CODING_AGENT_IMAGE_MIN_FREE_GIB` is retired with it. d083(a)/(b)
+  — argv target selection, per-unit shims — are untouched.
 - **"Render device exists" becomes "this host is an inference endpoint."**
-   The llama-swap pull gate (and, keeping the no-drift invariant, the
-   `llm-local-inference/generate.mjs` serving-layer gate) now requires
-   render devices **and** total RAM ≥ `INFERENCE_MIN_RAM_GIB` (16 GiB,
-   exported from lib/host-capabilities.mjs beside `totalMemGiB()` so
-   builder and generator share one definition). llama.cpp serving holds
-   weights plus KV cache in memory; a low-RAM host cannot serve no matter
-   what accelerators it has, and pulling multi-GB there is the exact waste
-   d083's floor was papering over — now stopped at the source.
+  The llama-swap pull gate (and, keeping the no-drift invariant, the
+  `llm-local-inference/generate.mjs` serving-layer gate) now requires
+  render devices **and** total RAM ≥ `INFERENCE_MIN_RAM_GIB` (16 GiB,
+  exported from lib/host-capabilities.mjs beside `totalMemGiB()` so
+  builder and generator share one definition). llama.cpp serving holds
+  weights plus KV cache in memory; a low-RAM host cannot serve no matter
+  what accelerators it has, and pulling multi-GB there is the exact waste
+  d083's floor was papering over — now stopped at the source.
 - **The gates stay hardware-fact keyed** (device nodes, installed RAM),
-   never artifact presence — d041/d058's staleness rule untouched. A
-   skipped target still logs loudly with the failing facts attached.
+  never artifact presence — d041/d058's staleness rule untouched. A
+  skipped target still logs loudly with the failing facts attached.
 
 Deliberately NOT done: probing whether an accelerator is a GPU vs TPU/NPU,
 or whether its driver works. The device-node check is the honest boundary

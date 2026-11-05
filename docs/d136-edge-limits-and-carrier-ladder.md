@@ -30,22 +30,22 @@ Provenance is per row: **M** measured on a Funnel edge by estige's spikes
 (d073, d077), **S** derived from upstream source, **U** unverified — a spike
 before the format freezes.
 
-| property                                              | status | detail / consequence                                                                                     |
-| ----------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
-| public ports `443`, `8443`, `10000` only; `*.ts.net` names only | M | not configurable; the design must not assume any other origin shape                                       |
-| edge offers ALPN `h2` and `http/1.1`                  | M      | `openssl s_client -alpn h2,http/1.1` → `h2`; h2 is the default public leg                                 |
-| edge → backend hop is **HTTP/1.1**; h2c only for gRPC content types | S | so public h2 buys mux/no-HOL, not backend h2; the server writes ordinary streaming h1.1 handlers         |
-| arbitrary methods forwarded (`PUT`/`DELETE`/`PATCH`)   | S + U  | Go `httputil.ReverseProxy` forwards any method; verify on the deployed edge                               |
-| WebDAV verbs (`MOVE`/`COPY`/`PROPFIND`)                | U      | assume fragile; namespace operations therefore live in `POST /op/<name>`                                  |
-| `101` WebSocket upgrade passes                        | S + M  | estige's deployed WebSocket transport works this way (d073 spike S3)                                      |
-| RFC 8441 (WebSocket over h2)                          | **absent** | upgrade never reaches the backend when the client negotiates h2 → `426`; **a WSS carrier must pin ALPN to `http/1.1`** |
-| WebSocket query string preserved                      | **no** | query strings are stripped on the upgrade request → auth must be a handshake header or an in-band first frame |
-| streaming request body (chunked, h1.1)                | S + U  | supported by the proxy; concurrent write+read is the claim that needs the spike                           |
-| response streaming / flush, idle timeouts             | S + U  | `FlushInterval` behavior on the backend side; **idle timeout is unknown** and decides long-poll viability  |
-| `Range`, `ETag`, `If-Match` pass through              | S      | ordinary headers, no special handling                                                                     |
-| request trailers                                      | U      | assume absent; half-close must be a frame, not an HTTP trailer                                            |
-| client IP at the backend                              | **no** | PROXY protocol is unsupported on the HTTP path (upstream issue, still open) → logs identify the credential, not the peer |
-| bandwidth                                             | M      | "non-configurable bandwidth limits", no published number → the clients need resumability and progress    |
+| property                                                            | status     | detail / consequence                                                                                                     |
+| ------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| public ports `443`, `8443`, `10000` only; `*.ts.net` names only     | M          | not configurable; the design must not assume any other origin shape                                                      |
+| edge offers ALPN `h2` and `http/1.1`                                | M          | `openssl s_client -alpn h2,http/1.1` → `h2`; h2 is the default public leg                                                |
+| edge → backend hop is **HTTP/1.1**; h2c only for gRPC content types | S          | so public h2 buys mux/no-HOL, not backend h2; the server writes ordinary streaming h1.1 handlers                         |
+| arbitrary methods forwarded (`PUT`/`DELETE`/`PATCH`)                | S + U      | Go `httputil.ReverseProxy` forwards any method; verify on the deployed edge                                              |
+| WebDAV verbs (`MOVE`/`COPY`/`PROPFIND`)                             | U          | assume fragile; namespace operations therefore live in `POST /op/<name>`                                                 |
+| `101` WebSocket upgrade passes                                      | S + M      | estige's deployed WebSocket transport works this way (d073 spike S3)                                                     |
+| RFC 8441 (WebSocket over h2)                                        | **absent** | upgrade never reaches the backend when the client negotiates h2 → `426`; **a WSS carrier must pin ALPN to `http/1.1`**   |
+| WebSocket query string preserved                                    | **no**     | query strings are stripped on the upgrade request → auth must be a handshake header or an in-band first frame            |
+| streaming request body (chunked, h1.1)                              | S + U      | supported by the proxy; concurrent write+read is the claim that needs the spike                                          |
+| response streaming / flush, idle timeouts                           | S + U      | `FlushInterval` behavior on the backend side; **idle timeout is unknown** and decides long-poll viability                |
+| `Range`, `ETag`, `If-Match` pass through                            | S          | ordinary headers, no special handling                                                                                    |
+| request trailers                                                    | U          | assume absent; half-close must be a frame, not an HTTP trailer                                                           |
+| client IP at the backend                                            | **no**     | PROXY protocol is unsupported on the HTTP path (upstream issue, still open) → logs identify the credential, not the peer |
+| bandwidth                                                           | M          | "non-configurable bandwidth limits", no published number → the clients need resumability and progress                    |
 
 Upstream evidence: Tailscale Funnel docs (ports, names, bandwidth); tailscale
 issue #20882 (h2 WebSocket upgrade not proxied); #18651 (query stripped on
@@ -57,12 +57,12 @@ upgrade); #18483 / `shouldProxyViaH2C` (h2c gated to gRPC content types); #7747
 One carrier at a time, chosen per dial, degrading downward automatically and
 never changing semantics:
 
-| rung | carrier | duplex | survives |
-| ---- | ------- | ------ | -------- |
-| 1 | **h2 streaming `POST`** — one long-lived POST per channel, body and response both streamed | yes | upgrade-stripping gateways (no `Upgrade` header ever appears); h2 midboxes |
-| 2 | **`WSS` on a pinned `http/1.1`** — binary frames | yes | h2 buffering on the public leg, gRPC-only h2c backends, path where upgrades pass but h2 streaming does not |
-| 3 | **h1.1 windowed `POST`** — stop-and-wait exchanges, each standing alone | half, windowed | buffering proxies, flaky links, no upgrade, no h2: a dropped window is retried, nothing to resurrect |
-| 4 | **encapsulated poll** — small `POST`s plus `text/event-stream` (or long-poll) downlink | half, high latency | DPI/gateways that pass only ordinary API traffic |
+| rung | carrier                                                                                    | duplex             | survives                                                                                                   |
+| ---- | ------------------------------------------------------------------------------------------ | ------------------ | ---------------------------------------------------------------------------------------------------------- |
+| 1    | **h2 streaming `POST`** — one long-lived POST per channel, body and response both streamed | yes                | upgrade-stripping gateways (no `Upgrade` header ever appears); h2 midboxes                                 |
+| 2    | **`WSS` on a pinned `http/1.1`** — binary frames                                           | yes                | h2 buffering on the public leg, gRPC-only h2c backends, path where upgrades pass but h2 streaming does not |
+| 3    | **h1.1 windowed `POST`** — stop-and-wait exchanges, each standing alone                    | half, windowed     | buffering proxies, flaky links, no upgrade, no h2: a dropped window is retried, nothing to resurrect       |
+| 4    | **encapsulated poll** — small `POST`s plus `text/event-stream` (or long-poll) downlink     | half, high latency | DPI/gateways that pass only ordinary API traffic                                                           |
 
 Rules:
 
@@ -92,7 +92,7 @@ that is valid JSON/binary for a plausible API; and no expectation of
 
 One near-miss worth recording: `tailscale funnel --tls-terminated-tcp=` can
 publish a raw TCP forwarder, which would let an `sshd` sit on port 443 behind the
-edge's TLS. That is a legitimate *deployment* fallback (see alternatives), but it
+edge's TLS. That is a legitimate _deployment_ fallback (see alternatives), but it
 is not this design: it is not HTTP, so it dies exactly where HTTP-level policy is
 enforced, and it cannot carry the file API.
 
@@ -108,12 +108,12 @@ rather than provisionally:
   opaque byte pump. It costs three things that do matter:
   `content-type: application/grpc` is one of the most recognizable signatures a
   DPI box can key on, the opposite of what a hostile-path carrier wants; it
-  depends on request *trailers*, unverified across the edge's proxy hop, where a
+  depends on request _trailers_, unverified across the edge's proxy hop, where a
   frame-level half-close is known to work; and it drags a protobuf toolchain into
   a protocol that otherwise needs none. One detail from that gate is worth
   watching anyway: broadening it from "gRPC only" to "any HTTP/2 request to a
   plaintext backend" is an open upstream change, and if it lands a deployment
-  gets real h2 on the *backend* leg too — an optimization for a server that
+  gets real h2 on the _backend_ leg too — an optimization for a server that
   cannot terminate TLS itself, and a thing to characterize, not to build on.
 - **WebSocket-over-h2 (RFC 8441).** Structurally cannot beat h2 streaming POST
   for a byte pump: both are HTTP/2 streams, so multiplexing is identical, while

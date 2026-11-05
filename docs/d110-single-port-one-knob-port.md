@@ -36,7 +36,7 @@ interfaces (`$PORT` carries a number; the socket is `:PORT`). Every other
 spelling of that bind is removed:
 
 - the `listen` config field — and it does **not** reappear in the role store:
-  d104's `exit.json` carries the exit's *policy* (admitted relays, egress),
+  d104's `exit.json` carries the exit's _policy_ (admitted relays, egress),
   never its bind;
 - the `-listen` argv;
 - the launcher's `LISTEN` env and the container path's

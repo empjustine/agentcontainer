@@ -15,10 +15,10 @@ the split and the one rule that lets some folders reuse others.
 
 ## Functional split
 
-| Side | Responsibility | Instance |
-|------|----------------|----------|
+| Side        | Responsibility                                                                                                                                                                                 | Instance                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | **serving** | run llama-swap (`llm-local-inference*`, LOCAL GGUF only; **deprecated for now**, d108) and estige (`estige/`, SSL-VPN tunnel family only — the reverse proxy is deleted, d108; docs/d073/d077) | `llm-local-inference/` (local layer, capability-gated) + `estige/` (exit node + relay node) |
-| **usage** | run the pi coding-agent (`coding-agent*`) | `coding-agent/` |
+| **usage**   | run the pi coding-agent (`coding-agent*`)                                                                                                                                                      | `coding-agent/`                                                                             |
 
 The serving side is split by concern (docs/d027): llama-swap
 (`llm-local-inference/`) is a **single local-GGUF instance** on GPU-capable
@@ -74,9 +74,9 @@ prohibits (and what was removed):
   helper is now inlined in its generator. The HF-cache tooling it came from now
   lives flat inside `llm-local-inference/` (docs/d113), its only consumer.
 - `openai-completions-arm5/build.sh` searching `../openai-completions-peer/
-  `.env` and `../openai-completions-gfx1030/.env` for keys (removed before the
+  `.env`and`../openai-completions-gfx1030/.env`for keys (removed before the
   whole arm5/ MikroTik folder was retired) —
-  each runner uses only its own `.env`.
+  each runner uses only its own`.env`.
 
 - `llm-local-inference/` is the **local GGUF serving instance** (local
   inference only): it owns the local-llm generator — since docs/d041 the
@@ -112,7 +112,7 @@ ARE the entry point — `./node-run.sh <unit>/<entry>.mjs [args]`,
 `./npm-run.sh <unit> <script>`, with no per-entry `.sh` shim in between. A
 version pin is a single fact, so a copy per unit is a fork waiting to happen
 (`estige/build.sh` had inlined the pin as a function before d138) — and a runner
-is invoked, not imported, so no unit's *code* depends on the root. What that
+is invoked, not imported, so no unit's _code_ depends on the root. What that
 costs is stated where it belongs: a folder copied out of this tree ships its
 code, not its way of being started.
 
@@ -179,7 +179,7 @@ code, not its way of being started.
   (docs/d119) and `estige/` with the packaged service (docs/d120); `jq` is
   therefore no longer a host prerequisite for either.
 - **`git/` has one more layer than a copy unit needs** (docs/d121): its `lib/`
-  is a *core library* — beside this folder's hand copies of the kernels above,
+  is a _core library_ — beside this folder's hand copies of the kernels above,
   it holds the floor every `git/` entry runs on (`git-core.mjs`'s
   non-interactive `git`, `forge-remotes.mjs`'s tenant URL normalization) and
   the plumbing they share (`cli.mjs` argv tables + the report tail,
@@ -197,7 +197,7 @@ execute rather than import. The rest is operator files and the QA sweep.
 
 - `environment.sh` — THE environment loader: `infisical run` fetches the
   vault and spawns the named script with it as plain env
-  (`./environment.sh ./node-run.sh coding-agent/run.mjs`, docs/d046).  Consumers
+  (`./environment.sh ./node-run.sh coding-agent/run.mjs`, docs/d046). Consumers
   read plain env and never load secrets themselves; a failing vault is
   fatal here via the CLI's own exit code. Exactly one loader per repo is the
   invariant (docs/d113).
@@ -216,7 +216,7 @@ execute rather than import. The rest is operator files and the QA sweep.
   lock changes. The same lock carries the Android Biome/oxc builds, so Termux
   and the container hosts run identical gate versions.
 - `lint.sh`, `check-types.sh`, `test.sh`, `vm-bench.sh` — the repo-wide QA
-  sweep: QA is the maintainer's view *across* units, so it lives outside all of
+  sweep: QA is the maintainer's view _across_ units, so it lives outside all of
   them and no unit imports it. It owns **no test of its own** — every test sits
   in `<unit>/tests/` beside the code it exercises (docs/d113), including
   docs/d050's committed-manifest guard, which followed its manifests into
@@ -294,9 +294,9 @@ implicit regeneration.
 and only on hosts where generation detects a container backend + GPU devices.
 `config.d/` carries exactly two layers:
 
-| Layer | Role | Generated by | When |
-|-------|------|--------------|------|
-| `00-general.yaml` | globals + macros | `llm-local-inference/generate.mjs` | always |
+| Layer                                                         | Role                | Generated by                                                                                                                        | When                             |
+| ------------------------------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `00-general.yaml`                                             | globals + macros    | `llm-local-inference/generate.mjs`                                                                                                  | always                           |
 | `10-local-llm-inference.yaml` (+ `.paths` staleness manifest) | local GGUF `models` | `llm-local-inference/generate.mjs` (from its own `lib/llamacpp-model-data.json`; snapshot paths baked at generation, `docs/d029` B) | container backend + GPU detected |
 
 Cloud providers are NOT a config layer anymore: `estige/` (raw
@@ -309,11 +309,11 @@ folders and the `coding-agent-cloud/`/`coding-agent-peer/` usage runners are
 retired — the capability-gated layered generation pattern made
 the variant folders redundant.)
 
-| Folder | Role | What makes it work |
-|--------|------|--------------------|
-| `llm-local-inference/` (deprecated for now, d108) | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh` |
-| `estige/` (tunnel-only since d108) | the SSL-VPN tunnel transports (h2-POST, WebSocket, h1.1-POST; docs/d073/d077/d105) in one binary in two network positions (docs/d088): the **exit node** (funnel front + tunnel server, egress enforced from `tunnel.egress`) and the **relay node** (loopback CONNECT/SOCKS5, served as a host service; the chain step that points a child at it is the binary's own `estige proxy-env`, docs/d095) — each installed as a service by the deb/rpm package (docs/d120). One reserved path (`/vpn`) serves the tunnels; **every other path answers the plain funnel 404** (d073 VPN-R34) — the allowlist reverse proxy that used to serve those paths (docs/d047/d063/d070) is deleted, not disabled (d108). WebSocket tunnel deployed; h2-POST tunnel default-on (d084); **no config file at all** (d108's tree-shake) — the arming credential, the bind (`PORT`, d110) and the egress opt-ins all arrive on the env chain, with d104's role store slated to own the policy half; standalone-repo boundary defined in docs/d082 (split-time CI findings in `estige/CI.md`) | `main.go`, the tunnel family — `relaynode.go`, `relaychain.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go` — plus the `packaging/` tree (pure-Go deb/rpm writers + the Termux and Oracle Linux service inputs, docs/d120); the POSIX launchers and the shell+jq workload library are deleted (docs/d120), as are `generate.go`, `estige.json`, `estige.example.json` and `smoke-test.go` with the allowlist (docs/d108); built by its own `build.mjs` |
-| `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.mjs`, `settings.json`; image built by its own `build.mjs` |
+| Folder                                            | Role                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | What makes it work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `llm-local-inference/` (deprecated for now, d108) | local GGUF serving only (GPU container hosts; hard-fails elsewhere)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh`                                                                                                                                                                                                                                                                                                                                                                                            |
+| `estige/` (tunnel-only since d108)                | the SSL-VPN tunnel transports (h2-POST, WebSocket, h1.1-POST; docs/d073/d077/d105) in one binary in two network positions (docs/d088): the **exit node** (funnel front + tunnel server, egress enforced from `tunnel.egress`) and the **relay node** (loopback CONNECT/SOCKS5, served as a host service; the chain step that points a child at it is the binary's own `estige proxy-env`, docs/d095) — each installed as a service by the deb/rpm package (docs/d120). One reserved path (`/vpn`) serves the tunnels; **every other path answers the plain funnel 404** (d073 VPN-R34) — the allowlist reverse proxy that used to serve those paths (docs/d047/d063/d070) is deleted, not disabled (d108). WebSocket tunnel deployed; h2-POST tunnel default-on (d084); **no config file at all** (d108's tree-shake) — the arming credential, the bind (`PORT`, d110) and the egress opt-ins all arrive on the env chain, with d104's role store slated to own the policy half; standalone-repo boundary defined in docs/d082 (split-time CI findings in `estige/CI.md`) | `main.go`, the tunnel family — `relaynode.go`, `relaychain.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go` — plus the `packaging/` tree (pure-Go deb/rpm writers + the Termux and Oracle Linux service inputs, docs/d120); the POSIX launchers and the shell+jq workload library are deleted (docs/d120), as are `generate.go`, `estige.json`, `estige.example.json` and `smoke-test.go` with the allowlist (docs/d108); built by its own `build.mjs` |
+| `coding-agent/`                                   | base pi workload image + artifacts (includes Cline CLI and Thinkrail)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.mjs`, `settings.json`; image built by its own `build.mjs`                                                                                                                                                                                                                                                                                                                                                      |
 
 The former "next planned step" sketch (a simplified config-generator system
 split by concern) is archived at

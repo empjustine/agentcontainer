@@ -55,13 +55,13 @@ admit-but-trim.
 - Not written back: the real regeneration lands with the next full
   generator run — the working tree carries unrelated in-flight manifest
   edits this change must not tangle with. Audit note: under `DRY_RUN`,
-  `mergeModels` merges the *committed* layer files (previews do not match
+  `mergeModels` merges the _committed_ layer files (previews do not match
   its `model-*.json` glob), so audit the layer previews directly, as this
   check did.
 
 ## Motivation
 
-Today a model's *right to be in a generated lineup* is decided in two
+Today a model's _right to be in a generated lineup_ is decided in two
 different vocabularies, and only one provider uses the safer one:
 
 - **Name-based filters** (`PEER_MODEL_FILTERS`,
@@ -89,10 +89,10 @@ than an eligibility gate.
 
 ## Current state before this change (name-shaped eligibility)
 
-| Layer | Where | Vocabulary | Effect |
-|---|---|---|---|
+| Layer       | Where                                           | Vocabulary                                                         | Effect                                         |
+| ----------- | ----------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------- |
 | Eligibility | `PEER_MODEL_FILTERS` `(id, record?) => boolean` | name-shaped for openrouter, mistral; modality allowlist for google | whether the id enters the emitted layer at all |
-| Projection | `toInput()` × 2 | text+image allowlist applied to whatever survived | emitted `input` array is schema-legal |
+| Projection  | `toInput()` × 2                                 | text+image allowlist applied to whatever survived                  | emitted `input` array is schema-legal          |
 
 The projections already agree. The **eligibility** gate does not: it is
 per-provider, name-shaped, and mixes a modality allowlist (google) with a
@@ -159,7 +159,7 @@ no-record path), never the first word. Doing it first and uniformly means a
 provider can never leak a non-chat model through its own name dialect, and
 the "did we remember to deny category X for provider Y?" question disappears.
 
-To be concrete about what is *not* being asked for: a model whose declared
+To be concrete about what is _not_ being asked for: a model whose declared
 input offers no drivable text, or whose declared output is not exactly
 `{text}`, is out — whatever its id, family, or provider. Everything else is
 in, and what it offers beyond the driving schema (an extra `audio` input,
@@ -213,7 +213,7 @@ fields. — DONE 2026-09-23 with the implementation: see the Change section
   `{text, image}` at emission. They cannot drift: both read the same
   constant.
 - `openrouter`'s `:free` scoping and `d040`'s curated `modelAllowlist` are
-  *access/price* allowlists, not modality ones — **decided 2026-09-23:
+  _access/price_ allowlists, not modality ones — **decided 2026-09-23:
   they stay out** of this change; access/price stays orthogonal and runs
   after the modality gate, not folded into one "allowlist" concept.
 

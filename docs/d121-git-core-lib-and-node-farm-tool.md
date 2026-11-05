@@ -27,7 +27,7 @@ one folder where the miss cost the most:
 - **Seven hand-rolled `parseArgs` loops.** The same unknown-flag error, the
   same `-h/--help` branch, the same `main().catch` tail, copied per entry.
 - **1,507 lines of shell logic on top of it** — `farm-tool.sh` (638) plus
-  `farm-tool-lib.sh` (389) and `-vbs-mirror-all.sh` (480) — a *second* home
+  `farm-tool-lib.sh` (389) and `-vbs-mirror-all.sh` (480) — a _second_ home
   for facts the folder's node half already owned. `farm-tool-lib.sh`'s
   `fg_repo_ids` restated the mirror-discovery rule `findBareMirrors`
   implements, with a comment admitting the two walks must agree. The
@@ -59,7 +59,7 @@ shim.** The fold is d113's, applied to the last unit:
   `createFailureStreak`, with `sleep`/`random` injected, because a policy an
   operator can argue about (10 retries, 60s pacing, a 300s backoff ceiling)
   is otherwise only testable by waiting.
-- `git/lib/farm-lock.mjs` — the mutation lock's *path* and a probe, never the
+- `git/lib/farm-lock.mjs` — the mutation lock's _path_ and a probe, never the
   lock. It reports `held` / `free` / `unknown` by asking `flock -n`, not by
   looking at whether a file exists.
 - `git/lib/farm-posture.mjs` — d099's safety posture for the node side: the
@@ -127,7 +127,7 @@ the next token, so `--deep-optimize --no-optimize` silently became
 ### What stays shell
 
 `farm-lock.sh` stays because `flock` has no node equivalent — and it uses flock
-in *fd* mode, not `flock LOCKFILE CMD…`, because the command it guarded was
+in _fd_ mode, not `flock LOCKFILE CMD…`, because the command it guarded was
 `node_run`, a shell **function** no exec can see (d138 turned that command into
 an executable, so exec mode would now work; fd mode is kept because it holds
 the lock in the caller's own process and releases it when the holder dies). The two mutation verbs therefore still spawn the two

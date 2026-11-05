@@ -6,7 +6,19 @@ title: "d128 — an HTTP-native ssh substitute: capability API, operation set, c
 parent: architecture
 depends-on: [d073, d077]
 references: [d108, d117, d136]
-tags: ["http", "sftp", "files", "capability-security", "cli", "sync", "tunnel", "tailscale", "dpi", "agent-tooling"]
+tags:
+  [
+    "http",
+    "sftp",
+    "files",
+    "capability-security",
+    "cli",
+    "sync",
+    "tunnel",
+    "tailscale",
+    "dpi",
+    "agent-tooling",
+  ]
 ---
 
 # d128 — an HTTP-native ssh substitute
@@ -14,7 +26,7 @@ tags: ["http", "sftp", "files", "capability-security", "cli", "sync", "tunnel", 
 ## Status
 
 Draft proposal for a product that does not exist yet: no code, no build, and no
-spike run against the edge for *this* design. Its carrier analysis inherits
+spike run against the edge for _this_ design. Its carrier analysis inherits
 estige's measured edge evidence (d073's spikes, d077's evidence base) wherever a
 row below says **measured**, which is why the record links to them rather than
 restating the numbers. The transport section separates **measured**,
@@ -42,7 +54,7 @@ Six facts shape every decision:
   the product. Their requirements — ranges, resume, deltas, exit codes, stream
   separation, progress — drive the design.
 - **The LLM is one client among several, never the reference client.** Agent
-  tooling is a *projection* of the same API and must not distort it.
+  tooling is a _projection_ of the same API and must not distort it.
 - **Authorization is a product feature, not a wrapper.** A grant can be written
   down, reviewed and revoked, and a confused or compromised client is bounded by
   its grant rather than by the server's OS account.
@@ -60,7 +72,7 @@ Six facts shape every decision:
 
 estige is the sibling product, and the reason half this record's edge facts are
 already known: it solved "reach the internet from a restricted network" against
-the same deployment edge, so its *measured transport findings* transfer — the
+the same deployment edge, so its _measured transport findings_ transfer — the
 ALPN offer, the `101` upgrade passing the edge proxy, the HTTP/1.1 backend hop
 and its h2c gate (d073, d077) — and its camouflage-404 posture (VPN-R34) is the
 one this record adopts for `/`.
@@ -78,7 +90,7 @@ of that: an estige mode should not grow a file API to save one binary.
 Read and write are `GET`/`PUT` with `Range`/`Content-Range`; preconditions via
 `ETag`/`If-Match`; metadata and existence via `HEAD`; namespace operations via
 `POST /op/<name>` (see the wire-form decision, which explains why namespace
-operations are *not* required to use WebDAV verbs).
+operations are _not_ required to use WebDAV verbs).
 
 Why not one JSON-RPC endpoint: ranges, resumption, conditional writes, `HEAD`
 and cacheability come free and are exactly what the CLI clients need; a
@@ -100,16 +112,16 @@ in two:
 
 Two profiles, identical semantics:
 
-| profile        | encoding                                                                                                         | when                    |
-| -------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| `native`       | real verbs (`PUT`, `DELETE`, `PATCH`, `MOVE`), real headers (`Range`, `ETag`, `If-Match`)                         | edge passes them        |
+| profile        | encoding                                                                                                                            | when                     |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `native`       | real verbs (`PUT`, `DELETE`, `PATCH`, `MOVE`), real headers (`Range`, `ETag`, `If-Match`)                                           | edge passes them         |
 | `encapsulated` | one `POST` per operation to a single opaque path, JSON envelope carries verb + path + headers, body follows in the envelope framing | DPI or gateway is strict |
 
-Both profiles are the *same* protocol; `encapsulated` is a transport encoding,
+Both profiles are the _same_ protocol; `encapsulated` is a transport encoding,
 not a second API. Every capability survives it (ranges, preconditions, resume are
 envelope fields), so nothing is lost — accept the round-trip overhead as the
 price of reachability. This is the distinction that keeps the earlier rejection
-of JSON-RPC honest: the objection was to *discarding* HTTP's capabilities, not to
+of JSON-RPC honest: the objection was to _discarding_ HTTP's capabilities, not to
 bytes in a JSON body.
 
 Rules that follow:
@@ -130,6 +142,7 @@ Rules that follow:
 - **The server must also work behind an ordinary HTTPS origin** (nginx, a CDN, a
   corporate gateway), not just Funnel — Funnel is the first deployment, not the
   contract.
+
 ### What the deployment edge actually does
 
 **Moved to [d136](d136-edge-limits-and-carrier-ladder.md)** — the per-row
@@ -145,15 +158,15 @@ an operator say "this credential may read `/srv/data`, write into
 `/srv/data/inbox`, move within `/srv/data`, and tunnel only to `10.0.4.0/24:443`"
 and mean it.
 
-| grant       | operations                                         | default |
-| ----------- | -------------------------------------------------- | ------- |
-| `inspect`   | stat, ls, grep, find, read                         | absent  |
-| `publish`   | write into one directory; no move, no delete        | absent  |
-| `edit`      | read, write, edit, mkdir, move within prefix        | absent  |
-| `relocate`  | move/copy/sync between two named roots              | absent  |
-| `tunnel`    | dial TCP targets in a declared set; `-L`, `-D`      | absent  |
-| `listen`    | accept inbound TCP, forward to the client; `-R`     | absent  |
-| `exec`      | run declared commands, with streams                 | absent  |
+| grant      | operations                                      | default |
+| ---------- | ----------------------------------------------- | ------- |
+| `inspect`  | stat, ls, grep, find, read                      | absent  |
+| `publish`  | write into one directory; no move, no delete    | absent  |
+| `edit`     | read, write, edit, mkdir, move within prefix    | absent  |
+| `relocate` | move/copy/sync between two named roots          | absent  |
+| `tunnel`   | dial TCP targets in a declared set; `-L`, `-D`  | absent  |
+| `listen`   | accept inbound TCP, forward to the client; `-R` | absent  |
+| `exec`     | run declared commands, with streams             | absent  |
 
 Nothing outside a grant may be reachable — including "just `stat`", which leaks
 tree structure.
@@ -192,7 +205,7 @@ Three rules make that noise cost nothing:
   grant, malformed request and wrong method must render the same bytes in
   comparable time; any difference is an enumeration oracle. The same applies to
   anything the client can induce into a response body.
-- **No landing page, not even for authenticated users.** The capability path *is*
+- **No landing page, not even for authenticated users.** The capability path _is_
   the site; there is nothing to greet, and a public index would only list what an
   observer must not learn.
 
@@ -212,23 +225,23 @@ large trees stay out of an LLM's context without special-casing the LLM.
 
 ### The operation set is SFTP's, minus the escape hatches, plus the primitives SFTP lacks
 
-| SFTP operation              | Exposed as              | Caller-visible | Notes                                                                 |
-| --------------------------- | ----------------------- | -------------- | --------------------------------------------------------------------- |
+| SFTP operation              | Exposed as              | Caller-visible | Notes                                                                  |
+| --------------------------- | ----------------------- | -------------- | ---------------------------------------------------------------------- |
 | `stat`/`lstat`, `fstat`     | `stat`                  | yes            | symlink policy explicit per request, never silently followed           |
 | `opendir`/`readdir`         | `ls` (paged)            | yes            | paging is mandatory; a flat listing of a large tree attacks the client |
 | `open`/`read` (offset, len) | `GET` + `Range`         | yes            | ranges are the primitive behind resume and caller-side truncation      |
 | `write` (offset, len)       | `PUT` + `Content-Range` | yes            | atomic: temp → `fsync` → `rename`; preconditions required              |
-| `rename`/`posix-rename`     | `move`                  | yes            | replaces upload → download → upload                                   |
+| `rename`/`posix-rename`     | `move`                  | yes            | replaces upload → download → upload                                    |
 | `remove`/`rmdir`            | `remove`                | yes            | recursive delete is its own grant, never implied by depth              |
-| `mkdir`                     | `mkdir`                 | yes            |                                                                       |
+| `mkdir`                     | `mkdir`                 | yes            |                                                                        |
 | `setstat` (chmod/utime)     | internal                | **no**         | a privilege knob with no user story; the server owns modes             |
-| `realpath`, `fsync`         | internal                | **no**         | transport detail, not a client decision                               |
+| `realpath`, `fsync`         | internal                | **no**         | transport detail, not a client decision                                |
 | `readlink`                  | `readlink`              | optional       | read-only, still subject to containment resolution                     |
 | `symlink`, `hardlink`       | —                       | **no**         | symlink is the canonical prefix escape; hardlink defeats retention     |
-| `statvfs`                   | `statfs`                | yes            | clients need free space to plan                                       |
-| — extension                 | `copy`, `sync`          | yes            | absent from SFTP; the reason to build this at all                     |
+| `statvfs`                   | `statfs`                | yes            | clients need free space to plan                                        |
+| — extension                 | `copy`, `sync`          | yes            | absent from SFTP; the reason to build this at all                      |
 | — extension                 | `hash`                  | yes            | content identity for sync short-circuit and audit                      |
-| — extension                 | `archive`/`extract`     | optional       | zip-slip-safe by construction, or deliberately omitted                |
+| — extension                 | `archive`/`extract`     | optional       | zip-slip-safe by construction, or deliberately omitted                 |
 
 The client-side half of SFTP — `close`, handle management, `fsync` — disappears.
 A stateless service has nothing to close, and every operation states its own
@@ -238,7 +251,7 @@ possible: a windowed exchange has no state to lose.
 ### Path authority is enforced server-side, after canonicalization, on every operation
 
 Canonicalize, resolve symlinks under the stated policy, re-check containment
-*after* resolution, refuse traversal. Corollaries that are cheap before v1 and
+_after_ resolution, refuse traversal. Corollaries that are cheap before v1 and
 expensive after: the API cannot create symlinks; hardlinks are rejected;
 `extract` validates every entry path before writing; `move` may not leave its
 grant's reachable set; `copy` inherits the destination grant, not the source's.
@@ -324,7 +337,7 @@ databases — dwarfs this project. Carrying them here would mean reimplementing
 The tunnel makes that escape hatch real rather than rhetorical: because the relay
 is blind and carries arbitrary TCP, `ssh` inside it behaves exactly as it does
 natively, certificates and all. That is also the honest boundary of this
-project — it replaces the *transport*, not the terminal.
+project — it replaces the _transport_, not the terminal.
 
 ### Integrity is HTTP's job: preconditions, idempotency, atomicity — not a client lock
 
@@ -366,7 +379,7 @@ if granted — `exec` and `tunnel`. Two boundaries:
 - **Server semantics stay exact; presentation is the adapter's job.** The API
   answers with exact ranges and complete paged listings — a CLI needs nothing
   less. Line/byte truncation with a "continue with offset" notice, one-line call
-  rendering and diff output are *client* behaviour. Encoding one consumer's
+  rendering and diff output are _client_ behaviour. Encoding one consumer's
   truncation budget into the protocol would break the CLI and couple the wire
   format to an adapter.
 - **The adapter preserves the tool contracts the model's habits come from:**
@@ -381,12 +394,12 @@ If a sandboxed-JavaScript client is offered (the model writes code calling the
 exposed operations; only what the script emits returns), it is an optional
 adapter, and its limits define what the API must provide:
 
-| work shape                                                  | where it belongs                    | why                                              |
-| ----------------------------------------------------------- | ----------------------------------- | ------------------------------------------------ |
-| one namespace op (`move`, `copy`, `stat`)                   | one API call                        | atomic, authorized once, no bytes                |
-| decide-then-act on a few entries (`ls` → filter → 3 moves)  | script loop over the API            | control flow, small N                            |
-| bulk (10⁴+ files, whole trees, large objects)               | server-side `sync`/`copy`/`archive` | one round trip per script call is fatal at scale |
-| large content transfer                                      | ranged caller-side transfer         | script values are JSON, not streams              |
+| work shape                                                 | where it belongs                    | why                                              |
+| ---------------------------------------------------------- | ----------------------------------- | ------------------------------------------------ |
+| one namespace op (`move`, `copy`, `stat`)                  | one API call                        | atomic, authorized once, no bytes                |
+| decide-then-act on a few entries (`ls` → filter → 3 moves) | script loop over the API            | control flow, small N                            |
+| bulk (10⁴+ files, whole trees, large objects)              | server-side `sync`/`copy`/`archive` | one round trip per script call is fatal at scale |
+| large content transfer                                     | ranged caller-side transfer         | script values are JSON, not streams              |
 
 Consequences that hold for any client:
 
@@ -461,11 +474,11 @@ put an interpreter in the server.
 - **Put the credential or route in a WebSocket query string.** The edge strips
   query strings on upgrade requests; and paths/queries are logged everywhere
   else. In-band or header auth only.
-- **One JSON-RPC endpoint as *the* protocol.** Would discard ranges,
+- **One JSON-RPC endpoint as _the_ protocol.** Would discard ranges,
   preconditions, resumption and cacheability. Kept only as the `encapsulated`
   profile, where those properties are preserved as explicit fields.
 - **Model the wire format on SFTP.** Discards HTTP's properties and makes every
-  proxy a suspect. Only SFTP's *operation set* is kept.
+  proxy a suspect. Only SFTP's _operation set_ is kept.
 - **Require WebDAV verbs for namespace operations.** `MOVE`/`COPY`/`PROPFIND` are
   the methods middleboxes are most likely to reject. `POST /op/<name>` instead.
 - **Publish `sshd` via `funnel --tls-terminated-tcp=` on 443.** A valid
@@ -476,7 +489,7 @@ put an interpreter in the server.
   `ssh`-inside-the-tunnel.
 - **Adopt an existing filesystem-server tool surface as the protocol.** Coarse,
   connection-per-process, weak metadata, no ranges, no preconditions, no `move`.
-  Fine as a *client* of this server; unusable as its shape.
+  Fine as a _client_ of this server; unusable as its shape.
 - **Make the LLM tool schema the API contract.** Bakes one consumer's truncation
   and naming habits into the protocol and breaks the CLI. Inverted: API first,
   adapter second.
@@ -517,7 +530,7 @@ put an interpreter in the server.
 ## Verification status
 
 Nothing implemented for this project; no spike has been run against the edge for
-*this* design. The transport table's provenance is stated per row: **measured**
+_this_ design. The transport table's provenance is stated per row: **measured**
 rows come from estige's deployment spikes on a Funnel edge (ALPN negotiation, the
 `101` upgrade passing the edge proxy, ports/names/bandwidth — d073's spikes and
 d077's evidence base), **source-derived** rows come from reading the upstream
@@ -526,7 +539,7 @@ gRPC content types, h1.1 edge→backend hop), and the upstream issues cited are
 third-party reports, not our measurements. The gRPC feasibility claim rests on an
 upstream change that special-cases gRPC content types so gRPC services can be
 served through the edge (merged upstream in 2023), plus the currently open issues
-asking to widen that special case beyond gRPC; gRPC's *full-duplex* streaming
+asking to widen that special case beyond gRPC; gRPC's _full-duplex_ streaming
 through the edge specifically was not verified here, and the rejection does not
 depend on it. **Unverified** rows are marked as such
 and are the spikes listed under open decisions. The agent-client tool contracts

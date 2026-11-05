@@ -6,7 +6,19 @@ title: "d129 — agent-vault-2: a credential-brokering proxy on an honest substr
 parent: architecture
 depends-on: [d126, d127, d077]
 references: [d073, d094, d128]
-tags: ["agent-vault", "credential-brokering", "mitm", "tls", "proxy", "rewriter", "http2", "grpc", "security", "sandbox"]
+tags:
+  [
+    "agent-vault",
+    "credential-brokering",
+    "mitm",
+    "tls",
+    "proxy",
+    "rewriter",
+    "http2",
+    "grpc",
+    "security",
+    "sandbox",
+  ]
 ---
 
 # d129 — agent-vault-2: a credential-brokering proxy on an honest substrate
@@ -43,7 +55,7 @@ each cost more than they look:
   error or ignore the variable and fall back to system roots, which presents as
   a network fault. Six variables is not a compatibility list; it is a sample.
 - **It captures nothing and mints everything.** That is the right instinct
-  (*Credentials are minted server-side*) but it is implemented as a partial OAuth
+  (_Credentials are minted server-side_) but it is implemented as a partial OAuth
   client, so a target that is only approximately OAuth silently half-works
   (d126's G7 table).
 - **Its far leg is opaque.** A failure on the broker→origin hop reaches the agent
@@ -65,24 +77,24 @@ four.
   different adversary.
 - **Not [d128](d128-http-ssh-substitute.md).** That is an HTTP-native `ssh`
   substitute: a capability API over files, exec and byte pipes. It shares the
-  carrier ladder and nothing else; a grant is authority to *do*, never a secret
-  to *inject*.
+  carrier ladder and nothing else; a grant is authority to _do_, never a secret
+  to _inject_.
 - **Not a plugin proxy.** No script host, no Wasm, no user-supplied expression
-  language on the hot path. The evidence for that refusal is in *The rewriter is
-  a dispatch table*.
+  language on the hot path. The evidence for that refusal is in _The rewriter is
+  a dispatch table_.
 - **Not a drop-in replacement.** Dropping the CA changes every client's
-  configuration; that is a migration, not an upgrade, and *Consequences* prices
+  configuration; that is a migration, not an upgrade, and _Consequences_ prices
   it.
 
 ## Decisions
 
 ### The substrate has three interception modes, and only two are allowed
 
-| mode | the agent sees | the broker does | injects | CA needed |
-| --- | --- | --- | --- | --- |
-| **blind tunnel** | real TLS to the origin | `CONNECT`, copies bytes | no | no |
-| **mint** (agent-vault today) | real TLS to the *broker* | terminates, re-originates | yes | **yes** |
-| **honest cleartext** | plain `http://` to the broker | absolute-form request, real TLS to the origin | yes | no |
+| mode                         | the agent sees                | the broker does                               | injects | CA needed |
+| ---------------------------- | ----------------------------- | --------------------------------------------- | ------- | --------- |
+| **blind tunnel**             | real TLS to the origin        | `CONNECT`, copies bytes                       | no      | no        |
+| **mint** (agent-vault today) | real TLS to the _broker_      | terminates, re-originates                     | yes     | **yes**   |
+| **honest cleartext**         | plain `http://` to the broker | absolute-form request, real TLS to the origin | yes     | no        |
 
 v1 implements **blind tunnel** and **honest cleartext**, and refuses to mint.
 The modes are per-target, not per-deployment: a rule either names a target the
@@ -96,7 +108,7 @@ A minting proxy is a CA, whether or not it says so: `MintLeaf` on any SNI
 SNI the client chose. That has three consequences a brokering product should not
 accept: the trust anchor has to be planted into every client runtime
 individually; origin certificate failures stop being attributable, because the
-agent validates the *broker's* leaf and the real `x509` error dies in a log; and
+agent validates the _broker's_ leaf and the real `x509` error dies in a log; and
 whoever controls the broker can impersonate any origin to anything that trusts
 that anchor.
 
@@ -106,7 +118,7 @@ workload's only reachable destination is the broker
 (`ip daddr <broker> tcp dport <broker-port> accept`, everything else dropped), so
 the cleartext leg is a private path between two processes in one namespace. The
 threat that TLS would address on that leg — a network attacker — has no route in.
-What TLS *would* add is a second thing to break.
+What TLS _would_ add is a second thing to break.
 
 ### Honest cleartext is only honest if the client can be pointed at it
 
@@ -124,7 +136,7 @@ rather than discovered per deployment. Which toolchains actually accept an
 
 The temptation is a general rewriter — a template language, a Wasm module, a
 small VM — because "store and replace credentials in bodies, both directions,
-any format" sounds unbounded. It is not; it is *addressing*, and the general
+any format" sounds unbounded. It is not; it is _addressing_, and the general
 form buys nothing:
 
 - **Auditability.** "Credential X was injected at this offset" has to be
@@ -143,17 +155,17 @@ unmatched target is a refusal, never a passthrough-with-best-effort.
 
 ### Rewrite depth: headers, textual bodies, then the wall at signatures
 
-| depth | what is rewritten | what must be parsed | what a failure looks like |
-| --- | --- | --- | --- |
-| **headers** | `Authorization`, `X-Api-Key`, cookies | nothing | none — this is agent-vault's whole surface today |
-| **textual body** | a declared path in JSON / form / XML | content type + one path | a silent no-op on schema drift, so the rule must match *and* verify |
-| **signed body or URL** | JWT bodies, SigV4 headers, S3/GCS presigned URLs | **the signer's canonical input** | not expressible as substitution at all — the credential *is* the signature's subject |
-| **framed or binary** | protobuf, capnp, msgpack, gRPC, custom TLV | framing + schema, per target | rewriting at the wrong offset is silent corruption |
-| **protocol state** | OAuth2/ROPC/OIDC/session flows | the whole flow | d126's G7 table: refusal, or a silent stop |
+| depth                  | what is rewritten                                | what must be parsed              | what a failure looks like                                                            |
+| ---------------------- | ------------------------------------------------ | -------------------------------- | ------------------------------------------------------------------------------------ |
+| **headers**            | `Authorization`, `X-Api-Key`, cookies            | nothing                          | none — this is agent-vault's whole surface today                                     |
+| **textual body**       | a declared path in JSON / form / XML             | content type + one path          | a silent no-op on schema drift, so the rule must match _and_ verify                  |
+| **signed body or URL** | JWT bodies, SigV4 headers, S3/GCS presigned URLs | **the signer's canonical input** | not expressible as substitution at all — the credential _is_ the signature's subject |
+| **framed or binary**   | protobuf, capnp, msgpack, gRPC, custom TLV       | framing + schema, per target     | rewriting at the wrong offset is silent corruption                                   |
+| **protocol state**     | OAuth2/ROPC/OIDC/session flows                   | the whole flow                   | d126's G7 table: refusal, or a silent stop                                           |
 
 The wall is the third row, and it is not a power wall. Nothing in a SigV4 header
 can be substituted, because the signature covers the secret; the broker has to
-*be the client* for that target — canonicalize, sign, attach. That is a registry
+_be the client_ for that target — canonicalize, sign, attach. That is a registry
 of signers (AWS SigV4, GCS/S3 presign, RFC 7523 JWT bearer, and per-target
 HMACs), each a bounded function with its own conformance note. Rows four and
 five are explicitly out of scope in v1: a broker that half-parses protobuf is
@@ -176,7 +188,7 @@ fidelity, `ETag`/`Content-MD5` integrity, range semantics, and every proxy
 behaviour built on `io.Copy` — the current code streams responses through and
 only messages them when a byte cap trips (`response_too_large`,
 `internal/mitm/forward.go`). Two concrete traps sit on the same path: nothing
-handles `Content-Encoding`, so a compressed *request* body silently escapes
+handles `Content-Encoding`, so a compressed _request_ body silently escapes
 substitution today; and nothing reads `Trailer`, which is where gRPC keeps its
 status.
 
@@ -210,14 +222,14 @@ than half-executed at request time.
 
 ### Credentials are minted server-side, never captured from traffic
 
-The broker may hold a secret, and may hold a *derivable* credential (refresh
+The broker may hold a secret, and may hold a _derivable_ credential (refresh
 token, client credentials, a password grant) that it exchanges itself. It may
 not learn a credential by reading a response it proxied. Capturing would make
 the broker adopt "whatever JSON the upstream just returned", chosen by a request
 the agent controls — a token-poisoning seam with the agent as the author.
 
 That keeps the whole lifecycle server-driven, which is what makes a current
-token possible at all: the credential's stored value *is* the live token, so
+token possible at all: the credential's stored value _is_ the live token, so
 every rule naming that key follows rotation with no agent involvement (d126
 records the mechanism and its traps).
 
@@ -246,13 +258,13 @@ deliberately and tested, not by pretending the standard flow covers it.
 The three recurring failures in d126 share one shape: the broker's far leg
 becomes an opaque failure domain.
 
-| leg | the failure must say so |
-| --- | --- |
-| agent → broker | policy refusal, `401` on the token, no rule for this target |
-| broker → origin, transport | DNS, refused, timeout, and which of them |
-| broker → origin, TLS | the real `x509` error, unattributed to the broker's own certificate |
-| origin response | the upstream status and the response's own error identity, verbatim and un-summarised |
-| credential lifecycle | which stage failed (discovery, exchange, refresh, inject) and against which endpoint |
+| leg                        | the failure must say so                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------- |
+| agent → broker             | policy refusal, `401` on the token, no rule for this target                           |
+| broker → origin, transport | DNS, refused, timeout, and which of them                                              |
+| broker → origin, TLS       | the real `x509` error, unattributed to the broker's own certificate                   |
+| origin response            | the upstream status and the response's own error identity, verbatim and un-summarised |
+| credential lifecycle       | which stage failed (discovery, exchange, refresh, inject) and against which endpoint  |
 
 That is the property blind tunnelling has for free — the application holds the
 TLS session, so the `x509` error is the application's — and the property a
@@ -274,7 +286,7 @@ rewriter without one.
 
 ### Observability records the rewrite, not just the request
 
-The audit unit is the rewrite: target, rule identity, surface, secret *key* (never
+The audit unit is the rewrite: target, rule identity, surface, secret _key_ (never
 value), outcome, and the leg that refused if it refused. That is what makes
 "credential X was injected here" provable afterwards, and it is the reason the
 rule table has to be declarative. Attribution is per-agent and per-rule, so
@@ -302,13 +314,13 @@ blast-radius decision, per d126).
 - **Deployment inherits d127's shape.** Broker and relay as a gateway on the
   workload's `--internal` network, the kernel rule as the egress boundary, the
   three environment scopes. Nothing in this record weakens that rule; the
-  cleartext mode *depends* on it.
+  cleartext mode _depends_ on it.
 
 ## Alternatives rejected
 
 - **A Wasm/DSL rewriter.** Buys expressiveness the problem does not need, costs
   auditability, termination and a second runtime on the hot path. Rejected in
-  *The rewriter is a dispatch table*.
+  _The rewriter is a dispatch table_.
 - **Keep minting, make it convenient.** The CA tax is not a packaging problem;
   it is a trust-root problem. Convenience packaging (a generated bundle, a
   `vault run`-style wrapper) still leaves every uncovered runtime one silent
@@ -318,14 +330,14 @@ blast-radius decision, per d126).
   covers the actual goal — the agent must not receive a secret — at a fraction of
   the surface.
 - **Broker h2 by adding ALPN.** Fails on trailers, multiplexing and per-stream
-  framing, per *h2 and gRPC are carried*. A real h2 proxy is a different program.
+  framing, per _h2 and gRPC are carried_. A real h2 proxy is a different program.
 - **Capture the token from the proxied response.** The agent authors the
-  request, so it authors the token. Rejected in *Credentials are minted
-  server-side*.
+  request, so it authors the token. Rejected in _Credentials are minted
+  server-side_.
 - **Fork agent-vault in place.** The substrate change is not additive: no CA,
   different modes, body rewriting, h2 refusal, conformance probes. A fork would
   touch every layer while [d126](d126-agent-vault-in-the-chain.md)'s W-A patch is
-  still the fastest way to put the *current* vault behind the chain.
+  still the fastest way to put the _current_ vault behind the chain.
 
 ## Open decisions
 
@@ -359,5 +371,5 @@ unmeasured:
   itself unmeasured on an engine);
 - the signer registry against live AWS/GCS credentials;
 - the response detector's false-positive rate on real repository content;
-- every *current implementation* claim, which rests on d126's source read of
+- every _current implementation_ claim, which rests on d126's source read of
   agent-vault at `17b2473` — accurate as of that commit, and a moving target.

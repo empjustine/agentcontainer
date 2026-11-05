@@ -95,7 +95,7 @@ cline-pass/qwen3.8-max        cline-pass/qwen3.7-max
 
 ## Related bugfix: live-listing input schema poisoning
 
-The same live-listing surface bit the *openrouter* override later: the raw
+The same live-listing surface bit the _openrouter_ override later: the raw
 `/models` listing's `architecture.input_modalities` (with `video`/`audio`/
 `pdf`) was emitted verbatim by `piModel()`, producing 3+ element `input`
 arrays that strict models.json schemas (cline) rejected wholesale — see

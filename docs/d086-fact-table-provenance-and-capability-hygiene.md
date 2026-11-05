@@ -41,7 +41,7 @@ makes provenance stable instead.
 
 ## 2. Decision
 
-- **`fetchedFrom` is removed** from cache documents *and* refresh logs
+- **`fetchedFrom` is removed** from cache documents _and_ refresh logs
   (coding-agent/catalog-facts.mjs). The log echo was the same leak into
   shipped logs — the proxy's VPN-R44 redaction duty had exactly this
   rationale. Provenance is `fetchedAt` plus the file's own identity; the
@@ -52,20 +52,20 @@ makes provenance stable instead.
   synthetic fixture (all-zero UUID). The leak is textual, so a plain pattern
   is the whole detector — it catches any writer, not just known generators.
 - **Churn discipline** (landed — see the Implementation status):
-  1. *Canonical serialization* — sorted keys, stable order, normalized
+  1. _Canonical serialization_ — sorted keys, stable order, normalized
      numbers: unchanged data ⇒ byte-identical file.
-  2. *Hash short-circuit* — skip the rewrite when the upstream and derived
+  2. _Hash short-circuit_ — skip the rewrite when the upstream and derived
      hashes are unchanged; `fetchedAt` bumps only when a hash moves. This is
      what actually deletes timestamp-noise.
-  3. *`_meta` provenance block* — stable leading block per generated file:
+  3. _`_meta` provenance block_ — stable leading block per generated file:
      schema, source id, upstream sha256, generator, regen command, owning
      decision. Grep answers "where from / how fresh / how regen / who owns
      it" — the grep-able frontmatter question, answered in JSON.
-  4. *Layer separation* — stable facts vs volatile observations in separate
+  4. _Layer separation_ — stable facts vs volatile observations in separate
      files; raw mirrors (models.dev) live outside git, hash-pinned.
-  5. *Commit discipline* — facts regens are standalone `chore(facts):`
+  5. _Commit discipline_ — facts regens are standalone `chore(facts):`
      commits, never mixed into feature versions.
-  6. *Idempotence lint* — regenerate to temp; the diff must be empty.
+  6. _Idempotence lint_ — regenerate to temp; the diff must be empty.
 
 ## Implementation status
 
@@ -97,7 +97,7 @@ separation stays deferred, and commit discipline was and remains process.
   move on every fetch of identical data and could never short-circuit
   anything.
 - **The raw mirror is exempt from `_meta`** (a narrowing of the block above):
-  `lib/models.dev.api.json` *is* the provider map every generator indexes by
+  `lib/models.dev.api.json` _is_ the provider map every generator indexes by
   provider id, so a provenance member would sit in the provider namespace and
   the file would stop being a faithful mirror of upstream `api.json`. Its
   provenance is the `contentSha256` in the refresh log until it leaves git.

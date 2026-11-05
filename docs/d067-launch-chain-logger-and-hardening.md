@@ -32,7 +32,7 @@ container read it: `lib/log.sh` has no `export -f`, and `launch.sh` is
 `/bin/sh`, so no log function survives `exec bash`. A host repo file was
 bound into every sandbox for a single JSON line.
 
-The line's only unique value was attestation — it was emitted *inside* the
+The line's only unique value was attestation — it was emitted _inside_ the
 container, so it proved the shell actually started. That is worth little here:
 the host already logs `starting container` immediately before `workload_run`
 (which then blocks, foreground `-it`), and the operator's real readiness
@@ -91,7 +91,7 @@ not a flag combination. The choice made here is the hatch, recorded in
 
 - **No repo file is mounted.** The only repo-tree coupling left is the
   CWD/`ARGV` directory mount — and when the documented launch runs from the
-  repo root, that mount *is* the repo (the open point recorded in the d066
+  repo root, that mount _is_ the repo (the open point recorded in the d066
   audit; this record does not change it).
 - **The launch chain is self-contained**: env pins, `exec bash`, nothing
   sourced. The one ro-mount it still needs is its own generated file.
@@ -148,12 +148,12 @@ pre-provisioning alternative above covers.
   plus no `no-new-privileges` so setuid works. That is most of the cap set
   and no NNP — hardening in name only. Rejected.
 - **Root-in-userns, keep NNP, drop `--cap-drop=all`.** `apt` works (root
-  already holds the namespace caps, so nothing is *gained*), but container-root
+  already holds the namespace caps, so nothing is _gained_), but container-root
   writes into mounted dirs land on the host as a subuid — the ownership
   problem `--userns=keep-id` + the `z,U` relabel exist to avoid. Trades
   hardening for `re-chown.sh` runs. Rejected.
 - **Move privileged work out of the sandbox** (build-time provisioning in the
-  Containerfile, or a separate rootful/host-side step). The correct path *if*
+  Containerfile, or a separate rootful/host-side step). The correct path _if_
   hardening is ever wanted; not taken now because it removes the agent's
   ability to install a system package unattended. Recorded so the trade is
   visible when the policy is revisited.

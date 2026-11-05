@@ -42,13 +42,13 @@ The letters fail as names:
 
 Use these canonical names in current prose, requirements, and reference docs:
 
-| Former label | Canonical name | Transport mechanism |
-|---|---|---|
-| A | **allowlist relay** | HTTPS reverse proxy keyed by the upstream-host path, deny-by-absence |
-| B | **authenticated relay** | HTTPS path-prefix forward relay, operator-authenticated |
-| C | **h2-POST tunnel** | HTTP/2 streaming `POST`; one long-lived request/response body pair per local connection |
-| D | **WebSocket tunnel** | HTTP/1.1 WebSocket upgrade carrying the tunnel protocol |
-| E | **h1.1-POST tunnel** | HTTP/1.1 `POST` exchanges, stop-and-wait / windowed |
+| Former label | Canonical name          | Transport mechanism                                                                     |
+| ------------ | ----------------------- | --------------------------------------------------------------------------------------- |
+| A            | **allowlist relay**     | HTTPS reverse proxy keyed by the upstream-host path, deny-by-absence                    |
+| B            | **authenticated relay** | HTTPS path-prefix forward relay, operator-authenticated                                 |
+| C            | **h2-POST tunnel**      | HTTP/2 streaming `POST`; one long-lived request/response body pair per local connection |
+| D            | **WebSocket tunnel**    | HTTP/1.1 WebSocket upgrade carrying the tunnel protocol                                 |
+| E            | **h1.1-POST tunnel**    | HTTP/1.1 `POST` exchanges, stop-and-wait / windowed                                     |
 
 - **Letters are historical aliases, not names.** They may appear in a
   historical decision record while narrating the past, in code constants and

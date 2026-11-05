@@ -22,7 +22,7 @@ deployment.
 different product, not a patch to this one: what a brokering proxy on an honest
 substrate looks like — no CA, declarative rewrites, h2 carried rather than
 brokered — is recorded in [d129](d129-agent-vault-2.md). Nothing here is
-superseded; d126 remains the fastest path to putting the *current* vault behind
+superseded; d126 remains the fastest path to putting the _current_ vault behind
 the chain.
 
 ## Problem
@@ -56,21 +56,21 @@ which is exactly what a restricted network forbids.
 
 ## Finding: the vault's upstream legs do not read proxy env
 
-The repository is asymmetric in a way that hides the gap. Its *control-plane*
-legs honor the standard variables; its *data-plane* legs do not.
+The repository is asymmetric in a way that hides the gap. Its _control-plane_
+legs honor the standard variables; its _data-plane_ legs do not.
 
-| Leg | Where | Honors `HTTPS_PROXY`/`ALL_PROXY`? |
-| --- | --- | --- |
-| Infisical control-plane client | `internal/infisical/client.go` (transport built with `http.ProxyFromEnvironment`) | **yes** |
-| OAuth token refresher | `internal/oauth/oauth.go` | **yes** |
-| `vault run` / CLI helpers | `cmd/helpers.go` | **yes** |
-| **MITM upstream (HTTPS + CONNECT)** | `internal/mitm/proxy.go` `New` — the upstream `http.Transport` sets `DialContext: netguard.SafeDialContext(...)` and carries **no `Proxy` field** | **no** |
-| **MITM upstream (WebSocket)** | `internal/mitm/websocket.go` `dialWebSocketUpstream` — dials `outReq.URL.Host` through `p.upstream.DialContext`, so it never consults `Transport.Proxy` even if one were set | **no** |
-| Server-side OAuth refresher transport | `internal/server/server.go` — clones `http.DefaultTransport`, then sets `oauthTransport.Proxy = nil` **deliberately**, paired with netguard, as its SSRF posture | **no, on purpose** |
+| Leg                                   | Where                                                                                                                                                                        | Honors `HTTPS_PROXY`/`ALL_PROXY`? |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Infisical control-plane client        | `internal/infisical/client.go` (transport built with `http.ProxyFromEnvironment`)                                                                                            | **yes**                           |
+| OAuth token refresher                 | `internal/oauth/oauth.go`                                                                                                                                                    | **yes**                           |
+| `vault run` / CLI helpers             | `cmd/helpers.go`                                                                                                                                                             | **yes**                           |
+| **MITM upstream (HTTPS + CONNECT)**   | `internal/mitm/proxy.go` `New` — the upstream `http.Transport` sets `DialContext: netguard.SafeDialContext(...)` and carries **no `Proxy` field**                            | **no**                            |
+| **MITM upstream (WebSocket)**         | `internal/mitm/websocket.go` `dialWebSocketUpstream` — dials `outReq.URL.Host` through `p.upstream.DialContext`, so it never consults `Transport.Proxy` even if one were set | **no**                            |
+| Server-side OAuth refresher transport | `internal/server/server.go` — clones `http.DefaultTransport`, then sets `oauthTransport.Proxy = nil` **deliberately**, paired with netguard, as its SSRF posture             | **no, on purpose**                |
 
 The first three rows make the trap: export `HTTPS_PROXY` on the vault and the
 Infisical sync, `/health`, and every `vault run` child all succeed through the
-chain — while every *proxied* request dials the target directly. On an open
+chain — while every _proxied_ request dials the target directly. On an open
 host the chain then silently looks deployed and isn't; in a restricted network
 the proxied traffic hangs or fails with an upstream error that names the target,
 not the missing hop. That asymmetry is the whole finding, and it is why "set the
@@ -103,15 +103,15 @@ rejected alternatives.
 
 `estige/relaynode.go`'s `requireLoopback` refuses any non-loopback listen
 address (VPN-R23 is made structural, not configurable), and `handleSOCKS` says
-why it carries no credential: *"the listener is loopback-only, VPN-R23 — a
-credential check here would be theater."* Consequence: the only way the vault
+why it carries no credential: _"the listener is loopback-only, VPN-R23 — a
+credential check here would be theater."_ Consequence: the only way the vault
 reaches the relay is **sharing its network namespace**. Two shapes, both fine:
 
 - podman `--network container:<relay>` (the vault joins the relay's netns), or
 - systemd `JoinsNamespaceOf=` / `NetworkNamespacePath=` on the vault unit.
 
 Note the direction of the safety argument: the vault may bind a non-loopback
-address (`--host`, default `127.0.0.1`), but it *must* be loopback-bound when it
+address (`--host`, default `127.0.0.1`), but it _must_ be loopback-bound when it
 shares a namespace with a listener that has no credential check of its own.
 
 ### G4 — three environment scopes, and the relay refuses to chain to itself
@@ -123,11 +123,11 @@ chain names the relay's own listener (`errSelfChained`, mapped to exit **94** in
 `HTTPS_PROXY` pointing at the corporate proxy, and merged they trip the
 self-chain guard.
 
-| scope | `HTTPS_PROXY` / chain vars | other |
-| --- | --- | --- |
-| `estige-relay.service` | the corporate proxy, or `SOCKS_SERVER`+`SOCKS_VERSION=5` | tunnel/exit identity per [d104](d104-mutual-exit-relay-credential.md), `PROXY_LISTEN`, `SOCKS_LISTEN` |
-| agent-vault server | `http://127.0.0.1:<relay-proxy-port>` | `AGENT_VAULT_MASTER_PASSWORD`, `AGENT_VAULT_NETWORK_ALLOWLIST=127.0.0.1/32`, `--host`, `--mitm-port 14322` |
-| agent / `vault run` child | the vault's `:14322` | `AGENT_VAULT_ADDR`, the vault token, the CA vars `vault run` exports |
+| scope                     | `HTTPS_PROXY` / chain vars                               | other                                                                                                      |
+| ------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `estige-relay.service`    | the corporate proxy, or `SOCKS_SERVER`+`SOCKS_VERSION=5` | tunnel/exit identity per [d104](d104-mutual-exit-relay-credential.md), `PROXY_LISTEN`, `SOCKS_LISTEN`      |
+| agent-vault server        | `http://127.0.0.1:<relay-proxy-port>`                    | `AGENT_VAULT_MASTER_PASSWORD`, `AGENT_VAULT_NETWORK_ALLOWLIST=127.0.0.1/32`, `--host`, `--mitm-port 14322` |
+| agent / `vault run` child | the vault's `:14322`                                     | `AGENT_VAULT_ADDR`, the vault token, the CA vars `vault run` exports                                       |
 
 ### G5 — the exit's egress policy is `:80`/`:443`
 
@@ -144,14 +144,14 @@ tunnel.
 [d094](d094-relay-chain-proxy.md) gives the relay **one** chain hop: one `http`
 (CONNECT) or one `socks5` endpoint, resolved at startup, fail-closed. The
 corporate proxy is therefore the hop estige must consume, which means the SSL
-VPN has to terminate *locally* (a tun/route, or a localhost SOCKS5 the relay
+VPN has to terminate _locally_ (a tun/route, or a localhost SOCKS5 the relay
 dials) rather than be consumed as `HTTPS_PROXY` — otherwise two proxies compete
 for one slot. Confirm the corporate proxy also permits
 `CONNECT <exit-host>:<port>` toward the funnel, not only plain HTTPS origins.
 
 ### G7 — credentials are minted, never captured (code, by design)
 
-The vault maintains a genuinely *current* credential — the credential's stored
+The vault maintains a genuinely _current_ credential — the credential's stored
 value **is** the live access token (`UpdateCredentialOAuthTokens` writes it into
 `credentials.ciphertext`), with expiry, refresh token and client credentials in
 the companion `credential_oauth` row (`internal/store/sql_store.go`). Injection
@@ -165,7 +165,7 @@ response headers only to strip hop-by-hop fields.
 
 That rules out brokering a legacy **Resource Owner Password** (ROPC) IdP the
 obvious way. Injecting the password leg is easy (a `body`-surface substitution
-on the token endpoint); the problem is the *return* leg — the token comes back
+on the token endpoint); the problem is the _return_ leg — the token comes back
 in the response, the vault does not look, so it lands in the agent's process and
 layer 2 leaks anyway. Two smaller traps compound it: ROPC frequently returns no
 refresh token, and `internal/brokercore/credential.go` returns early when
@@ -195,7 +195,7 @@ today, and why any opaque blob an operator deposits works too.
 
 #### Where it is not: the token client is an OAuth 2.0 client
 
-Every surface where the vault must *interpret* the flow is `internal/oauth`, and
+Every surface where the vault must _interpret_ the flow is `internal/oauth`, and
 there it is a strict RFC 6749 client: an `application/x-www-form-urlencoded`
 request, client authentication limited to `client_secret_post` or
 `client_secret_basic` (no mTLS, no DPoP, no assertion), and a JSON response
@@ -203,21 +203,21 @@ unmarshalled into `TokenResponse{access_token, refresh_token, token_type, scope,
 expires_in}`. A bespoke IdP that deviates is not "supported with caveats": it
 lands in one of two outcomes, and the quiet one is the dangerous one.
 
-| deviation from RFC 6749 | what the vault does |
-| --- | --- |
-| non-2xx, or a 2xx body that is not that JSON shape | hard `oauth_refresh_failed` → **502** to the agent with a generic message; the IdP's actual body is written to `LastRefreshError`, never returned |
+| deviation from RFC 6749                                                | what the vault does                                                                                                                                                                                                                                                                                              |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| non-2xx, or a 2xx body that is not that JSON shape                     | hard `oauth_refresh_failed` → **502** to the agent with a generic message; the IdP's actual body is written to `LastRefreshError`, never returned                                                                                                                                                                |
 | `expires_in` absent or `0` (the parameter is only RECOMMENDED by §5.1) | `ExpiresAt` stays zero, `credential.go` persists `TokenExpiresAt = nil`, and its refresh decision **returns early on nil** — so the token is never refreshed again. No error, no log line, nothing in the agent's response: requests simply start failing upstream while the vault believes it has no work to do |
-| `token_type` anything but `Bearer` | unmarshalled into `TokenResponse.TokenType` and **read nowhere in the tree** (the field has no second reference); injection hardcodes `"Bearer " + value` (`internal/broker/broker.go`) |
-| refresh response omits `refresh_token` | the stored one is kept (`newRefreshCT` stays nil) — correct, RFC 6749 §6 permits either |
+| `token_type` anything but `Bearer`                                     | unmarshalled into `TokenResponse.TokenType` and **read nowhere in the tree** (the field has no second reference); injection hardcodes `"Bearer " + value` (`internal/broker/broker.go`)                                                                                                                          |
+| refresh response omits `refresh_token`                                 | the stored one is kept (`newRefreshCT` stays nil) — correct, RFC 6749 §6 permits either                                                                                                                                                                                                                          |
 
-Compliance is therefore never *asserted*, only *assumed*: the vault validates
+Compliance is therefore never _asserted_, only _assumed_: the vault validates
 none of it, so an IdP that satisfies half the spec fails as a refused request or,
 worse, as a silent stop. The text the agent receives — "OAuth token expired and
 refresh failed — reconnect in the Agent Vault dashboard"
 (`internal/brokercore/brokercore.go`) — points at the wrong component: the vault's
 state is intact, the IdP is not speaking the dialect. This is the same shape as
 the [G1](#g1--no-upstream-proxy-support-on-the-data-plane-blocking-code) trap: a
-partial fit makes the deployment *look* wired while one leg silently does the
+partial fit makes the deployment _look_ wired while one leg silently does the
 wrong thing.
 
 #### Consequence: a bespoke flow is operator tooling, not a vault feature
@@ -288,7 +288,7 @@ proxy test harness but no chain case):
 
 The vault sits beside the exit, where egress is open by design, so its direct
 dials are correct and G1 never arises. The cost is elsewhere: the workload's
-proxy env would have to name a host:port reachable *only through the tunnel*,
+proxy env would have to name a host:port reachable _only through the tunnel_,
 which means the workload's client must speak proxy-inside-a-tunnel — two proxy
 levels — and stock HTTP clients speak exactly one. Making it work needs either
 a forwarder process on the agent side or an estige feature that composes
@@ -307,7 +307,7 @@ requirement that started this.
 ## Alternatives rejected
 
 - **`AGENT_VAULT_ALLOW_PRIVATE_RANGES=true`.** Drops the private-range guard on
-  *every* leg, including OAuth and the Infisical client, to reach one loopback
+  _every_ leg, including OAuth and the Infisical client, to reach one loopback
   port. The allowlist exists for this.
 - **`Transport.Proxy = http.ProxyFromEnvironment`.** Not fail-closed, cannot
   express SOCKS5, silently skips `NO_PROXY`/localhost destinations, and the
@@ -337,7 +337,7 @@ requirement that started this.
   [d127](d127-proxy-only-container-egress.md). It is also the reason the vault,
   not the relay, is the right thing to put on the workload's network — and the
   reason the word is "network", not "internet": upstream's own guidance is
-  that `14322` stays private to the agents' network because the token *inside*
+  that `14322` stays private to the agents' network because the token _inside_
   `HTTPS_PROXY` is expected to leak, so reachability — not the credential — is
   what makes a leaked value useless. Only the management API on `14321` is
   documented as publicly exposable (behind TLS and an IP allowlist), never the

@@ -33,7 +33,7 @@ never be named `model-*.json`** (that glob is the layered merge's own).
 
 `gen-lib.mjs` keeps re-exporting the provider symbols (its consumers already
 depended on `gen-lib` as the facts barrel) and `lib/cloud-providers.mjs`
-points at the new home. FR-L3 still holds — the two fact *caches* are
+points at the new home. FR-L3 still holds — the two fact _caches_ are
 distinct files, but they now have one owning module, which is what "exactly
 one home" asks for. Neither module had a direct test — they are
 network-and-cache code whose observable contract is "warn and serve stale",
@@ -61,7 +61,7 @@ removed at the end. What was **not** given up:
   artifact (`requireInstallBase`), and `coding-agent/tests/artifact-urls.test.mjs` still
   covers the installed-direction escape detector.
 - **The committed layer snapshot** (d037) — unchanged, with one deliberate
-  difference: `generate.mjs` seeds `PI_LAYER_DIR` with the *committed*
+  difference: `generate.mjs` seeds `PI_LAYER_DIR` with the _committed_
   `model-*.json` layers before spawning the pi generator, so the merge glob
   and d064's stale-preserve still see previous state on a clean checkout
   (previously they saw whatever `scratch/` had been copied in).
@@ -72,7 +72,7 @@ removed at the end. What was **not** given up:
 with it, and `generate.sh` now just passes the script path while the `.mjs`
 derives the rest. What stayed: `LIB_DIR` itself is the d023 **import
 convention** (generators resolve `lib/` through `$LIB_DIR` so the bootstrap
-logger can be loaded before anything else); only its use as a *path* prefix
+logger can be loaded before anything else); only its use as a _path_ prefix
 for stage directories is gone, because each stage now derives its own
 output dir. `coding-agent/DESIGN.md`,
 `lib/log.mjs`, `coding-agent/generate.sh`, and the README folder rows follow.
@@ -119,7 +119,7 @@ rules** everywhere (`llm-local-inference/generate.mjs` header, its
   "falls back to committed static config" clause (d070 §6 removed the
   fallback; generation fails closed).
 - **FR-U5** — "no merge logic, no preservation contract" contradicted
-  `mcp.json`, which merges committed entries *under* operator state because
+  `mcp.json`, which merges committed entries _under_ operator state because
   an operator's MCP servers exist nowhere else (d061). Recorded as the
   deliberate, documented exception rather than left as a contradiction.
 
@@ -129,14 +129,14 @@ Call-site census (every export in `lib/`, `coding-agent/`,
 `llm-reverse-proxy/`, `llm-local-inference/`, `git/`, `tests/` with exactly
 one external call site):
 
-| Export | Verdict |
-|--------|---------|
-| `detectContainerTool`, `detectGpuDevices` (`lib/host-capabilities.mjs` → `llm-local-inference/generate.mjs`) | **kept** — the module's two probes are one host-capability vocabulary; the only real question is its *placement* (`lib/` reads are the allowed direction), and relocating it now would move a tested unit for no behavioural gain |
-| `loadCatwalkFacts`, `getCatwalkModels`, `loadProviderFacts` (`catalog-facts.mjs` → pi generator) | **kept** — one module, three stages of the same contract (refresh → load → query); folding them into the generator would re-create the file this record just merged |
-| `providerEntry` (`gen-lib.mjs`, called by `providerReroute` in the same file and by the pi generator) | **kept** — two callers, one of them intra-module; it is the only shaping of a fact row into a pi provider |
-| `probeRoute` (`route-probe.mjs` → `probeRoutes`) | **kept** — single caller, but it is the *classification contract* (reachable / auth / unreachable) with its own documented header that other comments point at; merging it into the candidate loop would bury the verdict table |
-| `softwareForgeUserEmail`, `softwareForgeSshUrl`, `softwareForgeMirrorRelPath` (`git/software-forge-remotes.mjs`) | **kept** — a cohesive domain unit with one external consumer; the d039 fold rule targets `lib/`-vs-runner placement, not sibling scripts inside one runner |
-| `harToManifest` (`git/vbs-har.mjs`) | **kept** — library-shaped function inside a CLI script, exported for tests; no split to undo |
+| Export                                                                                                           | Verdict                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `detectContainerTool`, `detectGpuDevices` (`lib/host-capabilities.mjs` → `llm-local-inference/generate.mjs`)     | **kept** — the module's two probes are one host-capability vocabulary; the only real question is its _placement_ (`lib/` reads are the allowed direction), and relocating it now would move a tested unit for no behavioural gain |
+| `loadCatwalkFacts`, `getCatwalkModels`, `loadProviderFacts` (`catalog-facts.mjs` → pi generator)                 | **kept** — one module, three stages of the same contract (refresh → load → query); folding them into the generator would re-create the file this record just merged                                                               |
+| `providerEntry` (`gen-lib.mjs`, called by `providerReroute` in the same file and by the pi generator)            | **kept** — two callers, one of them intra-module; it is the only shaping of a fact row into a pi provider                                                                                                                         |
+| `probeRoute` (`route-probe.mjs` → `probeRoutes`)                                                                 | **kept** — single caller, but it is the _classification contract_ (reachable / auth / unreachable) with its own documented header that other comments point at; merging it into the candidate loop would bury the verdict table   |
+| `softwareForgeUserEmail`, `softwareForgeSshUrl`, `softwareForgeMirrorRelPath` (`git/software-forge-remotes.mjs`) | **kept** — a cohesive domain unit with one external consumer; the d039 fold rule targets `lib/`-vs-runner placement, not sibling scripts inside one runner                                                                        |
+| `harToManifest` (`git/vbs-har.mjs`)                                                                              | **kept** — library-shaped function inside a CLI script, exported for tests; no split to undo                                                                                                                                      |
 
 `previousLocalProvider()` exists twice with the same name and the same why
 (d064 first-class stale-preserve) but two different schemas — pi's
@@ -163,7 +163,7 @@ adding the repo's FIRST `package.json` (there is none today: opencode is
 provisioned via mise, not npm) pinned to the pi version the image installs.
 
 What the swap would look like: derive id/label/api/baseUrl from
-`getBuiltinProviders()` at generate time, and keep a *small* repo-side table
+`getBuiltinProviders()` at generate time, and keep a _small_ repo-side table
 only for what pi-ai does not know — our `apiKeyEnv` names (vault key
 convention), the local `llama-swap` row, and the deny list. Deny-by-absence
 (d047) then reads from pi's own set, so a new pi provider can never be

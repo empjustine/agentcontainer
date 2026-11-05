@@ -49,7 +49,7 @@ points at holds only `webrecorder`).
    **creation/write** price, `cost_per_1m_out_cached` = cache **read** price;
    same in `cmd/vercel/main.go`). So `../coding-agent/generate-pi-coding-agent.mjs`'s
    pairing `cache_read ← cost_per_1m_out_cached` / `cache_write ←
-   cost_per_1m_in_cached` is correct — it only *looks* crossed relative to the
+   cost_per_1m_in_cached` is correct — it only _looks_ crossed relative to the
    naive field names ("out" suggests output, but cached tokens are input-side).
    No fix owed to the sibling runner.
 2. **`aliou/pi-synthetic` as a cross-check.** Mirror copy present
@@ -88,8 +88,8 @@ Either way `model-019` stays CANONICAL (docs/d070), routing stays in
 - **`infinite:*` tiers — CLOSED, the filter stays.** Probed live with the
   fleet's key: a non-streamed call returns **400** ("Infinite models require
   streaming"), and the same call with `stream: true` returns **402** —
-  *"Infinite models require an active Big plan subscription. Upgrade at
-  https://synthetic.new/billing"*. The key authenticates fine (§1.3) but lacks
+  _"Infinite models require an active Big plan subscription. Upgrade at
+  https://synthetic.new/billing"_. The key authenticates fine (§1.3) but lacks
   the subscription tier, so `UNSUPPORTED_ID_PREFIXES` is not a gap to fill
   later — it is the correct behavior for this key level. Revisit only if the
   fleet ever holds a Big-plan key. Two wire facts for that day: the family

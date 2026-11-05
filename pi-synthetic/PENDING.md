@@ -38,12 +38,12 @@ in-flight change had not closed.**
 
 State at the time of writing (2026-10-29 23:07Z, `v23.0: ssl vpn`):
 
-| Gate                                                     | Result                                                                                      |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `node --test tests/pi-synthetic-merge.test.mjs`          | **19/19 pass**                                                                              |
-| `merge.mjs` / `sources.mjs` vs their `extension/` copies | **in sync** (`cmp`)                                                                         |
-| `./check-types.sh`                                       | **8 errors** in `generate.mjs`, `merge.mjs`, the test file                                  |
-| `biome check pi-synthetic`                               | **4 format errors** (`TODO.md`, `extension/index.ts`, `extension/models.js`, `models.json`) |
+| Gate                                                                                     | Result                                                                                      |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `node --test tests/pi-synthetic-merge.test.mjs`                                          | **19/19 pass**                                                                              |
+| `merge.mjs` / `sources.mjs` vs their `extension/` copies                                 | **in sync** (`cmp`)                                                                         |
+| `./check-types.sh`                                                                       | **8 errors** in `generate.mjs`, `merge.mjs`, the test file                                  |
+| `biome check pi-synthetic`                                                               | **4 format errors** (`TODO.md`, `extension/index.ts`, `extension/models.js`, `models.json`) |
 | generate twice, offline (`./generate.sh` then; `./npm-run.sh pi-synthetic generate` now) | **byte-identical** (idempotent), 16 rows, `resolved: 4`                                     |
 
 ---

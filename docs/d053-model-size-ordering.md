@@ -5,7 +5,8 @@ status: active
 title: "d053 — model footprint data + cheapest-first `lib/llamacpp-model-data.json`"
 parent: llm-local-inference
 depends-on: [llm-local-inference, workload-api]
-references: [d025, d050, gguf-model-tooling, refresh-llm-local-inference-manifest, gguf-vram-fit-estimates]
+references:
+  [d025, d050, gguf-model-tooling, refresh-llm-local-inference-manifest, gguf-vram-fit-estimates]
 tags: [gguf, manifest, ordering, determinism, footprint, size]
 ---
 
@@ -37,7 +38,7 @@ unrelated to the catalog, and a consumer that only wanted "how big is this
 model" had to re-derive it (`du`, the estimator, or the model card).
 
 Footprint — the bytes on disk, which are also the bytes a runner must load into
-RAM/VRAM — is intrinsic, cheap, and offline. It is a *rough* proxy for "how
+RAM/VRAM — is intrinsic, cheap, and offline. It is a _rough_ proxy for "how
 expensive is this model to run", which is exactly the ordering signal wanted; a
 speed benchmark is a much heavier, host-bound way to get the same rough
 ranking.
@@ -45,7 +46,7 @@ ranking.
 ## Decisions (resolved)
 
 1. **Script home** — a new `.mjs` in `llm-local-inference/`
-   (`model-sizes.mjs` + a `node-run.sh` shim). The table's *content* is owned
+   (`model-sizes.mjs` + a `node-run.sh` shim). The table's _content_ is owned
    by that folder (d025), so its writer lives there too. `local-llm/` tooling
    is deprecated; the former Python `--update-model-data` reorder is retired.
 2. **Sources** — committed manifests first, local HF cache fallback.
@@ -57,7 +58,7 @@ ranking.
 4. **Fields / units** — `size-gb` (SI GB, decimal 1e9, fixed 3 decimals) plus
    `size-parts` (same keys, same unit). SI because the number measures
    storage/network, not RAM; a GiB field is deliberately omitted.
-5. **Order** — ascending by `size-gb` (cheapest first, a *rough* estimate),
+5. **Order** — ascending by `size-gb` (cheapest first, a _rough_ estimate),
    tie-break `hf-repo` then `model`, code-unit compare.
 6. **R4** — left as a TODO; not in the first cut.
 7. **Cache-only** — warn-only, implemented inline in the `.mjs` (the
@@ -89,9 +90,9 @@ into `lib/llamacpp-model-data.json`.
 - **Offline.** Removing the `gdevenyi/huggingface-estimate` checkout (or
   running without its mirror) does not change the output.
 
-*"Somewhat" reproducible* is deliberate: the inputs are the committed manifests
+_"Somewhat" reproducible_ is deliberate: the inputs are the committed manifests
 and the local HF cache, so two hosts with different cached quants can
-legitimately differ. The guarantee is *same inputs → same bytes*, plus
+legitimately differ. The guarantee is _same inputs → same bytes_, plus
 host-independence for every file a committed manifest lists. As of 2026-09 all
 26 table repos have a committed manifest, but the `byteshape/Qwen3.8-27B-GGUF`
 manifest is stale, so 5 of its `IQ*` files fall back to the cache (see
@@ -114,7 +115,7 @@ the rounded GB value is stored.
 
 This is the **disk footprint**. Because those same bytes must be resident to
 run the model, it doubles as a rough **RAM/VRAM** footprint. It is explicitly
-*not* the runtime resident set: the KV cache and activation workspace are added
+_not_ the runtime resident set: the KV cache and activation workspace are added
 at serve time and remain the estimator's job (`llm-local-inference/gguf-vram-fit-estimates.md`).
 
 ### R3 — ordering
@@ -135,14 +136,15 @@ A future `active-gb`: the weight bytes read per generated token.
 - **MoE model** — active = non-expert weights + (expert weights ×
   `expert_used_count` / `expert_count`), matching the archived
   `estimate_active_params.py` semantics (`llm-local-inference/gguf-model-tooling.md`).
-- The MTP drafter and mmproj are *resident* but not part of the base per-token
+- The MTP drafter and mmproj are _resident_ but not part of the base per-token
   active stream unless engaged; report them separately.
 
 Preferred source is a header-only measurement of the local GGUF (read metadata
-+ tensor-info, never the weights) — deterministic and estimator-free. Lifting
-the estimator's active fields from `gguf-vram-fit-estimates.data.json` is an
-acceptable fallback but re-introduces the host/parameter dependence R1 removes.
-The field must be named/annotated as an estimate.
+
+- tensor-info, never the weights) — deterministic and estimator-free. Lifting
+  the estimator's active fields from `gguf-vram-fit-estimates.data.json` is an
+  acceptable fallback but re-introduces the host/parameter dependence R1 removes.
+  The field must be named/annotated as an estimate.
 
 ### R5 — cache-only models: warn, never add
 
@@ -156,8 +158,8 @@ report is a **summary** (counts per class, with the zero-coverage repos named),
 not one line per extra quant: on the 2026-09 host there are 2 zero-coverage
 repos but 76 extra cached files in 5 listed repos (`unsloth/gemma-4-12b-it-GGUF`
 alone carries 19 unlisted quants). Per-file detail is emitted at `debug` and
-  level-tagged, so a reader keeps the summary alone with
-  `jq 'select(.level!="debug")'` (docs/d060; the producer drops no line — d045).
+level-tagged, so a reader keeps the summary alone with
+`jq 'select(.level!="debug")'` (docs/d060; the producer drops no line — d045).
 
 **Auto-adding is not implemented.** The table is hand-curated and owned by
 `llm-local-inference/` (d025); the cache cannot supply an entry's extensive
@@ -165,17 +167,17 @@ alone carries 19 unlisted quants). Per-file detail is emitted at `debug` and
 `ctx-size` cap, the family `__argv` macro, the `active-b.json` slug, `parallel`
 or the KV cache type. An auto-added entry would be incomplete or would silently
 pin the wrong quant — the exact failure `fetch_hf_manifests.py` exists to catch.
-If an add mode is ever wanted, it should append a *stub* carrying only what the
+If an add mode is ever wanted, it should append a _stub_ carrying only what the
 cache can prove (`hf-repo`, `model`, `size-gb`) and **refuse** when the quant
 tag is ambiguous (bpw suffix / multiple quant keywords), leaving the rest to
 the human.
 
 ## Data sources and resolution order
 
-| # | Source | Properties |
-|---|---|---|
-| 1 | committed `lib/hf-manifests/<org>--<repo>.json` (`files[].path` → `size`) | host-independent, stable between manifest refreshes; **can be stale** |
-| 2 | local HF cache `models--org--repo/snapshots/<commit>/<file>` via `statSync` (follows blob symlinks) | exact for what the serving host will load; host-dependent (only cached quants resolve) |
+| #   | Source                                                                                              | Properties                                                                             |
+| --- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| 1   | committed `lib/hf-manifests/<org>--<repo>.json` (`files[].path` → `size`)                           | host-independent, stable between manifest refreshes; **can be stale**                  |
+| 2   | local HF cache `models--org--repo/snapshots/<commit>/<file>` via `statSync` (follows blob symlinks) | exact for what the serving host will load; host-dependent (only cached quants resolve) |
 
 Resolution: source 1 first, source 2 as fallback. An entry that resolves in
 neither is a hard error (R1).
@@ -188,7 +190,7 @@ fallback covers all five — these are the 5 `cache_fallbacks` the run reports.
 
 ## Edge cases (specified and handled)
 
-- **Sharded models** — sum *all* sibling shards even when the exact `model`
+- **Sharded models** — sum _all_ sibling shards even when the exact `model`
   path is present in the source. An exact-match fast path that returns shard
   `00001` alone under-counts a 100+ GB model to a few MB; this was observed in
   the draft spike on `unsloth/DeepSeek-V4-Flash-0731-GGUF` and
@@ -260,7 +262,7 @@ the table (R5's motivating data).
 - `llm-local-inference/refresh-llm-local-inference-manifest.md` — the add-a-model runbook (now calls
   `model-sizes.sh`).
 - `llm-local-inference/gguf-vram-fit-estimates.md` — the estimator's KV/activation/active
-  numbers (what this footprint deliberately is *not*).
+  numbers (what this footprint deliberately is _not_).
 - `docs/d025-shared-model-data-to-lib.md` — table ownership and the
   shared-vs-runner boundary (the manifest move follows it).
 - `docs/d050-deterministic-generated-artifacts.md` — the repo's stable-output

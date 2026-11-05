@@ -35,17 +35,17 @@ Already-mandatory, per repo evidence:
   CONNECT that terminates at the real origin (`d073` §5.1).
 - **The secrets chain.** Unchanged (`d046`, d073 VPN-R32).
 
-Currently carried *in addition*: install-time base-URL substitution and
+Currently carried _in addition_: install-time base-URL substitution and
 its verification (`d070`), the relay base chain
 (`REVERSE_PROXY_BASE_URLS`, `d063` §5), and two live catalog endpoints
 fetched through that chain (`d114`). Each is an extra failure class with
 its own code, env, and prose (DESIGN.md's "cloud reachability" matrix axis
-exists mostly to route *around* them).
+exists mostly to route _around_ them).
 
 **The counter-law stays in force:** `d114` finding 2 — a
 generation-time transient must never become a hard generation failure
-("generation is how you fix things"). Consolidation here changes *where
-inputs come from*, never *whether missing inputs stop generation*: both
+("generation is how you fix things"). Consolidation here changes _where
+inputs come from_, never _whether missing inputs stop generation_: both
 deltas keep the stale-copy / best-effort / loud-log semantics exactly as
 they are.
 
@@ -59,7 +59,7 @@ loopback CONNECT listener; the harness then speaks canonical upstream URLs
 directly. Two consequences make this strictly better than rewriting:
 
 - **End-to-end trust improves.** CONNECT carries SNI/Host to the origin, so
-  the harness validates the *real* provider certificate — the d073 VPN-R28
+  the harness validates the _real_ provider certificate — the d073 VPN-R28
   posture (system roots, no override) now covers harness→provider hops too,
   where install-time substitution left the harness trusting whatever cert
   the intercepting hop presented.
@@ -78,7 +78,7 @@ other harnesses are a §6 verification item.
   (`generate.mjs:350`, `generate-pi-coding-agent.mjs:1766`).
 - `check-routed-artifacts.mjs --installed` and its `run.sh` gate — the
   installed-vs-committed comparison collapses once installed == committed.
-- Vault base-chain probing as a *base-URL* concern
+- Vault base-chain probing as a _base-URL_ concern
   (`route-probe.mjs` base-chain half; `generate-pi:136`,
   `generate-opencode:104`).
 - DESIGN.md's "cloud reachability" matrix axis, halved: harness reachability
@@ -88,10 +88,10 @@ other harnesses are a §6 verification item.
 
 - **The layer cake** (`d065`): base URL is one input; key hubs, license
   gating, and deliberately-omitted compat schemas are orthogonal axes.
-- **Lineup bounding** (`probeRoutes`): still needed to know *which*
+- **Lineup bounding** (`probeRoutes`): still needed to know _which_
   providers exist — retargeted at canonical hosts via an explicit proxy
   dialer (§6), not through relay bases.
-- **`providerReroute`'s rationale**: it becomes the *fallback* regime's
+- **`providerReroute`'s rationale**: it becomes the _fallback_ regime's
   documentation (mode A, `d073`) rather than the primary path.
 - **Credentials** (`d052`): untouched.
 - **Mode A stays a fallback** (`d073`): route machinery is demoted to
@@ -150,7 +150,7 @@ the farm layout allows), of:
 
 The **interface does not move**: committed `lib/` JSON stays what
 consumers read; validation, atomic rename, and the stale-copy rule stay
-byte-for-byte in force. Only the *update path* changes from HTTP chain to
+byte-for-byte in force. Only the _update path_ changes from HTTP chain to
 `git fetch`.
 
 ### 3.3 Verdict — honest, per source
@@ -160,7 +160,7 @@ byte-for-byte in force. Only the *update path* changes from HTTP chain to
   `/v2/providers` observation — §6 verifies parity). Aggregation
   (read-dir → normalize → age-stamp) replaces the whole fetch chain:
   relay candidates, timeouts, TLS-skip, env-proxy for that leg.
-- **models.dev: conditional.** The repo publishes its *source* as TOML
+- **models.dev: conditional.** The repo publishes its _source_ as TOML
   (`providers/<p>/provider.toml`, `providers/<p>/models/<m>.toml`,
   `models/...`); the consumed `api.json?type=all` is a **built** artifact
   of their bun/sst stack (no release artifacts found). Options:
@@ -168,7 +168,7 @@ byte-for-byte in force. Only the *update path* changes from HTTP chain to
   **(b)** run their build from the clone (endpoint dependency → toolchain
   dependency; rejected, heavier than what it replaces);
   **(c)** a small in-repo assembler over the pinned TOML (adds a TOML
-  parser + coupling to upstream *internals* — but a pinned commit makes
+  parser + coupling to upstream _internals_ — but a pinned commit makes
   upstream refactors a controlled, validation-gated update absorbed at our
   cadence, not a live-API surprise; the consumed-shape validation we
   already run is exactly the breakage tripwire). Draft leans (c) **only if**
@@ -183,7 +183,7 @@ acceptable — but if §6's sizing says the assembler is not a simplification,
 ### 3.4 What does not simplify (by law, not oversight)
 
 Validation, atomic rename, stale-copy fallback, and provenance stamping
-stay for *both* sources — `d114` finding 2 binds unchanged. The clones
+stay for _both_ sources — `d114` finding 2 binds unchanged. The clones
 are the update path, never a generation precondition: clone fetch failure
 logs and advances with the last good snapshot, exactly as today.
 
@@ -223,11 +223,11 @@ outcome for this record.
 
 ## 4. Deltas restated (draft; with citations)
 
-- **`d070` (implemented)** → superseded *on hosts adopting §2*:
+- **`d070` (implemented)** → superseded _on hosts adopting §2_:
   install-time substitution retires; its zero-canonical guarantee is
   re-homed as `run.sh`'s launch-time proxy-env check (NFR-2 loud failure
   preserved, §2.4). `d070`'s first clause — canonical URLs in committed
-  artifacts — is *strengthened*, not changed.
+  artifacts — is _strengthened_, not changed.
 - **`d063` (implemented)** → "refresh is relay-only" becomes
   "refresh is git-source-first"; the relay chain survives only for a
   catalog with no usable git source (today: models.dev, provisionally).
@@ -235,7 +235,7 @@ outcome for this record.
 - **`d114` (accepted)** → unchanged; finding 2 (best-effort, stale copy,
   never clobber) and finding 4 (probe failure skips, never aborts) bind
   both deltas verbatim (§1, §3.4).
-- **`d073`/`d077`** → unchanged; they *provide* what §2 rides (VPN-R23
+- **`d073`/`d077`** → unchanged; they _provide_ what §2 rides (VPN-R23
   loopback listeners, mode D/C transports). No new mode is introduced.
 - **New:** catalog refresh source = pinned git clones of the two named
   repos; `MODELS_DEV_RELAY_URL` retired; harness launch precondition =

@@ -20,7 +20,7 @@ tags: ["gguf", "mmproj", "multimodal", "vram", "generator"]
 Every mmproj-bearing entry expands to three llama-swap models (d029 F6):
 `0text` (projector absent), `1vision` (projector on CPU), and `2mmproj`
 (projector offloaded to the GPU). The third variant only pays off when the
-projector's weights fit *alongside* the model. Above roughly 14 GB total the
+projector's weights fit _alongside_ the model. Above roughly 14 GB total the
 model already saturates the GPU, so co-resident projector weights force weight
 eviction / CPU offload and `2mmproj` ends up **slower** than `1vision`: the
 mode's premise (a GPU-resident projector) inverts exactly where it is offered,

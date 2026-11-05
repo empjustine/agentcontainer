@@ -39,9 +39,9 @@ default returns to `d` — one line, no migration.
 **As amended when mode E landed (d081's L4 amendment): the default offer
 is now `cde`.** The same law decides it — a built surface that needs a
 config edit to exist is exactly this record's original problem — and the
-ladder is the point: E must be *on offer* to demote into when the C and D
+ladder is the point: E must be _on offer_ to demote into when the C and D
 probes both fail (§4's invariant, "an unbuilt Mode E never surfaces as a
-failed exchange", becomes "a not-offered E *would* surface as one"). The
+failed exchange", becomes "a not-offered E _would_ surface as one"). The
 traffic shape does not move: E takes a session only when both built
 probes fail, so healthy deployments never touch it. Revert criterion for
 E matches C's: default back to `cd`, one line.
@@ -63,7 +63,7 @@ public-web ports — VPN-R35).
 - ~~Mode E stays unbuilt — d081's L4 gate is untouched~~ **SUPERSEDED**
   (d081's mode-E amendment): mode E is built, `parseRelayModes` accepts
   `e`, and the default offer carries it (decision 1 as amended).
-  Fail-loudly still rejects *unknown* letters — only `e` stopped being one.
+  Fail-loudly still rejects _unknown_ letters — only `e` stopped being one.
 - Mode A fallback and d080's host policy are untouched (VPN-R2: an
   unarmed deployment behaves exactly as before).
 - The provisioning prerequisite stands: the vault must carry

@@ -17,7 +17,7 @@ were not adopted.
 ## Problem
 
 The llama-swap local-inference runtime resolves GGUF snapshots through a
-script that is copied *inside the serving container*
+script that is copied _inside the serving container_
 (`config.d/launch-gguf.sh`). The prompt that put this audit together: that
 path "seems to be growing in complexity very fast". This note measures where
 the complexity actually is, separates it from the one constraint that makes
@@ -36,19 +36,19 @@ at all — fetched 2026-09-12 from
 > or another model registry. The file must already exist, or the configured
 > `cmd` must fetch it before starting the inference server."
 
-So *some* resolver is unavoidable **if** launch-time resolution is kept. That
+So _some_ resolver is unavoidable **if** launch-time resolution is kept. That
 is the only irreducible piece; everything below is mutable design.
 
 ## Findings (measured)
 
-| # | Complexity source | Evidence | Cost |
-|---|---|---|---|
-| F1 | **Positional launcher interface churn**: 5 positional args + `--` (`repoDir repoId gguf mmproj|- draft|- -- <server>…`) | `launch-gguf.sh:75-88`; emitted cmds in `config.d/10-local-llm-inference.yaml` (128 of them) | every new model capability = a 6th positional + coordinated generator+launcher+128-cmd change |
-| F2 | **Fork-in-`config.d` mechanism**: source `launch-gguf.sh` → `generate.sh` copies it into `config.d/` → ro-mounted into the container; a 15-line self-contained logger fork rides along because the copy cannot reach `lib/log.sh` | `generate.sh:74-78`; `launch-gguf.sh:31-45` | two copies of the launcher exist; drift class |
-| F3 | **Image-layout hedge**: hardcoded server-binary search dirs (`/opt/llama.cpp/bin /app /app/bin` …) | `launch-gguf.sh:87-104` | brittle against unified-image revisions |
-| F4 | **Path inconsistency across three files**: `run.sh` mounts the HF cache at *two* container paths (`/root/.cache/…` **and** `/home/ubuntu/.cache/…`); the launcher defaults to `/home/ubuntu/…`; `generate.sh`'s `LOCAL_INFERENCE=1` comment claims `/root/.cache` paths | `run.sh:69-70`, `launch-gguf.sh:47`, `generate.sh:21-22` | latent — whichever belief is wrong fails only on the mismatched path |
-| F5 | **Macro-verbatim coupling**: the generator must keep `${LLAMA_SERVER}` / `${qwen36}`-family text un-interpolated (llama-swap expands them) | `generate-local-llm-models.yaml.mjs:38-43` | small, inherent to the macro design |
-| F6 | **mmproj tripling**: each multimodal model emits ×3 llama-swap entries (0text/1vision/2mmproj) | generator's MMPROJ_MODES; the 122 KB yaml | catalog size + swap targets; product decision, not accidental |
+| #   | Complexity source                                                                                                                                                                                                                                                       | Evidence                                                 | Cost                                                                 |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------- |
+| F1  | **Positional launcher interface churn**: 5 positional args + `--` (`repoDir repoId gguf mmproj                                                                                                                                                                          | - draft                                                  | - -- <server>…`)                                                     | `launch-gguf.sh:75-88`; emitted cmds in `config.d/10-local-llm-inference.yaml` (128 of them) | every new model capability = a 6th positional + coordinated generator+launcher+128-cmd change |
+| F2  | **Fork-in-`config.d` mechanism**: source `launch-gguf.sh` → `generate.sh` copies it into `config.d/` → ro-mounted into the container; a 15-line self-contained logger fork rides along because the copy cannot reach `lib/log.sh`                                       | `generate.sh:74-78`; `launch-gguf.sh:31-45`              | two copies of the launcher exist; drift class                        |
+| F3  | **Image-layout hedge**: hardcoded server-binary search dirs (`/opt/llama.cpp/bin /app /app/bin` …)                                                                                                                                                                      | `launch-gguf.sh:87-104`                                  | brittle against unified-image revisions                              |
+| F4  | **Path inconsistency across three files**: `run.sh` mounts the HF cache at _two_ container paths (`/root/.cache/…` **and** `/home/ubuntu/.cache/…`); the launcher defaults to `/home/ubuntu/…`; `generate.sh`'s `LOCAL_INFERENCE=1` comment claims `/root/.cache` paths | `run.sh:69-70`, `launch-gguf.sh:47`, `generate.sh:21-22` | latent — whichever belief is wrong fails only on the mismatched path |
+| F5  | **Macro-verbatim coupling**: the generator must keep `${LLAMA_SERVER}` / `${qwen36}`-family text un-interpolated (llama-swap expands them)                                                                                                                              | `generate-local-llm-models.yaml.mjs:38-43`               | small, inherent to the macro design                                  |
+| F6  | **mmproj tripling**: each multimodal model emits ×3 llama-swap entries (0text/1vision/2mmproj)                                                                                                                                                                          | generator's MMPROJ_MODES; the 122 KB yaml                | catalog size + swap targets; product decision, not accidental        |
 
 ## Options (ranked by complexity-removed / risk)
 
@@ -61,7 +61,7 @@ is the only irreducible piece; everything below is mutable design.
 
 **B — generation-time snapshot resolution (deletes the launcher)**
 
-The host and container share the *same* HF cache (`run.sh` bind-mounts it), so
+The host and container share the _same_ HF cache (`run.sh` bind-mounts it), so
 `generate.sh` can resolve `models--…/snapshots/<hash>/<file>` at generation
 time and emit plain absolute-path cmds:
 

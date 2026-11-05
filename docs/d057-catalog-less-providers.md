@@ -26,8 +26,8 @@ catalog.
 **Verboo** (`https://code.verboo.ai/router/v1`, `$VERBOO_API_KEY`) is the first
 one that is not — not in models.dev, not in catwalk, not a pi-native
 provider, and no vendor extension to crib a model table from. Its listing is
-also the opposite of hyper's: rich in *capability* (`context_window`, a
-`vision` flag, an effort enum) and silent on *money* (no prices, no output
+also the opposite of hyper's: rich in _capability_ (`context_window`, a
+`vision` flag, an effort enum) and silent on _money_ (no prices, no output
 limit).
 
 ## Decision
@@ -35,12 +35,12 @@ limit).
 Two provider classes now exist in the full mode, distinguished by ONE new
 spec flag rather than a second code path:
 
-| | catalog has the provider | `catalogOptional` |
-|---|---|---|
-| endpoint | catalog `api` | **fact-table `baseUrl`** |
-| lineup | `provider.models` | the facts cache, in both modes |
-| facts cache role | enrichment (hyper) | the only source (verboo) |
-| direct-mode liveSync | yes | skipped (see below) |
+|                      | catalog has the provider | `catalogOptional`              |
+| -------------------- | ------------------------ | ------------------------------ |
+| endpoint             | catalog `api`            | **fact-table `baseUrl`**       |
+| lineup               | `provider.models`        | the facts cache, in both modes |
+| facts cache role     | enrichment (hyper)       | the only source (verboo)       |
+| direct-mode liveSync | yes                      | skipped (see below)            |
 
 - `catalogOptional: true` → `loadProvider()` returns an **empty** lineup and
   the fact-table base URL instead of throwing. The fact table is also what

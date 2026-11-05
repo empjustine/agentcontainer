@@ -36,12 +36,12 @@ names.
 
 ## Environments
 
-| Name                    | Sandbox / runtime                    | Cloud access | Serving dir(s)                                       | Usage dir              |
-|-------------------------|--------------------------------------|--------------|-----------------------------------------------------|------------------------|
-| **local-inference-host** | rootless podman, SELinux enforced    | direct       | `llm-local-inference/` (local layer) + `estige/` (tunnel service) | `coding-agent/`        |
-| **termux**              | rootless termux, restrictive SELinux, | direct (if   | `estige/` (deb, exit-node service)         | `coding-agent/`        |
-|                         | non-standard file paths              | any)         |                                                     |                        |
-| **small-cloud-vm**      | rootless podman or docker            | relay only   | `estige/` (rpm, relay service)           | `coding-agent/` (static config) |
+| Name                     | Sandbox / runtime                     | Cloud access | Serving dir(s)                                                    | Usage dir                       |
+| ------------------------ | ------------------------------------- | ------------ | ----------------------------------------------------------------- | ------------------------------- |
+| **local-inference-host** | rootless podman, SELinux enforced     | direct       | `llm-local-inference/` (local layer) + `estige/` (tunnel service) | `coding-agent/`                 |
+| **termux**               | rootless termux, restrictive SELinux, | direct (if   | `estige/` (deb, exit-node service)                                | `coding-agent/`                 |
+|                          | non-standard file paths               | any)         |                                                                   |                                 |
+| **small-cloud-vm**       | rootless podman or docker             | relay only   | `estige/` (rpm, relay service)                                    | `coding-agent/` (static config) |
 
 ### local-inference-host (full, default)
 
@@ -79,6 +79,7 @@ direct-first one); both faces are also the unified endpoint for
 external clients.
 
 ### termux (funnel-only serving)
+
 Hostname `<serial>.sn.mynetname.net` (a Synology/`mynetname` DDNS name — put your
 own here). SoC: **EN7562CT** (ARM32v5, 512 MB RAM, 128 MB flash). Resource-constrained host (a phone/router under Termux). It **cannot run the
 `llm-local-inference` llama-swap container** at all — Termux has no usable
@@ -102,6 +103,7 @@ So there is no llama-swap here at all: the host serves the tunnel only, via a
   termux serving documentation now lives.
 
 ### wsl2 (nonfree-world, funnel-only usage)
+
 No fixed hostname (dynamic). Kernel: `6.18.33.2-microsoft-standard-WSL2`. WSL2 under rootful docker with **no direct cloud access**, so the coding agent
 only ever talks through the funnel. `coding-agent/` covers this via static
 config (no Infisical-backed generation; a static pi `settings.json` +
@@ -132,6 +134,7 @@ podman, and just `--user uid:gid` on rootful docker; SELinux relabeling is
 automatic (`:z,U` on podman, `:z` on docker) with no per-script flags.
 
 ### small-cloud-vm (small cloud VM, funnel-only serving)
+
 The host only
 relays cloud providers. The relay is estige — one Go binary, ~13 MB
 RSS, no model routing and no secrets, installed as a service from the `.rpm`
@@ -157,7 +160,7 @@ or the local GPU/VRAM (local-inference generation simply fails there — there
 is no peers-only llama-swap mode anymore).
 
 > Note: `local-inference-host`, `termux`, and `small-cloud-vm` are **static**
-> reference hosts with known hostnames and hardware.  `wsl2` is **dynamic** —
+> reference hosts with known hostnames and hardware. `wsl2` is **dynamic** —
 > it has no fixed hostname and is instantiated ad-hoc.
 >
 > The previous MikroTik **arm5** (e50ug / RouterOS 7) variant has been
@@ -170,8 +173,8 @@ is no peers-only llama-swap mode anymore).
 `llm-local-inference/`; `coding-agent/` carries the node implementation instead,
 `lib/workload-runtime.mjs`, docs/d119, and `estige/` retired its copy with
 docs/d120) is a **description-driven workload runner**: run
-scripts declare *what* they need and the tool renders *how* for the active
-backend — rootless podman or rootful docker —  It is
+scripts declare _what_ they need and the tool renders _how_ for the active
+backend — rootless podman or rootful docker — It is
 the single place that detects the backend and computes `SCRIPT_DIR`
 (the only "where do I live" logic), so run scripts never re-detect podman/docker
 or guess their own paths inline. PRoot was removed as a backend (see

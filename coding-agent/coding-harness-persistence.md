@@ -13,12 +13,12 @@ How `coding-agent/run.mjs` preserves each coding harness's state across
 ephemeral container runs. For the planned hardening of this mechanism into a
 data diode (state may flow out, but can never be rewritten or deleted from
 inside the container), see `docs/d026-data-diode-audit.md` — design note only,
-not yet implemented. **pi splits the rule (docs/d054):** its *config* dir is the
+not yet implemented. **pi splits the rule (docs/d054):** its _config_ dir is the
 host's own `~/.pi/agent`, mounted directly (no per-run copy), while its
-*sessions* are staged per run under the container's `pi/`. **OpenCode splits
-the same way (docs/d065):** its *config* dir is the host's own
+_sessions_ are staged per run under the container's `pi/`. **OpenCode splits
+the same way (docs/d065):** its _config_ dir is the host's own
 (`OPENCODE_CONFIG_DIR`, default `~/.config/opencode`), mounted directly,
-while its *data* dir (auth + long-term logs/sessions) stays staged per run.
+while its _data_ dir (auth + long-term logs/sessions) stays staged per run.
 Every other harness gets a **per-run stage directory** on the host
 (`$HOME/workspace/$container_name/...`) RW-mounted into the container at the
 harness's expected home-relative path, so state written inside the sandbox
@@ -27,21 +27,21 @@ are loaded host-side once (./environment.sh — the explicit chain) and forwarde
 `workload_env` allowlist (`CLINE_API_KEY`, `MISTRAL_API_KEY`, `PEER_API_KEY`,
 `OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `HF_TOKEN`, `GEMINI_API_KEY`).
 
-| Harness | Host dir | Container mount (RW) | Env pinned in launch.sh | What it preserves |
-|---|---|---|---|---|
-| pi (`pi-coding-agent`) config | `$HOME/.pi/agent` (host, permanent) | `/home/$USER/.pi/agent` | `PI_CODING_AGENT_DIR` | settings.json, models.json, skills |
-| pi (`pi-coding-agent`) sessions | `$stage/pi/sessions` (per run) | `/home/$USER/.pi/sessions` | `PI_CODING_AGENT_SESSION_DIR` | sessions (docs/d054) |
-| OpenCode config | `$HOME/.config/opencode` (host, permanent; `OPENCODE_CONFIG_DIR` override) | `/home/$USER/.config/opencode` | `OPENCODE_CONFIG_DIR` | opencode.json overlay (generator-installed; a missing overlay is a tolerated partial config, docs/d065) |
-| OpenCode data | `$stage/opencode/data` (per run) | `/home/$USER/.local/share/opencode` | — | auth.json, long-term logs (log/), sessions (project/…/storage) |
-| Cline (CLI) | `$stage/cline` | `/home/$USER/.cline` | `CLINE_DIR`, `CLINE_DATA_DIR` | data/settings/providers.json, global-settings.json, cline_mcp_settings.json, sessions/, db/, workflows/, rules/, hooks/, skills/, agents/, plugins/, cron/ |
-| ThinkRail | `$stage/thinkrail` | `/home/$USER/.thinkrail` | `THINKRAIL_DATA_DIR` | projects.json, workspaces.json, terminals.json, installation.json, app config |
+| Harness                         | Host dir                                                                   | Container mount (RW)                | Env pinned in launch.sh       | What it preserves                                                                                                                                          |
+| ------------------------------- | -------------------------------------------------------------------------- | ----------------------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| pi (`pi-coding-agent`) config   | `$HOME/.pi/agent` (host, permanent)                                        | `/home/$USER/.pi/agent`             | `PI_CODING_AGENT_DIR`         | settings.json, models.json, skills                                                                                                                         |
+| pi (`pi-coding-agent`) sessions | `$stage/pi/sessions` (per run)                                             | `/home/$USER/.pi/sessions`          | `PI_CODING_AGENT_SESSION_DIR` | sessions (docs/d054)                                                                                                                                       |
+| OpenCode config                 | `$HOME/.config/opencode` (host, permanent; `OPENCODE_CONFIG_DIR` override) | `/home/$USER/.config/opencode`      | `OPENCODE_CONFIG_DIR`         | opencode.json overlay (generator-installed; a missing overlay is a tolerated partial config, docs/d065)                                                    |
+| OpenCode data                   | `$stage/opencode/data` (per run)                                           | `/home/$USER/.local/share/opencode` | —                             | auth.json, long-term logs (log/), sessions (project/…/storage)                                                                                             |
+| Cline (CLI)                     | `$stage/cline`                                                             | `/home/$USER/.cline`                | `CLINE_DIR`, `CLINE_DATA_DIR` | data/settings/providers.json, global-settings.json, cline_mcp_settings.json, sessions/, db/, workflows/, rules/, hooks/, skills/, agents/, plugins/, cron/ |
+| ThinkRail                       | `$stage/thinkrail`                                                         | `/home/$USER/.thinkrail`            | `THINKRAIL_DATA_DIR`          | projects.json, workspaces.json, terminals.json, installation.json, app config                                                                              |
 
 Notes:
 
 - **Workspace project state needs no mount**: project-scoped harness dirs
   (`.cline/`, `.thinkrail/` inside a repo; pi's project config) live under the
   workspace, which is already RW-mounted at its real host path. Only the
-  home-relative *global* state dirs are staged per run — except pi's config
+  home-relative _global_ state dirs are staged per run — except pi's config
   dir (docs/d054) and opencode's config dir (docs/d065), which are mounted
   directly.
 - **Extra directories are explicit mounts**: `./node-run.sh coding-agent/run.mjs
@@ -130,4 +130,3 @@ a bwrap runtime must reproduce 1:1 (note bwrap has no named-volume or
 `--relabel` equivalent for SELinux; host-side staging dirs like
 `$workload_stage/*` remain the right persistence mechanism under either
 runtime).
-

@@ -20,7 +20,7 @@ tags:
 > tooling is kept for reference.
 >
 > **Folded flat (docs/d113).** This pipeline used to be the sibling folder
-> `local-llm/`, importing the shared repo-level lib. It now lives *in* this
+> `local-llm/`, importing the shared repo-level lib. It now lives _in_ this
 > folder, one level under the serving unit it feeds, and reads its `lib/` — the
 > same `lib/` the generator and `run.sh` use. Nothing about the workflow
 > changed; the folder boundary that forced the shared table into the old
@@ -44,7 +44,7 @@ never anything produced by this pipeline.
 
 1. `download_models.py` — provision served GGUFs into the HF cache.
 2. `fetch_hf_manifests.py` — refresh + audit repo:quant manifests (writes
-   `lib/hf-manifests/`; deprecated as a *workflow*, still the manifest writer).
+   `lib/hf-manifests/`; deprecated as a _workflow_, still the manifest writer).
 3. `upkeep.py` — cache list/pull/prune/verify.
 4. `generate_vram_fit_tables.py` — VRAM/KV/fit tables via
    gdevenyi/huggingface-estimate → regenerates

@@ -82,10 +82,11 @@ properties (and `cause` when there is an upstream error):
 throw new Error(`GET ${url} -> ${res.status} ${res.statusText}`);
 
 // GOOD — static label, attached properties, cause pointer
-throw Object.assign(
-  new Error("models listing answered non-2xx", { cause: fetchErr }),
-  { status: res.status, statusText: res.statusText, url },
-);
+throw Object.assign(new Error("models listing answered non-2xx", { cause: fetchErr }), {
+  status: res.status,
+  statusText: res.statusText,
+  url,
+});
 ```
 
 A consumer reads `err.message` for the label and `err.status`/`err.url` for
@@ -97,7 +98,9 @@ When an error wraps a previous one, the `cause` option (per the `Error`
 constructor spec, ES2022) points at it:
 
 ```js
-throw Object.assign(new Error("models.dev catalog unreadable", { cause: parseErr }), { path: API_JSON });
+throw Object.assign(new Error("models.dev catalog unreadable", { cause: parseErr }), {
+  path: API_JSON,
+});
 ```
 
 Without the pointer, the wrapper's message is all that survives; with it, the
@@ -126,21 +129,21 @@ different convention, not structured JSON).
 
 ### Files affected
 
-| file | change |
-|------|--------|
-| `lib/log.mjs` | stream → stdout default + `setLogStream`; `LOG_LEVEL` threshold removed; full error serialization (cause/errors/error/suppressed + stack + attached props, depth-capped) |
-| `lib/log.sh` | stream → stdout default + `LOG_STREAM=stderr`; `LOG_LEVEL` filter removed |
-| `lib/log.py` | stream → stdout default + `set_stream(sys.stderr)`; `LOG_LEVEL` filter removed; exception fields serialize with `__cause__` chain + traceback |
-| `coding-agent/generate-pi-coding-agent.mjs` | interpolated catwalk log message fixed; `loadProvider`/`readJson` errors → static label + `{ path, provider, cause }`; error fields carry the Error object |
-| `coding-agent/peer-probe.mjs` | `fetchModelEntries` errors → static label + `{ status, statusText, url }`; `ProbeResult.error`/`PeerRouteResult.error` carry the HttpError object; probe `failures` arrays are `{ url, result, error }` objects; `suppressedProbe()` composes the demotion records (below) |
-| `coding-agent/catwalk-facts.mjs` | fetch errors → static label + `{ status, statusText, url }`; catch handlers log the Error object |
-| `coding-agent/hyper-facts.mjs` | catch handlers log the Error object |
-| `coding-agent/refresh-models-dev.mjs` | `status`/`statusText` split into two fields; `fail()` takes static label + fields; catch handlers log the Error object |
-| `coding-agent/generate-opencode.mjs` | probe rejection handlers log the Error object |
-| `git/git-lib.mjs` | `setLogStream("stderr")` — every tool in the folder prints a payload on stdout |
-| `git/*.mjs` | ~20 interpolated `throw new Error(\`…${x}…\`)` arg-validation errors → static label + attached property (`{ flag }`, `{ root }`, `{ status, statusText }`, …); error fields carry the Error object |
-| `git/-vbs-mirror-all.sh` | printf-based `die`/`warn` → `lib/log.sh` (`log_die`/`log_warn`/`log_info`/`log_error`) with static messages + fields; `LOG_STREAM=stderr` (`--list`'s TSV owns stdout); mirrored/aligned lines are log_info |
-| `local-llm/*.py` | `set_stream(sys.stderr)` (tables/lists/reports own stdout); `error=str(e)` fields → the exception object |
+| file                                        | change                                                                                                                                                                                                                                                                     |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/log.mjs`                               | stream → stdout default + `setLogStream`; `LOG_LEVEL` threshold removed; full error serialization (cause/errors/error/suppressed + stack + attached props, depth-capped)                                                                                                   |
+| `lib/log.sh`                                | stream → stdout default + `LOG_STREAM=stderr`; `LOG_LEVEL` filter removed                                                                                                                                                                                                  |
+| `lib/log.py`                                | stream → stdout default + `set_stream(sys.stderr)`; `LOG_LEVEL` filter removed; exception fields serialize with `__cause__` chain + traceback                                                                                                                              |
+| `coding-agent/generate-pi-coding-agent.mjs` | interpolated catwalk log message fixed; `loadProvider`/`readJson` errors → static label + `{ path, provider, cause }`; error fields carry the Error object                                                                                                                 |
+| `coding-agent/peer-probe.mjs`               | `fetchModelEntries` errors → static label + `{ status, statusText, url }`; `ProbeResult.error`/`PeerRouteResult.error` carry the HttpError object; probe `failures` arrays are `{ url, result, error }` objects; `suppressedProbe()` composes the demotion records (below) |
+| `coding-agent/catwalk-facts.mjs`            | fetch errors → static label + `{ status, statusText, url }`; catch handlers log the Error object                                                                                                                                                                           |
+| `coding-agent/hyper-facts.mjs`              | catch handlers log the Error object                                                                                                                                                                                                                                        |
+| `coding-agent/refresh-models-dev.mjs`       | `status`/`statusText` split into two fields; `fail()` takes static label + fields; catch handlers log the Error object                                                                                                                                                     |
+| `coding-agent/generate-opencode.mjs`        | probe rejection handlers log the Error object                                                                                                                                                                                                                              |
+| `git/git-lib.mjs`                           | `setLogStream("stderr")` — every tool in the folder prints a payload on stdout                                                                                                                                                                                             |
+| `git/*.mjs`                                 | ~20 interpolated `throw new Error(\`…${x}…\`)` arg-validation errors → static label + attached property (`{ flag }`, `{ root }`, `{ status, statusText }`, …); error fields carry the Error object                                                                         |
+| `git/-vbs-mirror-all.sh`                    | printf-based `die`/`warn` → `lib/log.sh` (`log_die`/`log_warn`/`log_info`/`log_error`) with static messages + fields; `LOG_STREAM=stderr` (`--list`'s TSV owns stdout); mirrored/aligned lines are log_info                                                                |
+| `local-llm/*.py`                            | `set_stream(sys.stderr)` (tables/lists/reports own stdout); `error=str(e)` fields → the exception object                                                                                                                                                                   |
 
 ### What is NOT changed
 
@@ -156,13 +159,16 @@ different convention, not structured JSON).
 
 ```js
 // Wrap a fetch failure: static label, attached properties, cause pointer
-throw Object.assign(
-  new Error("models listing answered non-2xx", { cause: fetchErr }),
-  { status: res.status, statusText: res.statusText, url },
-);
+throw Object.assign(new Error("models listing answered non-2xx", { cause: fetchErr }), {
+  status: res.status,
+  statusText: res.statusText,
+  url,
+});
 
 // Wrap a parse failure: static label, attached property, cause pointer
-throw Object.assign(new Error("models.dev catalog unreadable", { cause: parseErr }), { path: API_JSON });
+throw Object.assign(new Error("models.dev catalog unreadable", { cause: parseErr }), {
+  path: API_JSON,
+});
 
 // Aggregate multiple probe failures: static label, errors array
 throw new AggregateError("all provider probes failed", { errors: failures });
@@ -303,6 +309,6 @@ as the `output` field instead of an indented stderr dump.
 - `python3 -m py_compile` clean on all touched py files; log.py error-chain
   serialization verified live (traceback + `__cause__` recursion).
 - `node --check` clean on every touched mjs (lib, coding-agent, git).
-- Repo-wide grep: zero remaining `` new Error(`…${…}`) `` interpolations and
+- Repo-wide grep: zero remaining ``new Error(`…${…}`)`` interpolations and
   zero interpolated log-message template literals in `lib/`, `coding-agent/`,
   `git/`.

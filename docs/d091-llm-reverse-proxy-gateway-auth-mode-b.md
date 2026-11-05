@@ -35,8 +35,8 @@ Three facts, one per layer:
    the launcher carries the vault round-trip for this single purpose.
 3. **Dropping it before something upstream authenticates is a trap.** The
    farm would become an internet resource gated by a path prefix — the
-   camouflage 404 (VPN-R34) hides route *existence*, it does not
-   *authenticate*. Rejected; the bearer stays until the proxy authenticates.
+   camouflage 404 (VPN-R34) hides route _existence_, it does not
+   _authenticate_. Rejected; the bearer stays until the proxy authenticates.
 
 d073's mode B (authenticated generic relay, deferred to v3) has never been
 specced. This record is that spec, plus the staged retirement the gateway

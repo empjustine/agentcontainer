@@ -18,20 +18,20 @@ depends-on: [coding-agent, estige, d023]
 only consumer is one runner's generator. After the d037 generator merge (and
 d038's proxy catalog), the consumer matrix is:
 
-| lib module              | coding-agent | llm-local-inference | llm-reverse-proxy | lib-internal         |
-|-------------------------|--------------|---------------------|-------------------|----------------------|
-| log.mjs / artifact.mjs  | gen-lib      | gen-lib             | generate-config   | most lib modules     |
-| peer-probe.mjs          | 3 generators | —                   | — (comment only)  | hyper, catwalk, refresh |
-| pi-models.mjs           | gen-lib only | —                   | —                 | —                    |
-| cloud-providers.mjs     | 2 generators | —                   | generate-config   | hyper-facts (hyper)  |
-| hyper-facts.mjs/.json   | cloud gen    | —                   | —                 | —                    |
-| catwalk-facts.mjs       | cloud gen    | —                   | — (reads raw JSON)| —                    |
-| catwalk-facts.json      | cloud gen    | —                   | generate-config   | —                    |
-| refresh-models-dev.mjs  | generate.sh  | —                   | —                 | peer-probe           |
-| pi-ai-providers.mjs     | —            | —                   | generate-config   | —                    |
-| ai-sdk-package-endpoints.mjs | —       | —                   | generate-config   | —                    |
-| models.dev.api.json     | gen + refresh| —                   | generate-config   | —                    |
-| llamacpp-model-data.json| —            | yaml generator      | —                 | 5 × local-llm tools  |
+| lib module                   | coding-agent  | llm-local-inference | llm-reverse-proxy  | lib-internal            |
+| ---------------------------- | ------------- | ------------------- | ------------------ | ----------------------- |
+| log.mjs / artifact.mjs       | gen-lib       | gen-lib             | generate-config    | most lib modules        |
+| peer-probe.mjs               | 3 generators  | —                   | — (comment only)   | hyper, catwalk, refresh |
+| pi-models.mjs                | gen-lib only  | —                   | —                  | —                       |
+| cloud-providers.mjs          | 2 generators  | —                   | generate-config    | hyper-facts (hyper)     |
+| hyper-facts.mjs/.json        | cloud gen     | —                   | —                  | —                       |
+| catwalk-facts.mjs            | cloud gen     | —                   | — (reads raw JSON) | —                       |
+| catwalk-facts.json           | cloud gen     | —                   | generate-config    | —                       |
+| refresh-models-dev.mjs       | generate.sh   | —                   | —                  | peer-probe              |
+| pi-ai-providers.mjs          | —             | —                   | generate-config    | —                       |
+| ai-sdk-package-endpoints.mjs | —             | —                   | generate-config    | —                       |
+| models.dev.api.json          | gen + refresh | —                   | generate-config    | —                       |
+| llamacpp-model-data.json     | —             | yaml generator      | —                  | 5 × local-llm tools     |
 
 `docs/architecture.md` makes `lib/` the shared-infrastructure copy unit, not a
 general dumping ground: modules with exactly one runner consumer blur the
@@ -95,8 +95,9 @@ what is genuinely shared.
 `log.mjs`, `artifact.mjs`, `cloud-providers.mjs` (coding-agent + proxy),
 `models.dev.api.json` (coding-agent + proxy), `catwalk-facts.json`
 (coding-agent + proxy), `llamacpp-model-data.json` (d025: llm-local-inference
-+ local-llm tooling), `log.sh`, `log.py`, `environment.sh`, `workload-*`.
-lib/*.mjs count: 11 → 3.
+
+- local-llm tooling), `log.sh`, `log.py`, `environment.sh`, `workload-*`.
+  lib/*.mjs count: 11 → 3.
 
 ### Consequences
 

@@ -5,11 +5,11 @@ base_model_relation: quantized
 library_name: gguf
 pipeline_tag: image-text-to-text
 tags:
-- gguf
-- llama.cpp
-- qwen3_5
-- quantized
-- speculative-decoding
+  - gguf
+  - llama.cpp
+  - qwen3_5
+  - quantized
+  - speculative-decoding
 ---
 
 # Qwen3.8-3.6-27B-blend GGUF
@@ -18,9 +18,9 @@ tags:
 
 [![Coding quality versus output tokens: tasks completed on JetBrains’ 100-task internal coding benchmark](https://blog.jetbrains.com/wp-content/uploads/2026/09/jbr-tradeoff-2.png)](https://blog.jetbrains.com/junie/2026/09/smarter-local-al/)
 
-*Tasks completed versus output tokens on JetBrains’ 100-task internal coding benchmark. Reasoning settings differ between configurations; see the article for methodology and context.*
+_Tasks completed versus output tokens on JetBrains’ 100-task internal coding benchmark. Reasoning settings differ between configurations; see the article for methodology and context._
 
-Read [Making Local AI Smarter and Faster](https://blog.jetbrains.com/junie/2026/09/smarter-local-al/) for the Junie Local release story, coding evaluations, token-efficiency results, and MTP runtime experiments. 
+Read [Making Local AI Smarter and Faster](https://blog.jetbrains.com/junie/2026/09/smarter-local-al/) for the Junie Local release story, coding evaluations, token-efficiency results, and MTP runtime experiments.
 
 Available formats: [BF16](https://huggingface.co/JetBrains/Qwen3.8-3.6-27B-blend) · [GGUF](https://huggingface.co/JetBrains/Qwen3.8-3.6-27B-blend-GGUF) · [MLX 4-bit](https://huggingface.co/JetBrains/Qwen3.8-3.6-27B-blend-MLX-4bit) · [MTP MLX 4-bit](https://huggingface.co/JetBrains/Qwen3.8-3.6-27B-blend-MTP-MLX-4bit).
 
@@ -28,17 +28,17 @@ IQ3_S, Q3_K_XL, IQ4_XS, Q4_K_M, and Q5_K_M conversions of [JetBrains/Qwen3.8-3.6
 
 The base model is a 50/50 combination of Qwen3.6-27B and Qwen3.8-27B, created by linearly interpolating their checkpoint parameters. The configuration, tokenizer, processor, and chat template are retained from Qwen3.8-27B. Exact source revisions and merge settings are recorded in [merge-manifest.json](merge-manifest.json). See [conversion-manifest.json](conversion-manifest.json) for conversion settings and runtime versions.
 
-| File | Size (decimal GB) | Contents |
-|---|---:|---|
-| `Qwen3.8-3.6-27B-blend-IQ3_S.gguf` | 12.60 | Main model plus native MTP head |
-| `Qwen3.8-3.6-27B-blend-Q3_K_XL.gguf` | 13.15 | Calibrated mixed-precision main model plus native MTP head |
-| `Qwen3.8-3.6-27B-blend-IQ4_XS.gguf` | 14.25 | Calibrated mixed-precision main model plus native MTP head |
-| `Qwen3.8-3.6-27B-blend-Q4_K_M.gguf` | 16.81 | Main model plus native MTP head |
-| `Qwen3.8-3.6-27B-blend-Q5_K_M.gguf` | 19.54 | Main model plus native MTP head |
-| `mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf` | 0.93 | BF16 vision encoder and projector |
-| `mmproj-Qwen3.8-3.6-27B-blend-Q8_0.gguf` | 0.63 | Q8_0 vision encoder and projector with F16 fallbacks |
-| `dflash-Qwen3.8-3.6-27B-blend-bf16.gguf` | 3.86 | DFlash2 drafter sidecar (BF16, all 81 drafter tensors) |
-| `dflash-Qwen3.8-3.6-27B-blend-Q4_K_M.gguf` | 1.14 | DFlash2 drafter sidecar (Q4_K_M) |
+| File                                       | Size (decimal GB) | Contents                                                   |
+| ------------------------------------------ | ----------------: | ---------------------------------------------------------- |
+| `Qwen3.8-3.6-27B-blend-IQ3_S.gguf`         |             12.60 | Main model plus native MTP head                            |
+| `Qwen3.8-3.6-27B-blend-Q3_K_XL.gguf`       |             13.15 | Calibrated mixed-precision main model plus native MTP head |
+| `Qwen3.8-3.6-27B-blend-IQ4_XS.gguf`        |             14.25 | Calibrated mixed-precision main model plus native MTP head |
+| `Qwen3.8-3.6-27B-blend-Q4_K_M.gguf`        |             16.81 | Main model plus native MTP head                            |
+| `Qwen3.8-3.6-27B-blend-Q5_K_M.gguf`        |             19.54 | Main model plus native MTP head                            |
+| `mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf`   |              0.93 | BF16 vision encoder and projector                          |
+| `mmproj-Qwen3.8-3.6-27B-blend-Q8_0.gguf`   |              0.63 | Q8_0 vision encoder and projector with F16 fallbacks       |
+| `dflash-Qwen3.8-3.6-27B-blend-bf16.gguf`   |              3.86 | DFlash2 drafter sidecar (BF16, all 81 drafter tensors)     |
+| `dflash-Qwen3.8-3.6-27B-blend-Q4_K_M.gguf` |              1.14 | DFlash2 drafter sidecar (Q4_K_M)                           |
 
 The MTP head is embedded in each main GGUF. A separate drafter file is not required. Either vision GGUF can be used with any of the five main-model quantizations; choose one with `--mmproj` for image input.
 
@@ -140,10 +140,10 @@ Both BF16 and Q8_0 projectors passed the same synthetic image smoke with the pub
 
 Added two DFlash2 drafter sidecars for llama.cpp's `--spec-type draft-dflash`, named with the `dflash-` prefix llama.cpp uses to discover sidecars next to the main model:
 
-| File | Size (decimal GB) | Contents |
-|---|---:|---|
-| `dflash-Qwen3.8-3.6-27B-blend-bf16.gguf` | 3.86 | BF16 DFlash2 drafter, all 81 drafter tensors |
-| `dflash-Qwen3.8-3.6-27B-blend-Q4_K_M.gguf` | 1.14 | Q4_K_M quantization of the drafter |
+| File                                       | Size (decimal GB) | Contents                                     |
+| ------------------------------------------ | ----------------: | -------------------------------------------- |
+| `dflash-Qwen3.8-3.6-27B-blend-bf16.gguf`   |              3.86 | BF16 DFlash2 drafter, all 81 drafter tensors |
+| `dflash-Qwen3.8-3.6-27B-blend-Q4_K_M.gguf` |              1.14 | Q4_K_M quantization of the drafter           |
 
 Both are conversions of the DFlash2 draft model for this blend (v0.3, training step 500; weights SHA-256 `fbee4cc4790035d0a4d4d7cece25f41a0f8d629b4c630d19be86a994ee90a477`), fine-tuned from the public [Qwen 3.8 DFlash2 drafter](https://huggingface.co/incoai/Qwen3.8-27B-DFlash2) on Junie coding trajectories. The BF16 drafter GGUF was produced with llama.cpp's `convert_hf_to_gguf.py --target-model-dir` (81 drafter tensors; `embed_tokens` and `lm_head` are pulled from the blend target at load time, so the drafter file deliberately contains none). The Q4_K_M sidecar was quantized from that BF16 GGUF with the JetBrains llama.cpp fork (commit `8e778da57`); it is a fresh quantization, not the file measured in the 2026-10-07 decode bench (different llama.cpp build, SHA-256 `8466a3f5fe9c276426924b8941753c848e2750f3e84f37acd2b07e92d7a71b20`).
 

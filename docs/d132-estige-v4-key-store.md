@@ -88,9 +88,7 @@ need to implement or audit the store itself.
   ```json
   {
     "endpoint": "https://exit-home.example:8443/tunnel/",
-    "exit": [
-      {"name": "exit-home", "public": "<base64url-spki>"}
-    ]
+    "exit": [{ "name": "exit-home", "public": "<base64url-spki>" }]
   }
   ```
 
@@ -99,14 +97,15 @@ need to implement or audit the store itself.
   and a separate key file, and one read audits the complete pair (the
   auditability of "which pairs does this host hold" that flat env could
   never answer at a glance).
+
 - **`exit.json`** answers the exit's one question — which relays may
   use this exit — as one key entry per admitted relay:
 
   ```json
   {
     "relays": [
-      {"name": "relay_bazzite", "public": "AAAA..."},
-      {"name": "relay_laptop",  "public": "AAAA..."}
+      { "name": "relay_bazzite", "public": "AAAA..." },
+      { "name": "relay_laptop", "public": "AAAA..." }
     ]
   }
   ```
@@ -115,8 +114,9 @@ need to implement or audit the store itself.
   "public"}` — so the principal is embedded **in** its key entry: never
   a separate directive, never concatenated into a shaped string (the
   env-era grammar stays rejected). Names unique; the entries are the
-  complete admitted set — the file *is* the list, not an index into
+  complete admitted set — the file _is_ the list, not an index into
   one.
+
 - **JSON, decoded strictly — the grammar is the parser.** No bespoke
   format: stdlib `encoding/json` with unknown-field rejection (Go's
   `Decoder.DisallowUnknownFields`) carries the fail-closed law for
@@ -127,7 +127,7 @@ need to implement or audit the store itself.
   a second only as same-name staging); `exit.json` takes `relays` (an
   array — ≥1 entries, unique names, cap 32) plus `egress` (d080's
   VPN-R38 opt-in data, inner shape owned there) — the fold that retires
-  `estige.json` (d108's tree-shake) — while the exit's *bind* is no
+  `estige.json` (d108's tree-shake) — while the exit's _bind_ is no
   config fact at all: exactly one knob, env `PORT` (d110), never in the
   store; entry names match
   `[A-Za-z0-9_-]{1,64}`; `public` is unpadded base64url decoding to a

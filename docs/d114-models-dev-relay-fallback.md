@@ -15,7 +15,7 @@ is refreshed best-effort from `https://models.dev/api.json` before each
 generation run; on any failure the stale vendored copy is kept and generation
 proceeds. With cloud relay now served by `llm-reverse-proxy` (the raw
 passthrough proxy) instead of llama-swap peers, the question was raised:
-should the catalog be fetched *through the relay* (a `models.dev` virtual
+should the catalog be fetched _through the relay_ (a `models.dev` virtual
 provider, `http://<host>:8080/models.dev/api.json`) so the stale-snapshot
 machinery could go away — on the argument that "if the relay is unreachable,
 everything is toast anyway"?
@@ -29,7 +29,7 @@ everything is toast anyway"?
    (`generate-cloud-alternative-providers.mjs`), and the container-side
    refresh mounted at `/opt/lib`.
 2. **"Relay down ⇒ everything toast" is true at request time, not at
-   generation time.** The catalog fetch happens in the step that *produces*
+   generation time.** The catalog fetch happens in the step that _produces_
    the runtime configuration. Coupling it to relay liveness would create a
    boot-order dependency (proxy must be up before generation) and turn a
    generation-time transient (proxy restarting, host booting, tailscale
@@ -43,7 +43,7 @@ everything is toast anyway"?
    chokepoint in the proxy logs.
 4. **Coding-agent generation is already network-dependent** (its provider
    probes do live reachability checks), so a hard network requirement at
-   generation is not unprecedented — but each probe failure *skips* a
+   generation is not unprecedented — but each probe failure _skips_ a
    provider; the catalog feed is broader than any one probe.
 5. **The snapshot machinery is small.** The entire "stale copy" handling is
    one ~180-line script (`refresh-models-dev.mjs`: atomic tmp+rename,
@@ -60,7 +60,7 @@ everything is toast anyway"?
   2. **relay** — the `llm-reverse-proxy` passthrough, for hosts/containers
      where direct egress to models.dev is blocked or broken but the local
      relay is up. The relay forwards byte-for-byte, so the response passes
-     through the *identical* validation (required providers present, ≥ 100
+     through the _identical_ validation (required providers present, ≥ 100
      providers, JSON shape) before the atomic rename;
   3. **stale copy** — last resort, unchanged contract: any failure above
      leaves `lib/models.dev.api.json` intact and generation proceeds with
@@ -72,7 +72,7 @@ everything is toast anyway"?
   with ≥ 100 providers). Public endpoint, no keys — the trivial case for a
   passthrough proxy, and a useful single observable egress point for catalog
   traffic.
-- **Generation keeps its network independence**: the chain *ends* at the
+- **Generation keeps its network independence**: the chain _ends_ at the
   stale copy; no source is load-bearing. Verified end-to-end: direct fetch
   OK (213 providers); with direct egress forced to fail (dead
   `HTTPS_PROXY`, `NO_PROXY=127.0.0.1` keeping the relay hop reachable) the
@@ -80,12 +80,12 @@ everything is toast anyway"?
 
 ## Decisions avoided (and why)
 
-- **Not making generation *depend* on the relay** (the original proposal's
+- **Not making generation _depend_ on the relay** (the original proposal's
   strong form). Finding 2: it inverts a dependency — the fetch is a
   setup-time concern, the relay a runtime one; the failure mode gets worse,
   not simpler.
 - **Not deleting the vendored snapshot / "live fetch only"** (the honest
-  version of the simplification the relay was meant to enable). It *would*
+  version of the simplification the relay was meant to enable). It _would_
   delete real machinery (catalog file, refresh script, `MODELS_DEV_*` env
   gating), but trades away pinned lineups (reviewable git diffs of model-id
   changes) and the shared-table invariant of `docs/d023`/`d025`. Deferred to
@@ -93,7 +93,7 @@ everything is toast anyway"?
   rework accepts live-fetch-only, this relay hop and the snapshot both die
   together and this note becomes historical.
 - **Not routing the container-side refresh through the relay by default**
-  (`MODELS_DEV_RELAY_URL` defaults to a *host-local* URL). Container-side
+  (`MODELS_DEV_RELAY_URL` defaults to a _host-local_ URL). Container-side
   callers must set the env explicitly; a wrong default that silently never
   answers would just be dead code with extra steps.
 
@@ -106,4 +106,4 @@ everything is toast anyway"?
   slugs are no longer implicitly LLM-only.
 - If the coding-agent rework later adopts live-fetch-only, remove: the
   `RELAY_URL` block, the vendored `lib/models.dev.api.json`, the
-  `MODELS_DEV_*` env docs, and this note's *taken* section (keep *avoided*).
+  `MODELS_DEV_*` env docs, and this note's _taken_ section (keep _avoided_).

@@ -32,12 +32,12 @@ grows, so read them as "a few hundred lines", not a contract.
 
 The coding-agent flow is the repo's largest machinery:
 
-| Piece | Size | Role |
-|---|---|---|
-| `coding-agent/run.sh` | ~260 ln | dual-branch launcher (container sandbox / Termux native) |
-| `coding-agent/generate.sh` | ~345 ln | unified generator: staging, probe cascades, install, fallbacks |
-| 5 generators + 3 helpers | ~1,450 ln | models.json layers (010/012/015/016), merge, opencode config |
-| `lib/*.mjs` shared toolkit | ~1,250 ln | probe engine, shaping, fact tables, artifact/log contracts |
+| Piece                      | Size      | Role                                                           |
+| -------------------------- | --------- | -------------------------------------------------------------- |
+| `coding-agent/run.sh`      | ~260 ln   | dual-branch launcher (container sandbox / Termux native)       |
+| `coding-agent/generate.sh` | ~345 ln   | unified generator: staging, probe cascades, install, fallbacks |
+| 5 generators + 3 helpers   | ~1,450 ln | models.json layers (010/012/015/016), merge, opencode config   |
+| `lib/*.mjs` shared toolkit | ~1,250 ln | probe engine, shaping, fact tables, artifact/log contracts     |
 
 The good news first: the probe semantics are already centralized
 (`lib/peer-probe.mjs` owns the "reachable ≠ authenticated" rule that used to
@@ -62,12 +62,12 @@ maintenance hazard in the flow.
 generators+lib into a `$RUN_DIR/pi-models-gen.$$` scratch dir because its own
 dir may be a read-only mount inside the container — but `run.sh` already
 builds a per-run staging dir on the host (`~/workspace/<container>`). The
-staging could happen *on the host*, mounted once; the in-container copy
+staging could happen _on the host_, mounted once; the in-container copy
 loop, the `models.dev.api.json` symlink trick, and the "catalog not
 writable → tmp+rename replaces the symlink" subtlety all exist to work around
 mounts that wouldn't be needed. (Note: run.sh's "never mount the whole dir —
 it also carries host-local, untracked files" comment stays true; the point is
-staging a *clean* subset on the host, not mounting the raw dir.)
+staging a _clean_ subset on the host, not mounting the raw dir.)
 
 **F3 — the generated `launch.sh` duplicates failure reporting that
 `generate.sh` already owns.** The heredoc in `run.sh` implements tee + an
@@ -78,20 +78,20 @@ Two overlapping failure-reporting layers on the same stream.
 
 **F4 — no GC for timestamped containers/stages.** Each container-host run
 creates `agentcontainer-$(date +%Y%m%d%H%M%S%3N)` and a staged dir under
-`~/workspace/`; `workload_rm` only ever removes the *current* name; nothing
+`~/workspace/`; `workload_rm` only ever removes the _current_ name; nothing
 prunes the prefix. On a long-lived GPU host this accumulates one container +
 one stage dir per run, forever. (Hygiene/reliability, not correctness.)
 
 **F5 — the env allowlist is per-runner and hand-copied.** `run.sh` forwards
 11 vault keys in an inline loop; `llm-local-inference/run.sh` forwards 2
-individually. The key *lists* drift risk; the mechanism (non-empty check,
+individually. The key _lists_ drift risk; the mechanism (non-empty check,
 `workload_env`) is identical and belongs in `lib/workload-runtime.sh`.
 
 **F6 — near-duplicate cloud generators.** `generate-cloud-pi-native-
 providers.mjs` (~225 ln, override-only for providers pi ships) and
 `generate-cloud-alternative-providers.mjs` (~635 ln, full blocks for providers
 pi lacks) already share the probe toolkit, the fact tables, the shaping, and
-the direct-vs-peer route cascade; both are table-driven. The *only* semantic
+the direct-vs-peer route cascade; both are table-driven. The _only_ semantic
 difference is full-block vs override-only output. ~860 lines where ~500
 might do, at the cost of a wider single file.
 
@@ -122,7 +122,7 @@ kit; `lib` has no equivalent for the coding-agent generators.
    preamble becomes one import; optionally home for shared cascade helpers.
    Low risk, mechanical.
 6. **Unify the two cloud generators** (F6): one table with a
-   `mode: override|full` column. Do this *after* 5; it is the riskiest of
+   `mode: override|full` column. Do this _after_ 5; it is the riskiest of
    these (semantics differ subtly — e.g. cline-pass `supportsDeveloperRole:
    false`, hyper's deepseek thinking format) and deserves its own diff.
 

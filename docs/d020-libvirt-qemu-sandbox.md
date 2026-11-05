@@ -13,8 +13,8 @@ establishes what it would take to support qemu/libvirt VMs as workload runtimes
 next to the existing podman/docker container backend, for both serving
 (`llm-local-inference/`) and usage (`coding-agent/`). It is the deliberate
 replacement for the retired PRoot backend (see
-[container-tooling.md](container-tooling.md), "PRoot backend removed"): where PRoot only *translated
-paths over ptrace* (no namespaces, no cgroups, no real root, no GPU), a
+[container-tooling.md](container-tooling.md), "PRoot backend removed"): where PRoot only _translated
+paths over ptrace_ (no namespaces, no cgroups, no real root, no GPU), a
 qemu/KVM VM is a full kernel boundary — real isolation, real devices, at the
 cost of an image + lifecycle surface that containers hide.
 
@@ -22,17 +22,17 @@ cost of an image + lifecycle surface that containers hide.
 
 ## 1. Why a VM backend, and why not instead of containers
 
-| Property | rootless podman/docker | qemu/KVM VM |
-|---|---|---|
-| Kernel boundary | shared host kernel | separate guest kernel |
-| Escalation risk of agent `bash` | namespaces + seccomp + SELinux (strong, same-kernel) | confined by the hypervisor (strongest short of hardware) |
-| GPU compute (ROCm/Vulkan, llama.cpp) | device nodes passed through natively | only via VFIO PCI passthrough (whole device) |
-| Image model | OCI (layers, registries) | disk image + cloud-init (no OCI natively) |
-| Resource cost | MBs, shared kernel | GBs of pinned RAM + vCPUs per VM |
-| Boot/teardown | ms | seconds |
-| Snapshot/rollback | rebuild image | `virsh snapshot-*` / qcow2 — cheap full-state reset |
+| Property                             | rootless podman/docker                               | qemu/KVM VM                                              |
+| ------------------------------------ | ---------------------------------------------------- | -------------------------------------------------------- |
+| Kernel boundary                      | shared host kernel                                   | separate guest kernel                                    |
+| Escalation risk of agent `bash`      | namespaces + seccomp + SELinux (strong, same-kernel) | confined by the hypervisor (strongest short of hardware) |
+| GPU compute (ROCm/Vulkan, llama.cpp) | device nodes passed through natively                 | only via VFIO PCI passthrough (whole device)             |
+| Image model                          | OCI (layers, registries)                             | disk image + cloud-init (no OCI natively)                |
+| Resource cost                        | MBs, shared kernel                                   | GBs of pinned RAM + vCPUs per VM                         |
+| Boot/teardown                        | ms                                                   | seconds                                                  |
+| Snapshot/rollback                    | rebuild image                                        | `virsh snapshot-*` / qcow2 — cheap full-state reset      |
 
-**Conclusion up front:** VMs should *complement* containers, in the "VM as
+**Conclusion up front:** VMs should _complement_ containers, in the "VM as
 workload **host**" shape (§2 Level 1), not replace them. A full "VM as the
 workload" backend (Level 2) is only worth building for workloads that are
 peers-only/CPU — GPU inference is strictly worse inside a VM on this fleet
@@ -44,14 +44,14 @@ Where each available boundary sits, by what it confines and its escape
 risk — this is what "stronger than container, weaker than hardware"
 means concretely:
 
-| Boundary | Security boundary | Escape risk | For untrusted workloads |
-|---|---|---|---|
-| native (bare) | none | n/a | never |
-| proot (retired) | filesystem path translation only | low (ptrace escapes possible) | not isolation |
-| bubblewrap | kernel namespaces | low (namespace escapes rare) | good for most cases |
-| podman rootless | full OCI isolation | low (container escapes rare) | good for most cases |
-| podman rootful | full OCI isolation | medium (container escape = host root) | with restrictions |
-| qemu/KVM VM | hypervisor / separate guest kernel | very low (VM escapes extremely rare) | best isolation |
+| Boundary        | Security boundary                  | Escape risk                           | For untrusted workloads |
+| --------------- | ---------------------------------- | ------------------------------------- | ----------------------- |
+| native (bare)   | none                               | n/a                                   | never                   |
+| proot (retired) | filesystem path translation only   | low (ptrace escapes possible)         | not isolation           |
+| bubblewrap      | kernel namespaces                  | low (namespace escapes rare)          | good for most cases     |
+| podman rootless | full OCI isolation                 | low (container escapes rare)          | good for most cases     |
+| podman rootful  | full OCI isolation                 | medium (container escape = host root) | with restrictions       |
+| qemu/KVM VM     | hypervisor / separate guest kernel | very low (VM escapes extremely rare)  | best isolation          |
 
 Two host facts fall out of the same survey and are worth recording here:
 
@@ -61,7 +61,7 @@ Two host facts fall out of the same survey and are worth recording here:
 - **Rootless podman cannot bind ports < 1024 or create device nodes** (no
   `CAP_NET_BIND_SERVICE` / `CAP_MKNOD`) — the container backend on a local
   inference host publishes high ports and passes GPUs via `--device`, which only works
-  because device *access* (not creation) is available to the rootless user.
+  because device _access_ (not creation) is available to the rootless user.
 
 ## 2. Two integration levels
 
@@ -101,17 +101,17 @@ SSH, exec a script inside). **No changes to the `workload_*` API.**
 A `_workload='libvirt'` backend in `lib/workload-runtime.sh` rendering `workload_*`
 descriptions to domain XML / `virt-install`. The mapping, for the record:
 
-| `workload_*` API | libvirt rendering |
-|---|---|
-| `workload_name` | domain name (`virsh define/start`) |
-| `workload_image` | **does not map** — needs a cloud image + cloud-init seed instead of an OCI ref (this is the main gap) |
-| `workload_publish h g` | `<interface type='user'>` + hostfwd, or NAT-network port forward |
-| `workload_ro` / `workload_rw` | virtiofs share (`<filesystem type='mount'>` + virtiofsd); read-only via virtiofs `--shared-dir` ro or guest mount option |
-| `workload_gpu` | VFIO `<hostdev>` PCI passthrough — whole GPU only (§4) |
-| `workload_user` | guest-managed (cloud-init user); host UID mapping is meaningless |
-| `workload_env` / `workload_env_set` | cloud-init or `ssh` injection — no `--env` equivalent |
-| `workload_init` / `workload_hardening` | N/A / subsumed (the guest has no host access beyond explicit shares) |
-| `workload_rm` / `workload_logs` | `virsh destroy/undefine`, journal via serial console or guest journald |
+| `workload_*` API                       | libvirt rendering                                                                                                        |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `workload_name`                        | domain name (`virsh define/start`)                                                                                       |
+| `workload_image`                       | **does not map** — needs a cloud image + cloud-init seed instead of an OCI ref (this is the main gap)                    |
+| `workload_publish h g`                 | `<interface type='user'>` + hostfwd, or NAT-network port forward                                                         |
+| `workload_ro` / `workload_rw`          | virtiofs share (`<filesystem type='mount'>` + virtiofsd); read-only via virtiofs `--shared-dir` ro or guest mount option |
+| `workload_gpu`                         | VFIO `<hostdev>` PCI passthrough — whole GPU only (§4)                                                                   |
+| `workload_user`                        | guest-managed (cloud-init user); host UID mapping is meaningless                                                         |
+| `workload_env` / `workload_env_set`    | cloud-init or `ssh` injection — no `--env` equivalent                                                                    |
+| `workload_init` / `workload_hardening` | N/A / subsumed (the guest has no host access beyond explicit shares)                                                     |
+| `workload_rm` / `workload_logs`        | `virsh destroy/undefine`, journal via serial console or guest journald                                                   |
 
 This is a real backend, not a flag-flip — and only Level-1's gap list (image
 model, sharing, secrets) shrinks. Defer until Level 1 proves insufficient.
@@ -131,7 +131,7 @@ systemctl --user status virtqemud virtstoraged 2>/dev/null   # user-session daem
 
 - **Session vs system daemon**: rootless (local-inference-host's default posture) wants
   `qemu:///session` (per-user `virtqemud`); SELinux sVirt confinement of QEMU
-  processes is a *system-session* feature, so a system daemon + polkit is the
+  processes is a _system-session_ feature, so a system daemon + polkit is the
   choice if guest process labeling matters. Decide per host; the container
   backend keeps its own SELinux story either way.
 - **SELinux on local-inference-host**: virtiofsd runs confined (`virtiofsd_t`); shared dirs
@@ -158,10 +158,10 @@ systemctl --user status virtqemud virtstoraged 2>/dev/null   # user-session daem
   - **virtio-gpu / Venus (Vulkan passthrough)** is a rendering path; ROCm/HIP
     compute does not work through it. Not an option for llama.cpp.
   - **AMD SR-IOV / MxGPU**: not supported on gfx1030 in practice.
-  → **Verdict: keep local inference on the host container backend.** A VM
-  serving configuration only makes sense with a *second* GPU dedicated to
-  VFIO, or for CPU-only GGUF (where the VM's pinned-RAM tax buys isolation at
-  a real throughput cost on this 1-GPU host).
+    → **Verdict: keep local inference on the host container backend.** A VM
+    serving configuration only makes sense with a _second_ GPU dedicated to
+    VFIO, or for CPU-only GGUF (where the VM's pinned-RAM tax buys isolation at
+    a real throughput cost on this 1-GPU host).
 - **HF cache**: mount via virtiofs (rw) works, but weight loading is
   mmap-heavy; a dedicated virtio-blk disk for the cache gives better cold-start
   than a network-ish FS. Either way the generation-time path baking

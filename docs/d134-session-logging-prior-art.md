@@ -39,7 +39,7 @@ instruction.
 
 ### Squid
 
-One line per transaction, at the end, in a *configurable* format. The shipped
+One line per transaction, at the end, in a _configurable_ format. The shipped
 formats (`src/cf.data.pre`):
 
 ```
@@ -52,7 +52,7 @@ Points that matter to us:
 
 - **Both a start time and a duration.** `%ts.%03tu` is epoch seconds with
   milliseconds; `%tr` is response time in milliseconds; `%tS` is the
-  transaction *start* time, which Squid defines as when the complete request
+  transaction _start_ time, which Squid defines as when the complete request
   header arrived. A single end-of-transaction line is still placeable in time.
 - **A closed vocabulary for the outcome, in two halves.** `%Ss` is the
   Squid-side result code (`TCP_MISS`, `TCP_DENIED`, `TCP_TUNNEL`,
@@ -70,10 +70,10 @@ Points that matter to us:
   logging, "to protect your user's privacy and reduce log size". The
   documented way to see full URLs is to turn it off deliberately.
 
-*What transfers:* the (start time, duration) pair even in an end-only record;
+_What transfers:_ the (start time, duration) pair even in an end-only record;
 separating our-side result from upstream status; the bare-authority form for
 CONNECT; query stripping as the default rather than the option.
-*What does not:* the single end-only record — it is why a long Squid CONNECT
+_What does not:_ the single end-only record — it is why a long Squid CONNECT
 tunnel is invisible until it closes.
 
 ### Privoxy
@@ -123,9 +123,9 @@ Three details worth stealing or avoiding:
   shorten it … some require additional software to do it". The same sentence
   is true of `podman logs`, and nobody has written it down for estige.
 
-*What transfers:* the open/close split and the reason vocabulary; the
+_What transfers:_ the open/close split and the reason vocabulary; the
 precedent that CLF coexists with differently-shaped lines in one stream.
-*What does not:* the level system — d045 forbids producer-side filtering, so
+_What does not:_ the level system — d045 forbids producer-side filtering, so
 our equivalent control is what we log, not whether we log it.
 
 ### OpenVPN
@@ -142,11 +142,11 @@ in-flight problem (a session is a long-lived tunnel, not an HTTP exchange):
 - `--verb 0..11`: 0 is fatal-only, 3 is the recommended summary, 5 prints
   R/W per packet, 6–11 is debug.
 
-*What transfers:* the split between the event log (connect/disconnect, with
+_What transfers:_ the split between the event log (connect/disconnect, with
 who and from where) and the periodic snapshot (bytes, since-when); `Connected
 Since` as a first-class field, i.e. the open timestamp is part of the record,
 not implied by line order.
-*What does not:* the 60-second polling granularity as a *log* mechanism — it
+_What does not:_ the 60-second polling granularity as a _log_ mechanism — it
 exists because OpenVPN has no HTTP surface to ask.
 
 ### Tailscale
@@ -166,10 +166,10 @@ worth naming:
   was some packet sent to this peer in the past two minutes"). Honest about
   being a heuristic rather than pretending to be a session state.
 
-*What transfers:* per-session timestamps (`LastHandshake`, `LastWrite`) are
+_What transfers:_ per-session timestamps (`LastHandshake`, `LastWrite`) are
 cheap and answer "is it alive"; a rate-limit exemption list is the right shape
 if session lines ever get noisy.
-*What does not:* there is no per-connection URL anywhere, because Tailscale is
+_What does not:_ there is no per-connection URL anywhere, because Tailscale is
 an L3 VPN — the honest ceiling is endpoint plus bytes, which is also ours for
 every TLS-carrying tunnel.
 
@@ -184,15 +184,15 @@ vocabularies are structured, not prose:
 - handshake events carry `handshake{stage, style}` plus `udpAddrs`,
   `initiatorIndex`, `durationNs` (`handshake_manager.go`),
 - rehandshakes carry a `reason` from a fixed list — "local certificate
-  removed", "message counter rehandshake threshold reached", … 
+  removed", "message counter rehandshake threshold reached", …
   (`connection_manager.go:533-575`),
 - teardown logs `Sending close tunnel message` with `vpnAddrs` and
   `udpAddr` (`control.go:358`), packet drops log `reason` at debug.
 
-*What transfers:* bind the identity fields once per session object and let
+_What transfers:_ bind the identity fields once per session object and let
 every line inherit them; keep reasons in a closed set; log the close event
 with the peer identity rather than a bare "closed".
-*What does not:* pre-binding maps onto a session struct, which is the piece of
+_What does not:_ pre-binding maps onto a session struct, which is the piece of
 plumbing we do not have yet (sessions are bare goroutines today).
 
 ### ZeroTier
@@ -207,11 +207,11 @@ emits `address`, `version`, `role` (LEAF/MOON/PLANET), `latency`,
 `allowDefault`, etc. Lifecycle arrives as events (`ZT_EVENT_UP`,
 `ONLINE`/`OFFLINE` in `node/Node.cpp`, plus trace events).
 
-*What transfers:* the explicit `lastSend`/`lastReceive` ages — the cheapest
+_What transfers:_ the explicit `lastSend`/`lastReceive` ages — the cheapest
 possible answer to "is this session alive"; per-path preference is the direct
 analogue of our transport ladder, and it lives in the snapshot rather than the
 log.
-*What does not:* per-network addressing detail, and the JSON-in-one-blob
+_What does not:_ per-network addressing detail, and the JSON-in-one-blob
 approach (unreadable in `journalctl` without a pipe).
 
 ### Pritunl
@@ -227,10 +227,10 @@ directory. `pritunl/clients/clients.py` emits an audit event
 totals and periodic `user_bandwidth` points. `pritunl/logger/entry.py` is a
 plain `{timestamp, message}` log entry.
 
-*What transfers:* the audit-event shape (who, from where, to which server, one
+_What transfers:_ the audit-event shape (who, from where, to which server, one
 record) and per-client byte deltas as monitoring points rather than per-packet
 logging.
-*What does not:* `user_name`/`device_name`/`platform` — d078 explicitly
+_What does not:_ `user_name`/`device_name`/`platform` — d078 explicitly
 declines to become a user directory. Our ceiling is the operator key id, which
 is exactly why the hardcoded `who=operator` is a defect and not a
 simplification.
@@ -248,7 +248,7 @@ Every one of the seven, in some spelling:
 5. **time** — a timestamp plus a duration, or a start/since field
 6. **a closed-vocabulary outcome or reason**
 
-That list *is* VPN-R19's contract. The defect this record is about is not a
+That list _is_ VPN-R19's contract. The defect this record is about is not a
 missing requirement, it is that only one node emits it, only at the end, with
 two of the six fields neutered (`who` a literal, time as a duration with no
 start).
@@ -258,7 +258,7 @@ start).
 None of the seven logs payload, request bodies, or TLS plaintext; none claims
 to know a scheme for an opaque tunnel (Squid logs the bare authority for
 CONNECT); none logs a resolved IP in place of the name the client asked for
-(Squid `%<a` is the *server* address, not a resolver internal). The
+(Squid `%<a` is the _server_ address, not a resolver internal). The
 conspicuous exception is the MITM-class proxy family (Privoxy's
 `FEATURE_HTTPS_INSPECTION`, mitmproxy), which we deliberately are not
 (VPN-R25, d103) — so our ceiling is their floor, and that is fine.

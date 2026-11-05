@@ -98,15 +98,36 @@ run_mise_or_host shfmt find . -path ./node_modules -prune -o \
 	-path ./.venv -prune -o \
 	-type f -name '*.sh' -exec shfmt -l {} + || true
 
-# oxfmt (advisory, markdown only): the ox toolchain's prose formatter — the
-# one that can actually reflow a table a JS linter can't see. Advisory
-# because the repo has never wholesale-reformatted its docs: the signal is
-# drift, not a rule. The glob excludes non-md output — code-format policy
-# belongs to biome, whose lint line below is deliberately lint-only. The
-# glob is quoted so bash hands oxfmt the pattern itself (its own glob
-# walker), not a one-level shell expansion.
-log_info "oxfmt markdown (advisory)"
-run_mise_or_host oxfmt oxfmt --list-different "**/*.md" || true
+# oxfmt (gating, markdown only): the ox toolchain's prose formatter — the one
+# that can reflow a table a JS linter cannot see. Gating, and it started that
+# way only after a one-shot reformat of the whole tree (docs/docs included): an
+# advisory that is permanently non-empty is not a signal, it is wallpaper, and
+# it was covering 1000+ files nobody could act on. Now a non-empty list means
+# somebody wrote markdown oxfmt disagrees with, which is a one-command fix.
+# The glob excludes non-md output — code-format policy belongs to biome, whose
+# lint line below is deliberately lint-only. The glob is quoted so bash hands
+# oxfmt the pattern itself (its own glob walker), not a shell expansion.
+#
+# PINNED, not @latest (d137's rule for a gate whose output IS its meaning): a
+# formatter default change upstream would otherwise turn the sweep red across
+# the tree without a single edit here. The pin lives in the shim because the
+# repo commits no mise.toml (docs/d051/d082); Termux has no mise and takes the
+# host package's oxfmt, so a bump there re-runs the one-shot reformat.
+OXFMT_VERSION=0.75.0
+OXFMT_GLOB='**/*.md'
+log_info "oxfmt markdown (gating — canonical markdown, pinned)"
+if [ "$_termux" = 1 ] || ! command -v mise >/dev/null 2>&1; then
+	oxfmt --version >/dev/null 2>&1 ||
+		log_die 96 "no runnable oxfmt — install it with the host package manager" \
+			tool=oxfmt hint="Termux: pkg install oxfmt"
+	oxfmt --check "$OXFMT_GLOB" ||
+		log_die 96 "markdown is not oxfmt-canonical" \
+			hint="fix: oxfmt --write '**/*.md'  (or \"mise exec oxfmt@$OXFMT_VERSION -- oxfmt --write '**/*.md'\")"
+else
+	mise exec "oxfmt@$OXFMT_VERSION" -- oxfmt --check "$OXFMT_GLOB" ||
+		log_die 96 "markdown is not oxfmt-canonical" \
+			hint="fix: mise exec oxfmt@$OXFMT_VERSION -- oxfmt --write '**/*.md'"
+fi
 
 npm_tools_ensure "$repo_root"
 [ -x "$repo_root/node_modules/.bin/biome" ] ||

@@ -34,13 +34,13 @@ cloud router).
 "Reachable" means the **network path works**, not that we hold credentials.
 
 A 401/403 (or any other HTTP response) from an OpenAI-compatible `/models`
-endpoint is what that endpoint returns to *any* unauthenticated request. The
+endpoint is what that endpoint returns to _any_ unauthenticated request. The
 generators legitimately run without provider keys — pi and opencode resolve
 their own key / OAuth login at request time — so such a response proves
 routing to the provider works and must **not** trigger a peer override.
 
 Only the **total absence of an HTTP response** — DNS failure, connection
-refused, TLS failure (a bogus certificate with verification ON dies *before*
+refused, TLS failure (a bogus certificate with verification ON dies _before_
 any request byte, so a credentialed probe can never reach an impostor),
 timeout —, or a **5xx server-error response** (the endpoint answered but says
 it cannot serve right now: outage/overload) is evidence that the endpoint is
@@ -117,13 +117,13 @@ is usable: the route delivered to the real endpoint.
 
 ## What each generator emits
 
-| Generator | Layer | Semantic | Subset |
-|---|---|---|---|
-| `generate-local-llama-swap.mjs` | `model-010-local-default.json` | **ADDS** the `llama-swap` provider (pi has no native one) | local GGUF models |
-| `generate-cloud-providers.mjs` (override-only rows) | `model-012-cloud-pi-native.json` | **override-ONLY** (peer reroutes for unreachable endpoints, minimal
-  models.dev ∪ catwalk id merges otherwise) | openrouter / opencode / opencode-go / mistral / google / nvidia |
-| `generate-cloud-providers.mjs` (full rows) | `model-015/016/017-*.json` | **AUTHORITATIVE full block** (pi has no native provider for any of them) | cline-pass / hyper / inferx |
-| `generate-opencode.jsonc.mjs` | `opencode.jsonc` (opencode V1 schema) | same cascade, opencode's provider subset | opencode / opencode-go / openrouter + local GGUF |
+| Generator                                           | Layer                                                           | Semantic                                                                 | Subset                                           |
+| --------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------ |
+| `generate-local-llama-swap.mjs`                     | `model-010-local-default.json`                                  | **ADDS** the `llama-swap` provider (pi has no native one)                | local GGUF models                                |
+| `generate-cloud-providers.mjs` (override-only rows) | `model-012-cloud-pi-native.json`                                | **override-ONLY** (peer reroutes for unreachable endpoints, minimal      |
+| models.dev ∪ catwalk id merges otherwise)           | openrouter / opencode / opencode-go / mistral / google / nvidia |
+| `generate-cloud-providers.mjs` (full rows)          | `model-015/016/017-*.json`                                      | **AUTHORITATIVE full block** (pi has no native provider for any of them) | cline-pass / hyper / inferx                      |
+| `generate-opencode.jsonc.mjs`                       | `opencode.jsonc` (opencode V1 schema)                           | same cascade, opencode's provider subset                                 | opencode / opencode-go / openrouter + local GGUF |
 
 Merge order and semantics are owned by `coding-agent/merge-models-json.mjs`.
 

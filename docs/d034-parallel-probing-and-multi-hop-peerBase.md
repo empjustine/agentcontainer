@@ -133,8 +133,10 @@ Each `emitProvider()` is self-contained (catalog load → direct probe → peer 
 // Phase 1: parallel cloud direct probes
 const cloudResults = await Promise.allSettled(
   Object.entries(CLOUD_PROVIDERS).map(([id, cfg]) =>
-    probeDirect(cfg.baseUrl, bearerHeaders(process.env[cfg.apiKeyEnv]?.trim()))
-      .then((r) => ({ id, ...r })),
+    probeDirect(cfg.baseUrl, bearerHeaders(process.env[cfg.apiKeyEnv]?.trim())).then((r) => ({
+      id,
+      ...r,
+    })),
   ),
 );
 
@@ -198,12 +200,12 @@ Each proxy probe has an 8s timeout. With 4 proxies, worst-case per-provider prob
 
 ## Latency impact
 
-| Scenario | Before | After |
-|----------|--------|-------|
-| All providers reachable | ~8s (first probe answers) | ~8s (all fire, first answer wins) |
-| All providers unreachable + no proxies | ~48s (6 × 8s direct) | ~8s (all direct probes fire concurrently) |
-| All providers unreachable + 1 proxy | ~56s (6 × 8s direct + 6 × 8s peer) | ~16s (8s direct + 8s peer, both parallel) |
-| All providers unreachable + 4 proxies | ~288s (6 × 8s × 6 probes) | ~40s (8s direct + 32s peer chain, both parallel) |
+| Scenario                               | Before                             | After                                            |
+| -------------------------------------- | ---------------------------------- | ------------------------------------------------ |
+| All providers reachable                | ~8s (first probe answers)          | ~8s (all fire, first answer wins)                |
+| All providers unreachable + no proxies | ~48s (6 × 8s direct)               | ~8s (all direct probes fire concurrently)        |
+| All providers unreachable + 1 proxy    | ~56s (6 × 8s direct + 6 × 8s peer) | ~16s (8s direct + 8s peer, both parallel)        |
+| All providers unreachable + 4 proxies  | ~288s (6 × 8s × 6 probes)          | ~40s (8s direct + 32s peer chain, both parallel) |
 
 ## Caveats
 

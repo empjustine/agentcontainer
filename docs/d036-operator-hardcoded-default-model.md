@@ -10,7 +10,7 @@ depends-on: [coding-agent]
 
 # d036 — default model is operator-hardcoded; the dynamic picker is retired
 
-**Status:** implemented (supersedes the *selection* mechanism of d035; d035's
+**Status:** implemented (supersedes the _selection_ mechanism of d035; d035's
 provider facts remain valid)
 
 ## Problem
@@ -20,7 +20,7 @@ The dynamic picker (`generate-default-model.mjs`, d035) reads the generated
 emitted. In practice this still lands the agent on a broken endpoint:
 
 - The picker's usability signal — "the cascade emitted a layer for this
-  provider" — proves *routing*, not *callability*. A 401-gated peer route, a
+  provider" — proves _routing_, not _callability_. A 401-gated peer route, a
   model the host's credentials cannot actually serve, or a provider with no
   credits all pass the signal and then fail at request time.
 - When the pick is garbage (or no default gets written), pi falls back to its
@@ -44,8 +44,8 @@ the hardcoded default, as is:
 2. `generate-default-model.mjs` no longer probes `models.json`. It returns
    the hardcoded pair read from the settings source (single source of truth:
    `coding-agent/settings.json`, via `$PI_SETTINGS`), so the merge stage in
-   `generate.sh` is idempotent and the stage can no longer *fail to find a
-   default*. The models.json-ordering constraint from d035 dies with the
+   `generate.sh` is idempotent and the stage can no longer _fail to find a
+   default_. The models.json-ordering constraint from d035 dies with the
    probing.
 3. Changing the default is an edit to `coding-agent/settings.json` — one
    place, then re-run generation. The picker never overrode the operator's

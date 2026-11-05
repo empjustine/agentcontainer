@@ -24,19 +24,19 @@ the llama-swap serving container and the pi coding-agent container.
 > The workload is not adversarial by intent: the boundaries aim at
 > **accidents** (a typo'd `rm` finding a `$HOME` bind mount, cross-repo
 > data streams, a vault secret forwarded one layer too far) and at the
-> *cost-raising* against prompt-injection misalignment — never at becoming
+> _cost-raising_ against prompt-injection misalignment — never at becoming
 > a perimeter against a determined, competent adversary, which no naive
 > sandbox short of a VM (docs/d020) honestly is.
 
 ## Environments
 
-| Name                 | Sandbox / runtime                    | Cloud access | Serving dir                     | Usage dir              |
-|----------------------|--------------------------------------|--------------|---------------------------------|------------------------|
-| local-inference-host | rootless podman, SELinux enforced    | direct       | `llm-local-inference/`           | `coding-agent/`        |
-| termux               | rootless termux, restrictive SELinux, | direct (if   | `estige/` (deb,      | `coding-agent/`        |
-|                      | non-standard file paths              | any)         |                                 |                        |
-| small-cloud-vm       | rootless podman or docker            | relay only   | `estige/` (rpm,      | `coding-agent/` (static config) |
-|                      |                                      |              | relay service)       |                        |
+| Name                 | Sandbox / runtime                     | Cloud access | Serving dir            | Usage dir                       |
+| -------------------- | ------------------------------------- | ------------ | ---------------------- | ------------------------------- |
+| local-inference-host | rootless podman, SELinux enforced     | direct       | `llm-local-inference/` | `coding-agent/`                 |
+| termux               | rootless termux, restrictive SELinux, | direct (if   | `estige/` (deb,        | `coding-agent/`                 |
+|                      | non-standard file paths               | any)         |                        |                                 |
+| small-cloud-vm       | rootless podman or docker             | relay only   | `estige/` (rpm,        | `coding-agent/` (static config) |
+|                      |                                       |              | relay service)         |                                 |
 
 ### local-inference-host (full, default)
 
@@ -45,15 +45,16 @@ The reference environment. Runs **one** multipurpose llama-swap instance,
 `./npm-run.sh llm-local-inference generate`) detects the container backend + GPU
 devices and emits the layers it can into
 `config.d/`; `run.sh` launches the `unified-vulkan` image with GPU passthrough
-+ HF cache on LAN port 8101 — plus the full `coding-agent/`. Rootless podman
-with SELinux means every writable bind mount gets `:z,U` (or `:Z,U`) relabel +
-chown, and the containers run as the host UID via `--userns=keep-id` +
-`--user $(id -u):$(id -g)`. Two rootless constraints shape what this env can
-express (full survey in `d020` §1.1): no ports < 1024 (no
-`CAP_NET_BIND_SERVICE` — all publishes are high ports) and no device-node
-creation (no `CAP_MKNOD` — GPUs pass through as *existing* nodes via
-`--device`, requiring group access to `/dev/dri`/`/dev/kfd`, which is what
-`workload_gpu`/`detect_gpu_devs` hand the backend).
+
+- HF cache on LAN port 8101 — plus the full `coding-agent/`. Rootless podman
+  with SELinux means every writable bind mount gets `:z,U` (or `:Z,U`) relabel +
+  chown, and the containers run as the host UID via `--userns=keep-id` +
+  `--user $(id -u):$(id -g)`. Two rootless constraints shape what this env can
+  express (full survey in `d020` §1.1): no ports < 1024 (no
+  `CAP_NET_BIND_SERVICE` — all publishes are high ports) and no device-node
+  creation (no `CAP_MKNOD` — GPUs pass through as _existing_ nodes via
+  `--device`, requiring group access to `/dev/dri`/`/dev/kfd`, which is what
+  `workload_gpu`/`detect_gpu_devs` hand the backend).
 
 ### termux (coding-agent + packaged cloud relay)
 
@@ -79,8 +80,8 @@ config generated on a capable host (the run-scripts section below).
 ## The workload runner: `<unit>/lib/workload-runtime.{sh,mjs}` (description-driven)
 
 The runner is a **description-driven workload runner**, not a
-bag of flags. Run scripts declare *what* they need; the tool renders *how* for
-the active backend — podman or docker —  No
+bag of flags. Run scripts declare _what_ they need; the tool renders _how_ for
+the active backend — podman or docker — No
 `:z${_vol_u}` strings, no inline `podman`/`docker` detection, no
 `cd "$(dirname "$0")"` path-guessing leak into the run scripts.
 
@@ -139,28 +140,28 @@ to decide which config layers the host can run.)
 
 ### Declarative API
 
-| Call | Meaning |
-|------|---------|
-| `workload_name <n>` | container / instance name |
-| `workload_image <img>` | OCI image to run |
-| `workload_detach` / `workload_interactive` | `-d` / `-it` |
-| `workload_restart <policy>` | `--restart=<policy>`; empty (default) emits no flag. The relay node's detached launch uses `unless-stopped` so the listener address its consumer was handed survives a crash (docs/d095) |
-| `workload_init` | `--init` |
-| `workload_network <mode>` | e.g. `host` → `--network=host` |
-| `workload_user` | run as the host user: `--userns=keep-id --user uid:gid` (podman) or `--user uid:gid` (docker). Uses `SUDO_UID`/`SUDO_GID` when present. |
-| `workload_gpu` | detect + passthrough GPU devices (`/dev/kfd`, `/dev/dri/renderD*`) |
-| `workload_hardening` | `--cap-drop=all --security-opt no-new-privileges` |
-| `workload_publish <host> <guest>` | `-p host:guest/tcp` |
-| `workload_ro <host> <guest>` | required read-only bind (fails if host path missing) |
-| `workload_rw <host> <guest>` | required read-write bind |
-| `workload_ro_if <host> <guest>` | optional variant (skipped if host path absent) |
-| `workload_env <NAME...>` | pass these host env vars into the workload (`--env`) |
-| `workload_env_allowlist <NAME...>` | like `workload_env`, but skips names whose host value is empty — a bare `--env NAME` on an unset var injects an EMPTY value, which consumers then read as “set”. Both vault-key forwarders (the coding-agent launcher, the llama-swap path) use this one implementation (docs/d030) |
-| `workload_cmd <args...>` | the command (argv after the image) |
-| `workload_has <field>` | true when a description array is non-empty — e.g. `workload_has devices`, which is how `llm-local-inference/generate.mjs` gates the local-inference layer |
-| `workload_rm <id>` | remove a prior instance by name |
-| `workload_logs <id>` | tail a running instance's logs |
-| `workload_run [wrapper...]` | render + launch; optional `wrapper` prefixes the launch command. Host-side only — it cannot inject env into the workload; secrets reach the workload via the `workload_env` allowlist (see `coding-agent/run.mjs`: host-side `./environment.sh` → forwarded vault env) |
+| Call                                       | Meaning                                                                                                                                                                                                                                                                             |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `workload_name <n>`                        | container / instance name                                                                                                                                                                                                                                                           |
+| `workload_image <img>`                     | OCI image to run                                                                                                                                                                                                                                                                    |
+| `workload_detach` / `workload_interactive` | `-d` / `-it`                                                                                                                                                                                                                                                                        |
+| `workload_restart <policy>`                | `--restart=<policy>`; empty (default) emits no flag. The relay node's detached launch uses `unless-stopped` so the listener address its consumer was handed survives a crash (docs/d095)                                                                                            |
+| `workload_init`                            | `--init`                                                                                                                                                                                                                                                                            |
+| `workload_network <mode>`                  | e.g. `host` → `--network=host`                                                                                                                                                                                                                                                      |
+| `workload_user`                            | run as the host user: `--userns=keep-id --user uid:gid` (podman) or `--user uid:gid` (docker). Uses `SUDO_UID`/`SUDO_GID` when present.                                                                                                                                             |
+| `workload_gpu`                             | detect + passthrough GPU devices (`/dev/kfd`, `/dev/dri/renderD*`)                                                                                                                                                                                                                  |
+| `workload_hardening`                       | `--cap-drop=all --security-opt no-new-privileges`                                                                                                                                                                                                                                   |
+| `workload_publish <host> <guest>`          | `-p host:guest/tcp`                                                                                                                                                                                                                                                                 |
+| `workload_ro <host> <guest>`               | required read-only bind (fails if host path missing)                                                                                                                                                                                                                                |
+| `workload_rw <host> <guest>`               | required read-write bind                                                                                                                                                                                                                                                            |
+| `workload_ro_if <host> <guest>`            | optional variant (skipped if host path absent)                                                                                                                                                                                                                                      |
+| `workload_env <NAME...>`                   | pass these host env vars into the workload (`--env`)                                                                                                                                                                                                                                |
+| `workload_env_allowlist <NAME...>`         | like `workload_env`, but skips names whose host value is empty — a bare `--env NAME` on an unset var injects an EMPTY value, which consumers then read as “set”. Both vault-key forwarders (the coding-agent launcher, the llama-swap path) use this one implementation (docs/d030) |
+| `workload_cmd <args...>`                   | the command (argv after the image)                                                                                                                                                                                                                                                  |
+| `workload_has <field>`                     | true when a description array is non-empty — e.g. `workload_has devices`, which is how `llm-local-inference/generate.mjs` gates the local-inference layer                                                                                                                           |
+| `workload_rm <id>`                         | remove a prior instance by name                                                                                                                                                                                                                                                     |
+| `workload_logs <id>`                       | tail a running instance's logs                                                                                                                                                                                                                                                      |
+| `workload_run [wrapper...]`                | render + launch; optional `wrapper` prefixes the launch command. Host-side only — it cannot inject env into the workload; secrets reach the workload via the `workload_env` allowlist (see `coding-agent/run.mjs`: host-side `./environment.sh` → forwarded vault env)              |
 
 Only `workload_ro`/`workload_rw` (required) abort the run if the host path is
 gone; `workload_ro_if` is best-effort. Mount host/guest paths may contain
@@ -193,14 +194,14 @@ The description is held in two halves:
 Each list mutator is one small jq filter in the unit's own `lib/`, and **each filter's header
 is its specification** — expected inputs, output shape, and why it exists:
 
-| Filter | Called by | Contract |
-|---|---|---|
-| `lib/workload-mount.jq` | `workload_ro` / `workload_rw` / `workload_ro_if` | append `{mode,host,guest}` to `.mounts` |
-| `lib/workload-append.jq` | `workload_env`, `detect_gpu_devs` | append strings to a named array (`.env`, `.devices`) |
-| `lib/workload-port.jq` | `workload_publish` | append `{host,guest}` to `.ports` |
-| `lib/workload-cmd.jq` | `workload_cmd` | **set** `.cmd` to the word array (a set, not an append) |
-| `lib/workload-has.jq` | `workload_has` | boolean; the answer is jq's `-e` exit status |
-| `lib/workload-render.jq` | `_render_container` | the whole description + scalars → one line of `@sh`-quoted argv words |
+| Filter                   | Called by                                        | Contract                                                              |
+| ------------------------ | ------------------------------------------------ | --------------------------------------------------------------------- |
+| `lib/workload-mount.jq`  | `workload_ro` / `workload_rw` / `workload_ro_if` | append `{mode,host,guest}` to `.mounts`                               |
+| `lib/workload-append.jq` | `workload_env`, `detect_gpu_devs`                | append strings to a named array (`.env`, `.devices`)                  |
+| `lib/workload-port.jq`   | `workload_publish`                               | append `{host,guest}` to `.ports`                                     |
+| `lib/workload-cmd.jq`    | `workload_cmd`                                   | **set** `.cmd` to the word array (a set, not an append)               |
+| `lib/workload-has.jq`    | `workload_has`                                   | boolean; the answer is jq's `-e` exit status                          |
+| `lib/workload-render.jq` | `_render_container`                              | the whole description + scalars → one line of `@sh`-quoted argv words |
 
 Two jq invocations rules that are easy to get wrong, and that every filter
 header repeats:
@@ -255,19 +256,19 @@ mirror `github/containers/bubblewrap`) would take, against the current
 description API (`workload-render.jq` emits podman/docker dialects keyed on
 `$tool`; a bwrap dialect would be a third branch):
 
-| API piece | bwrap translation | Verdict |
-|---|---|---|
-| `workload_image` | no OCI concept — a rootfs dir must be assembled by hand (`--ro-bind / `--bind` per tree) or the unified-vulkan image unpacked to disk first | **structural blocker** — loses the pull/build/layer story `build.mjs` owns |
-| `workload_publish` | none from bwrap itself — prior art publishes via host `socat` ⇄ unix-socket bridges (fence) or from an in-ns proxy/firewall supervisor under slirp4netns (`microsoft/mxc`) | **still the blocking row for a dialect** — llama-swap must publish LAN 8101 (docs/d027); bridges make it feasible-not-free (surveyed in [workload-sandboxing-prior-art.md](workload-sandboxing-prior-art.md)) |
-| `workload_detach` / `workload_logs` / `workload_rm` | no daemon, no named workloads: bwrap is a foreground process; needs setsid+pidfile, stdout redirected to a file for `logs`, and a rm-by-pidfile | feasible but re-implements what podman/docker give for free |
-| `workload_ro`/`workload_rw` | `--ro-bind` / `--bind` (+ `--*-try` variants) | maps 1:1; SELinux `z,U` mount options have no equivalent (bwrap does not relabel; `--exec-label` only sets the process label) — a rootless-podman-on-SELinux host is exactly where this repo runs |
-| `workload_gpu` (`/dev/kfd`, `/dev/dri/renderD*`) | `--dev-bind` per node | maps 1:1; no device-cgroup controller — access control only via the userns |
-| `workload_env_allowlist` | inverted default: bwrap inherits the FULL host env unless `--clearenv` + one `--setenv NAME=value` per var — the renderer must resolve host VALUES at render time (podman takes bare names and forwards values at run time) | feasible; changes the jq filter contract (names → name+value) |
-| `workload_user` (keep-id) | default behavior (runs as the caller under `--unshare-user`; `--uid/--gid` for remaps; `--group-add keep-groups` has no direct analog) | maps well |
-| `workload_hardening` | unprivileged userns is inherently non-root; `--cap-drop`/`--seccomp` optional | comparable-or-stronger, different flag surface |
-| `workload_init` | no built-in init: llama-swap spawns llama-server children, so zombie reaping needs a tini-style shim as cmd prefix (`--die-with-parent` alone doesn't reap) | small shim required |
-| `workload_workdir` | `--chdir` | maps 1:1 |
-| `workload_cmd` | argv passthrough; `--args`/`--args-fd` could even bypass argv-size limits | maps 1:1 |
+| API piece                                           | bwrap translation                                                                                                                                                                                                           | Verdict                                                                                                                                                                                                       |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `workload_image`                                    | no OCI concept — a rootfs dir must be assembled by hand (`--ro-bind / `--bind` per tree) or the unified-vulkan image unpacked to disk first                                                                                 | **structural blocker** — loses the pull/build/layer story `build.mjs` owns                                                                                                                                    |
+| `workload_publish`                                  | none from bwrap itself — prior art publishes via host `socat` ⇄ unix-socket bridges (fence) or from an in-ns proxy/firewall supervisor under slirp4netns (`microsoft/mxc`)                                                  | **still the blocking row for a dialect** — llama-swap must publish LAN 8101 (docs/d027); bridges make it feasible-not-free (surveyed in [workload-sandboxing-prior-art.md](workload-sandboxing-prior-art.md)) |
+| `workload_detach` / `workload_logs` / `workload_rm` | no daemon, no named workloads: bwrap is a foreground process; needs setsid+pidfile, stdout redirected to a file for `logs`, and a rm-by-pidfile                                                                             | feasible but re-implements what podman/docker give for free                                                                                                                                                   |
+| `workload_ro`/`workload_rw`                         | `--ro-bind` / `--bind` (+ `--*-try` variants)                                                                                                                                                                               | maps 1:1; SELinux `z,U` mount options have no equivalent (bwrap does not relabel; `--exec-label` only sets the process label) — a rootless-podman-on-SELinux host is exactly where this repo runs             |
+| `workload_gpu` (`/dev/kfd`, `/dev/dri/renderD*`)    | `--dev-bind` per node                                                                                                                                                                                                       | maps 1:1; no device-cgroup controller — access control only via the userns                                                                                                                                    |
+| `workload_env_allowlist`                            | inverted default: bwrap inherits the FULL host env unless `--clearenv` + one `--setenv NAME=value` per var — the renderer must resolve host VALUES at render time (podman takes bare names and forwards values at run time) | feasible; changes the jq filter contract (names → name+value)                                                                                                                                                 |
+| `workload_user` (keep-id)                           | default behavior (runs as the caller under `--unshare-user`; `--uid/--gid` for remaps; `--group-add keep-groups` has no direct analog)                                                                                      | maps well                                                                                                                                                                                                     |
+| `workload_hardening`                                | unprivileged userns is inherently non-root; `--cap-drop`/`--seccomp` optional                                                                                                                                               | comparable-or-stronger, different flag surface                                                                                                                                                                |
+| `workload_init`                                     | no built-in init: llama-swap spawns llama-server children, so zombie reaping needs a tini-style shim as cmd prefix (`--die-with-parent` alone doesn't reap)                                                                 | small shim required                                                                                                                                                                                           |
+| `workload_workdir`                                  | `--chdir`                                                                                                                                                                                                                   | maps 1:1                                                                                                                                                                                                      |
+| `workload_cmd`                                      | argv passthrough; `--args`/`--args-fd` could even bypass argv-size limits                                                                                                                                                   | maps 1:1                                                                                                                                                                                                      |
 
 Net: mounts/user/cmd/hardening translate cleanly, but the **image** and
 **port-publishing** pieces have no bwrap equivalent — the two this repo's
@@ -315,10 +316,10 @@ layers, and only the layers that work on the current host land in `config.d/`
   its own `lib/llamacpp-model-data.json` (docs/d041 fold), which resolves each model to an HF snapshot dir and bakes the
   absolute paths into each `cmd` (docs/d029 option B; a cache miss is a
   generation error pointing at `llm-local-inference/download_models.py`).
-Exactly these two layers: the config.d-era cloud layers (`peer-cloud.yaml`,
-`22-peer-gfx1030.yaml`) left with the relay handoff — cloud providers are
-not a config layer (docs/d027); see architecture.md for the layer table and
-docs/d018 for the merge contract this supersedes.
+  Exactly these two layers: the config.d-era cloud layers (`peer-cloud.yaml`,
+  `22-peer-gfx1030.yaml`) left with the relay handoff — cloud providers are
+  not a config layer (docs/d027); see architecture.md for the layer table and
+  docs/d018 for the merge contract this supersedes.
 
 #### `llm-local-inference/run.sh` (serve-only, adapts to config.d)
 

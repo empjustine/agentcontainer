@@ -12,7 +12,7 @@ tags: ["serving", "proxy", "vpn", "ssl-vpn", "tunnel", "observability", "logging
 # d106 — tunnel observability
 
 **Status: draft.** Nothing below is implemented and this record decides
-nothing yet. It is written first because the *vocabulary* (field names, event
+nothing yet. It is written first because the _vocabulary_ (field names, event
 names, what a "session" is) is cheap to agree on now and expensive to
 reconcile once log lines exist in two deployments' histories — and because
 seven independent upstream tools converge on the same field set, which is
@@ -54,23 +54,23 @@ different design.
 
 Exit node:
 
-| call site | when | what |
-|---|---|---|
-| `tunnelserver.go:374` `logTunnelLifecycle` | session end (`defer`), refusals included | `[vpn] who=operator label=%q target=%q transport=%s bytes_in=%d bytes_out=%d duration_ms=%d outcome=%s` |
-| `tunnelserver.go:144`, `:184` | after auth, before session work | `[estige] tunnel session: authenticated key=%s` |
-| `main.go:379` `logCombinedRequestURI` | per request | CLF, including **one line per mode E window** |
-| `tunnelserver.go:199`, `modee.go:523`, `:689` | error paths | mode C full-duplex unavailable, registry full, window drain failed |
+| call site                                     | when                                     | what                                                                                                    |
+| --------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `tunnelserver.go:374` `logTunnelLifecycle`    | session end (`defer`), refusals included | `[vpn] who=operator label=%q target=%q transport=%s bytes_in=%d bytes_out=%d duration_ms=%d outcome=%s` |
+| `tunnelserver.go:144`, `:184`                 | after auth, before session work          | `[estige] tunnel session: authenticated key=%s`                                                         |
+| `main.go:379` `logCombinedRequestURI`         | per request                              | CLF, including **one line per mode E window**                                                           |
+| `tunnelserver.go:199`, `modee.go:523`, `:689` | error paths                              | mode C full-duplex unavailable, registry full, window drain failed                                      |
 
 Relay node:
 
-| call site | when | what |
-|---|---|---|
-| `relaynode.go:201`, `:206`, `:211` | startup | listeners, chain, cleartext-chain warning |
-| `relaynode.go:292`, `:315`, `:322` | per tunnel dial | `[vpn-relay] tunnel transport=%s` — transport only |
-| `relaynode.go:309`, `:319` | per demotion | mode C/D failed, falling back |
-| `relaynode.go:494`, `:634` | session end | nothing: `relay()`'s `relayStats` is discarded |
-| `forward.go:39` | per cleartext exchange | nothing; no byte counters are kept |
-| `relaynode.go:431` `handleHealth` | on request | tunnel endpoint, `sessions`, `last_error` |
+| call site                          | when                   | what                                               |
+| ---------------------------------- | ---------------------- | -------------------------------------------------- |
+| `relaynode.go:201`, `:206`, `:211` | startup                | listeners, chain, cleartext-chain warning          |
+| `relaynode.go:292`, `:315`, `:322` | per tunnel dial        | `[vpn-relay] tunnel transport=%s` — transport only |
+| `relaynode.go:309`, `:319`         | per demotion           | mode C/D failed, falling back                      |
+| `relaynode.go:494`, `:634`         | session end            | nothing: `relay()`'s `relayStats` is discarded     |
+| `forward.go:39`                    | per cleartext exchange | nothing; no byte counters are kept                 |
+| `relaynode.go:431` `handleHealth`  | on request             | tunnel endpoint, `sessions`, `last_error`          |
 
 Transport labels in use (`transport()`): `h2` (`modec.go:183`), `wss`
 (`websocket.go:409`), `post` (`modee.go:461`, `:763`,
@@ -128,6 +128,7 @@ none requires reading payload.
   cleartext branch can address any `http://` origin, where presigned URLs and
   session tokens routinely live in the query. Squid's default is the opposite
   of what a naive `url=` field would do.
+
 ## Prior art
 
 **Moved to [d134](d134-session-logging-prior-art.md)** — the eight-implementation
@@ -185,22 +186,22 @@ Rules that come with the shapes:
 
 ### Field vocabulary
 
-| field | values | notes |
-|---|---|---|
-| `ts` | epoch seconds, milliseconds | matches Squid's `%ts.%03tu`; per line, because `log.SetFlags(0)` is deliberate — turning flags on would prefix CLF lines and break stock parsers |
-| `role` | `relay`, `exit` | replaces the need for a consumer to know `[vpn]` and `[vpn-relay]` as two vocabularies |
-| `event` | `open`, `close`, `refused` | the discriminator; no `level=`, since estige has no producer-side filtering (d045) |
-| `id` | 32 lowercase hex | correlation id, see below |
-| `key` | operator key id or `-` | replaces the literal `who=operator`; the rationale is already written in code for the line this one subsumes — "the matched id is a label, so a success may say it out loud — as a side line, not inside the CLF, so the standard access log stays parseable by stock tools" (`tunnelserver.go:130`, d078's *Attribution lives beside the CLF, not in it*) |
-| `label` | client label from HELLO | unchanged |
-| `via` | `connect`, `socks5`, `http` | the local surface the app used; `socks5` is relay-side only, the exit cannot see it (the wire carries `host:port` alone) |
-| `transport` | `h2`, `wss`, `post` | unchanged names (d105); what *that node* ran on |
-| `target` | `host:port` | the CONNECT authority; never the resolved address (VPN-R19, as the code comment already states) |
-| `url` | `connect://host:port`, `http://host:port/path`, `ws://…` | only where a URL was spoken — relay-side; the exit has no scheme |
-| `bytes_up`, `bytes_down` | integers | client→origin and origin→client, unambiguous at both ends |
-| `duration_ms` | integer | unchanged |
-| `outcome` | `closed`, `idle-timeout`, `peer-disconnected`, `local-error`, `protocol-error` | unchanged (`relay.go:42`) |
-| `reason` | `port-denied`, `egress-denied`, `target-ip-literal`, `resolve-failed`, `dial-failed`, `invalid-target`, `hijack-failed`, … | the existing `errReason*` set (`tunnelproto.go:65`) plus relay-local admission failures |
+| field                    | values                                                                                                                     | notes                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ts`                     | epoch seconds, milliseconds                                                                                                | matches Squid's `%ts.%03tu`; per line, because `log.SetFlags(0)` is deliberate — turning flags on would prefix CLF lines and break stock parsers                                                                                                                                                                                                           |
+| `role`                   | `relay`, `exit`                                                                                                            | replaces the need for a consumer to know `[vpn]` and `[vpn-relay]` as two vocabularies                                                                                                                                                                                                                                                                     |
+| `event`                  | `open`, `close`, `refused`                                                                                                 | the discriminator; no `level=`, since estige has no producer-side filtering (d045)                                                                                                                                                                                                                                                                         |
+| `id`                     | 32 lowercase hex                                                                                                           | correlation id, see below                                                                                                                                                                                                                                                                                                                                  |
+| `key`                    | operator key id or `-`                                                                                                     | replaces the literal `who=operator`; the rationale is already written in code for the line this one subsumes — "the matched id is a label, so a success may say it out loud — as a side line, not inside the CLF, so the standard access log stays parseable by stock tools" (`tunnelserver.go:130`, d078's _Attribution lives beside the CLF, not in it_) |
+| `label`                  | client label from HELLO                                                                                                    | unchanged                                                                                                                                                                                                                                                                                                                                                  |
+| `via`                    | `connect`, `socks5`, `http`                                                                                                | the local surface the app used; `socks5` is relay-side only, the exit cannot see it (the wire carries `host:port` alone)                                                                                                                                                                                                                                   |
+| `transport`              | `h2`, `wss`, `post`                                                                                                        | unchanged names (d105); what _that node_ ran on                                                                                                                                                                                                                                                                                                            |
+| `target`                 | `host:port`                                                                                                                | the CONNECT authority; never the resolved address (VPN-R19, as the code comment already states)                                                                                                                                                                                                                                                            |
+| `url`                    | `connect://host:port`, `http://host:port/path`, `ws://…`                                                                   | only where a URL was spoken — relay-side; the exit has no scheme                                                                                                                                                                                                                                                                                           |
+| `bytes_up`, `bytes_down` | integers                                                                                                                   | client→origin and origin→client, unambiguous at both ends                                                                                                                                                                                                                                                                                                  |
+| `duration_ms`            | integer                                                                                                                    | unchanged                                                                                                                                                                                                                                                                                                                                                  |
+| `outcome`                | `closed`, `idle-timeout`, `peer-disconnected`, `local-error`, `protocol-error`                                             | unchanged (`relay.go:42`)                                                                                                                                                                                                                                                                                                                                  |
+| `reason`                 | `port-denied`, `egress-denied`, `target-ip-literal`, `resolve-failed`, `dial-failed`, `invalid-target`, `hijack-failed`, … | the existing `errReason*` set (`tunnelproto.go:65`) plus relay-local admission failures                                                                                                                                                                                                                                                                    |
 
 Two open sub-questions in the vocabulary are listed under Open questions:
 whether to keep the bracketed prefixes, and whether `url` on `connect`
@@ -247,7 +248,7 @@ of a close record with zero bytes, which is what it says today.
   as `[0-9a-f]{32}` before logging, and `%q`-quoted so no value can inject a
   log line. It rides under the Funnel terminator in cleartext, so the edge can
   read or alter it: it is a hint, not a fact.
-- It is *not* in d104's credential scope: the id is per-session diagnostic data, not
+- It is _not_ in d104's credential scope: the id is per-session diagnostic data, not
   a credential, and signing it would imply it can be trusted — the opposite of
   what a tamperable field should mean.
 
@@ -370,7 +371,7 @@ without reconstructing this analysis.
 
 ## Verification status
 
-Not implemented; no end-to-end check exists yet. What this draft *did* verify,
+Not implemented; no end-to-end check exists yet. What this draft _did_ verify,
 because the issues above are claims about code and about other projects:
 
 - Every code fact above was read from the tree at `estige/` on 2026-11-01,

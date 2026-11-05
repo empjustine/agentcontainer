@@ -26,7 +26,7 @@ same state: one is paused, the other is now judged insecure.
   `REVERSE_PROXY_API_KEY` bearer, and a tsnet row in the allowlist. It is
   the only local-inference provider, so every generated client carries a
   dependency on one host's GPU state.
-- **The allowlist relay is the world-facing edge.** The *allowlist relay*
+- **The allowlist relay is the world-facing edge.** The _allowlist relay_
   (d105's name; the host-form `/<upstream-host>/<path>` table, d047) is the
   default and d073's VPN-R1 says it MUST stay the default. Two costs come
   with that:
@@ -35,7 +35,7 @@ same state: one is paused, the other is now judged insecure.
      the client's TLS and hands the proxy plaintext, so the proxy
      necessarily sees provider keys. d073's trust table records this
      plainly: the allowlist relay and authenticated relay both answer
-     "yes" to *client trusts the proxy?*; only the tunnel transports
+     "yes" to _client trusts the proxy?_; only the tunnel transports
      answer "no". That property is inherent to the reverse proxy, not a
      bug to harden later — and a proxy that sees every provider key is a
      single point of compromise for the whole fleet's credentials.
@@ -59,12 +59,12 @@ for the whole tree: no other record renumbers these. d104's credential
 generations were renumbered onto it (its "v1 bearer / v2 Ed25519" reading is
 retired — see the history note below).
 
-| Generation | Edge | Operator credential | State |
-| --- | --- | --- | --- |
-| **v1** | a trusted reverse proxy with allowlisted hostnames | none at the edge; provider keys traverse it in plaintext | historical — previously deployed |
-| **v2** | the same trusted reverse proxy, with symmetric auth credentials | symmetric credential at the edge | never implemented or deployed — skipped for simplicity in favour of v3 |
-| **v3** | tunnel transports — h2-POST / WebSocket / h1.1-POST (d073/d077) | shared bearer, injected as env (`VPN_*`) | deployed, working |
-| **v4** | the same tunnel transports | d104's mutual single-use nonce-bound Ed25519 proofs, with key material in files under `~/.local/share/estige/` rather than env | in progress, not yet exercised |
+| Generation | Edge                                                            | Operator credential                                                                                                            | State                                                                  |
+| ---------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| **v1**     | a trusted reverse proxy with allowlisted hostnames              | none at the edge; provider keys traverse it in plaintext                                                                       | historical — previously deployed                                       |
+| **v2**     | the same trusted reverse proxy, with symmetric auth credentials | symmetric credential at the edge                                                                                               | never implemented or deployed — skipped for simplicity in favour of v3 |
+| **v3**     | tunnel transports — h2-POST / WebSocket / h1.1-POST (d073/d077) | shared bearer, injected as env (`VPN_*`)                                                                                       | deployed, working                                                      |
+| **v4**     | the same tunnel transports                                      | d104's mutual single-use nonce-bound Ed25519 proofs, with key material in files under `~/.local/share/estige/` rather than env | in progress, not yet exercised                                         |
 
 Two things this table settles that were previously scattered or ambiguous:
 
@@ -79,7 +79,7 @@ Two things this table settles that were previously scattered or ambiguous:
   amendment).
 
 A third vocabulary exists and must still not be read across: d073/d077 number
-**delivery** generations, where their v2 bundles the allowlist relay *and* the
+**delivery** generations, where their v2 bundles the allowlist relay _and_ the
 WebSocket tunnel and their v3 is the authenticated relay (unadopted). Where
 this record and d073/d077 disagree on a number, this record wins — d073/d077
 keep their text as history with the supersession noted at the point of use.
@@ -87,7 +87,7 @@ keep their text as history with the supersession noted at the point of use.
 The point of the distinction: **v3 is not the security end state.** It proves
 the tunnel shape works, and it already removes the plaintext-key problem,
 because a tunnel carries a `CONNECT`/SOCKS5 stream and the client validates
-the upstream's real certificate end to end. It does *not* fix the operator
+the upstream's real certificate end to end. It does _not_ fix the operator
 credential — a long-lived shared bearer that any compromised relay or exit can
 replay. That is d104's work (v4), and mode A's deprecation does not wait for
 it: no credential scheme can make a TLS-terminating proxy stop seeing plaintext
@@ -101,7 +101,7 @@ provider keys.
   generated client blocks, and the `bazzite.coelacanth-barb.ts.net`
   allowlist row are **deprecated for now**. "For now" is deliberate: no
   removal date is set, the code stays, and the existing generation keeps
-  working. Deprecated means *no new clients and no new features*, not
+  working. Deprecated means _no new clients and no new features_, not
   "deleted".
 - New deployments should not add a llama-swap provider or a tsnet row for
   one. A host that still runs the farm keeps working until the code is
@@ -135,7 +135,7 @@ provider keys.
   fall back to direct provider URLs.
 
 The two obligations are ordered by this record, but they are separate
-implementing changes (see *Open items*); this record changes no code.
+implementing changes (see _Open items_); this record changes no code.
 
 ### What stays until the removal diffs
 
@@ -144,7 +144,7 @@ implementing changes (see *Open items*); this record changes no code.
   diff, so deployed hosts keep their edge while the generators move. What
   changes now is that nothing presents them as the supported shape.
 - Historical records (d047, d063, d070) keep their verdicts and their text.
-  This record supersedes their *currency*, not their history.
+  This record supersedes their _currency_, not their history.
 - The tunnel family, the relay/exit entry points, egress policy, and d104's
   credential work are unaffected and remain the active direction.
 
@@ -208,8 +208,8 @@ implementing changes (see *Open items*); this record changes no code.
   would be re-adopted by the next provider addition.
 - **Delete the edge in this change.** The generators still emit routed base
   URLs; deleting the edge before they move would break installed clients
-  with no replacement path. The sequencing is deliberate and lives in *Open
-  items*.
+  with no replacement path. The sequencing is deliberate and lives in _Open
+  items_.
 - **Keep the allowlist but stop rewriting routes.** Clients would still have
   to carry the host-form path and the proxy would still see plaintext; it
   removes the generator magic without removing the trust problem.
@@ -245,7 +245,7 @@ implementing changes (see *Open items*); this record changes no code.
   live contract.
 - ~~Where the v2/v3/v4 generation vocabulary lives.~~ **Closed by this record's
   own generation table**: it now spans v1–v4 and is the one vocabulary, with
-  d104's credential numbering renumbered onto it. d105 owns transport *names*,
+  d104's credential numbering renumbered onto it. d105 owns transport _names_,
   not generations.
 - What, if anything, serves local models after the llama-swap pause.
 - How external (non-fleet) clients are onboarded onto the tunnel.

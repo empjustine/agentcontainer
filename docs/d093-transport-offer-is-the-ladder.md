@@ -28,10 +28,10 @@ historical reason: gating the default flip while mode C's rollout settled.
 The rollout settled.
 
 The knob also forced a config-time guard: d090 §2's C⇒wss cross-check in
-`validate()`, because *offering* `c` against a cleartext URL was a config
+`validate()`, because _offering_ `c` against a cleartext URL was a config
 error that failed lazily. With the offer fixed to the full ladder that
 failure mode is unreachable — C never probes a cleartext plane
-(`alpnNegotiate` skips non-wss; the rung is simply not offered *there*),
+(`alpnNegotiate` skips non-wss; the rung is simply not offered _there_),
 D and E always remain, and the empty-attempt-list error needs a restricted
 offer to occur. The check and the knob retire together.
 
@@ -77,7 +77,7 @@ offer to occur. The check and the knob retire together.
    C⇒wss check die), `run.sh` (env/argv forwarding dies, both branches).
 3. **Tests** — `TestParseClientModes` dies; the plain-h1 mode E e2e rides
    the upgrade-stripping gateway (with the ladder whole, a plain tunnel
-  server legitimately carries D — E is what a *refusal* demotes to); the
+   server legitimately carries D — E is what a _refusal_ demotes to); the
    config table loses the modes dimension.
 
 ## Acceptance

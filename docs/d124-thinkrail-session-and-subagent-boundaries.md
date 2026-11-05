@@ -55,8 +55,8 @@ to.
 ### Supervision is filesystem observation, not control
 
 There is no IPC channel between sessions; the only cross-session surface is
-shared disk state, and it is enough to *read* a sibling's work and not enough
-to *change* it:
+shared disk state, and it is enough to _read_ a sibling's work and not enough
+to _change_ it:
 
 - `~/.thinkrail/workspaces.json` — workspace → `branch` → `worktreePath`,
   `baseBranch`, `lastActiveAt`.

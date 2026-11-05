@@ -80,7 +80,7 @@ this approach replaced it. The one-line essence of each, kept here so the notes
 can be removed without losing the law they recorded:
 
 - **d004 (provider-id renaming, metadata maps)** — obsolete by construction:
-  generated layers now *override pi-native provider ids* instead of inventing
+  generated layers now _override pi-native provider ids_ instead of inventing
   suffixed ones, so there is no collision and no metadata bridge to maintain.
 - **d005 (Google dynamic discovery)** — retired with the client-side catalog:
   pi's own built-in Google catalog is used (`pi update --models`), not a
@@ -97,7 +97,7 @@ can be removed without losing the law they recorded:
   reachability is probed, not assumed (d021: an unreadable catalog skips a
   provider rather than aborting the layer).
 - **d015 (api-gateway)** — retired from the tree. Pattern of record
-  for limited-network environments: a basic-auth, UUID-routed API *gateway*
+  for limited-network environments: a basic-auth, UUID-routed API _gateway_
   (terminating TLS, injecting provider keys) rather than a transparent proxy.
   Nothing in the current tree implements it; revisit only if a
   no-direct-cloud host needs key injection again.

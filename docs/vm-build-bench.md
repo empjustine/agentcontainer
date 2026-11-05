@@ -74,18 +74,18 @@ What `provision` does, so this SOP stays true if the artifact drifts:
    (slirp user-mode net — outbound-only, so it satisfies the d020 §5 "NAT
    (outbound-only) suffices" requirement without any system daemon).
 5. Polls ssh up to 6 min (`SSH_PORT` override), then reports. under `~/.local/share/libvirt/vm-bench/` (`SYSPAD` override) —
-**no image, disk, or state file is committed to the repo** (mirrors the d044
-principle: heavy/ephemeral storage never lives in-tree). `rm -rf` that dir +
-`. destroy` is the full "burn it down" reset.
+   **no image, disk, or state file is committed to the repo** (mirrors the d044
+   principle: heavy/ephemeral storage never lives in-tree). `rm -rf` that dir +
+   `. destroy` is the full "burn it down" reset.
 
 ## Operating the bench
 
-| command | meaning |
-|---|---|
-| `sync` | rsyncs the repo into `~/${VM_NAME}/` inside the guest (default `/home/bench/agent-build-bench/`) (transport = ssh/rsync per d020 §5, NOT virtiofs — the bench needs a snapshot, not live sharing, and slirp+rsync skips the virtiofsd_t SELinux friction d020 §3 flags) |
-| `bench` | **the actual test**: inside the guest's rootless podman runs the agent Containerfile with `--progress=plain` (mandatory — see build.mjs comment) and `mise` under the Containerfile's own `MISE_QUIET=1`/`NO_COLOR=1` ENV. Then smoke-runs the image in the guest. |
-| `snapshot` / `rollback` | `virsh snapshot-create-as` / `snapshot-revert --current` — the "clean-room" reset podman cannot offer (d020 §5's "clean room" semantics; the synced workspace is OUTSIDE the snapshot) |
-| `status` / `ssh` / `destroy` | `virsh domstate`, an interactive shell, `shutdown`+`undefine --nvram` |
+| command                      | meaning                                                                                                                                                                                                                                                                 |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sync`                       | rsyncs the repo into `~/${VM_NAME}/` inside the guest (default `/home/bench/agent-build-bench/`) (transport = ssh/rsync per d020 §5, NOT virtiofs — the bench needs a snapshot, not live sharing, and slirp+rsync skips the virtiofsd_t SELinux friction d020 §3 flags) |
+| `bench`                      | **the actual test**: inside the guest's rootless podman runs the agent Containerfile with `--progress=plain` (mandatory — see build.mjs comment) and `mise` under the Containerfile's own `MISE_QUIET=1`/`NO_COLOR=1` ENV. Then smoke-runs the image in the guest.      |
+| `snapshot` / `rollback`      | `virsh snapshot-create-as` / `snapshot-revert --current` — the "clean-room" reset podman cannot offer (d020 §5's "clean room" semantics; the synced workspace is OUTSIDE the snapshot)                                                                                  |
+| `status` / `ssh` / `destroy` | `virsh domstate`, an interactive shell, `shutdown`+`undefine --nvram`                                                                                                                                                                                                   |
 
 ## Validation checklist (what "the bench passed" means)
 

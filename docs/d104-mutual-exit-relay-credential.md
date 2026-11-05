@@ -94,11 +94,11 @@ the other's direction because a verifier holds only public keys.
 **The mechanics live in three companion records**, split out because this record
 had grown past the point where a decision could be read as one:
 
-| record | owns |
-| --- | --- |
-| [d131](d131-estige-v4-proof-mechanics.md) | the envelopes, both signatures, the signed message layout, the version counters (`v4` deployment vs the `v2` envelope token), and what a verify costs |
-| [d132](d132-estige-v4-key-store.md) | the store: role-scoped `prv/` directories, the `relay.json` / `exit.json` helpers, the strict-JSON parsing law, and the `estige key` CLI |
-| [d133](d133-estige-v4-credential-operations.md) | operating it: arming by helper presence, deployment naming, the unchanged camouflage failure posture, and staged zero-gap rotation |
+| record                                          | owns                                                                                                                                                  |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [d131](d131-estige-v4-proof-mechanics.md)       | the envelopes, both signatures, the signed message layout, the version counters (`v4` deployment vs the `v2` envelope token), and what a verify costs |
+| [d132](d132-estige-v4-key-store.md)             | the store: role-scoped `prv/` directories, the `relay.json` / `exit.json` helpers, the strict-JSON parsing law, and the `estige key` CLI              |
+| [d133](d133-estige-v4-credential-operations.md) | operating it: arming by helper presence, deployment naming, the unchanged camouflage failure posture, and staged zero-gap rotation                    |
 
 What stays here is the decision itself and what follows from it: the problem, why
 this primitive and not the alternatives, the requirement deltas it forces, its
@@ -236,7 +236,7 @@ consequences, and the alternatives rejected.
 - **`pbl/` per-key public files** — intermediate idea: config
   references a key file, key file holds the value — two spellings of
   one binding, drift-prone, and a directory of keys is not auditable as
-  a *pairing* list. Embedding the key in the helper is one spelling and
+  a _pairing_ list. Embedding the key in the helper is one spelling and
   one read.
 - **One merged helper (or three or more)** — merged interleaves the two
   roles' sections and couples their failure domains on a dual-role
@@ -277,7 +277,7 @@ consequences, and the alternatives rejected.
   Wrong layer twice.
 - **Challenge-response over a nonce** — needs a pre-auth round trip; the
   first response becomes an oracle (VPN-R34) and costs a handshake RTT
-  for nothing a pre-computed proof does not buy. (A client-*drawn* nonce
+  for nothing a pre-computed proof does not buy. (A client-_drawn_ nonce
   in the first message is not this: it adds freshness without a flight,
   and is what the decision uses.)
 - **The time-step window (`step` = floor(unix/30), accepted ±1) — this

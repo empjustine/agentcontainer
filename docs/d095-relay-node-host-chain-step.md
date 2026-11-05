@@ -14,8 +14,8 @@ references: [d059, d070, d079, d082, d084, d090]
 > is an installed service (`estige-relay.service`, or the Termux runit
 > service), and the chain step is the binary's own `estige proxy-env`, which
 > prints the loopback spelling for `eval` and starts nothing. The parts of
-> this record that still bind are the ones about *why* the relay is a host
-> service and *who may hold which credential*; the launcher mechanics below
+> this record that still bind are the ones about _why_ the relay is a host
+> service and _who may hold which credential_; the launcher mechanics below
 > (two argv modes, the readiness probe, the supervisor loop) belong to the
 > retired script and stay only as the record of what it did. The self-chain
 > refusal moved into `relayConfigFromEnv` with the launcher's exit status 94.
@@ -32,7 +32,7 @@ d094 gave the relay node a route through the conventional proxy variables.
 That leaves the other half of the deployment story unstated: **who points a
 local consumer at the relay?** The variables are the one spelling a
 restricted network already speaks, so the answer has to be an env fact — and
-an env fact that is *wrong* is worse than no env fact at all. Point a client
+an env fact that is _wrong_ is worse than no env fact at all. Point a client
 at a loopback listener with nothing behind it and every request that honors
 the variable fails, including requests that would have worked direct: a
 dead proxy address is a total egress outage wearing a routing costume.
@@ -41,7 +41,7 @@ Two shapes were available and neither was chosen deliberately:
 
 - **Ambient forwarding.** `coding-agent/run.sh` forwards the host's
   `HTTP_PROXY`/`HTTPS_PROXY`/`NO_PROXY` into the sandbox (docs/d074). On
-  the very host d094 targets, those are the *corporate* values, so the
+  the very host d094 targets, those are the _corporate_ values, so the
   sandbox dials the corporate proxy directly and never touches the tunnel —
   d079 §2.4's named regression, with d094's chain variables and the sandbox's
   proxy variables colliding under one spelling.
@@ -51,7 +51,7 @@ Two shapes were available and neither was chosen deliberately:
 
 Meanwhile the launcher carried a third spelling of the same fact: `run.sh`
 selected the deployment with `PROXY_MODE=exit|relay` — a two-valued knob
-whose every value names a *different* script, and which cannot express the
+whose every value names a _different_ script, and which cannot express the
 thing the relay side actually needs (start the relay, then run a child under
 it). d093 retired `-modes` for exactly this reason: a knob that can only
 restate what the code already knows.
@@ -101,8 +101,8 @@ restate what the code already knows.
       `GET /healthz` on the loopback listener, and the identity check is
       the `tunnel` field compared against the URL normalized exactly as the
       binary normalizes it (d090: http(s) → ws(s)). Three outcomes:
-      *ours* → reuse; *nothing answered* → start; *something else
-      answered* → refuse by name. A foreign listener squatting on the port
+      _ours_ → reuse; _nothing answered_ → start; _something else
+      answered_ → refuse by name. A foreign listener squatting on the port
       must never become the child's silent proxy, and a second relay must
       never be started behind it.
    3. **Start, then wait bounded.** Detached, host-network, with a restart
@@ -120,7 +120,7 @@ restate what the code already knows.
 
 5. **The env sequencing is the whole point, and it is pinned.** The relay's
    own upstream chain (d094) is read from the HOST environment, so the chain
-   step starts the relay *before* it exports the loopback spelling. Export
+   step starts the relay _before_ it exports the loopback spelling. Export
    first and the relay chains to itself. A guard refuses the start outright
    when the ambient proxy spelling already names the listener it is about to
    start.
@@ -142,7 +142,7 @@ restate what the code already knows.
    wrapper's readiness gate, not a check inside the launcher. A consumer that
    rides the chain step needs no new check of its own:
    `coding-agent/run.sh`'s existing `workload_env_allowlist` line now
-   forwards the *loopback* values, because the chain step rewrote the host
+   forwards the _loopback_ values, because the chain step rewrote the host
    env before the launcher ran. Host-side consumers that read the env
    directly (`lib/node-run.sh`'s `NODE_USE_ENV_PROXY=1` generators) ride the
    same relay for free.
@@ -186,7 +186,7 @@ restate what the code already knows.
 - `VPN_OPERATOR_TOKEN` missing → exit 94 naming the variable, before any
   probe.
 - The relay container's argv: `--detach --restart=unless-stopped
-  --network=host`, the chain variable *names* forwarded (d094), the
+  --network=host`, the chain variable _names_ forwarded (d094), the
   loopback spelling nowhere in its own chain env.
 - `estige/tests/check-vpn-relay-chain.sh` pins all four; `coding-agent/tests/check-workload.test.mjs`
   pins the `--restart` flag position.

@@ -16,17 +16,17 @@ checkout upkeep it claims to. Every claim below was executed, not inferred.
 
 ## Verdict at a glance
 
-| Component | Verdict |
-|---|---|
-| `./build.sh` go install path | **Never works** — structurally impossible while upstream go.mod has `replace` directives (all platforms) |
-| `./build.sh` checkout build | Works on Termux; verified end-to-end (`git pull --ff-only` + `-checklinkname=0` build, ~50 min) |
-| `estige` native build | Works untouched — `GOOS=android` binary builds in seconds |
-| `estige` runtime | Works — serves, streams, and reaches real HTTPS upstreams (models.dev 200 through the proxy) |
-| `estige` smoke test | Was 28/29 on this host — the one failure was a **harness calibration bug** (absolute timing threshold), fixed; now 29/29 |
+| Component                    | Verdict                                                                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `./build.sh` go install path | **Never works** — structurally impossible while upstream go.mod has `replace` directives (all platforms)                 |
+| `./build.sh` checkout build  | Works on Termux; verified end-to-end (`git pull --ff-only` + `-checklinkname=0` build, ~50 min)                          |
+| `estige` native build        | Works untouched — `GOOS=android` binary builds in seconds                                                                |
+| `estige` runtime             | Works — serves, streams, and reaches real HTTPS upstreams (models.dev 200 through the proxy)                             |
+| `estige` smoke test          | Was 28/29 on this host — the one failure was a **harness calibration bug** (absolute timing threshold), fixed; now 29/29 |
 
 ## 1. `./build.sh` — the `go install` primary path is dead
 
-The header claimed `go install github.com/Infisical/cli@main` had *replaced*
+The header claimed `go install github.com/Infisical/cli@main` had _replaced_
 the checkout-clone maintenance ("no clone, no checkout refresh, no local
 build state"). **False**, on two independent counts:
 
@@ -48,7 +48,7 @@ $ echo $?
 
 Exit 1, no binary. There is no flag to bypass this; it fails before any
 compilation. So the "reduced maintenance" premise was wrong from the start:
-the clone + `git pull --ff-only` + `go build` path is the *only* path that
+the clone + `git pull --ff-only` + `go build` path is the _only_ path that
 produces a binary, on every platform.
 
 ### 1b. Android linkname rejection (the real, narrower issue)
@@ -89,10 +89,10 @@ The dual-mode `build.sh` detects `$PREFIX` and builds the native
 On this host it measured ~305 ms — but a **direct** fetch of the same first
 chunk from the upstream node process (bypassing the proxy) is also ~300 ms:
 
-| measurement (termux, first chunk, node interval = 100 ms) | time |
-|---|---|
-| direct: curl → upstream node | 296 / 297 / 317 ms |
-| through proxy | 301 / 316 / 330 ms |
+| measurement (termux, first chunk, node interval = 100 ms) | time               |
+| --------------------------------------------------------- | ------------------ |
+| direct: curl → upstream node                              | 296 / 297 / 317 ms |
+| through proxy                                             | 301 / 316 / 330 ms |
 
 Proxy overhead ≈ 0–15 ms — `FlushInterval: -1` is genuinely unbuffered; the
 absolute threshold is simply unachievable on this CPU (curl + node spawn +
