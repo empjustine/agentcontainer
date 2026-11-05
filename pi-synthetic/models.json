@@ -86,6 +86,32 @@
           }
         },
         {
+          "id": "hf:moonshotai/Kimi-K3.1-Pro",
+          "name": "Kimi K3.1 Pro",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 524288,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 2,
+            "output": 10,
+            "cacheRead": 0.2,
+            "cacheWrite": 0
+          },
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": null,
+            "low": "low",
+            "medium": null,
+            "high": "high",
+            "xhigh": null,
+            "max": "max"
+          }
+        },
+        {
           "id": "hf:openai/gpt-oss-120b",
           "name": "GPT-OSS-120B",
           "reasoning": true,

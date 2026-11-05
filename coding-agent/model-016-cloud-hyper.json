@@ -411,6 +411,38 @@
           }
         },
         {
+          "id": "kimi-k3.1-pro",
+          "name": "Kimi K3.1 Pro",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 262144,
+          "cost": {
+            "input": 2.2,
+            "output": 11,
+            "cacheRead": 0.22,
+            "cacheWrite": 0
+          },
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": null,
+            "low": "low",
+            "medium": null,
+            "high": "high",
+            "xhigh": null,
+            "max": "max"
+          },
+          "compat": {
+            "supportsStore": false,
+            "supportsReasoningEffort": true,
+            "thinkingFormat": "deepseek",
+            "maxTokensField": "max_tokens"
+          }
+        },
+        {
           "id": "minimax-m2.7",
           "name": "MiniMax-M2.7",
           "reasoning": false,
@@ -465,6 +497,38 @@
           }
         },
         {
+          "id": "muse-spark-open",
+          "name": "Muse Spark Open",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 1048576,
+          "cost": {
+            "input": 1.4,
+            "output": 4.65,
+            "cacheRead": 0.17,
+            "cacheWrite": 0
+          },
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": null
+          },
+          "compat": {
+            "supportsStore": false,
+            "supportsReasoningEffort": true,
+            "thinkingFormat": "deepseek",
+            "maxTokensField": "max_tokens"
+          }
+        },
+        {
           "id": "prism",
           "name": "Prism",
           "reasoning": false,
@@ -473,11 +537,34 @@
             "image"
           ],
           "contextWindow": 1000000,
-          "maxTokens": 16000,
+          "maxTokens": 131072,
           "cost": {
             "input": 3.2664,
             "output": 16.332,
             "cacheRead": 0.32664,
+            "cacheWrite": 0
+          },
+          "compat": {
+            "supportsStore": false,
+            "supportsReasoningEffort": false,
+            "thinkingFormat": "deepseek",
+            "maxTokensField": "max_tokens"
+          }
+        },
+        {
+          "id": "prism-core",
+          "name": "Prism Core",
+          "reasoning": false,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 1.52432,
+            "output": 4.79072,
+            "cacheRead": 0.283088,
             "cacheWrite": 0
           },
           "compat": {

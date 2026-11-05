@@ -3,8 +3,8 @@
  *
  * The catalog the extension registers when it cannot read the provider's
  * listing: the same shaping that produced pi-synthetic/models.json, rendered
- * with the pi-ai model field names. Regenerate with npm_run pi-synthetic
- * generate (source ./npm-run.sh at the repo root first); the git diff is the
+ * with the pi-ai model field names. Regenerate with ./npm-run.sh pi-synthetic
+ * generate; the git diff is the
  * review.
  */
 
@@ -81,6 +81,35 @@ export const SYNTHETIC_MODELS = [
 			"input": 3,
 			"output": 15,
 			"cacheRead": 0.45,
+			"cacheWrite": 0
+		},
+		"compat": {
+			"supportsReasoningEffort": true
+		},
+		"thinkingLevelMap": {
+			"off": null,
+			"minimal": null,
+			"low": "low",
+			"medium": null,
+			"high": "high",
+			"xhigh": null,
+			"max": "max"
+		}
+	},
+	{
+		"id": "hf:moonshotai/Kimi-K3.1-Pro",
+		"name": "Kimi K3.1 Pro",
+		"contextWindow": 524288,
+		"maxTokens": 65536,
+		"reasoning": true,
+		"input": [
+			"text",
+			"image"
+		],
+		"cost": {
+			"input": 2,
+			"output": 10,
+			"cacheRead": 0.2,
 			"cacheWrite": 0
 		},
 		"compat": {

@@ -789,6 +789,13 @@
           ]
         },
         {
+          "id": "crouton-alpha-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "deepseek-v4-flash",
           "reasoning": true,
           "input": [
@@ -1496,6 +1503,13 @@
           ]
         },
         {
+          "id": "pulse-alpha-free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "qwen3-coder",
           "reasoning": true,
           "input": [
@@ -1621,6 +1635,13 @@
         },
         {
           "id": "hy3",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "hy4",
           "reasoning": true,
           "input": [
             "text"
@@ -1847,26 +1868,6 @@
           ],
           "contextWindow": 262144,
           "maxTokens": 262144
-        },
-        {
-          "id": "thinkingmachines/inkling-small:free",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 1048576,
-          "maxTokens": 1048576
-        },
-        {
-          "id": "thinkingmachines/inkling:free",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 1048576,
-          "maxTokens": 1048576
         },
         {
           "id": "xingchen-agi/xing4.0-29b-a4b:free",

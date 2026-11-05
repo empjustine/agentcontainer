@@ -2,12 +2,12 @@
   "_meta": {
     "schema": "fact-cache/1",
     "source": "hyper",
-    "contentSha256": "7ea7545f51c83337db9dfd3d9ea2d70ac1961a7f0434670999407ddb233d614d",
+    "contentSha256": "278a6fa799cfb18c9c53bb34622475dc1ef347e5aea3a8c1b85c2efb05b885c4",
     "generator": "coding-agent/catalog-facts.mjs",
     "regen": "node coding-agent/generate-pi-coding-agent.mjs",
     "decision": "docs/d086"
   },
-  "fetchedAt": "2026-10-29T16:53:24.470Z",
+  "fetchedAt": "2026-11-05T17:30:54.175Z",
   "models": [
     {
       "id": "deepseek-v4-flash-0731",
@@ -225,6 +225,24 @@
       "supports_attachments": true
     },
     {
+      "id": "kimi-k3.1-pro",
+      "name": "Kimi K3.1 Pro",
+      "cost_per_1m_in": 2.2,
+      "cost_per_1m_out": 11,
+      "cost_per_1m_in_cached": 0,
+      "cost_per_1m_out_cached": 0.22,
+      "context_window": 1000000,
+      "default_max_tokens": 262144,
+      "can_reason": true,
+      "reasoning_levels": [
+        "low",
+        "high",
+        "max"
+      ],
+      "default_reasoning_effort": "high",
+      "supports_attachments": true
+    },
+    {
       "id": "minimax-m2.7",
       "name": "MiniMax M2.7",
       "cost_per_1m_in": 0.484,
@@ -255,6 +273,25 @@
       "supports_attachments": true
     },
     {
+      "id": "muse-spark-open",
+      "name": "Muse Spark Open",
+      "cost_per_1m_in": 1.4,
+      "cost_per_1m_out": 4.65,
+      "cost_per_1m_in_cached": 0,
+      "cost_per_1m_out_cached": 0.17,
+      "context_window": 1048576,
+      "default_max_tokens": 1048576,
+      "can_reason": true,
+      "reasoning_levels": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "default_reasoning_effort": "xhigh",
+      "supports_attachments": true
+    },
+    {
       "id": "prism",
       "name": "Prism",
       "cost_per_1m_in": 3.2664,
@@ -262,7 +299,19 @@
       "cost_per_1m_in_cached": 0,
       "cost_per_1m_out_cached": 0.32664,
       "context_window": 1000000,
-      "default_max_tokens": 16000,
+      "default_max_tokens": 131072,
+      "can_reason": false,
+      "supports_attachments": true
+    },
+    {
+      "id": "prism-core",
+      "name": "Prism Core",
+      "cost_per_1m_in": 1.52432,
+      "cost_per_1m_out": 4.79072,
+      "cost_per_1m_in_cached": 0,
+      "cost_per_1m_out_cached": 0.283088,
+      "context_window": 1000000,
+      "default_max_tokens": 131072,
       "can_reason": false,
       "supports_attachments": true
     },

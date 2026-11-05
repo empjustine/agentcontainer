@@ -4,8 +4,8 @@
  * The catalog the extension registers when it cannot read the provider's
  * listing: the same shaping that produced pi-hyper/models.json, rendered with
  * the pi-ai model field names (mandatory cost block — the one deliberate
- * divergence, see merge.mjs). Regenerate with npm_run pi-hyper generate
- * (source ./npm-run.sh at the repo root first); the git diff is the review.
+ * divergence, see merge.mjs). Regenerate with ./npm-run.sh pi-hyper generate
+ *; the git diff is the review.
  */
 
 export const HYPER_MODELS = [
@@ -410,6 +410,38 @@ export const HYPER_MODELS = [
 		}
 	},
 	{
+		"id": "kimi-k3.1-pro",
+		"name": "Kimi K3.1 Pro",
+		"contextWindow": 1000000,
+		"maxTokens": 262144,
+		"reasoning": true,
+		"input": [
+			"text",
+			"image"
+		],
+		"cost": {
+			"input": 2.2,
+			"output": 11,
+			"cacheRead": 0.22,
+			"cacheWrite": 0
+		},
+		"compat": {
+			"supportsStore": false,
+			"supportsReasoningEffort": true,
+			"thinkingFormat": "deepseek",
+			"maxTokensField": "max_tokens"
+		},
+		"thinkingLevelMap": {
+			"off": null,
+			"minimal": null,
+			"low": "low",
+			"medium": null,
+			"high": "high",
+			"xhigh": null,
+			"max": "max"
+		}
+	},
+	{
 		"id": "minimax-m2.7",
 		"name": "MiniMax M2.7",
 		"contextWindow": 262100,
@@ -464,10 +496,42 @@ export const HYPER_MODELS = [
 		}
 	},
 	{
+		"id": "muse-spark-open",
+		"name": "Muse Spark Open",
+		"contextWindow": 1048576,
+		"maxTokens": 1048576,
+		"reasoning": true,
+		"input": [
+			"text",
+			"image"
+		],
+		"cost": {
+			"input": 1.4,
+			"output": 4.65,
+			"cacheRead": 0.17,
+			"cacheWrite": 0
+		},
+		"compat": {
+			"supportsStore": false,
+			"supportsReasoningEffort": true,
+			"thinkingFormat": "deepseek",
+			"maxTokensField": "max_tokens"
+		},
+		"thinkingLevelMap": {
+			"off": null,
+			"minimal": null,
+			"low": "low",
+			"medium": "medium",
+			"high": "high",
+			"xhigh": "xhigh",
+			"max": null
+		}
+	},
+	{
 		"id": "prism",
 		"name": "Prism",
 		"contextWindow": 1000000,
-		"maxTokens": 16000,
+		"maxTokens": 131072,
 		"reasoning": false,
 		"input": [
 			"text",
@@ -477,6 +541,29 @@ export const HYPER_MODELS = [
 			"input": 3.2664,
 			"output": 16.332,
 			"cacheRead": 0.32664,
+			"cacheWrite": 0
+		},
+		"compat": {
+			"supportsStore": false,
+			"supportsReasoningEffort": false,
+			"thinkingFormat": "deepseek",
+			"maxTokensField": "max_tokens"
+		}
+	},
+	{
+		"id": "prism-core",
+		"name": "Prism Core",
+		"contextWindow": 1000000,
+		"maxTokens": 131072,
+		"reasoning": false,
+		"input": [
+			"text",
+			"image"
+		],
+		"cost": {
+			"input": 1.52432,
+			"output": 4.79072,
+			"cacheRead": 0.283088,
 			"cacheWrite": 0
 		},
 		"compat": {

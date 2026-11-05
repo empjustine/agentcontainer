@@ -4,8 +4,8 @@
  * The catalog the extension registers when it cannot read the provider's
  * listing: the same shaping that produced pi-verboo/models.json, rendered with
  * the pi-ai model field names (mandatory zero cost block — the one
- * deliberate divergence, see merge.mjs). Regenerate with npm_run pi-verboo
- * generate (source ./npm-run.sh at the repo root first); the git diff is the
+ * deliberate divergence, see merge.mjs). Regenerate with ./npm-run.sh pi-verboo
+ * generate; the git diff is the
  * review.
  */
 

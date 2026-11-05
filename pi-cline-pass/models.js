@@ -5,8 +5,8 @@
  * same shaping that produced pi-cline-pass/models.json, rendered with the
  * pi-ai model field names (mandatory cost block, per-model compat — the
  * two projections differ there deliberately, see merge.mjs).
- * Regenerate with npm_run pi-cline-pass generate (source ./npm-run.sh at the
- * repo root first); the git diff is the review.
+ * Regenerate with ./npm-run.sh pi-cline-pass generate from the
+ * repo root; the git diff is the review.
  */
 
 export const CLINE_PASS_MODELS = [
