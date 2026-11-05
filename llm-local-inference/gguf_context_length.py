@@ -20,12 +20,16 @@ Usage:
     uv run llm-local-inference/gguf_context_length.py PATH [PATH ...]
     uv run llm-local-inference/gguf_context_length.py --repo unsloth/Qwen3.8-27B-GGUF
 """
-import os, sys, glob, argparse
-from gguf import GGUFReader
+import argparse
+import glob
+import os
 
 # Structured logging (JSON lines on stderr; see lib/log.py) — stdout stays
 # reserved for machine-consumed output.
 import pathlib as _pl
+import sys
+
+from gguf import GGUFReader
 
 sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
 import log
@@ -52,7 +56,7 @@ def show(path):
         # gguf.GGUFReader exposes metadata as `fields` (OrderedDict of ReaderField);
         # ReaderField.contents() returns the parsed value. Build a flat dict once.
         md = {k: f.contents() for k, f in r.fields.items()}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — unreadable headers are skipped with a note; that IS the scan
         print(f"FILE: {path}\n   (skipped: not a readable GGUF header: {e})\n")
         return
     arch = md.get("general.architecture")

@@ -20,11 +20,11 @@ ref (see main() below).
 Env: HF_HUB_CACHE, HF_HOME, HF_TOKEN (see hf-cache-upkeep.md).
 """
 import os
-import sys
 
 # Structured logging (JSON lines on stderr; see lib/log.py) — stdout stays
 # reserved for machine-consumed output.
 import pathlib as _pl
+import sys
 
 sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
 import log
@@ -35,9 +35,9 @@ log.set_tool("llm-local-inference/upkeep")
 log.set_stream(sys.stderr)
 
 from huggingface_hub import (
+    HfApi,
     scan_cache_dir,
     snapshot_download,
-    HfApi,
 )
 
 
@@ -80,7 +80,7 @@ def pull_newer(cache_dir: str) -> None:
             continue
         try:
             refs = api.list_repo_refs(repo_id=repo.repo_id, repo_type="model")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — remote-ref failure skips the repo; the next sweep retries
             log.warn("cannot read remote refs; skipping", repo=repo.repo_id, error=e)
             continue
         remote = {r.name: _commit(r) for r in refs.branches}
@@ -112,7 +112,7 @@ def pull_newer(cache_dir: str) -> None:
                         revision=name,
                         ignore_patterns=["*.gguf"],
                     )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — pull failure logged; the next sweep retries
                 log.warn("pull failed", repo=repo.repo_id, error=e)
 
 

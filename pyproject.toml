@@ -1,0 +1,32 @@
+# Tooling home for llm-local-inference/'s python scripts (docs/d113 kept the
+# unit standalone; this file is REPO-level gate infrastructure, like package.json).
+#
+# WHY a project file exists at all: ty resolves third-party imports only
+# against a real environment, and ruff/ty need one pinned home for their
+# config — the node_modules package-lock.json analog for the python tree.
+# The scripts themselves stay PEP 723 self-contained (`uv run file.py`);
+# this env exists so the lint gate can check them as-authored, not to ship
+# anything.
+[project]
+name = "agentcontainer-gate"
+version = "0.0.0"
+# Matches the oldest interpreter the scripts' own PEP 723 headers promise
+# (all seven # requires-python = ">=3.11" headers); ty's target-version
+# derives from this line, so the two must stay in step.
+requires-python = ">=3.11"
+# The imports this tree actually declares (huggingface_hub, gguf) — only
+# what the type checker must see, never a runtime the repo executes itself.
+dependencies = [
+    "huggingface-hub>=0.23.0",
+    "gguf",
+]
+
+# NOTE on ty: its `[tool.ty.environment]` table is schema-validated by
+# ty 0.0.95 but NOT applied (the interpreter/search paths stay at ty's
+# defaults — measured, 2026-11-06). lint.sh therefore passes
+# --python/--extra-search-path flags explicitly; run the same flags for an
+# interactive check. When a ty release applies this table, move them here.
+[tool.uv]
+# Virtual (non-package) project: nothing is built or installed from THIS
+# tree — uv only materializes the dependency environment for the gate.
+package = false

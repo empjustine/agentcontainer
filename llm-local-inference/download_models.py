@@ -53,6 +53,10 @@ Exit code 1 if any configured file is missing from its repo or fails to download
 
 import argparse
 import json
+
+# Structured logging (JSON lines on stderr; see lib/log.py) — stdout stays
+# reserved for machine-consumed output.
+import pathlib as _pl
 import re
 import sys
 from collections import defaultdict
@@ -60,10 +64,6 @@ from pathlib import Path
 
 from huggingface_hub import HfApi, snapshot_download
 from huggingface_hub.hf_api import RepoFile
-
-# Structured logging (JSON lines on stderr; see lib/log.py) — stdout stays
-# reserved for machine-consumed output.
-import pathlib as _pl
 
 sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
 import log
@@ -116,7 +116,7 @@ def resolve(api, repo, entries):
         commit = api.repo_info(repo_id=repo, revision="main").sha
         tree = {t.path for t in api.list_repo_tree(
             repo_id=repo, revision=commit, recursive=True) if isinstance(t, RepoFile)}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — resolve failure is reported as an error list, not a crash
         return None, [], [f"cannot resolve {repo}@main: {e}"]
 
     wanted = []
@@ -163,7 +163,7 @@ def main():
     total_bytes = 0
     for repo, entries in sorted(by_repo.items()):
         log.info("repo plan", repo=repo, entries=len(entries))
-        commit, wanted, errors = resolve(api, repo, entries)
+        _commit, wanted, errors = resolve(api, repo, entries)
         failures += len(errors)
         for err in errors:
             log.error("resolution failed", error=err)
@@ -183,7 +183,7 @@ def main():
                 size = (Path(folder) / fname).stat().st_size
                 total_bytes += size
                 log.info("file ensured", file=fname, gib=round(size / 2**30, 2))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — per-file failure logged; the plan continues
             failed = sorted({fname for fname, _ in wanted})
             failures += len(failed)
             for fname in failed:

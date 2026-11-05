@@ -28,17 +28,20 @@ Usage:
     uv run llm-local-inference/scan_cache_coverage.py
     uv run llm-local-inference/scan_cache_coverage.py --cache /path/to/hub --manifest /path/to/llamacpp-model-data.json
 """
-import os, re, sys, json, argparse
+import argparse
+import json
+import os
+import re
 
 # The sidecar filter and cache-root order are shared with the manifest
 # scanner (same directory, so plain import: see _hf_cache.py).
 from _hf_cache import is_model_file, resolve_cache
 
-RE_SPLIT = re.compile(r"^(.+)-(\d{5})-of-(\d{5})$", re.I)
-RE_TAG = re.compile(r"[-.]([A-Z0-9_]+)$", re.I)
+RE_SPLIT = re.compile(r"^(.+)-(\d{5})-of-(\d{5})$", re.IGNORECASE)
+RE_TAG = re.compile(r"[-.]([A-Z0-9_]+)$", re.IGNORECASE)
 
 def split_info(name):
-    base = name[:-5] if name.endswith(".gguf") else name
+    base = name.removesuffix(".gguf")
     idx = count = 1
     m = RE_SPLIT.match(base)
     if m:
@@ -56,7 +59,7 @@ QUANT_KW = {"Q4_K_S", "Q4_K_M", "Q4_K_XL", "Q6_K", "Q6_K_XL", "Q8_0", "Q8_K_XL",
 def ambiguity(name):
     if "bpw" in name.lower():
         return "bpw-suffix (llama.cpp shows trailing <n>BPW, not the named quant)"
-    stem = name[:-5] if name.endswith(".gguf") else name
+    stem = name.removesuffix(".gguf")
     toks = [t for t in re.split(r"[-.]", stem) if t in QUANT_KW]
     if len(set(toks)) >= 2:
         return "multiple quant keywords in filename: " + "/".join(sorted(set(toks)))

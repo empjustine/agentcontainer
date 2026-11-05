@@ -35,17 +35,17 @@ Exit code 1 if any configured model disagrees with the heuristic pick.
 
 import argparse
 import json
-import re
-import sys
-from datetime import datetime, timezone
-from pathlib import Path
-
-from huggingface_hub import HfApi
-from huggingface_hub.hf_api import RepoFile
 
 # Structured logging (JSON lines on stderr; see lib/log.py) — stdout stays
 # reserved for machine-consumed output.
 import pathlib as _pl
+import re
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+
+from huggingface_hub import HfApi
+from huggingface_hub.hf_api import RepoFile
 
 sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
 import log
@@ -80,7 +80,7 @@ def fetch_manifest(api, repo):
              for t in api.list_repo_tree(repo_id=repo, revision=commit, recursive=True)
              if isinstance(t, RepoFile)]
     return {"repo": repo, "commit": commit,
-            "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "fetched_at": datetime.now(UTC).isoformat(timespec="seconds"),
             "files": files}
 
 
@@ -161,7 +161,7 @@ def main():
         if repo not in seen:
             try:
                 seen[repo] = load_manifest(api, repo, args.offline)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 — FETCH FAILED is counted into mismatches, not fatal
                 print(f"{m['hf-repo']:52s} FETCH FAILED: {e}")
                 mismatches += 1
                 continue

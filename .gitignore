@@ -12,3 +12,8 @@ node_modules/
 # writes __pycache__ beside every imported module (the unit's own lib/
 # included). Disposable by definition: no .pyc is ever an input.
 __pycache__/
+
+# The gate's python environment (lint.sh's `uv sync --frozen` from
+# pyproject.toml + uv.lock) — node_modules' twin: disposable, rebuilt on
+# demand, never tracked. uv.lock IS tracked (the package-lock.json analog).
+.venv/

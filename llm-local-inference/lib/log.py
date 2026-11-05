@@ -67,7 +67,7 @@ def set_stream(stream) -> None:
 
 
 def emit(level: str, msg: str, **fields) -> None:
-    ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ts = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     if os.environ.get("LOG_FORMAT") == "logfmt":
         def val(v) -> str:
             s = str(v)

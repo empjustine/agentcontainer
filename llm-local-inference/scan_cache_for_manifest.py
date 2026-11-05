@@ -31,12 +31,12 @@ Usage:
 import argparse
 import json
 import os
-import re
-import sys
-from pathlib import Path
 
 # Structured logging (JSON lines on stderr).
 import pathlib as _pl
+import re
+import sys
+from pathlib import Path
 
 sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
 import log
@@ -109,7 +109,7 @@ def extract_quant_tag(filename: str) -> str:
     """
     base = filename[:-5]
     # Only the trailing tag varies; everything before it is the repo stem.
-    m = re.search(r"([A-Z0-9_]+(?:-[0-9.]+bpw)?)\.gguf$", filename, re.I)
+    m = re.search(r"([A-Z0-9_]+(?:-[0-9.]+bpw)?)\.gguf$", filename, re.IGNORECASE)
     if m:
         return m.group(1).upper()
     parts = re.split(r"[-.]", base)
@@ -278,7 +278,7 @@ def main():
         print("SCAN REPORT: HF Cache → llamacpp-model-data.json", file=sys.stderr)
         print(f"{'=' * 80}", file=sys.stderr)
 
-        print(f"\nGGUF repos with NEW entries: {len(set(e['hf-repo'].split(':')[0] for e in new_entries))}", file=sys.stderr)
+        print(f"\nGGUF repos with NEW entries: {len({e['hf-repo'].split(':')[0] for e in new_entries})}", file=sys.stderr)
         print(f"Total new GGUF entries: {len(new_entries)}", file=sys.stderr)
         print(f"Non-GGUF repos (skipped): {len(non_gguf_repos)}", file=sys.stderr)
 
