@@ -8,7 +8,7 @@
  *
  * Probes address each provider's CANONICAL upstream (the fact table) and
  * reach the serving edge through the environment proxy — NODE_USE_ENV_PROXY=1
- * plus HTTP(S)_PROXY, both set by lib/node-run.sh and the image (docs/d074),
+ * plus HTTP(S)_PROXY, both set by ./node-run.sh and the image (docs/d074),
  * so node's own fetch honors them and no repo-side dispatcher exists. The
  * prefixed reverse-proxy probe (`<base>/<upstream-host>/…`, d047/d063) is
  * gone from this path with the tunnel migration (docs/d108): a probe says
@@ -61,7 +61,7 @@ const { logWarn } = /** @type {typeof import("./lib/log.mjs")} */ (
 	await import(`${LIB_DIR}/log.mjs`)
 );
 // Proxy env is handled by Node itself: NODE_USE_ENV_PROXY=1 (set by
-// lib/node-run.sh and the coding-agent image, docs/d074) makes global fetch()
+// ./node-run.sh and the coding-agent image, docs/d074) makes global fetch()
 // and http/https honor HTTP(S)_PROXY / NO_PROXY natively. The former undici
 // EnvHttpProxyAgent setGlobalDispatcher monkey-patch is retired — a repo-side
 // dispatcher would only shadow the native one and drift from it. Requires

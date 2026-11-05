@@ -35,7 +35,7 @@ network, because the claim it checks is about the outside world.
 
 Each unit answers with its own contract; the script knows no payload formats:
 
-- **pi-* extensions**: `npm_run <unit> generate --check`. The generator re-reads
+- **pi-* extensions**: `./npm-run.sh <unit> generate --check`. The generator re-reads
   its listing and exits nonzero when the committed artifacts no longer match.
 - **llm-local-inference**: `fetch_hf_manifests.py --offline`, an offline audit
   that every configured `--model` still resolves inside the cached manifest

@@ -28,7 +28,7 @@
  * fleet's cline-pass row carries liveSync: false for exactly that reason
  * (docs/d040 item 2), and this folder keeps the boundary.
  *
- * Usage: from the repo root, `. ./npm-run.sh && npm_run pi-cline-pass
+ * Usage: from the repo root, `./npm-run.sh pi-cline-pass
  * generate [--check]` — package.json's scripts are the entrypoint table
  * (docs/d113).
  *   --check verifies the committed artifacts match a fresh generation and
@@ -262,8 +262,8 @@ function seedSource(models) {
  * same shaping that produced pi-cline-pass/models.json, rendered with the
  * pi-ai model field names (mandatory cost block, per-model compat — the
  * two projections differ there deliberately, see merge.mjs).
- * Regenerate with npm_run pi-cline-pass generate (source ./npm-run.sh at the
- * repo root first); the git diff is the review.
+ * Regenerate with ./npm-run.sh pi-cline-pass generate from the
+ * repo root; the git diff is the review.
  */
 
 export const CLINE_PASS_MODELS = ${JSON.stringify(

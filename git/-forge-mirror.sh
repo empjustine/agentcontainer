@@ -8,8 +8,8 @@
 # mutation, so it queues behind a hand-run ./git/maintain.sh sweep and vice
 # versa — one mutation on the farm no matter which entry started it.
 set -eu
-# shellcheck source-path=SCRIPTDIR source=lib/node-run.sh
-. "$(dirname "$0")/lib/node-run.sh"
+unit=$(CDPATH='' cd "$(dirname "$0")" && pwd)
+repo=${unit%/*}
 # shellcheck source-path=SCRIPTDIR source=farm-lock.sh
-. "$(dirname "$0")/farm-lock.sh"
-with_farm_mutation_lock node_run "$(dirname "$0")/forge-mirror.mjs" "$@"
+. "$unit/farm-lock.sh"
+with_farm_mutation_lock "$repo/node-run.sh" "$unit/forge-mirror.mjs" "$@"

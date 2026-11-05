@@ -37,7 +37,7 @@ worth the warning.
 
 There are no generated artifacts, no `generate.sh`, no `--check` — the
 folder has nothing to regenerate. `tests/pi-mistral.test.mjs` (in this folder)
-pins the rules; run it with `. ./npm-run.sh && npm_run pi-mistral test` from
+pins the rules; run it with `./npm-run.sh pi-mistral test` from
 the repo root (all fetches injected — no network in `node --test`).
 
 ## Provenance

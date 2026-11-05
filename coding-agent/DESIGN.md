@@ -46,7 +46,7 @@ The image provides a pre-configured development environment including:
 
 ## Shape
 
-Since docs/d041 `generate.mjs` (via the `generate.sh` shim) IS the folder
+Since docs/d041 `generate.mjs` (run as `./npm-run.sh coding-agent generate`) IS the folder
 driver, and since the by-agent merge it drives exactly TWO generators — one
 per coding agent (the broad merge that supersedes docs/d037's narrow
 per-concern verdict; the supersession is recorded in the
@@ -85,7 +85,7 @@ enumerate **no** model lists: the agent cycles pi's own catalog
 setting is **deprecated** — no tooling here sets it (see `docs/requirements.md`
 FR-U3).
 
-`run.sh` (a shim over `run.mjs`, which does the work) launches the container:
+`run.mjs` (started by `./node-run.sh coding-agent/run.mjs`) launches the container:
 loads vault secrets **once on the host** via
 ./environment.sh and forwards them through the `workload_env` allowlist — nothing
 inside the workload runs infisical, and no credential store file is staged
@@ -100,14 +100,14 @@ missing overlay tolerated as partial config — while opencode's data dir
 dir aborts the run (keys resolve from forwarded env — pi's own empty `{}` is
 ignored; d052/d054). It NEVER generates (docs/d041, docs/d056): the generator
 tree is NOT mounted into the container, so an in-container session works
-against the host-generated config mounted above. `run.sh` takes
+against the host-generated config mounted above. `run.mjs` takes
 `[DIRECTORY [DIRECTORY...]]` instead — CWD is the implicit first directory,
 assembled by `run.mjs`'s pure `buildLaunch(argv, env)` so the mount manifest is
 a value the tests assert instead of a second run of the whole launcher —
 and exposes each rw — a home-relative path is spelled `/home/$USER/...` on
 the container side (docs/d068) — with the first as the workdir; the
 `~/Downloads/references` mirror is passed as just another directory, replacing
-the former `CODING_AGENT_REFERENCES` toggle (docs/d043, docs/d056). `run.sh` is
+the former `CODING_AGENT_REFERENCES` toggle (docs/d043, docs/d056). The launcher is
 container-ONLY (docs/d059): without podman/docker it refuses at the top —
 before staging anything — and names the sandbox-free path
 (`./environment.sh pi`, which spawns a bare PATH command as well as a
@@ -121,7 +121,7 @@ build; pi enforces its own ≥ 22.19 engines floor at launch), secrets arrive
 as plain env via the explicit chain, the models.dev catalog refresh is
 best-effort like everywhere else (running generate means "I want current
 networked data", docs/d060), the opencode stage is skipped unless
-`OPENCODE_CONFIG_DIR` is set. **Everywhere else** — repo-pinned node via this folder's own `lib/node-run.sh`, catalog
+`OPENCODE_CONFIG_DIR` is set. **Everywhere else** — repo-pinned node via the repo-root `node-run.sh`, catalog
 refreshed best-effort, probes addressing each provider's canonical upstream
 through the environment proxy.
 
@@ -147,9 +147,9 @@ through the environment proxy.
   probe.
 - **The shell surface is bootstrap only** (`node-scripts` port): every
   entrypoint is an npm script over `build.mjs`/`generate.mjs`/`run.mjs`, and the
-  two `.sh` files that remain only pick the interpreter (`lib/node-run.sh`) and
-  start a script under it (`lib/npm-run.sh`, so `npm` itself never lands on an
-  entrypoint's path). The launcher's argv assembly is a pure `buildLaunch` — the
+  three `.sh` files that remain only pick the interpreter (the repo-root
+  `node-run.sh`) and start a script under it (the repo-root `npm-run.sh`, so
+  `npm` itself never lands on an entrypoint's path). The launcher's argv assembly is a pure `buildLaunch` — the
   mount manifest is asserted, not incidentally produced — and the workload
   description is a JS module, so this folder needs **no `jq`** on the host
   (`estige/` and `llm-local-inference/` still ship their own jq copies,
@@ -158,7 +158,7 @@ through the environment proxy.
 - **URL form is verified, not assumed** (docs/d070):
   `check-canonical-artifacts.mjs` is the one detector — canonical upstreams
   over the committed artifacts (guarded by `tests/artifact-urls.test.mjs`)
-  and re-run at launch over the agent dir by `run.sh` (exit 94), which is
+  and re-run at launch over the agent dir by the launcher (exit 94), which is
   what catches a route-form leftover from the reverse-proxy generation.
 - **Route building is gone** (docs/d027, removed as insecure by docs/d108):
   cloud routes were `<base>/<upstream-host>` on the reverse proxy; clients
@@ -231,7 +231,7 @@ attribution, or behavioral copy — and every behavioral copy must be flagged).
 ## Boundary
 
 Copy unit = **this folder alone** (`docs/architecture.md`, docs/d113): its own
-`lib/`, its own `build.sh`/`generate.sh`, its own `tests/`. Nothing one level
+`lib/`, its own build/generate entry, its own `tests/`. Nothing one level
 up is implied — and nothing below is shared either: `tests/committed-manifests.test.mjs`
 (docs/d050's canonicity guard) lives here because this folder owns every
 manifest it asserts on.
@@ -249,8 +249,7 @@ It carries what this unit actually uses:
 | `catwalk-facts.json` | the secondary catalog fallback cache |
 | `fact-table.mjs` | the fact-table publisher (docs/d086) — exactly one consumer, so it lives here and nowhere else (docs/d113) |
 | `host-capabilities.mjs` | the capability gates the build registers targets on |
-| `node-run.sh` | the `node_run()` interpreter pin — the bootstrap every shell shim sources |
-| `npm-run.sh` | `npm_run <script>`: runs this folder's `package.json` script under the SAME pinned node, so `build.sh`/`generate.sh` need no `npm` on PATH |
+| `…/node-run.sh`, `…/npm-run.sh` | NOT here: both runners are one copy each at the repo root (docs/d138), and this folder ships **no `.sh` at all** — its entries are `./node-run.sh coding-agent/run.mjs` and `./npm-run.sh coding-agent {build,generate}`. `npm-run.sh` runs this folder's `package.json` script under the same pinned node, so no `npm` lands on an entrypoint's PATH |
 | `workload-runtime.mjs` | the workload API `run.mjs` describes the container with (`docs/container-tooling.md`) — description in, `container run` argv out. Replaced `workload-runtime.sh` + the six `workload-*.jq` filters, which is why this unit needs no `jq` on the host |
 
 `gen-lib.mjs` is the shared preamble for the pi-layer stages: it carries the pi

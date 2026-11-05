@@ -470,7 +470,7 @@ async function cmdQuery(argv) {
 }
 
 const USAGE =
-	"usage: ./git/search-references.sh <index|serve|query> [flags]\n\n" +
+	"usage: ./node-run.sh git/search-references.mjs <index|serve|query> [flags]\n\n" +
 	"  index [--only GLOB]... [--all] [--root DIR] [--index DIR] [--jobs N]\n" +
 	"        [--max-depth N] [--branches REFS] [--exclude GLOB]\n" +
 	"        (indexing is opt-in: --only selects repos; --all is the explicit farm-wide build)\n" +

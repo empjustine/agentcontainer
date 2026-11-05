@@ -3,7 +3,7 @@
 # vault, injects it into the child environment and spawns the target
 # (docs/d046).  One invocation, no dotenv parsing, nothing on disk:
 #
-#   ./environment.sh ./coding-agent/run.sh [args...]
+#   ./environment.sh ./node-run.sh coding-agent/run.mjs [args...]
 #   ./environment.sh pi                       # bare command → resolved on PATH
 #
 # Consumers read plain env and never load secrets themselves; a failing
@@ -40,7 +40,7 @@ LOG_TOOL='environment'
 export LOG_TOOL
 
 [ "$#" -ge 1 ] ||
-	log_die 91 "usage: ./environment.sh <script-or-command> [args...]  — e.g. ./environment.sh ./coding-agent/generate.sh, ./environment.sh pi"
+	log_die 91 "usage: ./environment.sh <script-or-command> [args...]  — e.g. ./environment.sh ./npm-run.sh coding-agent generate, ./environment.sh pi"
 
 target="$1"
 shift
@@ -91,7 +91,7 @@ elif command -v infisical >/dev/null 2>&1 && infisical --version >/dev/null 2>&1
 elif command -v mise >/dev/null 2>&1; then
 	_mise_wrap=1
 else
-	log_die 95 "no infisical binary — on Termux run ./estige/build.sh (source build via ./provision-termux.sh); elsewhere mise x infisical@latest, or a release binary on PATH"
+	log_die 95 "no infisical binary — on Termux run ./node-run.sh estige/build.mjs termux-provisioning (source build via ./provision-termux.sh); elsewhere mise x infisical@latest, or a release binary on PATH"
 fi
 
 _vault_exec() {

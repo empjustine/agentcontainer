@@ -84,7 +84,7 @@ async function main() {
 	const o = parseArgs(process.argv.slice(2));
 	if (o.help) {
 		process.stdout.write(
-			"usage: ./git/audit.sh [--root DIR] [--max-depth N]\n",
+			"usage: ./node-run.sh git/audit.mjs [--root DIR] [--max-depth N]\n",
 		);
 		return;
 	}

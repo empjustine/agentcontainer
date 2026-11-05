@@ -6,7 +6,7 @@
  *
  * The environment is loaded EXPLICITLY, before this launcher runs:
  *
- *   ./environment.sh ./coding-agent/run.sh
+ *   ./environment.sh ./node-run.sh coding-agent/run.mjs
  *
  * That chain (./environment.sh — the ONE infisical round-trip, on the host,
  * outside any sandbox) injects the vault into plain environment variables;
@@ -16,7 +16,7 @@
  * RUNNERS NEVER BUILD OR GENERATE (docs/d041): stale/missing generation is a
  * USER ISSUE. This launcher serves the generator's installed config — the host
  * agent dir and the host opencode config dir, both mounted as-is — refreshed by
- * ./generate.sh or the root ./generate.sh, which forward the vault env
+ * `./npm-run.sh coding-agent generate`, which forwards the vault env
  * themselves. A missing pi artifact is a loud failure pointing at the
  * generator, never an implicit regeneration; a missing opencode overlay is a
  * TOLERATED partial config (docs/d065 — opencode runs on its built-ins). The
@@ -29,7 +29,7 @@
  *   (docs/d068), because a host home may sit behind a symlink. CWD is the
  *   implicit first DIRECTORY, so extra arguments ADD mounts without restating
  *   the workdir; the first directory is also the container workdir.
- *   `./run.sh ~/Downloads/references` is the whole replacement for the retired
+ *   `./node-run.sh coding-agent/run.mjs ~/Downloads/references` is the whole replacement for the retired
  *   CODING_AGENT_REFERENCES toggle (docs/d043, docs/d056): the costly z,U
  *   relabel walk is paid only for a launch that names the mirror. A DIRECTORY
  *   resolving to $HOME is refused — HOME is host state and credentials, not a
@@ -156,7 +156,7 @@ const EXIT_ARTIFACT = 94;
  * stays out on purpose: only the generator consumes it (docs/d063, docs/d070),
  * and the generator does not run in here (docs/d056).
  *
- * NODE_USE_ENV_PROXY arrives from lib/node-run.sh, which pins it to 1 for this
+ * NODE_USE_ENV_PROXY arrives from ./node-run.sh, which pins it to 1 for this
  * process, so it is forwarded even when the host did not export it — the same
  * value the image's ENV already defaults to.
  */
@@ -361,7 +361,8 @@ THINKRAIL_DATA_DIR="/home/${user}/.thinkrail"
 export PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR OPENCODE_CONFIG_DIR CLINE_DIR CLINE_DATA_DIR THINKRAIL_DATA_DIR
 
 # NO generation here (docs/d041, docs/d056): the host agent dir is mounted
-# as-is and regeneration happens on the host via ./generate.sh. No logger
+# as-is and regeneration happens on the host through the npm runner
+# (./npm-run.sh coding-agent generate). No logger
 # either (docs/d067) — this chain is self-contained, and nothing from the
 # repo tree is bound for it.
 exec bash
@@ -584,11 +585,11 @@ function artifactGate(launch) {
 	for (const [file, message] of /** @type {[string, string][]} */ ([
 		[
 			"settings.json",
-			"no settings.json in the agent dir — run ./generate.sh first",
+			"no settings.json in the agent dir — run `./npm-run.sh coding-agent generate` first",
 		],
 		[
 			"models.json",
-			"no models.json in the agent dir — run ./generate.sh first (or the root ./generate.sh)",
+			"no models.json in the agent dir — run `./npm-run.sh coding-agent generate` first",
 		],
 		// mcp.json is required even though pi runs without it: "every environment
 		// has the committed servers" is the check's whole value, and the
@@ -596,7 +597,7 @@ function artifactGate(launch) {
 		// deleted file.
 		[
 			"mcp.json",
-			"no mcp.json in the agent dir — run ./generate.sh first (or the root ./generate.sh)",
+			"no mcp.json in the agent dir — run `./npm-run.sh coding-agent generate` first",
 		],
 	])) {
 		if (!hostFs.exists(join(launch.agentDir, file))) {
@@ -622,7 +623,7 @@ function artifactGate(launch) {
 	if (check.status !== 0) {
 		return new LaunchRefusal(
 			EXIT_ARTIFACT,
-			"installed models.json does not carry canonical provider URLs — run ./generate.sh (docs/d108)",
+			"installed models.json does not carry canonical provider URLs — run `./npm-run.sh coding-agent generate` (docs/d108)",
 			{ agentDir: launch.agentDir },
 		);
 	}
@@ -687,7 +688,7 @@ async function main() {
 	// fix.
 	if (!hostFs.exists(join(launch.opencodeConfigDir, "opencode.json"))) {
 		logWarn(
-			"no opencode.json in the host config dir — opencode launches on built-in (partial) config; run ./generate.sh to install",
+			"no opencode.json in the host config dir — opencode launches on built-in (partial) config; run `./npm-run.sh coding-agent generate` to install",
 			{ configDir: launch.opencodeConfigDir },
 		);
 	}

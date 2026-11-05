@@ -9,7 +9,7 @@
  * environment proxy's job (NODE_USE_ENV_PROXY + HTTP(S)_PROXY, docs/d074).
  * A route-form URL left behind by an older generation is now a dead endpoint
  * — which is exactly what this check catches: at launch over the agent dir's
- * models.json (run.sh) and in tests over the committed snapshots.
+ * models.json (the launcher) and in tests over the committed snapshots.
  *
  * The check is structural and keyed by provider id through the fact table —
  * never substring guesses over the file (docs/d070 Verification). Exit 0 =

@@ -45,8 +45,8 @@ run_mise_or_host() {
 }
 
 log_info "shellcheck"
-# -x: follow `source` directives (the generate.sh/build.sh shims point at their
-# own folder's lib/node-run.sh and lib/npm-run.sh; the shell run scripts point
+# -x: follow `source` directives (the run scripts point at their
+# own folder's lib copies; the shell run scripts point
 # at their lib/workload-runtime.sh — coding-agent's launcher is a node module,
 # docs/d119).
 # node_modules is pruned: npm's dependency tree may carry vendor *.sh files,
@@ -195,6 +195,19 @@ fi
 # once an operator ran the script. Textual, like the gate above, because the
 # break is a path, not a type. `*/tests/` is excluded on purpose — a test in
 # `<unit>/tests/` climbing one level reaches its own unit's lib.
+log_info "runner-copy gate (gating — tracked sources)"
+# The interpreter runners live ONCE, at the repo root (docs/d138). A unit copy
+# re-forks the pin — estige/build.sh had inlined the whole function before this
+# existed — and a fork of a version pin is exactly the drift no gate would catch
+# later, because the copy keeps working until the day it does not.
+if _runner_copies=$(git ls-files '*/lib/node-run.sh' '*/lib/npm-run.sh' '*/lib/node-run.ps1' '*/node-run.ps1'); then
+	if [ -n "$_runner_copies" ]; then
+		echo "per-unit runner copy — the pin is ./node-run.sh at the repo root (docs/d138):" >&2
+		echo "$_runner_copies" >&2
+		exit 1
+	fi
+fi
+
 log_info "retired-root-lib gate (gating — tracked sources)"
 if git grep -nE 'parent[.]parent|HERE[.]parent' -- '*.py' \
 	|| git grep -nE '[.][.]/lib/' -- '*.mjs' '*.sh' '*.jq' '*.ts' ':(exclude)*/tests/*'; then

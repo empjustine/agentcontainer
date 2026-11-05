@@ -315,7 +315,7 @@ async function main() {
 	const o = parseArgs(process.argv.slice(2));
 	if (o.help) {
 		process.stdout.write(
-			"usage: ./git/migrate.sh [--root DIR] [--dest DIR] [--jobs N]\n" +
+			"usage: ./node-run.sh git/migrate-to-bare.mjs [--root DIR] [--dest DIR] [--jobs N]\n" +
 				"                       [--max-depth N] [--redownload]\n" +
 				"                       [--delete-originals] [--force]\n" +
 				"                       [--only GLOB]... [--exclude GLOB]\n",

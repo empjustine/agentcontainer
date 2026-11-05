@@ -842,7 +842,7 @@ async function maintenanceStatus(argv) {
  * Usage names the SHIM, not this file: telling a caller to run the .mjs would
  * send them around the node-version pin the shim exists to apply.
  */
-const USAGE = `usage: ./git/farm-tool.sh TOOL [ARGS...]
+const USAGE = `usage: ./node-run.sh git/farm-tool.mjs TOOL [ARGS...]
 
 d099's reference-farm tool surface as a POSIX CLI: positional argv, one
 JSON object on stdout, structured logs on stderr. The later stdio MCP

@@ -33,7 +33,7 @@ hyper-specific deltas are below.
 `models.json` and `models.js` are written by `generate.mjs`. Hand-editing
 them is erased by the next generation run — fix the shaping instead. Both
 are in `biome.jsonc`'s ignore list (generated files, same reasoning as
-`coding-agent/model-*.json`). `. ./npm-run.sh && npm_run pi-hyper generate
+`coding-agent/model-*.json`). `./npm-run.sh pi-hyper generate
 --check` is the drift gate.
 
 ## The fleet seam (the one open piece)

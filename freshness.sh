@@ -64,9 +64,6 @@ case "${1:-}" in
 	;;
 esac
 
-# shellcheck source-path=SCRIPTDIR source=npm-run.sh
-. ./npm-run.sh
-
 # The one place a unit's secret requirement is written down: the generators
 # read `$<VAR>` inside the artifacts they emit (that is how pi forwards the key
 # to pi at run time), so nothing in the unit can report "I am skippable" before
@@ -101,7 +98,7 @@ for dir in ./*/; do
 	fi
 
 	[ "$quiet" = 1 ] || log_info "check" unit="$unit"
-	if npm_run "$unit" generate --check; then
+	if "$root/npm-run.sh" "$unit" generate --check; then
 		checked=$((checked + 1))
 	else
 		log_error "stale — the committed artifacts are not what upstream serves" unit="$unit"

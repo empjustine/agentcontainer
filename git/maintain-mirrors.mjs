@@ -104,7 +104,7 @@ const DEFAULT_MIN_INTERVAL = 1;
 /**
  * Seconds of idle before the next software-forge fetch when `--min-interval`
  * is unset — the rate-limit contract of the Visual Builder Studio tenant,
- * the maintainer's counterpart of `-vbs-mirror-all.sh`'s between-repositories
+ * the maintainer's counterpart of `vbs-mirror-all.mjs`'s between-repositories
  * throttle (docs/d044). It deliberately overrides DEFAULT_MIN_INTERVAL
  * upward: that tenant rate-limits even a fully serial sweep, so its floor
  * stays higher. 30 s rather than the original 60 s: the by-host scheduler

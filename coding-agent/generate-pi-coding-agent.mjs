@@ -1682,7 +1682,7 @@ function mergeModels(out) {
 
 /**
  * The settings source whose defaultProvider/defaultModel this generator
- * returns. generate.sh points $PI_SETTINGS at the file it installs (the
+ * returns. The generator points $PI_SETTINGS at the file it installs (the
  * agent dir's settings.json after the settings-install stage); manual runs
  * read the repo's committed copy.
  * @returns {string}

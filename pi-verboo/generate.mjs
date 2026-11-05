@@ -26,7 +26,7 @@
  * sibling artifacts, so there is no copy step, no `extension/` subfolder,
  * and nothing to keep in sync with `cmp`.
  *
- * Usage: . ./npm-run.sh && npm_run pi-verboo generate [--check]
+ * Usage: ./npm-run.sh pi-verboo generate [--check]
  *   --check verifies the committed artifacts match a fresh generation and
  *   exits non-zero on drift (the CI-shaped form; without it the run writes).
  *   Both forms need VERBOO_API_KEY — the listing is auth-gated.
@@ -249,8 +249,8 @@ function seedSource(models) {
  * The catalog the extension registers when it cannot read the provider's
  * listing: the same shaping that produced pi-verboo/models.json, rendered with
  * the pi-ai model field names (mandatory zero cost block — the one
- * deliberate divergence, see merge.mjs). Regenerate with npm_run pi-verboo
- * generate (source ./npm-run.sh at the repo root first); the git diff is the
+ * deliberate divergence, see merge.mjs). Regenerate with ./npm-run.sh pi-verboo
+ * generate; the git diff is the
  * review.
  */
 

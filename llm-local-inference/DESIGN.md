@@ -34,7 +34,8 @@ relay/proxy machinery is no longer exercised from here.
 ## Shape
 
 `generate.mjs` (generation — the former gen-lib.mjs + both emitters folded
-into one file, docs/d041; `generate.sh` is its node_run shim) and `run.sh`
+into one file, docs/d041; `./npm-run.sh llm-local-inference generate` runs it)
+and `run.sh`
 (serve) are strictly separated;
 `run.sh` mounts the generated `config.d/` read-only into the
 `llama-swap:unified-vulkan` image with GPU passthrough + HF-cache mounts and
@@ -79,7 +80,8 @@ endpoint.
   provisioning belongs to `download_models.py` and is never
   duplicated as a launch-time download. `run.sh` re-verifies the baked paths
   via the generated `.paths` manifest so a cache changed since generation is
-  a loud "re-run ./generate.sh", not a llama-server 127 at swap time.
+  a loud "re-run ./npm-run.sh llm-local-inference generate", not a llama-server 127
+  at swap time.
 - **Offline generation**: the local layer is built from vendored tables
   (`llamacpp-model-data.json`, `active-b.json`, `llama-swap-core.json`) plus a
   read of the host HF hub cache directory (no network) — the models.dev
@@ -98,7 +100,7 @@ endpoint.
 Copy unit = this folder alone (`docs/architecture.md`, docs/d113): it carries
 its own `lib/` copy — `log.mjs`/`log.py`, `artifact.mjs` +
 `canonical-json.mjs`, `host-capabilities.mjs`, `workload-runtime.sh` +
-`workload-*.jq`, `node-run.sh`, and the data tables it reads
+`workload-*.jq`, and the data tables it reads
 (`llamacpp-model-data.json`, `hf-manifests/`). The HF-cache provisioning and
 audit tooling that used to be the sibling `local-llm/` folder now lives FLAT in
 this folder too (`CACHE-DESIGN.md` is its sub-spec), so there is no separate

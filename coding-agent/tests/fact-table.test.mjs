@@ -13,7 +13,7 @@
  *
  * Everything runs on plain records in temp dirs — no network, no repo writes.
  *
- * Run: . ./lib/node-run.sh && node_run --test tests/*.test.mjs   (this folder)
+ * Run: ../node-run.sh --test tests/*.test.mjs   (this folder)
  */
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";

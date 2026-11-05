@@ -41,8 +41,8 @@ the llama-swap serving container and the pi coding-agent container.
 ### local-inference-host (full, default)
 
 The reference environment. Runs **one** multipurpose llama-swap instance,
-`llm-local-inference/` — generation (docs/d041: `generate.mjs`, via the
-`generate.sh` shim) detects the container backend + GPU
+`llm-local-inference/` — generation (docs/d041: `generate.mjs`, via
+`./npm-run.sh llm-local-inference generate`) detects the container backend + GPU
 devices and emits the layers it can into
 `config.d/`; `run.sh` launches the `unified-vulkan` image with GPU passthrough
 + HF cache on LAN port 8101 — plus the full `coding-agent/`. Rootless podman
@@ -155,12 +155,12 @@ to decide which config layers the host can run.)
 | `workload_rw <host> <guest>` | required read-write bind |
 | `workload_ro_if <host> <guest>` | optional variant (skipped if host path absent) |
 | `workload_env <NAME...>` | pass these host env vars into the workload (`--env`) |
-| `workload_env_allowlist <NAME...>` | like `workload_env`, but skips names whose host value is empty — a bare `--env NAME` on an unset var injects an EMPTY value, which consumers then read as “set”. Both vault-key forwarders (`coding-agent/run.sh`, the llama-swap path) use this one implementation (docs/d030) |
+| `workload_env_allowlist <NAME...>` | like `workload_env`, but skips names whose host value is empty — a bare `--env NAME` on an unset var injects an EMPTY value, which consumers then read as “set”. Both vault-key forwarders (the coding-agent launcher, the llama-swap path) use this one implementation (docs/d030) |
 | `workload_cmd <args...>` | the command (argv after the image) |
 | `workload_has <field>` | true when a description array is non-empty — e.g. `workload_has devices`, which is how `llm-local-inference/generate.mjs` gates the local-inference layer |
 | `workload_rm <id>` | remove a prior instance by name |
 | `workload_logs <id>` | tail a running instance's logs |
-| `workload_run [wrapper...]` | render + launch; optional `wrapper` prefixes the launch command. Host-side only — it cannot inject env into the workload; secrets reach the workload via the `workload_env` allowlist (see `coding-agent/run.sh`: host-side `./environment.sh` → forwarded vault env) |
+| `workload_run [wrapper...]` | render + launch; optional `wrapper` prefixes the launch command. Host-side only — it cannot inject env into the workload; secrets reach the workload via the `workload_env` allowlist (see `coding-agent/run.mjs`: host-side `./environment.sh` → forwarded vault env) |
 
 Only `workload_ro`/`workload_rw` (required) abort the run if the host path is
 gone; `workload_ro_if` is best-effort. Mount host/guest paths may contain
@@ -257,7 +257,7 @@ description API (`workload-render.jq` emits podman/docker dialects keyed on
 
 | API piece | bwrap translation | Verdict |
 |---|---|---|
-| `workload_image` | no OCI concept — a rootfs dir must be assembled by hand (`--ro-bind / `--bind` per tree) or the unified-vulkan image unpacked to disk first | **structural blocker** — loses the pull/build/layer story `build.sh` owns |
+| `workload_image` | no OCI concept — a rootfs dir must be assembled by hand (`--ro-bind / `--bind` per tree) or the unified-vulkan image unpacked to disk first | **structural blocker** — loses the pull/build/layer story `build.mjs` owns |
 | `workload_publish` | none from bwrap itself — prior art publishes via host `socat` ⇄ unix-socket bridges (fence) or from an in-ns proxy/firewall supervisor under slirp4netns (`microsoft/mxc`) | **still the blocking row for a dialect** — llama-swap must publish LAN 8101 (docs/d027); bridges make it feasible-not-free (surveyed in [workload-sandboxing-prior-art.md](workload-sandboxing-prior-art.md)) |
 | `workload_detach` / `workload_logs` / `workload_rm` | no daemon, no named workloads: bwrap is a foreground process; needs setsid+pidfile, stdout redirected to a file for `logs`, and a rm-by-pidfile | feasible but re-implements what podman/docker give for free |
 | `workload_ro`/`workload_rw` | `--ro-bind` / `--bind` (+ `--*-try` variants) | maps 1:1; SELinux `z,U` mount options have no equivalent (bwrap does not relabel; `--exec-label` only sets the process label) — a rootless-podman-on-SELinux host is exactly where this repo runs |
@@ -345,11 +345,11 @@ docs/d018 for the merge contract this supersedes.
   variant is retired (see the [termux-serving.md](termux-serving.md) banner).
   What runs on termux today: `coding-agent/` plus `estige/`'s installed
   service, from the `.deb` (`dpkg -i … && sv-enable estige`, docs/d120);
-  `./estige/build.sh` provisions the Infisical CLI there (via the repo-root
+  `./node-run.sh estige/build.mjs` provisions the Infisical CLI there (via the repo-root
   `provision-termux.sh`) and builds the android payload plus that package. The
   package itself needs neither `node` nor `jq`.
 
-### `coding-agent/run.sh` (full, default usage)
+### `coding-agent/run.mjs` (full, default usage)
 
 Launches the pi coding-agent container. The ARGV/env contract — directory
 mounts and their container-side spelling (docs/d056/d068), the
@@ -360,7 +360,7 @@ is owned by the run script's own header; this page carries only what a
 runbook needs:
 
 - **Secrets**: loaded ONCE on the HOST by the explicit chain
-  (`./environment.sh ./coding-agent/run.sh`, docs/d046) and forwarded
+  (`./environment.sh ./node-run.sh coding-agent/run.mjs`, docs/d046) and forwarded
   through the `workload_env` allowlist; pi resolves the `"$VAR"` api-key
   references at request time. Nothing inside the sandbox touches the vault
   (FR-U4).

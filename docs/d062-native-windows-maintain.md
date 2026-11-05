@@ -11,7 +11,7 @@ tags: [git, references, work, windows, powershell, wsl2, mirrors]
 
 # d062 — native Windows mirror maintenance (maintain.ps1)
 
-**Status:** implemented
+**Status:** implemented · the runner is EXECUTED since d138 and now lives at the repo root (`& ../node-run.ps1 maintain-mirrors.mjs`), not dot-sourced; the branch rationale below is unchanged.
 
 ## Problem
 
@@ -50,9 +50,10 @@ Two things stood in the way:
 
 ### 1. `git/maintain.ps1` — the native Windows entry
 
-maintain.sh's shim in PowerShell: fail-fast, dot-source
-`../lib/node-run.ps1`, `node_run maintain-mirrors.mjs`, propagate
-`$LASTEXITCODE`. Paths inside it are spelled with `/` — every PowerShell
+maintain.sh's shim in PowerShell: fail-fast, run
+`../node-run.ps1 maintain-mirrors.mjs` (it was dot-sourced when this was
+written — a function was the only way to share a pin with a sourcing shim;
+both sides invoke it since d138), propagate `$LASTEXITCODE`. Paths inside it are spelled with `/` — every PowerShell
 host accepts those — so the shim itself runs (and is checked) off Windows.
 Execution-policy note: the repo ships unsigned scripts, so Windows PowerShell
 5.1 needs `-ExecutionPolicy Bypass` (or an Unrestricted session); pwsh 7's

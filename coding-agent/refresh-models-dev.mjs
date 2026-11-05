@@ -17,7 +17,7 @@
  * download just advances to the next candidate. A payload that validates but
  * carries the same facts as the file already there is not written at all
  * (lib/fact-table.mjs, docs/d086). Proxy env is honored
- * natively by Node (NODE_USE_ENV_PROXY=1, set by lib/node-run.sh; docs/d074)
+ * natively by Node (NODE_USE_ENV_PROXY=1, set by ./node-run.sh; docs/d074)
  * — no repo-side dispatcher.
  *
  * Validation is scoped to what the generators consume from the catalog (see

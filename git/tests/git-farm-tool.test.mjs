@@ -147,20 +147,24 @@ test("no tool prints the usage on stderr and exits 2", () => {
 		const res = run([], env);
 		assert.equal(res.status, 2);
 		assert.equal(res.out, "");
-		assert.match(res.err, /^usage: \.\/git\/farm-tool\.sh TOOL/);
+		assert.match(res.err, /^usage: \.\/node-run\.sh git\/farm-tool\.mjs TOOL/);
 	} finally {
 		cleanup();
 	}
 });
 
-test("--help names the shim, never the .mjs behind it", () => {
+// The usage line is the interface a human AND the future MCP wrapper copy, so it
+// spells the invocation that actually works — the repo-root runner plus this
+// entry (docs/d138: there is no shim to name any more). A bare `farm-tool.mjs`
+// would be a path that cannot be run, and `git/lib/farm-posture.mjs` is cited
+// because that is where the posture lives, not as a second entry.
+test("--help names the runnable invocation, never a bare entry path", () => {
 	const { env, cleanup } = farm();
 	try {
 		const res = run(["--help"], env);
 		assert.equal(res.status, 0);
-		assert.match(res.out, /usage: \.\/git\/farm-tool\.sh TOOL/);
+		assert.match(res.out, /usage: \.\/node-run\.sh git\/farm-tool\.mjs TOOL/);
 		assert.match(res.out, /git\/lib\/farm-posture\.mjs/);
-		assert.doesNotMatch(res.out, /farm-tool\.mjs/);
 		assert.equal(res.err, "");
 	} finally {
 		cleanup();

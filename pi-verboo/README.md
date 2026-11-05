@@ -32,7 +32,7 @@ effort enums) but NO prices and NO output limits, so the committed artifacts
 assert neither: the manifest omits `cost` and `maxTokens` entirely
 (docs/d057), and the extension fills the mandatory zero cost and the schema's
 own 16384 default. The committed pair was seeded from the fleet's facts cache
-of the same listing (see AGENTS.md); `npm_run pi-verboo generate --check` is
+of the same listing (see AGENTS.md); `./npm-run.sh pi-verboo generate --check` is
 the drift gate, and both forms need the key.
 
 ## Files
@@ -47,7 +47,7 @@ the drift gate, and both forms need the key.
 | `models.json`                  | GENERATED: the pi-`models.json`-shaped verboo block (canonical upstream, d070)     |
 | `models.js`                    | GENERATED: the extension's offline seed                                            |
 
-Regenerate with `. ./npm-run.sh && npm_run pi-verboo generate` from the repo
+Regenerate with `./npm-run.sh pi-verboo generate` from the repo
 root (the git diff is the review).
 
 ## Provenance
@@ -65,7 +65,7 @@ AGENTS.md (the fleet's facts cache of the same listing).
 ## Tests
 
 ```sh
-. ./npm-run.sh && npm_run pi-verboo test     # from the repo root
+./npm-run.sh pi-verboo test     # from the repo root
 ```
 
 Network-free (injected fetch) and rule-pinning: the source contract, the

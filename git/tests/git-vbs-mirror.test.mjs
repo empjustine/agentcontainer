@@ -283,7 +283,7 @@ test("WORK_MIRRORS stands in for --dest; --dest wins over it", () => {
 test("--help prints the usage and exits 0", () => {
 	const out = run(["--help"]);
 	assert.equal(out.status, 0);
-	assert.match(out.stdout, /^usage: -vbs-mirror-all\.sh --manifest FILE/);
+	assert.match(out.stdout, /^usage: \.\/node-run\.sh git\/vbs-mirror-all\.mjs --manifest FILE/);
 	assert.match(out.stdout, /--throttle N {3}seconds between repositories/);
 });
 

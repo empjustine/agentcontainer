@@ -12,34 +12,35 @@ passthrough reverse proxy for cloud LLM providers.
 # Bazzite (rootless podman) — ONE llama-swap instance for LOCAL GGUF
 # inference, published on LAN port 8101 (the coding agent reaches it in-network;
 # the world reaches estige's tunnel at the funnel mount, docs/d073/d108)
-cd ~/agentcontainer/llm-local-inference && ./generate.sh
+cd ~/agentcontainer && ./npm-run.sh llm-local-inference generate
 #   then the coding agent (local models + cloud; credentials via ./environment.sh, docs/d046)
-#   extra ARGV dirs mount rw too (CWD is implicit first): ./coding-agent/run.sh ~/Downloads/references
-cd ~/agentcontainer && ./environment.sh ./coding-agent/run.sh
+#   extra ARGV dirs mount rw too (CWD is implicit first): ./node-run.sh coding-agent/run.mjs ~/Downloads/references
+cd ~/agentcontainer && ./environment.sh ./node-run.sh coding-agent/run.mjs
 
 # cloud/remote providers — the SSL-VPN tunnel node (no model routing, no
 # credential handling; requests must already carry valid provider keys)
 # estige installs as a service: build the packages, then let the service
 # manager run it (docs/d120)
-cd ~/agentcontainer && ./estige/build.sh estige-packages
+cd ~/agentcontainer && ./node-run.sh estige/build.mjs estige-packages
 #   Termux:   dpkg -i estige/packaging/out/estige_<v>_aarch64.deb && sv-enable estige
 #   Oracle Linux: rpm -i estige/packaging/out/estige-<v>-1.x86_64.rpm && systemctl enable --now estige
 #   direct run instead of a package: ./environment.sh ./estige/estige -mode exit
 # relay node (restricted network, docs/d095): the installed estige-relay
 # service, and the chain step that points a local consumer at its loopback
 # proxy — the chain step starts nothing (docs/d120)
-#   eval "$(./estige/estige proxy-env)" && ./coding-agent/run.sh
+#   eval "$(./estige/estige proxy-env)" && ./node-run.sh coding-agent/run.mjs
 ```
 
 **Every folder is a copy unit, and it is built from that folder (docs/d113)**:
 each carries the modules it needs (its own `lib/`, or folder-local modules in
-the pi extension family, d118), its own build/generate entry (a `build.sh` /
-`generate.sh` where it builds or generates something, a `package.json` script
-table in the pi extension family), and its own `tests/`.
+the pi extension family, d118), its own build/generate entry (a `build.mjs` /
+`generate.mjs` where it builds or generates something, a `package.json` script
+table in the pi extension family — and no `.sh` of its own, d138), and its own
+`tests/`.
 There is **no root build or generate entry point** — you invoke the unit you
-are building: `./estige/build.sh`, `./coding-agent/generate.sh`,
-`./llm-local-inference/generate.sh`, and for the pi extensions
-`. ./npm-run.sh && npm_run pi-hyper generate` (the wrapper only supplies the
+are building: `./node-run.sh estige/build.mjs`, `./npm-run.sh coding-agent generate`,
+`./npm-run.sh llm-local-inference generate`, and for the pi extensions
+`./npm-run.sh pi-hyper generate` (the wrapper only supplies the
 pinned node; the command line comes from the folder's own `package.json`).
 That holds because a folder has to survive being copied out of this tree on its own
 (docs/architecture.md), and a root sequencer would make every folder
@@ -49,13 +50,13 @@ sweep**: the maintainer's view across units, which no unit imports. The first
 three are offline by contract; `./freshness.sh` is the fourth and the only one
 that touches the network, because "is this committed cache still what upstream
 serves?" cannot be answered offline ([docs/d122](docs/d122-data-freshness-gate.md)).
-Runners NEVER build or generate: stale/missing artifacts are user issues, and run.sh
-fails loudly pointing at the generator.
+Runners NEVER build or generate: stale/missing artifacts are user issues, and the
+launcher fails loudly pointing at the generator.
 
 **Environment/secrets are an EXPLICIT chain step** (`./environment.sh` —
 `infisical run` fetches the vault and spawns the target with it as plain
 env, on the host, docs/d046):
-`./environment.sh ./coding-agent/run.sh`, `./environment.sh
+`./environment.sh ./node-run.sh coding-agent/run.mjs`, `./environment.sh
 ./llm-local-inference/run.sh`, etc. The target may also be a bare command:
 `./environment.sh pi` runs pi with the vault env and no sandbox — the run
 path for a host with no container backend (docs/d059). The scripts it wraps consume plain env
@@ -79,8 +80,8 @@ cloud relay moved to estige.
 agentcontainer/
 ├── environment.sh                       # → EXPLICIT env chain: `infisical run` spawns <script-or-command> (d046; a bare command = the sandbox-free run path, d059)
 ├── provision-termux.sh                  # → termux pkg/infisical provisioning (the former root build.sh)
-├── log.sh / node-run.sh / npm-tools.sh  # → operator-level shell, never imported by a unit: structured logger · standalone node_run() (pinned node; termux-aware) · on-demand npm devDependency install (d107)
-├── npm-run.sh                           # → `npm_run <unit> <script>`: runs a unit's package.json script under the pinned node, never shelling out to `npm` (d118)
+├── node-run.sh / npm-run.sh / node-run.ps1 # → THE interpreter runners (d138): one copy each, and THE way to start a unit — `./node-run.sh <entry> [args]`, `./npm-run.sh <unit> <script>` — no per-folder copies and no per-entry shims (the pin is one edit); ps1 is the Windows counterpart (d062)
+├── log.sh / npm-tools.sh                # → operator-level shell, never imported by a unit: structured logger · on-demand npm devDependency install (d107)
 ├── lint.sh / check-types.sh / test.sh / vm-bench.sh # → the repo-wide QA sweep (d113): biome+knip+jq+golangci-lint gates · tsc · every unit's tests (test.sh globs `<unit>/tests/` and runs estige's Go suite explicitly, d123), driven from the root because no unit imports them (the sweep owns no test of its own)
 ├── freshness.sh                         # → the QA sweep's one NETWORK gate (d122): every pi-* `generate --check` + the offline HF manifest audit, so a stale committed cache fails a gate instead of a review; key-gated listings skip loudly, run it via ./environment.sh to include them
 ├── docs/                                # docs tree, typed per docs/spec-graph-standard.md
@@ -94,14 +95,14 @@ agentcontainer/
 │   └── ...
 │
 ├── llm-local-inference/                 # llama-swap: LOCAL GGUF inference only
-│   ├── run.sh                           #   → unified-vulkan image + GPU + HF mounts on :8101
-│   ├── generate.sh / generate.mjs       #   → capability-gated config.d layers (fails on non-GPU hosts)
-│   ├── build.sh / build.mjs             #   → pulls the llama-swap image (inference-endpoint gate, d087)
+│   ├── run.sh                           #   → unified-vulkan image + GPU + HF mounts on :8101 (real logic: the workload API)
+│   ├── generate.mjs                     #   → capability-gated config.d layers (fails on non-GPU hosts); `./npm-run.sh llm-local-inference generate`
+│   ├── build.mjs                        #   → pulls the llama-swap image (inference-endpoint gate, d087); `./npm-run.sh llm-local-inference build`
 │   ├── model-sizes.sh / model-sizes.mjs #   → footprint + cheapest-first reorder of its own lib/llamacpp-model-data.json (d053)
 │   ├── active-b.json                    #   → activeB table (model-id derivation)
 │   ├── llama-swap-core.json             #   → general-purpose config source
 │   ├── config.d/                        #   → generated split config (loaded via -config-dir)
-│   ├── lib/                             #   → THIS FOLDER's own copy (d113): workload-runtime.sh + workload-*.jq, node-run.sh, log.mjs/log.sh/log.py, artifact.mjs, canonical-json.mjs, host-capabilities.mjs, llamacpp-model-data.json, hf-manifests/ (size source for d053)
+│   ├── lib/                             #   → THIS FOLDER's own copy (d113): workload-runtime.sh + workload-*.jq, log.mjs/log.sh/log.py, artifact.mjs, canonical-json.mjs, host-capabilities.mjs, llamacpp-model-data.json, hf-manifests/ (size source for d053); the interpreter runner is repo-root, not per-folder (d138)
 │   ├── tests/                           #   → this folder's own tests, standalone-runnable
 │   ├── CACHE-DESIGN.md                  #   → HF cache pipeline (the folded local-llm/ tooling, flat here since d113), table-write rule
 │   ├── DESIGN.md                        #   → llama-swap config.d layers, generation-time path baking, capability gating, bearer auth
@@ -110,16 +111,16 @@ agentcontainer/
 ├── estige/                              # SSL-VPN tunnel node (Go, one binary, two roles: exit + relay), installed as a package (d073/d077/d120)
 │   ├── main.go                          #   → dispatches the two roles: `-mode exit` (tunnel server) / `-mode relay`, plus `proxy-env` and `-version`
 │   ├── packaging/                       #   → the deb/rpm writers (pure Go) + termux/ and ol/ format inputs; `out/` is gitignored (docs/d120)
-│   ├── build.sh / build.mjs             #   → this folder's own build (d083/d113): go-build probe + target selection (native · image · packages), no root builder
+│   ├── build.mjs                        #   → this folder's own build (d083/d113): go-build probe + target selection (native · image · packages), no root builder; `./node-run.sh estige/build.mjs`
 │   ├── *.go / *_test.go                 #   → egress policy, tunnel transports, relay node, `proxy-env`, VPN end-to-end tests (go test ./...)
 │   ├── lib/                             #   → THIS FOLDER's own copy (d113), now build-only: go-build.mjs, host-capabilities.mjs, log.mjs (no shell, no jq — docs/d120)
 │   ├── README.md                        #   → operations: package install, service units, env-only config, `proxy-env`, build, port model
 │   └── DESIGN.md                        #   → deployment boundary (binary/supervisor/package), tunnel-transport rationale, 404, error taxonomy
 │
 ├── coding-agent/                        # Bazzite usage (full pi)
-│   ├── run.sh / run.mjs                 #   → launches the pi coding-agent CONTAINER; no backend → ./environment.sh pi (d059); ARGV = extra dirs to mount rw (CWD implicit, d056). run.sh is a shim over run.mjs (d118)
-│   ├── generate.sh / generate.mjs       #   → the folder driver: stages + runs the TWO by-agent generators (d041; broad by-agent merge); the sh scripts invoke the package.json scripts
-│   ├── build.sh / build.mjs / package.json # → this folder's own image build (d083/d113) + its script table (build/generate/run/test)
+│   ├── run.mjs                          #   → launches the pi coding-agent CONTAINER; no backend → ./environment.sh pi (d059); ARGV = extra dirs to mount rw (CWD implicit, d056). `./node-run.sh coding-agent/run.mjs`
+│   ├── generate.mjs                     #   → the folder driver: stages + runs the TWO by-agent generators (d041; broad by-agent merge); `./npm-run.sh coding-agent generate` runs the package.json script
+│   ├── build.mjs / package.json         # → this folder's own image build (d083/d113) + its script table (build/generate/run/test); `./npm-run.sh coding-agent build`
 │   ├── generate-pi-coding-agent.mjs     #   → ALL pi config: model-*.json layers → models.json + default-model.json overlay
 │   ├── generate-opencode.mjs            #   → opencode overlay config (provider SINGULAR key; skipped on Termux w/o OPENCODE_CONFIG_DIR)
 │   ├── gen-lib.mjs                      #   → shared generator preamble (pi shaping folded in, d039)
@@ -133,13 +134,13 @@ agentcontainer/
 │   ├── config.toml                      #   → mise configuration (includes cline and thinkrail)
 │   ├── Containerfile                    #   → container image build
 │   ├── *.md                             #   → this unit's own living docs (d117): DESIGN, plus coding-harness-persistence / scoped-models-and-proxy-overrides / summarized-thinking
-│   ├── lib/                             #   → THIS FOLDER's own copy (d113), the largest: workload-runtime.mjs (the workload_* API in node, no jq on the host), node-run.sh, npm-run.sh, log.mjs, artifact.mjs, canonical-json.mjs, fact-table.mjs, host-capabilities.mjs, cloud-providers.mjs/.json (the full table), models.dev.api.json, catwalk-facts.json
+│   ├── lib/                             #   → THIS FOLDER's own copy (d113), the largest: workload-runtime.mjs (the workload_* API in node, no jq on the host), log.mjs, artifact.mjs, canonical-json.mjs, fact-table.mjs, host-capabilities.mjs, cloud-providers.mjs/.json (the full table), models.dev.api.json, catwalk-facts.json; the interpreter runners are repo-root (d138)
 │   └── tests/                           #   → this folder's own tests (canonicalization, committed-manifest guard (d050), fact table, URL forms, modality gate, cost map, launcher argv + workload rendering, the jq-free guard)
 │
 ├── pi-synthetic/                        # Synthetic as a pi package (d096): ONE generator + ONE loadable extension, in this folder
 │   ├── sources.mjs                      #   → the ONE data source: the provider's /models listing, at the fact table's canonical upstream (d070)
 │   ├── merge.mjs                        #   → the ONE shaping step + both projections (pi models.json entry, pi-ai extension entry)
-│   ├── generate.mjs / package.json       #   → one fetch in, two artifacts out; --check verifies them without writing. The script table replaces generate.sh (d118): `npm_run <unit> generate`
+│   ├── generate.mjs / package.json       #   → one fetch in, two artifacts out; --check verifies them without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json / models.js          #   → GENERATED pi models.json-shaped block (canonical upstream, d070) · the extension's seed
 │   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
@@ -155,7 +156,7 @@ agentcontainer/
 ├── pi-cline-pass/                       # ClinePass as a pi package (d040): the reconciled lineup (Cline's docs table ∪ models.dev) as ONE generator + ONE loadable extension
 │   ├── sources.mjs                      #   → the two published sources + the ONE reconciliation contract (match floor, cline-pass/ billing-prefix guard)
 │   ├── merge.mjs                        #   → the ONE shaping step + both projections (pi models.json entry, pi-ai extension entry)
-│   ├── generate.mjs / package.json       #   → two sources in, two artifacts out; --check verifies them without writing. The script table replaces generate.sh (d118): `npm_run <unit> generate`
+│   ├── generate.mjs / package.json       #   → two sources in, two artifacts out; --check verifies them without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json / models.js          #   → GENERATED pi models.json-shaped block (canonical upstream, d070) · the extension's seed
 │   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
@@ -164,7 +165,7 @@ agentcontainer/
 │
 ├── pi-hyper/                            # Charm Hyper as a pi package (d100): ONE generator + ONE loadable extension — the provider's /provider catalog is PUBLIC
 │   ├── sources.mjs / merge.mjs          #   → the ONE source read (the provider's /provider document) · the ONE shaping step + both projections (incl. the transcribed compat mirror, d033)
-│   ├── generate.mjs / package.json       #   → one fetch in, two artifacts out; --check verifies them without writing. The script table replaces generate.sh (d118): `npm_run <unit> generate`
+│   ├── generate.mjs / package.json       #   → one fetch in, two artifacts out; --check verifies them without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json / models.js          #   → GENERATED pi models.json-shaped block (canonical upstream, d070) · the extension's seed
 │   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
@@ -173,7 +174,7 @@ agentcontainer/
 │
 ├── pi-verboo/                           # Verboo as a pi package (d100): same shape against the AUTH-GATED /models listing — no prices ever asserted (d057)
 │   ├── sources.mjs / merge.mjs          #   → the ONE source read (the provider's own listing — models.dev carries no verboo row at all, d057) · the ONE shaping step + both projections
-│   ├── generate.mjs / package.json       #   → one keyed fetch in, two artifacts out; --check verifies them without writing. The script table replaces generate.sh (d118): `npm_run <unit> generate`
+│   ├── generate.mjs / package.json       #   → one keyed fetch in, two artifacts out; --check verifies them without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json / models.js          #   → GENERATED pi models.json-shaped block (canonical upstream, d070) · the extension's seed
 │   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
@@ -190,7 +191,7 @@ agentcontainer/
 │   ├── FINDINGS.md                      #   → the pi 1.5.0 + ThinkRail contracts it rests on, cited by symbol · the cache arithmetic · the superseded claims
 │   ├── AGENTS.md / TODO.md              #   → folder rules (this extension never touches the context) · the open worklist, unbuilt (the `why` is coding-agent/summarized-thinking.md)
 │
-├── git/                                 # Reference-farm tooling (mirrors + search); shell is interpreter shims only (d121)
+├── git/                                 # Reference-farm tooling (mirrors + search); the only shell is the flock pair (d121/d138)
 │   ├── README.md                        #   → the module doc: the farm's three jobs, boundary, entry points
 │   ├── -forge-mirror.sh                 #   → add a BARE mirror from any forge: https public forges + the software-forge tenant (idempotent; farm-wide flock, d099)
 │   ├── farm-tool.sh → farm-tool.mjs     #   → d099's MCP tool surface (capped reads + two flocked maintenance verbs), one JSON object per call
@@ -200,7 +201,7 @@ agentcontainer/
 │   ├── maintain-mirrors.mjs             #   → align mirrors + repack/commit-graph (pickaxe fast; --deep-optimize adds gc --aggressive, d089)
 │   ├── search-references.mjs            #   → opt-in cross-repo/cross-branch search via Zoekt container (d043)
 │   ├── lib/                             #   → THIS FOLDER's core library (d121): the floor (git-core, forge-remotes) + the plumbing every entry shares
-│   │                                    #     (cli, retry, farm-lock, farm-posture) + its own kernel copies (log.mjs, node-run.sh/.ps1, artifact, canonical-json)
+│   │                                    #     (cli, retry, farm-lock, farm-posture) + its own kernel copies (log.mjs, artifact, canonical-json); the node runners are repo-root (d138)
 │   ├── farm-lock.sh                     #   → the ONE shell that still holds logic: flock(1) has no node equivalent (d121)
 │   ├── tests/                           #   → this folder's own tests (pacer, globs, argv, retry, lock probe, and both ports end to end)
 │   └── non-bare-issues.md               #   → why bare mirrors, the farm audit, pickaxe notes

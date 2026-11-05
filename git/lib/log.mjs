@@ -14,7 +14,7 @@
  *
  * Stream: stdout by default. A script whose stdout IS the machine-consumed
  * payload (git/audit.mjs's JSON report, search-references' results,
- * -vbs-mirror-all.sh's --list TSV) calls setLogStream("stderr") once at
+ * vbs-mirror-all.mjs's --list TSV) calls setLogStream("stderr") once at
  * startup so logs cannot interleave with the payload; `2>&1 | jq` still gives
  * the consumer one jsonlines stream. Docs/d045 owns the policy.
  *

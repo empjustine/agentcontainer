@@ -1,6 +1,10 @@
 /**
  * @fileoverview check-run-dirs.test.mjs — the DIRECTORY argv that
- * coding-agent/run.sh hands the container tool, asserted as argv.
+ * coding-agent/run.mjs hands the container tool, asserted as argv.
+ *
+ * The launcher is spawned the way an operator starts it (docs/d138): the
+ * repo-root invoker with the entry as its first argument, so the test covers
+ * the real chain — pin, then launcher — rather than a shim around it.
  *
  * WHAT IT PINS: docs/d068's two-sided spelling of the mount manifest — the
  * HOST side of a DIRECTORY stays canonical (`pwd -P`: the dedupe and the
@@ -31,7 +35,7 @@
  * 90 (a DIRECTORY that is $HOME), 93 (auth.json holding credentials), 94 (a
  * missing generated artifact).
  *
- * Run: . ./lib/node-run.sh && node_run --test tests/*.test.mjs   (from ./coding-agent)
+ * Run: ../node-run.sh --test tests/*.test.mjs   (from ./coding-agent)
  *      RECORD=1 … to rewrite tests/expect-run-dirs.txt (review the diff!)
  */
 
@@ -56,7 +60,8 @@ import { buildLaunch, vaultEnv } from "../run.mjs";
 
 const unit = dirname(dirname(fileURLToPath(import.meta.url)));
 const expectation = join(unit, "tests/expect-run-dirs.txt");
-const runSh = join(unit, "run.sh");
+const nodeRun = join(unit, "..", "node-run.sh");
+const runMjs = join(unit, "run.mjs");
 
 /** The uid:gid the --user flag carries, whatever process.getuid says here. */
 const uidGid = `${process.getuid?.() ?? ""}:${process.getgid?.() ?? ""}`;
@@ -86,7 +91,7 @@ function fixture() {
 		{ mode: 0o755 },
 	);
 	// The pinned interpreter under a second name: the jq-free launch below takes
-	// node_run's system-node branch, which resolves `node` from PATH.
+	// node-run.sh's system-node branch, which resolves `node` from PATH.
 	symlinkSync(process.execPath, join(bin, "node"));
 	writeFileSync(
 		join(bin, "jq"),
@@ -137,7 +142,7 @@ function launcherEnv() {
  * PREPENDS its own tool dirs to PATH inside `mise exec`, so a stub earlier in
  * PATH never wins (measured with a `node` stub) — the only way to make the
  * launcher genuinely jq-less is to remove those directories and take
- * node_run's system-node branch, which the `PREFIX` spelling below selects and
+ * node-run.sh's system-node branch, which the `PREFIX` spelling below selects and
  * the fixture's `node` symlink satisfies.
  * @returns {string}
  */
@@ -158,7 +163,7 @@ function jqFreePath() {
  * @returns {{ status: number | null, stdout: string, stderr: string }}
  */
 function launch(dirs, env = launcherEnv()) {
-	const result = spawnSync(runSh, dirs, {
+	const result = spawnSync(nodeRun, [runMjs, ...dirs], {
 		cwd: join(home, "project"),
 		env,
 		stdio: ["ignore", "pipe", "pipe"],
@@ -221,7 +226,7 @@ suite("the DIRECTORY argv is the d068 mount manifest", () => {
 	});
 
 	// The only argv word the node port ADDS to the recorded manifest is
-	// `--env NODE_USE_ENV_PROXY`: the launcher now runs under lib/node-run.sh,
+	// `--env NODE_USE_ENV_PROXY`: the launcher now runs under ./node-run.sh,
 	// which pins that variable to 1 for its process, and the allowlist forwards
 	// whatever the process environment holds. The image's ENV sets the same
 	// value, so the sandbox sees no change; the fixture records it because the

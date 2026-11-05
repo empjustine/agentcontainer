@@ -47,13 +47,16 @@ module in the language the unit already needs can express.
   92 `WorkloadDescriptionError`, 93 `auth.json`, 94 missing or stale artifact.
 - `run.sh` survives as a **~20-line compat shim** over `lib/node-run.sh` +
   `run.mjs`. The documented chain (`./environment.sh ./coding-agent/run.sh`),
-  operator habit and `docs/d046`'s chain step all name it; `exec` is impossible
-  because `node_run` is a shell function, so `set -e` carries the status.
+  operator habit and `docs/d046`'s chain step all name it. `exec` was
+  impossible when this was written (a shell function cannot be exec'd, so
+  `set -e` carried the status); d138 made the pin a command, so the shim now
+  execs and the status is node's own.
 - **`package.json` is the unit's entrypoint table** (`build`, `generate`,
-  `run`, `test`), and `build.sh`/`generate.sh` became shims that source
-  `lib/node-run.sh` then `lib/npm-run.sh` and call `npm_run <script> "$@"`. The
-  same helper is the repo-root `npm-run.sh` for units that ship no shell at all
-  (d118).
+  `run`, `test`), and `build.sh`/`generate.sh` became shims over
+  `lib/npm-run.sh` (they sourced it when this was written; since d138 each is
+  one `exec` of the repo-root `npm-run.sh` with the unit folder and the script
+  name as argv). The same helper is the repo-root `npm-run.sh` for units that ship no
+  shell at all (d118).
 - **The tests that were shell scripts are `*.test.mjs`**: the retired renderer's
   captured argv is the differential fixture (`tests/expect-run-dirs.txt`, one
   word per line), and a static `jq-free` guard proves the unit carries no `.jq`
@@ -62,7 +65,7 @@ module in the language the unit already needs can express.
 ## Invariants this keeps
 
 - **The sandbox sees no change.** The one argv difference is
-  `--env NODE_USE_ENV_PROXY=1`: `lib/node-run.sh` sets it per invocation, the
+  `--env NODE_USE_ENV_PROXY=1`: the runner (`node-run.sh`) sets it per invocation, the
   launcher's allowlist already listed the name, and the image's own `ENV` has
   the same value — so forwarding it is a no-op inside the container and is
   recorded in the fixture with that reason.
@@ -73,7 +76,7 @@ module in the language the unit already needs can express.
   built and refused once in the launcher (`missingMountHosts`), so a description
   can be assembled with no filesystem.
 - **The pin is unchanged.** `lib/node-run.sh` still picks system node on Termux
-  and `mise exec node@24` elsewhere; `npm_run` never lets PATH pick npm's own
+  and `mise exec node@24` elsewhere; `./npm-run.sh` never lets PATH pick npm's own
   interpreter, because `npm` is itself a node program (measured: `mise exec`
   rewrites PATH, so a stubbed `node` earlier in PATH loses).
 - **`jq`-freedom is proven, not asserted.** The static scan catches an

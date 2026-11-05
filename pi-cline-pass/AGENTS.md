@@ -70,8 +70,8 @@ billing selector.
 
 `models.json` and `models.js` are written by `generate.mjs`. Hand-editing
 them is erased by the next generation run — fix the shaping instead. Both
-are in `biome.jsonc`'s ignore list (generated files). `. ./npm-run.sh &&
-npm_run pi-cline-pass generate --check` is the drift gate; prefer it over
+are in `biome.jsonc`'s ignore list (generated files). `./npm-run.sh pi-cline-pass
+generate --check` is the drift gate; prefer it over
 eyeballing a diff when you only need to know "is this current".
 
 `CLINE_PASS_LINEUP` (the committed fallback) is transcribed from the same

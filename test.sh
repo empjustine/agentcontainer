@@ -4,7 +4,7 @@
 # WHAT IT IS: the maintainer's view across the copy units, not a library any
 # unit consumes. Since docs/d113 every test lives with the code it tests —
 # `<unit>/tests/` — and each of those runs standalone from its own folder
-# (`. ./<unit>/lib/node-run.sh && node_run --test <unit>/tests/*.test.mjs`).
+# (`./node-run.sh --test <unit>/tests/*.test.mjs`, from the repo root).
 # This script exists for the one thing a single unit cannot do: run them all at
 # once, in every folder, and report one verdict. It owns no test of its own —
 # the last one (docs/d050's committed-manifest guard) moved to
@@ -31,11 +31,8 @@ export LOG_TOOL
 
 root="$(CDPATH='' cd "$(dirname "$0")" && pwd)"
 cd "$root"
-# shellcheck source-path=SCRIPTDIR source=node-run.sh
-. ./node-run.sh
-
 log_info "unit tests (node --test: every */tests/)"
-node_run --test ./*/tests/*.test.mjs
+"$root/node-run.sh" --test ./*/tests/*.test.mjs
 
 # Go toolchain detection follows estige/lib/go-build.mjs, and for the same
 # reason: on a sandbox/toolbox host the mise shims are off PATH, while a shim

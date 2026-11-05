@@ -127,14 +127,15 @@ the next token, so `--deep-optimize --no-optimize` silently became
 ### What stays shell
 
 `farm-lock.sh` stays because `flock` has no node equivalent — and it uses flock
-in *fd* mode, not `flock LOCKFILE CMD…`, because the command it guards is
-`node_run`, a shell **function** no exec can see; fd mode also releases the
-lock when the holder dies. The two mutation verbs therefore still spawn the two
+in *fd* mode, not `flock LOCKFILE CMD…`, because the command it guarded was
+`node_run`, a shell **function** no exec can see (d138 turned that command into
+an executable, so exec mode would now work; fd mode is kept because it holds
+the lock in the caller's own process and releases it when the holder dies). The two mutation verbs therefore still spawn the two
 existing shell entries (`-forge-mirror.sh`, `maintain.sh`), so the lock is
 taken by the same process that takes it today: no double-lock, no deadlock.
 
 That leaves `git/` with nine interpreter shims, `farm-lock.sh`,
-`lib/node-run.sh` and `lib/node-run.ps1` (the Windows port, docs/d062) as its
+the repo-root `node-run.sh` and `node-run.ps1` (the Windows port, docs/d062) as its
 only shell. `lib/log.sh` was deleted with its last consumer — the shell farm
 tool — on docs/d120's rule for `estige/lib/`.
 

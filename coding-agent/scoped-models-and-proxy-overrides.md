@@ -11,7 +11,7 @@ tags: ["design", "scoped-models", "overrides"]
 
 The coding-agent container is configured on the host ahead of pi by
 the generator, whose install target is the agent dir that
-`./coding-agent/run.sh` mounts at `~/.pi/agent` (docs/d054; credentials
+`./node-run.sh coding-agent/run.mjs` mounts at `~/.pi/agent` (docs/d054; credentials
 arrive via the explicit env chain — see
 Credentials below). This replaces the earlier, fragile
 "generate a full model list" workflow with a **scoped models** approach.

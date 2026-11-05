@@ -105,11 +105,11 @@ branch="${INFISICAL_BRANCH:-main}"
 # Termux has no mise, so the two tools the rest of the tree needs that cannot
 # be provisioned any other way here come from `pkg`:
 #
-#   nodejs -> node   the .mjs generators (llm-local-inference/generate.sh,
-#                    coding-agent/generate.sh) run under the SYSTEM node on
+#   nodejs -> node   the .mjs generators (llm-local-inference + coding-agent,
+#                    started through the root runners) run under the SYSTEM node on
 #                    Termux — there is no mise to pin one.
 #   jq               the SHELL workload-runtime.sh copies are jq-backed (their
-#                    lib/workload-*.jq), and llm-local-inference/generate.sh calls
+#                    lib/workload-*.jq), and llm-local-inference/generate.mjs calls
 #                    sandbox_has on every run. `coding-agent/` no longer needs it:
 #                    its workload API is a node module (docs/d119).
 #

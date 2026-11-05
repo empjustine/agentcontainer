@@ -12,7 +12,7 @@
  * home. The Go side keeps the same ordering natively and is not checkable from
  * node (docs/d102).
  *
- * Run: . ./lib/node-run.sh && node_run --test tests/*.test.mjs   (this folder)
+ * Run: ../node-run.sh --test tests/*.test.mjs   (this folder)
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

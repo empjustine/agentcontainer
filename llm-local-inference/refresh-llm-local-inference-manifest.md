@@ -137,7 +137,7 @@ macro, edit `llama-swap-core.json` and re-run generation.
 
 ```sh
 cd llm-local-inference
-LOCAL_INFERENCE=1 ./llm-local-inference/generate.sh   # -> both config.d/ layers (00-general + 10-local-llm-inference + .paths)
+LOCAL_INFERENCE=1 ./npm-run.sh llm-local-inference generate   # -> both config.d/ layers (00-general + 10-local-llm-inference + .paths)
 ```
 
 Generation runs offline (no Infisical, no network). The generator warns on **duplicate model

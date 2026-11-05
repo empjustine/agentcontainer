@@ -9,7 +9,7 @@ tags: ["reference", "persistence", "workloads"]
 
 # Coding-Harness Persistence Table
 
-How `coding-agent/run.sh` preserves each coding harness's state across
+How `coding-agent/run.mjs` preserves each coding harness's state across
 ephemeral container runs. For the planned hardening of this mechanism into a
 data diode (state may flow out, but can never be rewritten or deleted from
 inside the container), see `docs/d026-data-diode-audit.md` — design note only,
@@ -44,7 +44,8 @@ Notes:
   home-relative *global* state dirs are staged per run — except pi's config
   dir (docs/d054) and opencode's config dir (docs/d065), which are mounted
   directly.
-- **Extra directories are explicit mounts**: `run.sh [DIRECTORY [DIRECTORY...]]`
+- **Extra directories are explicit mounts**: `./node-run.sh coding-agent/run.mjs
+  [DIRECTORY [DIRECTORY...]]`
   mounts each argument rw — the host side canonical, the container side at
   the container's home spelling for a home-relative path (CWD is the implicit
   first directory, and the first directory is the workdir; docs/d068). The
@@ -69,7 +70,7 @@ Notes:
   in-container launch chain. Most duplicate each harness's built-in default —
   they exist to make the sandbox contract explicit and resilient to upstream
   default changes.
-- **Init seeding**: run.sh seeds nothing per run for pi or OpenCode anymore —
+- **Init seeding**: the launcher seeds nothing per run for pi or OpenCode anymore —
   the generator installs pi's config into `$HOME/.pi/agent` (docs/d054) and
   opencode's `opencode.json` into the host config dir, refreshing the
   committed `coding-agent/opencode.jsonc` alongside (docs/d065). A missing

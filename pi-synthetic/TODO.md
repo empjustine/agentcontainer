@@ -76,7 +76,7 @@ Done looks like (either option, plus the doc sync):
 - **A** — the `synthetic` `PROVIDER_SPECS` row reads this folder's shaped
   listing (import `pi-synthetic/sources.mjs` + `merge.mjs`, or read
   `pi-synthetic/models.json`), and `model-019` becomes a rendering of it.
-- **B** — `coding-agent/generate.mjs` runs `npm_run pi-synthetic generate` as a
+- **B** — `coding-agent/generate.mjs` runs `./npm-run.sh pi-synthetic generate` as a
   pre-step and copies `model-019` from `pi-synthetic/models.json`.
 
 Either way `model-019` stays CANONICAL (docs/d070), routing stays in

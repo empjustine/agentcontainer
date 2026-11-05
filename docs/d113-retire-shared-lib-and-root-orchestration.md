@@ -13,6 +13,11 @@ tags: [architecture, copy-unit, lib, builders, generators, tests]
 
 ## Problem
 
+> Narrowed by [d138](d138-sh-interpreter-trampolines.md): the interpreter
+> runners (`node-run.sh`, `npm-run.sh`, `node-run.ps1`) are one copy each at
+> the repo root, executed by every unit's shim. Copy-unit applies to a unit's
+> *code*; a pin is a single fact, not a per-folder artifact.
+
 The tree was organised as **`folder + ../lib`**: a unit's folder carried its
 own code, and everything it shared — loggers, the artifact standard, the
 workload API, the provider fact tables, `node-run.sh`, the model manifest —

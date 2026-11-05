@@ -183,7 +183,7 @@ the allowlist relay by decision
   one-edit law), and the rows stay byte-comparable (docs/d050) so divergence is
   visible in a diff.
 - **FR-L4** — Toolchains are provisioned uniformly without a shared dependency:
-  the node runner (`node_run()`), the go builder probe and the npm dev-tool
+  the node runner (`node-run.sh`), the go builder probe and the npm dev-tool
   lock exist as per-unit copies of one kernel, and every copy pins the same
   versions (repo-pinned node, docs/d041; `./npm-tools.sh` from
   `package-lock.json`, docs/d107), so no unit drags a toolchain of its own.

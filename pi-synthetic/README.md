@@ -35,9 +35,8 @@ three-source ladder that caused them.
 ## Generate
 
 ```sh
-. ./npm-run.sh                    # from the repo root
-npm_run pi-synthetic generate         # fetch, shape, write both artifacts
-npm_run pi-synthetic generate --check # verify the committed artifacts are current (no write)
+./npm-run.sh pi-synthetic generate         # fetch, shape, write both artifacts
+./npm-run.sh pi-synthetic generate --check # verify the committed artifacts are current (no write)
 ```
 
 There is no root-level generator any more (docs/d113): this folder's

@@ -34,17 +34,17 @@ for that step, recorded before context is lost.
 3. Node 24 for the folder's own builder — the only remaining node leg.
    Generation itself is Go since d102 and needs no node; the old
    `tests/canonical-json.test.mjs` guard moved to `coding-agent/tests/`
-   with docs/d108, and this unit has no shell test left. `build.sh` resolves
+   with docs/d108, and this unit has no shell test left. The build entry resolves
    `mise exec node@24` inline; there is **no repo `mise.toml`**
    (d051/d082: the pin lives only in the shim, deliberately — a root
    mise.toml would re-pin bare `node` for anyone cd-ing into the repo). CI
    must use `jdx/mise-action` + `mise install node@24`, not rely on a
    checked-in config.
-4. `./estige/build.sh estige-image` — **the
+4. `./node-run.sh estige/build.mjs estige-image` — **the
    shim, never an inline `podman build -f`** (d041/d083/d087 law: one
    build implementation; inlining `imageBuildArgs`/`--pull`/tag
    logic into the workflow would create a second one to drift).
-5. `./estige/build.sh estige-packages` — the packaging leg. It
+5. `./node-run.sh estige/build.mjs estige-packages` — the packaging leg. It
    cross-compiles android/arm64 and linux/amd64 and runs the stdlib
    `.deb`/`.rpm` writer, so the runner needs no `dpkg-deb` or `rpmbuild`.
    The artifact identity is `packaging/VERSION` (the same value injected
@@ -116,7 +116,7 @@ both cases, no NDK, no extra toolchain:
 ## Runner friction (must-check on the first real run)
 
 - **Paths filter** must include `estige/**` — the whole folder, since the
-  split unit carries its own `lib/`, `build.mjs`, `packaging/`, `build.sh`
+  split unit carries its own `lib/`, `build.mjs`, `packaging/`
   and workflow (docs/d113). There is no root builder to delegate to.
 - **Buildx lands in the daemon store** under the runner's default
   docker driver (`docker buildx build` without `--load`); verify with

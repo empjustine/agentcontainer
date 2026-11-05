@@ -38,7 +38,7 @@ rationale stays in [DESIGN.md](DESIGN.md).
 
 ## Install
 
-Packages are the supported deployment. `./estige/build.sh estige-packages`
+Packages are the supported deployment. `./node-run.sh estige/build.mjs estige-packages`
 writes both artifacts to `estige/packaging/out/`; the binary is self-contained
 (no node, jq, or infisical inside the package). The env file belongs to the
 operator and to the service manager: the binary reads no file.
@@ -79,7 +79,7 @@ drop-in with both `CapabilityBoundingSet=CAP_NET_BIND_SERVICE` and
 **Container (image still built; the operator launches it)**
 
 ```console
-$ ./estige/build.sh estige-image
+$ ./node-run.sh estige/build.mjs estige-image
 $ podman run -d --name estige-exit --network=host \
     --env-file ~/.config/estige/exit.env localhost/estige:latest -mode exit
 ```
@@ -111,7 +111,7 @@ consumer the spelling without starting anything.
 
 ```console
 $ eval "$(estige proxy-env)"
-$ ./coding-agent/run.sh
+$ ./node-run.sh coding-agent/run.mjs
 ```
 
 ### Configuration: none the binary reads — the env chain is the whole surface
@@ -147,7 +147,7 @@ than downgrading.
 
 ## Build & run
 
-Building is **this folder's own** `./build.sh` → `build.mjs` (docs/d083/d113 —
+Building is **this folder's own** `./node-run.sh estige/build.mjs` (docs/d083/d113 —
 there is no root builder any more; each folder is a copy unit). Targets:
 
 - `estige-native` — the host binary (`estige-android` on Termux; `GOOS=android`

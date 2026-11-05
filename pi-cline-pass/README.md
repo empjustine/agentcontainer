@@ -93,7 +93,7 @@ execution of their code — with these caveats:
 | `models.json` | GENERATED: the pi-`models.json`-shaped cline-pass block (fleet parity: provider-level compat, canonical upstream) |
 | `models.js` | GENERATED: the extension's offline seed (registered before any fresher store exists) |
 
-Regenerate with `. ./npm-run.sh && npm_run pi-cline-pass generate` from the
+Regenerate with `./npm-run.sh pi-cline-pass generate` from the
 repo root (the git diff is the review); the committed artifacts are the
 offline fallback a network-less host reads. `--check` verifies them without
 writing.
@@ -135,7 +135,7 @@ here so nobody debugs it as one.
 ## Tests
 
 ```sh
-. ./npm-run.sh && npm_run pi-cline-pass test    # from the repo root
+./npm-run.sh pi-cline-pass test    # from the repo root
 ```
 
 Network-free (injected fetch, `CLINE_PASS_MDX` for the docs file) and

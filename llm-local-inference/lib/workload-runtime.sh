@@ -27,13 +27,11 @@ WORKLOAD_LIB_DIR="${WORKLOAD_LIB_DIR:-$SCRIPT_DIR/lib}"
 # shellcheck source-path=SCRIPTDIR source=log.sh
 . "$WORKLOAD_LIB_DIR/log.sh"
 
-# interpreter selection (node_run) — a standalone sh lib any script can source
-# without the container API; sourced here so existing consumers keep it.
-# shellcheck source-path=SCRIPTDIR source=node-run.sh
-. "$WORKLOAD_LIB_DIR/node-run.sh"
+# Interpreter selection is NOT here (docs/d138): a run script invokes the
+# repo-root `./node-run.sh` as a command instead of sourcing a function.
 
 # --- profile + runner helpers ----------------------------------------------
-# Shared by every script that sources this file (the generate.sh scripts used
+# Shared by every script that sources this file (the per-folder generate scripts used
 # to carry their own identical copies — see docs/d023).
 #
 # Termux profile: 1 = Termux (PREFIX under /data/data/com.termux) — system
@@ -43,7 +41,7 @@ case "${PREFIX:-}" in
 	*/com.termux/*) _termux=1 ;;
 esac
 
-# default_run_dir — the ${RUN_DIR:-...} fallback shared by the generate.sh
+# default_run_dir — the ${RUN_DIR:-...} fallback shared by the generate
 # scripts (scratch dir for intermediate artifacts; the script's own dir may be
 # a read-only mount).  Termux: $TMPDIR or $PREFIX/tmp; elsewhere $TMPDIR or
 # /tmp.
@@ -103,7 +101,7 @@ detect_workload_tool && _workload='workload'
 
 # workload_has <field> — succeed when a named array of the description is
 # non-empty.  This is how callers ask the description a question without
-# reaching into its internals: llm-local-inference/generate.sh gates the
+# reaching into its internals: llm-local-inference/generate.mjs gates the
 # local-inference layer on `workload_has devices` (plus the workload backend).
 # The predicate itself lives in lib/workload-has.jq and is carried by jq's -e
 # exit status (0 = true, 1 = false/null), so there is no string comparison.
@@ -202,7 +200,7 @@ workload_env() { _sb_append env "$@"; }
 # workload_env_allowlist <name...> — forward each named host variable into the
 # workload ONLY when it is non-empty.  A bare `--env NAME` with an unset host
 # var injects an EMPTY value (which generators/tools then read as "set"), so
-# every vault-key forwarder — coding-agent/run.sh and llm-local-inference/run.sh
+# every vault-key forwarder — coding-agent/run.mjs and llm-local-inference/run.sh
 # — goes through this one implementation instead of a pasted for-loop.
 workload_env_allowlist() {
 	for _wea_key in "$@"; do
@@ -319,7 +317,7 @@ _render_workload() {
 # invocation, so it cannot inject env into the workload — secrets reach the
 # workload only through the workload_env allowlist (the coding-agent run
 # forwards host-loaded vault keys that way; it no longer runs infisical inside
-# the workload — see coding-agent/run.sh).
+# the workload — see coding-agent/run.mjs).
 workload_run() {
 	_wrapper="$*"
 	[ "$_workload" = 'workload' ] ||

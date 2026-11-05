@@ -5,7 +5,7 @@
  * (the leftover route form of the deprecated reverse proxy, docs/d108).
  *
  * Everything goes through check-canonical-artifacts.mjs — the same module
- * run.sh guards launches with — so a detector regression fails here rather
+ * the launcher guards launches with — so a detector regression fails here rather
  * than only on a real host at launch time (d070 Verification).
  *
  * Run: node --test   (discovers tests/*.test.mjs from the repo root)

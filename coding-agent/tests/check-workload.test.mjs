@@ -25,7 +25,7 @@
  * workload_env_allowlist non-empty guard, and the workload_restart flag
  * position (docs/d095).
  *
- * Run: . ./lib/node-run.sh && node_run --test tests/*.test.mjs   (from ./coding-agent)
+ * Run: ../node-run.sh --test tests/*.test.mjs   (from ./coding-agent)
  */
 
 import assert from "node:assert/strict";

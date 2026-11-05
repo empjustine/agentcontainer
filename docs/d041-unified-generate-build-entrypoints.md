@@ -12,7 +12,7 @@ depends-on: [d023]
 
 ## Status
 
-DRY_RUN/BUILD_PLAN later retired by d058 · per-folder build.sh entries return as selection shims (d083).
+DRY_RUN/BUILD_PLAN later retired by d058 · per-folder build.sh entries return as selection shims (d083) · `node_run` becomes an INVOKED command instead of a sourced function (d138).
 
 Follow-up to the d039 lib/ fold-back. Four moves, registered together because
 they reshape the same surface: who can invoke generation/building, from where,
@@ -38,7 +38,14 @@ and in what language.
 
 ## Decisions
 
-### (a) `lib/node-run.sh` — the visible sh lib
+### (a) `lib/node-run.sh` — the visible runner
+
+> Superseded in part by [d138](d138-sh-interpreter-trampolines.md): the pin
+> kept this split (it is still its own file, still the one interpreter
+> decision) but that file is now `./node-run.sh` at the repo root — a trampoline
+> a shim `exec`s, not a per-unit function a shim sources. Everything below
+> about the Termux branch and the pin policy still holds; the location and the
+> invocation form do not.
 
 `node_run` moves to its own `lib/node-run.sh`, self-contained (its Termux
 profile check is a `case` inside the function — no `_termux` global, no
@@ -70,8 +77,9 @@ in-container run can only mount its own folder + `../lib`):
   the 45-line shell folded in — it was already the one generator.
 
 Each folder's `generate.sh` remains as a 3-line interpreter shim
-(`. ../lib/node-run.sh && node_run generate.mjs`) — same invocation paths as
-today, so doc references don't move; the shell carries zero logic.
+(`. ../lib/node-run.sh && node_run generate.mjs` — one invoked command since
+d138) — same invocation paths as today, so doc references don't move; the
+shell carries zero logic.
 
 **Root `generate.mjs`** spawns each folder's `generate.mjs` sequentially
 (cheap/offline first: proxy, local-inference, coding-agent), continues past a

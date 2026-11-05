@@ -26,7 +26,7 @@ mostly dead weight:
 | `lib/canonical-json.mjs` | 192 | 1 of 4 exports (`serializeArtifact`) |
 | `lib/artifact.mjs` | 62 | only through `generate.mjs` |
 | `lib/cloud-providers.mjs` | 78 | a *loader* for a 9–16 line JSON holding **one row** |
-| `lib/node-run.sh` | 31 | a pinned-node bootstrap |
+| `lib/node-run.sh` (retired by d138) | — | a pinned-node bootstrap; the runner is now repo-root |
 | `lib/workload-runtime.sh` + `workload-*.jq` | — | absent (never needed here) |
 
 2533 lines across the six folders to serve about five functions each. Two of
@@ -61,16 +61,19 @@ folder root, imported statically by the folder's own files.
 - **`generate.sh` is deleted; `package.json` is the entrypoint table.** A
   folder's scripts (`generate`, `test`) are the command lines, invoked through
   the repo-root `./npm-run.sh`:
-  `. ./npm-run.sh && npm_run pi-hyper generate --check`. The wrapper only
+  `./npm-run.sh pi-hyper generate --check`. The wrapper only
   supplies the pinned node — it reads the command line out of the folder's own
   `package.json`, so there is no second table to drift and no `npm` on the path
   (npm is itself a node program; letting PATH choose its interpreter would
   defeat the pin, `docs/d107`).
 - **No bootstrap shell in the folder.** `node-run.sh` is not copied here: the
-  pin is a *repo* fact, and the folder's own shell surface is empty.
+  pin is a *repo* fact, the folder ships no `.sh` to run it from (docs/d138), and
+  its own shell surface is empty.
 
-`coding-agent/lib/npm-run.sh` keeps its own `npm_run` — a unit works alone
-(`docs/d113`), so a shell file a folder sources cannot live at the repo root.
+`coding-agent/lib/npm-run.sh` was a per-unit copy of `./npm-run.sh`; it went
+with the other runner copies (docs/d138), which is the one place the copy-unit
+rule (docs/d113) does not reach: a folder ships its code, not its way of being
+run.
 The root `npm-run.sh` is the same helper for folders that ship no shell at all;
 the difference in home is the difference in copy unit, not a fork of the logic.
 

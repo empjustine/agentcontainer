@@ -28,7 +28,7 @@ ladder, no route files.
 
 One source: the provider's own `/provider` document — lineup, metadata and
 prices together. A failed fetch fails the run (the committed artifact is the
-offline fallback); `. ./npm-run.sh && npm_run pi-hyper generate --check` (from
+offline fallback); `./npm-run.sh pi-hyper generate --check` (from
 the repo root) is the drift gate. The one
 transcribed fact is the wire-compat mirror (see Provenance below) — everything
 else (prices, limits, effort enums, attachment support) comes from the
@@ -46,7 +46,7 @@ document.
 | `models.json`                  | GENERATED: the pi-`models.json`-shaped hyper block (canonical upstream, d070)      |
 | `models.js`                    | GENERATED: the extension's offline seed                                            |
 
-Regenerate with `. ./npm-run.sh && npm_run pi-hyper generate` from the repo
+Regenerate with `./npm-run.sh pi-hyper generate` from the repo
 root (the git diff is the review).
 
 ## Provenance
@@ -76,7 +76,7 @@ properties:
 ## Tests
 
 ```sh
-. ./npm-run.sh && npm_run pi-hyper test    # from the repo root
+./npm-run.sh pi-hyper test    # from the repo root
 ```
 
 Network-free (injected fetch) and rule-pinning: the source contract, the

@@ -36,7 +36,7 @@ export function detectContainerTool() {
  * host (the estige allowlist carries models.dev), so the probe
  * never depends on an endpoint nothing else here needs.
  *
- * Dispatch rides node_run's NODE_USE_ENV_PROXY=1 (docs/d074), so the
+ * Dispatch rides node-run.sh's NODE_USE_ENV_PROXY=1 (docs/d074), so the
  * probe answers the question the gates actually have: can THIS host,
  * through whatever proxy env is configured, reach the models.dev host
  * in the allowlist. It certifies nothing at run time.

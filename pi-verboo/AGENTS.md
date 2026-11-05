@@ -29,7 +29,7 @@ verboo-specific deltas are below.
 ## Generated artifacts
 
 `models.json` and `models.js` are written by `generate.mjs`. Hand-editing
-them is erased by the next `. ./npm-run.sh && npm_run pi-verboo generate` —
+them is erased by the next `./npm-run.sh pi-verboo generate` —
 fix the shaping instead. Both are in `biome.jsonc`'s ignore list. Adding
 `--check` to that command is the drift gate; both forms need the key.
 
@@ -38,7 +38,7 @@ The committed pair was SEEDED at landing from the fleet's facts cache
 2026-10-29) because this sandbox holds no `VERBOO_API_KEY` — the seeding ran
 the real generate path with only the transport stubbed, so the artifacts are
 exactly what a keyed regeneration of that listing produces. The first keyed
-`npm_run pi-verboo generate` is the honest refresh.
+`./npm-run.sh pi-verboo generate` is the honest refresh.
 
 ## The fleet seam (the one open piece)
 

@@ -19,7 +19,7 @@
  * sibling artifacts, so there is no copy step, no `extension/` subfolder,
  * and nothing to keep in sync with `cmp`.
  *
- * Usage: from the repo root, `. ./npm-run.sh && npm_run pi-hyper generate
+ * Usage: from the repo root, `./npm-run.sh pi-hyper generate
  * [--check]` — package.json's scripts are the entrypoint table (docs/d113).
  *   --check verifies the committed artifacts match a fresh generation and
  *   exits non-zero on drift (the CI-shaped form; without it the run writes).
@@ -246,8 +246,8 @@ function seedSource(models) {
  * The catalog the extension registers when it cannot read the provider's
  * listing: the same shaping that produced pi-hyper/models.json, rendered with
  * the pi-ai model field names (mandatory cost block — the one deliberate
- * divergence, see merge.mjs). Regenerate with npm_run pi-hyper generate
- * (source ./npm-run.sh at the repo root first); the git diff is the review.
+ * divergence, see merge.mjs). Regenerate with ./npm-run.sh pi-hyper generate
+ *; the git diff is the review.
  */
 
 export const HYPER_MODELS = ${JSON.stringify(

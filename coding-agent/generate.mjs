@@ -13,13 +13,13 @@
  *   Termux (PREFIX under /data/data/com.termux): system node (Termux's
  *     bionic build; pi's own engines enforce the >= 22.19 floor when it
  *     launches) and secrets arriving as plain environment, via the explicit
- *     chain (./environment.sh ./generate.sh). The committed snapshot is
+ *     chain (./environment.sh ./npm-run.sh coding-agent generate). The committed snapshot is
  *     not consumed here — pi reads the agent dir directly, which is why the
  *     copy-back is container-only (docs/d059).
  *   Everywhere else (host or inside the coding-agent container): stages run
- *     via process.execPath (the same pinned node the generate.sh shim
- *     resolved through lib/node-run.sh), and secrets are expected ALREADY IN
- *     the environment by the caller (run.sh is exec'd through
+ *     via process.execPath (the same pinned node ./npm-run.sh resolved through
+ *     ./node-run.sh), and secrets are expected ALREADY IN the environment by
+ *     the caller (the launcher is exec'd through
  *     ./environment.sh and forwards the vault env through the workload_env
  *     allowlist).
  *
@@ -57,7 +57,7 @@
  *                    ${XDG_CONFIG_HOME:-$HOME/.config}/opencode) — upstream's
  *                    documented custom config directory (config.mdx:
  *                    searched like `.opencode`, loaded after the global
- *                    config so it overrides) and the dir coding-agent/run.sh
+ *                    config so it overrides) and the dir coding-agent/run.mjs
  *                    mounts rw into the sandbox (docs/d065). The install hits
  *                    BOTH this host dir and the committed opencode.jsonc;
  *                    Termux skips the opencode stage unless this is set
@@ -212,7 +212,7 @@ function readMcpConfig(path) {
  * this script's own dir — the committed snapshot, identical in URL form to
  * what the agent dir gets (docs/d041/d070/d108: generation emits real
  * upstream URLs and no install-time rewrite exists). Without this
- * copy-back `./generate.sh` refreshes
+ * copy-back `./npm-run.sh coding-agent generate` refreshes
  * only the agent dir, so the committed coding-agent/models.json stays frozen:
  * the artifact a review reads and the next run's stale-preserve input would
  * both keep an old generation. Container hosts only (docs/d059). A read-only
@@ -500,7 +500,7 @@ currentStage = "opencode-config";
 // (docs/d054, docs/d065): generate into a per-run COPY of the committed
 // overlay — the copy is the write target AND the d064 stale-preserve input
 // previousLocalProvider reads (a fresh output dir carries no history), then
-// on success install BOTH the host config dir (the dir run.sh mounts rw into
+// on success install BOTH the host config dir (the dir the launcher mounts rw into
 // the sandbox) and this dir's committed opencode.jsonc. The two take
 // same canonical URL form (docs/d070/d108): the host copy is what the
 // sandbox mounts, the committed copy is the reviewed git diff and the next

@@ -34,11 +34,12 @@ FG_FARM_MUTATION_LOCK_TIMEOUT_S=1800
 # advisory lock; the exit status is CMD's.
 #
 # The lock is taken on an fd of THIS process (flock's fd mode), NOT via
-# `flock LOCKFILE CMD...`: that mode execvp's CMD, and the callers' command is
-# node_run — a shell FUNCTION from lib/node-run.sh that no exec can see
-# (flock: "failed to execute node_run"). The fd mode also releases the lock
-# automatically if the holder dies: the kernel drops the open file
-# description with the process.
+# `flock LOCKFILE CMD...`: fd mode keeps the lock owned by the caller, so no
+# supervising flock process sits between the caller and its command's exit
+# status, and the kernel drops the lock the moment the holder dies — the
+# property that makes a killed repack safe to retry. The callers' command is a
+# real executable since d138 (the repo-root node-run.sh), so exec mode would work too;
+# the fd is still the half with fewer moving parts.
 #
 # flock is missing → warn and run unlocked: a degraded lock beats refusing
 # every mutation on a host without util-linux, and the warning keeps the

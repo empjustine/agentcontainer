@@ -39,7 +39,7 @@ folder has nothing to regenerate. `tests/pi-opencode.test.mjs` pins the
 rules: each config carries only `refreshModels`, no model data exists in
 the folder, the upstream URLs match this folder's fact-table row literals,
 and every failure path leaves pi's defaults in place. Run it with
-`. ./npm-run.sh && npm_run pi-opencode test` from the repo root (all fetches
+`./npm-run.sh pi-opencode test` from the repo root (all fetches
 injected — no network in `node --test`).
 
 ## Provenance

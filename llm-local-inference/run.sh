@@ -17,7 +17,8 @@
 #   HOST_PORT          container published port (default 8101)
 #   LLAMA_SWAP_IMAGE   container image override
 #   HF_HUB_CACHE       HF cache override (default XDG_CACHE_HOME/huggingface/hub;
-#                      must match the cache ./generate.sh baked model paths from)
+#                      must match the cache ./npm-run.sh llm-local-inference generate
+#                      baked model paths from)
 
 set -eu
 # shellcheck source-path=SCRIPTDIR source=lib/workload-runtime.sh
@@ -30,10 +31,10 @@ config_d="$script_dir/config.d"
 HOST_PORT="${HOST_PORT:-8101}"
 
 [ -d "$config_d" ] ||
-	log_die 94 "config.d not found — generate it first with ./generate.sh" dir="$config_d"
+	log_die 94 "config.d not found — generate it first with ./npm-run.sh llm-local-inference generate" dir="$config_d"
 
 [ -f "$config_d/10-local-llm-inference.yaml" ] ||
-	log_die 94 "no local-inference layer in config.d — this host cannot serve local inference (run ./generate.sh on a GPU-capable container host)" dir="$config_d"
+	log_die 94 "no local-inference layer in config.d — this host cannot serve local inference (run ./npm-run.sh llm-local-inference generate on a GPU-capable container host)" dir="$config_d"
 
 # Secrets: arrive as plain environment — loaded by the explicit chain
 # (./environment.sh ./run.sh, the ONE infisical round-trip) and forwarded
@@ -58,7 +59,7 @@ if [ -f "$paths_file" ]; then
 		[ -n "$baked_rel" ] || continue
 		baked_path="$hub_cache/$baked_rel"
 		[ -e "$baked_path" ] ||
-			log_die 95 "model file baked into config.d is gone from the HF cache — cache changed since generation; re-run ./generate.sh" path="$baked_path"
+			log_die 95 "model file baked into config.d is gone from the HF cache — cache changed since generation; re-run ./npm-run.sh llm-local-inference generate" path="$baked_path"
 	done <"$paths_file"
 fi
 

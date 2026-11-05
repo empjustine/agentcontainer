@@ -5,7 +5,7 @@
  * tests/committed-manifests.test.mjs beside this file, because its subject is
  * this folder's committed manifests).
  *
- * Run: . ./lib/node-run.sh && node_run --test tests/*.test.mjs   (this folder)
+ * Run: ../node-run.sh --test tests/*.test.mjs   (this folder)
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";

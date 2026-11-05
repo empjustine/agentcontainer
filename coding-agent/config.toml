@@ -6,7 +6,7 @@ uv = "latest"
 
 # mise resolves a multi-version array in order, so the FIRST entry is the
 # default `node` on PATH (shims). 24 stays installed because
-# lib/node-run.sh deliberately pins node@24 for repo scripts (docs/d051).
+# ./node-run.sh (repo root) deliberately pins node@24 for repo scripts (docs/d051).
 # node = ["26", "24"] #"22"
 
 # python = ["3.14"]

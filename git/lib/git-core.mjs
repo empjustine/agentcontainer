@@ -496,7 +496,7 @@ export async function originUrl(repo) {
 
 /**
  * Serialize gated work and leave `intervalMs` of idle time after each call —
- * the JS counterpart of `-vbs-mirror-all.sh`'s `sleep $VBS_THROTTLE` between
+ * the JS counterpart of `vbs-mirror-all.mjs`'s `sleep $VBS_THROTTLE` between
  * repos. Serializing matters as much as the gap: a pool worker starting a
  * fetch while another is still in flight would still be two concurrent
  * requests to the forge, which is exactly what the software-forge tenant

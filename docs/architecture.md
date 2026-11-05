@@ -43,7 +43,7 @@ keep their verdicts.
 
 Every serving/usage folder is **self-contained**, and since **docs/d113** the
 copy unit is the folder **alone**: each unit carries its own `lib/` — a hand
-copy of the kernels it actually uses — plus its own `build.sh`/`generate.sh`
+copy of the kernels it actually uses — plus its own `build.mjs`/`generate.mjs`
 and its own `tests/`. The `pi-*` extension family carries no `lib/` at all
 (docs/d118): their kernels are folder-root modules imported statically by the
 folder's own files, because an extension is loaded by the pi host rather than
@@ -104,7 +104,17 @@ don't exist.
 
 There is **no repo-level `lib/`** (docs/d113). Every kernel below exists as one
 hand copy per unit that uses it — inside that unit's `lib/`, or at the folder
-root where the unit is a pi extension (docs/d118):
+root where the unit is a pi extension (docs/d118).
+
+The **interpreter runners are the one exception** (docs/d138): `node-run.sh`,
+`npm-run.sh` and `node-run.ps1` sit at the repo root, one copy each, and they
+ARE the entry point — `./node-run.sh <unit>/<entry>.mjs [args]`,
+`./npm-run.sh <unit> <script>`, with no per-entry `.sh` shim in between. A
+version pin is a single fact, so a copy per unit is a fork waiting to happen
+(`estige/build.sh` had inlined the pin as a function before d138) — and a runner
+is invoked, not imported, so no unit's *code* depends on the root. What that
+costs is stated where it belongs: a folder copied out of this tree ships its
+code, not its way of being started.
 
 - `workload-runtime.sh` / `workload-runtime.mjs` — the two implementations of
   the same API (spec id `workload-api`, contract in
@@ -126,10 +136,15 @@ root where the unit is a pi extension (docs/d118):
   the `pi-*` folders the logger sits at the folder root (`<unit>/log.mjs`,
   docs/d118), pruned to the level functions that folder calls; there is no
   `lib/` around it.
-- `node-run.sh` — the standalone `node_run()` sh lib (docs/d041): repo-pinned
-  node for any script (system node on Termux, `mise exec node@24` elsewhere).
-- `node-run.ps1` — the PowerShell `node_run()` counterpart (docs/d062), carried
-  by `git/` beside the Windows shims that use it: same pin policy, but it
+- `node-run.sh` — the pinned-node runner, at the repo root, invoked as a
+  command (docs/d041, d138): `./node-run.sh ./coding-agent/run.mjs <args>`,
+  system node on Termux and `mise exec node@24` elsewhere. It is a program
+  rather than a sourced function, so `exec`, `flock` and non-shell callers all
+  reach the same pin — and nothing has to stay resident to carry a status back.
+  The two entries that keep a `.sh` of their own do so for `flock`
+  (`git/maintain.sh`, `git/-forge-mirror.sh`), never for the interpreter.
+- `node-run.ps1` — the PowerShell counterpart, at the repo root and invoked the
+  same way (docs/d062, d138), used by `git/maintain.ps1`: same pin policy, but it
   branches on mise PRESENCE — Windows carries no Termux-style profile signal to
   key on.
 - `go-build.mjs` — the go toolchain probe + android/host build-env presets
@@ -171,15 +186,18 @@ root where the unit is a pi extension (docs/d118):
   `retry.mjs`'s backoff policy with an injected clock, `farm-lock.mjs`'s view
   of the mutation lock, `farm-posture.mjs`'s caps and scrubbed spawn). The
   same record left every top-level `.sh` in that folder an interpreter shim,
-  so `farm-lock.sh` — `flock` in fd mode around `node_run`, because a shell
-  function is invisible to `exec` — is the only shell there that holds logic.
+  and d138 deleted all but two of them: `git/maintain.sh` and
+  `git/-forge-mirror.sh` remain because `farm-lock.sh` — `flock` in fd mode
+  around the repo-root `node-run.sh`, holding the lock in the caller's own
+  process — is behavior, not indirection.
 
-What stays at the repo root is **not importable by any unit**: the operator
-files and the QA sweep.
+What stays at the repo root is **not importable by any unit** — nothing a unit
+imports lives up there — with the two runner exceptions above, which units
+execute rather than import. The rest is operator files and the QA sweep.
 
 - `environment.sh` — THE environment loader: `infisical run` fetches the
   vault and spawns the named script with it as plain env
-  (`./environment.sh ./coding-agent/run.sh`, docs/d046).  Consumers
+  (`./environment.sh ./node-run.sh coding-agent/run.mjs`, docs/d046).  Consumers
   read plain env and never load secrets themselves; a failing vault is
   fatal here via the CLI's own exit code. Exactly one loader per repo is the
   invariant (docs/d113).
@@ -187,8 +205,9 @@ files and the QA sweep.
   CLI source build; the former root `build.sh`), exec'd by `estige/build.mjs`
   for the Termux target. Stays shell on purpose — every path in it is
   Termux-only and untestable from a container host.
-- `node-run.sh`, `log.sh`, `npm-run.sh` — the sweep's own copies of the same
-  kernels, plus `npm-run.sh`'s `npm_run <unit> <script>`: it runs a unit's
+- `node-run.sh`, `npm-run.sh`, `node-run.ps1`, `log.sh` — the runners every
+  unit executes (docs/d138), and the sweep's own copy of the shell logger.
+  `./npm-run.sh <unit> <script>` runs a unit's
   `package.json` script under the pinned node without ever putting `npm` on the
   path, which is how the `pi-*` family — whose folders ship no shell — is built
   and generated (docs/d118).
@@ -233,22 +252,22 @@ working. No unit reads `../lib` — there is nothing there any more.
 
 **A unit builds and generates itself.** There is no root sequencer (docs/d113
 deleted `build.mjs`/`generate.mjs` and their shims): you invoke the folder you
-are working on.
+are working on, through the root runner (docs/d138).
 
-- `./llm-local-inference/generate.sh` (capability-gated: emits both config.d
-  layers only on an inference endpoint), `./coding-agent/generate.sh`
-  (network-heavy: catalogs + model layers), and `./estige/build.sh` — estige
+- `./npm-run.sh llm-local-inference generate` (capability-gated: emits both config.d
+  layers only on an inference endpoint), `./npm-run.sh coding-agent generate`
+  (network-heavy: catalogs + model layers), and `./node-run.sh estige/build.mjs` — estige
   has **no generator** since docs/d108 deleted `estige generate` with the
   allowlist.
 - The `pi-*` family generates one provider each through its own
-  `package.json` script (`. ./npm-run.sh && npm_run <unit> generate`, docs/d118)
-  rather than a `generate.sh`; a unit with nothing to generate has no script.
-- `./estige/build.sh`, `./coding-agent/build.sh` and
-  `./llm-local-inference/build.sh` build for THIS host: container images in
+  `package.json` script (`./npm-run.sh <unit> generate`, docs/d118)
+  rather than a shell entry; a unit with nothing to generate has no script.
+- `./node-run.sh estige/build.mjs`, `./npm-run.sh coding-agent build` and
+  `./npm-run.sh llm-local-inference build` build for THIS host: container images in
   parallel on podman/docker hosts, Termux provisioning + the android binary
   strictly serialized on ~1 GB devices. Each accepts target names
-  (`./estige/build.sh <target>…`, docs/d083) — the shim selects its unit's
-  targets in its own `build.mjs`. Capability gates key target registration on
+  (`./node-run.sh estige/build.mjs <target>…`, docs/d083) — each entry selects
+  its unit's targets in its own `build.mjs`. Capability gates key target registration on
   hardware/network facts: the llama-swap pull needs an inference endpoint —
   render devices plus the RAM floor (docs/d087; d083's coding-agent free-disk
   gate retired with the image's shrink) — and estige's container targets
@@ -263,7 +282,7 @@ are working on.
   (docs/d122) — the one sweep that needs the network, because a stale committed
   cache is otherwise a valid artifact that only review could catch.
 
-Runners NEVER build or generate: run.sh stages the COMMITTED config and a
+Runners NEVER build or generate: the launcher stages the COMMITTED config and a
 stale/missing artifact is a loud failure pointing at the generator, never an
 implicit regeneration.
 
@@ -292,9 +311,9 @@ the variant folders redundant.)
 
 | Folder | Role | What makes it work |
 |--------|------|--------------------|
-| `llm-local-inference/` (deprecated for now, d108) | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `generate.sh`/`generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh` |
+| `llm-local-inference/` (deprecated for now, d108) | local GGUF serving only (GPU container hosts; hard-fails elsewhere) | `generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh` |
 | `estige/` (tunnel-only since d108) | the SSL-VPN tunnel transports (h2-POST, WebSocket, h1.1-POST; docs/d073/d077/d105) in one binary in two network positions (docs/d088): the **exit node** (funnel front + tunnel server, egress enforced from `tunnel.egress`) and the **relay node** (loopback CONNECT/SOCKS5, served as a host service; the chain step that points a child at it is the binary's own `estige proxy-env`, docs/d095) — each installed as a service by the deb/rpm package (docs/d120). One reserved path (`/vpn`) serves the tunnels; **every other path answers the plain funnel 404** (d073 VPN-R34) — the allowlist reverse proxy that used to serve those paths (docs/d047/d063/d070) is deleted, not disabled (d108). WebSocket tunnel deployed; h2-POST tunnel default-on (d084); **no config file at all** (d108's tree-shake) — the arming credential, the bind (`PORT`, d110) and the egress opt-ins all arrive on the env chain, with d104's role store slated to own the policy half; standalone-repo boundary defined in docs/d082 (split-time CI findings in `estige/CI.md`) | `main.go`, the tunnel family — `relaynode.go`, `relaychain.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go` — plus the `packaging/` tree (pure-Go deb/rpm writers + the Termux and Oracle Linux service inputs, docs/d120); the POSIX launchers and the shell+jq workload library are deleted (docs/d120), as are `generate.go`, `estige.json`, `estige.example.json` and `smoke-test.go` with the allowlist (docs/d108); built by its own `build.mjs` |
-| `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.sh`/`generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.sh`, `settings.json`; image built by its own `build.mjs` |
+| `coding-agent/` | base pi workload image + artifacts (includes Cline CLI and Thinkrail) | `generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.mjs`, `settings.json`; image built by its own `build.mjs` |
 
 The former "next planned step" sketch (a simplified config-generator system
 split by concern) is archived at

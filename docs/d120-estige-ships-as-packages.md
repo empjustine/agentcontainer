@@ -35,7 +35,7 @@ busybox runit through `termux-services`) and an `.rpm` for Oracle Linux 8/9
 launches it, this repo no longer does.
 
 Deleted with the launchers: `vpn-exit.sh`, `vpn-relay.sh`,
-`lib/workload-runtime.sh`, `lib/workload-*.jq`, `lib/node-run.sh`,
+`lib/workload-runtime.sh`, `lib/workload-*.jq`,
 `lib/log.sh`, and the shell test that drove them
 (`tests/check-vpn-relay-chain.sh`). `estige/lib/` now holds only what the
 build needs: `go-build.mjs`, `host-capabilities.mjs`, `log.mjs`.

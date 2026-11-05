@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * @fileoverview vbs-mirror-all.mjs — mirror EVERY git repository reachable in
- * a Visual Builder Studio (VBS) tenant. The operator entry is the
- * `-vbs-mirror-all.sh` shim beside this file.
+ * a Visual Builder Studio (VBS) tenant. The operator entry is
+ * `./node-run.sh git/vbs-mirror-all.mjs` (docs/d138: no per-entry shim).
  *
  * One input mode, one mirror loop (docs/d044):
  *
@@ -51,10 +51,10 @@ import {
 } from "./lib/git-core.mjs";
 import { backoffSeconds, classifyFailure, sleepSeconds } from "./lib/retry.mjs";
 
-// The operator enters through the shim, so the usage text must name the shim,
-// not this file — a message telling a user to run vbs-mirror-all.mjs would send
-// them around the node-version pin the shim exists to apply.
-const PROG = "-vbs-mirror-all.sh";
+// The usage text must name the invocation that actually works — the repo-root
+// runner plus this entry — because a bare "vbs-mirror-all.mjs" is not runnable
+// and would send an operator around the node pin (docs/d138).
+const PROG = "./node-run.sh git/vbs-mirror-all.mjs";
 
 const USAGE = `usage: ${PROG} --manifest FILE [--dest DIR] [--list] [--only GLOB]
 

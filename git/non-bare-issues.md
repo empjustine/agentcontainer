@@ -46,7 +46,7 @@ Podman binds the source tree with `:z,U`:
 Both are O(#files), on **every** launch. A checkout of a repo with 100k files
 costs 100k syscalls before the container even starts; a bare repo of the same
 project costs one packfile + refs. This is why the reference mirror was the
-single largest `coding-agent/run.sh` startup cost while the HF cache (823
+single largest `coding-agent/run.mjs` startup cost while the HF cache (823
 files) and the repo itself were noise.
 
 ### 2. A checkout duplicates what the objects already contain
@@ -81,7 +81,7 @@ mirror (`clone --mirror`, refspec `+refs/*:refs/*`, `remote.origin.mirror=true`)
 is an exact replica by construction: fetch prunes refs upstream deleted. That
 is the alignment model the maintenance script relies on.
 
-## The observed farm (from `./git/audit.sh`)
+## The observed farm (from `./node-run.sh git/audit.mjs`)
 
 At the time of writing: **778 repos**, **777 from github.com**, **1 with no
 origin**. The tree is not a clean two-level layout — the audit surfaces five
@@ -110,13 +110,13 @@ Consequences the tooling must respect:
 
 All three are standalone: the copy unit is `git/` alone
 (`docs/architecture.md`, docs/d113), they log through this folder's own
-`lib/log.mjs`/`lib/log.sh`, and the `.sh` shims run the repo-pinned node via
-`lib/node-run.sh`.
+`lib/log.mjs`, and the `.sh` shims run the repo-pinned node via the repo-root
+`node-run.sh` (docs/d138).
 
-### `./git/audit.sh` — report anomalies
+### `./node-run.sh git/audit.mjs` — report anomalies
 
 ```sh
-./git/audit.sh [--root DIR] [--max-depth N]
+./node-run.sh git/audit.mjs [--root DIR] [--max-depth N]
 ```
 
 The JSON report goes to stdout, the summary/warnings to stderr. Every repo also
@@ -124,10 +124,10 @@ gets `git status --porcelain` and a detached-HEAD check, so `detached`/`dirty`
 are always in the report rather than behind a thorough-flag people forget to
 pass (docs/d060).
 
-### `./git/migrate.sh` — convert clones to bare mirrors
+### `./node-run.sh git/migrate-to-bare.mjs` — convert clones to bare mirrors
 
 ```sh
-./git/migrate.sh [--root DIR] [--dest DIR] [--jobs N] [--max-depth N] \
+./node-run.sh git/migrate-to-bare.mjs [--root DIR] [--dest DIR] [--jobs N] [--max-depth N] \
                  [--redownload] [--delete-originals] [--force] \
                  [--only GLOB]... [--exclude GLOB]
 ```
@@ -242,7 +242,7 @@ already uses `workload_network host`), so the farm does not come back as a
 bind mount and the `z,U` startup cost does not return.
 
 Indexing is **opt-in**: nothing is indexed until a repo looks interesting, at
-which point `./git/search-references.sh index --only 'github.com/<o>/<r>.git'`
+which point `./node-run.sh git/search-references.mjs index --only 'github.com/<o>/<r>.git'`
 builds just that repo's shard. New mirrors are added with `./git/-forge-mirror.sh <url>` — any https forge
 (GitHub, Codeberg, sr.ht, GitLab subgroups), keyed by host, trailing `.git`
 optional (idempotent; re-runs align) — then optimized by `./git/maintain.sh`.

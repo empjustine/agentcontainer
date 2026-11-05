@@ -79,7 +79,7 @@ to act on.
 ## Decision
 
 A small MCP server, `git/search-mcp.mjs` behind a `git/search-mcp.sh` shim
-(node via `../lib/node-run.sh`, `@modelcontextprotocol/sdk`), speaking
+(node via the repo-root `node-run.sh`, `@modelcontextprotocol/sdk`), speaking
 **streamable HTTP on loopback only** (`127.0.0.1:6071` — beside Zoekt's
 6070). Host-side for the same reason d043's servers are:
 `coding-agent/run.sh` runs the agent with `workload_network host`, so a

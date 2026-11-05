@@ -44,7 +44,7 @@ read as an alias target. So:
 `models.json` and `models.js` are written by `generate.mjs`. Hand-editing
 them is erased by the next generation run — fix the shaping instead. Both are
 in `biome.jsonc`'s ignore list (generated files, same reasoning as
-`coding-agent/model-*.json`). `. ./npm-run.sh && npm_run pi-synthetic generate
+`coding-agent/model-*.json`). `./npm-run.sh pi-synthetic generate
 --check` is the drift gate; prefer it over eyeballing a diff when you only need
 to know "is this current".
 

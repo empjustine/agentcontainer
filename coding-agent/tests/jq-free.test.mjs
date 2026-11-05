@@ -9,7 +9,7 @@
  * half (a tripwire `jq` ahead on PATH while the launcher runs) lives in
  * check-run-dirs.test.mjs, which already has a host fixture to launch.
  *
- * Run: . ./lib/node-run.sh && node_run --test tests/*.test.mjs   (from ./coding-agent)
+ * Run: ../node-run.sh --test tests/*.test.mjs   (from ./coding-agent)
  */
 
 import assert from "node:assert/strict";

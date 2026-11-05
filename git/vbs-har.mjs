@@ -14,7 +14,7 @@
  * `name` (with `.git`), `url` (https clone) and `alternateUrl` (ssh clone,
  * WITHOUT a userinfo — the shell half injects `--ssh-user`).
  *
- * Output is the manifest schema `./git/-vbs-mirror-all.sh --manifest FILE`
+ * Output is the manifest schema `./node-run.sh git/vbs-mirror-all.mjs --manifest FILE`
  * consumes. Projects the capture never opened are listed under
  * `missingProjects` (ignored by the shell) so the gap is explicit rather than
  * silent.
@@ -310,7 +310,7 @@ function main() {
 	const o = parseArgs(process.argv.slice(2));
 	if (o.help) {
 		process.stdout.write(
-			"usage: ./git/vbs-har.sh <har-file> [--out manifest.json] [--base URL] [--org ORG]\n",
+			"usage: ./node-run.sh git/vbs-har.mjs <har-file> [--out manifest.json] [--base URL] [--org ORG]\n",
 		);
 		return;
 	}

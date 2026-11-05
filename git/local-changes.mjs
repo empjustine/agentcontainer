@@ -479,7 +479,7 @@ async function main() {
 	const o = parseArgs(process.argv.slice(2));
 	if (o.help) {
 		process.stdout.write(
-			"usage: ./git/local-changes.sh [--repo DIR] [--root DIR] [--json] [--all]\n" +
+			"usage: ./node-run.sh git/local-changes.mjs [--repo DIR] [--root DIR] [--json] [--all]\n" +
 				"                              [--max-depth N] [--max-entries N] [--no-ignored]\n" +
 				"                              [--only GLOB]... [--exclude GLOB]...\n",
 		);
