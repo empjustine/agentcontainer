@@ -7,6 +7,7 @@
 	},
 	"scripts": {
 		"lint:js": "biome lint . --error-on-warnings",
+		"lint:oxlint": "oxlint . -D warning",
 		"knip": "knip",
 		"check-types": "tsc -p tsconfig.json"
 	},
@@ -14,6 +15,8 @@
 		"@biomejs/biome": "2.6.3",
 		"@types/node": "24.19.2",
 		"knip": "6.43.0",
+		"oxlint": "^1.90.0",
+		"oxlint-tsgolint": "^7.0.2005",
 		"typescript": "6.0.3"
 	}
 }

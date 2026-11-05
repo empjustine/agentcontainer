@@ -19,6 +19,11 @@
 	"files": {
 		"includes": [
 			"**",
+			// The gate's python environment (uv sync) — biome ignores
+			// node_modules by default but has no built-in knowledge of .venv,
+			// whose site-packages carry third-party JS (urllib3's emscripten
+			// worker) that is nobody's lint target.
+			"!.venv",
 			"!.pi",
 			"!.vscode",
 			"!.thinkrail",

@@ -51,7 +51,10 @@ log_info "shellcheck"
 # docs/d119).
 # node_modules is pruned: npm's dependency tree may carry vendor *.sh files,
 # and this gate owns only this repo's sources.
+# .venv is pruned alongside node_modules: the gate environment ships its
+# own .sh files (tqdm's completion.sh) that are third-party, not ours.
 run_mise_or_host shellcheck find . -path ./node_modules -prune -o \
+	-path ./.venv -prune -o \
 	-type f -name '*.sh' -exec shellcheck -x {} +
 
 # jq compile gate for the workload description filters. One copy is left:
@@ -92,7 +95,18 @@ done'
 
 log_info "shfmt (advisory)"
 run_mise_or_host shfmt find . -path ./node_modules -prune -o \
+	-path ./.venv -prune -o \
 	-type f -name '*.sh' -exec shfmt -l {} + || true
+
+# oxfmt (advisory, markdown only): the ox toolchain's prose formatter — the
+# one that can actually reflow a table a JS linter can't see. Advisory
+# because the repo has never wholesale-reformatted its docs: the signal is
+# drift, not a rule. The glob excludes non-md output — code-format policy
+# belongs to biome, whose lint line below is deliberately lint-only. The
+# glob is quoted so bash hands oxfmt the pattern itself (its own glob
+# walker), not a one-level shell expansion.
+log_info "oxfmt markdown (advisory)"
+run_mise_or_host oxfmt oxfmt --list-different "**/*.md" || true
 
 npm_tools_ensure "$repo_root"
 [ -x "$repo_root/node_modules/.bin/biome" ] ||
@@ -113,6 +127,18 @@ npm_tools_ensure "$repo_root"
 log_info "biome lint (gating — rule set in biome.jsonc; pinned by package-lock.json)"
 "$repo_root/node_modules/.bin/biome" lint . --error-on-warnings
 
+# oxlint (gating): the type-aware JS/TS lint half biome structurally cannot
+# be — biome 2.6.x has no type-inference option anywhere in its schema
+# (schema-verified), so no-floating-promises / no-base-to-string /
+# require-array-sort-compare live here, powered by oxlint-tsgolint.
+# npm-pinned pair under node_modules/.bin so linter and type provider move
+# in one lockstep (the biome posture). Config = .oxlintrc.json: typeAware
+# on; the tests override turns off no-floating-promises for **/tests/**
+# because node:test treats every handler as fire-and-forget by design, not
+# a bug to flag 219 times.
+log_info "oxlint (gating — type-aware JS/TS lint)"
+( cd "$repo_root" && "$repo_root/node_modules/.bin/oxlint" . -D warning )
+
 # knip — the dead-code gate (unused files, unused exports). This is the
 # mechanical teeth for the fold discipline (docs/d039/d072): an export no
 # consumer imports is a finding, not a style opinion. The one hand-maintained
@@ -126,6 +152,28 @@ log_info "biome lint (gating — rule set in biome.jsonc; pinned by package-lock
 # lifecycle code, so the check itself carries no install-time code execution.
 log_info "knip (gating — unused files/exports; entry contract in knip.jsonc)"
 ( cd "$repo_root" && "$repo_root/node_modules/.bin/knip" )
+
+# ruff (gating): the python lint gate. No [tool.ruff] select exists on
+# purpose — the gate runs ruff 0.17's default surface (407 enabled codes,
+# measured green 2026-11-06); target-version derives from pyproject's
+# requires-python. A hand-written family list would either drift from that
+# default or silently drop rules the default keeps.
+log_info "ruff (gating — python lint)"
+run_mise_or_host ruff ruff check .
+
+# uv sync --frozen: ty's prerequisite and the python gate's npm-ci —
+# installs the tracked uv.lock into .venv exactly; --frozen fails on a
+# stale lock instead of silently re-resolving it.
+log_info "uv sync --frozen (ty's environment)"
+run_mise_or_host uv uv sync --frozen
+
+# ty (gating): python type checking — tsc's counterpart. The flags carry
+# what ty 0.0.95 parses but won't apply from [tool.ty.environment]
+# (pyproject's NOTE); the search-path pair is the per-unit lib/ layout
+# (docs/d113) that makes bare import log / import _hf_cache resolve the
+# way the scripts are written to run.
+log_info "ty (gating — python types)"
+run_mise_or_host ty ty check . --python .venv --extra-search-path llm-local-inference/lib --extra-search-path llm-local-inference
 
 # Capability-bearing URL gate (docs/d086): a funnel mount path in a tracked
 # file is the mode A credential written down — it leaks the only credential
