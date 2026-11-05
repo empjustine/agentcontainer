@@ -96,7 +96,9 @@ test("the listing is fetched from the canonical upstream, with no redirect surfa
 	let seen = "";
 	await fetchListing({
 		fetchImpl: async (url) => {
-			seen = String(url);
+			// Request has no own toString (base [object Request]); the pipeline
+			// hands fetchImpl URL objects, so only the Request case needs the url.
+			seen = String(url instanceof Request ? url.url : url);
 			return /** @type {Response} */ (
 				/** @type {unknown} */ ({
 					ok: true,
@@ -239,7 +241,7 @@ test("models are emitted in canonical id order (docs/d050)", () => {
 		row({ id: "syn:middle" }),
 	]);
 	const ids = models.map((m) => m.id);
-	assert.deepEqual(ids, [...ids].sort());
+	assert.deepEqual(ids, [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
 });
 
 test("prices parse from the provider's mixed number/string wire form", () => {
@@ -350,7 +352,7 @@ test("committed models.json carries the fact-table canonical upstream, not a rou
 	assert.equal(provider.apiKey, `$${synthetic.apiKeyEnv}`);
 	assert.equal(provider.authHeader, true);
 	const ids = provider.models.map((/** @type {{id: string}} */ m) => m.id);
-	assert.deepEqual(ids, [...ids].sort());
+	assert.deepEqual(ids, [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
 	assert.ok(ids.length > 0, "the committed artifact must carry models");
 });
 

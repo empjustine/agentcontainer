@@ -121,7 +121,9 @@ test("the catalog read is one canonical https fetch, whatever else is overridden
 	const seen = [];
 	await fetchCatalogSlice({
 		fetchImpl: async (url) => {
-			seen.push(String(url));
+			// Request has no own toString (base [object Request]); the pipeline
+			// hands fetchImpl URL objects, so only the Request case needs the url.
+			seen.push(String(url instanceof Request ? url.url : url));
 			return fetchOnce(catalogPayload({ "cline-pass/glm-5.2": record() }))();
 		},
 	});
@@ -216,7 +218,9 @@ test("the docs fetch degrades to null — it never throws", async () => {
 	let seen = "";
 	await fetchDocsIds({
 		fetchImpl: async (url) => {
-			seen = String(url);
+			// Request has no own toString (base [object Request]); the pipeline
+			// hands fetchImpl URL objects, so only the Request case needs the url.
+			seen = String(url instanceof Request ? url.url : url);
 			return fetchOnce(null, {
 				text: "## Models\n\n| Model | Model ID |\n| --- | --- |\n| A | cline-pass/glm-5.2 |\n",
 			})();
@@ -494,7 +498,7 @@ test("committed models.json carries the fact-table upstream and provider compat"
 	assert.deepEqual(provider.compat, { supportsDeveloperRole: false });
 	const ids = provider.models.map((/** @type {{id: string}} */ m) => m.id);
 	assert.ok(ids.length > 0, "the committed artifact must carry models");
-	assert.deepEqual(ids, [...ids].sort());
+	assert.deepEqual(ids, [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
 	for (const id of ids) {
 		assert.ok(
 			id.startsWith(CLINE_PASS_ID_PREFIX),

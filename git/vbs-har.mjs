@@ -78,7 +78,29 @@ function pick(obj, ...keys) {
 	for (const key of keys) {
 		const value = obj?.[key];
 		if (value !== undefined && value !== null && value !== "") {
-			return String(value);
+			if (typeof value === "string") {
+				return value;
+			}
+			if (typeof value === "function") {
+				// Non-JSON data in a manifest — render the name rather than [object Object].
+				return `[Function ${value.name}]`;
+			}
+			if (typeof value === "object") {
+				// String() of an object prints "[object Object]" into this tool's JSON
+				// output; JSON keeps the shape. Primitives below keep bare pick() rendering.
+				return JSON.stringify(value);
+			}
+			// Positive narrowing: tsgolint keeps `unknown`'s complement unsound,
+			// so every remaining JSON scalar is named here; anything else (symbol,
+			// exotic) has no business in a manifest and renders empty.
+			if (
+				typeof value === "number" ||
+				typeof value === "boolean" ||
+				typeof value === "bigint"
+			) {
+				return String(value);
+			}
+			return "";
 		}
 	}
 	return "";

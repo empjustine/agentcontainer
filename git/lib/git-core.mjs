@@ -276,7 +276,9 @@ export function findBareMirrors(root, maxDepth = DEFAULT_MAX_DEPTH) {
  */
 export async function pool(items, limit, worker) {
 	/** @type {R[]} */
-	const results = new Array(items.length);
+	// Array.from({length}) over new Array(n): the single-argument Array form
+	// is ambiguous (length vs element), and results is filled by index below.
+	const results = Array.from({ length: items.length });
 	let next = 0;
 	const runners = Math.max(1, Math.min(limit, items.length));
 	await Promise.all(

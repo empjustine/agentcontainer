@@ -101,8 +101,10 @@ export function refuse(code, message, fields = {}) {
 export function stripControl(s) {
 	// Dropping these exact bytes IS the contract with the shell's `tr`: the rule's
 	// usual hazard (an accidental control character in a pattern) is the point.
+	// oxlint's disable rides the code line (trailing) so neither tool's
+	// directive sits between the other's and the regex it covers.
 	// biome-ignore lint/suspicious/noControlCharactersInRegex: the C0 range is the target
-	return s.replace(/[\u0000-\u0008\u000b-\u001f]/g, "");
+	return s.replace(/[\u0000-\u0008\u000b-\u001f]/g, ""); // eslint-disable-line no-control-regex — matching these bytes IS the contract with the shell's `tr`
 }
 
 /**

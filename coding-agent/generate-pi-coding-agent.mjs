@@ -198,7 +198,7 @@ const MODEL_SCOPES = {
 		const output = record?.modalities?.output;
 		if (!input || input.length === 0 || !output || output.length === 0) {
 			return (
-				/^gemini-/.test(id) && !/(-image|-tts|-live|-computer-use)/i.test(id)
+				id.startsWith('gemini-') && !/(-image|-tts|-live|-computer-use)/i.test(id)
 			);
 		}
 		return (

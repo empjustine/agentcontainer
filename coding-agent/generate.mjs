@@ -316,7 +316,7 @@ if (scriptDir !== agentDir) {
 		const defaults = readMcpConfig(mcpSource)?.mcpServers ?? {};
 		const current = existsSync(mcpPath) ? readMcpConfig(mcpPath) : {};
 		if (current !== null) {
-			const mcpServers = { ...defaults, ...(current.mcpServers ?? {}) };
+			const mcpServers = { ...defaults, ...current.mcpServers };
 			// Tabs so the installed copy stays byte-diffable against the committed
 			// file this repo lints (biome; d050's determinism in spirit).
 			writeArtifact(

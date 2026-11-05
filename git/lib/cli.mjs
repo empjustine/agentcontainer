@@ -148,7 +148,7 @@ export function parseFlags(argv, table, positionals = "reject") {
  * because its errors carry a child process's stderr, which the generic
  * serializer would render as an unreadable nested blob.
  * @param {string} label  the tool name the log line carries, e.g. "audit"
- * @param {() => unknown | Promise<unknown>} body
+ * @param {() => unknown} body
  * @param {{ report?: (err: any) => Record<string, unknown> }} [hooks]
  * @returns {Promise<void>}
  */
