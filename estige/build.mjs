@@ -178,6 +178,11 @@ function fmtLogfmtValue(v) {
 	return /[\s"=\\]/.test(s) || s === "" ? JSON.stringify(s) : s;
 }
 
+/**
+ * @param {string} level
+ * @param {string} msg
+ * @param {Record<string, unknown>} [fields]
+ */
 function emit(level, msg, fields = {}) {
 	const base = { ts: ts(), level, tool, msg };
 	if (process.env.LOG_FORMAT === "logfmt") {
