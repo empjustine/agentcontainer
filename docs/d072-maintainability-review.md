@@ -142,7 +142,7 @@ one external call site):
 (d064 first-class stale-preserve) but two different schemas — pi's
 `providers["llama-swap"].models` array vs opencode's `provider.local.models`
 map. A generic version would need the path-extraction and the shape check
-parameterised, i.e. more indirection than the duplicated eight lines. Kept as
+parameterised, that is, more indirection than the duplicated eight lines. Kept as
 two schema-specific readers, each with the d064 comment.
 
 ## Deferred, with the investigation already done
@@ -183,7 +183,7 @@ official directory flag — `workload_cmd -config-dir /etc/llama-swap/config.d`
 (`llm-local-inference/run.sh:90`) — and `lib/workload-cmd.jq` /
 `lib/workload-runtime.sh` are written around that exact spelling. Our own Go
 proxy mirrors the sibling naming with `-config`/`-listen`. **No rename was
-needed on the repo side**; if the intent was something else (e.g. teaching
+needed on the repo side**; if the intent was something else (for example, teaching
 the Go proxy llama-swap's `-config-dir` so a `config.d/` layout works there
 too), that is a feature, not a rename, and it is not done here.
 
@@ -200,7 +200,7 @@ carrier of d064's stale-preserve. Collapsing them into a single in-memory
 merge would delete the merge glob and the per-layer review surface, but it
 would also delete the artifact a reviewer diffs after a generator change —
 and the committed file is what a clean checkout seeds `PI_LAYER_DIR` from.
-Worth doing only if the layers stop being committed, i.e. if the snapshot
+Worth doing only if the layers stop being committed, that is, if the snapshot
 moves to a rendered diff in CI. Until then the layers stay.
 
 ### Routing by host

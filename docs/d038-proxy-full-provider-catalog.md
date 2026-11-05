@@ -53,7 +53,7 @@ name**, merged with an explicit priority:
   endpoint wins: **pi-ai > models.dev > catwalk**. Every override is logged
   (which source won, what it replaced) so priority decisions are visible.
 - Different **names** for the same vendor ⇒ both names are served
-  (e.g. pi's `together` and models.dev's `togetherai`, catwalk's
+  (for example, pi's `together` and models.dev's `togetherai`, catwalk's
   `opencode-zen` and pi's `opencode`, catwalk's `moonshot` and pi's
   `moonshotai` each get their own route at their own endpoint). The route
   namespace is per-source-name, and clients use their own names.

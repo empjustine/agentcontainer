@@ -24,7 +24,7 @@ Verification of the then-current use of the shared workload helper
 whether a specialized Go helper would be the right abstraction for the three
 distinct target environments:
 
-- **rootful docker** (e.g. WSL2 "work" host)
+- **rootful docker** (for example, WSL2 "work" host)
 - **rootless podman** (local-inference-host, SELinux enforced)
 - **rootless bionic Termux** (only semi-usable workloading primitive is proot)
 

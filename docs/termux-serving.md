@@ -22,7 +22,7 @@ references: [environments]
 
 Orientation for the **termux** variant of the llama-swap serving layer
 (`llm-local-inference/`) — a no-container build for resource-constrained hosts
-running Termux (e.g. the **a50** phone/router environment).
+running Termux (for example, the **a50** phone/router environment).
 
 This file is a **map**: the operational documentation now lives in the source
 files it describes (literate style — read the file headers).

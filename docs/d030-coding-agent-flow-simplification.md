@@ -123,7 +123,7 @@ kit; `lib` has no equivalent for the coding-agent generators.
    Low risk, mechanical.
 6. **Unify the two cloud generators** (F6): one table with a
    `mode: override|full` column. Do this _after_ 5; it is the riskiest of
-   these (semantics differ subtly — e.g. cline-pass `supportsDeveloperRole:
+   these (semantics differ subtly — for example, cline-pass `supportsDeveloperRole:
    false`, hyper's deepseek thinking format) and deserves its own diff.
 
 ## Recommendation

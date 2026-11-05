@@ -25,9 +25,9 @@ byte-for-byte — as long as the host home was its own canonical path. On the
 reference host (Bazzite, Fedora Atomic layout) it is not: `/home` sits in
 front of `/var/home`, so
 
-    ~                       -> /home/deck      what the shell, the docs and
+    ~                       -> /home/deck what the shell, the docs and
                                                 the operator call "my home"
-    pwd -P of the same dir  -> /var/home/deck  what run.sh resolves
+    pwd -P of the same dir  -> /var/home/deck what run.sh resolves
 
 while the sandbox's own `~` is `/home/deck` (the image's useradd home — the
 same spelling every other mount in `run.sh` already uses:

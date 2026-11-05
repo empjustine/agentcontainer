@@ -38,7 +38,7 @@ rather than silently dropping one.
 The threshold is a product call (d029 C1), not a measured boundary: 14 GB is
 where a quant starts competing with the projector for a consumer GPU's VRAM.
 Result at time of writing: 36 of 62 mmproj entries lose the `2mmproj` variant
-(e.g. the JetBrains blend keeps it only at `IQ3_S` 13.5 GB, not `Q4_K_M`
+(for example, the JetBrains blend keeps it only at `IQ3_S` 13.5 GB, not `Q4_K_M`
 17.7 GB).
 
 ## Files touched

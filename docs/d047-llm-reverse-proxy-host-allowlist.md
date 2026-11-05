@@ -153,7 +153,7 @@ separate v1 rows — `opencode.ai`, `open.bigmodel.cn`, `api.minimax.io`,
 `api.together.xyz`, `api.cohere.com`, `api.perplexity.ai` — need **one**
 allowlisted host each. The proxy removes the last reason the _route
 namespace_ had to encode per-client path prefixes; it is the client's own
-base URL that decides, e.g., `api.minimax.io/anthropic` vs
+base URL that decides, for example, `api.minimax.io/anthropic` vs
 `api.minimax.io/anthropic/v1`.
 
 ### 404 policy and RFC 9457 internals are unchanged
@@ -213,7 +213,7 @@ contracts") are keyed by host in v2: a fact-table host missing from
 - **Migration check:** with the v2 config, `smoke-test.sh` must still pass
   its 32 checks (the local/refused/nxdomain/expired/… upstreams are all
   allowlisted hosts in the smoke config), plus a new negative: a request to
-  a non-allowlisted host (e.g. `received.host.badssl.com`) answers the
+  a non-allowlisted host (for example, `received.host.badssl.com`) answers the
   identical plain-text 404 body and leaks no hosts.
 - **Generator-first:** the generator flips to v2 shape in the same commit
   as `main.go`; a stale v1-generated config on a rolled host still serves

@@ -18,7 +18,7 @@ RW and `generate.mjs` installs the generated `opencode.json` into that same
 dir — mirroring what pi has done for its agent dir since docs/d054. Opencode's
 DATA dir (`~/.local/share/opencode`: `auth.json`, `log/`,
 `project/<slug>/storage`) stays on the per-run stage: it is the long-term
-logs/sessions persistence, i.e. audit state (docs/d026), and opencode has no
+logs/sessions persistence, that is, audit state (docs/d026), and opencode has no
 session-dir knob to split it out.
 
 ## Problem
@@ -90,7 +90,7 @@ removed for pi, for the same reasons:
   (`workload_env` allowlist). The reverse flow — an in-container
   `opencode auth login` persisting a credential into the stage — is
   pre-existing behavior and unchanged.
-- **Host config state is exposed to the sandbox** (e.g. `tui.json`, any
+- **Host config state is exposed to the sandbox** (for example, `tui.json`, any
   operator files next to `opencode.json`). Accepted under d054's
   precedent; the credential-shaped risk is excluded by the data-dir split
   above.

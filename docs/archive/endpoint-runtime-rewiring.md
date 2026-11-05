@@ -58,7 +58,7 @@ the full-catalog generation logic it provided is now handled inline by
 with credentials supplied via `auth.json` copied by `run.sh`.)_
 
 Consequence: turning models on/off = editing env vars or filter functions and
-re-running the generator (i.e. restarting the container). There is no runtime
+re-running the generator (that is, restarting the container). There is no runtime
 switching.
 
 ### 1.2 Alternative: `pi-free` (runtime extension)
@@ -113,7 +113,7 @@ against pi 0.84.1 docs:
 
 ### 2.1 The scenario
 
-In other environments (e.g. Termux/mobile — see `api-gateway/DECISIONS.md`, or
+In other environments (for example, Termux/mobile — see `api-gateway/DECISIONS.md`, or
 restricted networks) only a limited set of LLM endpoints is reachable. The goal:
 **proxy** those upstreams through the local (bazzite) `llama-swap`, so pi talks
 only to llama-swap and llama-swap carries the upstream traffic.

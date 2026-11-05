@@ -39,7 +39,7 @@ The two targets have different mechanics, so the system is split by concern:
 llama-swap already has the merge primitive we need: `-config-dir` loads every
 `*.yaml`/`*.yml` under a directory and **additively merges** identity-keyed
 maps (`models`, `peers`, `groups`, `profiles`, `selectors`, `matrix`), while
-concatenating `apiKeys` (see [d018](d018-split-config-d.md)). A generator system
+concatenating `apiKeys` (see [d018](../d018-split-config-d.md)). A generator system
 would emit, per concern, a small file into a host-specific `config.d/` overlay:
 
 - `00-general.yaml` — globals + macros + ctxWindows (one, canonical)
@@ -47,7 +47,7 @@ would emit, per concern, a small file into a host-specific `config.d/` overlay:
 - `peer-cloud.yaml` — cloud peers (OpenRouter + OpenCode Zen/Go)
 - `22-peer-gfx1030.yaml` — gfx1030 local-inference peer route
 
-A host picks _which_ concern-files it wants (e.g. a peer-only termux host
+A host picks _which_ concern-files it wants (for example, a peer-only termux host
 omits the local-llm file), and llama-swap does the rest. No generator needs to
 know about any other concern, and no file is copied wholesale.
 
@@ -55,7 +55,7 @@ know about any other concern, and no file is copied wholesale.
 
 pi reads a small set of JSON files (`settings.json`, `auth.json`, `models.json`)
 under `~/.pi/agent/`. The planned mechanism is a **series of JSON files that
-override values of other JSONs**: e.g. a per-environment override file that
+override values of other JSONs**: for example, a per-environment override file that
 `jq`-merges onto the canonical `settings.json`, and a `models.json` that
 overrides each provider's `baseUrl`/`apiKey` from the environment (the peer
 redirect already does exactly this one provider at a time).

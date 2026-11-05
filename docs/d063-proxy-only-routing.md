@@ -109,7 +109,7 @@ cascade branch now EMITS:
   modality gate) → empty models map + warn. The catalog slice was the missing
   middle rung — the old code had no offline lineup source at all;
 - `generateCloudProviders` fails the whole cloud stage when any spec
-  rejects (previously: warn, "layer left untouched" — i.e. keep the
+  rejects (previously: warn, "layer left untouched" — that is, keep the
   committed direct layer).
 
 ### 4. Fail closed
@@ -238,5 +238,5 @@ next direct URL.
   the peer base is vault state; baking it in turns the next funnel rotation
   into a hand-edit across four files (d024's one-source-of-truth rule).
 - **Warn-and-continue on cloud-stage failure** (the old per-spec contract) —
-  "continue" meant "install the committed direct artifact", i.e. the failure
+  "continue" meant "install the committed direct artifact", that is, the failure
   mode silently produced the forbidden state.

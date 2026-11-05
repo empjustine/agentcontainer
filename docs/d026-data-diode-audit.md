@@ -89,7 +89,7 @@ Enforcement quality: the kernel guarantees past versions are unreadable from
 the container — no harness behavior is trusted. Daemon hardening notes: run
 the FUSE daemon on the host outside the container's pid namespace (container
 processes cannot signal or ptrace what they cannot see), and under a distinct
-uid as belt-and-braces (containers here run with `--userns=keep-id`, i.e. the
+uid as belt-and-braces (containers here run with `--userns=keep-id`, that is, the
 host user's uid).
 
 Known implementation risks (to resolve when implemented):

@@ -48,7 +48,7 @@ the less useful half was the default:
    printed was produced or not produced by an `if (verbose)` in the middle of
    the report.
 4. **The less useful half behind a flag.** `git/audit.sh --deep` gated the
-   `git status --porcelain` + detached-HEAD checks — i.e. the shallow default
+   `git status --porcelain` + detached-HEAD checks — that is, the shallow default
    was the report you had to remember to re-run. Nothing calls it
    programmatically (there is no CI in this repo), so the flag existed only
    to remind people it exists.

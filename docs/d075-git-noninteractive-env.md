@@ -114,7 +114,7 @@ _does_, and the default below still makes the unset case fail fast).
   known_hosts): `BatchMode=yes` fails rather than asks the
   "authenticity … yes/no?" question. That is the intended trade — the sweep
   pays one operator step per new host instead of a possible hang.
-- `/usr/bin/false` need not exist on the host (e.g. the Windows path): a
+- `/usr/bin/false` need not exist on the host (for example, the Windows path): a
   missing askpass binary only fails the askpass attempt, whose terminal
   fallback is already disabled — fast error either way.
 - No change for the local-only tools: `audit.mjs`, `local-changes.mjs`,

@@ -406,7 +406,7 @@ VPN-R29. The table below is per-leg for that reason.
   anchor beyond the public one Funnel already presents. The tunnel leg uses
   Funnel's Let's Encrypt certificate.
 - **VPN-R29** — The tunnel transports MUST preserve end-to-end certificate validation: a
-  target with an invalid certificate (e.g. `self-signed.badssl.com`) MUST fail
+  target with an invalid certificate (for example, `self-signed.badssl.com`) MUST fail
   **at the client**, not at the proxy. This is the acceptance test that proves
   no MITM.
 - **VPN-R30** — The proxy MUST NOT need to terminate TLS for any transport. The
@@ -545,7 +545,7 @@ for the allowlist relay.
   virtual interface on every client, which defeats "just set `HTTPS_PROXY`",
   and it is the IP-layer model the request explicitly did not ask for.
 - **SSH `-D` / SOCKS over the tailnet.** Rejected as the built-in design: it
-  requires tailnet membership and an SSH stack on the client, i.e. it is
+  requires tailnet membership and an SSH stack on the client, that is, it is
   strictly more setup than the localhost proxy for the same result, and it does
   not compose with the existing Funnel front.
 - **One `wss` per CONNECT vs a muxed tunnel.** Both viable; VPN-R17 picks
@@ -785,7 +785,7 @@ pay for itself on a hop shared with a third party, and estige has none:
 - **The mismatch MASQUE exists to escape is one we would keep.** MASQUE rides
   QUIC (HTTP/3) precisely to preserve loss and ordering signals; as capsules
   on an h2 or `wss` carrier its datagrams sit on a reliable ordered stream,
-  i.e. the head-of-line problem VPN-R52 already legislates against.
+  that is, the head-of-line problem VPN-R52 already legislates against.
   Conformance would import the ceremony without the property.
 - **The cost lives in the egress policy, not the protocol** (VPN-R51:
   connect-per-socket, reply matching, byte caps, rate limits). No capsule

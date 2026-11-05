@@ -12,7 +12,7 @@ parent: coding-agent
 
 Most OpenAI-compatible providers use `Authorization: Bearer <token>`. Google's
 Gemini API uses `X-Goog-Api-Key` instead. Additionally, Google returns model
-IDs prefixed with `models/` (e.g. `models/gemini-2.0-flash`), but
+IDs prefixed with `models/` (for example, `models/gemini-2.0-flash`), but
 `PI_MODEL_METADATA` keys and pi's own model references use the bare ID
 (`gemini-2.0-flash`).
 

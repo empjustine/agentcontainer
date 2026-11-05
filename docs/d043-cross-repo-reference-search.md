@@ -108,7 +108,7 @@ podman run --rm -p 6070:6070 \
 
 ### Branch scope is the whole cross-branch story — and the cost dial
 
-`zoekt-git-index` defaults to `-branches HEAD`, i.e. **the default branch
+`zoekt-git-index` defaults to `-branches HEAD`, that is, **the default branch
 only**. Cross-branch requires naming the refs:
 
 ```sh
@@ -179,7 +179,7 @@ is new need embedding, and a blob that merely moved branch or path does not.
 3. **Embed** each chunk with a code-capable model served by llama.cpp
    (`/v1/embeddings`) — reusing the local inference stack
    (`llm-local-inference/`), so no API key and no data leaves the host. A small
-   GGUF embedding model (e.g. `Qwen3-Embedding-0.6B` or
+   GGUF embedding model (for example, `Qwen3-Embedding-0.6B` or
    `jina-embeddings-v2-base-code`) is enough for retrieval.
 4. **Store** in one SQLite file via Node's built-in `node:sqlite` (verified:
    SQLite 3.53.4, FTS5 and `loadExtension` available on the repo-pinned

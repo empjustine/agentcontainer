@@ -86,7 +86,7 @@ while True:
 - **Exceptions are control flow.** `exceptions.py` defines `InterruptAgentFlow` with subclasses `Submitted` (task done), `LimitsExceeded`/`TimeExceeded`, `UserInterruption`, `FormatError`. Anything that should end or redirect the loop raises a message-bearing exception.
 - **One model call per step**, then all actions execute, then observations are appended. No streaming, no abort signal, no parallelism.
 - **Termination is a magic string.** The prompt instructs the model to `echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT`. The environment (`local.py`, `docker.py`) sniffs the first output line; on match it raises `Submitted` with the remainder as the submission. Works with _any_ model — no structural "end of turn" needed.
-- **Format errors are conversational.** `parse_toolcall_actions` raises `FormatError` with a rendered `format_error_template` (e.g. "Your response MUST include at least one tool call"); the agent injects it as a user message and lets the model recover, capped at `max_consecutive_format_errors`.
+- **Format errors are conversational.** `parse_toolcall_actions` raises `FormatError` with a rendered `format_error_template` (for example, "Your response MUST include at least one tool call"); the agent injects it as a user message and lets the model recover, capped at `max_consecutive_format_errors`.
 - **Limits**: `step_limit`, `cost_limit` (litellm cost calculator), `wall_time_limit_seconds`, plus a process-wide `GLOBAL_MODEL_STATS` with env-configured cost/call caps.
 
 ### pi — async event stream with tool batches

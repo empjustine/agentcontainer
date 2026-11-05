@@ -60,7 +60,7 @@ nothing more at build time.
   coding-agent environment; the generic `./build.sh` builds it anywhere a
   container tool exists.
 - A new host profile skips the llama-swap pull that d083's era would have
-  allowed: render devices + ≥16 GiB RAM (e.g. a 32 GiB GPU workstation)
+  allowed: render devices + ≥16 GiB RAM (for example, a 32 GiB GPU workstation)
   pulls; an 8 GiB RAM box with a discrete GPU skips loudly. That host can
   still generate/proxy to cloud — only local GGUF serving is out.
 - `docs/d083` §(c) is superseded by this record; its accepted-cost note

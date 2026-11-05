@@ -65,7 +65,7 @@ client route is now `<peerBase>/llama-swap/v1`.
 
 Every cloud provider's peer route is
 **`peerProviderUrl(peerBase, id)` = `<peerBase>/<id>`** (lib/peer-probe.mjs;
-e.g. peer-mode hyper is `https://bazzite…/<uuid>/hyper`). The deployed
+for example, peer-mode hyper is `https://bazzite…/<uuid>/hyper`). The deployed
 `llm-reverse-proxy.json` maps each provider id to the provider's **full
 real base URL** — the same `baseUrl` facts as lib/cloud-providers.mjs:
 

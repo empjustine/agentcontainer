@@ -135,7 +135,7 @@ See `gguf-metadata-parser.js` for a reusable Node.js script that:
 
 ## Receipt: How to Get Architecture Data for Any Model
 
-1. **Find a GGUF file** for the model (e.g., on HuggingFace under `*-GGUF` repos)
+1. **Find a GGUF file** for the model (for example, on HuggingFace under `*-GGUF` repos)
 2. **Fetch the header** (first 100KB is enough for any model):
    ```bash
    curl -s -L -r 0-100000 \
@@ -144,7 +144,7 @@ See `gguf-metadata-parser.js` for a reusable Node.js script that:
    ```
 3. **Parse the metadata** using the Python or Node.js parser
 4. **Look for these keys**:
-   - `general.architecture` — e.g., `llama`, `qwen3_5_moe`, `deepseek2`
+   - `general.architecture` — for example, `llama`, `qwen3_5_moe`, `deepseek2`
    - `{arch}.block_count` — number of layers
    - `{arch}.embedding_length` — hidden size
    - `{arch}.attention.head_count` / `.head_count_kv` — attention heads

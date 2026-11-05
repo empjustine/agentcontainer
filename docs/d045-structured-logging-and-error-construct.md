@@ -111,7 +111,7 @@ entire chain (`err.cause.cause…`) is walkable and serializable.
 - **`AggregateError`** — several parallel failures are one failure: the
   aggregate's `message` is the label, its `errors` array the structured
   detail.
-- **`SuppressedError`** — a subsequent (e.g. cleanup) failure must not mask
+- **`SuppressedError`** — a subsequent (for example, cleanup) failure must not mask
   the original: `error`/`suppressed` point at what was lost.
 
 Both are standard Error subtypes; their chain properties are non-enumerable
@@ -177,7 +177,7 @@ throw new AggregateError("all provider probes failed", { errors: failures });
 ### Log serialization pattern
 
 `lib/log.mjs` `emit()` serializes every Error field as a structured object:
-`name`, `message`, `stack`, own enumerable properties (e.g. `status`, `url`,
+`name`, `message`, `stack`, own enumerable properties (for example, `status`, `url`,
 `path` from `Object.assign`), plus the explicitly walked NON-enumerable
 `cause` (Error constructor), `errors` (AggregateError), and
 `error`/`suppressed` (SuppressedError — each walked recursively, depth-capped
@@ -245,7 +245,7 @@ global; runtime behavior is untouched.
 - `lib/log.mjs` / `lib/log.sh` / `lib/log.py` emit every level to the stream.
   `LOG_LEVEL` no longer exists — the producer never drops a line.
 - The consumer filters via jsonlines tooling
-  (e.g. `jq 'select(.level != "debug")'`).
+  (for example, `jq 'select(.level != "debug")'`).
 
 ### Stream policy
 

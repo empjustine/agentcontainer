@@ -43,7 +43,7 @@ The modes failed on their own terms:
   preview had to be read _and_ the real run had to happen anyway.
 - **Two execution paths per tool.** The path nobody runs is the path that
   rots; `search-references --dry-run` was explicitly documented as _the_
-  test path on a host with no container tool, i.e. a simulation of testing.
+  test path on a host with no container tool, that is, a simulation of testing.
 - **Every consumer re-implemented the mode**, which is how the writer's
   contract leaked into orchestration code and README prose.
 - **The repo already has a review surface.** Generated artifacts are

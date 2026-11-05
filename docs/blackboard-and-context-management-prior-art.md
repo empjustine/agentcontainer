@@ -139,7 +139,7 @@ Factor 3 (`humanlayer/12-factor-agents:content/factor-03-own-your-context-window
 frames the whole agent input as a _context window you own_, not a fixed
 message array: "here's what's happened so far, what's the next step". It shows
 packing the entire event history into a single user message with custom tags
-(`<slack_message>`, `<list_git_tags_result>`), i.e. the blackboard can be the
+(`<slack_message>`, `<list_git_tags_result>`), that is, the blackboard can be the
 prompt itself when the interaction is short. The repo also names frameworks
 (`boundaryml/baml`, LangChain/LangGraph, etc.) as the surrounding ecosystem.
 
@@ -248,7 +248,7 @@ the compaction and may return an opaque/encrypted summary.
 `src/smolagents/memory.py` stores an `AgentMemory` of typed `MemoryStep`s
 (`ActionStep` holds tool calls, observations, errors, token usage).
 `docs/source/en/tutorials/memory.md` shows `agent.replay()` and step callbacks
-that reach into `agent.memory` — e.g. deleting images from ancient steps to
+that reach into `agent.memory` — for example, deleting images from ancient steps to
 cut token cost. Memory is a first-class, inspectable object rather than an
 opaque transcript.
 

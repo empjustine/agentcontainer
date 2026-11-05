@@ -15,7 +15,7 @@ title: "Work (nonfree-world) peer variant"
 >    tree — the coding-agent squash folded the peers-only usage variant into
 >    `coding-agent/` itself (static provider config + layered generation, see
 >    `coding-agent/merge-models-json.mjs` for the layer contract and
->    [environments-and-variants.md](environments-and-variants.md)).
+>    [environments-and-variants.md](../environments-and-variants.md)).
 > 2. **Routing + environment.** Everything this note says about peer shape
 >    and env is pre-d027/pre-vault and no longer true: peer routes are now
 >    path-prefix routes of llm-reverse-proxy — `<peerBase>/<providerId>` for
@@ -27,13 +27,13 @@ title: "Work (nonfree-world) peer variant"
 >    hardcoded/informational value. The
 >    `.env`-file mechanism described here was removed earlier still (no
 >    dotenv files anywhere; docs/d001). Current state: docs/d027,
->    [environments-and-variants.md](environments-and-variants.md),
->    [container-tooling.md](container-tooling.md).
+>    [environments-and-variants.md](../environments-and-variants.md),
+>    [container-tooling.md](../container-tooling.md).
 >
 > Kept as historical reference.
 
 Implements the **work** environment from
-[environments-and-variants.md](environments-and-variants.md):
+[environments-and-variants.md](../environments-and-variants.md):
 WSL2 under rootful docker with **no direct cloud access**, so the coding agent
 only ever talks to a peer endpoint.
 

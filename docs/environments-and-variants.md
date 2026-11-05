@@ -196,7 +196,7 @@ and `vpn-relay.sh` names retired with docs/d095 and docs/d120):
   llama.cpp needs the GPU/Vulkan runtime), GPU devices passed through, HF
   cache tree mounted, LAN **8101** (container 8080).
 - estige: one Go binary, deployed as a package + service (docs/d120) —
-  containerized with host networking or direct on the host, e.g. the termux
+  containerized with host networking or direct on the host, for example, the termux
   cross-build — LAN **8080**, no secrets mounted: the funnel front holds the
   operator's tunnel keys, provider keys stay with the clients.
 

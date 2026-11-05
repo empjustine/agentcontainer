@@ -43,7 +43,7 @@ positions, chosen on cost/benefit — record them once so the survey below
 - **The worst realistic escalation is prompt-injection misalignment** —
   an injected instruction turning the LLM against the user. Against a
   competent model faithfully executing a well-crafted instruction, no
-  "naive sandbox" (containers + Landlock + seccomp, i.e. everything on
+  "naive sandbox" (containers + Landlock + seccomp, that is, everything on
   the farm except the microVMs) is a real defense; the harshest honest
   verdict among the surveyed tools — "the agent running arbitrary code is
   the attack surface, every effective enforcement is OUTSIDE its
@@ -303,7 +303,7 @@ container-tooling.md named as the reason podman stays.
   container in ~3.5 ms; seccomp deny-by-default allowlist; cgroup v2 for
   resources; macOS via Linux VM only. Its own `FAQ` positions itself
   against bubblewrap ("bwrap is a sandbox launcher; kern is a runtime") —
-  i.e. the srt/fence pattern plus the OCI layer our `workload_image`
+  that is, the srt/fence pattern plus the OCI layer our `workload_image`
   blocker row assumed missing. The strongest "third backend would also
   work" datapoint: if a bwrap backend is ever pursued, kern shows the
   image problem can be solved without podman.
@@ -664,7 +664,7 @@ systemic gotchas repeated across the field.
 
 - **Static BPF is two-verdict only** (kill / ENOSYS). Anything conditional
   — "this exec path is fine, that one isn't", /proc virtualization, soft
-  memory caps — needs `SECCOMP_USER_NOTIF` (kernel 5.6+), i.e. a host-side
+  memory caps — needs `SECCOMP_USER_NOTIF` (kernel 5.6+), that is, a host-side
   supervisor process with a lifecycle, a message protocol, and the
   pidfd/procfs race questions fence answers with a versioned bootstrap
   plan and a pidfd-watching bridge helper.

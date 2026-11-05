@@ -244,7 +244,7 @@ touched. Matched records are rebuilt through `piModel()` so the effort →
 map/compat derivation runs on live data.
 
 **Known models.dev ↔ Hyper `/provider` drift** (verified 2026-09): a few
-reasoning flags and image-input claims disagree (e.g. `minimax-m2.7` reasoning
+reasoning flags and image-input claims disagree (for example, `minimax-m2.7` reasoning
 true in the catalog, `can_reason` false live; several kimi/glm/qwen models
 carry catalog image input that live `supports_attachments` denies), cache
 prices sit in different catalog slots per model, and the live-only model

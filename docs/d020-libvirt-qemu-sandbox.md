@@ -144,7 +144,7 @@ systemctl --user status virtqemud virtstoraged 2>/dev/null   # user-session daem
 - **Peers-only serving (cpu image)**: fully viable at Level 1 or 2. The
   llama-swap container is stateless, outbound-only, one published port; give
   the VM 2 vCPU / 1–2 GB and a NAT network. This is the easiest first target —
-  e.g. isolate the untrusted-facing peer endpoint (8654b72a… reverse proxy) in
+  for example, isolate the untrusted-facing peer endpoint (8654b72a… reverse proxy) in
   a VM while local inference stays on the host.
 - **Local GGUF inference**: the blocker is GPU compute:
   - **VFIO PCI passthrough** of the gfx1030 to the guest works technically

@@ -63,7 +63,7 @@ for the reference mirror. Here it stayed a hidden default.
 2. **The image's own cache is what `hf` uses in-container.** The
    Containerfile already creates and chowns `~/.cache/huggingface/hub`
    (the `huggingface-hub` pipx tool is in `config.toml`), so the CLI works
-   unchanged — it just writes to the container's own layer, i.e. the download
+   unchanged — it just writes to the container's own layer, that is, the download
    is per-container and ephemeral. That is the correct default for a coding
    sandbox: nothing the agent downloads silently becomes host state.
 3. **The warm host cache stays reachable, explicitly.** `./run.sh

@@ -108,7 +108,7 @@ none requires reading payload.
   `sent`/`received` from the exit node's seat. Copying the field names to
   the relay inverts their meaning with no visible change at the call site.
 - **Refusals at the relay leave no trace.** A policy denial, a dial failure
-  or a `CONNECT_ERR` reaches only `noteError`, i.e. `/healthz`'s
+  or a `CONNECT_ERR` reaches only `noteError`, that is, `/healthz`'s
   last-wins `last_error` — not a timestamped, attributable line. Squid
   writes `TCP_DENIED`; Privoxy logs blocked destinations at its own debug
   level.

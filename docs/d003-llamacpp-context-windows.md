@@ -15,7 +15,7 @@ metadata. The canonical context windows are defined in
 `lib/llamacpp-model-data.json` (owner: `llm-local-inference/` — the file was moved
 to lib to mark it shared, docs/d025) via each model's `ctx-size` field. The
 local-llm generator reads this field, converts it to a compact `NNNctx` slug for
-the model ID (e.g. 200000 → `200ctx`), and writes `--ctx-size NNNN` (+ the
+the model ID (for example, 200000 → `200ctx`), and writes `--ctx-size NNNN` (+ the
 mirroring `--n-predict`) **directly** into the model's `cmd` — no runtime macro
 parsing needed.
 
@@ -25,7 +25,7 @@ parsing needed.
 
 `generate-local-llm-models.yaml.mjs` reads `ctx-size` from each model entry in
 `lib/llamacpp-model-data.json`, formats it into a `NNNctx` slug for the model ID
-(e.g. 200000 → `200ctx`, 131072 → `128ctx`), and writes `--ctx-size NNNN`
+(for example, 200000 → `200ctx`, 131072 → `128ctx`), and writes `--ctx-size NNNN`
 
 - `--n-predict NNNN` directly into the model's `cmd`:
 
@@ -60,5 +60,5 @@ This eliminates the old `ctxNNN` macro table and any runtime context-window
 resolver: generation-time embedding is simpler (one write, no lookups), more
 explicit (each model's cmd says exactly what it uses), and avoids the sync step
 between a macro table and model definitions. 00-general.yaml still owns the
-_family_ macro tables (e.g. `${qwen38}` argv fragments); context windows are not
+_family_ macro tables (for example, `${qwen38}` argv fragments); context windows are not
 among them.

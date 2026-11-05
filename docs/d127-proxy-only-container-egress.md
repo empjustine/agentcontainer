@@ -229,7 +229,7 @@ one of them is not a flag at all:
   own rules out of the picture and, worse, makes them easy to reason about
   wrongly.
 - Running the workload as the _host_ uid with access to the rootless netns
-  (i.e. not a container boundary at all) — the reason the rootless-bridge half
+  (that is, not a container boundary at all) — the reason the rootless-bridge half
   of the table above is not the guarantee.
 
 ## Verification — the checklist that must pass on a host with an engine

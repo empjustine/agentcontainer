@@ -46,10 +46,10 @@ Re-run the generator when the proxy URL changes.
 ### 3. No env-var prefix hides provider keys from pi auto-detection
 
 Earlier revisions used a `__` double-underscore prefix on provider keys
-(e.g. `__OPENROUTER_API_KEY`) so the _bare_ name would not appear in the
+(for example, `__OPENROUTER_API_KEY`) so the _bare_ name would not appear in the
 shell and would not trigger pi's built-in provider auto-detection. The prefix
 was removed: provider keys are read as plain env vars by `gen-lib.mjs`
-(e.g. `OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `CLINE_API_KEY`) and consumed
+(for example, `OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `CLINE_API_KEY`) and consumed
 **server-side** by llama-swap (which resolves the `${env.*}` references in
 `config.d/` from its own process environment). pi is only a _client_ of
 llama-swap and authenticates with the llama-swap bearer key (`PEER_API_KEY`),

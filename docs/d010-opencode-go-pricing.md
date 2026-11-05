@@ -44,8 +44,8 @@ pipeline; see `coding-agent/scoped-models-and-proxy-overrides.md` for what repla
 3. Virtual cost heuristic (d006) — **lowest**
 
 The documented cost overrides the virtual estimate when the model ID is found
-in the table. Model IDs are matched on the bare name (e.g. `grok-4.5`) after
-stripping any provider namespace prefix (e.g. `opencode-go:grok-4.5`).
+in the table. Model IDs are matched on the bare name (for example, `grok-4.5`) after
+stripping any provider namespace prefix (for example, `opencode-go:grok-4.5`).
 
 ## Maintenance
 

@@ -39,7 +39,7 @@ branch bought very little and cost a great deal of surface:
 - d056's decisions were written as "uniform across the container and Termux
   branches", a uniformity that would have to be re-proved on every change;
 - a host with **no** podman/docker did not fail fast: it fell through to
-  `workload_run`'s backend check, i.e. _after_ the stage dir, launch chain and
+  `workload_run`'s backend check, that is, _after_ the stage dir, launch chain and
   mount manifest had been assembled.
 
 The blocker to dropping the branch was that `./environment.sh` could only

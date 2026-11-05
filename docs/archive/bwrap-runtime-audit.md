@@ -39,7 +39,7 @@ entail?
    executable overridable via `MSWEA_BUBBLEWRAP_EXECUTABLE`. Also
    referenced only as documentation elsewhere (docs, mkdocs, CI yaml);
    the sole other hit is a doc citation in `cline/kanban` (codex CLI
-   reference), i.e. not code.
+   reference), that is, not code.
 
 2. **This repo's own prior-art docs** referenced bwrap as the
    Pressure-Vessel / Flatpak-style ideal sandbox layer for a containerless

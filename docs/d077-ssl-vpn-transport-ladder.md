@@ -285,7 +285,7 @@ traffic is suspect anyway — should it just be broken?"):
 | destination-layer (SNI/DNS of `*.ts.net`)                              | dead                                              | dead                                        |
 
 **The non-negotiable condition:** inner TLS must validate against a **pinned
-trust anchor** (the Funnel chain — e.g. ISRG Root X1 only), **never system
+trust anchor** (the Funnel chain — for example, ISRG Root X1 only), **never system
 roots**. If the corporate CA is in the trust set the interceptor re-signs the
 inner handshake and the layer buys nothing — a false sense of the protection
 just added. Pinned anchor means: no MITM → inner validates (redundant,
