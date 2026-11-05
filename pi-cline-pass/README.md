@@ -1,3 +1,14 @@
+---
+id: pi-cline-pass
+type: module-design
+status: active
+title: "pi-cline-pass — the ClinePass provider as a pi package"
+parent: architecture
+depends-on: [d096]
+references: [d100, d118]
+tags: [pi-extensions, providers, cline-pass]
+---
+
 # pi-cline-pass — the ClinePass provider as a pi package
 
 Registers the **ClinePass** gateway (`https://api.cline.bot/api/v1`, the

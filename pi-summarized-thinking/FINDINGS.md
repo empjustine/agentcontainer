@@ -2,7 +2,7 @@
 
 The reconnaissance this design rests on, written down so a future session does
 not re-derive it. The design itself (and the reversals that shaped it) is
-[`../coding-agent/summarized-thinking.md`](../coding-agent/summarized-thinking.md);
+[`summarized-thinking.md`](summarized-thinking.md);
 this file is the evidence under it. Two source trees are cited, and they are not
 the same tree:
 
@@ -167,7 +167,7 @@ command-only extension has nothing to record).
 
 ## Superseded claims in the previous draft
 
-The previous revision of this note (`coding-agent/summarized-thinking.md`)
+The previous revision of this note (`summarized-thinking.md`)
 asserted things that no longer hold:
 
 | Previous claim                                                     | Now                                                                                                              |

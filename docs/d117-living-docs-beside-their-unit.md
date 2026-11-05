@@ -67,15 +67,20 @@ the path carries only habit.
 
 ## The moves this record makes
 
-| from                                               | to                                                            | why it is single-unit                                   |
-| -------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------- |
-| `docs/coding-harness-persistence.md`               | `coding-agent/coding-harness-persistence.md`                  | the per-harness state dirs `coding-agent/run.sh` mounts |
-| `docs/scoped-models-and-proxy-overrides.md`        | `coding-agent/scoped-models-and-proxy-overrides.md`           | the coding-agent container's generated config           |
-| `docs/summarized-thinking.md`                      | `coding-agent/summarized-thinking.md`                         | one pi extension's design note                          |
-| `docs/gguf-model-tooling.md`                       | `llm-local-inference/gguf-model-tooling.md`                   | this unit's manifest tooling                            |
-| `docs/gguf-vram-fit-estimates.md` (+ `.data.json`) | `llm-local-inference/`                                        | tables this unit's tooling generates                    |
-| `docs/hf-cache-upkeep.md`                          | `llm-local-inference/hf-cache-upkeep.md`                      | this unit's cache upkeep runbook                        |
-| `docs/refresh-llm-local-inference-manifest.md`     | `llm-local-inference/refresh-llm-local-inference-manifest.md` | this unit's manifest refresh runbook                    |
+| from                                        | to                                                  | why it is single-unit                                   |
+| ------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------- |
+| `docs/coding-harness-persistence.md`        | `coding-agent/coding-harness-persistence.md`        | the per-harness state dirs `coding-agent/run.sh` mounts |
+| `docs/scoped-models-and-proxy-overrides.md` | `coding-agent/scoped-models-and-proxy-overrides.md` | the coding-agent container's generated config           |
+| `docs/summarized-thinking.md`               | `coding-agent/summarized-thinking.md`               | one pi extension's design note                          |
+
+One row has since moved a second time: `summarized-thinking.md` now sits in
+`pi-summarized-thinking/`, beside the node that owns it, once docs/d141 gave that
+package its own front door. The rule above is unchanged — the second move
+applies it rather than departing from it.
+| `docs/gguf-model-tooling.md` | `llm-local-inference/gguf-model-tooling.md` | this unit's manifest tooling |
+| `docs/gguf-vram-fit-estimates.md` (+ `.data.json`) | `llm-local-inference/` | tables this unit's tooling generates |
+| `docs/hf-cache-upkeep.md` | `llm-local-inference/hf-cache-upkeep.md` | this unit's cache upkeep runbook |
+| `docs/refresh-llm-local-inference-manifest.md` | `llm-local-inference/refresh-llm-local-inference-manifest.md` | this unit's manifest refresh runbook |
 
 Ids are unchanged: an id is an identity, not a filename
 (`docs/spec-graph-standard.md`), and every stem stays equal to its id, so the

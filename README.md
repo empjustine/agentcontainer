@@ -47,9 +47,15 @@ That holds because a folder has to survive being copied out of this tree on its 
 reference a parent that no longer exists in the copy. `./lint.sh`,
 `./check-types.sh`, `./test.sh` and `./vm-bench.sh` are the repo-wide **QA
 sweep**: the maintainer's view across units, which no unit imports. The first
-three are offline by contract; `./freshness.sh` is the fourth and the only one
-that touches the network, because "is this committed cache still what upstream
-serves?" cannot be answered offline ([docs/d122](docs/d122-data-freshness-gate.md)).
+three are offline by contract — they read the working tree and fetch no subject
+data; `./freshness.sh` is the fourth and the only one that touches the network,
+because "is this committed cache still what upstream serves?" cannot be answered
+offline ([docs/d122](docs/d122-data-freshness-gate.md)). `./dev-tools.sh` is
+not a sweep but the **dev host's one-command toolchain install** behind the
+first two: one pin table, mise on a dev host, the host's own binaries on
+Termux/mise-less hosts, nothing installed at all under
+`DEV_TOOLS_PROFILE=none` ([docs/d139](docs/d139-dev-toolchain-bootstrap.md)).
+mise is never used by a runtime path, and no `mise.toml` is committed.
 Runners NEVER build or generate: stale/missing artifacts are user issues, and the
 launcher fails loudly pointing at the generator.
 
@@ -81,11 +87,13 @@ agentcontainer/
 ├── environment.sh                       # → EXPLICIT env chain: `infisical run` spawns <script-or-command> (d046; a bare command = the sandbox-free run path, d059)
 ├── provision-termux.sh                  # → termux pkg/infisical provisioning (the former root build.sh)
 ├── node-run.sh / npm-run.sh / node-run.ps1 # → THE interpreter runners (d138): one copy each, and THE way to start a unit — `./node-run.sh <entry> [args]`, `./npm-run.sh <unit> <script>` — no per-folder copies and no per-entry shims (the pin is one edit); ps1 is the Windows counterpart (d062)
-├── log.sh / npm-tools.sh                # → operator-level shell, never imported by a unit: structured logger · on-demand npm devDependency install (d107)
-├── lint.sh / check-types.sh / test.sh / vm-bench.sh # → the repo-wide QA sweep (d113): biome+knip+jq+golangci-lint gates · tsc · every unit's tests (test.sh globs `<unit>/tests/` and runs estige's Go suite explicitly, d123), driven from the root because no unit imports them (the sweep owns no test of its own)
+├── log.sh / npm-tools.sh / dev-tools.sh # → operator-level shell, never imported by a unit: structured logger · on-demand npm devDependency install (d107) · the dev-host toolchain bootstrap, one pin table + mise-or-host acquisition (d139); `./dev-tools.sh` installs the profile
+├── lint.sh / check-types.sh / test.sh / vm-bench.sh # → the repo-wide QA sweep (d113): shellcheck+jq+oxfmt+biome+oxlint+knip+ruff+ty and golangci-lint gates, the spec-graph contract (d140), tsc, and every unit's tests (test.sh globs `<unit>/tests/` and runs estige's Go suite explicitly, d123) — driven from the root because no unit imports them (the sweep owns no test of its own)
 ├── freshness.sh                         # → the QA sweep's one NETWORK gate (d122): every pi-* `generate --check` + the offline HF manifest audit, so a stale committed cache fails a gate instead of a review; key-gated listings skip loudly, run it via ./environment.sh to include them
 ├── docs/                                # docs tree, typed per docs/spec-graph-standard.md
 │   ├── requirements.md                  # → BRD: what the system must do (id: goal)
+│   ├── spec-graph-standard.md           # → THE frontmatter/nesting contract, plus its Rulings and the gate's finding codes
+│   ├── spec-check.mjs / tests/          # → the contract's executable half: `./node-run.sh docs/spec-check.mjs`, gated by lint.sh (d140)
 │   ├── architecture.md                  # → systems reference: the copy unit, per-unit lib, root QA sweep
 │   ├── environments-and-variants.md     # → bazzite / a50 / work matrix
 │   ├── container-tooling.md             # → the workload-api spec every unit's own copy implements (lib/workload-runtime.mjs in coding-agent, the .sh+.jq pair elsewhere)
@@ -134,7 +142,7 @@ agentcontainer/
 │   ├── mcp.json                         #   → committed default MCP servers, merged into the agent dir (docs/d061)
 │   ├── config.toml                      #   → mise configuration (includes cline and thinkrail)
 │   ├── Containerfile                    #   → container image build
-│   ├── *.md                             #   → this unit's own living docs (d117): DESIGN, plus coding-harness-persistence / scoped-models-and-proxy-overrides / summarized-thinking
+│   ├── *.md                             #   → this unit's own living docs (d117): DESIGN, plus coding-harness-persistence / scoped-models-and-proxy-overrides
 │   ├── lib/                             #   → THIS FOLDER's own copy (d113), the largest: workload-runtime.mjs (the workload_* API in node, no jq on the host), log.mjs, artifact.mjs, canonical-json.mjs, fact-table.mjs, host-capabilities.mjs, cloud-providers.mjs/.json (the full table), models.dev.api.json, catwalk-facts.json; the interpreter runners are repo-root (d138)
 │   └── tests/                           #   → this folder's own tests (canonicalization, committed-manifest guard (d050), fact table, URL forms, modality gate, cost map, launcher argv + workload rendering, the jq-free guard)
 │
@@ -189,8 +197,9 @@ agentcontainer/
 │
 ├── pi-summarized-thinking/              # end-of-turn reasoning summaries as a pi package (human-facing only): a `custom` entry per completed turn — never in the model's context
 │   ├── README.md                        #   → install + usage: the `custom` entry (not `custom_message`), the two deliveries, the model chain, the commands, the invariants
+│   ├── summarized-thinking.md           #   → the `why`: the two rejected rewrites, the cache rule, the reversals — this unit's living doc (d117)
 │   ├── FINDINGS.md                      #   → the pi 1.5.0 + ThinkRail contracts it rests on, cited by symbol · the cache arithmetic · the superseded claims
-│   ├── AGENTS.md / TODO.md              #   → folder rules (this extension never touches the context) · the open worklist, unbuilt (the `why` is coding-agent/summarized-thinking.md)
+│   ├── AGENTS.md / TODO.md              #   → folder rules (this extension never touches the context) · the open worklist, unbuilt
 │
 ├── git/                                 # Reference-farm tooling (mirrors + search); the only shell is the flock pair (d121/d138)
 │   ├── README.md                        #   → the module doc: the farm's three jobs, boundary, entry points
@@ -210,7 +219,7 @@ agentcontainer/
 
 ## Documentation index
 
-Docs are **typed and self-describing**: every Markdown file in this tree whose frontmatter carries `id` + `type` is a node in the spec graph, shaped by [docs/spec-graph-standard.md](docs/spec-graph-standard.md) (adopted in [docs/d111](docs/d111-spec-graph-standard-alignment.md)).
+Docs are **typed and self-describing**: every Markdown file in this tree whose frontmatter carries `id` + `type` is a node in the spec graph, shaped by [docs/spec-graph-standard.md](docs/spec-graph-standard.md) (adopted in [docs/d111](docs/d111-spec-graph-standard-alignment.md)) and **enforced mechanically** by [docs/spec-check.mjs](docs/spec-check.mjs) in `./lint.sh`'s `spec graph` leg (docs/d140) — the standard's _Rulings_ section decides what it once left to implication.
 
 **This index describes the patterns, not the inventory.** Each entry's frontmatter already carries `id`, `type`, `status`, `parent` and its links, and the body says what it covers — so a specific answer is one search away (`grep -l '^status: active' docs/d127*.md`, `rg 'egress policy' docs/`, or the spec tools). Enumerating 130+ docs here only guaranteed this file was edited on nearly every doc landing, and drifted from the graph besides. Read the pattern, then search.
 
@@ -234,7 +243,7 @@ A short reading path rather than a catalog — pick the one that matches what yo
 - **Running it** → [estige/README.md](estige/README.md) for the tunnel nodes, [coding-agent/DESIGN.md](coding-agent/DESIGN.md) for the agent sandbox, [docs/container-tooling.md](docs/container-tooling.md) for the workload API every unit's own copy implements.
 - **Why the tunnel looks like this** → [docs/d073](docs/d073-ssl-vpn-three-modes.md) (transports + `VPN-R*` requirements), [docs/d077](docs/d077-ssl-vpn-transport-ladder.md) (the ladder), [docs/d108](docs/d108-serving-edge-tunnel-only.md) (generations v1–v4, the one vocabulary), [docs/d104](docs/d104-mutual-exit-relay-credential.md) (v4's credential).
 - **Why the generators look like this** → [docs/d033](docs/d033-generator-cascade.md), [docs/d070](docs/d070-canonical-upstream-urls-and-install-time-routing.md), [docs/d100](docs/d100-pi-provider-extension-family.md).
-- **How docs and specs are written here** → [AGENTS.md](AGENTS.md), [docs/spec-graph-standard.md](docs/spec-graph-standard.md), [docs/d042](docs/d042-documentation-taxonomy.md), [docs/d117](docs/d117-living-docs-beside-their-unit.md).
+- **How docs and specs are written here** → [AGENTS.md](AGENTS.md), [docs/spec-graph-standard.md](docs/spec-graph-standard.md) (then run `./node-run.sh docs/spec-check.mjs`), [docs/d042](docs/d042-documentation-taxonomy.md), [docs/d117](docs/d117-living-docs-beside-their-unit.md).
 - **Before adding to a unit** → [docs/d113](docs/d113-retire-shared-lib-and-root-orchestration.md): a folder is a copy unit, and `lib/` code should be inlined until the unit has genuinely earned a library.
 
 The `d0XX` log is **history**: each record is kept mechanically accurate ([d072](docs/d072-maintainability-review.md)) but never rewritten wholesale, so a record's vocabulary is the vocabulary of its day and a newer record supersedes it by name. Search it freely — every record names its own status and what it supersedes.

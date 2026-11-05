@@ -215,6 +215,15 @@ execute rather than import. The rest is operator files and the QA sweep.
   (docs/d107): `npm ci --ignore-scripts` from `package-lock.json` when the
   lock changes. The same lock carries the Android Biome/oxc builds, so Termux
   and the container hosts run identical gate versions.
+- `dev-tools.sh` — the dev-host half of that split (docs/d139): one pin table
+  for the tools that are NOT npm packages (go, golangci-lint, shellcheck, jq,
+  shfmt, oxfmt, ruff, uv, ty) and one acquisition path — `mise exec` on a host
+  that has mise, the host's own binary on Termux/mise-less hosts, nothing
+  installed anywhere else (`DEV_TOOLS_PROFILE=none`). `./dev-tools.sh` with no
+  arguments is the one-command dev setup; the sweeps source it, so no gate names
+  a way to obtain its tool. mise stays out of every RUNTIME path (docs/d051,
+  d082): a root `mise.toml` is still not committed, and a harness-written one is
+  gitignored.
 - `lint.sh`, `check-types.sh`, `test.sh`, `vm-bench.sh` — the repo-wide QA
   sweep: QA is the maintainer's view _across_ units, so it lives outside all of
   them and no unit imports it. It owns **no test of its own** — every test sits
@@ -226,7 +235,10 @@ execute rather than import. The rest is operator files and the QA sweep.
   (docs/d118 turned the last two into `*.test.mjs`, and docs/d121 left the
   repository with no shell test at all — the globs stay as the contract).
   estige is the one suite the globs cannot see (Go, in-package), so `test.sh`
-  runs it explicitly and skips loudly on a host with no toolchain (docs/d123).
+  runs it explicitly, acquiring the pinned toolchain through `dev-tools.sh` and
+  skipping loudly only where acquisition is unavailable (docs/d123, d139).
+  `lint.sh` also carries the `spec graph` leg — `docs/spec-check.mjs` against
+  `docs/spec-graph-standard.md` (docs/d140).
 - `freshness.sh` — the sweep's one **network** gate (docs/d122). The offline
   gates cannot see a stale cache: it parses, its tests pass, and plain
   `generate` would rewrite it without complaint, so staleness used to be a
@@ -236,8 +248,11 @@ execute rather than import. The rest is operator files and the QA sweep.
   key-gated listing without its key is skipped loudly rather than failing the
   gate, and `coding-agent` stays out because its generator's per-source
   fallbacks make byte-equality a property of the host. `lint.sh` and `test.sh`
-  remain offline by contract — lint and test must survive a host with no
-  network, freshness is the one question that cannot.
+  remain offline by contract — lint and test read the working tree and fetch no
+  subject data, freshness is the one question that cannot. (Acquiring a gate
+  TOOL may need the network once, through `dev-tools.sh`; that is an install,
+  not a data fetch, and it is the same first-run cost `npm ci` pays — docs/d107,
+  d139.)
 
 The probe/facts/refresh modules that used to sit in a shared lib
 (`route-probe.mjs`, then named `peer-probe.mjs` (docs/d071), `pi-models.mjs`,
@@ -274,13 +289,17 @@ are working on, through the root runner (docs/d138).
   register only while outbound cloud networking is reachable, its native target
   always.
 - The repo-wide sweep stays at the root and is the only cross-unit view:
-  `./lint.sh` (biome + knip + jq + golangci-lint + the capability-URL and
-  retired-root-lib patterns; the Go rule set is `estige/.golangci.yml`,
-  docs/d137), `./check-types.sh` (tsc over every unit's JS), `./test.sh` (runs
-  every `<unit>/tests/` plus estige's in-package Go suite, and owns none of
-  them), `./vm-bench.sh` (docs/vm-build-bench.md), and `./freshness.sh`
-  (docs/d122) — the one sweep that needs the network, because a stale committed
-  cache is otherwise a valid artifact that only review could catch.
+  `./lint.sh` (shellcheck, the jq workload-filter compile, shfmt advisory,
+  oxfmt markdown, biome, oxlint, knip, ruff, `uv sync --frozen`, ty, the
+  capability-URL/runner-copy/retired-root-lib text gates, the spec-graph
+  contract of docs/d140, and golangci-lint whose Go rule set is
+  `estige/.golangci.yml` — docs/d107/d137), `./check-types.sh` (tsc over every
+  unit's JS), `./test.sh` (runs every `<unit>/tests/` plus estige's in-package
+  Go suite, and owns none of them), `./vm-bench.sh` (docs/vm-build-bench.md),
+  and `./freshness.sh` (docs/d122) — the one sweep that needs the network,
+  because a stale committed cache is otherwise a valid artifact that only
+  review could catch. `./dev-tools.sh` is not a sweep: it is the dev host's
+  one-command toolchain install the first two consult (docs/d139).
 
 Runners NEVER build or generate: the launcher stages the COMMITTED config and a
 stale/missing artifact is a loud failure pointing at the generator, never an

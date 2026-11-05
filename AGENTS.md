@@ -125,6 +125,12 @@ arguing with the gate.
   `./environment.sh <script>` does the one vault round-trip, then `exec`s the
   target. Consumers read plain env and never load secrets; there is exactly
   one loader and no unit owns it (`./environment.sh`).
+- **The dev toolchain has one install path** (`./dev-tools.sh`, docs/d139): a
+  single pin table, `mise exec` on a dev host, the host's own binaries on
+  Termux/mise-less hosts, nothing installed under `DEV_TOOLS_PROFILE=none`. mise
+  never appears in a runtime path and **no `mise.toml` is committed**
+  (d051/d082/d137 — a root file re-pins bare `node`/`go` for anything entering
+  the tree); `.gitignore` covers one a developer's harness writes.
 - **Markdown is oxfmt-canonical.** `./lint.sh` gates it (pinned in the shim,
   d137's rule for a gate whose output is its meaning) and
   `oxfmt --write '**/*.md'` is the fix. One one-shot reformat took the whole

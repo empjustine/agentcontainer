@@ -1,3 +1,14 @@
+---
+id: pi-opencode
+type: module-design
+status: active
+title: "pi-opencode — opencode and opencode-go as catalog freshness watchdogs"
+parent: architecture
+depends-on: [d097]
+references: [d100, d118]
+tags: [pi-extensions, providers, opencode]
+---
+
 # pi-opencode — opencode and opencode-go as catalog freshness watchdogs
 
 `pi -e ./pi-opencode/index.ts` (or `pi -c` with the absolute path) adds

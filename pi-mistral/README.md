@@ -1,3 +1,14 @@
+---
+id: pi-mistral
+type: module-design
+status: active
+title: "pi-mistral — mistral as a catalog freshness watchdog"
+parent: architecture
+depends-on: [d097]
+references: [d100, d118]
+tags: [pi-extensions, providers, mistral]
+---
+
 # pi-mistral — mistral as a catalog freshness watchdog
 
 `pi -e ./pi-mistral/index.ts` (or `pi -c` with the absolute path) adds a

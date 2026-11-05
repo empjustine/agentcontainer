@@ -1,3 +1,14 @@
+---
+id: pi-summarized-thinking
+type: module-design
+status: draft
+title: "pi-summarized-thinking — end-of-turn reasoning summaries as a pi package"
+parent: architecture
+depends-on: [d125]
+references: [d100, d118, summarized-thinking]
+tags: [pi-extensions, summarized-thinking, reasoning]
+---
+
 # pi-summarized-thinking — end-of-turn reasoning summaries as a pi package
 
 One summarizer call at the end of a completed turn, written into the session as a
@@ -6,7 +17,7 @@ transcript. The model's context is untouched — a session with this extension
 loaded hands the provider exactly the same bytes as one without it.
 
 Design rationale, the reversals that produced it, and the cache arithmetic live
-in [`../coding-agent/summarized-thinking.md`](../coding-agent/summarized-thinking.md);
+in [`summarized-thinking.md`](summarized-thinking.md);
 the decisions a build must not re-litigate are
 [`../docs/d125-summarized-thinking-decisions.md`](../docs/d125-summarized-thinking-decisions.md);
 the pi/ThinkRail contracts it rests on (with the symbols to check them against) are

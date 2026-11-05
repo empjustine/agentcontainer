@@ -26,6 +26,8 @@ set -eu
 
 # shellcheck source-path=SCRIPTDIR source=log.sh
 . "$(dirname "$0")/log.sh"
+# shellcheck source-path=SCRIPTDIR source=dev-tools.sh
+. "$(dirname "$0")/dev-tools.sh"
 LOG_TOOL='test'
 export LOG_TOOL
 
@@ -34,31 +36,24 @@ cd "$root"
 log_info "unit tests (node --test: every */tests/)"
 "$root/node-run.sh" --test ./*/tests/*.test.mjs
 
-# Go toolchain detection follows estige/lib/go-build.mjs, and for the same
-# reason: on a sandbox/toolbox host the mise shims are off PATH, while a shim
-# being *present* is not proof of a toolchain (`go version` is the only proof).
-# `mise where` is the third probe and a deliberate one: it answers only for an
-# ALREADY-installed toolchain, so a host that never had go skips instead of
-# pulling one down mid-sweep. A host with no go skips this leg loudly rather
-# than failing the sweep — the suite is real, but a laptop with no Go cannot be
-# asked to run it.
+# Go toolchain acquisition is dev-tools.sh's job now (docs/d139); the reason
+# d123 gave for the probe still holds inside it — a mise SHIM on PATH is not
+# proof of a toolchain (`go version` is), and on a sandbox host the shims are off
+# PATH entirely. d139 changes one thing: a dev host ACQUIRES the pinned go
+# through mise, exactly as the lint legs already did, instead of skipping until
+# somebody remembers an install command (that is the d123 sentence it
+# supersedes). Termux and mise-less hosts still skip loudly rather than fail the
+# sweep: the suite is real, but a box with no Go cannot be asked to run it, and
+# DEV_TOOLS_PROFILE=none makes the same skip an explicit choice anywhere.
 log_info "estige Go suite (in-package tests, needs a go toolchain)"
-if command -v mise >/dev/null 2>&1; then
-	if _goroot=$(mise where go 2>/dev/null); then
-		PATH="$_goroot/bin:$PATH"
-	fi
-fi
-if [ "${HOME:-}" != "" ] && [ -d "$HOME/.local/share/mise/shims" ]; then
-	PATH="$HOME/.local/share/mise/shims:$PATH"
-fi
-export PATH
-if command -v go >/dev/null 2>&1 && go version >/dev/null 2>&1; then
+if _go_bin=$(dev_tool_bin go) && _go_ver=$("$_go_bin" version 2>/dev/null); then
+	log_info "go toolchain" path="$_go_bin" version="$_go_ver"
 	(
 		cd estige
-		CGO_ENABLED=0 go test ./...
+		CGO_ENABLED=0 "$_go_bin" test ./...
 	)
 else
-	log_warn "skipped — no working go toolchain" hint="mise install go@1.27"
+	log_warn "skipped — no working go toolchain" hint="./dev-tools.sh go (or the host package manager)"
 fi
 
 # The sweep owns no test of its own and no unit has to ship a shell one: a

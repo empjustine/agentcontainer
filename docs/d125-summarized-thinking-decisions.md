@@ -3,7 +3,7 @@ id: d125
 type: module-design
 status: active
 title: "d125 — pi-summarized-thinking: human-facing turn summaries, and the context is never touched"
-parent: coding-agent
+parent: pi-summarized-thinking
 depends-on: [d100, d117]
 references: [d042, d096, d116, d124]
 tags: ["pi-extensions", "reasoning", "cache", "sessions", "thinkrail"]
@@ -16,8 +16,12 @@ tags: ["pi-extensions", "reasoning", "cache", "sessions", "thinkrail"]
 Decisions taken; **nothing implemented**. The package folder exists with
 documentation only (`../pi-summarized-thinking/`), and the build order is its
 `TODO.md`. This record is the decision log for that extension: the design note
-`../coding-agent/summarized-thinking.md` holds the reasoning and the reversals,
+`../pi-summarized-thinking/summarized-thinking.md` holds the reasoning and the reversals,
 and this record holds the decisions a build must not quietly re-litigate.
+
+One section has since been overruled: **Placement** below is superseded by
+docs/d141, which gives every `pi-*` package a module front door and moved this
+extension's design note into its own folder. Every other decision here stands.
 
 ## Problem
 
@@ -140,6 +144,10 @@ sees and can stop new writes, but it can never change what the model sees, becau
 nothing this extension writes is model-visible.
 
 ### Placement: the note stays a `coding-agent` living doc, the folder is not a node
+
+**Superseded by docs/d141** — read the section as the reasoning of its moment,
+not as the tree's current shape; `summarized-thinking.md` now sits in
+`pi-summarized-thinking/` under that folder's own node.
 
 `coding-agent/summarized-thinking.md` keeps its id and its `parent: coding-agent`
 edge and stays where docs/d117 requires a single-unit living doc to sit; the new

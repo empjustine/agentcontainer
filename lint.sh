@@ -1,7 +1,18 @@
 #!/bin/sh
-# Lint shell and JS/TS. The JS tools are npm devDependencies pinned by
-# package-lock.json (docs/d107); shellcheck/jq/shfmt come from mise on hosts
-# that have it, or the host package manager on Termux/mise-less hosts.
+# lint.sh — the repo-wide lint gate (docs/d113: the maintainer's view ACROSS
+# units; no unit imports it).
+#
+# The gate surface, in the order it runs — every leg gates except shfmt:
+#   shell sources · jq workload-filter compile · shfmt (advisory) · oxfmt
+#   markdown · biome · oxlint (type-aware) · knip · ruff · uv sync --frozen ·
+#   ty · the capability-URL, runner-copy and retired-root-lib text gates ·
+#   spec-graph contract · golangci-lint.
+#
+# Toolchain split (docs/d139): the npm packages are locked by package-lock.json
+# and installed by ./npm-tools.sh (docs/d107); every other tool is pinned in
+# ./dev-tools.sh, which acquires it through mise on a dev host and hands back
+# the host's own binary on Termux/mise-less hosts. Both helpers are the single
+# install path, so this file names a tool but never a way to obtain it.
 #
 # Runs shellcheck(1) as the gating linter.
 # shfmt(1) -l is advisory only (exit status tolerated): it lists files whose
@@ -16,6 +27,8 @@ set -eu
 . "$(dirname "$0")/log.sh"
 # shellcheck source-path=SCRIPTDIR source=npm-tools.sh
 . "$(dirname "$0")/npm-tools.sh"
+# shellcheck source-path=SCRIPTDIR source=dev-tools.sh
+. "$(dirname "$0")/dev-tools.sh"
 LOG_TOOL='lint'
 export LOG_TOOL
 
@@ -23,26 +36,10 @@ repo_root=$(CDPATH='' cd "$(dirname "$0")" && pwd)
 root="${1:-$repo_root}"
 cd "$root"
 
-case "${PREFIX:-}" in
-	*/com.termux/*) _termux=1 ;;
-	*) _termux=0 ;;
-esac
-
-# The host package manager is the only option on Termux or a mise-less host;
-# elsewhere mise remains the version source for these non-npm tools. The JS
-# gates below deliberately do NOT use this path — their versions are locked.
-run_mise_or_host() {
-	_tool=$1
-	shift
-	if [ "$_termux" = 1 ] || ! command -v mise >/dev/null 2>&1; then
-		command -v "$_tool" >/dev/null 2>&1 ||
-			log_die 96 "missing $_tool — install it with the host package manager" \
-				tool="$_tool" hint="Termux: pkg install $_tool"
-		"$@"
-	else
-		mise exec "$_tool@latest" -- "$@"
-	fi
-}
+# Every non-npm tool below is provided by dev-tools.sh (docs/d139): one pin
+# table, one acquisition path — mise on a dev host, the host's own binary on
+# Termux/mise-less hosts. The JS gates deliberately do NOT go through it: their
+# versions are locked by package-lock.json (docs/d107).
 
 log_info "shellcheck"
 # -x: follow `source` directives (the run scripts point at their
@@ -53,7 +50,7 @@ log_info "shellcheck"
 # and this gate owns only this repo's sources.
 # .venv is pruned alongside node_modules: the gate environment ships its
 # own .sh files (tqdm's completion.sh) that are third-party, not ours.
-run_mise_or_host shellcheck find . -path ./node_modules -prune -o \
+dev_tool_run shellcheck find . -path ./node_modules -prune -o \
 	-path ./.venv -prune -o \
 	-type f -name '*.sh' -exec shellcheck -x {} +
 
@@ -76,7 +73,7 @@ run_mise_or_host shellcheck find . -path ./node_modules -prune -o \
 # coding-agent/tests/check-workload.test.mjs's job, not this gate's.
 log_info "jq compile (gating — */lib/workload-*.jq)"
 # shellcheck disable=SC2016  # $f is expanded by the inner sh, not by this one
-run_mise_or_host jq sh -c '
+dev_tool_run jq sh -c '
 set -- --argjson doc "{}" \
 	--arg field f --arg mode m --arg host h --arg guest g \
 	--arg tool podman --arg image i --arg name n --arg network net --arg restart r \
@@ -94,7 +91,7 @@ for f in */lib/workload-*.jq; do
 done'
 
 log_info "shfmt (advisory)"
-run_mise_or_host shfmt find . -path ./node_modules -prune -o \
+dev_tool_run shfmt find . -path ./node_modules -prune -o \
 	-path ./.venv -prune -o \
 	-type f -name '*.sh' -exec shfmt -l {} + || true
 
@@ -110,24 +107,15 @@ run_mise_or_host shfmt find . -path ./node_modules -prune -o \
 #
 # PINNED, not @latest (d137's rule for a gate whose output IS its meaning): a
 # formatter default change upstream would otherwise turn the sweep red across
-# the tree without a single edit here. The pin lives in the shim because the
-# repo commits no mise.toml (docs/d051/d082); Termux has no mise and takes the
-# host package's oxfmt, so a bump there re-runs the one-shot reformat.
-OXFMT_VERSION=0.75.0
+# the tree without a single edit here. The pin lives in dev-tools.sh's one
+# table (docs/d139; the repo commits no mise.toml — docs/d051/d082); Termux has
+# no mise and takes the host package's oxfmt, so a bump there re-runs the
+# one-shot reformat.
 OXFMT_GLOB='**/*.md'
 log_info "oxfmt markdown (gating — canonical markdown, pinned)"
-if [ "$_termux" = 1 ] || ! command -v mise >/dev/null 2>&1; then
-	oxfmt --version >/dev/null 2>&1 ||
-		log_die 96 "no runnable oxfmt — install it with the host package manager" \
-			tool=oxfmt hint="Termux: pkg install oxfmt"
-	oxfmt --check "$OXFMT_GLOB" ||
-		log_die 96 "markdown is not oxfmt-canonical" \
-			hint="fix: oxfmt --write '**/*.md'  (or \"mise exec oxfmt@$OXFMT_VERSION -- oxfmt --write '**/*.md'\")"
-else
-	mise exec "oxfmt@$OXFMT_VERSION" -- oxfmt --check "$OXFMT_GLOB" ||
-		log_die 96 "markdown is not oxfmt-canonical" \
-			hint="fix: mise exec oxfmt@$OXFMT_VERSION -- oxfmt --write '**/*.md'"
-fi
+dev_tool_run oxfmt oxfmt --check "$OXFMT_GLOB" ||
+	log_die 96 "markdown is not oxfmt-canonical" \
+		hint="fix: oxfmt --write '**/*.md' (pinned: mise exec oxfmt@0.75.0 -- oxfmt --write '**/*.md')"
 
 npm_tools_ensure "$repo_root"
 [ -x "$repo_root/node_modules/.bin/biome" ] ||
@@ -180,13 +168,13 @@ log_info "knip (gating — unused files/exports; entry contract in knip.jsonc)"
 # requires-python. A hand-written family list would either drift from that
 # default or silently drop rules the default keeps.
 log_info "ruff (gating — python lint)"
-run_mise_or_host ruff ruff check .
+dev_tool_run ruff ruff check .
 
 # uv sync --frozen: ty's prerequisite and the python gate's npm-ci —
 # installs the tracked uv.lock into .venv exactly; --frozen fails on a
 # stale lock instead of silently re-resolving it.
 log_info "uv sync --frozen (ty's environment)"
-run_mise_or_host uv uv sync --frozen
+dev_tool_run uv uv sync --frozen
 
 # ty (gating): python type checking — tsc's counterpart. The flags carry
 # what ty 0.0.95 parses but won't apply from [tool.ty.environment]
@@ -194,7 +182,7 @@ run_mise_or_host uv uv sync --frozen
 # (docs/d113) that makes bare import log / import _hf_cache resolve the
 # way the scripts are written to run.
 log_info "ty (gating — python types)"
-run_mise_or_host ty ty check . --python .venv --extra-search-path llm-local-inference/lib --extra-search-path llm-local-inference
+dev_tool_run ty ty check . --python .venv --extra-search-path llm-local-inference/lib --extra-search-path llm-local-inference
 
 # Capability-bearing URL gate (docs/d086): a funnel mount path in a tracked
 # file is the mode A credential written down — it leaks the only credential
@@ -236,6 +224,15 @@ if git grep -nE 'parent[.]parent|HERE[.]parent' -- '*.py' \
 	exit 1
 fi
 
+# Spec-graph contract gate (docs/d140): the frontmatter invariants
+# docs/spec-graph-standard.md states and the ThinkRail validator does not check
+# — the vocabulary, titles, id spelling, the nesting rules, and the file/edge
+# agreement. Offline and textual: it walks markdown and fetches nothing.
+log_info "spec graph (gating — docs/spec-graph-standard.md)"
+"$repo_root/node-run.sh" docs/spec-check.mjs ||
+	log_die 96 "spec graph is off-contract" \
+		hint="fix the findings above (docs/spec-graph-standard.md)"
+
 # golangci-lint — the Go lint gate (docs/d137). estige is the repo's only Go
 # unit (docs/d102/d113) and its rule set rides in the folder
 # (estige/.golangci.yml), so it travels with the unit on the docs/d082 split.
@@ -251,44 +248,24 @@ fi
 #     mise.toml (docs/d051/d082); Termux has no mise and takes whatever
 #     `pkg install golangci-lint` ships, so a bump there re-runs the survey.
 log_info "golangci-lint (gating — Go; rule set in estige/.golangci.yml, docs/d137)"
-# The go probe is test.sh's three-step one (docs/d123), with the discovered
-# bin placed FIRST: golangci-lint shells out to `go`, and the mise shim `go`
-# errors ("no version is set") unless a version is pinned — which this repo
-# deliberately does not do (docs/d051).
-if [ "${HOME:-}" != "" ] && [ -d "$HOME/.local/share/mise/shims" ]; then
-	PATH="$HOME/.local/share/mise/shims:$PATH"
-fi
-if command -v mise >/dev/null 2>&1; then
-	if _goroot=$(mise where go 2>/dev/null); then
-		PATH="$_goroot/bin:$PATH"
-	fi
-fi
-export PATH
-
-run_golangci_lint() {
-	if [ "$_termux" = 1 ] || ! command -v mise >/dev/null 2>&1; then
-		command -v golangci-lint >/dev/null 2>&1 ||
-			log_die 96 "missing golangci-lint — install it with the host package manager" \
-				tool=golangci-lint hint="Termux: pkg install golangci-lint"
-		golangci-lint "$@"
-	else
-		# Resolve through mise, RUN the binary directly: `mise exec` rebuilds
-		# PATH from its own tool set, dropping the discovered go bin, so the
-		# child `go` would hit the version-less mise shim above.
-		_golangci=$(mise exec golangci-lint@2.15.0 -- sh -c 'command -v golangci-lint') ||
-			log_die 96 "golangci-lint 2.15.0 is not installed" hint="mise install golangci-lint@2.15.0"
-		"$_golangci" "$@"
-	fi
-}
-
+# Both binaries are resolved to REAL paths and placed first on PATH: the child
+# `go list` would otherwise resolve the mise SHIM, which errors "no version is
+# set" because this repo pins no bare `go` (docs/d051). On a dev host
+# dev_tool_bin also acquires the tool (docs/d139); on Termux/mise-less hosts a
+# missing toolchain skips the leg loudly, because a box with no Go cannot be
+# asked to lint Go.
 if [ ! -d estige ]; then
 	log_info "skipped — no estige/ under $root"
-elif command -v go >/dev/null 2>&1 && go version >/dev/null 2>&1; then
+elif ! _go_bin=$(dev_tool_bin go); then
+	log_warn "skipped — no go toolchain" hint="./dev-tools.sh go (or the host package manager)"
+else
+	_golangci=$(dev_tool_bin golangci-lint) ||
+		log_die 96 "golangci-lint is not obtainable" hint="./dev-tools.sh golangci-lint"
+	PATH="$(dirname "$_go_bin"):$PATH"
+	export PATH
 	# config verify is the schema gate first: in v2 a typo'd key makes
 	# golangci-lint silently drop the whole config, so the schema check runs
 	# before the lint.
-	( cd estige && run_golangci_lint config verify && run_golangci_lint run ./... )
-else
-	log_warn "skipped — no working go toolchain" hint="mise install go@1.27"
+	( cd estige && "$_golangci" config verify && "$_golangci" run ./... )
 fi
 

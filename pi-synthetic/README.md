@@ -1,3 +1,14 @@
+---
+id: pi-synthetic
+type: module-design
+status: active
+title: "pi-synthetic — the Synthetic provider as a committed, self-contained pi package"
+parent: architecture
+depends-on: [d096]
+references: [d100, d118]
+tags: [pi-extensions, providers, synthetic]
+---
+
 # pi-synthetic
 
 The **Synthetic** provider for [pi](https://github.com/earendil-works/pi) as one

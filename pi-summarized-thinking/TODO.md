@@ -2,7 +2,7 @@
 
 Open items, in the order they can be worked. Nothing is implemented: the package
 is a skeleton validated against pi and ThinkRail source, not a running extension.
-The design rationale is [`../coding-agent/summarized-thinking.md`](../coding-agent/summarized-thinking.md),
+The design rationale is [`summarized-thinking.md`](summarized-thinking.md),
 the decisions are [`../docs/d125-summarized-thinking-decisions.md`](../docs/d125-summarized-thinking-decisions.md)
 (settled — an item below that needs one of them changed says so), and the
 contracts are [`FINDINGS.md`](FINDINGS.md). Each item says what "done" looks like

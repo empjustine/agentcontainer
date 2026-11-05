@@ -1,3 +1,14 @@
+---
+id: pi-verboo
+type: module-design
+status: active
+title: "pi-verboo — the Verboo provider as a pi package"
+parent: architecture
+depends-on: [d096]
+references: [d100, d118]
+tags: [pi-extensions, providers, verboo]
+---
+
 # pi-verboo — the Verboo provider as a pi package
 
 Registers the **Verboo** gateway (`https://code.verboo.ai/router/v1`, the

@@ -3,7 +3,8 @@ id: summarized-thinking
 type: module-design
 status: draft
 title: "summarized-reasoning extension — design note: human-facing summaries, no context mutation"
-parent: coding-agent
+parent: pi-summarized-thinking
+depends-on: [d125]
 tags: ["design", "pi-extensions", "reasoning"]
 ---
 
@@ -16,8 +17,8 @@ extension sends the provider exactly the same bytes as one that does not.
 
 This note owns the _why_ and the reversals. The package itself —
 layout, the summarizer's model chain, commands, configuration, the invariants as
-folder rules — is `../pi-summarized-thinking/`, and the pi/ThinkRail contracts
-this rests on are `../pi-summarized-thinking/FINDINGS.md`. The **decisions** that
+folder rules — is `README.md` beside this note, and the pi/ThinkRail contracts
+this rests on are `FINDINGS.md`. The **decisions** that
 constrain a build are `../docs/d125-summarized-thinking-decisions.md`: this note
 argues, that record decides, and a build must not re-litigate it.
 
@@ -99,7 +100,7 @@ something this extension manages and becomes something it cannot express.
   reasoning off, not an agent turn.
 - Delivery is a `custom` entry, so the TUI needs `registerEntryRenderer` and
   ThinkRail needs one web row — where the entry arrives in the transcript but not
-  in the live `entry_appended` payload (`../pi-summarized-thinking/FINDINGS.md`).
+  in the live `entry_appended` payload (`FINDINGS.md`).
 - The summary is not selectable, searchable or quotable by the model, ever. That is
   the point, and it is also the one thing a user may ask for (feeding it back) that
   this design refuses.
@@ -108,6 +109,6 @@ something this extension manages and becomes something it cannot express.
 
 ## Status
 
-Design only — nothing implemented. `../pi-summarized-thinking/TODO.md` owns the
+Design only — nothing implemented. `TODO.md` owns the
 build order, led by the regression test that keeps it honest: a turn with the
 extension on and off must produce byte-identical `llmMessages`.

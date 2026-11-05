@@ -1,3 +1,14 @@
+---
+id: pi-hyper
+type: module-design
+status: active
+title: "pi-hyper — the Charm Hyper provider as a pi package"
+parent: architecture
+depends-on: [d096]
+references: [d100, d118]
+tags: [pi-extensions, providers, hyper]
+---
+
 # pi-hyper — the Charm Hyper provider as a pi package
 
 Registers the **Charm Hyper** gateway (`https://hyper.charm.land/v1`, the

@@ -11,6 +11,10 @@ tags: ["tooling", "golang", "lint", "estige", "golangci-lint"]
 
 # d137 — golangci-lint is the Go lint gate, strict-from-standard
 
+> **Superseded in part (docs/d139).** The pin moved out of `lint.sh` into
+> `./dev-tools.sh`'s one table; the pinned-not-@latest reasoning below is what
+> the table still encodes, and it is unchanged.
+
 ## Problem
 
 estige is the repository's only Go unit (docs/d102, docs/d113): one
