@@ -54,7 +54,7 @@ func modeCFetch(t *testing.T, httpAddr, targetHost string, upPort uint16) {
 }
 
 func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
-	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("X-Upstream", "yes")
 		_, _ = io.WriteString(w, "hello-mode-c")
 	}))
@@ -105,10 +105,8 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 		// POST carriers must run at once without stalls.
 		var wg sync.WaitGroup
 		fail := make(chan string, 6)
-		for i := 0; i < 6; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+		for range 6 {
+			wg.Go(func() {
 				conn := rawDial(t, httpAddr)
 				defer conn.Close()
 				mustWrite(t, conn, "CONNECT localhost:"+strconv.Itoa(int(upPort))+" HTTP/1.1\r\nHost: localhost\r\n\r\n"+
@@ -125,7 +123,7 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 				if string(body) != "hello-mode-c" {
 					fail <- "body=" + string(body)
 				}
-			}()
+			})
 		}
 		wg.Wait()
 		close(fail)
@@ -158,7 +156,7 @@ func TestModeCArrivalIsAuthenticatedAndCamouflaged(t *testing.T) {
 	logBuf := captureLog(t)
 
 	t.Run("wrong credential on a POST is the camouflage 404", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodPost, target, strings.NewReader("not-a-frame"))
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, target, strings.NewReader("not-a-frame"))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -178,7 +176,12 @@ func TestModeCArrivalIsAuthenticatedAndCamouflaged(t *testing.T) {
 	})
 
 	t.Run("no credential at all is the same 404", func(t *testing.T) {
-		resp, err := http.Post(target, "application/octet-stream", strings.NewReader("x"))
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, target, strings.NewReader("x"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Content-Type", "application/octet-stream")
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -189,7 +192,7 @@ func TestModeCArrivalIsAuthenticatedAndCamouflaged(t *testing.T) {
 	})
 
 	t.Run("a valid credential opens a POST session, attributed to its key", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodPost, target, strings.NewReader("x"))
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, target, strings.NewReader("x"))
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -201,3 +201,60 @@ if git grep -nE 'parent[.]parent|HERE[.]parent' -- '*.py' \
 	echo "reference to a lib/ outside the unit's own (docs/d113) — see lines above" >&2
 	exit 1
 fi
+
+# golangci-lint — the Go lint gate (docs/d137). estige is the repo's only Go
+# unit (docs/d102/d113) and its rule set rides in the folder
+# (estige/.golangci.yml), so it travels with the unit on the docs/d082 split.
+#
+# Two things separate this leg from the mise tools above:
+#   - it needs a WORKING go toolchain on PATH, not a mise shim: golangci-lint
+#     shells out to `go list`. The three-step probe is test.sh's (docs/d123);
+#     a host with no Go skips loudly, because a laptop with no toolchain
+#     cannot be asked to lint Go.
+#   - it is PINNED, not @latest: a linter's rule set IS the gate's meaning, so
+#     a floating pin would change what green means between runs (the biome
+#     posture, docs/d107). The pin lives here because the repo commits no
+#     mise.toml (docs/d051/d082); Termux has no mise and takes whatever
+#     `pkg install golangci-lint` ships, so a bump there re-runs the survey.
+log_info "golangci-lint (gating — Go; rule set in estige/.golangci.yml, docs/d137)"
+# The go probe is test.sh's three-step one (docs/d123), with the discovered
+# bin placed FIRST: golangci-lint shells out to `go`, and the mise shim `go`
+# errors ("no version is set") unless a version is pinned — which this repo
+# deliberately does not do (docs/d051).
+if [ "${HOME:-}" != "" ] && [ -d "$HOME/.local/share/mise/shims" ]; then
+	PATH="$HOME/.local/share/mise/shims:$PATH"
+fi
+if command -v mise >/dev/null 2>&1; then
+	if _goroot=$(mise where go 2>/dev/null); then
+		PATH="$_goroot/bin:$PATH"
+	fi
+fi
+export PATH
+
+run_golangci_lint() {
+	if [ "$_termux" = 1 ] || ! command -v mise >/dev/null 2>&1; then
+		command -v golangci-lint >/dev/null 2>&1 ||
+			log_die 96 "missing golangci-lint — install it with the host package manager" \
+				tool=golangci-lint hint="Termux: pkg install golangci-lint"
+		golangci-lint "$@"
+	else
+		# Resolve through mise, RUN the binary directly: `mise exec` rebuilds
+		# PATH from its own tool set, dropping the discovered go bin, so the
+		# child `go` would hit the version-less mise shim above.
+		_golangci=$(mise exec golangci-lint@2.15.0 -- sh -c 'command -v golangci-lint') ||
+			log_die 96 "golangci-lint 2.15.0 is not installed" hint="mise install golangci-lint@2.15.0"
+		"$_golangci" "$@"
+	fi
+}
+
+if [ ! -d estige ]; then
+	log_info "skipped — no estige/ under $root"
+elif command -v go >/dev/null 2>&1 && go version >/dev/null 2>&1; then
+	# config verify is the schema gate first: in v2 a typo'd key makes
+	# golangci-lint silently drop the whole config, so the schema check runs
+	# before the lint.
+	( cd estige && run_golangci_lint config verify && run_golangci_lint run ./... )
+else
+	log_warn "skipped — no working go toolchain" hint="mise install go@1.27"
+fi
+

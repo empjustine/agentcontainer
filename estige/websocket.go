@@ -53,10 +53,10 @@ const (
 // nothing enforces, and 1001/1011 in particular suggested a graceful-shutdown
 // and an internal-error path this carrier does not have.
 const (
-	wsCloseProtocolError = 1002
-	wsCloseUnsupported   = 1003
-	wsMaxControlPayload  = 125 // RFC 6455 §5.5 control frames
-	wsMaxMessage   int64 = 1 << 20
+	wsCloseProtocolError       = 1002
+	wsCloseUnsupported         = 1003
+	wsMaxControlPayload        = 125 // RFC 6455 §5.5 control frames
+	wsMaxMessage         int64 = 1 << 20
 )
 
 // errWSClosed reports an orderly or peer-initiated close; io.EOF is used for
@@ -117,7 +117,7 @@ func wsAcceptKey(key string) string {
 // case-insensitively (RFC 9110 §5.1 — Connection may list several tokens).
 func headerHasToken(h http.Header, name, token string) bool {
 	for _, v := range h.Values(name) {
-		for _, part := range strings.Split(v, ",") {
+		for part := range strings.SplitSeq(v, ",") {
 			if strings.EqualFold(strings.TrimSpace(part), token) {
 				return true
 			}
@@ -142,17 +142,17 @@ func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, d
 		dial = directDial
 	}
 	switch tunnelURL.Scheme {
-	case "ws", "wss":
+	case schemeWS, schemeWSS:
 		scheme := tunnelURL.Scheme
 		addr := tunnelURL.Host
 		if !hasPort(addr) {
-			if scheme == "wss" {
+			if scheme == schemeWSS {
 				addr = net.JoinHostPort(addr, "443")
 			} else {
 				addr = net.JoinHostPort(addr, "80")
 			}
 		}
-		if scheme == "wss" {
+		if scheme == schemeWSS {
 			// System roots, ServerName from the URL host, no override knobs:
 			// the Funnel `*.ts.net` certificate must verify as-is (VPN-R28),
 			// and nothing in this module may weaken verification (VPN-R55).
@@ -179,7 +179,7 @@ func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, d
 
 	keyBytes := make([]byte, 16)
 	if _, err := rand.Read(keyBytes); err != nil {
-		raw.Close()
+		_ = raw.Close()
 		return nil, err
 	}
 	key := base64.StdEncoding.EncodeToString(keyBytes)
@@ -200,28 +200,28 @@ func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, d
 	req.WriteString("\r\n")
 
 	if _, err := io.WriteString(raw, req.String()); err != nil {
-		raw.Close()
+		_ = raw.Close()
 		return nil, err
 	}
 
 	br := bufio.NewReader(raw)
 	statusLine, err := readLine(br)
 	if err != nil {
-		raw.Close()
+		_ = raw.Close()
 		return nil, err
 	}
 	fields := strings.Fields(statusLine)
 	if len(fields) < 2 || fields[1] != "101" {
-		raw.Close()
+		_ = raw.Close()
 		return nil, fmt.Errorf("tunnel handshake: expected 101, got %q", statusLine)
 	}
 	respHeader, err := textproto.NewReader(br).ReadMIMEHeader()
 	if err != nil {
-		raw.Close()
+		_ = raw.Close()
 		return nil, fmt.Errorf("tunnel handshake: reading response headers: %w", err)
 	}
 	if got := respHeader.Get("Sec-WebSocket-Accept"); got != wsAcceptKey(key) {
-		raw.Close()
+		_ = raw.Close()
 		return nil, fmt.Errorf("tunnel handshake: bad Sec-WebSocket-Accept %q", got)
 	}
 	// The handshake's deadline must not become the session's: after 101 the
@@ -409,7 +409,7 @@ func (w *wsConn) readTunnelMsg() ([]byte, error) {
 	// consumed control frames, so anything else is a peer speaking the
 	// wrong protocol.
 	if opcode != wsOpBinary {
-		return nil, fmt.Errorf("%W: non-binary message in the tunnel", ErrProtocol)
+		return nil, fmt.Errorf("%w: non-binary message in the tunnel", ErrProtocol)
 	}
 	return msg, nil
 }
@@ -432,7 +432,7 @@ func (w *wsConn) protocolViolation() {
 // transport is wss for both directions: mode D is the WebSocket carrier
 // (docs/d077 §4's vocabulary), whatever the cleartext test scheme is called.
 func (w *wsConn) transport() string {
-	return "wss"
+	return schemeWSS
 }
 
 // writeFrame serializes one frame: client frames masked with fresh random
@@ -448,7 +448,7 @@ func (w *wsConn) writeFrame(opcode byte, payload []byte) error {
 	// a concurrent frame's window; the interval is generous — a healthy
 	// relay drains frames in milliseconds.
 	_ = w.conn.SetWriteDeadline(time.Now().Add(tunnelKeepaliveInterval))
-	defer w.conn.SetWriteDeadline(time.Time{})
+	defer func() { _ = w.conn.SetWriteDeadline(time.Time{}) }()
 
 	var head [14]byte
 	head[0] = 0x80 | opcode // FIN set: the tunnel never fragments

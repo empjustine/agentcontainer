@@ -117,6 +117,10 @@ func readFrameFromStream(r io.Reader) ([]byte, error) {
 }
 
 // encodeFrame renders one frame: fixed header + payload.
+//
+// parameter so the v3 mux is a caller change, not a codec rewrite (VPN-R17).
+//
+//nolint:unparam // stream is the reserved v1 stream id (always 0); it stays a
 func encodeFrame(typ byte, stream uint16, payload []byte) ([]byte, error) {
 	if len(payload) > maxFramePayload {
 		return nil, fmt.Errorf("%w: frame payload %d exceeds %d", ErrProtocol, len(payload), maxFramePayload)

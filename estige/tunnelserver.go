@@ -119,7 +119,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	// bearer above is their whole auth (d077 §5: the credential rides every
 	// request, since a body session has no handshake header of its own).
 	if r.Method == http.MethodPost && !headerHasToken(r.Header, "Upgrade", "websocket") {
-		if r.Header.Get("traceparent") != "" {
+		if r.Header.Get("Traceparent") != "" {
 			t.serveTunnelExchange(w, r, keyID)
 			return
 		}
@@ -147,18 +147,18 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	conn, brw, err := http.NewResponseController(lw).Hijack()
 	if err != nil {
 		writeProblem(lw, r, http.StatusInternalServerError, "hijack-failed",
-			"Could not switch protocols on the tunnel connection", "", err)
+			"Could not switch protocols on the tunnel connection", err)
 		// Authenticated, but no 101 ever happened — the CLF line records
 		// the failure.
 		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
 		return
 	}
 	if _, err := brw.Write(resp); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return
 	}
 	if err := brw.Flush(); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return
 	}
 	// net/http never saw the 101 through WriteHeader — record it so the
@@ -170,7 +170,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	// The session outlives ServeHTTP: once hijacked, nothing on this
 	// connection is net/http's business anymore.
 	ws := &wsConn{conn: conn, br: brw.Reader, bw: brw.Writer, client: false}
-	go t.runSession(ws)
+	go t.runSession(context.WithoutCancel(r.Context()), ws)
 }
 
 // serveTunnelPOST runs a mode C session (docs/d077 §3): the response
@@ -183,7 +183,7 @@ func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, k
 
 	lw := &loggingResponseWriter{ResponseWriter: w}
 	p := &postStream{r: r, w: lw}
-	defer p.Close()
+	defer func() { _ = p.Close() }()
 
 	// This response is the session-open signal: it must go out before the
 	// client has sent a single tunnel byte (d077 §5). net/http's h1 default
@@ -207,7 +207,7 @@ func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, k
 		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
 		return
 	}
-	t.runSession(p)
+	t.runSession(context.WithoutCancel(r.Context()), p)
 	logCombinedRequestURI(r, http.StatusOK, lw.size)
 }
 
@@ -258,7 +258,7 @@ func (p *postStream) setReadDeadline(t time.Time) error {
 // rules define it). See docs/d077 §5.
 func (p *postStream) protocolViolation() {}
 
-func (p *postStream) transport() string { return "post" }
+func (p *postStream) transport() string { return transportPOST }
 
 func (p *postStream) Close() error {
 	p.closeOnce.Do(func() {
@@ -277,7 +277,7 @@ func (p *postStream) Close() error {
 // lifecycle log (VPN-R16's frame set, VPN-R20's remote resolution). It is
 // carrier-agnostic (docs/d077 §5): the same session over the 101 path and
 // over a mode C body.
-func (t *tunnelServer) runSession(s tunnelStream) {
+func (t *tunnelServer) runSession(ctx context.Context, s tunnelStream) {
 	start := time.Now()
 	var (
 		label   string
@@ -335,7 +335,7 @@ func (t *tunnelServer) runSession(s tunnelStream) {
 		failConnect(errReasonInvalid)
 		return
 	}
-	if _, literal := parseIPLiteral(host); literal {
+	if parseIPLiteral(host) {
 		// VPN-R22: pre-resolved targets are refused here, and here is the
 		// only place the tunnel dials — resolution and pinning stay server-side.
 		failConnect(errReasonTargetIP)
@@ -345,7 +345,7 @@ func (t *tunnelServer) runSession(s tunnelStream) {
 		failConnect(errReasonPortDenied)
 		return
 	}
-	dialCtx, cancel := context.WithTimeout(context.Background(), tunnelDialTimeout)
+	dialCtx, cancel := context.WithTimeout(ctx, tunnelDialTimeout)
 	upConn, _, err := dialValidated(dialCtx, t.egress, host, port)
 	cancel()
 	if err != nil {
@@ -354,7 +354,7 @@ func (t *tunnelServer) runSession(s tunnelStream) {
 	}
 
 	if err := sendFrame(s, frameConnected, nil); err != nil {
-		upConn.Close()
+		_ = upConn.Close()
 		return
 	}
 	// The relay owns the deadlines from here (VPN-R14).
@@ -429,7 +429,7 @@ func decodeOperatorKeys(raw string) (map[string]string, error) {
 	dec := json.NewDecoder(strings.NewReader(raw))
 	open, err := dec.Token()
 	if err != nil {
-		return nil, fmt.Errorf("%s is not a JSON object: %v", envOperatorKeys, err)
+		return nil, fmt.Errorf("%s is not a JSON object: %w", envOperatorKeys, err)
 	}
 	if delim, ok := open.(json.Delim); !ok || delim != '{' {
 		return nil, fmt.Errorf("%s must be a JSON object {\"<id>\": \"<token>\"} (docs/d078 §2)", envOperatorKeys)
@@ -438,7 +438,7 @@ func decodeOperatorKeys(raw string) (map[string]string, error) {
 	for dec.More() {
 		keyTok, err := dec.Token()
 		if err != nil {
-			return nil, fmt.Errorf("%s: %v", envOperatorKeys, err)
+			return nil, fmt.Errorf("%s: %w", envOperatorKeys, err)
 		}
 		id, ok := keyTok.(string)
 		if !ok || !validOperatorID(id) {
@@ -449,7 +449,7 @@ func decodeOperatorKeys(raw string) (map[string]string, error) {
 		}
 		var token string
 		if err := dec.Decode(&token); err != nil {
-			return nil, fmt.Errorf("%s value for %q must be a string: %v", envOperatorKeys, id, err)
+			return nil, fmt.Errorf("%s value for %q must be a string: %w", envOperatorKeys, id, err)
 		}
 		out[id] = token
 	}
@@ -457,7 +457,7 @@ func decodeOperatorKeys(raw string) (map[string]string, error) {
 	// only then decide whether anything followed the object.
 	closeTok, err := dec.Token()
 	if err != nil {
-		return nil, fmt.Errorf("%s is not a complete JSON object: %v", envOperatorKeys, err)
+		return nil, fmt.Errorf("%s is not a complete JSON object: %w", envOperatorKeys, err)
 	}
 	if closeTok != json.Delim('}') {
 		return nil, fmt.Errorf("%s must be one JSON object, nothing else", envOperatorKeys)
@@ -479,7 +479,7 @@ func validOperatorID(id string) bool {
 		return false
 	}
 	for _, r := range id {
-		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_') {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9') && r != '-' && r != '_' {
 			return false
 		}
 	}
@@ -557,7 +557,7 @@ func egressFromEnv() (egressConfig, error) {
 	dec := json.NewDecoder(strings.NewReader(raw))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&cfg); err != nil {
-		return egressConfig{}, fmt.Errorf("%s must be a JSON object {\"allowCidrs\": [\"10.0.0.0/8\"], \"ports\": [443]}: %v", envTunnelEgress, err)
+		return egressConfig{}, fmt.Errorf("%s must be a JSON object {\"allowCidrs\": [\"10.0.0.0/8\"], \"ports\": [44w]}: %w", envTunnelEgress, err)
 	}
 	if _, err := dec.Token(); !errors.Is(err, io.EOF) {
 		return egressConfig{}, fmt.Errorf("%s has content after the JSON object", envTunnelEgress)

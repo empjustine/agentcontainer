@@ -139,6 +139,8 @@ both cases, no NDK, no extra toolchain:
 - **`./lint.sh` + `./check-types.sh`** as extra jobs — both hermetic
   (shellcheck/jq/shfmt via mise or the host package manager; the JS toolchain
   is installed from `package-lock.json` by the repo-root `./npm-tools.sh`).
+  `./lint.sh`'s golangci-lint leg (docs/d137) needs a working Go toolchain,
+  which this workflow already installs for the suite.
 
 ## Verification limits
 

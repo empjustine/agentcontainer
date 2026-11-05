@@ -164,7 +164,7 @@ func newCONNECTChainProxy(t *testing.T) (string, func() []chainHop) {
 		mu.Lock()
 		hops = append(hops, chainHop{target: r.Host, header: r.Header.Clone()})
 		mu.Unlock()
-		up, err := net.DialTimeout("tcp", r.Host, 5*time.Second)
+		up, err := (&net.Dialer{Timeout: 5 * time.Second}).DialContext(r.Context(), "tcp", r.Host)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
 			return
@@ -196,7 +196,7 @@ func newCONNECTChainProxy(t *testing.T) (string, func() []chainHop) {
 // the RFC 1929 client path gets exercised.
 func newSOCKS5ChainProxy(t *testing.T, requireAuth bool) (string, func() []string) {
 	t.Helper()
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	ln, err := new(net.ListenConfig).Listen(context.Background(), "tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -259,7 +259,7 @@ func chainFetch(t *testing.T, httpAddr, targetHost string, upPort uint16) {
 
 func newChainUpstream(t *testing.T) *httptest.Server {
 	t.Helper()
-	return newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("X-Upstream", "yes")
 		_, _ = io.WriteString(w, "hello-chain")
 	}))
@@ -271,7 +271,7 @@ func newChainUpstream(t *testing.T) *httptest.Server {
 func TestRelayChainHTTPProxyCarriesTunnel(t *testing.T) {
 	upstream := newChainUpstream(t)
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	_, backend := modeETestServer(t, upstream)
+	backend := modeETestServer(t, upstream)
 
 	proxyURL, hops := newCONNECTChainProxy(t)
 	clearChainEnv(t)
@@ -297,7 +297,11 @@ func TestRelayChainHTTPProxyCarriesTunnel(t *testing.T) {
 	}
 
 	// /healthz reports the chain beside the tunnel endpoint (host only).
-	resp, err := http.Get("http://" + httpAddr + healthPath)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://"+httpAddr+healthPath, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -318,7 +322,7 @@ func TestRelayChainHTTPProxyCarriesTunnel(t *testing.T) {
 func TestRelayChainSOCKS5ProxyCarriesTunnelModeE(t *testing.T) {
 	upstream := newChainUpstream(t)
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	_, backend := modeETestServer(t, upstream)
+	backend := modeETestServer(t, upstream)
 	gateway := newHostileGateway(t, backend)
 
 	socksAddr, targets := newSOCKS5ChainProxy(t, false)
@@ -348,7 +352,7 @@ func TestRelayChainSOCKS5ProxyCarriesTunnelModeE(t *testing.T) {
 // TestALPNProbeRidesHTTPChain: mode C's leg — the disposable ALPN probe —
 // also dials through the chain, TLS end-to-end above it.
 func TestALPNProbeRidesHTTPChain(t *testing.T) {
-	backend := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	backend := newHTTPServer(t, http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 	front := newTLSFront(t, backend, true)
 
 	proxyURL, hops := newCONNECTChainProxy(t)
@@ -512,7 +516,7 @@ func socks5FixtureHandshake(conn net.Conn, requireAuth bool, record func(string)
 	}
 	target := net.JoinHostPort(host, strconv.Itoa(int(pb[0])<<8|int(pb[1])))
 	record(target)
-	up, err := net.DialTimeout("tcp", target, 5*time.Second)
+	up, err := (&net.Dialer{Timeout: 5 * time.Second}).DialContext(context.Background(), "tcp", target)
 	if err != nil {
 		_, _ = conn.Write([]byte{socksVersion, 0x05, 0, 1, 0, 0, 0, 0, 0, 0})
 		return nil, false

@@ -33,10 +33,14 @@ func waitForHealth(t *testing.T, healthURL string) {
 	t.Helper()
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
-		resp, err := http.Get(healthURL)
+		req, reqErr := http.NewRequestWithContext(context.Background(), http.MethodGet, healthURL, nil)
+		if reqErr != nil {
+			t.Fatalf("healthz request: %v", reqErr)
+		}
+		resp, err := http.DefaultClient.Do(req)
 		if err == nil {
 			_, _ = io.Copy(io.Discard, resp.Body)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			if resp.StatusCode == http.StatusOK {
 				return
 			}
@@ -51,7 +55,11 @@ func waitForHealth(t *testing.T, healthURL string) {
 // response alone (a direct dial would answer just as well).
 func healthSessions(t *testing.T, healthURL string) int64 {
 	t.Helper()
-	resp, err := http.Get(healthURL)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, healthURL, nil)
+	if err != nil {
+		t.Fatalf("healthz request: %v", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("healthz: %v", err)
 	}
@@ -176,7 +184,8 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 			t.Fatalf("greeting reply %v err=%v", greet, err)
 		}
 
-		req := []byte{socksVersion, 1, 0, 3, byte(len("localhost"))}
+		req := make([]byte, 0, 16)
+		req = append(req, socksVersion, 1, 0, 3, byte(len("localhost")))
 		req = append(req, "localhost"...)
 		req = append(req, byte(upPort>>8), byte(upPort))
 		mustWrite(t, conn, string(req))
@@ -340,6 +349,7 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 			"Sec-WebSocket-Key: dGVzdGtleTEyMzQ1Ng==\r\nSec-WebSocket-Version: 13\r\n\r\n")
 		br := bufio.NewReader(conn)
 		resp := readHTTPResponse(t, br)
+		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusSwitchingProtocols {
 			body, _ := io.ReadAll(resp.Body)
 			t.Fatalf("upgrade refused: status=%d body=%q", resp.StatusCode, body)
@@ -357,7 +367,11 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	})
 
 	t.Run("healthz reports the tunnel endpoint", func(t *testing.T) {
-		resp, err := http.Get("http://" + httpAddr + healthPath)
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://"+httpAddr+healthPath, nil)
+		if err != nil {
+			t.Fatalf("healthz request: %v", err)
+		}
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			t.Fatalf("healthz: %v", err)
 		}

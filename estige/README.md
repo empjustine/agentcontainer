@@ -171,7 +171,9 @@ there is no root builder any more; each folder is a copy unit). Targets:
   selectable: it is environment provisioning, not an artifact.
 
 The behavioural suite is `go test ./...` in this folder — no node, curl, or
-python3 on the host (docs/d102).
+python3 on the host (docs/d102). Static analysis is `./lint.sh`'s
+golangci-lint leg against `.golangci.yml` (docs/d137): strict-from-standard,
+with the rejected linters recorded there rather than re-litigated.
 
 Each process is still its own entry point (docs/d095), but now the **service
 unit** is the deployment identity, not a shell script: a Termux runit service

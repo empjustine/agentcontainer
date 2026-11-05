@@ -51,9 +51,9 @@ func TestWSAcceptValidatesUpgrade(t *testing.T) {
 	mutations := map[string]func(*http.Request){
 		"no upgrade header": func(r *http.Request) { r.Header.Del("Upgrade") },
 		"no connection hdr": func(r *http.Request) { r.Header.Del("Connection") },
-		"wrong version":     func(r *http.Request) { r.Header.Set("Sec-Websocket-Version", "8") },
-		"short key":         func(r *http.Request) { r.Header.Set("Sec-Websocket-Key", "c2hvcnQ=") },
-		"garbage key":       func(r *http.Request) { r.Header.Set("Sec-Websocket-Key", "!!!") },
+		"wrong version":     func(r *http.Request) { r.Header.Set("Sec-WebSocket-Version", "8") },
+		"short key":         func(r *http.Request) { r.Header.Set("Sec-WebSocket-Key", "c2hvcnQ=") },
+		"garbage key":       func(r *http.Request) { r.Header.Set("Sec-WebSocket-Key", "!!!") },
 	}
 	for name, mutate := range mutations {
 		r := valid()
@@ -107,9 +107,7 @@ func TestWSBinaryRoundTripBothDirections(t *testing.T) {
 	_, _ = rand.Read(big)
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		op, msg, err := server.readMessage()
 		if err != nil || op != wsOpBinary || len(msg) != len(big) {
 			t.Errorf("server read: op=%d len=%d err=%v", op, len(msg), err)
@@ -118,7 +116,7 @@ func TestWSBinaryRoundTripBothDirections(t *testing.T) {
 		if err := server.writeMessage(wsOpBinary, msg); err != nil {
 			t.Errorf("server echo: %v", err)
 		}
-	}()
+	})
 	if err := client.writeMessage(wsOpBinary, big); err != nil {
 		t.Fatalf("client write: %v", err)
 	}
@@ -363,7 +361,7 @@ func TestWSControlFrames(t *testing.T) {
 // The client handshake end-to-end: real socket, real 101, auth header and
 // path asserted server-side — VPN-R11/R12's transport half.
 func TestWSDialHandshake(t *testing.T) {
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	ln, err := new(net.ListenConfig).Listen(context.Background(), "tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -444,7 +442,7 @@ func TestWSDialHandshake(t *testing.T) {
 // A non-101 answer (the camouflage 404) must NOT look like a tunnel: no
 // partial handshake, no session — dial fails with the real status.
 func TestWSDialRejectsNon101(t *testing.T) {
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	ln, err := new(net.ListenConfig).Listen(context.Background(), "tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}

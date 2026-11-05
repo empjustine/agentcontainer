@@ -81,7 +81,7 @@ agentcontainer/
 ├── provision-termux.sh                  # → termux pkg/infisical provisioning (the former root build.sh)
 ├── log.sh / node-run.sh / npm-tools.sh  # → operator-level shell, never imported by a unit: structured logger · standalone node_run() (pinned node; termux-aware) · on-demand npm devDependency install (d107)
 ├── npm-run.sh                           # → `npm_run <unit> <script>`: runs a unit's package.json script under the pinned node, never shelling out to `npm` (d118)
-├── lint.sh / check-types.sh / test.sh / vm-bench.sh # → the repo-wide QA sweep (d113): biome+knip+jq gates · tsc · every unit's tests (test.sh globs `<unit>/tests/` and runs estige's Go suite explicitly, d123), driven from the root because no unit imports them (the sweep owns no test of its own)
+├── lint.sh / check-types.sh / test.sh / vm-bench.sh # → the repo-wide QA sweep (d113): biome+knip+jq+golangci-lint gates · tsc · every unit's tests (test.sh globs `<unit>/tests/` and runs estige's Go suite explicitly, d123), driven from the root because no unit imports them (the sweep owns no test of its own)
 ├── freshness.sh                         # → the QA sweep's one NETWORK gate (d122): every pi-* `generate --check` + the offline HF manifest audit, so a stale committed cache fails a gate instead of a review; key-gated listings skip loudly, run it via ./environment.sh to include them
 ├── docs/                                # docs tree, typed per docs/spec-graph-standard.md
 │   ├── requirements.md                  # → BRD: what the system must do (id: goal)

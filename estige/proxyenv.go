@@ -50,8 +50,8 @@ func proxyEnvLines(proxyAddr, socksAddr string) []string {
 	// client resolve first and send the refused ATYP. socks5h keeps the name
 	// on the wire, which is also what VPN-R24 asks the client to offer.
 	conventional := []struct{ name, value string }{
-		{"HTTP_PROXY", httpURL},
-		{"HTTPS_PROXY", httpURL},
+		{envHTTPProxy, httpURL},
+		{envHTTPSProxy, httpURL},
 		{"ALL_PROXY", "socks5h://" + socksAddr},
 		{"NO_PROXY", noProxy},
 	}
@@ -74,7 +74,7 @@ func mergeNoProxy(existing string) string {
 	for _, item := range items {
 		seen[item] = true
 	}
-	for _, item := range strings.Split(existing, ",") {
+	for item := range strings.SplitSeq(existing, ",") {
 		item = strings.TrimSpace(item)
 		if item == "" || seen[item] {
 			continue

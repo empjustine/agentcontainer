@@ -111,15 +111,17 @@ type problem struct {
 	Instance string `json:"instance,omitempty"`
 }
 
-func writeProblem(w http.ResponseWriter, r *http.Request, status int, code, title, detail string, err error) {
+func writeProblem(w http.ResponseWriter, r *http.Request, status int, code, title string, err error) {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(problem{
+	// The encode error is logged, not returned: the status line is already on
+	// the wire, so the log is the only honest signal left (NFR-2). The any-typed
+	// Details member is why errchkjson refuses a blank assignment here.
+	if encErr := json.NewEncoder(w).Encode(problem{
 		Type:    code,
 		Title:   title,
 		Status:  status,
-		Detail:  detail,
 		Raw:     rawErrorText(err),
 		Details: errorDetails(err),
 		// The instance is a diagnostic for the operator reading a LOOPBACK
@@ -129,7 +131,9 @@ func writeProblem(w http.ResponseWriter, r *http.Request, status int, code, titl
 		// post-auth today, but worth nothing to the client, which already knows
 		// what it asked for.
 		Instance: instanceOf(r),
-	})
+	}); encErr != nil {
+		log.Printf("[estige] problem response encode: %v", encErr)
+	}
 }
 
 // nodeRole is the process's network position (docs/d088). One process serves
@@ -186,8 +190,7 @@ type dnsErrorDetails struct {
 // vocabulary (code); the dump rides along as diagnostics and never feeds back
 // into the code.
 func errorDetails(err error) any {
-	var dnsErr *net.DNSError
-	if errors.As(err, &dnsErr) {
+	if dnsErr, ok := errors.AsType[*net.DNSError](err); ok {
 		server := dnsErr.Server
 		if server == "" {
 			server = "system resolver"
@@ -299,7 +302,7 @@ func writeFunnel404(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(http.StatusNotFound)
-	fmt.Fprintln(w, "404 page not found")
+	_, _ = fmt.Fprintln(w, "404 page not found")
 	logCombinedRequestURI(r, http.StatusNotFound, len("404 page not found\n"))
 }
 
@@ -382,9 +385,13 @@ func main() {
 			log.Fatalf("[vpn-relay] %v", err)
 		}
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-		defer stop()
-		if err := runRelayNode(ctx, relayCfg); err != nil {
-			log.Fatalf("[vpn-relay] %v", err)
+		runErr := runRelayNode(ctx, relayCfg)
+		// stop() runs explicitly, not from a defer: log.Fatalf below exits
+		// without unwinding defers (gocritic's exitAfterDefer), and a pending
+		// defer is exactly what that rule forbids.
+		stop()
+		if runErr != nil {
+			log.Fatalf("[vpn-relay] %v", runErr)
 		}
 		return
 	}

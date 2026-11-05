@@ -1,0 +1,38 @@
+version: "2"
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - forcetypeassert
+    - goconst
+    - gocritic
+    - modernize
+    - nilnil
+    - noctx
+    - nolintlint
+    - perfsprint
+    - prealloc
+    - revive
+    - unparam
+  settings:
+    goconst:
+      # Test fixtures repeat literals on purpose (the same upstream URL, the
+      # same "yes" header): a constant there would be a second spelling of a
+      # fixture, not a single source of a fact (docs/d090). Production
+      # findings stay live.
+      ignore-tests: true
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+formatters:
+  enable:
+    - gofmt
+    - goimports

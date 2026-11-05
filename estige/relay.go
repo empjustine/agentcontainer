@@ -107,9 +107,7 @@ func relay(s tunnelStream, local net.Conn, keepalive, idle time.Duration) (relay
 
 	// tunnel → local: decode frames, write bytes, honor the peer's
 	// half-close, answer protocol pings, enforce the idle reap.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			_ = s.setReadDeadline(time.Now().Add(idle))
 			msg, err := s.readTunnelMsg()
@@ -169,13 +167,11 @@ func relay(s tunnelStream, local net.Conn, keepalive, idle time.Duration) (relay
 			}
 			bothClosed()
 		}
-	}()
+	})
 
 	// local → tunnel: read at most one frame's worth, send it, repeat
 	// (bounded in-flight bytes — VPN-R18).
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		buf := make([]byte, maxFramePayload)
 		for {
 			n, err := local.Read(buf)
@@ -207,13 +203,11 @@ func relay(s tunnelStream, local net.Conn, keepalive, idle time.Duration) (relay
 				return
 			}
 		}
-	}()
+	})
 
 	// Keepalive pings are protocol frames, not WebSocket-level pings: they
 	// must be visible to OUR peer's idle timer on both ends (VPN-R14).
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		ticker := time.NewTicker(keepalive)
 		defer ticker.Stop()
 		for {
@@ -230,7 +224,7 @@ func relay(s tunnelStream, local net.Conn, keepalive, idle time.Duration) (relay
 				}
 			}
 		}
-	}()
+	})
 
 	wg.Wait()
 	mu.Lock()

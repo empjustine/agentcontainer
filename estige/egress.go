@@ -91,7 +91,7 @@ func newEgressPolicy(cfg egressConfig) (*egressPolicy, error) {
 	}
 	for _, port := range ports {
 		if port == 0 {
-			return nil, fmt.Errorf("egress ports must not include 0")
+			return nil, errors.New("egress ports must not include 0")
 		}
 		p.ports[port] = true
 	}
@@ -156,9 +156,9 @@ func splitConnectTarget(target string) (host string, port uint16, err error) {
 // parseIPLiteral reports whether a CONNECT host is already an address
 // (VPN-R22: rejected — resolution and pinning stay server-side, so there is
 // never a second, unchecked dial path).
-func parseIPLiteral(host string) (netip.Addr, bool) {
-	addr, err := netip.ParseAddr(host)
-	return addr, err == nil
+func parseIPLiteral(host string) bool {
+	_, err := netip.ParseAddr(host)
+	return err == nil
 }
 
 // dialValidated is VPN-R20/36 in one function: resolve the name ONCE with
@@ -186,7 +186,7 @@ func dialValidated(ctx context.Context, p *egressPolicy, host string, port uint1
 		}
 	}
 	if !chosen.IsValid() {
-		return nil, netip.Addr{}, errEgressDenied{host: host}
+		return nil, netip.Addr{}, egressDeniedError{host: host}
 	}
 	conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", net.JoinHostPort(chosen.String(), strconv.Itoa(int(port))))
 	if err != nil {
@@ -195,12 +195,12 @@ func dialValidated(ctx context.Context, p *egressPolicy, host string, port uint1
 	return conn, chosen, nil
 }
 
-// errEgressDenied is the policy verdict (distinct from resolver/transport
+// egressDeniedError is the policy verdict (distinct from resolver/transport
 // failures so the CONNECT_ERR reason and the lifecycle log say "denied",
 // not "failed" — the operator's action differs).
-type errEgressDenied struct{ host string }
+type egressDeniedError struct{ host string }
 
-func (e errEgressDenied) Error() string { return "egress policy denied " + e.host }
+func (e egressDeniedError) Error() string { return "egress policy denied " + e.host }
 
 // resolutionError and dialError keep the three CONNECT_ERR vocabularies
 // (denied / resolve-failed / dial-failed) separable WITHOUT the caller
@@ -229,7 +229,7 @@ func (e dialError) Unwrap() error { return e.err }
 // nowhere else, so a named predicate would be a second spelling of the same
 // question with only this switch, plus tests, as callers.
 func egressFailureReason(err error) string {
-	var denied errEgressDenied
+	var denied egressDeniedError
 	var resolve resolutionError
 	switch {
 	case errors.As(err, &denied):

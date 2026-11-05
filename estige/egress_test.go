@@ -123,12 +123,12 @@ func TestSplitConnectTarget(t *testing.T) {
 // literals do not reach the exit node at all.
 func TestParseIPLiteral(t *testing.T) {
 	for _, s := range []string{"1.2.3.4", "::1", "2001:db8::1"} {
-		if _, ok := parseIPLiteral(s); !ok {
+		if !parseIPLiteral(s) {
 			t.Errorf("%s: expected literal", s)
 		}
 	}
 	for _, s := range []string{"example.com", "localhost", "1.2.3.4.example.com"} {
-		if _, ok := parseIPLiteral(s); ok {
+		if parseIPLiteral(s) {
 			t.Errorf("%s: expected name", s)
 		}
 	}
@@ -138,7 +138,7 @@ func TestParseIPLiteral(t *testing.T) {
 // one. "localhost" resolves to loopback — denied under default policy, and
 // (the important half) an ALLOWED policy dials a validated literal address.
 func TestDialValidated(t *testing.T) {
-	target, err := net.Listen("tcp", "127.0.0.1:0")
+	target, err := new(net.ListenConfig).Listen(context.Background(), "tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}

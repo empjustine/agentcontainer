@@ -41,7 +41,7 @@ func (c *relayNode) handleForward(w http.ResponseWriter, r *http.Request) {
 	tun, err := c.openTunnel(r.Context(), target)
 	if err != nil {
 		status, code, title := httpStatusForTunnelErr(err)
-		writeProblem(w, r, status, code, title, "", err)
+		writeProblem(w, r, status, code, title, err)
 		return
 	}
 	// One request, one stream: ReverseProxy returns only after the
@@ -49,7 +49,7 @@ func (c *relayNode) handleForward(w http.ResponseWriter, r *http.Request) {
 	// live exchange — and it is what stops this tunnel from outliving the
 	// request that pinned it.
 	conn := &tunnelByteConn{stream: tun, target: target}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	rp := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
@@ -61,7 +61,7 @@ func (c *relayNode) handleForward(w http.ResponseWriter, r *http.Request) {
 			// and hop-by-hop headers and the client's forwarding headers
 			// by construction — d103's "one rewrite, done by a real HTTP
 			// message writer".
-			pr.SetURL(&url.URL{Scheme: "http", Host: r.URL.Host})
+			pr.SetURL(&url.URL{Scheme: schemeHTTP, Host: r.URL.Host})
 			// The addressed host reaches the origin as the client
 			// addressed it: Go's server ignores the Host line of an
 			// absolute-form request (r.Host = URL host), so this pins
@@ -87,7 +87,7 @@ func (c *relayNode) handleForward(w http.ResponseWriter, r *http.Request) {
 			// the tunnel's vocabulary — there is no fallback dial
 			// (VPN-R26) and no vocabulary of its own to invent.
 			status, code, title := httpStatusForTunnelErr(err)
-			writeProblem(w, r, status, code, title, "", err)
+			writeProblem(w, r, status, code, title, err)
 		},
 		Transport: &http.Transport{
 			// Zero-value Transport on purpose: Proxy is nil, so the
@@ -95,7 +95,7 @@ func (c *relayNode) handleForward(w http.ResponseWriter, r *http.Request) {
 			// tunneled exchange (the dial IS the tunnel), and keep-alives
 			// stay off because the stream underneath is single-use.
 			DisableKeepAlives: true,
-			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
 				// addr is deliberately dropped: the stream is already
 				// CONNECTed to forwardTarget's address, and dialing or
 				// resolving anything here would take resolution away from
@@ -169,10 +169,7 @@ func (c *tunnelByteConn) Read(p []byte) (int, error) {
 func (c *tunnelByteConn) Write(p []byte) (int, error) {
 	total := 0
 	for len(p) > 0 {
-		n := len(p)
-		if n > maxFramePayload {
-			n = maxFramePayload
-		}
+		n := min(len(p), maxFramePayload)
 		if err := sendFrame(c.stream, frameData, p[:n]); err != nil {
 			return total, err
 		}

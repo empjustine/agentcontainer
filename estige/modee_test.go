@@ -102,7 +102,7 @@ func wireRelayNode(t *testing.T, tunnelURL string) (string, func()) {
 // modeETestServer wires the exit node through enableTunnel with an egress
 // rule that reaches the loopback upstream, served plain (h1.1 — the plane
 // mode E runs on).
-func modeETestServer(t *testing.T, upstream *httptest.Server) (*server, *httptest.Server) {
+func modeETestServer(t *testing.T, upstream *httptest.Server) *httptest.Server {
 	t.Helper()
 	upPort := portOf(t, upstream.Listener.Addr().String())
 	armTestTunnelEnv(t)
@@ -113,16 +113,16 @@ func modeETestServer(t *testing.T, upstream *httptest.Server) (*server, *httptes
 	}); err != nil {
 		t.Fatal(err)
 	}
-	return s, newHTTPServer(t, s)
+	return newHTTPServer(t, s)
 }
 
 func TestModeEEndToEndOverPlainH1(t *testing.T) {
-	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("X-Upstream", "yes")
 		_, _ = io.WriteString(w, "hello-mode-e")
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	_, backend := modeETestServer(t, upstream)
+	backend := modeETestServer(t, upstream)
 
 	// The cleartext end of docs/d090's accepted set (an honest http:// URL,
 	// normalized to ws once) behind the upgrade-stripping gateway: with the
@@ -140,10 +140,8 @@ func TestModeEEndToEndOverPlainH1(t *testing.T) {
 	t.Run("concurrent sessions — one trace-id and registry slot each", func(t *testing.T) {
 		var wg sync.WaitGroup
 		fail := make(chan string, 4)
-		for i := 0; i < 4; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+		for range 4 {
+			wg.Go(func() {
 				conn := rawDial(t, httpAddr)
 				defer conn.Close()
 				mustWrite(t, conn, "CONNECT localhost:"+strconv.Itoa(int(upPort))+" HTTP/1.1\r\nHost: localhost\r\n\r\n"+
@@ -159,7 +157,7 @@ func TestModeEEndToEndOverPlainH1(t *testing.T) {
 				if body, _ := io.ReadAll(resp.Body); string(body) != "hello-mode-e" {
 					fail <- "body=" + string(body)
 				}
-			}()
+			})
 		}
 		wg.Wait()
 		close(fail)
@@ -180,12 +178,12 @@ func TestModeEEndToEndOverPlainH1(t *testing.T) {
 }
 
 func TestModeEDemotionThroughHostileGateway(t *testing.T) {
-	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("X-Upstream", "yes")
 		_, _ = io.WriteString(w, "hello-mode-e")
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	_, backend := modeETestServer(t, upstream)
+	backend := modeETestServer(t, upstream)
 	gateway := newHostileGateway(t, backend)
 
 	// The whole ladder rides (docs/d093): on the cleartext plane C is
@@ -212,12 +210,12 @@ func TestModeEDemotionThroughHostileGateway(t *testing.T) {
 // the session — the whole ladder on the URL's own wire form, with the
 // normalization and every carrier untouched.
 func TestGeneralizedTunnelURLDemotesOverTLS(t *testing.T) {
-	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("X-Upstream", "yes")
 		_, _ = io.WriteString(w, "hello-mode-e")
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	_, backend := modeETestServer(t, upstream)
+	backend := modeETestServer(t, upstream)
 	front := newTLSFront(t, newHostileGateway(t, backend), false)
 
 	httpAddr, stopRelay := wireRelayNode(t, front.URL+tunnelPath)
@@ -240,9 +238,9 @@ func TestModeEWindowsAreAuthenticatedAndCamouflaged(t *testing.T) {
 	logBuf := captureLog(t)
 
 	// trace, span, body as one POST.
-	post := func(t *testing.T, traceparent, bearer string, body []byte) *http.Response {
+	post := func(t *testing.T, traceparent, bearer string, body []byte) int {
 		t.Helper()
-		req, err := http.NewRequest(http.MethodPost, target, bytes.NewReader(body))
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, target, bytes.NewReader(body))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -250,15 +248,15 @@ func TestModeEWindowsAreAuthenticatedAndCamouflaged(t *testing.T) {
 			req.Header.Set("Authorization", "Bearer "+bearer)
 		}
 		if traceparent != "" {
-			req.Header.Set("traceparent", traceparent)
+			req.Header.Set("Traceparent", traceparent)
 		}
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			t.Fatal(err)
 		}
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
-		resp.Body.Close()
-		return resp
+		_ = resp.Body.Close()
+		return resp.StatusCode
 	}
 
 	validTrace := "000000000000000000000000000000aa"
@@ -275,32 +273,32 @@ func TestModeEWindowsAreAuthenticatedAndCamouflaged(t *testing.T) {
 	}
 
 	t.Run("wrong credential on a window is the camouflage 404", func(t *testing.T) {
-		resp := post(t, firstWindow, strings.Repeat("x", 16), hello)
-		if resp.StatusCode != http.StatusNotFound {
-			t.Fatalf("unauthenticated window answered %d, want 404 (VPN-R34)", resp.StatusCode)
+		status := post(t, firstWindow, strings.Repeat("x", 16), hello)
+		if status != http.StatusNotFound {
+			t.Fatalf("unauthenticated window answered %d, want 404 (VPN-R34)", status)
 		}
 	})
 
 	t.Run("malformed traceparent is the same 404", func(t *testing.T) {
-		resp := post(t, "not-a-traceparent", testTunnelToken, hello)
-		if resp.StatusCode != http.StatusNotFound {
-			t.Fatalf("malformed traceparent answered %d, want 404", resp.StatusCode)
+		status := post(t, "not-a-traceparent", testTunnelToken, hello)
+		if status != http.StatusNotFound {
+			t.Fatalf("malformed traceparent answered %d, want 404", status)
 		}
 	})
 
 	t.Run("a continuation without state is the same 404", func(t *testing.T) {
 		// Span > 1 on an unknown trace-id: the registry never minted it,
 		// and the answer must not reveal that minting works (d077 §3).
-		resp := post(t, buildTraceparent("000000000000000000000000000000bb", 7), testTunnelToken, hello)
-		if resp.StatusCode != http.StatusNotFound {
-			t.Fatalf("continuation-without-state answered %d, want 404", resp.StatusCode)
+		status := post(t, buildTraceparent("000000000000000000000000000000bb", 7), testTunnelToken, hello)
+		if status != http.StatusNotFound {
+			t.Fatalf("continuation-without-state answered %d, want 404", status)
 		}
 	})
 
 	t.Run("span 1 opens a session, attributed to its key", func(t *testing.T) {
-		resp := post(t, firstWindow, testTunnelToken, hello)
-		if resp.StatusCode != http.StatusOK {
-			t.Fatalf("first window answered %d, want 200", resp.StatusCode)
+		status := post(t, firstWindow, testTunnelToken, hello)
+		if status != http.StatusOK {
+			t.Fatalf("first window answered %d, want 200", status)
 		}
 		waitForLog(t, logBuf, "tunnel session: authenticated key=default")
 	})
@@ -308,15 +306,15 @@ func TestModeEWindowsAreAuthenticatedAndCamouflaged(t *testing.T) {
 	t.Run("an out-of-order window on a live session is the same 404", func(t *testing.T) {
 		// The session above is live at span 2; span 7 is a desync a
 		// stop-and-wait client can never produce — 404, session untouched.
-		resp := post(t, buildTraceparent(validTrace, 7), testTunnelToken, hello)
-		if resp.StatusCode != http.StatusNotFound {
-			t.Fatalf("out-of-order window answered %d, want 404", resp.StatusCode)
+		status := post(t, buildTraceparent(validTrace, 7), testTunnelToken, hello)
+		if status != http.StatusNotFound {
+			t.Fatalf("out-of-order window answered %d, want 404", status)
 		}
 		// The correct next span still works (the refusal above was a
 		// window, not a session kill): span 2 gets its 200.
-		resp = post(t, buildTraceparent(validTrace, 2), testTunnelToken, hello)
-		if resp.StatusCode != http.StatusOK {
-			t.Fatalf("next in-sequence window answered %d, want 200", resp.StatusCode)
+		status = post(t, buildTraceparent(validTrace, 2), testTunnelToken, hello)
+		if status != http.StatusOK {
+			t.Fatalf("next in-sequence window answered %d, want 200", status)
 		}
 	})
 
@@ -340,8 +338,8 @@ func TestModeEDrainFailureAnswersAnError(t *testing.T) {
 	// maxFramePayload-sized frames cross it on the third one
 	// (inboundWindowCap is exchangeWindowBytes + maxFramePayload, i.e. two
 	// frame payloads). The relay reads nothing here, so the queue fills.
-	var body []byte
-	for i := 0; i < 3; i++ {
+	body := make([]byte, 0, 3*(frameHeaderLen+maxFramePayload))
+	for range 3 {
 		frame, err := encodeFrame(frameData, tunnelStreamV1, make([]byte, maxFramePayload))
 		if err != nil {
 			t.Fatal(err)
@@ -349,12 +347,12 @@ func TestModeEDrainFailureAnswersAnError(t *testing.T) {
 		body = append(body, frame...)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, target, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, target, bytes.NewReader(body))
 	if err != nil {
 		t.Fatal(err)
 	}
 	req.Header.Set("Authorization", "Bearer "+testTunnelToken)
-	req.Header.Set("traceparent", buildTraceparent("000000000000000000000000000000cc", firstWindowSpan))
+	req.Header.Set("Traceparent", buildTraceparent("000000000000000000000000000000cc", firstWindowSpan))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
@@ -442,36 +440,36 @@ func TestModeESessionIsBoundToItsMintingKey(t *testing.T) {
 	target := backend.URL + tunnelPath
 	logBuf := captureLog(t)
 
-	post := func(t *testing.T, traceparent, bearer string) *http.Response {
+	post := func(t *testing.T, traceparent, bearer string) int {
 		t.Helper()
-		req, err := http.NewRequest(http.MethodPost, target, strings.NewReader(""))
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, target, strings.NewReader(""))
 		if err != nil {
 			t.Fatal(err)
 		}
 		req.Header.Set("Authorization", "Bearer "+bearer)
-		req.Header.Set("traceparent", traceparent)
+		req.Header.Set("Traceparent", traceparent)
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			t.Fatal(err)
 		}
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
-		resp.Body.Close()
-		return resp
+		_ = resp.Body.Close()
+		return resp.StatusCode
 	}
 
 	const trace = "000000000000000000000000000000dd"
 	first := buildTraceparent(trace, firstWindowSpan)
 
 	// Key "default" mints the session.
-	if resp := post(t, first, testTunnelToken); resp.StatusCode == http.StatusNotFound {
+	if status := post(t, first, testTunnelToken); status == http.StatusNotFound {
 		t.Fatalf("the minting key was refused its own first window (404)")
 	}
 
 	// Key "second" is a valid operator key, but not this session's. It gets
 	// the camouflage 404 — the answer must not reveal that the trace-id is
 	// live or that another principal holds it.
-	if resp := post(t, buildTraceparent(trace, 2), "second-operator-token-0123456789"); resp.StatusCode != http.StatusNotFound {
-		t.Fatalf("a foreign key's window answered %d, want the camouflage 404", resp.StatusCode)
+	if status := post(t, buildTraceparent(trace, 2), "second-operator-token-0123456789"); status != http.StatusNotFound {
+		t.Fatalf("a foreign key's window answered %d, want the camouflage 404", status)
 	}
 
 	// The authentication failure INTERRUPTED the tunnel. The proof has to use
@@ -479,8 +477,8 @@ func TestModeESessionIsBoundToItsMintingKey(t *testing.T) {
 	// never advanced the sequence, and span 2 is still the in-sequence
 	// continuation. If the session survived, that window works; if the failure
 	// killed it, the trace-id no longer resolves.
-	if resp := post(t, buildTraceparent(trace, 2), testTunnelToken); resp.StatusCode != http.StatusNotFound {
-		t.Fatalf("the session survived an authentication failure (in-sequence window answered %d, want 404)", resp.StatusCode)
+	if status := post(t, buildTraceparent(trace, 2), testTunnelToken); status != http.StatusNotFound {
+		t.Fatalf("the session survived an authentication failure (in-sequence window answered %d, want 404)", status)
 	}
 
 	// Both sides have a trace: the failure is logged on the arriving side.
@@ -501,12 +499,12 @@ func TestModeEDesyncDoesNotKillTheSession(t *testing.T) {
 
 	post := func(t *testing.T, traceparent string) int {
 		t.Helper()
-		req, err := http.NewRequest(http.MethodPost, target, strings.NewReader(""))
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, target, strings.NewReader(""))
 		if err != nil {
 			t.Fatal(err)
 		}
 		req.Header.Set("Authorization", "Bearer "+testTunnelToken)
-		req.Header.Set("traceparent", traceparent)
+		req.Header.Set("Traceparent", traceparent)
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			t.Fatal(err)

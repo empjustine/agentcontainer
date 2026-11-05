@@ -35,6 +35,8 @@ import (
 	"net/netip"
 	"net/url"
 	"os"
+	"slices"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -86,10 +88,10 @@ func relayConfigFromEnv(proxyAddr, socksAddr string) (relayConfig, error) {
 		return cfg, fmt.Errorf("%s: %w", envTunnelURL, err)
 	}
 	switch u.Scheme {
-	case "http", "ws":
-		u.Scheme = "ws"
-	case "https", "wss":
-		u.Scheme = "wss"
+	case schemeHTTP, schemeWS:
+		u.Scheme = schemeWS
+	case schemeHTTPS, schemeWSS:
+		u.Scheme = schemeWSS
 	default:
 		return cfg, fmt.Errorf("%s must be http://, https://, ws:// or wss://, got %q", envTunnelURL, u.Scheme)
 	}
@@ -245,7 +247,7 @@ func (cfg *relayConfig) validate() error {
 	if cfg.tunnelURL == nil {
 		return fmt.Errorf("no tunnel URL configured (%s)", envTunnelURL)
 	}
-	for what, addr := range map[string]string{"http proxy": cfg.proxyAddr, "socks5": cfg.socksAddr} {
+	for what, addr := range map[string]string{"http proxy": cfg.proxyAddr, schemeSOCKS5: cfg.socksAddr} {
 		if err := requireLoopback(addr); err != nil {
 			return fmt.Errorf("%s listener: %w", what, err)
 		}
@@ -310,13 +312,14 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 	if err := cfg.validate(); err != nil {
 		return err
 	}
-	proxyLn, err := net.Listen("tcp", cfg.proxyAddr)
+	var lc net.ListenConfig
+	proxyLn, err := lc.Listen(ctx, "tcp", cfg.proxyAddr)
 	if err != nil {
 		return fmt.Errorf("http proxy listen: %w", err)
 	}
-	socksLn, err := net.Listen("tcp", cfg.socksAddr)
+	socksLn, err := lc.Listen(ctx, "tcp", cfg.socksAddr)
 	if err != nil {
-		proxyLn.Close()
+		_ = proxyLn.Close()
 		return fmt.Errorf("socks5 listen: %w", err)
 	}
 	c := &relayNode{cfg: cfg}
@@ -330,7 +333,7 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 		// Host only — userinfo in a proxy URL is a credential (VPN-R44's
 		// law applied to the chain, docs/d094).
 		log.Printf("[vpn-relay] chain proxy kind=%s host=%s (docs/d094)", cfg.chain.kind, cfg.chain.host())
-		if cfg.tunnelURL.Scheme != "wss" {
+		if cfg.tunnelURL.Scheme != schemeWSS {
 			// Accepted, loudly (docs/d094 §3): ws:// already puts the
 			// bearer in front of every on-path observer, and the chain
 			// proxy is exactly that — a blind tunnel, not a reader.
@@ -344,7 +347,7 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 	}
 	serveErr := make(chan error, 1)
 	go func() { serveErr <- httpSrv.Serve(proxyLn) }()
-	go c.serveSOCKS(socksLn)
+	go c.serveSOCKS(ctx, socksLn)
 
 	select {
 	case <-ctx.Done():
@@ -411,7 +414,7 @@ func (c *relayNode) dialTransport(ctx context.Context) (tunnelStream, error) {
 		attempts = append(attempts, fmt.Sprintf("%s: %v", mode, err))
 	}
 	dial := c.tunnelDial()
-	proto, err := alpnNegotiate(ctx, c.cfg.tunnelURL, []string{"h2", "http/1.1"}, dial)
+	proto, err := alpnNegotiate(ctx, c.cfg.tunnelURL, []string{"h2", protoHTTP11}, dial)
 	if err == nil && proto == "h2" {
 		s, err := c.openPOST(ctx)
 		if err == nil {
@@ -539,7 +542,7 @@ func (c *relayNode) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method == http.MethodConnect:
 		c.handleConnect(w, r)
-	case r.URL.IsAbs() && (r.URL.Scheme == "http" || r.URL.Scheme == "ws"):
+	case r.URL.IsAbs() && (r.URL.Scheme == schemeHTTP || r.URL.Scheme == schemeWS):
 		c.handleForward(w, r)
 	// Health is this surface's own origin-form endpoint; an absolute-form
 	// request is an address, not a question about the relay (d103).
@@ -548,13 +551,13 @@ func (c *relayNode) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		w.Header().Set("Allow", "CONNECT, GET /healthz")
 		writeProblem(w, r, http.StatusMethodNotAllowed, "method-not-allowed",
-			"This loopback port accepts only CONNECT tunnels and "+healthPath, "", errors.New("method not allowed"))
+			"This loopback port accepts only CONNECT tunnels and "+healthPath, errors.New("method not allowed"))
 	}
 }
 
 // handleHealth is VPN-R27: a local, non-secret status surface — tunnel
 // endpoint (host only), session count, last failure. Never the credential.
-func (c *relayNode) handleHealth(w http.ResponseWriter, r *http.Request) {
+func (c *relayNode) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	last, _ := c.lastErr.Load().(string)
 	status := map[string]any{
 		"status":   "ok",
@@ -569,7 +572,9 @@ func (c *relayNode) handleHealth(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
-	_ = json.NewEncoder(w).Encode(status)
+	if encErr := json.NewEncoder(w).Encode(status); encErr != nil {
+		log.Printf("[vpn-relay] health response encode: %v", encErr)
+	}
 }
 
 func (c *relayNode) handleConnect(w http.ResponseWriter, r *http.Request) {
@@ -578,13 +583,13 @@ func (c *relayNode) handleConnect(w http.ResponseWriter, r *http.Request) {
 		// No port means no protocol target (VPN-R21's ports are explicit);
 		// this is the application's mistake, not a tunnel failure.
 		writeProblem(w, r, http.StatusBadRequest, "bad-connect-target",
-			"CONNECT target must be host:port", "", err)
+			"CONNECT target must be host:port", err)
 		return
 	}
 	ws, err := c.openTunnel(r.Context(), target)
 	if err != nil {
 		status, code, title := httpStatusForTunnelErr(err)
-		writeProblem(w, r, status, code, title, "", err)
+		writeProblem(w, r, status, code, title, err)
 		return
 	}
 
@@ -592,16 +597,16 @@ func (c *relayNode) handleConnect(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		_ = ws.Close()
 		writeProblem(w, r, http.StatusInternalServerError, "hijack-failed",
-			"Could not switch protocols on the local connection", "", err)
+			"Could not switch protocols on the local connection", err)
 		return
 	}
 	if _, err := brw.WriteString("HTTP/1.1 200 Connection Established\r\n\r\n"); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		_ = ws.Close()
 		return
 	}
 	if err := brw.Flush(); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		_ = ws.Close()
 		return
 	}
@@ -610,14 +615,14 @@ func (c *relayNode) handleConnect(w http.ResponseWriter, r *http.Request) {
 	// of the tunnel stream and must not be dropped before the relay starts
 	// reading the raw socket.
 	if n := brw.Reader.Buffered(); n > 0 {
-		early, _ := brw.Reader.Peek(n)
+		early, _ := brw.Peek(n)
 		if err := sendFrame(ws, frameData, early); err != nil {
-			conn.Close()
+			_ = conn.Close()
 			_ = ws.Close()
 			return
 		}
 	}
-	relay(ws, conn, tunnelKeepaliveInterval, tunnelIdleTimeout)
+	_, _ = relay(ws, conn, tunnelKeepaliveInterval, tunnelIdleTimeout)
 }
 
 // connectTarget extracts the CONNECT authority (r.Host for HTTP/1.1
@@ -633,8 +638,7 @@ func connectTarget(r *http.Request) string {
 }
 
 func httpStatusForTunnelErr(err error) (status int, code, title string) {
-	var rej *connectRejectedError
-	if errors.As(err, &rej) {
+	if rej, ok := errors.AsType[*connectRejectedError](err); ok {
 		switch {
 		case deniedReason(rej.reason):
 			return http.StatusForbidden, "tunnel-denied",
@@ -655,13 +659,13 @@ func httpStatusForTunnelErr(err error) (status int, code, title string) {
 // SOCKS5 listener (VPN-R23)
 // ---------------------------------------------------------------------------
 
-func (c *relayNode) serveSOCKS(ln net.Listener) {
+func (c *relayNode) serveSOCKS(ctx context.Context, ln net.Listener) {
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			return // listener closed on shutdown
 		}
-		go c.handleSOCKS(conn)
+		go c.handleSOCKS(ctx, conn)
 	}
 }
 
@@ -670,8 +674,8 @@ func (c *relayNode) serveSOCKS(ln net.Listener) {
 // CONNECT command, domain or IP address types. Domain names pass through
 // unresolved; IP literals are refused because the exit node resolves
 // (VPN-R22 — one resolution path, one place the pin happens).
-func (c *relayNode) handleSOCKS(conn net.Conn) {
-	defer conn.Close()
+func (c *relayNode) handleSOCKS(ctx context.Context, conn net.Conn) {
+	defer func() { _ = conn.Close() }()
 	_ = conn.SetDeadline(time.Now().Add(socksHandshakeTimeout))
 
 	var head [2]byte
@@ -731,7 +735,7 @@ func (c *relayNode) handleSOCKS(conn net.Conn) {
 			return
 		}
 		host = string(name)
-		if _, literal := parseIPLiteral(host); literal {
+		if parseIPLiteral(host) {
 			socksReply(conn, 0x08)
 			return
 		}
@@ -743,9 +747,9 @@ func (c *relayNode) handleSOCKS(conn net.Conn) {
 	if _, err := io.ReadFull(conn, portBytes[:]); err != nil {
 		return
 	}
-	target := net.JoinHostPort(host, fmt.Sprintf("%d", binary.BigEndian.Uint16(portBytes[:])))
+	target := net.JoinHostPort(host, strconv.FormatUint(uint64(binary.BigEndian.Uint16(portBytes[:])), 10))
 
-	ws, err := c.openTunnel(context.Background(), target)
+	ws, err := c.openTunnel(ctx, target)
 	if err != nil {
 		socksReply(conn, socksRepForTunnelErr(err))
 		return
@@ -757,7 +761,7 @@ func (c *relayNode) handleSOCKS(conn net.Conn) {
 		return
 	}
 	_ = conn.SetDeadline(time.Time{})
-	relay(ws, conn, tunnelKeepaliveInterval, tunnelIdleTimeout)
+	_, _ = relay(ws, conn, tunnelKeepaliveInterval, tunnelIdleTimeout)
 }
 
 func socksReply(conn net.Conn, rep byte) {
@@ -777,10 +781,5 @@ func socksRepForTunnelErr(err error) byte {
 }
 
 func containsByte(b []byte, want byte) bool {
-	for _, v := range b {
-		if v == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(b, want)
 }

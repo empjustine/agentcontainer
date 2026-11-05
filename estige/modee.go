@@ -33,6 +33,7 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -168,7 +169,7 @@ type windowStream struct {
 	token   string
 	traceID string
 	// parent is the dial context with cancel dropped — see openExchange.
-	parent context.Context
+	parent context.Context //nolint:containedctx // tunnelStream's methods take no context and the session outlives the request
 	client *http.Client
 	tr     *http.Transport
 
@@ -203,10 +204,10 @@ type windowStream struct {
 func (c *relayNode) openExchange(ctx context.Context) (tunnelStream, error) {
 	u := *c.cfg.tunnelURL
 	switch u.Scheme {
-	case "ws":
-		u.Scheme = "http"
-	case "wss":
-		u.Scheme = "https"
+	case schemeWS:
+		u.Scheme = schemeHTTP
+	case schemeWSS:
+		u.Scheme = schemeHTTPS
 	default:
 		return nil, fmt.Errorf("mode E needs a ws:// or wss:// tunnel URL, got %q", c.cfg.tunnelURL.Scheme)
 	}
@@ -221,7 +222,7 @@ func (c *relayNode) openExchange(ctx context.Context) (tunnelStream, error) {
 			// http/1.1 ONLY: mode E is the h1 floor — offering h2 would
 			// silently turn a floor session into mode C's plane. System
 			// roots, no override knob (VPN-R28/R55).
-			NextProtos: []string{"http/1.1"},
+			NextProtos: []string{protoHTTP11},
 		},
 		// The chain rides the DIAL, not Transport.Proxy (docs/d094) — same
 		// shape as mode C's transport.
@@ -349,7 +350,7 @@ func (w *windowStream) readTunnelMsg() ([]byte, error) {
 		w.curHadBody, w.curGotFrame = false, false
 		w.lastPollEmpty = !hadBody && !gotFrame
 		w.em.Unlock()
-		if err != io.EOF {
+		if !errors.Is(err, io.EOF) {
 			return nil, w.readErr(err)
 		}
 	}
@@ -383,7 +384,7 @@ func (w *windowStream) startExchangeLocked() error {
 		return err
 	}
 	req.Header.Set("Authorization", "Bearer "+w.token)
-	req.Header.Set("traceparent", buildTraceparent(w.traceID, w.seq))
+	req.Header.Set("Traceparent", buildTraceparent(w.traceID, w.seq))
 	resp, err := w.client.Do(req)
 	if err != nil {
 		return err
@@ -458,7 +459,7 @@ func (w *windowStream) protocolViolation() { _ = w.Close() }
 // transport names the carrier for the lifecycle log — "post" is the
 // vocabulary's h1-POST value (docs/d077 §4: h2 | wss | post; the relay node
 // CAN tell C from E by its own plane, but the log vocabulary stays stable).
-func (w *windowStream) transport() string { return "post" }
+func (w *windowStream) transport() string { return transportPOST }
 
 // Close tears the carrier down once: the closed channel releases every
 // parked reader/writer, the in-flight response body dies with it, and the
@@ -519,7 +520,7 @@ func newExchangeSessions() *exchangeSessions {
 // non-nil only for the key-mismatch case: a desynced span or an unknown
 // trace-id is a misrouted window, not evidence that someone else holds the
 // carrier.
-func (t *tunnelServer) accept(traceID string, span uint64, keyID string) (session *exchangeStream, compromised *exchangeStream) {
+func (t *tunnelServer) accept(ctx context.Context, traceID string, span uint64, keyID string) (session *exchangeStream, compromised *exchangeStream) {
 	t.sessions.mu.Lock()
 	defer t.sessions.mu.Unlock()
 	if s := t.sessions.byTrace[traceID]; s != nil {
@@ -552,7 +553,7 @@ func (t *tunnelServer) accept(traceID string, span uint64, keyID string) (sessio
 	// it: after auth, before any session work (docs/d078 §5). The id is a
 	// label, so saying it out loud is allowed; the credential never is.
 	log.Printf("[estige] tunnel session: authenticated key=%s", keyID)
-	go t.runSession(s)
+	go t.runSession(ctx, s)
 	return s, nil
 }
 
@@ -637,7 +638,7 @@ func (s *exchangeStream) drain(r *http.Request) error {
 	for {
 		msg, err := readFrameFromStream(r.Body)
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return nil // clean window end
 			}
 			return err
@@ -695,12 +696,12 @@ func (s *exchangeStream) flushWindow(lw *loggingResponseWriter) {
 // request.
 func (t *tunnelServer) serveTunnelExchange(w http.ResponseWriter, r *http.Request, keyID string) {
 	lw := &loggingResponseWriter{ResponseWriter: w}
-	traceID, span, err := parseTraceparent(r.Header.Get("traceparent"))
+	traceID, span, err := parseTraceparent(r.Header.Get("Traceparent"))
 	if err != nil {
 		writeFunnel404(lw, r)
 		return
 	}
-	s, compromised := t.accept(traceID, span, keyID)
+	s, compromised := t.accept(context.WithoutCancel(r.Context()), traceID, span, keyID)
 	if compromised != nil {
 		// Every tunnel session exists only under authentication, and a failed
 		// authentication interrupts the tunnel rather than merely declining
@@ -734,7 +735,7 @@ func (t *tunnelServer) serveTunnelExchange(w http.ResponseWriter, r *http.Reques
 		// disagree with the wire. This is post-auth, so a real problem body
 		// leaks no oracle (VPN-R34 governs the unauthenticated funnel only).
 		writeProblem(lw, r, http.StatusInternalServerError, "tunnel-window-failed",
-			"The tunnel could not read this window", "", err)
+			"The tunnel could not read this window", err)
 		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
 		return
 	}
@@ -808,7 +809,7 @@ func (s *exchangeStream) protocolViolation() { _ = s.Close() }
 // transport names the carrier for the lifecycle log: the exit node saw a
 // plain POST — the edge stripped the plane evidence, and the vocabulary is
 // h2 | wss | post (docs/d077 §4).
-func (s *exchangeStream) transport() string { return "post" }
+func (s *exchangeStream) transport() string { return transportPOST }
 
 // Close releases the session exactly once: parked readers/writers and any
 // in-flight handler see closed, and the registry entry goes with it.

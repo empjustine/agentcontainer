@@ -32,7 +32,7 @@ import (
 // chain proxy when one is configured (docs/d094); the TLS handshake is
 // end-to-end either way.
 func alpnNegotiate(ctx context.Context, u *url.URL, offer []string, dial dialFunc) (string, error) {
-	if u.Scheme != "wss" {
+	if u.Scheme != schemeWSS {
 		return "", nil
 	}
 	addr := u.Host
@@ -48,7 +48,12 @@ func alpnNegotiate(ctx context.Context, u *url.URL, offer []string, dial dialFun
 	if err != nil {
 		return "", err
 	}
-	proto := conn.(*tls.Conn).ConnectionState().NegotiatedProtocol
+	tlsConn, ok := conn.(*tls.Conn)
+	if !ok {
+		_ = conn.Close()
+		return "", fmt.Errorf("ALPN probe: dialTLS returned %T, not *tls.Conn", conn)
+	}
+	proto := tlsConn.ConnectionState().NegotiatedProtocol
 	_ = conn.Close()
 	return proto, nil
 }
@@ -59,10 +64,10 @@ func alpnNegotiate(ctx context.Context, u *url.URL, offer []string, dial dialFun
 // refusal (VPN-R34) and confirms nothing about whether the path exists.
 func (c *relayNode) openPOST(ctx context.Context) (tunnelStream, error) {
 	u := *c.cfg.tunnelURL
-	if u.Scheme != "wss" {
+	if u.Scheme != schemeWSS {
 		return nil, fmt.Errorf("mode C needs a wss:// tunnel URL, got %q", u.Scheme)
 	}
-	u.Scheme = "https"
+	u.Scheme = schemeHTTPS
 
 	tr := &http.Transport{
 		ForceAttemptHTTP2: true,
@@ -73,7 +78,7 @@ func (c *relayNode) openPOST(ctx context.Context) (tunnelStream, error) {
 			// transport can still parse a response if the edge downgrades.
 			// System roots only — this module has no override knob
 			// (VPN-R28/R55).
-			NextProtos: []string{"h2", "http/1.1"},
+			NextProtos: []string{"h2", protoHTTP11},
 		},
 		// The chain rides the DIAL, not Transport.Proxy (docs/d094): a
 		// blind CONNECT/SOCKS tunnel to the edge, TLS end-to-end above it.

@@ -255,8 +255,9 @@ are working on.
   register only while outbound cloud networking is reachable, its native target
   always.
 - The repo-wide sweep stays at the root and is the only cross-unit view:
-  `./lint.sh` (biome + knip + jq + the capability-URL and retired-root-lib
-  patterns), `./check-types.sh` (tsc over every unit's JS), `./test.sh` (runs
+  `./lint.sh` (biome + knip + jq + golangci-lint + the capability-URL and
+  retired-root-lib patterns; the Go rule set is `estige/.golangci.yml`,
+  docs/d137), `./check-types.sh` (tsc over every unit's JS), `./test.sh` (runs
   every `<unit>/tests/` plus estige's in-package Go suite, and owns none of
   them), `./vm-bench.sh` (docs/vm-build-bench.md), and `./freshness.sh`
   (docs/d122) — the one sweep that needs the network, because a stale committed

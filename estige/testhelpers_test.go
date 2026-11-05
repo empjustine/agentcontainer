@@ -48,7 +48,7 @@ import (
 var (
 	testTLSOnce     sync.Once
 	testTLSCert     tls.Certificate
-	testTLSErr      error
+	errTestTLS      error
 	testRootPEMPath string
 )
 
@@ -56,7 +56,7 @@ func initSuiteTLSRoot() error {
 	testTLSOnce.Do(func() {
 		key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		if err != nil {
-			testTLSErr = err
+			errTestTLS = err
 			return
 		}
 		tmpl := &x509.Certificate{
@@ -73,20 +73,20 @@ func initSuiteTLSRoot() error {
 		}
 		der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
 		if err != nil {
-			testTLSErr = err
+			errTestTLS = err
 			return
 		}
 		testTLSCert = tls.Certificate{Certificate: [][]byte{der}, PrivateKey: key}
 		dir, err := os.MkdirTemp("", "estige-test-root")
 		if err != nil {
-			testTLSErr = err
+			errTestTLS = err
 			return
 		}
 		testRootPEMPath = filepath.Join(dir, "root.pem")
 		pemBytes := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
-		testTLSErr = os.WriteFile(testRootPEMPath, pemBytes, 0o644)
+		errTestTLS = os.WriteFile(testRootPEMPath, pemBytes, 0o644)
 	})
-	return testTLSErr
+	return errTestTLS
 }
 
 // TestMain installs the suite TLS root before any test runs — SSL_CERT_FILE
@@ -208,7 +208,7 @@ func upgradeEchoHandler(w http.ResponseWriter, r *http.Request) {
 	// (with the VPN-R13 CLF line) can complete. A fixture that kept
 	// echoing would hold that relay open forever.
 	buf := make([]byte, 4096)
-	n, err := brw.Reader.Read(buf)
+	n, err := brw.Read(buf)
 	if err == nil && n > 0 {
 		_, _ = conn.Write(buf[:n])
 	}
@@ -242,7 +242,7 @@ func dialTunnelForTest(t *testing.T, u *url.URL, token string) (*wsConn, error) 
 // addresses directly; the release-then-bind window is a known test race,
 // kept because production ports are fixed and collision-free.
 func reserveLoopbackAddr() string {
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	ln, err := new(net.ListenConfig).Listen(context.Background(), "tcp", "127.0.0.1:0")
 	if err != nil {
 		return ""
 	}
@@ -253,7 +253,7 @@ func reserveLoopbackAddr() string {
 
 func rawDial(t *testing.T, addr string) net.Conn {
 	t.Helper()
-	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
+	conn, err := (&net.Dialer{Timeout: 5 * time.Second}).DialContext(context.Background(), "tcp", addr)
 	if err != nil {
 		t.Fatalf("dial %s: %v", addr, err)
 	}

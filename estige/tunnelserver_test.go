@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -210,9 +211,9 @@ func TestTunnelHandshakeAuth(t *testing.T) {
 // openRawTunnel completes handshake + HELLO and leaves CONNECT as the next
 // frame — the low-level driver for server-side protocol tests, bypassing
 // the relay node's convenience layers on purpose.
-func openRawTunnel(t *testing.T, tunnelURL *url.URL, token string) *wsConn {
+func openRawTunnel(t *testing.T, tunnelURL *url.URL) *wsConn {
 	t.Helper()
-	ws, err := dialTunnelForTest(t, tunnelURL, token)
+	ws, err := dialTunnelForTest(t, tunnelURL, testTunnelToken)
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
@@ -266,7 +267,7 @@ func TestServerRefusesIPLiteralTargets(t *testing.T) {
 	for _, target := range []string{"1.2.3.4:443", "[::1]:443"} {
 		// One CONNECT per session: v1 is unmuxed (VPN-R17), so every
 		// refusal opens a fresh tunnel — exactly as the relay node would.
-		ws := openRawTunnel(t, mustTunnelURL(t, proxy), testTunnelToken)
+		ws := openRawTunnel(t, mustTunnelURL(t, proxy))
 		if reason := connectErrReason(t, ws, target); reason != errReasonTargetIP {
 			t.Fatalf("%s: reason = %q, want %q", target, reason, errReasonTargetIP)
 		}
@@ -282,7 +283,7 @@ func TestServerRefusesNonPermittedPorts(t *testing.T) {
 		"example.com:22": errReasonPortDenied,
 		"example.com:":   errReasonInvalid,
 	} {
-		ws := openRawTunnel(t, mustTunnelURL(t, proxy), testTunnelToken)
+		ws := openRawTunnel(t, mustTunnelURL(t, proxy))
 		if reason := connectErrReason(t, ws, target); reason != want {
 			t.Fatalf("%s: reason = %q, want %q", target, reason, want)
 		}
@@ -294,7 +295,7 @@ func TestServerRefusesNonPermittedPorts(t *testing.T) {
 func TestServerRefusesLoopbackResolvingTargetsByDefault(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{Ports: []uint16{65000}})
 	proxy := newHTTPServer(t, s)
-	ws := openRawTunnel(t, mustTunnelURL(t, proxy), testTunnelToken)
+	ws := openRawTunnel(t, mustTunnelURL(t, proxy))
 	if reason := connectErrReason(t, ws, "localhost:65000"); reason != errReasonDenied {
 		t.Fatalf("reason = %q, want %q", reason, errReasonDenied)
 	}
@@ -327,7 +328,7 @@ func TestServerRequiresHelloFirst(t *testing.T) {
 // who/where/how-much/outcome and the prefix's digest — never the credential,
 // never the prefix itself.
 func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
-	target, err := net.Listen("tcp", "127.0.0.1:0")
+	target, err := new(net.ListenConfig).Listen(context.Background(), "tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -353,7 +354,7 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 		Ports:      []uint16{targetPort},
 	})
 	proxy := newHTTPServer(t, s)
-	ws := openRawTunnel(t, mustTunnelURL(t, proxy), testTunnelToken)
+	ws := openRawTunnel(t, mustTunnelURL(t, proxy))
 
 	targetAddr := "localhost:" + strconv.Itoa(int(targetPort))
 	if err := sendFrame(ws, frameConnect, []byte(targetAddr)); err != nil {

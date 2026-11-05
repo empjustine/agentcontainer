@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -14,10 +15,10 @@ import (
 )
 
 // decodeProblem runs writeProblem and returns the body it wrote.
-func decodeProblem(t *testing.T, r *http.Request, status int, err error) (map[string]any, *httptest.ResponseRecorder) {
+func decodeProblem(t *testing.T, r *http.Request, err error) (map[string]any, *httptest.ResponseRecorder) {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	writeProblem(rec, r, status, "dnserror", "Resolution failed", "", err)
+	writeProblem(rec, r, http.StatusBadGateway, "dnserror", "Resolution failed", err)
 	var body map[string]any
 	if decodeErr := json.Unmarshal(rec.Body.Bytes(), &body); decodeErr != nil {
 		t.Fatalf("problem body is not JSON: %v (%q)", decodeErr, rec.Body.String())
@@ -31,7 +32,7 @@ func decodeProblem(t *testing.T, r *http.Request, status int, err error) (map[st
 // emit an arbitrarily large body.
 func TestWriteProblemBoundsRawError(t *testing.T) {
 	err := errors.New(strings.Repeat("x", maxRawError*4))
-	body, _ := decodeProblem(t, httptest.NewRequest(http.MethodGet, "/vpn", nil), http.StatusBadGateway, err)
+	body, _ := decodeProblem(t, httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/vpn", nil), err)
 
 	raw, _ := body["raw"].(string)
 	if len(raw) > maxRawError+len("… (truncated)") {
@@ -44,7 +45,7 @@ func TestWriteProblemBoundsRawError(t *testing.T) {
 
 // A short error passes through verbatim: the bound must not degrade diagnostics.
 func TestWriteProblemKeepsShortRawError(t *testing.T) {
-	body, _ := decodeProblem(t, httptest.NewRequest(http.MethodGet, "/vpn", nil), http.StatusBadGateway, errors.New("dial tcp: connection refused"))
+	body, _ := decodeProblem(t, httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/vpn", nil), errors.New("dial tcp: connection refused"))
 	if got := body["raw"]; got != "dial tcp: connection refused" {
 		t.Fatalf("raw = %v, want the verbatim error", got)
 	}
@@ -57,16 +58,16 @@ func TestWriteProblemInstanceIsRoleScoped(t *testing.T) {
 	restore := nodeRole
 	defer func() { nodeRole = restore }()
 
-	r := httptest.NewRequest(http.MethodGet, "/vpn/whatever?injected=1", nil)
+	r := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/vpn/whatever?injected=1", nil)
 
 	nodeRole = roleExit
-	body, _ := decodeProblem(t, r, http.StatusBadGateway, errors.New("boom"))
+	body, _ := decodeProblem(t, r, errors.New("boom"))
 	if got, ok := body["instance"]; ok {
 		t.Fatalf("exit node echoed instance %q; it must be omitted", got)
 	}
 
 	nodeRole = roleRelay
-	body, _ = decodeProblem(t, r, http.StatusBadGateway, errors.New("boom"))
+	body, _ = decodeProblem(t, r, errors.New("boom"))
 	if got := body["instance"]; got != "/vpn/whatever?injected=1" {
 		t.Fatalf("relay instance = %v, want the request URI (its own loopback diagnostic)", got)
 	}
@@ -75,7 +76,7 @@ func TestWriteProblemInstanceIsRoleScoped(t *testing.T) {
 // The problem body keeps its RFC 9457 content type and no-store caching, so a
 // bounded body is still a well-formed problem response.
 func TestWriteProblemKeepsProblemContract(t *testing.T) {
-	_, rec := decodeProblem(t, httptest.NewRequest(http.MethodGet, "/vpn", nil), http.StatusBadGateway, errors.New("boom"))
+	_, rec := decodeProblem(t, httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/vpn", nil), errors.New("boom"))
 	if got := rec.Header().Get("Content-Type"); got != "application/problem+json" {
 		t.Fatalf("Content-Type = %q", got)
 	}

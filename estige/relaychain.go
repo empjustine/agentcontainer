@@ -41,7 +41,7 @@ import (
 // suite's TestMain) cannot drift from what the parser actually reads.
 var chainEnvVars = []string{
 	"SOCKS_SERVER", "socks_server", "SOCKS_VERSION", "socks_version",
-	"HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy",
+	envHTTPProxy, "http_proxy", envHTTPSProxy, "https_proxy",
 	"ALL_PROXY", "all_proxy",
 }
 
@@ -92,16 +92,19 @@ func relayChainFromEnv(tunnelURL *url.URL) (*chainProxy, error) {
 		}
 		return parseChainProxy(raw)
 	}
-	key := "HTTP_PROXY"
-	if tunnelURL.Scheme == "wss" || tunnelURL.Scheme == "https" {
-		key = "HTTPS_PROXY"
+	key := envHTTPProxy
+	if tunnelURL.Scheme == schemeWSS || tunnelURL.Scheme == schemeHTTPS {
+		key = envHTTPSProxy
 	}
 	raw := envAny(key, strings.ToLower(key))
 	if raw == "" {
 		raw = envAny("ALL_PROXY", "all_proxy")
 	}
 	if raw == "" {
-		return nil, nil
+		// nil,nil is the "no chain configured" contract: callers branch on
+		// the nil chain, not the error, so a sentinel would be a second
+		// spelling of "absent" nobody checks (VPN-R26's direct path).
+		return nil, nil //nolint:nilnil
 	}
 	if !strings.Contains(raw, "://") {
 		// curl's convention: a scheme-less proxy value means http://.
@@ -130,13 +133,13 @@ func parseChainProxy(raw string) (*chainProxy, error) {
 	}
 	var kind string
 	switch u.Scheme {
-	case "http":
-		kind = "http"
-	case "socks5", "socks5h":
+	case schemeHTTP:
+		kind = schemeHTTP
+	case schemeSOCKS5, "socks5h":
 		// socks5h is not a distinct behavior here: the chain NEVER
 		// resolves locally — the domain crosses to the proxy verbatim —
 		// which is exactly what the h suffix promises.
-		kind = "socks5"
+		kind = schemeSOCKS5
 	default:
 		return nil, fmt.Errorf("proxy %q: scheme must be http:// or socks5:// (docs/d094)", raw)
 	}
@@ -145,7 +148,7 @@ func parseChainProxy(raw string) (*chainProxy, error) {
 	}
 	port := u.Port()
 	if port == "" {
-		if kind == "socks5" {
+		if kind == schemeSOCKS5 {
 			port = "1080"
 		} else {
 			port = "80"
@@ -178,9 +181,9 @@ func (p *chainProxy) dial(ctx context.Context, network, addr string) (net.Conn, 
 	_ = raw.SetDeadline(deadline)
 	var c net.Conn
 	switch p.kind {
-	case "http":
+	case schemeHTTP:
 		c, err = p.httpConnect(raw, addr)
-	case "socks5":
+	case schemeSOCKS5:
 		c, err = p.socks5Connect(raw, addr)
 	default:
 		// Unreachable past parseChainProxy's switch; kept so a future
@@ -188,7 +191,7 @@ func (p *chainProxy) dial(ctx context.Context, network, addr string) (net.Conn, 
 		err = fmt.Errorf("chain proxy %s: unknown kind %q", p.addr, p.kind)
 	}
 	if err != nil {
-		raw.Close()
+		_ = raw.Close()
 		return nil, err
 	}
 	// The session owns timing from here (VPN-R14's rule at the chain leg).
@@ -269,7 +272,8 @@ func (p *chainProxy) socks5Connect(raw net.Conn, addr string) (net.Conn, error) 
 		if len(p.user) > 255 || len(p.pass) > 255 {
 			return nil, fmt.Errorf("chain proxy %s: socks5 credentials longer than 255 bytes", p.addr)
 		}
-		msg := []byte{1, byte(len(p.user))}
+		msg := make([]byte, 0, 2+len(p.user)+1+len(p.pass))
+		msg = append(msg, 1, byte(len(p.user)))
 		msg = append(msg, p.user...)
 		msg = append(msg, byte(len(p.pass)))
 		msg = append(msg, p.pass...)
@@ -356,7 +360,7 @@ func dialTLS(ctx context.Context, dial dialFunc, addr, serverName string, nextPr
 		NextProtos: nextProtos,
 	})
 	if err := td.HandshakeContext(ctx); err != nil {
-		raw.Close()
+		_ = raw.Close()
 		return nil, err
 	}
 	return td, nil
