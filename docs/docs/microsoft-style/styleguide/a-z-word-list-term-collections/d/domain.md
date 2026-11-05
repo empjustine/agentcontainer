@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # domain
 
-*Domain*
+_Domain_
 has different meanings in database design, Windows, and
 internet addresses. Define the term on the first use, if necessary, to
-make sure the meaning is clear. 
+make sure the meaning is clear.

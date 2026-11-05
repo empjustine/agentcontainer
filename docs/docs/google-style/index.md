@@ -5,10 +5,10 @@
 
 ## Page Summary
 
-* This style guide helps you write clear and consistent technical documentation for software developers and other technical practitioners.
-* Refer to project-specific guidelines first, then this guide, and finally third-party references like Merriam-Webster or the Chicago Manual of Style for questions.
-* While this guide offers recommendations, prioritize clarity and consistency for your specific domain and readers, even if it means deviating from the guidelines.
-* For Android or Google Cloud specific guidelines, look for the respective platform logos within the documentation.
+- This style guide helps you write clear and consistent technical documentation for software developers and other technical practitioners.
+- Refer to project-specific guidelines first, then this guide, and finally third-party references like Merriam-Webster or the Chicago Manual of Style for questions.
+- While this guide offers recommendations, prioritize clarity and consistency for your specific domain and readers, even if it means deviating from the guidelines.
+- For Android or Google Cloud specific guidelines, look for the respective platform logos within the documentation.
 
 This style guide provides editorial guidelines for writing clear and consistent technical
 documentation for an audience of software developers and other technical practitioners.
@@ -34,11 +34,11 @@ Use the following references, including this guide, in this order:
 3. **Third-party references**. If the preceding references don't provide explicit guidance,
    then see these third-party references, depending on the nature of your question:
 
-   | Type of question | Third-party reference |
-   | --- | --- |
-   | Spelling | Follow [Merriam-Webster.com](https://www.merriam-webster.com/). See also [Spelling](/style/spelling). |
-   | Nontechnical style | Follow [*The Chicago Manual of Style*, 17th edition](https://www.chicagomanualofstyle.org/home.html) (subscription required). |
-   | Technical style | See the [Microsoft Writing Style Guide](https://docs.microsoft.com/style-guide/welcome/). But consider whether Microsoft's guidance applies; some of it might apply only to Microsoft products and interfaces. |
+   | Type of question   | Third-party reference                                                                                                                                                                                          |
+   | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Spelling           | Follow [Merriam-Webster.com](https://www.merriam-webster.com/). See also [Spelling](/style/spelling).                                                                                                          |
+   | Nontechnical style | Follow [_The Chicago Manual of Style_, 17th edition](https://www.chicagomanualofstyle.org/home.html) (subscription required).                                                                                  |
+   | Technical style    | See the [Microsoft Writing Style Guide](https://docs.microsoft.com/style-guide/welcome/). But consider whether Microsoft's guidance applies; some of it might apply only to Microsoft products and interfaces. |
 
 At multiple stages of this hierarchy, it can be helpful to look to established usage. For
 example, search your organization's documentation, or check a broad language corpus such
@@ -51,22 +51,22 @@ part of Google developer documentation style.
 
 Here are some other style guides from the tech community:
 
-* [Apple Style Guide](https://help.apple.com/applestyleguide/)
-* [Red Hat supplementary style guide for product documentation](https://redhat-documentation.github.io/supplementary-style-guide/)
+- [Apple Style Guide](https://help.apple.com/applestyleguide/)
+- [Red Hat supplementary style guide for product documentation](https://redhat-documentation.github.io/supplementary-style-guide/)
 
 ## Annotations used in this guide
 
 For guidance that applies only to Android or Google Cloud documentation, look for the following
 logos:
 
-* precedes terms and guidelines specific to Android
+- precedes terms and guidelines specific to Android
   documentation.
-* precedes terms and guidelines specific to Google Cloud
+- precedes terms and guidelines specific to Google Cloud
   documentation.
 
 ## Break the rules
 
-> *Break any of these rules sooner than say anything outright barbarous.*
+> _Break any of these rules sooner than say anything outright barbarous._
 >
 > —George Orwell,
 > "[Politics and the English Language](https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/politics-and-the-english-language/)"

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # leading
 
-Use instead of *preceding* or *beginning* in phrases such as *leading slashes* or *leading* *spaces,* which might occur at the beginning of strings, parameters, or other values. *Leading* in this context is the opposite of *trailing.*
+Use instead of _preceding_ or _beginning_ in phrases such as _leading slashes_ or _leading_ _spaces,_ which might occur at the beginning of strings, parameters, or other values. _Leading_ in this context is the opposite of _trailing._

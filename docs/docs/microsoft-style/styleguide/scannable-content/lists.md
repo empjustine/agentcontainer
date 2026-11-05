@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # Lists
 
-Lists are a great way to present complex text in a way that's easy to scan. 
+Lists are a great way to present complex text in a way that's easy to scan.
 
 Lists
 work best when they have two to seven items. Each item should be fairly
@@ -24,9 +24,9 @@ Make items in a list parallel. For example, each item should be a noun or a phra
 Use a bulleted list for things that have something in common but don’t need to appear in a particular order.<br />
 **Example**<br />The database owner can:
 
-  - Create and delete a database.
-  - Add, delete, or modify a document.
-  - Add, delete, or modify any information in the database. 
+- Create and delete a database.
+- Add, delete, or modify a document.
+- Add, delete, or modify any information in the database.
 
 ## Numbered lists
 
@@ -35,7 +35,7 @@ Use a numbered list for sequential items (like a procedure) or prioritized items
 
 1.  On the **File** menu, select **Open database**.
 2.  In **Username**, enter your name.
-3.  In **Password**, enter your password, and then select **OK**. 
+3.  In **Password**, enter your password, and then select **OK**.
 
 ## Introductory text
 
@@ -52,7 +52,7 @@ your content will be localized, avoid lists where an introductory
 fragment is completed by the list items below it. This can be difficult
 to translate.
 
-## Capitalization 
+## Capitalization
 
 Begin
 each item in a list with a capital letter unless there's a reason not
@@ -64,8 +64,8 @@ all items begin with lowercase words.
 
 In bulleted and numbered lists, end each list item with a period if:
 
-  - Any item forms a complete sentence when combined with the list introduction that precedes the colon. <br />    **Exception** Don’t use periods if all items have three or fewer words or if the items are UI labels, headings, subheadings, or strings.  
-  
-  - Any item *by itself* is a complete sentence.
+- Any item forms a complete sentence when combined with the list introduction that precedes the colon. <br /> **Exception** Don’t use periods if all items have three or fewer words or if the items are UI labels, headings, subheadings, or strings.
 
-Don’t use semicolons, commas, or conjunctions (like *and* or *or*) at the end of list items.
+- Any item _by itself_ is a complete sentence.
+
+Don’t use semicolons, commas, or conjunctions (like _and_ or _or_) at the end of list items.

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # working memory
 
-Don't use. Use *available memory* instead.
+Don't use. Use _available memory_ instead.

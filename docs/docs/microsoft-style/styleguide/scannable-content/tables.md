@@ -9,18 +9,17 @@ ms.prod: non-product-specific
 
 # Tables
 
-Tables make complex information easier to understand by presenting it in a clear structure. 
-In a table, data is arranged into two or more rows (plus a header row) and two or more columns. Don't use a table 
-just to present a list of items that are similar. Use a list instead. 
+Tables make complex information easier to understand by presenting it in a clear structure.
+In a table, data is arranged into two or more rows (plus a header row) and two or more columns. Don't use a table
+just to present a list of items that are similar. Use a list instead.
 
-|        **Tables are sometimes useful for**         |                     **Example**                      |
+| **Tables are sometimes useful for**               | **Example**                                                    |
 | ------------------------------------------------- | -------------------------------------------------------------- |
 | Data or values                                    | Text formats and their associated HTML codes                   |
 | Simple instructions                               | User interface actions and their associated keyboard shortcuts |
 | Categories of things with examples                | SKUs and the products they include                             |
 | Collections of things with two or more attributes | Event dates with times and locations                           |
 
-  
 ## Content
 
 Make sure the purpose of the table is clear. If necessary, include a table title or brief introduction.
@@ -34,7 +33,6 @@ Make entries in a table parallel. For example, make all the items within a colum
 
 **Example**
 
-
 | Function                | Description                                                                                                        |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | AddUsersToEncryptedFile | Adds user keys to the specified encrypted file                                                                     |
@@ -42,7 +40,7 @@ Make entries in a table parallel. For example, make all the items within a colum
 | CancelloEx              | Marks any outstanding I/O operations for the specified file handle                                                 |
 | GetTempFileName         | Creates a name for a temporary file                                                                                |
 
-Don’t leave a cell blank or use an em dash to indicate there’s no entry for that cell. Instead, use *Not applicable* or *None.*
+Don’t leave a cell blank or use an em dash to indicate there’s no entry for that cell. Instead, use _Not applicable_ or _None._
 
 Keep
 responsive design in mind. Limit the number of columns and keep the
@@ -60,14 +58,14 @@ in the table. For example, make it larger, bolder, or a different color.
 Don’t
 organize a table so that the column heading forms a complete sentence
 when combined with the cell contents. This can make the table difficult
-to localize. 
+to localize.
 
 In
 long tables, make sure the header row is always visible. For example,
 on the web, use a fixed header row that stays in place during scrolling.
 Or, in a downloadable document, occasionally repeat the header row.
 Some authoring tools provide a way to do this automatically. In
-Microsoft Word, select the header row. On the **Layout** tab under **Table Tools**, select **Repeat Header Rows**. 
+Microsoft Word, select the header row. On the **Layout** tab under **Table Tools**, select **Repeat Header Rows**.
 
 ## Capitalization
 
@@ -75,7 +73,7 @@ Use
 sentence-style capitalization for the table title and each column
 heading. Use sentence-style capitalization for the text in cells unless
 there’s a reason not to (for example, keywords that must be
-lowercase). 
+lowercase).
 
 ## Punctuation
 

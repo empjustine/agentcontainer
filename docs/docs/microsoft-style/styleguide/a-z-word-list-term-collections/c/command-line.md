@@ -12,14 +12,14 @@ ms.prod: non-product-specific
 Two words as a noun. Hyphenate as an adjective.
 
 **Examples**  
-command-line parameter   
+command-line parameter  
 command-line tool
 
-Customers enter commands *at* a *command prompt,* not *on* a *command line.*
+Customers enter commands _at_ a _command prompt,_ not _on_ a _command line._
 
-It's OK to use *on the command line* in the context of building apps using command-line tools in Visual Studio.
+It's OK to use _on the command line_ in the context of building apps using command-line tools in Visual Studio.
 
-Use *command-line program* in content for a general audience. Use *console application* only in content for a technical audience. 
+Use _command-line program_ in content for a general audience. Use _console application_ only in content for a technical audience.
 
 **See also**  
 [Formatting developer text elements](~/developer-content/formatting-developer-text-elements.md)  

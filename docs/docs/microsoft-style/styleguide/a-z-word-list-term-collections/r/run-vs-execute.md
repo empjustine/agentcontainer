@@ -9,10 +9,10 @@ ms.prod: non-product-specific
 
 # run vs. execute
 
-Avoid *execute* except to follow the UI. Use *run* instead. If the UI includes *execute,* the resulting action is still *run*. 
+Avoid _execute_ except to follow the UI. Use _run_ instead. If the UI includes _execute,_ the resulting action is still _run_.
 
-Always use *run* in the context of operating systems, macros, and queries.
+Always use _run_ in the context of operating systems, macros, and queries.
 
 **Examples**  
 To run the program, select **Execute**.  
-Commands are run in the order in which they're listed in the file. 
+Commands are run in the order in which they're listed in the file.

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # as well as
 
-Don't use as a synonym for *and.*
+Don't use as a synonym for _and._

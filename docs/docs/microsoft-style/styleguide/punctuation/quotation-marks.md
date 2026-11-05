@@ -20,12 +20,12 @@ headings, follow the style sheet.
 
 In online content, use straight quotation marks.
 
-Refer to *quotation marks, opening quotation marks,* and *closing quotation marks.* Don't call them *quote marks, quotes, open* or *close quotation marks,* or *beginning* or *ending quotation marks.*
+Refer to _quotation marks, opening quotation marks,_ and _closing quotation marks._ Don't call them _quote marks, quotes, open_ or _close quotation marks,_ or _beginning_ or _ending quotation marks._
 
 Place closing quotation marks:
 
-  - Outside commas and periods.
-  - Inside other punctuation.
+- Outside commas and periods.
+- Inside other punctuation.
 
 **Exception** If punctuation is part of the quoted material, place it inside the quotation marks.
 

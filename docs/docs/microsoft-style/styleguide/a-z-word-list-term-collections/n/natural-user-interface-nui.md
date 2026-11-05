@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # natural user interface, NUI
 
-Don't use *natural user interface* in content for a general audience. Don't abbreviate as *NUI.*
+Don't use _natural user interface_ in content for a general audience. Don't abbreviate as _NUI._

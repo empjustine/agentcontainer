@@ -9,9 +9,9 @@ ms.prod: non-product-specific
 
 # recommend
 
-It's OK to use *we recommend* to introduce a Microsoft recommendation. Don't use *Microsoft recommends* or *it is recommended*.
+It's OK to use _we recommend_ to introduce a Microsoft recommendation. Don't use _Microsoft recommends_ or _it is recommended_.
 
-Don't use *recommend* when something is required.
+Don't use _recommend_ when something is required.
 
 **Examples**  
 Windows 10 requires 16 GB of hard drive space for 32-bit OS and 20 GB for 64-bit OS.<br />

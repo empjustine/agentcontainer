@@ -5,35 +5,35 @@
 
 ## Page Summary
 
-* Code samples should follow indentation guidelines, typically using spaces instead of tabs and two spaces per indentation level.
-* Wrap code lines at 80 characters for better readability, especially in narrow browser windows or when printed.
-* Use `<pre>` element in HTML or four-space indentation in Markdown to format code blocks as preformatted text and indicate omissions with comments specific to the code's language.
-* Introduce code samples with a sentence or paragraph, ending with a colon if directly preceding the sample, or a period if there's intervening material.
-* Refer to the relevant code style guides, such as Google's or project-specific ones, for language-specific formatting conventions.
+- Code samples should follow indentation guidelines, typically using spaces instead of tabs and two spaces per indentation level.
+- Wrap code lines at 80 characters for better readability, especially in narrow browser windows or when printed.
+- Use `<pre>` element in HTML or four-space indentation in Markdown to format code blocks as preformatted text and indicate omissions with comments specific to the code's language.
+- Introduce code samples with a sentence or paragraph, ending with a colon if directly preceding the sample, or a period if there's intervening material.
+- Refer to the relevant code style guides, such as Google's or project-specific ones, for language-specific formatting conventions.
 
 This page explains how to format code samples. For more information about formatting and
 explaining code that appears in text, command-line syntax, and placeholders, see the following
 resources:
 
-* [Code in text](/style/code-in-text)
-* [Documenting command-line syntax](/style/code-syntax)
-* [Formatting placeholders](/style/placeholders)
+- [Code in text](/style/code-in-text)
+- [Documenting command-line syntax](/style/code-syntax)
+- [Formatting placeholders](/style/placeholders)
 
 ## Basic guidelines
 
 Follow these guidelines when formatting code samples:
 
-* **Follow the indentation guidelines in the relevant
+- **Follow the indentation guidelines in the relevant
   [code style guide](#coding)**. For most programming languages, this means using
   spaces instead of tabs and using two spaces for each indentation level. However, some contexts
   use four spaces for each indentation level, and some contexts use tabs. This guidance applies to
   formatting code samples, not to [formatting commands](/style/code-syntax#formatting-a-command).
-* **Wrap lines** at 80 characters. If you expect readers to have a relatively narrow
+- **Wrap lines** at 80 characters. If you expect readers to have a relatively narrow
   browser window or to print out your document, consider wrapping at a smaller number of
   characters for readability.
-* **Mark code blocks as preformatted text**. In HTML, use a `pre` element;
+- **Mark code blocks as preformatted text**. In HTML, use a `pre` element;
   in Markdown, indent every line of the code block by four spaces.
-* **Indicate omitted code by using a comment** in the syntax of the language of your code
+- **Indicate omitted code by using a comment** in the syntax of the language of your code
   sample. Don't use three dots or the ellipsis character (`…`). If a code
   block contains an omission, don't format the block as click-to-copy.
 
@@ -101,12 +101,12 @@ For more information about how to introduce code samples, see
 
 The following public Google coding-style guides are available on GitHub:
 
-* [C++ style guide](https://google.github.io/styleguide/cppguide.html).
-* [HTML/CSS style guide](https://google.github.io/styleguide/htmlcssguide.html).
-* [Java style guide](https://google.github.io/styleguide/javaguide.html).
-* [JavaScript style guide](https://google.github.io/styleguide/javascriptguide.xml).
-* [Python style guide](https://google.github.io/styleguide/pyguide)
-* [Full list of Google's programming style guides](https://google.github.io/styleguide/)
+- [C++ style guide](https://google.github.io/styleguide/cppguide.html).
+- [HTML/CSS style guide](https://google.github.io/styleguide/htmlcssguide.html).
+- [Java style guide](https://google.github.io/styleguide/javaguide.html).
+- [JavaScript style guide](https://google.github.io/styleguide/javascriptguide.xml).
+- [Python style guide](https://google.github.io/styleguide/pyguide)
+- [Full list of Google's programming style guides](https://google.github.io/styleguide/)
 
 Some open source projects have their own overriding style guides. For
 example, Java code in the Android Open Source Project follows the [AOSP Java Code

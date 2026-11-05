@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # pin, unpin
 
-Use *pin* to refer to placing an item, such as a tile, an app, or a command, in a given area of the UI, so it's always accessible in that area. Use *unpin* to describe removing a pinned item.
+Use _pin_ to refer to placing an item, such as a tile, an app, or a command, in a given area of the UI, so it's always accessible in that area. Use _unpin_ to describe removing a pinned item.
 
 **Examples**  
 When you pin an app, it's added to the Start menu as a new tile.  
@@ -17,8 +17,8 @@ Pin important messages to the top of the message list, and unpin them when you'r
 
 **Pin apps to Start**
 
-1.  Select the **Start** ![](media/pin-unpin/967781121.png) button, and then select **All apps**. 
+1.  Select the **Start** ![](media/pin-unpin/967781121.png) button, and then select **All apps**.
 
 2.  Press and hold (or right-click) the app you want to pin.
 
-3.  Select **Pin to Start**. 
+3.  Select **Pin to Start**.

@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # deprecated
 
-Avoid in content for a technical audience. 
+Avoid in content for a technical audience.
 
-Don't use in content for a general audience. Use *obsolete* or another appropriate word.
+Don't use in content for a general audience. Use _obsolete_ or another appropriate word.

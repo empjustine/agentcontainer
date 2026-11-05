@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # client
 
-Don't use *client* to refer to a person. Use *customer* instead.
+Don't use _client_ to refer to a person. Use _customer_ instead.
 
-**See**  [Computer and device term collection](~/a-z-word-list-term-collections/term-collections/computer-device-terms.md)
+**See** [Computer and device term collection](~/a-z-word-list-term-collections/term-collections/computer-device-terms.md)

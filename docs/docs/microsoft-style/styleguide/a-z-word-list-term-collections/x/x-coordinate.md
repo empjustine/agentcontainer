@@ -11,4 +11,4 @@ ms.prod: non-product-specific
 
 Lowercase. Hyphenate.
 
-Don't use italic formatting for the *x* in *x-coordinate* unless the entire word is italic.
+Don't use italic formatting for the _x_ in _x-coordinate_ unless the entire word is italic.

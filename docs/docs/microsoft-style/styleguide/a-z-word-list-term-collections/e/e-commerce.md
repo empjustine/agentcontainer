@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # e-commerce
 
-Always hyphenate. Don't use *ecommerce* or *eCommerce*. 
+Always hyphenate. Don't use _ecommerce_ or _eCommerce_.
 
-Use *E-commerce* at the beginning of a sentence or heading. In uncommon situations where title-style capitalization is required, use *E-Commerce*.
+Use _E-commerce_ at the beginning of a sentence or heading. In uncommon situations where title-style capitalization is required, use _E-Commerce_.
 
 **See also** [Capitalization](../../capitalization.md)

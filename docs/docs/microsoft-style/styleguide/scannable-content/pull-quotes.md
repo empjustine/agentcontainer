@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # Pull quotes
 
-Pull quotes are short sentences—usually a quote from someone important to the story, but sometimes just a short, interesting sentence—set off from body text to grab the reader’s attention. 
+Pull quotes are short sentences—usually a quote from someone important to the story, but sometimes just a short, interesting sentence—set off from body text to grab the reader’s attention.
 
 ![](media/pull-quotes/pull-quote.png)
 

@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Technical writing benefits from using lists to organize information, specifically bulleted, numbered, and embedded lists, with a preference for the first two.
-* Lists should maintain parallelism, ensuring items match in grammar, logical category, capitalization, and punctuation for readability.
-* Numbered lists often start with imperative verbs to create clear instructions or steps.
-* Tables should have clear headers, concise cell content, and introduce the data being presented with an introductory sentence.
-* Both lists and tables need introductory sentences providing context and often using the word "following" to signal their presence.
+- Technical writing benefits from using lists to organize information, specifically bulleted, numbered, and embedded lists, with a preference for the first two.
+- Lists should maintain parallelism, ensuring items match in grammar, logical category, capitalization, and punctuation for readability.
+- Numbered lists often start with imperative verbs to create clear instructions or steps.
+- Tables should have clear headers, concise cell content, and introduce the data being presented with an introductory sentence.
+- Both lists and tables need introductory sentences providing context and often using the word "following" to signal their presence.
 
 **Estimated Time:** 15 minutes
 
@@ -21,25 +21,25 @@ seek opportunities to convert prose into lists.
 
 The following types of lists dominate technical writing:
 
-* Bulleted lists
-* Numbered lists
-* Embedded lists
+- Bulleted lists
+- Numbered lists
+- Embedded lists
 
-Use a **bulleted list** for *unordered* items; use a
-**numbered list** for *ordered* items. In other words:
+Use a **bulleted list** for _unordered_ items; use a
+**numbered list** for _ordered_ items. In other words:
 
-* If you rearrange the items in a *bulleted* list, the list's meaning
+- If you rearrange the items in a _bulleted_ list, the list's meaning
   does not change.
-* If you rearrange the items in a *numbered* list, the list's meaning
-  *changes*.
+- If you rearrange the items in a _numbered_ list, the list's meaning
+  _changes_.
 
 For example, we've made the following a bulleted list because rearranging its
 items does not change the list's meaning:
 
 > Bash provides the following string manipulation mechanisms:
 >
-> * Deleting a substring from the start of a string
-> * Reading an entire file into one string variable
+> - Deleting a substring from the start of a string
+> - Reading an entire file into one string variable
 
 The following list, by contrast, must be a numbered list because rearranging its
 items would change the list's meaning:
@@ -64,10 +64,10 @@ the embedded list into the following passage:
 
 > The llamacatcher API enables callers to do the following:
 >
-> * Create and query llamas.
-> * Analyze alpacas.
-> * Delete vicunas.
-> * Track dromedaries.
+> - Create and query llamas.
+> - Analyze alpacas.
+> - Delete vicunas.
+> - Track dromedaries.
 
 ### Exercise
 
@@ -82,11 +82,12 @@ Don't forget to introduce your list(s).
 #### Click the icon to see the answer.
 
 Here's one possible answer:
+
 > I must do the following at work today:
 >
-> * Code three unit tests.
-> * Write a design document.
-> * Review Janet's latest document.
+> - Code three unit tests.
+> - Write a design document.
+> - Review Janet's latest document.
 >
 > After work, I must do the following:
 >
@@ -97,11 +98,11 @@ The following is an alternative answer:
 
 > I must do the following tasks today:
 >
-> * At work:
->   + Code three unit tests.
->   + Write a design document.
->   + Review Janet's latest document.
-> * After work:
+> - At work:
+>   - Code three unit tests.
+>   - Write a design document.
+>   - Review Janet's latest document.
+> - After work:
 >   1. Wash my car without using any water.
 >   2. Dry my car without using any towels.
 
@@ -114,10 +115,10 @@ are parallel; defective lists tend to be nonparallel. All items in a
 **parallel** list look like they "belong" together. That is, all
 items in a parallel list match along the following parameters:
 
-* Grammar
-* Logical category
-* Capitalization
-* Punctuation
+- Grammar
+- Logical category
+- Capitalization
+- Punctuation
 
 Conversely, at least one item in a **nonparallel** list fails at least
 one of the preceding consistency checks.
@@ -127,23 +128,23 @@ because all the items are plural nouns (grammar),
 edible (logical category), in title case (capitalization),
 and without periods or commas (punctuation).
 
-* Carrots
-* Potatoes
-* Cabbages
+- Carrots
+- Potatoes
+- Cabbages
 
 By contrast, the following list is painfully nonparallel along
 all parameters:
 
-* Carrots
-* Potatoes
-* The summer light obscures all memories of winter.
+- Carrots
+- Potatoes
+- The summer light obscures all memories of winter.
 
 The following list is parallel because all the items are complete
 sentences with complete sentence capitalization and punctuation:
 
-* Carrots contain lots of Vitamin A.
-* Potatoes taste delicious.
-* Cabbages provide oodles of Vitamin K.
+- Carrots contain lots of Vitamin A.
+- Potatoes taste delicious.
+- Cabbages provide oodles of Vitamin K.
 
 The first item in a list establishes a pattern that readers expect
 to see repeated in subsequent items.
@@ -152,9 +153,9 @@ to see repeated in subsequent items.
 
 Is the following list parallel or nonparallel?
 
-* Broccoli inspires feelings of love or hate.
-* Potatoes taste delicious.
-* Cabbages.
+- Broccoli inspires feelings of love or hate.
+- Potatoes taste delicious.
+- Cabbages.
 
 #### Click the icon to see the answer.
 
@@ -168,9 +169,9 @@ punctuation of the third item.)
 
 Is the following list parallel or nonparallel?
 
-* The red dots represent sick trees.
-* Immature trees are represented by the blue dots.
-* The green dots represent healthy trees.
+- The red dots represent sick trees.
+- Immature trees are represented by the blue dots.
+- The green dots represent healthy trees.
 
 #### Click the icon to see the answer.
 
@@ -232,9 +233,9 @@ guide](https://developers.google.com/style/lists#capitalization-and-end-punctuat
 recommends (with some exceptions) starting each list item with a capital
 letter. For example:
 
-* Loops
-* Conditionals
-* Variable declarations
+- Loops
+- Conditionals
+- Variable declarations
 
 If a list item is a sentence, use appropriate sentence-ending punctuation.
 For example:
@@ -249,13 +250,13 @@ paragraphs and a single table, engineers' eyes zoom towards the table.
 
 Consider the following guidelines when creating tables:
 
-* Label each column with a meaningful header. Don't make readers guess what
+- Label each column with a meaningful header. Don't make readers guess what
   each column holds.
-* Avoid putting too much text into a table cell. If a table cell holds more
+- Avoid putting too much text into a table cell. If a table cell holds more
   than two sentences, ask yourself whether that information belongs in some
   other format.
-* Although different columns can hold different types of data, strive for
-  parallelism *within* individual columns. For instance, the cells within
+- Although different columns can hold different types of data, strive for
+  parallelism _within_ individual columns. For instance, the cells within
   a particular table column should not be a mixture of numerical data and
   famous circus performers.
 
@@ -283,11 +284,11 @@ sentences:
 
 Write an introductory sentence for the following table:
 
-| Language | Inventor | Year Introduced | Key Feature |
-| --- | --- | --- | --- |
-| Lisp | John McCarthy | 1958 | recursion |
-| C++ | Bjarne Stroustrup | 1979 | OOP |
-| Python | Guido van Rossum | 1994 | simplicity |
+| Language | Inventor          | Year Introduced | Key Feature |
+| -------- | ----------------- | --------------- | ----------- |
+| Lisp     | John McCarthy     | 1958            | recursion   |
+| C++      | Bjarne Stroustrup | 1979            | OOP         |
+| Python   | Guido van Rossum  | 1994            | simplicity  |
 
 #### Click the icon to see the answer.
 

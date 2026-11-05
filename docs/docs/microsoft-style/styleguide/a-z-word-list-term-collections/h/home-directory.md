@@ -9,12 +9,12 @@ ms.prod: non-product-specific
 
 # home directory
 
-Don't use. 
+Don't use.
 
-In content for developers, use *root directory*
+In content for developers, use _root directory_
 to refer to the starting point in a hierarchical file structure.
-In Windows, the root directory is indicated by a backslash (\\). 
+In Windows, the root directory is indicated by a backslash (\\).
 
-In all other content, use *top-level folder*.
+In all other content, use _top-level folder_.
 
 **See also** [root directory](~/a-z-word-list-term-collections/r/root-directory.md)

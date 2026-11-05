@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # terminate
 
-Don't use as a synonym for *close* or *exit*. 
+Don't use as a synonym for _close_ or _exit_.
 
-In content for a technical audience, it's OK to use *terminate* in phrases such as *null-terminated string* or *terminate a process.*
+In content for a technical audience, it's OK to use _terminate_ in phrases such as _null-terminated string_ or _terminate a process._
 
 **See also** [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md)

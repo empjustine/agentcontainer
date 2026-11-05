@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # browse
 
-Use to refer to manually scanning internet sites or other files. To describe using the search feature of an app, product, or service, or using an internet search engine, use *find* or *search.*
+Use to refer to manually scanning internet sites or other files. To describe using the search feature of an app, product, or service, or using an internet search engine, use _find_ or _search._
 
-It's OK to use *browse the web,* but use *browse through* a list, database, document, or similar item.
+It's OK to use _browse the web,_ but use _browse through_ a list, database, document, or similar item.

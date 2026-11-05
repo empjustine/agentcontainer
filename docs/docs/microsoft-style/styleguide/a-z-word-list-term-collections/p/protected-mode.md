@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # protected mode
 
-Use instead of *protect mode*. 
+Use instead of _protect mode_.

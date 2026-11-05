@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # sub-
 
-In general, don’t hyphenate words beginning with *sub-,* such as *subheading* and *subsection,* unless it’s necessary to avoid confusion or if *sub-* is followed by a proper noun, as in *sub-Saharan*. When in doubt, check [*The American Heritage Dictionary*](https://ahdictionary.com/).
+In general, don’t hyphenate words beginning with _sub-,_ such as _subheading_ and _subsection,_ unless it’s necessary to avoid confusion or if _sub-_ is followed by a proper noun, as in _sub-Saharan_. When in doubt, check [_The American Heritage Dictionary_](https://ahdictionary.com/).
 
 To learn more about hyphenation, see [Hyphens](~/punctuation/dashes-hyphens/hyphens.md).

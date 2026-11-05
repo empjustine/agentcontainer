@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # double buffering
 
-Two words as a noun. 
+Two words as a noun.
 
-Hyphenate as an adjective. 
+Hyphenate as an adjective.
 
-Don't use as a verb. Instead, use a phrase such as *uses double buffering*<em>.</em>
+Don't use as a verb. Instead, use a phrase such as _uses double buffering_<em>.</em>

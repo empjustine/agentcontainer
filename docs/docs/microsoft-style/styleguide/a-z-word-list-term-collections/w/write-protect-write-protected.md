@@ -9,12 +9,12 @@ ms.prod: non-product-specific
 
 # write-protect, write-protected
 
-Always hyphenate. 
+Always hyphenate.
 
-Use *write-protect* as a verb. Use instead of *lock* to refer to the action of protecting disks from being overwritten. 
+Use _write-protect_ as a verb. Use instead of _lock_ to refer to the action of protecting disks from being overwritten.
 
-Use *write-protected* as an adjective.
+Use _write-protected_ as an adjective.
 
 **Examples**  
 to write-protect a disk  
-a write-protected disk 
+a write-protected disk

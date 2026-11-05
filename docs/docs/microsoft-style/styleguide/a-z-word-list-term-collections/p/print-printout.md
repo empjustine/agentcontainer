@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # print, printout
 
-As a verb, use *print* instead of *print out*. It's OK to use *printout* as the result of a print job, if necessary, but try to be more specific.
+As a verb, use _print_ instead of _print out_. It's OK to use _printout_ as the result of a print job, if necessary, but try to be more specific.

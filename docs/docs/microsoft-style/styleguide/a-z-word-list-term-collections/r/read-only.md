@@ -11,7 +11,7 @@ ms.prod: non-product-specific
 
 Always hyphenate.
 
-**Examples**    
+**Examples**  
 read-only memory  
 This file is read-only.
 

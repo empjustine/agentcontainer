@@ -9,14 +9,14 @@ ms.prod: non-product-specific
 
 # if vs. whether vs. when
 
-Use *if* to express a condition, use *whether* to express uncertainty, and use *when* for situations that require preparation or to denote the passage of time.
+Use _if_ to express a condition, use _whether_ to express uncertainty, and use _when_ for situations that require preparation or to denote the passage of time.
 
-In informal writing for the web, it's OK to use *if* to express uncertainty. Don't use *whether or not* to express uncertainty.
+In informal writing for the web, it's OK to use _if_ to express uncertainty. Don't use _whether or not_ to express uncertainty.
 
 **Examples**  
 If you don't know whether a network key is needed, contact your network administrator.  
 Use your BitLocker recovery key to sign in if you're locked out of your computer after too many failed password attempts.  
-When Setup is complete, restart your computer.   
+When Setup is complete, restart your computer.  
 To find out whether TrueType fonts are available ….  
 (Informal) To find out if TrueType fonts are available ….  
 Save a webpage to view it later, even if you're not connected to the internet.

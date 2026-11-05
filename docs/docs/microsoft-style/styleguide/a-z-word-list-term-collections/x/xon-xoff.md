@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # XON/XOFF
 
-Note capitalization and slash. 
+Note capitalization and slash.

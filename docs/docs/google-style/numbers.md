@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Spell out numbers zero through nine and use numerals for numbers 10 and greater, with exceptions for technical quantities and specific contexts like version numbers.
-* Use numerals for dimensions, percentages, currency, and measurements, ensuring proper formatting and units.
-* Express fractions as decimals when possible, and format ranges of numbers with hyphens.
-* For clarity, provide real-world examples and visuals to support comprehension of numerical concepts.
-* Write out ordinal numbers (first, second, third) instead of using numerals (1st, 2nd, 3rd).
+- Spell out numbers zero through nine and use numerals for numbers 10 and greater, with exceptions for technical quantities and specific contexts like version numbers.
+- Use numerals for dimensions, percentages, currency, and measurements, ensuring proper formatting and units.
+- Express fractions as decimals when possible, and format ranges of numbers with hyphens.
+- For clarity, provide real-world examples and visuals to support comprehension of numerical concepts.
+- Write out ordinal numbers (first, second, third) instead of using numerals (1st, 2nd, 3rd).
 
 For information about formatting quantities like 10 MB, see
 [Units of measurement](/style/units-of-measure).
@@ -32,7 +32,7 @@ a nonbreaking space between the number and the noun.
 
 In general, spell out the following:
 
-* Numbers from zero through nine, except as noted in
+- Numbers from zero through nine, except as noted in
   [Numbers as numerals](#numbers-as-numerals).
 
   Recommended:
@@ -43,7 +43,8 @@ In general, spell out the following:
   Recommended: five minutes
 
   Recommended: nine developers
-* A number that starts a sentence.
+
+- A number that starts a sentence.
 
   Recommended: Fifteen
   directories are created.
@@ -59,18 +60,20 @@ In general, spell out the following:
 
   **Exception**: It's okay, but non-optimal, to begin a
   sentence with a four-digit year.
-* A number that is followed by a numeral.
+
+- A number that is followed by a numeral.
 
   Recommended: This
   procedure creates fifteen 100,000-byte files.
 
-  *But*
+  _But_
 
   Recommended: This
   procedure creates 15 of the 100,000-byte files.
-* Indefinite and casual numbers.
 
-  Using words like *millions* or *billions* is fine for approximate numbers. For
+- Indefinite and casual numbers.
+
+  Using words like _millions_ or _billions_ is fine for approximate numbers. For
   precise numbers, use numerals.
 
   Recommended: You
@@ -88,7 +91,7 @@ a nonbreaking space between the number and the noun.
 
 In general, use numerals for the following:
 
-* Numbers 10 and greater.
+- Numbers 10 and greater.
 
   Recommended: The link expires in 24
   hours.
@@ -108,11 +111,12 @@ In general, use numerals for the following:
   **Exceptions**: Always use numerals for the following items, even if
   they're less than 10:
 
-  + Version numbers.
+  - Version numbers.
 
     Recommended:
     version 3
-  + Technical quantities, such as amounts of memory, amounts of disk
+
+  - Technical quantities, such as amounts of memory, amounts of disk
     space, numbers of queries, or usage limits.
 
     Recommended: 6 queries per second
@@ -120,35 +124,38 @@ In general, use numerals for the following:
     Recommended: 50 Mbps
 
     Recommended: 128 bits
-  + Page numbers.
-  + Chapter numbers, sections, pages, and so on.
-  + Step numbers. Avoid referring to step numbers whenever possible,
+
+  - Page numbers.
+  - Chapter numbers, sections, pages, and so on.
+  - Step numbers. Avoid referring to step numbers whenever possible,
     but in edge cases where you have no choice or it makes the most sense,
     use the numeral.
-  + Prices.
-  + Numbers without units, such as numbers used in mathematical
+  - Prices.
+  - Numbers without units, such as numbers used in mathematical
     expressions.
-  + Numbers less than 10 when they appear in the same sentence with
+  - Numbers less than 10 when they appear in the same sentence with
     numbers greater than 9.
 
     Recommended: The
     menu contains 15 options but 6 of them are deselected.
-* Negative numbers.
-* Most [fractions](#fractions).
-* [Percentages](#percentages).
-* [Dimensions](#dimensions).
-* Numbers containing decimal points.
-  + Treat decimal numbers as plural even when less than or equal to 1.0.
+
+- Negative numbers.
+- Most [fractions](#fractions).
+- [Percentages](#percentages).
+- [Dimensions](#dimensions).
+- Numbers containing decimal points.
+  - Treat decimal numbers as plural even when less than or equal to 1.0.
 
     Recommended: 1.0 inches
 
-    + For decimal numbers less than one, place a zero in front of the decimal point.
+    - For decimal numbers less than one, place a zero in front of the decimal point.
 
       Recommended: 0.3 inches
-* Measurements.
+- Measurements.
 
   Recommended: 8 pixels
-* [Numbers in a range](#ranges-of-numbers).
+
+- [Numbers in a range](#ranges-of-numbers).
 
 ## Numbers as Roman numerals
 
@@ -180,7 +187,7 @@ In general, use numerals and the percent sign (%), without a space between them.
 Recommended: 40%
 
 **Exception**: If the percentage starts the sentence, then spell out both
-the number and the word *percent*.
+the number and the word _percent_.
 
 Recommended: Forty
 percent of the files
@@ -195,8 +202,8 @@ Recommended:
 
 For more information, see the following:
 
-* [Ranges of numbers with units](/style/units-of-measure#ranges)
-* [Range of numbers](/style/hyphens#number-range)
+- [Ranges of numbers with units](/style/units-of-measure#ranges)
+- [Range of numbers](/style/hyphens#number-range)
 
 ## Suspended hyphens
 
@@ -244,11 +251,11 @@ the most common digit group separator used in the US.
 
 Use a period for a decimal point, also in the standard American style.
 
-| Recommended | Not recommended |
-| --- | --- |
-| The limit is 1,532,784 bytes per day. | The limit is 1532784 bytes per day. |
+| Recommended                            | Not recommended                       |
+| -------------------------------------- | ------------------------------------- |
+| The limit is 1,532,784 bytes per day.  | The limit is 1532784 bytes per day.   |
 | The API supports up to 2,000 vertices. | The API supports up to 2000 vertices. |
-| $0.031611/vCPU hour | $0.031 611/vCPU hour |
+| $0.031611/vCPU hour                    | $0.031 611/vCPU hour                  |
 
 **Note**: Even though in some scientific writing,
 four-digit numbers don't use commas, our style is to use a comma for a
@@ -260,8 +267,8 @@ For more information about decimal points and digit group separators, see Wikipe
 
 Use numerals for dimensions.
 
-Use a lowercase *x* between the numerals in the dimensions, with no space between
-the numerals and the *x*.
+Use a lowercase _x_ between the numerals in the dimensions, with no space between
+the numerals and the _x_.
 
 Recommended: 192x192
 

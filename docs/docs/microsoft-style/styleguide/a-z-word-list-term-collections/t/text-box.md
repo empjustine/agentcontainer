@@ -9,13 +9,12 @@ ms.prod: non-product-specific
 
 # text box
 
-Refer to a box in which the user enters text only by its label. If you must use a descriptor, use *box*. Don't use *field* or *entry field,* except in content about database programs.
+Refer to a box in which the user enters text only by its label. If you must use a descriptor, use _box_. Don't use _field_ or _entry field,_ except in content about database programs.
 
 **Examples**  
 **File name** box  
 Enter or update an email address for **Work email**.
 
-In content for developers, it's OK to use *text box* in content about designing and developing the UI.
+In content for developers, it's OK to use _text box_ in content about designing and developing the UI.
 
 **See also** [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md), [Formatting text in instructions](~/procedures-instructions/formatting-text-in-instructions.md)
-

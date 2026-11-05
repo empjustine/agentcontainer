@@ -9,8 +9,7 @@ ms.prod: non-product-specific
 
 # antialiasing
 
-Don't hyphenate. Don't capitalize *antialiasing* unless it begins a sentence or phrase. Don't capitalize *aliasing* in *antialiasing*. 
+Don't hyphenate. Don't capitalize _antialiasing_ unless it begins a sentence or phrase. Don't capitalize _aliasing_ in _antialiasing_.
 
-**Example**   
+**Example**  
 Microsoft ClearType antialiasing is a smoothing method that improves font display resolution, compared to traditional antialiasing.
-

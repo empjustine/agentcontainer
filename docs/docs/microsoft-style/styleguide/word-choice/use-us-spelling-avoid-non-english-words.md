@@ -9,19 +9,17 @@ ms.prod: non-product-specific
 
 # Use US spelling and avoid non-English words
 
-When the spelling of English words varies by locale, use the US spelling. For example, use *license,* not *licence.*
+When the spelling of English words varies by locale, use the US spelling. For example, use _license,_ not _licence._
 
-Avoid non-English words or phrases, such as *de facto* or *ad hoc*. 
+Avoid non-English words or phrases, such as _de facto_ or _ad hoc_.
 
-Avoid Latin abbreviations for common English phrases. 
+Avoid Latin abbreviations for common English phrases.
 
-**Exception** It’s OK to use *etc.,* in situations where space is limited. Otherwise, see [and so on](~/a-z-word-list-term-collections/a/and-so-on.md) for alternatives.
-
+**Exception** It’s OK to use _etc.,_ in situations where space is limited. Otherwise, see [and so on](~/a-z-word-list-term-collections/a/and-so-on.md) for alternatives.
 
 | **Use this** | **Instead of this** |
-|--------------|---------------------|
-| for example  |        e.g.         |
-|   that is    |        i.e.         |
-|    namely    |        viz.         |
-|  therefore   |        ergo         |
-
+| ------------ | ------------------- |
+| for example  | e.g.                |
+| that is      | i.e.                |
+| namely       | viz.                |
+| therefore    | ergo                |

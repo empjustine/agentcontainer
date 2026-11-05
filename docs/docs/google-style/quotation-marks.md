@@ -5,10 +5,10 @@
 
 ## Page Summary
 
-* In technical writing, quotation marks are primarily used for titles of shorter works and in specific cases outlined in the provided table.
-* Commas and periods generally go inside quotation marks, with exceptions for literal strings in code font.
-* Always use straight quotation marks and apostrophes in developer documentation for consistency and ease of writing and reviewing.
-* Single quotation marks are reserved for code examples and nesting quotations within other quotations.
+- In technical writing, quotation marks are primarily used for titles of shorter works and in specific cases outlined in the provided table.
+- Commas and periods generally go inside quotation marks, with exceptions for literal strings in code font.
+- Always use straight quotation marks and apostrophes in developer documentation for consistency and ease of writing and reviewing.
+- Single quotation marks are reserved for code examples and nesting quotations within other quotations.
 
 Use straight double quotation marks and apostrophes.
 
@@ -24,12 +24,12 @@ For most titles that are full-length works, we use italics.
 
 For examples of when to use quotation marks in regular text, see the following table:
 
-| Guidance | Example |
-| --- | --- |
-| Referring to a section of a larger document or piece, if you can't link to the section directly. | The technique is described in the section "Deploying containers" of the [Containers overview](https://www.youtube.com) video. |
-| Referring to the title of a parent document when you're already linking to a section | The [machine learning (ML) workflow section](https://cloud.google.com/vertex-ai/docs/start/introduction-unified-platform#ml-workflow) of "Introduction to Vertex AI" describes the machine learning workflow for Vertex AI. |
-| Directly citing a person or quoting a slogan or motto. | Martin Fowler has said, "We are still learning the techniques to write software effectively." |
-| Using a term metaphorically, but only if it's not an established usage in the domain. | This configuration forms an "island" within the network that is not connected to the external network. |
+| Guidance                                                                                         | Example                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Referring to a section of a larger document or piece, if you can't link to the section directly. | The technique is described in the section "Deploying containers" of the [Containers overview](https://www.youtube.com) video.                                                                                               |
+| Referring to the title of a parent document when you're already linking to a section             | The [machine learning (ML) workflow section](https://cloud.google.com/vertex-ai/docs/start/introduction-unified-platform#ml-workflow) of "Introduction to Vertex AI" describes the machine learning workflow for Vertex AI. |
+| Directly citing a person or quoting a slogan or motto.                                           | Martin Fowler has said, "We are still learning the techniques to write software effectively."                                                                                                                               |
+| Using a term metaphorically, but only if it's not an established usage in the domain.            | This configuration forms an "island" within the network that is not connected to the external network.                                                                                                                      |
 
 For more information, see [Text-formatting summary](/style/text-formatting).
 
@@ -68,15 +68,15 @@ apostrophes to the curly versions as you type. However, our guidance is
 to always use straight quotation marks and straight apostrophes in developer documentation, for
 the following reasons:
 
-* It makes writing documents easier.
-  + Code *requires* straight marks, so it's simpler to use straight marks everywhere
+- It makes writing documents easier.
+  - Code _requires_ straight marks, so it's simpler to use straight marks everywhere
     in developer documentation than to use them in code but not in text.
-  + Tools that automatically change straight marks to curly marks (such as word processors)
+  - Tools that automatically change straight marks to curly marks (such as word processors)
     often make mistakes.
-  + Humans who manually type curly marks also often make mistakes.
-  + Manually typing curly marks can be difficult on some platforms.
-* It makes reviewing documents easier.
-  + When you're proofreading a document, it can be hard to see whether marks are straight or
+  - Humans who manually type curly marks also often make mistakes.
+  - Manually typing curly marks can be difficult on some platforms.
+- It makes reviewing documents easier.
+  - When you're proofreading a document, it can be hard to see whether marks are straight or
     curly, and which direction they point in.
 
 In the following examples, the first example uses straight quotation marks and the second example
@@ -92,8 +92,8 @@ is “Care and feeding of the emu.”
 
 The only times to use single quotation marks in our documentation are the following:
 
-* In code examples, in languages that use single quotation marks.
-* When nesting a quotation inside another quotation.
+- In code examples, in languages that use single quotation marks.
+- When nesting a quotation inside another quotation.
 
 In the latter case, put the primary speaker's quote in double quotation marks and the quote inside
 the primary speaker's quote in single quotation marks.

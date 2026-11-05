@@ -5,10 +5,10 @@
 
 ## Page Summary
 
-* This self-study course focuses on writing clear and effective error messages, primarily for developers, with examples geared towards developer-facing scenarios.
-* Good error messages are crucial for a positive user experience, providing actionable information and reducing support burdens by enabling user self-help.
-* This course teaches you to write and review error messages that clearly explain the problem and guide users towards a solution, but does not delve into the technical implementation of displaying them.
-* The ultimate goal of a good error message is to concisely answer two questions: "What went wrong?" and "How does the user fix it?".
+- This self-study course focuses on writing clear and effective error messages, primarily for developers, with examples geared towards developer-facing scenarios.
+- Good error messages are crucial for a positive user experience, providing actionable information and reducing support burdens by enabling user self-help.
+- This course teaches you to write and review error messages that clearly explain the problem and guide users towards a solution, but does not delve into the technical implementation of displaying them.
+- The ultimate goal of a good error message is to concisely answer two questions: "What went wrong?" and "How does the user fix it?".
 
 This self-study course helps you write clearer, more effective error messages,
 whether they appear in IDEs, command lines, or GUIs. While this course contains
@@ -23,9 +23,9 @@ target audience.
 
 We've aimed this course at the following audiences:
 
-* Engineers
-* Program managers
-* Technical writers
+- Engineers
+- Program managers
+- Technical writers
 
 We recommend taking [Technical Writing
 One](https://developers.google.com/tech-writing/overview) before taking this
@@ -43,32 +43,32 @@ features and some are caused by product defects; all error messages require
 users to figure out what to do next.
 
 Data collected through Google support systems and UX research identified the
-following common problems with *bad* error messages:
+following common problems with _bad_ error messages:
 
-* unactionable
-* vague
-* imprecise
-* confusing
-* inaccurate
-* unclear cause
-* unknown next steps
+- unactionable
+- vague
+- imprecise
+- confusing
+- inaccurate
+- unclear cause
+- unknown next steps
 
-Conversely, *good* error messages provide the following benefits:
+Conversely, _good_ error messages provide the following benefits:
 
-* Deliver the best user experience.
-* Are actionable.
-* Are universally accessible. (To learn more, take [Tech Writing for
+- Deliver the best user experience.
+- Are actionable.
+- Are universally accessible. (To learn more, take [Tech Writing for
   Accessibility.](/tech-writing/accessibility))
-* Enable users to help themselves.
-* Reduce the support workload.
-* Enable faster resolution of issues.
+- Enable users to help themselves.
+- Reduce the support workload.
+- Enable faster resolution of issues.
 
 ## Learning objectives
 
 After completing this class, you will know how to do the following:
 
-* Write clearer, more helpful error messages.
-* Review your teammates' error messages.
+- Write clearer, more helpful error messages.
+- Review your teammates' error messages.
 
 ### Learning non-objectives
 
@@ -80,8 +80,8 @@ a GUI.
 
 Great error messages answer two questions as clearly and concisely as possible:
 
-* What went wrong?
-* How does the user fix that problem?
+- What went wrong?
+- How does the user fix that problem?
 
 Yes, it's just that simple.
 

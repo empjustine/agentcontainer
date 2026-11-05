@@ -11,6 +11,6 @@ ms.prod: non-product-specific
 
 Don't use
 in content for a general audience to mean creating things like
-documents, charts, graphics, and worksheets. Use *create* instead. 
+documents, charts, graphics, and worksheets. Use _create_ instead.
 
-In content for a technical audience, it's OK to use *build* as a verb to mean to compile and link code and as a noun to refer to a prerelease version.
+In content for a technical audience, it's OK to use _build_ as a verb to mean to compile and link code and as a noun to refer to a prerelease version.

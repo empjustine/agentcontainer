@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # opcode
 
-It's OK to use *opcode* to refer to a programming term, such as the *opcode* parameter. 
+It's OK to use _opcode_ to refer to a programming term, such as the _opcode_ parameter.
 
-Don't use *opcode* as a shortened form of *operation code*. Use *operation code* instead.
+Don't use _opcode_ as a shortened form of _operation code_. Use _operation code_ instead.

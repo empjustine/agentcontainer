@@ -9,13 +9,13 @@ ms.prod: non-product-specific
 
 # header
 
-In content related to word-processing and publishing apps, use instead of *running head* when discussing page layout. It's OK to use *running head* for clarification or as a keyword.
+In content related to word-processing and publishing apps, use instead of _running head_ when discussing page layout. It's OK to use _running head_ for clarification or as a keyword.
 
-Don't use *header* as a synonym for *heading*.
+Don't use _header_ as a synonym for _heading_.
 
-In technical content, it's OK to use *header* as a short form of *file header,* as in *HTML header.* 
+In technical content, it's OK to use _header_ as a short form of _file header,_ as in _HTML header._
 
-Don't use *header* as a synonym for *header file,*
+Don't use _header_ as a synonym for _header file,_
 which refers to the file at the beginning of a program that
 contains definitions of data types and variables used by the
 program's functions.

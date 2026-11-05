@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # US
 
-It's OK to use *US* as an abbreviation for *United States* as an adjective and when space is limited. Spell out *United States* as a noun except when third-party, legally required content specifies otherwise. 
+It's OK to use _US_ as an abbreviation for _United States_ as an adjective and when space is limited. Spell out _United States_ as a noun except when third-party, legally required content specifies otherwise.
 
-Don't use *USA,* *U.S.,* or *U.S.A.*
+Don't use _USA,_ _U.S.,_ or _U.S.A._
 
-If you use the abbreviation, you don't have to spell out *United States* on the first mention.
+If you use the abbreviation, you don't have to spell out _United States_ on the first mention.

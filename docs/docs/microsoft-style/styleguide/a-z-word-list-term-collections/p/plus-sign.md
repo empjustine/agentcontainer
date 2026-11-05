@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # plus sign (+)
 
-Don’t use the plus sign (+) to replace words like *and, over,* and *plus.*
+Don’t use the plus sign (+) to replace words like _and, over,_ and _plus._
 
 **Exception** Where space is limited, like in UI or a headline, it’s OK to use the
 plus sign to indicate a count that exceeds a certain number.
@@ -17,6 +17,6 @@ plus sign to indicate a count that exceeds a certain number.
 **Examples**  
 Microsoft Dynamics 365 and Office 365 are better together.  
 Choose from more than 750,000 apps in Microsoft Store.  
-999+ connections (in the UI) 
+999+ connections (in the UI)
 
 **See also** [ampersand (&)](~/a-z-word-list-term-collections/a/ampersand.md)

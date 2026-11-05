@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # e-learning
 
-Always hyphenate. Don't use *elearning* or *eLearning.*
+Always hyphenate. Don't use _elearning_ or _eLearning._
 
-Use *E-learning* at the beginning of a sentence or heading. In uncommon situations where title-style capitalization is required, use *E-Learning*.
+Use _E-learning_ at the beginning of a sentence or heading. In uncommon situations where title-style capitalization is required, use _E-Learning_.
 
 **See also** [Capitalization](~/capitalization.md)

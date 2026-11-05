@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # catalog
 
-Use instead of *catalogue.*
+Use instead of _catalogue._

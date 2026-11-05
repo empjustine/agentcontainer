@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # friendly name
 
-Don't use. Use *display name* instead to refer to a person's name as it appears in an address or email list.
+Don't use. Use _display name_ instead to refer to a person's name as it appears in an address or email list.

@@ -9,10 +9,10 @@ ms.prod: non-product-specific
 
 # italic
 
-Use only as an adjective, not as a noun. Don't use *italics* or *italicized*.
+Use only as an adjective, not as a noun. Don't use _italics_ or _italicized_.
 
 **Examples**  
-To make the selected characters italic, select **Ctrl+I**.   
+To make the selected characters italic, select **Ctrl+I**.  
 The characters are displayed in italic type.
 
-In writing for customers, use *regular type* to describe type that's neither bold nor italic.
+In writing for customers, use _regular type_ to describe type that's neither bold nor italic.

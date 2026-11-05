@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # install
 
-Use *install* to describe adding apps, hardware, and drivers to a device. Don't use *download.* Use *uninstall* to describe removing them. 
+Use _install_ to describe adding apps, hardware, and drivers to a device. Don't use _download._ Use _uninstall_ to describe removing them.
 
-Don't use *install* as a noun. Use *installation* instead.
+Don't use _install_ as a noun. Use _installation_ instead.
 
 **See also** [add](~/a-z-word-list-term-collections/a/add.md)

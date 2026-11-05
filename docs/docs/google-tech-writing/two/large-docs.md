@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Technical documents benefit from clear outlines that group related topics and use hierarchical headings for better navigation.
-* Progressive disclosure, revealing information gradually, improves reader comprehension by introducing concepts incrementally.
-* Short documents are ideal for beginners or quick overviews, while longer documents suit in-depth content and can be broken down for better navigation.
-* Introductions should clearly state the document's scope, prerequisites, and exclusions to set reader expectations.
-* Using signposting phrases and providing links within the document helps guide readers through the content and connects related information.
+- Technical documents benefit from clear outlines that group related topics and use hierarchical headings for better navigation.
+- Progressive disclosure, revealing information gradually, improves reader comprehension by introducing concepts incrementally.
+- Short documents are ideal for beginners or quick overviews, while longer documents suit in-depth content and can be broken down for better navigation.
+- Introductions should clearly state the document's scope, prerequisites, and exclusions to set reader expectations.
+- Using signposting phrases and providing links within the document helps guide readers through the content and connects related information.
 
 **Estimated Time:** 20 minutes
 
@@ -17,10 +17,10 @@ How do you organize a large collection of information into a cohesive document
 or website? Alternatively, how do you reorganize an existing messy document or
 website into something approachable and useful? The following tactics can help:
 
-* Choosing to write a single, large document or a set of documents
-* Organizing a document
-* Adding navigation
-* Disclosing information progressively
+- Choosing to write a single, large document or a set of documents
+- Organizing a document
+- Adding navigation
+- Disclosing information progressively
 
 ## When to write large documents
 
@@ -33,28 +33,28 @@ Some readers respond more positively than others to longer documents. Consider
 the following perspectives from two hypothetical readers you're writing
 documentation for:
 
-* Hong finds reading long documents difficult and disorientating. He prefers
+- Hong finds reading long documents difficult and disorientating. He prefers
   to use site search to find answers to his questions.
-* Rose is comfortable navigating large documents. She often uses the built-in
+- Rose is comfortable navigating large documents. She often uses the built-in
   page search feature in her web browser to find useful information on the
   current page.
 
 So, should you organize your material into a single document or into a set of
 documents in a website? Consider the following guidelines:
 
-* How-to guides, introductory overviews, and conceptual guides often work
+- How-to guides, introductory overviews, and conceptual guides often work
   better as shorter documents when aimed at readers who are new to the subject
   matter. For example, a reader who is completely new to your subject matter
   might struggle to remember lots of new terms, concepts, and facts.
   Remember that your audience might be reading your documentation to gain a
   quick and general overview of the topic.
-* In-depth tutorials, best practice guides, and command-line reference pages
+- In-depth tutorials, best practice guides, and command-line reference pages
   can work well as lengthier documents, especially when aimed at readers who
   already have some experience with the tools and subject matter.
-* A great tutorial can rely on a narrative to lead the reader through a series
+- A great tutorial can rely on a narrative to lead the reader through a series
   of related tasks in a longer document. However, even large tutorials can
   sometimes benefit from being broken up into smaller parts.
-* Many longer documents aren't designed to be read in one sitting. For example,
+- Many longer documents aren't designed to be read in one sitting. For example,
   users typically scan through a reference page to search for an explanation
   of a command or flag.
 
@@ -79,28 +79,28 @@ You might find it useful to think of an outline as the narrative for your
 document. There is no standard approach to writing an outline, but the following
 guidelines provide practical tips you might find useful:
 
-* Before you ask your reader to perform a task, explain to them why they are
+- Before you ask your reader to perform a task, explain to them why they are
   doing it. For example, the following bullet points illustrate a section of
   an outline from a tutorial about auditing and improving the accessibility of
   web pages:
-  + Introduce a browser plugin that audits the accessibility of web pages;
+  - Introduce a browser plugin that audits the accessibility of web pages;
     explain that the reader will use the results of the audit report to fix
     several bugs.
-  + List the steps to run the plugin and audit the accessibility of a web
+  - List the steps to run the plugin and audit the accessibility of a web
     page.
-* Limit each step of your outline to describing a concept or completing a
+- Limit each step of your outline to describing a concept or completing a
   specific task.
-* Structure your outline so that your document introduces information when
+- Structure your outline so that your document introduces information when
   it's most relevant to your reader. For example, your reader probably doesn't
   need to know (or want to know) about the history of the project in the
   introductory sections of your document when they're just getting started
   with the basics. If you feel the history of the project is useful, then
   include a link to this type of information at the end of your document.
-* Consider explaining a concept and then demonstrating how the reader can
+- Consider explaining a concept and then demonstrating how the reader can
   apply it either in a sample project or in their own work. Documents that
   alternate between conceptual information and practical steps can be a
   particularly engaging way to learn.
-* Before you start drafting, share the outline with your contributors.
+- Before you start drafting, share the outline with your contributors.
   Outlines are especially useful if you're working with a team of contributors
   who are going to review and test your document.
 
@@ -109,9 +109,9 @@ guidelines provide practical tips you might find useful:
 Review and update the following high-level outline of an introduction to a long
 tutorial. To solve this exercise, you can do any of the following:
 
-* Rearrange the existing topics.
-* Add any missing topics you feel should be in an introduction.
-* Remove any topics you feel are irrelevant for an introduction.
+- Rearrange the existing topics.
+- Add any missing topics you feel should be in an introduction.
+- Remove any topics you feel are irrelevant for an introduction.
 
 ```
 ## The history of the project
@@ -178,9 +178,9 @@ If readers of your documentation can't find relevance in the subject, they are
 likely to ignore it. To set the ground rules for your users, we recommend
 providing an introduction that includes the following information:
 
-* What the document covers.
-* What prior knowledge you expect readers to have.
-* What the document doesn't cover.
+- What the document covers.
+- What prior knowledge you expect readers to have.
+- What the document doesn't cover.
 
 Remember that you want to keep your documentation easy to maintain, so don't
 try to cover everything in the introduction.
@@ -243,12 +243,12 @@ they are looking for and the information they need to get unstuck.
 
 Clear navigation includes:
 
-* introduction and summary sections
-* a clear, logical development of the subject
-* headings and subheadings that help users understand the subject
-* a table of contents menu that shows users where they are in the document
-* links to related resources or more in-depth information
-* links to what to learn next
+- introduction and summary sections
+- a clear, logical development of the subject
+- headings and subheadings that help users understand the subject
+- a table of contents menu that shows users where they are in the document
+- links to related resources or more in-depth information
+- links to what to learn next
 
 The tips in the following sections can help you plan the headings in your
 documentation.
@@ -263,12 +263,12 @@ framework, the reader must run the `carambola` command-line tool. At first
 glance, it might seem logical to add either of the following headings to the
 instructions:
 
-* Running the carambola command
-* Initializing the Froobus framework
+- Running the carambola command
+- Initializing the Froobus framework
 
 Unless your readers are already very experienced with the terminology and
 concepts for this topic, a more familiar heading might be preferable, such as
-*Creating the site*.
+_Creating the site_.
 
 ### Provide text under each heading
 
@@ -394,15 +394,15 @@ documents that progressively disclose new information to them when they need it.
 The following techniques can help you incorporate progressive disclosure in your
 documents:
 
-* Where possible, try introducing new terminology and concepts near the
+- Where possible, try introducing new terminology and concepts near the
   instructions that rely on them.
-* Break up large walls of text. To avoid multiple large paragraphs on a single
+- Break up large walls of text. To avoid multiple large paragraphs on a single
   page, aim to introduce tables, diagrams, lists, and headings where
   appropriate.
-* Break up large series of steps. If you have a particularly long list of
+- Break up large series of steps. If you have a particularly long list of
   complicated steps, try to re-arrange them into shorter lists that explain
   how to complete sub-tasks.
-* Start with simple examples and instructions, and add progressively more
+- Start with simple examples and instructions, and add progressively more
   interesting and complicated techniques. For example, in a tutorial for
   creating forms, start by explaining how to handle text responses, and then
   introduce other techniques to handle multiple choice, images, and other

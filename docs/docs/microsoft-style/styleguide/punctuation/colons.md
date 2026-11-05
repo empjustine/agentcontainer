@@ -13,11 +13,11 @@ ms.prod: non-product-specific
 
 Include a colon at the end of a phrase that directly introduces a list.<br />
 **Example**  
-We can create a backup of all sorts of things to make the transition easier, including: 
+We can create a backup of all sorts of things to make the transition easier, including:
 
-  - The apps you've installed on your phone, along with high scores and progress from participating apps. 
-  - The passwords for your accounts. 
-  - Your call history. 
+- The apps you've installed on your phone, along with high scores and progress from participating apps.
+- The passwords for your accounts.
+- Your call history.
 
 To learn more, see [Lists](~/scannable-content/lists.md).
 
@@ -33,16 +33,16 @@ Most of the time, two sentences are more readable.
 
 When you use a colon in a sentence, lowercase the word that follows it unless:
 
-  - The colon introduces a direct quotation.  
-    **Example** <br />What does it mean when I see a message that asks: "Are you trying to visit this site?"  
-    
-  - The first word after the colon is a proper noun.  
-    **Example** <br />We're considering three cities for the event: Los Angeles, Munich, and Tokyo. 
-    
-## In titles and headings  
+- The colon introduces a direct quotation.  
+  **Example** <br />What does it mean when I see a message that asks: "Are you trying to visit this site?"
+
+- The first word after the colon is a proper noun.  
+  **Example** <br />We're considering three cities for the event: Los Angeles, Munich, and Tokyo.
+
+## In titles and headings
 
 When you use a colon in a title or heading, capitalize the word that follows it.  
 **Examples**  
 Block party: Communities use Minecraft to create public spaces  
 Why girls lose interest in STEM: New research has some answers  
-Get started with Azure IoT: An interactive developer guide  
+Get started with Azure IoT: An interactive developer guide

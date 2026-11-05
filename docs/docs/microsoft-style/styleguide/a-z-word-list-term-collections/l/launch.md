@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # launch
 
-Don't use to mean opening an app or form. Use *open* instead.
+Don't use to mean opening an app or form. Use _open_ instead.
 
 **Examples**  
 Select a tile to open an app.  

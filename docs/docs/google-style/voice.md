@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Prioritize using active voice to ensure clarity and directness in your writing, making it clear who is performing the action.
-* While active voice is generally preferred, passive voice can be acceptable in specific situations, such as when emphasizing the object, de-emphasizing the subject, or when the actor is irrelevant.
-* Passive voice can make it difficult for readers to understand who is responsible for an action, leading to confusion and ambiguity.
-* When using passive voice, ensure the context provides enough information for readers to understand the meaning, even without explicitly stating the actor.
-* Refer to Google's Technical Writing One guide for a deeper understanding of active and passive voice and their appropriate usage.
+- Prioritize using active voice to ensure clarity and directness in your writing, making it clear who is performing the action.
+- While active voice is generally preferred, passive voice can be acceptable in specific situations, such as when emphasizing the object, de-emphasizing the subject, or when the actor is irrelevant.
+- Passive voice can make it difficult for readers to understand who is responsible for an action, leading to confusion and ambiguity.
+- When using passive voice, ensure the context provides enough information for readers to understand the meaning, even without explicitly stating the actor.
+- Refer to Google's Technical Writing One guide for a deeper understanding of active and passive voice and their appropriate usage.
 
 In general, use active voice (in which the grammatical subject of the
 sentence is the person or thing performing the action) instead of passive voice
@@ -29,7 +29,7 @@ Not recommended: The service is queried,
 and an acknowledgment is sent.
 
 It's possible to indicate who's performing the action in passive voice (using
-*by*), but the resulting prose is generally not as good as if you were to recast
+_by_), but the resulting prose is generally not as good as if you were to recast
 the sentence as active voice. So whenever possible, make the doer the subject of
 the sentence.
 
@@ -48,11 +48,11 @@ in Google's Technical Writing One guide.
 In certain cases, it's okay to use passive voice. For example, passive can be
 okay in the following instances:
 
-* To emphasize an object over an action.
+- To emphasize an object over an action.
 
 Recommended: The file is saved.
 
-* To de-emphasize a subject or actor.
+- To de-emphasize a subject or actor.
 
 Recommended: Over 50 conflicts were
 found in the file.
@@ -60,7 +60,7 @@ found in the file.
 Not recommended: You created over 50
 conflicts in the file.
 
-* If your readers don't need to know who's responsible for the action.
+- If your readers don't need to know who's responsible for the action.
 
 Recommended: The database was purged
 in January.

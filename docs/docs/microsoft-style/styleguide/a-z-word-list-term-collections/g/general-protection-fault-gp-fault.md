@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # general protection fault, GP fault
 
-Spell out on the first mention. On subsequent mentions, it's OK to abbreviate as *GP fault*.
+Spell out on the first mention. On subsequent mentions, it's OK to abbreviate as _GP fault_.

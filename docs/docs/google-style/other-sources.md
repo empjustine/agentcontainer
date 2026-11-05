@@ -21,13 +21,13 @@ incident" (<https://en.wikipedia.org/wiki/Disaster_recovery#Recovery_Point_Objec
 
 Unless you are sure that your company owns the assets, avoid copying from these sources:
 
-* Third-party sources: This list includes documentation, websites, books, blogs, videos, images,
+- Third-party sources: This list includes documentation, websites, books, blogs, videos, images,
   podcasts, and more.
-* Reference sources: Avoid copying from dictionaries, encyclopedias, and Wikipedia.
-* Open source product documentation: Open source software (OSS) has different license options,
+- Reference sources: Avoid copying from dictionaries, encyclopedias, and Wikipedia.
+- Open source product documentation: Open source software (OSS) has different license options,
   which can range from no reuse without attribution to complete freedom to use the material. It's
   not safe to assume that you can reuse this content freely. When in doubt, don't use their
   content.
-* GitHub content: Different GitHub users might adopt different licenses for their content. It's
+- GitHub content: Different GitHub users might adopt different licenses for their content. It's
   not safe to assume that you can reuse this content freely. When in doubt, don't use their
   content.

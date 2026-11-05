@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # File Explorer
 
-Use instead of *Windows Explorer.* Don't use an article, such as *the,* to precede *File Explorer.* Don't shorten to *Explorer.*
+Use instead of _Windows Explorer._ Don't use an article, such as _the,_ to precede _File Explorer._ Don't shorten to _Explorer._

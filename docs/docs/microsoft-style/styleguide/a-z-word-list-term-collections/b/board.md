@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # board
 
-Don't use to describe hardware that provides a connection between a peripheral device and a computer. Use *card* instead.
+Don't use to describe hardware that provides a connection between a peripheral device and a computer. Use _card_ instead.
 
 **Examples**  
-video card   
+video card  
 motherboard

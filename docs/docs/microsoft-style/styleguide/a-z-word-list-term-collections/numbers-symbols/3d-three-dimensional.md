@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # 3D, three-dimensional
 
-Use *3D* most of the time. 
+Use _3D_ most of the time.
 
-Spell out *three-dimensional* on the first mention if your audience may be unfamiliar with the acronym. Always hyphenate *three-dimensional*.
+Spell out _three-dimensional_ on the first mention if your audience may be unfamiliar with the acronym. Always hyphenate _three-dimensional_.

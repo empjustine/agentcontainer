@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # spoofing
 
-It's OK to use *spoofing* in content for all audiences if you're sure that your audience will understand the meaning. To avoid ambiguity, be specific about the kind of spoofing you're referring to, such as *email spoofing* or *IP spoofing*.
+It's OK to use _spoofing_ in content for all audiences if you're sure that your audience will understand the meaning. To avoid ambiguity, be specific about the kind of spoofing you're referring to, such as _email spoofing_ or _IP spoofing_.

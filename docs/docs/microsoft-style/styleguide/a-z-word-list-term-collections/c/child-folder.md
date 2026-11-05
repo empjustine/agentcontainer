@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # child folder
 
-Don't use. Use *subfolder,* *subdirectory,* *folder,* or the name of the folder.
+Don't use. Use _subfolder,_ _subdirectory,_ _folder,_ or the name of the folder.

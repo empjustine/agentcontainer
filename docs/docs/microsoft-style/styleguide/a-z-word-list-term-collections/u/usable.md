@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # usable
 
-Use instead of *useable.*
+Use instead of _useable._

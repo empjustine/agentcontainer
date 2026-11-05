@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # 2D, two-dimensional
 
-Spell out on the first mention if your audience may be unfamiliar with the term. On subsequent mentions, use *2D*.
+Spell out on the first mention if your audience may be unfamiliar with the term. On subsequent mentions, use _2D_.
 
-Always hyphenate *two-dimensional*.
+Always hyphenate _two-dimensional_.

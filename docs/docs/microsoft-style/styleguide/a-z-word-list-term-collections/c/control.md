@@ -9,9 +9,9 @@ ms.prod: non-product-specific
 
 # control
 
-In content for a general audience, don't use *control* to refer to a UI element such as a text box, check box, or list box. It's OK to use *control* to refer to adding a user-defined control in a program.
+In content for a general audience, don't use _control_ to refer to a UI element such as a text box, check box, or list box. It's OK to use _control_ to refer to adding a user-defined control in a program.
 
-In other contexts, it's OK to use *control*.  
+In other contexts, it's OK to use _control_.
 
 **Examples**  
 In the **Font** list, select the font that you want to use.  

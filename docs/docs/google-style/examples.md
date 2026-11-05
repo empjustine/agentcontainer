@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Avoid using real or personally identifiable information (PII) in examples, including domain names, email addresses, and phone numbers.
-* Utilize the provided list of example data, such as reserved domain names (e.g., example.com), generic email addresses (e.g., dana@example.com), and fictional person names, for creating realistic but anonymized examples.
-* When depicting people in examples, prioritize inclusivity by using gender-neutral pronouns, diverse names, and avoiding stereotypes.
-* For company, project, street address, phone number, and IP address examples, refer to the specific guidelines and fictitious options provided to maintain user privacy.
-* Refer to the style guide for detailed instructions on placeholder usage, formatting specifics (e.g., phone numbers), and writing inclusive documentation.
+- Avoid using real or personally identifiable information (PII) in examples, including domain names, email addresses, and phone numbers.
+- Utilize the provided list of example data, such as reserved domain names (e.g., example.com), generic email addresses (e.g., dana@example.com), and fictional person names, for creating realistic but anonymized examples.
+- When depicting people in examples, prioritize inclusivity by using gender-neutral pronouns, diverse names, and avoiding stereotypes.
+- For company, project, street address, phone number, and IP address examples, refer to the specific guidelines and fictitious options provided to maintain user privacy.
+- Refer to the style guide for detailed instructions on placeholder usage, formatting specifics (e.g., phone numbers), and writing inclusive documentation.
 
 Don't use real domain names, email addresses, or people's names in your examples. Don't reveal
 personally identifiable information (PII), such as domain names, email addresses,
@@ -28,12 +28,12 @@ for use in documentation.
 Alternatively, you can use any of the following domain names, which Google
 owns specifically for use in documentation:
 
-* altostrat.com
-* examplepetstore.com
-* example-pet-store.com
-* myownpersonaldomain.com
-* my-own-personal-domain.com
-* cymbalgroup.com
+- altostrat.com
+- examplepetstore.com
+- example-pet-store.com
+- myownpersonaldomain.com
+- my-own-personal-domain.com
+- cymbalgroup.com
 
 If you need an example domain name for an internationalized domain name, use one of the
 [IDN Test TLDs](https://en.wikipedia.org/wiki/IDN_Test_TLDs) and copy from the
@@ -57,36 +57,36 @@ person names, product names, or made-up names in email addresses.
 When you need to include example given names in your documentation,
 draw from the following list:
 
-* Alex
-* Amal
-* Ariel
-* Bola
-* Charlie
-* Cruz
-* Dana
-* Dani
-* Hao
-* Ira
-* Izumi
-* Jie
-* Kai
-* Kalani
-* Kim
-* Kiran
-* Lee
-* Lucian
-* Luka
-* Mahan
-* Noam
-* Nur
-* Quinn
-* Raha
-* Rosario
-* Sasha
-* Tal
-* Taylor
-* Tristan
-* Yuri
+- Alex
+- Amal
+- Ariel
+- Bola
+- Charlie
+- Cruz
+- Dana
+- Dani
+- Hao
+- Ira
+- Izumi
+- Jie
+- Kai
+- Kalani
+- Kim
+- Kiran
+- Lee
+- Lucian
+- Luka
+- Mahan
+- Noam
+- Nur
+- Quinn
+- Raha
+- Rosario
+- Sasha
+- Tal
+- Taylor
+- Tristan
+- Yuri
 
 ### Example person surnames
 
@@ -104,7 +104,7 @@ cultural contexts, and backgrounds, so strive to include a variety of people in 
 as well.
 
 Use the [gender-neutral singular pronouns](/style/pronouns#gender-neutral-pronouns)
-*they*, *their*, and *theirs*
+_they_, _their_, and _theirs_
 whenever possible, and avoid specifying gender unless it is integral to the information you
 are communicating. Avoid examples that depend on a gender binary. However, if you do write an
 example that requires specifying gender, consider that some of the names on this list may imply
@@ -114,9 +114,9 @@ chosen do not carry a conflicting gender connotation.
 Be mindful of assumptions and stereotypes that might be reinforced through hypothetical
 examples, such as:
 
-* Job roles and levels, such as executive, that might be disproportionately assigned
+- Job roles and levels, such as executive, that might be disproportionately assigned
   particular gendered personas.
-* Job roles, such as developer or engineer, that might be disproportionately assigned
+- Job roles, such as developer or engineer, that might be disproportionately assigned
   particular ethnic personas.
 
 We recommend using names from the preceding list in most documentation. Some security
@@ -153,41 +153,41 @@ When you need an IPv4 address in an example, such as in a log, use one of the
 [RFC 5737](https://tools.ietf.org/html/rfc5737) addresses that are
 reserved for use in documentation:
 
-* `192.0.2.0` through `192.0.2.255`
-* `198.51.100.0` through `198.51.100.255`
-* `203.0.113.0` through `203.0.113.255`
+- `192.0.2.0` through `192.0.2.255`
+- `198.51.100.0` through `198.51.100.255`
+- `203.0.113.0` through `203.0.113.255`
 
 For IPv4 address ranges, use the following examples:
 
-* `192.0.2.0/24`
-* `198.51.100.0/24`
-* `203.0.113.0/24`
+- `192.0.2.0/24`
+- `198.51.100.0/24`
+- `203.0.113.0/24`
 
 When you need an IPv6 address, use values from the
 [RFC 3849](https://tools.ietf.org/html/rfc3849) range. Example IPv6 addresses include
 the following:
 
-* `2001:db8::`
-* `2001:db8:ffff:ffff:ffff:ffff:ffff:ffff`
-* `2001:db8:1:1:1:1:1:1`
-* `2001:db8:2:2:2:2:2:2`
-* `2001:db8:3:3:3:3:3:3`
-* `2001:db8:4:4:4:4:4:4`
+- `2001:db8::`
+- `2001:db8:ffff:ffff:ffff:ffff:ffff:ffff`
+- `2001:db8:1:1:1:1:1:1`
+- `2001:db8:2:2:2:2:2:2`
+- `2001:db8:3:3:3:3:3:3`
+- `2001:db8:4:4:4:4:4:4`
 
 For IPv6 address ranges, use the following example:
 
-* `2001:db8::/32`
+- `2001:db8::/32`
 
 ## Example street addresses
 
 Avoid using real street addresses in examples. Instead, use one of the following fictional
 street addresses:
 
-* 1800 Amphibious Blvd.  
+- 1800 Amphibious Blvd.  
   Mountain View, CA 94045
-* Avenida da Pastelaria, 1903  
+- Avenida da Pastelaria, 1903  
   Lisbon, 1229-076
-* 8 Rue du Nom Fictif  
+- 8 Rue du Nom Fictif  
   341 Paris
 
 ## Example project names

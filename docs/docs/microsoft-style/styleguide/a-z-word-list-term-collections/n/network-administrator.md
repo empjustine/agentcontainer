@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # network administrator
 
-Use only to specifically refer to the administrator of networks. In general, use *administrator* or *system administrator* unless you must specify a particular kind.
+Use only to specifically refer to the administrator of networks. In general, use _administrator_ or _system administrator_ unless you must specify a particular kind.
 
 **See also** [administrator, admin](~/a-z-word-list-term-collections/a/administrator-admin.md)

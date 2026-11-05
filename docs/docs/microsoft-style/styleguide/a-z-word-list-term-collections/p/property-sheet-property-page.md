@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # property sheet, property page
 
-Don't use in content for a general audience. Use *dialog box* or *tab* instead.
+Don't use in content for a general audience. Use _dialog box_ or _tab_ instead.

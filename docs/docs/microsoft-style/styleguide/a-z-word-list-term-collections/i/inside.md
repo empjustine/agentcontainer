@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # inside
 
-Use instead of *inside of.*
+Use instead of _inside of._
 
 **Example**  
 To change the margins inside the text box ....

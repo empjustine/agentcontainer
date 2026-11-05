@@ -5,17 +5,17 @@
 
 ## Page Summary
 
-* Write effective opening sentences that clearly establish the paragraph's central point, as busy readers often focus on them.
-* Maintain paragraph focus by ensuring each paragraph sticks to a single topic and remove any sentences that deviate from it.
-* Strive for a balanced paragraph length, avoiding overly long paragraphs that intimidate readers and overly short ones that hinder flow, aiming for 3-5 sentences per paragraph.
-* Ensure your paragraphs answer the crucial questions of what, why, and how to provide readers with context, relevance, and actionable insights.
+- Write effective opening sentences that clearly establish the paragraph's central point, as busy readers often focus on them.
+- Maintain paragraph focus by ensuring each paragraph sticks to a single topic and remove any sentences that deviate from it.
+- Strive for a balanced paragraph length, avoiding overly long paragraphs that intimidate readers and overly short ones that hinder flow, aiming for 3-5 sentences per paragraph.
+- Ensure your paragraphs answer the crucial questions of what, why, and how to provide readers with context, relevance, and actionable insights.
 
 **Estimated Time:** 10 minutes
 
 This unit provides some guidelines on building cohesive paragraphs.
 But first, here is an inspirational message:
 
-> The work of writing is *simply* this: untangling the dependencies
+> The work of writing is _simply_ this: untangling the dependencies
 > among the parts of a topic, and presenting those parts in a logical
 > stream that enables the reader to understand you.
 
@@ -124,6 +124,7 @@ for the paragraph:
 The paragraph focuses on spreadsheets as a way of organizing data.
 The third sentence distracts from that theme. Move the third sentence
 to another paragraph about mathematical operations in spreadsheets.
+
 > **Spreadsheets** provide a great way to organize data. Think of a
 > spreadsheet as a table with rows and columns. ~~Spreadsheets also
 > provide mathematical functions, such as means and standard deviations.~~
@@ -137,7 +138,7 @@ to another paragraph about mathematical operations in spreadsheets.
 
 ## Don't make paragraphs too long or too short
 
-Long paragraphs are visually intimidating. *Very* long paragraphs form
+Long paragraphs are visually intimidating. _Very_ long paragraphs form
 a dreaded "wall of text" that readers ignore. Readers generally welcome
 paragraphs containing three to five sentences, but will avoid paragraphs
 containing more than about seven sentences. When revising, consider dividing

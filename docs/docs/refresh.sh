@@ -20,6 +20,33 @@ die() {
 	exit 1
 }
 
+# The vendored tree is committed oxfmt-canonical and ./lint.sh gates that, so a
+# refresh has to land in the same shape — otherwise every re-clip would show a
+# formatting diff on top of the real change. The version must match lint.sh's
+# OXFMT_VERSION: a different oxfmt can reformat differently, which is the why
+# of that pin.
+# The vendored tree is committed oxfmt-canonical and ./lint.sh gates that, so a
+# refresh has to land in the same shape — otherwise every re-clip would show a
+# formatting diff on top of the real change. The version must match lint.sh's
+# OXFMT_VERSION: two oxfmt versions on one tree give two canonical forms, and the
+# gate only knows the pinned one.
+OXFMT_VERSION=0.75.0
+format_vendored() {
+	# mise first: it is the only source of the PINNED version, and a bare `oxfmt`
+	# on a mise host is a shim that may answer a different one. `command -v oxfmt`
+	# is not a probe either — the shim satisfies PATH lookups with no version set
+	# and then fails on exec (docs/d123's trap for go). --version is the proof.
+	if command -v mise >/dev/null 2>&1; then
+		( cd "$here" && mise exec "oxfmt@$OXFMT_VERSION" -- oxfmt --write \
+			'google-style/**/*.md' 'google-tech-writing/**/*.md' 'microsoft-style/**/*.md' >/dev/null )
+	elif oxfmt --version >/dev/null 2>&1; then
+		( cd "$here" && oxfmt --write \
+			'google-style/**/*.md' 'google-tech-writing/**/*.md' 'microsoft-style/**/*.md' >/dev/null )
+	else
+		printf 'refresh.sh: no runnable oxfmt — the tree is not canonical; ./lint.sh shows the diff\n' >&2
+	fi
+}
+
 # One rendered Google page -> one Markdown file.
 to_md() {
 	uv run --quiet --with markdownify --with beautifulsoup4 python - "$1" "$2" "$3" <<'PY'
@@ -105,6 +132,7 @@ fetch_google() {
 		mkdir -p "$(dirname "$out")"
 		to_md "$tmp/page.html" "https://developers.google.com/$page" "$clip_date" >"$out"
 	done <"$tmp/pages.txt"
+	format_vendored
 	printf 'google: done (%s miss)\n' "$miss"
 }
 
@@ -123,6 +151,7 @@ fetch_microsoft() {
 		cp "$src" "$here/microsoft-style/$rel"
 	done
 	cp "$tmp/ms/LICENSE" "$here/microsoft-style/LICENSE"
+	format_vendored
 	printf 'microsoft: done (upstream %s)\n' "$sha"
 }
 

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # et al.
 
-Don't use except in a citation that includes three or more authors. Use *and others* instead.
+Don't use except in a citation that includes three or more authors. Use _and others_ instead.

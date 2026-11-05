@@ -10,6 +10,7 @@ ms.prod: non-product-specific
 # Top 10 tips for Microsoft style and voice
 
 ## Use bigger ideas, fewer words
+
 Our modern design hinges on crisp minimalism. Shorter is always better. To
 learn more, see [Brand voice](~/brand-voice-above-all-simple-human.md).
 
@@ -18,6 +19,7 @@ learn more, see [Brand voice](~/brand-voice-above-all-simple-human.md).
 With this: Ready to buy? Contact us.
 
 ## Write like you speak
+
 Read your text aloud. Does it sound like something a real person would
 say? Be friendly and conversational. No. Robot. Words. To
 learn more, see [Brand voice](~/brand-voice-above-all-simple-human.md).
@@ -27,16 +29,18 @@ learn more, see [Brand voice](~/brand-voice-above-all-simple-human.md).
 With this: You need an ID that looks like this: <someone@example.com>
 
 ## Project friendliness
-Use contractions: *it’s, you’ll, you’re, we’re, let’s.* To learn more, see [Use contractions](~/word-choice/use-contractions.md).
 
-**Example**<br />Replace this: To help you avoid traffic, remember anniversaries, and 
-in general do more, Cortana needs to know what you are interested in, what is on your calendar, 
-and who you are doing things with. 
+Use contractions: _it’s, you’ll, you’re, we’re, let’s._ To learn more, see [Use contractions](~/word-choice/use-contractions.md).
 
-With this: To help you avoid traffic, remember anniversaries, and in general do more, 
+**Example**<br />Replace this: To help you avoid traffic, remember anniversaries, and
+in general do more, Cortana needs to know what you are interested in, what is on your calendar,
+and who you are doing things with.
+
+With this: To help you avoid traffic, remember anniversaries, and in general do more,
 Cortana needs to know what you’re interested in, what’s on your calendar, and who you’re doing things with.
 
 ## Get to the point fast
+
 Lead with what’s most important. Front-load keywords for scanning. Make
 customer choices and next steps obvious. To learn more, see [Scannable content](~/scannable-content/index.md).
 
@@ -52,16 +56,18 @@ and page layouts you use most often. Then use the template whenever you
 create a new document.
 
 ## Be brief
+
 Give customers just enough information to make decisions confidently. Prune every excess word. To learn more, see [Word choice](~/word-choice/index.md).
 
 **Example**<br />Replace this:
 The Recommended Charts command on the Insert tab recommends charts that
 are likely to represent your data well. Use the command when you want
-to visually present data, and you're not sure how to do it. 
+to visually present data, and you're not sure how to do it.
 
 With this: Create a chart that's just right for your data by using the Recommend Charts command on the Insert tab.
 
 ## When in doubt, don’t capitalize
+
 Default to sentence-style capitalization—capitalize only the first word of
 a heading or phrase and any proper nouns or names. Never Use Title
 Capitalization (Like This). Never Ever. To learn more, see [Capitalization](~/capitalization.md).
@@ -71,22 +77,25 @@ Capitalization (Like This). Never Ever. To learn more, see [Capitalization](~/ca
 With these:<br />Find a Microsoft partner<br />Office 365 customer<br />Limited-time offer<br />Join us online
 
 ## Skip periods (and : \! ?)
+
 Skip end punctuation on titles, headings, subheads, UI titles, and
 items in a list that are three or fewer words. Save the periods for
-paragraphs and body copy. To learn more, see [Punctuation](~/punctuation/index.md), [Headings](~/scannable-content/headings.md), and [Lists](~/scannable-content/lists.md). 
+paragraphs and body copy. To learn more, see [Punctuation](~/punctuation/index.md), [Headings](~/scannable-content/headings.md), and [Lists](~/scannable-content/lists.md).
 
 **Example**<br />Replace this:<br />**Move a tile.**<br />1\. Press and hold the tile.
 
 With this:<br />**Move a tile**<br />1\. Press and hold the tile.
 
 ## Remember the last comma
-In a list of three or more items, include a comma before the conjunction. (The comma that comes before the conjunction is known as the Oxford or serial comma.) To learn more, see [Commas](~/punctuation/commas.md). 
+
+In a list of three or more items, include a comma before the conjunction. (The comma that comes before the conjunction is known as the Oxford or serial comma.) To learn more, see [Commas](~/punctuation/commas.md).
 
 **Example**<br />Replace this: Android, iOS and Windows
 
 With this: Android, iOS, and Windows
 
 ## Don’t be spacey
+
 Use only one space after periods, question marks, and colons—and no spaces around dashes. To learn more, see [Punctuation](~/punctuation/index.md).
 
 **Example**<br />Replace this: Use pipelines — logical groups of activities — to consolidate activities that are part of a task.
@@ -94,7 +103,8 @@ Use only one space after periods, question marks, and colons—and no spaces aro
 With this: Use pipelines—logical groups of activities—to consolidate activities that are part of a task.
 
 ## Revise weak writing
-Most of the time, start each statement with a verb. Edit out *you can* and *there is, there are, there were*. To learn more, see [Verbs](~/grammar/verbs.md) and [Word choice](~/word-choice/index.md).
+
+Most of the time, start each statement with a verb. Edit out _you can_ and _there is, there are, there were_. To learn more, see [Verbs](~/grammar/verbs.md) and [Word choice](~/word-choice/index.md).
 
 **Example**<br />Replace this: You can access Office apps across your devices, and you get online file storage and sharing.
 

@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # etc.
 
-Don't use. Instead be specific. When space is limited, use *such as* or *like* followed by an example or two.
+Don't use. Instead be specific. When space is limited, use _such as_ or _like_ followed by an example or two.
 
 **Examples**  
-Body text is most readable in Times New Roman, Palatino, and other serif fonts. (Not *Body text is most readable in Times New Roman, Palatino, etc.*)   
-Body text is most readable in serif fonts like Palatino. 
+Body text is most readable in Times New Roman, Palatino, and other serif fonts. (Not _Body text is most readable in Times New Roman, Palatino, etc._)  
+Body text is most readable in serif fonts like Palatino.

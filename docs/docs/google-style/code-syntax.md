@@ -5,26 +5,26 @@
 
 ## Page Summary
 
-* This document provides best practices for documenting command-line commands, focusing on clarity and user experience.
-* It emphasizes clear formatting, including code blocks, line breaks, placeholders, and punctuation, for easy readability.
-* It outlines how to handle optional, mutually exclusive, and repeating arguments, recommending simplification for click-to-copy examples.
-* The guide details how to present command prompts, input/output, and command-line terminology for consistency.
-* It offers specific recommendations for handling output from commands, including selective inclusion and introductory phrases.
+- This document provides best practices for documenting command-line commands, focusing on clarity and user experience.
+- It emphasizes clear formatting, including code blocks, line breaks, placeholders, and punctuation, for easy readability.
+- It outlines how to handle optional, mutually exclusive, and repeating arguments, recommending simplification for click-to-copy examples.
+- The guide details how to present command prompts, input/output, and command-line terminology for consistency.
+- It offers specific recommendations for handling output from commands, including selective inclusion and introductory phrases.
 
 This page shows how to document command-line commands and their arguments. For more
 information about formatting code that appears in text, placeholders, and code samples, see the
 following links:
 
-* [Code in text](/style/code-in-text)
-* [Formatting placeholders](/style/placeholders)
-* [Code samples](/style/code-samples)
+- [Code in text](/style/code-in-text)
+- [Formatting placeholders](/style/placeholders)
+- [Code samples](/style/code-samples)
 
 ## Best practices
 
 When you write procedural or conceptual documentation for a command-line command, apply the
 following best practices:
 
-* **Provide an inline link to the command reference**. A good place for that link is in
+- **Provide an inline link to the command reference**. A good place for that link is in
   the text that introduces the command or a series of steps.
 
   Recommended:
@@ -35,11 +35,12 @@ following best practices:
   ```
   gcloud compute ssh
   ```
-* **Determine which arguments are needed to complete each task in the recommended way**.
+
+- **Determine which arguments are needed to complete each task in the recommended way**.
   To minimize the number of options that you need to document in non-reference content, use as
   few optional arguments as possible. Rely on the command reference for the complete list of
   arguments.
-* **Provide a click-to-copy command example that the reader doesn't need to edit after they
+- **Provide a click-to-copy command example that the reader doesn't need to edit after they
   copy it**. If possible, include only runnable code and placeholder variables in the
   click-to-copy example.
 
@@ -61,26 +62,27 @@ following best practices:
 To mark a block of code such as a lengthy command or a code sample, use the
 following formatting:
 
-* In HTML, use the `pre` element.
-* In Markdown, use a code fence (```` ``` ````).
+- In HTML, use the `pre` element.
+- In Markdown, use a code fence (` ``` `).
 
 To format a command with multiple elements, do the following:
 
-* When a line exceeds 80 characters, you can safely add a line break before
+- When a line exceeds 80 characters, you can safely add a line break before
   some characters, such as a single hyphen, double hyphen, underscore, or
   quotation marks. After the first line, indent each line by four spaces to vertically align each line
   that follows a line break.
-* When you split a command line with a line break, each line except the
+- When you split a command line with a line break, each line except the
   last line must end with the command-continuation character. Commands that don't
   have the command-continuation character don't work.
 
-  + Linux or Cloud Shell: A backslash typically preceded with a space
+  - Linux or Cloud Shell: A backslash typically preceded with a space
     ( `\`)
-  + Windows: A caret preceded with a space ( `^`)
-* Format placeholder text with [placeholders](/style/placeholders).
-* Follow the command line with a descriptive list of the placeholders
+  - Windows: A caret preceded with a space ( `^`)
+
+- Format placeholder text with [placeholders](/style/placeholders).
+- Follow the command line with a descriptive list of the placeholders
   used in the command line. For more information, see [Explaining placeholders](/style/placeholders#explain-placeholders).
-* When documenting a command-line option or argument, use end puctuation for complete
+- When documenting a command-line option or argument, use end puctuation for complete
   sentences. Don't use end punctuation for single words or noun phrases, unless there is a mix of
   sentences and noun phrases. This guidance is similar to [end punctuation in lists](/style/lists#capitalization-and-end-punctuation).
   For more information, see [Google AIP guidelines for documentation](https://google.aip.dev/192#style).
@@ -185,12 +187,12 @@ In the following example, choose either `FILE_1` or `FILE_2`:
 
 In the following example, there are also two options:
 
-* Left side of pipe: If the source code is deployed from a cloud
+- Left side of pipe: If the source code is deployed from a cloud
   repository, the following is required:  
   `--source=CLOUD_SOURCE --source-url=SOURCE_URL`
-* Right side of pipe: If the source code is in a local directory:
-  + `--bucket=BUCKET` is required.
-  + `--source=LOCAL_SOURCE` is optional, as specified by the square
+- Right side of pipe: If the source code is in a local directory:
+  - `--bucket=BUCKET` is required.
+  - `--source=LOCAL_SOURCE` is optional, as specified by the square
     brackets.
 
 ```
@@ -224,7 +226,7 @@ contain characters (such as square brackets, curly braces, pipes, and ellipses) 
 commands if the reader doesn't remove them. Avoid using these types of arguments in click-to-copy
 commands. Instead, choose one of the following approaches:
 
-* **Remove the optional arguments**. As a best practice,
+- **Remove the optional arguments**. As a best practice,
   [use only the necessary arguments](#best-practices)
   to complete the task for the most common use case. If possible, remove optional arguments from
   the command; always provide a link to the command reference for the command, where readers can
@@ -243,7 +245,8 @@ commands. Instead, choose one of the following approaches:
 
   If you want to narrow the list of VMs to a specific zone, use the previous command with the
   `--zones` flag.
-* **Use separate code blocks for each option**. In some cases, it might be ideal to
+
+- **Use separate code blocks for each option**. In some cases, it might be ideal to
   provide more than one click-to-copy code block within the same section.
 
   Recommended:
@@ -264,7 +267,8 @@ commands. Instead, choose one of the following approaches:
       --source-file=SOURCE_FILE \
       --byol
   ```
-* **Document optional arguments in separate tasks**. In some cases, it might be best to
+
+- **Document optional arguments in separate tasks**. In some cases, it might be best to
   treat different options in separate sections.
 
   Recommended:
@@ -293,7 +297,8 @@ commands. Instead, choose one of the following approaches:
       --source-file=SOURCE_FILE \
       --data-disk
   ```
-* **Let the reader know that the command contains optional arguments**. If you must
+
+- **Let the reader know that the command contains optional arguments**. If you must
   include special characters to indicate optional arguments, indicate that fact when you
   introduce the command.
 
@@ -354,21 +359,21 @@ Wakeup reason: 0
 
 For more information about presenting output, also see the following:
 
-* For more information about how to present output in procedures, see [Order of multiple
+- For more information about how to present output in procedures, see [Order of multiple
   components in a step](/style/procedures#order-of-multiple-components-in-a-step).
-* For more information about using placeholders in output, see [Placeholders in output](/style/placeholders#placeholders-in-output).
-* For more information about using examples such as domain names and IP addresses in output, see [Example domains and names](/style/examples).
+- For more information about using placeholders in output, see [Placeholders in output](/style/placeholders#placeholders-in-output).
+- For more information about using examples such as domain names and IP addresses in output, see [Example domains and names](/style/examples).
 
 ## Command-line terminology
 
 When discussing commands and their constituent parts in the `gcloud` CLI
 and in Linux commands, follow this guidance:
 
-* Avoid mapping nomenclature of the `gcloud` CLI's commands to
+- Avoid mapping nomenclature of the `gcloud` CLI's commands to
   Linux commands.
-* Linux commands can be complicated. It's wise to describe what the entire
+- Linux commands can be complicated. It's wise to describe what the entire
   command does rather than what its individual elements are called.
-* For Linux commands or commands in the `gcloud` CLI, ask yourself if the reader must
+- For Linux commands or commands in the `gcloud` CLI, ask yourself if the reader must
   know the name of the command-line element or if explaining the command is sufficient.
 
 ### gcloud commands
@@ -381,13 +386,13 @@ gcloud GROUP | COMMAND [--account=ACCOUNT] [--configuration=CONFIGURATION] \
 ```
 
 For the sake of accurate classification, the `gcloud` CLI's
-syntax distinguishes between a *command* and a *command group*. In
+syntax distinguishes between a _command_ and a _command group_. In
 docs, however, command-line contents are generally referred to as commands.
 
 You can use commands (and groups) alone or with one or more flags. A
-*flag* is a Google Cloud-specific term for any element
+_flag_ is a Google Cloud-specific term for any element
 other than the command or group name itself. A command or flag might also
-take an *argument*, for example, a region value.
+take an _argument_, for example, a region value.
 
 #### Example command
 
@@ -420,18 +425,18 @@ gcloud ml-engine jobs submit training ${JOB_NAME} \
 
 The preceding command consists of the following elements:
 
-* `ml-engine` is a `gcloud` command group.
-* `jobs` is an `ml-engine` command group.
-* `submit` is a `jobs` command group.
-* `training` is a `submit` command.
-* `${JOB_NAME}` is an argument that refers to an environment
+- `ml-engine` is a `gcloud` command group.
+- `jobs` is an `ml-engine` command group.
+- `submit` is a `jobs` command group.
+- `training` is a `submit` command.
+- `${JOB_NAME}` is an argument that refers to an environment
   variable called `JOB_NAME` that was set earlier.
-* `--package-path` is a flag set to a path to a Python package to build.
-* `--` in isolation separates the `gcloud` arguments that precede it from
+- `--package-path` is a flag set to a path to a Python package to build.
+- `--` in isolation separates the `gcloud` arguments that precede it from
   the [user arguments](https://cloud.google.com/sdk/gcloud/reference/ml-engine/jobs/submit/training#USER_ARGS)
   that follow it.
 
-In addition to the term flag, *option* is often used as a
+In addition to the term flag, _option_ is often used as a
 catchall term when you don't want to mire the reader in specialized
 nomenclature.
 
@@ -446,8 +451,8 @@ This section covers only the most common elements. For a more detailed reference
 see [The Linux Command Line](http://wiki.lib.sun.ac.za/images/c/ca/TLCL-13.07.pdf).
 
 Where the `gcloud` CLI uses the catchall terms
-flag and option, Linux commands use *options*, *parameters*,
-*arguments*, and a host of specialized syntax elements. The following is an
+flag and option, Linux commands use _options_, _parameters_,
+_arguments_, and a host of specialized syntax elements. The following is an
 example:
 
 ```
@@ -456,19 +461,19 @@ find /usr/src/linux -follow -type f -name '*.[ch]' | xargs grep -iHn pcnet
 
 The preceding command consists of the following elements:
 
-* `find` is the command name.
-* `/usr/src/linux` is an argument that specifies the path to look
+- `find` is the command name.
+- `/usr/src/linux` is an argument that specifies the path to look
   in. Easier to refer to as only a path.
-* `-follow` is an option. The hyphen (`-`), often called a *dash* in
+- `-follow` is an option. The hyphen (`-`), often called a _dash_ in
   this context, is part of the option.
-* `-type` is an option with a value of `f`.
-* `-name` is an option with a value of `'*.[ch]'`, where
-  the asterisk (`*`) is a *metacharacter* signifying a wildcard.
-  Metacharacters are used in Linux shell commands for *globbing*, or filename
+- `-type` is an option with a value of `f`.
+- `-name` is an option with a value of `'*.[ch]'`, where
+  the asterisk (`*`) is a _metacharacter_ signifying a wildcard.
+  Metacharacters are used in Linux shell commands for _globbing_, or filename
   expansion. In addition to the asterisk, metacharacters include the question mark
   (`?`) and caret (`^`).
 
-The results of the first command are redirected by using a *pipe*
+The results of the first command are redirected by using a _pipe_
 (`|`) to the `xargs grep -iHn pcnet` command. Other
 redirection symbols include the greater than symbol (`>`), less than symbol
 (`<`), left double angle quotation mark (`<<`), and right double
@@ -480,14 +485,14 @@ and sending it as input to another file, command, program, or script.
 
 Linux signals require vocabulary choices that
 are generally discouraged elsewhere in documentation. We recommend using the terms in the
-following table *only* in the context of process control:
+following table _only_ in the context of process control:
 
-| Signal | Description |
-| --- | --- |
-| `SIGKILL` | Signal sent to *kill* a specified process, all members of a specified process group, or all processes on the system. `SIGKILL` cannot be caught, blocked, or ignored. Do not substitute *cancel*, *end*, *exit*, *quit*, *stop*, or *terminate*. |
-| `SIGTERM` | Signal sent as a request to *terminate* a process. Although similar to `SIGKILL`, this signal gives the process a chance to clean up any child processes that might be running. Do not substitute *cancel*, *end*, *exit*, *quit*, or *stop*. |
-| `SIGQUIT` | Signal sent from a keyboard to *quit* a process. Some processes can catch, block, or ignore a quit signal. Do not substitute *cancel*, *end*, *exit*, *quit*, or *stop*. |
-| `SIGINT` | Signal sent to *interrupt* a process immediately. The default action of this signal is to terminate a process gracefully. It can be handled, ignored, or caught. It can be sent from a terminal—for example, when a user presses `Control+C`. Do not substitute *suspend*, *end*, *exit*, *pause*, or *terminate*. |
-| `SIGPAUSE` | Signal that tells a process to *pause*, or *sleep*, until any signal is delivered that either terminates the process or invokes a signal-catching function. Do not substitute *cancel* or *interrupt*. |
-| `SIGSUSPEND` | Signal sent to temporarily *suspend* execution of a process. Used to prevent delivery of a particular signal during the execution of a critical code section. Do not substitute *pause* or *exit*. |
-| `SIGSTOP` | Signal sent to *stop* execution of a process for later continuation (upon receiving a `SIGCONT` signal). `SIGSTOP` cannot be caught, blocked, or ignored. Do not substitute *cancel*, *end*, *exit*, *interrupt*, *quit*, or *terminate*. |
+| Signal       | Description                                                                                                                                                                                                                                                                                                        |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `SIGKILL`    | Signal sent to _kill_ a specified process, all members of a specified process group, or all processes on the system. `SIGKILL` cannot be caught, blocked, or ignored. Do not substitute _cancel_, _end_, _exit_, _quit_, _stop_, or _terminate_.                                                                   |
+| `SIGTERM`    | Signal sent as a request to _terminate_ a process. Although similar to `SIGKILL`, this signal gives the process a chance to clean up any child processes that might be running. Do not substitute _cancel_, _end_, _exit_, _quit_, or _stop_.                                                                      |
+| `SIGQUIT`    | Signal sent from a keyboard to _quit_ a process. Some processes can catch, block, or ignore a quit signal. Do not substitute _cancel_, _end_, _exit_, _quit_, or _stop_.                                                                                                                                           |
+| `SIGINT`     | Signal sent to _interrupt_ a process immediately. The default action of this signal is to terminate a process gracefully. It can be handled, ignored, or caught. It can be sent from a terminal—for example, when a user presses `Control+C`. Do not substitute _suspend_, _end_, _exit_, _pause_, or _terminate_. |
+| `SIGPAUSE`   | Signal that tells a process to _pause_, or _sleep_, until any signal is delivered that either terminates the process or invokes a signal-catching function. Do not substitute _cancel_ or _interrupt_.                                                                                                             |
+| `SIGSUSPEND` | Signal sent to temporarily _suspend_ execution of a process. Used to prevent delivery of a particular signal during the execution of a critical code section. Do not substitute _pause_ or _exit_.                                                                                                                 |
+| `SIGSTOP`    | Signal sent to _stop_ execution of a process for later continuation (upon receiving a `SIGCONT` signal). `SIGSTOP` cannot be caught, blocked, or ignored. Do not substitute _cancel_, _end_, _exit_, _interrupt_, _quit_, or _terminate_.                                                                          |

@@ -11,23 +11,23 @@ ms.prod: non-product-specific
 
 Use emoticons. A little personality goes a long way.
 
-In the right context, emoticons can help customers connect with us. 
+In the right context, emoticons can help customers connect with us.
 
 It's OK to use emoticons carefully when:
 
-  - The message is short.
-  - The message will be seen only once.
+- The message is short.
+- The message will be seen only once.
 
 Don't use emoticons when:
 
-  - There's a serious problem.
-  - The message will be seen repeatedly.
+- There's a serious problem.
+- The message will be seen repeatedly.
 
-The emoticons :) and :( are widely understood. Be cautious using other emoticons. 
+The emoticons :) and :( are widely understood. Be cautious using other emoticons.
 
 Most of the time, don’t use emoji in text-based communications. When you do, be aware of potential cultural and diversity implications, as you would with any image. To learn more, see [Bias-free communication](~/bias-free-communication.md) and [Global communications](~/global-communications/index.md).
 
-In discussions about emoji, use *emoji* as both the singular and plural noun forms. 
+In discussions about emoji, use _emoji_ as both the singular and plural noun forms.
 
 Emoticons
 and emoji might be removed in localized versions. Make sure

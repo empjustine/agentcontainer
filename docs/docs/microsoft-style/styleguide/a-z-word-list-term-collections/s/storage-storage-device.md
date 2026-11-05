@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # storage, storage device
 
-Don't use *storage* to refer to available space on a disk. Use *disk space* instead. 
+Don't use _storage_ to refer to available space on a disk. Use _disk space_ instead.
 
-It's OK to use *storage device* to refer generally to external drives, USB drives, and other types of storage hardware. 
+It's OK to use _storage device_ to refer generally to external drives, USB drives, and other types of storage hardware.

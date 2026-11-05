@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # family
 
-Use instead of *line* to refer to a set of related Microsoft products or services.
+Use instead of _line_ to refer to a set of related Microsoft products or services.

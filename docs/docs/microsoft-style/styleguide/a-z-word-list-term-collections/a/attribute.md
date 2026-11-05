@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # attribute
 
-Don't use as a synonym for *property*.
+Don't use as a synonym for _property_.
 
 **See** [property](~/a-z-word-list-term-collections/p/property.md)

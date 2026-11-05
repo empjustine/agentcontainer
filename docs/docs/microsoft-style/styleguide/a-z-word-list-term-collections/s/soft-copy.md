@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # soft copy
 
-Don't use. Use a more specific term, such as *electronic document* or *file,* instead.
+Don't use. Use a more specific term, such as _electronic document_ or _file,_ instead.

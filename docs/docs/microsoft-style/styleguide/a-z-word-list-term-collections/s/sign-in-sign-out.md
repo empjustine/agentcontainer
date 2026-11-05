@@ -9,19 +9,19 @@ ms.prod: non-product-specific
 
 # sign in, sign out
 
-Use *sign in*
+Use _sign in_
 to describe starting a session on a computer, a device, a network, an
-app, or anywhere a username and password are required. Use *sign out* to refer to ending a session. 
+app, or anywhere a username and password are required. Use _sign out_ to refer to ending a session.
 
-Don't use *log in, login, log into, log on, logon, log onto, log off, log out, logout, sign into, signin, signoff, 
-sign off,* or *sign on* unless these terms appear in the UI (and you're writing instructions).
+Don't use _log in, login, log into, log on, logon, log onto, log off, log out, logout, sign into, signin, signoff,
+sign off,_ or _sign on_ unless these terms appear in the UI (and you're writing instructions).
 
-The verb form is two words, *sign in* or *sign out.* Avoid using as a noun or adjective (*sign-in, sign-out*). Instead, use a more descriptive or precise term.
+The verb form is two words, _sign in_ or _sign out._ Avoid using as a noun or adjective (_sign-in, sign-out_). Instead, use a more descriptive or precise term.
 
 **Examples**  
 Enter your password to sign in.  
 Learn how to sign in to Power BI service on the web and how to sign out of it.  
 After an extended period without activity, the network will sign you out automatically.  
-Some networks can be set up to remember your username and password.  
+Some networks can be set up to remember your username and password.
 
 **See also** [connect](~/a-z-word-list-term-collections/c/connect.md), [single sign-on (SSO)](~/a-z-word-list-term-collections/s/single-sign-on-sso.md)

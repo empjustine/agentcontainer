@@ -9,9 +9,9 @@ ms.prod: non-product-specific
 
 # tool
 
-Use *tool,* not *utility,* to describe a feature that helps customers accomplish tasks.
+Use _tool,_ not _utility,_ to describe a feature that helps customers accomplish tasks.
 
-**See also**   
+**See also**  
 [add-in, add-on](~/a-z-word-list-term-collections/a/add-in-add-on.md)  
 [app, application](~/a-z-word-list-term-collections/a/app-application.md)  
 [applet](~/a-z-word-list-term-collections/a/applet.md)  

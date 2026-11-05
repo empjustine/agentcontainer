@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # wildcard character
 
-Use *wildcard character,* not just *wildcard,* to describe a character used to represent one or many characters, such as the asterisk (\*) or question mark (?).
+Use _wildcard character,_ not just _wildcard,_ to describe a character used to represent one or many characters, such as the asterisk (\*) or question mark (?).
 
-*Wildcard* is one word.
+_Wildcard_ is one word.

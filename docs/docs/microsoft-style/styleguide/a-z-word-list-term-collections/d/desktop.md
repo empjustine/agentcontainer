@@ -9,10 +9,10 @@ ms.prod: non-product-specific
 
 # desktop
 
-Use to refer to the work area on the Windows screen. Refer to the desktop as *client area* only in content 
+Use to refer to the work area on the Windows screen. Refer to the desktop as _client area_ only in content
 for a technical audience and only if necessary.
 
-It's OK to use *desktop* when it's necessary to distinguish the core version of an app from its variations.  
+It's OK to use _desktop_ when it's necessary to distinguish the core version of an app from its variations.  
 **Example**  
 The feature is available on the Outlook desktop, Outlook on the web, and Outlook.com.
 

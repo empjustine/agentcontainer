@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Prioritize providing context and help within the document itself instead of relying heavily on external links for supplementary information.
-* When linking to other documents or sections, use clear and descriptive link text that accurately reflects the content being linked.
-* Ensure links open in the same window unless absolutely necessary, and in such cases, explicitly inform the reader that the link will open in a new tab.
-* Maintain consistency by using site-root-relative URLs for internal links and avoid unnecessary link repetition.
-* When linking externally, use HTTPS if supported and clearly indicate when a link leads to a different domain or server within the link text if deemed important.
+- Prioritize providing context and help within the document itself instead of relying heavily on external links for supplementary information.
+- When linking to other documents or sections, use clear and descriptive link text that accurately reflects the content being linked.
+- Ensure links open in the same window unless absolutely necessary, and in such cases, explicitly inform the reader that the link will open in a new tab.
+- Maintain consistency by using site-root-relative URLs for internal links and avoid unnecessary link repetition.
+- When linking externally, use HTTPS if supported and clearly indicate when a link leads to a different domain or server within the link text if deemed important.
 
 In general, cross-references link to nonessential information that adds to
 the reader's understanding.
@@ -32,9 +32,9 @@ When possible, provide help in context rather than linking elsewhere. For
 example, in the following situations, consider providing information on the
 page instead of linking:
 
-* Define a term.
-* Briefly explain a concept.
-* Provide a couple of steps.
+- Define a term.
+- Briefly explain a concept.
+- Provide a couple of steps.
 
 As a specific example, if you need readers to understand another product's
 software or standards, it's better to link to good documentation elsewhere
@@ -51,9 +51,9 @@ the reader.
 
 It's OK to add a secondary link in situations such as the following:
 
-* You're linking to a particular section of another page.
-* Your page is very long and the duplicate links are far apart.
-* There are multiple entry points to the document that you're linking from.
+- You're linking to a particular section of another page.
+- Your page is very long and the duplicate links are far apart.
+- There are multiple entry points to the document that you're linking from.
   For example, if a page contains a procedure section and a troubleshooting
   section, then you might need to provide the same link in both of those
   sections.
@@ -111,10 +111,10 @@ destination page, capitalized as if it's part of the sentence.
 When you write a descriptive phrase as link text, help readers quickly
 determine whether the link is relevant to them:
 
-* Place important words at the beginning of the link text.
-* Don't use the same link text in the same document for different target
+- Place important words at the beginning of the link text.
+- Don't use the same link text in the same document for different target
   pages.
-* Keep link text short where possible.
+- Keep link text short where possible.
   Don't write lengthy link text such as a sentence or short paragraph.
 
 Recommended: You can use
@@ -127,7 +127,7 @@ Not recommended: See
 ### Avoid vague link text
 
 Write link text that makes sense without the surrounding text.
-Don't use phrases such as *this document*, *this article*, or *click here*.
+Don't use phrases such as _this document_, _this article_, or _click here_.
 
 Recommended:
 For more information, see
@@ -208,9 +208,9 @@ For more information, see the
 [Clarify the purpose of a link](#clarify-purpose)
 section of this document.
 
-Don't use *on* instead of *about*.
+Don't use _on_ instead of _about_.
 
-Use *see* to refer to links and cross-references. For more information, see
+Use _see_ to refer to links and cross-references. For more information, see
 [see](/style/word-list#see).
 
 Recommended: For more information, see
@@ -248,7 +248,7 @@ sample dump file is in a CSV, Avro, or Parquet file format, then
 If a link goes to an unexpected destination or behaves in an unexpected way,
 then provide that context. The following are a few such situations:
 
-* **Links that download files and open emails.** If a link
+- **Links that download files and open emails.** If a link
   downloads a file or opens an email, then make that clear in the link text, and
   mention the file type.
 
@@ -261,7 +261,8 @@ then provide that context. The following are a few such situations:
   ```
     <a href="mailto:support@example.com">send email to Technical Support</a>
   ```
-* **Links to sections on the same page.** When you're
+
+- **Links to sections on the same page.** When you're
   linking to another section on the same page, let the reader know that the link
   takes you to a different section of the same page. Use a standard phrase to clue
   readers in if you use an on-page link.
@@ -271,7 +272,7 @@ then provide that context. The following are a few such situations:
   [Write descriptive link text](#descriptive-link-text)
   section of this document.
 
-  * **Links to sections on another page.** When you're linking
+  - **Links to sections on another page.** When you're linking
     to a section heading on another page, use the same wording and formatting as you
     do in a regular cross-reference.
 
@@ -284,10 +285,11 @@ then provide that context. The following are a few such situations:
     Recommended: For more information, see
     [Install libraries](#different-page)
     in "Building new audiences based on existing customer lifetime value."
-  * **Links that open in a new tab.** For more information, see the
+
+  - **Links that open in a new tab.** For more information, see the
     [Open links in the current tab](#current-tab) section of this
     document.
-  * **Links that go to a different domain or server.** For more
+  - **Links that go to a different domain or server.** For more
     information, see the
     [Don't use external link icons](#external-link-icons) section
     of this document.
@@ -372,17 +374,17 @@ more information, see
 In the rare case when a cross-reference isn't a link, use italics or
 quotation marks as appropriate.
 
-* For an unlinked reference to a document section, short work, or part
+- For an unlinked reference to a document section, short work, or part
   of a series—such as an episode in a web series—use quotation marks.
 
 Recommended: For more
 information, see "Describing system versions" in the following section.
 
-* For an unlinked reference to the title of a full-length work—such as a
+- For an unlinked reference to the title of a full-length work—such as a
   book, movie, or web series—use italics.
 
   Recommended: ...see
-  *The Chicago Manual of Style*.
+  _The Chicago Manual of Style_.
 
 ## Avoid external links in your documentation navigation
 
@@ -399,13 +401,13 @@ set.
 If you write sitewide CSS for your website, apply standard styling to link
 text. This helps readers find links in your content.
 
-* **Contrast link text color and regular text color.** To
+- **Contrast link text color and regular text color.** To
   help readers see links, link text should be distinguishable from the rest of the
   text on the page.
-* **Underline link text, and don't underline non-link text.**
+- **Underline link text, and don't underline non-link text.**
   When readers scan a page, a horizontal line cuts through the vertical line of
   scanning and helps readers find links.
-* **Make visited links change color.** Use color-blind-friendly
+- **Make visited links change color.** Use color-blind-friendly
   color changes to help readers differentiate links that they've followed against
   links that they haven't followed. This helps readers navigate your site
   effectively without revisiting content that they've already read.

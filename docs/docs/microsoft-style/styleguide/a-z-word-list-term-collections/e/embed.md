@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # embed
 
-Use instead of *imbed*.
+Use instead of _imbed_.

@@ -9,16 +9,16 @@ ms.prod: non-product-specific
 
 # remove
 
-Don't use *remove* to mean *delete*. 
+Don't use _remove_ to mean _delete_.
 
-Use *remove:*
+Use _remove:_
 
-  - To describe taking an item off a list in a dialog box that has **Add** and **Remove** buttons. 
-  - To
-    describe taking a toolbar button off a toolbar or hiding displayed
-    data, such as columns in a spreadsheet, without deleting the
-    data. 
-  - As a synonym for *unload*. 
-  - As a verb to describe removing add-ins and add-ons. 
+- To describe taking an item off a list in a dialog box that has **Add** and **Remove** buttons.
+- To
+  describe taking a toolbar button off a toolbar or hiding displayed
+  data, such as columns in a spreadsheet, without deleting the
+  data.
+- As a synonym for _unload_.
+- As a verb to describe removing add-ins and add-ons.
 
-**See also**  [uninstall](~/a-z-word-list-term-collections/u/uninstall.md), [delete](~/a-z-word-list-term-collections/d/delete.md), [load](~/a-z-word-list-term-collections/l/load.md)
+**See also** [uninstall](~/a-z-word-list-term-collections/u/uninstall.md), [delete](~/a-z-word-list-term-collections/d/delete.md), [load](~/a-z-word-list-term-collections/l/load.md)

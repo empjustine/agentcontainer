@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # UK
 
-Avoid using as an abbreviation for *United Kingdom* unless space is limited. 
+Avoid using as an abbreviation for _United Kingdom_ unless space is limited.
 
-Don't use as a synonym for *Great Britain (GB)* or *England.* 
+Don't use as a synonym for _Great Britain (GB)_ or _England._

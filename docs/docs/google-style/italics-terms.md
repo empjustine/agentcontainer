@@ -16,16 +16,16 @@ When you introduce a new term that you're defining immediately, use italics on
 the first mention of the term. Don't use bold or quotation marks.
 
 Recommended: A
-*Clos network* is a kind of multistage circuit switching network.
+_Clos network_ is a kind of multistage circuit switching network.
 
 ## Words as words
 
 When you refer to a word, phrase, or letter in reference to the word, phrase,
-or letter itself (sometimes called *words as words*) use italics. Don't use bold
+or letter itself (sometimes called _words as words_) use italics. Don't use bold
 or quotation marks.
 
 Recommended: Don't use
-*&* (ampersand) as a conjunction. Use the word *and* instead.
+_&_ (ampersand) as a conjunction. Use the word _and_ instead.
 
 Recommended: To form a
-possessive of a singular noun, add *'s* to the end of the word.
+possessive of a singular noun, add _'s_ to the end of the word.

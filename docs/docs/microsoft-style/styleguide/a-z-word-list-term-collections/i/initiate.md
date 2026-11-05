@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # initiate
 
-Don't use to mean *start a program or app.* 
+Don't use to mean _start a program or app._
 
 **See** [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md)

@@ -11,4 +11,4 @@ ms.prod: non-product-specific
 
 Don't use.
 
-Use *fail* for disks or other hardware, or *stop responding* for programs or the operating system. 
+Use _fail_ for disks or other hardware, or _stop responding_ for programs or the operating system.

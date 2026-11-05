@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # of
 
-Don't use *of* after another preposition in phrases such as *off of* or *outside of*. 
+Don't use _of_ after another preposition in phrases such as _off of_ or _outside of_.
 
 **Example**  
 The taskbar is outside the main window area.

@@ -9,12 +9,12 @@ ms.prod: non-product-specific
 
 # uppercase
 
-Most of the time, use *capital letters* instead of *uppercase.* It's OK to use *uppercase* when comparing with *lowercase* or to follow the UI. 
+Most of the time, use _capital letters_ instead of _uppercase._ It's OK to use _uppercase_ when comparing with _lowercase_ or to follow the UI.
 
-One word. Don't use *uppercase* as a verb. Don't use *uppercased*. 
+One word. Don't use _uppercase_ as a verb. Don't use _uppercased_.
 
-When using *uppercase* and *lowercase* together, don't use a suspended hyphen (as in *upper- and lowercase*). Spell out both words instead. 
+When using _uppercase_ and _lowercase_ together, don't use a suspended hyphen (as in _upper- and lowercase_). Spell out both words instead.
 
 **Examples**  
 Change all the lowercase letters to uppercase.  
-Change the case of both lowercase and uppercase letters.   
+Change the case of both lowercase and uppercase letters.

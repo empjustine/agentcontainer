@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # End-User License Agreement (EULA)
 
-Don't use. Use *Microsoft Software License Terms*.
+Don't use. Use _Microsoft Software License Terms_.
 
-**See also**  [Microsoft Software License Terms](~/a-z-word-list-term-collections/m/software-license-terms.md)
+**See also** [Microsoft Software License Terms](~/a-z-word-list-term-collections/m/software-license-terms.md)

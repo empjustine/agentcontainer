@@ -5,26 +5,26 @@
 
 ## Page Summary
 
-* Follow standard American English capitalization rules and avoid unnecessary capitalization for clarity.
-* Capitalize product names as they officially appear, but use sentence case for titles, headings, and references to them within the document.
-* Begin text following a colon with lowercase unless it's a proper noun, heading, quote, or follows specific labels like "Caution".
-* Use sentence case for captions, labels within images, glossary terms and definitions, list items, and table elements.
-* When describing casing styles, provide clear requirements and examples instead of using style names like "camel case".
+- Follow standard American English capitalization rules and avoid unnecessary capitalization for clarity.
+- Capitalize product names as they officially appear, but use sentence case for titles, headings, and references to them within the document.
+- Begin text following a colon with lowercase unless it's a proper noun, heading, quote, or follows specific labels like "Caution".
+- Use sentence case for captions, labels within images, glossary terms and definitions, list items, and table elements.
+- When describing casing styles, provide clear requirements and examples instead of using style names like "camel case".
 
 Follow the standard [capitalization rules](https://owl.purdue.edu/owl/general_writing/mechanics/help_with_capitals.html) for American English. Additionally,
 do the following:
 
-* Don't use unnecessary capitalization; before you capitalize a word, think
+- Don't use unnecessary capitalization; before you capitalize a word, think
   about why (and whether) it should be capitalized.
-* Don't rely on a difference in capitalization to convey meaning. For example,
+- Don't rely on a difference in capitalization to convey meaning. For example,
   although people who are familiar with Kubernetes probably understand that a
-  capitalized *Pod* is a Kubernetes unit, and a lowercase *pod* is
+  capitalized _Pod_ is a Kubernetes unit, and a lowercase _pod_ is
   any other kind of pod, that distinction is likely lost on many casual
   readers or those who are new to the domain.
-* Don't use all-uppercase, except in the following contexts: in official
+- Don't use all-uppercase, except in the following contexts: in official
   names, in [abbreviations](/style/abbreviations) that are always
   written in all-caps, or when referring to code that uses all-caps.
-* Don't use
+- Don't use
   [camel
   case](https://en.wikipedia.org/wiki/Camel_case), except in official names or when referring to code that uses camel
   case.
@@ -66,11 +66,11 @@ see [HTML and semantic tagging](/style/semantic-tagging).
 Use a lowercase letter to begin the first word of the text immediately
 following a colon, unless the text is one of the following:
 
-* A proper noun (*Open source software: Hadoop*)
-* A heading; see also [Capitalization in titles
+- A proper noun (_Open source software: Hadoop_)
+- A heading; see also [Capitalization in titles
   and headings](#capitalization-in-titles-and-headings)
-* A quotation (*Arthurian wit: "Bring me yon sworde"*)
-* Text that follows a label such as *Caution* or *Note*
+- A quotation (_Arthurian wit: "Bring me yon sworde"_)
+- Text that follows a label such as _Caution_ or _Note_
 
 ## Capitalization and figures
 
@@ -102,7 +102,7 @@ labels, and captions.
 
 ## Special capitalization style names
 
-Don't use a casing style name, such as *camel case* or *snake case*, to describe a
+Don't use a casing style name, such as _camel case_ or _snake case_, to describe a
 casing style. These names don't localize well and they aren't standardized. Instead, explain what
 the requirements are and provide an example.
 

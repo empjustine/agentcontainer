@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # uncheck, unmark, unselect
 
-Don't use to refer to clearing a check box. Use *clear* instead.
+Don't use to refer to clearing a check box. Use _clear_ instead.

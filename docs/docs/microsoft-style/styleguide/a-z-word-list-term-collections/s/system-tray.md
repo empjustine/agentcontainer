@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # system tray
 
-Don't use. Use *notification area* instead.
+Don't use. Use _notification area_ instead.
 
 **See also** [notification area](~/a-z-word-list-term-collections/n/notification-area.md)

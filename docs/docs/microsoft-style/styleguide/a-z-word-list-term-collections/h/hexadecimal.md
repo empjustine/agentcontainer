@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # hexadecimal
 
-Don't abbreviate as *hex*. Use *h* or *0x* when abbreviating a number. Don't insert a space between the number and *h,* and use all uppercase for alphabetical characters displayed in hexadecimal numbers.
+Don't abbreviate as _hex_. Use _h_ or _0x_ when abbreviating a number. Don't insert a space between the number and _h,_ and use all uppercase for alphabetical characters displayed in hexadecimal numbers.
 
 **Examples**  
 Interrupt 21h  

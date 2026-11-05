@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # word processing, word-processing
 
-Use *word processor* or *word processing* as a noun.
+Use _word processor_ or _word processing_ as a noun.
 
-Hyphenate *word-processing* as an adjective.
+Hyphenate _word-processing_ as an adjective.
 
-Don't use *word process* or *word processing* as a verb. Use *write, format*, or another term instead.
+Don't use _word process_ or _word processing_ as a verb. Use _write, format_, or another term instead.

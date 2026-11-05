@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # slideshow
 
-One word unless you need to match the UI. Don’t use *carousel* as a synonym.
+One word unless you need to match the UI. Don’t use _carousel_ as a synonym.

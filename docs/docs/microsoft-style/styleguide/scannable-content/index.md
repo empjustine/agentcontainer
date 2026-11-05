@@ -17,17 +17,17 @@ Writing to facilitate scanning will help.
 
 Organize text into discrete components to support scanning. This section describes some of the methods you can use:
 
-  - [Headings](~/scannable-content/headings.md)
-  - [Lists](~/scannable-content/lists.md)
-  - [Pull quotes](~/scannable-content/pull-quotes.md)
-  - [Sidebars](~/scannable-content/sidebars.md)
-  - [Tables](~/scannable-content/tables.md)
+- [Headings](~/scannable-content/headings.md)
+- [Lists](~/scannable-content/lists.md)
+- [Pull quotes](~/scannable-content/pull-quotes.md)
+- [Sidebars](~/scannable-content/sidebars.md)
+- [Tables](~/scannable-content/tables.md)
 
 How you write is equally important to scanning.
 
 ## Put first things first
 
-Content on the first screen (also called *above the fold*)
+Content on the first screen (also called _above the fold_)
 is the most likely to be read. Many readers won’t scroll
 further without a compelling reason. So as always, keep it short,
 and lead with what’s most important to the customer. Keep in mind that what appears above the fold varies by device and screen resolution.
@@ -46,9 +46,9 @@ corner of the text pane.
 Long
 spans of dense text are daunting and unapproachable to readers.
 Write short headings, short sentences, and short paragraphs that
-are easy to read—and more visually appealing. 
+are easy to read—and more visually appealing.
 
-1.  Use short, simple words. 
+1.  Use short, simple words.
 2.  Get to the point.
 3.  Then stop.
 
@@ -58,19 +58,19 @@ In
 general, keep web content short. When you have a
 great, customer-focused reason to create longer content, provide
 readers with at least one way to navigate within it, so they can
-quickly get to what they need. 
+quickly get to what they need.
 
-  - If
-    you're developing content for a collection, such as the MSDN or
-    TechNet libraries, break the content up into sections so
-    that information is easy to find in the library navigation.  
-    
-  - In
-    a longer document that's likely to be read online, even if it’s a
-    downloadable Word document or PDF file, include a table of
-    contents with links to subheadings.  
-    
-  - Add *Back to top* links at the end of sections.
+- If
+  you're developing content for a collection, such as the MSDN or
+  TechNet libraries, break the content up into sections so
+  that information is easy to find in the library navigation.
+
+- In
+  a longer document that's likely to be read online, even if it’s a
+  downloadable Word document or PDF file, include a table of
+  contents with links to subheadings.
+
+- Add _Back to top_ links at the end of sections.
 
 ## Establish patterns in content
 
@@ -79,18 +79,18 @@ writing, design, and formatting create patterns, which help
 readers comprehend more efficiently. Apply these tactics throughout your
 content to create familiar landmarks for your readers:
 
-  - Lead
-    with what's most important. Place important keywords near the beginning
-    of headings, table entries, and paragraphs so they're easy to
-    spot.  
-    
-  - Use text formatting consistently, such as using bold in procedures to identify UI labels. To learn more, see [Text formatting](~/text-formatting/index.md).  
-  
-  - Apply
-    the same sentence structures to similar information. For example,
-    use prepositional phrases consistently in procedures to
-    help customers navigate menus and dialog boxes. And use the same
-    syntax for cross-references and other common content elements.
+- Lead
+  with what's most important. Place important keywords near the beginning
+  of headings, table entries, and paragraphs so they're easy to
+  spot.
+
+- Use text formatting consistently, such as using bold in procedures to identify UI labels. To learn more, see [Text formatting](~/text-formatting/index.md).
+
+- Apply
+  the same sentence structures to similar information. For example,
+  use prepositional phrases consistently in procedures to
+  help customers navigate menus and dialog boxes. And use the same
+  syntax for cross-references and other common content elements.
 
 **Writing tip** When comparing things, use parallel sentence structures
 to describe each thing. Write headlines and bulleted list items
@@ -101,10 +101,10 @@ using the same sentence structure, too.
 Paragraphs
 usually have extra space between them. How much extra space
 depends on the size of the font. The minimum is usually 50 percent of
-the line spacing, or at least half the font size. 
+the line spacing, or at least half the font size.
 
 Short
 paragraphs, like this one, help to break up long passages of text.
-Three to seven lines is about the right length for a paragraph. 
+Three to seven lines is about the right length for a paragraph.
 
-It’s also fine to have a single-line paragraph now and then. 
+It’s also fine to have a single-line paragraph now and then.

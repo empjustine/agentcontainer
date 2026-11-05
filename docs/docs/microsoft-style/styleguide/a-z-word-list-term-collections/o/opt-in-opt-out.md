@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # opt in, opt out
 
-Use *opt in* and *opt out* as verbs. 
+Use _opt in_ and _opt out_ as verbs.
 
-Use *opt-in* and *opt-out* as adjectives.
+Use _opt-in_ and _opt-out_ as adjectives.
 
 Don’t use as nouns.

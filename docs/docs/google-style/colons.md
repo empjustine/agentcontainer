@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Colons are used after introductory phrases that can stand alone as complete sentences to introduce closely-related information like lists.
-* The first word after a colon is generally lowercase, with exceptions outlined in the capitalization guidelines.
-* Lists introduced by colons should have introductory phrases that form grammatically complete sentences, unlike constructions that simply end with "are:".
-* For further guidance on punctuation in introductory material, refer to the sections on list and code-sample introductions.
-* To understand the distinctions between colons and dashes, consult the dedicated section on dashes.
+- Colons are used after introductory phrases that can stand alone as complete sentences to introduce closely-related information like lists.
+- The first word after a colon is generally lowercase, with exceptions outlined in the capitalization guidelines.
+- Lists introduced by colons should have introductory phrases that form grammatically complete sentences, unlike constructions that simply end with "are:".
+- For further guidance on punctuation in introductory material, refer to the sections on list and code-sample introductions.
+- To understand the distinctions between colons and dashes, consult the dedicated section on dashes.
 
 A colon indicates that closely-related information follows.
 

@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # Blu-ray Disc
 
-Use this spelling and capitalization when talking about the disc. After the first mention, it's OK to abbreviate to *BD* (no hyphen).
+Use this spelling and capitalization when talking about the disc. After the first mention, it's OK to abbreviate to _BD_ (no hyphen).
 
-When referring to the technology (not a specific disc), it's OK to use *Blue-ray [X]*.
+When referring to the technology (not a specific disc), it's OK to use _Blue-ray [X]_.

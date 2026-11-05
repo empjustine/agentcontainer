@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # cyber-
 
-Don’t hyphenate words that begin with *cyber,* such as *cybersecurity,* *cyberspace,* and *cyberattack*.
+Don’t hyphenate words that begin with _cyber,_ such as _cybersecurity,_ _cyberspace,_ and _cyberattack_.
 
 To learn more about hyphenation, see [Hyphens](~/punctuation/dashes-hyphens/hyphens.md).

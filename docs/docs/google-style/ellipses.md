@@ -5,10 +5,10 @@
 
 ## Page Summary
 
-* Avoid using ellipses (...) in technical documentation to indicate omission or hesitation.
-* When describing UI elements, omit ellipses unless their absence would create confusion.
-* In quoted text, ellipses can be used to replace omitted content mid-sentence, but not at the beginning or end.
-* Ellipses should be three periods with a space before and after, unless followed by punctuation.
+- Avoid using ellipses (...) in technical documentation to indicate omission or hesitation.
+- When describing UI elements, omit ellipses unless their absence would create confusion.
+- In quoted text, ellipses can be used to replace omitted content mid-sentence, but not at the beginning or end.
+- Ellipses should be three periods with a space before and after, unless followed by punctuation.
 
 In general, don't use ellipses. An ellipsis is made up of
 three contiguous periods. Ellipses indicate the omission of part of a sentence, paragraph, or larger
@@ -17,8 +17,8 @@ hand.
 
 ## Ellipses as suspension points
 
-When ellipses are used to indicate hesitation, they are called *suspension
-points*. Don't use ellipses this way in our documentation.
+When ellipses are used to indicate hesitation, they are called _suspension
+points_. Don't use ellipses this way in our documentation.
 
 Not recommended: The answer is ... wait
 for it ... that you shouldn't do this.
@@ -28,7 +28,7 @@ for it ... that you shouldn't do this.
 When ellipses appear in a user interface, exclude them from the
 documentation describing the user interface unless their omission could cause
 confusion. For example, if the text on the button in the UI reads **Save ...**,
-document it as *click **Save***.
+document it as _click **Save**_.
 
 ## Ellipses in text
 

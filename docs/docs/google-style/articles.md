@@ -4,7 +4,7 @@
 # Articles (a, an, the)
 
 For ease of comprehension and translation, include definite and indefinite
-articles (*a*, *an*, and *the*) in your writing. Don't skip
+articles (_a_, _an_, and _the_) in your writing. Don't skip
 articles for brevity, including in headings and titles.
 
 Recommended: Create a VM instance
@@ -21,6 +21,6 @@ For more information about writing clear headings and titles, see
 For information about using articles before product names, see
 [Articles before product names](/style/product-names#the-with-names).
 
-For information about using *a* or *an* before an abbreviation when the pronunciation
+For information about using _a_ or _an_ before an abbreviation when the pronunciation
 of the abbreviation can vary, see
 [Indefinite articles before abbreviations](/style/abbreviations#articles).

@@ -5,10 +5,10 @@
 
 ## Page Summary
 
-* Prioritize clarity in technical writing by choosing strong, specific verbs over generic ones like *be*, *occur*, or *happen*.
-* Avoid starting sentences with "There is" or "There are" to improve clarity; instead, identify a clear subject and verb.
-* Instead of vague adjectives or adverbs, use objective numerical data to maintain accuracy and credibility in technical writing.
-* Replacing weak verbs and phrases with stronger alternatives ensures more engaging and informative technical content.
+- Prioritize clarity in technical writing by choosing strong, specific verbs over generic ones like _be_, _occur_, or _happen_.
+- Avoid starting sentences with "There is" or "There are" to improve clarity; instead, identify a clear subject and verb.
+- Instead of vague adjectives or adverbs, use objective numerical data to maintain accuracy and credibility in technical writing.
+- Replacing weak verbs and phrases with stronger alternatives ensures more engaging and informative technical content.
 
 **Estimated Time:** 10 minutes
 
@@ -29,28 +29,28 @@ results.
 To engage and educate readers, choose precise, strong, specific verbs.
 Reduce imprecise, weak, or generic verbs, such as the following:
 
-* Forms of *be*: is, are, am, was, were, etc.
-* Occur
-* Happen
+- Forms of _be_: is, are, am, was, were, etc.
+- Occur
+- Happen
 
 For example, consider how strengthening the weak verb in the following
 sentences ignites a more engaging sentence:
 
-| Weak Verb | Strong Verb |
-| --- | --- |
-| The exception **occurs** when dividing by zero. | Dividing by zero **raises** the exception. |
-| This error message **happens** when... | The system **generates** this error message when... |
-| We **are** very careful to ensure... | We carefully **ensure**... |
+| Weak Verb                                       | Strong Verb                                         |
+| ----------------------------------------------- | --------------------------------------------------- |
+| The exception **occurs** when dividing by zero. | Dividing by zero **raises** the exception.          |
+| This error message **happens** when...          | The system **generates** this error message when... |
+| We **are** very careful to ensure...            | We carefully **ensure**...                          |
 
-Many writers rely on forms of *be* as if they were the only spices on the rack.
+Many writers rely on forms of _be_ as if they were the only spices on the rack.
 Sprinkle in different verbs and watch your prose become more appetizing. That
-said, a form of *be* is sometimes the best choice of verb, so don't feel that
-you have to eliminate every form of *be* from your writing.
+said, a form of _be_ is sometimes the best choice of verb, so don't feel that
+you have to eliminate every form of _be_ from your writing.
 
 Note that generic verbs often signal other problems, such as:
 
-* An imprecise or missing actor in a sentence
-* A passive voice sentence
+- An imprecise or missing actor in a sentence
+- A passive voice sentence
 
 ### Exercise
 
@@ -65,15 +65,15 @@ feel free to rearrange the sentences and to add, modify, or delete words:
 #### Click the icon to see the answer.
 
 1. A few possible answers:
-   * When a variable declaration doesn't **specify** a
+   - When a variable declaration doesn't **specify** a
      datatype, the compiler **generates** an error message.
-   * If you **declare** a variable but don't
+   - If you **declare** a variable but don't
      **specify** a datatype, the compiler **generates**
      an error message.
 2. A few possible answers:
-   * Compilers **issue** errors when you **omit** a
+   - Compilers **issue** errors when you **omit** a
      semicolon at the end of a statement.
-   * A missing semicolon at the end of a statement **triggers**
+   - A missing semicolon at the end of a statement **triggers**
      compiler errors.
 
 ---

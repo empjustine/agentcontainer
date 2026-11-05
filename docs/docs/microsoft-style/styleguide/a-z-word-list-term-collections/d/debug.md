@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # debug
 
-Use only in the context of software development. Don't use as a synonym for *troubleshoot*. 
+Use only in the context of software development. Don't use as a synonym for _troubleshoot_.

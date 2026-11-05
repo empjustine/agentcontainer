@@ -13,8 +13,8 @@ Lowercase. Hyphenate.
 
 In
 3D charts, the z-axis shows depth and generally represents values.
-On the first mention, refer to the z-axis as the *value (z) axis,* where both the x-axis and y-axis are category axes. On subsequent mentions, use *z-axis*. 
+On the first mention, refer to the z-axis as the _value (z) axis,_ where both the x-axis and y-axis are category axes. On subsequent mentions, use _z-axis_.
 
-Don't use italic formatting for the *z* in *z-axis* unless the entire word is italic.
+Don't use italic formatting for the _z_ in _z-axis_ unless the entire word is italic.
 
 **See also** [value axis](~/a-z-word-list-term-collections/v/value-axis.md)

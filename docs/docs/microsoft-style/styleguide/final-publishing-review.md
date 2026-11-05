@@ -10,11 +10,11 @@ ms.prod: non-product-specific
 # Final publishing review
 
 Use these tips to help you edit like
-a pro, so your final content and design shine. 
+a pro, so your final content and design shine.
 
 **Hit the mark.** Review the project brief and customer insights one last time. Did you nail the
 objective? Is the value proposition front and center? Are key messages
-and benefits clear? 
+and benefits clear?
 
 **Get a second opinion.** Find someone completely removed from the work to offer feedback and act as
 the customer. (Or hire an editor.) No matter how well you write, a
@@ -39,8 +39,8 @@ phrases verbatim, or include tips or notes found later in the text.
 
 **Pay attention to the spell checker.** Those squiggly lines will help you eliminate a lot of errors. But
 spell checkers can’t think. It’s up to you to check each
-suggestion. Otherwise you might end up saying *manger* where you meant *manager.* 
+suggestion. Otherwise you might end up saying _manger_ where you meant _manager._
 
-**Take a break.** Leave the finished piece alone for a day. Read it again tomorrow—you may see things you missed. 
+**Take a break.** Leave the finished piece alone for a day. Read it again tomorrow—you may see things you missed.
 
 **Evaluate the voice and personality.** Before you call it done, read it one final time. Can you hear the fresh and modern [Microsoft voice](~/brand-voice-above-all-simple-human.md)? Your writing should sound warm and relaxed, crisp and clear, and ready to lend a hand.

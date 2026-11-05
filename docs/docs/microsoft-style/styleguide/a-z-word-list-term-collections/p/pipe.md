@@ -9,9 +9,9 @@ ms.prod: non-product-specific
 
 # pipe
 
-Don't use as a verb in content for a general audience. Use a more specific term, such as *send, move, copy, direct, redirect,* or *write*. 
+Don't use as a verb in content for a general audience. Use a more specific term, such as _send, move, copy, direct, redirect,_ or _write_.
 
-It's OK to use *pipe* as
+It's OK to use _pipe_ as
 a verb in content for a technical audience to refer to routing data
 from the standard output of one process to the standard input
 of another.

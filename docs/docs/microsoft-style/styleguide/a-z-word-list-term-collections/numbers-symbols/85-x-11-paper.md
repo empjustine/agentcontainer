@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # 8.5" × 11" paper
 
-Use instead of *8.5-by-11-inch, 8.5 × 11-inch, 8 1/2 by 11-inch,*
+Use instead of _8.5-by-11-inch, 8.5 × 11-inch, 8 1/2 by 11-inch,_
 or other ways of referring to the paper size. Use a
 straight quotation mark (") to signify inches. Use a
-multiplication sign (×), not the letter *x.*
+multiplication sign (×), not the letter _x._

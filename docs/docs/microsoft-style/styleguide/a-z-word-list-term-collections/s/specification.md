@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # specification
 
-Always spell out. Don't use *spec*. 
+Always spell out. Don't use _spec_.

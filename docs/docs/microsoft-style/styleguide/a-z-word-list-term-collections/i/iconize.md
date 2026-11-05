@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # iconize
 
-Don't use. Use *shrink to an icon* or *minimize* instead.
+Don't use. Use _shrink to an icon_ or _minimize_ instead.

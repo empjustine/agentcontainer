@@ -5,10 +5,10 @@
 
 ## Page Summary
 
-* Use lowercase, hyphens, and standard ASCII characters for file and directory names for better search engine optimization and compatibility across operating systems.
-* Prioritize consistency with existing naming conventions within a directory when adding new files, even if it means deviating from the general guidelines.
-* When referencing files, use code font, include the word "file", and maintain the exact spelling of the filename.
-* When discussing file types, use their formal names instead of filename extensions (e.g., "PNG file" instead of ".png file").
+- Use lowercase, hyphens, and standard ASCII characters for file and directory names for better search engine optimization and compatibility across operating systems.
+- Prioritize consistency with existing naming conventions within a directory when adding new files, even if it means deviating from the general guidelines.
+- When referencing files, use code font, include the word "file", and maintain the exact spelling of the filename.
+- When discussing file types, use their formal names instead of filename extensions (e.g., "PNG file" instead of ".png file").
 
 ## Guidelines for names
 
@@ -59,12 +59,12 @@ The following sections discuss how to reference files.
 
 When referring to a specific file, do the following:
 
-* Use [code font](/style/code-in-text).
-* Include the word *file* after the filename. For more information, see
+- Use [code font](/style/code-in-text).
+- Include the word _file_ after the filename. For more information, see
   [Grammatical treatment of code elements](/style/code-in-text#grammatical-treatment-of-code-elements).
-* Use the exact spelling of the filename even if it doesn't follow
+- Use the exact spelling of the filename even if it doesn't follow
   [naming guidelines](#naming-guidelines).
-* If a sample of the file is included on the page, follow the
+- If a sample of the file is included on the page, follow the
   [code sample](/style/code-samples)
   guidelines and precede a code sample with an introductory sentence or paragraph that includes the
   filename.
@@ -100,29 +100,29 @@ file
 The following table lists some examples of filename extensions and the
 corresponding file type names to use.
 
-| Extension | File type name |
-| --- | --- |
-| `.adoc` | AsciiDoc file |
-| `.csv` | CSV file |
-| `.exe` | executable file |
-| `.gif` | GIF file |
-| `.img` | disk image file |
-| `.ipynb` | IPYNB file |
-| `.jar` | JAR file |
-| `.jpg`, `.jpeg` | JPEG file |
-| `.json` | JSON file |
-| `.md` | Markdown file |
-| `.pdf` | PDF file |
-| `.png` | PNG file |
-| `.ps` | PowerShell file |
-| `.py` | Python file |
-| `.sh` | Bash file |
-| `.sql` | SQL file |
-| `.svg` | SVG file |
-| `.tar` | tar file |
-| `.tf` | Terraform file |
-| `.tiff` | TIFF file |
-| `.txt` | text file |
-| `.wasm` | Wasm file |
-| `.yaml` | YAML file |
-| `.zip` | zip file |
+| Extension       | File type name  |
+| --------------- | --------------- |
+| `.adoc`         | AsciiDoc file   |
+| `.csv`          | CSV file        |
+| `.exe`          | executable file |
+| `.gif`          | GIF file        |
+| `.img`          | disk image file |
+| `.ipynb`        | IPYNB file      |
+| `.jar`          | JAR file        |
+| `.jpg`, `.jpeg` | JPEG file       |
+| `.json`         | JSON file       |
+| `.md`           | Markdown file   |
+| `.pdf`          | PDF file        |
+| `.png`          | PNG file        |
+| `.ps`           | PowerShell file |
+| `.py`           | Python file     |
+| `.sh`           | Bash file       |
+| `.sql`          | SQL file        |
+| `.svg`          | SVG file        |
+| `.tar`          | tar file        |
+| `.tf`           | Terraform file  |
+| `.tiff`         | TIFF file       |
+| `.txt`          | text file       |
+| `.wasm`         | Wasm file       |
+| `.yaml`         | YAML file       |
+| `.zip`          | zip file        |

@@ -12,5 +12,5 @@ ms.prod: non-product-specific
 Two words as a noun. Hyphenate as an adjective.
 
 **Examples**  
-Tips for playing your video game   
+Tips for playing your video game  
 Video-game tips

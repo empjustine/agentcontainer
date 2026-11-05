@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Procedures should be written as numbered steps with clear and concise language, focusing on the action to be performed.
-* Sub-steps and multi-action steps have specific formatting guidelines to ensure clarity and readability, such as using letters and roman numerals for sub-steps and the `>` symbol for sequential actions within a single step.
-* Multiple procedures for the same task should be organized thoughtfully, prioritizing accessibility and clarity by using separate sections or tabs and favoring the shortest and simplest method.
-* Steps should provide context, clearly state the goal or purpose, and include any necessary justifications or results while avoiding redundancy and unnecessary information.
-* Optional steps are indicated with "Optional:", and repetitive procedures are referenced rather than repeated to maintain conciseness and avoid redundancy.
+- Procedures should be written as numbered steps with clear and concise language, focusing on the action to be performed.
+- Sub-steps and multi-action steps have specific formatting guidelines to ensure clarity and readability, such as using letters and roman numerals for sub-steps and the `>` symbol for sequential actions within a single step.
+- Multiple procedures for the same task should be organized thoughtfully, prioritizing accessibility and clarity by using separate sections or tabs and favoring the shortest and simplest method.
+- Steps should provide context, clearly state the goal or purpose, and include any necessary justifications or results while avoiding redundancy and unnecessary information.
+- Optional steps are indicated with "Optional:", and repetitive procedures are referenced rather than repeated to maintain conciseness and avoid redundancy.
 
 A procedure is a sequence of numbered steps for accomplishing a task. For information about
 lists of items that aren't part of a procedure, see the
@@ -54,7 +54,7 @@ Also recommended:
 
 To modify a chart, do the following:
 
-* Click **Edit**, and then in the **Edit visualization** pane, edit the chart.
+- Click **Edit**, and then in the **Edit visualization** pane, edit the chart.
 
 ## Sub-steps in numbered procedures
 
@@ -86,11 +86,13 @@ To document a complex procedural step, use the following order:
 
    For more information, see
    [Formatting placeholders](/style/placeholders).
+
 4. Explain the command in more detail, if necessary.
 5. List the output of the command, if necessary.
 
    For more information, see
    [Output from commands](/style/code-syntax#output).
+
 6. In a separate paragraph, explain
    [the result of an
    action](/style/procedures#steps-with-results-or-justifications), or any output, if necessary.
@@ -149,9 +151,9 @@ task, then separate them in different pages, headings, or tabs.
 
 The following guidelines can help you choose which procedure to document:
 
-* Choose a procedure that lets readers do all the steps by using only a keyboard.
-* Choose the shortest procedure.
-* Choose a procedure that uses a programming language that most of your
+- Choose a procedure that lets readers do all the steps by using only a keyboard.
+- Choose the shortest procedure.
+- Choose a procedure that uses a programming language that most of your
   audience is familiar with.
 
 ## Repetitive procedures
@@ -169,7 +171,7 @@ Also recommended:
 
 ## Optional steps
 
-For an optional step, at the beginning of the step, type *Optional*
+For an optional step, at the beginning of the step, type _Optional_
 followed by a colon.
 
 Recommended:
@@ -279,23 +281,23 @@ Recommended:
 
 ## Summary of guidelines for writing procedures
 
-| Guidance | Recommended | Not recommended |
-| --- | --- | --- |
-| Make sure that the first sentence in a procedural step includes an imperative verb. | Clone the repository that contains the sample data. | You need the project ID later in this document. Retrieve the project ID. |
-| Use complete sentences. |  |  |
-| Use parallel structure and consistent verb form. | Download the service account key to your local machine. Click **More**, and then click **Download**. | Download the service account key to your local machine by clicking **More** and then clicking **Download** file. |
-| For an optional step, type *Optional:* as the first word of the step. | Optional: Type an arbitrary string... | (Optional) Type an arbitrary string... |
-| Set the context (such as a tool or an environment) in which the reader performs a procedure.  If there are multiple headings associated with a set of procedures, restate the context of the procedure in the first step, even if the context is the same as in the previous procedure. | In Cloud Shell, connect to the development cluster.  In the Google Cloud console, go to the **BigQuery** page. |  |
-| Write in the order that the reader needs to follow. State the location of the action before stating the action. | In Google Docs, click **File > New > Document**.  In the Google Cloud console, go to the **Monitoring** page. | Click **File > New > Document** in Google Docs.  Go to the **Monitoring** page in the Google Cloud console. |
-| State the purpose or goal of the action before stating the action. | To start a new document, click **File > New > Document**. | Click **File > New > Document** to start a new document. |
-| Don't use directional language to orient the reader, such as *above*, *below*, or *right-hand side*. This type of language doesn't work well for accessibility or for localization. If a UI element is hard to find, provide a screenshot.  For information about documenting icons, see [Buttons and icons](/style/ui-elements#buttons). | Click **Menu**.  In the preceding diagram,...  In the following diagram,... | Click the button with three lines.  In the above diagram, ...  In the diagram below, ... |
-| Don't use *please*. | To open a document, click **File > Open**. | To open a document, please click **File > Open**. |
-| Avoid using *run the following command* to introduce code. Instead, focus on what the command does. | In Cloud Shell, deploy the load generator:...  Define a firewall rule to allow internal traffic:... | In Cloud Shell, deploy the load generator by running the following command:...  Run the following command:... |
-| If the reader must press **Enter** after a step, then include that instruction as part of the step. | Click the search box, type `custom function`, and then press **Enter**. | 1. Click the search box and type `custom function`. 2. Press **Enter**. |
-| Don't include keyboard shortcuts. | Copy the command, and then paste it... | Press Ctrl+C, and then press Ctrl+V... |
-| When there's more than one way to do something, give only the best way. Giving alternate ways can confuse readers. |  |  |
-| If your procedure includes code samples, see how to format  [code samples](/style/code-samples). |  |  |
-| If your procedure includes commands, see how to format  [commands](/style/code-syntax#formatting-a-command). |  |  |
-| Ensure that the reader has the information that they need in order to prepare for the task ahead of time. Having information in advance supports task management, executive functioning, memory, and emotional regulation. | The following hardware and software are required:... |  |
-| Include as few steps as possible to complete the task. Limit interruptions in the path. |  |  |
-| Focus on one reader decision at a time. Separate each instruction by making each instruction a separate list item. |  |  |
+| Guidance                                                                                                                                                                                                                                                                                                                                 | Recommended                                                                                                   | Not recommended                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Make sure that the first sentence in a procedural step includes an imperative verb.                                                                                                                                                                                                                                                      | Clone the repository that contains the sample data.                                                           | You need the project ID later in this document. Retrieve the project ID.                                         |
+| Use complete sentences.                                                                                                                                                                                                                                                                                                                  |                                                                                                               |                                                                                                                  |
+| Use parallel structure and consistent verb form.                                                                                                                                                                                                                                                                                         | Download the service account key to your local machine. Click **More**, and then click **Download**.          | Download the service account key to your local machine by clicking **More** and then clicking **Download** file. |
+| For an optional step, type _Optional:_ as the first word of the step.                                                                                                                                                                                                                                                                    | Optional: Type an arbitrary string...                                                                         | (Optional) Type an arbitrary string...                                                                           |
+| Set the context (such as a tool or an environment) in which the reader performs a procedure. If there are multiple headings associated with a set of procedures, restate the context of the procedure in the first step, even if the context is the same as in the previous procedure.                                                   | In Cloud Shell, connect to the development cluster. In the Google Cloud console, go to the **BigQuery** page. |                                                                                                                  |
+| Write in the order that the reader needs to follow. State the location of the action before stating the action.                                                                                                                                                                                                                          | In Google Docs, click **File > New > Document**. In the Google Cloud console, go to the **Monitoring** page.  | Click **File > New > Document** in Google Docs. Go to the **Monitoring** page in the Google Cloud console.       |
+| State the purpose or goal of the action before stating the action.                                                                                                                                                                                                                                                                       | To start a new document, click **File > New > Document**.                                                     | Click **File > New > Document** to start a new document.                                                         |
+| Don't use directional language to orient the reader, such as _above_, _below_, or _right-hand side_. This type of language doesn't work well for accessibility or for localization. If a UI element is hard to find, provide a screenshot. For information about documenting icons, see [Buttons and icons](/style/ui-elements#buttons). | Click **Menu**. In the preceding diagram,... In the following diagram,...                                     | Click the button with three lines. In the above diagram, ... In the diagram below, ...                           |
+| Don't use _please_.                                                                                                                                                                                                                                                                                                                      | To open a document, click **File > Open**.                                                                    | To open a document, please click **File > Open**.                                                                |
+| Avoid using _run the following command_ to introduce code. Instead, focus on what the command does.                                                                                                                                                                                                                                      | In Cloud Shell, deploy the load generator:... Define a firewall rule to allow internal traffic:...            | In Cloud Shell, deploy the load generator by running the following command:... Run the following command:...     |
+| If the reader must press **Enter** after a step, then include that instruction as part of the step.                                                                                                                                                                                                                                      | Click the search box, type `custom function`, and then press **Enter**.                                       | 1. Click the search box and type `custom function`. 2. Press **Enter**.                                          |
+| Don't include keyboard shortcuts.                                                                                                                                                                                                                                                                                                        | Copy the command, and then paste it...                                                                        | Press Ctrl+C, and then press Ctrl+V...                                                                           |
+| When there's more than one way to do something, give only the best way. Giving alternate ways can confuse readers.                                                                                                                                                                                                                       |                                                                                                               |                                                                                                                  |
+| If your procedure includes code samples, see how to format [code samples](/style/code-samples).                                                                                                                                                                                                                                          |                                                                                                               |                                                                                                                  |
+| If your procedure includes commands, see how to format [commands](/style/code-syntax#formatting-a-command).                                                                                                                                                                                                                              |                                                                                                               |                                                                                                                  |
+| Ensure that the reader has the information that they need in order to prepare for the task ahead of time. Having information in advance supports task management, executive functioning, memory, and emotional regulation.                                                                                                               | The following hardware and software are required:...                                                          |                                                                                                                  |
+| Include as few steps as possible to complete the task. Limit interruptions in the path.                                                                                                                                                                                                                                                  |                                                                                                               |                                                                                                                  |
+| Focus on one reader decision at a time. Separate each instruction by making each instruction a separate list item.                                                                                                                                                                                                                       |                                                                                                               |                                                                                                                  |

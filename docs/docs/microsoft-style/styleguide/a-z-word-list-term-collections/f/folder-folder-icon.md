@@ -9,11 +9,11 @@ ms.prod: non-product-specific
 
 # folder, folder icon
 
-In general, try not to talk about UI. Instead, talk about what the customer should do. 
+In general, try not to talk about UI. Instead, talk about what the customer should do.
 
-In content about Windows, use *folder* to refer to a container for files and other folders. Use *directory* only in content for developers when you need to refer to the structure of the file system or to match the API. For MS-DOS, use *directory*. 
+In content about Windows, use _folder_ to refer to a container for files and other folders. Use _directory_ only in content for developers when you need to refer to the structure of the file system or to match the API. For MS-DOS, use _directory_.
 
-Use *folder icon* to describe the visual representation of a folder. Don't use *directory icon.*
+Use _folder icon_ to describe the visual representation of a folder. Don't use _directory icon._
 
 **Note** Not
 all folders contain files or other folders. For example, the
@@ -24,4 +24,4 @@ In instructions, use bold formatting for the folder name if you're directing the
 
 **Examples**<br />You can find the file on your hard drive in C:\\Windows\\System\\Color. <br />You can find the file on X:\\Windows\\System\\Color. <br />You can find the file in the Color folder. <br />The system files are in the System subdirectory in the Windows directory. <br />Select the **Windows** folder.<br />Select **Documents**, and then select the file you want.
 
-**See also** [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md), [Formatting text in instructions](~/procedures-instructions/formatting-text-in-instructions.md)  
+**See also** [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md), [Formatting text in instructions](~/procedures-instructions/formatting-text-in-instructions.md)

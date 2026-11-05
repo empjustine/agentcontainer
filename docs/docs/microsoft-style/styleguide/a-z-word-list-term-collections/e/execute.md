@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # execute
 
-Don't use except to follow the UI. Use *run* instead. Even if the UI includes *execute,* the action is *run*. Always use *run* in the context of macros and queries.
+Don't use except to follow the UI. Use _run_ instead. Even if the UI includes _execute,_ the action is _run_. Always use _run_ in the context of macros and queries.
 
 **Examples**  
 To run the program, select **Execute**.  

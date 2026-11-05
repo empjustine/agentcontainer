@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # blog, blogger, blogroll, weblog
 
-Use *blog* as a noun or verb. Don't use *weblog.* 
+Use _blog_ as a noun or verb. Don't use _weblog._
 
-Use *blogger* to refer to a person who writes or publishes entries for a blog.
+Use _blogger_ to refer to a person who writes or publishes entries for a blog.
 
-Use *blogroll* to refer to a list of links to other online content, particularly blogs, that's provided on a blog page. 
+Use _blogroll_ to refer to a list of links to other online content, particularly blogs, that's provided on a blog page.

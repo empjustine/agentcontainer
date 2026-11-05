@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # memory-resident
 
-Always hyphenate. Use *memory-resident program,* not *TSR,* in content for a general audience.
+Always hyphenate. Use _memory-resident program,_ not _TSR,_ in content for a general audience.
 
-In content for a technical audience, it's OK to use *TSR* as an abbreviation for *terminate-and-stay-resident*.
+In content for a technical audience, it's OK to use _TSR_ as an abbreviation for _terminate-and-stay-resident_.

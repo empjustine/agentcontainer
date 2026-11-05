@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # snap-in
 
-Always hyphenate. Use only to describe a program that runs in Microsoft Management Console. 
+Always hyphenate. Use only to describe a program that runs in Microsoft Management Console.

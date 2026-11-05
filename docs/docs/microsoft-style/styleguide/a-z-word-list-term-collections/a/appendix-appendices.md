@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # appendix, appendices
 
-Use *appendices* as the plural form of *appendix,* not *appendixes*.
+Use _appendices_ as the plural form of _appendix,_ not _appendixes_.

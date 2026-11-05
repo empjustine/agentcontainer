@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # chat
 
-Use as an adjective, a noun, or a verb in the context of internet or intranet chat. Use *voice chat* and *video chat* if necessary to avoid ambiguity.
+Use as an adjective, a noun, or a verb in the context of internet or intranet chat. Use _voice chat_ and _video chat_ if necessary to avoid ambiguity.

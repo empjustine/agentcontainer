@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # ask
 
-Don't use as a noun. Use *request, task,* or another suitable word.
+Don't use as a noun. Use _request, task,_ or another suitable word.
 
 **Examples**  
 Your assigned tasks  

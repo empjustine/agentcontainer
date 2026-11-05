@@ -5,10 +5,10 @@
 
 ## Page Summary
 
-* Avoid using slashes to denote alternatives, instead use "or" or "and" to ensure clarity.
-* Do not use slashes in date formats, abbreviations (such as c/o or w/), or fractions; opt for clearer alternatives like dedicated date formats, spelled-out words, and decimals/percentages respectively.
-* Use forward slashes appropriately in computer file paths and URLs (backslashes for Windows paths), and break long URLs after a forward slash.
-* Generally, replace slashes with "and" or "or" for better readability and to avoid ambiguity, except for code, file paths, and URLs where they have specific functions.
+- Avoid using slashes to denote alternatives, instead use "or" or "and" to ensure clarity.
+- Do not use slashes in date formats, abbreviations (such as c/o or w/), or fractions; opt for clearer alternatives like dedicated date formats, spelled-out words, and decimals/percentages respectively.
+- Use forward slashes appropriately in computer file paths and URLs (backslashes for Windows paths), and break long URLs after a forward slash.
+- Generally, replace slashes with "and" or "or" for better readability and to avoid ambiguity, except for code, file paths, and URLs where they have specific functions.
 
 Avoid using slashes, except in code.
 
@@ -35,8 +35,6 @@ Not recommended: For example, a disaster
 relief map is not subject to the usage limits even if it has been
 developed/hosted by a commercial entity.
 
-  
-
 Recommended: Call this method five or six
 times.
 
@@ -45,8 +43,8 @@ times.
 
 ### And/or
 
-Often, *and* implies *or*, so you don't need to write both words.
-If you need to specify both in your content, avoid writing *and/or* except
+Often, _and_ implies _or_, so you don't need to write both words.
+If you need to specify both in your content, avoid writing _and/or_ except
 when space is limited, such as in tables.
 
 Recommended: You can view
@@ -54,8 +52,6 @@ and edit your own data.
 
 Not recommended: You can
 view and/or edit your own data.
-
-  
 
 Recommended: You can
 export raw events, processed events, or both.
@@ -77,7 +73,7 @@ a slash. Don't ever insert an extraneous hyphen into a URL to break it between t
 
 Recommended:
 https://developers.google.com/
-  
+
 cardboard/
 
 ## Slashes with fractions

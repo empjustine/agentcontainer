@@ -18,7 +18,7 @@ sentence:
 
 > The reading pane displays the content of the selected message.
 
-The prepositional phrase, *of the selected message,* describes the noun, *the content.*
+The prepositional phrase, _of the selected message,_ describes the noun, _the content._
 
 Avoid
 joining more than two prepositional phrases. Long chains of
@@ -31,4 +31,4 @@ prepositional phrases are hard to read and easy to misinterpret.
 It's OK to end a sentence with a preposition when it improves readability.  
 **Examples**  
 Use a different instrumentation key for each environment that your application runs in.  
-Specify which event hub you want to send the data to.  
+Specify which event hub you want to send the data to.

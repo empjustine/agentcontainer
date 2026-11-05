@@ -11,6 +11,6 @@ ms.prod: non-product-specific
 
 On the first mention, use:
 
-> perimeter network (also known as *DMZ, demilitarized zone,* and *screened subnet*)
+> perimeter network (also known as _DMZ, demilitarized zone,_ and _screened subnet_)
 
-After that, just use *perimeter network.*
+After that, just use _perimeter network._

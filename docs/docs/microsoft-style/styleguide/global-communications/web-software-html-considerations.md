@@ -17,15 +17,15 @@ providers don't always charge a flat monthly rate for access. Follow these guide
 
 **Support browsers likely to be used by worldwide audiences. To support earlier versions of browsers, you might need to:**
 
-  - Provide a no-frames version. 
-  
-  - Avoid certain elements in scripts. 
-  
-  - Include some design information (such as background color) in the document files instead of the style sheet. 
-  
-  - Avoid nested tables.
-  
-  - Test using a variety of browsers and versions. 
+- Provide a no-frames version.
+
+- Avoid certain elements in scripts.
+
+- Include some design information (such as background color) in the document files instead of the style sheet.
+
+- Avoid nested tables.
+
+- Test using a variety of browsers and versions.
 
 **Design content so fonts will be substituted if the specified font isn't
 available.** Avoid hand-drawn fonts and fonts that are hard-coded in text or code.
@@ -40,37 +40,37 @@ available.** Avoid hand-drawn fonts and fonts that are hard-coded in text or cod
 and include text-only versions for larger content. Internet service
 charges still vary greatly by locale and access method.
 
-**Design pages so text loads first,** followed by graphics, so pages are usable before they're finished loading. 
+**Design pages so text loads first,** followed by graphics, so pages are usable before they're finished loading.
 
 ## Support multiple languages
 
 **Support reading from right to left or from top to bottom.**
 For example, provide key information, such as home
 page links, at both the upper-right and upper-left sides of the
-page. 
+page.
 
 **Allow space for text expansion due to localization.**
 
 ## Comply with US and local laws as well as software availability
 
-**Follow laws pertaining to software restrictions.** Pay particular attention to downloads and multiproduct DVDs. 
+**Follow laws pertaining to software restrictions.** Pay particular attention to downloads and multiproduct DVDs.
 
-  - US
-    law restricts the international delivery of certain
-    information and technology. Verify that the download complies with
-    US law.
-    
-  - Be
-    aware of local download restrictions. The distribution of
-    marketing statements; political statements; and the names of people,
-    places, and landmarks is restricted by law in some countries and
-    regions. Verify that the download is legal in the country or
-    region.
+- US
+  law restricts the international delivery of certain
+  information and technology. Verify that the download complies with
+  US law.
+
+- Be
+  aware of local download restrictions. The distribution of
+  marketing statements; political statements; and the names of people,
+  places, and landmarks is restricted by law in some countries and
+  regions. Verify that the download is legal in the country or
+  region.
 
 **Verify availability.**
 Some products and formats aren't available worldwide.
 Localized versions of new and updated products and formats may lag
-behind US availability. 
+behind US availability.
 
 ## Globalize links
 

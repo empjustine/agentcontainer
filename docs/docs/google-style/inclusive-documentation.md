@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* This documentation provides guidelines for writing inclusive developer documentation, focusing on avoiding ableist, gendered, and violent language.
-* It emphasizes using diverse and inclusive examples by incorporating a variety of names, genders, ages, and locations while respecting cultural differences.
-* The guide recommends replacing or writing around non-inclusive terms, offering strategies for established industry terms and code-embedded keywords.
-* It highlights the importance of avoiding bias and harm when discussing disability and accessibility, advising on respectful terminology and person-first language.
-* Developers are encouraged to educate themselves on preferred terminology and prioritize inclusive language to reflect the real-world diversity of the audience.
+- This documentation provides guidelines for writing inclusive developer documentation, focusing on avoiding ableist, gendered, and violent language.
+- It emphasizes using diverse and inclusive examples by incorporating a variety of names, genders, ages, and locations while respecting cultural differences.
+- The guide recommends replacing or writing around non-inclusive terms, offering strategies for established industry terms and code-embedded keywords.
+- It highlights the importance of avoiding bias and harm when discussing disability and accessibility, advising on respectful terminology and person-first language.
+- Developers are encouraged to educate themselves on preferred terminology and prioritize inclusive language to reflect the real-world diversity of the audience.
 
 **Note**: This document includes references to
 potentially disrespectful or offensive terms. These terms are listed here to
@@ -26,9 +26,9 @@ documentation.
 
 For other writing best practices, see the following resources:
 
-* [Write for a global audience](/style/translation)
-* [Write accessible documentation](/style/accessibility)
-* [Voice and tone](/style/tone)
+- [Write for a global audience](/style/translation)
+- [Write accessible documentation](/style/accessibility)
+- [Voice and tone](/style/tone)
 
 ## Avoid unnecessarily gendered language
 
@@ -37,20 +37,20 @@ Be mindful of the
 that are used in narrative
 examples, and be aware of other possible sources of gendered language.
 
-| Recommended | Not recommended |
-| --- | --- |
+| Recommended                                                      | Not recommended                                               |
+| ---------------------------------------------------------------- | ------------------------------------------------------------- |
 | Equipment installation takes around 16 person-hours to complete. | Equipment installation takes around 16 man-hours to complete. |
-| Build AI that benefits humanity. | Build AI that benefits mankind. |
+| Build AI that benefits humanity.                                 | Build AI that benefits mankind.                               |
 
 ## Avoid figurative language
 
 Use simple language and terminology that's precise and clear for all of your
 audiences:
 
-* Avoid idiomatic or figurative language that can be misunderstood,
+- Avoid idiomatic or figurative language that can be misunderstood,
   distracting, or difficult for translation.
-* Avoid [jargon](/style/jargon).
-* Use terms that are established industry standards and widely understood by
+- Avoid [jargon](/style/jargon).
+- Use terms that are established industry standards and widely understood by
   the target audience.
 
 When you try to achieve a [friendly and conversational
@@ -60,7 +60,7 @@ your word choice, especially when you aim for an informal tone.
 
 Don't use metaphors, and don't use a term in a metaphorical sense
 ([use words in their primary sense](/style/translation#use-words-in-their-primary-sense)).
-For example, avoid using the metaphor of *pets versus cattle* when you
+For example, avoid using the metaphor of _pets versus cattle_ when you
 compare on-premises or stateful systems with stateless cloud systems.
 
 For guidance about specific terms, see the
@@ -69,16 +69,16 @@ For guidance about specific terms, see the
 ### Avoid ableist language
 
 Ableist language includes
-words or phrases such as *crazy*, *insane*, *blind to* or
-*blind eye to*, *cripple*, *dumb*, and others. Choose a more
+words or phrases such as _crazy_, _insane_, _blind to_ or
+_blind eye to_, _cripple_, _dumb_, and others. Choose a more
 accurate or alternative word, depending on the context.
 
-| Recommended | Not recommended |
-| --- | --- |
-| Before launch, give everything a final check for completeness and clarity. | Before launch, give everything a final sanity-check. |
-| There are some baffling outliers in the data. | There are some crazy outliers in the data. |
-| It slows down the service, causing a poor user experience until the queue clears. | It cripples the service, causing a poor user experience until the queue clears. |
-| Replace the placeholder in this example with the appropriate value. | Replace the [dummy variable](/style/word-list#dummy-variable) in this example with the appropriate value. |
+| Recommended                                                                       | Not recommended                                                                                           |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Before launch, give everything a final check for completeness and clarity.        | Before launch, give everything a final sanity-check.                                                      |
+| There are some baffling outliers in the data.                                     | There are some crazy outliers in the data.                                                                |
+| It slows down the service, causing a poor user experience until the queue clears. | It cripples the service, causing a poor user experience until the queue clears.                           |
+| Replace the placeholder in this example with the appropriate value.               | Replace the [dummy variable](/style/word-list#dummy-variable) in this example with the appropriate value. |
 
 ### Avoid graphic or metaphorical language
 
@@ -86,9 +86,9 @@ Avoid unnecessarily graphic or metaphorical language, when you can use a more
 precise term.
 
 For example, instead of
-*[STONITH](/style/word-list#stonith)*, use specific terms to
+_[STONITH](/style/word-list#stonith)_, use specific terms to
 describe the process that's used to stop an errant node. If you need to mention a term
-such as *STONITH*, you can mention it once when you first explain the
+such as _STONITH_, you can mention it once when you first explain the
 relevant feature, and phrase it in a way that de-emphasizes the term.
 
 Recommended:
@@ -96,7 +96,7 @@ This approach might require you to fence failed nodes.
 
 Sometimes okay:
 This approach might require you to fence failed nodes (sometimes referred to
-as *STONITH*).
+as _STONITH_).
 
 Always use the most precise and well-understood terms for your context.
 In some contexts, an industry-established term has a specific technical meaning
@@ -104,10 +104,10 @@ that doesn't have an accurate synonym or alternative. For examples, see the word
 list entries for [terminate](/style/word-list#terminate) and
 [execute](/style/word-list#execute).
 
-| Recommended | Not recommended |
-| --- | --- |
+| Recommended                                          | Not recommended                            |
+| ---------------------------------------------------- | ------------------------------------------ |
 | If the connection doesn't respond, check for errors. | If the connection hangs, check for errors. |
-| Point to **File**, and then click **New**. | Hover over **File**, and hit **New**. |
+| Point to **File**, and then click **New**.           | Hover over **File**, and hit **New**.      |
 
 For guidance about specific terms, see the
 [Word list](/style/word-list).
@@ -115,25 +115,25 @@ For guidance about specific terms, see the
 ## Use precise, objective language
 
 Use precise, objective language so that all readers can gather the same information from your
-writing. Don't use vague or subjective language. What's *simple* or *quick* for an
+writing. Don't use vague or subjective language. What's _simple_ or _quick_ for an
 experienced engineer might be complex or time consuming for someone new to the product. To prevent
 introducing subjectivity in your writing, avoid the following:
 
-* Words like [simple, simply](/style/word-list#simple),
+- Words like [simple, simply](/style/word-list#simple),
   [easy, easily](/style/word-list#easy), and
   [quick, quickly](/style/word-list#quick), which introduce an opinion that might not
   reflect the user's experience.
-* Words like [careful, carefully](/style/word-list#careful) or *thorough,
-  thoroughly*, which provide unclear instruction or imply either that not all tasks require the
+- Words like [careful, carefully](/style/word-list#careful) or _thorough,
+  thoroughly_, which provide unclear instruction or imply either that not all tasks require the
   user's full attention or that the user is usually careless or inattentive.
-* Words like [proper, properly](/style/word-list#proper), which are unclear and can
+- Words like [proper, properly](/style/word-list#proper), which are unclear and can
   assert opinions of superiority.
 
-| Recommended | Not recommended |
-| --- | --- |
-| Review the audit logs for security issues. For example, ensure that the user accounts have multi-factor authentication enabled. | Make sure that you carefully and thoroughly review all of the audit logs for potential security issues. |
-| To verify that the daemon is running, run `systemctl status DAEMON_NAME` and confirm that the output shows `Active: active (running)`. | Ensure the daemon is properly installed and running. |
-| Open the configuration file and add your custom key. | Simply open the configuration file to quickly add your custom key. |
+| Recommended                                                                                                                            | Not recommended                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Review the audit logs for security issues. For example, ensure that the user accounts have multi-factor authentication enabled.        | Make sure that you carefully and thoroughly review all of the audit logs for potential security issues. |
+| To verify that the daemon is running, run `systemctl status DAEMON_NAME` and confirm that the output shows `Active: active (running)`. | Ensure the daemon is properly installed and running.                                                    |
+| Open the configuration file and add your custom key.                                                                                   | Simply open the configuration file to quickly add your custom key.                                      |
 
 ## Write diverse and inclusive examples
 
@@ -142,27 +142,27 @@ Write documentation for a
 Use diverse names, genders, ages, and locations in examples. Keep the following
 advice in mind:
 
-* Follow our [gender-neutral
+- Follow our [gender-neutral
   pronoun](/style/pronouns#gender-neutral-pronouns) guidance.
-* Avoid being too culturally specific to the US. Be mindful when referring
-  to specific holidays (see also the word list entry for [*the holidays*](/style/word-list#holiday)), cultural practices,
+- Avoid being too culturally specific to the US. Be mindful when referring
+  to specific holidays (see also the word list entry for [_the holidays_](/style/word-list#holiday)), cultural practices,
   sports, and figures of speech.
-* In examples,
+- In examples,
   [choose a diverse set of names](/style/examples#example-person-names)
   to help reflect our global audience. For guidelines about fictional people,
   see
   [Further notes about example people](/style/examples#further-notes-about-example-people).
-* When writing about older adults, avoid terms and figures of speech such
-  as *the elderly*, *the aged*, *seniors*,
-  *senior citizens*, or *80 years young*. Instead, use terms such as
-  *older adults* or *aging population*, or mention the person's
+- When writing about older adults, avoid terms and figures of speech such
+  as _the elderly_, _the aged_, _seniors_,
+  _senior citizens_, or _80 years young_. Instead, use terms such as
+  _older adults_ or _aging population_, or mention the person's
   relative age or relationship to the other people in your example when those
   details are relevant.
 
 ## Write about features and users in inclusive ways
 
 Avoid referring to people in divisive ways. For example, instead of referring
-to people as *native speakers* or *non-native speakers* of English, consider
+to people as _native speakers_ or _non-native speakers_ of English, consider
 whether your document needs to discuss this at all, and revise it
 to discuss the feature in terms that are relevant to anyone regardless of what
 languages they know.
@@ -183,23 +183,23 @@ non-inclusive jargon, see [Jargon](/style/jargon).
 
 #### Replace established terms
 
-Many non-inclusive terms are in wide use in the industry, such as *whitelist*. If replacing
+Many non-inclusive terms are in wide use in the industry, such as _whitelist_. If replacing
 an established term could cause confusion for readers, you can directly refer to the non-inclusive
 term on the first use, and put it in parentheses. Then use the inclusive, replacement term
 throughout the rest of the document.
 
 Recommended: To make sure that administrators
-get the notification, add them to an allowlist (sometimes called a *whitelist*). Anyone who
+get the notification, add them to an allowlist (sometimes called a _whitelist_). Anyone who
 isn't on the allowlist is blocked ...
 
 Recommended: In this model, a Jenkins
 controller (master) handles HTTP requests. The Jenkins controller is designed to ...
 
 Recommended: In cloud architecture, servers
-are treated as commodities (sometimes described by using the metaphor *cattle, not pets*).
+are treated as commodities (sometimes described by using the metaphor _cattle, not pets_).
 
 In many cases, instead of directly replacing a word, you can rewrite to improve the clarity of a
-sentence. For example, instead of replacing the verb *whitelist* with *allowlist*, try
+sentence. For example, instead of replacing the verb _whitelist_ with _allowlist_, try
 rewriting the sentence.
 
 Recommended: You can allow requests from a
@@ -212,7 +212,7 @@ IP addresses by entering a CIDR block instead of a single address in the field.
 
 In some cases, non-inclusive terms are embedded in code (or similar) as names or keywords, and
 you can't simply ignore those terms and use different terminology. What you can do, however, is
-*minimize* your use of the term (hence avoid propagating it as a term of art), while still
+_minimize_ your use of the term (hence avoid propagating it as a term of art), while still
 providing clear documentation to your readers. Don't use a non-inclusive name or keyword unless it's
 in code font.
 
@@ -250,7 +250,7 @@ create a parent node (which is named `master` in the file).
 Recommended: Start the replica by using the
 `START SLAVE` statement.
 
-In subsequent mentions, use the preferred term (*parent node*, *replica*). If it's
+In subsequent mentions, use the preferred term (_parent node_, _replica_). If it's
 necessary to refer to the entity name or keyword, continue doing so only with code formatting.
 
 ## Avoid bias and harm when discussing disability and accessibility
@@ -264,18 +264,18 @@ your documentation.
 
 Some general guidelines in this area include the following:
 
-* Don't describe people without disabilities as *normal* or *healthy*. This
+- Don't describe people without disabilities as _normal_ or _healthy_. This
   contributes to othering and alienation of people with disabilities by implying that
-  they are abnormal or sick. Instead, use terms such as *nondisabled person*,
-  *sighted person*, *hearing person*,
-  *person without disabilities*, or *neurotypical person*.
-* Research the ways that the people in the communities that you're writing about
+  they are abnormal or sick. Instead, use terms such as _nondisabled person_,
+  _sighted person_, _hearing person_,
+  _person without disabilities_, or _neurotypical person_.
+- Research the ways that the people in the communities that you're writing about
   prefer to be identified and use the terms that they prefer. In many cases, avoid
   terms that remove personhood or that define people by their disability. For
-  example, avoid terms such as *the disabled* or *a quadriplegic*.
-  Instead, use terms such as *people with disabilities* or *a quadriplegic person*.
+  example, avoid terms such as _the disabled_ or _a quadriplegic_.
+  Instead, use terms such as _people with disabilities_ or _a quadriplegic person_.
 
-  However, many members of some communities prefer *identity-first language*—for
+  However, many members of some communities prefer _identity-first language_—for
   example, that preference is common in autistic, blind, and Deaf communities. Capitalization of
   identities also can vary (for some perspectives, visit
   [Identity-First Language](https://autisticadvocacy.org/about-asan/identity-first-language/)
@@ -283,10 +283,11 @@ Some general guidelines in this area include the following:
   [Self-Identification
   in the Deaf Community](https://www.verywellhealth.com/deaf-culture-big-d-small-d-1046233)). Whenever possible, research and choose terms
   that respect the ways that people in the communities identify.
-* Use *see* to refer to links and cross-references. For more information, see
+
+- Use _see_ to refer to links and cross-references. For more information, see
   [see](/style/word-list#see).
-* Avoid terms that reflect or project feelings and judgments about a person's disability,
-  such as *victim of*, *suffering from*, or *wheelchair-bound*. Instead, use neutral
-  terms such as *experiencing*, *living with*, or *uses a wheelchair*.
-* Avoid euphemisms or patronizing terms such as *physically challenged*, *special*,
-  *differently abled*, or *handi-capable*.
+- Avoid terms that reflect or project feelings and judgments about a person's disability,
+  such as _victim of_, _suffering from_, or _wheelchair-bound_. Instead, use neutral
+  terms such as _experiencing_, _living with_, or _uses a wheelchair_.
+- Avoid euphemisms or patronizing terms such as _physically challenged_, _special_,
+  _differently abled_, or _handi-capable_.

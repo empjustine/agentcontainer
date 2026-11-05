@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # lower
 
-Don't use to indicate product version numbers. Use *earlier* instead.
+Don't use to indicate product version numbers. Use _earlier_ instead.
 
 **See** [earlier](~/a-z-word-list-term-collections/e/earlier.md)

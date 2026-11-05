@@ -11,13 +11,13 @@ ms.prod: non-product-specific
 
 Don't use in content for a general audience.
 
-It's OK to use *platform*
+It's OK to use _platform_
 in content for a technical audience when you need to distinguish
 differing behaviors of a function or other API element in various
 operating systems.
 
-In content for a technical audience, use *cross-platform* to refer to an app or device that can run on more than one operating system.
+In content for a technical audience, use _cross-platform_ to refer to an app or device that can run on more than one operating system.
 
-Use *on* as a preposition with *platform* in discussions about hardware platforms: *on the Intel Atom platform,* for example, but *in Windows 10.*
+Use _on_ as a preposition with _platform_ in discussions about hardware platforms: _on the Intel Atom platform,_ for example, but _in Windows 10._
 
-**See also**  [operating environment, operating system](~/a-z-word-list-term-collections/o/operating-environment-operating-system.md)
+**See also** [operating environment, operating system](~/a-z-word-list-term-collections/o/operating-environment-operating-system.md)

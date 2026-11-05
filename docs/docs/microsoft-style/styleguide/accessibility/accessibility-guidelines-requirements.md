@@ -11,15 +11,15 @@ ms.prod: non-product-specific
 
 Microsoft
 devices and services empower people of all abilities, around the globe—at home, at work,
-and on the go—to do the activities they value most. 
+and on the go—to do the activities they value most.
 
 This section provides an overview of accessibility guidelines:
 
-  - [Writing for all abilities](~/accessibility/writing-all-abilities.md)
-  - [Colors and patterns in text, graphics, and design](~/accessibility/colors-patterns-text-graphics-design.md) 
-  - [Graphics, design, and media](~/accessibility/graphics-design-media.md)
+- [Writing for all abilities](~/accessibility/writing-all-abilities.md)
+- [Colors and patterns in text, graphics, and design](~/accessibility/colors-patterns-text-graphics-design.md)
+- [Graphics, design, and media](~/accessibility/graphics-design-media.md)
 
 **See also** [Accessibility term collection](~/a-z-word-list-term-collections/term-collections/accessibility-terms.md)
 
 **Learn more**  
-[Microsoft Accessibility site](https://www.microsoft.com/en-us/accessibility/)  
+[Microsoft Accessibility site](https://www.microsoft.com/en-us/accessibility/)

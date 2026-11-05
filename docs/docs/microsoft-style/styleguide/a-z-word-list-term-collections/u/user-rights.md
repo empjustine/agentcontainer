@@ -9,11 +9,11 @@ ms.prod: non-product-specific
 
 # user rights
 
-Use *user rights*
+Use _user rights_
 only to refer to Windows security policies that apply to individual
 user accounts or administrative groups. The system administrator manages
 user rights through the User Rights Assignment snap-in. User rights are
-*assigned,* not *granted* or *allowed*.
+_assigned,_ not _granted_ or _allowed_.
 
 When you refer to a named user right, use sentence-style capitalization and bold formatting for the name itself.
 
@@ -22,7 +22,7 @@ an operation requires that the user be signed in to an account that's a
 member of a specific administrative group, refer to the group instead
 of to the associated user rights.
 
-Don't use *privilege* as a synonym for *user right*.
+Don't use _privilege_ as a synonym for _user right_.
 
 **Examples**  
 You must have the **Perform volume maintenance tasks** user right to perform this task.  

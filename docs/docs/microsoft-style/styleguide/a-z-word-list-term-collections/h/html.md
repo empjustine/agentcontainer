@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # HTML
 
-Don't spell out. If you have a reason to spell out, use *Hypertext Markup Language.*
+Don't spell out. If you have a reason to spell out, use _Hypertext Markup Language._

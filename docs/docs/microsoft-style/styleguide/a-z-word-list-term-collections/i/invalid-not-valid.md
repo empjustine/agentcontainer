@@ -9,9 +9,9 @@ ms.prod: non-product-specific
 
 # invalid, not valid
 
-Both terms are OK to use, but try to use more specific terms instead. 
+Both terms are OK to use, but try to use more specific terms instead.
 
-**Global tip** Use *not valid* instead of *invalid* if possible because machine translation might not translate *i*<em>nvalid</em> correctly.
+**Global tip** Use _not valid_ instead of _invalid_ if possible because machine translation might not translate _i_<em>nvalid</em> correctly.
 
 **Examples**  
 There are several reasons why a product key might not be valid.  

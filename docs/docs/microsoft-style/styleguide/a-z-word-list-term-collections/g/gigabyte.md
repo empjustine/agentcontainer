@@ -11,4 +11,4 @@ ms.prod: non-product-specific
 
 **See** [Bits and bytes term collection](~/a-z-word-list-term-collections/term-collections/bits-bytes-terms.md)
 
-*GB* is also the abbreviation for *Great Britain* (England, Scotland, and Wales). Don't use *United Kingdom (UK),* *Great Britain (GB),* and *England* interchangeably. 
+_GB_ is also the abbreviation for _Great Britain_ (England, Scotland, and Wales). Don't use _United Kingdom (UK),_ _Great Britain (GB),_ and _England_ interchangeably.

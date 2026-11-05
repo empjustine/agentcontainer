@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # OK, okay
 
-Use *OK* instead of *okay* or *all right.* Never use *alright.*  
+Use _OK_ instead of _okay_ or _all right._ Never use _alright._

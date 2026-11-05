@@ -9,10 +9,10 @@ ms.prod: non-product-specific
 
 # indent, outdent
 
-Use *indent* to refer to a single instance of indentation. For example, use *hanging indent, nested indent, negative indent,* or *positive indent*. 
+Use _indent_ to refer to a single instance of indentation. For example, use _hanging indent, nested indent, negative indent,_ or _positive indent_.
 
-Use *indentation* to refer to the general concept.
+Use _indentation_ to refer to the general concept.
 
-Don't use *outdent.*
+Don't use _outdent._
 
-Don't use *indenting* or *outdenting into the margin*. Use *extending text into the margin* or *indenting to the previous tab stop* instead.
+Don't use _indenting_ or _outdenting into the margin_. Use _extending text into the margin_ or _indenting to the previous tab stop_ instead.

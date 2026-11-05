@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # increment
 
-In content for developers and IT pros, use *increment* as a verb only to mean *increase by one or by a specified interval*. As a noun, use *increment* to refer to the specified interval.
+In content for developers and IT pros, use _increment_ as a verb only to mean _increase by one or by a specified interval_. As a noun, use _increment_ to refer to the specified interval.
 
-In other content, it's OK to use *increment* as long as the meaning is clear.
+In other content, it's OK to use _increment_ as long as the meaning is clear.

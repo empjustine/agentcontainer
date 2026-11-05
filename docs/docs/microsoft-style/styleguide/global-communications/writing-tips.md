@@ -13,48 +13,48 @@ Content that’s easy to read tends to be easy to localize
 and translate. If you follow the writing recommendations in this style
 guide, you’re off to a great start. Pay particular attention to:
 
-  - [Word choice](~/word-choice/index.md)
-  - [Grammar and parts of speech](~/grammar/grammar-and-parts-of-speech.md)
-  - [Punctuation](~/punctuation/index.md)
+- [Word choice](~/word-choice/index.md)
+- [Grammar and parts of speech](~/grammar/grammar-and-parts-of-speech.md)
+- [Punctuation](~/punctuation/index.md)
 
 ## Tips for all global content
 
-These practices will help localizers and customers. 
+These practices will help localizers and customers.
 
 **Write short, simple sentences.**
 Punctuating a sentence with more than a few commas and end punctuation
 usually indicates a complex sentence. Consider rewriting it or breaking
-it into multiple sentences.  
+it into multiple sentences.
 
 **Replace complex sentences and paragraphs** with lists and tables.
 
-**Include *that* and *who*.** They help to clarify the sentence structure.<br />
+**Include _that_ and _who_.** They help to clarify the sentence structure.<br />
 **Examples**  
 Inspect the database to verify that all tables, data, and relationships were correctly migrated.  
 Select the check box of each folder that you want to sync with your desktop.
 
-**Include articles,** such as *the.* Articles help readers and translation software identify the nouns and modifiers in a sentence.<br />
+**Include articles,** such as _the._ Articles help readers and translation software identify the nouns and modifiers in a sentence.<br />
 **Examples**  
 Empty the container.  
 The empty container
 
-**If necessary for clarity, include verbs** in short headings and UI labels. For example, say *Access is denied* instead of *Access denied.*
+**If necessary for clarity, include verbs** in short headings and UI labels. For example, say _Access is denied_ instead of _Access denied._
 
-**Use sentence-style capitalization.** Capitalize proper nouns only, including trademarks and the names of products. 
+**Use sentence-style capitalization.** Capitalize proper nouns only, including trademarks and the names of products.
 
 **Avoid idioms, colloquial expressions, and culture-specific references.**
 They can be confusing for non-native English speakers and hard to
 localize. Consider the worldwide implications of what you write.
 Customers in other locales may not know much about the history and culture of
-your country. 
+your country.
 
 **Avoid modifier stacks.** Long chains of modifying words are confusing even to native English speakers. For example, say "Your migration will proceed more smoothly if you have a project plan that's well thought out," not "With an extremely well thought-out Windows migration project plan, your migration will go more smoothly."
 
 **Use active voice and indicative mood** most of the time. Use imperative mood in procedures.
 
-**Keep adjectives and adverbs close to the words they modify.** Pay particular attention to the placement of *only.*
+**Keep adjectives and adverbs close to the words they modify.** Pay particular attention to the placement of _only._
 
-**Avoid linking more than three phrases or clauses** by using coordinate conjunctions such as *and,* *or,* or *but.* Better yet, avoid linking more than two. 
+**Avoid linking more than three phrases or clauses** by using coordinate conjunctions such as _and,_ _or,_ or _but._ Better yet, avoid linking more than two.
 
 ## Additional tips for machine translation
 
@@ -75,24 +75,24 @@ the same word to refer to multiple concepts or features.
 
 **Limit your use of sentence fragments.** Sentence fragments can be hard to translate.
 
-**Use words ending in *–ing* carefully.** A word ending in *–ing* can be a verb, an adjective, or a noun. Use the sentence structure and optional words to clarify the role of the *–ing* word.
+**Use words ending in _–ing_ carefully.** A word ending in _–ing_ can be a verb, an adjective, or a noun. Use the sentence structure and optional words to clarify the role of the _–ing_ word.
 
-**Use words ending in *–ed* carefully.** A word ending in *-ed* can be a modifier or part of a verb phrase. Use the sentence structure and optional words to clarify the role of the *–ed* word.
+**Use words ending in _–ed_ carefully.** A word ending in _-ed_ can be a modifier or part of a verb phrase. Use the sentence structure and optional words to clarify the role of the _–ed_ word.
 
-  - Add a determiner (*a, an, the, this*) before or after the *–ed* word.  
-**Example**  
-They have **an** added functionality.  
+- Add a determiner (_a, an, the, this_) before or after the _–ed_ word.  
+  **Example**  
+  They have **an** added functionality.
 
-  - Add a form of the verb *be*.  
-**Example**  
-Configure limits for the backup **that are based** on the amount of storage space available.  
+- Add a form of the verb _be_.  
+  **Example**  
+  Configure limits for the backup **that are based** on the amount of storage space available.
 
-  - Split the sentence in two.  
-**Example**  
-Configure limits for the backup. These limits should be based on the amount of storage space available.  
+- Split the sentence in two.  
+  **Example**  
+  Configure limits for the backup. These limits should be based on the amount of storage space available.
 
-  - Rewrite the sentence to avoid the *–ed* word.  
-**Example**  
-Configure limits for the backup. **Base the limits** on the amount of storage space available.
+- Rewrite the sentence to avoid the _–ed_ word.  
+  **Example**  
+  Configure limits for the backup. **Base the limits** on the amount of storage space available.
 
-**Use only common abbreviations,** such as *USB*, and abbreviations that are defined in glossaries. Check with a localization expert to find our if an acronym is defined.  
+**Use only common abbreviations,** such as _USB_, and abbreviations that are defined in glossaries. Check with a localization expert to find our if an acronym is defined.

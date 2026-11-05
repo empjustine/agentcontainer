@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # adjacent selection
 
-Don't use if you can use *multiple selection* instead. It's OK to use *adjacent selection* if you must emphasize that the selected items are adjacent to one another.
+Don't use if you can use _multiple selection_ instead. It's OK to use _adjacent selection_ if you must emphasize that the selected items are adjacent to one another.
 
-Don't use *contiguous selection*.
+Don't use _contiguous selection_.
 
 **See also** [multiple selection](~/a-z-word-list-term-collections/m/multiple-selection.md)

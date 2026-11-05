@@ -9,9 +9,9 @@ ms.prod: non-product-specific
 
 # scroll
 
-Avoid. Use a verb phrase such as *move through* instead, if the context is clear.
+Avoid. Use a verb phrase such as _move through_ instead, if the context is clear.
 
-It's OK to use *scroll*
+It's OK to use _scroll_
 in content that teaches beginning skills to describe
 interacting with a document by using a mouse,
 keyboard, or other peripheral device.

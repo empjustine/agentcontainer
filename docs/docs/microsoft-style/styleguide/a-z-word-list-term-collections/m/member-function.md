@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # member function
 
-Don't use if you can correctly use *method* instead.
+Don't use if you can correctly use _method_ instead.

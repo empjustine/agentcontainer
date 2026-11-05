@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # defragment
 
-Don't abbreviate to *defrag*.
+Don't abbreviate to _defrag_.

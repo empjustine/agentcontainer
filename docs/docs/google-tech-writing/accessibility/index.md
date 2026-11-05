@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* This course focuses on creating accessible documentation and websites for everyone, including people with disabilities, by incorporating inclusive design principles and best practices.
-* It's offered in two formats: a 90-minute instructor-led workshop and a self-study version, both covering similar accessibility content.
-* Google provides materials for in-house sessions and occasionally offers free public sessions, with more information on the facilitator resources and announcements pages.
-* The target audience includes engineers, product/program managers, technical writers, and anyone involved in document creation or review.
-* Upon completion, participants will gain skills in inclusive design, writing alt text, color contrast checking, accessible diagram creation, and error detection in documents.
+- This course focuses on creating accessible documentation and websites for everyone, including people with disabilities, by incorporating inclusive design principles and best practices.
+- It's offered in two formats: a 90-minute instructor-led workshop and a self-study version, both covering similar accessibility content.
+- Google provides materials for in-house sessions and occasionally offers free public sessions, with more information on the facilitator resources and announcements pages.
+- The target audience includes engineers, product/program managers, technical writers, and anyone involved in document creation or review.
+- Upon completion, participants will gain skills in inclusive design, writing alt text, color contrast checking, accessible diagram creation, and error detection in documents.
 
 Our mission statement is to organize the world's information and make it
 universally accessible and useful. Take this course to learn how to make
@@ -19,8 +19,8 @@ for screen reader users.
 
 This course is available in the following two formats:
 
-* Instructor-led, which this page describes.
-* [Self-study](/tech-writing/accessibility/self-study)
+- Instructor-led, which this page describes.
+- [Self-study](/tech-writing/accessibility/self-study)
 
 Both formats cover similar, though not identical, content.
 
@@ -41,17 +41,17 @@ public. For details, see [Announcements](/tech-writing/announcements).
 
 We've aimed this course at the following roles:
 
-* engineers
-* product managers and technical program managers
-* technical writers
-* anyone else who writes or reviews documents
+- engineers
+- product managers and technical program managers
+- technical writers
+- anyone else who writes or reviews documents
 
 ## Learning objectives
 
 After taking this course, you will know how to do the following:
 
-* Learn to design inclusively.
-* Write helpful `alt` text for technical diagrams.
-* Check color contrast.
-* Create accessible diagrams.
-* Detect accessibility errors in documents.
+- Learn to design inclusively.
+- Write helpful `alt` text for technical diagrams.
+- Check color contrast.
+- Create accessible diagrams.
+- Detect accessibility errors in documents.

@@ -9,9 +9,9 @@ challenges for localization efforts.
 
 Instead of a footnote, consider using the following formats to convey information:
 
-* [Add a cross-reference](/style/cross-references).
-* [Use a note](/style/notices).
-* [Put it in a parenthetical](/style/parentheses).
+- [Add a cross-reference](/style/cross-references).
+- [Use a note](/style/notices).
+- [Put it in a parenthetical](/style/parentheses).
 
 If the only way to convey this information is to use a footnote, then use a superscript
 number—for example, `<sup>1</sup>`.

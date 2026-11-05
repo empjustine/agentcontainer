@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # refresh
 
-Use to describe updating a webpage. 
+Use to describe updating a webpage.
 
-Don't use *refresh* to describe an image being restored on the screen or data being updated. Use *redraw* or *update* instead. 
+Don't use _refresh_ to describe an image being restored on the screen or data being updated. Use _redraw_ or _update_ instead.

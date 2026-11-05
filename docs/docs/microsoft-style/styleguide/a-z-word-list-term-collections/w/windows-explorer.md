@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # Windows Explorer
 
-Don't use. 
+Don't use.
 
 **See** [File Explorer](~/a-z-word-list-term-collections/f/file-explorer.md)

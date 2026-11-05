@@ -11,10 +11,10 @@ your documents. On the other hand, careless use of LLMs can inject mistakes
 into your documents. This section focuses on responsible use of LLMs to
 help you do the following:
 
-* Generate a first draft.
-* Revise a document.
-* Format a document.
-* Summarize a document.
+- Generate a first draft.
+- Revise a document.
+- Format a document.
+- Summarize a document.
 
 The requests you make to an LLM are called
 [**prompts**](/machine-learning/glossary#prompt). An LLM reacts to prompts
@@ -36,14 +36,14 @@ first draft. To get a good first draft, you'll need to supply good prompts.
 LLMs generate the best responses for topics they "know" about. LLMs know
 the following:
 
-* The information the LLM was
+- The information the LLM was
   [**pre-trained**](/machine-learning/glossary#pre-training) on.
-* Any additional information the LLM was subsequently
+- Any additional information the LLM was subsequently
   [**fine-tuned**](/machine-learning/glossary#fine-tuning) on.
-* Information traditionally available through a search engine (if the LLM
+- Information traditionally available through a search engine (if the LLM
   is enhanced with
   [Retrieval-Augmented Generation (RAG)](/machine-learning/glossary#retrieval-augmented_generation)).
-* Any additional information you provide in prompts or attachments.
+- Any additional information you provide in prompts or attachments.
 
 For example, most LLMs are pre-trained on a lot of information about the
 Python programming language. Therefore, most LLMs can generate a first draft
@@ -75,7 +75,7 @@ to the target audience.
 ### Identify your target audience
 
 Prompts should specify the target audience.
-For example, the following prompt does *not* identify a target audience,
+For example, the following prompt does _not_ identify a target audience,
 so the LLM's response may or may not be helpful:
 
 Not recommended
@@ -96,7 +96,7 @@ Recommended
 
 ### Specify the document type
 
-What *type* of document do you want the LLM to generate?
+What _type_ of document do you want the LLM to generate?
 The following prompt, for example, doesn't answer the preceding question:
 
 Not recommended
@@ -198,10 +198,10 @@ Your initial prompt generally won't produce a perfect response.
 You'll probably need to prompt multiple times, making adjustments each time.
 If the responses still aren't very good, consider the following questions:
 
-* Do your prompts identify a role, a target audience, and a document type?
-* Are your prompts sufficiently specific? Are you asking for exactly what
+- Do your prompts identify a role, a target audience, and a document type?
+- Are your prompts sufficiently specific? Are you asking for exactly what
   you want?
-* Is your prompt clear? Would your prompt conform to the technical writing
+- Is your prompt clear? Would your prompt conform to the technical writing
   lessons in [Technical Writing One](/tech-writing/one)?
   If you gave the same prompt to a human, would that person know what you
   are requesting?
@@ -211,7 +211,7 @@ but not quite perfect, it is tempting to continue refining the prompt. However,
 it can be more efficient to edit the very good response yourself rather than
 endlessly refine the prompt.
 
-**Note:** LLMs often produce different responses to the *same* prompt. So, even
+**Note:** LLMs often produce different responses to the _same_ prompt. So, even
 re-issuing the same prompt can sometimes be a form of iteration.
 
 ### Set the context
@@ -221,11 +221,11 @@ Providing additional information to establish context helps LLMs generate
 better responses. The additional information could include just about any
 information relevant to the topic, including:
 
-* Documents
-* Meeting transcripts
-* Source code
-* Emails
-* Diagrams
+- Documents
+- Meeting transcripts
+- Source code
+- Emails
+- Diagrams
 
 For example, attaching the relevant source code to a prompt can help an LLM
 generate a first draft of documentation:
@@ -240,7 +240,7 @@ in attached source code are actually features.
 
 ### Consider this counterpoint
 
-When you rely on an LLM to create a first draft, you lose the *benefits* of the
+When you rely on an LLM to create a first draft, you lose the _benefits_ of the
 writing process.
 
 > "One writes to know what one is thinking" - Abraham Verghese
@@ -277,7 +277,7 @@ one possible prompt:
 ## Revise a document
 
 LLMs excel at critical analysis. LLMs are such good critics that they can even
-find mistakes in the text that *they* generated.
+find mistakes in the text that _they_ generated.
 
 ### Reorganize
 
@@ -354,9 +354,9 @@ LLMs can convert a document from one format to another. For example, you can
 ask an LLM to convert a Word document to HTML or Markdown. To do so, you'll
 need to provide the following:
 
-* The document to convert.
-* The target format.
-* Any specific formatting requirements.
+- The document to convert.
+- The target format.
+- Any specific formatting requirements.
 
 For example:
 
@@ -380,10 +380,10 @@ technical professionals struggle to write abstracts, executive summaries,
 and overviews. Fortunately, LLMs generally excel at summarization.
 Prompts to summarize text should typically identify the following:
 
-* Style
-* Target audience
-* Purpose
-* Optionally, tone
+- Style
+- Target audience
+- Purpose
+- Optionally, tone
 
 For example, here is a good summarization prompt:
 
@@ -417,7 +417,7 @@ Recommended
 
 ### Alternate media for summaries
 
-If the medium you are working in *requires* a textual summary, then you'll
+If the medium you are working in _requires_ a textual summary, then you'll
 need to provide text. Sometimes though, technical people default to producing
 textual summaries when a non-text summary (for example, an image or a video)
 might be more memorable or engaging.
@@ -454,6 +454,7 @@ The image should help non-technical people understand the app.
 #### Click the icon to see a possible answer.
 
 Here is one possibility:
+
 > Create an image that helps non-technical people understand the app.
 
 ---

@@ -11,6 +11,6 @@ ms.prod: non-product-specific
 
 Two words. Hyphenate as an adjective.
 
-Use *business-critical* or simply *critical* instead
+Use _business-critical_ or simply _critical_ instead
 if you can. When necessary, it's OK to use this term in a
-technical context to describe an application or business process. 
+technical context to describe an application or business process.

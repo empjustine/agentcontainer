@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Always end complete sentences with a period, except in lists or headings.
-* When including URLs, avoid placing them at the end of a sentence to prevent confusion with the period.
-* For quotations, place the period inside the quotation marks, even if it's not part of the quoted material.
-* In parentheses, if it encloses a full sentence, the period goes inside; if it's part of a larger sentence, the period goes outside.
-* Use periods for decimal points and abbreviations but not for acronyms, headings, or generally in captions.
+- Always end complete sentences with a period, except in lists or headings.
+- When including URLs, avoid placing them at the end of a sentence to prevent confusion with the period.
+- For quotations, place the period inside the quotation marks, even if it's not part of the quoted material.
+- In parentheses, if it encloses a full sentence, the period goes inside; if it's part of a larger sentence, the period goes outside.
+- Use periods for decimal points and abbreviations but not for acronyms, headings, or generally in captions.
 
 End a complete sentence with a period, unless it's a question. There are
 exceptions for working in lists.
@@ -31,9 +31,9 @@ tell whether the period is part of the URL.
 To indicate that the punctuating period isn't part of the URL, try one of the
 following techniques:
 
-* Whenever possible, avoid putting [URLs in text](/style/cross-references#urls).
-* Rewrite the sentence so that the URL isn't at the end of the sentence.
-* Put the URL on a separate line from the text, omitting the final period.
+- Whenever possible, avoid putting [URLs in text](/style/cross-references#urls).
+- Rewrite the sentence so that the URL isn't at the end of the sentence.
+- Put the URL on a separate line from the text, omitting the final period.
 
 If the URL is a link, it generally looks different from the surrounding text. For
 example, in most browsers, link text is blue by default. This formatting helps
@@ -124,14 +124,14 @@ Leave only one space between sentences.
 
 In general, avoid exclamation points. They can appear unprofessional, alarming, or translate poorly into other languages. If you need to use an exclamation point, see the following guidance by content type:
 
-* **Concept and reference docs.** Never use exclamation points. These sections should maintain a neutral, objective tone.
-* **Procedural topics.** Avoid exclamation points. Use periods for completion steps—for example, "The VM is created."
-* **Blog posts.** Exclamation points are acceptable to convey enthusiasm but shouldn't be used in every paragraph.
+- **Concept and reference docs.** Never use exclamation points. These sections should maintain a neutral, objective tone.
+- **Procedural topics.** Avoid exclamation points. Use periods for completion steps—for example, "The VM is created."
+- **Blog posts.** Exclamation points are acceptable to convey enthusiasm but shouldn't be used in every paragraph.
 
 When exclamation points are acceptable:
 
-* **Code examples.** Use when required by syntax—for example, the `!=` operator.
-* **System literals.** Use when an exclamation point is part of a specific error code or log message that must be matched exactly.
-* **Tutorials and learning modules.** Use sparingly to mark major milestones or achievements—for example, "Congratulations! You've completed the setup."
+- **Code examples.** Use when required by syntax—for example, the `!=` operator.
+- **System literals.** Use when an exclamation point is part of a specific error code or log message that must be matched exactly.
+- **Tutorials and learning modules.** Use sparingly to mark major milestones or achievements—for example, "Congratulations! You've completed the setup."
 
 **Note:** For translation impact, be conservative with exclamation points in global documentation. In some languages, such as Japanese or Korean, exclamation marks can come across as overly emphatic or even shouting, which can alienate the reader.

@@ -9,10 +9,10 @@ ms.prod: non-product-specific
 
 # Question marks
 
-Use questions sparingly. In general, customers want *us* to give *them* answers. 
+Use questions sparingly. In general, customers want _us_ to give _them_ answers.
 
 When a customer needs to make a decision, a question is appropriate.<br />
 **Examples**  
-If you forgot your password, provide your secret answer.   
+If you forgot your password, provide your secret answer.  
 More nature themes are available online.  
 Do you want to save your changes?

@@ -9,9 +9,9 @@ ms.prod: non-product-specific
 
 # tile, Live Tile
 
-Lowercase *tile*
-in general references to the shortcuts on the Start menu 
+Lowercase _tile_
+in general references to the shortcuts on the Start menu
 that customers can move around. These can be static, live, or content
-tiles. 
+tiles.
 
-Capitalize *Live Tile* to describe the feature and in marketing materials. 
+Capitalize _Live Tile_ to describe the feature and in marketing materials.

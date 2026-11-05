@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # click
 
-Avoid this verb, which is specific to using a mouse. Instead, use verbs that work with multiple devices, such as *select*.
+Avoid this verb, which is specific to using a mouse. Instead, use verbs that work with multiple devices, such as _select_.
 
-It's OK to use *click* when you need to describe mouse actions specifically.
+It's OK to use _click_ when you need to describe mouse actions specifically.
 
 **See** [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md)

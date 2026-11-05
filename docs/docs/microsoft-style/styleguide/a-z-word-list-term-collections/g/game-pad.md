@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # game pad
 
-Two words. 
+Two words.

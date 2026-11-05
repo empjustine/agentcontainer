@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # administer
 
-Use instead of *administrate*.
+Use instead of _administrate_.

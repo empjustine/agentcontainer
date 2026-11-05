@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # page
 
-Use *page* or *webpage* to describe one of a collection of web documents that make up a website. Use *page* to refer to the page the reader is on or to a specific page, such as the home page or start page.
+Use _page_ or _webpage_ to describe one of a collection of web documents that make up a website. Use _page_ to refer to the page the reader is on or to a specific page, such as the home page or start page.
 
-In a wizard, use *page* instead of *screen* to refer to an individual screen.
+In a wizard, use _page_ instead of _screen_ to refer to an individual screen.

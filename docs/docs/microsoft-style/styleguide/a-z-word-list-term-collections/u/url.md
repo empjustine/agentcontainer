@@ -9,11 +9,11 @@ ms.prod: non-product-specific
 
 # URL
 
-In content for a general audience, use *address* rather than *URL*. In content for a technical audience, don't spell out *URL* on the first mention. If you have a reason to spell out URL, use *uniform* *resource locator*. Use *a,* not *an,* as an article preceding *URL*.
+In content for a general audience, use _address_ rather than _URL_. In content for a technical audience, don't spell out _URL_ on the first mention. If you have a reason to spell out URL, use _uniform_ _resource locator_. Use _a,_ not _an,_ as an article preceding _URL_.
 
-Use *of* (not *for*) to describe the relationship of the word *URL* to a resource. 
+Use _of_ (not _for_) to describe the relationship of the word _URL_ to a resource.
 
 **Example**  
-Search results include the URL of the page. 
+Search results include the URL of the page.
 
 **See also** [URLs and web addresses](~/urls-web-addresses.md)

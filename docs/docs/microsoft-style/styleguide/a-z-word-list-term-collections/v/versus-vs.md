@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # versus, vs.
 
-In headings, use the abbreviation *vs.,* all lowercase. In text, spell out as *versus*.
+In headings, use the abbreviation _vs.,_ all lowercase. In text, spell out as _versus_.

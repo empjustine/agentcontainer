@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # multithreaded
 
-Use instead of *multithread*.
+Use instead of _multithread_.

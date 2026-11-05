@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # labeled, labeling
 
-Use one *l,* not two.
+Use one _l,_ not two.

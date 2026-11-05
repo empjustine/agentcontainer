@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* This guide provides formatting instructions for phone numbers in technical documentation, using HTML or Markdown.
-* Use non-breaking spaces and hyphens (`&nbsp;`, `&#8209;`) to ensure phone numbers are displayed on a single line.
-* For example phone numbers, utilize the reserved range (800) 555‑0100 through (800) 555‑0199 and avoid real numbers.
-* Adhere to specific formatting guidelines for North American and international phone numbers, including country and area codes when applicable.
-* When including extensions, follow the phone number with the word "extension" and the corresponding number.
+- This guide provides formatting instructions for phone numbers in technical documentation, using HTML or Markdown.
+- Use non-breaking spaces and hyphens (`&nbsp;`, `&#8209;`) to ensure phone numbers are displayed on a single line.
+- For example phone numbers, utilize the reserved range (800) 555‑0100 through (800) 555‑0199 and avoid real numbers.
+- Adhere to specific formatting guidelines for North American and international phone numbers, including country and area codes when applicable.
+- When including extensions, follow the phone number with the word "extension" and the corresponding number.
 
 This page describes how to use and format phone numbers in technical documentation. This page
 doesn't provide guidance on how to enter or use phone numbers in Google or third-party products.
@@ -54,7 +54,7 @@ Recommended: 415‑555‑0132
 To format a real phone number in non-NANP countries, include the country and area
 codes. Insert a plus sign
 immediately before the country code (no space); the plus sign stands in for a
-prefix known as an *exit code*, which lets you dial out of a country. Each
+prefix known as an _exit code_, which lets you dial out of a country. Each
 country has a different exit code.
 
 For more information, see the [ITU document about
@@ -64,7 +64,7 @@ Recommended: +1‑415‑555‑0132
 
 ## Format phone numbers that include an extension
 
-To specify a phone extension, follow the phone number with the word *extension*, and then
+To specify a phone extension, follow the phone number with the word _extension_, and then
 specify the extension number.
 
 Recommended: 415‑555‑0132, extension 987

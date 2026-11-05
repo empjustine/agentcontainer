@@ -9,19 +9,19 @@ ms.prod: non-product-specific
 
 # shut down, shutdown
 
-Two words as a verb, one word as a noun. 
+Two words as a verb, one word as a noun.
 
-Use *shut down* to describe exiting the operating system and turning off the device in a single action. 
+Use _shut down_ to describe exiting the operating system and turning off the device in a single action.
 
-Don't use *shut down* to describe turning off a device or as a synonym for *close*.
+Don't use _shut down_ to describe turning off a device or as a synonym for _close_.
 
 **Examples**  
 To turn off your computer, select **Settings**, and then select **Shut down**.  
-Use the **Shut down** command to safely close open apps, shut down Windows, and turn off the device.   
+Use the **Shut down** command to safely close open apps, shut down Windows, and turn off the device.  
 Many computers turn the power off automatically.  
-The accidental shutdown might have damaged some files. 
+The accidental shutdown might have damaged some files.
 
-**See also**   
+**See also**  
 [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md)  
 [turn on, turn off](~/a-z-word-list-term-collections/t/turn-on-turn-off.md)  
 [sleep](~/a-z-word-list-term-collections/s/sleep.md)

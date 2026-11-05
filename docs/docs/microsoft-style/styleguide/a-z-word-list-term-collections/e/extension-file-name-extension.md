@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # extension, file name extension
 
-Use instead of *file extension*. 
+Use instead of _file extension_.
 
 **Examples**  
 the .bak extension  

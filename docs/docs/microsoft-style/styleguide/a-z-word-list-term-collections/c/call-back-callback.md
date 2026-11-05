@@ -11,4 +11,4 @@ ms.prod: non-product-specific
 
 Two words as a verb, one word as an adjective or a noun.
 
-In content for developers, don't use *callback* to mean *callback function*.
+In content for developers, don't use _callback_ to mean _callback function_.

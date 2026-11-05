@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # toward
 
-Use instead of *towards*.
+Use instead of _towards_.

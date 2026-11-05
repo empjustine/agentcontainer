@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # column format
 
-Use instead of *columnar* or *columnlike*.
+Use instead of _columnar_ or _columnlike_.

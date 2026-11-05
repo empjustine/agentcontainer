@@ -9,15 +9,15 @@ ms.prod: non-product-specific
 
 # disable, disabled
 
-Don't use *disabled* to refer to people with disabilities. 
+Don't use _disabled_ to refer to people with disabilities.
 
-In content for a technical audience, it's OK to use *disable* to mean making a command or function inactive and *disabled* to describe such commands and functions.
+In content for a technical audience, it's OK to use _disable_ to mean making a command or function inactive and _disabled_ to describe such commands and functions.
 
-In other content, use *turned off* or *isn’t available.*
+In other content, use _turned off_ or _isn’t available._
 
-**Examples**   
+**Examples**  
 If the command prompt isn’t available, your network administrator might have turned off this feature.  
-Disable the command prompt to prevent users from opening a command window. 
+Disable the command prompt to prevent users from opening a command window.
 
 **See also**  
 [Accessibility term collection](~/a-z-word-list-term-collections/term-collections/accessibility-terms.md)  

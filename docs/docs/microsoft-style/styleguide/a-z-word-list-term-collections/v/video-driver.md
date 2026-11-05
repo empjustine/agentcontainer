@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # video driver
 
-Use *video driver* instead of *display driver* or *graphics driver.*
+Use _video driver_ instead of _display driver_ or _graphics driver._

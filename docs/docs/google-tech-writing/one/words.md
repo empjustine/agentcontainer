@@ -5,10 +5,10 @@
 
 ## Page Summary
 
-* Define new or unfamiliar terms within your document or link to existing definitions to ensure clarity for all readers.
-* Use consistent terminology throughout your document to avoid confusion and ensure clear communication of ideas.
-* Introduce acronyms properly by providing the full term followed by the acronym in parentheses, both in bold, and use them judiciously, especially for lengthy or frequently used terms.
-* Minimize ambiguity by replacing or clarifying pronouns like "it," "they," "this," and "that" with explicit nouns or by placing them closer to their referents to ensure clear understanding.
+- Define new or unfamiliar terms within your document or link to existing definitions to ensure clarity for all readers.
+- Use consistent terminology throughout your document to avoid confusion and ensure clear communication of ideas.
+- Introduce acronyms properly by providing the full term followed by the acronym in parentheses, both in bold, and use them judiciously, especially for lengthy or frequently used terms.
+- Minimize ambiguity by replacing or clarifying pronouns like "it," "they," "this," and "that" with explicit nouns or by placing them closer to their referents to ensure clear understanding.
 
 **Estimated Time:** 10 minutes
 
@@ -21,9 +21,9 @@ When writing or editing, learn to recognize terms that might be unfamiliar to
 some or all of your target audience. When you spot such a term, take one of the
 following two tactics:
 
-* If the term already exists, link to a good existing explanation. (Don't
+- If the term already exists, link to a good existing explanation. (Don't
   reinvent the wheel.)
-* If your document is introducing the term, define the term. If your
+- If your document is introducing the term, define the term. If your
   document is introducing many terms, collect the definitions into a
   glossary.
 
@@ -44,8 +44,8 @@ document. Once you've named a component **thingy**, don't rename it
 George Fairbanks, a Google software engineer, provides this excellent note about
 consistent naming:
 
-|  |
-| --- |
+|                                                                                                                                                                |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | When I encounter two words that seem to be synonyms, I wonder if the author is trying to signal a subtle distinction that I need to track down and understand. |
 
 Yes, technical writing is cruel and restrictive, but at least technical writing
@@ -82,25 +82,25 @@ same document.
 
 ### Use the acronym or the full term?
 
-Sure, you can introduce and use acronyms properly, but *should* you use
+Sure, you can introduce and use acronyms properly, but _should_ you use
 acronyms? Well, acronyms do reduce sentence size.
-For example, *TTN* is two words shorter than *Telekinetic Tactile Network*.
+For example, _TTN_ is two words shorter than _Telekinetic Tactile Network_.
 However, acronyms are really just a layer of abstraction; readers must
 mentally expand recently learned acronyms to the full term. For example,
-readers convert *TTN* to *Telekinetic Tactile Network* in their heads,
+readers convert _TTN_ to _Telekinetic Tactile Network_ in their heads,
 so the "shorter" acronym actually takes a little longer to process than
 the full term.
 
 Heavily used acronyms develop their own identity. After a number of
 occurrences, readers generally stop expanding acronyms into the full term.
-Many web developers, for example, have forgotten what *HTML* expands to.
+Many web developers, for example, have forgotten what _HTML_ expands to.
 
 Here are the guidelines for acronyms:
 
-* Don't define acronyms that would only be used a few times.
-* Do define acronyms that meet both of the following criteria:
-  + The acronym is significantly shorter than the full term.
-  + The acronym appears many times in the document.
+- Don't define acronyms that would only be used a few times.
+- Do define acronyms that meet both of the following criteria:
+  - The acronym is significantly shorter than the full term.
+  - The acronym appears many times in the document.
 
 ### Exercise
 
@@ -117,14 +117,16 @@ the term **MapReduce** in the document and that **MR** is the best abbreviation.
 #### Click the icon to see the answer.
 
 You could take a few different approaches here. One approach
-is to associate the acronym *MR* with the full term and then
+is to associate the acronym _MR_ with the full term and then
 use that acronym:
+
 > Jeff Dean invented **MapReduce** (**MR**) in... This version of MR held
 > several...
 
 Alternatively, you could decide that defining an acronym for such
 a short passage puts too much burden on readers, so you'll simply
-use the full term *MapReduce* every time:
+use the full term _MapReduce_ every time:
+
 > Jeff Dean invented **MapReduce** in... This version of MapReduce held
 > several...
 
@@ -145,20 +147,20 @@ sometimes outweighs its risk (as in this sentence).
 
 Consider the following pronoun guidelines:
 
-* Only use a pronoun *after* you've introduced the noun; never use the
+- Only use a pronoun _after_ you've introduced the noun; never use the
   pronoun before you've introduced the noun.
-* Place the pronoun as close as possible to the referring noun. In general,
+- Place the pronoun as close as possible to the referring noun. In general,
   if more than five words separate your noun from your pronoun,
   consider repeating the noun instead of using the pronoun.
-* If you introduce a second noun between your noun and your pronoun, reuse
+- If you introduce a second noun between your noun and your pronoun, reuse
   your noun instead of using a pronoun.
 
 ### It and they
 
 The following pronouns cause the most confusion in technical documentation:
 
-* It
-* They, them, and their
+- It
+- They, them, and their
 
 For example, in the following sentence, does **It** refer to Python or to C++?
 
@@ -174,8 +176,8 @@ As another example, what does **their** refer to in the following sentence?
 
 Consider two additional problem pronouns:
 
-* This
-* That
+- This
+- That
 
 For example, in the following ambiguous sentence, **This** could refer to
 the user ID, to running the process, or to all of these:
@@ -187,8 +189,8 @@ To help readers, avoid using **this** or **that** in ways where it's not clear
 what they refer to. Use either of the following tactics to clarify ambiguous
 uses of **this** and **that**:
 
-* Replace **this** or **that** with the appropriate noun.
-* Place a noun immediately after **this** or **that**.
+- Replace **this** or **that** with the appropriate noun.
+- Place a noun immediately after **this** or **that**.
 
 Substitute or add explicit terms as needed, as in the following rewrites of the
 example's second sentence:
@@ -212,15 +214,15 @@ following passages:
 #### Click the icon to see the answer.
 
 1. The pronoun **they** could refer to any of the following:
-   * Aparna and Phil
-   * Maysam and Karan
-   * Aparna, Phil, Maysam, and Karan
-   * Any one of the individuals as a singular
+   - Aparna and Phil
+   - Maysam and Karan
+   - Aparna, Phil, Maysam, and Karan
+   - Any one of the individuals as a singular
      [gender-neutral pronoun](/style/pronouns#gender-neutral-pronouns)
 2. The pronoun **this** could refer to any of the following:
-   * Importing via the configuration file
-   * Importing dynamically at run time
-   * Both
+   - Importing via the configuration file
+   - Importing dynamically at run time
+   - Both
 
 ---
 

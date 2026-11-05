@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # impact
 
-Use only as a noun. As a verb, use *affect* or another synonym.
+Use only as a noun. As a verb, use _affect_ or another synonym.

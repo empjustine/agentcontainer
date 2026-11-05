@@ -11,14 +11,14 @@ ms.prod: non-product-specific
 
 Don’t use in content for a general audience. Instead, describe what the customer needs to do.
 
-It’s OK to use *flyout*
+It’s OK to use _flyout_
 as an adjective in content for a technical audience if you need to
 describe a transient UI element that displays settings or information
-related to what the customer is doing. 
+related to what the customer is doing.
 
 **Examples**  
 flyout menu  
 flyout message  
 flyout control
 
-Avoid using *flyout* as a noun (for example, “the flyout appears”). Don’t use as a verb (for example, “the menu will fly out”).
+Avoid using _flyout_ as a noun (for example, “the flyout appears”). Don’t use as a verb (for example, “the menu will fly out”).

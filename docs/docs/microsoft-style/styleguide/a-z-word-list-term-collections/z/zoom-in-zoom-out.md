@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # zoom in, zoom out
 
-Use *zoom in* and *zoom out* as generic verbs in instructions for all input methods.
+Use _zoom in_ and _zoom out_ as generic verbs in instructions for all input methods.
 
-Don't use *dezoom* or *unzoom.* 
+Don't use _dezoom_ or _unzoom._
 
-**See also** [Touch and pen interaction term collection](~/a-z-word-list-term-collections/term-collections/touch-pen-interaction-terms.md) 
+**See also** [Touch and pen interaction term collection](~/a-z-word-list-term-collections/term-collections/touch-pen-interaction-terms.md)

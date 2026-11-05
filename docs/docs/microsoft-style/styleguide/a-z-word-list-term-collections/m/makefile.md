@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # makefile
 
-One word. Use only in content for a technical audience. 
+One word. Use only in content for a technical audience.

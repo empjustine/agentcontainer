@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Tables are ideal for presenting data with three or more related pieces of information per item, while lists are better for simpler data structures.
-* When using tables, introduce them with a complete sentence, use clear and concise column headings, and avoid unnecessary styling or formatting.
-* Ensure table accessibility by using proper HTML elements like `caption`, `th`, and `scope`, and provide descriptive alternative text for any images or symbols.
-* For single-unit items, use bulleted, lettered, or numbered lists; for paired data, consider description lists or tables depending on the context.
-* Avoid using tables for page layout, code snippets, long one-dimensional lists, or within numbered procedures, and ensure responsiveness for various viewport sizes.
+- Tables are ideal for presenting data with three or more related pieces of information per item, while lists are better for simpler data structures.
+- When using tables, introduce them with a complete sentence, use clear and concise column headings, and avoid unnecessary styling or formatting.
+- Ensure table accessibility by using proper HTML elements like `caption`, `th`, and `scope`, and provide descriptive alternative text for any images or symbols.
+- For single-unit items, use bulleted, lettered, or numbered lists; for paired data, consider description lists or tables depending on the context.
+- Avoid using tables for page layout, code snippets, long one-dimensional lists, or within numbered procedures, and ensure responsiveness for various viewport sizes.
 
 In many contexts, tables are the best way to represent sets of related pieces of data. However,
 in some contexts, other approaches are better choices.
@@ -20,26 +20,26 @@ Tables and lists are both ways to present a set of similarly structured
 items; sometimes it's not obvious when to choose one presentation over the
 other. To decide which presentation to use, consult the following table:
 
-| Item type | Example | How to present |
-| --- | --- | --- |
-| Each item is a single unit. | A list of programming language names, or a list of steps to follow. | Use a [numbered list, lettered list, or bulleted list](/style/lists#numbered-lettered-bulleted-lists). |
-| Each item is a pair of pieces of related data. | A list of term/definition pairs. | Use a [description list](/style/lists#description-lists) (or, in some contexts, a table). |
-| Each item is three or more pieces of related data. | A set of parameters, where each parameter has a name, a data type, and a description. | Use a table. |
+| Item type                                          | Example                                                                               | How to present                                                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Each item is a single unit.                        | A list of programming language names, or a list of steps to follow.                   | Use a [numbered list, lettered list, or bulleted list](/style/lists#numbered-lettered-bulleted-lists). |
+| Each item is a pair of pieces of related data.     | A list of term/definition pairs.                                                      | Use a [description list](/style/lists#description-lists) (or, in some contexts, a table).              |
+| Each item is three or more pieces of related data. | A set of parameters, where each parameter has a name, a data type, and a description. | Use a table.                                                                                           |
 
 ### Places not to use tables
 
-* Don't use tables to lay out a page; use your site's standard CSS instead.
-* Usually if you have only one row of material, a table isn't the best
+- Don't use tables to lay out a page; use your site's standard CSS instead.
+- Usually if you have only one row of material, a table isn't the best
   choice for how to present it. But in some contexts (especially for consistency
   of layout in reference documentation), it might be.
-* If you have only one column in your table, turn the table into a list.
-* Don't use tables to lay out code snippets.
-* Don't use tables to lay out long one-dimensional lists in multiple
+- If you have only one column in your table, turn the table into a list.
+- Don't use tables to lay out code snippets.
+- Don't use tables to lay out long one-dimensional lists in multiple
   columns. For example, if you have a long list of function names, don't try to
   save space by splitting the list in half and presenting the two halves as a
   two-column table. Use tables only to present two-dimensional data—that is,
   material that semantically makes sense to display in rows and columns.
-* Avoid tables in the middle of a numbered procedure.
+- Avoid tables in the middle of a numbered procedure.
 
 ## Multi-paragraph table cells
 
@@ -52,10 +52,10 @@ element](https://html.spec.whatwg.org/multipage/semantics.html#the-br-element) a
 
 Example of a table with some cells that contain more than one paragraph:
 
-| Attribute name | Type | Description |
-| --- | --- | --- |
-| `href` | HTML | Defines the URL for a link.  For example, go to the `<a href="https://www.google.com">Google Search</a>` page. |
-| `src` | HTML | Defines the path of the image to be displayed.  For example, `<img src="kitten.jpg">`. |
+| Attribute name | Type | Description                                                                                                   |
+| -------------- | ---- | ------------------------------------------------------------------------------------------------------------- |
+| `href`         | HTML | Defines the URL for a link. For example, go to the `<a href="https://www.google.com">Google Search</a>` page. |
+| `src`          | HTML | Defines the path of the image to be displayed. For example, `<img src="kitten.jpg">`.                         |
 
 ## Introductory sentences for tables
 
@@ -72,10 +72,10 @@ For more information, see the
 
 ## Table placement
 
-* When introducing a table, use a complete sentence and try to refer to the
-  table's position, using a phrase like *the following table* or *the preceding table*.
-* Don't put a table in the middle of a sentence.
-* Avoid using footnotes when possible. If your table does refer to footnotes, place them
+- When introducing a table, use a complete sentence and try to refer to the
+  table's position, using a phrase like _the following table_ or _the preceding table_.
+- Don't put a table in the middle of a sentence.
+- Avoid using footnotes when possible. If your table does refer to footnotes, place them
   immediately following the table. For more information, see
   [Footnotes](/style/footnotes).
 
@@ -92,7 +92,7 @@ DESCRIPTION". Use sentence case for the caption, but don't place a
 period at the end.
 
 When referring to the table from text, refer to it by its number—for example,
-*... as shown in table 2*. Do not capitalize *table* unless it starts a sentence.
+_... as shown in table 2_. Do not capitalize _table_ unless it starts a sentence.
 
 Your site's CSS determines the styling and placement of the caption.
 
@@ -107,26 +107,26 @@ Recommended:
 
 ## Table formatting
 
-* Don't add styling to the table element.
-* Don't apply a visual style such as a different font, font color, or background color to convey a
+- Don't add styling to the table element.
+- Don't apply a visual style such as a different font, font color, or background color to convey a
   header row or column by itself. Use the `th` element to semantically mark up headers in
   tables.
-* Don't merge cells. Don't use `colspan` or `rowspan` attributes.
-* Sort rows in a logical order, or alphabetically if there is no logical order.
-* If the table is long or complicated—for example, with multiple header rows or columns—consider
+- Don't merge cells. Don't use `colspan` or `rowspan` attributes.
+- Sort rows in a logical order, or alphabetically if there is no logical order.
+- If the table is long or complicated—for example, with multiple header rows or columns—consider
   splitting it into multiple tables.
-* Don't present new information in tables through images or symbols alone; always provide a
+- Don't present new information in tables through images or symbols alone; always provide a
   descriptive `alt` attribute for the image or symbol. For more information, see
   [Alt text](/style/images#alt-text).
 
 ## Table column heads
 
-* Use sentence case.
-* Write concise headings.
-* Don't end with punctuation, including a period, an ellipsis, or a colon.
-* Use table headings for the first column and the first row only. Use the
+- Use sentence case.
+- Write concise headings.
+- Don't end with punctuation, including a period, an ellipsis, or a colon.
+- Use table headings for the first column and the first row only. Use the
   [`th` element](https://www.w3.org/TR/2014/REC-html5-20141028/tabular-data.html#the-th-element).
-* Include the [`scope` attribute](https://www.w3.org/TR/WCAG20-TECHS/H63.html) as appropriate for accessibility.
+- Include the [`scope` attribute](https://www.w3.org/TR/WCAG20-TECHS/H63.html) as appropriate for accessibility.
 
 ## Responsive tables
 

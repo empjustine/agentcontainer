@@ -9,13 +9,13 @@ ms.prod: non-product-specific
 
 # SQL, SQL Server
 
-When you're referring to a computer that's running Microsoft SQL Server, use *a computer running SQL Server* or *a computer that's running SQL Server*. (Note the capital *S* in *Server*.)
+When you're referring to a computer that's running Microsoft SQL Server, use _a computer running SQL Server_ or _a computer that's running SQL Server_. (Note the capital _S_ in _Server_.)
 
 Never refer to a computer that's running Microsoft SQL Server as any of the following:
 
-  - the SQL Server
-  - a SQL Server
-  - SQL Servers
-  - SQL server
+- the SQL Server
+- a SQL Server
+- SQL Servers
+- SQL server
 
-When you're referring to Structured Query Language as *SQL,* use the indefinite article *an:* *an* *SQL database.*
+When you're referring to Structured Query Language as _SQL,_ use the indefinite article _an:_ _an_ _SQL database._

@@ -9,13 +9,13 @@ ms.prod: non-product-specific
 
 # number sign (\#)
 
-Always spell out *number* in *number sign.* Don't use *pound sign.*
+Always spell out _number_ in _number sign._ Don't use _pound sign._
 
-Don't use the \# symbol preceding a numeral. Spell out *number* instead. For example, use *number 7,* not *\#7*. When space is limited, as in tables, it's OK to abbreviate *number* as *No*. 
+Don't use the \# symbol preceding a numeral. Spell out _number_ instead. For example, use _number 7,_ not _\#7_. When space is limited, as in tables, it's OK to abbreviate _number_ as _No_.
 
-**Global tip** The abbreviation *No.* isn't used to abbreviate *number* in other languages, so using *No.* for this purpose might lead to mistranslation in machine-translated content. 
+**Global tip** The abbreviation _No._ isn't used to abbreviate _number_ in other languages, so using _No._ for this purpose might lead to mistranslation in machine-translated content.
 
-In social media, it's OK to use the \# symbol to indicate a hashtag. Don't use *number sign* to refer to the hashtag.
+In social media, it's OK to use the \# symbol to indicate a hashtag. Don't use _number sign_ to refer to the hashtag.
 
 **Example**  
 (on Twitter) A quick look at top conversations and \#Office365 product announcements of the week.

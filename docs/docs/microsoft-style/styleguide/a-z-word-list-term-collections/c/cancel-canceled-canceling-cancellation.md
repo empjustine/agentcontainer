@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # cancel, canceled, canceling, cancellation
 
-Use *cancel the selection* instead of *deselect* or *unmark*. Use *clear* to refer to check boxes.
+Use _cancel the selection_ instead of _deselect_ or _unmark_. Use _clear_ to refer to check boxes.
 
-Use *cancel* to describe ending code requests and processes before they're complete.
+Use _cancel_ to describe ending code requests and processes before they're complete.
 
-Spell *canceled* and *canceling* with one *l,* but spell *cancellation* with two <em>l'</em>s.
+Spell _canceled_ and _canceling_ with one _l,_ but spell _cancellation_ with two <em>l'</em>s.

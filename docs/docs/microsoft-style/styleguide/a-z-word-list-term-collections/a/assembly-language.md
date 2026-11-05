@@ -9,7 +9,6 @@ ms.prod: non-product-specific
 
 # assembly language
 
-Use instead of *assembler* or *machine language*. 
+Use instead of _assembler_ or _machine language_.
 
 Hyphenate as an adjective.
-

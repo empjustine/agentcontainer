@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Markdown is a lightweight markup language used to create and edit technical documents using plain text and special characters for formatting.
-* Markdown files are converted into HTML by a Markdown parser, which allows browsers to display the content to readers.
-* Bash and ksh are similar shells, with bash being more widely used and therefore easier to troubleshoot.
-* You can learn Markdown through online tutorials like www.markdowntutorial.com and Mastering Markdown.
-* This page is part of the Technical Writing One pre-class work, with options to continue learning through in-class sessions or facilitator guides.
+- Markdown is a lightweight markup language used to create and edit technical documents using plain text and special characters for formatting.
+- Markdown files are converted into HTML by a Markdown parser, which allows browsers to display the content to readers.
+- Bash and ksh are similar shells, with bash being more widely used and therefore easier to troubleshoot.
+- You can learn Markdown through online tutorials like www.markdowntutorial.com and Mastering Markdown.
+- This page is part of the Technical Writing One pre-class work, with options to continue learning through in-class sessions or facilitator guides.
 
 **Estimated Time:** 10 minutes
 
@@ -34,9 +34,9 @@ The rendered version of the preceding technical document looks as follows:
 > ## bash and ksh
 >
 > **bash** closely resembles an older shell named **ksh**. The key
-> *practical* difference between the two shells is as follows:
+> _practical_ difference between the two shells is as follows:
 >
-> * More people know bash than ksh, so it is easier to get help for bash
+> - More people know bash than ksh, so it is easier to get help for bash
 >   problems than ksh problems.
 
 A Markdown parser converts Markdown files into HTML. Browsers can then
@@ -45,8 +45,8 @@ display the resulting HTML to readers.
 We recommend becoming comfortable with Markdown by taking one of the following
 tutorials:
 
-* [www.markdowntutorial.com](https://www.markdowntutorial.com/)
-* [Mastering
+- [www.markdowntutorial.com](https://www.markdowntutorial.com/)
+- [Mastering
   Markdown](https://guides.github.com/features/mastering-markdown/)
 
 ## What's next?

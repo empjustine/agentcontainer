@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # tone
 
-Don't use to refer to a beeping sound. Use *beep* instead. 
+Don't use to refer to a beeping sound. Use _beep_ instead.
 
-It's OK to use *tone* in other contexts dealing with sound, such as a *dial tone* or a *tone* coming from a speaker. 
+It's OK to use _tone_ in other contexts dealing with sound, such as a _dial tone_ or a _tone_ coming from a speaker.

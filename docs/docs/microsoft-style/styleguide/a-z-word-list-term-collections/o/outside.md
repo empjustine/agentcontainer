@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # outside
 
-Use instead of *outside of*.
+Use instead of _outside of_.
 
 **Example**  
-The taskbar is outside the main window area. 
+The taskbar is outside the main window area.

@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # print queue, printer queue
 
-Don’t use. Use *list of documents* instead. 
+Don’t use. Use _list of documents_ instead.
 
 **Examples**  
 Your document will be sent to the printer.  

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # i.e.
 
-Don't use. Use *that is* instead.
+Don't use. Use _that is_ instead.

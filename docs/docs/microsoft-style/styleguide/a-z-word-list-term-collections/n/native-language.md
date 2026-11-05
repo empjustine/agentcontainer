@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # native language
 
-Don't use to refer to a computer system's machine language. Use *machine language* or *host language* instead.
+Don't use to refer to a computer system's machine language. Use _machine language_ or _host language_ instead.

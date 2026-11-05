@@ -9,16 +9,16 @@ ms.prod: non-product-specific
 
 # alert
 
-For technical audiences, it's OK to use *alert* to refer to automated messages from apps, products, services, and websites. 
+For technical audiences, it's OK to use _alert_ to refer to automated messages from apps, products, services, and websites.
 
-For general users, don't use *alert* to refer to a system message. Use *notification* instead. 
+For general users, don't use _alert_ to refer to a system message. Use _notification_ instead.
 
-Don't use *alert* as a synonym for *reminder.*
+Don't use _alert_ as a synonym for _reminder._
 
 **Examples**  
 When
 hosting a service in the cloud, you may need to monitor and send alerts
 in response to specific conditions, such as service
-interruptions.   
-To receive an alert whenever an event occurs ....   
-Select **Add alert**. 
+interruptions.  
+To receive an alert whenever an event occurs ....  
+Select **Add alert**.

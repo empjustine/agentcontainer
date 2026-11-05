@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # environment variable
 
-Use instead of *environment setting* or *environment string*.
+Use instead of _environment setting_ or _environment string_.

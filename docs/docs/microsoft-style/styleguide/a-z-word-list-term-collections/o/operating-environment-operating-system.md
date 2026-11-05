@@ -9,15 +9,15 @@ ms.prod: non-product-specific
 
 # operating environment, operating system
 
-OK to use in content for a technical audience, but avoid in content for a general audience. 
+OK to use in content for a technical audience, but avoid in content for a general audience.
 
-Use *operating environment* or *environment* to describe both hardware and the operating system software.
+Use _operating environment_ or _environment_ to describe both hardware and the operating system software.
 
-Use *operating system* to describe only the software. 
+Use _operating system_ to describe only the software.
 
-Use *graphical environment* to describe the graphical user interface (GUI) of an operating system. 
+Use _graphical environment_ to describe the graphical user interface (GUI) of an operating system.
 
-Use *on,* *under,* or *with* as prepositions with *operating system*. Don't use *against*.
+Use _on,_ _under,_ or _with_ as prepositions with _operating system_. Don't use _against_.
 
 **Examples**<br />Word 2016 runs with the Windows operating system. <br />Microsoft Exchange Server runs on the Windows Server operating system.
 

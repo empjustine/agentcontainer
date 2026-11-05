@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # cabling
 
-Don't use as a synonym for *cable* or *cables*. 
+Don't use as a synonym for _cable_ or _cables_.
 
-In a discussion of network connections, it's OK to use *cabling* to refer to a combination of cables, connectors, and terminators.
+In a discussion of network connections, it's OK to use _cabling_ to refer to a combination of cables, connectors, and terminators.

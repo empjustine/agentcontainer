@@ -9,9 +9,9 @@ ms.prod: non-product-specific
 
 # please
 
-Avoid *please* except
+Avoid _please_ except
 in situations where the customer is asked to do something
-inconvenient or the application or site is to blame for the situation. 
+inconvenient or the application or site is to blame for the situation.
 
 **Example**  
-The network connection was lost. Please reenter your password. 
+The network connection was lost. Please reenter your password.

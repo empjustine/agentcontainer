@@ -24,10 +24,10 @@ worldwide. For example, greeting cards are uncommon in many parts
 of the world, and in some cultures men and women don’t touch in public,
 even to shake hands.
 
-**Avoid mentioning real places altogether,** or use the names of recognizable cities from different parts of the world. Vary the locales from one example to the next. 
+**Avoid mentioning real places altogether,** or use the names of recognizable cities from different parts of the world. Vary the locales from one example to the next.
 
 **Avoid discussing technologies and standards** that
 aren't used worldwide. Standards vary, from phone, mobile, wireless,
 and video to measurement, paper size, character sets, and text
 direction. And don’t assume US standards are familiar or
-relevant to everyone. 
+relevant to everyone.

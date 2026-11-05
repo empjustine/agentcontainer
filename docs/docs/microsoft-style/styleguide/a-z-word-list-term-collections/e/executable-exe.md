@@ -9,10 +9,10 @@ ms.prod: non-product-specific
 
 # executable, .exe
 
-Use *executable* and *.exe* as adjectives, not nouns. Use *an,* not *a,* as the article preceding .exe: *an .exe file.*
+Use _executable_ and _.exe_ as adjectives, not nouns. Use _an,_ not _a,_ as the article preceding .exe: _an .exe file._
 
 **Examples**  
 an executable program  
-the .exe file  
+the .exe file
 
-Use *executable file* only in content for a technical audience. For a general audience, use *program file* instead. 
+Use _executable file_ only in content for a technical audience. For a general audience, use _program file_ instead.

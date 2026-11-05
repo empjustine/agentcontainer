@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # playlist
 
-One word. A customer *adds* media *to* a playlist and *deletes* media *from* a playlist.
+One word. A customer _adds_ media _to_ a playlist and _deletes_ media _from_ a playlist.

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # center on
 
-Use instead of *center around.*
+Use instead of _center around._

@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Good sample code is correct, concise, understandable, reusable, and potentially sequenced to demonstrate a range of complexity for users.
-* Sample code should be treated like production code, built without errors, perform its intended task, be secure, and follow language-specific conventions.
-* Comments within sample code should be concise, focus on non-intuitive parts, and explain the *why* more than the *what* for experienced users.
-* Documentation for sample code should clearly explain how to run it, including setup instructions, dependencies, and expected outputs or results.
-* Sample code sets ideally provide a range of complexity, from basic "Hello World" examples to more advanced use cases, to cater to different user skill levels.
+- Good sample code is correct, concise, understandable, reusable, and potentially sequenced to demonstrate a range of complexity for users.
+- Sample code should be treated like production code, built without errors, perform its intended task, be secure, and follow language-specific conventions.
+- Comments within sample code should be concise, focus on non-intuitive parts, and explain the _why_ more than the _what_ for experienced users.
+- Documentation for sample code should clearly explain how to run it, including setup instructions, dependencies, and expected outputs or results.
+- Sample code sets ideally provide a range of complexity, from basic "Hello World" examples to more advanced use cases, to cater to different user skill levels.
 
 **Estimated Time:** 10 minutes
 
@@ -26,11 +26,11 @@ Good samples are **correct** and **concise** code that your readers can
 
 Sample code should meet the following criteria:
 
-* Build without errors.
-* Perform the task it claims to perform.
-* Be as production-ready as possible. For example, the code shouldn't
+- Build without errors.
+- Perform the task it claims to perform.
+- Be as production-ready as possible. For example, the code shouldn't
   contain any security vulnerabilities.
-* Follow language-specific conventions.
+- Follow language-specific conventions.
 
 Sample code is an opportunity to directly influence how your users write code.
 Therefore, sample code should set the best way to use your product. If
@@ -56,9 +56,9 @@ Good documents explain how to run sample code. For example, your document might
 need to tell users to perform activities such as the following prior to running
 the samples:
 
-* Install a certain library.
-* Adjust the values assigned to certain environment variables.
-* Adjust something in the integrated development environment (IDE).
+- Install a certain library.
+- Adjust the values assigned to certain environment variables.
+- Adjust something in the integrated development environment (IDE).
 
 Users don't always perform the preceding activities properly. In some
 situations, users prefer to run or (experiment with) sample code directly
@@ -80,10 +80,10 @@ conciseness.
 
 Follow these recommendations to create clear sample code:
 
-* Pick descriptive class, method, and variable names.
-* Avoid confusing your readers with hard-to-decipher programming tricks.
-* Avoid deeply nested code.
-* Optional: Use bold or colored font to draw the reader's attention
+- Pick descriptive class, method, and variable names.
+- Avoid confusing your readers with hard-to-decipher programming tricks.
+- Avoid deeply nested code.
+- Optional: Use bold or colored font to draw the reader's attention
   to a specific section of your sample code. However, use highlighting
   judiciously—too much highlighting means the reader won't focus on
   anything in particular.
@@ -110,12 +110,12 @@ to learn.
 
 Consider the following recommendations about comments in sample code:
 
-* Keep comments short, but always prefer clarity over brevity.
-* Avoid writing comments about *obvious* code, but remember that what
+- Keep comments short, but always prefer clarity over brevity.
+- Avoid writing comments about _obvious_ code, but remember that what
   is obvious to you (the expert) might not be obvious to newcomers.
-* Focus your commenting energy on anything non-intuitive in the code.
-* When your readers are very experienced with a technology, don't explain
-  *what* the code is doing, explain *why* the code is doing it.
+- Focus your commenting energy on anything non-intuitive in the code.
+- When your readers are very experienced with a technology, don't explain
+  _what_ the code is doing, explain _why_ the code is doing it.
 
 Should you place descriptions of code inside code comments or in
 text (paragraphs or lists) outside of the sample code? Note that readers
@@ -142,8 +142,8 @@ mystream = br.openstream(pathname="/tmp/myfile", mode="z")
 
 The comments contain the following flaws:
 
-* The comment elaborates on a fairly obvious part of the code.
-* The snippet doesn't explain the non-obvious portion of the code. Namely,
+- The comment elaborates on a fairly obvious part of the code.
+- The snippet doesn't explain the non-obvious portion of the code. Namely,
   what is the mode parameter and what does a value of z
   mean?
 
@@ -153,9 +153,9 @@ The comments contain the following flaws:
 
 For your reader to easily reuse your sample code, provide the following:
 
-* All information necessary to run the sample code, including any
+- All information necessary to run the sample code, including any
   dependencies and setup.
-* Code that can be extended or customized in useful ways.
+- Code that can be extended or customized in useful ways.
 
 Having easy-to-understand sample code that's concise and compiles is
 a great start. If it blows up your reader's app, though, they won't
@@ -165,8 +165,8 @@ Nobody wants insecure or grossly inefficient code.
 
 ## The example and the anti-example
 
-In addition to showing readers *what to do*, it is sometimes wise to show
-readers *what not to do*. For example, many programming languages
+In addition to showing readers _what to do_, it is sometimes wise to show
+readers _what not to do_. For example, many programming languages
 permit programmers to place white space on either side of the equals sign.
 Now suppose that you were writing a tutorial on a language (such as bash)
 that does not permit white space on either side of the equals sign. In this
@@ -215,7 +215,7 @@ a tutorial introducing newcomers to the concept of functions?
 
 The best answer is **1**. Providing samples that cover a range of complexity
 is usually the wisest choice—particularly for newcomers. Resist the
-temptation to *rush* towards very complex sample programs, bypassing
+temptation to _rush_ towards very complex sample programs, bypassing
 the beginner and intermediate sample programs that newcomers crave.
 
 ---

@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # ship
 
-Don't use to refer to making products or services available to customers. Use *release* instead. 
+Don't use to refer to making products or services available to customers. Use _release_ instead.
 
 **Example**  
 Windows 10 was released in July 2015.

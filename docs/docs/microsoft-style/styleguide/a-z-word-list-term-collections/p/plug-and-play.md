@@ -9,19 +9,19 @@ ms.prod: non-product-specific
 
 # Plug and Play, plug and play
 
-Use *Plug and Play* as
+Use _Plug and Play_ as
 a noun or an adjective to refer to a set of
 specifications developed by Intel for the automatic configuration
 of a computer so that it works with various peripheral devices.
 Note capitalization. Don't hyphenate.
 
-It's OK to use all lowercase (*plug and play*) for all audiences to refer to the ability of a computer to automatically configure a device that's added to it.
+It's OK to use all lowercase (_plug and play_) for all audiences to refer to the ability of a computer to automatically configure a device that's added to it.
 
-Don't use as a synonym for *Universal Plug and Play* (UPnP). 
+Don't use as a synonym for _Universal Plug and Play_ (UPnP).
 
 **Examples**  
 Plug and Play functionality  
-Plug and Play printer   
+Plug and Play printer  
 Plug and Play records the information in an event log.
 
 **See also** [UPnP](~/a-z-word-list-term-collections/u/upnp.md)

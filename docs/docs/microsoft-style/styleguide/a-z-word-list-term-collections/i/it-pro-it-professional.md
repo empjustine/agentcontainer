@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # IT pro, IT professional
 
-Use *IT pro,* not *IT professional*. Note capitalization. Don't spell out *information technology*—always use *IT.*
+Use _IT pro,_ not _IT professional_. Note capitalization. Don't spell out _information technology_—always use _IT._

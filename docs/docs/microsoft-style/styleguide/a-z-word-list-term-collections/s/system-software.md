@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # system software
 
-Use *system software* (singular) instead of *systems software* (plural).
+Use _system software_ (singular) instead of _systems software_ (plural).

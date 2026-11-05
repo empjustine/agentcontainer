@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Define the scope of your document clearly, including what it covers and, importantly, what it does not cover to manage reader expectations.
-* Identify your target audience and their existing knowledge to tailor the content appropriately, considering their needs and goals for reading the document.
-* Summarize the key points at the beginning of the document to provide readers with a quick overview and entice them to read further.
-* Relate new concepts to familiar ones by comparing and contrasting them with existing technologies or ideas that your audience already understands.
-* Organize your document logically based on your audience's needs, ensuring it flows smoothly and addresses their key questions in a clear and concise manner.
+- Define the scope of your document clearly, including what it covers and, importantly, what it does not cover to manage reader expectations.
+- Identify your target audience and their existing knowledge to tailor the content appropriately, considering their needs and goals for reading the document.
+- Summarize the key points at the beginning of the document to provide readers with a quick overview and entice them to read further.
+- Relate new concepts to familiar ones by comparing and contrasting them with existing technologies or ideas that your audience already understands.
+- Organize your document logically based on your audience's needs, ensuring it flows smoothly and addresses their key questions in a clear and concise manner.
 
 **Estimated Time:** 10 minutes
 
@@ -31,7 +31,7 @@ to cover. For example:
 
 Scope and non-scope statements benefit not only the reader but also the
 writer (you). While writing, if the contents of your document veer away from the
-scope statement (or venture *into* the non-scope statement), then you must
+scope statement (or venture _into_ the non-scope statement), then you must
 either refocus your document or modify your scope statement. When reviewing
 your first draft, delete any sections that don't help satisfy the scope
 statement.
@@ -56,8 +56,8 @@ A good document explicitly specifies its audience. For example:
 
 > This document is aimed at the following audiences:
 >
-> * software engineers
-> * program managers
+> - software engineers
+> - program managers
 
 Beyond the audience's role, a good audience declaration might also
 specify any prerequisite knowledge or experience. For example:
@@ -122,33 +122,33 @@ your document.
 Answering the following questions helps you determine what your document
 should contain:
 
-* Who is your target audience?
-* What is your target audience's goal? Why are they reading this document?
-* What do your readers already know *before* they read your document?
-* What should your readers know or be able to do *after* they read your
+- Who is your target audience?
+- What is your target audience's goal? Why are they reading this document?
+- What do your readers already know _before_ they read your document?
+- What should your readers know or be able to do _after_ they read your
   document?
 
 For example, suppose you have invented a new sorting algorithm, which is
 similar to quicksort. The following list contains some potential answers
 to the preceding questions:
 
-* **Who is your target audience?** The target audience consists of all the
+- **Who is your target audience?** The target audience consists of all the
   software engineers in my organization.
-* **What is your target audience's goal?** My target audience wants to
+- **What is your target audience's goal?** My target audience wants to
   find more efficient ways to sort data. They are reading this document to
   determine whether this new algorithm is worth implementing.
-* **What do your readers already know *before* they read your document?**
+- **What do your readers already know _before_ they read your document?**
   My target audience knows how to write code and has previously studied
   sorting algorithms, including quicksort. However, most people in my
   target audience haven't implemented or evaluated a sorting algorithm
   in several years.
-* **What should your readers know or be able to do *after* they read your
+- **What should your readers know or be able to do _after_ they read your
   document?** My target audience will be able to do all of the following:
-  + Understand how the algorithm compares and contrasts with quicksort.
-  + Identify the two kinds of datasets for which the algorithm outperforms
+  - Understand how the algorithm compares and contrasts with quicksort.
+  - Identify the two kinds of datasets for which the algorithm outperforms
     the quicksort algorithm.
-  + Implement the algorithm in their choice of programming language.
-  + Identify the two edge cases in which the algorithm performs poorly.
+  - Implement the algorithm in their choice of programming language.
+  - Identify the two edge cases in which the algorithm performs poorly.
 
 ### Organize the document to meet your audience's needs
 
@@ -157,14 +157,14 @@ get the information they need. For example, based on the answers in the
 previous section, the outline for the document could look as follows:
 
 1. Overview of the algorithm
-   * Compare and contrast with quicksort, including Big O comparisons
-     + Link to Wikipedia article on quicksort
-   * Optimal datasets for the algorithm
+   - Compare and contrast with quicksort, including Big O comparisons
+     - Link to Wikipedia article on quicksort
+   - Optimal datasets for the algorithm
 2. Implementing the algorithm
-   * Implementation in pseudocode
-   * Implementation tips, including common mistakes
+   - Implementation in pseudocode
+   - Implementation tips, including common mistakes
 3. Deeper analysis of algorithm
-   * Edge cases
-   * Known unknowns
+   - Edge cases
+   - Known unknowns
 
 **Next unit:** [Punctuation](/tech-writing/one/punctuation), an optional unit

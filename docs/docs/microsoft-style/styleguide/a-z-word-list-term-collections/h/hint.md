@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # hint
 
-Don't use *hint* as a heading for a type of note. Use *tip* instead.
+Don't use _hint_ as a heading for a type of note. Use _tip_ instead.

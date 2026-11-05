@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # application developer, app developer
 
-Don't use *application developer,* *applications developer,* or *app developer*. Use *software developer, web developer, developer,* or *programmer* instead.
+Don't use _application developer,_ _applications developer,_ or _app developer_. Use _software developer, web developer, developer,_ or _programmer_ instead.

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # application file, app file
 
-Don't use. Use the specific name of the file if you can. Otherwise, use *program file*.
+Don't use. Use the specific name of the file if you can. Otherwise, use _program file_.

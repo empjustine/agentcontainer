@@ -13,4 +13,4 @@ Use to refer to a webpage or site the customer may want to return to later in Mi
 
 **Examples**  
 Select **Add to favorites** to add a website to the **Favorites** menu.  
-Go to the **Favorites** menu to see your list of favorite websites.  
+Go to the **Favorites** menu to see your list of favorite websites.

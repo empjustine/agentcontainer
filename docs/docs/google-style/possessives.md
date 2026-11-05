@@ -5,27 +5,27 @@
 
 ## Page Summary
 
-* To form possessives of most singular and plural nouns not ending in "s", add "'s", but for plural nouns ending in "s", add only an apostrophe.
-* Avoid using possessives for product, feature, or company names when describing their function; instead, use them as modifiers or rephrase with "of".
-* When indicating possession with company names, add "'s" unless it's being used as a trademark, in which case, refer to trademark guidelines.
-* For code items, avoid possessives by forming the possessive from the subsequent noun or rewriting the sentence to eliminate the possessive form.
+- To form possessives of most singular and plural nouns not ending in "s", add "'s", but for plural nouns ending in "s", add only an apostrophe.
+- Avoid using possessives for product, feature, or company names when describing their function; instead, use them as modifiers or rephrase with "of".
+- When indicating possession with company names, add "'s" unless it's being used as a trademark, in which case, refer to trademark guidelines.
+- For code items, avoid possessives by forming the possessive from the subsequent noun or rewriting the sentence to eliminate the possessive form.
 
 In general, to form a possessive, follow these guidelines.
 
-For singular nouns, including those that end in *s*, add *'s* to the end of the word.
+For singular nouns, including those that end in _s_, add _'s_ to the end of the word.
 
 Recommended: Modify each vector's record.
 
 Recommended: Raise the storage class's quota.
 
-For plural nouns that end in *s*, add only an apostrophe to the end of the word.
+For plural nouns that end in _s_, add only an apostrophe to the end of the word.
 
 Recommended: Extend the models' capabilities.
 
 Not recommended: Extend the models's
 capabilities.
 
-For plural nouns that don't end in *s*, add *'s* to the end of the word.
+For plural nouns that don't end in _s_, add _'s_ to the end of the word.
 
 If a possessive seems awkward, rewrite the sentence to omit the possessive.
 
@@ -39,13 +39,13 @@ Commission (FTC) issued.
 Not recommended: The Federal Trade
 Commission's (FTC's) rule.
 
-Avoid using *'s* to form a plural noun. For more information, see [Pluralization](/style/pluralization).
+Avoid using _'s_ to form a plural noun. For more information, see [Pluralization](/style/pluralization).
 
 ## Product, feature, and company names
 
 When describing function or performance, don't form a possessive from a
 feature name, product name, or trademark, regardless of who owns it. Instead,
-use the name as a modifier or rewrite to use a word like *of* to indicate
+use the name as a modifier or rewrite to use a word like _of_ to indicate
 the relationship.
 
 Recommended: You can use this template to
@@ -57,7 +57,7 @@ monitor the performance of Google Search.
 Not recommended: You can use this template to
 monitor Google Search's performance.
 
-To form the possessive of a company name, add *'s* to the end of the name. Don't form the
+To form the possessive of a company name, add _'s_ to the end of the name. Don't form the
 possessive of a company name when using it as a trademark.
 
 Recommended: Google's new office is

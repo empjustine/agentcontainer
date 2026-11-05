@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # inbound
 
-Don't use to describe email being delivered. Use *incoming* instead.
+Don't use to describe email being delivered. Use _incoming_ instead.
 
-It's OK to use *inbound* and *outbound* to describe marketing tactics.
+It's OK to use _inbound_ and _outbound_ to describe marketing tactics.

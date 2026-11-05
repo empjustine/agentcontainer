@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # e-book
 
-Always hyphenate. Don't use *ebook* or *eBook.*
+Always hyphenate. Don't use _ebook_ or _eBook._
 
-Use *E-book* at the beginning of a sentence or heading. In uncommon situations where title-style capitalization is required, use *E-Book*.
+Use _E-book_ at the beginning of a sentence or heading. In uncommon situations where title-style capitalization is required, use _E-Book_.
 
 **See also** [Capitalization](~/capitalization.md)

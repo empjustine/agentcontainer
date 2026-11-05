@@ -18,15 +18,15 @@ The
 consistent formatting of text elements, such as command names and
 URLs, reduces ambiguity and helps customers find and
 interpret information easily. Text-formatting guidelines
-are sometimes called *document conventions.*
+are sometimes called _document conventions._
 
 This section covers:
 
-  - [Using type](~/text-formatting/using-type/index.md)
-  - [Formatting common text elements](~/text-formatting/formatting-common-text-elements.md)
-  - [Formatting titles](~/text-formatting/formatting-titles.md)
+- [Using type](~/text-formatting/using-type/index.md)
+- [Formatting common text elements](~/text-formatting/formatting-common-text-elements.md)
+- [Formatting titles](~/text-formatting/formatting-titles.md)
 
 **See also**  
 [Formatting developer text elements](~/developer-content/formatting-developer-text-elements.md)  
 [Reference documentation](~/developer-content/reference-documentation.md)  
-[Procedures and instructions](~/procedures-instructions/index.md)  
+[Procedures and instructions](~/procedures-instructions/index.md)

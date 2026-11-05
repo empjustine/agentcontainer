@@ -9,21 +9,21 @@ ms.prod: non-product-specific
 
 # hyperlink
 
-Use *hyperlink* or *link* to
+Use _hyperlink_ or _link_ to
 describe text or a graphic that readers can select to go to another
 document, to another place within the same document, or to a webpage.
-Use *hyperlink* to refer to a UI element labeled *hyperlink*.
+Use _hyperlink_ to refer to a UI element labeled _hyperlink_.
 
-Don't use *hot spot, hot link,* or *shortcut* to refer to a link.
+Don't use _hot spot, hot link,_ or _shortcut_ to refer to a link.
 
-Use *go to* to describe the process of going to another document, place, or webpage. Don't use *click* or *click on.*
+Use _go to_ to describe the process of going to another document, place, or webpage. Don't use _click_ or _click on._
 
-Use *create* to describe writing the HTML code that forms the link.
+Use _create_ to describe writing the HTML code that forms the link.
 
-In content for web designers, it's OK to use *followed link* to refer to a destination that the reader has already visited. Don't use in content for other audiences.
+In content for web designers, it's OK to use _followed link_ to refer to a destination that the reader has already visited. Don't use in content for other audiences.
 
 **Examples**  
-Select the link to go to another webpage.   
-On the **Insert** tab, select **Hyperlink** in the **Links** group.  
+Select the link to go to another webpage.  
+On the **Insert** tab, select **Hyperlink** in the **Links** group.
 
 **See also** [URLs and web addresses](~/urls-web-addresses.md), [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md)

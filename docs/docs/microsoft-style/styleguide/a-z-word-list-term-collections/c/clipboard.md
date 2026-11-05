@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # clipboard
 
-Don't precede *clipboard* with *Windows*. 
+Don't precede _clipboard_ with _Windows_.
 
-Material is moved or copied *to* the clipboard, not *onto* it.
+Material is moved or copied _to_ the clipboard, not _onto_ it.

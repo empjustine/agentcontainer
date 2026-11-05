@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # antispyware
 
-Use only as an adjective. Don't hyphenate. 
+Use only as an adjective. Don't hyphenate.
 
 **Example**  
-antispyware tools 
+antispyware tools

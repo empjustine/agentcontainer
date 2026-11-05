@@ -25,27 +25,27 @@ arithmetic and algebra. For the plus sign (`+`), equals sign
 (`=`), and division sign (`/`), you can use
 their keyboard equivalents.
 
-| Symbol | Markup | Description |
-| --- | --- | --- |
-| + | Use the keyboard symbol. | Plus sign |
-| − | `&minus;` | Minus sign |
-| × | `&times;` | Multiplication sign  Alternatively, you can use the dot operator `∙` (`&#8729;`) or asterisk operator `*` (`&#42;`) to match the UI. Don't use an asterisk (`*`) to indicate multiplication in text.  You can indicate multiplication by omitting the multiplication symbol if doing so doesn't create ambiguity—for example, instead of *a* × *b*, you can write *ab*. |
-| / | Use the keyboard symbol. | Division sign |
-| = | Use the keyboard symbol. | Equals sign |
-| ≠ | `&ne;` | Not equal to |
-| ± | `&plusmn;` | Plus-minus sign |
-| ∓ | `&mnplus;` | Minus-plus sign |
-| < | `&lt;` | Less than sign |
-| > | `&gt;` | Greater than sign |
-| ≈ | `&asymp;` | Approximately equal to |
-| ≉ | `&nap;` | Not approximately equal to |
-| ≅ | `&cong;` | Congruent to |
-| ≤ | `&le;` | Less than or equal to |
-| ≥ | `&ge;` | Greater than or equal to |
-| ≡ | `&equiv;` | Identical to |
-| ≢ | `&nequiv;` | Not identical to |
-| √ | `&radic;` | Square root |
-| ∑ | `&sum;` | N-ary summation |
+| Symbol | Markup                   | Description                                                                                                                                                                                                                                                                                                                                                           |
+| ------ | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| +      | Use the keyboard symbol. | Plus sign                                                                                                                                                                                                                                                                                                                                                             |
+| −      | `&minus;`                | Minus sign                                                                                                                                                                                                                                                                                                                                                            |
+| ×      | `&times;`                | Multiplication sign Alternatively, you can use the dot operator `∙` (`&#8729;`) or asterisk operator `*` (`&#42;`) to match the UI. Don't use an asterisk (`*`) to indicate multiplication in text. You can indicate multiplication by omitting the multiplication symbol if doing so doesn't create ambiguity—for example, instead of _a_ × _b_, you can write _ab_. |
+| /      | Use the keyboard symbol. | Division sign                                                                                                                                                                                                                                                                                                                                                         |
+| =      | Use the keyboard symbol. | Equals sign                                                                                                                                                                                                                                                                                                                                                           |
+| ≠      | `&ne;`                   | Not equal to                                                                                                                                                                                                                                                                                                                                                          |
+| ±      | `&plusmn;`               | Plus-minus sign                                                                                                                                                                                                                                                                                                                                                       |
+| ∓      | `&mnplus;`               | Minus-plus sign                                                                                                                                                                                                                                                                                                                                                       |
+| <      | `&lt;`                   | Less than sign                                                                                                                                                                                                                                                                                                                                                        |
+| >      | `&gt;`                   | Greater than sign                                                                                                                                                                                                                                                                                                                                                     |
+| ≈      | `&asymp;`                | Approximately equal to                                                                                                                                                                                                                                                                                                                                                |
+| ≉      | `&nap;`                  | Not approximately equal to                                                                                                                                                                                                                                                                                                                                            |
+| ≅      | `&cong;`                 | Congruent to                                                                                                                                                                                                                                                                                                                                                          |
+| ≤      | `&le;`                   | Less than or equal to                                                                                                                                                                                                                                                                                                                                                 |
+| ≥      | `&ge;`                   | Greater than or equal to                                                                                                                                                                                                                                                                                                                                              |
+| ≡      | `&equiv;`                | Identical to                                                                                                                                                                                                                                                                                                                                                          |
+| ≢      | `&nequiv;`               | Not identical to                                                                                                                                                                                                                                                                                                                                                      |
+| √      | `&radic;`                | Square root                                                                                                                                                                                                                                                                                                                                                           |
+| ∑      | `&sum;`                  | N-ary summation                                                                                                                                                                                                                                                                                                                                                       |
 
 ## Format mathematical notation
 
@@ -64,27 +64,27 @@ statement.
 
 Don't italicize operators.
 
-Recommended: *a* − *b*
+Recommended: _a_ − _b_
 
-To render *a* − *b*, use the following markup:
+To render _a_ − _b_, use the following markup:
 
-* **HTML:** `<i>a</i>&nbsp;&minus;&nbsp;<i>b</i>`
-* **Markdown:** `_a_&nbsp;&minus;&nbsp;_b_`
+- **HTML:** `<i>a</i>&nbsp;&minus;&nbsp;<i>b</i>`
+- **Markdown:** `_a_&nbsp;&minus;&nbsp;_b_`
 
 ### Variables
 
 Italicize variables.
 
-Recommended: *x* ≠ *y*
+Recommended: _x_ ≠ _y_
 
-Recommended: *x**y*
+Recommended: _x\*\*y_
 
-Recommended: *y**i*
+Recommended: _y\*\*i_
 
-To render *x* ≠ *y*, use the following markup:
+To render _x_ ≠ _y_, use the following markup:
 
-* **HTML:** `<i>x</i>&nbsp;&ne;&nbsp;<i>y</i>`
-* **Markdown:** `_x_&nbsp;&ne;&nbsp;_y_`
+- **HTML:** `<i>x</i>&nbsp;&ne;&nbsp;<i>y</i>`
+- **Markdown:** `_x_&nbsp;&ne;&nbsp;_y_`
 
 ### Expressions and equations
 
@@ -99,18 +99,18 @@ placing it on its own line.
 
 Recommended: The equation
 that describes a linear trend line is
-*y* = *a* + *bx*.
+_y_ = _a_ + _bx_.
 
 Recommended: The equation
-that describes a polynomial trend line, where the order is *o*, is the
+that describes a polynomial trend line, where the order is _o_, is the
 following:
-*y* = *a* + *b* × *x* + ... + *k* × *x**o*
+_y_ = _a_ + _b_ × _x_ + ... + _k_ × _x\*\*o_
 
-To render *y* = *a* + *bx*, use the
+To render _y_ = _a_ + _bx_, use the
 following markup:
 
-* **HTML:** `<i>y</i>&nbsp;&=&nbsp;<i>a</i>&nbsp;+&nbsp;<i>bx</i>`
-* **Markdown:** `_y_&nbsp;&=&nbsp;_a_&nbsp;+&nbsp;_bx_`
+- **HTML:** `<i>y</i>&nbsp;&=&nbsp;<i>a</i>&nbsp;+&nbsp;<i>bx</i>`
+- **Markdown:** `_y_&nbsp;&=&nbsp;_a_&nbsp;+&nbsp;_bx_`
 
 ### Fractions
 
@@ -140,9 +140,9 @@ To render subscripts, use the HTML `<sub>` tag.
 
 Recommended: 23
 
-Recommended: *x**y*
+Recommended: _x\*\*y_
 
-Recommended: *y**i*
+Recommended: _y\*\*i_
 
 Not recommended: 2^3
 
@@ -153,22 +153,22 @@ To render 23, use the following markup in HTML and Markdown:
 
 In general, you can use mathematical notation in place of words in running
 text. For example, in a sentence, you might use the statement
-*x* ≠ *y* instead of writing "*x* is not equal to
-*y*." If the use of notation instead of words creates ambiguous, grammatically
+_x_ ≠ _y_ instead of writing "_x_ is not equal to
+_y_." If the use of notation instead of words creates ambiguous, grammatically
 incorrect, or difficult-to-read text, then use words to convey the
 mathematical concept.
 
 Recommended: Check
-whether *a* > *b*.
+whether _a_ > _b_.
 
 Recommended: The area
 is calculated by multiplying the length by the width.
 
 Not recommended: Check
-whether *a* is greater than *b*.
+whether _a_ is greater than _b_.
 
 Not recommended: The
-area is calculated by multiplying *l* × *w*.
+area is calculated by multiplying _l_ × _w_.
 
 ## Tools for complex or multiline equations
 
@@ -181,6 +181,6 @@ illustrating percentages.
 
 ## More resources
 
-* [Numbers](/style/numbers)
-* [Units of measure](/style/units-of-measure)
-* [Text-formatting summary](/style/text-formatting)
+- [Numbers](/style/numbers)
+- [Units of measure](/style/units-of-measure)
+- [Text-formatting summary](/style/text-formatting)

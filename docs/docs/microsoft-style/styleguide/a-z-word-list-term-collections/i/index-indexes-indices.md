@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # index, indexes, indices
 
-Use *indexes* as the plural form of *index.* Use *indices* only in the context of mathematical expressions.
+Use _indexes_ as the plural form of _index._ Use _indices_ only in the context of mathematical expressions.

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # onboarding
 
-Don't use to mean the process of introducing employees to a new role or organization. Use *orientation* instead.
+Don't use to mean the process of introducing employees to a new role or organization. Use _orientation_ instead.

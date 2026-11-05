@@ -9,11 +9,11 @@ ms.prod: non-product-specific
 
 # turn on, turn off
 
-Use instead of *power on/power off, start/stop,* or *switch on/switch off* to mean turning the device on and off.
+Use instead of _power on/power off, start/stop,_ or _switch on/switch off_ to mean turning the device on and off.
 
-Don't use to refer to selecting or clearing check boxes in instructions. Use *select* and *clear* instead. It's OK to use *turn on/turn off* to refer to webpage options and toggles. 
+Don't use to refer to selecting or clearing check boxes in instructions. Use _select_ and _clear_ instead. It's OK to use _turn on/turn off_ to refer to webpage options and toggles.
 
-Use *turned on* and *turned off* instead of *enabled* and *disabled* to refer to commands and features that can be hidden or deactivated.
+Use _turned on_ and _turned off_ instead of _enabled_ and _disabled_ to refer to commands and features that can be hidden or deactivated.
 
 **Examples**  
 To turn on your device ….  

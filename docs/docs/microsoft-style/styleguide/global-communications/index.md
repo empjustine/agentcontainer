@@ -17,7 +17,7 @@ communication.
 It's
 usually safe to assume your content will be read in many countries and
 by readers whose primary language isn't English. Some content
-will probably be translated into other languages or localized. 
+will probably be translated into other languages or localized.
 
 **Translation** is simply changing the language of content. Translation is often automated using machine translation.
 
@@ -32,33 +32,32 @@ English content and for streamlining localization and machine
 translation. You'll find a few exceptions to general Microsoft voice and
 style guidance. This section covers:
 
-  - [Art](~/global-communications/art.md)
-  - [Currency](~/global-communications/currency.md)
-  - [Examples and scenarios](~/global-communications/examples-scenarios.md)
-  - [Names and contact information](~/global-communications/names-contact-information.md)
-  - [Time and place](~/global-communications/time-place.md)
-  - [Web, software, and HTML considerations](~/global-communications/web-software-html-considerations.md)
-  - [Writing tips](~/global-communications/writing-tips.md)
-
+- [Art](~/global-communications/art.md)
+- [Currency](~/global-communications/currency.md)
+- [Examples and scenarios](~/global-communications/examples-scenarios.md)
+- [Names and contact information](~/global-communications/names-contact-information.md)
+- [Time and place](~/global-communications/time-place.md)
+- [Web, software, and HTML considerations](~/global-communications/web-software-html-considerations.md)
+- [Writing tips](~/global-communications/writing-tips.md)
 
 ## Learn more about worldwide audiences
 
 **Be curious.**
 If you write for audiences in particular countries or regions,
 subscribe to local email newsletters, visit local websites, and
-follow local news. 
+follow local news.
 
 **Use these resources:**
 
-  - [Microsoft International Style Guides](https://www.microsoft.com/en-us/language/StyleGuides)
-  - [Plain Language Action and Information Network (United States)](https://www.plainlanguage.gov/)
-  - [World Time Zones](https://www.worldtimeserver.com/)
-  - [W3C Internationalization Activity](https://www.w3.org/international/)
+- [Microsoft International Style Guides](https://www.microsoft.com/en-us/language/StyleGuides)
+- [Plain Language Action and Information Network (United States)](https://www.plainlanguage.gov/)
+- [World Time Zones](https://www.worldtimeserver.com/)
+- [W3C Internationalization Activity](https://www.w3.org/international/)
 
 **Read more:**
 
-  - John R. Kohl, *The Global English Style Guide: Writing Clear, Translatable Documentation for a Global Market* (Cary, NC: SAS Institute, Inc., 2008).
-  - Edmond H. Weiss, *The
-    Elements of International English Style: A Guide to Writing
-    Correspondence, Reports, Technical Documents, and Internet Pages for a
-    Global Audience* (Armonk, NY: M.E. Sharpe, 2005). 
+- John R. Kohl, _The Global English Style Guide: Writing Clear, Translatable Documentation for a Global Market_ (Cary, NC: SAS Institute, Inc., 2008).
+- Edmond H. Weiss, _The
+  Elements of International English Style: A Guide to Writing
+  Correspondence, Reports, Technical Documents, and Internet Pages for a
+  Global Audience_ (Armonk, NY: M.E. Sharpe, 2005).

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # fax
 
-Lowercase. Abbreviation for *facsimile*. It's OK to use *fax* as an adjective (*fax machine*, *fax transmission*), as a noun (*your fax arrived*), or as a verb (*fax a copy of the order*). 
+Lowercase. Abbreviation for _facsimile_. It's OK to use _fax_ as an adjective (_fax machine_, _fax transmission_), as a noun (_your fax arrived_), or as a verb (_fax a copy of the order_).

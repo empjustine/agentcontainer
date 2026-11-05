@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # postal code
 
-Unless you're writing content that's specifically for the United States, use *postal code* instead of *ZIP Code*.
+Unless you're writing content that's specifically for the United States, use _postal code_ instead of _ZIP Code_.
 
 **See also** [ZIP Code](~/a-z-word-list-term-collections/z/zip-code.md)

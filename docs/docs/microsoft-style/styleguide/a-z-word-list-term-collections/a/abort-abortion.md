@@ -9,18 +9,18 @@ ms.prod: non-product-specific
 
 # abort, abortion
 
-Never use *abortion.* 
+Never use _abortion._
 
-Don't use *abort* in content or user experiences for a general audience. If *abort* appears in a UI that you can't edit, use an alternative term to describe the customer action.
+Don't use _abort_ in content or user experiences for a general audience. If _abort_ appears in a UI that you can't edit, use an alternative term to describe the customer action.
 
-Use *abort* for
+Use _abort_ for
 a technical audience only if it's part of the application
 programming interface (API). Use an alternative term
 in comments and descriptions.
 
 ## Alternative terms
 
-  - *End:* use for communications and network connections.
-  - *Close:* use for apps and programs.
-  - *Stop:* use for hardware operations.
-  - *Cancel:* use for requests and processes. 
+- _End:_ use for communications and network connections.
+- _Close:_ use for apps and programs.
+- _Stop:_ use for hardware operations.
+- _Cancel:_ use for requests and processes.

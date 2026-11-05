@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # finalize
 
-Don't use. Use *finish* or *complete* instead.
+Don't use. Use _finish_ or _complete_ instead.

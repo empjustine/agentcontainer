@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # ZIP Code
 
-It’s OK to use *ZIP Code* in content that's intended for a US audience only. Otherwise, use *postal code.*
+It’s OK to use _ZIP Code_ in content that's intended for a US audience only. Otherwise, use _postal code._
 
 Capitalize as shown.

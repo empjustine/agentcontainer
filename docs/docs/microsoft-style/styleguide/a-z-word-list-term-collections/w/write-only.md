@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # write-only
 
-Always hyphenate. 
+Always hyphenate.
 
 **See also** [read/write, read/write permission](~/a-z-word-list-term-collections/r/read-write-read-write-permission.md)

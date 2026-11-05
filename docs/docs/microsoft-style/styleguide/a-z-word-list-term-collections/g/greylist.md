@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # greylist
 
-Note spelling. 
+Note spelling.
 
 Use
 only to discuss the spam-reduction technique in which mail from an

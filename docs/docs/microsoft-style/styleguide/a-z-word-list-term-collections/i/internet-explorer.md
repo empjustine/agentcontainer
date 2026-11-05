@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # Internet Explorer
 
-Capitalize. Always spell out; don't abbreviate. 
+Capitalize. Always spell out; don't abbreviate.

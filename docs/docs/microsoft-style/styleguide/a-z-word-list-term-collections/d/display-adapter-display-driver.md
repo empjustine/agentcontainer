@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # display adapter, display driver
 
-Don't use. Use *video card* and *video driver* instead.
+Don't use. Use _video card_ and _video driver_ instead.

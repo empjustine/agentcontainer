@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # matrix, matrices
 
-Use *matrices,* not *matrixes,* as the plural form of *matrix*.
+Use _matrices,_ not _matrixes,_ as the plural form of _matrix_.

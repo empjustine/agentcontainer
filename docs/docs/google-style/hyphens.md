@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Hyphens are used to avoid misreading, combine terms, and separate parts of words for clarity.
-* Hyphenate prefixes like *self-* and *cross-*, before capitalized nouns or numbers, and in cases of ambiguity.
-* Generally, write compound nouns in closed form, but consult the word list for exceptions or established conventions.
-* Hyphenate compound modifiers before a noun for clarity but avoid those with more than two words.
-* Don't use spaces around hyphens except in suspended hyphens where a space can follow but not precede the hyphen.
+- Hyphens are used to avoid misreading, combine terms, and separate parts of words for clarity.
+- Hyphenate prefixes like _self-_ and _cross-_, before capitalized nouns or numbers, and in cases of ambiguity.
+- Generally, write compound nouns in closed form, but consult the word list for exceptions or established conventions.
+- Hyphenate compound modifiers before a noun for clarity but avoid those with more than two words.
+- Don't use spaces around hyphens except in suspended hyphens where a space can follow but not precede the hyphen.
 
 Use a hyphen (-) when needed for clarity. A hyphen can separate parts of words to avoid
 misreadings, and it can combine terms when they should be read as a unit.
@@ -19,11 +19,11 @@ misreadings, and it can combine terms when they should be read as a unit.
 Guidance for hyphenation isn't always straightforward because it depends on
 the following circumstances:
 
-* **Location**. For example, does a term precede a noun, or does it follow a
+- **Location**. For example, does a term precede a noun, or does it follow a
   verb?
-* **Interpretation and readability**. Is a sentence ambiguous or unclear if a term is
+- **Interpretation and readability**. Is a sentence ambiguous or unclear if a term is
   not hyphenated?
-* **Convention**. For some terms, our guidance tells us to always hyphenate or
+- **Convention**. For some terms, our guidance tells us to always hyphenate or
   never hyphenate, even if the convention seems to contradict other guidance.
 
 In addition, there are many exceptions to general hyphenation guidance. If you're not
@@ -49,47 +49,47 @@ that has different uses. For more information, see
 
 In general, don't use a hyphen between a prefix and the main noun.
 
-Recommended: *infrastructure*,
-*megabyte*, *metadata*, *preprocessing*, *pseudocode*,
-*semiconductor*
+Recommended: _infrastructure_,
+_megabyte_, _metadata_, _preprocessing_, _pseudocode_,
+_semiconductor_
 
 ### Exceptions
 
 Add a hyphen after a prefix in the following circumstances:
 
-* If the prefix is *self* or *cross*: *self-managing*,
-  *cross-region*
-* If the noun is capitalized or is a number: *non-Google*,
-  *post-2000*
-* To avoid confusion or difficulty in reading: *de-energize*, *intra-index*,
-  *re-mark*, *re-sign*
-* If the prefix is for a term that already has hyphens or spaces:
-  *un-Google-like*, *non-twentieth-century*
-* To be consistent within a document: *pre-processing*,
-  *post-processing*
+- If the prefix is _self_ or _cross_: _self-managing_,
+  _cross-region_
+- If the noun is capitalized or is a number: _non-Google_,
+  _post-2000_
+- To avoid confusion or difficulty in reading: _de-energize_, _intra-index_,
+  _re-mark_, _re-sign_
+- If the prefix is for a term that already has hyphens or spaces:
+  _un-Google-like_, _non-twentieth-century_
+- To be consistent within a document: _pre-processing_,
+  _post-processing_
 
-### The *non* prefix
+### The _non_ prefix
 
-The *non* prefix follows the same guidelines, but because it
+The _non_ prefix follows the same guidelines, but because it
 can easily form words that are hard to parse, it's often hyphenated. Use your
 best judgment, taking into account consistency within your documentation. The following
 recommendations show contrasting usages that you can use as examples.
 
-Recommended: *noncurrent*,
-*nonempty*, *noninteractive*, *nonpublic*
+Recommended: _noncurrent_,
+_nonempty_, _noninteractive_, _nonpublic_
 
-Recommended: *non-existence*,
-*non-integer*, *non-key*, *non-managed*, *non-negative*
+Recommended: _non-existence_,
+_non-integer_, _non-key_, _non-managed_, _non-negative_
 
-When using *non* as a prefix, add a hyphen before hyphenated compound words.
+When using _non_ as a prefix, add a hyphen before hyphenated compound words.
 
-Recommended: *non-KSA-based*,
-*non-self-sustaining*
+Recommended: _non-KSA-based_,
+_non-self-sustaining_
 
 ## Compounds
 
-A *compound* is a term that combines more than one word. Compounds can
-be *closed* as one word with no spaces, *open* with spaces between
+A _compound_ is a term that combines more than one word. Compounds can
+be _closed_ as one word with no spaces, _open_ with spaces between
 words, or hyphenated.
 
 ### Compound nouns
@@ -113,7 +113,7 @@ Recommended: workaround
 
 Our [word list](/style/word-list) includes exceptions for
 well-established terms that commonly use a hyphen or a space, such as
-*multi-region* and *style sheet*. In some cases, we note that noun,
+_multi-region_ and _style sheet_. In some cases, we note that noun,
 verb, and adjective versions of a word are treated differently.
 
 When the components of a unit of measurement are multiplied by each other,
@@ -135,7 +135,7 @@ Recommended: A well-designed app
 Recommended: Android-specific
 techniques
 
-Use a hyphen after *more* or *most* if you need to clarify what
+Use a hyphen after _more_ or _most_ if you need to clarify what
 those words modify.
 
 Recommended: The most common scenario
@@ -181,7 +181,7 @@ For more information, see [Units of measurement](/style/units-of-measure).
 
 #### Exceptions
 
-Don't hyphenate adverbs that end in *-ly* except when needed for clarity.
+Don't hyphenate adverbs that end in _-ly_ except when needed for clarity.
 
 Recommended: Publicly available
 implementations
@@ -250,7 +250,7 @@ an experience that's game-like.
 
 Use a hyphen, not an en dash (`&ndash;`),
 to indicate a range of numbers. If a hyphen introduces ambiguity, use words such as
-*from*, *to*, and *through* for clarity. Don't mix hyphens with words.
+_from_, _to_, and _through_ for clarity. Don't mix hyphens with words.
 For information about how to represent a range of numbers that includes units, see
 [Ranges of numbers with units](/style/units-of-measure#ranges).
 
@@ -272,7 +272,7 @@ Never place a space on either side of a hyphen except when using a
 
 When two or more compound modifiers have a common base, you can keep the
 hyphens but leave out the base for all except the last modifier. In the
-following examples, the base is *hour*.
+following examples, the base is _hour_.
 
 Recommended: You can set up the system to
 scan for new files at one- or two-hour intervals.

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # set-top box
 
-Note hyphen. Don't abbreviate. 
+Note hyphen. Don't abbreviate.

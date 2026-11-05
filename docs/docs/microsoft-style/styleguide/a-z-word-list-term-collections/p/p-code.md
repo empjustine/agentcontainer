@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # p-code
 
-Abbreviation for *pseudocode*. Spell out on the first mention. 
+Abbreviation for _pseudocode_. Spell out on the first mention.
 
-Capitalize as *P-code* when it's the first word in a sentence. 
+Capitalize as _P-code_ when it's the first word in a sentence.
 
 Use only in content for a technical audience.

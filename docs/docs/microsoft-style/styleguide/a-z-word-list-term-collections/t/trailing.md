@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # trailing
 
-Use instead of *following* in phrases such as *trailing periods,* *trailing slashes,* and *trailing spaces,* which might occur at the end of strings, parameters, or other values. *Trailing* in this context is the opposite of *leading.*
+Use instead of _following_ in phrases such as _trailing periods,_ _trailing slashes,_ and _trailing spaces,_ which might occur at the end of strings, parameters, or other values. _Trailing_ in this context is the opposite of _leading._

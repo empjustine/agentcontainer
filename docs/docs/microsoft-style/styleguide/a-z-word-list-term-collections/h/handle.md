@@ -9,14 +9,14 @@ ms.prod: non-product-specific
 
 # handle
 
-When you use *handle* to
+When you use _handle_ to
 describe a token that's temporarily assigned to a device or object to
 identify and provide access to the device, insert a space between
-the word *handle* and the sequential number.
+the word _handle_ and the sequential number.
 
-**Examples**   
+**Examples**  
 handle 0  
 handle 1  
 handle 2
 
-To describe a handle in UI that the customer uses to move or size an object, use *move handle* or *sizing handle*. Don't use *size handle, grab handle, little box,* or similar phrases.
+To describe a handle in UI that the customer uses to move or size an object, use _move handle_ or _sizing handle_. Don't use _size handle, grab handle, little box,_ or similar phrases.

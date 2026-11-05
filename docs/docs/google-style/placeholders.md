@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* This page provides guidance on formatting placeholders within commands, code samples, and text strings for Google developer documentation.
-* Placeholders represent values that readers need to replace when using code samples or indicate variable values in example output.
-* Specific formatting rules are outlined for placeholders in inline text, code blocks, and general text, emphasizing clear and descriptive naming conventions.
-* The document also details how to effectively explain placeholders to readers, including providing context and descriptions for each placeholder used.
-* Guidelines for handling placeholders in output examples are provided, ensuring clarity and understanding of the presented information.
+- This page provides guidance on formatting placeholders within commands, code samples, and text strings for Google developer documentation.
+- Placeholders represent values that readers need to replace when using code samples or indicate variable values in example output.
+- Specific formatting rules are outlined for placeholders in inline text, code blocks, and general text, emphasizing clear and descriptive naming conventions.
+- The document also details how to effectively explain placeholders to readers, including providing context and descriptions for each placeholder used.
+- Guidelines for handling placeholders in output examples are provided, ensuring clarity and understanding of the presented information.
 
 This page explains how to format placeholders in commands, code samples, and text
 strings. This page doesn't explain how to implement visual styling for placeholders, but it does
@@ -19,9 +19,9 @@ distinct from other text.
 For more information about formatting code, command-line syntax, and code samples, see the
 following links:
 
-* [Code in text](/style/code-in-text)
-* [Documenting command-line syntax](/style/code-syntax)
-* [Code samples](/style/code-samples)
+- [Code in text](/style/code-in-text)
+- [Documenting command-line syntax](/style/code-syntax)
+- [Code samples](/style/code-samples)
 
 Placeholders in sample code and commands represent values that the reader must replace when they use
 the sample input. Placeholders in example output can also represent other values that vary. In
@@ -36,12 +36,12 @@ HTTP response code; the reader isn't expected to set this to a specific value.
 ## Placeholders
 
 When you create placeholders follow this general guidance around using the letter
-*x*:
+_x_:
 
-* In general, don't use a single *x* or a series of *x*'s as placeholders; use a more
+- In general, don't use a single _x_ or a series of _x_'s as placeholders; use a more
   informative placeholder.
-* In some contexts (such as HTTP status codes), a series of *x*'s is the standard,
-  so it's OK to use (for example) *xx* in those cases.
+- In some contexts (such as HTTP status codes), a series of _x_'s is the standard,
+  so it's OK to use (for example) _xx_ in those cases.
 
 There are several ways to format placeholders, depending on whether you're
 working in HTML or Markdown, or whether the placeholder is inline, in a code block, or in a
@@ -51,19 +51,20 @@ paragraph. For details, see the following sections.
 
 If your sample code and command placeholders occur in a sentence, use the following formatting:
 
-* In HTML, wrap variable placeholders by using the `var`
+- In HTML, wrap variable placeholders by using the `var`
   element, like this:
 
   ```
   <code><var>PLACEHOLDER_NAME</var></code>
   ```
-* In Markdown, wrap inline placeholders in backticks (`), and use an
+
+- In Markdown, wrap inline placeholders in backticks (`), and use an
   asterisk (\*) before the first backtick and after the second one
   (`` *`PLACEHOLDER_NAME`* ``).
 
 If your placeholder does not represent a code sample or command, use the following formatting:
 
-* In HTML, wrap placeholders by using the `var`
+- In HTML, wrap placeholders by using the `var`
   element, like this:
 
   ```
@@ -74,7 +75,7 @@ If your placeholder does not represent a code sample or command, use the followi
 
 If your placeholders are in a block of code, use the following formatting:
 
-* In HTML, wrap the code block in a `pre` element,
+- In HTML, wrap the code block in a `pre` element,
   and tag placeholders with `var` elements:
 
   ```
@@ -86,13 +87,18 @@ If your placeholders are in a block of code, use the following formatting:
             ...
         </pre>
   ```
-* In Markdown, wrap the code block in a code fence (```). Inside a
+
+- In Markdown, wrap the code block in a code fence (```). Inside a
   code fence, you can't apply formatting like bold or italic.
 
   ```
+
   ```
+
   PLACEHOLDER_NAME
+
   ```
+
   ```
 
 ### Placeholder text
@@ -103,24 +109,24 @@ For example, in HTML:
 
 Recommended:
 
-* `.../<var>API_NAME</var>`
-* `.../<var>METHOD_NAME</var>`
+- `.../<var>API_NAME</var>`
+- `.../<var>METHOD_NAME</var>`
 
 Not recommended:
 
-* `.../<var>API-name</var>`
-* `.../<var>API_name</var>`
-* `.../<var>API name</var>`
-* `.../<var>api_name</var>`
-* `.../<var>api-name</var>`
-* `.../<var>apiName</var>`
+- `.../<var>API-name</var>`
+- `.../<var>API_name</var>`
+- `.../<var>API name</var>`
+- `.../<var>api_name</var>`
+- `.../<var>api-name</var>`
+- `.../<var>apiName</var>`
 
 In Markdown:
 
 Recommended:
 
-* `.../*API_NAME*`
-* `.../*METHOD_NAME*`
+- `.../*API_NAME*`
+- `.../*METHOD_NAME*`
 
 If the context in which your placeholders appear makes using
 uppercase characters with underscore delimiters a bad idea, use something else
@@ -130,8 +136,8 @@ that makes sense to you, but be internally consistent.
 
 Not recommended:
 
-* `.../<var>MY_API_NAME</var>`
-* `.../<var>YOUR_API_NAME</var>`
+- `.../<var>MY_API_NAME</var>`
+- `.../<var>YOUR_API_NAME</var>`
 
 **Note**: You can mark up command-line syntax with [brackets](/style/code-syntax#optional-arguments), [braces](/style/code-syntax#set-of-two-arguments), and [ellipses](/style/code-syntax#arguments-that-can-repeat). Don't put the
 brackets, braces, or ellipses in the `var` element.
@@ -142,9 +148,9 @@ When you use a placeholder in text or code, explain the placeholder the first ti
 It's not necessary to repeat the explanation in the document unless doing so might benefit the
 reader—for example, in circumstances such as the following:
 
-* Your document is lengthy.
-* You've introduced several other placeholders in a long procedure.
-* Your document isn't intended to be read from beginning to end.
+- Your document is lengthy.
+- You've introduced several other placeholders in a long procedure.
+- Your document isn't intended to be read from beginning to end.
 
 The following is an example of a command that uses a placeholder with an explanation of that
 placeholder:
@@ -163,7 +169,7 @@ you want your new VM instance to have.</p>
 
 Use the following format for a single placeholder:
 
-* Replace PLACEHOLDER with a description of what
+- Replace PLACEHOLDER with a description of what
   the placeholder represents.
 
 Recommended:
@@ -181,12 +187,12 @@ Recommended:
 
 Use the following format for two or more placeholders:
 
-* Follow the command line with a descriptive list of the placeholders
+- Follow the command line with a descriptive list of the placeholders
   used in the command line. Explain what each placeholder represents
   even if the placeholder value is intuitive to you.
-* Introduce this list with *Replace the following:*
-* List the placeholders in the order in which they appear in the command line.
-* Tag each placeholder in a code sample or command with `code` and
+- Introduce this list with _Replace the following:_
+- List the placeholders in the order in which they appear in the command line.
+- Tag each placeholder in a code sample or command with `code` and
   `var` elements, followed by a
   [colon and a description that starts with a lowercase letter](/style/colons).
   For
@@ -195,8 +201,9 @@ Use the following format for two or more placeholders:
   ```
   <li><code><var>INSTANCE_NAME</var></code>: description</li>
   ```
-* If the description contains an example, introduce it with an *em dash* or
-  *such as*—for example:
+
+- If the description contains an example, introduce it with an _em dash_ or
+  _such as_—for example:
 
   ```
   <li><code><var>INSTANCE_NAME</var></code>: description&mdash;for example,...</li>
@@ -205,7 +212,8 @@ Use the following format for two or more placeholders:
   ```
   <li><code><var>INSTANCE_NAME</var></code>: description, such as...</li>
   ```
-* Each item in the list follows our [list style](/style/lists).
+
+- Each item in the list follows our [list style](/style/lists).
 
 Recommended:
 
@@ -222,10 +230,10 @@ Recommended:
 
    Replace the following:
 
-   * `ADMIN_PROJECT_ID`: the project that owns the reservation
-   * `LOCATION`: the location of the reservation
-   * `CONCURRENCY`: the maximum concurrency target
-   * `RESERVATION_NAME`: the name of the reservation
+   - `ADMIN_PROJECT_ID`: the project that owns the reservation
+   - `LOCATION`: the location of the reservation
+   - `CONCURRENCY`: the maximum concurrency target
+   - `RESERVATION_NAME`: the name of the reservation
 
 Recommended:
 
@@ -238,11 +246,11 @@ Recommended:
 
    Replace the following:
 
-   * `ON_PREM_PROJECT_NAME`: the Google Cloud project
+   - `ON_PREM_PROJECT_NAME`: the Google Cloud project
      name for your on-premises project. You can find your project number on the
      [Dashboard](https://console.cloud.google.com/home/dashboard)
      page of the Google Cloud console.
-   * `ZONE`: a [Google Cloud
+   - `ZONE`: a [Google Cloud
      zone](/compute/docs/regions-zones#identifying_a_region_or_zone) that's close to your location—for example, `us-east1`.
 
 ### Placeholders in output
@@ -250,22 +258,23 @@ Recommended:
 If you provide a code output example, explain any placeholders that appear in
 sample output:
 
-* Use `var` elements to identify the placeholder text in
+- Use `var` elements to identify the placeholder text in
   the output.
-* Follow the example output with a list of the placeholders used in the
+- Follow the example output with a list of the placeholders used in the
   example.
-* Introduce the list of placeholders with *This output includes the
-  following values:*
-* List the placeholders in the order in which they appear in the
+- Introduce the list of placeholders with _This output includes the
+  following values:_
+- List the placeholders in the order in which they appear in the
   example.
-* Tag each placeholder with a `var` element,
+- Tag each placeholder with a `var` element,
   followed by a colon and a description that starts with a lowercase letter—for example:
 
   ```
   <li><code><var>INSTANCE_NAME</var></code>: description</li>
   ```
-* If the description contains an example, introduce it with an *em dash* or
-  *such as*—for example:
+
+- If the description contains an example, introduce it with an _em dash_ or
+  _such as_—for example:
 
   ```
   <li><code><var>INSTANCE_NAME</var></code>: description&mdash;for example,...</li>
@@ -321,14 +330,14 @@ The output is similar to the following:
 
 This output includes the following values:
 
-* `PROJECT_ID`: the project ID for the project that
+- `PROJECT_ID`: the project ID for the project that
   the image was imported into
-* `OPERATION_ID`: the ID of the import operation
-* `BUILD_ID`: the ID of the build for the import
+- `OPERATION_ID`: the ID of the import operation
+- `BUILD_ID`: the ID of the build for the import
   operation
-* `IMAGE_NAME`: the name of the image to be
+- `IMAGE_NAME`: the name of the image to be
   imported
-* `SOURCE_FILE`: the URI for the image in Cloud
+- `SOURCE_FILE`: the URI for the image in Cloud
   Storage—for example, `gs://my-bucket/my-image.vmdk`
-* `PROJECT_NUMBER`: the number for the import
+- `PROJECT_NUMBER`: the number for the import
   project

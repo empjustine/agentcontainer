@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # onto
 
-Use one word (*onto*) to indicate moving something to a position on top of something else, as in *drag the icon onto the desktop*.
+Use one word (_onto_) to indicate moving something to a position on top of something else, as in _drag the icon onto the desktop_.
 
-**See also**  [sign in, sign out](~/a-z-word-list-term-collections/s/sign-in-sign-out.md)
+**See also** [sign in, sign out](~/a-z-word-list-term-collections/s/sign-in-sign-out.md)

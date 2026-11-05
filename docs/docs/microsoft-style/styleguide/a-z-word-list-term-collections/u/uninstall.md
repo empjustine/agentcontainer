@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # uninstall
 
-Use *uninstall* as a verb to describe removing apps, programs, and hardware drivers from a device. 
+Use _uninstall_ as a verb to describe removing apps, programs, and hardware drivers from a device.
 
-Don't use *uninstall* as a noun.
+Don't use _uninstall_ as a noun.
 
 **See also** [remove](~/a-z-word-list-term-collections/r/remove.md)

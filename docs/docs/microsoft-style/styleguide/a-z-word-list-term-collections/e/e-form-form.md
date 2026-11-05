@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # e-form, form
 
-Don't use *e-form.* Use *form* instead. 
+Don't use _e-form._ Use _form_ instead.

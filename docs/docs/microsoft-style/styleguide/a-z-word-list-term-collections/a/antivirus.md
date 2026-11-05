@@ -9,10 +9,10 @@ ms.prod: non-product-specific
 
 # antivirus
 
-Use only as an adjective. Don't hyphenate. 
+Use only as an adjective. Don't hyphenate.
 
-*Antivirus* is often used interchangeably with *antimalware* to describe any program that removes malware. Use *antivirus* when you want to differentiate between antispyware and other antimalware programs.
+_Antivirus_ is often used interchangeably with _antimalware_ to describe any program that removes malware. Use _antivirus_ when you want to differentiate between antispyware and other antimalware programs.
 
 **Examples**  
 antivirus program  
-Windows Defender has both antivirus and antispyware capabilities. 
+Windows Defender has both antivirus and antispyware capabilities.

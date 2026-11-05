@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # secondary menu
 
-Don't use in content for a general audience. If it's important to describe how the menu works, use *submenu*.
+Don't use in content for a general audience. If it's important to describe how the menu works, use _submenu_.
 
-In content for developers, use only in content about creating menus and only if you can't use *submenu*. 
+In content for developers, use only in content about creating menus and only if you can't use _submenu_.

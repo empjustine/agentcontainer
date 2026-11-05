@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # need
 
-Use *need* to discuss a requirement or obligation; use *want* when the customer has a choice of actions.
+Use _need_ to discuss a requirement or obligation; use _want_ when the customer has a choice of actions.
 
 **Example**  
 If you want to use a laser printer, you need a laser printer driver.

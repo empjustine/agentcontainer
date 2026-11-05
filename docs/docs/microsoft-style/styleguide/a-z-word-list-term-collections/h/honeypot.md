@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # honeypot
 
-Don't use. 
+Don't use.
 
 In
 content that's specifically about network decoy technology, try to

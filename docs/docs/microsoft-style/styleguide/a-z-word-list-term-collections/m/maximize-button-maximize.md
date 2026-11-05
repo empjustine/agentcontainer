@@ -9,11 +9,11 @@ ms.prod: non-product-specific
 
 # Maximize button, maximize
 
-Use the ***Maximize*** *button* to refer to the button, not just ***Maximize***. *Maximize* as part of the ***Maximize*** *button* is always bold. Don't use *Maximize box* or *Maximize icon*. 
+Use the _**Maximize**_ _button_ to refer to the button, not just _**Maximize**_. _Maximize_ as part of the _**Maximize**_ _button_ is always bold. Don't use _Maximize box_ or _Maximize icon_.
 
-It's OK to use *maximize* as a verb. 
+It's OK to use _maximize_ as a verb.
 
-**Examples**    
-Select the **Maximize** button.     
-To fill the screen, maximize the window.   
+**Examples**  
+Select the **Maximize** button.  
+To fill the screen, maximize the window.  
 Select ![](media/maximize-button-maximize/302251874.png).

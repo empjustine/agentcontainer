@@ -9,11 +9,11 @@ ms.prod: non-product-specific
 
 # bulk
 
-In content for a general audience, don’t use *bulk* as an adverb, such as *bulk add* or *bulk edit,* unless the term is in the UI.
+In content for a general audience, don’t use _bulk_ as an adverb, such as _bulk add_ or _bulk edit,_ unless the term is in the UI.
 
-In content for a technical audience, avoid using *bulk* as an adverb to describe an action performed on multiple objects. Try *in bulk* as an alternative.
+In content for a technical audience, avoid using _bulk_ as an adverb to describe an action performed on multiple objects. Try _in bulk_ as an alternative.
 
-Don’t use *bulk* in compound nouns. 
+Don’t use _bulk_ in compound nouns.
 
 Don't hyphenate.
 

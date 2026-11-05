@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # cellular
 
-Don’t use *cellular phone* or *cell phone*. 
+Don’t use _cellular phone_ or _cell phone_.
 
-It's OK to use *cellular* in the context of *cellular data network* or *cellular data connection*.
+It's OK to use _cellular_ in the context of _cellular data network_ or _cellular data connection_.
 
 **See** [Computer and device term collection](~/a-z-word-list-term-collections/term-collections/computer-device-terms.md)

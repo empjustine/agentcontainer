@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # application icon, app icon
 
-Don't use to refer to a program icon. Use the specific product name, such as *the* *Word* *icon,* instead. If you must use a general term, use *app icon.*
+Don't use to refer to a program icon. Use the specific product name, such as _the_ _Word_ _icon,_ instead. If you must use a general term, use _app icon._
 
-It's OK to use *application icon* in content for developers when discussing programming elements such as the **ApplicationIcon** property.
+It's OK to use _application icon_ in content for developers when discussing programming elements such as the **ApplicationIcon** property.

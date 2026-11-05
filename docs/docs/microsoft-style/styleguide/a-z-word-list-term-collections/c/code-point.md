@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # code point
 
-Two words. 
+Two words.

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # Far East
 
-Don't use to refer to the geographic region of East Asia. Use *East Asia* or *Asia* instead.
+Don't use to refer to the geographic region of East Asia. Use _East Asia_ or _Asia_ instead.

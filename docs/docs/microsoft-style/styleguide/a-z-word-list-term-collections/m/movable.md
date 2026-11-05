@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # movable
 
-Note spelling. Don't use *moveable.*
+Note spelling. Don't use _moveable._

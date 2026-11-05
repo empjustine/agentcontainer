@@ -9,11 +9,11 @@ ms.prod: non-product-specific
 
 # select
 
-Use *select*
+Use _select_
 to refer to marking text, objects, cells, and other items that a
 customer will take action on, such as copying or moving. Describe
-the marked items as *the selection* or *the* *selected* text, objects, cells, and so on.
+the marked items as _the selection_ or _the_ _selected_ text, objects, cells, and so on.
 
-Don't use *highlight* or *pick* as a synonym for *select*.
+Don't use _highlight_ or _pick_ as a synonym for _select_.
 
-For information about using *select* as a verb in instructions and procedures, see [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md).
+For information about using _select_ as a verb in instructions and procedures, see [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md).

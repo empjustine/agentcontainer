@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # character set
 
-Don't use as a synonym for *code page*. A character set appears on a code page.
+Don't use as a synonym for _code page_. A character set appears on a code page.

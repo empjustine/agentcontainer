@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # target drive, target file
 
-Don't use. Refer to the specific drive, folder, or file instead. If the concept of *target* is important to the discussion, use *destination drive* or *destination file* instead. 
+Don't use. Refer to the specific drive, folder, or file instead. If the concept of _target_ is important to the discussion, use _destination drive_ or _destination file_ instead.
 
 **Examples**  
 Set your phone to automatically save photos and videos to Microsoft OneDrive.  

@@ -9,14 +9,14 @@ ms.prod: non-product-specific
 
 # per
 
-It's OK to use *per* to mean *for each* in statistical or technical contexts. In other contexts, use *a* or the phrase *for each* instead of *per*.
+It's OK to use _per_ to mean _for each_ in statistical or technical contexts. In other contexts, use _a_ or the phrase _for each_ instead of _per_.
 
 **Examples**  
 Customers who sign in only once a day are rare.  
-You can have only one drive letter per network resource.  
+You can have only one drive letter per network resource.
 
-Don't use *per* to mean *by* or *in accordance with*.
+Don't use _per_ to mean _by_ or _in accordance with_.
 
-**Examples**   
+**Examples**  
 Find all the articles that contain a specific word by following the instructions on your screen.  
-Identify your computer by using the procedure in the next section. 
+Identify your computer by using the procedure in the next section.

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # management information systems
 
-Abbreviate as *MIS*. Most of the time, use *IS* for *information systems* instead, unless the reference is specifically to management information systems.
+Abbreviate as _MIS_. Most of the time, use _IS_ for _information systems_ instead, unless the reference is specifically to management information systems.

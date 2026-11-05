@@ -11,4 +11,4 @@ ms.prod: non-product-specific
 
 ![](media/split-bar-split-box/1404636417.png)
 
-It's OK to use *split bar* and *split box* in content for all audiences.
+It's OK to use _split bar_ and _split box_ in content for all audiences.

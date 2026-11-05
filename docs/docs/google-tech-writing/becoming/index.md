@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Google's Technical Writers bridge communication gaps between engineers, product managers, and users, playing a crucial role in the Google ecosystem.
-* A diverse range of backgrounds is welcome; strong English writing skills, the ability to learn and explain complex technologies, interpersonal skills, and code comprehension are essential for success.
-* Aspiring technical writers without professional experience can build a portfolio by contributing to open-source projects, showcasing diverse documentation types and adherence to style guides.
-* Google's technical writers primarily document programming products like Google Cloud, Android, and Google Maps, employing various media for effective communication.
-* To apply, visit the Google Careers website, review open positions, and submit an application highlighting your technical documentation experience.
+- Google's Technical Writers bridge communication gaps between engineers, product managers, and users, playing a crucial role in the Google ecosystem.
+- A diverse range of backgrounds is welcome; strong English writing skills, the ability to learn and explain complex technologies, interpersonal skills, and code comprehension are essential for success.
+- Aspiring technical writers without professional experience can build a portfolio by contributing to open-source projects, showcasing diverse documentation types and adherence to style guides.
+- Google's technical writers primarily document programming products like Google Cloud, Android, and Google Maps, employing various media for effective communication.
+- To apply, visit the Google Careers website, review open positions, and submit an application highlighting your technical documentation experience.
 
 Technical Writers provide a key link between Google engineers,
 product managers, marketing associates, developer advocates, as well as client
@@ -26,13 +26,13 @@ physicists, lawyers, and teachers now working
 as technical writers at Google. Despite the wide range of educational
 and professional backgrounds, this diverse bunch share the following skills:
 
-* Write clearly in English. We don't care whether English is your first
+- Write clearly in English. We don't care whether English is your first
   language or your tenth; we only care about the quality of your writing
   in English.
-* Learn complex technologies relatively quickly.
-* Explain complex technologies in useful ways for the target audience.
-* Wield strong interpersonal skills.
-* Understand code.
+- Learn complex technologies relatively quickly.
+- Explain complex technologies in useful ways for the target audience.
+- Wield strong interpersonal skills.
+- Understand code.
 
 Technical writers are rare hybrids, possessing an uncommon mixture
 of talents.
@@ -45,20 +45,20 @@ communication portfolio, we recommend contributing documentation to
 open-source projects. Your documentation portfolio should ideally meet
 the following criteria:
 
-* Represent a variety of documentation types.
-* Adhere to a well-known [style guide](/tech-writing/resources).
+- Represent a variety of documentation types.
+- Adhere to a well-known [style guide](/tech-writing/resources).
 
 ## What do Google's technical writers document?
 
 Although some Google technical writers focus on hardware and others on
-consumer products such as Google Docs, *most* Google technical writers
+consumer products such as Google Docs, _most_ Google technical writers
 document programming products, including:
 
-* Google Cloud
-* Android
-* Google Maps
-* Chrome
-* TensorFlow
+- Google Cloud
+- Android
+- Google Maps
+- Chrome
+- TensorFlow
 
 Helping developers use these technologies or platforms might involve traditional
 documentation, code samples, videos, slides, or any other media that gets the

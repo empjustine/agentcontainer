@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # high-resolution
 
-Always hyphenate. Don’t abbreviate as *hi-res*. 
+Always hyphenate. Don’t abbreviate as _hi-res_.

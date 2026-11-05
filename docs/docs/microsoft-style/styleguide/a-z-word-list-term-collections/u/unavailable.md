@@ -9,9 +9,9 @@ ms.prod: non-product-specific
 
 # unavailable
 
-Most of the time, talk about the actions that customers should take rather than describing UI. 
+Most of the time, talk about the actions that customers should take rather than describing UI.
 
-When you must discuss UI, use *not available* or *isn’t available* instead of *unavailable, disabled,* or *grayed* to describe commands and options that are in an unusable state. Use *appears dimmed* if you must describe their appearance. It’s OK to use *unavailable* to describe an outage or a service that isn’t offered to certain customers.  
+When you must discuss UI, use _not available_ or _isn’t available_ instead of _unavailable, disabled,_ or _grayed_ to describe commands and options that are in an unusable state. Use _appears dimmed_ if you must describe their appearance. It’s OK to use _unavailable_ to describe an outage or a service that isn’t offered to certain customers.
 
 **Examples**  
 The command isn’t available until you select text.  

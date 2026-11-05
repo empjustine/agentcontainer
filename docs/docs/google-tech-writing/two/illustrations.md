@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Illustrations are crucial for technical writing as they enhance reader engagement and comprehension, especially for complex topics.
-* Effective captions are concise, highlight key takeaways, and guide the reader's focus within the illustration.
-* Technical illustrations should be simplified by limiting information, organizing complex systems into subsystems, and using visual cues like callouts to direct attention.
-* Iterative revisions are essential for refining illustrations, focusing on clarity, conciseness, and accessibility, much like the evolution of the London Tube map.
-* Several free or freemium tools, like Google Drawings, diagrams.net, and LucidChart, are available for creating and exporting scalable, high-quality diagrams in SVG format.
+- Illustrations are crucial for technical writing as they enhance reader engagement and comprehension, especially for complex topics.
+- Effective captions are concise, highlight key takeaways, and guide the reader's focus within the illustration.
+- Technical illustrations should be simplified by limiting information, organizing complex systems into subsystems, and using visual cues like callouts to direct attention.
+- Iterative revisions are essential for refining illustrations, focusing on clarity, conciseness, and accessibility, much like the evolution of the London Tube map.
+- Several free or freemium tools, like Google Drawings, diagrams.net, and LucidChart, are available for creating and exporting scalable, high-quality diagrams in SVG format.
 
 **Estimated Time:** 10 minutes
 
@@ -27,21 +27,21 @@ kids—still yearning for pictures rather than text.
 According to research by [Sung and Mayer
 (2012)](https://www.sciencedirect.com/science/article/pii/S0747563212000921),
 providing any graphics—good or bad—makes readers like the document more;
-however, only *instructive* graphics help readers learn. This unit suggests
+however, only _instructive_ graphics help readers learn. This unit suggests
 a few ways to help you create figures truly worth a thousand words.
 
 ## Write the caption first
 
-It is often helpful to write the caption *before* creating the
+It is often helpful to write the caption _before_ creating the
 illustration. Then, create the illustration that best represents the caption.
 This process helps you to check that the illustration matches the goal.
 
 Good captions have the following characteristics:
 
-* They are **brief**. Typically, a caption is just a few words.
-* They explain the **takeaway**. *After viewing this graphic,
-  what should the reader remember?*
-* They **focus** the reader's attention. Focus is particularly important
+- They are **brief**. Typically, a caption is just a few words.
+- They explain the **takeaway**. _After viewing this graphic,
+  what should the reader remember?_
+- They **focus** the reader's attention. Focus is particularly important
   when a photograph or diagram contains a lot of detail.
 
 **Note:** By convention, the caption always follows the diagram.
@@ -67,14 +67,14 @@ Which of the three preceding figures best illustrates its caption?
 
 #### Click the icon to see the answer.
 
-* Figure A is bad. The chain is pretty, but information-free. The chain also
+- Figure A is bad. The chain is pretty, but information-free. The chain also
   erroneously implies that a single-linked list points both backwards and
   forwards.
-* Figure B is okay. The illustration helps students realize that the first
+- Figure B is okay. The illustration helps students realize that the first
   item points to the second item, the second points to the third, and so on.
-  However, although the caption refers to both *content* and a
-  *pointer*, the illustration shows pointers but does not show content.
-* Figure C is the best and most instructive choice. The illustration
+  However, although the caption refers to both _content_ and a
+  _pointer_, the illustration shows pointers but does not show content.
+- Figure C is the best and most instructive choice. The illustration
   clearly delineates the content part of each node from the pointer part.
 
 ---
@@ -88,7 +88,7 @@ do exactly that in the world's art museums.
 **Figure 2. You'd happily study this Van Gogh painting.**
 
 [Portrait of Pere Tanguy By Vincent van Gogh - Musée Rodin [Public domain]](https://commons.wikimedia.org/wiki/File:Van_Gogh_-_Portrait_of_Pere_Tanguy_1887-8.JPG "Vincent van Gogh
- [Public domain], via Wikimedia Commons")
+[Public domain], via Wikimedia Commons")
 
 By contrast, highly complex technical illustrations like the following tend
 to discourage most readers:
@@ -150,12 +150,12 @@ As with writing, the first draft of an illustration is seldom good
 enough. Revise your illustrations to clarify the content.
 As you revise, ask yourself the following questions:
 
-* How can I simplify the illustration?
-* Should I split this illustration into two or more simpler
+- How can I simplify the illustration?
+- Should I split this illustration into two or more simpler
   illustrations?
-* Is the text in the illustration easy to read? Does the text contrast
+- Is the text in the illustration easy to read? Does the text contrast
   sufficiently with its background?
-* What's the takeaway?
+- What's the takeaway?
 
 For instance, consider the
 [evolution of the London Tube
@@ -194,17 +194,17 @@ might you address these problems?
 
 Some possible issues with the diagram include:
 
-* **Issue**: The bright colors pull the reader's attention away
+- **Issue**: The bright colors pull the reader's attention away
   from other aspects of the diagram.  
   **Solution**: Choose colors
   carefully so that they do not overpower the diagram.
-* **Issue**: The diagram does not have sufficient color contrast.
+- **Issue**: The diagram does not have sufficient color contrast.
   This makes the diagram inaccessible for some people with low vision or
   certain types of color blindness.  
   **Solution**: Remove
   unnecessary use of color and ensure that colors pass
   [standard color contrast recommendations](https://m3.material.io/foundations/designing/color-contrast).
-* **Issue**: The arrows point in both directions which
+- **Issue**: The arrows point in both directions which
   makes it unclear which way the diagram flows.  
   **Solution**:
   Separate the arrows into two parts with one set illustrating invoking a
@@ -224,10 +224,10 @@ What flaws do you see in the improved illustration?
 
 Here are two of the flaws that still exist:
 
-* This diagram is still too complex. It would take far more than a paragraph
+- This diagram is still too complex. It would take far more than a paragraph
   to explain this illustration. Consider how removing extra information or
   adding clarifying labels might simplify the interpretation.
-* While separating the arrows helped display when the functions invoke or
+- While separating the arrows helped display when the functions invoke or
   return data to each other, the return arrows might benefit from labels that
   tell the reader what the return values are.
 
@@ -238,9 +238,9 @@ Here are two of the flaws that still exist:
 There are many options available for creating diagrams. Three options that are
 free or have free options include:
 
-* [Google Drawings](https://drawings.google.com)
-* [diagrams.net](https://diagrams.net)
-* [LucidChart](https://www.lucidchart.com/pages/)
+- [Google Drawings](https://drawings.google.com)
+- [diagrams.net](https://diagrams.net)
+- [LucidChart](https://www.lucidchart.com/pages/)
 
 When exporting diagrams from these tools to use in documentation, it is usually
 best to export the files as [Scalable Vector

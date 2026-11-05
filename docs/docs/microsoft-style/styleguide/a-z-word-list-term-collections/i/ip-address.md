@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # IP address
 
-Don't spell out. 
+Don't spell out.

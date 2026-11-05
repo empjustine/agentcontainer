@@ -4,7 +4,7 @@
 # Pluralization
 
 In general, follow the standard rules for pluralization in US English and use the regular
-plural form of a word in most cases. Avoid using *'s* to form a plural to avoid confusing
+plural form of a word in most cases. Avoid using _'s_ to form a plural to avoid confusing
 a plural with a possessive or contraction.
 
 For more information, see [Contractions](/style/contractions) and [Possessives](/style/possessives).
@@ -23,7 +23,7 @@ Recommended: The workloads with the
 Not recommended: The efficiency of
 algorithms that process data sets depend on memory allocation.
 
-For sentences with more than one subject being connected by *and* or *or*, make sure
+For sentences with more than one subject being connected by _and_ or _or_, make sure
 to use either a plural and singular appropriately.
 
 Recommended: The request payload and
@@ -35,9 +35,9 @@ service account wasn't authenticated.
 Not recommended: User authentication and
 authorization is processed and handled by the security module.
 
-For consistent style, use a plural after *one or more*, not a singular.
+For consistent style, use a plural after _one or more_, not a singular.
 
-Because *one or more* can express the possibility of one or more outcomes, it's sometimes
+Because _one or more_ can express the possibility of one or more outcomes, it's sometimes
 helpful to reword the sentence for clarity.
 
 Recommended: If one or more tests fail, a
@@ -48,7 +48,7 @@ system warning is triggered.
 
 See also [Plurals in parentheses](#plurals-in-parentheses).
 
-Use a singular after *more than one*, not a plural.
+Use a singular after _more than one_, not a plural.
 
 Recommended: You can create more than one
 instance at a time.
@@ -56,7 +56,7 @@ instance at a time.
 ## Plural abbreviations
 
 In general, treat acronyms, initialisms, and other abbreviations as regular words when making
-them plural. Avoid using *'s* to form the plural to help distinguish the plural form from the
+them plural. Avoid using _'s_ to form the plural to help distinguish the plural form from the
 possessive. For more information, see [Possessives](/style/possessives).
 
 Recommended: APIs, SKEs, and IDEs
@@ -64,11 +64,11 @@ Recommended: APIs, SKEs, and IDEs
 Not recommended: API's, SKE's, and
 IDE's
 
-If the acronym, initialism, or abbreviation ends in *s*, *sh*, *ch*, or
-*x*, then add *es*—for example, *OSes*, *DISHes*, *DCCHes*, and
-*BMXes*.
+If the acronym, initialism, or abbreviation ends in _s_, _sh_, _ch_, or
+_x_, then add _es_—for example, _OSes_, _DISHes_, _DCCHes_, and
+_BMXes_.
 
-**Note:** Forming a plural using *'s* can be ambiguous or confusing
+**Note:** Forming a plural using _'s_ can be ambiguous or confusing
 to readers and might cause issues in translation. For more information, see [Write for a global audience](/style/translation).
 
 When spelling out a term, make sure that both the spelled-out term and abbreviation match,
@@ -96,8 +96,8 @@ Recommended: 64 GB
 
 Not recommended: 64 GBs
 
-**Note:** Sometimes it can be helpful to spell out *-bit* or
-*-byte* terms. However, in general, it's not necessary to spell out a unit when used in
+**Note:** Sometimes it can be helpful to spell out _-bit_ or
+_-byte_ terms. However, in general, it's not necessary to spell out a unit when used in
 combination with a specific number.
 
 Make sure to include a space, preferably a nonbreaking space, between the number and
@@ -133,15 +133,15 @@ comments](/style/api-reference-comments).
 Don't put optional plurals in parentheses. Instead, use either a plural or singular
 construction and keep things consistent throughout your documentation. Choose what is most
 appropriate for your documentation and your audience. If it's important in a specific context to
-indicate both, use *one or more*.
+indicate both, use _one or more_.
 
-| Recommended | Not recommended |
-| --- | --- |
-| To find your API key, visit the **Credentials** page. | To find your API key(s), visit the **Credentials** page. |
-| The value of the parent depends on the values of its children. | The value of the parent depends on the value(s) of its child(ren). |
-| You can use a physical linecard, which can contain one or more ports. | You can use a physical linecard, which can contain port(s). |
+| Recommended                                                           | Not recommended                                                    |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| To find your API key, visit the **Credentials** page.                 | To find your API key(s), visit the **Credentials** page.           |
+| The value of the parent depends on the values of its children.        | The value of the parent depends on the value(s) of its child(ren). |
+| You can use a physical linecard, which can contain one or more ports. | You can use a physical linecard, which can contain port(s).        |
 
 ## Plural pronouns
 
-For information about plural pronouns like *we*, *you*, and *they*, see [Pronouns](/style/pronouns) and [Second person and first
+For information about plural pronouns like _we_, _you_, and _they_, see [Pronouns](/style/pronouns) and [Second person and first
 person](/style/person).

@@ -5,27 +5,27 @@
 
 ## Page Summary
 
-* Concise technical writing mirrors efficient coding by prioritizing clarity and brevity for better readability and maintenance.
-* Focus each sentence on a single idea to improve comprehension and avoid overly complex sentence structures.
-* Convert lengthy sentences containing lists or multiple ideas into bullet points or shorter, separate sentences for clarity.
-* Eliminate unnecessary words and phrases to create concise and impactful technical documentation.
-* Differentiate between "that" and "which" when introducing subordinate clauses to ensure grammatical accuracy and clarity for US audiences.
+- Concise technical writing mirrors efficient coding by prioritizing clarity and brevity for better readability and maintenance.
+- Focus each sentence on a single idea to improve comprehension and avoid overly complex sentence structures.
+- Convert lengthy sentences containing lists or multiple ideas into bullet points or shorter, separate sentences for clarity.
+- Eliminate unnecessary words and phrases to create concise and impactful technical documentation.
+- Differentiate between "that" and "which" when introducing subordinate clauses to ensure grammatical accuracy and clarity for US audiences.
 
 **Estimated Time:** 20 minutes
 
 Software engineers generally try to minimize the number of lines of code in an
 implementation for the following reasons:
 
-* Shorter code is typically easier for others to read.
-* Shorter code is typically easier to maintain than longer code.
-* Extra lines of code introduce additional points of failure.
+- Shorter code is typically easier for others to read.
+- Shorter code is typically easier to maintain than longer code.
+- Extra lines of code introduce additional points of failure.
 
 In fact, the same rules apply to technical writing:
 
-* Shorter documentation reads faster than longer documentation.
-* Shorter documentation is typically easier to maintain than longer
+- Shorter documentation reads faster than longer documentation.
+- Shorter documentation is typically easier to maintain than longer
   documentation.
-* Extra lines of documentation introduce additional points of failure.
+- Extra lines of documentation introduce additional points of failure.
 
 Finding the shortest documentation implementation takes time but is
 ultimately worthwhile. Short sentences communicate more powerfully
@@ -95,11 +95,11 @@ bulleted list:
 
 To alter the usual flow of a loop, call one of the following statements:
 
-* `break`, which hops you out of the current loop.
-* `continue`, which skips past the remainder of the current iteration of
+- `break`, which hops you out of the current loop.
+- `continue`, which skips past the remainder of the current iteration of
   the current loop.
 
-  ---
+  ***
 
 ### Exercise
 
@@ -133,8 +133,8 @@ Take the following steps to get started with the Frambus app:
 
 The following two Bell Labs computer scientists invented popular shells:
 
-* Stephen Bourne invented the Bourne Shell in 1977.
-* David Korn invented the KornShell in 1983.
+- Stephen Bourne invented the Bourne Shell in 1977.
+- David Korn invented the KornShell in 1983.
 
 The KornShell is a backwards-compatible superset of the Bourne Shell,
 containing many improvements over the older shell.
@@ -166,11 +166,11 @@ The phrase **provides a detailed description of** reduces to the verb
 
 The following table suggests replacements for a few common bloated phrases:
 
-| Wordy | Concise |
-| --- | --- |
-| at this point in time | now |
-| determine the location of | find |
-| is able to | can |
+| Wordy                     | Concise |
+| ------------------------- | ------- |
+| at this point in time     | now     |
+| determine the location of | find    |
+| is able to                | can     |
 
 ### Exercise
 
@@ -189,9 +189,10 @@ Shorten the following sentences without changing their meaning:
 Here are some possible solutions:
 
 1. Although Arnold writes buggy code, he writes error-free documentation.
-     
+
    **Alternative answer:** Arnold writes buggy code. However, he writes
    error-free documentation.
+
 2. Changing the sentence from passive voice to active voice clarifies the
    key points.
 3. Determine whether Rikona can code in COBOL.
@@ -204,8 +205,8 @@ Here are some possible solutions:
 A **clause** is an independent logical fragment of a sentence, which contains an
 actor and an action. Every sentence contains the following:
 
-* A main clause
-* Zero or more subordinate clauses
+- A main clause
+- Zero or more subordinate clauses
 
 Subordinate clauses modify the idea in the main clause. As the name
 implies, subordinate clauses are less important than the main clause. For
@@ -213,20 +214,20 @@ example, consider the following sentence:
 
 > Python is an interpreted programming language, which was invented in 1991.
 >
-> * Main clause: Python is an interpreted programming language
-> * Subordinate clause: which was invented in 1991
+> - Main clause: Python is an interpreted programming language
+> - Subordinate clause: which was invented in 1991
 
 You can usually identify subordinate clauses by the words that introduce them.
 The following list (by no means complete) shows common words that introduce
 subordinate clauses:
 
-* which
-* that
-* because
-* whose
-* until
-* unless
-* since
+- which
+- that
+- because
+- whose
+- until
+- unless
+- since
 
 Some subordinate clauses begin with a comma and some don't. The highlighted
 subordinate clause in the following sentence, for example, begins with the
@@ -237,8 +238,8 @@ word **because** and does not contain a comma:
 
 When editing, scrutinize subordinate clauses. Keep the `one sentence = one idea`,
 [single-responsibility principle](https://en.wikipedia.org/wiki/Single-responsibility_principle)
-in mind. Do the subordinate clauses in a sentence *extend* the single idea or
-do they *branch off* into a separate idea? If the latter, consider dividing the
+in mind. Do the subordinate clauses in a sentence _extend_ the single idea or
+do they _branch off_ into a separate idea? If the latter, consider dividing the
 offending subordinate clause(s) into separate sentences.
 
 ### Exercise
@@ -268,20 +269,20 @@ We've shaded the subordinate clauses.
    so this sentence is fine as is.**
 2. Bash is a modern shell scripting language
    that takes many of its features
-   from KornShell 88, 
+   from KornShell 88,
    which was developed at Bell Labs.
    **The first subordinate clause extends the main idea, but the second
    subordinate clause goes in another direction. Divide this sentence
    in two.**
 3. Lisp is a programming language that
    relies on Polish prefix notation,
-    which is one of the systems
+   which is one of the systems
    invented by the Polish logician Jan Łukasiewicz.
    **The first subordinate clause is clearly critical to the sentence,
    but the second subordinate clause takes the reader too far away
    from the main clause. Divide this sentence in two.**
 4. I don't want to say that Fortran is old,
-    but only radiocarbon dating can
+   but only radiocarbon dating can
    determine its true age.
    **The subordinate clause is critical to the sentence, so
    this sentence is fine as is.**
@@ -301,12 +302,12 @@ subordinate clauses, and use **that** for an
 essential subordinate clause that the sentence can't live without.
 For example, the key message in the following sentence is that
 Python is an interpreted language; the sentence can survive without
-*Guido van Rossum invented*:
+_Guido van Rossum invented_:
 
 > Python is an interpreted language, **which** Guido van Rossum invented.
 
-By contrast, the following sentence requires *don't involve linear
-algebra*:
+By contrast, the following sentence requires _don't involve linear
+algebra_:
 
 > Fortran is perfect for mathematical calculations **that** don't involve
 > linear algebra.

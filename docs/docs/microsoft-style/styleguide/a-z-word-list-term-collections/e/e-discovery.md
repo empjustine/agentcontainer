@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # e-discovery
 
-Always hyphenate. Don't use *ediscovery* or *eDiscovery.*
+Always hyphenate. Don't use _ediscovery_ or _eDiscovery._
 
-Use *E-discovery* at the beginning of a sentence or heading. In uncommon situations where title-style capitalization is required, use *E-Discovery*.
+Use _E-discovery_ at the beginning of a sentence or heading. In uncommon situations where title-style capitalization is required, use _E-Discovery_.
 
 **See also** [Capitalization](~/capitalization.md)

@@ -5,19 +5,19 @@
 
 ## Page Summary
 
-* Use the serial (or Oxford) comma in a list of three or more items to avoid ambiguity.
-* Place a comma after introductory words and phrases, and between independent clauses joined by a coordinating conjunction.
-* Use a comma before *which* in nonrestrictive clauses and after conjunctive adverbs like *however* or *therefore*.
-* Generally avoid a comma before *because* unless it starts a nonrestrictive clause.
-* Refer to specific sections for guidance on punctuating numbers and examples.
+- Use the serial (or Oxford) comma in a list of three or more items to avoid ambiguity.
+- Place a comma after introductory words and phrases, and between independent clauses joined by a coordinating conjunction.
+- Use a comma before _which_ in nonrestrictive clauses and after conjunctive adverbs like _however_ or _therefore_.
+- Generally avoid a comma before _because_ unless it starts a nonrestrictive clause.
+- Refer to specific sections for guidance on punctuating numbers and examples.
 
 Use commas to separate items in a series, and use commas to separate certain kinds of
 clauses.
 
 ## Serial commas
 
-In a series of three or more items, use a comma before the final *and* or
-*or* to avoid potentially changing the meaning of the sentence. This comma is called a serial
+In a series of three or more items, use a comma before the final _and_ or
+_or_ to avoid potentially changing the meaning of the sentence. This comma is called a serial
 comma or an Oxford comma.
 
 Recommended: Locations are divided into
@@ -38,8 +38,8 @@ your game, you can implement this method to update game information.
 
 ## Commas separating two independent clauses
 
-When a coordinating conjunction (*and*, *but*, *or*,
-*nor*, *for*, *so*, or *yet*) separates two independent
+When a coordinating conjunction (_and_, _but_, _or_,
+_nor_, _for_, _so_, or _yet_) separates two independent
 clauses, insert a comma after the first clause (before the conjunction) unless
 both clauses are very short.
 
@@ -57,7 +57,7 @@ Not recommended: Type your ID, and click
 ## Commas separating independent from dependent clauses
 
 When an independent clause and a dependent clause are separated by a
-coordinating conjunction, insert a comma *only if* the sentence could
+coordinating conjunction, insert a comma _only if_ the sentence could
 be misunderstood without one.
 
 Recommended: Direct-access flags are
@@ -79,23 +79,23 @@ other punctuation for clarity.
 
 A couple of specific places where commas are a good idea:
 
-* In general, put a comma before the word *which* at the start of a
+- In general, put a comma before the word _which_ at the start of a
   nonrestrictive clause. For more information about this topic, see this guide's section on [relative pronouns](/style/pronouns#relative-pronouns) and Grammar
   Girl's page on
-  [*which* versus *that*](https://www.quickanddirtytips.com/articles/which-versus-that/).
-* In general, put a semicolon or a period or a dash before a conjunctive
-  adverb, such as *otherwise*, *however*, or *therefore*, and put a comma after
+  [_which_ versus _that_](https://www.quickanddirtytips.com/articles/which-versus-that/).
+- In general, put a semicolon or a period or a dash before a conjunctive
+  adverb, such as _otherwise_, _however_, or _therefore_, and put a comma after
   the conjunctive adverb.
 
-In general, don't use a comma before the causal conjunction *because* unless it starts a nonrestrictive clause. For more information,
-see the *Chicago Manual of Style* Q&A entry on
+In general, don't use a comma before the causal conjunction _because_ unless it starts a nonrestrictive clause. For more information,
+see the _Chicago Manual of Style_ Q&A entry on
 [using
-commas with *because*](https://www.chicagomanualofstyle.org/qanda/data/faq/topics/Commas/faq0018.html).
+commas with _because_](https://www.chicagomanualofstyle.org/qanda/data/faq/topics/Commas/faq0018.html).
 
-| Recommended | Not recommended |
-| --- | --- |
-| Name of the group, which has a maximum length of 200 characters. | Name of the group which has a maximum length of 200 characters. |
-| The variable must have a value; otherwise, the server returns an error. | The variable must have a value otherwise the server returns an error. |
+| Recommended                                                                                                                            | Not recommended                                                                                                                       |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Name of the group, which has a maximum length of 200 characters.                                                                       | Name of the group which has a maximum length of 200 characters.                                                                       |
+| The variable must have a value; otherwise, the server returns an error.                                                                | The variable must have a value otherwise the server returns an error.                                                                 |
 | You can use the same key name in multiple backend services and backend buckets, because each set of keys is independent of the others. | You can use the same key name in multiple backend services and backend buckets because each set of keys is independent of the others. |
 
 ## Punctuate numbers

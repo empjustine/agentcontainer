@@ -9,15 +9,15 @@ ms.prod: non-product-specific
 
 # command prompt
 
-Use instead of *C prompt, command-line prompt,* or *system prompt.*
+Use instead of _C prompt, command-line prompt,_ or _system prompt._
 
-*Command prompt* refers only to a prompt itself. For example, *C:>* is a command prompt. The window in which a command prompt appears is the *Command Prompt window.* Note the capitalization.
+_Command prompt_ refers only to a prompt itself. For example, _C:>_ is a command prompt. The window in which a command prompt appears is the _Command Prompt window._ Note the capitalization.
 
-Don't refer to the Command Prompt window as a *console window* except in content for a technical audience.
+Don't refer to the Command Prompt window as a _console window_ except in content for a technical audience.
 
-Describe entering commands *at a command prompt,* not *on a command line*.
+Describe entering commands _at a command prompt,_ not _on a command line_.
 
 **Example**  
 At the command prompt, enter **certutil -setreg ca**.
 
-**See also**  [command line](~/a-z-word-list-term-collections/c/command-line.md), [console](~/a-z-word-list-term-collections/c/console.md)
+**See also** [command line](~/a-z-word-list-term-collections/c/command-line.md), [console](~/a-z-word-list-term-collections/c/console.md)

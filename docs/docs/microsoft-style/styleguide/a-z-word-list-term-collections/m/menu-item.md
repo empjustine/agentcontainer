@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # menu item
 
-In general, avoid talking about the UI. Instead, talk about what the customer needs to do. If you must refer to commands on menus in content for a general audience, call them *commands,* not *menu items.* 
+In general, avoid talking about the UI. Instead, talk about what the customer needs to do. If you must refer to commands on menus in content for a general audience, call them _commands,_ not _menu items._
 
-In content for developers, it's OK to use *menu items* in the context of UI development. 
+In content for developers, it's OK to use _menu items_ in the context of UI development.
 
-**See also** [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md), [Formatting text in instructions](~/procedures-instructions/formatting-text-in-instructions.md)  
+**See also** [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md), [Formatting text in instructions](~/procedures-instructions/formatting-text-in-instructions.md)

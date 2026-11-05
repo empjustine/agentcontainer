@@ -9,12 +9,12 @@ ms.prod: non-product-specific
 
 # zero, zeros
 
-Use *zeros,* not *zeroes,* as the plural of *zero*.
+Use _zeros,_ not _zeroes,_ as the plural of _zero_.
 
 When a measurement includes 0, use the plural form of the spelled-out unit of measure.
 
 **Examples**  
 0 MB  
-0 megabytes  
+0 megabytes
 
 **See also** [Units of measure term collection](~/a-z-word-list-term-collections/term-collections/units-of-measure-terms.md)

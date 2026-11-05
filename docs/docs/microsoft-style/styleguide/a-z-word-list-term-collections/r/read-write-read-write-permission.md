@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # read/write, read/write permission
 
-Use instead of *read-write.* Capitalize both *read* and *write* if the context requires *read* to be capitalized. 
+Use instead of _read-write._ Capitalize both _read_ and _write_ if the context requires _read_ to be capitalized.
 
-Use *read/write permission,* not *read/write access*. 
+Use _read/write permission,_ not _read/write access_.

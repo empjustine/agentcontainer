@@ -12,5 +12,5 @@ ms.prod: non-product-specific
 Consider alternatives where possible.
 
 **Examples**  
-Safe Recipients list   
+Safe Recipients list  
 blocked or safe programs

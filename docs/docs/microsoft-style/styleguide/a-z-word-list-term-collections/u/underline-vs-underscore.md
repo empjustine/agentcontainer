@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # underline vs. underscore
 
-Use *underline* to describe text formatting that puts a line under the characters. Use *underscore* to refer to the underscore character ( \_ ).
+Use _underline_ to describe text formatting that puts a line under the characters. Use _underscore_ to refer to the underscore character ( \_ ).

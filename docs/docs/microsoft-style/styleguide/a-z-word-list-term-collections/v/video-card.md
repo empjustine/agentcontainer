@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # video card
 
-Use *video card* instead of *video adapter,* *display adapter,* *graphics adapter*, *graphics card*, or *graphics board*<em>.</em>
+Use _video card_ instead of _video adapter,_ _display adapter,_ _graphics adapter_, _graphics card_, or _graphics board_<em>.</em>

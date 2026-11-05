@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # microprocessor
 
-Use instead of *processor* to refer to the chip used in personal computers.
+Use instead of _processor_ to refer to the chip used in personal computers.

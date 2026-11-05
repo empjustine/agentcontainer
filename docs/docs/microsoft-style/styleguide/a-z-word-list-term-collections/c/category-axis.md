@@ -11,14 +11,14 @@ ms.prod: non-product-specific
 
 Lowercase. Don't hyphenate.
 
-Refer to the *category (x) axis* on the first mention. On subsequent mentions, use *x-axis*. It's OK to use *horizontal (x) axis* in content for a general audience.
+Refer to the _category (x) axis_ on the first mention. On subsequent mentions, use _x-axis_. It's OK to use _horizontal (x) axis_ in content for a general audience.
 
-In 3D charts, both the x-axis and y-axis are usually category axes<em>.</em> 
+In 3D charts, both the x-axis and y-axis are usually category axes<em>.</em>
 
-Don't use italic formatting for the *x* in *x-axis* or the *y* in *y-axis* unless the entire word is italic.
+Don't use italic formatting for the _x_ in _x-axis_ or the _y_ in _y-axis_ unless the entire word is italic.
 
 **See also**  
- [
+[
 value axis](~/a-z-word-list-term-collections/v/value-axis.md)  
 [x-axis](~/a-z-word-list-term-collections/x/x-axis.md)  
 [y-axis](~/a-z-word-list-term-collections/y/y-axis.md)

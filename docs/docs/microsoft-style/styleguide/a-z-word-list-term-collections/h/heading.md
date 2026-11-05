@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # heading
 
-Use instead of *head* or *header* to refer to the heading of an article or a section.
+Use instead of _head_ or _header_ to refer to the heading of an article or a section.
 
 **See also** [Headings](~/scannable-content/headings.md)

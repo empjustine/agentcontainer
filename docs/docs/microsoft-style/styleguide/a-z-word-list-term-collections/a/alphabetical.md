@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # alphabetical
 
-Use instead of *alphabetic*.
+Use instead of _alphabetic_.

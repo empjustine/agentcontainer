@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # high-quality
 
-Don’t use *quality* by itself as an adjective. Always use *high-quality*.
+Don’t use _quality_ by itself as an adjective. Always use _high-quality_.

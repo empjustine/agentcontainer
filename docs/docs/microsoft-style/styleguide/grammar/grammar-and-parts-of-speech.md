@@ -12,15 +12,15 @@ ms.prod: non-product-specific
 Simple
 grammar tends to be easy to read and understand, like a
 conversation. That basic grammar you learned before you were 12 is
-probably just right for most Microsoft content. 
+probably just right for most Microsoft content.
 
 This section covers common grammatical issues:
 
-  - [Verbs](~/grammar/verbs.md) 
-  - [Person](~/grammar/person.md) 
-  - [Nouns and pronouns](~/grammar/nouns-pronouns.md) 
-  - [Words ending in *–ing*](~/grammar/ing-words.md) 
-  - [Prepositions](~/grammar/prepositions.md) 
-  - [Dangling and misplaced modifiers](~/grammar/dangling-misplaced-modifiers.md) 
+- [Verbs](~/grammar/verbs.md)
+- [Person](~/grammar/person.md)
+- [Nouns and pronouns](~/grammar/nouns-pronouns.md)
+- [Words ending in _–ing_](~/grammar/ing-words.md)
+- [Prepositions](~/grammar/prepositions.md)
+- [Dangling and misplaced modifiers](~/grammar/dangling-misplaced-modifiers.md)
 
-**Learn more** For more information about grammar and parts of speech, see *[The Chicago Manual of Style](https://www.chicagomanualofstyle.org/home.html)*.
+**Learn more** For more information about grammar and parts of speech, see _[The Chicago Manual of Style](https://www.chicagomanualofstyle.org/home.html)_.

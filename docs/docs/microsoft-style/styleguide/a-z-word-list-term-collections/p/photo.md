@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # photo
 
-OK to use as an abbreviation for *photograph.* Don't use as a verb. Use *photograph* or *take pictures* instead. 
+OK to use as an abbreviation for _photograph._ Don't use as a verb. Use _photograph_ or _take pictures_ instead.

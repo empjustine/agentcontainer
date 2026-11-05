@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # afterward
 
-Use instead of *afterwards*.
+Use instead of _afterwards_.

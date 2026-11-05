@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* API documentation must include descriptions for every class, constant, method, and parameter, with detailed explanations of their purpose, usage, and potential exceptions.
-* Descriptions should be concise and informative, prioritizing clarity and avoiding redundancy, using present tense and specific verbs for actions.
-* Parameter descriptions should clearly define their purpose and expected values, including behavior for booleans and defaults, while return values focus on the information provided.
-* Class descriptions should begin with a concise purpose statement and offer guidance on usage, features, and best practices, while member descriptions should link to relevant methods.
-* Deprecation notices must specify replacements and provide guidance for updating existing code to ensure compatibility.
+- API documentation must include descriptions for every class, constant, method, and parameter, with detailed explanations of their purpose, usage, and potential exceptions.
+- Descriptions should be concise and informative, prioritizing clarity and avoiding redundancy, using present tense and specific verbs for actions.
+- Parameter descriptions should clearly define their purpose and expected values, including behavior for booleans and defaults, while return values focus on the information provided.
+- Class descriptions should begin with a concise purpose statement and offer guidance on usage, features, and best practices, while member descriptions should link to relevant methods.
+- Deprecation notices must specify replacements and provide guidance for updating existing code to ensure compatibility.
 
 When you're documenting an API, provide a complete API reference, typically
 generated from source code using document comments that describe all public
@@ -20,43 +20,43 @@ language. This document doesn't specify how to mark up document comments.
 
 For more information, see the following resources:
 
-* [AIP-192: Documentation](https://google.aip.dev/192)
+- [AIP-192: Documentation](https://google.aip.dev/192)
   in Google's API standards
-* [Inline API documentation](https://cloud.google.com/apis/design/documentation)
+- [Inline API documentation](https://cloud.google.com/apis/design/documentation)
   in the Google Cloud API design guide
-* The specific style guide for each programming language
+- The specific style guide for each programming language
 
 ## Documentation basics
 
 The API reference **must** provide a description for each of the following:
 
-* Every class, interface, struct, and any other similar member of the API (such
+- Every class, interface, struct, and any other similar member of the API (such
   as union types in C++).
-* Every constant, field, enum, and typedef.
-* Every method, with a description for each parameter, the return value, and any
+- Every constant, field, enum, and typedef.
+- Every method, with a description for each parameter, the return value, and any
   exceptions thrown.
 
 The following are **extremely strong suggestions**. In some cases, they don't
 make sense for a particular API or in a specific language, but in general,
 follow these guidelines:
 
-* On each unique page (for a class, interface, etc.), include a code sample
+- On each unique page (for a class, interface, etc.), include a code sample
   (~5-20 lines) at the top.
-* Put all API names, classes, methods, constants, and parameters in code font,
+- Put all API names, classes, methods, constants, and parameters in code font,
   and link each name to the corresponding reference page. Most document
   generators do this automatically for you.
-* Put string literals in code font, and enclose them in double quotation marks.
+- Put string literals in code font, and enclose them in double quotation marks.
   For example, XML attribute values might be `"wrap_content"` or `"true"`.
-* Make sure that the spelling of a class name in documentation matches the
+- Make sure that the spelling of a class name in documentation matches the
   spelling in code, with capital letters and no spaces (for example,
   `ActionBar`).
 
-  + Don't make class names plural (`Intents`, `Activities`); instead, add a
+  - Don't make class names plural (`Intents`, `Activities`); instead, add a
     plural noun (`Intent` objects, `Activity` instances). For more
     information, see [Plural product and feature
     names](/style/pluralization#plural-product-and-feature-names).
-  + However, if a class has a name that's a common term, you can refer to it
-    with the corresponding English word, in lowercase and *not* in code font
+  - However, if a class has a name that's a common term, you can refer to it
+    with the corresponding English word, in lowercase and _not_ in code font
     (activities, action bar).
 
 ## Classes, interfaces, structs
@@ -71,18 +71,18 @@ Many documentation tools automatically extract the first sentence of each class
 description for use in a list of all classes, so make the first sentence unique
 and descriptive, yet short. Additionally:
 
-* Don't repeat the class name in the first sentence.
-* Don't say "this class will/does ..."
-* Don't use a period before the actual end of the sentence, because some
+- Don't repeat the class name in the first sentence.
+- Don't say "this class will/does ..."
+- Don't use a period before the actual end of the sentence, because some
   document generators naively terminate the "short description" at the first
   period. For example, some generators terminate the sentence if they see
-  *e.g.*, so use *for example* instead.
+  _e.g._, so use _for example_ instead.
 
 The following example is the first sentence of the description for Android's
 [`ActionBar` class](http://developer.android.com/reference/android/app/ActionBar.html):
 
-> *A primary toolbar within the activity that may display the activity title,
-> application-level navigation affordances, and other interactive items.*
+> _A primary toolbar within the activity that may display the activity title,
+> application-level navigation affordances, and other interactive items._
 
 ## Members
 
@@ -93,10 +93,10 @@ For example, here's the description for the `ActionBar` class's
 [`DISPLAY_SHOW_HOME`](http://developer.android.com/reference/android/app/ActionBar.html#DISPLAY_SHOW_HOME)
 constant:
 
-> *Show 'home' elements in this action bar, leaving more space for other
-> navigation elements. This includes logo and icon.*
+> _Show 'home' elements in this action bar, leaving more space for other
+> navigation elements. This includes logo and icon._
 
-> *See also: `setDisplayOptions(int)`, `setDisplayOptions(int, int)`*
+> _See also: `setDisplayOptions(int)`, `setDisplayOptions(int, int)`_
 
 ## Methods
 
@@ -113,92 +113,98 @@ dependency is missing (for example, "the method throws a
 or "the method returns null").
 
 For example, here's the description for Android's
-[`Activity.isChangingConfigurations` method](http://developer.android.com/reference/android/app/Activity.html#isChangingConfigurations()):
+[`Activity.isChangingConfigurations` method](<http://developer.android.com/reference/android/app/Activity.html#isChangingConfigurations()>):
 
-> *Checks whether this activity is in the process of being destroyed in order to
+> _Checks whether this activity is in the process of being destroyed in order to
 > be recreated with a new configuration. This is often used in `onStop` to
 > determine whether the state needs to be cleaned up or if it's passed on to the
-> next instance of the activity using `onRetainNonConfigurationInstance`.*
+> next instance of the activity using `onRetainNonConfigurationInstance`._
 
 Use present tense for all descriptions—for example:
 
-* *Adds a new bird to the ornithology list.*
-* *Returns a bird.*
+- _Adds a new bird to the ornithology list._
+- _Returns a bird._
 
 ### Description
 
-* If a method performs an operation and returns some data, start the description
+- If a method performs an operation and returns some data, start the description
   with a verb describing the operation—for example:
 
-  + *Adds a new bird to the ornithology list and returns the ID of the new
-    entry.*
-* If it's a "getter" method and it returns a boolean, start with "Checks
-  whether ...."
-* If it's a "getter" method and it returns something other than a boolean,
-  start with "Gets the ...."
-* If it has no return value, start with a verb like one of the following:
+  - _Adds a new bird to the ornithology list and returns the ID of the new
+    entry._
 
-  + Turning on an ability or setting: "Sets the ...."
-  + Updating a property: "Updates the ...."
-  + Deleting something: "Deletes the ...."
-  + Registering a callback or other element for later reference:
+- If it's a "getter" method and it returns a boolean, start with "Checks
+  whether ...."
+- If it's a "getter" method and it returns something other than a boolean,
+  start with "Gets the ...."
+- If it has no return value, start with a verb like one of the following:
+
+  - Turning on an ability or setting: "Sets the ...."
+  - Updating a property: "Updates the ...."
+  - Deleting something: "Deletes the ...."
+  - Registering a callback or other element for later reference:
     "Registers ...."
-  + For a callback: "Called by ...." (Usually for a method that's named
+  - For a callback: "Called by ...." (Usually for a method that's named
     starting with "on", such as `onBufferingUpdate`.) For example, "Called by
     Android when ...." Then, later in the description: "Subclasses implement this
     method to ...."
-* If it's a convenience method that constructs the class object, start with
+
+- If it's a convenience method that constructs the class object, start with
   "Creates a ...."
 
 ### Parameters
 
 For parameter descriptions, follow these guidelines:
 
-* Capitalize the first word, and end the sentence or phrase with a period.
-* Begin descriptions of non-boolean parameters with "The" or "A" if possible:
+- Capitalize the first word, and end the sentence or phrase with a period.
+- Begin descriptions of non-boolean parameters with "The" or "A" if possible:
 
-  + *The ID of the bird you want to get.*
-  + *A description of the bird.*
-* For boolean parameters that tell the API to do or not do something, state
+  - _The ID of the bird you want to get._
+  - _A description of the bird._
+
+- For boolean parameters that tell the API to do or not do something, state
   what the API does if the parameter is true and if it's false. For example:
 
-  + *`enableCertificateValidation`: If true, validates the SSL certificate
-    before proceeding. If false, trusts the certificate without validating it.*
-* For boolean parameters that declare the already-established state of something
+  - _`enableCertificateValidation`: If true, validates the SSL certificate
+    before proceeding. If false, trusts the certificate without validating it._
+
+- For boolean parameters that declare the already-established state of something
   (rather than telling the API to do something), use the format "True if ...;
   false otherwise." For example:
 
-  + *True if the zoom is set; false otherwise.*
-* In this context, don't put the words "true" and "false" in code font or
+  - _True if the zoom is set; false otherwise._
+
+- In this context, don't put the words "true" and "false" in code font or
   quotation marks.
-* For parameters with default behavior, explain what the behavior is for each
+- For parameters with default behavior, explain what the behavior is for each
   value or range of values, and then say what the default value is. Use the
-  format *Default:* to explain the default value.
+  format _Default:_ to explain the default value.
 
 ### Return values
 
 Be as brief as possible in the return value's description; put any detailed
 information in the class description.
 
-* If the return value is anything other than a boolean, start with "The ..."—for
+- If the return value is anything other than a boolean, start with "The ..."—for
   example:
 
-  + *The bird specified by the given ID.*
-* If the return value is a boolean, use the format "True if ...; false
+  - _The bird specified by the given ID._
+
+- If the return value is a boolean, use the format "True if ...; false
   otherwise."—for example:
 
-  + *True if the bird is in the sanctuary; false otherwise.*
+  - _True if the bird is in the sanctuary; false otherwise._
 
 ### Exceptions
 
 In languages where the reference generator automatically inserts the word
 "Throws", begin your description with "If ...":
 
-* *If no key is assigned.*
+- _If no key is assigned._
 
 Otherwise, begin with "Thrown when ...":
 
-* *Thrown when no key is assigned.*
+- _Thrown when no key is assigned._
 
 ### Deprecations
 
@@ -215,6 +221,6 @@ If a method is deprecated, tell the reader what to do to make their code work.
 
 #### Examples
 
-> *Deprecated. Use #CameraPose instead.*
+> _Deprecated. Use #CameraPose instead._
 
-> *Deprecated. Access this field using the `getField` method.*
+> _Deprecated. Access this field using the `getField` method._

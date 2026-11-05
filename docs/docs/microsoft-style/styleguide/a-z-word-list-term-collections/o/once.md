@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # once
 
-Don't use as a synonym for *after*.
+Don't use as a synonym for _after_.
 
 **Example**  
 After you save the document, you can close the app.

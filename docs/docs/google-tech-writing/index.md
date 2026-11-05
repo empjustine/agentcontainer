@@ -31,27 +31,27 @@ Learn about the role of developer technical writers at Google.
 
 We've aimed these courses at people in the following roles:
 
-* professional software engineers
-* computer science students
-* engineering-adjacent roles, such as product managers
+- professional software engineers
+- computer science students
+- engineering-adjacent roles, such as product managers
 
 You need at least a little writing proficiency in English, but you don't need to be a strong writer to take these courses.
 
 You will find these courses easier to understand if you have at least a little background in coding, though you don't need to be an expert coder.
 
-These courses focus on *technical* writing, not on general English writing or business writing.
+These courses focus on _technical_ writing, not on general English writing or business writing.
 
-* #### [Technical Writing One objectives](https://developers.google.com/tech-writing/one)
-* #### [Technical Writing Two objectives](https://developers.google.com/tech-writing/two)
-* #### [Tech Writing for Accessibility objectives](https://developers.google.com/tech-writing/accessibility)
-* #### [Writing Helpful Error Messages objectives](https://developers.google.com/tech-writing/error-messages)
+- #### [Technical Writing One objectives](https://developers.google.com/tech-writing/one)
+- #### [Technical Writing Two objectives](https://developers.google.com/tech-writing/two)
+- #### [Tech Writing for Accessibility objectives](https://developers.google.com/tech-writing/accessibility)
+- #### [Writing Helpful Error Messages objectives](https://developers.google.com/tech-writing/error-messages)
 
 ## What format do these courses take?
 
 Technical Writing One and Technical Writing Two consist of two parts:
 
-* pre-class lessons
-* in-class lessons with a facilitator and other students
+- pre-class lessons
+- in-class lessons with a facilitator and other students
 
 The pre-class lessons provide a solid educational experience,
 which the in-class lessons enhance. That said, the pre-class

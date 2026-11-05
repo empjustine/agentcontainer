@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # .NET
 
-Note capitalization. Always begin with a period (.). Don't spell out as *dot NET*. 
+Note capitalization. Always begin with a period (.). Don't spell out as _dot NET_.
 
-Use *Microsoft .NET* on the first mention. After that, it's OK to use *.NET.*
+Use _Microsoft .NET_ on the first mention. After that, it's OK to use _.NET._
 
-It's OK to begin a sentence with *.NET* to avoid awkwardness or ambiguity, but be aware that the consecutive periods *(. .NET)* might briefly confuse some readers.
+It's OK to begin a sentence with _.NET_ to avoid awkwardness or ambiguity, but be aware that the consecutive periods _(. .NET)_ might briefly confuse some readers.

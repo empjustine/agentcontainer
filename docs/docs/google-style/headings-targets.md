@@ -5,22 +5,22 @@
 
 ## Page Summary
 
-* Turn a heading into a link target by adding an `id` attribute within a `<section>` element or directly to the heading tag in HTML.
-* When creating custom anchors, use lowercase letters, hyphens between words, and ensure they are descriptive yet concise.
-* Consider adding custom anchors for frequently linked content or when revising headings to prevent broken links.
-* If revising a heading with an existing anchor, create a new custom anchor using the older ID to maintain link functionality, or update existing links if changing the anchor.
+- Turn a heading into a link target by adding an `id` attribute within a `<section>` element or directly to the heading tag in HTML.
+- When creating custom anchors, use lowercase letters, hyphens between words, and ensure they are descriptive yet concise.
+- Consider adding custom anchors for frequently linked content or when revising headings to prevent broken links.
+- If revising a heading with an existing anchor, create a new custom anchor using the older ID to maintain link functionality, or update existing links if changing the anchor.
 
 This page discusses how to turn a heading into a link target by using an
 `id` attribute. For more information about how to format headings, see
 [Headings and titles](/style/headings).
 
 In some content management systems, anchors are automatically created for headings. However, you
-might want to add a *custom* anchor to a heading for several reasons:
+might want to add a _custom_ anchor to a heading for several reasons:
 
-* You want to use an anchor that's shorter than the automatically generated anchor.
-* You want to use an anchor for content that might be frequently linked to. Adding a custom
+- You want to use an anchor that's shorter than the automatically generated anchor.
+- You want to use an anchor for content that might be frequently linked to. Adding a custom
   anchor reduces the likelihood of breaking existing links if the heading text changes later.
-* You want to [revise a heading](#changing-an-anchor). If the
+- You want to [revise a heading](#changing-an-anchor). If the
   anchor for the heading is generated automatically, then the anchor changes when you revise
   the heading, breaking existing links.
 
@@ -112,7 +112,7 @@ a disrespectful term).
 
 To create the custom anchor, use the older ID string for the heading. You can find the ID
 string by inspecting the heading on the published page. For example, if you change a heading from
-*Introduction to some things* to *Introduction to everything*, then add a custom anchor
+_Introduction to some things_ to _Introduction to everything_, then add a custom anchor
 that uses the older ID string and formatting.
 
 ### HTML

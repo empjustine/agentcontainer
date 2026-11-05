@@ -9,17 +9,17 @@ ms.prod: non-product-specific
 
 # internet, intranet, extranet
 
-Use *internet*
+Use _internet_
 to refer to the worldwide collection of networks that use open
 protocols such as TCP/IP to communicate with one another. Don't
 capitalize.
 
-Use *intranet*
+Use _intranet_
 to refer to a communications network based on web technology but
 that's available only to certain people, such as the employees of a
 company. Don't capitalize.
 
-Use *extranet*
+Use _extranet_
 to refer to an extension of an intranet that uses
 internet protocols to give authorized outside
 users limited access to the intranet. Don't capitalize.

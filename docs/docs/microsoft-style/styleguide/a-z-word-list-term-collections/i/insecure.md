@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # insecure
 
-Don't use to mean *not secure*. 
+Don't use to mean _not secure_.

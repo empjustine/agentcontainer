@@ -9,13 +9,13 @@ ms.prod: non-product-specific
 
 # path
 
-Use *path* instead of *pathname,* both in general references and in syntax. 
+Use _path_ instead of _pathname,_ both in general references and in syntax.
 
-Use *path* to refer to a drive and any folders below the root directory. When a path also specifies a file, use *full path*.
+Use _path_ to refer to a drive and any folders below the root directory. When a path also specifies a file, use _full path_.
 
-In command syntax, use *path* to represent only the folder portion of the full path:
+In command syntax, use _path_ to represent only the folder portion of the full path:
 
-> **copy** \[*drive:*\]\[*path*\]*filename*
+> **copy** \[_drive:_\]\[_path_\]_filename_
 
 To
 indicate a path, first type the drive name, followed by a colon and a
@@ -24,9 +24,9 @@ open it, separated by a backslash, as follows:
 
 > C:\Documents and Settings\user1
 
-Use *address* or *URL,* not *path,* to refer to a location on the internet.
+Use _address_ or _URL,_ not _path,_ to refer to a location on the internet.
 
-In general, use *path of,* not *path to,* to refer to the location of a file.
+In general, use _path of,_ not _path to,_ to refer to the location of a file.
 
 **Example**  
 The full path of my current tax form is:  
@@ -40,4 +40,4 @@ names. File names don't require extensions.
 **Example**  
 (Mac) Macintosh HD:My Documentation:Sales CORP-16:TOMCAT:EX130D Mac Temp:Workbook1
 
-**See also**  [Formatting common text elements](~/text-formatting/formatting-common-text-elements.md), [URLs and web addresses](~/urls-web-addresses.md)
+**See also** [Formatting common text elements](~/text-formatting/formatting-common-text-elements.md), [URLs and web addresses](~/urls-web-addresses.md)

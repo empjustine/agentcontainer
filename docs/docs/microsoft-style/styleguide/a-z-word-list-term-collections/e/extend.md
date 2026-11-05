@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # extend
 
-Use *extend* instead of *grow* to refer to extending a selection.
+Use _extend_ instead of _grow_ to refer to extending a selection.

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # bug fix
 
-Don't use. To describe the general category of fixes for an issue, use *software update*. 
+Don't use. To describe the general category of fixes for an issue, use _software update_.

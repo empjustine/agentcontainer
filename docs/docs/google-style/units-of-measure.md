@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Use a nonbreaking space (`&nbsp;`) between numbers and most units of measurement (e.g., `64&nbsp;GB`), except for currency, percent, or degrees of an angle.
-* For temperature, use `°&nbsp;C` or `°&nbsp;F`, and for Kelvin, use `&nbsp;K` (e.g., `50°&nbsp;C`, `300&nbsp;K`).
-* In ranges, repeat the unit for each number and use "to" instead of a hyphen (e.g., -40° C to 85° C).
-* When documenting technology, ensure you use the correct system for bytes, distinguishing between decimal (kB, MB, GB) and binary (KiB, MiB, GiB) units.
-* Use visuals like diagrams or charts to enhance comprehension of math concepts and accompany numerical concepts with real-world implications whenever possible.
+- Use a nonbreaking space (`&nbsp;`) between numbers and most units of measurement (e.g., `64&nbsp;GB`), except for currency, percent, or degrees of an angle.
+- For temperature, use `°&nbsp;C` or `°&nbsp;F`, and for Kelvin, use `&nbsp;K` (e.g., `50°&nbsp;C`, `300&nbsp;K`).
+- In ranges, repeat the unit for each number and use "to" instead of a hyphen (e.g., -40° C to 85° C).
+- When documenting technology, ensure you use the correct system for bytes, distinguishing between decimal (kB, MB, GB) and binary (KiB, MiB, GiB) units.
+- Use visuals like diagrams or charts to enhance comprehension of math concepts and accompany numerical concepts with real-world implications whenever possible.
 
 Put a nonbreaking space (`&nbsp;`) between the number and the unit.
 
@@ -50,7 +50,7 @@ Recommended: 180°
 
 For degrees of temperature, include a nonbreaking space between the number and the degree symbol.
 Don't use a space between the degree symbol (`&deg;`) and the temperature scale
-(*F* or *C*).
+(_F_ or _C_).
 
 ### Example
 
@@ -65,7 +65,7 @@ Don't use a space between the degree symbol (`&deg;`) and the temperature scale
 `50&nbsp;&deg;C`
 
 For Kelvin temperatures, leave out the degree symbol but use a nonbreaking space before the
-*K*.
+_K_.
 
 ### Example
 
@@ -87,12 +87,12 @@ Recommended:
 
 ## Ranges of numbers with units
 
-In a range of numbers, repeat the unit for each number. *Unit* includes both symbols (like
-the degree symbol (º)) and abbreviations (like *MB* for megabytes) but not nouns
-(like *file*). For more information, see
+In a range of numbers, repeat the unit for each number. _Unit_ includes both symbols (like
+the degree symbol (º)) and abbreviations (like _MB_ for megabytes) but not nouns
+(like _file_). For more information, see
 [Range of numbers](/style/hyphens#number-range).
 
-Use the word *to* between the numbers, rather than a hyphen. A hyphen
+Use the word _to_ between the numbers, rather than a hyphen. A hyphen
 can be misinterpreted as a subtraction sign.
 
 Recommended: -40 °C to 85 °C
@@ -108,15 +108,15 @@ Recommended: 5 vCPU-hours
 
 Recommended: 40 person-hours
 
-## Use *k* to indicate thousands
+## Use _k_ to indicate thousands
 
 In some contexts, it might be appropriate to indicate thousands of something by
-following a number with a lowercase *k*. If you do that, then follow these
+following a number with a lowercase _k_. If you do that, then follow these
 guidelines:
 
-* Don't put a space between the number and *k*.
-* Add a noun to indicate what the number measures, and to make clear that
-  you're not using *k* as an abbreviation for *kilobytes*.
+- Don't put a space between the number and _k_.
+- Add a noun to indicate what the number measures, and to make clear that
+  you're not using _k_ as an abbreviation for _kilobytes_.
 
 Recommended: On this plan, you are
 limited to 55k download operations and 20k upload operations per day.
@@ -124,7 +124,7 @@ limited to 55k download operations and 20k upload operations per day.
 ## Currency
 
 If you're writing about monetary amounts, make sure that the reader knows what
-currency you're referring to. For example, the dollar sign—the *$*
+currency you're referring to. For example, the dollar sign—the _$_
 symbol—can refer to US dollars, Canadian dollars, Mexican pesos, and several
 other currencies.
 
@@ -136,13 +136,13 @@ Recommended: US$10
 
 ## Rates
 
-Use *per* instead of the division slash (/) when space permits.
+Use _per_ instead of the division slash (/) when space permits.
 It's OK to use the division slash when space is limited,
 such as in a table with small cells.
 
-Shorten *per* to *p* only for well-established abbreviations for
-rate units, such as *Gbps* for *gigabits per second* or
-*MBps* for *megabytes per second*.
+Shorten _per_ to _p_ only for well-established abbreviations for
+rate units, such as _Gbps_ for _gigabits per second_ or
+_MBps_ for _megabytes per second_.
 
 Recommended: requests per day
 
@@ -155,13 +155,13 @@ Not recommended: Gb/s
 ## Decimal and binary units
 
 Use the same system to measure bytes as the technology that you're documenting.
-Don't use *MB* if you mean *MiB*, or *GB* if you mean *GiB*. The following
+Don't use _MB_ if you mean _MiB_, or _GB_ if you mean _GiB_. The following
 table lists common types of
 [decimal and binary units](https://en.wikipedia.org/wiki/Byte#Multiple-byte_units):
 
-| Decimal units | Binary units |
-| --- | --- |
-| kB (kilobyte, or 1000 bytes) | KiB (kibibyte, or 1024 bytes) |
+| Decimal units                 | Binary units                   |
+| ----------------------------- | ------------------------------ |
+| kB (kilobyte, or 1000 bytes)  | KiB (kibibyte, or 1024 bytes)  |
 | MB (megabyte, or 10002 bytes) | MiB (mebibyte, or 10242 bytes) |
 | GB (gigabyte, or 10003 bytes) | GiB (gibibyte, or 10243 bytes) |
 
@@ -170,5 +170,5 @@ For more information about abbreviating measurement terms, see
 
 ## More resources
 
-* [Mathematical notation](/style/mathematical-notation)
-* [Numbers](/style/numbers)
+- [Mathematical notation](/style/mathematical-notation)
+- [Numbers](/style/numbers)

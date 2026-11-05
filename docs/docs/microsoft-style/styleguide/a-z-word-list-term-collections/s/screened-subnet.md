@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # screened subnet
 
-Don't use. Use *perimeter network* instead. On the first mention, it's OK to say:
+Don't use. Use _perimeter network_ instead. On the first mention, it's OK to say:
 
->perimeter network (also known as *DMZ, demilitarized zone,* and *screened subnet*)
+> perimeter network (also known as _DMZ, demilitarized zone,_ and _screened subnet_)

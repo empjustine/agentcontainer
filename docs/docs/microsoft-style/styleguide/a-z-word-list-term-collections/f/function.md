@@ -9,9 +9,9 @@ ms.prod: non-product-specific
 
 # function
 
-Don't use to mean *application programming interface (API)*. 
+Don't use to mean _application programming interface (API)_.
 
-Don't use *API* to mean *function*. 
+Don't use _API_ to mean _function_.
 
 **Examples**  
 A RESTful API uses HTTP requests to get, put, post, and delete data.  

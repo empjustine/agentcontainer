@@ -9,10 +9,10 @@ ms.prod: non-product-specific
 
 # Minimize button, minimize
 
-Use the ***Minimize*** *button* to refer to the button, not just ***Minimize***. *Minimize* as part of the ***Minimize*** *button* is always bold. Don't use *Minimize box* or *Minimize icon*. 
+Use the _**Minimize**_ _button_ to refer to the button, not just _**Minimize**_. _Minimize_ as part of the _**Minimize**_ _button_ is always bold. Don't use _Minimize box_ or _Minimize icon_.
 
-It's OK to use *minimize* as a verb. 
+It's OK to use _minimize_ as a verb.
 
 **Examples**  
-Select the **Minimize** button.   
+Select the **Minimize** button.  
 Select ![](media/minimize-button-minimize/1223646377.png).

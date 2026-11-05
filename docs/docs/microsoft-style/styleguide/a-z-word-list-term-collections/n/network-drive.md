@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # network drive
 
-Use instead of *remote drive*.
+Use instead of _remote drive_.

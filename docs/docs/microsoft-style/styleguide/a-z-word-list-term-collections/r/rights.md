@@ -9,13 +9,13 @@ ms.prod: non-product-specific
 
 # rights
 
-Use *rights*
+Use _rights_
 only in a nonspecific way to refer to system actions that are
-authorized by the system administrator. For specific references, use *user rights*.
+authorized by the system administrator. For specific references, use _user rights_.
 
-Don't confuse *rights,* which apply to system operations, with *permissions,* which apply to specific system resources, such as files or printers.
+Don't confuse _rights,_ which apply to system operations, with _permissions,_ which apply to specific system resources, such as files or printers.
 
-Don't use *privileges* as a synonym for *rights*.
+Don't use _privileges_ as a synonym for _rights_.
 
 **Example**  
 Domain administrators should use a primary user account, which has basic user rights in the domain.

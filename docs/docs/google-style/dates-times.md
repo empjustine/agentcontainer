@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* Express dates with the full month name, day, and four-digit year, for example, January 19, 2017.
-* Express time using the 12-hour clock with AM or PM, omitting minutes for round hours, for example, 3 PM.
-* Avoid using time zones unless necessary; if needed, use the full region name and UTC offset, such as US and Canadian Pacific Standard Time (UTC-8).
-* For numeric-only dates, adhere to the ISO 8601 standard (YYYY-MM-DD), like 2017-04-15.
-* Avoid using seasons; instead, specify months or quarters for clarity in global content.
+- Express dates with the full month name, day, and four-digit year, for example, January 19, 2017.
+- Express time using the 12-hour clock with AM or PM, omitting minutes for round hours, for example, 3 PM.
+- Avoid using time zones unless necessary; if needed, use the full region name and UTC offset, such as US and Canadian Pacific Standard Time (UTC-8).
+- For numeric-only dates, adhere to the ISO 8601 standard (YYYY-MM-DD), like 2017-04-15.
+- Avoid using seasons; instead, specify months or quarters for clarity in global content.
 
 Expressing dates and times in a clear and unambiguous way helps support
 [writing for a global audience](/style/translation) and reduces
@@ -19,17 +19,19 @@ confusion.
 
 In general, use the following guidelines to format expressions of time:
 
-* Use the 12-hour clock, except if required to use a 24-hour time, such as
+- Use the 12-hour clock, except if required to use a 24-hour time, such as
   when documenting features that use 24-hour time. If the UI, a command, or a code sample uses the
   24-hour format, use that format throughout the page for consistency.
-* Use exact times when possible, but *noon* and *midnight* are OK.
-* Use hyphens in time ranges. Don't add spaces before or after the hyphens.
+- Use exact times when possible, but _noon_ and _midnight_ are OK.
+- Use hyphens in time ranges. Don't add spaces before or after the hyphens.
 
   Recommended: 5-10 minutes ago.
-* Capitalize AM and PM, and leave one space between it and the time.
+
+- Capitalize AM and PM, and leave one space between it and the time.
 
   Recommended: 3:45 PM.
-* Remove the minutes from round hours.
+
+- Remove the minutes from round hours.
 
   Recommended: 3 PM.
 
@@ -38,17 +40,17 @@ In general, use the following guidelines to format expressions of time:
 Avoid using time zones unless absolutely necessary. In cases where you need to use a time
 zone—such as describing real events at real times—use the following guidelines:
 
-* Let the reader know if the time is local to their time—for example, *10 AM your local
-  time*.
-* If a time zone is necessary, use the timestamp format as seen in the user interface (if
+- Let the reader know if the time is local to their time—for example, _10 AM your local
+  time_.
+- If a time zone is necessary, use the timestamp format as seen in the user interface (if
   available).
-* If using a specific time zone, spell out the region and include the
+- If using a specific time zone, spell out the region and include the
   [UTC or GMT label](https://www.worldtimeserver.com/learn/utc-vs-gmt/)
   as a parenthetical. For example:
-  + US and Canadian Pacific Standard Time (UTC-8)
-  + US and Canadian Pacific Daylight Time (UTC-7)
-* Don't abbreviate the name of the time zone.
-* In the rare event where the time of an event doesn't change for daylight saving time, use the
+  - US and Canadian Pacific Standard Time (UTC-8)
+  - US and Canadian Pacific Daylight Time (UTC-7)
+- Don't abbreviate the name of the time zone.
+- In the rare event where the time of an event doesn't change for daylight saving time, use the
   specific time zone, without reference to UTC.
 
 ## Express dates
@@ -68,8 +70,7 @@ Recommended: Tuesday, April 27, 2021
 
 When giving only the month and year, don't use a comma.
 
-Recommended: She was hired in January
-2017.
+Recommended: She was hired in January 2017.
 
 In most cases, don't abbreviate the day of the week or the month. However,
 when conserving space, such as in a heading or table, it's okay to abbreviate
@@ -108,11 +109,11 @@ format](#numeric-only-date-format)). Different regions of the world put parts of
 order for numeric dates. For example, a date written as 04/05/09 means different
 things in different regions:
 
-* In the UK, 04/05/09 means May 4, 2009, where the order is usually day,
+- In the UK, 04/05/09 means May 4, 2009, where the order is usually day,
   month, and then year.
-* In the US, 04/05/09 means April 5, 2009, where the order is usually month,
+- In the US, 04/05/09 means April 5, 2009, where the order is usually month,
   day, and then year.
-* In some other parts of the world, 04/05/09 means May 9, 2004. Some
+- In some other parts of the world, 04/05/09 means May 9, 2004. Some
   regions write the year first, followed by the month and day.
 
 For this reason, we recommend always using words to express dates. Expressing
@@ -155,8 +156,8 @@ Recommended: May 4, 2009, at 6 PM
 Avoid referring to seasons. Spring in the northern hemisphere is fall (autumn) in the
 southern hemisphere. Instead, use the month, quarter, or temperature (if relevant).
 
-| Recommended | Not recommended |
-| --- | --- |
+| Recommended                                                                | Not recommended                                                            |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | During warmer months, data centers face a higher risk of cooling failures. | During summer months, data centers face a higher risk of cooling failures. |
-| In November and December, data centers experience higher traffic volume. | In winter, data centers experience higher traffic volume. |
-| Changes are released in October of each year. | Changes are released in the Fall of each year. |
+| In November and December, data centers experience higher traffic volume.   | In winter, data centers experience higher traffic volume.                  |
+| Changes are released in October of each year.                              | Changes are released in the Fall of each year.                             |

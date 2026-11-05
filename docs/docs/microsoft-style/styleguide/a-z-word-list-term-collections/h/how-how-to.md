@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # how to, how-to
 
-Don’t use *how-to* as a noun. Always hyphenate as an adjective. Never capitalize the *t* in *to*.
+Don’t use _how-to_ as a noun. Always hyphenate as an adjective. Never capitalize the _t_ in _to_.
 
 **Examples**  
 how-to book  

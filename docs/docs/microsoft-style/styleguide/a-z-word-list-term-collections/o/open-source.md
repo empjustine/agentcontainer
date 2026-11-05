@@ -9,10 +9,10 @@ ms.prod: non-product-specific
 
 # open source, open-source
 
-Lowercase unless you're talking about the Open Source Initiative. 
+Lowercase unless you're talking about the Open Source Initiative.
 
-Hyphenate *open-source* as an adjective preceding a noun, as in *open-source software.* Don't use *open-sourced* as an adjective<em>.</em>
+Hyphenate _open-source_ as an adjective preceding a noun, as in _open-source software._ Don't use _open-sourced_ as an adjective<em>.</em>
 
-Don't hyphenate in other instances, such as *Open source is a development model in which ....*
+Don't hyphenate in other instances, such as _Open source is a development model in which ...._
 
-Don't use *OSS* as an abbreviation for *open-source software.*
+Don't use _OSS_ as an abbreviation for _open-source software._

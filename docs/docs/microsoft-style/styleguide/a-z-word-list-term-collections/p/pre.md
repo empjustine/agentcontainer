@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # pre-
 
-In general, don’t hyphenate words beginning with *pre-,* such as *preallocate* and *preempt,* unless it’s necessary to avoid confusion, as in *pre-engineered,* or if *pre-* is followed by a proper noun, as in *pre-C++.* When in doubt, refer to [*The American Heritage Dictionary*](https://ahdictionary.com/).
+In general, don’t hyphenate words beginning with _pre-,_ such as _preallocate_ and _preempt,_ unless it’s necessary to avoid confusion, as in _pre-engineered,_ or if _pre-_ is followed by a proper noun, as in _pre-C++._ When in doubt, refer to [_The American Heritage Dictionary_](https://ahdictionary.com/).
 
 To learn more about hyphenation, see [Hyphens](~/punctuation/dashes-hyphens/hyphens.md).

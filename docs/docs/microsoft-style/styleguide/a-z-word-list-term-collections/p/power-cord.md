@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # power cord
 
-Use instead of *power cable*.
+Use instead of _power cable_.

@@ -9,9 +9,9 @@ ms.prod: non-product-specific
 
 # bio
 
-OK to use as an abbreviation for *biography*.
+OK to use as an abbreviation for _biography_.
 
 **Global tip** In
 many languages, the full term is translated because an abbreviation
 isn't available. So you'll still need to allow ample space for expansion
-in localized text. 
+in localized text.

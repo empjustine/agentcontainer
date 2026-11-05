@@ -9,16 +9,16 @@ ms.prod: non-product-specific
 
 # worldwide vs. international
 
-Use *worldwide* to describe something that encompasses all regions or involves the entire world.
+Use _worldwide_ to describe something that encompasses all regions or involves the entire world.
 
 **Examples**  
-Get one month of free, worldwide calling.   
+Get one month of free, worldwide calling.  
 OneNote Mobile for Android is now available in more than 20 markets worldwide.
 
-Use *international* to describe something that:
+Use _international_ to describe something that:
 
-  - Involves two or more countries or regions.
-  - Crosses national boundaries.
+- Involves two or more countries or regions.
+- Crosses national boundaries.
 
 **Example**  
 International
@@ -26,7 +26,7 @@ Fonts and Text Display provides platform support for international
 fonts and text to meet the typography needs of Windows customers
 worldwide.
 
-Don’t use *international* to mean “outside the United States.” Instead, refer to a specific region or use wording that describes what you mean.
+Don’t use _international_ to mean “outside the United States.” Instead, refer to a specific region or use wording that describes what you mean.
 
 **Examples**  
 In

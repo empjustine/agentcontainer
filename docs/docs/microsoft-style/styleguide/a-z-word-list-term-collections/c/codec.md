@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # codec
 
-Don't spell out as *compressor/decompressor* or *coder/decoder*. Use only in content for a technical audience or when *codec* appears in the UI.
+Don't spell out as _compressor/decompressor_ or _coder/decoder_. Use only in content for a technical audience or when _codec_ appears in the UI.

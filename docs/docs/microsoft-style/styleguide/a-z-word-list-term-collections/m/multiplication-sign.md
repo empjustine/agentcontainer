@@ -9,9 +9,9 @@ ms.prod: non-product-specific
 
 # multiplication sign (×)
 
-Use the multiplication sign (×), not the letter *x,* to indicate the mathematical operation. Use an asterisk (\*) if you need to match the UI.
+Use the multiplication sign (×), not the letter _x,_ to indicate the mathematical operation. Use an asterisk (\*) if you need to match the UI.
 
-Use × to mean *by* when you refer to screen resolution or dimensions.
+Use × to mean _by_ when you refer to screen resolution or dimensions.
 
 **Examples**  
 48 × 48 pixels  

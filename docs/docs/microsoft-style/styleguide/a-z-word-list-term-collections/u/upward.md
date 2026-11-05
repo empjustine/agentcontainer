@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # upward
 
-Use instead of *upwards.*
+Use instead of _upwards._

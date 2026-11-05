@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # bitmap
 
-One word. 
+One word.
 
-Don't use generically to refer to any graphic. Use *illustration, figure, picture,* or a similar term instead.
+Don't use generically to refer to any graphic. Use _illustration, figure, picture,_ or a similar term instead.

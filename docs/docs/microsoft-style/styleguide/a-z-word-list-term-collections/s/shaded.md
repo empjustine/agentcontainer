@@ -11,13 +11,13 @@ ms.prod: non-product-specific
 
 Most of the time, talk about the actions that customers should take.
 
-Don’t use to describe commands or options that are in an unusable state—use *not available* or *isn’t available* instead. If you must describe their appearance, use *appears dimmed.*
+Don’t use to describe commands or options that are in an unusable state—use _not available_ or _isn’t available_ instead. If you must describe their appearance, use _appears dimmed._
 
-It’s OK to use *shaded* to describe the appearance of check boxes that represent a mixture of settings.
+It’s OK to use _shaded_ to describe the appearance of check boxes that represent a mixture of settings.
 
-**Examples**   
+**Examples**  
 The command isn’t available until you select text.  
 If the option appears dimmed, it's not available.  
-Selected effects appear shaded. 
+Selected effects appear shaded.
 
 **See also** [unavailable](~/a-z-word-list-term-collections/u/unavailable.md)

@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # left justify, left-justified
 
-Don’t use. Use *left-aligned* instead.
+Don’t use. Use _left-aligned_ instead.
 
 **See** [left align, left-aligned](~/a-z-word-list-term-collections/l/left-align-left-aligned.md)

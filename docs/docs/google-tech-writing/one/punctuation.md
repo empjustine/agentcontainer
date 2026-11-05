@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* This unit provides a refresher on punctuation marks like commas, semicolons, em dashes, en dashes, hyphens, colons, and parentheses, emphasizing their proper usage in technical writing.
-* Commas indicate natural pauses within sentences, separate items in lists, and delineate conditions and consequences, while semicolons unite closely related, grammatically complete sentences.
-* Em dashes create strong breaks or set off digressions, while hyphens join words in compound terms, and colons introduce lists or tables.
-* Parentheses enclose minor points or digressions, with punctuation placement depending on whether they contain a complete sentence or are part of a larger sentence.
-* Technical writing prioritizes clarity and minimizing ambiguity, recommending bulleted lists over embedded lists and favoring concise, straightforward language.
+- This unit provides a refresher on punctuation marks like commas, semicolons, em dashes, en dashes, hyphens, colons, and parentheses, emphasizing their proper usage in technical writing.
+- Commas indicate natural pauses within sentences, separate items in lists, and delineate conditions and consequences, while semicolons unite closely related, grammatically complete sentences.
+- Em dashes create strong breaks or set off digressions, while hyphens join words in compound terms, and colons introduce lists or tables.
+- Parentheses enclose minor points or digressions, with punctuation placement depending on whether they contain a complete sentence or are part of a larger sentence.
+- Technical writing prioritizes clarity and minimizing ambiguity, recommending bulleted lists over embedded lists and favoring concise, straightforward language.
 
 **Estimated Time:** 5 minutes
 
@@ -24,12 +24,12 @@ a sentence. For the musically inclined, if a period is a whole note (semibreve)
 rest, then a comma is perhaps a half-note (minim) or quarter-note (crotchet)
 rest. In other words, the pause for a comma is shorter than that for a period.
 For example, if you read the following sentence aloud, you probably rest briefly
-before the word *just*:
+before the word _just_:
 
 > C behaves as a mid-level language, just a couple of steps up in abstraction
 > from assembly language.
 
-Some situations *require* a comma. For example, use commas to separate
+Some situations _require_ a comma. For example, use commas to separate
 items in an embedded list like the following:
 
 > Our company uses C++, Python, Java, and JavaScript.
@@ -109,13 +109,13 @@ Recommended
 
 Before using a semicolon, ask yourself whether the sentence would still make
 sense if you flipped the thoughts to opposite sides of the semicolon. For
-example, reversing the earlier example still yields a *valid* sentence:
+example, reversing the earlier example still yields a _valid_ sentence:
 
 > Don't rerun Frambus after updating existing source code; rerun Frambus
 > after updating your configuration file.
 
 The thoughts preceding and following the semicolon must each be grammatically
-complete sentences. For example, the following semicolon is *incorrect* because
+complete sentences. For example, the following semicolon is _incorrect_ because
 the passage following the semicolon is a
 [clause](/tech-writing/one/short-sentences#reduce_subordinate_clauses_optional),
 not a complete sentence:
@@ -131,7 +131,7 @@ Recommended
 > existing source code.
 
 You should almost always use commas, not semicolons, to separate items in
-an embedded list. For example, the following use of semicolons is *incorrect*:
+an embedded list. For example, the following use of semicolons is _incorrect_:
 
 Not recommended
 
@@ -202,11 +202,11 @@ Sure. Why did we choose an em dash instead of a comma? Feel. Art. Experience.
 
 Consider the horizontal punctuation marks shown in the following table:
 
-| Name | Mark | Relative width |
-| --- | --- | --- |
-| em dash | — | widest (usually, the length of the letter `m`) |
-| en dash | – | medium (usually, the length of the letter `n`) |
-| hyphen | - | narrowest |
+| Name    | Mark | Relative width                                 |
+| ------- | ---- | ---------------------------------------------- |
+| em dash | —    | widest (usually, the length of the letter `m`) |
+| en dash | –    | medium (usually, the length of the letter `n`) |
+| hyphen  | -    | narrowest                                      |
 
 Some style guides recommend the **en dash** for certain uses. The
 [Google Style Guide](https://developers.google.com/style/dashes#en-dashes),
@@ -217,18 +217,18 @@ however, offers the following blunt advice about en dashes:
 **Hyphens** are tricky. Within technical writing, hyphens connect words in
 certain compound terms, such as:
 
-* Self-attention
-* N-gram
+- Self-attention
+- N-gram
 
 Confusingly, three-word compound terms often contain a hyphen between the
 first and second word but not between the second and third word. For example:
 
-* Decision-making system
-* Floating-point feature
+- Decision-making system
+- Floating-point feature
 
 When in doubt about hyphens, consult a dictionary, glossary, or style guide.
 
-**Note:** If you consult *more than one* dictionary, glossary, or style guide
+**Note:** If you consult _more than one_ dictionary, glossary, or style guide
 about hyphens, you may encounter inconsistencies.
 
 ## Colons
@@ -241,9 +241,9 @@ sentence that introduces the list:
 
 > Consider the following important programming languages:
 >
-> * Python
-> * Java
-> * C++
+> - Python
+> - Java
+> - C++
 
 Technical writing prefers bulleted lists or numbered lists to embedded
 lists. That said, you can use a colon to introduce an embedded list as
@@ -268,9 +268,9 @@ writing.
 The rules regarding periods and parentheses aren't always clear. Here
 are the standard rules:
 
-* If a pair of parentheses holds an entire sentence, the period goes inside
+- If a pair of parentheses holds an entire sentence, the period goes inside
   the closing parenthesis.
-* If a pair of parentheses ends a sentence but does not hold the entire
+- If a pair of parentheses ends a sentence but does not hold the entire
   sentence, the period goes just outside the closing parenthesis.
 
 For example:

@@ -9,10 +9,10 @@ ms.prod: non-product-specific
 
 # General Data Protection Regulation (GDPR)
 
-Capitalize and spell out on the first mention. 
+Capitalize and spell out on the first mention.
 
-Include *the* when used as a noun. When *General Data Protection Regulation* or *GDPR* is used as an adjective, 
-include *the* if the syntax of the sentence requires it.  
+Include _the_ when used as a noun. When _General Data Protection Regulation_ or _GDPR_ is used as an adjective,
+include _the_ if the syntax of the sentence requires it.
 
 **Examples**  
 Compliance with the General Data Protection Regulation (GDPR) is an ongoing process.  

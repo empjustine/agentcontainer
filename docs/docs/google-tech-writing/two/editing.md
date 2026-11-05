@@ -5,11 +5,11 @@
 
 ## Page Summary
 
-* To enhance clarity and readability, refine your initial drafts through an iterative editing process, incorporating feedback and utilizing various techniques.
-* Adhere to established style guides, like the Google Developer Documentation Style Guide, to ensure consistency and quality in your technical writing.
-* Consider your target audience's perspective, define unfamiliar terms, and potentially create personas to better tailor your content to their needs and expertise.
-* Enhance the flow and engagement of your writing by reading it aloud, identifying awkward phrasing or lengthy sentences, and adjusting the style as needed.
-* Allow time for review and reflection, revisiting your drafts with fresh eyes or changing the context to catch potential improvements and refine your work further.
+- To enhance clarity and readability, refine your initial drafts through an iterative editing process, incorporating feedback and utilizing various techniques.
+- Adhere to established style guides, like the Google Developer Documentation Style Guide, to ensure consistency and quality in your technical writing.
+- Consider your target audience's perspective, define unfamiliar terms, and potentially create personas to better tailor your content to their needs and expertise.
+- Enhance the flow and engagement of your writing by reading it aloud, identifying awkward phrasing or lengthy sentences, and adjusting the style as needed.
+- Allow time for review and reflection, revisiting your drafts with fresh eyes or changing the context to catch potential improvements and refine your work further.
 
 **Estimated Time:** 10 minutes
 
@@ -47,20 +47,20 @@ project, you might find the highlights are all you need.
 Some of the guidelines listed in the highlights are covered in Technical Writing
 One. You might recall some of the following techniques:
 
-* Use [active voice](/tech-writing/one/active-voice) to make clear who's
+- Use [active voice](/tech-writing/one/active-voice) to make clear who's
   performing the action.
-* Format sequential steps as
+- Format sequential steps as
   [numbered lists](/tech-writing/one/lists-and-tables).
-* Format most other lists as bulleted lists.
+- Format most other lists as bulleted lists.
 
 The highlights introduce many other techniques that can be useful when writing
 technical documentation, such as:
 
-* [Write in the second person](/style/person). Refer to your audience as
+- [Write in the second person](/style/person). Refer to your audience as
   "you", not "we".
-* [Place conditions before instructions](/style/sentence-structure),
+- [Place conditions before instructions](/style/sentence-structure),
   not after.
-* Format [code-related text as code font](/style/code-in-text).
+- Format [code-related text as code font](/style/code-in-text).
 
 ## Think like your audience
 
@@ -71,13 +71,13 @@ for any terms or concepts that might be unfamiliar to your readers.
 It can be helpful to outline a persona for your audience. A persona can consist
 of any of the following attributes:
 
-* A role, such as *Systems Engineer* or *QA Tester*.
-* An end goal, such as *Restore the database*.
-* A set of assumptions about the persona and their knowledge and experience.
+- A role, such as _Systems Engineer_ or _QA Tester_.
+- An end goal, such as _Restore the database_.
+- A set of assumptions about the persona and their knowledge and experience.
   For example, you might assume that your persona is:
-  + Familiar with Python.
-  + Running a Linux operating system.
-  + Comfortable following instructions for the command line.
+  - Familiar with Python.
+  - Running a Linux operating system.
+  - Comfortable following instructions for the command line.
 
 You can then review your draft with your persona in mind. It can be especially
 useful to tell your audience about any assumptions you've made. You can also
@@ -151,10 +151,10 @@ paragraph below.
 To help your audience understand your document, apply these basic editing
 principles:
 
-* Use active voice instead of passive voice.
-* Consider using simpler words that mean the same thing.
-* Include links to background information.
-* Break long sentences into shorter sentences or lists.
+- Use active voice instead of passive voice.
+- Consider using simpler words that mean the same thing.
+- Include links to background information.
+- Break long sentences into shorter sentences or lists.
 
 ---
 

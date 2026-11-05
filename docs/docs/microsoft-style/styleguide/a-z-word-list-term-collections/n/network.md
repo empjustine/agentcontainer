@@ -9,10 +9,10 @@ ms.prod: non-product-specific
 
 # network
 
-Don't shorten to *net*. 
+Don't shorten to _net_.
 
-Don't use *network* as a verb to describe the action of connecting a computer to a network.
+Don't use _network_ as a verb to describe the action of connecting a computer to a network.
 
-A computer is *on,* not *in,* a network, and computers on a network are *linked* or *connected,* not *networked*.
+A computer is _on,_ not _in,_ a network, and computers on a network are _linked_ or _connected,_ not _networked_.
 
-Use *network* as a verb and the noun *networking* only to describe making personal and business connections.
+Use _network_ as a verb and the noun _networking_ only to describe making personal and business connections.

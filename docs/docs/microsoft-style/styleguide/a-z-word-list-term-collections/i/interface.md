@@ -9,13 +9,13 @@ ms.prod: non-product-specific
 
 # interface
 
-Use only as a noun, as in *user interface* and *application programming interface*. Use *interface* by itself only if the context is clear. 
+Use only as a noun, as in _user interface_ and _application programming interface_. Use _interface_ by itself only if the context is clear.
 
-For a general audience, it's OK to use *UI* or *API* after
+For a general audience, it's OK to use _UI_ or _API_ after
 spelling out on the first mention. For a technical audience, it's
 not necessary to spell out those terms on the first mention.
 
-Don't use *interface* as a verb. Use *interact* or *communicate* instead.
+Don't use _interface_ as a verb. Use _interact_ or _communicate_ instead.
 
 **Examples**  
 The familiar interface helps to minimize training requirements.  

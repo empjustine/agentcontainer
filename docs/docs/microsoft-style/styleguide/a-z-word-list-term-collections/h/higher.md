@@ -9,11 +9,11 @@ ms.prod: non-product-specific
 
 # higher
 
-Don't use *or higher* to mean *or later* to refer to multiple versions of software.
+Don't use _or higher_ to mean _or later_ to refer to multiple versions of software.
 
-It's OK to use *higher* to refer to display resolution. 
+It's OK to use _higher_ to refer to display resolution.
 
-Don't use *higher* to refer to processor speed. Use *faster* instead.
+Don't use _higher_ to refer to processor speed. Use _faster_ instead.
 
 **Examples**  
 1920 × 1200 pixels or higher resolution  

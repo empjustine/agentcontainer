@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # use terms
 
-Don't use to mean *license terms.*
+Don't use to mean _license terms._
 
 **See** [Microsoft Software License Terms](~/a-z-word-list-term-collections/m/software-license-terms.md)

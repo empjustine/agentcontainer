@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # baseline
 
-Use *baseline* (one word) to refer to an established standard, as in *baseline data*.
+Use _baseline_ (one word) to refer to an established standard, as in _baseline data_.

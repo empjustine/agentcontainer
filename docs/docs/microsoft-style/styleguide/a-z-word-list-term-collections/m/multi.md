@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # multi-
 
-In general, don't hyphenate words beginning with *multi-* unless it's necessary to avoid confusion or *multi-* is followed by a proper noun. Check [*The American Heritage Dictionary*](https://ahdictionary.com/). If you don't find the word there or in the following list, use *multiple* before the word instead. Don't invent new words by combining words with *multi-.*
+In general, don't hyphenate words beginning with _multi-_ unless it's necessary to avoid confusion or _multi-_ is followed by a proper noun. Check [_The American Heritage Dictionary_](https://ahdictionary.com/). If you don't find the word there or in the following list, use _multiple_ before the word instead. Don't invent new words by combining words with _multi-._
 
 **Examples**<br />multicast <br />multichannel <br />multicolumn <br />multilevel <br />multiline <br />multilingual <br />multimedia <br />multiprocessor <br />multitasking <br />multiuser
 

@@ -9,14 +9,14 @@ ms.prod: non-product-specific
 
 # pull down, pull-down
 
-In general, avoid talking about UI. Instead, describe what the customer needs to do. 
+In general, avoid talking about UI. Instead, describe what the customer needs to do.
 
-Don't use *pull down* as a verb to describe how to use a menu or list. Don't use *pull-down* as an adjective 
-to describe the appearance of a menu or list.  
+Don't use _pull down_ as a verb to describe how to use a menu or list. Don't use _pull-down_ as an adjective
+to describe the appearance of a menu or list.
 
 **Examples**  
 In the **Background** list, select **Solid color**.  
-Go to **Tools**, and select **Change language**.  
+Go to **Tools**, and select **Change language**.
 
 **See also**  
 [drop-down](~/a-z-word-list-term-collections/d/drop-down.md)  

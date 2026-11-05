@@ -9,13 +9,13 @@ ms.prod: non-product-specific
 
 # from vs. on
 
-Use *from* to indicate a specific place or time as a starting point. 
+Use _from_ to indicate a specific place or time as a starting point.
 
 **Examples**  
 Paste the text from the clipboard.  
 From the time you set the clock, the alarm is active.
 
-Use *on* to indicate the starting place for selecting a command or option.
+Use _on_ to indicate the starting place for selecting a command or option.
 
 **Example**  
 On the **File** menu, select **Open**.

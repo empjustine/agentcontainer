@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # default
 
-Don't use as a verb. 
+Don't use as a verb.
 
 **Examples**  
 If you don't choose a template, Normal.dot is applied by default.  

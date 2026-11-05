@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # flush, flush to
 
-In content for a general audience, don't use *flush, flush to, flush left,* or *flush right* to describe text alignment. Instead, use *even, left-aligned,* or *right-aligned,* as appropriate.
+In content for a general audience, don't use _flush, flush to, flush left,_ or _flush right_ to describe text alignment. Instead, use _even, left-aligned,_ or _right-aligned,_ as appropriate.
 
-In content for a technical audience, it's OK to use *flush* as a verb, for example, *flush the buffer*.
+In content for a technical audience, it's OK to use _flush_ as a verb, for example, _flush the buffer_.

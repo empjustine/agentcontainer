@@ -9,7 +9,7 @@ ms.prod: non-product-specific
 
 # notification
 
-Use instead of *notice* to describe information displayed to a customer about communications, contacts, a service problem, or other item. Don't use *pop-up, toast,* or *banner* for this purpose.
+Use instead of _notice_ to describe information displayed to a customer about communications, contacts, a service problem, or other item. Don't use _pop-up, toast,_ or _banner_ for this purpose.
 
 **Examples**  
 When you receive a message, a notification briefly appears at the top of Start ...  

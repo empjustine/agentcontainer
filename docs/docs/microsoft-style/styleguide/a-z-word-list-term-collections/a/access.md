@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # access
 
-It's OK to use as a verb to mean *obtain access to*. 
+It's OK to use as a verb to mean _obtain access to_.
 
-Don’t use *access* to mean *start, create,* or *open.* Use a more specific verb or phrase instead.
+Don’t use _access_ to mean _start, create,_ or _open._ Use a more specific verb or phrase instead.

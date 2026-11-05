@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # size, resize
 
-It's OK to use *size* as a verb, as in *size the window*. 
+It's OK to use _size_ as a verb, as in _size the window_.
 
-Use *resize* to mean *change the size of*.
+Use _resize_ to mean _change the size of_.

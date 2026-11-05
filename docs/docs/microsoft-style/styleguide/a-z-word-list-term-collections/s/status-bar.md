@@ -9,10 +9,10 @@ ms.prod: non-product-specific
 
 # status bar
 
-Use instead of *status line* or *message area* to refer
+Use instead of _status line_ or _message area_ to refer
 to the area at the bottom of a document window that shows the
 status of a document and other information, such as the meaning of a
-command. Messages appear *on,* not *in,* the status bar.
+command. Messages appear _on,_ not _in,_ the status bar.
 
 ![](media/status-bar/1622172745.png)
 

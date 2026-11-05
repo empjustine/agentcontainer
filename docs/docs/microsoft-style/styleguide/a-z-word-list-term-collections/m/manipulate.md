@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # manipulate
 
-Use *work with, handle,* or *use* instead.
+Use _work with, handle,_ or _use_ instead.

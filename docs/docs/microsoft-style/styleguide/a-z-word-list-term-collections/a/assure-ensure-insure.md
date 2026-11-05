@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # assure, ensure, insure
 
-*Ensure, insure,* and *assure* are interchangeable in many situations. To improve worldwide readability, Microsoft style makes these distinctions:
+_Ensure, insure,_ and _assure_ are interchangeable in many situations. To improve worldwide readability, Microsoft style makes these distinctions:
 
-  - Use *ensure* to mean *to make sure* or *to guarantee*. 
-  - Use *insure* to mean *to provide insurance*. 
-  - Use *assure* to mean *to state positively* or *to make confident*. 
+- Use _ensure_ to mean _to make sure_ or _to guarantee_.
+- Use _insure_ to mean _to provide insurance_.
+- Use _assure_ to mean _to state positively_ or _to make confident_.

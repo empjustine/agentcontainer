@@ -5,14 +5,15 @@
 
 If possible, avoid using semicolons. In a few cases, a semicolon is preferred:
 
-* When joining two closely related independent clauses where a period or a comma is not as
+- When joining two closely related independent clauses where a period or a comma is not as
   effective.
 
   Recommended: You can easily test
   compatibility by computing the centroid; if it is on the opposite side of the
   planet, reverse the order of your vertices.
-* When preceding a conjunctive adverb (like *therefore*) or a phrase
-  (like *that is*) that joins two independent clauses.
+
+- When preceding a conjunctive adverb (like _therefore_) or a phrase
+  (like _that is_) that joins two independent clauses.
 
   Recommended: This setup places the
   head-tracked node below the Main Camera; therefore, only the stereo cameras are
@@ -20,7 +21,8 @@ If possible, avoid using semicolons. In a few cases, a semicolon is preferred:
 
   Recommended: The URL from which a video
   ad loads; that is, the URL to use to fetch that video ad.
-* When separating a series of long or complex items that contain their own punctuation.
+
+- When separating a series of long or complex items that contain their own punctuation.
 
   Recommended: If you don't have time,
   then focus on the improvements that will have the greatest benefit: what matters most

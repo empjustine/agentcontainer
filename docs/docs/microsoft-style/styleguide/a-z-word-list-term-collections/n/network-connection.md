@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # network connection
 
-Use instead of *local area network connection*.
+Use instead of _local area network connection_.

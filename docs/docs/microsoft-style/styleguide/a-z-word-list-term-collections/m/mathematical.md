@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # mathematical
 
-Use instead of *mathematic*.
+Use instead of _mathematic_.

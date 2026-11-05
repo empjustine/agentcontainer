@@ -9,12 +9,12 @@ ms.prod: non-product-specific
 
 # check, check box, check mark
 
-Use *check* or *checked* as an adjective related to check boxes. For example, *a check mark* or *a checked command*.
+Use _check_ or _checked_ as an adjective related to check boxes. For example, _a check mark_ or _a checked command_.
 
-Use *check box,* not *box* or *checkbox,* to refer to a check box in UI. 
+Use _check box,_ not _box_ or _checkbox,_ to refer to a check box in UI.
 
-Use *select* and *clear* with check boxes, not *turn on* and *turn off,* *mark* and *unmark,* *check* and *uncheck,* or *select* and *deselect.*
+Use _select_ and _clear_ with check boxes, not _turn on_ and _turn off,_ _mark_ and _unmark,_ _check_ and _uncheck,_ or _select_ and _deselect._
 
-Use *check mark,* not *check,* as a noun.
+Use _check mark,_ not _check,_ as a noun.
 
-**See also** [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md), [Formatting text in instructions](~/procedures-instructions/formatting-text-in-instructions.md)  
+**See also** [Describing interactions with UI](~/procedures-instructions/describing-interactions-with-ui.md), [Formatting text in instructions](~/procedures-instructions/formatting-text-in-instructions.md)

@@ -12,7 +12,7 @@ The server sends an acknowledgment.
 Not recommended: Send a query to the
 service. The server will send an acknowledgment.
 
-However, it's fine to use future tense (*will*) to distinguish an action that will occur in
+However, it's fine to use future tense (_will_) to distinguish an action that will occur in
 the future.
 
 Recommended: Add the filename to the
@@ -30,7 +30,7 @@ that notifies any Pub/Sub subscribers.
 Don't use future tense to describe how a product or feature will work after the next release
 or update. For more information, see [Document future features](/style/future).
 
-Also avoid the hypothetical future *would*—for example:
+Also avoid the hypothetical future _would_—for example:
 
 Recommended: If you send an unsubscribe
 message, the server removes you from the mailing list.

@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # data binding
 
-Two words. 
+Two words.

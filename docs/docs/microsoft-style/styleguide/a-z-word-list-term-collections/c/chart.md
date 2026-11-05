@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # chart
 
-Don't use as a verb when referring to entering data for a chart. Use *plot* instead.
+Don't use as a verb when referring to entering data for a chart. Use _plot_ instead.
 
-Use the noun *chart* instead of *graph* to refer to graphic representations of data. For example, use *bar chart, pie chart,* and *scatter chart.*
+Use the noun _chart_ instead of _graph_ to refer to graphic representations of data. For example, use _bar chart, pie chart,_ and _scatter chart._

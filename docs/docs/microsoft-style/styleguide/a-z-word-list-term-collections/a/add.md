@@ -9,8 +9,8 @@ ms.prod: non-product-specific
 
 # add
 
-Use as a verb to describe installing add-ins and add-ons. Use *remove* to describe removing them. 
+Use as a verb to describe installing add-ins and add-ons. Use _remove_ to describe removing them.
 
-Don't use *add* to refer to installing apps and programs. Use *install* instead.
+Don't use _add_ to refer to installing apps and programs. Use _install_ instead.
 
 **See also** [install](~/a-z-word-list-term-collections/i/install.md)

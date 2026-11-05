@@ -9,9 +9,9 @@ ms.prod: non-product-specific
 
 # org, organization
 
-Use the term that makes the most sense for your audience.  
+Use the term that makes the most sense for your audience.
 
-In content for a business or technical audience, it's OK to use *org* as an abbreviation for *organization.* 
+In content for a business or technical audience, it's OK to use _org_ as an abbreviation for _organization._
 Don't use a period after the abbreviation.
 
 **Examples**  

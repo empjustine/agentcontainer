@@ -5,16 +5,16 @@
 
 ## Page Summary
 
-* Em dashes indicate a break or interruption in a sentence and should not have spaces before or after.
-* To create an em dash, use the HTML entity `&mdash;` or platform-specific keyboard shortcuts (provided in the content).
-* Avoid using en dashes or hyphens in place of em dashes; instead, use hyphens or the word "to" where appropriate.
-* Use colons or periods (or HTML description lists for multiple items) to separate items and their descriptions instead of dashes.
+- Em dashes indicate a break or interruption in a sentence and should not have spaces before or after.
+- To create an em dash, use the HTML entity `&mdash;` or platform-specific keyboard shortcuts (provided in the content).
+- Avoid using en dashes or hyphens in place of em dashes; instead, use hyphens or the word "to" where appropriate.
+- Use colons or periods (or HTML description lists for multiple items) to separate items and their descriptions instead of dashes.
 
 This page explains when to use em dashes. For information about hyphens, see the following:
 
-* [Hyphens](/style/hyphens)
-* [Ranges of numbers](/style/numbers#ranges-of-numbers)
-* [Ranges of numbers with units](/style/units-of-measure#ranges)
+- [Hyphens](/style/hyphens)
+- [Ranges of numbers](/style/numbers#ranges-of-numbers)
+- [Ranges of numbers with units](/style/units-of-measure#ranges)
 
 ## Em dashes
 
@@ -24,25 +24,25 @@ dash, also known as a long dash. Don't put a space before or after it.
 You can type the em dash character in various ways:
 
 HTML
-:   &mdash;
+: &mdash;
 
 macOS
-:   Press `Option+Shift+hyphen`.
+: Press `Option+Shift+hyphen`.
 
 Linux desktop environment
-:   Enable the Compose key (instructions for doing that vary depending on
-    your flavor of Linux—for examples, see [Linux Keyboard Shortcuts For
-    Text Symbols](http://fsymbols.com/keyboard/linux/compose/)). After the Compose key is enabled, you can create an em dash
-    by typing the Compose key followed by three hyphens.
-:   Alternatively, press `Control+Shift+U`. Let go of those keys, and then type
-    `2014`. Then press `Return`.
-:   **Note**: These Linux options don't work if
-    you're signed in to the Linux command line from a remote system using `ssh` or the
-    like; you have to be in a Linux desktop environment.
+: Enable the Compose key (instructions for doing that vary depending on
+your flavor of Linux—for examples, see [Linux Keyboard Shortcuts For
+Text Symbols](http://fsymbols.com/keyboard/linux/compose/)). After the Compose key is enabled, you can create an em dash
+by typing the Compose key followed by three hyphens.
+: Alternatively, press `Control+Shift+U`. Let go of those keys, and then type
+`2014`. Then press `Return`.
+: **Note**: These Linux options don't work if
+you're signed in to the Linux command line from a remote system using `ssh` or the
+like; you have to be in a Linux desktop environment.
 
 Windows
-:   Turn num lock on, and then hold down the left `Alt` key and type `0151`
-    on the numeric keypad.
+: Turn num lock on, and then hold down the left `Alt` key and type `0151`
+on the numeric keypad.
 
 Don't use an en dash (the shorter dash) or a hyphen in place of an em dash.
 The use of an en dash with spaces around it in place of
@@ -52,11 +52,11 @@ used in Canada and a few other places. For now, only use the em dash.
 
 ## En dashes
 
-Don't use. Instead, use a hyphen or the word *to*. For more information, see
+Don't use. Instead, use a hyphen or the word _to_. For more information, see
 the following:
 
-* [Ranges of numbers with units](/style/units-of-measure#ranges)
-* [Range of numbers](/style/hyphens#number-range)
+- [Ranges of numbers with units](/style/units-of-measure#ranges)
+- [Range of numbers](/style/hyphens#number-range)
 
 ## Colons instead of dashes in description lists
 

@@ -9,12 +9,12 @@ ms.prod: non-product-specific
 
 # over
 
-Use *over* to refer to a position or location above something. For quantities, use *more than*. 
+Use _over_ to refer to a position or location above something. For quantities, use _more than_.
 
 **Examples**  
 A transparent viewing layer with a red border appears over the diagram.  
-The installed base is more than 2 million. 
+The installed base is more than 2 million.
 
-Don't use to refer to version numbers. Use *later* instead.
+Don't use to refer to version numbers. Use _later_ instead.
 
 **See also** [later](../l/later.md)

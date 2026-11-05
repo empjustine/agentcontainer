@@ -9,6 +9,6 @@ ms.prod: non-product-specific
 
 # numeric
 
-Use instead of *numerical*.
+Use instead of _numerical_.
 
-For the keypad, use *numeric keypad* instead of *numerical keypad* or *numeric keyboard*.
+For the keypad, use _numeric keypad_ instead of _numerical keypad_ or _numeric keyboard_.

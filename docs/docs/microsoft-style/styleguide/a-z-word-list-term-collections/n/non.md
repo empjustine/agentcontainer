@@ -9,11 +9,11 @@ ms.prod: non-product-specific
 
 # non-
 
-Don't hyphenate words beginning with *non-,* such as *nonnumeric* and *nonzero,* unless a hyphen is necessary to avoid confusion, as in *non-native,* or *non-* is followed by a proper noun, as in *non-English.* When in doubt, check [*The American Heritage Dictionary*](https://ahdictionary.com/).
+Don't hyphenate words beginning with _non-,_ such as _nonnumeric_ and _nonzero,_ unless a hyphen is necessary to avoid confusion, as in _non-native,_ or _non-_ is followed by a proper noun, as in _non-English._ When in doubt, check [_The American Heritage Dictionary_](https://ahdictionary.com/).
 
-Don't use *non-* to negate an entire phrase.
+Don't use _non-_ to negate an entire phrase.
 
 **Example**  
-unrelated to security (instead of *non-security related*)
+unrelated to security (instead of _non-security related_)
 
-To learn more about hyphenation, see  [Hyphens](~/punctuation/dashes-hyphens/hyphens.md).
+To learn more about hyphenation, see [Hyphens](~/punctuation/dashes-hyphens/hyphens.md).

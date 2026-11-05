@@ -9,4 +9,4 @@ ms.prod: non-product-specific
 
 # check in
 
-OK to use as a verb phrase, as in *check in code* or *check in changes*. Don't use as a noun.
+OK to use as a verb phrase, as in _check in code_ or _check in changes_. Don't use as a noun.
