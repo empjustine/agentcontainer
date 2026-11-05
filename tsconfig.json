@@ -1,8 +1,10 @@
 // Type-checking config for the JSDoc-typed scripts. The types themselves live
-// in the code (JSDoc next to the functions they describe) — this file only
-// points `tsc` at the files that carry them and sets the strictness. Add a
-// script to `include` once it carries JSDoc types; scripts without them are
-// left out on purpose so the checker stays a gate instead of a backlog.
+// in the code (JSDoc next to the functions they describe) — this file sets
+// the strictness and points `tsc` at the whole tree: the coverage wave
+// (2026-11-05) replaced the curated include list with globs, so a file
+// joins the gate by existing, not by being listed. The two exclusions are
+// contracts (node_modules; the host-provided pi-*/index.ts), documented
+// beside the include, not backlog.
 //
 // Run it with ./check-types.sh (typescript + @types/node are root
 // devDependencies pinned by package-lock.json — docs/d107).
@@ -21,11 +23,12 @@
 		"checkJs": true,
 		"noEmit": true,
 		"strict": true,
-		// The zero-finding strictness flags (surveyed 2026-10-30: each produces
-		// zero diagnostics over the whole include list, so enabling them changed
-		// nothing the day they landed — the tsc half of the strictness free
-		// wave; the finding-carrying flags land as their own fix-and-enable
-		// waves, one commit per flag):
+		// The zero-finding strictness flags (surveyed 2026-10-30; the second
+		// wave measured 2026-11-05: each produces zero diagnostics over the
+		// whole include list, so enabling them changed nothing the day they
+		// landed — the tsc half of the strictness free wave; the
+		// finding-carrying flags land as their own fix-and-enable waves, one
+		// commit per flag):
 		"noImplicitOverride": true,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitReturns": true,
@@ -33,6 +36,15 @@
 		"noUncheckedSideEffectImports": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
+		// Second free wave (2026-11-05): all measured at zero findings. The
+		// first three flip tsc's lenient defaults (undefined = no check) to
+		// enforced checks; skipLibCheck inverts its old true — @types/node
+		// 24.19.2 under TS 6.0.3 type-checks clean, so full .d.ts checking
+		// now costs nothing and buys the whole installed type surface.
+		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
+		"isolatedModules": true,
+		"skipLibCheck": false,
 		// The finding wave (24 sites, fixed): optional slots that DELIBERATELY
 		// receive undefined ("the source did not publish this") are now typed
 		// T|undefined; fetch headers became conditional spreads; test override
@@ -47,85 +59,14 @@
 		// for zero typo-safety (an index signature accepts any string either
 		// way), against the d001 env-surface convention, and in direct conflict
 		// with biome's useLiteralKeys (error level), which demands the opposite.
-		// noUncheckedIndexedAccess lands as its own overlay waves (see the
-		// commit log for the wave order).
-		"skipLibCheck": true
 	},
-	"include": [
-		// The per-unit lib/ copies (docs/d113 folded the one shared lib/ into
-		// the folders that consume it), plus each unit's own build entry —
-		// there is no root build.mjs or generate.mjs any more. The pi
-		// extension folders carry no lib/ at all: their logger sits at the
-		// folder root, imported statically by the folder's own modules.
-		"*/lib/*.mjs",
-		"pi-*/log.mjs",
-		"estige/build.mjs",
-		"coding-agent/build.mjs",
-		"llm-local-inference/build.mjs",
-		"git/tests/git-glob.test.mjs",
-		"git/tests/git-pacer.test.mjs",
-		"git/tests/git-cli.test.mjs",
-		"git/tests/git-retry.test.mjs",
-		"git/tests/git-farm-lock.test.mjs",
-		"git/tests/git-vbs-mirror.test.mjs",
-		"git/tests/git-farm-posture.test.mjs",
-		"git/tests/git-farm-tool.test.mjs",
-		"git/audit.mjs",
-		"git/local-changes.mjs",
-		"git/migrate-to-bare.mjs",
-		"git/maintain-mirrors.mjs",
-		"git/forge-mirror.mjs",
-		"git/search-references.mjs",
-		"git/vbs-har.mjs",
-		"git/vbs-mirror-all.mjs",
-		"git/farm-tool.mjs",
-		"pi-synthetic/sources.mjs",
-		"pi-synthetic/merge.mjs",
-		"pi-synthetic/generate.mjs",
-		"pi-cline-pass/sources.mjs",
-		"pi-cline-pass/merge.mjs",
-		"pi-cline-pass/generate.mjs",
-		"pi-hyper/sources.mjs",
-		"pi-hyper/merge.mjs",
-		"pi-hyper/generate.mjs",
-		"pi-verboo/sources.mjs",
-		"pi-verboo/merge.mjs",
-		"pi-verboo/generate.mjs",
-		// Every test lives with the code it tests (docs/d113) — the repo root
-		// has no tests/ folder.
-		"coding-agent/tests/committed-manifests.test.mjs",
-		"coding-agent/tests/canonical-json.test.mjs",
-		"coding-agent/tests/fact-table.test.mjs",
-		"coding-agent/tests/artifact-urls.test.mjs",
-		"coding-agent/tests/modality-allowlist.test.mjs",
-		"coding-agent/tests/pi-cost.test.mjs",
-		"pi-synthetic/tests/pi-synthetic.test.mjs",
-		"pi-cline-pass/tests/pi-cline-pass.test.mjs",
-		"pi-opencode/tests/pi-opencode.test.mjs",
-		"pi-hyper/tests/pi-hyper.test.mjs",
-		"pi-verboo/tests/pi-verboo.test.mjs",
-		"pi-mistral/tests/pi-mistral.test.mjs",
-		"llm-local-inference/generate.mjs",
-		"llm-local-inference/model-sizes.mjs",
-		"coding-agent/run.mjs",
-		"coding-agent/tests/check-workload.test.mjs",
-		"coding-agent/tests/check-run-dirs.test.mjs",
-		"coding-agent/tests/jq-free.test.mjs",
-		"coding-agent/route-probe.mjs",
-		"coding-agent/check-canonical-artifacts.mjs",
-		"coding-agent/catalog-facts.mjs",
-		"coding-agent/refresh-models-dev.mjs",
-		"coding-agent/gen-lib.mjs",
-		"coding-agent/generate-pi-coding-agent.mjs",
-		"coding-agent/generate-opencode.mjs",
-		"coding-agent/generate.mjs"
-		// NOTE: the extension entries (pi-synthetic/index.ts,
-		// pi-cline-pass/index.ts, pi-hyper/index.ts, pi-verboo/index.ts,
-		// pi-mistral/index.ts, pi-opencode/index.ts) are deliberately
-		// NOT listed. They import
-		// @earendil-works/pi-coding-agent, which this repo does not vendor, so
-		// tsc would report one missing module that is host-provided at runtime.
-		// They are covered better by their <folder>/tests/*.test.mjs files,
-		// which IMPORT AND RUN the real entry points.
-	]
+	"include": ["**/*.mjs", "**/*.ts", "**/*.mts", "**/*.js"],
+	// Exclusions are contracts, not backlog. node_modules: third-party code
+	// pinned by package-lock (docs/d107), checked by the tools' own gates.
+	// pi-*/index.ts (the six extension entry points): they import
+	// @earendil-works/pi-coding-agent, which this repo does not vendor, so
+	// tsc would report a module that is host-provided at runtime; their
+	// <folder>/tests/*.test.mjs files IMPORT AND RUN the real entry points
+	// instead, which covers them better.
+	"exclude": ["node_modules", "**/node_modules", "pi-*/index.ts"]
 }

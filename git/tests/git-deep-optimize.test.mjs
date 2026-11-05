@@ -59,7 +59,7 @@ function buildFarm(root) {
  * A git that logs then obeys. The wrapper is first on PATH for the maintained
  * child process only, so the test's own setup keeps using the real git.
  * @param {string} binDir
- * @param {string} gitLog
+ * @param {string} _gitLog
  * @returns {void}
  */
 function installGitWrapper(binDir, _gitLog) {
@@ -94,7 +94,7 @@ function commandsFor(gitLog, repo) {
  * @param {string} binDir
  * @param {string} gitLog
  * @param {...string} args
- * @returns {{ logs: Record<string, unknown>[], status: number }}
+ * @returns {{ logs: { msg?: string, failed?: number, deep?: number, error?: { message?: string }, [key: string]: unknown }[], status: number | null }}
  */
 function runMaintain(root, binDir, gitLog, ...args) {
 	const res = spawnSync(

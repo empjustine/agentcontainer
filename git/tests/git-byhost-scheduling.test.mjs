@@ -173,10 +173,11 @@ function readFetches(sshLog) {
  */
 function countOverlaps(intervals, sameHost) {
 	let overlaps = 0;
-	for (let i = 0; i < intervals.length; i += 1) {
-		for (let j = i + 1; j < intervals.length; j += 1) {
-			const a = intervals[i];
-			const b = intervals[j];
+	// entries() + slice() instead of index pairs: noUncheckedIndexedAccess
+	// types intervals[i] as possibly-undefined, but every (i, j>i) pair is
+	// in-bounds by construction — the iterator makes that proof structural.
+	for (const [i, a] of intervals.entries()) {
+		for (const b of intervals.slice(i + 1)) {
 			if ((a.host === b.host) !== sameHost) {
 				continue;
 			}
@@ -205,7 +206,14 @@ function minSameHostGapNs(intervals) {
 	for (const list of byHost.values()) {
 		list.sort((a, b) => a.start - b.start);
 		for (let i = 1; i < list.length; i += 1) {
-			min = Math.min(min, list[i].start - list[i - 1].end);
+			const prev = list[i - 1];
+			const cur = list[i];
+			// Both in bounds by construction (1 <= i < length); the guard is
+			// what lets noUncheckedIndexedAccess see that too.
+			if (prev === undefined || cur === undefined) {
+				continue;
+			}
+			min = Math.min(min, cur.start - prev.end);
 		}
 	}
 	return min;
@@ -232,10 +240,17 @@ test("by-host scheduling: one job per host, per-host pacing (docs/d076)", () => 
 		assert.equal(discovery1?.minInterval, 1);
 		assert.equal(discovery1?.softwareForgeMinInterval, 30);
 		assert.equal(run1.status, 1, "fake-ssh fetches fail; exit 1 by tally");
-		const lonely = run1.stderrLines.find(
-			(l) => l.msg === "no upstream — cannot align; optimize only",
+		// run() types stderrLines as Record<string, unknown>; this row's repo
+		// field is a string on the wire — the double cast narrows it (the
+		// repo-wide `/** @type {T} */ (/** @type {unknown} */ (…))` pattern).
+		const lonely = /** @type {{ repo?: string } | undefined} */ (
+			/** @type {unknown} */ (
+				run1.stderrLines.find(
+					(l) => l.msg === "no upstream — cannot align; optimize only",
+				)
+			)
 		);
-		assert.match(String(lonely?.repo ?? ""), /local\/lonely\.git$/);
+		assert.match(lonely?.repo ?? "", /local\/lonely\.git$/);
 
 		const fetches1 = readFetches(sshLog);
 		assert.ok(
