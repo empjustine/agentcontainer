@@ -43,7 +43,7 @@
 
 set -eu
 
-# shellcheck disable=SC1091  # repo-root operator files, resolved from $0
+# shellcheck source-path=SCRIPTDIR source=log.sh
 . "$(dirname "$0")/log.sh"
 LOG_TOOL='freshness'
 export LOG_TOOL
@@ -64,7 +64,7 @@ case "${1:-}" in
 	;;
 esac
 
-# shellcheck disable=SC1091  # provides npm_run, which never shells out to npm
+# shellcheck source-path=SCRIPTDIR source=npm-run.sh
 . ./npm-run.sh
 
 # The one place a unit's secret requirement is written down: the generators

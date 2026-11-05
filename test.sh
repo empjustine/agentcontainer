@@ -24,14 +24,14 @@
 
 set -eu
 
-# shellcheck disable=SC1091  # repo-root operator files, resolved from $0
+# shellcheck source-path=SCRIPTDIR source=log.sh
 . "$(dirname "$0")/log.sh"
 LOG_TOOL='test'
 export LOG_TOOL
 
 root="$(CDPATH='' cd "$(dirname "$0")" && pwd)"
 cd "$root"
-# shellcheck disable=SC1091  # repo-pinned interpreter selection (node_run)
+# shellcheck source-path=SCRIPTDIR source=node-run.sh
 . ./node-run.sh
 
 log_info "unit tests (node --test: every */tests/)"

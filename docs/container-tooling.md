@@ -125,11 +125,10 @@ on the host (docs/d119). `estige/` retired its pair with the packaging change
 container argv), which leaves `llm-local-inference/` as the shell
 implementation's only consumer.
 
-On source it detects the backend and computes two paths every run script uses
-(instead of recomputing them per script):
+On source it detects the backend and computes the path every run script uses
+(instead of recomputing it per script):
 
 - `SCRIPT_DIR` — directory of the sourcing run script (from `$0`)
-- `REPO_ROOT`  — its parent, which for a unit's run script is the repo root
 
 It also sets `_workload` (`container` › `none`) and, for the container
 backend, `_container_tool` (`podman`/`docker`) — but run scripts should not read

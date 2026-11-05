@@ -34,7 +34,7 @@ here="$(CDPATH='' cd "$(dirname "$0")" && pwd)"
 # Sibling, not parent: b2a024c moved this file out of lib/ to the repo root,
 # so log.sh sits BESIDE it — the inherited `here/..` parent walk sourced
 # <checkout-parent>/log.sh and died with ENOENT before the vault round-trip.
-# shellcheck disable=SC1091
+# shellcheck source-path=SCRIPTDIR source=log.sh
 . "$here/log.sh"
 LOG_TOOL='environment'
 export LOG_TOOL

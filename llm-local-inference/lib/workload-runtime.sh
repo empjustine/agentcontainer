@@ -10,9 +10,11 @@
 # assessed in docs/d020-libvirt-qemu-sandbox.md (not implemented).
 
 # path resolution (the only "where do I live" logic; run scripts reuse these)
-# shellcheck disable=SC2034  # exported-by-contract for sourcing scripts
+# SCRIPT_DIR doubles as this file's documented export to its sourcing run
+# scripts (docs/container-tooling.md). No SC2034 disable: the one that used
+# to sit here, above the first command, applied file-wide and hid two dead
+# variables (REPO_ROOT, workload_GPU) — pruned rather than silenced.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # POSIX sh cannot locate a SOURCED file — $0 is the caller's script — so this
 # copy's own directory is derived from the caller by contract: the unit's lib/
 # sits next to the run scripts that source it. WORKLOAD_LIB_DIR is the seam
@@ -22,12 +24,12 @@ WORKLOAD_LIB_DIR="${WORKLOAD_LIB_DIR:-$SCRIPT_DIR/lib}"
 
 # structured logging (see lib/log.sh) — every tool sourcing this file inherits
 # log_debug/log_info/log_warn/log_error/log_die
-# shellcheck disable=SC1091
+# shellcheck source-path=SCRIPTDIR source=log.sh
 . "$WORKLOAD_LIB_DIR/log.sh"
 
 # interpreter selection (node_run) — a standalone sh lib any script can source
 # without the container API; sourced here so existing consumers keep it.
-# shellcheck disable=SC1091
+# shellcheck source-path=SCRIPTDIR source=node-run.sh
 . "$WORKLOAD_LIB_DIR/node-run.sh"
 
 # --- profile + runner helpers ----------------------------------------------
@@ -166,7 +168,6 @@ workload_NETWORK=''
 workload_RESTART=''
 workload_INIT=0
 workload_USER=0
-workload_GPU=0
 workload_HARDEN=0
 workload_WORKDIR=''
 workload_ENTRYPOINT=''
@@ -185,7 +186,7 @@ workload_restart()  { workload_RESTART="$1"; }
 workload_init()     { workload_INIT=1; }
 workload_network()  { workload_NETWORK="$1"; }
 workload_user()     { workload_USER=1; }
-workload_gpu()      { workload_GPU=1; detect_gpu_devs; }
+workload_gpu()      { detect_gpu_devs; }
 workload_hardening(){ workload_HARDEN=1; }
 workload_workdir()  { workload_WORKDIR="$1"; }
 workload_entrypoint(){ workload_ENTRYPOINT="$1"; }

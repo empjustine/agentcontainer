@@ -172,7 +172,7 @@ is no peers-only llama-swap mode anymore).
 docs/d120) is a **description-driven workload runner**: run
 scripts declare *what* they need and the tool renders *how* for the active
 backend — rootless podman or rootful docker —  It is
-the single place that detects the backend and computes `SCRIPT_DIR` / `REPO_ROOT`
+the single place that detects the backend and computes `SCRIPT_DIR`
 (the only "where do I live" logic), so run scripts never re-detect podman/docker
 or guess their own paths inline. PRoot was removed as a backend (see
 [container-tooling.md](container-tooling.md)); a qemu/libvirt VM backend is

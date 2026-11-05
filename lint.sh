@@ -12,9 +12,9 @@
 
 set -eu
 
-# shellcheck disable=SC1091
+# shellcheck source-path=SCRIPTDIR source=log.sh
 . "$(dirname "$0")/log.sh"
-# shellcheck disable=SC1091
+# shellcheck source-path=SCRIPTDIR source=npm-tools.sh
 . "$(dirname "$0")/npm-tools.sh"
 LOG_TOOL='lint'
 export LOG_TOOL

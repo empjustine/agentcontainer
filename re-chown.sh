@@ -3,7 +3,7 @@
 # Usage: ./re-chown [path] (default: CWD).  Uses "podman unshare chown" when
 # podman is available, else "sudo chown".
 
-# shellcheck disable=SC1091
+# shellcheck source-path=SCRIPTDIR source=log.sh
 . "$(dirname "$0")/log.sh"
 LOG_TOOL='re-chown'
 export LOG_TOOL

@@ -20,7 +20,7 @@
 #                      must match the cache ./generate.sh baked model paths from)
 
 set -eu
-# shellcheck disable=SC1091
+# shellcheck source-path=SCRIPTDIR source=lib/workload-runtime.sh
 . "$(dirname "$0")/lib/workload-runtime.sh"
 LOG_TOOL='llm-local-inference/run'
 export LOG_TOOL
@@ -62,7 +62,6 @@ if [ -f "$paths_file" ]; then
 	done <"$paths_file"
 fi
 
-# shellcheck disable=SC2154  # _workload is set by the sourced lib/workload-runtime.sh
 [ "$_workload" = 'workload' ] ||
 	log_die 91 "no container tool (podman/docker) — local inference requires the container backend"
 
@@ -92,6 +91,9 @@ workload_cmd      -config-dir /etc/llama-swap/config.d -listen 0.0.0.0:8080
 # No infisical wrapper here: the values were loaded by the explicit chain
 # (./environment.sh ./run.sh) and are forwarded through the workload_env
 # allowlist above.
+# shellcheck disable=SC2119  # bare call = no wrapper; workload_run's $1 is an
+# optional wrapper prefix (see its header in lib/workload-runtime.sh), not the
+# script's argv
 workload_run
 
 sleep 5

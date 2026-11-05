@@ -23,7 +23,7 @@
 set -eu
 
 here="$(CDPATH='' cd "$(dirname "$0")" && pwd)"
-# shellcheck disable=SC1091  # loads log.sh + the workload_* API
+# shellcheck source-path=SCRIPTDIR source=lib/workload-runtime.sh
 . "$here/lib/workload-runtime.sh"
 LOG_TOOL='llm-local-inference/run-all'
 export LOG_TOOL

@@ -4,7 +4,7 @@
 # container that mounts PATH with :z so podman handles the relabel to
 # container_file_t.  No-op (silently skipped) on non-SELinux systems.
 
-# shellcheck disable=SC1091
+# shellcheck source-path=SCRIPTDIR source=log.sh
 . "$(dirname "$0")/log.sh"
 LOG_TOOL='re-selinux'
 export LOG_TOOL

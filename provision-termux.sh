@@ -91,7 +91,7 @@
 
 set -eu
 
-# shellcheck disable=SC1091
+# shellcheck source-path=SCRIPTDIR source=log.sh
 . "$(dirname "$0")/log.sh"
 LOG_TOOL='build'
 export LOG_TOOL
