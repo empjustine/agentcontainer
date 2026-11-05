@@ -7,6 +7,12 @@ graph tools see plain notes (the same standing as
 because four style authorities are worth having offline and greppable, and one of
 them is not published as Markdown anywhere.
 
+**What consumes it:** `docs/writing-style.md`, the tree's prose contract, cites a
+line in these files under each of its rules (d142 decided the adoption, d143 the
+opening block). That makes this folder the source layer of a binding contract
+rather than a shelf of manuals: a rule here is worth quoting at a document, and
+the contract is where the quoting is agreed and kept.
+
 | folder                 | source                                                                                                                                                               | form                                                                                                 |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `google-style/`        | [Google developer documentation style guide](https://developers.google.com/style)                                                                                    | 70 files: 69 pages + index, **clipped from HTML** (no Markdown upstream)                             |

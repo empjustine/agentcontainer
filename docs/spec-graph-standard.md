@@ -202,7 +202,9 @@ Rules that keep the value parseable:
   in a `## Status` section at the top of the body — "superseded by d084",
   "phase 1 landed, phase 2 deferred", "enforced at each generator change". That
   prose is where the qualifier belongs: it is readable, and it cannot break a
-  parser.
+  parser. "Top of the body" means the first section: a document's opening block
+  of prose sits above it (`docs/writing-style.md`), so the qualifier stays the
+  first thing a reader reaches by heading.
 - **No synonyms.** If you are reaching for one of these, use the standard value
   and let the body carry the nuance:
 
@@ -293,6 +295,10 @@ Three constraints bind the placement, and the first one decides:
    state, not an orphan to be repaired by adding a row.
 4. If it changes a boundary, contract, or invariant, update the owning spec in
    the same change.
+5. Write the prose to `docs/writing-style.md`: the opening block (what it is,
+   what it is not, who reads it), one idea per sentence, and the three modal
+   forms for how binding a statement is. A living doc keeps its prose timeless;
+   a record stays true to its own moment instead (`docs/d142`, `docs/d143`).
 
 ## Changing a document
 

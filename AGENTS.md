@@ -90,6 +90,33 @@ log's curated-history rule, d072). When extending a numbered record, add
 named headings and named references; do not add new `§` anywhere.
 `docs/d042-documentation-taxonomy.md` carries the full constraint.
 
+## Prose: the writing contract
+
+**`docs/writing-style.md` owns the prose rules** — the opening block, the shape
+of a sentence, the three modals, timelessness, headings, procedures, and the
+read a document gets before it lands. Each rule carries its source line under
+`docs/docs/` and the measurement that justified it (d142, d143), so read that
+file rather than restating its rules elsewhere: a rule with two homes has two
+versions.
+
+Two parts of it matter most for prose an agent writes.
+
+- **A living document stays timeless.** No "now", "currently" or "no longer":
+  the tree moves and the sentence does not, and the pair then disagree. A
+  **record is the opposite** — it is a dated artefact, and its time-anchored
+  words mean "at the time of the record". That is the one exemption, and it is
+  why a record can narrate a change while `README.md` cannot.
+- **Say how binding a statement is.** A requirement states the constraint in
+  the declarative (`Each host runs exactly ONE instance`), a procedure opens
+  with the imperative, and guidance reaches for `must`, `we recommend`, or
+  `can`. Leave the force to `should` and the reader cannot tell which of the
+  three was meant.
+
+Two vendor rules are ruled out rather than adopted, and both are worth knowing
+before quoting a style guide at this tree: no second person (a document states
+what the system is, not what "you" do), and no conversational register
+(personality is noise to a reader who arrived to settle one question).
+
 ## Doc frontmatter: the spec-graph standard
 
 Every markdown file here whose frontmatter carries `id` + `type` is a node in
