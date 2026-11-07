@@ -88,6 +88,66 @@ replaced by rlimits/seccomp-notif shims.
 | seccomp + `SECCOMP_RET_USER_NOTIF` | syscall filter       | argv-level `execve` inspection, /proc and IP virtualization, pseudo-rlimits | `fencesandbox/fence`, `89luca89/clampdown` (sidecar), `multikernel/sandlock`, `souk4711/hakoniwa`                                |
 | cgroups v2                         | resource caps        | memory/CPU/io                                                               | `souk4711/hakoniwa` (via systemd), `getkern/kern`; elsewhere replaced (fence→rlimits+notif, clampdown→seccomp-notif)             |
 
+## An index of the field: the ai-sandboxes dataset
+
+One mirror is not a tool but a curated **index of agent-specific sandboxes**:
+`~/Downloads/references/github.com/pjlsergeant/ai-sandboxes.git` (HEAD
+`9badb24`, dataset v0.2.9, 2026-10-01). Its single `ai-sandboxes.yaml` carries
+24 principal `sandboxes`, 14 `adjacent` patterns, and 76 primary `sources`,
+and renders as pleasedonotescape.com. Unlike the per-mechanism sources below,
+it is a **claim-carrying comparison**: every non-identity field is
+`{value, ev: official|thread|editorial, ...}`, so vendor documentation,
+Hacker-News assertion, and the maintainers' own inference stay separable. It
+ships no code and no license file (checked) — link it, do not copy it.
+
+Its facets are the axes this file already argues along, so they are worth
+adopting as the shared vocabulary:
+
+| facet                  | values                                                                                 | our record that owns the axis                                                       |
+| ---------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `isolation_boundary`   | user → os_sandbox → container → microvm → vm (+ layered), 1-5                          | [d020](d020-libvirt-qemu-sandbox.md)'s isolation ladder                             |
+| `network_policy`       | open / allowlist / proxy_mediated / none / operator_managed / configurable             | [d127](d127-proxy-only-container-egress.md) and the d077 transport ladder           |
+| `credential_mediation` | ambient / mounted / forwarded / host_side_injection / os_keyring / managed_integration | [d104](d104-mutual-exit-relay-credential.md) and [d129](d129-agent-vault-2.md)-d133 |
+| `state_model`          | ephemeral / resumable / persistent / copy_apply                                        | d020 snapshot/rollback; d026's per-run stage                                        |
+| `threat_tier`          | t1_accidents / t2_exfiltration / t3_hostile_escape                                     | the lens above                                                                      |
+
+Two rows name our own design back to us:
+
+- **`host_side_injection` is the majority credential posture** (9 of 24
+  entries): the agent holds a placeholder and a host-side proxy swaps in the
+  real secret only for its bound destination — `gondolin` (the
+  earendil-works/pi org, our nearest analogue), `agentcage`, `discobox`'s
+  auditing proxy, `docker_sandboxes`' host-side header injection,
+  `greywall`, `nono`, `yoloai`, `omnigent`, `agentjail`. `forwarded`
+  (`clawk`, SSH agent) is the dataset's row for "the key never enters the
+  guest" — the industry spelling of the estige/agent-vault work in
+  [d129](d129-agent-vault-2.md).
+- **`proxy_mediated` networking** (5 entries) is
+  [d127](d127-proxy-only-container-egress.md)'s thesis, and `configurable`
+  (11) is the preset shape (`docker_sandboxes`' Open / Balanced / Locked
+  Down).
+
+Entry-level prior art already on this farm (verify against the farm copy, not
+the dataset's prose): `earendil-works/gondolin` (QEMU microVM),
+`clawkwork/clawk` (VM plus outbound allowlist), `matheusmoreira/virtdev`
+(KVM/QEMU plus nftables egress zones), `discobox-ai/discobox` (copy/apply
+plus auditing proxy and sentinel swap), `GreyhavenHQ/greywall`,
+`fencesandbox/fence`, `agentcage/agentcage` (layered container/VM with an
+inspecting fail-closed proxy). Entries the farm does not yet carry are useful
+as pointers only: `docker_sandboxes` (a shipping microVM plus host-side policy
+proxy plus host-side credential injection — the productised version of our
+target posture), `fly_sprites`, `exe_dev`, and the
+`adjacent` DIY rows (`separate_user_account`, `diy_container_plus_network`,
+`k8s_pvc_per_agent`, `vm_substrates`, `wasm_substrates`).
+
+**Read it as an index, not a source.** It is agent-CLI-centric: no serving
+(llama-swap), no relay/exit tunnel (`estige`), and its `container` tier
+lumps rootless podman without the fixed plumbing costs this repo already pays
+(no ports below 1024, `--userns=keep-id`, SELinux `z,U`). For any mechanism
+claim the primary source stays the tool's own repo/docs
+([d043](d043-cross-repo-reference-search.md)); what the dataset uniquely gives
+this file is the comparison axis and the evidence discipline.
+
 ## bwrap-only wrappers (agent harnesses)
 
 Thin shells around `bwrap` confining an agent to the cwd, network left open
