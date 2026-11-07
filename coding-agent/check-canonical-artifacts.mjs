@@ -20,7 +20,7 @@
  */
 
 import { readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -158,9 +158,9 @@ function main(args) {
 	process.exit(0);
 }
 
-if (
-	process.argv[1] &&
-	fileURLToPath(import.meta.url) === resolve(process.argv[1])
-) {
+// `import.meta.main`, not a path-spelling comparison: the same symlink bug
+// as the launcher's guard (node realpaths `import.meta.url` but not argv[1]),
+// which made an absolute symlinked entry a silent no-op.
+if (import.meta.main) {
 	main(process.argv.slice(2));
 }

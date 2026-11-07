@@ -27,7 +27,6 @@
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
-import { pathToFileURL } from "node:url";
 
 /** The five types — scope, not genre. @type {readonly string[]} */
 const TYPES = [
@@ -550,6 +549,10 @@ function main(argv) {
 	}
 }
 
-if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// `import.meta.main`, not an `import.meta.url === pathToFileURL(argv[1])`
+// comparison: node realpaths the module URL but keeps argv[1]'s spelling, so a
+// gate invoked by an absolute path through a symlink skipped main() and exited
+// 0 as if the tree were clean.
+if (import.meta.main) {
 	main(process.argv.slice(2));
 }

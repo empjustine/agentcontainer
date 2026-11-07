@@ -734,7 +734,13 @@ async function main() {
 	process.exit(code);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+// `import.meta.main` (node >= 24.2; this repo runs 24.22) replaces a
+// `process.argv[1] === fileURLToPath(import.meta.url)` comparison that was
+// false whenever the entry was invoked by an absolute path spelled through a
+// symlink: node realpaths `import.meta.url` but keeps argv[1]'s spelling, so
+// main() never ran and the process exited 0 with no output at all — the
+// Bazzite /home -> /var/home shape, an IDE task, any absolute argv.
+if (import.meta.main) {
 	try {
 		await main();
 	} catch (error) {

@@ -80,6 +80,11 @@ function fixture() {
 	mkdirSync(join(physical, "home/Downloads/references"), { recursive: true });
 	mkdirSync(join(physical, "srv/data"), { recursive: true });
 	symlinkSync(join(physical, "home"), home);
+	// The launcher reached through a SYMLINKED path: node realpaths
+	// `import.meta.url` but keeps argv[1]'s spelling, so a main-module guard
+	// that compares the two exits 0 with no output here — the /home -> /var/home
+	// shape every Bazzite host has.
+	symlinkSync(unit, join(tmp, "unit-link"));
 
 	const bin = join(tmp, "bin");
 	mkdirSync(bin, { recursive: true });
@@ -160,10 +165,12 @@ function jqFreePath() {
  * Run the launcher from the fixture project with the given DIRECTORY args.
  * @param {string[]} dirs
  * @param {NodeJS.ProcessEnv} [env]
+ * @param {string} [entry] the run.mjs spelling to invoke; defaults to the
+ *   physical path, and the symlinked spelling is the guard regression's point
  * @returns {{ status: number | null, stdout: string, stderr: string }}
  */
-function launch(dirs, env = launcherEnv()) {
-	const result = spawnSync(nodeRun, [runMjs, ...dirs], {
+function launch(dirs, env = launcherEnv(), entry = runMjs) {
+	const result = spawnSync(nodeRun, [entry, ...dirs], {
 		cwd: join(home, "project"),
 		env,
 		stdio: ["ignore", "pipe", "pipe"],
@@ -243,6 +250,18 @@ suite("the DIRECTORY argv is the d068 mount manifest", () => {
 			writeFileSync(expectation, got);
 		}
 		assert.equal(got, readFileSync(expectation, "utf8"));
+	});
+
+	test("an entry spelled through a symlink still launches", () => {
+		const { status, stdout, stderr } = launch(
+			[],
+			launcherEnv(),
+			join(tmp, "unit-link", "run.mjs"),
+		);
+		// exit 0 is NOT enough — the bug was exit 0 with no log at all, so the
+		// launch marker is the assertion.
+		assert.equal(status, 0, `${stdout}${stderr}`);
+		assert.match(stdout, /starting container/);
 	});
 
 	test("no entrypoint needed jq on PATH", () => {
