@@ -397,11 +397,17 @@ Restated with citations, the way d104 carries its own:
   initiation-time argv, so an established relay opens no ACCEPT.
 - **The ACCEPT's carrier rung.** Which ladder rung carries the ACCEPT's
   event pipe is a ladder-level question broader than this record: the
-  duplex rungs (h2-POST, WebSocket) carry events on the open stream, the
-  stop-and-wait floor long-polls a parked exchange, and an h1.1
-  held-open full-duplex variant — attempted, if feasible, before the
-  WebSocket and the floor, to spare the floor the long-poll — would be a
-  new rung owned by a ladder record in d077's family, not here. Until it
-  lands, the relay rides the duplex rungs and long-polls the floor.
+  duplex rungs (h2-POST, WebSocket) carry events on the open stream, and
+  the stop-and-wait floor long-polls a parked exchange. The held-open
+  h1.1 variant once proposed here — a rung ahead of the WebSocket and
+  the floor, to spare the floor the long-poll — is measured dead through
+  the funnel/serve edge ([d147](d147-funnel-edge-carrier-spike.md)): the
+  edge never flushes an h1.1 response while the request body is open, so
+  a held-open exchange cannot even complete its handshake. The shape is
+  viable only behind intermediaries that flush incrementally, and a rung
+  for those belongs to a ladder record in d077's family, scoped to
+  non-funnel paths. The measured path stands: the relay rides the duplex
+  rungs — h2 is proven end-to-end including exit-originated push — and
+  the floor long-polls.
 - Per-consumer rules on top of `EVENT`'s consumer field, if a fleet is
   admitted but not mutually trusting.
