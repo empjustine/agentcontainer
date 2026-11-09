@@ -62,6 +62,7 @@ const frameHeaderLen = 8
 // outcomes without the exit node leaking resolver or host internals.
 const (
 	errReasonTargetIP   = "target-ip-literal" // VPN-R22: resolution stays exit-node-side
+	errReasonBogon      = "target-bogon"      // d163: a guaranteed-refused name or address
 	errReasonPortDenied = "port-denied"       // VPN-R37
 	errReasonDenied     = "egress-denied"     // VPN-R35/36
 	errReasonResolve    = "resolve-failed"

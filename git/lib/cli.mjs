@@ -19,6 +19,7 @@
  */
 
 import { logError } from "./git-core.mjs";
+import { installStopHandler, StopRequested, stopExitCode } from "./stop-signal.mjs";
 
 /**
  * How a positional (non-flag) argv entry is treated.
@@ -42,7 +43,7 @@ import { logError } from "./git-core.mjs";
  * @param {string} key
  */
 function flagNames(names, key) {
-	return new Set(names ?? [`--${key}`]);
+  return new Set(names ?? [`--${key}`]);
 }
 
 /**
@@ -53,9 +54,9 @@ function flagNames(names, key) {
  * @returns {Error & { flag: string }}
  */
 function unknownFlag(token) {
-	return Object.assign(new Error("unknown flag (try --help)"), {
-		flag: token,
-	});
+  return Object.assign(new Error("unknown flag (try --help)"), {
+    flag: token,
+  });
 }
 
 /**
@@ -65,83 +66,89 @@ function unknownFlag(token) {
  * @returns {{ values: Record<string, any>, positionals: string[], help: boolean }}
  */
 export function parseFlags(argv, table, positionals = "reject") {
-	/** @type {Record<string, any>} */
-	const values = {};
-	/** @type {Map<string, string>} */
-	const byName = new Map();
-	for (const [key, spec] of Object.entries(table)) {
-		values[key] = spec.kind === "list" ? [] : spec.default;
-		for (const name of flagNames(spec.names, key)) {
-			byName.set(name, key);
-		}
-	}
-	/** @type {string[]} */
-	const collected = [];
-	let help = false;
-	for (let i = 0; i < argv.length; i += 1) {
-		const token = argv[i];
-		// The loop condition guarantees a value; the check is the type gate's
-		// form of that fact.
-		if (token === undefined) {
-			break;
-		}
-		if (token === "-h" || token === "--help") {
-			help = true;
-			continue;
-		}
-		const key = byName.get(token);
-		if (key === undefined) {
-			if (positionals === "reject" || token.startsWith("-")) {
-				throw unknownFlag(token);
-			}
-			collected.push(token);
-			continue;
-		}
-		const spec = table[key];
-		// A boolean is the whole flag: it consumes nothing, so a following
-		// `--no-optimize` stays a flag instead of becoming `--deep-optimize`'s
-		// value. Everything else takes the next token — unfetched at the end of
-		// argv is the loose case the hand-written loops had: no value, no
-		// complaint.
-		if (spec?.kind === "bool") {
-			values[key] = true;
-			continue;
-		}
-		const raw = argv[++i];
-		switch (spec?.kind) {
-			case "number":
-				values[key] = Number(raw);
-				break;
-			case "list": {
-				const list = /** @type {unknown[]} */ (values[key]);
-				list.push(raw);
-				break;
-			}
-			default:
-				values[key] = raw;
-		}
-	}
-	// The policy's own answer, under one key, so an entry never re-derives it:
-	// the last token, all of them, or the one query the shell split apart.
-	switch (positionals) {
-		case "last":
-			values.positional = collected.at(-1);
-			break;
-		case "list":
-			values.positional = collected;
-			break;
-		case "join":
-			values.positional = collected.join(" ");
-			break;
-		default:
-			break;
-	}
-	return { values, positionals: collected, help };
+  /** @type {Record<string, any>} */
+  const values = {};
+  /** @type {Map<string, string>} */
+  const byName = new Map();
+  for (const [key, spec] of Object.entries(table)) {
+    values[key] = spec.kind === "list" ? [] : spec.default;
+    for (const name of flagNames(spec.names, key)) {
+      byName.set(name, key);
+    }
+  }
+  /** @type {string[]} */
+  const collected = [];
+  let help = false;
+  for (let i = 0; i < argv.length; i += 1) {
+    const token = argv[i];
+    // The loop condition guarantees a value; the check is the type gate's
+    // form of that fact.
+    if (token === undefined) {
+      break;
+    }
+    if (token === "-h" || token === "--help") {
+      help = true;
+      continue;
+    }
+    const key = byName.get(token);
+    if (key === undefined) {
+      if (positionals === "reject" || token.startsWith("-")) {
+        throw unknownFlag(token);
+      }
+      collected.push(token);
+      continue;
+    }
+    const spec = table[key];
+    // A boolean is the whole flag: it consumes nothing, so a following
+    // `--no-optimize` stays a flag instead of becoming `--deep-optimize`'s
+    // value. Everything else takes the next token — unfetched at the end of
+    // argv is the loose case the hand-written loops had: no value, no
+    // complaint.
+    if (spec?.kind === "bool") {
+      values[key] = true;
+      continue;
+    }
+    const raw = argv[++i];
+    switch (spec?.kind) {
+      case "number":
+        values[key] = Number(raw);
+        break;
+      case "list": {
+        const list = /** @type {unknown[]} */ (values[key]);
+        list.push(raw);
+        break;
+      }
+      default:
+        values[key] = raw;
+    }
+  }
+  // The policy's own answer, under one key, so an entry never re-derives it:
+  // the last token, all of them, or the one query the shell split apart.
+  switch (positionals) {
+    case "last":
+      values.positional = collected.at(-1);
+      break;
+    case "list":
+      values.positional = collected;
+      break;
+    case "join":
+      values.positional = collected.join(" ");
+      break;
+    default:
+      break;
+  }
+  return { values, positionals: collected, help };
 }
 
 /**
  * Run an entry's body, reporting any throw as the folder's one abort line and
  * exit status 1. Awaited by the entry so a rejection cannot slip past it.
+ *
+ * It also installs the signal handler (docs/d164): every entry in this folder
+ * is reached through here, so "a signal finishes the step in flight" is a
+ * property of the folder rather than a habit each tool has to keep. A stop
+ * exits with the signal's code instead of 1 — a sweep the operator cut short
+ * is not a sweep that failed.
  *
  * `report` exists for the one entry whose abort line is a different SHAPE, not
  * a different policy: forge-mirror flattens a git failure to `{error, detail}`
@@ -153,10 +160,18 @@ export function parseFlags(argv, table, positionals = "reject") {
  * @returns {Promise<void>}
  */
 export async function runEntry(label, body, { report } = {}) {
-	try {
-		await body();
-	} catch (err) {
-		logError(`${label} aborted`, report ? report(err) : { error: err });
-		process.exit(1);
-	}
+  installStopHandler();
+  try {
+    await body();
+  } catch (err) {
+    if (err instanceof StopRequested) {
+      logError(`${label} stopped at a step boundary`, {
+        signal: err.signal,
+        exitCode: stopExitCode(),
+      });
+      process.exit(stopExitCode());
+    }
+    logError(`${label} aborted`, report ? report(err) : { error: err });
+    process.exit(1);
+  }
 }

@@ -26,6 +26,7 @@ import (
 	"net"
 	"net/netip"
 	"strconv"
+	"strings"
 )
 
 // defaultDenyCidrs is VPN-R35's normative list, verbatim as data. These are
@@ -53,20 +54,118 @@ var defaultDenyCidrs = []string{
 // operator's data when configured; 80/443 only when they are not.
 var defaultEgressPorts = []uint16{80, 443}
 
+// guaranteedBogonCidrs is d146's exit-owned set, now enforced by the relay
+// door as well as the exit's dial (d163): space that can never answer a
+// connection, so neither end spends a lookup or a socket on it. It is
+// deliberately narrower than defaultDenyCidrs — RFC 1918, link-local and the
+// documentation ranges are d146's "possible bogons", left to the pinhole
+// review because a real network does allocate them.
+var guaranteedBogonCidrs = []string{
+	"0.0.0.0/8",          // this network
+	"127.0.0.0/8",        // loopback
+	"255.255.255.255/32", // limited broadcast
+	"224.0.0.0/4",        // multicast — no TCP dial answers it
+	"::/128",             // unspecified v6
+	"::1/128",            // loopback v6
+	"::ffff:0:0/96",      // v4-mapped: an IPv4 target has the plain spelling only
+	"100::/64",           // discard-only
+}
+
+// guaranteedBogons parses the constant once at load. The list is code, not
+// config, so a bad entry is a programming error — a panic here says so
+// louder than a mis-verdict at some later dial would.
+var guaranteedBogons = func() []netip.Prefix {
+	out := make([]netip.Prefix, 0, len(guaranteedBogonCidrs))
+	for _, c := range guaranteedBogonCidrs {
+		p, err := netip.ParsePrefix(c)
+		if err != nil {
+			panic("internal: bad guaranteed-bogon CIDR " + c)
+		}
+		out = append(out, p)
+	}
+	return out
+}()
+
+// isGuaranteedBogon answers for one address AS SPELLED. The spelling is
+// load-bearing: the mapped block sits in the list precisely so an IPv4
+// bogon cannot be re-spelled around its refusal, and unmapping first would
+// undo that (d146: the plain spelling is the only one for an IPv4 target).
+func isGuaranteedBogon(addr netip.Addr) bool {
+	for _, p := range guaranteedBogons {
+		if p.Contains(addr) {
+			return true
+		}
+	}
+	return false
+}
+
+// isBogonName is the DNS half of the same refusal (d163): RFC 6761 reserves
+// localhost, every name under the .localhost TLD resolves inside the host by
+// the same rule, and guaranteedBogonNames carries the /etc/hosts family
+// beside them — no lookup can produce a useful answer for any of them, so
+// both ends refuse the name before resolution. The trailing dot (DNS's root
+// anchor) and the case (DNS's case-insensitivity) are the same name wearing
+// another spelling, and neither spelling may dodge the refusal.
+func isBogonName(host string) bool {
+	h := strings.ToLower(strings.TrimSuffix(host, "."))
+	return h == localhostName || strings.HasSuffix(h, ".localhost") || guaranteedBogonNames[h]
+}
+
+// localhostName is RFC 6761's reserved loopback name, spelled once because
+// three surfaces must agree on it: the name door refuses it (d163),
+// requireLoopback accepts it as loopback (VPN-R23), and proxyEnvLoopback
+// lists it as always-direct.
+const localhostName = "localhost"
+
+// guaranteedBogonNames is the /etc/hosts half of the name door: the
+// localhost4/localhost6 and .localdomain spellings a default Fedora/RHEL
+// hosts file sets beside localhost, all carrying loopback's meaning.
+// Exact spellings rather than a prefix rule, because a localhost* pattern
+// would also swallow names like localhost.example.com, which the network
+// may answer for (d163).
+var guaranteedBogonNames = map[string]bool{
+	"localhost.localdomain":   true,
+	"localhost4":              true,
+	"localhost4.localdomain4": true,
+	"localhost6":              true,
+	"localhost6.localdomain6": true,
+}
+
 // egressConfig is the config-data half of the policy (VPN-R38): opt-in
 // CIDRs that override the default-deny table, and the port set that
 // replaces the 80/443 default when present.
 type egressConfig struct {
 	AllowCidrs []string `json:"allowCidrs,omitempty"`
 	Ports      []uint16 `json:"ports,omitempty"`
+	// AllowIPLiterals is the IP-exit switch (d163). Off, an address target
+	// dies at the door with target-ip-literal; on, it falls through to the
+	// dial path like a name — the address table still answers for it after
+	// resolution, and the guaranteed refusals answer first either way.
+	AllowIPLiterals bool `json:"allowIPLiterals,omitempty"`
 }
+
+// hostLookup is the exit's one DNS path (VPN-R36): dialValidated resolves
+// through this and nothing else.
+type hostLookup interface {
+	LookupIPAddr(ctx context.Context, host string) ([]net.IPAddr, error)
+}
+
+// defaultHostLookup fills every new policy's resolver. Tests swap it in
+// TestMain for a table over the suite's alias names — the door refuses
+// `localhost`/`.localhost` before any lookup (d163), so a test that must
+// reach a loopback upstream by name dials its alias instead, and no test
+// may let the host's DNS decide a policy outcome: an accidental lookup has
+// to fail as NXDOMAIN, not as a packet leaving the machine.
+var defaultHostLookup hostLookup = net.DefaultResolver
 
 // egressPolicy is the parsed, ready-to-check form. Zero value is not usable;
 // build with newEgressPolicy so bad config data fails loudly (NFR-2).
 type egressPolicy struct {
-	deny  []netip.Prefix
-	allow []netip.Prefix
-	ports map[uint16]bool
+	deny          []netip.Prefix
+	allow         []netip.Prefix
+	ports         map[uint16]bool
+	allowLiterals bool
+	resolver      hostLookup
 }
 
 func newEgressPolicy(cfg egressConfig) (*egressPolicy, error) {
@@ -95,6 +194,8 @@ func newEgressPolicy(cfg egressConfig) (*egressPolicy, error) {
 		}
 		p.ports[port] = true
 	}
+	p.allowLiterals = cfg.AllowIPLiterals
+	p.resolver = defaultHostLookup
 	return p, nil
 }
 
@@ -122,6 +223,35 @@ func (p *egressPolicy) allowAddr(ip netip.Addr) bool {
 
 func (p *egressPolicy) allowPort(port uint16) bool {
 	return p.ports[port]
+}
+
+// targetVerdict is the pre-dial decision for one CONNECT target: the stable
+// CONNECT_ERR reason the target must die with, or "" when the dial path may
+// take it. It reads no DNS — the door runs it before any lookup, and the
+// resolution half (VPN-R36) stays below in dialValidated.
+//
+// The order is the policy (d163): guaranteed refusals answer first, so no
+// knob can re-enable a name or an address with no possible answer on the
+// other end; then the IP-exit gate, which keeps address targets refused
+// until the operator configures it; then the port set. The address table is
+// consulted after resolution instead, because that is where the addresses
+// are.
+func (p *egressPolicy) targetVerdict(host string, port uint16) string {
+	if isBogonName(host) {
+		return errReasonBogon
+	}
+	if addr, ok := parseIPLiteral(host); ok {
+		if isGuaranteedBogon(addr) {
+			return errReasonBogon
+		}
+		if !p.allowLiterals {
+			return errReasonTargetIP
+		}
+	}
+	if !p.allowPort(port) {
+		return errReasonPortDenied
+	}
+	return ""
 }
 
 // splitConnectTarget parses and validates a CONNECT target "host:port".
@@ -153,12 +283,14 @@ func splitConnectTarget(target string) (host string, port uint16, err error) {
 	return h, uint16(n), nil
 }
 
-// parseIPLiteral reports whether a CONNECT host is already an address
-// (VPN-R22: rejected — resolution and pinning stay server-side, so there is
-// never a second, unchecked dial path).
-func parseIPLiteral(host string) bool {
-	_, err := netip.ParseAddr(host)
-	return err == nil
+// parseIPLiteral reports whether a CONNECT host is already an address, and
+// returns it as spelled. The trailing dot is DNS's root anchor, so
+// "1.2.3.4." is the same target spelled as a name: trimming it here is what
+// keeps that spelling from dodging the address rules by failing the parse
+// (VPN-R22 — one classification for one target, whichever door asks).
+func parseIPLiteral(host string) (netip.Addr, bool) {
+	addr, err := netip.ParseAddr(strings.TrimSuffix(host, "."))
+	return addr, err == nil
 }
 
 // dialValidated is VPN-R20/36 in one function: resolve the name ONCE with
@@ -166,7 +298,7 @@ func parseIPLiteral(host string) bool {
 // first allowed one, and dial that pinned address (never the name — a second
 // lookup is exactly the rebinding window this closes).
 func dialValidated(ctx context.Context, p *egressPolicy, host string, port uint16) (net.Conn, netip.Addr, error) {
-	ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+	ips, err := p.resolver.LookupIPAddr(ctx, host)
 	if err != nil {
 		return nil, netip.Addr{}, resolutionError{host: host, err: err}
 	}

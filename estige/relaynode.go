@@ -67,6 +67,10 @@ type relayConfig struct {
 	proxyAddr string      // HTTP CONNECT listener (must be loopback, VPN-R23)
 	socksAddr string      // SOCKS5 listener (must be loopback, VPN-R23)
 	chain     *chainProxy // optional upstream chain for the tunnel leg (docs/d094)
+	// legacyIPRelay is the relay half of the IP-exit switch (d163): off,
+	// every address target dies at the local doors before a tunnel exists;
+	// on, the address is handed over and the exit's verdict answers.
+	legacyIPRelay bool
 }
 
 // relayConfigFromEnv assembles the config from the flag values and the
@@ -77,7 +81,12 @@ type relayConfig struct {
 // ws/wss) and normalized here — the one place — to the canonical ws/wss
 // every carrier and probe branches on; each carrier rewrites to its own
 // wire scheme itself (docs/d090 §1).
-func relayConfigFromEnv(proxyAddr, socksAddr string) (relayConfig, error) {
+//
+// legacyIPRelay rides as a parameter rather than the environment because it
+// is argv — the same side of the ledger as d145's relay-side flags, and a
+// switch this load-bearing must be visible in the process's own command
+// line (d163).
+func relayConfigFromEnv(proxyAddr, socksAddr string, legacyIPRelay bool) (relayConfig, error) {
 	var cfg relayConfig
 	raw := os.Getenv(envTunnelURL)
 	if raw == "" {
@@ -103,6 +112,7 @@ func relayConfigFromEnv(proxyAddr, socksAddr string) (relayConfig, error) {
 	cfg.label = os.Getenv(envClientLabel)
 	cfg.proxyAddr = proxyAddr
 	cfg.socksAddr = socksAddr
+	cfg.legacyIPRelay = legacyIPRelay
 	// The chain env is read HERE, with the rest of the one config path:
 	// bad proxy config must refuse startup before any bind (VPN-R26).
 	cfg.chain, err = relayChainFromEnv(u)
@@ -272,7 +282,7 @@ func requireLoopback(addr string) error {
 	if err != nil {
 		return fmt.Errorf("listen address %q must be host:port: %w", addr, err)
 	}
-	if host == "localhost" {
+	if host == localhostName {
 		return nil
 	}
 	ip, err := netip.ParseAddr(host)
@@ -380,7 +390,7 @@ func (e *connectRejectedError) Error() string {
 // on SOCKS — a transport failure is not that.
 func deniedReason(reason string) bool {
 	switch reason {
-	case errReasonDenied, errReasonPortDenied, errReasonTargetIP:
+	case errReasonDenied, errReasonPortDenied, errReasonTargetIP, errReasonBogon:
 		return true
 	}
 	return false
@@ -577,13 +587,44 @@ func (c *relayNode) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
+// localTargetRefusal is the relay's own target gate (d163): what it refuses
+// itself, before a tunnel exists, and the SOCKS reply byte that refusal is
+// worth. ("", 0) means the target may be handed to the tunnel, where the
+// exit's verdict answers the rest. The codes keep their meanings: 0x02 is a
+// refusal no switch re-enables — the guarantee answers first here exactly as
+// it does at the exit — and 0x08 is VPN-R22's byte-identical refusal of the
+// address form that -legacy-ip-relay could admit.
+func (c *relayNode) localTargetRefusal(host string) (detail string, socksRep byte) {
+	if isBogonName(host) {
+		return "target " + host + " is a guaranteed-refused name (localhost and .localhost, d163)", 0x02
+	}
+	if addr, ok := parseIPLiteral(host); ok {
+		if isGuaranteedBogon(addr) {
+			return "target " + addr.String() + " is a guaranteed-bogon address (d163)", 0x02
+		}
+		if !c.cfg.legacyIPRelay {
+			return "this relay does not relay address targets (start it with -legacy-ip-relay, d163)", 0x08
+		}
+	}
+	return "", 0
+}
+
 func (c *relayNode) handleConnect(w http.ResponseWriter, r *http.Request) {
 	target := connectTarget(r)
-	if _, _, err := splitConnectTarget(target); err != nil {
+	host, _, err := splitConnectTarget(target)
+	if err != nil {
 		// No port means no protocol target (VPN-R21's ports are explicit);
 		// this is the application's mistake, not a tunnel failure.
 		writeProblem(w, r, http.StatusBadRequest, "bad-connect-target",
 			"CONNECT target must be host:port", err)
+		return
+	}
+	// The relay's own gate (d163) runs before a tunnel exists: a target
+	// this relay must not relay dies here, in the local problem vocabulary,
+	// and no session opens on the exit for it.
+	if detail, _ := c.localTargetRefusal(host); detail != "" {
+		writeProblem(w, r, http.StatusForbidden, "target-refused",
+			"This relay refuses that target", errors.New(detail))
 		return
 	}
 	ws, err := c.openTunnel(r.Context(), target)
@@ -672,8 +713,9 @@ func (c *relayNode) serveSOCKS(ctx context.Context, ln net.Listener) {
 // handleSOCKS speaks just enough RFC 1928: no-auth greeting (the listener
 // is loopback-only, VPN-R23 — a credential check here would be theater),
 // CONNECT command, domain or IP address types. Domain names pass through
-// unresolved; IP literals are refused because the exit node resolves
-// (VPN-R22 — one resolution path, one place the pin happens).
+// unresolved; every other target answers at localTargetRefusal (d163) —
+// address targets keep VPN-R22's byte-identical 0x08 default until
+// -legacy-ip-relay says otherwise, and guaranteed refusals answer first.
 func (c *relayNode) handleSOCKS(ctx context.Context, conn net.Conn) {
 	defer func() { _ = conn.Close() }()
 	_ = conn.SetDeadline(time.Now().Add(socksHandshakeTimeout))
@@ -716,16 +758,16 @@ func (c *relayNode) handleSOCKS(ctx context.Context, conn net.Conn) {
 		if _, err := io.ReadFull(conn, b[:]); err != nil {
 			return
 		}
-		socksReply(conn, 0x08) // exit-node-side resolution only (VPN-R22)
-		return
+		host = netip.AddrFrom4(b).String()
 	case 4: // IPv6 literal
 		var b [16]byte
 		if _, err := io.ReadFull(conn, b[:]); err != nil {
 			return
 		}
-		socksReply(conn, 0x08)
-		return
-	case 3: // domain name — the supported path
+		// As spelled, without an unmap: a v4-in-v6 address stays in the
+		// mapped block where the guaranteed refusal catches it (d146).
+		host = netip.AddrFrom16(b).String()
+	case 3: // domain name
 		var l [1]byte
 		if _, err := io.ReadFull(conn, l[:]); err != nil {
 			return
@@ -735,12 +777,14 @@ func (c *relayNode) handleSOCKS(ctx context.Context, conn net.Conn) {
 			return
 		}
 		host = string(name)
-		if parseIPLiteral(host) {
-			socksReply(conn, 0x08)
-			return
-		}
 	default:
 		socksReply(conn, 0x08)
+		return
+	}
+	// One gate for every address form, before the port bytes are read and
+	// before a tunnel exists (d163).
+	if detail, rep := c.localTargetRefusal(host); detail != "" {
+		socksReply(conn, rep)
 		return
 	}
 	var portBytes [2]byte

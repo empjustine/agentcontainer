@@ -37,7 +37,7 @@
  *
  * Usage:
  *   ./llm-local-inference/model-sizes.sh    # rewrite the table (the only mode)
- *   … | jq 'select(.level!="debug")'       # reader-side prune of the detail
+ *   … | jq 'select(.severityNumber>=5)'     # reader-side prune of the detail
  *
  * There is deliberately no --check and no --verbose (docs/d060): the table is
  * byte-identical over unchanged inputs (above), so run + `git diff` answers
@@ -310,8 +310,8 @@ function toGb(bytes) {
  * into zero-coverage repos and extra quants in listed repos (R5). The counts
  * are always reported — a host can carry dozens of extra quants per repo, so
  * the per-repo file lists ride at `debug` — emitted unconditionally and
- * tagged so a reader can take just the summary (`jq 'select(.level!="debug")'`,
- * docs/d060, d045).
+ * tagged so a reader can take just the summary
+ * (`jq 'select(.severityNumber>=5)'`, docs/d060, d045, and d151 for the field).
  * @param {Record<string, unknown>[]} models
  * @returns {void}
  */

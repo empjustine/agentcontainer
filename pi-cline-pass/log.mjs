@@ -1,13 +1,19 @@
 /**
  * @fileoverview log.mjs — this folder's structured logging: one JSON object
- * per line on stdout carrying the repo-wide `ts`/`level`/`tool`/`msg` fields
- * (docs/d045/d060).
+ * per line on stdout. The record leads with `msg`, carries the call site's
+ * fields next, and ends with this kernel's `ts`, `severityNumber` and `tool`
+ * (docs/d045/d060; the order is d151's).
+ *
+ * `ts` is Unix epoch MILLISECONDS as a number, and `severityNumber` is
+ * OpenTelemetry's SeverityNumber — the level name folded into bands of four,
+ * so a reader compares numbers where it used to match level words (docs/d151
+ * owns the record shape and the canonical ranges).
  *
  * Two files here log (`generate.mjs`, `sources.mjs`), each naming itself once
  * with setLogTool, so every line is attributable to the file that emitted it.
  * Level filtering is the consumer's job (docs/d045): nothing is dropped here,
- * and a reader prunes with `jq 'select(.level!="debug")'`. Messages are stable
- * labels; per-call metadata rides the structured fields and is never
+ * and a reader prunes with `jq 'select(.severityNumber >= 5)'`. Messages are
+ * stable labels; per-call metadata rides the structured fields and is never
  * interpolated into the message.
  *
  * Scope is deliberately this folder's. The shared kernel this was folded out
@@ -27,9 +33,35 @@ export function setLogTool(name) {
 	tool = name;
 }
 
-/** @returns {string} UTC now at second precision — the `ts` field. */
-function ts() {
-	return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+/**
+ * Each level's wire value, as an index into OpenTelemetry's severity bands
+ * (docs/d151): the four levels this kernel emits sit on their band's floor,
+ * and the remaining anchors are here so a new helper inherits the scale
+ * instead of re-deriving it.
+ * @type {Record<string, number>}
+ */
+const SEVERITY_NUMBER = {
+	trace: 1,
+	debug: 5,
+	info: 9,
+	warn: 13,
+	error: 17,
+	fatal: 21,
+};
+
+/**
+ * A level name as its SeverityNumber. An unknown level fails here rather than
+ * serializing to `undefined`: a record with no severity is a record nobody can
+ * sort, so the call site that spelled the level wrong is what has to change.
+ * @param {string} level
+ * @returns {number}
+ */
+function severityNumber(level) {
+	const number = SEVERITY_NUMBER[level];
+	if (number === undefined) {
+		throw Object.assign(new Error("unknown log level"), { level });
+	}
+	return number;
 }
 
 /**
@@ -108,13 +140,16 @@ function serializeError(err, depth) {
  * @returns {void}
  */
 function emit(level, msg, fields = {}) {
+	// The event leads; the three fields this kernel fills in trail it, so a
+	// reader skimming raw lines, or a terminal that truncates them, meets what
+	// happened before the bookkeeping (docs/d151).
 	process.stdout.write(
 		`${JSON.stringify({
-			ts: ts(),
-			level,
-			tool,
 			msg,
 			.../** @type {Record<string, unknown>} */ (serialize(fields, 0)),
+			ts: Date.now(),
+			severityNumber: severityNumber(level),
+			tool,
 		})}\n`,
 	);
 }

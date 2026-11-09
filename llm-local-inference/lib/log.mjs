@@ -2,15 +2,24 @@
  * @fileoverview log.mjs — structured logging shared by this repo's node tools.
  *
  * One JSON object per line on stdout (LOG_FORMAT=logfmt for logfmt):
- *   {"ts":"2025-09-02T12:00:00Z","level":"info","tool":"generate-pi-coding-agent","msg":"...","key":"value"}
+ *   {"msg":"...","key":"value","ts":1756824000000,"severityNumber":9,"tool":"coding-agent/generate"}
+ *
+ * `msg` leads and the fields this kernel fills in trail it, so the event is
+ * what a truncated view keeps. `ts` is Unix epoch MILLISECONDS as a number, and
+ * `severityNumber` is OpenTelemetry's SeverityNumber — the level name folded
+ * into bands of four so a consumer compares numbers instead of matching words.
+ * docs/d151 owns the record shape and its field order; the canonical ranges are
+ * TRACE 1-4, DEBUG 5-8, INFO 9-12, WARN 13-16, ERROR 17-20, FATAL 21-24, and 0
+ * is an unspecified severity.
+ * @see https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitynumber
  *
  * Level filtering is the consumer's job (d045, reaffirmed by d060): no line
  * is ever dropped here. A producer logs the useful-but-noisy detail at
  * `debug` unconditionally and never carries a --verbose branch of its own
  * (d045 owns the rest of the contract — static message labels, structured
  * fields, full cause chains), and whoever reads the stream prunes it —
- * `jq 'select(.level!="debug")'` for the quiet view, or one level with
- * `jq 'select(.level=="error")'`.
+ * `jq 'select(.severityNumber >= 5)'` for the quiet view, or one band with
+ * `jq 'select(.severityNumber >= 17)'`.
  *
  * Stream: stdout by default. A script whose stdout IS the machine-consumed
  * payload (git/audit.mjs's JSON report, search-references' results,
@@ -59,8 +68,35 @@ export function setLogStream(name) {
 	stream = name === "stderr" ? process.stderr : process.stdout;
 }
 
-function ts() {
-	return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+/**
+ * Each level's wire value, as an index into OpenTelemetry's severity bands
+ * (docs/d151): the four levels this kernel emits sit on their band's floor,
+ * and the remaining anchors are here so a new helper inherits the scale
+ * instead of re-deriving it.
+ * @type {Record<string, number>}
+ */
+const SEVERITY_NUMBER = {
+	trace: 1,
+	debug: 5,
+	info: 9,
+	warn: 13,
+	error: 17,
+	fatal: 21,
+};
+
+/**
+ * A level name as its SeverityNumber. An unknown level fails here rather than
+ * serializing to `undefined`: a record with no severity is a record nobody can
+ * sort, so the call site that spelled the level wrong is what has to change.
+ * @param {string} level
+ * @returns {number}
+ */
+function severityNumber(level) {
+	const number = SEVERITY_NUMBER[level];
+	if (number === undefined) {
+		throw Object.assign(new Error("unknown log level"), { level });
+	}
+	return number;
 }
 
 /**
@@ -150,14 +186,23 @@ function fmtLogfmtValue(v) {
 
 /**
  * One log line. The message is the stable label; structured fields carry the
- * per-call metadata (docs/d045 — never interpolated into the message).
+ * per-call metadata (docs/d045 — never interpolated into the message). The
+ * level name reaches the wire as its SeverityNumber, so a record carries one
+ * sortable number where it used to carry a word (docs/d151).
  * @param {string} level
  * @param {string} msg
  * @param {Record<string, unknown>} [fields]
  * @returns {void}
  */
 function emit(level, msg, fields = {}) {
-	const base = { ts: ts(), level, tool, msg };
+	// The event leads; the three fields this kernel fills in trail it, so a
+	// reader skimming raw lines, or a terminal that truncates them, meets what
+	// happened before the bookkeeping (docs/d151).
+	const trailer = {
+		ts: Date.now(),
+		severityNumber: severityNumber(level),
+		tool,
+	};
 	if (process.env.LOG_FORMAT === "logfmt") {
 		const rest = Object.entries(
 			/** @type {Record<string, unknown>} */ (serialize(fields, 0)),
@@ -166,14 +211,15 @@ function emit(level, msg, fields = {}) {
 			.join(" ");
 		const msgv = /[\s"=\\]/.test(msg) ? JSON.stringify(msg) : msg;
 		stream.write(
-			`ts=${base.ts} level=${level} tool=${tool} msg=${msgv}${rest ? ` ${rest}` : ""}\n`,
+			`msg=${msgv}${rest ? ` ${rest}` : ""} ts=${trailer.ts} severityNumber=${trailer.severityNumber} tool=${tool}\n`,
 		);
 		return;
 	}
 	stream.write(
 		`${JSON.stringify({
-			...base,
+			msg,
 			.../** @type {Record<string, unknown>} */ (serialize(fields, 0)),
+			...trailer,
 		})}\n`,
 	);
 }

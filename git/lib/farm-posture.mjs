@@ -26,7 +26,7 @@
  */
 
 import { execFile, spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, statSync } from "node:fs";
+import { lstatSync, mkdtempSync, realpathSync, rmSync, statSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { basename, join, relative, sep } from "node:path";
 
@@ -520,6 +520,39 @@ function existsAsMirror(path) {
 }
 
 /**
+ * A mirror id as stored, plus whether the entry at that path IS the mirror or a
+ * symlink to another one (docs/d158). Aliases keep a name a document or an
+ * upstream used to have resolvable without a lookup table a caller must read
+ * first; they are deliberately not farm members, so no sweep counts one mirror
+ * twice.
+ * @param {string} root
+ * @param {string} id
+ * @returns {{ path: string, entry: "mirror"|"alias", aliasTarget: string|null }}
+ */
+export function describeEntry(root, id) {
+	const path = resolveRepo(root, id);
+	try {
+		if (!lstatSync(path).isSymbolicLink()) {
+			return { path, entry: "mirror", aliasTarget: null };
+		}
+		const real = realpathSync(path);
+		const rel = relative(root, real);
+		if (rel.startsWith("..")) {
+			// A link out of the farm is not an alias of a farm mirror; report it as
+			// an entry with no farm target rather than inventing one.
+			return { path, entry: "alias", aliasTarget: null };
+		}
+		return {
+			path,
+			entry: "alias",
+			aliasTarget: rel.split(sep).join("/").replace(/\.git$/, ""),
+		};
+	} catch {
+		return { path, entry: "mirror", aliasTarget: null };
+	}
+}
+
+/**
  * The fan-out a verb scans, read in one place so `matches` and the scan cannot
  * disagree: the caller's pattern (default `*`) selects from the farm's ids.
  * @param {string} root
@@ -529,8 +562,22 @@ function existsAsMirror(path) {
 export function selectRepos(root, pattern = "*") {
 	const glob = requireGlob(pattern);
 	const matcher = caseGlob(glob);
-	const all = listRepoIds(root);
-	return { glob, ids: all.filter((id) => matcher(id)) };
+	const ids = listRepoIds(root).filter((id) => matcher(id));
+	// Discovery walks past symlinks, so the name a doc cites (an alias beside
+	// the mirror it points at) matches nothing and the verb answers "no
+	// matches" instead of the mirror behind it. Only an EXACT id qualifies: a
+	// pattern that matches nothing stays empty, or a wildcard would resolve to
+	// whatever happened to exist.
+	if (
+		ids.length === 0 &&
+		!/[*?]/.test(glob) &&
+		!glob.startsWith("/") &&
+		!glob.includes("..") &&
+		existsAsMirror(join(root, `${glob}.git`))
+	) {
+		ids.push(glob);
+	}
+	return { glob, ids };
 }
 
 // --- capped collection state ----------------------------------------------

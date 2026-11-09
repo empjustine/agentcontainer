@@ -133,7 +133,7 @@ func TestRelayChainBadConfigRefusesStartup(t *testing.T) {
 	t.Setenv(envTunnelURL, "wss://example.invalid:8443/vpn")
 	t.Setenv("SOCKS_SERVER", "gate:1080")
 	t.Setenv("SOCKS_VERSION", "4a")
-	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t)); err == nil || !strings.Contains(err.Error(), "SOCKS_VERSION") {
+	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false); err == nil || !strings.Contains(err.Error(), "SOCKS_VERSION") {
 		t.Fatalf("err=%v, want the SOCKS_VERSION refusal from relayConfigFromEnv", err)
 	}
 }
@@ -280,7 +280,7 @@ func TestRelayChainHTTPProxyCarriesTunnel(t *testing.T) {
 	httpAddr, stop := wireRelayNode(t, "http://"+backend.Listener.Addr().String()+tunnelPath)
 	defer stop()
 
-	chainFetch(t, httpAddr, "localhost", upPort)
+	chainFetch(t, httpAddr, testTargetAlias, upPort)
 
 	recorded := hops()
 	tunnelAddr := backend.Listener.Addr().String()
@@ -333,7 +333,7 @@ func TestRelayChainSOCKS5ProxyCarriesTunnelModeE(t *testing.T) {
 	defer stop()
 	logBuf := captureLog(t)
 
-	chainFetch(t, httpAddr, "localhost", upPort)
+	chainFetch(t, httpAddr, testTargetAlias, upPort)
 
 	waitForLog(t, logBuf, "transport=post")
 	recorded := targets()

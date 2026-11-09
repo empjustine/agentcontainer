@@ -1,7 +1,13 @@
 """Structured logging shared by this repo's python tools — same contract as
 lib/log.sh / lib/log.mjs: one JSON object per line on stdout.
 
-    {"ts":"2025-09-02T12:00:00Z","level":"info","tool":"llm-local-inference/upkeep","msg":"...","key":"value"}
+    {"msg":"...","key":"value","ts":1756824000000,"severityNumber":9,"tool":"llm-local-inference/upkeep"}
+
+`msg` leads and this kernel's three fields trail it, so the event is what a
+truncated view keeps. `ts` is Unix epoch MILLISECONDS as a number and
+`severityNumber` is OpenTelemetry's SeverityNumber, so a reader compares
+numbers where it used to match level words (docs/d151 owns the record shape,
+its field order and the canonical ranges).
 
 Env:
     LOG_FORMAT  json|logfmt   (default: json)
@@ -11,8 +17,8 @@ Env:
 Level filtering is the consumer's job (docs/d045, reaffirmed by docs/d060):
 nothing is dropped here. A tool logs the useful-but-noisy detail at `debug`
 unconditionally instead of growing a --verbose branch, and whoever reads the
-stream prunes it (`jq 'select(.level!="debug")'`, or one level with
-`jq 'select(.level=="error")'`). docs/d045 owns the rest of the contract
+stream prunes it (`jq 'select(.severityNumber >= 5)'`, or one band with
+`jq 'select(.severityNumber >= 17)'`). docs/d045 owns the rest of the contract
 (static labels, structured fields, full cause chains).
 Stream is stdout by default; a script whose stdout IS the machine-consumed
 payload calls set_stream(sys.stderr) once at startup so logs cannot interleave
@@ -27,11 +33,11 @@ Usage from a PEP-723 `uv run` script (the script's dir is on sys.path, its
     log.set_tool("llm-local-inference/upkeep")
     log.info("pulled repo", repo="org/name", revision="abc123")
 """
-import datetime
 import json
 import os
 import re
 import sys
+import time
 import traceback
 
 _tool = os.environ.get("LOG_TOOL", "python")
@@ -54,6 +60,29 @@ def _serialize(obj, depth=0):
     return str(obj)
 
 
+# OpenTelemetry SeverityNumber per level (docs/d151); the category name is
+# the caller-facing spelling, the number is what reaches the wire. 0 is the
+# spec's "unspecified" and no helper here can produce it.
+_SEVERITY_NUMBER = {
+    "trace": 1,
+    "debug": 5,
+    "info": 9,
+    "warn": 13,
+    "error": 17,
+    "fatal": 21,
+}
+
+
+def _severity_number(level: str) -> int:
+    """A level name as its SeverityNumber. An unknown level fails here rather
+    than serializing no severity: a record nobody can sort is worse than a
+    loud call-site bug."""
+    try:
+        return _SEVERITY_NUMBER[level]
+    except KeyError:
+        raise ValueError("unknown log level", level) from None
+
+
 def set_tool(name: str) -> None:
     global _tool
     _tool = name
@@ -67,18 +96,24 @@ def set_stream(stream) -> None:
 
 
 def emit(level: str, msg: str, **fields) -> None:
-    ts = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # The event leads; the three fields this kernel fills in trail it, so a
+    # reader skimming raw lines meets what happened before the bookkeeping
+    # (docs/d151).
+    trailer = {
+        "ts": int(time.time() * 1000),
+        "severityNumber": _severity_number(level),
+        "tool": _tool,
+    }
     if os.environ.get("LOG_FORMAT") == "logfmt":
         def val(v) -> str:
             s = str(v)
             return json.dumps(s) if re.search(r'[\s"=\\]', s) or s == "" else s
         rest = " ".join(f"{k}={val(v)}" for k, v in fields.items())
         m = json.dumps(msg) if re.search(r'[\s"=\\]', msg) else msg
-        line = f"ts={ts} level={level} tool={_tool} msg={m}"
-        if rest:
-            line += " " + rest
+        trailer = " ".join(f"{k}={v}" for k, v in trailer.items())
+        line = " ".join(part for part in (f"msg={m}", rest, trailer) if part)
     else:
-        rec = {"ts": ts, "level": level, "tool": _tool, "msg": msg, **fields}
+        rec = {"msg": msg, **fields, **trailer}
         line = json.dumps(rec, ensure_ascii=False, default=lambda o: _serialize(o))
     print(line, file=_stream)
 

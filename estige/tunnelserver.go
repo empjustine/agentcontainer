@@ -335,14 +335,12 @@ func (t *tunnelServer) runSession(ctx context.Context, s tunnelStream) {
 		failConnect(errReasonInvalid)
 		return
 	}
-	if parseIPLiteral(host) {
-		// VPN-R22: pre-resolved targets are refused here, and here is the
-		// only place the tunnel dials — resolution and pinning stay server-side.
-		failConnect(errReasonTargetIP)
-		return
-	}
-	if !t.egress.allowPort(port) {
-		failConnect(errReasonPortDenied)
+	// The pre-dial verdict (d163): guaranteed refusals, the IP-exit gate and
+	// the port set are decided here, before any lookup or socket — a refused
+	// target costs no DNS and no dial, and here is still the only place the
+	// tunnel dials (VPN-R22).
+	if reason := t.egress.targetVerdict(host, port); reason != "" {
+		failConnect(reason)
 		return
 	}
 	dialCtx, cancel := context.WithTimeout(ctx, tunnelDialTimeout)
@@ -545,9 +543,10 @@ func (s *server) enableTunnel(egress egressConfig) error {
 // the whole surface, which is also where the credential already lives.
 //
 // Parsing is strict (unknown fields and trailing content refused) because a
-// typo'd "allowCidr" would otherwise silently enforce the default deny: the
-// operator would believe a range is reachable while every dial to it fails
-// (NFR-2 fail-loudly, the same rule decodeOperatorKeys follows).
+// typo'd "allowCidr" or "allowIpLiterals" would otherwise silently enforce
+// the default deny: the operator would believe a target is reachable while
+// every attempt at it fails (NFR-2 fail-loudly, the same rule
+// decodeOperatorKeys follows).
 func egressFromEnv() (egressConfig, error) {
 	raw := os.Getenv(envTunnelEgress)
 	if raw == "" {
@@ -563,12 +562,12 @@ func egressFromEnv() (egressConfig, error) {
 		return egressConfig{}, fmt.Errorf("%s has content after the JSON object", envTunnelEgress)
 	}
 	// An all-empty object decodes cleanly but configures nothing: unset already
-	// means the default deny table, so a blob that names neither a range nor a
-	// port is a typo whose silent reading is "configured" (the same fail-loudly
-	// rule as the unknown-field check above). Naming only one half is fine —
-	// d104's defaults fill the other.
-	if len(cfg.AllowCidrs) == 0 && len(cfg.Ports) == 0 {
-		return egressConfig{}, fmt.Errorf("%s names neither a CIDR nor a port — unset it for the defaults", envTunnelEgress)
+	// means the default deny table, so a blob that names neither a range, a
+	// port nor the IP-exit switch is a typo whose silent reading is
+	// "configured" (the same fail-loudly rule as the unknown-field check
+	// above). Naming only one half is fine — d104's defaults fill the other.
+	if len(cfg.AllowCidrs) == 0 && len(cfg.Ports) == 0 && !cfg.AllowIPLiterals {
+		return egressConfig{}, fmt.Errorf("%s names neither a CIDR, a port nor the IP-exit switch — unset it for the defaults", envTunnelEgress)
 	}
 	return cfg, nil
 }

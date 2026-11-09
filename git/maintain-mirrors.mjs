@@ -30,8 +30,7 @@
  * schedule the fleet owner cannot see. This script is the explicit,
  * observable replacement.
  *
- * Usage (one program, two shims — `./git/maintain.sh` for POSIX shells,
- * `git\maintain.ps1` for native Windows, identical flags; docs/d062):
+ * Usage (`./git/maintain.sh`; the Windows-side ps1 entry was deleted — docs/d162):
  *   ./git/maintain.sh [--root DIR] [--jobs N] [--max-depth N]
  *                     [--no-fetch] [--no-optimize] [--deep-optimize]
  *                     [--min-interval S]
@@ -76,21 +75,22 @@ import { relative } from "node:path";
 
 import { parseFlags, runEntry } from "./lib/cli.mjs";
 import {
-	createMinIntervalGate,
-	DEFAULT_MAX_DEPTH,
-	DEFAULT_ROOT,
-	deepOptimizeMirror,
-	filterByGlobs,
-	findBareMirrors,
-	git,
-	logInfo,
-	logWarn,
-	optimizeMirror,
-	originUrl,
-	pool,
-	setLogTool,
+  createMinIntervalGate,
+  DEFAULT_MAX_DEPTH,
+  DEFAULT_ROOT,
+  deepOptimizeMirror,
+  filterByGlobs,
+  findBareMirrors,
+  git,
+  logInfo,
+  logWarn,
+  optimizeMirror,
+  originUrl,
+  pool,
+  setLogTool,
 } from "./lib/git-core.mjs";
 import { parseSoftwareForgeRemote } from "./lib/forge-remotes.mjs";
+import { StopRequested, stopExitCode, stopRequested } from "./lib/stop-signal.mjs";
 
 setLogTool("git/maintain-mirrors");
 
@@ -154,50 +154,47 @@ const ORIGIN_PROBE_JOBS = 8;
  * @returns {Options}
  */
 function parseArgs(argv) {
-	const { values: v, help } = parseFlags(argv, {
-		root: { default: DEFAULT_ROOT },
-		// null = the by-host default: one worker per discovered host.
-		jobs: { kind: "number" },
-		"max-depth": { kind: "number", default: DEFAULT_MAX_DEPTH },
-		"no-fetch": { kind: "bool" },
-		"no-optimize": { kind: "bool" },
-		// Opt-in, never defaulted: a forced repack is an hours-to-days job on
-		// cold storage — docs/d089 owns the ladder and its costs.
-		"deep-optimize": { kind: "bool" },
-		// `null` means "the per-host defaults" (see createPacing), not
-		// "unset/disabled" — `--min-interval 0` is the explicit disable. No env
-		// seed: the flag or the default is the whole input (docs/d060).
-		"min-interval": { kind: "number" },
-		only: { kind: "list" },
-		exclude: { kind: "list" },
-	});
-	/** @type {Options} */
-	const o = {
-		// The live farm holds the mirrors IN PLACE (git/non-bare-issues.md), not at
-		// the `-bare` sibling migrate defaults to, so maintain targets the farm
-		// root. Forge hosts (github.com, codeberg.org, git.sr.ht, …) are just
-		// directories under it; findBareMirrors covers them all by shape.
-		root: v.root,
-		jobs: v.jobs ?? null,
-		maxDepth: v["max-depth"],
-		fetch: !v["no-fetch"],
-		optimize: !v["no-optimize"],
-		deep: v["deep-optimize"],
-		only: v.only,
-		exclude: v.exclude,
-		minInterval: v["min-interval"] ?? null,
-		help,
-	};
-	if (
-		o.minInterval !== null &&
-		(!Number.isFinite(o.minInterval) || o.minInterval < 0)
-	) {
-		throw new Error("--min-interval must be a non-negative number of seconds");
-	}
-	if (o.jobs !== null && (!Number.isInteger(o.jobs) || o.jobs < 1)) {
-		throw new Error("--jobs must be a positive integer number of hosts");
-	}
-	return o;
+  const { values: v, help } = parseFlags(argv, {
+    root: { default: DEFAULT_ROOT },
+    // null = the by-host default: one worker per discovered host.
+    jobs: { kind: "number" },
+    "max-depth": { kind: "number", default: DEFAULT_MAX_DEPTH },
+    "no-fetch": { kind: "bool" },
+    "no-optimize": { kind: "bool" },
+    // Opt-in, never defaulted: a forced repack is an hours-to-days job on
+    // cold storage — docs/d089 owns the ladder and its costs.
+    "deep-optimize": { kind: "bool" },
+    // `null` means "the per-host defaults" (see createPacing), not
+    // "unset/disabled" — `--min-interval 0` is the explicit disable. No env
+    // seed: the flag or the default is the whole input (docs/d060).
+    "min-interval": { kind: "number" },
+    only: { kind: "list" },
+    exclude: { kind: "list" },
+  });
+  /** @type {Options} */
+  const o = {
+    // The live farm holds the mirrors IN PLACE (git/non-bare-issues.md), not at
+    // the `-bare` sibling migrate defaults to, so maintain targets the farm
+    // root. Forge hosts (github.com, codeberg.org, git.sr.ht, …) are just
+    // directories under it; findBareMirrors covers them all by shape.
+    root: v.root,
+    jobs: v.jobs ?? null,
+    maxDepth: v["max-depth"],
+    fetch: !v["no-fetch"],
+    optimize: !v["no-optimize"],
+    deep: v["deep-optimize"],
+    only: v.only,
+    exclude: v.exclude,
+    minInterval: v["min-interval"] ?? null,
+    help,
+  };
+  if (o.minInterval !== null && (!Number.isFinite(o.minInterval) || o.minInterval < 0)) {
+    throw new Error("--min-interval must be a non-negative number of seconds");
+  }
+  if (o.jobs !== null && (!Number.isInteger(o.jobs) || o.jobs < 1)) {
+    throw new Error("--jobs must be a positive integer number of hosts");
+  }
+  return o;
 }
 
 /**
@@ -212,22 +209,22 @@ function parseArgs(argv) {
  * @returns {string|null}
  */
 function originHost(url) {
-	const scpWithUser = /^[^/@]+@([^/:]+):/.exec(url);
-	if (scpWithUser) {
-		// group 1 is required — a match always carries it
-		return scpWithUser[1] ?? null;
-	}
-	const scpHostOnly = /^([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+):/.exec(url);
-	if (scpHostOnly) {
-		// group 1 is required — a match always carries it
-		return scpHostOnly[1] ?? null;
-	}
-	try {
-		const host = new URL(url).host;
-		return host || null;
-	} catch {
-		return null;
-	}
+  const scpWithUser = /^[^/@]+@([^/:]+):/.exec(url);
+  if (scpWithUser) {
+    // group 1 is required — a match always carries it
+    return scpWithUser[1] ?? null;
+  }
+  const scpHostOnly = /^([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+):/.exec(url);
+  if (scpHostOnly) {
+    // group 1 is required — a match always carries it
+    return scpHostOnly[1] ?? null;
+  }
+  try {
+    const host = new URL(url).host;
+    return host || null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -257,26 +254,26 @@ function originHost(url) {
  * @returns {Pacing}
  */
 function createPacing(o) {
-	/** @type {Map<string, { seconds: number, gate: <T>(fn: () => Promise<T>) => Promise<T> }>} */
-	const byHost = new Map();
-	/** @param {string} host @param {string} url */
-	const entryFor = (host, url) => {
-		let entry = byHost.get(host);
-		if (!entry) {
-			const seconds =
-				o.minInterval ??
-				(parseSoftwareForgeRemote(url) === null
-					? DEFAULT_MIN_INTERVAL
-					: SOFTWARE_FORGE_MIN_INTERVAL);
-			entry = { seconds, gate: createMinIntervalGate(seconds * 1000) };
-			byHost.set(host, entry);
-		}
-		return entry;
-	};
-	return {
-		gateFor: (host, url) => entryFor(host, url).gate,
-		intervalFor: (host, url) => entryFor(host, url).seconds,
-	};
+  /** @type {Map<string, { seconds: number, gate: <T>(fn: () => Promise<T>) => Promise<T> }>} */
+  const byHost = new Map();
+  /** @param {string} host @param {string} url */
+  const entryFor = (host, url) => {
+    let entry = byHost.get(host);
+    if (!entry) {
+      const seconds =
+        o.minInterval ??
+        (parseSoftwareForgeRemote(url) === null
+          ? DEFAULT_MIN_INTERVAL
+          : SOFTWARE_FORGE_MIN_INTERVAL);
+      entry = { seconds, gate: createMinIntervalGate(seconds * 1000) };
+      byHost.set(host, entry);
+    }
+    return entry;
+  };
+  return {
+    gateFor: (host, url) => entryFor(host, url).gate,
+    intervalFor: (host, url) => entryFor(host, url).seconds,
+  };
 }
 
 /**
@@ -288,162 +285,192 @@ function createPacing(o) {
  * @returns {Promise<"ok"|"skipped"|"failed">}
  */
 async function maintainOne(target, o, pacing) {
-	const { repo, url, host } = target;
-	if (o.fetch && !url) {
-		logWarn("no upstream — cannot align; optimize only", { repo });
-	}
+  const { repo, url, host } = target;
+  if (o.fetch && !url) {
+    logWarn("no upstream — cannot align; optimize only", { repo });
+  }
 
-	if (o.fetch && url) {
-		const runFetch = () =>
-			git(repo, ["remote", "update", "--prune"], { must: false });
-		const fetch = await pacing.gateFor(host, url)(runFetch);
-		if (fetch.code !== 0) {
-			logWarn("fetch failed — mirror left as-is", {
-				repo,
-				origin: url,
-				stderr: fetch.stderr.trim().split("\n").slice(-2).join(" | "),
-			});
-			return "failed";
-		}
-	}
+  if (o.fetch && url) {
+    const runFetch = () => git(repo, ["remote", "update", "--prune"], { must: false });
+    const fetch = await pacing.gateFor(host, url)(runFetch);
+    if (fetch.code !== 0) {
+      logWarn("fetch failed — mirror left as-is", {
+        repo,
+        origin: url,
+        stderr: fetch.stderr.trim().split("\n").slice(-2).join(" | "),
+      });
+      return "failed";
+    }
+  }
 
-	if (o.optimize) {
-		try {
-			await (o.deep ? deepOptimizeMirror(repo) : optimizeMirror(repo));
-		} catch (err) {
-			logWarn("optimization failed — mirror left as-is", {
-				repo,
-				error: err,
-			});
-			return "failed";
-		}
-	}
+  if (o.optimize) {
+    try {
+      await (o.deep ? deepOptimizeMirror(repo) : optimizeMirror(repo));
+    } catch (err) {
+      if (err instanceof StopRequested) {
+        // Consistent either way: a finished step plus refusals, or a step
+        // taken away by the second signal (git's temp-and-rename leaves no
+        // half-written pack). The two are reported apart because only one
+        // of them means this repo did any work (docs/d164).
+        logInfo(
+          err.abortedStep
+            ? "stop requested — step aborted, mirror consistent"
+            : "stop requested — mirror left between steps",
+          { repo, deep: o.deep ? 1 : 0 },
+        );
+        return "interrupted";
+      }
+      logWarn("optimization failed — mirror left as-is", {
+        repo,
+        error: err,
+      });
+      return "failed";
+    }
+  }
 
-	logInfo("mirror maintained", {
-		repo,
-		origin: url ?? "",
-		fetched: o.fetch && url ? 1 : 0,
-		optimized: o.optimize ? 1 : 0,
-		deep: o.deep ? 1 : 0,
-		paced: o.fetch && url ? (pacing.intervalFor(host, url) > 0 ? 1 : 0) : 0,
-	});
-	return "ok";
+  logInfo("mirror maintained", {
+    repo,
+    origin: url ?? "",
+    fetched: o.fetch && url ? 1 : 0,
+    optimized: o.optimize ? 1 : 0,
+    deep: o.deep ? 1 : 0,
+    paced: o.fetch && url ? (pacing.intervalFor(host, url) > 0 ? 1 : 0) : 0,
+  });
+  return "ok";
 }
 
 /** @returns {Promise<void>} */
 async function main() {
-	const o = parseArgs(process.argv.slice(2));
-	if (o.help) {
-		process.stdout.write(
-			"usage: ./git/maintain.sh [--root DIR] [--jobs N] [--max-depth N]\n" +
-				"                       [--no-fetch] [--no-optimize] [--deep-optimize]\n" +
-				"                       [--min-interval S]\n" +
-				"                       [--only GLOB]... [--exclude GLOB]\n" +
-				"       git\\maintain.ps1 takes the same flags — the native Windows\n" +
-				"       entry for non-NTFS / non-local UNC farm roots (docs/d062)\n" +
-				"       defaults: one worker per host (a host never has two jobs in\n" +
-				"       flight); 1 s min-interval, 30 s on a software-forge host\n" +
-				"       (docs/d044)\n",
-		);
-		return;
-	}
-	if (!existsSync(o.root)) {
-		throw Object.assign(new Error("reference root not found"), {
-			root: o.root,
-		});
-	}
-	if (o.deep && !o.optimize) {
-		throw new Error(
-			"--deep-optimize conflicts with --no-optimize — deep implies optimize (docs/d089)",
-		);
-	}
-	if (!o.fetch && !o.optimize) {
-		throw new Error("both --no-fetch and --no-optimize given — nothing to do");
-	}
+  const o = parseArgs(process.argv.slice(2));
+  if (o.help) {
+    process.stdout.write(
+      "usage: ./git/maintain.sh [--root DIR] [--jobs N] [--max-depth N]\n" +
+        "                       [--no-fetch] [--no-optimize] [--deep-optimize]\n" +
+        "                       [--min-interval S]\n" +
+        "                       [--only GLOB]... [--exclude GLOB]\n" +
+        "       defaults: one worker per host (a host never has two jobs in\n" +
+        "       flight); 1 s min-interval, 30 s on a software-forge host\n" +
+        "       (docs/d044)\n" +
+        "       a signal stops the sweep at the next repo or step boundary;\n" +
+        "       signal again to abort the step in flight (docs/d164)\n",
+    );
+    return;
+  }
+  if (!existsSync(o.root)) {
+    throw Object.assign(new Error("reference root not found"), {
+      root: o.root,
+    });
+  }
+  if (o.deep && !o.optimize) {
+    throw new Error(
+      "--deep-optimize conflicts with --no-optimize — deep implies optimize (docs/d089)",
+    );
+  }
+  if (!o.fetch && !o.optimize) {
+    throw new Error("both --no-fetch and --no-optimize given — nothing to do");
+  }
 
-	const discovered = findBareMirrors(o.root, o.maxDepth);
-	const rels = discovered.map((p) => relative(o.root, p));
-	const kept = new Set(filterByGlobs(rels, o.only, o.exclude));
-	const repos = discovered.filter((p) => kept.has(relative(o.root, p)));
-	// The URL must be resolved BEFORE scheduling: host is a property of the
-	// origin URL (the work farm's path layout carries no host segment), so
-	// neither discovery order nor path shape can define the groups. The probe
-	// returns repo/url pairs because pool() results arrive in completion
-	// order, not in the order of its items.
-	const probes = await pool(repos, ORIGIN_PROBE_JOBS, async (repo) => ({
-		repo,
-		url: await originUrl(repo),
-	}));
-	const urlByRepo = new Map(probes.map((p) => [p.repo, p.url]));
-	/** @type {Map<string, { repo: string, url: string|null, host: string }[]>} */
-	const groups = new Map();
-	for (const repo of repos) {
-		const url = urlByRepo.get(repo) ?? null;
-		// A mirror with no upstream (or one carrying no host) joins the local
-		// bucket — see LOCAL_HOST.
-		const host = (url && originHost(url)) || LOCAL_HOST;
-		let group = groups.get(host);
-		if (!group) {
-			group = [];
-			groups.set(host, group);
-		}
-		group.push({ repo, url, host });
-	}
-	const hostGroups = [...groups.values()];
-	// Default: one worker per discovered host. An explicit --jobs caps how
-	// many hosts are in flight; a group is never split, so no --jobs value
-	// can put two jobs on one host.
-	const workers = Math.max(
-		1,
-		Math.min(o.jobs ?? hostGroups.length, hostGroups.length),
-	);
+  const discovered = findBareMirrors(o.root, o.maxDepth);
+  const rels = discovered.map((p) => relative(o.root, p));
+  const kept = new Set(filterByGlobs(rels, o.only, o.exclude));
+  const repos = discovered.filter((p) => kept.has(relative(o.root, p)));
+  // The URL must be resolved BEFORE scheduling: host is a property of the
+  // origin URL (the work farm's path layout carries no host segment), so
+  // neither discovery order nor path shape can define the groups. The probe
+  // returns repo/url pairs because pool() results arrive in completion
+  // order, not in the order of its items.
+  const probes = await pool(repos, ORIGIN_PROBE_JOBS, async (repo) => ({
+    repo,
+    url: await originUrl(repo),
+  }));
+  const urlByRepo = new Map(probes.map((p) => [p.repo, p.url]));
+  /** @type {Map<string, { repo: string, url: string|null, host: string }[]>} */
+  const groups = new Map();
+  for (const repo of repos) {
+    const url = urlByRepo.get(repo) ?? null;
+    // A mirror with no upstream (or one carrying no host) joins the local
+    // bucket — see LOCAL_HOST.
+    const host = (url && originHost(url)) || LOCAL_HOST;
+    let group = groups.get(host);
+    if (!group) {
+      group = [];
+      groups.set(host, group);
+    }
+    group.push({ repo, url, host });
+  }
+  const hostGroups = [...groups.values()];
+  // Default: one worker per discovered host. An explicit --jobs caps how
+  // many hosts are in flight; a group is never split, so no --jobs value
+  // can put two jobs on one host.
+  const workers = Math.max(1, Math.min(o.jobs ?? hostGroups.length, hostGroups.length));
 
-	const pacing = createPacing(o);
-	logInfo("discovered bare mirrors", {
-		root: o.root,
-		count: repos.length,
-		skippedByFilter: discovered.length - repos.length,
-		hosts: hostGroups.length,
-		jobs: workers,
-		fetch: o.fetch ? 1 : 0,
-		optimize: o.optimize ? 1 : 0,
-		deep: o.deep ? 1 : 0,
-		paceScope:
-			o.minInterval === null ? "default" : o.minInterval > 0 ? "all" : "off",
-		minInterval: o.minInterval ?? DEFAULT_MIN_INTERVAL,
-		softwareForgeMinInterval: o.minInterval ?? SOFTWARE_FORGE_MIN_INTERVAL,
-	});
-	if (repos.length === 0) {
-		logWarn("no bare mirrors found under root", { root: o.root });
-		return;
-	}
+  const pacing = createPacing(o);
+  logInfo("discovered bare mirrors", {
+    root: o.root,
+    count: repos.length,
+    skippedByFilter: discovered.length - repos.length,
+    hosts: hostGroups.length,
+    jobs: workers,
+    fetch: o.fetch ? 1 : 0,
+    optimize: o.optimize ? 1 : 0,
+    deep: o.deep ? 1 : 0,
+    paceScope: o.minInterval === null ? "default" : o.minInterval > 0 ? "all" : "off",
+    minInterval: o.minInterval ?? DEFAULT_MIN_INTERVAL,
+    softwareForgeMinInterval: o.minInterval ?? SOFTWARE_FORGE_MIN_INTERVAL,
+  });
+  if (repos.length === 0) {
+    logWarn("no bare mirrors found under root", { root: o.root });
+    return;
+  }
 
-	const results = await pool(hostGroups, workers, async (group) => {
-		// One host, one worker: processing a group serially is what makes
-		// "a host never has two jobs in flight" structural, not a hope.
-		const out = [];
-		for (const target of group) {
-			out.push(await maintainOne(target, o, pacing));
-		}
-		return out;
-	});
-	/** @type {Record<string, number>} */
-	const tally = { ok: 0, skipped: 0, failed: 0 };
-	for (const groupResults of results) {
-		for (const r of groupResults) {
-			tally[r] = (tally[r] ?? 0) + 1;
-		}
-	}
+  const results = await pool(hostGroups, workers, async (group) => {
+    // One host, one worker: processing a group serially is what makes
+    // "a host never has two jobs in flight" structural, not a hope.
+    const out = [];
+    for (const target of group) {
+      if (stopRequested()) {
+        out.push("skipped");
+        continue;
+      }
+      try {
+        out.push(await maintainOne(target, o, pacing));
+      } catch (err) {
+        // The fetch half of maintainOne has no stop branch of its own: a
+        // refusal there means this repo never started (docs/d164).
+        if (err instanceof StopRequested) {
+          out.push("interrupted");
+          continue;
+        }
+        throw err;
+      }
+    }
+    return out;
+  });
+  /** @type {Record<string, number>} */
+  const tally = { ok: 0, skipped: 0, failed: 0 };
+  for (const groupResults of results) {
+    for (const r of groupResults) {
+      tally[r] = (tally[r] ?? 0) + 1;
+    }
+  }
 
-	logInfo("maintenance summary", {
-		mirrors: repos.length,
-		ok: tally.ok,
-		skipped: tally.skipped,
-		failed: tally.failed,
-	});
-	if (tally.failed) {
-		process.exitCode = 1;
-	}
+  const stopped = stopRequested();
+  logInfo("maintenance summary", {
+    mirrors: repos.length,
+    ok: tally.ok,
+    skipped: tally.skipped,
+    interrupted: tally.interrupted ?? 0,
+    failed: tally.failed,
+    stopped: stopped ? 1 : 0,
+  });
+  if (tally.failed) {
+    process.exitCode = 1;
+  }
+  // A stop outranks a failure: the operator cut the sweep short, so "some repo
+  // failed" is not the answer the exit status should give (docs/d164).
+  if (stopped) {
+    process.exitCode = stopExitCode();
+  }
 }
 
 await runEntry("maintenance", main);

@@ -69,7 +69,7 @@ function errorMessage(stderr) {
 				return null;
 			}
 		})
-		.find((/** @type {any} */ o) => o?.level === "error");
+		.find((/** @type {any} */ o) => o?.severityNumber >= 17);
 	return line?.msg;
 }
 

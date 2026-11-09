@@ -38,26 +38,50 @@ const llamaSwapImage =
 	"ghcr.io/mostlygeek/llama-swap:unified-vulkan";
 
 /**
+ * The streams a captured child can write, as `[descriptor, name]` pairs. The
+ * descriptor is what the `stream` field carries: shorter than a word, and the
+ * form generalizes to any other descriptor a child was handed without
+ * inventing a spelling for it (docs/d151).
+ * @type {readonly (readonly [number, "stdout" | "stderr"])[]}
+ */
+const CAPTURED_STREAMS = [
+	[1, "stdout"],
+	[2, "stderr"],
+];
+
+/**
+ * Emit one captured line as one record. The LINE is the message (docs/d151):
+ * it is the only specific thing this record has to say, and a fixed label would
+ * repeat down the whole stream while pushing the one varying value into a field
+ * named after it.
+ * @param {number} stream file descriptor the line arrived on
+ * @param {string} cmd command label ("podman image pull")
+ * @param {string} line
+ * @returns {void}
+ */
+function logCommandLine(stream, cmd, line) {
+	logInfo(line, { target, cmd, stream });
+}
+
+/**
  * Run one command to completion, capturing stdout+stderr LINE BY LINE and
  * re-emitting each as a structured log record (docs/d045): the container
  * backend is an upstream that cannot be made to honor d045 itself, so the
  * wrapping layer owns the line-boundary.
- * @param {string} cmd
+ * @param {string} executable
  * @param {string[]} args
+ * @param {string} cmd the command as a reader names it — executable AND
+ * subcommand, so `podman image pull` lines stay distinguishable from every
+ * other podman subcommand in a merged stream (docs/d151)
  * @returns {Promise<boolean>} success
  */
-async function run(cmd, args) {
+async function run(executable, args, cmd) {
 	return await new Promise((resolve) => {
-		const child = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
-		// The union literal (not a bare string[] loop variable) is what makes
-		// child[stream] a known-property index under checkJs.
-		for (const stream of /** @type {("stdout"|"stderr")[]} */ ([
-			"stdout",
-			"stderr",
-		])) {
+		const child = spawn(executable, args, { stdio: ["ignore", "pipe", "pipe"] });
+		for (const [stream, name] of CAPTURED_STREAMS) {
 			let partial = "";
-			child[stream].setEncoding("utf8");
-			child[stream].on("data", (/** @type {string} */ chunk) => {
+			child[name].setEncoding("utf8");
+			child[name].on("data", (/** @type {string} */ chunk) => {
 				partial += chunk;
 				const lines = partial.split("\n");
 				// split on a non-empty string never yields an empty tail, so the
@@ -72,14 +96,14 @@ async function run(cmd, args) {
 					if (!kept) {
 						continue;
 					}
-					logInfo("command output", { target, cmd, stream, line: kept });
+					logCommandLine(stream, cmd, kept);
 				}
 			});
-			child[stream].on("end", () => {
+			child[name].on("end", () => {
 				if (!partial) {
 					return;
 				}
-				logInfo("command output", { target, cmd, stream, line: partial });
+				logCommandLine(stream, cmd, partial);
 			});
 		}
 		child.on("close", (code) => resolve(code === 0));
@@ -111,7 +135,10 @@ if (renderDevices.length === 0 || hostRamGiB < INFERENCE_MIN_RAM_GIB) {
 }
 
 logInfo("building", { target });
-const ok = await run(containerTool, ["image", "pull", llamaSwapImage]);
+// The label names the subcommand, not just the backend: every podman line in
+// a merged stream is otherwise the same `cmd` (docs/d151).
+const imagePullCmd = `${containerTool} image pull`;
+const ok = await run(containerTool, ["image", "pull", llamaSwapImage], imagePullCmd);
 if (!ok) {
 	logError("build failed", { target });
 	process.exit(1);

@@ -57,10 +57,23 @@ func TestEgressFromEnv(t *testing.T) {
 			t.Fatalf("got %+v", cfg)
 		}
 	})
+	// d163's IP-exit switch is a whole config by itself: the empty-blob
+	// refusal keys on it too, and a case near-miss must not read as "on".
+	t.Run("IP-exit switch alone configures", func(t *testing.T) {
+		t.Setenv(envTunnelEgress, `{"allowIPLiterals": true}`)
+		cfg, err := egressFromEnv()
+		if err != nil {
+			t.Fatalf("egressFromEnv: %v", err)
+		}
+		if !cfg.AllowIPLiterals || len(cfg.AllowCidrs) != 0 || len(cfg.Ports) != 0 {
+			t.Fatalf("got %+v", cfg)
+		}
+	})
 	// Each of these is a plausible typo whose silent reading would be
 	// "configured, and the default deny still applies".
 	for _, raw := range []string{
 		`{"allowCidr": ["127.0.0.0/8"]}`,
+		`{"allowIPLiteral": true}`,
 		`{"ports": ["443"]}`,
 		`{"allowCidrs": []} `,
 		`{}`,
@@ -261,16 +274,53 @@ func connectErrReason(t *testing.T, ws *wsConn, target string) string {
 
 // VPN-R22: the exit node refuses pre-resolved targets — the enforcement point
 // must hold even against a peer that skips any client-side courtesy check.
+// A guaranteed-bogon address is refused earlier and separately (d163), so
+// the loopback spellings live in TestServerGuaranteedRefusalsAnswerFirst.
 func TestServerRefusesIPLiteralTargets(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{})
 	proxy := newHTTPServer(t, s)
-	for _, target := range []string{"1.2.3.4:443", "[::1]:443"} {
+	for _, target := range []string{"1.2.3.4:443", "203.0.113.7:80", "[2001:db8::1]:443"} {
 		// One CONNECT per session: v1 is unmuxed (VPN-R17), so every
 		// refusal opens a fresh tunnel — exactly as the relay node would.
 		ws := openRawTunnel(t, mustTunnelURL(t, proxy))
 		if reason := connectErrReason(t, ws, target); reason != errReasonTargetIP {
 			t.Fatalf("%s: reason = %q, want %q", target, reason, errReasonTargetIP)
 		}
+	}
+}
+
+// d163: guaranteed refusals answer FIRST — before the IP-exit switch, before
+// the allow table, before the port set. The config below would permit every
+// one of these targets if any later gate owned them, and the refusal order
+// is exactly what stops that. The last case is the complementary half: an
+// address the switch admits but no allow rule claims still dies at the
+// table, not at a dial.
+func TestServerGuaranteedRefusalsAnswerFirst(t *testing.T) {
+	s := newTunnelServer(t, true, egressConfig{
+		AllowIPLiterals: true,
+		AllowCidrs:      []string{"127.0.0.0/8", "::1/128"},
+		Ports:           []uint16{80, 443},
+	})
+	proxy := newHTTPServer(t, s)
+	for _, target := range []string{
+		"127.0.0.1:443",               // loopback literal, both families' door
+		"[::1]:80",                    //
+		"[::ffff:127.0.0.1]:443",      // loopback re-spelled IPv4-in-IPv6 — the v4-mapped spell must not dodge
+		"localhost:443",               // the name, refused before any lookup
+		"LOCALHOST.:80",               // case and trailing dot are the same name
+		"app.localhost:443",           // the whole .localhost TLD
+		"dev.localhost:80",            // the dev sub-tree included
+		"localhost.localdomain:443",   // the /etc/hosts loopback family
+		"LOCALHOST4.LOCALDOMAIN4.:80", // the family under case and trailing dot
+	} {
+		ws := openRawTunnel(t, mustTunnelURL(t, proxy))
+		if reason := connectErrReason(t, ws, target); reason != errReasonBogon {
+			t.Fatalf("%s: reason = %q, want %q", target, reason, errReasonBogon)
+		}
+	}
+	ws := openRawTunnel(t, mustTunnelURL(t, proxy))
+	if reason := connectErrReason(t, ws, "169.254.169.254:80"); reason != errReasonDenied {
+		t.Fatalf("metadata address: reason = %q, want %q", reason, errReasonDenied)
 	}
 }
 
@@ -295,8 +345,11 @@ func TestServerRefusesNonPermittedPorts(t *testing.T) {
 func TestServerRefusesLoopbackResolvingTargetsByDefault(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{Ports: []uint16{65000}})
 	proxy := newHTTPServer(t, s)
+	// A name that RESOLVES into the deny table — the door refuses
+	// `localhost`/`.localhost` as names (d163), so this proof needs an
+	// alias the suite's resolver maps to 127.0.0.1.
 	ws := openRawTunnel(t, mustTunnelURL(t, proxy))
-	if reason := connectErrReason(t, ws, "localhost:65000"); reason != errReasonDenied {
+	if reason := connectErrReason(t, ws, "loopback.test:65000"); reason != errReasonDenied {
 		t.Fatalf("reason = %q, want %q", reason, errReasonDenied)
 	}
 }
@@ -356,7 +409,7 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 	proxy := newHTTPServer(t, s)
 	ws := openRawTunnel(t, mustTunnelURL(t, proxy))
 
-	targetAddr := "localhost:" + strconv.Itoa(int(targetPort))
+	targetAddr := testTargetAlias + ":" + strconv.Itoa(int(targetPort))
 	if err := sendFrame(ws, frameConnect, []byte(targetAddr)); err != nil {
 		t.Fatalf("CONNECT: %v", err)
 	}

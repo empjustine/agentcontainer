@@ -52,6 +52,7 @@ import {
 	requireRepoId,
 	requireSince,
 	requireUint,
+	describeEntry,
 	resolveRepo,
 	selectRepos,
 	stripControl,
@@ -118,6 +119,50 @@ const logUnreadable = (id) => logWarn("unreadable HEAD — skipped", { repo: id 
 /** @param {string} stderr — git's last word on why it failed. */
 function lastLine(stderr) {
 	return stderr.trim().split("\n").pop() ?? "";
+}
+
+/**
+ * One `git grep` line (`rev:path:line:text`) as its parts, with the rev the
+ * search was pinned to taken off the front. The farm-wide search and the
+ * single-rev grep read the same stream, so the parse has one home.
+ * @param {string} raw
+ * @param {string} sha the rev git grep was given
+ * @returns {{ path: string, line: number, text: string }}
+ */
+function parseGrepLine(raw, sha) {
+	const line = raw.startsWith(`${sha}:`) ? raw.slice(sha.length + 1) : raw;
+	const firstColon = line.indexOf(":");
+	const path = firstColon === -1 ? line : line.slice(0, firstColon);
+	const rest = firstColon === -1 ? "" : line.slice(firstColon + 1);
+	const secondColon = rest.indexOf(":");
+	const lineNo = secondColon === -1 ? rest : rest.slice(0, secondColon);
+	const text = secondColon === -1 ? "" : rest.slice(secondColon + 1);
+	return {
+		path,
+		line: /^[0-9]+$/.test(lineNo) ? Number(lineNo) : 0,
+		text,
+	};
+}
+
+/**
+ * The commit a REV names, or a not-found refusal. Every rev-taking verb fails
+ * the same way, so resolution and its message live in one place.
+ * @param {string} repoPath
+ * @param {string} id
+ * @param {string} rev
+ * @returns {Promise<string>}
+ */
+async function resolveCommit(repoPath, id, rev) {
+	const sha = await farmGitOrNull(repoPath, [
+		"rev-parse",
+		"--verify",
+		"--end-of-options",
+		`${rev}^{commit}`,
+	]);
+	if (sha === null) {
+		refuse(3, "no such rev in this mirror", { repo: id, rev });
+	}
+	return stripControl(sha);
 }
 
 // --- read tools -----------------------------------------------------------
@@ -298,25 +343,16 @@ async function searchCode(argv, root) {
 			if (!raw) {
 				continue;
 			}
-			// git grep prefixes every match with the tree-ish it searched
-			// (rev:path:line:text) — here the pinned sha we already report as
-			// commit_sha, so it comes off the front.
-			const line = raw.startsWith(`${sha}:`) ? raw.slice(sha.length + 1) : raw;
-			const firstColon = line.indexOf(":");
-			const path = firstColon === -1 ? line : line.slice(0, firstColon);
-			const rest = firstColon === -1 ? "" : line.slice(firstColon + 1);
-			const secondColon = rest.indexOf(":");
-			const lineNo = secondColon === -1 ? rest : rest.slice(0, secondColon);
-			const text = secondColon === -1 ? "" : rest.slice(secondColon + 1);
-			if (pathMatches && !pathMatches(path)) {
+			const hit = parseGrepLine(raw, sha);
+			if (pathMatches && !pathMatches(hit.path)) {
 				continue;
 			}
 			window.collect({
 				repo: stripControl(id),
 				commit_sha: stripControl(sha),
-				path: stripControl(path),
-				line: /^[0-9]+$/.test(lineNo) ? Number(lineNo) : 0,
-				text: stripControl(text),
+				path: stripControl(hit.path),
+				line: hit.line,
+				text: stripControl(hit.text),
 			});
 			if (window.full()) {
 				break outer;
@@ -468,6 +504,242 @@ async function readFile(argv, root) {
 		truncated,
 		content,
 	});
+}
+
+// --- repo_info / list_tree / path_info / grep -----------------------------
+
+/**
+ * repo_info REPO
+ * One mirror as a caller must pin it: the url the farm records, the tip and
+ * its date, and whether this id IS the mirror or an alias beside it. It is the
+ * orientation call — the tip row a Re-verify table needs — and it never
+ * fetches, so a stale mirror reports the stale sha instead of silently
+ * updating itself.
+ * @param {string[]} argv
+ * @param {string} root
+ */
+async function repoInfo(argv, root) {
+	arity(argv, 1, "usage: repo_info REPO");
+	requireFarm(root);
+	const id = requireRepoId(argv[0] ?? "");
+	const { path: repoPath, entry, aliasTarget } = describeEntry(root, id);
+	const url = await farmGitOrNull(repoPath, [
+		"config",
+		"--get",
+		"remote.origin.url",
+	]);
+	const branch = await farmGitOrNull(repoPath, [
+		"symbolic-ref",
+		"-q",
+		"--short",
+		"HEAD",
+	]);
+	const head = await farmGitOrNull(repoPath, [
+		"rev-parse",
+		"--verify",
+		"--end-of-options",
+		"HEAD",
+	]);
+	const meta =
+		head === null
+			? null
+			: await farmGitOrNull(repoPath, [
+					"log",
+					"-1",
+					"--format=%cI\u001f%s",
+					"--end-of-options",
+					head,
+				]);
+	const [headDate, headSubject] =
+		meta === null ? [null, null] : meta.split("\u001f");
+	const refs = await farmGit(["-C", repoPath, "for-each-ref", "--format=x"]);
+	emitEnvelope({
+		tool: "repo_info",
+		ok: true,
+		repo: stripControl(id),
+		entry,
+		alias_target: aliasTarget === null ? null : stripControl(aliasTarget),
+		url: url === null ? null : stripControl(url),
+		default_branch: branch === null ? null : stripControl(branch),
+		head_sha: head === null ? null : stripControl(head),
+		head_date: headDate === null ? null : stripControl(headDate),
+		head_subject: headSubject === null ? null : stripControl(headSubject),
+		ref_count: refs.stdout.split("\n").length - 1,
+	});
+}
+
+/**
+ * list_tree REPO REV [PATH_GLOB] [CURSOR] [MAX]
+ * One mirror's files at ONE rev — the call that replaces `git ls-tree` against
+ * the mirror directory, and the only listing that can be pinned to the tip a
+ * document cited after HEAD has moved. Sizes ride along because the same walk
+ * has them; non-blobs report null.
+ * @param {string[]} argv
+ * @param {string} root
+ */
+async function listTree(argv, root) {
+	arityBetween(
+		argv,
+		2,
+		5,
+		"usage: list_tree REPO REV [PATH_GLOB] [CURSOR] [MAX]",
+	);
+	requireFarm(root);
+	const id = requireRepoId(argv[0] ?? "");
+	const rev = requireRev(argv[1] ?? "");
+	const pathGlob = requireGlob(argv[2] ?? "");
+	const repoPath = resolveRepo(root, id);
+	const sha = await resolveCommit(repoPath, id, rev);
+	const window = beginCollect(argv[3], argv[4]);
+	const pathMatches = pathGlob ? caseGlob(pathGlob) : null;
+	// -z so a path with non-ASCII bytes arrives unquoted, the same reason
+	// search_paths turns quotepath off.
+	const tree = await farmGit([
+		"-C",
+		repoPath,
+		"ls-tree",
+		"-r",
+		"-l",
+		"-z",
+		"--end-of-options",
+		sha,
+	]);
+	if (tree.code !== 0) {
+		refuse(5, "git ls-tree failed", {
+			repo: id,
+			rc: tree.code,
+			detail: lastLine(tree.stderr),
+		});
+	}
+	for (const record of tree.stdout.split("\u0000")) {
+		if (!record) {
+			continue;
+		}
+		const tab = record.indexOf("\t");
+		if (tab === -1) {
+			continue;
+		}
+		const meta = record.slice(0, tab).split(/\s+/);
+		const path = record.slice(tab + 1);
+		if (pathMatches && !pathMatches(path)) {
+			continue;
+		}
+		const size = meta[3] ?? "-";
+		window.collect({
+			repo: stripControl(id),
+			commit_sha: sha,
+			path: stripControl(path),
+			size: /^[0-9]+$/.test(size) ? Number(size) : null,
+		});
+		if (window.full()) {
+			break;
+		}
+	}
+	emitHits(
+		"list_tree",
+		{ commit_sha: sha, paths_matched: window.hits.length },
+		window,
+	);
+}
+
+/**
+ * path_info REPO REV PATH
+ * Whether a citation's `repo:path` target exists at that rev, and what it is.
+ * Absent is an ANSWER (ok with `exists:false`), not a failure: a doc check must
+ * not read "the file is gone" and "the tool broke" as the same result.
+ * @param {string[]} argv
+ * @param {string} root
+ */
+async function pathInfo(argv, root) {
+	arity(argv, 3, "usage: path_info REPO REV PATH");
+	requireFarm(root);
+	const id = requireRepoId(argv[0] ?? "");
+	const rev = requireRev(argv[1] ?? "");
+	const path = requirePath(argv[2] ?? "");
+	const repoPath = resolveRepo(root, id);
+	const sha = await resolveCommit(repoPath, id, rev);
+	const spec = `${sha}:${path}`;
+	const type = await farmGitOrNull(repoPath, ["cat-file", "-t", spec]);
+	const size = type === "blob" ? await farmGitOrNull(repoPath, ["cat-file", "-s", spec]) : null;
+	emitEnvelope({
+		tool: "path_info",
+		ok: true,
+		repo: stripControl(id),
+		rev: stripControl(rev),
+		path: stripControl(path),
+		commit_sha: sha,
+		exists: type !== null,
+		type: type === null ? null : stripControl(type),
+		size: size !== null && /^[0-9]+$/.test(size) ? Number(size) : null,
+	});
+}
+
+/**
+ * grep REPO REV QUERY [PATH_GLOB] [MODE] [MAX]
+ * search_code's per-mirror half at a pinned rev. A citation check has to read
+ * the tree the document cited, and HEAD is usually past it, so the rev is an
+ * argument rather than a default.
+ * @param {string[]} argv
+ * @param {string} root
+ */
+async function grep(argv, root) {
+	arityBetween(
+		argv,
+		3,
+		6,
+		"usage: grep REPO REV QUERY [PATH_GLOB] [MODE] [MAX]",
+	);
+	requireFarm(root);
+	const id = requireRepoId(argv[0] ?? "");
+	const rev = requireRev(argv[1] ?? "");
+	const query = argv[2];
+	if (!query) {
+		refuse(2, "empty query");
+	}
+	const pathGlob = requireGlob(argv[3] ?? "");
+	const mode = argv[4] ?? "fixed";
+	if (mode !== "fixed" && mode !== "regex") {
+		refuse(2, "MODE must be fixed or regex", { mode });
+	}
+	const repoPath = resolveRepo(root, id);
+	const sha = await resolveCommit(repoPath, id, rev);
+	const window = beginCollect("0", argv[5]);
+	const pathMatches = pathGlob ? caseGlob(pathGlob) : null;
+	const grepArgs = ["-C", repoPath, "grep", "-I", "-n", "--no-color"];
+	if (mode === "fixed") {
+		grepArgs.push("-F");
+	}
+	grepArgs.push("-e", query, "--end-of-options", sha);
+	const res = await farmGit(grepArgs);
+	if (res.code === 124) {
+		refuse(5, "git grep timed out", { repo: id });
+	}
+	if (res.code !== 0 && res.code !== 1) {
+		refuse(5, "git grep failed", {
+			repo: id,
+			rc: res.code,
+			detail: lastLine(res.stderr),
+		});
+	}
+	for (const raw of res.stdout.split("\n")) {
+		if (!raw) {
+			continue;
+		}
+		const hit = parseGrepLine(raw, sha);
+		if (pathMatches && !pathMatches(hit.path)) {
+			continue;
+		}
+		window.collect({
+			repo: stripControl(id),
+			path: stripControl(hit.path),
+			line: hit.line,
+			text: stripControl(hit.text),
+		});
+		if (window.full()) {
+			break;
+		}
+	}
+	emitHits("grep", { repo: stripControl(id), commit_sha: sha }, window);
 }
 
 // --- search_history -------------------------------------------------------
@@ -857,6 +1129,10 @@ read tools (capped, read-only by construction):
   read_file      REPO REV PATH [OFFSET] [LIMIT]
   search_history QUERY [REPO_GLOB] [PATH_GLOB] [SINCE] [CURSOR] [MAX]
   diff           REPO REV_A REV_B [PATH] [MAX]
+  repo_info      REPO
+  list_tree      REPO REV [PATH_GLOB] [CURSOR] [MAX]
+  path_info      REPO REV PATH
+  grep           REPO REV QUERY [PATH_GLOB] [MODE] [MAX]
 
 maintenance tools (farm-wide mutation lock, git/farm-lock.sh):
   upsert_repo        URL
@@ -877,6 +1153,10 @@ const VERBS = {
 	read_file: readFile,
 	search_history: searchHistory,
 	diff,
+	repo_info: repoInfo,
+	list_tree: listTree,
+	path_info: pathInfo,
+	grep,
 	upsert_repo: upsertRepo,
 	compact_repo: compactRepo,
 	maintenance_status: maintenanceStatus,

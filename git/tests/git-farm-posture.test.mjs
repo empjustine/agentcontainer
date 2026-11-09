@@ -12,7 +12,7 @@
 
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -130,6 +130,23 @@ test("the repo filter is a shell case-glob: `*` crosses `/`", () => {
 		]);
 		assert.deepEqual(selectRepos(root, "*/*beta").ids, ["gitlab/acme/beta"]);
 		assert.deepEqual(selectRepos(root).ids.length, 2);
+	} finally {
+		cleanup();
+	}
+});
+
+test("an exact alias id is selectable, a pattern that matches nothing stays empty", () => {
+	const { root, cleanup } = fixtureFarm();
+	try {
+		symlinkSync(join("alpha.git"), join(root, "github", "acme", "old.git"));
+		// Discovery skips the link, so the fallback is what makes the name a
+		// document cites reachable (docs/d160).
+		assert.deepEqual(listRepoIds(root), ["github/acme/alpha", "gitlab/acme/beta"]);
+		assert.deepEqual(selectRepos(root, "github/acme/old").ids, ["github/acme/old"]);
+		// A wildcard is never resolved this way: it must keep meaning "what the
+		// farm lists", or `*` would depend on whichever links exist.
+		assert.deepEqual(selectRepos(root, "github/acme/*").ids, ["github/acme/alpha"]);
+		assert.deepEqual(selectRepos(root, "github/acme/nope").ids, []);
 	} finally {
 		cleanup();
 	}

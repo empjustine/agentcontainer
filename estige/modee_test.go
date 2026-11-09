@@ -78,7 +78,7 @@ func wireRelayNode(t *testing.T, tunnelURL string) (string, func()) {
 	t.Setenv(envClientLabel, "mode-e-e2e")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false)
 	if err != nil {
 		t.Fatalf("relayConfigFromEnv: %v", err)
 	}
@@ -134,7 +134,7 @@ func TestModeEEndToEndOverPlainH1(t *testing.T) {
 	logBuf := captureLog(t)
 
 	t.Run("one session carries a full CONNECT exchange over mode E", func(t *testing.T) {
-		modeEFetch(t, httpAddr, "localhost", upPort)
+		modeEFetch(t, httpAddr, testTargetAlias, upPort)
 	})
 
 	t.Run("concurrent sessions — one trace-id and registry slot each", func(t *testing.T) {
@@ -144,7 +144,7 @@ func TestModeEEndToEndOverPlainH1(t *testing.T) {
 			wg.Go(func() {
 				conn := rawDial(t, httpAddr)
 				defer conn.Close()
-				mustWrite(t, conn, "CONNECT localhost:"+strconv.Itoa(int(upPort))+" HTTP/1.1\r\nHost: localhost\r\n\r\n"+
+				mustWrite(t, conn, "CONNECT "+testTargetAlias+":"+strconv.Itoa(int(upPort))+" HTTP/1.1\r\nHost: "+testTargetAlias+"\r\n\r\n"+
 					"GET /p HTTP/1.1\r\nHost: local.test\r\nConnection: close\r\n\r\n")
 				br := bufio.NewReader(conn)
 				status, err := br.ReadString('\n')
@@ -194,7 +194,7 @@ func TestModeEDemotionThroughHostileGateway(t *testing.T) {
 	defer stopRelay()
 	logBuf := captureLog(t)
 
-	modeEFetch(t, httpAddr, "localhost", upPort)
+	modeEFetch(t, httpAddr, testTargetAlias, upPort)
 
 	waitForLog(t, logBuf, "falling back to mode E")
 	waitForLog(t, logBuf, "transport=post")
@@ -222,7 +222,7 @@ func TestGeneralizedTunnelURLDemotesOverTLS(t *testing.T) {
 	defer stopRelay()
 	logBuf := captureLog(t)
 
-	modeEFetch(t, httpAddr, "localhost", upPort)
+	modeEFetch(t, httpAddr, testTargetAlias, upPort)
 
 	waitForLog(t, logBuf, "falling back to mode E")
 	waitForLog(t, logBuf, "transport=post")

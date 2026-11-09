@@ -1,0 +1,26 @@
+{
+  "note": "Old names kept resolvable as symlinks beside the mirror (docs/d160). id is the farm-relative path with .git stripped; target is the mirror that holds the objects. repository_id pins the identity the canonicality probe returned, so a future rename can be told apart from a different repo reusing the name.",
+  "aliases": [
+    {
+      "id": "github.com/sst/opencode",
+      "target": "github.com/anomalyco/opencode",
+      "kind": "rename",
+      "repository_id": 975734319,
+      "checked": "2026-11-08"
+    },
+    {
+      "id": "github.com/rivet-dev/agents",
+      "target": "github.com/rivet-dev/sandbox-agent",
+      "kind": "rename",
+      "repository_id": 1141720197,
+      "checked": "2026-11-08"
+    },
+    {
+      "id": "github.com/dais-labo/flock",
+      "target": "github.com/dais-polymtl/flock",
+      "kind": "rename",
+      "repository_id": 848527519,
+      "checked": "2026-11-08"
+    }
+  ]
+}

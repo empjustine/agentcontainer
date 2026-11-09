@@ -16,7 +16,7 @@ func relaysConfigFrom(t *testing.T, url string) (relayConfig, error) {
 	t.Helper()
 	armTestTunnelEnv(t)
 	t.Setenv(envTunnelURL, url)
-	cfg, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t))
+	cfg, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false)
 	if err != nil {
 		return cfg, err
 	}
@@ -44,7 +44,7 @@ func TestRelayConfigFromEnvNormalizesWireSchemes(t *testing.T) {
 
 	armTestTunnelEnv(t)
 	t.Setenv(envTunnelURL, "ftp://example.invalid/vpn")
-	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t)); err == nil || !strings.Contains(err.Error(), "must be http://, https://, ws:// or wss://") {
+	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false); err == nil || !strings.Contains(err.Error(), "must be http://, https://, ws:// or wss://") {
 		t.Fatalf("non-wire scheme: err=%v, want the four-scheme contract", err)
 	}
 }
@@ -71,7 +71,7 @@ func TestRelayConfigRefusesTokenThatCouldInjectHeaders(t *testing.T) {
 			// The production pair, without relaysConfigFrom's fixture token:
 			// relayConfigFromEnv parses, validate() gates the bind (runRelayNode
 			// treats either error as fatal).
-			cfg, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t))
+			cfg, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false)
 			if err == nil {
 				err = cfg.validate()
 			}
@@ -90,7 +90,7 @@ func TestRelayConfigRefusesTokenThatCouldInjectHeaders(t *testing.T) {
 func TestRelayConfigAcceptsWellFormedToken(t *testing.T) {
 	t.Setenv(envTunnelURL, "https://relay.example.test/vpn")
 	t.Setenv(envOperatorToken, "a-well-formed-operator-token-0123456789")
-	cfg, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t))
+	cfg, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false)
 	if err == nil {
 		err = cfg.validate()
 	}

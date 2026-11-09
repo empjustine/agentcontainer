@@ -10,7 +10,7 @@ func TestRelayConfigRefusesSelfChain(t *testing.T) {
 	t.Setenv(envOperatorToken, "token")
 	t.Setenv("HTTP_PROXY", "http://127.0.0.1:3128")
 
-	_, err := relayConfigFromEnv("127.0.0.1:3128", "127.0.0.1:1080")
+	_, err := relayConfigFromEnv("127.0.0.1:3128", "127.0.0.1:1080", false)
 	if !errors.Is(err, errSelfChained) {
 		t.Fatalf("relayConfigFromEnv err = %v, want errSelfChained", err)
 	}
@@ -21,7 +21,7 @@ func TestRelayConfigAcceptsForeignChain(t *testing.T) {
 	t.Setenv(envOperatorToken, "token")
 	t.Setenv("HTTPS_PROXY", "http://proxy.example.test:3128")
 
-	cfg, err := relayConfigFromEnv("127.0.0.1:3128", "127.0.0.1:1080")
+	cfg, err := relayConfigFromEnv("127.0.0.1:3128", "127.0.0.1:1080", false)
 	if err != nil {
 		t.Fatalf("relayConfigFromEnv: %v", err)
 	}
@@ -64,7 +64,7 @@ func TestRelayConfigRefusesSelfChainAcrossSpellings(t *testing.T) {
 			if tc.proxyAddr == socksAddr {
 				socksAddr = "127.0.0.1:1081"
 			}
-			_, err := relayConfigFromEnv(tc.proxyAddr, socksAddr)
+			_, err := relayConfigFromEnv(tc.proxyAddr, socksAddr, false)
 			if !errors.Is(err, errSelfChained) {
 				t.Fatalf("%s=%q against listener %q: err = %v, want errSelfChained",
 					tc.envVar, tc.value, tc.proxyAddr, err)
@@ -83,7 +83,7 @@ func TestRelayConfigAcceptsSamePortDifferentHost(t *testing.T) {
 	t.Setenv(envOperatorToken, "token")
 	t.Setenv("HTTP_PROXY", "http://proxy.example.test:3128")
 
-	cfg, err := relayConfigFromEnv("127.0.0.1:3128", "127.0.0.1:1080")
+	cfg, err := relayConfigFromEnv("127.0.0.1:3128", "127.0.0.1:1080", false)
 	if err != nil {
 		t.Fatalf("relayConfigFromEnv: %v", err)
 	}
@@ -105,7 +105,7 @@ func TestRelayConfigAcceptsOtherLoopbackFamily(t *testing.T) {
 			t.Setenv(envTunnelURL, "ws://relay.example.test/vpn")
 			t.Setenv(envOperatorToken, "token")
 			t.Setenv(tc.envVar, tc.value)
-			if _, err := relayConfigFromEnv(tc.proxyAddr, "127.0.0.1:1080"); err != nil {
+			if _, err := relayConfigFromEnv(tc.proxyAddr, "127.0.0.1:1080", false); err != nil {
 				t.Fatalf("%s=%q against listener %q: err = %v, want acceptance",
 					tc.envVar, tc.value, tc.proxyAddr, err)
 			}

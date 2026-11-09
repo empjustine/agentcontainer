@@ -38,6 +38,14 @@ import (
 // the same pinned tunnel (the client connection closes with the response).
 func (c *relayNode) handleForward(w http.ResponseWriter, r *http.Request) {
 	target := forwardTarget(r.URL)
+	// The relay's own gate (d163) runs before the tunnel exists: a target
+	// this relay must not relay dies here, in the local problem vocabulary,
+	// and no session opens on the exit for it.
+	if detail, _ := c.localTargetRefusal(r.URL.Hostname()); detail != "" {
+		writeProblem(w, r, http.StatusForbidden, "target-refused",
+			"This relay refuses that target", errors.New(detail))
+		return
+	}
 	tun, err := c.openTunnel(r.Context(), target)
 	if err != nil {
 		status, code, title := httpStatusForTunnelErr(err)

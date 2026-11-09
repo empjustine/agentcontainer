@@ -355,6 +355,11 @@ func main() {
 	mode := flag.String("mode", "exit", "process role: \"exit\" (the exit node: funnel front + tunnel server) or \"relay\" (the relay node: loopback CONNECT/SOCKS5 proxy feeding the tunnel, modes C–E; docs/d073 §7, docs/d088)")
 	proxyListen := flag.String("proxy-listen", "127.0.0.1:3128", "relay role: loopback HTTP CONNECT listener")
 	socksListen := flag.String("socks-listen", "127.0.0.1:1080", "relay role: loopback SOCKS5 listener")
+	// Address targets stay refused at the relay's own doors until asked
+	// for (d163): the exit answers them with a refusal of its own unless
+	// its egress config opts in, and this switch is the relay's half of the
+	// same statement. It never re-enables a guaranteed-bogon target.
+	legacyIPRelay := flag.Bool("legacy-ip-relay", false, "relay role: relay address (IP-literal) targets instead of refusing them at the local doors (d163)")
 	// No -modes flag: the transport offer is the whole ladder and selection
 	// is the relay node's per-dial ranking of the endpoint (docs/d093) — a
 	// knob here could only ever degrade it.
@@ -376,7 +381,7 @@ func main() {
 	// or missing env IS the kill switch (VPN-R26): a listener that could
 	// start without a credential would only exist to refuse everything anyway.
 	if *mode == "relay" {
-		relayCfg, err := relayConfigFromEnv(*proxyListen, *socksListen)
+		relayCfg, err := relayConfigFromEnv(*proxyListen, *socksListen, *legacyIPRelay)
 		if err != nil {
 			if errors.Is(err, errSelfChained) {
 				log.Printf("[vpn-relay] %v", err)

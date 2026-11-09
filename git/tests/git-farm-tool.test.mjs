@@ -11,7 +11,7 @@
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -183,7 +183,7 @@ test("an unknown tool is a 2 with the one failure envelope", () => {
 			name: "nope",
 		});
 		// The same fact as a log line, with `call` rather than a second `tool`.
-		const error = logs(res.err).find((l) => l.level === "error");
+		const error = logs(res.err).find((l) => l.severityNumber >= 17);
 		assert.equal(error?.msg, "unknown tool (try --help)");
 		assert.equal(error?.call, "nope");
 		assert.equal(error?.tool, "git/farm-tool");
@@ -553,6 +553,138 @@ test("the payload stream carries one JSON object and nothing else", () => {
 		const lines = res.out.split("\n").filter((line) => line !== "");
 		assert.equal(lines.length, 1);
 		assert.doesNotThrow(() => JSON.parse(String(lines[0])));
+	} finally {
+		cleanup();
+	}
+});
+
+test("repo_info pins the tip a Re-verify table needs", () => {
+	const { env, cleanup } = farm();
+	try {
+		const res = run(["repo_info", "acme/alpha"], env);
+		assert.equal(res.status, 0);
+		assert.equal(res.json.entry, "mirror");
+		assert.equal(res.json.alias_target, null);
+		assert.equal(res.json.url, "https://example.invalid/acme/alpha");
+		assert.match(res.json.head_sha, /^[0-9a-f]{40}$/);
+		assert.match(res.json.head_date, /^2024-02-01T/);
+		assert.equal(res.json.head_subject, "second commit needle too");
+		assert.equal(res.json.default_branch, "main");
+		assert.equal(res.json.ref_count, 3);
+	} finally {
+		cleanup();
+	}
+});
+
+test("list_tree lists one rev, its sizes, and a path glob", () => {
+	const { env, cleanup } = farm();
+	try {
+		const head = run(["list_tree", "acme/alpha", "HEAD"], env);
+		assert.equal(head.status, 0);
+		const paths = results(head.json)
+			.map((row) => row.path)
+			.sort((a, b) => a.localeCompare(b));
+		assert.deepEqual(paths, [
+			"big.txt",
+			"bin.dat",
+			"later.txt",
+			"readme.txt",
+			"src/a.js",
+		]);
+		const big = results(head.json).find((row) => row.path === "big.txt");
+		assert.equal(big.size, 300 * 1024);
+		assert.match(head.json.commit_sha, /^[0-9a-f]{40}$/);
+		// The rev is the argument, so an older tree is a different answer.
+		const older = run(["list_tree", "acme/alpha", "HEAD~1"], env);
+		assert.ok(!results(older.json).some((row) => row.path === "later.txt"));
+		const globbed = run(["list_tree", "acme/alpha", "HEAD", "src/*"], env);
+		assert.deepEqual(
+			results(globbed.json).map((row) => row.path),
+			["src/a.js"],
+		);
+		const missingRev = run(["list_tree", "acme/alpha", "nope"], env);
+		assert.equal(missingRev.status, 3);
+	} finally {
+		cleanup();
+	}
+});
+
+test("path_info answers existence instead of failing", () => {
+	const { env, cleanup } = farm();
+	try {
+		const blob = run(["path_info", "acme/alpha", "HEAD", "src/a.js"], env);
+		assert.equal(blob.status, 0);
+		assert.equal(blob.json.exists, true);
+		assert.equal(blob.json.type, "blob");
+		assert.equal(blob.json.size, 20);
+		const dir = run(["path_info", "acme/alpha", "HEAD", "src"], env);
+		assert.equal(dir.json.exists, true);
+		assert.equal(dir.json.type, "tree");
+		assert.equal(dir.json.size, null);
+		// Absent is an answer: a doc check compares the boolean, and a failure
+		// envelope would be indistinguishable from the tool breaking.
+		const absent = run(["path_info", "acme/alpha", "HEAD", "nope.txt"], env);
+		assert.equal(absent.status, 0);
+		assert.equal(absent.json.exists, false);
+		assert.equal(absent.json.type, null);
+		assert.equal(absent.json.size, null);
+		const badRev = run(["path_info", "acme/alpha", "nope", "src/a.js"], env);
+		assert.equal(badRev.status, 3);
+	} finally {
+		cleanup();
+	}
+});
+
+test("grep reads a pinned rev, not HEAD", () => {
+	const { env, cleanup } = farm();
+	try {
+		const head = run(["grep", "acme/alpha", "HEAD", "needle"], env);
+		assert.equal(head.status, 0);
+		assert.equal(head.json.repo, "acme/alpha");
+		assert.ok(results(head.json).some((row) => row.path === "later.txt"));
+		const older = run(["grep", "acme/alpha", "HEAD~1", "needle"], env);
+		assert.ok(!results(older.json).some((row) => row.path === "later.txt"));
+		assert.notEqual(older.json.commit_sha, head.json.commit_sha);
+		const none = run(["grep", "acme/alpha", "HEAD", "absent-token"], env);
+		assert.equal(none.status, 0);
+		assert.equal(none.json.total, 0);
+		const regex = run(["grep", "acme/alpha", "HEAD", "nee.le", "*", "regex"], env);
+		assert.ok(regex.json.total > 0);
+		// The path glob filters after grep, and cannot become a pattern.
+		const scoped = run(["grep", "acme/alpha", "HEAD", "needle", "src/*"], env);
+		assert.deepEqual(
+			results(scoped.json).map((row) => row.path),
+			["src/a.js"],
+		);
+		const badMode = run(["grep", "acme/alpha", "HEAD", "x", "", "glob"], env);
+		assert.equal(badMode.status, 2);
+	} finally {
+		cleanup();
+	}
+});
+
+test("an alias resolves through the read verbs without doubling the farm", () => {
+	const { env, cleanup } = farm();
+	try {
+		symlinkSync(join("alpha.git"), join(env.REFERENCES_ROOT, "acme", "old.git"));
+		const read = run(["read_file", "acme/old", "HEAD", "readme.txt"], env);
+		assert.equal(read.status, 0);
+		assert.match(read.json.content, /alpha line one/);
+		const info = run(["repo_info", "acme/old"], env);
+		assert.equal(info.json.entry, "alias");
+		assert.equal(info.json.alias_target, "acme/alpha");
+		// The fan-out verbs must find the name a document cites; discovery must
+		// still count the mirror once, so the hits do not double.
+		const search = run(["search_code", "needle", "acme/old"], env);
+		assert.equal(search.status, 0);
+		assert.equal(search.json.repos_matched, 1);
+		assert.ok(results(search.json).length > 0);
+		const grep = run(["grep", "acme/old", "HEAD", "needle"], env);
+		assert.ok(grep.json.total > 0);
+		const listed = run(["list_repos", "acme/*"], env);
+		assert.equal(results(listed.json).length, 2);
+		const full = run(["list_repos"], env);
+		assert.equal(full.json.matches, 2);
 	} finally {
 		cleanup();
 	}

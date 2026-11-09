@@ -22,8 +22,9 @@
  * short version is that a working tree is pure overhead for search and it is
  * what makes podman's `z,U` relabel walk take ~39 s.
  *
- * This file is also on the native Windows path (the `maintain.ps1` entry,
- * docs/d062): nothing in it assumes POSIX path separators or bare-path import
+ * This file also runs against farms rooted on NTFS or a UNC share, where paths
+ * arrive with Windows separators even though the host is Linux (docs/d062):
+ * nothing in it assumes POSIX path separators or bare-path import
  * specifiers — discovery takes paths opaquely, globs normalize separators, and
  * the sibling imports are relative specifiers (`./log.mjs`), which the ESM
  * loader accepts on every host. The file: URL dance d062 needed existed only
@@ -31,12 +32,19 @@
  * parses as a URL scheme; from inside `lib/` the specifier is relative.
  */
 
-import { execFile } from "node:child_process";
+import { spawn } from "node:child_process";
 import { readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { writeArtifact } from "./artifact.mjs";
 import { logError, logInfo, logWarn, setLogStream, setLogTool } from "./log.mjs";
+import {
+  StopRequested,
+  stopRequested,
+  throwIfStopRequested,
+  trackChild,
+  untrackChild,
+} from "./stop-signal.mjs";
 
 // Every tool in this folder prints a machine-consumed payload on stdout
 // (audit's JSON report, search-references' results, vbs-har's manifest,
@@ -52,7 +60,7 @@ export { logError, logInfo, logWarn, setLogTool, writeArtifact };
  * mirror farm and the retired bind mount describe the same tree.
  */
 export const DEFAULT_ROOT =
-	process.env.REFERENCES_ROOT ?? join(homedir(), "Downloads", "references");
+  process.env.REFERENCES_ROOT ?? join(homedir(), "Downloads", "references");
 
 /**
  * Where bare mirrors go when `--dest` is not given. A SEPARATE tree, not
@@ -62,8 +70,7 @@ export const DEFAULT_ROOT =
  * tree and be destroyed by `--delete-originals`. A parallel root makes the
  * farm flat, deletable and directly servable.
  */
-export const DEFAULT_DEST =
-	process.env.REFERENCES_MIRRORS ?? `${DEFAULT_ROOT}-bare`;
+export const DEFAULT_DEST = process.env.REFERENCES_MIRRORS ?? `${DEFAULT_ROOT}-bare`;
 
 /**
  * Default recursion bound. The mirror layout is
@@ -84,8 +91,8 @@ export const DEFAULT_MAX_DEPTH = 5;
  * `GIT_ASKPASS=/usr/bin/false` alone does NOT stop the hang — git reports the
  * dead askpass and falls back to its terminal prompt anyway. The askpass
  * entries only close the askpass channel, and `GCM_INTERACTIVE` is what stops
- * Git Credential Manager's GUI dialog on the `maintain.ps1` Windows path
- * (docs/d062), which `GIT_TERMINAL_PROMPT` never reaches. None of these
+ * Git Credential Manager's GUI dialog on a Windows host, where Git for Windows
+ * ships it and `GIT_TERMINAL_PROMPT` never reaches (docs/d062). None of these
  * disable any already-stored credential (helper/store/manager answers come
  * first), so a healthy configured host keeps working unchanged.
  *
@@ -105,15 +112,23 @@ export const DEFAULT_MAX_DEPTH = 5;
  * @returns {NodeJS.ProcessEnv}
  */
 function noninteractiveGitEnv() {
-	return {
-		...process.env,
-		GIT_TERMINAL_PROMPT: "0",
-		GIT_ASKPASS: "/usr/bin/false",
-		SSH_ASKPASS: "/usr/bin/false",
-		GCM_INTERACTIVE: "Never",
-		GIT_SSH_COMMAND: process.env.GIT_SSH_COMMAND ?? "ssh -oBatchMode=yes",
-	};
+  return {
+    ...process.env,
+    GIT_TERMINAL_PROMPT: "0",
+    GIT_ASKPASS: "/usr/bin/false",
+    SSH_ASKPASS: "/usr/bin/false",
+    GCM_INTERACTIVE: "Never",
+    GIT_SSH_COMMAND: process.env.GIT_SSH_COMMAND ?? "ssh -oBatchMode=yes",
+  };
 }
+
+/**
+ * How much a single git invocation may write before it is killed. Git's normal
+ * output is kilobytes; this exists for the pathological path (a `--stat` over
+ * an enormous diff), and it matches the ceiling the pi host gives an exec'd
+ * command (docs/d150) so a sweep and an agent tool fail at the same size.
+ */
+const GIT_MAX_BUFFER = 256 * 1024 * 1024;
 
 /**
  * Run `git -C cwd args…`. NEVER throws unless `must` is true: the mirror
@@ -121,47 +136,116 @@ function noninteractiveGitEnv() {
  * the other 775 repos. Every child runs with `noninteractiveGitEnv()` — a
  * fleet sweep must fail one repo, never hang on its prompt (docs/d075).
  *
+ * A requested stop is refused HERE, before the child exists: every caller's
+ * sequence (fetch → gc → repack → commit-graph) therefore stops BETWEEN git
+ * invocations, the only place an interrupted pass leaves a mirror in an
+ * obvious state (docs/d164).
+ *
  * @param {string} cwd
  * @param {string[]} args
  * @param {{ must?: boolean }} [opts]
  * @returns {Promise<{ code: number, stdout: string, stderr: string }>}
  */
 export function git(cwd, args, opts = {}) {
-	const { must = true } = opts;
-	return new Promise((resolve, reject) => {
-		execFile(
-			"git",
-			["-C", cwd, ...args],
-			{
-				encoding: "utf-8",
-				maxBuffer: 256 * 1024 * 1024,
-				env: noninteractiveGitEnv(),
-			},
-			(err, stdout, stderr) => {
-				const out = String(stdout ?? "");
-				const errout = String(stderr ?? "");
-				if (err) {
-					if (must) {
-						reject(
-							new Error(
-								`git ${args.join(" ")} (in ${cwd}) failed: ${
-									errout.trim() || err.message
-								}`,
-							),
-						);
-					} else {
-						resolve({
-							code: typeof err.code === "number" ? err.code : 1,
-							stdout: out,
-							stderr: errout,
-						});
-					}
-					return;
-				}
-				resolve({ code: 0, stdout: out, stderr: errout });
-			},
-		);
-	});
+  const { must = true } = opts;
+  throwIfStopRequested();
+  // `spawn`, not `execFile`: execFile builds its own spawn options and drops
+  // `detached`, silently leaving the step in the shell's process group — where
+  // a terminal Ctrl-C kills it mid-repack. Measured, not assumed: with
+  // execFile({detached:true}) the child's PGID stays the parent's (docs/d164).
+  return new Promise((resolve, reject) => {
+    const child = spawn("git", ["-C", cwd, ...args], {
+      env: noninteractiveGitEnv(),
+      // Its own process group: a terminal Ctrl-C reaches the sweep and NOT
+      // the step, which is what lets the step finish; the abort path kills
+      // this group deliberately instead (docs/d164).
+      detached: true,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    trackChild(child);
+    child.stdout.setEncoding("utf-8");
+    child.stderr.setEncoding("utf-8");
+    let stdout = "";
+    let stderr = "";
+    let buffered = 0;
+    let overflow = false;
+    /**
+     * @param {string} chunk
+     * @param {(value: string) => void} append
+     */
+    const collect = (chunk, append) => {
+      buffered += chunk.length;
+      if (buffered > GIT_MAX_BUFFER) {
+        overflow = true;
+        child.kill("SIGTERM");
+        return;
+      }
+      append(chunk);
+    };
+    child.stdout.on("data", (chunk) => collect(chunk, (s) => (stdout += s)));
+    child.stderr.on("data", (chunk) => collect(chunk, (s) => (stderr += s)));
+    let settled = false;
+    /** @param {Error} err */
+    const fail = (err) => {
+      settled = true;
+      reject(err);
+    };
+    /** @param {number} code */
+    const succeed = (code) => {
+      settled = true;
+      resolve({ code, stdout, stderr });
+    };
+    child.on("error", (err) => {
+      // A spawn failure is not a git answer: ENOENT (no git on PATH) must not
+      // read as "this repo is broken" in a fleet sweep (docs/d075).
+      untrackChild(child);
+      if (settled) {
+        return;
+      }
+      const stopping = stopRequested();
+      if (stopping) {
+        fail(new StopRequested(stopping));
+        return;
+      }
+      if (must) {
+        fail(new Error(`git ${args.join(" ")} (in ${cwd}) failed: ${err.message}`));
+        return;
+      }
+      succeed(1);
+    });
+    child.on("close", (code, signal) => {
+      untrackChild(child);
+      if (settled) {
+        return;
+      }
+      if (overflow) {
+        fail(
+          new Error(`git ${args.join(" ")} (in ${cwd}) wrote more than ${GIT_MAX_BUFFER} bytes`),
+        );
+        return;
+      }
+      if (code === 0) {
+        succeed(0);
+        return;
+      }
+      const stopping = stopRequested();
+      if (stopping) {
+        fail(new StopRequested(stopping, code === null));
+        return;
+      }
+      if (must) {
+        fail(
+          new Error(
+            `git ${args.join(" ")} (in ${cwd}) failed: ${
+              stderr.trim() || `killed by ${signal ?? `exit ${code}`}`
+            }`,
+          ),
+        );
+        return;
+      }
+      succeed(typeof code === "number" ? code : 1);
+    });
+  });
 }
 
 /**
@@ -170,7 +254,7 @@ export function git(cwd, args, opts = {}) {
  * @returns {boolean}
  */
 function hasGitDir(entries) {
-	return entries.some((e) => e.isDirectory() && e.name === ".git");
+  return entries.some((e) => e.isDirectory() && e.name === ".git");
 }
 
 /**
@@ -180,13 +264,11 @@ function hasGitDir(entries) {
  * @returns {boolean}
  */
 function looksBare(entries) {
-	const names = new Set(entries.map((e) => e.name));
-	const hasObjects = entries.some(
-		(e) => e.isDirectory() && e.name === "objects",
-	);
-	const hasRefs = entries.some((e) => e.isDirectory() && e.name === "refs");
-	const hasHead = entries.some((e) => e.isFile() && e.name === "HEAD");
-	return names.has("HEAD") && hasObjects && hasRefs && hasHead;
+  const names = new Set(entries.map((e) => e.name));
+  const hasObjects = entries.some((e) => e.isDirectory() && e.name === "objects");
+  const hasRefs = entries.some((e) => e.isDirectory() && e.name === "refs");
+  const hasHead = entries.some((e) => e.isFile() && e.name === "HEAD");
+  return names.has("HEAD") && hasObjects && hasRefs && hasHead;
 }
 
 /**
@@ -200,32 +282,32 @@ function looksBare(entries) {
  * @returns {string[]}
  */
 export function findCloneRoots(root, maxDepth = DEFAULT_MAX_DEPTH) {
-	/** @type {string[]} */
-	const out = [];
-	/** @param {string} dir @param {number} depth */
-	const walk = (dir, depth) => {
-		if (depth > maxDepth) {
-			return;
-		}
-		/** @type {import("node:fs").Dirent[]} */
-		let entries;
-		try {
-			entries = readdirSync(dir, { withFileTypes: true });
-		} catch {
-			return;
-		}
-		if (hasGitDir(entries)) {
-			out.push(dir);
-		}
-		for (const e of entries) {
-			if (!e.isDirectory() || e.name.startsWith(".")) {
-				continue;
-			}
-			walk(join(dir, e.name), depth + 1);
-		}
-	};
-	walk(root, 0);
-	return out.sort();
+  /** @type {string[]} */
+  const out = [];
+  /** @param {string} dir @param {number} depth */
+  const walk = (dir, depth) => {
+    if (depth > maxDepth) {
+      return;
+    }
+    /** @type {import("node:fs").Dirent[]} */
+    let entries;
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    if (hasGitDir(entries)) {
+      out.push(dir);
+    }
+    for (const e of entries) {
+      if (!e.isDirectory() || e.name.startsWith(".")) {
+        continue;
+      }
+      walk(join(dir, e.name), depth + 1);
+    }
+  };
+  walk(root, 0);
+  return out.sort();
 }
 
 /**
@@ -236,33 +318,33 @@ export function findCloneRoots(root, maxDepth = DEFAULT_MAX_DEPTH) {
  * @returns {string[]}
  */
 export function findBareMirrors(root, maxDepth = DEFAULT_MAX_DEPTH) {
-	/** @type {string[]} */
-	const out = [];
-	/** @param {string} dir @param {number} depth */
-	const walk = (dir, depth) => {
-		if (depth > maxDepth) {
-			return;
-		}
-		/** @type {import("node:fs").Dirent[]} */
-		let entries;
-		try {
-			entries = readdirSync(dir, { withFileTypes: true });
-		} catch {
-			return;
-		}
-		if (looksBare(entries)) {
-			out.push(dir);
-			return;
-		}
-		for (const e of entries) {
-			if (!e.isDirectory() || e.name.startsWith(".")) {
-				continue;
-			}
-			walk(join(dir, e.name), depth + 1);
-		}
-	};
-	walk(root, 0);
-	return out.sort();
+  /** @type {string[]} */
+  const out = [];
+  /** @param {string} dir @param {number} depth */
+  const walk = (dir, depth) => {
+    if (depth > maxDepth) {
+      return;
+    }
+    /** @type {import("node:fs").Dirent[]} */
+    let entries;
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    if (looksBare(entries)) {
+      out.push(dir);
+      return;
+    }
+    for (const e of entries) {
+      if (!e.isDirectory() || e.name.startsWith(".")) {
+        continue;
+      }
+      walk(join(dir, e.name), depth + 1);
+    }
+  };
+  walk(root, 0);
+  return out.sort();
 }
 
 /**
@@ -275,27 +357,27 @@ export function findBareMirrors(root, maxDepth = DEFAULT_MAX_DEPTH) {
  * @returns {Promise<R[]>} results in input order
  */
 export async function pool(items, limit, worker) {
-	/** @type {R[]} */
-	// Array.from({length}) over new Array(n): the single-argument Array form
-	// is ambiguous (length vs element), and results is filled by index below.
-	const results = Array.from({ length: items.length });
-	let next = 0;
-	const runners = Math.max(1, Math.min(limit, items.length));
-	await Promise.all(
-		Array.from({ length: runners }, async () => {
-			for (;;) {
-				const i = next++;
-				const item = items[i];
-				// i >= items.length is the exit; the undefined check is its
-				// type-gate form (same fact, a shape the flag can verify).
-				if (i >= items.length || item === undefined) {
-					return;
-				}
-				results[i] = await worker(item, i);
-			}
-		}),
-	);
-	return results;
+  /** @type {R[]} */
+  // Array.from({length}) over new Array(n): the single-argument Array form
+  // is ambiguous (length vs element), and results is filled by index below.
+  const results = Array.from({ length: items.length });
+  let next = 0;
+  const runners = Math.max(1, Math.min(limit, items.length));
+  await Promise.all(
+    Array.from({ length: runners }, async () => {
+      for (;;) {
+        const i = next++;
+        const item = items[i];
+        // i >= items.length is the exit; the undefined check is its
+        // type-gate form (same fact, a shape the flag can verify).
+        if (i >= items.length || item === undefined) {
+          return;
+        }
+        results[i] = await worker(item, i);
+      }
+    }),
+  );
+  return results;
 }
 
 /**
@@ -317,30 +399,30 @@ export async function pool(items, limit, worker) {
  * @returns {(s: string) => boolean}
  */
 export function globMatcher(glob) {
-	const pattern = glob.replaceAll("\\", "/");
-	let re = "";
-	for (let i = 0; i < pattern.length; i += 1) {
-		const c = pattern[i];
-		// The loop condition guarantees a value; the check is the type gate's
-		// form of that fact.
-		if (c === undefined) {
-			break;
-		}
-		if (c === "*") {
-			if (pattern[i + 1] === "*") {
-				re += ".*";
-				i += 1;
-			} else {
-				re += "[^/]*";
-			}
-		} else if (c === "?") {
-			re += "[^/]";
-		} else {
-			re += c.replace(/[.+^${}()|[\]\\]/g, "\\$&");
-		}
-	}
-	const rx = new RegExp(`^${re}$`);
-	return (s) => rx.test(s.replaceAll("\\", "/"));
+  const pattern = glob.replaceAll("\\", "/");
+  let re = "";
+  for (let i = 0; i < pattern.length; i += 1) {
+    const c = pattern[i];
+    // The loop condition guarantees a value; the check is the type gate's
+    // form of that fact.
+    if (c === undefined) {
+      break;
+    }
+    if (c === "*") {
+      if (pattern[i + 1] === "*") {
+        re += ".*";
+        i += 1;
+      } else {
+        re += "[^/]*";
+      }
+    } else if (c === "?") {
+      re += "[^/]";
+    } else {
+      re += c.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+    }
+  }
+  const rx = new RegExp(`^${re}$`);
+  return (s) => rx.test(s.replaceAll("\\", "/"));
 }
 
 /**
@@ -352,17 +434,17 @@ export function globMatcher(glob) {
  * @returns {string[]}
  */
 export function filterByGlobs(rels, only, exclude) {
-	const onlyFns = only.map(globMatcher);
-	const excludeFns = exclude.map(globMatcher);
-	return rels.filter((r) => {
-		if (onlyFns.length > 0 && !onlyFns.some((f) => f(r))) {
-			return false;
-		}
-		if (excludeFns.some((f) => f(r))) {
-			return false;
-		}
-		return true;
-	});
+  const onlyFns = only.map(globMatcher);
+  const excludeFns = exclude.map(globMatcher);
+  return rels.filter((r) => {
+    if (onlyFns.length > 0 && !onlyFns.some((f) => f(r))) {
+      return false;
+    }
+    if (excludeFns.some((f) => f(r))) {
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
@@ -381,37 +463,37 @@ export function filterByGlobs(rels, only, exclude) {
  * @returns {(s: string) => boolean}
  */
 export function caseGlob(pattern) {
-	let re = "";
-	for (let i = 0; i < pattern.length; i += 1) {
-		const c = pattern[i];
-		// The loop condition guarantees a value; the check is the type gate's
-		// form of that fact.
-		if (c === undefined) {
-			break;
-		}
-		if (c === "*") {
-			re += ".*";
-			continue;
-		}
-		if (c === "?") {
-			re += ".";
-			continue;
-		}
-		if (c === "[") {
-			// Stop before a `]` that would close an empty class (`[]`), which
-			// `case` reads as a literal `[]`.
-			const close = pattern.indexOf("]", i + 2);
-			if (close > i + 1) {
-				const body = pattern.slice(i + 1, close);
-				re += `[${body.startsWith("!") ? `^${body.slice(1)}` : body}]`;
-				i = close;
-				continue;
-			}
-		}
-		re += c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	}
-	const rx = new RegExp(`^${re}$`);
-	return (s) => rx.test(s);
+  let re = "";
+  for (let i = 0; i < pattern.length; i += 1) {
+    const c = pattern[i];
+    // The loop condition guarantees a value; the check is the type gate's
+    // form of that fact.
+    if (c === undefined) {
+      break;
+    }
+    if (c === "*") {
+      re += ".*";
+      continue;
+    }
+    if (c === "?") {
+      re += ".";
+      continue;
+    }
+    if (c === "[") {
+      // Stop before a `]` that would close an empty class (`[]`), which
+      // `case` reads as a literal `[]`.
+      const close = pattern.indexOf("]", i + 2);
+      if (close > i + 1) {
+        const body = pattern.slice(i + 1, close);
+        re += `[${body.startsWith("!") ? `^${body.slice(1)}` : body}]`;
+        i = close;
+        continue;
+      }
+    }
+    re += c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  const rx = new RegExp(`^${re}$`);
+  return (s) => rx.test(s);
 }
 
 /**
@@ -434,8 +516,8 @@ export function caseGlob(pattern) {
  * @returns {Promise<void>}
  */
 export async function optimizeMirror(repo) {
-	await setOptimizationConfig(repo);
-	await writePickaxePack(repo);
+  await setOptimizationConfig(repo);
+  await writePickaxePack(repo);
 }
 
 /**
@@ -446,8 +528,8 @@ export async function optimizeMirror(repo) {
  * @returns {Promise<void>}
  */
 async function writePickaxePack(repo) {
-	await git(repo, ["repack", "-adb", "--write-bitmap-index"]);
-	await git(repo, ["commit-graph", "write", "--reachable", "--changed-paths"]);
+  await git(repo, ["repack", "-adb", "--write-bitmap-index"]);
+  await git(repo, ["commit-graph", "write", "--reachable", "--changed-paths"]);
 }
 
 /**
@@ -458,9 +540,9 @@ async function writePickaxePack(repo) {
  * @returns {Promise<void>}
  */
 async function setOptimizationConfig(repo) {
-	await git(repo, ["config", "core.commitGraph", "true"]);
-	await git(repo, ["config", "gc.writeCommitGraph", "true"]);
-	await git(repo, ["config", "fetch.writeCommitGraph", "true"]);
+  await git(repo, ["config", "core.commitGraph", "true"]);
+  await git(repo, ["config", "gc.writeCommitGraph", "true"]);
+  await git(repo, ["config", "fetch.writeCommitGraph", "true"]);
 }
 
 /**
@@ -475,9 +557,9 @@ async function setOptimizationConfig(repo) {
  * @returns {Promise<void>}
  */
 export async function deepOptimizeMirror(repo) {
-	await setOptimizationConfig(repo);
-	await git(repo, ["gc", "--aggressive"]);
-	await writePickaxePack(repo);
+  await setOptimizationConfig(repo);
+  await git(repo, ["gc", "--aggressive"]);
+  await writePickaxePack(repo);
 }
 
 /**
@@ -487,11 +569,11 @@ export async function deepOptimizeMirror(repo) {
  * @returns {Promise<string|null>}
  */
 export async function originUrl(repo) {
-	const r = await git(repo, ["config", "--get", "remote.origin.url"], {
-		must: false,
-	});
-	const url = r.stdout.trim();
-	return r.code === 0 && url ? url : null;
+  const r = await git(repo, ["config", "--get", "remote.origin.url"], {
+    must: false,
+  });
+  const url = r.stdout.trim();
+  return r.code === 0 && url ? url : null;
 }
 
 /**
@@ -507,24 +589,24 @@ export async function originUrl(repo) {
  * @returns {<T>(fn: () => Promise<T>) => Promise<T>}
  */
 export function createMinIntervalGate(intervalMs) {
-	if (intervalMs <= 0) {
-		return (fn) => fn();
-	}
-	let tail = Promise.resolve();
-	return (fn) => {
-		const run = tail.then(async () => {
-			try {
-				return await fn();
-			} finally {
-				await new Promise((resolve) => setTimeout(resolve, intervalMs));
-			}
-		});
-		// `tail` must never reject, or a failing mirror would skip the turn of
-		// every later gate call and the sweep would burst after it.
-		tail = run.then(
-			() => undefined,
-			() => undefined,
-		);
-		return run;
-	};
+  if (intervalMs <= 0) {
+    return (fn) => fn();
+  }
+  let tail = Promise.resolve();
+  return (fn) => {
+    const run = tail.then(async () => {
+      try {
+        return await fn();
+      } finally {
+        await new Promise((resolve) => setTimeout(resolve, intervalMs));
+      }
+    });
+    // `tail` must never reject, or a failing mirror would skip the turn of
+    // every later gate call and the sweep would burst after it.
+    tail = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  };
 }

@@ -123,14 +123,20 @@ func TestSplitConnectTarget(t *testing.T) {
 // literals do not reach the exit node at all.
 func TestParseIPLiteral(t *testing.T) {
 	for _, s := range []string{"1.2.3.4", "::1", "2001:db8::1"} {
-		if !parseIPLiteral(s) {
+		if _, ok := parseIPLiteral(s); !ok {
 			t.Errorf("%s: expected literal", s)
 		}
 	}
 	for _, s := range []string{"example.com", "localhost", "1.2.3.4.example.com"} {
-		if parseIPLiteral(s) {
+		if _, ok := parseIPLiteral(s); ok {
 			t.Errorf("%s: expected name", s)
 		}
+	}
+	// The root anchor is spelling, not a different target: "1.2.3.4." is
+	// that address and must classify as one, or the rules die to a dot
+	// (d163).
+	if _, ok := parseIPLiteral("1.2.3.4."); !ok {
+		t.Error("1.2.3.4.: trailing dot must not dodge the address classification")
 	}
 }
 
@@ -184,5 +190,106 @@ func TestDialValidated(t *testing.T) {
 		t.Fatal("expected resolution failure")
 	} else if got := egressFailureReason(err); got != errReasonResolve {
 		t.Fatalf("expected resolve-failed vocabulary, got %v → %s", err, got)
+	}
+}
+
+// d163's door predicate: the guaranteed set is the NO-ANSWER space, and the
+// complementary half of the test is what keeps it that narrow — RFC 1918,
+// link-local, the metadata address and the documentation ranges stay under
+// the operator's allow table, because a pinhole for one of those is a
+// reviewable decision while a guaranteed refusal must not be one.
+func TestGuaranteedRefusals(t *testing.T) {
+	for _, s := range []string{
+		"0.0.0.1", "127.0.0.1", "127.1.2.3", "255.255.255.255",
+		"224.0.0.1", "239.1.2.3",
+		"::", "::1", "::ffff:127.0.0.1", "::ffff:1.2.3.4", "100::1",
+	} {
+		addr, err := netip.ParseAddr(s)
+		if err != nil {
+			t.Fatalf("fixture %q: %v", s, err)
+		}
+		if !isGuaranteedBogon(addr) {
+			t.Errorf("%s: must be a guaranteed refusal", s)
+		}
+	}
+	for _, s := range []string{
+		"10.0.0.1", "172.16.0.1", "192.168.1.1",
+		"169.254.169.254",
+		"240.0.0.1", "192.0.2.1", "203.0.113.7",
+		"fe80::1", "fc00::1", "2001:db8::1",
+		"8.8.8.8", "2001:4860:4860::8888",
+	} {
+		addr, err := netip.ParseAddr(s)
+		if err != nil {
+			t.Fatalf("fixture %q: %v", s, err)
+		}
+		if isGuaranteedBogon(addr) {
+			t.Errorf("%s: stays under the operator's allow table, not the guaranteed door", s)
+		}
+	}
+}
+
+// d163's name door: `localhost`, the whole .localhost TLD, the dev
+// sub-tree and the /etc/hosts loopback family are refused spellings of
+// names, checked as written — trailing dot and case are the same name, and
+// a lookalike (or a name that merely starts with "localhost") stays a name
+// the exit's policy owns.
+func TestIsBogonName(t *testing.T) {
+	for _, s := range []string{
+		"localhost", "localhost.", "LOCALHOST", "LocalHost.",
+		"x.localhost", "dev.localhost", "a.dev.localhost", "dev.localhost.",
+		"localhost4", "localhost6", "localhost.localdomain",
+		"localhost4.localdomain4", "localhost6.localdomain6",
+		"LOCALHOST4.", "Localhost.Localdomain.",
+	} {
+		if !isBogonName(s) {
+			t.Errorf("%s: must be refused at the door", s)
+		}
+	}
+	for _, s := range []string{
+		"example.com", "local.test",
+		"example.localhost.com", "localhost:443",
+		"localhost.example.com", "localhost4.example.com",
+	} {
+		if isBogonName(s) {
+			t.Errorf("%s: not a guaranteed-refused name", s)
+		}
+	}
+}
+
+// d163's refusal order in the one function that owns it: guaranteed
+// refusals first, then the IP-exit switch, then the port set. Several rows
+// name a config whose LATER gates would accept the target — the open config
+// allows every address and every port in the row — which is exactly what
+// the order has to defeat.
+func TestTargetVerdictOrder(t *testing.T) {
+	open := egressConfig{AllowIPLiterals: true, AllowCidrs: []string{"0.0.0.0/0"}, Ports: []uint16{80, 443, 8443}}
+	for _, tc := range []struct {
+		name string
+		cfg  egressConfig
+		host string
+		port uint16
+		want string
+	}{
+		{"bogon name before the switch", egressConfig{AllowIPLiterals: true}, "localhost", 443, errReasonBogon},
+		{"bogon name under the default config", egressConfig{}, "a.dev.localhost", 80, errReasonBogon},
+		{"hosts-file loopback name before the switch", egressConfig{AllowIPLiterals: true}, "localhost6.localdomain6", 443, errReasonBogon},
+		{"bogon address before its own allow rule", open, "127.0.0.1", 8443, errReasonBogon},
+		{"v4-mapped spelling cannot dodge", open, "::ffff:127.0.0.1", 443, errReasonBogon},
+		{"literal without the switch", egressConfig{}, "1.2.3.4", 443, errReasonTargetIP},
+		{"literal with the switch, port in set", open, "1.2.3.4", 8443, ""},
+		{"literal with the switch, port out", open, "1.2.3.4", 22, errReasonPortDenied},
+		{"name, port in set", open, "example.com", 443, ""},
+		{"name, port out", egressConfig{}, "example.com", 8443, errReasonPortDenied},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			p, err := newEgressPolicy(tc.cfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := p.targetVerdict(tc.host, tc.port); got != tc.want {
+				t.Fatalf("targetVerdict(%q, %d) = %q, want %q", tc.host, tc.port, got, tc.want)
+			}
+		})
 	}
 }

@@ -9,7 +9,7 @@ import (
 
 // proxyEnvLoopback is the always-direct set: a client must be able to reach
 // the local services it talks to without going back through the relay.
-var proxyEnvLoopback = []string{"127.0.0.1", "localhost", "::1"}
+var proxyEnvLoopback = []string{"127.0.0.1", localhostName, "::1"}
 
 // runProxyEnv is the d095 CHAIN STEP, now a binary verb: print the loopback
 // proxy spelling as shell assignments so an operator's shell can

@@ -49,7 +49,7 @@
 
 import { spawn } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
 	androidBuildEnv,
@@ -76,9 +76,15 @@ import {
 // consumer here wants setLogStream or logDebug, the right move is to extract a
 // real library again, not to re-grow a vendored copy.
 //
-// One JSON object per line on stdout (LOG_FORMAT=logfmt for logfmt). Level
-// filtering is the consumer's job (docs/d045): no line is ever dropped here.
-// Messages are stable labels; fields carry the metadata.
+// One JSON object per line on stdout (LOG_FORMAT=logfmt for logfmt), `msg`
+// first and this kernel's three fields last: the event is what a truncated
+// view keeps. `ts` is Unix epoch MILLISECONDS as a number and
+// `severityNumber` is OpenTelemetry's SeverityNumber, so a reader compares
+// numbers where it used to match level words (docs/d151 owns the record shape,
+// its field order and the canonical ranges; the bands are TRACE 1-4, DEBUG
+// 5-8, INFO 9-12, WARN 13-16, ERROR 17-20, FATAL 21-24). Level filtering is
+// the consumer's job (docs/d045): no line is ever dropped here. Messages are
+// stable labels; fields carry the metadata.
 
 let tool = process.env.LOG_TOOL ?? "node";
 /**
@@ -89,8 +95,34 @@ function setLogTool(name) {
 	tool = name;
 }
 
-function ts() {
-	return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+/**
+ * Each level's wire value, as an index into OpenTelemetry's severity bands
+ * (docs/d151): the three levels this inline copy emits sit on their band's
+ * floor, and the rest are the anchors so a new helper inherits the scale.
+ * @type {Record<string, number>}
+ */
+const SEVERITY_NUMBER = {
+	trace: 1,
+	debug: 5,
+	info: 9,
+	warn: 13,
+	error: 17,
+	fatal: 21,
+};
+
+/**
+ * A level name as its SeverityNumber. An unknown level fails here rather than
+ * serializing to `undefined`: a record with no severity is a record nobody can
+ * sort, so the call site that spelled the level wrong is what has to change.
+ * @param {string} level
+ * @returns {number}
+ */
+function severityNumber(level) {
+	const number = SEVERITY_NUMBER[level];
+	if (number === undefined) {
+		throw Object.assign(new Error("unknown log level"), { level });
+	}
+	return number;
 }
 
 /**
@@ -184,7 +216,14 @@ function fmtLogfmtValue(v) {
  * @param {Record<string, unknown>} [fields]
  */
 function emit(level, msg, fields = {}) {
-	const base = { ts: ts(), level, tool, msg };
+	// The event leads; the three fields this kernel fills in trail it, so a
+	// reader skimming raw lines, or a terminal that truncates them, meets what
+	// happened before the bookkeeping (docs/d151).
+	const trailer = {
+		ts: Date.now(),
+		severityNumber: severityNumber(level),
+		tool,
+	};
 	if (process.env.LOG_FORMAT === "logfmt") {
 		const rest = Object.entries(
 			/** @type {Record<string, unknown>} */ (serialize(fields, 0)),
@@ -193,14 +232,15 @@ function emit(level, msg, fields = {}) {
 			.join(" ");
 		const msgv = /[\s"=\\]/.test(msg) ? JSON.stringify(msg) : msg;
 		process.stdout.write(
-			`ts=${base.ts} level=${level} tool=${tool} msg=${msgv}${rest ? ` ${rest}` : ""}\n`,
+			`msg=${msgv}${rest ? ` ${rest}` : ""} ts=${trailer.ts} severityNumber=${trailer.severityNumber} tool=${tool}\n`,
 		);
 		return;
 	}
 	process.stdout.write(
 		`${JSON.stringify({
-			...base,
+			msg,
 			.../** @type {Record<string, unknown>} */ (serialize(fields, 0)),
+			...trailer,
 		})}\n`,
 	);
 }
@@ -248,33 +288,58 @@ function collapseRedrawFrames(line) {
 }
 
 /**
+ * The streams a captured child can write, as `[descriptor, name]` pairs. The
+ * descriptor is what the `stream` field carries: shorter than a word, and the
+ * form generalizes to any other descriptor a child was handed without
+ * inventing a spelling for it (docs/d151).
+ * @type {readonly (readonly [number, "stdout" | "stderr"])[]}
+ */
+const CAPTURED_STREAMS = [
+	[1, "stdout"],
+	[2, "stderr"],
+];
+
+/**
+ * Emit one captured line as one record. The LINE is the message (docs/d151):
+ * it is the only specific thing this record has to say, and a fixed label would
+ * repeat down the whole stream while pushing the one varying value into a field
+ * named after it.
+ * @param {string} cmd command label ("go build")
+ * @param {number} stream file descriptor the line arrived on
+ * @param {string|null} target
+ * @param {string} line
+ * @returns {void}
+ */
+function logCommandLine(cmd, stream, target, line) {
+	logInfo(line, { ...(target ? { target } : {}), cmd, stream });
+}
+
+/**
  * Run one command to completion, capturing stdout+stderr LINE BY LINE and
  * re-emitting each as a structured log record (docs/d045): child processes
  * are upstreams (buildah, go) that cannot be made to honor d045 themselves,
  * so the wrapping layer owns the line-boundary. stdio:"inherit" would turn
  * the parallel coding-agent/estige image builds into byte-wise interleaved
  * garbage when several units build at once.
- * @param {string} cmd
+ * @param {string} executable
  * @param {string[]} args
- * @param {{ cwd?: string, env?: Record<string, string>, name?: string }} [opts]
+ * @param {{ cwd?: string, env?: Record<string, string>, name?: string, cmd: string }} opts
+ * `cmd` is required: the command as a reader names it — executable AND
+ * subcommand — because a bare `go` or `podman` label makes every line in a
+ * merged stream look alike (docs/d151)
  * @returns {Promise<boolean>} success
  */
-async function run(cmd, args, opts = {}) {
+async function run(executable, args, opts) {
 	return await new Promise((resolve) => {
-		const child = spawn(cmd, args, {
+		const child = spawn(executable, args, {
 			cwd: opts.cwd,
 			env: opts.env ?? process.env,
 			stdio: ["ignore", "pipe", "pipe"],
 		});
-		// The union literal (not a bare string[] loop variable) is what makes
-		// child[stream] a known-property index under checkJs.
-		for (const stream of /** @type {("stdout"|"stderr")[]} */ ([
-			"stdout",
-			"stderr",
-		])) {
+		for (const [stream, name] of CAPTURED_STREAMS) {
 			let partial = "";
-			child[stream].setEncoding("utf8");
-			child[stream].on("data", (/** @type {string} */ chunk) => {
+			child[name].setEncoding("utf8");
+			child[name].on("data", (/** @type {string} */ chunk) => {
 				partial += chunk;
 				const lines = partial.split("\n");
 				// split on a non-empty string never yields an empty tail, so the
@@ -285,15 +350,10 @@ async function run(cmd, args, opts = {}) {
 					if (!keptLine) {
 						continue; // null (all-\r) or empty: not a record
 					}
-					logInfo("command output", {
-						...(opts.name ? { target: opts.name } : {}),
-						cmd,
-						stream,
-						line: keptLine,
-					});
+					logCommandLine(opts.cmd, stream, opts.name ?? null, keptLine);
 				}
 			});
-			child[stream].on("end", () => {
+			child[name].on("end", () => {
 				// A stream ending in \n leaves an empty partial — not a line.
 				if (!partial) {
 					return;
@@ -302,12 +362,7 @@ async function run(cmd, args, opts = {}) {
 				if (!keptPartial) {
 					return;
 				}
-				logInfo("command output", {
-					...(opts.name ? { target: opts.name } : {}),
-					cmd,
-					stream,
-					line: keptPartial,
-				});
+				logCommandLine(opts.cmd, stream, opts.name ?? null, keptPartial);
 			});
 		}
 		child.on("close", (code) => resolve(code === 0));
@@ -345,10 +400,12 @@ if (containerTool) {
 	// carries --progress=plain: default progress "auto" is tty-detected, and an
 	// agent harness often IS a pty — which renders buildah/buildx progress as
 	// overlapping redraw frames instead of appendable lines.
-	const imageBuildArgs =
-		containerTool === "podman"
-			? ["image", "build", "--progress=plain"]
-			: ["buildx", "build", "--progress=plain"];
+	const imageBuildSubcommand =
+		containerTool === "podman" ? ["image", "build"] : ["buildx", "build"];
+	const imageBuildArgs = [...imageBuildSubcommand, "--progress=plain"];
+	// Derived from the SAME array the build runs, so the `cmd` a line is
+	// filed under cannot drift from the command that produced it.
+	const imageBuildCmd = [containerTool, ...imageBuildSubcommand].join(" ");
 	const imageTag = process.env.IMAGE_TAG ?? "localhost/estige:latest";
 
 	if (await cloudReachable()) {
@@ -367,7 +424,7 @@ if (containerTool) {
 						imageTag,
 						estigeRoot,
 					],
-					{ name: "estige-image" },
+					{ name: "estige-image", cmd: imageBuildCmd },
 				),
 		});
 	} else {
@@ -407,6 +464,7 @@ if (containerTool) {
 				cwd: estigeRoot,
 				env,
 				name: "estige-native",
+				cmd: "go build",
 			});
 		},
 	});
@@ -444,7 +502,12 @@ if (goToolchainReady()) {
 			const debBuilt = await run(
 				"go",
 				["build", ...flags, "-o", debBinary, "."],
-				{ cwd: estigeRoot, env: debEnv, name: "estige-packages" },
+				{
+					cwd: estigeRoot,
+					env: debEnv,
+					name: "estige-packages",
+					cmd: "go build",
+				},
 			);
 			if (!debBuilt) {
 				return false;
@@ -452,7 +515,12 @@ if (goToolchainReady()) {
 			const rpmBuilt = await run(
 				"go",
 				["build", ...flags, "-o", rpmBinary, "."],
-				{ cwd: estigeRoot, env: rpmEnv, name: "estige-packages" },
+				{
+					cwd: estigeRoot,
+					env: rpmEnv,
+					name: "estige-packages",
+					cmd: "go build",
+				},
 			);
 			if (!rpmBuilt) {
 				return false;
@@ -473,7 +541,12 @@ if (goToolchainReady()) {
 					"-out",
 					outDir,
 				],
-				{ cwd: estigeRoot, env: hostBuildEnv(), name: "estige-packages" },
+				{
+					cwd: estigeRoot,
+					env: hostBuildEnv(),
+					name: "estige-packages",
+					cmd: "go run ./packaging",
+				},
 			);
 			if (packaged) {
 				rmSync(staging, { recursive: true, force: true });
@@ -499,7 +572,10 @@ if (termux) {
 	targets.unshift({
 		name: "termux-provisioning",
 		fn: async () =>
-			await run("sh", [provisioning], { name: "termux-provisioning" }),
+			await run("sh", [provisioning], {
+				name: "termux-provisioning",
+				cmd: `sh ${basename(provisioning)}`,
+			}),
 	});
 } else {
 	noteGated("termux-provisioning");

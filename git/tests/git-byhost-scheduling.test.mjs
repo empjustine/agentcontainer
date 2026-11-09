@@ -118,7 +118,7 @@ function runMaintain(root, binDir, sshLog, ...args) {
 		.filter(Boolean);
 	// An aborted run also exits 1, so the tally's designed exit code alone
 	// cannot tell "expected fetch failures" from "crashed halfway".
-	const aborted = stderrLines.find((l) => l.level === "error");
+	const aborted = stderrLines.find((l) => l.severityNumber >= 17);
 	assert.equal(
 		aborted,
 		undefined,

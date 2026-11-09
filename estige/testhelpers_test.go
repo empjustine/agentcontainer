@@ -89,6 +89,35 @@ func initSuiteTLSRoot() error {
 	return errTestTLS
 }
 
+// ---------------------------------------------------------------------------
+// Hermetic DNS — the suite owns every name it resolves (d163)
+// ---------------------------------------------------------------------------
+
+// testTargetAlias is what positive-path tests dial instead of the upstream's
+// numeric address: the relay answers at the door for `localhost`/`.localhost`
+// (d163) and the default egress table denies loopback-resolving names
+// (VPN-R35), so a loopback upstream is reached by an alias the suite's
+// resolver maps to 127.0.0.1.
+const testTargetAlias = "upstream.test"
+
+// staticHostLookup is the suite's resolver: the alias table TestMain
+// installs, plus the literal parsing net.Resolver does — a test that dials
+// an address must exercise the same post-resolve table path production
+// takes, not a shortcut. Unknown names fail as NXDOMAIN: no test outcome
+// may depend on the host's resolver, and no lookup may leave the machine.
+type staticHostLookup map[string]string
+
+func (r staticHostLookup) LookupIPAddr(_ context.Context, host string) ([]net.IPAddr, error) {
+	if addr, ok := parseIPLiteral(host); ok {
+		return []net.IPAddr{{IP: net.IP(addr.Unmap().AsSlice())}}, nil
+	}
+	ip, ok := r[host]
+	if !ok {
+		return nil, &net.DNSError{Err: "no test record", Name: host, IsNotFound: true}
+	}
+	return []net.IPAddr{{IP: net.ParseIP(ip)}}, nil
+}
+
 // TestMain installs the suite TLS root before any test runs — SSL_CERT_FILE
 // must be set before x509's first root load, which any test could trigger.
 func TestMain(m *testing.M) {
@@ -105,6 +134,14 @@ func TestMain(m *testing.M) {
 	// dial through a proxy no fixture owns. The suite owns its routing.
 	for _, v := range chainEnvVars {
 		_ = os.Unsetenv(v)
+	}
+	// Every policy built in this suite resolves through the alias table —
+	// including `localhost`, which engine-level tests dial past the door —
+	// so DNS never decides a test's outcome (d163).
+	defaultHostLookup = staticHostLookup{
+		"localhost":     "127.0.0.1",
+		testTargetAlias: "127.0.0.1",
+		"loopback.test": "127.0.0.1",
 	}
 	os.Exit(m.Run())
 }

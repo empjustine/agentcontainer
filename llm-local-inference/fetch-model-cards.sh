@@ -11,14 +11,20 @@ cd "$(dirname "$0")"
 # JSON-log helpers (same contract as lib/log.sh) — the python body below has
 # no shell, so it emits the structured lines itself.
 python3 - <<'EOF'
-import json, sys, datetime, urllib.request, os, ssl
+import json, sys, time, urllib.request, os, ssl
 
 TOOL = "llm-local-inference/fetch-model-cards"
 
+# OpenTelemetry SeverityNumber per level (docs/d151). This body has no shell,
+# so it carries its own copy of the table lib/log.sh uses rather than shelling
+# out per line.
+SEVERITY = {"trace": 1, "debug": 5, "info": 9, "warn": 13, "error": 17,
+            "fatal": 21}
+
 def log(level, msg, **fields):
-    rec = {"ts": datetime.datetime.now(datetime.timezone.utc).strftime(
-        "%Y-%m-%dT%H:%M:%SZ"), "level": level, "tool": TOOL, "msg": msg}
-    rec.update(fields)
+    # The event leads; the kernel-filled three trail it (docs/d151).
+    rec = {"msg": msg, **fields, "ts": int(time.time() * 1000),
+           "severityNumber": SEVERITY[level], "tool": TOOL}
     print(json.dumps(rec), file=sys.stderr)
 
 data = json.load(open("lib/llamacpp-model-data.json"))

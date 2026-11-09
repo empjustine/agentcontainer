@@ -45,6 +45,13 @@ FG_FARM_MUTATION_LOCK_TIMEOUT_S=1800
 # every mutation on a host without util-linux, and the warning keeps the
 # degradation visible.
 with_farm_mutation_lock() {
+	# A signal must not take the shell down while a step is in flight: node
+	# answers the FIRST signal by finishing that step (docs/d164), and the lock
+	# has to outlive the work it guards. POSIX runs a trap after the foreground
+	# command completes, so this keeps the holder alive until exactly the
+	# boundary the stop waits for; a second signal still reaches node, which is
+	# the half that aborts.
+	trap 'printf "%s\\n" "signal received — the step in flight finishes before this shell exits (docs/d164)" >&2' INT TERM
 	_flock_lock=$(farm_mutation_lock_path)
 	if ! command -v flock >/dev/null 2>&1; then
 		printf 'Warning: flock(1) not found — running WITHOUT the farm mutation lock\n' >&2
