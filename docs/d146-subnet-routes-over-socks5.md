@@ -5,7 +5,7 @@ status: draft
 title: "d146 — subnet routes: CIDR claims ride the ACCEPT session; IP literals match a live claim or are refused at the rendezvous"
 parent: estige
 depends-on: [d073, d104, d131, d145]
-references: [d080, d123, d132, d144]
+references: [d080, d123, d132, d144, d163]
 tags: ["estige", "tunnel", "forwarding", "routes", "subnet", "socks5", "claims", "v4"]
 ---
 
@@ -32,7 +32,9 @@ dials.
 and match rule, so the implementing change names both records, and it
 restates VPN-R22 on d073 under Requirement deltas. One code-level change
 belongs here too: the relay's own IP-literal refusal at its proxy doors
-relaxes to pass-through, noted under Decision. d132 takes no delta —
+relaxes to pass-through, noted under Decision — as d163 records, the
+relaxation ships opt-in behind `-legacy-ip-relay`, not as the default.
+d132 takes no delta —
 routes land in no config file at either end; a relay's claim seed is
 d145's argv decision, `CLAIMS` frames mutate the live set, and routes
 ride the same session from establishment onward.
@@ -100,6 +102,11 @@ pass-through. The relay never dials an address out of a request — it
 dials only what its own claims authorize — and the match can only happen
 where the claims live. Named targets are unaffected.
 
+d163 narrows this decision: the pass-through is opt-in behind the
+relay's `-legacy-ip-relay` flag, so a relay started without it keeps
+byte-identical refusal, and the guaranteed refusals answer first either
+way.
+
 ### The match rule extends d145's targeting
 
 For `CONNECT {target, port}` on an authenticated consumer's tunnel whose
@@ -117,7 +124,9 @@ host is an IP literal:
 4. The port must be on the winning route's list; otherwise the target
    falls through to refusal, never to the egress path.
 5. No match means today's IP-literal refusal, byte-for-byte — VPN-R22's
-   outcome for everything outside a live claim.
+   outcome for everything outside a live claim. d163 narrows it: with
+   the exit's `allowIPLiterals` switch set, an unclaimed literal falls
+   through to the exit's own gates instead, guarantee first.
 
 A match then runs the decided part of d145's bridge: `EVENT` through
 the ACCEPT pipe, the relay's re-check of its current claims, `DECLINE`
@@ -155,6 +164,10 @@ IPv4 and pocket, non-standard IPv6 use. The egress table (d080) keeps
 its own deny list (VPN-R35) for what the exit dials; this space is about
 what may be bridged, and the two surfaces stay separate.
 
+d163 implements this set as code: the guarantee answers at the relay's
+doors and the exit's gate before any claim, switch or table is read, and
+no configuration re-enables it.
+
 The relay-loopback reach the refusal removes was the wrong door anyway:
 d145's host-form `-R` is the unambiguous alternative, and its dial half
 spells the specific loopback address (`-R 22:127.0.0.2:22`) — one
@@ -171,7 +184,9 @@ unchanged and the checks relocate:
   did not check it, and resolution happens at exactly one point.
 - **Relay side (pass-through):** the relay stops refusing IP literals at
   its proxy doors, because it never dials them — its refusal was an early
-  rejection for a path that now leads somewhere real.
+  rejection for a path that now leads somewhere real. d163 keeps that
+  pass-through opt-in behind `-legacy-ip-relay`, so the byte-identical
+  refusal remains the default.
 - **Rendezvous side (match-then-refuse):** IP literals are matched
   against live claims and refused byte-identically otherwise; the exit
   dials nothing in either case.

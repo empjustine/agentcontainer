@@ -106,9 +106,9 @@ There is **no repo-level `lib/`** (docs/d113). Every kernel below exists as one
 hand copy per unit that uses it — inside that unit's `lib/`, or at the folder
 root where the unit is a pi extension (docs/d118).
 
-The **interpreter runners are the one exception** (docs/d138): `node-run.sh`,
-`npm-run.sh` and `node-run.ps1` sit at the repo root, one copy each, and they
-ARE the entry point — `./node-run.sh <unit>/<entry>.mjs [args]`,
+The **interpreter runners are the one exception** (docs/d138): `node-run.sh`
+and `npm-run.sh` sit at the repo root, one copy each, and they ARE the entry
+point — `./node-run.sh <unit>/<entry>.mjs [args]`,
 `./npm-run.sh <unit> <script>`, with no per-entry `.sh` shim in between. A
 version pin is a single fact, so a copy per unit is a fork waiting to happen
 (`estige/build.sh` had inlined the pin as a function before d138) — and a runner
@@ -143,10 +143,6 @@ code, not its way of being started.
   reach the same pin — and nothing has to stay resident to carry a status back.
   The two entries that keep a `.sh` of their own do so for `flock`
   (`git/maintain.sh`, `git/-forge-mirror.sh`), never for the interpreter.
-- `node-run.ps1` — the PowerShell counterpart, at the repo root and invoked the
-  same way (docs/d062, d138), used by `git/maintain.ps1`: same pin policy, but it
-  branches on mise PRESENCE — Windows carries no Termux-style profile signal to
-  key on.
 - `go-build.mjs` — the go toolchain probe + android/host build-env presets
   (docs/d041): one probe (`go version` must actually EXECUTE — mise shims
   answer PATH lookups even with no version set) so a builder never guesses.
@@ -205,8 +201,8 @@ execute rather than import. The rest is operator files and the QA sweep.
   CLI source build; the former root `build.sh`), exec'd by `estige/build.mjs`
   for the Termux target. Stays shell on purpose — every path in it is
   Termux-only and untestable from a container host.
-- `node-run.sh`, `npm-run.sh`, `node-run.ps1`, `log.sh` — the runners every
-  unit executes (docs/d138), and the sweep's own copy of the shell logger.
+- `node-run.sh`, `npm-run.sh`, `log.sh` — the runners every unit executes
+  (docs/d138), and the sweep's own copy of the shell logger.
   `./npm-run.sh <unit> <script>` runs a unit's
   `package.json` script under the pinned node without ever putting `npm` on the
   path, which is how the `pi-*` family — whose folders ship no shell — is built

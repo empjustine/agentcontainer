@@ -77,8 +77,9 @@ Three rules, applied to the survivors:
 3. **Verbosity belongs to the reader.** Code emits the useful-but-noisy
    detail at `debug` and tags it; nothing is dropped on the way out — d045's
    "the producer never drops a line" stands. A consumer that wants less
-   selects downstream (`jq 'select(.level!="debug")'`, or one level with
-   `jq 'select(.level=="error")'`). No tool keeps a `--verbose` branch, and
+   selects downstream (`jq 'select(.severityNumber>=5)'`, or one band with
+   `jq 'select(.severityNumber>=17)'` — the level is a number since d151). No
+   tool keeps a `--verbose` branch, and
    no consumer has to know which tool has one.
 
 ### Considered and rejected: a `LOG_LEVEL` gate

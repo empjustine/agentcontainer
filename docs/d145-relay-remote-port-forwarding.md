@@ -5,7 +5,7 @@ status: draft
 title: "d145 — remote port forwarding: a standing ACCEPT is the step-0 ACL, argv-seeded claims, connections outlive the ACCEPT"
 parent: estige
 depends-on: [d073, d104, d106, d131, d132, d144]
-references: [d080, d090, d108, d110, d123, d128, d146, d120]
+references: [d080, d090, d108, d110, d123, d128, d146, d120, d163]
 tags: ["estige", "tunnel", "forwarding", "ports", "claims", "v4", "ssh"]
 ---
 
@@ -98,7 +98,9 @@ form — and closes it when that want ends. The want is an initiation
 fact, not a runtime one: a relay started without forwarding arguments
 never opens an ACCEPT, and a running relay that wants to begin reversing
 restarts with arguments rather than opening one late — the late-open
-question is decided here, not left open. A relay with nothing to reverse
+question is decided here, not left open. d163 names this startup
+argument the only enable: neither reverse-relaying mode may turn on by
+default or by environment. A relay with nothing to reverse
 holds no ACCEPT at all, so the step-0 question is answered before
 any claim is consulted: the session's existence is itself the decision,
 and killing the relay remains the way to pull the plug on everything at

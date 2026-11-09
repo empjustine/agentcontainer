@@ -192,3 +192,13 @@ behavior and stay.
 - **Leave the shims sourcing and only fix the docs.** The flock workaround, the
   resident shim and the `dirname` conventions would all stay, and the tree would
   still have no way to reach the pin from a non-shell caller.
+
+## Status
+
+**Active, with one deprecated half.** The PowerShell counterpart this record
+placed at the repo root, `node-run.ps1`, was deleted along with every other
+repository-owned `*.ps1` endpoint (docs/d162): the Windows-side serving
+experiment measured poorly and is no longer supported. The last version is
+recoverable from this repository's history. The POSIX runners, the
+pin policy, the "run it, never dot-source it" rule and the no-per-unit-copies
+gate are unaffected.

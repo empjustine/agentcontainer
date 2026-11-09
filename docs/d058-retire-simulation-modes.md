@@ -20,7 +20,8 @@ verifiers" it kept (`model-sizes --check`, `migrate --verify`) and the env-seede
 knobs it listed as effect switches (`MODELS_DEV_REFRESH`, `MIRROR_MIN_INTERVAL`,
 the `VBS_*` env surface) are retired as well; the keep-list below now ends at
 scope selectors, real effect switches, `--help`, and reader-side verbosity
-filtering (`jq 'select(.level=="...")'`, d045's rule reaffirmed).
+filtering (`jq 'select(.severityNumber>=17)'`, d045's rule reaffirmed; the
+number is d151's).
 
 ## Problem
 

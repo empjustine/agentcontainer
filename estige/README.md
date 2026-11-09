@@ -204,7 +204,11 @@ only, `Transport.Proxy` stays nil, provider requests never touch it). The
 transport ladder rides whole — h2-POST → WebSocket → h1.1-POST ranked at dial
 time, no `-modes`/`MODES` override (docs/d093) — and the listeners default to
 `127.0.0.1:3128`/`1080` (`-proxy-listen`/`-socks-listen`; VPN-R23 forbids
-exposing them). The relay refuses to start if the ambient proxy env already
+exposing them). `-legacy-ip-relay` (off by default) passes address targets to
+the exit's gate instead of refusing them at the door, and both doors refuse
+the `localhost` name family (`localhost`, the whole `.localhost` TLD, and
+the `/etc/hosts` spellings like `localhost4.localdomain4`) plus
+guaranteed-bogon space before any lookup regardless (docs/d163). The relay refuses to start if the ambient proxy env already
 names its own listener (exit 94) — a self-chain would dial a loop.
 
 `estige proxy-env [-proxy-listen ADDR] [-socks-listen ADDR]` is the CHAIN STEP

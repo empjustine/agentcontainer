@@ -10,6 +10,7 @@ depends-on:
 references:
   - d024
   - d034
+  - d151
 ---
 
 # d045 — Structured logging and error construction
@@ -185,9 +186,6 @@ against cycles):
 
 ```json
 {
-  "ts": "2026-09-16T16:06:33Z",
-  "level": "warn",
-  "tool": "generate-pi",
   "msg": "default endpoint reachable but answered unexpectedly — keeping built-in routing",
   "provider": "opencode-go",
   "error": {
@@ -198,12 +196,21 @@ against cycles):
     "statusText": "Internal Server Error",
     "url": "https://opencode.ai/zen/go/v1/models",
     "cause": { "name": "Error", "message": "fetch failed", "code": "ECONNREFUSED" }
-  }
+  },
+  "ts": 1789574793000,
+  "severityNumber": 13,
+  "tool": "generate-pi"
 }
 ```
 
 The error stays a NESTED object — not flattened to dotted keys — so
 `jq '.error.status'` selects the detail directly.
+
+The record's own shape is d151's: `msg` and the call site's fields lead, and
+the three the kernel fills in trail them — `ts` is Unix epoch milliseconds,
+`severityNumber` is OpenTelemetry's SeverityNumber, so the level is a number a
+reader compares rather than a word it matches. Everything else on this page —
+the label rule, the error shape, the stream policy — is unchanged by that.
 
 ### Demotion records are SuppressedErrors, not bare labels
 
@@ -238,14 +245,19 @@ global; runtime behavior is untouched.
 - Error messages: static strings only. All dynamic values are attached
   properties or `cause` pointers.
 - Third-party tool output (git's stderr tail, a response body) rides as a
-  field value (`output`), not as the message.
+  field value (`output`), not as the message. One exception, decided in d151: a
+  child process's line CAPTURED by a wrapper (`run()` in a build entry point)
+  is the record's `msg`, because that line is the only specific thing such a
+  record has to say. The interpolation this rule forbids is the wrapper's own
+  values, and those still ride as fields.
 
 ### No level-filtering rule
 
 - `lib/log.mjs` / `lib/log.sh` / `lib/log.py` emit every level to the stream.
   `LOG_LEVEL` no longer exists — the producer never drops a line.
 - The consumer filters via jsonlines tooling
-  (for example, `jq 'select(.level != "debug")'`).
+  (for example, `jq 'select(.severityNumber >= 5)'`, which keeps the debug band
+  and above; d151 owns the severity field and its bands).
 
 ### Stream policy
 

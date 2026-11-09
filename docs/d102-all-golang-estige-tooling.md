@@ -49,8 +49,9 @@ The unit's generation becomes Go, end to end:
 - **Byte parity is the porting contract.** Same artifact bytes (docs/d050
   canonical JSON: `listen` first, `allowHosts` key-sorted, 2-space indent,
   trailing newline, atomic tmp+rename per docs/d023), same structured-log
-  vocabulary and field order (docs/d045 shape — `ts`/`level`/`tool`/`msg`
-  then caller fields in insertion order, no HTML escaping), same collapse
+  vocabulary and field order (docs/d045 shape — `msg` first, then caller
+  fields in insertion order, then `ts`/`severityNumber`/`tool` per docs/d151,
+  no HTML escaping), same collapse
   semantics ("owner rows share one upstream host — collapsed to one
   allowlist row"), same drift reports keyed by host. Proven by regenerating
   the committed `estige.json` with the Go generator and requiring zero

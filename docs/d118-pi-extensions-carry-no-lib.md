@@ -43,10 +43,10 @@ folder root, imported statically by the folder's own files.
 
 - **`log.mjs` at the folder root**, pruned to the level functions that folder
   actually calls, keeping the JSONL contract intact (`docs/d045`, `docs/d060`:
-  one object per line, `ts`/`level`/`tool`/`msg`, level filtering is the
-  consumer's job). `setLogStream` and the `LOG_FORMAT=logfmt` serializer are
-  deleted: nothing in an extension sets them, and a knob with no call site is a
-  contract nobody can honour.
+  one object per line, `msg` first and `ts`/`severityNumber`/`tool` last per
+  `docs/d151`, level filtering is the consumer's job). `setLogStream` and the
+  `LOG_FORMAT=logfmt` serializer are deleted: nothing in an extension sets
+  them, and a knob with no call site is a contract nobody can honour.
 - **The writer is inlined into its only caller.** The four generating folders
   fold the atomic write (temp + rename) and the canonical serialization it
   applies into `generate.mjs` (`docs/d050`'s choke point is preserved

@@ -1,7 +1,7 @@
 ---
 id: d062
 type: module-design
-status: active
+status: deprecated
 title: "d062 — native Windows mirror maintenance: git/maintain.ps1 + a Windows-portable maintain-mirrors.mjs"
 parent: git
 depends-on: [d041, d044]
@@ -171,3 +171,16 @@ needs a Windows entry, its shim is three lines over the same
 - **Port every `git/` shim to PowerShell now**: rejected with d041's own
   reasoning — an entry nobody exercises rots; only `maintain` has a Windows
   job today.
+
+## Status
+
+**Deprecated, and the file is deleted.** The Windows-native maintenance plan
+this record specifies was abandoned: serving the mirror from outside WSL2
+measured poor throughput and worse space efficiency than the same work inside
+WSL2 (docs/d162). `git/maintain.ps1` and `node-run.ps1` are removed from the
+tree; the last version before deletion is recoverable from this repository's
+history with
+`git show "$(git rev-list -1 HEAD -- git/maintain.ps1):git/maintain.ps1"`. The record is kept for its
+file-ownership rule and its account of what WSL2 mishandles on non-NTFS and
+non-local UNC farm roots, which still explains the WSL2-side accommodations in
+`git/lib/git-core.mjs`.

@@ -43,6 +43,18 @@ the next provider is a checklist instead of an archaeology dig.
 | vendored models.dev catalog (`coding-agent/lib/models.dev.api.json`)                                                                                       | model lineup, capabilities, prices, `api` endpoint, `env` key name | generate-cloud-providers.mjs (client layer, one file per full `PROVIDER_SPECS` row)                                                                                                                                          |
 | cloud provider fact table (`<unit>/lib/cloud-providers.mjs` — one copy per serving unit, docs/d113; a **frozen literal** in each `pi-*` folder, docs/d118) | provider id, label, `apiKeyEnv`, real `baseUrl`                    | generate-cloud-providers.mjs (pi-native subset, override-only rows), `generate-opencode.jsonc.mjs` (opencode subset), `coding-agent/catalog-facts.mjs` (`.hyper` only, docs/d039), every `pi-*` extension (its own row only) |
 
+The catalog has two halves upstream — `catalog.json` is `providers` (served
+alone as `/api.json`) plus `models` (served alone as `/models.json`, 609
+canonical entries) — and the repo vendors the **provider** half only
+(`lib/models.dev.api.json`), reading ten of its 235 rows — every fact-table id
+upstream carries (`verboo` and `llama-swap` have no row).
+The per-canonical-model half carries `license`, `weights`, `benchmarks`,
+`knowledge` and `limit`, joined by
+`providers[pid].models[mid].canonical_model_id`; it carries no lineage fact the
+provider half lacks, because lab is the canonical-id prefix and openness is
+`open_weights`, both already on every provider-model entry. Culling the vendored
+file to the ids read here is measured in docs/d086's culling section.
+
 A provider pi does NOT ship natively (d022 semantics: the alternative layer is
 the authoritative full block) therefore needs **one row in each source** plus
 the merge-order/doc updates. That is the entire flow:

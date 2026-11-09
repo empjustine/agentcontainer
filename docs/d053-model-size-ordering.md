@@ -159,7 +159,8 @@ not one line per extra quant: on the 2026-09 host there are 2 zero-coverage
 repos but 76 extra cached files in 5 listed repos (`unsloth/gemma-4-12b-it-GGUF`
 alone carries 19 unlisted quants). Per-file detail is emitted at `debug` and
 level-tagged, so a reader keeps the summary alone with
-`jq 'select(.level!="debug")'` (docs/d060; the producer drops no line — d045).
+`jq 'select(.severityNumber>=5)'` (docs/d060; the producer drops no line — d045,
+and d151 owns the numeric severity).
 
 **Auto-adding is not implemented.** The table is hand-curated and owned by
 `llm-local-inference/` (d025); the cache cannot supply an entry's extensive
@@ -223,7 +224,7 @@ is a one-file regeneration, never a hand edit.
 
 ```sh
 ./llm-local-inference/model-sizes.sh    # rewrite the table (the only mode)
-… | jq 'select(.level!="debug")'        # reader-side prune of per-file detail
+… | jq 'select(.severityNumber>=5)'      # reader-side prune of per-file detail
 ```
 
 ## Acceptance criteria (met)
