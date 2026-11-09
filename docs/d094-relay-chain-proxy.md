@@ -36,6 +36,10 @@ standing answer to "ambient configuration": the ./environment.sh law —
 an explicit chain step, parsed once, owned here, fail-closed before any
 bind (docs/d046).
 
+A SOCKS5 desync proxy (hufrea/byedpi's `ciadpi`) is a valid value for this hop and
+needs no code change: it re-segments the tunnel's TLS without touching it, and the
+strategies that work stay transparent to the edge (d165).
+
 ## Decision
 
 1. **The tunnel leg may ride one chained upstream proxy, declared only

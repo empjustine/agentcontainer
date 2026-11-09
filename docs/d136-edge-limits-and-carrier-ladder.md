@@ -83,6 +83,9 @@ Rules:
   and reports it; a silent fee-free downgrade that halves throughput and is
   discovered a week later is a support incident.
 
+Packet-level camouflage is outside this ladder: it belongs to a hop on the relay node's
+own path and cannot change what the Funnel edge sees (d165).
+
 DPI-specific hardening, beyond the ladder: no `X-` custom headers (strip-prone);
 no behavior changes keyed off a header's presence; identical response shape for
 authenticated failures and non-existent paths (uniform 404 — an unauthenticated
