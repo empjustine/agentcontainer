@@ -17,3 +17,8 @@ __pycache__/
 # pyproject.toml + uv.lock) — node_modules' twin: disposable, rebuilt on
 # demand, never tracked. uv.lock IS tracked (the package-lock.json analog).
 .venv/
+
+# A harness (mise) writes this beside the caller on first use. d051/d082 keep mise
+# out of every runtime path and d137 forbids committing a root file: one re-pins
+# bare `node`/`go` for anything entering the tree (docs/architecture.md).
+mise.toml
