@@ -147,6 +147,27 @@ examples, and the comments where a ported helper reproduces a jq operator
 (`tostring`, `//`). The `jq not found` guard, the `default_manifest_jq`
 program and the `MANIFEST_JQ` plumbing went with it.
 
+## Read verbs added after the port
+
+The port shipped the verbs the shell had. Four more followed, each closing a gap that sent a caller
+to the mirror directory instead of the tool:
+
+- `repo_info REPO` — the recorded url, the tip commit and its date, the default branch, the ref count,
+  and whether the id is the mirror or an alias beside it. Pinning a citation needs the tip pair, and
+  nothing else in the surface answered "what is this mirror's HEAD".
+- `list_tree REPO REV [PATH_GLOB]` — one mirror's files at one rev, with sizes. The farm-wide
+  `search_paths` answers "where is this name"; this answers "what is in that tree", and it takes a
+  rev because the tip a document cited is usually behind HEAD.
+- `path_info REPO REV PATH` — whether a `repo:path` target exists at that rev, and what it is.
+  Absence is an `ok` answer with `exists: false`: "the file is gone" and "the tool broke" must not be
+  the same result.
+- `grep REPO REV QUERY` — `search_code`'s per-mirror half at a pinned rev, sharing its line parse
+  and its `-I`/`-n` flags, so the two cannot drift.
+
+All four stay inside the same posture: argv-only, capped, offline, read-only, one JSON envelope.
+Alias resolution and the selection rule it needs live in d160; recorded mirror state and the
+warnings that surface with it live in d161.
+
 ## Invariants
 
 - **The usage text names the shim**, never the `.mjs` behind it: a ported

@@ -155,10 +155,11 @@ pass (docs/d060).
                   [--only GLOB]... [--exclude GLOB]
 ```
 
-On native Windows the same program runs through `git\maintain.ps1` with
-identical flags (docs/d062) — that is the entry for farm roots WSL2 mishandles
-(non-NTFS filesystems, non-local UNC paths), where maintenance must run with
-Git for Windows outside WSL2 entirely.
+Farm roots WSL2 mishandles (non-NTFS filesystems, non-local UNC paths) used to
+have a Windows-side entry, `git\maintain.ps1` (docs/d062). It was deleted
+(docs/d162) after measuring poor throughput and worse space efficiency against
+the same maintenance inside WSL2, so `./git/maintain.sh` is the only entry; the
+deleted script is recoverable from this repository's history.
 
 1. **Align**: `git remote update --prune` (mirror refspec ⇒ exact replica).
 2. **Optimize**:
