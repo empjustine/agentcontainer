@@ -352,7 +352,10 @@ async function main() {
         "       flight); 1 s min-interval, 30 s on a software-forge host\n" +
         "       (docs/d044)\n" +
         "       a signal stops the sweep at the next repo or step boundary;\n" +
-        "       signal again to abort the step in flight (docs/d164)\n",
+        "       signal again to abort the step in flight (docs/d164)\n" +
+        "       --lock-timeout SECONDS belongs to the shim, not this script:\n" +
+        "       the farm mutation lock wait (0 = indefinitely; default 10,\n" +
+        "       docs/d166)\n",
     );
     return;
   }
