@@ -45,8 +45,8 @@ dev_tool_pin() {
 	golangci-lint) printf '%s\n' '2.15.0' ;;
 	# Not in DEV_TOOLS_ALL: the QA sweeps never run duckdb. It pins here because
 	# a consumer is version-sensitive — MotherDuck's extension accepts v1.4-v1.5
-	# only (docs: 1.4.1-1.5.6), so atuin-warehouse-sync must not meet a bare
-	# v2.x on a PATH (atuin-warehouse-sync README).
+	# only (docs: 1.4.1-1.5.6), so datalakehouse must not meet a bare
+	# v2.x on a PATH (datalakehouse README).
 	duckdb) printf '%s\n' '1.5.6' ;;
 	oxfmt) printf '%s\n' '0.75.0' ;;
 	shellcheck | shfmt | jq | ruff | uv | ty) printf '%s\n' 'latest' ;;

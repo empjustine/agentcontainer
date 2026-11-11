@@ -1,14 +1,14 @@
 ---
-id: atuin-warehouse-sync
+id: datalakehouse
 type: module-design
 status: active
-title: "atuin-warehouse-sync — atuin history.db → MotherDuck via the duckdb CLI"
+title: "datalakehouse — atuin history.db → MotherDuck via the duckdb CLI"
 parent: architecture
 references: [d046, d113, d139]
 tags: [atuin, motherduck, duckdb, sync]
 ---
 
-# atuin-warehouse-sync
+# datalakehouse
 
 Syncs atuin's local `history.db` into the MotherDuck database `md:atuin`
 (`main.history`) with the conventional duckdb CLI. The MotherDuck MCP server
@@ -20,7 +20,7 @@ through the repo's toolchain and vault chain (`./environment.sh`).
 
 ```sh
 ./dev-tools.sh duckdb                          # once per host: pin the MotherDuck-compatible duckdb
-./environment.sh ./atuin-warehouse-sync/atuin-warehouse-sync.sh [--prune] [--print-source] [path]
+./environment.sh ./datalakehouse/atuin-warehouse-sync.sh [--prune] [--print-source] [path]
 ```
 
 - `path` — a `history.db` file, or a directory containing one. Optional: with
