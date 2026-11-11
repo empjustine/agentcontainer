@@ -215,6 +215,11 @@ agentcontainer/
 │   ├── farm-lock.sh                     #   → the ONE shell that still holds logic: flock(1) has no node equivalent (d121)
 │   ├── tests/                           #   → this folder's own tests (pacer, globs, argv, retry, lock probe, and both ports end to end)
 │   └── non-bare-issues.md               #   → why bare mirrors, the farm audit, pickaxe notes
+│
+├── atuin-warehouse-sync/                # atuin history.db → MotherDuck, duckdb CLI only (d046's chain supplies the token)
+│   ├── atuin-warehouse-sync.sh          #   → argv-free source resolution (CWD, config, atuin's own dirs), drift-tolerant upsert into md:atuin, --prune opt-in
+│   ├── README.md                        #   → module doc: usage, the data-dir file assessment, verified findings, gotchas
+│   └── tests/                           #   → source-resolution tests (pure path logic, no token or network)
 ```
 
 ## Documentation index
