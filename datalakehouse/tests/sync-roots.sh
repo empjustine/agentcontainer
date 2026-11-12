@@ -241,6 +241,13 @@ out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
 has 'non-pi file adds no entries' "$out" 'entries=5'
 has 'non-pi file adds no session' "$out" 'sessions=4'
 
+# 19 - a spool row in a foreign shape is normalised, not fed raw to the reader
+printf '%s\n' '{"id":"mtvu4plvxvbbzm","type":"search","timestamp":"2026-11-15T00:00:00Z","queries":["a"]}' >"$tmp/foreign-spool.ndjson"
+out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
+	--session-dir "$sessdir" --agent-dir "$agentdir" --spool "$tmp/foreign-spool.ndjson" --print-rows 2>/dev/null)
+has 'foreign spool row wrapped as an entry' "$out" '"id":"mtvu4plvxvbbzm"'
+has 'foreign spool row keeps its body as payload' "$out" '"queries"'
+
 if [ "$fails" -gt 0 ]; then
 	printf '%s agent-warehouse test(s) FAILED\n' "$fails" >&2
 	exit 1

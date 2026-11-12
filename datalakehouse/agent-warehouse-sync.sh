@@ -258,11 +258,19 @@ spool_seen=0
 for sp in "$spool_base" "$spool_base".rm.*; do
 	[ -f "$sp" ] || continue
 	spool_seen=1
+	spool_n=0
 	while IFS= read -r line; do
 		[ -n "$line" ] || continue
-		case "$line" in
-		*'"id"'*) printf '%s\n' "$line" >>"$entries_rows" ;;
-		*) printf '%s\n' "$line" >>"$sessions_rows" ;;
+		spool_n=$((spool_n + 1))
+		# The route is generic, so a spool row need not already be in the warehouse
+		# shape (an emitter may push a search event, say). Normalise it here: a
+		# session header stays a session row, an already-canonical entry row passes
+		# through, and anything else becomes an entry row with the original object
+		# kept verbatim as payload -- never fed raw to a schema-inferring reader.
+		row=$(printf '%s' "$line" | jq -c --argjson n "$spool_n" 'if (.type == "session") then {session_file:(.session_file // "spool"), store:(.store // "spool"), session_id:(.session_id // .id), cwd:(.cwd // null), version:(.version // null), parent_session:(.parent_session // null), started_at:(.started_at // .timestamp // null)} elif (.id != null and .payload != null) then . else {session_id:(.session_id // ""), session_file:(.session_file // "spool"), store:(.store // "spool"), line_no:(.line_no // $n), id:(.id // ("spool-" + ($n | tostring))), parent_id:(.parent_id // null), type:(.type // null), ts:(.ts // .timestamp // null), payload:.} end' 2>/dev/null) || continue
+		case "$(printf '%s' "$row" | jq -r 'has("payload")')" in
+		true) printf '%s\n' "$row" >>"$entries_rows" ;;
+		*) printf '%s\n' "$row" >>"$sessions_rows" ;;
 		esac
 	done <"$sp"
 done
@@ -385,7 +393,9 @@ CREATE TABLE IF NOT EXISTS $TGT.entry(
 SQL
 	if [ "$session_count" -gt 0 ]; then
 		cat <<SQL
-CREATE TEMP TABLE st_s AS SELECT * FROM read_json_auto('$sessions_rows');
+# Explicit columns, never schema inference: the payload is a JSON column, so a
+# heterogeneous value (a new entry field) cannot break the read.
+CREATE TEMP TABLE st_s AS SELECT * FROM read_json('$sessions_rows', format='newline_delimited', columns={session_file:'VARCHAR', store:'VARCHAR', session_id:'VARCHAR', cwd:'VARCHAR', version:'BIGINT', parent_session:'VARCHAR', started_at:'VARCHAR'});
 INSERT INTO $TGT.session (session_id, session_file, cwd, version, parent_session, started_at, store)
   SELECT session_id, session_file, cwd, try_cast(version AS INTEGER), parent_session,
          try_cast(started_at AS TIMESTAMP), store FROM st_s
@@ -396,7 +406,7 @@ SQL
 	fi
 	if [ "$entry_count" -gt 0 ]; then
 		cat <<SQL
-CREATE TEMP TABLE st_e AS SELECT * FROM read_json_auto('$entries_rows');
+CREATE TEMP TABLE st_e AS SELECT * FROM read_json('$entries_rows', format='newline_delimited', columns={session_id:'VARCHAR', session_file:'VARCHAR', store:'VARCHAR', line_no:'BIGINT', id:'VARCHAR', parent_id:'VARCHAR', type:'VARCHAR', ts:'VARCHAR', payload:'JSON'});
 INSERT INTO $TGT.entry (session_id, session_file, id, parent_id, type, ts, line_no, store, payload)
   SELECT session_id, session_file, id, parent_id, type, try_cast(ts AS TIMESTAMP), line_no, store, payload FROM st_e
   ON CONFLICT (session_id, id) DO UPDATE SET
