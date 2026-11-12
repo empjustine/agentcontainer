@@ -90,6 +90,30 @@ Because a hook is an **external command**, vibe needs no in-harness code at all:
 The caveat is the same shape: hook and plugin config are files the agent can
 reach unless they sit in a read-only or host-mounted location.
 
+## Host curation and child reach
+
+ThinkRail embeds pi as its engine, so the question is not which transcript format a
+session has - both are pi JSONL - but which extensions the host loads. Two facts
+decide it (ThinkRail's pi-delegation spec, decision 25, and its server agent spec):
+
+- **A parent session gets pi's own discovery.** In the normal install the host lets
+  pi discover extensions from settings, so a portable pi extension runs for a
+  ThinkRail parent session as it does for a vanilla one. Compiled and packaged
+  launchers are the exception: they register a value-imported factory set through
+  the host's bundled-runtime seam, so only bundled or host-listed extensions load.
+- **A child session never gets disk discovery.** The delegation engine's rule is a
+  curated, embedder-bound set: `SessionOptions.extensions: true` loads exactly the
+  embedder's `childExtensionFactories`, and every child loads
+  `childBaseExtensionFactories` ahead of it. A disk-discovered pi extension is
+  never inherited, and that is deliberate (the per-child heap cost).
+
+So one portable `pi-datalakehouse-session` extension covers parent sessions in
+both hosts, but it does **not** cover subagent transcripts live; child coverage
+needs a ThinkRail-side registration (a `thinkrail-extensions/` package, or the
+host's child-extension bindings). This is why the file sweep, not the emitter, is
+the completeness guarantee: [d184](d184-postmortem-session-sweep.md) reads parent
+and child JSONL from disk with the same parser, whatever loaded the extension.
+
 ## What this means for the route
 
 - All three harnesses can feed the route in near-real-time, and none needs a
