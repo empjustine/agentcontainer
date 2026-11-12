@@ -88,6 +88,8 @@ against a SQLite primary key), so a re-posted row is skipped durably and the syn
 re-posting every run appends nothing new. Identity is the transcript's own **session id** (pi's header id) and, per entry,
 the entry id; the file path is stored as a location attribute, never as the key,
 because the same session has a different path inside a sandbox and on the host.
+A pi header is recognized by its `type`, not its line position, so a file that
+concatenates two sessions splits back into two by their own ids.
 
 **The route is the sync's default
 transport** — `http://127.0.0.1:8787` or `AGENT_WAREHOUSE_ROUTE` — needing no

@@ -142,18 +142,25 @@ entries_rows="$tmp/entries.ndjson"
 # checkout keeps a directory.
 # shellcheck disable=SC2094  # the read loop's source and the two append targets
 # are three distinct paths; shellcheck sees one file per redirect.
-parse_file() { # $1 = file, $2 = store
-	local file=$1 store=$2 first=1 n=0 line cwd sid=""
+# A pi header is recognized by its type, never by its position: a concatenated
+# file carries several, each opening a new session, so the reader must not assume
+# line 1 is the only header. Assuming so would attribute the second session's
+# entries to the first and drop the second session's identity.
+# shellcheck disable=SC2094  # the read loop's source and the two append targets
+# are three distinct paths; shellcheck sees one file per redirect.
+parse_file() { # $1 = file, $2 = base store (session|delegation)
+	local file=$1 base=$2 line sid="" store="$2" cwd n=0
 	while IFS= read -r line || [ -n "$line" ]; do
 		[ -n "$line" ] || continue
 		n=$((n + 1))
-		if [ "$first" = 1 ]; then
-			first=0
-			cwd=$(printf '%s' "$line" | jq -r '.cwd // empty') || true
+		if printf '%s' "$line" | jq -e '.type == "session"' >/dev/null 2>&1; then
 			sid=$(printf '%s' "$line" | jq -r '.id // empty') || true
-			# A delegation transcript stays delegation even when its cwd is a worktree:
-			# the root decides the store, the worktree marker only refines a session row.
-			if [ -n "$cwd" ] && [ -f "$cwd/.git" ] && [ "$store" = session ]; then store=worktree; fi
+			cwd=$(printf '%s' "$line" | jq -r '.cwd // empty') || true
+			# A delegation transcript stays delegation even when its cwd is a
+			# worktree: the root decides the store, the marker only refines a
+			# session row.
+			store=$base
+			if [ "$base" = session ] && [ -n "$cwd" ] && [ -f "$cwd/.git" ]; then store=worktree; fi
 			printf '%s' "$line" | jq -c --arg f "$file" --arg s "$store" \
 				'select(.id != null) | {session_file:$f, store:$s, session_id:.id, cwd:(.cwd // null), version:(.version // null), parent_session:(.parentSession // null), started_at:(.timestamp // null)}' \
 				>>"$sessions_rows" || true

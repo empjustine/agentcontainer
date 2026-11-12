@@ -150,6 +150,25 @@ has 'route env override, trailing slash stripped' "$out" 'route=http://example:9
 out=$(env -i PATH="$PATH" HOME="$tmp/h11" bash "$SCRIPT" --print-roots --direct)
 has '--direct disables the route' "$out" 'route=(direct)'
 
+# 13 - a concatenated file carries a second header; each header opens a session
+csess="$tmp/concat-sessions"
+mkdir -p "$csess"
+cat >"$csess/concat.jsonl" <<JSON
+{"type":"session","version":3,"id":"cat-a","timestamp":"2026-11-13T09:00:00.000Z","cwd":"$wt"}
+{"type":"message","id":"a1","parentId":null,"timestamp":"2026-11-13T09:00:01.000Z","message":{"role":"user","content":"a"}}
+{"type":"session","version":3,"id":"cat-b","timestamp":"2026-11-13T10:00:00.000Z","cwd":"$wt"}
+{"type":"message","id":"b1","parentId":null,"timestamp":"2026-11-13T10:00:01.000Z","message":{"role":"user","content":"b"}}
+JSON
+out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
+	--session-dir "$csess" --agent-dir "$tmp/no-agent" --print-rows)
+has 'second header opens its own session' "$out" '"session_id":"cat-b"'
+has 'cat-b entries keep their own id' "$out" '"session_id":"cat-b","session_file"'
+if printf '%s' "$out" | grep -q '"id":"cat-b"'; then
+	bad 'the second header must not be stored as an entry'
+else
+	ok 'the second header is not an entry'
+fi
+
 if [ "$fails" -gt 0 ]; then
 	printf '%s agent-warehouse test(s) FAILED\n' "$fails" >&2
 	exit 1
