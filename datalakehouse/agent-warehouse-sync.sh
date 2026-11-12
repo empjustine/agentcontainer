@@ -43,10 +43,10 @@ usage: agent-warehouse-sync.sh [--session-dir DIR] [--agent-dir DIR]
   --spool            pushed rows from the daemon route (default XDG data dir/agent-warehouse/spool.ndjson)
   --route URL        daemon sink base URL; the default transport, needing no token
                      or duckdb (default env AGENT_WAREHOUSE_ROUTE, else http://127.0.0.1:8787)
-  --direct           upload straight to MotherDuck instead of the route
-                     (needs motherduck_token and the pinned duckdb)
-  --rm               after the transport ack, remove the processed session files
-                     and, on a direct run, the consumed spool (route runs keep it)
+  --direct           upload straight to MotherDuck instead of the route, and clear
+                     the consumed spool (needs motherduck_token and the pinned duckdb)
+  --rm               after the transport ack, also remove the processed session files
+                     (a route run removes nothing)
                      (postmortem and historical piles only; a file modified within
                      AGENT_WAREHOUSE_RM_GRACE seconds is kept as possibly live)
   --print-roots      print the resolved roots, then exit (no token needed)
@@ -125,12 +125,13 @@ GRACE=$(env_or AGENT_WAREHOUSE_RM_GRACE 300)
 BATCH_MAX=$(env_or AGENT_WAREHOUSE_BATCH_BYTES 4194304)
 TOKEN=$(env_or motherduck_token "")
 [ -n "$TOKEN" ] || TOKEN=$(env_or MOTHERDUCK_TOKEN "")
-# --rm clears the spool too, but only when THIS run folds it into the warehouse
-# (direct mode, with a token): a route-mode run has uploaded nothing, so it must
-# leave the daemon's tail alone. The spool is ROTATED before it is read rather
-# than truncated in place, so a concurrent daemon append cannot be lost; the
-# frozen file is deleted only after the direct ack.
-if [ "$RM" = 1 ] && [ -z "$route" ] && [ -n "$TOKEN" ] && [ -f "$spool_base" ]; then
+# A DIRECT run is the collector: it folds the spool into the warehouse, so it
+# clears the consumed tail itself, independent of --rm (which governs the session
+# files). A route run uploaded nothing and never touches the spool, and a report
+# or dry run has no side effect. The tail is ROTATED before it is read rather than
+# truncated in place, so a concurrent daemon append cannot be lost; the frozen
+# file is deleted only after the direct ack.
+if [ -z "$route" ] && [ -n "$TOKEN" ] && [ "$DRY" = 0 ] && [ "$PRINT_ROWS" = 0 ] && [ "$PRINT_ROOTS" = 0 ] && [ -f "$spool_base" ]; then
 	mv "$spool_base" "$spool_base.rm.$$"
 fi
 
@@ -195,12 +196,13 @@ remove_processed() {
 # shellcheck disable=SC2094  # the read loop's source and the two append targets
 # are three distinct paths; shellcheck sees one file per redirect.
 parse_file() { # $1 = file, $2 = base store (session|delegation)
-	local file=$1 base=$2 line sid="" store="$2" cwd n=0
+	local file=$1 base=$2 line sid="" store="$2" cwd n=0 seen_header=0
 	while IFS= read -r line || [ -n "$line" ]; do
 		[ -n "$line" ] || continue
 		n=$((n + 1))
 		if printf '%s' "$line" | jq -e '.type == "session"' >/dev/null 2>&1; then
 			sid=$(printf '%s' "$line" | jq -r '.id // empty') || true
+			seen_header=1
 			cwd=$(printf '%s' "$line" | jq -r '.cwd // empty') || true
 			# A delegation transcript stays delegation even when its cwd is a
 			# worktree: the root decides the store, the marker only refines a
@@ -218,6 +220,11 @@ parse_file() { # $1 = file, $2 = base store (session|delegation)
 			'select(.id != null) | {session_id:$sid, session_file:$f, store:$s, line_no:$n, id:.id, parent_id:(.parentId // null), type:(.type // null), ts:(.timestamp // null), payload:.}' \
 			>>"$entries_rows" || true
 	done <"$file"
+	# A file with entries but no pi header is not a session file, or is a fragment;
+	# its rows land with an empty session id, so say so rather than hide it.
+	if [ "$seen_header" = 0 ] && [ "$n" -gt 0 ]; then
+		printf 'agent-warehouse-sync: no pi session header in %s\n' "$file" >&2
+	fi
 }
 
 found=0
@@ -243,8 +250,8 @@ done < <(find "$SESSION_ROOT" "$DELEGATION_ROOT" -type f -name '*.jsonl' 2>/dev/
 # Pushed rows from the daemon route are a third source, so a live emitter's
 # capture survives even before the host sweep reaches the file.
 # Sources are the live tail plus any rotated tail a failed run left behind: a
-# direct+token --rm run rotated the live one above, so this read cannot race a
-# concurrent daemon append, and a leftover rotated file is still folded in.
+# direct run rotated the live one above, so this read cannot race a concurrent
+# daemon append, and a leftover rotated file is still folded in.
 spool_seen=0
 for sp in "$spool_base" "$spool_base".rm.*; do
 	[ -f "$sp" ] || continue
@@ -403,9 +410,9 @@ SQL
 
 result=$(duckdb -json -c "$(cat "$sql_file")")
 remove_processed
-# A direct --rm run has folded every rotated tail it read; remove them. The live
-# tail is only ever rotated, so a route run never touches it.
-if [ "$RM" = 1 ] && [ -z "$route" ]; then
+# A direct run has folded every tail it read; remove the rotated files. The live
+# tail is only ever rotated, so a route run never touches the spool at all.
+if [ -z "$route" ]; then
 	for sp in "$spool_base".rm.*; do
 		[ -f "$sp" ] && rm -f "$sp"
 	done

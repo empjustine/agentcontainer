@@ -219,6 +219,17 @@ else
 	ok 'the second header is not an entry'
 fi
 
+# 17 - a dry run has no side effect: it must not rotate the spool
+printf '%s\n' '{"session_file":"x","id":"x1","payload":{}}' >"$tmp/dry-spool.ndjson"
+env -i PATH="$PATH" HOME="$tmp/nohome" motherduck_token=dummy bash "$SCRIPT" \
+	--session-dir "$sessdir" --agent-dir "$tmp/no-agent" --spool "$tmp/dry-spool.ndjson" \
+	--direct --dry >/dev/null 2>&1
+if ls "$tmp/dry-spool.ndjson".rm.* >/dev/null 2>&1; then
+	bad 'a dry run must not rotate the spool'
+else
+	ok 'a dry direct run leaves the spool unrotated'
+fi
+
 if [ "$fails" -gt 0 ]; then
 	printf '%s agent-warehouse test(s) FAILED\n' "$fails" >&2
 	exit 1

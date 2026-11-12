@@ -99,9 +99,15 @@ MotherDuck.
 file is older than `AGENT_WAREHOUSE_RM_GRACE` seconds (default 300); it is meant for
 postmortem runs and the historical pile, never for a live session, and a
 just-modified file is kept and reported as possibly live.
-On a **direct** run `--rm` also clears the consumed spool, by rotating it before
-it is read and deleting the frozen copy after the ack; a **route** run never touches
-the spool, because it has folded nothing into the warehouse.
+**A direct run clears the consumed spool**: it rotates the tail before reading it
+and deletes the frozen copy after the ack, independent of `--rm` (which governs the
+session files). A **route** run never touches the spool, because it has folded
+nothing into the warehouse, and a `--dry` or report run has no side effect.
+The roots are searched **recursively** for `*.jsonl`, so `--session-dir` may
+point at any tree: pi's `--<cwd>--/` shape is not assumed, and a historic pile with
+sessions at mixed depths (or several `agentcontainer-<ts>` revisions) is read as-is.
+A `.jsonl` with no pi session header still contributes rows (keyed by an empty
+session id), and the sync warns about it.
 The route post is batched under `AGENT_WAREHOUSE_BATCH_BYTES` (default 4 MiB) so a
 row's large content array cannot overflow the daemon's `AGENT_INGEST_MAX_BODY`
 (default 8 MiB) in a single request.
