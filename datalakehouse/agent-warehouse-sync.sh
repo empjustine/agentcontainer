@@ -410,7 +410,40 @@ SELECT (SELECT count(*) FROM $TGT.session) AS sessions,
 SQL
 } >"$sql_file"
 
-result=$(duckdb -json -c "$(cat "$sql_file")")
+# MotherDuck does not create a database on ATTACH (and a read-scaling token cannot
+# create one at all), so a missing md:<db> is created here once and the run retried,
+# instead of failing with a bare "no database/share named" catalog error.
+ensure_db() {
+	local out
+	out=$(duckdb -c "INSTALL motherduck; LOAD motherduck; SET motherduck_token='$TOKEN'; ATTACH 'md:'; CREATE DATABASE IF NOT EXISTS $WAREHOUSE_DB;" 2>&1) && return 0
+	case "$out" in
+	*exists*) return 0 ;;
+	esac
+	out=$(duckdb -c "INSTALL motherduck; LOAD motherduck; SET motherduck_token='$TOKEN'; ATTACH 'md:'; CREATE DATABASE $WAREHOUSE_DB;" 2>&1) && return 0
+	case "$out" in
+	*exists*) return 0 ;;
+	esac
+	printf '%s\n' "$out" >&2
+	return 1
+}
+
+direct_err="$tmp/direct.err"
+if ! result=$(duckdb -json -c "$(cat "$sql_file")" 2>"$direct_err"); then
+	if grep -q 'no database/share named' "$direct_err"; then
+		printf 'agent-warehouse-sync: md:%s is missing; creating it once\n' "$WAREHOUSE_DB" >&2
+		if ! ensure_db; then
+			printf 'agent-warehouse-sync: could not create md:%s. A read-scaling token cannot create databases; create it once in MotherDuck with a read-write token, then re-run.\n' "$WAREHOUSE_DB" >&2
+			exit 1
+		fi
+		if ! result=$(duckdb -json -c "$(cat "$sql_file")" 2>"$direct_err"); then
+			cat "$direct_err" >&2
+			exit 1
+		fi
+	else
+		cat "$direct_err" >&2
+		exit 1
+	fi
+fi
 remove_processed
 # A direct run has folded every tail it read; remove the rotated files. The live
 # tail is only ever rotated, so a route run never touches the spool at all.
