@@ -106,8 +106,9 @@ nothing into the warehouse, and a `--dry` or report run has no side effect.
 The roots are searched **recursively** for `*.jsonl`, so `--session-dir` may
 point at any tree: pi's `--<cwd>--/` shape is not assumed, and a historic pile with
 sessions at mixed depths (or several `agentcontainer-<ts>` revisions) is read as-is.
-A `.jsonl` with no pi session header still contributes rows (keyed by an empty
-session id), and the sync warns about it.
+A `.jsonl` whose first line is not a pi session header is **skipped** (another
+tool's stream, such as mistral-vibe's `messages.jsonl`, or a fragment), so it
+contributes no rows and is never a `--rm` candidate.
 The route post is batched under `AGENT_WAREHOUSE_BATCH_BYTES` (default 4 MiB) so a
 row's large content array cannot overflow the daemon's `AGENT_INGEST_MAX_BODY`
 (default 8 MiB) in a single request.

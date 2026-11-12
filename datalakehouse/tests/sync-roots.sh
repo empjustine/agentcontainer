@@ -230,6 +230,17 @@ else
 	ok 'a dry direct run leaves the spool unrotated'
 fi
 
+# 18 - a non-pi .jsonl (mistral-vibe's messages.jsonl shape) is skipped: no rows
+mkdir -p "$sessdir/nonpi"
+cat >"$sessdir/nonpi/messages.jsonl" <<JSON
+{"role":"assistant","content":"hi","message_id":"m1"}
+{"role":"user","content":"yo","message_id":"m2"}
+JSON
+out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
+	--session-dir "$sessdir" --agent-dir "$agentdir" --dry 2>/dev/null)
+has 'non-pi file adds no entries' "$out" 'entries=5'
+has 'non-pi file adds no session' "$out" 'sessions=4'
+
 if [ "$fails" -gt 0 ]; then
 	printf '%s agent-warehouse test(s) FAILED\n' "$fails" >&2
 	exit 1

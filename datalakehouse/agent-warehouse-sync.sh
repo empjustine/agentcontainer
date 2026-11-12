@@ -196,13 +196,12 @@ remove_processed() {
 # shellcheck disable=SC2094  # the read loop's source and the two append targets
 # are three distinct paths; shellcheck sees one file per redirect.
 parse_file() { # $1 = file, $2 = base store (session|delegation)
-	local file=$1 base=$2 line sid="" store="$2" cwd n=0 seen_header=0
+	local file=$1 base=$2 line sid="" store="$2" cwd n=0
 	while IFS= read -r line || [ -n "$line" ]; do
 		[ -n "$line" ] || continue
 		n=$((n + 1))
 		if printf '%s' "$line" | jq -e '.type == "session"' >/dev/null 2>&1; then
 			sid=$(printf '%s' "$line" | jq -r '.id // empty') || true
-			seen_header=1
 			cwd=$(printf '%s' "$line" | jq -r '.cwd // empty') || true
 			# A delegation transcript stays delegation even when its cwd is a
 			# worktree: the root decides the store, the marker only refines a
@@ -220,16 +219,19 @@ parse_file() { # $1 = file, $2 = base store (session|delegation)
 			'select(.id != null) | {session_id:$sid, session_file:$f, store:$s, line_no:$n, id:.id, parent_id:(.parentId // null), type:(.type // null), ts:(.timestamp // null), payload:.}' \
 			>>"$entries_rows" || true
 	done <"$file"
-	# A file with entries but no pi header is not a session file, or is a fragment;
-	# its rows land with an empty session id, so say so rather than hide it.
-	if [ "$seen_header" = 0 ] && [ "$n" -gt 0 ]; then
-		printf 'agent-warehouse-sync: no pi session header in %s\n' "$file" >&2
-	fi
 }
 
 found=0
 while IFS= read -r f; do
 	[ -n "$f" ] || continue
+	# A pi session file ALWAYS opens with a {type:session} header. A .jsonl without
+	# one is another tool's stream (mistral-vibe's messages.jsonl, say) or a
+	# fragment, so it is skipped, never ingested, and never a --rm candidate: a
+	# foreign file must not become junk rows or be deleted.
+	if ! printf '%s' "$(head -n1 "$f")" | jq -e '.type == "session"' >/dev/null 2>&1; then
+		printf 'agent-warehouse-sync: skipping non-pi %s (no session header)\n' "$f" >&2
+		continue
+	fi
 	found=$((found + 1))
 	case "$f" in
 	"$DELEGATION_ROOT"/*) store=delegation ;;
