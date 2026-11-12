@@ -44,10 +44,11 @@ const spool =
   process.env.AGENT_WAREHOUSE_SPOOL || path.join(dataHome, "agent-warehouse", "spool.ndjson");
 const MAX_BODY = 8 * 1024 * 1024;
 
-// The spool is append-only, but a retried POST must not duplicate a row: the
-// sync re-posts every run, so a seen-set is loaded from the spool at startup and
-// consulted on each append. The key is a row's natural identity when it has one.
-const seen = new Set();
+// A re-posted row must not duplicate a line, and the sync re-posts every run.
+// The dedupe is a conditional insert: a SQLite PRIMARY KEY with INSERT OR IGNORE
+// turns a seen key into a no-op (changes === 0), so it is durable across restarts
+// and needs no startup scan. An in-memory set is the fallback when node:sqlite is
+// unavailable.
 function rowKey(row) {
   if (row && typeof row === "object") {
     if (row.session_file && row.id) { return JSON.stringify(["entry", row.session_file, row.id]); }
@@ -55,18 +56,37 @@ function rowKey(row) {
   }
   return JSON.stringify(["raw", row]);
 }
+
+let isNew;
 try {
-  const existing = fs.readFileSync(spool, "utf8");
-  for (const line of existing.split("\n")) {
-    if (line.trim() === "") { continue; }
-    try {
-      seen.add(rowKey(JSON.parse(line)));
-    } catch {
-      seen.add(line);
+  const { DatabaseSync } = await import("node:sqlite");
+  const db = new DatabaseSync(path.join(path.dirname(spool), "seen.sqlite"));
+  db.exec("CREATE TABLE IF NOT EXISTS seen(key TEXT PRIMARY KEY)");
+  const insert = db.prepare("INSERT OR IGNORE INTO seen(key) VALUES(?)");
+  isNew = (key) => insert.run(key).changes > 0;
+  // Seed once from an existing spool, or a pre-upgrade spool would re-append.
+  const seeded = db.prepare("SELECT count(*) AS n FROM seen").get().n;
+  if (seeded === 0 && fs.existsSync(spool)) {
+    db.exec("BEGIN");
+    for (const line of fs.readFileSync(spool, "utf8").split("\n")) {
+      if (line.trim() === "") { continue; }
+      let key;
+      try {
+        key = rowKey(JSON.parse(line));
+      } catch {
+        key = line;
+      }
+      insert.run(key);
     }
+    db.exec("COMMIT");
   }
 } catch {
-  // no spool yet: the first append creates it
+  const seen = new Set();
+  isNew = (key) => {
+    if (seen.has(key)) { return false; }
+    seen.add(key);
+    return true;
+  };
 }
 
 fs.mkdirSync(path.dirname(spool), { recursive: true });
@@ -118,13 +138,11 @@ const server = http.createServer((req, res) => {
     const fresh = [];
     let duplicates = 0;
     for (const r of rows) {
-      const key = rowKey(r);
-      if (seen.has(key)) {
+      if (isNew(rowKey(r))) {
+        fresh.push(r);
+      } else {
         duplicates++;
-        continue;
       }
-      seen.add(key);
-      fresh.push(r);
     }
     if (fresh.length > 0) {
       const lines = `${fresh.map((r) => JSON.stringify(r)).join("\n")}\n`;

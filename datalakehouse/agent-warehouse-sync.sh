@@ -23,10 +23,10 @@
 #                                [--spool FILE] [--route URL] [--print-roots]
 #                                [--dry] [--report-orphans]
 #
-# WHY route mode (docs/d181): the sync runs both inside a sandbox and on the
-# host. Inside, it has the mounted roots but no MotherDuck token; --route posts
-# the parsed rows to the host's write-only daemon sink instead, so one transport
-# serves both environments and the sandbox still never writes the archive.
+# WHY the route is the default (docs/d181): the sync runs both inside a sandbox
+# and on the host, and the daemon sink is the one transport both can use. Posting
+# to it keeps the archive host-written and needs no MotherDuck token or duckdb;
+# --direct is the alternative for a host that uploads without a daemon running.
 # Env:   motherduck_token   MotherDuck access token (MOTHERDUCK_TOKEN accepted)
 #        AGENT_WAREHOUSE_DB target md: database (default: agent)
 #        PI_CODING_AGENT_SESSION_DIR / PI_CODING_AGENT_DIR / XDG_DATA_HOME
@@ -41,8 +41,10 @@ usage: agent-warehouse-sync.sh [--session-dir DIR] [--agent-dir DIR]
   --agent-dir        pi agent dir; its delegation/ subdir is the second root
                      (default PI_CODING_AGENT_DIR, else ~/.pi/agent)
   --spool            pushed rows from the daemon route (default XDG data dir/agent-warehouse/spool.ndjson)
-  --route URL        post the parsed rows to the daemon sink instead of MotherDuck
-                     (env AGENT_WAREHOUSE_ROUTE; no token or duckdb needed)
+  --route URL        daemon sink base URL; the default transport, needing no token
+                     or duckdb (default env AGENT_WAREHOUSE_ROUTE, else http://127.0.0.1:8787)
+  --direct           upload straight to MotherDuck instead of the route
+                     (needs motherduck_token and the pinned duckdb)
   --print-roots      print the resolved roots, then exit (no token needed)
   --dry              parse and count, write nothing (no token needed)
   --report-orphans   print sessions whose cwd is gone (the postmortem view)
@@ -63,6 +65,7 @@ SESSION_DIR=""
 AGENT_DIR=""
 SPOOL=""
 ROUTE=""
+DIRECT=0
 PRINT_ROOTS=0
 DRY=0
 REPORT_ORPHANS=0
@@ -81,6 +84,7 @@ while [ $# -gt 0 ]; do
 		shift 2
 		;;
 	--print-roots) PRINT_ROOTS=1; shift ;;
+	--direct) DIRECT=1; shift ;;
 	--dry) DRY=1; shift ;;
 	--report-orphans) REPORT_ORPHANS=1; shift ;;
 	--print-rows) PRINT_ROWS=1; shift ;;
@@ -101,9 +105,15 @@ AGENT_ROOT="$AGENT_DIR"
 DELEGATION_ROOT="$AGENT_ROOT/delegation"
 spool_base="$SPOOL"
 [ -n "$spool_base" ] || spool_base=$(env_or XDG_DATA_HOME "$HOME/.local/share")/agent-warehouse/spool.ndjson
-route="$ROUTE"
-[ -n "$route" ] || route=$(env_or AGENT_WAREHOUSE_ROUTE "")
-[ -n "$route" ] && route=$(printf '%s' "$route" | sed 's:/*$::')
+# The route is the default transport; --direct turns it off and takes the
+# MotherDuck leg instead.
+if [ "$DIRECT" = 1 ]; then
+	route=""
+else
+	route="$ROUTE"
+	[ -n "$route" ] || route=$(env_or AGENT_WAREHOUSE_ROUTE "http://127.0.0.1:8787")
+	route=$(printf '%s' "$route" | sed 's:/*$::')
+fi
 
 # Resolution precedes the token check so --print-roots and --dry need no
 # credentials, and a path problem is reported before any vault round-trip.
@@ -111,6 +121,11 @@ if [ "$PRINT_ROOTS" = 1 ]; then
 	printf 'session_root=%s\n' "$SESSION_ROOT"
 	printf 'delegation_root=%s\n' "$DELEGATION_ROOT"
 	printf 'spool=%s\n' "$spool_base"
+	if [ "$DIRECT" = 1 ]; then
+		printf 'route=(direct)\n'
+	else
+		printf 'route=%s\n' "$route"
+	fi
 	exit 0
 fi
 
@@ -200,7 +215,8 @@ if [ "$PRINT_ROWS" = 1 ]; then
 fi
 
 if [ "$DRY" = 1 ]; then
-	printf 'session_root=%s sessions=%s entries=%s\n' "$SESSION_ROOT" "$session_count" "$entry_count"
+	if [ "$DIRECT" = 1 ]; then route_desc="(direct)"; else route_desc=$route; fi
+	printf 'session_root=%s sessions=%s entries=%s route=%s\n' "$SESSION_ROOT" "$session_count" "$entry_count" "$route_desc"
 	exit 0
 fi
 

@@ -134,6 +134,15 @@ else
 fi
 kill "$daemon_pid" 2>/dev/null || true
 
+# 11 - the route is the default transport; --direct opts into MotherDuck
+out=$(env -i PATH="$PATH" HOME="$tmp/h11" bash "$SCRIPT" --print-roots)
+has 'route defaults to the local daemon' "$out" 'route=http://127.0.0.1:8787'
+out=$(env -i PATH="$PATH" HOME="$tmp/h11" AGENT_WAREHOUSE_ROUTE="http://example:9000/" \
+	bash "$SCRIPT" --print-roots)
+has 'route env override, trailing slash stripped' "$out" 'route=http://example:9000'
+out=$(env -i PATH="$PATH" HOME="$tmp/h11" bash "$SCRIPT" --print-roots --direct)
+has '--direct disables the route' "$out" 'route=(direct)'
+
 if [ "$fails" -gt 0 ]; then
 	printf '%s agent-warehouse test(s) FAILED\n' "$fails" >&2
 	exit 1

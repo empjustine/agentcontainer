@@ -83,9 +83,12 @@ read-back and no delete, appending to the same spool the sync already reads, so 
 sandbox hands over events without holding write access to the archive.
 
 The daemon runs in the foreground and does not fork itself; backgrounding is the
-orchestration layer's job. It dedupes a re-posted row rather than appending it
-twice, and the sync reaches it from inside a sandbox with `--route` (or
-`AGENT_WAREHOUSE_ROUTE`), needing no token and no duckdb.
+orchestration layer's job. Its dedupe is a conditional insert (`INSERT OR IGNORE`
+against a SQLite primary key), so a re-posted row is skipped durably and the sync
+re-posting every run appends nothing new. **The route is the sync's default
+transport** — `http://127.0.0.1:8787` or `AGENT_WAREHOUSE_ROUTE` — needing no
+token and no duckdb; `--direct` is the alternative that uploads straight to
+MotherDuck.
 
 ## What gets synced
 
