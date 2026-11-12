@@ -68,6 +68,7 @@ relies on those must pass the path explicitly.
 ./environment.sh ./datalakehouse/agent-warehouse-sync.sh \
   [--session-dir DIR] [--agent-dir DIR] [--spool FILE] [--dry] [--print-rows] [--report-orphans]
 ./environment.sh ./datalakehouse/agent-warehouse-daemon.sh   # the write-only ingest route
+./environment.sh ./datalakehouse/agent-warehouse-spool-send.sh   # fold the spool into the warehouse, streamed
 ```
 
 The sync is the postmortem sweep of d184: it walks the pi session root and the
@@ -102,7 +103,11 @@ MotherDuck.
 file is older than `AGENT_WAREHOUSE_RM_GRACE` seconds (default 300); it is meant for
 postmortem runs and the historical pile, never for a live session, and a
 just-modified file is kept and reported as possibly live.
-**A direct run clears the consumed spool**: it rotates the tail before reading it
+The collector is its own tool: `agent-warehouse-spool-send.sh` folds an existing
+spool into the warehouse by reading bounded batches, so a hundreds-of-MiB pending
+spool never has to fit in the engine at once; it freezes the live tail first and
+deletes a frozen file only after it is fully consumed and acked. **A direct run of
+the sync clears the consumed spool**: it rotates the tail before reading it
 and deletes the frozen copy after the ack, independent of `--rm` (which governs the
 session files). A **route** run never touches the spool, because it has folded
 nothing into the warehouse, and a `--dry` or report run has no side effect.
