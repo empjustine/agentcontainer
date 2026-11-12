@@ -1,0 +1,105 @@
+#!/bin/sh
+# Root-resolution and parse tests for agent-warehouse-sync.sh - no token, no
+# duckdb, no MotherDuck. ./test.sh runs every */tests/*.sh with sh, so re-exec
+# into bash, and env -i keeps a host's own PI_CODING_AGENT_*/XDG_* out of a case.
+[ -n "$BASH_VERSION" ] || exec bash "$0" "$@"
+set -e
+SCRIPT="$(CDPATH='' cd "$(dirname "$0")/.." && pwd)/agent-warehouse-sync.sh"
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+fails=0
+ok() { printf 'ok   %s\n' "$1"; }
+bad() { printf 'FAIL %s\n' "$1"; fails=$((fails + 1)); }
+check() { if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (expected [$2], got [$3])"; fi; }
+has() { if printf '%s' "$2" | grep -q "$3"; then ok "$1"; else bad "$1 (missing [$3] in [$2])"; fi; }
+
+sessdir="$tmp/pi/sessions"
+agentdir="$tmp/pi/agent"
+wt="$tmp/wt-a"
+gone="$tmp/does-not-exist"
+mkdir -p "$sessdir/proj--worktree" "$sessdir/gone--x" \
+	"$agentdir/delegation/default/parent-1" \
+	"$agentdir/delegation/default/parent-1/.resources/res-1" \
+	"$wt"
+: >"$wt/.git" # a linked worktree keeps .git as a FILE
+
+cat >"$sessdir/proj--worktree/s1.jsonl" <<JSON
+{"type":"session","version":3,"id":"sess-1","timestamp":"2026-11-12T10:00:00.000Z","cwd":"$wt"}
+{"type":"message","id":"e1","parentId":null,"timestamp":"2026-11-12T10:00:01.000Z","message":{"role":"user","content":"hi"}}
+{"type":"usage","id":"e2","parentId":"e1","timestamp":"2026-11-12T10:00:02.000Z","usage":{"total":1}}
+JSON
+cat >"$sessdir/gone--x/s2.jsonl" <<JSON
+{"type":"session","version":3,"id":"sess-2","timestamp":"2026-11-12T10:30:00.000Z","cwd":"$gone"}
+{"type":"message","id":"g1","parentId":null,"timestamp":"2026-11-12T10:30:01.000Z","message":{"role":"user","content":"gone"}}
+JSON
+cat >"$agentdir/delegation/default/parent-1/2026-11-12T11-00-00_child-1.jsonl" <<JSON
+{"type":"session","version":3,"id":"child-1","timestamp":"2026-11-12T11:00:00.000Z","cwd":"$wt","parentSession":"$sessdir/proj--worktree/s1.jsonl"}
+{"type":"message","id":"c1","parentId":null,"timestamp":"2026-11-12T11:00:01.000Z","message":{"role":"user","content":"sub"}}
+JSON
+cat >"$agentdir/delegation/default/parent-1/.resources/res-1/res.jsonl" <<JSON
+{"type":"session","version":3,"id":"res-1","timestamp":"2026-11-12T12:00:00.000Z","cwd":"$wt"}
+{"type":"message","id":"r1","parentId":null,"timestamp":"2026-11-12T12:00:01.000Z","message":{"role":"user","content":"res"}}
+JSON
+
+# 1 - explicit roots
+out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
+	--session-dir "$sessdir" --agent-dir "$agentdir" --print-roots)
+has 'explicit session root' "$out" "session_root=$sessdir"
+has 'explicit delegation root' "$out" "delegation_root=$agentdir/delegation"
+
+# 2 - env roots (pi's own vars)
+out=$(env -i PATH="$PATH" HOME="$tmp/nohome" \
+	PI_CODING_AGENT_SESSION_DIR="$sessdir" PI_CODING_AGENT_DIR="$agentdir" \
+	bash "$SCRIPT" --print-roots)
+has 'env session root' "$out" "session_root=$sessdir"
+
+# 3 - defaults
+out=$(env -i PATH="$PATH" HOME="$tmp/h3" bash "$SCRIPT" --print-roots)
+has 'default session root' "$out" "session_root=$tmp/h3/.pi/agent/sessions"
+has 'default delegation root' "$out" "delegation_root=$tmp/h3/.pi/agent/delegation"
+
+# 4 - parse counts (4 sessions, 5 entries)
+out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
+	--session-dir "$sessdir" --agent-dir "$agentdir" --dry)
+has 'dry session count' "$out" 'sessions=4'
+has 'dry entry count' "$out" 'entries=5'
+
+# 5 - store classification (worktree marker, delegation root, plain session)
+out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
+	--session-dir "$sessdir" --agent-dir "$agentdir" --print-rows)
+has 'worktree store' "$out" '"store":"worktree"'
+has 'delegation store' "$out" '"store":"delegation"'
+has 'session store' "$out" '"store":"session"'
+has 'payload lands verbatim' "$out" '"payload":'
+
+# 6 - orphan report needs no token
+out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
+	--session-dir "$sessdir" --agent-dir "$agentdir" --report-orphans)
+has 'orphan reported' "$out" 'orphan:'
+has 'orphan names the gone cwd' "$out" "$gone"
+
+# 7 - unknown flag is a usage error
+rc=0
+env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" --frobnicate >/dev/null 2>&1 || rc=$?
+check 'unknown flag exits 64' 64 "$rc"
+
+# 8 - nothing to read exits 66
+mkdir -p "$tmp/empty"
+rc=0
+env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
+	--session-dir "$tmp/empty" --agent-dir "$tmp/empty" --dry >/dev/null 2>&1 || rc=$?
+check 'no roots exits 66' 66 "$rc"
+
+# 9 - the daemon spool is a third source
+: >"$tmp/spool.ndjson"
+printf '%s\n' '{"session_file":"spool","store":"session","line_no":1,"id":"p1","type":"custom","payload":{"from":"spool"}}' >"$tmp/spool.ndjson"
+out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
+	--session-dir "$sessdir" --agent-dir "$agentdir" --spool "$tmp/spool.ndjson" --dry)
+has 'spool row counted' "$out" 'entries=6'
+
+if [ "$fails" -gt 0 ]; then
+	printf '%s agent-warehouse test(s) FAILED\n' "$fails" >&2
+	exit 1
+fi
+printf 'all agent-warehouse tests passed\n'
+

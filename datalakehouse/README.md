@@ -62,6 +62,26 @@ inside `config.toml` receives no shell or environment expansion (a leading
 `~` is expanded), and a relative path is used as given. A host whose config
 relies on those must pass the path explicitly.
 
+### Coding-harness sessions
+
+```sh
+./environment.sh ./datalakehouse/agent-warehouse-sync.sh \
+  [--session-dir DIR] [--agent-dir DIR] [--spool FILE] [--dry] [--print-rows] [--report-orphans]
+./environment.sh ./datalakehouse/agent-warehouse-daemon.sh   # the write-only ingest route
+```
+
+The sync is the postmortem sweep of d184: it walks the pi session root and the
+agent dir's delegation/ directory, promotes each transcript's guaranteed fields
+and keeps every entry verbatim in a JSON payload column, and upserts into
+`md:agent` (`mdw.pi.session`, `mdw.pi.entry`). No ThinkRail field is stored
+(d183). The resolver, `--print-roots`, `--dry`, `--print-rows` and
+`--report-orphans` need no token, and resolution precedes the vault round-trip
+exactly as the atuin sibling's does.
+
+The daemon is the host-side, write-only `POST /ingest/session` sink of d181: no
+read-back and no delete, appending to the same spool the sync already reads, so a
+sandbox hands over events without holding write access to the archive.
+
 ## What gets synced
 
 `main.history` in `md:atuin` carries the source's columns — the base eight plus
