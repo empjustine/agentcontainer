@@ -48,9 +48,13 @@ const MAX_BODY = 8 * 1024 * 1024;
 // The dedupe is a conditional insert: a SQLite PRIMARY KEY with INSERT OR IGNORE
 // turns a seen key into a no-op (changes === 0), so it is durable across restarts
 // and needs no startup scan. An in-memory set is the fallback when node:sqlite is
-// unavailable.
+// unavailable. The key is the row's own identity (session id, then entry id), never
+// its file path: the same session has a different path inside a sandbox and on the
+// host, so a path key would fail to dedupe exactly the duplicate the route creates.
 function rowKey(row) {
   if (row && typeof row === "object") {
+    if (row.session_id && row.id) { return JSON.stringify(["entry", row.session_id, row.id]); }
+    if (row.session_id) { return JSON.stringify(["session", row.session_id]); }
     if (row.session_file && row.id) { return JSON.stringify(["entry", row.session_file, row.id]); }
     if (row.session_file) { return JSON.stringify(["session", row.session_file]); }
   }

@@ -71,6 +71,7 @@ has 'worktree store' "$out" '"store":"worktree"'
 has 'delegation store' "$out" '"store":"delegation"'
 has 'session store' "$out" '"store":"session"'
 has 'payload lands verbatim' "$out" '"payload":'
+has 'entries carry the session id' "$out" '"session_id":"sess-1"'
 
 # 6 - orphan report needs no token
 out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
@@ -129,6 +130,12 @@ if [ "$ready" = 1 ]; then
 		--session-dir "$sessdir" --agent-dir "$agentdir" --route "$route" >/dev/null
 	n2=$(wc -l <"$rspool")
 	check 'dedupe keeps the spool stable' "$n1" "$n2"
+	# 12 - the dedupe key is the session id, not the file path: the SAME session
+	# has a different path inside a sandbox and on the host.
+	resp=$(curl -s -X POST -H 'content-type: application/json' \
+		--data '[{"session_id":"sid-A","id":"e1","session_file":"/sandbox/a.jsonl"},{"session_id":"sid-A","id":"e1","session_file":"/host/b.jsonl"}]' \
+		"http://127.0.0.1:$port/ingest/session")
+	has 'same session id, different path, deduped' "$resp" '"duplicates":1'
 else
 	bad 'daemon did not start (route mode untested)'
 fi

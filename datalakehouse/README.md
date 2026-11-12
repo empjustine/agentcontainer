@@ -85,7 +85,11 @@ sandbox hands over events without holding write access to the archive.
 The daemon runs in the foreground and does not fork itself; backgrounding is the
 orchestration layer's job. Its dedupe is a conditional insert (`INSERT OR IGNORE`
 against a SQLite primary key), so a re-posted row is skipped durably and the sync
-re-posting every run appends nothing new. **The route is the sync's default
+re-posting every run appends nothing new. Identity is the transcript's own **session id** (pi's header id) and, per entry,
+the entry id; the file path is stored as a location attribute, never as the key,
+because the same session has a different path inside a sandbox and on the host.
+
+**The route is the sync's default
 transport** — `http://127.0.0.1:8787` or `AGENT_WAREHOUSE_ROUTE` — needing no
 token and no duckdb; `--direct` is the alternative that uploads straight to
 MotherDuck.

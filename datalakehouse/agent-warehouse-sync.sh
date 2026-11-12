@@ -143,13 +143,14 @@ entries_rows="$tmp/entries.ndjson"
 # shellcheck disable=SC2094  # the read loop's source and the two append targets
 # are three distinct paths; shellcheck sees one file per redirect.
 parse_file() { # $1 = file, $2 = store
-	local file=$1 store=$2 first=1 n=0 line cwd
+	local file=$1 store=$2 first=1 n=0 line cwd sid=""
 	while IFS= read -r line || [ -n "$line" ]; do
 		[ -n "$line" ] || continue
 		n=$((n + 1))
 		if [ "$first" = 1 ]; then
 			first=0
 			cwd=$(printf '%s' "$line" | jq -r '.cwd // empty') || true
+			sid=$(printf '%s' "$line" | jq -r '.id // empty') || true
 			# A delegation transcript stays delegation even when its cwd is a worktree:
 			# the root decides the store, the worktree marker only refines a session row.
 			if [ -n "$cwd" ] && [ -f "$cwd/.git" ] && [ "$store" = session ]; then store=worktree; fi
@@ -158,8 +159,8 @@ parse_file() { # $1 = file, $2 = store
 				>>"$sessions_rows" || true
 			continue
 		fi
-		printf '%s' "$line" | jq -c --arg f "$file" --arg s "$store" --argjson n "$n" \
-			'select(.id != null) | {session_file:$f, store:$s, line_no:$n, id:.id, parent_id:(.parentId // null), type:(.type // null), ts:(.timestamp // null), payload:.}' \
+		printf '%s' "$line" | jq -c --arg sid "$sid" --arg f "$file" --arg s "$store" --argjson n "$n" \
+			'select(.id != null) | {session_id:$sid, session_file:$f, store:$s, line_no:$n, id:.id, parent_id:(.parentId // null), type:(.type // null), ts:(.timestamp // null), payload:.}' \
 			>>"$entries_rows" || true
 	done <"$file"
 }
@@ -267,32 +268,32 @@ SET motherduck_token='$TOKEN';
 ATTACH 'md:$WAREHOUSE_DB' AS mdw;
 CREATE SCHEMA IF NOT EXISTS $TGT;
 CREATE TABLE IF NOT EXISTS $TGT.session(
-  session_file VARCHAR PRIMARY KEY, session_id VARCHAR, cwd VARCHAR,
+  session_id VARCHAR PRIMARY KEY, session_file VARCHAR, cwd VARCHAR,
   version INTEGER, parent_session VARCHAR, started_at TIMESTAMP, store VARCHAR);
 CREATE TABLE IF NOT EXISTS $TGT.entry(
-  session_file VARCHAR, id VARCHAR, parent_id VARCHAR, type VARCHAR,
-  ts TIMESTAMP, line_no BIGINT, store VARCHAR, payload JSON,
-  PRIMARY KEY (session_file, id));
+  session_id VARCHAR, session_file VARCHAR, id VARCHAR, parent_id VARCHAR,
+  type VARCHAR, ts TIMESTAMP, line_no BIGINT, store VARCHAR, payload JSON,
+  PRIMARY KEY (session_id, id));
 SQL
 	if [ "$session_count" -gt 0 ]; then
 		cat <<SQL
 CREATE TEMP TABLE st_s AS SELECT * FROM read_json_auto('$sessions_rows');
-INSERT INTO $TGT.session (session_file, session_id, cwd, version, parent_session, started_at, store)
-  SELECT session_file, session_id, cwd, try_cast(version AS INTEGER), parent_session,
+INSERT INTO $TGT.session (session_id, session_file, cwd, version, parent_session, started_at, store)
+  SELECT session_id, session_file, cwd, try_cast(version AS INTEGER), parent_session,
          try_cast(started_at AS TIMESTAMP), store FROM st_s
-  ON CONFLICT (session_file) DO UPDATE SET
-    session_id=excluded.session_id, cwd=excluded.cwd, version=excluded.version,
+  ON CONFLICT (session_id) DO UPDATE SET
+    session_file=excluded.session_file, cwd=excluded.cwd, version=excluded.version,
     parent_session=excluded.parent_session, started_at=excluded.started_at, store=excluded.store;
 SQL
 	fi
 	if [ "$entry_count" -gt 0 ]; then
 		cat <<SQL
 CREATE TEMP TABLE st_e AS SELECT * FROM read_json_auto('$entries_rows');
-INSERT INTO $TGT.entry (session_file, id, parent_id, type, ts, line_no, store, payload)
-  SELECT session_file, id, parent_id, type, try_cast(ts AS TIMESTAMP), line_no, store, payload FROM st_e
-  ON CONFLICT (session_file, id) DO UPDATE SET
-    parent_id=excluded.parent_id, type=excluded.type, ts=excluded.ts,
-    line_no=excluded.line_no, store=excluded.store, payload=excluded.payload;
+INSERT INTO $TGT.entry (session_id, session_file, id, parent_id, type, ts, line_no, store, payload)
+  SELECT session_id, session_file, id, parent_id, type, try_cast(ts AS TIMESTAMP), line_no, store, payload FROM st_e
+  ON CONFLICT (session_id, id) DO UPDATE SET
+    session_file=excluded.session_file, parent_id=excluded.parent_id, type=excluded.type,
+    ts=excluded.ts, line_no=excluded.line_no, store=excluded.store, payload=excluded.payload;
 SQL
 	fi
 	cat <<SQL
