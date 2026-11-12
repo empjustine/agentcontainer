@@ -74,9 +74,10 @@ The sync is the postmortem sweep of d184: it walks the pi session root and the
 agent dir's delegation/ directory, promotes each transcript's guaranteed fields
 and keeps every entry verbatim in a JSON payload column, and upserts into
 `md:agent` (`mdw.pi.session`, `mdw.pi.entry`). No ThinkRail field is stored
-(d183). A direct run creates `md:agent` if it is missing and retries once; a
-read-scaling token cannot create databases, so create it once in MotherDuck with a
-read-write token if the run refuses. The resolver, `--print-roots`, `--dry`, `--print-rows` and
+(d183). A direct run self-heals a missing `md:agent` by connecting to it once (DuckDB has
+no `CREATE DATABASE` statement, so connecting is the create route) and retrying; a
+read-scaling token cannot create one, so create it once in the MotherDuck UI if the
+run refuses. The resolver, `--print-roots`, `--dry`, `--print-rows` and
 `--report-orphans` need no token, and resolution precedes the vault round-trip
 exactly as the atuin sibling's does.
 
