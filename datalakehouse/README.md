@@ -102,6 +102,9 @@ just-modified file is kept and reported as possibly live.
 On a **direct** run `--rm` also clears the consumed spool, by rotating it before
 it is read and deleting the frozen copy after the ack; a **route** run never touches
 the spool, because it has folded nothing into the warehouse.
+The route post is batched under `AGENT_WAREHOUSE_BATCH_BYTES` (default 4 MiB) so a
+row's large content array cannot overflow the daemon's `AGENT_INGEST_MAX_BODY`
+(default 8 MiB) in a single request.
 
 ## What gets synced
 

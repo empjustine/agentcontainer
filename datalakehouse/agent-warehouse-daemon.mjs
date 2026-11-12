@@ -42,7 +42,9 @@ const token = process.env.AGENT_INGEST_TOKEN || "";
 const dataHome = process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", "share");
 const spool =
   process.env.AGENT_WAREHOUSE_SPOOL || path.join(dataHome, "agent-warehouse", "spool.ndjson");
-const MAX_BODY = 8 * 1024 * 1024;
+// A single row can carry a whole message content array, so the limit is env-tunable
+// and the sync batches under its own budget (AGENT_WAREHOUSE_BATCH_BYTES).
+const MAX_BODY = Number(process.env.AGENT_INGEST_MAX_BODY || 8 * 1024 * 1024);
 
 // A re-posted row must not duplicate a line, and the sync re-posts every run.
 // The dedupe is a conditional insert: a SQLite PRIMARY KEY with INSERT OR IGNORE

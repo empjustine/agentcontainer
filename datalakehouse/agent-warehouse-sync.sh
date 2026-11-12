@@ -122,6 +122,7 @@ else
 fi
 # --rm grace: a file modified within this many seconds is treated as live and kept.
 GRACE=$(env_or AGENT_WAREHOUSE_RM_GRACE 300)
+BATCH_MAX=$(env_or AGENT_WAREHOUSE_BATCH_BYTES 4194304)
 TOKEN=$(env_or motherduck_token "")
 [ -n "$TOKEN" ] || TOKEN=$(env_or MOTHERDUCK_TOKEN "")
 # --rm clears the spool too, but only when THIS run folds it into the warehouse
@@ -294,18 +295,48 @@ fi
 # rows to the host sink, so a sandbox with no token and no duckdb still ships its
 # sessions, and the archive is still written only host-side.
 if [ -n "$route" ]; then
-	payload="$tmp/payload.json"
-	jq -s '.' "$sessions_rows" "$entries_rows" >"$payload"
 	ingest_token=$(env_or AGENT_INGEST_TOKEN "")
-	set -- curl -sS -f -X POST -H 'content-type: application/json'
-	[ -z "$ingest_token" ] || set -- "$@" -H "x-ingest-token: $ingest_token"
-	set -- "$@" --data-binary "@$payload" "$route/ingest/session"
-	if ! resp=$("$@"); then
-		printf 'agent-warehouse-sync: route post to %s failed\n' "$route" >&2
-		exit 1
-	fi
+	# The route post is batched under a byte budget: one row can hold a whole
+	# message content array (docs/d167's v2 note), so a single array of every row
+	# is exactly what overflows the daemon's body limit (HTTP 413).
+	batch="$tmp/batch.ndjson"
+	batch_json="$tmp/batch.json"
+	: >"$batch"
+	accepted_total=0
+	duplicates_total=0
+	bytes=0
+	post_batch() {
+		[ -s "$batch" ] || return 0
+		jq -s -c '.' "$batch" >"$batch_json"
+		set -- curl -sS -f -X POST -H 'content-type: application/json'
+		[ -z "$ingest_token" ] || set -- "$@" -H "x-ingest-token: $ingest_token"
+		set -- "$@" --data-binary "@$batch_json" "$route/ingest/session"
+		if ! resp=$("$@"); then
+			printf 'agent-warehouse-sync: route post to %s failed (%s bytes; raise AGENT_INGEST_MAX_BODY on the daemon)\n' "$route" "$(wc -c <"$batch_json")" >&2
+			return 1
+		fi
+		accepted_total=$((accepted_total + $(printf '%s' "$resp" | jq -r '.accepted // 0')))
+		duplicates_total=$((duplicates_total + $(printf '%s' "$resp" | jq -r '.duplicates // 0')))
+		: >"$batch"
+		bytes=0
+	}
+	while IFS= read -r line; do
+		[ -n "$line" ] || continue
+		len=${#line}
+		if [ "$len" -gt "$BATCH_MAX" ]; then
+			printf 'agent-warehouse-sync: a %s-byte row exceeds the %s-byte budget; raise AGENT_INGEST_MAX_BODY on the daemon\n' "$len" "$BATCH_MAX" >&2
+			exit 1
+		fi
+		if [ "$bytes" -gt 0 ] && [ $((bytes + len)) -gt "$BATCH_MAX" ]; then
+			post_batch || exit 1
+		fi
+		printf '%s\n' "$line" >>"$batch"
+		bytes=$((bytes + len + 1))
+	done < <(cat "$sessions_rows" "$entries_rows")
+	post_batch || exit 1
 	remove_processed
-	printf '%s\n' "$resp"
+	jq -n --arg route "$route" --argjson accepted "$accepted_total" --argjson duplicates "$duplicates_total" \
+		'{route:$route, accepted:$accepted, duplicates:$duplicates}'
 	exit 0
 fi
 

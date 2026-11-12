@@ -171,6 +171,21 @@ if [ "$ready" = 1 ]; then
 	else
 		bad 'route --rm must not clear the spool'
 	fi
+	# 16 - the route post is batched under a byte budget, so a big payload is not
+	# one oversized request (the 413 case)
+	broot="$tmp/batch-sessions"
+	mkdir -p "$broot"
+	{
+		printf '{"type":"session","version":3,"id":"batch-1","timestamp":"2026-11-14T09:00:00.000Z","cwd":"%s"}\n' "$wt"
+		i=1
+		while [ "$i" -le 8 ]; do
+			printf '{"type":"message","id":"be%s","parentId":null,"timestamp":"2026-11-14T09:00:01.000Z","message":{"role":"user","content":"x"}}\n' "$i"
+			i=$((i + 1))
+		done
+	} >"$broot/s.jsonl"
+	out=$(env -i PATH="$PATH" HOME="$tmp/nohome" AGENT_WAREHOUSE_BATCH_BYTES=800 bash "$SCRIPT" \
+		--session-dir "$broot" --agent-dir "$tmp/no-agent" --route "$route")
+	has 'batched route post accepts every row' "$out" '"accepted": 9'
 else
 	bad 'daemon did not start (route mode untested)'
 fi
