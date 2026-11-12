@@ -5,7 +5,7 @@ status: active
 title: "d094 — the relay node's tunnel leg chains through the conventional proxy environment variables"
 parent: estige
 depends-on: [d073, d088, d090, d093]
-references: [d046, d079]
+references: [d046, d079, d171]
 ---
 
 # d094 — the relay node's tunnel leg chains through the conventional proxy env
@@ -82,6 +82,9 @@ strategies that work stay transparent to the edge (d165).
    proxy operator in exactly that already-assumed position. The startup
    log says so in a warning line; TLS tunnel URLs (the normal case) get
    no such exposure.
+   _Superseded by [d171](d171-insecure-exit-degraded-transport.md): a
+   cleartext tunnel URL, chained or not, is refused unless the relay runs
+   `-insecure-exit`._
 
 4. **Fail-closed at startup, like everything else.** Unparseable proxy
    values, unsupported schemes (https:// to the proxy, socks4, …), a

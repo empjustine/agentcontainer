@@ -5,7 +5,7 @@ status: active
 title: "d073 — llm-reverse-proxy → SSL-VPN transport family: requirements and feasibility"
 parent: estige
 depends-on: [estige, d027, d047, d070, d071]
-references: [d031, d038, d063, d064, d072, d077, d081, d084, d085, d104, d105]
+references: [d031, d038, d063, d064, d072, d077, d081, d084, d085, d104, d105, d171]
 tags: ["serving", "proxy", "vpn", "ssl-vpn", "websocket", "tailscale", "requirements"]
 ---
 
@@ -196,6 +196,12 @@ Requirements:
   NOT appear in any transport: in the allowlist and authenticated relays the
   client already trusts this front with plaintext — the one party who _can_
   verify the upstream MUST NOT skip it.
+  _Amended by [d171](d171-insecure-exit-degraded-transport.md): both
+  degraded postures — skipped verification on an `https`/`wss` leg and a
+  cleartext `ws://`/`http://` tunnel URL — now sit behind the relay's
+  `-insecure-exit` argv switch, and without it a cleartext tunnel URL is
+  refused at config time. d171 carries the amended text and the
+  per-generation exposure table._
 
 ### Compatibility rewrites (the replay-proxy set)
 
