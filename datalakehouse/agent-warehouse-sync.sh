@@ -46,6 +46,7 @@ usage: agent-warehouse-sync.sh [--session-dir DIR] [--agent-dir DIR]
   --direct           upload straight to MotherDuck instead of the route
                      (needs motherduck_token and the pinned duckdb)
   --rm               after the transport ack, remove the processed session files
+                     and, on a direct run, the consumed spool (route runs keep it)
                      (postmortem and historical piles only; a file modified within
                      AGENT_WAREHOUSE_RM_GRACE seconds is kept as possibly live)
   --print-roots      print the resolved roots, then exit (no token needed)
@@ -121,6 +122,16 @@ else
 fi
 # --rm grace: a file modified within this many seconds is treated as live and kept.
 GRACE=$(env_or AGENT_WAREHOUSE_RM_GRACE 300)
+TOKEN=$(env_or motherduck_token "")
+[ -n "$TOKEN" ] || TOKEN=$(env_or MOTHERDUCK_TOKEN "")
+# --rm clears the spool too, but only when THIS run folds it into the warehouse
+# (direct mode, with a token): a route-mode run has uploaded nothing, so it must
+# leave the daemon's tail alone. The spool is ROTATED before it is read rather
+# than truncated in place, so a concurrent daemon append cannot be lost; the
+# frozen file is deleted only after the direct ack.
+if [ "$RM" = 1 ] && [ -z "$route" ] && [ -n "$TOKEN" ] && [ -f "$spool_base" ]; then
+	mv "$spool_base" "$spool_base.rm.$$"
+fi
 
 # Resolution precedes the token check so --print-roots and --dry need no
 # credentials, and a path problem is reported before any vault round-trip.
@@ -230,16 +241,22 @@ done < <(find "$SESSION_ROOT" "$DELEGATION_ROOT" -type f -name '*.jsonl' 2>/dev/
 
 # Pushed rows from the daemon route are a third source, so a live emitter's
 # capture survives even before the host sweep reaches the file.
-if [ -f "$spool_base" ]; then
-	found=$((found + 1))
+# Sources are the live tail plus any rotated tail a failed run left behind: a
+# direct+token --rm run rotated the live one above, so this read cannot race a
+# concurrent daemon append, and a leftover rotated file is still folded in.
+spool_seen=0
+for sp in "$spool_base" "$spool_base".rm.*; do
+	[ -f "$sp" ] || continue
+	spool_seen=1
 	while IFS= read -r line; do
 		[ -n "$line" ] || continue
 		case "$line" in
 		*'"id"'*) printf '%s\n' "$line" >>"$entries_rows" ;;
 		*) printf '%s\n' "$line" >>"$sessions_rows" ;;
 		esac
-	done <"$spool_base"
-fi
+	done <"$sp"
+done
+[ "$spool_seen" = 0 ] || found=$((found + 1))
 
 if [ "$found" -eq 0 ]; then
 	printf 'agent-warehouse-sync: no session files under %s or %s\n' "$SESSION_ROOT" "$DELEGATION_ROOT" >&2
@@ -292,8 +309,6 @@ if [ -n "$route" ]; then
 	exit 0
 fi
 
-TOKEN=$(env_or motherduck_token "")
-[ -n "$TOKEN" ] || TOKEN=$(env_or MOTHERDUCK_TOKEN "")
 if [ -z "$TOKEN" ]; then
 	echo 'agent-warehouse-sync: set motherduck_token (MotherDuck access token; see README)' >&2
 	exit 1
@@ -357,6 +372,13 @@ SQL
 
 result=$(duckdb -json -c "$(cat "$sql_file")")
 remove_processed
+# A direct --rm run has folded every rotated tail it read; remove them. The live
+# tail is only ever rotated, so a route run never touches it.
+if [ "$RM" = 1 ] && [ -z "$route" ]; then
+	for sp in "$spool_base".rm.*; do
+		[ -f "$sp" ] && rm -f "$sp"
+	done
+fi
 jq -n --argjson result "$result" --arg db "md:$WAREHOUSE_DB" \
 	--argjson sessions "$session_count" --argjson entries "$entry_count" \
 	'{database:$db, parsed_sessions:$sessions, parsed_entries:$entries, target:($result[0] // {})}'

@@ -166,6 +166,11 @@ if [ "$ready" = 1 ]; then
 	else
 		bad 'files removed without --rm'
 	fi
+	if [ -s "$rspool" ]; then
+		ok 'route --rm leaves the spool for the host run'
+	else
+		bad 'route --rm must not clear the spool'
+	fi
 else
 	bad 'daemon did not start (route mode untested)'
 fi

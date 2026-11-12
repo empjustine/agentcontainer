@@ -99,6 +99,9 @@ MotherDuck.
 file is older than `AGENT_WAREHOUSE_RM_GRACE` seconds (default 300); it is meant for
 postmortem runs and the historical pile, never for a live session, and a
 just-modified file is kept and reported as possibly live.
+On a **direct** run `--rm` also clears the consumed spool, by rotating it before
+it is read and deleting the frozen copy after the ack; a **route** run never touches
+the spool, because it has folded nothing into the warehouse.
 
 ## What gets synced
 
