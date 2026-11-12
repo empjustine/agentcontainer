@@ -152,6 +152,11 @@ const server = http.createServer((req, res) => {
     }
     if (fresh.length > 0) {
       const lines = `${fresh.map((r) => JSON.stringify(r)).join("\n")}\n`;
+      // WHY append-by-path, never a held fd: the sender rotates the spool by
+      // renaming it (mv spool spool.rm.<pid>). Because this open targets the PATH on
+      // every append, the next write creates a fresh spool and the daemon follows the
+      // rotation with no signal. A persistent fs.createWriteStream would keep writing
+      // the renamed inode and silently break the sender's delete-after-consume.
       fs.appendFileSync(spool, lines);
     }
     send(res, 200, { accepted: fresh.length, duplicates });

@@ -106,7 +106,10 @@ just-modified file is kept and reported as possibly live.
 The collector is its own tool: `agent-warehouse-spool-send.sh` folds an existing
 spool into the warehouse by reading bounded batches, so a hundreds-of-MiB pending
 spool never has to fit in the engine at once; it freezes the live tail first and
-deletes a frozen file only after it is fully consumed and acked. **A direct run of
+deletes a frozen file only after it is fully consumed and acked. The rotation is
+unilateral: the daemon appends by path on every request, so the next append creates
+a fresh spool, and a daemon holding a persistent file handle would keep writing the
+renamed inode. **A direct run of
 the sync clears the consumed spool**: it rotates the tail before reading it
 and deletes the frozen copy after the ack, independent of `--rm` (which governs the
 session files). A **route** run never touches the spool, because it has folded
