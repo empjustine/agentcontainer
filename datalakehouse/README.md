@@ -82,6 +82,11 @@ The daemon is the host-side, write-only `POST /ingest/session` sink of d181: no
 read-back and no delete, appending to the same spool the sync already reads, so a
 sandbox hands over events without holding write access to the archive.
 
+The daemon runs in the foreground and does not fork itself; backgrounding is the
+orchestration layer's job. It dedupes a re-posted row rather than appending it
+twice, and the sync reaches it from inside a sandbox with `--route` (or
+`AGENT_WAREHOUSE_ROUTE`), needing no token and no duckdb.
+
 ## What gets synced
 
 `main.history` in `md:atuin` carries the source's columns — the base eight plus

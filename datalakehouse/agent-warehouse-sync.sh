@@ -20,8 +20,13 @@
 # formatter.
 #
 # Usage: agent-warehouse-sync.sh [--session-dir DIR] [--agent-dir DIR]
-#                                [--spool FILE] [--print-roots] [--dry]
-#                                [--report-orphans]
+#                                [--spool FILE] [--route URL] [--print-roots]
+#                                [--dry] [--report-orphans]
+#
+# WHY route mode (docs/d181): the sync runs both inside a sandbox and on the
+# host. Inside, it has the mounted roots but no MotherDuck token; --route posts
+# the parsed rows to the host's write-only daemon sink instead, so one transport
+# serves both environments and the sandbox still never writes the archive.
 # Env:   motherduck_token   MotherDuck access token (MOTHERDUCK_TOKEN accepted)
 #        AGENT_WAREHOUSE_DB target md: database (default: agent)
 #        PI_CODING_AGENT_SESSION_DIR / PI_CODING_AGENT_DIR / XDG_DATA_HOME
@@ -36,6 +41,8 @@ usage: agent-warehouse-sync.sh [--session-dir DIR] [--agent-dir DIR]
   --agent-dir        pi agent dir; its delegation/ subdir is the second root
                      (default PI_CODING_AGENT_DIR, else ~/.pi/agent)
   --spool            pushed rows from the daemon route (default XDG data dir/agent-warehouse/spool.ndjson)
+  --route URL        post the parsed rows to the daemon sink instead of MotherDuck
+                     (env AGENT_WAREHOUSE_ROUTE; no token or duckdb needed)
   --print-roots      print the resolved roots, then exit (no token needed)
   --dry              parse and count, write nothing (no token needed)
   --report-orphans   print sessions whose cwd is gone (the postmortem view)
@@ -55,6 +62,7 @@ env_or() { # $1 = var name, $2 = default
 SESSION_DIR=""
 AGENT_DIR=""
 SPOOL=""
+ROUTE=""
 PRINT_ROOTS=0
 DRY=0
 REPORT_ORPHANS=0
@@ -62,12 +70,13 @@ PRINT_ROWS=0
 
 while [ $# -gt 0 ]; do
 	case "$1" in
-	--session-dir | --agent-dir | --spool)
+	--session-dir | --agent-dir | --spool | --route)
 		[ $# -ge 2 ] || { echo "flag needs a value: $1" >&2; exit 64; }
 		case "$1" in
 		--session-dir) SESSION_DIR="$2" ;;
 		--agent-dir) AGENT_DIR="$2" ;;
 		--spool) SPOOL="$2" ;;
+		--route) ROUTE="$2" ;;
 		esac
 		shift 2
 		;;
@@ -92,6 +101,9 @@ AGENT_ROOT="$AGENT_DIR"
 DELEGATION_ROOT="$AGENT_ROOT/delegation"
 spool_base="$SPOOL"
 [ -n "$spool_base" ] || spool_base=$(env_or XDG_DATA_HOME "$HOME/.local/share")/agent-warehouse/spool.ndjson
+route="$ROUTE"
+[ -n "$route" ] || route=$(env_or AGENT_WAREHOUSE_ROUTE "")
+[ -n "$route" ] && route=$(printf '%s' "$route" | sed 's:/*$::')
 
 # Resolution precedes the token check so --print-roots and --dry need no
 # credentials, and a path problem is reported before any vault round-trip.
@@ -189,6 +201,24 @@ fi
 
 if [ "$DRY" = 1 ]; then
 	printf 'session_root=%s sessions=%s entries=%s\n' "$SESSION_ROOT" "$session_count" "$entry_count"
+	exit 0
+fi
+
+# Route mode is the inside-the-sandbox transport (docs/d181): post the parsed
+# rows to the host sink, so a sandbox with no token and no duckdb still ships its
+# sessions, and the archive is still written only host-side.
+if [ -n "$route" ]; then
+	payload="$tmp/payload.json"
+	jq -s '.' "$sessions_rows" "$entries_rows" >"$payload"
+	ingest_token=$(env_or AGENT_INGEST_TOKEN "")
+	set -- curl -sS -X POST -H 'content-type: application/json'
+	[ -z "$ingest_token" ] || set -- "$@" -H "x-ingest-token: $ingest_token"
+	set -- "$@" --data-binary "@$payload" "$route/ingest/session"
+	if ! resp=$("$@"); then
+		printf 'agent-warehouse-sync: route post to %s failed\n' "$route" >&2
+		exit 1
+	fi
+	printf '%s\n' "$resp"
 	exit 0
 fi
 

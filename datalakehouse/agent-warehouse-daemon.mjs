@@ -12,6 +12,10 @@
 // the sandbox it would be under the adversary's control, which is worse than no
 // route because it looks like one.
 //
+// WHY no daemonize: this runs in the foreground and logs to stdout. Background
+// management (systemd, supervisord, nohup) is the orchestration layer's job, not
+// the process's; a new-style daemon does not fork itself.
+//
 // Env: AGENT_INGEST_ADDR (default 127.0.0.1:8787), AGENT_INGEST_TOKEN,
 //      AGENT_WAREHOUSE_SPOOL.
 import http from "node:http";
@@ -39,6 +43,31 @@ const dataHome = process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", 
 const spool =
   process.env.AGENT_WAREHOUSE_SPOOL || path.join(dataHome, "agent-warehouse", "spool.ndjson");
 const MAX_BODY = 8 * 1024 * 1024;
+
+// The spool is append-only, but a retried POST must not duplicate a row: the
+// sync re-posts every run, so a seen-set is loaded from the spool at startup and
+// consulted on each append. The key is a row's natural identity when it has one.
+const seen = new Set();
+function rowKey(row) {
+  if (row && typeof row === "object") {
+    if (row.session_file && row.id) { return JSON.stringify(["entry", row.session_file, row.id]); }
+    if (row.session_file) { return JSON.stringify(["session", row.session_file]); }
+  }
+  return JSON.stringify(["raw", row]);
+}
+try {
+  const existing = fs.readFileSync(spool, "utf8");
+  for (const line of existing.split("\n")) {
+    if (line.trim() === "") { continue; }
+    try {
+      seen.add(rowKey(JSON.parse(line)));
+    } catch {
+      seen.add(line);
+    }
+  }
+} catch {
+  // no spool yet: the first append creates it
+}
 
 fs.mkdirSync(path.dirname(spool), { recursive: true });
 
@@ -86,9 +115,22 @@ const server = http.createServer((req, res) => {
       send(res, 400, { error: "invalid json" });
       return;
     }
-    const lines = `${rows.map((r) => JSON.stringify(r)).join("\n")}\n`;
-    fs.appendFileSync(spool, lines);
-    send(res, 200, { accepted: rows.length });
+    const fresh = [];
+    let duplicates = 0;
+    for (const r of rows) {
+      const key = rowKey(r);
+      if (seen.has(key)) {
+        duplicates++;
+        continue;
+      }
+      seen.add(key);
+      fresh.push(r);
+    }
+    if (fresh.length > 0) {
+      const lines = `${fresh.map((r) => JSON.stringify(r)).join("\n")}\n`;
+      fs.appendFileSync(spool, lines);
+    }
+    send(res, 200, { accepted: fresh.length, duplicates });
   });
 });
 

@@ -97,6 +97,43 @@ out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
 	--session-dir "$sessdir" --agent-dir "$agentdir" --spool "$tmp/spool.ndjson" --dry)
 has 'spool row counted' "$out" 'entries=6'
 
+# 10 - route mode: the sync posts to the daemon sink, and the daemon dedupes a
+# re-run instead of appending the same rows twice (docs/d181).
+daemon="$(CDPATH='' cd "$(dirname "$0")/.." && pwd)/agent-warehouse-daemon.sh"
+rspool="$tmp/route-spool.ndjson"
+port=$((18000 + ($$ % 1000)))
+AGENT_INGEST_ADDR="127.0.0.1:$port" AGENT_WAREHOUSE_SPOOL="$rspool" \
+	bash "$daemon" >"$tmp/daemon.log" 2>&1 &
+daemon_pid=$!
+trap 'kill "$daemon_pid" 2>/dev/null || true; rm -rf "$tmp"' EXIT
+ready=0
+i=0
+while [ "$i" -lt 25 ]; do
+	if curl -s -o /dev/null "http://127.0.0.1:$port/status" 2>/dev/null; then
+		ready=1
+		break
+	fi
+	i=$((i + 1))
+	sleep 0.2
+done
+if [ "$ready" = 1 ]; then
+	route="http://127.0.0.1:$port"
+	out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
+		--session-dir "$sessdir" --agent-dir "$agentdir" --route "$route")
+	has 'route post accepted rows' "$out" '"accepted"'
+	out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
+		--session-dir "$sessdir" --agent-dir "$agentdir" --route "$route")
+	has 'route re-post reports duplicates' "$out" '"duplicates"'
+	n1=$(wc -l <"$rspool")
+	env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
+		--session-dir "$sessdir" --agent-dir "$agentdir" --route "$route" >/dev/null
+	n2=$(wc -l <"$rspool")
+	check 'dedupe keeps the spool stable' "$n1" "$n2"
+else
+	bad 'daemon did not start (route mode untested)'
+fi
+kill "$daemon_pid" 2>/dev/null || true
+
 if [ "$fails" -gt 0 ]; then
 	printf '%s agent-warehouse test(s) FAILED\n' "$fails" >&2
 	exit 1
