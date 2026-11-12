@@ -38,6 +38,9 @@ are loaded host-side once (./environment.sh — the explicit chain) and forwarde
 
 Notes:
 
+- **mistral-vibe has no row in this table**: the launcher stages no
+  directory for it, mounts nothing, and pins no env — support is pending
+  (docs/d167), on the best-effort tier's terms (d116).
 - **Workspace project state needs no mount**: project-scoped harness dirs
   (`.cline/`, `.thinkrail/` inside a repo; pi's project config) live under the
   workspace, which is already RW-mounted at its real host path. Only the
@@ -51,7 +54,7 @@ Notes:
   first directory, and the first directory is the workdir; docs/d068). The
   `~/Downloads/references` mirror is passed this way; the former
   `CODING_AGENT_REFERENCES` env toggle is retired (docs/d056).
-- **No Hugging Face cache mount (docs/d066)**: the host HF cache is no longer
+- **No Hugging Face cache mount (docs/d066)**: the host HF cache is not
   bound into the sandbox. That mount was unconditional and existence-unguarded
   (`workload_rw` aborts the launch when the source dir is missing) and its
   `z,U` relabel walk scaled with the model store. The image's own
