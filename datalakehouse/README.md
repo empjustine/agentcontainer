@@ -95,6 +95,10 @@ concatenates two sessions splits back into two by their own ids.
 transport** — `http://127.0.0.1:8787` or `AGENT_WAREHOUSE_ROUTE` — needing no
 token and no duckdb; `--direct` is the alternative that uploads straight to
 MotherDuck.
+`--rm` removes a processed file only after the transport ack, and only when the
+file is older than `AGENT_WAREHOUSE_RM_GRACE` seconds (default 300); it is meant for
+postmortem runs and the historical pile, never for a live session, and a
+just-modified file is kept and reported as possibly live.
 
 ## What gets synced
 

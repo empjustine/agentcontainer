@@ -45,6 +45,9 @@ usage: agent-warehouse-sync.sh [--session-dir DIR] [--agent-dir DIR]
                      or duckdb (default env AGENT_WAREHOUSE_ROUTE, else http://127.0.0.1:8787)
   --direct           upload straight to MotherDuck instead of the route
                      (needs motherduck_token and the pinned duckdb)
+  --rm               after the transport ack, remove the processed session files
+                     (postmortem and historical piles only; a file modified within
+                     AGENT_WAREHOUSE_RM_GRACE seconds is kept as possibly live)
   --print-roots      print the resolved roots, then exit (no token needed)
   --dry              parse and count, write nothing (no token needed)
   --report-orphans   print sessions whose cwd is gone (the postmortem view)
@@ -66,6 +69,7 @@ AGENT_DIR=""
 SPOOL=""
 ROUTE=""
 DIRECT=0
+RM=0
 PRINT_ROOTS=0
 DRY=0
 REPORT_ORPHANS=0
@@ -85,6 +89,7 @@ while [ $# -gt 0 ]; do
 		;;
 	--print-roots) PRINT_ROOTS=1; shift ;;
 	--direct) DIRECT=1; shift ;;
+	--rm) RM=1; shift ;;
 	--dry) DRY=1; shift ;;
 	--report-orphans) REPORT_ORPHANS=1; shift ;;
 	--print-rows) PRINT_ROWS=1; shift ;;
@@ -114,6 +119,8 @@ else
 	[ -n "$route" ] || route=$(env_or AGENT_WAREHOUSE_ROUTE "http://127.0.0.1:8787")
 	route=$(printf '%s' "$route" | sed 's:/*$::')
 fi
+# --rm grace: a file modified within this many seconds is treated as live and kept.
+GRACE=$(env_or AGENT_WAREHOUSE_RM_GRACE 300)
 
 # Resolution precedes the token check so --print-roots and --dry need no
 # credentials, and a path problem is reported before any vault round-trip.
@@ -135,6 +142,8 @@ sessions_rows="$tmp/sessions.ndjson"
 entries_rows="$tmp/entries.ndjson"
 : >"$sessions_rows"
 : >"$entries_rows"
+removable="$tmp/removable"
+: >"$removable"
 
 # One file -> up to one session row and one entry row per line. Line 1 is pi's
 # header (no parentId); later lines extend the documented entry base (docs/d167).
@@ -146,6 +155,31 @@ entries_rows="$tmp/entries.ndjson"
 # file carries several, each opening a new session, so the reader must not assume
 # line 1 is the only header. Assuming so would attribute the second session's
 # entries to the first and drop the second session's identity.
+# --rm removes a processed file only AFTER the transport ack, and only when the
+# file is older than the grace window: a live session is being appended to right
+# now, so a just-modified file is kept and reported rather than deleted.
+remove_processed() {
+	[ "$RM" = 1 ] || return 0
+	[ -s "$removable" ] || return 0
+	local removed=0 kept=0 grace_min f recent
+	grace_min=$(((GRACE + 59) / 60))
+	while IFS= read -r f; do
+		[ -n "$f" ] || continue
+		recent=""
+		if [ "$grace_min" -gt 0 ]; then
+			recent=$(find "$f" -mmin -"$grace_min" -print -quit 2>/dev/null || true)
+		fi
+		if [ -n "$recent" ]; then
+			kept=$((kept + 1))
+			printf 'agent-warehouse-sync: --rm kept %s (modified within %ss; live?)\n' "$f" "$GRACE" >&2
+		else
+			rm -f "$f" && removed=$((removed + 1))
+		fi
+	done <"$removable"
+	find "$SESSION_ROOT" "$DELEGATION_ROOT" -mindepth 1 -type d -empty -delete 2>/dev/null || true
+	printf 'agent-warehouse-sync: --rm removed %s file(s), kept %s\n' "$removed" "$kept" >&2
+}
+
 # shellcheck disable=SC2094  # the read loop's source and the two append targets
 # are three distinct paths; shellcheck sees one file per redirect.
 parse_file() { # $1 = file, $2 = base store (session|delegation)
@@ -183,6 +217,15 @@ while IFS= read -r f; do
 	*) store=session ;;
 	esac
 	parse_file "$f" "$store"
+	if [ "$RM" = 1 ]; then
+		# Only a file whose every line is valid JSON is a removal candidate; a
+		# partial read must never cost the last copy of a session.
+		if jq . "$f" >/dev/null 2>&1; then
+			printf '%s\n' "$f" >>"$removable"
+		else
+			printf 'agent-warehouse-sync: invalid JSON, keeping %s\n' "$f" >&2
+		fi
+	fi
 done < <(find "$SESSION_ROOT" "$DELEGATION_ROOT" -type f -name '*.jsonl' 2>/dev/null || true)
 
 # Pushed rows from the daemon route are a third source, so a live emitter's
@@ -237,13 +280,14 @@ if [ -n "$route" ]; then
 	payload="$tmp/payload.json"
 	jq -s '.' "$sessions_rows" "$entries_rows" >"$payload"
 	ingest_token=$(env_or AGENT_INGEST_TOKEN "")
-	set -- curl -sS -X POST -H 'content-type: application/json'
+	set -- curl -sS -f -X POST -H 'content-type: application/json'
 	[ -z "$ingest_token" ] || set -- "$@" -H "x-ingest-token: $ingest_token"
 	set -- "$@" --data-binary "@$payload" "$route/ingest/session"
 	if ! resp=$("$@"); then
 		printf 'agent-warehouse-sync: route post to %s failed\n' "$route" >&2
 		exit 1
 	fi
+	remove_processed
 	printf '%s\n' "$resp"
 	exit 0
 fi
@@ -312,6 +356,7 @@ SQL
 } >"$sql_file"
 
 result=$(duckdb -json -c "$(cat "$sql_file")")
+remove_processed
 jq -n --argjson result "$result" --arg db "md:$WAREHOUSE_DB" \
 	--argjson sessions "$session_count" --argjson entries "$entry_count" \
 	'{database:$db, parsed_sessions:$sessions, parsed_entries:$entries, target:($result[0] // {})}'

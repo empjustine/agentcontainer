@@ -136,6 +136,36 @@ if [ "$ready" = 1 ]; then
 		--data '[{"session_id":"sid-A","id":"e1","session_file":"/sandbox/a.jsonl"},{"session_id":"sid-A","id":"e1","session_file":"/host/b.jsonl"}]' \
 		"http://127.0.0.1:$port/ingest/session")
 	has 'same session id, different path, deduped' "$resp" '"duplicates":1'
+	# 14 - --rm removes a processed file only after the ack, and only outside the
+	# grace window; a just-written file is kept as possibly live.
+	rmroot="$tmp/rm-sessions"
+	mkdir -p "$rmroot/--x--"
+	cp "$sessdir/proj--worktree/s1.jsonl" "$rmroot/--x--/old.jsonl"
+	env -i PATH="$PATH" HOME="$tmp/nohome" AGENT_WAREHOUSE_RM_GRACE=0 bash "$SCRIPT" \
+		--session-dir "$rmroot" --agent-dir "$tmp/no-agent" --route "$route" --rm >/dev/null 2>&1
+	if [ -f "$rmroot/--x--/old.jsonl" ]; then
+		bad 'rm should remove a processed file past the grace window'
+	else
+		ok 'rm removed the processed file after the ack'
+	fi
+	mkdir -p "$rmroot/--y--"
+	cp "$sessdir/proj--worktree/s1.jsonl" "$rmroot/--y--/fresh.jsonl"
+	env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
+		--session-dir "$rmroot" --agent-dir "$tmp/no-agent" --route "$route" --rm >/dev/null 2>&1
+	if [ -f "$rmroot/--y--/fresh.jsonl" ]; then
+		ok 'rm kept a file inside the grace window (possibly live)'
+	else
+		bad 'rm removed a file inside the grace window'
+	fi
+	# 15 - without --rm nothing is removed
+	cp "$sessdir/proj--worktree/s1.jsonl" "$rmroot/--y--/keep.jsonl"
+	env -i PATH="$PATH" HOME="$tmp/nohome" AGENT_WAREHOUSE_RM_GRACE=0 bash "$SCRIPT" \
+		--session-dir "$rmroot" --agent-dir "$tmp/no-agent" --route "$route" >/dev/null 2>&1
+	if [ -f "$rmroot/--y--/keep.jsonl" ]; then
+		ok 'no --rm leaves files alone'
+	else
+		bad 'files removed without --rm'
+	fi
 else
 	bad 'daemon did not start (route mode untested)'
 fi
