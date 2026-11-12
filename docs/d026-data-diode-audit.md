@@ -4,6 +4,7 @@ type: architecture-design
 status: draft
 parent: architecture
 title: "d026 — data-diode audit trail for harness state (design note)"
+references: [d172, d179, d180, d181, d182, d183]
 tags: ["security", "audit", "persistence", "design-only"]
 ---
 
@@ -11,7 +12,11 @@ tags: ["security", "audit", "persistence", "design-only"]
 
 Status: **design only — no implementation.** Complements
 `coding-agent/coding-harness-persistence.md`, which documents the _current_ per-run
-RW-mount staging that this design would replace.
+RW-mount staging that this design would replace. The subset that can ship before
+this design — a host-side collector and a read-only archive — is
+[d180](d180-session-collection-leg.md). The HTTP route that realizes Approach A
+without FUSE is [d181](d181-session-ingest-route.md), and
+[d172](d172-push-based-browsing-index.md) is the pattern it copies.
 
 ## Problem
 

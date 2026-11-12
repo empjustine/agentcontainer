@@ -4,7 +4,7 @@ type: module-design
 status: active
 title: "datalakehouse — atuin history.db → MotherDuck via the duckdb CLI"
 parent: architecture
-references: [d046, d113, d139]
+references: [d046, d113, d139, d167, d179, d180, d181]
 tags: [atuin, motherduck, duckdb, sync]
 ---
 
@@ -15,6 +15,12 @@ Syncs atuin's local `history.db` into the MotherDuck database `md:atuin`
 stays what d046 scopes it to — connection info, one-off queries, docs — and the
 scheduled path itself is a plain shell script plus a duckdb binary, delivered
 through the repo's toolchain and vault chain (`./environment.sh`).
+The coding-harness session sources (pi, OpenCode, ThinkRail, mistral-vibe)
+are not synced; d167 records their persistence formats and the
+guaranteed-fields storage shape their readers will land in. The session
+collection leg, its read side, its ingest route and its postmortem sweep span
+d179 to d184.
+Mistral-vibe support is pending in both this unit and `coding-agent/run.mjs`.
 
 ## Usage
 
