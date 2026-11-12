@@ -225,6 +225,25 @@ table: the decision stores none of its fields, because the worktree, the name an
 the branch are derivable from the pi rows above
 ([d183](d183-thinkrail-and-delegated-loop-capture.md)).
 
+## Deferred - splitting the message content array
+
+A `message` entry is the largest thing the reader stores: its
+`message.content[]` array can reach 100 KB or more (a pasted file, a base64
+image, a long tool result), and v1 keeps it verbatim inside the entry's `payload`
+column, so one row carries the whole array.
+
+The v2 split is a part table keyed on the message:
+`pi_content(session_id, message_id, content_index, part_type, payload)` with
+`PRIMARY KEY (session_id, message_id, content_index)`, one row per element of the
+closed `content[]` set (`text`, `toolCall`, `thinking`). The entry row keeps
+its metadata and a part count, and a reader reassembles by `content_index` or
+fetches one part alone.
+
+Deferred, not rejected. It departs from the no-shredding decision above by
+reshaping a private payload, so it needs its own decision and a migration of the
+rows v1 already wrote. It must also pin the part-type set, the
+`toolCall.arguments` irregularity, and a size policy before it can land.
+
 ## Consequences
 
 - An upstream format change — a new entry type, an additive field, a version

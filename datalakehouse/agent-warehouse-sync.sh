@@ -166,6 +166,8 @@ parse_file() { # $1 = file, $2 = base store (session|delegation)
 				>>"$sessions_rows" || true
 			continue
 		fi
+		# The payload carries the message content array verbatim; splitting it into
+		# content parts is a v2 design (docs/d167), so one row can hold 100 KB+.
 		printf '%s' "$line" | jq -c --arg sid "$sid" --arg f "$file" --arg s "$store" --argjson n "$n" \
 			'select(.id != null) | {session_id:$sid, session_file:$f, store:$s, line_no:$n, id:.id, parent_id:(.parentId // null), type:(.type // null), ts:(.timestamp // null), payload:.}' \
 			>>"$entries_rows" || true
