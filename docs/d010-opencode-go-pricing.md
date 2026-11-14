@@ -1,12 +1,16 @@
 ---
 id: d010
 type: module-design
-status: active
+status: deprecated
 title: "d010 — OpenCode Go documented cost overrides"
 parent: coding-agent
 ---
 
 # d010: OpenCode Go documented cost overrides
+
+## Status
+
+Superseded by [d186](d186-retire-legacy-full-catalog-notes.md): d010 — the generated-catalog pipeline this note describes left the tree; the scoped-models approach replaced it. Kept as history.
 
 ## Context
 

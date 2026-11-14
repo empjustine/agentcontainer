@@ -1,12 +1,16 @@
 ---
 id: d014
 type: module-design
-status: active
+status: deprecated
 title: 'd014 — drop paid-only "freeish" providers'
 parent: coding-agent
 ---
 
 # d014: drop paid-only "freeish" providers
+
+## Status
+
+Superseded by [d186](d186-retire-legacy-full-catalog-notes.md): d014 — the generated-catalog pipeline this note describes left the tree; the scoped-models approach replaced it. Kept as history.
 
 ## Context
 

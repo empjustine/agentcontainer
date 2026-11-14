@@ -1,12 +1,16 @@
 ---
 id: d009
 type: module-design
-status: active
+status: deprecated
 title: "d009 — custom auth schemes & model ID prefix stripping"
 parent: coding-agent
 ---
 
 # d009: custom auth schemes & model ID prefix stripping
+
+## Status
+
+Superseded by [d186](d186-retire-legacy-full-catalog-notes.md): d009 — the generated-catalog pipeline this note describes left the tree; the scoped-models approach replaced it. Kept as history.
 
 ## Context
 

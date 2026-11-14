@@ -1,12 +1,16 @@
 ---
 id: d005
 type: module-design
-status: active
+status: deprecated
 title: "d005 — Google model discovery approach"
 parent: coding-agent
 ---
 
 # d005: Google model discovery approach
+
+## Status
+
+Superseded by [d186](d186-retire-legacy-full-catalog-notes.md): d005 — the generated-catalog pipeline this note describes left the tree; the scoped-models approach replaced it. Kept as history.
 
 ## Context
 

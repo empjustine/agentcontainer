@@ -1,12 +1,16 @@
 ---
 id: d012
 type: architecture-design
-status: active
+status: deprecated
 title: "d012 — intermediate JSON dumps to ./cloud-llm/"
 parent: architecture
 ---
 
 # d012: intermediate JSON dumps to `./cloud-llm/`
+
+## Status
+
+Superseded by [d186](d186-retire-legacy-full-catalog-notes.md): d012 — the generated-catalog pipeline this note describes left the tree; the scoped-models approach replaced it. Kept as history.
 
 ## Context
 

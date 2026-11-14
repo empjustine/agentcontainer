@@ -1,12 +1,16 @@
 ---
 id: d013
 type: module-design
-status: active
+status: deprecated
 title: 'd013 — removed non-working "free" providers'
 parent: coding-agent
 ---
 
 # d013: removed non-working "free" providers
+
+## Status
+
+Superseded by [d186](d186-retire-legacy-full-catalog-notes.md): d013 — the generated-catalog pipeline this note describes left the tree; the scoped-models approach replaced it. Kept as history.
 
 ## Context
 

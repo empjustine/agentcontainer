@@ -1,12 +1,16 @@
 ---
 id: d004
 type: module-design
-status: active
+status: deprecated
 title: "d004 — provider ID renaming & metadata mapping"
 parent: coding-agent
 ---
 
 # d004: provider ID renaming & metadata mapping
+
+## Status
+
+Superseded by [d186](d186-retire-legacy-full-catalog-notes.md): d004 — the generated-catalog pipeline this note describes left the tree; the scoped-models approach replaced it. Kept as history.
 
 ## Context
 

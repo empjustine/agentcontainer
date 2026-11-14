@@ -1,13 +1,17 @@
 ---
 id: d015
 type: architecture-design
-status: active
+status: deprecated
 title: "API gateway"
 parent: architecture
 tags: ["api-gateway", "proxy"]
 ---
 
 # d015: API gateway
+
+## Status
+
+Superseded by [d186](d186-retire-legacy-full-catalog-notes.md): d015 — the generated-catalog pipeline this note describes left the tree; the scoped-models approach replaced it. Kept as history.
 
 `cloud-llm/api-gateway/server.js` is a lightweight API gateway that proxies
 requests to cloud AI providers over Tailscale Funnel. It is **an API

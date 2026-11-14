@@ -1,12 +1,16 @@
 ---
 id: d006
 type: module-design
-status: active
+status: deprecated
 title: "d006 — virtual cost estimation"
 parent: coding-agent
 ---
 
 # d006: virtual cost estimation
+
+## Status
+
+Superseded by [d186](d186-retire-legacy-full-catalog-notes.md): d006 — the generated-catalog pipeline this note describes left the tree; the scoped-models approach replaced it. Kept as history.
 
 ## Context
 
