@@ -23,7 +23,11 @@ out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" --spool "$spool" --d
 has 'dry counts the spool' "$out" '1 line(s)'
 
 check 'report leaves the spool in place' "$spool" "$(ls "$spool" 2>/dev/null)"
-check 'report rotates nothing' "0" "$(ls "$tmp" | grep -c 'spool.ndjson.rm.' || true)"
+rotated=0
+for rotated_file in "$tmp"/spool.ndjson.rm.*; do
+	[ -e "$rotated_file" ] && rotated=$((rotated + 1))
+done
+check 'report rotates nothing' "0" "$rotated"
 
 mkdir -p "$tmp/empty"
 rc=0

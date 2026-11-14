@@ -1,0 +1,15 @@
+# llm-local-inference/pyproject.toml — the unit's python project file (d170
+# Decision 8). One file owns the dependency floor the stack's tools carry;
+# `./py-run.sh llm-local-inference/<tool>.py` resolves against it.
+#
+# The PEP 723 inline metadata in each tool stays: uv treats the project as
+# the environment owner and the inline block as that tool's own pin, and a
+# tool copied out of the folder (the copy-unit rule, d113) still runs alone.
+[project]
+name = "llm-local-inference"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "huggingface_hub>=0.23.0", # tested with 0.36.x–1.28.x: hf_hub_download, list_repo_tree, token auth
+    "gguf>=0.6.0",             # GGUFReader: header-only metadata reads (gguf_context_length.py)
+]

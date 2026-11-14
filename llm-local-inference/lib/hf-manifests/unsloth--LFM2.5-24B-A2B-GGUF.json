@@ -1,0 +1,72 @@
+{
+	"repo": "unsloth/LFM2.5-24B-A2B-GGUF",
+	"commit": "aacc77834f6aa568c93b4dbd6d295059736be98c",
+	"fetched_at": "2026-11-12T03:58:27+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "b9d79ab2a7d7af50af5abcf1591ec532c9e1a42c",
+			"size": 2983
+		},
+		{
+			"path": "BF16/LFM2.5-24B-A2B-BF16.gguf",
+			"oid": "ed16dcf949d6e6dc4edf8690bdfa511f7d012344bfc11c97cc59b57004bdb06c",
+			"size": 47962095584
+		},
+		{
+			"path": "LFM2.5-24B-A2B-Q8_0.gguf",
+			"oid": "97cd912b01124793a69ddebc309abbbad7ebb38ac2fb9c2bc55dfc1ad9d1809e",
+			"size": 25493733344
+		},
+		{
+			"path": "LFM2.5-24B-A2B-UD-IQ2_M.gguf",
+			"oid": "54d861a1245d460389e971112e07f9313d75778ba96e12880594f2352a83a992",
+			"size": 7535313152
+		},
+		{
+			"path": "LFM2.5-24B-A2B-UD-IQ2_XXS.gguf",
+			"oid": "09c8d1d9527e683d5244a1d4dc1a4ffdb9695b0f512206d44fd4dadbbe4ee525",
+			"size": 7468302592
+		},
+		{
+			"path": "LFM2.5-24B-A2B-UD-IQ3_XXS.gguf",
+			"oid": "e06694b1f0bb322ecfde6bf9af260d2f2047ed1b30bbfdd04d97bf55472bfeec",
+			"size": 8959328480
+		},
+		{
+			"path": "LFM2.5-24B-A2B-UD-Q2_K_XL.gguf",
+			"oid": "bc1b210bdeec1592e3dc374cc9154fd29654a9004d01a6a9eae4809de69f58dc",
+			"size": 8042561760
+		},
+		{
+			"path": "LFM2.5-24B-A2B-UD-Q3_K_XL.gguf",
+			"oid": "d54834c785c7e265f1cb7375e47aa6f55a0b7cfab75816254c4d2e0c82fd5efc",
+			"size": 10947100928
+		},
+		{
+			"path": "LFM2.5-24B-A2B-UD-Q4_K_XL.gguf",
+			"oid": "a235d23638cc5549cb1ff61da7522c8a7e97f056f27093462a1e56f35aba91d8",
+			"size": 14876901632
+		},
+		{
+			"path": "LFM2.5-24B-A2B-UD-Q5_K_XL.gguf",
+			"oid": "d5a53342a2f5bec4ebee06652a437ee3b9fbc5e6b9b693f6f2343d96e699f38a",
+			"size": 17918820608
+		},
+		{
+			"path": "LFM2.5-24B-A2B-UD-Q6_K_XL.gguf",
+			"oid": "abcb7e21e006eb4c826a2b75fb91c0804db7b20f908a61beeebdbdd07c88f41d",
+			"size": 21861204224
+		},
+		{
+			"path": "README.md",
+			"oid": "7a5a5b13de0a3c0be91766510d71b100d0d2d92c",
+			"size": 18833
+		},
+		{
+			"path": "imatrix_unsloth.gguf_file",
+			"oid": "4145e8ec5addfa73ceb9223f02aa4fd9a75a5b675e7fdc7a82699335c1c48f48",
+			"size": 56115424
+		}
+	]
+}

@@ -15,7 +15,7 @@
   },
   "sendLoadingState": false,
   "apiKeys": [
-    "${env.REVERSE_PROXY_API_KEY}"
+    "${env.TLALOCAYOTL_API_KEY}"
   ],
   "ui": {
     "activity": {
@@ -41,12 +41,16 @@
     "lfm25": "--temp 0.2 --top-k 80 --repeat-penalty 1.05",
     "lfm25vl": "--temp 0.2 --top-k 50 --repeat-penalty 1.0",
     "gemma4": "--temp 1.0 --top-p 0.95 --top-k 64",
-    "minicpm5": "--temp 1.0 --top-p 0.95",
+    "minicpm5": "--temp 1.0 --top-p 0.95 --min-p 0.0",
     "devstral": "--temp 0.15",
     "laguna": "--temp 1.0 --top-p 1 --top-k 20 --min-p 0.0",
     "ling": "--temp 1.0 --top-p 0.95 --top-k 20",
     "museglimmer": "--temp 1.0 --top-p 0.95 --top-k 64",
     "northmini": "--temp 1.0 --top-p 0.95",
-    "g9v3": "--temp 0.9 --top-p 0.95 --chat-template-kwargs '{\"enable_thinking\": true}'"
+    "g9v3": "--temp 0.9 --top-p 0.95 --chat-template-kwargs '{\"enable_thinking\": true}'",
+    "lfm3": "--temp 0.1 --top-k 50 --repeat-penalty 1.1",
+    "spark26": "--temp 1.0 --top-p 0.95",
+    "dsv4": "--temp 1.0 --top-p 1.0",
+    "lfm25a2b": "--temp 0.1 --top-k 50 --repeat-penalty 1.05"
   }
 }

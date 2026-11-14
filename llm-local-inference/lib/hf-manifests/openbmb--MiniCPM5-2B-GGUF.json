@@ -1,7 +1,7 @@
 {
 	"repo": "openbmb/MiniCPM5-2B-GGUF",
-	"commit": "2079a22f3beaa4e306449978533478fe0522f4b3",
-	"fetched_at": "2026-11-02T18:24:18+00:00",
+	"commit": "8ad02b786ab81e33d465e1c80562640c55ab2877",
+	"fetched_at": "2026-11-12T01:47:17+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
@@ -30,8 +30,8 @@
 		},
 		{
 			"path": "README.md",
-			"oid": "3b54d9070886e91b6a80c9ec85a478c227c00f0c",
-			"size": 112379
+			"oid": "e9f10446ada9c81305d3a1a7f457d1379cc6d002",
+			"size": 112758
 		}
 	]
 }

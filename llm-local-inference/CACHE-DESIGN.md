@@ -12,17 +12,18 @@ tags:
   - tooling
 ---
 
-> **Mostly deprecated (docs/d053).** The audit/table tooling here is
-> superseded: the footprint + cheapest-first order regeneration moved to
-> `model-sizes.mjs` beside it, and the committed HF manifests live in
-> `lib/hf-manifests/`. Only cache provisioning (`download_models.py`) and
-> upkeep (`upkeep.py`) remain load-bearing; the table/manifest/estimator
-> tooling is kept for reference.
+> **Deprecated beyond the manifests (docs/d053, then d170).** The
+> audit/table/estimator tooling here is retired outright: the
+> footprint/order pass (`model-sizes.mjs`) and the VRAM-fit generator
+> (`generate_vram_fit_tables.py` + `gguf-vram-fit-estimates.md`) are gone,
+> and the committed HF manifests stay in `lib/hf-manifests/` — now the
+> param-count/quant-display source (d170). Only cache provisioning
+> (`download_models.py`) and upkeep (`upkeep.py`) remain load-bearing.
 >
 > **Folded flat (docs/d113).** This pipeline used to be the sibling folder
 > `local-llm/`, importing the shared repo-level lib. It now lives _in_ this
 > folder, one level under the serving unit it feeds, and reads its `lib/` — the
-> same `lib/` the generator and `run.sh` use. Nothing about the workflow
+> same `lib/` the generator and `run.py` use. Nothing about the workflow
 > changed; the folder boundary that forced the shared table into the old
 > repo-level `lib/` is gone (docs/d025's problem, dissolved rather than
 > solved).
@@ -46,10 +47,9 @@ never anything produced by this pipeline.
 2. `fetch_hf_manifests.py` — refresh + audit repo:quant manifests (writes
    `lib/hf-manifests/`; deprecated as a _workflow_, still the manifest writer).
 3. `upkeep.py` — cache list/pull/prune/verify.
-4. `generate_vram_fit_tables.py` — VRAM/KV/fit tables via
-   gdevenyi/huggingface-estimate → regenerates
-   `llm-local-inference/gguf-vram-fit-estimates.md` (+ raw-data JSON). Its
-   `--update-model-data` reorder is **retired** (docs/d053).
+   The VRAM/KV/fit table generator (`generate_vram_fit_tables.py` →
+   `gguf-vram-fit-estimates.md`) is retired (docs/d053, then d170 removed the
+   file with the tables it produced).
 
 Plus PoC/audit helpers (`scan_cache_coverage.py`, `gguf_context_length.py`,
 `fetch-model-cards.sh`). All are `uv` PEP-723 scripts (dependencies declared
@@ -62,9 +62,9 @@ what let them drift; operational detail lives in each script header.
 
 - The canonical model list is `lib/llamacpp-model-data.json` — **this folder's
   own copy** (its manifest-refresh workflow is
-  `llm-local-inference/refresh-llm-local-inference-manifest.md`). The pipeline must not edit
-  it as a side effect (`generate_vram_fit_tables.py`'s `--update-model-data`
-  reorder is the one sanctioned write, done explicitly).
+  `llm-local-inference/refresh-llm-local-inference-manifest.md`). The pipeline
+  never edits it — entries are hand-edited per the runbook (the one sanctioned
+  write the retired `generate_vram_fit_tables.py` used to make is gone, d170).
 - The folder boundary that used to separate this pipeline from its consumer is
   gone (docs/d113): it is a sub-spec of the unit, so the "consumed read-only
   here / owned there" split is now an intra-folder rule about which script may

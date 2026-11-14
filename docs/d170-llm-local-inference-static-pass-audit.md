@@ -22,9 +22,42 @@ work, and the Status section says what has landed.
 
 ## Status
 
-Draft — the audit is complete and the orders are recorded; none of the code or
-data named under Decision has changed yet. The record moves to active when the
-pass lands.
+Draft — the audit is complete and the orders are recorded. Landed so far:
+the size-gb/size-parts strip of Decision 2 (the fields are gone from the
+table and `model-sizes.mjs` is deleted), the quant-display rules in
+`generate.mjs`'s `pruneQuantDisplay`, Decision 1 (`active-b.json` and the
+slug are gone; `model-010-local-default.json` reseeded by hand and
+`models.json`/`opencode.jsonc` id-stripped in place — a full regeneration
+there waits for its host run), Decision 3 (estimator + VRAM tables deleted;
+all three mmproj modes emit again), Decision 4 (the `.paths` manifest is
+gone from the generator, the runner and config.d), Decisions 5–6 (mount-source
+checks and the env allowlist are gone; `TLALOCAYOTL_API_KEY` fails
+forward), Decision 7 (`run.py` + the root `py-run.sh`, the jq stack and
+`run.sh` deleted, `run-all.sh` sources `lib/log.sh` directly) and Decision
+8 (`pyproject.toml` added). The dead `./npm-run.sh llm-local-inference
+...` citations are replaced with the actual invocations across the docs.
+Still open: the `fetch-model-cards.sh` fold, the generator/tests pass, the
+requirements-gated items, and the staleness owner. This record moves to
+active when that remainder lands.
+
+Follow-up simplifications, also landed: the ctx slug went the way of the
+active-b slug (ids are `[<mmprojMode>-]repo:quant` — the context window a
+model serves is a property of the entry, and a second id spelling only
+invites callers to pin a stale one), and small models get their context
+raised to the 256k fleet cap, never past the GGUF header's native
+`context_length` (`ctx-native` in the table, filled from header reads;
+absent means no raise). The same header reads
+mis-sized two repos through side artifacts, which is why `mainGgufSizes`
+now also excludes the partial `dflash`/`dspark` builds some repos ship
+beside the main quants: the JetBrains blend's `dflash` bf16 read the 27B
+blend as 1.9B and would have raised it to 256k — it is unsized by the
+manifest and pinned at 131072 instead. Two native reads are still missing
+because the repos are not cached on any audited host:
+`unsloth/DeepSeek-V4-Flash-0731` (whose only full-precision file is a
+`dspark` side build, so it stays unsized) and the Spark repos wait for a
+cached host (their manifests carry the 1M native limit; the raise is
+capped at 256k regardless). The committed `10-local` layer does not yet
+reflect the new ids/rules — it regenerates on the serving host.
 
 ## Findings
 
@@ -71,7 +104,7 @@ shell has no arrays; that constraint ends when the runner changes language.
 
 - `active-b.json` is a 162-entry repo-basename to active-params table. Its only
   consumer is `deriveModelId` in `generate.mjs`, which bakes the value into
-  every model id (`03b-ctx128-…`). Those ids reach
+  every model id. Those ids reach
   `coding-agent/model-010-local-default.json`, `models.json` and
   `opencode.jsonc` — three committed artifacts in another unit, with no guard
   anywhere against drift between them and the manifest. The tool that refreshed
@@ -111,7 +144,8 @@ The operator ordered the first pass; the items below carry the orders in
 durable form.
 
 1. **Delete `active-b.json` and the active-b slug.** `deriveModelId` drops the
-   component, so ids become `ctxNNN[-mode]-repo:quant`. The change reaches
+   component (and, as implemented, the ctx slug too — ids are
+   `[<mmprojMode>-]repo:quant`). The change reaches
    `coding-agent/model-010-local-default.json` by hand edit — its llama-swap
    block is carried forward verbatim by coding-agent's generator — and
    `models.json` plus `opencode.jsonc` follow from a regeneration there. The
@@ -131,7 +165,7 @@ durable form.
    `HUB_HOST` stays as it is.
 5. **Delete the mount-source checks.** The runner must not inspect host
    sources; `_require`'s only callers leave with the shell runner.
-6. **Fail forward on `REVERSE_PROXY_API_KEY`.** Read the variable once before
+6. **Fail forward on `TLALOCAYOTL_API_KEY`.** Read the variable once before
    launch, die with one line naming the variable when it is empty — never its
    contents — and forward it unconditionally when it is set. The allowlist
    machinery and its `printenv` call go with it.
@@ -147,9 +181,52 @@ durable form.
    `generate.mjs` and `build.mjs` keep node until the deferred generator pass
    folds them too, and `run-all.sh` and `fetch-model-cards.sh` fold in a
    follow-up — the latter already carries a Python body behind a shell shim.
-8. **Add `llm-local-inference/package.json`** with the generate and build
-   script table in [d138](d138-sh-interpreter-trampolines.md)'s shape, so every
-   documented `npm-run.sh` citation becomes true again.
+8. **Add a `llm-local-inference/pyproject.toml`**, not a `package.json`. The
+   unit's own language is Python (see the language rationale below Decision 7),
+   so the project file follows the language it would name: `uv` already
+   resolves a PEP 723-less project for `uv run` from that file, and one file
+   owns the dependency floor the stack's tools carry (the `gguf` reader, the
+   HF client, the log lib import path). The stale `./npm-run.sh
+   llm-local-inference generate` citations then die with the docs edit rather
+   than becoming true — node-run-style trampolines stay a thing the other
+   units have, and this unit gets `py-run.sh` instead.
+
+The quant-display simplifications verified against the working tree land as
+orders here, in the same pass; none of them needs its own record because each
+removes or narrows, never adds a mechanism.
+
+- **The committed hf-manifests stay.** An earlier direction imagined the
+  `hf-repo`/`hf-file` keys inferable from a cache scan (`find` over the HF
+  hub cache) and the manifest pull dropped. That inference is rejected for the
+  same partiality [d053](d053-model-size-ordering.md)'s R5 already named: the
+  cache holds only the quants this host has pulled, so a scan cannot answer
+  "does the repo have a BF16 at all" for an entry whose quant is not cached,
+  and it cannot be host-independent. `fetch_hf_manifests.py` stays in
+  `run-all.sh` and the manifests remain the repo:quant audit and — with the
+  parameter-count rule below — a load-bearing source of truth.
+- **Total parameter counts come from the manifests, not a metadata table.** A
+  repo's total parameter count is its committed hf-manifest BF16 (fallback
+  F16) main-GGUF size divided by two: at 2 bytes per parameter those file
+  sizes ARE the count, so no separate estimator returns. The size scan
+  excludes mmproj and MTP-drafter files — both carry their own BF16/F16
+  variants whose sizes have nothing to do with the count — and a repo with
+  neither full-precision file passes through unfiltered rather than guessed
+  at, the same "unsized keeps, never guesses" stance d055's gate took.
+- **Full-precision variants display only where they are servable.** A repo at
+  or above 4 billion total parameters never displays BF16 or F16: the variant
+  is outside every footprint this fleet can serve and only bloats the config
+  with a model that can never load. Below that line the variant is genuinely
+  useful and stays.
+- **Low-parameter repos drop their cheapest four quants, keeping the top two.**
+  A repo below 4 billion total parameters loses its four smallest-quant
+  entries (ranked by manifest size, which is the quant ordering), but never
+  past the top two — a repo with few quants must keep a servable floor.
+  Repos at or above the line keep their whole quant ladder.
+- **The pruning lives in the generator, not the flat table.**
+  `pruneQuantDisplay` runs inside `generate.mjs` over
+  `llamacpp-model-data.json`'s entries, and the flat table keeps serving as
+  the full record of every quant a repo publishes. Narrowing the table itself
+  would lose that record and make the rules untestable against known input.
 
 The language choice follows the tooling: five of the stack's six tools are
 Python (`download_models.py`, `upkeep.py`, `fetch_hf_manifests.py`,

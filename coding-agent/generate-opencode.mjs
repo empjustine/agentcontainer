@@ -310,7 +310,7 @@ async function main() {
 			providers.local = routedProvider(
 				"Local LLM",
 				`${providerFacts("llama-swap").baseUrl}/v1`,
-				"REVERSE_PROXY_API_KEY",
+				"TLALOCAYOTL_API_KEY",
 				models,
 			);
 		} else {

@@ -1,0 +1,57 @@
+{
+	"repo": "XHToken/Spark-X2.6-1.7B-GGUF",
+	"commit": "c4bc25be0e537d55266d90a08bdef931f4cf580a",
+	"fetched_at": "2026-11-12T03:58:27+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "9fea92f81b4918e544391d623de949f2d9556261",
+			"size": 1764
+		},
+		{
+			"path": "LICENSE",
+			"oid": "b7456707c547e5df6a88ee0255ad9c422ac52f9b",
+			"size": 11338
+		},
+		{
+			"path": "README.md",
+			"oid": "5b9c02152e9e86716c6efe0c235f1b1aa05927e6",
+			"size": 15059
+		},
+		{
+			"path": "Spark-X2.6-1.7B-Q4_K_M.gguf",
+			"oid": "7abd9859c10924be3c583945456fa9b25d0569484876105a7b7376f7938fffb7",
+			"size": 1768720512
+		},
+		{
+			"path": "Spark-X2.6-1.7B-Q8_0.gguf",
+			"oid": "8d96279c95ae2be111576f3f599880598be0922efee15069b4d7e4dd96ef6ed4",
+			"size": 1820113440
+		},
+		{
+			"path": "Spark-X2.6-1.7B.gguf",
+			"oid": "7d88f9eb7b131cb729aef8d0ab95d15e387f8fe58c0b501bacc7729e8585a220",
+			"size": 3420932640
+		},
+		{
+			"path": "images/all_benchmark.svg",
+			"oid": "c12cd1517545cc68b4c03690390d036c75ce0aa4",
+			"size": 56772
+		},
+		{
+			"path": "images/inference.svg",
+			"oid": "ea945e17599ca365b1f7d28b860ec94eb50d49e4",
+			"size": 46562
+		},
+		{
+			"path": "images/reasoning_effort.svg",
+			"oid": "5fa829cad5d02cf3e2b332c9e7f112f618b8f598",
+			"size": 13561
+		},
+		{
+			"path": "images/xhtoken-wechat.jpg",
+			"oid": "0c3fbd25c987237b383461fdaa96bf6881af615c23ba3baf19e51a7879354ddb",
+			"size": 160131
+		}
+	]
+}

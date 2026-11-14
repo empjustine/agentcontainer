@@ -1,12 +1,12 @@
 {
 	"repo": "unsloth/Qwen3.8-27B-GGUF",
-	"commit": "4ca720788d1e01f1bff70c033e0d0028fd02e502",
-	"fetched_at": "2026-11-02T18:24:20+00:00",
+	"commit": "ce331efc48d5722b4b8041f72793e530eae18d9b",
+	"fetched_at": "2026-11-12T01:47:19+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
-			"oid": "ba7d80f9eb55035cd728cd81a851f32b44147bfa",
-			"size": 4175
+			"oid": "c31194894c64179b28472378f4e6bf55d2fbb907",
+			"size": 4238
 		},
 		{
 			"path": "BF16/Qwen3.8-27B-BF16-00001-of-00002.gguf",
@@ -50,13 +50,18 @@
 		},
 		{
 			"path": "Qwen3.8-27B-UD-IQ2_S.gguf",
-			"oid": "7897d2c5a5cee46aef50895141b2c8a0803c1185f3d03c4fda4cd137a7ad77fe",
-			"size": 8371970048
+			"oid": "f213bf4ff7dd70531cf7dea9e217baffb6b8e6a7d608bf7c175d9f155e1d000d",
+			"size": 8422719488
+		},
+		{
+			"path": "Qwen3.8-27B-UD-IQ2_XS.gguf",
+			"oid": "be3842ebaaaf8412e434ce856cb05abb0ae9033494c61bff09b289a90d7f7f8e",
+			"size": 7625883648
 		},
 		{
 			"path": "Qwen3.8-27B-UD-IQ2_XXS.gguf",
-			"oid": "e792d8fb3142fe6d9171876d6da0f71f05a71028718debc72dbec93ff645e67d",
-			"size": 7266070528
+			"oid": "f51f7340110329e897623338c9458544a88a76bfbc360808c847b8d8d0277a6c",
+			"size": 7206043648
 		},
 		{
 			"path": "Qwen3.8-27B-UD-IQ3_S.gguf",
@@ -70,13 +75,13 @@
 		},
 		{
 			"path": "Qwen3.8-27B-UD-IQ4_XS.gguf",
-			"oid": "40fac4050e940397dbf13087afd50f4734a11805bf9d65ef8ddd7483470e6199",
-			"size": 14252845984
+			"oid": "4b194b34ecec99fdfb74caef84445ccd01c987de87d96ae8ca50dc434b4b0a38",
+			"size": 14352911264
 		},
 		{
 			"path": "Qwen3.8-27B-UD-Q2_K_XL.gguf",
-			"oid": "fd4730dd8aad070517978752b63d530aeb1740d2283cab9fa24f1e404032ddb0",
-			"size": 9828981664
+			"oid": "18f1187f38e7994b05c08cb45c674b90b7f17523687c83a4614fe493f7ea739d",
+			"size": 9948666784
 		},
 		{
 			"path": "Qwen3.8-27B-UD-Q3_K_XL.gguf",
@@ -85,8 +90,8 @@
 		},
 		{
 			"path": "Qwen3.8-27B-UD-Q4_K_M.gguf",
-			"oid": "322e194ff79741c7baa497c240f677f54b201b0efab44ca8e50f122b39123482",
-			"size": 16464440224
+			"oid": "1bce504dfecd84153666928a41d8a66706f0158d3a317bc5196b72819d7dc529",
+			"size": 16564259744
 		},
 		{
 			"path": "Qwen3.8-27B-UD-Q4_K_S.gguf",
@@ -95,38 +100,38 @@
 		},
 		{
 			"path": "Qwen3.8-27B-UD-Q4_K_XL.gguf",
-			"oid": "3f227079003add2511437e5b1e94812e363385225bf6a9b47b0054a72bc8b01e",
-			"size": 17559178144
+			"oid": "2a5f3565f39cf885103da591182c1266da64745737b42b452fd3e675369f1211",
+			"size": 17659407264
 		},
 		{
 			"path": "Qwen3.8-27B-UD-Q5_K_M.gguf",
-			"oid": "2de73110cb254cbf09b54b717578dadff12ef1194e7271527e68202f39ba4bfd",
-			"size": 19771509664
+			"oid": "e2771d4c10c6b77141552ea7a21631067271f17baf918f46a3cba78495f92e1e",
+			"size": 19870878624
 		},
 		{
 			"path": "Qwen3.8-27B-UD-Q5_K_S.gguf",
-			"oid": "d8d62ffcf84d42658dd6ccf9782b4d0404700af78b26d750507510c7597b5bfe",
-			"size": 18665753504
+			"oid": "f42f66ba89073030064027bd30fe637010b458e843d1936f89207b7e49ce80c9",
+			"size": 18764794784
 		},
 		{
 			"path": "Qwen3.8-27B-UD-Q5_K_XL.gguf",
-			"oid": "8601193d3d5760c37fb8ce1b43afebc69df5fb24e1fbc5a547c32e2200305276",
-			"size": 20876938144
+			"oid": "a9c4a1d9f7298dfb00c95dd83241530bc07b141ee01ec6962cd31b39d746837c",
+			"size": 20976962464
 		},
 		{
 			"path": "Qwen3.8-27B-UD-Q6_K.gguf",
-			"oid": "c9c206812fbe4ac7b76a729e25928b63f2ae89d37f69da7a71c20aec763cd436",
-			"size": 21983677344
+			"oid": "6cac55f876015d6d4b94b1656d23f79f424ac9b583652aedf0633dba116576a8",
+			"size": 21980441504
 		},
 		{
 			"path": "Qwen3.8-27B-UD-Q6_K_L.gguf",
-			"oid": "121355b4c7422771da25adc74090e3c90138f77ce5c92d348687d47824ec80f4",
-			"size": 24193919904
+			"oid": "2847d974be08517e53be08b1d0226970e92168b68cd31e5de0a3e13f808fba1f",
+			"size": 24181549984
 		},
 		{
 			"path": "Qwen3.8-27B-UD-Q6_K_M.gguf",
-			"oid": "493301830a596b8ad56dc1329f80bbcb578c8e910da395feafdc9cd8263430bb",
-			"size": 23088409504
+			"oid": "3e253088108e612dac4fe845d73945234afb4e7095638711402b8317f8f65ca7",
+			"size": 23087180704
 		},
 		{
 			"path": "Qwen3.8-27B-UD-Q6_K_XL.gguf",
@@ -145,8 +150,8 @@
 		},
 		{
 			"path": "README.md",
-			"oid": "3fddda1850c5fd0c93e9ac3f7e20d8691b2163de",
-			"size": 7455
+			"oid": "37bc3dcc6f6ad7a8d915501b7efb5f6e3dfa7abb",
+			"size": 6945
 		},
 		{
 			"path": "config.json",

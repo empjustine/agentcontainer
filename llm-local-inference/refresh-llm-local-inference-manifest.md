@@ -20,14 +20,13 @@ folder was renamed/consolidated since this runbook was first written; the
 flow is unchanged):
 
 ```
-llamacpp-model-data.json  --(generate-local-llm-models.yaml.mjs)-->  config.d/10-local-llm-inference.yaml
-llama-swap-core.json      --(generate-general.yaml.mjs)----------->  config.d/00-general.yaml   (globals + sampling macros)
-active-b.json             --(consumed by deriveModelId)----------->  the <slug> prefix of every model id
+llamacpp-model-data.json  --(generate.mjs)-->  config.d/10-local-llm-inference.yaml
+llama-swap-core.json      --(generate.mjs)----------->  config.d/00-general.yaml   (globals + sampling macros)
+lib/hf-manifests/*.json   --(generate.mjs, param count + quant display)-->  which quants the layer shows
 ```
 
-No part of this needs Infisical or the network — the two `node` generators read
-local files only. (`generate.sh` wraps them in `infisical run` and _does_ need
-`infisical login` + network; use it only when you also need provider secrets.)
+No part of this needs Infisical or the network — the generator reads local
+files only, offline (the former `generate.sh` infisical wrapper is long gone).
 
 ## Schema (one manifest entry)
 
@@ -40,15 +39,28 @@ local files only. (`generate.sh` wraps them in `infisical run` and _does_ need
 | `cache-type-k` / `cache-type-v` | KV-cache quant; optional, **default `f16`/`f16`**                                                                                                                                                                                                                                                                                                                   |
 | `ctx-size`                      | **authoritative** context window; optional, **default `65536`**. The generator never applies `--fit-ctx`                                                                                                                                                                                                                                                            |
 | `parallel`                      | `1` or `2`; optional, **default `1`**                                                                                                                                                                                                                                                                                                                               |
+| `__argv`                        | family sampling macro ${…} (see Step 3), or omit when the family has no macro                                                                                                                                                                                                                                                                                       |
 
-Keys with an implicit default are filled in by `generate-local-llm-models.yaml.mjs`
+Keys with an implicit default are filled in by `generate.mjs`
 (`DEFAULTS` map) — omit them unless the entry deviates, e.g. `parallel: 2` or a
 cap other than `65536`.
-| `__argv` | family sampling macro `${…}` (see below), or omit when the family has no macro |
-
 The file is a flat `{ "models": [ … ] }` array. **The last element has no
 trailing comma** — append before the closing `]`/`}` and add a comma to the
 previous last element.
+
+## Step 1 — Discover what changed in the cache
+
+Run the coverage scanner, which diffs the cache against the manifest by
+filename only — no GGUF headers are read and no weights are loaded:
+
+```sh
+uv run llm-local-inference/scan_cache_coverage.py
+```
+
+It prints three sections: repos with zero manifest coverage, listed repos with
+extra cached quants, and ambiguous `bpw`/multi-quant filenames. The deeper
+audit of each served entry against llama.cpp's implicit `repo:quant -> file`
+heuristic is `fetch_hf_manifests.py` (Step 5).
 
 ## Step 2 — Gather the fields for each new entry
 
@@ -67,7 +79,7 @@ previous last element.
   header-only (memory-mapped, no tensor weights):
 
   ```sh
-  uv run llm-local-inference/gguf_context_length.py --repo ORG/REPO
+  ./py-run.sh llm-local-inference/gguf_context_length.py --repo ORG/REPO
   # or pass one or more explicit file paths / globs instead of --repo
   ```
 
@@ -83,25 +95,7 @@ previous last element.
   flags (`--spec-draft-n-max …`) via `__argv`.
 - **`__argv`** = the family sampling macro (next step) or omit.
 
-## Step 3 — New model _family_? update `active-b.json` (slug)
-
-`deriveModelId()` builds each id as `<slug>-ctx<ctxSlug>-<hf-repo>`, where
-`ctxSlug = round(ctx-size/1024)` and `<slug>` comes from `active-b.json`.
-
-`active-b.json` maps a **substring** of `hf-repo` → zero-padded `NNb` slug
-(`3.45B active → 03b`, `≥100B → NNNb`). The **first matching substring wins**,
-so insert a more specific key _before_ a generic one:
-
-```json
-"LFM2.5-8B-A1B": "01b",   // specific — must precede the generic line below
-"LFM2.5":         "03b",
-```
-
-Use `estimate_active_params.py --emit-slugs` (in `llm-local-inference/`) to (re)derive
-slugs from real header shapes and review the diff before overwriting
-`active-b.json`.
-
-## Step 4 — Edit `llamacpp-model-data.json`
+## Step 3 — Edit `llamacpp-model-data.json`
 
 Insert the new object(s) into the `models` array. Example (the LFM2.5-8B-A1B
 MoE, text-only, native ctx):
@@ -118,37 +112,33 @@ MoE, text-only, native ctx):
 (`cache-type-k`/`cache-type-v`/`parallel` are omitted — they equal the implicit
 defaults `f16`/`f16`/`1`; only the non-default `ctx-size: 128000` is written.)
 
-Then regenerate the footprint fields and the cheapest-first order — do not
-hand-write `size-gb`/`size-parts`:
-
-```sh
-./llm-local-inference/model-sizes.sh   # adds size-gb/size-parts, re-sorts, warns on cache-only GGUFs
-```
-
 Family sampling macros live under the `macros` key of `llama-swap-core.json`
 (the source of truth) and are emitted into `config.d/00-general.yaml` by
-`generate-general.yaml.mjs`. Current families include `qwen38`, `qwen36`,
+`generate.mjs`. Current families include `qwen38`, `qwen36`,
 `glm47f`, `gemma4`, `devstral`, `ling`, `lfm25`, plus the base `LLAMA_SERVER`
 launcher (check `llama-swap-core.json` for the live list). To add/change a
 macro, edit `llama-swap-core.json` and re-run generation.
 
-## Step 5 — Regenerate `config.d/`
+## Step 4 — Regenerate `config.d/`
 
 ```sh
 cd llm-local-inference
-LOCAL_INFERENCE=1 ./npm-run.sh llm-local-inference generate   # -> both config.d/ layers (00-general + 10-local-llm-inference + .paths)
+LOCAL_INFERENCE=1 ./node-run.sh llm-local-inference/generate.mjs   # -> both config.d/ layers (00-general + 10-local-llm-inference)
 ```
 
 Generation runs offline (no Infisical, no network). The generator warns on **duplicate model
-ids** — fix any collision (usually a `slug`/`ctx-size` clash) before shipping.
+ids** — fix any collision (usually a `ctx-size` clash) before shipping. Model ids are
+`[<mmprojMode>-]<hf-repo>` — no slug prefixes (active-b and ctx, both retired by d170); quant display is pruned by the
+generator from the committed hf-manifests (BF16/F16 hidden at ≥4B total params; the four
+cheapest quants dropped below 4B, top two kept), so a brand-new quant may not appear in
+the layer if the manifest still lists only cheap quants for its repo.
 
-## Step 6 — Validate
+## Step 5 — Validate
 
 ```sh
 node -e "require('./llm-local-inference/lib/llamacpp-model-data.json')"   # parses? (no output = ok)
 
-./llm-local-inference/model-sizes.sh                   # regenerate the footprint/order...
-git diff --exit-code llm-local-inference/lib/llamacpp-model-data.json    # ...and an empty diff says it was current
+git diff --exit-code llm-local-inference/lib/llamacpp-model-data.json    # you edited it by hand; the diff IS the change
 
 # coverage: re-run the Step 1 scanner and confirm
 #   - every cached repo has >=1 manifest entry (no repo left at zero coverage)
@@ -166,11 +156,32 @@ uv run llm-local-inference/fetch_hf_manifests.py --offline   # audits each entry
 the entry is ambiguous (e.g. two `Q4_K_S` quants at different bpw) and needs an
 explicit `model` pin.
 
+## Step 6 — Verify the macros against the model cards
+
+Macro values carry no mechanical check: a deviation from the family's card
+can be a deliberate override, and deciding which it is remains judgement. This
+step therefore runs as an agent-or-human action. The structural half —
+dangling `${…}` references, orphan macros, repeated flags inside one expanded
+`__argv` — is mechanical and can become a check of its own later.
+
+1. List the family macros under `macros` in `llama-swap-core.json`.
+2. For each family macro, open the family's model card under
+   `model-cards/<org>/<repo>.md` and compare the card's recommended sampling
+   parameters against the macro's flags. Treat an unexplained deviation as a
+   defect in one of the two, and fix the side that is wrong.
+3. Check the reverse direction: every macro must have at least one entry in
+   `lib/llamacpp-model-data.json` that references it through `__argv`, and
+   every `${…}` in an entry must resolve in `macros`. When a family leaves the
+   manifest, retire its macro and its `lib/hf-manifests/<org>--<repo>.json` in
+   the same change.
+4. Record each deviation you keep, with its reason, under Naming rules /
+   gotchas below.
+
 ## Step 7 — Reload llama-swap
 
 llama-swap merges `config.d/` files additively at startup. Restart the
-`llm-local-inference` llama-swap service (`./run.sh` — it re-verifies the
-baked snapshot paths from the `.paths` manifest) so the regenerated
+`llm-local-inference` llama-swap service
+(`./environment.sh ./py-run.sh llm-local-inference/run.py`) so the regenerated
 `10-local-llm-inference.yaml` (and `00-general.yaml` if changed) is picked up.
 
 ## Naming rules / gotchas
@@ -187,17 +198,14 @@ baked snapshot paths from the `.paths` manifest) so the regenerated
 - **`ctx-size` is authoritative.** The generator does not auto-fit context;
   whatever you write (or the `65536` default, when omitted) is what the server
   gets. Read `context_length` from the header and cap to VRAM.
-- **`active-b.json` substring ordering.** More-specific repo substrings must
-  precede generic ones, or the wrong slug wins.
 - **Sharded GGUFs.** `model` points at shard `00001-of-NNNNN`; the loader
   expands the prefix.
 - **Last array element has no trailing comma** in `llamacpp-model-data.json`.
 
 ## Related docs
 
-- `gguf-model-tooling.md` — schema contract, `fetch_hf_manifests.py`,
-  `estimate_active_params.py`, `generate_layer_cards.py` reference, and the two
-  PoC helpers `scan_cache_coverage.py` / `gguf_context_length.py` used above.
+- `gguf-model-tooling.md` — schema contract, `fetch_hf_manifests.py` reference,
+  and the two PoC helpers `scan_cache_coverage.py` / `gguf_context_length.py` used above.
 - `d018-split-config-d.md` — why the config is split into `00-general.yaml` /
   `10-local-llm-inference.yaml` and how llama-swap merges `config.d/`.
 - `hf-cache-upkeep.md` — `upkeep.py` cache GC/pull/verify; `download_models.py`

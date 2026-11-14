@@ -21,7 +21,7 @@ weights loaded) and reports three things:
 
 Run after a cache pull / download to find what needs adding to the manifest.
 The deeper audit of each served entry's `model` vs llama.cpp's implicit
-repo:quant -> file heuristic lives in `fetch_hf_manifests.py` (Step 6 of the
+repo:quant -> file heuristic lives in `fetch_hf_manifests.py` (Step 5 of the
 runbook).
 
 Usage:

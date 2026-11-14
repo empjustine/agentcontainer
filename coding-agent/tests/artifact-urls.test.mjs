@@ -59,10 +59,10 @@ test("detector rejects an id the fact table does not know", () => {
 // host config dir would point pi at a proxy this fleet no longer runs.
 test("detector rejects the deprecated route form", () => {
 	const base =
-		"https://bazzite.coelacanth-barb.ts.net/00000000-0000-4000-8000-000000000000";
+		"https://tlalocayotl.coelacanth-barb.ts.net/00000000-0000-4000-8000-000000000000";
 	const violations = canonicalViolations({
 		providers: {
-			"llama-swap": { baseUrl: `${base}/bazzite.coelacanth-barb.ts.net/v1` },
+			"llama-swap": { baseUrl: `${base}/tlalocayotl.coelacanth-barb.ts.net/v1` },
 			mistral: { baseUrl: `${base}/api.mistral.ai/v1` },
 		},
 	});

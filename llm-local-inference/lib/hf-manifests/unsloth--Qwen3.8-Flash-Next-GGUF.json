@@ -1,0 +1,392 @@
+{
+	"repo": "unsloth/Qwen3.8-Flash-Next-GGUF",
+	"commit": "084c631ac221016019d6e0a863afe92d90edd3b0",
+	"fetched_at": "2026-11-12T03:58:28+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "e709e4f09031d27f80a718bd6923f29d69af40f7",
+			"size": 9116
+		},
+		{
+			"path": "BF16/Qwen3.8-Flash-Next-BF16-00001-of-00008.gguf",
+			"oid": "348986b2568af284eb16a0be0ccd17aa4cf0bc823de4a1c9da8e5a24365e3fd9",
+			"size": 10946368
+		},
+		{
+			"path": "BF16/Qwen3.8-Flash-Next-BF16-00002-of-00008.gguf",
+			"oid": "905f21f256847501da84872c526791539a660328b85b701049d859a1c3dfa1cd",
+			"size": 10447201664
+		},
+		{
+			"path": "BF16/Qwen3.8-Flash-Next-BF16-00003-of-00008.gguf",
+			"oid": "fd6926a9142df95273cb92623b151f09d260f85b7c02e9469a1b610b552c6d0e",
+			"size": 102400491712
+		},
+		{
+			"path": "BF16/Qwen3.8-Flash-Next-BF16-00004-of-00008.gguf",
+			"oid": "e4ca944e85c400a5fecb6fd7b0ae0358b67e9bb39ded38a9a8596f8850e7e6dc",
+			"size": 48394236672
+		},
+		{
+			"path": "BF16/Qwen3.8-Flash-Next-BF16-00005-of-00008.gguf",
+			"oid": "c110361d1bbe8064e15c58c456cc35f0fe3d1b1329869e51b067909f83b95e6e",
+			"size": 48367899040
+		},
+		{
+			"path": "BF16/Qwen3.8-Flash-Next-BF16-00006-of-00008.gguf",
+			"oid": "cbce912e81f2d983e0a302ceb48554a45ecade9b083f4827d53fc8191af3aeb6",
+			"size": 48615233984
+		},
+		{
+			"path": "BF16/Qwen3.8-Flash-Next-BF16-00007-of-00008.gguf",
+			"oid": "23fbbbef0920c451c2fa4d9cf96d3dd167ed38c1cead608457464812d8930bc8",
+			"size": 48367899040
+		},
+		{
+			"path": "BF16/Qwen3.8-Flash-Next-BF16-00008-of-00008.gguf",
+			"oid": "b6e4e5c646f8f708bd471e922004aa752acbcdac1d3abb27c9d42037630916f7",
+			"size": 47426022016
+		},
+		{
+			"path": "MTP/README.md",
+			"oid": "bb3c92938ed04dc01d38f81efde78a6a4f26c932",
+			"size": 5906
+		},
+		{
+			"path": "MTP/mtp-Qwen3.8-Flash-Next-BF16.gguf",
+			"oid": "6b6c9988419c7f756888e034e8083053c73c00da4ffc1f6b9c21f9f3ececbec4",
+			"size": 7770760320
+		},
+		{
+			"path": "MTP/mtp-Qwen3.8-Flash-Next-Q4_K_M.gguf",
+			"oid": "8087dbb39fc73f79ac069b1debe4069a44b73ada900c8bd761569d43a5a90231",
+			"size": 2786204800
+		},
+		{
+			"path": "MTP/mtp-Qwen3.8-Flash-Next-Q8_0.gguf",
+			"oid": "58a47d6a216307e9b97172d5bfdc3436a8994b632f5e436b9bb6edf8951da8d1",
+			"size": 4137429120
+		},
+		{
+			"path": "MTP/mtp-Qwen3.8-Flash-Next-shared-BF16.gguf",
+			"oid": "32473fa74e8ed0f0026219b09b43d303f52f328c0f8b0caf4b24bf8834cc596b",
+			"size": 5227963456
+		},
+		{
+			"path": "MTP/mtp-Qwen3.8-Flash-Next-shared-Q4_K_M.gguf",
+			"oid": "f521868a9e143718bef513772f6e04d9642551e362cf2439636d2abdbd149dfc",
+			"size": 1907151936
+		},
+		{
+			"path": "MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf",
+			"oid": "5ff54097406a905cf3a724c709124ceb0e3e10235ee862298969e91c96fa96e6",
+			"size": 2786568256
+		},
+		{
+			"path": "Q8_0/Qwen3.8-Flash-Next-Q8_0-00001-of-00006.gguf",
+			"oid": "2dabcbb53ca537a7947bc7d20414fd464eeaf4d66d43021b5b2556cc87544ad2",
+			"size": 10946624
+		},
+		{
+			"path": "Q8_0/Qwen3.8-Flash-Next-Q8_0-00002-of-00006.gguf",
+			"oid": "494ca4ed3dbf97bc28da88af3890b8877b9032f909812d00c0526a9ca5e91d2e",
+			"size": 682434912
+		},
+		{
+			"path": "Q8_0/Qwen3.8-Flash-Next-Q8_0-00003-of-00006.gguf",
+			"oid": "34efd79a80a1ce540a517a5d56171924b66ce1c38b04c904f17ad6d8ef17cf20",
+			"size": 54400261312
+		},
+		{
+			"path": "Q8_0/Qwen3.8-Flash-Next-Q8_0-00004-of-00006.gguf",
+			"oid": "bfa634025fabbd2658bf7694bc80b90e571699c768723f844c934c7ef06c691a",
+			"size": 49446841216
+		},
+		{
+			"path": "Q8_0/Qwen3.8-Flash-Next-Q8_0-00005-of-00006.gguf",
+			"oid": "232a8f14cc0fa4262e7efe8593774b136fe40909e39c7a020342ddaa27259a97",
+			"size": 49668930400
+		},
+		{
+			"path": "Q8_0/Qwen3.8-Flash-Next-Q8_0-00006-of-00006.gguf",
+			"oid": "538a93bca918064983409a41187ad4c68640f9aced6f29564da8f551bf86d7a5",
+			"size": 34015618784
+		},
+		{
+			"path": "README.md",
+			"oid": "364c85bb5b28d77d90080b403f6a6bedba143eff",
+			"size": 60460
+		},
+		{
+			"path": "UD-IQ1_M/Qwen3.8-Flash-Next-UD-IQ1_M-00001-of-00003.gguf",
+			"oid": "b0d883bb9464021f31074145af74bfc2aa2d4bf0cf506f26f6f5107f4ca6ce17",
+			"size": 10946618
+		},
+		{
+			"path": "UD-IQ1_M/Qwen3.8-Flash-Next-UD-IQ1_M-00002-of-00003.gguf",
+			"oid": "bddcd79634ccddbb2e0951345c73c6ae8bd7b12594f55a2a529474701757391e",
+			"size": 39196009888
+		},
+		{
+			"path": "UD-IQ1_M/Qwen3.8-Flash-Next-UD-IQ1_M-00003-of-00003.gguf",
+			"oid": "05716382c280d999b81afff92b2d527fadbfd926ac225ffdc273f2d1d13331c6",
+			"size": 28800138432
+		},
+		{
+			"path": "UD-IQ1_S/Qwen3.8-Flash-Next-UD-IQ1_S-00001-of-00003.gguf",
+			"oid": "df6ba2c00267aa4853231fdb203ba76b67b7eadcfb372df65842760b9efa1a8d",
+			"size": 10946618
+		},
+		{
+			"path": "UD-IQ1_S/Qwen3.8-Flash-Next-UD-IQ1_S-00002-of-00003.gguf",
+			"oid": "7101e65fb6084e65c9e2c678291d8b6b62dfcce89c422958633cf5585a68cbb6",
+			"size": 37568095648
+		},
+		{
+			"path": "UD-IQ1_S/Qwen3.8-Flash-Next-UD-IQ1_S-00003-of-00003.gguf",
+			"oid": "05716382c280d999b81afff92b2d527fadbfd926ac225ffdc273f2d1d13331c6",
+			"size": 28800138432
+		},
+		{
+			"path": "UD-IQ2_XS/Qwen3.8-Flash-Next-UD-IQ2_XS-00001-of-00003.gguf",
+			"oid": "91e8dc8f1428ce25d48fd1f711e4bf1f42215c5bac0f32eeb5608e6ec7ae91e9",
+			"size": 10946618
+		},
+		{
+			"path": "UD-IQ2_XS/Qwen3.8-Flash-Next-UD-IQ2_XS-00002-of-00003.gguf",
+			"oid": "11a67c82f54a9edf683d6b708062de78d803921a18a6cb2bf1dd55949b4ef9bd",
+			"size": 47021008288
+		},
+		{
+			"path": "UD-IQ2_XS/Qwen3.8-Flash-Next-UD-IQ2_XS-00003-of-00003.gguf",
+			"oid": "05716382c280d999b81afff92b2d527fadbfd926ac225ffdc273f2d1d13331c6",
+			"size": 28800138432
+		},
+		{
+			"path": "UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00001-of-00004.gguf",
+			"oid": "9d5644b371ffac921427c8021cc7242dab8e3ba37d7b48d1e79fe3770fbf9915",
+			"size": 10946618
+		},
+		{
+			"path": "UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00002-of-00004.gguf",
+			"oid": "aacaff3bdb9032c2c3be428167930809735f65d3cfb204eba07d85e421e7ddf4",
+			"size": 49946027488
+		},
+		{
+			"path": "UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00003-of-00004.gguf",
+			"oid": "ef8f14e790ab471b363f146d5e8664eefbaf03e5776f317a1fb96a2bc7707b07",
+			"size": 4869325888
+		},
+		{
+			"path": "UD-IQ3_XXS/Qwen3.8-Flash-Next-UD-IQ3_XXS-00004-of-00004.gguf",
+			"oid": "5de8b5dbf89409acc39468decafd4a4a95b13c29d88a14b0356107897829ec36",
+			"size": 28800138432
+		},
+		{
+			"path": "UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00004.gguf",
+			"oid": "93ff23a08e5cd7501f24fa16f5b415d5807d0175e04edd3ed6a7a41b601a4eef",
+			"size": 10946618
+		},
+		{
+			"path": "UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00002-of-00004.gguf",
+			"oid": "13d5dc8b93d039e4cfade5a9af7037f10c97f7ec4e53f75bd2e9ae34aae54aeb",
+			"size": 49604491008
+		},
+		{
+			"path": "UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00003-of-00004.gguf",
+			"oid": "f6b9b5934908a2043732269dd740155d0f921d0763a1dcdd3452246311651f87",
+			"size": 15256783680
+		},
+		{
+			"path": "UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00004-of-00004.gguf",
+			"oid": "5de8b5dbf89409acc39468decafd4a4a95b13c29d88a14b0356107897829ec36",
+			"size": 28800138432
+		},
+		{
+			"path": "UD-Q2_0/Qwen3.8-Flash-Next-UD-Q2_0-00001-of-00003.gguf",
+			"oid": "38803c4e8d13077165aa9854502b3d4e7fef750e72a21d27a38ee42089f96ad6",
+			"size": 10946618
+		},
+		{
+			"path": "UD-Q2_0/Qwen3.8-Flash-Next-UD-Q2_0-00002-of-00003.gguf",
+			"oid": "57af20207d5f18fa72fba503806d98d65f58ba3982fe55c89c6ed6e691471acc",
+			"size": 41738806688
+		},
+		{
+			"path": "UD-Q2_0/Qwen3.8-Flash-Next-UD-Q2_0-00003-of-00003.gguf",
+			"oid": "05716382c280d999b81afff92b2d527fadbfd926ac225ffdc273f2d1d13331c6",
+			"size": 28800138432
+		},
+		{
+			"path": "UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00001-of-00004.gguf",
+			"oid": "297e174dc185f2bf3ab1856461059cb8a05aa741bc27edf42461cde87e5420af",
+			"size": 10946618
+		},
+		{
+			"path": "UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00002-of-00004.gguf",
+			"oid": "a4782511810bb61bd6b3236607a0aad05b1bfa04b90356defd202bb17e7db16d",
+			"size": 49732486272
+		},
+		{
+			"path": "UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00003-of-00004.gguf",
+			"oid": "4dffc4a1cea7ad484f2d5c711b747840e459b040b636cc8ddaa524d01e60662e",
+			"size": 1037181344
+		},
+		{
+			"path": "UD-Q2_K_XL/Qwen3.8-Flash-Next-UD-Q2_K_XL-00004-of-00004.gguf",
+			"oid": "5de8b5dbf89409acc39468decafd4a4a95b13c29d88a14b0356107897829ec36",
+			"size": 28800138432
+		},
+		{
+			"path": "UD-Q3_K_XL/Qwen3.8-Flash-Next-UD-Q3_K_XL-00001-of-00004.gguf",
+			"oid": "7666000ba91eb5527f8e12e0414de36766dc82a082876337f7827c2caa859143",
+			"size": 10946618
+		},
+		{
+			"path": "UD-Q3_K_XL/Qwen3.8-Flash-Next-UD-Q3_K_XL-00002-of-00004.gguf",
+			"oid": "e954cb3044ae087a003ce8cc1631c9d40fe15ae64a8befcf4aa06457848c647c",
+			"size": 49742117248
+		},
+		{
+			"path": "UD-Q3_K_XL/Qwen3.8-Flash-Next-UD-Q3_K_XL-00003-of-00004.gguf",
+			"oid": "fcce26b1e5e6e54559a7e7c2f8d6e37067ec695ff1f14bce662810bde78abe1f",
+			"size": 10911746208
+		},
+		{
+			"path": "UD-Q3_K_XL/Qwen3.8-Flash-Next-UD-Q3_K_XL-00004-of-00004.gguf",
+			"oid": "5de8b5dbf89409acc39468decafd4a4a95b13c29d88a14b0356107897829ec36",
+			"size": 28800138432
+		},
+		{
+			"path": "UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf",
+			"oid": "acc44040f74d0e55fb89c3967056cce5dbda1bcc52e909c3ba6fc72b5e9c0858",
+			"size": 10946618
+		},
+		{
+			"path": "UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00002-of-00004.gguf",
+			"oid": "45792ae869072d8229384c51c7c73dd959e191505252b41dd71852d9746f5ce4",
+			"size": 49720539552
+		},
+		{
+			"path": "UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00003-of-00004.gguf",
+			"oid": "8c76e79d444b16a663d9c8db54e585ed3b1da13eebd2619c37b0c355da803c82",
+			"size": 32803030176
+		},
+		{
+			"path": "UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00004-of-00004.gguf",
+			"oid": "5de8b5dbf89409acc39468decafd4a4a95b13c29d88a14b0356107897829ec36",
+			"size": 28800138432
+		},
+		{
+			"path": "UD-Q5_K_XL/Qwen3.8-Flash-Next-UD-Q5_K_XL-00001-of-00006.gguf",
+			"oid": "610922cdb1afe1094e95d7a3e86b12ee33317ebbf7320ac9344e21b6ae4bb69f",
+			"size": 10946618
+		},
+		{
+			"path": "UD-Q5_K_XL/Qwen3.8-Flash-Next-UD-Q5_K_XL-00002-of-00006.gguf",
+			"oid": "494ca4ed3dbf97bc28da88af3890b8877b9032f909812d00c0526a9ca5e91d2e",
+			"size": 682434912
+		},
+		{
+			"path": "UD-Q5_K_XL/Qwen3.8-Flash-Next-UD-Q5_K_XL-00003-of-00006.gguf",
+			"oid": "34efd79a80a1ce540a517a5d56171924b66ce1c38b04c904f17ad6d8ef17cf20",
+			"size": 54400261312
+		},
+		{
+			"path": "UD-Q5_K_XL/Qwen3.8-Flash-Next-UD-Q5_K_XL-00004-of-00006.gguf",
+			"oid": "9ee6bbe462e6830864382d629101490625b1c95afa15492b7ad550c7bed2dd13",
+			"size": 49990245824
+		},
+		{
+			"path": "UD-Q5_K_XL/Qwen3.8-Flash-Next-UD-Q5_K_XL-00005-of-00006.gguf",
+			"oid": "0b2437f661f584030cb5aeb8fb1bb70f6422518a6746bfcc0304167c7b6b8beb",
+			"size": 49882416192
+		},
+		{
+			"path": "UD-Q5_K_XL/Qwen3.8-Flash-Next-UD-Q5_K_XL-00006-of-00006.gguf",
+			"oid": "55dd96c5ad0863b06b6393151b9ad0ac727b8d58a62e02a296ca5d5ddbfee4a3",
+			"size": 3320101792
+		},
+		{
+			"path": "UD-Q6_K_XL/Qwen3.8-Flash-Next-UD-Q6_K_XL-00001-of-00006.gguf",
+			"oid": "8bdc6bad55b6699f46f60708829932ff4018d7ac9bd309c388534fa31753bdb7",
+			"size": 10946624
+		},
+		{
+			"path": "UD-Q6_K_XL/Qwen3.8-Flash-Next-UD-Q6_K_XL-00002-of-00006.gguf",
+			"oid": "494ca4ed3dbf97bc28da88af3890b8877b9032f909812d00c0526a9ca5e91d2e",
+			"size": 682434912
+		},
+		{
+			"path": "UD-Q6_K_XL/Qwen3.8-Flash-Next-UD-Q6_K_XL-00003-of-00006.gguf",
+			"oid": "34efd79a80a1ce540a517a5d56171924b66ce1c38b04c904f17ad6d8ef17cf20",
+			"size": 54400261312
+		},
+		{
+			"path": "UD-Q6_K_XL/Qwen3.8-Flash-Next-UD-Q6_K_XL-00004-of-00006.gguf",
+			"oid": "0ea4b599880a5a52fcd9c188ba1443f646c69c96571904ddbd6a79246a01a997",
+			"size": 49814108512
+		},
+		{
+			"path": "UD-Q6_K_XL/Qwen3.8-Flash-Next-UD-Q6_K_XL-00005-of-00006.gguf",
+			"oid": "9948e81ae8368144b135a7403d8c0f2cf9a6c2f9f692313865855b2832e696c9",
+			"size": 49419317344
+		},
+		{
+			"path": "UD-Q6_K_XL/Qwen3.8-Flash-Next-UD-Q6_K_XL-00006-of-00006.gguf",
+			"oid": "e4ae255234f42b18012f6d6eec5bf615b57479b7e0a0233c47436a321ffeec3f",
+			"size": 14838313984
+		},
+		{
+			"path": "engram/Qwen3.8-Flash-Next-engram-BF16.gguf_file",
+			"oid": "fd191dd766b7b9616bc648dad1d9dec7bff7cf0a6d27cb2c9edcde9be2aef966",
+			"size": 102400491712
+		},
+		{
+			"path": "engram/Qwen3.8-Flash-Next-engram-IQ4_NL.gguf_file",
+			"oid": "69b4700f0109c9013571156b77cb758b758114412b3d545ebc43f08e25c15d79",
+			"size": 28800138432
+		},
+		{
+			"path": "engram/Qwen3.8-Flash-Next-engram-Q5_1.gguf_file",
+			"oid": "6eabff6df91df62f802d0c7185512c776d705dd73679a8f65cfb0a7843480e26",
+			"size": 38400184512
+		},
+		{
+			"path": "engram/Qwen3.8-Flash-Next-engram-Q8_0.gguf_file",
+			"oid": "e3d76a2747c1fe53e3420d1bb7fd9593aafd03035fee4926317db80ad5c5296a",
+			"size": 54400261312
+		},
+		{
+			"path": "engram/README.md",
+			"oid": "ae26f059f696a50a0243ff66ad5507c19a4c2007",
+			"size": 4126
+		},
+		{
+			"path": "engram/set_split.py",
+			"oid": "0c258c17e6b70b196ef56564868d0f4344d8b209",
+			"size": 350
+		},
+		{
+			"path": "imatrix_unsloth.gguf_file",
+			"oid": "a5863123db1ca458727e738955bef7bfc199520aa2bee3a30142a1aff9254154",
+			"size": 580038720
+		},
+		{
+			"path": "mmproj-BF16.gguf",
+			"oid": "2e788f8c511d8093c7b43cb87b2fd7e14228340318057f8fb20c86df2efe2355",
+			"size": 907542944
+		},
+		{
+			"path": "mmproj-F16.gguf",
+			"oid": "1f7b7f0b984cf065c604360c29c8098362ed61b290db0ff12c6f360bb1a8a980",
+			"size": 904004000
+		},
+		{
+			"path": "mtp-Qwen3.8-Flash-Next-Q8_0.gguf",
+			"oid": "58a47d6a216307e9b97172d5bfdc3436a8994b632f5e436b9bb6edf8951da8d1",
+			"size": 4137429120
+		}
+	]
+}

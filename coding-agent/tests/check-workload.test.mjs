@@ -146,7 +146,7 @@ test("coding-agent shape, podman", () => {
 		description,
 		"CLINE_API_KEY",
 		"MISTRAL_API_KEY",
-		"REVERSE_PROXY_API_KEY",
+		"TLALOCAYOTL_API_KEY",
 		"OPENROUTER_API_KEY",
 	);
 	description = workload_env(
@@ -185,7 +185,7 @@ ARG[CLINE_API_KEY]
 ARG[--env]
 ARG[MISTRAL_API_KEY]
 ARG[--env]
-ARG[REVERSE_PROXY_API_KEY]
+ARG[TLALOCAYOTL_API_KEY]
 ARG[--env]
 ARG[OPENROUTER_API_KEY]
 ARG[--env]
@@ -221,7 +221,7 @@ test("llm-local-inference shape, docker", () => {
 		description,
 		"OPENROUTER_API_KEY",
 		"OPENCODE_API_KEY",
-		"REVERSE_PROXY_API_KEY",
+		"TLALOCAYOTL_API_KEY",
 	);
 	// Devices are populated by workload_gpu on a real GPU host; there is no
 	// /dev/kfd here, so declare them directly.
@@ -256,7 +256,7 @@ ARG[OPENROUTER_API_KEY]
 ARG[--env]
 ARG[OPENCODE_API_KEY]
 ARG[--env]
-ARG[REVERSE_PROXY_API_KEY]
+ARG[TLALOCAYOTL_API_KEY]
 ARG[ghcr.io/mostlygeek/llama-swap:cpu]
 ARG[-config-dir]
 ARG[/config.d]`;

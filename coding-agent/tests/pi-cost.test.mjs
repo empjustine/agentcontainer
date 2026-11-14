@@ -54,13 +54,13 @@ test("piModel judges the served block instead of copying it", () => {
 	// llama-swap mirrors its config metadata verbatim — this is the shape
 	// that reached the artifact untouched and invalidated it.
 	const unpriced = piModel({
-		id: "01b-ctx128-org/repo-GGUF:Q8_0",
+		id: "org/repo-GGUF:Q8_0",
 		meta: { llamaswap: { cost: {} } },
 	});
 	assert.equal("cost" in unpriced, false);
 
 	const free = piModel({
-		id: "01b-ctx128-org/repo-GGUF:Q8_0",
+		id: "org/repo-GGUF:Q8_0",
 		meta: {
 			llamaswap: { cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } },
 		},
@@ -68,7 +68,7 @@ test("piModel judges the served block instead of copying it", () => {
 	assert.equal("cost" in free, false);
 
 	const priced = piModel({
-		id: "01b-ctx128-org/repo-GGUF:Q8_0",
+		id: "org/repo-GGUF:Q8_0",
 		meta: { llamaswap: { cost: { input: 0.5 } } },
 	});
 	assert.deepEqual(priced.cost, {

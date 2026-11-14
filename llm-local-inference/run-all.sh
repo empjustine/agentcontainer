@@ -13,18 +13,18 @@
 # chain: ./environment.sh ./run-all.sh (the ONE infisical round-trip —
 # no .env file is read).  Never fatal inside: gated/private repos simply skip
 # auth when no token is in the environment.
-# See llm-local-inference/hf-cache-upkeep.md. The GGUF size-estimation tools (layer cards,
-# active params, VRAM fits) were retired;
-# their replacement is gdevenyi/huggingface-estimate (see
-# llm-local-inference/gguf-vram-fit-estimates.md).
+# See llm-local-inference/hf-cache-upkeep.md. The GGUF size-estimation tools
+# (layer cards, active params, VRAM fits) are retired (docs/d053, d170).
 #
 # Usage: ./run-all.sh [step ...]        # subset by script name, default all
 
 set -eu
 
 here="$(CDPATH='' cd "$(dirname "$0")" && pwd)"
-# shellcheck source-path=SCRIPTDIR source=lib/workload-runtime.sh
-. "$here/lib/workload-runtime.sh"
+# Only the log kernel is needed here — the workload API this file used to
+# source left with the shell runner (d170 Decision 7).
+# shellcheck source-path=SCRIPTDIR source=lib/log.sh
+. "$here/lib/log.sh"
 LOG_TOOL='llm-local-inference/run-all'
 export LOG_TOOL
 cd "$here"

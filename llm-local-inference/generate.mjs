@@ -3,9 +3,9 @@
  * the former generate.sh, gen-lib.mjs, generate-general.yaml.mjs and
  * generate-local-llm-models.yaml.mjs in): (re)generate the llama-swap config
  * in config.d/ for LOCAL GGUF inference. RUN THIS after a models/args change
- * (active-b.json, lib/llamacpp-model-data.json, llama-swap-core.json
- * macros) or when a host's capabilities changed (GPU added/removed, container
- * backend installed).
+ * (lib/llamacpp-model-data.json, llama-swap-core.json macros) or when a
+ * host's capabilities changed (GPU added/removed, container backend
+ * installed).
  *
  * Cloud/remote relaying is NOT generated here (nor anywhere): it is
  * served by ../estige, the raw passthrough proxy. This module
@@ -18,12 +18,6 @@
  *                                the RAM floor — docs/d087), or LOCAL_INFERENCE=1
  *                                to force (debug only; the host HF cache must
  *                                carry every configured GGUF)
- *   10-local-llm-inference.paths sibling manifest of the baked model files,
- *                                cache-relative — run.sh's staleness preflight
- *                                input (paths are  relative to the HF cache
- *                                root so the committed manifest stays readable
- *                                on any host)
- *
  * There is NO launch-gguf.sh: snapshot paths are resolved HERE
  * (generation-time baking, docs/d029 option B) and emitted as plain args in
  * each model's cmd; a cache miss is a generation error pointing at
@@ -38,9 +32,9 @@
  *
  * Secrets: none at generation time. This module's generation is fully offline
  * (vendored tables only) and embeds NO keys — the single ${env.*} reference in
- * the generated config (REVERSE_PROXY_API_KEY, 00-general.yaml apiKeys) is resolved by
- * llama-swap from ITS OWN environment at load time, which run.sh receives from
- * the explicit chain (./environment.sh ./run.sh). So generation needs no
+ * the generated config (TLALOCAYOTL_API_KEY, 00-general.yaml apiKeys) is resolved by
+ * llama-swap from ITS OWN environment at load time, which the runner receives from the explicit
+ * chain (./environment.sh ./py-run.sh llm-local-inference/run.py). Generation needs no
  * vault round-trip at all.
  *
  * Env overrides:
@@ -57,7 +51,7 @@ import {
 	statSync,
 } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, relative } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
@@ -123,21 +117,11 @@ function generateGeneral() {
 }
 
 // --- 10-local-llm-inference.yaml (folded generate-local-llm-models.yaml.mjs)
-// The local llama.cpp GGUF `models` map, plus the sibling .paths manifest
-// (host-side paths the run.sh staleness preflight re-checks). Built from
+// The local llama.cpp GGUF `models` map. Built from
 // lib/llamacpp-model-data.json (this folder's copy of the table, d025/d113);
 // no network access. The `cmd` strings reference macros defined in
 // 00-general.yaml (${LLAMA_SERVER}, ${qwen36}, …) which llama-swap resolves
 // after merging config.d/.
-
-/**
- * The activeB table (model-name slice -> "b" slug), split out of the generator
- * into its own mini-manifest (active-b.json).
- * @type {Record<string, string>}
- */
-const activeB = JSON.parse(
-	readFileSync(join(scriptDir, "active-b.json"), "utf-8"),
-);
 
 // llama-swap macro text, kept verbatim so the JS generator never tries to
 // interpolate it as a JS variable.  llama-swap expands ${LLAMA_SERVER} (and the
@@ -251,9 +235,9 @@ function allShards(filename) {
  * download_models.py's job and is not duplicated as a
  * launch-time download fallback.
  * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
- * @returns {{ modelPath: string, mmprojPath: string|null, draftPath: string|null, hostPaths: string[] }}
+ * @returns {{ modelPath: string, mmprojPath: string|null, draftPath: string|null }}
  *   container-side paths for the emitted cmd (mmproj/draft null when the entry
- *   omits them) plus the host-side file list for the .paths staleness manifest
+ *   omits them)
  */
 function bakeSnapshotPaths(m) {
 	const repo = m["hf-repo"].split(":")[0]; // drop :revision; the GGUF filename already pins the quant
@@ -290,17 +274,15 @@ function bakeSnapshotPaths(m) {
 		}
 
 		const snapGuest = `${HUB_GUEST}/${repoDir}/snapshots/${sha}`;
-		const snapHost = `${HUB_HOST}/${repoDir}/snapshots/${sha}`;
 		return {
 			modelPath: `${snapGuest}/${shardOne(m.model)}`,
 			mmprojPath: m.mmproj ? `${snapGuest}/${m.mmproj}` : null,
 			draftPath: m["model-draft"] ? `${snapGuest}/${m["model-draft"]}` : null,
-			hostPaths: required.map((f) => `${snapHost}/${f}`),
 		};
 	}
 
 	logError(
-		"no HF snapshot carries this entry — run ./download_models.py, then re-run ./generate.sh",
+		"no HF snapshot carries this entry — run ./download_models.py, then re-run the generator (./node-run.sh llm-local-inference/generate.mjs)",
 		{
 			repo,
 			hub: snapshotsDir,
@@ -320,8 +302,9 @@ function bakeSnapshotPaths(m) {
  *   1vision  -> --no-mmproj-offload --ubatch-size 2048  (projector loaded, stays on CPU)
  *   2mmproj  -> --ubatch-size 2048                      (projector offloaded to GPU)
  * The 1vision/2mmproj variants additionally pass --image-min-tokens/
- * --image-max-tokens from the manifest, and advertise the "image" input
- * modality; 0text and non-mmproj models stay text-only.
+ * --image-max-tokens (the manifest pair when present, else
+ * IMAGE_TOKENS_DEFAULT), and advertise the "image" input modality; 0text and
+ * non-mmproj models stay text-only.
  * @type {readonly { seg: string|null, vision: boolean }[]}
  */
 const MMPROJ_MODES = [
@@ -331,75 +314,237 @@ const MMPROJ_MODES = [
 ];
 
 /**
- * Total entry footprint (model + mmproj + draft, from model-sizes.mjs) above
- * which the 2mmproj variant is suppressed. A model this large already fills
- * the GPU, so also placing the projector there forces weight eviction/CPU
- * offload and 2mmproj ends up slower than 1vision — the mode's premise
- * (GPU-resident projector) inverts. Product threshold from docs/d029 C1.
+ * Image token budget for vision modes when an entry carries no
+ * `image-min-tokens`/`image-max-tokens` pair. The pair sits in the manifest
+ * only as a deviation from this value (gemma-4's 1120), so absence stays the
+ * compact spelling of "the default" instead of 40 identical rows.
  * @type {number}
  */
-const MMPROJ_OFFLOAD_MAX_SIZE_GB = 14;
+const IMAGE_TOKENS_DEFAULT = 1024;
 
 /**
  * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
- * @returns {{seg: string|null, vision: boolean}[]} the modes this entry emits;
- * an unsized entry (`size-gb` not yet computed) keeps 2mmproj rather than guess
+ * @returns {{seg: string|null, vision: boolean}[]} the modes this entry emits —
+ * every mmproj entry emits all three; swap time pays for the restored downloads
+ * on heavy entries (d170: the 14 GB size gate and its `size-gb` input retired)
  */
-function mmprojModesFor(m) {
-	const sizeGb = m["size-gb"];
-	return MMPROJ_MODES.filter(
-		(mode) =>
-			mode.seg !== "2mmproj" ||
-			typeof sizeGb !== "number" ||
-			sizeGb <= MMPROJ_OFFLOAD_MAX_SIZE_GB,
-	);
-}
-
-/**
- * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
- * @returns {string} the active-B slug ("99b" when no slice matches)
- */
-function activeSlug(m) {
-	for (const [slice, slug] of Object.entries(activeB)) {
-		if (m["hf-repo"].indexOf(slice) !== -1) {
-			return slug;
-		}
-	}
-	return "99b";
+function mmprojModesFor() {
+	return MMPROJ_MODES;
 }
 
 /**
  * @param {number} contextWindow
  * @returns {string} zero-padded context slug for the model id
  */
-function ctxSlug(contextWindow) {
-	if (contextWindow % 1024 === 0) {
-		return String(contextWindow / 1024).padStart(3, "0");
-	}
-	return String(Math.round(contextWindow / 1000)).padStart(3, "0");
-}
-
 // The quant now lives in `hf-repo` as `repo:revision`, and the kv-cache type is
 // emitted inline (--cache-type-k/-v), so neither the quant slug nor the
-// kv-quant segment appears in the id anymore — just the active slug, the
-// context window, the mmproj mode segment ("" for non-mmproj models), and the
-// (unique) hf-repo.
+// kv-quant segment appears in the id anymore — just the mmproj mode segment
+// ("" for non-mmproj models) and the (unique) hf-repo. The active-b slug and
+// the context slug are gone with their tables (d170): no guard anywhere
+// protected either against drift, the tool that refreshed one is gone, and
+// the context window a model serves is a property of the entry, not of the
+// caller's choice — a second id spelling of the same ctx would only invite
+// callers to pin a stale one. hf-repo carries the quant, so ids stay unique
+// as long as one entry exists per repo:quant.
 /**
  * @param {Record<string, any>} m
  * @param {string|null} modeSeg
  * @returns {string} the derived llama-swap model id
  */
 function deriveModelId(m, modeSeg) {
-	return `${activeSlug(m)}-ctx${ctxSlug(m["ctx-size"])}-${modeSeg ? `${modeSeg}-` : ""}${m["hf-repo"]}`;
+	return `${modeSeg ? `${modeSeg}-` : ""}${m["hf-repo"]}`;
 }
 
 /**
- * Generate the 10-local-llm-inference layer + the sibling .paths manifest.
+ * Generate the 10-local-llm-inference layer.
  * Capability-gated by the CALLER (container backend + GPU devices; see the
  * orchestration block below) — LOCAL_INFERENCE=1 forces generation for debug
  * and the generator itself never re-checks viability.
  * @returns {void}
  */
+
+// --- quant-display pruning ---------------------------------------------------
+
+/**
+ * Tail of one shard inside a split GGUF ("...-00001-of-00002.gguf"). Shard
+ * groups are summed under the de-sharded name, so a repo's footprint per
+ * quant is one number whether or not it was uploaded split.
+ */
+const GGUF_SHARD_RE = /-\d{5}-of-\d{5}\.gguf$/;
+
+/**
+ * Repos at or above this many BILLION total parameters never display BF16/F16:
+ * the variant is already outside every footprint this fleet can serve, so it
+ * only bloats the config with a model that can never load. Small models keep
+ * them — there a full-precision variant is genuinely useful.
+ * @type {number}
+ */
+const BF16_F16_HIDE_ABOVE_PARAMS_B = 4;
+
+/**
+ * Repos below this many BILLION total parameters are "low parameter models"
+ * for the low-quant rule: their cheapest four quants are noise in the model
+ * list, so they are dropped — but never past the top two quants, which a repo
+ * with few quants must keep to stay servable at all.
+ * @type {number}
+ */
+const LOW_QUANT_DROP_BELOW_PARAMS_B = 4;
+
+/**
+ * Repos below this many BILLION total parameters get their context window
+ * raised to SMALL_MODEL_CTX_CAP — never past what the GGUF header declares
+ * natively (`ctx-native` in the table; absent means no raise, never a
+ * guess — the same stance the unsized-keeps rule takes).
+ * @type {number}
+ */
+const SMALL_MODEL_CTX_RAISE_BELOW_PARAMS_B = 8;
+
+/**
+ * The context ceiling a small model is raised to (256k tokens).
+ * @type {number}
+ */
+const SMALL_MODEL_CTX_CAP = 262_144;
+
+/**
+ * Bytes of each distinct main GGUF (shard groups summed) keyed by de-sharded
+ * path, from one committed hf-manifest. The table entry's `model` field uses
+ * the same path, so normalization is the only alignment needed.
+ * @param {Array<{path: string, size: number}>} files
+ * @returns {Map<string, number>} de-sharded GGUF path -> total bytes
+ */
+function mainGgufSizes(files) {
+	/** @type {Map<string, number>} */
+	const sizes = new Map();
+	for (const f of files) {
+		if (!f.path.endsWith(".gguf")) { continue; }
+		// drafter/side builds (the mmproj projector, the MTP drafter, and the
+		// partial dflash/dspark artifacts some repos ship beside the main
+		// partial dflash/dspark artifacts some repos ship beside the main
+		// quants) carry file sizes unrelated to the total parameter count —
+		// a dflash bf16 once read a 27B blend as 1.9B
+		if (/(^|\/)(mmproj|mtp|dflash|dspark)-/i.test(f.path)) { continue; }
+		const key = f.path.replace(GGUF_SHARD_RE, ".gguf");
+		sizes.set(key, (sizes.get(key) ?? 0) + f.size);
+	}
+	return sizes;
+}
+
+/**
+ * The committed hf-manifest for one repo, main-GGUF sizes only. Throws when
+ * the manifest is absent — every consumer (quant display, ctx raise) needs
+ * the same file, so one loader keeps one error message.
+ * @param {string} repo "org/repo"
+ * @returns {Map<string, number>} de-sharded main GGUF path -> bytes
+ */
+function repoGgufSizes(repo) {
+	const manifestPath = join(LIB_DIR, "hf-manifests", `${repo.replace("/", "--")}.json`);
+	try {
+		return mainGgufSizes(JSON.parse(readFileSync(manifestPath, "utf-8")).files);
+	} catch (err) {
+		throw new Error(
+			"quant-display pruning needs the committed hf-manifest for " + repo +
+				" (" + manifestPath + "): " + /** @type {Error} */ (err).message,
+		);
+	}
+}
+
+/**
+ * Total parameter count, in billions, derived from a repo's BF16 (fallback
+ * F16) main GGUF bytes: at 2 bytes per parameter those file sizes ARE the
+ * parameter count, so no separate metadata table is needed. Returns null when
+ * neither full-precision file exists. One fallback exists: repos that ship a
+ * bare F16 build with no quant tag in the name (Spark's root upload) instead
+ * of an F16-suffixed file — without it the small-model rules could not see
+ * them at all. A bare build only counts when its name carries no quant tag:
+ * the largest low-bit shard of a big model must never pass as full
+ * precision, or a 24B repo would read as <8B.
+ * @param {Map<string, number>} sizes from mainGgufSizes
+ * @returns {number|null}
+ */
+function totalParamsB(sizes) {
+	for (const tag of ["BF16", "F16"]) {
+		for (const [key, bytes] of sizes) {
+			const base = key.split("/").pop().replace(/\.gguf$/i, "");
+			if (base.toLowerCase().endsWith(tag.toLowerCase())) {
+				return bytes / 2 / 1e9;
+			}
+		}
+	}
+	// No full-precision upload: some repos ship a bare F16 build (no quant tag
+	// in the name, e.g. Spark's root upload) instead of an F16-suffixed file.
+	// Only those count — the largest low-bit shard of a big model must never
+	// pass as "full precision", or a 24B repo would read as <8B.
+	let f16Bytes = null;
+	for (const [key, bytes] of sizes) {
+		const base = key.split("/").pop().replace(/\.gguf$/i, "");
+		if (/[.-](UD-|IQ[1-4]_|Q[2-8]_|TQ[1-2]_|BF16|F16|F32|NVFP4|MXFP4|FP8)/i.test(base)) { continue; }
+		f16Bytes = Math.max(f16Bytes ?? 0, bytes);
+	}
+	return f16Bytes === null ? null : f16Bytes / 2 / 1e9;
+}
+
+/**
+ * The two quant-display rules, both keyed off TOTAL parameters (not the
+ * per-quant footprint) because total size is what decides whether a variant
+ * can ever fit and whether its fidelity is worth a config slot:
+ *  - a repo above BF16_F16_HIDE_ABOVE_PARAMS_B never displays BF16/F16;
+ *  - a repo below LOW_QUANT_DROP_BELOW_PARAMS_B drops its four cheapest
+ *    quants, but always keeps the top two, so a short quant list can never
+ *    empty out.
+ * Repos without a usable parameter estimate pass through unfiltered.
+ * @param {Record<string, any>[]} entries the flat model-data table
+ * @returns {Record<string, any>[]} entries to generate, same order
+ */
+function pruneQuantDisplay(entries) {
+	/** @type {Map<string, Record<string, any>[]>} */
+	const byRepo = new Map();
+	for (const e of entries) {
+		const repo = e["hf-repo"].split(":")[0];
+		if (!byRepo.has(repo)) { byRepo.set(repo, []); }
+		byRepo.get(repo).push(e);
+	}
+	const keep = new Set(entries);
+	for (const [repo, group] of byRepo) {
+		const sizes = repoGgufSizes(repo);
+		const paramsB = totalParamsB(sizes);
+		if (paramsB === null) {
+			logWarn("quant-display pruning skipped — no BF16/F16 in hf-manifest", { repo });
+			continue;
+		}
+		const roundB = Math.round(paramsB * 10) / 10;
+		if (paramsB > BF16_F16_HIDE_ABOVE_PARAMS_B) {
+			for (const e of group) {
+				const quant = e["hf-repo"].split(":")[1];
+				// suffix match, not equality: some repos spell the tag
+			// "LFM3-1.7B-F16" rather than a bare "F16"
+			if (quant && /(bf16|f16)$/i.test(quant)) {
+					keep.delete(e);
+					logWarn("quant-display: full-precision variant hidden (large model)", {
+						repo, quant, paramsB: roundB,
+					});
+				}
+			}
+		}
+		if (paramsB < LOW_QUANT_DROP_BELOW_PARAMS_B) {
+			const bySize = group
+				.map((e) => ({
+					e,
+					size: sizes.get(e.model.replace(GGUF_SHARD_RE, ".gguf")),
+				}))
+				.sort((a, b) => (a.size ?? Number.POSITIVE_INFINITY) - (b.size ?? Number.POSITIVE_INFINITY));
+			const dropCount = Math.min(4, Math.max(0, bySize.length - 2));
+			for (const { e } of bySize.slice(0, dropCount)) {
+				keep.delete(e);
+				logWarn("quant-display: cheap quant dropped (small model)", {
+					repo, quant: e["hf-repo"].split(":")[1], paramsB: roundB,
+				});
+			}
+		}
+	}
+	return entries.filter((e) => keep.has(e));
+}
+
+
 function generateLocalInference() {
 	/**
 	 * The model-data table lives in this folder's own lib/ (docs/d113: the
@@ -409,14 +554,25 @@ function generateLocalInference() {
 	const modelData = JSON.parse(
 		readFileSync(join(LIB_DIR, "llamacpp-model-data.json"), "utf-8"),
 	);
+	const entries = pruneQuantDisplay(modelData.models);
 
-	/** @type {Set<string>} host-side files to re-verify in run.sh's preflight */
-	const bakedHostPaths = new Set();
 	/** @type {Record<string, unknown>} */
 	const models = {};
-	for (const raw of modelData.models) {
+	for (const raw of entries) {
 		const m = { ...DEFAULTS, ...raw };
-		const ctxSize = m["ctx-size"]; // AUTHORITATIVE --ctx-size (not --fit-ctx)
+		// Small models get their context raised to the fleet cap — but never
+		// past what the GGUF header declares natively (`ctx-native`, read per
+		// the runbook; absent means "no raise", never a guess — the same
+		// stance the unsized-keeps rule takes). The KV cost of 256k on a
+		// <8B model is what the small weights left spare.
+		const paramsB = totalParamsB(repoGgufSizes(m["hf-repo"].split(":")[0]));
+		let ctxSize = m["ctx-size"]; // AUTHORITATIVE --ctx-size (not --fit-ctx)
+		if (paramsB !== null && paramsB < SMALL_MODEL_CTX_RAISE_BELOW_PARAMS_B) {
+			const native = m["ctx-native"];
+			if (typeof native === "number") {
+				ctxSize = Math.max(ctxSize, Math.min(SMALL_MODEL_CTX_CAP, native));
+			}
+		}
 		const nPredict = ctxSize;
 		/**
 		 * One snapshot resolution per ENTRY (all three mmproj modes share it):
@@ -424,9 +580,6 @@ function generateLocalInference() {
 		 * at the same commit, or generation fails.
 		 */
 		const baked = bakeSnapshotPaths(m);
-		for (const p of baked.hostPaths) {
-			bakedHostPaths.add(p);
-		}
 		const modes = m.mmproj ? mmprojModesFor(m) : [{ seg: null, vision: false }];
 		for (const mode of modes) {
 			const modalities = mode.vision ? ["text", "image"] : ["text"];
@@ -444,8 +597,8 @@ function generateLocalInference() {
 			if (mode.seg) {
 				cmd += ` \${${mode.seg}}`;
 			}
-			if (mode.vision && m["image-min-tokens"] !== undefined) {
-				cmd += ` --image-min-tokens ${m["image-min-tokens"]} --image-max-tokens ${m["image-max-tokens"]}`;
+			if (mode.vision) {
+				cmd += ` --image-min-tokens ${m["image-min-tokens"] ?? IMAGE_TOKENS_DEFAULT} --image-max-tokens ${m["image-max-tokens"] ?? IMAGE_TOKENS_DEFAULT}`;
 			}
 			if (m.__argv) {
 				cmd += ` ${m.__argv}`;
@@ -501,21 +654,6 @@ function generateLocalInference() {
 	}
 
 	writeConfigD("10-local-llm-inference.yaml", { models });
-	// The .paths manifest is the run.sh staleness preflight's input (docs/d029
-	// B): one model-file path per line, re-verified before the serving container
-	// starts. Paths are stored relative to the HF cache root — absolute paths
-	// would bake the generating host's username into a committed artifact — and
-	// run.sh re-resolves them against the same cache the serving container
-	// binds. llama-swap ignores non-*.yml/*.yaml files in -config-dir
-	// (internal/config/merge.go listYAMLFiles), so the companion rides in
-	// config.d/ next to the layer it validates.
-	writeArtifact(
-		join(configD, "10-local-llm-inference.paths"),
-		`${[...bakedHostPaths]
-			.sort()
-			.map((p) => relative(HUB_HOST, p))
-			.join("\n")}\n`,
-	);
 }
 
 // --- orchestration (folded from the former generate.sh) ---------------------

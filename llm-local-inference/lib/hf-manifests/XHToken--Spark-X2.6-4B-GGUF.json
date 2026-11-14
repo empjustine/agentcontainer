@@ -1,0 +1,67 @@
+{
+	"repo": "XHToken/Spark-X2.6-4B-GGUF",
+	"commit": "9d716770ac7477776de5f891f70cdf98b003a5cd",
+	"fetched_at": "2026-11-12T03:58:27+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "09cd601a6117e10d3efb219f9e2f224409490791",
+			"size": 1827
+		},
+		{
+			"path": "LICENSE",
+			"oid": "b7456707c547e5df6a88ee0255ad9c422ac52f9b",
+			"size": 11338
+		},
+		{
+			"path": "README.md",
+			"oid": "101c93c705630053cd3523472ca03bc27e3d7462",
+			"size": 14945
+		},
+		{
+			"path": "Spark-X2.6-4B-Q4_K_M.gguf",
+			"oid": "91cb2811aebb47ac916aa619d27d4cdd7f4143106b7917accb8ead4cd7f5cbd9",
+			"size": 3543441312
+		},
+		{
+			"path": "Spark-X2.6-4B-Q8_0.gguf",
+			"oid": "145c2aa606820663f26ad530b8fc141ed885e2e9ca29f9be7c3bfe8931d58b81",
+			"size": 4375021824
+		},
+		{
+			"path": "Spark-X2.6-4B.gguf",
+			"oid": "1fcf934d5baab142ea66a508e0ef423854659f223f72248d2de31476ff6954a7",
+			"size": 8229921024
+		},
+		{
+			"path": "images/.DS_Store",
+			"oid": "5008ddfcf53c02e82d7eee2e57c38e5672ef89f6",
+			"size": 6148
+		},
+		{
+			"path": "images/all_benchmark.svg",
+			"oid": "9b8c04ba48986c0fa977643f0569930231ab2d22",
+			"size": 45910
+		},
+		{
+			"path": "images/benchmark.svg",
+			"oid": "8ff50652fc18ce3f2c5ddb2af098c8230c95397e",
+			"size": 51427
+		},
+		{
+			"path": "images/inference.svg",
+			"oid": "5999bcdc1fad0559cd062cb5f95f8c787c8675d3",
+			"size": 25659
+		},
+		{
+			"path": "images/reasoning_effort.svg",
+			"oid": "5fa829cad5d02cf3e2b332c9e7f112f618b8f598",
+			"size": 13561
+		},
+		{
+			"path": "images/xhtoken-wechat.jpg",
+			"oid": "0c3fbd25c987237b383461fdaa96bf6881af615c23ba3baf19e51a7879354ddb",
+			"size": 160131
+		}
+	]
+}

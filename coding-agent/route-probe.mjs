@@ -408,7 +408,7 @@ export async function probeEndpoint(url, headers) {
 
 /**
  * Probe candidate base URLs in order; the first one whose catalog passes
- * `accept` wins. Authenticated with $REVERSE_PROXY_API_KEY when set —
+ * `accept` wins. Authenticated with $TLALOCAYOTL_API_KEY when set —
  * llama-swap's own client-facing bearer key, the one row whose listing is
  * still keyed by a shared fleet secret (docs/d027). The cloud providers go
  * through probeEndpoint with their own key instead.
@@ -434,7 +434,7 @@ export async function probeCandidates(candidates, accept) {
 		try {
 			const entries = await fetchModelEntries(
 				baseUrl,
-				bearerHeaders(process.env.REVERSE_PROXY_API_KEY?.trim()),
+				bearerHeaders(process.env.TLALOCAYOTL_API_KEY?.trim()),
 			);
 			const ids = entries.map((e) => e.id);
 			if (!accept(ids)) {

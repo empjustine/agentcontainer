@@ -3,7 +3,7 @@
 # units; no unit imports it).
 #
 # The gate surface, in the order it runs — every leg gates except shfmt:
-#   shell sources · jq workload-filter compile · shfmt (advisory) · oxfmt
+#   shell sources · jq workload-filter compile (vacuous since d170) · shfmt (advisory) · oxfmt
 #   markdown · biome · oxlint (type-aware) · knip · ruff · uv sync --frozen ·
 #   ty · the capability-URL, runner-copy and retired-root-lib text gates ·
 #   spec-graph contract · golangci-lint.
@@ -43,8 +43,7 @@ cd "$root"
 
 log_info "shellcheck"
 # -x: follow `source` directives (the run scripts point at their
-# own folder's lib copies; the shell run scripts point
-# at their lib/workload-runtime.sh — coding-agent's launcher is a node module,
+# own folder's lib copies — coding-agent's launcher is a node module,
 # docs/d119).
 # node_modules is pruned: npm's dependency tree may carry vendor *.sh files,
 # and this gate owns only this repo's sources.
@@ -54,11 +53,12 @@ dev_tool_run shellcheck find . -path ./node_modules -prune -o \
 	-path ./.venv -prune -o \
 	-type f -name '*.sh' -exec shellcheck -x {} +
 
-# jq compile gate for the workload description filters. One copy is left:
-# llm-local-inference/ — there is no repo-level lib/ (docs/d113), coding-agent
-# ported its runtime to node (docs/d119) and estige became a package (docs/d120).
-# The glob stays `*/lib/workload-*.jq` so a future shell copy is gated the day it
-# lands rather than the day someone remembers this line.
+# jq compile gate for the workload description filters. The last shell copy
+# left with llm-local-inference/run.sh (d170): coding-agent ported its runtime
+# to node (docs/d119), estige became a package (docs/d120) and
+# llm-local-inference moved its runner to python. The glob stays
+# `*/lib/workload-*.jq` so a future shell copy is gated the day it lands
+# rather than the day someone remembers this line.
 #
 # jq resolves --arg/--argjson names at COMPILE time, so this catches a typo'd
 # filter variable as well as a syntax error.  The catch: a filter that uses

@@ -33,10 +33,10 @@ relay/proxy machinery is no longer exercised from here.
 ## Shape
 
 `generate.mjs` (generation — the former gen-lib.mjs + both emitters folded
-into one file, docs/d041; `./npm-run.sh llm-local-inference generate` runs it)
-and `run.sh`
+into one file, docs/d041; `./node-run.sh llm-local-inference/generate.mjs`
+runs it) and `run.py`
 (serve) are strictly separated;
-`run.sh` mounts the generated `config.d/` read-only into the
+`run.py` mounts the generated `config.d/` read-only into the
 `llama-swap:unified-vulkan` image with GPU passthrough + HF-cache mounts and
 publishes LAN **8101** (`HOST_PORT` overrides; in-container 8080) — host
 port 8080 belongs to ../estige, the funnel front, which points
@@ -46,9 +46,9 @@ The legacy :18080 port is dead and never probed.
 
 **config.d layers** (layer-merge rules in `docs/d018-split-config-d.md` —
 not pi's layered-cake merge; d072 names the two apart):
-`00-general.yaml` (globals/macros; always) · `10-local-llm-inference.yaml` +
-its `.paths` staleness manifest (only when a container backend **and** GPU
-devices are detected). There is no mode where this instance serves another
+`00-general.yaml` (globals/macros; always) · `10-local-llm-inference.yaml`
+(only when a container backend **and** GPU devices are detected; the sibling
+`.paths` staleness manifest was retired with its preflight, d170). There is no mode where this instance serves another
 host's models: a host without the container backend + GPU cannot serve local
 inference and generation fails hard
 (`LOCAL_INFERENCE=1` forces generation for debug only). No shell lives in
@@ -67,8 +67,10 @@ endpoint.
 - **Generation-time, not runtime**: context windows are embedded into each
   model's `cmd` as `--ctx-size/--n-predict` at generation time from
   `lib/llamacpp-model-data.json` — this folder's own copy, which it also owns
-  the _content_ of (`docs/d025`, `CACHE-DESIGN.md`); model-id slugs derive from
-  `active-b.json` (`docs/d003-llamacpp-context-windows.md`).
+  the _content_ of (`docs/d025`, `CACHE-DESIGN.md`); model ids are just the hf-repo
+  (quant lives in it; the active-b and ctx slug prefixes were retired with
+  their tables, d170 — a second id spelling of the same entry only invites
+  callers to pin a stale one).
 - **Generation-time path baking** (`docs/d029` option B): each model is
   resolved to ONE HF snapshot dir (refs/main first, the revision
   `download_models.py` pins) and `--model/--mmproj/--model-draft`
@@ -77,20 +79,28 @@ endpoint.
   `launch-gguf.sh` in-container resolver (binary lookup, download fallback,
   positional interface) is gone. A cache miss is a generation error; model
   provisioning belongs to `download_models.py` and is never
-  duplicated as a launch-time download. `run.sh` re-verifies the baked paths
-  via the generated `.paths` manifest so a cache changed since generation is
-  a loud "re-run ./npm-run.sh llm-local-inference generate", not a llama-server 127
-  at swap time.
+  duplicated as a launch-time download. A cache changed since generation
+  surfaces as a llama-server 127 at swap time — the `.paths` preflight that
+  used to catch it at launch is retired (d170), and its offline re-verify is
+  an open follow-up on `upkeep.py`.
 - **Offline generation**: the local layer is built from vendored tables
-  (`llamacpp-model-data.json`, `active-b.json`, `llama-swap-core.json`) plus a
+  (`llamacpp-model-data.json`, `llama-swap-core.json`) plus a
   read of the host HF hub cache directory (no network) — the models.dev
-  refresh and every HTTP probe went with that handoff and are gone.
-- **Inbound bearer auth stays**: `apiKeys: ${env.REVERSE_PROXY_API_KEY}` in
-  `00-general.yaml` is llama-swap's _own_ client-facing key (renamed from
-  the historical `PEER_API_KEY` under d071; `docs/d001` covers the
-  key-naming contract). It is the only
+  refresh and every HTTP probe went with that handoff and are gone. Quant
+  display is pruned here too (d170): BF16/F16 hidden for repos of ≥4B total
+  params, the four cheapest quants dropped for smaller repos (top two
+  kept) — the flat table stays the full record. Small models (<8B total params) also get
+  their context raised to the 256k fleet cap, never past the GGUF header's
+  native `context_length` (`ctx-native` in the table, filled from header
+  reads; absent means no raise). The parameter count excludes the
+  drafter/side builds some repos ship beside the main quants (mmproj, MTP,
+  dflash/dspark) — a dflash bf16 once read a 27B blend as 1.9B.
+- **Inbound bearer auth stays**: `apiKeys: ${env.TLALOCAYOTL_API_KEY}` in
+  `00-general.yaml` is llama-swap's _own_ client-facing key (PEER_API_KEY →
+  REVERSE_PROXY_API_KEY under d071, → TLALOCAYOTL_API_KEY with the hostname
+  change; `docs/d001` covers the key-naming contract). It is the only
   secret this module needs — `HF_TOKEN` is NOT forwarded into the container
-  anymore (nothing in-container downloads). Only **run.sh** needs the vault
+  anymore (nothing in-container downloads). Only **run.py** needs the vault
   (via the repo-root `./environment.sh`) — generation is offline and key-free: llama-swap
   resolves the `${env.*}` reference from its own environment at load time.
 
@@ -98,8 +108,7 @@ endpoint.
 
 Copy unit = this folder alone (`docs/architecture.md`, docs/d113): it carries
 its own `lib/` copy — `log.mjs`/`log.py`, `artifact.mjs` +
-`canonical-json.mjs`, `host-capabilities.mjs`, `workload-runtime.sh` +
-`workload-*.jq`, and the data tables it reads
+`canonical-json.mjs`, `host-capabilities.mjs`, and the data tables it reads
 (`llamacpp-model-data.json`, `hf-manifests/`). The HF-cache provisioning and
 audit tooling that used to be the sibling `local-llm/` folder now lives FLAT in
 this folder too (`CACHE-DESIGN.md` is its sub-spec), so there is no separate
