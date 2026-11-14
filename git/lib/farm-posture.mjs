@@ -160,7 +160,6 @@ export function emitHits(tool, extra, window) {
 /** @type {string[]} */
 const scratchDirs = [];
 let scratchHome = "";
-let scratchTmpDir = "";
 
 /**
  * The load-bearing scrub: git probes HOME, so it must exist as a directory,
@@ -169,19 +168,13 @@ let scratchTmpDir = "";
  */
 export function initScratch() {
 	scratchHome = mkdtempSync(join(tmpdir(), "farm-home-"));
-	scratchTmpDir = mkdtempSync(join(tmpdir(), "farm-tmp-"));
-	scratchDirs.push(scratchHome, scratchTmpDir);
+	scratchDirs.push(scratchHome);
 	// One hook, so a refusal thrown from any depth still cleans up.
 	process.on("exit", () => {
 		for (const dir of scratchDirs) {
 			rmSync(dir, { recursive: true, force: true });
 		}
 	});
-}
-
-/** @returns {string} the run's temp dir (verbs never make their own). */
-export function scratchTmp() {
-	return scratchTmpDir;
 }
 
 // --- the farm root --------------------------------------------------------

@@ -186,7 +186,8 @@ lives in ../pi-hyper/ and is flagged there.
 - Provider facts: the frozen row in `sources.mjs` (`synthetic`, docs/d092).
 - The emitted provider block's shape: `coding-agent/model-019-cloud-synthetic.json`.
 - Extension API surface: pi's own docs — `docs/custom-provider.md`,
-  `docs/extensions.md` — and the installed packages (see above).
+  `docs/extensions.md` — and the installed packages (see
+  _Checked against pi 1.4.0_).
 - Reference implementation, read as source and not installed:
   [aliou/pi-synthetic](https://github.com/aliou/pi-synthetic) (MIT, © Aliou
   Diallo). Taken: the idea that a bearer `authHeader` beats an SDK default, and

@@ -50,6 +50,9 @@
 		"git/farm-aliases.mjs",
 		"llm-local-inference/generate.mjs",
 		"llm-local-inference/model-sizes.mjs",
+		// the ingest daemon: exec'd by agent-warehouse-daemon.sh, whose tests
+		// are shell — no import graph reaches either
+		"datalakehouse/agent-warehouse-daemon.mjs",
 		// the pi extension family: each folder's generator (run by that
 		// folder's package.json script, via the root ./npm-run.sh) and its
 		// runtime entry (loaded by the pi host, which no import graph can

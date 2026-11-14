@@ -48,7 +48,7 @@ and a markdown file whose frontmatter lacks either field is simply not one —
 as meeting the contract below, and the validator only sees part of it.
 
 The `required` column is this tree's requirement, enforced by the gate — not the
-tooling's, which asks for less (see above).
+tooling's, which asks for less (see _Which rules are whose_).
 
 | field                                    | required         | rule                                                                                                                                                                                                                                                                                                                                                                                  |
 | ---------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
