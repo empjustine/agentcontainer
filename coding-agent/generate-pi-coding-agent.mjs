@@ -79,6 +79,7 @@ import { join } from "node:path";
 
 import {
 	bearerHeaders,
+	catalogModelLive,
 	providerFacts,
 	getCatwalkModels,
 	loadProviderFacts,
@@ -246,21 +247,20 @@ const MODEL_SCOPES = {
  *   lineup from the facts cache. Without it a catalog-less row throws and no
  *   layer is written
  *   (docs/d032 F1, docs/d057)
- * @property {readonly string[]} [modelAllowlist] catalog-namespace model ids
- *   to restrict the catalog lineup to (full; docs/d040)
+ * @property {boolean} [mixedSurface] one base URL serving several api
+ *   dialects, describable only by the provider's own live listing: without
+ *   one the row publishes NO models and pi's built-in records stand
+ *   (docs/d048)
  * @property {boolean} [catalogOnly] the provider serves no model listing the
  *   probe could ever authenticate (google: /v1beta/models demands its own
  *   api-key parameter, not the bearer the probe sends, so every probe is a
  *   permanent 403) — no probes at all, the models.dev slice is the sole
  *   lineup source, and the catwalk union is skipped (override-only; docs/d033)
- * @property {((modelsDevModels: Record<string, ModelsDevModel>) => ReadonlyMap<string, string>) | undefined}
- *   [modelApiResolver] derives per-model pi `api` overrides from a published
- *   source; only the returned ids get one, every other model keeps the
- *   provider-wide default (full/override-only; docs/d048)
- * @property {((models: Record<string, ModelsDevModel>) => readonly string[]) | undefined}
- *   [modelAllowlistResolver] derives the allowlist from a published source,
- *   cross-checked against the provider's catalog slice; when present it
- *   replaces modelAllowlist at emit time (full; docs/d040)
+ * @property {(() => Promise<readonly LineupEntry[]>) | undefined} [lineupResolver]
+ *   the provider's PUBLISHED lineup (id + display name), fetched at emit
+ *   time; when present it decides which ids publish and the catalog only
+ *   supplies their metadata, so it replaces modelAllowlist for that row
+ *   (full; docs/d189)
  * @property {string} [modelIdPrefix] literal prefix every catalog model id
  *   must carry (full). Structural guard, not a scoping choice: models.dev
  *   intermittently mislabels `cline`-provider models under other provider
@@ -278,59 +278,43 @@ const MODEL_SCOPES = {
 const CLINE_PASS_ID = "cline-pass";
 
 /**
- * Committed last-known-good lineup — the fallback for
- * resolveClinePassAllowlist below, transcribed from Cline's published table
- * (`docs/getting-started/clinepass.mdx` in the `~/cline/cline.git` mirror,
- * "Models" section). The live parse is preferred, so this constant only
- * matters on a broken-facts run (no mirror, or a failed agreement check);
- * docs/d040 owns the reconciliation contract.
- * @type {readonly string[]}
+ * Cline's published clinepass.mdx: the ONE source of the called-through
+ * lineup (docs/d189). The mirror farm is not consulted for this file — a
+ * mirror clone is a remembered table, and a remembered table publishes ids
+ * the gateway has already retired.
  */
-const CLINE_PASS_LINEUP = /** @type {readonly string[]} */ (
-	Object.freeze([
-		"cline-pass/glm-5.3",
-		"cline-pass/glm-5.3-flash",
-		"cline-pass/kimi-k3",
-		"cline-pass/deepseek-v4-pro",
-		"cline-pass/deepseek-v4.1-flash",
-		"cline-pass/mimo-v2.5",
-		"cline-pass/mimo-v2.5-pro",
-		"cline-pass/minimax-m3",
-		"cline-pass/muse-spark-1.3-contributor",
-		"cline-pass/qwen3.8-max",
-		"cline-pass/qwen3.7-max",
-		"cline-pass/qwen3.7-plus",
-	])
-);
+const CLINE_PASS_DOCS_URL =
+	"https://raw.githubusercontent.com/cline/cline/main/docs/getting-started/clinepass.mdx";
 
 /**
- * Minimum fraction of the published docs table that must also appear in the
- * models.dev cline-pass slice before either source is trusted (docs/d040).
- * models.dev intermittently dumps the whole `cline` catalog under
- * `cline-pass` — that collapse (and a reshaped docs table) drives the ratio
- * toward zero, so the committed fallback wins instead of a wrong-priced
- * lineup. Genuine lineup growth keeps the ratio near 1, so it self-adopts.
+ * One row of the published `## Models` table: the id the gateway bills under
+ * (already in the `cline-pass/` namespace) and the display name the table
+ * gives it.
+ * @typedef {object} LineupEntry
+ * @property {string} id
+ * @property {string} name
  */
-const CLINE_PASS_MATCH_FLOOR = 0.8;
 
 /**
- * Parse the `## Models` GFM table from Cline's published clinepass.mdx and
- * return the model ids WITH their `cline-pass/` prefix — the catalog
- * namespace and the id the layer publishes, so no consumer re-derives it.
- * Scoped to that section because the later
+ * Parse the `## Models` GFM table from Cline's published clinepass.mdx into
+ * one entry per row: the id WITH its `cline-pass/` prefix (the namespace the
+ * API bills under) and the display name in the table's first column, so no
+ * consumer re-derives either. Scoped to that section because the later
  * `## Reference pricing` table is a different shape (peak/off-peak and
  * token-tier rows with display-only names). Every accepted id must carry the
  * `cline-pass/` prefix — the published table doubles as the API-namespace
- * assertion. Returns null when the section is absent.
+ * assertion. Returns null when the section is absent or carries no prefixed
+ * id.
  * @param {string} mdx
- * @returns {string[]|null}
+ * @returns {LineupEntry[]|null}
  */
 function parseClinePassDocs(mdx) {
 	const section = mdx.split(/^## Models\s*$/m)[1]?.split(/^## /m)[0];
 	if (!section) {
 		return null;
 	}
-	const ids = [];
+	/** @type {LineupEntry[]} */
+	const lineup = [];
 	for (const line of section.split("\n")) {
 		const trimmed = line.trim();
 		if (!trimmed.startsWith("|")) {
@@ -340,12 +324,18 @@ function parseClinePassDocs(mdx) {
 			.split("|")
 			.slice(1, -1)
 			.map((c) => c.trim());
-		const raw = cells[1]?.replace(/`/g, "");
-		if (raw?.startsWith(`${CLINE_PASS_ID}/`)) {
-			ids.push(raw);
+		const id = cells[1]?.replace(/`/g, "");
+		if (!id?.startsWith(`${CLINE_PASS_ID}/`)) {
+			continue;
 		}
+		// A repeated row is one model: the docs file has carried duplicates
+		// before, and a lineup is a set, not an ordering to reproduce.
+		if (lineup.some((entry) => entry.id === id)) {
+			continue;
+		}
+		lineup.push({ id, name: cells[0] || id });
 	}
-	return ids;
+	return lineup.length > 0 ? lineup : null;
 }
 
 /**
@@ -360,11 +350,15 @@ function parseClinePassDocs(mdx) {
  *   OPENCODE_MIRROR, ...) — tried first, but a broken override still falls
  *   through to the farm defaults rather than failing the read
  * @param {string} orgRepo "<org>/<repo>" both farm layouts key on
- * @param {string} refPath the in-repo path handed to `git show HEAD:`
+ * @param {string|string[]} refPath the in-repo path handed to `git show
+ *   HEAD:` — an array is an ordered candidate list for a document that
+ *   moved: the first path the mirror still carries wins, and an upstream
+ *   move costs the file's content, never the read (docs/d048)
  * @param {string} warnContext log label on total failure
  * @returns {string|null}
  */
 function readMirrorFile(envMirror, orgRepo, refPath, warnContext) {
+	const refPaths = typeof refPath === "string" ? [refPath] : refPath;
 	const candidates = [
 		...(envMirror ? [envMirror] : []),
 		join(homedir(), "Downloads", "references", "github.com", `${orgRepo}.git`),
@@ -372,110 +366,65 @@ function readMirrorFile(envMirror, orgRepo, refPath, warnContext) {
 	];
 	let lastError;
 	for (const mirror of candidates) {
-		try {
-			return execFileSync("git", ["-C", mirror, "show", `HEAD:${refPath}`], {
-				encoding: "utf-8",
-				stdio: ["ignore", "pipe", "ignore"],
-				timeout: 15_000,
-			});
-		} catch (err) {
-			lastError = err;
+		for (const path of refPaths) {
+			try {
+				return execFileSync("git", ["-C", mirror, "show", `HEAD:${path}`], {
+					encoding: "utf-8",
+					stdio: ["ignore", "pipe", "ignore"],
+					timeout: 15_000,
+				});
+			} catch (err) {
+				lastError = err;
+			}
 		}
 	}
 	logWarn(`${warnContext} — no mirror location readable`, {
 		candidates,
+		refPaths,
 		error: lastError,
 	});
 	return null;
 }
 
 /**
- * Read Cline's published clinepass.mdx. The git farm is machine-specific, so
- * this is best-effort and bounded: a missing mirror (the normal container
- * case) or a blob-less mirror without network fails fast and the caller
- * falls back. CLINE_PASS_MDX points at a plain file when there is no mirror;
- * CLINE_MIRROR overrides the mirror lookup (readMirrorFile: the
- * ~/Downloads/references/github.com farm first, then ~/cline/cline.git).
- * @returns {string|null}
+ * Read Cline's published clinepass.mdx: a pinned local file (CLINE_PASS_MDX)
+ * when the host carries one, else the canonical raw URL. THROWS when neither
+ * answers — no table means no ClinePass lineup, and a remembered one is not
+ * a substitute (docs/d189).
+ * @returns {Promise<string>}
  */
-function readClinePassDocs() {
+async function readClinePassDocs() {
 	const explicit = process.env.CLINE_PASS_MDX;
 	if (explicit) {
-		try {
-			return readFileSync(explicit, "utf-8");
-		} catch (err) {
-			logWarn("cline-pass docs file unreadable", {
-				path: explicit,
-				error: err,
-			});
-			return null;
-		}
+		return readFileSync(explicit, "utf-8");
 	}
-	return readMirrorFile(
-		process.env.CLINE_MIRROR,
-		"cline/cline",
-		"docs/getting-started/clinepass.mdx",
-		"cline-pass docs mirror unreadable — using committed allowlist",
-	);
+	const res = await fetch(CLINE_PASS_DOCS_URL, {
+		signal: AbortSignal.timeout(15_000),
+	});
+	if (!res.ok) {
+		throw new Error(`cline-pass docs answered ${res.status}`);
+	}
+	return res.text();
 }
 
 /**
- * The cline-pass allowlist for this run: the UNION of Cline's published docs
- * table and the models.dev cline-pass slice when the two still agree, else
- * the committed fallback. The agreement floor is the self-check — it
- * protects against BOTH failure modes at once: a models.dev pollution dump
- * (docs models vanish from the slice) and a docs-table reshape (ids stop
- * parsing). Union, not docs-only, so catalog-first additions (new models
- * land in models.dev before the docs table updates) self-adopt while the
- * floor still guarantees the two sources describe the same provider. The
- * fallback is safe on top of that because the modelIdPrefix guard still
- * drops unprefixed ids, so a polluted slice yields no layer rather than a
- * wrong-priced one.
- * @param {Record<string, ModelsDevModel>} modelsDevModels the cline-pass slice
- * @returns {readonly string[]} catalog-namespace model ids
+ * ClinePass's published lineup for this run: the docs table, and nothing
+ * else. models.dev carries metadata for those ids, never a lineup — its
+ * cline-pass slice keeps rows the gateway has retired (docs/d189).
+ * @returns {Promise<readonly LineupEntry[]>}
+ * @throws {Error} when the table cannot be read or parsed: an unavailable
+ *   lineup is an unavailable provider, not a reason to publish a remembered
+ *   list (docs/d189)
  */
-function resolveClinePassAllowlist(modelsDevModels) {
-	const docs = readClinePassDocs();
-	const docsIds = docs ? parseClinePassDocs(docs) : null;
-	if (!docsIds || docsIds.length === 0) {
-		logWarn("cline-pass docs lineup unavailable — using committed allowlist", {
-			fallback: CLINE_PASS_LINEUP.length,
-		});
-		return CLINE_PASS_LINEUP;
+async function resolveClinePassLineup() {
+	const lineup = parseClinePassDocs(await readClinePassDocs());
+	if (!lineup) {
+		throw new Error("clinepass.mdx carries no ## Models table");
 	}
-	const catalogKeys = new Set(
-		Object.keys(modelsDevModels).filter((id) =>
-			id.startsWith(`${CLINE_PASS_ID}/`),
-		),
-	);
-	const matched = docsIds.filter((id) => catalogKeys.has(id));
-	const ratio = matched.length / docsIds.length;
-	if (ratio < CLINE_PASS_MATCH_FLOOR) {
-		logWarn(
-			"cline-pass docs/models.dev disagree — keeping committed allowlist",
-			{
-				docs: docsIds.length,
-				matched: matched.length,
-				ratio,
-				floor: CLINE_PASS_MATCH_FLOOR,
-			},
-		);
-		return CLINE_PASS_LINEUP;
-	}
-	/**
-	 * Union: docs ids first (the published contract), then catalog-only ids
-	 * (catalog-first additions the docs table has not caught up to) — the
-	 * emitFull filter intersects with the catalog anyway, so docs-only ids
-	 * simply find no record to emit.
-	 */
-	const union = [...new Set([...docsIds, ...catalogKeys])];
-	logInfo("cline-pass lineup adopted as docs ∪ models.dev union", {
-		docs: docsIds.length,
-		matched: matched.length,
-		catalogOnlyAdopted: catalogKeys.size - matched.length,
-		union: union.length,
+	logInfo("cline-pass lineup read from the published table", {
+		models: lineup.length,
 	});
-	return union;
+	return lineup;
 }
 
 /**
@@ -486,70 +435,63 @@ function resolveClinePassAllowlist(modelsDevModels) {
 const OPENCODE_GO_ID = "opencode-go";
 
 /**
- * The ai-sdk package each opencode-go endpoint speaks, mapped to the pi api
- * type that requests that wire shape (pi docs/models.md). The go.mdx
- * endpoints table and the models.dev per-model `provider.npm` override use
- * the same package vocabulary, so one table maps both (docs/d048).
- * @type {Readonly<Record<string, string>>}
+ * The pi-native rows behind ONE base URL that serves a MIXED api surface —
+ * zen (opencode) and Go share the machinery. Their provider-level dialect
+ * cannot route the lineup, and the catalog carries no dialect at all (its
+ * per-model `provider.npm` cannot split the two openai shapes), so only a
+ * live listing describes them: without one, publishing id-only records would
+ * replace pi's described built-ins with stubs and route every model through
+ * the wrong shape. The row keeps the reroute and publishes no models
+ * (docs/d048).
+ * @type {ReadonlySet<string>}
  */
-const OPENCODE_GO_API_BY_PACKAGE = Object.freeze({
-	"@ai-sdk/anthropic": "anthropic-messages",
-	"@ai-sdk/openai": "openai-responses",
-	"@ai-sdk/openai-compatible": "openai-completions",
-});
-
-/**
- * Same shape guarantee as CLINE_PASS_MATCH_FLOOR, for the opencode-go
- * endpoints table vs the models.dev opencode-go slice (docs/d048).
- * @type {number}
- */
-const OPENCODE_GO_MATCH_FLOOR = 0.8;
+const MIXED_SURFACE_IDS = new Set(["opencode", OPENCODE_GO_ID]);
 
 /**
  * Parse the `## Endpoints` GFM table from opencode's published go.mdx into
- * bare model id → pi api type. Scoped to that section because the other
- * tables (usage limits, privacy) carry display names only. Cell layout:
- * | Model | Model ID | Endpoint | AI SDK Package | — the endpoint path
- * itself is redundant with the package column for pi's purposes, so only the
- * package is mapped. Returns null when the section is absent.
+ * bare model ids. Scoped to that section because the other tables (usage
+ * limits, privacy) carry display names only; cell layout is
+ * | Model | Model ID | Endpoint | AI SDK Package | and only the id column
+ * matters — the endpoint column is a restatement of the route each LIVE
+ * listing entry already declares per model (docs/d048). Returns null when
+ * the section is absent, which is not an error: the table is a reference,
+ * never a lineup source.
  * @param {string} mdx
- * @returns {Map<string, string>|null}
+ * @returns {Set<string>|null}
  */
-function parseOpencodeGoEndpoints(mdx) {
+function parseDocsModelIds(mdx) {
 	const section = mdx.split(/^## Endpoints\s*$/m)[1]?.split(/^## /m)[0];
 	if (!section) {
 		return null;
 	}
-	/** @type {Map<string, string>} */
-	const apiById = new Map();
+	/** @type {Set<string>} */
+	const ids = new Set();
 	for (const line of section.split("\n")) {
 		const trimmed = line.trim();
 		if (!trimmed.startsWith("|")) {
 			continue;
 		}
-		const cells = trimmed
+		const id = trimmed
 			.split("|")
 			.slice(1, -1)
-			.map((c) => c.trim());
-		const id = cells[1]?.replace(/`/g, "");
-		const api = cells[3]
-			? OPENCODE_GO_API_BY_PACKAGE[cells[3].replace(/`/g, "")]
-			: undefined;
-		if (id && api) {
-			apiById.set(id, api);
+			.map((c) => c.trim())[1]
+			?.replace(/`/g, "");
+		// The GFM separator row (`| --- | --- | ...`) sits in the same table
+		// and its second cell is a dash run; the header cell is the label.
+		if (id && id !== "Model ID" && !/^-+$/.test(id)) {
+			ids.add(id);
 		}
 	}
-	return apiById;
+	return ids;
 }
 
 /**
- * Read opencode's published go.mdx. Same best-effort contract as
- * readClinePassDocs: OPENCODE_GO_MDX points at a plain file, OPENCODE_MIRROR
- * overrides the mirror lookup (readMirrorFile: the
- * ~/Downloads/references/github.com farm first, then
- * ~/anomalyco/opencode.git; the mirror's HEAD must be the dev branch), and
- * a missing mirror or blob-less mirror without network fails fast into the
- * bounded 15s timeout.
+ * Read opencode's published go.mdx. OPENCODE_GO_MDX points at a plain file;
+ * otherwise the mirror lookup (readMirrorFile) tries the in-repo paths in
+ * order — the docs moved from the package tree to the site tree, and the
+ * candidate list makes a further move a degrade to "no reference" rather
+ * than a silent loss (docs/d048). A missing mirror is the normal container
+ * case and warns once.
  * @returns {string|null}
  */
 function readOpencodeGoDocs() {
@@ -568,110 +510,60 @@ function readOpencodeGoDocs() {
 	return readMirrorFile(
 		process.env.OPENCODE_MIRROR,
 		"anomalyco/opencode",
-		"packages/web/src/content/docs/go.mdx",
-		"opencode-go docs mirror unreadable — no per-model api overrides",
+		[
+			"services/site/src/docs/content/console/go.mdx",
+			"packages/web/src/content/docs/go.mdx",
+		],
+		"opencode-go docs mirror unreadable — no docs/listing cross-check",
 	);
 }
 
+/** @type {Set<string>|null|undefined} undefined = not read yet */
+let docsModelIdsCache;
+
 /**
- * The per-model pi `api` overrides for opencode-go, whose single base URL
- * serves a MIXED api surface (/chat/completions, /responses, /messages per
- * model) — a provider-wide dialect cannot route the lineup, so models need
- * pi's model-level `api`. Two published sources, self-checked like
- * resolveClinePassAllowlist: opencode's endpoints table (the contract) and
- * the models.dev per-model `provider.npm` override (upstream: the anomalyco
- * models.dev fork's providers/opencode-go/models/*.toml). At or above
- * OPENCODE_GO_MATCH_FLOOR the union is adopted — docs wins on conflict, the
- * catalog npm fills catalog-only ids; below it (or with no docs source at
- * all) the map comes back EMPTY, which is exactly the pre-resolver behavior:
- * every model on pi's provider-wide default. An empty map is the safe
- * failure, not a wrong-shaped request.
- * @param {Record<string, ModelsDevModel>} modelsDevModels the opencode-go slice
- * @returns {ReadonlyMap<string, string>} bare model id → pi api type
+ * The published endpoint ids, read once per run. Null when no docs source
+ * answered — the cross-check then simply does not run.
+ * @returns {Set<string>|null}
  */
-function resolveOpencodeGoApi(modelsDevModels) {
-	const docs = readOpencodeGoDocs();
-	const docsApi = docs ? parseOpencodeGoEndpoints(docs) : null;
-	if (!docsApi || docsApi.size === 0) {
-		logWarn(
-			"opencode-go endpoints table unavailable — every model keeps the provider-wide default api",
-			{},
-		);
-		return new Map();
+function docsModelIds() {
+	if (docsModelIdsCache === undefined) {
+		const docs = readOpencodeGoDocs();
+		docsModelIdsCache = docs ? parseDocsModelIds(docs) : null;
 	}
-	const catalogKeys = new Set(Object.keys(modelsDevModels));
-	const matched = [...docsApi.keys()].filter((id) => catalogKeys.has(id));
-	const ratio = matched.length / docsApi.size;
-	if (ratio < OPENCODE_GO_MATCH_FLOOR) {
-		logWarn(
-			"opencode-go docs/models.dev disagree — no per-model api overrides",
-			{
-				docs: docsApi.size,
-				matched: matched.length,
-				ratio,
-				floor: OPENCODE_GO_MATCH_FLOOR,
-			},
-		);
-		return new Map();
-	}
-	const apiById = new Map(docsApi);
-	let catalogOnlyAdopted = 0;
-	let conflicts = 0;
-	let unmapped = 0;
-	for (const [id, m] of Object.entries(modelsDevModels)) {
-		const npm = m.provider?.npm;
-		const api = npm ? OPENCODE_GO_API_BY_PACKAGE[npm] : undefined;
-		if (npm && !api) {
-			unmapped++;
-		}
-		if (docsApi.has(id)) {
-			if (api && api !== docsApi.get(id)) {
-				conflicts++;
-			}
-		} else if (api) {
-			apiById.set(id, api);
-			catalogOnlyAdopted++;
-		}
-	}
-	logInfo("opencode-go per-model api overrides adopted", {
-		docs: docsApi.size,
-		matched: matched.length,
-		catalogOnlyAdopted,
-		conflicts,
-		unmapped,
-		union: apiById.size,
-	});
-	if (conflicts || unmapped) {
-		logWarn("opencode-go api sources disagree — docs table wins", {
-			conflicts,
-			unmapped,
-		});
-	}
-	return apiById;
+	return docsModelIdsCache;
 }
 
 /**
- * Attach the spec's per-model `api` overrides (when it has a resolver) to
- * already-built model records. Ids the resolver does not know keep pi's
- * provider-wide default — the override-only rows deliberately omit
- * provider-level `api` so pi's built-in dialect stays in charge.
- * @param {CloudProviderSpec} spec
+ * Compare opencode-go's emitted lineup with the published table and log both
+ * directions (docs/d048). The table is a REFERENCE, not a lineup: the live
+ * listing decides which ids exist (a key that cannot call a model does not
+ * see it, and that absence is the provider's answer, not a gap to patch),
+ * so a docs-only id is reported and never added. The reverse direction —
+ * a live model the table does not list — is the drift that matters for
+ * documentation, and it is reported the same way.
  * @param {import("./gen-lib.mjs").PiModel[]} models
  * @returns {void}
  */
-function applyModelApi(spec, models) {
-	if (!spec.modelApiResolver) {
+function reportOpencodeGoDocsDrift(models) {
+	const docsIds = docsModelIds();
+	if (!docsIds) {
 		return;
 	}
-	const apiById = spec.modelApiResolver(CATALOG?.[spec.id]?.models ?? {});
-	for (const m of models) {
-		const api = apiById.get(m.id);
-		if (api) {
-			m.api = api;
-		}
+	const emitted = new Set(models.map((m) => m.id));
+	const docsOnly = [...docsIds].filter((id) => !emitted.has(id));
+	const liveOnly = [...emitted].filter((id) => !docsIds.has(id));
+	if (docsOnly.length === 0 && liveOnly.length === 0) {
+		logInfo("opencode-go docs and live listing agree", {
+			models: emitted.size,
+		});
+		return;
 	}
+	logWarn(
+		"opencode-go docs and live listing disagree — the listing stands (docs/d048)",
+		{ docs: docsIds.size, live: emitted.size, docsOnly, liveOnly },
+	);
 }
-
 /** @type {CloudProviderSpec[]} */
 const PROVIDER_SPECS = [
 	// --- override-only: the pi-native set (fact table owns the base URL) ---
@@ -682,12 +574,8 @@ const PROVIDER_SPECS = [
 				mode: "override-only",
 				envKey: providerFacts(id).apiKeyEnv,
 				filter: MODEL_SCOPES[id],
-				// opencode-go is the one pi-native provider with a MIXED api
-				// surface behind one base URL — it needs per-model api overrides
-				// from the published endpoints table (docs/d048).
-				...(id === OPENCODE_GO_ID
-					? { modelApiResolver: resolveOpencodeGoApi }
-					: {}),
+				// A mixed surface is only describable by its own listing (d048).
+				...(MIXED_SURFACE_IDS.has(id) ? { mixedSurface: true } : {}),
 				// google publishes no models endpoint the probe can authenticate
 				// (its /v1beta/models reads an api-key param, not a bearer) — the
 				// models.dev google slice is the lineup source, probes are wasted
@@ -712,8 +600,8 @@ const PROVIDER_SPECS = [
 		// syncing against it would prune the real lineup and append 400+ wrong
 		// ids. The published ClinePass table is the contract instead (docs/d040).
 		modelIdPrefix: `${CLINE_PASS_ID}/`,
-		modelAllowlist: CLINE_PASS_LINEUP,
-		modelAllowlistResolver: resolveClinePassAllowlist,
+		// The table decides the lineup; models.dev only prices it (docs/d189).
+		lineupResolver: resolveClinePassLineup,
 	},
 	{
 		id: "hyper",
@@ -1218,10 +1106,13 @@ function listingModels(entries, spec) {
 	const models = entries
 		.filter(
 			(e) =>
-				// d049: judge the typed input surface when the listing carries
-				// one (RawModelEntry types input only — output is not on this
-				// path's typed surface, so it stays unjudgeable here).
-				modalitiesEligible({ input: e.architecture?.input_modalities }) &&
+				// d049: judge the typed surface when the listing carries one —
+				// llama-swap and openrouter type `architecture`, a first-party
+				// gateway types `modalities` (an untyped dimension passes).
+				modalitiesEligible({
+					input: e.architecture?.input_modalities ?? e.modalities?.input,
+					output: e.modalities?.output,
+				}) &&
 				(filter?.(e.id) ?? true),
 		)
 		.map(piModel);
@@ -1243,12 +1134,24 @@ function listingModels(entries, spec) {
  * @returns {void}
  */
 function emitMinimalCatalogOverride(spec, providers) {
+	if (spec.mixedSurface) {
+		// The catalog carries no per-model dialect, so id-only records would
+		// replace pi's described built-ins with stubs and misroute each model.
+		providers[spec.id] = providerReroute(providerFacts(spec.id).baseUrl);
+		logInfo("mixed surface, no listing — reroute only, pi's records stand", {
+			provider: spec.id,
+		});
+		return;
+	}
 	const filter = spec.filter;
 	const modelsDevModels = CATALOG?.[spec.id]?.models ?? {};
 	const ids = new Set(
 		Object.keys(modelsDevModels).filter(
 			(mid) =>
-				// d049 gate first, then the provider's exception/access checks.
+				// A retired catalog entry first (docs/d048): publishing it offers
+				// a model the provider stopped serving.
+				catalogModelLive(modelsDevModels[mid]) &&
+				// then the d049 gate, then the exception/access checks.
 				modalitiesEligible(modelsDevModels[mid]?.modalities) &&
 				(filter?.(mid, modelsDevModels[mid]) ?? true),
 		),
@@ -1273,7 +1176,6 @@ function emitMinimalCatalogOverride(spec, providers) {
 		);
 	}
 	const models = [...ids].map((mid) => piModel({ id: mid }));
-	applyModelApi(spec, models);
 	providers[spec.id] = providerReroute(
 		providerFacts(spec.id).baseUrl,
 		models,
@@ -1327,7 +1229,9 @@ async function emitOverrideOnly(spec, providers) {
 	}
 	const models = listingModels(route.entries, spec);
 	if (models) {
-		applyModelApi(spec, models);
+		if (spec.id === OPENCODE_GO_ID) {
+			reportOpencodeGoDocsDrift(models);
+		}
 		logInfo("override models from the live listing", {
 			provider: spec.id,
 			models: models.length,
@@ -1380,14 +1284,28 @@ async function emitFull(spec) {
 	 * @type {string}
 	 */
 	const canonicalUrl = providerFacts(spec.id).baseUrl;
-	const allow = spec.modelAllowlistResolver
-		? spec.modelAllowlistResolver(provider.models)
-		: spec.modelAllowlist;
+	/**
+	 * The published lineup, when this row has one: it decides WHICH ids
+	 * publish, and the catalog is then only their metadata (docs/d189).
+	 * @type {readonly LineupEntry[]|null}
+	 */
+	const lineup = spec.lineupResolver ? await spec.lineupResolver() : null;
+	/**
+	 * The bound on which catalog ids may publish: a published lineup is the
+	 * whole bound for its row, and a row without one publishes its whole
+	 * catalog slice.
+	 * @type {Set<string>|null}
+	 */
+	const allow = lineup
+		? new Set(lineup.map((entry) => entry.id))
+		: null;
 	const catalogModels = Object.entries(provider.models)
 		.filter(
-			([id]) =>
+			([id, m]) =>
+				// A retired catalog entry never publishes (docs/d048).
+				catalogModelLive(m) &&
 				(!spec.modelIdPrefix || id.startsWith(spec.modelIdPrefix)) &&
-				(!allow || allow.includes(id)),
+				(!allow || allow.has(id)),
 		)
 		.map(([, m]) => m);
 	/** @type {PiAlternativeModel[]} */
@@ -1395,12 +1313,49 @@ async function emitFull(spec) {
 		.map((m) => catalogPiModel(spec, m))
 		.filter((m) => m !== null);
 
+	if (lineup) {
+		/**
+		 * The table owns the display name as well: models.dev has published the
+		 * raw id in that field, and a row named after its own id is worse than
+		 * the published label (docs/d189).
+		 * @type {Map<string, string>}
+		 */
+		const publishedNames = new Map(
+			lineup.map((entry) => [entry.id, entry.name]),
+		);
+		for (const model of models) {
+			const name = publishedNames.get(model.id);
+			if (name) {
+				model.name = name;
+			}
+		}
+		/**
+		 * A published id the catalog has no record for still publishes: the
+		 * table is the contract and the catalog only its metadata, so a model
+		 * models.dev has not caught up to lands with the table's display name
+		 * and pi's schema defaults rather than vanishing (docs/d189).
+		 */
+		const published = new Set(models.map((m) => m.id));
+		for (const entry of lineup) {
+			if (published.has(entry.id)) {
+				continue;
+			}
+			const model = catalogPiModel(spec, {
+				id: entry.id,
+				name: entry.name,
+			});
+			if (model) {
+				models.push(model);
+			}
+		}
+	}
+
 	if (spec.facts) {
 		// refreshProviderFacts walks the reverse-proxy routes only (docs/d063)
 		// and falls back to the last good cache; provider facts are metadata,
 		// and metadata fetches never leave the proxy.
 		await refreshProviderFacts(spec.id, spec.facts);
-		const facts = loadProviderFacts(spec.id);
+		const facts = loadProviderFacts(spec.id, spec.facts?.listKey);
 		if (!facts) {
 			logWarn("facts cache unavailable — using catalog metadata", {
 				provider: spec.id,
@@ -1424,7 +1379,7 @@ async function emitFull(spec) {
 				? facts.models.filter((l) => routeIds.has(l.id))
 				: facts.models;
 			models = served
-				.filter((l) => !allow || allow.includes(l.id))
+				.filter((l) => !allow || allow.has(l.id))
 				.map((l) => catalogPiModel(spec, factsMapper(l), l.id))
 				.filter((m) => m !== null);
 			logInfo("lineup taken from the facts cache (no models.dev row)", {

@@ -66,6 +66,13 @@ export const {
 // Shared /models shapes — the types live next to the probe toolkit.
 /** @typedef {import("./route-probe.mjs").RawModelEntry} RawModelEntry */
 /** @typedef {import("./route-probe.mjs").Cost} Cost */
+/**
+ * pi's price block: the four required per-million prices plus the
+ * context-triggered overrides pi calls cost.tiers (a request whose input
+ * exceeds the threshold bills at the higher price for ALL its tokens, which is
+ * how a provider's ">200K context" row works).
+ * @typedef {Cost & { tiers?: Array<Cost & { inputTokensAbove: number }> }} PiCost
+ */
 
 /**
  * A pi-shaped model entry: what pi needs to route and price a model.
@@ -76,16 +83,18 @@ export const {
  * @property {string[]} input
  * @property {number|undefined} [contextWindow]
  * @property {number|undefined} [maxTokens]
- * @property {Cost} [cost] absent — the key is DROPPED, never null — when
+ * @property {PiCost} [cost] absent — the key is DROPPED, never null — when
  *   the listing carries no pricing, and piCost() refuses an empty, partial
  *   or all-zero block for the same reason: pi's schema needs all four price
  *   fields if the key is there at all (committed artifacts contain zero
  *   `"cost": null` entries; `cost: null` would churn every artifact and may
  *   trip strict consumers)
  * @property {string} [api] per-model api override (pi docs/models.md) —
- *   set by the generator when the provider serves a MIXED api surface and
- *   the provider-wide dialect cannot route every model (opencode-go,
- *   docs/d048)
+ *   set when the provider serves a MIXED api surface and the provider-wide
+ *   dialect cannot route every model (docs/d048)
+ * @property {string} [baseUrl] per-model base URL — set together with api
+ *   when the listing names one per dialect: a mixed surface lives at a path
+ *   per dialect, not at one provider root (docs/d048)
  */
 
 /**
@@ -166,6 +175,18 @@ export const PI_MODALITY_CAPABILITY = Object.freeze({
 });
 
 /**
+ * models.dev's own retirement flag: `deprecated` is the one status meaning the
+ * provider stopped serving the id, so publishing it offers a dead model.
+ * `beta` and `alpha` are availability stages of live models and stay
+ * (docs/d048).
+ * @param {{ status?: string }|undefined} record
+ * @returns {boolean}
+ */
+export function catalogModelLive(record) {
+	return record?.status !== "deprecated";
+}
+
+/**
  * docs/d049's admit-but-trim GATE: judge only the dimensions the record
  * actually carries. A missing/empty dimension is unjudgeable and PASSES —
  * name exceptions and id-only defaults stay the fallback for records
@@ -183,11 +204,7 @@ export const PI_MODALITY_CAPABILITY = Object.freeze({
 export function modalitiesEligible(modalities) {
 	const input = modalities?.input;
 	const output = modalities?.output;
-	if (
-		input &&
-		input.length > 0 &&
-		!input.includes(PI_DRIVABLE_CORE)
-	) {
+	if (input && input.length > 0 && !input.includes(PI_DRIVABLE_CORE)) {
 		return false;
 	}
 	if (
@@ -253,17 +270,131 @@ export function piCost(cost) {
 }
 
 /**
- * Mirror a raw `/models` entry into pi's model shape, preferring llama-swap's
- * own metadata over the llama.cpp fields.
+ * pi's api vocabulary keyed by the DIALECT name a gateway's own model listing
+ * uses (`api: { <dialect>: { base_url, sdk } }`). The dialect, not the ai-sdk
+ * package, is the wire shape: `@ai-sdk/openai` serves both /chat/completions
+ * and /responses, so only the dialect key says which one a model speaks
+ * (docs/d048).
+ * @type {Readonly<Record<string, string>>}
+ */
+const PI_API_BY_DIALECT = Object.freeze({
+	"chat-completions": "openai-completions",
+	responses: "openai-responses",
+	messages: "anthropic-messages",
+	"generate-content": "google-generative-ai",
+});
+
+/**
+ * The one wire route a rich listing declares for a model: its pi api plus the
+ * base URL that api needs. pi appends the endpoint to a base, so the anthropic
+ * base drops the listing's /v1 (pi's own catalogs carry `.../anthropic`, the
+ * base of /v1/messages) while the openai and google bases keep their version
+ * segment. An absent or multi-dialect `api` block is no answer at all: the
+ * model keeps the provider-wide dialect.
+ * @param {RawModelEntry} entry
+ * @returns {{ api: string, baseUrl: string }|null}
+ */
+function listingRoute(entry) {
+	const dialects = Object.keys(entry.api ?? {});
+	if (dialects.length !== 1) {
+		return null;
+	}
+	const [dialect] = dialects;
+	const api = PI_API_BY_DIALECT[dialect];
+	const baseUrl = entry.api?.[dialect]?.base_url;
+	if (!api || !baseUrl) {
+		return null;
+	}
+	return {
+		api,
+		baseUrl:
+			api === "anthropic-messages"
+				? baseUrl.replace(/\/v1$/, "")
+				: baseUrl,
+	};
+}
+
+/**
+ * The typed input surface a rich listing declares, in pi's capability
+ * vocabulary: the listing names MIME types (image/jpeg, application/pdf) while
+ * toInput's deny-by-absence projection speaks only text and image. What pi
+ * cannot drive (pdf, audio, video) is deliberately left for toInput to drop —
+ * mapping is not judgement (docs/d049).
+ * @param {string[]} [modalities]
+ * @returns {string[]|undefined}
+ */
+function listingInput(modalities) {
+	if (!Array.isArray(modalities) || modalities.length === 0) {
+		return;
+	}
+	return modalities.map((m) => (m.startsWith("image/") ? "image" : m));
+}
+
+/**
+ * A rich listing's price block in pi's shape: the base tier plus pi's
+ * `cost.tiers` for the context-triggered overrides the listing publishes
+ * (docs/d048). Completeness stays piCost's judgement, so an unpriced model
+ * still publishes no cost block at all.
+ * @param {RawModelEntry["cost"]} cost
+ * @returns {PiCost|undefined}
+ */
+function listingCost(cost) {
+	const text = cost?.text;
+	const price = piCost({
+		input: text?.input?.price,
+		output: text?.output?.price,
+		cacheRead: text?.input?.cache?.read,
+		cacheWrite: text?.input?.cache?.write,
+	});
+	if (!price) {
+		return;
+	}
+	const inputRows = text?.input?.overrides ?? [];
+	const outputRows = text?.output?.overrides ?? [];
+	const thresholds = [
+		...new Set(
+			[...inputRows, ...outputRows]
+				.map((row) => row?.when?.context?.gt)
+				.filter((limit) => typeof limit === "number"),
+		),
+	].sort((a, b) => a - b);
+	if (thresholds.length === 0) {
+		return price;
+	}
+	const rowAt = (rows, limit) =>
+		rows.find((row) => row?.when?.context?.gt === limit);
+	return {
+		...price,
+		tiers: thresholds.map((limit) => {
+			const inRow = rowAt(inputRows, limit);
+			const outRow = rowAt(outputRows, limit);
+			return {
+				inputTokensAbove: limit,
+				input: inRow?.price ?? price.input,
+				output: outRow?.price ?? price.output,
+				cacheRead: inRow?.cache?.read ?? price.cacheRead,
+				cacheWrite: inRow?.cache?.write ?? price.cacheWrite,
+			};
+		}),
+	};
+}
+
+/**
+ * Mirror a raw /models entry into pi's model shape. Llama-swap's own metadata
+ * wins where it speaks (the serving side declaring itself); the rich row a
+ * first-party gateway serves fills what llama.cpp fields cannot express —
+ * limits, tiers, the per-model wire route (docs/d048).
  * @param {RawModelEntry} entry
  * @returns {PiModel}
  */
 export function piModel(entry) {
 	const meta = entry.meta?.llamaswap;
+	const route = listingRoute(entry);
 	const contextWindow =
 		meta?.contextWindow ??
 		entry.context_length ??
 		entry.meta?.n_ctx ??
+		entry.limit?.context ??
 		undefined;
 	/**
 	 * Don't trust raw provider listings to stay inside pi's input schema:
@@ -277,20 +408,32 @@ export function piModel(entry) {
 	const input = toInput(
 		meta?.input ??
 			entry.architecture?.input_modalities ??
+			listingInput(entry.modalities?.input) ??
 			(entry.capabilities?.vision ? ["text", "image"] : ["text"]),
 	);
 	// Judged, never copied: an empty/all-zero upstream block becomes NO key
 	// (piCost's rule) instead of an invalid one reaching the artifact.
-	const cost = piCost(meta?.cost);
-	const name = displayName(entry.id);
+	const cost = meta?.cost ? piCost(meta.cost) : listingCost(entry.cost);
+	// A rich listing publishes the model name; llama-swap names its models in
+	// its own metadata, so its entries keep the id-derived display fallback.
+	const name = route ? entry.name : displayName(entry.id);
+	// capabilities.reasoning is an object in a rich listing ({supported,
+	// effort, toggle}) and a boolean on llama-swap metadata: only an explicit
+	// supported:false means the model cannot think.
+	const listed = entry.capabilities?.reasoning;
+	const reasoning =
+		meta?.reasoning ??
+		(typeof listed === "object" ? listed?.supported : listed) ??
+		true;
 	return {
 		id: entry.id,
 		...(name ? { name } : {}),
-		reasoning: meta?.reasoning ?? true,
+		reasoning,
 		input,
 		contextWindow,
-		maxTokens: meta?.maxTokens ?? contextWindow,
+		maxTokens: meta?.maxTokens ?? entry.limit?.output ?? contextWindow,
 		...(cost ? { cost } : {}),
+		...(route ? { api: route.api, baseUrl: route.baseUrl } : {}),
 	};
 }
 
@@ -351,13 +494,17 @@ export function providerEntry(baseUrl, models) {
  * @param {string} providerUrl the provider's canonical upstream URL
  *   (fact table `baseUrl`, docs/d070; install substitutes the client route.
  *   The legacy `\`/v1\`` append was llama-swap's model-id-magic and is gone)
- * @param {PiModel[]} models
+ * @param {PiModel[]} [models] the records this override publishes. OMITTED
+ *   for a row whose surface no source can describe faithfully: pi's merge
+ *   keeps its own built-in records (their api, limits and prices) and the
+ *   override only changes WHERE requests go — an id-only record would
+ *   replace a described model with a stub (docs/d048)
  * @returns {PiProvider}
  */
 export function providerReroute(providerUrl, models) {
 	return {
 		baseUrl: providerUrl,
-		models,
+		...(models ? { models } : {}),
 	};
 }
 

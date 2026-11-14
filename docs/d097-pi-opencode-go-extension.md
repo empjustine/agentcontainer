@@ -100,10 +100,10 @@ invalidate the rule.
   REPLACES the catalog, which is why the success path contributes nothing.
   If a merge-style hook ever lands (add rows without replacing), the
   watchdog could contribute fresh listing ids alongside the built-in rows.
-- The fleet's own `resolveOpencodeGoApi` (single historical go.mdx path,
-  google deliberately unmapped) still degrades silently on current
-  mirrors; migrating `model-012` to the tested dual-path resolver — or to
-  pi's built-in per-model api — remains deferred.
+- The fleet's own per-model api resolver — cited here while it still read a
+  single historical `go.mdx` path and left google unmapped — is retired
+  (docs/d048): `model-012` takes each model's route and metadata from the
+  live listing, which makes the migration deferred above unnecessary.
 
 ## Amendment — the opencode unification
 

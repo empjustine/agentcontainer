@@ -39,16 +39,39 @@ superficial). One table, because [d024](d024-generators-split-and-provider-facts
 already made this file the single place provider facts live; per-generator
 tier lists would be the duplicated decision the repo forbids.
 
-| Tier            | Providers                                                            | Contract                                                                                                                                                                                                  |
-| --------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **first-class** | `cline-pass`, `hyper`, `verboo`, `opencode-go`, `llama-swap` (local) | fully computed lineups (live/facts/catalog cascade); regressions are fix priorities; outages preserve the last good artifact (stale-preserve) rather than dropping models                                 |
-| **best-effort** | `google` (ai studio), `mistral`, `inferx`, `openrouter`              | same cascade, still route-probed wherever a probe can mean something; fixed when convenient, never a priority                                                                                             |
-| **superficial** | `opencode` (zen), `nvidia`                                           | supported at the REVERSE-PROXY level (d047 allowlist row) and present as metadata; NOT smoke-tested; lineup = catalog slice only; metadata may be stale or wrong and that is accepted; not a fix priority |
+| Tier            | Providers                                                                 | Contract                                                                                                                                                                                                  |
+| --------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **first-class** | `cline-pass`, `hyper`, `verboo`, `opencode-go`, `llama-swap` (local)      | fully computed lineups (live/facts/catalog cascade); regressions are fix priorities; outages preserve the last good artifact (stale-preserve) rather than dropping models                                 |
+| **best-effort** | `google` (ai studio), `mistral`, `inferx`, `openrouter`, `opencode` (zen) | same cascade, still route-probed wherever a probe can mean something; fixed when convenient, never a priority                                                                                             |
+| **superficial** | `nvidia`                                                                  | supported at the REVERSE-PROXY level (d047 allowlist row) and present as metadata; NOT smoke-tested; lineup = catalog slice only; metadata may be stale or wrong and that is accepted; not a fix priority |
 
 "Superficial" is deliberately honest about [d063](d063-proxy-only-routing.md)'s
 machinery: the row still emits a proxy-routed entry (never omitted — d063 §3
 applies to every tier), but nothing validates that the route answers or that
 the computed provider/model metadata is valid end-to-end.
+
+### Why zen moved out of the superficial tier
+
+Zen (`opencode`) was superficial because nothing could describe its surface:
+one base URL serves several api dialects, and the catalog carries no
+per-model route at all. Its own `/models` endpoint settles that — with the
+bearer it answers 35 rows carrying `limit`, `modalities`, `cost` and exactly
+ONE dialect key, where the keyless body carries 86 and the catalog 134 (84
+with the retired entries removed). The keyed body is the RESTRICTED
+offering — the set the key's workspace is shown, not the public list — which
+is the same rule the route work applies to opencode-go ([d048](d048-opencode-go-mixed-api-surface.md)).
+
+Best-effort rather than first-class: the same key's zen calls answer `402
+Insufficient balance … OpenCode Go covers only requests to the OpenCode Go
+provider`, because the Go subscription does not fund zen. A lineup the key
+can see but not pay for is no smoke test, and first-class promises one.
+
+What did not change: `nvidia` is the remaining superficial row (its catalog
+slice is all there is), superficial still means the probe is skipped, and a
+zen run with no key or a dead route falls back to the reroute-only emission
+[d048](d048-opencode-go-mixed-api-surface.md) defines — pi's built-in
+records stand, which is this tier's stale-preserve in the only form a mixed
+surface allows.
 
 ### 2. Tier consequences per consumer
 
@@ -57,9 +80,9 @@ the computed provider/model metadata is valid end-to-end.
   at the proxy URL. Skipping the probe IS the "not smoke tested" statement —
   probes are the generators' only liveness mechanism, and a tier that is not
   promised liveness should not spend 8 s proving it.
-- **opencode generator**: same skip for `opencode` (zen);
-  `opencode-go` (first-class) and `openrouter` (best-effort) keep their
-  probes.
+- **opencode generator**: the same skip applies to `nvidia`, the one
+  superficial row left; `opencode` (zen), `opencode-go` and `openrouter` keep
+  their probes.
 - **first-class + best-effort**: unchanged from d063 — probes choose the
   lineup, never the route.
 - **llm-reverse-proxy**: serves every tier identically. Tiers are a

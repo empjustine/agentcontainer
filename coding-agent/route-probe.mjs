@@ -165,13 +165,32 @@ export function upstreamCandidates(upstream, pathAndQuery, envOverride) {
  * else is best-effort (llama.cpp, llama-swap and cloud providers each spell
  * the same concepts differently; Google's Gemini API serves `name` —
  * `models/<id>` — instead of `id`, normalized by fetchModelEntries).
+ * A context-triggered price row: the gateway bills the higher price for the
+ * whole request once its input passes `when.context.gt` (pi calls the same
+ * rule `cost.tiers`).
+ * @typedef {object} PriceOverride
+ * @property {{ context?: { gt?: number } }} [when]
+ * @property {number} [price]
+ * @property {{ read?: number, write?: number }} [cache]
+ */
+
+/**
+ * One entry of a provider /models listing. Two vocabularies reach this type:
+ * llama-swap's own (`meta`, `context_length`, `architecture`) and a
+ * first-party gateway's rich row (`limit`, `modalities`, `capabilities`,
+ * `cost.text`, `api`) — the listing describing itself, per model, which is
+ * the only per-model source for a mixed api surface (docs/d048).
  * @typedef {object} RawModelEntry
  * @property {string} id
  * @property {string} [name]
  * @property {number} [context_length]
  * @property {{ input_modalities?: string[] }} [architecture]
- * @property {{ vision?: boolean }} [capabilities]
+ * @property {{ vision?: boolean, reasoning?: { supported?: boolean, effort?: string[], toggle?: boolean }|boolean }} [capabilities]
  * @property {{ llamaswap?: LlamaSwapMeta, n_ctx?: number }} [meta]
+ * @property {{ context?: number, output?: number }} [limit]
+ * @property {{ input?: string[], output?: string[] }} [modalities]
+ * @property {{ text?: { input?: { price?: number, cache?: { read?: number, write?: number }, overrides?: PriceOverride[] }, output?: { price?: number, overrides?: PriceOverride[] } } }} [cost]
+ * @property {Record<string, { base_url?: string, sdk?: { aisdk?: string, opencodeai?: string } }>} [api]
  */
 
 /**

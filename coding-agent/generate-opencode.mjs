@@ -40,6 +40,7 @@ import {
 	logError,
 	logInfo,
 	logWarn,
+	catalogModelLive,
 	modalitiesEligible,
 	modelsDevCatalogPath,
 	probeCandidates,
@@ -139,6 +140,8 @@ function catalogModels(id, filter) {
 		const catalog = JSON.parse(readFileSync(modelsDevCatalogPath(), "utf-8"));
 		const models = catalog?.[id]?.models ?? {};
 		return Object.keys(models)
+			// A retired catalog entry never publishes (docs/d048).
+			.filter((mid) => catalogModelLive(models[mid]))
 			.filter((mid) => modalitiesEligible(models[mid]?.modalities))
 			.filter((mid) => filter?.(mid) ?? true)
 			.map((mid) => ({ id: mid }));

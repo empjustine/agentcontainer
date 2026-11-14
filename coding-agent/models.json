@@ -11,31 +11,6 @@
       },
       "models": [
         {
-          "id": "cline-pass/deepseek-v4-flash",
-          "name": "DeepSeek V4 Flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 1000000,
-          "maxTokens": 384000,
-          "cost": {
-            "input": 0.14,
-            "output": 0.28,
-            "cacheRead": 0.0028,
-            "cacheWrite": 0
-          },
-          "thinkingLevelMap": {
-            "off": "none",
-            "minimal": null,
-            "low": "low",
-            "medium": null,
-            "high": "high",
-            "xhigh": null,
-            "max": "max"
-          }
-        },
-        {
           "id": "cline-pass/deepseek-v4-pro",
           "name": "DeepSeek V4 Pro",
           "reasoning": true,
@@ -87,33 +62,18 @@
           }
         },
         {
-          "id": "cline-pass/glm-5.2",
-          "name": "GLM-5.2",
-          "reasoning": true,
+          "id": "cline-pass/deepseek-v4.1-flash-1017",
+          "name": "DeepSeek V4.1 Flash 1017",
+          "reasoning": false,
           "input": [
             "text"
           ],
-          "contextWindow": 1000000,
-          "maxTokens": 131072,
-          "cost": {
-            "input": 1.4,
-            "output": 4.4,
-            "cacheRead": 0.26,
-            "cacheWrite": 0
-          },
-          "thinkingLevelMap": {
-            "off": "none",
-            "minimal": null,
-            "low": null,
-            "medium": null,
-            "high": "high",
-            "xhigh": null,
-            "max": "max"
-          }
+          "contextWindow": 128000,
+          "maxTokens": 16384
         },
         {
           "id": "cline-pass/glm-5.3",
-          "name": "GLM-5.3",
+          "name": "GLM 5.3",
           "reasoning": true,
           "input": [
             "text"
@@ -138,7 +98,7 @@
         },
         {
           "id": "cline-pass/glm-5.3-flash",
-          "name": "cline-pass/glm-5.3-flash",
+          "name": "GLM 5.3 Flash",
           "reasoning": true,
           "input": [
             "text",
@@ -160,40 +120,6 @@
             "high": "high",
             "xhigh": null,
             "max": "max"
-          }
-        },
-        {
-          "id": "cline-pass/kimi-k2.6",
-          "name": "Kimi K2.6",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 262144,
-          "maxTokens": 262144,
-          "cost": {
-            "input": 0.95,
-            "output": 4,
-            "cacheRead": 0.16,
-            "cacheWrite": 0
-          }
-        },
-        {
-          "id": "cline-pass/kimi-k2.7-code",
-          "name": "Kimi K2.7 Code",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 262144,
-          "maxTokens": 262144,
-          "cost": {
-            "input": 0.95,
-            "output": 4,
-            "cacheRead": 0.19,
-            "cacheWrite": 0
           }
         },
         {
@@ -223,41 +149,18 @@
           }
         },
         {
-          "id": "cline-pass/mimo-v2.5",
-          "name": "MiMo-V2.5",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 1048576,
-          "maxTokens": 131072,
-          "cost": {
-            "input": 0.14,
-            "output": 0.28,
-            "cacheRead": 0.0028,
-            "cacheWrite": 0
-          }
-        },
-        {
-          "id": "cline-pass/mimo-v2.5-pro",
-          "name": "MiMo-V2.5-Pro",
-          "reasoning": true,
+          "id": "cline-pass/kimi-k3.1-pro",
+          "name": "Kimi K3.1 Pro",
+          "reasoning": false,
           "input": [
             "text"
           ],
-          "contextWindow": 1048576,
-          "maxTokens": 131072,
-          "cost": {
-            "input": 1.74,
-            "output": 3.48,
-            "cacheRead": 0.0145,
-            "cacheWrite": 0
-          }
+          "contextWindow": 128000,
+          "maxTokens": 16384
         },
         {
           "id": "cline-pass/mimo-v2.6-flash",
-          "name": "MiMo-V2.6-Flash",
+          "name": "MiMo V2.6 Flash",
           "reasoning": true,
           "input": [
             "text",
@@ -283,7 +186,7 @@
         },
         {
           "id": "cline-pass/mimo-v2.6-pro",
-          "name": "MiMo-V2.6-Pro",
+          "name": "MiMo V2.6 Pro",
           "reasoning": true,
           "input": [
             "text",
@@ -309,7 +212,7 @@
         },
         {
           "id": "cline-pass/minimax-m3",
-          "name": "MiniMax-M3",
+          "name": "MiniMax M3",
           "reasoning": true,
           "input": [
             "text",
@@ -323,6 +226,16 @@
             "cacheRead": 0.06,
             "cacheWrite": 0
           }
+        },
+        {
+          "id": "cline-pass/minimax-m3.1-flash",
+          "name": "MiniMax M3.1 Flash",
+          "reasoning": false,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 128000,
+          "maxTokens": 16384
         },
         {
           "id": "cline-pass/muse-spark-1.3-contributor",
@@ -451,13 +364,6 @@
         },
         {
           "id": "gemini-3.1-flash-lite",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gemini-3.1-flash-lite-preview",
           "reasoning": true,
           "input": [
             "text"
@@ -914,7 +820,7 @@
         {
           "id": "kimi-k2.7-code",
           "name": "Kimi K2.7 Code",
-          "reasoning": false,
+          "reasoning": true,
           "input": [
             "text",
             "image"
@@ -926,6 +832,15 @@
             "output": 4.3552,
             "cacheRead": 0.206872,
             "cacheWrite": 0
+          },
+          "thinkingLevelMap": {
+            "off": "off",
+            "minimal": null,
+            "low": null,
+            "medium": null,
+            "high": null,
+            "xhigh": null,
+            "max": "max"
           },
           "compat": {
             "supportsStore": false,
@@ -1001,7 +916,7 @@
         {
           "id": "minimax-m2.7",
           "name": "MiniMax-M2.7",
-          "reasoning": false,
+          "reasoning": true,
           "input": [
             "text"
           ],
@@ -1012,6 +927,15 @@
             "output": 1.852,
             "cacheRead": 0.242,
             "cacheWrite": 0
+          },
+          "thinkingLevelMap": {
+            "off": "off",
+            "minimal": null,
+            "low": null,
+            "medium": null,
+            "high": null,
+            "xhigh": null,
+            "max": "max"
           },
           "compat": {
             "supportsStore": false,
@@ -1095,9 +1019,9 @@
           "contextWindow": 1000000,
           "maxTokens": 131072,
           "cost": {
-            "input": 3.2664,
-            "output": 16.332,
-            "cacheRead": 0.32664,
+            "input": 2.2,
+            "output": 11,
+            "cacheRead": 0.22,
             "cacheWrite": 0
           },
           "compat": {
@@ -1495,37 +1419,33 @@
       "models": [
         {
           "id": "0text-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S",
-          "name": "Qwen3.8-3.6-27B-blend IQ3_S",
           "reasoning": true,
           "input": [
             "text"
           ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
+          "contextWindow": 131072,
+          "maxTokens": 131072
         },
         {
           "id": "0text-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q4_K_M",
-          "name": "Qwen3.8-3.6-27B-blend Q4_K_M",
           "reasoning": true,
           "input": [
             "text"
           ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
+          "contextWindow": 131072,
+          "maxTokens": 131072
         },
         {
           "id": "0text-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q5_K_M",
-          "name": "Qwen3.8-3.6-27B-blend Q5_K_M",
           "reasoning": true,
           "input": [
             "text"
           ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
+          "contextWindow": 131072,
+          "maxTokens": 131072
         },
         {
           "id": "0text-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw",
-          "name": "Qwen3.6-35B-A3B Q4_K_S-3.80bpw",
           "reasoning": true,
           "input": [
             "text"
@@ -1535,7 +1455,6 @@
         },
         {
           "id": "0text-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw",
-          "name": "Qwen3.6-35B-A3B Q4_K_S-4.22bpw",
           "reasoning": true,
           "input": [
             "text"
@@ -1545,7 +1464,6 @@
         },
         {
           "id": "0text-byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw",
-          "name": "Qwen3.8-27B IQ2_XXS-2.56bpw",
           "reasoning": true,
           "input": [
             "text"
@@ -1555,7 +1473,6 @@
         },
         {
           "id": "0text-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw",
-          "name": "Qwen3.8-27B IQ3_S-3.23bpw",
           "reasoning": true,
           "input": [
             "text"
@@ -1565,7 +1482,6 @@
         },
         {
           "id": "0text-byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw",
-          "name": "Qwen3.8-27B IQ3_XS-3.01bpw",
           "reasoning": true,
           "input": [
             "text"
@@ -1575,7 +1491,6 @@
         },
         {
           "id": "0text-byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw",
-          "name": "Qwen3.8-27B IQ3_XXS-2.88bpw",
           "reasoning": true,
           "input": [
             "text"
@@ -1585,7 +1500,6 @@
         },
         {
           "id": "0text-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.84bpw",
-          "name": "Qwen3.8-27B IQ4_XS-3.84bpw",
           "reasoning": true,
           "input": [
             "text"
@@ -1595,17 +1509,15 @@
         },
         {
           "id": "0text-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
-          "name": "LFM2.5-VL-3B UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text"
           ],
-          "contextWindow": 32768,
-          "maxTokens": 32768
+          "contextWindow": 128000,
+          "maxTokens": 128000
         },
         {
           "id": "0text-unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
-          "name": "Qwen3.6-27B Q4_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -1615,7 +1527,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0",
-          "name": "Qwen3.6-35B-A3B Q8_0",
           "reasoning": true,
           "input": [
             "text"
@@ -1625,7 +1536,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K",
-          "name": "Qwen3.6-35B-A3B UD-Q6_K",
           "reasoning": true,
           "input": [
             "text"
@@ -1635,7 +1545,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL",
-          "name": "Qwen3.6-35B-A3B UD-Q6_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -1645,7 +1554,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL",
-          "name": "Qwen3.6-35B-A3B UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -1654,18 +1562,7 @@
           "maxTokens": 131072
         },
         {
-          "id": "0text-unsloth/Qwen3.8-27B-GGUF:BF16",
-          "name": "Qwen3.8-27B BF16",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q4_0",
-          "name": "Qwen3.8-27B Q4_0",
           "reasoning": true,
           "input": [
             "text"
@@ -1675,7 +1572,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q4_1",
-          "name": "Qwen3.8-27B Q4_1",
           "reasoning": true,
           "input": [
             "text"
@@ -1685,7 +1581,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
-          "name": "Qwen3.8-27B Q4_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -1695,7 +1590,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_S",
-          "name": "Qwen3.8-27B Q4_K_S",
           "reasoning": true,
           "input": [
             "text"
@@ -1705,7 +1599,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_XL",
-          "name": "Qwen3.8-27B Q4_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -1715,7 +1608,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q5_K_M",
-          "name": "Qwen3.8-27B Q5_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -1725,7 +1617,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q5_K_S",
-          "name": "Qwen3.8-27B Q5_K_S",
           "reasoning": true,
           "input": [
             "text"
@@ -1735,7 +1626,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q5_K_XL",
-          "name": "Qwen3.8-27B Q5_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -1745,7 +1635,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q6_K",
-          "name": "Qwen3.8-27B Q6_K",
           "reasoning": true,
           "input": [
             "text"
@@ -1755,7 +1644,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q6_K_L",
-          "name": "Qwen3.8-27B Q6_K_L",
           "reasoning": true,
           "input": [
             "text"
@@ -1765,7 +1653,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q6_K_M",
-          "name": "Qwen3.8-27B Q6_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -1775,7 +1662,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q6_K_XL",
-          "name": "Qwen3.8-27B Q6_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -1785,7 +1671,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q8_0",
-          "name": "Qwen3.8-27B Q8_0",
           "reasoning": true,
           "input": [
             "text"
@@ -1795,7 +1680,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q8_K_L",
-          "name": "Qwen3.8-27B Q8_K_L",
           "reasoning": true,
           "input": [
             "text"
@@ -1805,7 +1689,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:Q8_K_XL",
-          "name": "Qwen3.8-27B Q8_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -1815,7 +1698,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M",
-          "name": "Qwen3.8-27B UD-IQ1_M",
           "reasoning": true,
           "input": [
             "text"
@@ -1825,7 +1707,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S",
-          "name": "Qwen3.8-27B UD-IQ1_S",
           "reasoning": true,
           "input": [
             "text"
@@ -1835,7 +1716,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S",
-          "name": "Qwen3.8-27B UD-IQ2_S",
           "reasoning": true,
           "input": [
             "text"
@@ -1845,7 +1725,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS",
-          "name": "Qwen3.8-27B UD-IQ2_XXS",
           "reasoning": true,
           "input": [
             "text"
@@ -1855,7 +1734,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S",
-          "name": "Qwen3.8-27B UD-IQ3_S",
           "reasoning": true,
           "input": [
             "text"
@@ -1865,7 +1743,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS",
-          "name": "Qwen3.8-27B UD-IQ3_XXS",
           "reasoning": true,
           "input": [
             "text"
@@ -1875,7 +1752,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:UD-IQ4_XS",
-          "name": "Qwen3.8-27B UD-IQ4_XS",
           "reasoning": true,
           "input": [
             "text"
@@ -1885,7 +1761,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL",
-          "name": "Qwen3.8-27B UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -1895,7 +1770,6 @@
         },
         {
           "id": "0text-unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL",
-          "name": "Qwen3.8-27B UD-Q3_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -1905,7 +1779,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
-          "name": "gemma-4-12B-it-qat UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -1915,7 +1788,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-12b-it-GGUF:Q6_K",
-          "name": "gemma-4-12b-it Q6_K",
           "reasoning": true,
           "input": [
             "text"
@@ -1925,7 +1797,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-12b-it-GGUF:Q8_0",
-          "name": "gemma-4-12b-it Q8_0",
           "reasoning": true,
           "input": [
             "text"
@@ -1934,18 +1805,7 @@
           "maxTokens": 65536
         },
         {
-          "id": "0text-unsloth/gemma-4-26B-A4B-it-GGUF:BF16",
-          "name": "gemma-4-26B-A4B-it BF16",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 131072,
-          "maxTokens": 131072
-        },
-        {
           "id": "0text-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
-          "name": "gemma-4-26B-A4B-it Q8_0",
           "reasoning": true,
           "input": [
             "text"
@@ -1955,7 +1815,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K",
-          "name": "gemma-4-26B-A4B-it UD-Q6_K",
           "reasoning": true,
           "input": [
             "text"
@@ -1965,7 +1824,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL",
-          "name": "gemma-4-26B-A4B-it UD-Q6_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -1975,7 +1833,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL",
-          "name": "gemma-4-26B-A4B-it UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -1985,7 +1842,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
-          "name": "gemma-4-26B-A4B-it-qat UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -1995,7 +1851,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
-          "name": "gemma-4-31B-it-qat UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -2005,7 +1860,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-E2B-it-GGUF:Q8_0",
-          "name": "gemma-4-E2B-it Q8_0",
           "reasoning": true,
           "input": [
             "text"
@@ -2015,7 +1869,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL",
-          "name": "gemma-4-E2B-it UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -2025,7 +1878,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL",
-          "name": "gemma-4-E2B-it-qat UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -2035,7 +1887,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL",
-          "name": "gemma-4-E2B-it-qat UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -2045,7 +1896,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL",
-          "name": "gemma-4-E2B-it-qat-mobile UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -2055,7 +1905,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-E4B-it-GGUF:Q8_0",
-          "name": "gemma-4-E4B-it Q8_0",
           "reasoning": true,
           "input": [
             "text"
@@ -2065,7 +1914,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL",
-          "name": "gemma-4-E4B-it UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -2075,7 +1923,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL",
-          "name": "gemma-4-E4B-it-qat UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -2085,7 +1932,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL",
-          "name": "gemma-4-E4B-it-qat UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -2095,7 +1941,6 @@
         },
         {
           "id": "0text-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
-          "name": "gemma-4-E4B-it-qat-mobile UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -2105,40 +1950,36 @@
         },
         {
           "id": "1vision-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S",
-          "name": "Qwen3.8-3.6-27B-blend IQ3_S",
           "reasoning": true,
           "input": [
             "text",
             "image"
           ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
+          "contextWindow": 131072,
+          "maxTokens": 131072
         },
         {
           "id": "1vision-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q4_K_M",
-          "name": "Qwen3.8-3.6-27B-blend Q4_K_M",
           "reasoning": true,
           "input": [
             "text",
             "image"
           ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
+          "contextWindow": 131072,
+          "maxTokens": 131072
         },
         {
           "id": "1vision-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q5_K_M",
-          "name": "Qwen3.8-3.6-27B-blend Q5_K_M",
           "reasoning": true,
           "input": [
             "text",
             "image"
           ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
+          "contextWindow": 131072,
+          "maxTokens": 131072
         },
         {
           "id": "1vision-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw",
-          "name": "Qwen3.6-35B-A3B Q4_K_S-3.80bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -2149,7 +1990,6 @@
         },
         {
           "id": "1vision-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw",
-          "name": "Qwen3.6-35B-A3B Q4_K_S-4.22bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -2160,7 +2000,6 @@
         },
         {
           "id": "1vision-byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw",
-          "name": "Qwen3.8-27B IQ2_XXS-2.56bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -2171,7 +2010,6 @@
         },
         {
           "id": "1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw",
-          "name": "Qwen3.8-27B IQ3_S-3.23bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -2182,7 +2020,6 @@
         },
         {
           "id": "1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw",
-          "name": "Qwen3.8-27B IQ3_XS-3.01bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -2193,7 +2030,6 @@
         },
         {
           "id": "1vision-byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw",
-          "name": "Qwen3.8-27B IQ3_XXS-2.88bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -2204,7 +2040,6 @@
         },
         {
           "id": "1vision-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.84bpw",
-          "name": "Qwen3.8-27B IQ4_XS-3.84bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -2215,18 +2050,16 @@
         },
         {
           "id": "1vision-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
-          "name": "LFM2.5-VL-3B UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text",
             "image"
           ],
-          "contextWindow": 32768,
-          "maxTokens": 32768
+          "contextWindow": 128000,
+          "maxTokens": 128000
         },
         {
           "id": "1vision-unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
-          "name": "Qwen3.6-27B Q4_K_M",
           "reasoning": true,
           "input": [
             "text",
@@ -2237,7 +2070,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0",
-          "name": "Qwen3.6-35B-A3B Q8_0",
           "reasoning": true,
           "input": [
             "text",
@@ -2248,7 +2080,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K",
-          "name": "Qwen3.6-35B-A3B UD-Q6_K",
           "reasoning": true,
           "input": [
             "text",
@@ -2259,7 +2090,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL",
-          "name": "Qwen3.6-35B-A3B UD-Q6_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2270,7 +2100,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL",
-          "name": "Qwen3.6-35B-A3B UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2280,19 +2109,7 @@
           "maxTokens": 131072
         },
         {
-          "id": "1vision-unsloth/Qwen3.8-27B-GGUF:BF16",
-          "name": "Qwen3.8-27B BF16",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q4_0",
-          "name": "Qwen3.8-27B Q4_0",
           "reasoning": true,
           "input": [
             "text",
@@ -2303,7 +2120,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q4_1",
-          "name": "Qwen3.8-27B Q4_1",
           "reasoning": true,
           "input": [
             "text",
@@ -2314,7 +2130,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
-          "name": "Qwen3.8-27B Q4_K_M",
           "reasoning": true,
           "input": [
             "text",
@@ -2325,7 +2140,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_S",
-          "name": "Qwen3.8-27B Q4_K_S",
           "reasoning": true,
           "input": [
             "text",
@@ -2336,7 +2150,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q4_K_XL",
-          "name": "Qwen3.8-27B Q4_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2347,7 +2160,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q5_K_M",
-          "name": "Qwen3.8-27B Q5_K_M",
           "reasoning": true,
           "input": [
             "text",
@@ -2358,7 +2170,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q5_K_S",
-          "name": "Qwen3.8-27B Q5_K_S",
           "reasoning": true,
           "input": [
             "text",
@@ -2369,7 +2180,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q5_K_XL",
-          "name": "Qwen3.8-27B Q5_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2380,7 +2190,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K",
-          "name": "Qwen3.8-27B Q6_K",
           "reasoning": true,
           "input": [
             "text",
@@ -2391,7 +2200,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K_L",
-          "name": "Qwen3.8-27B Q6_K_L",
           "reasoning": true,
           "input": [
             "text",
@@ -2402,7 +2210,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K_M",
-          "name": "Qwen3.8-27B Q6_K_M",
           "reasoning": true,
           "input": [
             "text",
@@ -2413,7 +2220,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q6_K_XL",
-          "name": "Qwen3.8-27B Q6_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2424,7 +2230,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q8_0",
-          "name": "Qwen3.8-27B Q8_0",
           "reasoning": true,
           "input": [
             "text",
@@ -2435,7 +2240,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q8_K_L",
-          "name": "Qwen3.8-27B Q8_K_L",
           "reasoning": true,
           "input": [
             "text",
@@ -2446,7 +2250,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:Q8_K_XL",
-          "name": "Qwen3.8-27B Q8_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2457,7 +2260,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M",
-          "name": "Qwen3.8-27B UD-IQ1_M",
           "reasoning": true,
           "input": [
             "text",
@@ -2468,7 +2270,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S",
-          "name": "Qwen3.8-27B UD-IQ1_S",
           "reasoning": true,
           "input": [
             "text",
@@ -2479,7 +2280,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S",
-          "name": "Qwen3.8-27B UD-IQ2_S",
           "reasoning": true,
           "input": [
             "text",
@@ -2490,7 +2290,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS",
-          "name": "Qwen3.8-27B UD-IQ2_XXS",
           "reasoning": true,
           "input": [
             "text",
@@ -2501,7 +2300,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S",
-          "name": "Qwen3.8-27B UD-IQ3_S",
           "reasoning": true,
           "input": [
             "text",
@@ -2512,7 +2310,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS",
-          "name": "Qwen3.8-27B UD-IQ3_XXS",
           "reasoning": true,
           "input": [
             "text",
@@ -2523,7 +2320,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:UD-IQ4_XS",
-          "name": "Qwen3.8-27B UD-IQ4_XS",
           "reasoning": true,
           "input": [
             "text",
@@ -2534,7 +2330,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL",
-          "name": "Qwen3.8-27B UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2545,7 +2340,6 @@
         },
         {
           "id": "1vision-unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL",
-          "name": "Qwen3.8-27B UD-Q3_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2556,7 +2350,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
-          "name": "gemma-4-12B-it-qat UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2567,7 +2360,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-12b-it-GGUF:Q6_K",
-          "name": "gemma-4-12b-it Q6_K",
           "reasoning": true,
           "input": [
             "text",
@@ -2578,7 +2370,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-12b-it-GGUF:Q8_0",
-          "name": "gemma-4-12b-it Q8_0",
           "reasoning": true,
           "input": [
             "text",
@@ -2588,19 +2379,7 @@
           "maxTokens": 65536
         },
         {
-          "id": "1vision-unsloth/gemma-4-26B-A4B-it-GGUF:BF16",
-          "name": "gemma-4-26B-A4B-it BF16",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 131072,
-          "maxTokens": 131072
-        },
-        {
           "id": "1vision-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
-          "name": "gemma-4-26B-A4B-it Q8_0",
           "reasoning": true,
           "input": [
             "text",
@@ -2611,7 +2390,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K",
-          "name": "gemma-4-26B-A4B-it UD-Q6_K",
           "reasoning": true,
           "input": [
             "text",
@@ -2622,7 +2400,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL",
-          "name": "gemma-4-26B-A4B-it UD-Q6_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2633,7 +2410,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL",
-          "name": "gemma-4-26B-A4B-it UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2644,7 +2420,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
-          "name": "gemma-4-26B-A4B-it-qat UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2655,7 +2430,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
-          "name": "gemma-4-31B-it-qat UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2666,7 +2440,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-E2B-it-GGUF:Q8_0",
-          "name": "gemma-4-E2B-it Q8_0",
           "reasoning": true,
           "input": [
             "text",
@@ -2677,7 +2450,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL",
-          "name": "gemma-4-E2B-it UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2688,7 +2460,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL",
-          "name": "gemma-4-E2B-it-qat UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2699,7 +2470,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL",
-          "name": "gemma-4-E2B-it-qat UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2710,7 +2480,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL",
-          "name": "gemma-4-E2B-it-qat-mobile UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2721,7 +2490,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-E4B-it-GGUF:Q8_0",
-          "name": "gemma-4-E4B-it Q8_0",
           "reasoning": true,
           "input": [
             "text",
@@ -2732,7 +2500,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL",
-          "name": "gemma-4-E4B-it UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2743,7 +2510,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL",
-          "name": "gemma-4-E4B-it-qat UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2754,7 +2520,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL",
-          "name": "gemma-4-E4B-it-qat UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2765,7 +2530,6 @@
         },
         {
           "id": "1vision-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
-          "name": "gemma-4-E4B-it-qat-mobile UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2776,18 +2540,56 @@
         },
         {
           "id": "2mmproj-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S",
-          "name": "Qwen3.8-3.6-27B-blend IQ3_S",
           "reasoning": true,
           "input": [
             "text",
             "image"
           ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
+          "contextWindow": 131072,
+          "maxTokens": 131072
+        },
+        {
+          "id": "2mmproj-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072
+        },
+        {
+          "id": "2mmproj-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072
+        },
+        {
+          "id": "2mmproj-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072
+        },
+        {
+          "id": "2mmproj-byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072
         },
         {
           "id": "2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw",
-          "name": "Qwen3.8-27B IQ2_XXS-2.56bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -2798,7 +2600,6 @@
         },
         {
           "id": "2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw",
-          "name": "Qwen3.8-27B IQ3_S-3.23bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -2809,7 +2610,6 @@
         },
         {
           "id": "2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw",
-          "name": "Qwen3.8-27B IQ3_XS-3.01bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -2820,7 +2620,16 @@
         },
         {
           "id": "2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw",
-          "name": "Qwen3.8-27B IQ3_XXS-2.88bpw",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.84bpw",
           "reasoning": true,
           "input": [
             "text",
@@ -2831,18 +2640,216 @@
         },
         {
           "id": "2mmproj-unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
-          "name": "LFM2.5-VL-3B UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text",
             "image"
           ],
-          "contextWindow": 32768,
-          "maxTokens": 32768
+          "contextWindow": 128000,
+          "maxTokens": 128000
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q4_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q4_1",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q4_K_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q5_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q5_K_S",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q5_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q6_K",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q6_K_L",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q6_K_M",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q8_K_L",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
         },
         {
           "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M",
-          "name": "Qwen3.8-27B UD-IQ1_M",
           "reasoning": true,
           "input": [
             "text",
@@ -2853,7 +2860,6 @@
         },
         {
           "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S",
-          "name": "Qwen3.8-27B UD-IQ1_S",
           "reasoning": true,
           "input": [
             "text",
@@ -2864,7 +2870,6 @@
         },
         {
           "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S",
-          "name": "Qwen3.8-27B UD-IQ2_S",
           "reasoning": true,
           "input": [
             "text",
@@ -2875,7 +2880,6 @@
         },
         {
           "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS",
-          "name": "Qwen3.8-27B UD-IQ2_XXS",
           "reasoning": true,
           "input": [
             "text",
@@ -2886,7 +2890,6 @@
         },
         {
           "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S",
-          "name": "Qwen3.8-27B UD-IQ3_S",
           "reasoning": true,
           "input": [
             "text",
@@ -2897,7 +2900,16 @@
         },
         {
           "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS",
-          "name": "Qwen3.8-27B UD-IQ3_XXS",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-IQ4_XS",
           "reasoning": true,
           "input": [
             "text",
@@ -2908,7 +2920,16 @@
         },
         {
           "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL",
-          "name": "Qwen3.8-27B UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2919,7 +2940,6 @@
         },
         {
           "id": "2mmproj-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
-          "name": "gemma-4-12B-it-qat UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2930,7 +2950,6 @@
         },
         {
           "id": "2mmproj-unsloth/gemma-4-12b-it-GGUF:Q6_K",
-          "name": "gemma-4-12b-it Q6_K",
           "reasoning": true,
           "input": [
             "text",
@@ -2941,7 +2960,66 @@
         },
         {
           "id": "2mmproj-unsloth/gemma-4-12b-it-GGUF:Q8_0",
-          "name": "gemma-4-12b-it Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "2mmproj-unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072
+        },
+        {
+          "id": "2mmproj-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072
+        },
+        {
+          "id": "2mmproj-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072
+        },
+        {
+          "id": "2mmproj-unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072
+        },
+        {
+          "id": "2mmproj-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 131072,
+          "maxTokens": 131072
+        },
+        {
+          "id": "2mmproj-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2952,7 +3030,6 @@
         },
         {
           "id": "2mmproj-unsloth/gemma-4-E2B-it-GGUF:Q8_0",
-          "name": "gemma-4-E2B-it Q8_0",
           "reasoning": true,
           "input": [
             "text",
@@ -2963,7 +3040,6 @@
         },
         {
           "id": "2mmproj-unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL",
-          "name": "gemma-4-E2B-it UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2974,7 +3050,6 @@
         },
         {
           "id": "2mmproj-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL",
-          "name": "gemma-4-E2B-it-qat UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2985,7 +3060,6 @@
         },
         {
           "id": "2mmproj-unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL",
-          "name": "gemma-4-E2B-it-qat UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -2996,7 +3070,6 @@
         },
         {
           "id": "2mmproj-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL",
-          "name": "gemma-4-E2B-it-qat-mobile UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -3007,7 +3080,6 @@
         },
         {
           "id": "2mmproj-unsloth/gemma-4-E4B-it-GGUF:Q8_0",
-          "name": "gemma-4-E4B-it Q8_0",
           "reasoning": true,
           "input": [
             "text",
@@ -3018,7 +3090,6 @@
         },
         {
           "id": "2mmproj-unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL",
-          "name": "gemma-4-E4B-it UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -3029,7 +3100,6 @@
         },
         {
           "id": "2mmproj-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL",
-          "name": "gemma-4-E4B-it-qat UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -3040,7 +3110,6 @@
         },
         {
           "id": "2mmproj-unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL",
-          "name": "gemma-4-E4B-it-qat UD-Q4_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -3051,7 +3120,6 @@
         },
         {
           "id": "2mmproj-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
-          "name": "gemma-4-E4B-it-qat-mobile UD-Q2_K_XL",
           "reasoning": true,
           "input": [
             "text",
@@ -3062,37 +3130,6 @@
         },
         {
           "id": "LiquidAI/LFM2.5-2.6B-GGUF:BF16",
-          "name": "LFM2.5-2.6B BF16",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 131072,
-          "maxTokens": 131072
-        },
-        {
-          "id": "LiquidAI/LFM2.5-2.6B-GGUF:Q4_0",
-          "name": "LFM2.5-2.6B Q4_0",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 131072,
-          "maxTokens": 131072
-        },
-        {
-          "id": "LiquidAI/LFM2.5-2.6B-GGUF:Q4_K_M",
-          "name": "LFM2.5-2.6B Q4_K_M",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 131072,
-          "maxTokens": 131072
-        },
-        {
-          "id": "LiquidAI/LFM2.5-2.6B-GGUF:Q5_K_M",
-          "name": "LFM2.5-2.6B Q5_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3102,7 +3139,6 @@
         },
         {
           "id": "LiquidAI/LFM2.5-2.6B-GGUF:Q6_K",
-          "name": "LFM2.5-2.6B Q6_K",
           "reasoning": true,
           "input": [
             "text"
@@ -3112,7 +3148,6 @@
         },
         {
           "id": "LiquidAI/LFM2.5-2.6B-GGUF:Q8_0",
-          "name": "LFM2.5-2.6B Q8_0",
           "reasoning": true,
           "input": [
             "text"
@@ -3121,18 +3156,79 @@
           "maxTokens": 131072
         },
         {
-          "id": "LiquidAI/LFM2.5-2.6B-GGUF:QAD-Q4_0",
-          "name": "LFM2.5-2.6B QAD-Q4_0",
+          "id": "LiquidAI/LFM3-1.7B-GGUF:BF16",
           "reasoning": true,
           "input": [
             "text"
           ],
-          "contextWindow": 131072,
-          "maxTokens": 131072
+          "contextWindow": 262144,
+          "maxTokens": 262144
+        },
+        {
+          "id": "LiquidAI/LFM3-1.7B-GGUF:F16",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
+        },
+        {
+          "id": "LiquidAI/LFM3-1.7B-GGUF:Q6_K",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
+        },
+        {
+          "id": "LiquidAI/LFM3-1.7B-GGUF:Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
+        },
+        {
+          "id": "XHToken/Spark-X2.6-1.7B-GGUF:F16",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
+        },
+        {
+          "id": "XHToken/Spark-X2.6-1.7B-GGUF:Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
+        },
+        {
+          "id": "XHToken/Spark-X2.6-4B-GGUF:Q4_K_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
+        },
+        {
+          "id": "XHToken/Spark-X2.6-4B-GGUF:Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144
         },
         {
           "id": "bartowski/Ling-3.0-tiny-GGUF:Q8_0",
-          "name": "Ling-3.0-tiny Q8_0",
           "reasoning": true,
           "input": [
             "text"
@@ -3142,17 +3238,6 @@
         },
         {
           "id": "bartowski/ai9stars_G9v3-3B-GGUF:BF16",
-          "name": "ai9stars_G9v3-3B BF16",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 131072,
-          "maxTokens": 131072
-        },
-        {
-          "id": "bartowski/ai9stars_G9v3-3B-GGUF:Q6_K",
-          "name": "ai9stars_G9v3-3B Q6_K",
           "reasoning": true,
           "input": [
             "text"
@@ -3162,7 +3247,6 @@
         },
         {
           "id": "bartowski/ai9stars_G9v3-3B-GGUF:Q8_0",
-          "name": "ai9stars_G9v3-3B Q8_0",
           "reasoning": true,
           "input": [
             "text"
@@ -3172,7 +3256,6 @@
         },
         {
           "id": "bloomer010/Ling-3.0-tiny-GGUF:UD-Q8_K_XL",
-          "name": "Ling-3.0-tiny UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3181,48 +3264,7 @@
           "maxTokens": 131072
         },
         {
-          "id": "byteshape/North-Mini-Code-1.0-GGUF:IQ3_S-3.17BPW",
-          "name": "North-Mini-Code-1.0 IQ3_S-3.17BPW",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
-          "id": "byteshape/North-Mini-Code-1.0-GGUF:IQ4_XS-4.14BPW",
-          "name": "North-Mini-Code-1.0 IQ4_XS-4.14BPW",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
-          "id": "byteshape/North-Mini-Code-1.0-GGUF:IQ4_XS-4.27BPW",
-          "name": "North-Mini-Code-1.0 IQ4_XS-4.27BPW",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
-          "id": "byteshape/North-Mini-Code-1.0-GGUF:IQ4_XS-5.64BPW",
-          "name": "North-Mini-Code-1.0 IQ4_XS-5.64BPW",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
           "id": "openbmb/MiniCPM5-2B-GGUF:Q8_0",
-          "name": "MiniCPM5-2B Q8_0",
           "reasoning": true,
           "input": [
             "text"
@@ -3232,7 +3274,6 @@
         },
         {
           "id": "poolside/Laguna-XS-2.1-GGUF:Q4_K_M",
-          "name": "Laguna-XS-2.1 Q4_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3241,8 +3282,88 @@
           "maxTokens": 131072
         },
         {
+          "id": "unsloth/LFM2.5-24B-A2B-GGUF:Q8_0",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "unsloth/LFM2.5-24B-A2B-GGUF:UD-IQ2_M",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "unsloth/LFM2.5-24B-A2B-GGUF:UD-IQ2_XXS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "unsloth/LFM2.5-24B-A2B-GGUF:UD-IQ3_XXS",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "unsloth/LFM2.5-24B-A2B-GGUF:UD-Q2_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "unsloth/LFM2.5-24B-A2B-GGUF:UD-Q3_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "unsloth/LFM2.5-24B-A2B-GGUF:UD-Q4_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "unsloth/LFM2.5-24B-A2B-GGUF:UD-Q5_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
+          "id": "unsloth/LFM2.5-24B-A2B-GGUF:UD-Q6_K_XL",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 65536,
+          "maxTokens": 65536
+        },
+        {
           "id": "unsloth/LFM2.5-8B-A1B-GGUF:Q8_0",
-          "name": "LFM2.5-8B-A1B Q8_0",
           "reasoning": true,
           "input": [
             "text"
@@ -3252,7 +3373,6 @@
         },
         {
           "id": "unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL",
-          "name": "LFM2.5-8B-A1B UD-Q8_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3262,97 +3382,15 @@
         },
         {
           "id": "unsloth/LFM2.5-VL-3B-GGUF:Q8_0",
-          "name": "LFM2.5-VL-3B Q8_0",
           "reasoning": true,
           "input": [
             "text"
           ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
-          "id": "unsloth/Muse-Glimmer-30B-GGUF:Q8_0",
-          "name": "Muse-Glimmer-30B Q8_0",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
-          "id": "unsloth/Muse-Glimmer-30B-GGUF:UD-Q4_K_XL",
-          "name": "Muse-Glimmer-30B UD-Q4_K_XL",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
-          "id": "unsloth/Muse-Glimmer-30B-GGUF:UD-Q6_K_XL",
-          "name": "Muse-Glimmer-30B UD-Q6_K_XL",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
-          "id": "unsloth/Muse-Glimmer-30B-GGUF:UD-Q8_K_XL",
-          "name": "Muse-Glimmer-30B UD-Q8_K_XL",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
-          "id": "unsloth/North-Mini-Code-1.0-GGUF:Q4_K_XL",
-          "name": "North-Mini-Code-1.0 Q4_K_XL",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
-          "id": "unsloth/North-Mini-Code-1.0-GGUF:Q6_K_XL",
-          "name": "North-Mini-Code-1.0 Q6_K_XL",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
-          "id": "unsloth/North-Mini-Code-1.0-GGUF:Q8_K_XL",
-          "name": "North-Mini-Code-1.0 Q8_K_XL",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
-          "id": "unsloth/gemma-4-12b-it-GGUF:BF16",
-          "name": "gemma-4-12b-it BF16",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
+          "contextWindow": 128000,
+          "maxTokens": 128000
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:IQ2_M",
-          "name": "gemma-4-12b-it IQ2_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3362,7 +3400,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:IQ3_XXS",
-          "name": "gemma-4-12b-it IQ3_XXS",
           "reasoning": true,
           "input": [
             "text"
@@ -3372,7 +3409,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:IQ4_NL",
-          "name": "gemma-4-12b-it IQ4_NL",
           "reasoning": true,
           "input": [
             "text"
@@ -3382,7 +3418,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:IQ4_XS",
-          "name": "gemma-4-12b-it IQ4_XS",
           "reasoning": true,
           "input": [
             "text"
@@ -3392,7 +3427,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q2_K_XL",
-          "name": "gemma-4-12b-it Q2_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3402,7 +3436,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q3_K_M",
-          "name": "gemma-4-12b-it Q3_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3412,7 +3445,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q3_K_S",
-          "name": "gemma-4-12b-it Q3_K_S",
           "reasoning": true,
           "input": [
             "text"
@@ -3422,7 +3454,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q3_K_XL",
-          "name": "gemma-4-12b-it Q3_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3432,7 +3463,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q4_0",
-          "name": "gemma-4-12b-it Q4_0",
           "reasoning": true,
           "input": [
             "text"
@@ -3442,7 +3472,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q4_1",
-          "name": "gemma-4-12b-it Q4_1",
           "reasoning": true,
           "input": [
             "text"
@@ -3452,7 +3481,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q4_K_M",
-          "name": "gemma-4-12b-it Q4_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3462,7 +3490,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q4_K_S",
-          "name": "gemma-4-12b-it Q4_K_S",
           "reasoning": true,
           "input": [
             "text"
@@ -3472,7 +3499,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q4_K_XL",
-          "name": "gemma-4-12b-it Q4_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3482,7 +3508,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q5_K_M",
-          "name": "gemma-4-12b-it Q5_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3492,7 +3517,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q5_K_S",
-          "name": "gemma-4-12b-it Q5_K_S",
           "reasoning": true,
           "input": [
             "text"
@@ -3502,7 +3526,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q5_K_XL",
-          "name": "gemma-4-12b-it Q5_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3512,7 +3535,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q6_K_XL",
-          "name": "gemma-4-12b-it Q6_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3522,7 +3544,6 @@
         },
         {
           "id": "unsloth/gemma-4-12b-it-GGUF:Q8_K_XL",
-          "name": "gemma-4-12b-it Q8_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3532,7 +3553,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:IQ2_M",
-          "name": "gemma-4-26B-A4B-it IQ2_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3542,7 +3562,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:IQ2_XXS",
-          "name": "gemma-4-26B-A4B-it IQ2_XXS",
           "reasoning": true,
           "input": [
             "text"
@@ -3552,7 +3571,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:IQ3_S",
-          "name": "gemma-4-26B-A4B-it IQ3_S",
           "reasoning": true,
           "input": [
             "text"
@@ -3562,7 +3580,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:IQ3_XXS",
-          "name": "gemma-4-26B-A4B-it IQ3_XXS",
           "reasoning": true,
           "input": [
             "text"
@@ -3572,7 +3589,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:IQ4_NL",
-          "name": "gemma-4-26B-A4B-it IQ4_NL",
           "reasoning": true,
           "input": [
             "text"
@@ -3582,7 +3598,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:IQ4_XS",
-          "name": "gemma-4-26B-A4B-it IQ4_XS",
           "reasoning": true,
           "input": [
             "text"
@@ -3592,7 +3607,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:MXFP4_MOE",
-          "name": "gemma-4-26B-A4B-it MXFP4_MOE",
           "reasoning": true,
           "input": [
             "text"
@@ -3602,7 +3616,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:Q2_K_XL",
-          "name": "gemma-4-26B-A4B-it Q2_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3612,7 +3625,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:Q3_K_M",
-          "name": "gemma-4-26B-A4B-it Q3_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3622,7 +3634,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:Q3_K_XL",
-          "name": "gemma-4-26B-A4B-it Q3_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3632,7 +3643,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:Q4_K_M",
-          "name": "gemma-4-26B-A4B-it Q4_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3642,7 +3652,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:Q4_K_S",
-          "name": "gemma-4-26B-A4B-it Q4_K_S",
           "reasoning": true,
           "input": [
             "text"
@@ -3652,7 +3661,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:Q4_K_XL",
-          "name": "gemma-4-26B-A4B-it Q4_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3662,7 +3670,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:Q5_K_M",
-          "name": "gemma-4-26B-A4B-it Q5_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3672,7 +3679,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:Q5_K_S",
-          "name": "gemma-4-26B-A4B-it Q5_K_S",
           "reasoning": true,
           "input": [
             "text"
@@ -3682,17 +3688,6 @@
         },
         {
           "id": "unsloth/gemma-4-26B-A4B-it-GGUF:Q5_K_XL",
-          "name": "gemma-4-26B-A4B-it Q5_K_XL",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
-          "id": "unsloth/gemma-4-E2B-it-GGUF:BF16",
-          "name": "gemma-4-E2B-it BF16",
           "reasoning": true,
           "input": [
             "text"
@@ -3702,7 +3697,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:IQ2_M",
-          "name": "gemma-4-E2B-it IQ2_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3712,7 +3706,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:IQ3_XXS",
-          "name": "gemma-4-E2B-it IQ3_XXS",
           "reasoning": true,
           "input": [
             "text"
@@ -3722,7 +3715,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:IQ4_NL",
-          "name": "gemma-4-E2B-it IQ4_NL",
           "reasoning": true,
           "input": [
             "text"
@@ -3732,7 +3724,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:IQ4_XS",
-          "name": "gemma-4-E2B-it IQ4_XS",
           "reasoning": true,
           "input": [
             "text"
@@ -3742,7 +3733,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q2_K_XL",
-          "name": "gemma-4-E2B-it Q2_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3752,7 +3742,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q3_K_M",
-          "name": "gemma-4-E2B-it Q3_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3762,7 +3751,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q3_K_S",
-          "name": "gemma-4-E2B-it Q3_K_S",
           "reasoning": true,
           "input": [
             "text"
@@ -3772,7 +3760,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q3_K_XL",
-          "name": "gemma-4-E2B-it Q3_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3782,7 +3769,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q4_0",
-          "name": "gemma-4-E2B-it Q4_0",
           "reasoning": true,
           "input": [
             "text"
@@ -3792,7 +3778,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q4_1",
-          "name": "gemma-4-E2B-it Q4_1",
           "reasoning": true,
           "input": [
             "text"
@@ -3802,7 +3787,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q4_K_M",
-          "name": "gemma-4-E2B-it Q4_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3812,7 +3796,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q4_K_S",
-          "name": "gemma-4-E2B-it Q4_K_S",
           "reasoning": true,
           "input": [
             "text"
@@ -3822,7 +3805,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q4_K_XL",
-          "name": "gemma-4-E2B-it Q4_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3832,7 +3814,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q5_K_M",
-          "name": "gemma-4-E2B-it Q5_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3842,7 +3823,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q5_K_S",
-          "name": "gemma-4-E2B-it Q5_K_S",
           "reasoning": true,
           "input": [
             "text"
@@ -3852,7 +3832,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q5_K_XL",
-          "name": "gemma-4-E2B-it Q5_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3862,7 +3841,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q6_K",
-          "name": "gemma-4-E2B-it Q6_K",
           "reasoning": true,
           "input": [
             "text"
@@ -3872,17 +3850,6 @@
         },
         {
           "id": "unsloth/gemma-4-E2B-it-GGUF:Q6_K_XL",
-          "name": "gemma-4-E2B-it Q6_K_XL",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
-        },
-        {
-          "id": "unsloth/gemma-4-E4B-it-GGUF:BF16",
-          "name": "gemma-4-E4B-it BF16",
           "reasoning": true,
           "input": [
             "text"
@@ -3892,7 +3859,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:IQ2_M",
-          "name": "gemma-4-E4B-it IQ2_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3902,7 +3868,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:IQ3_XXS",
-          "name": "gemma-4-E4B-it IQ3_XXS",
           "reasoning": true,
           "input": [
             "text"
@@ -3912,7 +3877,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:IQ4_NL",
-          "name": "gemma-4-E4B-it IQ4_NL",
           "reasoning": true,
           "input": [
             "text"
@@ -3922,7 +3886,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:IQ4_XS",
-          "name": "gemma-4-E4B-it IQ4_XS",
           "reasoning": true,
           "input": [
             "text"
@@ -3932,7 +3895,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q2_K_XL",
-          "name": "gemma-4-E4B-it Q2_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3942,7 +3904,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q3_K_M",
-          "name": "gemma-4-E4B-it Q3_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -3952,7 +3913,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q3_K_S",
-          "name": "gemma-4-E4B-it Q3_K_S",
           "reasoning": true,
           "input": [
             "text"
@@ -3962,7 +3922,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q3_K_XL",
-          "name": "gemma-4-E4B-it Q3_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -3972,7 +3931,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q4_0",
-          "name": "gemma-4-E4B-it Q4_0",
           "reasoning": true,
           "input": [
             "text"
@@ -3982,7 +3940,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q4_1",
-          "name": "gemma-4-E4B-it Q4_1",
           "reasoning": true,
           "input": [
             "text"
@@ -3992,7 +3949,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q4_K_M",
-          "name": "gemma-4-E4B-it Q4_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -4002,7 +3958,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q4_K_S",
-          "name": "gemma-4-E4B-it Q4_K_S",
           "reasoning": true,
           "input": [
             "text"
@@ -4012,7 +3967,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q4_K_XL",
-          "name": "gemma-4-E4B-it Q4_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -4022,7 +3976,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q5_K_M",
-          "name": "gemma-4-E4B-it Q5_K_M",
           "reasoning": true,
           "input": [
             "text"
@@ -4032,7 +3985,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q5_K_S",
-          "name": "gemma-4-E4B-it Q5_K_S",
           "reasoning": true,
           "input": [
             "text"
@@ -4042,7 +3994,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q5_K_XL",
-          "name": "gemma-4-E4B-it Q5_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -4052,7 +4003,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q6_K",
-          "name": "gemma-4-E4B-it Q6_K",
           "reasoning": true,
           "input": [
             "text"
@@ -4062,7 +4012,6 @@
         },
         {
           "id": "unsloth/gemma-4-E4B-it-GGUF:Q6_K_XL",
-          "name": "gemma-4-E4B-it Q6_K_XL",
           "reasoning": true,
           "input": [
             "text"
@@ -4077,231 +4026,342 @@
       "models": [
         {
           "id": "codestral-2508",
-          "reasoning": true,
+          "reasoning": false,
           "input": [
             "text"
           ]
         },
         {
           "id": "codestral-latest",
-          "reasoning": true,
+          "reasoning": false,
           "input": [
             "text"
           ]
         },
         {
-          "id": "deepseek-v4-1-flash-1017",
+          "id": "labs-leanstral-1-5",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "devstral-2512",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "devstral-latest",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "devstral-medium-latest",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "glm-5-2",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "labs-devstral-small-2512",
-          "reasoning": true,
-          "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "labs-leanstral-1-5-1",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "magistral-medium-latest",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "magistral-small-latest",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-14b-2512",
-          "reasoning": true,
+          "reasoning": false,
           "input": [
-            "text"
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "ministral-14b-latest",
+          "reasoning": false,
+          "input": [
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-3b-2512",
-          "reasoning": true,
+          "reasoning": false,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-3b-latest",
-          "reasoning": true,
+          "reasoning": false,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-8b-2512",
-          "reasoning": true,
+          "reasoning": false,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "ministral-8b-latest",
-          "reasoning": true,
+          "reasoning": false,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-code-fim-latest",
+          "reasoning": false,
           "input": [
             "text"
           ]
         },
         {
-          "id": "mistral-large-2512",
-          "reasoning": true,
+          "id": "mistral-code-latest",
+          "reasoning": false,
           "input": [
             "text"
           ]
         },
         {
-          "id": "mistral-large-4",
+          "id": "mistral-medium",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistral-large-4-0-8",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistral-large-latest",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistral-medium-2505",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistral-medium-2508",
-          "reasoning": true,
-          "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "mistral-medium-2604",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-medium-3",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-medium-3-5",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-medium-3.5",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
           ]
         },
         {
           "id": "mistral-medium-latest",
           "reasoning": true,
           "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-moderation-2603",
+          "reasoning": false,
+          "input": [
             "text"
           ]
         },
         {
-          "id": "mistral-small-2506",
-          "reasoning": true,
+          "id": "mistral-ocr-2512",
+          "reasoning": false,
           "input": [
-            "text"
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-3",
+          "reasoning": false,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-3-0",
+          "reasoning": false,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-4",
+          "reasoning": false,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-4-1",
+          "reasoning": false,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-ocr-latest",
+          "reasoning": false,
+          "input": [
+            "text",
+            "image"
           ]
         },
         {
           "id": "mistral-small-2603",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
           "id": "mistral-small-latest",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ]
         },
         {
-          "id": "open-mistral-nemo",
+          "id": "mistral-vibe-cli-fast",
           "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-vibe-cli-latest",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "mistral-vibe-cli-with-tools",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "voxtral-mini-2602",
+          "reasoning": false,
           "input": [
             "text"
           ]
         },
         {
-          "id": "pixtral-12b",
-          "reasoning": true,
+          "id": "voxtral-mini-latest",
+          "reasoning": false,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "voxtral-mini-realtime-2602",
+          "reasoning": false,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "voxtral-mini-realtime-latest",
+          "reasoning": false,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "voxtral-mini-transcribe-3",
+          "reasoning": false,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "voxtral-mini-transcribe-3-0",
+          "reasoning": false,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "voxtral-mini-transcribe-realtime-2602",
+          "reasoning": false,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "voxtral-mini-transcribe-realtime-3",
+          "reasoning": false,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "voxtral-mini-transcribe-realtime-3-0",
+          "reasoning": false,
           "input": [
             "text"
           ]
         },
         {
           "id": "voxtral-small-2507",
-          "reasoning": true,
+          "reasoning": false,
           "input": [
             "text"
           ]
         },
         {
           "id": "voxtral-small-latest",
-          "reasoning": true,
+          "reasoning": false,
           "input": [
             "text"
           ]
         },
         {
-          "id": "zai-glm-5-2",
-          "reasoning": true,
+          "id": "voxtral-small-transcribe-3",
+          "reasoning": false,
           "input": [
             "text"
           ]
         },
         {
-          "id": "zai-glm-5-3",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "zai-glm-5-3-flash",
-          "reasoning": true,
+          "id": "voxtral-small-transcribe-3-0",
+          "reasoning": false,
           "input": [
             "text"
           ]
@@ -4320,20 +4380,6 @@
         },
         {
           "id": "google/diffusiongemma-26b-a4b-it",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "google/gemma-3-12b-it",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "google/gemma-3-4b-it",
           "reasoning": true,
           "input": [
             "text"
@@ -4389,63 +4435,7 @@
           ]
         },
         {
-          "id": "mistralai/magistral-small-2506",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistralai/mistral-7b-instruct-v0.3",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mistralai/mistral-medium-3-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "moonshotai/kimi-k2.6",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "moonshotai/kimi-k3",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/cosmos-reason2-8b",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/llama-3.1-nemotron-70b-instruct",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/llama-3.1-nemotron-ultra-253b-v1",
           "reasoning": true,
           "input": [
             "text"
@@ -4508,34 +4498,6 @@
           ]
         },
         {
-          "id": "nvidia/rerank-qa-mistral-4b",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/riva-translate-4b-instruct-v1.1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/usdcode",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nvidia/usdvalidate",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "openai/gpt-oss-20b",
           "reasoning": true,
           "input": [
@@ -4557,13 +4519,6 @@
           ]
         },
         {
-          "id": "z-ai/glm-5.3",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
           "id": "z-ai/glm-5.3-flash",
           "reasoning": true,
           "input": [
@@ -4577,941 +4532,593 @@
       "models": [
         {
           "id": "beam-free",
+          "name": "Beam Free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 131072,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "big-pickle",
+          "name": "Big Pickle",
           "reasoning": true,
           "input": [
             "text"
-          ]
-        },
-        {
-          "id": "cat-jam-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-3-5-haiku",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-fable-5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-fable-5-1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-haiku-4-5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-haiku-5-5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-opus-4-1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-opus-4-5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-opus-4-6",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-opus-4-7",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-opus-4-8",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-opus-5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-opus-5-5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-sonnet-4",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-sonnet-4-5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-sonnet-4-6",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-sonnet-5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "claude-sonnet-5-5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "crouton-alpha-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "deepseek-v4-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "deepseek-v4-flash-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "deepseek-v4-flash-vision-exp",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+          ],
+          "contextWindow": 200000,
+          "maxTokens": 32000,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "deepseek-v4-pro",
+          "name": "DeepSeek V4 Pro",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 384000,
+          "cost": {
+            "input": 1.74,
+            "output": 3.48,
+            "cacheRead": 0.145,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "deepseek-v4.1-flash",
+          "name": "DeepSeek V4.1 Flash 1017",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 384000,
+          "cost": {
+            "input": 0.3,
+            "output": 1.2,
+            "cacheRead": 0.006,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "deepseek-v4.1-flash-free",
+          "name": "DeepSeek V4.1 Flash Free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "exo-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "fledge-alpha-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 200000,
+          "maxTokens": 32000,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "flint-40b-free",
+          "name": "Flint 40B Free",
           "reasoning": true,
           "input": [
             "text"
-          ]
-        },
-        {
-          "id": "gemini-3-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gemini-3-pro",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gemini-3.1-pro",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gemini-3.5-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gemini-3.5-flash-lite",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gemini-3.6-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gemini-3.7-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gemini-3.8-flash",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gemini-4-argon",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "glm-4.6",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "glm-4.7",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "glm-4.7-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 65536,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "glm-5",
+          "name": "GLM-5",
           "reasoning": true,
           "input": [
             "text"
-          ]
-        },
-        {
-          "id": "glm-5-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+          ],
+          "contextWindow": 204800,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 1,
+            "output": 3.2,
+            "cacheRead": 0.2,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "glm-5.1",
+          "name": "GLM-5.1",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 204800,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 1.4,
+            "output": 4.4,
+            "cacheRead": 0.26,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "glm-5.2",
+          "name": "GLM-5.2",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 1.4,
+            "output": 4.4,
+            "cacheRead": 0.26,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "glm-5.3",
+          "name": "GLM-5.3",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 1.4,
+            "output": 4.4,
+            "cacheRead": 0.26,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "glm-5.3-flash",
+          "name": "GLM-5.3-Flash",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.15,
+            "output": 0.5,
+            "cacheRead": 0.03,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "glm-5.3-flash-free",
+          "name": "GLM-5.3-Flash Free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 200000,
+          "maxTokens": 32000,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
-          "id": "gpt-5",
+          "id": "iceman-free",
+          "name": "Iceman Free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 131072,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
-          "id": "gpt-5-codex",
+          "id": "inkling-2-small-free",
+          "name": "Inkling 2 Small Free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5-nano",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.1-codex",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.1-codex-max",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.1-codex-mini",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.2",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.2-codex",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.3-codex",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.3-codex-spark",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.4",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.4-mini",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.4-nano",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.4-pro",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.5-pro",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.6-luna",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.6-sol",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-5.6-terra",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-6-astra",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-6-luna",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-6-sol",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "gpt-6.1-sol",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "grok-4.5",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "grok-4.6",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "grok-4.7",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "grok-build-0.1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "grok-code",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "hy3-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "hy3-preview-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "jev-1.13",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "jev-1.13-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "kimi-k2",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "kimi-k2-thinking",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 131072,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "kimi-k2.5",
+          "name": "Kimi K2.5",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "kimi-k2.5-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 0.6,
+            "output": 3,
+            "cacheRead": 0.1,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "kimi-k2.6",
+          "name": "Kimi K2.6",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 0.95,
+            "output": 4,
+            "cacheRead": 0.16,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "kimi-k2.7-code",
+          "name": "Kimi K2.7 Code",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144,
+          "cost": {
+            "input": 0.95,
+            "output": 4,
+            "cacheRead": 0.19,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "kimi-k3",
+          "name": "Kimi K3",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 1048576,
+          "cost": {
+            "input": 3,
+            "output": 15,
+            "cacheRead": 0.3,
+            "cacheWrite": 3
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
-          "id": "laguna-s-2.1-free",
+          "id": "longcat-2.5-free",
+          "name": "LongCat 2.5 Free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "ling-2.6-flash-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "ling-3.0-flash-fin-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "ling-3.0-flash-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "ling-3.0-tiny-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "ling-3.1-flash-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "ll-alpha-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "longcat-2.0-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "longcat-2.5-preview-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mimo-v2-flash-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mimo-v2-omni-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mimo-v2-pro-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "mimo-v2.5-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 262144,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "mimo-v2.6-flash-free",
+          "name": "MiMo-V2.6-Flash Free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "minimax-m2.1",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "minimax-m2.1-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 200000,
+          "maxTokens": 32000,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "minimax-m2.5",
+          "name": "MiniMax-M2.5",
           "reasoning": true,
           "input": [
             "text"
-          ]
-        },
-        {
-          "id": "minimax-m2.5-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+          ],
+          "contextWindow": 204800,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.3,
+            "output": 1.2,
+            "cacheRead": 0.06,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "minimax-m2.7",
+          "name": "MiniMax-M2.7",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 204800,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.3,
+            "output": 1.2,
+            "cacheRead": 0.06,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "minimax-m3",
+          "name": "MiniMax-M3",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "minimax-m3-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 512000,
+          "maxTokens": 128000,
+          "cost": {
+            "input": 0.3,
+            "output": 1.2,
+            "cacheRead": 0.06,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "minimax-m3.1-flash-free",
+          "name": "MiniMax M3.1 Flash Free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 512000,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "mistral-large-4",
+          "name": "Mistral Large 4",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 524288,
+          "maxTokens": 262144,
+          "cost": {
+            "input": 0.68,
+            "output": 2.09,
+            "cacheRead": 0.07,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
+        },
+        {
+          "id": "muse-ember-1.0",
+          "name": "Muse Ember 1.0",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 270000,
+          "cost": {
+            "input": 0.1,
+            "output": 0.5,
+            "cacheRead": 0.004,
+            "cacheWrite": 0,
+            "tiers": [
+              {
+                "inputTokensAbove": 200000,
+                "input": 0.3,
+                "output": 1.5,
+                "cacheRead": 0.012,
+                "cacheWrite": 0
+              }
+            ]
+          },
+          "api": "openai-responses",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "muse-spark-1.2",
+          "name": "Muse Spark 1.2",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "muse-spark-1.2-contributor-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 1.25,
+            "output": 4.25,
+            "cacheRead": 0.15,
+            "cacheWrite": 0
+          },
+          "api": "openai-responses",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "muse-spark-1.3",
+          "name": "Muse Spark 1.3",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "muse-spark-1.3-contributor-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 1.25,
+            "output": 4.25,
+            "cacheRead": 0.15,
+            "cacheWrite": 0
+          },
+          "api": "openai-responses",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "muse-wonder-1.0",
+          "name": "Muse Wonder",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nemotron-3-super-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "nemotron-3-ultra-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 4,
+            "output": 20,
+            "cacheRead": 0.2,
+            "cacheWrite": 0
+          },
+          "api": "openai-responses",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "nemotron-3.5-lightning-free",
+          "name": "Nemotron 3.5 Lightning Free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "nemotron-3.5-super-vl-free",
+          "name": "Nemotron 3.5 Super VL Free",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "north-mini-code-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "pulse-alpha-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "qwen3-coder",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 131072,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         },
         {
           "id": "qwen3.5-plus",
+          "name": "Qwen3.5 Plus",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 0.2,
+            "output": 1.2,
+            "cacheRead": 0.02,
+            "cacheWrite": 0.25
+          },
+          "api": "anthropic-messages",
+          "baseUrl": "https://opencode.ai/inference/anthropic"
         },
         {
           "id": "qwen3.6-plus",
+          "name": "Qwen3.6 Plus",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "qwen3.6-plus-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 0.5,
+            "output": 3,
+            "cacheRead": 0.05,
+            "cacheWrite": 0.625
+          },
+          "api": "anthropic-messages",
+          "baseUrl": "https://opencode.ai/inference/anthropic"
         },
         {
           "id": "qwen3.8-flash",
+          "name": "Qwen3.8 Flash",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.15,
+            "output": 0.47,
+            "cacheRead": 0.016,
+            "cacheWrite": 0.2
+          },
+          "api": "anthropic-messages",
+          "baseUrl": "https://opencode.ai/inference/anthropic"
         },
         {
           "id": "qwen3.8-max",
+          "name": "Qwen3.8 Max",
           "reasoning": true,
           "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "ring-2.6-1t-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "space-bunny-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "step-5-preview-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "trinity-large-preview-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
-        },
-        {
-          "id": "x-preview-f-free",
-          "reasoning": true,
-          "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 2,
+            "output": 6,
+            "cacheRead": 0.25,
+            "cacheWrite": 2.5
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/openai/v1"
         }
       ]
     },
@@ -5520,177 +5127,485 @@
       "models": [
         {
           "id": "beam-free",
+          "name": "Beam Free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 131072,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "deepseek-v4-pro",
+          "name": "DeepSeek V4 Pro",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 384000,
+          "cost": {
+            "input": 0.66,
+            "output": 1.98,
+            "cacheRead": 0.022,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "deepseek-v4.1-flash",
+          "name": "DeepSeek V4.1 Flash 1017",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 384000,
+          "cost": {
+            "input": 0.15,
+            "output": 0.6,
+            "cacheRead": 0.003,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "glm-5.2",
+          "name": "GLM-5.2",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 1.4,
+            "output": 4.4,
+            "cacheRead": 0.26,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "glm-5.3",
+          "name": "GLM-5.3",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 1.4,
+            "output": 4.4,
+            "cacheRead": 0.26,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "glm-5.3-flash",
+          "name": "GLM-5.3-Flash",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.15,
+            "output": 0.5,
+            "cacheRead": 0.03,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "hy3",
+          "name": "Hy3",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 256000,
+          "maxTokens": 128000,
+          "cost": {
+            "input": 0.14,
+            "output": 0.58,
+            "cacheRead": 0.035,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "hy4",
+          "name": "Hy4",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 0.834,
+            "output": 2.501,
+            "cacheRead": 0.042,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "hy4-preview",
+          "name": "Hy4 preview",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1024000,
+          "maxTokens": 64000,
+          "cost": {
+            "input": 0.834,
+            "output": 2.501,
+            "cacheRead": 0.042,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "iceman-contributor-free",
+          "name": "Iceman Contributor Free",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 131072,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "kimi-k2.7-code",
+          "name": "Kimi K2.7 Code",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 262144,
+          "maxTokens": 262144,
+          "cost": {
+            "input": 0.95,
+            "output": 4,
+            "cacheRead": 0.19,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "kimi-k3",
+          "name": "Kimi K3",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 1048576,
+          "cost": {
+            "input": 3,
+            "output": 15,
+            "cacheRead": 0.3,
+            "cacheWrite": 3
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "kimi-k3.1-pro",
+          "name": "Kimi K3.1 Pro",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 1048576,
+          "cost": {
+            "input": 2,
+            "output": 10,
+            "cacheRead": 0.2,
+            "cacheWrite": 2
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "longcat-2.0",
+          "name": "LongCat-2.0",
           "reasoning": true,
           "input": [
             "text"
-          ]
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.3,
+            "output": 1.2,
+            "cacheRead": 0.006,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
+        },
+        {
+          "id": "longcat-2.5-free",
+          "name": "LongCat 2.5 Free",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 262144,
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "mimo-v2.6-flash",
+          "name": "MiMo-V2.6-Flash",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.14,
+            "output": 0.28,
+            "cacheRead": 0.0028,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "mimo-v2.6-pro",
+          "name": "MiMo-V2.6-Pro",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.435,
+            "output": 0.87,
+            "cacheRead": 0.003625,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "minimax-m3",
+          "name": "MiniMax-M3",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.3,
+            "output": 1.2,
+            "cacheRead": 0.06,
+            "cacheWrite": 0,
+            "tiers": [
+              {
+                "inputTokensAbove": 512000,
+                "input": 0.6,
+                "output": 2.4,
+                "cacheRead": 0.12,
+                "cacheWrite": 0
+              }
+            ]
+          },
+          "api": "anthropic-messages",
+          "baseUrl": "https://opencode.ai/inference/go/anthropic"
         },
         {
           "id": "minimax-m3.1-flash",
+          "name": "MiniMax M3.1 Flash",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 512000,
+          "cost": {
+            "input": 0.15,
+            "output": 0.6,
+            "cacheRead": 0.015,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "muse-spark-1.2-contributor",
+          "name": "Muse Spark 1.2 Contributor",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.1,
+            "output": 0.2,
+            "cacheRead": 0.002,
+            "cacheWrite": 0
+          },
+          "api": "openai-responses",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "muse-spark-1.3-contributor",
+          "name": "Muse Spark 1.3 Contributor",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.1,
+            "output": 0.2,
+            "cacheRead": 0.002,
+            "cacheWrite": 0
+          },
+          "api": "openai-responses",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         },
         {
           "id": "qwen3.7-plus",
+          "name": "Qwen3.7 Plus",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 0.4,
+            "output": 1.6,
+            "cacheRead": 0.04,
+            "cacheWrite": 0.5,
+            "tiers": [
+              {
+                "inputTokensAbove": 256000,
+                "input": 1.2,
+                "output": 4.8,
+                "cacheRead": 0.12,
+                "cacheWrite": 1.5
+              }
+            ]
+          },
+          "api": "anthropic-messages",
+          "baseUrl": "https://opencode.ai/inference/go/anthropic"
         },
         {
           "id": "qwen3.8-flash",
+          "name": "Qwen3.8 Flash",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.15,
+            "output": 0.47,
+            "cacheRead": 0.016,
+            "cacheWrite": 0.2
+          },
+          "api": "anthropic-messages",
+          "baseUrl": "https://opencode.ai/inference/go/anthropic"
         },
         {
           "id": "qwen3.8-max",
+          "name": "Qwen3.8 Max",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 2,
+            "output": 6,
+            "cacheRead": 0.25,
+            "cacheWrite": 2.5
+          },
+          "api": "anthropic-messages",
+          "baseUrl": "https://opencode.ai/inference/go/anthropic"
         },
         {
           "id": "step-5-preview",
+          "name": "Step 5 Preview",
           "reasoning": true,
           "input": [
-            "text"
-          ]
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 1,
+            "output": 2.7,
+            "cacheRead": 0.1,
+            "cacheWrite": 0
+          },
+          "api": "openai-completions",
+          "baseUrl": "https://opencode.ai/inference/go/openai/v1"
         }
       ]
     },
     "openrouter": {
       "baseUrl": "https://openrouter.ai/api/v1",
       "models": [
+        {
+          "id": "baidu/ernie-5.5-flash-preview:free",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 1024000,
+          "maxTokens": 1024000
+        },
         {
           "id": "cohere/north-mini-code:free",
           "reasoning": true,
@@ -5701,43 +5616,23 @@
           "maxTokens": 256000
         },
         {
-          "id": "dots-studio/dots-3-note-preview:free",
+          "id": "inclusionai/ling-3.2-flash:free",
           "reasoning": true,
           "input": [
             "text",
             "image"
           ],
-          "contextWindow": 512000,
-          "maxTokens": 512000
+          "contextWindow": 1048576,
+          "maxTokens": 1048576
         },
         {
-          "id": "google/gemma-4-26b-a4b-it:free",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 262144,
-          "maxTokens": 262144
-        },
-        {
-          "id": "google/gemma-4-31b-it:free",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 262144,
-          "maxTokens": 262144
-        },
-        {
-          "id": "liquid/lfm-2.5-2.6b:free",
+          "id": "liquid/lfm-3-1.7b:free",
           "reasoning": true,
           "input": [
             "text"
           ],
-          "contextWindow": 65536,
-          "maxTokens": 65536
+          "contextWindow": 262144,
+          "maxTokens": 262144
         },
         {
           "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
@@ -5759,16 +5654,6 @@
           "maxTokens": 1000000
         },
         {
-          "id": "nvidia/nemotron-3.5-content-safety:free",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 128000,
-          "maxTokens": 128000
-        },
-        {
           "id": "nvidia/nemotron-3.5-lightning:free",
           "reasoning": true,
           "input": [
@@ -5788,6 +5673,16 @@
           "maxTokens": 1000000
         },
         {
+          "id": "particle-ai/particle-1:free",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1048576,
+          "maxTokens": 1048576
+        },
+        {
           "id": "recursive/flint-v1.0:free",
           "reasoning": true,
           "input": [
@@ -5797,13 +5692,14 @@
           "maxTokens": 262144
         },
         {
-          "id": "xingchen-agi/xing4.0-29b-a4b:free",
+          "id": "thinkingmachines/inkling-2-small:free",
           "reasoning": true,
           "input": [
-            "text"
+            "text",
+            "image"
           ],
-          "contextWindow": 262144,
-          "maxTokens": 262144
+          "contextWindow": 1048576,
+          "maxTokens": 1048576
         }
       ]
     },
@@ -5814,58 +5710,6 @@
       "apiKey": "$SYNTHETIC_API_KEY",
       "authHeader": true,
       "models": [
-        {
-          "id": "hf:MiniMaxAI/MiniMax-M3",
-          "name": "MiniMax-M3",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 524288,
-          "maxTokens": 65536,
-          "cost": {
-            "input": 0.6,
-            "output": 1.2,
-            "cacheRead": 0.6,
-            "cacheWrite": 0
-          },
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": null,
-            "low": "low",
-            "medium": "medium",
-            "high": "high",
-            "xhigh": null,
-            "max": null
-          }
-        },
-        {
-          "id": "hf:Qwen/Qwen3.6-27B",
-          "name": "Qwen3.6 27B",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 262144,
-          "maxTokens": 65536,
-          "cost": {
-            "input": 0.45,
-            "output": 3.6,
-            "cacheRead": 0.45,
-            "cacheWrite": 0
-          },
-          "thinkingLevelMap": {
-            "off": "none",
-            "minimal": null,
-            "low": "low",
-            "medium": "medium",
-            "high": "high",
-            "xhigh": null,
-            "max": null
-          }
-        },
         {
           "id": "hf:deepseek-ai/DeepSeek-V4.1-Flash",
           "name": "DeepSeek V4.1 Flash",
@@ -5916,32 +5760,6 @@
             "high": "high",
             "xhigh": "xhigh",
             "max": "max"
-          }
-        },
-        {
-          "id": "hf:moonshotai/Kimi-K2.7-Code",
-          "name": "Kimi K2.7 Code",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 262144,
-          "maxTokens": 65536,
-          "cost": {
-            "input": 0.95,
-            "output": 4,
-            "cacheRead": 0.95,
-            "cacheWrite": 0
-          },
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": null,
-            "low": "low",
-            "medium": "medium",
-            "high": "high",
-            "xhigh": null,
-            "max": null
           }
         },
         {
@@ -6042,31 +5860,6 @@
             "medium": "medium",
             "high": "high",
             "xhigh": null,
-            "max": null
-          }
-        },
-        {
-          "id": "hf:zai-org/GLM-5.2",
-          "name": "GLM-5.2",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 524288,
-          "maxTokens": 65536,
-          "cost": {
-            "input": 1.4,
-            "output": 4.4,
-            "cacheRead": 1.4,
-            "cacheWrite": 0
-          },
-          "thinkingLevelMap": {
-            "off": "none",
-            "minimal": null,
-            "low": null,
-            "medium": null,
-            "high": "high",
-            "xhigh": "xhigh",
             "max": null
           }
         },

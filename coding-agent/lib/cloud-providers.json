@@ -11,7 +11,7 @@
 		"label": "OpenCode Zen",
 		"apiKeyEnv": "OPENCODE_API_KEY",
 		"baseUrl": "https://opencode.ai/zen/v1",
-		"support": "superficial"
+		"support": "best-effort"
 	},
 	{
 		"id": "opencode-go",

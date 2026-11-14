@@ -358,7 +358,7 @@
         {
           "id": "kimi-k2.7-code",
           "name": "Kimi K2.7 Code",
-          "reasoning": false,
+          "reasoning": true,
           "input": [
             "text",
             "image"
@@ -370,6 +370,15 @@
             "output": 4.3552,
             "cacheRead": 0.206872,
             "cacheWrite": 0
+          },
+          "thinkingLevelMap": {
+            "off": "off",
+            "minimal": null,
+            "low": null,
+            "medium": null,
+            "high": null,
+            "xhigh": null,
+            "max": "max"
           },
           "compat": {
             "supportsStore": false,
@@ -445,7 +454,7 @@
         {
           "id": "minimax-m2.7",
           "name": "MiniMax-M2.7",
-          "reasoning": false,
+          "reasoning": true,
           "input": [
             "text"
           ],
@@ -456,6 +465,15 @@
             "output": 1.852,
             "cacheRead": 0.242,
             "cacheWrite": 0
+          },
+          "thinkingLevelMap": {
+            "off": "off",
+            "minimal": null,
+            "low": null,
+            "medium": null,
+            "high": null,
+            "xhigh": null,
+            "max": "max"
           },
           "compat": {
             "supportsStore": false,
@@ -539,9 +557,9 @@
           "contextWindow": 1000000,
           "maxTokens": 131072,
           "cost": {
-            "input": 3.2664,
-            "output": 16.332,
-            "cacheRead": 0.32664,
+            "input": 2.2,
+            "output": 11,
+            "cacheRead": 0.22,
             "cacheWrite": 0
           },
           "compat": {
