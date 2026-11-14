@@ -5,7 +5,7 @@ status: draft
 title: "d165 — packet-level DPI camouflage is an operator hop, never an estige code path"
 parent: estige
 depends-on: [d073, d088, d094, d136]
-references: [d077, d090, d091, d128]
+references: [d077, d090, d091, d128, d185]
 tags: ["estige", "funnel", "dpi", "egress", "chain", "assessment"]
 ---
 
@@ -103,11 +103,74 @@ hop can carry the tunnel at all, and a middlebox that reassembles a full TCP
 stream the way the edge does is the case zapret's readme files under "when it
 will not work".
 
-The only signature that matters on this leg is the funnel hostname in the
-ClientHello. A filter that matches it inside one packet is what a split at byte
-one defeats. A filter that reassembles the stream before matching is not
-defeated by anything in this class, and which of the two the path has is the
-measurement that would settle adoption.
+The one packet-level signature this class can split away is the funnel
+hostname inside the ClientHello. A filter that matches it inside one packet is
+what a split at byte one defeats. A filter that reassembles the stream before
+matching is not defeated by anything in this class, and which of the two the
+path has is the measurement that would settle adoption. The surfaces a desync
+tool cannot touch are named under What a no-MITM observer sees.
+
+## What a no-MITM observer sees
+
+The tools above answer one packet-level signature. A passive observer that
+reassembles nothing still reads four surfaces, and each names a different
+defence. d077's Study B carries the adversary matrix for the inner-TLS case and
+d136 carries the content-and-shape ladder; this section is the surface list both
+rest on, so the placement question has a frame.
+
+| surface         | what leaks without decryption                                                    | defence class                                |
+| --------------- | -------------------------------------------------------------------------------- | -------------------------------------------- |
+| destination     | the SNI, the DNS lookup, and the IP ranges of the edge                           | cover endpoint (deployment)                  |
+| TLS fingerprint | the ClientHello: cipher suites, extensions, key shares, ALPN and GREASE presence | browser-grade ClientHello and server profile |
+| flow shape      | record sizes, inter-arrival timing, direction and connection cardinality         | padding, coalescing, cover traffic           |
+| active probe    | the answer to a fresh connection: status, headers, body and timing               | decoy site and uniform responses             |
+
+Read from cheapest to hardest:
+
+- **Destination.** The public leg dials a `*.ts.net` name (d136), so the name
+  alone is a block. It is the surface the deployed shape cannot hide, and the
+  reason a desync tool is the wrong remedy. ECH would hide the name from an
+  on-path observer, and d185 records why it is not adopted.
+- **TLS fingerprint.** The relay's ClientHello is Go's `crypto/tls`, not a
+  browser: a bare extension set without GREASE and the pinned toolchain's
+  post-quantum-hybrid key share. A JA3/JA4 match identifies the stack without a
+  byte of payload.
+- **Flow shape.** A tunnel is long-lived, sustained, multiplexed and
+  upstream-heavy where browsing is bursty request and response. Length and
+  timing sequences classify it without decryption, and this surface survives a
+  perfect ClientHello.
+- **Active probe.** A fresh connection to the funnel name answers the Go
+  `404 page not found` (VPN-R34), which is policy rather than camouflage, and
+  it fingerprints a single-route Go server.
+
+The inner-TLS shape is a fifth observable, and d077's Study B already carries
+its verdict: a nested handshake's record sizes and timing are classifiable even
+though its contents are encrypted.
+
+### Camouflage against each surface
+
+The surfaces sort into deployment facts and code paths, and neither the packet
+hop nor this list substitutes for the other.
+
+- **Destination.** A cover domain on reputable shared hosting with a
+  publicly-trusted certificate makes the name unremarkable. That is a deployment
+  change, and d165's SNI-rewriting rejection stands: the real ClientHello must
+  carry the routable name.
+- **TLS fingerprint.** A ClientHello that matches a browser (GREASE, extension
+  order, the browser's key shares) and a ServerHello and certificate profile
+  that match a common server. The standard library cannot shape the ClientHello,
+  so this is an external dependency, not an estige code path.
+- **Flow shape.** TLS-record padding, write coalescing, an upstream cap,
+  multiplexing over few connections, and cover requests to real sites. This is
+  the expensive surface, and it costs latency.
+- **Active probe.** A decoy site at every path with uniform headers and timing,
+  rather than the single-route 404.
+- **Inner TLS.** Carry a nested session inside a normal-looking application
+  protocol, or pad its records, so the handshake shape does not show.
+
+A reassembling middlebox plus a length and timing classifier defeats the packet
+hop and this list together, which is d077's classify-and-block row and the
+ceiling d165 already records.
 
 ## The one drop-in: byedpi as the relay node's chain hop
 
