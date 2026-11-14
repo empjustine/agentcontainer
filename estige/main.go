@@ -338,13 +338,23 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 var version = "dev"
 
 func main() {
-	// `proxy-env` is the one subcommand (docs/d095): it prints the loopback
-	// proxy spelling for the operator's shell and exits. `generate` went with
-	// the allowlist it emitted (docs/d108) and `smoke-test` went with the
-	// reverse-proxy behaviour it checked; the installed service units own
-	// everything else. Role selection stays `-mode`.
+	// Three subcommands remain, each print-and-exit: `proxy-env` prints the
+	// loopback proxy spelling for the operator's shell (docs/d095); `keygen`
+	// mints the host identity key material and `public` derives a peer-ready
+	// config entry from it (docs/d169, the store d132 describes). `generate`
+	// went with the allowlist it emitted (docs/d108) and `smoke-test` went
+	// with the reverse-proxy behaviour it checked; the installed service units
+	// own everything else. Role selection stays `-mode`.
 	if len(os.Args) > 1 && os.Args[1] == "proxy-env" {
 		runProxyEnv(os.Args[2:])
+		return
+	}
+	if len(os.Args) > 1 && os.Args[1] == "keygen" {
+		runKeygen(os.Args[2:])
+		return
+	}
+	if len(os.Args) > 1 && os.Args[1] == "public" {
+		runPublic(os.Args[2:])
 		return
 	}
 
