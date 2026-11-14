@@ -4,6 +4,24 @@ Instructions for coding agents (pi and others) operating in this repo.
 `docs/architecture.md` treats this file as repo-owned infrastructure, like
 `biome.jsonc`.
 
+## Code and documentation priorities
+
+Six priorities bind every change; `docs/design-priorities.md` carries the
+statements and the rationale, this list the test:
+
+- **Untangled** — execution, data and read flows stay parallel; a change never
+  knots two of them into one place.
+- **Local** — related things sit together: one change touches one place, and a
+  reader does not jump between files.
+- **Direct** — no indirection: a library, helper or utility with one caller (or
+  none) is inlined or deleted, not kept for later.
+- **Maintainable, observable** — failures surface at the step that owns them
+  and state reads from logs; no pattern hides either.
+- **Vetted dependencies** — unvetted packages stay out; a necessary one is
+  among the few most trusted.
+- **Terse** — short code and short documentation beat long ones; cut before
+  adding.
+
 ## Comments: explain WHY, never HOW
 
 This codebase is deliberately **comment-verbose — but only about intent**.

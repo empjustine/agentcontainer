@@ -232,6 +232,10 @@ the one BRD row about the tunnel credential itself; the fuller requirements
   retired variants are removed from the worktree, recorded only in docs.
 - **NFR-5** — Single-user economy: no rate limiting, tenancy, or hardening
   beyond what the underlying tools ship (see Non-goals).
+- **NFR-6** — Design priorities hold of every change: untangled flows, local
+  placement, direct code, maintainable and observable shapes, few vetted
+  dependencies, terse text (statements and rationale:
+  [design-priorities](design-priorities.md)).
 
 ## Non-goals
 
