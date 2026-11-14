@@ -60,28 +60,19 @@ left answering nothing that generation asks (docs/d072).
   module-design / submodule-design / task-spec, plus the `d0XX` decision log
   and archived research).
 
-**Delivered in phases (docs/d073; transport names in docs/d077/d105):**
-the SSL-VPN transport family in `estige/` — the allowlist relay (today's
-host allowlist), the authenticated relay (generic prefix-route relay whose
-`${prefix}` namespace rides the Funnel mount since d085, one operator
-credential, no tenancy), and the tunnel transports (h2-POST, WebSocket,
-h1.1-POST) — is specified in [d073](d073-ssl-vpn-three-modes.md): v2 = the
-allowlist relay + the WebSocket tunnel (`CONNECT`-over-WebSocket with a
-localhost client proxy that validates the target's real certificate
-end-to-end) is delivered; the h2-POST tunnel is built and default-on since
-d084; the h1.1-POST tunnel is built with no spike ahead of it (d081's L4
-amendment — L4 demoted to characterization; the default client offer remains
-the code string `cde`); and the authenticated relay is deferred to v3, while deployment **v4**
-replaces the tunnel's shared bearer with mutual per-principal proofs — decided
-but not implemented (FR-E1, d104). The
-tunnel transports' operator keys are the bounded principal set of
-[d078](d078-ssl-vpn-operator-keys.md) (the NFR-5 exception); accepting the
-authenticated relay (v3) would add one operator credential on top of them
-without introducing tenants. The fuller requirements (`VPN-R*`) live in
-d073 and this BRD otherwise stays allowlist-shaped — the d047 allowlist is scoped to
-the allowlist relay by decision
-([d080](d080-forward-proxy-no-host-allowlist.md)) — FR-E1 is the one row about
-the tunnel credential itself.
+**Delivered (docs/d187, docs/d188):** the SSL-VPN tunnel family in
+`estige/` is the whole serving edge — the allowlist relay and the
+authenticated relay are deleted (docs/d108). [d188](d188-tunnel-contract.md)
+is the requirements register (end-to-end TLS with no MITM, default-deny
+egress, the loopback client); [d077](d077-ssl-vpn-transport-ladder.md) owns
+the three transports (h2-POST, WebSocket, h1.1-POST) and
+[d187](d187-tunnel-family-complete-arms-by-default.md) the arming and the
+offer (the whole ladder, chosen per dial; the operator keyset is the arm
+signal, docs/d085/d093). The tunnel's operator credential is mutual
+per-principal Ed25519 proofs (docs/d104, d131-d133) over the bounded principal
+set of [d078](d078-ssl-vpn-operator-keys.md) (the NFR-5 exception). FR-E1 is
+the one BRD row about the tunnel credential itself; the fuller requirements
+(`VPN-R*`) live in [d188](d188-tunnel-contract.md).
 
 ## Functional requirements
 
@@ -177,8 +168,9 @@ the tunnel credential itself.
   the auth path (docs/d131, docs/d132). Failures are indistinguishable from the
   allowlist relay's camouflage 404, and every configuration ambiguity refuses at
   boot rather than guessing (VPN-R26/R33/R34). The transport requirements
-  themselves stay d073's (`VPN-R*`), amended forward by d077/d081/d084/d085/d104;
-  this row is the BRD's claim, and d133 owns operating it.
+  themselves live in [d188](d188-tunnel-contract.md) (`VPN-R*`), superseding
+  d073's register; the mechanics are d077's, the auth d104/d131-d133, and d133
+  owns operating it.
 
 ### Copy units and per-unit infrastructure
 

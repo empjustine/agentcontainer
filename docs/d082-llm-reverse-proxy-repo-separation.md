@@ -48,7 +48,7 @@ it happens.
   docs/d120), `smoke-test.sh`,
   `README.md`, `DESIGN.md`, `llm-reverse-proxy.example.json`, the
   generated `llm-reverse-proxy.json`;
-- its requirements: the BRD's FR-S5 extract and d073's `VPN-R*` block
+- its requirements: the BRD's FR-S5 extract and d188's `VPN-R*` block
   (copied out at split — the BRD itself stays here);
 - its decision log entries: d015, d027, d114, d031, d038, d047, d073,
   d077, d078, d080, d081. History is **copied, not moved**: this repo's

@@ -1,7 +1,7 @@
 ---
 id: d073
 type: module-design
-status: active
+status: deprecated
 title: "d073 — llm-reverse-proxy → SSL-VPN transport family: requirements and feasibility"
 parent: estige
 depends-on: [estige, d027, d047, d070, d071]
@@ -13,15 +13,11 @@ tags: ["serving", "proxy", "vpn", "ssl-vpn", "websocket", "tailscale", "requirem
 
 ## Status
 
-Adopted in part — this began as requirements
-and feasibility only, and the parts that shipped are amended forward by
-d077/d081/d084/d085/d104; the transport names are d105's. It exists so the
-question d072 deliberately left open ("a TLS-level VPN (ssl-vpn style) or a
-non-HTTP-proxy transport") had a written, checkable target instead of a
-sentence in a review. Normative language is RFC 2119
-(MUST / SHOULD / MAY). Requirement IDs are `VPN-R*`; when a transport is accepted
-they fold into the BRD (docs/requirements.md) as `FR-S*` rows and this record
-stays the history of the decision.
+Superseded by [d188](d188-tunnel-contract.md) as the live requirements
+register. This record remains the requirements-and-feasibility study: the
+feasibility verdict, the rejected alternatives, the retired
+allowlist/authenticated-relay designs, and the deferred UDP and rate-limit
+assessments.
 
 ## Verdict (the feasibility question, answered)
 

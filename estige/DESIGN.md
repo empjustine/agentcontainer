@@ -14,7 +14,7 @@ answers the way it does for everything that is not a tunnel, how tunnel-side
 failures are reported, and what the deleted reverse proxy left behind.
 Operation (usage, build, ports) lives in [README.md](README.md); the
 requirement statement is FR-S5 in [../docs/requirements.md](../docs/requirements.md);
-the transport requirements are [d073](../docs/d073-ssl-vpn-three-modes.md)'s.
+the transport requirements are [d188](../docs/d188-tunnel-contract.md)'s.
 
 > **The reverse proxy is gone (docs/d108).** The v2 host-allowlist routing
 > convention — host-key table, client-carried base path, the generated

@@ -28,7 +28,7 @@ end to end and never trust the node in the middle.
 > (`CONNECT`-over-WebSocket, the deployed v2 shape), and the h1.1-POST tunnel
 > (per-exchange windowing — the floor under an upgrade-stripping gateway). The
 > offer is always the whole ladder, ranked per dial by the relay node; the
-> `-modes`/`MODES` knob retired with docs/d093. Requirements are d073's,
+> `-modes`/`MODES` knob retired with docs/d093. Requirements are d188's,
 > negotiation/framing d077's, names d105's, the credential redesign d104's.
 
 Historical reference for the deleted proxy: llama-swap,

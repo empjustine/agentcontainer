@@ -17,7 +17,7 @@ the split and the one rule that lets some folders reuse others.
 
 | Side        | Responsibility                                                                                                                                                                                 | Instance                                                                                    |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| **serving** | run llama-swap (`llm-local-inference*`, LOCAL GGUF only; **deprecated for now**, d108) and estige (`estige/`, SSL-VPN tunnel family only — the reverse proxy is deleted, d108; docs/d073/d077) | `llm-local-inference/` (local layer, capability-gated) + `estige/` (exit node + relay node) |
+| **serving** | run llama-swap (`llm-local-inference*`, LOCAL GGUF only; **deprecated for now**, d108) and estige (`estige/`, SSL-VPN tunnel family only — the reverse proxy is deleted, d108; docs/d188/d077) | `llm-local-inference/` (local layer, capability-gated) + `estige/` (exit node + relay node) |
 | **usage**   | run the pi coding-agent (`coding-agent*`)                                                                                                                                                      | `coding-agent/`                                                                             |
 
 The serving side is split by concern (docs/d027): llama-swap

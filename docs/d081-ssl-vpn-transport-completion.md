@@ -1,7 +1,7 @@
 ---
 id: d081
 type: module-design
-status: active
+status: deprecated
 title: "d081 — completing the tunnel family: Mode C adoption is a spike gate, Mode E builds to spike numbers"
 parent: estige
 depends-on: [d073, d077]
@@ -10,14 +10,10 @@ references: [d047, d070, d080]
 
 ## Status
 
-v2 (mode A + mode D) is delivered; mode C is built (default-on since d084 — the L3 default-flip gate below is superseded); mode E
-is built (docs/d077 — the L4 build gate in decision 2 below is superseded
-by this record's amendment). The L4 gate is demoted to production
-characterization: mode E shipped without measurements, its mechanics settled by
-the hostile-link model and its parameters provisional. This record decides **how
-the family completes and in what order** — not what the transports are: d077
-owns their mechanics,
-d073 owns their requirements, and this record restates neither.
+Superseded by [d187](d187-tunnel-family-complete-arms-by-default.md): every
+transport is built and the family arms by default. The gate history this record
+kept — L1-L4 as build gates, mode C's default flip — is recorded there under
+Alternatives rejected.
 
 ## Decision
 

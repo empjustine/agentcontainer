@@ -66,7 +66,7 @@ Use these canonical names in current prose, requirements, and reference docs:
 
 ## Migration
 
-- d073 and d077, as the current owners of the requirements and the transport
+- d188 and d077, as the current owners of the requirements and the transport
   ladder, are reworded to the canonical names.
 - Current-facing references — `docs/requirements.md`, `docs/architecture.md`,
   `docs/environments-and-variants.md`, `estige/README.md`,

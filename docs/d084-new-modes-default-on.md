@@ -1,7 +1,7 @@
 ---
 id: d084
 type: module-design
-status: active
+status: deprecated
 title: "d084 — the new modes arm by default: -modes starts at cd, and the capability env arms the tunnel family"
 parent: estige
 depends-on: [d073, d077, d081]
@@ -12,7 +12,10 @@ references: [d078, d080]
 
 ## Status
 
-Superseded in part by d085 — the arm env is the operator keyset, not VPN_TUNNEL_PREFIX; superseded in part by d081's mode-E amendment — the default offer cd → cde, same arm-by-default law, decision 1 as amended.
+Superseded by [d187](d187-tunnel-family-complete-arms-by-default.md): the
+family arms by default. The `-modes` default this record decided was retired
+wholesale by d093, and the arm signal moved from `VPN_TUNNEL_PREFIX` to the
+operator keyset (d085).
 
 ## Problem
 
