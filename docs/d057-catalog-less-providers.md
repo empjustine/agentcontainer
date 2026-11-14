@@ -50,7 +50,10 @@ spec flag rather than a second code path:
   endpoint, refreshed and cached by `coding-agent/provider-facts.mjs`
   (generalized from the hyper-only `hyper-facts.mjs`; `<id>-facts.json`,
   `<ID>_FACTS_JSON`, same tmp+rename / stale-tolerant / fail-closed-TLS
-  contract).
+  contract). The `listKey` is the endpoint's own list member — hyper answers
+  `models`, verboo answers `data` — and BOTH the publisher and
+  `loadProviderFacts` take it from this row; a reader with its own hardcoded
+  key silently empties the provider (docs/d086 has the verboo failure).
 - With an empty catalog lineup the facts cache IS the lineup, and the liveSync
   pass is **skipped**: it exists to reconcile the catalog against a listing,
   and running it here would prune the cache's metadata down to bare ids.
@@ -84,8 +87,9 @@ advertises (a 400 risk), so the gap stands until verb oo publishes one.
 ## The committed cache is load-bearing
 
 A catalog-less provider's layer is reproducible **without a key**: the seeded
-`coding-agent/verboo-facts.json` (a captured `GET /router/v1/models`) is read
-stale-tolerantly when the live fetch 401s, exactly as hyper's cache is.
+`coding-agent/verboo-facts.json` (a captured `GET /router/v1/models`, whose
+record list is the `data` member — docs/d086) is read stale-tolerantly when the
+live fetch 401s, exactly as hyper's cache is.
 That makes peer-mode generation — where the provider's own host is
 unreachable — possible at all, and it is why the cache is a committed
 artifact rather than a leftover.

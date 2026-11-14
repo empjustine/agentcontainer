@@ -432,12 +432,16 @@ export async function refreshProviderFacts(id, options) {
 
 /**
  * Stale-tolerant cache read (docs/d021: an unreadable facts file skips the
- * enrichment, never aborts the run).
+ * enrichment, never aborts the run). `listKey` must match the endpoint's own
+ * list member (the spec's `facts.listKey`): verboo serves `data`, and a
+ * reader hardcoded to `models` turned every refreshed verboo cache into a
+ * "no models array" warning and an EMPTY verboo lineup.
  * @param {string} id fact-table provider id
+ * @param {string} [listKey] the member holding the record list
  * @returns {LoadedProviderFacts|null} null when the cache is absent/unreadable
  */
-export function loadProviderFacts(id) {
-	const cache = loadCache(factsPath(id), "models", id);
+export function loadProviderFacts(id, listKey = "models") {
+	const cache = loadCache(factsPath(id), listKey, id);
 	if (!cache) {
 		return null;
 	}

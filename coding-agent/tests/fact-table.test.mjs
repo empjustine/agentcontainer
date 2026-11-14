@@ -26,6 +26,7 @@ import {
 	canonicalizeFactsCache,
 	canonicalizeProviderCatalog,
 } from "../lib/canonical-json.mjs";
+import { loadProviderFacts } from "../catalog-facts.mjs";
 import {
 	publishFactCache,
 	publishProviderMirror,
@@ -47,7 +48,8 @@ const PROVENANCE = {
 	},
 	hyper: { listKey: "models", regen: "node coding-agent/generate-pi-coding-agent.mjs" },
 	verboo: {
-		listKey: "models",
+		// The endpoint answers with `data` (the row's facts.listKey).
+		listKey: "data",
 		regen: "node coding-agent/generate-pi-coding-agent.mjs",
 	},
 };
@@ -261,6 +263,21 @@ const COMMITTED_CACHES = [
 	{ path: "hyper-facts.json", source: "hyper" },
 	{ path: "verboo-facts.json", source: "verboo" },
 ];
+
+// The reader and the publisher must take the list member from the same
+// place: the row's `facts.listKey`. A reader with its own hardcoded key
+// turned every refreshed verboo cache (`data`) into a "no models array"
+// warning and an empty lineup (docs/d086).
+test("facts reader takes the endpoint's own list member", () => {
+	const declared = loadProviderFacts("verboo", "data");
+	assert.ok(declared, "verboo loads under its declared key");
+	assert.ok(declared.models.length > 0, "the declared key is not empty");
+	assert.equal(
+		loadProviderFacts("verboo"),
+		null,
+		"the default `models` key is not verboo's — that read IS the bug",
+	);
+});
 
 for (const { path: rel, source } of COMMITTED_CACHES) {
 	test(`committed cache is canonical: ${rel}`, () => {

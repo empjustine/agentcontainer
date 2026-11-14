@@ -67,6 +67,32 @@ makes provenance stable instead.
      commits, never mixed into feature versions.
   6. _Idempotence lint_ — regenerate to temp; the diff must be empty.
 
+### The list member is the endpoint's, not the reader's
+
+A facts endpoint names its own record list in its own body: hyper answers
+`{ models: […] }` and verboo answers `{ data: […] }`. The row's
+`facts.listKey` declares which, and BOTH sides of the cache must take it from
+there — the publisher writing the file and `loadProviderFacts` reading it.
+
+The reader did not. It hardcoded `models` while verboo's row declared `data`,
+so every refresh published a cache the reader then rejected: one
+"no models array" warning, and an EMPTY verboo lineup in `models.json` — a
+generate run that reported success and shipped a provider offering nothing.
+The failure is silent by construction (an unreadable cache is a stale-tolerant
+skip, d021), which is why it took a committed-cache test, not a run, to see it.
+
+Verboo's body moved under the reader: the committed capture at the time the
+tier work landed was a `models`-keyed body, the refresh writes what the
+endpoint answers now (`data`), and `pi-verboo/sources.mjs` already read
+`data`. The fleet side is the one that drifted.
+
+The fix is the parameter: `loadProviderFacts(id, listKey = "models")`, called
+with the row's declared key (`spec.facts?.listKey`). `verboo-facts.json` is
+re-keyed to `data` by the refresh itself, the committed-cache guard declares
+`data` in its provenance table, and `tests/fact-table.test.mjs` asserts both
+sides: the declared key loads the cache, the default key returns null (the bug,
+pinned).
+
 ## Implementation status
 
 The recipe's generator half landed — canonical serialization, hash
