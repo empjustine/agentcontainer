@@ -14,8 +14,8 @@ tags: [pi-extensions, providers, cline-pass]
 Registers the **ClinePass** gateway (`https://api.cline.bot/api/v1`, the
 frozen provider row in `sources.mjs`) with
 [pi](https://github.com/earendil-works/pi), seeded from committed artifacts
-and reconcilable at refresh time against the same two published sources the
-generator uses (docs/d040 owns the lineup contract).
+and rebuilt at refresh time from the same two published sources the
+generator uses (docs/d189 owns the lineup contract).
 
 ## Install
 
@@ -38,20 +38,20 @@ no route files.
 
 ## The lineup contract in one screen
 
-Two published sources, reconciled by `resolveAllowlist`:
+Two published sources, one direction (docs/d189):
 
-1. **Cline's docs table** (`clinepass.mdx`, `## Models`) — the SUBSCRIPTION
-   CONTRACT: which ids ClinePass serves, already in the `cline-pass/`
-   namespace.
+1. **Cline's docs table** (`clinepass.mdx`, `## Models`) — the LINEUP: which
+   ids ClinePass serves, already in the `cline-pass/` namespace. Nothing else
+   adds an id, and a table id models.dev has not caught up to still publishes.
 2. **The models.dev `cline-pass` slice** — the METADATA: prices, limits,
-   modalities, effort enums; catalog-first additions are adopted from here.
+   modalities, effort enums. An id only the slice carries is a retired model
+   and never publishes.
 
-When at least `CLINE_PASS_MATCH_FLOOR` (0.8) of the docs table still appears
-in the slice, the published lineup is the union of both; below that, or when
-the docs table cannot be read, the committed fallback lineup wins and the run
-says so. The provider's OWN `/models` listing is deliberately never consulted:
-at api.cline.bot it serves the different `cline` (usage-billing) provider
-(`liveSync: false`, docs/d040).
+There is no committed lineup and no agreement floor: both consumers read the
+table on every run, and a read that fails means ClinePass is unavailable for
+that run (`CLINE_PASS_MDX` pins a local copy). The provider's OWN `/models`
+listing is deliberately never consulted: at api.cline.bot it serves the
+different `cline` (usage-billing) provider (`liveSync: false`, docs/d040).
 
 **The `cline-pass/` prefix is a billing contract**: an unprefixed id through
 this gateway bills at standard API pricing, so every consumer filters on it
@@ -66,8 +66,8 @@ capabilities (incl. `prompt-cache`), effort enums (`reasoningOptions`) and
 zero-filled subscription pricing — plus the recommended/free/clinePass
 group snapshot, the machine twin of the docs table. It runs _ahead_ of
 models.dev (e.g. `cline-pass/kimi-k3.1-pro`, video input, exists there
-first), which makes it the best candidate for a third, independent
-cross-check opinion in the reconciliation.
+first), which makes it the best candidate for the metadata the slice lacks —
+the rows the table names and models.dev has not yet priced.
 
 It is **not wired in**, and the reason matters: the package ships **no JSON
 artifact**. The catalog is a bun-minified JS object literal (unquoted keys)
@@ -87,17 +87,17 @@ execution of their code — with these caveats:
   plus nightlies); an unpinned read would drift our artifacts on Cline's
   release cadence instead of on source reality. Committed extraction
   fixtures keep the tests network-free.
-- **Cross-check, never third authority.** Parsing a minified bundle is not
-  reading published data: the docs table and models.dev stay the reconciled
-  authorities, and this source can only add a warning when the union
-  disagrees with Cline's own rendering of it.
+- **Metadata only, never a lineup.** Parsing a minified bundle is not reading
+  published data: the docs table stays the lineup and models.dev the metadata
+  source, and this source could only fill fields for ids the table already
+  names — never add one.
 
 ## Files
 
 | File           | Role                                                                                                              |
 | -------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `index.ts`     | the extension entry: `registerProvider` + `refreshModels` (the reconciliation at runtime)                         |
-| `sources.mjs`  | the two source reads, the reconciliation floor, the committed fallback lineup                                     |
+| `sources.mjs`  | the two source reads: the lineup from the docs table, the metadata from models.dev                                |
 | `merge.mjs`    | the one shaping step and both projections (manifest entry, registered-model entry)                                |
 | `generate.mjs` | two sources in, two artifacts out; `--check` verifies without writing                                             |
 | `log.mjs`      | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045)                                             |
@@ -105,9 +105,9 @@ execution of their code — with these caveats:
 | `models.js`    | GENERATED: the extension's offline seed (registered before any fresher store exists)                              |
 
 Regenerate with `./npm-run.sh pi-cline-pass generate` from the
-repo root (the git diff is the review); the committed artifacts are the
-offline fallback a network-less host reads. `--check` verifies them without
-writing.
+repo root (the git diff is the review). The artifacts are the extension's
+seed — what pi registers before the first refresh — and the fleet-parity
+record; `--check` verifies them without writing.
 
 ## Provenance
 
@@ -123,12 +123,10 @@ never vendored):
   deliberately not redirectable by env.
 - **Cline's published docs table** (clinepass.mdx in the cline/cline repo)
   — the SUBSCRIPTION CONTRACT: which ids ClinePass serves. Live data when
-  fetched from the raw-file URL; a pinned local copy via CLINE_PASS_MDX or
-  the git-mirror farm otherwise. Nothing behavioral is copied from that
-  repo — only the table is parsed, and the committed fallback lineup is a
-  transcription of it that a deliberate lineup contraction must update in
-  both places (fleet CLINE_PASS_LINEUP and sources.mjs's, siblings by
-  provenance).
+  fetched from the raw-file URL, or a pinned local copy via CLINE_PASS_MDX.
+  Nothing behavioral is copied from that repo — only the table is parsed, and
+  no copy of it is committed anywhere: a deliberate lineup contraction is one
+  regenerated artifact set, not a constant to edit in two places.
 - No third-party provider implementation is read or mirrored: the shaping
   rules are the fleet's own (docs/d033/d040/d049/d057), re-derived here as
   a standalone projection.
@@ -150,5 +148,5 @@ here so nobody debugs it as one.
 ```
 
 Network-free (injected fetch, `CLINE_PASS_MDX` for the docs file) and
-rule-pinning: they assert the guards, the floor, the cost/compat projections
-and the artifact contracts — never today's lineup.
+rule-pinning: they assert the guards, the lineup direction, the cost/compat
+projections and the artifact contracts — never today's lineup.

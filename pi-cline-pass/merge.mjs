@@ -309,28 +309,32 @@ export function shapeRow(record) {
 }
 
 /**
- * Shape the whole catalog slice into the published lineup: the prefix guard
- * (the billing contract), the allowlist (the reconciled docs ∪ catalog set
- * — undefined means "no lineup bound"), the d049 gate — then sort by id
- * (the canonical order a rerun must reproduce, docs/d050).
+ * Shape the published lineup into the emitted rows: the docs table decides
+ * WHICH ids publish, the catalog slice only supplies their metadata
+ * (docs/d189). A lineup id the catalog has no record for still emits — with
+ * the table's display name and pi's schema defaults — because the table is
+ * the contract; a catalog id the table does not list is a retired id and
+ * never emits. Then sort by id (the canonical order a rerun must reproduce,
+ * docs/d050).
  * @param {Record<string, CatalogRecord>} records the fetched cline-pass slice
- * @param {readonly string[]|undefined} allowlist resolved lineup ids
+ * @param {readonly import("./sources.mjs").LineupEntry[]} lineup the parsed docs table
  * @returns {MergedModel[]}
  */
-export function shapeCatalog(records, allowlist) {
+export function shapeCatalog(records, lineup) {
 	/** @type {MergedModel[]} */
 	const models = [];
-	for (const [key, record] of Object.entries(records ?? {})) {
-		if (!key.startsWith(CLINE_PASS_ID_PREFIX)) {
+	for (const entry of lineup) {
+		// The entry's id is the prefix-guarded identity, and the only one the
+		// row may carry: a catalog body's own id must never replace it — an
+		// unprefixed id published here bills at standard API pricing (docs/d040).
+		if (!entry.id.startsWith(CLINE_PASS_ID_PREFIX)) {
 			continue;
 		}
-		if (allowlist && !allowlist.includes(key)) {
-			continue;
-		}
-		// The KEY is the prefix-guarded, allowlist-matched identity; a record
-		// body that carries its own id must never replace it — an unprefixed id
-		// published here bills at standard API pricing (docs/d040).
-		const model = shapeRow({ ...record, id: key });
+		// The table owns the display name: models.dev has published the raw id in
+		// that field, and a row named after its own id is worse than the
+		// published label (docs/d189).
+		const record = records[entry.id] ?? {};
+		const model = shapeRow({ ...record, id: entry.id, name: entry.name });
 		if (model) {
 			models.push(model);
 		}

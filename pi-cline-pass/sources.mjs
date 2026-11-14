@@ -1,51 +1,44 @@
 /**
- * @fileoverview sources.mjs — the data sources of the ClinePass lineup, and
- * the ONE reconciliation contract between them.
+ * @fileoverview sources.mjs — the two published sources of the ClinePass
+ * catalog, with ONE direction between them (docs/d189):
  *
- * Why the provider's own listing is NOT a source here (docs/d040, the fleet's
- * cline-pass row): `GET <baseUrl>/models` at api.cline.bot answers with the
- * catalog of the `cline` (usage-billing) provider — a DIFFERENT provider —
- * so syncing against it would prune the real ClinePass lineup and append
- * hundreds of wrong-priced ids. The lineup comes from the two published
- * sources the fleet reconciles instead:
+ *   - Cline's docs table (docs/getting-started/clinepass.mdx in the
+ *     cline/cline repo, ## Models section) — the LINEUP: which ids ClinePass
+ *     serves, in the cline-pass/ namespace. Nothing else may add an id.
+ *   - the models.dev cline-pass slice — the METADATA (prices, limits,
+ *     modalities, effort enums) for those ids, where the catalog has any.
  *
- *   - Cline's docs table (`docs/getting-started/clinepass.mdx` in the
- *     cline/cline repo, `## Models` section) — the SUBSCRIPTION CONTRACT:
- *     the ids ClinePass currently serves, in the `cline-pass/` namespace.
- *   - the models.dev `cline-pass` slice — the METADATA (prices, limits,
- *     modalities, effort enums) and catalog-first lineup additions.
+ * Why the provider's own listing is NOT a source (docs/d040, the fleet's
+ * cline-pass row): GET <baseUrl>/models at api.cline.bot answers with the
+ * catalog of the cline (usage-billing) provider — a DIFFERENT provider — so
+ * syncing against it would prune the real ClinePass lineup and append
+ * hundreds of wrong-priced ids.
  *
- * `resolveAllowlist` is the fleet's `resolveClinePassAllowlist`
- * (coding-agent/generate-pi-coding-agent.mjs, docs/d040) in miniature: a
- * docs ∪ catalog union when at least CLINE_PASS_MATCH_FLOOR of the docs
- * table still appears in the slice, else the committed fallback lineup. The
- * floor is the self-check against both failure modes at once — a models.dev
- * pollution dump (the whole `cline` catalog dumped under `cline-pass`) and
- * a docs-table reshape (ids stop parsing).
+ * Why the catalog cannot widen the lineup either: models.dev keeps rows the
+ * gateway has already retired, so a catalog-only id is a dead id, not a
+ * catalog-first addition (docs/d189). A docs id the catalog does not know
+ * still publishes — the table is the contract, and pi's schema defaults fill
+ * the fields the catalog did not supply (merge.mjs).
  *
  * The prefix guard is a BILLING fact, not tidiness: a ClinePass id served
- * without the `cline-pass/` prefix bills at standard API pricing instead of
- * the subscription, and models.dev intermittently mislabels `cline`-provider
- * rows under neighboring provider keys. Every consumer filters on
+ * without the cline-pass/ prefix bills at standard API pricing instead of the
+ * subscription, and models.dev intermittently mislabels cline-provider rows
+ * under neighboring provider keys. Every consumer filters on
  * CLINE_PASS_ID_PREFIX before publishing a row (docs/d040).
  *
- * Failure contract, mirroring the fleet and pi-synthetic:
- *   - a failed catalog fetch THROWS: the committed artifacts (written
- *     atomically by this folder's generator) are the offline fallback, and a
- *     run with no metadata source has nothing to publish;
- *   - an unreadable docs table degrades to the committed fallback lineup
- *     with a warning: a missing markdown file says nothing about whether
- *     the subscription still serves its models.
+ * Failure contract: both reads THROW. An unreadable lineup or metadata source
+ * means there is nothing to publish, and "ClinePass is unavailable" is the
+ * answer — never a remembered list (docs/d189). The artifact a successful run
+ * wrote stays in place; a failed run writes nothing.
  * Neither fetch URL is recorded in logs (docs/d086).
  *
- * Env: CLINE_PASS_MDX —
- * a plain local copy of the docs file, the fleet's git-mirror override
- * kept here because the docs source is published markdown, not an API.
+ * Env: CLINE_PASS_MDX — a plain local copy of the docs file, for a host that
+ * pins the table instead of fetching it.
  */
 
 import { readFileSync } from "node:fs";
 
-import { logDebug, logInfo, logWarn, setLogTool } from "./log.mjs";
+import { logDebug, logInfo, setLogTool } from "./log.mjs";
 
 setLogTool("pi-cline-pass/sources");
 
@@ -112,38 +105,13 @@ const CLINE_PASS_DOCS_URL =
 	"https://raw.githubusercontent.com/cline/cline/main/docs/getting-started/clinepass.mdx";
 
 /**
- * The committed last-known-good lineup — the fallback when the docs table
- * cannot be read or no longer agrees with the catalog. Transcribed from the
- * published `## Models` table, exactly as the fleet's CLINE_PASS_LINEUP
- * constant in coding-agent/generate-pi-coding-agent.mjs; the two are
- * siblings by provenance, and a deliberate lineup contraction must land in
- * both (docs/d040 owns the reconciliation contract).
- * @type {readonly string[]}
+ * One row of the published ## Models table: the id the gateway bills under
+ * (already in the cline-pass/ namespace) and the display name the table gives
+ * it.
+ * @typedef {object} LineupEntry
+ * @property {string} id
+ * @property {string} name
  */
-export const CLINE_PASS_LINEUP = Object.freeze([
-	"cline-pass/glm-5.3",
-	"cline-pass/glm-5.3-flash",
-	"cline-pass/kimi-k3",
-	"cline-pass/deepseek-v4-pro",
-	"cline-pass/deepseek-v4.1-flash",
-	"cline-pass/mimo-v2.5",
-	"cline-pass/mimo-v2.5-pro",
-	"cline-pass/minimax-m3",
-	"cline-pass/muse-spark-1.3-contributor",
-	"cline-pass/qwen3.8-max",
-	"cline-pass/qwen3.7-max",
-	"cline-pass/qwen3.7-plus",
-]);
-
-/**
- * Minimum fraction of the docs table that must also appear in the catalog
- * slice before either source is trusted (docs/d040, fleet parity). Genuine
- * lineup churn keeps the ratio near 1 and self-adopts; a pollution dump or
- * a docs reshape drives it toward zero and the committed lineup wins
- * instead of a wrong-priced one.
- * @type {number}
- */
-export const CLINE_PASS_MATCH_FLOOR = 0.8;
 
 const REQUEST_TIMEOUT_MS = 15_000;
 const MODEL_STORE_TTL_MS = 4 * 60 * 60 * 1000;
@@ -179,7 +147,7 @@ const MODEL_STORE_TTL_MS = 4 * 60 * 60 * 1000;
  * @param {typeof fetch} [options.fetchImpl] injected by tests
  * @returns {Promise<Record<string, CatalogRecord>>} the slice, keyed by the
  *   catalog's own (prefixed) ids — unfiltered; the prefix guard is applied
- *   by resolveAllowlist and shapeCatalog, not here
+ *   by shapeCatalog, not here
  * @throws {Error} on a transport failure, a non-2xx answer, or a payload
  *   with no cline-pass slice — the caller has nothing to publish, and the
  *   committed artifact is the fallback rather than a stale regeneration
@@ -213,21 +181,22 @@ export async function fetchCatalogSlice({ signal, fetchImpl = fetch } = {}) {
 
 /**
  * Parse the `## Models` GFM table from Cline's published clinepass.mdx and
- * return the model ids WITH their `cline-pass/` prefix — the namespace the
- * API bills under, so no consumer re-derives it. Scoped to that section
- * because the later `## Reference pricing` table is a different shape
- * (peak/off-peak and token-tier rows with display-only names). Returns null
- * when the section is absent or carries no prefixed id.
+ * return one entry per row: the id WITH its `cline-pass/` prefix (the
+ * namespace the API bills under) and the display name in the table's first
+ * column, so no consumer re-derives either. Scoped to that section because
+ * the later `## Reference pricing` table is a different shape (peak/off-peak
+ * and token-tier rows with display-only names). Returns null when the
+ * section is absent or carries no prefixed id.
  * @param {string} mdx the raw docs file
- * @returns {string[]|null}
+ * @returns {LineupEntry[]|null}
  */
 export function parseClinePassDocs(mdx) {
 	const section = mdx.split(/^## Models\s*$/m)[1]?.split(/^## /m)[0];
 	if (!section) {
 		return null;
 	}
-	/** @type {string[]} */
-	const ids = [];
+	/** @type {LineupEntry[]} */
+	const lineup = [];
 	for (const line of section.split("\n")) {
 		const trimmed = line.trim();
 		if (!trimmed.startsWith("|")) {
@@ -237,98 +206,54 @@ export function parseClinePassDocs(mdx) {
 			.split("|")
 			.slice(1, -1)
 			.map((c) => c.trim());
-		const raw = cells[1]?.replace(/`/g, "");
-		if (raw?.startsWith(CLINE_PASS_ID_PREFIX)) {
-			ids.push(raw);
+		const id = cells[1]?.replace(/`/g, "");
+		if (!id?.startsWith(CLINE_PASS_ID_PREFIX)) {
+			continue;
 		}
+		// A repeated row is one model: the docs file has carried duplicates
+		// before, and a lineup is a set, not an ordering to reproduce.
+		if (lineup.some((entry) => entry.id === id)) {
+			continue;
+		}
+		lineup.push({ id, name: cells[0] || id });
 	}
-	return ids.length > 0 ? ids : null;
+	return lineup.length > 0 ? lineup : null;
 }
 
 /**
- * The docs table's id list, from a local copy (CLINE_PASS_MDX) or the
- * canonical raw URL. UNLIKE the catalog fetch this NEVER throws: the docs
- * source is one of two lineup inputs, and its absence degrades to the
- * committed fallback lineup (resolveAllowlist) rather than failing a run
- * whose metadata source answered.
+ * The published lineup, from a local copy (CLINE_PASS_MDX) or the canonical
+ * raw URL. THROWS on every failure: without the table there is no lineup to
+ * publish, and "ClinePass is unavailable" is the answer rather than a
+ * remembered list (docs/d189).
  * @param {object} [options]
  * @param {AbortSignal} [options.signal]
  * @param {typeof fetch} [options.fetchImpl] injected by tests
- * @returns {Promise<string[]|null>}
+ * @returns {Promise<LineupEntry[]>}
+ * @throws {Error} on an unreadable override, a transport failure, a non-2xx
+ *   answer, or a file with no ## Models table
  */
-export async function fetchDocsIds({ signal, fetchImpl = fetch } = {}) {
-	try {
-		const explicit = process.env.CLINE_PASS_MDX;
-		let mdx;
-		if (explicit) {
-			mdx = readFileSync(explicit, "utf-8");
-		} else {
-			const res = await fetchImpl(CLINE_PASS_DOCS_URL, {
-				signal: signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-			});
-			if (!res.ok) {
-				throw new Error(`docs file answered ${res.status}`);
-			}
-			mdx = await res.text();
-		}
-		const ids = parseClinePassDocs(mdx);
-		if (!ids) {
-			throw new Error("no ## Models table with prefixed ids");
-		}
-		return ids;
-	} catch (err) {
-		logWarn("cline-pass docs lineup unreadable", { error: err });
-		return null;
-	}
-}
-
-/**
- * The lineup contract for one run: the UNION of the docs table and the
- * catalog slice when the two still agree, else the committed fallback —
- * the fleet's reconciliation (docs/d040), pure over its inputs so the
- * generator and the extension resolve identically and tests need neither
- * source on the wire.
- * @param {string[]|null} docsIds the parsed docs table, or null when it
- *   could not be read
- * @param {Record<string, CatalogRecord>} records the fetched cline-pass
- *   slice
- * @returns {readonly string[]} the allowlist ids (catalog-namespace)
- */
-export function resolveAllowlist(docsIds, records) {
-	if (!docsIds || docsIds.length === 0) {
-		logWarn("cline-pass docs lineup unavailable — using committed lineup", {
-			fallback: CLINE_PASS_LINEUP.length,
+export async function fetchDocsLineup({ signal, fetchImpl = fetch } = {}) {
+	const explicit = process.env.CLINE_PASS_MDX;
+	let mdx;
+	if (explicit) {
+		mdx = readFileSync(explicit, "utf-8");
+	} else {
+		const res = await fetchImpl(CLINE_PASS_DOCS_URL, {
+			signal: signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 		});
-		return CLINE_PASS_LINEUP;
+		if (!res.ok) {
+			throw new Error(`cline-pass docs answered ${res.status} — nothing to publish`);
+		}
+		mdx = await res.text();
 	}
-	const catalogKeys = new Set(
-		Object.keys(records).filter((id) => id.startsWith(CLINE_PASS_ID_PREFIX)),
-	);
-	const matched = docsIds.filter((id) => catalogKeys.has(id));
-	const ratio = matched.length / docsIds.length;
-	if (ratio < CLINE_PASS_MATCH_FLOOR) {
-		logWarn("cline-pass docs/catalog disagree — keeping committed lineup", {
-			docs: docsIds.length,
-			matched: matched.length,
-			ratio,
-			floor: CLINE_PASS_MATCH_FLOOR,
-		});
-		return CLINE_PASS_LINEUP;
+	const lineup = parseClinePassDocs(mdx);
+	if (!lineup) {
+		throw new Error("clinepass.mdx carries no ## Models table — nothing to publish");
 	}
-	/**
-	 * Union: docs ids first (the published contract), then catalog-only ids
-	 * (catalog-first additions the docs table has not caught up to) —
-	 * shapeCatalog intersects with the slice anyway, so docs-only ids
-	 * simply find no record to emit.
-	 */
-	const union = [...new Set([...docsIds, ...catalogKeys])];
-	logInfo("cline-pass lineup adopted as docs ∪ catalog union", {
-		docs: docsIds.length,
-		matched: matched.length,
-		catalogOnlyAdopted: catalogKeys.size - matched.length,
-		union: union.length,
+	logInfo("cline-pass lineup read from the published table", {
+		models: lineup.length,
 	});
-	return union;
+	return lineup;
 }
 
 /**

@@ -1,28 +1,26 @@
 /**
  * @fileoverview generate.mjs — the pi-cline-pass generator: TWO published
- * sources in (the models.dev `cline-pass` slice and Cline's published docs
- * table), TWO committed artifacts out (`models.json`, the pi
+ * sources in (Cline's published docs table, which alone decides the lineup,
+ * and the models.dev `cline-pass` slice, metadata only), TWO committed
+ * artifacts out (`models.json`, the pi
  * `models.json`-shaped cline-pass provider block, and `models.js`, the
  * extension's offline seed).
  *
- * Why two sources plus a reconciliation floor here, when pi-synthetic
- * deleted its multi-source ladder (docs/d096): they are not rungs of one
- * ladder. The docs table is the SUBSCRIPTION CONTRACT (which ids ClinePass
- * serves), models.dev is the METADATA (prices, limits, effort enums), and
- * neither can stand in for the other — and neither is this provider's own
- * /models listing, which serves a DIFFERENT provider's catalog entirely
- * (docs/d040; sources.mjs carries the full contract). The floor decides
- * when the two still describe the same lineup; below it the committed
- * fallback lineup wins and the run says so loudly.
+ * Why two sources and no ladder between them (pi-synthetic deleted its own,
+ * docs/d096): they are not rungs of one ladder. The docs table is the
+ * LINEUP, models.dev is the METADATA (prices, limits, effort enums) for the
+ * ids the table names, and neither can stand in for the other — and neither
+ * is this provider's own /models listing, which serves a DIFFERENT
+ * provider's catalog entirely (docs/d040). There is no fallback list and no
+ * agreement floor: the table is the whole contract, so the catalog can
+ * neither add a retired id nor drop a published one (docs/d189).
  *
- * Failure contract: a failed catalog fetch THROWS — no metadata source
- * means nothing publishable, and the committed artifact (written
- * atomically, see the writer below) is the offline fallback a network-less
- * host reads. The docs table degrades to the committed lineup with a
- * warning instead: a missing markdown file says nothing about whether the
- * subscription still serves its models (sources.mjs).
+ * Failure contract: BOTH reads THROW. No lineup table means no ClinePass
+ * lineup, and "unavailable" is the honest answer — never a remembered one
+ * (docs/d189). A failed run writes nothing (the writer below is atomic), so
+ * the committed artifact a successful run wrote stays byte-identical.
  *
- * The lineup is reconciled at BOTH refresh points with the SAME contract —
+ * The lineup is resolved at BOTH refresh points with the SAME contract —
  * this file and the extension's refreshModels share sources.mjs/merge.mjs
  * — and at neither does the provider's own /models listing appear: the
  * fleet's cline-pass row carries liveSync: false for exactly that reason
@@ -55,8 +53,7 @@ import {
 	CLINE_PASS_BASE_URL,
 	CLINE_PASS_NAME,
 	fetchCatalogSlice,
-	fetchDocsIds,
-	resolveAllowlist,
+	fetchDocsLineup,
 } from "./sources.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -306,12 +303,11 @@ function alreadyCommitted(path, content) {
 }
 
 async function main() {
-	// Order IS the failure contract: the catalog fetch throws (no metadata
-	// source = nothing publishable), the docs fetch degrades inside
-	// resolveAllowlist (unreadable table = committed lineup + a warning).
+	// Order IS the failure contract: either source failing aborts the run
+	// with the committed artifacts untouched (docs/d189).
 	const records = await fetchCatalogSlice();
-	const allowlist = resolveAllowlist(await fetchDocsIds(), records);
-	const models = shapeCatalog(records, allowlist);
+	const lineup = await fetchDocsLineup();
+	const models = shapeCatalog(records, lineup);
 	// Zero rows means the prefix guard or the eligibility gates swallowed the
 	// whole lineup: writing that would silently replace a working provider
 	// with an empty one, which is a failure to publish, not a result.

@@ -11,7 +11,10 @@ tags: [bugfix]
 
 # d040 — cline-pass lineup is the curated ClinePass list, not Cline's catalog
 
-**Status:** implemented
+**Status:** implemented — amended by d189, which retires the union-and-floor
+reconciliation and the committed fallback list described below in favour of
+the published table alone. Everything else here still holds: the prefix
+guard, the `/models` boundary, and why this provider is curated.
 
 ## Problem
 

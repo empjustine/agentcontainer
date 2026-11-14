@@ -1,7 +1,7 @@
 /**
  * @fileoverview index.ts — the pi extension entry: registers the ClinePass
  * provider (its OpenAI-compatible gateway at the fact table's canonical
- * upstream) with pi, seeded from the generated catalog and reconciled at
+ * upstream) with pi, seeded from the generated catalog and rebuilt at
  * refresh time against the SAME two published sources the generator uses.
  *
  * This file, sources.mjs, merge.mjs, log.mjs, models.js and package.json ARE
@@ -12,9 +12,9 @@
  * `/models` listing — at api.cline.bot that listing serves the `cline`
  * (usage-billing) provider, a different catalog, which is why the fleet's
  * cline-pass row carries liveSync: false (docs/d040 item 2). Refresh here
- * means the reconciliation itself: models.dev metadata intersected with the
- * docs-table lineup through the same floor both consumers share
- * (sources.mjs/merge.mjs — one contract, generation and runtime alike).
+ * means the lineup itself: the docs table names the ids, models.dev supplies
+ * their metadata, and both consumers share that one contract
+ * (sources.mjs/merge.mjs; docs/d189).
  *
  * Compat (`supportsDeveloperRole: false`, docs/d022/d033) rides PER MODEL
  * rather than at provider level: the legacy ProviderConfig registration has
@@ -44,8 +44,7 @@ import {
 	CLINE_PASS_NAME,
 	CLINE_PASS_PROVIDER_ID,
 	fetchCatalogSlice,
-	fetchDocsIds,
-	resolveAllowlist,
+	fetchDocsLineup,
 	storeIsFresh,
 } from "./sources.mjs";
 
@@ -68,12 +67,10 @@ interface RefreshContext {
 }
 
 /**
- * The freshly reconciled list plus the committed seed, deduplicated by id
- * with the fresh rows winning. The seed is never dropped: it is the only row
- * set that exists offline, and a refresh whose docs fetch degraded to the
- * committed fallback lineup must not delete the union-adopted rows the seed
- * carries (docs/d040) — a refresh that cannot confirm a row is not a
- * refresh that may revoke it.
+ * The freshly resolved list plus the committed seed, deduplicated by id with
+ * the fresh rows winning. Both are the same published table, so the seed only
+ * survives where the fresh read could not cover it — a lookup that fails
+ * mid-list must not revoke a row the provider still serves.
  * @param {MergedModel[]} models freshly shaped models
  * @returns {unknown[]} the list pi registers
  */
@@ -126,11 +123,9 @@ export default function piClinePass(pi: ExtensionAPI): void {
 					const records = await fetchCatalogSlice({
 						signal: context.signal,
 					});
-					const docsIds = await fetchDocsIds({ signal: context.signal });
+					const lineup = await fetchDocsLineup({ signal: context.signal });
 					context.signal?.throwIfAborted();
-					return withSeed(
-						shapeCatalog(records, resolveAllowlist(docsIds, records)),
-					);
+					return withSeed(shapeCatalog(records, lineup));
 				} catch (err) {
 					if (context.signal?.aborted) {
 						throw err;

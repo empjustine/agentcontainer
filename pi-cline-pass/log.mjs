@@ -168,9 +168,4 @@ export const logInfo = (msg, fields) => emit("info", msg, fields);
  * @param {string} msg
  * @param {Record<string, unknown>} [fields]
  */
-export const logWarn = (msg, fields) => emit("warn", msg, fields);
-/**
- * @param {string} msg
- * @param {Record<string, unknown>} [fields]
- */
 export const logError = (msg, fields) => emit("error", msg, fields);

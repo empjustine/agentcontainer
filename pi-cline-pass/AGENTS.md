@@ -4,34 +4,35 @@ Folder-local rules. Repo-wide rules are in `../AGENTS.md`; the standalone rule
 (a folder is a copy unit) is in `../docs/architecture.md`. What follows is only
 what is specific here (docs/d040 owns the lineup contract itself).
 
-## Two sources, one floor — and never the provider's own listing
+## Two sources, one direction — and never the provider's own listing
 
-- **The docs table is the subscription contract** (which ids ClinePass
-  serves); **models.dev is the metadata** (prices, limits, effort enums).
-  Neither can stand in for the other, which is why this folder has two
-  sources where pi-synthetic fought its way down to one: those were rungs of
-  one ladder, these are two different claims.
+- **The docs table is the lineup** (which ids ClinePass serves); **models.dev
+  is the metadata** (prices, limits, effort enums). Neither can stand in for
+  the other, which is why this folder has two sources where pi-synthetic
+  fought its way down to one: those were rungs of one ladder, these are two
+  different claims. The direction is fixed (docs/d189): a table id the slice
+  has not caught up to still publishes on pi's defaults, and an id only the
+  slice carries is a retired model that never publishes.
 - **The provider's own `/models` listing is not a source, ever.** At
   api.cline.bot it answers with the `cline` (usage-billing) provider's
   catalog — a different provider — which is why the fleet's cline-pass row
   carries `liveSync: false`. Do not add it "as a sanity check": it would
   prune the real lineup and append hundreds of wrong-priced ids.
-- **The floor decides which pair of sources is believable.** Below
-  `CLINE_PASS_MATCH_FLOOR` the committed lineup wins and the run says so
-  loudly; genuine churn self-adopts (the ratio stays near 1).
-- **The failure contract has two directions on purpose.** A failed catalog
-  fetch THROWS (no metadata source means nothing publishable; the committed
-  artifact, written atomically, is the offline fallback). An unreadable docs
-  table DEGRADES to the committed lineup with a warning (a missing markdown
-  file says nothing about whether the subscription still serves its models).
-  Do not "unify" the directions.
+- **There is no committed lineup and no agreement floor.** Neither shaper
+  holds a list of model ids; both read the table per run, so a rotation is a
+  regenerated artifact set. A fallback list would let this folder claim
+  availability no source confirmed — the thing d189 exists to remove — so it
+  is not coming back for offline use either.
+- **Both reads THROW.** No lineup table or no metadata source means there is
+  nothing to publish, and ClinePass unavailable is the answer (a failed run
+  writes nothing; the writers are atomic). `CLINE_PASS_MDX` pins a table on
+  a host that carries one; the git-mirror farm is not consulted.
 - **A third source exists as documentation, not as code** (README:
   "Candidate third source"): `@cline/llms` bakes Cline's own catalog, but
   ships it as a minified bundle that needs format-fragile parsing. If it is
-  ever wired in, it enters as a degrading cross-check behind the same floor —
-  never as an authority, never as a throwing fetch, and never by adding a
-  package dependency (text extraction from a pinned, checksummed tarball
-  only).
+  ever wired in, it enters as metadata for ids the table already names — never
+  as a lineup authority, and never by adding a package dependency (text
+  extraction from a pinned, checksummed tarball only).
 
 ## The prefix is money
 
@@ -74,10 +75,9 @@ are in `biome.jsonc`'s ignore list (generated files). `./npm-run.sh pi-cline-pas
 generate --check` is the drift gate; prefer it over
 eyeballing a diff when you only need to know "is this current".
 
-`CLINE_PASS_LINEUP` (the committed fallback) is transcribed from the same
-published docs table the fleet's constant carries — siblings by provenance.
-A deliberate lineup contraction must land in BOTH this folder and
-`../coding-agent/generate-pi-coding-agent.mjs`.
+The lineup is committed to neither shaper: the docs table is read on every
+run, so a rotation is a regenerated artifact set rather than a constant
+edited here and in `../coding-agent/generate-pi-coding-agent.mjs`.
 
 ## The folder is the package
 
@@ -97,7 +97,7 @@ is a stronger check than a type pass. Keep that test working.
 `../coding-agent/generate-pi-coding-agent.mjs` owns the fleet artifact and
 its `model-015` row; this folder owns the extension package, duplicating the
 shaping because the standalone rule forbids reaching into a sibling runner
-(`docs/architecture.md`). Contract changes (the floor, the fallback lineup,
-the compat fact, the eligibility gates) land in BOTH until one shaping
-describes the provider. Record the join in `docs/` when it lands — this file
+(`docs/architecture.md`). Contract changes (the lineup direction, the
+compat fact, the eligibility gates) land in BOTH until one shaping describes
+the provider. Record the join in `docs/` when it lands — this file
 is not its home.

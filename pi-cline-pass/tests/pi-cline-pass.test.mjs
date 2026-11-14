@@ -1,14 +1,15 @@
 /**
  * @fileoverview pi-cline-pass.test.mjs — tests for the pi-cline-pass folder:
- * the shaping rules (merge.mjs), the two source reads and the reconciliation
- * floor (sources.mjs), the committed artifacts, and the extension entry.
+ * the shaping rules (merge.mjs), the two source reads (sources.mjs), the
+ * committed artifacts, and the extension entry.
  *
  * Everything here works on plain records or injects fetchImpl/CLINE_PASS_MDX,
  * so the suite needs no network — and it pins RULES, never today's lineup (a
  * lineup assertion would fail on the next provider rotation and teach nothing).
  * The only lineup facts asserted are structural: every published id carries
- * the cline-pass/ prefix (the billing contract, docs/d040) and the committed
- * seed and artifact agree with each other.
+ * the cline-pass/ prefix (the billing contract, docs/d040), the docs table is
+ * the sole lineup source (docs/d189), and the committed seed and artifact
+ * agree with each other.
  *
  * Run: node --test   (from this folder — discovers tests/*.test.mjs)
  */
@@ -24,14 +25,11 @@ const {
 	CLINE_PASS_API_KEY_ENV,
 	CLINE_PASS_BASE_URL,
 	CLINE_PASS_ID_PREFIX,
-	CLINE_PASS_LINEUP,
-	CLINE_PASS_MATCH_FLOOR,
 	CLINE_PASS_NAME,
 	CLINE_PASS_PROVIDER_ID,
 	fetchCatalogSlice,
-	fetchDocsIds,
+	fetchDocsLineup,
 	parseClinePassDocs,
-	resolveAllowlist,
 	storeIsFresh,
 } = await import("../sources.mjs");
 const {
@@ -79,6 +77,16 @@ const record = (overrides = {}) =>
  * @returns {Record<string, unknown>}
  */
 const catalogPayload = (models) => ({ [CLINE_PASS_PROVIDER_ID]: { models } });
+
+/**
+ * A docs-table lineup naming exactly the catalog keys of a record set: the
+ * table decides which ids publish (docs/d189), so a test that only cares
+ * about shaping names its own records.
+ * @param {Record<string, unknown>} records
+ * @returns {{id: string, name: string}[]}
+ */
+const lineupOf = (records) =>
+	Object.keys(records).map((id) => ({ id, name: id }));
 
 /**
  * A fetch stub that answers with one payload. Typed through unknown because
@@ -190,33 +198,37 @@ test("the docs parser reads backticked ids from the second column of ## Models",
 		"cline-pass/glm-5.3 is not in a table and must not count.",
 	].join("\n");
 	assert.deepEqual(parseClinePassDocs(mdx), [
-		"cline-pass/glm-5.2",
-		"cline-pass/kimi-k2.6",
+		{ id: "cline-pass/glm-5.2", name: "GLM 5.2" },
+		{ id: "cline-pass/kimi-k2.6", name: "Kimi K2.6" },
 	]);
 	// A section without prefixed ids is no lineup at all — null, not empty.
 	assert.equal(parseClinePassDocs("## Models\n\nnothing here\n"), null);
 	assert.equal(parseClinePassDocs("no table here"), null);
 });
 
-test("the docs fetch degrades to null — it never throws", async () => {
-	// A missing or unreadable markdown file says nothing about whether the
-	// subscription still serves its models, so it must not abort a refresh:
-	// resolveAllowlist then falls back to the committed lineup.
-	assert.equal(
-		await fetchDocsIds({
+test("the docs read throws — no table is no lineup", async () => {
+	// A missing or unreadable table says nothing about the lineup, so it must
+	// not be papered over with a remembered one (docs/d189): the caller gets an
+	// error and ClinePass is unavailable until the table answers again.
+	await assert.rejects(
+		fetchDocsLineup({
 			fetchImpl: fetchOnce(null, { ok: false, status: 404 }),
 		}),
-		null,
+		/404/,
 	);
-	assert.equal(
-		await fetchDocsIds({
+	await assert.rejects(
+		fetchDocsLineup({
 			fetchImpl: fetchOnce(null, { reject: new Error("ECONNREFUSED") }),
 		}),
-		null,
+		/ECONNREFUSED/,
 	);
+	// A 200 whose body carries no ## Models table is the same answer.
+	await assert.rejects(fetchDocsLineup({ fetchImpl: fetchOnce(null) }), {
+		message: /no ## Models table/,
+	});
 	// With no local override, the read goes to the canonical raw file.
 	let seen = "";
-	await fetchDocsIds({
+	const lineup = await fetchDocsLineup({
 		fetchImpl: async (url) => {
 			// Request has no own toString (base [object Request]); the pipeline
 			// hands fetchImpl URL objects, so only the Request case needs the url.
@@ -226,6 +238,7 @@ test("the docs fetch degrades to null — it never throws", async () => {
 			})();
 		},
 	});
+	assert.deepEqual(lineup, [{ id: "cline-pass/glm-5.2", name: "A" }]);
 	assert.ok(
 		seen.startsWith("https://raw.githubusercontent.com/cline/cline/"),
 		`${seen} must be the canonical raw file, not a redirectable surface`,
@@ -244,7 +257,9 @@ test("CLINE_PASS_MDX overrides the docs read with a local file", async () => {
 	const previous = process.env.CLINE_PASS_MDX;
 	process.env.CLINE_PASS_MDX = file;
 	try {
-		assert.deepEqual(await fetchDocsIds(), ["cline-pass/glm-5.2"]);
+		assert.deepEqual(await fetchDocsLineup(), [
+			{ id: "cline-pass/glm-5.2", name: "GLM 5.2" },
+		]);
 	} finally {
 		if (previous === undefined) {
 			delete process.env.CLINE_PASS_MDX;
@@ -254,33 +269,35 @@ test("CLINE_PASS_MDX overrides the docs read with a local file", async () => {
 	}
 });
 
-test("a healthy ratio adopts docs ∪ catalog; a rotten one falls back", () => {
-	const docs = ["a", "b", "c", "d", "e"].map((id) => CLINE_PASS_ID_PREFIX + id);
+test("the docs table is the lineup: it adds and prunes, the catalog only prices", () => {
+	// The table names six ids; the catalog knows five of them plus one retired
+	// model it still carries. The retired row never publishes and the table-only
+	// row still does — a catalog-only id is a dead id, not an addition, and a
+	// table id the catalog has not caught up to is live (docs/d189).
+	const lineup = ["a", "b", "c", "d", "e", "f"].map((id) => ({
+		id: CLINE_PASS_ID_PREFIX + id,
+		name: id.toUpperCase(),
+	}));
 	const records = Object.fromEntries(
-		["a", "b", "c", "d", "f"].map((id) => [
+		["a", "b", "c", "d", "g"].map((id) => [
 			CLINE_PASS_ID_PREFIX + id,
 			record(),
 		]),
 	);
-	// 4 of 5 docs rows found in the catalog is exactly the floor: adoption.
-	assert.deepEqual(resolveAllowlist(docs, records), [
-		"cline-pass/a",
-		"cline-pass/b",
-		"cline-pass/c",
-		"cline-pass/d",
-		"cline-pass/e",
-		"cline-pass/f",
-	]);
-	// One more docs row the catalog cannot confirm drops below the floor:
-	// the committed lineup wins, as the same committed value.
-	const sparse = resolveAllowlist(
-		[...docs, "cline-pass/g", "cline-pass/h"],
-		records,
+	assert.deepEqual(
+		shapeCatalog(records, lineup).map((m) => m.id),
+		["a", "b", "c", "d", "e", "f"].map((id) => CLINE_PASS_ID_PREFIX + id),
 	);
-	assert.equal(sparse, CLINE_PASS_LINEUP);
-	// An unreadable table (null docs) is the same fallback.
-	assert.equal(resolveAllowlist(null, records), CLINE_PASS_LINEUP);
-	assert.equal(CLINE_PASS_MATCH_FLOOR, 0.8);
+	// The table-only row keeps the table's display name and pi's defaults.
+	const docsOnly = shapeCatalog({}, [
+		{ id: "cline-pass/deepseek-v4.1-flash-1017", name: "DeepSeek V4.1 Flash" },
+	]);
+	const [docsRow] = docsOnly.map(toExtensionModel);
+	assert.ok(docsRow);
+	assert.deepEqual(
+		[docsRow.id, docsRow.name, docsRow.contextWindow, docsRow.maxTokens],
+		["cline-pass/deepseek-v4.1-flash-1017", "DeepSeek V4.1 Flash", 128_000, 16_384],
+	);
 });
 
 test("the shape guard drops every row that would bill wrong or not at all", () => {
@@ -290,10 +307,9 @@ test("the shape guard drops every row that would bill wrong or not at all", () =
 	// prefix-guarded key.
 	assert.equal(shapeRow({ ...record() }), undefined, "no id, no model");
 	assert.deepEqual(
-		shapeCatalog(
-			{ "cline-pass/glm-5.2": record({ id: "glm-5.2" }) },
-			undefined,
-		).map((m) => m.id),
+		shapeCatalog({ "cline-pass/glm-5.2": record({ id: "glm-5.2" }) }, [
+			{ id: "cline-pass/glm-5.2", name: "GLM 5.2" },
+		]).map((m) => m.id),
 		["cline-pass/glm-5.2"],
 	);
 	assert.equal(
@@ -329,18 +345,16 @@ test("the shape guard drops every row that would bill wrong or not at all", () =
 });
 
 test("rich input trims to what pi originates, and id-only records survive", () => {
-	const models = shapeCatalog(
-		{
-			"cline-pass/rich": record({
-				modalities: {
-					input: ["text", "image", "video", "pdf"],
-					output: ["text"],
-				},
-			}),
-			"cline-pass/no-metadata": record({ modalities: undefined }),
-		},
-		undefined,
-	);
+	const records = {
+		"cline-pass/rich": record({
+			modalities: {
+				input: ["text", "image", "video", "pdf"],
+				output: ["text"],
+			},
+		}),
+		"cline-pass/no-metadata": record({ modalities: undefined }),
+	};
+	const models = shapeCatalog(records, lineupOf(records));
 	assert.deepEqual(
 		models.map((m) => m.id),
 		["cline-pass/no-metadata", "cline-pass/rich"],
@@ -373,15 +387,13 @@ test("thinking levels come from the published enum only", () => {
 	assert.equal(thinkingLevelMapFor(undefined), null);
 	assert.equal(thinkingLevelMapFor([]), null);
 	// The enum flows through the record shape, too.
-	const [quiet] = shapeCatalog(
-		{
-			"cline-pass/quiet": record({
-				reasoning: false,
-				reasoning_options: undefined,
-			}),
-		},
-		undefined,
-	);
+	const quietRecords = {
+		"cline-pass/quiet": record({
+			reasoning: false,
+			reasoning_options: undefined,
+		}),
+	};
+	const [quiet] = shapeCatalog(quietRecords, lineupOf(quietRecords));
 	assert.ok(quiet);
 	assert.equal(quiet.thinkingLevelMap, null);
 	assert.equal("thinkingLevelMap" in toExtensionModel(quiet), false);
@@ -399,7 +411,7 @@ test("a partial price block completes with zeros; an all-zero block is absent", 
 	// A record with no published prices at all shapes to no cost.
 	const [unpriced] = shapeCatalog(
 		{ "cline-pass/glm-5.2": record({ cost: null }) },
-		undefined,
+		[{ id: "cline-pass/glm-5.2", name: "GLM 5.2" }],
 	);
 	assert.ok(unpriced);
 	assert.equal(unpriced.cost, undefined);
@@ -413,7 +425,7 @@ test("the manifest omits an unpublishable cost; the extension fills zeros", () =
 	// pi-synthetic verified its own.
 	const [unpriced] = shapeCatalog(
 		{ "cline-pass/glm-5.2": record({ cost: { input: 0, output: 0 } }) },
-		[`${CLINE_PASS_ID_PREFIX}glm-5.2`],
+		[{ id: "cline-pass/glm-5.2", name: "GLM 5.2" }],
 	);
 	assert.ok(unpriced);
 	assert.equal("cost" in toPiModel(unpriced), false);
@@ -430,7 +442,7 @@ test("every extension key is one pi defines — and the compat fact rides per mo
 	// registration overwrites the models layer: the one published fact
 	// (docs/d022/d033) must live on every model or it is silently lost.
 	const [model] = shapeCatalog({ "cline-pass/glm-5.2": record() }, [
-		`${CLINE_PASS_ID_PREFIX}glm-5.2`,
+		{ id: "cline-pass/glm-5.2", name: "GLM 5.2" },
 	]);
 	assert.ok(model);
 	const entry = toExtensionModel(model);
@@ -462,15 +474,18 @@ test("every extension key is one pi defines — and the compat fact rides per mo
 	]);
 });
 
-test("models are emitted sorted, allowlist-filtered, prefix-carrying", () => {
+test("models are emitted sorted, lineup-bounded, prefix-carrying", () => {
 	const models = shapeCatalog(
 		{
 			"cline-pass/z-last": record(),
 			"cline-pass/a-first": record(),
-			"cline-pass/not-listed": record(),
+			"cline-pass/retired": record(),
 			"wrong-namespace": record(),
 		},
-		[`${CLINE_PASS_ID_PREFIX}z-last`, `${CLINE_PASS_ID_PREFIX}a-first`],
+		[
+			{ id: `${CLINE_PASS_ID_PREFIX}z-last`, name: "Z" },
+			{ id: `${CLINE_PASS_ID_PREFIX}a-first`, name: "A" },
+		],
 	);
 	assert.deepEqual(
 		models.map((m) => m.id),

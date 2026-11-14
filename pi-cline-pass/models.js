@@ -11,34 +11,6 @@
 
 export const CLINE_PASS_MODELS = [
 	{
-		"id": "cline-pass/deepseek-v4-flash",
-		"name": "DeepSeek V4 Flash",
-		"contextWindow": 1000000,
-		"maxTokens": 384000,
-		"reasoning": true,
-		"input": [
-			"text"
-		],
-		"cost": {
-			"input": 0.14,
-			"output": 0.28,
-			"cacheRead": 0.0028,
-			"cacheWrite": 0
-		},
-		"compat": {
-			"supportsDeveloperRole": false
-		},
-		"thinkingLevelMap": {
-			"off": "none",
-			"minimal": null,
-			"low": "low",
-			"medium": null,
-			"high": "high",
-			"xhigh": null,
-			"max": "max"
-		}
-	},
-	{
 		"id": "cline-pass/deepseek-v4-pro",
 		"name": "DeepSeek V4 Pro",
 		"contextWindow": 1000000,
@@ -96,36 +68,27 @@ export const CLINE_PASS_MODELS = [
 		}
 	},
 	{
-		"id": "cline-pass/glm-5.2",
-		"name": "GLM-5.2",
-		"contextWindow": 1000000,
-		"maxTokens": 131072,
-		"reasoning": true,
+		"id": "cline-pass/deepseek-v4.1-flash-1017",
+		"name": "DeepSeek V4.1 Flash 1017",
+		"contextWindow": 128000,
+		"maxTokens": 16384,
+		"reasoning": false,
 		"input": [
 			"text"
 		],
 		"cost": {
-			"input": 1.4,
-			"output": 4.4,
-			"cacheRead": 0.26,
+			"input": 0,
+			"output": 0,
+			"cacheRead": 0,
 			"cacheWrite": 0
 		},
 		"compat": {
 			"supportsDeveloperRole": false
-		},
-		"thinkingLevelMap": {
-			"off": "none",
-			"minimal": null,
-			"low": null,
-			"medium": null,
-			"high": "high",
-			"xhigh": null,
-			"max": "max"
 		}
 	},
 	{
 		"id": "cline-pass/glm-5.3",
-		"name": "GLM-5.3",
+		"name": "GLM 5.3",
 		"contextWindow": 1000000,
 		"maxTokens": 131072,
 		"reasoning": true,
@@ -153,7 +116,7 @@ export const CLINE_PASS_MODELS = [
 	},
 	{
 		"id": "cline-pass/glm-5.3-flash",
-		"name": "cline-pass/glm-5.3-flash",
+		"name": "GLM 5.3 Flash",
 		"contextWindow": 1000000,
 		"maxTokens": 131072,
 		"reasoning": true,
@@ -181,50 +144,10 @@ export const CLINE_PASS_MODELS = [
 		}
 	},
 	{
-		"id": "cline-pass/kimi-k2.6",
-		"name": "Kimi K2.6",
-		"contextWindow": 262144,
-		"maxTokens": 262144,
-		"reasoning": true,
-		"input": [
-			"text",
-			"image"
-		],
-		"cost": {
-			"input": 0.95,
-			"output": 4,
-			"cacheRead": 0.16,
-			"cacheWrite": 0
-		},
-		"compat": {
-			"supportsDeveloperRole": false
-		}
-	},
-	{
-		"id": "cline-pass/kimi-k2.7-code",
-		"name": "Kimi K2.7 Code",
-		"contextWindow": 262144,
-		"maxTokens": 262144,
-		"reasoning": true,
-		"input": [
-			"text",
-			"image"
-		],
-		"cost": {
-			"input": 0.95,
-			"output": 4,
-			"cacheRead": 0.19,
-			"cacheWrite": 0
-		},
-		"compat": {
-			"supportsDeveloperRole": false
-		}
-	},
-	{
 		"id": "cline-pass/kimi-k3",
 		"name": "Kimi K3",
 		"contextWindow": 1048576,
-		"maxTokens": 131072,
+		"maxTokens": 1048576,
 		"reasoning": true,
 		"input": [
 			"text",
@@ -250,38 +173,18 @@ export const CLINE_PASS_MODELS = [
 		}
 	},
 	{
-		"id": "cline-pass/mimo-v2.5",
-		"name": "MiMo-V2.5",
-		"contextWindow": 1048576,
-		"maxTokens": 131072,
-		"reasoning": true,
-		"input": [
-			"text",
-			"image"
-		],
-		"cost": {
-			"input": 0.14,
-			"output": 0.28,
-			"cacheRead": 0.0028,
-			"cacheWrite": 0
-		},
-		"compat": {
-			"supportsDeveloperRole": false
-		}
-	},
-	{
-		"id": "cline-pass/mimo-v2.5-pro",
-		"name": "MiMo-V2.5-Pro",
-		"contextWindow": 1048576,
-		"maxTokens": 131072,
-		"reasoning": true,
+		"id": "cline-pass/kimi-k3.1-pro",
+		"name": "Kimi K3.1 Pro",
+		"contextWindow": 128000,
+		"maxTokens": 16384,
+		"reasoning": false,
 		"input": [
 			"text"
 		],
 		"cost": {
-			"input": 1.74,
-			"output": 3.48,
-			"cacheRead": 0.0145,
+			"input": 0,
+			"output": 0,
+			"cacheRead": 0,
 			"cacheWrite": 0
 		},
 		"compat": {
@@ -290,7 +193,7 @@ export const CLINE_PASS_MODELS = [
 	},
 	{
 		"id": "cline-pass/mimo-v2.6-flash",
-		"name": "MiMo-V2.6-Flash",
+		"name": "MiMo V2.6 Flash",
 		"contextWindow": 1048576,
 		"maxTokens": 131072,
 		"reasoning": true,
@@ -319,7 +222,7 @@ export const CLINE_PASS_MODELS = [
 	},
 	{
 		"id": "cline-pass/mimo-v2.6-pro",
-		"name": "MiMo-V2.6-Pro",
+		"name": "MiMo V2.6 Pro",
 		"contextWindow": 1048576,
 		"maxTokens": 131072,
 		"reasoning": true,
@@ -348,7 +251,7 @@ export const CLINE_PASS_MODELS = [
 	},
 	{
 		"id": "cline-pass/minimax-m3",
-		"name": "MiniMax-M3",
+		"name": "MiniMax M3",
 		"contextWindow": 1048576,
 		"maxTokens": 512000,
 		"reasoning": true,
@@ -360,6 +263,25 @@ export const CLINE_PASS_MODELS = [
 			"input": 0.3,
 			"output": 1.2,
 			"cacheRead": 0.06,
+			"cacheWrite": 0
+		},
+		"compat": {
+			"supportsDeveloperRole": false
+		}
+	},
+	{
+		"id": "cline-pass/minimax-m3.1-flash",
+		"name": "MiniMax M3.1 Flash",
+		"contextWindow": 128000,
+		"maxTokens": 16384,
+		"reasoning": false,
+		"input": [
+			"text"
+		],
+		"cost": {
+			"input": 0,
+			"output": 0,
+			"cacheRead": 0,
 			"cacheWrite": 0
 		},
 		"compat": {
