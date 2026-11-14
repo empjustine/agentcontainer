@@ -9,11 +9,11 @@ tags: ["workload-runtime", "container-tooling", "copy-units"]
 
 # Container tooling & run scripts
 
-This covers the container-runtime detection (one hand copy per unit that runs
-workloads — `lib/workload-runtime.sh` with its `workload-*.jq` filters in
-`llm-local-inference/`, or `lib/workload-runtime.mjs` in `coding-agent/` —
-docs/d113, docs/d118, docs/d119), the
-deployment environments (local-inference-host, termux, small-cloud-vm), and the run scripts that launch
+This covers the container-runtime detection (the hand copy `coding-agent/`
+carries — `lib/workload-runtime.mjs`; the shell `workload-runtime.sh` +
+`workload-*.jq` pair retired with `llm-local-inference/run.py`, d170 —
+docs/d113, docs/d118, docs/d119), the deployment environments
+(local-inference-host, termux, small-cloud-vm), and the run scripts that launch
 the llama-swap serving container and the pi coding-agent container.
 
 > **Threat positions (explicit, not aspirational).** The host is trusted
@@ -42,9 +42,9 @@ the llama-swap serving container and the pi coding-agent container.
 
 The reference environment. Runs **one** multipurpose llama-swap instance,
 `llm-local-inference/` — generation (docs/d041: `generate.mjs`, via
-`./npm-run.sh llm-local-inference generate`) detects the container backend + GPU
+`./node-run.sh llm-local-inference/generate.mjs`) detects the container backend + GPU
 devices and emits the layers it can into
-`config.d/`; `run.sh` launches the `unified-vulkan` image with GPU passthrough
+`config.d/`; `run.py` launches the `unified-vulkan` image with GPU passthrough
 
 - HF cache on LAN port 8101 — plus the full `coding-agent/`. Rootless podman
   with SELinux means every writable bind mount gets `:z,U` (or `:Z,U`) relabel +
@@ -77,7 +77,7 @@ Cloud VMs serve `estige/` — the relay node's service, installed from the
 mode — and run `coding-agent/` against the
 config generated on a capable host (the run-scripts section below).
 
-## The workload runner: `<unit>/lib/workload-runtime.{sh,mjs}` (description-driven)
+## The workload runner: `<unit>/lib/workload-runtime.mjs` (description-driven)
 
 The runner is a **description-driven workload runner**, not a
 bag of flags. Run scripts declare _what_ they need; the tool renders _how_ for
@@ -100,68 +100,50 @@ the active backend — podman or docker — No
 > [workload-sandboxing-prior-art.md](workload-sandboxing-prior-art.md)
 > (reference farm survey; prior art, not a security or trust reference).
 
-Source it from the unit's own `run*.sh` (each unit that runs workloads carries
-its copy in `<unit>/lib/`, docs/d113):
-
-```sh
-. "$(dirname "$0")/lib/workload-runtime.sh"
-```
-
-The copy lives in the unit, but it must still be **locatable from the sourcing
-script**, and POSIX sh cannot self-locate a file it is being run from. Each
-`.sh` copy therefore resolves its siblings (`workload-*.jq`, `log.sh`) from the
-sourcing script's `SCRIPT_DIR` + `lib`, and honors `WORKLOAD_LIB_DIR` when the
-caller is not the unit's own run script (that variable is the seam: it names the
-`lib/` whose filters and loggers the caller wants). The `.mjs` copy is imported
-by path from the unit's own `run.mjs`, so it has no such seam and needs none
+The unit's own code imports its copy (each unit that runs workloads carries it
+in `<unit>/lib/`, docs/d113); `coding-agent/lib/workload-runtime.mjs` is
+imported by path from the unit's own `run.mjs`, so it has no sourcing seam
 (docs/d119).
 
-**Two implementations, one contract.** The rest of this document describes the
-contract in the shell vocabulary (`workload_*` mutators, one jq filter per
-list). `coding-agent/lib/workload-runtime.mjs` implements the same contract in
-node: same mutator names, same flag order out, one in-memory description instead
-of a JSON document filtered per mutator — which is why that unit needs no `jq`
-on the host (docs/d119). `estige/` retired its pair with the packaging change
-(docs/d120: a package installs the relay as a service, so nothing renders a
-container argv), which leaves `llm-local-inference/` as the shell
-implementation's only consumer.
+**The contract in shell vocabulary.** The contract below is written in the
+shell vocabulary it was designed in (`workload_*` mutators, one jq filter per
+list) — `estige/` retired its pair with the packaging change (docs/d120) and
+`llm-local-inference/` with the runner move to python (d170), so
+`coding-agent/lib/workload-runtime.mjs` is now the implementation: same
+mutator names, same flag order out, one in-memory description instead of a JSON
+document filtered per mutator — which is why that unit needs no `jq` on the
+host (docs/d119).
 
-On source it detects the backend and computes the path every run script uses
-(instead of recomputing it per script):
-
-- `SCRIPT_DIR` — directory of the sourcing run script (from `$0`)
-
-It also sets `_workload` (`container` › `none`) and, for the container
-backend, `_container_tool` (`podman`/`docker`) — but run scripts should not read
-these directly; they describe intent via the API below. (Capability probing in
-`llm-local-inference/generate.mjs` legitimately reuses the internals —
-`_workload` + `detect_gpu_devs` (ported as capability probes, docs/d041) —
-to decide which config layers the host can run.)
+It detects the backend and exposes the facts every run script uses (instead of
+recomputing them per script) — `_workload` (`container` › `none`) and, for the
+container backend, `_container_tool` (`podman`/`docker`). Run scripts should
+not read these directly; they describe intent via the API below. (Capability
+probing lives in `llm-local-inference/generate.mjs` itself — docs/d041.)
 
 ### Declarative API
 
-| Call                                       | Meaning                                                                                                                                                                                                                                                                             |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `workload_name <n>`                        | container / instance name                                                                                                                                                                                                                                                           |
-| `workload_image <img>`                     | OCI image to run                                                                                                                                                                                                                                                                    |
-| `workload_detach` / `workload_interactive` | `-d` / `-it`                                                                                                                                                                                                                                                                        |
-| `workload_restart <policy>`                | `--restart=<policy>`; empty (default) emits no flag. The relay node's detached launch uses `unless-stopped` so the listener address its consumer was handed survives a crash (docs/d095)                                                                                            |
-| `workload_init`                            | `--init`                                                                                                                                                                                                                                                                            |
-| `workload_network <mode>`                  | e.g. `host` → `--network=host`                                                                                                                                                                                                                                                      |
-| `workload_user`                            | run as the host user: `--userns=keep-id --user uid:gid` (podman) or `--user uid:gid` (docker). Uses `SUDO_UID`/`SUDO_GID` when present.                                                                                                                                             |
-| `workload_gpu`                             | detect + passthrough GPU devices (`/dev/kfd`, `/dev/dri/renderD*`)                                                                                                                                                                                                                  |
-| `workload_hardening`                       | `--cap-drop=all --security-opt no-new-privileges`                                                                                                                                                                                                                                   |
-| `workload_publish <host> <guest>`          | `-p host:guest/tcp`                                                                                                                                                                                                                                                                 |
-| `workload_ro <host> <guest>`               | required read-only bind (fails if host path missing)                                                                                                                                                                                                                                |
-| `workload_rw <host> <guest>`               | required read-write bind                                                                                                                                                                                                                                                            |
-| `workload_ro_if <host> <guest>`            | optional variant (skipped if host path absent)                                                                                                                                                                                                                                      |
-| `workload_env <NAME...>`                   | pass these host env vars into the workload (`--env`)                                                                                                                                                                                                                                |
-| `workload_env_allowlist <NAME...>`         | like `workload_env`, but skips names whose host value is empty — a bare `--env NAME` on an unset var injects an EMPTY value, which consumers then read as “set”. Both vault-key forwarders (the coding-agent launcher, the llama-swap path) use this one implementation (docs/d030) |
-| `workload_cmd <args...>`                   | the command (argv after the image)                                                                                                                                                                                                                                                  |
-| `workload_has <field>`                     | true when a description array is non-empty — e.g. `workload_has devices`, which is how `llm-local-inference/generate.mjs` gates the local-inference layer                                                                                                                           |
-| `workload_rm <id>`                         | remove a prior instance by name                                                                                                                                                                                                                                                     |
-| `workload_logs <id>`                       | tail a running instance's logs                                                                                                                                                                                                                                                      |
-| `workload_run [wrapper...]`                | render + launch; optional `wrapper` prefixes the launch command. Host-side only — it cannot inject env into the workload; secrets reach the workload via the `workload_env` allowlist (see `coding-agent/run.mjs`: host-side `./environment.sh` → forwarded vault env)              |
+| Call                                       | Meaning                                                                                                                                                                                                                                                                                                      |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `workload_name <n>`                        | container / instance name                                                                                                                                                                                                                                                                                    |
+| `workload_image <img>`                     | OCI image to run                                                                                                                                                                                                                                                                                             |
+| `workload_detach` / `workload_interactive` | `-d` / `-it`                                                                                                                                                                                                                                                                                                 |
+| `workload_restart <policy>`                | `--restart=<policy>`; empty (default) emits no flag. The relay node's detached launch uses `unless-stopped` so the listener address its consumer was handed survives a crash (docs/d095)                                                                                                                     |
+| `workload_init`                            | `--init`                                                                                                                                                                                                                                                                                                     |
+| `workload_network <mode>`                  | e.g. `host` → `--network=host`                                                                                                                                                                                                                                                                               |
+| `workload_user`                            | run as the host user: `--userns=keep-id --user uid:gid` (podman) or `--user uid:gid` (docker). Uses `SUDO_UID`/`SUDO_GID` when present.                                                                                                                                                                      |
+| `workload_gpu`                             | detect + passthrough GPU devices (`/dev/kfd`, `/dev/dri/renderD*`)                                                                                                                                                                                                                                           |
+| `workload_hardening`                       | `--cap-drop=all --security-opt no-new-privileges`                                                                                                                                                                                                                                                            |
+| `workload_publish <host> <guest>`          | `-p host:guest/tcp`                                                                                                                                                                                                                                                                                          |
+| `workload_ro <host> <guest>`               | required read-only bind (fails if host path missing)                                                                                                                                                                                                                                                         |
+| `workload_rw <host> <guest>`               | required read-write bind                                                                                                                                                                                                                                                                                     |
+| `workload_ro_if <host> <guest>`            | optional variant (skipped if host path absent)                                                                                                                                                                                                                                                               |
+| `workload_env <NAME...>`                   | pass these host env vars into the workload (`--env`)                                                                                                                                                                                                                                                         |
+| `workload_env_allowlist <NAME...>`         | like `workload_env`, but skips names whose host value is empty — a bare `--env NAME` on an unset var injects an EMPTY value, which consumers then read as “set”. The coding-agent launcher's vault-key forwarding is its one user (docs/d030); the llama-swap runner forwards its single key directly (d170) |
+| `workload_cmd <args...>`                   | the command (argv after the image)                                                                                                                                                                                                                                                                           |
+| `workload_has <field>`                     | true when a description array is non-empty — e.g. `workload_has devices`                                                                                                                                                                                                                                     |
+| `workload_rm <id>`                         | remove a prior instance by name                                                                                                                                                                                                                                                                              |
+| `workload_logs <id>`                       | tail a running instance's logs                                                                                                                                                                                                                                                                               |
+| `workload_run [wrapper...]`                | render + launch; optional `wrapper` prefixes the launch command. Host-side only — it cannot inject env into the workload; secrets reach the workload via the `workload_env` allowlist (see `coding-agent/run.mjs`: host-side `./environment.sh` → forwarded vault env)                                       |
 
 Only `workload_ro`/`workload_rw` (required) abort the run if the host path is
 gone; `workload_ro_if` is best-effort. Mount host/guest paths may contain
@@ -175,52 +157,24 @@ subuid, so files land back on the real user rather than a raw subuid), with
 `U` is what keeps rootless podman from chowning all the user's files into the
 subuid range.
 
-### Description model: scalars in shell, lists in JSON
+### Description model: scalars and lists
 
-The description is held in two halves:
+The vocabulary keeps the two halves the description has:
 
-- **Scalars** — one shell global each (`_SB_NAME`, `_SB_IMAGE`, `_SB_NETWORK`,
-  …). They are plain strings and 0/1 flags with no data-structure problem, so
-  jq would only add a subprocess. **An empty string means “not set”**: the
-  renderer omits the flag entirely rather than passing an empty value.
-- **Lists** — mounts, env names, ports, devices and command words live in ONE
-  JSON document (`_SB_LISTS`), because these are the values that used to be
+- **Scalars** — one name each (`_SB_NAME`, `_SB_IMAGE`, `_SB_NETWORK`, …):
+  plain strings and 0/1 flags with no data-structure problem. **An empty string
+  means “not set”**: the renderer omits the flag entirely rather than passing
+  an empty value.
+- **Lists** — mounts, env names, ports, devices and command words, appended one
+  mutator call at a time, because these are the values that used to be
   `eval`-emulated arrays or space-joined strings word-split at render time.
   Word-splitting an unquoted expansion is a bash/dash behaviour, not a shell
-  one — zsh does not do it — so that form was silently dialect-dependent. jq
-  behaves identically whichever shell called it, and `--arg` carries values
-  with no shell quoting at all.
+  one — zsh does not do it — so that form was silently dialect-dependent.
 
-Each list mutator is one small jq filter in the unit's own `lib/`, and **each filter's header
-is its specification** — expected inputs, output shape, and why it exists:
-
-| Filter                   | Called by                                        | Contract                                                              |
-| ------------------------ | ------------------------------------------------ | --------------------------------------------------------------------- |
-| `lib/workload-mount.jq`  | `workload_ro` / `workload_rw` / `workload_ro_if` | append `{mode,host,guest}` to `.mounts`                               |
-| `lib/workload-append.jq` | `workload_env`, `detect_gpu_devs`                | append strings to a named array (`.env`, `.devices`)                  |
-| `lib/workload-port.jq`   | `workload_publish`                               | append `{host,guest}` to `.ports`                                     |
-| `lib/workload-cmd.jq`    | `workload_cmd`                                   | **set** `.cmd` to the word array (a set, not an append)               |
-| `lib/workload-has.jq`    | `workload_has`                                   | boolean; the answer is jq's `-e` exit status                          |
-| `lib/workload-render.jq` | `_render_container`                              | the whole description + scalars → one line of `@sh`-quoted argv words |
-
-Two jq invocations rules that are easy to get wrong, and that every filter
-header repeats:
-
-- `--args` **must be followed by a bare `--`**. jq keeps parsing options after
-  `--args`, so `workload_cmd -config-dir …` is otherwise read as jq flags
-  ("Unknown option -o").
-- any filter that takes its input from `--argjson` rather than stdin **must be
-  run with `jq -n`**, or it waits on stdin and never produces output.
-
-**Dependency:** jq is required by the `workload_*` calls of the **shell**
-implementation only — scripts that source `<unit>/lib/workload-runtime.sh` just
-for `log_*` never touch it, and the lookup is lazy (it fails on first use, not
-at source time). Provisioned in `mise.toml` (host), `coding-agent/config.toml`
-(the image's own mise, where it stays even though the unit no longer needs it
-host-side, docs/d119), and `pkg install jq` on Termux. The filters are evaluated
-HOST-side (`workload_JQDIR` is the unit's own `lib/`), so nothing about them has
-to reach inside the container — the `/opt/lib` bind-mounts that once carried
-them were retired with the generator-tree mounts (d056).
+`coding-agent/lib/workload-runtime.mjs` holds both in one in-memory object
+(docs/d119): no filter layer, and `jq` is no longer a host prerequisite of any
+run path. It stays pinned in `./dev-tools.sh` for the compile leg below, which
+is kept for the day a shell copy lands.
 
 **Tests:** `coding-agent/tests/check-workload.test.mjs` renders full
 descriptions (one per backend) and diffs the argv against the pre-refactor
@@ -251,9 +205,9 @@ one.
 
 ### `bwrap` backend — assessed, NOT implemented
 
-What extending a unit's `lib/workload-runtime.sh` to a third backend (bubblewrap,
+What extending the workload runner to a third backend (bubblewrap,
 mirror `github/containers/bubblewrap`) would take, against the current
-description API (`workload-render.jq` emits podman/docker dialects keyed on
+description API (the renderer emits podman/docker dialects keyed on
 `$tool`; a bwrap dialect would be a third branch):
 
 | API piece                                           | bwrap translation                                                                                                                                                                                                           | Verdict                                                                                                                                                                                                       |
@@ -263,7 +217,7 @@ description API (`workload-render.jq` emits podman/docker dialects keyed on
 | `workload_detach` / `workload_logs` / `workload_rm` | no daemon, no named workloads: bwrap is a foreground process; needs setsid+pidfile, stdout redirected to a file for `logs`, and a rm-by-pidfile                                                                             | feasible but re-implements what podman/docker give for free                                                                                                                                                   |
 | `workload_ro`/`workload_rw`                         | `--ro-bind` / `--bind` (+ `--*-try` variants)                                                                                                                                                                               | maps 1:1; SELinux `z,U` mount options have no equivalent (bwrap does not relabel; `--exec-label` only sets the process label) — a rootless-podman-on-SELinux host is exactly where this repo runs             |
 | `workload_gpu` (`/dev/kfd`, `/dev/dri/renderD*`)    | `--dev-bind` per node                                                                                                                                                                                                       | maps 1:1; no device-cgroup controller — access control only via the userns                                                                                                                                    |
-| `workload_env_allowlist`                            | inverted default: bwrap inherits the FULL host env unless `--clearenv` + one `--setenv NAME=value` per var — the renderer must resolve host VALUES at render time (podman takes bare names and forwards values at run time) | feasible; changes the jq filter contract (names → name+value)                                                                                                                                                 |
+| `workload_env_allowlist`                            | inverted default: bwrap inherits the FULL host env unless `--clearenv` + one `--setenv NAME=value` per var — the renderer must resolve host VALUES at render time (podman takes bare names and forwards values at run time) | feasible; changes the mutator contract (names → name+value)                                                                                                                                                   |
 | `workload_user` (keep-id)                           | default behavior (runs as the caller under `--unshare-user`; `--uid/--gid` for remaps; `--group-add keep-groups` has no direct analog)                                                                                      | maps well                                                                                                                                                                                                     |
 | `workload_hardening`                                | unprivileged userns is inherently non-root; `--cap-drop`/`--seccomp` optional                                                                                                                                               | comparable-or-stronger, different flag surface                                                                                                                                                                |
 | `workload_init`                                     | no built-in init: llama-swap spawns llama-server children, so zombie reaping needs a tini-style shim as cmd prefix (`--die-with-parent` alone doesn't reap)                                                                 | small shim required                                                                                                                                                                                           |
@@ -272,7 +226,7 @@ description API (`workload-render.jq` emits podman/docker dialects keyed on
 
 Net: mounts/user/cmd/hardening translate cleanly, but the **image** and
 **port-publishing** pieces have no bwrap equivalent — the two this repo's
-serving path (`llm-local-inference/run.sh`) depends on. (Prior art found
+serving path (`llm-local-inference/run.py`) depends on. (Prior art found
 since this verdict was written softens the second blocker only: fence and
 srt publish from an isolated netns via per-port unix-socket/socat bridges,
 not from bwrap itself — surveyed in
@@ -296,10 +250,11 @@ was removed with the relay handoff (see the module DESIGN docs).
 ### Serving run script (one multipurpose instance)
 
 Every local-inference-host runs ONE llama-swap serving container, launched by
-`llm-local-inference/run.sh` (sources `./lib/workload-runtime.sh`). `run.sh` is
-serve-only: it mounts the already-generated `config.d/` (read-only) loaded via
-`-config-dir` and adapts to it. Generation lives in `llm-local-inference/generate.mjs`
-(docs/d041).
+`llm-local-inference/run.py` (`./environment.sh ./py-run.sh
+llm-local-inference/run.py` — d170 folded the shell runner + the jq filters it
+sourced into this one file). `run.py` is serve-only: it mounts the
+already-generated `config.d/` (read-only) loaded via `-config-dir` and adapts
+to it. Generation lives in `llm-local-inference/generate.mjs` (docs/d041).
 
 #### `llm-local-inference/generate.mjs` (capability-gated layers)
 
@@ -310,9 +265,10 @@ layers, and only the layers that work on the current host land in `config.d/`
 
 - `00-general.yaml` — always (globals + macros; harmless when no local models
   reference them).
-- `10-local-llm-inference.yaml` (+ its `.paths` staleness manifest) — only
+- `10-local-llm-inference.yaml` — only
   when the container backend is available AND GPU devices (`/dev/kfd`,
-  `/dev/dri/renderD*`) are present. The GGUF layer is built from
+  `/dev/dri/renderD*`) are present (the sibling `.paths` staleness manifest
+  retired with its preflight, d170). The GGUF layer is built from
   its own `lib/llamacpp-model-data.json` (docs/d041 fold), which resolves each model to an HF snapshot dir and bakes the
   absolute paths into each `cmd` (docs/d029 option B; a cache miss is a
   generation error pointing at `llm-local-inference/download_models.py`).
@@ -321,15 +277,17 @@ layers, and only the layers that work on the current host land in `config.d/`
   not a config layer (docs/d027); see architecture.md for the layer table and
   docs/d018 for the merge contract this supersedes.
 
-#### `llm-local-inference/run.sh` (serve-only, adapts to config.d)
+#### `llm-local-inference/run.py` (serve-only, adapts to config.d)
 
 - **Image**: `ghcr.io/mostlygeek/llama-swap:unified-vulkan` (local llama.cpp
-  needs the GPU/Vulkan runtime; `LLAMA_SWAP_IMAGE` overrides) — and `run.sh`
+  needs the GPU/Vulkan runtime; `LLAMA_SWAP_IMAGE` overrides) — and `run.py`
   refuses to start without the local layer, so there is no other mode.
 - **HF cache**: mounted read-only — nothing in-container writes it
-  (provisioning/pruning are the cache pipeline's host-side job, FR-S4), and a
-  model path baked at generation time that no longer exists aborts the
-  launch (docs/d029 B staleness preflight).
+  (provisioning/pruning are the cache pipeline's host-side job, FR-S4). A
+  model path baked at generation time that no longer exists surfaces as a
+  llama-server 127 at swap time — the launch-time staleness preflight is
+  retired (d170), and its offline re-verify is an open follow-up on
+  `upkeep.py`.
 - **GPU**: detects usable dedicated inference devices — any DRM render node
   `/dev/dri/renderD*` (Vulkan) and `/dev/kfd` (ROCm) — and passes each
   through to the container.
@@ -380,7 +338,7 @@ bind-mounted dirs are owned by the host user.
 
 ## Image / mode per instance
 
-There is ONE multipurpose serving folder: `llm-local-inference/run.sh` runs
+There is ONE multipurpose serving folder: `llm-local-inference/run.py` runs
 `ghcr.io/mostlygeek/llama-swap:unified-vulkan` with GPU devices passed
 through and the HF cache tree mounted read-only — the mode is what
 generation emitted into `config.d/`, and without the local layer the run

@@ -7,8 +7,10 @@
 #   4. fetch-model-cards.sh       refresh model-card mirrors
 #
 # Steps 1-2 are hard prerequisites for anything reading model files; steps
-# 3-4 are mutually independent but ordered for a deterministic run. All
-# python tools use PEP 723 inline metadata via `uv run` — no venv needed.
+# 3-4 are mutually independent but ordered for a deterministic run. Every
+# python tool carries its own PEP 723 block and `uv run --script` resolves it
+# into uv's cache — nothing writes an environment into this folder (py-run.sh's
+# header carries the why, docs/d170).
 # Secrets (HF_TOKEN etc.) arrive as plain environment, loaded by the explicit
 # chain: ./environment.sh ./run-all.sh (the ONE infisical round-trip —
 # no .env file is read).  Never fatal inside: gated/private repos simply skip
@@ -36,7 +38,7 @@ fi
 run_uv() {
 	step="$1"
 	log_info "step start" step="$step"
-	uv run --quiet "$step" || {
+	uv run --quiet --script "$step" || {
 		_rc=$?
 		log_die "$_rc" "step failed" step="$step"
 	}

@@ -17,8 +17,8 @@ package (the authoritative quant/header reader) rather than re-implementing the
 GGUF format, so it tracks llama.cpp releases.
 
 Usage:
-    uv run llm-local-inference/gguf_context_length.py PATH [PATH ...]
-    uv run llm-local-inference/gguf_context_length.py --repo unsloth/Qwen3.8-27B-GGUF
+    ./py-run.sh llm-local-inference/gguf_context_length.py PATH [PATH ...]
+    ./py-run.sh llm-local-inference/gguf_context_length.py --repo unsloth/Qwen3.8-27B-GGUF
 """
 import argparse
 import glob

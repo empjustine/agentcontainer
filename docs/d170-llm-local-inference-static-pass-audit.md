@@ -34,8 +34,8 @@ gone from the generator, the runner and config.d), Decisions 5–6 (mount-source
 checks and the env allowlist are gone; `TLALOCAYOTL_API_KEY` fails
 forward), Decision 7 (`run.py` + the root `py-run.sh`, the jq stack and
 `run.sh` deleted, `run-all.sh` sources `lib/log.sh` directly) and Decision
-8 (`pyproject.toml` added). The dead `./npm-run.sh llm-local-inference
-...` citations are replaced with the actual invocations across the docs.
+8 (`pyproject.toml` added, then reversed — see below). The dead
+`./npm-run.sh llm-local-inference ...` citations are replaced with the actual invocations across the docs.
 Still open: the `fetch-model-cards.sh` fold, the generator/tests pass, the
 requirements-gated items, and the staleness owner. This record moves to
 active when that remainder lands.
@@ -58,6 +58,16 @@ because the repos are not cached on any audited host:
 cached host (their manifests carry the 1M native limit; the raise is
 capped at 256k regardless). The committed `10-local` layer does not yet
 reflect the new ids/rules — it regenerates on the serving host.
+
+**Decision 8 is reversed: the unit carries no `pyproject.toml`.** uv
+materializes a project's environment at `<project>/.venv`, so the first tool
+run through `py-run.sh` wrote a venv of third-party sources INTO the copy unit
+— gitignored, but not outside the biome leg of `./lint.sh` (it prunes only the
+root `.venv`), so the gate went red for whoever ran a tool. The floor was
+stated twice already: each tool's PEP 723 block and the root `pyproject.toml`
+that the gate's ty leg resolves against. `py-run.sh` and `run-all.sh` now pass
+`uv run --script`, which resolves the inline block into uv's cache — nothing
+lands in the tree, and a tool copied out of the folder still runs alone.
 
 ## Findings
 

@@ -49,7 +49,6 @@
 		"git/farm-tool.mjs",
 		"git/farm-aliases.mjs",
 		"llm-local-inference/generate.mjs",
-		"llm-local-inference/model-sizes.mjs",
 		// the ingest daemon: exec'd by agent-warehouse-daemon.sh, whose tests
 		// are shell — no import graph reaches either
 		"datalakehouse/agent-warehouse-daemon.mjs",

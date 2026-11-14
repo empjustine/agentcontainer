@@ -126,8 +126,8 @@ request time — the proxy forwards them untouched).
   (`./estige/build.sh` — each folder builds itself, docs/d113 — then its
   installed service; docs/d120), as on the other non-GPU hosts.
 
-`llm-local-inference/`'s own shell workload runtime (and `coding-agent/`'s node
-one) makes this work on both local-inference-host-style podman and
+`coding-agent/`'s node workload runtime (the shell copy left with
+`llm-local-inference/run.py`, d170) makes this work on both local-inference-host-style podman and
 small-cloud-vm-style docker through the same `workload_*` description: `workload_user` emits
 `--userns=keep-id --user uid:gid` (plus `--group-add keep-groups`) on rootless
 podman, and just `--user uid:gid` on rootful docker; SELinux relabeling is

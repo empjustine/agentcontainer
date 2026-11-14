@@ -12,7 +12,7 @@ passthrough reverse proxy for cloud LLM providers.
 # Bazzite (rootless podman) — ONE llama-swap instance for LOCAL GGUF
 # inference, published on LAN port 8101 (the coding agent reaches it in-network;
 # the world reaches estige's tunnel at the funnel mount, docs/d073/d108)
-cd ~/agentcontainer && ./npm-run.sh llm-local-inference generate
+cd ~/agentcontainer && ./node-run.sh llm-local-inference/generate.mjs
 #   then the coding agent (local models + cloud; credentials via ./environment.sh, docs/d046)
 #   extra ARGV dirs mount rw too (CWD is implicit first): ./node-run.sh coding-agent/run.mjs ~/Downloads/references
 cd ~/agentcontainer && ./environment.sh ./node-run.sh coding-agent/run.mjs
@@ -38,8 +38,8 @@ the pi extension family, d118), its own build/generate entry (a `build.mjs` /
 table in the pi extension family — and no `.sh` of its own, d138), and its own
 `tests/`.
 There is **no root build or generate entry point** — you invoke the unit you
-are building: `./node-run.sh estige/build.mjs`, `./npm-run.sh coding-agent generate`,
-`./npm-run.sh llm-local-inference generate`, and for the pi extensions
+are building: `./node-run.sh estige/build.mjs`, `./npm-run.sh coding-agent generate`, and
+for the pi extensions
 `./npm-run.sh pi-hyper generate` (the wrapper only supplies the
 pinned node; the command line comes from the folder's own `package.json`).
 That holds because a folder has to survive being copied out of this tree on its own
@@ -63,7 +63,7 @@ launcher fails loudly pointing at the generator.
 `infisical run` fetches the vault and spawns the target with it as plain
 env, on the host, docs/d046):
 `./environment.sh ./node-run.sh coding-agent/run.mjs`, `./environment.sh
-./llm-local-inference/run.sh`, etc. The target may also be a bare command:
+./py-run.sh llm-local-inference/run.py`, etc. The target may also be a bare command:
 `./environment.sh pi` runs pi with the vault env and no sandbox — the run
 path for a host with no container backend (docs/d059). The scripts it wraps consume plain env
 and never load anything themselves; inside sandboxes the vault env is
@@ -96,7 +96,7 @@ agentcontainer/
 │   ├── spec-check.mjs / tests/          # → the contract's executable half: `./node-run.sh docs/spec-check.mjs`, gated by lint.sh (d140)
 │   ├── architecture.md                  # → systems reference: the copy unit, per-unit lib, root QA sweep
 │   ├── environments-and-variants.md     # → bazzite / a50 / work matrix
-│   ├── container-tooling.md             # → the workload-api spec every unit's own copy implements (lib/workload-runtime.mjs in coding-agent, the .sh+.jq pair elsewhere)
+│   ├── container-tooling.md             # → the workload-api spec every unit's own copy implements (lib/workload-runtime.mjs in coding-agent; the shell implementation retired with llm-local-inference/run.py, d170)
 │   │   # cross-cutting docs only (d117): a living doc that guides ONE unit lives in that unit's folder
 │   ├── d0XX-*.md                        # → decision log (history; kept mechanically accurate, FR-D2)
 │   ├── archive/                         # → research findings + retired docs (index inside)
@@ -104,18 +104,16 @@ agentcontainer/
 │   └── ...
 │
 ├── llm-local-inference/                 # llama-swap: LOCAL GGUF inference only
-│   ├── run.sh                           #   → unified-vulkan image + GPU + HF mounts on :8101 (real logic: the workload API)
-│   ├── generate.mjs                     #   → capability-gated config.d layers (fails on non-GPU hosts); `./npm-run.sh llm-local-inference generate`
-│   ├── build.mjs                        #   → pulls the llama-swap image (inference-endpoint gate, d087); `./npm-run.sh llm-local-inference build`
-│   ├── model-sizes.sh / model-sizes.mjs #   → footprint + cheapest-first reorder of its own lib/llamacpp-model-data.json (d053)
-│   ├── active-b.json                    #   → activeB table (model-id derivation)
+│   ├── run.py                           #   → unified-vulkan image + GPU + HF mounts on :8101 (run via ./py-run.sh; env chain ./environment.sh first)
+│   ├── *.py / run-all.sh                #   → the PEP 723 cache tools (download_models, upkeep, fetch_hf_manifests, scan_cache_*, gguf_context_length), run via ./py-run.sh; run-all.sh is their order
+│   ├── generate.mjs                     #   → capability-gated config.d layers (fails on non-GPU hosts); `./node-run.sh llm-local-inference/generate.mjs`
+│   ├── build.mjs                        #   → pulls the llama-swap image (inference-endpoint gate, d087); `./node-run.sh llm-local-inference/build.mjs`
 │   ├── llama-swap-core.json             #   → general-purpose config source
 │   ├── config.d/                        #   → generated split config (loaded via -config-dir)
-│   ├── lib/                             #   → THIS FOLDER's own copy (d113): workload-runtime.sh + workload-*.jq, log.mjs/log.sh/log.py, artifact.mjs, canonical-json.mjs, host-capabilities.mjs, llamacpp-model-data.json, hf-manifests/ (size source for d053); the interpreter runner is repo-root, not per-folder (d138)
-│   ├── tests/                           #   → this folder's own tests, standalone-runnable
+│   ├── lib/                             #   → THIS FOLDER's own copy (d113): log.mjs/log.sh/log.py, artifact.mjs, canonical-json.mjs, host-capabilities.mjs, llamacpp-model-data.json, hf-manifests/ (param-count + quant-display source, d170); the interpreter runner is repo-root, not per-folder (d138)
 │   ├── CACHE-DESIGN.md                  #   → HF cache pipeline (the folded local-llm/ tooling, flat here since d113), table-write rule
 │   ├── DESIGN.md                        #   → llama-swap config.d layers, generation-time path baking, capability gating, bearer auth
-│   └── *.md                             #   → this unit's own living docs (d117): hf-cache-upkeep / refresh-...-manifest runbooks, gguf-model-tooling + its generated gguf-vram-fit-estimates tables
+│   └── *.md                             #   → this unit's own living docs (d117): hf-cache-upkeep / refresh-...-manifest runbooks, gguf-model-tooling
 │
 ├── estige/                              # SSL-VPN tunnel node (Go, one binary, two roles: exit + relay), installed as a package (d073/d077/d120)
 │   ├── main.go                          #   → dispatches the two roles: `-mode exit` (tunnel server) / `-mode relay`, plus `proxy-env` and `-version`

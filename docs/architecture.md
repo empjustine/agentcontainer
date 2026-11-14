@@ -82,12 +82,13 @@ prohibits (and what was removed):
   inference only): it owns the local-llm generator — since docs/d041 the
   whole generator (former `gen-lib.mjs`, `generate-general.yaml.mjs`,
   `generate-local-llm-models.yaml.mjs`) is folded into one
-  `generate.mjs` (`active-b.json` + its own `lib/llamacpp-model-data.json` →
-  `config.d/00-general.yaml` + `config.d/10-local-llm-inference.yaml` + its
-  `.paths` staleness manifest, emitted only on GPU-capable container hosts;
-  snapshot paths are baked at generation — `docs/d029` option B), plus
-  `llama-swap-core.json`, `config.d/` and `run.sh`. Cloud/remote relaying is
-  NOT here — it moved to `estige/`; the relay layer generators, Termux
+  `generate.mjs` (its own `lib/llamacpp-model-data.json` + the committed
+  `lib/hf-manifests/` — the param-count/quant-display source, d170 — →
+  `config.d/00-general.yaml` + `config.d/10-local-llm-inference.yaml`, emitted
+  only on GPU-capable container hosts; snapshot paths are baked at generation
+  — `docs/d029` option B), plus `llama-swap-core.json`, `config.d/` and
+  `run.py` (entered through the root `./py-run.sh`, d170). Cloud/remote
+  relaying is NOT here — it moved to `estige/`; the relay layer generators, Termux
   build/serve, and peers-only mode were removed with that handoff.
 - `coding-agent/` is the **pi workload baseline generator**: it owns the
   `Containerfile`/`config.toml` image definition and the canonical
@@ -116,22 +117,16 @@ is invoked, not imported, so no unit's _code_ depends on the root. What that
 costs is stated where it belongs: a folder copied out of this tree ships its
 code, not its way of being started.
 
-- `workload-runtime.sh` / `workload-runtime.mjs` — the two implementations of
-  the same API (spec id `workload-api`, contract in
-  `docs/container-tooling.md`): container-runtime detection (podman vs docker,
-  UID/SELinux flags), the declarative workload description API, structured
-  shell logging, and the profile/runner helpers the run scripts reuse
-  (`_termux`, `default_run_dir`). The `.sh` copies — only
-  `llm-local-inference/`'s now, with the `workload-*.jq` filters beside it
-  (`estige/` retired its pair with the packaging change, docs/d120) —
-  resolve their siblings from the **sourcing script's** `SCRIPT_DIR` + `lib`,
-  honoring `WORKLOAD_LIB_DIR` when the caller is not the unit's own run script
-  (POSIX sh cannot self-locate a sourced file). `coding-agent/` has the `.mjs`
-  one: a description in, a `container run` argv out, which is why that unit
-  needs no `jq` on the host (docs/d119). Secrets are NOT part of either:
-  loading is the explicit `./environment.sh` chain (below). This is the one
-  kernel with more than one consumer, so its copies are the ones most likely
-  to diverge — deliberately (d113).
+- `workload-runtime.mjs` — the workload-api spec's implementation (contract
+  in `docs/container-tooling.md`), carried by `coding-agent/` alone now: a
+  description in, a `container run` argv out, which is why that unit needs no
+  `jq` on the host (docs/d119). The shell pair (`workload-runtime.sh` + its
+  `workload-*.jq` filters) is gone: `estige/` retired its copy with the
+  packaging change (docs/d120) and `llm-local-inference/` with the runner move
+  to python (`run.py`, d170). Secrets are NOT part of it: loading is the
+  explicit `./environment.sh` chain (below). It was the one kernel with more
+  than one consumer, so its copies were the ones most likely to diverge —
+  deliberately (d113); one consumer is left.
 - `log.sh` / `log.mjs` / `log.py` — the structured loggers (per language). In
   the `pi-*` folders the logger sits at the folder root (`<unit>/log.mjs`,
   docs/d118), pruned to the level functions that folder calls; there is no
@@ -169,11 +164,6 @@ code, not its way of being started.
   docs/d086); the GGUF footprint data and HF listings live in
   `llm-local-inference/lib/`, their only consumer since docs/d113 folded the
   `local-llm/` pipeline in.
-- `workload-*.jq` — the jq filters behind the shell implementation of the
-  workload description API, one copy per unit that still uses it — today only
-  `llm-local-inference/`. `coding-agent/` deleted its copy with the node port
-  (docs/d119) and `estige/` with the packaged service (docs/d120); `jq` is
-  therefore no longer a host prerequisite for either.
 - **`git/` has one more layer than a copy unit needs** (docs/d121): its `lib/`
   is a _core library_ — beside this folder's hand copies of the kernels above,
   it holds the floor every `git/` entry runs on (`git-core.mjs`'s
@@ -265,7 +255,7 @@ working. No unit reads `../lib` — there is nothing there any more.
 deleted `build.mjs`/`generate.mjs` and their shims): you invoke the folder you
 are working on, through the root runner (docs/d138).
 
-- `./npm-run.sh llm-local-inference generate` (capability-gated: emits both config.d
+- `./node-run.sh llm-local-inference/generate.mjs` (capability-gated: emits both config.d
   layers only on an inference endpoint), `./npm-run.sh coding-agent generate`
   (network-heavy: catalogs + model layers), and `./node-run.sh estige/build.mjs` — estige
   has **no generator** since docs/d108 deleted `estige generate` with the
@@ -274,7 +264,7 @@ are working on, through the root runner (docs/d138).
   `package.json` script (`./npm-run.sh <unit> generate`, docs/d118)
   rather than a shell entry; a unit with nothing to generate has no script.
 - `./node-run.sh estige/build.mjs`, `./npm-run.sh coding-agent build` and
-  `./npm-run.sh llm-local-inference build` build for THIS host: container images in
+  `./node-run.sh llm-local-inference/build.mjs` build for THIS host: container images in
   parallel on podman/docker hosts, Termux provisioning + the android binary
   strictly serialized on ~1 GB devices. Each accepts target names
   (`./node-run.sh estige/build.mjs <target>…`, docs/d083) — each entry selects
@@ -285,7 +275,7 @@ are working on, through the root runner (docs/d138).
   register only while outbound cloud networking is reachable, its native target
   always.
 - The repo-wide sweep stays at the root and is the only cross-unit view:
-  `./lint.sh` (shellcheck, the jq workload-filter compile, shfmt advisory,
+  `./lint.sh` (shellcheck, shfmt advisory,
   oxfmt markdown, biome, oxlint, knip, ruff, `uv sync --frozen`, ty, the
   capability-URL/runner-copy/retired-root-lib text gates, the spec-graph
   contract of docs/d140, and golangci-lint whose Go rule set is
@@ -309,10 +299,10 @@ implicit regeneration.
 and only on hosts where generation detects a container backend + GPU devices.
 `config.d/` carries exactly two layers:
 
-| Layer                                                         | Role                | Generated by                                                                                                                        | When                             |
-| ------------------------------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `00-general.yaml`                                             | globals + macros    | `llm-local-inference/generate.mjs`                                                                                                  | always                           |
-| `10-local-llm-inference.yaml` (+ `.paths` staleness manifest) | local GGUF `models` | `llm-local-inference/generate.mjs` (from its own `lib/llamacpp-model-data.json`; snapshot paths baked at generation, `docs/d029` B) | container backend + GPU detected |
+| Layer                         | Role                | Generated by                                                                                                                        | When                             |
+| ----------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `00-general.yaml`             | globals + macros    | `llm-local-inference/generate.mjs`                                                                                                  | always                           |
+| `10-local-llm-inference.yaml` | local GGUF `models` | `llm-local-inference/generate.mjs` (from its own `lib/llamacpp-model-data.json`; snapshot paths baked at generation, `docs/d029` B) | container backend + GPU detected |
 
 Cloud providers are NOT a config layer anymore: `estige/` (raw
 passthrough proxy) serves them. The former `peer-cloud.yaml` and
@@ -326,7 +316,7 @@ the variant folders redundant.)
 
 | Folder                                            | Role                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | What makes it work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `llm-local-inference/` (deprecated for now, d108) | local GGUF serving only (GPU container hosts; hard-fails elsewhere)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `generate.mjs` (both layers, docs/d041) + `active-b.json`, `llama-swap-core.json`, `config.d/`, `run.sh`                                                                                                                                                                                                                                                                                                                                                                                            |
+| `llm-local-inference/` (deprecated for now, d108) | local GGUF serving only (GPU container hosts; hard-fails elsewhere)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `generate.mjs` (both layers, docs/d041) + `llama-swap-core.json`, `config.d/`, `run.py`                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `estige/` (tunnel-only since d108)                | the SSL-VPN tunnel transports (h2-POST, WebSocket, h1.1-POST; docs/d073/d077/d105) in one binary in two network positions (docs/d088): the **exit node** (funnel front + tunnel server, egress enforced from `tunnel.egress`) and the **relay node** (loopback CONNECT/SOCKS5, served as a host service; the chain step that points a child at it is the binary's own `estige proxy-env`, docs/d095) — each installed as a service by the deb/rpm package (docs/d120). One reserved path (`/vpn`) serves the tunnels; **every other path answers the plain funnel 404** (d073 VPN-R34) — the allowlist reverse proxy that used to serve those paths (docs/d047/d063/d070) is deleted, not disabled (d108). WebSocket tunnel deployed; h2-POST tunnel default-on (d084); **no config file at all** (d108's tree-shake) — the arming credential, the bind (`PORT`, d110) and the egress opt-ins all arrive on the env chain, with d104's role store slated to own the policy half; standalone-repo boundary defined in docs/d082 (split-time CI findings in `estige/CI.md`) | `main.go`, the tunnel family — `relaynode.go`, `relaychain.go`, `tunnelserver.go`, `tunnelproto.go`, `modec.go`, `websocket.go`, `relay.go`, `egress.go` — plus the `packaging/` tree (pure-Go deb/rpm writers + the Termux and Oracle Linux service inputs, docs/d120); the POSIX launchers and the shell+jq workload library are deleted (docs/d120), as are `generate.go`, `estige.json`, `estige.example.json` and `smoke-test.go` with the allowlist (docs/d108); built by its own `build.mjs` |
 | `coding-agent/`                                   | base pi workload image + artifacts (includes Cline CLI and Thinkrail)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `generate.mjs` orchestrator + stage generators, `Containerfile`, `config.toml`, `run.mjs`, `settings.json`; image built by its own `build.mjs`                                                                                                                                                                                                                                                                                                                                                      |
 

@@ -54,7 +54,7 @@ Run the coverage scanner, which diffs the cache against the manifest by
 filename only — no GGUF headers are read and no weights are loaded:
 
 ```sh
-uv run llm-local-inference/scan_cache_coverage.py
+./py-run.sh llm-local-inference/scan_cache_coverage.py
 ```
 
 It prints three sections: repos with zero manifest coverage, listed repos with
@@ -144,10 +144,9 @@ git diff --exit-code llm-local-inference/lib/llamacpp-model-data.json    # you e
 #   - every cached repo has >=1 manifest entry (no repo left at zero coverage)
 #   - no listed repo has a cached .gguf whose quant is absent from the manifest
 
-uv run llm-local-inference/fetch_hf_manifests.py --offline   # audits each entry's
-                                                       # model vs llama.cpp's
-                                                       # implicit repo:quant->file
-                                                       # heuristic (exit 1 on mismatch)
+# --offline audits each entry's model against llama.cpp's implicit
+# repo:quant -> file heuristic, with no network (exit 1 on mismatch)
+./py-run.sh llm-local-inference/fetch_hf_manifests.py --offline
 ```
 
 `fetch_hf_manifests.py` is the load-bearing check: it re-implements

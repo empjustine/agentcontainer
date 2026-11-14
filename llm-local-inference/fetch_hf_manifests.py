@@ -25,10 +25,10 @@ repo:quant -> file mapping can be audited offline and drift between the
 configured --model and upstream's current main is caught early.
 
 Usage:
-    uv run fetch_hf_manifests.py                # refresh manifests + audit all repos
-    uv run fetch_hf_manifests.py --repo unsloth/Qwen3.8-27B-GGUF
-    uv run fetch_hf_manifests.py --offline      # no network: audit cached manifests only
-    uv run fetch_hf_manifests.py --print-plan   # show llama.cpp's implicit choice per entry
+    ./py-run.sh llm-local-inference/fetch_hf_manifests.py                 # refresh + audit every repo
+    ./py-run.sh llm-local-inference/fetch_hf_manifests.py --repo ORG/REPO # one repo
+    ./py-run.sh llm-local-inference/fetch_hf_manifests.py --offline       # no network: cached manifests only
+    ./py-run.sh llm-local-inference/fetch_hf_manifests.py --print-plan    # llama.cpp's implicit pick per entry
 
 Exit code 1 if any configured model disagrees with the heuristic pick.
 """

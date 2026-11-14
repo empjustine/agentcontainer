@@ -12,10 +12,10 @@ tags: ["reference", "gguf", "tooling"]
 > **Status:** the size-estimation pass is retired outright (docs/d053, then
 > d170): `generate_layer_cards.py`, `estimate_active_params.py`,
 > `fit_analysis.py`, `generate_vram_fit_tables.py` and the
-> [`gguf-vram-fit-estimates.md`](gguf-vram-fit-estimates.md) tables they fed are
-> gone, along with the `model-sizes.mjs` footprint/order pass. The committed HF
-> manifests (`lib/hf-manifests/`, written by the one live tool below) are now
-> also the generator's param-count and quant-display source: total params come
+> `gguf-vram-fit-estimates.md` tables they fed are gone, along with the
+> `model-sizes.mjs` footprint/order pass. The committed HF manifests
+> (`lib/hf-manifests/`, written by the one live tool below) are now also the
+> generator's param-count and quant-display source: total params come
 > from the manifest's BF16 (fallback F16) main-GGUF size ÷ 2, and the display
 > rules (BF16/F16 hidden at ≥4B; the four cheapest quants dropped below 4B, top
 > two kept) are evaluated there. The estimator behind the retired tables was

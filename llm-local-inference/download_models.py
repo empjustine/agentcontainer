@@ -41,8 +41,8 @@ resolves the branch once per call, so model + mmproj of an entry still land
 at the SAME resolved commit while refs/main keeps the revision attached.
 
 Usage:
-    uv run download_models.py                     # all manifest entries
-    uv run download_models.py --repo unsloth/Qwen3.8   # substring filter (repeatable)
+    ./py-run.sh llm-local-inference/download_models.py                 # every manifest entry
+    ./py-run.sh llm-local-inference/download_models.py --repo ORG/NAME # substring filter (repeatable)
 
 No preview flag: ensuring is idempotent against the HF cache (a file that is
 already present costs no download), so a run IS the review — git status on

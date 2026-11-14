@@ -1,7 +1,7 @@
 ---
 id: d055
 type: module-design
-status: active
+status: deprecated
 title: "d055 — suppress the GPU-projector (`2mmproj`) mode above 14 GB"
 parent: llm-local-inference
 depends-on: [llm-local-inference]
@@ -14,6 +14,10 @@ tags: ["gguf", "mmproj", "multimodal", "vram", "generator"]
 **Status: implemented.** `llm-local-inference/generate.mjs` no longer emits the
 `2mmproj` serving variant for a multimodal entry whose total footprint exceeds
 14 GB. `0text` and `1vision` are unaffected.
+
+> **Deprecated (d170).** The gate and its `size-gb` input are removed — every
+> mmproj entry emits all three modes again, and the swap-time cost of the
+> restored downloads is the accepted price (see d170's mmproj decision).
 
 ## Problem
 

@@ -17,16 +17,14 @@ produces a JSON object with the fields the generator expects:
                 from gguf_context_length.py, which reads the header via gguf)
     parallel  — 1 (default; override with --parallel N)
     __argv    — macro reference derived from model family
-    size-gb   — computed from the blob size on disk
-    size-parts — { "model": <size-gb> }
 
 Non-GGUF repos (safetensors, Android binaries, .cact, imatrix-only) are
 reported but NOT emitted as manifest entries.
 
 Usage:
-    uv run llm-local-inference/scan_cache_for_manifest.py
-    uv run llm-local-inference/scan_cache_for_manifest.py --output new-entries.json
-    uv run llm-local-inference/scan_cache_for_manifest.py --parallel 2  # override parallelism
+    ./py-run.sh llm-local-inference/scan_cache_for_manifest.py
+    ./py-run.sh llm-local-inference/scan_cache_for_manifest.py --output new-entries.json
+    ./py-run.sh llm-local-inference/scan_cache_for_manifest.py --parallel 2  # override parallelism
 """
 import argparse
 import json
@@ -124,9 +122,8 @@ def scan_cache(cache_root: str, parallel: int = 1):
         manifest = json.load(f)
 
     manifest_files = {m["model"] for m in manifest["models"]}
-    manifest_hf_repos = {m["hf-repo"].split(":")[0] for m in manifest["models"]}
 
-    cached_gguf = []  # list of (repo, filename, tag, snap_path, blob_dir, sha)
+    cached_gguf = []  # list of (repo, filename, tag, snap_path)
     non_gguf_repos = {}  # repo -> description
 
     for d in sorted(os.listdir(cache_root)):
@@ -185,39 +182,13 @@ def scan_cache(cache_root: str, parallel: int = 1):
             for fname in os.listdir(snap_path):
                 if not is_model_file(fname):
                     continue
-                # Resolve blob info from symlink
-                fpath = os.path.join(snap_path, fname)
-                sha = None
-                blob_dir = os.path.join(repo_dir, "blobs")
-                if os.path.islink(fpath):
-                    target = os.readlink(fpath)
-                    # Target is like ../../blobs/<sha256>
-                    sha = os.path.basename(target)
-                cached_gguf.append((repo, fname, extract_quant_tag(fname), snap_path, blob_dir, sha))
+                cached_gguf.append((repo, fname, extract_quant_tag(fname), snap_path))
 
     # Filter: only entries NOT already in manifest
     new_entries = []
-    for repo, fname, tag, snap_path, blob_dir, sha in cached_gguf:
+    for repo, fname, tag, snap_path in cached_gguf:
         if fname in manifest_files:
             continue
-        if repo in manifest_hf_repos:
-            # Repo is listed but this specific quant might not be
-            pass
-
-        # Compute size
-        size_bytes = 0
-        if sha and blob_dir:
-            blob_path = os.path.join(blob_dir, sha)
-            if os.path.isfile(blob_path):
-                size_bytes = os.path.getsize(blob_path)
-            elif os.path.islink(blob_path):
-                # Follow the chain
-                try:
-                    size_bytes = os.path.getsize(blob_path)
-                except OSError:
-                    pass
-
-        size_gb = round(size_bytes / (1024 ** 3), 3) if size_bytes > 0 else 0
 
         macro = derive_macro(repo, fname)
         hf_repo_tag = f"{repo}:{tag}"
@@ -227,8 +198,6 @@ def scan_cache(cache_root: str, parallel: int = 1):
             "model": fname,
             "parallel": parallel,
             "__argv": f"${{{macro}}}",
-            "size-gb": size_gb,
-            "size-parts": {"model": size_gb},
         }
         entry["ctx-size"] = 65536
 
@@ -300,9 +269,8 @@ def main():
             for repo in sorted(by_repo):
                 print(f"\n  ### {repo}", file=sys.stderr)
                 for e in by_repo[repo]:
-                    size_str = f"{e['size-gb']:.3f} GB" if e["size-gb"] > 0 else "?"
                     ctx_str = str(e.get("ctx-size", 65536))
-                    print(f"    {e['model']:60s}  {size_str:>10s}  ctx={ctx_str}  macro={e['__argv']}", file=sys.stderr)
+                    print(f"    {e['model']:60s}  ctx={ctx_str}  macro={e['__argv']}", file=sys.stderr)
 
     # Output JSON
     output = json.dumps(new_entries, indent=2) + "\n"

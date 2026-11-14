@@ -3,11 +3,20 @@
 # shape (docs/d138: one root file owns the interpreter decision).
 #
 #   ./py-run.sh llm-local-inference/run.py
-#   ./py-run.sh llm-local-inference/upkeep.py --prune
+#   ./py-run.sh llm-local-inference/scan_cache_coverage.py --manifest ...
 #
 # No Termux branch (node-run.sh has one): an inference host carries the RAM
 # and the GPU that Termux lacks, and this trampoline exists for the stack
-# whose hosts all have them (docs/d170 Decision 7).
+# whose hosts all have them (docs/d170).
+#
+# WHY `--script` and not a project environment: uv materializes a project's
+# environment at `<project>/.venv`, and the project a bare `uv run` discovers
+# inside this tree is the repo's gate env — its .venv is gitignored but NOT
+# pruned by ./lint.sh's biome leg, and the unit's own folder is not a uv
+# project at all (d170 retires the per-unit pyproject). `--script` resolves
+# each tool's PEP 723 block into uv's cache: the tree stays clean, the tool's
+# own header is the single statement of its dependencies, and a tool copied
+# out of the repo still runs alone (docs/d113).
 #
 # WHY a wrapper and not `uv run` shebangs: one root file owns the interpreter
 # decision, so a missing uv is one loud death, not a per-file ENOEXEC.
@@ -24,17 +33,17 @@ if ! command -v uv >/dev/null 2>&1; then
 	exit 90
 fi
 
-cd "$repo_root"
-
-# The unit's pyproject owns the dependency floor (d170 Decision 8), so the
-# project is taken from the SCRIPT's directory — the caller may stand anywhere
-# and the repo root may not carry the unit's deps.
-case "$1" in
-*/*.py)
-	uv_dir="$(CDPATH='' cd "$(dirname "$1")" && pwd)"
-	exec uv run --quiet --project "$uv_dir" "$@"
-	;;
+# A script path is the whole contract: `--script` reads the tool's inline
+# metadata, and arguments after it belong to the tool, not to uv.
+case "${1:-}" in
+*.py) ;;
 *)
-	exec uv run --quiet "$@"
+	echo "py-run.sh: usage: py-run.sh <script.py> [args...]" >&2
+	exit 64
 	;;
 esac
+
+cd "$repo_root"
+script="$1"
+shift
+exec uv run --quiet --script "$script" "$@"

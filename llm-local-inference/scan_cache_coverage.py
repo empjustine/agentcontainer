@@ -25,8 +25,8 @@ repo:quant -> file heuristic lives in `fetch_hf_manifests.py` (Step 5 of the
 runbook).
 
 Usage:
-    uv run llm-local-inference/scan_cache_coverage.py
-    uv run llm-local-inference/scan_cache_coverage.py --cache /path/to/hub --manifest /path/to/llamacpp-model-data.json
+    ./py-run.sh llm-local-inference/scan_cache_coverage.py
+    ./py-run.sh llm-local-inference/scan_cache_coverage.py --cache /path/to/hub --manifest /path/to/llamacpp-model-data.json
 """
 import argparse
 import json
@@ -67,7 +67,7 @@ def ambiguity(name):
 
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
-    default_manifest = os.path.join(here, "..", "lib", "llamacpp-model-data.json")
+    default_manifest = os.path.join(here, "lib", "llamacpp-model-data.json")
     ap = argparse.ArgumentParser(description="Diff HF cache vs llamacpp-model-data.json (PoC)")
     ap.add_argument("--cache", default=None, help="HF cache root (default $HF_HUB_CACHE or ~/.cache/huggingface/hub)")
     ap.add_argument("--manifest", default=default_manifest, help="path to llamacpp-model-data.json")

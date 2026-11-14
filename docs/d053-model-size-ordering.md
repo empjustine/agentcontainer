@@ -1,12 +1,11 @@
 ---
 id: d053
 type: module-design
-status: active
+status: deprecated
 title: "d053 — model footprint data + cheapest-first `lib/llamacpp-model-data.json`"
 parent: llm-local-inference
 depends-on: [llm-local-inference, workload-api]
-references:
-  [d025, d050, gguf-model-tooling, refresh-llm-local-inference-manifest, gguf-vram-fit-estimates]
+references: [d025, d050, gguf-model-tooling, refresh-llm-local-inference-manifest]
 tags: [gguf, manifest, ordering, determinism, footprint, size]
 ---
 
@@ -20,6 +19,11 @@ DRY_RUN preview retired by d058.
 `model-sizes.sh`) derives each entry's footprint and orders
 `lib/llamacpp-model-data.json` cheapest-first; the committed table now carries
 `size-gb` / `size-parts`. R4 (active-part estimate) remains a **TODO**.
+
+> **Deprecated (d170).** The script and the `size-gb`/`size-parts` fields are
+> gone — the footprint/order pass is retired and the manifest stays in manifest
+> order. The committed HF manifests remain load-bearing, now as the generator's
+> param-count/quant-display source. This record stays as history.
 
 ## Problem
 
