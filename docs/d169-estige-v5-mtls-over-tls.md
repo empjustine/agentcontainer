@@ -5,7 +5,7 @@ status: draft
 title: "d169 — estige v5: inner mTLS over the tunnel — channel security for an untrusted carrier"
 parent: estige
 depends-on: [d077, d104, d108, d131, d132]
-references: [d073, d081, d085, d090, d103, d133, d136, d171]
+references: [d073, d081, d085, d090, d103, d133, d136, d171, d185]
 tags: ["estige", "tunnel", "mtls", "tls", "crypto", "channel-security"]
 ---
 
@@ -21,16 +21,20 @@ its refusal vocabulary, and none of its crypto choices changes here. It
 implements nothing: the record is the design, the build-cost accounting for
 each candidate, and the alternatives rejected. The reader is an auditor of the
 crypto surface, and three facts come first — every primitive named here is Go
-standard library, the new code is `crypto/x509` plumbing plus a `net.Conn`
-adapter, and exactly one line of that wiring can fail open; the record names
-it and its test pins it.
+standard library, the new code is `crypto/x509` minting plus a `net.Conn`
+adapter, and verification is the library's own: no `InsecureSkipVerify` and
+no hand-written callback whose omission could fail open.
 
 ## Status
 
 Draft — a proposal, not in force and not accepted; nothing in the tree has to
 obey it yet, and d104/d131/d132/d133 remain the credential design on record.
 The implementation would land as a separately sequenced change, the way
-d104's own implementation order sequences its steps.
+d104's own implementation order sequences its steps. An earlier revision of
+this draft kept the clock out of the channel with `InsecureSkipVerify` and a
+hand-written verifier; the decision below replaces that with the library's
+own verification against a bounded validity window, and the rejected shape is
+recorded under Alternatives rejected.
 
 ## Generation numbering
 
@@ -170,6 +174,14 @@ an **ephemeral leaf** under it:
   certificate under its own root, in memory only: never written, never env,
   never shipped (VPN-R32 holds structurally — the certificate is derived, not
   transported).
+- **Validity is bounded, and the bounds carry the clock tolerance.** Both
+  certificates carry `NotBefore` set 24 hours before the host clock at mint
+  and `NotAfter` at most 15 years after it (What a verifiable certificate
+  must carry states the provenance of both numbers). The day of backdate is the skew
+  budget — a peer whose clock trails the verifier's by up to a day still
+  validates — and the forward bound is far past any drift. A leaf never
+  outlives its anchor: where the root's `NotAfter` is sooner, the leaf
+  inherits it.
 - **Trust is pinning, not public chains.** Each side holds the peer's root as
   public material in the store pairing (d132's `relay.json` and `exit.json`
   rows) and validates the peer's leaf against it. System roots never enter
@@ -178,40 +190,94 @@ an **ephemeral leaf** under it:
   certificate would add a signature with no decision behind it.
 - **Rotation is staged, not expired.** Root rotation is d133's staged double
   entries in the peer's trust pool; leaves minted under whichever roots are
-  staged follow without their own staging.
+  staged follow without their own staging. The principal name stays fixed while
+  the key moves, so no peer configuration changes — d185 states why a name, not
+  a certificate, is the unit a peer selects.
 
 The hierarchy buys what a direct store-key leaf cannot: the root signs leaves
 and never enters a handshake, so a leaf stolen from a process dump is one
 identity instance rather than the durable identity, and root rotation becomes
 a pool entry instead of a fleet event.
 
-### Verification and the no-clock law
+### Verification and validity bounds
 
-d104's law — no clock in the auth path; drift causes an outage, never a
-widened decision — collides with `x509`'s default verification, which checks
-`NotBefore` and `NotAfter` against wall time. This record settles the
-collision: **expiry does no job that staged rotation does not already do
-here, so the inner verification reads no wall clock.**
+d104's no-clock law binds the **admission** path: the Ed25519 proofs read no
+wall clock, because a drifted clock must never widen an admission decision.
+The inner session is a different layer with a different failure mode — a
+certificate that fails to verify tears down one channel, it never admits a
+stranger — so this record runs the library's own verification, clock
+included, instead of hand-rolling a verifier to keep the clock out.
 
-Mechanically, that forces the manual-verification shape: the client sets
-`InsecureSkipVerify`, the server requires a client certificate without
-chain-verifying it, and `VerifyPeerCertificate` becomes the verifier on both
-sides — Go's own contract says that with those settings the callback "will be
-considered", with `verifiedChains` nil. The callback parses the presented
-leaf, checks its signature against the pinned root with `CheckSignatureFrom`,
-checks basic constraints and extended usages, and compares the pinned SPKI —
-all with time under the record's control, never `time.Now()`.
+An earlier revision of this draft resolved the collision the other way: it set
+`InsecureSkipVerify` on both sides and made `VerifyPeerCertificate` the
+verifier, keeping time under the record's control. That resolution is
+rejected. `InsecureSkipVerify` with a forgotten or misordered callback
+accepts any chain, and a hand-written verifier owes its own signature,
+basic-constraint, extended-usage and name checks, each a chance to differ
+from the library's. Standard verification fails closed at every one of those
+points, and an auditor reads the library's code rather than this record's.
 
-This is the one wiring in the design that can fail open: `InsecureSkipVerify`
-with a forgotten callback accepts anything. The callback therefore lands with
-a sentinel test in the same change — a chain under no root, a chain under a
-wrong root, and a tampered leaf must each abort the handshake.
+The trust wiring is the standard one:
 
-Session resumption is disabled (`SessionTicketsDisabled`). Go's contract says
-the verification callback "is not invoked on resumed connections", so
-resumption would silently bypass the verifier; it would also add
-cross-restart ticket state for the price of one handshake. No resumption
-means neither.
+- **Client** — `RootCAs` is a pool holding only the pinned peer root (system
+  roots are never added), `ServerName` is the peer's principal name, and
+  `Certificates` carries the local leaf.
+- **Server** — `ClientCAs` is the same single-root pool and `ClientAuth` is
+  `RequireAndVerifyClientCert`.
+- **No callback and no skip** — `InsecureSkipVerify` does not appear and
+  `VerifyPeerCertificate` is not set; chain, key usage, extended key usage
+  and the `NotBefore`/`NotAfter` window are the library's checks against
+  `time.Now()`.
+
+Because the clock is in the channel path, the certificate bounds carry the
+skew tolerance (the Certificate hierarchy lists them): the 24-hour
+`NotBefore` backdate absorbs a day of drift, and the multi-year `NotAfter`
+is far beyond any realistic skew. A clock outside that window fails the
+handshake closed in the existing teardown vocabulary — a channel outage,
+never a widened admission.
+
+### What a verifiable certificate must carry
+
+The mandatory fields and their limits are findings from the pinned toolchain
+(go1.27.4), not inference, because this design leans on the library refusing
+what a hand-rolled verifier would have to enforce itself:
+
+- **The validity window is mandatory.** RFC 5280 §4.1.2.5 makes `Validity` a
+  two-`Time` SEQUENCE with no `OPTIONAL`, so a certificate that omits it
+  does not parse. Go's `x509.CreateCertificate` accepts a zero
+  `NotBefore`/`NotAfter` rather than refusing it — it encodes the zero time
+  as year 1 (`00010101000000Z`) — which yields a certificate that parses and
+  then fails every wall-clock verifier. The mint therefore sets both:
+  `NotBefore` 24 hours before the host clock at mint, `NotAfter` at most 15
+  years after it.
+- **A name is mandatory, and the name is a SAN.** Under standard verification
+  a client refuses an empty `ServerName` ("tls: either ServerName or
+  InsecureSkipVerify must be specified in the tls.Config") and matches the
+  name against the leaf's `subjectAltName`; a name living only in
+  `commonName` is rejected ("x509: certificate relies on legacy Common Name
+  field, use SANs instead"). No configuration keeps chain verification while
+  dropping the name — that takes `InsecureSkipVerify` or a callback, both
+  rejected above — so every leaf carries a SAN naming its own principal
+  (the host key's `prv/<principal>.der` basename, docs/d132).
+- **The trust pool holds certificates, not SPKIs.** `RootCAs`/`ClientCAs`
+  take certificate entries, so the peer's public material in the pairing row
+  is its self-signed root certificate (Certificate hierarchy), not the bare
+  SPKI the admission keys travel as.
+- **The public CA limits, and which of them bind.** A private pinned pairing
+  is outside the subscriber regime, so the short caps that otherwise decide a
+  leaf's life (398 days, falling to 200, 100 and 47 under the Baseline
+  Requirements' operational-period table) do not apply here; the numbers this
+  record borrows are the CA-profile ones — a CA certificate's `notBefore` at
+  most one day prior to signing, a root's `notAfter` roughly 8 to 25 years —
+  and Mozilla's 15-year websites-trust horizon, which the 15-year bound sits
+  under. Expiry is not a rotation trigger: staged rotation remains the
+  mechanism, and the window exists so standard verification has one to check.
+
+Session resumption is disabled (`SessionTicketsDisabled`). Tickets add
+cross-restart state for the price of one handshake, and in the manual shape
+this record rejects, a resumed connection skips the verification callback;
+standard verification removes that hazard, but the state still does not earn
+its keep.
 
 ### Configuration laws
 
@@ -221,6 +287,9 @@ means neither.
 - **Both leaves carry both usages** (`ServerAuth` and `ClientAuth`) — each
   node acts as server for its own leg of life and as client for the other,
   and one symmetric usage list keeps the config one-spelling.
+- **Verification is the library's, over a single-root pool** — system roots
+  are absent, `InsecureSkipVerify` is absent, and the peer's root is the
+  only anchor (`RootCAs` client-side, `ClientCAs` server-side).
 - **No suite selection of our own** — AES-GCM versus ChaCha20-Poly1305 is
   the library's hardware decision; the record picks nothing.
 - **Key exchange is inherited** — TLS 1.3 mandates ephemeral DH, so forward
@@ -249,21 +318,22 @@ buys two independent review surfaces for the cost of the teardown above.
 
 Nothing in this design is cryptographic code. The new surface is:
 
-| piece                                      | shape                                                                   |
-| ------------------------------------------ | ----------------------------------------------------------------------- |
-| `net.Conn` adapter over `tunnelStream`     | Read, Write, Close and deadlines delegating to the frame-msg primitives |
-| root and leaf minting                      | two `x509.CreateCertificate` calls and their extension fields           |
-| the verification callback                  | signature check, extension checks, SPKI pin                             |
-| placement in three modes + failure posture | handshake after admission, alert mapped to teardown                     |
-| the refusal matrix                         | below — the bulk of the change                                          |
+| piece                                      | shape                                                                     |
+| ------------------------------------------ | ------------------------------------------------------------------------- |
+| `net.Conn` adapter over `tunnelStream`     | Read, Write, Close and deadlines delegating to the frame-msg primitives   |
+| root and leaf minting                      | two `x509.CreateCertificate` calls and their extension fields             |
+| the TLS trust wiring                       | single-root `RootCAs`/`ClientCAs`, `ServerName`, `SessionTicketsDisabled` |
+| placement in three modes + failure posture | handshake after admission, alert mapped to teardown                       |
+| the refusal matrix                         | below — the bulk of the change                                            |
 
 The bug list is the classic CA-plumbing list, not math: wrong `IsCA` and
-`KeyUsage` combinations (Go's verifier fails those closed), the forgotten
-callback (the one fail-open line), and wall clock creeping into verification
-(the law above). The test matrix that pins it: happy path; wrong root;
+`KeyUsage` combinations (Go's verifier fails those closed), a leaf that
+omits the name the peer dials, and a validity window too tight for the skew
+the bounds promise. The test matrix that pins it: happy path; wrong root;
 tampered chain; a leaf presenting itself as a CA; mixed root generations
-during a staged rotation; a host clock at epoch, which verification must not
-notice; and the fail-open sentinel.
+during a staged rotation; an expired leaf and a not-yet-valid leaf, each
+failing closed; and a peer clock pushed past the 24-hour backdate, likewise
+failing closed.
 
 Per-boot leaves ship first: one mint per process, root loadable only at boot,
 and TLS 1.3's ephemeral key exchange already gives the session its forward
@@ -281,12 +351,16 @@ be adopted later without redesign.
   decrypts nothing that was recorded.
 - Key separation: the durable root never enters a handshake, and leaves are
   disposable by construction.
+- No fail-open wiring: standard verification carries the signature,
+  constraint, usage and validity checks, so the forgotten-callback defect
+  class does not exist here.
 - The certificate message is encrypted under TLS 1.3, so the chain is
   invisible to the carrier and to the funnel terminator — strictly more
   private than the proof headers, which ride outer HTTP as log-safe labels
   by design.
-- v4's crypto estate survives whole: Ed25519 identities, no clock, no public
-  CA, keys only in `prv/`, an empty `go.mod`, fail-closed refusals.
+- v4's crypto estate survives whole: Ed25519 identities, no clock in the
+  admission path, no public CA, keys only in `prv/`, an empty `go.mod`,
+  fail-closed refusals.
 
 **Costs**
 
@@ -300,8 +374,13 @@ be adopted later without redesign.
   AEAD pass and roughly 21 bytes of record overhead per 16 KiB record —
   accepted deliberately, since the split that would avoid it was rejected
   on disambiguation, not on price.
-- Roughly four to six hundred lines of new code and its tests, concentrated
-  in the verification callback — reviewed as plumbing, not as crypto.
+- Roughly four to six hundred lines of new code and its tests — the TLS
+  wiring, the minting and the placement — reviewed as plumbing, not as
+  crypto.
+- The channel depends on host clocks: drift past the 24-hour backdate, or a
+  root whose `NotAfter` has passed, refuses the handshake until the clock or
+  the root is corrected. Admission stays clock-free; a channel outage is the
+  exposure the bounds accept.
 - Sizes and timings remain visible; padding stays a separate, optional layer.
 
 **Unchanged**
@@ -369,10 +448,17 @@ be adopted later without redesign.
   byte-identical 404, and a TLS flight in the answer would be a
   distinguishable response (VPN-R34). The proofs stay; the handshake is the
   second layer, not the replacement.
-- **Wall-clock expiry as a rotation trigger** — reintroduces the clock d104
-  removed from the auth path for a job staged rotation already does. A
-  decorative expiry check would claim to protect what only rotation
-  protects.
+- **Manual verification under `InsecureSkipVerify`** — the earlier
+  revision's shape, rejected under Verification and validity bounds: it keeps
+  the clock out of the channel at the cost of hand-writing the chain,
+  constraint, usage and name checks, and it opens the fail-open hole a
+  forgotten callback leaves. Standard verification over a bounded validity
+  window is the smaller surface.
+- **Wall-clock expiry as a rotation trigger** — rejected: staged rotation is
+  the mechanism, and the validity window exists only so standard verification
+  has one to check. Letting expiry drive rotation would reintroduce the clock
+  d104 removed from the admission path for a job staged rotation already
+  does.
 - **The low-overhead split: tunnel only plaintext, pass already-encrypted
   streams raw** — the classification it needs fails three ways. A
   first-bytes heuristic guesses, and the wrong guess is silent: a
@@ -389,14 +475,20 @@ be adopted later without redesign.
 
 ## Implementation order
 
-1. **Store roots** — root minting in the `estige key` CLI (d132's verbs),
-   the root certificate stored as public material in the role helper, and
-   `estige key check` validating its shape like every other row.
+1. **Store roots** — `estige keygen` mints the host identity at
+   `~/.local/share/estige/prv/<principal>.der` (PKCS#8 Ed25519, the
+   principal its file name) and prints its `{name, public}` config entry;
+   `estige public` re-derives that entry from an existing key. Root minting
+   in the `estige key` CLI (d132's verbs) then issues the self-signed CA
+   certificate over the key, stores the root certificate as public material
+   in the role helper, and `estige key check` validates its shape like every
+   other row.
 2. **Leaf minting** — boot-time in-memory key and certificate; no new file,
    no new env name.
-3. **Adapter and callback** — `net.Conn` over `tunnelStream`,
-   `tls.Config` wiring with `SessionTicketsDisabled`, and the sentinel test
-   in the same change as the callback.
+3. **Adapter and TLS config** — `net.Conn` over `tunnelStream` and the
+   standard `tls.Config` wiring: the single-root `RootCAs`/`ClientCAs`
+   pools, `ServerName`, `RequireAndVerifyClientCert`, and
+   `SessionTicketsDisabled`.
 4. **Placement** — handshake after admission in modes C, D and E, with the
    failure posture mapped to teardown and the camouflage vocabulary.
 5. **Refusal matrix** — the tests above, plus end-to-end cases mirroring

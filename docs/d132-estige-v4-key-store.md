@@ -28,6 +28,7 @@ need to implement or audit the store itself.
 ├── relay.json          relay role: dial-out pairing — endpoint + expected exit key
 ├── exit.json           exit role: admitted relays — principals + public keys
 └── prv/                          0700
+    ├── ${principal}.der          0600   this host's identity — the host key (docs/d169)
     ├── relay/${principal}.der    0600   this host's relay identity (exactly one)
     └── exit/${principal}.der     0600   this host's exit identity (exactly one)
 ```
@@ -45,7 +46,11 @@ need to implement or audit the store itself.
   to wire. Zero or two-plus files refuse loudly. A dual-role host
   (d090's shared-env case) simply has one file in each role directory,
   and each role process reads its own. A `VPN_PRINCIPAL`-style selector
-  is rejected as a second spelling of the same fact.
+  is rejected as a second spelling of the same fact. The host identity
+  itself — the key `estige keygen` mints and d169 roots the host in — sits
+  one level up at `prv/<principal>.der`, outside the role directories,
+  because it is one key for the host rather than one per admitted
+  direction.
 - **Private keys: PKCS#8 Ed25519, DER only.** PEM-format private keys are
   refused with the intent in the message ("private keys are DER-only;
   rotate, don't move"). The friction is deliberate: no `cat` into
@@ -56,10 +61,14 @@ need to implement or audit the store itself.
   32-byte seed, fail-closed (d071's law; d078's floor carried: an
   identity key's compromise is total impersonation for that principal).
 - **Public keys live as normalized entries inside the helpers, never as
-  their own files.** Import accepts PEM, DER, and ssh-pubkey lines (all
-  three are encodings of the same SPKI — convenience, not ceremony);
-  storage normalizes to one line; `export-pub` prints PEM for
-  interchange; fingerprints are `SHA256:<base64url of SHA-256(raw
+  their own files.** The canonical spelling is the SPKI DER on ONE line of
+  unpadded base64url — no PEM armor, no 72-column wrapping, nothing an SSH
+  tool would accept — so the same string is the helper's `public` value,
+  `export-pub`'s output, and the value pasted into a peer's helper, and it
+  drops into JSON without escapes and without a scalar hiding line breaks.
+  Import still accepts armored PEM, raw DER, and ssh-pubkey lines (encodings
+  of the same SPKI — convenience, not ceremony) and normalizes them to the
+  canonical line; fingerprints are `SHA256:<base64url of SHA-256(raw
   32-byte pubkey)>` — encoding-independent, so the same key has one
   fingerprint however it was imported, and it can be compared over a
   second channel at provisioning (public-key substitution is the
@@ -131,8 +140,9 @@ need to implement or audit the store itself.
   is nothing else left to fold — while the exit's _bind_ is no
   config fact at all: exactly one knob, env `PORT` (d110), never in the
   store; entry names match
-  `[A-Za-z0-9_-]{1,64}`; `public` is unpadded base64url decoding to a
-  44-byte Ed25519 SPKI. JSON's no-comments cost is accepted (annotation
+  `[A-Za-z0-9_-]{1,64}`; `public` is the canonical one-line base64url SPKI
+  above, decoding to 44 bytes for Ed25519. JSON's no-comments cost is
+  accepted (annotation
   belongs in a field or outside the file) and recorded in the
   alternatives; one-field-per-line formatting keeps diffs reviewable
   and the parser does not care.
