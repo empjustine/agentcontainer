@@ -204,28 +204,40 @@ llama.cpp has **no quantization-to-file manifest**: given
 default branch to a commit (`GET /api/models/{repo}/refs`, prefers `main`),
 lists the tree (`GET /api/models/{repo}/tree/{commit}?recursive=true`), then
 picks a GGUF by a pure filename heuristic (`find_best_model`,
-`common/download.cpp`): the quant tag must appear in the path followed by `.` or
-`-` (case-insensitive), sidecars (`mmproj`/`imatrix`/`mtp-`/`eagle3-`/`dflash-`/
-`dspark-`) are excluded, sharded models resolve to shard `-00001-of-`, and the
-**first match in tree order wins**. No tag defaults to trying `Q4_K_M` then
-`Q8_0`.
+`common/download.cpp`): the quant tag must START at a token boundary (`^`, `-`,
+`.` or `/`) and be followed by `.` or `-`, case-insensitively — `:F16` cannot
+select a `BF16` file, `:Q4_XS` cannot select `IQ4_XS` (#31620). An underscore
+is not a boundary: upstream added it and reverted it (#31639). Sidecars
+(`mmproj`/`imatrix`/`mtp-`/`eagle3-`/`dflash-`/`dspark-`) are excluded, sharded
+models resolve to shard `-00001-of-`, and the **first match in tree order
+wins**. No tag defaults to trying `Q4_K_M` then `Q8_0`.
 
 Because that is fragile (duplicate quants at different bpw, tag strings that
 don't appear verbatim in filenames), this tool downloads the tree listing once
 per repo and persists it as `llm-local-inference/lib/hf-manifests/<org>--<repo>.json`
-(including the resolved commit), then re-implements the heuristic offline and
-checks every `llamacpp-model-data.json` entry: does the configured `--hf-file`
-match what llama-server would pick implicitly?
+(including the resolved commit), then re-implements the heuristic offline.
+
+The audit checks the LABEL, not the served file. `generate.mjs` bakes each
+entry's `--model` from the HF cache and `download_models.py` fetches the
+filename in `model`, so llama.cpp never runs `find_best_model` for these
+entries: the `:quant` tells a reader which file the row serves, and the
+committed manifests are still the generator's input for the parameter-count and
+quant-display rules (d170). The audit fails on a tag whose pick is a different
+file and on a configured file absent from the tree; a repo whose only
+full-precision upload carries no tag (`XHToken`'s `Spark-X2.6-1.7B.gguf`) prints
+`label-only` and passes, since no tag can select it.
 
 Network access goes through `huggingface_hub.HfApi` (`repo_info` for the
 resolved `main` commit, `list_repo_tree(recursive=True)` for the tree) —
 pagination, `HF_TOKEN` auth and retries included; `HF_ENDPOINT` overrides apply
-as usual. Exit code 1 on any mismatch. Known findings (2026-06): for
-`byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S` the repo ships two Q4_K_S quants
-(3.80bpw / 4.22bpw) and the heuristic would pick the other one — the explicit
-`--hf-file` there is load-bearing. (A third bogus entry,
-`unsloth/Qwen3.8-27B-GGUF:Q3_K_S` pinning `UD-Q3_K_XL` whose name never
-contains `Q3_K_S[.-]`, was removed after this audit caught it.)
+as usual. Exit code 1 on any mismatch or missing file. Known findings (2026-06):
+for `byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S` the repo ships two Q4_K_S quants
+(3.80bpw / 4.22bpw) and the heuristic picks the other one, so the `model` pin
+is load-bearing. (A third bogus entry, `unsloth/Qwen3.8-27B-GGUF:Q3_K_S`
+pinning `UD-Q3_K_XL` — a name that never contains `Q3_K_S` — was removed after
+this audit caught it. The `LiquidAI/LFM3-1.7B-GGUF:F16` row, by contrast, was a
+replica lag: the config was right and the audit's missing token boundary was
+the bug.)
 
 ## gguf-metadata-parser.js
 

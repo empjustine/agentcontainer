@@ -7,22 +7,34 @@
 # ///
 """fetch_hf_manifests.py — download and persist the HF repo file listing that
 llama-server resolves implicitly from `--hf-repo <org>/<repo>:<quant>`, and
-verify that each configured --model in llamacpp-model-data.json is what
-llama.cpp would pick on its own.
+audit every configured model in llamacpp-model-data.json against it.
 
 Background: llama.cpp has no "quantization-to-file" manifest. On every load it
 resolves the repo's default branch to a commit (GET /api/models/{repo}/refs,
 prefers `main`), lists the tree (GET /api/models/{repo}/tree/{commit}?recursive=true),
 then picks the GGUF by filename heuristic (`find_best_model`, common/download.cpp):
-tag must appear in the path followed by '.' or '-' (case-insensitive), excluding
-mmproj/imatrix/mtp-/eagle3-/dflash-/dspark- files, sharded models must be the
-first shard, first match in tree order wins. Default tags without ':quant' are
-Q4_K_M then Q8_0.
+the tag must START at a token boundary (`^`, `-`, `.` or `/`) and be followed
+by '.' or '-', case-insensitively — so `:F16` cannot select a `BF16` file and
+`:Q4_XS` cannot select `IQ4_XS` (ggml-org/llama.cpp#31620). `_` is deliberately
+NOT a boundary: #31620 added it, #31639 reverted it, so `step3p5_flash_Q4_K_S.gguf`
+does not resolve by `:Q4_K_S` upstream either. mmproj/imatrix/mtp-/eagle3-/
+dflash-/dspark- files are excluded, sharded models must be the first shard,
+first match in tree order wins. Default tags without ':quant' are Q4_K_M then
+Q8_0.
 
 This tool caches that tree per repo as a local manifest
-(hf-manifests/<org>--<repo>.json, including the resolved commit) so the
-repo:quant -> file mapping can be audited offline and drift between the
-configured --model and upstream's current main is caught early.
+(hf-manifests/<org>--<repo>.json, including the resolved commit) so the audit
+runs offline and drift against upstream's current main is caught early.
+
+What the audit is worth: the generator bakes each entry's `--model` from the
+HF cache (generate.mjs `bakeSnapshotPaths`) and download_models.py fetches the
+filename in `model`, so the `:quant` is a LABEL, not a lookup key — llama.cpp
+never runs find_best_model for these entries. The audit therefore checks the
+label, not the served file: the tag's heuristic pick must be the configured
+`model` (a tag naming a different file is a mislabel), and a repo whose
+full-precision upload carries no tag at all (XHToken ships
+`Spark-X2.6-1.7B.gguf`) is reported as label-only, because no tag can select
+it and the baked path is what serves.
 
 Usage:
     ./py-run.sh llm-local-inference/fetch_hf_manifests.py                 # refresh + audit every repo
@@ -30,7 +42,8 @@ Usage:
     ./py-run.sh llm-local-inference/fetch_hf_manifests.py --offline       # no network: cached manifests only
     ./py-run.sh llm-local-inference/fetch_hf_manifests.py --print-plan    # llama.cpp's implicit pick per entry
 
-Exit code 1 if any configured model disagrees with the heuristic pick.
+Exit code 1 if a configured model disagrees with the heuristic pick or is absent
+from the repo's tree.
 """
 
 import argparse
@@ -62,6 +75,12 @@ MANIFEST_DIR = HERE / "lib" / "hf-manifests"
 SIDECAR_RE = re.compile(r"(mmproj|imatrix|mtp-|eagle3-|dflash-|dspark-)")
 SPLIT_RE = re.compile(r"-(\d{5})-of-(\d{5})\.gguf$")
 DEFAULT_TAGS = ["Q4_K_M", "Q8_0"]
+
+# A tag must start at a token boundary upstream (#31620) — without this prefix
+# the replica selects a BF16 file for ":F16" and reports the config as wrong.
+# The boundary set is exact, not approximately: underscore was tried upstream and
+# reverted (#31639), so the replica must not accept it "to be safe".
+TAG_BOUNDARY = r"(^|[-./])"
 
 
 def fetch_manifest(api, repo):
@@ -116,10 +135,15 @@ def split_index(path):
 
 
 def find_best_model(manifest, tag):
-    """Replicates find_best_model (common/download.cpp) on a cached manifest."""
+    """Replicates find_best_model (common/download.cpp) on a cached manifest.
+
+    Same tags, same order, same first-match-in-tree-order rule, same token
+    boundary as upstream — a replica that lags the boundary reports a mismatch
+    for a correct entry, which is exactly how it reads as noise.
+    """
     tags = [tag] if tag else list(DEFAULT_TAGS)
     for t in tags:
-        pat = re.compile(re.escape(t) + r"[.-]", re.IGNORECASE)
+        pat = re.compile(TAG_BOUNDARY + re.escape(t) + r"[.-]", re.IGNORECASE)
         for f in manifest["files"]:
             p = f["path"]
             idx, cnt = split_index(p)
@@ -153,6 +177,7 @@ def main():
                if not args.repo or any(r in m["hf-repo"] for r in args.repo)]
 
     mismatches = 0
+    label_only = 0
     print(f"{'repo:quant':52s} {'configured --model':44s} {'heuristic pick':40s} verdict")
     print("-" * 148)
     seen = {}
@@ -173,14 +198,25 @@ def main():
 
         picked = find_best_model(man, quant_tag(m["hf-repo"]))
         configured = m["model"]
-        ok = picked == configured
-        if not ok:
+        if picked == configured:
+            verdict = "ok"
+        elif picked is None and any(f["path"] == configured for f in man["files"]):
+            # No tag selects a bare full-precision upload, and the served path
+            # bakes the filename rather than resolving the tag, so this is a
+            # label, not a broken lookup — printed, never counted (docstring).
+            verdict = "label-only"
+            label_only += 1
+        elif picked is None:
+            verdict = "MISSING"
             mismatches += 1
-        if args.print_plan or not ok:
-            verdict = "ok" if ok else ("MISMATCH" if picked else "NO MATCH")
-            print(f"{m['hf-repo']:52s} {configured:44s} {picked or '(none)':40s} {verdict}")
+        else:
+            verdict = "MISMATCH"
+            mismatches += 1
+        if args.print_plan or verdict != "ok":
+            print(f"{m['hf-repo']:52s} {configured:44s} {(picked or '(none)'):40s} {verdict}")
 
-    log.info("manifest audit done", manifestDir=str(MANIFEST_DIR), mismatches=mismatches)
+    log.info("manifest audit done", manifestDir=str(MANIFEST_DIR),
+             mismatches=mismatches, labelOnly=label_only)
     sys.exit(1 if mismatches else 0)
 
 

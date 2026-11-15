@@ -149,11 +149,22 @@ git diff --exit-code llm-local-inference/lib/llamacpp-model-data.json    # you e
 ./py-run.sh llm-local-inference/fetch_hf_manifests.py --offline
 ```
 
-`fetch_hf_manifests.py` is the load-bearing check: it re-implements
-`find_best_model` offline and verifies the configured `model` filename is what
-`llama-server` would actually pick for that `hf-repo:quant`. A mismatch means
-the entry is ambiguous (e.g. two `Q4_K_S` quants at different bpw) and needs an
-explicit `model` pin.
+`fetch_hf_manifests.py` re-implements `find_best_model` offline and checks the
+`:quant` label against the configured `model` filename. The tag is a label, not
+a lookup key: the generator bakes `--model` from the HF cache and
+`download_models.py` fetches the filename in `model`, so llama.cpp never
+resolves the tag for these entries. The audit fails on two things — a tag whose
+heuristic pick is a different file (a mislabelled entry, or an ambiguous one
+like two `Q4_K_S` quants at different bpw), and a configured file absent from
+the repo's current tree. A repo whose full-precision upload carries no tag at
+all prints `label-only` and passes (`XHToken` ships `Spark-X2.6-1.7B.gguf`; no
+tag selects it, the baked path serves it).
+
+The replica carries upstream's token boundary (`common/download.cpp`, #31620):
+a tag starts at `^`, `-`, `.` or `/`, so `:F16` cannot select a `BF16` file. `_`
+is not a boundary — upstream added and reverted it (#31639). A replica missing
+the boundary reports a correct entry as a mismatch, which is how
+`LiquidAI/LFM3-1.7B-GGUF:F16` read before it was fixed.
 
 ## Step 6 — Verify the macros against the model cards
 
@@ -190,10 +201,15 @@ llama-swap merges `config.d/` files additively at startup. Restart the
   prefix (`UD-Q8_K_XL`). Keep these in `hf-repo` — never collapse to a bare
   `Q4_K_S`. llama.cpp's cached-list display only shows the _trailing_ filename
   token (so it prints `:80BPW`, `:22BPW`, `:04BPW`); the `:quant` you put in
-  `hf-repo` is what `find_best_model` matches via the `TAG[.-]` regex, so the
-  extensive name selects the right file.
+  `hf-repo` is what `find_best_model` matches via the `(^|[-./])TAG[.-]`
+  regex, so the extensive name selects the right file (an underscore is not a
+  boundary upstream — #31639).
 - **`mmproj` only when cached.** Don't guess a projector filename; if the
   snapshot dir has no `mmproj-*.gguf`, omit the key (text-only).
+- **A bare full-precision upload has no tag.** `XHToken`'s Spark repos ship
+  `Spark-X2.6-1.7B.gguf` with no quant in the name, so `:F16` there labels a
+  file llama.cpp cannot resolve by tag. The audit prints `label-only` and the
+  baked `--model` path serves it; do not "fix" it by inventing a tag.
 - **`ctx-size` is authoritative.** The generator does not auto-fit context;
   whatever you write (or the `65536` default, when omitted) is what the server
   gets. Read `context_length` from the header and cap to VRAM.
