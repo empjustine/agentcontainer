@@ -30,7 +30,10 @@ is the visited check alone, and everything else may be cold or asynchronous.
 
 ## Status
 
-Characterisation in force for the design records that follow; nothing is built.
+Characterisation in force for the design records that follow.
+[`datalakehouse/`](../datalakehouse/README.md) ships the atuin leg and the
+coding-harness session legs, so the write path it owns is real for those two
+writers; the browsing writers below and the hot read are design only.
 
 ## Writers
 

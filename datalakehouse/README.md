@@ -2,9 +2,9 @@
 id: datalakehouse
 type: module-design
 status: active
-title: "datalakehouse — atuin history.db → MotherDuck via the duckdb CLI"
+title: "datalakehouse — local history and session stores → MotherDuck via the duckdb CLI"
 parent: architecture
-references: [d046, d113, d139, d167, d179, d180, d181]
+references: [d046, d113, d139, d167, d172, d173, d179, d180, d181]
 tags: [atuin, motherduck, duckdb, sync]
 ---
 
@@ -21,6 +21,13 @@ guaranteed-fields storage shape their readers will land in. The session
 collection leg, its read side, its ingest route and its postmortem sweep span
 d179 to d184.
 Mistral-vibe support is pending in both this unit and `coding-agent/run.mjs`.
+
+The browsing-history side is designed and not built: a push-based visit index
+(d172), its storage tiers (d173), the clipper and hister comparisons (d174,
+d175, d177) and the workload it would add (d178). This unit carries the atuin and
+coding-harness legs, and a browsing source would extend it rather than open a
+third storage path. The retired tailscale+promnesia stack those records replaced
+is gone from the worktree.
 
 ## Usage
 

@@ -4,7 +4,7 @@ type: architecture-design
 status: active
 title: "d174 — obsidian-clipper against hister: adjacent capture tools, and what a clipper note can reconstruct"
 parent: architecture
-references: [d172, d173, d176, personal-datalakehouse-prior-art]
+references: [d172, d173, d176, datalakehouse, personal-datalakehouse-prior-art]
 tags:
   [
     "obsidian-clipper",
@@ -113,5 +113,7 @@ The clipper is a promnesia-shaped context source and hister is a content index,
 which is the split [d172](d172-push-based-browsing-index.md) assumes; a clipper
 vault is a second context source beside bookmarks. The storage tiers of
 [d173](d173-browsing-history-storage-tiers.md) apply to both, because both keep
-content that most queries never read. The wider personal-data landscape is
-surveyed in [personal-datalakehouse-prior-art](personal-datalakehouse-prior-art.md).
+content that most queries never read. The warehouse half of that split is [`datalakehouse/`](../datalakehouse/README.md),
+which ships the atuin and coding-harness legs; a clipper vault would be a new
+source inside it, not a new unit. The wider personal-data landscape is surveyed
+in [personal-datalakehouse-prior-art](personal-datalakehouse-prior-art.md).

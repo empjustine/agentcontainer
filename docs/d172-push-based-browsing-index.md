@@ -21,8 +21,9 @@ tags:
 
 # d172 — a push-based browsing index
 
-This record replaces the `tailscale-funnel-promnesia/` stack with a
-push-based browsing index: a custom Firefox extension drains history and
+This record replaces the retired tailscale+promnesia stack — a funnel in front
+of a Promnesia server, whose folder is deleted — with a push-based browsing
+index: a custom Firefox extension drains history and
 bookmarks into a listener, and the listener answers the stock Promnesia
 extension from a DuckDB columnar backend. It covers the ingest path and the
 served query shape only; the long-term storage split is
@@ -34,9 +35,10 @@ the listener speaks Promnesia's wire protocol.
 
 ## Status
 
-Decision in force; implementation pending. `tailscale-funnel-promnesia/`
-remains the on-disk stack, and no unit, Containerfile or extension implements
-the design below.
+Decision in force; implementation pending. The previous stack is retired and its
+folder deleted, `datalakehouse/` is the unit that exists (it owns the warehouse
+side, not this ingest path), and no Containerfile or extension implements the
+design below.
 
 ## Problem
 
@@ -91,8 +93,8 @@ facet over those document timestamps rather than a list of visits.
 
 ## Consequences
 
-- A new unit lands under the copy-unit rule (d113), with a pruned `cannon.py`
-  copy and a DuckDB dependency.
+- The ingest path lands in `datalakehouse/` under the copy-unit rule (d113),
+  with a pruned `cannon.py` copy and a DuckDB dependency.
 - No profile mount, no SELinux relabel and no tailscale funnel remain in the
   path, so the Flatpak Firefox boundary stops mattering.
 - DuckDB is single-writer. Every write goes through the staging zone, and the
@@ -111,8 +113,8 @@ facet over those document timestamps rather than a list of visits.
 - **Promnesia plus Hister as two extensions.** The split works and needs no
   custom code, but it keeps two extensions, two servers and two stores for one
   question. It stays the fallback when a custom unit is unwanted.
-- **The `tailscale-funnel-promnesia/` stack.** It couples a browser-history
-  task to a network tunnel and a second host.
+- **The retired tailscale+promnesia stack.** It coupled a browser-history task
+  to a network tunnel and a second host, and the folder is gone.
 - **The Promnesia indexer inside the listener container, reading the profile.**
   It reopens the Flatpak/SELinux boundary and the WAL locking race that the push
   path removes.
@@ -122,4 +124,7 @@ facet over those document timestamps rather than a list of visits.
 ## Where this leads
 
 The long-term storage split — a minimal hot index against a cold lakehouse — is
-[d173](d173-browsing-history-storage-tiers.md).
+[d173](d173-browsing-history-storage-tiers.md). The unit that exists is
+[`datalakehouse/`](../datalakehouse/README.md): it warehouses atuin's history and
+the coding-harness sessions into MotherDuck, and the browsing source this record
+describes would extend it rather than open a storage path of its own.

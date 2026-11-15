@@ -92,5 +92,8 @@ reads a bounded number of objects per query rather than a resident inverted
 index, and cheap compute that scales to zero. The candidates — object-storage
 index splits, or a columnar postings table in Parquet queried by DuckDB — are the
 design follow-up this record points at; the design is
-[d177](d177-cold-full-text-search.md). The wider landscape is
+[d177](d177-cold-full-text-search.md). The warehouse side is
+[`datalakehouse/`](../datalakehouse/README.md), which ships the atuin and
+coding-harness legs and serves no hister content; a cold tier that lands there
+would extend that unit. The wider landscape is
 [personal-datalakehouse-prior-art](personal-datalakehouse-prior-art.md).
