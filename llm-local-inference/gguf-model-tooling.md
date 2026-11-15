@@ -227,6 +227,13 @@ file and on a configured file absent from the tree; a repo whose only
 full-precision upload carries no tag (`XHToken`'s `Spark-X2.6-1.7B.gguf`) prints
 `label-only` and passes, since no tag can select it.
 
+The serving image's llama.cpp carries the boundary as well: `llama-server
+--version` reports the build (`0.9.0-dev (build 1, commit 5d4c8ee)` on the pull
+measured 2026-11-14, 216 commits past #31620), so a revived `-hf` path resolves
+`:F16` to the F16 file there too. What remains unproven by this tool is an
+image older than the fix — on such a build the tag really does select `BF16`,
+and the version string, not the replica, is what settles it per host.
+
 Network access goes through `huggingface_hub.HfApi` (`repo_info` for the
 resolved `main` commit, `list_repo_tree(recursive=True)` for the tree) —
 pagination, `HF_TOKEN` auth and retries included; `HF_ENDPOINT` overrides apply
