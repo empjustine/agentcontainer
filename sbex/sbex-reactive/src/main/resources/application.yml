@@ -1,0 +1,57 @@
+# Same operational contract as sbex-servlet: environment-owned values, a
+# bounded pool, confirmed publishes, probes and graceful drain. What is absent
+# says what the stack is — no Tomcat, no listener container, no virtual
+# threads (sbex/servlet-vs-reactive.md).
+spring:
+  application:
+    name: sbex-reactive
+  datasource:
+    url: ${SBEX_DB_URL:jdbc:postgresql://localhost:5432/sbex}
+    username: ${SBEX_DB_USER:sbex}
+    password: ${SBEX_DB_PASSWORD:}
+    hikari:
+      pool-name: sbex
+      # Smaller than the servlet default on purpose: the reactive app's
+      # concurrency is cheap, the database's is not — the pool stays the
+      # bottleneck by design.
+      maximum-pool-size: ${SBEX_DB_POOL:6}
+      connection-timeout: 3000
+      maximum-lifetime: 600000
+      keepalive-time: 60000
+      leak-detection-threshold: 10000
+  flyway:
+    locations: classpath:db/migration/{vendor}
+    fail-on-missing-locations: true
+  rabbitmq:
+    host: ${SBEX_AMQP_HOST:localhost}
+    port: ${SBEX_AMQP_PORT:5672}
+    username: ${SBEX_AMQP_USER:guest}
+    password: ${SBEX_AMQP_PASSWORD:guest}
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+  webflux:
+    problemdetails:
+      enabled: true
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+server:
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+sbex:
+  archive-batch-size: 500
+  events-exchange: sbex.orders.events
+  # The downstream this app proxies; operator-owned like every other endpoint.
+  inventory-url: ${SBEX_INVENTORY_URL:http://localhost:9090}

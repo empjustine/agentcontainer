@@ -1,0 +1,120 @@
+# Containerfile — the JVM deployment image for BOTH applications, plus an
+# optional native-image appliance target (container-image.md owns the rationale
+# and the reference links).
+#
+# Build context is THIS folder:
+#   podman build -f Containerfile .                                  # sbex-servlet
+#   podman build -f Containerfile --build-arg APP=sbex-reactive .    # the reactive app
+#   podman build -f Containerfile --target native-runtime .          # the native appliance
+
+# --- builder: one pinned toolchain for compile, package and layer extraction ----
+FROM docker.io/library/maven:3.9-eclipse-temurin-21 AS build
+ARG APP=sbex-servlet
+WORKDIR /build
+
+# POMs first: dependency resolution is the expensive step that survives every
+# source edit, so a source-only change reuses this layer.
+COPY pom.xml ./
+COPY sbex-core/pom.xml sbex-core/pom.xml
+COPY sbex-servlet/pom.xml sbex-servlet/pom.xml
+COPY sbex-reactive/pom.xml sbex-reactive/pom.xml
+# go-offline is best effort by nature: an artifact it misses is fetched by the
+# next goal, which is a slower build, never a wrong one.
+RUN mvn -B -ntp dependency:go-offline
+
+COPY sbex-core/src sbex-core/src
+COPY sbex-servlet/src sbex-servlet/src
+COPY sbex-reactive/src sbex-reactive/src
+RUN mvn -B -ntp -pl "${APP}" -am package -DskipTests
+
+# Split the repackaged jar into its layers and hand them over as directories.
+# The extracted layout (lib/ + application jar) is what production runs: no
+# nested-jar class loading, and it is the layout CDS/AOT training runs need
+# (spring-boot reference: "Efficient Deployments" and "Dockerfiles"). The jar
+# is renamed first: the official layout keeps whatever name it is given, and
+# the runtime ENTRYPOINT below is written against application.jar.
+RUN cp "${APP}"/target/*.jar application.jar \
+	&& java -Djarmode=tools -jar application.jar extract --layers --destination extracted
+
+# --- runtime: JRE only, non-root, unpacked layers, one CDS training run --------
+FROM docker.io/library/eclipse-temurin:21-jre-jammy AS runtime
+WORKDIR /application
+
+# Cheapest-to-change layer first: dependencies almost never change, application
+# code changes on every commit — each COPY is a cache boundary of its own.
+COPY --from=build /build/extracted/dependencies/ ./
+COPY --from=build /build/extracted/spring-boot-loader/ ./
+COPY --from=build /build/extracted/snapshot-dependencies/ ./
+COPY --from=build /build/extracted/application/ ./
+
+# Build-time CDS training run: the context must reach "refreshed" without a
+# database or a broker, so migrations and listener startup are off for this one
+# command (the datasource itself connects lazily and never opens here).
+# The resulting .jsa is loaded by every start of THIS image layer.
+RUN SPRING_FLYWAY_ENABLED=false \
+	SPRING_RABBITMQ_LISTENER_SIMPLE_AUTO_STARTUP=false \
+	java -XX:ArchiveClassesAtExit=application.jsa \
+	-Dspring.context.exit=onRefresh -jar application.jar
+
+# Group-0 ownership + g=u permissions: the image runs as a fixed non-root UID
+# here and as an arbitrary UID in group 0 under OpenShift-style runAsNonRoot.
+RUN mkdir -p /var/dumps \
+	&& chown -R 1001:0 /application /var/dumps \
+	&& chmod -R g=u /application /var/dumps
+# Structured logs are the container contract; an operator extends the list
+# (SPRING_PROFILES_ACTIVE=prod,json) rather than editing the image.
+ENV SPRING_PROFILES_ACTIVE=json
+USER 1001:0
+
+# Every flag is a deliberate bound for a RAM-constrained container; the WHYs
+# live in memory.md next to the measurement that justified each number.
+#   MaxRAMPercentage  heap ceiling as a share of the CONTAINER limit, so a
+#                     limit change needs no image rebuild (JVM container support)
+#   MaxMetaspaceSize  bound class metadata: a class leak fails fast instead of
+#                     growing the RSS past the limit
+#   ExitOn/OOM dump   a dead process is restarted by the orchestrator; a dump in
+#                     /var/dumps keeps the evidence
+#   DisableExplicitGC third-party System.gc() calls (RMI DGC) must not trigger a
+#                     full collection in a small heap
+#   MaxDirectMemorySize  bounds Tomcat/Netty direct buffers, which sit OUTSIDE
+#                     the heap and otherwise escape MaxRAMPercentage
+#   Xlog:gc*          GC events on stdout: the container log driver owns rotation
+ENTRYPOINT ["java", \
+	"-XX:MaxRAMPercentage=70.0", \
+	"-XX:MaxMetaspaceSize=256m", \
+	"-XX:+ExitOnOutOfMemoryError", \
+	"-XX:+HeapDumpOnOutOfMemoryError", \
+	"-XX:HeapDumpPath=/var/dumps", \
+	"-XX:+DisableExplicitGC", \
+	"-XX:MaxDirectMemorySize=128m", \
+	"-Xlog:gc*", \
+	"-jar", "application.jar"]
+
+# --- native appliance: build once with GraalVM, run on distroless ----------------
+# The GraalVM image ships the JDK and native-image but no maven; the pinned
+# maven distribution is copied from the same builder image used above instead of
+# installing a second toolchain in this stage.
+FROM docker.io/library/maven:3.9-eclipse-temurin-21 AS native-maven
+FROM ghcr.io/graalvm/native-image-community:21 AS native-build
+COPY --from=native-maven /opt/maven /opt/maven
+ENV PATH="/opt/maven/bin:$PATH"
+WORKDIR /build
+COPY pom.xml ./
+COPY sbex-core/pom.xml sbex-core/pom.xml
+COPY sbex-servlet/pom.xml sbex-servlet/pom.xml
+COPY sbex-reactive/pom.xml sbex-reactive/pom.xml
+COPY sbex-core/src sbex-core/src
+COPY sbex-servlet/src sbex-servlet/src
+COPY sbex-reactive/src sbex-reactive/src
+# native:compile is a direct goal, so it runs on one module: sbex-core has to be
+# in the local repository first, and the Spring AOT sources are generated by the
+# parent's native profile (process-aot) while the lifecycle forks.
+RUN mvn -B -ntp -pl sbex-core install -DskipTests \
+	&& mvn -B -ntp -Pnative -f sbex-servlet/pom.xml native:compile
+
+FROM gcr.io/distroless/base-debian12:nonroot AS native-runtime
+COPY --from=native-build /build/sbex-servlet/target/sbex-servlet /application/sbex-servlet
+EXPOSE 8080
+# Distroless has no shell: exec-form ENTRYPOINT is the only form available, and
+# the JVM flag set is fixed at build time (native images take few options).
+ENTRYPOINT ["/application/sbex-servlet"]

@@ -218,6 +218,13 @@ agentcontainer/
 │   ├── README.md                        #   → module doc: usage, the data-dir file assessment, verified findings, gotchas
 │   └── tests/                           #   → source-resolution tests (pure path logic, no token or network)
 │
+├── sbex/                               # Spring Boot best-practice example — unrelated to the pi workload; its own Maven reactor (Boot 3.5, Java 21)
+│   ├── pom.xml                         #   → parent: the Boot BOM, the enforcer floor, one module per stack (sbex-core, sbex-servlet, sbex-reactive)
+│   ├── README.md                       #   → module doc: requirement→file map, build/run/test, the conventions the code follows
+│   ├── *.md                            #   → this unit's own living docs (d117): memory, persistence, messaging, servlet-vs-reactive, container-image
+│   ├── Containerfile                   #   → multi-stage image: unpacked layers, non-root user, CDS training run, native-appliance target
+│   ├── build.mjs                       #   → this folder's own build (d083/d113): java/maven probe, then the reactor; `./node-run.sh sbex/build.mjs`
+│   └── tests/                          #   → the sweep hook (`*/tests/*.sh` picks it up): mvn test, loud skip without a JDK
 ```
 
 ## Documentation index

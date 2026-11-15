@@ -23,6 +23,7 @@
 		"estige/build.mjs",
 		"coding-agent/build.mjs",
 		"llm-local-inference/build.mjs",
+		"sbex/build.mjs",
 		// the coding-agent runner: the folder driver, its two generator
 		// children, and the standalone CLIs the shims and run.sh execute
 		"coding-agent/generate.mjs",

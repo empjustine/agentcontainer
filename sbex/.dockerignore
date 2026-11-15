@@ -1,0 +1,6 @@
+# The image build reads only sources: every module's target/ is produced inside
+# the builder stage, and shipping it in the context would both slow the upload
+# and mask a stale local build behind a fresh COPY.
+**/target/
+.git/
+.idea/

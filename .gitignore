@@ -23,6 +23,10 @@ __pycache__/
 # demand, never tracked. uv.lock IS tracked (the package-lock.json analog).
 .venv/
 
+# Maven build outputs of the sbex unit — every module's target/ is disposable:
+# the jar is the artifact and nothing under target/ is ever an input.
+sbex/**/target/
+
 # A harness (mise) writes this beside the caller on first use. d051/d082 keep mise
 # out of every runtime path and d137 forbids committing a root file: one re-pins
 # bare `node`/`go` for anything entering the tree (docs/architecture.md).
