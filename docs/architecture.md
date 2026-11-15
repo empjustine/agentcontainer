@@ -147,23 +147,17 @@ code, not its way of being started.
   The four generating `pi-*` folders fold both into `generate.mjs` instead
   (docs/d118) — one writer, one file, no module whose only job is to re-export
   another.
-- `fact-table.mjs` — the fact-table publisher (docs/d086): canonical order,
-  `_meta` provenance and the skip-when-unchanged rule in one place. It has
-  exactly one consumer (`coding-agent/catalog-facts.mjs` and
-  `coding-agent/refresh-models-dev.mjs`), so it lives in `coding-agent/lib/`
-  and nowhere else (docs/d113).
 - `cloud-providers.mjs` — the cloud-provider fact table (id / label / key env /
   real base URL), pruned per unit as above (docs/d024, amended by d113). No
   `pi-*` folder carries the loader or its JSON any more: the row is a frozen
   literal at its single consumer — `sources.mjs` in the four generating
   folders, the folder's own test in `pi-mistral`/`pi-opencode` (docs/d118).
-- `models.dev.api.json`, `catwalk-facts.json`, `llamacpp-model-data.json`,
-  `hf-manifests/` — the vendored data tables, each in the unit that reads it.
-  The first two live in `coding-agent/lib/` (the models.dev mirror carries no
-  `_meta` block because the document itself is the provider namespace,
-  docs/d086); the GGUF footprint data and HF listings live in
-  `llm-local-inference/lib/`, their only consumer since docs/d113 folded the
-  `local-llm/` pipeline in.
+- `llamacpp-model-data.json`, `hf-manifests/` — the vendored data tables,
+  each in the unit that reads it: the GGUF footprint data and HF listings live
+  in `llm-local-inference/lib/`, their only consumer since docs/d113 folded the
+  `local-llm/` pipeline in. The models.dev catalog and the provider listings are
+  NOT data tables in this sense any more: they are fetched per run and never
+  committed (docs/d191), so `coding-agent/lib/` carries code only.
 - **`git/` has one more layer than a copy unit needs** (docs/d121): its `lib/`
   is a _core library_ — beside this folder's hand copies of the kernels above,
   it holds the floor every `git/` entry runs on (`git-core.mjs`'s

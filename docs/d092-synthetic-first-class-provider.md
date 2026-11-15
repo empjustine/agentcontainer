@@ -30,10 +30,10 @@ checklist, which this addition touched as follows:
 
 1. **Fact-table row** (`lib/cloud-providers.mjs`): `synthetic`,
    `SYNTHETIC_API_KEY`, full base `https://api.synthetic.new/openai/v1`
-   (path suffix included, d027), tier `first-class` — the lineup is
-   catalog-derived and the provider is a primary non-subscription
-   reasoning source, so regressions are fix priorities with stale-preserve
-   semantics.
+   (path suffix included, d027), tier `first-class` — the provider is a
+   primary non-subscription reasoning source, so regressions are fix
+   priorities. (The lineup is its own public listing as of d190, which also
+   retired the stale-preserve half of the tier.)
 2. **Full `PROVIDER_SPECS` row** (`coding-agent/generate-pi-coding-agent.mjs`)
    → layer `model-019-cloud-synthetic.json`. pi does NOT ship synthetic
    natively (it is absent from the proxy generator's extracted

@@ -41,7 +41,7 @@ tier lists would be the duplicated decision the repo forbids.
 
 | Tier            | Providers                                                                 | Contract                                                                                                                                                                                                  |
 | --------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **first-class** | `cline-pass`, `hyper`, `verboo`, `opencode-go`, `llama-swap` (local)      | fully computed lineups (live/facts/catalog cascade); regressions are fix priorities; outages preserve the last good artifact (stale-preserve) rather than dropping models                                 |
+| **first-class** | `cline-pass`, `hyper`, `verboo`, `opencode-go`, `llama-swap` (local)      | fully computed lineups from the provider's own source; regressions are fix priorities; an outage publishes nothing rather than a remembered lineup (d190 retired the stale-preserve)                      |
 | **best-effort** | `google` (ai studio), `mistral`, `inferx`, `openrouter`, `opencode` (zen) | same cascade, still route-probed wherever a probe can mean something; fixed when convenient, never a priority                                                                                             |
 | **superficial** | `nvidia`                                                                  | supported at the REVERSE-PROXY level (d047 allowlist row) and present as metadata; NOT smoke-tested; lineup = catalog slice only; metadata may be stale or wrong and that is accepted; not a fix priority |
 
@@ -70,8 +70,18 @@ What did not change: `nvidia` is the remaining superficial row (its catalog
 slice is all there is), superficial still means the probe is skipped, and a
 zen run with no key or a dead route falls back to the reroute-only emission
 [d048](d048-opencode-go-mixed-api-surface.md) defines — pi's built-in
-records stand, which is this tier's stale-preserve in the only form a mixed
-surface allows.
+records stand, which is the one carry-forward a mixed surface allows: a
+built-in catalog is pi's own data, not a lineup this generator remembered.
+
+### What the tiers do NOT promise: a remembered lineup
+
+This record originally paired first-class with a stale-preserve: an outage
+carried the last good artifact forward rather than dropping models (see the
+known-issue section, which used it for llama-swap). [d190](d190-no-remembered-lineup.md)
+retired that half of the contract, for extensions and for generator layers
+alike. The tiers keep their meaning — how hard a regression is chased, and
+whether the probe is worth spending — and lose the claim that last run's
+lineup ships when this run's source does not answer.
 
 ### 2. Tier consequences per consumer
 
@@ -96,16 +106,20 @@ surface allows.
 
 **Known issue (this record's lifetime):** all funnel routes — including
 `/llama-swap/v1/models` — answer 502, so fresh local lineups cannot be
-probed. Mitigation is exactly the first-class stale-preserve:
+probed. The mitigation this record chose was the first-class stale-preserve:
 
-- `generate.mjs` now stages committed `model-*.json` layers into the
-  scratch dir (d063 consequences), so a failed local probe leaves the
-  previous `model-010-local-default.json` in the merge instead of silently
-  deleting llama-swap from the installed artifact;
-- `generate-opencode.mjs` carries the previous `local` entry forward from
-  the output file it is about to rewrite when the probe fails (the same
-  "output left untouched" semantics model-010 has, applied to the one entry
-  whose lineup exists nowhere else).
+- `generate.mjs` stages committed `model-*.json` layers into the scratch
+  dir (d063 consequences), so a failed local probe left the previous
+  `model-010-local-default.json` in the merge;
+- `generate-opencode.mjs` carried the previous `local` entry forward from
+  the output file it was about to rewrite when the probe failed.
+
+**Superseded by [d190](d190-no-remembered-lineup.md).** Both carries are gone:
+an unreachable farm now writes an empty `llama-swap` / `local` block, so the
+installed artifact says "nothing local today" instead of describing GGUFs the
+funnel cannot serve. The layer seed above survives for a different reason — a
+layer a generator writes nothing for must still merge the set the reviewed
+snapshot describes — and no generator reads history out of that dir any more.
 
 **Follow-up (documented, NOT applied here):** all tsnet-connected proxy
 instances must later be repointed at the internal bazzite tsnet route. This

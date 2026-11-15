@@ -26,9 +26,9 @@
  *   out defaults to ./opencode.jsonc. generate.mjs passes a SCRATCH copy of
  *   the committed overlay as out and then installs the result to BOTH the
  *   host config dir (the sandbox's mount source) and the committed
- *   opencode.jsonc (docs/d065) — so the d064 local stale-preserve below,
- *   which reads the previous state through out, sees the last committed
- *   overlay under generate.mjs and the last out-file standalone.
+ *   opencode.jsonc (docs/d065) — the reviewed snapshot. Nothing reads the
+ *   previous state back through out any more (docs/d190 retired the d064
+ *   local stale-preserve), so a fresh output dir is enough.
  */
 
 import { readFileSync } from "node:fs";
@@ -42,7 +42,6 @@ import {
 	logWarn,
 	catalogModelLive,
 	modalitiesEligible,
-	modelsDevCatalogPath,
 	probeCandidates,
 	probeEndpoint,
 	scriptDir,
@@ -52,6 +51,15 @@ import {
 } from "./gen-lib.mjs";
 
 setLogTool("coding-agent/generate-opencode");
+
+/**
+ * The dir this run owns: generate.mjs points $PI_LAYER_DIR at its per-run
+ * output dir, and a manual run lands beside its own sources. The models.dev
+ * catalog the run fetched sits there beside the layers (docs/d191) — no env
+ * var names the catalog itself, so a manual run simply has none.
+ * @type {string}
+ */
+const runDir = process.env.PI_LAYER_DIR ?? scriptDir;
 
 /**
  * A validated `/models` entry.
@@ -137,7 +145,11 @@ const MODEL_SCOPES = {
  */
 function catalogModels(id, filter) {
 	try {
-		const catalog = JSON.parse(readFileSync(modelsDevCatalogPath(), "utf-8"));
+		// An absent catalog is the manual-run case, not an error: the route's
+		// own answer is the lineup then (docs/d191).
+		const catalog = JSON.parse(
+			readFileSync(join(runDir, "models.dev.api.json"), "utf-8"),
+		);
 		const models = catalog?.[id]?.models ?? {};
 		return Object.keys(models)
 			// A retired catalog entry never publishes (docs/d048).
@@ -228,26 +240,6 @@ function routedProvider(label, providerUrl, apiKeyEnv, models) {
 	};
 }
 
-/**
- * The `local` block from the previous overlay, when readable — the d064
- * first-class stale-preserve for the local lineup (a fresh lineup comes only
- * from the live probe; nothing else knows the farm's GGUFs).
- * @param {string} path the overlay about to be rewritten
- * @returns {OpenCodeProvider|null}
- */
-function previousLocalProvider(path) {
-	try {
-		const overlay = JSON.parse(readFileSync(path, "utf-8"));
-		const entry = overlay?.provider?.local;
-		if (typeof entry?.options?.baseURL !== "string" || !entry.models) {
-			return null;
-		}
-		return entry;
-	} catch {
-		return null;
-	}
-}
-
 /** @returns {Promise<void>} */
 async function main() {
 	const out = process.argv[2] ?? join(scriptDir, "opencode.jsonc");
@@ -320,22 +312,18 @@ async function main() {
 			logInfo("no local GGUF models visible — omitting local provider");
 		}
 	} else {
-		// d064 first-class stale-preserve: the local lineup exists nowhere
-		// else, so when the funnel cannot list it the previous entry is
-		// carried forward instead of dropping `local` from the overlay.
-		const previous = previousLocalProvider(out);
-		if (previous) {
-			providers.local = previous;
-			logWarn(
-				"no local GGUF source reachable — carrying the previous local entry forward",
-				{
-					baseURL: previous.options.baseURL,
-					models: Object.keys(previous.models).length,
-				},
-			);
-		} else {
-			logInfo("no local GGUF source reachable — omitting local provider");
-		}
+		// The farm answers for itself or not at all (docs/d190): d064's
+		// stale-preserve is retired here too, so an unreachable funnel no longer
+		// leaves `local` in the overlay describing GGUFs it cannot serve.
+		providers.local = routedProvider(
+			"Local LLM",
+			`${providerFacts("llama-swap").baseUrl}/v1`,
+			"TLALOCAYOTL_API_KEY",
+			[],
+		);
+		logWarn(
+			"no local GGUF source reachable — the local lineup is empty (docs/d190)",
+		);
 	}
 
 	const written = writeJsonArtifact(out, { provider: providers });

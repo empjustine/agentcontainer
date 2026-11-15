@@ -187,12 +187,11 @@ next direct URL.
   once with `PEER_BASE_URL` set and the diff is reviewed. Until that run
   succeeds, `SKIP_GEN` keeps installing the old artifact.
 - **Committed layers are staged into the scratch dir** before generation
-  (new: `generate.mjs` copies `model-*.json` in). This is the stale-preserve
-  that model-010 (LOCAL llama-swap, first-class per [d064](d064-provider-support-tiers.md))
-  needs when its probe fails — the local stage's "output left untouched"
-  previously left the file out of the MERGE too, silently dropping
-  llama-swap from the installed `models.json`. Cloud layers get no such
-  leeway: they are rewritten every successful run (§3) or the run fails (§4).
+  (new: `generate.mjs` copies `model-*.json` in), so a layer a generator
+  writes nothing for still merges the set the reviewed snapshot describes.
+  The stage was introduced for model-010's probe-failure carry-forward, which
+  [d190](d190-no-remembered-lineup.md) retired: an unreachable source now
+  writes an empty block, cloud and local alike.
 - **d034's direct-probe parallelism** dies with `probeDirect`; route probes
   remain `Promise.allSettled`-parallel. **d045's `probeDirect`/
   `suppressedProbe` examples** describe the retired path — its

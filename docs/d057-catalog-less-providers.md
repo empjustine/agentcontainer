@@ -2,7 +2,7 @@
 id: d057
 type: module-design
 status: active
-title: "d057 — a provider models.dev does not carry: the facts cache as the lineup (worked example: verboo)"
+title: "d057 — a provider models.dev does not carry: its own listing as the lineup (worked example: verboo)"
 parent: coding-agent
 depends-on: [d021, d023, d024, d032, d033]
 references: [d047, d049, d050, environments]
@@ -11,14 +11,15 @@ tags: [coding-agent, llm-reverse-proxy, generators, models-dev]
 
 # d057 — A provider models.dev does not carry
 
-**Status:** implemented
+**Status:** implemented — the cache half is superseded by
+[d191](d191-fetch-per-run-catalogs.md): the listing is fetched per run, nothing
+is committed, and a provider that cannot answer publishes nothing.
 
 ## Problem
 
-d032 F1 states the rule for adding a provider: the vendored
-`lib/models.dev.api.json` is **regenerated wholesale** by
-`coding-agent/refresh-models-dev.mjs`, so a hand-added catalog row is
-transient, and `loadProvider()` throws on a provider the catalog does not
+d032 F1 states the rule for adding a provider: the models.dev catalog is
+fetched wholesale per run (docs/d191), so a hand-added catalog row could not
+survive, and `loadProvider()` throws on a provider the catalog does not
 know — a catalog-less provider could not emit a layer at all. Every full
 provider in the repo (cline-pass, hyper, inferx) happened to be in the
 catalog.
@@ -35,28 +36,32 @@ limit).
 Two provider classes now exist in the full mode, distinguished by ONE new
 spec flag rather than a second code path:
 
-|                      | catalog has the provider | `catalogOptional`              |
-| -------------------- | ------------------------ | ------------------------------ |
-| endpoint             | catalog `api`            | **fact-table `baseUrl`**       |
-| lineup               | `provider.models`        | the facts cache, in both modes |
-| facts cache role     | enrichment (hyper)       | the only source (verboo)       |
-| direct-mode liveSync | yes                      | skipped (see below)            |
+|                      | catalog has the provider | `catalogOptional`          |
+| -------------------- | ------------------------ | -------------------------- |
+| endpoint             | catalog `api`            | **fact-table `baseUrl`**   |
+| lineup               | `provider.models`        | the provider's own listing |
+| listing role         | enrichment (hyper)       | the only source (verboo)   |
+| direct-mode liveSync | yes                      | skipped (see below)        |
 
 - `catalogOptional: true` → `loadProvider()` returns an **empty** lineup and
   the fact-table base URL instead of throwing. The fact table is also what
   `peerProviderUrl` builds the peer route from, so direct and peer routing
   cannot disagree (d047).
-- `facts: {path, listKey}` + `factsMapper` → the provider's own facts
-  endpoint, refreshed and cached by `coding-agent/provider-facts.mjs`
-  (generalized from the hyper-only `hyper-facts.mjs`; `<id>-facts.json`,
-  `<ID>_FACTS_JSON`, same tmp+rename / stale-tolerant / fail-closed-TLS
-  contract). The `listKey` is the endpoint's own list member — hyper answers
-  `models`, verboo answers `data` — and BOTH the publisher and
-  `loadProviderFacts` take it from this row; a reader with its own hardcoded
-  key silently empties the provider (docs/d086 has the verboo failure).
-- With an empty catalog lineup the facts cache IS the lineup, and the liveSync
-  pass is **skipped**: it exists to reconcile the catalog against a listing,
-  and running it here would prune the cache's metadata down to bare ids.
+- **d190 amended the first column.** A provider's own listing no longer only
+  enriches: its answer decides WHICH ids publish (hyper, synthetic), and a
+  source that cannot answer publishes nothing rather than a remembered list.
+  `catalogOptional` still marks the row the catalog cannot describe at all.
+- `facts: {path, listKey}` + `factsMapper` → the provider's own listing,
+  fetched per run by `coding-agent/catalog-facts.mjs` and handed over in
+  memory (docs/d191: no cache file, no `<ID>_FACTS_JSON`, fail-closed TLS).
+  The `listKey` is the endpoint's own list member — hyper answers `models`,
+  verboo answers `data` — and the row is the one place it is stated; a reader
+  with its own hardcoded key silently empties the provider (docs/d086 has the
+  verboo failure).
+- With an empty catalog lineup the provider's listing IS the lineup, and the
+  liveSync pass is **skipped**: it exists to reconcile the catalog against a
+  listing, and running it here would prune the listing's metadata down to bare
+  ids.
 
 ### The mapper, not the defaults, decides what is fact
 
@@ -84,24 +89,22 @@ their map has `off: null` and pi offers no way to turn thinking off.
 Synthesizing one would mean inventing a wire value the listing never
 advertises (a 400 risk), so the gap stands until verb oo publishes one.
 
-## The committed cache is load-bearing
+## A key is required to publish the layer
 
-A catalog-less provider's layer is reproducible **without a key**: the seeded
-`coding-agent/verboo-facts.json` (a captured `GET /router/v1/models`, whose
-record list is the `data` member — docs/d086) is read stale-tolerantly when the
-live fetch 401s, exactly as hyper's cache is.
-That makes peer-mode generation — where the provider's own host is
-unreachable — possible at all, and it is why the cache is a committed
-artifact rather than a leftover.
+The committed `verboo-facts.json` this section used to defend is deleted
+(docs/d191). A generation without `VERBOO_API_KEY`, or against a host that
+cannot reach the listing, writes an **empty** verboo layer and says so — the
+row's lineup is unverifiable otherwise, and a captured `GET /router/v1/models`
+from some earlier day is exactly the remembered lineup d190 removed. Peer-mode
+generation needs the key like every other key-gated row.
 
 ## Consequences
 
-- `hyper-facts.mjs` is gone, replaced by the parameterized
-  `provider-facts.mjs`; hyper's committed `hyper-facts.json` and
-  `HYPER_FACTS_JSON` keep working unchanged (the naming convention is
-  `<id>-facts.json`).
-- `coding-agent/generate.mjs` discovers caches by that naming rule instead of
-  listing them per provider.
+- The fetch is parameterized by the row (`path`, `listKey`, mapper) rather
+  than per provider: hyper, synthetic and verboo share one code path with three
+  mappers.
+- `coding-agent/generate.mjs` no longer discovers anything by a naming rule:
+  there are no cache files to discover (docs/d191).
 - the canonicity guard (`coding-agent/tests/committed-manifests.test.mjs`, d113) covers
   `model-018-cloud-verboo.json` like
   every other committed layer.

@@ -229,14 +229,16 @@ Provider-specific mirrors:
   its reasoning models expose only a `toggle`, which pi's default on/off
   handling already covers. No `thinkingLevelMap` is emitted.
 
-**Hyper facts cache** (`coding-agent/hyper-facts.mjs`, docs/d039): hyper is the one provider here
-whose own live `/provider` catalog beats the models.dev snapshot per field
-(live reasoning flags, attachment support, per-model cached-input/output
-prices, effort enums) and pi has no built-in hyper, so the emitted layer is
-the only metadata pi ever sees. Direct mode refreshes the cache and enriches
-every model from it. Peer mode (where `hyper.charm.land` itself is
-unreachable) first tries the same refresh over the multi-hop peer candidates,
-then consumes the last good cache stale-tolerantly (docs/d034). Enrichment is a narrow per-field
+**Hyper facts listing** (`coding-agent/catalog-facts.mjs`, docs/d039): hyper is
+the one provider here whose own live `/provider` catalog beats the models.dev
+snapshot per field (live reasoning flags, attachment support, per-model
+cached-input/output prices, effort enums) and pi has no built-in hyper, so the
+emitted layer is the only metadata pi ever sees. The listing is fetched
+per run and enriches every model from it — and since
+[d190](d190-no-remembered-lineup.md) it is the lineup too: a models.dev id the
+live catalog does not carry is retired, and a fetch that does not answer
+publishes nothing ([d191](d191-fetch-per-run-catalogs.md) removed the last good
+copy peer mode used to fall back to, docs/d034). Enrichment is a narrow per-field
 whitelist (`reasoning`, `input`, costs incl. cached-in/out, limits,
 `thinkingLevelMap`, `compat.supportsReasoningEffort`); display names stay
 models.dev (more descriptive); the wire compat block and the route are never
@@ -283,7 +285,6 @@ container/host runs) — always as an atomic swap via `lib/artifact.mjs`, so
 the review of a regeneration is `git diff` (docs/d058). `coding-agent/generate.sh` runs them in layer order and
 then `merge-models-json.mjs`. Environment: `PEER_BASE_URLS` / `PEER_BASE_URL` (the peer base chain,
 vault-sourced; docs/d034), `PEER_API_KEY` (local GGUF bearer), each provider's own key
-env (direct and peer-route probes only), `MODELS_DEV_JSON` (catalog path
-override), `PI_MODELS_JSON` (output override), `HYPER_FACTS_JSON` (cache path
-override), `PEERS_ONLY` (skip the direct probes, every provider goes straight
+env (direct and peer-route probes only), `PI_MODELS_JSON`
+(output override), `PEERS_ONLY` (skip the direct probes, every provider goes straight
 to the peer path-route cascade — see the cascade section above).

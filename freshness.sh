@@ -25,11 +25,12 @@
 #
 # Units deliberately NOT here:
 #   coding-agent — no `--check`, and it could not have an honest one: its
-#       generator falls back per source when upstream is unreachable (the
-#       tailnet API, a key-gated listing, the opencode docs mirror), so
-#       byte-equality against the committed snapshot is a property of the
-#       host, not of the data. Its offline guarantees live in
-#       ./check-types.sh and coding-agent/tests/ instead.
+#       generator's own inputs are absent when upstream is (the tailnet API,
+#       a key-gated listing, the opencode docs mirror), so byte-equality
+#       against the committed snapshot is a property of the host, not of the
+#       data. Its catalogs are fetched per run and never committed
+#       (docs/d191), so there is no cache here to compare; its offline
+#       guarantees live in ./check-types.sh and coding-agent/tests/.
 #   estige, git, and the remaining pi-* units — no upstream cache to compare.
 #
 # A listing that needs a secret we do not hold is SKIPPED, not failed: a dev

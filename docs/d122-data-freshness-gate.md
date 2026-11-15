@@ -70,6 +70,10 @@ question that cannot.
 - A committed cache that is _regenerable_ is still committed (d023): the gate
   checks the copy, it never rewrites it. `--check` is where a generator's write
   path stays off.
+- The gate's subjects are generated ARTIFACTS. The upstream catalogs a
+  generation reads are fetched per run and never committed
+  ([d191](d191-fetch-per-run-catalogs.md)), so there is no copy of them for
+  this gate to compare — a stale one cannot exist.
 
 ## Alternatives rejected
 

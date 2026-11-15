@@ -1,10 +1,10 @@
 /**
  * @fileoverview canonical-json.mjs — schema-aware canonicalization of
- * generated manifests (docs/d050) and of the vendored fact tables
- * (docs/d086). Serialization half only: the atomic-write contract (and
+ * generated manifests (docs/d050) and of the models.dev payload a run fetches
+ * (docs/d191). Serialization half only: the atomic-write contract (and
  * `writeJsonArtifact`, which combines the two) lives in lib/artifact.mjs, the
- * write choke point. The d086 hash short-circuit that consumes these forms is
- * lib/fact-table.mjs.
+ * write choke point. No hash short-circuit consumes these forms any more: with
+ * no committed catalog there is no diff to keep quiet (docs/d191).
  *
  * Why this exists: generators are the source of truth (docs/d023), but a
  * rerun over unchanged inputs used to emit different *bytes* because key and
@@ -138,8 +138,9 @@ export function canonicalizeManifest(doc) {
 
 /**
  * Canonical form of a provider CATALOG — the raw vendor shape where the
- * document itself *is* the provider map (`lib/models.dev.api.json`): its keys
- * ascend and each provider's `models` collection is canonical.
+ * document itself *is* the provider map (the models.dev payload a run fetches,
+ * docs/d191): its keys ascend and each provider's `models` collection is
+ * canonical.
  *
  * The distinction from canonicalizeManifest matters: that one looks for a
  * `providers` map inside a generated document, while upstream sends no such
@@ -152,31 +153,6 @@ export function canonicalizeManifest(doc) {
  */
 export function canonicalizeProviderCatalog(catalog) {
 	return isPlainObject(catalog) ? sortProviderMap(catalog) : catalog;
-}
-
-/**
- * Canonical form of a fact-cache document (docs/d086): the record list under
- * `listKey` sorted by id and each record's own `models` collection canonical,
- * with every other member — the `_meta` block, `fetchedAt`, provider-specific
- * fields — exactly as given.
- *
- * Order-insensitivity is the whole point: the same facts arriving in a
- * different upstream order must produce the same bytes, because "did the
- * content move?" is the question the writer answers before it touches the
- * file (lib/fact-table.mjs).
- *
- * @param {unknown} doc parsed fact-cache document
- * @param {string} listKey member holding the record list (`providers`, `models`)
- * @returns {unknown} canonically ordered equivalent of `doc`
- */
-export function canonicalizeFactsCache(doc, listKey) {
-	if (!isPlainObject(doc) || !Array.isArray(doc[listKey])) {
-		return doc;
-	}
-	const records = /** @type {unknown[]} */ (doc[listKey]).map(
-		withCanonicalModels,
-	);
-	return { ...doc, [listKey]: sortModels(records) };
 }
 
 /**

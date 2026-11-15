@@ -65,8 +65,10 @@ removed at the end. What was **not** given up:
   `model-*.json` layers before spawning the pi generator, so the merge glob
   and d064's stale-preserve still see previous state on a clean checkout
   (previously they saw whatever `scratch/` had been copied in).
-- **`MODELS_DEV_JSON`** — was a symlink into scratch; it is now the committed
+- **`MODELS_DEV_JSON`** — was a symlink into scratch; it became the committed
   path directly (`process.env.MODELS_DEV_JSON`), same target, no indirection.
+  Retired since ([d191](d191-fetch-per-run-catalogs.md)): the catalog is written
+  into the run's own dir and read from there, with no env var naming it.
 
 `tests/lib-staging.test.mjs` — the guard for that retired mount list — went
 with it, and `generate.sh` now just passes the script path while the `.mjs`
@@ -264,7 +266,7 @@ Same sweep, smaller items: `catalog-facts.mjs` publishes its cache through
 tracked, so a serialization switch would churn every refresh diff);
 `git/vbs-har.mjs` writes its manifest through the same writer;
 `modelsDevCatalogPath()` lost the next-to-script probe that the retired d023
-staging made look reachable; `emitFullAt` folded back into `emitFull` (its only
+staging made look reachable (the whole helper is gone since d191); `emitFullAt` folded back into `emitFull` (its only
 caller — with the constant `auth` bag and the provider literal inlined);
 dead code from earlier folds removed (`humanBytes`, `repo_dir_name`,
 `blob_size`, three internal `route-probe.mjs` exports); and the two HF-cache

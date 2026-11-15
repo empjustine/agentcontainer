@@ -193,19 +193,19 @@ through the environment proxy.
 ## Provenance
 
 The generators reach outside this folder for provider knowledge in exactly
-four ways, and since docs/d113 every one of them is a **read**: this folder
-owns its copies of the facts (below), so a sibling's file cannot change what
-a generate here emits. Three are DATA legs — self-correcting or validation-pinned — and
-one is a behavioral copy, which is the caveat worth knowing:
+four ways, and every one of them is a **read**: nothing this folder generates
+depends on a data file in the tree (docs/d191), so a sibling's file cannot
+change what a generate here emits. Three are LIVE legs — a fetch per run, no
+committed copy — and one is a behavioral copy, the caveat worth knowing:
 
-- **models.dev + catwalk** (vendored `lib/models.dev.api.json`,
-  `lib/catwalk-facts.json`): live catalogs, refreshed through the relay
-  chain, consumed-shape-validated, stale-copy rule (docs/d114). A live
-  endpoint can change under a run, but the validation is the tripwire and
-  the committed snapshot is the fallback.
-- **Per-provider facts listings** (hyper `/provider`, verboo `/models` —
-  committed `<id>-facts.json` caches, docs/d057): the providers' own
-  documents. Live data; the cache is the last good copy.
+- **models.dev + catwalk**: live catalogs, fetched once per run through the
+  relay chain and consumed-shape-validated. A fetch that does not answer
+  aborts the run (models.dev) or empties the row (catwalk) — there is no
+  committed fallback to degrade to (docs/d191, retired d114's stale copy).
+- **Per-provider listings** (hyper `/provider`, synthetic `/models`, verboo
+  `/models`, docs/d057): the providers' own documents, fetched per run and
+  handed over in memory. The live answer IS the lineup; a source that cannot
+  answer publishes nothing (docs/d190, d191).
 - **Published docs read from git mirrors** (cline/cline
   `clinepass.mdx`, anomalyco/opencode `go.mdx`): pinned sources read with
   `git show` through the reference farm — the opencode mirror's HEAD must
@@ -246,10 +246,9 @@ It carries what this unit actually uses:
 | `log.mjs`                             | structured logging, same shape as every unit's                                                                                                                                                                                                                                                                                                        |
 | `artifact.mjs` + `canonical-json.mjs` | the atomic write choke point and the canonical serialization it applies (docs/d050) — they only work as a pair                                                                                                                                                                                                                                        |
 | `cloud-providers.mjs`                 | **the full** provider fact table: this folder is the reference vocabulary docs/d032's checklist and the tests read                                                                                                                                                                                                                                    |
-| `models.dev.api.json`                 | the vendored catalog, read by every catalog-driven stage                                                                                                                                                                                                                                                                                              |
-| `catwalk-facts.json`                  | the secondary catalog fallback cache                                                                                                                                                                                                                                                                                                                  |
-| `fact-table.mjs`                      | the fact-table publisher (docs/d086) — exactly one consumer, so it lives here and nowhere else (docs/d113)                                                                                                                                                                                                                                            |
-| `host-capabilities.mjs`               | the capability gates the build registers targets on                                                                                                                                                                                                                                                                                                   |
+| (no catalog)                          | the models.dev payload and every provider listing are fetched per run into that run's output dir, never committed (docs/d191)                                                                                                                                                                                                                         |
+| (no caches)                           | nothing in this folder can go stale — a failed fetch publishes nothing (docs/d190, d191)                                                                                                                                                                                                                                                              |
+| (deleted)                             | lib/fact-table.mjs published a committed cache; with no cache there is no publish path (docs/d191)                                                                                                                                                                                                                                                    |
 | `…/node-run.sh`, `…/npm-run.sh`       | NOT here: both runners are one copy each at the repo root (docs/d138), and this folder ships **no `.sh` at all** — its entries are `./node-run.sh coding-agent/run.mjs` and `./npm-run.sh coding-agent {build,generate}`. `npm-run.sh` runs this folder's `package.json` script under the same pinned node, so no `npm` lands on an entrypoint's PATH |
 | `workload-runtime.mjs`                | the workload API `run.mjs` describes the container with (`docs/container-tooling.md`) — description in, `container run` argv out. Replaced `workload-runtime.sh` + the six `workload-*.jq` filters, which is why this unit needs no `jq` on the host                                                                                                  |
 
@@ -258,11 +257,10 @@ shaping helpers (folded from the former `lib/pi-models.mjs`, docs/d039),
 re-exports this folder's `lib/log.mjs` and `lib/cloud-providers.mjs` via
 `$LIB_DIR`, and its same-dir siblings `route-probe.mjs`, `catalog-facts.mjs`,
 `refresh-models-dev.mjs` (all single-consumer, folded out of the old repo-level
-lib by d039; the two fact caches merged into one module in d072). It reads
-`lib/models.dev.api.json` and the caches (`<id>-facts.json` beside its module,
-`lib/catwalk-facts.json`), both published through `lib/fact-table.mjs` (`_meta`
-provenance, no write when the facts are unchanged — docs/d086). Must not reach
-into `llm-local-inference/`, `estige/` or any `pi-*` sibling.
+lib by d039; the two catalog reads merged into one module in d072). It reads
+nothing from this folder's tree: the models.dev payload and every listing are
+fetched per run (docs/d191). Must not reach into `llm-local-inference/`,
+`estige/` or any `pi-*` sibling.
 
 Nothing copies this tree anywhere at generate time (docs/d072): the generators
 run from their own dir, output goes to the per-run `RUN_DIR` dir, and the

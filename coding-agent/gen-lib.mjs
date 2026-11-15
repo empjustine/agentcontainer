@@ -24,10 +24,9 @@ import {
 } from "./route-probe.mjs";
 
 export {
+	fetchCatwalkFacts,
+	fetchProviderFacts,
 	getCatwalkModels,
-	loadProviderFacts,
-	refreshCatwalkFacts,
-	refreshProviderFacts,
 } from "./catalog-facts.mjs";
 
 export const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -508,13 +507,3 @@ export function providerReroute(providerUrl, models) {
 	};
 }
 
-/**
- * The models.dev catalog to read: `MODELS_DEV_JSON` when the driver named
- * this run's refreshed copy (coding-agent/generate.mjs always does), else the
- * shared vendored catalog under `LIB_DIR` — the only other copy, and the one
- * a manual in-place run reads (docs/d023).
- * @returns {string}
- */
-export function modelsDevCatalogPath() {
-	return process.env.MODELS_DEV_JSON ?? join(LIB_DIR, "models.dev.api.json");
-}

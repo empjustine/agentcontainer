@@ -81,13 +81,13 @@ import {
 	bearerHeaders,
 	catalogModelLive,
 	providerFacts,
+	fetchCatwalkFacts,
+	fetchProviderFacts,
 	getCatwalkModels,
-	loadProviderFacts,
 	logError,
 	logInfo,
 	logWarn,
 	modalitiesEligible,
-	modelsDevCatalogPath,
 	PI_NATIVE_CLOUD_IDS,
 	piCost,
 	piModel,
@@ -95,8 +95,6 @@ import {
 	probeEndpoint,
 	providerEntry,
 	providerReroute,
-	refreshCatwalkFacts,
-	refreshProviderFacts,
 	scriptDir,
 	setLogTool,
 	supportTier,
@@ -125,13 +123,13 @@ const layerDir = process.env.PI_LAYER_DIR ?? scriptDir;
 mkdirSync(layerDir, { recursive: true });
 
 /**
- * The catalog this run validated: generate.mjs points MODELS_DEV_JSON at the
- * freshly refreshed copy, and a manual in-place run falls back to the shared
- * vendored catalog. The lookup order itself lives in modelsDevCatalogPath
- * (gen-lib.mjs, docs/d023).
+ * The catalog THIS RUN fetched, sitting in the run's layer dir beside the
+ * `model-*` layers because that dir IS the run (docs/d191). No env var names it
+ * and no second copy exists to fall back to — a manual run has no catalog,
+ * which is the honest state for a run that fetched nothing.
  * @type {string}
  */
-const API_JSON = modelsDevCatalogPath();
+const API_JSON = join(layerDir, "models.dev.api.json");
 
 // The vendored models.dev catalog parsed ONCE and shared by both modes
 // (override-only uses it for bare-id fallbacks, full mode for the whole
@@ -231,15 +229,21 @@ const MODEL_SCOPES = {
  *   the ON_OFF representative map (full; see that constant)
  * @property {{ path: string, listKey?: string }|undefined} [facts] the
  *   provider's OWN rich model endpoint, relative to its base URL: refreshed
- *   and cached (catalog-facts.mjs), then read back through factsMapper. Two
- *   roles, distinguished by whether the catalog contributes a lineup
- *   (catalogOptional): hyper's cache ENRICHES the models.dev lineup
- *   (docs/d033), while a catalog-less provider's cache IS the lineup in both
- *   the committed canonical artifact and the installed routed one (docs/d057, d070)
- * @property {((record: ProviderFactsModel) => ModelsDevModel)|undefined}
+ *   and cached (catalog-facts.mjs), then read back through factsMapper. Its
+ *   role follows the catalog: a lineupFromFacts row publishes exactly what it
+ *   answered, a catalog-less provider's cache is the only lineup there is
+ *   (docs/d057), and a plain row keeps the catalog slice enriched by it
+ *   (docs/d033)
+ * @property {boolean} [lineupFromFacts] the provider's own source decides
+ *   WHICH ids publish and the catalog only their metadata (docs/d190): a
+ *   catalog row the source does not serve is retired rather than carried, and
+ *   a source that cannot answer publishes nothing instead of the last good
+ *   cache. Without it the catalog slice stays the lineup (full)
+ * @property {((record: ProviderFactsModel) => ModelsDevModel|null)|undefined}
  *   [factsMapper] rebuild one cached record as a models.dev-shaped record so
- *   it reuses catalogPiModel()'s full derivation; required whenever facts is
- *   set, and the only place a provider's own record shape is interpreted
+ *   it reuses catalogPiModel()'s full derivation, or null for a record the
+ *   row must not publish at all; required whenever facts is set, and the only
+ *   place a provider's own record shape is interpreted
  * @property {boolean} [catalogOptional] the models.dev catalog does not carry
  *   this provider at all, so loadProvider() must not be the lineup source and
  *   must not throw: the endpoint comes from the fact table (the same base URL
@@ -624,11 +628,14 @@ const PROVIDER_SPECS = [
 		// Pair the deepseek thinking format with the ON_OFF map for
 		// effort-less reasoning models — see ON_OFF_THINKING_LEVEL_MAP.
 		onOffThinking: true,
-		// hyper's own /provider catalog ENRICHES the models.dev lineup (hyper
-		// is in the catalog): live prices, limits and effort enums win over the
-		// catalog's, and live-only ids are appended in direct mode (docs/d033).
+		// hyper's own /provider catalog IS the lineup (docs/d190): models.dev
+		// only prices it, so a catalog id the source no longer serves is retired
+		// instead of carried (docs/d033 records the earlier enrich-and-keep
+		// shape and why it kept them: nothing dropped a row pi could still ask
+		// for while the endpoint answered).
 		facts: { path: "/provider" },
 		factsMapper: hyperFactsRecord,
+		lineupFromFacts: true,
 		headers: {
 			// Mirror of the extension's "pi-hyper-provider/<version>" UA
 			// (models.json headers are static literals; versioning is
@@ -687,14 +694,19 @@ const PROVIDER_SPECS = [
 		file: "model-019-cloud-synthetic.json",
 		envKey: "SYNTHETIC_API_KEY",
 		// Plain OpenAI-compatible gateway (models.dev:
-		// @ai-sdk/openai-compatible) with the full per-model catalog row —
-		// the inferx shape: no developer-role quirk, no per-model wire-compat
-		// mirror, no facts cache. Every reasoning model publishes an effort
-		// enum, so buildThinkingLevelMap covers them and no ON_OFF fallback
-		// applies (docs/d033, d032 F7).
+		// @ai-sdk/openai-compatible), the inferx shape: no developer-role
+		// quirk, no per-model wire-compat mirror. Every reasoning model
+		// publishes an effort enum, so buildThinkingLevelMap covers them and no
+		// ON_OFF fallback applies (docs/d033, d032 F7).
 		compat: null,
 		modelCompat: null,
 		onOffThinking: false,
+		// The public listing IS the lineup (docs/d190): the catalog slice kept
+		// `hf:` ids the provider had already rotated away, and the `syn:*` tier
+		// rows exist only on the wire.
+		facts: { path: "/models", listKey: "data" },
+		factsMapper: syntheticFactsRecord,
+		lineupFromFacts: true,
 	},
 ];
 
@@ -906,7 +918,7 @@ function catalogPiModel(spec, m, id = m.id) {
  */
 
 /**
- * @typedef {import("./catalog-facts.mjs").LoadedProviderFacts} LoadedProviderFacts
+ * @typedef {import("./catalog-facts.mjs").ProviderFactsModel} ProviderFactsModelRaw
  */
 
 /**
@@ -1054,6 +1066,71 @@ function verbooFactsRecord(l) {
 }
 
 /**
+ * The listing's id families this row drops: `infinite:*` is Synthetic's print/mesh
+ * routing family, which the OpenAI-compatible surface these layers point at
+ * does not serve (docs/d096).
+ * @type {readonly string[]}
+ */
+const UNSUPPORTED_SYNTHETIC_ID_PREFIXES = Object.freeze(["infinite:"]);
+
+/**
+ * Synthetic's listing row as a models.dev-shaped record, so the fleet layer's
+ * prices, limits, modalities and effort enums come from the provider that
+ * serves the model (docs/d190). Its pricing fields are dollar-prefixed
+ * per-token strings ("$0.000002"), the same units the catalog states per
+ * million (docs/d033's conversion, spelled out here because this folder may
+ * not import a sibling extension's shaper — docs/d113).
+ *
+ * null for the `infinite:` family: the listing publishes a second routing family the
+ * OpenAI-compatible surface this row points at does not serve, so publishing
+ * it would put ids in the layer that answer 400 (docs/d096 carries the same
+ * filter in the extension).
+ * @param {Record<string, any>} l one listing record
+ * @returns {ModelsDevModel|null}
+ */
+function syntheticFactsRecord(l) {
+	if (
+		typeof l.id === "string" &&
+		UNSUPPORTED_SYNTHETIC_ID_PREFIXES.some((p) => l.id.startsWith(p))
+	) {
+		return null;
+	}
+	const efforts = /** @type {unknown[]} */ (
+		l.reasoning_parameters?.efforts ?? []
+	).map((v) => String(v).toLowerCase());
+	const perMillion = (/** @type {unknown} */ value) => {
+		const raw = typeof value === "string" ? value.trim().replace(/^\$/, "") : value;
+		const n = Number(raw);
+		return Number.isFinite(n) ? Number((n * 1_000_000).toFixed(9)) : 0;
+	};
+	const pricing = l.pricing ?? {};
+	// A tier id says nothing about the model currently behind it, so the name
+	// renders the target — the same display the extension emits (docs/d096).
+	const pointsAt =
+		typeof l.hugging_face_id === "string" && `hf:${l.hugging_face_id}` !== l.id
+			? ` (hf:${l.hugging_face_id})`
+			: "";
+	return {
+		id: l.id,
+		name: `${l.display_name ?? l.id}${pointsAt}`,
+		reasoning: efforts.length > 0,
+		modalities: {
+			input: l.input_modalities ?? ["text"],
+			output: l.output_modalities ?? ["text"],
+		},
+		limit: { context: l.context_length, output: l.max_output_length },
+		cost: {
+			input: perMillion(pricing.prompt),
+			output: perMillion(pricing.completion),
+			cache_read: perMillion(pricing.input_cache_reads),
+			cache_write: perMillion(pricing.input_cache_writes),
+		},
+		reasoning_options:
+			efforts.length > 0 ? [{ type: "effort", values: efforts }] : [],
+	};
+}
+
+/**
  * Enrich pi-shaped models with the provider's facts cache: rebuild every model
  * whose id is in the live records through catalogPiModel() on LIVE data
  * (via the spec's factsMapper), keeping the models.dev display name (see the
@@ -1065,7 +1142,7 @@ function verbooFactsRecord(l) {
  * catalog to reconcile against (docs/d057).
  * @param {CloudProviderSpec} spec
  * @param {PiAlternativeModel[]} models the models to enrich
- * @param {LoadedProviderFacts} facts loaded cache
+ * @param {ProviderFactsModelRaw[]} facts the records the provider just served
  * @returns {{ enriched: PiAlternativeModel[], untouched: PiAlternativeModel[] }}
  */
 function enrichWithFacts(spec, models, facts) {
@@ -1073,7 +1150,7 @@ function enrichWithFacts(spec, models, facts) {
 	if (!factsMapper) {
 		return { enriched: [], untouched: [...models] };
 	}
-	const live = new Map(facts.models.map((l) => [l.id, l]));
+	const live = new Map(facts.map((l) => [l.id, l]));
 	/** @type {PiAlternativeModel[]} */
 	const enriched = [];
 	/** @type {PiAlternativeModel[]} */
@@ -1084,13 +1161,55 @@ function enrichWithFacts(spec, models, facts) {
 			untouched.push(m);
 			continue;
 		}
-		const merged = { ...factsMapper(l), name: m.name };
-		const rebuilt = catalogPiModel(spec, merged, m.id);
+		const mapped = factsMapper(l);
+		if (!mapped) {
+			continue;
+		}
+		const rebuilt = catalogPiModel(spec, { ...mapped, name: m.name }, m.id);
 		if (rebuilt) {
 			enriched.push(rebuilt);
 		}
 	}
 	return { enriched, untouched };
+}
+
+/**
+ * The provider's own source AS the lineup (docs/d190): every record it served
+ * publishes, bounded by the route's live listing and the published lineup when
+ * the row has one. A catalog row the source does not mention never publishes —
+ * that carried row IS the remembered lineup — and the catalog keeps the
+ * display name for an id it also carries.
+ * @param {CloudProviderSpec} spec
+ * @param {ProviderFactsModelRaw[]} facts the records the provider just served
+ * @param {PiAlternativeModel[]} catalogModels the catalog's pi-shaped rows
+ * @param {{ routeIds: Set<string>|null, allow: Set<string>|null }} bounds
+ * @returns {PiAlternativeModel[]}
+ */
+function factsLineup(spec, facts, catalogModels, { routeIds, allow }) {
+	const { factsMapper } = spec;
+	if (!factsMapper) {
+		logWarn("facts row without a mapper — lineup unusable", {
+			provider: spec.id,
+		});
+		return [];
+	}
+	const catalogNames = new Map(catalogModels.map((m) => [m.id, m.name]));
+	const served = routeIds
+		? facts.filter((l) => routeIds.has(l.id))
+		: facts;
+	return served
+		.filter((l) => !allow || allow.has(l.id))
+		.map((l) => {
+			const record = factsMapper(l);
+			return record === null
+				? null
+				: catalogPiModel(
+						spec,
+						{ ...record, name: catalogNames.get(l.id) ?? record.name },
+						l.id,
+					);
+		})
+		.filter((m) => m !== null);
 }
 
 /**
@@ -1131,9 +1250,11 @@ function listingModels(entries, spec) {
  * lineup beats a silent direct URL.
  * @param {CloudProviderSpec} spec
  * @param {Record<string, import("./gen-lib.mjs").PiProvider>} providers
+ * @param {import("./catalog-facts.mjs").CatwalkProvider[]|null} catwalk the
+ *   run's fetched catwalk listing
  * @returns {void}
  */
-function emitMinimalCatalogOverride(spec, providers) {
+function emitMinimalCatalogOverride(spec, providers, catwalk) {
 	if (spec.mixedSurface) {
 		// The catalog carries no per-model dialect, so id-only records would
 		// replace pi's described built-ins with stubs and misroute each model.
@@ -1161,7 +1282,7 @@ function emitMinimalCatalogOverride(spec, providers) {
 	// gemini view is a rendering of the same upstream, not an independent
 	// source to union in.
 	if (!spec.catalogOnly) {
-		for (const m of getCatwalkModels(spec.id) ?? []) {
+		for (const m of getCatwalkModels(catwalk, spec.id) ?? []) {
 			if (filter?.(m.id) ?? true) {
 				ids.add(m.id);
 			}
@@ -1194,9 +1315,11 @@ function emitMinimalCatalogOverride(spec, providers) {
  * rows (docs/d064) skip it entirely and take the catalog directly.
  * @param {CloudProviderSpec} spec
  * @param {Record<string, import("./gen-lib.mjs").PiProvider>} providers
+ * @param {import("./catalog-facts.mjs").CatwalkProvider[]|null} catwalk the
+ *   run's fetched catwalk listing
  * @returns {Promise<void>}
  */
-async function emitOverrideOnly(spec, providers) {
+async function emitOverrideOnly(spec, providers, catwalk) {
 	const headers = bearerHeaders(process.env[spec.envKey]?.trim());
 
 	// catalogOnly rows never probe (docs/d033): the endpoint cannot
@@ -1212,7 +1335,7 @@ async function emitOverrideOnly(spec, providers) {
 				: "superficial provider — not route-probed (docs/d064), catalog lineup",
 			{ provider: spec.id },
 		);
-		emitMinimalCatalogOverride(spec, providers);
+		emitMinimalCatalogOverride(spec, providers, catwalk);
 		return;
 	}
 
@@ -1224,7 +1347,7 @@ async function emitOverrideOnly(spec, providers) {
 			"no usable endpoint — lineup degrades to the catalog (docs/d108)",
 			{ provider: spec.id },
 		);
-		emitMinimalCatalogOverride(spec, providers);
+		emitMinimalCatalogOverride(spec, providers, catwalk);
 		return;
 	}
 	const models = listingModels(route.entries, spec);
@@ -1245,7 +1368,7 @@ async function emitOverrideOnly(spec, providers) {
 	// Route proved but not listable (401/403 without a key, or an unexpected
 	// answer — reachable ≠ authenticated): the catalog mirrors the provider's
 	// own ids, and the canonical base stands either way.
-	emitMinimalCatalogOverride(spec, providers);
+	emitMinimalCatalogOverride(spec, providers, catwalk);
 }
 
 /**
@@ -1351,52 +1474,34 @@ async function emitFull(spec) {
 	}
 
 	if (spec.facts) {
-		// refreshProviderFacts walks the reverse-proxy routes only (docs/d063)
-		// and falls back to the last good cache; provider facts are metadata,
-		// and metadata fetches never leave the proxy.
-		await refreshProviderFacts(spec.id, spec.facts);
-		const facts = loadProviderFacts(spec.id, spec.facts?.listKey);
-		if (!facts) {
-			logWarn("facts cache unavailable — using catalog metadata", {
+		// The fetch walks the reverse-proxy routes only (docs/d063). Its ANSWER
+		// is the whole lineup contract: there is no cache behind it to fall back
+		// to, so a provider that cannot answer offers nothing (docs/d190, d191).
+		const facts = await fetchProviderFacts(spec.id, spec.facts);
+		if (!facts && spec.lineupFromFacts) {
+			logWarn(
+				"the provider's own source did not answer — the lineup is empty (docs/d190)",
+				{ provider: spec.id },
+			);
+			models = [];
+		} else if (!facts) {
+			logWarn("the provider did not answer — using catalog metadata", {
 				provider: spec.id,
 			});
-		} else if (models.length === 0 && spec.catalogOptional) {
-			/**
-			 * Catalog-less row: the cache is not an enrichment, it is the only
-			 * lineup there is — every record is published. The two sources of
-			 * truth for "may pi ask for this id" still apply: the optional
-			 * allowlist, and the route's own listing when the probe could
-			 * authenticate it.
-			 */
-			const { factsMapper } = spec;
-			if (!factsMapper) {
-				logWarn("facts row without a mapper — cache unusable", {
-					provider: spec.id,
-				});
-				return;
-			}
-			const served = routeIds
-				? facts.models.filter((l) => routeIds.has(l.id))
-				: facts.models;
-			models = served
-				.filter((l) => !allow || allow.has(l.id))
-				.map((l) => catalogPiModel(spec, factsMapper(l), l.id))
-				.filter((m) => m !== null);
-			logInfo("lineup taken from the facts cache (no models.dev row)", {
+		} else if (spec.lineupFromFacts || (models.length === 0 && spec.catalogOptional)) {
+			models = factsLineup(spec, facts, models, { routeIds, allow });
+			logInfo("lineup taken from the facts source", {
 				provider: spec.id,
-				fetchedAt: facts.fetchedAt,
-				ageMs: facts.ageMs,
-				cached: facts.models.length,
+				served: facts.length,
 				published: models.length,
+				catalogNamed: models.filter((m) => m.name !== m.id).length,
 				routeBounded: routeIds !== null,
 			});
 		} else {
 			const { enriched, untouched } = enrichWithFacts(spec, models, facts);
 			models = [...enriched, ...untouched];
-			logInfo("enriched from facts cache", {
+			logInfo("enriched from the live listing", {
 				provider: spec.id,
-				fetchedAt: facts.fetchedAt,
-				ageMs: facts.ageMs,
 				enriched: enriched.length,
 				catalogOnlyKept: untouched.length,
 			});
@@ -1443,19 +1548,21 @@ async function generateCloudProviders() {
 	// No reverse-proxy base is required any more (docs/d108): probes address
 	// each provider's canonical upstream and reach the edge through the
 	// environment proxy. A probe that cannot answer only narrows the lineup to
-	// the catalog/facts cache — the emitted URL is canonical either way.
+	// the catalog — the emitted URL is canonical either way.
 	//
-	// Best-effort cache refresh before the cascade reads it (order is
-	// irrelevant — it only writes lib caches; a failing refresh must not fail
-	// generation: a stale catalog is a file, not a wire URL). The providers'
-	// facts refreshes are NOT here: they belong to each row's emit path.
-	await Promise.allSettled([refreshCatwalkFacts()]);
+	// Catwalk is fetched ONCE here, in memory, for the reroute-only rows that
+	// union its view in (docs/d048); it is not a cache a later run reads
+	// (docs/d191). Each full row fetches its own provider listing in its emit
+	// path, so a row that cannot answer offers nothing.
+	const catwalk = await fetchCatwalkFacts();
 
 	/** @type {Record<string, import("./gen-lib.mjs").PiProvider>} */
 	const providers = {};
 	const results = await Promise.allSettled(
 		PROVIDER_SPECS.map((spec) =>
-			spec.mode === "full" ? emitFull(spec) : emitOverrideOnly(spec, providers),
+			spec.mode === "full"
+				? emitFull(spec)
+				: emitOverrideOnly(spec, providers, catwalk),
 		),
 	);
 	let failed = 0;
@@ -1491,26 +1598,6 @@ async function generateCloudProviders() {
 }
 
 /**
- * The llama-swap block from the previous layer file, when readable — the
- * d064 first-class stale-preserve for the local lineup (a fresh lineup comes
- * only from the live probe; nothing else knows the farm's GGUFs).
- * @param {string} path the layer file about to be rewritten
- * @returns {import("./gen-lib.mjs").PiProvider|null}
- */
-function previousLocalProvider(path) {
-	try {
-		const layer = JSON.parse(readFileSync(path, "utf-8"));
-		const entry = layer?.providers?.["llama-swap"];
-		if (typeof entry?.baseUrl !== "string" || !Array.isArray(entry.models)) {
-			return null;
-		}
-		return entry;
-	} catch {
-		return null;
-	}
-}
-
-/**
  * @param {string} out
  * @returns {Promise<void>}
  */
@@ -1539,25 +1626,18 @@ async function generateLocalLlamaSwap(out) {
 			gguf.map(piModel),
 		);
 	} else {
-		// d064 first-class stale-preserve: the local lineup exists nowhere
-		// else, so when the funnel cannot list it (the d064 known issue —
-		// llama-swap routing down) the previous layer is carried forward
-		// instead of silently dropping the provider from the merge.
-		const previous = previousLocalProvider(out);
-		if (previous) {
-			providers["llama-swap"] = previous;
-			logWarn(
-				"no local GGUF source reachable — carrying the previous llama-swap layer forward",
-				{ baseUrl: previous.baseUrl, models: previous.models.length },
-			);
-		} else {
-			logInfo("no local GGUF source reachable — omitting llama-swap provider");
-		}
-	}
-
-	if (Object.keys(providers).length === 0) {
-		logWarn("nothing usable detected — output left untouched", { out });
-		return;
+		// The farm answers for itself or not at all (docs/d190): carrying the
+		// previous layer forward is what made a dead endpoint read as healthy,
+		// and d064's stale-preserve (its "outages preserve the last good
+		// artifact") is retired here. An empty block, not an unwritten file —
+		// leaving the file alone would let the merge republish the old lineup.
+		providers["llama-swap"] = providerEntry(
+			providerFacts("llama-swap").baseUrl,
+			[],
+		);
+		logWarn(
+			"no local GGUF source reachable — the llama-swap lineup is empty (docs/d190)",
+		);
 	}
 
 	const written = writeJsonArtifact(out, { providers });

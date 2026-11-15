@@ -102,6 +102,20 @@
           ]
         },
         {
+          "id": "gemini-4-carbon",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
+          "id": "gemini-4-hydrogen",
+          "reasoning": true,
+          "input": [
+            "text"
+          ]
+        },
+        {
           "id": "gemini-flash-latest",
           "reasoning": true,
           "input": [

@@ -8,29 +8,29 @@
       "authHeader": true,
       "models": [
         {
-          "id": "hf:deepseek-ai/DeepSeek-V4.1-Flash",
-          "name": "DeepSeek V4.1 Flash",
+          "id": "hf:Qwen/Qwen3.8-27B",
+          "name": "Qwen3.8 27B",
           "reasoning": true,
           "input": [
             "text",
             "image"
           ],
-          "contextWindow": 524288,
+          "contextWindow": 262144,
           "maxTokens": 65536,
           "cost": {
-            "input": 0.6,
-            "output": 1.2,
-            "cacheRead": 0.03,
+            "input": 0.45,
+            "output": 2.2,
+            "cacheRead": 0.09,
             "cacheWrite": 0
           },
           "thinkingLevelMap": {
-            "off": "none",
+            "off": null,
             "minimal": null,
             "low": "low",
-            "medium": null,
-            "high": "high",
+            "medium": "medium",
+            "high": null,
             "xhigh": "xhigh",
-            "max": "max"
+            "max": null
           }
         },
         {
@@ -60,8 +60,8 @@
           }
         },
         {
-          "id": "hf:moonshotai/Kimi-K3",
-          "name": "Kimi K3",
+          "id": "hf:moonshotai/Kimi-K3.1-Pro",
+          "name": "Kimi K3.1 Pro",
           "reasoning": true,
           "input": [
             "text",
@@ -70,9 +70,9 @@
           "contextWindow": 524288,
           "maxTokens": 65536,
           "cost": {
-            "input": 3,
-            "output": 15,
-            "cacheRead": 0.45,
+            "input": 2,
+            "output": 10,
+            "cacheRead": 0.2,
             "cacheWrite": 0
           },
           "thinkingLevelMap": {
@@ -83,31 +83,6 @@
             "high": "high",
             "xhigh": null,
             "max": "max"
-          }
-        },
-        {
-          "id": "hf:nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4",
-          "name": "Nemotron 3 Super 120B A12B",
-          "reasoning": true,
-          "input": [
-            "text"
-          ],
-          "contextWindow": 262144,
-          "maxTokens": 65536,
-          "cost": {
-            "input": 0.3,
-            "output": 1,
-            "cacheRead": 0.06,
-            "cacheWrite": 0
-          },
-          "thinkingLevelMap": {
-            "off": "none",
-            "minimal": null,
-            "low": "low",
-            "medium": "medium",
-            "high": "high",
-            "xhigh": null,
-            "max": null
           }
         },
         {
@@ -208,6 +183,109 @@
             "medium": null,
             "high": "high",
             "xhigh": null,
+            "max": "max"
+          }
+        },
+        {
+          "id": "syn:large:text",
+          "name": "syn:large:text (hf:deepseek-ai/DeepSeek-V4.1-Flash-1017)",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 524288,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 0.6,
+            "output": 1.2,
+            "cacheRead": 0.03,
+            "cacheWrite": 0
+          },
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": null,
+            "low": "low",
+            "medium": null,
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": "max"
+          }
+        },
+        {
+          "id": "syn:large:vision",
+          "name": "syn:large:vision (hf:moonshotai/Kimi-K3.1-Pro)",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 524288,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 2,
+            "output": 10,
+            "cacheRead": 0.2,
+            "cacheWrite": 0
+          },
+          "thinkingLevelMap": {
+            "off": null,
+            "minimal": null,
+            "low": "low",
+            "medium": null,
+            "high": "high",
+            "xhigh": null,
+            "max": "max"
+          }
+        },
+        {
+          "id": "syn:small:text",
+          "name": "syn:small:text (hf:zai-org/GLM-4.7-Flash)",
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "contextWindow": 196608,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 0.1,
+            "output": 0.5,
+            "cacheRead": 0.02,
+            "cacheWrite": 0
+          },
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": null,
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
+            "xhigh": null,
+            "max": null
+          }
+        },
+        {
+          "id": "syn:small:vision",
+          "name": "syn:small:vision (hf:deepseek-ai/DeepSeek-V4.1-Flash-1017)",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 524288,
+          "maxTokens": 65536,
+          "cost": {
+            "input": 0.6,
+            "output": 1.2,
+            "cacheRead": 0.03,
+            "cacheWrite": 0
+          },
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": null,
+            "low": "low",
+            "medium": null,
+            "high": "high",
+            "xhigh": "xhigh",
             "max": "max"
           }
         }

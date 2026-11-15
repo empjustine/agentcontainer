@@ -69,8 +69,6 @@
  *                    their layers and merged artifacts into (default $TMPDIR,
  *                    falling back to $PREFIX/tmp on Termux, /tmp elsewhere) —
  *                    this script's dir may be a read-only mount
- *   MODELS_DEV_JSON  models.dev catalog (default ./lib/models.dev.api.json —
- *                    the shared vendored catalog, see docs/d023)
  *   MODELS_DEV_RELAY_URL  catalog fetch override (default = the canonical
  *                    models.dev URL via the environment proxy, empty
  *                    disables — docs/d108)
@@ -78,8 +76,6 @@
 
 import { spawnSync } from "node:child_process";
 import {
-	accessSync,
-	constants,
 	copyFileSync,
 	existsSync,
 	mkdirSync,
@@ -144,8 +140,6 @@ const runDir =
 	(termux
 		? join(process.env.PREFIX ?? "/data/data/com.termux/files/usr", "tmp")
 		: tmpdir());
-const modelsDevJson =
-	process.env.MODELS_DEV_JSON ?? join(LIB_DIR, "models.dev.api.json");
 
 // Generator runner: the two by-harness generators are CLIs (spawned child
 // processes, so one harness's crash never aborts the other), and a stage
@@ -214,8 +208,7 @@ function readMcpConfig(path) {
  * upstream URLs and no install-time rewrite exists). Without this
  * copy-back `./npm-run.sh coding-agent generate` refreshes
  * only the agent dir, so the committed coding-agent/models.json stays frozen:
- * the artifact a review reads and the next run's stale-preserve input would
- * both keep an old generation. Container hosts only (docs/d059). A read-only
+ * the artifact a review reads would keep an old generation. Container hosts only (docs/d059). A read-only
  * scriptDir (e.g. a copied folder mounted ro) is
  * expected and only warns.
  * @param {string} modelsOut the merged models.json just installed
@@ -260,8 +253,9 @@ currentStage = "output-dir";
 // from scriptDir: docs/d072 retired the d023 scratch staging, which existed
 // for a read-only /opt tree that d056 has already stopped mounting (the
 // runner carries zero generator support), and what generation still writes
-// next to its own sources — the committed layer/snapshot copy-back and the
-// facts caches — is best-effort and warn-only by contract (docs/d021, d039).
+// next to its own sources — the committed layer/snapshot copy-back — is
+// best-effort and warn-only by contract (docs/d039; the facts caches it also
+// wrote are gone, docs/d191).
 // The dir is per run (mkdtemp) so two generations cannot publish into each
 // other, and it is the only source the committed copy-back reads: every
 // artifact write is tmp+rename inside this dir (lib/artifact.mjs) and the
@@ -344,32 +338,20 @@ currentStage = "models-json";
 // --- models.json ------------------------------------------------------------
 /** @type {string} */
 let modelsOut = "";
-// Best-effort refresh of the vendored models.dev catalog (no secrets
-// needed). Unconditional: running generate means "I want current data", so
-// the catalog is refetched on every host and only a failed fetch falls back
-// to the vendored copy — there is no ambient switch that makes one run
-// quieter than another (docs/d060).
-//
-// Refresh into the output dir when the catalog itself is not writable
-// (container hosts: $MODELS_DEV_JSON is a read-only mount, so writing there
-// would fail every single run), and point the generators at the refreshed
-// copy through $MODELS_DEV_JSON — the vendored file stays as it is either
-// way (docs/d072: no symlink into the staged tree anymore, the env override
-// is the whole handoff).
-let catalogOut = modelsDevJson;
-try {
-	accessSync(modelsDevJson, constants.W_OK);
-} catch {
-	catalogOut = join(outDir, "models.dev.api.json");
-}
-if (runStage(join(scriptDir, "refresh-models-dev.mjs"), [catalogOut])) {
-	process.env.MODELS_DEV_JSON = catalogOut;
-	logInfo("models.dev catalog refreshed", { path: catalogOut });
-} else {
-	logWarn("models.dev catalog refresh failed; using vendored copy", {
-		path: modelsDevJson,
+// The models.dev catalog is FETCHED for this run and kept in the run's output
+// dir — there is no committed copy and no fallback to one (docs/d191). The
+// fetch is not best-effort any more: the catalog is where every row's prices,
+// limits and display names come from, so a host that cannot reach it has no
+// business writing layers that would claim otherwise. Fail closed, like a
+// failed provider row (docs/d063).
+const catalogOut = join(outDir, "models.dev.api.json");
+if (!runStage(join(scriptDir, "refresh-models-dev.mjs"), [catalogOut])) {
+	logError("models.dev catalog unavailable — aborting (nothing generated)", {
+		script: "refresh-models-dev.mjs",
 	});
+	process.exit(1);
 }
+logInfo("models.dev catalog fetched", { path: catalogOut });
 
 logInfo("generating pi config (layers + merge + default overlay)");
 // One generator, one process: generate-pi-coding-agent.mjs runs the local
@@ -381,11 +363,11 @@ logInfo("generating pi config (layers + merge + default overlay)");
 process.env.PI_SETTINGS = settingsPath;
 process.env.PI_MODELS_JSON = join(outDir, "models.json");
 process.env.PI_DEFAULT_MODEL_JSON = join(outDir, "default-model.json");
-// Seed the run's layer dir ($PI_LAYER_DIR above) from the committed layers:
-// mergeModels globs that dir, and d064's stale-preserve reads the model-010
-// layer from it as it stands BEFORE this run rewrites it — an empty dir would
-// merge the wrong set and drop the farm's previous llama-swap lineup. The
-// retired staging made this copy part of every run too (docs/d072).
+// Seed the run's layer dir ($PI_LAYER_DIR above) from the committed layers so
+// a layer the generator writes nothing for still merges the set the reviewed
+// snapshot describes — no generator reads history from that dir any more
+// (docs/d190 retired d064's stale-preserve, which did). The retired staging
+// made this copy part of every run too (docs/d072).
 for (const name of readdirSync(scriptDir)) {
 	if (/^model-.*\.json$/.test(name)) {
 		copyFileSync(join(scriptDir, name), join(outDir, name));
@@ -498,15 +480,14 @@ currentStage = "opencode-config";
 //
 // The install mirrors what this script does for pi's settings/models.json
 // (docs/d054, docs/d065): generate into a per-run COPY of the committed
-// overlay — the copy is the write target AND the d064 stale-preserve input
-// previousLocalProvider reads (a fresh output dir carries no history), then
-// on success install BOTH the host config dir (the dir the launcher mounts rw into
-// the sandbox) and this dir's committed opencode.jsonc. The two take
-// same canonical URL form (docs/d070/d108): the host copy is what the
-// sandbox mounts, the committed copy is the reviewed git diff and the next
-// run's stale-preserve input, so it refreshes on every host that runs this
-// stage, Termux included. Termux
-// skips the stage entirely (pi-only path) unless OPENCODE_CONFIG_DIR is set.
+// overlay — the copy is the write target, and a fresh output dir carries no
+// history for the generator to fall back on (docs/d190) — then on success
+// install BOTH the host config dir (the dir the launcher mounts rw into the
+// sandbox) and this dir's committed opencode.jsonc. The two take same
+// canonical URL form (docs/d070/d108): the host copy is what the sandbox
+// mounts, the committed copy is the reviewed git diff, so it refreshes on
+// every host that runs this stage, Termux included. Termux skips the stage
+// entirely (pi-only path) unless OPENCODE_CONFIG_DIR is set.
 const ocHostDir =
 	process.env.OPENCODE_CONFIG_DIR ??
 	join(

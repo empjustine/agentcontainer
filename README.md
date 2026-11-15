@@ -133,23 +133,22 @@ agentcontainer/
 │   ├── gen-lib.mjs                      #   → shared generator preamble (pi shaping folded in, d039)
 │   ├── route-probe.mjs                  #   → HTTP route/probe toolkit (renamed peer-probe.mjs, d071; folded out of the root lib, d039)
 │   ├── check-canonical-artifacts.mjs    #   → committed artifacts carry canonical upstreams, installed ones carry routes (d070)
-│   ├── catalog-facts.mjs                #   → the two catalog fact caches: per-provider (`<id>-facts.json`, d057) + catwalk (lib/, d039) — d072 merged them
-│   ├── hyper-facts.json / verboo-facts.json # → committed facts caches (d057: verboo's is its lineup)
-│   ├── refresh-models-dev.mjs           #   → atomic models.dev catalog refresh (d039/d086)
+│   ├── catalog-facts.mjs                #   → the two catalog reads: per-provider listings + catwalk, both fetched per run, nothing cached or committed (d191)
+│   ├── refresh-models-dev.mjs           #   → the run's models.dev catalog fetch into its own output dir (d039/d191)
 │   ├── settings.json                    #   → static pi settings (generator installs into PI_CODING_AGENT_DIR)
 │   ├── mcp.json                         #   → committed default MCP servers, merged into the agent dir (docs/d061)
 │   ├── config.toml                      #   → mise configuration (includes cline and thinkrail)
 │   ├── Containerfile                    #   → container image build
 │   ├── *.md                             #   → this unit's own living docs (d117): DESIGN, plus coding-harness-persistence / scoped-models-and-proxy-overrides
-│   ├── lib/                             #   → THIS FOLDER's own copy (d113), the largest: workload-runtime.mjs (the workload_* API in node, no jq on the host), log.mjs, artifact.mjs, canonical-json.mjs, fact-table.mjs, host-capabilities.mjs, cloud-providers.mjs/.json (the full table), models.dev.api.json, catwalk-facts.json; the interpreter runners are repo-root (d138)
-│   └── tests/                           #   → this folder's own tests (canonicalization, committed-manifest guard (d050), fact table, URL forms, modality gate, cost map, launcher argv + workload rendering, the jq-free guard)
+│   ├── lib/                             #   → THIS FOLDER's own copy (d113), the largest: workload-runtime.mjs (the workload_* API in node, no jq on the host), log.mjs, artifact.mjs, canonical-json.mjs, host-capabilities.mjs, cloud-providers.mjs/.json (the full table); the interpreter runners are repo-root (d138)
+│   └── tests/                           #   → this folder's own tests (canonicalization, committed-manifest guard (d050), catalog ordering, URL forms, modality gate, cost map, launcher argv + workload rendering, the jq-free guard)
 │
 ├── pi-synthetic/                        # Synthetic as a pi package (d096): ONE generator + ONE loadable extension, in this folder
 │   ├── sources.mjs                      #   → the ONE data source: the provider's /models listing, at the fact table's canonical upstream (d070)
 │   ├── merge.mjs                        #   → the ONE shaping step + both projections (pi models.json entry, pi-ai extension entry)
-│   ├── generate.mjs / package.json       #   → one fetch in, two artifacts out; --check verifies them without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
+│   ├── generate.mjs / package.json       #   → one fetch in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
-│   ├── models.json / models.js          #   → GENERATED pi models.json-shaped block (canonical upstream, d070) · the extension's seed
+│   ├── models.json                      #   → GENERATED pi models.json-shaped block (canonical upstream, d070) — the drift gate's subject · no runtime reader, no seed (d190)
 │   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md / TODO.md / PENDING.md #   → folder rules · install + open items · the review that collapsed the design
@@ -160,30 +159,30 @@ agentcontainer/
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · the built-in-provider rule + install + provenance
 │
-├── pi-cline-pass/                       # ClinePass as a pi package (d040): the reconciled lineup (Cline's docs table ∪ models.dev) as ONE generator + ONE loadable extension
-│   ├── sources.mjs                      #   → the two published sources + the ONE reconciliation contract (match floor, cline-pass/ billing-prefix guard)
+├── pi-cline-pass/                       # ClinePass as a pi package (d040/d189): the published docs table as the lineup (models.dev only prices it) as ONE generator + ONE loadable extension
+│   ├── sources.mjs                      #   → the two published sources: the docs table (which ids) + models.dev (what they cost), both throw-on-failure, the cline-pass/ billing-prefix guard
 │   ├── merge.mjs                        #   → the ONE shaping step + both projections (pi models.json entry, pi-ai extension entry)
-│   ├── generate.mjs / package.json       #   → two sources in, two artifacts out; --check verifies them without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
+│   ├── generate.mjs / package.json       #   → two sources in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
-│   ├── models.json / models.js          #   → GENERATED pi models.json-shaped block (canonical upstream, d070) · the extension's seed
+│   ├── models.json                      #   → GENERATED pi models.json-shaped block (canonical upstream, d070) — the drift gate's subject · no runtime reader, no seed (d190)
 │   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the lineup contract
 │
 ├── pi-hyper/                            # Charm Hyper as a pi package (d100): ONE generator + ONE loadable extension — the provider's /provider catalog is PUBLIC
 │   ├── sources.mjs / merge.mjs          #   → the ONE source read (the provider's /provider document) · the ONE shaping step + both projections (incl. the transcribed compat mirror, d033)
-│   ├── generate.mjs / package.json       #   → one fetch in, two artifacts out; --check verifies them without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
+│   ├── generate.mjs / package.json       #   → one fetch in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
-│   ├── models.json / models.js          #   → GENERATED pi models.json-shaped block (canonical upstream, d070) · the extension's seed
+│   ├── models.json                      #   → GENERATED pi models.json-shaped block (canonical upstream, d070) — the drift gate's subject · no runtime reader, no seed (d190)
 │   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the behavioral-copy provenance flag
 │
 ├── pi-verboo/                           # Verboo as a pi package (d100): same shape against the AUTH-GATED /models listing — no prices ever asserted (d057)
 │   ├── sources.mjs / merge.mjs          #   → the ONE source read (the provider's own listing — models.dev carries no verboo row at all, d057) · the ONE shaping step + both projections
-│   ├── generate.mjs / package.json       #   → one keyed fetch in, two artifacts out; --check verifies them without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
+│   ├── generate.mjs / package.json       #   → one keyed fetch in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
-│   ├── models.json / models.js          #   → GENERATED pi models.json-shaped block (canonical upstream, d070) · the extension's seed
+│   ├── models.json                      #   → GENERATED pi models.json-shaped block (canonical upstream, d070) — the drift gate's subject · no runtime reader, no seed (d190)
 │   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the seeding provenance + the fleet seam

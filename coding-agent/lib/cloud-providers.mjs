@@ -62,9 +62,9 @@ import { fileURLToPath } from "node:url";
 /**
  * docs/d064's support tiers — what this repo PROMISES per provider:
  * `first-class` (full lineup cascade, regressions are fix priorities,
- * stale-preserve on outages), `best-effort` (same cascade, fixed when
- * convenient), `superficial` (proxy-level support + metadata presence only,
- * not smoke-tested, metadata may be stale).
+ * publishes nothing when its source cannot answer, docs/d190), `best-effort`
+ * (same cascade, fixed when convenient), `superficial` (proxy-level support +
+ * metadata presence only, not smoke-tested, metadata may be stale).
  * @typedef {"first-class"|"best-effort"|"superficial"} SupportTier
  */
 

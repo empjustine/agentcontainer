@@ -1,7 +1,7 @@
 /**
- * @fileoverview refresh-models-dev.mjs — refresh the vendored models.dev
- * catalog (lib/models.dev.api.json) from the canonical upstream
- * (docs/d108; the prefixed reverse-proxy relay chain of d027/d063 is gone):
+ * @fileoverview refresh-models-dev.mjs — fetch the models.dev catalog for ONE
+ * generation run, into that run's output dir (docs/d191; the prefixed
+ * reverse-proxy relay chain of d027/d063 is gone):
  *
  * The chain is upstreamCandidates (route-probe.mjs): the operator's
  * MODELS_DEV_RELAY_URL when set (empty = no fetch at all), else the ONE
@@ -9,14 +9,13 @@
  * (NODE_USE_ENV_PROXY=1, docs/d074). models.dev answers byte-for-byte, so
  * the response is validated exactly like any other catalog download.
  *
- * The stale-copy fallback is why this is safe to call on every run, air-
- * gapped hosts and egress-blocking proxies included: no failure here is a
- * precondition for generation, and none can clobber the last good catalog —
- * a payload is validated in memory and only then renamed over the live file,
- * so a network error, non-200, invalid JSON, unexpected shape or truncated
- * download just advances to the next candidate. A payload that validates but
- * carries the same facts as the file already there is not written at all
- * (lib/fact-table.mjs, docs/d086). Proxy env is honored
+ * There is no committed catalog and no fallback to one: the out path is
+ * REQUIRED and lives in the run's output dir, which the run deletes. A
+ * network error, non-200, invalid JSON, unexpected shape or truncated
+ * download advances to the next candidate, and if none delivers this exits 1
+ * — the caller (coding-agent/generate.mjs) aborts, because the catalog is
+ * where every row's prices, limits and display names come from and a run
+ * without it would publish layers that claim otherwise. Proxy env is honored
  * natively by Node (NODE_USE_ENV_PROXY=1, set by ./node-run.sh; docs/d074)
  * — no repo-side dispatcher.
  *
@@ -27,30 +26,34 @@
  * cloud-relay handoff to estige removed them; the required list
  * keeps its UNION shape so a future consumer needs no edit here.)
  *
- * Usage: node refresh-models-dev.mjs [out]
- *   out defaults to ./lib/models.dev.api.json in this folder
- *   (i.e. the vendored shared catalog itself).
+ * Usage: node refresh-models-dev.mjs <out>
+ *   out is required and must be a path this run owns — normally
+ *   $PI_LAYER_DIR/models.dev.api.json, where the generators read it beside the
+ *   layers (docs/d191; no env var names it).
  * Env: MODELS_DEV_RELAY_URL — operator's override URL (replaces the
- *   canonical candidate entirely; set to empty to disable the fetch — the
- *   stale vendored copy then always wins).
+ *   canonical candidate entirely; set to empty to disable the fetch, which
+ *   makes this exit 1 rather than fall back to a remembered catalog).
  *
- * Lives in coding-agent/ (its invoker is coding-agent/generate.mjs, which
- * points it at this run's catalog path — docs/d039) and writes this folder's
- * own vendored catalog: lib/ is the catalog home, and the copy carries it
- * (docs/d113 — estige has had no fact table since docs/d108).
+ * Lives in coding-agent/ because its one invoker is coding-agent/generate.mjs
+ * (docs/d039, d113): the fetch/validate step is a spawned stage, not a
+ * library, so a wedge in the network cannot take the driver down.
  */
 
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { upstreamCandidates } from "./route-probe.mjs";
 
-const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "lib");
-const { publishProviderMirror } =
-	/** @type {typeof import("./lib/fact-table.mjs")} */ (
-		await import(`${LIB_DIR}/fact-table.mjs`)
+const LIB_DIR =
+	process.env.LIB_DIR ?? join(dirname(fileURLToPath(import.meta.url)), "lib");
+const { writeArtifact } =
+	/** @type {typeof import("./lib/artifact.mjs")} */ (
+		await import(`${LIB_DIR}/artifact.mjs`)
 	);
-const { logInfo, logWarn, setLogTool } =
+const { canonicalizeProviderCatalog } =
+	/** @type {typeof import("./lib/canonical-json.mjs")} */ (
+		await import(`${LIB_DIR}/canonical-json.mjs`)
+	);
+const { logError, logInfo, logWarn, setLogTool } =
 	/** @type {typeof import("./lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
@@ -65,8 +68,7 @@ setLogTool("coding-agent/refresh-models-dev");
  */
 const RELAY_PATH_AND_QUERY = "/api.json?type=all";
 
-const OUT =
-	process.argv[2] ?? join(scriptDir, "lib", "models.dev.api.json");
+const OUT = process.argv[2];
 const REQUEST_TIMEOUT_MS = 15_000;
 /**
  * Provider entries the generators read from the catalog; each must exist with
@@ -86,7 +88,7 @@ const MIN_PROVIDERS = 100;
  * @param {Record<string, unknown>} [fields]
  */
 function fail(msg, fields) {
-	logWarn("models.dev refresh skipped — keeping existing catalog", {
+	logError("models.dev catalog fetch failed — no catalog for this run", {
 		reason: msg,
 		...fields,
 	});
@@ -134,6 +136,9 @@ async function fetchCatalog(url, { via }) {
  * @returns {Promise<void>}
  */
 async function main() {
+	if (!OUT) {
+		return fail("no output path given", { usage: "refresh-models-dev.mjs <out>" });
+	}
 	let res = null;
 	let via = "";
 	let url = "";
@@ -192,23 +197,19 @@ async function main() {
 	}
 
 	// Re-serialize the VALIDATED catalog instead of writing the raw response
-	// body: models.dev serves the whole catalog as one ~4 MB minified line, and
-	// it emits providers (and their models maps) in its own iteration order,
-	// which differs between two fetches of identical data — so a raw body write
-	// turns a routine refresh into a ~416k-line diff of nothing. Canonical
-	// ordering plus the skip-when-unchanged rule (lib/fact-table.mjs, docs/d086)
-	// reduce the same refresh to the lines that actually moved.
-	const published = publishProviderMirror(OUT, catalog);
-	logInfo(
-		published.written
-			? "refreshed models.dev catalog"
-			: "models.dev catalog unchanged — not rewritten",
-		{
-			path: OUT,
-			providers: providerCount,
-			contentSha256: published.contentSha256,
-		},
+	// body: models.dev serves the whole catalog as one ~4 MB minified line in
+	// its own iteration order, which differs between two fetches of identical
+	// data — and the layer's model order follows the catalog's (docs/d050).
+	// Canonical ordering keeps two runs' artifacts comparable; the payload
+	// itself is the upstream's, untouched.
+	writeArtifact(
+		OUT,
+		`${JSON.stringify(canonicalizeProviderCatalog(catalog), null, "\t")}\n`,
 	);
+	logInfo("models.dev catalog written", {
+		path: OUT,
+		providers: providerCount,
+	});
 }
 
 main().catch((err) => fail("unhandled failure", { error: err }));
