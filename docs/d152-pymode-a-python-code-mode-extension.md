@@ -3,7 +3,7 @@ id: d152
 type: module-design
 status: draft
 title: "d152 — spike: pymode, a Python code mode as a pi extension beside jsmode"
-parent: coding-agent
+parent: codemode2
 depends-on: [d150, codemode-runtime-prior-art]
 references:
   [
@@ -47,7 +47,9 @@ here** — including Monty's restrictions and pydantic-ai's limits.
 ## Status
 
 Draft spike. It records the design, the API surface that supports it, the interpreter options and
-their costs. It changes no file outside this record and commits the tree to no runtime.
+their costs. It changes no file outside this record and commits the tree to no runtime. It hangs
+off `codemode2`, whose surface is the runtime this design would be chosen against; the body is
+unchanged.
 
 ## The premise: a sibling tool, not a runtime swap
 

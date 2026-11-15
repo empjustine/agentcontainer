@@ -3,7 +3,7 @@ id: d156
 type: module-design
 status: draft
 title: "d156 — spike: shmode, a closed shell over just-bash, with tools spelled as commands"
-parent: coding-agent
+parent: codemode2
 depends-on: [codemode-runtime-prior-art, d152]
 references: [d116, d150, d152, d153, codemode-runtime-prior-art, mini-swe-agent]
 tags: ["agent", "codemode", "shell", "just-bash", "extension", "sandbox", "spike"]
@@ -33,7 +33,8 @@ Sources are bare mirrors under `~/Downloads/references/` at the tips in
 
 Draft spike. It records the verified API surface, a design, the verification list that decides
 the effort, and the one structural finding that changes the design. It adds no extension to the
-tree.
+tree. It hangs off `codemode2`, which inherits the closed-command-table sketch drafted here; the
+body is unchanged.
 
 ## The premise: disguise, not a new runtime
 

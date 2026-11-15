@@ -3,7 +3,7 @@ id: d150
 type: module-design
 status: draft
 title: "d150 — spike: Code Mode and base tooling across four harnesses"
-parent: coding-agent
+parent: codemode2
 depends-on: [d116]
 references: [d116, d148, d149]
 tags: [spike, research, codemode, tools, opencode, crush, pi-coding-agent, thinkrail]
@@ -20,7 +20,9 @@ declarations and hidden declarations hand control to is this record's subject.
 
 Draft, read as a spike. Every claim cites a file in one of the four mirrors listed under
 "Re-verify", at the commit named there. Nothing below decides anything: d116 owns the
-support tiers, and no generated surface changes because of this record.
+support tiers, and no generated surface changes because of this record. The record hangs off
+`codemode2` because the tool-surface research became a unit there: the four Code Mode
+implementations and the base inventories are that unit's inheritance, and the body is unchanged.
 
 ## Trust boundary
 

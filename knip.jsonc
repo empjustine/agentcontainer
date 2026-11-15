@@ -69,7 +69,10 @@
 		"*/tests/*.test.mjs",
 		// the spec-graph gate ./lint.sh executes (docs/d140): it walks the tree
 		// and nothing imports it
-		"docs/spec-check.mjs"
+		"docs/spec-check.mjs",
+		// the codemode2 enumeration (docs/d194): a CLI over the reference farm,
+		// run by hand — nothing imports it
+		"codemode2/enumerate.mjs"
 	],
 	// The pi host package is provided by the runtime environment and is
 	// deliberately never a dependency of this repo (tsconfig.json's NOTE).

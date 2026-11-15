@@ -3,7 +3,7 @@ id: d153
 type: module-design
 status: draft
 title: "d153 — spike: do minimal agents over a familiar runtime beat a tuned code-mode sandbox?"
-parent: coding-agent
+parent: codemode2
 depends-on: [d150, codemode-runtime-prior-art, d152]
 references: [d116, d149, d150, d152, codemode-runtime-prior-art, mini-swe-agent]
 tags: ["agent", "codemode", "minimal-agent", "performance", "spike"]
@@ -30,7 +30,9 @@ project's interface was run side by side with another on this tree's tasks.
 ## Status
 
 Draft spike. It states a hypothesis, the evidence for and against it, and an experiment design.
-No experiment ran, no settings changed, and the record recommends no interface.
+No experiment ran, no settings changed, and the record recommends no interface. It hangs off
+`codemode2`: the familiarity claim it states is the one that unit's surface has to answer, and
+the body is unchanged.
 
 ## The claim, split into three
 

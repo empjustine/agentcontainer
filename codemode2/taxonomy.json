@@ -1,0 +1,2618 @@
+{
+	"generated": "codemode2/enumerate.mjs — docs/d194",
+	"sources": {
+		"gtfobins": {
+			"repo": "GTFOBins/GTFOBins.github.io.git",
+			"tip": "acd524623f9c406acedd2754ebd9c2431f3675ad",
+			"files": 478,
+			"canonical": 458,
+			"aliases": 20
+		},
+		"lolbas": {
+			"repo": "LOLBAS-Project/LOLBAS.git",
+			"tip": "2056cb7662509dc998fc6ce79636aec4e6c0397f",
+			"files": 248,
+			"names": 247,
+			"categories": {
+				"Execute": 160,
+				"Download": 58,
+				"AWL Bypass": 35,
+				"ADS": 26,
+				"Copy": 11,
+				"Upload": 5,
+				"Decode": 1,
+				"Encode": 1,
+				"Tamper": 4,
+				"Credentials": 4,
+				"UAC Bypass": 7,
+				"Compile": 4,
+				"Conceal": 1,
+				"Dump": 12,
+				"Reconnaissance": 3
+			}
+		}
+	},
+	"functions": {
+		"bind-shell": {
+			"total": 7,
+			"unprivileged": 7
+		},
+		"command": {
+			"total": 30,
+			"unprivileged": 19
+		},
+		"download": {
+			"total": 32,
+			"unprivileged": 30
+		},
+		"file-read": {
+			"total": 199,
+			"unprivileged": 197
+		},
+		"file-write": {
+			"total": 84,
+			"unprivileged": 81
+		},
+		"inherit": {
+			"total": 71,
+			"unprivileged": 67
+		},
+		"library-load": {
+			"total": 11,
+			"unprivileged": 11
+		},
+		"privilege-escalation": {
+			"total": 14,
+			"unprivileged": 0
+		},
+		"reverse-shell": {
+			"total": 21,
+			"unprivileged": 21
+		},
+		"shell": {
+			"total": 228,
+			"unprivileged": 207
+		},
+		"upload": {
+			"total": 34,
+			"unprivileged": 31
+		}
+	},
+	"classes": {
+		"posix": {
+			"absent": 113,
+			"read": 44,
+			"privileged": 8,
+			"write": 10,
+			"shell": 53,
+			"transfer": 1
+		},
+		"windows": {
+			"other": 56,
+			"transfer": 10,
+			"exec": 43
+		}
+	},
+	"posix": [
+		{
+			"name": "arch",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "b2sum",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "base32",
+			"corpus": "base32",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "base64",
+			"corpus": "base64",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "basename",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "basenc",
+			"corpus": "basenc",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "cat",
+			"corpus": "cat",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "chcon",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "chgrp",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "chmod",
+			"corpus": "chmod",
+			"functions": [],
+			"class": "privileged"
+		},
+		{
+			"name": "chown",
+			"corpus": "chown",
+			"functions": [],
+			"class": "privileged"
+		},
+		{
+			"name": "cksum",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "comm",
+			"corpus": "comm",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "cp",
+			"corpus": "cp",
+			"functions": [
+				"file-read",
+				"file-write"
+			],
+			"class": "write"
+		},
+		{
+			"name": "csplit",
+			"corpus": "csplit",
+			"functions": [
+				"file-read",
+				"file-write"
+			],
+			"class": "write"
+		},
+		{
+			"name": "cut",
+			"corpus": "cut",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "date",
+			"corpus": "date",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "dd",
+			"corpus": "dd",
+			"functions": [
+				"file-read",
+				"file-write"
+			],
+			"class": "write"
+		},
+		{
+			"name": "df",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "dircolors",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "dirname",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "du",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "echo",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "env",
+			"corpus": "env",
+			"functions": [
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "expand",
+			"corpus": "expand",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "expr",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "factor",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "false",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "fmt",
+			"corpus": "fmt",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "fold",
+			"corpus": "fold",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "head",
+			"corpus": "head",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "hostname",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "id",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "install",
+			"corpus": "install",
+			"functions": [],
+			"class": "privileged"
+		},
+		{
+			"name": "join",
+			"corpus": "join",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "link",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "ln",
+			"corpus": "ln",
+			"functions": [],
+			"class": "privileged"
+		},
+		{
+			"name": "ls",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "md5sum",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "mkdir",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "mkfifo",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "mknod",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "mktemp",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "mv",
+			"corpus": "mv",
+			"functions": [
+				"file-write"
+			],
+			"class": "write"
+		},
+		{
+			"name": "nice",
+			"corpus": "nice",
+			"functions": [
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "nl",
+			"corpus": "nl",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "nohup",
+			"corpus": "nohup",
+			"functions": [
+				"command",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "nproc",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "numfmt",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "od",
+			"corpus": "od",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "paste",
+			"corpus": "paste",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "pathchk",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "pr",
+			"corpus": "pr",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "printenv",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "printf",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "ptx",
+			"corpus": "ptx",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "pwd",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "readlink",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "realpath",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "rm",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "rmdir",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "seq",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "sha1sum",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "sha256sum",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "shred",
+			"corpus": "shred",
+			"functions": [
+				"file-write"
+			],
+			"class": "write"
+		},
+		{
+			"name": "shuf",
+			"corpus": "shuf",
+			"functions": [
+				"file-read",
+				"file-write"
+			],
+			"class": "write"
+		},
+		{
+			"name": "sleep",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "sort",
+			"corpus": "sort",
+			"functions": [
+				"file-read",
+				"file-write"
+			],
+			"class": "write"
+		},
+		{
+			"name": "split",
+			"corpus": "split",
+			"functions": [
+				"file-read",
+				"file-write",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "stat",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "stdbuf",
+			"corpus": "stdbuf",
+			"functions": [
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "stty",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "sum",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "sync",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "tac",
+			"corpus": "tac",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "tail",
+			"corpus": "tail",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "tee",
+			"corpus": "tee",
+			"functions": [
+				"file-write"
+			],
+			"class": "write"
+		},
+		{
+			"name": "test",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "timeout",
+			"corpus": "timeout",
+			"functions": [
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "touch",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "tr",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "true",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "truncate",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "tsort",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "tty",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "uname",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "unexpand",
+			"corpus": "unexpand",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "uniq",
+			"corpus": "uniq",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "unlink",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "users",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "wc",
+			"corpus": "wc",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "who",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "whoami",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "yes",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "blkid",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "blockdev",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "cal",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "chcpu",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "chfn",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "chrt",
+			"corpus": "chrt",
+			"functions": [
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "chsh",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "col",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "colcrt",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "colrm",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "column",
+			"corpus": "column",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "dmesg",
+			"corpus": "dmesg",
+			"functions": [
+				"file-read",
+				"inherit"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "eject",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "fallocate",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "flock",
+			"corpus": "flock",
+			"functions": [
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "fsck",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "getopt",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "hexdump",
+			"corpus": "hexdump",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "hwclock",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "ionice",
+			"corpus": "ionice",
+			"functions": [
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "ipcs",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "kill",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "logger",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "login",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "look",
+			"corpus": "look",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "losetup",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "lsblk",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "lscpu",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "lsipc",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "lslocks",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "lsns",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "mesg",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "mkfs",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "mount",
+			"corpus": "mount",
+			"functions": [],
+			"class": "privileged"
+		},
+		{
+			"name": "mountpoint",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "namei",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "nologin",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "nsenter",
+			"corpus": "nsenter",
+			"functions": [
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "partx",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "pivot_root",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "prlimit",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "rename",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "renice",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "rev",
+			"corpus": "rev",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "rfkill",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "rtcwake",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "script",
+			"corpus": "script",
+			"functions": [
+				"file-write",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "scriptreplay",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "setarch",
+			"corpus": "setarch",
+			"functions": [
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "setsid",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "setterm",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "su",
+			"corpus": "su",
+			"functions": [],
+			"class": "privileged"
+		},
+		{
+			"name": "sulogin",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "swapon",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "switch_root",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "taskset",
+			"corpus": "taskset",
+			"functions": [
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "ul",
+			"corpus": "ul",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "umount",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "unshare",
+			"corpus": "unshare",
+			"functions": [
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "utmpdump",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "uuidgen",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "wall",
+			"corpus": "wall",
+			"functions": [],
+			"class": "privileged"
+		},
+		{
+			"name": "wdctl",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "whereis",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "wipefs",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "write",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "cmp",
+			"corpus": "cmp",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "diff",
+			"corpus": "diff",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "diff3",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "sdiff",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "find",
+			"corpus": "find",
+			"functions": [
+				"file-read",
+				"file-write",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "xargs",
+			"corpus": "xargs",
+			"functions": [
+				"file-read",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "locate",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "grep",
+			"corpus": "grep",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "egrep",
+			"corpus": "egrep",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "fgrep",
+			"corpus": "fgrep",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "sed",
+			"corpus": "sed",
+			"functions": [
+				"file-read",
+				"file-write",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "awk",
+			"corpus": "mawk",
+			"functions": [
+				"file-read",
+				"file-write",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "gawk",
+			"corpus": "gawk",
+			"functions": [
+				"bind-shell",
+				"file-read",
+				"file-write",
+				"reverse-shell",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "mawk",
+			"corpus": "mawk",
+			"functions": [
+				"file-read",
+				"file-write",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "iconv",
+			"corpus": "iconv",
+			"functions": [
+				"file-read",
+				"file-write"
+			],
+			"class": "write"
+		},
+		{
+			"name": "nroff",
+			"corpus": "nroff",
+			"functions": [
+				"file-read",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "troff",
+			"corpus": "troff",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "gzip",
+			"corpus": "gzip",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "gunzip",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "zcat",
+			"corpus": "zcat",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "bzip2",
+			"corpus": "bzip2",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "bunzip2",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "xz",
+			"corpus": "xz",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "unxz",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "tar",
+			"corpus": "tar",
+			"functions": [
+				"download",
+				"file-read",
+				"file-write",
+				"shell",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "cpio",
+			"corpus": "cpio",
+			"functions": [
+				"file-read",
+				"file-write"
+			],
+			"class": "write"
+		},
+		{
+			"name": "pax",
+			"corpus": "pax",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "zip",
+			"corpus": "zip",
+			"functions": [
+				"file-read",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "unzip",
+			"corpus": "unzip",
+			"functions": [],
+			"class": "privileged"
+		},
+		{
+			"name": "7z",
+			"corpus": "7z",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "curl",
+			"corpus": "curl",
+			"functions": [
+				"download",
+				"file-read",
+				"file-write",
+				"library-load",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "wget",
+			"corpus": "wget",
+			"functions": [
+				"download",
+				"file-read",
+				"file-write",
+				"shell",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "openssl",
+			"corpus": "openssl",
+			"functions": [
+				"download",
+				"file-read",
+				"file-write",
+				"library-load",
+				"reverse-shell",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "ssh",
+			"corpus": "ssh",
+			"functions": [
+				"download",
+				"file-read",
+				"shell",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "scp",
+			"corpus": "scp",
+			"functions": [
+				"download",
+				"shell",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "sftp",
+			"corpus": "sftp",
+			"functions": [
+				"download",
+				"shell",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "rsync",
+			"corpus": "rsync",
+			"functions": [
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "nc",
+			"corpus": "nc",
+			"functions": [
+				"bind-shell",
+				"download",
+				"reverse-shell",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "socat",
+			"corpus": "socat",
+			"functions": [
+				"bind-shell",
+				"download",
+				"file-read",
+				"file-write",
+				"reverse-shell",
+				"shell",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "telnet",
+			"corpus": "telnet",
+			"functions": [
+				"reverse-shell",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "ftp",
+			"corpus": "ftp",
+			"functions": [
+				"download",
+				"shell",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "tftp",
+			"corpus": "tftp",
+			"functions": [
+				"download",
+				"upload"
+			],
+			"class": "transfer"
+		},
+		{
+			"name": "python3",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "perl",
+			"corpus": "perl",
+			"functions": [
+				"download",
+				"file-read",
+				"reverse-shell",
+				"shell",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "node",
+			"corpus": "node",
+			"functions": [
+				"bind-shell",
+				"download",
+				"file-read",
+				"file-write",
+				"reverse-shell",
+				"shell",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "git",
+			"corpus": "git",
+			"functions": [
+				"file-read",
+				"file-write",
+				"inherit",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "make",
+			"corpus": "make",
+			"functions": [
+				"file-read",
+				"file-write",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "gcc",
+			"corpus": "gcc",
+			"functions": [
+				"file-read",
+				"file-write",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "jq",
+			"corpus": "jq",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "sqlite3",
+			"corpus": "sqlite3",
+			"functions": [
+				"file-read",
+				"file-write",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "busybox",
+			"corpus": "busybox",
+			"functions": [
+				"inherit",
+				"reverse-shell",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "vim",
+			"corpus": "vim",
+			"functions": [
+				"file-read",
+				"inherit"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "nano",
+			"corpus": "nano",
+			"functions": [
+				"file-read",
+				"file-write",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "less",
+			"corpus": "less",
+			"functions": [
+				"command",
+				"file-read",
+				"file-write",
+				"inherit",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "more",
+			"corpus": "more",
+			"functions": [
+				"file-read",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "man",
+			"corpus": "man",
+			"functions": [
+				"file-read",
+				"inherit",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "strings",
+			"corpus": "strings",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "file",
+			"corpus": "file",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "patch",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "ldd",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "nm",
+			"corpus": "nm",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "objdump",
+			"corpus": null,
+			"functions": [],
+			"class": "absent"
+		},
+		{
+			"name": "readelf",
+			"corpus": "readelf",
+			"functions": [
+				"file-read"
+			],
+			"class": "read"
+		},
+		{
+			"name": "ssh-keygen",
+			"corpus": "ssh-keygen",
+			"functions": [
+				"library-load"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "sshfs",
+			"corpus": "sshfs",
+			"functions": [
+				"command",
+				"download",
+				"shell",
+				"upload"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "expect",
+			"corpus": "expect",
+			"functions": [
+				"file-read",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "tmux",
+			"corpus": "tmux",
+			"functions": [
+				"file-read",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "screen",
+			"corpus": "screen",
+			"functions": [
+				"file-write",
+				"shell"
+			],
+			"class": "shell"
+		},
+		{
+			"name": "watch",
+			"corpus": "watch",
+			"functions": [
+				"shell"
+			],
+			"class": "shell"
+		}
+	],
+	"windows": [
+		{
+			"name": "type",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "more",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "dir",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "copy",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "move",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "del",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "ren",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "md",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "rd",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "sort",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "fc",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "tree",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "attrib",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "echo",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "cmd",
+			"corpus": "cmd",
+			"categories": [
+				"ADS",
+				"Download",
+				"Upload"
+			],
+			"class": "transfer"
+		},
+		{
+			"name": "powershell",
+			"corpus": "powershell",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "pwsh",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "reg",
+			"corpus": "reg",
+			"categories": [
+				"ADS",
+				"Credentials"
+			],
+			"class": "other"
+		},
+		{
+			"name": "regedit",
+			"corpus": "regedit",
+			"categories": [
+				"ADS"
+			],
+			"class": "other"
+		},
+		{
+			"name": "sc",
+			"corpus": "sc",
+			"categories": [
+				"ADS"
+			],
+			"class": "other"
+		},
+		{
+			"name": "net",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "net1",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "netsh",
+			"corpus": "netsh",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "at",
+			"corpus": "at",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "schtasks",
+			"corpus": "schtasks",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "wmic",
+			"corpus": "wmic",
+			"categories": [
+				"ADS",
+				"Copy",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "certutil",
+			"corpus": "certutil",
+			"categories": [
+				"ADS",
+				"Decode",
+				"Download",
+				"Encode"
+			],
+			"class": "transfer"
+		},
+		{
+			"name": "bitsadmin",
+			"corpus": "bitsadmin",
+			"categories": [
+				"ADS",
+				"Copy",
+				"Download",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "mshta",
+			"corpus": "mshta",
+			"categories": [
+				"ADS",
+				"Download",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "rundll32",
+			"corpus": "rundll32",
+			"categories": [
+				"ADS",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "regsvr32",
+			"corpus": "regsvr32",
+			"categories": [
+				"AWL Bypass",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "regasm",
+			"corpus": "regasm",
+			"categories": [
+				"AWL Bypass",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "regsvcs",
+			"corpus": "regsvcs",
+			"categories": [
+				"AWL Bypass",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "cscript",
+			"corpus": "cscript",
+			"categories": [
+				"ADS"
+			],
+			"class": "other"
+		},
+		{
+			"name": "wscript",
+			"corpus": "wscript",
+			"categories": [
+				"ADS"
+			],
+			"class": "other"
+		},
+		{
+			"name": "msiexec",
+			"corpus": "msiexec",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "installutil",
+			"corpus": "installutil",
+			"categories": [
+				"AWL Bypass",
+				"Download",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "odbcconf",
+			"corpus": "odbcconf",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "forfiles",
+			"corpus": "forfiles",
+			"categories": [
+				"ADS",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "where",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "findstr",
+			"corpus": "findstr",
+			"categories": [
+				"ADS",
+				"Credentials",
+				"Download"
+			],
+			"class": "transfer"
+		},
+		{
+			"name": "expand",
+			"corpus": "expand",
+			"categories": [
+				"ADS",
+				"Copy",
+				"Download"
+			],
+			"class": "transfer"
+		},
+		{
+			"name": "extrac32",
+			"corpus": "extrac32",
+			"categories": [
+				"ADS",
+				"Copy",
+				"Download"
+			],
+			"class": "transfer"
+		},
+		{
+			"name": "makecab",
+			"corpus": "makecab",
+			"categories": [
+				"ADS",
+				"Download",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "replace",
+			"corpus": "replace",
+			"categories": [
+				"Copy",
+				"Download"
+			],
+			"class": "transfer"
+		},
+		{
+			"name": "robocopy",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "xcopy",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "tar",
+			"corpus": "tar",
+			"categories": [
+				"ADS",
+				"Copy"
+			],
+			"class": "transfer"
+		},
+		{
+			"name": "curl",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "ssh",
+			"corpus": "ssh",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "scp",
+			"corpus": "scp",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "sftp",
+			"corpus": "sftp",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "ftp",
+			"corpus": "ftp",
+			"categories": [
+				"Download",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "tftp",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "pktmon",
+			"corpus": "pktmon",
+			"categories": [
+				"Reconnaissance"
+			],
+			"class": "other"
+		},
+		{
+			"name": "psr",
+			"corpus": "psr",
+			"categories": [
+				"Reconnaissance"
+			],
+			"class": "other"
+		},
+		{
+			"name": "print",
+			"corpus": "print",
+			"categories": [
+				"ADS",
+				"Copy"
+			],
+			"class": "transfer"
+		},
+		{
+			"name": "fsutil",
+			"corpus": "fsutil",
+			"categories": [
+				"Execute",
+				"Tamper"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "diskshadow",
+			"corpus": "diskshadow",
+			"categories": [
+				"Dump",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "vssadmin",
+			"corpus": "vssadmin",
+			"categories": [
+				"Tamper"
+			],
+			"class": "other"
+		},
+		{
+			"name": "wbadmin",
+			"corpus": "wbadmin",
+			"categories": [
+				"Dump"
+			],
+			"class": "other"
+		},
+		{
+			"name": "bcdedit",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "cipher",
+			"corpus": "cipher",
+			"categories": [
+				"Tamper"
+			],
+			"class": "other"
+		},
+		{
+			"name": "icacls",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "takeown",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "nltest",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "openfiles",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "query",
+			"corpus": "query",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "rasdial",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "route",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "runas",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "setspn",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "subst",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "sxstrace",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "systeminfo",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "taskkill",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "tasklist",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "telnet",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "typeperf",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "vbc",
+			"corpus": "vbc",
+			"categories": [
+				"Compile"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "verifier",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "vol",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "wecutil",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "wevtutil",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "wlrmdr",
+			"corpus": "wlrmdr",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "wsl",
+			"corpus": "wsl",
+			"categories": [
+				"Download",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "bash",
+			"corpus": "bash",
+			"categories": [
+				"AWL Bypass",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "conhost",
+			"corpus": "conhost",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "control",
+			"corpus": "control",
+			"categories": [
+				"ADS",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "mmc",
+			"corpus": "mmc",
+			"categories": [
+				"Download",
+				"Execute",
+				"UAC Bypass"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "msbuild",
+			"corpus": "msbuild",
+			"categories": [
+				"AWL Bypass",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "csc",
+			"corpus": "csc",
+			"categories": [
+				"Compile"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "jsc",
+			"corpus": "jsc",
+			"categories": [
+				"Compile"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "aspnet_compiler",
+			"corpus": "aspnet_compiler",
+			"categories": [
+				"AWL Bypass"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "cdb",
+			"corpus": "cdb",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "windbg",
+			"corpus": "windbg",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "dump64",
+			"corpus": "dump64",
+			"categories": [
+				"Dump"
+			],
+			"class": "other"
+		},
+		{
+			"name": "procdump",
+			"corpus": "procdump",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "comsvcs",
+			"corpus": "comsvcs",
+			"categories": [
+				"Dump"
+			],
+			"class": "other"
+		},
+		{
+			"name": "esentutl",
+			"corpus": "esentutl",
+			"categories": [
+				"ADS",
+				"Copy",
+				"Download"
+			],
+			"class": "transfer"
+		},
+		{
+			"name": "ldifde",
+			"corpus": "ldifde",
+			"categories": [
+				"Download"
+			],
+			"class": "transfer"
+		},
+		{
+			"name": "mavinject",
+			"corpus": "mavinject",
+			"categories": [
+				"ADS",
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "pcalua",
+			"corpus": "pcalua",
+			"categories": [
+				"Execute"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "odbcad32",
+			"corpus": "odbcad32",
+			"categories": [
+				"UAC Bypass"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "computerdefaults",
+			"corpus": "computerdefaults",
+			"categories": [
+				"UAC Bypass"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "eventvwr",
+			"corpus": "eventvwr",
+			"categories": [
+				"UAC Bypass"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "wsreset",
+			"corpus": "wsreset",
+			"categories": [
+				"UAC Bypass"
+			],
+			"class": "exec"
+		},
+		{
+			"name": "sdclt",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		},
+		{
+			"name": "fodhelper",
+			"corpus": null,
+			"categories": [],
+			"class": "other"
+		}
+	]
+}

@@ -5,7 +5,7 @@ status: draft
 title: "Code-mode runtime prior art: four ways to give a model a language and only intentional tools"
 parent: architecture
 depends-on: [d150]
-references: [d116, d149, d150, d152, d153]
+references: [d116, d149, d150, d152, d153, d194, d196]
 tags: ["references", "prior-art", "codemode", "sandbox", "runtime", "shell", "python", "agents"]
 ---
 
@@ -25,7 +25,10 @@ built as a sibling extension — pymode beside pi's jsmode — would cost this t
 whether a minimal agent over a familiar runtime outperforms a tuned scaffold, and d156 takes the
 first shape in the reverse direction, asking what it costs to use an emulated shell as a _closed
 command table_ rather than as somewhere to run bash. d150 owns the four coding harnesses' Code Mode implementations and
-the catalog plumbing; this survey does not re-derive those.
+the catalog plumbing; this survey does not re-derive those. The reader who wants the landing
+site rather than the survey reads d194, which enumerates the two living-off-the-land corpora into
+a closed tool surface, and d196, which designs the decision point and the isolation envelope
+above it.
 
 ## Trust boundary: every claim is a project's own statement
 
