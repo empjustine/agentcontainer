@@ -45,7 +45,7 @@ no documented home for either.
 The pattern split d096/d097 established is the whole design: **pi does not
 build the provider in → the folder carries its catalog** (the pi-synthetic
 shape: one live listing at the canonical upstream, throw-on-failure,
-committed `models.json` + `models.js` pair, `--check` drift gate);
+committed `models.json` and no seed, `--check` drift gate — docs/d190);
 **pi builds it in → the folder is a watchdog** (the d097 shape: only
 `refreshModels`, never a model list). Four additions and one unification:
 
@@ -122,8 +122,9 @@ mode-A state.
   smoke-tested" contract; it is the operator's explicit call, recorded
   here).
 - Three fleet seams now exist (synthetic, hyper, verboo): each provider has
-  two committed descriptions — the fleet layer (models.dev-derived and/or
-  facts-cache-enriched) and the extension folder's (live-listing-derived).
+  two committed descriptions — the fleet layer (source-derived since d190;
+  models.dev prices what the provider answered) and the extension folder's
+  (live-listing-derived).
   All three joins are blocked on the same llm-reverse-proxy deployment
   decision; the drift is real (synthetic's rotated-away ghosts; hyper's
   stale context window) and each folder's README says so.

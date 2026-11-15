@@ -1,10 +1,10 @@
 /**
  * @fileoverview index.ts — the pi extension entry: registers the Synthetic
  * provider (its OpenAI-compatible surface at the fact table's canonical
- * upstream) with pi, seeded from the generated catalog and refreshed from the
- * provider's own listing at runtime.
+ * upstream) with pi, rebuilt at refresh time from the provider's own listing
+ * — the only lineup source this folder has.
  *
- * This file, sources.mjs, merge.mjs, log.mjs, models.js and package.json ARE
+ * This file, sources.mjs, merge.mjs, log.mjs and package.json ARE
  * the pi package (docs/d096): `pi install ./pi-synthetic -l`, a copy into
  * `~/.pi/agent/extensions/pi-synthetic/`, or `pi -e ./pi-synthetic/index.ts`.
  * There is no subfolder and no copy step — the folder is the unit.
@@ -17,11 +17,15 @@
  * UI, and any request-shaping stream wrapper. Compat is emitted only where the
  * listing published the capability — a flag enabled on a hunch changes what pi
  * SENDS, which is a wire-level claim this folder cannot verify.
+ *
+ * No model list is registered or committed (docs/d190): `refreshModels` reads
+ * the provider's own source on every run, and a source that cannot answer
+ * leaves the provider with nothing to offer instead of reviving a remembered
+ * lineup.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { type MergedModel, shapeListing, toExtensionModel } from "./merge.mjs";
-import { SYNTHETIC_ALIASES, SYNTHETIC_MODELS } from "./models.js";
+import { shapeListing, toExtensionModel } from "./merge.mjs";
 import {
 	fetchListing,
 	SYNTHETIC_API_KEY_ENV,
@@ -47,8 +51,7 @@ const REQUEST_HEADERS = {
  * Declared structurally and read defensively because `@earendil-works/pi-*` is
  * host-provided at runtime but is not a dependency of this repo: the shipped
  * declaration is the only thing checkable here. Every field is optional in this
- * reading, so a version that stops sending one degrades to the committed seed
- * instead of throwing.
+ * reading, so a version that stops sending one costs a refresh, never a throw.
  */
 interface RefreshContext {
 	signal?: AbortSignal;
@@ -57,39 +60,6 @@ interface RefreshContext {
 	stored?: { models?: unknown[]; checkedAt?: number };
 	/** false when pi knows the network is not wanted right now. */
 	allowNetwork?: boolean;
-}
-
-/**
- * The freshly shaped list plus the committed seed, deduplicated by id with the
- * fresh rows winning. The seed is never dropped: it is the only row set that
- * exists offline, and a listing that omits a row must not delete a model the
- * user may be mid-conversation with.
- * @param {MergedModel[]} models freshly shaped models
- * @returns {unknown[]} the list pi registers
- */
-function withSeed(models: MergedModel[]): unknown[] {
-	const fresh = models.map(toExtensionModel);
-	const seen = new Set(models.map((m) => m.id));
-	return [
-		...fresh,
-		...SYNTHETIC_MODELS.filter((m) => !seen.has((m as { id: string }).id)),
-	];
-}
-
-/**
- * Rebuild the list from pi's own persisted snapshot. `stored.models` is pi's
- * model shape, not this folder's config shape, so the rows are passed straight
- * back as pi gave them — re-shaping them here would re-invent data pi already
- * normalized.
- * @param {RefreshContext} context
- * @returns {unknown[]|undefined} undefined when there is no usable snapshot
- */
-function fromStore(context: RefreshContext): unknown[] | undefined {
-	const stored = context.stored;
-	if (!stored || !Array.isArray(stored.models) || stored.models.length === 0) {
-		return;
-	}
-	return stored.models;
 }
 
 export default function piSynthetic(pi: ExtensionAPI): void {
@@ -106,10 +76,10 @@ export default function piSynthetic(pi: ExtensionAPI): void {
 		// x-api-key header.
 		authHeader: true,
 		headers: { ...REQUEST_HEADERS },
-		models: [...SYNTHETIC_MODELS],
-		// The alias mapping is passed through as data; the extension never
-		// re-derives it from a display name.
-		aliasMap: { ...SYNTHETIC_ALIASES },
+		// No `models` list on purpose (docs/d190): a list here is a lineup the
+		// provider may have stopped serving, and pi would keep publishing it.
+		// `refreshModels` is the only source; when it cannot read one there is
+		// nothing to offer.
 		refreshModels: async (context: RefreshContext = {}) => {
 			context.signal?.throwIfAborted();
 			const stored = context.stored;
@@ -122,16 +92,17 @@ export default function piSynthetic(pi: ExtensionAPI): void {
 						await fetchListing({ signal: context.signal }),
 					);
 					context.signal?.throwIfAborted();
-					return withSeed(models);
+					return models.map(toExtensionModel);
 				} catch (err) {
 					if (context.signal?.aborted) {
 						throw err;
 					}
-					// A failed refresh must never cost the user a working provider:
-					// the store, then the seed, stand in.
+					// The provider's own source is the only lineup, so an unreadable
+					// one means the provider is not working: no remembered rows stand
+					// in (docs/d190).
 				}
 			}
-			return fromStore(context) ?? undefined;
+			return;
 		},
 	});
 }

@@ -89,7 +89,7 @@ const MODEL_STORE_TTL_MS = 4 * 60 * 60 * 1000;
  * warning in the generation log. Nothing is invented to fill the gap.
  * @type {readonly string[]}
  */
-export const ALIAS_TIER_IDS = Object.freeze([
+const ALIAS_TIER_IDS = Object.freeze([
 	"syn:large:text",
 	"syn:small:text",
 	"syn:large:vision",

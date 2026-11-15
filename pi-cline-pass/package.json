@@ -7,7 +7,7 @@
 		"generate": "node ./generate.mjs",
 		"test": "node --test tests/*.test.mjs"
 	},
-	"description": "pi extension: the ClinePass provider, seeded from and reconciled to Cline's published lineup and the models.dev metadata",
+	"description": "pi extension: the ClinePass provider — the published docs table is the lineup, models.dev supplies the metadata, both read on every refresh",
 	"keywords": [
 		"pi-package",
 		"pi-extension",

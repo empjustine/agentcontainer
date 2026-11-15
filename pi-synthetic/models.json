@@ -60,32 +60,6 @@
           }
         },
         {
-          "id": "hf:moonshotai/Kimi-K3",
-          "name": "Kimi K3",
-          "reasoning": true,
-          "input": [
-            "text",
-            "image"
-          ],
-          "contextWindow": 524288,
-          "maxTokens": 65536,
-          "cost": {
-            "input": 3,
-            "output": 15,
-            "cacheRead": 0.45,
-            "cacheWrite": 0
-          },
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": null,
-            "low": "low",
-            "medium": null,
-            "high": "high",
-            "xhigh": null,
-            "max": "max"
-          }
-        },
-        {
           "id": "hf:moonshotai/Kimi-K3.1-Pro",
           "name": "Kimi K3.1 Pro",
           "reasoning": true,
@@ -240,7 +214,7 @@
         },
         {
           "id": "syn:large:vision",
-          "name": "syn:large:vision (hf:moonshotai/Kimi-K3)",
+          "name": "syn:large:vision (hf:moonshotai/Kimi-K3.1-Pro)",
           "reasoning": true,
           "input": [
             "text",
@@ -249,9 +223,9 @@
           "contextWindow": 524288,
           "maxTokens": 65536,
           "cost": {
-            "input": 3,
-            "output": 15,
-            "cacheRead": 0.45,
+            "input": 2,
+            "output": 10,
+            "cacheRead": 0.2,
             "cacheWrite": 0
           },
           "thinkingLevelMap": {

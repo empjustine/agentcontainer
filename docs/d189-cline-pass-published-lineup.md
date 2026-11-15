@@ -61,9 +61,9 @@ One direction between the two sources, in both shapers
   not consulted for this file either: a mirror clone is a remembered table.
   `CLINE_PASS_MDX` remains the way to pin a table on a host that carries one.
 
-The committed extension seed (`pi-cline-pass/models.js`) stays. It is
-generated from the same table, it is what pi registers before the first
-refresh, and it carries no claim the sources did not make.
+The committed extension seed (`pi-cline-pass/models.js`) went later: docs/d190
+retired it, so the extension registers no lineup and `refreshModels` is the
+only source here too. `models.json` stays as the drift gate's subject.
 
 ## Consequences
 

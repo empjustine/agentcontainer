@@ -26,17 +26,16 @@ read as source and never installed — see "Provenance".
 
 ## Layout
 
-| Path                                   | Role                                                                                                                      |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `sources.mjs`                          | the ONE data source: the provider's `/models` listing, fetched from the folder's own canonical-upstream row               |
-| `merge.mjs`                            | the ONE shaping step (`shapeListing`/`shapeRow`) plus the two projections — pi `models.json` entry, pi-ai extension entry |
-| `generate.mjs`                         | one fetch in, two committed artifacts out; `--check` verifies them without writing                                        |
-| `log.mjs`                              | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045)                                                     |
-| `index.ts`                             | the pi extension entry (provider registration + `refreshModels`)                                                          |
-| `models.json`                          | **generated** — a pi `models.json`-shaped manifest with the `synthetic` provider block (canonical upstream, docs/d070)    |
-| `models.js`                            | **generated** — the extension's offline seed: `SYNTHETIC_MODELS` + `SYNTHETIC_ALIASES`                                    |
-| `package.json`                         | the pi package manifest (`pi.extensions` → `./index.ts`)                                                                  |
-| `AGENTS.md` / `TODO.md` / `PENDING.md` | folder rules · open items · the review that collapsed the design                                                          |
+| Path                                   | Role                                                                                                                                                                              |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sources.mjs`                          | the ONE data source: the provider's `/models` listing, fetched from the folder's own canonical-upstream row                                                                       |
+| `merge.mjs`                            | the ONE shaping step (`shapeListing`/`shapeRow`) plus the two projections — pi `models.json` entry, pi-ai extension entry                                                         |
+| `generate.mjs`                         | one fetch in, one committed artifact out; `--check` verifies it without writing                                                                                                   |
+| `log.mjs`                              | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045)                                                                                                             |
+| `index.ts`                             | the pi extension entry (provider registration + `refreshModels`)                                                                                                                  |
+| `models.json`                          | **generated** — a pi `models.json`-shaped manifest with the `synthetic` provider block (canonical upstream, docs/d070); the drift gate reads it, no runtime path does (docs/d190) |
+| `package.json`                         | the pi package manifest (`pi.extensions` → `./index.ts`)                                                                                                                          |
+| `AGENTS.md` / `TODO.md` / `PENDING.md` | folder rules · open items · the review that collapsed the design                                                                                                                  |
 
 The folder **is** the package. There is no `extension/` subfolder, no copy step,
 and nothing kept in sync between two module trees — those existed only while
@@ -97,10 +96,9 @@ syn:large:text   →   syn:large:text (hf:deepseek-ai/DeepSeek-V4.1-Flash-1017)
 
 The name is generated from the response, never hand-written, so it cannot go
 stale; a literal id would silently change meaning at the next rotation. The
-mapping is also committed as **data** (`SYNTHETIC_ALIASES` in `models.js`) and
-passed to the registration as-is — it is never parsed back out of a display
-name. A test asserts the two agree, which is what would catch a hand-edited or
-half-regenerated artifact. If the provider stops serving a tier, generation
+target comes from the listing row (`aliasTarget`) and `displayNameFor` renders
+it into the name; it is never parsed back out of one, and no committed side
+table mirrors it (docs/d190 removed `SYNTHETIC_ALIASES`). If the provider stops serving a tier, generation
 **warns** and publishes what it has; it does not invent a row.
 
 ## Use the extension

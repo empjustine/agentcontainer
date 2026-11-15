@@ -52,13 +52,13 @@ extension:
   projections (pi `models.json` entry; pi-ai extension entry): the docs/d049
   modality gate, effort-enum-derived thinking maps, docs/d057's cost rule, and
   the alias display name.
-- `generate.mjs` / `generate.sh` — one fetch in, two committed artifacts out
+- `generate.mjs` / `generate.sh` — one fetch in, one committed artifact out
   (atomic writes, `lib/artifact.mjs`; canonical JSON per docs/d050), plus
   `--check` for the drift gate.
 - `models.json` — **committed**, pi-`models.json`-shaped, canonical upstream
-  URL, `$SYNTHETIC_API_KEY` reference.
-- `models.js` — **committed**, the extension's seed (`SYNTHETIC_MODELS`,
-  `SYNTHETIC_ALIASES`).
+  URL, `$SYNTHETIC_API_KEY` reference. Its readers are the drift gate and the
+  fleet-parity check; no runtime path reads it, and there is no seed beside it
+  (docs/d190).
 - `index.ts` + `package.json` — the extension entry and its `pi.extensions`
   manifest. **The folder IS the package**: no `extension/` subfolder, no copy
   step, nothing kept in sync with `cmp`.
@@ -141,12 +141,13 @@ at runtime.
   `syn:large:text` and its three siblings are fixed ids whose target model
   rotates, so `name` renders it —
   `syn:large:text (hf:deepseek-ai/DeepSeek-V4.1-Flash-1017)` — because the id
-  alone cannot say what it points at. The mapping is also committed as DATA
-  (`models.js`'s `SYNTHETIC_ALIASES`) and passed to the registration directly:
-  it is never recovered by parsing a display name, because a name is display
-  text and a model legitimately called "… (NVFP4)" would poison any parser.
-  `ALIAS_TIER_IDS` survives as a WARN-ONLY checklist — a tier the listing stops
-  serving is reported, never invented, since the listing is the sole source.
+  alone cannot say what it points at. The target comes from the listing row
+  (`aliasTarget`) and `displayNameFor` renders it into the name — never parsed
+  back out of one, because a name is display text and a model legitimately
+  called "… (NVFP4)" would poison any parser — and no side table mirrors it
+  (docs/d190 removed `SYNTHETIC_ALIASES`). `ALIAS_TIER_IDS` survives as a WARN-ONLY checklist — a
+  tier the listing stops serving is reported, never invented, since the
+  listing is the sole source.
 - **`infinite:*` ids are filtered.** The listing publishes a second routing
   family that this OpenAI surface does not serve.
 - **No route substitution here.** Committed artifacts keep canonical upstream
@@ -208,8 +209,8 @@ exists to prevent.
   `tsconfig.json`'s include list and the repo lint path; the generated pair is
   excluded from biome like `coding-agent/model-*.json`).
 - Regeneration is idempotent: a second `./generate.sh` over the same listing
-  leaves both artifacts byte-identical, and `./generate.sh --check` reports
-  clean — proven both ways by appending a byte to `models.js` and watching the
+  leaves the artifact byte-identical, and `./generate.sh --check` reports clean
+  — proven both ways by appending a byte to `models.json` and watching the
   check fail, then pass after a regeneration.
 - The extension LOADS and REGISTERS in-process (Node's native TypeScript
   stripping over the real entry point) and every registered row survives

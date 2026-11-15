@@ -80,8 +80,8 @@ the difference in home is the difference in copy unit, not a fork of the logic.
 ## What this does not change
 
 - **Artifacts are still generated output, byte for byte.** Every fold proves it:
-  the pre-fold and post-fold folders are run side by side, and `models.js` /
-  `models.json` come out identical. The committed header even keeps telling the
+  the pre-fold and post-fold folders are run side by side, and the generated
+  artifacts come out identical. The committed header even keeps telling the
   reader how to regenerate — the instruction text was updated in the template
   and in the artifact together, and `--check` confirms they still agree.
 - **`docs/d024`'s one-edit law stays retired** (`docs/d113`): a fact edit is

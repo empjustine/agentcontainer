@@ -5,9 +5,9 @@
  * Why one source (the pi-synthetic verdict, docs/d096, applied here):
  * models.dev carries no verboo row at all (catalogOptional in the fleet,
  * docs/d057) — the listing was ALWAYS the only lineup there is, so the
- * extension reads it directly and nothing else. The fleet's facts cache of
- * it (coding-agent/verboo-facts.json) is the committed last-good snapshot
- * the same design already uses.
+ * extension reads it directly and nothing else. The fleet reads the same
+ * listing live (coding-agent, docs/d191): one fetch per run on either side,
+ * no committed snapshot to drift.
  *
  * The route machinery never existed here. This reads the fact-table row's
  * CANONICAL upstream (docs/d070) directly and relies on the environment's

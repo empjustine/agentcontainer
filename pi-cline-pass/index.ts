@@ -1,10 +1,11 @@
 /**
  * @fileoverview index.ts — the pi extension entry: registers the ClinePass
  * provider (its OpenAI-compatible gateway at the fact table's canonical
- * upstream) with pi, seeded from the generated catalog and rebuilt at
- * refresh time against the SAME two published sources the generator uses.
+ * upstream) with pi, rebuilt at refresh time from the SAME two published
+ * sources the generator uses — the docs table for the lineup, models.dev for
+ * metadata.
  *
- * This file, sources.mjs, merge.mjs, log.mjs, models.js and package.json ARE
+ * This file, sources.mjs, merge.mjs, log.mjs and package.json ARE
  * the pi package (docs/d096): `pi install ./pi-cline-pass -l`, a copy into
  * `~/.pi/agent/extensions/pi-cline-pass/`, or `pi -e ./pi-cline-pass/index.ts`.
  *
@@ -33,11 +34,15 @@
  * fleet's full row defines none, so none are invented — an invented header
  * is a wire-level claim this folder cannot verify), and an alias map
  * (ClinePass publishes no rotating tier ids).
+ *
+ * No model list is registered or committed (docs/d190): `refreshModels` reads
+ * the provider's own source on every run, and a source that cannot answer
+ * leaves the provider with nothing to offer instead of reviving a remembered
+ * lineup.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { type MergedModel, shapeCatalog, toExtensionModel } from "./merge.mjs";
-import { CLINE_PASS_MODELS } from "./models.js";
+import { shapeCatalog, toExtensionModel } from "./merge.mjs";
 import {
 	CLINE_PASS_API_KEY_ENV,
 	CLINE_PASS_BASE_URL,
@@ -54,8 +59,8 @@ import {
  * Declared structurally and read defensively because `@earendil-works/pi-*` is
  * host-provided at runtime but is not a dependency of this repo: the shipped
  * declaration is the only thing checkable here. Every field is optional in
- * this reading, so a version that stops sending one degrades to the committed
- * seed instead of throwing.
+ * this reading, so a version that stops sending one costs a refresh, never a
+ * throw.
  */
 interface RefreshContext {
 	signal?: AbortSignal;
@@ -64,39 +69,6 @@ interface RefreshContext {
 	stored?: { models?: unknown[]; checkedAt?: number };
 	/** false when pi knows the network is not wanted right now. */
 	allowNetwork?: boolean;
-}
-
-/**
- * The freshly resolved list plus the committed seed, deduplicated by id with
- * the fresh rows winning. Both are the same published table, so the seed only
- * survives where the fresh read could not cover it — a lookup that fails
- * mid-list must not revoke a row the provider still serves.
- * @param {MergedModel[]} models freshly shaped models
- * @returns {unknown[]} the list pi registers
- */
-function withSeed(models: MergedModel[]): unknown[] {
-	const fresh = models.map(toExtensionModel);
-	const seen = new Set(models.map((m) => m.id));
-	return [
-		...fresh,
-		...CLINE_PASS_MODELS.filter((m) => !seen.has((m as { id: string }).id)),
-	];
-}
-
-/**
- * Rebuild the list from pi's own persisted snapshot. `stored.models` is pi's
- * model shape, not this folder's config shape, so the rows are passed
- * straight back as pi gave them — re-shaping them here would re-invent data
- * pi already normalized.
- * @param {RefreshContext} context
- * @returns {unknown[]|undefined} undefined when there is no usable snapshot
- */
-function fromStore(context: RefreshContext): unknown[] | undefined {
-	const stored = context.stored;
-	if (!stored || !Array.isArray(stored.models) || stored.models.length === 0) {
-		return;
-	}
-	return stored.models;
 }
 
 export default function piClinePass(pi: ExtensionAPI): void {
@@ -111,7 +83,10 @@ export default function piClinePass(pi: ExtensionAPI): void {
 		// The gateway authenticates with Authorization: Bearer rather than an
 		// x-api-key header (the fleet's full row carries authHeader: true).
 		authHeader: true,
-		models: [...CLINE_PASS_MODELS],
+		// No `models` list on purpose (docs/d190): a list here is a lineup the
+		// provider may have stopped serving, and pi would keep publishing it.
+		// `refreshModels` is the only source; when it cannot read one there is
+		// nothing to offer.
 		refreshModels: async (context: RefreshContext = {}) => {
 			context.signal?.throwIfAborted();
 			const stored = context.stored;
@@ -125,16 +100,17 @@ export default function piClinePass(pi: ExtensionAPI): void {
 					});
 					const lineup = await fetchDocsLineup({ signal: context.signal });
 					context.signal?.throwIfAborted();
-					return withSeed(shapeCatalog(records, lineup));
+					return shapeCatalog(records, lineup).map(toExtensionModel);
 				} catch (err) {
 					if (context.signal?.aborted) {
 						throw err;
 					}
-					// A failed refresh must never cost the user a working provider:
-					// the store, then the seed, stand in.
+					// The provider's own source is the only lineup, so an unreadable
+					// one means the provider is not working: no remembered rows stand
+					// in (docs/d190).
 				}
 			}
-			return fromStore(context) ?? undefined;
+			return;
 		},
 	});
 }

@@ -322,25 +322,14 @@ test("committed models.json carries the fact-table canonical upstream, not a rou
 	);
 	assert.equal("compat" in provider, false, "wire facts ride per model");
 	const ids = provider.models.map((/** @type {{id: string}} */ m) => m.id);
-	assert.deepEqual(ids, [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
+	assert.deepEqual(
+		ids,
+		[...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
+	);
 	assert.ok(ids.length > 0, "the committed artifact must carry models");
 });
 
-test("the committed seed agrees with the committed manifest, model for model", async () => {
-	const seed = await import("../models.js");
-	const manifest = JSON.parse(
-		readFileSync(join(unitDir, "models.json"), "utf-8"),
-	);
-	const manifestIds = manifest.providers[HYPER_PROVIDER_ID].models.map(
-		(/** @type {{id: string}} */ m) => m.id,
-	);
-	assert.deepEqual(
-		seed.HYPER_MODELS.map((/** @type {{id: string}} */ m) => m.id),
-		manifestIds,
-	);
-});
-
-test("the extension loads, registers, and every row survives pi's own required fields", async () => {
+test("the extension loads and registers a provider with no remembered lineup", async () => {
 	// The real entry point, imported and executed — not a textual review. Node's
 	// native TypeScript stripping runs index.ts directly, and the sibling .mjs
 	// modules are plain ESM, so this exercises the shipped module graph.
@@ -362,27 +351,22 @@ test("the extension loads, registers, and every row survives pi's own required f
 		const first = registered[0];
 		assert.ok(first);
 		const { id, config } = first;
+		// No dedicated seed: a list on the registration outlives the provider's
+		// own catalog, which is the remembered lineup docs/d190 removed.
+		assert.equal(
+			"models" in config,
+			false,
+			"the extension carries no lineup of its own",
+		);
+		assert.equal(typeof config.refreshModels, "function");
+		// Nothing remembered and no network wanted: nothing to offer, rather
+		// than a list the provider may already have retired.
+		assert.equal(
+			await config.refreshModels({ allowNetwork: false }),
+			undefined,
+		);
 		assert.equal(id, HYPER_PROVIDER_ID);
 		assert.equal(config.baseUrl, hyper.baseUrl);
-		assert.ok(config.models.length > 0);
-		for (const model of config.models) {
-			for (const field of [
-				"id",
-				"name",
-				"reasoning",
-				"input",
-				"cost",
-				"contextWindow",
-				"maxTokens",
-				"compat",
-			]) {
-				assert.notEqual(
-					model[field],
-					undefined,
-					`${model.id} must carry ${field}`,
-				);
-			}
-		}
 	} finally {
 		if (previousKey === undefined) {
 			delete process.env.HYPER_API_KEY;

@@ -5,7 +5,7 @@
  * Why one source (the pi-synthetic verdict, docs/d096, applied to a provider
  * whose listing is just as authoritative): hyper's `/provider` endpoint
  * publishes the lineup, the metadata and the prices in ONE document, and the
- * fleet's facts cache of it (coding-agent/hyper-facts.json, docs/d033/d057)
+ * fleet's own fetch of it (coding-agent, docs/d033/d057/d191)
  * is already the enrichment source for model-016. A second catalog (models.dev
  * carries hyper too) can only lag or contradict it — for the EXTENSION the
  * listing alone is the catalog, because pi does not build this provider in

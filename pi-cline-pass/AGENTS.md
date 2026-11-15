@@ -69,11 +69,15 @@ billing selector.
 
 ## Generated artifacts
 
-`models.json` and `models.js` are written by `generate.mjs`. Hand-editing
-them is erased by the next generation run — fix the shaping instead. Both
-are in `biome.jsonc`'s ignore list (generated files). `./npm-run.sh pi-cline-pass
-generate --check` is the drift gate; prefer it over
+`models.json` is written by `generate.mjs`; it is the only artifact. Hand-
+editing it is erased by the next generation run — fix the shaping instead. It
+is in `biome.jsonc`'s ignore list (generated file).
+`./npm-run.sh pi-cline-pass generate --check` is the drift gate; prefer it over
 eyeballing a diff when you only need to know "is this current".
+
+The extension registers no lineup of its own (docs/d190): `refreshModels`
+reads the docs table, so the artifact is the drift-gate and fleet-parity
+record, with no runtime reader.
 
 The lineup is committed to neither shaper: the docs table is read on every
 run, so a rotation is a regenerated artifact set rather than a constant
@@ -81,7 +85,7 @@ edited here and in `../coding-agent/generate-pi-coding-agent.mjs`.
 
 ## The folder is the package
 
-`index.ts`, `sources.mjs`, `merge.mjs`, `log.mjs`, `models.js` and
+`index.ts`, `sources.mjs`, `merge.mjs`, `log.mjs` and
 `package.json` at this level ARE the pi package (`log.mjs` included: it is what
 `sources.mjs`, and therefore the loaded extension, writes its log lines with). If a change seems to need a subfolder, a copy
 step, or two module trees kept in sync, it is rebuilding machinery that was

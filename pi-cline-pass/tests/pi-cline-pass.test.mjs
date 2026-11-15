@@ -8,8 +8,8 @@
  * lineup assertion would fail on the next provider rotation and teach nothing).
  * The only lineup facts asserted are structural: every published id carries
  * the cline-pass/ prefix (the billing contract, docs/d040), the docs table is
- * the sole lineup source (docs/d189), and the committed seed and artifact
- * agree with each other.
+ * the sole lineup source (docs/d189), and the committed artifact is the
+ * freshness gate's record — nothing reads it at runtime (docs/d190).
  *
  * Run: node --test   (from this folder — discovers tests/*.test.mjs)
  */
@@ -158,8 +158,9 @@ test("a failed catalog fetch throws instead of inventing a catalog", async () =>
 	});
 	await assert.rejects(
 		fetchCatalogSlice({ fetchImpl: fetchOnce(catalogPayload({})) }),
-		{ message: /no cline-pass models/ },
-	);
+		{
+		message: /no cline-pass models/,
+	});
 });
 
 test("the catalog slice comes back keyed in the prefixed namespace", async () => {
@@ -522,26 +523,7 @@ test("committed models.json carries the fact-table upstream and provider compat"
 	}
 });
 
-test("the committed seed and the committed artifact publish the same lineup", async () => {
-	const seed = await import("../models.js");
-	const doc = JSON.parse(
-		readFileSync(join(unitDir, "models.json"), "utf-8"),
-	);
-	const seedIds = seed.CLINE_PASS_MODELS.map(
-		(/** @type {{id: string}} */ m) => m.id,
-	);
-	const artifactIds = doc.providers[CLINE_PASS_PROVIDER_ID].models.map(
-		(/** @type {{id: string}} */ m) => m.id,
-	);
-	assert.deepEqual(seedIds, artifactIds);
-	// The seed's rows must satisfy the same mandatory shape pi dereferences.
-	for (const model of seed.CLINE_PASS_MODELS) {
-		assert.notEqual(model.cost, undefined, `${model.id} needs a cost block`);
-		assert.deepEqual(model.compat, { supportsDeveloperRole: false });
-	}
-});
-
-test("the extension loads, registers, and every row carries the compat fact", async () => {
+test("the extension loads and registers a provider with no remembered lineup", async () => {
 	// The real entry point, imported and executed — not a textual review. Node's
 	// native TypeScript stripping runs index.ts directly, and the sibling .mjs
 	// modules are plain ESM, so this exercises the shipped module graph.
@@ -563,26 +545,25 @@ test("the extension loads, registers, and every row carries the compat fact", as
 		const first = registered[0];
 		assert.ok(first);
 		const { id, config } = first;
+		// No dedicated seed: a list on the registration outlives the provider's
+		// own catalog, which is the remembered lineup docs/d190 removed.
+		assert.equal(
+			"models" in config,
+			false,
+			"the extension carries no lineup of its own",
+		);
 		assert.equal(id, CLINE_PASS_PROVIDER_ID);
 		assert.equal(config.baseUrl, clinePass.baseUrl);
 		assert.equal(config.api, "openai-completions");
 		assert.equal(config.apiKey, `$${clinePass.apiKeyEnv}`);
 		assert.equal(config.authHeader, true);
-		assert.ok(config.models.length > 0);
 		assert.equal(typeof config.refreshModels, "function");
-		for (const model of config.models) {
-			assert.ok(model.id.startsWith(CLINE_PASS_ID_PREFIX), model.id);
-			assert.notEqual(model.cost, undefined, `${model.id} needs a cost block`);
-			assert.deepEqual(
-				model.compat,
-				{ supportsDeveloperRole: false },
-				`${model.id} must carry the published compat fact`,
-			);
-		}
-		// With no network wanted and no store to fall back on, the refresh
-		// returns undefined — pi keeps the seed the extension registered.
-		const refreshed = await config.refreshModels({ allowNetwork: false });
-		assert.equal(refreshed, undefined);
+		// Nothing remembered and no network wanted: nothing to offer, rather
+		// than a list the provider may already have retired.
+		assert.equal(
+			await config.refreshModels({ allowNetwork: false }),
+			undefined,
+		);
 	} finally {
 		if (previousKey === undefined) {
 			delete process.env.CLINE_API_KEY;

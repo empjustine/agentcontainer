@@ -17,9 +17,6 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const {
-	aliasMap,
-	displayNameFor,
-	isAliasName,
 	laysWithinPiModalities,
 	piCost,
 	shapeListing,
@@ -29,7 +26,6 @@ const {
 	toPiModel,
 } = await import("../merge.mjs");
 const {
-	ALIAS_TIER_IDS,
 	fetchListing,
 	listingUrl,
 	storeIsFresh,
@@ -169,32 +165,6 @@ test("an alias row names its target from hugging_face_id, and only that", () => 
 	);
 	assert.equal(plain?.pointsAt, undefined);
 	assert.equal(plain?.name, "Test Model");
-});
-
-test("a name renders the alias target, and only the exact rendering is accepted", () => {
-	const name = displayNameFor("syn:large:text", "syn:large:text", "hf:a/x");
-	assert.equal(name, "syn:large:text (hf:a/x)");
-	assert.equal(isAliasName("syn:large:text", name, "hf:a/x"), true);
-	// A name that merely LOOKS like it carries a target must not be accepted.
-	// This is why there is no name parser anywhere in this folder.
-	assert.equal(
-		isAliasName("hf:a/x", "Nemotron 3 Super 120B (NVFP4)", "NVFP4"),
-		false,
-	);
-	assert.equal(
-		isAliasName("syn:large:text", "syn:large:text (hf:a/other)", "hf:a/x"),
-		false,
-	);
-});
-
-test("the alias map is built from data, and covers only contract tiers", () => {
-	const models = shapeListing([
-		row({ id: "syn:large:text", hugging_face_id: "a/x" }),
-		row({ id: "hf:a/x" }),
-		// A non-tier alias is not part of the map the extension exports.
-		row({ id: "hf:a/y", hugging_face_id: "a/z" }),
-	]);
-	assert.deepEqual(aliasMap(models), { "syn:large:text": "hf:a/x" });
 });
 
 test("thinking levels come from the published enum only", () => {
@@ -352,34 +322,14 @@ test("committed models.json carries the fact-table canonical upstream, not a rou
 	assert.equal(provider.apiKey, `$${synthetic.apiKeyEnv}`);
 	assert.equal(provider.authHeader, true);
 	const ids = provider.models.map((/** @type {{id: string}} */ m) => m.id);
-	assert.deepEqual(ids, [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
+	assert.deepEqual(
+		ids,
+		[...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
+		);
 	assert.ok(ids.length > 0, "the committed artifact must carry models");
 });
 
-test("the committed seed's rows and alias mapping agree with each other", async () => {
-	const seed = await import("../models.js");
-	const byId = new Map(
-		seed.SYNTHETIC_MODELS.map((/** @type {{id: string}} */ m) => [m.id, m]),
-	);
-	for (const [tier, target] of Object.entries(seed.SYNTHETIC_ALIASES)) {
-		assert.ok(ALIAS_TIER_IDS.includes(tier), `${tier} is not a contract tier`);
-		/** @type {{id: string, name?: string}|undefined} */
-		const entry = byId.get(tier);
-		assert.ok(entry, `the seed must carry a row for the tier ${tier}`);
-		assert.equal(
-			isAliasName(tier, entry.name, target),
-			true,
-			`the seed's row for ${tier} must name its target`,
-		);
-	}
-	// Every committed alias must point at a row the seed itself carries, or the
-	// resolution is a pointer a user cannot follow.
-	for (const target of Object.values(seed.SYNTHETIC_ALIASES)) {
-		assert.ok(byId.has(target), `${target} must be in the seed`);
-	}
-});
-
-test("the extension loads, registers, and every row survives pi's own code paths", async () => {
+test("the extension loads and registers a provider with no remembered lineup", async () => {
 	// The real entry point, imported and executed — not a textual review. Node's
 	// native TypeScript stripping runs index.ts directly, and the sibling .mjs
 	// modules are plain ESM, so this exercises the shipped module graph.
@@ -401,28 +351,22 @@ test("the extension loads, registers, and every row survives pi's own code paths
 		const first = registered[0];
 		assert.ok(first);
 		const { id, config } = first;
+		// No dedicated seed: a list on the registration outlives the provider's
+		// own catalog, which is the remembered lineup docs/d190 removed.
+		assert.equal(
+			"models" in config,
+			false,
+			"the extension carries no lineup of its own",
+		);
+		assert.equal(typeof config.refreshModels, "function");
+		// Nothing remembered and no network wanted: nothing to offer, rather
+		// than a list the provider may already have retired.
+		assert.equal(
+			await config.refreshModels({ allowNetwork: false }),
+			undefined,
+		);
 		assert.equal(id, SYNTHETIC_PROVIDER_ID);
 		assert.equal(config.baseUrl, synthetic.baseUrl);
-		assert.ok(config.models.length > 0);
-		for (const model of config.models) {
-			for (const field of [
-				"id",
-				"name",
-				"reasoning",
-				"input",
-				"cost",
-				"contextWindow",
-				"maxTokens",
-			]) {
-				assert.notEqual(
-					model[field],
-					undefined,
-					`${model.id} must carry ${field}`,
-				);
-			}
-		}
-		// The alias mapping reaches the registration as data.
-		assert.deepEqual(config.aliasMap, config.aliasMap);
 	} finally {
 		if (previousKey === undefined) {
 			delete process.env.SYNTHETIC_API_KEY;

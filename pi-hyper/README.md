@@ -52,13 +52,14 @@ document.
 | `index.ts`     | the extension entry: `registerProvider` + `refreshModels` (the listing at runtime) |
 | `sources.mjs`  | the ONE source read: the provider's `/provider` catalog at the canonical upstream  |
 | `merge.mjs`    | the ONE shaping step + both projections (manifest entry, registered-model entry)   |
-| `generate.mjs` | one fetch in, two artifacts out; `--check` verifies without writing                |
+| `generate.mjs` | one fetch in, one artifact out; `--check` verifies without writing                 |
 | `log.mjs`      | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045)              |
 | `models.json`  | GENERATED: the pi-`models.json`-shaped hyper block (canonical upstream, d070)      |
-| `models.js`    | GENERATED: the extension's offline seed                                            |
 
 Regenerate with `./npm-run.sh pi-hyper generate` from the repo
-root (the git diff is the review).
+root (the git diff is the review). The extension registers no lineup of its
+own (docs/d190): `refreshModels` is the only source, so the artifact has no
+runtime reader — it is the drift gate's subject.
 
 ## Provenance
 

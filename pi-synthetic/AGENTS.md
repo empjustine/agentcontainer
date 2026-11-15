@@ -32,25 +32,30 @@ A display name is display text: a model may legitimately be called
 "Nemotron 3 Super 120B (NVFP4)", whose trailing parenthesis any parser would
 read as an alias target. So:
 
-- the mapping lives in `models.js`'s `SYNTHETIC_ALIASES` and is passed to the
-  registration as a field;
-- `isAliasName` is the ONLY name-based check, and it is an exact-render
-  comparison, not a parse;
+- the target comes from `aliasTarget(row)` on the listing row and is rendered
+  by `displayNameFor`, the one function that builds the name — there is no
+  committed `SYNTHETIC_ALIASES` table (docs/d190 removed it);
+- `ALIAS_TIER_IDS` is a WARN-ONLY checklist, so a tier the listing stops
+  serving is reported rather than invented;
 - adding a "parse the name back" helper would reintroduce the unsound behavior
   the review deleted. Don't.
 
 ## Generated artifacts
 
-`models.json` and `models.js` are written by `generate.mjs`. Hand-editing
-them is erased by the next generation run — fix the shaping instead. Both are
-in `biome.jsonc`'s ignore list (generated files, same reasoning as
-`coding-agent/model-*.json`). `./npm-run.sh pi-synthetic generate
---check` is the drift gate; prefer it over eyeballing a diff when you only need
-to know "is this current".
+`models.json` is written by `generate.mjs`; it is the only artifact. Hand-
+editing it is erased by the next generation run — fix the shaping instead. It is
+in `biome.jsonc`'s ignore list (generated file, same reasoning as
+`coding-agent/model-*.json`). `./npm-run.sh pi-synthetic generate --check` is the
+drift gate; prefer it over eyeballing a diff when you only need to know "is this
+current".
+
+The extension registers no lineup of its own (docs/d190): `refreshModels` is
+the only source, so nothing reads the artifact at runtime. Do not add a `models`
+field or a committed seed to make an offline start look populated.
 
 ## The folder is the package
 
-`index.ts`, `sources.mjs`, `merge.mjs`, `log.mjs`, `models.js` and
+`index.ts`, `sources.mjs`, `merge.mjs`, `log.mjs` and
 `package.json` at this level ARE the pi package (`log.mjs` included: it is what
 `sources.mjs`, and therefore the loaded extension, writes its log lines with). If a change seems to need a subfolder, a copy step, or
 two module trees kept in sync with `cmp`, it is rebuilding machinery that was

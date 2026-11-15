@@ -30,16 +30,20 @@ hyper-specific deltas are below.
 
 ## Generated artifacts
 
-`models.json` and `models.js` are written by `generate.mjs`. Hand-editing
-them is erased by the next generation run — fix the shaping instead. Both
-are in `biome.jsonc`'s ignore list (generated files, same reasoning as
-`coding-agent/model-*.json`). `./npm-run.sh pi-hyper generate
---check` is the drift gate.
+`models.json` is written by `generate.mjs`; it is the only artifact. Hand-
+editing it is erased by the next generation run — fix the shaping instead. It
+is in `biome.jsonc`'s ignore list (generated file, same reasoning as
+`coding-agent/model-*.json`). `./npm-run.sh pi-hyper generate --check` is the
+drift gate.
+
+The extension registers no lineup of its own (docs/d190): `refreshModels` is
+the only source, so nothing reads the artifact at runtime. Do not add a `models`
+field or a committed seed to make an offline start look populated.
 
 ## The fleet seam (the one open piece)
 
 `../coding-agent/generate-pi-coding-agent.mjs` still derives the fleet's
-hyper layer (model-016) from models.dev ∪ the facts cache, so two artifacts
+hyper layer (model-016) from models.dev ∪ its own fetch of the listing, so two artifacts
 describe one provider and can drift (observed at landing: the fleet layer
 carries a stale `deepseek-v4.1-flash` context window the live listing has
 since corrected). The join is blocked on the same estige

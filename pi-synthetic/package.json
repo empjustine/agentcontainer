@@ -7,7 +7,7 @@
 		"generate": "node ./generate.mjs",
 		"test": "node --test tests/*.test.mjs"
 	},
-	"description": "pi extension: the Synthetic provider, seeded from and refreshed to the provider's own model listing",
+	"description": "pi extension: the Synthetic provider — rebuilt from its own model listing on every refresh",
 	"keywords": [
 		"pi-package",
 		"pi-extension",

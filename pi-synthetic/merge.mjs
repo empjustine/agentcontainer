@@ -18,8 +18,6 @@
  *     because its absence makes pi fabricate levels.
  */
 
-import { ALIAS_TIER_IDS } from "./sources.mjs";
-
 /** @typedef {import("./sources.mjs").ListingRow} ListingRow */
 
 /**
@@ -108,28 +106,9 @@ const EFFORT_TO_PI = Object.freeze({
  * @param {string|undefined} pointsAt the model this row serves, if it is an alias
  * @returns {string}
  */
-export function displayNameFor(id, published, pointsAt) {
+function displayNameFor(id, published, pointsAt) {
 	const base = published ?? id;
 	return pointsAt ? `${base} (${pointsAt})` : base;
-}
-
-/**
- * Whether the display `name` is exactly the one `displayNameFor` produces for
- * this id and target — the only sound way to ask "does this name still describe
- * this mapping?".
- *
- * There is deliberately NO "parse the name back into a target" function: a name
- * is display text, and a model may legitimately be called "Nemotron 3 Super
- * 120B (NVFP4)", whose trailing parenthesis any regex would read as a target.
- * The alias mapping is always carried as data (the seed's `SYNTHETIC_ALIASES`
- * export); this predicate is all the name is used for.
- * @param {string} id row id
- * @param {string|undefined} name the display name to check
- * @param {string} target the candidate alias target
- * @returns {boolean}
- */
-export function isAliasName(id, name, target) {
-	return name === displayNameFor(id, undefined, target);
 }
 
 /**
@@ -353,25 +332,6 @@ export function shapeListing(rows) {
 	return models.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 
-/**
- * The alias mapping a shaped lineup implies: tier id -> the model it points at.
- * This is what the generator commits (the seed's `SYNTHETIC_ALIASES`) and what
- * the extension reads back, so the resolution is DATA and never parsed out of a
- * display name.
- * @param {readonly MergedModel[]} models
- * @returns {Record<string, string>}
- */
-export function aliasMap(models) {
-	/** @type {Record<string, string>} */
-	const aliases = {};
-	for (const model of models) {
-		if (model.pointsAt && ALIAS_TIER_IDS.includes(model.id)) {
-			aliases[model.id] = model.pointsAt;
-		}
-	}
-	return aliases;
-}
-
 /* ------------------------------ projections -------------------------------- */
 
 /**
@@ -421,8 +381,8 @@ export function toPiModel(model) {
  *     hide `max`/`xhigh` that it does.
  *
  * No folder-specific field rides along: pi's schema is strict and a vendor
- * field here would be a gamble. The alias mapping lives in the seed's separate
- * `SYNTHETIC_ALIASES` export for the same reason.
+ * field here would be a gamble. A tier row's target rides its own display name
+ * (`displayNameFor`), never a side table.
  * @param {MergedModel} model
  * @returns {Record<string, unknown>}
  */

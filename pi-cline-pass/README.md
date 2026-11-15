@@ -99,15 +99,14 @@ execution of their code — with these caveats:
 | `index.ts`     | the extension entry: `registerProvider` + `refreshModels` (the reconciliation at runtime)                         |
 | `sources.mjs`  | the two source reads: the lineup from the docs table, the metadata from models.dev                                |
 | `merge.mjs`    | the one shaping step and both projections (manifest entry, registered-model entry)                                |
-| `generate.mjs` | two sources in, two artifacts out; `--check` verifies without writing                                             |
+| `generate.mjs` | two sources in, one artifact out; `--check` verifies without writing                                              |
 | `log.mjs`      | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045)                                             |
 | `models.json`  | GENERATED: the pi-`models.json`-shaped cline-pass block (fleet parity: provider-level compat, canonical upstream) |
-| `models.js`    | GENERATED: the extension's offline seed (registered before any fresher store exists)                              |
 
 Regenerate with `./npm-run.sh pi-cline-pass generate` from the
-repo root (the git diff is the review). The artifacts are the extension's
-seed — what pi registers before the first refresh — and the fleet-parity
-record; `--check` verifies them without writing.
+repo root (the git diff is the review). The extension registers no lineup of
+its own (docs/d190): `refreshModels` reads the docs table at runtime, so the
+artifact is the fleet-parity and drift record and nothing else.
 
 ## Provenance
 

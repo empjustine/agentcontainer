@@ -28,22 +28,25 @@ verboo-specific deltas are below.
 
 ## Generated artifacts
 
-`models.json` and `models.js` are written by `generate.mjs`. Hand-editing
-them is erased by the next `./npm-run.sh pi-verboo generate` —
-fix the shaping instead. Both are in `biome.jsonc`'s ignore list. Adding
-`--check` to that command is the drift gate; both forms need the key.
+`models.json` is written by `generate.mjs`; it is the only artifact. Hand-
+editing it is erased by the next `./npm-run.sh pi-verboo generate` — fix the
+shaping instead. It is in `biome.jsonc`'s ignore list. Adding `--check` to that
+command is the drift gate; either form needs the key.
 
-The committed pair was SEEDED at landing from the fleet's facts cache
-(`../coding-agent/verboo-facts.json`, the same listing as last fetched
-2026-10-29) because this sandbox holds no `VERBOO_API_KEY` — the seeding ran
-the real generate path with only the transport stubbed, so the artifacts are
-exactly what a keyed regeneration of that listing produces. The first keyed
-`./npm-run.sh pi-verboo generate` is the honest refresh.
+The extension registers no lineup of its own (docs/d190): `refreshModels` is
+the only source, so nothing reads the artifact at runtime.
+
+The committed artifact was SEEDED at landing from the fleet's last fetch of
+the same listing because this sandbox holds no `VERBOO_API_KEY` — the seeding
+ran the real generate path with only the transport stubbed. The fleet keeps no
+copy of it any more (docs/d191), so this artifact is the only record of what
+that fetch answered; the first keyed `./npm-run.sh pi-verboo generate` is the
+honest refresh.
 
 ## The fleet seam (the one open piece)
 
 `../coding-agent/generate-pi-coding-agent.mjs` still derives the fleet's
-verboo layer (model-018) from the same facts cache through its own mapper,
+verboo layer (model-018) from the same listing through its own mapper,
 so two shapings of one listing exist and can drift. The join is blocked on
 the same estige deployment decision as pi-synthetic's seam
 (docs/d096, d100) — do not start it independently.
