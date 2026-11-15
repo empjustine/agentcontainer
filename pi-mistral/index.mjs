@@ -85,6 +85,21 @@ const REFRESH_INTERVAL_MS = 4 * 60 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 15_000;
 
 /**
+ * The request signal: pi's cancellation composed with this folder's own
+ * deadline. Both, never either — `signal ?? AbortSignal.timeout(…)` dropped the
+ * ceiling on every real refresh, because pi always hands a concrete signal
+ * (pi-ai's RefreshModelsContext), so a catalog fetch to an upstream that never
+ * answers waited on the user's cancel alone.
+ * @param {AbortSignal} [caller] pi's signal, when the caller has one
+ * @returns {AbortSignal}
+ */
+function requestSignal(caller) {
+	return caller
+		? AbortSignal.any([caller, AbortSignal.timeout(REQUEST_TIMEOUT_MS)])
+		: AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+}
+
+/**
  * One listing probe. The payload check is deliberately shallow: a 2xx whose
  * body is not the OpenAI-shaped {data: [...]} means the upstream changed
  * shape, which is exactly the "the live lineup cannot be confirmed" case
@@ -100,7 +115,7 @@ async function fetchListingCount(signal, fetchImpl = fetch) {
 		// Conditional spread, not `headers: undefined`: exactOptionalPropertyTypes
 		// rejects an explicit undefined in a RequestInit slot (tsconfig).
 		...(key ? { headers: { Authorization: `Bearer ${key}` } } : {}),
-		signal: signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+		signal: requestSignal(signal),
 	});
 	if (!res.ok) {
 		throw new Error(`model listing answered ${res.status}`);
@@ -134,6 +149,7 @@ async function fetchListingCount(signal, fetchImpl = fetch) {
  * @returns {Promise<void>} never a list: pi's built-ins ARE this provider's catalog
  */
 async function watch(context) {
+	context.signal.throwIfAborted();
 	if (context.allowNetwork === false) {
 		return;
 	}

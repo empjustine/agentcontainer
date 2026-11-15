@@ -104,6 +104,22 @@ const CLINE_PASS_DOCS_URL =
  */
 
 const REQUEST_TIMEOUT_MS = 15_000;
+
+/**
+ * The request signal: the CALLER's cancellation composed with this folder's own
+ * deadline. Both, never either — `signal ?? AbortSignal.timeout(…)` was the
+ * first shape here and it silently dropped the ceiling on every real refresh,
+ * because pi always hands a concrete signal (pi-ai's RefreshModelsContext): a
+ * revoked refresh then waited on an upstream that never answers, which is the
+ * hang d045 says the step owning the I/O must report instead.
+ * @param {AbortSignal} [caller] pi's signal, when the caller has one
+ * @returns {AbortSignal}
+ */
+function requestSignal(caller) {
+	return caller
+		? AbortSignal.any([caller, AbortSignal.timeout(REQUEST_TIMEOUT_MS)])
+		: AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+}
 const MODEL_STORE_TTL_MS = 4 * 60 * 60 * 1000;
 
 /**
@@ -166,7 +182,7 @@ export async function fetchDocsLineup({ signal, fetchImpl = fetch } = {}) {
 		mdx = readFileSync(explicit, "utf-8");
 	} else {
 		const res = await fetchImpl(CLINE_PASS_DOCS_URL, {
-			signal: signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+			signal: requestSignal(signal),
 		});
 		if (!res.ok) {
 			throw new Error(`cline-pass docs answered ${res.status} — nothing to publish`);

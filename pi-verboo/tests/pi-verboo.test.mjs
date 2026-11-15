@@ -299,3 +299,25 @@ test("an unreadable source is REPORTED, never a silent empty lineup (docs/d190)"
 		globalThis.fetch = realFetch;
 	}
 });
+
+test("the request signal composes the caller's cancellation with the deadline", async () => {
+	// Both, never either: `signal ?? AbortSignal.timeout(…)` dropped the 15 s
+	// ceiling on every real refresh, because pi always hands a concrete signal —
+	// a revoked refresh then waited on an upstream that never answers.
+	const controller = new AbortController();
+	/** @type {AbortSignal|undefined} */
+	let seen;
+	await fetchListing({
+		signal: controller.signal,
+		fetchImpl: async (/** @type {any} */ _url, /** @type {any} */ init) => {
+			seen = init.signal;
+			return /** @type {any} */ ({ ok: true, status: 200, json: async () => ({ data: [{ id: "x" }] }) });
+		},
+	});
+	assert.ok(seen, "fetch was called with a signal");
+	assert.notEqual(seen, controller.signal, "composed, so the ceiling rides along");
+	assert.equal(seen.aborted, false);
+	controller.abort();
+	assert.equal(seen.aborted, true, "the caller's abort reaches the request");
+});
+
