@@ -210,7 +210,9 @@ function startAgent(agent, cwd) {
 			// group dies: a wedged model must not survive its step.
 			try {
 				child.stdin.end();
-				process.kill(-child.pid, "SIGKILL");
+				if (child.pid !== undefined) {
+					process.kill(-child.pid, "SIGKILL");
+				}
 			} catch {
 				// Already gone.
 			}
@@ -646,7 +648,9 @@ export function report(records) {
 		(r) => r.record === "step" && live.has(`${r.seed}:${r.arm}:${r.attempt}`),
 	);
 	const traps = steps.filter((r) => r.kind === "trap");
-	const armOf = [...new Set(episodes.map((e) => e.arm))].sort();
+	const armOf = [...new Set(episodes.map((e) => e.arm))].sort((a, b) =>
+		a.localeCompare(b),
+	);
 	const row = (cells) => `| ${cells.join(" | ")} |`;
 	const lines = [
 		"# llm-local-bench",
@@ -713,7 +717,7 @@ export function report(records) {
 		row(["trap", "n", "pass", "wrong decision", "wrong source", "invented"]),
 	);
 	lines.push(row(["---", "---", "---", "---", "---", "---"]));
-	for (const id of [...new Set(traps.map((r) => r.id))]) {
+	for (const id of new Set(traps.map((r) => r.id))) {
 		const rows = traps.filter((r) => r.id === id);
 		lines.push(
 			row([
