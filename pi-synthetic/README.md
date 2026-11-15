@@ -33,8 +33,8 @@ and [ben-vargas/pi-packages](https://github.com/ben-vargas/pi-packages)
 | `sources.mjs`                          | the ONE data source: the provider's `/models` listing, fetched from the folder's own canonical-upstream row |
 | `merge.mjs`                            | the ONE shaping step (`shapeListing`/`shapeRow`) and the projection into pi-ai's registered-model entry     |
 | `log.mjs`                              | the JSONL log lines `sources.mjs` emits (docs/d045)                                                         |
-| `index.ts`                             | the pi extension entry (provider registration + `refreshModels`)                                            |
-| `package.json`                         | the pi package manifest (`pi.extensions` → `./index.ts`)                                                    |
+| `index.mjs`                            | the pi extension entry (provider registration + `refreshModels`)                                            |
+| `package.json`                         | the pi package manifest (`pi.extensions` → `./index.mjs`)                                                   |
 | `AGENTS.md` / `TODO.md` / `PENDING.md` | folder rules · open items · the review that collapsed the design                                            |
 
 The folder **is** the package. There is no `extension/` subfolder, no copy step,
@@ -149,7 +149,7 @@ table mirrors it (docs/d190 removed `SYNTHETIC_ALIASES`). If the provider stops 
 
 ```sh
 # one invocation, nothing installed
-pi -e ./pi-synthetic/index.ts
+pi -e ./pi-synthetic/index.mjs
 
 # installed as a package (project-local: .pi/settings.json)
 pi install ./pi-synthetic -l
@@ -197,7 +197,7 @@ two renderings" is the whole point of the folder.
 `ProviderConfig.refreshModels` form accepts a returned array ("the returned list
 replaces extension-provided models") and its context carries `credential`,
 `stored`, `publish`, `allowNetwork`, `force` and `signal` — the fields
-`index.ts` reads.
+`index.mjs` reads.
 
 **Not** verified: a real turn. The transport is untouched by any test here, and
 no pi process has ever loaded this extension. `TODO.md` §1 carries the rest.

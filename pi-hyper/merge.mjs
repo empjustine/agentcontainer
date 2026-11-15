@@ -24,6 +24,14 @@
  */
 
 /** @typedef {import("./sources.mjs").CatalogRecord} CatalogRecord */
+/**
+ * pi's registration surface, and the CHAT arm of its model union — the arm this
+ * folder always emits (no `type` field; pi normalizes that to "chat"). The
+ * host's own types, pinned by the folder's devDependency (docs/d107), so a
+ * schema field pi changes becomes a tsc finding here.
+ * @typedef {import("@earendil-works/pi-coding-agent").ProviderModelConfig} ProviderModelConfig
+ * @typedef {Extract<ProviderModelConfig, {reasoning: boolean}>} ProviderChatModelConfig
+ */
 
 /**
  * @typedef {Record<string, string|null>} ThinkingLevelMap
@@ -35,8 +43,8 @@
  * @typedef {object} MergedModel
  * @property {string} id
  * @property {string} name display name — the catalog's, or the id itself
- * @property {string[]} input already pi-shaped (what pi drives, from the
- *   record's attachment flag)
+ * @property {("text"|"image")[]} input already pi-shaped (what pi drives, from
+ *   the record's attachment flag)
  * @property {number|undefined} contextWindow
  * @property {number|undefined} maxTokens
  * @property {boolean} reasoning
@@ -64,7 +72,7 @@
  *
  * `supportsReasoningEffort` is the one per-model member (the published
  * effort enum decides it) and is filled in by the projections.
- * @type {Readonly<{supportsStore: boolean, thinkingFormat: string, maxTokensField: string}>}
+ * @type {Readonly<{supportsStore: false, thinkingFormat: "deepseek", maxTokensField: "max_tokens"}>}
  */
 const HYPER_WIRE_COMPAT = Object.freeze({
 	supportsStore: false,
@@ -214,7 +222,7 @@ function num(/** @type {unknown} */ value) {
  * no modality arrays, only whether a model accepts attachments, so text is
  * the always-present core and image rides the flag.
  * @param {CatalogRecord} record
- * @returns {string[]}
+ * @returns {("text"|"image")[]}
  */
 function toInput(record) {
 	return record.supports_attachments === true ? ["text", "image"] : ["text"];
@@ -274,7 +282,7 @@ export function shapeCatalog(records) {
  * has no provider-level compat slot, so the per-model copy is the only
  * placement that survives registration.
  * @param {MergedModel} model
- * @returns {{supportsStore: boolean, supportsReasoningEffort: boolean, thinkingFormat: string, maxTokensField: string}}
+ * @returns {NonNullable<ProviderChatModelConfig["compat"]>}
  */
 export function compatFor(model) {
 	return {
@@ -303,10 +311,10 @@ export function compatFor(model) {
  * levels the provider never published AND hide the `max` the ON_OFF map
  * exists to offer.
  * @param {MergedModel} model
- * @returns {Record<string, unknown>}
+ * @returns {ProviderChatModelConfig}
  */
 export function toExtensionModel(model) {
-	/** @type {Record<string, unknown>} */
+	/** @type {ProviderChatModelConfig} */
 	const entry = {
 		id: model.id,
 		name: model.name,

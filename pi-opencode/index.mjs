@@ -1,5 +1,5 @@
 /**
- * @fileoverview index.ts — the pi extension entry, as TWO CATALOG FRESHNESS
+ * @fileoverview index.mjs — the pi extension entry, as TWO CATALOG FRESHNESS
  * WATCHDOGS, not catalogs (docs/d097's built-in-provider rule; the opencode
  * + opencode-go unification is docs/d100's).
  *
@@ -43,7 +43,22 @@
  * flows, quota/status UI, request shaping, and any model data.
  */
 
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+/**
+ * The host's extension surface. A devDependency pins the version whose types
+ * are checked here (docs/d107); the runtime instance is the host's own, and
+ * the peerDep range states that contract in package.json.
+ * @typedef {import("@earendil-works/pi-coding-agent").ExtensionAPI} ExtensionAPI
+ * @typedef {import("@earendil-works/pi-coding-agent").ProviderConfig} ProviderConfig
+ * @typedef {import("@earendil-works/pi-coding-agent").ProviderModelConfig} ProviderModelConfig
+ */
+
+/**
+ * What pi hands `refreshModels`, DERIVED from the registration slot rather than
+ * imported from `@earendil-works/pi-ai`: pi-ai is a transitive dependency of
+ * the host, not something this folder may name (pnpm's isolated node_modules
+ * would not resolve it), and a derived type cannot drift from the slot.
+ * @typedef {Parameters<NonNullable<ProviderConfig["refreshModels"]>>[0]} RefreshModelsContext
+ */
 
 /** pi namespaces the models under these ids; they are also the fact-table ids. */
 export const OPENCODE_PROVIDER_ID = "opencode";
@@ -75,46 +90,36 @@ const REFRESH_INTERVAL_MS = 4 * 60 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 15_000;
 
 /**
- * What pi hands `refreshModels`, as far as this extension reads it —
- * declared structurally and read defensively because @earendil-works/pi-* is
- * host-provided at runtime but is not a dependency of this repo.
- */
-interface RefreshContext {
-	signal?: AbortSignal;
-	/** false during offline/cache-only initialization — no warning then. */
-	allowNetwork?: boolean;
-	/** bypass the refresh interval and fetch immediately. */
-	force?: boolean;
-}
-
-/**
  * One listing probe. The payload check is deliberately shallow: a 2xx whose
  * body is not the OpenAI-shaped {data: [...]} means the upstream changed
  * shape (or answered through an intercepting page), which is exactly the
  * "the live lineup cannot be confirmed" case this watchdog exists to report.
+ * @param {string} url
+ * @param {AbortSignal} [signal]
+ * @param {typeof fetch} [fetchImpl]
+ * @returns {Promise<number>} usable rows in the listing
  * @throws {Error} on transport failure, non-2xx, or an unrecognizable payload
  */
-async function fetchListingCount(
-	url: string,
-	signal?: AbortSignal,
-	fetchImpl: typeof fetch = fetch,
-): Promise<number> {
+async function fetchListingCount(url, signal, fetchImpl = fetch) {
 	const key = process.env[OPENCODE_API_KEY_ENV]?.trim();
 	const res = await fetchImpl(url, {
-		headers: key ? { Authorization: `Bearer ${key}` } : undefined,
+		// Conditional spread, not `headers: undefined`: exactOptionalPropertyTypes
+		// rejects an explicit undefined in a RequestInit slot (tsconfig).
+		...(key ? { headers: { Authorization: `Bearer ${key}` } } : {}),
 		signal: signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 	});
 	if (!res.ok) {
 		throw new Error(`model listing answered ${res.status}`);
 	}
-	const payload: unknown = await res.json();
+	/** @type {unknown} */
+	const payload = await res.json();
 	const rows = Array.isArray(payload)
 		? payload
-		: Array.isArray((payload as { data?: unknown })?.data)
-			? (payload as { data: unknown[] }).data
+		: Array.isArray(/** @type {{data?: unknown}} */ (payload)?.data)
+			? /** @type {{data: unknown[]}} */ (payload).data
 			: [];
 	const ids = rows.filter(
-		(row) => typeof (row as { id?: unknown })?.id === "string",
+		(row) => typeof /** @type {{id?: unknown}} */ (row)?.id === "string",
 	);
 	if (ids.length === 0) {
 		throw new Error("model listing carried no usable rows");
@@ -127,47 +132,63 @@ async function fetchListingCount(
  * listing URL, the shared rules. Returned as the registration's whole
  * config — ONLY refreshModels, because anything else would override the
  * built-in provider.
+ *
+ * `undefined` is a real outcome, not an empty lineup: an empty array would
+ * REPLACE the catalog with nothing. The composer applies a returned list only
+ * when it is truthy (verified in the pinned host), which is what docs/d190's
+ * "no remembered lineup" rule rests on — and what the published slot type
+ * cannot express, hence the cast at the registration.
  * @param {string} providerId the provider this watchdog speaks for
  * @param {string} listingUrl the provider's live listing
+ * @returns {ProviderConfig}
  */
-function watchdog(providerId: string, listingUrl: string) {
+function watchdog(providerId, listingUrl) {
 	let lastAttemptAt = 0;
-	return {
-		refreshModels: async (context: RefreshContext = {}) => {
-			context.signal?.throwIfAborted();
-			if (context.allowNetwork === false) {
-				return;
-			}
-			if (!context.force && Date.now() - lastAttemptAt < REFRESH_INTERVAL_MS) {
-				return;
-			}
-			lastAttemptAt = Date.now();
-			try {
-				await fetchListingCount(listingUrl, context.signal);
-			} catch (err) {
-				if (context.signal?.aborted) {
-					throw err;
-				}
-				// Throwing IS the catalog warning: pi records the provider in
-				// ModelsRefreshResult.errors and the UI shows "Could not refresh
-				// <provider>; showing cached models." — and since we returned
-				// nothing, the built-in rows are exactly what keeps standing.
-				throw new Error(
-					`${providerId}: live model listing unreachable (${
-						err instanceof Error ? err.message : String(err)
-					}) — keeping pi's built-in catalog`,
-					{ cause: err },
-				);
-			}
-			// Success returns undefined on purpose: the fresh lineup is the ids
-			// only, and pi's built-in rows carry names, limits, prices, dialects
-			// and thinking maps this file neither has nor could improve.
+	/**
+	 * @param {RefreshModelsContext} context
+	 * @returns {Promise<void>} never a list: pi's built-ins ARE the catalog
+	 */
+	const refresh = async (context) => {
+		if (context.allowNetwork === false) {
 			return;
-		},
+		}
+		if (!context.force && Date.now() - lastAttemptAt < REFRESH_INTERVAL_MS) {
+			return;
+		}
+		lastAttemptAt = Date.now();
+		try {
+			await fetchListingCount(listingUrl, context.signal);
+		} catch (err) {
+			if (context.signal.aborted) {
+				throw err;
+			}
+			// Throwing IS the catalog warning: pi records the provider in
+			// ModelsRefreshResult.errors and the UI shows "Could not refresh
+			// <provider>; showing cached models." — and since we returned
+			// nothing, the built-in rows are exactly what keeps standing.
+			throw new Error(
+				`${providerId}: live model listing unreachable (${
+					err instanceof Error ? err.message : String(err)
+				}) — keeping pi's built-in catalog`,
+				{ cause: err },
+			);
+		}
+		// Success returns nothing on purpose: the fresh lineup is the ids only,
+		// and pi's built-in rows carry names, limits, prices, dialects and
+		// thinking maps this file neither has nor could improve.
+	};
+	return {
+		refreshModels: /** @type {NonNullable<ProviderConfig["refreshModels"]>} */ (
+			/** @type {unknown} */ (refresh)
+		),
 	};
 }
 
-export default function piOpencode(pi: ExtensionAPI): void {
+/**
+ * @param {ExtensionAPI} pi
+ * @returns {void}
+ */
+export default function piOpencode(pi) {
 	pi.registerProvider(
 		OPENCODE_PROVIDER_ID,
 		watchdog(OPENCODE_PROVIDER_ID, OPENCODE_LISTING_URL),

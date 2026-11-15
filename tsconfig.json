@@ -37,14 +37,22 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		// Second free wave (2026-11-05): all measured at zero findings. The
-		// first three flip tsc's lenient defaults (undefined = no check) to
-		// enforced checks; skipLibCheck inverts its old true — @types/node
-		// 24.19.2 under TS 6.0.3 type-checks clean, so full .d.ts checking
-		// now costs nothing and buys the whole installed type surface.
+		// first two flip tsc's lenient defaults (undefined = no check) to
+		// enforced checks.
 		"allowUnreachableCode": false,
 		"allowUnusedLabels": false,
 		"isolatedModules": true,
-		"skipLibCheck": false,
+		// TRUE again, and for a reason the 2026-11-05 wave did not have: the pi
+		// extension entries now carry the host's real types (each folder's
+		// devDependency, docs/d107), which drags pi-ai's provider SDK types into
+		// the program — and @google/genai's genai.d.ts names DOM globals
+		// (RequestInfo, ErrorEvent, HeadersInit) and an optional
+		// @modelcontextprotocol/sdk peer this repo does not install. None of that
+		// is the tree's code, and the tree carries no .d.ts of its own: every
+		// .mjs/.ts source stays fully checked. The flag was false while
+		// @types/node was the only library in the program (it measured clean);
+		// a vendored type graph is exactly the case this flag exists for.
+		"skipLibCheck": true,
 		// The finding wave (24 sites, fixed): optional slots that DELIBERATELY
 		// receive undefined ("the source did not publish this") are now typed
 		// T|undefined; fetch headers became conditional spreads; test override
@@ -61,12 +69,10 @@
 		// with biome's useLiteralKeys (error level), which demands the opposite.
 	},
 	"include": ["**/*.mjs", "**/*.ts", "**/*.mts", "**/*.js"],
-	// Exclusions are contracts, not backlog. node_modules: third-party code
-	// pinned by package-lock (docs/d107), checked by the tools' own gates.
-	// pi-*/index.ts (the six extension entry points): they import
-	// @earendil-works/pi-coding-agent, which this repo does not vendor, so
-	// tsc would report a module that is host-provided at runtime; their
-	// <folder>/tests/*.test.mjs files IMPORT AND RUN the real entry points
-	// instead, which covers them better.
-	"exclude": ["node_modules", "**/node_modules", "pi-*/index.ts"]
+	// node_modules is the ONLY exclusion: third-party code pinned by
+	// package-lock/pnpm-lock (docs/d107), checked by the tools' own gates.
+	// There is no per-file exemption any more — the pi-*/index.mjs entries were
+	// the last one, and they hold the host's real types now, so they are
+	// ordinary members of the program.
+	"exclude": ["node_modules", "**/node_modules"]
 }

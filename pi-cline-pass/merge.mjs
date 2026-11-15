@@ -15,18 +15,11 @@
 
 import { CLINE_PASS_ID_PREFIX } from "./sources.mjs";
 /** @typedef {import("./sources.mjs").LineupEntry} LineupEntry */
-
 /**
- * pi's registration surface for one model.
- * @typedef {object} ExtensionModel
- * @property {string} id
- * @property {string} name
- * @property {boolean} reasoning
- * @property {string[]} input
- * @property {number} contextWindow
- * @property {number} maxTokens
- * @property {{input: number, output: number, cacheRead: number, cacheWrite: number}} cost
- * @property {Readonly<{supportsDeveloperRole: boolean}>} compat
+ * pi's registration surface for one model — the host's own type, so a field
+ * pi's schema changes is a tsc finding here rather than a runtime surprise in
+ * the model selector (the folder's devDependency pins the version, docs/d107).
+ * @typedef {import("@earendil-works/pi-coding-agent").ProviderModelConfig} ProviderModelConfig
  */
 
 /**
@@ -66,7 +59,7 @@ export function shapeCatalog(lineup) {
  * does not carry, so they carry its documented defaults and the zero cost
  * block (docs/models-configuration.md).
  * @param {MergedModel} model
- * @returns {ExtensionModel}
+ * @returns {ProviderModelConfig}
  */
 export function toExtensionModel({ id, name }) {
 	return {

@@ -22,7 +22,7 @@ generator uses (docs/d189 owns the lineup contract).
 ```sh
 pi install ./pi-cline-pass -l    # local package from this repo
 # or point pi straight at the entry:
-pi -e ./pi-cline-pass/index.ts
+pi -e ./pi-cline-pass/index.mjs
 ```
 
 ## Environment
@@ -102,7 +102,7 @@ execution of their code — with these caveats:
 
 | File          | Role                                                                                      |
 | ------------- | ----------------------------------------------------------------------------------------- |
-| `index.ts`    | the extension entry: `registerProvider` + `refreshModels` (the reconciliation at runtime) |
+| `index.mjs`   | the extension entry: `registerProvider` + `refreshModels` (the reconciliation at runtime) |
 | `sources.mjs` | the one source read (the docs table) and its parser                                       |
 | `merge.mjs`   | the one shaping step: a published row becomes the registered-model entry                  |
 | `log.mjs`     | the JSONL log lines `sources.mjs` emits (docs/d045)                                       |
@@ -116,9 +116,10 @@ for a drift gate to compare, and the extension registers no lineup of its own
 ## Provenance
 
 Every cross-repo reference this folder makes is either LIVE DATA or an
-ATTRIBUTION — never a code dependency (the only package dependency is the
-host itself, @earendil-works/pi-coding-agent, an optional peerDep that is
-never vendored):
+ATTRIBUTION — never a code dependency. The host package
+(@earendil-works/pi-coding-agent) is an optional peerDependency at runtime and
+an exact devDependency for its types: the runtime instance is pi's own, and the
+pin is only what tsc and the tests read (docs/d107).
 
 - **The provider row** (`sources.mjs`, frozen) — the canonical upstream
   and key env (docs/d024/d070). Live data, one home.

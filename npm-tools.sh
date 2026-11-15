@@ -37,3 +37,43 @@ npm_tools_ensure() {
 	fi
 	printf '%s\n' "$_npm_sum" > "$_npm_stamp"
 }
+# pnpm_tools_ensure <repo-root> — install what the six pi extension folders
+# typecheck against: @earendil-works/pi-coding-agent, one lockfile per folder
+# because a folder is a copy unit (docs/d113), ONE store because pnpm hardlinks
+# the unpacked tree instead of copying it (docs/d107). Six entries therefore
+# cost one copy on disk — the reason pnpm rather than npm is the second manager
+# here, where npm would have written six.
+#
+# Skips a folder whose lockfile is unchanged, by the same cksum stamp idiom as
+# the npm tree above. A folder with no lockfile is skipped rather than fatal:
+# only the extensions that carry the devDependency need the install.
+#
+# Usage: pnpm_tools_ensure <repo-root>
+pnpm_tools_ensure() {
+	_pnpm_root=$1
+	# shellcheck source-path=SCRIPTDIR source=dev-tools.sh
+	. "$(dirname "$0")/dev-tools.sh"
+	for _pnpm_lock in "$_pnpm_root"/pi-*/pnpm-lock.yaml; do
+		[ -f "$_pnpm_lock" ] || continue
+		_pnpm_dir=${_pnpm_lock%/pnpm-lock.yaml}
+		_pnpm_stamp="$_pnpm_dir/node_modules/.agentcontainer-lock"
+		_pnpm_sum=$(cksum "$_pnpm_lock" | awk '{print $1 ":" $2}')
+		if [ -d "$_pnpm_dir/node_modules" ] &&
+			[ "$(cat "$_pnpm_stamp" 2>/dev/null || :)" = "$_pnpm_sum" ]; then
+			continue
+		fi
+		_pnpm_name=${_pnpm_dir##*/}
+		log_info "installing pi extension types" unit="$_pnpm_name" \
+			lock=pnpm-lock.yaml store=.pnpm-store
+		# --frozen-lockfile: the committed lock is the only version source, so a
+		# drifted package.json fails here instead of silently resolving. The pin
+		# table (dev-tools.sh) supplies pnpm; mise is a dev-host tool only.
+		if ! ( cd "$_pnpm_dir" &&
+			dev_tool_run pnpm pnpm install --frozen-lockfile --ignore-scripts ); then
+			log_die 96 "pnpm install failed — the pi entry points cannot typecheck" \
+				path="$_pnpm_dir" hint="./dev-tools.sh pnpm"
+		fi
+		printf '%s\n' "$_pnpm_sum" > "$_pnpm_stamp"
+	done
+}
+

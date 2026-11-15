@@ -24,6 +24,10 @@ root="${1:-$repo_root}"
 cd "$root"
 
 npm_tools_ensure "$repo_root"
+# The pi extension entries are IN tsconfig.json's program and resolve
+# @earendil-works/pi-coding-agent from their own node_modules; without them tsc
+# reports six missing modules. One store, six lockfiles (npm-tools.sh).
+pnpm_tools_ensure "$repo_root"
 [ -x "$repo_root/node_modules/.bin/tsc" ] ||
 	log_die 96 "tsc missing from the npm dev toolchain" path="$repo_root/node_modules"
 

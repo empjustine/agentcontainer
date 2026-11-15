@@ -309,23 +309,25 @@ test("the model store TTL is the refresh gate, not an absolute clock", () => {
 });
 
 test("the extension loads and registers a provider with no remembered lineup", async () => {
-	// The real entry point, imported and executed — not a textual review. Node's
-	// native TypeScript stripping runs index.ts directly, and the sibling .mjs
-	// modules are plain ESM, so this exercises the shipped module graph.
+	// The real entry point, imported and executed — not a textual review. the entry is part of the tsc program too
+	// (the folder carries pi's types as a devDependency), so this also pins that
+	// the shipped module graph type-checks.
 	const previousKey = process.env.SYNTHETIC_API_KEY;
 	delete process.env.SYNTHETIC_API_KEY;
 	try {
-		// A computed specifier on purpose: a literal ".ts" path would pull this
-		// file into the tsc program, where pi's host-provided imports report as
-		// missing modules. Running it is the check that matters.
-		const entrySpecifier = "../index.ts";
-		const entry = await import(entrySpecifier);
+		const entry = await import("../index.mjs");
 		/** @type {{id: string, config: any}[]} */
 		const registered = [];
-		entry.default({
-			registerProvider: (/** @type {string} */ id, /** @type {any} */ config) =>
-				registered.push({ id, config }),
-		});
+		// The shim is the ONE member this folder uses: the host interface is an
+		// overloaded registerProvider plus dozens of members, so it captures the
+		// registration rather than faking the whole surface.
+		entry.default(
+			/** @type {any} */ ({
+				registerProvider: (/** @type {string} */ id, /** @type {any} */ config) => {
+					registered.push({ id, config });
+				},
+			}),
+		);
 		assert.equal(registered.length, 1, "exactly one provider is registered");
 		const first = registered[0];
 		assert.ok(first);
@@ -341,7 +343,10 @@ test("the extension loads and registers a provider with no remembered lineup", a
 		// Nothing remembered and no network wanted: nothing to offer, rather
 		// than a list the provider may already have retired.
 		assert.equal(
-			await config.refreshModels({ allowNetwork: false }),
+			await config.refreshModels({
+				allowNetwork: false,
+				signal: new AbortController().signal,
+			}),
 			undefined,
 		);
 		assert.equal(id, SYNTHETIC_PROVIDER_ID);
@@ -352,5 +357,42 @@ test("the extension loads and registers a provider with no remembered lineup", a
 		} else {
 			process.env.SYNTHETIC_API_KEY = previousKey;
 		}
+	}
+});
+
+test("an unreadable source is REPORTED, never a silent empty lineup (docs/d190)", async () => {
+	// The provider's own source is the only lineup, so a failure must reach the
+	// operator: pi renders a thrown refresh as "Could not refresh <provider>;
+	// showing cached models." (ModelsRefreshResult.errors). Returning undefined
+	// instead would keep the last list and say nothing.
+	const realFetch = globalThis.fetch;
+	globalThis.fetch = /** @type {any} */ (
+		async () => ({ ok: false, status: 503, json: async () => ({}) })
+	);
+	try {
+		const entry = await import("../index.mjs");
+		/** @type {any} */
+		let config;
+		entry.default(
+			/** @type {any} */ ({
+				registerProvider: (/** @type {string} */ _id, /** @type {any} */ c) => {
+					config = c;
+				},
+			}),
+		);
+		await assert.rejects(
+			() =>
+				config.refreshModels({
+					allowNetwork: true,
+					signal: new AbortController().signal,
+				}),
+			(/** @type {any} */ err) => {
+				assert.ok(err.message.includes(SYNTHETIC_PROVIDER_ID));
+				assert.ok(err.cause instanceof Error, "the cause is carried (d045)");
+				return true;
+			},
+		);
+	} finally {
+		globalThis.fetch = realFetch;
 	}
 });

@@ -11,7 +11,7 @@ tags: [pi-extensions, providers, opencode]
 
 # pi-opencode — opencode and opencode-go as catalog freshness watchdogs
 
-`pi -e ./pi-opencode/index.ts` (or `pi -c` with the absolute path) adds
+`pi -e ./pi-opencode/index.mjs` (or `pi -c` with the absolute path) adds
 provider extensions for **both** opencode.ai surfaces — `opencode` (zen)
 and `opencode-go` — **without carrying any model data of their own**. One
 folder for the family because they share the key env (`OPENCODE_API_KEY`),
@@ -40,10 +40,10 @@ session warns once per provider, not on every model-selector open.
 
 ## Layout
 
-| file           | role                                                                                                                                                              |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index.ts`     | the entire extension: two `registerProvider(<id>, { refreshModels })` registrations, the shared listing probe and the warn/fall-through rules (WHY: fileoverview) |
-| `package.json` | `pi.package`, `pi.extensions: ["./index.ts"]`; optional peerDep on `@earendil-works/pi-coding-agent` (host-provided, never vendored)                              |
+| file           | role                                                                                                                                                               |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `index.mjs`    | the entire extension: two `registerProvider(<id>, { refreshModels })` registrations, the shared listing probe and the warn/fall-through rules (WHY: fileoverview)  |
+| `package.json` | `pi.package`, `pi.extensions: ["./index.mjs"]`; `@earendil-works/pi-coding-agent` as an optional peerDep (the runtime is pi's own) and an exact devDep (its types) |
 
 There are no generated artifacts, no `generate.sh`, no `--check` — the
 folder has nothing to regenerate. `tests/pi-opencode.test.mjs` pins the

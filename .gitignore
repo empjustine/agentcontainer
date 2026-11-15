@@ -8,6 +8,11 @@ estige/estige-android
 # installed tree is disposable and recreated on demand by ./npm-tools.sh.
 node_modules/
 
+# pnpm's content-addressable store (docs/d107): the pi extensions each carry
+# their own pnpm-lock.yaml (a folder is a copy unit), and this ONE store holds
+# the bytes all six hardlink — deleting a folder's node_modules costs nothing.
+.pnpm-store/
+
 # Python bytecode — the llm-local-inference tools run through `uv run`, which
 # writes __pycache__ beside every imported module (the unit's own lib/
 # included). Disposable by definition: no .pyc is ever an input.

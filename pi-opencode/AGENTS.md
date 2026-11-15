@@ -1,7 +1,7 @@
 # AGENTS.md — pi-opencode
 
 The folder IS the pi package (`pi.package` in `package.json`) and its
-`index.ts` is the extension entry (like `examples/extensions/`). It covers
+`index.mjs` is the extension entry (like `examples/extensions/`). It covers
 the whole opencode.ai vendor family — `opencode` (zen) and `opencode-go`
 — as TWO registrations in one entry, because they share the key env, the
 watchdog rules and the built-in-provider constraint (docs/d100).
@@ -27,7 +27,7 @@ could become one:
   catalog stands. Never substitute rows on failure.
 - **Per-provider interval state**: one provider's outage must not silence
   the other's — each watchdog keeps its own clock (`force` bypasses both).
-- `index.ts` deliberately has no sibling module: a copied package must stand
+- `index.mjs` deliberately has no sibling module: a copied package must stand
   alone. The upstream URLs are pinned constants (fact table: the row literals
   in `tests/pi-opencode.test.mjs`, docs/d070); the tests assert the pins.
 - Network access rides the environment's forward proxy

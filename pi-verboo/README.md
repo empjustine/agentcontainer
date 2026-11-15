@@ -21,7 +21,7 @@ refreshed at runtime from the provider's own `/models` listing.
 ```sh
 pi install ./pi-verboo -l    # local package from this repo
 # or point pi straight at the entry:
-pi -e ./pi-verboo/index.ts
+pi -e ./pi-verboo/index.mjs
 ```
 
 ## Environment
@@ -47,7 +47,7 @@ extension fills the mandatory zero cost and the schema's own 16384 default
 
 | File          | Role                                                                               |
 | ------------- | ---------------------------------------------------------------------------------- |
-| `index.ts`    | the extension entry: `registerProvider` + `refreshModels` (the listing at runtime) |
+| `index.mjs`   | the extension entry: `registerProvider` + `refreshModels` (the listing at runtime) |
 | `sources.mjs` | the ONE source read: the provider's `/models` listing at the canonical upstream    |
 | `merge.mjs`   | the ONE shaping step: a listing row becomes the registered-model entry             |
 | `log.mjs`     | the JSONL log lines `sources.mjs` emits (docs/d045)                                |

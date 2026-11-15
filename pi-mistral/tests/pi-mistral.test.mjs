@@ -22,9 +22,9 @@ import test, { after, before, describe } from "node:test";
 
 /**
  * This folder's own row of the provider fact table (docs/d113), as a literal
- * because the test is its ONLY consumer: `index.ts` keeps the upstream URL as
+ * because the test is its ONLY consumer: `index.mjs` keeps the upstream URL as
  * its own pinned constant, and this row is what pins it (docs/d024/d070/d104).
- * Editing the URL in `index.ts` alone must fail here.
+ * Editing the URL in `index.mjs` alone must fail here.
  */
 const FACT_ROW = Object.freeze({
 	id: "mistral",
@@ -34,14 +34,12 @@ const FACT_ROW = Object.freeze({
 	support: "best-effort",
 });
 
-// A computed specifier on purpose: a literal ".ts" path would pull the
-// extension entry into the tsc program, where pi's host-provided imports
-// report as missing modules — the very reason tsconfig.json leaves the
-// entry out. Importing and running it is the check that matters (same
-// idiom as the sibling suites).
-const entrySpecifier = "../index.ts";
+// The real entry point, imported here and RUN inside each test. It is part of
+// the tsc program too (the folder carries pi's types as a devDependency, so
+// there is no host-provided import to hide from it); executing it is the check
+// a type pass cannot do.
 const { MISTRAL_LISTING_URL, MISTRAL_PROVIDER_ID } = await import(
-	entrySpecifier
+	"../index.mjs"
 );
 
 const FOLDER = new URL("../", import.meta.url);
@@ -78,21 +76,36 @@ async function withEnv(name, value, fn) {
  * @returns {Promise<{ config: any, registeredIds: string[] }>}
  */
 async function loadExtension() {
-	const module = await import(entrySpecifier);
+	const module = await import("../index.mjs");
 	/** @type {string[]} */
 	const registeredIds = [];
 	/** @type {any} */
 	let config;
-	module.default({
-		registerProvider(
-			/** @type {string} */ id,
-			/** @type {any} */ providerConfig,
-		) {
-			registeredIds.push(id);
-			config = providerConfig;
-		},
-	});
-	return { config, registeredIds };
+	// The shim is the ONE member this folder uses: the host interface is an
+	// overloaded registerProvider plus dozens of members, so it captures the
+	// registration rather than faking the whole surface.
+	module.default(
+		/** @type {any} */ ({
+			registerProvider(
+				/** @type {string} */ id,
+				/** @type {any} */ providerConfig,
+			) {
+				registeredIds.push(id);
+				config = providerConfig;
+			},
+		}),
+	);
+	// pi always hands a concrete signal (pi-ai's RefreshModelsContext: "Always
+	// present, including when the public refresh caller omits its optional
+	// signal"), so the harness supplies one instead of letting each test
+	// remember. The folder depends on that invariant, exactly as the host
+	// promises it.
+	const refreshModels = (/** @type {Record<string, unknown>} */ context = {}) =>
+		config.refreshModels({
+			signal: new AbortController().signal,
+			...context,
+		});
+	return { config: { ...config, refreshModels }, registeredIds };
 }
 
 describe("the built-in-provider rule (docs/d097)", () => {
@@ -111,7 +124,7 @@ describe("the built-in-provider rule (docs/d097)", () => {
 				`${retired} is a model-data copy — pi builds this provider in`,
 			);
 		}
-		assert.ok(entries.includes("index.ts"));
+		assert.ok(entries.includes("index.mjs"));
 		assert.ok(entries.includes("package.json"));
 	});
 
@@ -235,7 +248,10 @@ describe("the auth-gated watchdog", () => {
 			throw new Error("must not fetch");
 		});
 		const result = await withEnv("MISTRAL_API_KEY", "sk-test-key", () =>
-			config.refreshModels({ allowNetwork: false }),
+			config.refreshModels({
+				allowNetwork: false,
+				signal: new AbortController().signal,
+			}),
 		);
 		assert.equal(result, undefined);
 		assert.equal(calls.length, 0);

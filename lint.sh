@@ -45,11 +45,12 @@ log_info "shellcheck"
 # -x: follow `source` directives (the run scripts point at their
 # own folder's lib copies — coding-agent's launcher is a node module,
 # docs/d119).
-# node_modules is pruned: npm's dependency tree may carry vendor *.sh files,
-# and this gate owns only this repo's sources.
+# node_modules is pruned at ANY depth: npm's root tree and each pi extension's
+# pnpm tree may carry vendor *.sh files (pi-tui's native build.sh), and this
+# gate owns only this repo's sources.
 # .venv is pruned alongside node_modules: the gate environment ships its
 # own .sh files (tqdm's completion.sh) that are third-party, not ours.
-dev_tool_run shellcheck find . -path ./node_modules -prune -o \
+dev_tool_run shellcheck find . -name node_modules -prune -o \
 	-path ./.venv -prune -o \
 	-type f -name '*.sh' -exec shellcheck -x {} +
 

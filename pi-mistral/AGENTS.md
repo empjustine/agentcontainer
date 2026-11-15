@@ -1,7 +1,7 @@
 # AGENTS.md — pi-mistral
 
 The folder IS the pi package (`pi.package` in `package.json`) and its
-`index.ts` is the extension entry. It is the mistral instance of
+`index.mjs` is the extension entry. It is the mistral instance of
 `../pi-opencode/AGENTS.md`'s watchdog rules (docs/d097, applied by
 docs/d100) — read that one first. Only the mistral-specific deltas are
 below:
@@ -16,6 +16,6 @@ below:
   unconfigured provider is hidden by pi anyway, and a "could not refresh"
   warning about it would be noise. With a key, the opencode rules apply
   unchanged (failure throws the catalog warning).
-- `index.ts` deliberately has no sibling module: a copied package must stand
+- `index.mjs` deliberately has no sibling module: a copied package must stand
   alone. The upstream URL is a pinned constant; the test asserts the pin
   against the fact-table row literal it carries.

@@ -49,6 +49,10 @@ dev_tool_pin() {
 	# v2.x on a PATH (datalakehouse README).
 	duckdb) printf '%s\n' '1.5.6' ;;
 	oxfmt) printf '%s\n' '0.75.0' ;;
+	# The pi extensions' type source (@earendil-works/pi-coding-agent) is a real
+	# devDependency; pnpm is what installs it WITHOUT a copy per folder — its
+	# content-addressed store hardlinks one unpacked copy into six node_modules.
+	pnpm) printf '%s\n' '12.21.0' ;;
 	shellcheck | shfmt | jq | ruff | uv | ty) printf '%s\n' 'latest' ;;
 	*)
 		printf 'dev-tools.sh: unknown tool: %s\n' "$1" >&2
@@ -59,7 +63,7 @@ dev_tool_pin() {
 
 # Every tool a `full` profile installs, in one list so ./dev-tools.sh and the
 # sweeps cannot drift about what "the dev toolchain" means.
-DEV_TOOLS_ALL='go golangci-lint shellcheck shfmt jq oxfmt ruff uv ty'
+DEV_TOOLS_ALL='go golangci-lint shellcheck shfmt jq oxfmt pnpm ruff uv ty'
 
 dev_tools_is_termux() {
 	case "${PREFIX:-}" in

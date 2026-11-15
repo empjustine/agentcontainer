@@ -147,14 +147,14 @@ agentcontainer/
 │   ├── sources.mjs                      #   → the ONE data source: the provider's /models listing, at the fact table's canonical upstream (d070)
 │   ├── merge.mjs                        #   → the ONE shaping step + both projections (pi models.json entry, pi-ai extension entry)
 │   ├── generate.mjs / package.json       #   → one fetch in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
-│   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
+│   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json                      #   → GENERATED pi models.json-shaped block (canonical upstream, d070) — the drift gate's subject · no runtime reader, no seed (d190)
 │   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md / TODO.md / PENDING.md #   → folder rules · install + open items · the review that collapsed the design
 │
 ├── pi-opencode/                         # opencode + opencode-go as ONE pi package (d097, unified by d100): catalog FRESHNESS WATCHDOGS — no model data, because pi builds both providers in
-│   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package, and there is nothing to generate
+│   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package, and there is nothing to generate
 │   ├── tests/                           #   → this folder's own tests — and the only home of its fact-table rows (d118)
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · the built-in-provider rule + install + provenance
@@ -163,7 +163,7 @@ agentcontainer/
 │   ├── sources.mjs                      #   → the two published sources: the docs table (which ids) + models.dev (what they cost), both throw-on-failure, the cline-pass/ billing-prefix guard
 │   ├── merge.mjs                        #   → the ONE shaping step + both projections (pi models.json entry, pi-ai extension entry)
 │   ├── generate.mjs / package.json       #   → two sources in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
-│   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
+│   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json                      #   → GENERATED pi models.json-shaped block (canonical upstream, d070) — the drift gate's subject · no runtime reader, no seed (d190)
 │   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
 │   ├── tests/                           #   → this folder's own tests
@@ -172,7 +172,7 @@ agentcontainer/
 ├── pi-hyper/                            # Charm Hyper as a pi package (d100): ONE generator + ONE loadable extension — the provider's /provider catalog is PUBLIC
 │   ├── sources.mjs / merge.mjs          #   → the ONE source read (the provider's /provider document) · the ONE shaping step + both projections (incl. the transcribed compat mirror, d033)
 │   ├── generate.mjs / package.json       #   → one fetch in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
-│   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
+│   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json                      #   → GENERATED pi models.json-shaped block (canonical upstream, d070) — the drift gate's subject · no runtime reader, no seed (d190)
 │   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
 │   ├── tests/                           #   → this folder's own tests
@@ -181,14 +181,14 @@ agentcontainer/
 ├── pi-verboo/                           # Verboo as a pi package (d100): same shape against the AUTH-GATED /models listing — no prices ever asserted (d057)
 │   ├── sources.mjs / merge.mjs          #   → the ONE source read (the provider's own listing — models.dev carries no verboo row at all, d057) · the ONE shaping step + both projections
 │   ├── generate.mjs / package.json       #   → one keyed fetch in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
-│   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
+│   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json                      #   → GENERATED pi models.json-shaped block (canonical upstream, d070) — the drift gate's subject · no runtime reader, no seed (d190)
 │   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the seeding provenance + the fleet seam
 │
 ├── pi-mistral/                           # mistral as a pi package (d100): an AUTH-GATED watchdog — no model data (pi builds it in), silent without a key
-│   ├── index.ts / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package, and there is nothing to generate
+│   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package, and there is nothing to generate
 │   ├── tests/                           #   → this folder's own tests — and the only home of its fact-table row (d118)
 │   ├── AGENTS.md / README.md            #   → folder rules (the opencode watchdog deltas) · install + provenance
 │
@@ -217,6 +217,7 @@ agentcontainer/
 │   ├── atuin-warehouse-sync.sh          #   → argv-free source resolution (CWD, config, atuin's own dirs), drift-tolerant upsert into md:atuin, --prune opt-in
 │   ├── README.md                        #   → module doc: usage, the data-dir file assessment, verified findings, gotchas
 │   └── tests/                           #   → source-resolution tests (pure path logic, no token or network)
+│
 ```
 
 ## Documentation index

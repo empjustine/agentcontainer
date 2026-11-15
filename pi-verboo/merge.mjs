@@ -33,6 +33,14 @@
  */
 
 /** @typedef {import("./sources.mjs").ListingRow} ListingRow */
+/**
+ * pi's registration surface, and the CHAT arm of its model union — the arm this
+ * folder always emits (no `type` field; pi normalizes that to "chat"). The
+ * host's own types, pinned by the folder's devDependency (docs/d107), so a
+ * schema field pi changes becomes a tsc finding here.
+ * @typedef {import("@earendil-works/pi-coding-agent").ProviderModelConfig} ProviderModelConfig
+ * @typedef {Extract<ProviderModelConfig, {reasoning: boolean}>} ProviderChatModelConfig
+ */
 
 /**
  * @typedef {Record<string, string|null>} ThinkingLevelMap
@@ -45,7 +53,8 @@
  * @property {string} id
  * @property {string} name display name — the listing publishes none, so the
  *   id itself is the honest name
- * @property {string[]} input already pi-shaped (what pi drives, from the
+ * @property {("text"|"image")[]} input already pi-shaped (what pi drives, from
+ *   the
  *   row's vision flag)
  * @property {number|undefined} contextWindow
  * @property {boolean} reasoning
@@ -139,7 +148,7 @@ function num(/** @type {unknown} */ value) {
  * modality arrays, only whether a model takes images, so text is the
  * always-present core and image rides the flag.
  * @param {ListingRow} row
- * @returns {string[]}
+ * @returns {("text"|"image")[]}
  */
 function toInput(row) {
 	return row.vision === true ? ["text", "image"] : ["text"];
@@ -208,10 +217,10 @@ export function shapeListing(rows) {
  * absence makes pi fabricate `off`…`high`, which would advertise an
  * `off` the provider never published AND hide `max`/`xhigh` that it does.
  * @param {MergedModel} model
- * @returns {Record<string, unknown>}
+ * @returns {ProviderChatModelConfig}
  */
 export function toExtensionModel(model) {
-	/** @type {Record<string, unknown>} */
+	/** @type {ProviderChatModelConfig} */
 	const entry = {
 		id: model.id,
 		name: model.name,

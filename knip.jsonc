@@ -52,16 +52,16 @@
 		// the ingest daemon: exec'd by agent-warehouse-daemon.sh, whose tests
 		// are shell — no import graph reaches either
 		"datalakehouse/agent-warehouse-daemon.mjs",
-		// the pi extension family: each folder's generator (run by that
-		// folder's package.json script, via the root ./npm-run.sh) and its
-		// runtime entry (loaded by the pi host, which no import graph can
-		// see — entry status encodes that contract)
-		"pi-cline-pass/index.ts",
-		"pi-synthetic/index.ts",
-		"pi-hyper/index.ts",
-		"pi-verboo/index.ts",
-		"pi-mistral/index.ts",
-		"pi-opencode/index.ts",
+		// the pi extension family: each folder's runtime entry. The pi host
+		// loads it from package.json's pi.extensions (no import graph can see
+		// that), and its tests import it as well — entry status states the
+		// contract rather than relying on the test reachability.
+		"pi-cline-pass/index.mjs",
+		"pi-synthetic/index.mjs",
+		"pi-hyper/index.mjs",
+		"pi-verboo/index.mjs",
+		"pi-mistral/index.mjs",
+		"pi-opencode/index.mjs",
 		"*/lib/*.mjs",
 		// ./test.sh runs every unit's tests, which nothing else imports
 		// (docs/d113)

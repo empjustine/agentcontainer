@@ -11,7 +11,7 @@ tags: [pi-extensions, providers, mistral]
 
 # pi-mistral — mistral as a catalog freshness watchdog
 
-`pi -e ./pi-mistral/index.ts` (or `pi -c` with the absolute path) adds a
+`pi -e ./pi-mistral/index.mjs` (or `pi -c` with the absolute path) adds a
 provider extension for `mistral` — **without carrying any model data of its
 own**.
 
@@ -41,10 +41,10 @@ worth the warning.
 
 ## Layout
 
-| file           | role                                                                                                                                          |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index.ts`     | the entire extension: `registerProvider("mistral", { refreshModels })`; the listing probe and the warn/fall-through rules (WHY: fileoverview) |
-| `package.json` | `pi.package`, `pi.extensions: ["./index.ts"]`; optional peerDep on `@earendil-works/pi-coding-agent` (host-provided, never vendored)          |
+| file           | role                                                                                                                                                               |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `index.mjs`    | the entire extension: `registerProvider("mistral", { refreshModels })`; the listing probe and the warn/fall-through rules (WHY: fileoverview)                      |
+| `package.json` | `pi.package`, `pi.extensions: ["./index.mjs"]`; `@earendil-works/pi-coding-agent` as an optional peerDep (the runtime is pi's own) and an exact devDep (its types) |
 
 There are no generated artifacts, no `generate.sh`, no `--check` — the
 folder has nothing to regenerate. `tests/pi-mistral.test.mjs` (in this folder)

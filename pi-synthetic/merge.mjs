@@ -18,11 +18,25 @@
  */
 
 /** @typedef {import("./sources.mjs").ListingRow} ListingRow */
+/**
+ * pi's registration surface, and the CHAT arm of its model union — the arm this
+ * folder always emits (no `type` field; pi normalizes that to "chat"). The
+ * host's own types, pinned by the folder's devDependency (docs/d107), so a
+ * schema field pi changes becomes a tsc finding here.
+ * @typedef {import("@earendil-works/pi-coding-agent").ProviderModelConfig} ProviderModelConfig
+ * @typedef {Extract<ProviderModelConfig, {reasoning: boolean}>} ProviderChatModelConfig
+ */
 
 /**
- * @typedef {import("../coding-agent/route-probe.mjs").Cost} Cost
- * @typedef {Record<string, string|null>} ThinkingLevelMap
+ * The per-million price block, declared here rather than reached for across
+ * the unit boundary: a copy unit carries the types it uses (docs/d113).
+ * @typedef {object} Cost
+ * @property {number} input
+ * @property {number} output
+ * @property {number} cacheRead
+ * @property {number} cacheWrite
  */
+/** @typedef {Record<string, string|null>} ThinkingLevelMap */
 
 /**
  * One model, shaped but still schema-agnostic: everything downstream is a
@@ -30,7 +44,8 @@
  * @typedef {object} MergedModel
  * @property {string} id
  * @property {string} name display name; for an alias row it carries the target
- * @property {string[]} input already pi-shaped (trimmed to what pi drives)
+ * @property {("text"|"image")[]} input already pi-shaped (trimmed to what pi
+ *   drives)
  * @property {string[]|undefined} output the raw published set — kept for
  *   eligibility only, never rendered
  * @property {string} [pointsAt] the model id this row ALIASES (the provider's
@@ -49,7 +64,7 @@
  */
 
 /** The one input modality every drivable model must accept (docs/d049). */
-const PI_DRIVABLE_CORE = "text";
+const PI_DRIVABLE_CORE = /** @type {const} */ ("text");
 
 /**
  * pi's driving-capability declaration, copied from the repo's shared projection
@@ -57,10 +72,10 @@ const PI_DRIVABLE_CORE = "text";
  * than imported, for the standalone rule): input is trimmed to the modalities
  * pi originates, output must be consumable, and a record without the drivable
  * core cannot be driven at all.
- * @type {Readonly<{input: readonly string[], output: readonly string[]}>}
+ * @type {Readonly<{input: readonly ("text"|"image")[], output: readonly string[]}>}
  */
 const PI_MODALITY_CAPABILITY = Object.freeze({
-	input: Object.freeze([PI_DRIVABLE_CORE, "image"]),
+	input: Object.freeze(/** @type {const} */ ([PI_DRIVABLE_CORE, "image"])),
 	output: Object.freeze(["text"]),
 });
 
@@ -196,7 +211,7 @@ export function laysWithinPiModalities(modalities) {
  * Intersect published input with what pi drives, in capability order, falling
  * back to the drivable core for rows with no modality metadata.
  * @param {string[]|undefined} input
- * @returns {string[]}
+ * @returns {("text"|"image")[]}
  */
 function toInput(input) {
 	const kept = PI_MODALITY_CAPABILITY.input.filter((m) => input?.includes(m));
@@ -354,10 +369,10 @@ export function shapeListing(rows) {
  * field here would be a gamble. A tier row's target rides its own display name
  * (`displayNameFor`), never a side table.
  * @param {MergedModel} model
- * @returns {Record<string, unknown>}
+ * @returns {ProviderChatModelConfig}
  */
 export function toExtensionModel(model) {
-	/** @type {Record<string, unknown>} */
+	/** @type {ProviderChatModelConfig} */
 	const entry = {
 		id: model.id,
 		name: model.name,

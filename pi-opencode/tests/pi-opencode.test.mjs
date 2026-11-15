@@ -23,9 +23,9 @@ import test, { after, before, describe } from "node:test";
 
 /**
  * This folder's own rows of the provider fact table (docs/d113), as literals
- * because the test is their ONLY consumer: `index.ts` keeps the upstream URLs
+ * because the test is their ONLY consumer: `index.mjs` keeps the upstream URLs
  * as its own pinned constants, and these rows are what pin them
- * (docs/d024/d070/d104). Editing a URL in `index.ts` alone must fail here.
+ * (docs/d024/d070/d104). Editing a URL in `index.mjs` alone must fail here.
  */
 const OPENCODE = Object.freeze({
 	id: "opencode",
@@ -43,17 +43,15 @@ const OPENCODE_GO = Object.freeze({
 });
 
 // A computed specifier on purpose: a literal ".ts" path would pull the
-// extension entry into the tsc program, where pi's host-provided imports
-// report as missing modules — the very reason tsconfig.json leaves the
-// entry out. Importing and running it is the check that matters (same
-// idiom as the sibling suites).
-const entrySpecifier = "../index.ts";
+// extension entry into the tsc program. That reason is gone — the folder
+// carries pi's types as a devDependency — so the entry is imported here and RUN
+// inside each test, which is the check a type pass cannot do.
 const {
 	OPENCODE_GO_LISTING_URL,
 	OPENCODE_GO_PROVIDER_ID,
 	OPENCODE_LISTING_URL,
 	OPENCODE_PROVIDER_ID,
-} = await import(entrySpecifier);
+} = await import("../index.mjs");
 
 const FOLDER = new URL("../", import.meta.url);
 
@@ -89,20 +87,40 @@ async function withEnv(name, value, fn) {
  * @returns {Promise<{ configs: Map<string, any>, registeredIds: string[] }>}
  */
 async function loadExtension() {
-	const module = await import(entrySpecifier);
+	const module = await import("../index.mjs");
 	/** @type {string[]} */
 	const registeredIds = [];
 	/** @type {Map<string, any>} */
 	const configs = new Map();
-	module.default({
-		registerProvider(
-			/** @type {string} */ id,
-			/** @type {any} */ providerConfig,
-		) {
-			registeredIds.push(id);
-			configs.set(id, providerConfig);
-		},
-	});
+	// The shim is the ONE member this folder uses: the host interface is an
+	// overloaded registerProvider plus dozens of members, so it captures the two
+	// registrations rather than faking the whole surface.
+	module.default(
+		/** @type {any} */ ({
+			registerProvider(
+				/** @type {string} */ id,
+				/** @type {any} */ providerConfig,
+			) {
+				registeredIds.push(id);
+				configs.set(id, providerConfig);
+			},
+		}),
+	);
+	// pi always hands a concrete signal (pi-ai's RefreshModelsContext: "Always
+	// present, including when the public refresh caller omits its optional
+	// signal"), so the harness supplies one instead of letting each test
+	// remember. The folder depends on that invariant, exactly as the host
+	// promises it.
+	for (const [id, providerConfig] of configs) {
+		configs.set(id, {
+			...providerConfig,
+			refreshModels: (/** @type {Record<string, unknown>} */ context = {}) =>
+				providerConfig.refreshModels({
+					signal: new AbortController().signal,
+					...context,
+				}),
+		});
+	}
 	return { configs, registeredIds };
 }
 
@@ -122,7 +140,7 @@ describe("the built-in-provider rule (docs/d097)", () => {
 				`${retired} is a model-data copy — pi builds both providers in`,
 			);
 		}
-		assert.ok(entries.includes("index.ts"));
+		assert.ok(entries.includes("index.mjs"));
 		assert.ok(entries.includes("package.json"));
 	});
 
@@ -258,7 +276,10 @@ describe("the catalog freshness watchdog", () => {
 			});
 			const result = await configs
 				.get(id)
-				.refreshModels({ allowNetwork: false });
+				.refreshModels({
+				allowNetwork: false,
+				signal: new AbortController().signal,
+			});
 			assert.equal(result, undefined);
 			assert.equal(calls.length, 0);
 		});

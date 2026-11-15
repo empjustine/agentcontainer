@@ -33,9 +33,14 @@ corrected.
    env before blaming the vault. The service also offers an Anthropic-compatible
    surface (`/anthropic/v1/messages`) which the fleet does not use and this
    folder deliberately does not offer — one surface, one wire.
-4. **Type-check `index.ts` for real.** It is out of `tsconfig.json` because its
-   pi import is host-provided. Once a host has the packages, add a `paths`
-   alias and include it, or keep relying on the executed test and say so here.
+4. ~~**Type-check `index.ts` for real.**~~ **CLOSED.** The folder carries
+   `@earendil-works/pi-coding-agent@1.5.2` as an exact devDependency (pnpm, one
+   store copy across the six folders) and the entry — now `index.mjs` — is inside
+   the `tsconfig.json` program: `./check-types.sh` checks the registration, and
+   `merge.mjs` returns pi's own `ProviderModelConfig`, so the emitted model shape
+   is checked against the host schema instead of a hand-written typedef.
+   `tsconfig.json` lost its `pi-*/index.ts` exclusion; the executed test keeps
+   its separate value (it runs the entry, which a type pass cannot).
 
 ## 2. The mirror-dependent questions — RESOLVED (mirror now mounted)
 

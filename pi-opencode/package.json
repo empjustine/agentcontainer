@@ -14,7 +14,7 @@
 	],
 	"pi": {
 		"extensions": [
-			"./index.ts"
+			"./index.mjs"
 		]
 	},
 	"peerDependencies": {
@@ -24,5 +24,8 @@
 		"@earendil-works/pi-coding-agent": {
 			"optional": true
 		}
+	},
+	"devDependencies": {
+		"@earendil-works/pi-coding-agent": "1.5.2"
 	}
 }

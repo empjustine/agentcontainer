@@ -21,7 +21,7 @@ and refreshed at runtime from the provider's own `/provider` catalog.
 ```sh
 pi install ./pi-hyper -l    # local package from this repo
 # or point pi straight at the entry:
-pi -e ./pi-hyper/index.ts
+pi -e ./pi-hyper/index.mjs
 ```
 
 ## Environment
@@ -49,7 +49,7 @@ effort enums, attachment support) comes from the document.
 
 | File          | Role                                                                               |
 | ------------- | ---------------------------------------------------------------------------------- |
-| `index.ts`    | the extension entry: `registerProvider` + `refreshModels` (the listing at runtime) |
+| `index.mjs`   | the extension entry: `registerProvider` + `refreshModels` (the listing at runtime) |
 | `sources.mjs` | the ONE source read: the provider's `/provider` catalog at the canonical upstream  |
 | `merge.mjs`   | the ONE shaping step: a catalog record becomes the registered-model entry          |
 | `log.mjs`     | the JSONL log lines `sources.mjs` emits (docs/d045)                                |

@@ -79,16 +79,18 @@ run, so a rotation is a live change rather than a constant edited here and in
 
 ## The folder is the package
 
-`index.ts`, `sources.mjs`, `merge.mjs`, `log.mjs` and
+`index.mjs`, `sources.mjs`, `merge.mjs`, `log.mjs` and
 `package.json` at this level ARE the pi package (`log.mjs` included: it is what
 `sources.mjs`, and therefore the loaded extension, writes its log lines with). If a change seems to need a subfolder, a copy
 step, or two module trees kept in sync, it is rebuilding machinery that was
 already deleted once in pi-synthetic — find out why before doing it.
 
-`index.ts` is excluded from `tsconfig.json` because it imports
-`@earendil-works/pi-coding-agent`, which this repo does not vendor.
-`tests/pi-cline-pass.test.mjs` covers it by IMPORTING AND RUNNING it, which
-is a stronger check than a type pass. Keep that test working.
+`index.mjs` is INSIDE the `tsconfig.json` program: the folder carries
+`@earendil-works/pi-coding-agent` as an exact devDependency (pnpm, so six
+folders share one store copy — docs/d107), which is what makes its types real
+instead of hand-declared. `tests/pi-cline-pass.test.mjs` additionally IMPORTS AND
+RUNS the entry, which is the check a type pass cannot do. Keep that test
+working.
 
 ## The fleet seam
 
