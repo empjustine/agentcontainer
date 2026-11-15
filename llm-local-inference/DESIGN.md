@@ -87,14 +87,20 @@ endpoint.
   (`llamacpp-model-data.json`, `llama-swap-core.json`) plus a
   read of the host HF hub cache directory (no network) — the models.dev
   refresh and every HTTP probe went with that handoff and are gone. Quant
-  display is pruned here too (d170): BF16/F16 hidden for repos of ≥4B total
-  params, the four cheapest quants dropped for smaller repos (top two
-  kept) — the flat table stays the full record. Small models (<8B total params) also get
-  their context raised to the 256k fleet cap, never past the GGUF header's
-  native `context_length` (`ctx-native` in the table, filled from header
-  reads; absent means no raise). The parameter count excludes the
-  drafter/side builds some repos ship beside the main quants (mmproj, MTP,
-  dflash/dspark) — a dflash bf16 once read a 27B blend as 1.9B.
+  display is pruned here too (d170): BF16/F16 hidden where a full-precision
+  copy would claim more than half the fleet card, up to three of the cheapest
+  quants dropped where the served weights claim less than a quarter of it
+  (never below three rows) — the flat table stays the full record. A vision
+  entry exercises the same quarter line: below it the projector fits anyway, so
+  `0text` — the no-projector mode — is not emitted; above 75% the offloaded
+  `2mmproj` is not (d195, d200). Thresholds are shares of
+  `FLEET_VRAM_GIB` (16 GiB), never parameter counts, so each one states how
+  much of the card it is talking about (d199); the 4B/12B equivalents are
+  ~25%/75%. Context comes from the model's own GGUF header via
+  `lib/gguf-facts.json` for every entry, capped at 262144 (d197), and
+  `--fit on` reconciles a host too small for the window. The parameter count
+  excludes the drafter/side builds some repos ship beside the main quants
+  (mmproj, MTP, dflash/dspark) — a dflash bf16 once read a 27B blend as 1.9B.
 - **Inbound bearer auth stays**: `apiKeys: ${env.TLALOCAYOTL_API_KEY}` in
   `00-general.yaml` is llama-swap's _own_ client-facing key (PEER_API_KEY →
   REVERSE_PROXY_API_KEY under d071, → TLALOCAYOTL_API_KEY with the hostname

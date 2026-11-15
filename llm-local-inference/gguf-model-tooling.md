@@ -46,7 +46,7 @@ llama.cpp inference. They share two design constraints:
 | `estimate_active_params.py` | Measure total and per-token ACTIVE parameter counts / bytes from the GGUF header                                                                                                                                                                            |
 | `fetch_hf_manifests.py`     | Persist HF repo file listings (to `llm-local-inference/lib/hf-manifests/`) and audit each configured `--hf-file` against llama.cpp's implicit `repo:quant` → file heuristic                                                                                 |
 | `scan_cache_coverage.py`    | **PoC/MVP** — diff the HF cache against `llamacpp-model-data.json`: repos with zero coverage, listed repos with extra cached quants, ambiguous `bpw`/multi-quant filenames (header-free; see `llm-local-inference/refresh-llm-local-inference-manifest.md`) |
-| `gguf_context_length.py`    | **PoC/MVP** — read `general.architecture` / `context_length` / `general.name` from a GGUF header via the PyPI `gguf` package (no weights loaded); used to pick `ctx-size`                                                                                   |
+| `gguf_context_length.py`    | read `general.architecture` / `context_length` / `general.name` from a GGUF header via the PyPI `gguf` package (no weights loaded); `--facts` rewrites `lib/gguf-facts.json`, the committed context-ceiling artifact (d197)                                 |
 
 All consume the same canonical model list in
 `llm-local-inference/` (generator owner; file in `lib/`) that drives
@@ -77,13 +77,19 @@ The flat, llama.cpp-shaped schema is consumed by the JS generator
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
 | `hf-repo`                               | `org/repo:revision` (revision = quant tag)                                                                                                                                                                                     | `--hf-repo`                             |
 | `hf-file`                               | exact GGUF filename (load-bearing: see `fetch_hf_manifests.py`)                                                                                                                                                                | `--hf-file`                             |
-| `mmproj`                                | optional vision projector file                                                                                                                                                                                                 | `--mmproj`                              |
+| `mmproj`                                | **override only** — the generator takes the repo's BF16 projector from the hf-manifest (F16/Q8_0 accepted with a warning, d197)                                                                                                | `--mmproj`                              |
 | `image-min-tokens` / `image-max-tokens` | vision-only token budget for the 1vision/2mmproj variants; optional — an absent pair means the generator default (1024), set only when the family deviates (gemma-4: 1120)                                                     | `--image-min-tokens/--image-max-tokens` |
 | `model-draft`                           | optional MTP/drafter sidecar GGUF (same snapshot as `model`); generator emits `--model-draft` via the launcher plus an explicit `--spec-type draft-mtp` (auto-inference of the spec type only happens on the `--hf-repo` path) | `--model-draft`                         |
 | `cache-type-k` / `cache-type-v`         | KV cache quant (`f32 f16 bf16 q8_0 q4_0 q4_1 iq4_nl q5_0 q5_1`); optional, default `f16`/`f16`                                                                                                                                 | `--cache-type-k/-v`                     |
-| `ctx-size`                              | AUTHORITATIVE context window (no `--fit-ctx`); optional, default `65536`                                                                                                                                                       | `--ctx-size`                            |
+| `ctx-size`                              | optional ceiling: the window served is the GGUF header's `context_length` from `lib/gguf-facts.json`, capped at 262144; a written value can only lower it                                                                      | `--ctx-size`                            |
 | `parallel`                              | 1 or 2; optional, default `1`                                                                                                                                                                                                  | `--parallel`                            |
 | `__argv`                                | family macro reference (`${qwen36}` …) + literal extra flags; llama-swap expands `${…}` at load; omit when empty                                                                                                               | verbatim                                |
+
+`lib/gguf-facts.json` (not a table column) is the second committed input: the
+per-repo GGUF header facts — `arch` and `ctx-native` — pruned to the files the
+table serves, written only by `gguf_context_length.py --facts`, normalized
+(sorted, integers, no timestamp) so a refresh diffs only moved facts. A repo
+whose served files disagree drops to a per-file map under `files` (d197).
 
 The `size-gb`/`size-parts` footprint fields and the `active-b.json` slug
 companion are retired (docs/d053's fields were stripped by d170; model ids are

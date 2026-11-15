@@ -7,7 +7,10 @@
 #   4. fetch-model-cards.sh       refresh model-card mirrors
 #
 # Steps 1-2 are hard prerequisites for anything reading model files; steps
-# 3-4 are mutually independent but ordered for a deterministic run. Every
+# 3-4 are mutually independent but ordered for a deterministic run. NOT here: the
+# GGUF header sweep (`gguf_context_length.py --facts`, docs/d197) — it re-reads
+# every served file, so it runs on its own after step 3 and its output
+# (lib/gguf-facts.json) is committed with the table it describes. Every
 # python tool carries its own PEP 723 block and `uv run --script` resolves it
 # into uv's cache — nothing writes an environment into this folder (py-run.sh's
 # header carries the why, docs/d170).

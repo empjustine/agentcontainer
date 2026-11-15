@@ -3,35 +3,30 @@
 		{
 			"hf-repo": "LiquidAI/LFM2.5-2.6B-GGUF:Q4_0",
 			"model": "LFM2.5-2.6B-Q4_0.gguf",
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${lfm25}"
 		},
 		{
 			"hf-repo": "LiquidAI/LFM2.5-2.6B-GGUF:QAD-Q4_0",
 			"model": "LFM2.5-2.6B-QAD-Q4_0.gguf",
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${lfm25}"
 		},
 		{
 			"hf-repo": "LiquidAI/LFM2.5-2.6B-GGUF:Q4_K_M",
 			"model": "LFM2.5-2.6B-Q4_K_M.gguf",
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${lfm25}"
 		},
 		{
 			"hf-repo": "LiquidAI/LFM2.5-2.6B-GGUF:Q5_K_M",
 			"model": "LFM2.5-2.6B-Q5_K_M.gguf",
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${lfm25}"
 		},
 		{
 			"hf-repo": "LiquidAI/LFM2.5-2.6B-GGUF:Q6_K",
 			"model": "LFM2.5-2.6B-Q6_K.gguf",
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${lfm25}"
 		},
@@ -39,54 +34,46 @@
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:IQ2_M",
 			"model": "gemma-4-E2B-it-UD-IQ2_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:IQ3_XXS",
 			"model": "gemma-4-E2B-it-UD-IQ3_XXS.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q2_K_XL",
 			"model": "gemma-4-E2B-it-UD-Q2_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q3_K_S",
 			"model": "gemma-4-E2B-it-Q3_K_S.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q3_K_M",
 			"model": "gemma-4-E2B-it-Q3_K_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "bartowski/ai9stars_G9v3-3B-GGUF:Q6_K",
 			"model": "ai9stars_G9v3-3B-Q6_K.gguf",
-			"ctx-size": 131072,
 			"__argv": "${g9v3}"
 		},
 		{
 			"hf-repo": "openbmb/MiniCPM5-2B-GGUF:Q8_0",
 			"model": "MiniCPM5-2B-Q8_0.gguf",
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${minicpm5}"
 		},
 		{
 			"hf-repo": "LiquidAI/LFM2.5-2.6B-GGUF:Q8_0",
 			"model": "LFM2.5-2.6B-Q8_0.gguf",
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${lfm25}"
 		},
@@ -94,79 +81,66 @@
 			"hf-repo": "unsloth/LFM2.5-VL-3B-GGUF:Q8_0",
 			"model": "LFM2.5-VL-3B-Q8_0.gguf",
 			"parallel": 1,
-			"__argv": "${lfm25}",
-			"ctx-size": 65536,
-			"ctx-native": 128000
+			"__argv": "${lfm25}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q3_K_XL",
 			"model": "gemma-4-E2B-it-UD-Q3_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:IQ4_XS",
 			"model": "gemma-4-E2B-it-IQ4_XS.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:IQ4_NL",
 			"model": "gemma-4-E2B-it-IQ4_NL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q4_0",
 			"model": "gemma-4-E2B-it-Q4_0.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q4_K_S",
 			"model": "gemma-4-E2B-it-Q4_K_S.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q4_K_M",
 			"model": "gemma-4-E2B-it-Q4_K_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q4_1",
 			"model": "gemma-4-E2B-it-Q4_1.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "bartowski/ai9stars_G9v3-3B-GGUF:Q8_0",
 			"model": "ai9stars_G9v3-3B-Q8_0.gguf",
-			"ctx-size": 131072,
 			"__argv": "${g9v3}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q4_K_XL",
 			"model": "gemma-4-E2B-it-UD-Q4_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q2_K_XL",
 			"model": "gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E2B-it-Q8_0.gguf"
@@ -174,10 +148,8 @@
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL",
 			"model": "gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E2B-it-Q8_0.gguf"
@@ -186,30 +158,25 @@
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q5_K_S",
 			"model": "gemma-4-E2B-it-Q5_K_S.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q5_K_M",
 			"model": "gemma-4-E2B-it-Q5_K_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:IQ2_M",
 			"model": "gemma-4-E4B-it-UD-IQ2_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-qat-GGUF:UD-Q4_K_XL",
 			"model": "gemma-4-E2B-it-qat-UD-Q4_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E2B-it-Q8_0.gguf"
@@ -218,60 +185,49 @@
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:IQ3_XXS",
 			"model": "gemma-4-E4B-it-UD-IQ3_XXS.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q2_K_XL",
 			"model": "gemma-4-E4B-it-UD-Q2_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q3_K_S",
 			"model": "gemma-4-E4B-it-Q3_K_S.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q3_K_M",
 			"model": "gemma-4-E4B-it-Q3_K_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:IQ2_M",
 			"model": "gemma-4-12b-it-UD-IQ2_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q5_K_XL",
 			"model": "gemma-4-E2B-it-UD-Q5_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL",
 			"model": "LFM2.5-VL-3B-UD-Q8_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
-			"ctx-size": 32768,
 			"parallel": 2,
-			"__argv": "${lfm25vl}",
-			"ctx-native": 128000
+			"__argv": "${lfm25vl}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q2_K_XL",
 			"model": "gemma-4-E4B-it-qat-UD-Q2_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E4B-it-Q8_0.gguf"
@@ -279,10 +235,8 @@
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
 			"model": "gemma-4-E4B-it-qat-UD-Q2_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E4B-it-Q8_0.gguf"
@@ -291,100 +245,85 @@
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q6_K",
 			"model": "gemma-4-E2B-it-Q6_K.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q3_K_XL",
 			"model": "gemma-4-E4B-it-UD-Q3_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:IQ3_XXS",
 			"model": "gemma-4-12b-it-UD-IQ3_XXS.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q2_K_XL",
 			"model": "gemma-4-12b-it-UD-Q2_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q6_K_XL",
 			"model": "gemma-4-E2B-it-UD-Q6_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:IQ4_XS",
 			"model": "gemma-4-E4B-it-IQ4_XS.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:IQ4_NL",
 			"model": "gemma-4-E4B-it-IQ4_NL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q4_0",
 			"model": "gemma-4-E4B-it-Q4_0.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q4_K_S",
 			"model": "gemma-4-E4B-it-Q4_K_S.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q4_K_M",
 			"model": "gemma-4-E4B-it-Q4_K_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q4_1",
 			"model": "gemma-4-E4B-it-Q4_1.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q4_K_XL",
 			"model": "gemma-4-E4B-it-UD-Q4_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q3_K_S",
 			"model": "gemma-4-12b-it-Q3_K_S.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-qat-GGUF:UD-Q4_K_XL",
 			"model": "gemma-4-E4B-it-qat-UD-Q4_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E4B-it-Q8_0.gguf"
@@ -392,7 +331,6 @@
 		{
 			"hf-repo": "LiquidAI/LFM2.5-2.6B-GGUF:BF16",
 			"model": "LFM2.5-2.6B-BF16.gguf",
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${lfm25}"
 		},
@@ -400,43 +338,36 @@
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q5_K_S",
 			"model": "gemma-4-E4B-it-Q5_K_S.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q5_K_M",
 			"model": "gemma-4-E4B-it-Q5_K_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q3_K_M",
 			"model": "gemma-4-12b-it-Q3_K_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "bartowski/ai9stars_G9v3-3B-GGUF:BF16",
 			"model": "ai9stars_G9v3-3B-bf16.gguf",
-			"ctx-size": 131072,
 			"__argv": "${g9v3}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q3_K_XL",
 			"model": "gemma-4-12b-it-UD-Q3_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:Q8_0",
 			"model": "gemma-4-E2B-it-Q8_0.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E2B-it-Q8_0.gguf"
@@ -444,10 +375,8 @@
 		{
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:UD-Q8_K_XL",
 			"model": "gemma-4-E2B-it-UD-Q8_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E2B-it-Q8_0.gguf"
@@ -456,55 +385,47 @@
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:IQ4_XS",
 			"model": "gemma-4-12b-it-IQ4_XS.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q5_K_XL",
 			"model": "gemma-4-E4B-it-UD-Q5_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:IQ4_NL",
 			"model": "gemma-4-12b-it-IQ4_NL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q4_0",
 			"model": "gemma-4-12b-it-Q4_0.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q4_K_S",
 			"model": "gemma-4-12b-it-Q4_K_S.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q6_K",
 			"model": "gemma-4-E4B-it-Q6_K.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q4_K_M",
 			"model": "gemma-4-12b-it-Q4_K_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ1_S",
 			"model": "Qwen3.8-27B-UD-IQ1_S.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -514,7 +435,6 @@
 		{
 			"hf-repo": "unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
 			"model": "gemma-4-12B-it-qat-UD-Q4_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
@@ -524,27 +444,23 @@
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q4_K_XL",
 			"model": "gemma-4-12b-it-UD-Q4_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q4_1",
 			"model": "gemma-4-12b-it-Q4_1.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q6_K_XL",
 			"model": "gemma-4-E4B-it-UD-Q6_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ1_M",
 			"model": "Qwen3.8-27B-UD-IQ1_M.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -554,7 +470,6 @@
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ2_XXS",
 			"model": "Qwen3.8-27B-UD-IQ2_XXS.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -565,13 +480,11 @@
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q5_K_S",
 			"model": "gemma-4-12b-it-Q5_K_S.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "bartowski/Ling-3.0-tiny-GGUF:Q8_0",
 			"model": "Ling-3.0-tiny-Q8_0.gguf",
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${ling}"
 		},
@@ -579,30 +492,25 @@
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q5_K_M",
 			"model": "gemma-4-12b-it-Q5_K_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q5_K_XL",
 			"model": "gemma-4-12b-it-UD-Q5_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-8B-A1B-GGUF:Q8_0",
 			"model": "LFM2.5-8B-A1B-Q8_0.gguf",
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${lfm25}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:Q8_0",
 			"model": "gemma-4-E4B-it-Q8_0.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E4B-it-Q8_0.gguf"
@@ -610,7 +518,6 @@
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ2_S",
 			"model": "Qwen3.8-27B-UD-IQ2_S.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -621,20 +528,17 @@
 			"hf-repo": "unsloth/gemma-4-E2B-it-GGUF:BF16",
 			"model": "gemma-4-E2B-it-BF16.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL",
 			"model": "LFM2.5-8B-A1B-UD-Q8_K_XL.gguf",
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${lfm25}"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ2_XXS-2.56bpw",
 			"model": "Qwen3.8-27B-IQ2_XXS-2.56bpw.gguf",
-			"mmproj": "mmproj-bf16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -644,10 +548,8 @@
 		{
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL",
 			"model": "gemma-4-E4B-it-UD-Q8_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"parallel": 2,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-E4B-it-Q8_0.gguf"
@@ -656,20 +558,17 @@
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:IQ2_XXS",
 			"model": "gemma-4-26B-A4B-it-UD-IQ2_XXS.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:IQ2_M",
 			"model": "gemma-4-26B-A4B-it-UD-IQ2_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q6_K",
 			"model": "gemma-4-12b-it-Q6_K.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
@@ -679,20 +578,17 @@
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:Q2_K_XL",
 			"model": "gemma-4-26B-A4B-it-UD-Q2_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q6_K_XL",
 			"model": "gemma-4-12b-it-UD-Q6_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-Q2_K_XL",
 			"model": "Qwen3.8-27B-UD-Q2_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -702,7 +598,6 @@
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ3_XXS-2.88bpw",
 			"model": "Qwen3.8-27B-IQ3_XXS-2.88bpw.gguf",
-			"mmproj": "mmproj-bf16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -712,13 +607,11 @@
 		{
 			"hf-repo": "bloomer010/Ling-3.0-tiny-GGUF:UD-Q8_K_XL",
 			"model": "Ling-3.0-tiny-UD-Q8_K_XL.gguf",
-			"ctx-size": 131072,
 			"__argv": "${ling}"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ3_XS-3.01bpw",
 			"model": "Qwen3.8-27B-IQ3_XS-3.01bpw.gguf",
-			"mmproj": "mmproj-bf16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -729,20 +622,17 @@
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:IQ3_S",
 			"model": "gemma-4-26B-A4B-it-UD-IQ3_S.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:IQ3_XXS",
 			"model": "gemma-4-26B-A4B-it-UD-IQ3_XXS.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ3_XXS",
 			"model": "Qwen3.8-27B-UD-IQ3_XXS.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -752,7 +642,6 @@
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw",
 			"model": "Qwen3.8-27B-IQ3_S-3.23bpw.gguf",
-			"mmproj": "mmproj-bf16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -763,20 +652,17 @@
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:Q3_K_M",
 			"model": "gemma-4-26B-A4B-it-UD-Q3_K_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:Q3_K_XL",
 			"model": "gemma-4-26B-A4B-it-UD-Q3_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ3_S",
 			"model": "Qwen3.8-27B-UD-IQ3_S.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -786,7 +672,6 @@
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q8_0",
 			"model": "gemma-4-12b-it-Q8_0.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
@@ -795,39 +680,33 @@
 		{
 			"hf-repo": "JetBrains/Qwen3.8-3.6-27B-blend-GGUF:IQ3_S",
 			"model": "Qwen3.8-3.6-27B-blend-IQ3_S.gguf",
-			"mmproj": "mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} ${DRAFT_MTP}",
-			"ctx-size": 131072
+			"__argv": "${qwen38} ${DRAFT_MTP}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:IQ4_XS",
 			"model": "gemma-4-26B-A4B-it-UD-IQ4_XS.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:IQ4_NL",
 			"model": "gemma-4-26B-A4B-it-UD-IQ4_NL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:Q8_K_XL",
 			"model": "gemma-4-12b-it-UD-Q8_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.84bpw",
 			"model": "Qwen3.8-27B-IQ4_XS-3.84bpw.gguf",
-			"mmproj": "mmproj-bf16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -837,7 +716,6 @@
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL",
 			"model": "Qwen3.8-27B-UD-Q3_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -848,13 +726,11 @@
 			"hf-repo": "unsloth/gemma-4-E4B-it-GGUF:BF16",
 			"model": "gemma-4-E4B-it-BF16.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:UD-IQ4_XS",
 			"model": "Qwen3.8-27B-UD-IQ4_XS.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -864,17 +740,14 @@
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
 			"model": "gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q4_K_S",
 			"model": "Qwen3.8-27B-UD-Q4_K_S.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -885,27 +758,23 @@
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:Q4_K_S",
 			"model": "gemma-4-26B-A4B-it-UD-Q4_K_S.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:MXFP4_MOE",
 			"model": "gemma-4-26B-A4B-it-MXFP4_MOE.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:Q4_K_M",
 			"model": "gemma-4-26B-A4B-it-UD-Q4_K_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q4_0",
 			"model": "Qwen3.8-27B-Q4_0.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -916,22 +785,18 @@
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:Q4_K_XL",
 			"model": "gemma-4-26B-A4B-it-UD-Q4_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw",
 			"model": "Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf",
-			"mmproj": "mmproj-bf16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
-			"ctx-size": 131072,
 			"__argv": "${qwen36}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
 			"model": "Qwen3.8-27B-UD-Q4_K_M.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -941,18 +806,15 @@
 		{
 			"hf-repo": "JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q4_K_M",
 			"model": "Qwen3.8-3.6-27B-blend-Q4_K_M.gguf",
-			"mmproj": "mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} ${DRAFT_MTP}",
-			"ctx-size": 131072
+			"__argv": "${qwen38} ${DRAFT_MTP}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
 			"model": "Qwen3.6-27B-Q4_K_M.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"__argv": "${qwen36} ${DRAFT_MTP}"
@@ -960,7 +822,6 @@
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q4_1",
 			"model": "Qwen3.8-27B-Q4_1.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -970,7 +831,6 @@
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q4_K_XL",
 			"model": "Qwen3.8-27B-UD-Q4_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -981,13 +841,11 @@
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:Q5_K_S",
 			"model": "gemma-4-26B-A4B-it-UD-Q5_K_S.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
 			"model": "gemma-4-31B-it-qat-UD-Q4_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
@@ -996,16 +854,13 @@
 		{
 			"hf-repo": "byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw",
 			"model": "Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf",
-			"mmproj": "mmproj-bf16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
-			"ctx-size": 131072,
 			"__argv": "${qwen36}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q5_K_S",
 			"model": "Qwen3.8-27B-UD-Q5_K_S.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -1015,25 +870,20 @@
 		{
 			"hf-repo": "poolside/Laguna-XS-2.1-GGUF:Q4_K_M",
 			"model": "Laguna-XS-2.1-Q4_K_M.gguf",
-			"ctx-size": 131072,
-			"__argv": "${laguna}",
-			"ctx-native": 262144
+			"__argv": "${laguna}"
 		},
 		{
 			"hf-repo": "JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q5_K_M",
 			"model": "Qwen3.8-3.6-27B-blend-Q5_K_M.gguf",
-			"mmproj": "mmproj-Qwen3.8-3.6-27B-blend-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
 			"cache-type-v": "q8_0",
-			"__argv": "${qwen38} ${DRAFT_MTP}",
-			"ctx-size": 131072
+			"__argv": "${qwen38} ${DRAFT_MTP}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q5_K_M",
 			"model": "Qwen3.8-27B-UD-Q5_K_M.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -1044,20 +894,17 @@
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:Q5_K_M",
 			"model": "gemma-4-26B-A4B-it-UD-Q5_K_M.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:Q5_K_XL",
 			"model": "gemma-4-26B-A4B-it-UD-Q5_K_XL.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q5_K_XL",
 			"model": "Qwen3.8-27B-UD-Q5_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -1067,7 +914,6 @@
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q6_K",
 			"model": "Qwen3.8-27B-UD-Q6_K.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -1078,13 +924,11 @@
 			"hf-repo": "unsloth/gemma-4-12b-it-GGUF:BF16",
 			"model": "gemma-4-12b-it-BF16.gguf",
 			"parallel": 1,
-			"__argv": "${gemma4}",
-			"ctx-size": 65536
+			"__argv": "${gemma4}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q6_K_M",
 			"model": "Qwen3.8-27B-UD-Q6_K_M.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -1094,27 +938,22 @@
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K",
 			"model": "gemma-4-26B-A4B-it-UD-Q6_K.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL",
 			"model": "gemma-4-26B-A4B-it-UD-Q6_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q6_K_L",
 			"model": "Qwen3.8-27B-UD-Q6_K_L.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -1124,7 +963,6 @@
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q6_K_XL",
 			"model": "Qwen3.8-27B-UD-Q6_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -1134,17 +972,14 @@
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
 			"model": "gemma-4-26B-A4B-it-Q8_0.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q8_K_L",
 			"model": "Qwen3.8-27B-UD-Q8_K_L.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -1154,17 +989,14 @@
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL",
 			"model": "gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q8_0",
 			"model": "Qwen3.8-27B-Q8_0.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -1174,16 +1006,13 @@
 		{
 			"hf-repo": "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K",
 			"model": "Qwen3.6-35B-A3B-UD-Q6_K.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
-			"ctx-size": 131072,
 			"__argv": "${qwen36}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:Q8_K_XL",
 			"model": "Qwen3.8-27B-UD-Q8_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -1193,44 +1022,35 @@
 		{
 			"hf-repo": "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL",
 			"model": "Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
-			"ctx-size": 131072,
 			"__argv": "${qwen36}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0",
 			"model": "Qwen3.6-35B-A3B-Q8_0.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
-			"ctx-size": 131072,
 			"__argv": "${qwen36}"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL",
 			"model": "Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
-			"ctx-size": 131072,
 			"__argv": "${qwen36}"
 		},
 		{
 			"hf-repo": "unsloth/gemma-4-26B-A4B-it-GGUF:BF16",
 			"model": "BF16/gemma-4-26B-A4B-it-BF16-00001-of-00002.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1120,
 			"image-max-tokens": 1120,
-			"ctx-size": 131072,
 			"__argv": "${gemma4} ${DRAFT_MTP}",
 			"model-draft": "MTP/mtp-gemma-4-26B-A4B-it-Q8_0.gguf"
 		},
 		{
 			"hf-repo": "unsloth/Qwen3.8-27B-GGUF:BF16",
 			"model": "BF16/Qwen3.8-27B-BF16-00001-of-00002.gguf",
-			"mmproj": "mmproj-BF16.gguf",
 			"image-min-tokens": 1024,
 			"image-max-tokens": 1024,
 			"cache-type-k": "q8_0",
@@ -1240,159 +1060,121 @@
 		{
 			"hf-repo": "LiquidAI/LFM3-1.7B-GGUF:QAD-Q4_0",
 			"model": "LFM3-1.7B-QAD-Q4_0.gguf",
-			"ctx-size": 65536,
-			"__argv": "${lfm3}",
-			"ctx-native": 262144
+			"__argv": "${lfm3}"
 		},
 		{
 			"hf-repo": "LiquidAI/LFM3-1.7B-GGUF:Q4_K_M",
 			"model": "LFM3-1.7B-Q4_K_M.gguf",
-			"ctx-size": 65536,
-			"__argv": "${lfm3}",
-			"ctx-native": 262144
+			"__argv": "${lfm3}"
 		},
 		{
 			"hf-repo": "LiquidAI/LFM3-1.7B-GGUF:Q5_K_M",
 			"model": "LFM3-1.7B-Q5_K_M.gguf",
-			"ctx-size": 65536,
-			"__argv": "${lfm3}",
-			"ctx-native": 262144
+			"__argv": "${lfm3}"
 		},
 		{
 			"hf-repo": "LiquidAI/LFM3-1.7B-GGUF:NVFP4",
 			"model": "LFM3-1.7B-NVFP4.gguf",
-			"ctx-size": 65536,
-			"__argv": "${lfm3}",
-			"ctx-native": 262144
+			"__argv": "${lfm3}"
 		},
 		{
 			"hf-repo": "LiquidAI/LFM3-1.7B-GGUF:Q6_K",
 			"model": "LFM3-1.7B-Q6_K.gguf",
-			"ctx-size": 65536,
-			"__argv": "${lfm3}",
-			"ctx-native": 262144
+			"__argv": "${lfm3}"
 		},
 		{
 			"hf-repo": "LiquidAI/LFM3-1.7B-GGUF:Q8_0",
 			"model": "LFM3-1.7B-Q8_0.gguf",
-			"ctx-size": 65536,
-			"__argv": "${lfm3}",
-			"ctx-native": 262144
+			"__argv": "${lfm3}"
 		},
 		{
 			"hf-repo": "LiquidAI/LFM3-1.7B-GGUF:BF16",
 			"model": "LFM3-1.7B-BF16.gguf",
-			"ctx-size": 65536,
-			"__argv": "${lfm3}",
-			"ctx-native": 262144
+			"__argv": "${lfm3}"
 		},
 		{
 			"hf-repo": "LiquidAI/LFM3-1.7B-GGUF:F16",
 			"model": "LFM3-1.7B-F16.gguf",
-			"ctx-size": 65536,
-			"__argv": "${lfm3}",
-			"ctx-native": 262144
+			"__argv": "${lfm3}"
 		},
 		{
 			"hf-repo": "XHToken/Spark-X2.6-1.7B-GGUF:Q4_K_M",
 			"model": "Spark-X2.6-1.7B-Q4_K_M.gguf",
-			"ctx-size": 65536,
-			"__argv": "${spark26}",
-			"ctx-native": 1048576
+			"__argv": "${spark26}"
 		},
 		{
 			"hf-repo": "XHToken/Spark-X2.6-1.7B-GGUF:Q8_0",
 			"model": "Spark-X2.6-1.7B-Q8_0.gguf",
-			"ctx-size": 65536,
-			"__argv": "${spark26}",
-			"ctx-native": 1048576
+			"__argv": "${spark26}"
 		},
 		{
 			"hf-repo": "XHToken/Spark-X2.6-1.7B-GGUF:F16",
 			"model": "Spark-X2.6-1.7B.gguf",
-			"ctx-size": 65536,
-			"__argv": "${spark26}",
-			"ctx-native": 1048576
+			"__argv": "${spark26}"
 		},
 		{
 			"hf-repo": "XHToken/Spark-X2.6-4B-GGUF:Q4_K_M",
 			"model": "Spark-X2.6-4B-Q4_K_M.gguf",
-			"ctx-size": 65536,
-			"__argv": "${spark26}",
-			"ctx-native": 1048576
+			"__argv": "${spark26}"
 		},
 		{
 			"hf-repo": "XHToken/Spark-X2.6-4B-GGUF:Q8_0",
 			"model": "Spark-X2.6-4B-Q8_0.gguf",
-			"ctx-size": 65536,
-			"__argv": "${spark26}",
-			"ctx-native": 1048576
+			"__argv": "${spark26}"
 		},
 		{
 			"hf-repo": "XHToken/Spark-X2.6-4B-GGUF:F16",
 			"model": "Spark-X2.6-4B.gguf",
-			"ctx-size": 65536,
-			"__argv": "${spark26}",
-			"ctx-native": 1048576
+			"__argv": "${spark26}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-24B-A2B-GGUF:UD-IQ2_XXS",
 			"model": "LFM2.5-24B-A2B-UD-IQ2_XXS.gguf",
-			"ctx-size": 65536,
 			"__argv": "${lfm25a2b}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-24B-A2B-GGUF:UD-IQ2_M",
 			"model": "LFM2.5-24B-A2B-UD-IQ2_M.gguf",
-			"ctx-size": 65536,
 			"__argv": "${lfm25a2b}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-24B-A2B-GGUF:UD-Q2_K_XL",
 			"model": "LFM2.5-24B-A2B-UD-Q2_K_XL.gguf",
-			"ctx-size": 65536,
 			"__argv": "${lfm25a2b}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-24B-A2B-GGUF:UD-IQ3_XXS",
 			"model": "LFM2.5-24B-A2B-UD-IQ3_XXS.gguf",
-			"ctx-size": 65536,
 			"__argv": "${lfm25a2b}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-24B-A2B-GGUF:UD-Q3_K_XL",
 			"model": "LFM2.5-24B-A2B-UD-Q3_K_XL.gguf",
-			"ctx-size": 65536,
 			"__argv": "${lfm25a2b}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-24B-A2B-GGUF:UD-Q4_K_XL",
 			"model": "LFM2.5-24B-A2B-UD-Q4_K_XL.gguf",
-			"ctx-size": 65536,
 			"__argv": "${lfm25a2b}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-24B-A2B-GGUF:UD-Q5_K_XL",
 			"model": "LFM2.5-24B-A2B-UD-Q5_K_XL.gguf",
-			"ctx-size": 65536,
 			"__argv": "${lfm25a2b}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-24B-A2B-GGUF:UD-Q6_K_XL",
 			"model": "LFM2.5-24B-A2B-UD-Q6_K_XL.gguf",
-			"ctx-size": 65536,
 			"__argv": "${lfm25a2b}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-24B-A2B-GGUF:Q8_0",
 			"model": "LFM2.5-24B-A2B-Q8_0.gguf",
-			"ctx-size": 65536,
 			"__argv": "${lfm25a2b}"
 		},
 		{
 			"hf-repo": "unsloth/LFM2.5-24B-A2B-GGUF:BF16",
 			"model": "BF16/LFM2.5-24B-A2B-BF16.gguf",
-			"ctx-size": 65536,
 			"__argv": "${lfm25a2b}"
 		}
 	]

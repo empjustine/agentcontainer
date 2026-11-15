@@ -45,7 +45,8 @@ active-b slug (ids are `[<mmprojMode>-]repo:quant` — the context window a
 model serves is a property of the entry, and a second id spelling only
 invites callers to pin a stale one), and small models get their context
 raised to the 256k fleet cap, never past the GGUF header's native
-`context_length` (`ctx-native` in the table, filled from header reads;
+`context_length` (`ctx-native`, filled from header reads — since d197 the
+value lives in the generated `lib/gguf-facts.json`, not a table column;
 absent means no raise). The same header reads
 mis-sized two repos through side artifacts, which is why `mainGgufSizes`
 now also excludes the partial `dflash`/`dspark` builds some repos ship
@@ -223,12 +224,15 @@ removes or narrows, never adds a mechanism.
   neither full-precision file passes through unfiltered rather than guessed
   at, the same "unsized keeps, never guesses" stance d055's gate took.
 - **Full-precision variants display only where they are servable.** A repo at
-  or above 4 billion total parameters never displays BF16 or F16: the variant
+  or above 4 billion total parameters never displays BF16 or F16 (restated
+  since as a share of the fleet card — d199 owns the units, the boundary is the
+  same): the variant
   is outside every footprint this fleet can serve and only bloats the config
   with a model that can never load. Below that line the variant is genuinely
   useful and stays.
 - **Low-parameter repos drop their cheapest four quants, keeping the top two.**
-  A repo below 4 billion total parameters loses its four smallest-quant
+  A repo below 4 billion total parameters (d199: under a quarter of the fleet
+  card) loses its four smallest-quant
   entries (ranked by manifest size, which is the quant ordering), but never
   past the top two — a repo with few quants must keep a servable floor.
   Repos at or above the line keep their whole quant ladder.

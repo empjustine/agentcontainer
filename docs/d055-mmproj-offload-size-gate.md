@@ -18,6 +18,10 @@ tags: ["gguf", "mmproj", "multimodal", "vram", "generator"]
 > **Deprecated (d170).** The gate and its `size-gb` input are removed — every
 > mmproj entry emits all three modes again, and the swap-time cost of the
 > restored downloads is the accepted price (see d170's mmproj decision).
+> The ceiling itself returned, first on parameters (d195) and then as a share of
+> the fleet card — `MMPROJ_OFFLOAD_MAX_VRAM_SHARE` = 75%, the same boundary
+> (d199, d200) — where the class a model belongs to does not move with its
+> quant.
 
 ## Problem
 

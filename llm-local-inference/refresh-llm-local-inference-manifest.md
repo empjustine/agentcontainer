@@ -30,16 +30,16 @@ files only, offline (the former `generate.sh` infisical wrapper is long gone).
 
 ## Schema (one manifest entry)
 
-| Key                             | Meaning                                                                                                                                                                                                                                                                                                                                                             |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hf-repo`                       | `org/repo:quant` — `quant` is the **trailing filename token** of the GGUF (see naming rules below)                                                                                                                                                                                                                                                                  |
-| `model`                         | exact cached GGUF filename. For sharded files, the `00001-of-NNNNN` shard (llama.cpp resolves the prefix)                                                                                                                                                                                                                                                           |
-| `mmproj`                        | optional vision projector file; **omit entirely** if no projector is cached                                                                                                                                                                                                                                                                                         |
-| `model-draft`                   | optional MTP/drafter sidecar GGUF (unsloth ships these under the repo's `MTP/` subdir — the subdir prefix is part of the filename); must live in the SAME snapshot as `model`. Requires `--spec-type` at launch, which the generator emits (`draft-mtp` by default) — a bare `--model-draft` on a local-path model enables no speculative impl and just wastes VRAM |
-| `cache-type-k` / `cache-type-v` | KV-cache quant; optional, **default `f16`/`f16`**                                                                                                                                                                                                                                                                                                                   |
-| `ctx-size`                      | **authoritative** context window; optional, **default `65536`**. The generator never applies `--fit-ctx`                                                                                                                                                                                                                                                            |
-| `parallel`                      | `1` or `2`; optional, **default `1`**                                                                                                                                                                                                                                                                                                                               |
-| `__argv`                        | family sampling macro ${…} (see Step 3), or omit when the family has no macro                                                                                                                                                                                                                                                                                       |
+| Key                             | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hf-repo`                       | `org/repo:quant` — `quant` is the **trailing filename token** of the GGUF (see naming rules below)                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `model`                         | exact cached GGUF filename. For sharded files, the `00001-of-NNNNN` shard (llama.cpp resolves the prefix)                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `mmproj`                        | **override only.** Omit it: the generator takes the projector from the committed hf-manifest (BF16 first, then F16, d197), so vision capability is a repo fact, not a per-entry one. A written value must exist in the manifest; F16/Q8_0 while the repo ships BF16 warns but is honoured. Fills the mode set, gated from both ends (d195, d200): `1vision` always; `2mmproj` only while the weights stay under 75% of the fleet card; `0text` only once they are over 25% — below that the projector fits anyway, so the no-projector mode buys nothing |
+| `model-draft`                   | optional MTP/drafter sidecar GGUF (unsloth ships these under the repo's `MTP/` subdir — the subdir prefix is part of the filename); must live in the SAME snapshot as `model`. Requires `--spec-type` at launch, which the generator emits (`draft-mtp` by default) — a bare `--model-draft` on a local-path model enables no speculative impl and just wastes VRAM                                                                                                                                                                                      |
+| `cache-type-k` / `cache-type-v` | KV-cache quant; optional, **default `f16`/`f16`**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `ctx-size`                      | **optional ceiling**, never a target: the generator serves the GGUF header's `context_length` (from `lib/gguf-facts.json`, capped at 262144, d197). A written value lowers it; a value above the header is clamped with a warning                                                                                                                                                                                                                                                                                                                        |
+| `parallel`                      | `1` or `2`; optional, **default `1`**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `__argv`                        | family sampling macro ${…} (see Step 3), or omit when the family has no macro                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 Keys with an implicit default are filled in by `generate.mjs`
 (`DEFAULTS` map) — omit them unless the entry deviates, e.g. `parallel: 2` or a
@@ -70,22 +70,24 @@ heuristic is `fetch_hf_manifests.py` (Step 5).
   specifier, not decoration.
 - **`model`** = the exact filename from Step 1 (sharded → the `00001-of-NNNNN`
   shard).
-- **`mmproj`** = `mmproj-*.gguf` **only if one is cached in the same
-  `snapshots/<commit>/` dir**. If the repo is text-only, leave the key out.
+- **`mmproj`** = leave it out. The generator resolves the projector from the
+  committed hf-manifest (BF16 → F16 → F32 → Q8_0) and validates every written
+  filename against that manifest; a repo with no `mmproj-*.gguf` stays
+  text-only automatically.
 - **`cache-type-k` / `cache-type-v`**: omit (the implicit default is `f16`/`f16`); set only for a non-f16 KV cache.
-- **`ctx-size`** = the model's native `context_length` from the GGUF header,
-  capped to fit VRAM. Read it without loading weights — the PoC header reader
-  (`llm-local-inference/gguf_context_length.py`) uses the PyPI `gguf` package and is
-  header-only (memory-mapped, no tensor weights):
+- **`ctx-size`** = omit. The window is the model's native `context_length`
+  read from the GGUF header into `lib/gguf-facts.json` (d197), capped at 262144. `--fit on` in the `LLAMA_SERVER` macro reconciles a host that cannot
+  hold it. Write the key only to pin a LOWER window for a host-specific reason.
+  The header — not a model card's "256K" claim — is what the generator serves:
 
   ```sh
-  ./py-run.sh llm-local-inference/gguf_context_length.py --repo ORG/REPO
-  # or pass one or more explicit file paths / globs instead of --repo
+  ./py-run.sh llm-local-inference/gguf_context_length.py --repo ORG/REPO  # one model
+  ./py-run.sh llm-local-inference/gguf_context_length.py --facts          # rewrite the artifact
   ```
 
-  Policy applied so far: Qwen3.8 / GLM-4.7 capped to `65536`; LFM2.5 kept at
-  native (`131072` / `128000`); others at native or `65536` when VRAM-bound.
-  Write the key only when the cap is **not** the `65536` default.
+  `--facts` re-reads every file the table serves and is the ONLY writer of
+  `lib/gguf-facts.json`; run it whenever an entry's `model` changes, then commit
+  the regenerated file with the table.
 
 - **`parallel`**: omit (the implicit default is `1`); write `2` only when VRAM allows.
 - **`model-draft`** = the repo's `MTP/mtp-<model>-<QUANT>.gguf` sidecar, when it
@@ -104,13 +106,14 @@ MoE, text-only, native ctx):
 {
   "hf-repo": "unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL",
   "model": "LFM2.5-8B-A1B-UD-Q8_K_XL.gguf",
-  "ctx-size": 128000,
   "__argv": "${lfm25}"
 }
 ```
 
-(`cache-type-k`/`cache-type-v`/`parallel` are omitted — they equal the implicit
-defaults `f16`/`f16`/`1`; only the non-default `ctx-size: 128000` is written.)
+That is the whole entry. `mmproj`, `ctx-size`, `ctx-native`, `cache-type-k`/
+`cache-type-v` and `parallel` are all derived (projector and parameter count
+from the hf-manifest, window from `lib/gguf-facts.json`, KV type and
+parallelism from the generator defaults); write one only to deviate.
 
 Family sampling macros live under the `macros` key of `llama-swap-core.json`
 (the source of truth) and are emitted into `config.d/00-general.yaml` by
@@ -126,12 +129,19 @@ cd llm-local-inference
 LOCAL_INFERENCE=1 ./node-run.sh llm-local-inference/generate.mjs   # -> both config.d/ layers (00-general + 10-local-llm-inference)
 ```
 
-Generation runs offline (no Infisical, no network). The generator warns on **duplicate model
-ids** — fix any collision (usually a `ctx-size` clash) before shipping. Model ids are
+Generation runs offline (no Infisical, no network). It FAILS on a **duplicate
+model id** (two entries claiming one serving slot) and on a **declared file the
+manifest does not carry** — both are table bugs, not host state. It WARNS, and
+still emits a complete config, when the host cache lacks an entry's snapshot
+(a host that has not pulled yet must generate) and when an entry overrides the
+repo's BF16 projector with an F16 one. Model ids are
 `[<mmprojMode>-]<hf-repo>` — no slug prefixes (active-b and ctx, both retired by d170); quant display is pruned by the
-generator from the committed hf-manifests (BF16/F16 hidden at ≥4B total params; the four
-cheapest quants dropped below 4B, top two kept), so a brand-new quant may not appear in
-the layer if the manifest still lists only cheap quants for its repo.
+generator from the committed hf-manifests, in shares of the 16 GiB fleet card
+(d199): BF16/F16 hidden where a full-precision copy would claim >50% of it, up to
+three cheapest quants dropped where the served weights claim <25% (never below
+three rows, d200), `2mmproj` only up to 75% (d195) and `0text` only above 25%
+(d200). A brand-new quant may therefore not appear in the
+layer if the manifest still lists only cheap quants for its repo.
 
 ## Step 5 — Validate
 
@@ -143,6 +153,10 @@ git diff --exit-code llm-local-inference/lib/llamacpp-model-data.json    # you e
 # coverage: re-run the Step 1 scanner and confirm
 #   - every cached repo has >=1 manifest entry (no repo left at zero coverage)
 #   - no listed repo has a cached .gguf whose quant is absent from the manifest
+
+# the header facts must cover every served file: re-run the writer after any
+# `model` change, then commit lib/gguf-facts.json with the table (d197)
+./py-run.sh llm-local-inference/gguf_context_length.py --facts
 
 # --offline audits each entry's model against llama.cpp's implicit
 # repo:quant -> file heuristic, with no network (exit 1 on mismatch)
@@ -204,15 +218,19 @@ llama-swap merges `config.d/` files additively at startup. Restart the
   `hf-repo` is what `find_best_model` matches via the `(^|[-./])TAG[.-]`
   regex, so the extensive name selects the right file (an underscore is not a
   boundary upstream — #31639).
-- **`mmproj` only when cached.** Don't guess a projector filename; if the
-  snapshot dir has no `mmproj-*.gguf`, omit the key (text-only).
+- **Never write `mmproj` to enable vision.** Capability comes from the
+  committed hf-manifest: a repo that ships `mmproj-*.gguf` fans out, one that
+  does not stays text-only, and every entry of a vision repo gets the same
+  projector. Write the key only to pick a NON-BF16 projector, and expect a
+  warning — the fleet prefers BF16 (d197).
 - **A bare full-precision upload has no tag.** `XHToken`'s Spark repos ship
   `Spark-X2.6-1.7B.gguf` with no quant in the name, so `:F16` there labels a
   file llama.cpp cannot resolve by tag. The audit prints `label-only` and the
   baked `--model` path serves it; do not "fix" it by inventing a tag.
-- **`ctx-size` is authoritative.** The generator does not auto-fit context;
-  whatever you write (or the `65536` default, when omitted) is what the server
-  gets. Read `context_length` from the header and cap to VRAM.
+- **`ctx-size` is a ceiling, not a target.** The generator serves the header's
+  `context_length` (capped at 262144) and clamps a written value that exceeds
+  it, with a warning. It never shrinks a window to fit VRAM — `--fit on` does
+  that at launch, so a too-large number is a host problem, not a config lie.
 - **Sharded GGUFs.** `model` points at shard `00001-of-NNNNN`; the loader
   expands the prefix.
 - **Last array element has no trailing comma** in `llamacpp-model-data.json`.

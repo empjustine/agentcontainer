@@ -20,9 +20,15 @@
  *                                carry every configured GGUF)
  * There is NO launch-gguf.sh: snapshot paths are resolved HERE
  * (generation-time baking, docs/d029 option B) and emitted as plain args in
- * each model's cmd; a cache miss is a generation error pointing at
- * ./download_models.py. Stale launch-gguf.sh copies from older
+ * each model's cmd; a cache miss WARNS and still emits a complete config,
+ * because a host that has not pulled yet must generate (the miss surfaces as
+ * llama-server's 127 at swap time). Stale launch-gguf.sh copies from older
  * generate.sh versions are removed below.
+ *
+ * Three inputs are committed facts, never hand-maintained: lib/hf-manifests/
+ * (what a repo ships — file validation, projector choice, parameter counts),
+ * lib/gguf-facts.json (GGUF header truth: context ceilings, docs/d197) and
+ * llama-swap-core.json (macros).
  *
  * Layer-merge rules for the fragments (llama-swap's -config-dir loader;
  * docs/d018): identity-keyed maps merge additively and a duplicate key across
@@ -130,15 +136,15 @@ function generateGeneral() {
 const LLAMA_SERVER_MACRO = "${LLAMA_SERVER}";
 
 /**
- * Implicit manifest defaults: entries in llamacpp-model-data.json may omit
- * these keys and the generator fills them in. Only deviations (e.g. a
- * --parallel 2 model or a non-65536 context) need to be written out.
+ * Implicit entry defaults: keys an entry may omit because the generator owns
+ * them. `ctx-size` is NOT one of them — the window comes from the model's own
+ * GGUF header via lib/gguf-facts.json (docs/d197). f16 KV is the low-KLD
+ * default; only a memory-pressed entry overrides it.
  * @type {Record<string, number|string>}
  */
 const DEFAULTS = {
 	"cache-type-k": "f16",
 	"cache-type-v": "f16",
-	"ctx-size": 65_536,
 	parallel: 1,
 };
 
@@ -231,9 +237,12 @@ function allShards(filename) {
  * files (every model shard, plus the projector/drafter when declared) so
  * --model/--mmproj/--model-draft stay backed by the exact same commit.
  *
- * No candidate qualifies ⇒ generation FAILS (exit 1): provisioning is
- * download_models.py's job and is not duplicated as a
- * launch-time download fallback.
+ * No candidate qualifies ⇒ WARN and bake against the best revision a committed
+ * source names (refs/main, else the manifest's resolved commit): a host that
+ * has not pulled yet must still generate a complete config, and a wrong path
+ * is llama-server's documented 127 at swap time, not a generation failure
+ * (docs/d197 — the hard-fail blocked first-run and cache-less hosts for a
+ * condition download_models.py owns).
  * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
  * @returns {{ modelPath: string, mmprojPath: string|null, draftPath: string|null }}
  *   container-side paths for the emitted cmd (mmproj/draft null when the entry
@@ -281,22 +290,29 @@ function bakeSnapshotPaths(m) {
 		};
 	}
 
-	logError(
-		"no HF snapshot carries this entry — run ./download_models.py, then re-run the generator (./node-run.sh llm-local-inference/generate.mjs)",
-		{
-			repo,
-			hub: snapshotsDir,
-			snapshotsChecked: candidates.length,
-			required,
-		},
+	const sha = candidates[0] ?? repoManifest(repo).commit;
+	if (sha === null) {
+		throw new Error(
+			`no cached snapshot and no committed manifest commit to bake ${m["hf-repo"]} against`,
+		);
+	}
+	logWarn(
+		"no cached HF snapshot carries this entry — run ./download_models.py; baking unverified paths",
+		{ repo, sha, snapshotsChecked: candidates.length, required },
 	);
-	process.exit(1);
+	const snapGuest = `${HUB_GUEST}/${repoDir}/snapshots/${sha}`;
+	return {
+		modelPath: `${snapGuest}/${shardOne(m.model)}`,
+		mmprojPath: m.mmproj ? `${snapGuest}/${m.mmproj}` : null,
+		draftPath: m["model-draft"] ? `${snapGuest}/${m["model-draft"]}` : null,
+	};
 }
 
 /**
- * mmproj models are tripled: one llama-swap model per level of commitment to
- * GPU-offloading the vision projector. The middle slug segment doubles as a
- * llama-swap macro name (llama-swap-core.json):
+ * One llama-swap model per level of commitment to GPU-offloading the vision
+ * projector — the fan is size-gated, see MMPROJ_OFFLOAD_MAX_VRAM_SHARE. The
+ * middle slug segment doubles as a llama-swap macro name
+ * (llama-swap-core.json):
  *   0text    -> --no-mmproj --ubatch-size 512   (projector never loaded; also
  *              emitted without --mmproj so the projector is never required)
  *   1vision  -> --no-mmproj-offload --ubatch-size 2048  (projector loaded, stays on CPU)
@@ -323,13 +339,230 @@ const MMPROJ_MODES = [
 const IMAGE_TOKENS_DEFAULT = 1024;
 
 /**
- * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
- * @returns {{seg: string|null, vision: boolean}[]} the modes this entry emits —
- * every mmproj entry emits all three; swap time pays for the restored downloads
- * on heavy entries (d170: the 14 GB size gate and its `size-gb` input retired)
+ * The card every size rule is measured against: the fleet's serving GPU, a
+ * 16 GiB-class board (15.98 GiB measured from
+ * `/sys/class/drm/card1/device/mem_info_vram_total` on tlalocayotl). A
+ * constant, not a probe: `config.d` is a committed artifact, so its contents
+ * must not change with the card of whichever host regenerates it (d050). A
+ * different fleet card moves this number and the shares below, together.
+ * @type {number}
  */
-function mmprojModesFor() {
+const FLEET_VRAM_GIB = 16;
+
+/**
+ * Share of `FLEET_VRAM_GIB` a repo's weights are estimated to occupy when
+ * served, i.e. what is left for the KV cache on that card.
+ *
+ * Total parameters (not active) times the fleet's serving bytes per parameter:
+ * the Q4–Q8 ladder this table publishes averages ~1 GiB per billion, the round
+ * number every threshold below is set on. Total, not active, on purpose — a
+ * 35B-A3B still has to LOAD 35B of weights, and that is what competes with the
+ * KV cache for VRAM.
+ *
+ * Rules quote this share rather than a parameter count so one line reads the
+ * same on any card: ~4B ≈ 25%, ~8B ≈ 50%, ~12B ≈ 75% of a 16 GiB board
+ * (docs/d199).
+ * @param {number} paramsB total parameters, in billions
+ * @returns {number} estimated share of the fleet card (1 = the whole card)
+ */
+function weightsVramShare(paramsB) {
+	return paramsB / FLEET_VRAM_GIB;
+}
+
+/**
+ * Share of the card a FULL-PRECISION copy of the same weights occupies —
+ * 2 bytes per parameter, which is what a BF16/F16 GGUF is.
+ * @param {number} paramsB total parameters, in billions
+ * @returns {number} estimated share of the fleet card (1 = the whole card)
+ */
+function fullPrecisionVramShare(paramsB) {
+	return (2 * paramsB) / FLEET_VRAM_GIB;
+}
+
+/**
+ * Projector-offload ceiling: d055's gate, re-landed after d170 retired
+ * `size-gb`. Above three quarters of the card the weights leave the GPU-resident
+ * projector no headroom, so `2mmproj` runs SLOWER than `1vision` — the mode's
+ * premise inverts exactly where it is offered. `0text` + `1vision` still cover
+ * text and CPU-projector vision, so only the redundant variant goes (d195).
+ * @type {number}
+ */
+const MMPROJ_OFFLOAD_MAX_VRAM_SHARE = 0.75;
+
+/**
+ * "Small model" line: weights under a quarter of the card. Both trimming rules
+ * read it, because below it nothing needs trimming —
+ *  - the quant ladder's cheapest rows are all servable, so they are noise
+ *    (CHEAP_QUANT constants), and
+ *  - a projector fits alongside the weights comfortably, so `0text` — the
+ *    no-projector mode whose whole point is clawing VRAM back — buys a caller
+ *    nothing and costs them images (d200).
+ * @type {number}
+ */
+const SMALL_MODEL_VRAM_SHARE = 0.25;
+
+/**
+ * The publisher's declared parameter count from the repo slug — `Qwen3.8-27B`,
+ * `gemma-4-E2B`, `LFM2.5-VL-3B` — in billions, or null.
+ * A name read is needed because 10 of the 18 mmproj repos ship NO full-precision
+ * file, so `totalParamsB` is null for exactly the 26B/27B/31B/35B qat, byteshape
+ * and JetBrains repos the ceiling exists to catch — and d170's "unsized keeps"
+ * stance would then hand them the one mode the ceiling suppresses. The token
+ * agrees with the manifest count on every repo where both exist, and the
+ * degenerate active-parameter segments (`A3B`, `A4B`) never come first.
+ * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
+ * @returns {number|null}
+ */
+function declaredParamsB(m) {
+	const slug = m["hf-repo"].split(":")[0].split("/").pop() ?? "";
+	const match = /(?:^|[^0-9])(\d+(?:\.\d+)?)b(?:[^a-z0-9]|$)/i.exec(slug);
+	return match ? Number(match[1]) : null;
+}
+
+/**
+ * The fan, gated from BOTH ends (docs/d195, d200): the mode set exists to trade
+ * VRAM for projector placement, so it only earns its slots where VRAM is
+ * actually contested.
+ *  - over the ceiling (weights > 75% of the card) the offloaded projector has no
+ *    headroom and runs slower than the CPU one: drop `2mmproj`;
+ *  - under the small-model line (weights < 25%) the projector fits next to the
+ *    weights anyway, so `0text` — the no-projector mode whose only purpose is
+ *    clawing VRAM back — is a needlessly compromised candidate: drop it.
+ * @param {number|null} paramsB total (not active) parameters, or null when
+ * neither the manifest nor the slug declares them
+ * @returns {{seg: string|null, vision: boolean}[]} the modes this entry emits —
+ * unknown parameters keep all three, the "unsized keeps, never guesses" stance
+ * d170 recorded
+ */
+function mmprojModesFor(paramsB) {
+	if (paramsB === null) {
+		return MMPROJ_MODES;
+	}
+	const share = weightsVramShare(paramsB);
+	if (share > MMPROJ_OFFLOAD_MAX_VRAM_SHARE) {
+		return MMPROJ_MODES.filter((mode) => mode.seg !== "2mmproj");
+	}
+	if (share < SMALL_MODEL_VRAM_SHARE) {
+		return MMPROJ_MODES.filter((mode) => mode.seg !== "0text");
+	}
 	return MMPROJ_MODES;
+}
+
+/**
+ * Projector quant preference, best first. BF16 is the fleet ceiling for a
+ * projector: the file is tiny, so the F16 half-precision buy is a lossy
+ * trade for nothing (docs/d197). F16 stays a valid explicit override; the
+ * rest are last resorts for repos that publish nothing better.
+ * @type {readonly string[]}
+ */
+const MMPROJ_QUANT_PRIORITY = ["bf16", "f16", "f32", "q8_0"];
+
+/**
+ * @param {string} path a manifest file path
+ * @returns {number} index into MMPROJ_QUANT_PRIORITY, or the list length
+ */
+function mmprojRank(path) {
+	const quant = /mmproj-(.+)\.gguf$/i.exec(path)?.[1]?.toLowerCase() ?? "";
+	const rank = MMPROJ_QUANT_PRIORITY.indexOf(quant);
+	return rank === -1 ? MMPROJ_QUANT_PRIORITY.length : rank;
+}
+
+/**
+ * The projector a repo should serve, straight from its committed manifest.
+ * This is the ONE home of vision capability: a per-entry `mmproj` key drifted
+ * (2 of gemma-4-12b's 21 entries carried it) because the capability is a repo
+ * fact, not a quant fact (docs/d197).
+ * @param {string} repo "org/repo"
+ * @returns {string|null} manifest path of the best projector, or null
+ */
+function repoMmproj(repo) {
+	const candidates = repoManifest(repo)
+		.files.map((f) => f.path)
+		.filter((path) => /(^|\/)mmproj-.*\.gguf$/i.test(path));
+	if (candidates.length === 0) {
+		return null;
+	}
+	candidates.sort((a, b) => mmprojRank(a) - mmprojRank(b) || a.localeCompare(b));
+	return candidates[0] ?? null;
+}
+
+/**
+ * Image-token budget declared anywhere in this repo, so an entry that gains
+ * vision by the projector fill inherits its family's budget (gemma-4: 1120)
+ * instead of silently dropping to the generic default.
+ * @type {Map<string, {min: number, max: number}|null>}
+ */
+const REPO_IMAGE_TOKENS = new Map();
+
+/**
+ * @param {Record<string, any>[]} rows the RAW model-data table (the record of
+ * every quant, so pruning cannot empty a repo of its declared pair)
+ * @returns {void}
+ */
+function indexImageTokens(rows) {
+	for (const row of rows) {
+		const repo = row["hf-repo"].split(":")[0];
+		const min = row["image-min-tokens"];
+		const max = row["image-max-tokens"];
+		if (typeof min !== "number" || typeof max !== "number") {
+			continue;
+		}
+		const seen = REPO_IMAGE_TOKENS.get(repo);
+		if (seen && (seen.min !== min || seen.max !== max)) {
+			logWarn("repo declares two image-token budgets — keeping the first", {
+				repo,
+				kept: seen,
+				ignored: { min, max },
+			});
+			continue;
+		}
+		REPO_IMAGE_TOKENS.set(repo, { min, max });
+	}
+}
+
+/**
+ * Validate an entry against its committed manifest, then fill what the
+ * manifest proves. A declared file the manifest does not carry is a HARD
+ * ERROR: the manifest is committed truth, so a miss is a typo or a stale
+ * table, never a host state (docs/d197).
+ * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
+ * @returns {void} mutates m: resolves `mmproj`, fills the image-token pair
+ */
+function resolveEntryFiles(m) {
+	const repo = m["hf-repo"].split(":")[0];
+	const shipped = new Set(repoManifest(repo).files.map((f) => f.path));
+	const declared = [...allShards(m.model)];
+	if (m.mmproj) {
+		declared.push(m.mmproj);
+	}
+	if (m["model-draft"]) {
+		declared.push(m["model-draft"]);
+	}
+	for (const file of declared) {
+		if (!shipped.has(file)) {
+			throw new Error(
+				`model ${m["hf-repo"]} declares ${file}, which its committed hf-manifest does not carry (re-run fetch_hf_manifests.py, then fix the table)`,
+			);
+		}
+	}
+
+	const preferred = repoMmproj(repo);
+	if (m.mmproj && preferred !== null && m.mmproj !== preferred) {
+		logWarn("projector is not this repo's BF16 pick — valid override, kept", {
+			repo,
+			declared: m.mmproj,
+			preferred,
+		});
+	}
+	const projector = m.mmproj ?? preferred;
+	if (projector) {
+		m.mmproj = projector;
+		const tokens = REPO_IMAGE_TOKENS.get(repo);
+		m["image-min-tokens"] ??= tokens?.min ?? IMAGE_TOKENS_DEFAULT;
+		m["image-max-tokens"] ??= tokens?.max ?? IMAGE_TOKENS_DEFAULT;
+	} else {
+		delete m.mmproj;
+	}
 }
 
 /**
@@ -373,37 +606,76 @@ function deriveModelId(m, modeSeg) {
 const GGUF_SHARD_RE = /-\d{5}-of-\d{5}\.gguf$/;
 
 /**
- * Repos at or above this many BILLION total parameters never display BF16/F16:
- * the variant is already outside every footprint this fleet can serve, so it
- * only bloats the config with a model that can never load. Small models keep
- * them — there a full-precision variant is genuinely useful.
+ * A repo whose FULL-PRECISION copy would claim more than half the card never
+ * displays BF16/F16: half the VRAM on weights alone leaves no room for the KV
+ * cache the same model needs, so the variant can only ever bloat the config
+ * with a model that cannot load. Below the line a full-precision variant is
+ * genuinely useful and stays.
  * @type {number}
  */
-const BF16_F16_HIDE_ABOVE_PARAMS_B = 4;
+const FULL_PRECISION_MAX_VRAM_SHARE = 0.5;
 
 /**
- * Repos below this many BILLION total parameters are "low parameter models"
- * for the low-quant rule: their cheapest four quants are noise in the model
- * list, so they are dropped — but never past the top two quants, which a repo
- * with few quants must keep to stay servable at all.
+ * The low-quant rule's two numbers. A small model (SMALL_MODEL_VRAM_SHARE) has
+ * every quant servable, so its cheapest rows are noise in a catalog this size:
+ * cut at most CHEAP_QUANT_DROP_MAX of them, and never below
+ * CHEAP_QUANT_KEEP_MIN rows — a repo with few quants must keep a servable
+ * ladder, so the floor counts rows, not dropped quants (docs/d200 made this
+ * gentler than d170's four/two).
  * @type {number}
  */
-const LOW_QUANT_DROP_BELOW_PARAMS_B = 4;
+const CHEAP_QUANT_DROP_MAX = 3;
 
 /**
- * Repos below this many BILLION total parameters get their context window
- * raised to SMALL_MODEL_CTX_CAP — never past what the GGUF header declares
- * natively (`ctx-native` in the table; absent means no raise, never a
- * guess — the same stance the unsized-keeps rule takes).
  * @type {number}
  */
-const SMALL_MODEL_CTX_RAISE_BELOW_PARAMS_B = 8;
+const CHEAP_QUANT_KEEP_MIN = 3;
 
 /**
- * The context ceiling a small model is raised to (256k tokens).
+ * Fleet context ceiling. Every entry serves its model's NATIVE context up to
+ * this line: the fleet's priority is correct behaviour — the widest window the
+ * weights and the KV cache can honestly claim — over fast execution, so the
+ * old small-model-only raise and the 65k default are gone (docs/d197).
+ * `--fit on` in the LLAMA_SERVER macro still reconciles a host too small for
+ * the window at launch.
  * @type {number}
  */
-const SMALL_MODEL_CTX_CAP = 262_144;
+const CTX_CAP = 262_144;
+
+/**
+ * Context used only when neither the entry pins one nor lib/gguf-facts.json
+ * knows the model — a freshly added entry, before `gguf_context_length.py
+ * --facts` runs. Conservative on purpose: an unknown window must not claim a
+ * bigger one than the fleet default has always served.
+ * @type {number}
+ */
+const CTX_FALLBACK = 65_536;
+
+/**
+ * GGUF header truth for the files this table serves, keyed by repo — a repo
+ * whose served files disagree drops to a per-file map (`files`). Written by
+ * `gguf_context_length.py --facts` from the cached GGUFs' own metadata, pruned
+ * to configured files, normalized (sorted, integers, no timestamp) so a refresh
+ * re-writes the same bytes. A hand value here would be a second home for a
+ * header fact, which is how "marketing" 256K claims leaked into the table
+ * (docs/d197).
+ * @type {Record<string, Fact|{files: Record<string, Fact>}>}
+ * @typedef {{arch?: string, "ctx-native"?: number}} Fact
+ */
+const GGUF_FACTS = JSON.parse(
+	readFileSync(join(LIB_DIR, "gguf-facts.json"), "utf-8"),
+);
+
+/**
+ * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
+ * @returns {number|null} this entry's file's header `context_length`, or null
+ * when the facts file has nothing for it
+ */
+function factsCtxNative(m) {
+	const fact = GGUF_FACTS[m["hf-repo"].split(":")[0]];
+	const perFile = fact?.files?.[m.model] ?? fact;
+	return typeof perFile?.["ctx-native"] === "number" ? perFile["ctx-native"] : null;
+}
 
 /**
  * Bytes of each distinct main GGUF (shard groups summed) keyed by de-sharded
@@ -430,22 +702,48 @@ function mainGgufSizes(files) {
 }
 
 /**
- * The committed hf-manifest for one repo, main-GGUF sizes only. Throws when
- * the manifest is absent — every consumer (quant display, ctx raise) needs
- * the same file, so one loader keeps one error message.
+ * The committed hf-manifest for one repo — the ONE loader for every fact
+ * generation takes from it: which files the repo ships (entry validation and
+ * the projector choice), the total parameter count (d170's rule) and the
+ * resolved commit (the bake fallback when the host cache lacks the entry).
+ * Throws when the manifest is absent: a repo with no manifest is a table entry
+ * whose files nothing can vouch for.
+ * @type {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>}
+ */
+const MANIFEST_CACHE = new Map();
+
+/**
+ * @param {string} repo "org/repo"
+ * @returns {{commit: string|null, files: Array<{path: string, size: number}>}}
+ */
+function repoManifest(repo) {
+	const cached = MANIFEST_CACHE.get(repo);
+	if (cached) {
+		return cached;
+	}
+	const manifestPath = join(LIB_DIR, "hf-manifests", `${repo.replace("/", "--")}.json`);
+	try {
+		const parsed = JSON.parse(readFileSync(manifestPath, "utf-8"));
+		const manifest = {
+			commit: typeof parsed.commit === "string" ? parsed.commit : null,
+			files: parsed.files,
+		};
+		MANIFEST_CACHE.set(repo, manifest);
+		return manifest;
+	} catch (err) {
+		throw new Error(
+			"generation needs the committed hf-manifest for " + repo +
+				" (" + manifestPath + "): " + /** @type {Error} */ (err).message,
+		);
+	}
+}
+
+/**
  * @param {string} repo "org/repo"
  * @returns {Map<string, number>} de-sharded main GGUF path -> bytes
  */
 function repoGgufSizes(repo) {
-	const manifestPath = join(LIB_DIR, "hf-manifests", `${repo.replace("/", "--")}.json`);
-	try {
-		return mainGgufSizes(JSON.parse(readFileSync(manifestPath, "utf-8")).files);
-	} catch (err) {
-		throw new Error(
-			"quant-display pruning needs the committed hf-manifest for " + repo +
-				" (" + manifestPath + "): " + /** @type {Error} */ (err).message,
-		);
-	}
+	return mainGgufSizes(repoManifest(repo).files);
 }
 
 /**
@@ -484,14 +782,17 @@ function totalParamsB(sizes) {
 }
 
 /**
- * The two quant-display rules, both keyed off TOTAL parameters (not the
- * per-quant footprint) because total size is what decides whether a variant
- * can ever fit and whether its fidelity is worth a config slot:
- *  - a repo above BF16_F16_HIDE_ABOVE_PARAMS_B never displays BF16/F16;
- *  - a repo below LOW_QUANT_DROP_BELOW_PARAMS_B drops its four cheapest
- *    quants, but always keeps the top two, so a short quant list can never
- *    empty out.
- * Repos without a usable parameter estimate pass through unfiltered.
+ * The two quant-display rules, both stated as a share of the fleet card rather
+ * than a parameter count, so one line reads the same on any card (docs/d199):
+ *  - a repo whose full-precision copy would claim more than
+ *    FULL_PRECISION_MAX_VRAM_SHARE never displays BF16/F16;
+ *  - a repo whose served weights claim less than SMALL_MODEL_VRAM_SHARE drops
+ *    up to CHEAP_QUANT_DROP_MAX of its cheapest quants, but always keeps
+ *    CHEAP_QUANT_KEEP_MIN rows, so a short quant list can never empty out.
+ * Both are measured on TOTAL parameters (not the per-quant footprint, not
+ * active parameters): a 35B-A3B must LOAD 35B of weights, and loading is what
+ * competes with the KV cache for the card. Repos without a usable parameter
+ * estimate pass through unfiltered.
  * @param {Record<string, any>[]} entries the flat model-data table
  * @returns {Record<string, any>[]} entries to generate, same order
  */
@@ -512,7 +813,7 @@ function pruneQuantDisplay(entries) {
 			continue;
 		}
 		const roundB = Math.round(paramsB * 10) / 10;
-		if (paramsB > BF16_F16_HIDE_ABOVE_PARAMS_B) {
+		if (fullPrecisionVramShare(paramsB) > FULL_PRECISION_MAX_VRAM_SHARE) {
 			for (const e of group) {
 				const quant = e["hf-repo"].split(":")[1];
 				// suffix match, not equality: some repos spell the tag
@@ -525,14 +826,17 @@ function pruneQuantDisplay(entries) {
 				}
 			}
 		}
-		if (paramsB < LOW_QUANT_DROP_BELOW_PARAMS_B) {
+		if (weightsVramShare(paramsB) < SMALL_MODEL_VRAM_SHARE) {
 			const bySize = group
 				.map((e) => ({
 					e,
 					size: sizes.get(e.model.replace(GGUF_SHARD_RE, ".gguf")),
 				}))
 				.sort((a, b) => (a.size ?? Number.POSITIVE_INFINITY) - (b.size ?? Number.POSITIVE_INFINITY));
-			const dropCount = Math.min(4, Math.max(0, bySize.length - 2));
+			const dropCount = Math.min(
+				CHEAP_QUANT_DROP_MAX,
+				Math.max(0, bySize.length - CHEAP_QUANT_KEEP_MIN),
+			);
 			for (const { e } of bySize.slice(0, dropCount)) {
 				keep.delete(e);
 				logWarn("quant-display: cheap quant dropped (small model)", {
@@ -554,33 +858,47 @@ function generateLocalInference() {
 	const modelData = JSON.parse(
 		readFileSync(join(LIB_DIR, "llamacpp-model-data.json"), "utf-8"),
 	);
+	indexImageTokens(modelData.models);
 	const entries = pruneQuantDisplay(modelData.models);
 
 	/** @type {Record<string, unknown>} */
 	const models = {};
 	for (const raw of entries) {
 		const m = { ...DEFAULTS, ...raw };
-		// Small models get their context raised to the fleet cap — but never
-		// past what the GGUF header declares natively (`ctx-native`, read per
-		// the runbook; absent means "no raise", never a guess — the same
-		// stance the unsized-keeps rule takes). The KV cost of 256k on a
-		// <8B model is what the small weights left spare.
+		resolveEntryFiles(m);
 		const paramsB = totalParamsB(repoGgufSizes(m["hf-repo"].split(":")[0]));
-		let ctxSize = m["ctx-size"]; // AUTHORITATIVE --ctx-size (not --fit-ctx)
-		if (paramsB !== null && paramsB < SMALL_MODEL_CTX_RAISE_BELOW_PARAMS_B) {
-			const native = m["ctx-native"];
-			if (typeof native === "number") {
-				ctxSize = Math.max(ctxSize, Math.min(SMALL_MODEL_CTX_CAP, native));
-			}
+		// The window is the GGUF header's `context_length`, capped by the fleet
+		// ceiling; an entry may pin a LOWER value but never a higher one, because
+		// the header is hardware truth and a pinned value above it is a claim the
+		// model cannot serve (docs/d197). Absent facts means the model is newer
+		// than the artifact: serve the conservative default and say so.
+		const native = factsCtxNative(m);
+		let ctxSize = m["ctx-size"] ?? native ?? CTX_FALLBACK;
+		if (native === null) {
+			logWarn("no GGUF facts for this entry — serving the fallback context (run gguf_context_length.py --facts)", {
+				repo: m["hf-repo"],
+				model: m.model,
+				ctxSize,
+			});
+		} else if (ctxSize > native) {
+			logWarn("pinned ctx-size exceeds the header's context_length — clamping to the header", {
+				repo: m["hf-repo"],
+				pinned: m["ctx-size"],
+				native,
+			});
+			ctxSize = native;
 		}
+		ctxSize = Math.min(ctxSize, CTX_CAP);
 		const nPredict = ctxSize;
 		/**
-		 * One snapshot resolution per ENTRY (all three mmproj modes share it):
+		 * One snapshot resolution per ENTRY (all mmproj modes share it):
 		 * refs/main carries the model, its every shard, and the mmproj/drafter
-		 * at the same commit, or generation fails.
+		 * at the same commit, else the bake warns and names what provisioning owes.
 		 */
 		const baked = bakeSnapshotPaths(m);
-		const modes = m.mmproj ? mmprojModesFor(m) : [{ seg: null, vision: false }];
+		const modes = m.mmproj
+			? mmprojModesFor(paramsB ?? declaredParamsB(m))
+			: [{ seg: null, vision: false }];
 		for (const mode of modes) {
 			const modalities = mode.vision ? ["text", "image"] : ["text"];
 			/**
@@ -629,11 +947,13 @@ function generateLocalInference() {
 
 			const id = deriveModelId(m, mode.seg);
 			if (models[id]) {
-				logWarn("duplicate derived model id — skipping", {
-					id,
-					hfRepo: m["hf-repo"],
-				});
-				continue;
+				// A duplicate id is two entries claiming one serving slot: emitting
+				// one and dropping the other silently removes a model from the
+				// catalog, and the generated layer would no longer be a function of
+				// the table (d050). Stop and make the operator choose.
+				throw new Error(
+					`duplicate derived model id "${id}" — two entries serve the same repo:quant and mode; fix lib/llamacpp-model-data.json`,
+				);
 			}
 			// capabilities.context enriches llama-swap's served metadata with the
 			// context window; the "metadata" key (exact name required by llama-swap)
