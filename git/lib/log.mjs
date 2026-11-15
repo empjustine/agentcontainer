@@ -13,12 +13,12 @@
  * is an unspecified severity.
  * @see https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitynumber
  *
- * Level filtering is the consumer's job (d045, reaffirmed by d060): no line
- * is ever dropped here. A producer logs the useful-but-noisy detail at
- * `debug` unconditionally and never carries a --verbose branch of its own
- * (d045 owns the rest of the contract — static message labels, structured
- * fields, full cause chains), and whoever reads the stream prunes it —
- * `jq 'select(.severityNumber >= 5)'` for the quiet view, or one band with
+ * Level filtering is the consumer's job (d045, reaffirmed by d060): no line is
+ * ever dropped here. A producer logs the useful-but-noisy detail anyway and
+ * never carries a --verbose branch of its own (d045 owns the rest of the
+ * contract — static message labels, structured fields, full cause chains), and
+ * whoever reads the stream prunes it — `jq 'select(.severityNumber >= 13)'`
+ * for the warn-and-worse view, or one band with
  * `jq 'select(.severityNumber >= 17)'`.
  *
  * Stream: stdout by default. A script whose stdout IS the machine-consumed
@@ -41,9 +41,10 @@
  * Import via the LIB_DIR convention (docs/d023), so a consumer never has to
  * know where its own sources sit relative to the shared kernel:
  *   const { logInfo, logWarn } = await import(`${LIB_DIR}/log.mjs`);
- * A lib that must also load on Windows imports through pathToFileURL()
+ * A consumer that must also load on Windows imports through pathToFileURL()
  * instead — a `C:\...` specifier parses as a URL scheme and is rejected by
- * the ESM loader (docs/d062).
+ * the ESM loader, which is what tests/git-stop-signal.test.mjs builds its
+ * LIB_URL for (docs/d062).
  */
 
 let tool = process.env.LOG_TOOL ?? "node";
@@ -70,7 +71,7 @@ export function setLogStream(name) {
 
 /**
  * Each level's wire value, as an index into OpenTelemetry's severity bands
- * (docs/d151): the four levels this kernel emits sit on their band's floor,
+ * (docs/d151): the three levels this kernel emits sit on their band's floor,
  * and the remaining anchors are here so a new helper inherits the scale
  * instead of re-deriving it.
  * @type {Record<string, number>}
@@ -224,11 +225,6 @@ function emit(level, msg, fields = {}) {
 	);
 }
 
-/**
- * @param {string} msg
- * @param {Record<string, unknown>} [fields]
- */
-export const logDebug = (msg, fields) => emit("debug", msg, fields);
 /**
  * @param {string} msg
  * @param {Record<string, unknown>} [fields]

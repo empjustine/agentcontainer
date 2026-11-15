@@ -33,7 +33,7 @@
  * it is later INVOKED).
  */
 
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import {
 	accessSync,
 	constants,
@@ -610,33 +610,4 @@ export async function workload_run(description, context) {
 			resolve(code ?? signalExitCode(signal)),
 		);
 	});
-}
-
-/**
- * Remove a prior instance by name through EVERY installed backend, not just the
- * one picked for `run`: podman and docker keep separate stores, so a stale
- * instance left by the other tool would otherwise collide with `--name`.
- * @param {string} name
- * @param {Host} [host]
- * @returns {void}
- */
-export function workload_rm(name, host = hostFs) {
-	for (const tool of /** @type {const} */ (["podman", "docker"])) {
-		if (!host.findOnPath(tool)) {
-			continue;
-		}
-		spawnSync(tool, ["container", "rm", "-f", name], { stdio: "ignore" });
-	}
-}
-
-/**
- * Tail a running instance's logs, attached like the sh API did.
- * @param {string} name
- * @param {Backend} backend
- * @returns {number} the tool's exit status
- */
-export function workload_logs(name, backend) {
-	return (
-		spawnSync(backend.tool, ["logs", name], { stdio: "inherit" }).status ?? 1
-	);
 }

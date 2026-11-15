@@ -13,19 +13,16 @@
  * is an unspecified severity.
  * @see https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitynumber
  *
- * Level filtering is the consumer's job (d045, reaffirmed by d060): no line
- * is ever dropped here. A producer logs the useful-but-noisy detail at
- * `debug` unconditionally and never carries a --verbose branch of its own
- * (d045 owns the rest of the contract — static message labels, structured
- * fields, full cause chains), and whoever reads the stream prunes it —
- * `jq 'select(.severityNumber >= 5)'` for the quiet view, or one band with
- * `jq 'select(.severityNumber >= 17)'`.
+ * Level filtering is the consumer's job (d045, reaffirmed by d060): no line is
+ * ever dropped here. A producer logs the useful-but-noisy detail anyway and
+ * never carries a --verbose branch of its own (d045 owns the rest of the
+ * contract — static message labels, structured fields, full cause chains), and
+ * whoever reads the stream prunes it — `jq 'select(.severityNumber >= 13)'`
+ * for the warn-and-worse view.
  *
- * Stream: stdout by default. A script whose stdout IS the machine-consumed
- * payload (git/audit.mjs's JSON report, search-references' results,
- * vbs-mirror-all.mjs's --list TSV) calls setLogStream("stderr") once at
- * startup so logs cannot interleave with the payload; `2>&1 | jq` still gives
- * the consumer one jsonlines stream. Docs/d045 owns the policy.
+ * Stream: stdout. No script in this unit writes a machine-consumed payload to
+ * stdout, so the stream selector the shared kernel carried is not part of this
+ * copy (docs/d045 owns the policy, docs/d113 the pruning).
  *
  * Error values in fields serialize as structured objects — name, message,
  * stack, own enumerable properties — with the full cause/suppressed chain
@@ -41,9 +38,6 @@
  * Import via the LIB_DIR convention (docs/d023), so a consumer never has to
  * know where its own sources sit relative to the shared kernel:
  *   const { logInfo, logWarn } = await import(`${LIB_DIR}/log.mjs`);
- * A lib that must also load on Windows imports through pathToFileURL()
- * instead — a `C:\...` specifier parses as a URL scheme and is rejected by
- * the ESM loader (git/git-lib.mjs, docs/d062).
  */
 
 let tool = process.env.LOG_TOOL ?? "node";
@@ -55,22 +49,9 @@ export function setLogTool(name) {
 	tool = name;
 }
 
-let stream = /** @type {{ write(chunk: string): unknown }} */ (
-	/** @type {unknown} */ (process.stdout)
-);
-/**
- * Route the log stream away from stdout for scripts whose stdout is a
- * machine-consumed payload (docs/d045). "stdout" restores the default.
- * @param {"stdout"|"stderr"} name
- * @returns {void}
- */
-export function setLogStream(name) {
-	stream = name === "stderr" ? process.stderr : process.stdout;
-}
-
 /**
  * Each level's wire value, as an index into OpenTelemetry's severity bands
- * (docs/d151): the four levels this kernel emits sit on their band's floor,
+ * (docs/d151): the three levels this kernel emits sit on their band's floor,
  * and the remaining anchors are here so a new helper inherits the scale
  * instead of re-deriving it.
  * @type {Record<string, number>}
@@ -210,12 +191,12 @@ function emit(level, msg, fields = {}) {
 			.map(([k, v]) => `${k}=${fmtLogfmtValue(v)}`)
 			.join(" ");
 		const msgv = /[\s"=\\]/.test(msg) ? JSON.stringify(msg) : msg;
-		stream.write(
+		process.stdout.write(
 			`msg=${msgv}${rest ? ` ${rest}` : ""} ts=${trailer.ts} severityNumber=${trailer.severityNumber} tool=${tool}\n`,
 		);
 		return;
 	}
-	stream.write(
+	process.stdout.write(
 		`${JSON.stringify({
 			msg,
 			.../** @type {Record<string, unknown>} */ (serialize(fields, 0)),
@@ -224,11 +205,6 @@ function emit(level, msg, fields = {}) {
 	);
 }
 
-/**
- * @param {string} msg
- * @param {Record<string, unknown>} [fields]
- */
-export const logDebug = (msg, fields) => emit("debug", msg, fields);
 /**
  * @param {string} msg
  * @param {Record<string, unknown>} [fields]
