@@ -161,10 +161,6 @@ export function upstreamCandidates(upstream, pathAndQuery, envOverride) {
  */
 
 /**
- * An unvalidated `/models` entry: `id` is the only required field, everything
- * else is best-effort (llama.cpp, llama-swap and cloud providers each spell
- * the same concepts differently; Google's Gemini API serves `name` —
- * `models/<id>` — instead of `id`, normalized by fetchModelEntries).
  * A context-triggered price row: the gateway bills the higher price for the
  * whole request once its input passes `when.context.gt` (pi calls the same
  * rule `cost.tiers`).
@@ -175,7 +171,12 @@ export function upstreamCandidates(upstream, pathAndQuery, envOverride) {
  */
 
 /**
- * One entry of a provider /models listing. Two vocabularies reach this type:
+ * An unvalidated `/models` entry: `id` is the only required field, everything
+ * else is best-effort (llama.cpp, llama-swap and cloud providers each spell the
+ * same concepts differently; Google's Gemini API serves `name` —
+ * `models/<id>` — instead of `id`, normalized by fetchModelEntries).
+ *
+ * Two vocabularies reach this type:
  * llama-swap's own (`meta`, `context_length`, `architecture`) and a
  * first-party gateway's rich row (`limit`, `modalities`, `capabilities`,
  * `cost.text`, `api`) — the listing describing itself, per model, which is
@@ -285,7 +286,7 @@ export function bearerHeaders(key) {
  * @returns {Promise<RawModelEntry[]>} entries with a truthy `id`
  * @throws {HttpError} `status` is set when the endpoint answered non-2xx
  */
-export async function fetchModelEntries(serverUrl, headers) {
+async function fetchModelEntries(serverUrl, headers) {
 	let url = `${serverUrl}/models`;
 	let res = await fetch(url, {
 		...(headers ? { headers } : {}),
@@ -328,23 +329,6 @@ export async function fetchModelEntries(serverUrl, headers) {
 			return id ? { ...entry, id } : entry;
 		})
 		.filter((entry) => Boolean(entry?.id));
-}
-
-/**
- * Guarantee a probe failure is always an Error with the HttpError shape: a
- * non-Error throw (or an error-less classification) must still produce a
- * structured value, never an undefined `error` field on a non-ok result —
- * that is exactly the "generic message with no cause" record d045 forbids.
- * @param {unknown} err
- * @returns {HttpError}
- */
-function normalizedProbeError(err) {
-	if (err instanceof Error) {
-		return /** @type {HttpError} */ (err);
-	}
-	return Object.assign(new Error("probe threw a non-Error value"), {
-		thrown: String(err),
-	});
 }
 
 /**
@@ -407,7 +391,16 @@ export async function probeEndpoint(url, headers) {
 		const entries = await fetchModelEntries(url, headers);
 		return { usable: true, result: "ok", entries };
 	} catch (err) {
-		const http = normalizedProbeError(err);
+		// A non-Error throw must still produce a structured value: an undefined
+		// `error` on a non-ok result is the "generic message with no cause"
+		// record docs/d045 forbids.
+		const http = /** @type {HttpError} */ (
+			err instanceof Error
+				? err
+				: Object.assign(new Error("probe threw a non-Error value"), {
+						thrown: String(err),
+					})
+		);
 		if (http.status === undefined || DEAD_ROUTE_STATUSES.has(http.status)) {
 			return {
 				usable: false,
@@ -437,32 +430,19 @@ export async function probeEndpoint(url, headers) {
  */
 export async function probeCandidates(candidates, accept) {
 	const failures = [];
+	// The TLS fail-closed gate, the timeout and the auth header are
+	// probeEndpoint's: a candidate that re-did them would be a second copy of
+	// the rule this module exists to hold in one place.
+	const headers = bearerHeaders(process.env.TLALOCAYOTL_API_KEY?.trim());
 	for (const baseUrl of candidates) {
-		// Fail closed on unverifiable https bases — the rule every probe in
-		// this module applies; plain-http rows (the LAN llama-swap) still count.
-		if (tlsUnverifiable(baseUrl)) {
-			failures.push({
-				baseUrl,
-				error: Object.assign(
-					new Error("TLS verification disabled — https route not trusted"),
-					{ url: baseUrl },
-				),
-			});
-			continue;
-		}
-		try {
-			const entries = await fetchModelEntries(
-				baseUrl,
-				bearerHeaders(process.env.TLALOCAYOTL_API_KEY?.trim()),
-			);
-			const ids = entries.map((e) => e.id);
-			if (!accept(ids)) {
-				throw new Error("no usable models for this concern");
-			}
+		const { entries, error } = await probeEndpoint(baseUrl, headers);
+		if (accept(entries.map((entry) => entry.id))) {
 			return { baseUrl, entries };
-		} catch (err) {
-			failures.push({ baseUrl, error: err });
 		}
+		failures.push({
+			baseUrl,
+			error: error ?? new Error("no usable models for this concern"),
+		});
 	}
 	if (failures.length > 0) {
 		logWarn("no probe candidate answered", { failures });

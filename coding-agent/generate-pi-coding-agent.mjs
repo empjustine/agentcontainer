@@ -305,6 +305,35 @@ const CLINE_PASS_DOCS_URL =
  */
 
 /**
+ * The rows of the GFM table under one `## ` heading, as trimmed cells without
+ * the outer pipes. Scoping to the heading is what makes a table readable at
+ * all: every one of these documents carries further tables whose columns mean
+ * something else, and the `| --- |` separator row is left to the caller that
+ * knows which cell identifies a data row.
+ * @param {string} mdx
+ * @param {string} heading section heading without the `## `, e.g. "Models"
+ * @returns {string[][]|null} null when the section is absent
+ */
+function tableRows(mdx, heading) {
+	const section = mdx
+		.split(new RegExp(`^## ${heading}\\s*$`, "m"))[1]
+		?.split(/^## /m)[0];
+	if (!section) {
+		return null;
+	}
+	return section
+		.split("\n")
+		.map((line) => line.trim())
+		.filter((line) => line.startsWith("|"))
+		.map((line) =>
+			line
+				.split("|")
+				.slice(1, -1)
+				.map((cell) => cell.trim()),
+		);
+}
+
+/**
  * Parse the `## Models` GFM table from Cline's published clinepass.mdx into
  * one entry per row: the id WITH its `cline-pass/` prefix (the namespace the
  * API bills under) and the display name in the table's first column, so no
@@ -318,21 +347,13 @@ const CLINE_PASS_DOCS_URL =
  * @returns {LineupEntry[]|null}
  */
 function parseClinePassDocs(mdx) {
-	const section = mdx.split(/^## Models\s*$/m)[1]?.split(/^## /m)[0];
-	if (!section) {
+	const rows = tableRows(mdx, "Models");
+	if (!rows) {
 		return null;
 	}
 	/** @type {LineupEntry[]} */
 	const lineup = [];
-	for (const line of section.split("\n")) {
-		const trimmed = line.trim();
-		if (!trimmed.startsWith("|")) {
-			continue;
-		}
-		const cells = trimmed
-			.split("|")
-			.slice(1, -1)
-			.map((c) => c.trim());
+	for (const cells of rows) {
 		const id = cells[1]?.replace(/`/g, "");
 		if (!id?.startsWith(`${CLINE_PASS_ID}/`)) {
 			continue;
@@ -469,22 +490,14 @@ const MIXED_SURFACE_IDS = new Set(["opencode", OPENCODE_GO_ID]);
  * @returns {Set<string>|null}
  */
 function parseDocsModelIds(mdx) {
-	const section = mdx.split(/^## Endpoints\s*$/m)[1]?.split(/^## /m)[0];
-	if (!section) {
+	const rows = tableRows(mdx, "Endpoints");
+	if (!rows) {
 		return null;
 	}
 	/** @type {Set<string>} */
 	const ids = new Set();
-	for (const line of section.split("\n")) {
-		const trimmed = line.trim();
-		if (!trimmed.startsWith("|")) {
-			continue;
-		}
-		const id = trimmed
-			.split("|")
-			.slice(1, -1)
-			.map((c) => c.trim())[1]
-			?.replace(/`/g, "");
+	for (const cells of rows) {
+		const id = cells[1]?.replace(/`/g, "");
 		// The GFM separator row (`| --- | --- | ...`) sits in the same table
 		// and its second cell is a dash run; the header cell is the label.
 		if (id && id !== "Model ID" && !/^-+$/.test(id)) {
@@ -1315,6 +1328,19 @@ function emitMinimalCatalogOverride(spec, providers, catwalk) {
 }
 
 /**
+ * Probe one row's canonical upstream with its own bearer. The base URL comes
+ * from the fact table rather than the spec, so the URL a probe checks and the
+ * URL the layer emits cannot diverge (docs/d070, d108).
+ * @param {CloudProviderSpec} spec
+ */
+async function probeRow(spec) {
+	return await probeEndpoint(
+		providerFacts(spec.id).baseUrl,
+		bearerHeaders(process.env[spec.envKey]?.trim()),
+	);
+}
+
+/**
  * Run the override-only cascade for one pi-native row and record its entry
  * in `providers`: ALWAYS at the canonical fact-table upstream URL (docs/d070
  * — the route substitution is generate.mjs's install-time job). The probe
@@ -1327,8 +1353,6 @@ function emitMinimalCatalogOverride(spec, providers, catwalk) {
  * @returns {Promise<void>}
  */
 async function emitOverrideOnly(spec, providers, catwalk) {
-	const headers = bearerHeaders(process.env[spec.envKey]?.trim());
-
 	// catalogOnly rows never probe (docs/d033): the endpoint cannot
 	// authenticate the probe's bearer, so no probe outcome means anything —
 	// "credential-gated" would be a misleading verdict for an endpoint that
@@ -1346,7 +1370,7 @@ async function emitOverrideOnly(spec, providers, catwalk) {
 		return;
 	}
 
-	const route = await probeEndpoint(providerFacts(spec.id).baseUrl, headers);
+	const route = await probeRow(spec);
 	// The probe only selects the LINEUP source — the emitted URL is canonical
 	// either way (docs/d108).
 	if (!route.usable) {
@@ -1393,8 +1417,7 @@ async function emitOverrideOnly(spec, providers, catwalk) {
  */
 async function emitFull(spec) {
 	const provider = loadProvider(spec);
-	const headers = bearerHeaders(process.env[spec.envKey]?.trim());
-	const route = await probeEndpoint(providerFacts(spec.id).baseUrl, headers);
+	const route = await probeRow(spec);
 	if (!route.usable) {
 		logWarn(
 			"no usable endpoint — lineup degrades to the catalog/facts cascade (docs/d108)",

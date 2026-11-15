@@ -34,7 +34,9 @@
 import { renameSync, writeFileSync } from "node:fs";
 import { serializeArtifact } from "./canonical-json.mjs";
 
-export { canonicalizeManifest, serializeArtifact } from "./canonical-json.mjs";
+// generate.mjs resolves its lib/ through LIB_DIR and takes the serializer with
+// the writer, so the pair is published here as one import for that consumer.
+export { serializeArtifact };
 
 /**
  * Atomically write `text` to `out` (header contract: tmp + rename, replace).

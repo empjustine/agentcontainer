@@ -1,10 +1,8 @@
 /**
  * @fileoverview canonical-json.mjs — schema-aware canonicalization of
- * generated manifests (docs/d050) and of the vendored fact tables
- * (docs/d086). Serialization half only: the atomic-write contract (and
- * `writeJsonArtifact`, which combines the two) lives in lib/artifact.mjs, the
- * write choke point. The d086 hash short-circuit that consumes these forms is
- * coding-agent/lib/fact-table.mjs (docs/d086).
+ * generated manifests (docs/d050). Serialization half only: the atomic-write
+ * contract (and `writeJsonArtifact`, which combines the two) lives in
+ * lib/artifact.mjs, the write choke point.
  *
  * Why this exists: generators are the source of truth (docs/d023), but a
  * rerun over unchanged inputs used to emit different *bytes* because key and
@@ -22,7 +20,7 @@
  * The same rule covers both artifact classes because the question is the same
  * one — "is this collection a set?" — and answering it twice would let the
  * two answers drift: a manifest's `providers` map and the raw catalog's own
- * top-level map are the same set in two wrappings (docs/d086).
+ * top-level map are the same set in two wrappings (docs/d050).
  */
 
 /**
@@ -134,49 +132,6 @@ export function canonicalizeManifest(doc) {
 	}
 
 	return out;
-}
-
-/**
- * Canonical form of a provider CATALOG — the raw vendor shape where the
- * document itself *is* the provider map (`lib/models.dev.api.json`): its keys
- * ascend and each provider's `models` collection is canonical.
- *
- * The distinction from canonicalizeManifest matters: that one looks for a
- * `providers` map inside a generated document, while upstream sends no such
- * wrapper and no wrapper may be added — consumers index the document by
- * provider id, so the top level has to stay the provider namespace
- * (docs/d086).
- *
- * @param {unknown} catalog parsed upstream catalog
- * @returns {unknown} canonically ordered equivalent of `catalog`
- */
-export function canonicalizeProviderCatalog(catalog) {
-	return isPlainObject(catalog) ? sortProviderMap(catalog) : catalog;
-}
-
-/**
- * Canonical form of a fact-cache document (docs/d086): the record list under
- * `listKey` sorted by id and each record's own `models` collection canonical,
- * with every other member — the `_meta` block, `fetchedAt`, provider-specific
- * fields — exactly as given.
- *
- * Order-insensitivity is the whole point: the same facts arriving in a
- * different upstream order must produce the same bytes, because "did the
- * content move?" is the question the writer answers before it touches the
- * file (coding-agent/lib/fact-table.mjs (docs/d086)).
- *
- * @param {unknown} doc parsed fact-cache document
- * @param {string} listKey member holding the record list (`providers`, `models`)
- * @returns {unknown} canonically ordered equivalent of `doc`
- */
-export function canonicalizeFactsCache(doc, listKey) {
-	if (!isPlainObject(doc) || !Array.isArray(doc[listKey])) {
-		return doc;
-	}
-	const records = /** @type {unknown[]} */ (doc[listKey]).map(
-		withCanonicalModels,
-	);
-	return { ...doc, [listKey]: sortModels(records) };
 }
 
 /**

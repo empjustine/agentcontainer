@@ -1,29 +1,18 @@
 /**
- * @fileoverview cloud-providers.mjs — loader + derived projections of the
- * ONE fact table for the providers every generator family touches
- * (docs/d023 c3/c4 follow-up, docs/d024): provider id, display label, the
- * env var holding the provider's real key, and the provider's real (default)
- * base URL. Previously these facts were re-declared per family with drifting
- * field names (`generate-models.json.mjs` `baseUrl`, `generate-opencode.mjs`
- * `realBase`, `llm-local-inference/gen-lib.mjs` `defaultBaseUrl`) — a
- * base-url or key-env change needed two/three edits in files with different
- * output renderers. Now every consumer derives from this table and only the
- * per-family *rendering* stays local (pi-shaped layer vs opencode V1 config
- * vs llama-swap entry).
+ * @fileoverview cloud-providers.mjs — loader + derived projections of the ONE
+ * fact table for the providers every generator family touches (docs/d024):
+ * provider id, display label, the env var holding the provider's real key, and
+ * its real (default) base URL. Only the per-family *rendering* stays local
+ * (pi-shaped layer vs opencode V1 config vs llama-swap entry).
  *
- * The rows themselves live in `cloud-providers.json` (docs/d102): the table
- * is DATA, so the estige generator — all-Go since d102 — and every node
- * generator read the SAME bytes, and no projection copy can drift from the
- * deployed allowlist. This module is the node-facing half: it loads the JSON
- * with its row-order intact, validates it loudly, and derives the typed
- * exports below. Row-level WHY (full-base-path rationale, catalog gaps) rides
+ * The rows themselves live in `cloud-providers.json` (docs/d102): the table is
+ * DATA, so the estige generator and every node generator read the SAME bytes and
+ * no projection copy can drift from the deployed allowlist. Row-level WHY rides
  * the rows as `note` strings, so the reasoning travels with the data.
  *
  * The table is d070's canonical-URL source: committed and installed artifacts
  * carry these `baseUrl`s verbatim, and the verifier's host set is built from
- * them — one source for "which upstream does this provider sit on" (docs/d070).
- * The route derivation and the proxy allowlist that also read this table are
- * gone with the reverse proxy (docs/d108).
+ * them — one source for "which upstream does this provider sit on".
  *
  * Import via the LIB_DIR convention (docs/d023/d113): consumers resolve this
  * file through `process.env.LIB_DIR ?? <their own dir>/lib`, so a folder
@@ -72,11 +61,10 @@ import { fileURLToPath } from "node:url";
 const SUPPORT_TIERS = new Set(["first-class", "best-effort", "superficial"]);
 
 /**
- * Load + validate the shared table, preserving the JSON's row order (the
- * estige generator's collapse logs follow it, so node and Go agree byte for
- * byte). A malformed row is a broken repo, not a downstream surprise: every
- * field the typedef promises is checked here, loudly (docs/d024's one-table
- * contract is only worth as much as this gate).
+ * Row order is preserved because the estige generator's collapse logs follow
+ * it, so node and Go agree byte for byte. A malformed row is a broken repo,
+ * not a downstream surprise: d024's one-table contract is only worth as much
+ * as this gate.
  * @returns {Readonly<Record<string, CloudProviderFacts>>}
  */
 function loadCloudProviders() {
@@ -133,23 +121,16 @@ export function providerFacts(id) {
 
 /**
  * The pi-native cloud providers: providers pi-coding-agent ships natively,
- * where a
- * layer is only ever an override ("swap only baseUrl"). cline-pass
- * is deliberately absent (pi does NOT ship it natively — the authoritative
- * full-block layer is owned by generate-pi-coding-agent.mjs's full rows,
- * docs/d022), and so are hyper, inferx and verboo (same reasoning, model-016,
- * model-017 and model-018). `google` IS
- * pi-native (built-in google provider, google-generative-ai wire format) and
- * gains a client route only since the simplified router forwards its
- * native dialect untouched (docs/d027) — previously Google could never be
- * routed and silently relied on direct reachability. `nvidia` IS
- * pi-native too (built-in openai-completions provider against the cloud NIM
- * endpoint, no local hardware — docs/d028).
- * There is no
- * `openai` provider in this table and never was: no
- * route or generator here consumes api.openai.com and no OPENAI_API_KEY
- * exists — "openai" only ever appears as the API *shape* other providers
- * (opencode, opencode-go, cline-pass, ...) speak.
+ * where a layer is only ever an override ("swap only baseUrl"). cline-pass is
+ * deliberately absent (pi does NOT ship it natively — the authoritative
+ * full-block layer is generate-pi-coding-agent.mjs's full rows, docs/d022), and
+ * so are hyper, inferx and verboo (same reasoning, model-016..model-018).
+ * `nvidia` is pi-native against the cloud NIM endpoint (docs/d028), and
+ * `google` gains a route because the router forwards its native dialect
+ * untouched (docs/d027).
+ *
+ * There is no `openai` row: nothing here consumes api.openai.com — "openai"
+ * only ever appears as the API *shape* other providers speak.
  * @type {readonly string[]}
  */
 export const PI_NATIVE_CLOUD_IDS = Object.freeze([
@@ -162,24 +143,11 @@ export const PI_NATIVE_CLOUD_IDS = Object.freeze([
 ]);
 
 /**
- * The table's baseUrl per id — the projection every URL-shape rule needs
- * (route derivation in route-probe.mjs, the d070 verifier, install-time
- * substitution). Kept here rather than re-derived in each consumer so an
- * artifact can never be checked against a stale copy of the table.
- * @type {Readonly<Record<string, string>>}
- */
-export const PROVIDER_BASE_URLS = Object.freeze(
-	Object.fromEntries(
-		Object.entries(CLOUD_PROVIDERS).map(([id, f]) => [id, f.baseUrl]),
-	),
-);
-
-/**
- * Every row's baseUrl as a list — the CANONICAL upstreams (docs/d070 §1) a
+ * Every row's baseUrl as a list — the CANONICAL upstreams (docs/d070) a
  * committed artifact carries and an installed one must not.
  * @type {readonly string[]}
  */
-export const FACT_UPSTREAMS = Object.freeze(
+const FACT_UPSTREAMS = Object.freeze(
 	Object.values(CLOUD_PROVIDERS).map((f) => f.baseUrl),
 );
 

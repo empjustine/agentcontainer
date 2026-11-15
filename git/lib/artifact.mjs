@@ -34,8 +34,6 @@
 import { renameSync, writeFileSync } from "node:fs";
 import { serializeArtifact } from "./canonical-json.mjs";
 
-export { canonicalizeManifest, serializeArtifact } from "./canonical-json.mjs";
-
 /**
  * Atomically write `text` to `out` (header contract: tmp + rename, replace).
  * @param {string} out destination path
