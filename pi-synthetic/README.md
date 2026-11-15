@@ -20,9 +20,11 @@ emits as `model-019-cloud-synthetic.json` — the same provider, packaged so it
 works on a host that has no generated agent dir (bare host, `pi -e`, a
 container that mounts only a work directory).
 
-Written from scratch against pi's documented contracts. The reference for _what_
-to build was [aliou/pi-synthetic](https://github.com/aliou/pi-synthetic) (MIT),
-read as source and never installed — see "Provenance".
+Written from scratch against pi's documented contracts. The references for
+_what_ to build are [aliou/pi-synthetic](https://github.com/aliou/pi-synthetic)
+and [ben-vargas/pi-packages](https://github.com/ben-vargas/pi-packages)
+(`packages/pi-synthetic-provider`), both MIT, read as source and never installed
+— see "Prior art" and "Provenance".
 
 ## Layout
 
@@ -81,6 +83,54 @@ Consequences worth knowing:
   docs/d074), which both consumers already have. Third-generation
   `estige` makes that path real, so no client-side relay/probe
   machinery lives here.
+
+## Prior art: the two upstream implementations
+
+Two pi providers serve this same gateway. Both are read as source and neither
+is installed or copied from; they are cited because each settles a question
+this folder otherwise answers alone.
+
+- **[`aliou/pi-synthetic`](https://github.com/aliou/pi-synthetic)** (MIT) — the
+  idea that a bearer `authHeader` beats an SDK default, and that the provider's
+  own listing is the authoritative lineup.
+- **[`ben-vargas/pi-packages`](https://github.com/ben-vargas/pi-packages)
+  → `packages/pi-synthetic-provider`**
+  (`@benvargas/pi-synthetic-provider@1.2.7`, MIT) — the closest implementation:
+  same endpoint, same catalog fields, the same per-model effort map. The table
+  is against that package's `extensions/{config,models,index}.ts`.
+
+|                        | `@benvargas/pi-synthetic-provider`                                                                                | this folder                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| listing                | `…/openai/v1/models`, key from `SYNTHETIC_API_KEY`                                                                | the same URL, built from the frozen row (`sources.mjs`)            |
+| fields read            | `context_length`, `max_output_length`, `supported_features`, `reasoning_parameters.efforts`, price                | the same five                                                      |
+| lineup owner           | the live catalog, plus a hardcoded `getFallbackModels()` when the fetch fails or answers empty                    | the live catalog only: a failed read publishes nothing (docs/d190) |
+| thinking map           | from the advertised efforts, fail-closed; no efforts → no `reasoning_effort` sent                                 | the same map, the same rule (`merge.mjs`'s `thinkingLevelMapFor`)  |
+| per-model effort table | hardcoded `REASONING_OVERRIDES` as a startup snapshot, in a `Map` so a catalog id of `constructor` cannot resolve | none — the live enum is the only source                            |
+| compat                 | eight explicit flags, plus `supportsReasoningEffort: true` per model                                              | `compat: null`, `modelCompat: null` in the fleet row               |
+| credentials            | env var or `~/.pi/agent/auth.json`                                                                                | env var only (`$SYNTHETIC_API_KEY`)                                |
+| commands               | `/synthetic-models`, `/synthetic-quota` (`GET /v2/quotas`)                                                        | `/model` only                                                      |
+
+What the comparison settles:
+
+- **The endpoint and the field names are corroborated.** An independent
+  implementation reads the same five fields off the same URL, so the fact table
+  is not one reader's guess at the wire.
+- **The fallback lineup is the rejected pattern, with a live example.** docs/d190
+  argues from principle; `pi-synthetic-provider` took the other road and pays
+  the price its comment names — the fallback rows and effort snapshots are a
+  snapshot only a release can correct, so the extension can describe a lineup
+  two releases old while the listing two requests away is current.
+- **One compat flag is worth a probe.** `supportsUsageInStreaming` defaults to
+  `true` in pi (docs/models-configuration.md) and the upstream sets it `false`
+  for this gateway. The other flags that differ (`supportsStore`,
+  `supportsDeveloperRole`, `maxTokensField`, `requiresToolResultName`) are
+  auto-detected from the URL, so this is the only claim where `compat: null`
+  states something different from the vendor's explicit choice. A probe asking
+  the gateway for `stream_options.include_usage` settles it; until then this
+  folder keeps pi's default rather than copying the flag.
+- **Nothing else is taken**: no committed catalog, no `auth.json` reader, no
+  quota command — a credential store and a second endpoint are surfaces this
+  container has no slot for.
 
 ## The category tiers (`syn:`), and why their names carry a target
 
@@ -186,12 +236,16 @@ lives in ../pi-hyper/ and is flagged there.
 - Extension API surface: pi's own docs — `docs/custom-provider.md`,
   `docs/extensions.md` — and the installed packages (see
   _Checked against pi 1.4.0_).
-- Reference implementation, read as source and not installed:
+- Reference implementations, read as source and not installed:
   [aliou/pi-synthetic](https://github.com/aliou/pi-synthetic) (MIT, © Aliou
-  Diallo). Taken: the idea that a bearer `authHeader` beats an SDK default, and
-  that the provider's own listing is the authoritative lineup. Not taken: its
-  five-extension layout, settings/status UI, utility-API proxy, and hardcoded
-  catalog.
+  Diallo) — taken: the bearer `authHeader` and the listing-as-lineup idea; not
+  taken: its five-extension layout, settings/status UI, utility-API proxy and
+  hardcoded catalog.
+  [ben-vargas/pi-packages](https://github.com/ben-vargas/pi-packages)
+  `packages/pi-synthetic-provider` (MIT, © Ben Vargas) — taken: confirmation of
+  the endpoint and the five catalog fields, and the fail-closed effort map; not
+  taken: its fallback lineup, its hardcoded effort snapshots, its `auth.json`
+  reader and its quota command. The full mapping is under "Prior art".
 - The review that deleted the three-source ladder, with its measurements:
   `PENDING.md`.
 - Generator conventions (atomic writes, canonical JSON, the fact table):
