@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/Qwen3.6-27B-GGUF",
 	"commit": "82d411acf4a06cfb8d9b073a5211bf410bfc29bf",
-	"fetched_at": "2026-11-12T01:47:22+00:00",
+	"fetched_at": "2026-11-15T02:31:02+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

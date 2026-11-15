@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/Qwen3.8-27B-GGUF",
-	"commit": "ce331efc48d5722b4b8041f72793e530eae18d9b",
-	"fetched_at": "2026-11-12T01:47:19+00:00",
+	"commit": "4af51b3542f775b0a8e4b310bfb3f17e01c306c9",
+	"fetched_at": "2026-11-15T02:30:59+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
@@ -85,7 +85,7 @@
 		},
 		{
 			"path": "Qwen3.8-27B-UD-Q3_K_XL.gguf",
-			"oid": "8c2a45ff85e7674ca185ec8eb6cdeab0e617ed9d8018caed0b64380eb2a67a5e",
+			"oid": "7b20f0679da6f5c6ec7971e241630f44fe1e123e5c99bfea90c433268b355723",
 			"size": 13146393504
 		},
 		{
