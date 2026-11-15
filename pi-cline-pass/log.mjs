@@ -153,12 +153,6 @@ function emit(level, msg, fields = {}) {
 		})}\n`,
 	);
 }
-
-/**
- * @param {string} msg
- * @param {Record<string, unknown>} [fields]
- */
-export const logDebug = (msg, fields) => emit("debug", msg, fields);
 /**
  * @param {string} msg
  * @param {Record<string, unknown>} [fields]

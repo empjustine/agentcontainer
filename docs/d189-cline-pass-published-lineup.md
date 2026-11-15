@@ -92,3 +92,28 @@ only source here too. `models.json` stays as the drift gate's subject.
   this record exists to remove; the seed covers the one legitimate use
   (registering models before the first refresh) without pretending to be a
   source.
+
+## Amendment: the table is the only read
+
+The second read retired as well: both shapers read the docs table first and
+make no models.dev request after a successful parse, and the fleet's row
+carries `lineupOnly` so the artifact side follows the same rule.
+`fetchCatalogSlice` keeps no production caller.
+
+The reason is what the second read was buying. Its price column is a reference
+rate — Cline's own page states the tabulated per-million rates are not what a
+subscriber pays, and that the quota over them is "2-5x" and otherwise
+undefined — so a published `cost` was a number pi's footer reports as money
+nobody spends. Its remaining fields disagreed with the vendor's own
+`@cline/llms` package on most rows of this table: context window on 7 of 15,
+output limit on 7 of 15, the effort enum on 6 of 15. And it could never supply
+a lineup under this record's own rule, so it was metadata on paper and a live
+dependency in practice: an unreadable catalog cost the provider its whole
+catalog, not one field.
+
+The "three docs-only ids publish with pi's defaults" consequence above is every
+row's case now, and the committed artifacts carry the schema's numbers, not the
+source's. `coding-agent/model-015-cloud-cline-pass.json` and its merged
+`models.json` still hold the pre-amendment rows until the fleet generator runs
+through `./environment.sh` (a key-less run blanks the gated layers instead, and
+`freshness.sh` does not gate that folder — d191).

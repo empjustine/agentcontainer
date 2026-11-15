@@ -239,6 +239,11 @@ const MODEL_SCOPES = {
  *   catalog row the source does not serve is retired rather than carried, and
  *   a source that cannot answer publishes nothing instead of the last good
  *   cache. Without it the catalog slice stays the lineup (full)
+ * @property {boolean} [lineupOnly] the published lineup is ALSO the only field
+ *   source: the row takes no catalog records, so the table's ids and names
+ *   publish over pi's schema defaults and nothing from models.dev follows a
+ *   successful table read (docs/d189). Distinct from lineupFromFacts, which
+ *   takes the lineup from the provider's own listing and keeps catalog metadata
  * @property {((record: ProviderFactsModel) => ModelsDevModel|null)|undefined}
  *   [factsMapper] rebuild one cached record as a models.dev-shaped record so
  *   it reuses catalogPiModel()'s full derivation, or null for a record the
@@ -604,8 +609,10 @@ const PROVIDER_SPECS = [
 		// syncing against it would prune the real lineup and append 400+ wrong
 		// ids. The published ClinePass table is the contract instead (docs/d040).
 		modelIdPrefix: `${CLINE_PASS_ID}/`,
-		// The table decides the lineup; models.dev only prices it (docs/d189).
+		// The table decides the lineup AND is the only field source: read first, so
+		// a successful read means no models.dev metadata follows it (docs/d189).
 		lineupResolver: resolveClinePassLineup,
+		lineupOnly: true,
 	},
 	{
 		id: "hyper",
@@ -1427,6 +1434,9 @@ async function emitFull(spec) {
 			([id, m]) =>
 				// A retired catalog entry never publishes (docs/d048).
 				catalogModelLive(m) &&
+				// A lineup-only row takes no catalog records: its published lineup is
+				// the whole contract, so the catalog cannot enrich it (docs/d189).
+				!spec.lineupOnly &&
 				(!spec.modelIdPrefix || id.startsWith(spec.modelIdPrefix)) &&
 				(!allow || allow.has(id)),
 		)

@@ -1,22 +1,22 @@
 /**
- * @fileoverview generate.mjs — the pi-cline-pass generator: TWO published
- * sources in (Cline's published docs table, which alone decides the lineup,
- * and the models.dev `cline-pass` slice, metadata only), ONE committed
+ * @fileoverview generate.mjs — the pi-cline-pass generator: ONE published
+ * source in (Cline's docs table), ONE committed
  * artifact out (`models.json`, the pi `models.json`-shaped cline-pass provider
  * block: the freshness gate's subject and the fleet-parity record; nothing
  * reads it at runtime, and the extension registers no model list of its own, so
  * there is no seed to write (docs/d190)).
  *
- * Why two sources and no ladder between them (pi-synthetic deleted its own,
- * docs/d096): they are not rungs of one ladder. The docs table is the
- * LINEUP, models.dev is the METADATA (prices, limits, effort enums) for the
- * ids the table names, and neither can stand in for the other — and neither
- * is this provider's own /models listing, which serves a DIFFERENT
- * provider's catalog entirely (docs/d040). There is no fallback list and no
- * agreement floor: the table is the whole contract, so the catalog can
- * neither add a retired id nor drop a published one (docs/d189).
+ * Why one source (docs/d189): the table decides the lineup AND supplies every
+ * field this folder publishes — the billing-namespaced id and the display
+ * name. The models.dev `cline-pass` slice was the second read, and metadata
+ * was all it added: its price column is Cline's reference rate against an
+ * undefined quota multiplier rather than the money a subscriber pays, and its
+ * remaining fields disagreed with the vendor's own package on most rows. The
+ * provider's own /models listing is not a candidate either — it serves a
+ * DIFFERENT provider's catalog entirely (docs/d040). There is no fallback
+ * list and no agreement floor, so nothing is read after a successful parse.
  *
- * Failure contract: BOTH reads THROW. No lineup table means no ClinePass
+ * Failure contract: the read THROWS. No lineup table means no ClinePass
  * lineup, and "unavailable" is the honest answer — never a remembered one
  * (docs/d189). A failed run writes nothing (the writer below is atomic), so
  * the committed artifact a successful run wrote stays byte-identical.
@@ -49,7 +49,6 @@ import {
 	CLINE_PASS_BASE_URL,
 	CLINE_PASS_NAME,
 	CLINE_PASS_PROVIDER_ID,
-	fetchCatalogSlice,
 	fetchDocsLineup,
 } from "./sources.mjs";
 
@@ -248,11 +247,11 @@ function alreadyCommitted(path, content) {
 }
 
 async function main() {
-	// Order IS the failure contract: either source failing aborts the run
-	// with the committed artifact untouched (docs/d189).
-	const records = await fetchCatalogSlice();
+	// The read IS the failure contract: failing aborts the run with the
+	// committed artifact untouched (docs/d189), and succeeding ends the run's
+	// reads — no second source follows it.
 	const lineup = await fetchDocsLineup();
-	const models = shapeCatalog(records, lineup);
+	const models = shapeCatalog(lineup);
 	// Zero rows means the prefix guard or the eligibility gates swallowed the
 	// whole lineup: writing that would silently replace a working provider
 	// with an empty one, which is a failure to publish, not a result.

@@ -1,44 +1,42 @@
 /**
- * @fileoverview sources.mjs — the two published sources of the ClinePass
- * catalog, with ONE direction between them (docs/d189):
+ * @fileoverview sources.mjs — the ONE published source of the ClinePass
+ * catalog, and the read that carries it:
  *
  *   - Cline's docs table (docs/getting-started/clinepass.mdx in the
- *     cline/cline repo, ## Models section) — the LINEUP: which ids ClinePass
- *     serves, in the cline-pass/ namespace. Nothing else may add an id.
- *   - the models.dev cline-pass slice — the METADATA (prices, limits,
- *     modalities, effort enums) for those ids, where the catalog has any.
+ *     cline/cline repo, ## Models section) — the lineup: which ids ClinePass
+ *     serves, in the cline-pass/ namespace, and the display name of each.
+ *     Nothing else adds an id and nothing else describes one.
+ *
+ * models.dev was the second read, and it retired (docs/d189's amendment): its
+ * price column is a reference rate a subscriber never pays, the fields it could
+ * add disagreed with the vendor's own package on most rows of the table, and it
+ * could never widen the lineup — so an unreadable catalog cost the provider its
+ * whole catalog to protect fields nobody could check. A successful table parse
+ * now ends the run: one fetch, no catalog request.
  *
  * Why the provider's own listing is NOT a source (docs/d040, the fleet's
  * cline-pass row): GET <baseUrl>/models at api.cline.bot answers with the
  * catalog of the cline (usage-billing) provider — a DIFFERENT provider — so
- * syncing against it would prune the real ClinePass lineup and append
- * hundreds of wrong-priced ids.
- *
- * Why the catalog cannot widen the lineup either: models.dev keeps rows the
- * gateway has already retired, so a catalog-only id is a dead id, not a
- * catalog-first addition (docs/d189). A docs id the catalog does not know
- * still publishes — the table is the contract, and pi's schema defaults fill
- * the fields the catalog did not supply (merge.mjs).
+ * syncing against it would prune the real ClinePass lineup and append hundreds
+ * of wrong-priced ids.
  *
  * The prefix guard is a BILLING fact, not tidiness: a ClinePass id served
  * without the cline-pass/ prefix bills at standard API pricing instead of the
- * subscription, and models.dev intermittently mislabels cline-provider rows
- * under neighboring provider keys. Every consumer filters on
- * CLINE_PASS_ID_PREFIX before publishing a row (docs/d040).
+ * subscription. Every consumer filters on CLINE_PASS_ID_PREFIX before
+ * publishing a row (docs/d040).
  *
- * Failure contract: both reads THROW. An unreadable lineup or metadata source
- * means there is nothing to publish, and "ClinePass is unavailable" is the
- * answer — never a remembered list (docs/d189). The artifact a successful run
- * wrote stays in place; a failed run writes nothing.
- * Neither fetch URL is recorded in logs (docs/d086).
+ * Failure contract: the read THROWS. An unreadable table means there is
+ * nothing to publish, and "ClinePass is unavailable" is the answer — never a
+ * remembered list (docs/d189). The artifact a successful run wrote stays in
+ * place; a failed run writes nothing. The fetch URL is never recorded in logs
+ * (docs/d086).
  *
  * Env: CLINE_PASS_MDX — a plain local copy of the docs file, for a host that
  * pins the table instead of fetching it.
  */
-
 import { readFileSync } from "node:fs";
 
-import { logDebug, logInfo, setLogTool } from "./log.mjs";
+import { logInfo, setLogTool } from "./log.mjs";
 
 setLogTool("pi-cline-pass/sources");
 
@@ -87,14 +85,6 @@ export const CLINE_PASS_NAME = CLINE_PASS.label;
 export const CLINE_PASS_ID_PREFIX = `${CLINE_PASS_PROVIDER_ID}/`;
 
 /**
- * models.dev's canonical catalog URL — the metadata source. Public, no key,
- * and deliberately NOT redirectable by env: one canonical fetch, the same
- * no-redirect-surface contract pi-synthetic's listing fetch keeps.
- * @type {string}
- */
-const MODELS_DEV_URL = "https://models.dev/api.json";
-
-/**
  * Cline's published docs table at its canonical raw-file URL — the lineup
  * contract source. CLINE_PASS_MDX overrides the READ (a plain local copy,
  * e.g. `git show HEAD:docs/getting-started/clinepass.mdx` from the fleet's
@@ -115,69 +105,6 @@ const CLINE_PASS_DOCS_URL =
 
 const REQUEST_TIMEOUT_MS = 15_000;
 const MODEL_STORE_TTL_MS = 4 * 60 * 60 * 1000;
-
-/**
- * A models.dev model record — the subset this folder reads. Every field is
- * optional, including the identity: the catalog's map KEY is the row this
- * folder publishes (the prefix guard filters keys; merge.mjs trusts no body
- * id), and the source may stop publishing any other field at any time,
- * degrading field by field.
- * @typedef {object} CatalogRecord
- * @property {string} [id] a body id may exist but is never trusted — the
- *   map key wins (the prefix is a billing contract, docs/d040)
- * @property {string} [name]
- * @property {string} [family]
- * @property {boolean} [reasoning]
- * @property {{ input?: string[], output?: string[] }} [modalities]
- * @property {{ context?: number, output?: number }} [limit]
- * @property {{ input?: number, output?: number, cache_read?: number, cache_write?: number }|null} [cost]
- *   `null`/absent = no published prices (docs/d057: nothing is rendered);
- *   `cache_write` is commonly absent from the wire and completes to zero at
- *   shaping time (fleet `toCost` semantics)
- * @property {Array<{ type?: string, values?: string[] }>} [reasoning_options]
- *   the published effort enum — the ONLY source of thinking levels
- */
-
-/**
- * One catalog fetch: the canonical models.dev URL, sliced to the cline-pass
- * provider record's models. Injectable fetch so tests exercise the parse
- * with no network.
- * @param {object} [options]
- * @param {AbortSignal} [options.signal]
- * @param {typeof fetch} [options.fetchImpl] injected by tests
- * @returns {Promise<Record<string, CatalogRecord>>} the slice, keyed by the
- *   catalog's own (prefixed) ids — unfiltered; the prefix guard is applied
- *   by shapeCatalog, not here
- * @throws {Error} on a transport failure, a non-2xx answer, or a payload
- *   with no cline-pass slice — the caller has nothing to publish, and the
- *   committed artifact is the fallback rather than a stale regeneration
- */
-export async function fetchCatalogSlice({ signal, fetchImpl = fetch } = {}) {
-	logDebug("fetching models.dev catalog", { provider: CLINE_PASS_PROVIDER_ID });
-	const res = await fetchImpl(MODELS_DEV_URL, {
-		signal: signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-	});
-	if (!res.ok) {
-		throw new Error(
-			`models.dev catalog answered ${res.status} — nothing to publish`,
-		);
-	}
-	const payload = /** @type {unknown} */ (await res.json());
-	const provider =
-		/** @type {{ models?: Record<string, CatalogRecord> }|undefined} */ (
-			/** @type {Record<string, unknown>|undefined} */ (payload)?.[
-				CLINE_PASS_PROVIDER_ID
-			]
-		);
-	const slice = provider?.models;
-	if (!slice || typeof slice !== "object" || Object.keys(slice).length === 0) {
-		throw new Error(
-			"models.dev carries no cline-pass models — nothing to publish",
-		);
-	}
-	logDebug("models.dev catalog answered", { rows: Object.keys(slice).length });
-	return slice;
-}
 
 /**
  * Parse the `## Models` GFM table from Cline's published clinepass.mdx and
