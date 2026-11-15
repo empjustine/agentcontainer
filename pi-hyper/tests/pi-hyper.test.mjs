@@ -11,10 +11,7 @@
  * Run: node --test   (from this folder — discovers tests/*.test.mjs)
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
 
 const {
 	compatFor,
@@ -24,7 +21,6 @@ const {
 	shapeRow,
 	thinkingLevelMapFor,
 	toExtensionModel,
-	toPiModel,
 } = await import("../merge.mjs");
 const {
 	catalogUrl,
@@ -34,7 +30,6 @@ const {
 	HYPER_PROVIDER_ID,
 	storeIsFresh,
 } = await import("../sources.mjs");
-const unitDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 // The folder's own row: the one place the upstream and the key env are spelled
 // (sources.mjs), so the exports above are only believable if they match it.
 const hyper = HYPER;
@@ -227,7 +222,10 @@ test("models are emitted in canonical id order (docs/d050)", () => {
 		record({ id: "m-middle" }),
 	]);
 	const ids = models.map((m) => m.id);
-	assert.deepEqual(ids, [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
+	assert.deepEqual(
+		ids,
+		[...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
+	);
 });
 
 test("the compat mirror is the vendor transcription, with the enum deciding effort", () => {
@@ -252,7 +250,7 @@ test("the compat mirror is the vendor transcription, with the enum deciding effo
 	assert.equal(effortValues(record({ reasoning_levels: ["MAX"] }))?.[0], "max");
 });
 
-test("the manifest omits an unpublishable cost; the extension fills zeros", () => {
+test("an unpublishable cost is omitted from the record; the extension fills zeros", () => {
 	const [free] = shapeCatalog([
 		record({
 			cost_per_1m_in: 0,
@@ -263,7 +261,6 @@ test("the manifest omits an unpublishable cost; the extension fills zeros", () =
 	]);
 	assert.ok(free);
 	assert.equal(free.cost, undefined);
-	assert.equal("cost" in toPiModel(free), false);
 	assert.deepEqual(toExtensionModel(free).cost, {
 		input: 0,
 		output: 0,
@@ -272,7 +269,10 @@ test("the manifest omits an unpublishable cost; the extension fills zeros", () =
 	});
 });
 
-test("the extension and the manifest offer the SAME thinking levels per model", () => {
+test("a registered model carries the record's own thinking map, not a fabricated one", () => {
+	// An absent map makes pi fabricate off..high, and the ON_OFF map's whole
+	// purpose is to keep that from advertising levels the provider never
+	// published (see toExtensionModel).
 	const models = shapeCatalog([
 		record({ id: "a-tiered" }),
 		record({ id: "a-onoff", reasoning_levels: undefined }),
@@ -280,7 +280,7 @@ test("the extension and the manifest offer the SAME thinking levels per model", 
 	for (const model of models) {
 		assert.deepEqual(
 			toExtensionModel(model).thinkingLevelMap,
-			toPiModel(model).thinkingLevelMap,
+			model.thinkingLevelMap,
 		);
 	}
 });
@@ -305,28 +305,6 @@ test("every extension key is one pi defines — no folder-specific field rides a
 test("the model store TTL is the refresh gate, not an absolute clock", () => {
 	assert.equal(storeIsFresh(Date.now() - 60_000), true);
 	assert.equal(storeIsFresh(Date.now() - 5 * 60 * 60 * 1000), false);
-});
-
-test("committed models.json carries the fact-table canonical upstream, not a route", () => {
-	const doc = JSON.parse(
-		readFileSync(join(unitDir, "models.json"), "utf-8"),
-	);
-	const provider = doc.providers[HYPER_PROVIDER_ID];
-	assert.equal(provider.baseUrl, hyper.baseUrl);
-	assert.equal(provider.api, "openai-completions");
-	assert.equal(provider.apiKey, `$${hyper.apiKeyEnv}`);
-	assert.equal(provider.authHeader, true);
-	assert.ok(
-		provider.headers["User-Agent"],
-		"the client identity rides the block",
-	);
-	assert.equal("compat" in provider, false, "wire facts ride per model");
-	const ids = provider.models.map((/** @type {{id: string}} */ m) => m.id);
-	assert.deepEqual(
-		ids,
-		[...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
-	);
-	assert.ok(ids.length > 0, "the committed artifact must carry models");
 });
 
 test("the extension loads and registers a provider with no remembered lineup", async () => {

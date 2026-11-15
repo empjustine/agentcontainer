@@ -12,8 +12,9 @@ hyper-specific deltas are below.
   prices in one place, PUBLIC (no key needed to read it). Do not add a
   models.dev fallback "to be safe": the catalog carries hyper too, but a
   second source can only lag or contradict the provider's own document.
-- **A failure throws.** The committed artifact is the offline fallback;
-  the atomic writer in `generate.mjs` is what makes that true.
+- **A failure throws.** There is no committed copy and no fallback lineup: a
+  broken read leaves the provider unconfigured for that run, which is the
+  observable outcome (docs/d190).
 - **The compat mirror is a TRANSCRIPTION, not a published fact.**
   `merge.mjs`'s `HYPER_WIRE_COMPAT` copies charmbracelet/pi-hyper-provider
   `src/models.ts` (the same transcription the fleet's modelCompat makes,
@@ -28,17 +29,18 @@ hyper-specific deltas are below.
   cache WRITE, `out_cached` is cache READ (verified against catwalk's own
   schema — see merge.mjs). It looks crossed; it is not.
 
-## Generated artifacts
+## Nothing is committed
 
-`models.json` is written by `generate.mjs`; it is the only artifact. Hand-
-editing it is erased by the next generation run — fix the shaping instead. It
-is in `biome.jsonc`'s ignore list (generated file, same reasoning as
-`coding-agent/model-*.json`). `./npm-run.sh pi-hyper generate --check` is the
-drift gate.
+No lineup, no fallback, no manifest. `refreshModels` reads the provider's
+`/provider` document on every run (docs/d190), and `generate` is a stub that
+prints its own name — so there is no
+artifact to hand-edit, no `--check` drift gate, and no generated file in
+`biome.jsonc`'s ignore list. A stub rather than a deleted script keeps the
+unit's entrypoint table whole (docs/d113).
 
 The extension registers no lineup of its own (docs/d190): `refreshModels` is
-the only source, so nothing reads the artifact at runtime. Do not add a `models`
-field or a committed seed to make an offline start look populated.
+the only source. Do not add a `models` field or a committed seed to make an
+offline start look populated.
 
 ## The fleet seam (the one open piece)
 

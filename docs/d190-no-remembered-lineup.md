@@ -148,3 +148,28 @@ not an input to the next one.
   models.dev mirror or fact cache is the same remembered data one level down.
 - d033, d057 — the two facts-listing roles (enrich, and be the whole lineup) this
   record unifies into one: the source decides, the catalog prices.
+
+## Amendment: the unit artifact retires with its generator
+
+The four extension folders no longer commit a `models.json`. The What stays is
+the committed artifact itself paragraph above kept it as the gate's subject;
+once every folder's data was a live read and the `coding-agent` layer was the
+only committed form of the same rows, that artifact had no reader, no runtime
+path and — with the generator gone — no writer, so it was stale by construction
+and `--check` compared a file against itself.
+
+What changed:
+
+- `generate.mjs`, `models.json` and the manifest projection (`toPiModel`) are
+  deleted in `pi-cline-pass`, `pi-hyper`, `pi-synthetic` and `pi-verboo`. The
+  `"generate"` script survives as `echo '{"msg":"nothing to generate in
+  <unit>"}'`, so a unit's entrypoint table keeps its shape (docs/d113) and
+  `./npm-run.sh <unit> generate` answers instead of failing.
+- `freshness.sh` counts a stub unit as skipped rather than checked, and asks for
+  no credential it would not use (docs/d122).
+- The contract-tier warning only the generator made (`warnOnMissingTiers`) moves
+  to `refreshModels` in `pi-synthetic`, the one remaining surface that sees a
+  listing.
+- The fleet's `model-*.json` layers are unchanged: they are now the only
+  committed rows of these providers, and no unit keeps a second copy to drift
+  from them.

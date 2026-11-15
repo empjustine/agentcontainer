@@ -1,9 +1,9 @@
 /**
  * @fileoverview merge.mjs — the ONE place a listing row becomes a model
- * record, shared by both halves of this folder: generate.mjs renders the
- * result into the committed pi `models.json` provider block, and the
- * extension imports this same file so its runtime shaping is identical
- * (one shape in, one shape out; docs/d096's folder contract, applied here).
+ * record. The extension is the only consumer: `refreshModels` imports this file
+ * and maps the result through `toExtensionModel`, so the shape a user sees is
+ * exactly the shape this file builds (one shape in, one shape out; docs/d096's
+ * folder contract, applied here).
  *
  * Mirrors the fleet's verboo row (coding-agent/generate-pi-coding-agent.mjs
  * `verbooFactsRecord` + `catalogPiModel`) — the fleet owns the reference
@@ -13,10 +13,10 @@
  *
  * Two absences are deliberate, not oversights, and both are the fleet row's
  * own documented positions:
- *   - NO cost, ever: the listing publishes no prices (cost: null in the
- *     fleet's mapper), so the manifest omits the block entirely (docs/d057)
- *     and the extension fills the mandatory zero block. Inventing a price
- *     would be a vendor fact nobody published.
+ *   - NO cost from the source, ever: the listing publishes no prices (cost:
+ *     null in the fleet's mapper), so the registration's mandatory block is
+ *     filled with zeros (docs/d057). Inventing a price would be a vendor fact
+ *     nobody published.
  *   - no `maxTokens`: likewise unpublished. pi's schema default (16384) is
  *     the conservative cap to request; inventing context-window-sized
  *     max_tokens against a 1M-context model would send a value the upstream
@@ -189,29 +189,6 @@ export function shapeListing(rows) {
 /* ------------------------------ projections -------------------------------- */
 
 /**
- * The models.json model entry — the fields pi's manifest schema takes, and
- * nothing else. No `cost` key at all (the listing publishes no prices,
- * docs/d057) and no `maxTokens` (likewise unpublished; pi's own schema
- * default applies — the fleet row's documented position, see the header).
- * @param {MergedModel} model
- * @returns {Record<string, unknown>}
- */
-export function toPiModel(model) {
-	/** @type {Record<string, unknown>} */
-	const entry = {
-		id: model.id,
-		name: model.name,
-		reasoning: model.reasoning,
-		input: model.input,
-		contextWindow: model.contextWindow ?? 128_000,
-	};
-	if (model.reasoning && model.thinkingLevelMap) {
-		entry.thinkingLevelMap = model.thinkingLevelMap;
-	}
-	return entry;
-}
-
-/**
  * The extension's model entry: pi's `ProviderChatModelConfig` surface,
  * verified against `@earendil-works/pi-coding-agent@1.4.0` the same way
  * pi-synthetic verified its own.
@@ -219,12 +196,12 @@ export function toPiModel(model) {
  * `cost` is MANDATORY on a registered model and `calculateCost()`
  * dereferences the block on every scored turn, so an omitted block throws
  * instead of streaming. Zeros are the correct fill and the honest one: no
- * price was published, and pi already assumes zero for an absent block —
- * which is exactly why the manifest path omits it.
+ * price was published, and pi already assumes zero for an absent block — which
+ * is why the record carries no `cost` of its own.
  *
- * `maxTokens` IS carried (the schema default 16384): unlike the manifest,
- * where a missing field falls back to pi's default, the registered-model
- * shape takes the field as given — and 16384 is the schema's own value, not
+ * `maxTokens` IS carried (the schema default 16384): the registered-model
+ * shape takes the field as given, so the default is stated rather than
+ * inherited — and 16384 is the schema's own value, not
  * an invented vendor fact.
  *
  * `thinkingLevelMap` is carried when the row published an enum, because its

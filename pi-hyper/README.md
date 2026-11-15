@@ -30,36 +30,34 @@ pi -e ./pi-hyper/index.ts
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `HYPER_API_KEY` | the key pi sends as `Authorization: Bearer` (an unset key leaves the provider unconfigured — pi hides its models from `/model`) |
 
-The catalog itself is PUBLIC — a keyless generator run regenerates the same
-artifacts. Network rides the environment's forward proxy
+The catalog itself is PUBLIC — reading it needs no key, so the extension's data
+path and the provider's own publication are the same request. Network rides the
+environment's forward proxy
 (`NODE_USE_ENV_PROXY=1` + the forwarded `HTTP(S)_PROXY`, docs/d074). No relay
 ladder, no route files.
 
 ## The lineup contract in one screen
 
 One source: the provider's own `/provider` document — lineup, metadata and
-prices together. A failed fetch fails the run (the committed artifact is the
-offline fallback); `./npm-run.sh pi-hyper generate --check` (from
-the repo root) is the drift gate. The one
-transcribed fact is the wire-compat mirror (see Provenance below) — everything
-else (prices, limits, effort enums, attachment support) comes from the
-document.
+prices together. A failed fetch fails the run, with no committed copy behind
+it: a broken read leaves the provider unconfigured rather than asserting a
+lineup nobody is serving (docs/d190). The one transcribed fact is the
+wire-compat mirror (see Provenance below) — everything else (prices, limits,
+effort enums, attachment support) comes from the document.
 
 ## Files
 
-| File           | Role                                                                               |
-| -------------- | ---------------------------------------------------------------------------------- |
-| `index.ts`     | the extension entry: `registerProvider` + `refreshModels` (the listing at runtime) |
-| `sources.mjs`  | the ONE source read: the provider's `/provider` catalog at the canonical upstream  |
-| `merge.mjs`    | the ONE shaping step + both projections (manifest entry, registered-model entry)   |
-| `generate.mjs` | one fetch in, one artifact out; `--check` verifies without writing                 |
-| `log.mjs`      | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045)              |
-| `models.json`  | GENERATED: the pi-`models.json`-shaped hyper block (canonical upstream, d070)      |
+| File          | Role                                                                               |
+| ------------- | ---------------------------------------------------------------------------------- |
+| `index.ts`    | the extension entry: `registerProvider` + `refreshModels` (the listing at runtime) |
+| `sources.mjs` | the ONE source read: the provider's `/provider` catalog at the canonical upstream  |
+| `merge.mjs`   | the ONE shaping step: a catalog record becomes the registered-model entry          |
+| `log.mjs`     | the JSONL log lines `sources.mjs` emits (docs/d045)                                |
 
-Regenerate with `./npm-run.sh pi-hyper generate` from the repo
-root (the git diff is the review). The extension registers no lineup of its
-own (docs/d190): `refreshModels` is the only source, so the artifact has no
-runtime reader — it is the drift gate's subject.
+Nothing is generated and nothing is committed: `./npm-run.sh pi-hyper
+generate` prints a stub line. The script stays because a unit's `package.json`
+is its entrypoint table (docs/d113) — there is no artifact left for a drift gate
+to compare, and the extension registers no lineup of its own (docs/d190).
 
 ## Provenance
 

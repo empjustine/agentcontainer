@@ -1,9 +1,9 @@
 /**
  * @fileoverview merge.mjs — the ONE place a catalog record becomes a model
- * record, shared by both halves of this folder: generate.mjs renders the
- * result into the committed pi `models.json` provider block, and the
- * extension imports this same file so its runtime shaping is identical
- * (one shape in, one shape out; docs/d096's folder contract, applied here).
+ * record. The extension is the only consumer: `refreshModels` imports this file
+ * and maps the result through `toExtensionModel`, so the shape a user sees is
+ * exactly the shape this file builds (one shape in, one shape out; docs/d096's
+ * folder contract, applied here).
  *
  * Mirrors the fleet's hyper row (coding-agent/generate-pi-coding-agent.mjs
  * `hyperFactsRecord` + `catalogPiModel` + the spec's modelCompat) — the
@@ -12,9 +12,10 @@
  * rule forbids a runner folder reaching into a sibling runner
  * (docs/architecture.md).
  *
- * The two projections differ in exactly one place, because pi's schemas
- * differ (the same divergence pi-synthetic and pi-cline-pass document):
- * `cost` is OPTIONAL in models.json and MANDATORY on a registered model.
+ * One field is added at the projection, because the registration schema
+ * requires it and this record may not carry it: `cost` is MANDATORY on a
+ * registered model, and pi dereferences it (pi-synthetic and pi-cline-pass
+ * document the same rule).
  *
  * No modality gate here, on purpose: hyper's records publish a boolean
  * attachment flag, not modality arrays, so every row is text or text+image —
@@ -287,34 +288,6 @@ export function compatFor(model) {
 /* ------------------------------ projections -------------------------------- */
 
 /**
- * The models.json model entry — the fields pi's manifest schema takes, and
- * nothing else. `contextWindow`/`maxTokens` fall back to pi's own schema
- * defaults when the catalog published nothing; those values are the
- * schema's, not an invented vendor fact.
- * @param {MergedModel} model
- * @returns {Record<string, unknown>}
- */
-export function toPiModel(model) {
-	/** @type {Record<string, unknown>} */
-	const entry = {
-		id: model.id,
-		name: model.name,
-		reasoning: model.reasoning,
-		input: model.input,
-		contextWindow: model.contextWindow ?? 128_000,
-		maxTokens: model.maxTokens ?? 16_384,
-		compat: compatFor(model),
-	};
-	if (model.cost) {
-		entry.cost = model.cost;
-	}
-	if (model.reasoning && model.thinkingLevelMap) {
-		entry.thinkingLevelMap = model.thinkingLevelMap;
-	}
-	return entry;
-}
-
-/**
  * The extension's model entry: pi's `ProviderChatModelConfig` surface,
  * verified against `@earendil-works/pi-coding-agent@1.4.0` the same way
  * pi-synthetic verified its own.
@@ -322,8 +295,8 @@ export function toPiModel(model) {
  * `cost` is MANDATORY on a registered model and `calculateCost()`
  * dereferences the block on every scored turn, so an omitted block throws
  * instead of streaming. Zeros are the correct fill: pi already assumes a
- * zero price for an absent block, which is exactly why the manifest path
- * omits it.
+ * zero price for an absent block — which is why the record keeps `cost`
+ * optional and the projection is where the zeros appear.
  *
  * `thinkingLevelMap` is carried on every reasoning model, map or ON_OFF:
  * its absence makes pi fabricate `off`…`high`, which would advertise

@@ -11,10 +11,7 @@
  * Run: node --test   (from this folder — discovers tests/*.test.mjs)
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
 
 const {
 	effortValues,
@@ -22,7 +19,6 @@ const {
 	shapeRow,
 	thinkingLevelMapFor,
 	toExtensionModel,
-	toPiModel,
 } = await import("../merge.mjs");
 const {
 	fetchListing,
@@ -32,7 +28,6 @@ const {
 	VERBOO_BASE_URL,
 	VERBOO_PROVIDER_ID,
 } = await import("../sources.mjs");
-const unitDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // The fact-table row now lives in ../sources.mjs (one row per folder, docs/d113).
 // These three literals are the independent copy every consumer is pinned
@@ -181,10 +176,9 @@ test("input modalities come from the vision flag; the id is the honest name", ()
 	assert.equal(visual?.name, "test-model");
 });
 
-test("NO cost is ever asserted — the listing publishes no prices (docs/d057)", () => {
+test("NO cost is ever invented — the listing publishes no prices (docs/d057)", () => {
 	const models = shapeListing([row({}), row({ id: "other" })]);
 	for (const model of models) {
-		assert.equal("cost" in toPiModel(model), false);
 		assert.deepEqual(toExtensionModel(model).cost, {
 			input: 0,
 			output: 0,
@@ -194,49 +188,27 @@ test("NO cost is ever asserted — the listing publishes no prices (docs/d057)",
 	}
 });
 
-test("the manifest publishes no maxTokens; the extension carries the schema default", () => {
+test("the extension carries the schema default for an unpublished maxTokens", () => {
 	const [model] = shapeListing([row({})]);
 	assert.ok(model);
-	assert.equal("maxTokens" in toPiModel(model), false);
+	assert.equal("maxTokens" in model, false, "nothing published one");
 	assert.equal(toExtensionModel(model).maxTokens, 16_384);
-	// The context window IS published and carried by both.
-	assert.equal(toPiModel(model).contextWindow, 1_048_576);
+	// The context window IS published, so it is carried rather than defaulted.
 	assert.equal(toExtensionModel(model).contextWindow, 1_048_576);
 });
 
 test("models are emitted in canonical id order (docs/d050)", () => {
 	const models = shapeListing([row({ id: "z-last" }), row({ id: "a-first" })]);
 	const ids = models.map((m) => m.id);
-	assert.deepEqual(ids, [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
+	assert.deepEqual(
+		ids,
+		[...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
+	);
 });
 
 test("the model store TTL is the refresh gate, not an absolute clock", () => {
 	assert.equal(storeIsFresh(Date.now() - 60_000), true);
 	assert.equal(storeIsFresh(Date.now() - 5 * 60 * 60 * 1000), false);
-});
-
-test("committed models.json carries the fact-table canonical upstream, not a route", () => {
-	const doc = JSON.parse(
-		readFileSync(join(unitDir, "models.json"), "utf-8"),
-	);
-	const provider = doc.providers[VERBOO_PROVIDER_ID];
-	assert.equal(provider.baseUrl, VERBOO_FACT_BASE_URL);
-	assert.equal(provider.api, "openai-completions");
-	assert.equal(provider.apiKey, `$${VERBOO_FACT_API_KEY_ENV}`);
-	assert.equal(provider.authHeader, true);
-	for (const retired of ["compat", "headers"]) {
-		assert.equal(
-			retired in provider,
-			false,
-			`${retired} would be an invented claim`,
-		);
-	}
-	const ids = provider.models.map((/** @type {{id: string}} */ m) => m.id);
-	assert.deepEqual(
-		ids,
-		[...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
-	);
-	assert.ok(ids.length > 0, "the committed artifact must carry models");
 });
 
 test("the extension loads and registers a provider with no remembered lineup", async () => {

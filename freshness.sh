@@ -89,6 +89,14 @@ for dir in ./*/; do
 	[ -f "$unit/package.json" ] || continue
 	case $unit in pi-*) ;; *) continue ;; esac
 	grep -q '"generate"' "$unit/package.json" || continue
+	# The pi extension data files are live reads; their `generate` scripts are
+	# stubs that keep the script table complete (docs/d113) and carry no
+	# artifact, so there is nothing here that can go stale. Skipped, not
+	# counted as checked: a stub answering 0 is not a passed audit.
+	if grep -q 'nothing to generate in' "$unit/package.json"; then
+		skipped=$((skipped + 1))
+		continue
+	fi
 
 	secret=$(requires_secret "$unit")
 	if [ -n "$secret" ] && [ -z "$(printenv "$secret" || true)" ]; then

@@ -32,6 +32,7 @@ import {
 	SYNTHETIC_BASE_URL,
 	SYNTHETIC_PROVIDER_ID,
 	storeIsFresh,
+	warnOnMissingTiers,
 } from "./sources.mjs";
 
 /**
@@ -92,6 +93,10 @@ export default function piSynthetic(pi: ExtensionAPI): void {
 						await fetchListing({ signal: context.signal }),
 					);
 					context.signal?.throwIfAborted();
+					// The tier checklist only ever warned from the generator; the
+					// live read is the one place it can still fire, and a tier the
+					// listing stops serving is worth a line either way.
+					warnOnMissingTiers(models.map((m) => m.id));
 					return models.map(toExtensionModel);
 				} catch (err) {
 					if (context.signal?.aborted) {

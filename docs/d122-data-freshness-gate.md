@@ -113,3 +113,18 @@ question that cannot.
 `./freshness.sh` → `checked 4, skipped 1` (pi-verboo), exit 0; a planted stale
 artifact in `pi-hyper/models.json` → exit 1 naming the unit, then restored to
 exit 0.
+
+## Amendment: the extension leg skips a unit with nothing to compare
+
+The `pi-*` extensions carry no generated data file any more: their sources are
+live reads and their `generate` scripts are stubs (docs/d190's amendment). The
+loop still walks every unit whose `package.json` carries the script — a folder
+that grows a real artifact is picked up again without editing the gate — but a
+stub unit counts as `skipped`, not `checked`, and its credential is not
+requested: a no-op answering 0 is not a passed audit.
+
+Measured after the change: the extension leg reports `checked 0, skipped 4`. The
+planted-stale-artifact check in the Verification status has no subject in those
+folders any more — the fleet's `coding-agent/model-*.json` layers are the only
+committed rows, and they stay outside this gate for the reason the Decision
+gives.

@@ -100,19 +100,18 @@ execution of their code — with these caveats:
 
 ## Files
 
-| File           | Role                                                                                                              |
-| -------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `index.ts`     | the extension entry: `registerProvider` + `refreshModels` (the reconciliation at runtime)                         |
-| `sources.mjs`  | the one source read (the docs table) and its parser                                                               |
-| `merge.mjs`    | the one shaping step and both projections (manifest entry, registered-model entry)                                |
-| `generate.mjs` | one source in, one artifact out; `--check` verifies without writing                                               |
-| `log.mjs`      | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045)                                             |
-| `models.json`  | GENERATED: the pi-`models.json`-shaped cline-pass block (fleet parity: provider-level compat, canonical upstream) |
+| File          | Role                                                                                      |
+| ------------- | ----------------------------------------------------------------------------------------- |
+| `index.ts`    | the extension entry: `registerProvider` + `refreshModels` (the reconciliation at runtime) |
+| `sources.mjs` | the one source read (the docs table) and its parser                                       |
+| `merge.mjs`   | the one shaping step: a published row becomes the registered-model entry                  |
+| `log.mjs`     | the JSONL log lines `sources.mjs` emits (docs/d045)                                       |
 
-Regenerate with `./npm-run.sh pi-cline-pass generate` from the
-repo root (the git diff is the review). The extension registers no lineup of
-its own (docs/d190): `refreshModels` reads the docs table at runtime, so the
-artifact is the fleet-parity and drift record and nothing else.
+Nothing is generated and nothing is committed: `./npm-run.sh pi-cline-pass
+generate` prints a stub line. The script stays because a unit's
+`package.json` is its entrypoint table (docs/d113) — there is no artifact left
+for a drift gate to compare, and the extension registers no lineup of its own
+(docs/d190).
 
 ## Provenance
 

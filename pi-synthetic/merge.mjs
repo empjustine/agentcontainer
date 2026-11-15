@@ -1,21 +1,20 @@
 /**
- * @fileoverview merge.mjs — the ONE place a listing row becomes a model record,
- * shared by both halves of this folder: generate.mjs renders the result into the
- * committed pi `models.json` provider block, and the extension imports this same
- * file so its runtime shaping is identical.
+ * @fileoverview merge.mjs — the ONE place a listing row becomes a model record.
+ * The extension is the only consumer: `refreshModels` imports this file and maps
+ * the result through `toExtensionModel`, so the shape a user sees is exactly the
+ * shape this file builds.
  *
  * One shape in, one shape out. `shapeListing` turns the provider's raw rows into
  * `MergedModel`s (pi's modality gate, the thinking level map, the cost rule,
- * the alias display name), and the two projections render that one record for
- * their two schemas. Nothing here reads a second catalog: the fold-in of the
+ * the alias display name), and the projection renders that one record on pi-ai's
+ * registration schema. Nothing here reads a second catalog: the fold-in of the
  * vendored models.dev/catwalk sources was deleted because it changed no value
  * they did not already have (docs/d096).
  *
- * The two projections differ in exactly two places, both because pi's schemas
- * differ, and both are commented where they happen:
- *   - `cost`: OPTIONAL in `models.json`, MANDATORY on a registered model;
- *   - `thinkingLevelMap`: rendered in both, and required in the extension
- *     because its absence makes pi fabricate levels.
+ * The projection adds exactly two things the record may omit, both because pi's
+ * registration schema requires them, and both are commented where they happen:
+ *   - `cost`, mandatory there, since pi dereferences it on every scored turn;
+ *   - `thinkingLevelMap`, whose absence makes pi fabricate levels.
  */
 
 /** @typedef {import("./sources.mjs").ListingRow} ListingRow */
@@ -335,46 +334,17 @@ export function shapeListing(rows) {
 /* ------------------------------ projections -------------------------------- */
 
 /**
- * The models.json model entry — the fields pi's manifest schema takes, and
- * nothing else.
- *
- * `contextWindow`/`maxTokens` fall back to pi's own schema defaults when the
- * listing published nothing, matching the repo's catalog path; those values are
- * the schema's, not an invented vendor fact.
- * @param {MergedModel} model
- * @returns {Record<string, unknown>}
- */
-export function toPiModel(model) {
-	/** @type {Record<string, unknown>} */
-	const entry = {
-		id: model.id,
-		name: model.name,
-		reasoning: model.reasoning,
-		input: model.input,
-		contextWindow: model.contextWindow ?? 128_000,
-		maxTokens: model.maxTokens ?? 16_384,
-	};
-	if (model.cost) {
-		entry.cost = model.cost;
-	}
-	if (model.reasoning && model.thinkingLevelMap) {
-		entry.thinkingLevelMap = model.thinkingLevelMap;
-	}
-	return entry;
-}
-
-/**
  * The extension's model entry: pi's `ProviderChatModelConfig` surface, verified
  * against `@earendil-works/pi-coding-agent@1.4.0`.
  *
- * Two fields differ from the manifest projection, both for reasons the type
+ * Two fields are added here, both for reasons the registration schema
  * declarations and pi-ai's runtime spell out:
  *
  *   - `cost` is MANDATORY on a registered model and `calculateCost()`
  *     dereferences `model.cost.tiers` on every scored turn, so an omitted block
  *     throws instead of streaming. Zeros are the correct fill: pi already
- *     assumes a zero price for an absent block, which is exactly why the
- *     manifest path omits it.
+ *     assumes a zero price for an absent block — which is why the record keeps
+ *     it optional and this projection is where the zeros appear.
  *   - `thinkingLevelMap` is carried, not optional polish:
  *     `getSupportedThinkingLevels()` fabricates `off`…`high` when no map is
  *     present, which would advertise an `off` the provider never published AND

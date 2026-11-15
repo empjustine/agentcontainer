@@ -12,29 +12,30 @@ verboo-specific deltas are below.
   be: models.dev carries no verboo row at all (the fleet's catalogOptional
   case, docs/d057), so there is no second catalog to fall back to even in
   principle.
-- **The listing is AUTH-GATED**: regeneration needs `VERBOO_API_KEY`. The
-  committed artifact is the offline fallback; a failure throws and the
-  atomic writer in `generate.mjs`) leaves it untouched.
-- **No price is ever asserted.** The listing publishes none, so the
-  manifest omits the cost block (docs/d057) and the extension fills the
-  mandatory zeros. Inventing a price would be a vendor fact nobody
-  published.
-- **No `maxTokens` in the manifest**: likewise unpublished; pi's schema
-  default (16384) is the conservative cap, and the extension carries that
-  same default explicitly (its shape takes the field as given).
+- **The listing is AUTH-GATED**: reading it needs `VERBOO_API_KEY`. A failure
+  throws with no committed copy behind it — the provider is unconfigured for
+  that run (docs/d190).
+- **No price is ever asserted.** The listing publishes none, so the extension
+  fills the mandatory zeros (docs/d057). Inventing a price would be a vendor
+  fact nobody published.
+- **No `maxTokens` is asserted**: likewise unpublished; pi's schema default
+  (16384) is the conservative cap, and the extension carries that same default
+  explicitly (its shape takes the field as given).
 - **No off-state fallback for thinking**: only a published "none" disables
   thinking (fleet `onOffThinking: false`). A model whose enum lacks it
   simply offers no off state — never an invented wire value.
 
-## Generated artifacts
+## Nothing is committed
 
-`models.json` is written by `generate.mjs`; it is the only artifact. Hand-
-editing it is erased by the next `./npm-run.sh pi-verboo generate` — fix the
-shaping instead. It is in `biome.jsonc`'s ignore list. Adding `--check` to that
-command is the drift gate; either form needs the key.
+No lineup, no fallback, no manifest. `refreshModels` reads the provider's
+`/models` listing on every run (docs/d190), and `generate` is a stub that prints
+its own name — so there is no
+artifact to hand-edit, no `--check` drift gate, and no generated file in
+`biome.jsonc`'s ignore list. A stub rather than a deleted script keeps the
+unit's entrypoint table whole (docs/d113).
 
 The extension registers no lineup of its own (docs/d190): `refreshModels` is
-the only source, so nothing reads the artifact at runtime.
+the only source.
 
 The committed artifact was SEEDED at landing from the fleet's last fetch of
 the same listing because this sandbox holds no `VERBOO_API_KEY` — the seeding

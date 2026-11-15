@@ -223,8 +223,10 @@ execute rather than import. The rest is operator files and the QA sweep.
   gates cannot see a stale cache: it parses, its tests pass, and plain
   `generate` would rewrite it without complaint, so staleness used to be a
   review catch and was in practice nothing at all. Each unit answers with its
-  own contract (`<unit>/package.json` `generate --check` for the `pi-*`
-  extensions, the offline HF manifest audit for llm-local-inference); a
+  own contract through `./npm-run.sh` (the offline HF manifest audit for
+  llm-local-inference); the `pi-*` extensions carry no generated data file —
+  their sources are live reads and their `generate` scripts are stubs, so the
+  leg skips them rather than counting a no-op as a pass (docs/d190, d122). A
   key-gated listing without its key is skipped loudly rather than failing the
   gate, and `coding-agent` stays out because its generator's per-source
   fallbacks make byte-equality a property of the host. `lint.sh` and `test.sh`

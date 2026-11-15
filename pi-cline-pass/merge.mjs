@@ -1,40 +1,36 @@
 /**
  * @fileoverview merge.mjs — the one place a published lineup entry becomes a
- * pi model record, and the only shaping this folder has: generate.mjs renders
- * the result into the committed pi `models.json` provider block, and the
- * extension imports this same file, so a runtime model and a committed one
- * cannot drift.
+ * registered pi model, and the only shaping this folder has: the extension maps
+ * the table through `shapeCatalog` and `toExtensionModel`, and nothing else
+ * reads a model shape.
  *
  * Every field besides the id and the display name is pi's own schema default,
  * because no source publishes one for these ids (docs/d189): the docs table
  * names the ids, and the reference prices it prints are not what a subscriber
  * pays — a flat subscription bills the quota, not the token.
  *
- * The two projections differ exactly where pi's schemas do, and one rule
- * covers all three cases — the manifest never states what no source stated,
- * the registration writes the schema default the API requires:
+ * `cost` is the one field the registration schema requires and no source
+ * supplies: pi dereferences it on every scored turn, and a subscription model
+ * is not billed per token, so the honest block is zero. `contextWindow` and
+ * `maxTokens` are mandatory there too and carry pi's documented defaults
+ * (docs/models-configuration.md) — the only non-invented value available.
  *
- *   - cost: optional in `models.json`, mandatory on a registration; the
- *     extension writes the zero block, the manifest says nothing.
- *   - limits: optional in `models.json` (pi applies 128000/16384 itself), so
- *     the manifest omits them and the extension restates them as the default.
- *   - compat: provider-level in `models.json`, per-model on a registration,
- *     because pi's `ProviderConfig` has no provider-level compat slot and the
- *     provider composer replaces the `models.json` layer wholesale (d022, d033).
+ * `compat` rides PER MODEL rather than at provider level, because pi 1.4.0's
+ * legacy ProviderConfig has no provider-level compat slot and the composer
+ * replaces the models layer wholesale (d022, d033).
  *
  * Deliberately absent: alias tiers (ClinePass publishes no rotating tier ids)
  * and a thinking-level map (no source publishes an effort enum for these ids,
  * so `reasoning` stays false and pi sends no thinking parameter).
  */
 
-
 import { CLINE_PASS_ID_PREFIX } from "./sources.mjs";
 /** @typedef {import("./sources.mjs").LineupEntry} LineupEntry */
 
 /**
- * What a registration needs and a `models.json` entry may omit: pi dereferences
- * `cost` on every scored turn, and the schema's own defaults are the only
- * non-invented limits available here (docs/d189).
+ * What a registration requires: pi dereferences `cost` on every scored turn,
+ * and the schema's own defaults are the only non-invented limits available
+ * here (docs/d189).
  * @typedef {object} ExtensionModel
  * @property {string} id
  * @property {string} name
@@ -78,15 +74,6 @@ export function shapeCatalog(lineup) {
 		.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 
-/**
- * The pi `models.json` entry for one model: the id and the name, which is the
- * whole of what a published source stated.
- * @param {MergedModel} model
- * @returns {{id: string, name: string}}
- */
-export function toPiModel({ id, name }) {
-	return { id, name };
-}
 
 /**
  * The extension projection: the registration schema requires the fields

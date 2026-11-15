@@ -9,8 +9,9 @@
  * so a reader compares numbers where it used to match level words (docs/d151
  * owns the record shape and the canonical ranges).
  *
- * Two files here log (`generate.mjs`, `sources.mjs`), each naming itself once
- * with setLogTool, so every line is attributable to the file that emitted it.
+ * One file here logs (`sources.mjs`, and therefore the loaded extension too),
+ * naming itself once with setLogTool, so every line is attributable to the file
+ * that emitted it.
  * Level filtering is the consumer's job (docs/d045): nothing is dropped here,
  * and a reader prunes with `jq 'select(.severityNumber >= 5)'`. Messages are
  * stable labels; per-call metadata rides the structured fields and is never
@@ -26,7 +27,7 @@ let tool = process.env.LOG_TOOL ?? "node";
 
 /**
  * The component name every later line carries.
- * @param {string} name e.g. "pi-cline-pass/generate"
+ * @param {string} name e.g. "pi-cline-pass/sources"
  * @returns {void}
  */
 export function setLogTool(name) {
@@ -158,8 +159,3 @@ function emit(level, msg, fields = {}) {
  * @param {Record<string, unknown>} [fields]
  */
 export const logInfo = (msg, fields) => emit("info", msg, fields);
-/**
- * @param {string} msg
- * @param {Record<string, unknown>} [fields]
- */
-export const logError = (msg, fields) => emit("error", msg, fields);

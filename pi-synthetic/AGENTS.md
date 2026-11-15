@@ -10,16 +10,16 @@ what is specific here.
   safe". A second source cannot make an unreachable network work; it only lets
   the committed artifact contradict its own upstream, which is exactly the
   state the three-source ladder was deleted for (see `PENDING.md`).
-- **A failure throws.** No stale-copy branch, no lineup floor. The committed
-  artifact is the offline fallback, and a failed run must never write a worse
-  one — the atomic writer in `generate.mjs` is what makes that true.
+- **A failure throws.** No stale-copy branch, no lineup floor: a broken read
+  leaves the provider unconfigured, which is the outcome a user can see, not a
+  catalog nobody is serving (docs/d190).
 - **No invented facts.** The only literals are the provider's identity (the
   frozen row in `sources.mjs`), `api: "openai-completions"` (a claim about the
   wire, not a model), and pi's own schema defaults for a limit the listing did
   not publish.
-- **`cost`** follows docs/d057 in the manifest (omit a partial block) and fills
-  zeros in the extension (a registered model's cost is mandatory and pi
-  dereferences it). That divergence is deliberate; do not "unify" it.
+- **`cost`** fills zeros in the extension: a registered model's cost is
+  mandatory and pi dereferences it, and a partial block is worse than a zero one
+  (docs/d057). There is no manifest to diverge from.
 - **Efforts and thinking levels** come only from a published effort enum. A
   model with no enum gets no map; do not synthesize one.
 - **Compat** carries only capabilities a source published. pi's own guidance is
@@ -40,18 +40,17 @@ read as an alias target. So:
 - adding a "parse the name back" helper would reintroduce the unsound behavior
   the review deleted. Don't.
 
-## Generated artifacts
+## Nothing is committed
 
-`models.json` is written by `generate.mjs`; it is the only artifact. Hand-
-editing it is erased by the next generation run — fix the shaping instead. It is
-in `biome.jsonc`'s ignore list (generated file, same reasoning as
-`coding-agent/model-*.json`). `./npm-run.sh pi-synthetic generate --check` is the
-drift gate; prefer it over eyeballing a diff when you only need to know "is this
-current".
+No lineup, no fallback, no manifest. `refreshModels` reads the provider's
+`/models` listing on every run (docs/d190), and `generate` is a stub that prints
+its own name — so there is no artifact to hand-edit, no `--check` drift gate,
+and no generated file in `biome.jsonc`'s ignore list. A stub rather than a
+deleted script keeps the unit's entrypoint table whole (docs/d113).
 
 The extension registers no lineup of its own (docs/d190): `refreshModels` is
-the only source, so nothing reads the artifact at runtime. Do not add a `models`
-field or a committed seed to make an offline start look populated.
+the only source. Do not add a `models` field or a committed seed to make an
+offline start look populated.
 
 ## The folder is the package
 
@@ -73,7 +72,7 @@ its route substitution (docs/d070); this folder owns the extension package. When
 they are joined:
 
 - the `synthetic` `PROVIDER_SPECS` row should read THIS folder's shaped listing
-  (or `model-019` should be revived from `pi-synthetic/models.json`), so one
+  (or `model-019` should be revived from this folder's shaped listing), so one
   shaping describes the provider; and
 - canonical URLs stay canonical in both committed artifacts, with routing
   substituted only at install (docs/d070).

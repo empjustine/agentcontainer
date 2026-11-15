@@ -56,13 +56,9 @@
 		// folder's package.json script, via the root ./npm-run.sh) and its
 		// runtime entry (loaded by the pi host, which no import graph can
 		// see — entry status encodes that contract)
-		"pi-cline-pass/generate.mjs",
 		"pi-cline-pass/index.ts",
-		"pi-synthetic/generate.mjs",
 		"pi-synthetic/index.ts",
-		"pi-hyper/generate.mjs",
 		"pi-hyper/index.ts",
-		"pi-verboo/generate.mjs",
 		"pi-verboo/index.ts",
 		"pi-mistral/index.ts",
 		"pi-opencode/index.ts",

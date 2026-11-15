@@ -10,11 +10,12 @@
 //   - .pi/, .vscode/ and .thinkrail/ are tool-owned dirs, not repo source.
 //   - the vendored models.dev catalog, the VRAM-fit data file and the HF
 //     manifests are fetched/derived data, not hand-maintained source.
-//   - coding-agent/models.json, model-*.json, pi-synthetic/models.json and
-//     pi-synthetic/models.js are WRITTEN by their generators
-//     (JSON.stringify(…, null, 2)) — formatting them here would only be undone
-//     by the next generate run, and would show up as churn in the artifact a
-//     regeneration is supposed to be reviewed by.
+//   - coding-agent/models.json, model-*.json and coding-agent/opencode.jsonc
+//     are WRITTEN by their generators (JSON.stringify(…, null, 2)) —
+//     formatting them here would only be undone by the next generate run, and
+//     would show up as churn in the artifact a regeneration is supposed to be
+//     reviewed by. A pi-* unit carries no generated file: its `generate`
+//     script is a stub and its data is read live (docs/d190).
 {
 	"files": {
 		"includes": [
@@ -32,16 +33,6 @@
 			"!**/lib/hf-manifests",
 			"!coding-agent/models.json",
 			"!coding-agent/model-*.json",
-			// pi-synthetic's pair of generated artifacts (d096): the pi
-			// models.json-shaped provider block and the extension's model seed.
-			"!pi-synthetic/models.json",
-			// pi-cline-pass's generated pair, same reasoning (d040).
-			"!pi-cline-pass/models.json",
-			// pi-hyper's and pi-verboo's generated pairs, same reasoning (d100).
-			"!pi-hyper/models.json",
-			"!pi-hyper/models.js",
-			"!pi-verboo/models.json",
-			"!pi-verboo/models.js",
 			// same reasoning, .jsonc extension: written by
 			// generate-opencode.mjs
 			"!coding-agent/opencode.jsonc"

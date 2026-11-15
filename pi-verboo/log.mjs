@@ -9,8 +9,9 @@
  * so a reader compares numbers where it used to match level words (docs/d151
  * owns the record shape and the canonical ranges).
  *
- * Two files here log (`sources.mjs`, `generate.mjs`), each naming itself once
- * with setLogTool, so every line is attributable to the file that emitted it —
+ * One file here logs (`sources.mjs`, and therefore the loaded extension too),
+ * naming itself once with setLogTool, so every line is attributable to the file
+ * that emitted it —
  * which is also why this stays a folder-root module instead of moving into
  * either of them.
  *
@@ -177,13 +178,3 @@ function emit(level, msg, fields = {}) {
  * @param {Record<string, unknown>} [fields]
  */
 export const logDebug = (msg, fields) => emit("debug", msg, fields);
-/**
- * @param {string} msg
- * @param {Record<string, unknown>} [fields]
- */
-export const logInfo = (msg, fields) => emit("info", msg, fields);
-/**
- * @param {string} msg
- * @param {Record<string, unknown>} [fields]
- */
-export const logError = (msg, fields) => emit("error", msg, fields);

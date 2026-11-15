@@ -26,7 +26,7 @@
  * replaces the models.json layer wholesale with an extension's `models` —
  * each definition must carry the fact itself or it would be silently
  * dropped the moment this file registers. merge.mjs owns that projection;
- * the generated models.json keeps the fleet's provider-level block.
+ * nothing in this folder writes a manifest, so this is the only placement.
  *
  * Network access rides the environment's forward proxy (`NODE_USE_ENV_PROXY=1`
  * plus the forwarded `HTTP(S)_PROXY`, docs/d074), the same path the

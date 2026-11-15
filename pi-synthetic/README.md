@@ -28,16 +28,14 @@ and [ben-vargas/pi-packages](https://github.com/ben-vargas/pi-packages)
 
 ## Layout
 
-| Path                                   | Role                                                                                                                                                                              |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sources.mjs`                          | the ONE data source: the provider's `/models` listing, fetched from the folder's own canonical-upstream row                                                                       |
-| `merge.mjs`                            | the ONE shaping step (`shapeListing`/`shapeRow`) plus the two projections — pi `models.json` entry, pi-ai extension entry                                                         |
-| `generate.mjs`                         | one fetch in, one committed artifact out; `--check` verifies it without writing                                                                                                   |
-| `log.mjs`                              | the JSONL log lines `generate.mjs` and `sources.mjs` emit (docs/d045)                                                                                                             |
-| `index.ts`                             | the pi extension entry (provider registration + `refreshModels`)                                                                                                                  |
-| `models.json`                          | **generated** — a pi `models.json`-shaped manifest with the `synthetic` provider block (canonical upstream, docs/d070); the drift gate reads it, no runtime path does (docs/d190) |
-| `package.json`                         | the pi package manifest (`pi.extensions` → `./index.ts`)                                                                                                                          |
-| `AGENTS.md` / `TODO.md` / `PENDING.md` | folder rules · open items · the review that collapsed the design                                                                                                                  |
+| Path                                   | Role                                                                                                        |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `sources.mjs`                          | the ONE data source: the provider's `/models` listing, fetched from the folder's own canonical-upstream row |
+| `merge.mjs`                            | the ONE shaping step (`shapeListing`/`shapeRow`) and the projection into pi-ai's registered-model entry     |
+| `log.mjs`                              | the JSONL log lines `sources.mjs` emits (docs/d045)                                                         |
+| `index.ts`                             | the pi extension entry (provider registration + `refreshModels`)                                            |
+| `package.json`                         | the pi package manifest (`pi.extensions` → `./index.ts`)                                                    |
+| `AGENTS.md` / `TODO.md` / `PENDING.md` | folder rules · open items · the review that collapsed the design                                            |
 
 The folder **is** the package. There is no `extension/` subfolder, no copy step,
 and nothing kept in sync between two module trees — those existed only while
@@ -46,15 +44,11 @@ three-source ladder that caused them.
 
 ## Generate
 
-```sh
-./npm-run.sh pi-synthetic generate         # fetch, shape, write both artifacts
-./npm-run.sh pi-synthetic generate --check # verify the committed artifacts are current (no write)
-```
-
-There is no root-level generator any more (docs/d113): this folder's
-`package.json` is the only entrypoint table, and `--check` is the CI-shaped
-form — it exits non-zero when a committed artifact differs from a fresh
-generation.
+There is nothing to generate. `./npm-run.sh pi-synthetic generate` prints a
+stub line and exits 0: `refreshModels` fetches the listing on every run
+(docs/d190), so this folder carries no artifact for a `--check` to compare. The
+script stays because a unit's `package.json` is its entrypoint table
+(docs/d113).
 
 ## One source, deliberately
 

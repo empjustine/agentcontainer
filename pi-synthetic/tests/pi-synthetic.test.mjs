@@ -11,10 +11,7 @@
  * Run: node --test   (from this folder — discovers tests/*.test.mjs)
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
 
 const {
 	laysWithinPiModalities,
@@ -23,7 +20,6 @@ const {
 	shapeRow,
 	thinkingLevelMapFor,
 	toExtensionModel,
-	toPiModel,
 } = await import("../merge.mjs");
 const {
 	fetchListing,
@@ -33,7 +29,6 @@ const {
 	SYNTHETIC_BASE_URL,
 	SYNTHETIC_PROVIDER_ID,
 } = await import("../sources.mjs");
-const unitDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 // The folder's own row: the one place the upstream and the key env are spelled
 // (sources.mjs), so the exports above are only believable if they match it.
 const synthetic = SYNTHETIC;
@@ -211,7 +206,10 @@ test("models are emitted in canonical id order (docs/d050)", () => {
 		row({ id: "syn:middle" }),
 	]);
 	const ids = models.map((m) => m.id);
-	assert.deepEqual(ids, [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
+	assert.deepEqual(
+		ids,
+		[...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
+	);
 });
 
 test("prices parse from the provider's mixed number/string wire form", () => {
@@ -244,15 +242,13 @@ test("a partial or all-zero price block is refused outright (docs/d057)", () => 
 	assert.deepEqual(piCost(complete), complete);
 });
 
-test("the manifest omits an unpublishable cost; the extension fills zeros", () => {
-	// The two schemas genuinely differ here: pi's manifest makes the block
-	// optional, a registered model's cost is MANDATORY and pi dereferences
+test("an unpublishable cost is omitted from the record; the extension fills zeros", () => {
+	// A registered model's cost is MANDATORY and pi dereferences
 	// model.cost.tiers on every scored turn — so an omitted block throws
 	// instead of streaming. Verified against @earendil-works/pi-ai 1.4.0.
 	const [unpriced] = shapeListing([row({ pricing: { prompt: "0" } })]);
 	assert.ok(unpriced);
 	assert.equal(unpriced.cost, undefined);
-	assert.equal("cost" in toPiModel(unpriced), false);
 	assert.deepEqual(toExtensionModel(unpriced).cost, {
 		input: 0,
 		output: 0,
@@ -279,7 +275,7 @@ test("every extension key is one pi defines — no folder-specific field rides a
 	assert.deepEqual(entry.compat, { supportsReasoningEffort: true });
 });
 
-test("the extension and the manifest offer the SAME thinking levels per model", () => {
+test("a published effort enum becomes the map; no enum means no parameter", () => {
 	// `getSupportedThinkingLevels` derives the advertised set from
 	// thinkingLevelMap, and fabricates off..high when the map is absent — so a
 	// difference here would offer one model two different level pickers.
@@ -299,7 +295,7 @@ test("the extension and the manifest offer the SAME thinking levels per model", 
 	assert.ok(tiered && quiet);
 	assert.deepEqual(
 		toExtensionModel(tiered).thinkingLevelMap,
-		toPiModel(tiered).thinkingLevelMap,
+		tiered.thinkingLevelMap,
 	);
 	assert.equal(tiered.thinkingLevelMap?.medium, null);
 	assert.equal(tiered.thinkingLevelMap?.max, "max");
@@ -310,23 +306,6 @@ test("the extension and the manifest offer the SAME thinking levels per model", 
 test("the model store TTL is the refresh gate, not an absolute clock", () => {
 	assert.equal(storeIsFresh(Date.now() - 60_000), true);
 	assert.equal(storeIsFresh(Date.now() - 5 * 60 * 60 * 1000), false);
-});
-
-test("committed models.json carries the fact-table canonical upstream, not a route", () => {
-	const doc = JSON.parse(
-		readFileSync(join(unitDir, "models.json"), "utf-8"),
-	);
-	const provider = doc.providers[SYNTHETIC_PROVIDER_ID];
-	assert.equal(provider.baseUrl, synthetic.baseUrl);
-	assert.equal(provider.api, "openai-completions");
-	assert.equal(provider.apiKey, `$${synthetic.apiKeyEnv}`);
-	assert.equal(provider.authHeader, true);
-	const ids = provider.models.map((/** @type {{id: string}} */ m) => m.id);
-	assert.deepEqual(
-		ids,
-		[...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
-		);
-	assert.ok(ids.length > 0, "the committed artifact must carry models");
 });
 
 test("the extension loads and registers a provider with no remembered lineup", async () => {

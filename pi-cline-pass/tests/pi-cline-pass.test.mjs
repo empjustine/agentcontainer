@@ -15,11 +15,10 @@
  * Run: node --test   (from this folder — discovers tests/*.test.mjs)
  */
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
 
 const {
 	CLINE_PASS,
@@ -32,14 +31,10 @@ const {
 	parseClinePassDocs,
 	storeIsFresh,
 } = await import("../sources.mjs");
-const {
-	CLINE_PASS_COMPAT,
-	shapeCatalog,
-	toExtensionModel,
-	toPiModel,
-} = await import("../merge.mjs");
+const { CLINE_PASS_COMPAT, shapeCatalog, toExtensionModel } = await import(
+	"../merge.mjs"
+);
 
-const unitDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 // The folder's own row: the one place the upstream and the key env are spelled
 // (sources.mjs), so the exports above are only believable if they match it.
 const clinePass = CLINE_PASS;
@@ -180,12 +175,6 @@ test("the table is the whole model: the id, the display name, nothing invented",
 		id: "cline-pass/deepseek-v4.1-flash-1017",
 		name: "DeepSeek V4.1 Flash",
 	});
-	// The manifest states what the source stated, nothing more: pi applies its
-	// own 128000/16384 when a limit is absent (docs/models-configuration.md).
-	assert.deepEqual(toPiModel(row), {
-		id: "cline-pass/deepseek-v4.1-flash-1017",
-		name: "DeepSeek V4.1 Flash",
-	});
 });
 
 const sortedLineup = [
@@ -202,15 +191,12 @@ test("models are emitted sorted, and a row outside the namespace never publishes
 	);
 });
 
-test("the extension fills what the registration schema requires, the manifest does not", () => {
-	// The two schemas genuinely differ: cost is optional in models.json and
-	// MANDATORY on a registered model (pi dereferences model.cost on every
-	// scored turn), and a subscription model is not billed per token, so the
-	// honest block is zero. Verified against @earendil-works/pi-ai 1.4.0 the
-	// same way pi-synthetic verified its own.
+test("the extension fills what the registration schema requires", () => {
+	// cost is MANDATORY on a registered model (pi dereferences model.cost on
+	// every scored turn), and a subscription model is not billed per token, so
+	// the honest block is zero. Verified against @earendil-works/pi-ai 1.4.0.
 	const [model] = shapeCatalog([{ id: "cline-pass/glm-5.2", name: "GLM 5.2" }]);
 	assert.ok(model);
-	assert.deepEqual(Object.keys(toPiModel(model)).sort(), ["id", "name"]);
 	const entry = toExtensionModel(model);
 	assert.deepEqual(Object.keys(entry).sort(), [
 		"compat",
@@ -240,30 +226,6 @@ test("the extension fills what the registration schema requires, the manifest do
 test("the model store TTL is the refresh gate, not an absolute clock", () => {
 	assert.equal(storeIsFresh(Date.now() - 60_000), true);
 	assert.equal(storeIsFresh(Date.now() - 5 * 60 * 60 * 1000), false);
-});
-
-test("committed models.json carries the fact-table upstream and provider compat", () => {
-	const doc = JSON.parse(
-		readFileSync(join(unitDir, "models.json"), "utf-8"),
-	);
-	const provider = doc.providers[CLINE_PASS_PROVIDER_ID];
-	assert.equal(provider.name, CLINE_PASS_NAME);
-	assert.equal(provider.baseUrl, clinePass.baseUrl);
-	assert.equal(provider.api, "openai-completions");
-	assert.equal(provider.apiKey, `$${clinePass.apiKeyEnv}`);
-	assert.equal(provider.authHeader, true);
-	// The fleet's shape: the compat fact at the provider level (modelCompat
-	// is null there — nothing per-model in this artifact).
-	assert.deepEqual(provider.compat, { supportsDeveloperRole: false });
-	const ids = provider.models.map((/** @type {{id: string}} */ m) => m.id);
-	assert.ok(ids.length > 0, "the committed artifact must carry models");
-	assert.deepEqual(ids, [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
-	for (const id of ids) {
-		assert.ok(
-			id.startsWith(CLINE_PASS_ID_PREFIX),
-			`${id} must carry the billing prefix (docs/d040)`,
-		);
-	}
 });
 
 test("the extension loads and registers a provider with no remembered lineup", async () => {

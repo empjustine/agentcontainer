@@ -47,41 +47,35 @@ billing selector.
 
 - Provider identity comes only from `sources.mjs`'s frozen row; the only other
   literals are `api: "openai-completions"` and pi's schema defaults for a
-  limit the catalog did not publish.
-- **cost** completes a partial block with zeros (models.dev routinely omits
-  `cache_write`; the fleet publishes 0 for those) and yields nothing only
-  when the whole block is zero. The manifest omits that nothing; the
-  registration fills zeros, because a registered model's cost is mandatory
-  and pi dereferences it. The divergence is deliberate; do not "unify" it.
+  limit no source published.
+- **cost** states nothing about this provider: the docs table prints reference
+  rates for a subscription, not what a scored turn bills, so the registration
+  fills the mandatory zero block and no other reader exists (docs/d189). Do not
+  "complete" it from any source — a filled price is a number nobody charged.
 - **Efforts and thinking levels** come only from a published effort enum.
   This row's `onOffThinking` is false — there is no on/off fallback map to
   synthesize for a model whose enum was not published.
 - **compat is ONE fact with ONE spelling** (`CLINE_PASS_COMPAT`):
   `supportsDeveloperRole: false` — ClinePass rejects the `developer` role
-  pi-ai emits (docs/d022, docs/d033). It rides provider-level in
-  `models.json` (the fleet's shape) and per model in the registration,
+  pi-ai emits (docs/d022, docs/d033). It rides PER MODEL in the registration,
   because pi 1.4.0's `ProviderConfig` has NO provider-level `compat` field
-  and registration overwrites the models layer. Do not move it, duplicate
-  its literal, or add a provider-level `compat` to `registerProvider` — it
-  would be silently dropped.
+  and registration overwrites the models layer; nothing here writes a manifest
+  that could carry it instead. Do not move it, duplicate its literal, or add a
+  provider-level `compat` to `registerProvider` — it would be silently dropped.
 - **No alias map**, unlike pi-synthetic: ClinePass publishes no rotating
   tier ids, so an alias export would be an invented contract.
 
-## Generated artifacts
+## Nothing is committed
 
-`models.json` is written by `generate.mjs`; it is the only artifact. Hand-
-editing it is erased by the next generation run — fix the shaping instead. It
-is in `biome.jsonc`'s ignore list (generated file).
-`./npm-run.sh pi-cline-pass generate --check` is the drift gate; prefer it over
-eyeballing a diff when you only need to know "is this current".
-
-The extension registers no lineup of its own (docs/d190): `refreshModels`
-reads the docs table, so the artifact is the drift-gate and fleet-parity
-record, with no runtime reader.
+No lineup, no fallback, no manifest. `refreshModels` reads the docs table on
+every run (docs/d190), and `generate` is a stub that prints its own name — so
+there is no artifact to hand-edit, no `--check` drift gate, and no generated
+file in `biome.jsonc`'s ignore list. A stub rather than a deleted script keeps
+the unit's entrypoint table whole (docs/d113).
 
 The lineup is committed to neither shaper: the docs table is read on every
-run, so a rotation is a regenerated artifact set rather than a constant
-edited here and in `../coding-agent/generate-pi-coding-agent.mjs`.
+run, so a rotation is a live change rather than a constant edited here and in
+`../coding-agent/generate-pi-coding-agent.mjs`.
 
 ## The folder is the package
 

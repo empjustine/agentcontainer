@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"generate": "node ./generate.mjs",
+		"generate": "echo '{\"msg\": \"nothing to generate in pi-verboo\"}'",
 		"test": "node --test tests/*.test.mjs"
 	},
 	"description": "pi extension: the Verboo provider — rebuilt from its own auth-gated /models listing on every refresh",
