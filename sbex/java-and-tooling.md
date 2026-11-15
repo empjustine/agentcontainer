@@ -4,12 +4,13 @@ type: submodule-design
 status: active
 title: "sbex java and tooling: records, streaming, Maven and the Java level each feature needs"
 parent: sbex
+references: [d193]
 tags: ["java", "records", "jackson", "maven", "toolchains", "native-image"]
 ---
 
 # Java and tooling: records, streaming, Maven and the Java level each feature needs
 
-This file records four findings about the Spring Boot 3.5/4.1 generation: records are the first-class data carrier on both sides of the wire, Jackson streaming is invisible until the payload is large, Maven pinning and toolchains are unchanged as mechanisms, and each JVM feature in that stack names its Java level. It does not size heaps (`memory.md`), size pods (`pod-sizing.md`) or wire telemetry (`observability.md`). The reader is choosing a Java level for a new or existing Boot service and wants to know what the choice costs.
+This file records four findings about a Spring Boot 4.1 service: records are the first-class data carrier on both sides of the wire, Jackson streaming is invisible until the payload is large, Maven pinning and toolchains are unchanged as mechanisms, and each JVM feature in that stack names its Java level. It does not size heaps (`memory.md`), size pods (`pod-sizing.md`) or wire telemetry (`observability.md`). The reader is choosing a Java level for a new or existing Boot service and wants to know what the choice costs.
 
 ## Records carry the data
 
@@ -30,7 +31,7 @@ Between `JdbcTemplate` and JPA sits `JdbcClient` (Spring 6.1, Boot 3.2, still in
 - **Large outputs** have three supported shapes: `StreamingResponseBody` or an SSE emitter where the application owns the generator loop (the `ReportController` pattern), WebFlux `Flux`/SSE responses encoded element by element, and `ObjectMapper.writeValues`/`MappingIterator` for chunked or NDJSON output.
 - **Large inputs** are `ObjectMapper.getFactory().createParser(stream)` plus `readValues` — short and imperative.
 - **What remains painful is inherent to streaming**, not to Jackson: the status line is committed before the first element, flush discipline belongs to the writer, and MVC has no declarative "bind this query as a stream" facility.
-- **The coming migration is packages, not streaming.** Boot 4 manages Jackson 3 (`tools.jackson.*`, BOM 3.1.7) with a `spring-boot-jackson2` compatibility module alongside; Jackson 3's own build declares a Java 17 baseline.
+- **Two Jackson lines are managed; one is configured.** Boot 4 auto-configures Jackson 3 (`tools.jackson.*`) and still manages the Jackson 2 line (`com.fasterxml.*`) so an unmigrated library keeps resolving; `spring-boot-jackson2` is the compatibility module that keeps a Jackson 2 `ObjectMapper` bean on offer. Jackson 3 declares a Java 17 baseline, so the switch costs no Java level. The trap is that both lines compile: a parameter typed `com.fasterxml…ObjectMapper`, or a `Jackson2JsonMessageConverter` (deprecated for removal), fails at startup rather than at build time because no such bean exists by default (`docs/d193`).
 
 ## Maven pinning, toolchains and native builds
 
@@ -40,17 +41,16 @@ Between `JdbcTemplate` and JPA sits `JdbcClient` (Spring 6.1, Boot 3.2, still in
 
 One trap found while verifying: overriding the build target with `-Djava.version=17` also overwrites the JVM's own `java.version` system property, which the enforcer reads — the rule then reports "JDK is version 17" while running on 21. Override `-Dmaven.compiler.release=17` instead, or change the POM property.
 
-**Native builds and toolchains work together.** The GraalVM Native Maven Plugin (0.10.6, the version Boot 3.5 manages) injects Maven's `ToolchainManager` into every goal — verified in its `plugin.xml` — and otherwise resolves GraalVM from `GRAALVM_HOME`, a `JAVA_HOME` that is itself a GraalVM distribution, or `native-image` on `PATH`, failing with a named reason when none applies. So a build can compile and test on Temurin through a toolchain and hand only `native:compile` a GraalVM. `spring-boot:process-aot` runs on the build JVM (any JDK 17+), and `spring-boot:build-image -Pnative` sidesteps the whole question because buildpacks compile inside a container.
+**Native builds and toolchains work together.** The GraalVM Native Maven Plugin (1.1.14, the version Boot 4.1.2 manages) injects Maven's `ToolchainManager` into every goal — verified in its `plugin.xml` — and otherwise resolves GraalVM from `GRAALVM_HOME`, a `JAVA_HOME` that is itself a GraalVM distribution, or `native-image` on `PATH`, failing with a named reason when none applies. So a build can compile and test on Temurin through a toolchain and hand only `native:compile` a GraalVM. `spring-boot:process-aot` runs on the build JVM (any JDK 17+), and `spring-boot:build-image -Pnative` sidesteps the whole question because buildpacks compile inside a container. The native floor is higher than the JVM's: Boot 4.1.2 supports GraalVM 25 and above, so a toolchain that compiles on Temurin 21 still hands `native:compile` a GraalVM 25 (`container-image.md` pins that image).
 
 ## The Java level each feature needs
 
 | Feature                                            | Level        | Note                                                                                                                     |
 | -------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | Records, text blocks, `instanceof` patterns        | 15–16        | fine on any supported Boot level                                                                                         |
-| Spring Boot 3.5.16 baseline                        | 17           | `java.version` in the parent POM                                                                                         |
-| Spring Boot 4.1.2 baseline                         | 17           | same property — the next major does not move the floor                                                                   |
+| Spring Boot 4.1.2 baseline                         | 17           | `java.version` in the parent POM; the runtime supports up to Java 27                                                     |
 | Jackson 3 baseline                                 | 17           | stated in its own build                                                                                                  |
-| sbex source and tests                              | 17           | `mvn -Dmaven.compiler.release=17 clean verify` compiles every module and runs the suite green                            |
+| sbex source and tests                              | 17           | `mvn -Dmaven.compiler.release=17 test` compiles every module and runs the suite green                                    |
 | Virtual threads (`spring.threads.virtual.enabled`) | 21           | no backport; on 17 the servlet stack returns to platform threads and `server.tomcat.threads.max` becomes the bound again |
 | Pattern matching for `switch`                      | 21           | deliberately unused — `SqlDialect` uses if-chains                                                                        |
 | AOT cache (JEP 483)                                | 25           | on 17 and 21 the classic CDS training run in `memory.md` is the available tool                                           |
@@ -60,8 +60,8 @@ The support-window point stands regardless of the table: each distribution publi
 
 ## References
 
-- [Spring Boot reference — SQL databases](https://docs.spring.io/spring-boot/3.5/reference/data/sql.html) (JdbcTemplate, JdbcClient, JPA)
-- [Spring Boot — Maven plugin packaging](https://docs.spring.io/spring-boot/3.5/maven-plugin/packaging.html) and [native image](https://docs.spring.io/spring-boot/3.5/reference/packaging/native-image/index.html)
+- [Spring Boot reference — SQL databases](https://docs.spring.io/spring-boot/4.1/reference/data/sql.html) (JdbcTemplate, JdbcClient, JPA)
+- [Spring Boot — Maven plugin packaging](https://docs.spring.io/spring-boot/4.1/maven-plugin/packaging.html) and [native image](https://docs.spring.io/spring-boot/4.1/reference/packaging/native-image/index.html)
 - [Apache Maven Wrapper](https://maven.apache.org/wrapper/)
 - [GraalVM Native Build Tools](https://github.com/graalvm/native-build-tools) (the plugin whose toolchain injection is cited above)
-- [Spring Boot — efficient deployments](https://docs.spring.io/spring-boot/3.5/reference/packaging/efficient.html)
+- [Spring Boot — efficient deployments](https://docs.spring.io/spring-boot/4.1/reference/packaging/efficient.html)

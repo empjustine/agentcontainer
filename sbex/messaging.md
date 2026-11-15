@@ -4,6 +4,7 @@ type: submodule-design
 status: active
 title: "sbex messaging: confirmed publishes and an idempotent listener"
 parent: sbex
+references: [d193]
 tags: ["rabbitmq", "amqp", "idempotency", "spring-amqp"]
 ---
 
@@ -18,13 +19,13 @@ This file owns `sbex-core/…/messaging/` and the servlet listener: how a publis
 - A **topic exchange** with the routing key `order.placed`: consumers bind by pattern, so a second consumer joins without a publish-side change.
 - A **quorum queue** (`x-queue-type: quorum`): disk-backed and replicated, the durability choice for messages whose loss costs money. Classic queues are the memory-first alternative and the wrong default for this traffic.
 - **Dead-lettering** (`x-dead-letter-exchange` plus a bound DLQ): a message rejected enough times lands somewhere inspectable instead of looping forever. Republishing with the broker's `x-death` count is how a consumer decides "poison" from "transient".
-- A **JSON payload converter** (`Jackson2JsonMessageConverter`): the payload is a record contract, and `@RegisterReflectionForBinding` on the same configuration is what keeps that contract working in a native image.
+- A **JSON payload converter** (`JacksonJsonMessageConverter` over Boot's `JsonMapper`): the payload is a record contract, `@RegisterReflectionForBinding` on the same configuration keeps that contract working in a native image, and the converter speaks the same Jackson 3 the web layer does. `Jackson2JsonMessageConverter` is the Jackson 2 path and deprecated for removal — and because Boot 4 configures no `com.fasterxml…ObjectMapper` bean by default, reaching for it fails the boot rather than the build (`docs/d193`).
 
 ## Publishing: proves before trusting
 
 A fire-and-forget `convertAndSend` is a blind write. `spring.rabbitmq.publisher-confirm-type= correlated` makes the broker answer each publish, `publisher-returns` plus `template.mandatory` make unroutable messages come back instead of vanishing, and `OrderEventPublisher` turns both answers into log lines:
 
-- The `CorrelationData` future completes with a `Confirm` — `ack` false is a nack with a reason.
+- The `CorrelationData` future completes with a `Confirm` — `ack()` false is a nack with a `reason()`.
 - A returned message means the exchange had no binding for the routing key: the publish reached the broker and still went nowhere.
 - Either failure is an ERROR line carrying the `eventId`, the field a search starts from.
 

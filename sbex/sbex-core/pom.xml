@@ -31,9 +31,12 @@
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 		<!-- Payload encoding for RabbitTemplate's JSON message converter; the
-			amqp starter ships the plain SimpleMessageConverter only. -->
+			amqp starter ships the plain SimpleMessageConverter only. Jackson 3
+			(tools.jackson) is the line the Boot BOM manages and the
+			auto-configured JsonMapper bean is built from; Jackson 2 stays
+			managed for legacy code and nothing here uses it. -->
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
+			<groupId>tools.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
 		<!-- Migrations live in this module so both applications migrate one
@@ -71,20 +74,22 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<!-- Versions come from the Boot BOM's testcontainers-bom import. -->
+		<!-- Versions come from the Boot BOM's testcontainers-bom import, and the
+			`testcontainers-` prefix is Testcontainers 2's module naming: the bare
+			junit-jupiter/postgresql/oracle-xe artifacts stop at 1.x. -->
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>junit-jupiter</artifactId>
+			<artifactId>testcontainers-junit-jupiter</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>postgresql</artifactId>
+			<artifactId>testcontainers-postgresql</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>oracle-xe</artifactId>
+			<artifactId>testcontainers-oracle-xe</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

@@ -51,17 +51,17 @@ Two gotchas are worth the space they take:
 
 ## Migrations
 
-Flyway runs before the application serves anything, with `spring.flyway.locations=classpath:db/migration/{vendor}` — the `{vendor}` placeholder picks `postgresql` or `oracle` from the JDBC URL, so one location pattern drives two schema histories. `fail-on-missing-locations` turns a mistyped vendor into a failed boot rather than an unmigrated database. The migrations live in `sbex-core` so both applications migrate the same schema, and `spring.jpa.auto`-style runtime DDL has no place in the example: schema changes are versioned files, reviewed as code ([Flyway's documentation](https://documentation.red-gate.com/flyway)).
+Flyway runs before the application serves anything, with `spring.flyway.locations=classpath:db/migration/{vendor}` — the `{vendor}` placeholder picks `postgresql` or `oracle` from the JDBC URL, so one location pattern drives two schema histories. `fail-on-missing-locations` turns a mistyped vendor into a failed boot rather than an unmigrated database. The migrations live in `sbex-core` so both applications migrate the same schema, and `spring.jpa.hibernate.ddl-auto`-style runtime DDL has no place in the example: schema changes are versioned files, reviewed as code ([Flyway's documentation](https://documentation.red-gate.com/flyway)).
 
 ## JPA, when the object graph is the model
 
-JPA stays out of this example because the queries here are set-based and the row shape is the model — JdbcTemplate shows the mechanics the question is about. JPA earns its place when the domain is an object graph with relationships, lazy loading and identity maps: `spring-boot-starter-data-jpa` adds Hibernate on top of the same `DataSource` and the same transaction manager, so `@Transactional` semantics above apply unchanged, and `@DataJptest` gives the repository slice its own fast test. The trade it makes is explicit: schema and query control move behind the ORM, and the heap cost of a persistence context is one more thing `memory.md` has to budget for. The reference is [Spring Data JPA's documentation](https://docs.spring.io/spring-data/jpa/reference/).
+JPA stays out of this example because the queries here are set-based and the row shape is the model — JdbcTemplate shows the mechanics the question is about. JPA earns its place when the domain is an object graph with relationships, lazy loading and identity maps: `spring-boot-starter-data-jpa` adds Hibernate on top of the same `DataSource` and the same transaction manager, so `@Transactional` semantics above apply unchanged, and `@DataJpaTest` (`org.springframework.boot.data.jpa.test.autoconfigure`) gives the repository slice its own fast test. The trade it makes is explicit: schema and query control move behind the ORM, and the heap cost of a persistence context is one more thing `memory.md` has to budget for. The reference is [Spring Data JPA's documentation](https://docs.spring.io/spring-data/jpa/reference/).
 
 ## References
 
-- [Spring Boot reference — SQL databases](https://docs.spring.io/spring-boot/3.5/reference/data/sql.html) (JdbcTemplate, JdbcClient, JPA)
-- [Spring Boot how-to — database initialization](https://docs.spring.io/spring-boot/3.5/how-to/data-initialization.html) (the `{vendor}` placeholder)
-- [Spring Framework — JDBC access](https://docs.spring.io/spring-framework/reference/6.2/data-access/jdbc.html) and [declarative transactions](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction.html)
+- [Spring Boot reference — SQL databases](https://docs.spring.io/spring-boot/4.1/reference/data/sql.html) (JdbcTemplate, JdbcClient, JPA)
+- [Spring Boot how-to — database initialization](https://docs.spring.io/spring-boot/4.1/how-to/data-initialization.html) (the `{vendor}` placeholder)
+- [Spring Framework — JDBC access](https://docs.spring.io/spring-framework/reference/7.0/data-access/jdbc.html) and [declarative transactions](https://docs.spring.io/spring-framework/reference/7.0/data-access/transaction.html)
 - [PostgreSQL — PL/pgSQL](https://www.postgresql.org/docs/current/plpgsql.html) and [INSERT … ON CONFLICT](https://www.postgresql.org/docs/current/sql-insert.html)
 - [Oracle — PL/SQL language reference](https://docs.oracle.com/en/database/oracle/oracle-database/23/lnpls/toc.htm) and [JDBC developer's guide](https://docs.oracle.com/en/database/oracle/oracle-database/23/jjdbc/toc.htm)
 - [Testcontainers](https://java.testcontainers.org/) (the contract tests' container runtime)

@@ -95,7 +95,9 @@ ENTRYPOINT ["java", \
 # maven distribution is copied from the same builder image used above instead of
 # installing a second toolchain in this stage.
 FROM docker.io/library/maven:3.9-eclipse-temurin-21 AS native-maven
-FROM ghcr.io/graalvm/native-image-community:21 AS native-build
+# GraalVM 25, not 21: Boot 4.1.2 supports native images on 25 and above, so a
+# 21 compiler would build against an unsupported floor (container-image.md).
+FROM ghcr.io/graalvm/native-image-community:25 AS native-build
 COPY --from=native-maven /opt/maven /opt/maven
 ENV PATH="/opt/maven/bin:$PATH"
 WORKDIR /build

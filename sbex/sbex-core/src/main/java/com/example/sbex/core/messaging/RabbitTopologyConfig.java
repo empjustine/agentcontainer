@@ -1,14 +1,14 @@
 package com.example.sbex.core.messaging;
 
 import com.example.sbex.core.AppProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
 import org.springframework.context.annotation.Bean;
@@ -33,9 +33,16 @@ public class RabbitTopologyConfig {
 	private static final String DEAD_LETTER_EXCHANGE = "sbex.orders.dlx";
 	private static final String ORDERS_ROUTING_KEY = "order.placed";
 
+	/**
+	 * JacksonJsonMessageConverter, not Jackson2JsonMessageConverter: the latter
+	 * speaks the Jackson 2 ObjectMapper that Boot 4 no longer auto-configures,
+	 * and is deprecated for removal in Spring AMQP 4.1. The JsonMapper bean is
+	 * Boot's (spring-boot-jackson), so the payload contract and the framework's
+	 * own JSON share one configuration.
+	 */
 	@Bean
-	MessageConverter payloadConverter(ObjectMapper objectMapper) {
-		return new Jackson2JsonMessageConverter(objectMapper);
+	MessageConverter payloadConverter(JsonMapper jsonMapper) {
+		return new JacksonJsonMessageConverter(jsonMapper);
 	}
 
 	@Bean

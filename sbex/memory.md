@@ -68,7 +68,7 @@ Class Data Sharing maps app classes from a file instead of loading them, cutting
 
 The archive is valid as long as the application's classes do not change — a rebuilt jar means a rebuilt archive, which is why the `Containerfile` performs the training run as a `RUN` step of the runtime stage: the archive rebuilds exactly when the application layer does. A training run at build time has no database and no broker, so that one command runs with `SPRING_FLYWAY_ENABLED=false` and the listener auto-start off; the datasource itself connects lazily and never opens during the run.
 
-The commands above are the Spring Boot reference's own — [Class Data Sharing](https://docs.spring.io/spring-boot/3.5/reference/packaging/class-data-sharing.html) carries both variants, and [Efficient Deployments](https://docs.spring.io/spring-boot/3.5/reference/packaging/efficient.html) carries the extraction step.
+The commands above are the Spring Boot reference's own — [AOT Cache](https://docs.spring.io/spring-boot/4.1/reference/packaging/aot-cache.html) carries both variants, the CDS one and the AOT cache that subsumes it on Java 25 and above, and [Efficient Deployments](https://docs.spring.io/spring-boot/4.1/reference/packaging/efficient.html) carries the extraction step.
 
 ## AOT processing on the JVM
 
@@ -77,7 +77,7 @@ Spring's AOT processing does for the application context what the native image d
 1. Build with the `native` profile so the jar carries the AOT-generated sources: `mvn -Pnative package`.
 2. Start with `java -Dspring.aot.enabled=true -jar application.jar`.
 
-The restrictions are the price: the classpath is fixed at build time, beans cannot change at runtime, and profile-specific or `@ConditionalOnProperty` configuration that would alter the bean graph is out. An appliance whose configuration is known at image-build time pays nothing for that; a service that adds a feature flag per deployment does. [Ahead-of-Time Processing With the JVM](https://docs.spring.io/spring-boot/3.5/reference/packaging/aot.html) is the owning reference.
+The restrictions are the price: the classpath is fixed at build time, beans cannot change at runtime, and profile-specific or `@ConditionalOnProperty` configuration that would alter the bean graph is out. An appliance whose configuration is known at image-build time pays nothing for that; a service that adds a feature flag per deployment does. [Ahead-of-Time Processing With the JVM](https://docs.spring.io/spring-boot/4.1/reference/packaging/aot.html) is the owning reference.
 
 ## Startup and steady state
 

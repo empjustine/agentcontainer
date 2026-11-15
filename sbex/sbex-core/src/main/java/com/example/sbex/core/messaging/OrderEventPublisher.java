@@ -49,11 +49,11 @@ public class OrderEventPublisher {
 							event.orderId(),
 							event.eventId(),
 							failure);
-					} else if (!confirm.isAck()) {
+					} else if (!confirm.ack()) {
 						log.error(
 							"broker nacked eventId={} reason={}",
 							event.eventId(),
-							confirm.getReason());
+							confirm.reason());
 					} else if (correlation.getReturned() != null) {
 						// mandatory + publisher-returns: an unroutable message comes
 						// back here instead of being dropped by the broker.

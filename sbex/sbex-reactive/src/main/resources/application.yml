@@ -16,7 +16,9 @@ spring:
       # bottleneck by design.
       maximum-pool-size: ${SBEX_DB_POOL:6}
       connection-timeout: 3000
-      maximum-lifetime: 600000
+      # Hikari's own name: 'maximum-lifetime' is not a Boot property and
+      # would bind nowhere, leaving the pool at Hikari's 30-minute default.
+      max-lifetime: 600000
       keepalive-time: 60000
       leak-detection-threshold: 10000
   flyway:

@@ -15,7 +15,9 @@ spring:
       # capacity lives in request threads (sbex/memory.md).
       maximum-pool-size: ${SBEX_DB_POOL:10}
       connection-timeout: 3000
-      maximum-lifetime: 600000
+      # Hikari's own name: 'maximum-lifetime' is not a Boot property and
+      # would bind nowhere, leaving the pool at Hikari's 30-minute default.
+      max-lifetime: 600000
       keepalive-time: 60000
       # A connection that outlives the threshold is dumped with its stack:
       # the leak shows itself at the step that owns it.

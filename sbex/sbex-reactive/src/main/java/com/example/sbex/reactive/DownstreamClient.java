@@ -25,7 +25,17 @@ public class DownstreamClient {
 
 	private final WebClient client;
 
-	public DownstreamClient(@Value("${sbex.inventory-url}") String baseUrl) {
+	/**
+	 * Boot's auto-configured WebClient.Builder, cloned and narrowed: it carries
+	 * the observation registry, which is what makes the outbound call a child
+	 * span and what injects the trace context into the request. A WebClient
+	 * built from the static WebClient.builder() loses both, silently, and no
+	 * client-side instrumentation appears to say so (sbex/observability.md).
+	 *
+	 * @param builder the prototype builder Boot wires
+	 * @param baseUrl the downstream this application proxies
+	 */
+	public DownstreamClient(WebClient.Builder builder, @Value("${sbex.inventory-url}") String baseUrl) {
 		ConnectionProvider pool =
 			ConnectionProvider.builder("inventory")
 				.maxConnections(64)
@@ -40,7 +50,8 @@ public class DownstreamClient {
 			HttpClient.create(pool)
 				.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) CONNECT_TIMEOUT.toMillis());
 		this.client =
-			WebClient.builder()
+			builder
+				.clone()
 				.baseUrl(baseUrl)
 				.clientConnector(new ReactorClientHttpConnector(http))
 				.build();

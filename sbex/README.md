@@ -4,12 +4,13 @@ type: module-design
 status: active
 title: "sbex: a Spring Boot best-practice example for constrained containers"
 parent: architecture
+references: [d193]
 tags: ["spring-boot", "java", "example", "containers", "messaging"]
 ---
 
 # sbex: a Spring Boot best-practice example
 
-sbex is a worked Spring Boot example whose subject is doing the ordinary things well: a shared persistence and messaging core, one blocking and one non-blocking application, and a deployment shaped for RAM-constrained containers. It is not a production service — authentication, schema evolution past the first migration and business depth are out of scope on purpose. The reader is an engineer picking patterns for a Spring Boot service; every claim in these files points at the vendor document that owns it. The example pins Spring Boot 3.5.x and Java 21, and every `docs.spring.io` link carries the matching `/3.5/` path so the code and its references describe the same release.
+sbex is a worked Spring Boot example whose subject is doing the ordinary things well: a shared persistence and messaging core, one blocking and one non-blocking application, and a deployment shaped for RAM-constrained containers. It is not a production service — authentication, schema evolution past the first migration and business depth are out of scope on purpose. The reader is an engineer picking patterns for a Spring Boot service; every claim in these files points at the vendor document that owns it. The example pins Spring Boot 4.1.2 and Java 21, and every `docs.spring.io` link carries the matching `/4.1/` path so the code and its references describe the same release; `docs/d193` records what that pin cost.
 
 ## Requirement to file
 
