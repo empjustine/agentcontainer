@@ -103,6 +103,12 @@ agentcontainer/
 │   ├── docs/                            # → VENDORED writing references, outside the spec graph (no id/type): Google style guide + Technical Writing One/Two (clipped), Microsoft Writing Style Guide (source Markdown). CC BY 4.0, NOT this repo's license — read the README there
 │   └── ...
 │
+├── llm-local-bench/                     # how far an agent travels before its discipline breaks, and whether a fresh session can repair the tree it left (d201)
+│   ├── episode.mjs                      #   → seeded scene + journey of any length (grammar 0.2.0); traps at seeded positions, chores between them
+│   ├── score.mjs                        #   → judge-free scorer: decision · cited evidence · seeded facts · artifact · stop shape · phantom sources
+│   ├── bench.mjs                        #   → line-protocol runner: a journey (`--arm journey`, or `steps` for the context control) then repair passes (`--passes 2`); per-step deadline, journal, survival + recovery report; `./node-run.sh llm-local-bench/bench.mjs --seeds 1-4 --length 40 --passes 2 --agent "<cmd>"`
+│   └── tests/                           #   → journey determinism and placement, the defect ledger, span grading, the protocol driver, death and resume
+│
 ├── llm-local-inference/                 # llama-swap: LOCAL GGUF inference only
 │   ├── run.py                           #   → unified-vulkan image + GPU + HF mounts on :8101 (run via ./py-run.sh; env chain ./environment.sh first)
 │   ├── *.py / run-all.sh                #   → the PEP 723 cache tools (download_models, upkeep, fetch_hf_manifests, scan_cache_*, gguf_context_length), run via ./py-run.sh; run-all.sh is their order
