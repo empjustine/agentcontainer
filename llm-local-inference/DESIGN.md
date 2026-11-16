@@ -83,14 +83,30 @@ endpoint.
   surfaces as a llama-server 127 at swap time — the `.paths` preflight that
   used to catch it at launch is retired (d170), and its offline re-verify is
   an open follow-up on `upkeep.py`.
+- **Speculation is baked per row, tuned per fleet** (d206): the row owns the
+  spec type (`draft-mtp` by default, `draft-dflash` for a dflash sidecar, and a
+  model with built-in nextn heads names a type and passes no sidecar at all),
+  while the macro owns the span policy — `${SPEC_MTP}` (`--spec-draft-n-max 16`,
+  one token at a time) and `${SPEC_DFLASH}` (`--spec-draft-n-max 3`, a
+  four-token block per forward pass), both with `--spec-draft-p-min 0.8`: draft
+  while the drafter stays confident, stop when it does not, with the ceiling only
+  bounding a run that never loses confidence. The KV cache follows the same
+  split: values may be quantized and the drafter's cache quantizes with them,
+  keys never are (KLD).
+- **The hub must be visible** (d207): generation verifies every baked path
+  against `$HF_HUB_CACHE` (else `$XDG_CACHE_HOME`/`~`), so an absent, non-directory
+  or unreadable root stops it with exit 95 instead of emitting a layer whose
+  paths nothing checked. A root that exists but lacks an entry stays the
+  warn-and-bake rule (d197); an empty root is a fresh host, not a fault.
 - **Offline generation**: the local layer is built from vendored tables
   (`llamacpp-model-data.json`, `llama-swap-core.json`) plus a
   read of the host HF hub cache directory (no network) — the models.dev
   refresh and every HTTP probe went with that handoff and are gone. Quant
-  display is pruned here too (d170): BF16/F16 hidden where a full-precision
-  copy would claim more than half the fleet card, up to three of the cheapest
-  quants dropped where the served weights claim less than a quarter of it
-  (never below three rows) — the flat table stays the full record. A vision
+  display is pruned here too (d170): BF16/F16/F32 hidden where the row itself
+  would claim more than half the fleet card (d199, d202 — never the last row a
+  repo publishes), up to three of the cheapest quants dropped where the served
+  weights claim less than a quarter of it (never below three rows) — the flat
+  table stays the full record. A vision
   entry exercises the same quarter line: below it the projector fits anyway, so
   `0text` — the no-projector mode — is not emitted; above 75% the offloaded
   `2mmproj` is not (d195, d200). Thresholds are shares of
@@ -100,7 +116,10 @@ endpoint.
   `lib/gguf-facts.json` for every entry, capped at 262144 (d197), and
   `--fit on` reconciles a host too small for the window. The parameter count
   excludes the drafter/side builds some repos ship beside the main quants
-  (mmproj, MTP, dflash/dspark) — a dflash bf16 once read a 27B blend as 1.9B.
+  (mmproj, MTP, dflash/dspark) — a dflash bf16 once read a 27B blend as 1.9B —
+  and reads a repo's full-precision upload as its LARGEST main GGUF, so an
+  untagged auxiliary (an `imatrix` blob, a projector name the prefix filter
+  misses) can never size the repo (d202).
 - **Inbound bearer auth stays**: `apiKeys: ${env.TLALOCAYOTL_API_KEY}` in
   `00-general.yaml` is llama-swap's _own_ client-facing key (PEER_API_KEY →
   REVERSE_PROXY_API_KEY under d071, → TLALOCAYOTL_API_KEY with the hostname

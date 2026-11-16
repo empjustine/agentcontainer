@@ -60,6 +60,14 @@ never dropped.
 > **Revised (d200).** The cut is `min(3, rows − 3)` and the 25% line now also
 > removes the `0text` mode; the share constant is `SMALL_MODEL_VRAM_SHARE`,
 > which both rules read.
+>
+> **Revised (d202).** The full-precision row is measured with its own bytes
+> (`bytesVramShare`) instead of `fullPrecisionVramShare(paramsB)`, so F32 costs
+> what 4 bytes per parameter costs; the tag set is one table
+> (`FULL_PRECISION_BYTES_PER_PARAM`), and a repo that publishes nothing but full
+> precision keeps its smallest such row. The estimate stays a count of total
+> parameters: it states how many bytes a full-precision copy holds, not that a
+> row must fit the card — an offloaded MoE serves on one its share calls full.
 
 **Total parameters, not active.** A 35B-A3B activates 3B per token but must
 LOAD 35B of weights, and loading is what competes with the KV cache — the same

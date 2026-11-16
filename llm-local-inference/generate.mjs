@@ -138,23 +138,28 @@ const LLAMA_SERVER_MACRO = "${LLAMA_SERVER}";
 /**
  * Implicit entry defaults: keys an entry may omit because the generator owns
  * them. `ctx-size` is NOT one of them — the window comes from the model's own
- * GGUF header via lib/gguf-facts.json (docs/d197). f16 KV is the low-KLD
- * default; only a memory-pressed entry overrides it.
+ * GGUF header via lib/gguf-facts.json (docs/d197).
+ *
+ * There is no `cache-type-k` on purpose: the KEY cache stays at llama.cpp's f16
+ * default for every entry, because quantizing keys is the half of the KV-cache
+ * trade that moves KLD (docs/d206). Only values may be quantized, and an entry
+ * that quantizes them quantizes the drafter's cache with them.
  * @type {Record<string, number|string>}
  */
 const DEFAULTS = {
-	"cache-type-k": "f16",
 	"cache-type-v": "f16",
 	parallel: 1,
 };
 
 /**
- * Speculative decoding strategy used when an entry carries a "model-draft"
- * drafter GGUF (unsloth ships MTP sidecars under the repo's MTP/ subdir).
+ * Spec type for an entry that declares a `model-draft` sidecar but no kind of
+ * its own (unsloth ships MTP sidecars under the repo's MTP/ subdir). A dflash
+ * or dspark sidecar must name its type in the table instead: llama.cpp refuses
+ * a type that does not match the drafter's head, and a DSpark drafter without a
+ * confidence head refuses `--spec-draft-p-min` (docs/d206).
  * --model-draft ALONE is a no-op for speculation when the target model is a
  * local path: the server only auto-infers the spec type on the --hf-repo
- * download path, so --spec-type must be emitted explicitly (and a bare
- * --model-draft would still load the drafter into VRAM, wasted).
+ * download path, so --spec-type must be emitted explicitly.
  * @type {string}
  */
 const DEFAULT_SPEC_TYPE = "draft-mtp";
@@ -181,6 +186,38 @@ const HUB_HOST =
 		"huggingface",
 		"hub",
 	);
+
+/**
+ * The hub root must be VISIBLE. Generation verifies every baked path against
+ * this directory, so an invisible root disables that verification for the whole
+ * catalog at once — indistinguishable from a host that has pulled nothing, which
+ * is why it would bake every path unverified and exit 0. A root that EXISTS but
+ * lacks one repo stays the warn-and-bake rule (docs/d197); a root that is
+ * absent, not a directory, or unreadable is a host/configuration failure and
+ * generation stops with exit 95 (docs/d207).
+ * @returns {void}
+ */
+function requireVisibleHub() {
+	let reason = null;
+	try {
+		if (statSync(HUB_HOST).isDirectory()) {
+			// proves the mount is readable, not merely present
+			readdirSync(HUB_HOST);
+		} else {
+			reason = "not a directory";
+		}
+	} catch (err) {
+		reason = /** @type {NodeJS.ErrnoException} */ (err).code ?? String(err);
+	}
+	if (reason === null) {
+		return;
+	}
+	logError(
+		"the HF hub cache is not visible — every baked path would be unverified (point HF_HUB_CACHE at the mount, or provision it with ./download_models.py)",
+		{ hub: HUB_HOST, reason },
+	);
+	process.exit(95);
+}
 
 /**
  * Sharded GGUF naming, kept in sync with download_models.py's
@@ -370,13 +407,15 @@ function weightsVramShare(paramsB) {
 }
 
 /**
- * Share of the card a FULL-PRECISION copy of the same weights occupies —
- * 2 bytes per parameter, which is what a BF16/F16 GGUF is.
- * @param {number} paramsB total parameters, in billions
- * @returns {number} estimated share of the fleet card (1 = the whole card)
+ * Share of the card a GGUF of these bytes claims once loaded — the one unit
+ * conversion the display rules measure a row with, so a ceiling and the row it
+ * judges cannot disagree. Decimal GB, the unit `totalParamsB` reports, so the
+ * two readings of one file agree.
+ * @param {number} bytes
+ * @returns {number} share of the fleet card (1 = the whole card)
  */
-function fullPrecisionVramShare(paramsB) {
-	return (2 * paramsB) / FLEET_VRAM_GIB;
+function bytesVramShare(bytes) {
+	return bytes / 1e9 / FLEET_VRAM_GIB;
 }
 
 /**
@@ -606,11 +645,73 @@ function deriveModelId(m, modeSeg) {
 const GGUF_SHARD_RE = /-\d{5}-of-\d{5}\.gguf$/;
 
 /**
- * A repo whose FULL-PRECISION copy would claim more than half the card never
- * displays BF16/F16: half the VRAM on weights alone leaves no room for the KV
- * cache the same model needs, so the variant can only ever bloat the config
- * with a model that cannot load. Below the line a full-precision variant is
- * genuinely useful and stays.
+ * Bytes per parameter of every full-precision GGUF the repos publish — the ONE
+ * home of both "is this file full precision" and "how big is a parameter in
+ * it". The size estimate (`totalParamsB`) and the display rule below read this
+ * table, because two per-tag lists drifted: F32 was in neither, so an F32-only
+ * repo went unsized and an F32 row survived the very rule that hid its BF16
+ * sibling, at twice the bytes (docs/d202).
+ *
+ * Order matters: `bf16` precedes `f16`, since "…BF16" also ends with "f16".
+ * @type {Readonly<Record<string, number>>}
+ */
+const FULL_PRECISION_BYTES_PER_PARAM = { f32: 4, bf16: 2, f16: 2 };
+
+/**
+ * Anywhere-in-the-name form of the same tags, for "this file is full precision
+ * spelled oddly" — the size estimate's bare-upload fallback must not read a
+ * file that mentions a full-precision tag but does not end with one.
+ * @type {RegExp}
+ */
+const FULL_PRECISION_NAME_RE = new RegExp(
+	Object.keys(FULL_PRECISION_BYTES_PER_PARAM).join("|"),
+	"i",
+);
+
+/**
+ * @param {string} name a GGUF path or basename, with or without the extension,
+ *   sharded or whole, or a table entry's bare `:quant` label
+ * @returns {string|null} the full-precision tag the name ENDS with (a key of
+ *   FULL_PRECISION_BYTES_PER_PARAM), or null for a quant or an untagged file
+ */
+function fullPrecisionTag(name) {
+	// shards are stripped first: a table row and the manifest both name the
+	// 00001 shard, so "...-BF16-00001-of-00002.gguf" must still read as BF16
+	const base = (name.split("/").pop() ?? "")
+		.replace(GGUF_SHARD_RE, "")
+		.replace(/\.gguf$/i, "")
+		.toLowerCase();
+	for (const tag of Object.keys(FULL_PRECISION_BYTES_PER_PARAM)) {
+		if (base.endsWith(tag)) {
+			return tag;
+		}
+	}
+	return null;
+}
+
+/**
+ * The tag a TABLE ROW serves, read from the file it points at and, failing
+ * that, from the row's `:quant` label. The label is not a second derivation of
+ * the same fact: some repos upload full precision untagged (Spark's
+ * `Spark-X2.6-4B.gguf`, which fetch_hf_manifests.py reports as label-only), and
+ * the label is the only place that survives. Reading the file first keeps the
+ * label from overriding a name that disagrees (docs/d202).
+ * @param {Record<string, any>} e one table entry
+ * @returns {string|null}
+ */
+function entryFullPrecisionTag(e) {
+	const label = e["hf-repo"].split(":")[1];
+	return fullPrecisionTag(e.model) ?? (label ? fullPrecisionTag(label) : null);
+}
+
+/**
+ * FULL-PRECISION rows (BF16, F16, F32) are hidden where the row itself would
+ * claim more than half the card: half the VRAM on weights alone leaves no room
+ * for the KV cache the same model needs, so the variant can only ever bloat the
+ * config. Measured on the row's OWN bytes, never on a 2-byte-per-parameter
+ * estimate — an F32 is twice that size — and never to the point of deleting a
+ * repo that publishes nothing else: that repo keeps its smallest such row.
+ * Below the line a full-precision variant is genuinely useful and stays.
  * @type {number}
  */
 const FULL_PRECISION_MAX_VRAM_SHARE = 0.5;
@@ -747,52 +848,74 @@ function repoGgufSizes(repo) {
 }
 
 /**
- * Total parameter count, in billions, derived from a repo's BF16 (fallback
- * F16) main GGUF bytes: at 2 bytes per parameter those file sizes ARE the
- * parameter count, so no separate metadata table is needed. Returns null when
- * neither full-precision file exists. One fallback exists: repos that ship a
- * bare F16 build with no quant tag in the name (Spark's root upload) instead
- * of an F16-suffixed file — without it the small-model rules could not see
- * them at all. A bare build only counts when its name carries no quant tag:
- * the largest low-bit shard of a big model must never pass as full
- * precision, or a 24B repo would read as <8B.
+ * Total parameter count, in billions, derived from a repo's main full-precision
+ * GGUF bytes: FULL_PRECISION_BYTES_PER_PARAM turns the file size into the count,
+ * so no separate metadata table is needed. Every tag yields the same count by
+ * construction, so the first full-precision file a repo lists wins. Returns null
+ * when the repo ships no such file. One fallback exists: repos that ship a bare
+ * F16 build with no quant tag in the name (Spark's root upload) instead of an
+ * F16-suffixed file — without it the small-model rules could not see them at
+ * all. That proxy is the repo's LARGEST main GGUF and nothing else: full
+ * precision is the biggest file a repo publishes, so a smaller untagged file is
+ * an auxiliary, and the largest tagged file is a quant.
  * @param {Map<string, number>} sizes from mainGgufSizes
  * @returns {number|null}
  */
 function totalParamsB(sizes) {
-	for (const tag of ["BF16", "F16"]) {
-		for (const [key, bytes] of sizes) {
-			const base = key.split("/").pop().replace(/\.gguf$/i, "");
-			if (base.toLowerCase().endsWith(tag.toLowerCase())) {
-				return bytes / 2 / 1e9;
-			}
-		}
-	}
-	// No full-precision upload: some repos ship a bare F16 build (no quant tag
-	// in the name, e.g. Spark's root upload) instead of an F16-suffixed file.
-	// Only those count — the largest low-bit shard of a big model must never
-	// pass as "full precision", or a 24B repo would read as <8B.
-	let f16Bytes = null;
+	// The heuristic every branch reads: a repo's full-precision upload is its
+	// LARGEST main GGUF. 2 bytes per parameter is the lightest full precision
+	// there is, so a smaller file is a quant, a side build, or an auxiliary — and
+	// the three readings that need no name at all (totals, not guesses):
+	//  - a `dflash`/`dspark`/MTP side build carries a full-precision tag but is
+	//    never the biggest file, which is the guard the name filters cannot be;
+	//  - an untagged auxiliary (an `imatrix` blob, a projector named
+	//    "<model>-mmproj-bf16.gguf", which the `mmproj-` prefix exclusion above
+	//    misses) is never read as weights — one sized a 27B repo as 0B and cut
+	//    its ladder (docs/d202);
+	//  - the negated quant vocabulary below cannot be complete (it never named
+	//    Q1_0), and it does not have to be: a 1-bit build is never the biggest
+	//    file in its repo.
+	const largest = Math.max(0, ...sizes.values());
 	for (const [key, bytes] of sizes) {
+		if (bytes !== largest) {
+			continue;
+		}
+		const tag = fullPrecisionTag(key);
+		if (tag !== null) {
+			return bytes / FULL_PRECISION_BYTES_PER_PARAM[tag] / 1e9;
+		}
+		// A bare F16 build with no quant tag in the name (Spark's root upload,
+		// reported label-only by fetch_hf_manifests.py): without it the small-model
+		// rules could not see that repo at all. The name must still carry no tag,
+		// or a full-precision spelling the endsWith test misses would be read as
+		// 2-byte weights whatever it is.
 		const base = key.split("/").pop().replace(/\.gguf$/i, "");
-		if (/[.-](UD-|IQ[1-4]_|Q[2-8]_|TQ[1-2]_|BF16|F16|F32|NVFP4|MXFP4|FP8)/i.test(base)) { continue; }
-		f16Bytes = Math.max(f16Bytes ?? 0, bytes);
+		if (FULL_PRECISION_NAME_RE.test(base)) { continue; }
+		if (/[.-](UD-|IQ[1-4]_|Q[2-8]_|TQ[1-2]_|NVFP4|MXFP4|FP8)/i.test(base)) { continue; }
+		return bytes / 2 / 1e9;
 	}
-	return f16Bytes === null ? null : f16Bytes / 2 / 1e9;
+	return null;
 }
 
 /**
  * The two quant-display rules, both stated as a share of the fleet card rather
  * than a parameter count, so one line reads the same on any card (docs/d199):
- *  - a repo whose full-precision copy would claim more than
- *    FULL_PRECISION_MAX_VRAM_SHARE never displays BF16/F16;
+ *  - a full-precision ROW (BF16, F16, F32) whose own file claims more than
+ *    FULL_PRECISION_MAX_VRAM_SHARE is hidden — but never the last row a repo
+ *    publishes, which keeps its smallest such row (docs/d202);
  *  - a repo whose served weights claim less than SMALL_MODEL_VRAM_SHARE drops
  *    up to CHEAP_QUANT_DROP_MAX of its cheapest quants, but always keeps
  *    CHEAP_QUANT_KEEP_MIN rows, so a short quant list can never empty out.
- * Both are measured on TOTAL parameters (not the per-quant footprint, not
- * active parameters): a 35B-A3B must LOAD 35B of weights, and loading is what
- * competes with the KV cache for the card. Repos without a usable parameter
- * estimate pass through unfiltered.
+ *
+ * The size estimate is TOTAL parameters (not active): that is how many bytes a
+ * full-precision copy has to hold somewhere. For a MoE it overstates the VRAM
+ * penalty — a 35B-A3B streams from RAM with a 3B active slice, so it serves
+ * fine on a card the estimate calls full — which is why the second rule keeps a
+ * ladder rather than demanding every row fit (docs/d202). Repos the manifests
+ * cannot size keep every row they publish: unsized keeps, never guesses.
+ * Each decision is logged at INFO, not WARN: a healthy run makes a dozen of them,
+ * and a warning band that is never empty is not a signal — the operator filters
+ * `severityNumber >= 13` to find the states that need them (docs/d208).
  * @param {Record<string, any>[]} entries the flat model-data table
  * @returns {Record<string, any>[]} entries to generate, same order
  */
@@ -807,31 +930,62 @@ function pruneQuantDisplay(entries) {
 	const keep = new Set(entries);
 	for (const [repo, group] of byRepo) {
 		const sizes = repoGgufSizes(repo);
+		/** @type {(e: Record<string, any>) => number|undefined} */
+		const rowBytes = (e) => sizes.get(e.model.replace(GGUF_SHARD_RE, ".gguf"));
+
+		// Row-level, from the row's OWN file: the tag set (f32/bf16/f16) and the
+		// bytes/parameter of each live in FULL_PRECISION_BYTES_PER_PARAM, so an
+		// F32 row is judged at 4 bytes per parameter instead of passing as a
+		// 2-byte copy — or surviving as an unknown tag. A row the manifest cannot
+		// size is kept: dropping it would be a guess.
+		const tooBig = group.filter((e) => {
+			const bytes = rowBytes(e);
+			return (
+				entryFullPrecisionTag(e) !== null &&
+				bytes !== undefined &&
+				bytesVramShare(bytes) > FULL_PRECISION_MAX_VRAM_SHARE
+			);
+		});
+		// A repo that publishes NOTHING but full precision keeps its smallest
+		// such row: hiding all of them would delete the repo from the catalog
+		// outright, and the floor is "one servable choice", the same floor
+		// CHEAP_QUANT_KEEP_MIN states for the other rule.
+		const hide =
+			tooBig.length === group.length
+				? [...tooBig]
+						.sort(
+							(a, b) =>
+								(rowBytes(a) ?? Number.POSITIVE_INFINITY) -
+								(rowBytes(b) ?? Number.POSITIVE_INFINITY),
+						)
+						.slice(1)
+				: tooBig;
+		if (hide.length !== tooBig.length) {
+			logInfo(
+				"quant-display: repo publishes nothing but full precision — keeping its smallest row",
+				{ repo, kept: group.find((e) => !hide.includes(e))?.["hf-repo"] },
+			);
+		}
+		for (const e of hide) {
+			const bytes = rowBytes(e) ?? 0;
+			keep.delete(e);
+			logInfo("quant-display: full-precision variant hidden (large model)", {
+				repo,
+				quant: e["hf-repo"].split(":")[1],
+				sizeGB: Math.round(bytes / 1e8) / 10,
+				cardShare: Math.round(bytesVramShare(bytes) * 100) / 100,
+			});
+		}
+
 		const paramsB = totalParamsB(sizes);
 		if (paramsB === null) {
-			logWarn("quant-display pruning skipped — no BF16/F16 in hf-manifest", { repo });
+			logInfo("cheap-quant pruning skipped — no full-precision file sizes this repo", { repo });
 			continue;
 		}
 		const roundB = Math.round(paramsB * 10) / 10;
-		if (fullPrecisionVramShare(paramsB) > FULL_PRECISION_MAX_VRAM_SHARE) {
-			for (const e of group) {
-				const quant = e["hf-repo"].split(":")[1];
-				// suffix match, not equality: some repos spell the tag
-			// "LFM3-1.7B-F16" rather than a bare "F16"
-			if (quant && /(bf16|f16)$/i.test(quant)) {
-					keep.delete(e);
-					logWarn("quant-display: full-precision variant hidden (large model)", {
-						repo, quant, paramsB: roundB,
-					});
-				}
-			}
-		}
 		if (weightsVramShare(paramsB) < SMALL_MODEL_VRAM_SHARE) {
 			const bySize = group
-				.map((e) => ({
-					e,
-					size: sizes.get(e.model.replace(GGUF_SHARD_RE, ".gguf")),
-				}))
+				.map((e) => ({ e, size: rowBytes(e) }))
 				.sort((a, b) => (a.size ?? Number.POSITIVE_INFINITY) - (b.size ?? Number.POSITIVE_INFINITY));
 			const dropCount = Math.min(
 				CHEAP_QUANT_DROP_MAX,
@@ -839,7 +993,7 @@ function pruneQuantDisplay(entries) {
 			);
 			for (const { e } of bySize.slice(0, dropCount)) {
 				keep.delete(e);
-				logWarn("quant-display: cheap quant dropped (small model)", {
+				logInfo("quant-display: cheap quant dropped (small model)", {
 					repo, quant: e["hf-repo"].split(":")[1], paramsB: roundB,
 				});
 			}
@@ -855,6 +1009,8 @@ function generateLocalInference() {
 	 * copy is owned here, not shared through a repo-level lib/). Same LIB_DIR
 	 * convention as the log import above.
 	 */
+	// before anything is baked: an invisible hub turns the verification off wholesale
+	requireVisibleHub();
 	const modelData = JSON.parse(
 		readFileSync(join(LIB_DIR, "llamacpp-model-data.json"), "utf-8"),
 	);
@@ -921,12 +1077,26 @@ function generateLocalInference() {
 			if (m.__argv) {
 				cmd += ` ${m.__argv}`;
 			}
-			cmd += ` --cache-type-k ${m["cache-type-k"]} --cache-type-v ${m["cache-type-v"]}`;
+			// Keys are never quantized: the key cache is the KLD-bearing half of the
+			// trade, so it stays at llama.cpp's f16 default with no flag at all.
+			cmd += ` --cache-type-v ${m["cache-type-v"]}`;
 			cmd += ` --ctx-size ${ctxSize} --n-predict ${nPredict}`;
-			if (baked.draftPath) {
-				// explicit: auto-inference only happened on the retired --hf-repo
-				// download path, never for local snapshot paths (see DEFAULT_SPEC_TYPE)
+			// The spec type is a per-ENTRY fact (docs/d206): a sidecar names its own
+			// kind (`draft-mtp` for the MTP sidecars, `draft-dflash` for a dflash
+			// one), and a model whose speculator is built into the weights carries
+			// the type with no sidecar at all — llama.cpp then drafts against a
+			// second context of the TARGET model. Emitted explicitly either way:
+			// auto-inference only happened on the retired --hf-repo path.
+			const speculates = baked.draftPath !== null || m["spec-type"];
+			if (speculates) {
 				cmd += ` --spec-type ${m["spec-type"] || DEFAULT_SPEC_TYPE}`;
+				// The drafter's cache follows the entry's value quant (docs/d206): one
+				// entry decides both contexts, and a row left at f16 needs no flag
+				// because llama.cpp's draft default is f16 too. Self-speculation gets
+				// this as well — the draft context exists either way.
+				if (m["cache-type-v"] !== "f16") {
+					cmd += ` --spec-draft-type-v ${m["cache-type-v"]}`;
+				}
 			}
 			if (![1, 2].includes(m.parallel)) {
 				throw new Error(
