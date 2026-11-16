@@ -425,12 +425,12 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 	// The lifecycle line is written once, at session end (outcome + totals
 	// are only knowable there) — so every assertion waits for the close.
 	ws.Close()
-	waitForLog(t, logBuf, "[vpn] who=operator")
+	waitForLog(t, logBuf, "event=close")
 	dumped := logBuf.String()
 	if strings.Contains(dumped, testTunnelToken) {
 		t.Fatalf("token leaked into the log:\n%s", dumped)
 	}
-	if !strings.Contains(dumped, "transport=") {
+	if !strings.Contains(dumped, "transport=wss") {
 		t.Fatalf("expected transport column in the lifecycle line:\n%s", dumped)
 	}
 	if !strings.Contains(dumped, `label="raw-test"`) {
@@ -439,7 +439,7 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 	if !strings.Contains(dumped, targetAddr) {
 		t.Fatalf("expected target metadata:\n%s", dumped)
 	}
-	if !strings.Contains(dumped, "bytes_in=") || !strings.Contains(dumped, "outcome=") {
+	if !strings.Contains(dumped, "bytes_up=") || !strings.Contains(dumped, "bytes_down=") || !strings.Contains(dumped, "outcome=") {
 		t.Fatalf("expected byte counters and outcome:\n%s", dumped)
 	}
 }
@@ -539,6 +539,12 @@ func TestOperatorKeysFromEnv(t *testing.T) {
 		{"short relay token alone still refuses", "", "short", true, nil},
 		{"id not label-shaped", `{"ali ce":"alice-token-0123456789"}`, "", true, nil},
 		{"keyset's default id untouched by the relay token", `{"default":"default-token-0123456789"}`, testTunnelToken, false, []string{"default"}},
+		{"object form without egress inherits the default", `{"alice":{"token":"alice-token-0123456789"}}`, "", false, []string{"alice"}},
+		{"object form with a per-key egress table", `{"alice":{"token":"alice-token-0123456789","egress":{"ports":[443]}}}`, "", false, []string{"alice"}},
+		{"object form requires a token", `{"alice":{"egress":{"ports":[443]}}}`, "", true, nil},
+		{"object form refuses unknown fields", `{"alice":{"token":"alice-token-0123456789","egres":{"ports":[443]}}}`, "", true, nil},
+		{"per-key egress refuses an empty object", `{"alice":{"token":"alice-token-0123456789","egress":{}}}`, "", true, nil},
+		{"per-key egress refuses an unknown field", `{"alice":{"token":"alice-token-0123456789","egress":{"allowCidr":["10.0.0.0/8"]}}}`, "", true, nil},
 		{"over the cap", over.String(), "", true, nil},
 	}
 	for _, tc := range cases {
@@ -628,9 +634,7 @@ func TestPrincipalSetAcceptance(t *testing.T) {
 		_ = ws.Close()
 	}
 	for _, want := range []string{"key=alice", "key=bob"} {
-		if !strings.Contains(logBuf.String(), want) {
-			t.Errorf("attribution line missing %s:\n%s", want, logBuf.String())
-		}
+		waitForLog(t, logBuf, want)
 	}
 	if strings.Contains(logBuf.String(), testAliceToken) || strings.Contains(logBuf.String(), testBobToken) {
 		t.Fatalf("a credential reached the log:\n%s", logBuf.String())

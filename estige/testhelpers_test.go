@@ -217,6 +217,18 @@ func newHTTPServer(t *testing.T, h http.Handler) *httptest.Server {
 	return srv
 }
 
+// newHTTPSServer is the same fixture on the suite's one trust anchor
+// (docs/d090): the relay verifies the exit's certificate with system roots,
+// so a wss:// harness must chain to testTLSCert, not httptest's throwaway.
+func newHTTPSServer(t *testing.T, h http.Handler) *httptest.Server {
+	t.Helper()
+	srv := httptest.NewUnstartedServer(h)
+	srv.TLS = &tls.Config{Certificates: []tls.Certificate{testTLSCert}, MinVersion: tls.VersionTLS12}
+	srv.StartTLS()
+	t.Cleanup(srv.Close)
+	return srv
+}
+
 // upgradeEchoHandler is the tunnel's cleartext-ws fixture (d103): a backend
 // that accepts an upgrade and echoes raw bytes until EOF — everything the
 // tunnel transport needs from a WebSocket-capable upstream, without a
@@ -258,7 +270,11 @@ func mustTunnelURL(t *testing.T, proxy *httptest.Server) *url.URL {
 	if err != nil {
 		t.Fatal(err)
 	}
-	u.Scheme = "ws"
+	// The URL's honest wire form (docs/d090): a TLS fixture is wss.
+	u.Scheme = schemeWS
+	if strings.HasPrefix(proxy.URL, "https://") {
+		u.Scheme = schemeWSS
+	}
 	u.Path = tunnelPath
 	return u
 }
@@ -271,7 +287,7 @@ func dialTunnelForTest(t *testing.T, u *url.URL, token string) (*wsConn, error) 
 	if token != "" {
 		hdr.Set("Authorization", "Bearer "+token)
 	}
-	return wsDial(ctx, u, hdr, nil)
+	return wsDial(ctx, u, hdr, nil, false)
 }
 
 // reserveLoopbackAddr picks a concrete port by binding :0 and releasing

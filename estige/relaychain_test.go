@@ -133,7 +133,7 @@ func TestRelayChainBadConfigRefusesStartup(t *testing.T) {
 	t.Setenv(envTunnelURL, "wss://example.invalid:8443/vpn")
 	t.Setenv("SOCKS_SERVER", "gate:1080")
 	t.Setenv("SOCKS_VERSION", "4a")
-	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false); err == nil || !strings.Contains(err.Error(), "SOCKS_VERSION") {
+	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false, false); err == nil || !strings.Contains(err.Error(), "SOCKS_VERSION") {
 		t.Fatalf("err=%v, want the SOCKS_VERSION refusal from relayConfigFromEnv", err)
 	}
 }
@@ -275,17 +275,21 @@ func TestRelayChainHTTPProxyCarriesTunnel(t *testing.T) {
 
 	proxyURL, hops := newCONNECTChainProxy(t)
 	clearChainEnv(t)
-	t.Setenv("http_proxy", proxyURL)
+	t.Setenv("https_proxy", proxyURL)
 
-	httpAddr, stop := wireRelayNode(t, "http://"+backend.Listener.Addr().String()+tunnelPath)
+	front := newTLSFront(t, backend, false)
+	httpAddr, stop := wireRelayNode(t, front.URL+tunnelPath)
 	defer stop()
 
 	chainFetch(t, httpAddr, testTargetAlias, upPort)
 
 	recorded := hops()
-	tunnelAddr := backend.Listener.Addr().String()
-	if len(recorded) != 1 {
-		t.Fatalf("chain hops=%d, want exactly 1 (one session, ladder skips C on ws://); hops=%+v", len(recorded), recorded)
+	tunnelAddr := front.Listener.Addr().String()
+	// Two dials, deliberately: the disposable ALPN probe (a wss leg has TLS
+	// to inspect) and the session itself. Both ride the chain — routing is
+	// one leg, not a per-transport choice (docs/d094).
+	if len(recorded) != 2 {
+		t.Fatalf("chain hops=%d, want exactly 2 (ALPN probe + session); hops=%+v", len(recorded), recorded)
 	}
 	if recorded[0].target != tunnelAddr {
 		t.Fatalf("chain hop target=%q, want the tunnel endpoint %q", recorded[0].target, tunnelAddr)
@@ -329,7 +333,8 @@ func TestRelayChainSOCKS5ProxyCarriesTunnelModeE(t *testing.T) {
 	clearChainEnv(t)
 	t.Setenv("SOCKS_SERVER", socksAddr)
 
-	httpAddr, stop := wireRelayNode(t, "http://"+gateway.Listener.Addr().String()+tunnelPath)
+	front := newTLSFront(t, gateway, false)
+	httpAddr, stop := wireRelayNode(t, front.URL+tunnelPath)
 	defer stop()
 	logBuf := captureLog(t)
 
@@ -337,7 +342,7 @@ func TestRelayChainSOCKS5ProxyCarriesTunnelModeE(t *testing.T) {
 
 	waitForLog(t, logBuf, "transport=post")
 	recorded := targets()
-	tunnelAddr := gateway.Listener.Addr().String()
+	tunnelAddr := front.Listener.Addr().String()
 	found := false
 	for _, target := range recorded {
 		if target == tunnelAddr {
@@ -367,7 +372,7 @@ func TestALPNProbeRidesHTTPChain(t *testing.T) {
 	u.Scheme = "wss"
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	proto, err := alpnNegotiate(ctx, u, []string{"h2", "http/1.1"}, chain.dial)
+	proto, err := alpnNegotiate(ctx, u, []string{"h2", "http/1.1"}, chain.dial, false)
 	if err != nil {
 		t.Fatalf("alpnNegotiate over chain: %v", err)
 	}

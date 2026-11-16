@@ -93,6 +93,10 @@ type tunnelStream interface {
 	// transport names the carrier for the lifecycle log — h2 | wss | post
 	// (docs/d077 §4).
 	transport() string
+	// sessionID is the correlation id docs/d106 puts on open and close. Mode
+	// E's trace-id is the same value; the other carriers carry it in the
+	// request header.
+	sessionID() string
 	io.Closer
 }
 

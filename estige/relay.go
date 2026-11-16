@@ -58,10 +58,26 @@ type closeWriter interface {
 	CloseWrite() error
 }
 
+// relayMeter is the live half of a session's byte counters (docs/d106's
+// snapshot surface): relay() owns the totals, a meter lets the status surface
+// read them while the pump is still running. nil is the no-op meter.
+type relayMeter interface {
+	addUp(int64)
+	addDown(int64)
+}
+
+// swappedMeter is the exit node's adapter: the pump's directions are named
+// from whoever holds the local socket, and the exit's local socket is the
+// target, so its "up" is the record's down (docs/d106's viewpoint finding).
+type swappedMeter struct{ m relayMeter }
+
+func (s swappedMeter) addUp(n int64)   { s.m.addDown(n) }
+func (s swappedMeter) addDown(n int64) { s.m.addUp(n) }
+
 // relay runs until both directions have half-closed (outcome "closed"),
 // one side fails, or the idle timer reaps the session. It closes both
 // `ws` and `local` before returning — callers own no cleanup.
-func relay(s tunnelStream, local net.Conn, keepalive, idle time.Duration) (relayStats, error) {
+func relay(s tunnelStream, local net.Conn, meter relayMeter) (relayStats, error) {
 	var (
 		stats    relayStats
 		mu       sync.Mutex // first outcome wins; also carries its error
@@ -109,7 +125,7 @@ func relay(s tunnelStream, local net.Conn, keepalive, idle time.Duration) (relay
 	// half-close, answer protocol pings, enforce the idle reap.
 	wg.Go(func() {
 		for {
-			_ = s.setReadDeadline(time.Now().Add(idle))
+			_ = s.setReadDeadline(time.Now().Add(tunnelIdleTimeout))
 			msg, err := s.readTunnelMsg()
 			if err != nil {
 				switch {
@@ -136,6 +152,9 @@ func relay(s tunnelStream, local net.Conn, keepalive, idle time.Duration) (relay
 			case frameData:
 				n, err := writeAll(local, payload)
 				stats.received += int64(n)
+				if meter != nil {
+					meter.addDown(int64(n))
+				}
 				if err != nil {
 					setOutcome(outcomeLocalError, err)
 					stop()
@@ -184,6 +203,9 @@ func relay(s tunnelStream, local net.Conn, keepalive, idle time.Duration) (relay
 					return
 				}
 				stats.sent += int64(n)
+				if meter != nil {
+					meter.addUp(int64(n))
+				}
 			}
 			if err != nil {
 				if aborted() {
@@ -208,7 +230,7 @@ func relay(s tunnelStream, local net.Conn, keepalive, idle time.Duration) (relay
 	// Keepalive pings are protocol frames, not WebSocket-level pings: they
 	// must be visible to OUR peer's idle timer on both ends (VPN-R14).
 	wg.Go(func() {
-		ticker := time.NewTicker(keepalive)
+		ticker := time.NewTicker(tunnelKeepaliveInterval)
 		defer ticker.Stop()
 		for {
 			select {

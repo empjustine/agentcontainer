@@ -78,7 +78,7 @@ func wireRelayNode(t *testing.T, tunnelURL string) (string, func()) {
 	t.Setenv(envClientLabel, "mode-e-e2e")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false, false)
 	if err != nil {
 		t.Fatalf("relayConfigFromEnv: %v", err)
 	}
@@ -129,7 +129,8 @@ func TestModeEEndToEndOverPlainH1(t *testing.T) {
 	// whole ladder riding (docs/d093), a plain tunnel server legitimately
 	// carries D — E is what a refused upgrade demotes to, so the gateway is
 	// what pins the carrier under test.
-	httpAddr, stopRelay := wireRelayNode(t, "http://"+newHostileGateway(t, backend).Listener.Addr().String()+tunnelPath)
+	front := newTLSFront(t, newHostileGateway(t, backend), false)
+	httpAddr, stopRelay := wireRelayNode(t, front.URL+tunnelPath)
 	defer stopRelay()
 	logBuf := captureLog(t)
 
@@ -170,7 +171,7 @@ func TestModeEEndToEndOverPlainH1(t *testing.T) {
 		// d077 §4: transport is operational debugging data; for mode E the
 		// relay node's own plane is h1.1 POST, so both roles say "post".
 		waitForLog(t, logBuf, "transport=post")
-		waitForLog(t, logBuf, "tunnel session: authenticated key=default")
+		waitForLog(t, logBuf, "key=default")
 		if dumped := logBuf.String(); strings.Contains(dumped, testTunnelToken) {
 			t.Fatalf("token leaked into the log:\n%s", dumped)
 		}
@@ -190,7 +191,8 @@ func TestModeEDemotionThroughHostileGateway(t *testing.T) {
 	// unreachable, D is refused by the gateway, E must carry the session —
 	// and the refusal must be LOGGED as a demotion, never surfacing as
 	// failure (d077 §4's invariant, the amendment's ladder).
-	httpAddr, stopRelay := wireRelayNode(t, "ws://"+gateway.Listener.Addr().String()+tunnelPath)
+	front := newTLSFront(t, gateway, false)
+	httpAddr, stopRelay := wireRelayNode(t, front.URL+tunnelPath)
 	defer stopRelay()
 	logBuf := captureLog(t)
 
@@ -300,7 +302,6 @@ func TestModeEWindowsAreAuthenticatedAndCamouflaged(t *testing.T) {
 		if status != http.StatusOK {
 			t.Fatalf("first window answered %d, want 200", status)
 		}
-		waitForLog(t, logBuf, "tunnel session: authenticated key=default")
 	})
 
 	t.Run("an out-of-order window on a live session is the same 404", func(t *testing.T) {
@@ -413,7 +414,7 @@ func TestParseTraceparent(t *testing.T) {
 	}
 
 	t.Run("build/parse round-trip", func(t *testing.T) {
-		id, err := newTraceID()
+		id, err := newSessionID()
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -29,7 +29,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/netip"
@@ -71,6 +70,14 @@ type relayConfig struct {
 	// every address target dies at the local doors before a tunnel exists;
 	// on, the address is handed over and the exit's verdict answers.
 	legacyIPRelay bool
+	// insecureExit is docs/d171's one switch for both degraded relay->exit
+	// postures: skip certificate verification and accept a cleartext
+	// tunnel URL. Off means https/wss verifies and ws:// is refused at
+	// config time, before any listener binds.
+	insecureExit bool
+	// forwards is the -L listener set (docs/d144), parsed from argv by
+	// main before this config is built. Empty means no forwarding.
+	forwards []forwardSpec
 }
 
 // relayConfigFromEnv assembles the config from the flag values and the
@@ -86,7 +93,7 @@ type relayConfig struct {
 // is argv — the same side of the ledger as d145's relay-side flags, and a
 // switch this load-bearing must be visible in the process's own command
 // line (d163).
-func relayConfigFromEnv(proxyAddr, socksAddr string, legacyIPRelay bool) (relayConfig, error) {
+func relayConfigFromEnv(proxyAddr, socksAddr string, legacyIPRelay, insecureExit bool) (relayConfig, error) {
 	var cfg relayConfig
 	raw := os.Getenv(envTunnelURL)
 	if raw == "" {
@@ -113,6 +120,14 @@ func relayConfigFromEnv(proxyAddr, socksAddr string, legacyIPRelay bool) (relayC
 	cfg.proxyAddr = proxyAddr
 	cfg.socksAddr = socksAddr
 	cfg.legacyIPRelay = legacyIPRelay
+	cfg.insecureExit = insecureExit
+	// docs/d171: a cleartext tunnel leg is a degraded posture, legal only
+	// under the switch. Refusing here — before any bind — is VPN-R26's
+	// fail-closed shape, and it closes the loophole where ws:// was
+	// accepted with no warning unless a chain proxy happened to be set.
+	if cfg.tunnelURL.Scheme == schemeWS && !insecureExit {
+		return relayConfig{}, fmt.Errorf("%s names a cleartext ws:// tunnel; start the relay with -insecure-exit to accept it (docs/d171)", envTunnelURL)
+	}
 	// The chain env is read HERE, with the rest of the one config path:
 	// bad proxy config must refuse startup before any bind (VPN-R26).
 	cfg.chain, err = relayChainFromEnv(u)
@@ -294,9 +309,9 @@ func requireLoopback(addr string) error {
 
 // relayNode owns the listeners and the health surface (VPN-R27).
 type relayNode struct {
-	cfg      relayConfig
-	sessions atomic.Int64 // established tunnels (diagnostic, VPN-R27)
-	lastErr  atomic.Value // string: last tunnel failure, for /healthz
+	cfg     relayConfig
+	live    liveRegistry // in-flight tunnels (docs/d106: state, not a lifetime total)
+	lastErr atomic.Value // string: last tunnel failure, for /healthz
 }
 
 // tunnelDial is the one TCP leg every carrier's dial rides (docs/d094):
@@ -332,25 +347,30 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 		_ = proxyLn.Close()
 		return fmt.Errorf("socks5 listen: %w", err)
 	}
-	c := &relayNode{cfg: cfg}
+	c := &relayNode{cfg: cfg, live: newLiveRegistry()}
 	// The log shows WHICH tunnel endpoint (host only): the path embeds the
 	// capability prefix, which must not land in any log (VPN-R44).
 	// The log shows WHICH carriers are on offer (d077 §4): the ladder is
 	// constant (docs/d093), so this line states a fact, not a config.
-	log.Printf("[vpn-relay] listeners http=%s socks5=%s tunnel=%s://%s modes=%s",
+	logLine(sevInfo, "[vpn-relay] listeners http=%s socks5=%s tunnel=%s://%s modes=%s",
 		proxyLn.Addr(), socksLn.Addr(), cfg.tunnelURL.Scheme, cfg.tunnelURL.Host, transportOffer)
 	if cfg.chain != nil {
 		// Host only — userinfo in a proxy URL is a credential (VPN-R44's
 		// law applied to the chain, docs/d094).
-		log.Printf("[vpn-relay] chain proxy kind=%s host=%s (docs/d094)", cfg.chain.kind, cfg.chain.host())
-		if cfg.tunnelURL.Scheme != schemeWSS {
-			// Accepted, loudly (docs/d094 §3): ws:// already puts the
-			// bearer in front of every on-path observer, and the chain
-			// proxy is exactly that — a blind tunnel, not a reader.
-			log.Printf("[vpn-relay] WARNING: chained cleartext tunnel (%s) — the chain proxy can record the operator token (docs/d094)", cfg.tunnelURL.Scheme)
-		}
+		logLine(sevInfo, "[vpn-relay] chain proxy kind=%s host=%s (docs/d094)", cfg.chain.kind, cfg.chain.host())
+	}
+	if cfg.insecureExit {
+		// docs/d171: one warning naming the posture and pointing at the
+		// exposure table; the per-generation cost is d171's, not restated.
+		logLine(sevWarn, "[vpn-relay] DEGRADED: -insecure-exit is set — certificate verification is skipped and a cleartext ws:// tunnel is accepted; the bearer is exposed to whoever terminates the leg (docs/d171)")
 	}
 
+	forwardLns, err := c.bindForwards(ctx, cfg.forwards)
+	if err != nil {
+		_ = proxyLn.Close()
+		_ = socksLn.Close()
+		return err
+	}
 	httpSrv := &http.Server{
 		Handler:           c,
 		ReadHeaderTimeout: 30e9,
@@ -358,11 +378,27 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 	serveErr := make(chan error, 1)
 	go func() { serveErr <- httpSrv.Serve(proxyLn) }()
 	go c.serveSOCKS(ctx, socksLn)
+	for i, spec := range cfg.forwards {
+		go c.serveForward(ctx, forwardLns[i], spec)
+	}
 
 	select {
 	case <-ctx.Done():
-		_ = httpSrv.Close()
+		// Drain rather than kill (docs/d171's rotation primitive): a
+		// restart is how a v3 bearer rotates, and truncating every live
+		// response to rotate a token is a choice, not a requirement.
+		logLine(sevInfo, "[vpn-relay] signal received; draining %d live tunnel(s) (grace %s)", c.live.count(), drainGrace)
+		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), drainGrace)
+		defer cancel()
 		_ = socksLn.Close()
+		for _, ln := range forwardLns {
+			_ = ln.Close()
+		}
+		go func() { _ = httpSrv.Shutdown(shutdownCtx) }()
+		// Hijacked CONNECT sessions are not net/http handlers; the registry
+		// is the real wait (docs/d106).
+		drainLive(&c.live, drainGrace)
+		<-time.After(200 * time.Millisecond)
 		return nil
 	case err := <-serveErr:
 		_ = socksLn.Close()
@@ -376,6 +412,53 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 // ---------------------------------------------------------------------------
 // Tunnel establishment (VPN-R11/R12/R16)
 // ---------------------------------------------------------------------------
+
+// tunnelErrReason is the refusal token the records carry: the exit's
+// CONNECT_ERR vocabulary when the peer refused, and the local dial class
+// otherwise, so the log line and the app's problem body agree (docs/d106).
+func tunnelErrReason(err error) string {
+	if rej, ok := errors.AsType[*connectRejectedError](err); ok {
+		return rej.reason
+	}
+	return errReasonDial
+}
+
+// refusedRecord is one admission failure at the relay, in d106's vocabulary.
+func (c *relayNode) refusedRecord(target, via, url, reason string) {
+	sessionRecord{
+		Role: roleRelay, Event: eventRefused, Label: c.cfg.label,
+		Via: via, Target: target, URL: url, Reason: reason,
+	}.emit()
+}
+
+// beginRelaySession registers an admitted tunnel for the open/close records
+// and the status surface. The finish func emits the close from the live
+// counters, so both the pump and the cleartext exchange report the same way.
+func (c *relayNode) beginRelaySession(s tunnelStream, target, via, url string) (*liveSession, func(string)) {
+	start := time.Now()
+	live := &liveSession{
+		id: s.sessionID(), label: c.cfg.label, via: via, target: target,
+		transport: s.transport(), start: start, stream: s,
+	}
+	c.live.register(live)
+	identity := sessionRecord{
+		Role: roleRelay, ID: live.id, Label: live.label, Via: via,
+		Transport: live.transport, Target: target, URL: url,
+	}
+	open := identity
+	open.Event = eventOpen
+	open.emit()
+	return live, func(outcome string) {
+		c.live.unregister(live)
+		closeRec := identity
+		closeRec.Event = eventClose
+		closeRec.Outcome = outcome
+		closeRec.Up = live.up.Load()
+		closeRec.Down = live.down.Load()
+		closeRec.Duration = time.Since(start).Milliseconds()
+		closeRec.emit()
+	}
+}
 
 // connectRejectedError carries the exit node's CONNECT_ERR reason so each
 // local surface can map policy refusals to its own vocabulary.
@@ -417,18 +500,18 @@ const transportOffer = "cde"
 // longer "no mode left" — it demotes). The fallback never retries in a way
 // that would reveal intent, and with nothing left it fails closed
 // (VPN-R26).
-func (c *relayNode) dialTransport(ctx context.Context) (tunnelStream, error) {
+func (c *relayNode) dialTransport(ctx context.Context, id string) (tunnelStream, error) {
 	var attempts []string
 	var cErr error
 	record := func(mode string, err error) {
 		attempts = append(attempts, fmt.Sprintf("%s: %v", mode, err))
 	}
 	dial := c.tunnelDial()
-	proto, err := alpnNegotiate(ctx, c.cfg.tunnelURL, []string{"h2", protoHTTP11}, dial)
+	proto, err := alpnNegotiate(ctx, c.cfg.tunnelURL, []string{"h2", protoHTTP11}, dial, c.cfg.insecureExit)
 	if err == nil && proto == "h2" {
-		s, err := c.openPOST(ctx)
+		s, err := c.openPOST(ctx, id, c.cfg.insecureExit)
 		if err == nil {
-			log.Printf("[vpn-relay] tunnel transport=%s", s.transport())
+			logLine(sevInfo, "[vpn-relay] tunnel transport=%s", s.transport())
 			return s, nil
 		}
 		record("mode C", err)
@@ -445,20 +528,21 @@ func (c *relayNode) dialTransport(ctx context.Context) (tunnelStream, error) {
 	// the edge answered h2 but not the session (d077 §4 — route around
 	// it as if it were censorship).
 	if cErr != nil {
-		log.Printf("[vpn-relay] mode C failed (%v), falling back to mode D", cErr)
+		logLine(sevWarn, "[vpn-relay] mode C failed (%v), falling back to mode D", cErr)
 	}
 	hdr := make(http.Header)
 	hdr.Set("Authorization", "Bearer "+c.cfg.token)
-	ws, err := wsDial(ctx, c.cfg.tunnelURL, hdr, dial)
+	hdr.Set(sessionIDHeader, id)
+	ws, err := wsDial(ctx, c.cfg.tunnelURL, hdr, dial, c.cfg.insecureExit)
 	if err == nil {
-		log.Printf("[vpn-relay] tunnel transport=%s", ws.transport())
+		logLine(sevInfo, "[vpn-relay] tunnel transport=%s", ws.transport())
 		return ws, nil
 	}
 	record("mode D", err)
-	log.Printf("[vpn-relay] mode D failed (%v), falling back to mode E", err)
-	s, err := c.openExchange(ctx)
+	logLine(sevWarn, "[vpn-relay] mode D failed (%v), falling back to mode E", err)
+	s, err := c.openExchange(ctx, id, c.cfg.insecureExit)
 	if err == nil {
-		log.Printf("[vpn-relay] tunnel transport=%s", s.transport())
+		logLine(sevInfo, "[vpn-relay] tunnel transport=%s", s.transport())
 		return s, nil
 	}
 	record("mode E", err)
@@ -470,7 +554,13 @@ func (c *relayNode) dialTransport(ctx context.Context) (tunnelStream, error) {
 }
 
 func (c *relayNode) openTunnel(ctx context.Context, target string) (tunnelStream, error) {
-	s, err := c.dialTransport(ctx)
+	// One id per app connection: the demotion ladder's attempts and the
+	// carrier that finally wins share it (docs/d106).
+	id, err := newSessionID()
+	if err != nil {
+		return nil, err
+	}
+	s, err := c.dialTransport(ctx, id)
 	if err != nil {
 		err = fmt.Errorf("tunnel dial: %w", err)
 		c.noteError(err)
@@ -533,7 +623,6 @@ func (c *relayNode) openTunnel(ctx context.Context, target string) (tunnelStream
 
 	// The relay owns the deadlines from here (VPN-R14).
 	_ = s.setReadDeadline(time.Time{})
-	c.sessions.Add(1)
 	ok = true
 	return s, nil
 }
@@ -570,9 +659,11 @@ func (c *relayNode) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (c *relayNode) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	last, _ := c.lastErr.Load().(string)
 	status := map[string]any{
-		"status":   "ok",
-		"tunnel":   c.cfg.tunnelURL.Scheme + "://" + c.cfg.tunnelURL.Host,
-		"sessions": c.sessions.Load(),
+		"status":    "ok",
+		"tunnel":    c.cfg.tunnelURL.Scheme + "://" + c.cfg.tunnelURL.Host,
+		"sessions":  c.live.count(),
+		"in_flight": c.live.snapshot(),
+		"degraded":  c.cfg.insecureExit,
 	}
 	if c.cfg.chain != nil {
 		status["chain"] = c.cfg.chain.kind + "://" + c.cfg.chain.host()
@@ -583,7 +674,7 @@ func (c *relayNode) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
 	if encErr := json.NewEncoder(w).Encode(status); encErr != nil {
-		log.Printf("[vpn-relay] health response encode: %v", encErr)
+		logLine(sevWarn, "[vpn-relay] health response encode: %v", encErr)
 	}
 }
 
@@ -615,6 +706,7 @@ func (c *relayNode) handleConnect(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// No port means no protocol target (VPN-R21's ports are explicit);
 		// this is the application's mistake, not a tunnel failure.
+		c.refusedRecord(target, viaConnect, "", errReasonInvalid)
 		writeProblem(w, r, http.StatusBadRequest, "bad-connect-target",
 			"CONNECT target must be host:port", err)
 		return
@@ -623,6 +715,7 @@ func (c *relayNode) handleConnect(w http.ResponseWriter, r *http.Request) {
 	// this relay must not relay dies here, in the local problem vocabulary,
 	// and no session opens on the exit for it.
 	if detail, _ := c.localTargetRefusal(host); detail != "" {
+		c.refusedRecord(target, viaConnect, "connect://"+target, errReasonBogon)
 		writeProblem(w, r, http.StatusForbidden, "target-refused",
 			"This relay refuses that target", errors.New(detail))
 		return
@@ -630,6 +723,7 @@ func (c *relayNode) handleConnect(w http.ResponseWriter, r *http.Request) {
 	ws, err := c.openTunnel(r.Context(), target)
 	if err != nil {
 		status, code, title := httpStatusForTunnelErr(err)
+		c.refusedRecord(target, viaConnect, "connect://"+target, tunnelErrReason(err))
 		writeProblem(w, r, status, code, title, err)
 		return
 	}
@@ -651,19 +745,33 @@ func (c *relayNode) handleConnect(w http.ResponseWriter, r *http.Request) {
 		_ = ws.Close()
 		return
 	}
+	// docs/d171's guard wraps the blind door while the switch is on: the
+	// first client bytes are classified, and an HTTP request line closes the
+	// tunnel instead of forwarding a cleartext HTTP service.
+	var guard *degradedGuard
+	if c.cfg.insecureExit {
+		guard = newDegradedGuard(conn, c, target, viaConnect)
+		conn = guard
+	}
 	// An application that pipelined bytes onto the same segment as its
 	// CONNECT request already has them in the hijack buffer; they are part
 	// of the tunnel stream and must not be dropped before the relay starts
 	// reading the raw socket.
 	if n := brw.Reader.Buffered(); n > 0 {
 		early, _ := brw.Peek(n)
+		if guard != nil && guard.checkEarly(early) {
+			_ = ws.Close()
+			return
+		}
 		if err := sendFrame(ws, frameData, early); err != nil {
 			_ = conn.Close()
 			_ = ws.Close()
 			return
 		}
 	}
-	_, _ = relay(ws, conn, tunnelKeepaliveInterval, tunnelIdleTimeout)
+	live, finish := c.beginRelaySession(ws, target, viaConnect, "connect://"+target)
+	stats, _ := relay(ws, conn, live)
+	finish(stats.outcome)
 }
 
 // connectTarget extracts the CONNECT authority (r.Host for HTTP/1.1
@@ -784,6 +892,7 @@ func (c *relayNode) handleSOCKS(ctx context.Context, conn net.Conn) {
 	// One gate for every address form, before the port bytes are read and
 	// before a tunnel exists (d163).
 	if detail, rep := c.localTargetRefusal(host); detail != "" {
+		c.refusedRecord(host, viaSOCKS, "", errReasonBogon)
 		socksReply(conn, rep)
 		return
 	}
@@ -795,6 +904,7 @@ func (c *relayNode) handleSOCKS(ctx context.Context, conn net.Conn) {
 
 	ws, err := c.openTunnel(ctx, target)
 	if err != nil {
+		c.refusedRecord(target, viaSOCKS, "", tunnelErrReason(err))
 		socksReply(conn, socksRepForTunnelErr(err))
 		return
 	}
@@ -805,7 +915,15 @@ func (c *relayNode) handleSOCKS(ctx context.Context, conn net.Conn) {
 		return
 	}
 	_ = conn.SetDeadline(time.Time{})
-	_, _ = relay(ws, conn, tunnelKeepaliveInterval, tunnelIdleTimeout)
+	// docs/d171's guard on the second blind door: same first-bytes
+	// classification as CONNECT, and the same narrowness.
+	appConn := conn
+	if c.cfg.insecureExit {
+		appConn = newDegradedGuard(conn, c, target, viaSOCKS)
+	}
+	live, finish := c.beginRelaySession(ws, target, viaSOCKS, "")
+	stats, _ := relay(ws, appConn, live)
+	finish(stats.outcome)
 }
 
 func socksReply(conn net.Conn, rep byte) {

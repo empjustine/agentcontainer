@@ -71,9 +71,12 @@ type wsConn struct {
 	conn    net.Conn
 	br      *bufio.Reader
 	bw      *bufio.Writer
-	client  bool // client frames are masked (RFC 6455 §5.3)
+	client  bool   // client frames are masked (RFC 6455 §5.3)
+	id      string // session correlation id (docs/d106)
 	writeMu sync.Mutex
 }
+
+func (c *wsConn) sessionID() string { return c.id }
 
 // ---------------------------------------------------------------------------
 // Handshake (server side)
@@ -135,7 +138,7 @@ func headerHasToken(h http.Header, name, token string) bool {
 // rides this handshake, protected by the tunnel leg's TLS). dial is the
 // relay node's TCP leg — nil/direct, or through the chain proxy when one
 // is configured (docs/d094); TLS stays end-to-end above a chain.
-func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, dial dialFunc) (*wsConn, error) {
+func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, dial dialFunc, skipVerify bool) (*wsConn, error) {
 	var raw net.Conn
 	var err error
 	if dial == nil {
@@ -156,7 +159,7 @@ func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, d
 			// System roots, ServerName from the URL host, no override knobs:
 			// the Funnel `*.ts.net` certificate must verify as-is (VPN-R28),
 			// and nothing in this module may weaken verification (VPN-R55).
-			raw, err = dialTLS(ctx, dial, addr, tunnelURL.Hostname(), nil)
+			raw, err = dialTLS(ctx, dial, addr, tunnelURL.Hostname(), nil, skipVerify)
 		} else {
 			raw, err = dial(ctx, "tcp", addr)
 		}
@@ -227,7 +230,9 @@ func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, d
 	// The handshake's deadline must not become the session's: after 101 the
 	// keepalive/idle policy owns the connection's timing (VPN-R14).
 	_ = raw.SetDeadline(time.Time{})
-	return &wsConn{conn: raw, br: br, bw: bufio.NewWriter(raw), client: true}, nil
+	// The caller puts the correlation id in extraHeaders; reading it back
+	// here keeps the id on the one structure every carrier shape returns.
+	return &wsConn{conn: raw, br: br, bw: bufio.NewWriter(raw), client: true, id: extraHeaders.Get(sessionIDHeader)}, nil
 }
 
 // readLine reads one CRLF-terminated line without the terminator (the
@@ -267,9 +272,9 @@ func hasPort(host string) bool {
 // ---------------------------------------------------------------------------
 
 // readFrame reads exactly one WebSocket frame off the wire.
-func (w *wsConn) readFrame() (fin bool, opcode byte, payload []byte, err error) {
+func (c *wsConn) readFrame() (fin bool, opcode byte, payload []byte, err error) {
 	var head [2]byte
-	if _, err = io.ReadFull(w.br, head[:]); err != nil {
+	if _, err = io.ReadFull(c.br, head[:]); err != nil {
 		return false, 0, nil, err
 	}
 	fin = head[0]&0x80 != 0
@@ -282,20 +287,20 @@ func (w *wsConn) readFrame() (fin bool, opcode byte, payload []byte, err error) 
 	// server→client frames are bare. Enforced by role — a proxy in the
 	// middle (the Funnel edge) is byte-transparent, so a violated polarity
 	// means the PEER got the role wrong, not the network.
-	if masked == w.client {
+	if masked == c.client {
 		return false, 0, nil, fmt.Errorf("%w: frame masking violates role polarity", ErrProtocol)
 	}
 	n := int64(head[1] & 0x7f)
 	switch n {
 	case 126:
 		var ext [2]byte
-		if _, err = io.ReadFull(w.br, ext[:]); err != nil {
+		if _, err = io.ReadFull(c.br, ext[:]); err != nil {
 			return false, 0, nil, err
 		}
 		n = int64(binary.BigEndian.Uint16(ext[:]))
 	case 127:
 		var ext [8]byte
-		if _, err = io.ReadFull(w.br, ext[:]); err != nil {
+		if _, err = io.ReadFull(c.br, ext[:]); err != nil {
 			return false, 0, nil, err
 		}
 		n = int64(binary.BigEndian.Uint64(ext[:]))
@@ -311,12 +316,12 @@ func (w *wsConn) readFrame() (fin bool, opcode byte, payload []byte, err error) 
 	}
 	var maskKey [4]byte
 	if masked {
-		if _, err = io.ReadFull(w.br, maskKey[:]); err != nil {
+		if _, err = io.ReadFull(c.br, maskKey[:]); err != nil {
 			return false, 0, nil, err
 		}
 	}
 	payload = make([]byte, n)
-	if _, err = io.ReadFull(w.br, payload); err != nil {
+	if _, err = io.ReadFull(c.br, payload); err != nil {
 		return false, 0, nil, err
 	}
 	if masked {
@@ -331,20 +336,20 @@ func (w *wsConn) readFrame() (fin bool, opcode byte, payload []byte, err error) 
 // pings and consuming pong/close control frames. Fragmented messages are
 // reassembled (an intermediary may never fragment — we do not — but a
 // conforming peer may, and rejecting it would be a protocol bug).
-func (w *wsConn) readMessage() (opcode byte, payload []byte, err error) {
+func (c *wsConn) readMessage() (opcode byte, payload []byte, err error) {
 	var assembled []byte
 	var msgOp byte // RFC 6455 5.4: the first frame's opcode is the message's
 	inFragment := false
 	for {
 		var fin bool
 		var frame []byte
-		fin, opcode, frame, err = w.readFrame()
+		fin, opcode, frame, err = c.readFrame()
 		if err != nil {
 			return 0, nil, err
 		}
 		switch opcode {
 		case wsOpPing:
-			if err := w.writeFrame(wsOpPong, frame); err != nil {
+			if err := c.writeFrame(wsOpPong, frame); err != nil {
 				return 0, nil, err
 			}
 			continue
@@ -354,10 +359,10 @@ func (w *wsConn) readMessage() (opcode byte, payload []byte, err error) {
 			// Echo the close (RFC 6455 §5.5.1) and surface it as an
 			// orderly end; the peer's code/reason is intentionally not
 			// parsed — the relay's lifecycle log records our own outcome.
-			_ = w.writeFrame(wsOpClose, frame)
+			_ = c.writeFrame(wsOpClose, frame)
 			return 0, nil, errWSClosed
 		case wsOpText:
-			_ = w.writeClose(wsCloseUnsupported)
+			_ = c.writeClose(wsCloseUnsupported)
 			return 0, nil, fmt.Errorf("%w: text frames are not part of the tunnel protocol", ErrProtocol)
 		case wsOpBinary:
 			if inFragment {
@@ -392,16 +397,16 @@ func (w *wsConn) readMessage() (opcode byte, payload []byte, err error) {
 
 // writeMessage sends one complete data message as a single unfragmented
 // frame (payloads are frame-capped below any fragmentation threshold).
-func (w *wsConn) writeMessage(opcode byte, payload []byte) error {
-	return w.writeFrame(opcode, payload)
+func (c *wsConn) writeMessage(opcode byte, payload []byte) error {
+	return c.writeFrame(opcode, payload)
 }
 
 // The tunnelStream surface (docs/d077 §5): for the WebSocket carrier one
 // frame is one binary message, so the message boundary supplies the frame
 // boundary and the tunnel protocol's length prefix only validates.
 
-func (w *wsConn) readTunnelMsg() ([]byte, error) {
-	opcode, msg, err := w.readMessage()
+func (c *wsConn) readTunnelMsg() ([]byte, error) {
+	opcode, msg, err := c.readMessage()
 	if err != nil {
 		return nil, err
 	}
@@ -414,41 +419,41 @@ func (w *wsConn) readTunnelMsg() ([]byte, error) {
 	return msg, nil
 }
 
-func (w *wsConn) writeTunnelMsg(msg []byte) error {
-	return w.writeMessage(wsOpBinary, msg)
+func (c *wsConn) writeTunnelMsg(msg []byte) error {
+	return c.writeMessage(wsOpBinary, msg)
 }
 
-func (w *wsConn) setReadDeadline(t time.Time) error {
-	return w.conn.SetReadDeadline(t)
+func (c *wsConn) setReadDeadline(t time.Time) error {
+	return c.conn.SetReadDeadline(t)
 }
 
 // protocolViolation is the close frame the RFC gives WebSocket: an in-band,
 // unambiguous "you framed that wrong" before the teardown (and the one
 // signal a plain HTTP body cannot send — docs/d077 §5).
-func (w *wsConn) protocolViolation() {
-	_ = w.writeClose(wsCloseProtocolError)
+func (c *wsConn) protocolViolation() {
+	_ = c.writeClose(wsCloseProtocolError)
 }
 
 // transport is wss for both directions: mode D is the WebSocket carrier
 // (docs/d077 §4's vocabulary), whatever the cleartext test scheme is called.
-func (w *wsConn) transport() string {
+func (c *wsConn) transport() string {
 	return schemeWSS
 }
 
 // writeFrame serializes one frame: client frames masked with fresh random
 // keys (RFC 6455 §5.3), server frames bare. One mutex covers control and
 // data writes so interleaved frames never corrupt each other on the wire.
-func (w *wsConn) writeFrame(opcode byte, payload []byte) error {
-	w.writeMu.Lock()
-	defer w.writeMu.Unlock()
+func (c *wsConn) writeFrame(opcode byte, payload []byte) error {
+	c.writeMu.Lock()
+	defer c.writeMu.Unlock()
 
 	// Every write is bounded (VPN-R39): a peer that stops draining the
 	// socket must surface as an error, not a goroutine parked in Flush
 	// forever. Serialized under writeMu so the deferred clear cannot erase
 	// a concurrent frame's window; the interval is generous — a healthy
 	// relay drains frames in milliseconds.
-	_ = w.conn.SetWriteDeadline(time.Now().Add(tunnelKeepaliveInterval))
-	defer func() { _ = w.conn.SetWriteDeadline(time.Time{}) }()
+	_ = c.conn.SetWriteDeadline(time.Now().Add(tunnelKeepaliveInterval))
+	defer func() { _ = c.conn.SetWriteDeadline(time.Time{}) }()
 
 	var head [14]byte
 	head[0] = 0x80 | opcode // FIN set: the tunnel never fragments
@@ -467,46 +472,46 @@ func (w *wsConn) writeFrame(opcode byte, payload []byte) error {
 		binary.BigEndian.PutUint64(head[2:10], uint64(n))
 		hn = 10
 	}
-	if w.client {
+	if c.client {
 		head[1] |= 0x80
 		var key [4]byte
 		if _, err := rand.Read(key[:]); err != nil {
 			return err
 		}
-		if _, err := w.bw.Write(head[:hn]); err != nil {
+		if _, err := c.bw.Write(head[:hn]); err != nil {
 			return err
 		}
-		if _, err := w.bw.Write(key[:]); err != nil {
+		if _, err := c.bw.Write(key[:]); err != nil {
 			return err
 		}
 		masked := make([]byte, n)
 		for i, b := range payload {
 			masked[i] = b ^ key[i%4]
 		}
-		if _, err := w.bw.Write(masked); err != nil {
+		if _, err := c.bw.Write(masked); err != nil {
 			return err
 		}
 	} else {
-		if _, err := w.bw.Write(head[:hn]); err != nil {
+		if _, err := c.bw.Write(head[:hn]); err != nil {
 			return err
 		}
-		if _, err := w.bw.Write(payload); err != nil {
+		if _, err := c.bw.Write(payload); err != nil {
 			return err
 		}
 	}
-	return w.bw.Flush()
+	return c.bw.Flush()
 }
 
 // writeClose sends an orderly close frame (best-effort: the peer may be
 // gone, and the caller is already tearing down).
-func (w *wsConn) writeClose(code uint16) error {
+func (c *wsConn) writeClose(code uint16) error {
 	var payload [2]byte
 	binary.BigEndian.PutUint16(payload[:], code)
-	return w.writeFrame(wsOpClose, payload[:])
+	return c.writeFrame(wsOpClose, payload[:])
 }
 
 // Close tears the connection down without a close frame — the abnormal path
 // (protocol error, idle timeout, local failure). Idempotent.
-func (w *wsConn) Close() error {
-	return w.conn.Close()
+func (c *wsConn) Close() error {
+	return c.conn.Close()
 }

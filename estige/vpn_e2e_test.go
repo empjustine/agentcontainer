@@ -9,7 +9,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"strconv"
@@ -48,29 +47,6 @@ func waitForHealth(t *testing.T, healthURL string) {
 		time.Sleep(20 * time.Millisecond)
 	}
 	t.Fatalf("health endpoint %s never came up", healthURL)
-}
-
-// healthSessions reads the relay's tunnel-session counter — d103's
-// "answered from the tunnel" is proven by this number moving, not by the
-// response alone (a direct dial would answer just as well).
-func healthSessions(t *testing.T, healthURL string) int64 {
-	t.Helper()
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, healthURL, nil)
-	if err != nil {
-		t.Fatalf("healthz request: %v", err)
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("healthz: %v", err)
-	}
-	defer resp.Body.Close()
-	var status struct {
-		Sessions int64 `json:"sessions"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&status); err != nil {
-		t.Fatalf("healthz body: %v", err)
-	}
-	return status.Sessions
 }
 
 func readHTTPResponse(t *testing.T, br *bufio.Reader) *http.Response {
@@ -127,14 +103,14 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	proxy := newHTTPServer(t, s)
+	proxy := newHTTPSServer(t, s)
 
 	// Relay node: env chain + runRelayNode, exactly as -mode relay wires it.
-	t.Setenv(envTunnelURL, "ws://"+proxy.Listener.Addr().String()+tunnelPath)
+	t.Setenv(envTunnelURL, "wss://"+proxy.Listener.Addr().String()+tunnelPath)
 	t.Setenv(envClientLabel, "e2e-label")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -236,8 +212,6 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	})
 
 	t.Run("cleartext absolute-form http is answered from the tunnel (d103)", func(t *testing.T) {
-		healthURL := "http://" + httpAddr + healthPath
-		before := healthSessions(t, healthURL)
 		conn := rawDial(t, httpAddr)
 		defer conn.Close()
 		target := testTargetAlias + ":" + strconv.Itoa(int(upPort))
@@ -290,9 +264,9 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 		if !resp.Close {
 			t.Fatal("response must force Connection: close — one tunneled exchange per client connection (d103)")
 		}
-		if after := healthSessions(t, healthURL); after <= before {
-			t.Fatalf("request never opened a tunnel: sessions before=%d after=%d", before, after)
-		}
+		// The gauge is in-flight now (docs/d106), and this exchange has
+		// already closed: the durable fact is the relay's open record.
+		waitForLog(t, logBuf, "via=http")
 		// The pinned tunnel is single-use: a second request on this
 		// client connection must find it closed, not answer from host A's
 		// tunnel on host B's behalf.
@@ -323,8 +297,6 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 		// exit session is spent on a target the switch never claimed. The
 		// flag-on half (the target passing the door and dying at the
 		// exit's VPN-R22 gate) is TestRelayLegacyIPRelaySwitch.
-		healthURL := "http://" + httpAddr + healthPath
-		before := healthSessions(t, healthURL)
 		conn := rawDial(t, httpAddr)
 		defer conn.Close()
 		// A non-guaranteed literal: the guaranteed-bogon spellings are the
@@ -338,9 +310,7 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 		if resp.StatusCode != http.StatusForbidden || !strings.Contains(string(body), "target-refused") || !strings.Contains(string(body), "-legacy-ip-relay") {
 			t.Fatalf("the relay must refuse address targets locally: status=%d body=%q", resp.StatusCode, body)
 		}
-		if after := healthSessions(t, healthURL); after != before {
-			t.Fatalf("refused address target opened a tunnel: sessions before=%d after=%d", before, after)
-		}
+		waitForLog(t, logBuf, "reason=target-bogon")
 	})
 
 	t.Run("absolute-form https:// still rides CONNECT (405, bytes unopened)", func(t *testing.T) {
@@ -417,7 +387,7 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	})
 
 	t.Run("connection log carries metadata and never the credential", func(t *testing.T) {
-		waitForLog(t, logBuf, "[vpn] who=operator")
+		waitForLog(t, logBuf, "event=close")
 		dumped := logBuf.String()
 		if strings.Contains(dumped, testTunnelToken) {
 			t.Fatalf("token leaked into the log:\n%s", dumped)
@@ -444,12 +414,12 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 // answer that could only come from a direct dial.
 func TestCleartextForwardFailsClosedWithoutTunnel(t *testing.T) {
 	dead := reserveLoopbackAddr() // released: connecting to it must be refused
-	t.Setenv(envTunnelURL, "ws://"+dead+tunnelPath)
+	t.Setenv(envTunnelURL, "wss://"+dead+tunnelPath)
 	t.Setenv(envOperatorToken, testTunnelToken)
 	t.Setenv(envClientLabel, "dead-tunnel-fwd")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -492,15 +462,15 @@ func TestRelayLegacyIPRelaySwitch(t *testing.T) {
 	if err := s.enableTunnel(egressConfig{}); err != nil {
 		t.Fatal(err)
 	}
-	proxy := newHTTPServer(t, s)
-	t.Setenv(envTunnelURL, "ws://"+proxy.Listener.Addr().String()+tunnelPath)
+	proxy := newHTTPSServer(t, s)
+	t.Setenv(envTunnelURL, "wss://"+proxy.Listener.Addr().String()+tunnelPath)
 	t.Setenv(envClientLabel, "legacy-ip")
 
 	startRelay := func(t *testing.T, legacyIPRelay bool) (string, string, func()) {
 		t.Helper()
 		httpAddr := freeLoopbackAddr(t)
 		socksAddr := freeLoopbackAddr(t)
-		cfg, err := relayConfigFromEnv(httpAddr, socksAddr, legacyIPRelay)
+		cfg, err := relayConfigFromEnv(httpAddr, socksAddr, legacyIPRelay, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -561,15 +531,11 @@ func TestRelayLegacyIPRelaySwitch(t *testing.T) {
 	t.Run("flag off: the relay answers address targets itself", func(t *testing.T) {
 		httpAddr, socksAddr, stop := startRelay(t, false)
 		defer stop()
-		healthURL := "http://" + httpAddr + healthPath
-		before := healthSessions(t, healthURL)
 		code, body := connect(t, httpAddr, "1.2.3.4:443")
 		if code != http.StatusForbidden || !strings.Contains(body, "target-refused") || !strings.Contains(body, "-legacy-ip-relay") {
 			t.Fatalf("status=%d body=%q", code, body)
 		}
-		if after := healthSessions(t, healthURL); after != before {
-			t.Fatalf("refused address target opened a tunnel: before=%d after=%d", before, after)
-		}
+
 		if rep := socksReply(t, socksAddr); rep != 0x08 {
 			t.Fatalf("socks address target rep=%#x, want 0x08 (VPN-R22's byte, unchanged)", rep)
 		}

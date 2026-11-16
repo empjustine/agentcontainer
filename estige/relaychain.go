@@ -346,7 +346,7 @@ func (p *chainProxy) socks5Connect(raw net.Conn, addr string) (net.Conn, error) 
 // override knob, nothing here may weaken verification). Over a chain the
 // proxy sees SNI and ciphertext only; the certificate the relay node
 // verifies is the exit node's own, exactly as if dialed direct.
-func dialTLS(ctx context.Context, dial dialFunc, addr, serverName string, nextProtos []string) (net.Conn, error) {
+func dialTLS(ctx context.Context, dial dialFunc, addr, serverName string, nextProtos []string, skipVerify bool) (net.Conn, error) {
 	if dial == nil {
 		dial = directDial
 	}
@@ -358,6 +358,9 @@ func dialTLS(ctx context.Context, dial dialFunc, addr, serverName string, nextPr
 		MinVersion: tls.VersionTLS12,
 		ServerName: serverName,
 		NextProtos: nextProtos,
+		// docs/d171 posture (a): the switch skips verification, never
+		// encryption and never MinVersion. Off is the only default.
+		InsecureSkipVerify: skipVerify, //nolint:gosec // explicit, argv-gated, documented exposure (d171)
 	})
 	if err := td.HandshakeContext(ctx); err != nil {
 		_ = raw.Close()

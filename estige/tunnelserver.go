@@ -24,11 +24,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -56,9 +56,25 @@ const maxOperatorKeys = 32
 // operatorKey is one security principal: an id that is a log-safe LABEL
 // (never a capability — docs/d078 §5 lets it appear in server logs) plus
 // the bearer token it authenticates (VPN-R31 as amended by docs/d078).
+//
+// policy is the principal's own egress table (docs/d078): nil means the
+// process default from VPN_TUNNEL_EGRESS, which is what a plain string
+// value in the keyset has always meant. A per-key table narrows one
+// principal without giving every relay the same blast radius.
 type operatorKey struct {
-	id    string
-	token string
+	id     string
+	token  string
+	policy *egressPolicy
+}
+
+// policyOr returns the principal's table when it has one, else the process
+// default. Never nil for an admitted key: the process default is built
+// before any session can exist.
+func (k *operatorKey) policyOr(def *egressPolicy) *egressPolicy {
+	if k != nil && k.policy != nil {
+		return k.policy
+	}
+	return def
 }
 
 type tunnelServer struct {
@@ -67,7 +83,30 @@ type tunnelServer struct {
 	// sessions is the mode E per-trace-id registry (d077 §3/§4, d081's
 	// amendment): minted by span-1 windows, self-removing on session close.
 	sessions *exchangeSessions
+
+	// live is every admitted session, in every carrier. It is the status
+	// surface and the drain's work list (docs/d106): the mode E registry
+	// knows only its own carrier, and net/http tracks no hijacked conn.
+	live liveRegistry
 }
+
+// liveSession is one admitted session's pull-side state. Byte counters are
+// atomics because the status surface reads them while the pump writes.
+type liveSession struct {
+	id        string
+	keyID     string
+	label     string
+	via       string
+	target    string
+	transport string
+	start     time.Time
+	stream    tunnelStream
+	up        atomic.Int64 // client -> origin
+	down      atomic.Int64 // origin -> client
+}
+
+func (l *liveSession) addUp(n int64)   { l.up.Add(n) }
+func (l *liveSession) addDown(n int64) { l.down.Add(n) }
 
 // isTunnelPath reports whether this request belongs to the tunnel
 // namespace. Exact-match only: /vpn/anything-else is not tunnel traffic and
@@ -84,17 +123,20 @@ func (t *tunnelServer) isTunnelPath(path string) bool {
 // position nor the set's contents leak through timing (VPN-R33). The
 // "Bearer " scheme prefix is public format, not secret, so an early return
 // on its absence leaks nothing.
-func matchOperatorKey(r *http.Request, keys []operatorKey) string {
+func matchOperatorKey(r *http.Request, keys []operatorKey) *operatorKey {
 	const scheme = "Bearer "
 	auth := r.Header.Get("Authorization")
 	if !strings.HasPrefix(auth, scheme) {
-		return ""
+		return nil
 	}
 	got := []byte(auth[len(scheme):])
-	matched := ""
-	for _, k := range keys {
-		if subtle.ConstantTimeCompare(got, []byte(k.token)) == 1 {
-			matched = k.id
+	var matched *operatorKey
+	for i := range keys {
+		// The scan visits every key whether or not one already matched, so
+		// neither the matched principal's position nor the set's contents
+		// leak through timing (VPN-R33).
+		if subtle.ConstantTimeCompare(got, []byte(keys[i].token)) == 1 {
+			matched = &keys[i]
 		}
 	}
 	return matched
@@ -106,10 +148,20 @@ func matchOperatorKey(r *http.Request, keys []operatorKey) string {
 func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	// Factor 1 first: an unknown credential must not even learn whether
 	// /<prefix>/vpn exists as a route (VPN-R12: rejected before any 101).
-	keyID := matchOperatorKey(r, t.keys)
-	if keyID == "" {
+	key := matchOperatorKey(r, t.keys)
+	if key == nil {
 		writeFunnel404(w, r)
 		return
+	}
+	// The correlation id is per-session diagnostic metadata (docs/d106):
+	// the relay mints it and sends it on the session-opening request; a
+	// malformed or absent value is replaced locally, because the header is
+	// never an authorization input.
+	id := r.Header.Get(sessionIDHeader)
+	if !validSessionID(id) {
+		if minted, err := newSessionID(); err == nil {
+			id = minted
+		}
 	}
 	// Mode C/E arrival (docs/d077 §4): an authenticated POST with no
 	// upgrade is a body session — no 101, no hijack — and traceparent
@@ -120,10 +172,10 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	// request, since a body session has no handshake header of its own).
 	if r.Method == http.MethodPost && !headerHasToken(r.Header, "Upgrade", "websocket") {
 		if r.Header.Get("Traceparent") != "" {
-			t.serveTunnelExchange(w, r, keyID)
+			t.serveTunnelExchange(w, r, key)
 			return
 		}
-		t.serveTunnelPOST(w, r, keyID)
+		t.serveTunnelPOST(w, r, key, id)
 		return
 	}
 	// Factor 2: the request must actually be a v13 websocket upgrade with a
@@ -134,23 +186,21 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Attribution (docs/d078 §5): the matched id is a label, so a success
-	// may say it out loud — as a side line, not inside the CLF, so the
-	// standard access log stays parseable by stock tools. A rejection above
-	// never names an id: the response vocabulary (VPN-R34) and the auth
-	// failure path must not count keys.
-	log.Printf("[estige] tunnel session: authenticated key=%s", keyID)
+	// Attribution moved into the session records (docs/d106): the matched
+	// key is a field on open/close, not a second line per session. A
+	// rejection above still never names an id — the response vocabulary
+	// (VPN-R34) and the auth failure path must not count keys.
 
 	// From here the peer is authenticated, so a proxy-internal failure may
 	// answer like one (RFC 9457 — the module's internal-error contract).
-	lw := &loggingResponseWriter{ResponseWriter: w}
+	lw := &loggingResponseWriter{ResponseWriter: w, start: time.Now()}
 	conn, brw, err := http.NewResponseController(lw).Hijack()
 	if err != nil {
 		writeProblem(lw, r, http.StatusInternalServerError, "hijack-failed",
 			"Could not switch protocols on the tunnel connection", err)
 		// Authenticated, but no 101 ever happened — the CLF line records
 		// the failure.
-		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
+		logAccess(r, http.StatusInternalServerError, lw.size, lw.start)
 		return
 	}
 	if _, err := brw.Write(resp); err != nil {
@@ -165,12 +215,12 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	// CLF line is honest (the Unwrap chain keeps Hijack reachable,
 	// VPN-R13).
 	lw.recordSwitched(len(resp))
-	logCombinedRequestURI(r, http.StatusSwitchingProtocols, len(resp))
+	logAccess(r, http.StatusSwitchingProtocols, len(resp), lw.start)
 
 	// The session outlives ServeHTTP: once hijacked, nothing on this
 	// connection is net/http's business anymore.
-	ws := &wsConn{conn: conn, br: brw.Reader, bw: brw.Writer, client: false}
-	go t.runSession(context.WithoutCancel(r.Context()), ws)
+	ws := &wsConn{conn: conn, br: brw.Reader, bw: brw.Writer, client: false, id: id}
+	go t.runSession(context.WithoutCancel(r.Context()), ws, key)
 }
 
 // serveTunnelPOST runs a mode C session (docs/d077 §3): the response
@@ -178,11 +228,9 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 // must stay alive for the whole session — returning would end the response
 // body that carries it. Attribution happens at the same point the 101 path
 // does it: after auth, before any session work (docs/d078 §5).
-func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, keyID string) {
-	log.Printf("[estige] tunnel session: authenticated key=%s", keyID)
-
-	lw := &loggingResponseWriter{ResponseWriter: w}
-	p := &postStream{r: r, w: lw}
+func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, key *operatorKey, id string) {
+	lw := &loggingResponseWriter{ResponseWriter: w, start: time.Now()}
+	p := &postStream{r: r, w: lw, id: id}
 	defer func() { _ = p.Close() }()
 
 	// This response is the session-open signal: it must go out before the
@@ -194,9 +242,9 @@ func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, k
 	if err := http.NewResponseController(lw).EnableFullDuplex(); err != nil {
 		// Fail loudly: without full duplex the session would open and then
 		// hang, which reads as network loss rather than a defect (NFR-2).
-		log.Printf("[estige] tunnel mode C: full duplex unavailable: %v", err)
+		logLine(sevError, "[estige] tunnel mode C: full duplex unavailable: %v", err)
 		lw.WriteHeader(http.StatusInternalServerError)
-		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
+		logAccess(r, http.StatusInternalServerError, lw.size, lw.start)
 		return
 	}
 
@@ -204,11 +252,11 @@ func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, k
 	if err := http.NewResponseController(lw).Flush(); err != nil {
 		// Headers never made it out: the session cannot exist. The status
 		// was not committed, so this is the honest CLF outcome.
-		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
+		logAccess(r, http.StatusInternalServerError, lw.size, lw.start)
 		return
 	}
-	t.runSession(context.WithoutCancel(r.Context()), p)
-	logCombinedRequestURI(r, http.StatusOK, lw.size)
+	t.runSession(context.WithoutCancel(r.Context()), p, key)
+	logAccess(r, http.StatusOK, lw.size, lw.start)
 }
 
 // postStream is mode C's carrier (docs/d077 §3/§5): frames ride the HTTP
@@ -221,9 +269,12 @@ func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, k
 type postStream struct {
 	r         *http.Request
 	w         http.ResponseWriter
+	id        string
 	wmu       sync.Mutex
 	closeOnce sync.Once
 }
+
+func (p *postStream) sessionID() string { return p.id }
 
 func (p *postStream) readTunnelMsg() ([]byte, error) {
 	return readFrameFromStream(p.r.Body)
@@ -274,24 +325,49 @@ func (p *postStream) Close() error {
 }
 
 // runSession is one tunnel's whole life: HELLO → CONNECT → relay →
-// lifecycle log (VPN-R16's frame set, VPN-R20's remote resolution). It is
-// carrier-agnostic (docs/d077 §5): the same session over the 101 path and
+// open/close records (VPN-R16's frame set, VPN-R20's remote resolution). It
+// is carrier-agnostic (docs/d077 §5): the same session over the 101 path and
 // over a mode C body.
-func (t *tunnelServer) runSession(ctx context.Context, s tunnelStream) {
+func (t *tunnelServer) runSession(ctx context.Context, s tunnelStream, key *operatorKey) {
 	start := time.Now()
 	var (
 		label   string
 		target  string
 		outcome = outcomeProtocolError
 		stats   relayStats
+		live    *liveSession
 	)
 	defer func() {
 		_ = s.Close()
+		if live != nil {
+			t.live.unregister(live)
+		}
 		// VPN-R19's contract: who (principal + label), where (target), how
 		// much (bytes/duration), outcome — nothing derivable from reading
 		// the stream, never the credential; plus the carrier (docs/d077 §4:
 		// transport is operational debugging data, h2|wss|post).
-		logTunnelLifecycle(label, target, s.transport(), start, stats, outcome)
+		//
+		// A session that never reached the streaming state is a refusal, not
+		// a zero-byte close (docs/d106): the reason is the same token the
+		// peer's CONNECT_ERR carried.
+		rec := sessionRecord{
+			Role: roleExit, ID: s.sessionID(), Key: key.id, Label: label,
+			Via: viaConnect, Transport: s.transport(), Target: target,
+			// The pump's sent/received are viewpoint-relative; the record's
+			// names are not (docs/d106). At the exit, local is the target:
+			// local→tunnel (sent) is origin→client = down, tunnel→local
+			// (received) is client→origin = up.
+			Up: stats.received, Down: stats.sent,
+			Duration: time.Since(start).Milliseconds(),
+		}
+		if live != nil {
+			rec.Event = eventClose
+			rec.Outcome = stats.outcome
+		} else {
+			rec.Event = eventRefused
+			rec.Reason = outcome
+		}
+		rec.emit()
 	}()
 
 	// Phase 1 — HELLO (VPN-R16): magic, version, client label.
@@ -339,12 +415,13 @@ func (t *tunnelServer) runSession(ctx context.Context, s tunnelStream) {
 	// the port set are decided here, before any lookup or socket — a refused
 	// target costs no DNS and no dial, and here is still the only place the
 	// tunnel dials (VPN-R22).
-	if reason := t.egress.targetVerdict(host, port); reason != "" {
+	policy := key.policyOr(t.egress)
+	if reason := policy.targetVerdict(host, port); reason != "" {
 		failConnect(reason)
 		return
 	}
 	dialCtx, cancel := context.WithTimeout(ctx, tunnelDialTimeout)
-	upConn, _, err := dialValidated(dialCtx, t.egress, host, port)
+	upConn, _, err := dialValidated(dialCtx, policy, host, port)
 	cancel()
 	if err != nil {
 		failConnect(egressFailureReason(err))
@@ -359,114 +436,17 @@ func (t *tunnelServer) runSession(ctx context.Context, s tunnelStream) {
 	_ = s.setReadDeadline(time.Time{})
 	// The pinned address stays out of the log on purpose: VPN-R19 allows
 	// "where" as the target the operator asked for, not resolver internals.
-	stats, _ = relay(s, upConn, tunnelKeepaliveInterval, tunnelIdleTimeout)
+	live = &liveSession{
+		id: s.sessionID(), keyID: key.id, label: label, via: viaConnect,
+		target: target, transport: s.transport(), start: start, stream: s,
+	}
+	t.live.register(live)
+	sessionRecord{
+		Role: roleExit, Event: eventOpen, ID: s.sessionID(), Key: key.id, Label: label,
+		Via: viaConnect, Transport: s.transport(), Target: target,
+	}.emit()
+	stats, _ = relay(s, upConn, swappedMeter{live})
 	outcome = stats.outcome
-}
-
-// logTunnelLifecycle renders the one log line per tunnel (VPN-R19).
-// transport is the carrier the session actually ran on (docs/d077 §4): at
-// the exit node that is what arrived — "post" for a mode C session, since a
-// proxy strips the ALPN evidence on the way in.
-func logTunnelLifecycle(label, target, transport string, start time.Time, stats relayStats, outcome string) {
-	log.Printf("[vpn] who=operator label=%q target=%q transport=%s bytes_in=%d bytes_out=%d duration_ms=%d outcome=%s",
-		label, target, transport, stats.received, stats.sent,
-		time.Since(start).Milliseconds(), outcome)
-}
-
-// operatorKeysFromEnv builds the exit node's principal set from the env
-// chain — the only home credentials have (VPN-R32: never the config file;
-// and no digest of a token stored beside the plaintext, which would be a
-// second credential copy for zero protection — docs/d078 §2). The roles
-// are disjoint since d090: VPN_OPERATOR_KEYS is the exit node's set and
-// VPN_OPERATOR_TOKEN is the relay node's bearer, read nowhere else —
-// d078 §2's back-compat merge is retired, and a TOKEN-only exit node
-// refuses with the zero-wire migration spelled out. When both are set the
-// keyset wins (TOKEN is ignored HERE; it stays the relay credential on a
-// shared-env host running both roles). Every failure here refuses the
-// tunnel rather than weakening it (NFR-2, VPN-R26).
-func operatorKeysFromEnv() ([]operatorKey, error) {
-	byID, err := decodeOperatorKeys(os.Getenv(envOperatorKeys))
-	if err != nil {
-		return nil, err
-	}
-	if len(byID) == 0 {
-		if os.Getenv(envOperatorToken) != "" {
-			return nil, fmt.Errorf("%s is the relay node's bearer; the exit node reads %s — the migration is zero-wire: set %s={\"default\": \"<the same token>\"} (docs/d090)", envOperatorToken, envOperatorKeys, envOperatorKeys)
-		}
-		return nil, fmt.Errorf("no operator credential: set %s (VPN-R26/R31 fail-closed)", envOperatorKeys)
-	}
-	if len(byID) > maxOperatorKeys {
-		return nil, fmt.Errorf("%d operator keys exceed cap %d (docs/d078: a bounded set, not a user directory)", len(byID), maxOperatorKeys)
-	}
-	// Floor, not entropy proof: the vault owns how strong each token is;
-	// this only catches empty or truncated loads BEFORE the surface exists
-	// (VPN-R31/R26 — refuse without a credential, loudly). The same check
-	// refuses control characters, which is what keeps a token from injecting
-	// headers in the hand-rolled mode D handshake (validOperatorToken).
-	keys := make([]operatorKey, 0, len(byID))
-	for id, token := range byID {
-		if len(token) < 16 {
-			return nil, fmt.Errorf("operator key %q shorter than 16 bytes (VPN-R26/R31 fail-closed)", id)
-		}
-		if !validOperatorToken(token) {
-			return nil, fmt.Errorf("operator key %q contains a control character: a bearer token may not carry header framing (RFC 9110 field-value; VPN-R26 fail-closed)", id)
-		}
-		keys = append(keys, operatorKey{id: id, token: token})
-	}
-	return keys, nil
-}
-
-// decodeOperatorKeys parses VPN_OPERATOR_KEYS strictly — duplicate ids are
-// rejected, never last-wins: encoding/json would silently keep the final
-// duplicate, and a shadowed principal is a key the operator believes exists
-// but does not (NFR-2 fail-loudly; docs/d078 §2).
-func decodeOperatorKeys(raw string) (map[string]string, error) {
-	if raw == "" {
-		return map[string]string{}, nil
-	}
-	dec := json.NewDecoder(strings.NewReader(raw))
-	open, err := dec.Token()
-	if err != nil {
-		return nil, fmt.Errorf("%s is not a JSON object: %w", envOperatorKeys, err)
-	}
-	if delim, ok := open.(json.Delim); !ok || delim != '{' {
-		return nil, fmt.Errorf("%s must be a JSON object {\"<id>\": \"<token>\"} (docs/d078 §2)", envOperatorKeys)
-	}
-	out := make(map[string]string)
-	for dec.More() {
-		keyTok, err := dec.Token()
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", envOperatorKeys, err)
-		}
-		id, ok := keyTok.(string)
-		if !ok || !validOperatorID(id) {
-			return nil, fmt.Errorf("%s id %v must be 1..64 chars of [A-Za-z0-9_-] — ids are log-safe labels (docs/d078 §2)", envOperatorKeys, keyTok)
-		}
-		if _, dup := out[id]; dup {
-			return nil, fmt.Errorf("%s repeats id %q: rejected, not last-wins (docs/d078 §2)", envOperatorKeys, id)
-		}
-		var token string
-		if err := dec.Decode(&token); err != nil {
-			return nil, fmt.Errorf("%s value for %q must be a string: %w", envOperatorKeys, id, err)
-		}
-		out[id] = token
-	}
-	// dec.More only PEEKS at the closing brace, so consume it explicitly and
-	// only then decide whether anything followed the object.
-	closeTok, err := dec.Token()
-	if err != nil {
-		return nil, fmt.Errorf("%s is not a complete JSON object: %w", envOperatorKeys, err)
-	}
-	if closeTok != json.Delim('}') {
-		return nil, fmt.Errorf("%s must be one JSON object, nothing else", envOperatorKeys)
-	}
-	// Exactly io.EOF ends a clean object; any other outcome — a returned
-	// token OR a parse error on garbage — is trailing content (invalid JSON
-	// after the object must not be excused just because Token() errored).
-	if _, err := dec.Token(); !errors.Is(err, io.EOF) {
-		return nil, fmt.Errorf("%s has trailing content after the JSON object", envOperatorKeys)
-	}
-	return out, nil
 }
 
 // validOperatorID is the label shape docs/d078 §2 promises: ids reach server
@@ -526,8 +506,8 @@ func (s *server) enableTunnel(egress egressConfig) error {
 	if err != nil {
 		return err
 	}
-	s.vpn = &tunnelServer{keys: keys, egress: policy, sessions: newExchangeSessions()}
-	log.Printf("[estige] tunnel (modes C–E): enabled at %s", tunnelPath)
+	s.vpn = &tunnelServer{keys: keys, egress: policy, sessions: newExchangeSessions(), live: newLiveRegistry()}
+	logLine(sevInfo, "[estige] tunnel (modes C–E): enabled at %s", tunnelPath)
 	return nil
 }
 

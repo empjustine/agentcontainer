@@ -38,16 +38,29 @@ import (
 // the same pinned tunnel (the client connection closes with the response).
 func (c *relayNode) handleForward(w http.ResponseWriter, r *http.Request) {
 	target := forwardTarget(r.URL)
+	// d171's parsed door: while the switch is on, this branch refuses before
+	// any tunnel opens, because here the relay KNOWS the exchange is
+	// cleartext by construction. The blind doors keep their shape and get a
+	// first-bytes guard instead (degraded.go).
+	if c.cfg.insecureExit {
+		c.refusedRecord(target, viaHTTP, accessURI(r), "degraded-cleartext")
+		writeProblem(w, r, http.StatusForbidden, "degraded-forward-refused",
+			"This relay refuses cleartext HTTP while -insecure-exit is set (docs/d171)",
+			errors.New("the parsed cleartext-forward door is closed in the degraded posture"))
+		return
+	}
 	// The relay's own gate (d163) runs before the tunnel exists: a target
 	// this relay must not relay dies here, in the local problem vocabulary,
 	// and no session opens on the exit for it.
 	if detail, _ := c.localTargetRefusal(r.URL.Hostname()); detail != "" {
+		c.refusedRecord(target, viaHTTP, accessURI(r), errReasonBogon)
 		writeProblem(w, r, http.StatusForbidden, "target-refused",
 			"This relay refuses that target", errors.New(detail))
 		return
 	}
 	tun, err := c.openTunnel(r.Context(), target)
 	if err != nil {
+		c.refusedRecord(target, viaHTTP, accessURI(r), tunnelErrReason(err))
 		status, code, title := httpStatusForTunnelErr(err)
 		writeProblem(w, r, status, code, title, err)
 		return
@@ -58,6 +71,9 @@ func (c *relayNode) handleForward(w http.ResponseWriter, r *http.Request) {
 	// request that pinned it.
 	conn := &tunnelByteConn{stream: tun, target: target}
 	defer func() { _ = conn.Close() }()
+	live, finish := c.beginRelaySession(tun, target, viaHTTP, accessURI(r))
+	conn.live = live
+	outcome := outcomeClosed
 
 	rp := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
@@ -94,6 +110,7 @@ func (c *relayNode) handleForward(w http.ResponseWriter, r *http.Request) {
 			// A failure after the tunnel opened still answers locally in
 			// the tunnel's vocabulary — there is no fallback dial
 			// (VPN-R26) and no vocabulary of its own to invent.
+			outcome = outcomeLocalError
 			status, code, title := httpStatusForTunnelErr(err)
 			writeProblem(w, r, status, code, title, err)
 		},
@@ -114,6 +131,7 @@ func (c *relayNode) handleForward(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	rp.ServeHTTP(w, r)
+	finish(outcome)
 }
 
 // forwardTarget is the tunnel's CONNECT address for an absolute-form
@@ -137,6 +155,7 @@ type tunnelByteConn struct {
 	stream  tunnelStream
 	target  string // CONNECT address — the RemoteAddr diagnostics show
 	pending []byte // unread tail of an oversized DATA frame
+	live    *liveSession
 }
 
 func (c *tunnelByteConn) Read(p []byte) (int, error) {
@@ -169,6 +188,9 @@ func (c *tunnelByteConn) Read(p []byte) (int, error) {
 	}
 	n := copy(p, c.pending)
 	c.pending = c.pending[n:]
+	if c.live != nil {
+		c.live.addDown(int64(n))
+	}
 	return n, nil
 }
 
@@ -180,6 +202,9 @@ func (c *tunnelByteConn) Write(p []byte) (int, error) {
 		n := min(len(p), maxFramePayload)
 		if err := sendFrame(c.stream, frameData, p[:n]); err != nil {
 			return total, err
+		}
+		if c.live != nil {
+			c.live.addUp(int64(n))
 		}
 		total += n
 		p = p[n:]

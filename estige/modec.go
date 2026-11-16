@@ -31,7 +31,7 @@ import (
 // dial is the relay node's TCP leg for this probe — direct, or through the
 // chain proxy when one is configured (docs/d094); the TLS handshake is
 // end-to-end either way.
-func alpnNegotiate(ctx context.Context, u *url.URL, offer []string, dial dialFunc) (string, error) {
+func alpnNegotiate(ctx context.Context, u *url.URL, offer []string, dial dialFunc, skipVerify bool) (string, error) {
 	if u.Scheme != schemeWSS {
 		return "", nil
 	}
@@ -44,7 +44,7 @@ func alpnNegotiate(ctx context.Context, u *url.URL, offer []string, dial dialFun
 		ctx, cancel = context.WithTimeout(ctx, tunnelHandshakeTimeout)
 		defer cancel()
 	}
-	conn, err := dialTLS(ctx, dial, addr, u.Hostname(), offer)
+	conn, err := dialTLS(ctx, dial, addr, u.Hostname(), offer, skipVerify)
 	if err != nil {
 		return "", err
 	}
@@ -62,7 +62,7 @@ func alpnNegotiate(ctx context.Context, u *url.URL, offer []string, dial dialFun
 // frames and whose response body carries the exit node's. A 200 on h2 is this
 // mode's session-open (the 101's counterpart); a 404 is the camouflage
 // refusal (VPN-R34) and confirms nothing about whether the path exists.
-func (c *relayNode) openPOST(ctx context.Context) (tunnelStream, error) {
+func (c *relayNode) openPOST(ctx context.Context, id string, skipVerify bool) (tunnelStream, error) {
 	u := *c.cfg.tunnelURL
 	if u.Scheme != schemeWSS {
 		return nil, fmt.Errorf("mode C needs a wss:// tunnel URL, got %q", u.Scheme)
@@ -76,9 +76,10 @@ func (c *relayNode) openPOST(ctx context.Context) (tunnelStream, error) {
 			ServerName: u.Hostname(),
 			// The offer set of d077 §4: h2 first, http/1.1 kept so the
 			// transport can still parse a response if the edge downgrades.
-			// System roots only — this module has no override knob
-			// (VPN-R28/R55).
-			NextProtos: []string{"h2", protoHTTP11},
+			// System roots are the default; the skip is docs/d171's
+			// argv-gated posture, never a silent fallback.
+			NextProtos:         []string{"h2", protoHTTP11},
+			InsecureSkipVerify: skipVerify, //nolint:gosec // explicit, argv-gated, documented exposure (d171)
 		},
 		// The chain rides the DIAL, not Transport.Proxy (docs/d094): a
 		// blind CONNECT/SOCKS tunnel to the edge, TLS end-to-end above it.
@@ -99,6 +100,7 @@ func (c *relayNode) openPOST(ctx context.Context) (tunnelStream, error) {
 		return nil, err
 	}
 	req.Header.Set("Authorization", "Bearer "+c.cfg.token)
+	req.Header.Set(sessionIDHeader, id)
 
 	// A redirect must never carry the credential somewhere silently: answer
 	// with the 3xx and treat it like any other non-200.
@@ -126,7 +128,7 @@ func (c *relayNode) openPOST(ctx context.Context) (tunnelStream, error) {
 		tr.CloseIdleConnections()
 		return nil, fmt.Errorf("mode C negotiated %s, not h2", resp.Proto)
 	}
-	return &postRelayStream{body: resp.Body, pipe: pw, tr: tr}, nil
+	return &postRelayStream{body: resp.Body, pipe: pw, tr: tr, id: id}, nil
 }
 
 // postRelayStream is mode C's carrier on the relay-node side (d077 §5):
@@ -139,6 +141,7 @@ type postRelayStream struct {
 	body      io.ReadCloser
 	pipe      *io.PipeWriter
 	tr        *http.Transport
+	id        string
 	wmu       sync.Mutex
 	closeOnce sync.Once
 	readTimer *time.Timer
@@ -186,6 +189,8 @@ func (p *postRelayStream) protocolViolation() { _ = p.Close() }
 // transport is h2 — the relay node can see the ALPN evidence the exit node
 // can't (a proxy stripped it), which is exactly d077 §4's h2|wss|post split.
 func (p *postRelayStream) transport() string { return "h2" }
+
+func (p *postRelayStream) sessionID() string { return p.id }
 
 func (p *postRelayStream) Close() error {
 	p.closeOnce.Do(func() {

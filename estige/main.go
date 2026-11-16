@@ -24,11 +24,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -86,7 +86,7 @@ func portFromEnv() string {
 	}
 	for _, r := range port {
 		if r < '0' || r > '9' {
-			log.Fatalf("[estige] PORT=%q is not a port number (docs/d110)", port)
+			fatalLine("[estige] PORT=%q is not a port number (docs/d110)", port)
 		}
 	}
 	return ":" + port
@@ -132,7 +132,7 @@ func writeProblem(w http.ResponseWriter, r *http.Request, status int, code, titl
 		// what it asked for.
 		Instance: instanceOf(r),
 	}); encErr != nil {
-		log.Printf("[estige] problem response encode: %v", encErr)
+		logLine(sevWarn, "[estige] problem response encode: %v", encErr)
 	}
 }
 
@@ -219,6 +219,7 @@ type loggingResponseWriter struct {
 	http.ResponseWriter
 	status int
 	size   int
+	start  time.Time // access-line duration; zero when the caller did not set it
 }
 
 func (lw *loggingResponseWriter) WriteHeader(status int) {
@@ -267,12 +268,19 @@ func (lw *loggingResponseWriter) recordSwitched(size int) {
 // unmodified — nothing request-shaped is credential-class any more
 // (docs/d085), so there is nothing left to scrub.
 func logCombinedRequestURI(r *http.Request, status int, size int) {
+	logAccess(r, status, size, time.Time{})
+}
+
+// logAccess writes the stock Combined Log Format line and hands the same
+// facts to the sink as fields (docs/d155: STATUS, BYTES and DURATION_MS ride
+// beside MESSAGE, because journald parses nothing out of a stream line).
+func logAccess(r *http.Request, status int, size int, start time.Time) {
 	remoteAddr := r.RemoteAddr
 	if host, _, err := net.SplitHostPort(remoteAddr); err == nil {
 		remoteAddr = host
 	}
 	ts := time.Now().Format("02/Jan/2006:15:04:05 -0700")
-	requestLine := fmt.Sprintf("%s %s %s", r.Method, r.URL.RequestURI(), r.Proto)
+	requestLine := fmt.Sprintf("%s %s %s", r.Method, accessURI(r), r.Proto)
 	referrer := r.Referer()
 	if referrer == "" {
 		referrer = "-"
@@ -281,8 +289,34 @@ func logCombinedRequestURI(r *http.Request, status int, size int) {
 	if userAgent == "" {
 		userAgent = "-"
 	}
-	log.Printf("%s - - [%s] %s %d %d %q %q",
-		remoteAddr, ts, requestLine, status, size, referrer, userAgent)
+	fields := []journalField{
+		{"STATUS", strconv.Itoa(status)},
+		{"BYTES", strconv.Itoa(size)},
+	}
+	if !start.IsZero() {
+		fields = append(fields, journalField{"DURATION_MS", strconv.FormatInt(time.Since(start).Milliseconds(), 10)})
+	}
+	activeSink.emit(sevInfo, fmt.Sprintf("%s - - [%s] %s %d %d %q %q",
+		remoteAddr, ts, requestLine, status, size, referrer, userAgent), fields)
+}
+
+// accessURI is what the access line logs. The tunnel and health paths carry
+// no query; the cleartext forward branch does — and there a presigned URL or
+// a session token can live in it (docs/d106's query-string finding). d085's
+// "nothing request-shaped is credential-class" was scoped to the allowlist
+// relay, so the generic branch strips the query rather than log it.
+func accessURI(r *http.Request) string {
+	if !r.URL.IsAbs() {
+		return r.URL.RequestURI()
+	}
+	if r.URL.Scheme != schemeHTTP && r.URL.Scheme != schemeWS {
+		return r.URL.RequestURI()
+	}
+	stripped := *r.URL
+	stripped.RawQuery = ""
+	stripped.ForceQuery = false
+	stripped.Fragment = ""
+	return stripped.String()
 }
 
 // writeFunnel404 answers every 404 this node can produce the way the
@@ -370,6 +404,19 @@ func main() {
 	// its egress config opts in, and this switch is the relay's half of the
 	// same statement. It never re-enables a guaranteed-bogon target.
 	legacyIPRelay := flag.Bool("legacy-ip-relay", false, "relay role: relay address (IP-literal) targets instead of refusing them at the local doors (d163)")
+	// One switch for both degraded relay->exit postures (docs/d171): a
+	// skipped certificate check on an https/wss leg, and a cleartext
+	// ws:// URL. It is argv, not env, because a posture this load-bearing
+	// must be visible in the process's own command line (d163's ledger).
+	insecureExit := flag.Bool("insecure-exit", false, "relay role: allow the two degraded tunnel postures — skip TLS verification and accept a cleartext ws:// URL (docs/d171)")
+	// ssh-style local forwarding (docs/d144): each -L is its own loopback
+	// listener and its own tunnel per accepted connection.
+	var forwardArgs forwardList
+	flag.Var(&forwardArgs, "L", "relay role: local forward, [<bind>:]<port>:<host>:<port> (repeatable; docs/d144)")
+	// The exit node's local status surface (docs/d106). Off by default and
+	// loopback-only when on: the funnel face must stay the camouflage 404,
+	// so a state read cannot ride the public port.
+	statusListen := flag.String("status-listen", "", "exit role: loopback address for the JSON status surface, e.g. 127.0.0.1:8081 (off by default)")
 	// No -modes flag: the transport offer is the whole ladder and selection
 	// is the relay node's per-dial ranking of the endpoint (docs/d093) — a
 	// knob here could only ever degrade it.
@@ -381,37 +428,53 @@ func main() {
 	}
 	nodeRole = *mode
 
-	// Disable Go's default timestamp prefix — the Combined Log Format lines
-	// already carry their own timestamp in brackets, so the log package's
-	// automatic "2009/01/02 15:04:05" header would be redundant noise.
-	log.SetFlags(0)
+	// One detection, before the first line (docs/d155, R1): a service whose
+	// output systemd attached to the journal gets fields; everything else
+	// keeps the stream line byte for byte.
+	installLogSink()
 
 	// Relay node (docs/d073 §7, modes C–E, docs/d088): a separate role with its
 	// own contract — no allowlist config, and failing BEFORE any bind on bad
 	// or missing env IS the kill switch (VPN-R26): a listener that could
 	// start without a credential would only exist to refuse everything anyway.
 	if *mode == "relay" {
-		relayCfg, err := relayConfigFromEnv(*proxyListen, *socksListen, *legacyIPRelay)
+		if *statusListen != "" {
+			fatalLine("[vpn-relay] -status-listen belongs to the exit role; the relay's surface is its loopback /healthz (VPN-R27)")
+		}
+		relayCfg, err := relayConfigFromEnv(*proxyListen, *socksListen, *legacyIPRelay, *insecureExit)
 		if err != nil {
 			if errors.Is(err, errSelfChained) {
-				log.Printf("[vpn-relay] %v", err)
+				logLine(sevError, "[vpn-relay] %v", err)
 				os.Exit(exitSelfChain)
 			}
-			log.Fatalf("[vpn-relay] %v", err)
+			fatalLine("[vpn-relay] %v", err)
+		}
+		relayCfg.forwards, err = parseForwards(forwardArgs)
+		if err != nil {
+			fatalLine("[vpn-relay] %v", err)
 		}
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 		runErr := runRelayNode(ctx, relayCfg)
-		// stop() runs explicitly, not from a defer: log.Fatalf below exits
+		// stop() runs explicitly, not from a defer: fatalLine below exits
 		// without unwinding defers (gocritic's exitAfterDefer), and a pending
 		// defer is exactly what that rule forbids.
 		stop()
 		if runErr != nil {
-			log.Fatalf("[vpn-relay] %v", runErr)
+			fatalLine("[vpn-relay] %v", runErr)
 		}
 		return
 	}
 	if *mode != "exit" {
-		log.Fatalf("[estige] unknown -mode %q (want exit or relay)", *mode)
+		fatalLine("[estige] unknown -mode %q (want exit or relay)", *mode)
+	}
+	if *insecureExit {
+		// The exit node dials nothing: a switch about the dial cannot mean
+		// anything here, and silently ignoring it would hide a misplaced
+		// argv line (docs/d171).
+		fatalLine("[estige] -insecure-exit belongs to the relay role; the exit node dials no tunnel")
+	}
+	if len(forwardArgs) > 0 {
+		fatalLine("[estige] -L belongs to the relay role; the exit node opens no local listeners")
 	}
 
 	// There is no config FILE (docs/d108's tree-shake): every fact the exit
@@ -420,16 +483,21 @@ func main() {
 	// (env PORT, docs/d110). d104's role store becomes the home for the
 	// policy half; until it lands, the env is the whole surface.
 	bind := portFromEnv()
+	if *statusListen != "" {
+		if err := requireLoopback(*statusListen); err != nil {
+			fatalLine("[estige] status listener: %v", err)
+		}
+	}
 
 	s := &server{}
 	armed := operatorCredentialInEnv()
 	if armed {
 		egress, err := egressFromEnv()
 		if err != nil {
-			log.Fatalf("[estige] %v", err)
+			fatalLine("[estige] %v", err)
 		}
 		if err := s.enableTunnel(egress); err != nil {
-			log.Fatalf("[estige] tunnel: %v", err)
+			fatalLine("[estige] tunnel: %v", err)
 		}
 	}
 	// An exit node that is not armed would bind a port and answer 404 to
@@ -437,7 +505,7 @@ func main() {
 	// front, and there is no other face left to serve. Fail loudly instead
 	// (docs/d084's kill-switch law, now the only boot condition, docs/d108).
 	if !armed {
-		log.Fatalf("[estige] nothing to serve: no operator credential in the env (docs/d084)")
+		fatalLine("[estige] nothing to serve: no operator credential in the env (docs/d084)")
 	}
 
 	srv := &http.Server{
@@ -455,6 +523,40 @@ func main() {
 		Handler:     s,
 	}
 
-	log.Printf("[estige] listening on %s; tunnel at %s", bind, tunnelPath)
-	log.Fatal(srv.ListenAndServe())
+	logLine(sevInfo, "[estige] listening on %s; tunnel at %s", bind, tunnelPath)
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	if *statusListen != "" {
+		// The status surface is loopback-only and never part of the funnel
+		// face (docs/d106): it answers the operator's "what is happening"
+		// without adding a byte to the public 404.
+		go serveStatus(*statusListen, s)
+	}
+
+	serveErr := make(chan error, 1)
+	go func() { serveErr <- srv.ListenAndServe() }()
+	select {
+	case err := <-serveErr:
+		fatalLine("[estige] %v", err)
+	case <-ctx.Done():
+		// One signal drains rather than kills (docs/d171's rotation
+		// primitive): stop accepting, let live sessions finish, then close
+		// what is left at the deadline. Without this a restart — which is
+		// how a v3 credential rotates — drops every streaming request.
+		stop()
+		live := s.tunnelLiveCount()
+		logLine(sevInfo, "[estige] signal received; draining %d live session(s) (grace %s)", live, drainGrace)
+		deadline, cancel := context.WithTimeout(context.Background(), drainGrace)
+		defer cancel()
+		// Shutdown closes the listeners immediately (no new session) and
+		// waits for the handlers net/http knows about. Mode D sessions are
+		// hijacked and therefore invisible to it, so the live registry is
+		// the real wait: both carriers must reach zero, or the deadline.
+		go func() { _ = srv.Shutdown(deadline) }()
+		s.drainTunnelSessions(drainGrace)
+		<-time.After(300 * time.Millisecond)
+		logLine(sevInfo, "[estige] drained")
+	}
 }

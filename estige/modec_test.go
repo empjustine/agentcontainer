@@ -83,7 +83,7 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -207,7 +207,7 @@ func TestModeCArrivalIsAuthenticatedAndCamouflaged(t *testing.T) {
 		}
 		// The truncated "frame" ends the session; the carrier and the key
 		// must both be on record (d077 §4 transport, d078 §5 attribution).
-		waitForLog(t, logBuf, "tunnel session: authenticated key=default")
+		waitForLog(t, logBuf, "key=default")
 		waitForLog(t, logBuf, "transport=post")
 	})
 }

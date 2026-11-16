@@ -30,13 +30,11 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
 	"crypto/tls"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -137,22 +135,6 @@ func buildTraceparent(traceID string, span uint64) string {
 	return fmt.Sprintf("00-%s-%016x-01", traceID, span)
 }
 
-// newTraceID draws the per-session connection identity: 16 random bytes as
-// 32 lowercase hex chars, all-zero redrawn (W3C forbids it; the redraw loop
-// is form-over-probability — a zero draw is 2^-128).
-func newTraceID() (string, error) {
-	var b [16]byte
-	for {
-		if _, err := rand.Read(b[:]); err != nil {
-			return "", err
-		}
-		id := hex.EncodeToString(b[:])
-		if strings.Trim(id, "0") != "" {
-			return id, nil
-		}
-	}
-}
-
 // ---------------------------------------------------------------------------
 // Client carrier — the relay node's windowStream
 // ---------------------------------------------------------------------------
@@ -201,7 +183,7 @@ type windowStream struct {
 // The dial context is kept by value with cancel dropped (WithoutCancel,
 // mode C's session-request reason): once the local connection is hijacked
 // the request context dies, the session does not.
-func (c *relayNode) openExchange(ctx context.Context) (tunnelStream, error) {
+func (c *relayNode) openExchange(ctx context.Context, id string, skipVerify bool) (tunnelStream, error) {
 	u := *c.cfg.tunnelURL
 	switch u.Scheme {
 	case schemeWS:
@@ -211,18 +193,20 @@ func (c *relayNode) openExchange(ctx context.Context) (tunnelStream, error) {
 	default:
 		return nil, fmt.Errorf("mode E needs a ws:// or wss:// tunnel URL, got %q", c.cfg.tunnelURL.Scheme)
 	}
-	traceID, err := newTraceID()
-	if err != nil {
-		return nil, err
-	}
+	// One id per app connection, not per window and not per dial attempt:
+	// mode E's trace-id IS docs/d106's session id, so a demotion ladder's
+	// attempts and the windows that follow share one correlation value.
+	traceID := id
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			MinVersion: tls.VersionTLS12,
 			ServerName: u.Hostname(),
 			// http/1.1 ONLY: mode E is the h1 floor — offering h2 would
 			// silently turn a floor session into mode C's plane. System
-			// roots, no override knob (VPN-R28/R55).
-			NextProtos: []string{protoHTTP11},
+			// roots are the default; the skip is docs/d171's argv-gated
+			// posture, never a silent fallback.
+			NextProtos:         []string{protoHTTP11},
+			InsecureSkipVerify: skipVerify, //nolint:gosec // explicit, argv-gated, documented exposure (d171)
 		},
 		// The chain rides the DIAL, not Transport.Proxy (docs/d094) — same
 		// shape as mode C's transport.
@@ -384,6 +368,7 @@ func (w *windowStream) startExchangeLocked() error {
 		return err
 	}
 	req.Header.Set("Authorization", "Bearer "+w.token)
+	req.Header.Set(sessionIDHeader, w.traceID)
 	req.Header.Set("Traceparent", buildTraceparent(w.traceID, w.seq))
 	resp, err := w.client.Do(req)
 	if err != nil {
@@ -461,6 +446,8 @@ func (w *windowStream) protocolViolation() { _ = w.Close() }
 // CAN tell C from E by its own plane, but the log vocabulary stays stable).
 func (w *windowStream) transport() string { return transportPOST }
 
+func (w *windowStream) sessionID() string { return w.traceID }
+
 // Close tears the carrier down once: the closed channel releases every
 // parked reader/writer, the in-flight response body dies with it, and the
 // transport's idle conns are dropped (a dead session leaves no keep-alive
@@ -520,16 +507,16 @@ func newExchangeSessions() *exchangeSessions {
 // non-nil only for the key-mismatch case: a desynced span or an unknown
 // trace-id is a misrouted window, not evidence that someone else holds the
 // carrier.
-func (t *tunnelServer) accept(ctx context.Context, traceID string, span uint64, keyID string) (session *exchangeStream, compromised *exchangeStream) {
+func (t *tunnelServer) accept(ctx context.Context, traceID string, span uint64, key *operatorKey) (session *exchangeStream, compromised *exchangeStream) {
 	t.sessions.mu.Lock()
 	defer t.sessions.mu.Unlock()
 	if s := t.sessions.byTrace[traceID]; s != nil {
-		if s.keyID != keyID {
+		if s.keyID != key.id {
 			// Attribution side only: the arriving key is named in the log (it
 			// authenticated), never in the response, and the session's own key
 			// is deliberately NOT logged here — a refusal must not report who
 			// else holds the trace-id.
-			log.Printf("[estige] tunnel mode E: AUTH FAILURE — window authenticated as key=%s, but this session was minted by another principal; killing the session", keyID)
+			logLine(sevWarn, "[estige] tunnel mode E: AUTH FAILURE — window authenticated as key=%s, but this session was minted by another principal; killing the session", key.id)
 			return nil, s
 		}
 		return s, nil
@@ -544,16 +531,15 @@ func (t *tunnelServer) accept(ctx context.Context, traceID string, span uint64, 
 		// Loud, not silent: a full registry means a session leak or an
 		// operator burst, and refusing a NEW session is survivable while a
 		// half-minted one would not be (NFR-2).
-		log.Printf("[estige] tunnel mode E: session registry full (%d) — refusing new session", maxExchangeSessions)
+		logLine(sevWarn, "[estige] tunnel mode E: session registry full (%d) — refusing new session", maxExchangeSessions)
 		return nil, nil
 	}
-	s := newExchangeStream(traceID, t.sessions, keyID)
+	s := newExchangeStream(traceID, t.sessions, key.id)
 	t.sessions.byTrace[traceID] = s
-	// Attribution at mint — the same point the 101 and mode C paths take
-	// it: after auth, before any session work (docs/d078 §5). The id is a
-	// label, so saying it out loud is allowed; the credential never is.
-	log.Printf("[estige] tunnel session: authenticated key=%s", keyID)
-	go t.runSession(ctx, s)
+	// Attribution lives on the session's own open record now (docs/d106):
+	// the id and key appear there, once, instead of a second line per
+	// session that said almost nothing.
+	go t.runSession(ctx, s, key)
 	return s, nil
 }
 
@@ -694,14 +680,14 @@ func (s *exchangeStream) flushWindow(lw *loggingResponseWriter) {
 // admission, drain, then the response — and the CLF line is emitted for
 // EVERY window, because unlike mode C each exchange really is its own
 // request.
-func (t *tunnelServer) serveTunnelExchange(w http.ResponseWriter, r *http.Request, keyID string) {
-	lw := &loggingResponseWriter{ResponseWriter: w}
+func (t *tunnelServer) serveTunnelExchange(w http.ResponseWriter, r *http.Request, key *operatorKey) {
+	lw := &loggingResponseWriter{ResponseWriter: w, start: time.Now()}
 	traceID, span, err := parseTraceparent(r.Header.Get("Traceparent"))
 	if err != nil {
 		writeFunnel404(lw, r)
 		return
 	}
-	s, compromised := t.accept(context.WithoutCancel(r.Context()), traceID, span, keyID)
+	s, compromised := t.accept(context.WithoutCancel(r.Context()), traceID, span, key)
 	if compromised != nil {
 		// Every tunnel session exists only under authentication, and a failed
 		// authentication interrupts the tunnel rather than merely declining
@@ -728,7 +714,7 @@ func (t *tunnelServer) serveTunnelExchange(w http.ResponseWriter, r *http.Reques
 		// it (one stream, one life) — kill the state rather than leave a
 		// minted session waiting for windows that will never come.
 		_ = s.Close()
-		log.Printf("[estige] tunnel mode E: window drain failed: %v", err)
+		logLine(sevWarn, "[estige] tunnel mode E: window drain failed: %v", err)
 		// The status must reach the peer: answering nothing here would let
 		// net/http emit an empty 200 while the CLF line records 500, so a
 		// dead session would look healthy to the client and the log would
@@ -736,7 +722,7 @@ func (t *tunnelServer) serveTunnelExchange(w http.ResponseWriter, r *http.Reques
 		// leaks no oracle (VPN-R34 governs the unauthenticated funnel only).
 		writeProblem(lw, r, http.StatusInternalServerError, "tunnel-window-failed",
 			"The tunnel could not read this window", err)
-		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
+		logAccess(r, http.StatusInternalServerError, lw.size, lw.start)
 		return
 	}
 	// The response headers are this window's session-open signal. No
@@ -744,11 +730,11 @@ func (t *tunnelServer) serveTunnelExchange(w http.ResponseWriter, r *http.Reques
 	// fully read, which is exactly why windows exist.
 	lw.WriteHeader(http.StatusOK)
 	if err := http.NewResponseController(lw).Flush(); err != nil {
-		logCombinedRequestURI(r, http.StatusInternalServerError, lw.size)
+		logAccess(r, http.StatusInternalServerError, lw.size, lw.start)
 		return
 	}
 	s.flushWindow(lw)
-	logCombinedRequestURI(r, http.StatusOK, lw.size)
+	logAccess(r, http.StatusOK, lw.size, lw.start)
 }
 
 // readTunnelMsg pops the next admitted frame — or waits for the next
@@ -810,6 +796,8 @@ func (s *exchangeStream) protocolViolation() { _ = s.Close() }
 // plain POST — the edge stripped the plane evidence, and the vocabulary is
 // h2 | wss | post (docs/d077 §4).
 func (s *exchangeStream) transport() string { return transportPOST }
+
+func (s *exchangeStream) sessionID() string { return s.traceID }
 
 // Close releases the session exactly once: parked readers/writers and any
 // in-flight handler see closed, and the registry entry goes with it.
