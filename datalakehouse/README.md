@@ -4,7 +4,7 @@ type: module-design
 status: active
 title: "datalakehouse — local history and session stores → MotherDuck via the duckdb CLI"
 parent: architecture
-references: [d046, d113, d139, d167, d172, d173, d179, d180, d181]
+references: [d046, d113, d139, d167, d172, d173, d179, d180, d181, d203]
 tags: [atuin, motherduck, duckdb, sync]
 ---
 
@@ -80,14 +80,19 @@ relies on those must pass the path explicitly.
 
 The sync is the postmortem sweep of d184: it walks the pi session root and the
 agent dir's delegation/ directory, promotes each transcript's guaranteed fields
-and keeps every entry verbatim in a JSON payload column, and upserts into
-`md:agent` (`mdw.pi.session`, `mdw.pi.entry`). No ThinkRail field is stored
-(d183). A direct run self-heals a missing `md:agent` by connecting to it once (DuckDB has
+and keeps every entry verbatim in a JSON payload column, and inserts into
+`md:agent` (`mdw.pi.session`, `mdw.pi.entry`) with first-write-wins on each
+natural key. An entry is immutable by `(session_id, id)`, and re-writing an
+unchanged row would leave a new MotherDuck version in failsafe on every run
+(d203). No ThinkRail field is stored (d183). A direct run self-heals a missing `md:agent` by connecting to it once (DuckDB has
 no `CREATE DATABASE` statement, so connecting is the create route) and retrying; a
 read-scaling token cannot create one, so create it once in the MotherDuck UI if the
 run refuses. The resolver, `--print-roots`, `--dry`, `--print-rows` and
 `--report-orphans` need no token, and resolution precedes the vault round-trip
 exactly as the atuin sibling's does.
+Cold Parquet archiving of session rows is a pending task of this unit (d203):
+export rows outside the hot window to zstd Parquet, keep the hot window in
+MotherDuck, and verify the archive before pruning.
 
 The daemon is the host-side, write-only `POST /ingest/session` sink of d181: no
 read-back and no delete, appending to the same spool the sync already reads, so a
@@ -183,7 +188,12 @@ somewhere, and `key`/`output-capture` stay out by design.
 - An MCP query after account or database surgery can hit a stale catalog —
   the immediate retry succeeds; treat a `schema does not exist` on a
   just-written table as that staleness, not as data loss.
-- End-to-end: fixture runs cover create, re-run upsert, an atuin-style
+- MotherDuck bills managed storage, failsafe included, and an
+  `ON CONFLICT DO UPDATE` sync of unchanged rows grows that failsafe: the
+  session table's `failsafe_bytes` can exceed its live bytes by an order of
+  magnitude (d203). The sync and the spool sender use first-write-wins
+  (`ON CONFLICT DO NOTHING`), so an unchanged row is not rewritten.
+- End-to-end: fixture runs cover create, re-run idempotence, an atuin-style
   `ALTER`-add-column drift, and prune; the resolution order has its own
   `tests/resolve-source.sh` (no token, no network).
 

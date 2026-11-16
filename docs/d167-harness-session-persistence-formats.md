@@ -5,7 +5,7 @@ status: draft
 title: "d167 — harness session persistence formats: guaranteed columns plus a JSON catch-all, mistral-vibe pending"
 parent: datalakehouse
 depends-on: [coding-harness-persistence, d148]
-references: [d046, d054, d116, d124, d179, d182, d183, d184]
+references: [d046, d054, d116, d124, d179, d182, d183, d184, d203]
 tags:
   [
     "datalakehouse",
@@ -243,6 +243,9 @@ Deferred, not rejected. It departs from the no-shredding decision above by
 reshaping a private payload, so it needs its own decision and a migration of the
 rows v1 already wrote. It must also pin the part-type set, the
 `toolCall.arguments` irregularity, and a size policy before it can land.
+[d203](d203-session-payload-storage-cost.md) measures the storage claim: the
+split is 1% larger in native MotherDuck storage and 4% smaller in Parquet, so
+the split's reason is column pruning and query shape, not native compression.
 
 ## Consequences
 

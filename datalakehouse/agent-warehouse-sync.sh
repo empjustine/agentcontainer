@@ -396,22 +396,27 @@ SQL
 # Explicit columns, never schema inference: the payload is a JSON column, so a
 # heterogeneous value (a new entry field) cannot break the read.
 CREATE TEMP TABLE st_s AS SELECT * FROM read_json('$sessions_rows', format='newline_delimited', columns={session_file:'VARCHAR', store:'VARCHAR', session_id:'VARCHAR', cwd:'VARCHAR', version:'BIGINT', parent_session:'VARCHAR', started_at:'VARCHAR'});
+-- First-write-wins (docs/d203): a session is immutable by its own id, and
+-- re-writing an unchanged row creates a new MotherDuck version in failsafe, so
+-- a per-run upsert multiplies managed storage. The path is a location attribute;
+-- the first spelling seen wins, so a host and a sandbox do not churn the row.
 INSERT INTO $TGT.session (session_id, session_file, cwd, version, parent_session, started_at, store)
   SELECT session_id, session_file, cwd, try_cast(version AS INTEGER), parent_session,
          try_cast(started_at AS TIMESTAMP), store FROM st_s
-  ON CONFLICT (session_id) DO UPDATE SET
-    session_file=excluded.session_file, cwd=excluded.cwd, version=excluded.version,
-    parent_session=excluded.parent_session, started_at=excluded.started_at, store=excluded.store;
+  ON CONFLICT (session_id) DO NOTHING;
 SQL
 	fi
 	if [ "$entry_count" -gt 0 ]; then
 		cat <<SQL
 CREATE TEMP TABLE st_e AS SELECT * FROM read_json('$entries_rows', format='newline_delimited', columns={session_id:'VARCHAR', session_file:'VARCHAR', store:'VARCHAR', line_no:'BIGINT', id:'VARCHAR', parent_id:'VARCHAR', type:'VARCHAR', ts:'VARCHAR', payload:'JSON'});
+-- First-write-wins (docs/d203): an entry is immutable by (session_id, id), and
+-- the sync re-posts every row on every run. An update of an unchanged row would
+-- leave a full copy in failsafe each run; DO NOTHING leaves the archive intact
+-- and keeps the managed byte count flat. A repair is an explicit delete plus
+-- insert, not an every-run rewrite.
 INSERT INTO $TGT.entry (session_id, session_file, id, parent_id, type, ts, line_no, store, payload)
   SELECT session_id, session_file, id, parent_id, type, try_cast(ts AS TIMESTAMP), line_no, store, payload FROM st_e
-  ON CONFLICT (session_id, id) DO UPDATE SET
-    session_file=excluded.session_file, parent_id=excluded.parent_id, type=excluded.type,
-    ts=excluded.ts, line_no=excluded.line_no, store=excluded.store, payload=excluded.payload;
+  ON CONFLICT (session_id, id) DO NOTHING;
 SQL
 	fi
 	cat <<SQL

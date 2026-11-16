@@ -8,8 +8,8 @@
 # whole spool to read_json.
 #
 # WHY streaming: a pending spool can be hundreds of MiB, and a single read_json over
-# it holds it in the engine and in a temp file. This reads a bounded batch, upserts
-# it, and advances, so memory is the batch, not the spool. The upsert is idempotent,
+# it holds it in the engine and in a temp file. This reads a bounded batch, applies
+# it, and advances, so memory is the batch, not the spool. The insert is idempotent,
 # so an interrupted run re-reads from the start and no row is doubled.
 #
 # WHY rotate first: the daemon keeps appending. Moving the live tail aside freezes
@@ -30,7 +30,7 @@ usage: agent-warehouse-spool-send.sh [--spool FILE] [--db NAME] [--batch-rows N]
                                      [--keep] [--dry] [--print-rows]
   --spool FILE       spool to consume (default AGENT_WAREHOUSE_SPOOL)
   --db NAME          target MotherDuck database (default AGENT_WAREHOUSE_DB, else agent)
-  --batch-rows N     rows per upsert batch (default 5000)
+  --batch-rows N     rows per apply batch (default 5000)
   --keep             do not delete a spool file after folding it
   --dry              normalise and count, write and delete nothing (no token)
   --print-rows       print the normalised rows, write and delete nothing (no token)
@@ -113,7 +113,7 @@ ensure_db() { # DuckDB has no CREATE DATABASE; connecting is the create route.
 	return 1
 }
 
-# The batch upsert. $1 = session rows to include (0/1), $2 = entry rows to include.
+# The batch apply. $1 = session rows to include (0/1), $2 = entry rows to include.
 send_batch() { # $1 = include session rows (0/1), $2 = include entry rows (0/1)
 	local sql result
 	cp "$s_rows" "$tmp/send_s.ndjson"
@@ -132,18 +132,22 @@ CREATE TABLE IF NOT EXISTS mdw.pi.entry(
 	if [ "$1" = 1 ]; then
 		sql="$sql
 CREATE TEMP TABLE st_s AS SELECT * FROM read_json('$tmp/send_s.ndjson', format='newline_delimited', columns={session_file:'VARCHAR', store:'VARCHAR', session_id:'VARCHAR', cwd:'VARCHAR', version:'BIGINT', parent_session:'VARCHAR', started_at:'VARCHAR'});
+-- First-write-wins (docs/d203): re-writing an unchanged session is a new
+-- MotherDuck version in failsafe; the path is a location attribute, so the
+-- first spelling seen wins.
 INSERT INTO mdw.pi.session (session_id, session_file, cwd, version, parent_session, started_at, store)
   SELECT session_id, session_file, cwd, try_cast(version AS INTEGER), parent_session, try_cast(started_at AS TIMESTAMP), store FROM st_s
-  ON CONFLICT (session_id) DO UPDATE SET session_file=excluded.session_file, cwd=excluded.cwd,
-    version=excluded.version, parent_session=excluded.parent_session, started_at=excluded.started_at, store=excluded.store;"
+  ON CONFLICT (session_id) DO NOTHING;"
 	fi
 	if [ "$2" = 1 ]; then
 		sql="$sql
 CREATE TEMP TABLE st_e AS SELECT * FROM read_json('$tmp/send_e.ndjson', format='newline_delimited', columns={session_id:'VARCHAR', session_file:'VARCHAR', store:'VARCHAR', line_no:'BIGINT', id:'VARCHAR', parent_id:'VARCHAR', type:'VARCHAR', ts:'VARCHAR', payload:'JSON'});
+-- First-write-wins (docs/d203): an entry is immutable by (session_id, id) and
+-- the spool is re-read after an interruption. An update leaves a copy in
+-- failsafe; DO NOTHING keeps the archive and the bill flat.
 INSERT INTO mdw.pi.entry (session_id, session_file, id, parent_id, type, ts, line_no, store, payload)
   SELECT session_id, session_file, id, parent_id, type, try_cast(ts AS TIMESTAMP), line_no, store, payload FROM st_e
-  ON CONFLICT (session_id, id) DO UPDATE SET session_file=excluded.session_file, parent_id=excluded.parent_id,
-    type=excluded.type, ts=excluded.ts, line_no=excluded.line_no, store=excluded.store, payload=excluded.payload;"
+  ON CONFLICT (session_id, id) DO NOTHING;"
 	fi
 	sql="$sql
 SELECT (SELECT count(*) FROM mdw.pi.session) AS sessions, (SELECT count(*) FROM mdw.pi.entry) AS entries;"
