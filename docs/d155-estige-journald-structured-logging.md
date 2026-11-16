@@ -18,12 +18,20 @@ what stays exactly as it is. Nothing implements it yet.
 
 ## Status
 
-Accepted, pending implementation. The condition described below holds in the
-tree as it stands: `main.go` writes a Combined Log Format access line and
-`[estige] …` operational lines through the standard library's `log` package,
-`log.SetFlags(0)` and no `log.SetOutput`, and neither unit in
+Implemented. `estige/logging.go` owns the sink and `estige/journald.go` the
+protocol: detection is `JOURNAL_STREAM`, the stream path is unchanged
+byte-for-byte, and every entry carries `PRIORITY` and `SEVERITY_NUMBER` from
+the one table in `logging.go`. `estige/observability_test.go` asserts the
+datagram fields and the binary form for a value containing a newline; the
+detection itself is not faked because it compares the process's own stderr
+stat, and a test that lied about that would test the fixture, not the code.
+
+What was true before this change, and why the detection had to be the
+environment rather than a flag: `main.go` wrote a Combined Log Format access
+line and `[estige] …` operational lines through the standard library's `log`
+package, `log.SetFlags(0)` and no `log.SetOutput`, and neither unit in
 `estige/packaging/ol/` sets `StandardOutput=` or `StandardError=`, so systemd's
-default (`journal`) governs both streams.
+default (`journal`) governed both streams.
 
 ## Problem
 
@@ -125,7 +133,7 @@ must not raise it — an unbounded journal is a disk-full outage on a node whose
 job is forwarding traffic. A dump is a projection (d154) and `journalctl --since`
 narrows a query; neither needs the limit moved.
 
-## Requirements (pending implementation)
+## Requirements
 
 - **R1 — detect once.** Detection happens at startup, before the first line; a
   mismatch never falls back mid-run.

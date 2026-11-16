@@ -27,11 +27,21 @@ accepts by setting it.
 
 ## Status
 
-Decision in force; implementation pending. Today's code has no such flag,
-accepts a `ws://` tunnel URL at config time with no warning unless a chain
-proxy is configured, and keeps the absolute no-skip rule at all three of its
-TLS construction sites. The exposure table below is the switch's contract and
-must travel with any implementation of it.
+Implemented. The switch exists (`-insecure-exit`, relay role only), a
+cleartext tunnel URL is refused at config time without it, the three TLS
+construction sites share one posture field, the boot warning names the
+exposure, `/healthz` reports `degraded`, the parsed forward door refuses
+before any tunnel, and the blind doors classify their first client bytes.
+`estige/degraded_test.go` covers the grammar, the config refusal, the forward
+door and the guard (ClientHello passes, an HTTP request line closes); the
+existing `ws://` harnesses became `wss://` fixtures in the same change, which
+is the loud diff this record predicted.
+
+Two consequences beyond the matrix below: rotation now drains rather than
+kills (a signal waits `drainGrace` for live sessions, so restarting to rotate
+a v3 bearer does not truncate a streaming response), and the relay's records
+carry `via=` for every door, so a session's posture can be read beside the
+boot line that announced it.
 
 ## Problem
 

@@ -124,7 +124,8 @@ or operator already owns:
 
 | fact                               | spelling                                                                                                                                                       |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| arming credential (the capability) | `VPN_OPERATOR_KEYS` — no credential, no tunnel, no boot (docs/d084)                                                                                            |
+| arming credential (the capability) | `VPN_OPERATOR_KEYS`, JSON id → token; no credential, no tunnel, no boot (docs/d084)                                                                            |
+| per-principal egress (optional)    | a keyset value may instead be `{"token": "…", "egress": {…}}` (docs/d078); a string inherits the process table                                                 |
 | egress opt-ins (VPN-R38)           | `VPN_TUNNEL_EGRESS`, JSON `{"allowCidrs": ["10.0.0.0/8"], "ports": [443]}`; unset = the requirement's defaults (deny RFC 1918/metadata/loopback, allow 80/443) |
 | bind                               | `PORT` (docs/d110)                                                                                                                                             |
 
@@ -211,6 +212,17 @@ the `/etc/hosts` spellings like `localhost4.localdomain4`) plus
 guaranteed-bogon space before any lookup regardless (docs/d163). The relay refuses to start if the ambient proxy env already
 names its own listener (exit 94) — a self-chain would dial a loop.
 
+Two postures and one extra listener are argv, not env: `-insecure-exit`
+(docs/d171) is the only way to skip tunnel-leg verification or accept a
+cleartext `ws://` URL — without it the URL is refused at boot — and while it
+is set the parsed cleartext-forward door refuses and the blind doors close a
+client that opens with an HTTP request line. On the exit node, `-status-listen
+127.0.0.1:8081` (loopback only, off by default) serves `GET /status` with the
+live session set (docs/d106). `-L [<bind>:]<port>:<host>:<port>`
+(docs/d144, repeatable, loopback binds only) adds an ssh-style listener whose
+every accepted connection buys its own tunnel. `/healthz` reports the live
+session set, the endpoint and the degraded flag; never the credential.
+
 `estige proxy-env [-proxy-listen ADDR] [-socks-listen ADDR]` is the CHAIN STEP
 (docs/d095): it prints `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY`
 (loopback direct plus the host's entries) and `NODE_USE_ENV_PROXY=1` as
@@ -237,6 +249,21 @@ when the env carries the operator keyset) holds the keyset
 (`VPN_OPERATOR_KEYS`), and the relay node holds the operator token
 (`VPN_OPERATOR_TOKEN`) — disjoint since docs/d090, which retired the keyset's
 implicit-`default` merge of the token.
+
+### Logs and the v3 rotation
+
+Every line is still one line: the access line stays stock Combined Log Format
+and session records are logfmt (`ts= role= event= id= key= …`, docs/d106).
+Under systemd the same lines become journal entries with fields — detected by
+`JOURNAL_STREAM`, no flag — so `journalctl -o json` can be queried by `ID`
+or `EVENT` while `journalctl -o cat` still parses the access log (docs/d155).
+
+Rotating the v3 bearer is a staged overlap, never a cut: add the new id to the
+exit's keyset, move the relay to the new token, restart the exit, remove the
+old id, restart the exit again. Each restart drains (`SIGTERM` waits for live
+sessions up to 20 s) instead of truncating them, and a session id joins the
+exit's and relay's records for the same connection. A per-key egress table
+(docs/d078) travels with its id, so a staged rotation stages policy too.
 
 ### Port model (the single knob, docs/d110)
 

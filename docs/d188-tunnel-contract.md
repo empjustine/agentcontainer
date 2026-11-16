@@ -65,6 +65,9 @@ MITMs.
   principal and the client label, never the credential) and where (target
   `host:port`, tunnel, bytes in/out, duration, outcome). (d103 bounds the
   loopback surface's own parsing of cleartext `http`/`ws` requests.)
+  Amended by d106: the who is the matched key id on a session record, joined
+  across nodes by a per-session id, and the forward door's query string is
+  stripped rather than logged.
 
 ## The target connection
 
@@ -80,7 +83,8 @@ MITMs.
 ## The client and the loopback proxy
 
 - **VPN-R23** — The client is the same binary in a client mode, unprivileged,
-  bound only to loopback.
+  bound only to loopback. d144's `-L` listeners are part of this surface and
+  obey the same rule: a non-loopback bind half is refused at parse time.
 - **VPN-R24** — It offers an HTTP proxy listener implementing
   `CONNECT host:port` (for `HTTPS_PROXY`) and SOCKS5 with remote-name
   resolution (for `ALL_PROXY` and non-HTTP TCP).
@@ -91,7 +95,11 @@ MITMs.
   silently leak to a direct connection.
 - **VPN-R27** — A loopback health/status surface distinguishes "proxy down"
   from "upstream down". (The loopback listener is HTTP/1.1 on purpose — its h2
-  refusal is d073's recorded rationale.)
+  refusal is d073's recorded rationale.) Amended by d106: the relay's
+  `/healthz` reports the live session set beside the endpoint and last
+  error, and the exit node gains an optional loopback-only `/status`
+  (`-status-listen`, off by default) so the same question is answerable on
+  the other node without touching the funnel face.
 
 ## Authentication and secrets
 
@@ -99,7 +107,9 @@ MITMs.
   credentials are the relay's own, distinct from the client-owned provider
   keys. Amended by d104: the credential is mutual Ed25519 proofs — each
   direction signed by its own principal's key, the verifier holding only
-  public keys, no shared secret on the wire.
+  public keys, no shared secret on the wire. Until that lands, the v3 bearer
+  is the credential, and each named principal may carry its own egress table
+  (d078) so one leaked token does not inherit every relay's reach.
 - **VPN-R32** — Key material lives in a role-scoped store on the host that
   holds it (never env, never git, never through the vault chain step; d104,
   d131-d133); the env carries only non-secret runtime knobs (d090, d130).
@@ -146,3 +156,8 @@ MITMs.
   the camouflage 404 are its two observable acceptance tests.
 - A future transport joins the ladder (d077/d187); a future degraded mode stays
   behind `-insecure-exit` (d171).
+- One node's state is readable without the log (d106): the relay's live set on
+  `/healthz`, the exit's on its loopback `/status`, and both nodes'
+  session records share an id.
+- Policy that used to belong to the process can belong to a principal
+  (d078); d104's store is still where it moves next.

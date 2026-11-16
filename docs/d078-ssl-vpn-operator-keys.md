@@ -189,3 +189,106 @@ and "multi-tenant" remains rejected as written (d073 §12).
   colliding id refuses startup.
 - Server logs contain the id on success and never a token; the CLF line's
   format is unchanged; existing suite green.
+
+## Per-key egress (keyset extension, implemented)
+
+### Status
+
+Implemented with this record. It amends d078's keyset grammar without
+changing what a plain-string value means, and it is explicitly a **v3-era
+stopgap**: d104's exit.json carries egress beside the admitted relays, and
+when that store lands this member is retired with the rest of the env
+surface (d108's generation numbering, d104's VPN-R32 amendment).
+
+### The containment gap
+
+VPN_OPERATOR_KEYS names a bounded set of principals (d078), and every one of
+them shares the single egress table from VPN_TUNNEL_EGRESS. A deployment that
+admits a work laptop and a less-trusted relay therefore gives both the same
+reach; the key id already distinguishes them in the records (d106), but it
+buys nothing at the dial.
+
+The v3 bearer is permanent (d104's Problem), so the blast radius of one
+leaked token is exactly "whatever the process egress allows". Narrowing that
+per principal is the one containment measure available without the v4
+credential.
+
+### Grammar
+
+The keyset value is either the token string it always was, or an object:
+
+    VPN_OPERATOR_KEYS='{"laptop":"<token>","relay-a":{"token":"<token>","egress":{"allowCidrs":["10.0.0.0/8"],"ports":[443]}}}'
+
+- A **string** value inherits the process table from VPN_TUNNEL_EGRESS.
+  Existing env files need no edit, and an object is never required.
+- An **object** value requires token and may carry egress, whose members are
+  egressConfig's (allowCidrs, ports, allowIPLiterals).
+- A per-key table is built by the same newEgressPolicy as the process table,
+  so the default-deny set and the CIDR/port checks cannot diverge between
+  the two. It can widen the defaults only the way the process table can — by
+  an explicit allowed CIDR — and it never re-enables a guaranteed refusal
+  (d163).
+
+### Strictness — the credential surface refuses rather than guesses
+
+- Unknown members anywhere in the object are refused
+  (DisallowUnknownFields).
+- An empty egress object is refused: unset means "inherit", and a blob that
+  names nothing is a typo whose silent reading would be "configured".
+- Duplicate ids stay refused, not last-wins (d078). The object form does not
+  change the rule.
+- The token floor (16 bytes) and the control-character refusal
+  (validOperatorToken) apply exactly as they do to a string value.
+- The principal cap (maxOperatorKeys) counts entries, not members.
+
+### Why not a second env variable
+
+VPN_TUNNEL_EGRESS stays the process default; a second variable naming a
+policy per key would reintroduce the cardinality problem d090 exists to kill
+(singular/plural names encoding a data structure). The policy belongs where
+the key is, which is also where d104's store puts it.
+
+### What this does not add
+
+- **No per-key rate limit or concurrency cap.** d188 keeps throughput quotas
+  out of scope (single-user economy), and this record does not reopen it.
+- **No per-key port forwarding scope.** d144's forwards are argv and reach
+  the exit's table; a per-key scope for them would need d145's claims model.
+- **No new failure vocabulary.** A refusal is still port-denied /
+  egress-denied / target-bogon, so the app's problem body and the session
+  record agree (d106).
+
+### Consequences of the extension
+
+- One relay's leak no longer reaches another relay's destinations when the
+  operator narrows the tables; the records name which principal dialed.
+- The keyset is a small schema, so estige must validate it at load — a
+  malformed policy refuses the whole tunnel surface (VPN-R26), never a
+  partial admit.
+- The keyset is now the place an operator edits policy for v3, which is the
+  pressure d104's store removes.
+- Rotation is unchanged: add the new id (with or without a table), move the
+  relay, remove the old id, restart the exit. A staged rotation therefore
+  also stages policy.
+
+### Alternatives rejected for the extension
+
+- **A per-key table in VPN_TUNNEL_EGRESS keyed by id.** Two structures in
+  one variable, and the same cardinality problem as a second variable.
+- **Narrow only: refuse any allow CIDR in a per-key table.** It would make
+  the member useless for the one case that motivates it — a relay that
+  needs a private range the others must not reach.
+- **Merge the per-key table into the process table.** Intersection hides
+  what the operator wrote, and union makes the member pointless; the
+  principal's table replaces the process table, and inheritance is the
+  explicit alternative.
+- **Wait for d104.** The v3 deployment is the one shipping; waiting leaves
+  the containment gap in place for the lifetime of the bearer.
+
+### Verification of the extension
+
+estige/keyset_test.go drives the grammar (string, object, inheritance,
+unknown field, empty table, token floor) and an end-to-end CONNECT where one
+key's table admits a loopback target and a plain-string key still hits the
+default deny. The records in that test carry the principal's id, and the
+token never appears in a line.

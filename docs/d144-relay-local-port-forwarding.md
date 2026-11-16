@@ -25,15 +25,22 @@ no egress change.
 
 ## Status
 
-**Draft.** Nothing is implemented, and forwarding scope comes from the
-relay's argv at establishment (Decision), so the store takes no delta and
-the feature does not wait for it. The implementing change extends the
-relay's flag surface with ssh-style `-L`: parse-time refusals carrying
-the argument's position, no interim env spelling (the
-`VPN_TUNNEL_EGRESS` interim home exists only because egress predates any
-store), and the packaged service unit's `ExecStart` carrying the
-operator's arguments through ([d120](d120-estige-ships-as-packages.md)
-retired the launcher script that pass-through used to live in).
+**Implemented.** The relay takes repeatable `-L [<bind>:]<port>:<host>:<port>`
+arguments (cap 32), binds each listener at startup with parse-time refusals,
+and runs the ordinary CONNECT path per accepted connection
+(`estige/forwarding.go`; the end-to-end case is in `forwarding_test.go`).
+Scope comes from argv at establishment, so the store takes no delta and the
+feature does not wait for it. Two grammar decisions settled in implementation:
+a bracketed IPv6 target is refused rather than silently mis-parsed (the
+colon-split grammar is host-name/IPv4 only; a bracketed form is a future
+widening), and an argument whose bind half is not loopback is refused by the
+same `requireLoopback` every other listener uses (VPN-R23). The
+principal-named target half is not implemented: it is the rendezvous half of
+[d145](d145-relay-remote-port-forwarding.md) and needs the v4 credential's
+attributable principals, so under v3 every target is an ordinary host name
+resolved and gated at the exit. The service unit
+passes `ExecStart` arguments through already ([d120](d120-estige-ships-as-packages.md)
+retired the launcher script that used to own that).
 
 ## Problem
 

@@ -39,7 +39,10 @@ deployment, and mode C's unauthenticated tunnel probes. No JSON, no URN, no
 distinctive header: a differential body would confirm to a prober that custom
 software lives here, and a client from the deleted deployment learns nothing
 about why its old route stopped working. Mistakes are debugged from the
-Combined Log Format line, which records each request.
+Combined Log Format line, which records each request, and from the session
+records beside it (docs/d106): an open/close pair per session on both nodes,
+joined by one id, carrying the matched key, the carrier, the target, byte
+counters and the outcome — never the credential and never a forward URL's query.
 
 ## Error reporting (RFC 9457)
 
@@ -81,7 +84,10 @@ path" is exactly the oracle the 404 policy exists to remove.
   ports 80/443; operator opt-ins arrive as `VPN_TUNNEL_EGRESS` until d104's
   store carries them — docs/d108) before the first byte leaves.
 - No silent degradation: a node that is not armed refuses to boot rather than
-  binding a port that answers 404 to everything (docs/d084's kill-switch law).
+  binding a port that answers 404 to everything (docs/d084's kill-switch law),
+  and a degraded relay posture exists only behind `-insecure-exit` (docs/d171).
+  The exit's state is readable on its own loopback surface (`-status-listen`,
+  docs/d106), never on the funnel face.
 
 ## The SSL-VPN transport family (docs/d073, delivered in phases)
 

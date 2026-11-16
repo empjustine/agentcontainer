@@ -11,12 +11,11 @@ tags: ["serving", "proxy", "vpn", "ssl-vpn", "tunnel", "observability", "logging
 
 # d106 — tunnel observability
 
-**Status: draft.** Nothing below is implemented and this record decides
-nothing yet. It is written first because the _vocabulary_ (field names, event
-names, what a "session" is) is cheap to agree on now and expensive to
-reconcile once log lines exist in two deployments' histories — and because
-seven independent upstream tools converge on the same field set, which is
-evidence that the scope is real rather than invented.
+**Status: active — implemented.** The survey and the field vocabulary below
+were written before any line was emitted; the questions this draft left open
+are settled under "Adopted decisions", and the code follows them. The
+section "What the code emits today" records the pre-change state and is kept
+as the measurement the vocabulary rests on.
 
 ## Problem
 
@@ -369,9 +368,50 @@ without reconstructing this analysis.
   minted (VPN-R25), and the name would suggest a capability the design
   explicitly refuses.
 
+## Adopted decisions
+
+The open questions are settled as follows; each is now a test or a code fact,
+and changing one means changing this section first.
+
+- **Prefixes vs fields.** Session records carry no bracketed prefix: they are
+  uniform logfmt lines led by ts= and discriminated by role= and event=.
+  Boot and diagnostic lines keep their [estige] / [vpn-relay] prefixes,
+  because they are not session records.
+- **Clock.** Session records carry ts= as Unix epoch milliseconds (d151's
+  shape). The journal path omits it from the fields: journald stamps
+  __REALTIME_TIMESTAMP, and a second clock in the payload is a second truth.
+- **The header is adopted.** X-Estige-Session: <32 lowercase hex> rides every
+  session-opening request (mode C, mode D's upgrade, mode E's windows). The
+  exit validates it and mints a local id when it is absent or malformed; it
+  is never an authorization input. Mode E's traceparent trace-id is now the
+  same value, so the per-window CLF lines and the session records agree.
+- **url= keeps the scheme, query stripped.** connect://host:port on the relay;
+  an absolute-form http/ws URL on the forward door logs scheme, host and path
+  with the query removed (a presigned URL is credential-class, d085's
+  allowlist-era scope no longer covers that door).
+- **The exit's status surface exists.** It is off by default and
+  loopback-only: -status-listen ADDR serves GET /status with the live session
+  set (id, key, label, via, transport, target, byte counters, age). The
+  funnel face stays the camouflage 404. The relay's /healthz carries the same
+  live set beside its endpoint and last error.
+- **The relay records per session.** open on admission (after the tunnel's
+  CONNECT is accepted) and close with the pumps' totals; refusals are a
+  first-class event with the same reason token the app's problem body used.
+  The relay's key field is "-": a bearer has no id on that node.
+- **No periodic snapshots.** The live numbers are pull-only.
+- **Byte fields are canonical, the old pair is gone.** bytes_up is
+  client→origin and bytes_down is origin→client on BOTH nodes; the pump's
+  viewpoint-relative sent/received never reaches a record. The exit's meter
+  is a swapped adapter over the same pump (relay.go), which is the fix for
+  the issue recorded above.
+
 ## Verification status
 
-Not implemented; no end-to-end check exists yet. What this draft _did_ verify,
+Implemented and covered by estige/observability_test.go (record shape,
+id pairing, journal fields, status snapshot), the mode C/E suites (records on
+both roles, one id per session) and the end-to-end suite (the same id on the
+exit and relay open/close pair, no credential in any line). What this draft
+_did_ verify before implementation,
 because the issues above are claims about code and about other projects:
 
 - Every code fact above was read from the tree at `estige/` on 2026-11-01,
