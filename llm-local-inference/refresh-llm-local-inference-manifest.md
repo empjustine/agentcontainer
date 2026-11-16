@@ -32,7 +32,7 @@ files only, offline (the former `generate.sh` infisical wrapper is long gone).
 
 | Key            | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hf-repo`      | `org/repo:quant` — `quant` is the **trailing filename token** of the GGUF (see naming rules below)                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `hf-repo`      | `org/repo:quant` — `quant` is the **trailing filename token** of the GGUF (see naming rules below). A repo whose table holds exactly ONE row drops the `:quant`: nothing can be selected there, and the model id loses the suffix with it (d210). Rows of a multi-quant repo keep theirs — it names which file the row serves                                                                                                                                                                                                                            |
 | `model`        | exact cached GGUF filename. For sharded files, the `00001-of-NNNNN` shard (llama.cpp resolves the prefix)                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `mmproj`       | **override only.** Omit it: the generator takes the projector from the committed hf-manifest (BF16 first, then F16, d197), so vision capability is a repo fact, not a per-entry one. A written value must exist in the manifest; F16/Q8_0 while the repo ships BF16 warns but is honoured. Fills the mode set, gated from both ends (d195, d200): `1vision` always; `2mmproj` only while the weights stay under 75% of the fleet card; `0text` only once they are over 25% — below that the projector fits anyway, so the no-projector mode buys nothing |
 | `model-draft`  | optional drafter sidecar GGUF (unsloth ships MTP ones under the repo's `MTP/` subdir — the subdir prefix is part of the filename); must live in the SAME snapshot as `model`. Requires `--spec-type` at launch, which the generator emits — `draft-mtp` unless the row sets `spec-type` — because a bare `--model-draft` on a local-path model enables no speculative impl and just wastes VRAM                                                                                                                                                          |
@@ -151,6 +151,16 @@ Family sampling macros live under the `macros` key of `llama-swap-core.json`
 `glm47f`, `gemma4`, `devstral`, `ling`, `lfm25`, plus the base `LLAMA_SERVER`
 launcher (check `llama-swap-core.json` for the live list). To add/change a
 macro, edit `llama-swap-core.json` and re-run generation.
+
+The `LLAMA_SERVER` launcher spells out every default the fleet depends on:
+`--log-jsonl` with `--no-log-timestamps` (structured lines; the relay adds its
+own timestamps), `--lazy-mode auto` (on-demand reading of per-layer tensors over
+4 GiB, which needs the `--load-mode mmap` the macro pins), `--load-mode mmap`,
+`--kv-unified`, `--cache-ram 8192`, `--flash-attn on`, `--fit on --fit-target
+1024`, `--no-context-shift` and `--reasoning-preserve`. A flag whose value is
+the server's default is written down on purpose: a build that changes the
+default then shows up as a behaviour change to review, not a silent shift
+(d210).
 
 ## Step 4 — Regenerate `config.d/`
 

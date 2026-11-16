@@ -290,6 +290,12 @@ const FIXTURE_MANIFESTS = {
 		"dflash-spec-dflash.gguf": 1.1,
 		"spec-dflash-Q4_K_M.gguf": 13.5,
 	}),
+	// a split quant that SURVIVES: the point of naming shards is the load path,
+	// not the pruning rules
+	"spec/sharded-repo": files({
+		"spec-sharded-Q8_0-00001-of-00002.gguf": 13.5,
+		"spec-sharded-Q8_0-00002-of-00002.gguf": 13.5,
+	}),
 };
 
 /** @type {{models: Record<string, string>[]}} */
@@ -358,6 +364,7 @@ const FIXTURE_TABLE = {
 			"spec-type": "draft-dflash",
 			__argv: SPEC_DRAFT_ARGV,
 		}),
+		row("spec/sharded-repo", "Q8_0", "spec-sharded-Q8_0-00001-of-00002.gguf"),
 	],
 };
 
@@ -491,6 +498,32 @@ test("spec: a dflash sidecar carries its own type, never the MTP one", () => {
 	assert.deepEqual(flagValues(cmd, "--spec-type"), ["draft-dflash"]);
 });
 
+test("model: every extra shard is named on the command line", () => {
+	// The server can stitch shards from anywhere, so generation — which already
+	// validates the file set against the manifest and the cache — is the one
+	// place that names them (d210).
+	const cmd = fixtureLayer["spec/sharded-repo:Q8_0"]?.cmd ?? "";
+	assert.deepEqual(
+		flagValues(cmd, "--model").map((p) => p.split("/").pop()),
+		["spec-sharded-Q8_0-00001-of-00002.gguf"],
+	);
+	assert.deepEqual(
+		flagValues(cmd, "--shard").map((shards) =>
+			shards.split(",").map((p) => p.split("/").pop()).join(","),
+		),
+		["spec-sharded-Q8_0-00002-of-00002.gguf"],
+	);
+});
+
+test("server: the macro pins the logging and lazy-loading defaults", () => {
+	const core = JSON.parse(readFileSync(join(unitRoot, "llama-swap-core.json"), "utf-8"));
+	const server = core.macros.LLAMA_SERVER;
+	for (const flag of ["--log-jsonl", "--no-log-timestamps", "--lazy-mode auto"]) {
+		assert.ok(server.includes(flag), `${flag} missing from LLAMA_SERVER`);
+	}
+	assert.ok(!server.includes("--log-colors"), "log-jsonl already disables colour");
+});
+
 test("spec: each variant's span policy lives in its own macro", () => {
 	// A dflash draft is a BLOCK of n-max + 1 tokens in one forward pass, so the
 	// ceiling is the block size there, while MTP drafts one token at a time.
@@ -548,6 +581,17 @@ test("cache: the committed catalog keeps the pair together", () => {
 
 const committedLayer = generate();
 const committedIds = Object.keys(committedLayer).sort();
+
+test("the committed catalog drops the label where no choice exists", () => {
+	// One row in the repo means the `:quant` selects nothing; multi-quant repos
+	// keep it because their ids would collide without it (d210).
+	assert.ok(committedLayer["0text-unsloth/Qwen3.6-27B-GGUF"], "label-less Qwen3.6 id");
+	assert.ok(committedLayer["bartowski/Ling-3.0-tiny-GGUF"], "label-less Ling tiny id");
+	assert.ok(
+		committedLayer["0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_M"],
+		"labelled multi-quant id",
+	);
+});
 
 test("the committed catalog keeps exactly the full-precision rows it can serve", () => {
 	// The rule's verdict on the real table, host-independent (sizes come from the

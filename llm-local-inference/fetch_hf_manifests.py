@@ -196,7 +196,23 @@ def main():
             mismatches += 1
             continue
 
-        picked = find_best_model(man, quant_tag(m["hf-repo"]))
+        tag = quant_tag(m["hf-repo"])
+        if not tag:
+            # No label: the entry serves a repo whose catalog holds ONE quant, so
+            # there is nothing for a tag to select or misspell. The heuristic pick
+            # defaults to Q4_K_M and would report a correct Q8_0 row as a
+            # mismatch, so an unlabelled entry is printed and never counted —
+            # the same treatment as a repo whose full-precision upload carries no
+            # tag (docs/d209).
+            verdict = "unlabelled"
+            label_only += 1
+            picked = None
+            configured = m["model"]
+            if args.print_plan or verdict != "ok":
+                print(f"{m['hf-repo']:52s} {configured:44s} {'(unlabelled)':40s} {verdict}")
+            continue
+
+        picked = find_best_model(man, tag)
         configured = m["model"]
         if picked == configured:
             verdict = "ok"

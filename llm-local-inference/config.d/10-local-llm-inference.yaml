@@ -398,7 +398,7 @@
         "maxTokens": 131072
       }
     },
-    "openbmb/MiniCPM5-2B-GGUF:Q8_0": {
+    "openbmb/MiniCPM5-2B-GGUF": {
       "cmd": "${LLAMA_SERVER} ${minicpm5} --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--openbmb--MiniCPM5-2B-GGUF/snapshots/8ad02b786ab81e33d465e1c80562640c55ab2877/MiniCPM5-2B-Q8_0.gguf",
       "capabilities": {
         "in": [
@@ -410,7 +410,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "openbmb/MiniCPM5-2B-GGUF:Q8_0",
+        "id": "openbmb/MiniCPM5-2B-GGUF",
         "reasoning": true,
         "input": [
           "text"
@@ -1089,7 +1089,7 @@
         "maxTokens": 131072
       }
     },
-    "1vision-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL": {
+    "1vision-unsloth/gemma-4-E2B-it-qat-mobile-GGUF": {
       "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} ${SPEC_MTP} --cache-type-v q8_0 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --spec-draft-type-v q8_0 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E2B-it-qat-mobile-GGUF/snapshots/46af839dc23aceb4b965ab640dae7fc1bea39bba/gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E2B-it-qat-mobile-GGUF/snapshots/46af839dc23aceb4b965ab640dae7fc1bea39bba/mmproj-BF16.gguf --model-draft /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E2B-it-qat-mobile-GGUF/snapshots/46af839dc23aceb4b965ab640dae7fc1bea39bba/MTP/mtp-gemma-4-E2B-it-BF16.gguf",
       "capabilities": {
         "in": [
@@ -1102,7 +1102,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "1vision-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+        "id": "1vision-unsloth/gemma-4-E2B-it-qat-mobile-GGUF",
         "reasoning": true,
         "input": [
           "text",
@@ -1112,7 +1112,7 @@
         "maxTokens": 131072
       }
     },
-    "2mmproj-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL": {
+    "2mmproj-unsloth/gemma-4-E2B-it-qat-mobile-GGUF": {
       "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} ${SPEC_MTP} --cache-type-v q8_0 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --spec-draft-type-v q8_0 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E2B-it-qat-mobile-GGUF/snapshots/46af839dc23aceb4b965ab640dae7fc1bea39bba/gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E2B-it-qat-mobile-GGUF/snapshots/46af839dc23aceb4b965ab640dae7fc1bea39bba/mmproj-BF16.gguf --model-draft /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E2B-it-qat-mobile-GGUF/snapshots/46af839dc23aceb4b965ab640dae7fc1bea39bba/MTP/mtp-gemma-4-E2B-it-BF16.gguf",
       "capabilities": {
         "in": [
@@ -1125,7 +1125,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "2mmproj-unsloth/gemma-4-E2B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+        "id": "2mmproj-unsloth/gemma-4-E2B-it-qat-mobile-GGUF",
         "reasoning": true,
         "input": [
           "text",
@@ -1897,7 +1897,7 @@
         "maxTokens": 131072
       }
     },
-    "0text-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL": {
+    "0text-unsloth/gemma-4-E4B-it-qat-mobile-GGUF": {
       "cmd": "${LLAMA_SERVER} ${0text} ${gemma4} ${SPEC_MTP} --cache-type-v q8_0 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --spec-draft-type-v q8_0 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E4B-it-qat-mobile-GGUF/snapshots/6a6e7121b977cefd85daa8fbc538fa485e7e8b1b/gemma-4-E4B-it-qat-UD-Q2_K_XL.gguf --model-draft /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E4B-it-qat-mobile-GGUF/snapshots/6a6e7121b977cefd85daa8fbc538fa485e7e8b1b/MTP/mtp-gemma-4-E4B-it-BF16.gguf",
       "capabilities": {
         "in": [
@@ -1909,7 +1909,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "0text-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+        "id": "0text-unsloth/gemma-4-E4B-it-qat-mobile-GGUF",
         "reasoning": true,
         "input": [
           "text"
@@ -1918,7 +1918,7 @@
         "maxTokens": 131072
       }
     },
-    "1vision-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL": {
+    "1vision-unsloth/gemma-4-E4B-it-qat-mobile-GGUF": {
       "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} ${SPEC_MTP} --cache-type-v q8_0 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --spec-draft-type-v q8_0 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E4B-it-qat-mobile-GGUF/snapshots/6a6e7121b977cefd85daa8fbc538fa485e7e8b1b/gemma-4-E4B-it-qat-UD-Q2_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E4B-it-qat-mobile-GGUF/snapshots/6a6e7121b977cefd85daa8fbc538fa485e7e8b1b/mmproj-BF16.gguf --model-draft /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E4B-it-qat-mobile-GGUF/snapshots/6a6e7121b977cefd85daa8fbc538fa485e7e8b1b/MTP/mtp-gemma-4-E4B-it-BF16.gguf",
       "capabilities": {
         "in": [
@@ -1931,7 +1931,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "1vision-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+        "id": "1vision-unsloth/gemma-4-E4B-it-qat-mobile-GGUF",
         "reasoning": true,
         "input": [
           "text",
@@ -1941,7 +1941,7 @@
         "maxTokens": 131072
       }
     },
-    "2mmproj-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL": {
+    "2mmproj-unsloth/gemma-4-E4B-it-qat-mobile-GGUF": {
       "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} ${SPEC_MTP} --cache-type-v q8_0 --ctx-size 131072 --n-predict 131072 --spec-type draft-mtp --spec-draft-type-v q8_0 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E4B-it-qat-mobile-GGUF/snapshots/6a6e7121b977cefd85daa8fbc538fa485e7e8b1b/gemma-4-E4B-it-qat-UD-Q2_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E4B-it-qat-mobile-GGUF/snapshots/6a6e7121b977cefd85daa8fbc538fa485e7e8b1b/mmproj-BF16.gguf --model-draft /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-E4B-it-qat-mobile-GGUF/snapshots/6a6e7121b977cefd85daa8fbc538fa485e7e8b1b/MTP/mtp-gemma-4-E4B-it-BF16.gguf",
       "capabilities": {
         "in": [
@@ -1954,7 +1954,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "2mmproj-unsloth/gemma-4-E4B-it-qat-mobile-GGUF:UD-Q2_K_XL",
+        "id": "2mmproj-unsloth/gemma-4-E4B-it-qat-mobile-GGUF",
         "reasoning": true,
         "input": [
           "text",
@@ -3859,7 +3859,7 @@
         "maxTokens": 262144
       }
     },
-    "0text-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL": {
+    "0text-unsloth/gemma-4-12B-it-qat-GGUF": {
       "cmd": "${LLAMA_SERVER} ${0text} ${gemma4} ${SPEC_MTP} --cache-type-v q8_0 --ctx-size 262144 --n-predict 262144 --spec-type draft-mtp --spec-draft-type-v q8_0 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-12B-it-qat-GGUF/snapshots/980b060c40a8539ac159e0501a3e0f66a6365af3/gemma-4-12B-it-qat-UD-Q4_K_XL.gguf --model-draft /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-12B-it-qat-GGUF/snapshots/980b060c40a8539ac159e0501a3e0f66a6365af3/MTP/mtp-gemma-4-12B-it-BF16.gguf",
       "capabilities": {
         "in": [
@@ -3871,7 +3871,7 @@
         "context": 262144
       },
       "metadata": {
-        "id": "0text-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
+        "id": "0text-unsloth/gemma-4-12B-it-qat-GGUF",
         "reasoning": true,
         "input": [
           "text"
@@ -3880,7 +3880,7 @@
         "maxTokens": 262144
       }
     },
-    "1vision-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL": {
+    "1vision-unsloth/gemma-4-12B-it-qat-GGUF": {
       "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} ${SPEC_MTP} --cache-type-v q8_0 --ctx-size 262144 --n-predict 262144 --spec-type draft-mtp --spec-draft-type-v q8_0 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-12B-it-qat-GGUF/snapshots/980b060c40a8539ac159e0501a3e0f66a6365af3/gemma-4-12B-it-qat-UD-Q4_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-12B-it-qat-GGUF/snapshots/980b060c40a8539ac159e0501a3e0f66a6365af3/mmproj-BF16.gguf --model-draft /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-12B-it-qat-GGUF/snapshots/980b060c40a8539ac159e0501a3e0f66a6365af3/MTP/mtp-gemma-4-12B-it-BF16.gguf",
       "capabilities": {
         "in": [
@@ -3893,7 +3893,7 @@
         "context": 262144
       },
       "metadata": {
-        "id": "1vision-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
+        "id": "1vision-unsloth/gemma-4-12B-it-qat-GGUF",
         "reasoning": true,
         "input": [
           "text",
@@ -3903,7 +3903,7 @@
         "maxTokens": 262144
       }
     },
-    "2mmproj-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL": {
+    "2mmproj-unsloth/gemma-4-12B-it-qat-GGUF": {
       "cmd": "${LLAMA_SERVER} ${2mmproj} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} ${SPEC_MTP} --cache-type-v q8_0 --ctx-size 262144 --n-predict 262144 --spec-type draft-mtp --spec-draft-type-v q8_0 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-12B-it-qat-GGUF/snapshots/980b060c40a8539ac159e0501a3e0f66a6365af3/gemma-4-12B-it-qat-UD-Q4_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-12B-it-qat-GGUF/snapshots/980b060c40a8539ac159e0501a3e0f66a6365af3/mmproj-BF16.gguf --model-draft /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-12B-it-qat-GGUF/snapshots/980b060c40a8539ac159e0501a3e0f66a6365af3/MTP/mtp-gemma-4-12B-it-BF16.gguf",
       "capabilities": {
         "in": [
@@ -3916,7 +3916,7 @@
         "context": 262144
       },
       "metadata": {
-        "id": "2mmproj-unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
+        "id": "2mmproj-unsloth/gemma-4-12B-it-qat-GGUF",
         "reasoning": true,
         "input": [
           "text",
@@ -4282,7 +4282,7 @@
         "maxTokens": 262144
       }
     },
-    "bartowski/Ling-3.0-tiny-GGUF:Q8_0": {
+    "bartowski/Ling-3.0-tiny-GGUF": {
       "cmd": "${LLAMA_SERVER} ${ling} --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--bartowski--Ling-3.0-tiny-GGUF/snapshots/ea072726af0d2e8ba325b2f90fc0efa762105a91/Ling-3.0-tiny-Q8_0.gguf",
       "capabilities": {
         "in": [
@@ -4294,7 +4294,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "bartowski/Ling-3.0-tiny-GGUF:Q8_0",
+        "id": "bartowski/Ling-3.0-tiny-GGUF",
         "reasoning": true,
         "input": [
           "text"
@@ -5055,7 +5055,7 @@
         "maxTokens": 262144
       }
     },
-    "bloomer010/Ling-3.0-tiny-GGUF:UD-Q8_K_XL": {
+    "bloomer010/Ling-3.0-tiny-GGUF": {
       "cmd": "${LLAMA_SERVER} ${ling} --cache-type-v f16 --ctx-size 131072 --n-predict 131072 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--bloomer010--Ling-3.0-tiny-GGUF/snapshots/9abc60203407b59a4f22eaeeb09b789717643fb0/Ling-3.0-tiny-UD-Q8_K_XL.gguf",
       "capabilities": {
         "in": [
@@ -5067,7 +5067,7 @@
         "context": 131072
       },
       "metadata": {
-        "id": "bloomer010/Ling-3.0-tiny-GGUF:UD-Q8_K_XL",
+        "id": "bloomer010/Ling-3.0-tiny-GGUF",
         "reasoning": true,
         "input": [
           "text"
@@ -5826,7 +5826,7 @@
         "maxTokens": 262144
       }
     },
-    "0text-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL": {
+    "0text-unsloth/gemma-4-26B-A4B-it-qat-GGUF": {
       "cmd": "${LLAMA_SERVER} ${0text} ${gemma4} ${SPEC_MTP} --cache-type-v q8_0 --ctx-size 262144 --n-predict 262144 --spec-type draft-mtp --spec-draft-type-v q8_0 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-26B-A4B-it-qat-GGUF/snapshots/7b92b5b28818151e8669af2e45e88d6086f490dd/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf --model-draft /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-26B-A4B-it-qat-GGUF/snapshots/7b92b5b28818151e8669af2e45e88d6086f490dd/MTP/mtp-gemma-4-26B-A4B-it-BF16.gguf",
       "capabilities": {
         "in": [
@@ -5838,7 +5838,7 @@
         "context": 262144
       },
       "metadata": {
-        "id": "0text-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
+        "id": "0text-unsloth/gemma-4-26B-A4B-it-qat-GGUF",
         "reasoning": true,
         "input": [
           "text"
@@ -5847,7 +5847,7 @@
         "maxTokens": 262144
       }
     },
-    "1vision-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL": {
+    "1vision-unsloth/gemma-4-26B-A4B-it-qat-GGUF": {
       "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} ${SPEC_MTP} --cache-type-v q8_0 --ctx-size 262144 --n-predict 262144 --spec-type draft-mtp --spec-draft-type-v q8_0 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-26B-A4B-it-qat-GGUF/snapshots/7b92b5b28818151e8669af2e45e88d6086f490dd/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-26B-A4B-it-qat-GGUF/snapshots/7b92b5b28818151e8669af2e45e88d6086f490dd/mmproj-BF16.gguf --model-draft /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-26B-A4B-it-qat-GGUF/snapshots/7b92b5b28818151e8669af2e45e88d6086f490dd/MTP/mtp-gemma-4-26B-A4B-it-BF16.gguf",
       "capabilities": {
         "in": [
@@ -5860,7 +5860,7 @@
         "context": 262144
       },
       "metadata": {
-        "id": "1vision-unsloth/gemma-4-26B-A4B-it-qat-GGUF:UD-Q4_K_XL",
+        "id": "1vision-unsloth/gemma-4-26B-A4B-it-qat-GGUF",
         "reasoning": true,
         "input": [
           "text",
@@ -6266,7 +6266,7 @@
         "maxTokens": 262144
       }
     },
-    "0text-unsloth/Qwen3.6-27B-GGUF:Q4_K_M": {
+    "0text-unsloth/Qwen3.6-27B-GGUF": {
       "cmd": "${LLAMA_SERVER} ${0text} ${qwen36} ${SPEC_MTP} --cache-type-v f16 --ctx-size 262144 --n-predict 262144 --spec-type draft-mtp --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-GGUF/snapshots/82d411acf4a06cfb8d9b073a5211bf410bfc29bf/Qwen3.6-27B-Q4_K_M.gguf",
       "capabilities": {
         "in": [
@@ -6278,7 +6278,7 @@
         "context": 262144
       },
       "metadata": {
-        "id": "0text-unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
+        "id": "0text-unsloth/Qwen3.6-27B-GGUF",
         "reasoning": true,
         "input": [
           "text"
@@ -6287,7 +6287,7 @@
         "maxTokens": 262144
       }
     },
-    "1vision-unsloth/Qwen3.6-27B-GGUF:Q4_K_M": {
+    "1vision-unsloth/Qwen3.6-27B-GGUF": {
       "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} ${SPEC_MTP} --cache-type-v f16 --ctx-size 262144 --n-predict 262144 --spec-type draft-mtp --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-GGUF/snapshots/82d411acf4a06cfb8d9b073a5211bf410bfc29bf/Qwen3.6-27B-Q4_K_M.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-GGUF/snapshots/82d411acf4a06cfb8d9b073a5211bf410bfc29bf/mmproj-BF16.gguf",
       "capabilities": {
         "in": [
@@ -6300,7 +6300,7 @@
         "context": 262144
       },
       "metadata": {
-        "id": "1vision-unsloth/Qwen3.6-27B-GGUF:Q4_K_M",
+        "id": "1vision-unsloth/Qwen3.6-27B-GGUF",
         "reasoning": true,
         "input": [
           "text",
@@ -6442,7 +6442,7 @@
         "maxTokens": 262144
       }
     },
-    "0text-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL": {
+    "0text-unsloth/gemma-4-31B-it-qat-GGUF": {
       "cmd": "${LLAMA_SERVER} ${0text} ${gemma4} ${SPEC_MTP} --cache-type-v q8_0 --ctx-size 262144 --n-predict 262144 --spec-type draft-mtp --spec-draft-type-v q8_0 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-31B-it-qat-GGUF/snapshots/43cc1aeb31adf47ec06a854507ce552cd9862e6f/gemma-4-31B-it-qat-UD-Q4_K_XL.gguf --model-draft /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-31B-it-qat-GGUF/snapshots/43cc1aeb31adf47ec06a854507ce552cd9862e6f/MTP/mtp-gemma-4-31B-it-BF16.gguf",
       "capabilities": {
         "in": [
@@ -6454,7 +6454,7 @@
         "context": 262144
       },
       "metadata": {
-        "id": "0text-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
+        "id": "0text-unsloth/gemma-4-31B-it-qat-GGUF",
         "reasoning": true,
         "input": [
           "text"
@@ -6463,7 +6463,7 @@
         "maxTokens": 262144
       }
     },
-    "1vision-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL": {
+    "1vision-unsloth/gemma-4-31B-it-qat-GGUF": {
       "cmd": "${LLAMA_SERVER} ${1vision} --image-min-tokens 1120 --image-max-tokens 1120 ${gemma4} ${SPEC_MTP} --cache-type-v q8_0 --ctx-size 262144 --n-predict 262144 --spec-type draft-mtp --spec-draft-type-v q8_0 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-31B-it-qat-GGUF/snapshots/43cc1aeb31adf47ec06a854507ce552cd9862e6f/gemma-4-31B-it-qat-UD-Q4_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-31B-it-qat-GGUF/snapshots/43cc1aeb31adf47ec06a854507ce552cd9862e6f/mmproj-BF16.gguf --model-draft /home/ubuntu/.cache/huggingface/hub/models--unsloth--gemma-4-31B-it-qat-GGUF/snapshots/43cc1aeb31adf47ec06a854507ce552cd9862e6f/MTP/mtp-gemma-4-31B-it-BF16.gguf",
       "capabilities": {
         "in": [
@@ -6476,7 +6476,7 @@
         "context": 262144
       },
       "metadata": {
-        "id": "1vision-unsloth/gemma-4-31B-it-qat-GGUF:UD-Q4_K_XL",
+        "id": "1vision-unsloth/gemma-4-31B-it-qat-GGUF",
         "reasoning": true,
         "input": [
           "text",
@@ -6574,7 +6574,7 @@
         "maxTokens": 262144
       }
     },
-    "poolside/Laguna-XS-2.1-GGUF:Q4_K_M": {
+    "poolside/Laguna-XS-2.1-GGUF": {
       "cmd": "${LLAMA_SERVER} ${laguna} --cache-type-v f16 --ctx-size 262144 --n-predict 262144 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--poolside--Laguna-XS-2.1-GGUF/snapshots/1a37c0a5fb8c7a18e6106decb6be6327d1b63fa6/Laguna-XS-2.1-Q4_K_M.gguf",
       "capabilities": {
         "in": [
@@ -6586,7 +6586,7 @@
         "context": 262144
       },
       "metadata": {
-        "id": "poolside/Laguna-XS-2.1-GGUF:Q4_K_M",
+        "id": "poolside/Laguna-XS-2.1-GGUF",
         "reasoning": true,
         "input": [
           "text"

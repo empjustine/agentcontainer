@@ -281,9 +281,9 @@ function allShards(filename) {
  * (docs/d197 — the hard-fail blocked first-run and cache-less hosts for a
  * condition download_models.py owns).
  * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
- * @returns {{ modelPath: string, mmprojPath: string|null, draftPath: string|null }}
+ * @returns {{ modelPath: string, shardPaths: string[], mmprojPath: string|null, draftPath: string|null }}
  *   container-side paths for the emitted cmd (mmproj/draft null when the entry
- *   omits them)
+ *   omits them, shardPaths empty for a single-file model)
  */
 function bakeSnapshotPaths(m) {
 	const repo = m["hf-repo"].split(":")[0]; // drop :revision; the GGUF filename already pins the quant
@@ -319,12 +319,7 @@ function bakeSnapshotPaths(m) {
 			continue;
 		}
 
-		const snapGuest = `${HUB_GUEST}/${repoDir}/snapshots/${sha}`;
-		return {
-			modelPath: `${snapGuest}/${shardOne(m.model)}`,
-			mmprojPath: m.mmproj ? `${snapGuest}/${m.mmproj}` : null,
-			draftPath: m["model-draft"] ? `${snapGuest}/${m["model-draft"]}` : null,
-		};
+		return guestPaths(sha);
 	}
 
 	const sha = candidates[0] ?? repoManifest(repo).commit;
@@ -337,12 +332,29 @@ function bakeSnapshotPaths(m) {
 		"no cached HF snapshot carries this entry — run ./download_models.py; baking unverified paths",
 		{ repo, sha, snapshotsChecked: candidates.length, required },
 	);
-	const snapGuest = `${HUB_GUEST}/${repoDir}/snapshots/${sha}`;
-	return {
-		modelPath: `${snapGuest}/${shardOne(m.model)}`,
-		mmprojPath: m.mmproj ? `${snapGuest}/${m.mmproj}` : null,
-		draftPath: m["model-draft"] ? `${snapGuest}/${m["model-draft"]}` : null,
-	};
+	return guestPaths(sha);
+
+	/**
+	 * The guest-side paths of ONE snapshot — the shape both the resolved and the
+	 * unverified branch emit, so a fix to one cannot miss the other.
+	 * @param {string} sha
+	 * @returns {{ modelPath: string, shardPaths: string[], mmprojPath: string|null, draftPath: string|null }}
+	 */
+	function guestPaths(sha) {
+		const snapGuest = `${HUB_GUEST}/${repoDir}/snapshots/${sha}`;
+		return {
+			modelPath: `${snapGuest}/${shardOne(m.model)}`,
+			// Every extra shard is named explicitly (docs/d210): the server can
+			// stitch shards that live anywhere, and relying on the sibling-name
+			// convention turns a mis-named upload into a load failure instead of
+			// a generation check.
+			shardPaths: allShards(m.model)
+				.slice(1)
+				.map((shard) => `${snapGuest}/${shard}`),
+			mmprojPath: m.mmproj ? `${snapGuest}/${m.mmproj}` : null,
+			draftPath: m["model-draft"] ? `${snapGuest}/${m["model-draft"]}` : null,
+		};
+	}
 }
 
 /**
@@ -1108,6 +1120,9 @@ function generateLocalInference() {
 			// appended them in).  0text omits --mmproj entirely — the projector
 			// must not be required for a text-only serving mode.
 			cmd += ` --model ${baked.modelPath}`;
+			if (baked.shardPaths.length > 0) {
+				cmd += ` --shard ${baked.shardPaths.join(",")}`;
+			}
 			if (mode.seg !== "0text" && baked.mmprojPath) {
 				cmd += ` --mmproj ${baked.mmprojPath}`;
 			}

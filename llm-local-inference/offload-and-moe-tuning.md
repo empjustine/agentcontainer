@@ -4,7 +4,7 @@ type: module-design
 status: draft
 title: "Offload and MoE tuning — the sweep harness, and what to measure before an offload flag earns a place"
 parent: llm-local-inference
-references: [d206, gguf-model-tooling, refresh-llm-local-inference-manifest]
+references: [d206, d210, gguf-model-tooling, refresh-llm-local-inference-manifest]
 tags: ["gguf", "offload", "moe", "speculation", "measurement"]
 ---
 
