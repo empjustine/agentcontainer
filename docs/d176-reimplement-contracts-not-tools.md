@@ -79,6 +79,9 @@ of their shapes is.
   build; that spec is the asset, and the implementations are replaceable.
 - Imitating a shape means owning either bug-compatibility or a documented
   deviation. Nothing may depend on the original's internals.
+- The requirements register that turns this contract into client-facing
+  endpoints and a storage split is
+  [d205](d205-hister-shaped-backend-requirements.md).
 - Hister's Bleve index is an implementation detail; the search behavior and the
   ranking contract are the part worth imitating.
 - d172 is the first instance: it vendors only `cannon.canonify` and serves the

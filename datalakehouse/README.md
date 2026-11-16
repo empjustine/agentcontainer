@@ -4,7 +4,7 @@ type: module-design
 status: active
 title: "datalakehouse — local history and session stores → MotherDuck via the duckdb CLI"
 parent: architecture
-references: [d046, d113, d139, d167, d172, d173, d179, d180, d181, d203]
+references: [d046, d113, d139, d167, d172, d173, d179, d180, d181, d203, d204, d205]
 tags: [atuin, motherduck, duckdb, sync]
 ---
 
@@ -24,9 +24,10 @@ Mistral-vibe support is pending in both this unit and `coding-agent/run.mjs`.
 
 The browsing-history side is designed and not built: a push-based visit index
 (d172), its storage tiers (d173), the clipper and hister comparisons (d174,
-d175, d177) and the workload it would add (d178). This unit carries the atuin and
-coding-harness legs, and a browsing source would extend it rather than open a
-third storage path. The retired tailscale+promnesia stack those records replaced
+d175, d177) and the workload it would add (d178). The task-level requirements
+are d204 for the Firefox history and bookmark producer and d205 for the
+hister-shaped backend. This unit carries the atuin and coding-harness legs, and
+a browsing source would extend it rather than open a third storage path. The retired tailscale+promnesia stack those records replaced
 is gone from the worktree.
 
 ## Usage

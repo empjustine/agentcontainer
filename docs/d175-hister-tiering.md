@@ -95,5 +95,6 @@ design follow-up this record points at; the design is
 [d177](d177-cold-full-text-search.md). The warehouse side is
 [`datalakehouse/`](../datalakehouse/README.md), which ships the atuin and
 coding-harness legs and serves no hister content; a cold tier that lands there
-would extend that unit. The wider landscape is
+would extend that unit. The backend requirements register is
+[d205](d205-hister-shaped-backend-requirements.md). The wider landscape is
 [personal-datalakehouse-prior-art](personal-datalakehouse-prior-art.md).

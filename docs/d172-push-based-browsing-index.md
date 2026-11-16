@@ -128,3 +128,8 @@ The long-term storage split — a minimal hot index against a cold lakehouse —
 [`datalakehouse/`](../datalakehouse/README.md): it warehouses atuin's history and
 the coding-harness sessions into MotherDuck, and the browsing source this record
 describes would extend it rather than open a storage path of its own.
+The task-level requirements are [d204](d204-firefox-slurp-extension-requirements.md)
+for the history and bookmark streams — current-page content belongs to the
+hister-side extension — and [d205](d205-hister-shaped-backend-requirements.md)
+for the hister-shaped store; both expose the user input that this record leaves
+open.

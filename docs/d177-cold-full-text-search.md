@@ -200,4 +200,6 @@ The survey is [personal-datalakehouse-prior-art](personal-datalakehouse-prior-ar
 ## Where this lands
 
 This is the search half of the architecture change d175 names; the store half is
-d173 and d176.
+d173 and d176. The backend requirements register, including the hister
+extension's API surface and the local-SMR authority rule, is
+[d205](d205-hister-shaped-backend-requirements.md).
