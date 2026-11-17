@@ -224,6 +224,12 @@ agentcontainer/
 │   ├── README.md                        #   → module doc: usage, the data-dir file assessment, verified findings, gotchas
 │   └── tests/                           #   → source-resolution tests (pure path logic, no token or network)
 │
+├── codemode2/                          # A closed core-tool surface: POSIX/Windows tools reimplemented over a runtime-owned filesystem, enumerated from the living-off-the-land corpora (d194/d198)
+│   ├── README.md                       #   → the module doc: the surface, the enumeration, what the corpora bought
+│   ├── enumerate.mjs / surface.json    #   → the generator and the table it emits
+│   ├── taxonomy.json / attack-corpus.json  # → the corpus rows the enumeration answers to
+│   ├── tests/                          #   → this folder's own tests
+│
 ├── sbex/                               # Spring Boot best-practice example — unrelated to the pi workload; its own Maven reactor (Boot 3.5, Java 21)
 │   ├── pom.xml                         #   → parent: the Boot BOM, the enforcer floor, one module per stack (sbex-core, sbex-servlet, sbex-reactive)
 │   ├── README.md                       #   → module doc: requirement→file map, build/run/test, the conventions the code follows

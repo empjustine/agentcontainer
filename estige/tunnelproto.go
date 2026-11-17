@@ -181,12 +181,28 @@ func readTunnelFrame(s tunnelStream) ([]byte, error) {
 	return s.readTunnelMsg()
 }
 
+// validTunnelLabel is d106's label rule: at most tunnelLabelMax bytes of
+// printable ASCII. The label is logged on both nodes and echoed in the status
+// surface, so a control character would forge a record or split a journal
+// field; nothing legitimate needs one.
+func validTunnelLabel(label string) bool {
+	if len(label) > tunnelLabelMax {
+		return false
+	}
+	for i := 0; i < len(label); i++ {
+		if c := label[i]; c < 0x20 || c > 0x7e {
+			return false
+		}
+	}
+	return true
+}
+
 // encodeHello renders the opening HELLO payload: magic, version, then the
 // non-secret client label (VPN-R16). Length-prefixed so a label change can
 // never shift the version bytes.
 func encodeHello(label string) ([]byte, error) {
-	if len(label) > tunnelLabelMax {
-		return nil, fmt.Errorf("%w: client label longer than %d bytes", ErrProtocol, tunnelLabelMax)
+	if !validTunnelLabel(label) {
+		return nil, fmt.Errorf("%w: client label must be 0..%d printable ASCII characters", ErrProtocol, tunnelLabelMax)
 	}
 	buf := make([]byte, 0, len(tunnelMagic)+2+len(label))
 	buf = append(buf, tunnelMagic...)
@@ -213,5 +229,9 @@ func decodeHello(payload []byte) (version byte, label string, err error) {
 	if ll > tunnelLabelMax || len(payload) != len(tunnelMagic)+2+ll {
 		return 0, "", fmt.Errorf("%w: bad HELLO label length", ErrProtocol)
 	}
-	return version, string(payload[len(tunnelMagic)+2:]), nil
+	label = string(payload[len(tunnelMagic)+2:])
+	if !validTunnelLabel(label) {
+		return 0, "", fmt.Errorf("%w: client label must be printable ASCII", ErrProtocol)
+	}
+	return version, label, nil
 }

@@ -23,6 +23,35 @@ func relaysConfigFrom(t *testing.T, url string) (relayConfig, error) {
 	return cfg, cfg.validate()
 }
 
+// A tunnel URL carrying userinfo would make net/http mint its own
+// Authorization header beside the operator token.
+func TestRelayConfigRefusesURLUserinfo(t *testing.T) {
+	if _, err := relaysConfigFrom(t, "https://user:secret@example.invalid:8443/vpn"); err == nil {
+		t.Fatal("expected the userinfo refusal")
+	} else if !strings.Contains(err.Error(), "must not carry credentials") {
+		t.Fatalf("err=%v, want the userinfo refusal", err)
+	}
+}
+
+// The label reaches both nodes' log records, so only printable ASCII rides
+// the HELLO.
+func TestRelayConfigRefusesUnprintableLabel(t *testing.T) {
+	for _, label := range []string{"relay\nEVENT=forged", "relay\tfield", "relais\x7f", "réseau", strings.Repeat("x", tunnelLabelMax+1)} {
+		t.Run(label, func(t *testing.T) {
+			armTestTunnelEnv(t)
+			t.Setenv(envTunnelURL, "https://example.invalid:8443/vpn")
+			t.Setenv(envClientLabel, label)
+			cfg, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false, true)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := cfg.validate(); err == nil {
+				t.Fatalf("label %q accepted", label)
+			}
+		})
+	}
+}
+
 func TestRelayConfigFromEnvNormalizesWireSchemes(t *testing.T) {
 	for _, tc := range []struct{ url, wantScheme string }{
 		// Cleartext — accepted (d090 §3): the C rung is unreachable on it

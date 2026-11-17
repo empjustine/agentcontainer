@@ -114,6 +114,13 @@ func relayConfigFromEnv(proxyAddr, socksAddr string, legacyIPRelay, insecureExit
 	if u.Host == "" || u.Path == "" {
 		return cfg, fmt.Errorf("%s must include host and path (d073 §7)", envTunnelURL)
 	}
+	// WHY: net/http turns URL userinfo into an Authorization header of its
+	// own, so a URL with credentials would make the exit see two — one the
+	// operator typed and one we minted. The credential has one spelling
+	// (VPN_OPERATOR_TOKEN) and the URL carries none.
+	if u.User != nil {
+		return cfg, fmt.Errorf("%s must not carry credentials; the token has its own variable (%s)", envTunnelURL, envOperatorToken)
+	}
 	cfg.tunnelURL = u
 	cfg.token = os.Getenv(envOperatorToken)
 	cfg.label = os.Getenv(envClientLabel)
@@ -284,8 +291,11 @@ func (cfg *relayConfig) validate() error {
 		}
 		cfg.label = host
 	}
-	if len(cfg.label) > tunnelLabelMax {
-		return fmt.Errorf("client label longer than %d bytes", tunnelLabelMax)
+	// The label rides the HELLO and lands in this node's and the exit's log
+	// records, so its shape is checked where every other wire string is
+	// (tunnelproto.go) rather than only for length here.
+	if !validTunnelLabel(cfg.label) {
+		return fmt.Errorf("client label must be 0..%d printable ASCII characters (%s)", tunnelLabelMax, envClientLabel)
 	}
 	return nil
 }

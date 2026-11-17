@@ -8,7 +8,8 @@
  * installed).
  *
  * Cloud/remote relaying is NOT generated here (nor anywhere): it is
- * served by ../estige, the raw passthrough proxy. This module
+ * served by ../estige, whose tunnel transports carry the client's own CONNECT
+ * (the allowlist proxy died with docs/d108). This module
  * emits only what serves local llama.cpp GGUFs.
  *
  * Layers emitted:

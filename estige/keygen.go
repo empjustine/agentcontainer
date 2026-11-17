@@ -1,19 +1,18 @@
-// keygen.go — estige keygen: the host identity's key material (docs/d169).
+// keygen.go — estige keygen: the host identity's key material (docs/d132).
 //
-// WHY a bare key pair and no certificate yet: d169 roots each host in a
-// self-signed CA certificate over this key, and the certificate is *derived*
+// WHY one key pair and no certificate yet: d169's channel layer mints a
+// self-signed certificate over this key, and the certificate is *derived*
 // material — the key is the durable fact, the certificate can be re-minted
-// from it at boot. Keeping them apart keeps the one file that must never
-// leave the host (VPN-R32) separate from the one that is public by
-// definition.
+// from it. Keeping them apart keeps the one file that must never leave the
+// host (VPN-R32) separate from the one that is public by definition.
 //
 // WHY the private file is named for the principal (docs/d132's identity
-// rule): the basename IS the security principal — the name a peer sees as
-// the certificate SAN and dials as ServerName (docs/d169) — so there is one
-// spelling from disk to wire and no config field can desync it. The public
-// half has no file: it is the {"name","public"} entry a relay.json exit
-// array or an exit.json relays array holds, printed by keygen and by estige
-// public.
+// rule): the basename is the security principal a peer's store names, so
+// there is one spelling per identity and no config field can desync it. The
+// wire name is a separate decision — d211 makes it a neutral constant so the
+// SNI discloses nothing. The public half has no file: it is the
+// {"name","public"} entry a relay.json exit array or an exit.json relays
+// array holds, printed by keygen and by estige public.
 package main
 
 import (
@@ -164,6 +163,14 @@ func writePrivateKey(path string, der []byte, force bool) error {
 		}
 		return err
 	}
+	// WHY before the write: -force reuses an existing file, and O_TRUNC leaves
+	// its mode alone. Narrowing first means the new key is never briefly
+	// readable at the old file's permissions.
+	if err := f.Chmod(keygenPrivPerm); err != nil {
+		_ = f.Close()
+		_ = os.Remove(path)
+		return err
+	}
 	if _, err := f.Write(der); err != nil {
 		_ = f.Close()
 		_ = os.Remove(path)
@@ -173,9 +180,8 @@ func writePrivateKey(path string, der []byte, force bool) error {
 		_ = os.Remove(path)
 		return err
 	}
-	// WHY chmod after write: -force reuses an existing file, and O_TRUNC does
-	// not reset its mode — a key rotated over a file that had lost its 0600
-	// must come back at 0600.
+	// Belt and braces: the chmod above already narrowed the open file, and a
+	// final one leaves no dependence on that ordering.
 	return os.Chmod(path, keygenPrivPerm)
 }
 

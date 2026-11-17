@@ -169,9 +169,10 @@ Consequences.
 
 ### One certificate per principal
 
-Each node's store key is presented directly. `estige keygen` wraps the public
-half of the `prv/<principal>.der` Ed25519 key (d132) in one self-signed
-certificate and stores it as public material in the pairing row. No CA
+Each node's store key is presented directly. The implementing change makes
+`estige keygen` wrap the public half of the `prv/<principal>.der` Ed25519 key
+(d132) in one self-signed certificate and store it as public material in the
+pairing row. No CA
 certificate and no ephemeral leaf exist; the same bytes are the trust anchor
 in the peer's pool and the certificate sent in the handshake.
 
