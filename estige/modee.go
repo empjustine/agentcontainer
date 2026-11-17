@@ -30,7 +30,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -198,16 +197,9 @@ func (c *relayNode) openExchange(ctx context.Context, id string, skipVerify bool
 	// attempts and the windows that follow share one correlation value.
 	traceID := id
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12,
-			ServerName: u.Hostname(),
-			// http/1.1 ONLY: mode E is the h1 floor — offering h2 would
-			// silently turn a floor session into mode C's plane. System
-			// roots are the default; the skip is docs/d171's argv-gated
-			// posture, never a silent fallback.
-			NextProtos:         []string{protoHTTP11},
-			InsecureSkipVerify: skipVerify, //nolint:gosec // explicit, argv-gated, documented exposure (d171)
-		},
+		// http/1.1 ONLY: mode E is the h1 floor — offering h2 would
+		// silently turn a floor session into mode C's plane.
+		TLSClientConfig: tunnelTLSConfig(u.Hostname(), []string{protoHTTP11}, skipVerify),
 		// The chain rides the DIAL, not Transport.Proxy (docs/d094) — same
 		// shape as mode C's transport.
 		DialContext:         c.tunnelDial(),

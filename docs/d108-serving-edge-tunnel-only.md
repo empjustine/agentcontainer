@@ -65,6 +65,8 @@ retired — see the history note below).
 | **v2**     | the same trusted reverse proxy, with symmetric auth credentials | symmetric credential at the edge                                                                                               | never implemented or deployed — skipped for simplicity in favour of v3 |
 | **v3**     | tunnel transports — h2-POST / WebSocket / h1.1-POST (d073/d077) | shared bearer, injected as env (`VPN_*`)                                                                                       | deployed, working                                                      |
 | **v4**     | the same tunnel transports                                      | d104's mutual single-use nonce-bound Ed25519 proofs, with key material in files under `~/.local/share/estige/` rather than env | in progress, not yet exercised                                         |
+| **v5**     | the same transports, with an inner TLS 1.3 session (d169)       | v4 proofs, plus a self-signed store-key certificate for the channel                                                            | design on record                                                       |
+| **v6**     | front-door TLS 1.3 mTLS at the Funnel edge (d211)               | the pinned store-key certificate only; no admission proofs                                                                     | design on record                                                       |
 
 Two things this table settles that were previously scattered or ambiguous:
 
@@ -77,6 +79,9 @@ Two things this table settles that were previously scattered or ambiguous:
   what moves is the material's home (files, not `VPN_*` env). The `VPN_*`
   tunnel variables are deprecated with v4 and retire when it lands (VPN-R32's
   amendment).
+- **v5 adds a channel; v6 moves it to the front door.** Both keep v4's store
+  keys. v6 drops the admission proofs and the inner session that v5 needs
+  (d169, d211).
 
 A third vocabulary exists and must still not be read across: d073/d077 number
 **delivery** generations, where their v2 bundles the allowlist relay _and_ the
@@ -89,9 +94,10 @@ the tunnel shape works, and it already removes the plaintext-key problem,
 because a tunnel carries a `CONNECT`/SOCKS5 stream and the client validates
 the upstream's real certificate end to end. It does _not_ fix the operator
 credential — a long-lived shared bearer that any compromised relay or exit can
-replay. That is d104's work (v4), and mode A's deprecation does not wait for
-it: no credential scheme can make a TLS-terminating proxy stop seeing plaintext
-provider keys.
+replay. That is d104's work (v4). d169's v5 adds the channel. d211's v6
+folds both into one front-door TLS session. Mode A's deprecation does not
+wait for any of them: no credential scheme can make a TLS-terminating proxy
+stop seeing plaintext provider keys.
 
 ## Decision
 
@@ -244,7 +250,7 @@ implementing changes (see _Open items_); this record changes no code.
   and d085 keep their text as history; the file-side veto/assert is not a
   live contract.
 - ~~Where the v2/v3/v4 generation vocabulary lives.~~ **Closed by this record's
-  own generation table**: it now spans v1–v4 and is the one vocabulary, with
+  own generation table**: it now spans v1–v6 and is the one vocabulary, with
   d104's credential numbering renumbered onto it. d105 owns transport _names_,
   not generations.
 - What, if anything, serves local models after the llama-swap pause.

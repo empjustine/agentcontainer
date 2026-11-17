@@ -512,7 +512,10 @@ func main() {
 		Addr: bind,
 		// Only guard against slowloris-style clients. Everything else is left
 		// unlimited: LLM streams can legitimately run for many minutes.
-		ReadHeaderTimeout: 30e9,
+		ReadHeaderTimeout: 30 * time.Second,
+		// The tunnel's own headers are a handful of short fields. Go's 1 MiB
+		// default is an unnecessary public-face allocation budget.
+		MaxHeaderBytes: 1 << 14,
 		// IdleTimeout is the one terminator that is safe to enable: it bounds
 		// how long a connection may sit with NO request in flight, so it never
 		// touches a live session (which is always either reading a window or

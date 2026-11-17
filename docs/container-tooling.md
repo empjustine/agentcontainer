@@ -189,7 +189,7 @@ from the retired shell renderer (docs/d119). It is a differential test: it
 exists because the two bugs found during this refactor were semantic, and
 neither the shellcheck nor the jq compile gate in `./lint.sh` can see them.
 The relay half of that surface is now Go-side: `estige/proxyenv_test.go` pins
-the `proxy-env` export shape, quoting and `NO_PROXY` merge — including the two
+the `proxy-env` export shape, quoting and loopback-only `NO_PROXY` — including the two
 values docs/d130 exists for, the `socks5h` scheme and both cases of every
 variable — and `estige/relaynode_selfchain_test.go` pins the self-chain refusal
 (exit 94) and the foreign-chain accept; an end-to-end case in

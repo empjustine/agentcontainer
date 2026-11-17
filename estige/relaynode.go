@@ -373,7 +373,7 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 	}
 	httpSrv := &http.Server{
 		Handler:           c,
-		ReadHeaderTimeout: 30e9,
+		ReadHeaderTimeout: 30 * time.Second,
 	}
 	serveErr := make(chan error, 1)
 	go func() { serveErr <- httpSrv.Serve(proxyLn) }()

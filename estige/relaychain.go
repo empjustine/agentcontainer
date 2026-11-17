@@ -129,8 +129,10 @@ func envAny(upper, lower string) string {
 func parseChainProxy(raw string) (*chainProxy, error) {
 	u, err := url.Parse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("proxy %q: %w", raw, err)
+		return nil, fmt.Errorf("proxy URL: %w", err)
 	}
+	// Userinfo lives in raw; no error may echo it back into a log line.
+	shown := u.Redacted()
 	var kind string
 	switch u.Scheme {
 	case schemeHTTP:
@@ -141,10 +143,10 @@ func parseChainProxy(raw string) (*chainProxy, error) {
 		// which is exactly what the h suffix promises.
 		kind = schemeSOCKS5
 	default:
-		return nil, fmt.Errorf("proxy %q: scheme must be http:// or socks5:// (docs/d094)", raw)
+		return nil, fmt.Errorf("proxy %q: scheme must be http:// or socks5:// (docs/d094)", shown)
 	}
 	if u.Hostname() == "" {
-		return nil, fmt.Errorf("proxy %q: no host", raw)
+		return nil, fmt.Errorf("proxy %q: no host", shown)
 	}
 	port := u.Port()
 	if port == "" {
@@ -155,10 +157,17 @@ func parseChainProxy(raw string) (*chainProxy, error) {
 		}
 	}
 	if _, err := strconv.ParseUint(port, 10, 16); err != nil {
-		return nil, fmt.Errorf("proxy %q: bad port %q", raw, port)
+		return nil, fmt.Errorf("proxy %q: bad port %q", shown, port)
 	}
 	c := &chainProxy{kind: kind, addr: net.JoinHostPort(u.Hostname(), port)}
 	if u.User != nil {
+		// Basic CONNECT and RFC 1929 credentials cross this leg in cleartext.
+		// A loopback proxy keeps that exposure on the host; a remote one
+		// would hand the credential to a third party.
+		chainHost := net.JoinHostPort(u.Hostname(), port)
+		if err := requireLoopback(chainHost); err != nil {
+			return nil, fmt.Errorf("proxy %q: credentials require a loopback proxy (docs/d094)", chainHost)
+		}
 		c.user = u.User.Username()
 		c.pass, _ = u.User.Password()
 	}
@@ -354,14 +363,9 @@ func dialTLS(ctx context.Context, dial dialFunc, addr, serverName string, nextPr
 	if err != nil {
 		return nil, err
 	}
-	td := tls.Client(raw, &tls.Config{
-		MinVersion: tls.VersionTLS12,
-		ServerName: serverName,
-		NextProtos: nextProtos,
-		// docs/d171 posture (a): the switch skips verification, never
-		// encryption and never MinVersion. Off is the only default.
-		InsecureSkipVerify: skipVerify, //nolint:gosec // explicit, argv-gated, documented exposure (d171)
-	})
+	// docs/d171 posture (a): the switch skips verification, never
+	// encryption and never MinVersion. Off is the only default.
+	td := tls.Client(raw, tunnelTLSConfig(serverName, nextProtos, skipVerify))
 	if err := td.HandshakeContext(ctx); err != nil {
 		_ = raw.Close()
 		return nil, err

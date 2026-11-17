@@ -142,5 +142,8 @@ ECH also hides less than it appears: the outer ClientHello still carries the
 
 Adopt the stable principal. The host key tooling already names the private file
 for it (`prv/<principal>.der`, d132) and derives the SAN from the same
-string (d169). Revisit ECH only if hiding the principal name from the carrier
+string (d169). v6 (d211) keeps the name as the stable unit but fills it with a
+neutral constant: the wire name carries no principal information, and the
+pinned key carries the identity. The selection mechanics in this record are
+unchanged. Revisit ECH only if hiding the principal name from the carrier
 becomes a requirement, and record that adoption as its own decision then.

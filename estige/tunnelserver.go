@@ -122,19 +122,21 @@ func (t *tunnelServer) isTunnelPath(path string) bool {
 // whether or not one already matched, so neither the matched principal's
 // position nor the set's contents leak through timing (VPN-R33). The
 // "Bearer " scheme prefix is public format, not secret, so an early return
-// on its absence leaks nothing.
+// on its absence leaks nothing. Exactly one header is required: a second
+// spelling leaves the edge and estige free to verify different values.
 func matchOperatorKey(r *http.Request, keys []operatorKey) *operatorKey {
 	const scheme = "Bearer "
-	auth := r.Header.Get("Authorization")
+	values := r.Header.Values("Authorization")
+	if len(values) != 1 {
+		return nil
+	}
+	auth := values[0]
 	if !strings.HasPrefix(auth, scheme) {
 		return nil
 	}
 	got := []byte(auth[len(scheme):])
 	var matched *operatorKey
 	for i := range keys {
-		// The scan visits every key whether or not one already matched, so
-		// neither the matched principal's position nor the set's contents
-		// leak through timing (VPN-R33).
 		if subtle.ConstantTimeCompare(got, []byte(keys[i].token)) == 1 {
 			matched = &keys[i]
 		}

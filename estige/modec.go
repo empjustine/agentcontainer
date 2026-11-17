@@ -71,16 +71,9 @@ func (c *relayNode) openPOST(ctx context.Context, id string, skipVerify bool) (t
 
 	tr := &http.Transport{
 		ForceAttemptHTTP2: true,
-		TLSClientConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12,
-			ServerName: u.Hostname(),
-			// The offer set of d077 §4: h2 first, http/1.1 kept so the
-			// transport can still parse a response if the edge downgrades.
-			// System roots are the default; the skip is docs/d171's
-			// argv-gated posture, never a silent fallback.
-			NextProtos:         []string{"h2", protoHTTP11},
-			InsecureSkipVerify: skipVerify, //nolint:gosec // explicit, argv-gated, documented exposure (d171)
-		},
+		// The offer set of d077 §4: h2 first, http/1.1 kept so the
+		// transport can still parse a response if the edge downgrades.
+		TLSClientConfig: tunnelTLSConfig(u.Hostname(), []string{"h2", protoHTTP11}, skipVerify),
 		// The chain rides the DIAL, not Transport.Proxy (docs/d094): a
 		// blind CONNECT/SOCKS tunnel to the edge, TLS end-to-end above it.
 		DialContext:           c.tunnelDial(),

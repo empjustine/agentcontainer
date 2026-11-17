@@ -17,6 +17,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"errors"
 	"io"
 	"net"
@@ -32,6 +33,18 @@ const (
 	tunnelKeepaliveInterval = 30 * time.Second
 	tunnelIdleTimeout       = 90 * time.Second
 )
+
+// tunnelTLSConfig is the one TLS shape for every relay→edge leg: TLS 1.3 only,
+// the URL's host verified by the library, and no silent downgrade. skipVerify
+// is docs/d171's argv-gated posture, never a default.
+func tunnelTLSConfig(serverName string, nextProtos []string, skipVerify bool) *tls.Config {
+	return &tls.Config{
+		MinVersion:         tls.VersionTLS13,
+		ServerName:         serverName,
+		NextProtos:         nextProtos,
+		InsecureSkipVerify: skipVerify, //nolint:gosec // explicit, argv-gated, documented exposure (d171)
+	}
+}
 
 // Relay lifecycle outcomes: the payload-free verdict the connection log
 // records (VPN-R19). Values are stable vocabulary, not free text.

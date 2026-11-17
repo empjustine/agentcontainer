@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
 	"strings"
 )
 
@@ -42,7 +41,7 @@ func runProxyEnv(args []string) {
 // source of both spellings, so they cannot drift apart.
 func proxyEnvLines(proxyAddr, socksAddr string) []string {
 	httpURL := "http://" + proxyAddr
-	noProxy := mergeNoProxy(os.Getenv("NO_PROXY"))
+	noProxy := strings.Join(proxyEnvLoopback, ",")
 
 	// WHY socks5h and not socks5 (docs/d130): the relay's SOCKS listener
 	// refuses a literal-IP target because the exit node owns resolution and
@@ -64,25 +63,6 @@ func proxyEnvLines(proxyAddr, socksAddr string) []string {
 	// has no lowercase form, and node ignores the proxy variables entirely
 	// without it — so it is part of the spelling, not an extra knob (docs/d095).
 	return append(lines, shellAssignment("NODE_USE_ENV_PROXY", "1"))
-}
-
-// mergeNoProxy keeps loopback direct and appends the host's existing entries
-// without duplicating them. One spelling of the merged list, printed once.
-func mergeNoProxy(existing string) string {
-	items := append([]string{}, proxyEnvLoopback...)
-	seen := make(map[string]bool, len(items))
-	for _, item := range items {
-		seen[item] = true
-	}
-	for item := range strings.SplitSeq(existing, ",") {
-		item = strings.TrimSpace(item)
-		if item == "" || seen[item] {
-			continue
-		}
-		seen[item] = true
-		items = append(items, item)
-	}
-	return strings.Join(items, ",")
 }
 
 func shellAssignment(key, value string) string {

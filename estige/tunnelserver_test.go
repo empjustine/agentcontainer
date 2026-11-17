@@ -195,6 +195,19 @@ func TestTunnelPathCamouflage(t *testing.T) {
 // TestTunnelHandshakeAuth drives the REAL handshake through wsDial: the
 // credential rides the upgrade header, and only a correct one ever reaches
 // a 101.
+func TestMatchOperatorKeyRejectsDuplicateAuthorization(t *testing.T) {
+	keys := []operatorKey{{id: "default", token: testTunnelToken}}
+	req := &http.Request{Header: http.Header{}}
+	req.Header.Add("Authorization", "Bearer "+testTunnelToken)
+	if got := matchOperatorKey(req, keys); got == nil {
+		t.Fatal("a single valid header must authenticate")
+	}
+	req.Header.Add("Authorization", "Bearer "+testTunnelToken)
+	if got := matchOperatorKey(req, keys); got != nil {
+		t.Fatal("two Authorization headers must be refused, not resolved by Header.Get")
+	}
+}
+
 func TestTunnelHandshakeAuth(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{})
 	proxy := newHTTPServer(t, s)

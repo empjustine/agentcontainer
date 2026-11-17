@@ -11,7 +11,7 @@ import (
 // (docs/d130). socks5h is part of it — the relay's SOCKS listener refuses a
 // literal-IP target by design (VPN-R22), so a client told `socks5://` resolves
 // first, sends ATYP=IPv4/6, and is refused.
-func TestProxyEnvLinesMergesNoProxyAndQuotes(t *testing.T) {
+func TestProxyEnvLinesLoopbackNoProxyAndQuotes(t *testing.T) {
 	t.Setenv("NO_PROXY", "internal.test, 127.0.0.1")
 
 	got := proxyEnvLines("127.0.0.1:3128", "127.0.0.1:1080")
@@ -22,8 +22,8 @@ func TestProxyEnvLinesMergesNoProxyAndQuotes(t *testing.T) {
 		"export https_proxy='http://127.0.0.1:3128'",
 		"export ALL_PROXY='socks5h://127.0.0.1:1080'",
 		"export all_proxy='socks5h://127.0.0.1:1080'",
-		"export NO_PROXY='127.0.0.1,localhost,::1,internal.test'",
-		"export no_proxy='127.0.0.1,localhost,::1,internal.test'",
+		"export NO_PROXY='127.0.0.1,localhost,::1'",
+		"export no_proxy='127.0.0.1,localhost,::1'",
 		"export NODE_USE_ENV_PROXY='1'",
 	}
 	if !reflect.DeepEqual(got, want) {
@@ -36,6 +36,17 @@ func TestProxyEnvLinesMergesNoProxyAndQuotes(t *testing.T) {
 // only the lowercase spelling — so a spelling exported in one case sends that
 // child to the internet DIRECT, past the kill switch (VPN-R26). Both cases
 // therefore carry the same value, always (docs/d130).
+// An inherited NO_PROXY is a direct-dial license: any non-loopback entry
+// would send a child past the tunnel and past the exit's egress policy.
+func TestProxyEnvIgnoresHostNoProxy(t *testing.T) {
+	for _, hostile := range []string{"*", ".internal,169.254.169.254", "internal.test"} {
+		t.Setenv("NO_PROXY", hostile)
+		if got, want := proxyEnvValue(t, "NO_PROXY"), "'127.0.0.1,localhost,::1'"; got != want {
+			t.Errorf("NO_PROXY=%q: got %s, want %s", hostile, got, want)
+		}
+	}
+}
+
 func TestProxyEnvLinesPairsEveryCase(t *testing.T) {
 	t.Setenv("NO_PROXY", "internal.test")
 

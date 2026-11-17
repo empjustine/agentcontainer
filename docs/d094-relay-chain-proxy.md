@@ -13,6 +13,8 @@ references: [d046, d079, d171]
 ## Status
 
 All three phases landed: record + index, relaychain.go code, relaychain_test.go suite.
+A later hardening pass confined proxy userinfo to loopback proxies and made
+config errors redact it.
 
 ## Problem
 
@@ -61,7 +63,9 @@ strategies that work stay transparent to the edge (d165).
      = SOCKS5 (we never resolve locally, which is what socks5h means).
      A bare host:port means http://; SOCKS_SERVER is host:port (or any
      accepted proxy URL). Userinfo becomes Proxy-Authorization (Basic)
-     on CONNECT, RFC 1929 credentials on SOCKS5.
+     on CONNECT, RFC 1929 credentials on SOCKS5. Both cross the chain leg
+     in cleartext, so userinfo is refused on a non-loopback proxy; a remote
+     credential needs https-to-the-proxy, which remains an extension point.
    - NO_PROXY is deliberately NOT read: the chain's only destination
      is the tunnel endpoint — one host the operator chose — so the
      correct way to opt out is to unset the proxy variable.
@@ -108,9 +112,9 @@ strategies that work stay transparent to the edge (d165).
 - **Resolving NO_PROXY** — one destination, chosen by the operator's
   own VPN_TUNNEL_URL; a suppression list for a single host is a
   second spelling of "unset the variable".
-- **TLS-to-proxy (https:// proxy URLs)** — real but rarer; refused
-  fail-closed with a named error rather than half-supported. Extension
-  point recorded here.
+- **TLS-to-proxy (https:// proxy URLs)** — real but rarer, and the reason
+  remote userinfo cannot be supported today; refused fail-closed with a
+  named error rather than half-supported. Extension point recorded here.
 
 ## Phases
 
@@ -141,6 +145,7 @@ strategies that work stay transparent to the edge (d165).
   unchanged).
 - The chain proxy's recorded view: CONNECT/SOCKS to the tunnel host:port
   only, zero Authorization/Proxy-Authorization unless the operator put
-  userinfo in the proxy value itself.
+  userinfo in a loopback proxy value itself. Config errors name the host,
+  never the userinfo.
 - Bad chain config refuses startup before any bind, naming the variable.
 - SOCKS_VERSION=4 and https:// proxy URLs: loud refusal, no fallback.

@@ -10,6 +10,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"io"
 	"net"
@@ -86,9 +87,15 @@ func TestRelayChainFromEnvPrecedence(t *testing.T) {
 		{name: "socks5h is the socks5 kind", scheme: "wss",
 			env:  map[string]string{"ALL_PROXY": "socks5h://gate:1080"},
 			kind: "socks5", addr: "gate:1080"},
-		{name: "userinfo is proxy credentials", scheme: "wss",
-			env:  map[string]string{"ALL_PROXY": "http://user:secret@corp:3128"},
-			kind: "http", addr: "corp:3128"},
+		{name: "userinfo on a loopback proxy is allowed", scheme: "wss",
+			env:  map[string]string{"ALL_PROXY": "http://user:secret@127.0.0.1:3128"},
+			kind: "http", addr: "127.0.0.1:3128"},
+		{name: "userinfo on a remote proxy refuses", scheme: "wss",
+			env:   map[string]string{"ALL_PROXY": "http://user:secret@corp:3128"},
+			errIs: "loopback proxy"},
+		{name: "socks5 userinfo on a remote proxy refuses", scheme: "wss",
+			env:   map[string]string{"SOCKS_SERVER": "socks5://u:p@gate:1080"},
+			errIs: "loopback proxy"},
 		{name: "https-to-the-proxy refuses", scheme: "wss",
 			env:   map[string]string{"ALL_PROXY": "https://corp:3128"},
 			errIs: "scheme must be"},
@@ -116,12 +123,35 @@ func TestRelayChainFromEnvPrecedence(t *testing.T) {
 			if c.kind != tc.kind || c.addr != tc.addr {
 				t.Fatalf("chain=%+v, want kind=%s addr=%s", c, tc.kind, tc.addr)
 			}
-			if tc.env["ALL_PROXY"] == "http://user:secret@corp:3128" {
+			if tc.env["ALL_PROXY"] == "http://user:secret@127.0.0.1:3128" {
 				if c.user != "user" || c.pass != "secret" {
 					t.Fatalf("userinfo not parsed: %+v", c)
 				}
 			}
 		})
+	}
+}
+
+func TestChainProxyCredentialErrorsAreRedacted(t *testing.T) {
+	_, err := parseChainProxy("http://user:secret@corp:3128")
+	if err == nil {
+		t.Fatal("expected the remote-userinfo refusal")
+	}
+	if !strings.Contains(err.Error(), "loopback proxy") {
+		t.Fatalf("err=%v, want the loopback refusal", err)
+	}
+	if strings.Contains(err.Error(), "secret") || strings.Contains(err.Error(), "user:") {
+		t.Fatalf("err=%v echoes proxy credentials", err)
+	}
+}
+
+func TestTunnelTLSConfigIsTLS13Only(t *testing.T) {
+	c := tunnelTLSConfig("edge.example", []string{"h2"}, false)
+	if c.MinVersion != tls.VersionTLS13 {
+		t.Errorf("MinVersion=%x, want TLS 1.3", c.MinVersion)
+	}
+	if c.ServerName != "edge.example" || len(c.NextProtos) != 1 || c.NextProtos[0] != "h2" || c.InsecureSkipVerify {
+		t.Errorf("config=%+v, want the shared tunnel shape", c)
 	}
 }
 

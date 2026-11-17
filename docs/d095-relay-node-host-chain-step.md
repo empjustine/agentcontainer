@@ -111,12 +111,13 @@ restate what the code already knows.
    4. **Derive the child's env and exec.** `HTTP_PROXY`/`HTTPS_PROXY` (and
       their lowercase spellings) point at the CONNECT listener,
       `ALL_PROXY`/`all_proxy` at the SOCKS5h listener (VPN-R24), and
-      `NO_PROXY`/`no_proxy` is `127.0.0.1,localhost,::1` **merged with the
-      host's list**: loopback stays direct — the relay itself, and any
-      host-local service, must not depend on the tunnel being up — while an
-      operator's internal suffixes keep their meaning. Both cases of every
-      variable, and the `h` in `socks5h`, are load-bearing: docs/d130 records
-      what each buys and what a regression costs.
+      `NO_PROXY`/`no_proxy` is `127.0.0.1,localhost,::1` alone: loopback
+      stays direct — the relay itself, and any host-local service, must not
+      depend on the tunnel being up — while the host's own list is ignored,
+      since a non-loopback exception would bypass the tunnel and its egress
+      policy. Both cases of every variable, and the `h` in `socks5h`, are
+      load-bearing: docs/d130 records what each buys and what a regression
+      costs.
 
 5. **The env sequencing is the whole point, and it is pinned.** The relay's
    own upstream chain (d094) is read from the HOST environment, so the chain

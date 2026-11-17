@@ -29,7 +29,9 @@ end to end and never trust the node in the middle.
 > (per-exchange windowing — the floor under an upgrade-stripping gateway). The
 > offer is always the whole ladder, ranked per dial by the relay node; the
 > `-modes`/`MODES` knob retired with docs/d093. Requirements are d188's,
-> negotiation/framing d077's, names d105's, the credential redesign d104's.
+> negotiation/framing d077's, names d105's, the credential redesign d104's,
+> the inner channel d169's and the front-door mTLS session d211's. The later
+> three are designs on record; the deployed transports are v3.
 
 Historical reference for the deleted proxy: llama-swap,
 github.com/mostlygeek/llama-swap (`internal/router/peer.go`) — estige was
@@ -225,7 +227,7 @@ session set, the endpoint and the degraded flag; never the credential.
 
 `estige proxy-env [-proxy-listen ADDR] [-socks-listen ADDR]` is the CHAIN STEP
 (docs/d095): it prints `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY`
-(loopback direct plus the host's entries) and `NODE_USE_ENV_PROXY=1` as
+(loopback direct only; the host list is ignored) and `NODE_USE_ENV_PROXY=1` as
 single-quoted `export` assignments for `eval "$(estige proxy-env)"`. It starts no
 relay and waits for no health answer: the service manager already owns the
 relay, and the relay's own upstream chain is read from the ambient env before

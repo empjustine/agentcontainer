@@ -15,7 +15,9 @@ tags: ["estige", "proxy", "socks5", "env", "chain-step", "regression"]
 
 Accepted — the implementing change landed: `estige proxy-env` prints
 `ALL_PROXY='socks5h://…'` and exports every conventional variable in both
-cases, with the exported line set pinned by test.
+cases, with the exported line set pinned by test. A later hardening pass
+removed the inherited `NO_PROXY` entries: the exported value is now the
+loopback set alone.
 
 ## Problem
 
@@ -106,6 +108,10 @@ pinned:
   `ALL_PROXY`/`all_proxy`, `NO_PROXY`/`no_proxy`. One table in
   `proxyEnvLines` is the single source of both spellings, so a future edit
   cannot separate them.
+- **`NO_PROXY` is the loopback set only.** The host's own list is ignored. Any
+  inherited non-loopback entry would hand a child a direct dial past the
+  tunnel and past the exit node's egress policy, which is precisely the
+  bypass the chain step exists to close.
 - **`NODE_USE_ENV_PROXY` stays one assignment.** It is node's own switch, has
   no lowercase form and no case convention, and node ignores the proxy
   variables entirely without it (d074).
@@ -115,7 +121,7 @@ pinned:
 - A child of the chain step is proxied whichever case it reads, and the SOCKS
   leg works by name for every target — the v3 behaviour, restored.
 - The pairing "spelling ↔ what the listener accepts" is now test-visible:
-  `TestProxyEnvLinesMergesNoProxyAndQuotes` pins the exact line set,
+  `TestProxyEnvLinesLoopbackNoProxyAndQuotes` pins the exact line set,
   `TestProxyEnvLinesPairsEveryCase` forbids a half-exported variable, and an
   end-to-end subtest drives the relay's SOCKS listener with an ATYP=IPv4
   literal to assert the `0x08` refusal. A future edit that picks the wrong
