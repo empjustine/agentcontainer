@@ -1,0 +1,645 @@
+# ruff: noqa
+# Vendored from karlicoss/promnesia src/promnesia/cannon.py (MIT, (c) 2018
+# Dmitrii Gerasimov). Promnesia URL canonicalisation is the contract /visited
+# and /visits answer against (docs/d172, docs/d176): the daemon and the stock
+# extension must normalise a URL identically or a visited link reports
+# unvisited. Only the canonify() path is kept — the module's pattern-analysis
+# CLI below the PATTERNS tables is stripped, so this file has one job.
+#
+# Do not edit below this header: an upstream change is taken by re-vendoring,
+# so a local fix would silently fork the canonicalisation. The daemon's own
+# conventions (state, schema, HTTP) live in browse-daemon.py.
+#!/usr/bin/env python3
+"""
+Experimental libarary for normalising domain names and urls to achieve 'canonical' urls for content.
+E.g.
+ https://mobile.twitter.com/demarionunn/status/928409560548769792
+and
+ https://twitter.com/demarionunn/status/928409560548769792
+are same content, but you can't tell that by URL equality. Even canonical urls are different!
+
+Also some experiments to establish 'URL hierarchy'.
+"""
+
+from __future__ import annotations
+
+import re
+import typing
+import urllib.parse
+from collections.abc import Collection, Iterable, Sequence
+
+# TODO eh?? they fixed mobile.twitter.com?
+from itertools import chain
+from typing import Any, NamedTuple
+from urllib.parse import SplitResult, parse_qsl, urlencode, urlsplit, urlunsplit
+
+# this has some benchmark, but quite a few librarires seem unmaintained, sadly
+# I guess i'll stick to default for now, until it's a critical bottleneck
+# https://github.com/commonsearch/urlparse4
+# rom urllib.parse import urlparse
+
+# TODO perhaps archive.org contributes to both?
+
+
+# TODO move this to site-specific normalisers?
+dom_subst = [
+    ('m.youtube.'     , 'youtube.'),
+    ('studio.youtube.', 'youtube.'),
+
+    ('mobile.twitter.', 'twitter.'),
+    ('m.twitter.'     , 'twitter.'),
+    ('nitter.net'     , 'twitter.com'),
+
+    ('m.reddit.'      , 'reddit.'),
+    ('old.reddit.'    , 'reddit.'),
+    ('i.reddit.'      , 'reddit.'),
+    ('pay.reddit.'    , 'reddit.'),
+    ('np.reddit.'     , 'reddit.'),
+
+    ('m.facebook.'    , 'facebook.'),
+    # app.getpocket.com is the canonical domain in the JSON returned by
+    # https://github.com/karlicoss/pockexport, so let's canonicalize to that.
+    ('getpocket.'     , 'app.getpocket.'),
+]  # fmt: skip
+
+
+def canonify_domain(dom: str) -> str:
+    # TODO perhaps not necessary now that I'm checking suffixes??
+    for st in ('www.', 'amp.'):
+        dom = dom.removeprefix(st)
+
+    for start, repl in dom_subst:
+        if dom.startswith(start):
+            dom = repl + dom[len(start) :]
+            break
+
+    return dom
+
+
+default_qremove = {
+    'utm_source',
+    'utm_campaign',
+    'utm_content',
+    'utm_medium',
+    'utm_term',
+    'utm_umg_et',
+
+    # https://moz.com/blog/decoding-googles-referral-string-or-how-i-survived-secure-search
+    # some google referral
+    'usg',
+
+    # google language??
+    'hl',
+    'vl',
+
+    # e.g. on github
+    'utf8',
+}  # fmt: skip
+
+default_qkeep = [
+    # ok, various BBS have it, hackernews has it etc?
+    # hopefully it's a reasonable one to keep..
+    'id',
+
+    # common to forums, usually means 'thread'
+    't',
+
+    # common to some sites.., usually 'post'
+    'p',
+]  # fmt: skip
+
+
+# TODO perhaps, decide if fragment is meaningful (e.g. wiki) or random sequence of letters?
+class Spec(NamedTuple):
+    qkeep: Collection[str] | bool | None = None
+    qremove: set[str] | None = None
+    fkeep: bool = False
+
+    def keep_query(self, q: str) -> int | None:  # returns order
+        if self.qkeep is True:
+            return 1
+        qkeep = {q: i for i, q in enumerate(chain(default_qkeep, self.qkeep or []))}
+        qremove = default_qremove.union(self.qremove or {})
+        # I suppose 'remove' is only useful for logging. we remove by default anyway
+
+        qk = qkeep.get(q)
+        if qk is not None:
+            return qk
+        # todo later, check if spec tells both to keep and remove?
+        if q in qremove:
+            return None
+        # by default drop all
+        # it's a better default, since if it's *too* unified, the user would notice it. but not vice versa!
+        return None
+
+    @classmethod
+    def make(cls, **kwargs) -> Spec:
+        return cls(**kwargs)
+
+
+S = Spec
+
+# TODO perhaps these can be machine learnt from large set of urls?
+specs: dict[str, Spec] = {
+    'youtube.com': S(
+        # TODO search_query?
+        qkeep=[ # note: experimental.. order matters here
+            'v',
+            't',
+            'list',
+        ],
+        # todo frozenset?
+        qremove={
+            'time_continue', 'index', 'feature', 'lc', 'app', 'start_radio', 'pbjreload', 'annotation_id',
+            'flow', 'sort', 'view',
+            'enablejsapi', 'wmode', 'html5', 'autoplay', 'ar',
+
+            'gl', # gl=GB??
+            'sub_confirmation', 'shelf_id', 'disable_polymer', 'spfreload', 'src_vid', 'origin', 'rel', 'shuffle',
+            'nohtml5',
+            'showinfo', 'ab_channel', 'start', 'ebc', 'ref', 'view_as', 'fr', 'redirect_to_creator',
+            'sp', # TODO ??
+            'noapp', 'client', 'sa', 'ob', 'fbclid', 'noredirect', 'zg_or', 'ved',
+        } # TODO not so sure about t
+    ),
+    # TODO shit. for playlist don't need to remove 'list'...
+
+
+    'github.com': S(
+        qkeep={'q'},
+        qremove={'o', 's', 'type', 'tab', 'code', 'privacy', 'fork'},
+    ),
+    'facebook.com': S(
+        qkeep={'fbid', 'story_fbid'},
+        qremove={
+            'set', 'type', 'fref', 'locale2', '__tn__', 'notif_t', 'ref', 'notif_id', 'hc_ref', 'acontext', 'multi_permalinks', 'no_hist', 'next', 'bucket_id',
+            'eid',
+            'tab', 'active_tab',
+
+            'source', 'tsid', 'refsrc', 'pnref', 'rc', '_rdr', 'src', 'hc_location', 'section', 'permPage', 'soft', 'pn_ref', 'action',
+            'ti', 'aref', 'event_time_id', 'action_history', 'filter', 'ref_notif_type', 'has_source', 'source_newsfeed_story_type',
+        },
+    ),
+    'physicstravelguide.com': S(fkeep=True), # TODO instead, pass fkeep marker object for shorter spec?
+    'wikipedia.org': S(fkeep=True),
+    'scottaaronson.com'  : S(qkeep={'p'}, fkeep=True),
+    'urbandictionary.com': S(qkeep={'term'}),
+    'ycombinator.com'    : S(qkeep={'id'}), # todo just keep id by default?
+    'play.google.com'    : S(qkeep={'id'}),
+    'answers.yahoo.com'  : S(qkeep={'qid'}),
+    'isfdb.org': S(qkeep=True),
+}  # fmt: skip
+
+_def_spec = S()
+
+
+# TODO use cache?
+def get_spec(dom: str) -> Spec:
+    # ugh. a bit ugly way of getting stuff without subdomain...
+    parts = dom.split('.')
+    cur = None
+    for p in reversed(parts):
+        if cur is None:
+            cur = p
+        else:
+            cur = p + '.' + cur
+        sp = specs.get(cur)
+        if sp is not None:
+            return sp
+    return _def_spec
+
+
+# ideally we'd just be able to reference the domain name and use it in the subst?
+# some sort of hierarchical matchers? not sure what's got better performance..
+# if 'from?site=' in url:
+#     return p.query('site')
+
+Spec2 = Any  # TODO
+
+# TODO this should be a map
+Frag = Any
+Parts = Sequence[tuple[str, str]]
+
+
+def _yc(domain: str, path: str, qq: Parts, frag: Frag) -> tuple[Any, Any, Parts, Frag]:
+    if path[:5] == '/from':
+        site = dict(qq).get('site')
+        if site is not None:
+            domain = site
+            path = ''
+            qq = ()
+            frag = ''
+    # TODO this should be in-place? for brevity?
+    return (domain, path, qq, frag)
+
+
+def get_spec2(dom: str) -> Spec2 | None:
+    return {
+        'news.ycombinator.com': _yc,
+    }.get(dom)
+
+
+class CanonifyException(Exception):
+    pass
+
+
+# TODO not so sure if it's better to quote or not?
+quote_via = urllib.parse.quote
+unquote_via = urllib.parse.unquote
+
+
+def _quote_path(path: str) -> str:
+    parts = path.split('/')
+    nparts = []
+    for p in parts:
+        # TODO maybe re.match?
+        if (
+            '%' in p or '+' in p
+        ):  # some urls are partially encoded... perhaps canonify needs hints indicating if url needs normalising or not
+            p = unquote_via(p)
+        # TODO safe argumnet?
+        nparts.append(quote_via(p))
+    return '/'.join(nparts)
+
+
+# TODO wtf is it doing???
+def _prenormalise(url: str) -> str:
+    # meh..
+    url = re.sub(r'google\..*/amp/s/', '', url)
+
+    if '?' not in url:
+        # sometimes urls have not ? but do have query parameters starting with & for some reason; urlsplit chokes over it
+        # e.g. in google takeout
+        # not sure how safe it in general...
+        first_q = url.find('&')
+        if first_q != -1:
+            return url[:first_q] + '?' + url[first_q + 1 :]
+    return url
+
+
+Left = str | Sequence[str]
+Right = tuple[str, str, str]
+
+
+def transform_split(split: SplitResult):
+    netloc = canonify_domain(split.netloc)
+
+    path = split.path
+    qparts = parse_qsl(split.query, keep_blank_values=True)
+
+    fragment = split.fragment
+
+    ID = r'(?P<id>[^/]+)'
+    # REST = r'(?P<rest>.*)'
+
+    # the idea is that we can unify certain URLs here and map them to the 'canonical' one
+    # this is a dict only for grouping but should be a list really.. todo
+    rules: dict[Left, Right] = {
+        # TODO m. handling might be quite common
+        # f'm.youtube.com/{REST}': ('youtube.com', '{rest}'),
+        (
+            f'youtu.be/{ID}',
+            f'youtube.com/embed/{ID}',
+        ): ('youtube.com', '/watch', 'v={id}'),
+        # TODO wonder if there is a better candidate for canonical video link?
+        # {DOMAIN} pattern? implicit?
+        (
+            'twitter.com/home',
+            'twitter.com/explore',
+        ): ('twitter.com', '', ''),
+    }
+
+    def iter_rules():
+        for fr, to in rules.items():
+            if isinstance(fr, str):
+                fr = (fr,)
+            for f in fr:
+                yield f, to
+
+    for fr, to in iter_rules():
+        # TODO precache by domain?
+        dom, rest = fr.split('/', maxsplit=1)
+        if dom != netloc:
+            continue
+
+        rest = '/' + rest  # path seems to always start with /
+        m = re.fullmatch(rest, path)
+        if m is None:
+            continue
+        gd = m.groupdict()
+        if len(to) == 2:
+            to = (*to, '')
+
+        (netloc, path, qq) = (t.format(**gd) for t in to)
+        qparts.extend(parse_qsl(qq, keep_blank_values=True))  # TODO hacky..
+        # TODO eh, qparts should really be a map or something...
+        break
+
+    return netloc, path, qparts, fragment
+
+
+def myunsplit(domain: str, path: str, query: str, fragment: str) -> str:
+    uns = urlunsplit(
+        (
+            '',  # dummy protocol
+            domain,
+            path,
+            query,
+            fragment,
+        )
+    )
+    uns = uns.removeprefix('//')  # // due to dummy protocol
+    return uns
+
+
+#
+# r'web.archive.org/web/\d+/
+# def canonify_simple(url: str) -> Optional[str]:
+#     '''
+#     Experiment with simply using regexes for normalising, as close to regular python as it gets
+#     '''
+#     # - using named groups for comments?
+
+#     # TODO to be fair, archive.org is a 'very' special case..
+#     regexes = [
+#         r'web.archive.org/web/(?<timestamp>\d+)/' # TODO what about 'rest'?
+#     ]
+#     for re in regexes:
+
+
+def handle_archive_org(url: str) -> str | None:
+    are = r'web.archive.org/web/(?P<timestamp>\d+)/(?P<rest>.*)'
+    m = re.fullmatch(are, url)
+    if m is None:
+        return None
+    else:
+        return m.group('rest')
+
+
+# TODO ok, I suppose even though we can't distinguish + and space, likelihood of them overlapping in normalised url is so low, that it doesn't matter much
+# TODO actually, might be easier for most special charaters
+def canonify(url: str) -> str:
+    # TODO check for invalid charaters?
+    url = _prenormalise(url)
+
+    try:
+        # TODO didn't really get difference from urlparse
+        parts = urlsplit(url)
+    except Exception as e:
+        # TODO not sure about the exception...
+        # TODO return it instead of raising
+        raise CanonifyException(url) from e
+
+    # TODO move to prenormalise?
+    if parts.scheme == '':
+        # if scheme is missing it doesn't parse netloc properly...
+        try:
+            parts = urlsplit('http://' + url)
+        except Exception as e:
+            raise CanonifyException(url) from e
+
+    # meh. figure out what's up with transform_split
+    no_protocol = parts.netloc + parts.path + parts.query + parts.fragment
+
+    res = handle_archive_org(no_protocol)
+    if res is not None:
+        assert len(res) < len(no_protocol)  # just a paranoia to avoid infinite recursion...
+        return canonify(res)
+
+    domain, path, qq, _frag = transform_split(parts)
+
+    spec2 = get_spec2(domain)
+    if spec2 is not None:
+        # meh
+        domain, path, qq, _frag = spec2(domain, path, qq, _frag)
+
+    spec = get_spec(domain)
+
+    # TODO FIXME turn this logic back on?
+    # frag = parts.fragment if spec.fkeep else ''
+    frag = ''
+
+    iqq = []
+    for k, v in qq:
+        order = spec.keep_query(k)
+        if order is not None:
+            iqq.append((order, k, v))
+    qq = [(k, v) for i, k, v in sorted(iqq)]
+    # TODO still not sure what we should do..
+    # quote_plus replaces %20 with +, not sure if we want it...
+    query = urlencode(qq, quote_via=quote_via)
+
+    path = _quote_path(path)
+
+    uns = myunsplit(domain, path, query, frag)
+    uns = uns.removesuffix('/')  # not sure if there is a better way
+    return uns
+
+
+# TODO wonder if lisp could be convenient for this. lol
+TW_PATTERNS = [
+    {
+        'U': r'[\w-]+',
+        'S': r'\d+',
+        'L': r'[\w-]+',
+    },
+
+    r'twitter.com/U/status/S',
+    r'twitter.com/U/status/S/retweets',
+    r'twitter.com/statuses/S',
+    r'twitter.com/U',
+    r'twitter.com/U/likes',
+    r'twitter.com/U/status/S/.*',
+    r'twitter.com/U/statuses/S',
+    r'twitter.com/i/notifications',
+    r'twitter.com/U/with_replies',
+    r'twitter.com/(settings|account)/.*',
+    r'twitter.com/U/lists',
+    r'twitter.com/U/lists/L(/.*)?',
+    r'twitter.com/i/web/status/S',
+    r'twitter.com',
+    r'twitter.com/home',
+    r'tweetdeck.twitter.com',
+    r'twitter.com/U/(media|photo|followers|following)',
+    # r'mobile.twitter.com/.*',
+
+    r'twitter.com/compose/tweet',
+    r'twitter.com/hashtag/\w+',
+    r'twitter.com/i/(moments|offline|timeline|u|bookmarks|display|redirect)',
+    r'twitter.com/intent/tweet.*',
+    r'twitter.com/lists/(create|add_member)',
+    r'twitter.com/search-home',
+    r'twitter.com/notifications/\d+',
+
+    r'twitter.com/i/events/\d+',
+
+    r'(dev|api|analytics|developer|help|support|blog|anywhere|careers|pic).twitter.com/.*',
+]  # fmt: skip
+
+RD_PATTERNS = [
+    {
+        'U'  : r'[\w-]+',
+        'S'  : r'\w+',
+        'PID': r'\w+',
+        'PT' : r'\w+',
+        'CID': r'\w+',
+    },
+    r'reddit.com/(user|u)/U',
+    r'reddit.com/user/U/(comments|saved|posts)',
+    r'reddit.com/r/S(/(top|new|hot|about|search|submit|rising))?',
+    r'reddit.com/r/S/comments/PID/PT',
+    r'reddit.com/r/S/duplicates/PID/PT',
+    r'reddit.com/r/S/comments/PID/PT/CID',
+    r'reddit.com/r/S/wiki(/.*)?',
+
+    r'reddit.com/comments/PID',
+    r'reddit.com/(subreddits|submit|search|top|original|premium|gilded|gold|gilding)',
+    r'reddit.com/subreddits/mine',
+    r'reddit.com',
+    r'reddit.com/(settings|prefs)(/.*)?',
+    r'reddit.com/message/(unread|inbox|messages|compose|sent|newsletter)',
+    r'reddit.com/me/.*',
+    r'reddit.com/login',
+
+    r'ssl.reddit.com/api/v1/authorize',
+    r'reddit.com/dev/api',
+    r'reddit.com/api/v1/authorize',
+    r'reddit.com/domain/.*',
+]  # fmt: skip
+
+GH_PATTERNS = [
+    {
+        'U': r'[\w-]+',
+        'R': r'[\w\.-]+',
+        'b': r'[\w-]+',
+        'X': r'(/.*)?',
+        'C': r'\w+',
+        'G': r'\w+',
+    },
+    r'github.com/U',
+    r'github.com/U/R(/(watchers|settings|actions|branches))?',
+    r'github.com/U/R/wiki/.*',
+    r'github.com/U/R/issuesX',
+    r'github.com/U/R/issues\?q.*',
+    r'github.com/U/R/networkX',
+    r'github.com/U/R/releasesX',
+    r'github.com/U/R/blobX',
+    r'github.com/U/R/treeX',
+    r'github.com/U/R/pullX',
+    r'github.com/U/R/pulls',
+    r'github.com/U/R/wiki',
+    r'github.com/U/R/commits/B',
+    r'github.com/U/R/commit/C',
+    r'github.com/U/R/search\?.*',
+    r'github.com/search\?.*',
+    r'github.com/search/advanced\?.*',
+    r'github.com/loginX',
+    r'github.com/settings/.*',
+    r'github.com/\?q.*',
+
+    r'github.com/_google_extract.*', # TODO wtf?
+    r'github.communityX',
+    r'github.com/dashboard',
+    r'help.github.comX',
+    r'gist.github.com/UX',
+    r'gist.github.com/G',
+    r'developer.github.com/.*',
+
+    # TODO FIXME no canonical here
+    # https://gist.github.com/dneto/2258454
+    # same as https://gist.github.com/2258454
+]  # fmt: skip
+
+YT_PATTERNS = [
+    {
+        'V': r'[\w-]+',
+        'L': r'[\w-]+',
+        'U': r'[\w-]+',
+        'C': r'[\w-]+',
+    },
+    r'youtube.com/watch\?v=V',
+    r'youtube.com/watch\?list=L&v=V',
+    r'youtube.com/watch\?list=L',
+    r'youtube.com/playlist\?list=L',
+    r'youtube.com/user/U(/(videos|playlists|feautred|channels|featured))?',
+    r'youtube.com/(channel|c)/C(/(videos|playlists))?',
+
+    r'accounts.youtube.com/.*',
+    r'youtube.com/signin\?.*',
+    r'youtube.com/redirect\?.*',
+    r'youtube.com/results\?(search_query|q)=.*',
+    r'youtube.com/feed/(subscriptions|library|trending|history)',
+    r'youtube.com',
+    r'youtube.com/(post_login|upload)',
+]  # fmt: skip
+
+SOP = r'(^|\w+\.)stackoverflow.com'
+
+SO_PATTERNS = [
+    {
+        # TODO just replace with identifier? should be quite unambiguous
+        'QI': r'\d+',
+        'QT': r'[\w-]+',
+        'A' : r'\d+',
+        'UI': r'\d+',
+        'U' : r'[\w-]+',
+    },
+    SOP + r'/questions/QI/QT',
+    SOP + r'/questions/QI/QT/A',
+    SOP + r'/q/QI',
+    SOP + r'/q/QI/A',
+    SOP + r'/a/QI',
+    SOP + r'/a/QI/A',
+    SOP + r'/search',
+    SOP + r'/users/UI',
+    SOP + r'/users/UI/U',
+    SOP,
+]  # fmt: skip
+
+WKP = r'(^|.+\.)wikipedia.org'
+
+WK_PATTERNS = [
+    {
+        'AN': r'[\w%.-]+',
+    },
+    WKP + '/wiki/AN',
+    WKP,
+]  # fmt: skip
+
+FB_PATTERNS = [
+    {
+        'F': 'facebook.com',
+        'U': r'[\w\.-]+',
+        'P': r'\d+',
+        'I': r'\d+',
+        'CI': r'\d+',
+    },
+    r'F',
+    r'F/U',
+    r'F/U/(posts|videos)/P',
+    r'F/U/posts/P\?comment_id=CI',
+    r'F/photo.php\?fbid=I',
+    r'F/photo.php\?fbid=I&id=I',
+    r'F/profile.php\?fbid=I',
+    r'F/profile.php\?id=I',
+    r'F/groups/U',
+    r'F/search/.*',
+    r'F/events/I',
+    r'F/events/I/permalink/I',
+    r'F/events/I/I',
+    r'F/U/photos/pcb.I/I',
+
+    r'F/pages/U/P',
+    r'F/stories/I',
+    r'F/notes/U/P',
+]  # fmt: skip
+
+PKP = r'^(app)?\.getpocket\.com'
+
+PK_PATTERNS = [
+    {
+        'ID': r'\d+',
+    },
+    PKP + '/read/ID',
+]  # fmt: skip
+

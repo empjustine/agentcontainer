@@ -183,7 +183,7 @@ dev_tool_run uv uv sync --frozen
 # (docs/d113) that makes bare import log / import _hf_cache resolve the
 # way the scripts are written to run.
 log_info "ty (gating — python types)"
-dev_tool_run ty ty check . --python .venv --extra-search-path llm-local-inference/lib --extra-search-path llm-local-inference
+dev_tool_run ty ty check . --python .venv --extra-search-path llm-local-inference/lib --extra-search-path llm-local-inference --extra-search-path datalakehouse
 
 # Capability-bearing URL gate (docs/d086): a funnel mount path in a tracked
 # file is the mode A credential written down — it leaks the only credential

@@ -33,8 +33,12 @@ export LOG_TOOL
 
 root="$(CDPATH='' cd "$(dirname "$0")" && pwd)"
 cd "$root"
-log_info "unit tests (node --test: every */tests/)"
-"$root/node-run.sh" --test ./*/tests/*.test.mjs
+# Two depths on purpose: a unit is a top-level folder, and a nested unit is a
+# folder inside one (datalakehouse/firefox-extension is a copyable unit of its
+# own, docs/d204). A single-level glob would run its tests - nowhere, which is
+# the failure mode this sweep exists to prevent.
+log_info "unit tests (node --test: every */tests/ and */*/tests/)"
+"$root/node-run.sh" --test ./*/tests/*.test.mjs ./*/*/tests/*.test.mjs
 
 # Go toolchain acquisition is dev-tools.sh's job now (docs/d139); the reason
 # d123 gave for the probe still holds inside it — a mise SHIM on PATH is not

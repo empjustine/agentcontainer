@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>slurp — browsing history and bookmarks</title>
+		<style>
+			body {
+				font: 14px/1.5 system-ui, sans-serif;
+				max-width: 46rem;
+				margin: 2rem auto;
+				padding: 0 1rem;
+				color: #1b1b1f;
+			}
+			h1 {
+				font-size: 1.4rem;
+			}
+			label {
+				display: block;
+				margin: 1rem 0 0.3rem;
+				font-weight: 600;
+			}
+			input[type="text"],
+			input[type="url"],
+			input[type="password"] {
+				width: 100%;
+				padding: 0.4rem;
+				box-sizing: border-box;
+			}
+			.consent {
+				border: 1px solid #b9b9c0;
+				padding: 0.8rem 1rem;
+				margin: 1.2rem 0;
+				background: #f7f7f9;
+			}
+			pre {
+				white-space: pre-wrap;
+				background: #f2f2f4;
+				padding: 0.8rem;
+				font-size: 12px;
+			}
+			footer {
+				margin-top: 2rem;
+				font-size: 12px;
+				color: #55555c;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>slurp — browsing history and bookmarks</h1>
+		<p>
+			This extension streams your local Firefox history, bookmarks, and page
+			titles to the loopback browsing daemon. It never reads page content, never
+			injects a content script, and never talks to Firefox Sync.
+		</p>
+		<div class="consent">
+			<label for="enabled">
+				<input type="checkbox" id="enabled" />
+				I understand that my browsing history and bookmarks leave this browser
+				and are stored by the daemon on this machine.
+			</label>
+		</div>
+		<label for="daemon_url">Daemon origin (loopback only)</label>
+		<input type="url" id="daemon_url" spellcheck="false" />
+		<label for="key">Static key (leave empty when the daemon has none)</label>
+		<input type="password" id="key" spellcheck="false" autocomplete="off" />
+		<p><button type="button" id="save">Save</button> <span id="notice"></span></p>
+		<label for="status">Status</label>
+		<pre id="status">loading…</pre>
+		<footer>
+			The requirements this implements are docs/d204; the daemon end is
+			docs/d205. The queue is bounded, so a long daemon outage drops the oldest
+			visits and the next backfill sweep re-reads them — removals are never
+			dropped that way.
+		</footer>
+		<script type="module" src="options.mjs"></script>
+	</body>
+</html>

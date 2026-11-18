@@ -64,9 +64,15 @@
 		"pi-mistral/index.mjs",
 		"pi-opencode/index.mjs",
 		"*/lib/*.mjs",
+		// the Firefox extension producer: Firefox loads background.mjs from the
+		// manifest and options.html loads options.mjs, so no import graph reaches
+		// either (docs/d204; the unit is nested, see ./test.sh's two globs)
+		"datalakehouse/firefox-extension/background.mjs",
+		"datalakehouse/firefox-extension/options.mjs",
 		// ./test.sh runs every unit's tests, which nothing else imports
 		// (docs/d113)
 		"*/tests/*.test.mjs",
+		"*/*/tests/*.test.mjs",
 		// the spec-graph gate ./lint.sh executes (docs/d140): it walks the tree
 		// and nothing imports it
 		"docs/spec-check.mjs",

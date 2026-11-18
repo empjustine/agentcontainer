@@ -22,13 +22,15 @@ collection leg, its read side, its ingest route and its postmortem sweep span
 d179 to d184.
 Mistral-vibe support is pending in both this unit and `coding-agent/run.mjs`.
 
-The browsing-history side is designed and not built: a push-based visit index
-(d172), its storage tiers (d173), the clipper and hister comparisons (d174,
-d175, d177) and the workload it would add (d178). The task-level requirements
-are d204 for the Firefox history and bookmark producer and d205 for the
-hister-shaped backend. This unit carries the atuin and coding-harness legs, and
-a browsing source would extend it rather than open a third storage path. The retired tailscale+promnesia stack those records replaced
-is gone from the worktree.
+The browsing-history side has both halves. `browse-daemon.py` serves the stock
+Promnesia and hister extensions from one hot store, and
+[`firefox-extension/`](firefox-extension/README.md) is the producer that fills
+it: a Firefox add-on that streams visits, titles, bookmarks and removals over
+`POST /ingest/slurp`. Its storage tiers are designed at d173, the clipper and
+hister comparisons at d174, d175 and d177, the workload at d178, and the
+task-level requirements are d204 and d205.
+The retired tailscale+promnesia stack those records replaced is gone from the
+worktree.
 
 ## Usage
 
@@ -136,6 +138,186 @@ contributes no rows and is never a `--rm` candidate.
 The route post is batched under `AGENT_WAREHOUSE_BATCH_BYTES` (default 4 MiB) so a
 row's large content array cannot overflow the daemon's `AGENT_INGEST_MAX_BODY`
 (default 8 MiB) in a single request.
+
+### The browsing endpoint (Promnesia and hister)
+
+```sh
+./py-run.sh ./datalakehouse/browse-daemon.py            # foreground, one log line per request
+BROWSE_TOKEN=… ./environment.sh ./datalakehouse/browse-daemon.sh   # the static key on the write faces
+```
+
+One daemon serves both browser clients over one SQLite store: the stock
+Promnesia extension reads the visit and visited faces, the stock hister
+extension posts page captures and reads the indexing rules (d205). The
+canonicaliser is Promnesia's own `cannon.py`, vendored (MIT) because
+`/visited` answers only when both sides normalise a URL identically
+(d172, d176).
+
+- Two listeners on the ports each client already defaults to: the hister API
+  (and this unit's ingest edge) on `BROWSE_HISTER_ADDR` (default
+  `127.0.0.1:4433`), the Promnesia protocol on `BROWSE_PROMNESIA_ADDR`
+  (default `127.0.0.1:13131`). Each answers its own `/search`: the hister
+  listener serves the document query dialect, the Promnesia listener serves the
+  visit search, and the Promnesia path also answers a hister-shaped request
+  because the two protocols share that path upstream (d205).
+- `BROWSE_DB` (default `$XDG_DATA_HOME/agent-warehouse/browse.sqlite`) and
+  `BROWSE_TOKEN`.
+- `BROWSE_TOKEN` gates the **write** faces (`/ingest/slurp`, `/api/add`,
+  `/api/add_pdf`, `/api/delete`, `/api/label`, `POST /api/rules`,
+  `/api/history`). Reads stay open because the Promnesia extension has no field
+  to carry a key and the default bind is loopback; an operator who binds wider
+  treats the key as the network secret.
+- `--print-config` prints the resolved address, store and whether a key is set.
+
+The producer half is the Firefox add-on in `firefox-extension/`; its README
+carries the install path, the consent gate and the permission contract. It needs
+no key when the daemon runs without `BROWSE_TOKEN`, and the same key on its
+options page when the daemon has one. The slurper **is** the import path: there
+is no separate Promnesia-DB or hister-DB importer, and a second browser (Edge) is
+a second producer of the same envelope, not a migration of an old store.
+
+The ingest verb is the custom slurper of d204: the extension in
+`firefox-extension/` is its producer, and the batch is the one stream-shaped
+envelope that producer builds — every record carries its own `src` and `kind`,
+and a batch belongs to one stream.
+
+```json
+POST /ingest/slurp
+{"schema":1,"producer":"agentcontainer-slurp/0.1.0","stream":"visit",
+ "stream_seq":{"low":1,"high":3,"acked":0},"checkpoint":{"cursor":"…"},
+ "records":[
+  {"src":"firefox-history","kind":"visit","key":"<json [url, visit_time]>",
+   "url":"https://…","visit_time":1712345678901,"title":"…","via":"backfill"},
+  {"src":"firefox-history","kind":"title","key":"title:<page guid>",
+   "url":"https://…","title":"…","seen_at":1712345679000},
+  {"src":"firefox-bookmarks","kind":"bookmark","key":"<node id>",
+   "node_type":"bookmark","url":"https://…","title":"…","parent_id":"<guid>",
+   "position":0,"date_added":1712345600000},
+  {"src":"firefox-bookmarks","kind":"bookmark-removed","key":"<node id>",
+   "node_type":"folder","cascade":true,"deleted_at":1712345700000,
+   "source":"bookmark"},
+  {"src":"firefox-history","kind":"visit-removed","key":"https://…",
+   "url":"https://…","deleted_at":1712345700000,"source":"local"},
+  {"src":"firefox-history","kind":"history-cleared","key":"*",
+   "deleted_at":1712345700000,"source":"local"}]}
+→ 200 {"accepted":N,"duplicates":N,"version":"…","checkpoint":{…}}
+```
+
+- A batch is one transaction with one ack, and the dedupe identity is
+  `(src, kind, key)`; a re-sent batch answers `accepted: 0`.
+- A replayed batch is answered as duplicates by row identity, never by the
+  sequence mark alone: a producer that resets its own sequence (a storage wipe,
+  a reinstall, a restored older profile) restarts at 1 while the daemon still
+  remembers a higher mark, and a mark-based shortcut would answer every later
+  batch as a duplicate while writing nothing. `stream_seq` is recorded for
+  observability, not trusted for skipping.
+- A `schema` the daemon does not speak is a `409`, which the producer treats as
+  a permanent reject: a retry of the same bytes cannot succeed.
+- The daemon canonicalises every URL; the producer sends raw ones.
+- `visit-removed` is page-granular, because Firefox reports no visit detail on
+  removal: the mark hides that page's visits, while the visited check still
+  answers yes.
+- A removal erases exactly what Firefox named (d204's "What a removal may
+  erase"): a `bookmark-removed` carries an exact node guid, so it is an erase
+  instruction the compaction may act on (a folder cascades over the stored
+  parent chain); a `visit-removed` or `history-cleared` carries no visit
+  identity, so it is a mark that hides rows and leaves them in place.
+- A title fact is keyed on the page guid and only fills a blank locator, so it
+  never invents a visit.
+- A bookmark carries its parent guid, index and node type; the folder path is a
+  view of that chain, which is why a move costs no row churn.
+- A bookmark is stored as context, never as a visited mark: the row enriches a
+  page a visit already made present (its blank locator title), but bookmark-only
+  URLs answer `/visited` with `null`. That is the producer's own distinction
+  between "saved" and "seen" (d204).
+- Promnesia timestamps are IXDTF in the numeric-offset form, in the host's
+  timezone (`2024-04-05T21:34:38+02:00`). The stock extension parses the field
+  with `Date.parse` and slices six characters off the end, so the bracketed
+  `[Zone]` annotation would break it; the offset form keeps both of the
+  extension's fields correct (d205).
+
+The daemon answers the pinned hister surface of d205 from the same store
+(`/search`, `/api/config`, `/api/profile`, `/api/rules` GET+POST, `/api/add`,
+`/api/add_pdf`, `/api/document` GET and HEAD, `/api/delete`, `/api/history`,
+`/api/label`). Shapes worth knowing before changing them:
+
+- `/search` serves a naive BM25 over a cold-shaped index: a term dictionary
+  (`term_stats`) and posting lists (`posting`) sorted by term, with no
+  positions. A cold query reads one contiguous term range per term, which is
+  the ClickHouse-shaped inverted index the Parquet rewrite can keep as row
+  groups. Terms, prefixes, quoted phrases, `url:`, `domain:`, `title:`,
+  `label:`, `language:`, `match_all`, `sort:`, date bounds, pagination and
+  the priority boost are supported; there is no stemmer, no semantic search and
+  no live-search latency promise. The hister extension does not call it, but a
+  web client can (d205, Search).
+- `/api/delete` takes the same query dialect, not a URL: the extension's
+  `url:"…"` and `domain:…` actions delete every matching document and leave the
+  visit rows alone (a capture is not a visit), clearing only the click history
+  the upstream server also removes.
+- `/api/profile` is upstream's single-user shape: `200` with no body, so the
+  extension's `user_id` stays `0` and it never invents an account.
+- `/api/add_pdf` extracts text with the declared `pypdf` dependency, stores it
+  as the document body and answers `201`; an unextractable PDF answers `500`,
+  the same failure upstream reports, because a document the index cannot see is
+  not a successful capture.
+- `/api/versions` and `/api/facets` answer `501`: upstream serves both, but
+  the extension calls neither, so the version-purge rule stays open rather than
+  being guessed at.
+- `/api/add` never erases a stored body: a re-add that carries only the URL
+  (the extension's label and permission paths do) keeps the stored text, HTML
+  and language, and the postings are rebuilt from the stored row, not the
+  request.
+
+Retention is split the way the clients are: the archive keeps everything, the
+browser keeps half of Gecko's expiry rule (50 000 pages, 45 days) and the
+producer prunes it through the public history API, so history falls into the
+archive instead of expiring unwatched. The producer's GitHub repository-root
+bookmark rule and the 5 s-to-7 d scrub cadence live in
+[d204](../docs/d204-firefox-slurp-extension-requirements.md).
+
+### Verification status
+
+The daemon's shell suite (`tests/browse-daemon.sh`) drives a live daemon over
+the Promnesia face, the hister face, the slurper and the CORS/auth edges; the
+extension's Node suite runs its four streams against the fake WebExtension; and
+`tests/slurp-contract.mjs` posts through the extension's own `wire.mjs` to the
+daemon and reads the result back from both faces. The call set was compared
+against upstream `karlicoss/promnesia` `server.py`/`api.ts` and the current
+hister extension. That repository now redirects to `asciimoo/nogon`; its
+extension still calls the same nine endpoints, so the capture surface stays
+pinned even though the server has grown many endpoints the extension does not
+call.
+
+No real Firefox session has run: the extension tests use
+`firefox-extension/tests/fake-webext.mjs`, so Flatpak and ESR installs remain
+unverified, and the daemon's own tests use shaped HTTP payloads rather than a
+browser. The IXDTF timestamp shape is asserted, not parsed by a stock extension
+in CI.
+
+### What the browsing endpoint does not do yet
+
+- **A web UI.** Neither stock extension needs one to work: Promnesia's sidebar
+  and hister's capture/rules/label/history calls are HTTP, and the hister popup's
+  logo is a plain link to the server root. That root answers `404` here. The UI
+  and its preview/facet surface remain out of scope (d205's L3 decision); a thin
+  local UI or a disposable hister sidecar is a separate client choice.
+- **Cold generations.** SQLite holds every visit and every posting, not a hot
+  window over a Parquet archive (d173). Nothing has been demoted, so no query is
+  missing data yet — and nothing has been measured about the demotion window
+  either. The posting layout is the cold one; the Parquet writer is not built.
+- **Search quality and the full query language.** The index has no positions,
+  no stemming and no Bleve-compatible parser; a phrase is a candidate filter,
+  `/api/facets` and `/api/versions` are `501`, and there is no WebSocket
+  stream. The implemented dialect is the one the delete action and a simple web
+  client use, not hister's full query language.
+- **Erasure, retention, offsite copy, scrubbing.** d205's pending list, unchanged
+  by this daemon: a tombstone marks, and no SMR generation exists to scrub.
+- **Sensitive-content rejection (`422`).** Extraction is the producer's job in
+  d205's scope, so the daemon honours a producer that marks a row `sensitive` and
+  never inspects content itself.
+- **Document versions.** The storage contract asks for diffs, the extension reads
+  none, and `/api/versions` answers `501` until the retention rule that would
+  purge them exists.
 
 ## What gets synced
 

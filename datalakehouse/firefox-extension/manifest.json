@@ -1,0 +1,33 @@
+{
+	"manifest_version": 3,
+	"name": "slurp — browsing history and bookmarks to the local lakehouse",
+	"version": "0.1.0",
+	"description": "Streams local browsing history, bookmarks, and page-title changes to the loopback browsing daemon (docs/d204). Reads no page content.",
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "slurp@agentcontainer.invalid",
+			"strict_min_version": "128.0"
+		}
+	},
+	"permissions": [
+		"history",
+		"bookmarks",
+		"storage",
+		"alarms"
+	],
+	"host_permissions": [
+		"http://127.0.0.1/*",
+		"http://localhost/*"
+	],
+	"background": {
+		"scripts": [
+			"background.mjs"
+		],
+		"type": "module"
+	},
+	"options_ui": {
+		"page": "options.html",
+		"open_in_tab": true
+	},
+	"incognito": "not_allowed"
+}
