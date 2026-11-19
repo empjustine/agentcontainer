@@ -37,6 +37,7 @@ once, in the filesystem:
     40-download-models.py        provision the curated files
     50-verify-cache.py           checksums
     60-audit-snapshots.py        what the serving set no longer claims
+    70-prune-cache.py            erase the undeclared and the corrupt (d218)
 
 The rule is scoped to manual intervention: a tool a human types mid-runbook,
 where "what comes next" is the question being answered. Two kinds of tool are out
@@ -54,7 +55,7 @@ everything that follows.
 
 - The rename landed with this record: `10-fetch-hf-manifests.py`,
   `20-propose-entries.mjs`, `30-generate.mjs`, `40-download-models.py`,
-  `50-verify-cache.py`, `60-audit-snapshots.py`. It moved
+  `50-verify-cache.py`, `60-audit-snapshots.py`, `70-prune-cache.py`. It moved
   `knip.jsonc`, the README folder rows, every runbook command and the tests'
   entry names in one commit, because a half-rename leaves a runbook naming files
   that no longer exist.

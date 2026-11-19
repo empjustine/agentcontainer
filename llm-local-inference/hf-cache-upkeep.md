@@ -24,9 +24,10 @@ declares one), any drafter sidecar, and the split index when the repo ships it.
 
 `lib/cache-scope.json` is the closed inventory: every repo this unit keeps,
 in one mode. `served` repos have model entries and curated manifests;
-`audit-only` repos are verified if already cached and never downloaded. A repo
-with no line is out of scope, and the generator refuses a mismatch either way.
-
+`audit-only` repos are refreshed and verified but never downloaded, and their
+cached weights are prunable: the model manifest is the keep order, so an
+audit-only repo keeps its facts (the repo manifest) for an offline promotion
+and not its bytes (docs/d218). A repo with no line is out of scope.
 The checksum step is `50-verify-cache.py` (its own tool: never
 `--fail-on-missing-files`, which would fail on exactly the files a curated set
 skips). Provisioning and verification are separate jobs on purpose.

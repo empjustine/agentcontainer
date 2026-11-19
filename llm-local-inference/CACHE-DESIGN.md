@@ -56,8 +56,8 @@ manifests first, because curation resolves each entry's files from them:
 4. `fetch_model_cards.py` — mirror the served repos' READMEs.
 5. `50-verify-cache.py` — checksum-verify every cached served repo.
 
-Plus the audit/prune pair (`60-audit-snapshots.py`; its destructive sibling
-uses `hf cache rm`), `20-propose-entries.mjs` (the manifest-authoring
+Plus the audit/prune pair (`60-audit-snapshots.py` reports;
+`70-prune-cache.py` erases the undeclared and the corrupt, docs/d218),
 aid) and the GGUF helpers (`gguf_context_length.py`,
 `scan_cache_coverage.py`, `scan_cache_for_manifest.py`). Every Python
 tool is a PEP-723 script logging through `lib/log.py`; there is no shell

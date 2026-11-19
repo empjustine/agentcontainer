@@ -44,8 +44,10 @@ with the position d213 gives its tool:
 4. **Provisioning.** `40-download-models.py` fetches exactly the curated files, after a
    free-space preflight.
 5. **Verification.** `50-verify-cache.py` checksums the present served repos.
-6. **Upkeep and audit.** `upkeep.py` refreshes and prunes; `60-audit-snapshots.py`
-   reports what no curated manifest claims.
+6. **Upkeep, audit and prune.** `upkeep.py` refreshes and drops detached
+   revisions; `60-audit-snapshots.py` reports what the manifest does not
+   declare; `70-prune-cache.py` erases it and any file that failed its
+   checksum (d218).
 
 A step that is judgement rather than programming is written as judgement. Step 2 is
 the only place a human decides what is served; every other step is mechanical and
