@@ -198,6 +198,9 @@ agentcontainer/
 │   ├── tests/                           #   → this folder's own tests — and the only home of its fact-table row (d118)
 │   ├── AGENTS.md / README.md            #   → folder rules (the opencode watchdog deltas) · install + provenance
 │
+├── pi-neuralwatt/                       # Neuralwatt as a pi package — an ADAPTER only (no energy/cost/quota UI): the catalog comes from /v1/models, the four compat fields from its published docs (cited per field)
+│   ├── README.md                        #   → this folder's spec node: the two doc-MCP references, live-data vs documentation split, the cited compat table, the probe list
+│
 ├── pi-summarized-thinking/              # end-of-turn reasoning summaries as a pi package (human-facing only): a `custom` entry per completed turn — never in the model's context
 │   ├── README.md                        #   → install + usage: the `custom` entry (not `custom_message`), the two deliveries, the model chain, the commands, the invariants
 │   ├── summarized-thinking.md           #   → the `why`: the two rejected rewrites, the cache rule, the reversals — this unit's living doc (d117)
