@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/gemma-4-E2B-it-qat-mobile-GGUF",
 	"commit": "46af839dc23aceb4b965ab640dae7fc1bea39bba",
-	"fetched_at": "2026-11-15T02:30:57+00:00",
+	"fetched_at": "2026-11-19T02:30:40+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

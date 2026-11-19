@@ -1,0 +1,16 @@
+{
+  "repo": "unsloth/gemma-4-E4B-it-GGUF",
+  "manifestCommit": "bfc15c382204943c3a8fff0c750b94ae2364d7a3",
+  "entries": [
+    "unsloth/gemma-4-E4B-it-GGUF:Q8_0",
+    "unsloth/gemma-4-E4B-it-GGUF:UD-Q8_K_XL"
+  ],
+  "files": [
+    "MTP/mtp-gemma-4-E4B-it-BF16.gguf",
+    "gemma-4-E4B-it-Q8_0.gguf",
+    "gemma-4-E4B-it-UD-Q8_K_XL.gguf",
+    "mmproj-BF16.gguf"
+  ],
+  "optional": [],
+  "bytes": 18067779712
+}

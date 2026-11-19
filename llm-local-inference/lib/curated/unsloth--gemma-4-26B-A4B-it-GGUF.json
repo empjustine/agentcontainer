@@ -1,0 +1,20 @@
+{
+  "repo": "unsloth/gemma-4-26B-A4B-it-GGUF",
+  "manifestCommit": "c099eb48e663fd284577b04978a94ffccb261841",
+  "entries": [
+    "unsloth/gemma-4-26B-A4B-it-GGUF:Q8_0",
+    "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K",
+    "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q6_K_XL",
+    "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q8_K_XL"
+  ],
+  "files": [
+    "MTP/mtp-gemma-4-26B-A4B-it-BF16.gguf",
+    "gemma-4-26B-A4B-it-Q8_0.gguf",
+    "gemma-4-26B-A4B-it-UD-Q6_K.gguf",
+    "gemma-4-26B-A4B-it-UD-Q6_K_XL.gguf",
+    "gemma-4-26B-A4B-it-UD-Q8_K_XL.gguf",
+    "mmproj-BF16.gguf"
+  ],
+  "optional": [],
+  "bytes": 103014021632
+}

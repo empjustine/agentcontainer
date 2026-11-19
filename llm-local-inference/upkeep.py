@@ -117,6 +117,12 @@ def pull_newer(cache_dir: str) -> None:
 
 
 def main() -> int:
+    # d215: a tool with no accepted arguments fails closed on argv, because
+    # ignoring it would run the tool's full effect anyway.
+    if len(sys.argv) > 1:
+        print("usage: upkeep.py   # takes no arguments", file=sys.stderr)
+        return 64
+
     cache_dir = _cache_dir()
 
     # 1. list model repos

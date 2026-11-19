@@ -5,7 +5,7 @@
 #     "huggingface_hub>=0.23.0",   # tested with 1.28.x; list_repo_tree + token auth
 # ]
 # ///
-"""fetch_hf_manifests.py — download and persist the HF repo file listing that
+"""10-fetch-hf-manifests.py — download and persist the HF repo file listing that
 llama-server resolves implicitly from `--hf-repo <org>/<repo>:<quant>`, and
 audit every configured model in llamacpp-model-data.json against it.
 
@@ -27,7 +27,7 @@ This tool caches that tree per repo as a local manifest
 runs offline and drift against upstream's current main is caught early.
 
 What the audit is worth: the generator bakes each entry's `--model` from the
-HF cache (generate.mjs `bakeSnapshotPaths`) and download_models.py fetches the
+HF cache (30-generate.mjs `bakeSnapshotPaths`) and 40-download-models.py fetches the
 filename in `model`, so the `:quant` is a LABEL, not a lookup key — llama.cpp
 never runs find_best_model for these entries. The audit therefore checks the
 label, not the served file: the tag's heuristic pick must be the configured
@@ -36,11 +36,17 @@ full-precision upload carries no tag at all (XHToken ships
 `Spark-X2.6-1.7B.gguf`) is reported as label-only, because no tag can select
 it and the baked path is what serves.
 
+Refresh is repo-driven, not entry-driven: the repos the table names PLUS every
+repo lib/cache-scope.json declares (a candidate or a mirror that serves nothing,
+so it has no table entry to be found through), and --repo may name a repo outside
+the table by id. A repo with no manifest cannot be planned or audited at all, so
+reaching it is this tool job — nothing downstream can guess a file list.
+
 Usage:
-    ./py-run.sh llm-local-inference/fetch_hf_manifests.py                 # refresh + audit every repo
-    ./py-run.sh llm-local-inference/fetch_hf_manifests.py --repo ORG/REPO # one repo
-    ./py-run.sh llm-local-inference/fetch_hf_manifests.py --offline       # no network: cached manifests only
-    ./py-run.sh llm-local-inference/fetch_hf_manifests.py --print-plan    # llama.cpp's implicit pick per entry
+    ./py-run.sh llm-local-inference/10-fetch-hf-manifests.py                 # refresh + audit every repo
+    ./py-run.sh llm-local-inference/10-fetch-hf-manifests.py --repo ORG/REPO # one repo
+    ./py-run.sh llm-local-inference/10-fetch-hf-manifests.py --offline       # no network: cached manifests only
+    ./py-run.sh llm-local-inference/10-fetch-hf-manifests.py --print-plan    # llama.cpp's implicit pick per entry
 
 Exit code 1 if a configured model disagrees with the heuristic pick or is absent
 from the repo's tree.
@@ -70,6 +76,10 @@ log.set_stream(sys.stderr)
 
 HERE = Path(__file__).parent
 MODEL_DATA = HERE / "lib" / "llamacpp-model-data.json"
+# The repos this unit keeps in cache scope that the table cannot name: the
+# generator reads the same file for its plan, so a repo is either served, declared
+# audit-only, or out of scope — never merely forgotten (30-generate.mjs).
+SCOPE_FILE = HERE / "lib" / "cache-scope.json"
 MANIFEST_DIR = HERE / "lib" / "hf-manifests"
 
 SIDECAR_RE = re.compile(r"(mmproj|imatrix|mtp-|eagle3-|dflash-|dspark-)")
@@ -175,6 +185,31 @@ def main():
     data = json.loads(MODEL_DATA.read_text())
     entries = [m for m in data["models"]
                if not args.repo or any(r in m["hf-repo"] for r in args.repo)]
+
+    # lib/cache-scope.json is the CLOSED inventory (docs/d212): the refresh set
+    # is its keys and nothing else, so a repo cannot be refreshed, audited or
+    # provisioned merely because some table once mentioned it.
+    scope = json.loads(SCOPE_FILE.read_text()) if SCOPE_FILE.exists() else {}
+    repos = [r for r in scope if not args.repo or any(x in r for x in args.repo)]
+    for wanted in args.repo or []:
+        if not any(wanted in r for r in scope):
+            log.error(
+                "repo is not in lib/cache-scope.json — add it there first",
+                repo=wanted,
+            )
+            sys.exit(1)
+    for repo in repos:
+        try:
+            manifest = load_manifest(api, repo, args.offline)
+        except Exception as e:  # noqa: BLE001 — one repo failure must not stop the sweep
+            log.warn("repo manifest refresh failed", repo=repo, error=e)
+            continue
+        log.info(
+            "repo manifest refreshed",
+            repo=repo,
+            mode=scope[repo],
+            files=len(manifest["files"]) if manifest else 0,
+        )
 
     mismatches = 0
     label_only = 0

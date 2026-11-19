@@ -1,0 +1,14 @@
+{
+  "repo": "unsloth/LFM2.5-24B-A2B-GGUF",
+  "manifestCommit": "aacc77834f6aa568c93b4dbd6d295059736be98c",
+  "entries": [
+    "unsloth/LFM2.5-24B-A2B-GGUF:Q8_0",
+    "unsloth/LFM2.5-24B-A2B-GGUF:UD-Q6_K_XL"
+  ],
+  "files": [
+    "LFM2.5-24B-A2B-Q8_0.gguf",
+    "LFM2.5-24B-A2B-UD-Q6_K_XL.gguf"
+  ],
+  "optional": [],
+  "bytes": 47354937568
+}

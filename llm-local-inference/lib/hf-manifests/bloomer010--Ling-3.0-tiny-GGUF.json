@@ -1,7 +1,7 @@
 {
 	"repo": "bloomer010/Ling-3.0-tiny-GGUF",
-	"commit": "9abc60203407b59a4f22eaeeb09b789717643fb0",
-	"fetched_at": "2026-11-15T02:31:00+00:00",
+	"commit": "947514b2ea038203acb47dfc6fa4e53d2edfc9c8",
+	"fetched_at": "2026-11-19T02:30:43+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
@@ -150,8 +150,8 @@
 		},
 		{
 			"path": "README.md",
-			"oid": "20c6f9048cf7b3fa6af71afab526e5cdc0bf68a5",
-			"size": 4705
+			"oid": "c46b2fb3e662904d788606f26e65ae21a63183ff",
+			"size": 4239
 		},
 		{
 			"path": "chat_template.jinja",

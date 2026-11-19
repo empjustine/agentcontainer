@@ -1,5 +1,6 @@
 """Structured logging shared by this repo's python tools — same contract as
-lib/log.sh / lib/log.mjs: one JSON object per line on stdout.
+lib/log.mjs: one JSON object per line; stdout by default, stderr for a tool
+whose stdout is a payload.
 
     {"msg":"...","key":"value","ts":1756824000000,"severityNumber":9,"tool":"llm-local-inference/upkeep"}
 

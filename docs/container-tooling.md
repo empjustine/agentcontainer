@@ -42,7 +42,7 @@ the llama-swap serving container and the pi coding-agent container.
 
 The reference environment. Runs **one** multipurpose llama-swap instance,
 `llm-local-inference/` — generation (docs/d041: `generate.mjs`, via
-`./node-run.sh llm-local-inference/generate.mjs`) detects the container backend + GPU
+`./node-run.sh llm-local-inference/30-generate.mjs`) detects the container backend + GPU
 devices and emits the layers it can into
 `config.d/`; `run.py` launches the `unified-vulkan` image with GPU passthrough
 
@@ -118,7 +118,7 @@ It detects the backend and exposes the facts every run script uses (instead of
 recomputing them per script) — `_workload` (`container` › `none`) and, for the
 container backend, `_container_tool` (`podman`/`docker`). Run scripts should
 not read these directly; they describe intent via the API below. (Capability
-probing lives in `llm-local-inference/generate.mjs` itself — docs/d041.)
+probing lives in `llm-local-inference/30-generate.mjs` itself — docs/d041.)
 
 ### Declarative API
 
@@ -259,9 +259,9 @@ Every local-inference-host runs ONE llama-swap serving container, launched by
 llm-local-inference/run.py` — d170 folded the shell runner + the jq filters it
 sourced into this one file). `run.py` is serve-only: it mounts the
 already-generated `config.d/` (read-only) loaded via `-config-dir` and adapts
-to it. Generation lives in `llm-local-inference/generate.mjs` (docs/d041).
+to it. Generation lives in `llm-local-inference/30-generate.mjs` (docs/d041).
 
-#### `llm-local-inference/generate.mjs` (capability-gated layers)
+#### `llm-local-inference/30-generate.mjs` (capability-gated layers)
 
 The llm-local-inference analog of the `coding-agent/generate.mjs` orchestrator:
 generators emit
@@ -276,7 +276,7 @@ layers, and only the layers that work on the current host land in `config.d/`
   retired with its preflight, d170). The GGUF layer is built from
   its own `lib/llamacpp-model-data.json` (docs/d041 fold), which resolves each model to an HF snapshot dir and bakes the
   absolute paths into each `cmd` (docs/d029 option B; a cache miss is a
-  generation error pointing at `llm-local-inference/download_models.py`).
+  generation error pointing at `llm-local-inference/40-download-models.py`).
   Exactly these two layers: the config.d-era cloud layers (`peer-cloud.yaml`,
   `22-peer-gfx1030.yaml`) left with the relay handoff — cloud providers are
   not a config layer (docs/d027); see architecture.md for the layer table and

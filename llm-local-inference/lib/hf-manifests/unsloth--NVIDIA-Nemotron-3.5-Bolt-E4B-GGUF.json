@@ -1,0 +1,87 @@
+{
+	"repo": "unsloth/NVIDIA-Nemotron-3.5-Bolt-E4B-GGUF",
+	"commit": "b738967d6da3441a7d1c71fcec15e49e32e16ecd",
+	"fetched_at": "2026-11-19T02:30:37+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "269d7548a1141adf8b8ac1dffcc4f4e4aadca0ae",
+			"size": 2537
+		},
+		{
+			"path": "NVIDIA-Nemotron-3.5-Bolt-E4B-BF16.gguf",
+			"oid": "800116a575a514f9e45213e48d3037b0a42b2530d9e545be8699b9967df9da10",
+			"size": 15053099936
+		},
+		{
+			"path": "NVIDIA-Nemotron-3.5-Bolt-E4B-UD-IQ2_M.gguf",
+			"oid": "070456a111a8431a32ba72a506f76e71f5ada7c684371fd63cf9083b24551795",
+			"size": 3531578560
+		},
+		{
+			"path": "NVIDIA-Nemotron-3.5-Bolt-E4B-UD-IQ3_XXS.gguf",
+			"oid": "e678b2bdc79a31a6f954062fedeb43b41e5bab105c3743a4d1a1926f2a9be173",
+			"size": 3703968960
+		},
+		{
+			"path": "NVIDIA-Nemotron-3.5-Bolt-E4B-UD-Q2_K_XL.gguf",
+			"oid": "b70fcf46323970cd40b393b99a56087cee645014afa34081925305c9405a9187",
+			"size": 3742102720
+		},
+		{
+			"path": "NVIDIA-Nemotron-3.5-Bolt-E4B-UD-Q3_K_XL.gguf",
+			"oid": "3f8032b9d2c18536c4ac51b97959a563cc27434de99823640c98147edc62ce9b",
+			"size": 4219133120
+		},
+		{
+			"path": "NVIDIA-Nemotron-3.5-Bolt-E4B-UD-Q4_K_XL.gguf",
+			"oid": "84ff34f5834b929043f5ae74799e8d562d4056998f6a5923ceb44831e8ad84d6",
+			"size": 5060482240
+		},
+		{
+			"path": "NVIDIA-Nemotron-3.5-Bolt-E4B-UD-Q5_K_XL.gguf",
+			"oid": "e79fc43c104cd127626b5ed6b4a6d9a3ac108518bb3842c580d399a849cd0cb6",
+			"size": 5832930496
+		},
+		{
+			"path": "NVIDIA-Nemotron-3.5-Bolt-E4B-UD-Q6_K_XL.gguf",
+			"oid": "dfb738c25ba41219bd51ae4aa07c3f86f8e6e76d7acd918d0502113cb206d548",
+			"size": 7258879168
+		},
+		{
+			"path": "NVIDIA-Nemotron-3.5-Bolt-E4B-UD-Q8_K_XL.gguf",
+			"oid": "6176bd788769bd58042c165d3dc8e8c86a8ca5c90d5de188a364b31dc9560810",
+			"size": 8192955584
+		},
+		{
+			"path": "README.md",
+			"oid": "31db2315a2b567730d19d5907bea11f8c9a671ee",
+			"size": 58954
+		},
+		{
+			"path": "dflash-NVIDIA-Nemotron-3.5-Bolt-E4B-Q8_0.gguf",
+			"oid": "9a63662ae8395b8bfc1a1b00d7a9ef354120f172704bd6ba88d3870cf22d4d03",
+			"size": 398892256
+		},
+		{
+			"path": "imatrix_unsloth.gguf",
+			"oid": "9a7774f87b5bb53003cf423b8f602a826a0df764ad5cf5ec26a0e6dd9c22e59e",
+			"size": 8868320
+		},
+		{
+			"path": "mmproj-BF16.gguf",
+			"oid": "da892cb91545599c7d27a1b9b655e176fe3dcbc5362a8638b847b9c12faa038f",
+			"size": 991553216
+		},
+		{
+			"path": "mmproj-F16.gguf",
+			"oid": "6bc77b7ac2b62cf61bc86757605e45e39f6345373f0a6b76cc5b1ed97f2e233e",
+			"size": 990373568
+		},
+		{
+			"path": "mmproj-Q8_0.gguf",
+			"oid": "6e0602540b342560e0ec62b182e8ea3bf54cc8e352b5e912f20cbb7a847cf23d",
+			"size": 559875776
+		}
+	]
+}

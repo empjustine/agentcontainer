@@ -1,0 +1,15 @@
+{
+  "repo": "byteshape/Qwen3.6-35B-A3B-GGUF",
+  "manifestCommit": "57f6dec8727b4c3f5498ff2564a0333ac1f6624a",
+  "entries": [
+    "byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-3.80bpw",
+    "byteshape/Qwen3.6-35B-A3B-GGUF:Q4_K_S-4.22bpw"
+  ],
+  "files": [
+    "Qwen3.6-35B-A3B-Q4_K_S-3.80bpw.gguf",
+    "Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf",
+    "mmproj-bf16.gguf"
+  ],
+  "optional": [],
+  "bytes": 35674209952
+}

@@ -4,7 +4,7 @@
  * target REGISTRATION on these probes (llama-swap pull needs an inference
  * ENDPOINT — render devices plus the RAM floor, docs/d087 — and
  * estige image needs outbound cloud networking, and
- * llm-local-inference/generate.mjs gates its serving layer on the same
+ * llm-local-inference/30-generate.mjs gates its serving layer on the same
  * inference probes — one definition per capability, so "can this host serve
  * local inference" cannot drift between builder and generator (docs/d041).
  *

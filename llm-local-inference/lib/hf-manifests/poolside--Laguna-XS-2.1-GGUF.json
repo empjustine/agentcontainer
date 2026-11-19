@@ -1,7 +1,7 @@
 {
 	"repo": "poolside/Laguna-XS-2.1-GGUF",
 	"commit": "1a37c0a5fb8c7a18e6106decb6be6327d1b63fa6",
-	"fetched_at": "2026-11-15T02:31:02+00:00",
+	"fetched_at": "2026-11-19T02:30:45+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

@@ -1,0 +1,14 @@
+{
+  "repo": "unsloth/gemma-4-26B-A4B-it-qat-GGUF",
+  "manifestCommit": "7b92b5b28818151e8669af2e45e88d6086f490dd",
+  "entries": [
+    "unsloth/gemma-4-26B-A4B-it-qat-GGUF"
+  ],
+  "files": [
+    "MTP/mtp-gemma-4-26B-A4B-it-BF16.gguf",
+    "gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
+    "mmproj-BF16.gguf"
+  ],
+  "optional": [],
+  "bytes": 16299122720
+}

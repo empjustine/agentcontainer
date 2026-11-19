@@ -1,7 +1,7 @@
 {
 	"repo": "byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF",
 	"commit": "12529130b813e35fd10ea92cab21e0ca4dcb7ecc",
-	"fetched_at": "2026-08-23T03:56:26+00:00",
+	"fetched_at": "2026-11-19T02:30:34+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
@@ -10,42 +10,42 @@
 		},
 		{
 			"path": "Devstral-Small-2-24B-Instruct-2512-IQ2_S-2.34bpw.gguf",
-			"oid": "e7110d9181dce634480f1548b4c94250f9bdb6f3",
+			"oid": "9319e31cb665aab18b6452d37ed5a3c8bde503004a00cdc744de0ad2bbb22736",
 			"size": 6901508768
 		},
 		{
 			"path": "Devstral-Small-2-24B-Instruct-2512-IQ2_S-2.43bpw.gguf",
-			"oid": "5f32c57d0e3e55a1fc662279977d6b877ae35b7f",
+			"oid": "d7ca3d269dbc38bb0da8282c50293258a7b6b806311064cd37eff5d7223b2fd4",
 			"size": 7181879968
 		},
 		{
 			"path": "Devstral-Small-2-24B-Instruct-2512-IQ3_S-2.67bpw.gguf",
-			"oid": "7b70e8b54a3f2daefb467a446d94828686341a91",
+			"oid": "bffcb8772d36293eb7ee311b1e2d8f0223a50aec2f277e4c78c6c263aa1e3875",
 			"size": 7879264928
 		},
 		{
 			"path": "Devstral-Small-2-24B-Instruct-2512-IQ3_S-2.78bpw.gguf",
-			"oid": "f34d7e79df43c2982b8bfd3873ffc1ceb4ca28d5",
+			"oid": "de3cb8942284a690444b462f577d761b1cfe369db5f200bf2412fe2d109b3c72",
 			"size": 8191093408
 		},
 		{
 			"path": "Devstral-Small-2-24B-Instruct-2512-IQ3_S-2.96bpw.gguf",
-			"oid": "fad4364a7589ebcdf19f236f8ff46f9d5e80429a",
+			"oid": "82f344588f9baf5cc242a272000719adead25894d690322077e8068145ef0458",
 			"size": 8715545248
 		},
 		{
 			"path": "Devstral-Small-2-24B-Instruct-2512-IQ3_S-3.19bpw.gguf",
-			"oid": "c133227ae57e77a7f0c6915326538fd6689477c1",
+			"oid": "5ec827e781d56287eaeb267176ccd38d2d3a15a6faa20fa9eb08341b8d449181",
 			"size": 9401379456
 		},
 		{
 			"path": "Devstral-Small-2-24B-Instruct-2512-IQ3_S-3.47bpw.gguf",
-			"oid": "75d9c45148763dcc2bb88c859fff14adf3873032",
+			"oid": "ebcb92e398a2a9c39313368cf9a65d576e94616bce4a2c6eedd7734752ad9a01",
 			"size": 10245524128
 		},
 		{
 			"path": "Devstral-Small-2-24B-Instruct-2512-IQ4_XS-4.04bpw.gguf",
-			"oid": "de31bb801c212af3083803712bafbb4f02acb2b5",
+			"oid": "ef7195549baa1bbf0b4589f85b1c2420258843015b7125297a3a1b7ee42e57da",
 			"size": 11916774048
 		},
 		{
@@ -55,12 +55,12 @@
 		},
 		{
 			"path": "img/RTX5090.png",
-			"oid": "3e2454d95de909a199ea240b9c1741bd58825faa",
+			"oid": "a69b9391cba06b72a4cacc654ec7e25d298943ffa9e79d6ce10f493f663ed628",
 			"size": 734978
 		},
 		{
 			"path": "mmproj-bf16.gguf",
-			"oid": "cd891fd6ed767b68a51a2c98a69848853318189d",
+			"oid": "0990b9eb0eea4263b4f5e3a70538dc433314b607a7f16eb0e81f43e0705405a3",
 			"size": 887646752
 		},
 		{

@@ -90,8 +90,8 @@ def cache_root():
 
 def cached_file(repo, filename):
     """The cached copy of one served file: refs/main first (the revision
-    download_models.py pins), then every snapshot dir sorted -- the same order
-    generate.mjs bakes paths in, so both sides observe one revision."""
+    40-download-models.py pins), then every snapshot dir sorted -- the same order
+    30-generate.mjs bakes paths in, so both sides observe one revision."""
     d = os.path.join(cache_root(), 'models--' + repo.replace('/', '--'))
     cands = []
     ref = os.path.join(d, 'refs', 'main')
@@ -147,7 +147,7 @@ def write_facts():
     FACTS.write_text(json.dumps(facts, indent='\t', sort_keys=True) + '\n')
     log.info('gguf facts written', path=str(FACTS), repos=len(facts), missing=len(missing))
     for repo, filename in missing:
-        log.warn('served file not cached -- provision with download_models.py', repo=repo, file=filename)
+        log.warn('served file not cached -- provision with 40-download-models.py', repo=repo, file=filename)
     return 0 if not missing else 1
 def main():
     ap = argparse.ArgumentParser(description="Read GGUF header context_length (PoC)")

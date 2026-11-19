@@ -1,0 +1,282 @@
+{
+	"repo": "unsloth/Devstral-2-123B-Instruct-2512-GGUF",
+	"commit": "1f2bfbe35f7f9071d9b318374bf5eeffefab4459",
+	"fetched_at": "2026-11-19T02:30:36+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "01670f75c07a292f79c112db3ee601c716718f7a",
+			"size": 7199
+		},
+		{
+			"path": "BF16/Devstral-2-123B-Instruct-2512-BF16-00001-of-00006.gguf",
+			"oid": "c0c113d4aab044df2b63a5cebbc3c6714ee5040617afcde31b2f1bcf4078ae34",
+			"size": 49838509216
+		},
+		{
+			"path": "BF16/Devstral-2-123B-Instruct-2512-BF16-00002-of-00006.gguf",
+			"oid": "86881707f081a7b75a6bf0a3832bbccde258f2a23cc83cb3eff4b8c209170195",
+			"size": 49830110784
+		},
+		{
+			"path": "BF16/Devstral-2-123B-Instruct-2512-BF16-00003-of-00006.gguf",
+			"oid": "6955508052fab3c536affb211cdcb23201b580eacd91689f4cc21c479e1b5121",
+			"size": 49653950208
+		},
+		{
+			"path": "BF16/Devstral-2-123B-Instruct-2512-BF16-00004-of-00006.gguf",
+			"oid": "8f27be0bb49da99fa694c7eb8579d94186b3f874bc15665d66018ba923f5b500",
+			"size": 49326794112
+		},
+		{
+			"path": "BF16/Devstral-2-123B-Instruct-2512-BF16-00005-of-00006.gguf",
+			"oid": "84b3630908aa7b13e8de372c66535e400a1810ee6fc310c8b9f0c5b8380e1501",
+			"size": 49351712960
+		},
+		{
+			"path": "BF16/Devstral-2-123B-Instruct-2512-BF16-00006-of-00006.gguf",
+			"oid": "759c59844b702df7d60d963fcf269218010267e3c5ee90023a0704c009a0ad53",
+			"size": 2063696480
+		},
+		{
+			"path": "Devstral-2-123B-Instruct-2512-Q2_K.gguf",
+			"oid": "6aae5aaf498cf81c793317094cf4fadc853685cd145241b744538a8f6a1dfb3c",
+			"size": 46591221984
+		},
+		{
+			"path": "Devstral-2-123B-Instruct-2512-Q2_K_L.gguf",
+			"oid": "b3272ba50bf7345a07f079a7fc7d0dc9a0ee8fc85d81115d451ba9c178af5c9f",
+			"size": 46968709344
+		},
+		{
+			"path": "Devstral-2-123B-Instruct-2512-UD-IQ1_M.gguf",
+			"oid": "c86abbcc902ba84a7dad4b9861f6a75d9b341cd7dfe03bf5c3e22eb51ffb9e31",
+			"size": 30565310688
+		},
+		{
+			"path": "Devstral-2-123B-Instruct-2512-UD-IQ1_S.gguf",
+			"oid": "c1d648426ff07f5f1fed53b107a8811c7c0fcc1e1b10b9f1200ed887939dd47a",
+			"size": 28445876448
+		},
+		{
+			"path": "Devstral-2-123B-Instruct-2512-UD-IQ2_M.gguf",
+			"oid": "b816c0608079d918bfcbdc06e2f0c69afcb7adc01bea6f6da30e9bb0096a0e92",
+			"size": 43543404768
+		},
+		{
+			"path": "Devstral-2-123B-Instruct-2512-UD-IQ2_XXS.gguf",
+			"oid": "4f7ab5126d1d95c139a9ce2b834c12e69057826532aced0e002b7e9b3f675d5b",
+			"size": 34404671712
+		},
+		{
+			"path": "Devstral-2-123B-Instruct-2512-UD-IQ3_XXS.gguf",
+			"oid": "ef572cb3804ce6cdb89bad417758d2f47c85f4b442c5d84172650c0908bef8b0",
+			"size": 48963887328
+		},
+		{
+			"path": "Devstral-2-123B-Instruct-2512-UD-Q2_K_XL.gguf",
+			"oid": "d54d8f9da0a53cf7efed4b32b59eb9048b9dd9a82ca48a725b8968aaa2fee191",
+			"size": 47942312160
+		},
+		{
+			"path": "IQ4_NL/Devstral-2-123B-Instruct-2512-IQ4_NL-00001-of-00002.gguf",
+			"oid": "3a6ed99006a56271d4affc6068871fe9bfd1990ae5a071e077934cf3cc79f095",
+			"size": 50007222624
+		},
+		{
+			"path": "IQ4_NL/Devstral-2-123B-Instruct-2512-IQ4_NL-00002-of-00002.gguf",
+			"oid": "7f71af073884632c73ab9f402e281c0652897c053571435ec5e8df1ea627de54",
+			"size": 20889466944
+		},
+		{
+			"path": "IQ4_XS/Devstral-2-123B-Instruct-2512-IQ4_XS-00001-of-00002.gguf",
+			"oid": "0ab3e3e9786d6d82d49cf5ededca8b75ecb3b68ead9da673f303d5284c1075f2",
+			"size": 49978077344
+		},
+		{
+			"path": "IQ4_XS/Devstral-2-123B-Instruct-2512-IQ4_XS-00002-of-00002.gguf",
+			"oid": "b8a165fecd53366939ef946a5a6ec4ae5ffdbb3f19c83f304e37562d49c3032d",
+			"size": 17146884352
+		},
+		{
+			"path": "Q3_K_M/Devstral-2-123B-Instruct-2512-Q3_K_M-00001-of-00002.gguf",
+			"oid": "b65f243e9d4449c5243dbaaf3044e50f127555a31622aa8bee2f22825362835e",
+			"size": 50006687648
+		},
+		{
+			"path": "Q3_K_M/Devstral-2-123B-Instruct-2512-Q3_K_M-00002-of-00002.gguf",
+			"oid": "c8e8b281e291c1043a4c2ab8f68fd1234262ce3f9454fe1028cabc679fed4f81",
+			"size": 10613695008
+		},
+		{
+			"path": "Q3_K_S/Devstral-2-123B-Instruct-2512-Q3_K_S-00001-of-00002.gguf",
+			"oid": "fd7c4189d993ee61b45505014f6b49d8e5ad283aea3de3761da0eb1a0e3bdaee",
+			"size": 49900769728
+		},
+		{
+			"path": "Q3_K_S/Devstral-2-123B-Instruct-2512-Q3_K_S-00002-of-00002.gguf",
+			"oid": "14af445aa6e3938cf27f4c4b391faaa6b7f214d0b46652ad2dbc37413eff1bfb",
+			"size": 4466692064
+		},
+		{
+			"path": "Q4_0/Devstral-2-123B-Instruct-2512-Q4_0-00001-of-00002.gguf",
+			"oid": "1efeb4aea5b3080f9b630d0337fdf8c5066e7233a4f6bba943db055ee625ec82",
+			"size": 49983629536
+		},
+		{
+			"path": "Q4_0/Devstral-2-123B-Instruct-2512-Q4_0-00002-of-00002.gguf",
+			"oid": "a8661abe24a001a2c239145b0480e5a7f99af410b6a8941accd3934c390397f2",
+			"size": 21016869056
+		},
+		{
+			"path": "Q4_1/Devstral-2-123B-Instruct-2512-Q4_1-00001-of-00002.gguf",
+			"oid": "100afd60882506d5d546b1187dbd7478a2b313bfeafb9655600050ff83db68e1",
+			"size": 49928772672
+		},
+		{
+			"path": "Q4_1/Devstral-2-123B-Instruct-2512-Q4_1-00002-of-00002.gguf",
+			"oid": "ee31d9ee3fa8a0ec9590408cc4c02de5c8819a021d72f37b4fd98a3e5399d205",
+			"size": 28542829920
+		},
+		{
+			"path": "Q4_K_M/Devstral-2-123B-Instruct-2512-Q4_K_M-00001-of-00002.gguf",
+			"oid": "e1d870265f1dced7ca17c198a8701c0fb2c32c5a664f71183c25bbe7dcb95ef2",
+			"size": 49936343776
+		},
+		{
+			"path": "Q4_K_M/Devstral-2-123B-Instruct-2512-Q4_K_M-00002-of-00002.gguf",
+			"oid": "18137111738c71ff3cda27a6012ec448c51ff0cb0cf7b20ec8d01b9801281114",
+			"size": 24961318624
+		},
+		{
+			"path": "Q4_K_S/Devstral-2-123B-Instruct-2512-Q4_K_S-00001-of-00002.gguf",
+			"oid": "cfc582c83a3c26271d1f876f68d3cfa54874114e4aa13f6f2bc541f884892e76",
+			"size": 49828603840
+		},
+		{
+			"path": "Q4_K_S/Devstral-2-123B-Instruct-2512-Q4_K_S-00002-of-00002.gguf",
+			"oid": "4db6444242c443498eb02f551d14bdc075ec631f4a648ad96ed8a6b499a8019a",
+			"size": 21420407264
+		},
+		{
+			"path": "Q5_K_M/Devstral-2-123B-Instruct-2512-Q5_K_M-00001-of-00002.gguf",
+			"oid": "08d102714cdf61c62af16958d6abd9513d4ebeec56f5253201997f6f22158838",
+			"size": 49941794560
+		},
+		{
+			"path": "Q5_K_M/Devstral-2-123B-Instruct-2512-Q5_K_M-00002-of-00002.gguf",
+			"oid": "f547baa0fc3a8bccf03d780e487dc680a163da2b126747b3f0873716e0e1b070",
+			"size": 38375543456
+		},
+		{
+			"path": "Q5_K_S/Devstral-2-123B-Instruct-2512-Q5_K_S-00001-of-00002.gguf",
+			"oid": "41169f3ff5f0730e9d39f678c13d8bf1c684ff6b62b6edc611a76961ceb5c236",
+			"size": 49778807072
+		},
+		{
+			"path": "Q5_K_S/Devstral-2-123B-Instruct-2512-Q5_K_S-00002-of-00002.gguf",
+			"oid": "7d26fe1807fa6d37ac44b4cc21659bc306752ebec0f1150179583ea1d862329e",
+			"size": 36406120608
+		},
+		{
+			"path": "Q6_K/Devstral-2-123B-Instruct-2512-Q6_K-00001-of-00003.gguf",
+			"oid": "242c29f48822974c0824bcb0775693b5538b78a435fa0f1655718d4331c418ad",
+			"size": 49764204512
+		},
+		{
+			"path": "Q6_K/Devstral-2-123B-Instruct-2512-Q6_K-00002-of-00003.gguf",
+			"oid": "0abeee1bdc62d6a6dc1e6cc7733f0d0211a93b43abf214703d81b3618c963faf",
+			"size": 49962441984
+		},
+		{
+			"path": "Q6_K/Devstral-2-123B-Instruct-2512-Q6_K-00003-of-00003.gguf",
+			"oid": "c97b795cc7354c4df2d3c49f5c2bbd8e40a1a396aeed5eb7c192e4b57de99a7a",
+			"size": 2849097056
+		},
+		{
+			"path": "Q8_0/Devstral-2-123B-Instruct-2512-Q8_0-00001-of-00003.gguf",
+			"oid": "18cdcdb56ebe0149d29fc914c718f4d08f3945fa706935a61e5925a7058e1e86",
+			"size": 49745521376
+		},
+		{
+			"path": "Q8_0/Devstral-2-123B-Instruct-2512-Q8_0-00002-of-00003.gguf",
+			"oid": "7b9bee9d9b54d756ebe911919f4a1c4491fe764ccf50f8b1218bc9144b032d79",
+			"size": 49630365600
+		},
+		{
+			"path": "Q8_0/Devstral-2-123B-Instruct-2512-Q8_0-00003-of-00003.gguf",
+			"oid": "8e0d64e7907f885408a8cdec75560c7e6ff2282f1fa71991bd444f884e8a2303",
+			"size": 33479061408
+		},
+		{
+			"path": "README.md",
+			"oid": "980f0156c5663aefc01e0705173fd2be4734b774",
+			"size": 57596
+		},
+		{
+			"path": "UD-Q3_K_XL/Devstral-2-123B-Instruct-2512-UD-Q3_K_XL-00001-of-00002.gguf",
+			"oid": "ee6f8480cdd2a74c13f5a7034842d6c363264bbc2da17d68815827bb77661cca",
+			"size": 49951784416
+		},
+		{
+			"path": "UD-Q3_K_XL/Devstral-2-123B-Instruct-2512-UD-Q3_K_XL-00002-of-00002.gguf",
+			"oid": "8cbc8d3f4c921e6aaa1ee6f3dff4814a6803ee7a6d09e94aee9e42b99d22a75f",
+			"size": 11987837888
+		},
+		{
+			"path": "UD-Q4_K_XL/Devstral-2-123B-Instruct-2512-UD-Q4_K_XL-00001-of-00002.gguf",
+			"oid": "ff99bb740b92424242a5e6360f03076aadb50d56758b4d7276bda73da4add467",
+			"size": 49956004576
+		},
+		{
+			"path": "UD-Q4_K_XL/Devstral-2-123B-Instruct-2512-UD-Q4_K_XL-00002-of-00002.gguf",
+			"oid": "b92f12d5244d0407399ae8cb730e574058168ab167205452abcf1a8d301e09d7",
+			"size": 25542885088
+		},
+		{
+			"path": "UD-Q5_K_XL/Devstral-2-123B-Instruct-2512-UD-Q5_K_XL-00001-of-00002.gguf",
+			"oid": "933a8ad117450c778de7273c606d4a402cf83e85c06b3ac97010fe8a1281faca",
+			"size": 49736388704
+		},
+		{
+			"path": "UD-Q5_K_XL/Devstral-2-123B-Instruct-2512-UD-Q5_K_XL-00002-of-00002.gguf",
+			"oid": "7e178f1da653b3e9a33e22d1557608fbb0e5155e7285e858fd365d2537d27e43",
+			"size": 38513316160
+		},
+		{
+			"path": "UD-Q6_K_XL/Devstral-2-123B-Instruct-2512-UD-Q6_K_XL-00001-of-00003.gguf",
+			"oid": "d9b1d82ecf1f269e00d2883bae665031c44ebd522c57054b84d23277c2a1ac3f",
+			"size": 49963268416
+		},
+		{
+			"path": "UD-Q6_K_XL/Devstral-2-123B-Instruct-2512-UD-Q6_K_XL-00002-of-00003.gguf",
+			"oid": "3135e1b5e5930a166d26a8e0865c4179355fb665e5fa27b7fd0c5a55ea04aeea",
+			"size": 49772321024
+		},
+		{
+			"path": "UD-Q6_K_XL/Devstral-2-123B-Instruct-2512-UD-Q6_K_XL-00003-of-00003.gguf",
+			"oid": "3e412ea762859472ce0d4a769bef5593efb4290c1284b83582a73cd0c1ab83db",
+			"size": 10105212896
+		},
+		{
+			"path": "UD-Q8_K_XL/Devstral-2-123B-Instruct-2512-UD-Q8_K_XL-00001-of-00003.gguf",
+			"oid": "1d32379d4be516d7a4c861077fe95f47c522cdfc72aaedd4a9484a1db4c15d95",
+			"size": 49925218688
+		},
+		{
+			"path": "UD-Q8_K_XL/Devstral-2-123B-Instruct-2512-UD-Q8_K_XL-00002-of-00003.gguf",
+			"oid": "44eb7ed6174d3e4365431555ea9c178225e7e1c0ca34d9ddd4c05aa857e288b0",
+			"size": 49643636416
+		},
+		{
+			"path": "UD-Q8_K_XL/Devstral-2-123B-Instruct-2512-UD-Q8_K_XL-00003-of-00003.gguf",
+			"oid": "551f4a286417dcda9dea60eaf69bc7bf8edb67cf31557666cdd49d60d707a0e8",
+			"size": 46498150880
+		},
+		{
+			"path": "imatrix_unsloth.gguf_file",
+			"oid": "d0159081c4c569634a8f4ddaa6d814089a0a759d449ac415ab6a49b210e6d363",
+			"size": 36139520
+		}
+	]
+}

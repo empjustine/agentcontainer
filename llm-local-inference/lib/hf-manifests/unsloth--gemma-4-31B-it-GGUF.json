@@ -1,0 +1,182 @@
+{
+	"repo": "unsloth/gemma-4-31B-it-GGUF",
+	"commit": "c1ac76e99d5513b141e8adde7288b85c3f9c32ec",
+	"fetched_at": "2026-11-19T02:30:56+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "108f9fa2925c5be82a0a8a7ca492e7dacf17d010",
+			"size": 3992
+		},
+		{
+			"path": "BF16/gemma-4-31B-it-BF16-00001-of-00002.gguf",
+			"oid": "9aa27a4f71ce16ed6edda262b517e34d4301fd6506be773c0004eb2e021d4e14",
+			"size": 49950156960
+		},
+		{
+			"path": "BF16/gemma-4-31B-it-BF16-00002-of-00002.gguf",
+			"oid": "eca9083855ec546e8cbad372e4348e7f9a118a4925fb108052621252dcb43504",
+			"size": 11463033568
+		},
+		{
+			"path": "MTP/README.md",
+			"oid": "f89f1c51694bb1d31903c80fbfca3a02831bcc30",
+			"size": 2098
+		},
+		{
+			"path": "MTP/mtp-gemma-4-31B-it-BF16.gguf",
+			"oid": "8e6211a54648eca5af909bddf9331b447203b1a7febae6831491367afb61da7f",
+			"size": 954843264
+		},
+		{
+			"path": "MTP/mtp-gemma-4-31B-it-F16.gguf",
+			"oid": "c19d08440ed71bc0fb57b8d09f5eef925c13ad19b2bdbb6e7784e75740e1b3ad",
+			"size": 954843264
+		},
+		{
+			"path": "MTP/mtp-gemma-4-31B-it-Q8_0.gguf",
+			"oid": "5ae8b0117bed601e8924c6305bd5b0585de361d51f0e77091bcb4252cf1f27de",
+			"size": 514687104
+		},
+		{
+			"path": "README.md",
+			"oid": "dad4d9f5ad292a1f074938f1b9d7339e1ccbaf2f",
+			"size": 28499
+		},
+		{
+			"path": "config.json",
+			"oid": "67a81f9b6148f54e34ef04cb5ecd5e4c3d3ee493",
+			"size": 4702
+		},
+		{
+			"path": "gemma-4-31B-it-IQ4_NL.gguf",
+			"oid": "811dccf90edd3e0a5341c601473d42642f4acc238966326395d4f4c1289b2e92",
+			"size": 17287670720
+		},
+		{
+			"path": "gemma-4-31B-it-IQ4_XS.gguf",
+			"oid": "e3d40b6e363954c993a6e28b160d881dfe5a243b62746bd4092b393d4f1d54e5",
+			"size": 16372460480
+		},
+		{
+			"path": "gemma-4-31B-it-Q3_K_M.gguf",
+			"oid": "d2d7a0f9117eb1a9a4b8b68bbb53c1ce5d1f602c45b9028dc12add0d0056f4fd",
+			"size": 14736608192
+		},
+		{
+			"path": "gemma-4-31B-it-Q3_K_S.gguf",
+			"oid": "02cdd36af753d2a61832c3e71b621e6d6be65906bbee4adfcde9f62b42154d97",
+			"size": 13210856384
+		},
+		{
+			"path": "gemma-4-31B-it-Q4_0.gguf",
+			"oid": "5c558b9b009e3ee69bde43e2b98a45d1f5afd316b9fbf447edd2ad4945a187bc",
+			"size": 17338248128
+		},
+		{
+			"path": "gemma-4-31B-it-Q4_1.gguf",
+			"oid": "4957468acdcf412b56d34b69acc9bb380a5872895846effbf37dacbd43c951c6",
+			"size": 19118091200
+		},
+		{
+			"path": "gemma-4-31B-it-Q4_K_M.gguf",
+			"oid": "38bd64c852c4b460434cc7162fa9bdcf242faf86502581a754cb72956bb17f84",
+			"size": 18323733440
+		},
+		{
+			"path": "gemma-4-31B-it-Q4_K_S.gguf",
+			"oid": "41557bd9b7fd0973f2648942fd3d073c5f7dd2aff30d4c91f934ad907dacbf7c",
+			"size": 17399835584
+		},
+		{
+			"path": "gemma-4-31B-it-Q5_K_M.gguf",
+			"oid": "95192e41190ef5eb72db92b669cea0ed733049c2265a03a64ac5a080d8605958",
+			"size": 21658401728
+		},
+		{
+			"path": "gemma-4-31B-it-Q5_K_S.gguf",
+			"oid": "81dbe67b7e2fc456eeb275f0ecdc493be82b7db4c8d6971061b7afc407f7a3dd",
+			"size": 21124672448
+		},
+		{
+			"path": "gemma-4-31B-it-Q6_K.gguf",
+			"oid": "4660692bca96f1d9d19c550641088789c8c0c25bb07965a1e2798e3cb16885fb",
+			"size": 25201486784
+		},
+		{
+			"path": "gemma-4-31B-it-Q8_0.gguf",
+			"oid": "d5808e5874e660a85ab45b2da00c9e3b4a003621249a333772232d1a703e4d67",
+			"size": 32635677632
+		},
+		{
+			"path": "gemma-4-31B-it-UD-IQ2_M.gguf",
+			"oid": "952cfe8d7872e9bc64edb8862e14c354c565ae9e86257f4e3f8fe720200af49c",
+			"size": 10752820160
+		},
+		{
+			"path": "gemma-4-31B-it-UD-IQ2_XXS.gguf",
+			"oid": "e0366169198137bb91121777eb6235aaabe042b422812b12a2d3835d9564fe4b",
+			"size": 8534295488
+		},
+		{
+			"path": "gemma-4-31B-it-UD-IQ3_XXS.gguf",
+			"oid": "beb8b6e69da5d3778d781664d376f94962528c84982e1bf5aa7453d9b2d739b8",
+			"size": 11837782976
+		},
+		{
+			"path": "gemma-4-31B-it-UD-Q2_K_XL.gguf",
+			"oid": "3c0f374d3bc5d3d8c26adf27535354404f144922cecb8c57d7967647d56f17f3",
+			"size": 11774991296
+		},
+		{
+			"path": "gemma-4-31B-it-UD-Q3_K_XL.gguf",
+			"oid": "73f1de2bde15da19362e5760febc01cd31e4e72f5c29561b7ead63ee2a28c716",
+			"size": 15380222912
+		},
+		{
+			"path": "gemma-4-31B-it-UD-Q4_K_XL.gguf",
+			"oid": "9e92cb6236044c6a9870af406029c74a76e0571c157a6f95df724dcc8c7a1575",
+			"size": 18822970304
+		},
+		{
+			"path": "gemma-4-31B-it-UD-Q5_K_XL.gguf",
+			"oid": "abd37a1692ed4a6e7387a886cce871a8d4205359ce098de43f144146cf6455a3",
+			"size": 21890429888
+		},
+		{
+			"path": "gemma-4-31B-it-UD-Q6_K_XL.gguf",
+			"oid": "7f56eb37d53b0435ed154cbd647704b920488b38cd0684882766cf9a0cf0517f",
+			"size": 27521338304
+		},
+		{
+			"path": "gemma-4-31B-it-UD-Q8_K_XL.gguf",
+			"oid": "d1808aea1320e2d1cd0296fbda97b2d2a889cf49a8b212f9eee8b21979e73190",
+			"size": 35020041152
+		},
+		{
+			"path": "imatrix_unsloth.gguf_file",
+			"oid": "36c470a3e195505d2c1363868d4bf290f1ca859f09a43cdd2bd75af0d5e331db",
+			"size": 13753952
+		},
+		{
+			"path": "mmproj-BF16.gguf",
+			"oid": "7a4601b12ec680f706a7e0c7e1f78f579b1db64d485a9e352ee87d4b9daa45e4",
+			"size": 1200726496
+		},
+		{
+			"path": "mmproj-F16.gguf",
+			"oid": "6edcca228213c28d3567a35d22f849eea52d8360875093851959adf5d2f270eb",
+			"size": 1198957024
+		},
+		{
+			"path": "mmproj-F32.gguf",
+			"oid": "6ba741a2445b1585a35556cf19b2a55eab86b4e2ed38e31767a6583a8a2fa4e4",
+			"size": 2302996960
+		},
+		{
+			"path": "mtp-gemma-4-31B-it.gguf",
+			"oid": "5ae8b0117bed601e8924c6305bd5b0585de361d51f0e77091bcb4252cf1f27de",
+			"size": 514687104
+		}
+	]
+}

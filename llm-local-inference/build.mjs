@@ -6,7 +6,7 @@
  * will use.
  *
  * The pull is GATED on this host being an inference ENDPOINT (docs/d087) —
- * render devices AND the RAM floor, the SAME gate generate.mjs puts on its
+ * render devices AND the RAM floor, the SAME gate 30-generate.mjs puts on its
  * serving layer (shared probes, lib/host-capabilities.mjs): against a
  * non-endpoint host the pull is a wasted multi-GB download of an image that
  * cannot serve (no accelerator to run llama.cpp on, or too little RAM for
@@ -29,6 +29,13 @@ import {
 	totalMemGiB,
 } from "./lib/host-capabilities.mjs";
 import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
+
+// d215: no accepted arguments. Ignoring argv would run the full effect anyway:
+// a stray --help once provisioned the whole catalog.
+if (process.argv.length > 2) {
+	process.stderr.write("usage: build.mjs   # takes no arguments\n");
+	process.exit(64);
+}
 
 setLogTool("llm-local-inference/build");
 
@@ -122,7 +129,7 @@ if (containerTool === null) {
 
 // The gate is the endpoint definition itself, not a proxy for it: a host that
 // cannot serve has no use for the pull. LOCAL_INFERENCE=1 is NOT honored here
-// on purpose — generate.mjs's debug override generates a config, but an image
+// on purpose — 30-generate.mjs's debug override generates a config, but an image
 // this host cannot run is a wasted download regardless.
 if (renderDevices.length === 0 || hostRamGiB < INFERENCE_MIN_RAM_GIB) {
 	logWarn("skipping target — host is not an inference endpoint", {

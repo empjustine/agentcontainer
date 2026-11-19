@@ -1,5 +1,5 @@
 /**
- * @fileoverview generate.mjs — the llm-local-inference generator (d041 folded
+ * @fileoverview 30-generate.mjs — the llm-local-inference generator (d041 folded
  * the former generate.sh, gen-lib.mjs, generate-general.yaml.mjs and
  * generate-local-llm-models.yaml.mjs in): (re)generate the llama-swap config
  * in config.d/ for LOCAL GGUF inference. RUN THIS after a models/args change
@@ -38,13 +38,22 @@
  * 00-general.yaml is the only home of the globals.
  *
  * Secrets: none at generation time. This module's generation is fully offline
- * (vendored tables only) and embeds NO keys — the single ${env.*} reference in
+ * (vendored data only) and embeds NO keys — the single ${env.*} reference in
  * the generated config (TLALOCAYOTL_API_KEY, 00-general.yaml apiKeys) is resolved by
  * llama-swap from ITS OWN environment at load time, which the runner receives from the explicit
  * chain (./environment.sh ./py-run.sh llm-local-inference/run.py). Generation needs no
  * vault round-trip at all.
  *
- * Env overrides:
+ * Outputs, both from the same in-memory set so they cannot disagree:
+ *   lib/curated/<org>--<repo>.json   one repo's provisioning input (the
+ *                                    files its entries need, resolved from
+ *                                    the committed repo manifest)
+ *   config.d/*.yaml                  the llama-swap rendering
+ * The cache scope (lib/cache-scope.json) is checked in both directions before
+ * anything is written: an entry without a scope line, a served line without
+ * entries, an audit-only line with entries, or an unknown mode stops the run
+ * (docs/d212).
+ *
  *   LOCAL_INFERENCE   1 = force the local-inference layer regardless of the
  *                       capability gate (emits container-side paths; debug)
  */
@@ -72,9 +81,28 @@ const { logError, logInfo, logWarn } =
 	/** @type {typeof import("./lib/log.mjs")} */ (
 		await import(`${LIB_DIR}/log.mjs`)
 	);
-const { writeArtifact } = /** @type {typeof import("./lib/artifact.mjs")} */ (
+const {
+	GGUF_SHARD_RE,
+	FULL_PRECISION_BYTES_PER_PARAM,
+	FULL_PRECISION_NAME_RE,
+	allShards,
+	fullPrecisionTag,
+	mainGgufSizes,
+	shardOne,
+} = /** @type {typeof import("./lib/model-entries.mjs")} */ (
+	await import(`${LIB_DIR}/model-entries.mjs`)
+);
+
+const { writeArtifact, writeJsonArtifact } = /** @type {typeof import("./lib/artifact.mjs")} */ (
 	await import(`${LIB_DIR}/artifact.mjs`)
 );
+
+// d215: no accepted arguments. Ignoring argv would run the full effect anyway:
+// a stray --help once provisioned the whole catalog.
+if (process.argv.length > 2) {
+	process.stderr.write("usage: 30-generate.mjs   # takes no arguments\n");
+	process.exit(64);
+}
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const configD = join(scriptDir, "config.d");
@@ -125,7 +153,7 @@ function generateGeneral() {
 
 // --- 10-local-llm-inference.yaml (folded generate-local-llm-models.yaml.mjs)
 // The local llama.cpp GGUF `models` map. Built from
-// lib/llamacpp-model-data.json (this folder's copy of the table, d025/d113);
+// lib/llamacpp-model-data.json (this folder's copy of the model manifest, d025/d113);
 // no network access. The `cmd` strings reference macros defined in
 // 00-general.yaml (${LLAMA_SERVER}, ${qwen36}, …) which llama-swap resolves
 // after merging config.d/.
@@ -155,7 +183,7 @@ const DEFAULTS = {
 /**
  * Spec type for an entry that declares a `model-draft` sidecar but no kind of
  * its own (unsloth ships MTP sidecars under the repo's MTP/ subdir). A dflash
- * or dspark sidecar must name its type in the table instead: llama.cpp refuses
+ * or dspark sidecar must name its type in the model entry instead: llama.cpp refuses
  * a type that does not match the drafter's head, and a DSpark drafter without a
  * confidence head refuses `--spec-draft-p-min` (docs/d206).
  * --model-draft ALONE is a no-op for speculation when the target model is a
@@ -214,62 +242,16 @@ function requireVisibleHub() {
 		return;
 	}
 	logError(
-		"the HF hub cache is not visible — every baked path would be unverified (point HF_HUB_CACHE at the mount, or provision it with ./download_models.py)",
+		"the HF hub cache is not visible — every baked path would be unverified (point HF_HUB_CACHE at the mount, or provision it with ./40-download-models.py)",
 		{ hub: HUB_HOST, reason },
 	);
 	process.exit(95);
 }
 
 /**
- * Sharded GGUF naming, kept in sync with download_models.py's
- * SPLIT_RE (that script downloads every shard; the generator verifies it did).
- * @type {RegExp}
- */
-const SPLIT_RE = /-(\d{5})-of-(\d{5})\.gguf$/;
-
-/**
- * Normalize a (possibly sharded) GGUF filename to its 00001 shard — llama.cpp
- * auto-loads sibling shards when pointed at the first one. Tolerates a
- * non-first shard in the manifest the same way the retired launch-gguf.sh did.
- * @param {string} filename
- * @returns {string} the 00001-shard filename
- */
-function shardOne(filename) {
-	const m = SPLIT_RE.exec(filename);
-	if (!m) {
-		return filename;
-	}
-	return `${filename.slice(0, m.index)}-00001-of-${m[2]}.gguf`;
-}
-
-/**
- * Expand a sharded GGUF filename to ALL of its shards (llama-server needs the
- * complete set present, not just shard 1 — download_models.py enforces this at
- * download time, and the generator re-verifies it against the cache).
- * @param {string} filename
- * @returns {string[]} every shard filename
- */
-function allShards(filename) {
-	const first = shardOne(filename);
-	// SPLIT_RE's groups are all required, so a match carries them — the guard
-	// below is the noUncheckedIndexedAccess narrowing of that fact.
-	const m = SPLIT_RE.exec(first);
-	const width = m?.[1]?.length;
-	const total = m?.[2];
-	if (m === null || width === undefined || total === undefined) {
-		return [first];
-	}
-	const base = first.slice(0, first.length - m[0].length);
-	return Array.from(
-		{ length: Number(total) },
-		(_, i) => `${base}-${String(i + 1).padStart(width, "0")}-of-${total}.gguf`,
-	);
-}
-
-/**
  * Resolve one manifest entry to ONE HF snapshot dir and bake the final
  * container-side paths. Candidate snapshots: the refs/main revision first —
- * the revision download_models.py pins, so a healthy cache always resolves
+ * the revision 40-download-models.py pins, so a healthy cache always resolves
  * there — then every snapshot dir (sorted), mirroring the glob order the
  * retired launch-gguf.sh used. The chosen snapshot must carry ALL required
  * files (every model shard, plus the projector/drafter when declared) so
@@ -280,7 +262,7 @@ function allShards(filename) {
  * has not pulled yet must still generate a complete config, and a wrong path
  * is llama-server's documented 127 at swap time, not a generation failure
  * (docs/d197 — the hard-fail blocked first-run and cache-less hosts for a
- * condition download_models.py owns).
+ * condition 40-download-models.py owns).
  * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
  * @returns {{ modelPath: string, shardPaths: string[], mmprojPath: string|null, draftPath: string|null }}
  *   container-side paths for the emitted cmd (mmproj/draft null when the entry
@@ -330,7 +312,7 @@ function bakeSnapshotPaths(m) {
 		);
 	}
 	logWarn(
-		"no cached HF snapshot carries this entry — run ./download_models.py; baking unverified paths",
+		"no cached HF snapshot carries this entry — run ./40-download-models.py; baking unverified paths",
 		{ repo, sha, snapshotsChecked: candidates.length, required },
 	);
 	return guestPaths(sha);
@@ -383,7 +365,7 @@ const MMPROJ_MODES = [
  * Image token budget for vision modes when an entry carries no
  * `image-min-tokens`/`image-max-tokens` pair. The pair sits in the manifest
  * only as a deviation from this value (gemma-4's 1120), so absence stays the
- * compact spelling of "the default" instead of 40 identical rows.
+ * compact spelling of "the default" instead of 40 identical entries.
  * @type {number}
  */
 const IMAGE_TOKENS_DEFAULT = 1024;
@@ -404,7 +386,7 @@ const FLEET_VRAM_GIB = 16;
  * served, i.e. what is left for the KV cache on that card.
  *
  * Total parameters (not active) times the fleet's serving bytes per parameter:
- * the Q4–Q8 ladder this table publishes averages ~1 GiB per billion, the round
+ * the Q4–Q8 ladder this manifest publishes averages ~1 GiB per billion, the round
  * number every threshold below is set on. Total, not active, on purpose — a
  * 35B-A3B still has to LOAD 35B of weights, and that is what competes with the
  * KV cache for VRAM.
@@ -421,7 +403,7 @@ function weightsVramShare(paramsB) {
 
 /**
  * Share of the card a GGUF of these bytes claims once loaded — the one unit
- * conversion the display rules measure a row with, so a ceiling and the row it
+ * conversion the display rules measure a entry with, so a ceiling and the entry it
  * judges cannot disagree. Decimal GB, the unit `totalParamsB` reports, so the
  * two readings of one file agree.
  * @param {number} bytes
@@ -444,7 +426,7 @@ const MMPROJ_OFFLOAD_MAX_VRAM_SHARE = 0.75;
 /**
  * "Small model" line: weights under a quarter of the card. Both trimming rules
  * read it, because below it nothing needs trimming —
- *  - the quant ladder's cheapest rows are all servable, so they are noise
+ *  - the quant ladder's cheapest entries are all servable, so they are noise
  *    (CHEAP_QUANT constants), and
  *  - a projector fits alongside the weights comfortably, so `0text` — the
  *    no-projector mode whose whole point is clawing VRAM back — buys a caller
@@ -547,15 +529,15 @@ function repoMmproj(repo) {
 const REPO_IMAGE_TOKENS = new Map();
 
 /**
- * @param {Record<string, any>[]} rows the RAW model-data table (the record of
+ * @param {Record<string, any>[]} entries the RAW models array (the record of
  * every quant, so pruning cannot empty a repo of its declared pair)
  * @returns {void}
  */
-function indexImageTokens(rows) {
-	for (const row of rows) {
-		const repo = row["hf-repo"].split(":")[0];
-		const min = row["image-min-tokens"];
-		const max = row["image-max-tokens"];
+function indexImageTokens(entries) {
+	for (const entry of entries) {
+		const repo = entry["hf-repo"].split(":")[0];
+		const min = entry["image-min-tokens"];
+		const max = entry["image-max-tokens"];
 		if (typeof min !== "number" || typeof max !== "number") {
 			continue;
 		}
@@ -576,7 +558,7 @@ function indexImageTokens(rows) {
  * Validate an entry against its committed manifest, then fill what the
  * manifest proves. A declared file the manifest does not carry is a HARD
  * ERROR: the manifest is committed truth, so a miss is a typo or a stale
- * table, never a host state (docs/d197).
+ * entry, never a host state (docs/d197).
  * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
  * @returns {void} mutates m: resolves `mmproj`, fills the image-token pair
  */
@@ -593,7 +575,7 @@ function resolveEntryFiles(m) {
 	for (const file of declared) {
 		if (!shipped.has(file)) {
 			throw new Error(
-				`model ${m["hf-repo"]} declares ${file}, which its committed hf-manifest does not carry (re-run fetch_hf_manifests.py, then fix the table)`,
+				`model ${m["hf-repo"]} declares ${file}, which its committed hf-manifest does not carry (re-run 10-fetch-hf-manifests.py, then fix the model entry)`,
 			);
 		}
 	}
@@ -651,65 +633,13 @@ function deriveModelId(m, modeSeg) {
 // --- quant-display pruning ---------------------------------------------------
 
 /**
- * Tail of one shard inside a split GGUF ("...-00001-of-00002.gguf"). Shard
- * groups are summed under the de-sharded name, so a repo's footprint per
- * quant is one number whether or not it was uploaded split.
- */
-const GGUF_SHARD_RE = /-\d{5}-of-\d{5}\.gguf$/;
-
-/**
- * Bytes per parameter of every full-precision GGUF the repos publish — the ONE
- * home of both "is this file full precision" and "how big is a parameter in
- * it". The size estimate (`totalParamsB`) and the display rule below read this
- * table, because two per-tag lists drifted: F32 was in neither, so an F32-only
- * repo went unsized and an F32 row survived the very rule that hid its BF16
- * sibling, at twice the bytes (docs/d202).
- *
- * Order matters: `bf16` precedes `f16`, since "…BF16" also ends with "f16".
- * @type {Readonly<Record<string, number>>}
- */
-const FULL_PRECISION_BYTES_PER_PARAM = { f32: 4, bf16: 2, f16: 2 };
-
-/**
- * Anywhere-in-the-name form of the same tags, for "this file is full precision
- * spelled oddly" — the size estimate's bare-upload fallback must not read a
- * file that mentions a full-precision tag but does not end with one.
- * @type {RegExp}
- */
-const FULL_PRECISION_NAME_RE = new RegExp(
-	Object.keys(FULL_PRECISION_BYTES_PER_PARAM).join("|"),
-	"i",
-);
-
-/**
- * @param {string} name a GGUF path or basename, with or without the extension,
- *   sharded or whole, or a table entry's bare `:quant` label
- * @returns {string|null} the full-precision tag the name ENDS with (a key of
- *   FULL_PRECISION_BYTES_PER_PARAM), or null for a quant or an untagged file
- */
-function fullPrecisionTag(name) {
-	// shards are stripped first: a table row and the manifest both name the
-	// 00001 shard, so "...-BF16-00001-of-00002.gguf" must still read as BF16
-	const base = (name.split("/").pop() ?? "")
-		.replace(GGUF_SHARD_RE, "")
-		.replace(/\.gguf$/i, "")
-		.toLowerCase();
-	for (const tag of Object.keys(FULL_PRECISION_BYTES_PER_PARAM)) {
-		if (base.endsWith(tag)) {
-			return tag;
-		}
-	}
-	return null;
-}
-
-/**
- * The tag a TABLE ROW serves, read from the file it points at and, failing
- * that, from the row's `:quant` label. The label is not a second derivation of
+ * The tag a model entry serves, read from the file it points at and, failing
+ * that, from the entry's `:quant` label. The label is not a second derivation of
  * the same fact: some repos upload full precision untagged (Spark's
- * `Spark-X2.6-4B.gguf`, which fetch_hf_manifests.py reports as label-only), and
+ * `Spark-X2.6-4B.gguf`, which 10-fetch-hf-manifests.py reports as label-only), and
  * the label is the only place that survives. Reading the file first keeps the
  * label from overriding a name that disagrees (docs/d202).
- * @param {Record<string, any>} e one table entry
+ * @param {Record<string, any>} e one model entry
  * @returns {string|null}
  */
 function entryFullPrecisionTag(e) {
@@ -718,12 +648,12 @@ function entryFullPrecisionTag(e) {
 }
 
 /**
- * FULL-PRECISION rows (BF16, F16, F32) are hidden where the row itself would
+ * FULL-PRECISION entries (BF16, F16, F32) are hidden where the entry itself would
  * claim more than half the card: half the VRAM on weights alone leaves no room
  * for the KV cache the same model needs, so the variant can only ever bloat the
- * config. Measured on the row's OWN bytes, never on a 2-byte-per-parameter
+ * config. Measured on the entry's OWN bytes, never on a 2-byte-per-parameter
  * estimate — an F32 is twice that size — and never to the point of deleting a
- * repo that publishes nothing else: that repo keeps its smallest such row.
+ * repo that publishes nothing else: that repo keeps its smallest such entry.
  * Below the line a full-precision variant is genuinely useful and stays.
  * @type {number}
  */
@@ -731,10 +661,10 @@ const FULL_PRECISION_MAX_VRAM_SHARE = 0.5;
 
 /**
  * The low-quant rule's two numbers. A small model (SMALL_MODEL_VRAM_SHARE) has
- * every quant servable, so its cheapest rows are noise in a catalog this size:
+ * every quant servable, so its cheapest entries are noise in a catalog this size:
  * cut at most CHEAP_QUANT_DROP_MAX of them, and never below
- * CHEAP_QUANT_KEEP_MIN rows — a repo with few quants must keep a servable
- * ladder, so the floor counts rows, not dropped quants (docs/d200 made this
+ * CHEAP_QUANT_KEEP_MIN entries — a repo with few quants must keep a servable
+ * ladder, so the floor counts entries, not dropped quants (docs/d200 made this
  * gentler than d170's four/two).
  * @type {number}
  */
@@ -766,12 +696,12 @@ const CTX_CAP = 262_144;
 const CTX_FALLBACK = 65_536;
 
 /**
- * GGUF header truth for the files this table serves, keyed by repo — a repo
+ * GGUF header truth for the files these entries serve, keyed by repo — a repo
  * whose served files disagree drops to a per-file map (`files`). Written by
  * `gguf_context_length.py --facts` from the cached GGUFs' own metadata, pruned
  * to configured files, normalized (sorted, integers, no timestamp) so a refresh
  * re-writes the same bytes. A hand value here would be a second home for a
- * header fact, which is how "marketing" 256K claims leaked into the table
+ * header fact, which is how "marketing" 256K claims leaked into the manifest
  * (docs/d197).
  * @type {Record<string, Fact|{files: Record<string, Fact>}>}
  * @typedef {{arch?: string, "ctx-native"?: number}} Fact
@@ -791,36 +721,13 @@ function factsCtxNative(m) {
 	return typeof perFile?.["ctx-native"] === "number" ? perFile["ctx-native"] : null;
 }
 
-/**
- * Bytes of each distinct main GGUF (shard groups summed) keyed by de-sharded
- * path, from one committed hf-manifest. The table entry's `model` field uses
- * the same path, so normalization is the only alignment needed.
- * @param {Array<{path: string, size: number}>} files
- * @returns {Map<string, number>} de-sharded GGUF path -> total bytes
- */
-function mainGgufSizes(files) {
-	/** @type {Map<string, number>} */
-	const sizes = new Map();
-	for (const f of files) {
-		if (!f.path.endsWith(".gguf")) { continue; }
-		// drafter/side builds (the mmproj projector, the MTP drafter, and the
-		// partial dflash/dspark artifacts some repos ship beside the main
-		// partial dflash/dspark artifacts some repos ship beside the main
-		// quants) carry file sizes unrelated to the total parameter count —
-		// a dflash bf16 once read a 27B blend as 1.9B
-		if (/(^|\/)(mmproj|mtp|dflash|dspark)-/i.test(f.path)) { continue; }
-		const key = f.path.replace(GGUF_SHARD_RE, ".gguf");
-		sizes.set(key, (sizes.get(key) ?? 0) + f.size);
-	}
-	return sizes;
-}
 
 /**
  * The committed hf-manifest for one repo — the ONE loader for every fact
  * generation takes from it: which files the repo ships (entry validation and
  * the projector choice), the total parameter count (d170's rule) and the
  * resolved commit (the bake fallback when the host cache lacks the entry).
- * Throws when the manifest is absent: a repo with no manifest is a table entry
+ * Throws when the manifest is absent: a repo with no manifest is a model entry
  * whose files nothing can vouch for.
  * @type {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>}
  */
@@ -863,7 +770,7 @@ function repoGgufSizes(repo) {
 /**
  * Total parameter count, in billions, derived from a repo's main full-precision
  * GGUF bytes: FULL_PRECISION_BYTES_PER_PARAM turns the file size into the count,
- * so no separate metadata table is needed. Every tag yields the same count by
+ * so per-tag metadata needs no second source. Every tag yields the same count by
  * construction, so the first full-precision file a repo lists wins. Returns null
  * when the repo ships no such file. One fallback exists: repos that ship a bare
  * F16 build with no quant tag in the name (Spark's root upload) instead of an
@@ -898,7 +805,7 @@ function totalParamsB(sizes) {
 			return bytes / FULL_PRECISION_BYTES_PER_PARAM[tag] / 1e9;
 		}
 		// A bare F16 build with no quant tag in the name (Spark's root upload,
-		// reported label-only by fetch_hf_manifests.py): without it the small-model
+		// reported label-only by 10-fetch-hf-manifests.py): without it the small-model
 		// rules could not see that repo at all. The name must still carry no tag,
 		// or a full-precision spelling the endsWith test misses would be read as
 		// 2-byte weights whatever it is.
@@ -914,25 +821,31 @@ function totalParamsB(sizes) {
  * The two quant-display rules, both stated as a share of the fleet card rather
  * than a parameter count, so one line reads the same on any card (docs/d199):
  *  - a full-precision ROW (BF16, F16, F32) whose own file claims more than
- *    FULL_PRECISION_MAX_VRAM_SHARE is hidden — but never the last row a repo
- *    publishes, which keeps its smallest such row (docs/d202);
+ *    FULL_PRECISION_MAX_VRAM_SHARE is hidden — but never the last entry a repo
+ *    publishes, which keeps its smallest such entry (docs/d202);
  *  - a repo whose served weights claim less than SMALL_MODEL_VRAM_SHARE drops
  *    up to CHEAP_QUANT_DROP_MAX of its cheapest quants, but always keeps
- *    CHEAP_QUANT_KEEP_MIN rows, so a short quant list can never empty out.
+ *    CHEAP_QUANT_KEEP_MIN entries, so a short quant list can never empty out.
  *
  * The size estimate is TOTAL parameters (not active): that is how many bytes a
  * full-precision copy has to hold somewhere. For a MoE it overstates the VRAM
  * penalty — a 35B-A3B streams from RAM with a 3B active slice, so it serves
  * fine on a card the estimate calls full — which is why the second rule keeps a
- * ladder rather than demanding every row fit (docs/d202). Repos the manifests
- * cannot size keep every row they publish: unsized keeps, never guesses.
+ * ladder rather than demanding every entry fit (docs/d202). Repos the manifests
+ * cannot size keep every entry they publish: unsized keeps, never guesses.
  * Each decision is logged at INFO, not WARN: a healthy run makes a dozen of them,
  * and a warning band that is never empty is not a signal — the operator filters
  * `severityNumber >= 13` to find the states that need them (docs/d208).
- * @param {Record<string, any>[]} entries the flat model-data table
+ * @param {Record<string, any>[]} entries the flat models array (its objects are
+ *   the model entries; nothing in this file is a tabular structure)
+ * @param {{quiet?: boolean}} [options] quiet silences the INFO band for
+ *   simulated candidates, whose decisions are not this run's decisions
  * @returns {Record<string, any>[]} entries to generate, same order
  */
-function pruneQuantDisplay(entries) {
+function pruneQuantDisplay(entries, options = {}) {
+	// Candidates are simulated entries, not this run's catalog: their decisions are
+	// not decisions, so the caller silences the INFO band (docs/d208).
+	const note = options.quiet ? () => undefined : logInfo;
 	/** @type {Map<string, Record<string, any>[]>} */
 	const byRepo = new Map();
 	for (const e of entries) {
@@ -944,15 +857,15 @@ function pruneQuantDisplay(entries) {
 	for (const [repo, group] of byRepo) {
 		const sizes = repoGgufSizes(repo);
 		/** @type {(e: Record<string, any>) => number|undefined} */
-		const rowBytes = (e) => sizes.get(e.model.replace(GGUF_SHARD_RE, ".gguf"));
+		const entryBytes = (e) => sizes.get(e.model.replace(GGUF_SHARD_RE, ".gguf"));
 
-		// Row-level, from the row's OWN file: the tag set (f32/bf16/f16) and the
+		// Row-level, from the entry's OWN file: the tag set (f32/bf16/f16) and the
 		// bytes/parameter of each live in FULL_PRECISION_BYTES_PER_PARAM, so an
-		// F32 row is judged at 4 bytes per parameter instead of passing as a
-		// 2-byte copy — or surviving as an unknown tag. A row the manifest cannot
+		// F32 entry is judged at 4 bytes per parameter instead of passing as a
+		// 2-byte copy — or surviving as an unknown tag. A entry the manifest cannot
 		// size is kept: dropping it would be a guess.
 		const tooBig = group.filter((e) => {
-			const bytes = rowBytes(e);
+			const bytes = entryBytes(e);
 			return (
 				entryFullPrecisionTag(e) !== null &&
 				bytes !== undefined &&
@@ -960,7 +873,7 @@ function pruneQuantDisplay(entries) {
 			);
 		});
 		// A repo that publishes NOTHING but full precision keeps its smallest
-		// such row: hiding all of them would delete the repo from the catalog
+		// such entry: hiding all of them would delete the repo from the catalog
 		// outright, and the floor is "one servable choice", the same floor
 		// CHEAP_QUANT_KEEP_MIN states for the other rule.
 		const hide =
@@ -968,21 +881,21 @@ function pruneQuantDisplay(entries) {
 				? [...tooBig]
 						.sort(
 							(a, b) =>
-								(rowBytes(a) ?? Number.POSITIVE_INFINITY) -
-								(rowBytes(b) ?? Number.POSITIVE_INFINITY),
+								(entryBytes(a) ?? Number.POSITIVE_INFINITY) -
+								(entryBytes(b) ?? Number.POSITIVE_INFINITY),
 						)
 						.slice(1)
 				: tooBig;
 		if (hide.length !== tooBig.length) {
-			logInfo(
-				"quant-display: repo publishes nothing but full precision — keeping its smallest row",
+			note(
+				"quant-display: repo publishes nothing but full precision — keeping its smallest entry",
 				{ repo, kept: group.find((e) => !hide.includes(e))?.["hf-repo"] },
 			);
 		}
 		for (const e of hide) {
-			const bytes = rowBytes(e) ?? 0;
+			const bytes = entryBytes(e) ?? 0;
 			keep.delete(e);
-			logInfo("quant-display: full-precision variant hidden (large model)", {
+			note("quant-display: full-precision variant hidden (large model)", {
 				repo,
 				quant: e["hf-repo"].split(":")[1],
 				sizeGB: Math.round(bytes / 1e8) / 10,
@@ -992,13 +905,13 @@ function pruneQuantDisplay(entries) {
 
 		const paramsB = totalParamsB(sizes);
 		if (paramsB === null) {
-			logInfo("cheap-quant pruning skipped — no full-precision file sizes this repo", { repo });
+			note("cheap-quant pruning skipped — no full-precision file sizes this repo", { repo });
 			continue;
 		}
 		const roundB = Math.round(paramsB * 10) / 10;
 		if (weightsVramShare(paramsB) < SMALL_MODEL_VRAM_SHARE) {
 			const bySize = group
-				.map((e) => ({ e, size: rowBytes(e) }))
+				.map((e) => ({ e, size: entryBytes(e) }))
 				.sort((a, b) => (a.size ?? Number.POSITIVE_INFINITY) - (b.size ?? Number.POSITIVE_INFINITY));
 			const dropCount = Math.min(
 				CHEAP_QUANT_DROP_MAX,
@@ -1006,7 +919,7 @@ function pruneQuantDisplay(entries) {
 			);
 			for (const { e } of bySize.slice(0, dropCount)) {
 				keep.delete(e);
-				logInfo("quant-display: cheap quant dropped (small model)", {
+				note("quant-display: cheap quant dropped (small model)", {
 					repo, quant: e["hf-repo"].split(":")[1], paramsB: roundB,
 				});
 			}
@@ -1016,9 +929,170 @@ function pruneQuantDisplay(entries) {
 }
 
 
+// --- curation: scope + repo manifests -> curated model manifests (docs/d212) --
+//
+// The chain: lib/cache-scope.json (which repos this unit keeps) -> the repo
+// manifests it names -> the model manifest's entries -> these curated files.
+// A curated file is ONE repo's provisioning input: the entry labels it serves
+// and every file they need, resolved from the committed repo manifest.
+// 40-download-models.py reads these and nothing else, and config.d is rendered
+// from the same in-memory set in the same run, so the two cannot disagree.
+//
+// WHY files and not a shared library: the provisioner is Python
+// (huggingface_hub is the vetted client) and this generator is JS, so the
+// interface is committed data — never a mode flag on either tool, and never a
+// second implementation of the shard/projector rules.
+const curatedDir = join(scriptDir, "lib", "curated");
+
+/**
+ * The modes a scope line may declare: served (has model entries, downloads its
+ * files) or audit-only (verified if already cached, never downloaded).
+ * @type {Set<string>}
+ */
+const SCOPE_MODES = new Set(["served", "audit-only"]);
+
+/**
+ * lib/cache-scope.json — the CLOSED inventory: every repo this unit keeps, in
+ * exactly one mode. It is the only place in-scope can be stated, so the
+ * manifest-refresh step reads it and nothing else, and the checks below make
+ * the inventory and the model entries agree in BOTH directions (the pretend
+ * scope this replaces was a list of exceptions to an implicit manifest).
+ * @returns {Map<string, string>} repo -> mode
+ */
+function readScope() {
+	const path = join(LIB_DIR, "cache-scope.json");
+	if (!existsSync(path)) {
+		throw new Error("lib/cache-scope.json is missing — it is the closed inventory of the repos this unit keeps");
+	}
+	/** @type {Record<string, string>} */
+	const declared = JSON.parse(readFileSync(path, "utf-8"));
+	for (const [repo, mode] of Object.entries(declared)) {
+		if (!SCOPE_MODES.has(mode)) {
+			throw new Error(
+				`lib/cache-scope.json: ${repo} declares unknown mode ${JSON.stringify(mode)} (known: ${[...SCOPE_MODES].join(
+)})`,
+			);
+		}
+	}
+	return new Map(Object.entries(declared));
+}
+
+/**
+ * The model manifest is AUTHORITATIVE about what is served: a repo with rows
+ * is served, full stop. lib/cache-scope.json is the inventory — what gets
+ * refreshed and audited — plus a keep-only declaration for repos that serve
+ * nothing; it cannot veto an entry.
+ *
+ * WHY nothing here throws except an unknown mode: the scope is a generated
+ * snapshot of a manifest that keeps moving (the first version made a stale
+ * "served" line a hard error, so curating the manifest DOWN stopped
+ * generation — the file outvoted the file it was derived from). Disagreement
+ * is reported: the row edit is the decision, the scope line is bookkeeping
+ * (docs/d212).
+ * @param {Map<string, string>} scope repo -> mode
+ * @param {Record<string, any>[]} rows the RAW models array
+ * @returns {void}
+ */
+function validateScope(scope, rows) {
+	/** @type {Map<string, number>} */
+	const entriesPerRepo = new Map();
+	for (const row of rows) {
+		const repo = row["hf-repo"].split(":")[0];
+		entriesPerRepo.set(repo, (entriesPerRepo.get(repo) ?? 0) + 1);
+	}
+	for (const repo of entriesPerRepo.keys()) {
+		if (!scope.has(repo)) {
+			logWarn(
+				"the model manifest serves a repo with no cache-scope line — it will not be refreshed or verified",
+				{ repo },
+			);
+		}
+	}
+	for (const [repo, mode] of scope) {
+		const count = entriesPerRepo.get(repo) ?? 0;
+		if (mode === "served" && count === 0) {
+			logWarn(
+				"cache-scope says served but the model manifest has no entries — nothing is curated for it",
+				{ repo },
+			);
+		}
+		if (mode === "audit-only" && count > 0) {
+			logWarn(
+				"cache-scope says audit-only but the model manifest serves it — the manifest wins",
+				{ repo, entries: count },
+			);
+		}
+	}
+}
+
+/**
+ * Fold one resolved entry into its repo's curated record: every shard, the
+ * projector the entry resolved (a manifest fact, not a row key), the drafter
+ * sidecar, and the split index when the repo ships one.
+ * @param {Map<string, {entries: Set<string>, files: Set<string>, optional: Set<string>}>} curated
+ * @param {Record<string, any>} m one entry with DEFAULTS applied and files resolved
+ * @returns {void}
+ */
+function noteCurated(curated, m) {
+	const repo = m["hf-repo"].split(":")[0];
+	const shipped = new Set(repoManifest(repo).files.map((f) => f.path));
+	/** @type {string[]} */
+	const files = allShards(m.model);
+	if (m.mmproj) {
+		files.push(m.mmproj);
+	}
+	if (m["model-draft"]) {
+		files.push(m["model-draft"]);
+	}
+	const rec = curated.get(repo) ?? { entries: new Set(), files: new Set(), optional: new Set() };
+	rec.entries.add(m["hf-repo"]);
+	for (const file of files) {
+		rec.files.add(file);
+	}
+	const index = `${shardOne(m.model)}.index.json`;
+	if (shipped.has(index)) {
+		rec.optional.add(index);
+	}
+	curated.set(repo, rec);
+}
+
+/**
+ * Write one curated manifest per served repo, and delete the ones whose repo
+ * left the curated set — a stale file would keep a retired repo in the
+ * provisioning loop, which a generated artifact must never do.
+ * @param {Map<string, {entries: Set<string>, files: Set<string>, optional: Set<string>}>} curated
+ * @returns {void}
+ */
+function writeCurated(curated) {
+	mkdirSync(curatedDir, { recursive: true });
+	const written = new Set();
+	const ordered = [...curated.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+	for (const [repo, rec] of ordered) {
+		const manifest = repoManifest(repo);
+		const sizes = new Map(manifest.files.map((f) => [f.path, f.size ?? 0]));
+		const files = [...rec.files].sort();
+		const name = `${repo.replace("/", "--")}.json`;
+		writeJsonArtifact(join(curatedDir, name), {
+			repo,
+			manifestCommit: manifest.commit,
+			entries: [...rec.entries].sort(),
+			files,
+			optional: [...rec.optional].sort(),
+			bytes: files.reduce((sum, file) => sum + (sizes.get(file) ?? 0), 0),
+		});
+		written.add(name);
+	}
+	for (const name of readdirSync(curatedDir)) {
+		if (name.endsWith(".json") && !written.has(name)) {
+			rmSync(join(curatedDir, name));
+			logInfo("curated manifest removed (repo no longer served)", { file: name });
+		}
+	}
+}
+
 function generateLocalInference() {
 	/**
-	 * The model-data table lives in this folder's own lib/ (docs/d113: the
+	 * The model manifest lives in this folder's own lib/ (docs/d113: the
 	 * copy is owned here, not shared through a repo-level lib/). Same LIB_DIR
 	 * convention as the log import above.
 	 */
@@ -1028,7 +1102,10 @@ function generateLocalInference() {
 		readFileSync(join(LIB_DIR, "llamacpp-model-data.json"), "utf-8"),
 	);
 	indexImageTokens(modelData.models);
+	const scope = readScope();
+	validateScope(scope, modelData.models);
 	const entries = pruneQuantDisplay(modelData.models);
+	const curated = new Map();
 
 	/** @type {Record<string, unknown>} */
 	const models = {};
@@ -1064,6 +1141,7 @@ function generateLocalInference() {
 		 * refs/main carries the model, its every shard, and the mmproj/drafter
 		 * at the same commit, else the bake warns and names what provisioning owes.
 		 */
+		noteCurated(curated, m);
 		const baked = bakeSnapshotPaths(m);
 		const modes = m.mmproj
 			? mmprojModesFor(paramsB ?? declaredParamsB(m))
@@ -1104,7 +1182,7 @@ function generateLocalInference() {
 			if (speculates) {
 				cmd += ` --spec-type ${m["spec-type"] || DEFAULT_SPEC_TYPE}`;
 				// The drafter's cache follows the entry's value quant (docs/d206): one
-				// entry decides both contexts, and a row left at f16 needs no flag
+				// entry decides both contexts, and a entry left at f16 needs no flag
 				// because llama.cpp's draft default is f16 too. Self-speculation gets
 				// this as well — the draft context exists either way.
 				if (m["cache-type-v"] !== "f16") {
@@ -1136,7 +1214,7 @@ function generateLocalInference() {
 				// A duplicate id is two entries claiming one serving slot: emitting
 				// one and dropping the other silently removes a model from the
 				// catalog, and the generated layer would no longer be a function of
-				// the table (d050). Stop and make the operator choose.
+				// the model manifest (d050). Stop and make the operator choose.
 				throw new Error(
 					`duplicate derived model id "${id}" — two entries serve the same repo:quant and mode; fix lib/llamacpp-model-data.json`,
 				);
@@ -1160,12 +1238,12 @@ function generateLocalInference() {
 	}
 
 	writeConfigD("10-local-llm-inference.yaml", { models });
+	writeCurated(curated);
+	logInfo("curated manifests written", { dir: curatedDir, repos: curated.size });
 }
 
-// --- orchestration (folded from the former generate.sh) ---------------------
 
-mkdirSync(configD, { recursive: true });
-logInfo("generating config.d", { dir: configD });
+// --- orchestration (folded from the former generate.sh) ---------------------
 
 // 1. general layer: always.
 generateGeneral();
@@ -1176,7 +1254,7 @@ generateGeneral();
 // floor — weights plus KV cache do not fit on a low-RAM host no matter what
 // accelerators it has. LOCAL_INFERENCE=1 forces the layer regardless
 // (debug: the generator still requires every configured GGUF in the host HF
-// cache — provision it with ./download_models.py first).
+// cache — provision it with ./40-download-models.py first).
 // All probes/thresholds come from lib/host-capabilities.mjs — the SAME
 // definitions build.mjs gates its llama-swap pull on (the device probes port
 // workload-runtime.sh's detect_workload_tool/detect_gpu_devs), so this

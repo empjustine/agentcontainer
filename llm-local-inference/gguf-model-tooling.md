@@ -44,13 +44,13 @@ llama.cpp inference. They share two design constraints:
 | `generate_layer_cards.py`   | Extract per-tensor (layer) names/sizes and render markdown "layer cards"                                                                                                                                                                                    |
 | `fit_analysis.py`           | Compute how many layers must be evicted to CPU to fit a GPU budget                                                                                                                                                                                          |
 | `estimate_active_params.py` | Measure total and per-token ACTIVE parameter counts / bytes from the GGUF header                                                                                                                                                                            |
-| `fetch_hf_manifests.py`     | Persist HF repo file listings (to `llm-local-inference/lib/hf-manifests/`) and audit each configured `--hf-file` against llama.cpp's implicit `repo:quant` → file heuristic                                                                                 |
+| `10-fetch-hf-manifests.py`  | Persist HF repo file listings (to `llm-local-inference/lib/hf-manifests/`) and audit each configured `--hf-file` against llama.cpp's implicit `repo:quant` → file heuristic                                                                                 |
 | `scan_cache_coverage.py`    | **PoC/MVP** — diff the HF cache against `llamacpp-model-data.json`: repos with zero coverage, listed repos with extra cached quants, ambiguous `bpw`/multi-quant filenames (header-free; see `llm-local-inference/refresh-llm-local-inference-manifest.md`) |
 | `gguf_context_length.py`    | read `general.architecture` / `context_length` / `general.name` from a GGUF header via the PyPI `gguf` package (no weights loaded); `--facts` rewrites `lib/gguf-facts.json`, the committed context-ceiling artifact (d197)                                 |
 
 All consume the same canonical model list in
 `llm-local-inference/` (generator owner; file in `lib/`) that drives
-`config.d/10-local-llm-inference.yaml` (via `generate.mjs`).
+`config.d/10-local-llm-inference.yaml` (via `30-generate.mjs`).
 
 ### Shared code policy
 
@@ -64,19 +64,20 @@ and rejected: extraction would be churn without a third independent consumer.
 The guardrail stands: single-purpose CLIs over shared code — not a mega-tool
 with subcommands (that consolidation pattern already failed once).
 
-`upkeep.py` (HF cache maintenance) and `fetch-model-cards.sh` (README mirrors)
+`upkeep.py` (HF cache maintenance) and `fetch_model_cards.py` (README mirrors)
+on the serving host, driven by `run_all.py`.
 stay standalone by design: different concerns, no GGUF parsing.
 
 ### `llamacpp-model-data.json` — cross-language contract
 
 The flat, llama.cpp-shaped schema is consumed by the JS generator
-(`llm-local-inference/generate.mjs`) and, until they retire, the Python tools
+(`llm-local-inference/30-generate.mjs`) and, until they retire, the Python tools
 (this directory). Keys:
 
 | Key                                     | Meaning                                                                                                                                                                                                                         | Generator flag                          |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
 | `hf-repo`                               | `org/repo:revision` (revision = quant tag)                                                                                                                                                                                      | `--hf-repo`                             |
-| `hf-file`                               | exact GGUF filename (load-bearing: see `fetch_hf_manifests.py`)                                                                                                                                                                 | `--hf-file`                             |
+| `hf-file`                               | exact GGUF filename (load-bearing: see `10-fetch-hf-manifests.py`)                                                                                                                                                              | `--hf-file`                             |
 | `mmproj`                                | **override only** — the generator takes the repo's BF16 projector from the hf-manifest (F16/Q8_0 accepted with a warning, d197)                                                                                                 | `--mmproj`                              |
 | `image-min-tokens` / `image-max-tokens` | vision-only token budget for the 1vision/2mmproj variants; optional — an absent pair means the generator default (1024), set only when the family deviates (gemma-4: 1120)                                                      | `--image-min-tokens/--image-max-tokens` |
 | `model-draft`                           | optional drafter sidecar GGUF (same snapshot as `model`); the generator emits `--model-draft` plus the row's `spec-type` (`draft-mtp` by default) — auto-inference of the spec type only happens on the `--hf-repo` path (d206) | `--model-draft`                         |
@@ -203,7 +204,7 @@ keys derived the same way the generator's `indexOf(slice)` matching expects
   (Its UD-Q8_K_XL quant type was once outside the hand-copied type table,
   leaving the active-GiB column partial; the PyPI `gguf` table resolves it.)
 
-## fetch_hf_manifests.py
+## 10-fetch-hf-manifests.py
 
 llama.cpp has **no quantization-to-file manifest**: given
 `--hf-repo <org>/<repo>:<quant>` without `--hf-file`, it resolves the repo's
@@ -223,8 +224,8 @@ don't appear verbatim in filenames), this tool downloads the tree listing once
 per repo and persists it as `llm-local-inference/lib/hf-manifests/<org>--<repo>.json`
 (including the resolved commit), then re-implements the heuristic offline.
 
-The audit checks the LABEL, not the served file. `generate.mjs` bakes each
-entry's `--model` from the HF cache and `download_models.py` fetches the
+The audit checks the LABEL, not the served file. `30-generate.mjs` bakes each
+entry's `--model` from the HF cache and `40-download-models.py` fetches the
 filename in `model`, so llama.cpp never runs `find_best_model` for these
 entries: the `:quant` tells a reader which file the row serves, and the
 committed manifests are still the generator's input for the parameter-count and

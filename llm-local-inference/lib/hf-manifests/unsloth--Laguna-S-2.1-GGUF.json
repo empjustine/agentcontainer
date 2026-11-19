@@ -1,0 +1,322 @@
+{
+	"repo": "unsloth/Laguna-S-2.1-GGUF",
+	"commit": "750f92f90cf54159c4d7a610cb7b3e74498e75c6",
+	"fetched_at": "2026-11-19T02:30:37+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "24fc883ac16f4931037a092abedc621c29d41c4b",
+			"size": 6677
+		},
+		{
+			"path": "BF16/Laguna-S-2.1-BF16-00001-of-00005.gguf",
+			"oid": "9c1f46a6a9936f24427ed256ce578fda41ee4610f3acc1b7e1fe2d2354e12217",
+			"size": 49981785952
+		},
+		{
+			"path": "BF16/Laguna-S-2.1-BF16-00002-of-00005.gguf",
+			"oid": "e7317a28f2036f5459f5d5f81008eb8ff25fe7d3d05a9040cc3647d9105b6f9c",
+			"size": 49928997248
+		},
+		{
+			"path": "BF16/Laguna-S-2.1-BF16-00003-of-00005.gguf",
+			"oid": "e49e5bf2c0c674fcfdaca2fe72b6edefbfa9ac0af11568f44af0e0a7478452e0",
+			"size": 49928997248
+		},
+		{
+			"path": "BF16/Laguna-S-2.1-BF16-00004-of-00005.gguf",
+			"oid": "87e673332099b71a5d0c822b2dea09b3786a99498e0e8fdbfee4fdd673cd6796",
+			"size": 49928997248
+		},
+		{
+			"path": "BF16/Laguna-S-2.1-BF16-00005-of-00005.gguf",
+			"oid": "53aaa7a46b5239f4e82192749c74def853948e727da0f84218747112127038ff",
+			"size": 35433481952
+		},
+		{
+			"path": "Laguna-S-2.1-UD-IQ1_M.gguf",
+			"oid": "bb75e145833baa18f03e39743adb39006709db11a54c5780da8d1476f7b90e0a",
+			"size": 35641635872
+		},
+		{
+			"path": "Laguna-S-2.1-UD-IQ1_S.gguf",
+			"oid": "177fd430e507cc25011e532276b0ab7b573d2fc6dc720adcd48a5324ef927340",
+			"size": 33766781984
+		},
+		{
+			"path": "Laguna-S-2.1-UD-IQ2_M.gguf",
+			"oid": "1b88452d0b05b471a37fa4e40af796953de5574ebae140c122860933df65bb29",
+			"size": 37268665376
+		},
+		{
+			"path": "Laguna-S-2.1-UD-IQ2_XXS.gguf",
+			"oid": "68adb361cdfc2d6462f3c90ec503f57872e2977f86bc269360b625b71574bfd5",
+			"size": 37189334048
+		},
+		{
+			"path": "Laguna-S-2.1-UD-IQ3_S.gguf",
+			"oid": "8a9ab3f8b3ff1723441cd251e873b295a7ef086d78dbae7515e5e27c8382b002",
+			"size": 48428911520
+		},
+		{
+			"path": "Laguna-S-2.1-UD-IQ3_XXS.gguf",
+			"oid": "2d91fd0cdd887b49bdade16018771ea9a0907b608277478748a4b3e4e4f17ff1",
+			"size": 44282842016
+		},
+		{
+			"path": "Laguna-S-2.1-UD-Q2_K_XL.gguf",
+			"oid": "d77f2c9e55eeb7793a9d4389a4cf1b1c60b1ea3f1e887135b0b8587ca70a1574",
+			"size": 39684584480
+		},
+		{
+			"path": "MXFP4_MOE/Laguna-S-2.1-MXFP4_MOE-00001-of-00003.gguf",
+			"oid": "c95d102099ca90cdb88ccf30b265bf4ea808fe74a41be1542f5b5acd6f3dfbc9",
+			"size": 3683648
+		},
+		{
+			"path": "MXFP4_MOE/Laguna-S-2.1-MXFP4_MOE-00002-of-00003.gguf",
+			"oid": "7d858609c5ef6af45814ccf28d42ba22366c3baf966125c280ea488b4d04a661",
+			"size": 49884202016
+		},
+		{
+			"path": "MXFP4_MOE/Laguna-S-2.1-MXFP4_MOE-00003-of-00003.gguf",
+			"oid": "e76cbc706d10271a32cc3c6db7bfe8c5c2b77a42479bd2750bfaa2b15f67d52a",
+			"size": 21192030528
+		},
+		{
+			"path": "Q8_0/Laguna-S-2.1-Q8_0-00001-of-00004.gguf",
+			"oid": "0c3a90890963fe61b4b09ad9f16d894f31918f038ee11323449c9040c05f5289",
+			"size": 3683648
+		},
+		{
+			"path": "Q8_0/Laguna-S-2.1-Q8_0-00002-of-00004.gguf",
+			"oid": "8bf26fce82066f509d169d2e74c45ce62b94e9c2ed128784c367d9ca3979c77f",
+			"size": 49317489568
+		},
+		{
+			"path": "Q8_0/Laguna-S-2.1-Q8_0-00003-of-00004.gguf",
+			"oid": "1aca2966d50c8ddc81a96644a6e3494aa6ee9fc554505972a95c12454e838608",
+			"size": 49337085920
+		},
+		{
+			"path": "Q8_0/Laguna-S-2.1-Q8_0-00004-of-00004.gguf",
+			"oid": "1ffa8d1ecdf5ff8f6d511d27a8cea95dfbbc0b47412c13ee73009d1fe69d1452",
+			"size": 26364600960
+		},
+		{
+			"path": "README.md",
+			"oid": "21c1e9b368b3cc52ac7bd0d0e4c9574a47caaf48",
+			"size": 9333
+		},
+		{
+			"path": "UD-IQ4_NL/Laguna-S-2.1-UD-IQ4_NL-00001-of-00003.gguf",
+			"oid": "156f4ec8c516003fc8ddcc4f83141aaaaf59e2147380cd37c34926e554575099",
+			"size": 3683648
+		},
+		{
+			"path": "UD-IQ4_NL/Laguna-S-2.1-UD-IQ4_NL-00002-of-00003.gguf",
+			"oid": "787cf36d66c2e2c4dfd9e8ee0878ef51998c267d16e7502178add6de433f36bf",
+			"size": 49626607520
+		},
+		{
+			"path": "UD-IQ4_NL/Laguna-S-2.1-UD-IQ4_NL-00003-of-00003.gguf",
+			"oid": "d61591ee52027a517c94eb5d432e242a2f56658717f823a939464aeb7c9722a6",
+			"size": 9119206880
+		},
+		{
+			"path": "UD-IQ4_XS/Laguna-S-2.1-UD-IQ4_XS-00001-of-00003.gguf",
+			"oid": "a6378c893a836ee2649fbb24d60e3e9489313bd873fa53c7ffeb814466fe8867",
+			"size": 3683648
+		},
+		{
+			"path": "UD-IQ4_XS/Laguna-S-2.1-UD-IQ4_XS-00002-of-00003.gguf",
+			"oid": "d9d8482e132457db41c8407958bc478dbc4f1389c53e55ae8a8fd48a478142c2",
+			"size": 49820135904
+		},
+		{
+			"path": "UD-IQ4_XS/Laguna-S-2.1-UD-IQ4_XS-00003-of-00003.gguf",
+			"oid": "6fde44340ca9be41cddc86661acce1518cbaf08875f0daa6e393b62228b59dbd",
+			"size": 7742884768
+		},
+		{
+			"path": "UD-Q3_K_M/Laguna-S-2.1-UD-Q3_K_M-00001-of-00003.gguf",
+			"oid": "39de6a5ff3b9813b923e1bf8684d8ff6dc786d6337f75fa245f21d1e6f2c586b",
+			"size": 3683648
+		},
+		{
+			"path": "UD-Q3_K_M/Laguna-S-2.1-UD-Q3_K_M-00002-of-00003.gguf",
+			"oid": "ff5d50c41982518d285350bb93efc3a840c0bfc5664365a7e806eaffec64a9df",
+			"size": 49970511744
+		},
+		{
+			"path": "UD-Q3_K_M/Laguna-S-2.1-UD-Q3_K_M-00003-of-00003.gguf",
+			"oid": "da24bcd7b5931a7f9a4dfd09cab5ec4b69cef00b8f240cb98e819670596d27f1",
+			"size": 4044963296
+		},
+		{
+			"path": "UD-Q3_K_XL/Laguna-S-2.1-UD-Q3_K_XL-00001-of-00003.gguf",
+			"oid": "39de6a5ff3b9813b923e1bf8684d8ff6dc786d6337f75fa245f21d1e6f2c586b",
+			"size": 3683648
+		},
+		{
+			"path": "UD-Q3_K_XL/Laguna-S-2.1-UD-Q3_K_XL-00002-of-00003.gguf",
+			"oid": "0e8bc5a30c755c5faac6e6cdef3cc8c8c2425bc7468e31ecb282bbbbf6558c19",
+			"size": 49699878368
+		},
+		{
+			"path": "UD-Q3_K_XL/Laguna-S-2.1-UD-Q3_K_XL-00003-of-00003.gguf",
+			"oid": "25c8d2c8e9e1c6c059b1b7dfbeaa02e29caeadc85974c4971dea5e7878665d2d",
+			"size": 4390258592
+		},
+		{
+			"path": "UD-Q4_K_M/Laguna-S-2.1-UD-Q4_K_M-00001-of-00003.gguf",
+			"oid": "0cfaf46917260d253773e5e2fab64329fa5c9c60fdf0db0f59f31205b5f5dd32",
+			"size": 3683648
+		},
+		{
+			"path": "UD-Q4_K_M/Laguna-S-2.1-UD-Q4_K_M-00002-of-00003.gguf",
+			"oid": "94f075774ca99355f6146acf6292f689fbe92d1adfd06059f6ebabc0e6eb8a71",
+			"size": 49930584576
+		},
+		{
+			"path": "UD-Q4_K_M/Laguna-S-2.1-UD-Q4_K_M-00003-of-00003.gguf",
+			"oid": "0d730b919a0591739091f135cde53c28631c89d0221482778f6fc70a3101eb49",
+			"size": 23184915328
+		},
+		{
+			"path": "UD-Q4_K_S/Laguna-S-2.1-UD-Q4_K_S-00001-of-00003.gguf",
+			"oid": "3e8d20d4aab3497d32568010b9b4b29fc0143d4d5e716ab958264e5a083301fb",
+			"size": 3683648
+		},
+		{
+			"path": "UD-Q4_K_S/Laguna-S-2.1-UD-Q4_K_S-00002-of-00003.gguf",
+			"oid": "c3a48e4dd559ac20bd1c0e78ac6064aa95fd35b38d981f60ed6653093a0934ab",
+			"size": 49587832416
+		},
+		{
+			"path": "UD-Q4_K_S/Laguna-S-2.1-UD-Q4_K_S-00003-of-00003.gguf",
+			"oid": "2354ad27a19ea411cc85e1982e2209c21c1e672d6d397c8c76d77fb01419d2c5",
+			"size": 18997819168
+		},
+		{
+			"path": "UD-Q4_K_XL/Laguna-S-2.1-UD-Q4_K_XL-00001-of-00003.gguf",
+			"oid": "0cfaf46917260d253773e5e2fab64329fa5c9c60fdf0db0f59f31205b5f5dd32",
+			"size": 3683648
+		},
+		{
+			"path": "UD-Q4_K_XL/Laguna-S-2.1-UD-Q4_K_XL-00002-of-00003.gguf",
+			"oid": "2296102462b02edca70163121ac62bacf7a82078c0eafc91625c8822850769bf",
+			"size": 49971821312
+		},
+		{
+			"path": "UD-Q4_K_XL/Laguna-S-2.1-UD-Q4_K_XL-00003-of-00003.gguf",
+			"oid": "9150e2338f7690af29685b6a2ca621a8fda7ecf9724678266c4b04b7c6dd0ef3",
+			"size": 23419667040
+		},
+		{
+			"path": "UD-Q5_K_M/Laguna-S-2.1-UD-Q5_K_M-00001-of-00003.gguf",
+			"oid": "074489d0b4aacf87f00b7b4a44fa0d253c5d429b88ef3695b352a091bc0db502",
+			"size": 3683648
+		},
+		{
+			"path": "UD-Q5_K_M/Laguna-S-2.1-UD-Q5_K_M-00002-of-00003.gguf",
+			"oid": "112b884191393d3bcfe45a5241109cce481af6142c97ffc29acd0935b97eda97",
+			"size": 49485371712
+		},
+		{
+			"path": "UD-Q5_K_M/Laguna-S-2.1-UD-Q5_K_M-00003-of-00003.gguf",
+			"oid": "f951a95cc706cd48c3101323c411c6fec0a39b413cff79b5c68565eaeab7538e",
+			"size": 38370173984
+		},
+		{
+			"path": "UD-Q5_K_S/Laguna-S-2.1-UD-Q5_K_S-00001-of-00003.gguf",
+			"oid": "426ec039077f7f9c0ce8e44551b2037b6a3ab3f1f5d33a2ad16d2197f47a6673",
+			"size": 3683648
+		},
+		{
+			"path": "UD-Q5_K_S/Laguna-S-2.1-UD-Q5_K_S-00002-of-00003.gguf",
+			"oid": "f026ec1e20133d3ad81de936cc0a1c9a85b899f8e53d3c1c72310d04f8cdbce1",
+			"size": 49502923552
+		},
+		{
+			"path": "UD-Q5_K_S/Laguna-S-2.1-UD-Q5_K_S-00003-of-00003.gguf",
+			"oid": "11192189e91501aeb4aacea43fc77e0037d4705452f0607b5a00a24409bb3658",
+			"size": 33149588064
+		},
+		{
+			"path": "UD-Q5_K_XL/Laguna-S-2.1-UD-Q5_K_XL-00001-of-00003.gguf",
+			"oid": "074489d0b4aacf87f00b7b4a44fa0d253c5d429b88ef3695b352a091bc0db502",
+			"size": 3683648
+		},
+		{
+			"path": "UD-Q5_K_XL/Laguna-S-2.1-UD-Q5_K_XL-00002-of-00003.gguf",
+			"oid": "112b884191393d3bcfe45a5241109cce481af6142c97ffc29acd0935b97eda97",
+			"size": 49485371712
+		},
+		{
+			"path": "UD-Q5_K_XL/Laguna-S-2.1-UD-Q5_K_XL-00003-of-00003.gguf",
+			"oid": "c51570b6fd3fa08347481d958f54d4538eecc09e628bd6084eaec635b30a9dde",
+			"size": 38584083488
+		},
+		{
+			"path": "UD-Q6_K/Laguna-S-2.1-UD-Q6_K-00001-of-00003.gguf",
+			"oid": "07b73f4ffb3695a6e005bd6a2130b0965edaf57a46ce2a5eefffdc16282968d2",
+			"size": 3683648
+		},
+		{
+			"path": "UD-Q6_K/Laguna-S-2.1-UD-Q6_K-00002-of-00003.gguf",
+			"oid": "b5540a2204c391cd975198a016524fb4462abe63142156715bdd3c6974f14acf",
+			"size": 49527849888
+		},
+		{
+			"path": "UD-Q6_K/Laguna-S-2.1-UD-Q6_K-00003-of-00003.gguf",
+			"oid": "f36ce3c7677ff7ec8995a60e79eed506f470855b5510c110bc628f6de4681a4d",
+			"size": 48381442496
+		},
+		{
+			"path": "UD-Q6_K_XL/Laguna-S-2.1-UD-Q6_K_XL-00001-of-00004.gguf",
+			"oid": "e7fe690509db46d9303c2e27ad251c7439376d34d22241dbc085b2f5c96965c6",
+			"size": 3683648
+		},
+		{
+			"path": "UD-Q6_K_XL/Laguna-S-2.1-UD-Q6_K_XL-00002-of-00004.gguf",
+			"oid": "a6c8bf20cde41c8b6d43418f8b1326afaf3aac3184fb5056c9da61dbcf6aacc7",
+			"size": 49714573632
+		},
+		{
+			"path": "UD-Q6_K_XL/Laguna-S-2.1-UD-Q6_K_XL-00003-of-00004.gguf",
+			"oid": "eb92c5ac517257413418c9a064ca1ec0b83a7c9454352693cd4bedf16fa95fcb",
+			"size": 49535976704
+		},
+		{
+			"path": "UD-Q6_K_XL/Laguna-S-2.1-UD-Q6_K_XL-00004-of-00004.gguf",
+			"oid": "faa6e791d9a5067f7ad1ff5fd4f45e8db58ee29bcc8ad95e6eaadaa924b28ce1",
+			"size": 7825393568
+		},
+		{
+			"path": "UD-Q8_K_XL/Laguna-S-2.1-UD-Q8_K_XL-00001-of-00004.gguf",
+			"oid": "0c3a90890963fe61b4b09ad9f16d894f31918f038ee11323449c9040c05f5289",
+			"size": 3683648
+		},
+		{
+			"path": "UD-Q8_K_XL/Laguna-S-2.1-UD-Q8_K_XL-00002-of-00004.gguf",
+			"oid": "8bf26fce82066f509d169d2e74c45ce62b94e9c2ed128784c367d9ca3979c77f",
+			"size": 49317489568
+		},
+		{
+			"path": "UD-Q8_K_XL/Laguna-S-2.1-UD-Q8_K_XL-00003-of-00004.gguf",
+			"oid": "1aca2966d50c8ddc81a96644a6e3494aa6ee9fc554505972a95c12454e838608",
+			"size": 49337085920
+		},
+		{
+			"path": "UD-Q8_K_XL/Laguna-S-2.1-UD-Q8_K_XL-00004-of-00004.gguf",
+			"oid": "94e4c36777f341912a5503be8bdcb2339cc6243a0c470509ddcdc03470b117c4",
+			"size": 29452536960
+		},
+		{
+			"path": "imatrix_unsloth.gguf_file",
+			"oid": "158642bc6e6a55954ca48b77a4ffea990f2c740faf41b764c1a18d2f64b7af4a",
+			"size": 351195360
+		}
+	]
+}

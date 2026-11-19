@@ -20,9 +20,9 @@ folder was renamed/consolidated since this runbook was first written; the
 flow is unchanged):
 
 ```
-llamacpp-model-data.json  --(generate.mjs)-->  config.d/10-local-llm-inference.yaml
-llama-swap-core.json      --(generate.mjs)----------->  config.d/00-general.yaml   (globals + sampling macros)
-lib/hf-manifests/*.json   --(generate.mjs, param count + quant display)-->  which quants the layer shows
+llamacpp-model-data.json  --(30-generate.mjs)-->  config.d/10-local-llm-inference.yaml
+llama-swap-core.json      --(30-generate.mjs)----------->  config.d/00-general.yaml   (globals + sampling macros)
+lib/hf-manifests/*.json   --(30-generate.mjs, param count + quant display)-->  which quants the layer shows
 ```
 
 No part of this needs Infisical or the network — the generator reads local
@@ -32,22 +32,42 @@ files only, offline (the former `generate.sh` infisical wrapper is long gone).
 
 | Key            | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hf-repo`      | `org/repo:quant` — `quant` is the **trailing filename token** of the GGUF (see naming rules below). A repo whose table holds exactly ONE row drops the `:quant`: nothing can be selected there, and the model id loses the suffix with it (d210). Rows of a multi-quant repo keep theirs — it names which file the row serves                                                                                                                                                                                                                            |
+| `hf-repo`      | `org/repo:quant` — `quant` is the **trailing filename token** of the GGUF (see naming rules below). A repo whose manifest holds exactly ONE entry drops the `:quant`: nothing can be selected there, and the model id loses the suffix with it (d210). Entries of a multi-quant repo keep theirs — it names which file the entry serves                                                                                                                                                                                                                  |
 | `model`        | exact cached GGUF filename. For sharded files, the `00001-of-NNNNN` shard (llama.cpp resolves the prefix)                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `mmproj`       | **override only.** Omit it: the generator takes the projector from the committed hf-manifest (BF16 first, then F16, d197), so vision capability is a repo fact, not a per-entry one. A written value must exist in the manifest; F16/Q8_0 while the repo ships BF16 warns but is honoured. Fills the mode set, gated from both ends (d195, d200): `1vision` always; `2mmproj` only while the weights stay under 75% of the fleet card; `0text` only once they are over 25% — below that the projector fits anyway, so the no-projector mode buys nothing |
-| `model-draft`  | optional drafter sidecar GGUF (unsloth ships MTP ones under the repo's `MTP/` subdir — the subdir prefix is part of the filename); must live in the SAME snapshot as `model`. Requires `--spec-type` at launch, which the generator emits — `draft-mtp` unless the row sets `spec-type` — because a bare `--model-draft` on a local-path model enables no speculative impl and just wastes VRAM                                                                                                                                                          |
-| `spec-type`    | optional; the speculative decoding kind this row requests, default `draft-mtp`. Write `draft-dflash` for a dflash sidecar: llama.cpp refuses a type that disagrees with the drafter's head. A row with built-in nextn heads sets `draft-mtp` and passes NO `model-draft` — llama.cpp then drafts against a second context of the target (d206)                                                                                                                                                                                                           |
+| `model-draft`  | optional drafter sidecar GGUF (unsloth ships MTP ones under the repo's `MTP/` subdir — the subdir prefix is part of the filename); must live in the SAME snapshot as `model`. Requires `--spec-type` at launch, which the generator emits — `draft-mtp` unless the entry sets `spec-type` — because a bare `--model-draft` on a local-path model enables no speculative impl and just wastes VRAM                                                                                                                                                        |
+| `spec-type`    | optional; the speculative decoding kind this entry requests, default `draft-mtp`. Write `draft-dflash` for a dflash sidecar: llama.cpp refuses a type that disagrees with the drafter's head. An entry with built-in nextn heads sets `draft-mtp` and passes NO `model-draft` — llama.cpp then drafts against a second context of the target (d206)                                                                                                                                                                                                      |
 | `cache-type-v` | value-cache quant; optional, **default `f16`**. There is no `cache-type-k`: the key cache stays at llama.cpp's `f16` default for every entry, because quantizing keys is the half of the KV trade that moves KLD (d206). An entry that quantizes values quantizes the drafter's cache with it (the generator emits `--spec-draft-type-v` from the same key)                                                                                                                                                                                              |
 | `ctx-size`     | **optional ceiling**, never a target: the generator serves the GGUF header's `context_length` (from `lib/gguf-facts.json`, capped at 262144, d197). A written value lowers it; a value above the header is clamped with a warning                                                                                                                                                                                                                                                                                                                        |
-| `parallel`     | **not a per-row key.** Every entry serves one slot: the generator emits `--parallel 1` from its `DEFAULTS`, because llama.cpp's own default is `-1` (auto) and the fleet wants one deterministic slot per model. A row that writes one is drift                                                                                                                                                                                                                                                                                                          |
+| `parallel`     | **not a per-entry key.** Every entry serves one slot: the generator emits `--parallel 1` from its `DEFAULTS`, because llama.cpp's own default is `-1` (auto) and the fleet wants one deterministic slot per model. An entry that writes one is drift                                                                                                                                                                                                                                                                                                     |
 | `__argv`       | family sampling macro ${…} (see Step 3), or omit when the family has no macro                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
-Keys with an implicit default are filled in by `generate.mjs`
+Keys with an implicit default are filled in by `30-generate.mjs`
 (`DEFAULTS` map) — omit them unless the entry deviates, e.g. a window cap other
 than `65536` or a projector the repo does not prefer.
 The file is a flat `{ "models": [ … ] }` array. **The last element has no
 trailing comma** — append before the closing `]`/`}` and add a comma to the
 previous last element.
+
+## Step 0 — the repository → model manifest step
+
+This is the one flow that turns a repo into model-manifest entries. A repo in
+cache scope with no model entry (an `audit-only` line in
+`lib/cache-scope.json`) already has a committed `lib/hf-manifests/` file,
+so its entries can be derived instead of typed:
+
+    ./node-run.sh llm-local-inference/20-propose-entries.mjs
+
+The output is a `{"models": [...]}` fragment — one entry per servable
+quant, the filename an entry must write (shard 1), tab-indented like the
+manifest — for review and paste. Nothing writes the manifest for you: a
+promotion is a decision (which quant, which window, which macro), so the tool
+stops at the fragment.
+
+The `:quant` label is the one field only a human supplies;
+`10-fetch-hf-manifests.py --print-plan` audits it afterwards. The scope line is
+bookkeeping: the model manifest is authoritative, so a stale `audit-only`
+line only warns (docs/d212).
 
 ## Step 1 — Discover what changed in the cache
 
@@ -61,7 +81,7 @@ filename only — no GGUF headers are read and no weights are loaded:
 It prints three sections: repos with zero manifest coverage, listed repos with
 extra cached quants, and ambiguous `bpw`/multi-quant filenames. The deeper
 audit of each served entry against llama.cpp's implicit `repo:quant -> file`
-heuristic is `fetch_hf_manifests.py` (Step 5).
+heuristic is `10-fetch-hf-manifests.py` (Step 5).
 
 ## Step 2 — Gather the fields for each new entry
 
@@ -86,9 +106,9 @@ heuristic is `fetch_hf_manifests.py` (Step 5).
   ./py-run.sh llm-local-inference/gguf_context_length.py --facts          # rewrite the artifact
   ```
 
-  `--facts` re-reads every file the table serves and is the ONLY writer of
+  `--facts` re-reads every file the model manifest serves and is the ONLY writer of
   `lib/gguf-facts.json`; run it whenever an entry's `model` changes, then commit
-  the regenerated file with the table.
+  the regenerated file with the model manifest.
 
 - **`parallel`**: never write it. The fleet serves one slot per model — a second
   slot spends the KV cache to buy concurrency the catalog does not need, and
@@ -118,7 +138,7 @@ heuristic is `fetch_hf_manifests.py` (Step 5).
   the rare confident run and saves nothing. `p-min` is a greedy-path threshold
   (llama.cpp warns if combined with `--spec-draft-sampling probabilistic`), and it
   caps throughput, never quality: drafted tokens are verified against the target.
-- **Three routes, and the type is the row's.** A sidecar row takes `draft-mtp` by
+- **Three routes, and the type is the entry's.** A sidecar entry takes `draft-mtp` by
   default and `draft-dflash`/its own kind otherwise (llama.cpp refuses a type
   that disagrees with the drafter's head). A row whose model carries nextn heads
   needs no sidecar at all: `spec-type: draft-mtp` alone makes llama.cpp draft
@@ -127,7 +147,7 @@ heuristic is `fetch_hf_manifests.py` (Step 5).
   own type and, absent a head, `p-min 0` (d206).
 - **`__argv`** = the family sampling macro (next step) or omit.
 
-## Step 3 — Edit `llamacpp-model-data.json`
+## Step 3 — paste the entries (the promotion's human half)
 
 Insert the new object(s) into the `models` array. Example (the LFM2.5-8B-A1B
 MoE, text-only, native ctx):
@@ -147,7 +167,7 @@ parallelism from the generator defaults); write one only to deviate.
 
 Family sampling macros live under the `macros` key of `llama-swap-core.json`
 (the source of truth) and are emitted into `config.d/00-general.yaml` by
-`generate.mjs`. Current families include `qwen38`, `qwen36`,
+`30-generate.mjs`. Current families include `qwen38`, `qwen36`,
 `glm47f`, `gemma4`, `devstral`, `ling`, `lfm25`, plus the base `LLAMA_SERVER`
 launcher (check `llama-swap-core.json` for the live list). To add/change a
 macro, edit `llama-swap-core.json` and re-run generation.
@@ -162,11 +182,11 @@ the server's default is written down on purpose: a build that changes the
 default then shows up as a behaviour change to review, not a silent shift
 (d210).
 
-## Step 4 — Regenerate `config.d/`
+## Step 4 — curate: curated manifests + config.d
 
 ```sh
 cd llm-local-inference
-LOCAL_INFERENCE=1 ./node-run.sh llm-local-inference/generate.mjs   # -> both config.d/ layers (00-general + 10-local-llm-inference)
+LOCAL_INFERENCE=1 ./node-run.sh llm-local-inference/30-generate.mjs   # -> both config.d/ layers (00-general + 10-local-llm-inference)
 ```
 
 Generation runs offline (no Infisical, no network). It FAILS on a **duplicate
@@ -204,18 +224,18 @@ git diff --exit-code llm-local-inference/lib/llamacpp-model-data.json    # you e
 #   - no listed repo has a cached .gguf whose quant is absent from the manifest
 
 # the header facts must cover every served file: re-run the writer after any
-# `model` change, then commit lib/gguf-facts.json with the table (d197)
+# `model` change, then commit lib/gguf-facts.json with the model manifest (d197)
 ./py-run.sh llm-local-inference/gguf_context_length.py --facts
 
 # --offline audits each entry's model against llama.cpp's implicit
 # repo:quant -> file heuristic, with no network (exit 1 on mismatch)
-./py-run.sh llm-local-inference/fetch_hf_manifests.py --offline
+./py-run.sh llm-local-inference/10-fetch-hf-manifests.py --offline
 ```
 
-`fetch_hf_manifests.py` re-implements `find_best_model` offline and checks the
+`10-fetch-hf-manifests.py` re-implements `find_best_model` offline and checks the
 `:quant` label against the configured `model` filename. The tag is a label, not
 a lookup key: the generator bakes `--model` from the HF cache and
-`download_models.py` fetches the filename in `model`, so llama.cpp never
+`40-download-models.py` fetches the filename in `model`, so llama.cpp never
 resolves the tag for these entries. The audit fails on two things — a tag whose
 heuristic pick is a different file (a mislabelled entry, or an ambiguous one
 like two `Q4_K_S` quants at different bpw), and a configured file absent from
@@ -286,11 +306,11 @@ llama-swap merges `config.d/` files additively at startup. Restart the
 
 ## Related docs
 
-- `gguf-model-tooling.md` — schema contract, `fetch_hf_manifests.py` reference,
+- `gguf-model-tooling.md` — schema contract, `10-fetch-hf-manifests.py` reference,
   and the two PoC helpers `scan_cache_coverage.py` / `gguf_context_length.py` used above.
 - `d018-split-config-d.md` — why the config is split into `00-general.yaml` /
   `10-local-llm-inference.yaml` and how llama-swap merges `config.d/`.
-- `hf-cache-upkeep.md` — `upkeep.py` cache GC/pull/verify; `download_models.py`
+- `hf-cache-upkeep.md` — `upkeep.py` cache GC/pull/verify; `40-download-models.py`
   must use the `main` ref (not a pinned SHA) to survive pruning.
 - `coding-agent/generate-pi-coding-agent.mjs` — the _coding-agent_ model
   generator and the layered `models.json` contract (separate concern; not

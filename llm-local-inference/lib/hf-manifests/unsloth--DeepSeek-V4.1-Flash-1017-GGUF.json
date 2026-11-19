@@ -1,0 +1,397 @@
+{
+	"repo": "unsloth/DeepSeek-V4.1-Flash-1017-GGUF",
+	"commit": "dfcee0ec8d6b874c6663eca0fc55d90ab32534c8",
+	"fetched_at": "2026-11-19T02:30:36+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "2b3f9ec7a38cda2391de595ee713ac23a9fa05cf",
+			"size": 11135
+		},
+		{
+			"path": "README.md",
+			"oid": "eb083f0dc9e6a3eadbc8b8f09c310928198e85ee",
+			"size": 7355
+		},
+		{
+			"path": "UD-IQ1_M/DeepSeek-V4.1-Flash-1017-UD-IQ1_M-00001-of-00005.gguf",
+			"oid": "5197c309479c7be06e3612dc696d7f18e13e5942cfe52e70c3c586b7e585a5ac",
+			"size": 5780868
+		},
+		{
+			"path": "UD-IQ1_M/DeepSeek-V4.1-Flash-1017-UD-IQ1_M-00002-of-00005.gguf",
+			"oid": "fbfb546557a33f41332ffbed7f15fbed249b9f7796975d9db571c8cf3870f335",
+			"size": 49707332128
+		},
+		{
+			"path": "UD-IQ1_M/DeepSeek-V4.1-Flash-1017-UD-IQ1_M-00003-of-00005.gguf",
+			"oid": "394b7a06e04d4b1b96b6028ec3d4dec49e4716900c26a493e8c2aa38a357ea1a",
+			"size": 49292777280
+		},
+		{
+			"path": "UD-IQ1_M/DeepSeek-V4.1-Flash-1017-UD-IQ1_M-00004-of-00005.gguf",
+			"oid": "323a7f59a2938879eaac82b37c443c85151e518071ad44c79b1e4580c91d0ed7",
+			"size": 40803165856
+		},
+		{
+			"path": "UD-IQ1_M/DeepSeek-V4.1-Flash-1017-UD-IQ1_M-00005-of-00005.gguf",
+			"oid": "771805301e695d72d268151dfc43043581ba904298574aa879d4349cbe67b020",
+			"size": 110595290592
+		},
+		{
+			"path": "UD-IQ1_S/DeepSeek-V4.1-Flash-1017-UD-IQ1_S-00001-of-00005.gguf",
+			"oid": "5197c309479c7be06e3612dc696d7f18e13e5942cfe52e70c3c586b7e585a5ac",
+			"size": 5780868
+		},
+		{
+			"path": "UD-IQ1_S/DeepSeek-V4.1-Flash-1017-UD-IQ1_S-00002-of-00005.gguf",
+			"oid": "e83af39db628614d252d49a316af8cd5911d78ab96a9e7a5997b392ece26eaf7",
+			"size": 49120285248
+		},
+		{
+			"path": "UD-IQ1_S/DeepSeek-V4.1-Flash-1017-UD-IQ1_S-00003-of-00005.gguf",
+			"oid": "6caa1da6302b532374d55da6510fc92a9031a0ee1bd2bb5bf7defca2477f3d98",
+			"size": 48899707008
+		},
+		{
+			"path": "UD-IQ1_S/DeepSeek-V4.1-Flash-1017-UD-IQ1_S-00004-of-00005.gguf",
+			"oid": "71c6c54dd1f20008e2130188cc655742d3738a365de4571d21a56de503b206b7",
+			"size": 24358544704
+		},
+		{
+			"path": "UD-IQ1_S/DeepSeek-V4.1-Flash-1017-UD-IQ1_S-00005-of-00005.gguf",
+			"oid": "771805301e695d72d268151dfc43043581ba904298574aa879d4349cbe67b020",
+			"size": 110595290592
+		},
+		{
+			"path": "UD-IQ2_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00001-of-00006.gguf",
+			"oid": "22ad51c224e499883c1a753ad35719af44c296bbc8bcb9c931de6bdf950fa3aa",
+			"size": 5780923
+		},
+		{
+			"path": "UD-IQ2_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00002-of-00006.gguf",
+			"oid": "6880d0483490504a530b72686d79c92daa46e58ca5b71763bbfa3778d8a6131a",
+			"size": 49955895008
+		},
+		{
+			"path": "UD-IQ2_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00003-of-00006.gguf",
+			"oid": "04b3ec7947255efaf789da77557da9180e93128948644828798d07b8a6e7a60a",
+			"size": 49950675200
+		},
+		{
+			"path": "UD-IQ2_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00004-of-00006.gguf",
+			"oid": "318762f39cd7ebf03e3d7b30feaf938fab0464a9c2d6c0e0e99fc030bbfcd820",
+			"size": 48971469632
+		},
+		{
+			"path": "UD-IQ2_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00005-of-00006.gguf",
+			"oid": "34fa48fbe2237b1b71a4f18a04bbe10946f6b1c76b7bbff21c76da630da677b6",
+			"size": 16419622240
+		},
+		{
+			"path": "UD-IQ2_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00006-of-00006.gguf",
+			"oid": "406103485a7a7193337adee38b7178d3b636940aaa3ca033bc91e0d3687e3031",
+			"size": 135172021792
+		},
+		{
+			"path": "UD-IQ3_S/DeepSeek-V4.1-Flash-1017-UD-IQ3_S-00001-of-00008.gguf",
+			"oid": "1d3027d28a1c749a5a185420640d2849849e5d42e7719df5d852572e1771de25",
+			"size": 5780886
+		},
+		{
+			"path": "UD-IQ3_S/DeepSeek-V4.1-Flash-1017-UD-IQ3_S-00002-of-00008.gguf",
+			"oid": "a5c5b3a1d56fc64e2018442170371348683a6ca31d805040946635c508698c89",
+			"size": 49714948320
+		},
+		{
+			"path": "UD-IQ3_S/DeepSeek-V4.1-Flash-1017-UD-IQ3_S-00003-of-00008.gguf",
+			"oid": "0182203a6278cd29702003589b11635a8b6c58a17613270a94532a7487760092",
+			"size": 49249617536
+		},
+		{
+			"path": "UD-IQ3_S/DeepSeek-V4.1-Flash-1017-UD-IQ3_S-00004-of-00008.gguf",
+			"oid": "5e1aed1952f95ada91abb3332adb8d77eff6a98281a09c246e827c6031ba0a93",
+			"size": 49262124864
+		},
+		{
+			"path": "UD-IQ3_S/DeepSeek-V4.1-Flash-1017-UD-IQ3_S-00005-of-00008.gguf",
+			"oid": "69dd858b60744b9430be3b69684120d1bcb33ba4b5a740b60ddf8fc5a2875dee",
+			"size": 49616016928
+		},
+		{
+			"path": "UD-IQ3_S/DeepSeek-V4.1-Flash-1017-UD-IQ3_S-00006-of-00008.gguf",
+			"oid": "962c493b4f41f2dedfb31ebbfe725d14b55d97a442f0cd14296a42ac51345ff7",
+			"size": 49262122592
+		},
+		{
+			"path": "UD-IQ3_S/DeepSeek-V4.1-Flash-1017-UD-IQ3_S-00007-of-00008.gguf",
+			"oid": "c96d4a18a86dcdb3ed10e3e367bc9f3070d61a1da0144926519d2987c4e41b26",
+			"size": 15235610176
+		},
+		{
+			"path": "UD-IQ3_S/DeepSeek-V4.1-Flash-1017-UD-IQ3_S-00008-of-00008.gguf",
+			"oid": "e70b4bf3ac5b26aa2addb048cff61a6be5490e99ba88cfbc29f7fb7279000141",
+			"size": 161284798692
+		},
+		{
+			"path": "UD-IQ3_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ3_XXS-00001-of-00007.gguf",
+			"oid": "0c2a2031bd93ebd60aa6a4f3912775ba3990b5f39b24c6edf9ea029d2f387a28",
+			"size": 5780927
+		},
+		{
+			"path": "UD-IQ3_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ3_XXS-00002-of-00007.gguf",
+			"oid": "aa7827cc3c88958f4bc4134fab2c2d63dff1e53f947f76cbb34ce429205d551c",
+			"size": 49485970112
+		},
+		{
+			"path": "UD-IQ3_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ3_XXS-00003-of-00007.gguf",
+			"oid": "7e5bc7c88e2bbcdadafcf672a1959581aeb2f2b23732ffd77823a756151a4e76",
+			"size": 49037273088
+		},
+		{
+			"path": "UD-IQ3_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ3_XXS-00004-of-00007.gguf",
+			"oid": "a6b33c1cc73bbd2a54617f0714c5144ee8ee6d6403ceea49628633a7a2be21de",
+			"size": 49580635872
+		},
+		{
+			"path": "UD-IQ3_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ3_XXS-00005-of-00007.gguf",
+			"oid": "5e392a945c534eb439279bbb638e7ea47e5a1cfca620b96c3fd47da87d5923a8",
+			"size": 48448165536
+		},
+		{
+			"path": "UD-IQ3_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ3_XXS-00006-of-00007.gguf",
+			"oid": "e1b4a74844e637d8b15c94c30757e2359f81f287824c421e8b5b746b010e030e",
+			"size": 36893972640
+		},
+		{
+			"path": "UD-IQ3_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ3_XXS-00007-of-00007.gguf",
+			"oid": "9d21807ac1a40cd1635634c14135b5acca1c8b855dae228170361602c7de560b",
+			"size": 161284798692
+		},
+		{
+			"path": "UD-Q2_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q2_K_XL-00001-of-00007.gguf",
+			"oid": "6b6e9ace54298156974cc3e024e5ba86d50c40c06482da8f64fece77d7f73452",
+			"size": 5780868
+		},
+		{
+			"path": "UD-Q2_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q2_K_XL-00002-of-00007.gguf",
+			"oid": "fa56e7cb79f88d992170bbc41b192991bd89b9534c53106e328fc03a5d26afed",
+			"size": 49290279808
+		},
+		{
+			"path": "UD-Q2_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q2_K_XL-00003-of-00007.gguf",
+			"oid": "b279f9bbb331460d182658a9ec6a49eb232ef7d8c69600a2c53d5d797bf037b4",
+			"size": 49745070208
+		},
+		{
+			"path": "UD-Q2_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q2_K_XL-00004-of-00007.gguf",
+			"oid": "c7fed7b94a11aeafbf07e164940718fab26e99a5f1d9986af0602c6515d18bff",
+			"size": 48680128800
+		},
+		{
+			"path": "UD-Q2_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q2_K_XL-00005-of-00007.gguf",
+			"oid": "c8d6bd8063607e788db7daed01487f4e87a9529d5756dd561481bed78fea7d6d",
+			"size": 49970937696
+		},
+		{
+			"path": "UD-Q2_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q2_K_XL-00006-of-00007.gguf",
+			"oid": "2f62bf418b0f722254728bdd88b4b1c88c1b64a4d664c7b696c08fecd49abd76",
+			"size": 1929325664
+		},
+		{
+			"path": "UD-Q2_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q2_K_XL-00007-of-00007.gguf",
+			"oid": "a653c5309b7c74a6c41580aaa8c2d2bbdae0342253bca2cd3fc9e69d05f3d0eb",
+			"size": 135172021792
+		},
+		{
+			"path": "UD-Q3_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q3_K_XL-00001-of-00008.gguf",
+			"oid": "427a6be72b502c52562b1f1f7c5c764cad2a4cb3af991e9aaf02a33d958cc322",
+			"size": 5780927
+		},
+		{
+			"path": "UD-Q3_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q3_K_XL-00002-of-00008.gguf",
+			"oid": "9a3500224d10ca5565f010f57154f5b1999406c9453d86e4a0903a8183503697",
+			"size": 48856795552
+		},
+		{
+			"path": "UD-Q3_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q3_K_XL-00003-of-00008.gguf",
+			"oid": "ba5c295631a392c7f929a14b633f6c9badc0eb1c9d719ecad92ec43efd4ddc6d",
+			"size": 48089732928
+		},
+		{
+			"path": "UD-Q3_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q3_K_XL-00004-of-00008.gguf",
+			"oid": "4dd4ea5d34219cd1444218352def2977dd153739853464154a3936276f31ffbb",
+			"size": 49795067616
+		},
+		{
+			"path": "UD-Q3_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q3_K_XL-00005-of-00008.gguf",
+			"oid": "1a733e505a723fb1a5ccc15a45547c6d42097d8830d8fa4c4d17ca7bbb580855",
+			"size": 49964720992
+		},
+		{
+			"path": "UD-Q3_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q3_K_XL-00006-of-00008.gguf",
+			"oid": "0592a53ddba5a57062e266116bae26e9f1a97c268acb5287c8f4be5bb1741314",
+			"size": 49332666816
+		},
+		{
+			"path": "UD-Q3_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q3_K_XL-00007-of-00008.gguf",
+			"oid": "e6e8dd016ffbb2820f0e6a37f4f8a531f5365fbdd009e758dda1c054453f9ffc",
+			"size": 36265841792
+		},
+		{
+			"path": "UD-Q3_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q3_K_XL-00008-of-00008.gguf",
+			"oid": "18ddc73eea11981cb6317c6d3c4a4e58ec71baaea2de41b071d9127bc15c2a94",
+			"size": 202758032592
+		},
+		{
+			"path": "UD-Q4_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q4_K_XL-00001-of-00009.gguf",
+			"oid": "cc15d470afcb030558bbc4d8e2ccd840182e2e95de1a95198138efe63a5fd99f",
+			"size": 5780589
+		},
+		{
+			"path": "UD-Q4_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q4_K_XL-00002-of-00009.gguf",
+			"oid": "17df217d8fc26a39f21ea40805dc6ab788c7ce8623a59a95c431051df7eafc94",
+			"size": 48129640000
+		},
+		{
+			"path": "UD-Q4_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q4_K_XL-00003-of-00009.gguf",
+			"oid": "0c8065f620a049cb437024c54ff12c314c94603a1cc683f5191be4689d6d6d3b",
+			"size": 48129640000
+		},
+		{
+			"path": "UD-Q4_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q4_K_XL-00004-of-00009.gguf",
+			"oid": "3bd8b2ebf8f51d8708a73ae0895f8d4acc7e4c983ba4e89d038492b203cc89ac",
+			"size": 48129640000
+		},
+		{
+			"path": "UD-Q4_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q4_K_XL-00005-of-00009.gguf",
+			"oid": "929054a6bbf3701765779b58c37988b6c6284a3b8413901858b59c0e95f37cc3",
+			"size": 48129640000
+		},
+		{
+			"path": "UD-Q4_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q4_K_XL-00006-of-00009.gguf",
+			"oid": "49d3de04bd6a09de786c9ef7db900eae02ee9fd391573f91a923013d7d5b24d3",
+			"size": 48129640000
+		},
+		{
+			"path": "UD-Q4_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q4_K_XL-00007-of-00009.gguf",
+			"oid": "f18feae5878dd680f1ea87ecd1d84f4fb098480298b25a3162dcbdab8dc2ca5b",
+			"size": 48129640000
+		},
+		{
+			"path": "UD-Q4_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q4_K_XL-00008-of-00009.gguf",
+			"oid": "12df293355efbd104b088a77e13ee22410fb1ec3f7ab3863947f09896e64bec7",
+			"size": 202758032592
+		},
+		{
+			"path": "UD-Q4_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q4_K_XL-00009-of-00009.gguf",
+			"oid": "c21ad6105a780bc2f44eb7dd41f9b1a1efb4e8ec87618f60b733bc2652bd2ffe",
+			"size": 9165923392
+		},
+		{
+			"path": "UD-Q8_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q8_K_XL-00001-of-00009.gguf",
+			"oid": "cc15d470afcb030558bbc4d8e2ccd840182e2e95de1a95198138efe63a5fd99f",
+			"size": 5780589
+		},
+		{
+			"path": "UD-Q8_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q8_K_XL-00002-of-00009.gguf",
+			"oid": "9cb2047676bd20e448be2377b480080c97fb38fae117f4846e07de2c65bb8522",
+			"size": 50536121984
+		},
+		{
+			"path": "UD-Q8_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q8_K_XL-00003-of-00009.gguf",
+			"oid": "17d398dd327e7ff1991b382677814db75d970b074661757564b6f2ac3d0c8d95",
+			"size": 50536121984
+		},
+		{
+			"path": "UD-Q8_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q8_K_XL-00004-of-00009.gguf",
+			"oid": "7ea8da1143b9a6bf1424a361eb1b0d6f66c7ce79eac9711162f212cc4f39c319",
+			"size": 50536122016
+		},
+		{
+			"path": "UD-Q8_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q8_K_XL-00005-of-00009.gguf",
+			"oid": "1952da19a841176b46f9681c99ea57c674f8a8861e16d76fb35cec4befe039b2",
+			"size": 50536122016
+		},
+		{
+			"path": "UD-Q8_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q8_K_XL-00006-of-00009.gguf",
+			"oid": "d6711781d8effab79b410af9c40920bffcc0c28976e509bc1227ff0c6669c33a",
+			"size": 50536122016
+		},
+		{
+			"path": "UD-Q8_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q8_K_XL-00007-of-00009.gguf",
+			"oid": "2ebc8d198d03a14865e8a85df637285ceb5dd79b1ffc78424bd3c3e06df57823",
+			"size": 36097230048
+		},
+		{
+			"path": "UD-Q8_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q8_K_XL-00008-of-00009.gguf",
+			"oid": "12df293355efbd104b088a77e13ee22410fb1ec3f7ab3863947f09896e64bec7",
+			"size": 202758032592
+		},
+		{
+			"path": "UD-Q8_K_XL/DeepSeek-V4.1-Flash-1017-UD-Q8_K_XL-00009-of-00009.gguf",
+			"oid": "df33722d1dcf5ffe0347ed8406f7acb3b18061f4ded2c13c2b0a184b8d41c9ea",
+			"size": 16835109952
+		},
+		{
+			"path": "dspark-DeepSeek-V4.1-Flash-1017-Q8_0.gguf",
+			"oid": "6ba6ac1b331c540691a209e7fc97dec2a24e295acb1e755c84c7d24a4373927a",
+			"size": 7976914240
+		},
+		{
+			"path": "dspark/README.md",
+			"oid": "e81fbb585baeff8509a34938db2e33806a4b80bc",
+			"size": 2989
+		},
+		{
+			"path": "dspark/dspark-DeepSeek-V4.1-Flash-1017-BF16.gguf",
+			"oid": "c5dcff7c704aad1ac0ff0f57a0741902af3d06bc74aad480a82d453081936e69",
+			"size": 8506281280
+		},
+		{
+			"path": "engram/DeepSeek-V4.1-Flash-1017-engram-IQ4_NL.gguf_file",
+			"oid": "4de55238158d230017a83a7e95cb4b2dd58c68bd058e1c7a81f7278e6309d19f",
+			"size": 110595290592
+		},
+		{
+			"path": "engram/DeepSeek-V4.1-Flash-1017-engram-MXFP8.gguf_file",
+			"oid": "475af55625456ed4e9dc64d44716adbd5a46bdfb0522a5c357164d322136125b",
+			"size": 202758032592
+		},
+		{
+			"path": "engram/DeepSeek-V4.1-Flash-1017-engram-Q5_K.gguf_file",
+			"oid": "1ff9650efaf7d5c2b367cce367d9333d5fa97ebd189391d2e9c4bc957a006138",
+			"size": 135172021792
+		},
+		{
+			"path": "engram/DeepSeek-V4.1-Flash-1017-engram-Q6_K.gguf_file",
+			"oid": "5c2a5a4aa87c72cecc0fc2a8898cb2b91ab9ae5a61a5c8befe21df1b3db26179",
+			"size": 161284798692
+		},
+		{
+			"path": "engram/README.md",
+			"oid": "c7329537a87d7c88094dcf3007a1abcc558d740a",
+			"size": 3750
+		},
+		{
+			"path": "engram/set_split.py",
+			"oid": "0c258c17e6b70b196ef56564868d0f4344d8b209",
+			"size": 350
+		},
+		{
+			"path": "imatrix_unsloth.gguf_file",
+			"oid": "22ed7e8f07a471c8ec773a8062e5e9d72831cc179b9baf63ebf6792c8b3fd8f5",
+			"size": 789186368
+		},
+		{
+			"path": "mmproj-BF16.gguf",
+			"oid": "9a1ef7c40d0d702c7ed8c5f863f60abae64091387ba3fce0ad19ce9beeda3bf9",
+			"size": 972208288
+		},
+		{
+			"path": "mmproj-F16.gguf",
+			"oid": "dad8ad13f1d9a25757e121592d7b4f8ca83620d1172048004998b7c0b964b18e",
+			"size": 971004064
+		}
+	]
+}

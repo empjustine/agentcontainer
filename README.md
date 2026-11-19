@@ -12,7 +12,7 @@ passthrough reverse proxy for cloud LLM providers.
 # Bazzite (rootless podman) — ONE llama-swap instance for LOCAL GGUF
 # inference, published on LAN port 8101 (the coding agent reaches it in-network;
 # the world reaches estige's tunnel at the funnel mount, docs/d073/d108)
-cd ~/agentcontainer && ./node-run.sh llm-local-inference/generate.mjs
+cd ~/agentcontainer && ./node-run.sh llm-local-inference/30-generate.mjs
 #   then the coding agent (local models + cloud; credentials via ./environment.sh, docs/d046)
 #   extra ARGV dirs mount rw too (CWD is implicit first): ./node-run.sh coding-agent/run.mjs ~/Downloads/references
 cd ~/agentcontainer && ./environment.sh ./node-run.sh coding-agent/run.mjs
@@ -68,7 +68,7 @@ env, on the host, docs/d046):
 path for a host with no container backend (docs/d059). The scripts it wraps consume plain env
 and never load anything themselves; inside sandboxes the vault env is
 forwarded via the `workload_env` allowlist. Generation steps that need no
-keys (llm-local-inference/generate.mjs, every `pi-*/generate.mjs`) run
+keys (llm-local-inference/30-generate.mjs, every `pi-*/generate.mjs`) run
 without the chain. No `.env` files, no in-script loaders, no emergency
 paths — a failed vault round-trip is fatal at the chain, never a silent
 half-configured run.
@@ -111,12 +111,12 @@ agentcontainer/
 │
 ├── llm-local-inference/                 # llama-swap: LOCAL GGUF inference only
 │   ├── run.py                           #   → unified-vulkan image + GPU + HF mounts on :8101 (run via ./py-run.sh; env chain ./environment.sh first)
-│   ├── *.py / run-all.sh                #   → the PEP 723 cache tools (download_models, upkeep, fetch_hf_manifests, scan_cache_*, gguf_context_length), run via ./py-run.sh; run-all.sh is their order
-│   ├── generate.mjs                     #   → capability-gated config.d layers (fails on non-GPU hosts); `./node-run.sh llm-local-inference/generate.mjs`
+│   ├── *.py                             #   → the PEP 723 cache tools (run_all, download_models, upkeep, fetch_hf_manifests, fetch_model_cards, verify_cache, audit_snapshots, scan_cache_*, gguf_context_length), run via ./py-run.sh; run_all.py is their order (no shell tooling left, docs/d212)
+│   ├── 20-propose-entries.mjs / 30-generate.mjs #  → config.d + curated manifests (capability-gated) · the manifest-authoring aid, docs/d212
 │   ├── build.mjs                        #   → pulls the llama-swap image (inference-endpoint gate, d087); `./node-run.sh llm-local-inference/build.mjs`
 │   ├── llama-swap-core.json             #   → general-purpose config source
 │   ├── config.d/                        #   → generated split config (loaded via -config-dir)
-│   ├── lib/                             #   → THIS FOLDER's own copy (d113): log.mjs/log.sh/log.py, artifact.mjs, canonical-json.mjs, host-capabilities.mjs, llamacpp-model-data.json, hf-manifests/ (param-count + quant-display source, d170); the interpreter runner is repo-root, not per-folder (d138)
+│   ├── lib/                             #   → THIS FOLDER's own copy (d113): log.mjs/log.py, artifact.mjs, canonical-json.mjs, model-entries.mjs, host-capabilities.mjs, cache-scope.json (closed inventory), curated/ (per-repo provisioning input), llamacpp-model-data.json, hf-manifests/ (repo facts); the interpreter runner is repo-root, not per-folder (d138)
 │   ├── CACHE-DESIGN.md                  #   → HF cache pipeline (the folded local-llm/ tooling, flat here since d113), table-write rule
 │   ├── DESIGN.md                        #   → llama-swap config.d layers, generation-time path baking, capability gating, bearer auth
 │   └── *.md                             #   → this unit's own living docs (d117): hf-cache-upkeep / refresh-...-manifest runbooks, gguf-model-tooling

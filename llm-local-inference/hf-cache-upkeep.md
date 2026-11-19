@@ -9,6 +9,39 @@ tags: ["reference", "runbook", "hf-cache"]
 
 # Hugging Face cache upkeep
 
+## Provisioning: the curated manifests
+
+`40-download-models.py` downloads nothing it was not told to. Its input is
+`lib/curated/<org>--<repo>.json`, written by `30-generate.mjs` from the
+model manifest and the committed repo manifests — the same run that renders
+`config.d`, so served and downloaded cannot diverge:
+
+    ./py-run.sh llm-local-inference/40-download-models.py
+
+Per repo a curated file names every shard of each surviving quant (rows the
+display rules hide are absent), the projector the generator resolved (no entry
+declares one), any drafter sidecar, and the split index when the repo ships it.
+
+`lib/cache-scope.json` is the closed inventory: every repo this unit keeps,
+in one mode. `served` repos have model entries and curated manifests;
+`audit-only` repos are verified if already cached and never downloaded. A repo
+with no line is out of scope, and the generator refuses a mismatch either way.
+
+The checksum step is `50-verify-cache.py` (its own tool: never
+`--fail-on-missing-files`, which would fail on exactly the files a curated set
+skips). Provisioning and verification are separate jobs on purpose.
+
+docs/d212's "Leaving audit-only" lists the three exits.
+
+The operator's one shot is `./py-run.sh llm-local-inference/run_all.py`, and the
+checksum pass is its own tool: `./py-run.sh llm-local-inference/50-verify-cache.py`.
+
+- One cache root per run (`HF_HUB_CACHE`): the generator bakes paths against
+  it and `run.py` binds it, so a second root is a second run, not a stage.
+  `hf cache verify` does not fail on files present upstream only, which is what
+  makes a partial (plan-sized) snapshot verifiable; never pass
+  `--fail-on-missing-files`.
+
 ## upkeep.py
 
 Lists, prunes, pulls newer revisions, and verifies the local Hugging Face
@@ -74,7 +107,7 @@ while still skipping the unused heavy `.gguf` quants.
 
 ### Provisioning must go through refs
 
-`download_models.py` deliberately downloads via `snapshot_download(revision="main")`,
+`40-download-models.py` deliberately downloads via `snapshot_download(revision="main")`,
 never via a pinned commit hash. A commit-hash download (`hf_hub_download(revision=<sha>)`)
 creates `snapshots/<sha>/…` with **no** entry under `refs/` — a detached revision.
 The prune step above deletes exactly those, so pinning by SHA produces an endless
@@ -84,7 +117,7 @@ revision is attached, survives pruning, and is automatically kept fresh by the
 pull step. Consistency between an entry's model + mmproj files is preserved
 because `snapshot_download` resolves the branch to a single commit per call.
 
-## fetch-model-cards.sh
+## fetch_model_cards.py
 
 Refreshes the model-card mirrors under `llm-local-inference/model-cards/<org>/<repo>.md`
 from Hugging Face (the `README.md` of each repo in

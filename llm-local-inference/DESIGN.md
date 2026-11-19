@@ -32,8 +32,8 @@ relay/proxy machinery is no longer exercised from here.
 
 ## Shape
 
-`generate.mjs` (generation — the former gen-lib.mjs + both emitters folded
-into one file, docs/d041; `./node-run.sh llm-local-inference/generate.mjs`
+`30-generate.mjs` (generation — the former gen-lib.mjs + both emitters folded
+into one file, docs/d041; `./node-run.sh llm-local-inference/30-generate.mjs`
 runs it) and `run.py`
 (serve) are strictly separated;
 `run.py` mounts the generated `config.d/` read-only into the
@@ -73,12 +73,12 @@ endpoint.
   callers to pin a stale one).
 - **Generation-time path baking** (`docs/d029` option B): each model is
   resolved to ONE HF snapshot dir (refs/main first, the revision
-  `download_models.py` pins) and `--model/--mmproj/--model-draft`
+  `40-download-models.py` pins) and `--model/--mmproj/--model-draft`
   are emitted as plain absolute args inside the `cmd`. llama-swap splits `cmd`
   with posix shlex and execs argv directly — no shell runs, so the retired
   `launch-gguf.sh` in-container resolver (binary lookup, download fallback,
   positional interface) is gone. A cache miss is a generation error; model
-  provisioning belongs to `download_models.py` and is never
+  provisioning belongs to `40-download-models.py` and is never
   duplicated as a launch-time download. A cache changed since generation
   surfaces as a llama-server 127 at swap time — the `.paths` preflight that
   used to catch it at launch is retired (d170), and its offline re-verify is

@@ -1,0 +1,442 @@
+{
+	"repo": "unsloth/GLM-5.3-Flash-GGUF",
+	"commit": "a38483c8cd5df544f53d70fb281afe97369d5ab6",
+	"fetched_at": "2026-11-19T02:30:37+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "0377e8f4290e67e77ec635eea1e004ac7ea6b39d",
+			"size": 9483
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00001-of-00014.gguf",
+			"oid": "95a1129a1a92d08b9fdd6d19cb5967bbe8c78f6d4a8bcf806970a18716b0d6ce",
+			"size": 9429728
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00002-of-00014.gguf",
+			"oid": "9cc585be519911723528aee146812057663d062eac6d7bae6e06cdaec6e989aa",
+			"size": 48155668736
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00003-of-00014.gguf",
+			"oid": "2e2042b9ced18a23ea1debba8d77a16f654459260aa979911750e5ac069cf002",
+			"size": 49289812544
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00004-of-00014.gguf",
+			"oid": "9ee483074b94e2a2a36205f01bb681a0537c7a44baf52e6fba32ec82e3fe1ac8",
+			"size": 49315393792
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00005-of-00014.gguf",
+			"oid": "df779fcbd5c7e58dfdda6769c60a9bf86fd038b290d19df1841e7138c30a5831",
+			"size": 49998245760
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00006-of-00014.gguf",
+			"oid": "06c35b31c602a1f1f113cd009a139570972b7a2143aff5aef27247a8a9242a34",
+			"size": 49492991520
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00007-of-00014.gguf",
+			"oid": "48d497ce1bbb5f72967d2e560528e79d72db60c34b57194bfc711ae9b6ceb4b0",
+			"size": 49289812544
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00008-of-00014.gguf",
+			"oid": "219e96d774f81042dfdc9a1742b43fe0f6ce888d2db1cda1c2f8950f81921815",
+			"size": 49596568192
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00009-of-00014.gguf",
+			"oid": "01deeaa4f6cdbdfa3be4aa414dff46a001956ef2fd027d22e0ae8c31ed500962",
+			"size": 49315393792
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00010-of-00014.gguf",
+			"oid": "8ae81821be0cdec5ae7fe952fdade3617a6e476eda47c013fa6dc66d7b514868",
+			"size": 49289812544
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00011-of-00014.gguf",
+			"oid": "bae93e277539b6a2f8fae2bedfe45e943d51eec3a8533203203f6359ed829ec8",
+			"size": 49622149440
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00012-of-00014.gguf",
+			"oid": "4d3cb10c7daa4be17ed9ecc866bb0ff482f210de6061f67193e9a1acd5410f94",
+			"size": 49289812544
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00013-of-00014.gguf",
+			"oid": "fbf5c3a84f5eda926235e9aca02873d555e1eefee4a8eacdd92c18179211012d",
+			"size": 49355397280
+		},
+		{
+			"path": "BF16/GLM-5.3-Flash-BF16-00014-of-00014.gguf",
+			"oid": "15e05268e702f6539dd7b0fc592242b5c0b3c2122dc40c5821d92ba16c6fb795",
+			"size": 49620575872
+		},
+		{
+			"path": "Q8_0/GLM-5.3-Flash-Q8_0-00001-of-00008.gguf",
+			"oid": "5dc239a59cbd2d3b9d90b647cf697b80c0f4101bfaa2280b3102156e94a24ccf",
+			"size": 9429984
+		},
+		{
+			"path": "Q8_0/GLM-5.3-Flash-Q8_0-00002-of-00008.gguf",
+			"oid": "8aabbbc0a92c551894f62a0737b433c9fad60a94baaa61e669f96329bb1d88a6",
+			"size": 49665857344
+		},
+		{
+			"path": "Q8_0/GLM-5.3-Flash-Q8_0-00003-of-00008.gguf",
+			"oid": "7b50941b404fed3413be4e0ca52af43e79113e4b3e2c940d1f4cdf74e95ebb39",
+			"size": 49822821280
+		},
+		{
+			"path": "Q8_0/GLM-5.3-Flash-Q8_0-00004-of-00008.gguf",
+			"oid": "ff27fb4536d524cae687c4fb88dfa1b43a8ee0b4256e55304f95dc1aa38e8b81",
+			"size": 49849652064
+		},
+		{
+			"path": "Q8_0/GLM-5.3-Flash-Q8_0-00005-of-00008.gguf",
+			"oid": "c088636854c5da312e44a7be4195cd765dd9eb6339d7b014d1da4192851a9b5b",
+			"size": 49974608352
+		},
+		{
+			"path": "Q8_0/GLM-5.3-Flash-Q8_0-00006-of-00008.gguf",
+			"oid": "4bece55cb9e98720f3ef2e1e9683983aeced77434dbcd54584c0b7c80a2e95cb",
+			"size": 49840638624
+		},
+		{
+			"path": "Q8_0/GLM-5.3-Flash-Q8_0-00007-of-00008.gguf",
+			"oid": "a9f792204b0b58155e6092f9a4160a0659fcdc98a1c126e563ecc3cd02ad68ad",
+			"size": 49831834720
+		},
+		{
+			"path": "Q8_0/GLM-5.3-Flash-Q8_0-00008-of-00008.gguf",
+			"oid": "a6cb6887c0047653f08c0ab6e564972451d9511322202970f7052e36052aefd6",
+			"size": 41987123840
+		},
+		{
+			"path": "README.md",
+			"oid": "e7eea3cf683b7c25f207e9604c3a4116249eab48",
+			"size": 8377
+		},
+		{
+			"path": "Shard_Rewrite/GLM-5.3-Flash-BF16-00001-of-00014.gguf_file",
+			"oid": "95a1129a1a92d08b9fdd6d19cb5967bbe8c78f6d4a8bcf806970a18716b0d6ce",
+			"size": 9429728
+		},
+		{
+			"path": "Shard_Rewrite/GLM-5.3-Flash-Q8_0-00001-of-00008.gguf_file",
+			"oid": "5dc239a59cbd2d3b9d90b647cf697b80c0f4101bfaa2280b3102156e94a24ccf",
+			"size": 9429984
+		},
+		{
+			"path": "Shard_Rewrite/GLM-5.3-Flash-UD-IQ1_M-00001-of-00003.gguf_file",
+			"oid": "a3f31b5ba1ecc620a7c2088c30eb830c488453932f3e9e530777efb5980b0ef7",
+			"size": 9429984
+		},
+		{
+			"path": "Shard_Rewrite/GLM-5.3-Flash-UD-IQ1_S-00001-of-00003.gguf_file",
+			"oid": "909a8a2dedb493c5a694facfd1e0e9a3309ac66fbb9d270c024ff5d12e0d565f",
+			"size": 9429984
+		},
+		{
+			"path": "Shard_Rewrite/GLM-5.3-Flash-UD-IQ2_XXS-00001-of-00004.gguf_file",
+			"oid": "337870cefce5fb34b2aa3ade54a0fbf61676697f7f9a906670c20edde74561f4",
+			"size": 9429984
+		},
+		{
+			"path": "Shard_Rewrite/GLM-5.3-Flash-UD-IQ3_XXS-00001-of-00004.gguf_file",
+			"oid": "632f4fabe03ea73d20c299c8ef00c4a16e47dd9ab3f1750a8585b92eb70dfa74",
+			"size": 9429984
+		},
+		{
+			"path": "Shard_Rewrite/GLM-5.3-Flash-UD-IQ4_XS-00001-of-00005.gguf_file",
+			"oid": "c2f3b6ab98d3df844f322ea376059202d2eaeedcee1f0eff455345b86a137dbd",
+			"size": 9429984
+		},
+		{
+			"path": "Shard_Rewrite/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf_file",
+			"oid": "2f32eba33ebc75a715e9c85a010faac4c67542e38e8970bd961d544bfe815f9e",
+			"size": 9429984
+		},
+		{
+			"path": "Shard_Rewrite/GLM-5.3-Flash-UD-Q3_K_XL-00001-of-00004.gguf_file",
+			"oid": "be89305a221c1449cf9a5a84b5c492520a7fb23a3af1b2178a20ecf0b6ecae76",
+			"size": 9429984
+		},
+		{
+			"path": "Shard_Rewrite/GLM-5.3-Flash-UD-Q4_K_XL-00001-of-00006.gguf_file",
+			"oid": "b59c030090f012b38213bc8c4f78ce10767f2693d730d0dbcd3dc16a5f69e2bc",
+			"size": 9429984
+		},
+		{
+			"path": "Shard_Rewrite/GLM-5.3-Flash-UD-Q5_K_XL-00001-of-00006.gguf_file",
+			"oid": "cb792ba9c8dbcd7a45aede04ffc16c80b9f3b290423585e06835e0acf7081e17",
+			"size": 9429984
+		},
+		{
+			"path": "Shard_Rewrite/GLM-5.3-Flash-UD-Q6_K_XL-00001-of-00007.gguf_file",
+			"oid": "7d7bd899640a594a32b1c7577c41fc00e56143e3b5731d3b9056bdc988f80f1c",
+			"size": 9429984
+		},
+		{
+			"path": "Shard_Rewrite/mmproj-BF16.gguf_file",
+			"oid": "82b7adb44411dbb298b1c689567804e5ed0790d80f308ed8b5b6b8ac0527d2ac",
+			"size": 1164010176
+		},
+		{
+			"path": "Shard_Rewrite/mmproj-F16.gguf_file",
+			"oid": "922b809664d6a89cc1e40bfeaa63618000edc6651baf4082ce0718a784adf947",
+			"size": 1128047296
+		},
+		{
+			"path": "UD-IQ1_M/GLM-5.3-Flash-UD-IQ1_M-00001-of-00003.gguf",
+			"oid": "a3f31b5ba1ecc620a7c2088c30eb830c488453932f3e9e530777efb5980b0ef7",
+			"size": 9429984
+		},
+		{
+			"path": "UD-IQ1_M/GLM-5.3-Flash-UD-IQ1_M-00002-of-00003.gguf",
+			"oid": "6bcfc2210cced11cede6cd6ce4ac3368c0b1ab52d6fc3e40f2a3f310f0614001",
+			"size": 49996246592
+		},
+		{
+			"path": "UD-IQ1_M/GLM-5.3-Flash-UD-IQ1_M-00003-of-00003.gguf",
+			"oid": "07e252723e988154340414ebd6857051179f69eb25112ad75122d4230ccfc6f7",
+			"size": 47573668096
+		},
+		{
+			"path": "UD-IQ1_S/GLM-5.3-Flash-UD-IQ1_S-00001-of-00003.gguf",
+			"oid": "909a8a2dedb493c5a694facfd1e0e9a3309ac66fbb9d270c024ff5d12e0d565f",
+			"size": 9429984
+		},
+		{
+			"path": "UD-IQ1_S/GLM-5.3-Flash-UD-IQ1_S-00002-of-00003.gguf",
+			"oid": "b99c4dd929601884ff95d9ddeb581a5ef93fd281c37c162e48b2981bf23c0830",
+			"size": 49621122496
+		},
+		{
+			"path": "UD-IQ1_S/GLM-5.3-Flash-UD-IQ1_S-00003-of-00003.gguf",
+			"oid": "9bb0ff754968d588793d795c715cc2a7d5292280ff9d0df46b7e1edd57da34a1",
+			"size": 43456692608
+		},
+		{
+			"path": "UD-IQ2_XXS/GLM-5.3-Flash-UD-IQ2_XXS-00001-of-00004.gguf",
+			"oid": "337870cefce5fb34b2aa3ade54a0fbf61676697f7f9a906670c20edde74561f4",
+			"size": 9429984
+		},
+		{
+			"path": "UD-IQ2_XXS/GLM-5.3-Flash-UD-IQ2_XXS-00002-of-00004.gguf",
+			"oid": "d51a3d9ca05022d53e71753df75ee64ed5fd4e47655650ae023e9717b3ec158d",
+			"size": 49896298080
+		},
+		{
+			"path": "UD-IQ2_XXS/GLM-5.3-Flash-UD-IQ2_XXS-00003-of-00004.gguf",
+			"oid": "89180f13784dc1128586b98adf1ca876279881a20bc4f01747703ce352563372",
+			"size": 49248507840
+		},
+		{
+			"path": "UD-IQ2_XXS/GLM-5.3-Flash-UD-IQ2_XXS-00004-of-00004.gguf",
+			"oid": "9e0ef47daa1fdffce3cf2ac1594ce4634d176ad018be6e692729757f38d5fbf6",
+			"size": 2690716000
+		},
+		{
+			"path": "UD-IQ3_XXS/GLM-5.3-Flash-UD-IQ3_XXS-00001-of-00004.gguf",
+			"oid": "632f4fabe03ea73d20c299c8ef00c4a16e47dd9ab3f1750a8585b92eb70dfa74",
+			"size": 9429984
+		},
+		{
+			"path": "UD-IQ3_XXS/GLM-5.3-Flash-UD-IQ3_XXS-00002-of-00004.gguf",
+			"oid": "a4dba331fe92ffbd71317839cc1452c57f0b5b3f971a9e96ee5107f9a615cdac",
+			"size": 49261511584
+		},
+		{
+			"path": "UD-IQ3_XXS/GLM-5.3-Flash-UD-IQ3_XXS-00003-of-00004.gguf",
+			"oid": "5b728b5b263c662201ef4a4a2b12fb509fe230d012418d0ed37c220a8a5aa230",
+			"size": 49075832480
+		},
+		{
+			"path": "UD-IQ3_XXS/GLM-5.3-Flash-UD-IQ3_XXS-00004-of-00004.gguf",
+			"oid": "4b6d16e0d1381e1b4b7eeb6c9799671bf98153a995be12e75e3da93cd97981d2",
+			"size": 22020797792
+		},
+		{
+			"path": "UD-IQ4_XS/GLM-5.3-Flash-UD-IQ4_XS-00001-of-00005.gguf",
+			"oid": "c2f3b6ab98d3df844f322ea376059202d2eaeedcee1f0eff455345b86a137dbd",
+			"size": 9429984
+		},
+		{
+			"path": "UD-IQ4_XS/GLM-5.3-Flash-UD-IQ4_XS-00002-of-00005.gguf",
+			"oid": "7d64cf0395672c4322012841abec502ea7e20518299bb5e3069003f06f9e6de9",
+			"size": 49989334176
+		},
+		{
+			"path": "UD-IQ4_XS/GLM-5.3-Flash-UD-IQ4_XS-00003-of-00005.gguf",
+			"oid": "7c2c63c9c30f8060428fdf2ac935dbf2ee9ad8f771d62b6ae47a7f7f2c1520e7",
+			"size": 49607025280
+		},
+		{
+			"path": "UD-IQ4_XS/GLM-5.3-Flash-UD-IQ4_XS-00004-of-00005.gguf",
+			"oid": "06c90f191871317c92dd9d25a353b687aed44c50f3ac6c713e9fe410bc2d26dd",
+			"size": 49486530144
+		},
+		{
+			"path": "UD-IQ4_XS/GLM-5.3-Flash-UD-IQ4_XS-00005-of-00005.gguf",
+			"oid": "66ebf9ec85e04d3f44af674ae4f694acbc89cc53db75e42f2f4d3646bf321c0d",
+			"size": 7729791616
+		},
+		{
+			"path": "UD-Q2_K_XL/GLM-5.3-Flash-UD-Q2_K_XL-00001-of-00004.gguf",
+			"oid": "2f32eba33ebc75a715e9c85a010faac4c67542e38e8970bd961d544bfe815f9e",
+			"size": 9429984
+		},
+		{
+			"path": "UD-Q2_K_XL/GLM-5.3-Flash-UD-Q2_K_XL-00002-of-00004.gguf",
+			"oid": "f4a9e1ab13d5d9620f5590c9a4aba4c169e6707a1554f3be3fe3112f80a66825",
+			"size": 49294975936
+		},
+		{
+			"path": "UD-Q2_K_XL/GLM-5.3-Flash-UD-Q2_K_XL-00003-of-00004.gguf",
+			"oid": "330a8ad76c787b3ab6df062dd30abea7aafe6a0e3d5860e8720dfa4abb2434a5",
+			"size": 49949266048
+		},
+		{
+			"path": "UD-Q2_K_XL/GLM-5.3-Flash-UD-Q2_K_XL-00004-of-00004.gguf",
+			"oid": "5c294f42edc5d69cf00a79ab444e61f0742e9933105fc5c85f97da54dab8946f",
+			"size": 9466399584
+		},
+		{
+			"path": "UD-Q3_K_XL/GLM-5.3-Flash-UD-Q3_K_XL-00001-of-00004.gguf",
+			"oid": "be89305a221c1449cf9a5a84b5c492520a7fb23a3af1b2178a20ecf0b6ecae76",
+			"size": 9429984
+		},
+		{
+			"path": "UD-Q3_K_XL/GLM-5.3-Flash-UD-Q3_K_XL-00002-of-00004.gguf",
+			"oid": "310b5bef056c5cc61d98e1845feac97e35d0a5aa412fca354b6cd597d66b486e",
+			"size": 49609243584
+		},
+		{
+			"path": "UD-Q3_K_XL/GLM-5.3-Flash-UD-Q3_K_XL-00003-of-00004.gguf",
+			"oid": "eacaab11505a25f00e78b4dce64795cc38bc25839372ec586745af0261673a0c",
+			"size": 49623486016
+		},
+		{
+			"path": "UD-Q3_K_XL/GLM-5.3-Flash-UD-Q3_K_XL-00004-of-00004.gguf",
+			"oid": "c650640c9f94f5f1662ac84b803405db3265ee9fc24ffe56670bb0eafd632d00",
+			"size": 48293762496
+		},
+		{
+			"path": "UD-Q4_K_XL/GLM-5.3-Flash-UD-Q4_K_XL-00001-of-00006.gguf",
+			"oid": "b59c030090f012b38213bc8c4f78ce10767f2693d730d0dbcd3dc16a5f69e2bc",
+			"size": 9429984
+		},
+		{
+			"path": "UD-Q4_K_XL/GLM-5.3-Flash-UD-Q4_K_XL-00002-of-00006.gguf",
+			"oid": "d3ecb6ff3957a99878f9a0352676a0913748a431a9a4a1b1ffa5ade9b8947a74",
+			"size": 49198039200
+		},
+		{
+			"path": "UD-Q4_K_XL/GLM-5.3-Flash-UD-Q4_K_XL-00003-of-00006.gguf",
+			"oid": "328073c004e7c5395b208247feed26089db247b94dd8fa4ab0f2569d86c1d770",
+			"size": 49988626304
+		},
+		{
+			"path": "UD-Q4_K_XL/GLM-5.3-Flash-UD-Q4_K_XL-00004-of-00006.gguf",
+			"oid": "6803ab7effa6da4a0b02c9c7865952fdd6c5b2e10e53903348da369e90bd13f9",
+			"size": 48700701344
+		},
+		{
+			"path": "UD-Q4_K_XL/GLM-5.3-Flash-UD-Q4_K_XL-00005-of-00006.gguf",
+			"oid": "852f3df9dacde3d196796f9fe738468e80c8701555ff0a8c30bc010fb8974dd8",
+			"size": 49026026752
+		},
+		{
+			"path": "UD-Q4_K_XL/GLM-5.3-Flash-UD-Q4_K_XL-00006-of-00006.gguf",
+			"oid": "c6ba510fafc1e12cc0addbc361a329c0c592ab96980098e7e25e107d8faa983e",
+			"size": 2784497888
+		},
+		{
+			"path": "UD-Q5_K_XL/GLM-5.3-Flash-UD-Q5_K_XL-00001-of-00006.gguf",
+			"oid": "cb792ba9c8dbcd7a45aede04ffc16c80b9f3b290423585e06835e0acf7081e17",
+			"size": 9429984
+		},
+		{
+			"path": "UD-Q5_K_XL/GLM-5.3-Flash-UD-Q5_K_XL-00002-of-00006.gguf",
+			"oid": "fd2a37a8d00ad2ab9b8e8691f8d16f4e9991d1eab2aaca14ec4b97568803aa87",
+			"size": 48806959328
+		},
+		{
+			"path": "UD-Q5_K_XL/GLM-5.3-Flash-UD-Q5_K_XL-00003-of-00006.gguf",
+			"oid": "298edf5776b962f63643654bd85ed3ed91777b9a592dc3950b9002b08e320892",
+			"size": 48557435712
+		},
+		{
+			"path": "UD-Q5_K_XL/GLM-5.3-Flash-UD-Q5_K_XL-00004-of-00006.gguf",
+			"oid": "97b097efd8c135246eb620d22438d17c57ad1fff19a0e5340ca9c9232f5f1de9",
+			"size": 49317045120
+		},
+		{
+			"path": "UD-Q5_K_XL/GLM-5.3-Flash-UD-Q5_K_XL-00005-of-00006.gguf",
+			"oid": "17a5ef81a355d1cc4e771bedc7e2d688dab25892cf05bf26c2ddb5ae8230ffab",
+			"size": 49317045120
+		},
+		{
+			"path": "UD-Q5_K_XL/GLM-5.3-Flash-UD-Q5_K_XL-00006-of-00006.gguf",
+			"oid": "47435d0287b2f5f023715ceff78b036d0ab63698708f0be54e3a8f30b76bc57d",
+			"size": 44298171744
+		},
+		{
+			"path": "UD-Q6_K_XL/GLM-5.3-Flash-UD-Q6_K_XL-00001-of-00007.gguf",
+			"oid": "7d7bd899640a594a32b1c7577c41fc00e56143e3b5731d3b9056bdc988f80f1c",
+			"size": 9429984
+		},
+		{
+			"path": "UD-Q6_K_XL/GLM-5.3-Flash-UD-Q6_K_XL-00002-of-00007.gguf",
+			"oid": "c65caeffd822aab9810bf1049369f56e7b61c38217fa3c12f3dab2d21c0fd855",
+			"size": 49354106688
+		},
+		{
+			"path": "UD-Q6_K_XL/GLM-5.3-Flash-UD-Q6_K_XL-00003-of-00007.gguf",
+			"oid": "491f13fb641ecf27c30107e34a045b8cd00306b43559f3d0273687c47a154559",
+			"size": 48109732704
+		},
+		{
+			"path": "UD-Q6_K_XL/GLM-5.3-Flash-UD-Q6_K_XL-00004-of-00007.gguf",
+			"oid": "1db71efa40ba5f9ea017d12d744a8addf4025d3fd256f09e253967327a156270",
+			"size": 49515348992
+		},
+		{
+			"path": "UD-Q6_K_XL/GLM-5.3-Flash-UD-Q6_K_XL-00005-of-00007.gguf",
+			"oid": "41acb75b5105d49d89a21c3760d14c458f1e0c2b4e4fff08310c7cb2d5c3fff5",
+			"size": 48930700352
+		},
+		{
+			"path": "UD-Q6_K_XL/GLM-5.3-Flash-UD-Q6_K_XL-00006-of-00007.gguf",
+			"oid": "3f669d880bfce522063c677ddddd19f8b066f0d71701d2e123131f239b7fbf6b",
+			"size": 49077752288
+		},
+		{
+			"path": "UD-Q6_K_XL/GLM-5.3-Flash-UD-Q6_K_XL-00007-of-00007.gguf",
+			"oid": "3623f4af825ea01d7cd65706c496ac2c11cb585dfa1a27189320b5790a535b00",
+			"size": 46836040800
+		},
+		{
+			"path": "imatrix_unsloth.gguf_file",
+			"oid": "27d2ef6b6be0e314b373080f96322a1e4668b09b192664f3edc231c3b7c2d749",
+			"size": 512687616
+		},
+		{
+			"path": "mmproj-BF16.gguf",
+			"oid": "82b7adb44411dbb298b1c689567804e5ed0790d80f308ed8b5b6b8ac0527d2ac",
+			"size": 1164010176
+		},
+		{
+			"path": "mmproj-F16.gguf",
+			"oid": "922b809664d6a89cc1e40bfeaa63618000edc6651baf4082ce0718a784adf947",
+			"size": 1128047296
+		}
+	]
+}

@@ -288,8 +288,7 @@ facts:
 }
 ```
 
-`generate.mjs` then reads it the way it reads the other facts: three keys
+`30-generate.mjs` then reads it the way it reads the other facts: three keys
 (`n-cpu-moe`, `moe-cache-mib`, `moe-cache-cpu-share`) become emitted flags for a
 row that has them, the table stays the intent, and a row that deviates says so
-explicitly. A `sweep` leg joins `run-all.sh` on the serving host — never in
-generation, which stays offline and fact-only (d170).
+explicitly. A `sweep` leg joins `run_all.py` on the serving host — never in

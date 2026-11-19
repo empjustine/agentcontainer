@@ -40,7 +40,7 @@ present, not a provider key; it is read ONCE below and forwarded
 unconditionally when set, never inspected further (d170 Decision 6). HF_TOKEN
 is deliberately NOT forwarded: model paths are baked into the generated
 config at generation time (docs/d029 option B), so nothing in-container
-downloads — provisioning is ./download_models.py on the HOST.
+downloads — provisioning is ./40-download-models.py on the HOST.
 """
 
 from __future__ import annotations
@@ -65,7 +65,7 @@ CONFIG_D = SCRIPT_DIR / "config.d"
 # Guest path = the generator's HUB_GUEST constant — changing one means
 # changing both in the same edit. Read-only: nothing in-container writes the
 # cache anymore (no launch-time downloads); provisioning/pruning happen on
-# the host (./run-all.sh).
+# the host (./py-run.sh llm-local-inference/run_all.py).
 HUB_GUEST = "/home/ubuntu/.cache/huggingface/hub"
 CONTAINER_NAME = "llama-swap"
 DEFAULT_IMAGE = "ghcr.io/mostlygeek/llama-swap:unified-vulkan"
@@ -104,17 +104,21 @@ def collect_gpu_devs() -> list[str]:
 
 
 def main() -> None:
+	# d215: no accepted arguments — argv is a mistake, not a comment field.
+	if len(sys.argv) > 1:
+		die(64, "run.py takes no arguments", argv=sys.argv[1:])
+
 	if not CONFIG_D.is_dir():
 		die(
 			94,
-			"config.d not found — generate it first with ./node-run.sh llm-local-inference/generate.mjs",
+			"config.d not found — generate it first with ./node-run.sh llm-local-inference/30-generate.mjs",
 			dir=str(CONFIG_D),
 		)
 	layer = CONFIG_D / "10-local-llm-inference.yaml"
 	if not layer.is_file():
 		die(
 			94,
-			"no local-inference layer in config.d — this host cannot serve local inference (run ./node-run.sh llm-local-inference/generate.mjs on a GPU-capable container host)",
+			"no local-inference layer in config.d — this host cannot serve local inference (run ./node-run.sh llm-local-inference/30-generate.mjs on a GPU-capable container host)",
 			dir=str(CONFIG_D),
 		)
 

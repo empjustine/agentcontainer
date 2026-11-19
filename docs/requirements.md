@@ -23,7 +23,7 @@ every host's cloud traffic is routed through the fleet's relay ("routing by
 host", the accepted method; alternatives such as a TLS-level VPN or a
 non-HTTP-proxy transport are under study, docs/d072). The consequence is
 visible in code: capability detection now serves generation only for local
-inference (`llm-local-inference/generate.mjs`), and `cloudReachable()` is
+inference (`llm-local-inference/30-generate.mjs`), and `cloudReachable()` is
 left answering nothing that generation asks (docs/d072).
 
 ## Stakeholders & context

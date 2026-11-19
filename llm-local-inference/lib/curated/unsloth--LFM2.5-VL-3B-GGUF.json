@@ -1,0 +1,15 @@
+{
+  "repo": "unsloth/LFM2.5-VL-3B-GGUF",
+  "manifestCommit": "22f063714556bd4daa81c40dc1ff15ca37ae92ea",
+  "entries": [
+    "unsloth/LFM2.5-VL-3B-GGUF:Q8_0",
+    "unsloth/LFM2.5-VL-3B-GGUF:UD-Q8_K_XL"
+  ],
+  "files": [
+    "LFM2.5-VL-3B-Q8_0.gguf",
+    "LFM2.5-VL-3B-UD-Q8_K_XL.gguf",
+    "mmproj-BF16.gguf"
+  ],
+  "optional": [],
+  "bytes": 7175486816
+}

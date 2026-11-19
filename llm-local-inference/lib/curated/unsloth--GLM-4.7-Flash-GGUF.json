@@ -1,0 +1,14 @@
+{
+  "repo": "unsloth/GLM-4.7-Flash-GGUF",
+  "manifestCommit": "0d32489ecb9db6d2a4fc93bd27ef01519f95474d",
+  "entries": [
+    "unsloth/GLM-4.7-Flash-GGUF:Q8_0",
+    "unsloth/GLM-4.7-Flash-GGUF:UD-Q8_K_XL"
+  ],
+  "files": [
+    "GLM-4.7-Flash-Q8_0.gguf",
+    "GLM-4.7-Flash-UD-Q8_K_XL.gguf"
+  ],
+  "optional": [],
+  "bytes": 67467723456
+}

@@ -20,9 +20,11 @@
  * whoever reads the stream prunes it — `jq 'select(.severityNumber >= 13)'`
  * for the warn-and-worse view.
  *
- * Stream: stdout. No script in this unit writes a machine-consumed payload to
- * stdout, so the stream selector the shared kernel carried is not part of this
- * copy (docs/d045 owns the policy, docs/d113 the pruning).
+ * Stream: stdout by default, because a unit's log lines are its only output.
+ * setLogStream moves the kernel to stderr for the one tool that writes a
+ * machine payload there — 20-propose-entries.mjs, whose stdout is a model-entry
+ * fragment (docs/d045 owns the policy: payload on stdout, log on stderr, never
+ * interleaved).
  *
  * Error values in fields serialize as structured objects — name, message,
  * stack, own enumerable properties — with the full cause/suppressed chain
@@ -47,6 +49,21 @@ let tool = process.env.LOG_TOOL ?? "node";
  */
 export function setLogTool(name) {
 	tool = name;
+}
+
+/**
+ * @type {NodeJS.WritableStream}
+ */
+let stream = process.stdout;
+/**
+ * Send the log lines somewhere other than stdout. Only a mode whose stdout IS a
+ * payload may call this (see the fileoverview); the default stays stdout so no
+ * existing caller changes.
+ * @param {NodeJS.WritableStream} target
+ * @returns {void}
+ */
+export function setLogStream(target) {
+	stream = target;
 }
 
 /**
@@ -191,12 +208,12 @@ function emit(level, msg, fields = {}) {
 			.map(([k, v]) => `${k}=${fmtLogfmtValue(v)}`)
 			.join(" ");
 		const msgv = /[\s"=\\]/.test(msg) ? JSON.stringify(msg) : msg;
-		process.stdout.write(
+		stream.write(
 			`msg=${msgv}${rest ? ` ${rest}` : ""} ts=${trailer.ts} severityNumber=${trailer.severityNumber} tool=${tool}\n`,
 		);
 		return;
 	}
-	process.stdout.write(
+	stream.write(
 		`${JSON.stringify({
 			msg,
 			.../** @type {Record<string, unknown>} */ (serialize(fields, 0)),

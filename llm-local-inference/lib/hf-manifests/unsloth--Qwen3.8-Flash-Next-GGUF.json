@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/Qwen3.8-Flash-Next-GGUF",
-	"commit": "084c631ac221016019d6e0a863afe92d90edd3b0",
-	"fetched_at": "2026-11-12T03:58:28+00:00",
+	"commit": "f5d175de2cf7f720d45d6064019a81fcf056e986",
+	"fetched_at": "2026-11-19T02:42:00+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
@@ -360,8 +360,8 @@
 		},
 		{
 			"path": "engram/README.md",
-			"oid": "ae26f059f696a50a0243ff66ad5507c19a4c2007",
-			"size": 4126
+			"oid": "b3b834c66c2f91bbd345dc815e4b202f950e3b44",
+			"size": 5097
 		},
 		{
 			"path": "engram/set_split.py",
