@@ -35,7 +35,8 @@ a property the warehouse imposes rather than one every harness source has.
 
 Draft verification; no session reader exists on either leg. d167 and d148 remain
 the source findings, d026 remains a design note, and the `datalakehouse/` unit
-syncs only atuin.
+syncs only atuin. The per-run stage named below as the pull source is retired by
+docs/d216; the warehouse shapes and the collection contract stand.
 
 ## The two legs
 

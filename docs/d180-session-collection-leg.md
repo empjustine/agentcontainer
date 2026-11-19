@@ -32,7 +32,9 @@ captured logs.
 ## Status
 
 Draft; nothing implemented. d026 remains design-only, and its FUSE versioned
-store is the eventual closure this record works around.
+store is the eventual closure this record works around. The live stage this
+record names no longer exists (docs/d216 mounts the host dirs directly); the
+archive, the host-only writer and the read-only reader contract stand.
 
 ## The constraint
 

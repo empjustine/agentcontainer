@@ -16,12 +16,27 @@
 // management (systemd, supervisord, nohup) is the orchestration layer's job, not
 // the process's; a new-style daemon does not fork itself.
 //
+// WHY the daemon folds its own spool (docs/d217): the spool is a tail, not the
+// archive. Left alone it grows until an operator remembers to run the sender,
+// which is a size ceiling set by human attention. The daemon already holds the
+// one credential that leg needs whenever it starts through ./environment.sh, so
+// it runs the SAME sender (agent-warehouse-spool-send.sh) at a byte threshold
+// and the sender stays the only code that writes to MotherDuck. Rotation stays
+// safe on both sides because the sender freezes the tail by renaming it and
+// this process appends by path, never a held fd.
+//
 // Env: AGENT_INGEST_ADDR (default 127.0.0.1:8787), AGENT_INGEST_TOKEN,
-//      AGENT_WAREHOUSE_SPOOL.
+//      AGENT_WAREHOUSE_SPOOL,
+//      motherduck_token / MOTHERDUCK_TOKEN (enables the self-send),
+//      AGENT_WAREHOUSE_SPOOL_MAX_BYTES (default 32 MiB; 0 disables the
+//      self-send), AGENT_WAREHOUSE_SPOOL_SEND_RETRY (default 60000 ms),
+//      AGENT_WAREHOUSE_SENDER (default the sender script beside this file).
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 const args = process.argv.slice(2);
 if (args.includes("-h") || args.includes("--help")) {
@@ -29,7 +44,9 @@ if (args.includes("-h") || args.includes("--help")) {
     "usage: agent-warehouse-daemon.sh\n" +
       "  POST /ingest/session   append one JSON row, or a JSON array of rows\n" +
       "env: AGENT_INGEST_ADDR (default 127.0.0.1:8787), AGENT_INGEST_TOKEN,\n" +
-      "     AGENT_WAREHOUSE_SPOOL\n",
+      "     AGENT_WAREHOUSE_SPOOL, motherduck_token/MOTHERDUCK_TOKEN (enables the\n" +
+      "     self-send), AGENT_WAREHOUSE_SPOOL_MAX_BYTES (default 32 MiB; 0 off),\n" +
+      "     AGENT_WAREHOUSE_SPOOL_SEND_RETRY (ms), AGENT_WAREHOUSE_SENDER\n",
   );
   process.exit(0);
 }
@@ -45,6 +62,21 @@ const spool =
 // A single row can carry a whole message content array, so the limit is env-tunable
 // and the sync batches under its own budget (AGENT_WAREHOUSE_BATCH_BYTES).
 const MAX_BODY = Number(process.env.AGENT_INGEST_MAX_BODY || 8 * 1024 * 1024);
+
+// The self-send (docs/d217). The threshold is the spool tail the daemon
+// tolerates before folding it; the sender's own batch budget is
+// AGENT_WAREHOUSE_BATCH_ROWS, so this is a size ceiling, not a batching choice.
+// 0 disables it explicitly, and a missing token disables it implicitly — the
+// two are reported differently at startup.
+const warehouseToken =
+  process.env.motherduck_token || process.env.MOTHERDUCK_TOKEN || "";
+const spoolMaxBytes = Number(
+  process.env.AGENT_WAREHOUSE_SPOOL_MAX_BYTES || 32 * 1024 * 1024,
+);
+const sendRetryMs = Number(process.env.AGENT_WAREHOUSE_SPOOL_SEND_RETRY || 60_000);
+const senderScript =
+  process.env.AGENT_WAREHOUSE_SENDER ||
+  fileURLToPath(new URL("./agent-warehouse-spool-send.sh", import.meta.url));
 
 // A re-posted row must not duplicate a line, and the sync re-posts every run.
 // The dedupe is a conditional insert: a SQLite PRIMARY KEY with INSERT OR IGNORE
@@ -96,6 +128,75 @@ try {
 }
 
 fs.mkdirSync(path.dirname(spool), { recursive: true });
+
+// The self-send lives here, not in the request handler, because both the append
+// path and startup call it. The counter avoids a stat per POST; a tail left by
+// an earlier run is the seed.
+let pendingBytes = 0;
+try {
+  pendingBytes = fs.statSync(spool).size;
+} catch {
+  // no spool yet — the first append creates it
+}
+let sending = false;
+let retryAt = 0;
+
+function sendSpool() {
+  if (!warehouseToken || spoolMaxBytes <= 0 || sending) { return; }
+  if (Date.now() < retryAt || pendingBytes < spoolMaxBytes) { return; }
+  // One sender at a time. The lock also covers the daemon's own double trigger
+  // (a POST landing while the previous child is closing). A stale lock from a
+  // killed daemon is removed by hand: guessing at liveness is worse than a
+  // loud, resumable stop.
+  const lockPath = spool + ".lock";
+  let lockFd;
+  try {
+    lockFd = fs.openSync(lockPath, "wx");
+  } catch {
+    return;
+  }
+  sending = true;
+  const bytesAtStart = pendingBytes;
+  process.stdout.write(
+    "agent-warehouse-daemon: spool is " + pendingBytes +
+      " bytes, folding it into the warehouse\n",
+  );
+  const child = spawn("bash", [senderScript, "--spool", spool], {
+    stdio: ["ignore", "inherit", "inherit"],
+  });
+  let finished = false;
+  /** @param {number} code */
+  const done = (code) => {
+    if (finished) { return; }
+    finished = true;
+    sending = false;
+    fs.closeSync(lockFd);
+    fs.rmSync(lockPath, { force: true });
+    // The sender froze the tail by renaming it, so rows that landed after the
+    // rename are in a NEW spool and were not folded — they stay pending.
+    pendingBytes -= bytesAtStart;
+    if (code === 0) {
+      process.stdout.write("agent-warehouse-daemon: spool folded\n");
+      sendSpool();
+    } else {
+      // The sender keeps the spool on failure; back off so a host without
+      // duckdb does not spawn a child per POST.
+      retryAt = Date.now() + sendRetryMs;
+      process.stderr.write(
+        "agent-warehouse-daemon: spool send failed (" + code +
+          "); spool kept, retry in " + sendRetryMs + " ms\n",
+      );
+    }
+  };
+  child.on("error", (error) => {
+    process.stderr.write(
+      "agent-warehouse-daemon: cannot run " + senderScript +
+        " (" + error.message + ")\n",
+    );
+    done(1);
+  });
+  child.on("close", (code) => done(code ?? 1));
+}
 
 function send(res, code, obj) {
   res.writeHead(code, { "content-type": "application/json" });
@@ -158,6 +259,8 @@ const server = http.createServer((req, res) => {
       // rotation with no signal. A persistent fs.createWriteStream would keep writing
       // the renamed inode and silently break the sender's delete-after-consume.
       fs.appendFileSync(spool, lines);
+      pendingBytes += Buffer.byteLength(lines);
+      sendSpool();
     }
     send(res, 200, { accepted: fresh.length, duplicates });
   });
@@ -167,6 +270,19 @@ server.listen(port, host, () => {
   process.stdout.write(
     `agent-warehouse-daemon listening on http://${host}:${port} spool=${spool}\n`,
   );
+  if (!warehouseToken) {
+    process.stdout.write(
+      "agent-warehouse-daemon: no motherduck_token — spool self-send is off; run agent-warehouse-spool-send.sh\n",
+    );
+  } else if (spoolMaxBytes <= 0) {
+    process.stdout.write(
+      "agent-warehouse-daemon: AGENT_WAREHOUSE_SPOOL_MAX_BYTES=0 — spool self-send is off\n",
+    );
+  } else {
+    // A tail left by an earlier run is folded at startup, not after the next
+    // threshold's worth of appends.
+    sendSpool();
+  }
 });
 
 for (const sig of ["SIGTERM", "SIGINT"]) {

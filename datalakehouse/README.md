@@ -77,7 +77,7 @@ relies on those must pass the path explicitly.
 ```sh
 ./environment.sh ./datalakehouse/agent-warehouse-sync.sh \
   [--session-dir DIR] [--agent-dir DIR] [--spool FILE] [--dry] [--print-rows] [--report-orphans]
-./environment.sh ./datalakehouse/agent-warehouse-daemon.sh   # the write-only ingest route
+./environment.sh ./datalakehouse/agent-warehouse-daemon.sh   # the write-only ingest route; folds its own spool when it holds the token
 ./environment.sh ./datalakehouse/agent-warehouse-spool-send.sh   # fold the spool into the warehouse, streamed
 ```
 
@@ -109,6 +109,13 @@ the entry id; the file path is stored as a location attribute, never as the key,
 because the same session has a different path inside a sandbox and on the host.
 A pi header is recognized by its `type`, not its line position, so a file that
 concatenates two sessions splits back into two by their own ids.
+
+When the process holds `motherduck_token` (the usual `./environment.sh` start),
+the daemon also folds its own spool: it runs `agent-warehouse-spool-send.sh` at
+`AGENT_WAREHOUSE_SPOOL_MAX_BYTES` (default 32 MiB; `0` disables it), once at
+startup and after an append that crosses the threshold, one sender at a time
+(`<spool>.lock`), and backs off `AGENT_WAREHOUSE_SPOOL_SEND_RETRY` ms (default 60000) after a failed fold. Without the token it only spools and says so at
+startup; nothing else changes (docs/d217).
 
 **The route is the sync's default
 transport** — `http://127.0.0.1:8787` or `AGENT_WAREHOUSE_ROUTE` — needing no

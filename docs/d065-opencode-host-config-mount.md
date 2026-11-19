@@ -21,6 +21,12 @@ DATA dir (`~/.local/share/opencode`: `auth.json`, `log/`,
 logs/sessions persistence, that is, audit state (docs/d026), and opencode has no
 session-dir knob to split it out.
 
+**Superseded in part by docs/d216.** The data dir is now the host's own
+(`$XDG_DATA_HOME/opencode`, default `~/.local/share/opencode`), mounted at the
+container default, so this record's "no credential gate is needed" invariant is
+replaced: a populated `auth.json` there aborts the launch (exit 93). The
+config-dir mount stands.
+
 ## Problem
 
 The opencode config was staged per run: `run.sh` copied the committed

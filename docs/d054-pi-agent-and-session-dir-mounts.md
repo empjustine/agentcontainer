@@ -19,6 +19,11 @@ copy of the pi agent dir. It mounts the host's real agent directory RW as
 a **non-empty** `auth.json` is found in the agent dir (pi itself writes an
 empty `{}` on startup, so existence alone is not a signal).
 
+**Superseded in part by docs/d216.** The per-run session stage (decision 2) is
+retired: pi's sessions are `<agentDir>/sessions`, inside the host agent-dir
+mount, and `PI_CODING_AGENT_SESSION_DIR` is no longer exported. The agent-dir
+mount and the `auth.json` gate stand; the config/session split does not.
+
 ## Problem
 
 pi state was staged per run into `~/workspace/$container_name/pi/agent`: a

@@ -90,18 +90,17 @@ FR-U3).
 loads vault secrets **once on the host** via
 ./environment.sh and forwards them through the `workload_env` allowlist — nothing
 inside the workload runs infisical, and no credential store file is staged
-(the earlier staged-store design is tombstoned in `docs/d052`). It mounts the
-host agent dir RW as `PI_CODING_AGENT_DIR` and stages a per-run session dir RW
-as `PI_CODING_AGENT_SESSION_DIR` (docs/d054): the agent dir is the generator's
-install target, so config/skills persist, and sessions are per-run audit state
-kept out of that shared config store. The host opencode config dir is mounted
-the same way (docs/d065) — the generator's second install target, with a
-missing overlay tolerated as partial config — while opencode's data dir
-(long-term logs/sessions) stays on the per-run stage. A populated `auth.json` in the host agent
-dir aborts the run (keys resolve from forwarded env — pi's own empty `{}` is
-ignored; d052/d054). It NEVER generates (docs/d041, docs/d056): the generator
-tree is NOT mounted into the container, so an in-container session works
-against the host-generated config mounted above. `run.mjs` takes
+(the earlier staged-store design is tombstoned in `docs/d052`). Every harness
+state dir it mounts is the HOST's own, mounted RW at the CONTAINER's default
+path for that harness (docs/d216): pi's agent dir (`PI_CODING_AGENT_DIR`, which
+carries its `sessions/`), opencode's config and data dirs (docs/d065), Cline's
+`~/.cline`, ThinkRail's `~/.thinkrail`. There is no per-run stage and no
+env pin: the generator's install target, the host harness and the sandboxed
+harness are one directory. A populated `auth.json` in the pi agent dir or the
+opencode data dir aborts the run (keys resolve from forwarded env — an empty
+`{}` is ignored; d052/d054/d216). It NEVER generates (docs/d041, docs/d056):
+the generator tree is NOT mounted into the container, so an in-container
+session works against the host-generated config mounted above. `run.mjs` takes
 `[DIRECTORY [DIRECTORY...]]` instead — CWD is the implicit first directory,
 assembled by `run.mjs`'s pure `buildLaunch(argv, env)` so the mount manifest is
 a value the tests assert instead of a second run of the whole launcher —
@@ -110,7 +109,7 @@ the container side (docs/d068) — with the first as the workdir; the
 `~/Downloads/references` mirror is passed as just another directory, replacing
 the former `CODING_AGENT_REFERENCES` toggle (docs/d043, docs/d056). The launcher is
 container-ONLY (docs/d059): without podman/docker it refuses at the top —
-before staging anything — and names the sandbox-free path
+before creating anything — and names the sandbox-free path
 (`./environment.sh pi`, which spawns a bare PATH command as well as a
 script). A missing
 installed artifact is a loud failure pointing at the generator, never an

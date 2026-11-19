@@ -204,6 +204,8 @@ agentcontainer/
 │   ├── FINDINGS.md                      #   → the pi 1.5.0 + ThinkRail contracts it rests on, cited by symbol · the cache arithmetic · the superseded claims
 │   ├── AGENTS.md / TODO.md              #   → folder rules (this extension never touches the context) · the open worklist, unbuilt
 │
+├── pi-session-logs-dw/                  # the LLM session upload as a pi extension (d182): ASSESSMENT ONLY — no code yet; README.md is the folder's spec node and the requirements list
+│
 ├── git/                                 # Reference-farm tooling (mirrors + search); the only shell is the flock pair (d121/d138)
 │   ├── README.md                        #   → the module doc: the farm's three jobs, boundary, entry points
 │   ├── -forge-mirror.sh                 #   → add a BARE mirror from any forge: https public forges + the software-forge tenant (idempotent; farm-wide flock, d099)
@@ -222,7 +224,7 @@ agentcontainer/
 ├── datalakehouse/                       # local history/session stores → MotherDuck, duckdb CLI only (d046's chain supplies the token)
 │   ├── atuin-warehouse-sync.sh          #   → argv-free source resolution (CWD, config, atuin's own dirs), drift-tolerant upsert into md:atuin, --prune opt-in
 │   ├── README.md                        #   → module doc: usage, the data-dir file assessment, verified findings, gotchas
-│   └── tests/                           #   → source-resolution tests (pure path logic, no token or network)
+│   └── tests/                           #   → source-resolution, spool-send, daemon self-send and route/sync tests (no token or network)
 │
 ├── codemode2/                          # A closed core-tool surface: POSIX/Windows tools reimplemented over a runtime-owned filesystem, enumerated from the living-off-the-land corpora (d194/d198)
 │   ├── README.md                       #   → the module doc: the surface, the enumeration, what the corpora bought

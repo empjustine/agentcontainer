@@ -13,7 +13,9 @@
  * non-home DIRECTORY passes through untouched. It also rides along the pieces
  * the spelling is entangled with: CWD as the implicit first DIRECTORY, dedupe
  * of a symlinked and a physical spelling of the same directory, the `$HOME`
- * refusal (exit 90), and the workdir being that first DIRECTORY.
+ * refusal (exit 90), and the workdir being that first DIRECTORY. The
+ * harness-state mounts ride along (docs/d216): each host dir lands on the
+ * CONTAINER's default path, with no per-run stage and no launch script.
  *
  * WHY IT EXISTS: every other gate is blind to this class of bug. check-workload
  * renders host==guest pairs BY CONSTRUCTION, so it cannot express a pair that
@@ -127,6 +129,10 @@ function launcherEnv() {
 		"PI_CODING_AGENT_SESSION_DIR",
 		"OPENCODE_CONFIG_DIR",
 		"XDG_CONFIG_HOME",
+		"XDG_DATA_HOME",
+		"CLINE_DIR",
+		"CLINE_DATA_DIR",
+		"THINKRAIL_DATA_DIR",
 		"SUDO_UID",
 		"SUDO_GID",
 	]) {
@@ -217,6 +223,25 @@ suite("the DIRECTORY argv is the d068 mount manifest", () => {
 		writeFileSync(join(home, ".pi/agent/auth.json"), "{ }\n");
 		assert.equal(launch([]).status, 0);
 		rmSync(join(home, ".pi/agent/auth.json"));
+	});
+
+	// The host opencode data dir is mounted directly now (docs/d216), so its
+	// auth.json is a credential store on a RW mount — the condition d052's gate
+	// exists for. opencode writes the file only on login, so presence with
+	// content is the whole signal.
+	test("opencode's populated auth.json refuses the launch (exit 93)", () => {
+		const dataDir = join(home, ".local/share/opencode");
+		mkdirSync(dataDir, { recursive: true });
+		writeFileSync(join(dataDir, "auth.json"), '{"opencode":{"key":"x"}}\n');
+		assert.equal(launch([]).status, 93);
+		rmSync(join(dataDir, "auth.json"));
+	});
+
+	test("an empty opencode auth.json is not a credential", () => {
+		const authFile = join(home, ".local/share/opencode/auth.json");
+		writeFileSync(authFile, "{}\n");
+		assert.equal(launch([]).status, 0);
+		rmSync(authFile);
 	});
 
 	test("a missing generated artifact refuses the launch (exit 94)", () => {

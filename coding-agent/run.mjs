@@ -39,15 +39,15 @@
  *   - rw-mount the HOST agent dir (PI_CODING_AGENT_DIR) directly — no per-run
  *     config copy, so the generator's install target, the host pi, and the
  *     sandboxed pi are one directory
- *   - stage the pi session store (PI_CODING_AGENT_SESSION_DIR) under the
- *     per-run host stage's pi/ — sessions are per-run audit state (docs/d026),
- *     kept out of the shared config dir and off the host's own ~/.pi
- *   - stage a per-run sandbox dir for the harness state that stays audit
- *     trail, not config (opencode's data dir: logs + sessions; cline;
- *     thinkrail)
- *   - NO repo file rides along (docs/d067): the launch chain is self-contained
- *     (env pins + exec bash) and logs nothing, so the generator-tree mount
- *     (docs/d056) and the last lib/log.sh logger mount are both gone
+ *   - rw-mount every other harness state dir where the HOST keeps it, at the
+ *     CONTAINER's own default path for it (docs/d216): pi's sessions are the
+ *     agent dir's sessions/ child, opencode's config and data dirs, Cline's
+ *     ~/.cline and ThinkRail's ~/.thinkrail. No ~/workspace stage, no env
+ *     pin: each harness finds its state where it looks by default, and the
+ *     host harness reads the same directory
+ *   - NO repo file rides along (docs/d067): with no env pins there is nothing
+ *     to export, so the command is the image's own default shell — no
+ *     generated launch script and no logger mount
  *   - the host HF cache is NOT mounted (docs/d066): the old binding was
  *     unconditional and unguarded, and its relabel cost scaled with the model
  *     store. A run that wants it names it as a DIRECTORY
@@ -56,7 +56,7 @@
  *     bash with no infisical at all
  *
  * There is deliberately no second (host-native) branch: without podman/docker
- * this launcher refuses BEFORE staging anything and names the sandbox-free path
+ * this launcher refuses BEFORE creating anything and names the sandbox-free path
  * above.
  *
  * WHY the argv is a PURE function of (ARGV, env): the sh predecessor built the
@@ -67,24 +67,24 @@
  * renders THAT — the mount manifest, the two-sided DIRECTORY spelling and the
  * workdir are then ordinary assertions (docs/d068, docs/d069).
  *
- * Env overrides:
- *   PI_CODING_AGENT_DIR  pi's agent/config dir (default $HOME/.pi/agent) —
- *                    also the var pi itself reads, so the generator's install
- *                    target and pi's config source are the same path by
- *                    construction. This HOST DIR is mounted rw, so
- *                    config/skills persist across runs (docs/d054)
- *   PI_CODING_AGENT_SESSION_DIR  pinned to the per-run stage — NOT read from
- *                    the host env, so a host pi that has it set can never make
- *                    the sandbox share (merge into) the host's own session
- *                    store. The name is still pi's own var, exported inside the
- *                    container (docs/d054; diode target docs/d026)
- *   OPENCODE_CONFIG_DIR  opencode's config dir (default
- *                    ${XDG_CONFIG_HOME:-$HOME/.config}/opencode) — upstream's
- *                    own knob, the generator's install target, and the var
- *                    opencode reads inside the container. This HOST DIR is
- *                    mounted rw, so the generated overlay persists across runs
- *                    (docs/d065); a missing opencode.json there is a tolerated
- *                    partial config, not an abort
+ * Env overrides — each names the HOST dir; the sandbox always sees the
+ * CONTAINER's own default path, so a host override never leaks into the guest
+ * contract (docs/d216):
+ *   PI_CODING_AGENT_DIR  pi's agent/config dir (default ~/.pi/agent) — also
+ *                    the var pi itself reads, so the generator's install target
+ *                    and pi's config source are the same path by construction.
+ *                    Mounted rw (docs/d054); its sessions/ child is pi's
+ *                    session store, so cross-run /resume now works and
+ *                    PI_CODING_AGENT_SESSION_DIR is deliberately not read: the
+ *                    sandbox mounts one agent dir, not a second store
+ *   OPENCODE_CONFIG_DIR  opencode's config dir (default the XDG config root's
+ *                    opencode/ — upstream's own knob and the generator's
+ *                    install target), mounted rw (docs/d065). A missing
+ *                    opencode.json there is a tolerated partial config
+ *   XDG_CONFIG_HOME, XDG_DATA_HOME  the host's XDG roots: only the HOST side of
+ *                    a mount follows them
+ *   CLINE_DIR  Cline's dir (default ~/.cline), mounted rw
+ *   THINKRAIL_DATA_DIR  ThinkRail's data dir (default ~/.thinkrail), mounted rw
  *
  * Exit codes (unchanged from the sh launcher — wrappers and docs quote them):
  *   90 a DIRECTORY is unusable or is $HOME · 91 no backend / required mount
@@ -93,7 +93,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { userInfo } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -111,7 +111,6 @@ import {
 	workload_interactive,
 	workload_name,
 	workload_network,
-	workload_ro,
 	workload_run,
 	workload_rw,
 	workload_user,
@@ -123,7 +122,6 @@ import {
 
 const unitDir = dirname(fileURLToPath(import.meta.url));
 const image = "localhost/empjustine/coding-agent:latest";
-const launchGuestPath = "/opt/agentcontainer-launch.sh";
 
 /** Exit codes are part of the launcher's contract (see the file overview). */
 const EXIT_DIRECTORY = 90;
@@ -216,18 +214,14 @@ class LaunchRefusal extends Error {
  * touched. `main` is the only thing that turns this into effects.
  * @typedef {object} Launch
  * @property {string} containerName
- * @property {string} stage per-run host stage dir
  * @property {string} user image user; also the container home's last segment
  * @property {Directory[]} directories resolved DIRECTORY list, CWD first
  * @property {string} workdir container spelling of the first DIRECTORY
  * @property {string} agentDir host pi agent dir (mounted rw)
- * @property {string} sessionDir per-run pi session stage
  * @property {string} opencodeConfigDir host opencode config dir (mounted rw)
- * @property {string} opencodeDataDir per-run opencode data stage
- * @property {string} clineDir per-run cline stage
- * @property {string} thinkrailDir per-run thinkrail stage
- * @property {string} launchScript in-container launch chain (generated)
- * @property {string} launchScriptHostPath
+ * @property {string} opencodeDataDir host opencode data dir (mounted rw)
+ * @property {string} clineDir host Cline dir (mounted rw)
+ * @property {string} thinkrailDir host ThinkRail data dir (mounted rw)
  * @property {WorkloadDescription} workload the description the runner renders
  */
 
@@ -241,7 +235,7 @@ function pad(value, width = 2) {
 }
 
 /**
- * `agentcontainer-<YYYYMMDDhhmmssmmm>` — the per-run stage name. Collision
+ * `agentcontainer-<YYYYMMDDhhmmssmmm>` — the per-run container name. Collision
  * within one millisecond is not a concern (a second launch that fast would
  * fight over the same mounts anyway).
  * @param {Date} [now]
@@ -330,46 +324,6 @@ function resolveDirectories({
 }
 
 /**
- * The in-container launch chain: generated shell with no infisical — the host
- * (./environment.sh, outside the sandbox) forwarded the vault env through the
- * allowlist instead. NO generation here (docs/d041, docs/d056) and no logger
- * either (docs/d067): this chain is self-contained and nothing from the repo
- * tree is bound for it.
- * @param {string} user
- * @returns {string}
- */
-function launchScript(user) {
-	return `#!/bin/sh
-# Generated by coding-agent/run.mjs — in-container launch chain.
-# The environment is ALREADY correct here: the host-side loader
-# (./environment.sh) ran before the sandbox was built, and the launcher
-# forwarded the vault keys through the workload_env allowlist. No loader runs
-# in here.
-PI_CODING_AGENT_DIR="/home/${user}/.pi/agent"
-# The session store lives OUTSIDE the shared agent dir (docs/d054): it is the
-# one session-shaped RW store the sandbox gets, named by pi's own env var
-# (precedence: --session-dir > PI_CODING_AGENT_SESSION_DIR > settings.json).
-PI_CODING_AGENT_SESSION_DIR="/home/${user}/.pi/sessions"
-# Upstream's documented custom config directory (config.mdx): loaded after the
-# global config so the provider overlay overrides it. It names the HOST config
-# dir the launcher mounted (docs/d065) — the same path as opencode's own global
-# default, so both tiers read the same files — idempotent.
-OPENCODE_CONFIG_DIR="/home/${user}/.config/opencode"
-CLINE_DIR="/home/${user}/.cline"
-CLINE_DATA_DIR="/home/${user}/.cline/data"
-THINKRAIL_DATA_DIR="/home/${user}/.thinkrail"
-export PI_CODING_AGENT_DIR PI_CODING_AGENT_SESSION_DIR OPENCODE_CONFIG_DIR CLINE_DIR CLINE_DATA_DIR THINKRAIL_DATA_DIR
-
-# NO generation here (docs/d041, docs/d056): the host agent dir is mounted
-# as-is and regeneration happens on the host through the npm runner
-# (./npm-run.sh coding-agent generate). No logger
-# either (docs/d067) — this chain is self-contained, and nothing from the
-# repo tree is bound for it.
-exec bash
-`;
-}
-
-/**
  * Assemble the whole launch. Pure: no spawn, no filesystem writes, no mkdir —
  * every host fact comes through the injected Host port, so the tests can render
  * the same description against a fixture host.
@@ -394,44 +348,30 @@ export function buildLaunch(argv, env, host = hostFs, cwd = process.cwd()) {
 	const workdir = directories[0]?.guest ?? containerHome;
 
 	const name = containerName();
-	const stage = join(home, "workspace", name);
-	// pi's own env vars name its two mounts. The agent dir is the HOST's real
-	// dir (mounted permanent RW): the generator installs the committed config
-	// into PI_CODING_AGENT_DIR, and the host pi and the sandboxed pi read that
-	// same directory — a per-run copy only adds a drift seam and leaves config
-	// garbage under ~/workspace. The session store stays under the per-run stage
-	// (pi/), named by PI_CODING_AGENT_SESSION_DIR: pi's NEWER session handling
-	// may write sessions straight into that dir rather than the old nested
-	// agent/sessions path, so the mount exists to capture them regardless —
-	// per-run audit state (docs/d026), not something to merge into the host
-	// config dir (docs/d054).
+	// Every harness state dir below is the HOST's real dir, mounted at the
+	// CONTAINER's own default path for it (docs/d216). This is the move
+	// docs/d054 made for pi's agent dir and docs/d065 for opencode's config dir,
+	// applied to the harness dirs that were still staged per run: no
+	// ~/workspace stage, and no env pin, because the harness already looks where
+	// the mount lands and the host harness reads the same directory.
 	const agentDir = env.PI_CODING_AGENT_DIR ?? join(home, ".pi", "agent");
-	// Fixed, never taken from PI_CODING_AGENT_SESSION_DIR: unlike the agent dir
-	// (whose host env the generator also reads, so target and source agree by
-	// construction), a host-set session dir would silently point the mount at
-	// the host's own session store and merge the two. The var is set only inside
-	// the container, where pi reads it (docs/d054).
-	const sessionDir = join(stage, "pi", "sessions");
-	// pi's agent-dir split, extended to opencode's CONFIG (docs/d065): the
-	// host's real config dir (the env override a host opencode also reads, else
-	// the XDG default) is mounted permanent RW — the generator's install target,
-	// the host opencode and the sandboxed opencode are one directory. opencode
-	// has no session-dir knob, so its DATA dir (auth.json + log/ + project/
-	// session storage — the long-term logs/sessions persistence) stays on the
-	// per-run stage: audit state (docs/d026), kept off the host's own
-	// ~/.local/share/opencode.
+	// pi's sessions are <agentDir>/sessions by default — inside the mount above.
+	// PI_CODING_AGENT_SESSION_DIR is therefore NOT read: a second store would be
+	// a second mount for state the agent dir already carries (docs/d216).
 	const opencodeConfigDir =
 		env.OPENCODE_CONFIG_DIR ??
 		join(env.XDG_CONFIG_HOME ?? join(home, ".config"), "opencode");
-	const opencodeDataDir = join(stage, "opencode", "data");
-	const clineDir = join(stage, "cline");
-	const thinkrailDir = join(stage, "thinkrail");
-	const launchScriptHostPath = join(stage, "launch.sh");
+	// opencode has no data-dir knob (docs/d065), so the mount at its XDG default
+	// IS the pin. The HOST side follows the host's XDG_DATA_HOME; the GUEST side
+	// stays the container default, which is the path opencode reads.
+	const opencodeDataDir = join(
+		env.XDG_DATA_HOME ?? join(home, ".local", "share"),
+		"opencode",
+	);
+	const clineDir = env.CLINE_DIR ?? join(home, ".cline");
+	const thinkrailDir = env.THINKRAIL_DATA_DIR ?? join(home, ".thinkrail");
 
 	let workload = baseWorkload(name);
-	// The launch chain rides read-only at a fixed guest path, FIRST in the mount
-	// manifest (the sh launcher mounted it before the DIRECTORY loop).
-	workload = workload_ro(workload, launchScriptHostPath, launchGuestPath);
 	for (const directory of directories) {
 		// Each DIRECTORY is exposed rw at its guest target. Beware the cost the
 		// retired references toggle used to hide: every mount carries podman's
@@ -439,32 +379,15 @@ export function buildLaunch(argv, env, host = hostFs, cwd = process.cwd()) {
 		// the source on each launch — ~39 s for a 1.66M-file mirror.
 		workload = workload_rw(workload, directory.host, directory.guest);
 	}
-	workload = workload_rw(
-		workload,
-		agentDir,
-		join(containerHome, ".pi", "agent"),
-	);
-	workload = workload_rw(
-		workload,
-		sessionDir,
-		join(containerHome, ".pi", "sessions"),
-	);
-	workload = workload_rw(
-		workload,
-		opencodeConfigDir,
-		join(containerHome, ".config", "opencode"),
-	);
-	workload = workload_rw(
-		workload,
-		opencodeDataDir,
-		join(containerHome, ".local", "share", "opencode"),
-	);
-	workload = workload_rw(workload, clineDir, join(containerHome, ".cline"));
-	workload = workload_rw(
-		workload,
-		thinkrailDir,
-		join(containerHome, ".thinkrail"),
-	);
+	for (const [hostDir, guestDir] of /** @type {[string, string][]} */ ([
+		[agentDir, join(containerHome, ".pi", "agent")],
+		[opencodeConfigDir, join(containerHome, ".config", "opencode")],
+		[opencodeDataDir, join(containerHome, ".local", "share", "opencode")],
+		[clineDir, join(containerHome, ".cline")],
+		[thinkrailDir, join(containerHome, ".thinkrail")],
+	])) {
+		workload = workload_rw(workload, hostDir, guestDir);
+	}
 	workload = workload_workdir(workload, workdir);
 	// Secrets! The host-side loader (./environment.sh — the launcher is exec'd
 	// through it) put the vault keys in THIS process's environment; the
@@ -473,26 +396,25 @@ export function buildLaunch(argv, env, host = hostFs, cwd = process.cwd()) {
 	// deliberately NOT mounted (docs/d066): the old binding was unconditional and
 	// existence-unguarded while its z,U walk relabels the entire model store on
 	// every launch — the exact cost the ARGV manifest exists to make opt-in. The
-	// image ships its own empty, ephemeral ~/.cache/huggingface/hub, so `hf`
-	// still works in-container, and a launch that wants the warm host cache names
-	// it as a DIRECTORY (it lands at the path hf reads by default, docs/d068).
+	// image ships its own empty, ephemeral ~/.cache/huggingface/hub, so hf still
+	// works in-container, and a launch that wants the warm host cache names it
+	// as a DIRECTORY (it lands at the path hf reads by default, docs/d068).
 	workload = workload_env_allowlist(workload, vaultEnv, env);
-	workload = workload_cmd(workload, "/bin/sh", launchGuestPath);
+	// No launch script (docs/d067): with every mount on the harness's own
+	// default path there is nothing to export, and the image already defaults to
+	// bash. --init supplies the reaping init a bare shell loses.
+	workload = workload_cmd(workload, "/usr/bin/bash");
 
 	return {
 		containerName: name,
-		stage,
 		user,
 		directories,
 		workdir,
 		agentDir,
-		sessionDir,
 		opencodeConfigDir,
 		opencodeDataDir,
 		clineDir,
 		thinkrailDir,
-		launchScript: launchScript(user),
-		launchScriptHostPath,
 		workload,
 	};
 }
@@ -519,14 +441,14 @@ function baseWorkload(name) {
 }
 
 /**
- * The host dirs the launch stages — created once, before any gate reads them.
+ * The host state dirs a launch mounts — created once, before any gate reads
+ * them, so a first run on a fresh host does not refuse for a missing dir.
  * @param {Launch} launch
  * @returns {string[]}
  */
-function stagedDirs(launch) {
+function hostStateDirs(launch) {
 	return [
 		launch.agentDir,
-		launch.sessionDir,
 		launch.opencodeConfigDir,
 		launch.opencodeDataDir,
 		launch.clineDir,
@@ -535,41 +457,65 @@ function stagedDirs(launch) {
 }
 
 /**
- * auth.json must not carry CREDENTIALS. pi resolves the "$VAR" api-key
- * references in models.json from the forwarded environment, so a populated
- * credential store is dead state — but the agent dir is mounted RW, and
- * shipping it into the sandbox is exactly what docs/d052 removed. pi ITSELF
- * materialises an EMPTY store ("{}") on startup, so existence alone proves
- * nothing — only non-empty content is a credential, and only that aborts.
- * @param {string} agentDir
+ * A credential store must not ride a host mount (docs/d052): pi and opencode
+ * both resolve keys from the forwarded environment, so a populated auth.json is
+ * dead state — and both dirs are now mounted RW, which would ship it straight
+ * into the sandbox (docs/d216). WHY content, not existence: pi materialises an
+ * EMPTY store ("{}") on every start, so only non-empty content is a credential;
+ * opencode writes auth.json only on login, so the same empty-content test says
+ * the same thing.
+ * @param {Launch} launch
  * @returns {LaunchRefusal | null}
  */
-function authGate(agentDir) {
-	const authFile = join(agentDir, "auth.json");
-	let content;
-	try {
-		content = readFileSync(authFile, "utf8");
-	} catch (error) {
-		if (/** @type {NodeJS.ErrnoException} */ (error).code === "ENOENT") {
-			return null;
+function credentialGate(launch) {
+	for (const [label, key] of /** @type {[string, "agentDir" | "opencodeDataDir"][]} */ ([
+		["agent dir", "agentDir"],
+		["opencode data dir", "opencodeDataDir"],
+	])) {
+		const authFile = join(launch[key], "auth.json");
+		let content;
+		try {
+			content = readFileSync(authFile, "utf8");
+		} catch (error) {
+			if (/** @type {NodeJS.ErrnoException} */ (error).code === "ENOENT") {
+				continue;
+			}
+			return new LaunchRefusal(
+				EXIT_AUTH,
+				"cannot read auth.json in the " + label,
+				{ authFile },
+			);
+		}
+		const squashed = content.replace(/\s/g, "");
+		if (squashed === "" || squashed === "{}" || squashed === "[]") {
+			continue;
 		}
 		return new LaunchRefusal(
 			EXIT_AUTH,
-			"cannot read auth.json in the agent dir",
-			{
-				authFile,
-			},
+			"auth.json holds credentials in the " +
+				label +
+				" — keys resolve from the forwarded env; remove it before mounting the dir",
+			{ authFile },
 		);
 	}
-	const squashed = content.replace(/\s/g, "");
-	if (squashed === "" || squashed === "{}" || squashed === "[]") {
-		return null;
-	}
-	return new LaunchRefusal(
-		EXIT_AUTH,
-		"auth.json holds credentials in the agent dir — it is retired; keys resolve from the forwarded env. Remove it.",
-		{ agentDir, authFile },
-	);
+	return null;
+}
+
+/**
+ * Files the sandbox can now read because the harness dir is mounted directly
+ * (docs/d216), carrying credentials that have no empty form to gate on: Cline's
+ * providers.json and ThinkRail's installation/environment documents. A warning,
+ * not an abort — they are the operator's files, and the mount decision is the
+ * one being reported.
+ * @param {Launch} launch
+ * @returns {string[]}
+ */
+function credentialWarnings(launch) {
+	return [
+		join(launch.clineDir, "data", "settings", "providers.json"),
+		join(launch.thinkrailDir, "installation.json"),
+		join(launch.thinkrailDir, "environment.json"),
+	].filter((file) => hostFs.exists(file));
 }
 
 /**
@@ -660,24 +606,28 @@ async function main() {
 		);
 	}
 
-	for (const dir of stagedDirs(launch)) {
+	for (const dir of hostStateDirs(launch)) {
 		mkdirSync(dir, { recursive: true });
 	}
-	const auth = authGate(launch.agentDir);
+	const auth = credentialGate(launch);
 	if (auth) {
 		die(auth);
+	}
+	for (const file of credentialWarnings(launch)) {
+		logWarn(
+			"host credential-shaped file is readable in the sandbox (docs/d216)",
+			{ file },
+		);
 	}
 	const artifact = artifactGate(launch);
 	if (artifact) {
 		die(artifact);
 	}
 
-	writeFileSync(launch.launchScriptHostPath, launch.launchScript);
-	chmodSync(launch.launchScriptHostPath, 0o755);
 	const workload = launch.workload;
-	logInfo("staged sandbox", {
+	logInfo("mounting host harness state", {
 		container: launch.containerName,
-		stage: launch.stage,
+		dirs: hostStateDirs(launch).length,
 	});
 
 	// PARTIAL opencode config is ACCEPTED at launch (deliberately unlike pi's
