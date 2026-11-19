@@ -6,7 +6,7 @@
 #   shell sources · jq workload-filter compile (vacuous since d170) · shfmt (advisory) · oxfmt
 #   markdown · biome · oxlint (type-aware) · knip · ruff · uv sync --frozen ·
 #   ty · the capability-URL, runner-copy and retired-root-lib text gates ·
-#   spec-graph contract · golangci-lint.
+#   spec-graph contract · golangci-lint · sbex's Java static analysis.
 #
 # Toolchain split (docs/d139): the npm packages are locked by package-lock.json
 # and installed by ./npm-tools.sh (docs/d107); every other tool is pinned in
@@ -219,7 +219,11 @@ if _runner_copies=$(git ls-files '*/lib/node-run.sh' '*/lib/npm-run.sh'); then
 fi
 
 log_info "retired-root-lib gate (gating — tracked sources)"
-if git grep -nE 'parent[.]parent|HERE[.]parent' -- '*.py' \
+# HERE.parent is NOT itself a finding: llm-local-inference/run_all.py reaches the
+# repo-root node-run.sh that way, which is the d138 rule (the runner lives once,
+# at the root). What the gate must catch is that climb used to reach a root
+# lib/: parent.parent, or HERE.parent followed by a path containing lib.
+if git grep -nE 'parent[.]parent|HERE[.]parent[[:space:]]*/[[:space:]]*[^[:space:]]*lib' -- '*.py' \
 	|| git grep -nE '[.][.]/lib/' -- '*.mjs' '*.sh' '*.jq' '*.ts' ':(exclude)*/tests/*'; then
 	echo "reference to a lib/ outside the unit's own (docs/d113) — see lines above" >&2
 	exit 1
@@ -270,3 +274,33 @@ else
 	( cd estige && "$_golangci" config verify && "$_golangci" run ./... )
 fi
 
+# sbex static analysis — the Java gate (docs/d219). Three Maven plugins run
+# under -Pstatic (Checkstyle at validate; PMD and SpotBugs at verify) plus
+# javac's -Xlint:all -Werror: no SonarQube server, no scanner upload, and the
+# exit status is the quality gate. The analyzers resolve from Maven Central on
+# the first run and stay in ~/.m2 (the Go leg's module cache has the same
+# posture); a host without a JDK or Maven skips loudly, because a box that
+# cannot build Java cannot be asked to lint it.
+log_info "sbex static analysis (gating — Java; rule files in sbex/, docs/d219)"
+if [ ! -d sbex ]; then
+	log_info "skipped — no sbex/ under $root"
+elif ! _java_bin=$(dev_tool_bin java); then
+	log_warn "skipped — no JDK 21 toolchain" hint="./dev-tools.sh java (or the host package manager)"
+elif ! _mvn_bin=$(dev_tool_bin maven mvn); then
+	log_warn "skipped — no Maven toolchain" hint="./dev-tools.sh maven (or the host package manager)"
+else
+	# mvn is a shell script that reads JAVA_HOME, and dev_tool_bin hands back the
+	# real JDK binary. java.home is the authoritative JDK home: a package-managed
+	# java is usually a symlink through alternatives, so its parent directory is
+	# not the JDK. Prepending both bins puts the real java/mvn ahead of a version
+	# manager's shim (the golangci-lint leg's PATH reason).
+	JAVA_HOME=$("$_java_bin" -XshowSettings:properties -version 2>&1 |
+		awk -F'= ' '/java.home =/ { print $2; exit }')
+	[ -n "$JAVA_HOME" ] || log_die 96 "cannot read java.home from $_java_bin"
+	PATH="$(dirname "$_java_bin"):$(dirname "$_mvn_bin"):$PATH"
+	# SBEX_MVN rides env because node-run.sh's mise branch rebuilds PATH; the
+	# unit entry reads it before falling back to a PATH lookup (sbex/lint.mjs).
+	SBEX_MVN="$_mvn_bin"
+	export JAVA_HOME PATH SBEX_MVN
+	"$repo_root/node-run.sh" "$repo_root/sbex/lint.mjs"
+fi

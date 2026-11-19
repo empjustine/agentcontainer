@@ -38,7 +38,7 @@ abstract class PersistenceContractTest {
 	private OrderRepository orders;
 	private ProcessedEventRepository events;
 	private StoredProcedureGateway procedures;
-	private SqlDialect dialect;
+	private SqlDialect resolvedDialect;
 
 	@BeforeEach
 	void migrateAndWire() {
@@ -55,11 +55,11 @@ abstract class PersistenceContractTest {
 		jdbc.update("TRUNCATE TABLE order_totals");
 		jdbc.update("TRUNCATE TABLE processed_events");
 
-		dialect = dialect();
+		resolvedDialect = dialect();
 		NamedParameterJdbcTemplate named = new NamedParameterJdbcTemplate(dataSource);
 		orders = new OrderRepository(jdbc, named);
-		events = new ProcessedEventRepository(named, dialect);
-		procedures = new StoredProcedureGateway(jdbc, dialect, dataSource);
+		events = new ProcessedEventRepository(named, resolvedDialect);
+		procedures = new StoredProcedureGateway(jdbc, resolvedDialect, dataSource);
 	}
 
 	@Test
@@ -101,7 +101,7 @@ abstract class PersistenceContractTest {
 		// transaction-local setting, which is also the boundary production
 		// uses — the totals read and the row they land in move together.
 		new TransactionTemplate(new DataSourceTransactionManager(dataSource()))
-			.executeWithoutResult(status -> dialect.reconcileTotals(jdbc, "carol"));
+			.executeWithoutResult(status -> resolvedDialect.reconcileTotals(jdbc, "carol"));
 
 		BigDecimal total =
 			jdbc.queryForObject(

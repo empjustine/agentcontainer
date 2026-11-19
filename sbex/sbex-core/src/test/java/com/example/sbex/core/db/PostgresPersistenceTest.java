@@ -4,7 +4,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -17,7 +17,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class PostgresPersistenceTest extends PersistenceContractTest {
 
 	@Container
-	static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
+	static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:16-alpine");
 
 	private static HikariDataSource pool;
 

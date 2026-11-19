@@ -24,6 +24,8 @@
 		"coding-agent/build.mjs",
 		"llm-local-inference/build.mjs",
 		"sbex/build.mjs",
+		// the unit's static-analysis entry (docs/d219), run by lint.sh
+		"sbex/lint.mjs",
 		// the coding-agent runner: the folder driver, its two generator
 		// children, and the standalone CLIs the shims and run.sh execute
 		"coding-agent/generate.mjs",
@@ -55,6 +57,9 @@
 		// the ingest daemon: exec'd by agent-warehouse-daemon.sh, whose tests
 		// are shell — no import graph reaches either
 		"datalakehouse/agent-warehouse-daemon.mjs",
+		// the slurp contract driver: browse-daemon.sh executes it, nothing imports
+		// it (the test is a shell script, so the *.test.mjs glob cannot see it)
+		"datalakehouse/tests/slurp-contract.mjs",
 		// the pi extension family: each folder's runtime entry. The pi host
 		// loads it from package.json's pi.extensions (no import graph can see
 		// that), and its tests import it as well — entry status states the

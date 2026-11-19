@@ -22,7 +22,7 @@ public class StoredProcedureGateway {
 
 	private final JdbcTemplate jdbc;
 	private final SqlDialect dialect;
-	private final SimpleJdbcCall orderScore;
+	private final SimpleJdbcCall scoreCall;
 
 	public StoredProcedureGateway(JdbcTemplate jdbc, SqlDialect dialect, DataSource dataSource) {
 		this.jdbc = jdbc;
@@ -30,7 +30,7 @@ public class StoredProcedureGateway {
 		// Built once: SimpleJdbcCall reads function metadata from the database
 		// on first execution, and a per-call instance would pay that round trip
 		// on every score lookup.
-		this.orderScore = new SimpleJdbcCall(dataSource).withFunctionName("order_score");
+		this.scoreCall = new SimpleJdbcCall(dataSource).withFunctionName("order_score");
 	}
 
 	/**
@@ -64,6 +64,6 @@ public class StoredProcedureGateway {
 	 * @return the stored function's value
 	 */
 	public BigDecimal orderScore(long orderId) {
-		return orderScore.executeFunction(BigDecimal.class, orderId);
+		return scoreCall.executeFunction(BigDecimal.class, orderId);
 	}
 }

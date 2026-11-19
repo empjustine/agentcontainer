@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<ruleset name="sbex"
+	xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.github.io/schema/ruleset_2_0_0.xsd">
+	<!--
+	  The source-rules half of the Java gate (docs/d219). PMD carries the rules
+	  SonarQube's Java analyzer grew out of; the categories below are the
+	  bug-prone, best-practice, concurrency, performance and security sets, not
+	  codestyle — Checkstyle owns the structural style rules and two style
+	  gates would disagree about the same line.
+
+	  The measured baseline is green on this unit. A new finding is either fixed
+	  or excluded here with the reason, never silenced at the call site: this
+	  file is the one place a rule may be waived.
+	-->
+	<description>sbex: bug patterns, best practices, concurrency, performance and security</description>
+
+	<rule ref="category/java/bestpractices.xml">
+		<!-- Modern SLF4J parameterized calls (log.error("... {}", id)) build no
+		     message when the level is off; the rule wants an isXEnabled() guard
+		     around every call, which the logging guidance has moved past. -->
+		<exclude name="GuardLogStatement"/>
+		<!-- The contract tests deliberately assert several related properties per
+		     test; splitting them would trade one readable scenario for N setups. -->
+		<exclude name="UnitTestContainsTooManyAsserts"/>
+		<!-- MockMvc asserts through andExpect(...), which is not a JUnit assert
+		     call; the rule cannot see the assertion style the slice tests use. -->
+		<exclude name="UnitTestShouldIncludeAssert"/>
+	</rule>
+	<rule ref="category/java/errorprone.xml">
+		<!-- PersistenceContractTest is the abstract base and its subclasses inherit
+		     the @Test methods; PMD reads each class alone and sees none. -->
+		<exclude name="TestClassWithoutTestCases"/>
+	</rule>
+	<rule ref="category/java/multithreading.xml"/>
+	<rule ref="category/java/performance.xml"/>
+	<rule ref="category/java/security.xml"/>
+</ruleset>

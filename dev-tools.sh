@@ -54,6 +54,14 @@ dev_tool_pin() {
 	# content-addressed store hardlinks one unpacked copy into six node_modules.
 	pnpm) printf '%s\n' '12.21.0' ;;
 	shellcheck | shfmt | jq | ruff | uv | ty) printf '%s\n' 'latest' ;;
+	# sbex's Java gate (docs/d219). The analyzers are Maven plugins pinned in
+	# sbex/pom.xml, so the toolchain is only the JDK and Maven. Deliberately NOT
+	# in DEV_TOOLS_ALL: no other unit needs them, and the Java leg acquires them
+	# on demand the way the Go leg acquires go. The JDK is a prefix because a
+	# 21.0.x patch bump must not re-pin the gate; Maven is exact because the
+	# plugin resolution it performs is part of what the gate means.
+	java) printf '%s\n' '21' ;;
+	maven) printf '%s\n' '3.9.16' ;;
 	*)
 		printf 'dev-tools.sh: unknown tool: %s\n' "$1" >&2
 		return 2
@@ -116,19 +124,22 @@ dev_tool_run() {
 	"$@"
 }
 
-# dev_tool_bin <tool> — the real binary path, for callers that must run it
-# DIRECTLY: golangci-lint shells out to `go list`, and `mise exec` rebuilds PATH
-# from its own tool set, so the child would hit the version-less mise shim of a
-# repo that pins nothing (docs/d137). `mise which` is no use here — it answers
-# only for an already-installed exact version, while the pin is a prefix.
+# dev_tool_bin <tool> [binary] — the real binary path, for callers that must run
+# it DIRECTLY: golangci-lint shells out to `go list`, and `mise exec` rebuilds
+# PATH from its own tool set, so the child would hit the version-less mise shim
+# of a repo that pins nothing (docs/d137). `mise which` is no use here — it
+# answers only for an already-installed exact version, while the pin is a
+# prefix. The binary name defaults to the tool id; it is a parameter because a
+# mise id need not name its executable (tool `maven`, binary `mvn`).
 dev_tool_bin() {
 	_dev_tool=$1
+	_dev_bin=${2:-$1}
 	if _dev_tools_mise; then
 		# shellcheck disable=SC2016  # $0 is the inner sh's argv[0], not this shell's
-		mise exec "$_dev_tool@$(dev_tool_pin "$_dev_tool")" -- sh -c 'command -v "$0"' "$_dev_tool" ||
+		mise exec "$_dev_tool@$(dev_tool_pin "$_dev_tool")" -- sh -c 'command -v "$0"' "$_dev_bin" ||
 			return 1
-	elif command -v "$_dev_tool" >/dev/null 2>&1; then
-		command -v "$_dev_tool"
+	elif command -v "$_dev_bin" >/dev/null 2>&1; then
+		command -v "$_dev_bin"
 	else
 		return 1
 	fi

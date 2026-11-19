@@ -78,4 +78,104 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!--
+		  The Java static-analysis gate (docs/d219). Opt-in so the ordinary build
+		  and the test sweep do not pay for it; the repo-wide lint sweep runs it
+		  through sbex/lint.mjs. Everything is a Maven plugin: no SonarQube
+		  server, no dashboard, no scanner upload — the failure is the exit code.
+
+		  WHY the config paths use maven.multiModuleProjectDirectory: the shared
+		  rule files live at the unit root, and every entry point (build.mjs,
+		  lint.mjs) runs maven with the unit as the working directory, which is
+		  what that property resolves to. A bare "mvn -f sbex/pom.xml" from the
+		  repository root would look for them in the root instead; the unit's own
+		  entry points are the supported invocation.
+		-->
+		<profile>
+			<id>static</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-compiler-plugin</artifactId>
+						<configuration>
+							<!-- The compiler's own bug patterns (deprecation, unchecked,
+							     serial, try/fallthrough). Appended to the parent's args,
+							     which carry -XDuseUnsharedTable and the release pin. -->
+							<compilerArgs combine.children="append">
+								<arg>-Xlint:all</arg>
+								<arg>-Werror</arg>
+							</compilerArgs>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-checkstyle-plugin</artifactId>
+						<version>3.6.0</version>
+						<configuration>
+							<configLocation>${maven.multiModuleProjectDirectory}/checkstyle.xml</configLocation>
+							<consoleOutput>true</consoleOutput>
+							<failOnViolation>true</failOnViolation>
+							<violationSeverity>warning</violationSeverity>
+							<includeTestSourceDirectory>true</includeTestSourceDirectory>
+						</configuration>
+						<executions>
+							<execution>
+								<id>checkstyle</id>
+								<phase>validate</phase>
+								<goals>
+									<goal>check</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-pmd-plugin</artifactId>
+						<version>3.28.0</version>
+						<configuration>
+							<rulesets>
+								<ruleset>${maven.multiModuleProjectDirectory}/pmd-ruleset.xml</ruleset>
+							</rulesets>
+							<includeTests>true</includeTests>
+							<failOnViolation>true</failOnViolation>
+							<printFailingErrors>true</printFailingErrors>
+							<linkXRef>false</linkXRef>
+						</configuration>
+						<executions>
+							<execution>
+								<id>pmd</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>check</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>com.github.spotbugs</groupId>
+						<artifactId>spotbugs-maven-plugin</artifactId>
+						<version>4.10.5.0</version>
+						<configuration>
+							<effort>Max</effort>
+							<threshold>Medium</threshold>
+							<excludeFilterFile>${maven.multiModuleProjectDirectory}/spotbugs-exclude.xml</excludeFilterFile>
+							<failOnError>true</failOnError>
+						</configuration>
+						<executions>
+							<execution>
+								<id>spotbugs</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>check</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

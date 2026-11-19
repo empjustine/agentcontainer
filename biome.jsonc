@@ -29,6 +29,9 @@
 			"!.vscode",
 			"!.thinkrail",
 			"!opencode_share",
+			// Build outputs (sbex's Maven target/): generated classes, reports
+			// and jars are not source and must not be walked by a source gate.
+			"!**/target",
 			"!**/gguf-vram-fit-estimates.data.json",
 			"!**/lib/hf-manifests",
 			"!coding-agent/models.json",

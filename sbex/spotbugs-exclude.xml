@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!--
+  SpotBugs waivers for sbex (docs/d219). Two patterns are excluded because the
+  analyzer cannot see the ownership transfer this code deliberately uses; the
+  exclusion is the reason, and it is stated here rather than at the call site.
+-->
+<FindBugsFilter>
+	<!--
+	  Constructor injection stores a container-managed collaborator (JdbcTemplate,
+	  RabbitTemplate, a repository, ApplicationEventPublisher) in a field. Those
+	  objects never cross the application boundary as data, and Spring owns their
+	  lifecycle, so "may expose internal representation" is the DI shape itself,
+	  not a defect. The exclusion is by bug type, so a future value object that
+	  really does store an array would need this filter narrowed (for example a
+	  class-scoped Match) rather than silently inheriting the waiver.
+	-->
+	<Match>
+		<Bug pattern="EI_EXPOSE_REP2"/>
+	</Match>
+
+	<!--
+	  OrderRepository.insert hands the PreparedStatement to JdbcTemplate through a
+	  PreparedStatementCreator; the template closes it after use. SpotBugs sees
+	  the creation and not the transfer, so the "obligation" is discharged in
+	  code the analyzer does not model.
+	-->
+	<Match>
+		<Bug pattern="OBL_UNSATISFIED_OBLIGATION_EXCEPTION_EDGE"/>
+	</Match>
+</FindBugsFilter>

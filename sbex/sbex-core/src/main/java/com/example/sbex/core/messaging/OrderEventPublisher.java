@@ -3,6 +3,7 @@ package com.example.sbex.core.messaging;
 import com.example.sbex.core.AppProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.ReturnedMessage;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
@@ -54,13 +55,17 @@ public class OrderEventPublisher {
 							"broker nacked eventId={} reason={}",
 							event.eventId(),
 							confirm.reason());
-					} else if (correlation.getReturned() != null) {
+					} else {
 						// mandatory + publisher-returns: an unroutable message comes
-						// back here instead of being dropped by the broker.
-						log.error(
-							"unroutable eventId={} routingKey={}",
-							event.eventId(),
-							correlation.getReturned().getRoutingKey());
+						// back here instead of being dropped by the broker. Read it
+						// once: a second call may observe a different object (or null).
+						ReturnedMessage returned = correlation.getReturned();
+						if (returned != null) {
+							log.error(
+								"unroutable eventId={} routingKey={}",
+								event.eventId(),
+								returned.getRoutingKey());
+						}
 					}
 				});
 	}

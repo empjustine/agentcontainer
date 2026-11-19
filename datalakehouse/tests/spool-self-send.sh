@@ -32,21 +32,37 @@ port=$((19000 + ($$ % 1000)))
 start_daemon() { # $1 = log file, rest = env assignments
 	local log=$1
 	shift
-	env -i PATH="$PATH" HOME="$tmp/home" AGENT_INGEST_ADDR="127.0.0.1:$port" \
-		AGENT_WAREHOUSE_SPOOL="$tmp/spool.ndjson" AGENT_WAREHOUSE_SENDER="$stub" \
-		"$@" bash "$DAEMON" >"$log" 2>&1 &
-	daemon_pid=$!
-	ready=0
-	i=0
-	while [ "$i" -lt 50 ]; do
-		if curl -s -o /dev/null "http://127.0.0.1:$port/" 2>/dev/null; then
-			ready=1
-			break
+	# A fixed formula can land on a port another process already holds, and the
+	# sweep runs this beside other suites. Retry on a nearby port rather than
+	# failing the whole gate on an unlucky number; the caller's curl uses the
+	# global port this leaves behind.
+	local tries=0 ready i
+	while [ "$tries" -lt 5 ]; do
+		env -i PATH="$PATH" HOME="$tmp/home" AGENT_INGEST_ADDR="127.0.0.1:$port" \
+			AGENT_WAREHOUSE_SPOOL="$tmp/spool.ndjson" AGENT_WAREHOUSE_SENDER="$stub" \
+			"$@" bash "$DAEMON" >"$log" 2>&1 &
+		daemon_pid=$!
+		ready=0
+		i=0
+		while [ "$i" -lt 100 ]; do
+			if curl -s -o /dev/null "http://127.0.0.1:$port/" 2>/dev/null; then
+				ready=1
+				break
+			fi
+			# The daemon exits at once on a bind failure; stop waiting for it.
+			kill -0 "$daemon_pid" 2>/dev/null || break
+			i=$((i + 1))
+			sleep 0.1
+		done
+		if [ "$ready" = 1 ]; then
+			return 0
 		fi
-		i=$((i + 1))
-		sleep 0.1
+		kill "$daemon_pid" 2>/dev/null || true
+		daemon_pid=""
+		port=$((port + 7))
+		tries=$((tries + 1))
 	done
-	[ "$ready" = 1 ]
+	return 1
 }
 
 wait_for() { # $1 = file
