@@ -21,10 +21,12 @@ This file owns the choice between `sbex-servlet` and `sbex-reactive`, and what o
 
 - **Virtual threads on** (`spring.threads.virtual.enabled=true`). Each request's stack becomes heap-allocated, so Tomcat's `threads.max` stops being the concurrency cap — hundreds of requests blocked on the database no longer cost hundreds of megabytes of platform stacks.
 - **The bounds that remain are stated.** `server.tomcat.max-connections` and `accept-count` bound what the connector accepts; the Hikari pool bounds what the database will serve; `WebConfig`'s bounded executor bounds streaming requests. Virtual threads remove the thread-count limit, not the need for limits.
-- **Large responses stream.** `ReportController` writes rows through `StreamingResponseBody` as the cursor yields them — a report's heap cost is one row, not the result set.
+- **Large responses stream.** `ReportController` writes rows through `StreamingResponseBody` as the cursor yields them — a report's heap cost is one row, not the result set. The stream bounds the write side only; the read side is bounded by the cursor and its fetch size (`persistence.md`), and a `queryForList` behind a streamed write has already materialised the report.
 - **Shutdown drains.** `server.shutdown=graceful` with a lifecycle timeout lets in-flight requests finish when the container stops; a cut connection mid-transaction is what graceful drain exists to avoid.
 
 The one rule for this stack: blocking is allowed everywhere, because the thread blocking is disposable — but the pools are the capacity, so they are sized first.
+
+**What the stack cannot do is backpressure.** The connector admits requests up to `max-connections` and `accept-count` whatever the database can serve, so a burst of large responses grows queued-plus-active work and the failure lands as a garbage-collection storm shared by every request. The only brake in blocking mode is the client's socket: a writer thread waits on a slow reader after the bytes exist. [sbex-resource-isolation](resource-isolation.md) owns the answer — bounded concurrency per work class and an early `503` — because that is admission policy, not a stack setting.
 
 ## The reactive path, done well
 

@@ -12,7 +12,9 @@ model that produced the turn never sees it, in this turn or any later one.
 - **No `custom_message`, no `context_edit`, no system-prompt fragment, no
   injected tool result.** If a feature needs the model to read the summary, that
   feature belongs in another extension, and its cost is a full cache re-prefill
-  per turn (`FINDINGS.md` → "The cache rule").
+  per turn (`FINDINGS.md` → "The cache rule"). `model-facing-compaction.md`
+  records what such an extension would need — the verified pi hooks and the
+  LLMLingua facts — as reference, not permission: no rule in this folder relaxes.
 - **Append-only, at the tail.** Never prepend, never insert between an assistant
   tool-call message and its results.
 - **Write-once.** A summary is immutable once written; a reload, a retry or a

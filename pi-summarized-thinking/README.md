@@ -21,8 +21,11 @@ in [`summarized-thinking.md`](summarized-thinking.md);
 the decisions a build must not re-litigate are
 [`../docs/d125-summarized-thinking-decisions.md`](../docs/d125-summarized-thinking-decisions.md);
 the pi/ThinkRail contracts it rests on (with the symbols to check them against) are
-in [`FINDINGS.md`](FINDINGS.md). Nothing is implemented yet — `TODO.md` owns the
-build order and `AGENTS.md` the folder rules.
+in [`FINDINGS.md`](FINDINGS.md). The opposite audience — compression the model
+reads, which this package refuses — has its verified contracts in
+[`model-facing-compaction.md`](model-facing-compaction.md). Nothing is
+implemented yet — `TODO.md` owns the build order and `AGENTS.md` the folder
+rules.
 
 ## What it is not
 
@@ -150,12 +153,13 @@ short form, and each one is a bill:
 
 ## Layout
 
-| File                       | Role                                                                             |
-| -------------------------- | -------------------------------------------------------------------------------- |
-| `index.ts`, `package.json` | the extension entry and its `pi.extensions` manifest — the folder IS the package |
-| `README.md`                | this file: what it is, how it runs, the model chain, the commands                |
-| `FINDINGS.md`              | pi/ThinkRail contracts with citations, the cache rule, the superseded claims     |
-| `AGENTS.md`, `TODO.md`     | folder rules · the build order, unbuilt                                          |
+| File                         | Role                                                                                     |
+| ---------------------------- | ---------------------------------------------------------------------------------------- |
+| `index.ts`, `package.json`   | the extension entry and its `pi.extensions` manifest — the folder IS the package         |
+| `README.md`                  | this file: what it is, how it runs, the model chain, the commands                        |
+| `FINDINGS.md`                | pi/ThinkRail contracts with citations, the cache rule, the superseded claims             |
+| `model-facing-compaction.md` | the other audience: verified pi and LLMLingua contracts for a compressor the model reads |
+| `AGENTS.md`, `TODO.md`       | folder rules · the build order, unbuilt                                                  |
 
 `index.ts` stays out of `tsconfig.json`, like `../pi-synthetic/index.ts`: it
 imports `@earendil-works/pi-coding-agent`, which this repo does not vendor.

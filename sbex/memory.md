@@ -42,7 +42,7 @@ The G1 collector the JVM defaults to is the right default at this scale: it alre
 
 ## CDS and the AOT cache
 
-Class Data Sharing maps app classes from a file instead of loading them, cutting both startup time and the class-metadata footprint; on Java 25 and above the [AOT cache (JEP 483)](https://openjdk.org/jeps/483) supersedes [Class Data Sharing](https://docs.oracle.com/en/java/javase/21/vm/class-data-sharing.html), and Spring Boot recommends the AOT cache wherever the JVM supports it. Both need the same two steps, and both need the **extracted** deployment layout first — the nested-jar layout is not what the training run archives (see `container-image.md`).
+Class Data Sharing maps app classes from a file instead of loading them, cutting both startup time and the class-metadata footprint; the [AOT cache (JEP 483)](https://openjdk.org/jeps/483), delivered in JDK 24 and recommended by Spring Boot on Java 25 and above, supersedes [Class Data Sharing](https://docs.oracle.com/en/java/javase/21/vm/class-data-sharing.html), and the JEP's own measurements set the scale: 0.031 s to 0.018 s and 4.486 s to 2.604 s on its two sample applications, 42% in both cases, against caches of 11.4 MB and 130 MB. Both need the same two steps, and both need the **extracted** deployment layout first — the nested-jar layout is not what the training run archives (see `container-image.md`).
 
 1. Extract the jar (once, at build time):
 

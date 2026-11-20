@@ -131,7 +131,7 @@ Two findings decide the module layout.
 
 Three layouts follow. Keep the blocking core and offload it to `Schedulers.boundedElastic()` as [sbex-servlet-vs-reactive](servlet-vs-reactive.md) does, and the reactive stack stays a web-stack story. Split the persistence into a JDBC module and an R2DBC module behind the shared domain, and each application carries exactly one stack and one manager. Exclude the JDBC autoconfiguration in the reactive application and wire a `DataSource` by hand, and the ambiguity is hidden rather than removed. The first is the smallest change; the second is the one an example about "which stack, and what optimising each one means" can defend.
 
-Reactive engines: PostgreSQL and ClickHouse have drivers; SQLite and DuckDB do not, and the only published bridge is `party.iroiro:r2dbc-jdbc`, which runs JDBC on a worker pool inside an R2DBC SPI shell. That is an unvetted dependency by this tree's standard, and it buys nothing over `boundedElastic`.
+Reactive engines: PostgreSQL and ClickHouse have drivers; SQLite and DuckDB do not, and the only published bridge is `party.iroiro:r2dbc-jdbc`, which runs JDBC on a worker pool inside an R2DBC SPI shell. That is an unvetted dependency by this tree's standard, and it buys nothing over `boundedElastic`. Oracle's driver covers the procedural gap those four leave: a PL/SQL call registers `OUT` and `IN OUT` parameters with `Parameters.out(...)` and reads them from a `Result` emitted after any cursors.
 
 ## Streaming reads
 

@@ -19,6 +19,7 @@ sbex is a worked Spring Boot example whose subject is doing the ordinary things 
 | Spring Boot project conventions                          | this file, every `pom.xml`, `application.yml`               |
 | Heap and footprint on a small container                  | `memory.md`, `Containerfile`                                |
 | Servlet and reactive done optimally                      | `servlet-vs-reactive.md`, `sbex-servlet/`, `sbex-reactive/` |
+| Page delivery versus SPA: MPA, islands, htmx             | `pages-and-islands.md`                                      |
 | Transactions and JdbcTemplate over Oracle and PostgreSQL | `persistence.md`, `sbex-core/…/db/`, both migrations        |
 | Other engines and the R2DBC access mode                  | `persistence-engines.md`                                    |
 | Heap bounds, compression and Jackson findings            | `optimisation-findings.md`                                  |
