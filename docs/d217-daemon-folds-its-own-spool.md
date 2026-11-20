@@ -13,8 +13,9 @@ tags: [datalakehouse, sessions, ingest, spool, motherduck, duckdb]
 
 **Status: landed.** `agent-warehouse-daemon.mjs` runs
 `agent-warehouse-spool-send.sh` itself once the spool tail crosses
-`$AGENT_WAREHOUSE_SPOOL_MAX_BYTES` (default 32 MiB) and the process holds a
-MotherDuck token.
+`$AGENT_WAREHOUSE_SPOOL_MAX_BYTES` (default 32 MiB), and for whatever tail an
+earlier run left when the process starts, whenever the process holds a MotherDuck
+token.
 
 ## Problem
 
@@ -33,31 +34,53 @@ the design says why the process that owns the tail cannot fold it.
   the first-write-wins insert (d203); implementing any of it in node would be a
   second upload contract that can drift from the operator's (d176's rule).
 - **Trigger: bytes pending since the last successful fold**, checked after an
-  append and once at startup (a tail left by an earlier run is folded before it
-  grows further). `AGENT_WAREHOUSE_SPOOL_MAX_BYTES` sets the ceiling; `0`
-  disables the self-send explicitly.
+  append that crosses `AGENT_WAREHOUSE_SPOOL_MAX_BYTES`, once at startup (which
+  folds whatever tail an earlier run left, over the ceiling or not, because a
+  restart is the one moment nobody is appending), and when the failure backoff
+  expires. `0` sets the self-send off explicitly.
+- **The pending count is measured, not tracked.** It starts as the sum of the
+  live spool and every `spool.rm.*` the sender still globs, advances by the
+  bytes of each fresh append (no stat per POST), and is re-measured at the start
+  and the end of every fold. A running subtraction drifts in both directions: an
+  operator's `--direct` sync rotates bytes this process never counted, and rows
+  that land before the sender's rename are frozen into the file the fold
+  consumes. The drift costs a no-op fold either way (d203), but only a
+  measurement lets the startup fold see a leftover tail at all.
 - **Credential: `motherduck_token` (then `MOTHERDUCK_TOKEN`), read from the
   environment only.** Absent, the daemon stays what it was — a spool writer —
   and says so once at startup. The credential never becomes a file.
 - **One sender at a time.** `<spool>.lock` is created with `wx` (exclusive
   create) around the child; a second trigger returns immediately. A stale lock
   from a killed daemon is removed by hand, which is louder than guessing at
-  liveness.
+  liveness, and the first trigger it blocks logs the lock path — a fold that
+  stops is otherwise indistinguishable from a fold with nothing to do.
 - **Accounting survives rotation.** The sender freezes the tail by renaming it,
-  and the daemon appends by path, so the next append recreates the spool. Bytes
-  appended while the child runs are therefore still pending and are counted
-  after the fold — not reset to zero.
+  and the daemon appends by path, so the next append recreates the spool. Rows
+  appended while the child runs are in that new file and the post-fold
+  measurement counts them. A fold that removed no bytes is not re-triggered: the
+  guard keeps a sender that exits 0 without consuming the tail from calling
+  itself forever.
 - **Failure is not fatal and not a fork bomb.** On a non-zero exit the sender
   keeps the spool; the daemon backs off for `AGENT_WAREHOUSE_SPOOL_SEND_RETRY`
-  (default 60 s) before trying again. Ingest keeps accepting rows throughout.
+  (default 60 s) and retries from an unref'd timer, so an idle daemon folds the
+  kept tail instead of waiting for the next POST, and the timer cannot hold the
+  process open. Ingest keeps accepting rows throughout.
+- **A non-numeric numeric variable is reported and replaced by its default.**
+  `Number("32MB")` is `NaN`, and every ceiling and delay test compares false
+  against `NaN`: an unparseable ceiling folds on every accepted row and an
+  unparseable delay never waits. One `envNumber` helper owns the check and the
+  warning, because `NaN` reaching the guards is the failure mode.
 - **`AGENT_WAREHOUSE_SENDER`** overrides the script path; it exists so the
   test can stub the sender.
 
 ## Consequences
 
-- **The spool is bounded by the threshold plus one in-flight fold**, not by
-  whether anyone ran the sender. A long idle daemon folds at startup and then
-  only on traffic.
+- **The spool is bounded by the ceiling plus one request body plus the appends
+  that land during a fold**, not by whether anyone ran the sender. The threshold
+  is checked after an append, so a single POST overshoots it by up to
+  `AGENT_INGEST_MAX_BODY` (8 MiB default), and the fold is no lock on ingest.
+  A long idle daemon folds at startup and on the retry timer, not only on
+  traffic.
 - **The daemon needs bash and the sender beside it at its own folder path** (the
   copy unit, d113). When it fires it also needs the pinned duckdb and jq — a
   host without them logs a failed fold and retries, and ingestion is unaffected.
@@ -69,6 +92,28 @@ the design says why the process that owns the tail cannot fold it.
   that finds only seen rows writes nothing.
 - **d180/d181's split is unchanged**: the host-side receiver is the archive's
   only writer, and the sandbox still only POSTs.
+
+## Corrections from review
+
+A review of this design against the code found four points it left open; each
+rule below is enforced in `agent-warehouse-daemon.mjs` and covered by
+`tests/spool-self-send.sh`.
+
+- **A non-numeric ceiling or delay bypasses its own guards.** `NaN <= 0` and
+  `bytes < NaN` are both false, so a typo inverted the two behaviours the
+  design depends on. Every numeric variable (the two self-send ones and
+  `AGENT_INGEST_MAX_BODY`) passes through one `envNumber`.
+- **A backoff with no timer waits for traffic.** The retry belongs to the tail,
+  not to the next request, so a failed fold ends in an unref'd `setTimeout`.
+- **The count must cover the files the sender globs.** Reading only the live
+  path skips a `spool.rm.<pid>` a killed fold left, so the leftover never
+  triggers a fold, and subtracting a running total overcounts once an
+  operator's rotation removes bytes this process never counted. Measuring
+  `spool` plus `spool.rm.*` at startup and around each fold keeps the count
+  on the set the sender consumes.
+- **A zero-progress success must not re-trigger, and a held lock must speak.**
+  The success path re-triggers only when the fold removed bytes, warning when it
+  did not; the first lock-blocked trigger logs the path.
 
 ## Alternatives rejected
 

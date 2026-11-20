@@ -31,6 +31,9 @@
 //      AGENT_WAREHOUSE_SPOOL_MAX_BYTES (default 32 MiB; 0 disables the
 //      self-send), AGENT_WAREHOUSE_SPOOL_SEND_RETRY (default 60000 ms),
 //      AGENT_WAREHOUSE_SENDER (default the sender script beside this file).
+// A non-numeric value for any of the numeric variables is reported and replaced
+// by its default: NaN defeats every guard built on the number, which is worse
+// than the default.
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
@@ -59,9 +62,30 @@ const token = process.env.AGENT_INGEST_TOKEN || "";
 const dataHome = process.env.XDG_DATA_HOME || path.join(os.homedir(), ".local", "share");
 const spool =
   process.env.AGENT_WAREHOUSE_SPOOL || path.join(dataHome, "agent-warehouse", "spool.ndjson");
+/**
+ * An env number, or the default when the variable is absent or not a number.
+ * `Number("32MB")` is NaN, and NaN makes every comparison built on it false: a
+ * typo in a ceiling would fold on every append and a typo in a delay would never
+ * wait. The warning is the only signal the typo gets.
+ * @param {string} name
+ * @param {number} fallback
+ * @returns {number}
+ */
+function envNumber(name, fallback) {
+  const raw = process.env[name];
+  if (raw === undefined || raw === "") { return fallback; }
+  const value = Number(raw);
+  if (Number.isFinite(value)) { return value; }
+  process.stderr.write(
+    "agent-warehouse-daemon: " + name + "=" + JSON.stringify(raw) +
+      " is not a number; using " + fallback + "\n",
+  );
+  return fallback;
+}
+
 // A single row can carry a whole message content array, so the limit is env-tunable
 // and the sync batches under its own budget (AGENT_WAREHOUSE_BATCH_BYTES).
-const MAX_BODY = Number(process.env.AGENT_INGEST_MAX_BODY || 8 * 1024 * 1024);
+const MAX_BODY = envNumber("AGENT_INGEST_MAX_BODY", 8 * 1024 * 1024);
 
 // The self-send (docs/d217). The threshold is the spool tail the daemon
 // tolerates before folding it; the sender's own batch budget is
@@ -70,10 +94,8 @@ const MAX_BODY = Number(process.env.AGENT_INGEST_MAX_BODY || 8 * 1024 * 1024);
 // two are reported differently at startup.
 const warehouseToken =
   process.env.motherduck_token || process.env.MOTHERDUCK_TOKEN || "";
-const spoolMaxBytes = Number(
-  process.env.AGENT_WAREHOUSE_SPOOL_MAX_BYTES || 32 * 1024 * 1024,
-);
-const sendRetryMs = Number(process.env.AGENT_WAREHOUSE_SPOOL_SEND_RETRY || 60_000);
+const spoolMaxBytes = envNumber("AGENT_WAREHOUSE_SPOOL_MAX_BYTES", 32 * 1024 * 1024);
+const sendRetryMs = envNumber("AGENT_WAREHOUSE_SPOOL_SEND_RETRY", 60_000);
 const senderScript =
   process.env.AGENT_WAREHOUSE_SENDER ||
   fileURLToPath(new URL("./agent-warehouse-spool-send.sh", import.meta.url));
@@ -129,33 +151,90 @@ try {
 
 fs.mkdirSync(path.dirname(spool), { recursive: true });
 
-// The self-send lives here, not in the request handler, because both the append
-// path and startup call it. The counter avoids a stat per POST; a tail left by
-// an earlier run is the seed.
-let pendingBytes = 0;
-try {
-  pendingBytes = fs.statSync(spool).size;
-} catch {
-  // no spool yet — the first append creates it
+// The self-send lives here, not in the request handler, because the append path,
+// startup and the retry timer all call it. `pendingBytes` is an estimate that
+// avoids a stat per POST; every fold re-measures it against the files, because
+// the tail also moves without this process (an operator's --direct sync rotates
+// it) and a failed fold leaves it under `spool.rm.<pid>`.
+/**
+ * Bytes the next fold would consume: the live spool plus every frozen tail the
+ * sender still globs. Counting the live path alone would strand a leftover from
+ * a killed fold — it can sit under the ceiling forever and never trigger.
+ * @returns {number}
+ */
+function pendingTailBytes() {
+  const dir = path.dirname(spool);
+  const base = path.basename(spool);
+  let names;
+  try {
+    names = fs.readdirSync(dir);
+  } catch {
+    return 0;
+  }
+  let total = 0;
+  for (const name of names) {
+    if (name !== base && !name.startsWith(base + ".rm.")) { continue; }
+    try {
+      total += fs.statSync(path.join(dir, name)).size;
+    } catch {
+      // rotated away between the readdir and the stat
+    }
+  }
+  return total;
 }
+
+let pendingBytes = pendingTailBytes();
 let sending = false;
 let retryAt = 0;
+let retryTimer = null;
+let lockBlocked = false;
 
-function sendSpool() {
+// A failed fold ends in this timer, not in the next POST: an idle daemon would
+// otherwise leave the tail growing while the backoff expired silently. Unref'd,
+// so a pending retry never keeps the process alive.
+function armRetry() {
+  if (retryTimer) { return; }
+  // A hair past the deadline: firing early would send sendSpool() back into the
+  // same backoff branch and the timer would have to arm itself twice.
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    sendSpool();
+  }, Math.max(0, retryAt - Date.now()) + 10);
+  retryTimer.unref();
+}
+
+/**
+ * @param {boolean} [foldAnyTail] fold even under the ceiling. The startup call
+ *   sets it so a tail left by an earlier run (frozen ones included) is folded
+ *   before it grows further, instead of waiting for a threshold's worth of
+ *   appends that may never come.
+ */
+function sendSpool(foldAnyTail = false) {
   if (!warehouseToken || spoolMaxBytes <= 0 || sending) { return; }
-  if (Date.now() < retryAt || pendingBytes < spoolMaxBytes) { return; }
+  if (Date.now() < retryAt) { armRetry(); return; }
+  if (!foldAnyTail && pendingBytes < spoolMaxBytes) { return; }
   // One sender at a time. The lock also covers the daemon's own double trigger
   // (a POST landing while the previous child is closing). A stale lock from a
   // killed daemon is removed by hand: guessing at liveness is worse than a
-  // loud, resumable stop.
+  // loud, resumable stop — but the skip is still reported once, so folding that
+  // silently stops is distinguishable from folding with nothing to do.
   const lockPath = spool + ".lock";
   let lockFd;
   try {
     lockFd = fs.openSync(lockPath, "wx");
   } catch {
+    if (!lockBlocked) {
+      lockBlocked = true;
+      process.stderr.write(
+        "agent-warehouse-daemon: " + lockPath +
+          " is held; not folding (remove a stale lock by hand)\n",
+      );
+    }
     return;
   }
+  lockBlocked = false;
   sending = true;
+  pendingBytes = pendingTailBytes();
   const bytesAtStart = pendingBytes;
   process.stdout.write(
     "agent-warehouse-daemon: spool is " + pendingBytes +
@@ -172,12 +251,23 @@ function sendSpool() {
     sending = false;
     fs.closeSync(lockFd);
     fs.rmSync(lockPath, { force: true });
-    // The sender froze the tail by renaming it, so rows that landed after the
-    // rename are in a NEW spool and were not folded — they stay pending.
-    pendingBytes -= bytesAtStart;
+    // Measure what is left instead of subtracting what this process counted:
+    // rows that landed during the fold are in a NEW spool (the sender froze the
+    // old one by renaming it), and a failed fold leaves the whole tail behind as
+    // `spool.rm.<pid>`. Both are pending, and both are in the files.
+    pendingBytes = pendingTailBytes();
     if (code === 0) {
       process.stdout.write("agent-warehouse-daemon: spool folded\n");
-      sendSpool();
+      // Re-trigger only when the fold removed bytes: a sender that reports
+      // success without consuming would otherwise call itself forever.
+      if (pendingBytes < bytesAtStart) {
+        sendSpool();
+      } else if (pendingBytes > 0) {
+        process.stderr.write(
+          "agent-warehouse-daemon: spool folded but " + pendingBytes +
+            " bytes remain; not folding again until the next append\n",
+        );
+      }
     } else {
       // The sender keeps the spool on failure; back off so a host without
       // duckdb does not spawn a child per POST.
@@ -186,6 +276,7 @@ function sendSpool() {
         "agent-warehouse-daemon: spool send failed (" + code +
           "); spool kept, retry in " + sendRetryMs + " ms\n",
       );
+      armRetry();
     }
   };
   child.on("error", (error) => {
@@ -279,9 +370,9 @@ server.listen(port, host, () => {
       "agent-warehouse-daemon: AGENT_WAREHOUSE_SPOOL_MAX_BYTES=0 — spool self-send is off\n",
     );
   } else {
-    // A tail left by an earlier run is folded at startup, not after the next
-    // threshold's worth of appends.
-    sendSpool();
+    // Fold whatever the previous run left, over the ceiling or not: startup is
+    // the one moment nobody is appending, so it is the cheapest fold there is.
+    sendSpool(pendingBytes > 0);
   }
 });
 
