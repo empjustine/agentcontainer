@@ -20,6 +20,8 @@ sbex is a worked Spring Boot example whose subject is doing the ordinary things 
 | Heap and footprint on a small container                  | `memory.md`, `Containerfile`                                |
 | Servlet and reactive done optimally                      | `servlet-vs-reactive.md`, `sbex-servlet/`, `sbex-reactive/` |
 | Transactions and JdbcTemplate over Oracle and PostgreSQL | `persistence.md`, `sbex-core/…/db/`, both migrations        |
+| Other engines and the R2DBC access mode                  | `persistence-engines.md`                                    |
+| Heap bounds, compression and Jackson findings            | `optimisation-findings.md`                                  |
 | RabbitMQ publishing and consuming                        | `messaging.md`, `sbex-core/…/messaging/`                    |
 | Container builds, unpacked deployments                   | `container-image.md`, `Containerfile`                       |
 | AOT, CDS and the AOT cache                               | `memory.md` (the CDS section)                               |
@@ -33,6 +35,9 @@ sbex is a worked Spring Boot example whose subject is doing the ordinary things 
 | Spring Modulith events: registry and externalization     | `modulith-events.md`                                        |
 | What proves the limits, timeouts and log shape (NFR)     | `non-functional-testing.md`                                 |
 | End-to-end tracing and correlated logs                   | `observability.md`                                          |
+| SQLite backup and replication                            | `sqlite-replication.md`                                     |
+| The lakehouse workload as a port target                  | `datalakehouse-port.md`                                     |
+| The cold tier: Parquet, object storage and ADW           | `cold-persistence.md`, `cold-tier-platforms.md`             |
 
 ## The modules
 

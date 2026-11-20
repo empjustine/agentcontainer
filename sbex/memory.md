@@ -9,7 +9,7 @@ tags: ["jvm", "heap", "cds", "aot", "footprint"]
 
 # Memory: heap bounds, CDS and the AOT cache
 
-This file owns the footprint story: which JVM numbers a RAM-constrained container must set, which failures must end the process, and how CDS and the AOT cache cut both startup time and steady-state memory. It does not size the database pool or the messaging backlog — those are bounded in `messaging.md` and the `application.yml` files — nor the per-pod limit itself: `pod-sizing.md` owns the sweep that picks it. The reader arrives with a memory limit and a RSS graph; the procedure at the end turns both into a reviewed set of flags.
+This file owns the footprint story: which JVM numbers a RAM-constrained container must set, which failures must end the process, and how CDS and the AOT cache cut both startup time and steady-state memory. It does not size the database pool or the messaging backlog — those are bounded in `messaging.md` and the `application.yml` files — nor the per-pod limit itself: `pod-sizing.md` owns the sweep that picks it. What bounds a query's heap per engine and access mode is [sbex-optimisation-findings](optimisation-findings.md). The reader arrives with a memory limit and a RSS graph; the procedure at the end turns both into a reviewed set of flags.
 
 The flag set itself lives in the `Containerfile`'s `ENTRYPOINT`, beside a one-line reason each — this file carries the reasoning and the measurement behind the numbers.
 

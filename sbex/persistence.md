@@ -9,7 +9,7 @@ tags: ["jdbc", "transactions", "oracle", "postgresql", "flyway"]
 
 # Persistence: transactions, JdbcTemplate and two engines
 
-This file owns the `sbex-core/…/db/` package: where the transaction boundary sits, which JdbcTemplate shapes the repositories use, and how one codebase drives PostgreSQL and Oracle. It does not cover JPA beyond the closing section, nor connection-pool sizing — `memory.md` owns the pool numbers. The reader arrives with a schema and a question about transactions; the migration files and the contract tests are the worked answers.
+This file owns the `sbex-core/…/db/` package: where the transaction boundary sits, which JdbcTemplate shapes the repositories use, and how one codebase drives PostgreSQL and Oracle. It does not cover JPA beyond the closing section, nor connection-pool sizing — `memory.md` owns the pool numbers. Engine coverage beyond these two engines — SQLite, DuckDB, ClickHouse, the reactive access mode and SQLite replication — is [sbex-persistence-engines](persistence-engines.md). The reader arrives with a schema and a question about transactions; the migration files and the contract tests are the worked answers.
 
 ## The transaction boundary
 
