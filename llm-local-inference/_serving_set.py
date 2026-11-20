@@ -9,7 +9,9 @@ The serving set is the union of:
   - lib/curated/<org>--<repo>.json   what is served AND provisioned (docs/d212),
   - the model manifest rows          every declared quant, shards expanded from
                                      the committed repo manifest,
-  - each curated "optional"          the split index when the repo ships one.
+  - each curated "optional"          the split index when the repo ships one,
+  - every projector a repo ships     the mmproj files of any repo in the set, so
+                                     a projector is never prunable (docs/d218).
 
 The repo manifests under lib/hf-manifests/ are NOT part of this: they are
 committed facts (kilobytes each) and never live in the HF cache, so an
@@ -26,6 +28,10 @@ HERE = Path(__file__).parent
 LIB = HERE / "lib"
 SPLIT_RE = re.compile(r"-\d{5}-of-\d{5}\.gguf$")
 INDEX_SUFFIX = ".gguf.index.json"
+# The same vocabulary 30-generate.mjs's repoMmproj uses, on purpose: one word
+# for "projector" across both languages, so a file this keeps cannot be one the
+# generator would never serve, or the reverse.
+PROJECTOR_RE = re.compile(r"(?:^|/)mmproj-.*\.gguf$", re.IGNORECASE)
 
 
 def hub_cache() -> Path:
@@ -60,16 +66,20 @@ def repo_manifest(repo: str):
 
 
 def shards(repo: str, name: str) -> list:
-    """Every uploaded shard of a de-sharded name, from that repo's manifest.
+    """Every uploaded shard of a sharded name, from that repo's manifest.
 
-    A row names shard 1; the sibling shards are facts of the repo manifest, so
+    A row names ONE shard; the siblings are facts of the repo manifest, so
     expanding through it keeps a sharded model whole instead of leaving shard 1
-    beside a pruned 00002.
+    beside a pruned 00002. The row's own name is de-sharded before the lookup —
+    the comparison is against the group, not against the first shard, or a row
+    naming `-00002-of-` would match nothing and the pruner would erase the rest.
+    Mirrors 30-generate.mjs's allShards, which is the tool that emits --shard.
     """
     manifest = repo_manifest(repo)
-    if manifest is None:
+    if manifest is None or not SPLIT_RE.search(name):
         return [name]
-    matched = [p for p in manifest if SPLIT_RE.sub(".gguf", p) == name]
+    group = SPLIT_RE.sub(".gguf", name)
+    matched = [p for p in manifest if SPLIT_RE.sub(".gguf", p) == group]
     return matched or [name]
 
 
@@ -88,6 +98,14 @@ def serving_set() -> dict:
             keep.add(row["mmproj"])
         if row.get("model-draft"):
             keep.update(shards(repo, row["model-draft"]))
+    # Projectors are a REPO fact, and every one a repo in the set ships stays:
+    # the BF16-over-F16 preference is curation's display choice, not a keep
+    # choice, and resolving it here would be a second copy of that rule in
+    # another language. They are tiny next to the re-download a curation change
+    # would otherwise force, so keeping all of them costs nothing and makes
+    # pruning independent of whether curation has run yet (docs/d218).
+    for repo, keep in wanted.items():
+        keep.update(path for path in repo_manifest(repo) or {} if PROJECTOR_RE.search(path))
     return wanted
 
 

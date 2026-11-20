@@ -18,7 +18,9 @@
  * The ONE field a human must supply is the ":quant" label: it is a naming
  * choice (QAD-Q4_0 vs Q4_0), so this tool derives the trailing quant token from
  * the filename and 10-fetch-hf-manifests.py --print-plan audits whatever gets
- * written. An entry needs only hf-repo + model (d210).
+ * written. An entry needs only hf-repo + model (d210) — but drop the label
+ * when the repo holds no other row: then it selects nothing, and the served id
+ * loses the suffix too.
  *
  * Stdout is the fragment; log lines go to stderr. No flags: this is the whole
  * job (docs/d212).

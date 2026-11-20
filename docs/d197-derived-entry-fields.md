@@ -75,6 +75,27 @@ already documents.
 **A duplicate model id throws.** Two entries claiming one serving slot is an
 operator decision, not a log line.
 
+## Projector pick: quality first, deliberately not llama.cpp's rule
+
+llama.cpp answers the same question differently. With `--hf-repo` and no
+explicit projector, `common/download.cpp`'s `find_best_sibling` prefers the
+mmproj whose quant bit-width is CLOSEST to the served model's (Q8_0 for a Q4
+model, an exact-tag match first, directory depth before both, tree order last).
+It is a size match: the projector is assumed to be bandwidth-relevant next to
+the weights.
+
+This unit keeps the quality-first ladder instead — BF16, then F16, F32, Q8_0 —
+because a projector is one small file (kilobytes to about a gigabyte) whose
+precision does not move the memory budget the way the weights do, so the fleet
+takes the best available rather than the closest-sized. The choice is visible
+rather than inherited: the generated `cmd` names the exact file, so
+llama.cpp's heuristic never runs for a served entry; and where the two would
+disagree (a repo shipping both BF16 and a Q8_0 projector, e.g. JetBrains'
+blend or Muse-Glimmer), an ad-hoc `--hf-repo` run picks the Q8_0 file while
+this unit serves BF16. Both are valid projectors; only the default differs, and
+the cache keeps every projector a served repo ships (docs/d218), so neither
+choice turns into a re-download.
+
 ## Consequences
 
 The table lost 218 lines and four fields; what remains per entry is

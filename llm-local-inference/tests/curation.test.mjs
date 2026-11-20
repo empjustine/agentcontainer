@@ -141,6 +141,46 @@ test("curation plans the pruned file set and the resolved projector", () => {
 	}
 });
 
+test("config.d references only files the curated manifest declares", () => {
+	// The projector is the trap this pins: it is a REPO fact (resolveEntryFiles),
+	// never a model-manifest key, so a curated file derived from the row alone
+	// would leave --mmproj pointing at a file 70-prune-cache.py treats as
+	// undeclared and erases (docs/d218).
+	const dir = fixture();
+	try {
+		const result = run(dir, "30-generate.mjs");
+		assert.equal(result.status, 0, result.stdout + result.stderr);
+		const layer = JSON.parse(
+			readFileSync(join(dir, "config.d", "10-local-llm-inference.yaml"), "utf-8"),
+		);
+		const guest = "/home/ubuntu/.cache/huggingface/hub/";
+		let referenced = 0;
+		for (const entry of Object.values(layer.models)) {
+			for (const path of String(entry.cmd).split(" ").filter((t) => t.startsWith(guest))) {
+				const parts = path.slice(guest.length).split("/");
+				const repoDir = parts[0];
+				const file = parts.slice(3).join("/");
+				if (repoDir === undefined || file === "") { continue; }
+				const repo = repoDir.replace(/^models--/, "").replace("--", "/");
+				referenced += 1;
+				const rec = curated(dir, repo);
+				const declared = new Set([...rec.files, ...rec.optional]);
+				assert.ok(
+					declared.has(file),
+					`config.d references ${repo}/${file}, which its curated manifest omits`,
+				);
+			}
+		}
+		assert.ok(referenced > 0, "the fixture must emit at least one served file");
+		assert.ok(
+			curated(dir, "acme/served-GGUF").files.includes("mmproj-BF16.gguf"),
+			"the resolved projector must be curated",
+		);
+	} finally {
+		rmSync(dir, { recursive: true, force: true });
+	}
+});
+
 test("a curated file disappears when its repo stops serving", () => {
 	const dir = fixture();
 	try {

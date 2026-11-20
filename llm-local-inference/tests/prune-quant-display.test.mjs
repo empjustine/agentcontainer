@@ -600,19 +600,27 @@ const committedLayer = generate();
 const committedIds = Object.keys(committedLayer).sort();
 
 test("the committed catalog drops the label where no choice exists", () => {
-	// One row in the repo means the `:quant` selects nothing; multi-quant repos
-	// keep it because their ids would collide without it (d210).
-	// Same split as above: the RULE is asserted by the fixture cases, the current
-	// catalog only reports. A repo that leaves the manifest takes its id with it.
-	for (const id of ["0text-unsloth/Qwen3.6-27B-GGUF", "bartowski/Ling-3.0-tiny-GGUF"]) {
-		if (committedLayer[id] === undefined) {
-			console.warn("expected a label-less id for the current catalog: " + id);
-		}
+	// d210: a repo with exactly one row names nothing by its `:quant`, so its id
+	// loses the suffix; a multi-quant repo keeps it, because there the label is
+	// which file the id selects. Derived from the catalog rather than pinned to a
+	// quant, so curating a repo down (or out) cannot rot the assertion.
+	/** @type {Map<string, Set<string|null>>} */
+	const labelsByRepo = new Map();
+	for (const id of committedIds) {
+		const bare = id.replace(MODE_PREFIX, "");
+		const cut = bare.lastIndexOf(":");
+		const repo = cut === -1 ? bare : bare.slice(0, cut);
+		const labels = labelsByRepo.get(repo) ?? new Set();
+		labels.add(cut === -1 ? null : bare.slice(cut + 1));
+		labelsByRepo.set(repo, labels);
 	}
-	assert.ok(
-		committedLayer["0text-unsloth/Qwen3.8-27B-GGUF:Q4_K_M"],
-		"labelled multi-quant id",
-	);
+	for (const [repo, labels] of labelsByRepo) {
+		if (labels.size === 1 && labels.has(null)) {
+			continue; // one row: the id it emits names nothing, as it should
+		}
+		assert.ok(!labels.has(null), `${repo} mixes a labelled and an unlabelled id`);
+		assert.ok(labels.size > 1, `${repo} keeps a :quant label on its only row (d210)`);
+	}
 });
 
 test("the committed catalog keeps exactly the full-precision rows it can serve", () => {

@@ -3,17 +3,15 @@
   "manifestCommit": "a483e9e6cbd595906af30beda3187c2663a1118c",
   "entries": [
     "unsloth/Qwen3.6-35B-A3B-GGUF:Q8_0",
-    "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K",
     "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q6_K_XL",
     "unsloth/Qwen3.6-35B-A3B-GGUF:UD-Q8_K_XL"
   ],
   "files": [
     "Qwen3.6-35B-A3B-Q8_0.gguf",
-    "Qwen3.6-35B-A3B-UD-Q6_K.gguf",
     "Qwen3.6-35B-A3B-UD-Q6_K_XL.gguf",
     "Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf",
     "mmproj-BF16.gguf"
   ],
   "optional": [],
-  "bytes": 137409243744
+  "bytes": 108100923008
 }

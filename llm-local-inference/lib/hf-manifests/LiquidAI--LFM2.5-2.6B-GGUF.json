@@ -1,7 +1,7 @@
 {
 	"repo": "LiquidAI/LFM2.5-2.6B-GGUF",
 	"commit": "e7caca5d835a3901a8e0d63e94009429bafafdfc",
-	"fetched_at": "2026-11-19T02:30:38+00:00",
+	"fetched_at": "2026-11-19T18:59:05+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

@@ -28,6 +28,16 @@ in one mode. `served` repos have model entries and curated manifests;
 cached weights are prunable: the model manifest is the keep order, so an
 audit-only repo keeps its facts (the repo manifest) for an offline promotion
 and not its bytes (docs/d218). A repo with no line is out of scope.
+
+The curated manifests are COMMITTED, so a host that only provisions needs no
+GPU, no endpoint and no Hub beyond the download itself: `40-download-models.py`
+reads them, and they carry the projector the generated config passes as
+`--mmproj`. Regenerating them (`30-generate.mjs`) is the step that wants the
+serving host — on a plain prep box it needs `LOCAL_INFERENCE=1` and an existing
+`HF_HUB_CACHE` directory. Pruning does not depend on either: it keeps every
+projector the repo manifest of a repo in the set ships, not just the one
+curation picked (docs/d218).
+
 The checksum step is `50-verify-cache.py` (its own tool: never
 `--fail-on-missing-files`, which would fail on exactly the files a curated set
 skips). Provisioning and verification are separate jobs on purpose.

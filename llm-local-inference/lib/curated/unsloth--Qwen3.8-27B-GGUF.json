@@ -2,35 +2,17 @@
   "repo": "unsloth/Qwen3.8-27B-GGUF",
   "manifestCommit": "4af51b3542f775b0a8e4b310bfb3f17e01c306c9",
   "entries": [
-    "unsloth/Qwen3.8-27B-GGUF:Q4_0",
-    "unsloth/Qwen3.8-27B-GGUF:Q4_1",
-    "unsloth/Qwen3.8-27B-GGUF:Q4_K_M",
-    "unsloth/Qwen3.8-27B-GGUF:Q4_K_S",
-    "unsloth/Qwen3.8-27B-GGUF:Q4_K_XL",
-    "unsloth/Qwen3.8-27B-GGUF:Q5_K_M",
-    "unsloth/Qwen3.8-27B-GGUF:Q5_K_S",
-    "unsloth/Qwen3.8-27B-GGUF:Q5_K_XL",
     "unsloth/Qwen3.8-27B-GGUF:Q6_K",
     "unsloth/Qwen3.8-27B-GGUF:Q6_K_L",
     "unsloth/Qwen3.8-27B-GGUF:Q6_K_M",
     "unsloth/Qwen3.8-27B-GGUF:Q6_K_XL",
     "unsloth/Qwen3.8-27B-GGUF:Q8_0",
     "unsloth/Qwen3.8-27B-GGUF:Q8_K_L",
-    "unsloth/Qwen3.8-27B-GGUF:Q8_K_XL",
-    "unsloth/Qwen3.8-27B-GGUF:UD-IQ4_XS"
+    "unsloth/Qwen3.8-27B-GGUF:Q8_K_XL"
   ],
   "files": [
     "MTP/mtp-Qwen3.8-27B-Q4_0.gguf",
-    "Qwen3.8-27B-Q4_0.gguf",
-    "Qwen3.8-27B-Q4_1.gguf",
     "Qwen3.8-27B-Q8_0.gguf",
-    "Qwen3.8-27B-UD-IQ4_XS.gguf",
-    "Qwen3.8-27B-UD-Q4_K_M.gguf",
-    "Qwen3.8-27B-UD-Q4_K_S.gguf",
-    "Qwen3.8-27B-UD-Q4_K_XL.gguf",
-    "Qwen3.8-27B-UD-Q5_K_M.gguf",
-    "Qwen3.8-27B-UD-Q5_K_S.gguf",
-    "Qwen3.8-27B-UD-Q5_K_XL.gguf",
     "Qwen3.8-27B-UD-Q6_K.gguf",
     "Qwen3.8-27B-UD-Q6_K_L.gguf",
     "Qwen3.8-27B-UD-Q6_K_M.gguf",
@@ -40,5 +22,5 @@
     "mmproj-BF16.gguf"
   ],
   "optional": [],
-  "bytes": 342544355680
+  "bytes": 185399744576
 }

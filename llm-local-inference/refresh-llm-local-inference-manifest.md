@@ -150,17 +150,19 @@ heuristic is `10-fetch-hf-manifests.py` (Step 5).
 ## Step 3 — paste the entries (the promotion's human half)
 
 Insert the new object(s) into the `models` array. Example (the LFM2.5-8B-A1B
-MoE, text-only, native ctx):
+MoE, text-only, native ctx, and the repo's only row):
 
 ```json
 {
-  "hf-repo": "unsloth/LFM2.5-8B-A1B-GGUF:UD-Q8_K_XL",
+  "hf-repo": "unsloth/LFM2.5-8B-A1B-GGUF",
   "model": "LFM2.5-8B-A1B-UD-Q8_K_XL.gguf",
   "__argv": "${lfm25}"
 }
 ```
 
-That is the whole entry. `mmproj`, `ctx-size`, `ctx-native`, `cache-type-v`
+That is the whole entry. Drop the `:quant` `20-propose-entries.mjs` hands you
+when the entry is the repo's only row: the label exists only where it selects
+something, and the served id loses the suffix with it (d210). `mmproj`, `ctx-size`, `ctx-native`, `cache-type-v`
 and `parallel` are all derived (projector and parameter count
 from the hf-manifest, window from `lib/gguf-facts.json`, KV type and
 parallelism from the generator defaults); write one only to deviate.

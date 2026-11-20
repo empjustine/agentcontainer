@@ -51,8 +51,9 @@
  *   config.d/*.yaml                  the llama-swap rendering
  * The cache scope (lib/cache-scope.json) is checked in both directions before
  * anything is written: an entry without a scope line, a served line without
- * entries, an audit-only line with entries, or an unknown mode stops the run
- * (docs/d212).
+ * entries and an audit-only line with entries are REPORTED as warnings (the row
+ * edit is the decision, the scope line is bookkeeping); an unknown mode stops
+ * the run (docs/d212).
  *
  *   LOCAL_INFERENCE   1 = force the local-inference layer regardless of the
  *                       capability gate (emits container-side paths; debug)
@@ -1026,30 +1027,40 @@ function validateScope(scope, rows) {
 }
 
 /**
- * Fold one resolved entry into its repo's curated record: every shard, the
- * projector the entry resolved (a manifest fact, not a row key), the drafter
- * sidecar, and the split index when the repo ships one.
+ * Fold one entry's BAKED paths into its repo's curated record.
+ *
+ * WHY the baked paths and not the entry's own keys: they are exactly the files
+ * config.d hands llama-server, so the provisioning list and the serving list are
+ * ONE derivation. A curated file that re-derived the set from the row would be a
+ * second source, and a projector is the case that bites — it is a repo fact
+ * (resolveEntryFiles), never a model-manifest key, so an under-derived curated
+ * file lets a pruner erase a projector the emitted config requires (docs/d218).
  * @param {Map<string, {entries: Set<string>, files: Set<string>, optional: Set<string>}>} curated
- * @param {Record<string, any>} m one entry with DEFAULTS applied and files resolved
+ * @param {Record<string, any>} m one entry (label + the split-index probe)
+ * @param {{modelPath: string, shardPaths: string[], mmprojPath: string|null, draftPath: string|null}} baked
  * @returns {void}
  */
-function noteCurated(curated, m) {
+function noteCurated(curated, m, baked) {
 	const repo = m["hf-repo"].split(":")[0];
-	const shipped = new Set(repoManifest(repo).files.map((f) => f.path));
+	const head = `${HUB_GUEST}/models--${repo.split("/").join("--")}/snapshots/`;
+	/** @param {string} guestPath @returns {string} repo-relative file name */
+	const rel = (guestPath) =>
+		guestPath.slice(head.length).split("/").slice(1).join("/");
 	/** @type {string[]} */
-	const files = allShards(m.model);
-	if (m.mmproj) {
-		files.push(m.mmproj);
+	const bakedPaths = [baked.modelPath, ...baked.shardPaths];
+	if (baked.mmprojPath) {
+		bakedPaths.push(baked.mmprojPath);
 	}
-	if (m["model-draft"]) {
-		files.push(m["model-draft"]);
+	if (baked.draftPath) {
+		bakedPaths.push(baked.draftPath);
 	}
+	const shipped = new Set(repoManifest(repo).files.map((f) => f.path));
 	const rec = curated.get(repo) ?? { entries: new Set(), files: new Set(), optional: new Set() };
 	rec.entries.add(m["hf-repo"]);
-	for (const file of files) {
-		rec.files.add(file);
+	for (const guestPath of bakedPaths) {
+		rec.files.add(rel(guestPath));
 	}
-	const index = `${shardOne(m.model)}.index.json`;
+	const index = rel(baked.modelPath) + ".index.json";
 	if (shipped.has(index)) {
 		rec.optional.add(index);
 	}
@@ -1141,8 +1152,8 @@ function generateLocalInference() {
 		 * refs/main carries the model, its every shard, and the mmproj/drafter
 		 * at the same commit, else the bake warns and names what provisioning owes.
 		 */
-		noteCurated(curated, m);
 		const baked = bakeSnapshotPaths(m);
+		noteCurated(curated, m, baked);
 		const modes = m.mmproj
 			? mmprojModesFor(paramsB ?? declaredParamsB(m))
 			: [{ seg: null, vision: false }];

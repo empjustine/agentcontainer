@@ -1,0 +1,13 @@
+{
+  "repo": "unsloth/Qwen3.6-27B-GGUF",
+  "manifestCommit": "82d411acf4a06cfb8d9b073a5211bf410bfc29bf",
+  "entries": [
+    "unsloth/Qwen3.6-27B-GGUF"
+  ],
+  "files": [
+    "Qwen3.6-27B-UD-Q8_K_XL.gguf",
+    "mmproj-BF16.gguf"
+  ],
+  "optional": [],
+  "bytes": 36256310048
+}

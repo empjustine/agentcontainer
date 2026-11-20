@@ -2,14 +2,12 @@
   "repo": "byteshape/Qwen3.8-27B-GGUF",
   "manifestCommit": "3fdfbd9b4a618303ad36edb151e95d134ece8c18",
   "entries": [
-    "byteshape/Qwen3.8-27B-GGUF:IQ3_S-3.23bpw",
-    "byteshape/Qwen3.8-27B-GGUF:IQ4_XS-3.84bpw"
+    "byteshape/Qwen3.8-27B-GGUF"
   ],
   "files": [
-    "Qwen3.8-27B-IQ3_S-3.23bpw.gguf",
     "Qwen3.8-27B-IQ4_XS-3.84bpw.gguf",
     "mmproj-bf16.gguf"
   ],
   "optional": [],
-  "bytes": 25049552864
+  "bytes": 14014198368
 }

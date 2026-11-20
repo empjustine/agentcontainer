@@ -54,6 +54,13 @@ Three consequences are deliberate:
 - **The preview is a separate tool** (`60-audit-snapshots.py`), sharing the
   classification through `_serving_set.py` so the report and the deletion cannot
   disagree. `50-verify-cache.py` stays verification-only.
+- **Every projector a served repo ships stays.** It is a repo fact in the
+  committed repo manifest, and the BF16-over-F16 preference is curation's
+  display choice, not a keep choice; resolving it here would be a second copy
+  of that rule in another language. One or three files per repo, kilobytes to
+  a gigabyte, is a rounding error next to the mismatch it prevents: pruning
+  can no longer erase a projector because curation did not run or ran on
+  another host.
 - **Pruning is idempotent with provisioning**: a removed file is fetched again
   by `40-download-models.py` the moment the manifest declares it, so the cost of
   pruning too eagerly is a re-download, never a broken config.

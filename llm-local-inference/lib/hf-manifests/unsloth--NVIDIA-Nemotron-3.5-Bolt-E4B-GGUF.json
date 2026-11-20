@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/NVIDIA-Nemotron-3.5-Bolt-E4B-GGUF",
 	"commit": "b738967d6da3441a7d1c71fcec15e49e32e16ecd",
-	"fetched_at": "2026-11-19T02:30:37+00:00",
+	"fetched_at": "2026-11-19T18:59:13+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

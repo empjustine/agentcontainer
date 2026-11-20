@@ -1,146 +1,66 @@
 {
-  "JetBrains/Qwen3.8-3.6-27B-blend-GGUF": {
-    "arch": "qwen35",
-    "ctx-native": 262144
-  },
-  "LiquidAI/LFM2.5-2.6B-GGUF": {
-    "files": {
-      "LFM2.5-2.6B-BF16.gguf": {
-        "arch": "lfm2",
-        "ctx-native": 131072
-      },
-      "LFM2.5-2.6B-Q4_0.gguf": {
-        "arch": "lfm2",
-        "ctx-native": 131072
-      },
-      "LFM2.5-2.6B-Q4_K_M.gguf": {
-        "arch": "lfm2",
-        "ctx-native": 131072
-      },
-      "LFM2.5-2.6B-Q5_K_M.gguf": {
-        "arch": "lfm2",
-        "ctx-native": 131072
-      },
-      "LFM2.5-2.6B-Q6_K.gguf": {
-        "arch": "lfm2",
-        "ctx-native": 131072
-      },
-      "LFM2.5-2.6B-Q8_0.gguf": {
-        "arch": "lfm2",
-        "ctx-native": 131072
-      },
-      "LFM2.5-2.6B-QAD-Q4_0.gguf": {
-        "arch": "lfm2",
-        "ctx-native": 128000
-      }
-    }
-  },
-  "LiquidAI/LFM3-1.7B-GGUF": {
-    "arch": "lfm3",
-    "ctx-native": 262144
-  },
-  "XHToken/Spark-X2.6-1.7B-GGUF": {
-    "arch": "spark2_5",
-    "ctx-native": 1048576
-  },
-  "XHToken/Spark-X2.6-4B-GGUF": {
-    "arch": "spark2_5",
-    "ctx-native": 1048576
-  },
-  "bartowski/Ling-3.0-tiny-GGUF": {
-    "arch": "bailingmoe3",
-    "ctx-native": 131072
-  },
-  "bartowski/ai9stars_G9v3-3B-GGUF": {
-    "arch": "llama",
-    "ctx-native": 131072
-  },
-  "bloomer010/Ling-3.0-tiny-GGUF": {
-    "arch": "bailingmoe3",
-    "ctx-native": 131072
-  },
-  "byteshape/Qwen3.6-35B-A3B-GGUF": {
-    "arch": "qwen35moe",
-    "ctx-native": 262144
-  },
-  "byteshape/Qwen3.8-27B-GGUF": {
-    "arch": "qwen35",
-    "ctx-native": 262144
-  },
-  "openbmb/MiniCPM5-2B-GGUF": {
-    "arch": "llama",
-    "ctx-native": 131072
-  },
-  "poolside/Laguna-XS-2.1-GGUF": {
-    "arch": "laguna",
-    "ctx-native": 262144
-  },
-  "unsloth/LFM2.5-24B-A2B-GGUF": {
-    "arch": "lfm2moe",
-    "ctx-native": 131072
-  },
-  "unsloth/LFM2.5-8B-A1B-GGUF": {
-    "arch": "lfm2moe",
-    "ctx-native": 128000
-  },
-  "unsloth/LFM2.5-VL-3B-GGUF": {
-    "arch": "lfm2",
-    "ctx-native": 128000
-  },
-  "unsloth/Qwen3.6-27B-GGUF": {
-    "arch": "qwen35",
-    "ctx-native": 262144
-  },
-  "unsloth/Qwen3.6-35B-A3B-GGUF": {
-    "arch": "qwen35moe",
-    "ctx-native": 262144
-  },
-  "unsloth/Qwen3.8-27B-GGUF": {
-    "arch": "qwen35",
-    "ctx-native": 262144
-  },
-  "unsloth/gemma-4-12B-it-qat-GGUF": {
-    "arch": "gemma4",
-    "ctx-native": 262144
-  },
-  "unsloth/gemma-4-12b-it-GGUF": {
-    "arch": "gemma4",
-    "ctx-native": 262144
-  },
-  "unsloth/gemma-4-26B-A4B-it-GGUF": {
-    "arch": "gemma4",
-    "ctx-native": 262144
-  },
-  "unsloth/gemma-4-26B-A4B-it-qat-GGUF": {
-    "arch": "gemma4",
-    "ctx-native": 262144
-  },
-  "unsloth/gemma-4-31B-it-qat-GGUF": {
-    "arch": "gemma4",
-    "ctx-native": 262144
-  },
-  "unsloth/gemma-4-E2B-it-GGUF": {
-    "arch": "gemma4",
-    "ctx-native": 131072
-  },
-  "unsloth/gemma-4-E2B-it-qat-GGUF": {
-    "arch": "gemma4",
-    "ctx-native": 131072
-  },
-  "unsloth/gemma-4-E2B-it-qat-mobile-GGUF": {
-    "arch": "gemma4",
-    "ctx-native": 131072
-  },
-  "unsloth/gemma-4-E4B-it-GGUF": {
-    "arch": "gemma4",
-    "ctx-native": 131072
-  },
-  "unsloth/gemma-4-E4B-it-qat-GGUF": {
-    "arch": "gemma4",
-    "ctx-native": 131072
-  },
-  "unsloth/gemma-4-E4B-it-qat-mobile-GGUF": {
-    "arch": "gemma4",
-    "ctx-native": 131072
-  }
+	"byteshape/Qwen3.6-35B-A3B-GGUF": {
+		"arch": "qwen35moe",
+		"ctx-native": 262144
+	},
+	"byteshape/Qwen3.8-27B-GGUF": {
+		"arch": "qwen35",
+		"ctx-native": 262144
+	},
+	"unsloth/LFM2.5-24B-A2B-GGUF": {
+		"arch": "lfm2moe",
+		"ctx-native": 131072
+	},
+	"unsloth/LFM2.5-8B-A1B-GGUF": {
+		"arch": "lfm2moe",
+		"ctx-native": 128000
+	},
+	"unsloth/LFM2.5-VL-3B-GGUF": {
+		"arch": "lfm2",
+		"ctx-native": 128000
+	},
+	"unsloth/Qwen3.6-27B-GGUF": {
+		"arch": "qwen35",
+		"ctx-native": 262144
+	},
+	"unsloth/Qwen3.6-35B-A3B-GGUF": {
+		"arch": "qwen35moe",
+		"ctx-native": 262144
+	},
+	"unsloth/Qwen3.8-27B-GGUF": {
+		"arch": "qwen35",
+		"ctx-native": 262144
+	},
+	"unsloth/gemma-4-12B-it-qat-GGUF": {
+		"arch": "gemma4",
+		"ctx-native": 262144
+	},
+	"unsloth/gemma-4-12b-it-GGUF": {
+		"arch": "gemma4",
+		"ctx-native": 262144
+	},
+	"unsloth/gemma-4-26B-A4B-it-GGUF": {
+		"arch": "gemma4",
+		"ctx-native": 262144
+	},
+	"unsloth/gemma-4-26B-A4B-it-qat-GGUF": {
+		"arch": "gemma4",
+		"ctx-native": 262144
+	},
+	"unsloth/gemma-4-31B-it-GGUF": {
+		"arch": "gemma4",
+		"ctx-native": 262144
+	},
+	"unsloth/gemma-4-31B-it-qat-GGUF": {
+		"arch": "gemma4",
+		"ctx-native": 262144
+	},
+	"unsloth/gemma-4-E4B-it-GGUF": {
+		"arch": "gemma4",
+		"ctx-native": 131072
+	},
+	"unsloth/gemma-4-E4B-it-qat-GGUF": {
+		"arch": "gemma4",
+		"ctx-native": 131072
+	}
 }
