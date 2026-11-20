@@ -27,6 +27,11 @@ sbex is a worked Spring Boot example whose subject is doing the ordinary things 
 | Records, Jackson streaming, Maven wrapper and toolchains | `java-and-tooling.md`                                       |
 | Which Java level each feature needs (17/21/25)           | `java-and-tooling.md` (the level matrix)                    |
 | Per-pod heap limit vs throughput (Pareto frontier)       | `pod-sizing.md`                                             |
+| Priority classes, hard and soft pools, per-job breakers  | `resource-isolation.md`                                     |
+| Per-subject (JWT) fairness and quota requirements        | `tenant-fairness.md`                                        |
+| Queue and DLQ operations console requirements            | `queue-operations.md`                                       |
+| Spring Modulith events: registry and externalization     | `modulith-events.md`                                        |
+| What proves the limits, timeouts and log shape (NFR)     | `non-functional-testing.md`                                 |
 | End-to-end tracing and correlated logs                   | `observability.md`                                          |
 
 ## The modules
