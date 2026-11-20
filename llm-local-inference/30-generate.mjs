@@ -342,27 +342,6 @@ function bakeSnapshotPaths(m) {
 }
 
 /**
- * One llama-swap model per level of commitment to GPU-offloading the vision
- * projector — the fan is size-gated, see MMPROJ_OFFLOAD_MAX_VRAM_SHARE. The
- * middle slug segment doubles as a llama-swap macro name
- * (llama-swap-core.json):
- *   0text    -> --no-mmproj --ubatch-size 512   (projector never loaded; also
- *              emitted without --mmproj so the projector is never required)
- *   1vision  -> --no-mmproj-offload --ubatch-size 2048  (projector loaded, stays on CPU)
- *   2mmproj  -> --ubatch-size 2048                      (projector offloaded to GPU)
- * The 1vision/2mmproj variants additionally pass --image-min-tokens/
- * --image-max-tokens (the manifest pair when present, else
- * IMAGE_TOKENS_DEFAULT), and advertise the "image" input modality; 0text and
- * non-mmproj models stay text-only.
- * @type {readonly { seg: string|null, vision: boolean }[]}
- */
-const MMPROJ_MODES = [
-	{ seg: "0text", vision: false },
-	{ seg: "1vision", vision: true },
-	{ seg: "2mmproj", vision: true },
-];
-
-/**
  * Image token budget for vision modes when an entry carries no
  * `image-min-tokens`/`image-max-tokens` pair. The pair sits in the manifest
  * only as a deviation from this value (gemma-4's 1120), so absence stays the
@@ -415,73 +394,12 @@ function bytesVramShare(bytes) {
 }
 
 /**
- * Projector-offload ceiling: d055's gate, re-landed after d170 retired
- * `size-gb`. Above three quarters of the card the weights leave the GPU-resident
- * projector no headroom, so `2mmproj` runs SLOWER than `1vision` — the mode's
- * premise inverts exactly where it is offered. `0text` + `1vision` still cover
- * text and CPU-projector vision, so only the redundant variant goes (d195).
- * @type {number}
- */
-const MMPROJ_OFFLOAD_MAX_VRAM_SHARE = 0.75;
-
-/**
- * "Small model" line: weights under a quarter of the card. Both trimming rules
- * read it, because below it nothing needs trimming —
- *  - the quant ladder's cheapest entries are all servable, so they are noise
- *    (CHEAP_QUANT constants), and
- *  - a projector fits alongside the weights comfortably, so `0text` — the
- *    no-projector mode whose whole point is clawing VRAM back — buys a caller
- *    nothing and costs them images (d200).
+ * "Small model" line: weights under a quarter of the card. The cheap-quant
+ * cut reads it: below the line every quant is servable, so the cheapest ones
+ * are noise in a catalog this size (docs/d200).
  * @type {number}
  */
 const SMALL_MODEL_VRAM_SHARE = 0.25;
-
-/**
- * The publisher's declared parameter count from the repo slug — `Qwen3.8-27B`,
- * `gemma-4-E2B`, `LFM2.5-VL-3B` — in billions, or null.
- * A name read is needed because 10 of the 18 mmproj repos ship NO full-precision
- * file, so `totalParamsB` is null for exactly the 26B/27B/31B/35B qat, byteshape
- * and JetBrains repos the ceiling exists to catch — and d170's "unsized keeps"
- * stance would then hand them the one mode the ceiling suppresses. The token
- * agrees with the manifest count on every repo where both exist, and the
- * degenerate active-parameter segments (`A3B`, `A4B`) never come first.
- * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
- * @returns {number|null}
- */
-function declaredParamsB(m) {
-	const slug = m["hf-repo"].split(":")[0].split("/").pop() ?? "";
-	const match = /(?:^|[^0-9])(\d+(?:\.\d+)?)b(?:[^a-z0-9]|$)/i.exec(slug);
-	return match ? Number(match[1]) : null;
-}
-
-/**
- * The fan, gated from BOTH ends (docs/d195, d200): the mode set exists to trade
- * VRAM for projector placement, so it only earns its slots where VRAM is
- * actually contested.
- *  - over the ceiling (weights > 75% of the card) the offloaded projector has no
- *    headroom and runs slower than the CPU one: drop `2mmproj`;
- *  - under the small-model line (weights < 25%) the projector fits next to the
- *    weights anyway, so `0text` — the no-projector mode whose only purpose is
- *    clawing VRAM back — is a needlessly compromised candidate: drop it.
- * @param {number|null} paramsB total (not active) parameters, or null when
- * neither the manifest nor the slug declares them
- * @returns {{seg: string|null, vision: boolean}[]} the modes this entry emits —
- * unknown parameters keep all three, the "unsized keeps, never guesses" stance
- * d170 recorded
- */
-function mmprojModesFor(paramsB) {
-	if (paramsB === null) {
-		return MMPROJ_MODES;
-	}
-	const share = weightsVramShare(paramsB);
-	if (share > MMPROJ_OFFLOAD_MAX_VRAM_SHARE) {
-		return MMPROJ_MODES.filter((mode) => mode.seg !== "2mmproj");
-	}
-	if (share < SMALL_MODEL_VRAM_SHARE) {
-		return MMPROJ_MODES.filter((mode) => mode.seg !== "0text");
-	}
-	return MMPROJ_MODES;
-}
 
 /**
  * Projector quant preference, best first. BF16 is the fleet ceiling for a
@@ -598,29 +516,6 @@ function resolveEntryFiles(m) {
 	} else {
 		delete m.mmproj;
 	}
-}
-
-/**
- * @param {number} contextWindow
- * @returns {string} zero-padded context slug for the model id
- */
-// The quant now lives in `hf-repo` as `repo:revision`, and the kv-cache type is
-// emitted inline (--cache-type-k/-v), so neither the quant slug nor the
-// kv-quant segment appears in the id anymore — just the mmproj mode segment
-// ("" for non-mmproj models) and the (unique) hf-repo. The active-b slug and
-// the context slug are gone with their tables (d170): no guard anywhere
-// protected either against drift, the tool that refreshed one is gone, and
-// the context window a model serves is a property of the entry, not of the
-// caller's choice — a second id spelling of the same ctx would only invite
-// callers to pin a stale one. hf-repo carries the quant, so ids stay unique
-// as long as one entry exists per repo:quant.
-/**
- * @param {Record<string, any>} m
- * @param {string|null} modeSeg
- * @returns {string} the derived llama-swap model id
- */
-function deriveModelId(m, modeSeg) {
-	return `${modeSeg ? `${modeSeg}-` : ""}${m["hf-repo"]}`;
 }
 
 /**
@@ -1123,7 +1018,6 @@ function generateLocalInference() {
 	for (const raw of entries) {
 		const m = { ...DEFAULTS, ...raw };
 		resolveEntryFiles(m);
-		const paramsB = totalParamsB(repoGgufSizes(m["hf-repo"].split(":")[0]));
 		// The window is the GGUF header's `context_length`, capped by the fleet
 		// ceiling; an entry may pin a LOWER value but never a higher one, because
 		// the header is hardware truth and a pinned value above it is a claim the
@@ -1148,111 +1042,114 @@ function generateLocalInference() {
 		ctxSize = Math.min(ctxSize, CTX_CAP);
 		const nPredict = ctxSize;
 		/**
-		 * One snapshot resolution per ENTRY (all mmproj modes share it):
+		 * One snapshot resolution per ENTRY:
 		 * refs/main carries the model, its every shard, and the mmproj/drafter
 		 * at the same commit, else the bake warns and names what provisioning owes.
 		 */
 		const baked = bakeSnapshotPaths(m);
 		noteCurated(curated, m, baked);
-		const modes = m.mmproj
-			? mmprojModesFor(paramsB ?? declaredParamsB(m))
-			: [{ seg: null, vision: false }];
-		for (const mode of modes) {
-			const modalities = mode.vision ? ["text", "image"] : ["text"];
-			/**
-			 * The family macro reference (${qwen38} etc.) and any literal extra flags
-			 * live in __argv verbatim; llama-swap expands ${...} at load. Empty __argv
-			 * expands to nothing; shlex collapses the gap. The expanded
-			 * ${LLAMA_SERVER} must be the FIRST cmd token: shlex argv[0] is the
-			 * server binary llama-swap resolves on PATH and execs directly.
-			 * @type {string}
-			 */
-			let cmd = LLAMA_SERVER_MACRO;
-			// The mode slug is verbatim llama-swap macro text (\${0text} etc.),
-			// NOT JS interpolation — it expands to the projector-offload flags.
-			if (mode.seg) {
-				cmd += ` \${${mode.seg}}`;
-			}
-			if (mode.vision) {
-				cmd += ` --image-min-tokens ${m["image-min-tokens"] ?? IMAGE_TOKENS_DEFAULT} --image-max-tokens ${m["image-max-tokens"] ?? IMAGE_TOKENS_DEFAULT}`;
-			}
-			if (m.__argv) {
-				cmd += ` ${m.__argv}`;
-			}
-			// Keys are never quantized: the key cache is the KLD-bearing half of the
-			// trade, so it stays at llama.cpp's f16 default with no flag at all.
-			cmd += ` --cache-type-v ${m["cache-type-v"]}`;
-			cmd += ` --ctx-size ${ctxSize} --n-predict ${nPredict}`;
-			// The spec type is a per-ENTRY fact (docs/d206): a sidecar names its own
-			// kind (`draft-mtp` for the MTP sidecars, `draft-dflash` for a dflash
-			// one), and a model whose speculator is built into the weights carries
-			// the type with no sidecar at all — llama.cpp then drafts against a
-			// second context of the TARGET model. Emitted explicitly either way:
-			// auto-inference only happened on the retired --hf-repo path.
-			const speculates = baked.draftPath !== null || m["spec-type"];
-			if (speculates) {
-				cmd += ` --spec-type ${m["spec-type"] || DEFAULT_SPEC_TYPE}`;
-				// The drafter's cache follows the entry's value quant (docs/d206): one
-				// entry decides both contexts, and a entry left at f16 needs no flag
-				// because llama.cpp's draft default is f16 too. Self-speculation gets
-				// this as well — the draft context exists either way.
-				if (m["cache-type-v"] !== "f16") {
-					cmd += ` --spec-draft-type-v ${m["cache-type-v"]}`;
-				}
-			}
-			if (![1, 2].includes(m.parallel)) {
-				throw new Error(
-					`model ${m["hf-repo"]} needs --parallel 1 or --parallel 2, got ${JSON.stringify(m.parallel)}`,
-				);
-			}
-			cmd += ` --parallel ${m.parallel}`;
-			// Baked snapshot paths last (the order the retired launch-gguf.sh
-			// appended them in).  0text omits --mmproj entirely — the projector
-			// must not be required for a text-only serving mode.
-			cmd += ` --model ${baked.modelPath}`;
-			if (baked.shardPaths.length > 0) {
-				cmd += ` --shard ${baked.shardPaths.join(",")}`;
-			}
-			if (mode.seg !== "0text" && baked.mmprojPath) {
-				cmd += ` --mmproj ${baked.mmprojPath}`;
-			}
-			if (baked.draftPath) {
-				cmd += ` --model-draft ${baked.draftPath}`;
-			}
-
-			const id = deriveModelId(m, mode.seg);
-			if (models[id]) {
-				// A duplicate id is two entries claiming one serving slot: emitting
-				// one and dropping the other silently removes a model from the
-				// catalog, and the generated layer would no longer be a function of
-				// the model manifest (d050). Stop and make the operator choose.
-				throw new Error(
-					`duplicate derived model id "${id}" — two entries serve the same repo:quant and mode; fix lib/llamacpp-model-data.json`,
-				);
-			}
-			// capabilities.context enriches llama-swap's served metadata with the
-			// context window; the "metadata" key (exact name required by llama-swap)
-			// mirrors a pi-coding-agent models.json provider.models[] entry
-			// (reasoning / input / contextWindow / maxTokens).
-			models[id] = {
-				cmd,
-				capabilities: { in: modalities, out: ["text"], context: ctxSize },
-				metadata: {
-					id,
-					reasoning: true,
-					input: modalities,
-					contextWindow: ctxSize,
-					maxTokens: Math.min(ctxSize, nPredict),
-				},
-			};
+		// ONE mode per entry (docs/d220): a repo either ships a projector or it does
+		// not, so vision is a fact of the manifest rather than a size-gated choice,
+		// and the id carries no mode segment for a caller to pick between.
+		const vision = baked.mmprojPath !== null;
+		const modalities = vision ? ["text", "image"] : ["text"];
+		/**
+		 * The family macro reference (${qwen38} etc.) and any literal extra flags
+		 * live in __argv verbatim; llama-swap expands ${...} at load. Empty __argv
+		 * expands to nothing; shlex collapses the gap. The expanded
+		 * ${LLAMA_SERVER} must be the FIRST cmd token: shlex argv[0] is the
+		 * server binary llama-swap resolves on PATH and execs directly.
+		 * @type {string}
+		 */
+		let cmd = LLAMA_SERVER_MACRO;
+		// A text-only row names the one per-mode macro left (--no-mmproj): the
+		// projector must not be required, and --ubatch-size/--no-mmproj-offload are
+		// LLAMA_SERVER's now, so a vision row adds no macro at all.
+		if (!vision) {
+			// biome-ignore lint/suspicious/noTemplateCurlyInString: llama-swap expands ${0text}, not JS.
+			cmd += " ${0text}";
 		}
+		if (vision) {
+			cmd += ` --image-min-tokens ${m["image-min-tokens"] ?? IMAGE_TOKENS_DEFAULT} --image-max-tokens ${m["image-max-tokens"] ?? IMAGE_TOKENS_DEFAULT}`;
+		}
+		if (m.__argv) {
+			cmd += ` ${m.__argv}`;
+		}
+		// Keys are never quantized: the key cache is the KLD-bearing half of the
+		// trade, so it stays at llama.cpp's f16 default with no flag at all.
+		cmd += ` --cache-type-v ${m["cache-type-v"]}`;
+		cmd += ` --ctx-size ${ctxSize} --n-predict ${nPredict}`;
+		// The spec type is a per-ENTRY fact (docs/d206): a sidecar names its own
+		// kind (`draft-mtp` for the MTP sidecars, `draft-dflash` for a dflash
+		// one), and a model whose speculator is built into the weights carries
+		// the type with no sidecar at all — llama.cpp then drafts against a
+		// second context of the TARGET model. Emitted explicitly either way:
+		// auto-inference only happened on the retired --hf-repo path.
+		const speculates = baked.draftPath !== null || m["spec-type"];
+		if (speculates) {
+			cmd += ` --spec-type ${m["spec-type"] || DEFAULT_SPEC_TYPE}`;
+			// The drafter's cache follows the entry's value quant (docs/d206): one
+			// entry decides both contexts, and a entry left at f16 needs no flag
+			// because llama.cpp's draft default is f16 too. Self-speculation gets
+			// this as well — the draft context exists either way.
+			if (m["cache-type-v"] !== "f16") {
+				cmd += ` --spec-draft-type-v ${m["cache-type-v"]}`;
+			}
+		}
+		if (![1, 2].includes(m.parallel)) {
+			throw new Error(
+				`model ${m["hf-repo"]} needs --parallel 1 or --parallel 2, got ${JSON.stringify(m.parallel)}`,
+			);
+		}
+		cmd += ` --parallel ${m.parallel}`;
+		// Baked snapshot paths last (the order the retired launch-gguf.sh
+		// appended them in). A text-only row never passes --mmproj: the projector
+		// must not be required for a mode that has none.
+		cmd += ` --model ${baked.modelPath}`;
+		if (baked.shardPaths.length > 0) {
+			cmd += ` --shard ${baked.shardPaths.join(",")}`;
+		}
+		if (vision) {
+			cmd += ` --mmproj ${baked.mmprojPath}`;
+		}
+		if (baked.draftPath) {
+			cmd += ` --model-draft ${baked.draftPath}`;
+		}
+
+		// The id IS the manifest key (docs/d220): the mode segment left with the fan,
+		// and d210 drops the quant label where a repo serves one row, so a caller's
+		// id names the repo:quant its cache directory does.
+		const id = m["hf-repo"];
+		if (models[id]) {
+			// A duplicate id is two entries claiming one serving slot: emitting
+			// one and dropping the other silently removes a model from the
+			// catalog, and the generated layer would no longer be a function of
+			// the model manifest (d050). Stop and make the operator choose.
+			throw new Error(
+				`duplicate derived model id "${id}" — two entries serve the same repo:quant; fix lib/llamacpp-model-data.json`,
+			);
+		}
+		// capabilities.context enriches llama-swap's served metadata with the
+		// context window; the "metadata" key (exact name required by llama-swap)
+		// mirrors a pi-coding-agent models.json provider.models[] entry
+		// (reasoning / input / contextWindow / maxTokens).
+		models[id] = {
+			cmd,
+			capabilities: { in: modalities, out: ["text"], context: ctxSize },
+			metadata: {
+				id,
+				reasoning: true,
+				input: modalities,
+				contextWindow: ctxSize,
+				maxTokens: Math.min(ctxSize, nPredict),
+			},
+		};
 	}
 
 	writeConfigD("10-local-llm-inference.yaml", { models });
 	writeCurated(curated);
 	logInfo("curated manifests written", { dir: curatedDir, repos: curated.size });
 }
-
 
 // --- orchestration (folded from the former generate.sh) ---------------------
 

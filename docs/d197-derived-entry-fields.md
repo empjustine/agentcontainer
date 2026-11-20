@@ -18,6 +18,12 @@ committed artifacts now own, and the probes that exercised each new rule. It is
 not a schema reference — `refresh-llm-local-inference-manifest.md` owns the
 entry contract, `gguf-model-tooling.md` the tool surface.
 
+## Status
+
+Superseded in part by [d220](d220-one-mode-per-model.md): the mode segment
+named in the id churn below is gone (one mode per model, ids are the
+manifest key). The derived-field set this record landed stands.
+
 ## Problem
 
 The table carried four fields that were never table facts:

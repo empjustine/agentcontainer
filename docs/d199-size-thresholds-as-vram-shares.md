@@ -16,6 +16,12 @@ quant-display rules (d170) and the projector-offload ceiling (d195) now read as 
 fraction of the serving GPU's memory instead of a parameter count. It states the
 number, where the estimate comes from, and what is deliberately NOT probed.
 
+## Status
+
+Superseded in part by [d220](d220-one-mode-per-model.md): the 75%
+projector-offload ceiling in the threshold table is retired with `2mmproj`.
+The 50% full-precision and 25% small-model shares stand.
+
 ## Problem
 
 Every size rule in `generate.mjs` was written as "N billion parameters", which

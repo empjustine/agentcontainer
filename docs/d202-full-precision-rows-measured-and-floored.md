@@ -17,6 +17,12 @@ measured with, and what happens when hiding a row would hide a repo. It also
 states what the parameter estimate means for a mixture-of-experts model, because
 the answer is "not what the VRAM argument says".
 
+## Status
+
+Superseded in part by [d220](d220-one-mode-per-model.md): the fan-shaped
+fixture in the "unknown" trap list is gone with the fan. The rest of the
+list stands.
+
 ## Problem
 
 **The "full precision" fact had two spellings, and F32 was in neither.**

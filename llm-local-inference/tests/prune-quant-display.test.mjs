@@ -42,9 +42,6 @@ const unitRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 /** decimal bytes per "GB" the manifest sizes use, the unit `totalParamsB` reads. */
 const G = 1e9;
 
-/** llama-swap ids carry the mmproj mode as a prefix (`0text-<repo>:<quant>`). */
-const MODE_PREFIX = /^(0text|1vision|2mmproj)-/;
-
 // llama-swap macro text, verbatim: the generator copies __argv into the cmd and
 // llama-swap expands it at load, so this is not a JS placeholder.
 // biome-ignore lint/suspicious/noTemplateCurlyInString: llama-swap expands ${SPEC_DRAFT}, not JS.
@@ -155,24 +152,10 @@ function quantsOf(ids, repo) {
 	return [
 		...new Set(
 			ids
-				.filter((id) => id.replace(MODE_PREFIX, "").startsWith(`${repo}:`))
+				.filter((id) => id.startsWith(`${repo}:`))
 				.map((id) => id.slice(id.lastIndexOf(":") + 1)),
 		),
 	].sort();
-}
-
-/**
- * The mode prefixes one repo's row emits (`` for a text-only repo).
- * @param {string[]} ids
- * @param {string} repo
- * @param {string} quant
- * @returns {string[]}
- */
-function modesOf(ids, repo, quant) {
-	return ids
-		.filter((id) => id.endsWith(`${repo}:${quant}`))
-		.map((id) => id.slice(0, id.length - `${repo}:${quant}`.length).replace(/-$/, ""))
-		.sort();
 }
 
 // --- the fixture catalog -----------------------------------------------------
@@ -245,13 +228,6 @@ const FIXTURE_MANIFESTS = {
 		"unknown-imatrix-Q2_K.gguf": 9,
 		"unknown-imatrix-Q4_K_M.gguf": 13.5,
 		"unknown-imatrix-Q8_0.gguf": 26,
-	}),
-	// unknown: the same, observed through the mmproj fan — an unsized repo keeps
-	// all three modes, a repo mis-sized as ~0B loses `0text`
-	"unknown/fan-imatrix-gguf": files({
-		"unknown-fan-imatrix-imatrix.gguf": 0.02,
-		"unknown-fan-imatrix-Q4_K_M.gguf": 13.5,
-		"mmproj-BF16.gguf": 0.5,
 	}),
 	// unknown: Q1_0 is in no exclusion list — the largest-file rule covers it
 	"unknown/q1-gguf": files({
@@ -342,7 +318,6 @@ const FIXTURE_TABLE = {
 		row("unknown/imatrix-gguf", "Q2_K", "unknown-imatrix-Q2_K.gguf"),
 		row("unknown/imatrix-gguf", "Q4_K_M", "unknown-imatrix-Q4_K_M.gguf"),
 		row("unknown/imatrix-gguf", "Q8_0", "unknown-imatrix-Q8_0.gguf"),
-		row("unknown/fan-imatrix-gguf", "Q4_K_M", "unknown-fan-imatrix-Q4_K_M.gguf"),
 		row("unknown/q1-gguf", "Q1_0", "unknown-q1-Q1_0.gguf"),
 		row("unknown/q1-gguf", "Q2_K", "unknown-q1-Q2_K.gguf"),
 		row("unknown/q1-gguf", "Q4_K_M", "unknown-q1-Q4_K_M.gguf"),
@@ -431,14 +406,7 @@ test("unknown: an untagged auxiliary is never read as the weights", () => {
 	// which is the only reason the blob is never reached. Without the largest-file
 	// guard, 0.02 GB reads as 0B of parameters and the small-model rule fires.
 	assert.deepEqual(quantsOf(fixtureIds, "unknown/imatrix-gguf"), ["Q2_K", "Q4_K_M", "Q8_0"]);
-	// The same estimate drives the mmproj fan (docs/d195): unsized keeps all three
-	// modes, while a repo mis-sized as ~0B loses `0text` — the observable that
-	// separates the two readings of one fixture.
-	assert.deepEqual(modesOf(fixtureIds, "unknown/fan-imatrix-gguf", "Q4_K_M"), [
-		"0text",
-		"1vision",
-		"2mmproj",
-	]);
+
 });
 
 test("unknown: a projector the prefix exclusion misses is still not a full-precision file", () => {
@@ -525,13 +493,49 @@ test("model: every extra shard is named on the command line", () => {
 	);
 });
 
-test("server: the macro pins the logging and lazy-loading defaults", () => {
+test("model: a repo's projector decides the one mode it serves", () => {
+	// docs/d220: the size-gated fan is gone, and with it the mode segment in the
+	// id. A repo that ships a projector serves vision (--mmproj, the image
+	// modality); one that ships none serves text-only, names the `0text` macro and
+	// never requires a projector.
+	const visionId = "known/projector-gguf:Q4_K_M";
+	const textId = "known/mtp-gguf:Q4_K_M";
+	const visionCmd = fixtureLayer[visionId]?.cmd ?? "";
+	const textCmd = fixtureLayer[textId]?.cmd ?? "";
+	assert.ok(fixtureLayer[visionId] !== undefined, `${visionId} must be served`);
+	assert.ok(fixtureLayer[textId] !== undefined, `${textId} must be served`);
+	assert.equal(flagValues(visionCmd, "--mmproj").length, 1);
+	assert.ok(!/\$\{0text\}/.test(visionCmd), "a vision row adds no projector macro");
+	assert.ok(/\$\{0text\}/.test(textCmd), "a text-only row names --no-mmproj");
+	assert.deepEqual(flagValues(textCmd, "--mmproj"), []);
+	assert.deepEqual(fixtureLayer[visionId].capabilities.in, ["text", "image"]);
+	assert.deepEqual(fixtureLayer[textId].capabilities.in, ["text"]);
+	// No id carries a mode segment in either layer.
+	const prefixed = (ids) => ids.filter((id) => /^(0text|1vision|2mmproj)-/.test(id));
+	assert.deepEqual(prefixed(Object.keys(fixtureLayer)), []);
+	assert.deepEqual(prefixed(committedIds), []);
+});
+
+test("server: the macro pins the logging, lazy-loading and precision defaults", () => {
 	const core = JSON.parse(readFileSync(join(unitRoot, "llama-swap-core.json"), "utf-8"));
 	const server = core.macros.LLAMA_SERVER;
-	for (const flag of ["--log-jsonl", "--no-log-timestamps", "--lazy-mode auto"]) {
+	for (const flag of [
+		"--log-jsonl",
+		"--no-log-timestamps",
+		"--lazy-mode auto",
+		// Precision over speed (docs/d220): one ubatch for every row, and the
+		// projector is never offloaded, so the retired presets have nothing to trade.
+		"--ubatch-size 2048",
+		"--no-mmproj-offload",
+	]) {
 		assert.ok(server.includes(flag), `${flag} missing from LLAMA_SERVER`);
 	}
 	assert.ok(!server.includes("--log-colors"), "log-jsonl already disables colour");
+	// The one per-mode macro left: a text-only row names it. The two retired
+	// presets are DELETED, not left behind as dead strings a later edit revives.
+	assert.equal(core.macros["0text"], "--no-mmproj");
+	assert.equal(core.macros["1vision"], undefined);
+	assert.equal(core.macros["2mmproj"], undefined);
 });
 
 test("spec: each variant's span policy lives in its own macro", () => {
@@ -544,7 +548,7 @@ test("spec: each variant's span policy lives in its own macro", () => {
 	// the operator's catalog, so a catalog that no longer ships a dflash row is
 	// reported, not failed — pinning it made curating the manifest a build break
 	// (docs/d212: the model manifest is authoritative).
-	const blend = committedLayer["0text-JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q4_K_M"]?.cmd ?? "";
+	const blend = committedLayer["JetBrains/Qwen3.8-3.6-27B-blend-GGUF:Q4_K_M"]?.cmd ?? "";
 	if (!/\$\{SPEC_DFLASH\}/.test(blend)) {
 		// biome-ignore lint/suspicious/noTemplateCurlyInString: llama-swap expands ${SPEC_DFLASH}, not JS.
 		console.warn("no served dflash row in the committed catalog: ${SPEC_DFLASH} is unexercised");
@@ -607,7 +611,7 @@ test("the committed catalog drops the label where no choice exists", () => {
 	/** @type {Map<string, Set<string|null>>} */
 	const labelsByRepo = new Map();
 	for (const id of committedIds) {
-		const bare = id.replace(MODE_PREFIX, "");
+		const bare = id;
 		const cut = bare.lastIndexOf(":");
 		const repo = cut === -1 ? bare : bare.slice(0, cut);
 		const labels = labelsByRepo.get(repo) ?? new Set();
@@ -629,7 +633,7 @@ test("the committed catalog keeps exactly the full-precision rows it can serve",
 	const fullPrecision = [
 		...new Set(
 			committedIds
-				.map((id) => id.replace(MODE_PREFIX, ""))
+				.map((id) => id)
 				.filter((id) => /:(F32|BF16|F16)$/i.test(id)),
 		),
 	].sort();
@@ -698,6 +702,6 @@ test("the committed table carries a key only when it deviates", () => {
 test("the committed catalog never loses a repo to the rules", () => {
 	const table = JSON.parse(readFileSync(join(unitRoot, "lib", "llamacpp-model-data.json"), "utf-8"));
 	const reposInTable = new Set(table.models.map((m) => m["hf-repo"].split(":")[0]));
-	const reposEmitted = new Set(committedIds.map((id) => id.replace(MODE_PREFIX, "").split(":")[0]));
+	const reposEmitted = new Set(committedIds.map((id) => id.split(":")[0]));
 	assert.deepEqual([...reposInTable].filter((repo) => !reposEmitted.has(repo)), []);
 });

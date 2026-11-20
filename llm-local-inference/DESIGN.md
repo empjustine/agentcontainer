@@ -106,13 +106,13 @@ endpoint.
   would claim more than half the fleet card (d199, d202 — never the last row a
   repo publishes), up to three of the cheapest quants dropped where the served
   weights claim less than a quarter of it (never below three rows) — the flat
-  table stays the full record. A vision
-  entry exercises the same quarter line: below it the projector fits anyway, so
-  `0text` — the no-projector mode — is not emitted; above 75% the offloaded
-  `2mmproj` is not (d195, d200). Thresholds are shares of
-  `FLEET_VRAM_GIB` (16 GiB), never parameter counts, so each one states how
-  much of the card it is talking about (d199); the 4B/12B equivalents are
-  ~25%/75%. Context comes from the model's own GGUF header via
+  table stays the full record. A row's projector decides its one serving mode
+  (d220): a repo that ships one serves vision (`--mmproj`, image modality), one
+  that ships none serves text-only (`--no-mmproj`), and both carry the same
+  `--ubatch-size 2048`/`--no-mmproj-offload` from `LLAMA_SERVER`. Thresholds are
+  shares of `FLEET_VRAM_GIB` (16 GiB), never parameter counts, so each one
+  states how much of the card it is talking about (d199); the 4B/8B equivalents
+  are ~25%/50%. Context comes from the model's own GGUF header via
   `lib/gguf-facts.json` for every entry, capped at 262144 (d197), and
   `--fit on` reconciles a host too small for the window. The parameter count
   excludes the drafter/side builds some repos ship beside the main quants

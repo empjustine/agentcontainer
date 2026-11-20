@@ -17,6 +17,13 @@ different input. It is not an account of the mode macros themselves
 (`llama-swap-core.json` and the refresh runbook own those strings) and it is
 not a judgement about which quants exist.
 
+## Status
+
+Superseded by [d220](d220-one-mode-per-model.md): the catalog keeps exactly
+one mode per model, so there is no ceiling left to gate — `2mmproj` is
+removed and the 75% share this record set no longer exists. Kept as history,
+including the measurement that motivated it.
+
 ## Problem
 
 Every entry carrying an `mmproj` fans out to `0text`, `1vision` and

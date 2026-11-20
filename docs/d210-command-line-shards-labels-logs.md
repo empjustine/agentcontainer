@@ -15,6 +15,13 @@ Three edits to the args every entry carries, each removing a place where the
 config restated something the server already knew — plus the two flags worth
 spelling out because the macro is the fleet's operating contract.
 
+## Status
+
+Superseded in part by [d220](d220-one-mode-per-model.md): the mode segment
+left the id, so an id is the manifest key exactly — `repo` or `repo:quant`,
+not `[<mmprojMode>-]repo:quant`. The label rule, and the churn this record
+accepted for it, stand.
+
 ## Problem
 
 **Shards were resolved by naming convention.** An entry's `--model` names the

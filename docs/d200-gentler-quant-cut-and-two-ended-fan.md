@@ -16,6 +16,11 @@ small-model quant cut was too aggressive for a hand-curated catalog, and the
 projector fan kept a mode that only makes sense where VRAM is contested. Both
 read the same line — `SMALL_MODEL_VRAM_SHARE` = 25% of the fleet card (d199).
 
+## Status
+
+Superseded in part by [d220](d220-one-mode-per-model.md): the two-ended fan
+is gone (one mode per model), so only this record's gentler quant cut stands.
+
 ## Problem
 
 **The cut ran past what a caller needs.** The rule was `min(4, rows − 2)`: it
