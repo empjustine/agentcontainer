@@ -96,11 +96,13 @@ def collect_gpu_devs() -> list[str]:
 	DRI render node. A GPU-less host yields an empty list — the capability
 	gate that refuses such a host lives in the generator (docs/d087), not
 	here."""
-	return [
-		str(p)
-		for p in Path("/dev").iterdir()
-		if p.name == "kfd" or p.name.startswith("renderD")
-	]
+	devices = ["/dev/kfd"] if Path("/dev/kfd").exists() else []
+	dri = Path("/dev/dri")
+	if dri.is_dir():
+		# Render nodes sit one level down (/dev/dri/renderD128): the d170 port
+		# scanned /dev itself and so passed none of them.
+		devices += sorted(str(p) for p in dri.iterdir() if p.name.startswith("renderD"))
+	return devices
 
 
 def main() -> None:
