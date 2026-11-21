@@ -1,13 +1,23 @@
 ---
 id: scoped-models-and-proxy-overrides
 type: module-design
-status: draft
+status: deprecated
 title: "Scoped models and proxy overrides — the distilled rationale"
-parent: coding-agent
-tags: ["design", "scoped-models", "overrides"]
+parent: architecture
+tags: ["design", "scoped-models", "overrides", "archived"]
 ---
 
 # Scoped models and proxy overrides
+
+> **ARCHIVED — read nothing below as current.** This rationale belongs to the
+> era when llama-swap was made to act as a generic reverse/forward proxy, and
+> "scoped models" was the workaround for the arbitrary limits that role imposed
+> (a curated `:free` slice, per-provider filters, a model list generated
+> client-side). llm-reverse-proxy/estige took that role so the limits would stop
+> being invented (docs/d027/d070), and the reverse-proxy surface is deleted as
+> insecure (docs/d108): each provider is now addressed at its canonical
+> upstream, and pi uses its own catalog. Kept as the record of what the
+> workaround was and why it is gone, not as a statement of behavior.
 
 The coding-agent container is configured on the host ahead of pi by
 the generator, whose install target is the agent dir that
@@ -53,7 +63,7 @@ generator (`generate.sh`; the runner mounts that dir, docs/d054).
 
 > **Deprecated:** the `OPENCODE_GO_API_KEY` name below is retired — OpenCode
 > now uses the unified `OPENCODE_API_KEY` (rationale in
-> **[d001](../docs/d001-proxy-env-and-namespace.md)** §3).
+> **[d001](../d001-proxy-env-and-namespace.md)** §3).
 
 - The default model is pinned to the opencode-go subscription (DeepSeek V4
   Flash) **only** when `OPENCODE_GO_API_KEY` is present. When the key is absent
@@ -63,12 +73,12 @@ generator (`generate.sh`; the runner mounts that dir, docs/d054).
 
 ## Related decision records
 
-- [`d001-proxy-env-and-namespace.md`](../docs/d001-proxy-env-and-namespace.md) — proxy
+- [`d001-proxy-env-and-namespace.md`](../d001-proxy-env-and-namespace.md) — proxy
   env vars, plain un-prefixed key naming, `baseUrl` baking (in force; cited
   directly by `coding-agent/route-probe.mjs`,
   `coding-agent/refresh-models-dev.mjs`, `coding-agent/gen-lib.mjs`).
-- [`d003-llamacpp-context-windows.md`](../docs/d003-llamacpp-context-windows.md) —
+- [`d003-llamacpp-context-windows.md`](../d003-llamacpp-context-windows.md) —
   generation-time context-window embedding (in force).
-- [`d186-retire-legacy-full-catalog-notes.md`](../docs/d186-retire-legacy-full-catalog-notes.md) —
+- [`d186-retire-legacy-full-catalog-notes.md`](../d186-retire-legacy-full-catalog-notes.md) —
   the retirement of the free-tier generation notes (d004–d015) this approach
   replaced, with the surviving law mapped one note at a time.

@@ -82,7 +82,8 @@ Credentials are **not** staged as a file — vault keys are forwarded
 through the `workload_env` allowlist (below) and pi resolves the `"$VAR"`
 api-key refs in `models.json` from the forwarded environment. The generators
 enumerate **no** model lists: the agent cycles pi's own catalog
-(`coding-agent/scoped-models-and-proxy-overrides.md`). The `enabledModels`
+(`docs/archive/scoped-models-and-proxy-overrides.md` — archived with the proxy
+role it worked around). The `enabledModels`
 setting is **deprecated** — no tooling here sets it (see `docs/requirements.md`
 FR-U3).
 
@@ -167,7 +168,8 @@ through the environment proxy.
 - **Scoped models, not generated catalogs**: pi's own model catalog is used
   (`pi update --models`); providers are re-routed via `baseUrl` overrides only.
   The retired free-tier pipeline's decisions are distilled in
-  `coding-agent/scoped-models-and-proxy-overrides.md` ("spirit of the retired notes").
+  `docs/archive/scoped-models-and-proxy-overrides.md` ("spirit of the retired
+  notes"); the document is archived with the proxy role it served.
 - **The prompt and the tool loadout are configured separately**:
   `settings.json`'s `defaultTools` adds capability (the base four plus
   `grep`, `find`, `ls`, and the `codemode` built-in extension) without
