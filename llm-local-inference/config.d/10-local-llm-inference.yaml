@@ -1,5 +1,74 @@
 {
   "models": {
+    "unsloth/Muse-Glimmer-30B-GGUF:Q8_0": {
+      "cmd": "${LLAMA_SERVER} --image-min-tokens 1024 --image-max-tokens 1024 ${museglimmer} ${SPEC_MTP} --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Muse-Glimmer-30B-GGUF/snapshots/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-Q8_0.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Muse-Glimmer-30B-GGUF/snapshots/faa5b025c584459c13febfa5c59883516710ae39/mmproj-kquant.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "unsloth/Muse-Glimmer-30B-GGUF:Q8_0",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536
+      }
+    },
+    "unsloth/Muse-Glimmer-30B-GGUF:UD-Q6_K_XL": {
+      "cmd": "${LLAMA_SERVER} --image-min-tokens 1024 --image-max-tokens 1024 ${museglimmer} ${SPEC_MTP} --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Muse-Glimmer-30B-GGUF/snapshots/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-Q6_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Muse-Glimmer-30B-GGUF/snapshots/faa5b025c584459c13febfa5c59883516710ae39/mmproj-kquant.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "unsloth/Muse-Glimmer-30B-GGUF:UD-Q6_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536
+      }
+    },
+    "unsloth/Muse-Glimmer-30B-GGUF:UD-Q8_K_XL": {
+      "cmd": "${LLAMA_SERVER} --image-min-tokens 1024 --image-max-tokens 1024 ${museglimmer} ${SPEC_MTP} --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Muse-Glimmer-30B-GGUF/snapshots/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-UD-Q8_K_XL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Muse-Glimmer-30B-GGUF/snapshots/faa5b025c584459c13febfa5c59883516710ae39/mmproj-kquant.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "unsloth/Muse-Glimmer-30B-GGUF:UD-Q8_K_XL",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536
+      }
+    },
     "byteshape/Qwen3.6-35B-A3B-GGUF": {
       "cmd": "${LLAMA_SERVER} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen36} --cache-type-v f16 --ctx-size 262144 --n-predict 262144 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--byteshape--Qwen3.6-35B-A3B-GGUF/snapshots/57f6dec8727b4c3f5498ff2564a0333ac1f6624a/mmproj-bf16.gguf",
       "capabilities": {

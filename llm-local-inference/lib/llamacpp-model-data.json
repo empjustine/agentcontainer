@@ -1,4 +1,7 @@
 {"models":[
+{"hf-repo":"unsloth/Muse-Glimmer-30B-GGUF:Q8_0","model":"Muse-Glimmer-30B-Q8_0.gguf","__argv":"${museglimmer} ${SPEC_MTP}"},
+{"hf-repo":"unsloth/Muse-Glimmer-30B-GGUF:UD-Q6_K_XL","model":"Muse-Glimmer-30B-UD-Q6_K_XL.gguf","__argv":"${museglimmer} ${SPEC_MTP}"},
+{"hf-repo":"unsloth/Muse-Glimmer-30B-GGUF:UD-Q8_K_XL","model":"Muse-Glimmer-30B-UD-Q8_K_XL.gguf","__argv":"${museglimmer} ${SPEC_MTP}"},
 {"hf-repo":"byteshape/Qwen3.6-35B-A3B-GGUF","model":"Qwen3.6-35B-A3B-Q4_K_S-4.22bpw.gguf","image-min-tokens":1024,"image-max-tokens":1024,"__argv":"${qwen36}"},
 {"hf-repo":"byteshape/Qwen3.8-27B-GGUF","model":"Qwen3.8-27B-IQ4_XS-3.84bpw.gguf","image-min-tokens":1024,"image-max-tokens":1024,"cache-type-v":"q8_0","__argv":"${qwen38} ${SPEC_MTP}","spec-type":"draft-mtp"},
 {"hf-repo":"unsloth/gemma-4-12b-it-GGUF:Q6_K_XL","model":"gemma-4-12b-it-UD-Q6_K_XL.gguf","__argv":"${gemma4}"},

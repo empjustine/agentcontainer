@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/GLM-5.3-Flash-GGUF",
 	"commit": "a38483c8cd5df544f53d70fb281afe97369d5ab6",
-	"fetched_at": "2026-11-19T18:59:11+00:00",
+	"fetched_at": "2026-11-21T03:59:21+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

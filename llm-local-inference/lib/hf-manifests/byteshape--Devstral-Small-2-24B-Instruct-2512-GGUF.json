@@ -1,7 +1,7 @@
 {
 	"repo": "byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF",
 	"commit": "12529130b813e35fd10ea92cab21e0ca4dcb7ecc",
-	"fetched_at": "2026-11-19T18:59:03+00:00",
+	"fetched_at": "2026-11-21T03:59:13+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

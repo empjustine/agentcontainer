@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/Qwen3.8-Flash-Next-GGUF",
 	"commit": "f5d175de2cf7f720d45d6064019a81fcf056e986",
-	"fetched_at": "2026-11-19T18:59:14+00:00",
+	"fetched_at": "2026-11-21T03:59:24+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

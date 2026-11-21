@@ -1,0 +1,17 @@
+{
+  "repo": "unsloth/Muse-Glimmer-30B-GGUF",
+  "manifestCommit": "faa5b025c584459c13febfa5c59883516710ae39",
+  "entries": [
+    "unsloth/Muse-Glimmer-30B-GGUF:Q8_0",
+    "unsloth/Muse-Glimmer-30B-GGUF:UD-Q6_K_XL",
+    "unsloth/Muse-Glimmer-30B-GGUF:UD-Q8_K_XL"
+  ],
+  "files": [
+    "Muse-Glimmer-30B-Q8_0.gguf",
+    "Muse-Glimmer-30B-UD-Q6_K_XL.gguf",
+    "Muse-Glimmer-30B-UD-Q8_K_XL.gguf",
+    "mmproj-kquant.gguf"
+  ],
+  "optional": [],
+  "bytes": 89579300928
+}

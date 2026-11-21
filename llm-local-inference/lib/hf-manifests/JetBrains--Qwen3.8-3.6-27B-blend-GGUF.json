@@ -1,7 +1,7 @@
 {
 	"repo": "JetBrains/Qwen3.8-3.6-27B-blend-GGUF",
 	"commit": "e5d856b7430523bc465cbd07c78ac4bc0913a8c3",
-	"fetched_at": "2026-11-19T18:59:05+00:00",
+	"fetched_at": "2026-11-21T03:59:14+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

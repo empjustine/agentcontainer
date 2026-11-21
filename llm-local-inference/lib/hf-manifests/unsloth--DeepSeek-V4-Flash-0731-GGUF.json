@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/DeepSeek-V4-Flash-0731-GGUF",
 	"commit": "fbbb5b93fb787c21338159b0af3318bb3f4d9768",
-	"fetched_at": "2026-11-19T18:59:06+00:00",
+	"fetched_at": "2026-11-21T03:59:16+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
