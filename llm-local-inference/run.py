@@ -11,12 +11,21 @@ only; podman/docker). Entered as::
 Cloud/remote relaying is served by ../estige — this launcher runs the single
 llama-swap instance that owns local llama.cpp serving.
 
-Port model (docs/d027, reshaped by d070): llama-swap publishes LAN port
-${HOST_PORT:-8101} → in-container 8080. Host port 8080 belongs to ../estige —
-the tailscale funnel serves the whole <funnel-id> route on it, and the world
-reaches this instance through the proxy's host-allowlist row for llama-swap's
-tsnet `tailscale serve` hostname (the fact-table row in
-../coding-agent/lib/cloud-providers.json).
+Port model (docs/d027, reshaped by d070, port moved by d224):
+llama-swap publishes LAN port ${HOST_PORT:-9292} → in-container 8080, which is
+upstream llama-swap's own example shape (`-p 9292:8080` over the image's
+default `-listen 0.0.0.0:8080`). Host port 8080 belongs to ../estige — the
+tailscale funnel serves the whole <funnel-id> route on it — so this launcher
+takes a different one. The world reaches this instance only through its tsnet
+`tailscale serve` hostname (the fact-table row in
+../coding-agent/lib/cloud-providers.json), which maps the host root onto the
+publish port above.
+
+llama-server's own default port (9931 in current llama.cpp) is deliberately
+unreachable from here: the LLAMA_SERVER macro in 00-general.yaml always passes
+`--port ${PORT}`, and llama-swap assigns ${PORT} from `startPort`
+(llama-swap-core.json). Backend ports stay llama-swap's internal concern, so no
+client or outside host ever names one.
 
 d170 folded the former shell runner (run.sh + lib/workload-runtime.sh + the
 lib/workload-*.jq filters) into this file: the description API existed
@@ -28,7 +37,7 @@ stale baked paths surface as a swap-time 127 from llama-server, and their
 offline re-verify is upkeep.py's open follow-up (d170, Consequences).
 
 Env overrides:
-    HOST_PORT          container published port (default 8101)
+    HOST_PORT          container published port (default 9292, upstream's example)
     LLAMA_SWAP_IMAGE   container image override
     HF_HUB_CACHE       HF cache override (default XDG_CACHE_HOME/huggingface/hub;
                        must match the cache the generator baked model paths from)
@@ -140,7 +149,7 @@ def main() -> None:
 		/ "huggingface"
 		/ "hub"
 	)
-	host_port = os.environ.get("HOST_PORT", "8101")
+	host_port = os.environ.get("HOST_PORT", "9292")
 	image = os.environ.get("LLAMA_SWAP_IMAGE", DEFAULT_IMAGE)
 
 	log.info("serving local inference", image=image, port=host_port, backend=backend)
@@ -193,6 +202,9 @@ def main() -> None:
 		image,
 		"-config-dir",
 		"/etc/llama-swap/config.d",
+		# The image's own default (and what upstream's example publishes as
+		# 9292); the host-side publish above is the only number a client sees
+		# (docs/d224).
 		"-listen",
 		"0.0.0.0:8080",
 	]

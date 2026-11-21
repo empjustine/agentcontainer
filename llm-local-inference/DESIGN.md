@@ -38,11 +38,21 @@ runs it) and `run.py`
 (serve) are strictly separated;
 `run.py` mounts the generated `config.d/` read-only into the
 `llama-swap:unified-vulkan` image with GPU passthrough + HF-cache mounts and
-publishes LAN **8101** (`HOST_PORT` overrides; in-container 8080) — host
-port 8080 belongs to ../estige, the funnel front, which points
-the local face back here at `http://127.0.0.1:8101`. The world reaches the
-catalog via the tailscale FQDN → :8080 (proxy) → `/llama-swap/…` → :8101.
-The legacy :18080 port is dead and never probed.
+publishes LAN **9292** (`HOST_PORT` overrides; in-container 8080) — upstream
+llama-swap's own example shape, `-p 9292:8080` over the image's default
+`-listen 0.0.0.0:8080` (docs/d224). Host port 8080 belongs to ../estige, the
+funnel front, which serves the tunnel namespace only (docs/d108). The world
+reaches the catalog through the tsnet `tailscale serve` endpoint in front of
+this instance, whose host root maps onto that LAN port — a `HOST_PORT`
+override means re-pointing the serve endpoint too. The legacy :18080 and :8101
+ports are dead and never probed.
+
+**Backend ports are llama-swap's own.** Every model's `cmd` starts from the
+`LLAMA_SERVER` macro, which always passes `--port ${PORT}`, and llama-swap
+assigns `${PORT}` from `startPort` (`llama-swap-core.json`). llama.cpp's
+own default is therefore never in play — no client, user or outside host names
+a llama-server port, and llama.cpp moving that default (to 9931) changes
+nothing visible here (docs/d224).
 
 **config.d layers** (layer-merge rules in `docs/d018-split-config-d.md` —
 not pi's layered-cake merge; d072 names the two apart):

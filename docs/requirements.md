@@ -44,7 +44,7 @@ left answering nothing that generation asks (docs/d072).
   `llm-local-inference`): local llama.cpp
   GGUF inference where the host can do it, cloud providers everywhere else
   (directly, or relayed for hosts that cannot reach them),
-  published on LAN :8101 and reachable through the tailscale funnel (which
+  published on LAN :9292 and reachable through the tailscale funnel (which
   fronts estige on :8080 — docs/d027).
 - **Usage** — `coding-agent/` (see `coding-agent`): the pi coding-agent's
   container image, generated `models.json`/`opencode.jsonc` layers, static
@@ -95,11 +95,15 @@ the one BRD row about the tunnel credential itself; the fuller requirements
 - **FR-S2** — Local inference config is capability-gated: generated only where
   a container backend AND GPU devices are detected; generation fails hard
   elsewhere.
-- **FR-S3** — The instance is published on LAN :8101 and reachable from the
-  world only through the tailscale funnel → estige :8080 →
+- **FR-S3** — The instance is published on LAN :9292 (upstream llama-swap's own
+  example port, docs/d224) and reachable from the world only through the
+  tailscale funnel → estige :8080 →
   llama-swap's row in the host allowlist (its tsnet serve hostname — a
   fact-table row like any other, docs/d047; the `llama-swap` alias key is
-  retired, docs/d070 §2). Port 8080 belongs to the proxy.
+  retired, docs/d070 §2). Port 8080 belongs to the proxy. Backend ports are
+  internal: llama-swap assigns each llama-server its port (`startPort` plus
+  the `${PORT}` macro), so llama.cpp's own default (9931) is never part of
+  this surface.
 - **FR-S4** — Model provisioning (downloading GGUFs) is cache tooling's job,
   never the serving module's: serving reads the HF cache read-only; a cache
   miss at generation time is an error, not a download.

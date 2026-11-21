@@ -51,7 +51,7 @@ GPU host (local inference only) — two serving processes, one concern each (doc
   container backend + GPU devices and emits the local GGUF layer (`10-local-llm-inference.yaml` + its
   `.paths` staleness manifest; snapshot paths baked at generation, docs/d029);
   `run.sh` launches the `unified-vulkan` image with GPU
-  passthrough + the HF cache on LAN port **8101** (container 8080).
+  passthrough + the HF cache on LAN port **9292** (container 8080).
   llama-swap serves the LOCAL catalog and nothing else — its `peers`/proxy
   config is no longer exercised.
 - `estige/` — the SSL-VPN tunnel node (this folder's own `build.sh`, installed
@@ -68,7 +68,7 @@ https port on the wire); behind it sits the tunnel namespace `/vpn` and
 nothing else — the host-allowlist route map is deleted (docs/d108), so the
 funnel is no longer a cloud-provider front for external clients.
 llama-swap holds
-LAN **8101**. The legacy local-inference port **18080** is **deprecated**
+LAN **9292**. The legacy local-inference port **18080** is **deprecated**
 with the two-instance squash — nothing listens on it, and code that still
 probes `localhost:18080` must use the funnel base URL (`$REVERSE_PROXY_BASE_URLS`).
 
@@ -194,7 +194,7 @@ and `vpn-relay.sh` names retired with docs/d095 and docs/d120):
 
 - llama-swap: `ghcr.io/mostlygeek/llama-swap:unified-vulkan` (local
   llama.cpp needs the GPU/Vulkan runtime), GPU devices passed through, HF
-  cache tree mounted, LAN **8101** (container 8080).
+  cache tree mounted, LAN **9292** (container 8080).
 - estige: one Go binary, deployed as a package + service (docs/d120) —
   containerized with host networking or direct on the host, for example, the termux
   cross-build — LAN **8080**, no secrets mounted: the funnel front holds the

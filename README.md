@@ -10,7 +10,7 @@ passthrough reverse proxy for cloud LLM providers.
 
 ```sh
 # Bazzite (rootless podman) — ONE llama-swap instance for LOCAL GGUF
-# inference, published on LAN port 8101 (the coding agent reaches it in-network;
+# inference, published on LAN port 9292 (the coding agent reaches it in-network;
 # the world reaches estige's tunnel at the funnel mount, docs/d073/d108)
 cd ~/agentcontainer && ./node-run.sh llm-local-inference/30-generate.mjs
 #   then the coding agent (local models + cloud; credentials via ./environment.sh, docs/d046)
@@ -110,7 +110,7 @@ agentcontainer/
 │   └── tests/                           #   → journey determinism and placement, the defect ledger, span grading, the protocol driver, death and resume
 │
 ├── llm-local-inference/                 # llama-swap: LOCAL GGUF inference only
-│   ├── run.py                           #   → unified-vulkan image + GPU + HF mounts on :8101 (run via ./py-run.sh; env chain ./environment.sh first)
+│   ├── run.py                           #   → unified-vulkan image + GPU + HF mounts on :9292 (run via ./py-run.sh; env chain ./environment.sh first)
 │   ├── *.py                             #   → the PEP 723 cache tools: run_all.py drives the chain (10-fetch-hf-manifests, 20-propose-entries.mjs, 30-generate.mjs, 40-download-models, 50-verify-cache, 60-audit-snapshots, 70-prune-cache) plus upkeep/fetch_model_cards/scan_cache_*/gguf_context_length; run via ./py-run.sh, no shell tooling left (d212-d218)
 │   ├── 20-propose-entries.mjs / 30-generate.mjs #  → config.d + curated manifests (capability-gated) · the manifest-authoring aid, docs/d212
 │   ├── build.mjs                        #   → pulls the llama-swap image (inference-endpoint gate, d087); `./node-run.sh llm-local-inference/build.mjs`
