@@ -956,15 +956,11 @@ function catalogPiModel(spec, m, id = m.id) {
  * URL forms cannot disagree (docs/d047, d070). Its lineup arrives through the facts cache instead —
  * an empty `models` map is what tells emitFull the cache owns the lineup.
  * @param {CloudProviderSpec} spec the provider spec row
- * @returns {{ api: string, models: Record<string, ModelsDevModel> }} the
- *   provider record (api endpoint + per-model metadata)
+ * @returns {Record<string, ModelsDevModel>} the provider's per-model metadata
  */
 function loadProvider(spec) {
 	if (spec.catalogOptional) {
-		return {
-			api: providerFacts(spec.id).baseUrl,
-			models: {},
-		};
+		return {};
 	}
 	if (!CATALOG) {
 		throw Object.assign(new Error("models.dev catalog unreadable"), {
@@ -978,9 +974,7 @@ function loadProvider(spec) {
 			{ provider: spec.id, path: API_JSON },
 		);
 	}
-	return /** @type {{ api: string, models: Record<string, ModelsDevModel> }} */ (
-		provider
-	);
+	return provider.models;
 }
 
 /**
@@ -1416,7 +1410,6 @@ async function emitOverrideOnly(spec, providers, catwalk) {
  * @returns {Promise<void>}
  */
 async function emitFull(spec) {
-	const provider = loadProvider(spec);
 	const route = await probeRow(spec);
 	if (!route.usable) {
 		logWarn(
@@ -1452,7 +1445,8 @@ async function emitFull(spec) {
 	const allow = lineup
 		? new Set(lineup.map((entry) => entry.id))
 		: null;
-	const catalogModels = Object.entries(provider.models)
+	const catalog = loadProvider(spec);
+	const catalogModels = Object.entries(catalog)
 		.filter(
 			([id, m]) =>
 				// A retired catalog entry never publishes (docs/d048).
@@ -1635,43 +1629,29 @@ async function generateCloudProviders() {
  * @returns {Promise<void>}
  */
 async function generateLocalLlamaSwap(out) {
-	/**
-	 * The local row's probe candidate: its canonical fact-table upstream (the
-	 * tsnet serve hostname), reached over the tailnet directly — the LAN
-	 * :8080 proxy listen address is not routable from outside the host it
-	 * serves (docs/d022) and is not what clients address any more
-	 * (docs/d108). Lineup only: the emitted URL is canonical either way.
-	 */
-	const LOCAL_SOURCE_CANDIDATES = [providerFacts("llama-swap").baseUrl];
-
-	const local = await probeCandidates(LOCAL_SOURCE_CANDIDATES, (ids) =>
+	// The farm's row, read once here: the tsnet serve hostname is both the
+	// probe candidate and the emitted base. The LAN port is not routable from
+	// outside the serving host (docs/d022).
+	const farm = providerFacts("llama-swap");
+	const local = await probeCandidates([farm.baseUrl], (ids) =>
 		ids.some((id) => id.includes("-GGUF")),
 	);
-	/** @type {Record<string, import("./gen-lib.mjs").PiProvider>} */
-	const providers = {};
-	if (local) {
-		const gguf = local.entries.filter((e) => e.id.includes("-GGUF"));
-		// Canonical emission (docs/d070): providerEntry appends /v1 to the
-		// fact table's llama-swap upstream (the tsnet serve hostname), and
-		// generate.mjs rewrites it to the client route at install.
-		providers["llama-swap"] = providerEntry(
-			providerFacts("llama-swap").baseUrl,
-			gguf.map(piModel),
-		);
-	} else {
-		// The farm answers for itself or not at all (docs/d190): carrying the
-		// previous layer forward is what made a dead endpoint read as healthy,
-		// and d064's stale-preserve (its "outages preserve the last good
-		// artifact") is retired here. An empty block, not an unwritten file —
-		// leaving the file alone would let the merge republish the old lineup.
-		providers["llama-swap"] = providerEntry(
-			providerFacts("llama-swap").baseUrl,
-			[],
-		);
+	if (!local) {
+		// The farm answers for itself or not at all (docs/d190): d064's
+		// stale-preserve is retired. An empty block, not an unwritten file —
+		// leaving the file alone would let the merge republish the old lineup
+		// from the previous layer.
 		logWarn(
 			"no local GGUF source reachable — the llama-swap lineup is empty (docs/d190)",
 		);
 	}
+	const gguf = local?.entries.filter((e) => e.id.includes("-GGUF")) ?? [];
+	// Canonical emission (docs/d070): providerEntry appends /v1 to the fact
+	// table's upstream, and no install step rewrites it (docs/d108).
+	/** @type {Record<string, import("./gen-lib.mjs").PiProvider>} */
+	const providers = {
+		"llama-swap": providerEntry(farm.baseUrl, gguf.map(piModel)),
+	};
 
 	const written = writeJsonArtifact(out, { providers });
 	const summary = Object.entries(providers)

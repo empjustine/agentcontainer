@@ -95,15 +95,6 @@ const runDir = process.env.PI_LAYER_DIR ?? scriptDir;
 const CLOUD_PROVIDER_IDS = ["opencode", "opencode-go", "openrouter"];
 
 /**
- * The LOCAL row's probe candidate: its canonical fact-table upstream (the
- * tsnet serve hostname), reached over the tailnet directly (docs/d108) —
- * the LAN :8080 proxy listen address is not routable from outside the
- * serving host (docs/d022) and is not what clients address any more.
- * @type {readonly string[]}
- */
-const LOCAL_SOURCE_CANDIDATES = [providerFacts("llama-swap").baseUrl];
-
-/**
  * Classify a LOCAL llama-swap catalog model id (docs/d027: cloud ids are no
  * longer classified — each cloud provider's route returns its own
  * models).
@@ -163,79 +154,69 @@ function catalogModels(id, filter) {
 }
 
 /**
- * Resolve one cloud provider's emitted URL and lineup (docs/d108):
- * the probe picks the lineup source — the live listing, else the models.dev
- * catalog slice — and the URL is always the CANONICAL fact-table upstream.
- * Superficial rows
- * (docs/d064) never probe: catalog slice, canonical URL either way.
- * @param {string} id
- * @returns {Promise<{ providerUrl: string, models: ModelEntry[] }>}
+ * The lineup one cloud provider publishes: its live listing when the endpoint
+ * serves one, else the models.dev catalog slice (docs/d108). Superficial rows
+ * (docs/d064) never probe. The fact-table row arrives as a value — this
+ * function reads no table of its own.
+ * @param {import("./lib/cloud-providers.mjs").CloudProviderFacts} facts
+ * @returns {Promise<ModelEntry[]>}
  */
-async function resolveCloudProvider(id) {
-	const cfg = providerFacts(id);
-	const filter = MODEL_SCOPES[id];
-	if (supportTier(id) === "superficial") {
+async function resolveCloudModels(facts) {
+	const filter = MODEL_SCOPES[facts.id];
+	if (supportTier(facts.id) === "superficial") {
 		logInfo(
 			"superficial provider — not route-probed (docs/d064), catalog lineup",
-			{ provider: id },
+			{ provider: facts.id },
 		);
-		return {
-			providerUrl: cfg.baseUrl,
-			models: catalogModels(id, filter),
-		};
+		return catalogModels(facts.id, filter);
 	}
 	const route = await probeEndpoint(
-		cfg.baseUrl,
-		bearerHeaders(process.env[cfg.apiKeyEnv]?.trim()),
+		facts.baseUrl,
+		bearerHeaders(process.env[facts.apiKeyEnv]?.trim()),
 	);
 	if (!route.usable) {
 		logWarn(
 			"no usable endpoint — lineup degrades to the catalog (docs/d108)",
-			{ provider: id },
+			{ provider: facts.id },
 		);
 	}
 	// The probe only selects the LINEUP source; the emitted URL is the
 	// canonical fact-table upstream either way.
-	const providerUrl = cfg.baseUrl;
 	const listed = route.entries.filter((e) => filter?.(e.id) ?? true);
 	if (listed.length > 0) {
-		return { providerUrl, models: listed };
+		return listed;
 	}
-	const models = catalogModels(id, filter);
+	const models = catalogModels(facts.id, filter);
 	if (models.length > 0) {
 		logInfo("route unlistable — lineup from the models.dev catalog slice", {
-			provider: id,
+			provider: facts.id,
 			models: models.length,
 		});
 	} else {
 		logWarn("no lineup source resolved — empty lineup", {
-			provider: id,
+			provider: facts.id,
 		});
 	}
-	return { providerUrl, models };
+	return models;
 }
 
 /**
- * Build an opencode provider entry for `label`'s models on the cloud router
- * (docs/d047): baseURL is the provider's URL — CANONICAL fact-table upstream
- * in the committed artifact (docs/d070), rewritten to the client route at
- * install —, auth is the provider's
- * REAL key env (the proxy forwards credentials untouched — it performs
- * none), and the model ids are the provider's own bare ids — from the
- * route's `/models` listing when it served one, else the catalog slice
- * (docs/d063).
- * @param {string} label
- * @param {string} providerUrl the provider's canonical upstream URL
- * @param {string} apiKeyEnv the provider's real key env (shared fact table)
+ * One opencode provider entry: display `name`, the URL the client addresses,
+ * the env var holding the provider's own key, and its bare model ids
+ * (docs/d063). Values in, values out — no table lookup, so a caller sees
+ * exactly which row it is emitting.
+ * @param {string} name the entry's display name
+ * @param {string} baseUrl the provider's canonical upstream (docs/d070)
+ * @param {string} apiKeyEnv the provider's own key env (fact table `apiKeyEnv`)
  * @param {ModelEntry[]} models
  * @returns {OpenCodeProvider}
  */
-function routedProvider(label, providerUrl, apiKeyEnv, models) {
+function opencodeProvider(name, baseUrl, apiKeyEnv, models) {
 	return {
-		name: `Proxy: ${label}`,
+		name,
 		env: [apiKeyEnv],
 		npm: "@ai-sdk/openai-compatible",
-		options: { baseURL: providerUrl },
+		options: { baseURL: baseUrl },
 		models: Object.fromEntries(models.map((e) => [e.id, { name: e.id }])),
 	};
 }
@@ -244,85 +225,67 @@ function routedProvider(label, providerUrl, apiKeyEnv, models) {
 async function main() {
 	const out = process.argv[2] ?? join(scriptDir, "opencode.jsonc");
 
-	const local = await probeCandidates(LOCAL_SOURCE_CANDIDATES, (ids) =>
+	// The farm's row, read once here: its tsnet serve hostname is the probe
+	// candidate and the emitted base (plus /v1), and its apiKeyEnv is the key
+	// the entry names. The LAN port is not routable from outside the serving
+	// host (docs/d022).
+	const farm = providerFacts("llama-swap");
+	const local = await probeCandidates([farm.baseUrl], (ids) =>
 		ids.some((id) => classify(id) === "local"),
 	);
 
 	/** @type {Record<string, OpenCodeProvider>} */
 	const providers = {};
 
-	// --- 1. cloud providers: reverse-proxy routes, always emitted --------
-	// d063: the trio is emitted UNCONDITIONALLY at proxy routes; the probe
-	// only picks each provider's lineup source, and a dead route falls back
-	// to the first candidate — never to a direct URL. Resolutions run in
+	// --- 1. cloud providers: canonical routes, always emitted -----------
+	// d063: the trio is emitted UNCONDITIONALLY at its canonical upstream; the
+	// probe only picks each provider's lineup source. A resolution that throws
+	// still publishes the row (an omitted provider is how a direct URL gets
+	// back in), so the catch turns it into an empty lineup. Resolutions run in
 	// parallel (each is one probe timeout at worst).
-	const cloudResults = await Promise.allSettled(
-		CLOUD_PROVIDER_IDS.map((id) =>
-			resolveCloudProvider(id).then(
-				(r) => ({ id, ...r }),
-				// resolveCloudProvider is written not to throw, but the id must
-				// survive any unexpected rejection or the provider silently loses
-				// its reroute.
-				(err) => {
-					logWarn(
-						"cloud resolution threw — canonical base with an empty lineup",
-						{ provider: id, error: err },
-					);
-					return {
-						id,
-						providerUrl: providerFacts(id).baseUrl,
-						models: /** @type {ModelEntry[]} */ ([]),
-					};
-				},
-			),
-		),
-	);
-
-	for (const r of cloudResults) {
-		if (r.status !== "fulfilled") {
-			continue; // rejection already handled + logged above
-		}
-		const { id, providerUrl, models } = r.value;
-		providers[id] = routedProvider(
-			providerFacts(id).label,
-			providerUrl,
-			providerFacts(id).apiKeyEnv,
-			models,
-		);
-	}
-
-	// --- 2. local GGUF ---------------------------------------------------
-	if (local) {
-		const models = local.entries.filter((e) => classify(e.id) === "local");
-		if (models.length > 0) {
-			// The LOCAL llama-swap face keeps its own OpenAI surface (/v1) and
-			// its model-id routing — llama-swap is still what swaps GGUFs
-			// (docs/d027) — and llama-swap's own bearer key guards it. The
-			// EMITTED URL is canonical (docs/d070): the fact table's llama-swap
-			// upstream (the tsnet serve hostname, rooted — no path prefix) plus
-			// /v1, which install rewrites to `<base>/<host>/v1`. The probe above
-			// only picked the lineup.
-			providers.local = routedProvider(
-				"Local LLM",
-				`${providerFacts("llama-swap").baseUrl}/v1`,
-				"TLALOCAYOTL_API_KEY",
+	await Promise.all(
+		CLOUD_PROVIDER_IDS.map(async (id) => {
+			const facts = providerFacts(id);
+			const models = await resolveCloudModels(facts).catch((err) => {
+				logWarn(
+					"cloud resolution threw — canonical base with an empty lineup",
+					{ provider: facts.id, error: err },
+				);
+				return /** @type {ModelEntry[]} */ ([]);
+			});
+			providers[facts.id] = opencodeProvider(
+				`Proxy: ${facts.label}`,
+				facts.baseUrl,
+				facts.apiKeyEnv,
 				models,
 			);
-		} else {
-			logInfo("no local GGUF models visible — omitting local provider");
-		}
+		}),
+	);
+
+	// --- 2. local GGUF ---------------------------------------------------
+	// The farm answers for itself or not at all (docs/d190): an unreachable
+	// endpoint publishes an empty lineup, and a visible endpoint with no GGUF
+	// rows omits the provider entirely.
+	const localModels = local
+		? local.entries.filter((e) => classify(e.id) === "local")
+		: [];
+	if (local && localModels.length === 0) {
+		logInfo("no local GGUF models visible — omitting local provider");
 	} else {
-		// The farm answers for itself or not at all (docs/d190): d064's
-		// stale-preserve is retired here too, so an unreachable funnel no longer
-		// leaves `local` in the overlay describing GGUFs it cannot serve.
-		providers.local = routedProvider(
-			"Local LLM",
-			`${providerFacts("llama-swap").baseUrl}/v1`,
-			"TLALOCAYOTL_API_KEY",
-			[],
-		);
-		logWarn(
-			"no local GGUF source reachable — the local lineup is empty (docs/d190)",
+		if (!local) {
+			logWarn(
+				"no local GGUF source reachable — the local lineup is empty (docs/d190)",
+			);
+		}
+		// The local face keeps its own OpenAI surface (/v1) — llama-swap is
+		// still what swaps GGUFs (docs/d027) — and the tlalocayotl row's own
+		// key guards it. The emitted URL is canonical (docs/d070): the fact
+		// table's upstream plus /v1, with no install-time rewrite (docs/d108).
+		providers.local = opencodeProvider(
+			"Proxy: Local LLM",
+			`${farm.baseUrl}/v1`,
+			farm.apiKeyEnv,
+			localModels,
 		);
 	}
 
