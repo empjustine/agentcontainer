@@ -244,3 +244,7 @@ lives in ../pi-hyper/ and is flagged there.
   `PENDING.md`.
 - Generator conventions (atomic writes, canonical JSON, the fact table):
   `docs/d024`, `docs/d050`, `docs/d070`, `docs/d092`.
+
+## Base URL override
+
+- `SYNTHETIC_BASE_URL` — optional upstream override, derived from the key env the way Azure OpenAI spells the pair (`SYNTHETIC_API_KEY` → `SYNTHETIC_BASE_URL`). Absolute http(s) only; a trailing slash is trimmed; unset keeps `https://api.synthetic.new/openai/v1`. A malformed value makes the extension fail to load loudly rather than silently use the canonical upstream.

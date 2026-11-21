@@ -81,3 +81,7 @@ AGENTS.md — the fleet keeps no cache of the listing (docs/d191).
 Network-free (injected fetch) and rule-pinning: the source contract, the
 auth-gated bearer, the no-price/no-maxTokens rules, the reasoning-object
 presence rule, and the committed artifacts — never today's lineup.
+
+## Base URL override
+
+- `VERBOO_BASE_URL` — optional upstream override, derived from the key env the way Azure OpenAI spells the pair (`VERBOO_API_KEY` → `VERBOO_BASE_URL`). Absolute http(s) only; a trailing slash is trimmed; unset keeps `https://code.verboo.ai/router/v1`. A malformed value makes the extension fail to load loudly rather than silently use the canonical upstream.

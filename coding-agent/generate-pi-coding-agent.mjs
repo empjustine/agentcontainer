@@ -102,8 +102,11 @@ import {
 	writeArtifact,
 	writeJsonArtifact,
 } from "./gen-lib.mjs";
-import { readCloudProviders } from "./lib/cloud-providers.mjs";
-import { exitCodeOf } from "./lib/failure.mjs";
+import {
+	providerBaseUrl,
+	readCloudProviders,
+} from "./lib/cloud-providers.mjs";
+import { exitCodeOf, failure } from "./lib/failure.mjs";
 
 /**
  * The models.dev catalog this run fetched, or null when it is absent (the
@@ -118,9 +121,13 @@ import { exitCodeOf } from "./lib/failure.mjs";
  * They travel together because each stage emits one provider, and three
  * parallel arguments would let a call site drift onto another row.
  * @typedef {object} ProviderRow
- * @property {CloudProviderSpec} spec
+ * @property {CloudProviderSpec} [spec] the emission spec; absent for the local
+ *   farm row, which has one shape
  * @property {import("./lib/cloud-providers.mjs").CloudProviderFacts} facts
  * @property {string|undefined} apiKey the key resolved from facts.apiKeyEnv
+ * @property {string} baseUrl the upstream this run uses: the fact-table
+ *   canonical URL, or the `<KEY>_BASE_URL` override when the environment names
+ *   one. The derivation is lib/cloud-providers.mjs's providerBaseUrl
  */
 /**
  * Per-provider scoping of the override's model list, applied to BOTH sources
@@ -560,6 +567,25 @@ function reportOpencodeGoDocsDrift(models, docsIds) {
 		{ docs: docsIds.size, live: emitted.size, docsOnly, liveOnly },
 	);
 }
+/**
+ * One row's effective upstream, with a malformed override surfaced as THIS
+ * generator's failure: lib/cloud-providers.mjs throws a plain Error (it knows
+ * no exit codes), and a typo must stop generation with a line, not a stack
+ * (docs/d225).
+ * @param {import("./lib/cloud-providers.mjs").CloudProviderFacts} facts
+ * @param {Record<string, string|undefined>} env
+ * @returns {string}
+ */
+function rowBaseUrl(facts, env) {
+	try {
+		return providerBaseUrl(facts, env);
+	} catch (error) {
+		throw failure(`${/** @type {Error} */ (error).message}`, 1, {
+			provider: facts.id,
+		});
+	}
+}
+
 /**
  * The run's provider spec table: what to emit per row and how to gate it. A
  * function of the fact table and the environment, called by main — it is DATA
@@ -1260,7 +1286,7 @@ function emitMinimalCatalogOverride(row, catalog, catwalk) {
 		logInfo("mixed surface, no listing — reroute only, pi's records stand", {
 			provider: spec.id,
 		});
-		return providerReroute(row.facts.baseUrl);
+		return providerReroute(row.baseUrl);
 	}
 	const filter = spec.filter;
 	const modelsDevModels = catalog?.[spec.id]?.models ?? {};
@@ -1299,7 +1325,7 @@ function emitMinimalCatalogOverride(row, catalog, catwalk) {
 		provider: spec.id,
 		models: ids.size,
 	});
-	return providerReroute(row.facts.baseUrl, models);
+	return providerReroute(row.baseUrl, models);
 }
 
 /**
@@ -1311,7 +1337,7 @@ function emitMinimalCatalogOverride(row, catalog, catwalk) {
  */
 async function probeRow(row, tlsDisabled) {
 	return await probeEndpoint(
-		row.facts.baseUrl,
+		row.baseUrl,
 		bearerHeaders(row.apiKey?.trim()),
 		tlsDisabled,
 	);
@@ -1364,7 +1390,7 @@ async function emitOverrideOnly(row, tlsDisabled, catalog, catwalk) {
 			provider: spec.id,
 			models: models.length,
 		});
-		return providerReroute(row.facts.baseUrl, models);
+		return providerReroute(row.baseUrl, models);
 	}
 	// Route proved but not listable (401/403 without a key, or an unexpected
 	// answer — reachable ≠ authenticated): the catalog mirrors the provider's
@@ -1409,7 +1435,7 @@ async function emitFull(row, tlsDisabled, catalog, layerDir) {
 	 * upstream, keyed by id — never string-derived from a configured base.
 	 * @type {string}
 	 */
-	const canonicalUrl = row.facts.baseUrl;
+	const canonicalUrl = row.baseUrl;
 	/**
 	 * The published lineup, when this row has one: it decides WHICH ids
 	 * publish, and the catalog is then only their metadata (docs/d189).
@@ -1485,7 +1511,7 @@ async function emitFull(row, tlsDisabled, catalog, layerDir) {
 		// the whole lineup contract: there is no cache behind it to fall back
 		// to, so a provider that cannot answer offers nothing (docs/d190, d191).
 		const served = await fetchProviderFacts(
-			row.facts,
+			{ id: row.facts.id, baseUrl: row.baseUrl },
 			spec.facts,
 			row.apiKey,
 			tlsDisabled,
@@ -1659,21 +1685,20 @@ async function generateFullLayers(rows, catalog, layerDir, tlsDisabled) {
 }
 
 /**
- * @param {import("./lib/cloud-providers.mjs").CloudProviderFacts} farm the
- *   fact table's local-farm row (`llama-swap`)
- * @param {string|undefined} apiKey the farm's key, from the caller's env
+ * @param {ProviderRow} row the local farm (`llama-swap`) with its key and the
+ *   effective upstream this run uses
  * @param {boolean} tlsDisabled the runtime TLS state, from main
  * @param {string} out the layer file to write
  * @returns {Promise<void>}
  */
-async function generateLocalLlamaSwap(farm, apiKey, tlsDisabled, out) {
+async function generateLocalLlamaSwap(row, tlsDisabled, out) {
 	// The farm's tsnet serve hostname is both the probe candidate and the
 	// emitted base. The LAN port is not routable from outside the serving host
 	// (docs/d022).
 	const local = await probeCandidates(
-		[farm.baseUrl],
+		[row.baseUrl],
 		(ids) => ids.some((id) => id.includes("-GGUF")),
-		bearerHeaders(apiKey?.trim()),
+		bearerHeaders(row.apiKey?.trim()),
 		tlsDisabled,
 	);
 	if (!local) {
@@ -1691,9 +1716,9 @@ async function generateLocalLlamaSwap(farm, apiKey, tlsDisabled, out) {
 	/** @type {Record<string, import("./gen-lib.mjs").PiProvider>} */
 	const providers = {
 		"llama-swap": providerEntry(
-			farm.baseUrl,
+			row.baseUrl,
 			gguf.map(piModel),
-			Boolean(apiKey?.trim()),
+			Boolean(row.apiKey?.trim()),
 		),
 	};
 
@@ -1908,7 +1933,12 @@ async function main() {
 	/** @type {ProviderRow[]} */
 	const rows = providerSpecs(cloudProviders, env).map((spec) => {
 		const facts = providerFacts(cloudProviders, spec.id);
-		return { spec, facts, apiKey: env[facts.apiKeyEnv] };
+		return {
+			spec,
+			facts,
+			apiKey: env[facts.apiKeyEnv],
+			baseUrl: rowBaseUrl(facts, env),
+		};
 	});
 
 	const modelsOut =
@@ -1920,10 +1950,14 @@ async function main() {
 	const settingsPath = env.PI_SETTINGS ?? join(scriptDir, "settings.json");
 
 	const farm = providerFacts(cloudProviders, "llama-swap");
+	const farmRow = {
+		facts: farm,
+		apiKey: env[farm.apiKeyEnv],
+		baseUrl: rowBaseUrl(farm, env),
+	};
 	await runStage("local-llama-swap", () =>
 		generateLocalLlamaSwap(
-			farm,
-			env[farm.apiKeyEnv],
+			farmRow,
 			tlsDisabled,
 			join(layerDir, "model-010-local-default.json"),
 		),

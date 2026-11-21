@@ -67,3 +67,7 @@ Those folders are NOT built into pi, so they carry their own generated
 catalogs (docs/d096, d100). The general rule, tracked in docs/d097, is about
 substitution, not contribution: **a built-in provider's extension must not
 substitute its own model data for pi's**.
+
+## Base URL override
+
+- `MISTRAL_BASE_URL` — optional upstream override, derived from the key env the way Azure OpenAI spells the pair (`MISTRAL_API_KEY` → `MISTRAL_BASE_URL`). Absolute http(s) only; a trailing slash is trimmed; it points both the registration's `baseUrl` and the freshness listing (`<base>/models`) at the override, and unset leaves pi's built-in provider untouched. A malformed value makes the extension fail to load loudly.

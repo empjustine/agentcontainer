@@ -146,6 +146,26 @@ through the environment proxy.
   Probes run concurrently (`Promise.allSettled`) and only the LINEUP source
   is chosen; a thrown probe keeps its provider id so the remaining rows still
   probe.
+- **One base-url schema for every provider.** A provider row carries its key
+  env, and the upstream override derives from it the way Azure OpenAI spells the
+  pair: `OPENROUTER_API_KEY` → `OPENROUTER_BASE_URL`,
+  `AZURE_OPENAI_API_KEY` → `AZURE_OPENAI_BASE_URL`. `providerBaseUrl` in
+  `lib/cloud-providers.mjs` is the ONE derivation: an unset or empty override
+  keeps the fact table's canonical URL, a trailing slash is trimmed, and a value
+  that is not an absolute http(s) URL throws instead of falling back (a typo
+  must not send traffic to the canonical upstream while the operator believes
+  the provider is pointed elsewhere). A key env that does not end in
+  `_API_KEY` gets no derived name, because a guessed name silently retargets a
+  provider. The generator bakes whichever URL the run used, so an artifact is
+  canonical _for its host_; `check-canonical-artifacts.mjs` accepts the override
+  only while the same environment derives it. The `pi-*` provider extensions
+  adopt the same derivation at registration (a `sources.mjs` row resolves its
+  exported `*_BASE_URL`, and the reroute-only mistral/opencode units attach
+  `baseUrl` only when an override is set, leaving pi's built-ins untouched).
+  One consequence of deriving from the key env: two rows sharing one key env
+  share one override. `opencode` and `opencode-go` are the one such pair
+  (`OPENCODE_API_KEY` → `OPENCODE_BASE_URL`), so a gateway named there must
+  serve both surfaces; the generator and the extension both apply it to both.
 - **The shell surface is bootstrap only** (`node-scripts` port): every
   entrypoint is an npm script over `build.mjs`/`generate.mjs`/`run.mjs`, and the
   three `.sh` files that remain only pick the interpreter (the repo-root

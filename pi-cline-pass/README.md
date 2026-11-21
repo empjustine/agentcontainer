@@ -152,3 +152,7 @@ here so nobody debugs it as one.
 Network-free (injected fetch, `CLINE_PASS_MDX` for the docs file) and
 rule-pinning: they assert the parser, the prefix guard, the two projections and
 the artifact contracts — never today's lineup.
+
+## Base URL override
+
+- `CLINE_BASE_URL` — optional upstream override, derived from the key env the way Azure OpenAI spells the pair (`CLINE_API_KEY` → `CLINE_BASE_URL`). Absolute http(s) only; a trailing slash is trimmed; unset keeps `https://api.cline.bot/api/v1`. A malformed value makes the extension fail to load loudly rather than silently use the canonical upstream.

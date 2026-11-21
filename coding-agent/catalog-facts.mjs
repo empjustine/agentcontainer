@@ -192,17 +192,22 @@ export function getCatwalkModels(catwalk, piProviderId) {
  * Fetch one provider's own model listing (docs/d057, d191). Fail closed on
  * unverified TLS (docs/d033): the handshake is unauthenticated there, so the
  * key is never written to an impostor.
- * @param {import("./lib/cloud-providers.mjs").CloudProviderFacts} facts the
- *   provider's fact-table row (its baseUrl is the canonical upstream)
+ * @param {{ id: string, baseUrl: string }} provider the provider's identity and
+ *   the upstream this run uses (canonical, or its `<KEY>_BASE_URL` override)
  * @param {FactsEndpoint} endpoint where its listing lives under that base
  * @param {string|undefined} apiKey the provider's key, from the caller's env
  * @param {boolean} tlsDisabled the runtime TLS state, from the caller
  * @returns {Promise<ProviderFactsModel[]|null>} the served records, or null
  *   when the provider did not answer (the caller publishes nothing)
  */
-export async function fetchProviderFacts(facts, endpoint, apiKey, tlsDisabled) {
+export async function fetchProviderFacts(
+	provider,
+	endpoint,
+	apiKey,
+	tlsDisabled,
+) {
 	const { path, listKey = "models" } = endpoint;
-	const upstream = new URL(facts.baseUrl);
+	const upstream = new URL(provider.baseUrl);
 	const basePath = upstream.pathname.replace(/\/+$/, "");
 	/** @type {{ "Content-Type": string, Authorization?: string }} */
 	const headers = { "Content-Type": "application/json" };
@@ -213,7 +218,7 @@ export async function fetchProviderFacts(facts, endpoint, apiKey, tlsDisabled) {
 
 	const payload = await relayFetch({
 		candidates: upstreamCandidates(upstream.host, `${basePath}${path}`),
-		label: facts.id,
+		label: provider.id,
 		timeoutMs: FACTS_TIMEOUT_MS,
 		headers,
 		tlsDisabled,
@@ -223,7 +228,7 @@ export async function fetchProviderFacts(facts, endpoint, apiKey, tlsDisabled) {
 			? null
 			: /** @type {any} */ (payload)[listKey];
 	if (!Array.isArray(records) || records.length === 0) {
-		logWarn(`${facts.id} served no ${listKey} array`, {
+		logWarn(`${provider.id} served no ${listKey} array`, {
 			reason:
 				payload === undefined
 					? "no candidate delivered"
@@ -231,6 +236,8 @@ export async function fetchProviderFacts(facts, endpoint, apiKey, tlsDisabled) {
 		});
 		return null;
 	}
-	logInfo(`${facts.id} listing fetched`, { [listKey]: records.length });
+	logInfo(`${provider.id} listing fetched`, {
+		[listKey]: records.length,
+	});
 	return /** @type {ProviderFactsModel[]} */ (records);
 }

@@ -66,8 +66,41 @@ export const CLINE_PASS = Object.freeze({
 	support: "first-class",
 });
 
-/** @type {string} the provider's canonical upstream. */
-export const CLINE_PASS_BASE_URL = CLINE_PASS.baseUrl;
+/**
+ * The upstream this unit uses (the base-url schema, coding-agent/DESIGN.md):
+ * `<KEY>_BASE_URL` derived from the key env the way Azure OpenAI spells the
+ * pair, absolute http(s) only, trailing slashes trimmed. Unset or empty keeps
+ * the row's canonical URL. A malformed value throws at load: a loud extension
+ * error beats silently using the upstream the operator did not choose.
+ * @param {string} apiKeyEnv
+ * @param {string|undefined} canonical
+ * @param {Record<string, string|undefined>} env
+ * @returns {string|undefined}
+ */
+export function baseUrlFromEnv(apiKeyEnv, canonical, env) {
+	const name = apiKeyEnv.endsWith("_API_KEY")
+		? `${apiKeyEnv.slice(0, -"_API_KEY".length)}_BASE_URL`
+		: null;
+	const override = name === null ? undefined : env[name]?.trim();
+	if (!override) {
+		return canonical;
+	}
+	let protocol;
+	try {
+		protocol = new URL(override).protocol;
+	} catch {
+		protocol = "";
+	}
+	if (protocol !== "http:" && protocol !== "https:") {
+		throw new Error(`${name} is not an absolute http(s) URL: ${override}`);
+	}
+	return override.replace(/\/+$/, "");
+}
+
+/** @type {string} this unit's effective upstream (the row's canonical by default). */
+export const CLINE_PASS_BASE_URL = /** @type {string} */ (
+	baseUrlFromEnv(CLINE_PASS.apiKeyEnv, CLINE_PASS.baseUrl, process.env)
+);
 /** @type {string} the env var holding the real key. */
 export const CLINE_PASS_API_KEY_ENV = CLINE_PASS.apiKeyEnv;
 /** @type {string} the provider id pi namespaces model ids under. */

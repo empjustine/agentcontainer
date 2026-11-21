@@ -302,3 +302,24 @@ describe("the auth-gated watchdog", () => {
 		});
 	});
 });
+
+// The base-url schema (coding-agent/DESIGN.md): every unit accepts
+// <KEY>_BASE_URL derived from its key env.
+const { baseUrlFromEnv } = await import("../index.mjs");
+
+test("the base-url override derives from the key env", () => {
+	assert.equal(baseUrlFromEnv("MISTRAL_API_KEY", undefined, {}), undefined);
+	assert.equal(
+		baseUrlFromEnv("MISTRAL_API_KEY", undefined, {
+			MISTRAL_BASE_URL: "https://mirror.example/v1/",
+		}),
+		"https://mirror.example/v1",
+	);
+	assert.throws(
+		() =>
+			baseUrlFromEnv("MISTRAL_API_KEY", undefined, {
+				MISTRAL_BASE_URL: "ftp://mirror.example/v1",
+			}),
+		/MISTRAL_BASE_URL is not an absolute http\(s\) URL/,
+	);
+});

@@ -140,6 +140,50 @@ export const PI_NATIVE_CLOUD_IDS = Object.freeze([
 ]);
 
 /**
+ * The base-url env var a row accepts, derived from its key env the way Azure
+ * OpenAI spells the pair (AZURE_OPENAI_API_KEY → AZURE_OPENAI_BASE_URL). One
+ * rule for every provider, so a new row gets the override without a second
+ * table entry. A key env that does not end in `_API_KEY` has no derived name:
+ * the convention would be a guess, and a guessed name silently retargets a
+ * provider.
+ * @param {string} apiKeyEnv
+ * @returns {string|null}
+ */
+export function baseUrlEnvName(apiKeyEnv) {
+	return apiKeyEnv.endsWith("_API_KEY")
+		? `${apiKeyEnv.slice(0, -"_API_KEY".length)}_BASE_URL`
+		: null;
+}
+
+/**
+ * The upstream one run uses for a row: the env override when set (the derived
+ * name, absolute http(s) only, trailing slashes trimmed), else the fact table's
+ * canonical URL (docs/d070). A malformed override THROWS instead of falling
+ * back: a typo must not send traffic to the canonical upstream while the
+ * operator believes the provider is pointed elsewhere.
+ * @param {CloudProviderFacts} facts
+ * @param {Record<string, string|undefined>} env
+ * @returns {string}
+ */
+export function providerBaseUrl(facts, env) {
+	const name = baseUrlEnvName(facts.apiKeyEnv);
+	const override = name === null ? undefined : env[name]?.trim();
+	if (!override) {
+		return facts.baseUrl;
+	}
+	let protocol;
+	try {
+		protocol = new URL(override).protocol;
+	} catch {
+		protocol = "";
+	}
+	if (protocol !== "http:" && protocol !== "https:") {
+		throw new Error(`${name} is not an absolute http(s) URL: ${override}`);
+	}
+	return override.replace(/\/+$/, "");
+}
+
+/**
  * The upstreams' hostnames. A routed URL carried the upstream host as a path
  * segment (`<base>/<host>/…`, docs/d047); that form is deleted (docs/d108),
  * and this set is the regression guard that refuses it if it comes back — a

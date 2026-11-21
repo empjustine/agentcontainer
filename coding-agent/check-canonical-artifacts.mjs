@@ -23,7 +23,11 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { factHosts, readCloudProviders } from "./lib/cloud-providers.mjs";
+import {
+	factHosts,
+	providerBaseUrl,
+	readCloudProviders,
+} from "./lib/cloud-providers.mjs";
 import { exitCodeOf, failure } from "./lib/failure.mjs";
 
 /**
@@ -90,12 +94,18 @@ export function providerUrlsOf(doc) {
  * form). An id unknown to the fact table is a violation: artifacts and the
  * table must agree, so a rename on either side fails loudly instead of
  * shipping a URL nobody verified.
+ * An artifact carries either the fact-table canonical upstream or the
+ * `<KEY>_BASE_URL` override the generating host named for that provider: the
+ * override is the same schema at a different address (docs/d226's sibling in
+ * lib/cloud-providers.mjs), so it passes only when THIS environment derives it.
  * @param {unknown} doc parsed artifact
  * @param {Readonly<Record<string, import("./lib/cloud-providers.mjs").CloudProviderFacts>>} providers
  *   the fact table, read once by the caller
+ * @param {Record<string, string|undefined>} [env] the environment whose
+ *   overrides are accepted (the verifier is spawned with the launcher's env)
  * @returns {readonly string[]} human-readable violations; empty = conforming
  */
-export function canonicalViolations(doc, providers) {
+export function canonicalViolations(doc, providers, env = {}) {
 	const out = [];
 	const hosts = factHosts(providers);
 	for (const { id, url } of providerUrlsOf(doc)) {
@@ -103,13 +113,29 @@ export function canonicalViolations(doc, providers) {
 			continue;
 		}
 		const factId = OPENCODE_PROVIDER_FACT_IDS[id] ?? id;
-		const upstream = providers[factId]?.baseUrl;
-		if (!upstream) {
+		const facts = providers[factId];
+		if (!facts) {
 			out.push(`${id}: no fact-table upstream (docs/d070)`);
 			continue;
 		}
-		if (!url.startsWith(upstream)) {
-			out.push(`${id}: not the fact-table upstream ${upstream}: ${url}`);
+		let upstreams;
+		try {
+			upstreams = [
+				...new Set([facts.baseUrl, providerBaseUrl(facts, env)]),
+			];
+		} catch (err) {
+			out.push(`${id}: ${/** @type {Error} */ (err).message}`);
+			continue;
+		}
+		// Longest first: a shorter candidate must not mask a longer one it
+		// prefixes. The suffix check below is what reports a boundary violation.
+		const upstream = upstreams
+			.sort((left, right) => right.length - left.length)
+			.find((candidate) => url.startsWith(candidate));
+		if (!upstream) {
+			out.push(
+				`${id}: not the fact-table upstream ${facts.baseUrl} or its derived ${facts.apiKeyEnv.replace(/_API_KEY$/, "_BASE_URL")} override: ${url}`,
+			);
 			continue;
 		}
 		const suffix = url.slice(upstream.length);
@@ -151,6 +177,7 @@ function main(args) {
 		violations = canonicalViolations(
 			JSON.parse(readFileSync(path, "utf-8")),
 			providers,
+			process.env,
 		);
 	} catch (err) {
 		violations = [`unreadable or invalid JSON: ${String(err)}`];

@@ -417,3 +417,24 @@ test("the request signal composes the caller's cancellation with the deadline", 
 	assert.equal(seen.aborted, true, "the caller's abort reaches the request");
 });
 
+
+// The base-url schema (coding-agent/DESIGN.md): every unit accepts
+// <KEY>_BASE_URL derived from its key env.
+const { baseUrlFromEnv } = await import("../sources.mjs");
+
+test("the base-url override derives from the key env", () => {
+	assert.equal(baseUrlFromEnv("HYPER_API_KEY", "https://hyper.charm.land/v1", {}), "https://hyper.charm.land/v1");
+	assert.equal(
+		baseUrlFromEnv("HYPER_API_KEY", "https://hyper.charm.land/v1", {
+			HYPER_BASE_URL: "https://mirror.example/v1/",
+		}),
+		"https://mirror.example/v1",
+	);
+	assert.throws(
+		() =>
+			baseUrlFromEnv("HYPER_API_KEY", "https://hyper.charm.land/v1", {
+				HYPER_BASE_URL: "ftp://mirror.example/v1",
+			}),
+		/HYPER_BASE_URL is not an absolute http\(s\) URL/,
+	);
+});

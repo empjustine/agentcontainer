@@ -92,3 +92,7 @@ properties:
 Network-free (injected fetch) and rule-pinning: the source contract, the
 ON_OFF fallback, the cached-price pairing, the compat transcription, the
 cost rule, and the committed artifacts — never today's lineup.
+
+## Base URL override
+
+- `HYPER_BASE_URL` — optional upstream override, derived from the key env the way Azure OpenAI spells the pair (`HYPER_API_KEY` → `HYPER_BASE_URL`). Absolute http(s) only; a trailing slash is trimmed; unset keeps `https://hyper.charm.land/v1`. A malformed value makes the extension fail to load loudly rather than silently use the canonical upstream.

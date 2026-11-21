@@ -130,6 +130,28 @@ test("detector maps opencode's local to the llama-swap fact row", () => {
 	assert.match(violations[0] ?? "no violation recorded", /not the fact-table upstream/);
 });
 
+test("a base-url override passes only when this environment names it", () => {
+	const override = "https://mistral-mirror.example/v1";
+	const doc = { providers: { mistral: { baseUrl: `${override}/v1` } } };
+	assert.deepEqual(
+		canonicalViolations(doc, CLOUD_PROVIDERS, { MISTRAL_BASE_URL: override }),
+		[],
+	);
+	const violations = canonicalViolations(doc, CLOUD_PROVIDERS, {});
+	assert.equal(violations.length, 1, violations.join("\n"));
+	assert.match(violations[0] ?? "no violation recorded", /MISTRAL_BASE_URL override/);
+});
+
+test("a malformed base-url override is reported, never silently canonical", () => {
+	const violations = canonicalViolations(
+		{ providers: { mistral: { baseUrl: "https://mistral.example/v1" } } },
+		CLOUD_PROVIDERS,
+		{ MISTRAL_BASE_URL: "not a url" },
+	);
+	assert.equal(violations.length, 1, violations.join("\n"));
+	assert.match(violations[0] ?? "no violation recorded", /MISTRAL_BASE_URL/);
+});
+
 test("providerUrlsOf reads both pi and opencode artifact shapes", () => {
 	assert.deepEqual(providerUrlsOf({ providers: { a: { baseUrl: "u" } } }), [
 		{ id: "a", url: "u" },

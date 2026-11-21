@@ -65,15 +65,63 @@
 /** pi namespaces the models under this id; it is also the fact-table id. */
 export const MISTRAL_PROVIDER_ID = "mistral";
 
-/**
- * The provider's live model listing — the fact-table canonical upstream
- * (docs/d070) plus the path the OpenAI surface serves its listing under.
- * tests pin this against the row literal in tests/pi-mistral.test.mjs.
- */
-export const MISTRAL_LISTING_URL = "https://api.mistral.ai/v1/models";
-
 /** The env var holding the real key; sent when set, never logged (d086). */
 const MISTRAL_API_KEY_ENV = "MISTRAL_API_KEY";
+
+/**
+ * The upstream this unit uses (the base-url schema, coding-agent/DESIGN.md):
+ * `MISTRAL_BASE_URL`, derived from the key env the way Azure OpenAI spells the
+ * pair, absolute http(s) only, trailing slashes trimmed. `undefined` when the
+ * operator names no override: this unit registers only `refreshModels`, so pi's
+ * built-in provider keeps its own baseUrl. A malformed value throws at load: a
+ * loud extension error beats silently using an upstream the operator did not
+ * choose.
+ * @param {string} apiKeyEnv
+ * @param {string|undefined} canonical
+ * @param {Record<string, string|undefined>} env
+ * @returns {string|undefined}
+ */
+export function baseUrlFromEnv(apiKeyEnv, canonical, env) {
+	const name = apiKeyEnv.endsWith("_API_KEY")
+		? `${apiKeyEnv.slice(0, -"_API_KEY".length)}_BASE_URL`
+		: null;
+	const override = name === null ? undefined : env[name]?.trim();
+	if (!override) {
+		return canonical;
+	}
+	let protocol;
+	try {
+		protocol = new URL(override).protocol;
+	} catch {
+		protocol = "";
+	}
+	if (protocol !== "http:" && protocol !== "https:") {
+		throw new Error(`${name} is not an absolute http(s) URL: ${override}`);
+	}
+	return override.replace(/\/+$/, "");
+}
+
+/**
+ * The operator's upstream override, or undefined when none is set. This unit
+ * has no canonical row of its own (it reroutes pi's built-in provider), so the
+ * override is the only baseUrl it ever passes.
+ * @type {string|undefined}
+ */
+export const MISTRAL_BASE_URL = baseUrlFromEnv(
+	MISTRAL_API_KEY_ENV,
+	undefined,
+	process.env,
+);
+
+/**
+ * The provider's live model listing — the canonical upstream (docs/d070) plus
+ * the path the OpenAI surface serves its listing under, following the override
+ * when one is set. tests pin this against the row literal in
+ * tests/pi-mistral.test.mjs.
+ */
+export const MISTRAL_LISTING_URL = MISTRAL_BASE_URL
+	? `${MISTRAL_BASE_URL}/models`
+	: "https://api.mistral.ai/v1/models";
 
 /**
  * One warning per interval, not one per model-selector open: the failure is
@@ -194,9 +242,12 @@ let lastAttemptAt = 0;
  */
 export default function piMistral(pi) {
 	pi.registerProvider(MISTRAL_PROVIDER_ID, {
-		// ONLY refreshModels: no models (the built-in catalog must survive —
-		// any list we returned would REPLACE it wholesale), no api/baseUrl/
-		// apiKey/headers (the built-in provider's own). See the fileoverview.
+		// ONLY refreshModels plus an opt-in baseUrl override: no models (the
+		// built-in catalog must survive — any list we returned would REPLACE it
+		// wholesale), no api/apiKey/headers (the built-in provider's own). The
+		// override is absent unless the operator sets MISTRAL_BASE_URL, so the
+		// built-in provider is untouched by default. See the fileoverview.
+		...(MISTRAL_BASE_URL ? { baseUrl: MISTRAL_BASE_URL } : {}),
 		refreshModels: /** @type {NonNullable<ProviderConfig["refreshModels"]>} */ (
 			/** @type {unknown} */ (watch)
 		),

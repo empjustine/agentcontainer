@@ -9,8 +9,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+	baseUrlEnvName,
 	factHosts,
 	parseCloudProviders,
+	providerBaseUrl,
 	providerFacts,
 } from "../lib/cloud-providers.mjs";
 
@@ -55,6 +57,40 @@ test("providerFacts answers from the table it was given", () => {
 	const table = parseCloudProviders(JSON.stringify(ROWS));
 	assert.equal(providerFacts(table, "alpha").label, "Alpha");
 	assert.throws(() => providerFacts(table, "gamma"), /lost the gamma row/);
+});
+
+test("the base-url env name derives from the key env (Azure shape)", () => {
+	assert.equal(baseUrlEnvName("OPENROUTER_API_KEY"), "OPENROUTER_BASE_URL");
+	assert.equal(baseUrlEnvName("AZURE_OPENAI_API_KEY"), "AZURE_OPENAI_BASE_URL");
+	assert.equal(baseUrlEnvName("TLALOCAYOTL_API_KEY"), "TLALOCAYOTL_BASE_URL");
+	// No `_API_KEY` suffix: no guessed name, because a wrong guess retargets a
+	// provider.
+	assert.equal(baseUrlEnvName("OPENROUTER_KEY"), null);
+	assert.equal(baseUrlEnvName("X_API_KEY_EXTRA"), null);
+});
+
+test("providerBaseUrl prefers a valid override and trims it", () => {
+	const table = parseCloudProviders(JSON.stringify(ROWS));
+	const alpha = providerFacts(table, "alpha");
+	assert.equal(providerBaseUrl(alpha, {}), "https://alpha.example/v1");
+	assert.equal(providerBaseUrl(alpha, { ALPHA_BASE_URL: "  " }), "https://alpha.example/v1");
+	assert.equal(
+		providerBaseUrl(alpha, { ALPHA_BASE_URL: "https://alt.example/v1/" }),
+		"https://alt.example/v1",
+	);
+});
+
+test("a malformed override refuses instead of falling back", () => {
+	const table = parseCloudProviders(JSON.stringify(ROWS));
+	const alpha = providerFacts(table, "alpha");
+	assert.throws(
+		() => providerBaseUrl(alpha, { ALPHA_BASE_URL: "ftp://alt.example/v1" }),
+		/ALPHA_BASE_URL is not an absolute http\(s\) URL/,
+	);
+	assert.throws(
+		() => providerBaseUrl(alpha, { ALPHA_BASE_URL: "not a url" }),
+		/absolute http\(s\) URL/,
+	);
 });
 
 test("factHosts is the table's own host set", () => {

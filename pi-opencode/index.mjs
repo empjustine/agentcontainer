@@ -72,11 +72,64 @@ export const OPENCODE_GO_PROVIDER_ID = "opencode-go";
  * failure is a warning worth raising here — unlike pi-mistral's auth-gated
  * listing, where keyless means only "no key".
  */
-export const OPENCODE_LISTING_URL = "https://opencode.ai/zen/v1/models";
-export const OPENCODE_GO_LISTING_URL = "https://opencode.ai/zen/go/v1/models";
-
 /** The env var holding the real key; sent when set, never logged (d086). */
 const OPENCODE_API_KEY_ENV = "OPENCODE_API_KEY";
+
+/**
+ * The upstream this unit uses (the base-url schema, coding-agent/DESIGN.md):
+ * `OPENCODE_BASE_URL`, derived from the key env the way Azure OpenAI spells
+ * the pair, absolute http(s) only, trailing slashes trimmed. `undefined` when
+ * the operator names no override: this unit registers only `refreshModels`,
+ * so pi's built-in providers keep their own baseUrl. A malformed value throws
+ * at load: a loud extension error beats silently using an upstream the
+ * operator did not choose.
+ * @param {string} apiKeyEnv
+ * @param {string|undefined} canonical
+ * @param {Record<string, string|undefined>} env
+ * @returns {string|undefined}
+ */
+export function baseUrlFromEnv(apiKeyEnv, canonical, env) {
+	const name = apiKeyEnv.endsWith("_API_KEY")
+		? `${apiKeyEnv.slice(0, -"_API_KEY".length)}_BASE_URL`
+		: null;
+	const override = name === null ? undefined : env[name]?.trim();
+	if (!override) {
+		return canonical;
+	}
+	let protocol;
+	try {
+		protocol = new URL(override).protocol;
+	} catch {
+		protocol = "";
+	}
+	if (protocol !== "http:" && protocol !== "https:") {
+		throw new Error(`${name} is not an absolute http(s) URL: ${override}`);
+	}
+	return override.replace(/\/+$/, "");
+}
+
+/**
+ * The operator's upstream override, or undefined when none is set. The two Zen
+ * surfaces SHARE `OPENCODE_API_KEY`, so they share the derived name by
+ * construction: `OPENCODE_BASE_URL` retargets both providers, exactly as the
+ * generator applies it to both fact-table rows. A gateway named here therefore
+ * serves both surfaces' listings.
+ * @type {string|undefined}
+ */
+export const OPENCODE_BASE_URL = baseUrlFromEnv(
+	OPENCODE_API_KEY_ENV,
+	undefined,
+	process.env,
+);
+
+/** @type {string} the listing endpoint, following the override when set. */
+export const OPENCODE_LISTING_URL = OPENCODE_BASE_URL
+	? `${OPENCODE_BASE_URL}/models`
+	: "https://opencode.ai/zen/v1/models";
+/** @type {string} the Go surface's listing endpoint (same override, see above). */
+export const OPENCODE_GO_LISTING_URL = OPENCODE_BASE_URL
+	? `${OPENCODE_BASE_URL}/models`
+	: "https://opencode.ai/zen/go/v1/models";
 
 /**
  * One warning per interval per provider, not one per model-selector open: the
@@ -205,12 +258,12 @@ function watchdog(providerId, listingUrl) {
  * @returns {void}
  */
 export default function piOpencode(pi) {
-	pi.registerProvider(
-		OPENCODE_PROVIDER_ID,
-		watchdog(OPENCODE_PROVIDER_ID, OPENCODE_LISTING_URL),
-	);
-	pi.registerProvider(
-		OPENCODE_GO_PROVIDER_ID,
-		watchdog(OPENCODE_GO_PROVIDER_ID, OPENCODE_GO_LISTING_URL),
-	);
+	pi.registerProvider(OPENCODE_PROVIDER_ID, {
+		...(OPENCODE_BASE_URL ? { baseUrl: OPENCODE_BASE_URL } : {}),
+		...watchdog(OPENCODE_PROVIDER_ID, OPENCODE_LISTING_URL),
+	});
+	pi.registerProvider(OPENCODE_GO_PROVIDER_ID, {
+		...(OPENCODE_BASE_URL ? { baseUrl: OPENCODE_BASE_URL } : {}),
+		...watchdog(OPENCODE_GO_PROVIDER_ID, OPENCODE_GO_LISTING_URL),
+	});
 }

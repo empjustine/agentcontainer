@@ -76,3 +76,7 @@ substitute its own model data for pi's** — no backup catalog, no silent
 fallback on fetch failure. Contributing what can only _enrich_ pi's rows —
 freshness signals today, fresh listing ids if an additive composer hook ever
 lands — is welcome.
+
+## Base URL override
+
+- `OPENCODE_BASE_URL` — optional upstream override, derived from the key env the way Azure OpenAI spells the pair (`OPENCODE_API_KEY` → `OPENCODE_BASE_URL`). Both Zen surfaces share that key env, so they share the override: it retargets `opencode` AND `opencode-go` (as the generator does for both fact-table rows), and a gateway named here must serve both surfaces' listings. Absolute http(s) only; trailing slash trimmed; unset leaves pi's built-in providers untouched; a malformed value makes the extension fail to load loudly.
