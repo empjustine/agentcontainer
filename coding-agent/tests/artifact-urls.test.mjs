@@ -20,9 +20,13 @@ const {
 	canonicalViolations,
 	providerUrlsOf,
 } = await import("../check-canonical-artifacts.mjs");
-const { CLOUD_PROVIDERS } = await import("../lib/cloud-providers.mjs");
+const { readCloudProviders } = await import("../lib/cloud-providers.mjs");
 
 const unitRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+// The test owns the I/O: the module under test takes the table as a value.
+const CLOUD_PROVIDERS = readCloudProviders(
+	join(unitRoot, "lib/cloud-providers.json"),
+);
 const readDoc = (/** @type {string} */ p) =>
 	JSON.parse(readFileSync(join(unitRoot, p), "utf-8"));
 
@@ -41,15 +45,18 @@ const COMMITTED = [
 
 for (const file of COMMITTED) {
 	test(`committed ${file} carries canonical upstreams only`, () => {
-		const violations = canonicalViolations(readDoc(file));
+		const violations = canonicalViolations(readDoc(file), CLOUD_PROVIDERS);
 		assert.deepEqual(violations, [], violations.join("\n"));
 	});
 }
 
 test("detector rejects an id the fact table does not know", () => {
-	const violations = canonicalViolations({
-		providers: { "mystery-corp": { baseUrl: "https://mystery.example/v1" } },
-	});
+	const violations = canonicalViolations(
+		{
+			providers: { "mystery-corp": { baseUrl: "https://mystery.example/v1" } },
+		},
+		CLOUD_PROVIDERS,
+	);
 	assert.equal(violations.length, 1);
 	assert.match(violations[0] ?? "no violation recorded", /no fact-table upstream/);
 });
@@ -60,12 +67,17 @@ test("detector rejects an id the fact table does not know", () => {
 test("detector rejects the deprecated route form", () => {
 	const base =
 		"https://tlalocayotl.coelacanth-barb.ts.net/00000000-0000-4000-8000-000000000000";
-	const violations = canonicalViolations({
-		providers: {
-			"llama-swap": { baseUrl: `${base}/tlalocayotl.coelacanth-barb.ts.net/v1` },
-			mistral: { baseUrl: `${base}/api.mistral.ai/v1` },
+	const violations = canonicalViolations(
+		{
+			providers: {
+				"llama-swap": {
+					baseUrl: `${base}/tlalocayotl.coelacanth-barb.ts.net/v1`,
+				},
+				mistral: { baseUrl: `${base}/api.mistral.ai/v1` },
+			},
 		},
-	});
+		CLOUD_PROVIDERS,
+	);
 	assert.equal(violations.length, 2, violations.join("\n"));
 	// The route form's first segment is the destination host — the marker that
 	// survives the funnel llama-swap collision (docs/d070 Consequences).
@@ -76,9 +88,10 @@ test("detector rejects the deprecated route form", () => {
 test("detector rejects an upstream prefix that is not at a path boundary", () => {
 	const upstream = CLOUD_PROVIDERS.mistral?.baseUrl;
 	assert.ok(upstream, "mistral must stay a fact-table row");
-	const violations = canonicalViolations({
-		providers: { mistral: { baseUrl: `${upstream}-suffixed` } },
-	});
+	const violations = canonicalViolations(
+		{ providers: { mistral: { baseUrl: `${upstream}-suffixed` } } },
+		CLOUD_PROVIDERS,
+	);
 	assert.equal(violations.length, 1);
 	assert.match(violations[0] ?? "no violation recorded", /path boundary/);
 });
@@ -87,7 +100,10 @@ test("detector accepts a client suffix past the upstream", () => {
 	const upstream = CLOUD_PROVIDERS.mistral?.baseUrl;
 	assert.ok(upstream, "mistral must stay a fact-table row");
 	assert.deepEqual(
-		canonicalViolations({ providers: { mistral: { baseUrl: `${upstream}/v1` } } }),
+		canonicalViolations(
+			{ providers: { mistral: { baseUrl: `${upstream}/v1` } } },
+			CLOUD_PROVIDERS,
+		),
 		[],
 	);
 });
@@ -96,14 +112,20 @@ test("detector maps opencode's local to the llama-swap fact row", () => {
 	const upstream = CLOUD_PROVIDERS["llama-swap"]?.baseUrl;
 	assert.ok(upstream, "llama-swap must stay a fact-table row");
 	assert.deepEqual(
-		canonicalViolations({
-			provider: { local: { options: { baseURL: `${upstream}/v1` } } },
-		}),
+		canonicalViolations(
+			{ provider: { local: { options: { baseURL: `${upstream}/v1` } } } },
+			CLOUD_PROVIDERS,
+		),
 		[],
 	);
-	const violations = canonicalViolations({
-		provider: { local: { options: { baseURL: "https://elsewhere.example/v1" } } },
-	});
+	const violations = canonicalViolations(
+		{
+			provider: {
+				local: { options: { baseURL: "https://elsewhere.example/v1" } },
+			},
+		},
+		CLOUD_PROVIDERS,
+	);
 	assert.equal(violations.length, 1);
 	assert.match(violations[0] ?? "no violation recorded", /not the fact-table upstream/);
 });

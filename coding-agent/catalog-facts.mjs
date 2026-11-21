@@ -1,7 +1,7 @@
 /**
  * @fileoverview catalog-facts.mjs — the LIVE secondary catalogs the pi and
  * opencode generators read: Charm's multi-provider catwalk listing
- * (`https://catwalk.charm.land/v2/providers`) and one provider's own model
+ * (https://catwalk.charm.land/v2/providers) and one provider's own model
  * listing on its base URL (docs/d191).
  *
  * Both are fetched per run and handed over in memory. NO cache file is
@@ -12,9 +12,9 @@
  * republishing ids its provider had already rotated away (docs/d189, d190).
  *
  * Fetching: `upstreamCandidates` (route-probe.mjs) addresses the canonical
- * upstream and reaches it through the environment proxy (docs/d074, d108),
- * carrying the provider Authorization bearer when the key is present. An edge
- * that cannot deliver is a `null`, logged, never retried against a file.
+ * upstream and reaches it through the environment proxy (docs/d074, d108).
+ * This module reads no env and no table: the fact row, its key and the runtime
+ * TLS state are parameters, so a fetch is reproducible from its arguments.
  *
  * TLS: an https route under NODE_TLS_REJECT_UNAUTHORIZED=0 is skipped outright
  * (route-probe's fail-closed rule, docs/d033) — no request bytes, credentials
@@ -22,29 +22,13 @@
  *
  * Record shapes stay RAW, unnormalized: each consumer owns its rendering (the
  * pi generator's per-provider factsMapper, the catwalk id map). No fetch URL
- * reaches an ARTIFACT (docs/d086): the winning relay candidate is
- * capability-bearing (the funnel mount IS the mode A credential) and rotates
- * with it, so only a local `warn` line may name one — nothing written here is
- * ever committed.
+ * reaches an ARTIFACT (docs/d086): the winning candidate is capability-bearing
+ * (the tunnel mount IS the credential) and rotates with it, so only a local
+ * `warn` line may name one — nothing written here is ever committed.
  */
 
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
+import { logInfo, logWarn } from "./lib/log.mjs";
 import { tlsUnverifiable, upstreamCandidates } from "./route-probe.mjs";
-
-const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "lib");
-const { logInfo, logWarn, setLogTool } =
-	/** @type {typeof import("./lib/log.mjs")} */ (
-		await import(`${LIB_DIR}/log.mjs`)
-	);
-const { CLOUD_PROVIDERS } =
-	/** @type {typeof import("./lib/cloud-providers.mjs")} */ (
-		await import(`${LIB_DIR}/cloud-providers.mjs`)
-	);
-
-setLogTool("coding-agent/catalog-facts");
 
 const CATWALK_PATH_AND_QUERY = "/v2/providers";
 /** The catwalk listing is a large document; provider /models lists are small. */
@@ -104,12 +88,19 @@ const FACTS_TIMEOUT_MS = 8000;
  * @param {string} options.label log context — the catalog name / provider id
  * @param {number} options.timeoutMs per-caller fetch budget
  * @param {Record<string, string>} [options.headers] provider bearer when present
- * @returns {Promise<{ payload: unknown, url: string }|null>} null when every
- *   candidate failed — the caller publishes nothing
+ * @param {boolean} options.tlsDisabled the runtime TLS state, from the caller
+ * @returns {Promise<unknown>} the payload, or undefined when every candidate
+ *   failed — `null` stays a real payload the caller can reject on shape
  */
-async function relayFetch({ candidates, label, timeoutMs, headers }) {
+async function relayFetch({
+	candidates,
+	label,
+	timeoutMs,
+	headers,
+	tlsDisabled,
+}) {
 	for (const url of candidates) {
-		if (tlsUnverifiable(url)) {
+		if (tlsUnverifiable(url, tlsDisabled)) {
 			logWarn(`${label} route https unverifiable — skipping (TLS disabled)`, {
 				url,
 			});
@@ -121,14 +112,13 @@ async function relayFetch({ candidates, label, timeoutMs, headers }) {
 				signal: AbortSignal.timeout(timeoutMs),
 			});
 			if (res.ok) {
-				return { payload: await res.json(), url };
+				return await res.json();
 			}
 			logWarn(`${label} route returned non-2xx`, { status: res.status, url });
 		} catch (err) {
 			logWarn(`${label} fetch failed`, { error: err, url });
 		}
 	}
-	return null;
 }
 
 // --- catwalk ----------------------------------------------------------------
@@ -148,29 +138,31 @@ export const PROVIDER_MAP = Object.freeze({
 
 /**
  * Fetch catwalk's full /v2/providers catalog.
- * @param {string} [url] explicit URL = operator override of the relay chain
+ * @param {string|undefined} url explicit URL = operator override of the chain
+ * @param {boolean} tlsDisabled the runtime TLS state, from the caller
  * @returns {Promise<CatwalkProvider[]|null>} null when no candidate delivered
  */
-export async function fetchCatwalkFacts(url) {
+export async function fetchCatwalkFacts(url, tlsDisabled) {
 	const candidates = url
 		? [url]
 		: upstreamCandidates("catwalk.charm.land", CATWALK_PATH_AND_QUERY);
-	const found = await relayFetch({
+	const payload = await relayFetch({
 		candidates,
 		label: "catwalk",
 		timeoutMs: CATWALK_TIMEOUT_MS,
+		tlsDisabled,
 	});
-	const providers = found ? /** @type {any} */ (found.payload) : null;
-	if (!found || !Array.isArray(providers) || providers.length === 0) {
+	if (!Array.isArray(payload) || payload.length === 0) {
 		logWarn("catwalk did not deliver a provider list", {
-			reason: found
-				? "catalog answered without a providers array"
-				: "no candidate delivered",
+			reason:
+				payload === undefined
+					? "no candidate delivered"
+					: "catalog answered without a providers array",
 		});
 		return null;
 	}
-	logInfo("catwalk listing fetched", { providers: providers.length });
-	return /** @type {CatwalkProvider[]} */ (providers);
+	logInfo("catwalk listing fetched", { providers: payload.length });
+	return /** @type {CatwalkProvider[]} */ (payload);
 }
 
 /**
@@ -197,46 +189,48 @@ export function getCatwalkModels(catwalk, piProviderId) {
 // --- per-provider facts -----------------------------------------------------
 
 /**
- * Fetch one provider's own model listing (docs/d057, d191).
- * Fail closed on unverified TLS (docs/d033): the handshake is unauthenticated
- * there, so the key is never written to an impostor.
- * @param {string} id fact-table provider id
- * @param {FactsEndpoint} options
+ * Fetch one provider's own model listing (docs/d057, d191). Fail closed on
+ * unverified TLS (docs/d033): the handshake is unauthenticated there, so the
+ * key is never written to an impostor.
+ * @param {import("./lib/cloud-providers.mjs").CloudProviderFacts} facts the
+ *   provider's fact-table row (its baseUrl is the canonical upstream)
+ * @param {FactsEndpoint} endpoint where its listing lives under that base
+ * @param {string|undefined} apiKey the provider's key, from the caller's env
+ * @param {boolean} tlsDisabled the runtime TLS state, from the caller
  * @returns {Promise<ProviderFactsModel[]|null>} the served records, or null
  *   when the provider did not answer (the caller publishes nothing)
  */
-export async function fetchProviderFacts(id, options) {
-	const { path, listKey = "models" } = options;
-	const facts = CLOUD_PROVIDERS[id];
-	if (!facts) {
-		logWarn("no fact-table row — facts fetch skipped", { provider: id });
-		return null;
-	}
-	// Host-form route (docs/d047): the funnel fronts the estige allowlist, so
-	// candidates address the upstream HOST + base path.
+export async function fetchProviderFacts(facts, endpoint, apiKey, tlsDisabled) {
+	const { path, listKey = "models" } = endpoint;
 	const upstream = new URL(facts.baseUrl);
 	const basePath = upstream.pathname.replace(/\/+$/, "");
 	/** @type {{ "Content-Type": string, Authorization?: string }} */
 	const headers = { "Content-Type": "application/json" };
-	const key = process.env[facts.apiKeyEnv]?.trim();
+	const key = apiKey?.trim();
 	if (key) {
 		headers.Authorization = `Bearer ${key}`;
 	}
 
-	const found = await relayFetch({
+	const payload = await relayFetch({
 		candidates: upstreamCandidates(upstream.host, `${basePath}${path}`),
-		label: id,
+		label: facts.id,
 		timeoutMs: FACTS_TIMEOUT_MS,
 		headers,
+		tlsDisabled,
 	});
-	const payload = found ? /** @type {any} */ (found.payload) : null;
-	const records = payload ? payload[listKey] : null;
-	if (!found || !Array.isArray(records) || records.length === 0) {
-		logWarn(`${id} served no ${listKey} array`, {
-			reason: found ? "listing without records" : "no candidate delivered",
+	const records =
+		payload === undefined || payload === null
+			? null
+			: /** @type {any} */ (payload)[listKey];
+	if (!Array.isArray(records) || records.length === 0) {
+		logWarn(`${facts.id} served no ${listKey} array`, {
+			reason:
+				payload === undefined
+					? "no candidate delivered"
+					: "listing without records",
 		});
 		return null;
 	}
-	logInfo(`${id} listing fetched`, { [listKey]: records.length });
+	logInfo(`${facts.id} listing fetched`, { [listKey]: records.length });
 	return /** @type {ProviderFactsModel[]} */ (records);
 }

@@ -36,30 +36,20 @@ import { join } from "node:path";
 
 import {
 	bearerHeaders,
-	providerFacts,
+	catalogModelLive,
+	cloudProvidersPath,
 	logError,
 	logInfo,
 	logWarn,
-	catalogModelLive,
 	modalitiesEligible,
 	probeCandidates,
 	probeEndpoint,
+	providerFacts,
 	scriptDir,
 	setLogTool,
-	supportTier,
 	writeJsonArtifact,
 } from "./gen-lib.mjs";
-
-setLogTool("coding-agent/generate-opencode");
-
-/**
- * The dir this run owns: generate.mjs points $PI_LAYER_DIR at its per-run
- * output dir, and a manual run lands beside its own sources. The models.dev
- * catalog the run fetched sits there beside the layers (docs/d191) — no env
- * var names the catalog itself, so a manual run simply has none.
- * @type {string}
- */
-const runDir = process.env.PI_LAYER_DIR ?? scriptDir;
+import { readCloudProviders } from "./lib/cloud-providers.mjs";
 
 /**
  * A validated `/models` entry.
@@ -130,49 +120,48 @@ const MODEL_SCOPES = {
  * The models.dev catalog slice for a provider — the lineup fallback when the
  * route cannot list (docs/d063 §2): the d049 modality gate first, then the
  * provider's model filter.
+ * @param {Record<string, { models?: Record<string, ModelsDevModel> }>|null} catalog
+ *   the run's parsed models.dev catalog, read once by main
  * @param {string} id
  * @param {((id: string) => boolean)|undefined} filter
  * @returns {ModelEntry[]}
  */
-function catalogModels(id, filter) {
-	try {
-		// An absent catalog is the manual-run case, not an error: the route's
-		// own answer is the lineup then (docs/d191).
-		const catalog = JSON.parse(
-			readFileSync(join(runDir, "models.dev.api.json"), "utf-8"),
-		);
-		const models = catalog?.[id]?.models ?? {};
-		return Object.keys(models)
-			// A retired catalog entry never publishes (docs/d048).
-			.filter((mid) => catalogModelLive(models[mid]))
-			.filter((mid) => modalitiesEligible(models[mid]?.modalities))
-			.filter((mid) => filter?.(mid) ?? true)
-			.map((mid) => ({ id: mid }));
-	} catch {
-		return [];
-	}
+function catalogModels(catalog, id, filter) {
+	// An absent catalog is the manual-run case, not an error: the route's own
+	// answer is the lineup then (docs/d191).
+	const models = catalog?.[id]?.models ?? {};
+	return Object.keys(models)
+		// A retired catalog entry never publishes (docs/d048).
+		.filter((mid) => catalogModelLive(models[mid]))
+		.filter((mid) => modalitiesEligible(models[mid]?.modalities))
+		.filter((mid) => filter?.(mid) ?? true)
+		.map((mid) => ({ id: mid }));
 }
 
 /**
  * The lineup one cloud provider publishes: its live listing when the endpoint
  * serves one, else the models.dev catalog slice (docs/d108). Superficial rows
- * (docs/d064) never probe. The fact-table row arrives as a value — this
- * function reads no table of its own.
+ * (docs/d064) never probe. Every input arrives as a value — this function
+ * reads no table and no env of its own.
  * @param {import("./lib/cloud-providers.mjs").CloudProviderFacts} facts
+ * @param {Record<string, { models?: Record<string, ModelsDevModel> }>|null} catalog
+ * @param {string|undefined} apiKey the provider's key, from the caller's env
+ * @param {boolean} tlsDisabled the runtime TLS state, from the caller
  * @returns {Promise<ModelEntry[]>}
  */
-async function resolveCloudModels(facts) {
+async function resolveCloudModels(facts, catalog, apiKey, tlsDisabled) {
 	const filter = MODEL_SCOPES[facts.id];
-	if (supportTier(facts.id) === "superficial") {
+	if (facts.support === "superficial") {
 		logInfo(
 			"superficial provider — not route-probed (docs/d064), catalog lineup",
 			{ provider: facts.id },
 		);
-		return catalogModels(facts.id, filter);
+		return catalogModels(catalog, facts.id, filter);
 	}
 	const route = await probeEndpoint(
 		facts.baseUrl,
-		bearerHeaders(process.env[facts.apiKeyEnv]?.trim()),
+		bearerHeaders(apiKey?.trim()),
+		tlsDisabled,
 	);
 	if (!route.usable) {
 		logWarn(
@@ -186,7 +175,7 @@ async function resolveCloudModels(facts) {
 	if (listed.length > 0) {
 		return listed;
 	}
-	const models = catalogModels(facts.id, filter);
+	const models = catalogModels(catalog, facts.id, filter);
 	if (models.length > 0) {
 		logInfo("route unlistable — lineup from the models.dev catalog slice", {
 			provider: facts.id,
@@ -221,17 +210,50 @@ function opencodeProvider(name, baseUrl, apiKeyEnv, models) {
 	};
 }
 
-/** @returns {Promise<void>} */
+/**
+ * THE entry point: the env, the argv and both files are read here and passed
+ * down; everything below is a function of those values.
+ * @returns {Promise<void>}
+ */
 async function main() {
+	setLogTool("coding-agent/generate-opencode");
+	const env = process.env;
 	const out = process.argv[2] ?? join(scriptDir, "opencode.jsonc");
+
+	// The dir this run owns: generate.mjs points $PI_LAYER_DIR at its per-run
+	// output dir, and a manual run lands beside its own sources. The models.dev
+	// catalog the run fetched sits there beside the layers (docs/d191) — a
+	// manual run simply has none, which the cascade treats as "no fallback".
+	const runDir = env.PI_LAYER_DIR ?? scriptDir;
+	/** @type {Record<string, { models?: Record<string, ModelsDevModel> }>|null} */
+	let catalog = null;
+	try {
+		catalog = JSON.parse(
+			readFileSync(join(runDir, "models.dev.api.json"), "utf-8"),
+		);
+	} catch {
+		// Absent is the manual-run case, not an error (docs/d191).
+	}
+
+	const cloudProviders = readCloudProviders(cloudProvidersPath);
+	const tlsDisabled = env.NODE_TLS_REJECT_UNAUTHORIZED === "0";
+	if (tlsDisabled) {
+		logWarn(
+			"TLS verification disabled (NODE_TLS_REJECT_UNAUTHORIZED=0) — https endpoints fail closed; only plain-http emergency bases are used",
+		);
+	}
 
 	// The farm's row, read once here: its tsnet serve hostname is the probe
 	// candidate and the emitted base (plus /v1), and its apiKeyEnv is the key
 	// the entry names. The LAN port is not routable from outside the serving
 	// host (docs/d022).
-	const farm = providerFacts("llama-swap");
-	const local = await probeCandidates([farm.baseUrl], (ids) =>
-		ids.some((id) => classify(id) === "local"),
+	const farm = providerFacts(cloudProviders, "llama-swap");
+	const farmKey = env[farm.apiKeyEnv];
+	const local = await probeCandidates(
+		[farm.baseUrl],
+		(ids) => ids.some((id) => classify(id) === "local"),
+		bearerHeaders(farmKey?.trim()),
+		tlsDisabled,
 	);
 
 	/** @type {Record<string, OpenCodeProvider>} */
@@ -245,8 +267,13 @@ async function main() {
 	// parallel (each is one probe timeout at worst).
 	await Promise.all(
 		CLOUD_PROVIDER_IDS.map(async (id) => {
-			const facts = providerFacts(id);
-			const models = await resolveCloudModels(facts).catch((err) => {
+			const facts = providerFacts(cloudProviders, id);
+			const models = await resolveCloudModels(
+				facts,
+				catalog,
+				env[facts.apiKeyEnv],
+				tlsDisabled,
+			).catch((err) => {
 				logWarn(
 					"cloud resolution threw — canonical base with an empty lineup",
 					{ provider: facts.id, error: err },
@@ -299,7 +326,9 @@ async function main() {
 	logInfo("wrote opencode config", { path: written, providers: summary });
 }
 
-main().catch((err) => {
-	logError("opencode generator failed — nothing written", { error: err });
-	process.exit(1);
-});
+if (import.meta.main) {
+	main().catch((err) => {
+		logError("opencode generator failed — nothing written", { error: err });
+		process.exit(1);
+	});
+}

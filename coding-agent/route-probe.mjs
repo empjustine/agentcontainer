@@ -45,21 +45,12 @@
  * the canonical-URL contract, docs/d071 for the vocabulary, and probeRoute
  * for the classification.
  *
- * Import convention (docs/d023, d039, d113): this module lives beside its
- * consumers in coding-agent/ and resolves its logger as
- * `process.env.LIB_DIR ?? <this dir>/lib` — this folder's own copy, since the
- * copy unit is the folder plus its lib/ (docs/architecture.md).
+ * The logger is this folder's own `lib/` copy (the copy unit is the folder
+ * plus its lib/, docs/d113) behind a STATIC import: importing this module runs
+ * nothing, reads nothing and emits nothing.
  */
 
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const LIB_DIR =
-	process.env.LIB_DIR ??
-	join(dirname(fileURLToPath(import.meta.url)), "lib");
-const { logWarn } = /** @type {typeof import("./lib/log.mjs")} */ (
-	await import(`${LIB_DIR}/log.mjs`)
-);
+import { logWarn } from "./lib/log.mjs";
 // Proxy env is handled by Node itself: NODE_USE_ENV_PROXY=1 (set by
 // ./node-run.sh and the coding-agent image, docs/d074) makes global fetch()
 // and http/https honor HTTP(S)_PROXY / NO_PROXY natively. The former undici
@@ -247,23 +238,17 @@ const DEAD_ROUTE_STATUSES = new Set([404, 502, 504]);
 // emergency bases stay usable as the operator's explicit choice — no TLS to
 // verify, plaintext-credential risk accepted by the operator (a LAN
 // llama-swap/funnel front behind an http URL is the common shape).
-const TLS_UNVERIFIED = process.env.NODE_TLS_REJECT_UNAUTHORIZED === "0";
-if (TLS_UNVERIFIED) {
-	logWarn(
-		"TLS verification disabled (NODE_TLS_REJECT_UNAUTHORIZED=0) — https endpoints fail closed; only plain-http emergency bases are used",
-	);
-}
-
 /**
- * Whether an endpoint URL cannot be trusted under this runtime's TLS state:
- * true only for https URLs while certificate verification is disabled. http
- * URLs are never blocked — the operator's explicit emergency base may be
- * plaintext.
+ * Whether an endpoint URL cannot be trusted under a runtime TLS state: true
+ * only for https URLs while certificate verification is disabled. http URLs
+ * are never blocked — the operator's explicit emergency base may be plaintext.
  * @param {string} url
+ * @param {boolean} tlsDisabled the runtime's TLS state (NODE_TLS_REJECT_UNAUTHORIZED=0),
+ *   read once by the entry point and passed down
  * @returns {boolean}
  */
-export function tlsUnverifiable(url) {
-	return TLS_UNVERIFIED && /^https:\/\//i.test(url);
+export function tlsUnverifiable(url, tlsDisabled) {
+	return tlsDisabled && /^https:\/\//i.test(url);
 }
 
 /**
@@ -373,10 +358,11 @@ async function fetchModelEntries(serverUrl, headers) {
  * @param {Record<string, string>} [headers] the provider's real bearer when
  *   the caller has the key, else undefined (unauthenticated probes get
  *   401/403, which still classify the endpoint as usable)
+ * @param {boolean} tlsDisabled the runtime's TLS state (tlsUnverifiable's flag)
  * @returns {Promise<RouteResult>}
  */
-export async function probeEndpoint(url, headers) {
-	if (tlsUnverifiable(url)) {
+export async function probeEndpoint(url, headers, tlsDisabled) {
+	if (tlsUnverifiable(url, tlsDisabled)) {
 		return {
 			usable: false,
 			result: "unreachable",
@@ -420,22 +406,22 @@ export async function probeEndpoint(url, headers) {
 
 /**
  * Probe candidate base URLs in order; the first one whose catalog passes
- * `accept` wins. Authenticated with $TLALOCAYOTL_API_KEY when set — the
- * tlalocayotl provider row's own key (fact-table row `llama-swap`, its former
- * name; earlier still `bazzite`), which is also what that local instance
- * demands. Cloud rows go through probeEndpoint with their own key env.
+ * `accept` wins. The bearer and the TLS state arrive as arguments — the
+ * caller reads its env and passes `bearerHeaders(key)` (for the local farm
+ * that is the tlalocayotl row's own key; docs/d027's local face).
  * @param {readonly string[]} candidates
  * @param {(ids: string[]) => boolean} accept does this catalog serve our concern?
+ * @param {Record<string, string>|undefined} headers the bearer to send, if any
+ * @param {boolean} tlsDisabled the runtime's TLS state (tlsUnverifiable's flag)
  * @returns {Promise<ProbeSource|null>} null when no candidate is usable
  */
-export async function probeCandidates(candidates, accept) {
+export async function probeCandidates(candidates, accept, headers, tlsDisabled) {
 	const failures = [];
 	// The TLS fail-closed gate, the timeout and the auth header are
 	// probeEndpoint's: a candidate that re-did them would be a second copy of
 	// the rule this module exists to hold in one place.
-	const headers = bearerHeaders(process.env.TLALOCAYOTL_API_KEY?.trim());
 	for (const baseUrl of candidates) {
-		const { entries, error } = await probeEndpoint(baseUrl, headers);
+		const { entries, error } = await probeEndpoint(baseUrl, headers, tlsDisabled);
 		if (accept(entries.map((entry) => entry.id))) {
 			return { baseUrl, entries };
 		}

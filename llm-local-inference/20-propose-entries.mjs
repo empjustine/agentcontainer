@@ -29,35 +29,11 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// d215: no accepted arguments. Ignoring argv would run the full effect anyway:
-// a stray --help once provisioned the whole catalog.
-if (process.argv.length > 2) {
-	process.stderr.write("usage: 20-propose-entries.mjs   # takes no arguments\n");
-	process.exit(64);
-}
-
-/**
- * Logger + the GGUF facts this tool shares with the generator (docs/d113: the
- * unit's own lib/ copy, resolved through LIB_DIR).
- * @type {string}
- */
-const LIB_DIR = fileURLToPath(new URL("lib", import.meta.url));
-const { logInfo, setLogStream, setLogTool } =
-	/** @type {typeof import("./lib/log.mjs")} */ (
-		await import(`${LIB_DIR}/log.mjs`)
-	);
-const { GGUF_SHARD_RE, mainGgufSizes } =
-	/** @type {typeof import("./lib/model-entries.mjs")} */ (
-		await import(`${LIB_DIR}/model-entries.mjs`)
-	);
-
-setLogTool("llm-local-inference/propose-entries");
-// stdout carries the fragment, so the log lines move beside it (log.mjs's
-// setLogStream exists for exactly this).
-setLogStream(process.stderr);
+import { logInfo, setLogStream, setLogTool } from "./lib/log.mjs";
+import { GGUF_SHARD_RE, mainGgufSizes } from "./lib/model-entries.mjs";
 
 /**
  * The quant token a filename ends with, at a token boundary — the same shapes
@@ -105,11 +81,12 @@ function shardOneName(files, key) {
 }
 
 /**
+ * @param {string} libDir this folder's own lib/
  * @param {string} repo "org/repo"
  * @returns {Record<string, string>[]} entries this repo could serve
  */
-function entriesFor(repo) {
-	const path = join(LIB_DIR, "hf-manifests", `${repo.replace("/", "--")}.json`);
+function entriesFor(libDir, repo) {
+	const path = join(libDir, "hf-manifests", `${repo.replace("/", "--")}.json`);
 	if (!existsSync(path)) {
 		// The scope line is a declaration; without a repo manifest nothing can be
 		// proposed for it, and 10-fetch-hf-manifests.py is the fix (docs/d212).
@@ -125,12 +102,13 @@ function entriesFor(repo) {
 }
 
 /**
+ * @param {string} libDir this folder's own lib/
  * @returns {Record<string, string>[]} every proposed entry, repo-sorted
  */
-function propose() {
+function propose(libDir) {
 	/** @type {Record<string, string>} */
 	const scope = JSON.parse(
-		readFileSync(join(LIB_DIR, "cache-scope.json"), "utf-8"),
+		readFileSync(join(libDir, "cache-scope.json"), "utf-8"),
 	);
 	/** @type {Record<string, string>[]} */
 	const entries = [];
@@ -138,7 +116,7 @@ function propose() {
 		if (scope[repo] !== "audit-only") {
 			continue;
 		}
-		entries.push(...entriesFor(repo));
+		entries.push(...entriesFor(libDir, repo));
 	}
 	return entries;
 }
@@ -153,12 +131,34 @@ function render(entries) {
 	return `${JSON.stringify({ models: entries }, null, "\t")}\n`;
 }
 
-const proposed = propose();
-process.stdout.write(render(proposed));
-/** @type {Record<string, any>[]} */
-const entries = proposed;
-logInfo("proposal written", {
-	entries: entries.length,
-	repos: new Set(entries.map((e) => String(e["hf-repo"]).split(":")[0])).size,
-});
+/**
+ * THE entry point: reads argv/env and writes the fragment to stdout.
+ * @returns {void}
+ */
+function main() {
+	// d215: no accepted arguments. Ignoring argv would run the full effect
+	// anyway: a stray --help once provisioned the whole catalog.
+	if (process.argv.length > 2) {
+		process.stderr.write(
+			"usage: 20-propose-entries.mjs   # takes no arguments\n",
+		);
+		process.exit(64);
+	}
+	setLogTool("llm-local-inference/propose-entries");
+	// stdout carries the fragment, so the log lines move beside it (log.mjs's
+	// setLogStream exists for exactly this).
+	setLogStream(process.stderr);
+
+	const libDir = join(dirname(fileURLToPath(import.meta.url)), "lib");
+	const proposed = propose(libDir);
+	process.stdout.write(render(proposed));
+	logInfo("proposal written", {
+		entries: proposed.length,
+		repos: new Set(proposed.map((e) => String(e["hf-repo"]).split(":")[0])).size,
+	});
+}
+
+if (import.meta.main) {
+	main();
+}
 

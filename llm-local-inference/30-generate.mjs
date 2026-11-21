@@ -71,18 +71,15 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-/**
- * Structured logger + artifact writer from this folder's own lib/
- * (docs/d023/d113), resolved through the LIB_DIR convention so a copied-out
- * folder still finds its copy.
- * @type {string}
- */
-const LIB_DIR = fileURLToPath(new URL("lib", import.meta.url));
-const { logError, logInfo, logWarn } =
-	/** @type {typeof import("./lib/log.mjs")} */ (
-		await import(`${LIB_DIR}/log.mjs`)
-	);
-const {
+import { writeArtifact, writeJsonArtifact } from "./lib/artifact.mjs";
+import {
+	detectContainerTool,
+	detectGpuDevices,
+	INFERENCE_MIN_RAM_GIB,
+	totalMemGiB,
+} from "./lib/host-capabilities.mjs";
+import { logError, logInfo, logWarn } from "./lib/log.mjs";
+import {
 	GGUF_SHARD_RE,
 	FULL_PRECISION_BYTES_PER_PARAM,
 	FULL_PRECISION_NAME_RE,
@@ -90,32 +87,17 @@ const {
 	fullPrecisionTag,
 	mainGgufSizes,
 	shardOne,
-} = /** @type {typeof import("./lib/model-entries.mjs")} */ (
-	await import(`${LIB_DIR}/model-entries.mjs`)
-);
-
-const { writeArtifact, writeJsonArtifact } = /** @type {typeof import("./lib/artifact.mjs")} */ (
-	await import(`${LIB_DIR}/artifact.mjs`)
-);
-
-// d215: no accepted arguments. Ignoring argv would run the full effect anyway:
-// a stray --help once provisioned the whole catalog.
-if (process.argv.length > 2) {
-	process.stderr.write("usage: 30-generate.mjs   # takes no arguments\n");
-	process.exit(64);
-}
-
-const scriptDir = dirname(fileURLToPath(import.meta.url));
-const configD = join(scriptDir, "config.d");
+} from "./lib/model-entries.mjs";
 
 // --- config.d layer writers (folded gen-lib.mjs) ---------------------------
 
 /**
  * Read the hand-maintained llama-swap core config (scalars, macros,
  * ctxWindows, apiKeys) that 00-general.yaml is built from.
+ * @param {string} scriptDir this generator's own folder
  * @returns {Record<string, unknown>}
  */
-function loadCore() {
+function loadCore(scriptDir) {
 	return JSON.parse(
 		readFileSync(join(scriptDir, "llama-swap-core.json"), "utf-8"),
 	);
@@ -125,14 +107,15 @@ function loadCore() {
  * Write an object as pretty JSON into config.d/ (the YAML loader accepts JSON
  * content, and JSON-in-.yaml matches the repo's existing config style). Write
  * contract: lib/artifact.mjs (atomic tmp+rename, replace by default).
+ * @param {string} configDir the config.d directory to write into
  * @param {string} name layer filename (e.g. "10-local-llm-inference.yaml")
  * @param {unknown} obj config object to serialize
  * @returns {void}
  */
-function writeConfigD(name, obj) {
-	mkdirSync(configD, { recursive: true });
+function writeConfigD(configDir, name, obj) {
+	mkdirSync(configDir, { recursive: true });
 	const path = writeArtifact(
-		join(configD, name),
+		join(configDir, name),
 		`${JSON.stringify(obj, null, 2)}\n`,
 	);
 	logInfo("wrote config.d layer", { path });
@@ -144,11 +127,11 @@ function writeConfigD(name, obj) {
  * macros / ctxWindows / apiKeys; the model layer must not redefine any.
  * @returns {void}
  */
-function generateGeneral() {
-	const core = loadCore();
+function generateGeneral(scriptDir, configDir) {
+	const core = loadCore(scriptDir);
 	// The models map belongs to the local-inference layer below.
 	delete core.models;
-	writeConfigD("00-general.yaml", core);
+	writeConfigD(configDir, "00-general.yaml", core);
 }
 
 // --- 10-local-llm-inference.yaml (folded generate-local-llm-models.yaml.mjs)
@@ -202,21 +185,6 @@ const DEFAULT_SPEC_TYPE = "draft-mtp";
 const HUB_GUEST = "/home/ubuntu/.cache/huggingface/hub";
 
 /**
- * Host-side mirror of run.sh's HF_HUB_CACHE default (the same env-override
- * chain: HF_HUB_CACHE, else XDG_CACHE_HOME, else ~/.cache). Generation reads
- * the cache the serving container later binds, so both sides must compute the
- * same directory.
- * @type {string}
- */
-const HUB_HOST =
-	process.env.HF_HUB_CACHE ??
-	join(
-		process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache"),
-		"huggingface",
-		"hub",
-	);
-
-/**
  * The hub root must be VISIBLE. Generation verifies every baked path against
  * this directory, so an invisible root disables that verification for the whole
  * catalog at once — indistinguishable from a host that has pulled nothing, which
@@ -224,14 +192,15 @@ const HUB_HOST =
  * lacks one repo stays the warn-and-bake rule (docs/d197); a root that is
  * absent, not a directory, or unreadable is a host/configuration failure and
  * generation stops with exit 95 (docs/d207).
+ * @param {string} hubHost the host HF hub cache root
  * @returns {void}
  */
-function requireVisibleHub() {
+function requireVisibleHub(hubHost) {
 	let reason = null;
 	try {
-		if (statSync(HUB_HOST).isDirectory()) {
+		if (statSync(hubHost).isDirectory()) {
 			// proves the mount is readable, not merely present
-			readdirSync(HUB_HOST);
+			readdirSync(hubHost);
 		} else {
 			reason = "not a directory";
 		}
@@ -243,7 +212,7 @@ function requireVisibleHub() {
 	}
 	logError(
 		"the HF hub cache is not visible — every baked path would be unverified (point HF_HUB_CACHE at the mount, or provision it with ./40-download-models.py)",
-		{ hub: HUB_HOST, reason },
+		{ hub: hubHost, reason },
 	);
 	process.exit(95);
 }
@@ -263,18 +232,22 @@ function requireVisibleHub() {
  * is llama-server's documented 127 at swap time, not a generation failure
  * (docs/d197 — the hard-fail blocked first-run and cache-less hosts for a
  * condition 40-download-models.py owns).
+ * @param {string} hubHost the host HF hub cache root
  * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
+ * @param {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>} manifests
+ *   the run's manifest cache
+ * @param {string} libDir this folder's own lib/
  * @returns {{ modelPath: string, shardPaths: string[], mmprojPath: string|null, draftPath: string|null }}
  *   container-side paths for the emitted cmd (mmproj/draft null when the entry
  *   omits them, shardPaths empty for a single-file model)
  */
-function bakeSnapshotPaths(m) {
+function bakeSnapshotPaths(hubHost, m, manifests, libDir) {
 	const repo = m["hf-repo"].split(":")[0]; // drop :revision; the GGUF filename already pins the quant
 	const repoDir = `models--${repo.split("/").join("--")}`;
-	const snapshotsDir = join(HUB_HOST, repoDir, "snapshots");
+	const snapshotsDir = join(hubHost, repoDir, "snapshots");
 
 	const candidates = [];
-	const refPath = join(HUB_HOST, repoDir, "refs", "main");
+	const refPath = join(hubHost, repoDir, "refs", "main");
 	if (existsSync(refPath)) {
 		const sha = readFileSync(refPath, "utf-8").trim();
 		if (sha) {
@@ -305,7 +278,8 @@ function bakeSnapshotPaths(m) {
 		return guestPaths(sha);
 	}
 
-	const sha = candidates[0] ?? repoManifest(repo).commit;
+	const sha =
+		candidates[0] ?? repoManifest(manifests, libDir, repo).commit;
 	if (sha === null) {
 		throw new Error(
 			`no cached snapshot and no committed manifest commit to bake ${m["hf-repo"]} against`,
@@ -424,11 +398,14 @@ function mmprojRank(path) {
  * This is the ONE home of vision capability: a per-entry `mmproj` key drifted
  * (2 of gemma-4-12b's 21 entries carried it) because the capability is a repo
  * fact, not a quant fact (docs/d197).
+ * @param {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>} manifests
+ *   the run's manifest cache
+ * @param {string} libDir this folder's own lib/
  * @param {string} repo "org/repo"
  * @returns {string|null} manifest path of the best projector, or null
  */
-function repoMmproj(repo) {
-	const candidates = repoManifest(repo)
+function repoMmproj(manifests, libDir, repo) {
+	const candidates = repoManifest(manifests, libDir, repo)
 		.files.map((f) => f.path)
 		.filter((path) => /(^|\/)mmproj-.*\.gguf$/i.test(path));
 	if (candidates.length === 0) {
@@ -439,19 +416,17 @@ function repoMmproj(repo) {
 }
 
 /**
- * Image-token budget declared anywhere in this repo, so an entry that gains
- * vision by the projector fill inherits its family's budget (gemma-4: 1120)
- * instead of silently dropping to the generic default.
- * @type {Map<string, {min: number, max: number}|null>}
- */
-const REPO_IMAGE_TOKENS = new Map();
-
-/**
+ * Index the image-token budget declared anywhere in this repo, so an entry
+ * that gains vision by the projector fill inherits its family's budget
+ * (gemma-4: 1120) instead of silently dropping to the generic default.
+ * Returns the index; it is state of the RUN, created and passed by main.
  * @param {Record<string, any>[]} entries the RAW models array (the record of
  * every quant, so pruning cannot empty a repo of its declared pair)
- * @returns {void}
+ * @returns {Map<string, {min: number, max: number}>} repo -> budget
  */
 function indexImageTokens(entries) {
+	/** @type {Map<string, {min: number, max: number}>} */
+	const imageTokens = new Map();
 	for (const entry of entries) {
 		const repo = entry["hf-repo"].split(":")[0];
 		const min = entry["image-min-tokens"];
@@ -459,7 +434,7 @@ function indexImageTokens(entries) {
 		if (typeof min !== "number" || typeof max !== "number") {
 			continue;
 		}
-		const seen = REPO_IMAGE_TOKENS.get(repo);
+		const seen = imageTokens.get(repo);
 		if (seen && (seen.min !== min || seen.max !== max)) {
 			logWarn("repo declares two image-token budgets — keeping the first", {
 				repo,
@@ -468,8 +443,9 @@ function indexImageTokens(entries) {
 			});
 			continue;
 		}
-		REPO_IMAGE_TOKENS.set(repo, { min, max });
+		imageTokens.set(repo, { min, max });
 	}
+	return imageTokens;
 }
 
 /**
@@ -478,11 +454,17 @@ function indexImageTokens(entries) {
  * ERROR: the manifest is committed truth, so a miss is a typo or a stale
  * entry, never a host state (docs/d197).
  * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
+ * @param {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>} manifests
+ *   the run's manifest cache (main owns it)
+ * @param {string} libDir this folder's own lib/
+ * @param {Map<string, {min: number, max: number}>} imageTokens repo -> budget
  * @returns {void} mutates m: resolves `mmproj`, fills the image-token pair
  */
-function resolveEntryFiles(m) {
+function resolveEntryFiles(m, manifests, libDir, imageTokens) {
 	const repo = m["hf-repo"].split(":")[0];
-	const shipped = new Set(repoManifest(repo).files.map((f) => f.path));
+	const shipped = new Set(
+		repoManifest(manifests, libDir, repo).files.map((f) => f.path),
+	);
 	const declared = [...allShards(m.model)];
 	if (m.mmproj) {
 		declared.push(m.mmproj);
@@ -498,7 +480,7 @@ function resolveEntryFiles(m) {
 		}
 	}
 
-	const preferred = repoMmproj(repo);
+	const preferred = repoMmproj(manifests, libDir, repo);
 	if (m.mmproj && preferred !== null && m.mmproj !== preferred) {
 		logWarn("projector is not this repo's BF16 pick — valid override, kept", {
 			repo,
@@ -509,7 +491,7 @@ function resolveEntryFiles(m) {
 	const projector = m.mmproj ?? preferred;
 	if (projector) {
 		m.mmproj = projector;
-		const tokens = REPO_IMAGE_TOKENS.get(repo);
+		const tokens = imageTokens.get(repo);
 		m["image-min-tokens"] ??= tokens?.min ?? IMAGE_TOKENS_DEFAULT;
 		m["image-max-tokens"] ??= tokens?.max ?? IMAGE_TOKENS_DEFAULT;
 	} else {
@@ -601,17 +583,15 @@ const CTX_FALLBACK = 65_536;
  * @type {Record<string, Fact|{files: Record<string, Fact>}>}
  * @typedef {{arch?: string, "ctx-native"?: number}} Fact
  */
-const GGUF_FACTS = JSON.parse(
-	readFileSync(join(LIB_DIR, "gguf-facts.json"), "utf-8"),
-);
-
 /**
+ * @param {Record<string, Fact|{files: Record<string, Fact>}>} ggufFacts the
+ *   committed GGUF header facts (read by main)
  * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
  * @returns {number|null} this entry's file's header `context_length`, or null
  * when the facts file has nothing for it
  */
-function factsCtxNative(m) {
-	const fact = GGUF_FACTS[m["hf-repo"].split(":")[0]];
+function factsCtxNative(ggufFacts, m) {
+	const fact = ggufFacts[m["hf-repo"].split(":")[0]];
 	const perFile = fact?.files?.[m.model] ?? fact;
 	return typeof perFile?.["ctx-native"] === "number" ? perFile["ctx-native"] : null;
 }
@@ -623,28 +603,27 @@ function factsCtxNative(m) {
  * the projector choice), the total parameter count (d170's rule) and the
  * resolved commit (the bake fallback when the host cache lacks the entry).
  * Throws when the manifest is absent: a repo with no manifest is a model entry
- * whose files nothing can vouch for.
- * @type {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>}
- */
-const MANIFEST_CACHE = new Map();
-
-/**
+ * whose files nothing can vouch for. The cache is the RUN's (main creates it),
+ * so a second run never answers from a previous one.
+ * @param {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>} manifests
+ *   the run's manifest cache
+ * @param {string} libDir this folder's own lib/
  * @param {string} repo "org/repo"
  * @returns {{commit: string|null, files: Array<{path: string, size: number}>}}
  */
-function repoManifest(repo) {
-	const cached = MANIFEST_CACHE.get(repo);
+function repoManifest(manifests, libDir, repo) {
+	const cached = manifests.get(repo);
 	if (cached) {
 		return cached;
 	}
-	const manifestPath = join(LIB_DIR, "hf-manifests", `${repo.replace("/", "--")}.json`);
+	const manifestPath = join(libDir, "hf-manifests", `${repo.replace("/", "--")}.json`);
 	try {
 		const parsed = JSON.parse(readFileSync(manifestPath, "utf-8"));
 		const manifest = {
 			commit: typeof parsed.commit === "string" ? parsed.commit : null,
 			files: parsed.files,
 		};
-		MANIFEST_CACHE.set(repo, manifest);
+		manifests.set(repo, manifest);
 		return manifest;
 	} catch (err) {
 		throw new Error(
@@ -655,11 +634,14 @@ function repoManifest(repo) {
 }
 
 /**
+ * @param {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>} manifests
+ *   the run's manifest cache
+ * @param {string} libDir this folder's own lib/
  * @param {string} repo "org/repo"
  * @returns {Map<string, number>} de-sharded main GGUF path -> bytes
  */
-function repoGgufSizes(repo) {
-	return mainGgufSizes(repoManifest(repo).files);
+function repoGgufSizes(manifests, libDir, repo) {
+	return mainGgufSizes(repoManifest(manifests, libDir, repo).files);
 }
 
 /**
@@ -733,11 +715,14 @@ function totalParamsB(sizes) {
  * `severityNumber >= 13` to find the states that need them (docs/d208).
  * @param {Record<string, any>[]} entries the flat models array (its objects are
  *   the model entries; nothing in this file is a tabular structure)
+ * @param {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>} manifests
+ *   the run's manifest cache
+ * @param {string} libDir this folder's own lib/
  * @param {{quiet?: boolean}} [options] quiet silences the INFO band for
  *   simulated candidates, whose decisions are not this run's decisions
  * @returns {Record<string, any>[]} entries to generate, same order
  */
-function pruneQuantDisplay(entries, options = {}) {
+function pruneQuantDisplay(entries, manifests, libDir, options = {}) {
 	// Candidates are simulated entries, not this run's catalog: their decisions are
 	// not decisions, so the caller silences the INFO band (docs/d208).
 	const note = options.quiet ? () => undefined : logInfo;
@@ -750,7 +735,7 @@ function pruneQuantDisplay(entries, options = {}) {
 	}
 	const keep = new Set(entries);
 	for (const [repo, group] of byRepo) {
-		const sizes = repoGgufSizes(repo);
+		const sizes = repoGgufSizes(manifests, libDir, repo);
 		/** @type {(e: Record<string, any>) => number|undefined} */
 		const entryBytes = (e) => sizes.get(e.model.replace(GGUF_SHARD_RE, ".gguf"));
 
@@ -836,9 +821,6 @@ function pruneQuantDisplay(entries, options = {}) {
 // WHY files and not a shared library: the provisioner is Python
 // (huggingface_hub is the vetted client) and this generator is JS, so the
 // interface is committed data — never a mode flag on either tool, and never a
-// second implementation of the shard/projector rules.
-const curatedDir = join(scriptDir, "lib", "curated");
-
 /**
  * The modes a scope line may declare: served (has model entries, downloads its
  * files) or audit-only (verified if already cached, never downloaded).
@@ -852,10 +834,11 @@ const SCOPE_MODES = new Set(["served", "audit-only"]);
  * manifest-refresh step reads it and nothing else, and the checks below make
  * the inventory and the model entries agree in BOTH directions (the pretend
  * scope this replaces was a list of exceptions to an implicit manifest).
+ * @param {string} libDir this folder's own lib/
  * @returns {Map<string, string>} repo -> mode
  */
-function readScope() {
-	const path = join(LIB_DIR, "cache-scope.json");
+function readScope(libDir) {
+	const path = join(libDir, "cache-scope.json");
 	if (!existsSync(path)) {
 		throw new Error("lib/cache-scope.json is missing — it is the closed inventory of the repos this unit keeps");
 	}
@@ -930,11 +913,12 @@ function validateScope(scope, rows) {
  * (resolveEntryFiles), never a model-manifest key, so an under-derived curated
  * file lets a pruner erase a projector the emitted config requires (docs/d218).
  * @param {Map<string, {entries: Set<string>, files: Set<string>, optional: Set<string>}>} curated
+ * @param {Set<string>} shipped the repo's committed manifest paths
  * @param {Record<string, any>} m one entry (label + the split-index probe)
  * @param {{modelPath: string, shardPaths: string[], mmprojPath: string|null, draftPath: string|null}} baked
  * @returns {void}
  */
-function noteCurated(curated, m, baked) {
+function noteCurated(curated, shipped, m, baked) {
 	const repo = m["hf-repo"].split(":")[0];
 	const head = `${HUB_GUEST}/models--${repo.split("/").join("--")}/snapshots/`;
 	/** @param {string} guestPath @returns {string} repo-relative file name */
@@ -948,7 +932,6 @@ function noteCurated(curated, m, baked) {
 	if (baked.draftPath) {
 		bakedPaths.push(baked.draftPath);
 	}
-	const shipped = new Set(repoManifest(repo).files.map((f) => f.path));
 	const rec = curated.get(repo) ?? { entries: new Set(), files: new Set(), optional: new Set() };
 	rec.entries.add(m["hf-repo"]);
 	for (const guestPath of bakedPaths) {
@@ -965,15 +948,19 @@ function noteCurated(curated, m, baked) {
  * Write one curated manifest per served repo, and delete the ones whose repo
  * left the curated set — a stale file would keep a retired repo in the
  * provisioning loop, which a generated artifact must never do.
+ * @param {string} curatedDir the curated-manifest directory
  * @param {Map<string, {entries: Set<string>, files: Set<string>, optional: Set<string>}>} curated
+ * @param {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>} manifests
+ *   the run's manifest cache
+ * @param {string} libDir this folder's own lib/
  * @returns {void}
  */
-function writeCurated(curated) {
+function writeCurated(curatedDir, curated, manifests, libDir) {
 	mkdirSync(curatedDir, { recursive: true });
 	const written = new Set();
 	const ordered = [...curated.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
 	for (const [repo, rec] of ordered) {
-		const manifest = repoManifest(repo);
+		const manifest = repoManifest(manifests, libDir, repo);
 		const sizes = new Map(manifest.files.map((f) => [f.path, f.size ?? 0]));
 		const files = [...rec.files].sort();
 		const name = `${repo.replace("/", "--")}.json`;
@@ -995,34 +982,47 @@ function writeCurated(curated) {
 	}
 }
 
-function generateLocalInference() {
-	/**
-	 * The model manifest lives in this folder's own lib/ (docs/d113: the
-	 * copy is owned here, not shared through a repo-level lib/). Same LIB_DIR
-	 * convention as the log import above.
-	 */
+/**
+ * Generate the 10-local-llm-inference layer. Capability-gated by the CALLER
+ * (container backend + GPU devices, in main) — LOCAL_INFERENCE=1 forces
+ * generation for debug and this generator never re-checks viability.
+ * @param {string} scriptDir this generator's own folder (its own lib/ carries
+ *   the model manifest, manifests, GGUF facts and cache scope)
+ * @param {string} hubHost the host HF hub cache root
+ * @param {Record<string, Fact|{files: Record<string, Fact>}>} ggufFacts the
+ *   committed GGUF header facts
+ * @param {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>} manifests
+ *   the run's manifest cache (created by main, shared across this run)
+ * @returns {void}
+ */
+function generateLocalInference(scriptDir, hubHost, ggufFacts, manifests) {
+	const libDir = join(scriptDir, "lib");
+	const configDir = join(scriptDir, "config.d");
+	const curatedDir = join(libDir, "curated");
+	// The model manifest lives in this folder's own lib/ (docs/d113: the copy
+	// is owned here, not shared through a repo-level lib/).
 	// before anything is baked: an invisible hub turns the verification off wholesale
-	requireVisibleHub();
+	requireVisibleHub(hubHost);
 	const modelData = JSON.parse(
-		readFileSync(join(LIB_DIR, "llamacpp-model-data.json"), "utf-8"),
+		readFileSync(join(libDir, "llamacpp-model-data.json"), "utf-8"),
 	);
-	indexImageTokens(modelData.models);
-	const scope = readScope();
+	const imageTokens = indexImageTokens(modelData.models);
+	const scope = readScope(libDir);
 	validateScope(scope, modelData.models);
-	const entries = pruneQuantDisplay(modelData.models);
+	const entries = pruneQuantDisplay(modelData.models, manifests, libDir);
 	const curated = new Map();
 
 	/** @type {Record<string, unknown>} */
 	const models = {};
 	for (const raw of entries) {
 		const m = { ...DEFAULTS, ...raw };
-		resolveEntryFiles(m);
+		resolveEntryFiles(m, manifests, libDir, imageTokens);
 		// The window is the GGUF header's `context_length`, capped by the fleet
 		// ceiling; an entry may pin a LOWER value but never a higher one, because
 		// the header is hardware truth and a pinned value above it is a claim the
 		// model cannot serve (docs/d197). Absent facts means the model is newer
 		// than the artifact: serve the conservative default and say so.
-		const native = factsCtxNative(m);
+		const native = factsCtxNative(ggufFacts, m);
 		let ctxSize = m["ctx-size"] ?? native ?? CTX_FALLBACK;
 		if (native === null) {
 			logWarn("no GGUF facts for this entry — serving the fallback context (run gguf_context_length.py --facts)", {
@@ -1045,8 +1045,14 @@ function generateLocalInference() {
 		 * refs/main carries the model, its every shard, and the mmproj/drafter
 		 * at the same commit, else the bake warns and names what provisioning owes.
 		 */
-		const baked = bakeSnapshotPaths(m);
-		noteCurated(curated, m, baked);
+		const baked = bakeSnapshotPaths(hubHost, m, manifests, libDir);
+		const repo = m["hf-repo"].split(":")[0];
+		noteCurated(
+			curated,
+			new Set(repoManifest(manifests, libDir, repo).files.map((f) => f.path)),
+			m,
+			baked,
+		);
 		// ONE mode per entry (docs/d220): a repo either ships a projector or it does
 		// not, so vision is a fact of the manifest rather than a size-gated choice,
 		// and the id carries no mode segment for a caller to pick between.
@@ -1145,73 +1151,100 @@ function generateLocalInference() {
 		};
 	}
 
-	writeConfigD("10-local-llm-inference.yaml", { models });
-	writeCurated(curated);
+	writeConfigD(configDir, "10-local-llm-inference.yaml", { models });
+	writeCurated(curatedDir, curated, manifests, libDir);
 	logInfo("curated manifests written", { dir: curatedDir, repos: curated.size });
 }
 
 // --- orchestration (folded from the former generate.sh) ---------------------
 
-// 1. general layer: always.
-generateGeneral();
+/**
+ * THE entry point: reads the environment and argv, resolves every path and
+ * fact source ONCE, and hands them to the layer generators. Nothing above
+ * this function runs at import.
+ * @returns {void}
+ */
+function main() {
+	// d215: no accepted arguments. Ignoring argv would run the full effect
+	// anyway: a stray --help once provisioned the whole catalog.
+	if (process.argv.length > 2) {
+		process.stderr.write("usage: 30-generate.mjs   # takes no arguments\n");
+		process.exit(64);
+	}
 
-// 2. local-inference layer: capability-gated on being an INFERENCE ENDPOINT
-// (docs/d087): the container backend (the unified-vulkan image runs llama.cpp
-// against the GPU), at least one dedicated inference device, AND the RAM
-// floor — weights plus KV cache do not fit on a low-RAM host no matter what
-// accelerators it has. LOCAL_INFERENCE=1 forces the layer regardless
-// (debug: the generator still requires every configured GGUF in the host HF
-// cache — provision it with ./40-download-models.py first).
-// All probes/thresholds come from lib/host-capabilities.mjs — the SAME
-// definitions build.mjs gates its llama-swap pull on (the device probes port
-// workload-runtime.sh's detect_workload_tool/detect_gpu_devs), so this
-// layer's viability and the builder's target set cannot drift apart.
-const {
-	detectContainerTool,
-	detectGpuDevices,
-	totalMemGiB,
-	INFERENCE_MIN_RAM_GIB,
-} = /** @type {typeof import("./lib/host-capabilities.mjs")} */ (
-	await import(`${LIB_DIR}/host-capabilities.mjs`)
-);
-const containerTool = detectContainerTool();
-const gpuDevices = detectGpuDevices();
-const hostRamGiB = totalMemGiB();
-const inferenceViable =
-	containerTool !== null &&
-	gpuDevices.length > 0 &&
-	hostRamGiB >= INFERENCE_MIN_RAM_GIB;
+	const scriptDir = dirname(fileURLToPath(import.meta.url));
+	const libDir = join(scriptDir, "lib");
+	const configDir = join(scriptDir, "config.d");
+	const hubHost =
+		process.env.HF_HUB_CACHE ??
+		join(
+			process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache"),
+			"huggingface",
+			"hub",
+		);
+	const ggufFacts = JSON.parse(
+		readFileSync(join(libDir, "gguf-facts.json"), "utf-8"),
+	);
+	/** @type {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>} */
+	const manifests = new Map();
 
-if (process.env.LOCAL_INFERENCE === "1" || inferenceViable) {
-	generateLocalInference();
-	// Stale resolver copies from pre-d029 generate.sh versions.
-	rmSync(join(configD, "launch-gguf.sh"), { force: true });
-	logInfo("local-inference layer generated", {
-		containerTool,
-		gpuDevices: gpuDevices.length,
-		ramGiB: hostRamGiB,
-	});
-} else {
-	rmSync(join(configD, "10-local-llm-inference.yaml"), { force: true });
-	rmSync(join(configD, "10-local-llm-inference.paths"), { force: true });
-	rmSync(join(configD, "launch-gguf.sh"), { force: true });
-	logError(
-		"host is not an inference endpoint (no container backend, no inference devices, or RAM below the floor) — cannot serve local inference (LOCAL_INFERENCE=1 forces generation for debug)",
-		{
+	// 1. general layer: always.
+	generateGeneral(scriptDir, configDir);
+
+	// 2. local-inference layer: capability-gated on being an INFERENCE ENDPOINT
+	// (docs/d087): the container backend (the unified-vulkan image runs llama.cpp
+	// against the GPU), at least one dedicated inference device, AND the RAM
+	// floor — weights plus KV cache do not fit on a low-RAM host no matter what
+	// accelerators it has. LOCAL_INFERENCE=1 forces the layer regardless
+	// (debug: the generator still requires every configured GGUF in the host HF
+	// cache — provision it with ./40-download-models.py first).
+	// All probes/thresholds come from lib/host-capabilities.mjs — the SAME
+	// definitions build.mjs gates its llama-swap pull on (the device probes port
+	// workload-runtime.sh's detect_workload_tool/detect_gpu_devs), so this
+	// layer's viability and the builder's target set cannot drift apart.
+	const containerTool = detectContainerTool();
+	const gpuDevices = detectGpuDevices();
+	const hostRamGiB = totalMemGiB();
+	const inferenceViable =
+		containerTool !== null &&
+		gpuDevices.length > 0 &&
+		hostRamGiB >= INFERENCE_MIN_RAM_GIB;
+
+	if (process.env.LOCAL_INFERENCE === "1" || inferenceViable) {
+		generateLocalInference(scriptDir, hubHost, ggufFacts, manifests);
+		// Stale resolver copies from pre-d029 generate.sh versions.
+		rmSync(join(configDir, "launch-gguf.sh"), { force: true });
+		logInfo("local-inference layer generated", {
 			containerTool,
 			gpuDevices: gpuDevices.length,
 			ramGiB: hostRamGiB,
-			minRamGiB: INFERENCE_MIN_RAM_GIB,
-		},
-	);
-	process.exit(94);
+		});
+	} else {
+		rmSync(join(configDir, "10-local-llm-inference.yaml"), { force: true });
+		rmSync(join(configDir, "10-local-llm-inference.paths"), { force: true });
+		rmSync(join(configDir, "launch-gguf.sh"), { force: true });
+		logError(
+			"host is not an inference endpoint (no container backend, no inference devices, or RAM below the floor) — cannot serve local inference (LOCAL_INFERENCE=1 forces generation for debug)",
+			{
+				containerTool,
+				gpuDevices: gpuDevices.length,
+				ramGiB: hostRamGiB,
+				minRamGiB: INFERENCE_MIN_RAM_GIB,
+			},
+		);
+		process.exit(94);
+	}
+
+	// --- verify + report -------------------------------------------------------
+	logInfo("config.d ready", {
+		dir: configDir,
+		layers: readdirSync(configDir).filter((f) => {
+			const st = statSync(join(configDir, f));
+			return st.isFile();
+		}),
+	});
 }
 
-// --- verify + report ---------------------------------------------------------
-logInfo("config.d ready", {
-	dir: configD,
-	layers: readdirSync(configD).filter((f) => {
-		const st = statSync(join(configD, f));
-		return st.isFile();
-	}),
-});
+if (import.meta.main) {
+	main();
+}

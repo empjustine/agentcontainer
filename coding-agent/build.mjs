@@ -26,11 +26,6 @@ import { fileURLToPath } from "node:url";
 import { detectContainerTool } from "./lib/host-capabilities.mjs";
 import { logError, logInfo, setLogTool } from "./lib/log.mjs";
 
-setLogTool("coding-agent/build");
-
-const codingAgentRoot = dirname(fileURLToPath(import.meta.url));
-const force = process.env.FORCE === "1";
-const tag = process.env.CODING_AGENT_TAG ?? "localhost/empjustine/coding-agent";
 
 /**
  * Defense-in-depth line sanitizer (docs/d045). The ROOT cause of tty progress
@@ -75,9 +70,10 @@ const CAPTURED_STREAMS = [
  * @param {number} stream file descriptor the line arrived on
  * @param {string} cmd command label ("podman image build")
  * @param {string} line
+ * @param {string} target the image target the command is building
  * @returns {void}
  */
-function logCommandLine(stream, cmd, line) {
+function logCommandLine(stream, cmd, line, target) {
 	logInfo(line, { target, cmd, stream });
 }
 
@@ -92,9 +88,10 @@ function logCommandLine(stream, cmd, line) {
  * @param {string} cmd the command as a reader names it — executable AND
  * subcommand, so a stream of `podman image build` lines cannot be mistaken for
  * `podman image pull` ones (docs/d151)
+ * @param {string} target the image target the command is building
  * @returns {Promise<boolean>} success
  */
-async function run(executable, args, cmd) {
+async function run(executable, args, cmd, target) {
 	return await new Promise((resolve) => {
 		const child = spawn(executable, args, { stdio: ["ignore", "pipe", "pipe"] });
 		for (const [stream, name] of CAPTURED_STREAMS) {
@@ -111,7 +108,7 @@ async function run(executable, args, cmd) {
 					if (!keptLine) {
 						continue; // null (all-\r) or empty: not a record
 					}
-					logCommandLine(stream, cmd, keptLine);
+					logCommandLine(stream, cmd, keptLine, target);
 				}
 			});
 			child[name].on("end", () => {
@@ -123,7 +120,7 @@ async function run(executable, args, cmd) {
 				if (!keptPartial) {
 					return;
 				}
-				logCommandLine(stream, cmd, keptPartial);
+				logCommandLine(stream, cmd, keptPartial, target);
 			});
 		}
 		child.on("close", (code) => resolve(code === 0));
@@ -131,55 +128,81 @@ async function run(executable, args, cmd) {
 	});
 }
 
-const target = "coding-agent-image";
-const containerTool = detectContainerTool();
-if (!containerTool) {
-	logError(
-		"no container tool — the coding-agent image needs podman or docker (there is no host-native build path)",
+/**
+ * THE entry point: env and argv are read here, and every side effect of the
+ * build lives below this line.
+ * @returns {Promise<void>}
+ */
+async function main() {
+	setLogTool("coding-agent/build");
+	const codingAgentRoot = dirname(fileURLToPath(import.meta.url));
+	const force = process.env.FORCE === "1";
+	const tag = process.env.CODING_AGENT_TAG ?? "localhost/empjustine/coding-agent";
+	const target = "coding-agent-image";
+	const containerTool = detectContainerTool();
+	if (!containerTool) {
+		logError(
+			"no container tool — the coding-agent image needs podman or docker (there is no host-native build path)",
+		);
+		process.exit(91);
+	}
+
+	// Every image build goes through the explicit subcommand (`image build` /
+	// `buildx build`) rather than the backend-dependent bare `build` alias, and
+	// carries --progress=plain: default progress "auto" is tty-detected, and an
+	// agent harness often IS a pty — which renders buildah/buildx progress as
+	// overlapping redraw frames instead of appendable lines.
+	const imageBuildSubcommand =
+		containerTool === "podman" ? ["image", "build"] : ["buildx", "build"];
+	const imageBuildArgs = [...imageBuildSubcommand, "--progress=plain"];
+	// Derived from the SAME array the build runs, so the `cmd` a line is filed
+	// under cannot drift from the command that produced it.
+	const imageBuildCmd = [containerTool, ...imageBuildSubcommand].join(" ");
+
+	// BUILD_DATE / UID / GID / USER are baked into the image so the sandbox user
+	// matches the host operator (d098's uid-mapping rule): the container writes
+	// into mounted host dirs as the invoking user, never as an unowned uid.
+	const buildDate = new Date()
+		.toISOString()
+		.slice(0, 10)
+		.replace(/-/g, "");
+
+	logInfo("building", { target });
+	const ok = await run(
+		containerTool,
+		[
+			...imageBuildArgs,
+			"--pull",
+			...(force ? ["--no-cache"] : []),
+			"--build-arg",
+			`BUILD_DATE=${buildDate}`,
+			"--build-arg",
+			`UID=${process.env.SUDO_UID ?? process.getuid?.() ?? ""}`,
+			"--build-arg",
+			`GID=${process.env.SUDO_GID ?? process.getgid?.() ?? ""}`,
+			"--build-arg",
+			`USER=${process.env.USER ?? ""}`,
+			"--tag",
+			`${tag}:${buildDate}`,
+			"--tag",
+			`${tag}:latest`,
+			"-f",
+			join(codingAgentRoot, "Containerfile"),
+			codingAgentRoot,
+		],
+		imageBuildCmd,
+		target,
 	);
-	process.exit(91);
+	if (!ok) {
+		logError("build failed", { target });
+		process.exit(1);
+	}
+	logInfo("build complete", { targets: 1 });
 }
 
-// Every image build goes through the explicit subcommand (`image build` /
-// `buildx build`) rather than the backend-dependent bare `build` alias, and
-// carries --progress=plain: default progress "auto" is tty-detected, and an
-// agent harness often IS a pty — which renders buildah/buildx progress as
-// overlapping redraw frames instead of appendable lines.
-const imageBuildSubcommand =
-	containerTool === "podman" ? ["image", "build"] : ["buildx", "build"];
-const imageBuildArgs = [...imageBuildSubcommand, "--progress=plain"];
-// Derived from the SAME array the build runs, so the `cmd` a line is filed
-// under cannot drift from the command that produced it.
-const imageBuildCmd = [containerTool, ...imageBuildSubcommand].join(" ");
-
-// BUILD_DATE / UID / GID / USER are baked into the image so the sandbox user
-// matches the host operator (d098's uid-mapping rule): the container writes
-// into mounted host dirs as the invoking user, never as an unowned uid.
-const buildDate = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-
-logInfo("building", { target });
-const ok = await run(containerTool, [
-	...imageBuildArgs,
-	"--pull",
-	...(force ? ["--no-cache"] : []),
-	"--build-arg",
-	`BUILD_DATE=${buildDate}`,
-	"--build-arg",
-	`UID=${process.env.SUDO_UID ?? process.getuid?.() ?? ""}`,
-	"--build-arg",
-	`GID=${process.env.SUDO_GID ?? process.getgid?.() ?? ""}`,
-	"--build-arg",
-	`USER=${process.env.USER ?? ""}`,
-	"--tag",
-	`${tag}:${buildDate}`,
-	"--tag",
-	`${tag}:latest`,
-	"-f",
-	join(codingAgentRoot, "Containerfile"),
-	codingAgentRoot,
-], imageBuildCmd);
-if (!ok) {
-	logError("build failed", { target });
-	process.exit(1);
+if (import.meta.main) {
+	main().catch((err) => {
+		logError("build failed", { error: String(err?.stack ?? err) });
+		process.exit(1);
+	});
 }
-logInfo("build complete", { targets: 1 });

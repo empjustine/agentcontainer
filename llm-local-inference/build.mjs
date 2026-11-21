@@ -30,19 +30,6 @@ import {
 } from "./lib/host-capabilities.mjs";
 import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 
-// d215: no accepted arguments. Ignoring argv would run the full effect anyway:
-// a stray --help once provisioned the whole catalog.
-if (process.argv.length > 2) {
-	process.stderr.write("usage: build.mjs   # takes no arguments\n");
-	process.exit(64);
-}
-
-setLogTool("llm-local-inference/build");
-
-const target = "llama-swap-image";
-const llamaSwapImage =
-	process.env.LLAMA_SWAP_IMAGE ??
-	"ghcr.io/mostlygeek/llama-swap:unified-vulkan";
 
 /**
  * The streams a captured child can write, as `[descriptor, name]` pairs. The
@@ -64,9 +51,10 @@ const CAPTURED_STREAMS = [
  * @param {number} stream file descriptor the line arrived on
  * @param {string} cmd command label ("podman image pull")
  * @param {string} line
+ * @param {string} target the image target the command is pulling
  * @returns {void}
  */
-function logCommandLine(stream, cmd, line) {
+function logCommandLine(stream, cmd, line, target) {
 	logInfo(line, { target, cmd, stream });
 }
 
@@ -80,9 +68,10 @@ function logCommandLine(stream, cmd, line) {
  * @param {string} cmd the command as a reader names it — executable AND
  * subcommand, so `podman image pull` lines stay distinguishable from every
  * other podman subcommand in a merged stream (docs/d151)
+ * @param {string} target the image target the command is pulling
  * @returns {Promise<boolean>} success
  */
-async function run(executable, args, cmd) {
+async function run(executable, args, cmd, target) {
 	return await new Promise((resolve) => {
 		const child = spawn(executable, args, { stdio: ["ignore", "pipe", "pipe"] });
 		for (const [stream, name] of CAPTURED_STREAMS) {
@@ -103,14 +92,14 @@ async function run(executable, args, cmd) {
 					if (!kept) {
 						continue;
 					}
-					logCommandLine(stream, cmd, kept);
+					logCommandLine(stream, cmd, kept, target);
 				}
 			});
 			child[name].on("end", () => {
 				if (!partial) {
 					return;
 				}
-				logCommandLine(stream, cmd, partial);
+				logCommandLine(stream, cmd, partial, target);
 			});
 		}
 		child.on("close", (code) => resolve(code === 0));
@@ -118,36 +107,67 @@ async function run(executable, args, cmd) {
 	});
 }
 
-const containerTool = detectContainerTool();
-const renderDevices = detectGpuDevices();
-const hostRamGiB = totalMemGiB();
+/**
+ * THE entry point: env and argv are read here, and every side effect of the
+ * pull lives below this line.
+ * @returns {Promise<void>}
+ */
+async function main() {
+	// d215: no accepted arguments. Ignoring argv would run the full effect
+	// anyway: a stray --help once provisioned the whole catalog.
+	if (process.argv.length > 2) {
+		process.stderr.write("usage: build.mjs   # takes no arguments\n");
+		process.exit(64);
+	}
+	setLogTool("llm-local-inference/build");
+	const target = "llama-swap-image";
+	const llamaSwapImage =
+		process.env.LLAMA_SWAP_IMAGE ??
+		"ghcr.io/mostlygeek/llama-swap:unified-vulkan";
 
-if (containerTool === null) {
-	logError("no container tool — the llama-swap image needs podman or docker");
-	process.exit(91);
-}
+	const containerTool = detectContainerTool();
+	const renderDevices = detectGpuDevices();
+	const hostRamGiB = totalMemGiB();
 
-// The gate is the endpoint definition itself, not a proxy for it: a host that
-// cannot serve has no use for the pull. LOCAL_INFERENCE=1 is NOT honored here
-// on purpose — 30-generate.mjs's debug override generates a config, but an image
-// this host cannot run is a wasted download regardless.
-if (renderDevices.length === 0 || hostRamGiB < INFERENCE_MIN_RAM_GIB) {
-	logWarn("skipping target — host is not an inference endpoint", {
+	if (containerTool === null) {
+		logError("no container tool — the llama-swap image needs podman or docker");
+		process.exit(91);
+	}
+
+	// The gate is the endpoint definition itself, not a proxy for it: a host
+	// that cannot serve has no use for the pull. LOCAL_INFERENCE=1 is NOT
+	// honored here on purpose — 30-generate.mjs's debug override generates a
+	// config, but an image this host cannot run is a wasted download regardless.
+	if (renderDevices.length === 0 || hostRamGiB < INFERENCE_MIN_RAM_GIB) {
+		logWarn("skipping target — host is not an inference endpoint", {
+			target,
+			renderDevices: renderDevices.length,
+			ramGiB: hostRamGiB,
+			minRamGiB: INFERENCE_MIN_RAM_GIB,
+		});
+		process.exit(0);
+	}
+
+	logInfo("building", { target });
+	// The label names the subcommand, not just the backend: every podman line
+	// in a merged stream is otherwise the same `cmd` (docs/d151).
+	const imagePullCmd = `${containerTool} image pull`;
+	const ok = await run(
+		containerTool,
+		["image", "pull", llamaSwapImage],
+		imagePullCmd,
 		target,
-		renderDevices: renderDevices.length,
-		ramGiB: hostRamGiB,
-		minRamGiB: INFERENCE_MIN_RAM_GIB,
-	});
-	process.exit(0);
+	);
+	if (!ok) {
+		logError("build failed", { target });
+		process.exit(1);
+	}
+	logInfo("build complete", { targets: 1 });
 }
 
-logInfo("building", { target });
-// The label names the subcommand, not just the backend: every podman line in
-// a merged stream is otherwise the same `cmd` (docs/d151).
-const imagePullCmd = `${containerTool} image pull`;
-const ok = await run(containerTool, ["image", "pull", llamaSwapImage], imagePullCmd);
-if (!ok) {
-	logError("build failed", { target });
-	process.exit(1);
+if (import.meta.main) {
+	main().catch((err) => {
+		logError("build failed", { error: String(err?.stack ?? err) });
+		process.exit(1);
+	});
 }
-logInfo("build complete", { targets: 1 });

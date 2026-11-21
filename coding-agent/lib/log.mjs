@@ -35,18 +35,30 @@
  *   LOG_TOOL    component name (default derived per call site; each tool sets
  *               it once: setLogTool("coding-agent/generate"))
  *
- * Import via the LIB_DIR convention (docs/d023), so a consumer never has to
- * know where its own sources sit relative to the shared kernel:
- *   const { logInfo, logWarn } = await import(`${LIB_DIR}/log.mjs`);
+ * Import it statically from the unit's own `lib/` copy (docs/d113); this
+ * module runs nothing at import, so loading it can never emit a line:
+ *   import { logInfo, logWarn } from "./lib/log.mjs";
  */
 
-let tool = process.env.LOG_TOOL ?? "node";
+/** Set by the entry point (setLogTool); resolved lazily at emit, so
+ * importing this module reads no environment. */
+let tool = null;
 /**
  * @param {string} name
  * @returns {void}
  */
 export function setLogTool(name) {
 	tool = name;
+}
+
+/**
+ * The tool name this stream carries: the entry point set it via setLogTool,
+ * else the LOG_TOOL env, else the kernel default. Resolved HERE so importing
+ * this module reads no environment.
+ * @returns {string}
+ */
+function toolName() {
+	return tool ?? process.env.LOG_TOOL ?? "node";
 }
 
 /**
@@ -182,7 +194,7 @@ function emit(level, msg, fields = {}) {
 	const trailer = {
 		ts: Date.now(),
 		severityNumber: severityNumber(level),
-		tool,
+		tool: toolName(),
 	};
 	if (process.env.LOG_FORMAT === "logfmt") {
 		const rest = Object.entries(
@@ -192,7 +204,7 @@ function emit(level, msg, fields = {}) {
 			.join(" ");
 		const msgv = /[\s"=\\]/.test(msg) ? JSON.stringify(msg) : msg;
 		process.stdout.write(
-			`msg=${msgv}${rest ? ` ${rest}` : ""} ts=${trailer.ts} severityNumber=${trailer.severityNumber} tool=${tool}\n`,
+			`msg=${msgv}${rest ? ` ${rest}` : ""} ts=${trailer.ts} severityNumber=${trailer.severityNumber} tool=${toolName()}\n`,
 		);
 		return;
 	}

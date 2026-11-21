@@ -1,9 +1,18 @@
 /**
- * @fileoverview cloud-providers.mjs — loader + derived projections of the ONE
- * fact table for the providers every generator family touches (docs/d024):
- * provider id, display label, the env var holding the provider's real key, and
- * its real (default) base URL. Only the per-family *rendering* stays local
- * (pi-shaped layer vs opencode V1 config vs llama-swap entry).
+ * @fileoverview cloud-providers.mjs — the ONE fact table for the providers
+ * every generator family touches (docs/d024): provider id, display label, the
+ * env var holding the provider's real key, and its real (default) base URL.
+ * Only the per-family *rendering* stays local (pi-shaped layer vs opencode V1
+ * config vs llama-swap entry).
+ *
+ * PURE BY CONTRACT. This module reads no file, loads no table and answers no
+ * lookup from state the caller did not pass. A caller either parses bytes it
+ * holds (parseCloudProviders) or reads the table once (readCloudProviders) and
+ * then passes the resulting record to providerFacts, factHosts or the emitted
+ * entry builders (which read `row.support` straight off the row).
+ * That is what makes these functions testable against a five-row fixture, and
+ * what stops a "predicate" from silently answering out of a file read nobody
+ * at the call site can see.
  *
  * The rows themselves live in `cloud-providers.json` (docs/d102): the table is
  * DATA, so the estige generator and every node generator read the SAME bytes and
@@ -13,25 +22,15 @@
  * The table is d070's canonical-URL source: committed and installed artifacts
  * carry these `baseUrl`s verbatim, and the verifier's host set is built from
  * them — one source for "which upstream does this provider sit on".
- *
- * Import via the LIB_DIR convention (docs/d023/d113): consumers resolve this
- * file through `process.env.LIB_DIR ?? <their own dir>/lib`, so a folder
- * copied out of this tree reads its own copy, not a sibling's.
  */
 
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 
 /**
  * The stable facts of a provider — the part every family agrees on.
- * `baseUrl` is the provider's REAL endpoint: the upstream the deployed
- * estige allowlist keys on (its HOST, and the base path the
- * client route carries client-side — docs/d047), the URL committed
- * artifacts embed verbatim (docs/d070), and the source for the
- * fact-table facts endpoint. Generators never REQUEST it directly — probes
- * walk client routes (docs/d063) and generate substitutes the route at
- * install (d070 §3); estige fetches it as the allowlist
- * upstream.
+ * `baseUrl` is the provider's REAL endpoint: the URL committed artifacts embed
+ * verbatim (docs/d070/d108) and the base a probe addresses through the
+ * environment proxy (docs/d074). Nothing in the tree rewrites it.
  * @typedef {object} CloudProviderFacts
  * @property {string} id provider id (matches pi's and opencode's
  *   built-in provider names and the llama-swap farm id)
@@ -39,8 +38,8 @@ import { fileURLToPath } from "node:url";
  * @property {string} apiKeyEnv env var holding the provider's real key, used
  *   for the facts-refresh bearer and the `${env.*}` reference emitted
  *   layers carry — never inlined into an emitted artifact
- * @property {string} baseUrl the provider's real default endpoint (upstream
- *   for the proxy allowlist; canonical artifact URL, docs/d070)
+ * @property {string} baseUrl the provider's real default endpoint (canonical
+ *   artifact URL, docs/d070)
  * @property {SupportTier} support docs/d064's promise for this row — how
  *   much line-up/liveness work the generators do for it
  * @property {string} [note] why this row looks the way it does — the
@@ -65,13 +64,14 @@ const SUPPORT_TIERS = new Set(["first-class", "best-effort", "superficial"]);
  * it, so node and Go agree byte for byte. A malformed row is a broken repo,
  * not a downstream surprise: d024's one-table contract is only worth as much
  * as this gate.
+ * @param {string} text the table's JSON bytes
  * @returns {Readonly<Record<string, CloudProviderFacts>>}
  */
-function loadCloudProviders() {
-	const path = fileURLToPath(new URL("./cloud-providers.json", import.meta.url));
-	const rows = /** @type {CloudProviderFacts[]} */ (
-		JSON.parse(readFileSync(path, "utf-8"))
-	);
+export function parseCloudProviders(text) {
+	const rows = /** @type {CloudProviderFacts[]} */ (JSON.parse(text));
+	if (!Array.isArray(rows)) {
+		throw new Error("lib/cloud-providers.json must be a JSON array of rows");
+	}
 	/** @type {Record<string, CloudProviderFacts>} */
 	const byId = {};
 	for (const row of rows) {
@@ -89,18 +89,15 @@ function loadCloudProviders() {
 	return Object.freeze(byId);
 }
 
-/** @type {Readonly<Record<string, CloudProviderFacts>>} */
-export const CLOUD_PROVIDERS = loadCloudProviders();
-
 /**
- * One row's docs/d064 support tier. The fleet table (incl. the local
- * llama-swap farm) is all that gets a promise; everything outside it is
- * superficial: this repo promises nothing about providers it does not track.
- * @param {string} id fact-table provider id
- * @returns {SupportTier}
+ * Read and parse the table. The I/O happens at THIS call, with the caller's
+ * path: a test reads a fixture, a copied unit reads its own `lib/` copy, and
+ * no import of this module touches the filesystem.
+ * @param {string} path the json file to read
+ * @returns {Readonly<Record<string, CloudProviderFacts>>}
  */
-export function supportTier(id) {
-	return CLOUD_PROVIDERS[id]?.support ?? "superficial";
+export function readCloudProviders(path) {
+	return parseCloudProviders(readFileSync(path, "utf-8"));
 }
 
 /**
@@ -108,11 +105,12 @@ export function supportTier(id) {
  * for provider facts (this file, docs/d024): a consumer asking for a row
  * that is not there is a broken repo or a typo, and both deserve the same
  * loud stop — not undefined facts flowing downstream into an artifact.
+ * @param {Readonly<Record<string, CloudProviderFacts>>} providers the table
  * @param {string} id fact-table provider id
  * @returns {CloudProviderFacts}
  */
-export function providerFacts(id) {
-	const facts = CLOUD_PROVIDERS[id];
+export function providerFacts(providers, id) {
+	const facts = providers[id];
 	if (facts === undefined) {
 		throw new Error(`lib/cloud-providers.mjs lost the ${id} row`);
 	}
@@ -126,8 +124,7 @@ export function providerFacts(id) {
  * full-block layer is generate-pi-coding-agent.mjs's full rows, docs/d022), and
  * so are hyper, inferx and verboo (same reasoning, model-016..model-018).
  * `nvidia` is pi-native against the cloud NIM endpoint (docs/d028), and
- * `google` gains a route because the router forwards its native dialect
- * untouched (docs/d027).
+ * `google` gains a route because pi speaks its native dialect (docs/d027).
  *
  * There is no `openai` row: nothing here consumes api.openai.com — "openai"
  * only ever appears as the API *shape* other providers speak.
@@ -143,19 +140,15 @@ export const PI_NATIVE_CLOUD_IDS = Object.freeze([
 ]);
 
 /**
- * Every row's baseUrl as a list — the CANONICAL upstreams (docs/d070) a
- * committed artifact carries and an installed one must not.
- * @type {readonly string[]}
- */
-const FACT_UPSTREAMS = Object.freeze(
-	Object.values(CLOUD_PROVIDERS).map((f) => f.baseUrl),
-);
-
-/**
  * The upstreams' hostnames. A routed URL carried the upstream host as a path
  * segment (`<base>/<host>/…`, docs/d047); that form is deleted (docs/d108),
  * and this set is the regression guard that refuses it if it comes back — a
  * committed artifact names the fact-table upstream verbatim (docs/d070).
- * @type {ReadonlySet<string>}
+ * @param {Readonly<Record<string, CloudProviderFacts>>} providers the table
+ * @returns {Set<string>}
  */
-export const FACT_HOSTS = new Set(FACT_UPSTREAMS.map((u) => new URL(u).host));
+export function factHosts(providers) {
+	return new Set(
+		Object.values(providers).map((facts) => new URL(facts.baseUrl).host),
+	);
+}

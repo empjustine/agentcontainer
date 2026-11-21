@@ -39,26 +39,11 @@
  * library, so a wedge in the network cannot take the driver down.
  */
 
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { writeArtifact } from "./lib/artifact.mjs";
+import { canonicalizeProviderCatalog } from "./lib/canonical-json.mjs";
+import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 import { upstreamCandidates } from "./route-probe.mjs";
 
-const LIB_DIR =
-	process.env.LIB_DIR ?? join(dirname(fileURLToPath(import.meta.url)), "lib");
-const { writeArtifact } =
-	/** @type {typeof import("./lib/artifact.mjs")} */ (
-		await import(`${LIB_DIR}/artifact.mjs`)
-	);
-const { canonicalizeProviderCatalog } =
-	/** @type {typeof import("./lib/canonical-json.mjs")} */ (
-		await import(`${LIB_DIR}/canonical-json.mjs`)
-	);
-const { logError, logInfo, logWarn, setLogTool } =
-	/** @type {typeof import("./lib/log.mjs")} */ (
-		await import(`${LIB_DIR}/log.mjs`)
-	);
-
-setLogTool("coding-agent/refresh-models-dev");
 /**
  * ?type=all pins the FULL payload (every provider type): the generators read
  * slices the default view could theoretically drop — google's whole lineup
@@ -68,7 +53,6 @@ setLogTool("coding-agent/refresh-models-dev");
  */
 const RELAY_PATH_AND_QUERY = "/api.json?type=all";
 
-const OUT = process.argv[2];
 const REQUEST_TIMEOUT_MS = 15_000;
 /**
  * Provider entries the generators read from the catalog; each must exist with
@@ -136,7 +120,9 @@ async function fetchCatalog(url, { via }) {
  * @returns {Promise<void>}
  */
 async function main() {
-	if (!OUT) {
+	setLogTool("coding-agent/refresh-models-dev");
+	const out = process.argv[2];
+	if (!out) {
 		return fail("no output path given", { usage: "refresh-models-dev.mjs <out>" });
 	}
 	let res = null;
@@ -203,13 +189,15 @@ async function main() {
 	// Canonical ordering keeps two runs' artifacts comparable; the payload
 	// itself is the upstream's, untouched.
 	writeArtifact(
-		OUT,
+		out,
 		`${JSON.stringify(canonicalizeProviderCatalog(catalog), null, "\t")}\n`,
 	);
 	logInfo("models.dev catalog written", {
-		path: OUT,
+		path: out,
 		providers: providerCount,
 	});
 }
 
-main().catch((err) => fail("unhandled failure", { error: err }));
+if (import.meta.main) {
+	main().catch((err) => fail("unhandled failure", { error: err }));
+}

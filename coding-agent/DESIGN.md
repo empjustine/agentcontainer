@@ -253,13 +253,13 @@ It carries what this unit actually uses:
 
 `gen-lib.mjs` is the shared preamble for the pi-layer stages: it carries the pi
 shaping helpers (folded from the former `lib/pi-models.mjs`, docs/d039),
-re-exports this folder's `lib/log.mjs` and `lib/cloud-providers.mjs` via
-`$LIB_DIR`, and its same-dir siblings `route-probe.mjs`, `catalog-facts.mjs`,
+statically re-exports this folder's `lib/log.mjs` and `lib/cloud-providers.mjs`,
+and names its same-dir siblings `route-probe.mjs`, `catalog-facts.mjs`,
 `refresh-models-dev.mjs` (all single-consumer, folded out of the old repo-level
-lib by d039; the two catalog reads merged into one module in d072). It reads
-nothing from this folder's tree: the models.dev payload and every listing are
-fetched per run (docs/d191). Must not reach into `llm-local-inference/`,
-`estige/` or any `pi-*` sibling.
+lib by d039; the two catalog reads merged into one module in d072). Loading it
+runs nothing and reads nothing; the fact table arrives as a value from the entry
+point, and every listing is fetched per run (docs/d191). Must not reach into
+`llm-local-inference/`, `estige/` or any `pi-*` sibling.
 
 Nothing copies this tree anywhere at generate time (docs/d072): the generators
 run from their own dir, output goes to the per-run `RUN_DIR` dir, and the

@@ -26,8 +26,7 @@
  * post-check it without knowing how the write was performed.
  *
  * Usage:
- *   import { writeJsonArtifact } from "./artifact.mjs"; // JSON manifests
- *   import { writeArtifact } from `${LIB_DIR}/artifact.mjs`; // text output
+ *   import { writeJsonArtifact, writeArtifact } from "./lib/artifact.mjs";
  *   const written = writeJsonArtifact(out, doc);
  */
 

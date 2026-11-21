@@ -26,16 +26,15 @@
  * post-check it without knowing how the write was performed.
  *
  * Usage:
- *   import { writeJsonArtifact } from "./artifact.mjs"; // JSON manifests
- *   import { writeArtifact } from `${LIB_DIR}/artifact.mjs`; // text output
+ *   import { writeJsonArtifact, writeArtifact } from "./lib/artifact.mjs";
  *   const written = writeJsonArtifact(out, doc);
  */
 
 import { renameSync, writeFileSync } from "node:fs";
 import { serializeArtifact } from "./canonical-json.mjs";
 
-// generate.mjs resolves its lib/ through LIB_DIR and takes the serializer with
-// the writer, so the pair is published here as one import for that consumer.
+// The driver takes the serializer with the writer, so the pair is published
+// here as one import for that consumer.
 export { serializeArtifact };
 
 /**

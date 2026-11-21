@@ -10,7 +10,7 @@
  *
  *   1. `generateLocalLlamaSwap`  → `model-010-local-default.json`
  *      (ADDS the `llama-swap` provider for local GGUF; pi has no built-in one)
- *   2. `generateCloudProviders`  → `model-012-cloud-pi-native.json`
+ *   2. `generateOverrideLayers` / `generateFullLayers` → `model-012-cloud-pi-native.json`
  *      (override-only: EVERY pi-native provider emitted at its canonical
  *      fact-table upstream URL (docs/d070) — the probe only picks the
  *      lineup source, live listing vs models.dev ∪ catwalk ids, docs/d063 —
@@ -80,7 +80,7 @@ import { join } from "node:path";
 import {
 	bearerHeaders,
 	catalogModelLive,
-	providerFacts,
+	cloudProvidersPath,
 	fetchCatwalkFacts,
 	fetchProviderFacts,
 	getCatwalkModels,
@@ -94,60 +94,33 @@ import {
 	probeCandidates,
 	probeEndpoint,
 	providerEntry,
+	providerFacts,
 	providerReroute,
 	scriptDir,
 	setLogTool,
-	supportTier,
 	toInput,
 	writeArtifact,
 	writeJsonArtifact,
 } from "./gen-lib.mjs";
-
-setLogTool("coding-agent/generate-pi-coding-agent");
-
-/**
- * Where the `model-*.json` layers are written — and, in `mergeModels`, where
- * they are read from — for THIS run. generate.mjs points $PI_LAYER_DIR at its
- * per-run output dir; a manual run lands in the module's own dir, which is
- * where the committed layers live.
- *
- * WHY the override exists (docs/d072): the retired d023 scratch staging gave
- * every run a private layer dir that was committed back only after a fully
- * successful generation — that is the property this preserves. It matters
- * twice: `mergeModels` globs the whole dir, and d064's stale-preserve reads
- * the model-010 layer as it stands BEFORE this run rewrites it, so generate.mjs
- * seeds the dir from the committed layers first.
- * @type {string}
- */
-const layerDir = process.env.PI_LAYER_DIR ?? scriptDir;
-mkdirSync(layerDir, { recursive: true });
+import { readCloudProviders } from "./lib/cloud-providers.mjs";
 
 /**
- * The catalog THIS RUN fetched, sitting in the run's layer dir beside the
- * `model-*` layers because that dir IS the run (docs/d191). No env var names it
- * and no second copy exists to fall back to — a manual run has no catalog,
- * which is the honest state for a run that fetched nothing.
- * @type {string}
+ * The models.dev catalog this run fetched, or null when it is absent (the
+ * manual-run case). Parsed once by main and passed to the stages that read it.
+ * @typedef {Record<string, { models?: Record<string, ModelsDevModel> }>|null} CatalogDoc
  */
-const API_JSON = join(layerDir, "models.dev.api.json");
 
-// The vendored models.dev catalog parsed ONCE and shared by both modes
-// (override-only uses it for bare-id fallbacks, full mode for the whole
-// lineup). Absent ⇒ override-only rows still have catwalk; full rows fail
-// their row (logged, layer untouched) exactly as the old generator did.
-/** @type {Record<string, { api?: string, models?: Record<string, ModelsDevModel> }>|null} */
-let CATALOG = null;
-try {
-	CATALOG = /** @type {typeof CATALOG} */ (
-		JSON.parse(readFileSync(API_JSON, "utf-8"))
-	);
-} catch (err) {
-	logWarn("models.dev catalog unreadable — full-mode rows cannot load", {
-		path: API_JSON,
-		error: err,
-	});
-}
-
+/**
+ * One provider row as this run sees it: the three facts every emission stage
+ * needs about ONE provider — its spec (what to emit), its fact-table row (the
+ * canonical upstream and key env) and the key resolved from the environment.
+ * They travel together because each stage emits one provider, and three
+ * parallel arguments would let a call site drift onto another row.
+ * @typedef {object} ProviderRow
+ * @property {CloudProviderSpec} spec
+ * @property {import("./lib/cloud-providers.mjs").CloudProviderFacts} facts
+ * @property {string|undefined} apiKey the key resolved from facts.apiKeyEnv
+ */
 /**
  * Per-provider scoping of the override's model list, applied to BOTH sources
  * (the live listing and catalog fallback). These are the slices this fleet
@@ -421,10 +394,11 @@ function readMirrorFile(envMirror, orgRepo, refPath, warnContext) {
  * when the host carries one, else the canonical raw URL. THROWS when neither
  * answers — no table means no ClinePass lineup, and a remembered one is not
  * a substitute (docs/d189).
+ * @param {Record<string, string|undefined>} env the run's environment
  * @returns {Promise<string>}
  */
-async function readClinePassDocs() {
-	const explicit = process.env.CLINE_PASS_MDX;
+async function readClinePassDocs(env) {
+	const explicit = env.CLINE_PASS_MDX;
 	if (explicit) {
 		return readFileSync(explicit, "utf-8");
 	}
@@ -444,10 +418,11 @@ async function readClinePassDocs() {
  * @returns {Promise<readonly LineupEntry[]>}
  * @throws {Error} when the table cannot be read or parsed: an unavailable
  *   lineup is an unavailable provider, not a reason to publish a remembered
+ * @param {Record<string, string|undefined>} env the run's environment
  *   list (docs/d189)
  */
-async function resolveClinePassLineup() {
-	const lineup = parseClinePassDocs(await readClinePassDocs());
+async function resolveClinePassLineup(env) {
+	const lineup = parseClinePassDocs(await readClinePassDocs(env));
 	if (!lineup) {
 		throw new Error("clinepass.mdx carries no ## Models table");
 	}
@@ -514,10 +489,11 @@ function parseDocsModelIds(mdx) {
  * candidate list makes a further move a degrade to "no reference" rather
  * than a silent loss (docs/d048). A missing mirror is the normal container
  * case and warns once.
+ * @param {Record<string, string|undefined>} env the run's environment
  * @returns {string|null}
  */
-function readOpencodeGoDocs() {
-	const explicit = process.env.OPENCODE_GO_MDX;
+function readOpencodeGoDocs(env) {
+	const explicit = env.OPENCODE_GO_MDX;
 	if (explicit) {
 		try {
 			return readFileSync(explicit, "utf-8");
@@ -530,7 +506,7 @@ function readOpencodeGoDocs() {
 		}
 	}
 	return readMirrorFile(
-		process.env.OPENCODE_MIRROR,
+		env.OPENCODE_MIRROR,
 		"anomalyco/opencode",
 		[
 			"services/site/src/docs/content/console/go.mdx",
@@ -540,20 +516,16 @@ function readOpencodeGoDocs() {
 	);
 }
 
-/** @type {Set<string>|null|undefined} undefined = not read yet */
-let docsModelIdsCache;
-
 /**
- * The published endpoint ids, read once per run. Null when no docs source
- * answered — the cross-check then simply does not run.
+ * The published endpoint ids, or null when no docs source answered — the
+ * cross-check then simply does not run (one read per run: the caller does not
+ * call this twice).
+ * @param {Record<string, string|undefined>} env the run's environment
  * @returns {Set<string>|null}
  */
-function docsModelIds() {
-	if (docsModelIdsCache === undefined) {
-		const docs = readOpencodeGoDocs();
-		docsModelIdsCache = docs ? parseDocsModelIds(docs) : null;
-	}
-	return docsModelIdsCache;
+function docsModelIds(env) {
+	const docs = readOpencodeGoDocs(env);
+	return docs ? parseDocsModelIds(docs) : null;
 }
 
 /**
@@ -565,10 +537,11 @@ function docsModelIds() {
  * a live model the table does not list — is the drift that matters for
  * documentation, and it is reported the same way.
  * @param {import("./gen-lib.mjs").PiModel[]} models
+ * @param {Set<string>|null} docsIds the published endpoint ids, or null when
+ *   no docs source answered
  * @returns {void}
  */
-function reportOpencodeGoDocsDrift(models) {
-	const docsIds = docsModelIds();
+function reportOpencodeGoDocsDrift(models, docsIds) {
 	if (!docsIds) {
 		return;
 	}
@@ -586,15 +559,23 @@ function reportOpencodeGoDocsDrift(models) {
 		{ docs: docsIds.size, live: emitted.size, docsOnly, liveOnly },
 	);
 }
-/** @type {CloudProviderSpec[]} */
-const PROVIDER_SPECS = [
+/**
+ * The run's provider spec table: what to emit per row and how to gate it. A
+ * function of the fact table and the environment, called by main — it is DATA
+ * about the run, not module state.
+ * @param {Readonly<Record<string, import("./lib/cloud-providers.mjs").CloudProviderFacts>>} cloudProviders
+ * @param {Record<string, string|undefined>} env the run's environment
+ * @returns {CloudProviderSpec[]}
+ */
+function providerSpecs(cloudProviders, env) {
+	return [
 	// --- override-only: the pi-native set (fact table owns the base URL) ---
 	...PI_NATIVE_CLOUD_IDS.map(
 		(id) =>
 			/** @type {CloudProviderSpec} */ ({
 				id,
 				mode: "override-only",
-				envKey: providerFacts(id).apiKeyEnv,
+				envKey: providerFacts(cloudProviders, id).apiKeyEnv,
 				filter: MODEL_SCOPES[id],
 				// A mixed surface is only describable by its own listing (d048).
 				...(MIXED_SURFACE_IDS.has(id) ? { mixedSurface: true } : {}),
@@ -624,7 +605,7 @@ const PROVIDER_SPECS = [
 		modelIdPrefix: `${CLINE_PASS_ID}/`,
 		// The table decides the lineup AND is the only field source: read first, so
 		// a successful read means no models.dev metadata follows it (docs/d189).
-		lineupResolver: resolveClinePassLineup,
+		lineupResolver: () => resolveClinePassLineup(env),
 		lineupOnly: true,
 	},
 	{
@@ -728,7 +709,8 @@ const PROVIDER_SPECS = [
 		factsMapper: syntheticFactsRecord,
 		lineupFromFacts: true,
 	},
-];
+	];
+}
 
 /**
  * Map models.dev `reasoning_options` effort values onto pi thinking levels
@@ -955,23 +937,24 @@ function catalogPiModel(spec, m, id = m.id) {
  * base URL its client route is derived from, so the committed and installed
  * URL forms cannot disagree (docs/d047, d070). Its lineup arrives through the facts cache instead —
  * an empty `models` map is what tells emitFull the cache owns the lineup.
+ * @param {CatalogDoc} catalog the run's parsed models.dev catalog
+ * @param {string} layerDir the run's layer dir (the catalog sits beside it)
  * @param {CloudProviderSpec} spec the provider spec row
  * @returns {Record<string, ModelsDevModel>} the provider's per-model metadata
  */
-function loadProvider(spec) {
+function loadProvider(catalog, layerDir, spec) {
 	if (spec.catalogOptional) {
 		return {};
 	}
-	if (!CATALOG) {
-		throw Object.assign(new Error("models.dev catalog unreadable"), {
-			path: API_JSON,
-		});
-	}
-	const provider = CATALOG[spec.id];
+	const provider = catalog?.[spec.id];
 	if (!provider?.models) {
 		throw Object.assign(
-			new Error("provider not found in the models.dev catalog"),
-			{ provider: spec.id, path: API_JSON },
+			new Error(
+				catalog
+					? "provider not found in the models.dev catalog"
+					: "models.dev catalog unreadable",
+			),
+			{ provider: spec.id, path: join(layerDir, "models.dev.api.json") },
 		);
 	}
 	return provider.models;
@@ -1262,24 +1245,24 @@ function listingModels(entries, spec) {
  * provider is STILL emitted with `models: []`: omitting the provider would
  * hand routing to pi's built-in DIRECT definition (d063 §3) — a loud empty
  * lineup beats a silent direct URL.
- * @param {CloudProviderSpec} spec
- * @param {Record<string, import("./gen-lib.mjs").PiProvider>} providers
+ * @param {ProviderRow} row the provider this stage emits
+ * @param {CatalogDoc} catalog the run's parsed models.dev catalog
  * @param {import("./catalog-facts.mjs").CatwalkProvider[]|null} catwalk the
  *   run's fetched catwalk listing
- * @returns {void}
+ * @returns {import("./gen-lib.mjs").PiProvider} the entry to publish
  */
-function emitMinimalCatalogOverride(spec, providers, catwalk) {
+function emitMinimalCatalogOverride(row, catalog, catwalk) {
+	const spec = row.spec;
 	if (spec.mixedSurface) {
 		// The catalog carries no per-model dialect, so id-only records would
 		// replace pi's described built-ins with stubs and misroute each model.
-		providers[spec.id] = providerReroute(providerFacts(spec.id).baseUrl);
 		logInfo("mixed surface, no listing — reroute only, pi's records stand", {
 			provider: spec.id,
 		});
-		return;
+		return providerReroute(row.facts.baseUrl);
 	}
 	const filter = spec.filter;
-	const modelsDevModels = CATALOG?.[spec.id]?.models ?? {};
+	const modelsDevModels = catalog?.[spec.id]?.models ?? {};
 	const ids = new Set(
 		Object.keys(modelsDevModels).filter(
 			(mid) =>
@@ -1311,26 +1294,25 @@ function emitMinimalCatalogOverride(spec, providers, catwalk) {
 		);
 	}
 	const models = [...ids].map((mid) => piModel({ id: mid }));
-	providers[spec.id] = providerReroute(
-		providerFacts(spec.id).baseUrl,
-		models,
-	);
 	logInfo("minimal catalog override — canonical base, ids merged", {
 		provider: spec.id,
 		models: ids.size,
 	});
+	return providerReroute(row.facts.baseUrl, models);
 }
 
 /**
  * Probe one row's canonical upstream with its own bearer. The base URL comes
  * from the fact table rather than the spec, so the URL a probe checks and the
  * URL the layer emits cannot diverge (docs/d070, d108).
- * @param {CloudProviderSpec} spec
+ * @param {ProviderRow} row the provider to probe
+ * @param {boolean} tlsDisabled the runtime TLS state, from main
  */
-async function probeRow(spec) {
+async function probeRow(row, tlsDisabled) {
 	return await probeEndpoint(
-		providerFacts(spec.id).baseUrl,
-		bearerHeaders(process.env[spec.envKey]?.trim()),
+		row.facts.baseUrl,
+		bearerHeaders(row.apiKey?.trim()),
+		tlsDisabled,
 	);
 }
 
@@ -1340,31 +1322,32 @@ async function probeRow(spec) {
  * — the route substitution is generate.mjs's install-time job). The probe
  * only picks the lineup source (live listing → catalog); superficial
  * rows (docs/d064) skip it entirely and take the catalog directly.
- * @param {CloudProviderSpec} spec
- * @param {Record<string, import("./gen-lib.mjs").PiProvider>} providers
+ * @param {ProviderRow} row the provider this stage emits
+ * @param {boolean} tlsDisabled the runtime TLS state, from main
+ * @param {CatalogDoc} catalog the run's parsed models.dev catalog
  * @param {import("./catalog-facts.mjs").CatwalkProvider[]|null} catwalk the
  *   run's fetched catwalk listing
- * @returns {Promise<void>}
+ * @returns {Promise<import("./gen-lib.mjs").PiProvider>} the entry to publish
  */
-async function emitOverrideOnly(spec, providers, catwalk) {
+async function emitOverrideOnly(row, tlsDisabled, catalog, catwalk) {
+	const spec = row.spec;
 	// catalogOnly rows never probe (docs/d033): the endpoint cannot
 	// authenticate the probe's bearer, so no probe outcome means anything —
 	// "credential-gated" would be a misleading verdict for an endpoint that
 	// would 403 even with the key in hand. The models.dev slice IS the
 	// lineup source. Superficial rows (docs/d064) are not smoke-tested, so
 	// their probe would be a promise nothing maintains — same shortcut.
-	if (spec.catalogOnly || supportTier(spec.id) === "superficial") {
+	if (spec.catalogOnly || row.facts.support === "superficial") {
 		logInfo(
 			spec.catalogOnly
 				? "catalog-only provider — models.dev slice is the lineup source"
 				: "superficial provider — not route-probed (docs/d064), catalog lineup",
 			{ provider: spec.id },
 		);
-		emitMinimalCatalogOverride(spec, providers, catwalk);
-		return;
+		return emitMinimalCatalogOverride(row, catalog, catwalk);
 	}
 
-	const route = await probeRow(spec);
+	const route = await probeRow(row, tlsDisabled);
 	// The probe only selects the LINEUP source — the emitted URL is canonical
 	// either way (docs/d108).
 	if (!route.usable) {
@@ -1372,28 +1355,20 @@ async function emitOverrideOnly(spec, providers, catwalk) {
 			"no usable endpoint — lineup degrades to the catalog (docs/d108)",
 			{ provider: spec.id },
 		);
-		emitMinimalCatalogOverride(spec, providers, catwalk);
-		return;
+		return emitMinimalCatalogOverride(row, catalog, catwalk);
 	}
 	const models = listingModels(route.entries, spec);
 	if (models) {
-		if (spec.id === OPENCODE_GO_ID) {
-			reportOpencodeGoDocsDrift(models);
-		}
 		logInfo("override models from the live listing", {
 			provider: spec.id,
 			models: models.length,
 		});
-		providers[spec.id] = providerReroute(
-			providerFacts(spec.id).baseUrl,
-			models,
-		);
-		return;
+		return providerReroute(row.facts.baseUrl, models);
 	}
 	// Route proved but not listable (401/403 without a key, or an unexpected
 	// answer — reachable ≠ authenticated): the catalog mirrors the provider's
 	// own ids, and the canonical base stands either way.
-	emitMinimalCatalogOverride(spec, providers, catwalk);
+	return emitMinimalCatalogOverride(row, catalog, catwalk);
 }
 
 /**
@@ -1406,11 +1381,15 @@ async function emitOverrideOnly(spec, providers, catwalk) {
  * Full rows are first-class or best-effort (docs/d064), so they always get
  * the probe, and a `catalogOptional` row skips the catalog entirely — its
  * facts cache IS the lineup (docs/d057).
- * @param {CloudProviderSpec} spec
+ * @param {ProviderRow} row the provider this stage emits
+ * @param {boolean} tlsDisabled the runtime TLS state, from main
+ * @param {CatalogDoc} catalog the run's parsed models.dev catalog
+ * @param {string} layerDir where the `model-*.json` layers live this run
  * @returns {Promise<void>}
  */
-async function emitFull(spec) {
-	const route = await probeRow(spec);
+async function emitFull(row, tlsDisabled, catalog, layerDir) {
+	const spec = row.spec;
+	const route = await probeRow(row, tlsDisabled);
 	if (!route.usable) {
 		logWarn(
 			"no usable endpoint — lineup degrades to the catalog/facts cascade (docs/d108)",
@@ -1429,7 +1408,7 @@ async function emitFull(spec) {
 	 * upstream, keyed by id — never string-derived from a configured base.
 	 * @type {string}
 	 */
-	const canonicalUrl = providerFacts(spec.id).baseUrl;
+	const canonicalUrl = row.facts.baseUrl;
 	/**
 	 * The published lineup, when this row has one: it decides WHICH ids
 	 * publish, and the catalog is then only their metadata (docs/d189).
@@ -1445,8 +1424,8 @@ async function emitFull(spec) {
 	const allow = lineup
 		? new Set(lineup.map((entry) => entry.id))
 		: null;
-	const catalog = loadProvider(spec);
-	const catalogModels = Object.entries(catalog)
+	const modelsDev = loadProvider(catalog, layerDir, spec);
+	const catalogModels = Object.entries(modelsDev)
 		.filter(
 			([id, m]) =>
 				// A retired catalog entry never publishes (docs/d048).
@@ -1501,31 +1480,36 @@ async function emitFull(spec) {
 	}
 
 	if (spec.facts) {
-		// The fetch walks the reverse-proxy routes only (docs/d063). Its ANSWER
-		// is the whole lineup contract: there is no cache behind it to fall back
+		// The fetch addresses the canonical upstream (docs/d108). Its ANSWER is
+		// the whole lineup contract: there is no cache behind it to fall back
 		// to, so a provider that cannot answer offers nothing (docs/d190, d191).
-		const facts = await fetchProviderFacts(spec.id, spec.facts);
-		if (!facts && spec.lineupFromFacts) {
+		const served = await fetchProviderFacts(
+			row.facts,
+			spec.facts,
+			row.apiKey,
+			tlsDisabled,
+		);
+		if (!served && spec.lineupFromFacts) {
 			logWarn(
 				"the provider's own source did not answer — the lineup is empty (docs/d190)",
 				{ provider: spec.id },
 			);
 			models = [];
-		} else if (!facts) {
+		} else if (!served) {
 			logWarn("the provider did not answer — using catalog metadata", {
 				provider: spec.id,
 			});
 		} else if (spec.lineupFromFacts || (models.length === 0 && spec.catalogOptional)) {
-			models = factsLineup(spec, facts, models, { routeIds, allow });
+			models = factsLineup(spec, served, models, { routeIds, allow });
 			logInfo("lineup taken from the facts source", {
 				provider: spec.id,
-				served: facts.length,
+				served: served.length,
 				published: models.length,
 				catalogNamed: models.filter((m) => m.name !== m.id).length,
 				routeBounded: routeIds !== null,
 			});
 		} else {
-			const { enriched, untouched } = enrichWithFacts(spec, models, facts);
+			const { enriched, untouched } = enrichWithFacts(spec, models, served);
 			models = [...enriched, ...untouched];
 			logInfo("enriched from the live listing", {
 				provider: spec.id,
@@ -1570,40 +1554,95 @@ async function emitFull(spec) {
 	});
 }
 
-/** @returns {Promise<void>} */
-async function generateCloudProviders() {
+/**
+ * Run the override-only rows and return their provider entries. Catwalk is
+ * fetched ONCE here, in memory, for the rows that union its view in
+ * (docs/d048); it is not a cache a later run reads (docs/d191). The caller
+ * publishes the result and runs the opencode-go docs cross-check.
+ * @param {ProviderRow[]} rows the run's override-only rows
+ * @param {CatalogDoc} catalog the run's parsed models.dev catalog
+ * @param {boolean} tlsDisabled the runtime TLS state, from main
+ * @returns {Promise<Record<string, import("./gen-lib.mjs").PiProvider>>}
+ */
+async function generateOverrideLayers(rows, catalog, tlsDisabled) {
 	// No reverse-proxy base is required any more (docs/d108): probes address
 	// each provider's canonical upstream and reach the edge through the
 	// environment proxy. A probe that cannot answer only narrows the lineup to
 	// the catalog — the emitted URL is canonical either way.
-	//
-	// Catwalk is fetched ONCE here, in memory, for the reroute-only rows that
-	// union its view in (docs/d048); it is not a cache a later run reads
-	// (docs/d191). Each full row fetches its own provider listing in its emit
-	// path, so a row that cannot answer offers nothing.
-	const catwalk = await fetchCatwalkFacts();
+	const catwalk = await fetchCatwalkFacts(undefined, tlsDisabled);
+	const results = await Promise.allSettled(
+		rows.map((row) => emitOverrideOnly(row, tlsDisabled, catalog, catwalk)),
+	);
 
 	/** @type {Record<string, import("./gen-lib.mjs").PiProvider>} */
 	const providers = {};
-	const results = await Promise.allSettled(
-		PROVIDER_SPECS.map((spec) =>
-			spec.mode === "full"
-				? emitFull(spec)
-				: emitOverrideOnly(spec, providers, catwalk),
-		),
-	);
 	let failed = 0;
 	for (const [i, res] of results.entries()) {
-		const spec = PROVIDER_SPECS[i];
-		// results is PROVIDER_SPECS.map()'s settle — the index always names a
-		// spec; the guard is the type gate's form, not a reachable state.
-		if (spec === undefined) {
+		const row = rows[i];
+		// results is rows.map()'s settle — the index always names a row; the
+		// guard is the type gate's form, not a reachable state.
+		if (row === undefined) {
 			continue;
 		}
 		if (res.status === "rejected") {
 			failed++;
 			logError("provider spec failed — no layer written", {
-				provider: spec.id,
+				provider: row.spec.id,
+				error: res.reason,
+			});
+			continue;
+		}
+		providers[row.spec.id] = res.value;
+	}
+	// d063 §4: a rejected row means an omitted provider — and omission is how
+	// a direct URL gets back in (pi's built-in). One bad row fails the whole
+	// cloud stage, and generate.mjs treats this generator's exit as fatal.
+	if (failed) {
+		throw new Error(
+			`${failed} provider spec(s) failed — refusing to merge a partial cloud layer (docs/d063)`,
+		);
+	}
+	return providers;
+}
+
+/**
+ * Write the override-only layer from the entries the stage returned.
+ * @param {string} layerDir where the `model-*.json` layers live this run
+ * @param {Record<string, import("./gen-lib.mjs").PiProvider>} providers
+ * @returns {void}
+ */
+function writeOverrideLayer(layerDir, providers) {
+	const written = writeJsonArtifact(
+		join(layerDir, "model-012-cloud-pi-native.json"),
+		{ providers },
+	);
+	logInfo("pi-native override layer written", { path: written });
+}
+
+/**
+ * Run the full-mode rows, each writing its own layer file.
+ * @param {ProviderRow[]} rows the run's full-mode rows
+ * @param {CatalogDoc} catalog the run's parsed models.dev catalog
+ * @param {string} layerDir where the `model-*.json` layers live this run
+ * @param {boolean} tlsDisabled the runtime TLS state, from main
+ * @returns {Promise<void>}
+ */
+async function generateFullLayers(rows, catalog, layerDir, tlsDisabled) {
+	const results = await Promise.allSettled(
+		rows.map((row) => emitFull(row, tlsDisabled, catalog, layerDir)),
+	);
+	let failed = 0;
+	for (const [i, res] of results.entries()) {
+		const row = rows[i];
+		// results is rows.map()'s settle — the index always names a row; the
+		// guard is the type gate's form, not a reachable state.
+		if (row === undefined) {
+			continue;
+		}
+		if (res.status === "rejected") {
+			failed++;
+			logError("provider spec failed — no layer written", {
+				provider: row.spec.id,
 				error: res.reason,
 			});
 		}
@@ -1616,25 +1655,25 @@ async function generateCloudProviders() {
 			`${failed} provider spec(s) failed — refusing to merge a partial cloud layer (docs/d063)`,
 		);
 	}
-
-	const written = writeJsonArtifact(
-		join(layerDir, "model-012-cloud-pi-native.json"),
-		{ providers },
-	);
-	logInfo("pi-native override layer written", { path: written });
 }
 
 /**
- * @param {string} out
+ * @param {import("./lib/cloud-providers.mjs").CloudProviderFacts} farm the
+ *   fact table's local-farm row (`llama-swap`)
+ * @param {string|undefined} apiKey the farm's key, from the caller's env
+ * @param {boolean} tlsDisabled the runtime TLS state, from main
+ * @param {string} out the layer file to write
  * @returns {Promise<void>}
  */
-async function generateLocalLlamaSwap(out) {
-	// The farm's row, read once here: the tsnet serve hostname is both the
-	// probe candidate and the emitted base. The LAN port is not routable from
-	// outside the serving host (docs/d022).
-	const farm = providerFacts("llama-swap");
-	const local = await probeCandidates([farm.baseUrl], (ids) =>
-		ids.some((id) => id.includes("-GGUF")),
+async function generateLocalLlamaSwap(farm, apiKey, tlsDisabled, out) {
+	// The farm's tsnet serve hostname is both the probe candidate and the
+	// emitted base. The LAN port is not routable from outside the serving host
+	// (docs/d022).
+	const local = await probeCandidates(
+		[farm.baseUrl],
+		(ids) => ids.some((id) => id.includes("-GGUF")),
+		bearerHeaders(apiKey?.trim()),
+		tlsDisabled,
 	);
 	if (!local) {
 		// The farm answers for itself or not at all (docs/d190): d064's
@@ -1650,7 +1689,11 @@ async function generateLocalLlamaSwap(out) {
 	// table's upstream, and no install step rewrites it (docs/d108).
 	/** @type {Record<string, import("./gen-lib.mjs").PiProvider>} */
 	const providers = {
-		"llama-swap": providerEntry(farm.baseUrl, gguf.map(piModel)),
+		"llama-swap": providerEntry(
+			farm.baseUrl,
+			gguf.map(piModel),
+			Boolean(apiKey?.trim()),
+		),
 	};
 
 	const written = writeJsonArtifact(out, { providers });
@@ -1716,10 +1759,13 @@ function readJson(path) {
 }
 
 /**
- * @param {string} out
+ * Deep-merge every `model-*.json` layer in `layerDir`, lexical filename
+ * order, into the merged artifact.
+ * @param {string} layerDir the dir holding this run's layers
+ * @param {string} out the merged file to write
  * @returns {void}
  */
-function mergeModels(out) {
+function mergeModels(layerDir, out) {
 	const overlayNames = readdirSync(layerDir)
 		.filter((name) => /^model-.*\.json$/.test(name))
 		.sort();
@@ -1729,35 +1775,30 @@ function mergeModels(out) {
 }
 
 /**
- * The settings source whose defaultProvider/defaultModel this generator
- * returns. The generator points $PI_SETTINGS at the file it installs (the
- * agent dir's settings.json after the settings-install stage); manual runs
- * read the repo's committed copy.
- * @returns {string}
- */
-function settingsPath() {
-	return process.env.PI_SETTINGS ?? join(scriptDir, "settings.json");
-}
-
-/**
  * @typedef {object} SettingsSource
  * @property {string} [defaultProvider]
  * @property {string} [defaultModel]
  */
 
 /**
- * @param {string} outPath
+ * Return the operator's hardcoded defaultProvider/defaultModel from
+ * `settingsPath` as its own overlay file (docs/d036 — an OPERATOR DECISION,
+ * not a probed fact). The caller resolves `settingsPath`: the driver points it
+ * at the agent dir's settings.json after the settings-install stage, a manual
+ * run reads the repo's committed copy.
+ * @param {string} settingsPath the settings source
+ * @param {string} outPath the overlay file to write
  * @returns {void}
  */
-function generateDefaultModel(outPath) {
+function generateDefaultModel(settingsPath, outPath) {
 	let settings = /** @type {SettingsSource} */ ({});
 	try {
 		settings = /** @type {SettingsSource} */ (
-			JSON.parse(readFileSync(settingsPath(), "utf-8"))
+			JSON.parse(readFileSync(settingsPath, "utf-8"))
 		);
 	} catch (err) {
 		logWarn("settings source unreadable — no default model configuration", {
-			path: settingsPath(),
+			path: settingsPath,
 			error: err,
 		});
 	}
@@ -1774,12 +1815,12 @@ function generateDefaultModel(outPath) {
 		logInfo("default model: operator-hardcoded pair returned as is", {
 			provider: overlay.defaultProvider,
 			model: overlay.defaultModel,
-			from: settingsPath(),
+			from: settingsPath,
 		});
 	} else {
 		logWarn(
 			"settings source carries no defaultProvider/defaultModel — empty overlay written (pi's own default will apply)",
-			{ path: settingsPath() },
+			{ path: settingsPath },
 		);
 	}
 	const written = writeArtifact(
@@ -1809,29 +1850,114 @@ async function runStage(name, run) {
 	}
 }
 
-/** @returns {Promise<void>} */
+/**
+ * THE entry point. Every side effect of this generator happens below this
+ * line: the env, the argv, the fact table and the catalog are read here, and
+ * each stage receives the values it consumes (plus the network, which the
+ * probe helpers own).
+ * @returns {Promise<void>}
+ */
 async function main() {
+	setLogTool("coding-agent/generate-pi-coding-agent");
+	const env = process.env;
+	/**
+	 * Where the `model-*.json` layers are written — and, in `mergeModels`,
+	 * where they are read from — for THIS run. generate.mjs points
+	 * $PI_LAYER_DIR at its per-run output dir; a manual run lands in the
+	 * module's own dir, which is where the committed layers live.
+	 *
+	 * WHY the override exists (docs/d072): the retired d023 scratch staging
+	 * gave every run a private layer dir that was committed back only after a
+	 * fully successful generation — that is the property this preserves. It
+	 * matters twice: `mergeModels` globs the whole dir, and the committed
+	 * layers seed it before this run rewrites any (generate.mjs does that).
+	 */
+	const layerDir = env.PI_LAYER_DIR ?? scriptDir;
+	mkdirSync(layerDir, { recursive: true });
+
+	// The catalog THIS RUN fetched, sitting in the run's layer dir beside the
+	// `model-*` layers because that dir IS the run (docs/d191). Absent ⇒
+	// override-only rows still have catwalk; full rows fail their row, exactly
+	// as before.
+	const apiJson = join(layerDir, "models.dev.api.json");
+	/** @type {CatalogDoc} */
+	let catalog = null;
+	try {
+		catalog = /** @type {CatalogDoc} */ (
+			JSON.parse(readFileSync(apiJson, "utf-8"))
+		);
+	} catch (err) {
+		logWarn("models.dev catalog unreadable — full-mode rows cannot load", {
+			path: apiJson,
+			error: err,
+		});
+	}
+
+	const tlsDisabled = env.NODE_TLS_REJECT_UNAUTHORIZED === "0";
+	if (tlsDisabled) {
+		logWarn(
+			"TLS verification disabled (NODE_TLS_REJECT_UNAUTHORIZED=0) — https endpoints fail closed; only plain-http emergency bases are used",
+		);
+	}
+
+	// One row per provider: its spec, its fact-table row and the key this run
+	// holds for it. The stages take rows, so a given emission cannot read
+	// another provider's facts.
+	const cloudProviders = readCloudProviders(cloudProvidersPath);
+	/** @type {ProviderRow[]} */
+	const rows = providerSpecs(cloudProviders, env).map((spec) => {
+		const facts = providerFacts(cloudProviders, spec.id);
+		return { spec, facts, apiKey: env[facts.apiKeyEnv] };
+	});
+
 	const modelsOut =
-		process.argv[2] ??
-		process.env.PI_MODELS_JSON ??
-		join(scriptDir, "models.json");
+		process.argv[2] ?? env.PI_MODELS_JSON ?? join(scriptDir, "models.json");
 	const defaultOut =
 		process.argv[3] ??
-		process.env.PI_DEFAULT_MODEL_JSON ??
+		env.PI_DEFAULT_MODEL_JSON ??
 		join(scriptDir, "default-model.json");
+	const settingsPath = env.PI_SETTINGS ?? join(scriptDir, "settings.json");
 
+	const farm = providerFacts(cloudProviders, "llama-swap");
 	await runStage("local-llama-swap", () =>
-		generateLocalLlamaSwap(join(layerDir, "model-010-local-default.json")),
+		generateLocalLlamaSwap(
+			farm,
+			env[farm.apiKeyEnv],
+			tlsDisabled,
+			join(layerDir, "model-010-local-default.json"),
+		),
 	);
 	// NOT via runStage: a failed cloud stage must fail the generator — the
 	// merge after it would otherwise install the committed artifact, and an
 	// omitted provider is exactly the direct-routing fallback d063 forbids.
-	await generateCloudProviders();
-	await runStage("merge-models", () => mergeModels(modelsOut));
-	await runStage("default-model", () => generateDefaultModel(defaultOut));
+	const overrideRows = rows.filter((row) => row.spec.mode !== "full");
+	const overrides = await generateOverrideLayers(
+		overrideRows,
+		catalog,
+		tlsDisabled,
+	);
+	writeOverrideLayer(layerDir, overrides);
+	// The opencode-go docs table is a REFERENCE the listing is compared
+	// against (docs/d048); one read per run, and only when the row published.
+	const opencodeGo = overrides[OPENCODE_GO_ID];
+	if (opencodeGo) {
+		reportOpencodeGoDocsDrift(opencodeGo.models, docsModelIds(env));
+	}
+	await generateFullLayers(
+		rows.filter((row) => row.spec.mode === "full"),
+		catalog,
+		layerDir,
+		tlsDisabled,
+	);
+	await runStage("merge-models", () => mergeModels(layerDir, modelsOut));
+	await runStage("default-model", () =>
+		generateDefaultModel(settingsPath, defaultOut),
+	);
 }
 
-main().catch((err) => {
-	logError("pi generator failed — nothing merged", { error: err });
-	process.exit(1);
-});
+if (import.meta.main) {
+	main().catch((err) => {
+		logError("pi generator failed — nothing merged", { error: err });
+		process.exit(1);
+	});
+}

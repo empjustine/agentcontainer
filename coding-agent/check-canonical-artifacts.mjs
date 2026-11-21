@@ -23,12 +23,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = process.env.LIB_DIR ?? join(scriptDir, "lib");
-const { CLOUD_PROVIDERS, FACT_HOSTS } =
-	/** @type {typeof import("./lib/cloud-providers.mjs")} */ (
-		await import(`${LIB_DIR}/cloud-providers.mjs`)
-	);
+import { factHosts, readCloudProviders } from "./lib/cloud-providers.mjs";
 
 /**
  * True when any path segment of `url` is a fact-table upstream host — the
@@ -38,11 +33,12 @@ const { CLOUD_PROVIDERS, FACT_HOSTS } =
  * second segment (docs/d070 Consequences). The form is deleted (docs/d108);
  * this is the regression guard.
  * @param {string} url
+ * @param {Set<string>} hosts the fact table's upstream hosts
  * @returns {boolean}
  */
-function carriesFactHostSegment(url) {
+function carriesFactHostSegment(url, hosts) {
 	try {
-		return new URL(url).pathname.split("/").some((seg) => FACT_HOSTS.has(seg));
+		return new URL(url).pathname.split("/").some((seg) => hosts.has(seg));
 	} catch {
 		return false;
 	}
@@ -94,16 +90,19 @@ export function providerUrlsOf(doc) {
  * table must agree, so a rename on either side fails loudly instead of
  * shipping a URL nobody verified.
  * @param {unknown} doc parsed artifact
+ * @param {Readonly<Record<string, import("./lib/cloud-providers.mjs").CloudProviderFacts>>} providers
+ *   the fact table, read once by the caller
  * @returns {readonly string[]} human-readable violations; empty = conforming
  */
-export function canonicalViolations(doc) {
+export function canonicalViolations(doc, providers) {
 	const out = [];
+	const hosts = factHosts(providers);
 	for (const { id, url } of providerUrlsOf(doc)) {
 		if (url === undefined) {
 			continue;
 		}
 		const factId = OPENCODE_PROVIDER_FACT_IDS[id] ?? id;
-		const upstream = CLOUD_PROVIDERS[factId]?.baseUrl;
+		const upstream = providers[factId]?.baseUrl;
 		if (!upstream) {
 			out.push(`${id}: no fact-table upstream (docs/d070)`);
 			continue;
@@ -117,7 +116,7 @@ export function canonicalViolations(doc) {
 			out.push(`${id}: upstream prefix not at a path boundary: ${url}`);
 			continue;
 		}
-		if (carriesFactHostSegment(url)) {
+		if (carriesFactHostSegment(url, hosts)) {
 			out.push(
 				`${id}: carries a fact-table host as a path segment (the retired d047 route form, docs/d108): ${url}`,
 			);
@@ -140,10 +139,16 @@ function main(args) {
 		console.error("usage: check-canonical-artifacts.mjs <models-or-opencode-file>");
 		process.exit(2);
 	}
+	const providers = readCloudProviders(
+		join(dirname(fileURLToPath(import.meta.url)), "lib/cloud-providers.json"),
+	);
 	/** @type {readonly string[]} */
 	let violations = [];
 	try {
-		violations = canonicalViolations(JSON.parse(readFileSync(path, "utf-8")));
+		violations = canonicalViolations(
+			JSON.parse(readFileSync(path, "utf-8")),
+			providers,
+		);
 	} catch (err) {
 		violations = [`unreadable or invalid JSON: ${String(err)}`];
 	}

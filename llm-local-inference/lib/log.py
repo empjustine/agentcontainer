@@ -41,8 +41,8 @@ import sys
 import time
 import traceback
 
-_tool = os.environ.get("LOG_TOOL", "python")
-_stream = sys.stderr if os.environ.get("LOG_STREAM") == "stderr" else sys.stdout
+_tool = None
+_stream = None
 
 # Same policy as lib/log.mjs (docs/d045): exceptions in fields serialize as
 # structured objects — name, message, traceback, and the explicit __cause__
@@ -103,7 +103,7 @@ def emit(level: str, msg: str, **fields) -> None:
     trailer = {
         "ts": int(time.time() * 1000),
         "severityNumber": _severity_number(level),
-        "tool": _tool,
+        "tool": _tool if _tool is not None else os.environ.get("LOG_TOOL", "python"),
     }
     if os.environ.get("LOG_FORMAT") == "logfmt":
         def val(v) -> str:
@@ -116,7 +116,7 @@ def emit(level: str, msg: str, **fields) -> None:
     else:
         rec = {"msg": msg, **fields, **trailer}
         line = json.dumps(rec, ensure_ascii=False, default=lambda o: _serialize(o))
-    print(line, file=_stream)
+    print(line, file=_stream if _stream is not None else sys.stdout)
 
 
 def debug(msg: str, **fields) -> None:

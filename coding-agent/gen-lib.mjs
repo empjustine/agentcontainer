@@ -1,22 +1,27 @@
 /**
  * @fileoverview gen-lib.mjs — the shared preamble for the coding-agent
- * pi-layer generators: resolves `scriptDir` / `LIB_DIR`, re-exports the lib/
- * and coding-agent/ helpers they use, owns the models.dev catalog lookup
- * order, and holds pi's driving-capability declaration — the one allowlist
- * both eligibility (modalitiesEligible) and emission (toInput) derive from
+ * pi-layer generators: re-exports the lib/ and coding-agent/ helpers they use
+ * and holds pi's driving-capability declaration — the one allowlist both
+ * eligibility (modalitiesEligible) and emission (toInput) derive from
  * (docs/d049).
  *
- * Sibling modules import statically; `LIB_DIR` is this folder's own copy
- * (docs/d113), resolved from THIS file so a generator run in any cwd — or
- * under generate.mjs's per-run output dir — finds the same modules. docs/d072
- * retired the d023 scratch staging that once made an env-injected lib
- * directory necessary (a ro-mounted tree only blocks WRITES, and a staged run
- * never writes next to its own sources).
+ * IMPORTS ONLY. Every import here is static and every export is a function, a
+ * frozen constant or a path string: loading this module runs nothing, reads no
+ * file and emits no line. The lib/ modules are this folder's own copies
+ * (docs/d113), resolved relative to THIS file so a generator run in any cwd
+ * finds the same ones (docs/d072 retired the env-injected lib directory that
+ * once made this dynamic).
  */
 
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { writeArtifact, writeJsonArtifact } from "./lib/artifact.mjs";
+import {
+	PI_NATIVE_CLOUD_IDS,
+	providerFacts,
+} from "./lib/cloud-providers.mjs";
+import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 import {
 	bearerHeaders,
 	probeCandidates,
@@ -30,27 +35,26 @@ export {
 } from "./catalog-facts.mjs";
 
 export const scriptDir = dirname(fileURLToPath(import.meta.url));
-const LIB_DIR = join(scriptDir, "lib");
 
-const logging = /** @type {typeof import("./lib/log.mjs")} */ (
-	await import(`${LIB_DIR}/log.mjs`)
-);
-const artifact = /** @type {typeof import("./lib/artifact.mjs")} */ (
-	await import(`${LIB_DIR}/artifact.mjs`)
-);
-const cloudProviders =
-	/** @type {typeof import("./lib/cloud-providers.mjs")} */ (
-		await import(`${LIB_DIR}/cloud-providers.mjs`)
-	);
+/**
+ * The folder's ONE fact table, as a path: the entry point reads it once with
+ * readCloudProviders and passes the record down (docs/d024/d102).
+ */
+export const cloudProvidersPath = join(scriptDir, "lib", "cloud-providers.json");
 
-export const { logError, logInfo, logWarn, setLogTool } = logging;
-export const { writeArtifact, writeJsonArtifact } = artifact;
-export { bearerHeaders, probeCandidates, probeEndpoint };
-export const {
+export {
+	bearerHeaders,
+	logError,
+	logInfo,
+	logWarn,
 	PI_NATIVE_CLOUD_IDS,
+	probeCandidates,
+	probeEndpoint,
 	providerFacts,
-	supportTier,
-} = cloudProviders;
+	setLogTool,
+	writeArtifact,
+	writeJsonArtifact,
+};
 
 /**
  * pi shaping (folded in from the former lib/pi-models.mjs — docs/d039): shape
@@ -442,20 +446,20 @@ export function piModel(entry) {
  * compat — only `api`/`baseUrl` are inherited from builtin defaults.
  * `apiKey` is the literal "$TLALOCAYOTL_API_KEY": the tlalocayotl provider
  * row's own key (fact-table row `llama-swap`, its former name — earlier still
- * `bazzite`), which that instance demands and no cloud row uses. Omitted when
- * the generator's own environment carries no TLALOCAYOTL_API_KEY at all.
+ * `bazzite`), which that instance demands and no cloud row uses. The caller
+ * decides whether the reference is emitted (`includeApiKey`), so this builder
+ * reads no env and answers only from its arguments.
  * @param {string} baseUrl
  * @param {PiModel[]} models
+ * @param {boolean} includeApiKey emit the $TLALOCAYOTL_API_KEY reference
  * @returns {PiProvider}
  */
-export function providerEntry(baseUrl, models) {
+export function providerEntry(baseUrl, models, includeApiKey) {
 	return {
 		baseUrl: `${baseUrl}/v1`,
 		api: "openai-completions",
 		compat: LLAMA_SWAP_COMPAT,
-		...(process.env.TLALOCAYOTL_API_KEY?.trim()
-			? { apiKey: "$TLALOCAYOTL_API_KEY" }
-			: {}),
+		...(includeApiKey ? { apiKey: "$TLALOCAYOTL_API_KEY" } : {}),
 		models,
 	};
 }
