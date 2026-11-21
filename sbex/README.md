@@ -39,6 +39,7 @@ sbex is a worked Spring Boot example whose subject is doing the ordinary things 
 | SQLite backup and replication                            | `sqlite-replication.md`                                     |
 | The lakehouse workload as a port target                  | `datalakehouse-port.md`                                     |
 | The cold tier: Parquet, object storage and ADW           | `cold-persistence.md`, `cold-tier-platforms.md`             |
+| Backup, restore and routine maintenance without a DBA    | `db-maintenance.md`                                         |
 
 ## The modules
 
