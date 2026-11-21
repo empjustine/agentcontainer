@@ -41,6 +41,7 @@
 
 import { writeArtifact } from "./lib/artifact.mjs";
 import { canonicalizeProviderCatalog } from "./lib/canonical-json.mjs";
+import { exitCodeOf, failure } from "./lib/failure.mjs";
 import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 import { upstreamCandidates } from "./route-probe.mjs";
 
@@ -72,11 +73,10 @@ const MIN_PROVIDERS = 100;
  * @param {Record<string, unknown>} [fields]
  */
 function fail(msg, fields) {
-	logError("models.dev catalog fetch failed — no catalog for this run", {
+	return failure("models.dev catalog fetch failed — no catalog for this run", 1, {
 		reason: msg,
 		...fields,
 	});
-	process.exit(1);
 }
 
 /**
@@ -115,7 +115,7 @@ async function fetchCatalog(url, { via }) {
 /**
  * One-shot refresh CLI: walk the fallback chain, validate the payload
  * (REQUIRED_PROVIDERS + MIN_PROVIDERS), write the atomic temp file, and
- * rename it over CATALOG_PATH. Any validation failure is a `fail()` exit 1
+ * rename it over CATALOG_PATH. Any validation failure is a thrown failure
  * — the previous catalog is never touched (docs/d027's stale-source rule).
  * @returns {Promise<void>}
  */
@@ -123,7 +123,7 @@ async function main() {
 	setLogTool("coding-agent/refresh-models-dev");
 	const out = process.argv[2];
 	if (!out) {
-		return fail("no output path given", { usage: "refresh-models-dev.mjs <out>" });
+		throw fail("no output path given", { usage: "refresh-models-dev.mjs <out>" });
 	}
 	let res = null;
 	let via = "";
@@ -141,21 +141,21 @@ async function main() {
 		}
 	}
 	if (!res) {
-		return fail("no catalog source answered");
+		throw fail("no catalog source answered");
 	}
 
 	let text;
 	try {
 		text = await res.text();
 	} catch (err) {
-		return fail("body read failed", { via, url, error: err });
+		throw fail("body read failed", { via, url, error: err });
 	}
 
 	let catalog;
 	try {
 		catalog = JSON.parse(text);
 	} catch (err) {
-		return fail("invalid JSON", { via, url, error: err });
+		throw fail("invalid JSON", { via, url, error: err });
 	}
 
 	if (
@@ -163,7 +163,7 @@ async function main() {
 		catalog === null ||
 		Array.isArray(catalog)
 	) {
-		return fail("response is not a provider map");
+		throw fail("response is not a provider map");
 	}
 	for (const id of REQUIRED_PROVIDERS) {
 		const provider = catalog[id];
@@ -172,12 +172,12 @@ async function main() {
 			typeof provider.models !== "object" ||
 			provider.models === null
 		) {
-			return fail(`response missing expected provider '${id}'`);
+			throw fail(`response missing expected provider '${id}'`);
 		}
 	}
 	const providerCount = Object.keys(catalog).length;
 	if (providerCount < MIN_PROVIDERS) {
-		return fail(
+		throw fail(
 			`unexpectedly small catalog (${providerCount} providers < ${MIN_PROVIDERS})`,
 		);
 	}
@@ -199,5 +199,17 @@ async function main() {
 }
 
 if (import.meta.main) {
-	main().catch((err) => fail("unhandled failure", { error: err }));
+	main().catch((error) => {
+		// One handler (docs/d225 R3): log once, set the status, return.
+		const exitCode = exitCodeOf(error);
+		if (exitCode === undefined) {
+			logError("models.dev catalog refresh failed", {
+				error: String(error?.stack ?? error),
+			});
+			process.exitCode = 1;
+		} else {
+			logError(error.message, error.fields ?? {});
+			process.exitCode = exitCode;
+		}
+	});
 }

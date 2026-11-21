@@ -72,13 +72,14 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { writeArtifact, writeJsonArtifact } from "./lib/artifact.mjs";
+import { exitCodeOf, failure } from "./lib/failure.mjs";
 import {
 	detectContainerTool,
 	detectGpuDevices,
 	INFERENCE_MIN_RAM_GIB,
 	totalMemGiB,
 } from "./lib/host-capabilities.mjs";
-import { logError, logInfo, logWarn } from "./lib/log.mjs";
+import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 import {
 	GGUF_SHARD_RE,
 	FULL_PRECISION_BYTES_PER_PARAM,
@@ -210,11 +211,11 @@ function requireVisibleHub(hubHost) {
 	if (reason === null) {
 		return;
 	}
-	logError(
+	throw failure(
 		"the HF hub cache is not visible — every baked path would be unverified (point HF_HUB_CACHE at the mount, or provision it with ./40-download-models.py)",
+		95,
 		{ hub: hubHost, reason },
 	);
-	process.exit(95);
 }
 
 /**
@@ -1165,11 +1166,11 @@ function generateLocalInference(scriptDir, hubHost, ggufFacts, manifests) {
  * @returns {void}
  */
 function main() {
+	setLogTool("llm-local-inference/generate");
 	// d215: no accepted arguments. Ignoring argv would run the full effect
 	// anyway: a stray --help once provisioned the whole catalog.
 	if (process.argv.length > 2) {
-		process.stderr.write("usage: 30-generate.mjs   # takes no arguments\n");
-		process.exit(64);
+		throw failure("usage: 30-generate.mjs   # takes no arguments", 64);
 	}
 
 	const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -1223,8 +1224,9 @@ function main() {
 		rmSync(join(configDir, "10-local-llm-inference.yaml"), { force: true });
 		rmSync(join(configDir, "10-local-llm-inference.paths"), { force: true });
 		rmSync(join(configDir, "launch-gguf.sh"), { force: true });
-		logError(
+		throw failure(
 			"host is not an inference endpoint (no container backend, no inference devices, or RAM below the floor) — cannot serve local inference (LOCAL_INFERENCE=1 forces generation for debug)",
+			94,
 			{
 				containerTool,
 				gpuDevices: gpuDevices.length,
@@ -1232,7 +1234,6 @@ function main() {
 				minRamGiB: INFERENCE_MIN_RAM_GIB,
 			},
 		);
-		process.exit(94);
 	}
 
 	// --- verify + report -------------------------------------------------------
@@ -1246,5 +1247,19 @@ function main() {
 }
 
 if (import.meta.main) {
-	main();
+	try {
+		main();
+	} catch (error) {
+		// One handler (docs/d225 R3): log once, set the status, return.
+		const exitCode = exitCodeOf(error);
+		if (exitCode === undefined) {
+			logError("local-inference generation failed", {
+				error: String(error?.stack ?? error),
+			});
+			process.exitCode = 1;
+		} else {
+			logError(error.message, error.fields ?? {});
+			process.exitCode = exitCode;
+		}
+	}
 }

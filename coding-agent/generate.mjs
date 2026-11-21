@@ -89,6 +89,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { serializeArtifact, writeArtifact } from "./lib/artifact.mjs";
+import { exitCodeOf, failure } from "./lib/failure.mjs";
 import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -358,18 +359,11 @@ function installOpencode(generated, hostDir, snapshotDir) {
 async function main() {
 	setLogTool("coding-agent/generate");
 
-	// A stage that dies on an uncaught throw (missing input, EROFS write, typo)
+	// A stage that dies on an unexpected throw (missing input, EROFS write, typo)
 	// must end the run with a structured line naming where it died — not just a
-	// raw stack trace — so the caller can quote the real cause instead of
-	// "generate failed". Deliberate exits below use process.exit directly.
+	// raw stack trace. The catch below turns that throw into a failure carrying
+	// the stage; refusals already carry their own exit code (docs/d225).
 	let currentStage = "startup";
-	process.on("uncaughtException", (err) => {
-		logError("generate aborted — later stages did not run", {
-			stage: currentStage,
-			error: String(err?.stack ?? err),
-		});
-		process.exit(1);
-	});
 
 	const env = process.env;
 	const termux = Boolean(env.PREFIX?.includes("com.termux"));
@@ -415,165 +409,180 @@ async function main() {
 	// copy-back runs only after the whole generation succeeded, so a failed run
 	// publishes nothing.
 	const outDir = mkdtempSync(join(runDir, "pi-models-gen-"));
+	try {
 
-	currentStage = "settings-install";
-	installSettings(join(scriptDir, "settings.json"), join(agentDir, "settings.json"));
+		currentStage = "settings-install";
+		installSettings(join(scriptDir, "settings.json"), join(agentDir, "settings.json"));
 
-	currentStage = "mcp-install";
-	installMcp(join(scriptDir, "mcp.json"), join(agentDir, "mcp.json"));
+		currentStage = "mcp-install";
+		installMcp(join(scriptDir, "mcp.json"), join(agentDir, "mcp.json"));
 
-	currentStage = "models-json";
+		currentStage = "models-json";
 
-	// --- models.json ---------------------------------------------------------
-	// The models.dev catalog is FETCHED for this run and kept in the run's
-	// output dir — there is no committed copy and no fallback to one
-	// (docs/d191). The fetch is not best-effort any more: the catalog is where
-	// every row's prices, limits and display names come from, so a host that
-	// cannot reach it has no business writing layers that would claim
-	// otherwise. Fail closed, like a failed provider row (docs/d063).
-	const catalogOut = join(outDir, "models.dev.api.json");
-	const generatorEnv = { ...env, PI_LAYER_DIR: outDir };
-	if (!runStage(join(scriptDir, "refresh-models-dev.mjs"), [catalogOut], generatorEnv)) {
-		logError("models.dev catalog unavailable — aborting (nothing generated)", {
-			script: "refresh-models-dev.mjs",
-		});
-		process.exit(1);
-	}
-	logInfo("models.dev catalog fetched", { path: catalogOut });
-
-	logInfo("generating pi config (layers + merge + default overlay)");
-	// One generator, one process: generate-pi-coding-agent.mjs runs the local
-	// GGUF layer, the cloud layers (docs/d037 override-only + full rows), the
-	// layer merge, and the operator default-model overlay internally, each
-	// stage isolated so one failure does not take the rest down (the same
-	// contract the former per-stage child processes had). Its default stage
-	// reads the settings file installed above.
-	const piEnv = {
-		...generatorEnv,
-		PI_SETTINGS: join(agentDir, "settings.json"),
-		PI_MODELS_JSON: join(outDir, "models.json"),
-		PI_DEFAULT_MODEL_JSON: join(outDir, "default-model.json"),
-	};
-	// Seed the run's layer dir from the committed layers so a layer the
-	// generator writes nothing for still merges the set the reviewed snapshot
-	// describes — no generator reads history from that dir any more
-	// (docs/d190 retired d064's stale-preserve, which did). The retired staging
-	// made this copy part of every run too (docs/d072).
-	for (const name of readdirSync(scriptDir)) {
-		if (/^model-.*\.json$/.test(name)) {
-			copyFileSync(join(scriptDir, name), join(outDir, name));
-		}
-	}
-	// d063 fail closed: a failed pi generator means its layers were not
-	// written — there is no committed-artifact fallback any more (d070 §6
-	// retired SKIP_GEN; installing one raw would ship canonical URLs).
-	if (!runStage(join(scriptDir, "generate-pi-coding-agent.mjs"), [], piEnv)) {
-		logError("pi generator failed — aborting (nothing merged)", {
-			script: "generate-pi-coding-agent.mjs",
-		});
-		process.exit(1);
-	}
-
-	const modelsOut = join(outDir, "models.json");
-	if (!existsSync(modelsOut)) {
-		logError("pi generator produced no models.json — aborting (docs/d070 §6)", {
-			path: modelsOut,
-		});
-		process.exit(1);
-	}
-
-	currentStage = "default-model";
-
-	// --- default model: the pi generator's default stage returned the
-	// operator's hardcoded defaultProvider/defaultModel from the settings
-	// source, as is (docs/d036 — the default is an OPERATOR DECISION, not a
-	// probed fact). It ran with the rest of the pi stages; this block merges
-	// its overlay into the installed settings.json (independent of the
-	// models.json install).
-	const overlay = join(outDir, "default-model.json");
-	if (existsSync(overlay)) {
-		const defaultModel = JSON.parse(readFileSync(overlay, "utf-8"));
-		const settings = JSON.parse(readFileSync(join(agentDir, "settings.json"), "utf-8"));
-		if (defaultModel.defaultProvider) {
-			settings.defaultProvider = defaultModel.defaultProvider;
-		}
-		if (defaultModel.defaultModel) {
-			settings.defaultModel = defaultModel.defaultModel;
-		}
-		writeArtifact(
-			join(agentDir, "settings.json"),
-			`${JSON.stringify(settings, null, 2)}\n`,
-		);
-		logInfo("settings.json updated with default model config", {
-			path: join(agentDir, "settings.json"),
-		});
-	} else {
-		logWarn("pi generator produced no default-model overlay");
-	}
-
-	currentStage = "models-install";
-	const installed = installModels(modelsOut, agentDir);
-	if (installed === 0) {
-		logError("0 providers generated — refusing to install (docs/d063)", {
-			action: "abort",
-			modelsJson: modelsOut,
-		});
-		process.exit(1);
-	}
-	if (!termux && modelsOut !== join(scriptDir, "models.json")) {
-		refreshCommittedSnapshot(modelsOut, outDir, scriptDir);
-	}
-
-	currentStage = "opencode-config";
-
-	// --- opencode config -----------------------------------------------------
-	// Upstream loads the provider overlay when asked. The consumer knob is
-	// upstream's documented OPENCODE_CONFIG_DIR (config.mdx "Custom
-	// directory"; verified against 1.18.30): a directory loaded AFTER the
-	// global config and .opencode, so its settings override theirs. NOT
-	// upstream's OPENCODE_CONFIG — that is the config-FILE override, and a
-	// directory value is silently ignored (probe: file content takes effect,
-	// dir value doesn't). NOT XDG_CONFIG_HOME either (first cut here): it works
-	// upstream, but it is a standard var every XDG tool reads — scoping the
-	// override to opencode's own knob keeps other tools on the host default.
-	//
-	// The install mirrors what this script does for pi's settings/models.json
-	// (docs/d054, docs/d065): generate into a per-run COPY of the committed
-	// overlay — the copy is the write target, and a fresh output dir carries no
-	// history for the generator to fall back on (docs/d190) — then on success
-	// install BOTH the host config dir (the dir the launcher mounts rw into the
-	// sandbox) and this dir's committed opencode.jsonc. Termux skips the stage
-	// entirely (pi-only path) unless OPENCODE_CONFIG_DIR is set.
-	const ocHostDir =
-		env.OPENCODE_CONFIG_DIR ??
-		join(env.XDG_CONFIG_HOME ?? join(env.HOME ?? "", ".config"), "opencode");
-	let ocOut = "";
-	if (!termux || env.OPENCODE_CONFIG_DIR) {
-		ocOut = join(outDir, "opencode.json");
-		const ocCommitted = join(scriptDir, "opencode.jsonc");
-		if (existsSync(ocCommitted)) {
-			copyFileSync(ocCommitted, ocOut);
-		}
-	}
-	if (ocOut && existsSync(join(scriptDir, "generate-opencode.mjs"))) {
-		// d063 fail closed, same as the pi generator above: a half-written
-		// overlay would leave a stale provider map in the committed opencode.jsonc.
-		if (!runStage(join(scriptDir, "generate-opencode.mjs"), [ocOut], generatorEnv)) {
-			logError("opencode generator failed — aborting (nothing written)", {
-				script: "generate-opencode.mjs",
+		// --- models.json ---------------------------------------------------------
+		// The models.dev catalog is FETCHED for this run and kept in the run's
+		// output dir — there is no committed copy and no fallback to one
+		// (docs/d191). The fetch is not best-effort any more: the catalog is where
+		// every row's prices, limits and display names come from, so a host that
+		// cannot reach it has no business writing layers that would claim
+		// otherwise. Fail closed, like a failed provider row (docs/d063).
+		const catalogOut = join(outDir, "models.dev.api.json");
+		const generatorEnv = { ...env, PI_LAYER_DIR: outDir };
+		if (!runStage(join(scriptDir, "refresh-models-dev.mjs"), [catalogOut], generatorEnv)) {
+			throw failure("models.dev catalog unavailable — aborting (nothing generated)", 1, {
+				script: "refresh-models-dev.mjs",
 			});
-			process.exit(1);
 		}
-		installOpencode(ocOut, ocHostDir, scriptDir);
-	}
+		logInfo("models.dev catalog fetched", { path: catalogOut });
 
-	rmSync(outDir, { recursive: true, force: true });
-	logInfo("done", { agentDir });
+		logInfo("generating pi config (layers + merge + default overlay)");
+		// One generator, one process: generate-pi-coding-agent.mjs runs the local
+		// GGUF layer, the cloud layers (docs/d037 override-only + full rows), the
+		// layer merge, and the operator default-model overlay internally, each
+		// stage isolated so one failure does not take the rest down (the same
+		// contract the former per-stage child processes had). Its default stage
+		// reads the settings file installed above.
+		const piEnv = {
+			...generatorEnv,
+			PI_SETTINGS: join(agentDir, "settings.json"),
+			PI_MODELS_JSON: join(outDir, "models.json"),
+			PI_DEFAULT_MODEL_JSON: join(outDir, "default-model.json"),
+		};
+		// Seed the run's layer dir from the committed layers so a layer the
+		// generator writes nothing for still merges the set the reviewed snapshot
+		// describes — no generator reads history from that dir any more
+		// (docs/d190 retired d064's stale-preserve, which did). The retired staging
+		// made this copy part of every run too (docs/d072).
+		for (const name of readdirSync(scriptDir)) {
+			if (/^model-.*\.json$/.test(name)) {
+				copyFileSync(join(scriptDir, name), join(outDir, name));
+			}
+		}
+		// d063 fail closed: a failed pi generator means its layers were not
+		// written — there is no committed-artifact fallback any more (d070 §6
+		// retired SKIP_GEN; installing one raw would ship canonical URLs).
+		if (!runStage(join(scriptDir, "generate-pi-coding-agent.mjs"), [], piEnv)) {
+			throw failure("pi generator failed — aborting (nothing merged)", 1, {
+				script: "generate-pi-coding-agent.mjs",
+			});
+		}
+
+		const modelsOut = join(outDir, "models.json");
+		if (!existsSync(modelsOut)) {
+			throw failure("pi generator produced no models.json — aborting (docs/d070 §6)", 1, {
+				path: modelsOut,
+			});
+		}
+
+		currentStage = "default-model";
+
+		// --- default model: the pi generator's default stage returned the
+		// operator's hardcoded defaultProvider/defaultModel from the settings
+		// source, as is (docs/d036 — the default is an OPERATOR DECISION, not a
+		// probed fact). It ran with the rest of the pi stages; this block merges
+		// its overlay into the installed settings.json (independent of the
+		// models.json install).
+		const overlay = join(outDir, "default-model.json");
+		if (existsSync(overlay)) {
+			const defaultModel = JSON.parse(readFileSync(overlay, "utf-8"));
+			const settings = JSON.parse(readFileSync(join(agentDir, "settings.json"), "utf-8"));
+			if (defaultModel.defaultProvider) {
+				settings.defaultProvider = defaultModel.defaultProvider;
+			}
+			if (defaultModel.defaultModel) {
+				settings.defaultModel = defaultModel.defaultModel;
+			}
+			writeArtifact(
+				join(agentDir, "settings.json"),
+				`${JSON.stringify(settings, null, 2)}\n`,
+			);
+			logInfo("settings.json updated with default model config", {
+				path: join(agentDir, "settings.json"),
+			});
+		} else {
+			logWarn("pi generator produced no default-model overlay");
+		}
+
+		currentStage = "models-install";
+		const installed = installModels(modelsOut, agentDir);
+		if (installed === 0) {
+			throw failure("0 providers generated — refusing to install (docs/d063)", 1, {
+				action: "abort",
+				modelsJson: modelsOut,
+			});
+		}
+		if (!termux && modelsOut !== join(scriptDir, "models.json")) {
+			refreshCommittedSnapshot(modelsOut, outDir, scriptDir);
+		}
+
+		currentStage = "opencode-config";
+
+		// --- opencode config -----------------------------------------------------
+		// Upstream loads the provider overlay when asked. The consumer knob is
+		// upstream's documented OPENCODE_CONFIG_DIR (config.mdx "Custom
+		// directory"; verified against 1.18.30): a directory loaded AFTER the
+		// global config and .opencode, so its settings override theirs. NOT
+		// upstream's OPENCODE_CONFIG — that is the config-FILE override, and a
+		// directory value is silently ignored (probe: file content takes effect,
+		// dir value doesn't). NOT XDG_CONFIG_HOME either (first cut here): it works
+		// upstream, but it is a standard var every XDG tool reads — scoping the
+		// override to opencode's own knob keeps other tools on the host default.
+		//
+		// The install mirrors what this script does for pi's settings/models.json
+		// (docs/d054, docs/d065): generate into a per-run COPY of the committed
+		// overlay — the copy is the write target, and a fresh output dir carries no
+		// history for the generator to fall back on (docs/d190) — then on success
+		// install BOTH the host config dir (the dir the launcher mounts rw into the
+		// sandbox) and this dir's committed opencode.jsonc. Termux skips the stage
+		// entirely (pi-only path) unless OPENCODE_CONFIG_DIR is set.
+		const ocHostDir =
+			env.OPENCODE_CONFIG_DIR ??
+			join(env.XDG_CONFIG_HOME ?? join(env.HOME ?? "", ".config"), "opencode");
+		let ocOut = "";
+		if (!termux || env.OPENCODE_CONFIG_DIR) {
+			ocOut = join(outDir, "opencode.json");
+			const ocCommitted = join(scriptDir, "opencode.jsonc");
+			if (existsSync(ocCommitted)) {
+				copyFileSync(ocCommitted, ocOut);
+			}
+		}
+		if (ocOut && existsSync(join(scriptDir, "generate-opencode.mjs"))) {
+			// d063 fail closed, same as the pi generator above: a half-written
+			// overlay would leave a stale provider map in the committed opencode.jsonc.
+			if (!runStage(join(scriptDir, "generate-opencode.mjs"), [ocOut], generatorEnv)) {
+				throw failure("opencode generator failed — aborting (nothing written)", 1, {
+					script: "generate-opencode.mjs",
+				});
+			}
+			installOpencode(ocOut, ocHostDir, scriptDir);
+		}
+
+		logInfo("done", { agentDir });
+	} catch (error) {
+		if (exitCodeOf(error) !== undefined) {
+			throw error;
+		}
+		// An unexpected throw (a bug, EROFS, a missing input) still names the
+		// stage it died in, and still passes through the finally below.
+		throw failure(`generate failed during ${currentStage}`, 1, {
+			stage: currentStage,
+			error: String(error?.stack ?? error),
+		});
+	} finally {
+		rmSync(outDir, { recursive: true, force: true });
+	}
 }
 
 if (import.meta.main) {
-	main().catch((err) => {
-		logError("generate failed", { error: String(err?.stack ?? err) });
-		process.exit(1);
+	main().catch((error) => {
+		// One handler (docs/d225 R3): log once, set the status, return.
+		const exitCode = exitCodeOf(error);
+		if (exitCode === undefined) {
+			logError("generate failed", { error: String(error?.stack ?? error) });
+			process.exitCode = 1;
+		} else {
+			logError(error.message, error.fields ?? {});
+			process.exitCode = exitCode;
+		}
 	});
 }

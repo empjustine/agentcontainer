@@ -32,7 +32,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { logInfo, setLogStream, setLogTool } from "./lib/log.mjs";
+import { exitCodeOf, failure } from "./lib/failure.mjs";
+import { logError, logInfo, setLogStream, setLogTool } from "./lib/log.mjs";
 import { GGUF_SHARD_RE, mainGgufSizes } from "./lib/model-entries.mjs";
 
 /**
@@ -136,15 +137,12 @@ function render(entries) {
  * @returns {void}
  */
 function main() {
+	setLogTool("llm-local-inference/propose-entries");
 	// d215: no accepted arguments. Ignoring argv would run the full effect
 	// anyway: a stray --help once provisioned the whole catalog.
 	if (process.argv.length > 2) {
-		process.stderr.write(
-			"usage: 20-propose-entries.mjs   # takes no arguments\n",
-		);
-		process.exit(64);
+		throw failure("usage: 20-propose-entries.mjs   # takes no arguments", 64);
 	}
-	setLogTool("llm-local-inference/propose-entries");
 	// stdout carries the fragment, so the log lines move beside it (log.mjs's
 	// setLogStream exists for exactly this).
 	setLogStream(process.stderr);
@@ -159,6 +157,18 @@ function main() {
 }
 
 if (import.meta.main) {
-	main();
+	try {
+		main();
+	} catch (error) {
+		// One handler (docs/d225 R3): log once, set the status, return.
+		const exitCode = exitCodeOf(error);
+		if (exitCode === undefined) {
+			logError("proposal failed", { error: String(error?.stack ?? error) });
+			process.exitCode = 1;
+		} else {
+			logError(error.message, error.fields ?? {});
+			process.exitCode = exitCode;
+		}
+	}
 }
 

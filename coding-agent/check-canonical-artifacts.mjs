@@ -24,6 +24,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { factHosts, readCloudProviders } from "./lib/cloud-providers.mjs";
+import { exitCodeOf, failure } from "./lib/failure.mjs";
 
 /**
  * True when any path segment of `url` is a fact-table upstream host — the
@@ -136,8 +137,10 @@ export function canonicalViolations(doc, providers) {
 function main(args) {
 	const path = args[0];
 	if (path === undefined) {
-		console.error("usage: check-canonical-artifacts.mjs <models-or-opencode-file>");
-		process.exit(2);
+		throw failure(
+			"usage: check-canonical-artifacts.mjs <models-or-opencode-file>",
+			2,
+		);
 	}
 	const providers = readCloudProviders(
 		join(dirname(fileURLToPath(import.meta.url)), "lib/cloud-providers.json"),
@@ -156,15 +159,24 @@ function main(args) {
 		for (const v of violations) {
 			console.error(`${path}: ${v}`);
 		}
-		process.exit(1);
+		// A verdict is a status, not a throw (docs/d225 R5): the violations are
+		// the output, and the caller reads the code.
+		process.exitCode = 1;
+		return;
 	}
 	console.log(`${path}: canonical`);
-	process.exit(0);
 }
 
 // `import.meta.main`, not a path-spelling comparison: the same symlink bug
 // as the launcher's guard (node realpaths `import.meta.url` but not argv[1]),
 // which made an absolute symlinked entry a silent no-op.
 if (import.meta.main) {
-	main(process.argv.slice(2));
+	try {
+		main(process.argv.slice(2));
+	} catch (error) {
+		// One handler (docs/d225 R3). This verifier prints to stdout/stderr
+		// directly (it is spawned with stdio inherit), so the handler does too.
+		console.error(error.message);
+		process.exitCode = exitCodeOf(error) ?? 1;
+	}
 }

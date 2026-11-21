@@ -97,6 +97,7 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { userInfo } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { exitCodeOf, failure } from "./lib/failure.mjs";
 import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 import {
 	detectBackend,
@@ -181,25 +182,6 @@ export const vaultEnv = [
 	"all_proxy",
 	"NODE_USE_ENV_PROXY",
 ];
-
-/**
- * A refusal the launcher refuses to proceed past. Carries the exit code and the
- * structured fields so `main` can log it exactly like the sh `log_die` did
- * (docs/d045: stable message label, metadata in fields).
- */
-class LaunchRefusal extends Error {
-	/**
-	 * @param {number} code
-	 * @param {string} message
-	 * @param {Record<string, unknown>} [fields]
-	 */
-	constructor(code, message, fields = {}) {
-		super(message);
-		this.name = "LaunchRefusal";
-		this.code = code;
-		this.fields = fields;
-	}
-}
 
 /**
  * @typedef {object} Directory
@@ -298,18 +280,14 @@ function resolveDirectories({
 	for (const arg of [cwd, ...argv]) {
 		const resolved = host.canonicalDirectory(arg);
 		if (resolved === null) {
-			throw new LaunchRefusal(EXIT_DIRECTORY, "DIRECTORY is not a directory", {
+			throw failure("DIRECTORY is not a directory", EXIT_DIRECTORY, {
 				dir: arg,
 			});
 		}
 		if (resolved === hostHome) {
-			throw new LaunchRefusal(
-				EXIT_DIRECTORY,
-				"refusing to expose HOME as a DIRECTORY",
-				{
-					dir: resolved,
-				},
-			);
+			throw failure("refusing to expose HOME as a DIRECTORY", EXIT_DIRECTORY, {
+				dir: resolved,
+			});
 		}
 		if (seen.has(resolved)) {
 			continue;
@@ -465,7 +443,7 @@ function hostStateDirs(launch) {
  * opencode writes auth.json only on login, so the same empty-content test says
  * the same thing.
  * @param {Launch} launch
- * @returns {LaunchRefusal | null}
+ * @returns {Error | null} the refusal to throw, or null when the gate passes
  */
 function credentialGate(launch) {
 	for (const [label, key] of /** @type {[string, "agentDir" | "opencodeDataDir"][]} */ ([
@@ -480,21 +458,17 @@ function credentialGate(launch) {
 			if (/** @type {NodeJS.ErrnoException} */ (error).code === "ENOENT") {
 				continue;
 			}
-			return new LaunchRefusal(
-				EXIT_AUTH,
-				"cannot read auth.json in the " + label,
-				{ authFile },
-			);
+			return failure(`cannot read auth.json in the ${label}`, EXIT_AUTH, {
+				authFile,
+			});
 		}
 		const squashed = content.replace(/\s/g, "");
 		if (squashed === "" || squashed === "{}" || squashed === "[]") {
 			continue;
 		}
-		return new LaunchRefusal(
+		return failure(
+			`auth.json holds credentials in the ${label} — keys resolve from the forwarded env; remove it before mounting the dir`,
 			EXIT_AUTH,
-			"auth.json holds credentials in the " +
-				label +
-				" — keys resolve from the forwarded env; remove it before mounting the dir",
 			{ authFile },
 		);
 	}
@@ -525,7 +499,7 @@ function credentialWarnings(launch) {
  * Missing artifacts are a user issue: loud failure pointing at the generator,
  * never an implicit regeneration.
  * @param {Launch} launch
- * @returns {LaunchRefusal | null}
+ * @returns {Error | null} the refusal to throw, or null when the gate passes
  */
 function artifactGate(launch) {
 	for (const [file, message] of /** @type {[string, string][]} */ ([
@@ -547,9 +521,7 @@ function artifactGate(launch) {
 		],
 	])) {
 		if (!hostFs.exists(join(launch.agentDir, file))) {
-			return new LaunchRefusal(EXIT_ARTIFACT, message, {
-				agentDir: launch.agentDir,
-			});
+			return failure(message, EXIT_ARTIFACT, { agentDir: launch.agentDir });
 		}
 	}
 	// The installed file must carry the fact-table upstreams (docs/d070) — the
@@ -567,24 +539,13 @@ function artifactGate(launch) {
 		{ stdio: ["ignore", "ignore", "inherit"] },
 	);
 	if (check.status !== 0) {
-		return new LaunchRefusal(
-			EXIT_ARTIFACT,
+		return failure(
 			"installed models.json does not carry canonical provider URLs — run `./npm-run.sh coding-agent generate` (docs/d108)",
+			EXIT_ARTIFACT,
 			{ agentDir: launch.agentDir },
 		);
 	}
 	return null;
-}
-
-/**
- * Turn a refusal into the sh `log_die` the wrappers expect: one structured
- * error line, then that exit code.
- * @param {LaunchRefusal} refusal
- * @returns {never}
- */
-function die(refusal) {
-	logError(refusal.message, refusal.fields);
-	process.exit(refusal.code);
 }
 
 /**
@@ -598,11 +559,9 @@ async function main() {
 	// pointed at the sandbox-free run path (docs/d059).
 	const backend = detectBackend(hostFs);
 	if (backend === null) {
-		die(
-			new LaunchRefusal(
-				EXIT_BACKEND,
-				"no workload backend available (need podman or docker) — no sandbox here; run pi directly: ./environment.sh pi",
-			),
+		throw failure(
+			"no workload backend available (need podman or docker) — no sandbox here; run pi directly: ./environment.sh pi",
+			EXIT_BACKEND,
 		);
 	}
 
@@ -611,7 +570,7 @@ async function main() {
 	}
 	const auth = credentialGate(launch);
 	if (auth) {
-		die(auth);
+		throw auth;
 	}
 	for (const file of credentialWarnings(launch)) {
 		logWarn(
@@ -621,7 +580,7 @@ async function main() {
 	}
 	const artifact = artifactGate(launch);
 	if (artifact) {
-		die(artifact);
+		throw artifact;
 	}
 
 	const workload = launch.workload;
@@ -648,11 +607,9 @@ async function main() {
 	// over the assembled description.
 	const missing = missingMountHosts(workload, hostFs);
 	if (missing.length > 0) {
-		die(
-			new LaunchRefusal(EXIT_BACKEND, "required mount source is gone", {
-				mount: missing[0]?.host ?? "",
-			}),
-		);
+		throw failure("required mount source is gone", EXIT_BACKEND, {
+			mount: missing[0]?.host ?? "",
+		});
 	}
 	// Everything above this line is host-side argv assembly; the next call is
 	// where podman creates the container — mount relabel, userns setup and image
@@ -668,20 +625,20 @@ async function main() {
 		// sh API's render code); a backend that cannot be spawned is the
 		// environment's (exit 91).
 		const unrenderable = error instanceof WorkloadDescriptionError;
-		die(
-			new LaunchRefusal(
-				unrenderable ? EXIT_RENDER : EXIT_BACKEND,
-				unrenderable
-					? "cannot render the workload description"
-					: "cannot launch the workload backend",
-				{
-					backend: backend.tool,
-					cause: /** @type {Error} */ (error).message,
-				},
-			),
+		throw failure(
+			unrenderable
+				? "cannot render the workload description"
+				: "cannot launch the workload backend",
+			unrenderable ? EXIT_RENDER : EXIT_BACKEND,
+			{
+				backend: backend.tool,
+				cause: /** @type {Error} */ (error).message,
+			},
 		);
 	}
-	process.exit(code);
+	// The container's status is the launcher's status (docs/d225 R5): assigning
+	// it lets the call stack unwind instead of tearing the process down here.
+	process.exitCode = code;
 }
 
 // `import.meta.main` (node >= 24.2; this repo runs 24.22) replaces a
@@ -694,11 +651,19 @@ if (import.meta.main) {
 	try {
 		await main();
 	} catch (error) {
-		// `buildLaunch` reports a refused DIRECTORY by throwing, so a refusal can
-		// surface here as well as from an explicit check inside main.
-		if (error instanceof LaunchRefusal) {
-			die(error);
+		// The one handler (docs/d225 R3): log the refusal once, set the status,
+		// return. `buildLaunch` reports a refused DIRECTORY by throwing, so a
+		// refusal surfaces here as well as from a check inside main.
+		const refused = /** @type {Error & { fields?: Record<string, unknown> }} */ (
+			error
+		);
+		const exitCode = exitCodeOf(error);
+		if (exitCode === undefined) {
+			logError("launcher failed", { error: String(refused?.stack ?? refused) });
+			process.exitCode = 1;
+		} else {
+			logError(refused.message, refused.fields ?? {});
+			process.exitCode = exitCode;
 		}
-		throw error;
 	}
 }

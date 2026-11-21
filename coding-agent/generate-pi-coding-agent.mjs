@@ -103,6 +103,7 @@ import {
 	writeJsonArtifact,
 } from "./gen-lib.mjs";
 import { readCloudProviders } from "./lib/cloud-providers.mjs";
+import { exitCodeOf } from "./lib/failure.mjs";
 
 /**
  * The models.dev catalog this run fetched, or null when it is absent (the
@@ -1956,8 +1957,17 @@ async function main() {
 }
 
 if (import.meta.main) {
-	main().catch((err) => {
-		logError("pi generator failed — nothing merged", { error: err });
-		process.exit(1);
+	main().catch((error) => {
+		// One handler (docs/d225 R3): log once, set the status, return.
+		const exitCode = exitCodeOf(error);
+		if (exitCode === undefined) {
+			logError("pi generator failed — nothing merged", {
+				error: String(error?.stack ?? error),
+			});
+			process.exitCode = 1;
+		} else {
+			logError(error.message, error.fields ?? {});
+			process.exitCode = exitCode;
+		}
 	});
 }

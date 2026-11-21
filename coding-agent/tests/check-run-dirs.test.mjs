@@ -57,6 +57,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { after, suite, test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { exitCodeOf } from "../lib/failure.mjs";
 import { containerRunArgv, detectBackend } from "../lib/workload-runtime.mjs";
 import { buildLaunch, vaultEnv } from "../run.mjs";
 
@@ -343,12 +344,9 @@ function realHost() {
  */
 function refusal(code, message) {
 	return (error) => {
-		const refusalError = /** @type {{ code?: number, message?: string }} */ (
-			error
-		);
+		const refusalError = /** @type {{ message?: string }} */ (error);
 		return (
-			refusalError.code === code &&
-			message.test(refusalError.message ?? "")
+			exitCodeOf(error) === code && message.test(refusalError.message ?? "")
 		);
 	};
 }

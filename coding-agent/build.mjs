@@ -23,6 +23,7 @@
 import { spawn } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { exitCodeOf, failure } from "./lib/failure.mjs";
 import { detectContainerTool } from "./lib/host-capabilities.mjs";
 import { logError, logInfo, setLogTool } from "./lib/log.mjs";
 
@@ -141,10 +142,10 @@ async function main() {
 	const target = "coding-agent-image";
 	const containerTool = detectContainerTool();
 	if (!containerTool) {
-		logError(
+		throw failure(
 			"no container tool — the coding-agent image needs podman or docker (there is no host-native build path)",
+			91,
 		);
-		process.exit(91);
 	}
 
 	// Every image build goes through the explicit subcommand (`image build` /
@@ -194,15 +195,21 @@ async function main() {
 		target,
 	);
 	if (!ok) {
-		logError("build failed", { target });
-		process.exit(1);
+		throw failure("build failed", 1, { target });
 	}
 	logInfo("build complete", { targets: 1 });
 }
 
 if (import.meta.main) {
-	main().catch((err) => {
-		logError("build failed", { error: String(err?.stack ?? err) });
-		process.exit(1);
+	main().catch((error) => {
+		// One handler (docs/d225 R3): log once, set the status, return.
+		const exitCode = exitCodeOf(error);
+		if (exitCode === undefined) {
+			logError("build failed", { error: String(error?.stack ?? error) });
+			process.exitCode = 1;
+		} else {
+			logError(error.message, error.fields ?? {});
+			process.exitCode = exitCode;
+		}
 	});
 }

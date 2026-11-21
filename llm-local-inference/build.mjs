@@ -22,6 +22,7 @@
  */
 
 import { spawn } from "node:child_process";
+import { exitCodeOf, failure } from "./lib/failure.mjs";
 import {
 	INFERENCE_MIN_RAM_GIB,
 	detectContainerTool,
@@ -113,13 +114,12 @@ async function run(executable, args, cmd, target) {
  * @returns {Promise<void>}
  */
 async function main() {
+	setLogTool("llm-local-inference/build");
 	// d215: no accepted arguments. Ignoring argv would run the full effect
 	// anyway: a stray --help once provisioned the whole catalog.
 	if (process.argv.length > 2) {
-		process.stderr.write("usage: build.mjs   # takes no arguments\n");
-		process.exit(64);
+		throw failure("usage: build.mjs   # takes no arguments", 64);
 	}
-	setLogTool("llm-local-inference/build");
 	const target = "llama-swap-image";
 	const llamaSwapImage =
 		process.env.LLAMA_SWAP_IMAGE ??
@@ -130,8 +130,10 @@ async function main() {
 	const hostRamGiB = totalMemGiB();
 
 	if (containerTool === null) {
-		logError("no container tool — the llama-swap image needs podman or docker");
-		process.exit(91);
+		throw failure(
+			"no container tool — the llama-swap image needs podman or docker",
+			91,
+		);
 	}
 
 	// The gate is the endpoint definition itself, not a proxy for it: a host
@@ -145,7 +147,7 @@ async function main() {
 			ramGiB: hostRamGiB,
 			minRamGiB: INFERENCE_MIN_RAM_GIB,
 		});
-		process.exit(0);
+		return;
 	}
 
 	logInfo("building", { target });
@@ -159,15 +161,21 @@ async function main() {
 		target,
 	);
 	if (!ok) {
-		logError("build failed", { target });
-		process.exit(1);
+		throw failure("build failed", 1, { target });
 	}
 	logInfo("build complete", { targets: 1 });
 }
 
 if (import.meta.main) {
-	main().catch((err) => {
-		logError("build failed", { error: String(err?.stack ?? err) });
-		process.exit(1);
+	main().catch((error) => {
+		// One handler (docs/d225 R3): log once, set the status, return.
+		const exitCode = exitCodeOf(error);
+		if (exitCode === undefined) {
+			logError("build failed", { error: String(error?.stack ?? error) });
+			process.exitCode = 1;
+		} else {
+			logError(error.message, error.fields ?? {});
+			process.exitCode = exitCode;
+		}
 	});
 }
