@@ -109,6 +109,16 @@ const senderScript =
 // host, so a path key would fail to dedupe exactly the duplicate the route creates.
 function rowKey(row) {
   if (row && typeof row === "object") {
+    // A foreign harness mints its own ids, so its key carries the source: the
+    // same id string from two harnesses is two rows, and a vibe legacy entry is
+    // identified by message_id (docs/d221). pi keeps the key spelling below —
+    // a daemon upgrading in place must not re-accept a row seen.sqlite holds.
+    if (row.source && row.source !== "pi") {
+      const sid = row.session_id ?? "";
+      if (row.id) { return JSON.stringify(["entry", row.source, sid, row.id]); }
+      if (row.message_id) { return JSON.stringify(["message", row.source, sid, row.message_id]); }
+      return JSON.stringify(["row", row.source, row]);
+    }
     if (row.session_id && row.id) { return JSON.stringify(["entry", row.session_id, row.id]); }
     if (row.session_id) { return JSON.stringify(["session", row.session_id]); }
     if (row.session_file && row.id) { return JSON.stringify(["entry", row.session_file, row.id]); }

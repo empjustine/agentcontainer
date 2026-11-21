@@ -15,12 +15,14 @@ Syncs atuin's local `history.db` into the MotherDuck database `md:atuin`
 stays what d046 scopes it to — connection info, one-off queries, docs — and the
 scheduled path itself is a plain shell script plus a duckdb binary, delivered
 through the repo's toolchain and vault chain (`./environment.sh`).
-The coding-harness session sources (pi, OpenCode, ThinkRail, mistral-vibe)
-are not synced; d167 records their persistence formats and the
-guaranteed-fields storage shape their readers will land in. The session
+pi is the only harness with a reader. The transport carries any of them: a row
+names its `source`, and the sender lands a source it has no promoted table for in
+the `mdw.harness` envelope with the row verbatim (d221). d167 records every
+harness's persistence format and the guaranteed-fields shapes; d221 records the
+OpenCode and mistral-vibe readers still to write and what each needs. The session
 collection leg, its read side, its ingest route and its postmortem sweep span
-d179 to d184.
-Mistral-vibe support is pending in both this unit and `coding-agent/run.mjs`.
+d179 to d184. Mistral-vibe support is pending in both this unit and
+`coding-agent/run.mjs`.
 
 The browsing-history side has both halves. `browse-daemon.py` serves the stock
 Promnesia and hister extensions from one hot store, and
@@ -83,7 +85,8 @@ relies on those must pass the path explicitly.
 
 The sync is the postmortem sweep of d184: it walks the pi session root and the
 agent dir's delegation/ directory, promotes each transcript's guaranteed fields
-and keeps every entry verbatim in a JSON payload column, and inserts into
+and keeps every entry verbatim in a JSON payload column, and hands the rows to
+the sender, which owns every schema and every insert (d221). Rows land in
 `md:agent` (`mdw.pi.session`, `mdw.pi.entry`) with first-write-wins on each
 natural key. An entry is immutable by `(session_id, id)`, and re-writing an
 unchanged row would leave a new MotherDuck version in failsafe on every run
@@ -110,6 +113,16 @@ because the same session has a different path inside a sandbox and on the host.
 A pi header is recognized by its `type`, not its line position, so a file that
 concatenates two sessions splits back into two by their own ids.
 
+A row also says what it is (d221). `source` names the harness and `kind` splits a
+session row from an entry; absent `source` means `pi`, so rows written before the
+field exist stay valid. pi rows keep `mdw.pi.*`; any other source lands in
+`mdw.harness.session`/`mdw.harness.entry` with the row verbatim until its reader
+defines the promoted shape over those rows (d167). An unidentified row is keyed by
+the spool file and its line, never the line alone: a rotated tail would reuse a
+line-only key and `ON CONFLICT DO NOTHING` would drop the later row silently. The
+daemon keys a foreign row by source and accepts `message_id` as an entry id, because
+two harnesses mint ids independently.
+
 When the process holds `motherduck_token` (the usual `./environment.sh` start),
 the daemon also folds its own spool: it runs `agent-warehouse-spool-send.sh` at
 `AGENT_WAREHOUSE_SPOOL_MAX_BYTES` (default 32 MiB; `0` disables it), at startup for
@@ -135,11 +148,12 @@ spool never has to fit in the engine at once; it freezes the live tail first and
 deletes a frozen file only after it is fully consumed and acked. The rotation is
 unilateral: the daemon appends by path on every request, so the next append creates
 a fresh spool, and a daemon holding a persistent file handle would keep writing the
-renamed inode. **A direct run of
-the sync clears the consumed spool**: it rotates the tail before reading it
-and deletes the frozen copy after the ack, independent of `--rm` (which governs the
-session files). A **route** run never touches the spool, because it has folded
-nothing into the warehouse, and a `--dry` or report run has no side effect.
+renamed inode. **A direct run of the sync clears the consumed spool**: it rotates
+the tail first, hands the raw tails and the parsed rows to the sender in one fold,
+and removes what is left after the ack, independent of `--rm` (which governs the
+session files). A **route** run never touches the spool: the daemon already holds
+those rows, so re-posting them would only exercise the dedupe. A `--dry` or report
+run has no side effect and counts the spool rows on their own.
 The roots are searched **recursively** for `*.jsonl`, so `--session-dir` may
 point at any tree: pi's `--<cwd>--/` shape is not assumed, and a historic pile with
 sessions at mixed depths (or several `agentcontainer-<ts>` revisions) is read as-is.

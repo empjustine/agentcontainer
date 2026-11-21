@@ -34,6 +34,40 @@ rc=0
 env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" --spool "$tmp/empty/none.ndjson" --dry >/dev/null 2>&1 || rc=$?
 check 'a missing spool is a no-op, not an error' 0 "$rc"
 
+# A foreign source lands in the harness envelope, not in pi's columns (docs/d221):
+# its promoted shape has no reader yet, so the row keeps its own identity and the
+# object verbatim as payload.
+cat >"$tmp/foreign.ndjson" <<'EOF'
+{"source":"vibe_legacy","session_id":"s1","role":"user","content":"hi","message_id":"m1"}
+{"source":"vibe_legacy","session_id":"s1","role":"tool","content":"out"}
+{"source":"opencode_v2","kind":"session","session_id":"v2a","cwd":"/w"}
+EOF
+out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" --spool "$tmp/foreign.ndjson" --print-rows 2>/dev/null)
+has 'a foreign row keeps its source' "$out" '"source":"vibe_legacy"'
+has 'message_id stands in for the entry id' "$out" '"id":"m1"'
+has 'a foreign entry keeps its order' "$out" '"seq":1'
+has 'an explicit kind makes a session row' "$out" '"source":"opencode_v2"'
+has 'an unidentified row is keyed by spool file and line' "$out" '"id":"spool-foreign.ndjson-2"'
+
+# The key is the FILE and the line, never the line alone: a rotated tail is a new
+# generation, so the same position cannot collide with another row's key (a clash
+# is a silent drop under ON CONFLICT DO NOTHING).
+cp "$tmp/foreign.ndjson" "$tmp/foreign.ndjson.rm.77"
+out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" --spool "$tmp/foreign.ndjson.rm.77" --print-rows 2>/dev/null)
+has 'a rotated tail has its own id space' "$out" '"id":"spool-foreign.ndjson.rm.77-2"'
+
+# pi's canonical session row is a session, not an entry: the sweep hands these to
+# the sender over --direct, and reading them as entries would bury every header.
+printf '%s
+' '{"session_id":"sess-1","store":"session","cwd":"/w","version":3}' >"$tmp/canon.ndjson"
+out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" --spool "$tmp/canon.ndjson" --print-rows 2>/dev/null)
+has 'a canonical session row stays a session' "$out" '"session_file":"spool"'
+if printf '%s' "$out" | grep -q '"line_no"'; then
+	bad 'a canonical session row must not become an entry'
+else
+	ok 'a canonical session row carries no entry line'
+fi
+
 if [ "$fails" -gt 0 ]; then
 	printf '%s spool-send test(s) FAILED\n' "$fails" >&2
 	exit 1

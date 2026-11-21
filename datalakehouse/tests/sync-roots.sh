@@ -4,7 +4,9 @@
 # into bash, and env -i keeps a host's own PI_CODING_AGENT_*/XDG_* out of a case.
 [ -n "$BASH_VERSION" ] || exec bash "$0" "$@"
 set -e
-SCRIPT="$(CDPATH='' cd "$(dirname "$0")/.." && pwd)/agent-warehouse-sync.sh"
+UNIT="$(CDPATH='' cd "$(dirname "$0")/.." && pwd)"
+SCRIPT="$UNIT/agent-warehouse-sync.sh"
+SENDER="$UNIT/agent-warehouse-spool-send.sh"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 fails=0
@@ -96,7 +98,8 @@ check 'no roots exits 66' 66 "$rc"
 printf '%s\n' '{"session_file":"spool","store":"session","line_no":1,"id":"p1","type":"custom","payload":{"from":"spool"}}' >"$tmp/spool.ndjson"
 out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
 	--session-dir "$sessdir" --agent-dir "$agentdir" --spool "$tmp/spool.ndjson" --dry)
-has 'spool row counted' "$out" 'entries=6'
+has 'spool rows are counted on their own' "$out" 'spool=1'
+has 'spool rows are not parsed as file entries' "$out" 'entries=5'
 
 # 10 - route mode: the sync posts to the daemon sink, and the daemon dedupes a
 # re-run instead of appending the same rows twice (docs/d181).
@@ -136,6 +139,17 @@ if [ "$ready" = 1 ]; then
 		--data '[{"session_id":"sid-A","id":"e1","session_file":"/sandbox/a.jsonl"},{"session_id":"sid-A","id":"e1","session_file":"/host/b.jsonl"}]' \
 		"http://127.0.0.1:$port/ingest/session")
 	has 'same session id, different path, deduped' "$resp" '"duplicates":1'
+	# 20 - a foreign row is keyed with its source (docs/d221): two harnesses mint
+	# ids independently, so the same id under two sources is two rows, and only a
+	# true re-post is a duplicate.
+	resp=$(curl -s -X POST -H 'content-type: application/json' \
+		--data '[{"source":"vibe_legacy","session_id":"v1","message_id":"m1","role":"user"},{"source":"opencode_v2","session_id":"v1","message_id":"m1","role":"user"}]' \
+		"http://127.0.0.1:$port/ingest/session")
+	has 'same id under two sources is two rows' "$resp" '"accepted":2'
+	resp=$(curl -s -X POST -H 'content-type: application/json' \
+		--data '{"source":"vibe_legacy","session_id":"v1","message_id":"m1","role":"user"}' \
+		"http://127.0.0.1:$port/ingest/session")
+	has 'a foreign re-post is a duplicate' "$resp" '"duplicates":1'
 	# 14 - --rm removes a processed file only after the ack, and only outside the
 	# grace window; a just-written file is kept as possibly live.
 	rmroot="$tmp/rm-sessions"
@@ -241,12 +255,19 @@ out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
 has 'non-pi file adds no entries' "$out" 'entries=5'
 has 'non-pi file adds no session' "$out" 'sessions=4'
 
-# 19 - a spool row in a foreign shape is normalised, not fed raw to the reader
+# 19 - the sweep leaves a spool row to the sender (docs/d221): its rows are the
+# daemon's, so this run neither re-parses them into pi's shape nor re-posts them.
 printf '%s\n' '{"id":"mtvu4plvxvbbzm","type":"search","timestamp":"2026-11-15T00:00:00Z","queries":["a"]}' >"$tmp/foreign-spool.ndjson"
 out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SCRIPT" \
 	--session-dir "$sessdir" --agent-dir "$agentdir" --spool "$tmp/foreign-spool.ndjson" --print-rows 2>/dev/null)
-has 'foreign spool row wrapped as an entry' "$out" '"id":"mtvu4plvxvbbzm"'
-has 'foreign spool row keeps its body as payload' "$out" '"queries"'
+if printf '%s' "$out" | grep -q 'mtvu4plvxvbbzm'; then
+	bad 'the sweep must not re-parse a spool row'
+else
+	ok 'the sweep leaves spool rows to the sender'
+fi
+out=$(env -i PATH="$PATH" HOME="$tmp/nohome" bash "$SENDER" --spool "$tmp/foreign-spool.ndjson" --print-rows 2>/dev/null)
+has 'the sender normalises the spool row' "$out" '"id":"mtvu4plvxvbbzm"'
+has 'the sender keeps the row body as payload' "$out" '"queries"'
 
 if [ "$fails" -gt 0 ]; then
 	printf '%s agent-warehouse test(s) FAILED\n' "$fails" >&2

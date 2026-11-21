@@ -5,7 +5,7 @@ status: draft
 title: "d167 — harness session persistence formats: guaranteed columns plus a JSON catch-all, mistral-vibe pending"
 parent: datalakehouse
 depends-on: [coding-harness-persistence, d148]
-references: [d046, d054, d116, d124, d179, d182, d183, d184, d203]
+references: [d046, d054, d116, d124, d179, d182, d183, d184, d203, d221]
 tags:
   [
     "datalakehouse",
@@ -36,7 +36,9 @@ support is pending in both `coding-agent/run.mjs` and `datalakehouse/`.
 Findings verified at the date of this record; the session readers are
 unwritten, and mistral-vibe support is pending in both units named in the
 opening block. How these formats match the warehouse's push-side flows is
-[d179](d179-coding-agent-session-leg.md).
+[d179](d179-coding-agent-session-leg.md); the transport contract a reader posts
+to, and the work each reader needs, is
+[d221](d221-multi-harness-session-ingestion.md).
 
 ## Findings
 

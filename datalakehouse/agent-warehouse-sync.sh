@@ -33,6 +33,11 @@
 # Needs: duckdb v1.4-v1.5 (MotherDuck refuses other versions; ./dev-tools.sh duckdb), jq.
 set -euo pipefail
 
+UNIT=$(CDPATH='' cd "$(dirname "$0")" && pwd)
+# The sender is the unit's only uploader (docs/d221): this script reads sources
+# and hands rows over, so no schema, version gate or insert lives here.
+SENDER="$UNIT/agent-warehouse-spool-send.sh"
+
 usage() {
 	cat >&2 <<'EOF'
 usage: agent-warehouse-sync.sh [--session-dir DIR] [--agent-dir DIR]
@@ -249,30 +254,17 @@ while IFS= read -r f; do
 	fi
 done < <(find "$SESSION_ROOT" "$DELEGATION_ROOT" -type f -name '*.jsonl' 2>/dev/null || true)
 
-# Pushed rows from the daemon route are a third source, so a live emitter's
-# capture survives even before the host sweep reaches the file.
-# Sources are the live tail plus any rotated tail a failed run left behind: a
-# direct run rotated the live one above, so this read cannot race a concurrent
-# daemon append, and a leftover rotated file is still folded in.
+# The spool is the daemon's own tail (docs/d184): its rows are already stored
+# host-side, so this sweep neither re-parses nor re-posts them (docs/d221). A
+# direct run hands the tails to the sender, which normalises by source and by
+# line; a dry run counts them and moves on. Sources are the live tail plus any
+# rotated tail a failed run left behind.
 spool_seen=0
+spool_lines=0
 for sp in "$spool_base" "$spool_base".rm.*; do
 	[ -f "$sp" ] || continue
 	spool_seen=1
-	spool_n=0
-	while IFS= read -r line; do
-		[ -n "$line" ] || continue
-		spool_n=$((spool_n + 1))
-		# The route is generic, so a spool row need not already be in the warehouse
-		# shape (an emitter may push a search event, say). Normalise it here: a
-		# session header stays a session row, an already-canonical entry row passes
-		# through, and anything else becomes an entry row with the original object
-		# kept verbatim as payload -- never fed raw to a schema-inferring reader.
-		row=$(printf '%s' "$line" | jq -c --argjson n "$spool_n" 'if (.type == "session") then {session_file:(.session_file // "spool"), store:(.store // "spool"), session_id:(.session_id // .id), cwd:(.cwd // null), version:(.version // null), parent_session:(.parent_session // null), started_at:(.started_at // .timestamp // null)} elif (.id != null and .payload != null) then . else {session_id:(.session_id // ""), session_file:(.session_file // "spool"), store:(.store // "spool"), line_no:(.line_no // $n), id:(.id // ("spool-" + ($n | tostring))), parent_id:(.parent_id // null), type:(.type // null), ts:(.ts // .timestamp // null), payload:.} end' 2>/dev/null) || continue
-		case "$(printf '%s' "$row" | jq -r 'has("payload")')" in
-		true) printf '%s\n' "$row" >>"$entries_rows" ;;
-		*) printf '%s\n' "$row" >>"$sessions_rows" ;;
-		esac
-	done <"$sp"
+	spool_lines=$((spool_lines + $(awk 'NF' "$sp" | wc -l)))
 done
 [ "$spool_seen" = 0 ] || found=$((found + 1))
 
@@ -304,7 +296,7 @@ fi
 
 if [ "$DRY" = 1 ]; then
 	if [ "$DIRECT" = 1 ]; then route_desc="(direct)"; else route_desc=$route; fi
-	printf 'session_root=%s sessions=%s entries=%s route=%s\n' "$SESSION_ROOT" "$session_count" "$entry_count" "$route_desc"
+	printf 'session_root=%s sessions=%s entries=%s spool=%s route=%s\n' "$SESSION_ROOT" "$session_count" "$entry_count" "$spool_lines" "$route_desc"
 	exit 0
 fi
 
@@ -362,109 +354,26 @@ if [ -z "$TOKEN" ]; then
 	exit 1
 fi
 
-# The same version gate as the atuin sibling: MotherDuck's extension rejects
-# clients outside its range with a load error that names no fix.
-duckdb_version=$(duckdb --version 2>&1 || true)
-case "$duckdb_version" in
-v1.4.* | v1.5.*) ;;
-*)
-	duckdb_short=$(printf '%s' "$duckdb_version" | awk '{print $1}')
-	echo "duckdb $duckdb_short is outside the v1.4-v1.5 range MotherDuck accepts; run ./dev-tools.sh duckdb" >&2
-	exit 69
-	;;
-esac
-
-WAREHOUSE_DB=$(env_or AGENT_WAREHOUSE_DB agent)
-TGT=mdw.pi
-sql_file="$tmp/sync.sql"
-{
-	cat <<SQL
-INSTALL motherduck; LOAD motherduck;
-SET motherduck_token='$TOKEN';
-ATTACH 'md:$WAREHOUSE_DB' AS mdw;
-CREATE SCHEMA IF NOT EXISTS $TGT;
-CREATE TABLE IF NOT EXISTS $TGT.session(
-  session_id VARCHAR PRIMARY KEY, session_file VARCHAR, cwd VARCHAR,
-  version INTEGER, parent_session VARCHAR, started_at TIMESTAMP, store VARCHAR);
-CREATE TABLE IF NOT EXISTS $TGT.entry(
-  session_id VARCHAR, session_file VARCHAR, id VARCHAR, parent_id VARCHAR,
-  type VARCHAR, ts TIMESTAMP, line_no BIGINT, store VARCHAR, payload JSON,
-  PRIMARY KEY (session_id, id));
-SQL
-	if [ "$session_count" -gt 0 ]; then
-		cat <<SQL
-# Explicit columns, never schema inference: the payload is a JSON column, so a
-# heterogeneous value (a new entry field) cannot break the read.
-CREATE TEMP TABLE st_s AS SELECT * FROM read_json('$sessions_rows', format='newline_delimited', columns={session_file:'VARCHAR', store:'VARCHAR', session_id:'VARCHAR', cwd:'VARCHAR', version:'BIGINT', parent_session:'VARCHAR', started_at:'VARCHAR'});
--- First-write-wins (docs/d203): a session is immutable by its own id, and
--- re-writing an unchanged row creates a new MotherDuck version in failsafe, so
--- a per-run upsert multiplies managed storage. The path is a location attribute;
--- the first spelling seen wins, so a host and a sandbox do not churn the row.
-INSERT INTO $TGT.session (session_id, session_file, cwd, version, parent_session, started_at, store)
-  SELECT session_id, session_file, cwd, try_cast(version AS INTEGER), parent_session,
-         try_cast(started_at AS TIMESTAMP), store FROM st_s
-  ON CONFLICT (session_id) DO NOTHING;
-SQL
-	fi
-	if [ "$entry_count" -gt 0 ]; then
-		cat <<SQL
-CREATE TEMP TABLE st_e AS SELECT * FROM read_json('$entries_rows', format='newline_delimited', columns={session_id:'VARCHAR', session_file:'VARCHAR', store:'VARCHAR', line_no:'BIGINT', id:'VARCHAR', parent_id:'VARCHAR', type:'VARCHAR', ts:'VARCHAR', payload:'JSON'});
--- First-write-wins (docs/d203): an entry is immutable by (session_id, id), and
--- the sync re-posts every row on every run. An update of an unchanged row would
--- leave a full copy in failsafe each run; DO NOTHING leaves the archive intact
--- and keeps the managed byte count flat. A repair is an explicit delete plus
--- insert, not an every-run rewrite.
-INSERT INTO $TGT.entry (session_id, session_file, id, parent_id, type, ts, line_no, store, payload)
-  SELECT session_id, session_file, id, parent_id, type, try_cast(ts AS TIMESTAMP), line_no, store, payload FROM st_e
-  ON CONFLICT (session_id, id) DO NOTHING;
-SQL
-	fi
-	cat <<SQL
-SELECT (SELECT count(*) FROM $TGT.session) AS sessions,
-       (SELECT count(*) FROM $TGT.entry) AS entries;
-SQL
-} >"$sql_file"
-
-# MotherDuck does not create a database on ATTACH (and a read-scaling token cannot
-# create one at all), so a missing md:<db> is created here once and the run retried,
-# instead of failing with a bare "no database/share named" catalog error.
-# DuckDB has no CREATE DATABASE statement (it is a parser error even with the
-# MotherDuck extension loaded), so the only catalog-side route is to CONNECT to the
-# database path: MotherDuck creates a missing database on the first read-write
-# connect. This is also the pattern the MotherDuck MCP uses.
-ensure_db() {
-	local out
-	out=$(duckdb "md:$WAREHOUSE_DB?motherduck_token=$TOKEN" -c 'SELECT 1;' 2>&1) && return 0
-	printf '%s\n' "$out" >&2
-	return 1
-}
-
-direct_err="$tmp/direct.err"
-if ! result=$(duckdb -json -c "$(cat "$sql_file")" 2>"$direct_err"); then
-	if grep -q 'no database/share named' "$direct_err"; then
-		printf 'agent-warehouse-sync: md:%s is missing; creating it once\n' "$WAREHOUSE_DB" >&2
-		if ! ensure_db; then
-			printf 'agent-warehouse-sync: could not reach md:%s to create it. A read-scaling token cannot create a database; create md:%s once in the MotherDuck UI, or with: duckdb md:%s\n' "$WAREHOUSE_DB" "$WAREHOUSE_DB" "$WAREHOUSE_DB" >&2
-			exit 1
-		fi
-		if ! result=$(duckdb -json -c "$(cat "$sql_file")" 2>"$direct_err"); then
-			cat "$direct_err" >&2
-			exit 1
-		fi
-	else
-		cat "$direct_err" >&2
-		exit 1
-	fi
+# --direct is the sender's job (docs/d221): the sender owns the schema, the
+# duckdb version gate and the first-write-wins inserts, so this leg hands it
+# every row the run read -- the parsed files plus the daemon's tails -- instead
+# of carrying a second copy of the DDL (docs/d217).
+direct="$tmp/direct.ndjson"
+cat "$sessions_rows" "$entries_rows" >"$direct"
+for sp in "$spool_base" "$spool_base".rm.*; do
+	[ -f "$sp" ] && cat "$sp" >>"$direct"
+done
+if ! bash "$SENDER" --spool "$direct"; then
+	printf 'agent-warehouse-sync: the sender refused the direct fold\n' >&2
+	exit 1
 fi
 remove_processed
-# A direct run has folded every tail it read; remove the rotated files. The live
-# tail is only ever rotated, so a route run never touches the spool at all.
-if [ -z "$route" ]; then
-	for sp in "$spool_base".rm.*; do
-		[ -f "$sp" ] && rm -f "$sp"
-	done
-fi
-jq -n --argjson result "$result" --arg db "md:$WAREHOUSE_DB" \
+# A direct run folded every tail it read, and the sender deleted the file it was
+# handed; the rotated tails are this run's, so they go only after the ack.
+for sp in "$spool_base".rm.*; do
+	if [ -f "$sp" ]; then rm -f "$sp"; fi
+done
+jq -n --arg db "md:$(env_or AGENT_WAREHOUSE_DB agent)" \
 	--argjson sessions "$session_count" --argjson entries "$entry_count" \
-	'{database:$db, parsed_sessions:$sessions, parsed_entries:$entries, target:($result[0] // {})}'
-
+	'{database:$db, parsed_sessions:$sessions, parsed_entries:$entries}'
+exit 0
