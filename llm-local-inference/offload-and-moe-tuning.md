@@ -137,18 +137,20 @@ across cells or the comparison is noise.
 
 Measured on the inference host (`tlalocayotl`,
 `tlalocayotl.coelacanth-barb.ts.net` on the tailnet): the MoE-cache cells came
-out slower than the same row left to `--fit on` alone. The serving card sits on
-a PCIe 3.0 link backed by comparatively slow system memory, and the cache's
-whole mechanism is traffic across that link — an expert block uploaded on a
-miss, or computed on the host under `--moe-cache-cpu-share`. Static placement
-pays that cost once, at load: `--fit on` keeps what fits resident and leaves
-the rest on the CPU, and a token then reads its expert where the expert already
-is instead of waiting for an upload. A bus this narrow is the case the cache
-cannot win.
+out slower than the same row left to `--fit on` alone. The serving card reaches
+its host through 8 PCIe 3.0 lanes, and the host memory behind them is
+DDR4-2400 MT/s — the cache's whole mechanism is traffic across that bus: an
+expert block uploaded on a miss, or computed on the host under
+`--moe-cache-cpu-share`. Static placement pays that cost once, at load:
+`--fit on` keeps what fits resident and leaves the rest on the CPU, and a token
+then reads its expert where the expert already is instead of waiting for an
+upload. A bus this narrow against memory this slow is the case the cache cannot
+win.
 
-So no row on this host carries `--n-cpu-moe` or `--moe-cache-*`, and the sweep
-above is the procedure for a host with a wider link and faster memory rather
-than a pending measurement here. The finding also bounds the cache's advice: a
+So no row on this host carries `--n-cpu-moe` or `--moe-cache-*`, no layer
+declares them — the empty `20-moe-cache.yaml` fragment the experiment left
+behind is deleted — and the sweep above is the procedure for a host with a wider
+link and faster memory rather than a pending measurement here. The finding also bounds the cache's advice: a
 default committed from this host's numbers would be a pessimisation on a
 PCIe 4/5 host, and one committed from a fast host would be wrong here.
 
