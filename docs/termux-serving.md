@@ -53,9 +53,9 @@ that could emit `models`) is never generated.
 | `node` — for the `.mjs` generators. `jq` needed a home only while the shell workload runtime lived in `llm-local-inference/`; that copy retired with the unit's python runner (d170), leaving `./lint.sh`'s compile leg for `*/lib/workload-*.jq` as its only caller. `coding-agent/` needs no jq (its workload API is a node module, docs/d119) and estige's package needs neither (docs/d120) | `./estige/build.mjs` serializes the repo-root `provision-termux.sh`, which installs both via `pkg` when `$PREFIX/bin/<tool>` is not executable (`SKIP_PKG=1` to opt out; there is no mise here) — for the _other_ Termux units, not for the estige package |
 
 > Naming note: older revisions of this file listed `LLAMASWAP_API_KEY` as the
-> client auth key. The generated `apiKeys` reference `${env.PEER_API_KEY}`
-> (from `llama-swap-core.json`), so _that_ is the bearer key a client sends
-> today — see `llm-local-inference/.env.example`.
+> client auth key. The generated `apiKeys` reference `${env.TLALOCAYOTL_API_KEY}`
+> (from `llama-swap-core.json`), so _that_ is the bearer key a client sends —
+> see `llm-local-inference/.env.example`.
 
 ## Retired: the PRoot workload path (run-proot.sh)
 

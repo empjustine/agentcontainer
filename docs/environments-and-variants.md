@@ -52,8 +52,7 @@ GPU host (local inference only) — two serving processes, one concern each (doc
   `.paths` staleness manifest; snapshot paths baked at generation, docs/d029);
   `run.sh` launches the `unified-vulkan` image with GPU
   passthrough + the HF cache on LAN port **9292** (container 8080).
-  llama-swap serves the LOCAL catalog and nothing else — its `peers`/proxy
-  config is no longer exercised.
+  llama-swap serves the LOCAL catalog and nothing else.
 - `estige/` — the SSL-VPN tunnel node (this folder's own `build.sh`, installed
   as a service or run directly; docs/d120, LAN **8080**, host networking): the tunnel transports (h2-post-unbounded, WebSocket,
   h1.1-post-windowed; docs/d073/d077/d105) under the single reserved path `/vpn`.
@@ -69,14 +68,11 @@ nothing else — the host-allowlist route map is deleted (docs/d108), so the
 funnel is no longer a cloud-provider front for external clients.
 llama-swap holds
 LAN **9292**. The legacy local-inference port **18080** is **deprecated**
-with the two-instance squash — nothing listens on it, and code that still
-probes `localhost:18080` must use the funnel base URL (`$REVERSE_PROXY_BASE_URLS`).
+with the two-instance squash — nothing listens on it.
 
-The coding agent (`coding-agent/`) uses local models via the llama-swap
-face and cloud providers via the estige face (ALWAYS via the
-proxy — the generators' proxy-only cascade, docs/d063, retired the
-direct-first one); both faces are also the unified endpoint for
-external clients.
+The coding agent (`coding-agent/`) uses local models via the llama-swap face
+and cloud providers at their canonical fact-table upstreams, reached through the
+host's network (its own HTTP(S) proxy env where one exists, docs/d074).
 
 ### termux (funnel-only serving)
 
@@ -108,20 +104,17 @@ No fixed hostname (dynamic). Kernel: `6.18.33.2-microsoft-standard-WSL2`. WSL2 u
 only ever talks through the funnel. `coding-agent/` covers this via static
 config (no Infisical-backed generation; a static pi `settings.json` +
 `models.json`/`opencode.jsonc` that override the built-in providers with
-their reverse-proxy routes — `baseUrl` hardcoded to the routed form
-`<base>/<upstream-host><base-path>`, docs/d047/d070; cloud providers
-carry their own key env references, which pi resolves from the env at
-request time — the proxy forwards them untouched).
+their canonical fact-table upstreams, written verbatim — docs/d070/d108 — and
+cloud providers carry their own key env references, which pi resolves from the
+env at request time).
 
-- **Environment** — `PEER_API_KEY` (llama-swap's local bearer only) /
-  `REVERSE_PROXY_BASE_URLS` and the per-provider keys (`OPENROUTER_API_KEY`,
-  `OPENCODE_API_KEY`, `CLINE_API_KEY`, `HYPER_API_KEY`, `GEMINI_API_KEY`,
-  …), exported into the process environment (Infisical via ./environment.sh,
-  or exported by hand). No `.env` file is read anywhere in the repo.
-  `REVERSE_PROXY_BASE_URLS` is read by the
-  generator's route probing (`route-probe.mjs`) and baked into the provider
-  `baseUrl` overrides; `run.sh`
-  does not forward them into the sandbox (docs/d056).
+- **Environment** — `TLALOCAYOTL_API_KEY` (the local farm row's own key) and
+  the per-provider keys (`OPENROUTER_API_KEY`, `OPENCODE_API_KEY`,
+  `CLINE_API_KEY`, `HYPER_API_KEY`, `GEMINI_API_KEY`, …), exported into the
+  process environment (Infisical via ./environment.sh, or exported by hand).
+  No `.env` file is read anywhere in the repo, and the retired peer/proxy
+  names (`PEER_BASE_URL(S)`, `REVERSE_PROXY_BASE_URLS`) are dead env
+  (docs/d071/d108).
 - **Serving** (`estige/`): the tunnel node
   (`./estige/build.sh` — each folder builds itself, docs/d113 — then its
   installed service; docs/d120), as on the other non-GPU hosts.

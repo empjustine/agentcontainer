@@ -54,12 +54,10 @@ export const {
 
 /**
  * pi shaping (folded in from the former lib/pi-models.mjs — docs/d039): shape
- * probe results / catalog records into pi `models.json` entries. The pi
- * generator's local and cloud stages share this shaping: llama-swap serves
- * the SAME metadata shape for local GGUF and for cloud providers routed
- * through it (`meta.llamaswap` on `/v1/models`), so the RawModelEntry → PiModel
- * mapping and the provider wrapper (compat block, `/v1` normalization, the
- * `$TLALOCAYOTL_API_KEY` reference) are one implementation (docs/d024).
+ * probe results and catalog records into pi `models.json` entries. One
+ * RawModelEntry → PiModel mapping serves the local farm's `/v1/models`
+ * listing and the id-only records a cloud reroute publishes, so both read
+ * pi's required fields the same way (docs/d024).
  */
 
 // Shared /models shapes — the types live next to the probe toolkit.
@@ -437,15 +435,15 @@ export function piModel(entry) {
 }
 
 /**
- * A provider routed through `baseUrl` (the local llama-swap instance) under
- * the openai-completions protocol. The compat block is set EXPLICITLY: these
- * providers are hand-defined, so pi's provider-composer must not auto-inherit
- * the built-in `llama.cpp` provider's compat — only `api`/`baseUrl` are
- * inherited from built-in defaults. `apiKey` is the literal "$TLALOCAYOTL_API_KEY",
- * llama-swap's own client-facing bearer (the cloud path-routes on the
- * simplified proxy do NOT use it — they forward pi's built-in provider auth,
- * see providerReroute, docs/d027); omitted when the generator's own
- * environment has no TLALOCAYOTL_API_KEY at all.
+ * The pi provider entry for the local farm (`baseUrl` — the tlalocayotl
+ * instance's tsnet serve hostname) under the openai-completions protocol. The
+ * compat block is set EXPLICITLY: the entry is hand-defined, so pi's
+ * provider-composer must not auto-inherit the built-in `llama.cpp` provider's
+ * compat — only `api`/`baseUrl` are inherited from builtin defaults.
+ * `apiKey` is the literal "$TLALOCAYOTL_API_KEY": the tlalocayotl provider
+ * row's own key (fact-table row `llama-swap`, its former name — earlier still
+ * `bazzite`), which that instance demands and no cloud row uses. Omitted when
+ * the generator's own environment carries no TLALOCAYOTL_API_KEY at all.
  * @param {string} baseUrl
  * @param {PiModel[]} models
  * @returns {PiProvider}
@@ -465,9 +463,8 @@ export function providerEntry(baseUrl, models) {
 /**
  * A REROUTE-ONLY override for a provider pi ships NATIVELY (the
  * PI_NATIVE_CLOUD_IDS set): carries just the provider's canonical `baseUrl`
- * (the fact table's real upstream, docs/d070 — install substitutes the route)
- * `<base>/<upstream-host><base-path>`, providerRouteUrl, docs/d047) and the models —
- * deliberately NO `api`, NO `compat`, and NO `apiKey`.
+ * (the fact table's real upstream, written verbatim — docs/d070, d108) and the
+ * models — deliberately NO `api`, NO `compat`, and NO `apiKey`.
  *
  * Emitting an `api` compatibility key here would blindly pin the dialect for
  * providers whose built-in definition is richer than anything we can infer:
@@ -478,21 +475,16 @@ export function providerEntry(baseUrl, models) {
  * models.dev API does not expose which model uses which. Omitting the key
  * lets pi's built-in provider definition supply the api implementation and
  * compat, so the override only changes WHERE requests go, never HOW they are
- * encoded. This is exactly what makes mistral's non-completions endpoints
- * and google's native dialect work through the route (docs/d027/d047): the
- * host-allowlist proxy forwards every path under the upstream host key
- * byte-for-byte, whatever wire format pi speaks.
+ * encoded — which is what makes mistral's own wire format and google's native
+ * dialect work without this table describing either (docs/d048).
  *
- * `apiKey` is likewise omitted: estige does NO credential
- * handling (requests must already carry valid provider keys), so the
- * credentials are pi's own built-in per-provider auth (env key or OAuth,
- * resolved at request time) forwarded untouched. The former
- * `"$PEER_API_KEY"` reference belonged to llama-swap's gateway auth and has
- * no meaning here — TLALOCAYOTL_API_KEY now only guards the LOCAL
- * llama-swap /v1 route (docs/d027; the key's rename under d071).
+ * `apiKey` is likewise omitted: each provider's credential is pi's own
+ * built-in per-provider auth (env key or OAuth, resolved at request time).
+ * Only the local farm row carries a key reference, and it is that row's own
+ * TLALOCAYOTL_API_KEY (providerEntry) — never a gateway-wide secret.
  * @param {string} providerUrl the provider's canonical upstream URL
- *   (fact table `baseUrl`, docs/d070; install substitutes the client route.
- *   The legacy `\`/v1\`` append was llama-swap's model-id-magic and is gone)
+ *   (fact table `baseUrl`, docs/d070 — no route form and no `/v1` append, so
+ *   pi's own catalogs keep the paths they expect)
  * @param {PiModel[]} [models] the records this override publishes. OMITTED
  *   for a row whose surface no source can describe faithfully: pi's merge
  *   keeps its own built-in records (their api, limits and prices) and the

@@ -152,12 +152,10 @@ const FACT_UPSTREAMS = Object.freeze(
 );
 
 /**
- * The upstreams' hostnames. d070's v2 route form embeds the upstream host as
- * a path segment (`<base>/<host>/…`, docs/d047), so a matching segment is the
- * structural marker that a URL under a colliding base host is routed rather
- * than canonical — the bazzite funnel and the bazzite llama-swap row share a
- * host (docs/d027), and a host-set check on the BASE would flag every
- * install there.
+ * The upstreams' hostnames. A routed URL carried the upstream host as a path
+ * segment (`<base>/<host>/…`, docs/d047); that form is deleted (docs/d108),
+ * and this set is the regression guard that refuses it if it comes back — a
+ * committed artifact names the fact-table upstream verbatim (docs/d070).
  * @type {ReadonlySet<string>}
  */
 export const FACT_HOSTS = new Set(FACT_UPSTREAMS.map((u) => new URL(u).host));

@@ -43,13 +43,15 @@ Env overrides:
                        must match the cache the generator baked model paths from)
 
 Secrets: arrive as plain environment — loaded by the explicit chain
-(./environment.sh, the ONE infisical round-trip). TLALOCAYOTL_API_KEY is
-llama-swap's inbound bearer key (00-general.yaml apiKeys) — the key clients
-present, not a provider key; it is read ONCE below and forwarded
-unconditionally when set, never inspected further (d170 Decision 6). HF_TOKEN
-is deliberately NOT forwarded: model paths are baked into the generated
-config at generation time (docs/d029 option B), so nothing in-container
-downloads — provisioning is ./40-download-models.py on the HOST.
+(./environment.sh, the ONE infisical round-trip). TLALOCAYOTL_API_KEY is the
+tlalocayotl provider row's own key — the fact table's local-farm row, whose id
+is still `llama-swap` (the provider's former name; earlier still `bazzite`) —
+and it doubles as this instance's inbound bearer because that row IS this
+instance (00-general.yaml apiKeys). No cloud provider uses it. It is read ONCE
+below and forwarded unconditionally when set, never inspected further (d170
+Decision 6). HF_TOKEN is deliberately NOT forwarded: model paths are baked into
+the generated config at generation time (docs/d029 option B), so nothing
+in-container downloads — provisioning is ./40-download-models.py on the HOST.
 """
 
 from __future__ import annotations
@@ -133,7 +135,7 @@ def main() -> None:
 			dir=str(CONFIG_D),
 		)
 
-	# The inbound bearer key is read ONCE here and never inspected again; it
+	# The tlalocayotl row's key is read ONCE here and never inspected again; it
 	# is forwarded unconditionally when set, and a bare --env with an unset
 	# host var would inject an EMPTY value (read as "set"), so the launch dies
 	# instead (d170 Decision 6: fail forward on the one secret this runner

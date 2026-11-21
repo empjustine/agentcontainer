@@ -20,7 +20,7 @@ diode (state may flow out, but can never be rewritten or deleted from inside the
 container), see `docs/d026-data-diode-audit.md` — design note only, not yet
 implemented. Secrets never follow this path — they are loaded host-side once
 (./environment.sh — the explicit chain) and forwarded through the
-`workload_env` allowlist (`CLINE_API_KEY`, `MISTRAL_API_KEY`, `PEER_API_KEY`,
+`workload_env` allowlist (`CLINE_API_KEY`, `MISTRAL_API_KEY`, `TLALOCAYOTL_API_KEY`,
 `OPENROUTER_API_KEY`, `OPENCODE_API_KEY`, `HF_TOKEN`, `GEMINI_API_KEY`).
 
 | Harness                         | Host dir (override honored)                                   | Container mount (RW)                | Env pin | What it preserves                                                                                                                                          |

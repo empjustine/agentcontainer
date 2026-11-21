@@ -131,11 +131,11 @@ endpoint.
   untagged auxiliary (an `imatrix` blob, a projector name the prefix filter
   misses) can never size the repo (d202).
 - **Inbound bearer auth stays**: `apiKeys: ${env.TLALOCAYOTL_API_KEY}` in
-  `00-general.yaml` is llama-swap's _own_ client-facing key (PEER_API_KEY →
-  REVERSE_PROXY_API_KEY under d071, → TLALOCAYOTL_API_KEY with the hostname
-  change; `docs/d001` covers the key-naming contract). It is the only
-  secret this module needs — `HF_TOKEN` is NOT forwarded into the container
-  anymore (nothing in-container downloads). Only **run.py** needs the vault
+  `00-general.yaml` demands the tlalocayotl provider row's own key — the
+  fact table's local-farm row, id `llama-swap` (its former name; earlier still
+  `bazzite`). That key is one provider's credential; no cloud row carries it.
+  It is the only secret this module needs — `HF_TOKEN` is NOT forwarded into
+  the container (nothing in-container downloads). Only **run.py** needs the vault
   (via the repo-root `./environment.sh`) — generation is offline and key-free: llama-swap
   resolves the `${env.*}` reference from its own environment at load time.
 

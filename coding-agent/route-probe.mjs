@@ -420,10 +420,10 @@ export async function probeEndpoint(url, headers) {
 
 /**
  * Probe candidate base URLs in order; the first one whose catalog passes
- * `accept` wins. Authenticated with $TLALOCAYOTL_API_KEY when set —
- * llama-swap's own client-facing bearer key, the one row whose listing is
- * still keyed by a shared fleet secret (docs/d027). The cloud providers go
- * through probeEndpoint with their own key instead.
+ * `accept` wins. Authenticated with $TLALOCAYOTL_API_KEY when set — the
+ * tlalocayotl provider row's own key (fact-table row `llama-swap`, its former
+ * name; earlier still `bazzite`), which is also what that local instance
+ * demands. Cloud rows go through probeEndpoint with their own key env.
  * @param {readonly string[]} candidates
  * @param {(ids: string[]) => boolean} accept does this catalog serve our concern?
  * @returns {Promise<ProbeSource|null>} null when no candidate is usable

@@ -33,11 +33,10 @@ const { CLOUD_PROVIDERS, FACT_HOSTS } =
 /**
  * True when any path segment of `url` is a fact-table upstream host — the
  * fingerprint of the retired d047 route form, which spelled the destination
- * as `<base>/<upstream-host>/…`. Needed because one route is otherwise
- * INDISTINGUISHABLE from a canonical URL: the bazzite funnel's host IS the
- * llama-swap fact host, so `https://bazzite…/<mount>/bazzite…/v1` still
- * starts with the fact upstream at a path boundary (docs/d070
- * Consequences).
+ * as `<base>/<upstream-host>/…`. The check walks segments, not the prefix,
+ * because a route mounted under the same host repeated the fact upstream as a
+ * second segment (docs/d070 Consequences). The form is deleted (docs/d108);
+ * this is the regression guard.
  * @param {string} url
  * @returns {boolean}
  */

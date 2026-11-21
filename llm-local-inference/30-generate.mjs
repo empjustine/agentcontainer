@@ -146,9 +146,8 @@ function writeConfigD(name, obj) {
  */
 function generateGeneral() {
 	const core = loadCore();
-	// models/peers belong to the local-inference layer below.
+	// The models map belongs to the local-inference layer below.
 	delete core.models;
-	delete core.peers;
 	writeConfigD("00-general.yaml", core);
 }
 

@@ -62,9 +62,9 @@
  *                    BOTH this host dir and the committed opencode.jsonc;
  *                    Termux skips the opencode stage unless this is set
  *   (no URL-shaping env: artifacts carry the fact-table upstream verbatim,
- *   docs/d070/d108 — reachability is the proxy env's job. PEER_BASE_URL(S)
- *   and REVERSE_PROXY_BASE_URLS are DEAD env: the vault still sets them for
- *   outside compatibility, and nothing here reads either one — docs/d071)
+ *   docs/d070/d108. PEER_BASE_URL(S), REVERSE_PROXY_BASE_URLS and the other
+ *   retired peer/proxy names are DEAD env: nothing in the tree reads them
+ *   (docs/d071, d108))
  *   RUN_DIR          base dir for the per-run output dir the generators write
  *                    their layers and merged artifacts into (default $TMPDIR,
  *                    falling back to $PREFIX/tmp on Termux, /tmp elsewhere) —
