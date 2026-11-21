@@ -107,6 +107,45 @@ the vault allowlist are untouched, and public-mode MCP needs no key, so no
 `workload_env_allowlist` entry appears (the d032 F6 four-place rule does not
 apply here).
 
+### Amendment: `unsloth-docs`, and hiding its one write tool
+
+`https://unsloth.ai/docs/~gitbook/mcp` (GitBook-hosted, keyless, 4 tools) joins
+the list decision 1 owns, and revises decision 8's "both endpoints" to three.
+Three of its tools read the vendor's docs index; `sendFeedback` pushes
+model-authored text to the vendor — the one tool in the committed set that
+composes content instead of passing a caller's string — so the entry carries
+`toolExposure: { "sendFeedback": "hidden" }`. Tool-level exposure is the
+mechanism pi documents for exactly this: the server stays whole and reachable
+under `codemode`, the one tool is registered but unreachable. Hiding it in the
+entry rather than an extension keeps the decision in the file that owns the
+list. `searchDocumentation` is version-approximate the way Context7's index is,
+so its `description` carries the same "verify against the pin" clause.
+
+### MotherDuck: the first disabled entry
+
+`https://api.motherduck.com/mcp` (50 tools) joins as `"enabled": false` beside
+`"exposure": "hidden"`. It is the committed list's first entry that is
+**defined but inert**, and the reason is visible in one request: a bare
+`tools/list` answers `-32001 authentication required`, so the server is
+OAuth-only, and MotherDuck serves write verbs (`query_rw`, `delete_*`,
+`grant_access`, `get_short_lived_token`) over an operator's own warehouse.
+Decision 1's "holds no credentials" survives literally — the file carries a
+URL where a token would be, and no token.
+
+Three measured facts make disabled the right encoding rather than a deleted
+entry or a hidden one. It stays listed (`pi mcp list`: `disabled (hidden,
+global)`, exit 0, URL shown), so `/mcp` can turn it on later with no generator
+run and no host edit — decision 3's existing-wins merge leaves a local
+setting in place either way. It never connects, so it prompts no sign-in and
+sends no token; the OAuth pair an operator already minted still sits in
+`mcp-auth.json` in the mounted agent dir, which disabling does not remove (the
+credential-shaped-file warning list is d216's, not this record's). And it costs
+zero system-prompt bytes: 2,221 chars with the entry disabled, the same as an
+empty `mcpServers`, against 2,612 with the server enabled. `exposure: hidden`
+is the second half of inert — a host that turns the entry on still reaches no
+tool until it also changes the exposure, so re-enabling is a deliberate
+two-step, never a merge that silently hands a session write access.
+
 ## Consequences
 
 - The **host** pi gets the committed servers too, not only sandboxes: it reads
@@ -146,6 +185,14 @@ A server added _after_ a session
 starts is not in that session's tool set (`/reload` or a new session picks it
 up), which is why the list is installed by the generator and required by
 `run.sh` rather than added interactively.
+`unsloth-docs` was attached the same way: bare `initialize`, `tools/list` and
+`tools/call` requests over `https://unsloth.ai/docs/~gitbook/mcp` answered
+keyless, and `pi mcp list` against a directory holding only the committed file
+reports `connected, 4 tools (codemode, global)` with `sendFeedback [hidden]`.
+`motherduck` was measured the same way, as the disabled case: `pi mcp list`
+reports `disabled (hidden, global)` and exits 0, and the rendered system prompt
+carries no `mcp__motherduck` line — 2,221 chars with the entry disabled against
+2,612 with the same server enabled.
 
 System-prompt accounting for this repo, read out of a throwaway
 `before_agent_start` extension (`ctx.getSystemPrompt()` + `systemPromptOptions`,
