@@ -387,25 +387,13 @@ export function workload_ro_if(description, host, guest, hostFsPort = hostFs) {
 function requiredMount(description, mode, host, guest) {
 	// The sh API aborted the whole launch (exit 91) at THIS call when the host
 	// path was gone. The requirement is recorded instead and checked once over
-	// the assembled description (`missingMountHosts`): the same refusal, but the
-	// description stays a plain value, buildable without touching the disk.
+	// the assembled description by the launcher's own guard (run.mjs's
+	// requireMountSources): the same refusal, but the description stays a plain
+	// value, buildable without touching the disk.
 	return {
 		...description,
 		mounts: [...description.mounts, { mode, host, guest, required: true }],
 	};
-}
-
-/**
- * The required mounts whose host path is gone — the launcher's exit-91 gate,
- * checked once before anything is created or launched.
- * @param {WorkloadDescription} description
- * @param {Host} [host]
- * @returns {Mount[]}
- */
-export function missingMountHosts(description, host = hostFs) {
-	return description.mounts.filter(
-		(mount) => mount.required && !host.exists(mount.host),
-	);
 }
 
 /**

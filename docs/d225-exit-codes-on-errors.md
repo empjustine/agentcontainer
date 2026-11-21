@@ -42,7 +42,15 @@ Three costs follow, and none of them is visible at the call site:
 ## Decision
 
 **R1 — A failure that must stop an entry point is a thrown `Error` carrying its
-exit code under `Symbol.for("process.exitCode")`.** Construct it with
+exit code under `Symbol.for("process.exitCode")`, thrown by the step that
+decided it.** A gate or check that generates its own refusal throws it; it does
+not hand it back for a caller to throw, which would split one decision — what
+failed and whether to stop — across two places (the launcher's `credentialGate`
+and `artifactGate` are the worked example). A predicate that answers a question
+still returns data — `credentialWarnings` lists the files its reporter warns
+about, `canonicalViolations` lists what the verifier prints — and the guard that
+decides to stop generates the failure (`requireMountSources` in the launcher).
+Construct it with
 `Object.assign(new Error(message), { [Symbol.for("process.exitCode")]: code })`
 — `failure(message, code, fields)` in each unit's `lib/` (plus any structured
 fields the log line needs). The code travels on the value; the value travels up
@@ -52,10 +60,12 @@ the ordinary call stack. The key is a **global-registry symbol**, not the string
 (docs/d113) still resolve one key through `Symbol.for` without sharing an
 import.
 
-**R2 — No helper calls `process.exit`.** Not a `die`, not a local `fail`.
-`process.exit` exists nowhere below the top-level handler, and the handler does
-not call it either: it sets `process.exitCode` and returns, so the runtime tears
-the process down normally.
+**R2 — No helper calls `process.exit`.** Not a `die`, not a local `fail`
+that returns the error for its caller to throw — a helper that owns a stop
+throws its failure (`refresh-models-dev.mjs`'s `fail`). `process.exit` exists
+nowhere below the top-level handler, and the handler does not call it either: it
+sets `process.exitCode` and returns, so the runtime tears the process down
+normally.
 
 **R3 — The top-level handler of a `main` logs once and sets the status.** In
 Node that is the `import.meta.main` block, in Python the
@@ -104,9 +114,24 @@ record:
 - `coding-agent/generate.mjs` moves its per-run `rmSync(outDir)` into a
   `finally`, so a failed generator no longer leaves its staging directory
   behind — the first cleanup this rule protects.
-- The launcher's refusal gates (`credentialGate`, `artifactGate`,
-  `resolveDirectories`) already returned a refusal value; `main` now throws it
-  instead of handing it to `die`, so a test asserts the code by catching.
+- The launcher's refusal guards (`resolveDirectories`, `requireBackend`,
+  `credentialGate`, `artifactGate`, `requireMountSources`) throw the failure they
+  generated, so `main` reads as a sequence of statements instead of a chain of
+  `if (refusal) throw refusal`; a test asserts the code by catching the value.
+  The same pass moved the report-shaped steps out of `main` too
+  (`ensureHostState`, `warnCredentialFiles`, `warnMissingOpencodeConfig`) and
+  the run-and-map step into `launchWorkload`. A guard that a caller must
+  remember to turn into a stop has a weaker contract than one that stops:
+  `lib/workload-runtime.mjs` no longer exports a "missing mounts" predicate for
+  the launcher to interpret.
+- Guard-owned stops pay for themselves three times, which is why this is a
+  requirement and not a style note. The contract lives beside the predicate
+  (`@throws` on the guard, not prose at the call site explaining that this
+  `if` interrupts the flow); a refusal's stack trace names the guard that
+  stopped instead of a `throw` line in `main`; and comments that narrated the
+  interruption have nothing left to say, so they are promoted to the guard's
+  JSDoc or deleted (AGENTS.md's WHY-not-HOW test). The caller-side comments
+  that remain in `main` describe sequencing, not control flow.
 - A verdict that is not an internal failure stays a status value:
   `check-canonical-artifacts.mjs` prints its violations and sets
   `process.exitCode = 1` (R5), because the violations are the output and the

@@ -69,11 +69,15 @@ const REQUIRED_PROVIDERS = ["opencode", "opencode-go", "cline-pass", "hyper"];
 const MIN_PROVIDERS = 100;
 
 /**
+ * Stop this fetch with the exit code the driver reads (docs/d225): the failure
+ * is thrown at the step that knows the reason, never returned for a caller to
+ * throw.
  * @param {string} msg static label — the structured detail goes in `fields`
  * @param {Record<string, unknown>} [fields]
+ * @returns {never}
  */
 function fail(msg, fields) {
-	return failure("models.dev catalog fetch failed — no catalog for this run", 1, {
+	throw failure("models.dev catalog fetch failed — no catalog for this run", 1, {
 		reason: msg,
 		...fields,
 	});
@@ -123,7 +127,7 @@ async function main() {
 	setLogTool("coding-agent/refresh-models-dev");
 	const out = process.argv[2];
 	if (!out) {
-		throw fail("no output path given", { usage: "refresh-models-dev.mjs <out>" });
+		fail("no output path given", { usage: "refresh-models-dev.mjs <out>" });
 	}
 	let res = null;
 	let via = "";
@@ -141,21 +145,21 @@ async function main() {
 		}
 	}
 	if (!res) {
-		throw fail("no catalog source answered");
+		fail("no catalog source answered");
 	}
 
 	let text;
 	try {
 		text = await res.text();
 	} catch (err) {
-		throw fail("body read failed", { via, url, error: err });
+		fail("body read failed", { via, url, error: err });
 	}
 
 	let catalog;
 	try {
 		catalog = JSON.parse(text);
 	} catch (err) {
-		throw fail("invalid JSON", { via, url, error: err });
+		fail("invalid JSON", { via, url, error: err });
 	}
 
 	if (
@@ -163,7 +167,7 @@ async function main() {
 		catalog === null ||
 		Array.isArray(catalog)
 	) {
-		throw fail("response is not a provider map");
+		fail("response is not a provider map");
 	}
 	for (const id of REQUIRED_PROVIDERS) {
 		const provider = catalog[id];
@@ -172,12 +176,12 @@ async function main() {
 			typeof provider.models !== "object" ||
 			provider.models === null
 		) {
-			throw fail(`response missing expected provider '${id}'`);
+			fail(`response missing expected provider '${id}'`);
 		}
 	}
 	const providerCount = Object.keys(catalog).length;
 	if (providerCount < MIN_PROVIDERS) {
-		throw fail(
+		fail(
 			`unexpectedly small catalog (${providerCount} providers < ${MIN_PROVIDERS})`,
 		);
 	}

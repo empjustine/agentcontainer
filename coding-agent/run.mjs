@@ -86,7 +86,8 @@
  *   CLINE_DIR  Cline's dir (default ~/.cline), mounted rw
  *   THINKRAIL_DATA_DIR  ThinkRail's data dir (default ~/.thinkrail), mounted rw
  *
- * Exit codes (unchanged from the sh launcher — wrappers and docs quote them):
+ * Exit codes (unchanged from the sh launcher — wrappers and docs quote them).
+ * Each rides on a thrown `failure` and is set by the one handler (docs/d225):
  *   90 a DIRECTORY is unusable or is $HOME · 91 no backend / required mount
  *   source gone · 92 the description does not render · 93 auth.json holds
  *   credentials · 94 a generated artifact is missing or stale
@@ -103,7 +104,6 @@ import {
 	detectBackend,
 	emptyDescription,
 	hostFs,
-	missingMountHosts,
 	WorkloadDescriptionError,
 	workload_cmd,
 	workload_env_allowlist,
@@ -419,8 +419,7 @@ function baseWorkload(name) {
 }
 
 /**
- * The host state dirs a launch mounts — created once, before any gate reads
- * them, so a first run on a fresh host does not refuse for a missing dir.
+ * The host state dirs a launch mounts. `ensureHostState` creates them.
  * @param {Launch} launch
  * @returns {string[]}
  */
@@ -443,7 +442,8 @@ function hostStateDirs(launch) {
  * opencode writes auth.json only on login, so the same empty-content test says
  * the same thing.
  * @param {Launch} launch
- * @returns {Error | null} the refusal to throw, or null when the gate passes
+ * @returns {void}
+ * @throws {Error} the refusal, from the step that decided it (docs/d225)
  */
 function credentialGate(launch) {
 	for (const [label, key] of /** @type {[string, "agentDir" | "opencodeDataDir"][]} */ ([
@@ -458,7 +458,7 @@ function credentialGate(launch) {
 			if (/** @type {NodeJS.ErrnoException} */ (error).code === "ENOENT") {
 				continue;
 			}
-			return failure(`cannot read auth.json in the ${label}`, EXIT_AUTH, {
+			throw failure(`cannot read auth.json in the ${label}`, EXIT_AUTH, {
 				authFile,
 			});
 		}
@@ -466,13 +466,12 @@ function credentialGate(launch) {
 		if (squashed === "" || squashed === "{}" || squashed === "[]") {
 			continue;
 		}
-		return failure(
+		throw failure(
 			`auth.json holds credentials in the ${label} — keys resolve from the forwarded env; remove it before mounting the dir`,
 			EXIT_AUTH,
 			{ authFile },
 		);
 	}
-	return null;
 }
 
 /**
@@ -499,7 +498,8 @@ function credentialWarnings(launch) {
  * Missing artifacts are a user issue: loud failure pointing at the generator,
  * never an implicit regeneration.
  * @param {Launch} launch
- * @returns {Error | null} the refusal to throw, or null when the gate passes
+ * @returns {void}
+ * @throws {Error} the refusal, from the step that decided it (docs/d225)
  */
 function artifactGate(launch) {
 	for (const [file, message] of /** @type {[string, string][]} */ ([
@@ -521,7 +521,7 @@ function artifactGate(launch) {
 		],
 	])) {
 		if (!hostFs.exists(join(launch.agentDir, file))) {
-			return failure(message, EXIT_ARTIFACT, { agentDir: launch.agentDir });
+			throw failure(message, EXIT_ARTIFACT, { agentDir: launch.agentDir });
 		}
 	}
 	// The installed file must carry the fact-table upstreams (docs/d070) — the
@@ -539,13 +539,12 @@ function artifactGate(launch) {
 		{ stdio: ["ignore", "ignore", "inherit"] },
 	);
 	if (check.status !== 0) {
-		return failure(
+		throw failure(
 			"installed models.json does not carry canonical provider URLs — run `./npm-run.sh coding-agent generate` (docs/d108)",
 			EXIT_ARTIFACT,
 			{ agentDir: launch.agentDir },
 		);
 	}
-	return null;
 }
 
 /**
@@ -553,10 +552,40 @@ function artifactGate(launch) {
  */
 async function main() {
 	setLogTool("coding-agent/run");
+	// The launch is argv assembly; each check below is a guard that owns its own
+	// stop or report (docs/d225).
 	const launch = buildLaunch(process.argv.slice(2), process.env);
-	// No backend, no staging: the backend is resolved BEFORE anything is created
-	// or written, so a backend-less host is left with nothing half-built and is
-	// pointed at the sandbox-free run path (docs/d059).
+	const backend = requireBackend();
+	ensureHostState(launch);
+	credentialGate(launch);
+	warnCredentialFiles(launch);
+	artifactGate(launch);
+	logInfo("mounting host harness state", {
+		container: launch.containerName,
+		dirs: hostStateDirs(launch).length,
+	});
+	warnMissingOpencodeConfig(launch);
+	requireMountSources(launch.workload);
+
+	// Everything above this line is host-side argv assembly; the next call is
+	// where podman creates the container — mount relabel, userns setup and image
+	// probes all happen there. Nothing logs from inside any more (docs/d067), so
+	// this line IS the launch marker: the next thing on the terminal is the
+	// sandbox's own bash prompt.
+	logInfo("starting container", { container: launch.containerName });
+	// The container's status is the launcher's status (docs/d225 R5): assigning
+	// it lets the call stack unwind instead of tearing the process down here.
+	process.exitCode = await launchWorkload(launch.workload, backend);
+}
+
+/**
+ * The host must have a container backend. It is resolved BEFORE anything is
+ * created or written, so a backend-less host is left with nothing half-built
+ * and is pointed at the sandbox-free run path (docs/d059).
+ * @returns {import("./lib/workload-runtime.mjs").Backend}
+ * @throws {Error} exit 91 when neither podman nor docker is on PATH
+ */
+function requireBackend() {
 	const backend = detectBackend(hostFs);
 	if (backend === null) {
 		throw failure(
@@ -564,66 +593,89 @@ async function main() {
 			EXIT_BACKEND,
 		);
 	}
+	return backend;
+}
 
+/**
+ * Create the harness state dirs once, before any gate reads them, so a first
+ * run on a fresh host does not refuse for a missing dir.
+ * @param {Launch} launch
+ * @returns {void}
+ */
+function ensureHostState(launch) {
 	for (const dir of hostStateDirs(launch)) {
 		mkdirSync(dir, { recursive: true });
 	}
-	const auth = credentialGate(launch);
-	if (auth) {
-		throw auth;
-	}
+}
+
+/**
+ * Report the credential-shaped files the direct mounts expose (docs/d216). A
+ * warning, not a stop: these are the operator's files, and the mount decision
+ * is the one being reported.
+ * @param {Launch} launch
+ * @returns {void}
+ */
+function warnCredentialFiles(launch) {
 	for (const file of credentialWarnings(launch)) {
 		logWarn(
 			"host credential-shaped file is readable in the sandbox (docs/d216)",
 			{ file },
 		);
 	}
-	const artifact = artifactGate(launch);
-	if (artifact) {
-		throw artifact;
+}
+
+/**
+ * PARTIAL opencode config is ACCEPTED at launch (deliberately unlike pi's
+ * missing-artifact exit 94): opencode runs fine on its built-in providers, so a
+ * missing installed overlay only costs the provider reroute — warn and launch.
+ * SKIP_GEN (the committed-artifact install path) is retired with d070 §6: the
+ * overlay is a generate-time artifact, and regeneration is the only fix.
+ * @param {Launch} launch
+ * @returns {void}
+ */
+function warnMissingOpencodeConfig(launch) {
+	if (hostFs.exists(join(launch.opencodeConfigDir, "opencode.json"))) {
+		return;
 	}
+	logWarn(
+		"no opencode.json in the host config dir — opencode launches on built-in (partial) config; run `./npm-run.sh coding-agent generate` to install",
+		{ configDir: launch.opencodeConfigDir },
+	);
+}
 
-	const workload = launch.workload;
-	logInfo("mounting host harness state", {
-		container: launch.containerName,
-		dirs: hostStateDirs(launch).length,
-	});
-
-	// PARTIAL opencode config is ACCEPTED at launch (deliberately unlike pi's
-	// missing-artifact exit 94): opencode runs fine on its built-in providers, so
-	// a missing installed overlay only costs the provider reroute — warn and
-	// launch. SKIP_GEN (the committed-artifact install path) is retired with d070
-	// §6: the overlay is a generate-time artifact, and regeneration is the only
-	// fix.
-	if (!hostFs.exists(join(launch.opencodeConfigDir, "opencode.json"))) {
-		logWarn(
-			"no opencode.json in the host config dir — opencode launches on built-in (partial) config; run `./npm-run.sh coding-agent generate` to install",
-			{ configDir: launch.opencodeConfigDir },
-		);
-	}
-
-	// A required mount whose host path is gone refuses here — the sh API aborted
-	// at the workload_rw call (exit 91) and this is the same refusal, checked once
-	// over the assembled description.
-	const missing = missingMountHosts(workload, hostFs);
-	if (missing.length > 0) {
+/**
+ * No required mount may point at a host path that is gone: the container would
+ * be created and the bind fail after the fact. The sh API aborted at its
+ * workload_rw call (exit 91) and this is the same refusal, checked once over
+ * the assembled description.
+ * @param {WorkloadDescription} workload
+ * @returns {void}
+ * @throws {Error} exit 91 naming the first missing mount
+ */
+function requireMountSources(workload) {
+	const missing = workload.mounts.find(
+		(mount) => mount.required && !hostFs.exists(mount.host),
+	);
+	if (missing) {
 		throw failure("required mount source is gone", EXIT_BACKEND, {
-			mount: missing[0]?.host ?? "",
+			mount: missing.host,
 		});
 	}
-	// Everything above this line is host-side argv assembly; the next call is
-	// where podman creates the container — mount relabel, userns setup and image
-	// probes all happen there. Nothing logs from inside any more (docs/d067), so
-	// this line IS the launch marker: the next thing on the terminal is the
-	// sandbox's own bash prompt.
-	logInfo("starting container", { container: launch.containerName });
-	let code;
+}
+
+/**
+ * Run the container and map a render/spawn failure onto the launcher's codes.
+ * A description that does not render is a launcher bug (exit 92, the sh API's
+ * render code); a backend that cannot be spawned is the environment's (91).
+ * @param {WorkloadDescription} workload
+ * @param {import("./lib/workload-runtime.mjs").Backend} backend
+ * @returns {Promise<number>} the container's status
+ * @throws {Error} exit 92 or 91
+ */
+async function launchWorkload(workload, backend) {
 	try {
-		code = await workload_run(workload, { backend, env: process.env });
+		return await workload_run(workload, { backend, env: process.env });
 	} catch (error) {
-		// A description that does not render is a launcher bug (exit 92, the
-		// sh API's render code); a backend that cannot be spawned is the
-		// environment's (exit 91).
 		const unrenderable = error instanceof WorkloadDescriptionError;
 		throw failure(
 			unrenderable
@@ -636,9 +688,6 @@ async function main() {
 			},
 		);
 	}
-	// The container's status is the launcher's status (docs/d225 R5): assigning
-	// it lets the call stack unwind instead of tearing the process down here.
-	process.exitCode = code;
 }
 
 // `import.meta.main` (node >= 24.2; this repo runs 24.22) replaces a
@@ -652,11 +701,9 @@ if (import.meta.main) {
 		await main();
 	} catch (error) {
 		// The one handler (docs/d225 R3): log the refusal once, set the status,
-		// return. `buildLaunch` reports a refused DIRECTORY by throwing, so a
-		// refusal surfaces here as well as from a check inside main.
-		const refused = /** @type {Error & { fields?: Record<string, unknown> }} */ (
-			error
-		);
+		// return.
+		const refused =
+			/** @type {Error & { fields?: Record<string, unknown> }} */ (error);
 		const exitCode = exitCodeOf(error);
 		if (exitCode === undefined) {
 			logError("launcher failed", { error: String(refused?.stack ?? refused) });
