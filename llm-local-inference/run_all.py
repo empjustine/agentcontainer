@@ -21,14 +21,14 @@ step is the repo's own node-run.sh, which a copied-out unit does not ship — th
 same trade every unit makes (docs/d138).
 
 Secrets (HF_TOKEN) arrive as plain environment through the explicit chain:
-./environment.sh uv run --script llm-local-inference/run_all.py. Nothing is fatal on
+./environment.sh uv run llm-local-inference/run_all.py. Nothing is fatal on
 a missing token: gated repos log a warning and the sweep continues.
 
 Exit code is the failing step's own code. Every step is idempotent, so a rerun
 is the recovery path — there is no subset/step argument (a mode would be a flag
 in disguise, docs/d212).
 
-Usage: uv run --script llm-local-inference/run_all.py
+Usage: uv run llm-local-inference/run_all.py
 """
 
 # Structured logging (JSON lines on stderr; see lib/log.py) — stdout stays

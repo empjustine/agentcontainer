@@ -202,7 +202,7 @@ request.
 ### The browsing endpoint (Promnesia and hister)
 
 ```sh
-uv run --script ./datalakehouse/browse-daemon.py            # foreground, one log line per request
+uv run ./datalakehouse/browse-daemon.py            # foreground, one log line per request
 BROWSE_TOKEN=… ./environment.sh ./datalakehouse/browse-daemon.sh   # the static key on the write faces
 ```
 

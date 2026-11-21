@@ -78,17 +78,17 @@ between them, and a change that needs the answer uses the lists below.
 
 ## The lists today
 
-| role                       | tools                                                                                                                                                                                                                                                                                                                                            |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| runtime                    | `sh`; `node` (resolved by `./node-run.sh`, d138); `uv` + python (the PEP 723 tools, invoked as `uv run --script`); a container backend (`podman` or `docker`); `infisical` (the env chain); `go` (estige build/install); JDK + Maven (sbex jar); `git` (the `git/` unit and its mirrors); `duckdb` and `jq` (the datalakehouse warehouse script) |
-| development-only           | `mise` (acquisition itself); the npm gate toolchain — `biome`, `oxlint`, `knip` (installed by `./npm-tools.sh`); `oxfmt`; `shellcheck`, `shfmt`; `golangci-lint`; `ruff`, `ty`; `pnpm` (extension devDependencies); the gate environment itself (`pyproject.toml`, `uv.lock`, `.venv`)                                                           |
-| both (runtime and dev use) | `go` (builds the unit, runs the Go suite), `node` (runs the units, runs the node gates), `uv` (runs the tools, acquires the gate tools)                                                                                                                                                                                                          |
+| role                       | tools                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| runtime                    | `sh`; `node` (resolved by `./node-run.sh`, d138); `uv` + python (the PEP 723 tools, invoked as `uv run`); a container backend (`podman` or `docker`); `infisical` (the env chain); `go` (estige build/install); JDK + Maven (sbex jar); `git` (the `git/` unit and its mirrors); `duckdb` and `jq` (the datalakehouse warehouse script) |
+| development-only           | `mise` (acquisition itself); the npm gate toolchain — `biome`, `oxlint`, `knip` (installed by `./npm-tools.sh`); `oxfmt`; `shellcheck`, `shfmt`; `golangci-lint`; `ruff`, `ty`; `pnpm` (extension devDependencies); the gate environment itself (`pyproject.toml`, `uv.lock`, `.venv`)                                                  |
+| both (runtime and dev use) | `go` (builds the unit, runs the Go suite), `node` (runs the units, runs the node gates), `uv` (runs the tools, acquires the gate tools)                                                                                                                                                                                                 |
 
 ## First application: `py-run.sh` retired
 
 The python tools are runtime tooling, and their invocation is treated as such:
-`uv run --script <file>` directly, with the vault chain as
-`./environment.sh uv run --script llm-local-inference/run.py`. The root wrapper
+`uv run <file>` directly, with the vault chain as
+`./environment.sh uv run llm-local-inference/run.py`. The root wrapper
 that used to do this (d170's "one root file owns the interpreter decision") was
 not runtime tooling and was not a gate: it was invocation glue in a runtime path,
 one more file to keep in step with every entry that named it. uv itself is the

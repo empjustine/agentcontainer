@@ -43,10 +43,10 @@ the table by id. A repo with no manifest cannot be planned or audited at all, so
 reaching it is this tool job — nothing downstream can guess a file list.
 
 Usage:
-    uv run --script llm-local-inference/10-fetch-hf-manifests.py                 # refresh + audit every repo
-    uv run --script llm-local-inference/10-fetch-hf-manifests.py --repo ORG/REPO # one repo
-    uv run --script llm-local-inference/10-fetch-hf-manifests.py --offline       # no network: cached manifests only
-    uv run --script llm-local-inference/10-fetch-hf-manifests.py --print-plan    # llama.cpp's implicit pick per entry
+    uv run llm-local-inference/10-fetch-hf-manifests.py                 # refresh + audit every repo
+    uv run llm-local-inference/10-fetch-hf-manifests.py --repo ORG/REPO # one repo
+    uv run llm-local-inference/10-fetch-hf-manifests.py --offline       # no network: cached manifests only
+    uv run llm-local-inference/10-fetch-hf-manifests.py --print-plan    # llama.cpp's implicit pick per entry
 
 Exit code 1 if a configured model disagrees with the heuristic pick or is absent
 from the repo's tree.

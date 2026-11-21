@@ -25,8 +25,8 @@ repo:quant -> file heuristic lives in `10-fetch-hf-manifests.py` (Step 5 of the
 runbook).
 
 Usage:
-    uv run --script llm-local-inference/scan_cache_coverage.py
-    uv run --script llm-local-inference/scan_cache_coverage.py --cache /path/to/hub --manifest /path/to/llamacpp-model-data.json
+    uv run llm-local-inference/scan_cache_coverage.py
+    uv run llm-local-inference/scan_cache_coverage.py --cache /path/to/hub --manifest /path/to/llamacpp-model-data.json
 """
 import argparse
 import json

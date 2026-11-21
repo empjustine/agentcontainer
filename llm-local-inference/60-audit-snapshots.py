@@ -22,7 +22,7 @@ content-addressed, so two names can be one blob and only the second number is a
 capacity figure. Repo manifests live in lib/hf-manifests/ (kilobytes, never in
 the cache), so they are not part of this accounting.
 
-Usage: uv run --script llm-local-inference/60-audit-snapshots.py
+Usage: uv run llm-local-inference/60-audit-snapshots.py
 Exit code 1 when anything is prunable, 0 when clean.
 """
 

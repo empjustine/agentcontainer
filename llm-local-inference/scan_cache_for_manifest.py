@@ -22,9 +22,9 @@ Non-GGUF repos (safetensors, Android binaries, .cact, imatrix-only) are
 reported but NOT emitted as manifest entries.
 
 Usage:
-    uv run --script llm-local-inference/scan_cache_for_manifest.py
-    uv run --script llm-local-inference/scan_cache_for_manifest.py --output new-entries.json
-    uv run --script llm-local-inference/scan_cache_for_manifest.py --parallel 2  # override parallelism
+    uv run llm-local-inference/scan_cache_for_manifest.py
+    uv run llm-local-inference/scan_cache_for_manifest.py --output new-entries.json
+    uv run llm-local-inference/scan_cache_for_manifest.py --parallel 2  # override parallelism
 """
 import argparse
 import json

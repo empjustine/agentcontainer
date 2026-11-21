@@ -12,4 +12,4 @@ set -eu
 unit=$(CDPATH='' cd "$(dirname "$0")" && pwd)
 repo=$(dirname "$unit")
 cd "$repo"
-exec uv run --script "$unit/browse-daemon.py" "$@"
+exec uv run "$unit/browse-daemon.py" "$@"

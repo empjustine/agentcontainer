@@ -16,7 +16,7 @@ curation starts from, so a card appears exactly when a model entry does.
 Exit code 1 when any card fails; a gated repo without HF_TOKEN is the common
 case and does not stop the rest.
 
-Usage: uv run --script llm-local-inference/fetch_model_cards.py
+Usage: uv run llm-local-inference/fetch_model_cards.py
 """
 
 import json

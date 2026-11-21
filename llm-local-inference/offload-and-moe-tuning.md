@@ -172,7 +172,7 @@ carries `python3.12` but no node (`ghcr.io/mostlygeek/llama-swap:unified-vulkan`
 ships `llama-swap` + `llama-server`, not a JS runtime). So the harness is
 Python on both sides, split by privilege:
 
-**Host side — `llm-local-inference/sweep.py`** (entered as `uv run --script
+**Host side — `llm-local-inference/sweep.py`** (entered as `uv run
 llm-local-inference/sweep.py`, the usual uv/PEP 723 shape). It owns nothing but
 the launch and the artifact:
 

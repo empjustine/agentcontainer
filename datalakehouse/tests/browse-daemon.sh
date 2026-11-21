@@ -35,7 +35,7 @@ pairs = [
 ]
 print(" ".join("1" if cannon.canonify(a) == b else "0" for a, b in pairs))
 PY
-if out=$(cd "$repo" && uv run --script "$tmp/cannon_check.py" "$unit" 2>&1); then
+if out=$(cd "$repo" && uv run "$tmp/cannon_check.py" "$unit" 2>&1); then
 	is 'vendored cannon folds the tracked URL shapes' "$out" '1 1 1'
 else
 	bad "vendored cannon import ($out)"
@@ -52,7 +52,7 @@ export BROWSE_TOKEN="secret"
 base="http://$BROWSE_HISTER_ADDR"
 pm="http://$BROWSE_PROMNESIA_ADDR"
 
-( cd "$repo" && exec uv run --script "$unit/browse-daemon.py" ) >"$tmp/daemon.log" 2>&1 &
+( cd "$repo" && exec uv run "$unit/browse-daemon.py" ) >"$tmp/daemon.log" 2>&1 &
 pid=$!
 trap 'kill $pid 2>/dev/null || true; wait $pid 2>/dev/null || true; rm -rf "$tmp"' EXIT
 
@@ -399,7 +399,7 @@ is 'an oversized body is a 413' '413' "$(code --max-time 20 -X POST -H 'X-Access
 if ( cd "$repo" &&
 	BROWSE_TOKEN='' BROWSE_HISTER_ADDR="0.0.0.0:$((port + 2))" \
 	BROWSE_PROMNESIA_ADDR="127.0.0.1:$((port + 3))" \
-	exec uv run --script "$unit/browse-daemon.py" ) >/dev/null 2>&1; then
+	exec uv run "$unit/browse-daemon.py" ) >/dev/null 2>&1; then
 	bad 'a wide bind without a key must be refused'
 else
 	ok 'a wide bind without a key is refused'

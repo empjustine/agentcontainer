@@ -63,7 +63,7 @@ launcher fails loudly pointing at the generator.
 `infisical run` fetches the vault and spawns the target with it as plain
 env, on the host, docs/d046):
 `./environment.sh ./node-run.sh coding-agent/run.mjs`, `./environment.sh
-uv run --script llm-local-inference/run.py`, etc. The target may also be a bare command:
+uv run llm-local-inference/run.py`, etc. The target may also be a bare command:
 `./environment.sh pi` runs pi with the vault env and no sandbox — the run
 path for a host with no container backend (docs/d059). The scripts it wraps consume plain env
 and never load anything themselves; inside sandboxes the vault env is
@@ -110,8 +110,8 @@ agentcontainer/
 │   └── tests/                           #   → journey determinism and placement, the defect ledger, span grading, the protocol driver, death and resume
 │
 ├── llm-local-inference/                 # llama-swap: LOCAL GGUF inference only
-│   ├── run.py                           #   → unified-vulkan image + GPU + HF mounts on :9292 (run via `uv run --script`; env chain ./environment.sh first)
-│   ├── *.py                             #   → the PEP 723 cache tools: run_all.py drives the chain (10-fetch-hf-manifests, 20-propose-entries.mjs, 30-generate.mjs, 40-download-models, 50-verify-cache, 60-audit-snapshots, 70-prune-cache) plus upkeep/fetch_model_cards/scan_cache_*/gguf_context_length; run via `uv run --script`, no shell tooling left (d212-d218)
+│   ├── run.py                           #   → unified-vulkan image + GPU + HF mounts on :9292 (run via `uv run`; env chain ./environment.sh first)
+│   ├── *.py                             #   → the PEP 723 cache tools: run_all.py drives the chain (10-fetch-hf-manifests, 20-propose-entries.mjs, 30-generate.mjs, 40-download-models, 50-verify-cache, 60-audit-snapshots, 70-prune-cache) plus upkeep/fetch_model_cards/scan_cache_*/gguf_context_length; run via `uv run`, no shell tooling left (d212-d218)
 │   ├── 20-propose-entries.mjs / 30-generate.mjs #  → config.d + curated manifests (capability-gated) · the manifest-authoring aid, docs/d212
 │   ├── build.mjs                        #   → pulls the llama-swap image (inference-endpoint gate, d087); `./node-run.sh llm-local-inference/build.mjs`
 │   ├── llama-swap-core.json             #   → general-purpose config source

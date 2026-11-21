@@ -255,7 +255,7 @@ was removed with the relay handoff (see the module DESIGN docs).
 ### Serving run script (one multipurpose instance)
 
 Every local-inference-host runs ONE llama-swap serving container, launched by
-`llm-local-inference/run.py` (`./environment.sh uv run --script
+`llm-local-inference/run.py` (`./environment.sh uv run
 llm-local-inference/run.py` — d170 folded the shell runner + the jq filters it
 sourced into this one file; d226 retired the root `py-run.sh` wrapper). `run.py` is serve-only: it mounts the
 already-generated `config.d/` (read-only) loaded via `-config-dir` and adapts

@@ -16,7 +16,7 @@ tags: ["reference", "runbook", "hf-cache"]
 model manifest and the committed repo manifests — the same run that renders
 `config.d`, so served and downloaded cannot diverge:
 
-    uv run --script llm-local-inference/40-download-models.py
+    uv run llm-local-inference/40-download-models.py
 
 Per repo a curated file names every shard of each surviving quant (rows the
 display rules hide are absent), the projector the generator resolved (no entry
@@ -44,8 +44,8 @@ skips). Provisioning and verification are separate jobs on purpose.
 
 docs/d212's "Leaving audit-only" lists the three exits.
 
-The operator's one shot is `uv run --script llm-local-inference/run_all.py`, and the
-checksum pass is its own tool: `uv run --script llm-local-inference/50-verify-cache.py`.
+The operator's one shot is `uv run llm-local-inference/run_all.py`, and the
+checksum pass is its own tool: `uv run llm-local-inference/50-verify-cache.py`.
 
 - One cache root per run (`HF_HUB_CACHE`): the generator bakes paths against
   it and `run.py` binds it, so a second root is a second run, not a stage.
