@@ -264,7 +264,7 @@ func newSOCKS5ChainProxy(t *testing.T, requireAuth bool) (string, func() []strin
 }
 
 // chainFetch opens one local CONNECT and pulls one response through the
-// relay — the modeEFetch shape with its own body string.
+// relay — the h1PostWindowedFetch shape with its own body string.
 func chainFetch(t *testing.T, httpAddr, targetHost string, upPort uint16) {
 	t.Helper()
 	conn := rawDial(t, httpAddr)
@@ -295,13 +295,13 @@ func newChainUpstream(t *testing.T) *httptest.Server {
 	}))
 }
 
-// TestRelayChainHTTPProxyCarriesTunnel: mode D rides a CONNECT chain. The
+// TestRelayChainHTTPProxyCarriesTunnel: websocket rides a CONNECT chain. The
 // proof the chain was actually used is the proxy's recorded hop — the
 // relay node dials NOTHING around it.
 func TestRelayChainHTTPProxyCarriesTunnel(t *testing.T) {
 	upstream := newChainUpstream(t)
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	backend := modeETestServer(t, upstream)
+	backend := h1PostWindowedTestServer(t, upstream)
 
 	proxyURL, hops := newCONNECTChainProxy(t)
 	clearChainEnv(t)
@@ -356,7 +356,7 @@ func TestRelayChainHTTPProxyCarriesTunnel(t *testing.T) {
 func TestRelayChainSOCKS5ProxyCarriesTunnelModeE(t *testing.T) {
 	upstream := newChainUpstream(t)
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	backend := modeETestServer(t, upstream)
+	backend := h1PostWindowedTestServer(t, upstream)
 	gateway := newHostileGateway(t, backend)
 
 	socksAddr, targets := newSOCKS5ChainProxy(t, false)
@@ -370,7 +370,7 @@ func TestRelayChainSOCKS5ProxyCarriesTunnelModeE(t *testing.T) {
 
 	chainFetch(t, httpAddr, testTargetAlias, upPort)
 
-	waitForLog(t, logBuf, "transport=post")
+	waitForLog(t, logBuf, "transport=h1.1-post-windowed")
 	recorded := targets()
 	tunnelAddr := front.Listener.Addr().String()
 	found := false
@@ -384,7 +384,7 @@ func TestRelayChainSOCKS5ProxyCarriesTunnelModeE(t *testing.T) {
 	}
 }
 
-// TestALPNProbeRidesHTTPChain: mode C's leg — the disposable ALPN probe —
+// TestALPNProbeRidesHTTPChain: h2-post-unbounded's leg — the disposable ALPN probe —
 // also dials through the chain, TLS end-to-end above it.
 func TestALPNProbeRidesHTTPChain(t *testing.T) {
 	backend := newHTTPServer(t, http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))

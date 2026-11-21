@@ -434,10 +434,10 @@ func (c *wsConn) protocolViolation() {
 	_ = c.writeClose(wsCloseProtocolError)
 }
 
-// transport is wss for both directions: mode D is the WebSocket carrier
-// (docs/d077 §4's vocabulary), whatever the cleartext test scheme is called.
+// transport names the carrier for the lifecycle record (docs/d105): the
+// mechanism, never the wire scheme the cleartext test variant happens to use.
 func (c *wsConn) transport() string {
-	return schemeWSS
+	return carrierWebSocket
 }
 
 // writeFrame serializes one frame: client frames masked with fresh random

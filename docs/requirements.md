@@ -65,7 +65,7 @@ left answering nothing that generation asks (docs/d072).
 authenticated relay are deleted (docs/d108). [d188](d188-tunnel-contract.md)
 is the requirements register (end-to-end TLS with no MITM, default-deny
 egress, the loopback client); [d077](d077-ssl-vpn-transport-ladder.md) owns
-the three transports (h2-POST, WebSocket, h1.1-POST) and
+the transport carriers (h2-post-unbounded, WebSocket, h1.1-post-windowed) and
 [d187](d187-tunnel-family-complete-arms-by-default.md) the arming and the
 offer (the whole ladder, chosen per dial; the operator keyset is the arm
 signal, docs/d085/d093). The tunnel's operator credential is mutual
@@ -78,7 +78,7 @@ the one BRD row about the tunnel credential itself; the fuller requirements
 
 > **Direction changed (docs/d108).** FR-S1–FR-S4 (the llama-swap serving path)
 > are paused _for now_: the code keeps working, but no new clients or
-> features. FR-S5's reverse-proxy mode (legacy "mode A") and FR-U2's route
+> features. FR-S5's reverse-proxy mode (legacy allowlist relay) and FR-U2's route
 > substitution are **gone**: a TLS-terminating edge sees plaintext provider
 > keys, so the allowlist relay and the client-side route form were removed
 > outright — generators emit canonical upstream URLs only, and the SSL-VPN

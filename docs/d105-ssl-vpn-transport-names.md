@@ -2,7 +2,7 @@
 id: d105
 type: module-design
 status: active
-title: "d105 — SSL-VPN transports are named by mechanism; A–E are historical labels"
+title: "d105 — SSL-VPN transports are named by mechanism"
 parent: estige
 depends-on: [d073, d077]
 references: [d072, d093, d101]
@@ -46,17 +46,18 @@ Use these canonical names in current prose, requirements, and reference docs:
 | ------------ | ----------------------- | --------------------------------------------------------------------------------------- |
 | A            | **allowlist relay**     | HTTPS reverse proxy keyed by the upstream-host path, deny-by-absence                    |
 | B            | **authenticated relay** | HTTPS path-prefix forward relay, operator-authenticated                                 |
-| C            | **h2-POST tunnel**      | HTTP/2 streaming `POST`; one long-lived request/response body pair per local connection |
-| D            | **WebSocket tunnel**    | HTTP/1.1 WebSocket upgrade carrying the tunnel protocol                                 |
-| E            | **h1.1-POST tunnel**    | HTTP/1.1 `POST` exchanges, stop-and-wait / windowed                                     |
+| C            | **h2-post-unbounded**   | HTTP/2 streaming `POST`; one long-lived request/response body pair per local connection |
+| D            | **websocket**           | HTTP/1.1 WebSocket upgrade carrying the tunnel protocol                                 |
+| E            | **h1.1-post-windowed**  | HTTP/1.1 `POST` exchanges, stop-and-wait / windowed                                     |
+| —            | **h2-post-windowed**    | The same h2 `POST` split into size-bounded windows for a capped edge (d222)             |
 
-- **Letters are historical aliases, not names.** They may appear in a
-  historical decision record while narrating the past, in code constants and
-  wire-adjacent log strings until a separate mechanical rename lands, or in
-  an explicit "formerly mode X" note where a reader needs to connect old
-  text. Current prose must use the canonical names.
+- **Letters are historical aliases, not names.** The mechanical rename has
+  landed: code, logs, current prose and reference docs use the canonical
+  names only. A dated decision record may keep its own letters while
+  recounting its own decision, and an explicit "formerly mode X" note may
+  connect old text; nothing new may introduce a letter.
 - **The tunnel transports are a family, not modes of one thing.** Prefer
-  "tunnel transports" for the C/D/E set. When the whole VPN is meant, use
+  "tunnel carriers" for the set. When the whole VPN is meant, use
   "SSL-VPN transport family" — not "three-mode SSL VPN".
 - **Record IDs and slugs keep their committed spelling.** A slug such as
   `d073-ssl-vpn-three-modes` or `d091-llm-reverse-proxy-gateway-auth-mode-b`
@@ -74,9 +75,11 @@ Use these canonical names in current prose, requirements, and reference docs:
   family — use the canonical names.
 - Older decision records may keep the letters where they are recounting their
   own decision. A record that is still normative must use the canonical names.
-- Code identifiers and log strings follow in a separate mechanical pass; the
-  constant `transportOffer = "cde"` and its wire-adjacent diagnostics stay
-  until then, explicitly as aliases.
+- **The wire-visible carrier value is the name.** The lifecycle record's
+  `transport` field and the relay's carrier log print
+  `h2-post-unbounded`, `websocket`, `h2-post-windowed` or
+  `h1.1-post-windowed`; no short alias exists for a dashboard or a query to
+  drift onto.
 
 ## Consequences
 

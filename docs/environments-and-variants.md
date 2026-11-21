@@ -26,7 +26,7 @@ access or not) and the tree adapts along those functional lines:
 - **docs** live here, under `docs/`
 
 > **Direction (docs/d108).** The llama-swap provider is deprecated for now. The
-> reverse-proxy mode (legacy "mode A", the allowlist relay) is **gone** — it
+> allowlist relay (legacy reverse-proxy shape) is **gone** — it
 > was deprecated as insecure and has been deleted, allowlist and generator
 > included; the SSL-VPN tunnel transports replace it. A host still serving
 > the old shapes below is running a deployment that predates this tree.
@@ -55,8 +55,8 @@ GPU host (local inference only) — two serving processes, one concern each (doc
   llama-swap serves the LOCAL catalog and nothing else — its `peers`/proxy
   config is no longer exercised.
 - `estige/` — the SSL-VPN tunnel node (this folder's own `build.sh`, installed
-  as a service or run directly; docs/d120, LAN **8080**, host networking): the tunnel transports (h2-POST, WebSocket,
-  h1.1-POST; docs/d073/d077/d105) under the single reserved path `/vpn`.
+  as a service or run directly; docs/d120, LAN **8080**, host networking): the tunnel transports (h2-post-unbounded, WebSocket,
+  h1.1-post-windowed; docs/d073/d077/d105) under the single reserved path `/vpn`.
   This is the world-visible port — the tailscale funnel serves the
   `<funnel-id>` route to it — and every other path answers the funnel's
   plain 404: the allowlist `/<upstream-host>/<path>` router that shared it

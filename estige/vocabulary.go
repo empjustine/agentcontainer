@@ -14,15 +14,18 @@ const (
 	schemeWSS    = "wss"
 	schemeSOCKS5 = "socks5"
 
-	// protoHTTP11 is the h1 ALPN token: mode C's downgrade target and mode
-	// E's floor (docs/d077 — offering h2 on E's transport would silently
-	// promote a floor session onto C's plane).
+	// protoHTTP11 is the h1 ALPN token: the h2 carriers' downgrade target and
+	// the h1.1-post-windowed floor (offering h2 there would silently promote
+	// a floor session onto the h2 plane).
 	protoHTTP11 = "http/1.1"
 
-	// transportPOST is the lifecycle log's carrier value for the body
-	// carriers (docs/d077's h2 | wss | post vocabulary). The relay node
-	// can tell C from E by its own plane, but the log stays stable.
-	transportPOST = "post"
+	// Carrier names are mechanism names, never letters (docs/d105): one
+	// spelling per carrier, shared by the lifecycle log, the relay's policy
+	// memory and the exit's admission decisions.
+	carrierH2Unbounded = "h2-post-unbounded"
+	carrierH2Windowed  = "h2-post-windowed"
+	carrierWebSocket   = "websocket"
+	carrierH1Windowed  = "h1.1-post-windowed"
 
 	// envHTTPProxy/envHTTPSProxy are the uppercase spellings the chain parser
 	// reads first and the proxy-env table exports (docs/d094, docs/d130);

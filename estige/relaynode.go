@@ -1,6 +1,6 @@
 // relaynode.go — the relay node (docs/d088; installed as
 // estige-relay.service or the Termux runit service since the packaging change
-// retired the POSIX launchers), modes C–E: the loopback-only local proxy
+// retired the POSIX launchers): the loopback-only local proxy
 // feeding one authenticated tunnel
 // (docs/d073 §7: VPN-R23..R27, §5.1: VPN-R11).
 //
@@ -79,6 +79,13 @@ type relayConfig struct {
 	// main before this config is built. Empty means no forwarding.
 	forwards []forwardSpec
 }
+
+// h2Posture values: the zero value is "not yet discovered".
+const (
+	h2PostureUnknown int32 = iota
+	h2PostureUnbounded
+	h2PostureWindowed
+)
 
 // relayConfigFromEnv assembles the config from the flag values and the
 // environment. Nothing else may configure the relay node (one path, no
@@ -268,7 +275,7 @@ func (cfg *relayConfig) validate() error {
 	if cfg.token == "" {
 		return fmt.Errorf("no operator token configured; refusing to start (%s)", envOperatorToken)
 	}
-	// The relay is the side that WRITES this token into a header — mode D's
+	// The relay is the side that WRITES this token into a header — websocket's
 	// hand-rolled handshake interpolates it with fmt.Fprintf (websocket.go
 	// wsDial), so a CR/LF here would inject headers into our own request.
 	// The length floor and the control-character refusal are the same rule the
@@ -322,6 +329,11 @@ type relayNode struct {
 	cfg     relayConfig
 	live    liveRegistry // in-flight tunnels (docs/d106: state, not a lifetime total)
 	lastErr atomic.Value // string: last tunnel failure, for /healthz
+	// h2Posture is what the exit's edge port has taught this process about
+	// h2-post-unbounded (docs/d222): unknown until the first dial, then
+	// unbounded or windowed. It is the relay's whole per-edge configuration —
+	// the exit's port role is the fact, and one refusal is the discovery.
+	h2Posture atomic.Int32
 }
 
 // tunnelDial is the one TCP leg every carrier's dial rides (docs/d094):
@@ -361,9 +373,10 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 	// The log shows WHICH tunnel endpoint (host only): the path embeds the
 	// capability prefix, which must not land in any log (VPN-R44).
 	// The log shows WHICH carriers are on offer (d077 §4): the ladder is
-	// constant (docs/d093), so this line states a fact, not a config.
-	logLine(sevInfo, "[vpn-relay] listeners http=%s socks5=%s tunnel=%s://%s modes=%s",
-		proxyLn.Addr(), socksLn.Addr(), cfg.tunnelURL.Scheme, cfg.tunnelURL.Host, transportOffer)
+	// constant (docs/d093), so this line states a fact, not a config. The
+	// exit's edge port decides the h2 half at the first dial (docs/d222).
+	logLine(sevInfo, "[vpn-relay] listeners http=%s socks5=%s tunnel=%s://%s carriers=%s",
+		proxyLn.Addr(), socksLn.Addr(), cfg.tunnelURL.Scheme, cfg.tunnelURL.Host, carrierOffer)
 	if cfg.chain != nil {
 		// Host only — userinfo in a proxy URL is a credential (VPN-R44's
 		// law applied to the chain, docs/d094).
@@ -494,73 +507,101 @@ func deniedReason(reason string) bool {
 // Success returns a live, unmuxed tunnel (VPN-R17: one wss per CONNECT in
 // v2 — no session reuse yet, so every local connection pays one handshake;
 // the v3 mux is what removes that).
-// transportOffer is the full transport ladder, in rank order (docs/d077
-// §4). It is deliberately a constant: mode selection is the relay node's
-// per-dial ranking of what the endpoint actually offers, and an operator
-// override could only ever degrade the ladder — the -modes/MODES knob
-// retired with docs/d093.
-const transportOffer = "cde"
+// carrierOffer is the full ladder in rank order (docs/d077 §4), spelled
+// with carrier names (d105) rather than letters. It is deliberately a
+// constant: selection is the relay node's per-dial ranking of what the
+// endpoint actually offers, and an operator override could only ever degrade
+// the ladder — the -modes/MODES knob retired with docs/d093.
+const carrierOffer = "h2-post-unbounded, websocket, h2-post-windowed, h1.1-post-windowed"
 
 // dialTransport chooses the session's carrier from what the endpoint
-// actually supports (docs/d077 §4, "negotiation, not path"): the whole
-// ladder is offered — the constant transportOffer (docs/d093) — ALPN
-// decides h2 versus http/1.1, the upgrade probe separates D from E, and a
-// mode that fails routes around to the next built mode as if it were
-// censorship (d081's amendment: E is the floor, so a refused upgrade is no
-// longer "no mode left" — it demotes). The fallback never retries in a way
-// that would reveal intent, and with nothing left it fails closed
-// (VPN-R26).
+// actually supports (docs/d077 §4, "negotiation, not path"): the ladder is
+// constant (docs/d093) — ALPN decides h2 versus http/1.1, the upgrade probe
+// separates the WebSocket from the h1.1 windows, and a carrier that fails
+// routes around to the next built one as if it were censorship. The fallback
+// never retries in a way that would reveal intent, and with nothing left it
+// fails closed (VPN-R26).
+//
+// The h2 half is learned, not configured (docs/d222): the relay offers
+// h2-post-unbounded first, and an exit port serving a capped edge refuses it
+// at request initiation. One refusal switches this process to the order
+// websocket → h2-post-windowed → h1.1-post-windowed, and the posture is
+// remembered so later CONNECTs pay nothing. An uncapped edge never refuses,
+// so it keeps the lowest-overhead carrier first.
 func (c *relayNode) dialTransport(ctx context.Context, id string) (tunnelStream, error) {
 	var attempts []string
-	var cErr error
-	record := func(mode string, err error) {
-		attempts = append(attempts, fmt.Sprintf("%s: %v", mode, err))
+	record := func(carrier string, err error) {
+		attempts = append(attempts, fmt.Sprintf("%s: %v", carrier, err))
 	}
-	dial := c.tunnelDial()
-	proto, err := alpnNegotiate(ctx, c.cfg.tunnelURL, []string{"h2", protoHTTP11}, dial, c.cfg.insecureExit)
-	if err == nil && proto == "h2" {
-		s, err := c.openPOST(ctx, id, c.cfg.insecureExit)
+	posture := c.h2Posture.Load()
+	if posture != h2PostureWindowed {
+		s, err := c.openH2Carrier(ctx, id, false)
 		if err == nil {
-			logLine(sevInfo, "[vpn-relay] tunnel transport=%s", s.transport())
+			c.h2Posture.Store(h2PostureUnbounded)
+			logLine(sevInfo, "[vpn-relay] tunnel carrier=%s", s.transport())
 			return s, nil
 		}
-		record("mode C", err)
-		cErr = err
-	} else if err != nil {
-		// The ALPN probe itself failed (TLS refused, host down): D and E
-		// share the same endpoint, so recording it costs nothing and the
-		// composite error below stays honest about what was tried.
-		record("mode C ALPN", err)
+		record(carrierH2Unbounded, err)
+		if errors.Is(err, errUnboundedRefused) {
+			c.h2Posture.Store(h2PostureWindowed)
+			logLine(sevInfo, "[vpn-relay] the exit refused h2-post-unbounded at request initiation; this edge port uses the windowed carriers")
+		} else {
+			logLine(sevWarn, "[vpn-relay] h2-post-unbounded failed (%v); trying websocket", err)
+		}
 	}
-	// No h2 landed is the ordinary h1 case — or a cleartext plane, where
-	// the C rung is unreachable — mode D below, logged by its own
-	// transport= line. A failed POST is worth saying out loud: it means
-	// the edge answered h2 but not the session (d077 §4 — route around
-	// it as if it were censorship).
-	if cErr != nil {
-		logLine(sevWarn, "[vpn-relay] mode C failed (%v), falling back to mode D", cErr)
-	}
-	hdr := make(http.Header)
-	hdr.Set("Authorization", "Bearer "+c.cfg.token)
-	hdr.Set(sessionIDHeader, id)
-	ws, err := wsDial(ctx, c.cfg.tunnelURL, hdr, dial, c.cfg.insecureExit)
+	ws, err := c.openWebSocket(ctx, id)
 	if err == nil {
-		logLine(sevInfo, "[vpn-relay] tunnel transport=%s", ws.transport())
+		logLine(sevInfo, "[vpn-relay] tunnel carrier=%s", ws.transport())
 		return ws, nil
 	}
-	record("mode D", err)
-	logLine(sevWarn, "[vpn-relay] mode D failed (%v), falling back to mode E", err)
-	s, err := c.openExchange(ctx, id, c.cfg.insecureExit)
+	record(carrierWebSocket, err)
+	logLine(sevWarn, "[vpn-relay] websocket failed (%v); trying h2-post-windowed", err)
+
+	s, err := c.openH2Carrier(ctx, id, true)
 	if err == nil {
-		logLine(sevInfo, "[vpn-relay] tunnel transport=%s", s.transport())
+		logLine(sevInfo, "[vpn-relay] tunnel carrier=%s", s.transport())
 		return s, nil
 	}
-	record("mode E", err)
+	record(carrierH2Windowed, err)
+	logLine(sevWarn, "[vpn-relay] h2-post-windowed failed (%v); trying h1.1-post-windowed", err)
+
+	s, err = c.openH1Windowed(ctx, id, c.cfg.insecureExit)
+	if err == nil {
+		logLine(sevInfo, "[vpn-relay] tunnel carrier=%s", s.transport())
+		return s, nil
+	}
+	record(carrierH1Windowed, err)
 	if len(attempts) == 1 {
 		return nil, errors.New(attempts[0])
 	}
-	return nil, fmt.Errorf("no offered mode survived (fail-closed VPN-R26): %s",
+	return nil, fmt.Errorf("no offered carrier survived (fail-closed VPN-R26): %s",
 		strings.Join(attempts, "; "))
+}
+
+// openH2Carrier probes ALPN and opens one of the h2 POST carriers. The probe
+// is one TLS handshake the session does not reuse — the carriers dial fresh,
+// as d077 §4 requires for carrier selection.
+func (c *relayNode) openH2Carrier(ctx context.Context, id string, windowed bool) (tunnelStream, error) {
+	proto, err := alpnNegotiate(ctx, c.cfg.tunnelURL, []string{"h2", protoHTTP11}, c.tunnelDial(), c.cfg.insecureExit)
+	if err != nil {
+		return nil, fmt.Errorf("ALPN probe: %w", err)
+	}
+	if proto != "h2" {
+		return nil, fmt.Errorf("h2 not offered (ALPN %q)", proto)
+	}
+	if windowed {
+		return c.openH2Windowed(ctx, id, c.cfg.insecureExit)
+	}
+	return c.openH2Unbounded(ctx, id, c.cfg.insecureExit)
+}
+
+// openWebSocket is the WebSocket rung, extracted so every ladder shares one
+// handshake spelling.
+func (c *relayNode) openWebSocket(ctx context.Context, id string) (tunnelStream, error) {
+	hdr := make(http.Header)
+	hdr.Set("Authorization", "Bearer "+c.cfg.token)
+	hdr.Set(sessionIDHeader, id)
+	return wsDial(ctx, c.cfg.tunnelURL, hdr, c.tunnelDial(), c.cfg.insecureExit)
 }
 
 func (c *relayNode) openTunnel(ctx context.Context, target string) (tunnelStream, error) {

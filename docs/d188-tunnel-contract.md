@@ -47,10 +47,17 @@ MITMs.
 
 ## The protocol
 
-- **VPN-R11** — The transport is the ladder (d077): h2-POST preferred, then
-  WebSocket, then h1.1-POST, chosen by protocol negotiation on the one `/vpn`
-  path, never by the HTTP `CONNECT` method. The offer is the whole ladder
-  (d187).
+- **VPN-R11** — The transport is the ladder (d077): **h2-post-unbounded**
+  preferred, then **websocket**, then **h1.1-post-windowed**, chosen by
+  protocol negotiation on the one `/vpn` path, never by the HTTP `CONNECT`
+  method. The offer is the whole ladder (d187); carriers are named by
+  mechanism, never by letters (d105). An edge that caps a single request body
+  gets a second exit port whose requests refuse h2-post-unbounded at request
+  initiation (d222): the relay learns that posture from one refusal and ranks
+  websocket, then **h2-post-windowed**, then h1.1-post-windowed. The ladder is
+  still one offer, not an operator selection. The exit serves one port per
+  edge (`PORT`, and optionally `PORT_CLOUDFLARE`, docs/d222) and decides a
+  request's edge from its own listening port, never from a request header.
 - **VPN-R15** — The framing is a small, versioned, documented protocol,
   implementable in Go and Node with no third-party dependency.
 - **VPN-R16** — Control frames cover `HELLO`/`HELLO_OK`, `CONNECT`,

@@ -1,4 +1,4 @@
-// tunnelproto.go — the tunnel's application-layer protocol (modes C–E)
+// tunnelproto.go — the tunnel's application-layer protocol (carriers)
 // (docs/d073 §5.2: VPN-R15..R19, VPN-R39).
 //
 // The transport under this protocol is one WebSocket per CONNECT (VPN-R17),
@@ -8,8 +8,8 @@
 // change (and makes the mux a field addition, not a redesign — the stream id
 // is reserved from version 1 exactly so VPN-R17's v3 mux is additive).
 // Each mode adapts its carrier to the tunnelStream interface below: one
-// frame rides in one WebSocket binary message (mode D), or is delimited by
-// its own length prefix inside an HTTP body (mode C — docs/d077 §5).
+// frame rides in one WebSocket binary message (websocket), or is delimited by
+// its own length prefix inside an HTTP body (h2-post-unbounded — docs/d077 §5).
 //
 // Authentication does NOT appear here (VPN-R12): credentials ride the
 // WebSocket handshake header, so by the time a HELLO is decoded the peer is
@@ -75,8 +75,8 @@ const (
 var ErrProtocol = errors.New("tunnel protocol error")
 
 // tunnelStream is one session's transport carrier (docs/d077 §5): the
-// WebSocket message pipe of mode D today, the HTTP request/response bodies
-// of mode C. Every phase — HELLO, CONNECT, the relay — speaks only this, so
+// WebSocket message pipe of websocket today, the HTTP request/response bodies
+// of h2-post-unbounded. Every phase — HELLO, CONNECT, the relay — speaks only this, so
 // a new mode is an implementation and zero session logic. readTunnelMsg and
 // writeTunnelMsg each carry exactly ONE complete encoded frame; the frame
 // layer decides nothing about message boundaries, so a carrier without them

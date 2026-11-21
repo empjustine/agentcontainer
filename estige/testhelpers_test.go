@@ -1,6 +1,6 @@
 package main
 
-// testhelpers_test.go — shared scaffolding for the tunnel suite (modes C–E). Helpers
+// testhelpers_test.go — shared scaffolding for the tunnel suite (carriers). Helpers
 // live in one file so no single test file grows a private dialect of
 // "start a server, poke it, read the log" (d072's drift lesson, applied to
 // tests).
@@ -147,7 +147,7 @@ func TestMain(m *testing.M) {
 }
 
 // newTLSFront is a TLS reverse proxy to backend on the suite root: h2 at the
-// edge when enableHTTP2 (mode C's E2 shape), h1-only otherwise (the
+// edge when enableHTTP2 (h2-post-unbounded's E2 shape), h1-only otherwise (the
 // upgrade-stripping hostile gateway the demotion ladder needs).
 func newTLSFront(t *testing.T, backend *httptest.Server, enableHTTP2 bool) *httptest.Server {
 	t.Helper()

@@ -33,7 +33,7 @@ func (s *stubStream) readTunnelMsg() ([]byte, error)  { return nil, os.ErrClosed
 func (s *stubStream) writeTunnelMsg([]byte) error     { return os.ErrClosed }
 func (s *stubStream) setReadDeadline(time.Time) error { return nil }
 func (s *stubStream) protocolViolation()              {}
-func (s *stubStream) transport() string               { return transportPOST }
+func (s *stubStream) transport() string               { return carrierH2Unbounded }
 func (s *stubStream) sessionID() string               { return s.id }
 func (s *stubStream) Close() error {
 	s.once.Do(func() { close(s.closed) })
@@ -63,11 +63,11 @@ func TestSessionRecordPairsIDAndOmitsSecrets(t *testing.T) {
 	id := strings.Repeat("ab", 16)
 	sessionRecord{
 		Role: roleExit, Event: eventOpen, ID: id, Key: "default",
-		Label: "deck", Via: viaConnect, Transport: transportPOST, Target: "api.example:443",
+		Label: "deck", Via: viaConnect, Transport: carrierH2Unbounded, Target: "api.example:443",
 	}.emit()
 	sessionRecord{
 		Role: roleExit, Event: eventClose, ID: id, Key: "default",
-		Label: "deck", Via: viaConnect, Transport: transportPOST, Target: "api.example:443",
+		Label: "deck", Via: viaConnect, Transport: carrierH2Unbounded, Target: "api.example:443",
 		Up: 10, Down: 20, Duration: 5, Outcome: outcomeClosed,
 	}.emit()
 
@@ -185,7 +185,7 @@ func dialUnixgram(t *testing.T, path string) net.Conn {
 func TestStatusSurfaceReportsInFlightAndDropsOnClose(t *testing.T) {
 	s := &server{vpn: &tunnelServer{live: newLiveRegistry()}}
 	stream := newStubStream(strings.Repeat("cd", 16))
-	live := &liveSession{id: stream.id, keyID: "default", label: "deck", via: viaConnect, target: "example:443", transport: transportPOST, start: time.Now(), stream: stream}
+	live := &liveSession{id: stream.id, keyID: "default", label: "deck", via: viaConnect, target: "example:443", transport: carrierH2Unbounded, start: time.Now(), stream: stream}
 	s.vpn.live.register(live)
 
 	req := httptest.NewRequestWithContext(context.Background(), "GET", "/status", nil)

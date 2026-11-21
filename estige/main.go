@@ -1,4 +1,4 @@
-// estige — the SSL-VPN tunnel transports (docs/d073/d077, modes C–E).
+// estige — the SSL-VPN tunnel transports (docs/d073/d077, carriers).
 //
 // One binary, two network positions (docs/d088): the EXIT node terminates
 // tunnels at the edge and opens egress under the policy the operator reviews;
@@ -10,7 +10,7 @@
 // its env file and execs this binary; `proxy-env` is the only verb left for
 // the operator's shell (docs/d095).
 //
-// The v2 host-allowlist reverse proxy (docs/d047, legacy "mode A") is gone
+// The v2 host-allowlist reverse proxy (docs/d047, legacy allowlist relay) is gone
 // (docs/d108): a TLS-terminating edge sees plaintext provider keys, and no
 // credential scheme fixes that (d073's trust table). What survives of it is
 // the plumbing the tunnel shares — the collector 404 (VPN-R34) and the
@@ -33,7 +33,7 @@ import (
 	"time"
 )
 
-// Tunnel environment surface (modes C–E; docs/d073 §6.3/§7): credentials
+// Tunnel environment surface (carriers; docs/d073 §6.3/§7): credentials
 // arrive ONLY through this path — the ./environment.sh env chain. A file
 // would be a second, unkeyed copy of a credential (VPN-R32), and d108 removed
 // the last file the binary read rather than keep a policy-shaped exception.
@@ -54,6 +54,12 @@ const (
 	// envTunnelEgress is the exit node's policy half (VPN-R38): parsed by
 	// egressFromEnv, unset meaning the requirement's defaults.
 	envTunnelEgress = "VPN_TUNNEL_EGRESS"
+	// envCloudflarePort is the exit node's second bind: the port whose
+	// connector (cloudflared) fronts an edge that caps one request body
+	// (docs/d222). Requests arriving on it have h2-post-unbounded refused at
+	// request initiation, and only the windowed carriers are served. Unset
+	// means the exit serves one edge only.
+	envCloudflarePort = "PORT_CLOUDFLARE"
 )
 
 // operatorCredentialInEnv reports whether the env chain carries an operator
@@ -79,17 +85,39 @@ func operatorCredentialInEnv() bool {
 // A value that is not a bare port number is refused by name: "0.0.0.0:8080"
 // or "8080/tcp" would otherwise reach ListenAndServe as a garbled address
 // whose error names the socket, not the variable the operator set.
-func portFromEnv() string {
-	port := os.Getenv("PORT")
+func portFromEnv() string { return bindPort("PORT", "8080") }
+
+// bindPort validates a bare port number and returns the listen address. A
+// value that is not a bare port is refused by name: "0.0.0.0:8080" or
+// "8080/tcp" would otherwise reach ListenAndServe as a garbled address whose
+// error names the socket, not the variable the operator set.
+func bindPort(name, fallback string) string {
+	port := os.Getenv(name)
 	if port == "" {
-		return ":8080"
+		port = fallback
 	}
 	for _, r := range port {
 		if r < '0' || r > '9' {
-			fatalLine("[estige] PORT=%q is not a port number (docs/d110)", port)
+			fatalLine("[estige] %s=%q is not a port number (docs/d110)", name, port)
 		}
 	}
 	return ":" + port
+}
+
+// cloudflarePortFromEnv resolves the exit node's second bind, whose connector
+// fronts an edge that caps one request body (docs/d222). Empty means the exit
+// serves one edge.
+func cloudflarePortFromEnv() string {
+	port := os.Getenv(envCloudflarePort)
+	if port == "" {
+		return ""
+	}
+	for _, r := range port {
+		if r < '0' || r > '9' {
+			fatalLine("[estige] %s=%q is not a port number", envCloudflarePort, port)
+		}
+	}
+	return port
 }
 
 // ---------------------------------------------------------------------------
@@ -322,7 +350,7 @@ func accessURI(r *http.Request) string {
 // writeFunnel404 answers every 404 this node can produce the way the
 // tailscale funnel in front of it does: a bare, plain-text Go "404 page not
 // found". Every path outside the tunnel namespace lands here — garbage, a
-// stale reverse-proxy route from an older deployment, AND mode C's
+// stale reverse-proxy route from an older deployment, AND h2-post-unbounded's
 // unauthenticated tunnel probes. A JSON error body (even an RFC 9457 one)
 // would act as a probe oracle, confirming "custom software lives here";
 // whatever gets through the funnel must learn nothing (docs/d073
@@ -349,6 +377,25 @@ type server struct {
 	// "this process does not do that" — every path then answers the funnel's
 	// 404 (docs/d073 VPN-R2/R34).
 	vpn *tunnelServer
+	// cloudflarePort identifies the second, capped-edge listener by its bare
+	// port number (docs/d222). Detection reads the request's own local
+	// address, so no header or per-request config participates.
+	cloudflarePort string
+}
+
+// windowedOnly reports whether this request arrived on the capped edge's
+// port. The request's local address is the listener's, which is the fact the
+// exit serves, so a connector cannot lie about its edge by sending a header.
+func (s *server) windowedOnly(r *http.Request) bool {
+	if s.cloudflarePort == "" {
+		return false
+	}
+	la, ok := r.Context().Value(http.LocalAddrContextKey).(net.Addr)
+	if !ok {
+		return false
+	}
+	_, port, err := net.SplitHostPort(la.String())
+	return err == nil && port == s.cloudflarePort
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -357,7 +404,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// from the deleted allowlist deployment gets: the route it still carries
 	// is dead, and it learns nothing about why (docs/d108).
 	if s.vpn != nil && s.vpn.isTunnelPath(r.URL.Path) {
-		s.vpn.serveTunnel(w, r)
+		s.vpn.serveTunnel(w, r, s.windowedOnly(r))
 		return
 	}
 	writeFunnel404(w, r)
@@ -396,7 +443,7 @@ func main() {
 	// process is always a mix of client, server, and both proxy shapes, so
 	// only network position discriminates.
 	showVersion := flag.Bool("version", false, "print the version and exit")
-	mode := flag.String("mode", "exit", "process role: \"exit\" (the exit node: funnel front + tunnel server) or \"relay\" (the relay node: loopback CONNECT/SOCKS5 proxy feeding the tunnel, modes C–E; docs/d073 §7, docs/d088)")
+	mode := flag.String("mode", "exit", "process role: \"exit\" (the exit node: funnel front + tunnel server) or \"relay\" (the relay node: loopback CONNECT/SOCKS5 proxy feeding the tunnel, carriers; docs/d073 §7, docs/d088)")
 	proxyListen := flag.String("proxy-listen", "127.0.0.1:3128", "relay role: loopback HTTP CONNECT listener")
 	socksListen := flag.String("socks-listen", "127.0.0.1:1080", "relay role: loopback SOCKS5 listener")
 	// Address targets stay refused at the relay's own doors until asked
@@ -433,7 +480,7 @@ func main() {
 	// keeps the stream line byte for byte.
 	installLogSink()
 
-	// Relay node (docs/d073 §7, modes C–E, docs/d088): a separate role with its
+	// Relay node (docs/d073 §7, carriers, docs/d088): a separate role with its
 	// own contract — no allowlist config, and failing BEFORE any bind on bad
 	// or missing env IS the kill switch (VPN-R26): a listener that could
 	// start without a credential would only exist to refuse everything anyway.
@@ -483,13 +530,17 @@ func main() {
 	// (env PORT, docs/d110). d104's role store becomes the home for the
 	// policy half; until it lands, the env is the whole surface.
 	bind := portFromEnv()
+	cfPort := cloudflarePortFromEnv()
+	if cfPort != "" && bind == ":"+cfPort {
+		fatalLine("[estige] %s must not repeat PORT: one port cannot serve both edge roles", envCloudflarePort)
+	}
 	if *statusListen != "" {
 		if err := requireLoopback(*statusListen); err != nil {
 			fatalLine("[estige] status listener: %v", err)
 		}
 	}
 
-	s := &server{}
+	s := &server{cloudflarePort: cfPort}
 	armed := operatorCredentialInEnv()
 	if armed {
 		egress, err := egressFromEnv()
@@ -508,25 +559,36 @@ func main() {
 		fatalLine("[estige] nothing to serve: no operator credential in the env (docs/d084)")
 	}
 
-	srv := &http.Server{
-		Addr: bind,
-		// Only guard against slowloris-style clients. Everything else is left
-		// unlimited: LLM streams can legitimately run for many minutes.
-		ReadHeaderTimeout: 30 * time.Second,
-		// The tunnel's own headers are a handful of short fields. Go's 1 MiB
-		// default is an unnecessary public-face allocation budget.
-		MaxHeaderBytes: 1 << 14,
-		// IdleTimeout is the one terminator that is safe to enable: it bounds
-		// how long a connection may sit with NO request in flight, so it never
-		// touches a live session (which is always either reading a window or
-		// flushing one) and it reaps the half-open sockets ReadHeaderTimeout
-		// alone leaves parked between requests. Deliberately generous for the
-		// same reason the other knobs are unset.
-		IdleTimeout: 5 * time.Minute,
-		Handler:     s,
+	newServer := func(addr string) *http.Server {
+		return &http.Server{
+			Addr: addr,
+			// Only guard against slowloris-style clients. Everything else is
+			// left unlimited: LLM streams can legitimately run for minutes.
+			ReadHeaderTimeout: 30 * time.Second,
+			// The tunnel's own headers are a handful of short fields. Go's
+			// 1 MiB default is an unnecessary public-face allocation budget.
+			MaxHeaderBytes: 1 << 14,
+			// IdleTimeout is the one terminator that is safe to enable: it
+			// bounds how long a connection may sit with NO request in flight,
+			// so it never touches a live session (which is always either
+			// reading a window or flushing one) and it reaps the half-open
+			// sockets ReadHeaderTimeout alone leaves parked between requests.
+			IdleTimeout: 5 * time.Minute,
+			Handler:     s,
+		}
 	}
-
-	logLine(sevInfo, "[estige] listening on %s; tunnel at %s", bind, tunnelPath)
+	srv := newServer(bind)
+	var cfSrv *http.Server
+	if cfPort != "" {
+		cfSrv = newServer(":" + cfPort)
+	}
+	// One port per edge (docs/d222): the first is the Funnel face, where the
+	// lowest-overhead h2 carrier is allowed; the second is the port a capped
+	// edge's connector points at, where it is refused at initiation.
+	logLine(sevInfo, "[estige] listening on %s (tailscale edge: h2-post-unbounded allowed); tunnel at %s", bind, tunnelPath)
+	if cfSrv != nil {
+		logLine(sevInfo, "[estige] listening on :%s (cloudflare edge: h2-post-unbounded refused; windowed carriers only)", cfPort)
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -538,8 +600,11 @@ func main() {
 		go serveStatus(*statusListen, s)
 	}
 
-	serveErr := make(chan error, 1)
+	serveErr := make(chan error, 2)
 	go func() { serveErr <- srv.ListenAndServe() }()
+	if cfSrv != nil {
+		go func() { serveErr <- cfSrv.ListenAndServe() }()
+	}
 	select {
 	case err := <-serveErr:
 		fatalLine("[estige] %v", err)
@@ -554,10 +619,13 @@ func main() {
 		deadline, cancel := context.WithTimeout(context.Background(), drainGrace)
 		defer cancel()
 		// Shutdown closes the listeners immediately (no new session) and
-		// waits for the handlers net/http knows about. Mode D sessions are
-		// hijacked and therefore invisible to it, so the live registry is
-		// the real wait: both carriers must reach zero, or the deadline.
+		// waits for the handlers net/http knows about. Hijacked sessions are
+		// invisible to it, so the live registry is the real wait: every
+		// carrier must reach zero, or the deadline.
 		go func() { _ = srv.Shutdown(deadline) }()
+		if cfSrv != nil {
+			go func() { _ = cfSrv.Shutdown(deadline) }()
+		}
 		s.drainTunnelSessions(drainGrace)
 		<-time.After(300 * time.Millisecond)
 		logLine(sevInfo, "[estige] drained")

@@ -218,7 +218,7 @@ func keyOrDash(key string) string {
 }
 
 // newSessionID mints the per-session correlation id docs/d106 defines: 16
-// random bytes as 32 lowercase hex, the shape mode E already puts on the wire
+// random bytes as 32 lowercase hex, the shape h1.1-post-windowed already puts on the wire
 // as a W3C trace-id (and the shape its parser accepts).
 func newSessionID() (string, error) {
 	var b [16]byte

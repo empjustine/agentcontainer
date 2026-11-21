@@ -35,7 +35,7 @@ namespace and no ordering question left to get wrong (VPN-R42).
 **Every other path answers the identical tailscale-funnel 404** — plain-text
 `404 page not found` (Go-default body, `text/plain; charset=utf-8`, `nosniff`).
 That includes `/`, garbage, a stale reverse-proxy route from an older
-deployment, and mode C's unauthenticated tunnel probes. No JSON, no URN, no
+deployment, and h2-post-unbounded's unauthenticated tunnel probes. No JSON, no URN, no
 distinctive header: a differential body would confirm to a prober that custom
 software lives here, and a client from the deleted deployment learns nothing
 about why its old route stopped working. Mistakes are debugged from the

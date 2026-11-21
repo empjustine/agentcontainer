@@ -1,10 +1,10 @@
-// tunnelserver.go — the tunnel's server role (modes C–E): the /vpn namespace
+// tunnelserver.go — the tunnel's server role: the /vpn namespace
 // (docs/d073 §5: VPN-R11..R22, §8: VPN-R31..R34).
 //
 // Dispatch is by path only (VPN-R42): main's ServeHTTP hands this handler
 // exactly the tunnel path and answers the camouflage 404 to everything else —
 // the namespace is the whole edge now that d108 retired the allowlist reverse
-// proxy (legacy "mode A"), so there is no second surface to stay
+// proxy (legacy allowlist relay), so there is no second surface to stay
 // indistinguishable from; what remains is that enabling or disabling the
 // tunnel is invisible from outside (both states answer the same 404,
 // VPN-R34/R2).
@@ -80,12 +80,13 @@ func (k *operatorKey) policyOr(def *egressPolicy) *egressPolicy {
 type tunnelServer struct {
 	keys   []operatorKey
 	egress *egressPolicy
-	// sessions is the mode E per-trace-id registry (d077 §3/§4, d081's
-	// amendment): minted by span-1 windows, self-removing on session close.
+	// sessions is the per-trace-id registry the two windowed POST carriers
+	// share (d077 §3/§4, d081's amendment, docs/d222): minted by span-1
+	// windows, self-removing on session close.
 	sessions *exchangeSessions
 
 	// live is every admitted session, in every carrier. It is the status
-	// surface and the drain's work list (docs/d106): the mode E registry
+	// surface and the drain's work list (docs/d106): the h1.1-post-windowed registry
 	// knows only its own carrier, and net/http tracks no hijacked conn.
 	live liveRegistry
 }
@@ -147,7 +148,15 @@ func matchOperatorKey(r *http.Request, keys []operatorKey) *operatorKey {
 // serveTunnel takes a tunnel-path request to either a live session or
 // camouflage 404 — it never returns a response that distinguishes "wrong
 // credential" from "wrong path" (VPN-R34).
-func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
+func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2UnboundedRefused bool) {
+	// Every POST carrier's relay waits for the response before writing a
+	// byte, so an early refusal must not let net/http's h1.1 server drain the
+	// still-open body first — the two sides would wait on each other. Full
+	// duplex makes every response path (auth refusal, camouflage 404,
+	// carrier switch) safe to write immediately.
+	if r.Method == http.MethodPost {
+		_ = http.NewResponseController(w).EnableFullDuplex()
+	}
 	// Factor 1 first: an unknown credential must not even learn whether
 	// /<prefix>/vpn exists as a route (VPN-R12: rejected before any 101).
 	key := matchOperatorKey(r, t.keys)
@@ -165,19 +174,24 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 			id = minted
 		}
 	}
-	// Mode C/E arrival (docs/d077 §4): an authenticated POST with no
-	// upgrade is a body session — no 101, no hijack — and traceparent
-	// presence is what separates the two shapes: a windowed mode E exchange
-	// carries its demux key (d081's amendment — E built), an unbroken
-	// request does not and gets mode C's long-lived stream. The per-request
-	// bearer above is their whole auth (d077 §5: the credential rides every
-	// request, since a body session has no handshake header of its own).
+	// Body-carrier arrival (docs/d077 §4, docs/d222): an authenticated POST
+	// with no upgrade is a body session — no 101, no hijack. The window
+	// header is h2-post-windowed's discriminator and rides with traceparent,
+	// so it is checked first; traceparent alone is h1.1-post-windowed's
+	// window; neither is h2-post-unbounded's single long-lived request. The
+	// per-request bearer above is their whole auth (d077 §5: the credential
+	// rides every request, since a body session has no handshake header of
+	// its own).
 	if r.Method == http.MethodPost && !headerHasToken(r.Header, "Upgrade", "websocket") {
-		if r.Header.Get("Traceparent") != "" {
-			t.serveTunnelExchange(w, r, key)
+		if r.Header.Get(windowHeader) != "" {
+			t.serveH2Window(w, r, key)
 			return
 		}
-		t.serveTunnelPOST(w, r, key, id)
+		if r.Header.Get("Traceparent") != "" {
+			t.serveH1Window(w, r, key)
+			return
+		}
+		t.serveH2Unbounded(w, r, key, id, h2UnboundedRefused)
 		return
 	}
 	// Factor 2: the request must actually be a v13 websocket upgrade with a
@@ -225,14 +239,27 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request) {
 	go t.runSession(context.WithoutCancel(r.Context()), ws, key)
 }
 
-// serveTunnelPOST runs a mode C session (docs/d077 §3): the response
-// headers are the session-open signal, and unlike the 101 path the handler
-// must stay alive for the whole session — returning would end the response
-// body that carries it. Attribution happens at the same point the 101 path
-// does it: after auth, before any session work (docs/d078 §5).
-func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, key *operatorKey, id string) {
+// serveH2Unbounded runs an h2-post-unbounded session (docs/d077 §3): the
+// response headers are the session-open signal, and unlike the 101 path the
+// handler must stay alive for the whole session — returning would end the
+// response body that carries it. Attribution happens at the same point the
+// 101 path does it: after auth, before any session work (docs/d078 §5).
+func (t *tunnelServer) serveH2Unbounded(w http.ResponseWriter, r *http.Request, key *operatorKey, id string, refused bool) {
 	lw := &loggingResponseWriter{ResponseWriter: w, start: time.Now()}
-	p := &postStream{r: r, w: lw, id: id}
+	// The port decides, not a per-request header (docs/d222): the exit
+	// serves an edge whose connector caps a single request body, and on that
+	// port this carrier is structurally unable to finish a session — the
+	// edge rejects the body mid-stream, after the session started. The
+	// refusal lands at request initiation, before the body is read, so the
+	// relay can learn the port's posture from one cheap response.
+	if refused {
+		writeProblem(lw, r, http.StatusBadRequest, "h2-post-unbounded-refused",
+			"This port serves a capped edge: h2-post-unbounded is refused",
+			errors.New("use h2-post-windowed; the relay discovers this refusal"))
+		logAccess(r, http.StatusBadRequest, lw.size, lw.start)
+		return
+	}
+	p := &h2UnboundedServerStream{r: r, w: lw, id: id}
 	defer func() { _ = p.Close() }()
 
 	// This response is the session-open signal: it must go out before the
@@ -244,7 +271,7 @@ func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, k
 	if err := http.NewResponseController(lw).EnableFullDuplex(); err != nil {
 		// Fail loudly: without full duplex the session would open and then
 		// hang, which reads as network loss rather than a defect (NFR-2).
-		logLine(sevError, "[estige] tunnel mode C: full duplex unavailable: %v", err)
+		logLine(sevError, "[estige] tunnel h2-post-unbounded: full duplex unavailable: %v", err)
 		lw.WriteHeader(http.StatusInternalServerError)
 		logAccess(r, http.StatusInternalServerError, lw.size, lw.start)
 		return
@@ -261,14 +288,14 @@ func (t *tunnelServer) serveTunnelPOST(w http.ResponseWriter, r *http.Request, k
 	logAccess(r, http.StatusOK, lw.size, lw.start)
 }
 
-// postStream is mode C's carrier (docs/d077 §3/§5): frames ride the HTTP
+// h2UnboundedServerStream is h2-post-unbounded's carrier (docs/d077 §3/§5): frames ride the HTTP
 // request body inbound and the response body outbound. Everything the 101
 // path gets from owning its hijacked connection has to be re-earned here
 // through net/http's controllers — deadlines per read/write (VPN-R39) and a
 // write mutex so the relay's goroutines never interleave frames — while the
 // camouflage contract (VPN-R34) is already spent: an unauthenticated POST
 // never reached this type.
-type postStream struct {
+type h2UnboundedServerStream struct {
 	r         *http.Request
 	w         http.ResponseWriter
 	id        string
@@ -276,13 +303,13 @@ type postStream struct {
 	closeOnce sync.Once
 }
 
-func (p *postStream) sessionID() string { return p.id }
+func (p *h2UnboundedServerStream) sessionID() string { return p.id }
 
-func (p *postStream) readTunnelMsg() ([]byte, error) {
+func (p *h2UnboundedServerStream) readTunnelMsg() ([]byte, error) {
 	return readFrameFromStream(p.r.Body)
 }
 
-func (p *postStream) writeTunnelMsg(msg []byte) error {
+func (p *h2UnboundedServerStream) writeTunnelMsg(msg []byte) error {
 	p.wmu.Lock()
 	defer p.wmu.Unlock()
 	// Same bound the hijacked path takes from its conn write deadline: a
@@ -301,7 +328,7 @@ func (p *postStream) writeTunnelMsg(msg []byte) error {
 // setReadDeadline reaches the connection under the ResponseWriter: the
 // request body reads from it, so the handshake's and the relay's read
 // bounds apply to the body exactly as they do to a hijacked socket.
-func (p *postStream) setReadDeadline(t time.Time) error {
+func (p *h2UnboundedServerStream) setReadDeadline(t time.Time) error {
 	return http.NewResponseController(p.w).SetReadDeadline(t)
 }
 
@@ -309,11 +336,11 @@ func (p *postStream) setReadDeadline(t time.Time) error {
 // frame vocabulary, so the teardown itself is the abort — the peer sees the
 // response body end (unambiguous without frames once the session's own
 // rules define it). See docs/d077 §5.
-func (p *postStream) protocolViolation() {}
+func (p *h2UnboundedServerStream) protocolViolation() {}
 
-func (p *postStream) transport() string { return transportPOST }
+func (p *h2UnboundedServerStream) transport() string { return carrierH2Unbounded }
 
-func (p *postStream) Close() error {
+func (p *h2UnboundedServerStream) Close() error {
 	p.closeOnce.Do(func() {
 		// Deadlines must be cleared before the connection goes back to
 		// net/http: a stale write deadline would kill whatever the next
@@ -329,7 +356,7 @@ func (p *postStream) Close() error {
 // runSession is one tunnel's whole life: HELLO → CONNECT → relay →
 // open/close records (VPN-R16's frame set, VPN-R20's remote resolution). It
 // is carrier-agnostic (docs/d077 §5): the same session over the 101 path and
-// over a mode C body.
+// over a h2-post-unbounded body.
 func (t *tunnelServer) runSession(ctx context.Context, s tunnelStream, key *operatorKey) {
 	start := time.Now()
 	var (
@@ -468,7 +495,7 @@ func validOperatorID(id string) bool {
 
 // validOperatorToken rejects a credential that could not ride a header intact.
 //
-// WHY this is a load-time refusal and not an escaping problem: mode D's
+// WHY this is a load-time refusal and not an escaping problem: websocket's
 // handshake writes the Authorization header with fmt.Fprintf into a hand-rolled
 // request (websocket.go wsDial), so a token containing CR/LF closes the header
 // and opens one of the peer's choosing — the transport is being handed
@@ -508,8 +535,14 @@ func (s *server) enableTunnel(egress egressConfig) error {
 	if err != nil {
 		return err
 	}
-	s.vpn = &tunnelServer{keys: keys, egress: policy, sessions: newExchangeSessions(), live: newLiveRegistry()}
-	logLine(sevInfo, "[estige] tunnel (modes C–E): enabled at %s", tunnelPath)
+	s.vpn = &tunnelServer{
+		keys:     keys,
+		egress:   policy,
+		sessions: newExchangeSessions(),
+		live:     newLiveRegistry(),
+	}
+	logLine(sevInfo, "[estige] tunnel carriers: %s, %s, %s, %s (at %s)",
+		carrierH2Unbounded, carrierWebSocket, carrierH2Windowed, carrierH1Windowed, tunnelPath)
 	return nil
 }
 

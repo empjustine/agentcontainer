@@ -22,7 +22,12 @@ h1.1-POST. The transports are named by mechanism; the C/D/E letters this
 record originally used survive only as historical aliases (§9). Two studies
 (SSE response carrier, TLS-inside-TLS) are analyzed but **not adopted**. The
 h2-POST and h1.1-POST tunnels were built; d084 superseded L3 and d081's
-amendment removed the L4 build gate, demoting L1/L4 to characterization.
+amendment removed the L4 build gate, demoting L1/L4 to characterization. Superseded in part by d222: on an edge
+that caps a single request body, the h2-POST rung is **h2-post-windowed** and
+the ladder ranks **websocket** first after one request-initiation refusal; the
+single long-lived POST shape above still holds as **h2-post-unbounded** on an
+uncapped edge. The C/D/E letters below are historical aliases (d105); current
+prose, logs and code use the carrier names.
 
 ## 1. Why three ordered transports
 

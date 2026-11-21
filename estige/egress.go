@@ -1,4 +1,4 @@
-// egress.go — the tunnel's egress policy (modes C–E): what it may dial
+// egress.go — the tunnel's egress policy (carriers): what it may dial
 // (docs/d073 §9: VPN-R35..R38).
 //
 // WHY this shape: modes A's deny-by-absence no longer covers an
@@ -255,7 +255,7 @@ func (p *egressPolicy) targetVerdict(host string, port uint16) string {
 }
 
 // splitConnectTarget parses and validates a CONNECT target "host:port".
-// Host sanity mirrors the mode B authority rules (d073 §4): no userinfo, no
+// Host sanity mirrors the the authenticated relay's authority rules (d073 §4): no userinfo, no
 // path/escape tricks, length-bounded — the target reaches DNS and a socket,
 // so anything that is not plainly a host:port pair dies here (VPN-R20).
 // Port is mandatory: a CONNECT without one would need an implicit default,

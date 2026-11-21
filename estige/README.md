@@ -16,22 +16,27 @@ proxies to unmodified clients. Clients validate the target's real certificate
 end to end and never trust the node in the middle.
 
 > **What left (docs/d108):** the v2 host-allowlist reverse proxy — legacy
-> "mode A", docs/d047 — is deleted. A TLS-terminating edge sees plaintext
+> allowlist relay, docs/d047 — is deleted. A TLS-terminating edge sees plaintext
 > provider keys and no credential scheme fixes that (docs/d073's trust table).
 > Gone with it: `allowHosts`/host-form routing, the generated allowlist,
 > `estige generate`, the smoke-test suite, and the install-time route
 > substitution it forced on the generators. What remains of that shape is the
 > funnel's plain 404, which every non-tunnel path still answers.
 
-> **Transport family (docs/d073/d077/d105):** the h2-POST tunnel (HTTP/2
-> streaming POST — default-on since d084), the WebSocket tunnel
-> (`CONNECT`-over-WebSocket, the deployed v2 shape), and the h1.1-POST tunnel
-> (per-exchange windowing — the floor under an upgrade-stripping gateway). The
-> offer is always the whole ladder, ranked per dial by the relay node; the
-> `-modes`/`MODES` knob retired with docs/d093. Requirements are d188's,
-> negotiation/framing d077's, names d105's, the credential redesign d104's,
-> the inner channel d169's and the front-door mTLS session d211's. The later
-> three are designs on record; the deployed transports are v3.
+> **Transport family (docs/d073/d077/d105/d222):** **h2-post-unbounded**
+> (one long-lived HTTP/2 streaming POST), **websocket**
+> (`CONNECT`-over-WebSocket, the deployed v2 shape), **h2-post-windowed**
+> (the same h2 POST split into size-bounded windows for an edge that caps a
+> single request body), and **h1.1-post-windowed** (per-exchange HTTP/1.1
+> POSTs — the floor under an upgrade-stripping gateway). Carriers are named
+> by mechanism, never by letters (docs/d105). The relay offers
+> h2-post-unbounded first; a capped-edge port refuses it at request
+> initiation and the relay switches to websocket → h2-post-windowed →
+> h1.1-post-windowed for the rest of the process (docs/d222). The
+> `-modes`/`MODES` knob retired with docs/d093. Requirements are d188's, negotiation/framing d077's, names
+> d105's, the credential redesign d104's, the inner channel d169's and the
+> front-door mTLS session d211's. The later three are designs on record; the
+> deployed transports are v3.
 
 Historical reference for the deleted proxy: llama-swap,
 github.com/mostlygeek/llama-swap (`internal/router/peer.go`) — estige was
@@ -70,7 +75,7 @@ $ sudo systemctl enable --now estige-relay
 ```
 
 The units are separate files, not an `estige@.service` template: the exit node
-reads `VPN_OPERATOR_KEYS` and binds `PORT`; the relay reads
+reads `VPN_OPERATOR_KEYS` and binds `PORT` (plus optional `PORT_CLOUDFLARE`); the relay reads
 `VPN_OPERATOR_TOKEN` and binds only loopback listeners (docs/d090). Both env
 files are conffiles, so `rpm -U` never overwrites operator edits. The units are
 left disabled, so installing starts nothing. The unit has an empty
@@ -98,8 +103,10 @@ names from its env file):
 ```console
 $ ./estige -version                          # the packaged artifact identity
 $ ./environment.sh ./estige -mode exit      # VPN_OPERATOR_KEYS arms the tunnel
-[estige] listening on :8080; tunnel at /vpn
-$ PORT=8443 ./environment.sh ./estige -mode exit   # the one port knob (docs/d110)
+[estige] listening on :8080 (tailscale edge: h2-post-unbounded allowed); tunnel at /vpn
+$ PORT=8443 ./environment.sh ./estige -mode exit   # the tailscale-edge port (docs/d110)
+$ PORT=8443 PORT_CLOUDFLARE=8444 ./environment.sh ./estige -mode exit
+[estige] listening on :8444 (cloudflare edge: h2-post-unbounded refused; windowed carriers only)
 ```
 
 The funnel points at that port. The relay node (`./estige -mode relay`, or the
@@ -129,7 +136,8 @@ or operator already owns:
 | arming credential (the capability) | `VPN_OPERATOR_KEYS`, JSON id → token; no credential, no tunnel, no boot (docs/d084)                                                                            |
 | per-principal egress (optional)    | a keyset value may instead be `{"token": "…", "egress": {…}}` (docs/d078); a string inherits the process table                                                 |
 | egress opt-ins (VPN-R38)           | `VPN_TUNNEL_EGRESS`, JSON `{"allowCidrs": ["10.0.0.0/8"], "ports": [443]}`; unset = the requirement's defaults (deny RFC 1918/metadata/loopback, allow 80/443) |
-| bind                               | `PORT` (docs/d110)                                                                                                                                             |
+| bind (tailscale edge)              | `PORT` (docs/d110): the Funnel-facing port, where h2-post-unbounded is allowed                                                                                 |
+| bind (capped edge, optional)       | `PORT_CLOUDFLARE`: a second port whose connector fronts an edge that caps a request body; h2-post-unbounded is refused there at request initiation (docs/d222) |
 
 Why no file: a file holding a credential is a second, unkeyed copy of it
 (VPN-R32), and with the allowlist gone there was nothing else a file needed to
@@ -189,10 +197,11 @@ docs/d073 §7) runs locally on a restricted-internet environment, without
 direct tsnet to the endpoints. The code speaks the same names (d088 phase 2
 landed).
 
-Exit node: listening on `${PORT:-8080}` (env `PORT` is the only bind spelling,
-docs/d110). No config file is read (docs/d108): `VPN_OPERATOR_KEYS`, `PORT`
-and — when the operator opens an egress range — `VPN_TUNNEL_EGRESS` are the
-whole surface, handed over by the service manager's env file or the operator's
+Exit node: listening on `${PORT:-8080}` (docs/d110), plus `PORT_CLOUDFLARE`
+when a second edge's connector points at this exit (docs/d222). No config file
+is read (docs/d108): `VPN_OPERATOR_KEYS`, the two ports and — when the
+operator opens an egress range — `VPN_TUNNEL_EGRESS` are the whole surface,
+handed over by the service manager's env file or the operator's
 shell.
 
 Relay node: likewise no config file — `VPN_TUNNEL_URL` (http(s):// or
@@ -204,8 +213,12 @@ variables (`SOCKS_SERVER` beats a scheme-matched `http_proxy`/`https_proxy`,
 which beats `ALL_PROXY`; `SOCKS_VERSION` must be `5`; `NO_PROXY` deliberately
 not read — docs/d094: the chain is ONE blind TCP tunnel under the tunnel leg
 only, `Transport.Proxy` stays nil, provider requests never touch it). The
-transport ladder rides whole — h2-POST → WebSocket → h1.1-POST ranked at dial
-time, no `-modes`/`MODES` override (docs/d093) — and the listeners default to
+carrier ladder rides whole — h2-post-unbounded → websocket →
+h2-post-windowed → h1.1-post-windowed, ranked per dial, no `-modes`/`MODES`
+override (docs/d093). The h2 half is learned: an exit port serving a capped
+edge refuses h2-post-unbounded at request initiation, and that one refusal
+switches the process to websocket → h2-post-windowed for later CONNECTs
+(docs/d222) — and the listeners default to
 `127.0.0.1:3128`/`1080` (`-proxy-listen`/`-socks-listen`; VPN-R23 forbids
 exposing them). `-legacy-ip-relay` (off by default) passes address targets to
 the exit's gate instead of refusing them at the door, and both doors refuse
@@ -278,10 +291,13 @@ serve is down to one mount:
 | `/vpn` (the mount prefix, stripped at the edge, docs/d085) | the tunnel namespace — the only face          |
 | anything else                                              | the plain funnel 404, byte for byte (VPN-R34) |
 
-The bind has exactly one knob (docs/d110): env `PORT`, unset → `8080`, bound
-on all interfaces. No `-listen`/`-port` flag and no config field of our own —
-the standard name is the only spelling, so a coordinator that speaks `PORT`
-steers the exit node without editing files or argv.
+The bind has one standard name (docs/d110): env `PORT`, unset → `8080`,
+bound on all interfaces. No `-listen`/`-port` flag and no config field of our
+own. A second, optional listener is `PORT_CLOUDFLARE`: the port a
+Cloudflare (or other capped-edge) connector points at, where
+h2-post-unbounded is refused at request initiation and the windowed carriers
+serve (docs/d222). Both are bare port numbers; the exit refuses a
+`PORT_CLOUDFLARE` that repeats `PORT`.
 
 The suite that used to run against this table (`estige smoke-test`, 34 checks
 including the badssl TLS taxonomy) is deleted with it (docs/d108). What

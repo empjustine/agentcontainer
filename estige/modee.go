@@ -1,10 +1,11 @@
-// modee.go — mode E (docs/d077 §3): the h1.1 per-exchange windowing floor,
+// modee.go — the h1.1-post-windowed carrier (docs/d077 §3): the h1.1
+// per-exchange windowing floor,
 // built under d081's L4 amendment (mechanics settled by the hostile-link
 // model, parameters provisional, no spike gate).
 //
-// WHY windowing: mode E exists for gateways that strip upgrades AND offer no
+// WHY windowing: h1.1-post-windowed exists for gateways that strip upgrades AND offer no
 // h2 — environments where, by premise, connectivity is damaged. A long-lived
-// request body (mode C's shape) would die with the connection and need
+// request body (h2-post-unbounded's shape) would die with the connection and need
 // cross-reconnect session state exactly where the link is least trustworthy;
 // a windowed exchange stands alone — a dropped window retries, nothing to
 // resurrect. That decision needs no measurement, which is the whole point of
@@ -135,21 +136,22 @@ func buildTraceparent(traceID string, span uint64) string {
 }
 
 // ---------------------------------------------------------------------------
-// Client carrier — the relay node's windowStream
+// Client carrier — the relay node's h1WindowStream
 // ---------------------------------------------------------------------------
 
-// windowStream is mode E's tunnelStream on the relay-node side: frames
+// h1WindowStream is h1.1-post-windowed's tunnelStream on the relay-node side: frames
 // accumulate in pending and ride the next window; the reader drives
 // exchanges (a frame-read demand starts one, an idle reader polls on the
 // backoff timer), the writer forces one when the batch reaches
 // exchangeWindowBytes. Deadline semantics mirror postRelayStream's so the
 // relay needs no mode knowledge: a read past its window tears the session
 // down and reports the idle timeout it was.
-type windowStream struct {
+type h1WindowStream struct {
+	timerMu sync.Mutex
 	url     string // http(s) form of the tunnel URL — one POST target, path included
 	token   string
 	traceID string
-	// parent is the dial context with cancel dropped — see openExchange.
+	// parent is the dial context with cancel dropped — see openH1Windowed.
 	parent context.Context //nolint:containedctx // tunnelStream's methods take no context and the session outlives the request
 	client *http.Client
 	tr     *http.Transport
@@ -176,13 +178,13 @@ type windowStream struct {
 	timedOut  atomic.Bool
 }
 
-// openExchange builds the carrier without touching the network: mode E has
+// openH1Windowed builds the carrier without touching the network: h1.1-post-windowed has
 // no probe — the first window IS the session-open (HELLO rides it), which
 // is what makes E the floor a client can always demote into (d077 §4).
 // The dial context is kept by value with cancel dropped (WithoutCancel,
-// mode C's session-request reason): once the local connection is hijacked
+// h2-post-unbounded's session-request reason): once the local connection is hijacked
 // the request context dies, the session does not.
-func (c *relayNode) openExchange(ctx context.Context, id string, skipVerify bool) (tunnelStream, error) {
+func (c *relayNode) openH1Windowed(ctx context.Context, id string, skipVerify bool) (tunnelStream, error) {
 	u := *c.cfg.tunnelURL
 	switch u.Scheme {
 	case schemeWS:
@@ -190,30 +192,30 @@ func (c *relayNode) openExchange(ctx context.Context, id string, skipVerify bool
 	case schemeWSS:
 		u.Scheme = schemeHTTPS
 	default:
-		return nil, fmt.Errorf("mode E needs a ws:// or wss:// tunnel URL, got %q", c.cfg.tunnelURL.Scheme)
+		return nil, fmt.Errorf("h1.1-post-windowed needs a ws:// or wss:// tunnel URL, got %q", c.cfg.tunnelURL.Scheme)
 	}
 	// One id per app connection, not per window and not per dial attempt:
-	// mode E's trace-id IS docs/d106's session id, so a demotion ladder's
+	// h1.1-post-windowed's trace-id IS docs/d106's session id, so a demotion ladder's
 	// attempts and the windows that follow share one correlation value.
 	traceID := id
 	tr := &http.Transport{
-		// http/1.1 ONLY: mode E is the h1 floor — offering h2 would
-		// silently turn a floor session into mode C's plane.
+		// http/1.1 ONLY: h1.1-post-windowed is the h1 floor — offering h2 would
+		// silently turn a floor session into h2-post-unbounded's plane.
 		TLSClientConfig: tunnelTLSConfig(u.Hostname(), []string{protoHTTP11}, skipVerify),
 		// The chain rides the DIAL, not Transport.Proxy (docs/d094) — same
-		// shape as mode C's transport.
+		// shape as h2-post-unbounded's transport.
 		DialContext:         c.tunnelDial(),
 		TLSHandshakeTimeout: tunnelHandshakeTimeout,
 		// The FIRST window's headers can arrive after the exit node ran a
 		// whole CONNECT dial (drain happens before its 200): budget the
 		// handshake plus the dial, or a slow-but-legal 12 s dial would kill
-		// an E session that modes C/D would have completed.
+		// an E session that the h2 carriers would have completed.
 		ResponseHeaderTimeout: tunnelHandshakeTimeout + tunnelDialTimeout,
-		// Proxy stays nil on purpose (same as mode C): an ambient proxy
+		// Proxy stays nil on purpose (same as h2-post-unbounded): an ambient proxy
 		// would become a forwarding proxy for a cleartext URL and read the
 		// bearer — the chain leg exists precisely so it never does.
 	}
-	return &windowStream{
+	return &h1WindowStream{
 		url:          u.String(),
 		token:        c.cfg.token,
 		traceID:      traceID,
@@ -231,7 +233,7 @@ func (c *relayNode) openExchange(ctx context.Context, id string, skipVerify bool
 // batch); at or above it, it forces an exchange and — stop-and-wait — waits
 // out any in-flight one first. The wait is the backpressure: the pump's
 // write blocks instead of a queue growing (VPN-R18).
-func (w *windowStream) writeTunnelMsg(msg []byte) error {
+func (w *h1WindowStream) writeTunnelMsg(msg []byte) error {
 	select {
 	case <-w.closed:
 		return errWSClosed
@@ -255,7 +257,7 @@ func (w *windowStream) writeTunnelMsg(msg []byte) error {
 
 // forceExchange sends whatever is pending, waiting out an in-flight window
 // first — the writer's half of stop-and-wait.
-func (w *windowStream) forceExchange() error {
+func (w *h1WindowStream) forceExchange() error {
 	for {
 		w.em.Lock()
 		if w.resp == nil {
@@ -280,7 +282,7 @@ func (w *windowStream) forceExchange() error {
 // continue the current exchange's response, else start one (a non-empty
 // batch rides immediately; an empty one is a poll — backoff-gated after the
 // first pure empty poll so an idle session cannot spin).
-func (w *windowStream) readTunnelMsg() ([]byte, error) {
+func (w *h1WindowStream) readTunnelMsg() ([]byte, error) {
 	for {
 		w.em.Lock()
 		select {
@@ -334,7 +336,7 @@ func (w *windowStream) readTunnelMsg() ([]byte, error) {
 
 // pendingLen reads the batch size under pm (callers hold em, which is a
 // different lock — never take pm while holding em below this line).
-func (w *windowStream) pendingLen() int {
+func (w *h1WindowStream) pendingLen() int {
 	w.pm.Lock()
 	defer w.pm.Unlock()
 	return w.pending.Len()
@@ -342,7 +344,7 @@ func (w *windowStream) pendingLen() int {
 
 // startExchangeLocked POSTs the pending batch as one window and parks the
 // response for the reader. Caller holds em.
-func (w *windowStream) startExchangeLocked() error {
+func (w *h1WindowStream) startExchangeLocked() error {
 	select {
 	case <-w.closed:
 		return errWSClosed
@@ -384,7 +386,7 @@ func (w *windowStream) startExchangeLocked() error {
 
 // awaitWake parks the idle reader for at most one backoff tick; a client
 // write or the tick itself returns it (the loop re-checks everything).
-func (w *windowStream) awaitWake() error {
+func (w *h1WindowStream) awaitWake() error {
 	timer := time.NewTimer(exchangePollBackoff)
 	defer timer.Stop()
 	select {
@@ -401,7 +403,7 @@ func (w *windowStream) awaitWake() error {
 // a fired deadline wins (an idle reap reports as the timeout it was), the
 // cause survives when there is one (a refused window keeps its status line
 // for the dial-failure log), and a bare close is the carrier's closed error.
-func (w *windowStream) readErr(cause error) error {
+func (w *h1WindowStream) readErr(cause error) error {
 	if w.timedOut.Load() {
 		return os.ErrDeadlineExceeded
 	}
@@ -413,7 +415,9 @@ func (w *windowStream) readErr(cause error) error {
 
 // setReadDeadline bounds the next read (VPN-R39/R14): fire closes the
 // stream, which unblocks every park — reader, writer, and backoff alike.
-func (w *windowStream) setReadDeadline(t time.Time) error {
+func (w *h1WindowStream) setReadDeadline(t time.Time) error {
+	w.timerMu.Lock()
+	defer w.timerMu.Unlock()
 	if w.readTimer != nil {
 		w.readTimer.Stop()
 		w.readTimer = nil
@@ -430,25 +434,28 @@ func (w *windowStream) setReadDeadline(t time.Time) error {
 }
 
 // protocolViolation has no close frame to send over a body: ending
-// exchanges is the entire vocabulary (the mode C carrier says the same).
-func (w *windowStream) protocolViolation() { _ = w.Close() }
+// exchanges is the entire vocabulary (the h2-post-unbounded carrier says the same).
+func (w *h1WindowStream) protocolViolation() { _ = w.Close() }
 
 // transport names the carrier for the lifecycle log — "post" is the
 // vocabulary's h1-POST value (docs/d077 §4: h2 | wss | post; the relay node
 // CAN tell C from E by its own plane, but the log vocabulary stays stable).
-func (w *windowStream) transport() string { return transportPOST }
+func (w *h1WindowStream) transport() string { return carrierH1Windowed }
 
-func (w *windowStream) sessionID() string { return w.traceID }
+func (w *h1WindowStream) sessionID() string { return w.traceID }
 
 // Close tears the carrier down once: the closed channel releases every
 // parked reader/writer, the in-flight response body dies with it, and the
 // transport's idle conns are dropped (a dead session leaves no keep-alive
 // conn half-open behind it).
-func (w *windowStream) Close() error {
+func (w *h1WindowStream) Close() error {
 	w.closeOnce.Do(func() {
+		w.timerMu.Lock()
 		if w.readTimer != nil {
 			w.readTimer.Stop()
+			w.readTimer = nil
 		}
+		w.timerMu.Unlock()
 		close(w.closed)
 		w.em.Lock()
 		if w.resp != nil {
@@ -464,7 +471,7 @@ func (w *windowStream) Close() error {
 // Server side — the exit node's exchangeStream and its registry
 // ---------------------------------------------------------------------------
 
-// exchangeSessions is the per-trace-id registry: one entry per live mode E
+// exchangeSessions is the per-trace-id registry: one entry per live h1.1-post-windowed
 // session, minted by a span-1 window, removed by the session's own Close
 // (runSession is deadline-bounded end to end, so every entry that can exist
 // also always reaches its removal — the cap bounds the live set, nothing
@@ -499,7 +506,7 @@ func newExchangeSessions() *exchangeSessions {
 // non-nil only for the key-mismatch case: a desynced span or an unknown
 // trace-id is a misrouted window, not evidence that someone else holds the
 // carrier.
-func (t *tunnelServer) accept(ctx context.Context, traceID string, span uint64, key *operatorKey) (session *exchangeStream, compromised *exchangeStream) {
+func (t *tunnelServer) accept(ctx context.Context, traceID string, span uint64, key *operatorKey, carrier string) (session *exchangeStream, compromised *exchangeStream) {
 	t.sessions.mu.Lock()
 	defer t.sessions.mu.Unlock()
 	if s := t.sessions.byTrace[traceID]; s != nil {
@@ -508,7 +515,7 @@ func (t *tunnelServer) accept(ctx context.Context, traceID string, span uint64, 
 			// authenticated), never in the response, and the session's own key
 			// is deliberately NOT logged here — a refusal must not report who
 			// else holds the trace-id.
-			logLine(sevWarn, "[estige] tunnel mode E: AUTH FAILURE — window authenticated as key=%s, but this session was minted by another principal; killing the session", key.id)
+			logLine(sevWarn, "[estige] tunnel h1.1-post-windowed: AUTH FAILURE — window authenticated as key=%s, but this session was minted by another principal; killing the session", key.id)
 			return nil, s
 		}
 		return s, nil
@@ -523,10 +530,10 @@ func (t *tunnelServer) accept(ctx context.Context, traceID string, span uint64, 
 		// Loud, not silent: a full registry means a session leak or an
 		// operator burst, and refusing a NEW session is survivable while a
 		// half-minted one would not be (NFR-2).
-		logLine(sevWarn, "[estige] tunnel mode E: session registry full (%d) — refusing new session", maxExchangeSessions)
+		logLine(sevWarn, "[estige] tunnel h1.1-post-windowed: session registry full (%d) — refusing new session", maxExchangeSessions)
 		return nil, nil
 	}
-	s := newExchangeStream(traceID, t.sessions, key.id)
+	s := newExchangeStream(traceID, t.sessions, key.id, carrier)
 	t.sessions.byTrace[traceID] = s
 	// Attribution lives on the session's own open record now (docs/d106):
 	// the id and key appear there, once, instead of a second line per
@@ -535,7 +542,7 @@ func (t *tunnelServer) accept(ctx context.Context, traceID string, span uint64, 
 	return s, nil
 }
 
-// exchangeStream is mode E's tunnelStream on the exit-node side: reads pop
+// exchangeStream is h1.1-post-windowed's tunnelStream on the exit-node side: reads pop
 // the windows handlers drained into inbound; writes park in the one-frame
 // outbound slot until the current (or next) window's handler flushes it.
 // Slot capacity one IS VPN-R18 — the relay's next read cannot happen until
@@ -545,10 +552,18 @@ type exchangeStream struct {
 	sessions *exchangeSessions
 	// keyID is the principal whose credential minted this session. Every
 	// later window must authenticate as the same key (accept enforces it), so
-	// the session is as bound to one authentication as a mode D carrier is to
+	// the session is as bound to one authentication as a websocket carrier is to
 	// its handshake — the per-connection authentication d104 states as a
 	// security bound, expressed for a multi-request carrier.
 	keyID string
+	// carrier is the mechanism name the minting window arrived on
+	// (docs/d105/d222): the two windowed POST carriers share this registry,
+	// and the lifecycle record must still say which one carried the session.
+	carrier string
+
+	// timerMu guards readTimer between the pump's setReadDeadline and the
+	// handler's Close; s.mu is the sequence state and stays untouched.
+	timerMu sync.Mutex
 
 	// mu guards the sequence state AND the one-window-at-a-time contract:
 	// beginWindow is the only mutator, so response writers are serialized
@@ -569,11 +584,12 @@ type exchangeStream struct {
 
 // newExchangeStream builds an unstarted session carrier (runSession is
 // spawned by accept once the registry holds it).
-func newExchangeStream(traceID string, sessions *exchangeSessions, keyID string) *exchangeStream {
+func newExchangeStream(traceID string, sessions *exchangeSessions, keyID, carrier string) *exchangeStream {
 	return &exchangeStream{
 		traceID:  traceID,
 		sessions: sessions,
 		keyID:    keyID,
+		carrier:  carrier,
 		nextSpan: firstWindowSpan,
 		// Small on purpose: a handler blocks on a full queue instead of the
 		// queue growing, and the relay consumer is always running — during
@@ -666,20 +682,20 @@ func (s *exchangeStream) flushWindow(lw *loggingResponseWriter) {
 	}
 }
 
-// serveTunnelExchange runs one mode E window (docs/d077 §3/§4). Order
+// serveH1Window runs one h1.1-post-windowed window (docs/d077 §3/§4). Order
 // mirrors the 101 path's discipline: authenticate happens in serveTunnel
 // before this is ever called; here it is dispatch (traceparent), sequence
 // admission, drain, then the response — and the CLF line is emitted for
-// EVERY window, because unlike mode C each exchange really is its own
+// EVERY window, because unlike h2-post-unbounded each exchange really is its own
 // request.
-func (t *tunnelServer) serveTunnelExchange(w http.ResponseWriter, r *http.Request, key *operatorKey) {
+func (t *tunnelServer) serveH1Window(w http.ResponseWriter, r *http.Request, key *operatorKey) {
 	lw := &loggingResponseWriter{ResponseWriter: w, start: time.Now()}
 	traceID, span, err := parseTraceparent(r.Header.Get("Traceparent"))
 	if err != nil {
 		writeFunnel404(lw, r)
 		return
 	}
-	s, compromised := t.accept(context.WithoutCancel(r.Context()), traceID, span, key)
+	s, compromised := t.accept(context.WithoutCancel(r.Context()), traceID, span, key, carrierH1Windowed)
 	if compromised != nil {
 		// Every tunnel session exists only under authentication, and a failed
 		// authentication interrupts the tunnel rather than merely declining
@@ -706,7 +722,7 @@ func (t *tunnelServer) serveTunnelExchange(w http.ResponseWriter, r *http.Reques
 		// it (one stream, one life) — kill the state rather than leave a
 		// minted session waiting for windows that will never come.
 		_ = s.Close()
-		logLine(sevWarn, "[estige] tunnel mode E: window drain failed: %v", err)
+		logLine(sevWarn, "[estige] tunnel h1.1-post-windowed: window drain failed: %v", err)
 		// The status must reach the peer: answering nothing here would let
 		// net/http emit an empty 200 while the CLF line records 500, so a
 		// dead session would look healthy to the client and the log would
@@ -718,7 +734,7 @@ func (t *tunnelServer) serveTunnelExchange(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	// The response headers are this window's session-open signal. No
-	// EnableFullDuplex needed (unlike mode C): the request body is already
+	// EnableFullDuplex needed (unlike h2-post-unbounded): the request body is already
 	// fully read, which is exactly why windows exist.
 	lw.WriteHeader(http.StatusOK)
 	if err := http.NewResponseController(lw).Flush(); err != nil {
@@ -765,11 +781,13 @@ func (s *exchangeStream) writeTunnelMsg(msg []byte) error {
 // setReadDeadline arms the timer that closes the session on expiry —
 // the exchange carrier's equivalent of a conn read deadline (VPN-R39/R14).
 func (s *exchangeStream) setReadDeadline(t time.Time) error {
+	s.timerMu.Lock()
 	if s.readTimer != nil {
 		s.readTimer.Stop()
 		s.readTimer = nil
 	}
 	if t.IsZero() {
+		s.timerMu.Unlock()
 		return nil
 	}
 	s.timedOut.Store(false)
@@ -777,17 +795,18 @@ func (s *exchangeStream) setReadDeadline(t time.Time) error {
 		s.timedOut.Store(true)
 		_ = s.Close()
 	})
+	s.timerMu.Unlock()
 	return nil
 }
 
-// protocolViolation has no in-band signal (same as the mode C body
+// protocolViolation has no in-band signal (same as the h2-post-unbounded body
 // carrier): ending the session is the abort the peer observes.
 func (s *exchangeStream) protocolViolation() { _ = s.Close() }
 
 // transport names the carrier for the lifecycle log: the exit node saw a
 // plain POST — the edge stripped the plane evidence, and the vocabulary is
 // h2 | wss | post (docs/d077 §4).
-func (s *exchangeStream) transport() string { return transportPOST }
+func (s *exchangeStream) transport() string { return s.carrier }
 
 func (s *exchangeStream) sessionID() string { return s.traceID }
 
@@ -795,9 +814,12 @@ func (s *exchangeStream) sessionID() string { return s.traceID }
 // in-flight handler see closed, and the registry entry goes with it.
 func (s *exchangeStream) Close() error {
 	s.closeOnce.Do(func() {
+		s.timerMu.Lock()
 		if s.readTimer != nil {
 			s.readTimer.Stop()
+			s.readTimer = nil
 		}
+		s.timerMu.Unlock()
 		close(s.closed)
 		s.sessions.mu.Lock()
 		if s.sessions.byTrace[s.traceID] == s {

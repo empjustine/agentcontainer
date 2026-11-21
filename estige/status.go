@@ -57,7 +57,7 @@ func (r *liveRegistry) count() int {
 }
 
 // snapshot is the in-flight list, oldest first. No periodic log lines: a
-// mode E stream at 100 ms windows would emit thousands, and this answers the
+// h1.1-post-windowed stream at 100 ms windows would emit thousands, and this answers the
 // same question at zero log volume (docs/d106).
 func (r *liveRegistry) snapshot() []map[string]any {
 	r.mu.Lock()

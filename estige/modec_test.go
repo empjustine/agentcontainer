@@ -29,9 +29,9 @@ func newHTTP2Front(t *testing.T, backend *httptest.Server) *httptest.Server {
 	return newTLSFront(t, backend, true)
 }
 
-// modeCFetch opens a local CONNECT and pulls one response through a tunnel
+// h2PostUnboundedFetch opens a local CONNECT and pulls one response through a tunnel
 // session — the whole client→tunnel→upstream path for one connection.
-func modeCFetch(t *testing.T, httpAddr, targetHost string, upPort uint16) {
+func h2PostUnboundedFetch(t *testing.T, httpAddr, targetHost string, upPort uint16) {
 	t.Helper()
 	conn := rawDial(t, httpAddr)
 	defer conn.Close()
@@ -48,15 +48,15 @@ func modeCFetch(t *testing.T, httpAddr, targetHost string, upPort uint16) {
 	resp := readHTTPResponse(t, br)
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != http.StatusOK || string(body) != "hello-mode-c" || resp.Header.Get("X-Upstream") != "yes" {
+	if resp.StatusCode != http.StatusOK || string(body) != "hello-h2-post" || resp.Header.Get("X-Upstream") != "yes" {
 		t.Fatalf("status=%d body=%q upstream-header=%q", resp.StatusCode, body, resp.Header.Get("X-Upstream"))
 	}
 }
 
-func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
+func TestH2PostUnboundedEndToEndOverHTTP2Front(t *testing.T) {
 	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("X-Upstream", "yes")
-		_, _ = io.WriteString(w, "hello-mode-c")
+		_, _ = io.WriteString(w, "hello-h2-post")
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
 
@@ -95,8 +95,8 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 	logBuf := captureLog(t)
 	waitForHealth(t, "http://"+httpAddr+healthPath)
 
-	t.Run("one session carries a full CONNECT exchange over mode C", func(t *testing.T) {
-		modeCFetch(t, httpAddr, testTargetAlias, upPort)
+	t.Run("one session carries a full CONNECT exchange over h2-post-unbounded", func(t *testing.T) {
+		h2PostUnboundedFetch(t, httpAddr, testTargetAlias, upPort)
 	})
 
 	t.Run("six concurrent sessions — the browser's parallel-connection count", func(t *testing.T) {
@@ -120,7 +120,7 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 				resp := readHTTPResponse(t, br)
 				defer resp.Body.Close()
 				body, _ := io.ReadAll(resp.Body)
-				if string(body) != "hello-mode-c" {
+				if string(body) != "hello-h2-post" {
 					fail <- "body=" + string(body)
 				}
 			})
@@ -135,8 +135,8 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 	t.Run("both carriers are visible in the logs", func(t *testing.T) {
 		// d077 §4: transport is operational debugging data. The server saw
 		// a POST (the edge stripped the ALPN evidence); the relay node saw h2.
-		waitForLog(t, logBuf, "transport=post")
-		waitForLog(t, logBuf, "transport=h2")
+		waitForLog(t, logBuf, "transport=h2-post-unbounded")
+		waitForLog(t, logBuf, "transport=h2-post-unbounded")
 		dumped := logBuf.String()
 		if strings.Contains(dumped, testTunnelToken) {
 			t.Fatalf("token leaked into the log:\n%s", dumped)
@@ -149,7 +149,7 @@ func TestModeCEndToEndOverHTTP2Front(t *testing.T) {
 	}
 }
 
-func TestModeCArrivalIsAuthenticatedAndCamouflaged(t *testing.T) {
+func TestH2PostUnboundedArrivalIsAuthenticatedAndCamouflaged(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{AllowCidrs: []string{"127.0.0.0/8"}})
 	backend := newHTTPServer(t, s)
 	target := backend.URL + tunnelPath
@@ -208,6 +208,6 @@ func TestModeCArrivalIsAuthenticatedAndCamouflaged(t *testing.T) {
 		// The truncated "frame" ends the session; the carrier and the key
 		// must both be on record (d077 §4 transport, d078 §5 attribution).
 		waitForLog(t, logBuf, "key=default")
-		waitForLog(t, logBuf, "transport=post")
+		waitForLog(t, logBuf, "transport=h2-post-unbounded")
 	})
 }

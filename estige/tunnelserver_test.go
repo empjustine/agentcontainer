@@ -443,7 +443,7 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 	if strings.Contains(dumped, testTunnelToken) {
 		t.Fatalf("token leaked into the log:\n%s", dumped)
 	}
-	if !strings.Contains(dumped, "transport=wss") {
+	if !strings.Contains(dumped, "transport=websocket") {
 		t.Fatalf("expected transport column in the lifecycle line:\n%s", dumped)
 	}
 	if !strings.Contains(dumped, `label="raw-test"`) {

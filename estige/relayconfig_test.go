@@ -78,7 +78,7 @@ func TestRelayConfigFromEnvNormalizesWireSchemes(t *testing.T) {
 	}
 }
 
-// The relay interpolates its bearer into mode D's hand-rolled handshake
+// The relay interpolates its bearer into websocket's hand-rolled handshake
 // request with fmt.Fprintf, so a token carrying CR/LF would let the operator's
 // own credential inject headers into our outbound request. validate() refuses
 // it before any bind (VPN-R26 fail-closed); the exit node applies the same rule

@@ -1,9 +1,9 @@
 package main
 
-// modee_test.go — mode E acceptance (docs/d077 §3, d081's L4 amendment):
+// modee_test.go — h1.1-post-windowed acceptance (docs/d077 §3, d081's L4 amendment):
 // the windowed floor over a plain h1.1 path, the demotion ladder through a
 // hostile upgrade-refusing gateway, and the traceparent dispatch's
-// camouflage surface. Unlike mode C, no TLS front is involved — mode E is
+// camouflage surface. Unlike h2-post-unbounded, no TLS front is involved — h1.1-post-windowed is
 // the h1 plane by construction, so the fixtures stay plain and hermetic.
 
 import (
@@ -23,10 +23,10 @@ import (
 	"time"
 )
 
-// modeEFetch opens a local CONNECT and pulls one response through a tunnel
+// h1PostWindowedFetch opens a local CONNECT and pulls one response through a tunnel
 // session — the whole client→tunnel→upstream path for one connection, the
-// mode C twin with its own body string.
-func modeEFetch(t *testing.T, httpAddr, targetHost string, upPort uint16) {
+// h2-post-unbounded twin with its own body string.
+func h1PostWindowedFetch(t *testing.T, httpAddr, targetHost string, upPort uint16) {
 	t.Helper()
 	conn := rawDial(t, httpAddr)
 	defer conn.Close()
@@ -43,12 +43,12 @@ func modeEFetch(t *testing.T, httpAddr, targetHost string, upPort uint16) {
 	resp := readHTTPResponse(t, br)
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != http.StatusOK || string(body) != "hello-mode-e" || resp.Header.Get("X-Upstream") != "yes" {
+	if resp.StatusCode != http.StatusOK || string(body) != "hello-post" || resp.Header.Get("X-Upstream") != "yes" {
 		t.Fatalf("status=%d body=%q upstream-header=%q", resp.StatusCode, body, resp.Header.Get("X-Upstream"))
 	}
 }
 
-// newHostileGateway is the posture mode E exists for (d077 §1): a gateway
+// newHostileGateway is the posture h1.1-post-windowed exists for (d077 §1): a gateway
 // that refuses WebSocket upgrades with a plain 403 while passing ordinary
 // POSTs. The tunnel URL is ws:// so the ALPN leg cannot exist — the ladder
 // under test is D-refused → E, the rung this record's amendment added.
@@ -99,10 +99,10 @@ func wireRelayNode(t *testing.T, tunnelURL string) (string, func()) {
 	}
 }
 
-// modeETestServer wires the exit node through enableTunnel with an egress
+// h1PostWindowedTestServer wires the exit node through enableTunnel with an egress
 // rule that reaches the loopback upstream, served plain (h1.1 — the plane
-// mode E runs on).
-func modeETestServer(t *testing.T, upstream *httptest.Server) *httptest.Server {
+// h1.1-post-windowed runs on).
+func h1PostWindowedTestServer(t *testing.T, upstream *httptest.Server) *httptest.Server {
 	t.Helper()
 	upPort := portOf(t, upstream.Listener.Addr().String())
 	armTestTunnelEnv(t)
@@ -116,13 +116,13 @@ func modeETestServer(t *testing.T, upstream *httptest.Server) *httptest.Server {
 	return newHTTPServer(t, s)
 }
 
-func TestModeEEndToEndOverPlainH1(t *testing.T) {
+func TestH1PostWindowedEndToEndOverPlainH1(t *testing.T) {
 	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("X-Upstream", "yes")
-		_, _ = io.WriteString(w, "hello-mode-e")
+		_, _ = io.WriteString(w, "hello-post")
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	backend := modeETestServer(t, upstream)
+	backend := h1PostWindowedTestServer(t, upstream)
 
 	// The cleartext end of docs/d090's accepted set (an honest http:// URL,
 	// normalized to ws once) behind the upgrade-stripping gateway: with the
@@ -134,8 +134,8 @@ func TestModeEEndToEndOverPlainH1(t *testing.T) {
 	defer stopRelay()
 	logBuf := captureLog(t)
 
-	t.Run("one session carries a full CONNECT exchange over mode E", func(t *testing.T) {
-		modeEFetch(t, httpAddr, testTargetAlias, upPort)
+	t.Run("one session carries a full CONNECT exchange over h1.1-post-windowed", func(t *testing.T) {
+		h1PostWindowedFetch(t, httpAddr, testTargetAlias, upPort)
 	})
 
 	t.Run("concurrent sessions — one trace-id and registry slot each", func(t *testing.T) {
@@ -155,7 +155,7 @@ func TestModeEEndToEndOverPlainH1(t *testing.T) {
 				}
 				resp := readHTTPResponse(t, br)
 				defer resp.Body.Close()
-				if body, _ := io.ReadAll(resp.Body); string(body) != "hello-mode-e" {
+				if body, _ := io.ReadAll(resp.Body); string(body) != "hello-post" {
 					fail <- "body=" + string(body)
 				}
 			})
@@ -168,9 +168,9 @@ func TestModeEEndToEndOverPlainH1(t *testing.T) {
 	})
 
 	t.Run("both roles log the carrier and never the credential", func(t *testing.T) {
-		// d077 §4: transport is operational debugging data; for mode E the
+		// d077 §4: transport is operational debugging data; for h1.1-post-windowed the
 		// relay node's own plane is h1.1 POST, so both roles say "post".
-		waitForLog(t, logBuf, "transport=post")
+		waitForLog(t, logBuf, "transport=h1.1-post-windowed")
 		waitForLog(t, logBuf, "key=default")
 		if dumped := logBuf.String(); strings.Contains(dumped, testTunnelToken) {
 			t.Fatalf("token leaked into the log:\n%s", dumped)
@@ -178,13 +178,13 @@ func TestModeEEndToEndOverPlainH1(t *testing.T) {
 	})
 }
 
-func TestModeEDemotionThroughHostileGateway(t *testing.T) {
+func TestH1PostWindowedDemotionThroughHostileGateway(t *testing.T) {
 	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("X-Upstream", "yes")
-		_, _ = io.WriteString(w, "hello-mode-e")
+		_, _ = io.WriteString(w, "hello-post")
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	backend := modeETestServer(t, upstream)
+	backend := h1PostWindowedTestServer(t, upstream)
 	gateway := newHostileGateway(t, backend)
 
 	// The whole ladder rides (docs/d093): on the cleartext plane C is
@@ -196,10 +196,10 @@ func TestModeEDemotionThroughHostileGateway(t *testing.T) {
 	defer stopRelay()
 	logBuf := captureLog(t)
 
-	modeEFetch(t, httpAddr, testTargetAlias, upPort)
+	h1PostWindowedFetch(t, httpAddr, testTargetAlias, upPort)
 
-	waitForLog(t, logBuf, "falling back to mode E")
-	waitForLog(t, logBuf, "transport=post")
+	waitForLog(t, logBuf, "trying h1.1-post-windowed")
+	waitForLog(t, logBuf, "transport=h1.1-post-windowed")
 	if dumped := logBuf.String(); strings.Contains(dumped, testTunnelToken) {
 		t.Fatalf("token leaked into the log:\n%s", dumped)
 	}
@@ -214,26 +214,26 @@ func TestModeEDemotionThroughHostileGateway(t *testing.T) {
 func TestGeneralizedTunnelURLDemotesOverTLS(t *testing.T) {
 	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("X-Upstream", "yes")
-		_, _ = io.WriteString(w, "hello-mode-e")
+		_, _ = io.WriteString(w, "hello-post")
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	backend := modeETestServer(t, upstream)
+	backend := h1PostWindowedTestServer(t, upstream)
 	front := newTLSFront(t, newHostileGateway(t, backend), false)
 
 	httpAddr, stopRelay := wireRelayNode(t, front.URL+tunnelPath)
 	defer stopRelay()
 	logBuf := captureLog(t)
 
-	modeEFetch(t, httpAddr, testTargetAlias, upPort)
+	h1PostWindowedFetch(t, httpAddr, testTargetAlias, upPort)
 
-	waitForLog(t, logBuf, "falling back to mode E")
-	waitForLog(t, logBuf, "transport=post")
+	waitForLog(t, logBuf, "trying h1.1-post-windowed")
+	waitForLog(t, logBuf, "transport=h1.1-post-windowed")
 	if dumped := logBuf.String(); strings.Contains(dumped, testTunnelToken) {
 		t.Fatalf("token leaked into the log:\n%s", dumped)
 	}
 }
 
-func TestModeEWindowsAreAuthenticatedAndCamouflaged(t *testing.T) {
+func TestH1PostWindowedWindowsAreAuthenticatedAndCamouflaged(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{AllowCidrs: []string{"127.0.0.0/8"}})
 	backend := newHTTPServer(t, s)
 	target := backend.URL + tunnelPath
@@ -330,7 +330,7 @@ func TestModeEWindowsAreAuthenticatedAndCamouflaged(t *testing.T) {
 // healthy session and the log disagreed with it (VPN-R26 mid-session
 // semantics: a broken window means a dead session, and the peer must be able
 // to tell).
-func TestModeEDrainFailureAnswersAnError(t *testing.T) {
+func TestH1PostWindowedDrainFailureAnswersAnError(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{AllowCidrs: []string{"127.0.0.0/8"}})
 	backend := newHTTPServer(t, s)
 	target := backend.URL + tunnelPath
@@ -425,13 +425,13 @@ func TestParseTraceparent(t *testing.T) {
 	})
 }
 
-// A mode E session is bound to the key that minted it. Without the binding, a
+// A h1.1-post-windowed session is bound to the key that minted it. Without the binding, a
 // second — individually valid — operator key that learned a trace-id could
 // attach to or destroy someone else's session. The refusal must be the same
 // camouflage 404 as every other refusal (VPN-R34), and it must INTERRUPT the
 // tunnel: every tunnel session exists only under authentication, so a failed
 // authentication kills the carrier rather than merely declining a request.
-func TestModeESessionIsBoundToItsMintingKey(t *testing.T) {
+func TestH1PostWindowedSessionIsBoundToItsMintingKey(t *testing.T) {
 	t.Setenv(envOperatorKeys, `{"default":"`+testTunnelToken+`","second":"second-operator-token-0123456789"}`)
 	s := &server{}
 	if err := s.enableTunnel(egressConfig{AllowCidrs: []string{"127.0.0.0/8"}}); err != nil {
@@ -493,7 +493,7 @@ func TestModeESessionIsBoundToItsMintingKey(t *testing.T) {
 // window on a live session must NOT kill it (the session continues, and the
 // correct next span still works). This is the line between "misrouted window"
 // and "authentication failure".
-func TestModeEDesyncDoesNotKillTheSession(t *testing.T) {
+func TestH1PostWindowedDesyncDoesNotKillTheSession(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{AllowCidrs: []string{"127.0.0.0/8"}})
 	backend := newHTTPServer(t, s)
 	target := backend.URL + tunnelPath
