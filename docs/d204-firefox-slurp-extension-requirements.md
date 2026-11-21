@@ -121,7 +121,13 @@ tombstone erases exactly the identity its event carried, and never a wider one.
 So a bookmark tombstone is an **erase instruction** and a history tombstone is a
 **mark**. The daemon may compact a bookmark row away; it must keep the visit
 rows behind a page mark, because the visit that was deleted cannot be named and
-d173's archive is append-only.
+d173's archive is append-only. A page mark hides that page's visits; a global
+clear hides every visit up to its `deleted_at` on the visit read faces. Both
+leave the presence row alone: the archive still knows the page was seen, and a
+later clear must move the timestamp forward rather than be ignored. A later page
+title or bookmark title is enrichment, not a visit rewrite: it fills
+`page_title`/`presence` and the read faces join it, so the `visit` row stays
+append-only.
 
 Two corollaries. A visit row can never be erased through this API: the live
 event carries no visit id and the removal event carries no time, so "this

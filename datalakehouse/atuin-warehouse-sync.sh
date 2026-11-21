@@ -180,6 +180,10 @@ fi
 
 TOKEN=${motherduck_token:-${MOTHERDUCK_TOKEN:-}}
 : "${TOKEN:?set motherduck_token (MotherDuck access token; see README)}"
+# The token belongs in the environment: argv is readable in /proc, and a SET
+# literal also lands in a query log. The MotherDuck extension reads it itself.
+export motherduck_token="$TOKEN"
+export MOTHERDUCK_TOKEN="$TOKEN"
 
 # MotherDuck's extension rejects clients outside its supported range (docs:
 # 1.4.1-1.5.6) with a load error that names no fix — a bare PATH duckdb can be
@@ -194,6 +198,15 @@ v1.4.* | v1.5.*) ;;
 esac
 
 WAREHOUSE_DB=${ATUIN_WAREHOUSE_DB:-atuin}
+case "$WAREHOUSE_DB" in
+"" | *[!A-Za-z0-9_]*)
+	echo "ATUIN_WAREHOUSE_DB must be a simple database name" >&2
+	exit 64
+	;;
+esac
+# The source path goes into ATTACH as a SQL string literal; a quote in a host
+# path would end it early. Escape it once, at the boundary.
+SRC_SQL=$(printf '%s' "$SRC" | sed "s/'/''/g")
 TGT_DB=mdw
 TGT_SCHEMA=main
 TGT_TABLE=history
@@ -204,7 +217,7 @@ duck() { duckdb -json -c "$1"; }
 # Source columns as JSON [{name,type}]; fails cleanly when history.db has no history table.
 src_json=$(duck "
   INSTALL sqlite; LOAD sqlite;
-  ATTACH '$SRC' AS src (TYPE sqlite, READ_ONLY);
+  ATTACH '$SRC_SQL' AS src (TYPE sqlite, READ_ONLY);
   SELECT column_name AS name, data_type AS type
   FROM duckdb_columns()
   WHERE database_name='src' AND table_name='history'
@@ -217,7 +230,6 @@ jq -e 'type == "array" and length > 0' <<<"$src_json" >/dev/null ||
 # without error, so suppression would only hide real failures.
 tgt_json=$(duck "
   INSTALL motherduck; LOAD motherduck;
-  SET motherduck_token='$TOKEN';
   ATTACH 'md:$WAREHOUSE_DB' AS $TGT_DB;
   SELECT column_name AS name, data_type AS type
   FROM duckdb_columns()
@@ -275,8 +287,7 @@ sql=$(jq -r --argjson src "$src_json" --argjson tgt "$tgt_json" --argjson prune 
 result=$(duck "
   INSTALL sqlite; LOAD sqlite;
   INSTALL motherduck; LOAD motherduck;
-  SET motherduck_token='$TOKEN';
-  ATTACH '$SRC' AS src (TYPE sqlite, READ_ONLY);
+  ATTACH '$SRC_SQL' AS src (TYPE sqlite, READ_ONLY);
   ATTACH 'md:$WAREHOUSE_DB' AS $TGT_DB;
   CREATE SCHEMA IF NOT EXISTS $TGT_DB.$TGT_SCHEMA;
 $sql

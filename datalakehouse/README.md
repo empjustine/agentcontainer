@@ -107,50 +107,84 @@ sandbox hands over events without holding write access to the archive.
 The daemon runs in the foreground and does not fork itself; backgrounding is the
 orchestration layer's job. Its dedupe is a conditional insert (`INSERT OR IGNORE`
 against a SQLite primary key), so a re-posted row is skipped durably and the sync
-re-posting every run appends nothing new. Identity is the transcript's own **session id** (pi's header id) and, per entry,
-the entry id; the file path is stored as a location attribute, never as the key,
-because the same session has a different path inside a sandbox and on the host.
-A pi header is recognized by its `type`, not its line position, so a file that
-concatenates two sessions splits back into two by their own ids.
+re-posting every run appends nothing new. The key is recorded only **after** the
+line is appended: recording it first would let a disk-full append lose the row
+forever, because the replay would then be answered as a duplicate. On startup the
+ledger is reseeded from every tail the sender still globs, streamed line by line,
+so a pre-upgrade or crash-damaged ledger repairs itself without reading a
+hundreds-of-MiB spool into memory. It is then vacuumed and WAL-checkpointed on
+every start (`PRAGMA optimize`, `VACUUM`, `wal_checkpoint(TRUNCATE)`), so the
+append-only key table does not carry its freelist into the next run. Identity is the transcript's own **session id**
+(pi's header id) and, per entry, the entry id; the file path is stored as a
+location attribute, never as the key, because the same session has a different
+path inside a sandbox and on the host. A pi header is recognized by its `type`,
+not its line position, so a file that concatenates two sessions splits back into
+two by their own ids. `AGENT_INGEST_TOKEN` is optional on loopback, where any
+local process can already reach the route; a non-loopback bind without it refuses
+to start, because the write gate is the whole boundary there. Invalid input
+answers an RFC 9457 `application/problem+json` document (a `400` names
+`interface-error`), so a client branches on `type` rather than on prose.
 
 A row also says what it is (d221). `source` names the harness and `kind` splits a
 session row from an entry; absent `source` means `pi`, so rows written before the
 field exist stay valid. pi rows keep `mdw.pi.*`; any other source lands in
 `mdw.harness.session`/`mdw.harness.entry` with the row verbatim until its reader
-defines the promoted shape over those rows (d167). An unidentified row is keyed by
-the spool file and its line, never the line alone: a rotated tail would reuse a
-line-only key and `ON CONFLICT DO NOTHING` would drop the later row silently. The
-daemon keys a foreign row by source and accepts `message_id` as an entry id, because
-two harnesses mint ids independently.
+defines the promoted shape over those rows (d167). An unidentified row is keyed
+by the SHA-256 of its canonical JSON, not by the spool file and line: the sender
+renames the live tail to `.rm.<pid>` and a direct fold renumbers the same row on
+every run, so a file/line key minted a new primary key and the warehouse stored a
+duplicate each time. The daemon keys a foreign row by source and accepts
+`message_id` as an entry id, because two harnesses mint ids independently.
 
 When the process holds `motherduck_token` (the usual `./environment.sh` start),
 the daemon also folds its own spool: it runs `agent-warehouse-spool-send.sh` at
 `AGENT_WAREHOUSE_SPOOL_MAX_BYTES` (default 32 MiB; `0` disables it), at startup for
 whatever tail an earlier run left (a frozen `spool.rm.*` included) and after an append
-that crosses the threshold. One sender at a time (`<spool>.lock`); a failed fold backs
-off `AGENT_WAREHOUSE_SPOOL_SEND_RETRY` ms (default 60000) and retries from a timer, so an
-idle daemon does not wait for the next POST. The pending count is measured from the files
-at startup and around every fold, and a non-numeric value in either variable warns and
-falls back to its default. Without the token it only spools and says so at startup;
-nothing else changes (docs/d217).
+that crosses the threshold. The sender owns one shared `<spool>.lock`: the
+daemon, an operator run and a sync `--direct` leg all take it, so a second sender
+exits `75` (temporary failure) and the daemon treats that as busy, not as a
+failed fold. With `flock` the kernel releases the lock when the process dies; the
+POSIX `mkdir` fallback checks the recorded pid and reclaims a dead owner. A failed
+fold backs off `AGENT_WAREHOUSE_SPOOL_SEND_RETRY` ms (default 60000) and retries
+from a timer, so an idle daemon does not wait for the next POST. The pending count
+is measured from the files at startup and around every fold, and a non-numeric
+numeric variable warns and falls back to its default. Without the token it only
+spools and says so at startup; the spool then grows without a ceiling until an
+operator runs the sender (docs/d217).
 
 **The route is the sync's default
 transport** — `http://127.0.0.1:8787` or `AGENT_WAREHOUSE_ROUTE` — needing no
-token and no duckdb; `--direct` is the alternative that uploads straight to
+MotherDuck token and no duckdb; the route's own `AGENT_INGEST_TOKEN` may still be
+required. A plaintext route off loopback is refused because it would carry that
+key in the clear; `--direct` is the alternative that uploads straight to
 MotherDuck.
 `--rm` removes a processed file only after the transport ack, and only when the
 file is older than `AGENT_WAREHOUSE_RM_GRACE` seconds (default 300); it is meant for
 postmortem runs and the historical pile, never for a live session, and a
-just-modified file is kept and reported as possibly live.
+just-modified file is kept and reported as possibly live. A **route** ack only
+proves the row reached the host spool, not the warehouse: `--rm` in route mode
+warns that the source is then the last copy only until the next fold. Use
+`--direct` when the source must not be the last copy.
 The collector is its own tool: `agent-warehouse-spool-send.sh` folds an existing
-spool into the warehouse by reading bounded batches, so a hundreds-of-MiB pending
-spool never has to fit in the engine at once; it freezes the live tail first and
-deletes a frozen file only after it is fully consumed and acked. The rotation is
+spool into the warehouse by reading batches bounded by both rows (`AGENT_WAREHOUSE_BATCH_ROWS`) and bytes
+(`AGENT_WAREHOUSE_BATCH_BYTES`), so a hundreds-of-MiB pending spool never has to
+fit in the engine at once and one 100-KB row cannot make a 5000-row batch. It
+freezes the live tail first and deletes a frozen file only after it is fully
+consumed and acked; a recreated live tail is never read or deleted in the same
+pass, because rows appended between the last read and the `rm` would be lost. A
+malformed or unidentifiable line is a dead letter: it is appended to
+`<spool>.dead.ndjson` (or `AGENT_WAREHOUSE_DEADLOG`) with its last session
+header, the lines before it and the lines after it (`AGENT_WAREHOUSE_DLQ_CONTEXT`,
+default 3), so it can be repaired
+without the live tail blocking forever. The dead-letter queue is append-only and
+never consumed automatically; a record is keyed by the content hash of the bad
+line, so re-reading a rotated tail does not duplicate it. A line that cannot be
+quarantined keeps its tail instead. The rotation is
 unilateral: the daemon appends by path on every request, so the next append creates
 a fresh spool, and a daemon holding a persistent file handle would keep writing the
 renamed inode. **A direct run of the sync clears the consumed spool**: it rotates
 the tail first, hands the raw tails and the parsed rows to the sender in one fold,
-and removes what is left after the ack, independent of `--rm` (which governs the
+and removes only the tails it read after the ack, independent of `--rm` (which governs the
 session files). A **route** run never touches the spool: the daemon already holds
 those rows, so re-posting them would only exercise the dedupe. A `--dry` or report
 run has no side effect and counts the spool rows on their own.
@@ -162,7 +196,8 @@ tool's stream, such as mistral-vibe's `messages.jsonl`, or a fragment), so it
 contributes no rows and is never a `--rm` candidate.
 The route post is batched under `AGENT_WAREHOUSE_BATCH_BYTES` (default 4 MiB) so a
 row's large content array cannot overflow the daemon's `AGENT_INGEST_MAX_BODY`
-(default 8 MiB) in a single request.
+(default 8 MiB) or its `AGENT_INGEST_MAX_ROWS` (default 10000) in a single
+request.
 
 ### The browsing endpoint (Promnesia and hister)
 
@@ -190,8 +225,30 @@ canonicaliser is Promnesia's own `cannon.py`, vendored (MIT) because
 - `BROWSE_TOKEN` gates the **write** faces (`/ingest/slurp`, `/api/add`,
   `/api/add_pdf`, `/api/delete`, `/api/label`, `POST /api/rules`,
   `/api/history`). Reads stay open because the Promnesia extension has no field
-  to carry a key and the default bind is loopback; an operator who binds wider
-  treats the key as the network secret.
+  to carry a key and the default bind is loopback. A non-loopback bind without
+  a key refuses to start; a non-loopback bind with a key still leaves every read
+  unauthenticated, so the key is a write secret, not a network secret.
+- Invalid values answer an RFC 9457 `application/problem+json` document: a
+  `400` names `interface-error`, a `413` names `payload-too-large`, and a store
+  failure keeps its words in the log while the body names `store-error`.
+- `BROWSE_MAX_BODY` (default 8 MiB), `BROWSE_MAX_PDF_BYTES` (default 32 MiB),
+  `BROWSE_MAX_VISITED_URLS` (default 5000) and `BROWSE_MAX_FORM_FIELDS` (default 10000) bound the allocations a request can force before its route runs. A
+  request over a body ceiling answers `413`.
+- The store is created `0700`/`0600`: browsing history is private to the user.
+  Timestamps are stored in UTC, so a lexical compare of an offset form cannot
+  sort the wrong instant; a `history-cleared` mark hides the visits up to its
+  timestamp on both visit faces while the presence row (and the archive) stays.
+  A `visit` row is never updated; a later title or bookmark title fills the
+  derived `page_title`/`presence` and the read faces join it, so the append-only
+  fact stays append-only. A bookmark move updates the stored parent, position and
+  title while `date_added` stays immutable.
+- `BROWSE_PDF_TIMEOUT` (default 20 s) and `BROWSE_PDF_MAX_TEXT` (default 8 MiB)
+  bound PDF extraction, which runs in a separate interpreter with CPU,
+  address-space and file-size rlimits. The daemon is the appender; a media
+  parser gets its own process. `BROWSE_PDF_RUNNER` prefixes that worker with an
+  operator command (for example a `bwrap --unshare-net --die-with-parent … --` or
+  `systemd-run --scope -p MemoryMax=… --` wrapper); for hostile PDFs, run the
+  daemon in a container or use that runner for a namespace/container boundary.
 - `--print-config` prints the resolved address, store and whether a key is set.
 
 The producer half is the Firefox add-on in `firefox-extension/`; its README
@@ -293,12 +350,16 @@ The daemon answers the pinned hister surface of d205 from the same store
   and language, and the postings are rebuilt from the stored row, not the
   request.
 
-Retention is split the way the clients are: the archive keeps everything, the
-browser keeps half of Gecko's expiry rule (50 000 pages, 45 days) and the
-producer prunes it through the public history API, so history falls into the
+Retention is split the way the clients are: the archive keeps every visit row
+(a page mark or a global clear hides a row, never deletes it), the browser keeps
+half of Gecko's expiry rule (50 000 pages, 45 days) and the producer prunes it
+through the public history API, so history falls into the
 archive instead of expiring unwatched. The producer's GitHub repository-root
 bookmark rule and the 5 s-to-7 d scrub cadence live in
-[d204](../docs/d204-firefox-slurp-extension-requirements.md).
+[d204](../docs/d204-firefox-slurp-extension-requirements.md). A captured
+document is the one explicit erase: `/api/delete` removes the document and its
+postings, because the hister delete action is a user instruction, not a
+retention rule.
 
 ### Verification status
 
@@ -308,7 +369,7 @@ extension's Node suite runs its four streams against the fake WebExtension; and
 `tests/slurp-contract.mjs` posts through the extension's own `wire.mjs` to the
 daemon and reads the result back from both faces. The call set was compared
 against upstream `karlicoss/promnesia` `server.py`/`api.ts` and the current
-hister extension. That repository now redirects to `asciimoo/nogon`; its
+hister extension. The suite also asserts a wide bind without a key, an oversized body, a bookmark move, a history clear, a failed spool append, a quarantined malformed line with its context, the shared sender lock, an append-only visit under a late title and a bookmark title, a PDF parser crash in its worker and an RFC 9457 problem body. That repository now redirects to `asciimoo/nogon`; its
 extension still calls the same nine endpoints, so the capture surface stays
 pinned even though the server has grown many endpoints the extension does not
 call.

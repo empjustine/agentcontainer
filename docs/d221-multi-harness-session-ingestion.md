@@ -30,13 +30,13 @@ launcher row in `coding-harness-persistence` (d167's pending leg).
 The route is not. A row reaching `POST /ingest/session` is stored verbatim in one
 NDJSON spool (d181), and the daemon folds that spool at a byte ceiling (d217).
 
-| layer         | pi-shaped part                                                   | why it binds                                                                                                             |
-| ------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| sender        | `mdw.pi.session`/`mdw.pi.entry` DDL and two fixed staging shapes | it could only land pi's columns anywhere                                                                                 |
-| sender + sync | `id: "spool-<line_no>"` for a row without an id                  | a rotated spool restarts the counter, so two unrelated rows collide on the upsert key and the second is silently dropped |
-| sync          | a `.jsonl` whose first line is not a pi header is skipped        | deliberate: a foreign stream must not become junk rows (d184) — but it also means a vibe legacy session is invisible     |
-| sync          | the sweep reads files, never a database or a store               | OpenCode is SQLite, the vibe unified store is JSON chunks                                                                |
-| daemon        | `rowKey()` knew pi's identities only                             | two harnesses mint ids independently, so `(session_id, id)` alone collides across them                                   |
+| layer         | pi-shaped part                                                   | why it binds                                                                                                                                         |
+| ------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| sender        | `mdw.pi.session`/`mdw.pi.entry` DDL and two fixed staging shapes | it could only land pi's columns anywhere                                                                                                             |
+| sender + sync | `id: "spool-<sha256>"` for a row without an id                   | the spool's basename and line number change on a rotation or a direct re-fold, so the same row minted a new key and the warehouse stored a duplicate |
+| sync          | a `.jsonl` whose first line is not a pi header is skipped        | deliberate: a foreign stream must not become junk rows (d184) — but it also means a vibe legacy session is invisible                                 |
+| sync          | the sweep reads files, never a database or a store               | OpenCode is SQLite, the vibe unified store is JSON chunks                                                                                            |
+| daemon        | `rowKey()` knew pi's identities only                             | two harnesses mint ids independently, so `(session_id, id)` alone collides across them                                                               |
 
 ## The wire contract
 
@@ -78,13 +78,15 @@ promoted shape d167 names is defined over those rows when its reader lands
 d167's vocabulary). The envelope is the no-loss floor, never a second copy of a
 promoted row: a promotion reads these rows rather than re-ingesting the source.
 
-**Identity is generation-scoped, never line-scoped.** A row the producer did not
-identify gets `spool-<spool-file-basename>-<line>`. The basename is what makes it
-stable: the sender folds a frozen `spool.ndjson.rm.<pid>` under that name, so two
-generations cannot mint the same key, while re-reading an interrupted run
-reproduces it. A collision here is a silent drop (`ON CONFLICT DO NOTHING`,
-d203), which is why the fix matters more than the duplicate a better-supported
-fallback would cost.
+**Identity is content-scoped, never line-scoped.** A row the producer did not
+identify gets `spool-<sha256 of its canonical JSON>`. The earlier file-and-line
+key was not stable: the sender folds a frozen `spool.ndjson.rm.<pid>`, so the
+basename carries a new pid after every restart, and a direct fold concatenates
+rows into a differently named temp file, so the same row minted a new key and the
+warehouse stored a duplicate on every run. Canonical JSON (sorted object keys)
+also makes a re-post with a different key order dedupe. A collision here is a
+silent drop (`ON CONFLICT DO NOTHING`, d203), so the hash must be over the whole
+canonical row.
 
 **A foreign row is keyed with its source.** `rowKey()` in the daemon prepends
 `source` for anything that is not `pi`, and accepts `message_id` as an entry id

@@ -47,16 +47,18 @@ from __future__ import annotations
 
 import base64
 import datetime as dt
-import io
+import hmac
 import json
 import math
 import os
 import re
 import shlex
 import sqlite3
+import subprocess
 import sys
 import threading
 import time
+import traceback
 import urllib.parse
 from collections import Counter, defaultdict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -85,6 +87,55 @@ _data_home = os.environ.get("XDG_DATA_HOME") or os.path.join(
 )
 DB_PATH = os.environ.get("BROWSE_DB") or os.path.join(_data_home, "agent-warehouse", "browse.sqlite")
 TOKEN = os.environ.get("BROWSE_TOKEN") or ""
+
+
+def _env_int(name: str, fallback: int) -> int:
+    """An env integer, or the default when absent, empty or not a number.
+
+    A typo such as 8MB must not reach a comparison: a body ceiling that
+    compares false is no ceiling, and a timeout that compares false never
+    fires. The warning names the variable so the operator can see which one
+    was ignored.
+    """
+    raw = os.environ.get(name)
+    if raw is None or raw == "":
+        return fallback
+    try:
+        value = int(raw)
+    except ValueError:
+        sys.stderr.write(
+            "browse-daemon: " + name + "=" + repr(raw)
+            + " is not an integer; using " + str(fallback) + "\n"
+        )
+        return fallback
+    return value if value > 0 else fallback
+
+
+# The HTTP faces are a local tool, not a public service, but every unbounded
+# read is still a denial of service for the host: a client that declares a
+# gigabyte body, or posts a form with a million fields, allocates before any
+# route sees it. The ceilings are generous for the stock clients and tunable
+# for a capture that is larger than usual.
+MAX_BODY = _env_int("BROWSE_MAX_BODY", 8 * 1024 * 1024)
+MAX_FORM_FIELDS = _env_int("BROWSE_MAX_FORM_FIELDS", 10_000)
+MAX_PDF_BYTES = _env_int("BROWSE_MAX_PDF_BYTES", 32 * 1024 * 1024)
+MAX_VISITED_URLS = _env_int("BROWSE_MAX_VISITED_URLS", 5_000)
+# RFC 9457 problem details: every error body names a stable type and a title,
+# so a client branches on the type rather than on a prose string.
+PROBLEM_BASE = "https://agentcontainer.example/problems/"
+
+# One thread per connection is the stdlib server's default, and a slow client
+# can hold a thread for the socket timeout. A bounded pool turns connection
+# exhaustion into a fast 503 instead of an unbounded thread count.
+MAX_WORKERS = _env_int("BROWSE_MAX_WORKERS", 32)
+# PDF extraction runs in a separate interpreter with rlimits and a timeout: a
+# parser crash or a decompression bomb must not take the appender down with it.
+PDF_TIMEOUT = _env_int("BROWSE_PDF_TIMEOUT", 20)
+PDF_MAX_TEXT = _env_int("BROWSE_PDF_MAX_TEXT", 8 * 1024 * 1024)
+try:
+    PDF_RUNNER = shlex.split(os.environ.get("BROWSE_PDF_RUNNER", ""))
+except ValueError as exc:
+    raise SystemExit(f"browse-daemon: bad BROWSE_PDF_RUNNER: {exc}") from exc
 
 # One writer at a time: SQLite allows a single writer, and every write here is a
 # short transaction. The lock is held across the write, never across a response.
@@ -191,10 +242,26 @@ def connect() -> sqlite3.Connection:
 
 
 def init_store() -> None:
-    os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
+    # Browsing history is private: a 0755 directory and 0644 database are
+    # readable by every other local user. The process umask covers the WAL/SHM
+    # sidecars SQLite creates beside the main file.
+    directory = os.path.dirname(DB_PATH) or "."
+    os.makedirs(directory, mode=0o700, exist_ok=True)
+    # The default store directory is this daemon's own; tighten an older 0755
+    # one. A caller-chosen directory keeps its mode, because chmod on a shared
+    # parent such as /tmp is not this process's decision.
+    if os.path.basename(os.path.abspath(directory)) == "agent-warehouse":
+        try:
+            os.chmod(directory, 0o700)
+        except OSError:
+            pass
     with _write_lock, connect() as conn:
         conn.executescript(SCHEMA)
         ensure_index(conn)
+    try:
+        os.chmod(DB_PATH, 0o600)
+    except OSError:
+        pass
 
 
 # --- canonicalisation and the time boundary ---------------------------------
@@ -227,7 +294,11 @@ def _moment(value: Any) -> dt.datetime:
     if text.endswith("Z"):
         text = f"{text[:-1]}+00:00"
     parsed = dt.datetime.fromisoformat(text)
-    return parsed if parsed.tzinfo else parsed.replace(tzinfo=dt.UTC)
+    # Store one zone. The read faces compare and order these strings, and a
+    # lexical comparison of "+02:00" against "+00:00" is a different instant
+    # that sorts in the wrong place. The wire conversion back to the host zone
+    # is _promnesia_dt's job, not storage's.
+    return (parsed if parsed.tzinfo else parsed.replace(tzinfo=dt.UTC)).astimezone(dt.UTC)
 
 
 def _ms(moment: dt.datetime) -> int:
@@ -352,11 +423,6 @@ def _title(conn: sqlite3.Connection, url: str, title: str, at: str) -> bool:
         " (locator_title IS NULL OR locator_title = '')",
         (title, norm),
     )
-    conn.execute(
-        "UPDATE visit SET locator_title = ? WHERE norm_url = ? AND"
-        " (locator_title IS NULL OR locator_title = '')",
-        (title, norm),
-    )
     return True
 
 
@@ -365,33 +431,56 @@ def _bookmark(conn: sqlite3.Connection, src: str, record: dict[str, Any]) -> boo
     if not key:
         raise BadRequest("bookmark record without key")
     url = record.get("url")
-    node_type = str(record.get("node_type") or "bookmark")
-    # A folder has no URL and therefore no presence: the bookmark is context,
-    # not a visit (docs/d205's bookmark row).
-    norm = normalise(str(url)) if url else None
+    existing = conn.execute(
+        "SELECT * FROM bookmark WHERE src = ? AND key = ?", (src, key)
+    ).fetchone()
+    # A move or a rename is an event too: the row's parent, position and title
+    # are facts the producer re-sends, and INSERT OR IGNORE would drop every
+    # one after the first walk. Only date_added is immutable; the folder path
+    # stays a view over the chain (docs/d204).
+    node_type = str(
+        record.get("node_type") or (existing["node_type"] if existing else "bookmark")
+    )
+    norm = normalise(str(url)) if url else (existing["norm_url"] if existing else None)
+    orig_url = str(url) if url else (existing["orig_url"] if existing else None)
+    title = record.get("title")
+    if title is None and existing is not None:
+        title = existing["title"]
+    parent_id = record.get("parent_id")
+    if parent_id is None and existing is not None:
+        parent_id = existing["parent_id"]
+    position = record.get("position")
+    if position is None and existing is not None:
+        position = existing["position"]
     at = record.get("date_added")
     added_ms = int(at) if isinstance(at, (int, float)) else None
+    if existing is not None:
+        # date_added is the one immutable fact: a move or a rename re-sends it,
+        # and a partial event must not blank it.
+        added_ms = existing["date_added"]
     modified = record.get("date_modified")
     modified_ms = int(modified) if isinstance(modified, (int, float)) else None
-    cursor = conn.execute(
-        "INSERT OR IGNORE INTO bookmark(src, key, norm_url, orig_url, title, parent_id,"
-        " position, node_type, date_added, date_modified)"
-        " VALUES(?,?,?,?,?,?,?,?,?,?)",
-        (
-            src,
-            key,
-            norm,
-            str(url) if url else None,
-            record.get("title"),
-            record.get("parent_id"),
-            record.get("position"),
-            node_type,
-            added_ms,
-            modified_ms,
-        ),
-    )
-    if cursor.rowcount == 0:
-        return False
+    if modified_ms is None and existing is not None:
+        modified_ms = existing["date_modified"]
+    values = (norm, orig_url, title, parent_id, position, node_type, added_ms, modified_ms)
+    if existing is not None:
+        if all(existing[name] == value for name, value in zip(
+            ("norm_url", "orig_url", "title", "parent_id", "position", "node_type",
+             "date_added", "date_modified"), values)):
+            return False
+        conn.execute(
+            "UPDATE bookmark SET norm_url=?, orig_url=?, title=?, parent_id=?,"
+            " position=?, node_type=?, date_added=?, date_modified=?"
+            " WHERE src=? AND key=?",
+            values + (src, key),
+        )
+    else:
+        conn.execute(
+            "INSERT INTO bookmark(src, key, norm_url, orig_url, title, parent_id,"
+            " position, node_type, date_added, date_modified)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?)",
+            (src, key) + values,
+        )
     if norm:
         # A bookmark is context, never a visit (docs/d204): enrich a page that
         # a visit already made present, but never create the visited mark from
@@ -404,22 +493,51 @@ def _bookmark(conn: sqlite3.Connection, src: str, record: dict[str, Any]) -> boo
             " WHERE norm_url=?",
             (title, url, norm),
         )
-        conn.execute(
-            "UPDATE visit SET locator_title=?"
-            " WHERE norm_url=? AND (locator_title IS NULL OR locator_title = '')",
-            (title, norm),
-        )
+        # A bookmark title is context, not a visit mutation. page_title is the
+        # derived read-time locator, so a later real title event can replace it;
+        # the visit row itself stays append-only.
+        if title:
+            conn.execute(
+                "INSERT INTO page_title(norm_url, title, seen_at) VALUES(?,?,?)"
+                " ON CONFLICT(norm_url) DO NOTHING",
+                (norm, title, dt.datetime.now(dt.UTC).isoformat()),
+            )
     return True
 
 
 def _tombstone(
     conn: sqlite3.Connection, kind: str, key: str, at: str, source: str
 ) -> bool:
-    cursor = conn.execute(
-        "INSERT OR IGNORE INTO tombstone(kind, key, deleted_at, source) VALUES(?,?,?,?)",
+    """Record a removal mark, first-write-wins except for a global clear.
+
+    A page or bookmark mark names one identity, so the first sighting is the
+    fact and a replay changes nothing. A history clear is a timestamp: a second
+    clear must move the mark forward, or the visits between the two clears stay
+    visible forever.
+    """
+    existing = conn.execute(
+        "SELECT deleted_at FROM tombstone WHERE kind = ? AND key = ?", (kind, key)
+    ).fetchone()
+    if existing is not None:
+        if kind != "history-cleared":
+            return False
+        try:
+            if _moment(str(existing["deleted_at"])) >= _moment(at):
+                return False
+        except (TypeError, ValueError, OverflowError):
+            # A malformed stored mark must not hide a newer clear.
+            if str(existing["deleted_at"]) >= at:
+                return False
+        conn.execute(
+            "UPDATE tombstone SET deleted_at = ?, source = ? WHERE kind = ? AND key = ?",
+            (at, source, kind, key),
+        )
+        return True
+    conn.execute(
+        "INSERT INTO tombstone(kind, key, deleted_at, source) VALUES(?,?,?,?)",
         (kind, key, at, source),
     )
-    return cursor.rowcount > 0
+    return True
 
 
 def ingest_batch(envelope: dict[str, Any]) -> dict[str, Any]:
@@ -1125,18 +1243,69 @@ def hister_search(conn: sqlite3.Connection, params: dict[str, Any]) -> dict[str,
     }
 
 
+# The worker is a separate process on purpose. The main daemon is the
+# appender; a media parser is the one component whose input is an arbitrary
+# file, so it gets its own interpreter, address-space/CPU/file limits and a
+# wall-clock timeout. A container or bwrap wrapper is the stronger boundary for
+# a host that accepts hostile PDFs; this is the boundary that ships here.
+PDF_WORKER = r"""
+import io
+import resource
+import sys
+
+
+def limit(kind, value):
+    try:
+        resource.setrlimit(kind, (value, value))
+    except (OSError, ValueError):
+        pass
+
+
+limit(resource.RLIMIT_CPU, 10)
+limit(resource.RLIMIT_AS, 512 * 1024 * 1024)
+limit(resource.RLIMIT_NOFILE, 64)
+limit(resource.RLIMIT_FSIZE, 1024 * 1024)
+limit(resource.RLIMIT_CORE, 0)
+
+from pypdf import PdfReader
+
+data = sys.stdin.buffer.read()
+reader = PdfReader(io.BytesIO(data))
+text = "\n\f\n".join((page.extract_text() or "") for page in reader.pages).strip()
+sys.stdout.buffer.write(text.encode("utf-8"))
+"""
+
+
 def extract_pdf_text(data: bytes) -> str:
-    """Extract the text the upstream server indexes for /api/add_pdf.
+    """Extract PDF text out of process, under rlimits and a wall clock.
 
     The dependency is pypdf (BSD) and it is declared in the PEP 723 header, so
     this stays a single-file tool (docs/d113). Upstream fails the capture when a
     PDF has no extractable text; the same 5xx is returned here rather than
     storing a document the search index cannot see.
     """
-    from pypdf import PdfReader
-
-    reader = PdfReader(io.BytesIO(data))
-    return "\n\f\n".join((page.extract_text() or "") for page in reader.pages).strip()
+    try:
+        completed = subprocess.run(
+            PDF_RUNNER + [sys.executable, "-I", "-c", PDF_WORKER],
+            input=data,
+            capture_output=True,
+            timeout=PDF_TIMEOUT,
+            env={
+                "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+                "LANG": "C.UTF-8",
+            },
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError("pdf extraction timed out") from exc
+    if completed.returncode != 0:
+        detail = completed.stderr.decode("utf-8", "replace").strip()
+        last = detail.splitlines()[-1] if detail else "worker exited nonzero"
+        raise RuntimeError(last)
+    text = completed.stdout.decode("utf-8", "replace")
+    if len(text.encode("utf-8")) > PDF_MAX_TEXT:
+        raise RuntimeError("pdf text exceeds the configured ceiling")
+    return text
 
 
 # --- the Promnesia face (pinned from promnesia's server.py) -----------------
@@ -1144,19 +1313,35 @@ def extract_pdf_text(data: bytes) -> str:
 # A removed page hides its visits, but the presence row survives: "have I seen
 # this URL" stays true for an archive, and only the visit list answers a
 # deletion (docs/d204's append-only rule, docs/d205's pending erasure).
+_VISIT_SELECT = (
+    "SELECT visit.*, COALESCE(NULLIF(visit.locator_title, ''), page_title.title)"
+    " AS effective_title FROM visit LEFT JOIN page_title"
+    " ON page_title.norm_url = visit.norm_url"
+)
+
 _VISIBLE_VISIT = (
     " AND NOT EXISTS (SELECT 1 FROM tombstone t"
     " WHERE t.kind='visit-removed' AND t.key = visit.norm_url)"
+    # A global clear hides every visit up to its timestamp, while the rows and
+    # the presence mark stay: the archive still knows the page was seen
+    # (docs/d204's mark-not-erase rule). julianday() compares the instants, so
+    # an older row stored with a numeric offset is not hidden by lexical
+    # accident.
+    " AND NOT EXISTS (SELECT 1 FROM tombstone t"
+    " WHERE t.kind='history-cleared' AND t.key = '*'"
+    " AND julianday(visit.dt) <= julianday(t.deleted_at))"
 )
 
 
 def _visit_json(row: sqlite3.Row) -> dict[str, Any]:
+    keys = row.keys()
+    title = row["effective_title"] if "effective_title" in keys else row["locator_title"]
     return {
         "dt": _promnesia_dt(_moment(row["dt"])),
         "src": row["src"] or "unnamed",
         "context": row["context"],
         "duration": row["duration"],
-        "locator": {"title": row["locator_title"], "href": row["locator_href"]},
+        "locator": {"title": title, "href": row["locator_href"]},
         "original_url": row["orig_url"],
         "normalised_url": row["norm_url"],
     }
@@ -1170,23 +1355,33 @@ def promnesia_visits(url: str) -> dict[str, Any]:
     norm = normalise(url) or url.strip()
     with connect() as conn:
         rows = conn.execute(
-            "SELECT * FROM visit WHERE (norm_url = ? OR (context IS NOT NULL"
-            " AND substr(norm_url, 1, ?) = ? AND norm_url != ?))"
+            _VISIT_SELECT
+            + " WHERE (visit.norm_url = ? OR (visit.context IS NOT NULL"
+            " AND substr(visit.norm_url, 1, ?) = ? AND visit.norm_url != ?))"
             + _VISIBLE_VISIT
-            + " ORDER BY dt",
+            + " ORDER BY julianday(visit.dt)",
             (norm, len(norm), norm, norm),
         ).fetchall()
     return _visits_envelope(url, norm, rows)
 
 
+def _like_escape(value: str) -> str:
+    """Escape LIKE metacharacters: a literal search for 100% is not a wildcard."""
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 def promnesia_search(text: str) -> dict[str, Any]:
-    needle = f"%{text.strip()}%"
+    needle = f"%{_like_escape(text.strip())}%"
     with connect() as conn:
         rows = conn.execute(
-            "SELECT * FROM visit WHERE (norm_url LIKE ? OR orig_url LIKE ?"
-            " OR context LIKE ? OR locator_title LIKE ?)"
+            _VISIT_SELECT
+            + " WHERE (visit.norm_url LIKE ? ESCAPE '\\'"
+            " OR visit.orig_url LIKE ? ESCAPE '\\'"
+            " OR visit.context LIKE ? ESCAPE '\\'"
+            " OR COALESCE(NULLIF(visit.locator_title, ''), page_title.title)"
+            " LIKE ? ESCAPE '\\')"
             + _VISIBLE_VISIT
-            + " ORDER BY dt DESC LIMIT 500",
+            + " ORDER BY julianday(visit.dt) DESC LIMIT 500",
             (needle, needle, needle, needle),
         ).fetchall()
     return _visits_envelope(text, text.strip(), rows)
@@ -1198,9 +1393,10 @@ def promnesia_search_around(timestamp: float) -> dict[str, Any]:
     end = (centre + dt.timedelta(minutes=2)).isoformat()
     with connect() as conn:
         rows = conn.execute(
-            "SELECT * FROM visit WHERE dt BETWEEN ? AND ?"
+            _VISIT_SELECT
+            + " WHERE julianday(visit.dt) BETWEEN julianday(?) AND julianday(?)"
             + _VISIBLE_VISIT
-            + " ORDER BY dt",
+            + " ORDER BY julianday(visit.dt)",
             (start, end),
         ).fetchall()
     # Upstream answers with this literal placeholder URL and its extension
@@ -1247,8 +1443,10 @@ def promnesia_status() -> dict[str, Any]:
                 "tombstones": conn.execute("SELECT count(*) AS n FROM tombstone").fetchone()["n"],
             }
     except sqlite3.Error as exc:
-        # /status answers even when the store is broken (docs/d205).
-        stats = {"ERROR": str(exc)}
+        # /status answers even when the store is broken (docs/d205); the SQL
+        # words stay in the log, the response carries only the failure.
+        log("ERROR /status store: " + repr(exc))
+        stats = {"ERROR": "store error"}
     return {"version": DAEMON_VERSION, "db": DB_PATH, "stats": stats}
 
 
@@ -1466,10 +1664,17 @@ _WRITE_PATHS = (
 )
 
 
+class PayloadTooLarge(BadRequest):
+    """A request body or field count above the configured ceiling."""
+
+
 class Handler(BaseHTTPRequestHandler):
     """The shared machinery; SURFACE names the protocol the listener answers."""
 
     protocol_version = "HTTP/1.1"
+    # A slow or stalled client must not pin a handler thread forever; the stock
+    # extensions finish in milliseconds, so 30 seconds is already generous.
+    timeout = 30
     SURFACE = ""
 
     def log_message(self, format: str, *args: Any) -> None:
@@ -1478,17 +1683,42 @@ class Handler(BaseHTTPRequestHandler):
         # silenced rather than duplicated.
         return
 
-    def _send(self, status: int, payload: Any = None) -> None:
+    def _send(self, status: int, payload: Any = None, *, problem: bool = False) -> None:
         self._status = status
-        body = b"" if payload is None else json.dumps(payload, separators=(",", ":")).encode()
+        if getattr(self, "_responded", False):
+            return
+        self._responded = True
+        body = b"" if payload is None else json.dumps(
+            payload, separators=(",", ":"), allow_nan=False
+        ).encode()
         self.send_response(status)
         if body:
-            self.send_header("content-type", "application/json")
+            self.send_header(
+                "content-type",
+                "application/problem+json" if problem else "application/json",
+            )
         self.send_header("content-length", str(len(body)))
         self._cors()
         self.end_headers()
         if body and self.command != "HEAD":
-            self.wfile.write(body)
+            try:
+                self.wfile.write(body)
+            except OSError:
+                # The client disconnected; the request is over, not a server
+                # failure worth a second response or a traceback.
+                pass
+
+    def _problem(self, status: int, slug: str, title: str, detail: str) -> None:
+        self._send(
+            status,
+            {
+                "type": PROBLEM_BASE + slug,
+                "title": title,
+                "status": status,
+                "detail": detail,
+            },
+            problem=True,
+        )
 
     def _cors(self) -> None:
         origin = self.headers.get("Origin") or ""
@@ -1500,12 +1730,21 @@ class Handler(BaseHTTPRequestHandler):
             "Access-Control-Allow-Headers",
             self.headers.get("Access-Control-Request-Headers") or _ALLOW_HEADERS,
         )
-        self.send_header("Access-Control-Allow-Credentials", "true")
         self.send_header("Access-Control-Max-Age", "600")
         self.send_header("Vary", "Origin")
 
     def _body(self) -> bytes:
-        length = int(self.headers.get("content-length") or 0)
+        raw = self.headers.get("content-length")
+        if raw is None:
+            return b""
+        try:
+            length = int(raw)
+        except ValueError as exc:
+            raise BadRequest("invalid content-length") from exc
+        if length < 0:
+            raise BadRequest("negative content-length")
+        if length > MAX_BODY:
+            raise PayloadTooLarge(f"body exceeds {MAX_BODY} bytes")
         return self.rfile.read(length) if length else b""
 
     def _json(self) -> dict[str, Any]:
@@ -1513,19 +1752,39 @@ class Handler(BaseHTTPRequestHandler):
         if not raw:
             return {}
         try:
-            parsed = json.loads(raw)
-        except json.JSONDecodeError as exc:
+            parsed = json.loads(raw, parse_constant=self._reject_constant)
+        except ValueError as exc:
+            # JSONDecodeError and a rejected NaN/Infinity are both request
+            # errors: the parser accepts those constants by default, and a
+            # non-finite timestamp then fails deep in the store instead.
             raise BadRequest(f"invalid json: {exc}") from exc
         if not isinstance(parsed, dict):
             raise BadRequest("body must be an object")
         return parsed
 
+    @staticmethod
+    def _reject_constant(value: str) -> Any:
+        raise ValueError(f"non-finite number {value} is not JSON")
+
     def _form(self) -> dict[str, str]:
-        parsed = urllib.parse.parse_qs(self._body().decode(), keep_blank_values=True)
+        try:
+            text = self._body().decode()
+            parsed = urllib.parse.parse_qs(
+                text, keep_blank_values=True, max_num_fields=MAX_FORM_FIELDS
+            )
+        except (UnicodeDecodeError, ValueError) as exc:
+            raise BadRequest(f"invalid form body: {exc}") from exc
         return {k: v[0] for k, v in parsed.items()}
 
     def _query(self) -> dict[str, list[str]]:
-        return urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query, keep_blank_values=True)
+        try:
+            return urllib.parse.parse_qs(
+                urllib.parse.urlsplit(self.path).query,
+                keep_blank_values=True,
+                max_num_fields=MAX_FORM_FIELDS,
+            )
+        except ValueError as exc:
+            raise BadRequest(f"invalid query string: {exc}") from exc
 
     def _path(self) -> str:
         return urllib.parse.urlsplit(self.path).path.rstrip("/") or "/"
@@ -1539,23 +1798,38 @@ class Handler(BaseHTTPRequestHandler):
         if not header:
             auth = self.headers.get("Authorization") or ""
             header = auth[7:] if auth.lower().startswith("bearer ") else ""
-        return header == TOKEN
+        # compare_digest keeps the comparison independent of the matching
+        # prefix; plain == leaks the position of the first wrong byte to anyone
+        # measuring a wide bind.
+        return hmac.compare_digest(header.encode("utf-8"), TOKEN.encode("utf-8"))
 
     def _dispatch(self) -> None:
         started = time.monotonic()
         path = self._path()
         self._status = 0
+        self._responded = False
         try:
             if self.command == "OPTIONS":
                 self._send(204)
             elif not self._authorised():
-                self._send(401, {"error": "missing or bad token"})
+                self._problem(401, "unauthorized", "Unauthorized", "missing or bad token")
             else:
                 self._route(path)
+        except PayloadTooLarge as exc:
+            self._problem(413, "payload-too-large", "Payload too large", str(exc))
         except BadRequest as exc:
-            self._send(400, {"error": str(exc)})
+            self._problem(400, "interface-error", "Interface error", str(exc))
         except sqlite3.Error as exc:
-            self._send(500, {"error": f"store error: {exc}"})
+            # The store's words stay in the log: a table or SQL fragment in a
+            # response body is a schema leak (the sbex error rule).
+            log("ERROR " + self.command + " " + path + " store: " + repr(exc))
+            self._problem(500, "store-error", "Store error", "the store could not answer")
+        except Exception:  # noqa: BLE001 - request boundary: a handler bug is a 500, not a crash
+            log(
+                "ERROR " + self.command + " " + path + " "
+                + traceback.format_exc().replace("\n", " | ")
+            )
+            self._problem(500, "internal-error", "Internal error", "the request failed")
         finally:
             # Observability (docs/d205): one line per request, and the timing is
             # what tells an operator whether the visited check kept its budget.
@@ -1578,7 +1852,9 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/search_around":
                 self._search_around()
             else:
-                self._send(404, {"error": f"unknown path on {self.SURFACE}: {path}"})
+                self._problem(
+                    404, "not-found", "Not found", f"unknown path on {self.SURFACE}: {path}"
+                )
             return
         if path == "/ingest/slurp":
             self._ingest()
@@ -1587,7 +1863,9 @@ class Handler(BaseHTTPRequestHandler):
         elif path.startswith("/api/"):
             self._hister(path)
         else:
-            self._send(404, {"error": f"unknown path on {self.SURFACE}: {path}"})
+            self._problem(
+                404, "not-found", "Not found", f"unknown path on {self.SURFACE}: {path}"
+            )
 
     def _hister_search(self) -> None:
         params = self._json() if self.command == "POST" else self._query()
@@ -1615,7 +1893,13 @@ class Handler(BaseHTTPRequestHandler):
             timestamp = timestamp[0] if timestamp else None
         if timestamp in (None, ""):
             raise BadRequest("missing timestamp")
-        self._send(200, promnesia_search_around(float(timestamp)))
+        try:
+            centre = float(timestamp)
+        except (TypeError, ValueError) as exc:
+            raise BadRequest(f"bad timestamp: {timestamp!r}") from exc
+        if not math.isfinite(centre):
+            raise BadRequest("timestamp must be finite")
+        self._send(200, promnesia_search_around(centre))
 
     def _ingest(self) -> None:
         # A schema the daemon does not speak is a 409 and a permanent reject on
@@ -1627,7 +1911,7 @@ class Handler(BaseHTTPRequestHandler):
         except BadRequest as exc:
             if "unsupported schema" not in str(exc):
                 raise
-            self._send(409, {"error": str(exc)})
+            self._problem(409, "unsupported-schema", "Unsupported schema", str(exc))
 
     def _hister(self, path: str) -> None:
         if path == "/api/config":
@@ -1653,12 +1937,12 @@ class Handler(BaseHTTPRequestHandler):
             if document is None:
                 # HEAD is the extension's "already indexed" probe, and 200/404 is
                 # the whole contract; a GET answer carries the document.
-                self._send(404)
+                self._problem(404, "not-found", "Not found", "document not found")
                 return
             self._send(200, None if self.command == "HEAD" else document)
         elif path == "/api/add":
             if self.command != "POST":
-                self._send(405, {"error": "POST only"})
+                self._problem(405, "method-not-allowed", "Method not allowed", "POST only")
                 return
             if "json" in (self.headers.get("content-type") or ""):
                 payload = self._json()
@@ -1671,22 +1955,37 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(document, dict):
                 raise BadRequest("missing document field")
             pdf = payload.get("pdf") or ""
-            if not pdf:
+            if not isinstance(pdf, str) or not pdf:
                 raise BadRequest("missing pdf field")
+            # Check the encoded length before decoding: b64decode of a
+            # declared-gigabyte string allocates the whole payload first.
+            if len(pdf) > (MAX_PDF_BYTES * 4 // 3) + 8:
+                raise PayloadTooLarge(f"pdf exceeds {MAX_PDF_BYTES} bytes")
             try:
                 data = base64.b64decode(pdf, validate=True)
             except (ValueError, TypeError) as exc:
                 raise BadRequest(f"pdf must be base64-encoded: {exc}") from exc
+            if len(data) > MAX_PDF_BYTES:
+                raise PayloadTooLarge(f"pdf exceeds {MAX_PDF_BYTES} bytes")
             try:
                 text = extract_pdf_text(data)
             except Exception as exc:  # noqa: BLE001 - a malformed PDF is a request error, not a crash
                 # Upstream fails the capture rather than storing a document the
                 # index cannot see; the same 5xx keeps the extension's error
-                # badge meaningful.
-                self._send(500, {"error": f"pdf text extraction: {exc}"})
+                # badge meaningful. The parser's words stay in the log: a
+                # response body is not the place for a library trace.
+                log("ERROR /api/add_pdf extraction: " + repr(exc))
+                self._problem(
+                    500, "extraction-error", "Extraction failed", "pdf text extraction failed"
+                )
                 return
             if not text:
-                self._send(500, {"error": "pdf contains no extractable text"})
+                self._problem(
+                    500,
+                    "extraction-error",
+                    "Extraction failed",
+                    "pdf contains no extractable text",
+                )
                 return
             raw_metadata = document.get("metadata")
             submitted: Any = raw_metadata
@@ -1710,7 +2009,7 @@ class Handler(BaseHTTPRequestHandler):
             if not url:
                 raise BadRequest("missing url")
             if not hister_label(url, str(payload.get("label") or "")):
-                self._send(404, {"error": "document not found"})
+                self._problem(404, "not-found", "Not found", "document not found")
                 return
             self._send(200, {"ok": True})
         elif path == "/api/delete":
@@ -1721,7 +2020,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, hister_delete(query, bool(payload.get("dry_run"))))
         elif path == "/api/history":
             if self.command != "POST":
-                self._send(405, {"error": "POST only"})
+                self._problem(405, "method-not-allowed", "Method not allowed", "POST only")
                 return
             hister_history(self._json())
             self._send(201)
@@ -1729,9 +2028,11 @@ class Handler(BaseHTTPRequestHandler):
             # Upstream serves both, but the hister extension calls neither
             # (docs/d205's research item), and the web UI is out of scope, so the
             # deferral is answered instead of a guessed model.
-            self._send(501, {"error": f"{path} is not built (docs/d205)"})
+            self._problem(
+                501, "not-implemented", "Not implemented", f"{path} is not built (docs/d205)"
+            )
         else:
-            self._send(404, {"error": "unknown path"})
+            self._problem(404, "not-found", "Not found", "unknown path")
 
     def _url_param(self) -> str:
         if self.command == "POST":
@@ -1745,9 +2046,13 @@ class Handler(BaseHTTPRequestHandler):
             urls = self._json().get("urls") or []
             if not isinstance(urls, list):
                 raise BadRequest("urls must be an array")
-            return [str(u) for u in urls]
-        params = self._query()
-        return [str(u) for u in params.get("urls", []) + params.get("url", [])]
+            values = [str(u) for u in urls]
+        else:
+            params = self._query()
+            values = [str(u) for u in params.get("urls", []) + params.get("url", [])]
+        if len(values) > MAX_VISITED_URLS:
+            raise PayloadTooLarge(f"more than {MAX_VISITED_URLS} urls")
+        return values
 
     # Every method the surface uses goes through one dispatcher, so logging,
     # auth, CORS and error mapping have one home.
@@ -1777,16 +2082,80 @@ def parse_addr(addr: str, *, env: str) -> tuple[str, int]:
     try:
         if sep <= 0:
             raise ValueError("no port")
-        return addr[:sep].strip("[]"), int(addr[sep + 1 :])
+        port = int(addr[sep + 1 :])
+        if not 0 <= port <= 65_535:
+            raise ValueError("port outside 0-65535")
+        return addr[:sep].strip("[]"), port
     except ValueError as exc:
         # A bad address is a startup failure with the env var's name in it: the
         # operator reads which variable to fix instead of a traceback.
         raise SystemExit(f"browse-daemon: bad {env} {addr!r} (want host:port): {exc}") from exc
 
 
-def serve(handler: type[Handler], addr: str, env: str) -> ThreadingHTTPServer:
+def _is_loopback(host: str) -> bool:
+    return host in ("127.0.0.1", "::1", "localhost", "[::1]")
+
+
+def check_bind(addr: str, env: str) -> None:
+    """Refuse a wide bind with no key; warn when only the writes are gated.
+
+    A non-loopback bind with an empty BROWSE_TOKEN exposes the write faces to
+    the network, and a non-loopback bind with a key still exposes every read
+    because the stock Promnesia client cannot carry one. The first case is a
+    startup failure; the second is the operator's explicit choice and is
+    reported once.
+    """
+    host, _ = parse_addr(addr, env=env)
+    if _is_loopback(host):
+        return
+    if not TOKEN:
+        raise SystemExit(
+            "browse-daemon: " + env + "=" + repr(addr)
+            + " binds a non-loopback address without BROWSE_TOKEN; refusing to"
+            " expose unauthenticated writes"
+        )
+    log("warning: " + env + " binds " + host + "; reads stay unauthenticated")
+
+
+class BoundedThreadingHTTPServer(ThreadingHTTPServer):
+    """ThreadingHTTPServer with a hard cap on concurrent handler threads."""
+
+    daemon_threads = True
+    request_queue_size = 64
+
+    def __init__(self, server_address: tuple[str, int], handler: type[Handler]) -> None:
+        super().__init__(server_address, handler)
+        self._slots = threading.BoundedSemaphore(MAX_WORKERS)
+
+    def process_request(self, request: Any, client_address: Any) -> None:
+        if not self._slots.acquire(blocking=False):
+            line_break = bytes((13, 10))
+            try:
+                request.sendall(
+                    b"HTTP/1.1 503 Service Unavailable" + line_break
+                    + b"content-length: 0" + line_break
+                    + b"connection: close" + line_break + line_break
+                )
+            except OSError:
+                pass
+            self.shutdown_request(request)
+            return
+        try:
+            super().process_request(request, client_address)
+        except Exception:
+            self._slots.release()
+            raise
+
+    def process_request_thread(self, request: Any, client_address: Any) -> None:
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self._slots.release()
+
+
+def serve(handler: type[Handler], addr: str, env: str) -> BoundedThreadingHTTPServer:
     host, port = parse_addr(addr, env=env)
-    server = ThreadingHTTPServer((host, port), handler)
+    server = BoundedThreadingHTTPServer((host, port), handler)
     log(f"{handler.SURFACE} listening on http://{host}:{port}")
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -1805,11 +2174,16 @@ def main(argv: list[str]) -> int:
                     "promnesia": PROMNESIA_ADDR,
                     "db": DB_PATH,
                     "token": bool(TOKEN),
+                    "pdf_runner": bool(PDF_RUNNER),
+                    "pdf_timeout_s": PDF_TIMEOUT,
                 },
                 indent=2,
             )
         )
         return 0
+    os.umask(0o077)
+    check_bind(HISTER_ADDR, "BROWSE_HISTER_ADDR")
+    check_bind(PROMNESIA_ADDR, "BROWSE_PROMNESIA_ADDR")
     init_store()
     servers = [
         serve(HisterHandler, HISTER_ADDR, "BROWSE_HISTER_ADDR"),

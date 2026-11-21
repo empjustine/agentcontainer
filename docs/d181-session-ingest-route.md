@@ -21,8 +21,13 @@ property of the route.
 
 ## Status
 
-Draft; nothing implemented. The route ships independently of d026 and composes
-with it.
+Active — the route is implemented at `datalakehouse/agent-warehouse-daemon.mjs` and
+its self-fold at `agent-warehouse-spool-send.sh` (d217). It ships independently of
+d026 and composes with it. Two decision details landed with a narrower shape than
+this record first stated: the token is optional, but a non-loopback bind without
+it refuses to start, and the route has no rate limit yet. A row without a
+producer identity is keyed by the SHA-256 of its canonical JSON (d221), not by a
+spool line, because the sender rotates the tail and a direct fold renumbers it.
 
 ## Problem
 

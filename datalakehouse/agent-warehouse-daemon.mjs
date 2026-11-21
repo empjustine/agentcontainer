@@ -26,7 +26,8 @@
 // this process appends by path, never a held fd.
 //
 // Env: AGENT_INGEST_ADDR (default 127.0.0.1:8787), AGENT_INGEST_TOKEN,
-//      AGENT_WAREHOUSE_SPOOL,
+//      AGENT_INGEST_MAX_BODY (default 8 MiB), AGENT_INGEST_MAX_ROWS (default
+//      10000), AGENT_WAREHOUSE_SPOOL,
 //      motherduck_token / MOTHERDUCK_TOKEN (enables the self-send),
 //      AGENT_WAREHOUSE_SPOOL_MAX_BYTES (default 32 MiB; 0 disables the
 //      self-send), AGENT_WAREHOUSE_SPOOL_SEND_RETRY (default 60000 ms),
@@ -38,8 +39,15 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import crypto from "node:crypto";
+import readline from "node:readline";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+
+// Session transcripts are private. The umask covers every file this process
+// creates (the spool, the dedupe ledger, the lock) and every child that
+// inherits it, including the sender's temporary staging files.
+process.umask(0o077);
 
 const args = process.argv.slice(2);
 if (args.includes("-h") || args.includes("--help")) {
@@ -49,7 +57,8 @@ if (args.includes("-h") || args.includes("--help")) {
       "env: AGENT_INGEST_ADDR (default 127.0.0.1:8787), AGENT_INGEST_TOKEN,\n" +
       "     AGENT_WAREHOUSE_SPOOL, motherduck_token/MOTHERDUCK_TOKEN (enables the\n" +
       "     self-send), AGENT_WAREHOUSE_SPOOL_MAX_BYTES (default 32 MiB; 0 off),\n" +
-      "     AGENT_WAREHOUSE_SPOOL_SEND_RETRY (ms), AGENT_WAREHOUSE_SENDER\n",
+      "     AGENT_WAREHOUSE_SPOOL_SEND_RETRY (ms), AGENT_WAREHOUSE_SENDER,\n" +
+      "     AGENT_INGEST_MAX_BODY (default 8 MiB), AGENT_INGEST_MAX_ROWS (default 10000)\n",
   );
   process.exit(0);
 }
@@ -85,7 +94,12 @@ function envNumber(name, fallback) {
 
 // A single row can carry a whole message content array, so the limit is env-tunable
 // and the sync batches under its own budget (AGENT_WAREHOUSE_BATCH_BYTES).
-const MAX_BODY = envNumber("AGENT_INGEST_MAX_BODY", 8 * 1024 * 1024);
+const maxBodyEnv = envNumber("AGENT_INGEST_MAX_BODY", 8 * 1024 * 1024);
+const MAX_BODY = maxBodyEnv > 0 ? maxBodyEnv : 8 * 1024 * 1024;
+// A body can be eight megabytes of a million tiny rows; the row count bounds
+// the per-row work and the loop, the byte ceiling bounds the allocation.
+const maxRowsEnv = envNumber("AGENT_INGEST_MAX_ROWS", 10_000);
+const MAX_ROWS = maxRowsEnv > 0 ? maxRowsEnv : 10_000;
 
 // The self-send (docs/d217). The threshold is the spool tail the daemon
 // tolerates before folding it; the sender's own batch budget is
@@ -102,11 +116,36 @@ const senderScript =
 
 // A re-posted row must not duplicate a line, and the sync re-posts every run.
 // The dedupe is a conditional insert: a SQLite PRIMARY KEY with INSERT OR IGNORE
-// turns a seen key into a no-op (changes === 0), so it is durable across restarts
-// and needs no startup scan. An in-memory set is the fallback when node:sqlite is
-// unavailable. The key is the row's own identity (session id, then entry id), never
-// its file path: the same session has a different path inside a sandbox and on the
+// turns a seen key into a no-op, so it is durable across restarts. The ledger is
+// reseeded from the tails on every start, because a crash can leave a line that
+// was appended but not recorded; the scan is streamed, not read into memory. An
+// in-memory set is the fallback when node:sqlite is unavailable. The key is the
+// row's own identity (session id, then entry id), never its file path: the same
+// session has a different path inside a sandbox and on the
 // host, so a path key would fail to dedupe exactly the duplicate the route creates.
+/** Canonical JSON: sorted object keys, so a re-post with a different key order
+ * hashes to the same identity. Arrays keep their order; JSON has no set. */
+function canonicalJson(value) {
+  if (Array.isArray(value)) {
+    return "[" + value.map(canonicalJson).join(",") + "]";
+  }
+  if (value && typeof value === "object") {
+    return "{" + Object.keys(value).sort().map(
+      (key) => JSON.stringify(key) + ":" + canonicalJson(value[key]),
+    ).join(",") + "}";
+  }
+  const encoded = JSON.stringify(value);
+  return encoded === undefined ? "null" : encoded;
+}
+
+/** A content identity for a row that carries no id of its own. The hash is
+ * stable across spool rotations and direct folds; a line-number key was not
+ * (the sender renames the tail to .rm.<pid>, and a direct fold renumbers the
+ * same row on every run), so the warehouse stored a new copy each time. */
+function rowHash(row) {
+  return crypto.createHash("sha256").update(canonicalJson(row)).digest("hex");
+}
+
 function rowKey(row) {
   if (row && typeof row === "object") {
     // A foreign harness mints its own ids, so its key carries the source: the
@@ -117,49 +156,142 @@ function rowKey(row) {
       const sid = row.session_id ?? "";
       if (row.id) { return JSON.stringify(["entry", row.source, sid, row.id]); }
       if (row.message_id) { return JSON.stringify(["message", row.source, sid, row.message_id]); }
-      return JSON.stringify(["row", row.source, row]);
+      return JSON.stringify(["row", row.source, rowHash(row)]);
     }
     if (row.session_id && row.id) { return JSON.stringify(["entry", row.session_id, row.id]); }
     if (row.session_id) { return JSON.stringify(["session", row.session_id]); }
     if (row.session_file && row.id) { return JSON.stringify(["entry", row.session_file, row.id]); }
     if (row.session_file) { return JSON.stringify(["session", row.session_file]); }
   }
-  return JSON.stringify(["raw", row]);
+  return JSON.stringify(["raw", rowHash(row)]);
 }
 
-let isNew;
+function lineKey(line) {
+  try {
+    return rowKey(JSON.parse(line));
+  } catch {
+    return JSON.stringify(["raw-line", crypto.createHash("sha256").update(line).digest("hex")]);
+  }
+}
+
+fs.mkdirSync(path.dirname(spool), { recursive: true, mode: 0o700 });
+// Tighten the default store directory if it predates this daemon. A custom
+// spool's parent is the operator's; chmod on a shared parent such as /tmp is not
+// this process's decision.
+if (path.basename(path.resolve(path.dirname(spool))) === "agent-warehouse") {
+  try { fs.chmodSync(path.dirname(spool), 0o700); } catch { /* not ours */ }
+}
+
+/**
+ * A crash can leave the tail without its final newline. Treat the partial row as
+ * a line of its own: the next append then starts cleanly and the sender reports
+ * the malformed line instead of merging it into a later row.
+ */
+function repairPartialTail(file) {
+  let stat;
+  try { stat = fs.statSync(file); } catch { return; }
+  if (stat.size === 0) { return; }
+  const fd = fs.openSync(file, "r");
+  const last = Buffer.alloc(1);
+  try { fs.readSync(fd, last, 0, 1, stat.size - 1); } finally { fs.closeSync(fd); }
+  if (last[0] !== 0x0a) {
+    fs.appendFileSync(file, "\n", { mode: 0o600 });
+    process.stderr.write(
+      "agent-warehouse-daemon: " + file + " ended mid-line; appended a newline so" +
+        " the partial row is reported rather than merged\n",
+    );
+  }
+}
+repairPartialTail(spool);
+
+let sqliteDb = null;
+let hasSeen;
+let rememberSeen;
 try {
   const { DatabaseSync } = await import("node:sqlite");
-  const db = new DatabaseSync(path.join(path.dirname(spool), "seen.sqlite"));
-  db.exec("CREATE TABLE IF NOT EXISTS seen(key TEXT PRIMARY KEY)");
-  const insert = db.prepare("INSERT OR IGNORE INTO seen(key) VALUES(?)");
-  isNew = (key) => insert.run(key).changes > 0;
-  // Seed once from an existing spool, or a pre-upgrade spool would re-append.
-  const seeded = db.prepare("SELECT count(*) AS n FROM seen").get().n;
-  if (seeded === 0 && fs.existsSync(spool)) {
-    db.exec("BEGIN");
-    for (const line of fs.readFileSync(spool, "utf8").split("\n")) {
-      if (line.trim() === "") { continue; }
-      let key;
-      try {
-        key = rowKey(JSON.parse(line));
-      } catch {
-        key = line;
-      }
-      insert.run(key);
-    }
-    db.exec("COMMIT");
-  }
-} catch {
+  sqliteDb = new DatabaseSync(path.join(path.dirname(spool), "seen.sqlite"));
+  sqliteDb.exec("PRAGMA journal_mode=WAL");
+  sqliteDb.exec("PRAGMA synchronous=NORMAL");
+  sqliteDb.exec("PRAGMA busy_timeout=10000");
+  sqliteDb.exec("CREATE TABLE IF NOT EXISTS seen(key TEXT PRIMARY KEY)");
+  const has = sqliteDb.prepare("SELECT 1 AS n FROM seen WHERE key = ?");
+  const insert = sqliteDb.prepare("INSERT OR IGNORE INTO seen(key) VALUES(?)");
+  hasSeen = (key) => has.get(key) !== undefined;
+  rememberSeen = (key) => { insert.run(key); };
+} catch (error) {
+  // A durability downgrade is loud: without node:sqlite a restart forgets
+  // every key and re-appends rows (the warehouse's first-write-wins absorbs
+  // them, but the spool doubles).
   const seen = new Set();
-  isNew = (key) => {
-    if (seen.has(key)) { return false; }
-    seen.add(key);
-    return true;
-  };
+  hasSeen = (key) => seen.has(key);
+  rememberSeen = (key) => { seen.add(key); };
+  process.stderr.write(
+    "agent-warehouse-daemon: node:sqlite unavailable (" + error.message +
+      "); dedupe is in memory and will not survive a restart\n",
+  );
 }
 
-fs.mkdirSync(path.dirname(spool), { recursive: true });
+/**
+ * Seed the ledger from every tail the sender still globs: the live spool and a
+ * leftover frozen tail. Reading line by line keeps startup memory bounded by a
+ * line, not by a hundreds-of-MiB backlog. Seeding every start, not only an
+ * empty ledger, is what repairs a ledger that missed a line after a crash.
+ * @param {string} file
+ */
+async function seedSeen(file) {
+  if (!fs.existsSync(file)) { return; }
+  const lines = readline.createInterface({
+    input: fs.createReadStream(file, { encoding: "utf8" }),
+    crlfDelay: Number.POSITIVE_INFINITY,
+  });
+  for await (const line of lines) {
+    if (line.trim() === "") { continue; }
+    try {
+      rememberSeen(lineKey(line));
+    } catch (error) {
+      process.stderr.write(
+        "agent-warehouse-daemon: cannot seed " + file + ": " + error.message + "\n",
+      );
+    }
+  }
+}
+
+const spoolDir = path.dirname(spool);
+const spoolBase = path.basename(spool);
+const seedFiles = [spool];
+try {
+  for (const name of fs.readdirSync(spoolDir)) {
+    if (name.startsWith(spoolBase + ".rm.")) { seedFiles.push(path.join(spoolDir, name)); }
+  }
+} catch {
+  // the directory was created just above; a readdir failure is a real error
+}
+// One transaction for the seed: a per-line autocommit over a large backlog is
+// the slowest possible startup, and the whole seed is idempotent.
+if (sqliteDb !== null) { sqliteDb.exec("BEGIN"); }
+for (const file of seedFiles) { await seedSeen(file); }
+if (sqliteDb !== null) { sqliteDb.exec("COMMIT"); }
+// Start-up upkeep, not a one-off migration: the ledger only grows, and a
+// long-lived daemon should not carry its freelist and WAL into the next run.
+if (sqliteDb !== null) {
+  try {
+    sqliteDb.exec("PRAGMA optimize");
+    sqliteDb.exec("VACUUM");
+    sqliteDb.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+    const keys = sqliteDb.prepare("SELECT count(*) AS n FROM seen").get().n;
+    process.stdout.write(
+      "agent-warehouse-daemon: dedupe ledger vacuumed (" + keys + " keys)\n",
+    );
+  } catch (error) {
+    process.stderr.write(
+      "agent-warehouse-daemon: ledger upkeep failed (" + error.message +
+        "); continuing\n",
+    );
+  }
+}
+for (const file of [spool, path.join(spoolDir, "seen.sqlite")]) {
+  try { fs.chmodSync(file, 0o600); } catch { /* not created yet */ }
+}
 
 // The self-send lives here, not in the request handler, because the append path,
 // startup and the retry timer all call it. `pendingBytes` is an estimate that
@@ -197,7 +329,8 @@ let pendingBytes = pendingTailBytes();
 let sending = false;
 let retryAt = 0;
 let retryTimer = null;
-let lockBlocked = false;
+let activeChild = null;
+let shuttingDown = false;
 
 // A failed fold ends in this timer, not in the next POST: an idle daemon would
 // otherwise leave the tail growing while the backoff expired silently. Unref'd,
@@ -220,29 +353,12 @@ function armRetry() {
  *   appends that may never come.
  */
 function sendSpool(foldAnyTail = false) {
-  if (!warehouseToken || spoolMaxBytes <= 0 || sending) { return; }
+  if (!warehouseToken || spoolMaxBytes <= 0 || sending || shuttingDown) { return; }
   if (Date.now() < retryAt) { armRetry(); return; }
   if (!foldAnyTail && pendingBytes < spoolMaxBytes) { return; }
-  // One sender at a time. The lock also covers the daemon's own double trigger
-  // (a POST landing while the previous child is closing). A stale lock from a
-  // killed daemon is removed by hand: guessing at liveness is worse than a
-  // loud, resumable stop — but the skip is still reported once, so folding that
-  // silently stops is distinguishable from folding with nothing to do.
-  const lockPath = spool + ".lock";
-  let lockFd;
-  try {
-    lockFd = fs.openSync(lockPath, "wx");
-  } catch {
-    if (!lockBlocked) {
-      lockBlocked = true;
-      process.stderr.write(
-        "agent-warehouse-daemon: " + lockPath +
-          " is held; not folding (remove a stale lock by hand)\n",
-      );
-    }
-    return;
-  }
-  lockBlocked = false;
+  // One sender at a time is the sender's lock, not this process's: the daemon,
+  // an operator and the sync's --direct leg all contend on <spool>.lock. The
+  // sender exits 75 when another holds it; that is busy, not a failure.
   sending = true;
   pendingBytes = pendingTailBytes();
   const bytesAtStart = pendingBytes;
@@ -253,14 +369,14 @@ function sendSpool(foldAnyTail = false) {
   const child = spawn("bash", [senderScript, "--spool", spool], {
     stdio: ["ignore", "inherit", "inherit"],
   });
+  activeChild = child;
   let finished = false;
   /** @param {number} code */
   const done = (code) => {
     if (finished) { return; }
     finished = true;
     sending = false;
-    fs.closeSync(lockFd);
-    fs.rmSync(lockPath, { force: true });
+    if (activeChild === child) { activeChild = null; }
     // Measure what is left instead of subtracting what this process counted:
     // rows that landed during the fold are in a NEW spool (the sender froze the
     // old one by renaming it), and a failed fold leaves the whole tail behind as
@@ -278,6 +394,15 @@ function sendSpool(foldAnyTail = false) {
             " bytes remain; not folding again until the next append\n",
         );
       }
+    } else if (code === 75) {
+      // Another sender (operator, another daemon, a direct sync) holds the
+      // shared lock. Do not treat it as a failed fold; wait, then re-measure.
+      retryAt = Date.now() + sendRetryMs;
+      process.stderr.write(
+        "agent-warehouse-daemon: another sender holds " + spool +
+          ".lock; retry in " + sendRetryMs + " ms\n",
+      );
+      armRetry();
     } else {
       // The sender keeps the spool on failure; back off so a host without
       // duckdb does not spawn a child per POST.
@@ -299,77 +424,209 @@ function sendSpool(foldAnyTail = false) {
   child.on("close", (code) => done(code ?? 1));
 }
 
-function send(res, code, obj) {
-  res.writeHead(code, { "content-type": "application/json" });
-  res.end(`${JSON.stringify(obj)}\n`);
+// RFC 9457 problem details, the same shape the browse daemon answers.
+const PROBLEM_BASE = "https://agentcontainer.example/problems/";
+
+function problem(status, slug, title, detail) {
+  return { type: PROBLEM_BASE + slug, title, status, detail };
+}
+
+function send(res, code, obj, contentType = "application/json") {
+  if (res.writableEnded) { return; }
+  try {
+    res.writeHead(code, { "content-type": contentType });
+    res.end(JSON.stringify(obj) + "\n");
+  } catch {
+    // The client disconnected between the decision and the write.
+  }
+}
+
+/** Timing-safe: == leaks the length and the first wrong byte to a client that
+ * can measure a wide bind. */
+function tokenMatches(given) {
+  if (!token) { return true; }
+  const supplied = Buffer.from(typeof given === "string" ? given : "");
+  const expected = Buffer.from(token);
+  return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
+}
+
+function logRequest(req, code, started, detail) {
+  process.stdout.write(
+    "agent-warehouse-daemon: " + req.method + " " + (req.url || "") + " " + code +
+      " " + (Date.now() - started) + "ms" + (detail ? " " + detail : "") + "\n",
+  );
 }
 
 const server = http.createServer((req, res) => {
-  if (req.method !== "POST") {
-    send(res, 405, { error: "this route is write-only: POST /ingest/session" });
-    return;
-  }
-  if (req.url !== "/ingest/session") {
-    send(res, 404, { error: "unknown path" });
-    return;
-  }
-  if (token && req.headers["x-ingest-token"] !== token) {
-    send(res, 401, { error: "missing or bad token" });
-    return;
-  }
-  let size = 0;
-  const chunks = [];
-  req.on("data", (c) => {
-    size += c.length;
-    if (size > MAX_BODY) {
-      send(res, 413, { error: "body too large" });
-      req.destroy();
-      return;
-    }
-    chunks.push(c);
-  });
-  req.on("end", () => {
+  const started = Date.now();
+  const respond = (code, obj, detail = "", contentType = "application/json") => {
     if (res.writableEnded) { return; }
-    const text = Buffer.concat(chunks).toString("utf8").trim();
-    if (!text) {
-      send(res, 400, { error: "empty body" });
+    send(res, code, obj, contentType);
+    logRequest(req, code, started, detail);
+  };
+  const respondProblem = (code, slug, title, detail) =>
+    respond(code, problem(code, slug, title, detail), detail, "application/problem+json");
+  try {
+    if (req.method !== "POST") {
+      respondProblem(
+        405, "method-not-allowed", "Method not allowed",
+        "this route is write-only: POST /ingest/session",
+      );
       return;
     }
-    let rows;
-    try {
-      const parsed = JSON.parse(text);
-      rows = Array.isArray(parsed) ? parsed : [parsed];
-    } catch {
-      send(res, 400, { error: "invalid json" });
+    if (req.url !== "/ingest/session") {
+      respondProblem(404, "not-found", "Not found", "unknown path");
       return;
     }
-    const fresh = [];
-    let duplicates = 0;
-    for (const r of rows) {
-      if (isNew(rowKey(r))) {
-        fresh.push(r);
-      } else {
-        duplicates++;
+    if (!tokenMatches(req.headers["x-ingest-token"])) {
+      respondProblem(401, "unauthorized", "Unauthorized", "missing or bad token");
+      return;
+    }
+    let size = 0;
+    let tooLarge = false;
+    const chunks = [];
+    req.on("data", (chunk) => {
+      if (tooLarge) { return; }
+      size += chunk.length;
+      if (size > MAX_BODY) {
+        tooLarge = true;
+        respondProblem(413, "payload-too-large", "Payload too large", "body too large");
+        req.destroy();
+        return;
       }
-    }
-    if (fresh.length > 0) {
-      const lines = `${fresh.map((r) => JSON.stringify(r)).join("\n")}\n`;
-      // WHY append-by-path, never a held fd: the sender rotates the spool by
-      // renaming it (mv spool spool.rm.<pid>). Because this open targets the PATH on
-      // every append, the next write creates a fresh spool and the daemon follows the
-      // rotation with no signal. A persistent fs.createWriteStream would keep writing
-      // the renamed inode and silently break the sender's delete-after-consume.
-      fs.appendFileSync(spool, lines);
-      pendingBytes += Buffer.byteLength(lines);
-      sendSpool();
-    }
-    send(res, 200, { accepted: fresh.length, duplicates });
-  });
+      chunks.push(chunk);
+    });
+    req.on("error", () =>
+      respondProblem(400, "interface-error", "Interface error", "request read failed"),
+    );
+    req.on("end", () => {
+      if (tooLarge || res.writableEnded) { return; }
+      const text = Buffer.concat(chunks).toString("utf8").trim();
+      if (!text) {
+        respondProblem(400, "interface-error", "Interface error", "empty body");
+        return;
+      }
+      let rows;
+      try {
+        const parsed = JSON.parse(text);
+        rows = Array.isArray(parsed) ? parsed : [parsed];
+      } catch {
+        respondProblem(400, "interface-error", "Interface error", "invalid json");
+        return;
+      }
+      if (rows.length > MAX_ROWS) {
+        respondProblem(413, "payload-too-large", "Payload too large", "too many rows");
+        return;
+      }
+      const fresh = [];
+      const freshKeys = new Set();
+      let duplicates = 0;
+      try {
+        for (const row of rows) {
+          const key = rowKey(row);
+          if (freshKeys.has(key) || hasSeen(key)) {
+            duplicates++;
+            continue;
+          }
+          freshKeys.add(key);
+          fresh.push({ row, key });
+        }
+      } catch (error) {
+        process.stderr.write(
+          "agent-warehouse-daemon: cannot compute a row identity: " +
+            error.message + "\n",
+        );
+        respondProblem(400, "interface-error", "Interface error", "unidentifiable row");
+        return;
+      }
+      if (fresh.length > 0) {
+        const lines = fresh.map((item) => JSON.stringify(item.row)).join("\n") + "\n";
+        try {
+          // WHY append-by-path, never a held fd: the sender rotates the spool by
+          // renaming it (mv spool spool.rm.<pid>). Because this open targets the PATH on
+          // every append, the next write creates a fresh spool and the daemon follows the
+          // rotation with no signal. A persistent fs.createWriteStream would keep writing
+          // the renamed inode and silently break the sender's delete-after-consume.
+          fs.appendFileSync(spool, lines, { mode: 0o600 });
+        } catch (error) {
+          process.stderr.write(
+            "agent-warehouse-daemon: cannot append to " + spool + ": " +
+              error.message + "\n",
+          );
+          respondProblem(
+            500, "store-error", "Store error", "cannot append to the spool",
+          );
+          return;
+        }
+        // Record the keys only after the append: marking first would let a
+        // disk-full append lose the rows forever, because the replay is then
+        // answered as a duplicate. A ledger write that fails after a successful
+        // append is the safe direction (a replay may duplicate the spool line,
+        // and the warehouse's first-write-wins absorbs it).
+        try {
+          for (const item of fresh) { rememberSeen(item.key); }
+        } catch (error) {
+          process.stderr.write(
+            "agent-warehouse-daemon: cannot record dedupe keys: " +
+              error.message + "\n",
+          );
+        }
+        pendingBytes += Buffer.byteLength(lines);
+        sendSpool();
+      }
+      respond(
+        200,
+        { accepted: fresh.length, duplicates },
+        "accepted=" + fresh.length + " duplicates=" + duplicates,
+      );
+    });
+  } catch (error) {
+    process.stderr.write(
+      "agent-warehouse-daemon: handler failed: " + error.stack + "\n",
+    );
+    respondProblem(500, "internal-error", "Internal error", "the request failed");
+  }
 });
 
+const loopbackHost = host === "127.0.0.1" || host === "::1" ||
+  host === "localhost" || host === "[::1]";
+if (!Number.isInteger(port) || port < 0 || port > 65_535) {
+  process.stderr.write("agent-warehouse-daemon: bad AGENT_INGEST_ADDR " + JSON.stringify(addr) + "\n");
+  process.exit(64);
+}
+// The write gate is the whole boundary on a wide bind: without a token every
+// peer that can reach the port can append rows. Refuse to start rather than
+// look like a diode while being an open sink.
+if (!loopbackHost && !token) {
+  process.stderr.write(
+    "agent-warehouse-daemon: AGENT_INGEST_ADDR=" + JSON.stringify(addr) +
+      " binds a non-loopback address without AGENT_INGEST_TOKEN; refusing to" +
+      " expose an unauthenticated write route\n",
+  );
+  process.exit(78);
+}
+if (!token) {
+  process.stdout.write(
+    "agent-warehouse-daemon: no AGENT_INGEST_TOKEN - any local process can post" +
+      " to this route; set one whenever the bind is wider than loopback\n",
+  );
+}
+server.headersTimeout = 30_000;
+server.requestTimeout = 120_000;
+server.keepAliveTimeout = 5000;
+server.maxHeadersCount = 100;
+// A local route still must not let a stalled peer hold thousands of sockets;
+// the event loop is single-threaded, but the accept queue and file descriptors
+// are not free.
+server.maxConnections = 64;
+server.on("error", (error) => {
+  process.stderr.write("agent-warehouse-daemon: server error: " + error.message + "\n");
+  process.exit(1);
+});
 server.listen(port, host, () => {
   process.stdout.write(
-    `agent-warehouse-daemon listening on http://${host}:${port} spool=${spool}\n`,
+    "agent-warehouse-daemon listening on http://" + host + ":" + port +
+      " spool=" + spool + " max_body=" + MAX_BODY + " max_rows=" + MAX_ROWS + "\n",
   );
   if (!warehouseToken) {
     process.stdout.write(
@@ -386,7 +643,30 @@ server.listen(port, host, () => {
   }
 });
 
-for (const sig of ["SIGTERM", "SIGINT"]) {
-  process.on(sig, () => server.close(() => process.exit(0)));
+function shutdown(signal) {
+  if (shuttingDown) { return; }
+  shuttingDown = true;
+  process.stdout.write("agent-warehouse-daemon: " + signal + " - draining\n");
+  const finish = () => {
+    if (sqliteDb) {
+      try { sqliteDb.close(); } catch { /* already closed */ }
+    }
+    process.exit(0);
+  };
+  server.close(() => {
+    // A fold is a child writing to the warehouse; let it finish so its lock is
+    // removed by done(), not left stale for the next run.
+    if (activeChild && activeChild.exitCode === null && activeChild.signalCode === null) {
+      activeChild.once("close", finish);
+      const timer = setTimeout(finish, 5000);
+      timer.unref();
+    } else {
+      finish();
+    }
+  });
+  server.closeIdleConnections?.();
 }
 
+for (const sig of ["SIGTERM", "SIGINT"]) {
+  process.on(sig, () => shutdown(sig));
+}

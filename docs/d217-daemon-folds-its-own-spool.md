@@ -49,11 +49,13 @@ the design says why the process that owns the tail cannot fold it.
 - **Credential: `motherduck_token` (then `MOTHERDUCK_TOKEN`), read from the
   environment only.** Absent, the daemon stays what it was — a spool writer —
   and says so once at startup. The credential never becomes a file.
-- **One sender at a time.** `<spool>.lock` is created with `wx` (exclusive
-  create) around the child; a second trigger returns immediately. A stale lock
-  from a killed daemon is removed by hand, which is louder than guessing at
-  liveness, and the first trigger it blocks logs the lock path — a fold that
-  stops is otherwise indistinguishable from a fold with nothing to do.
+- **One sender at a time, across every caller.** The sender itself takes
+  `<spool>.lock` (`flock`, or a pid-checked directory fallback), so the daemon's
+  self-send, an operator's run and the sync's `--direct` leg cannot overlap. A
+  second sender exits `75` (temporary failure); the daemon treats that as busy,
+  keeps the spool and retries. `flock` releases on process death; the fallback
+  checks the recorded pid and reclaims a dead owner. The in-process `sending`
+  flag remains only to stop the daemon from spawning its own second child.
 - **Accounting survives rotation.** The sender freezes the tail by renaming it,
   and the daemon appends by path, so the next append recreates the spool. Rows
   appended while the child runs are in that new file and the post-fold
@@ -84,9 +86,10 @@ the design says why the process that owns the tail cannot fold it.
 - **The daemon needs bash and the sender beside it at its own folder path** (the
   copy unit, d113). When it fires it also needs the pinned duckdb and jq — a
   host without them logs a failed fold and retries, and ingestion is unaffected.
-- **An operator-run sender can race the daemon's** (the lock is the daemon's
-  own). Both rotate by rename and insert idempotently, so the cost of an
-  overlap is wasted work and a possibly empty fold, never a duplicate row.
+- **An operator-run sender used to race the daemon's** (the old lock was the
+  daemon's own). The sender now owns the shared lock, so the overlap is a
+  non-zero exit (75) rather than two rotations. Both paths still insert
+  idempotently if a lock is bypassed.
 - **MotherDuck sees trickle writes instead of one batch.** The insert is
   `ON CONFLICT DO NOTHING`, so unchanged rows never re-version (d203); a fold
   that finds only seen rows writes nothing.
@@ -113,7 +116,7 @@ rule below is enforced in `agent-warehouse-daemon.mjs` and covered by
   on the set the sender consumes.
 - **A zero-progress success must not re-trigger, and a held lock must speak.**
   The success path re-triggers only when the fold removed bytes, warning when it
-  did not; the first lock-blocked trigger logs the path.
+  did not; a busy sender logs the lock path and backs off.
 
 ## Alternatives rejected
 

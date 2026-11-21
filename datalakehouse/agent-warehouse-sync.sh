@@ -32,6 +32,49 @@
 #        PI_CODING_AGENT_SESSION_DIR / PI_CODING_AGENT_DIR / XDG_DATA_HOME
 # Needs: duckdb v1.4-v1.5 (MotherDuck refuses other versions; ./dev-tools.sh duckdb), jq.
 set -euo pipefail
+umask 077
+
+# The same <spool>.lock the sender takes. The direct leg rotates the live tail
+# before the sender runs, so it must hold the lock across rotation, read and
+# delete; otherwise a daemon self-send can consume the tail this run is folding.
+lock_dir=""
+tmp=""
+# shellcheck disable=SC2329  # invoked through the EXIT trap
+cleanup() {
+	[ -z "$lock_dir" ] || rm -rf "$lock_dir"
+	[ -z "$tmp" ] || rm -rf "$tmp"
+}
+
+trap cleanup EXIT
+acquire_lock() { # $1 = spool path
+	local path=$1 dir="$1.lock.d" pid=""
+	if command -v flock >/dev/null 2>&1; then
+		exec 9>"$path.lock"
+		if ! flock -n 9; then
+			echo "agent-warehouse-sync: another sender holds $path.lock" >&2
+			exit 75
+		fi
+		return 0
+	fi
+	if mkdir "$dir" 2>/dev/null; then
+		printf '%s\n' "$$" >"$dir/pid"
+		lock_dir="$dir"
+		return 0
+	fi
+	[ -f "$dir/pid" ] && pid=$(cat "$dir/pid" 2>/dev/null || true)
+	if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+		echo "agent-warehouse-sync: another sender (pid $pid) holds $dir" >&2
+		exit 75
+	fi
+	rm -rf "$dir"
+	if mkdir "$dir" 2>/dev/null; then
+		printf '%s\n' "$$" >"$dir/pid"
+		lock_dir="$dir"
+		return 0
+	fi
+	echo "agent-warehouse-sync: another sender holds $dir" >&2
+	exit 75
+}
 
 UNIT=$(CDPATH='' cd "$(dirname "$0")" && pwd)
 # The sender is the unit's only uploader (docs/d221): this script reads sources
@@ -68,6 +111,22 @@ env_or() { # $1 = var name, $2 = default
 	local v
 	v=$(printenv "$1" 2>/dev/null || true)
 	if [ -n "$v" ]; then printf '%s' "$v"; else printf '%s' "$2"; fi
+}
+
+env_int() { # $1 = var name, $2 = default
+	local v
+	v=$(env_or "$1" "")
+	if [ -z "$v" ]; then
+		printf '%s' "$2"
+		return 0
+	fi
+	case "$v" in
+	*[!0-9]*)
+		echo "agent-warehouse-sync: $1=$v is not an integer; using $2" >&2
+		printf '%s' "$2"
+		;;
+	*) printf '%s' "$v" ;;
+	esac
 }
 
 SESSION_DIR=""
@@ -126,8 +185,14 @@ else
 	route=$(printf '%s' "$route" | sed 's:/*$::')
 fi
 # --rm grace: a file modified within this many seconds is treated as live and kept.
-GRACE=$(env_or AGENT_WAREHOUSE_RM_GRACE 300)
-BATCH_MAX=$(env_or AGENT_WAREHOUSE_BATCH_BYTES 4194304)
+GRACE=$(env_int AGENT_WAREHOUSE_RM_GRACE 300)
+BATCH_MAX=$(env_int AGENT_WAREHOUSE_BATCH_BYTES 4194304)
+if [ "$RM" = 1 ] && [ "$GRACE" -eq 0 ]; then
+	printf 'agent-warehouse-sync: AGENT_WAREHOUSE_RM_GRACE=0 disables the live-file check; --rm may delete a session still being written\n' >&2
+fi
+if [ "$RM" = 1 ] && [ -n "$route" ]; then
+	printf 'agent-warehouse-sync: --rm after a route ack removes the source while the row is only in the host spool; use --direct when the source is the last copy\n' >&2
+fi
 TOKEN=$(env_or motherduck_token "")
 [ -n "$TOKEN" ] || TOKEN=$(env_or MOTHERDUCK_TOKEN "")
 # A DIRECT run is the collector: it folds the spool into the warehouse, so it
@@ -136,7 +201,15 @@ TOKEN=$(env_or motherduck_token "")
 # or dry run has no side effect. The tail is ROTATED before it is read rather than
 # truncated in place, so a concurrent daemon append cannot be lost; the frozen
 # file is deleted only after the direct ack.
-if [ -z "$route" ] && [ -n "$TOKEN" ] && [ "$DRY" = 0 ] && [ "$PRINT_ROWS" = 0 ] && [ "$PRINT_ROOTS" = 0 ] && [ -f "$spool_base" ]; then
+direct_side_effects=0
+if [ -z "$route" ] && [ -n "$TOKEN" ] && [ "$DRY" = 0 ] && [ "$PRINT_ROWS" = 0 ] &&
+	[ "$PRINT_ROOTS" = 0 ] && [ "$REPORT_ORPHANS" = 0 ]; then
+	direct_side_effects=1
+fi
+if [ "$direct_side_effects" = 1 ]; then
+	acquire_lock "$spool_base"
+fi
+if [ "$direct_side_effects" = 1 ] && [ -f "$spool_base" ]; then
 	mv "$spool_base" "$spool_base.rm.$$"
 fi
 
@@ -155,7 +228,6 @@ if [ "$PRINT_ROOTS" = 1 ]; then
 fi
 
 tmp=$(mktemp -d)
-trap 'rm -rf "$tmp"' EXIT
 sessions_rows="$tmp/sessions.ndjson"
 entries_rows="$tmp/entries.ndjson"
 : >"$sessions_rows"
@@ -194,14 +266,14 @@ remove_processed() {
 			rm -f "$f" && removed=$((removed + 1))
 		fi
 	done <"$removable"
-	find "$SESSION_ROOT" "$DELEGATION_ROOT" -mindepth 1 -type d -empty -delete 2>/dev/null || true
 	printf 'agent-warehouse-sync: --rm removed %s file(s), kept %s\n' "$removed" "$kept" >&2
 }
 
 # shellcheck disable=SC2094  # the read loop's source and the two append targets
 # are three distinct paths; shellcheck sees one file per redirect.
 parse_file() { # $1 = file, $2 = base store (session|delegation)
-	local file=$1 base=$2 line sid="" store="$2" cwd n=0
+	local file=$1 base=$2 line sid="" store="$2" cwd n=0 row
+	file_skipped=0
 	while IFS= read -r line || [ -n "$line" ]; do
 		[ -n "$line" ] || continue
 		n=$((n + 1))
@@ -213,16 +285,30 @@ parse_file() { # $1 = file, $2 = base store (session|delegation)
 			# session row.
 			store=$base
 			if [ "$base" = session ] && [ -n "$cwd" ] && [ -f "$cwd/.git" ]; then store=worktree; fi
-			printf '%s' "$line" | jq -c --arg f "$file" --arg s "$store" \
-				'select(.id != null) | {session_file:$f, store:$s, session_id:.id, cwd:(.cwd // null), version:(.version // null), parent_session:(.parentSession // null), started_at:(.timestamp // null)}' \
-				>>"$sessions_rows" || true
+			if ! row=$(printf '%s' "$line" | jq -c --arg f "$file" --arg s "$store" \
+				'select(.id != null) | {session_file:$f, store:$s, session_id:.id, cwd:(.cwd // null), version:(.version // null), parent_session:(.parentSession // null), started_at:(.timestamp // null)}'); then
+				printf 'agent-warehouse-sync: unparseable session header at %s:%s\n' "$file" "$n" >&2
+				file_skipped=$((file_skipped + 1))
+			elif [ -n "$row" ]; then
+				printf '%s\n' "$row" >>"$sessions_rows"
+			else
+				printf 'agent-warehouse-sync: session header without an id at %s:%s\n' "$file" "$n" >&2
+				file_skipped=$((file_skipped + 1))
+			fi
 			continue
 		fi
 		# The payload carries the message content array verbatim; splitting it into
 		# content parts is a v2 design (docs/d167), so one row can hold 100 KB+.
-		printf '%s' "$line" | jq -c --arg sid "$sid" --arg f "$file" --arg s "$store" --argjson n "$n" \
-			'select(.id != null) | {session_id:$sid, session_file:$f, store:$s, line_no:$n, id:.id, parent_id:(.parentId // null), type:(.type // null), ts:(.timestamp // null), payload:.}' \
-			>>"$entries_rows" || true
+		if ! row=$(printf '%s' "$line" | jq -c --arg sid "$sid" --arg f "$file" --arg s "$store" --argjson n "$n" \
+			'select(.id != null) | {session_id:$sid, session_file:$f, store:$s, line_no:$n, id:.id, parent_id:(.parentId // null), type:(.type // null), ts:(.timestamp // null), payload:.}'); then
+			printf 'agent-warehouse-sync: unparseable entry at %s:%s\n' "$file" "$n" >&2
+			file_skipped=$((file_skipped + 1))
+		elif [ -n "$row" ]; then
+			printf '%s\n' "$row" >>"$entries_rows"
+		else
+			printf 'agent-warehouse-sync: entry without an id at %s:%s\n' "$file" "$n" >&2
+			file_skipped=$((file_skipped + 1))
+		fi
 	done <"$file"
 }
 
@@ -243,14 +329,15 @@ while IFS= read -r f; do
 	*) store=session ;;
 	esac
 	parse_file "$f" "$store"
-	if [ "$RM" = 1 ]; then
-		# Only a file whose every line is valid JSON is a removal candidate; a
-		# partial read must never cost the last copy of a session.
-		if jq . "$f" >/dev/null 2>&1; then
-			printf '%s\n' "$f" >>"$removable"
-		else
-			printf 'agent-warehouse-sync: invalid JSON, keeping %s\n' "$f" >&2
-		fi
+	# Validate every file, not only a --rm candidate: the per-line jq above
+	# drops a line without an id, and a partial transcript must be reported and
+	# never be a removal candidate even when the rest of it is valid JSON.
+	if jq . "$f" >/dev/null 2>&1 && [ "$file_skipped" = 0 ]; then
+		[ "$RM" = 1 ] && printf '%s\n' "$f" >>"$removable"
+	elif [ "$file_skipped" -gt 0 ]; then
+		printf 'agent-warehouse-sync: kept %s (%s line(s) unparseable or without an id)\n' "$f" "$file_skipped" >&2
+	else
+		printf 'agent-warehouse-sync: invalid JSON, keeping %s (valid lines were ingested)\n' "$f" >&2
 	fi
 done < <(find "$SESSION_ROOT" "$DELEGATION_ROOT" -type f -name '*.jsonl' 2>/dev/null || true)
 
@@ -304,6 +391,20 @@ fi
 # rows to the host sink, so a sandbox with no token and no duckdb still ships its
 # sessions, and the archive is still written only host-side.
 if [ -n "$route" ]; then
+	# The scheme check belongs at the post, not at resolution: --print-roots and
+	# --dry must resolve and report without a credential or a network policy.
+	case "$route" in
+	https://*) ;;
+	http://127.0.0.1:* | http://localhost:* | "http://[::1]:"*) ;;
+	http://*)
+		echo 'agent-warehouse-sync: a plaintext route off loopback would carry the ingest token in the clear; use https or loopback' >&2
+		exit 64
+		;;
+	*)
+		echo 'agent-warehouse-sync: AGENT_WAREHOUSE_ROUTE must be an http(s) URL' >&2
+		exit 64
+		;;
+	esac
 	ingest_token=$(env_or AGENT_INGEST_TOKEN "")
 	# The route post is batched under a byte budget: one row can hold a whole
 	# message content array (docs/d167's v2 note), so a single array of every row
@@ -317,7 +418,8 @@ if [ -n "$route" ]; then
 	post_batch() {
 		[ -s "$batch" ] || return 0
 		jq -s -c '.' "$batch" >"$batch_json"
-		set -- curl -sS -f -X POST -H 'content-type: application/json'
+		set -- curl -sS -f --connect-timeout 10 --max-time 120 \
+			-X POST -H 'content-type: application/json'
 		[ -z "$ingest_token" ] || set -- "$@" -H "x-ingest-token: $ingest_token"
 		set -- "$@" --data-binary "@$batch_json" "$route/ingest/session"
 		if ! resp=$("$@"); then
@@ -331,7 +433,9 @@ if [ -n "$route" ]; then
 	}
 	while IFS= read -r line; do
 		[ -n "$line" ] || continue
-		len=${#line}
+		# Count bytes, not characters: a UTF-8 row over 4 MiB of characters is
+		# already larger than the daemon's byte cap.
+		len=$(printf '%s' "$line" | wc -c)
 		if [ "$len" -gt "$BATCH_MAX" ]; then
 			printf 'agent-warehouse-sync: a %s-byte row exceeds the %s-byte budget; raise AGENT_INGEST_MAX_BODY on the daemon\n' "$len" "$BATCH_MAX" >&2
 			exit 1
@@ -359,20 +463,27 @@ fi
 # every row the run read -- the parsed files plus the daemon's tails -- instead
 # of carrying a second copy of the DDL (docs/d217).
 direct="$tmp/direct.ndjson"
+rotated="$tmp/rotated"
+: >"$rotated"
 cat "$sessions_rows" "$entries_rows" >"$direct"
-for sp in "$spool_base" "$spool_base".rm.*; do
-	[ -f "$sp" ] && cat "$sp" >>"$direct"
+# Only the tails this run froze. The live path may be recreated by the daemon
+# while the fold runs, and deleting it here would discard rows this run never
+# read. The list is captured with the reads so a later glob cannot widen it.
+for sp in "$spool_base".rm.*; do
+	[ -f "$sp" ] || continue
+	cat "$sp" >>"$direct"
+	printf '%s\n' "$sp" >>"$rotated"
 done
-if ! bash "$SENDER" --spool "$direct"; then
+if ! bash "$SENDER" --spool "$direct" --deadlog "$spool_base.dead.ndjson"; then
 	printf 'agent-warehouse-sync: the sender refused the direct fold\n' >&2
 	exit 1
 fi
 remove_processed
 # A direct run folded every tail it read, and the sender deleted the file it was
-# handed; the rotated tails are this run's, so they go only after the ack.
-for sp in "$spool_base".rm.*; do
-	if [ -f "$sp" ]; then rm -f "$sp"; fi
-done
+# handed; the tails listed before the fold go only after the ack.
+while IFS= read -r sp; do
+	[ -n "$sp" ] && rm -f "$sp"
+done <"$rotated"
 jq -n --arg db "md:$(env_or AGENT_WAREHOUSE_DB agent)" \
 	--argjson sessions "$session_count" --argjson entries "$entry_count" \
 	'{database:$db, parsed_sessions:$sessions, parsed_entries:$entries}'

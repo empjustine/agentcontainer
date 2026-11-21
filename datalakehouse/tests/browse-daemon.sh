@@ -16,6 +16,7 @@ bad() { printf 'FAIL %s\n' "$1"; fails=$((fails + 1)); }
 # Fixed-string matching: the patterns under test carry JSON brackets and dots,
 # which a BRE would read as syntax.
 has() { if printf '%s' "$2" | grep -qF -- "$3"; then ok "$1"; else bad "$1 (missing [$3] in [$2])"; fi; }
+hasi() { if printf '%s' "$2" | grep -qiF -- "$3"; then ok "$1"; else bad "$1 (missing [$3] in [$2])"; fi; }
 lacks() { if printf '%s' "$2" | grep -qF -- "$3"; then bad "$1 (unexpected [$3])"; else ok "$1"; fi; }
 is() { if [ "$2" = "$3" ]; then ok "$1"; else bad "$1 (expected [$3], got [$2])"; fi; }
 
@@ -126,6 +127,32 @@ has 'a removed page still answers the visited check' "$out" 'Gone'
 out=$(curl -sS -m 10 -X POST -H 'content-type: application/json' \
 	--data-binary '{"url":"https://removed.example/gone"}' "$pm/visits")
 has 'a removed page leaves the visit list' "$out" '"visits":[]'
+
+# A move re-sends the same node with a new parent and position. INSERT OR IGNORE
+# would keep the first walk's chain forever and the folder view would lie.
+out=$(curl -sS -m 10 -X POST -H 'X-Access-Token: secret' -H 'content-type: application/json' --data-binary \
+	'{"schema":1,"stream":"bookmark","stream_seq":{"low":1,"high":1},"records":[
+	  {"src":"firefox-bookmarks","kind":"bookmark","key":"b2","node_type":"bookmark","url":"https://bookmark-only.example/saved","title":"Saved Only","parent_id":"f2","position":5,"date_added":1712345600000,"date_modified":1712345800000}]}' \
+	"$base/ingest/slurp")
+has 'a bookmark move is accepted' "$out" '"accepted":1'
+moved=$(python3 - "$tmp/browse.sqlite" <<'PYINNER'
+import sqlite3
+import sys
+
+conn = sqlite3.connect(sys.argv[1], timeout=10)
+row = conn.execute(
+    "SELECT parent_id, position, date_added FROM bookmark WHERE src = ? AND key = ?",
+    ("firefox-bookmarks", "b2"),
+).fetchone()
+print("|".join(str(value) for value in row))
+PYINNER
+)
+is 'a bookmark move updates the parent and position' 'f2|5|1712345600000' "$moved"
+out=$(curl -sS -m 10 -X POST -H 'X-Access-Token: secret' -H 'content-type: application/json' --data-binary \
+	'{"schema":1,"stream":"bookmark","stream_seq":{"low":1,"high":1},"records":[
+	  {"src":"firefox-bookmarks","kind":"bookmark","key":"b2","node_type":"bookmark","url":"https://bookmark-only.example/saved","title":"Saved Only","parent_id":"f2","position":5,"date_added":1712345600000,"date_modified":1712345800000}]}' \
+	"$base/ingest/slurp")
+has 'a replayed bookmark move is a duplicate' "$out" '"accepted":0'
 
 
 # --- the Promnesia face ----------------------------------------------------
@@ -239,9 +266,23 @@ out=$(curl -sS -m 10 "$base/api/document?url=https://files.example/doc.pdf")
 has 'the PDF text is extracted and stored' "$out" 'Hello PDF'
 out=$(curl -sS -m 10 --get --data-urlencode 'q=Hello' "$base/search")
 has 'the PDF text is searchable' "$out" 'https://files.example/doc.pdf'
+is 'a malformed PDF is a 500' '500' "$(code -X POST -H 'X-Access-Token: secret' \
+	-H 'content-type: application/json' --data-binary \
+	'{"document":{"url":"https://files.example/bad.pdf"},"pdf":"bm90IGEgcGRm"}' \
+	"$base/api/add_pdf")"
+is 'the daemon survives a bad PDF' '200' "$(code "$pm/status")"
 out=$(curl -sS -m 10 -X POST -H 'X-Access-Token: secret' -H 'content-type: application/json' \
 	--data-binary '{"query":"https://files.example/doc.pdf","dry_run":true}' "$base/api/delete")
 has 'a bare URL delete is still an exact url filter' "$out" '"matched":1'
+
+# Invalid values are RFC 9457 problem documents, not the old {"error": ...}.
+headers=$(curl -sS -m 10 -D - -o /dev/null -X POST -H 'X-Access-Token: secret' \
+	-H 'content-type: application/json' --data-binary '{}' "$base/api/add")
+hasi 'a client error is application/problem+json' "$headers" 'content-type: application/problem+json'
+out=$(curl -sS -m 10 -X POST -H 'X-Access-Token: secret' -H 'content-type: application/json' \
+	--data-binary '{}' "$base/api/add")
+has 'a client error names the interface-error type' "$out" '"type":"https://agentcontainer.example/problems/interface-error"'
+has 'a client error carries a title and status' "$out" '"title":"Interface error"'
 
 out=$(curl -sS -m 10 -X POST -H 'X-Access-Token: secret' -H 'content-type: application/json' \
 	--data-binary '{"url":"https://news.example/story","title":"Story","query":"q"}' "$base/api/history")
@@ -272,6 +313,96 @@ is 'the Promnesia port refuses a hister path' '404' "$(code "$pm/api/config")"
 is 'the hister port refuses a Promnesia path' '404' "$(code "$base/status")"
 
 lacks 'a web origin gets no CORS grant' "$(curl -sS -m 10 -D - -o /dev/null -H 'Origin: https://evil.example' "$base/api/config")" 'Access-Control-Allow-Origin'
+
+# The visit table is append-only: a later title fills the derived page_title
+# and the read faces, but the stored visit row keeps its original locator.
+out=$(curl -sS -m 10 -X POST -H 'X-Access-Token: secret' -H 'content-type: application/json' --data-binary \
+	'{"schema":1,"stream":"visit","stream_seq":{"low":1,"high":1},"records":[
+	  {"src":"firefox-history","kind":"visit","key":"append-v1","url":"https://append.example/page","visit_time":1712345698000}]}' \
+	"$base/ingest/slurp")
+has 'an untitled visit is accepted' "$out" '"accepted":1'
+out=$(curl -sS -m 10 -X POST -H 'X-Access-Token: secret' -H 'content-type: application/json' --data-binary \
+	'{"schema":1,"stream":"title","stream_seq":{"low":1,"high":1},"records":[
+	  {"src":"firefox-history","kind":"title","key":"title:append","url":"https://append.example/page","title":"Late Title","seen_at":1712345699000}]}' \
+	"$base/ingest/slurp")
+has 'a late title is accepted' "$out" '"accepted":1'
+append_state=$(python3 - "$tmp/browse.sqlite" <<'PYDB'
+import sqlite3
+import sys
+
+conn = sqlite3.connect(sys.argv[1], timeout=10)
+visit = conn.execute(
+    "SELECT locator_title FROM visit WHERE norm_url = ?", ("append.example/page",)
+).fetchone()
+page = conn.execute(
+    "SELECT title FROM page_title WHERE norm_url = ?", ("append.example/page",)
+).fetchone()
+print(f"{visit[0]!r}|{page[0]!r}")
+PYDB
+)
+is 'a late title leaves the visit row untouched' "None|'Late Title'" "$append_state"
+out=$(curl -sS -m 10 -X POST -H 'content-type: application/json' \
+	--data-binary '{"url":"https://append.example/page"}' "$pm/visits")
+has 'the visit read face derives the late title' "$out" 'Late Title'
+
+# A bookmark title is context too: it fills the derived page title, not the
+# append-only visit row.
+out=$(curl -sS -m 10 -X POST -H 'X-Access-Token: secret' -H 'content-type: application/json' --data-binary \
+	'{"schema":1,"stream":"visit","stream_seq":{"low":1,"high":1},"records":[
+	  {"src":"firefox-history","kind":"visit","key":"append-v2","url":"https://append2.example/page","visit_time":1712345698500}]}' \
+	"$base/ingest/slurp")
+has 'a second untitled visit is accepted' "$out" '"accepted":1'
+out=$(curl -sS -m 10 -X POST -H 'X-Access-Token: secret' -H 'content-type: application/json' --data-binary \
+	'{"schema":1,"stream":"bookmark","stream_seq":{"low":1,"high":1},"records":[
+	  {"src":"firefox-bookmarks","kind":"bookmark","key":"append-b1","node_type":"bookmark","url":"https://append2.example/page","title":"Bookmark Title","parent_id":"root________","position":9,"date_added":1712345600000}]}' \
+	"$base/ingest/slurp")
+has 'a bookmark for an untitled page is accepted' "$out" '"accepted":1'
+append_state=$(python3 - "$tmp/browse.sqlite" <<'PYDB'
+import sqlite3
+import sys
+
+conn = sqlite3.connect(sys.argv[1], timeout=10)
+visit = conn.execute(
+    "SELECT locator_title FROM visit WHERE norm_url = ?", ("append2.example/page",)
+).fetchone()
+print(repr(visit[0]))
+PYDB
+)
+is 'a bookmark title leaves the visit row untouched' 'None' "$append_state"
+out=$(curl -sS -m 10 -X POST -H 'content-type: application/json' \
+	--data-binary '{"url":"https://append2.example/page"}' "$pm/visits")
+has 'the visit read face derives the bookmark title' "$out" 'Bookmark Title'
+
+# A history clear is a timestamped global mark: it hides every visit up to the
+# mark on the read faces, while the presence row and its rows stay (docs/d204's
+# mark-not-erase rule). A second clear must move the mark forward.
+out=$(curl -sS -m 10 -X POST -H 'X-Access-Token: secret' -H 'content-type: application/json' --data-binary \
+	'{"schema":1,"stream":"history","stream_seq":{"low":1,"high":1},"records":[
+	  {"src":"firefox-history","kind":"history-cleared","key":"*","deleted_at":1712346000000,"source":"local"}]}' \
+	"$base/ingest/slurp")
+has 'a history clear is accepted' "$out" '"accepted":1'
+out=$(curl -sS -m 10 -X POST -H 'content-type: application/json' \
+	--data-binary '{"url":"https://www.example.com/post?id=7"}' "$pm/visits")
+has 'a history clear hides the visit list' "$out" '"visits":[]'
+out=$(curl -sS -m 10 -X POST -H 'content-type: application/json' \
+	--data-binary '{"urls":["https://www.example.com/post?id=7"]}' "$pm/visited")
+has 'a history clear keeps the visited archive mark' "$out" 'A Post'
+
+# A body over the ceiling is refused before it is read into memory. The
+# limit is deliberately generous, so the fixture is just over the default.
+head -c 9000000 /dev/zero | tr '\0' ' ' >"$tmp/big.json"
+is 'an oversized body is a 413' '413' "$(code --max-time 20 -X POST -H 'X-Access-Token: secret' \
+	-H 'content-type: application/json' --data-binary @"$tmp/big.json" "$base/ingest/slurp")"
+
+# A wide bind with no key would expose the write faces to the network; the
+# daemon must refuse to start rather than accept the first request.
+if BROWSE_TOKEN='' BROWSE_HISTER_ADDR="0.0.0.0:$((port + 2))" \
+	BROWSE_PROMNESIA_ADDR="127.0.0.1:$((port + 3))" \
+	"$repo/py-run.sh" "$unit/browse-daemon.py" >/dev/null 2>&1; then
+	bad 'a wide bind without a key must be refused'
+else
+	ok 'a wide bind without a key is refused'
+fi
 
 if [ "$fails" -gt 0 ]; then
 	printf '%s browse-daemon test(s) FAILED\n' "$fails" >&2

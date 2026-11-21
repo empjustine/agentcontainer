@@ -25,7 +25,7 @@ This note is the contract for turning the example from an order toy into a servi
 
 ## Status
 
-Draft. The inventory is extracted from `browse-daemon.py`, `agent-warehouse-daemon.mjs`, the unit's README and its HTTP-level test suites. The port is done when those suites pass against the Java service, with the one Python-specific canonicaliser assertion replaced by the golden fixture the Conformance section describes.
+Draft. The inventory is extracted from `browse-daemon.py`, `agent-warehouse-daemon.mjs`, the unit's README and its HTTP-level test suites. The port is done when those suites pass against the Java service, with the one Python-specific canonicaliser assertion replaced by the golden fixture the Conformance section describes. The groundwork is no longer only a wire inventory: the current daemons already enforce the append-only and security rules the port must not regress (see What the groundwork already guarantees). The port is a rewrite of the mechanism, not a licence to reopen the gaps.
 
 ## What the port keeps and what it replaces
 
@@ -95,20 +95,20 @@ Cross-cutting: CORS is echoed for `moz-extension://`, `chrome-extension://` and 
 
 ### The agent ingest
 
-`POST /ingest/session` and nothing else on that route. The body is one JSON row or an array of rows, keyed on the transcript's own session id and entry id, inserted conditionally so a re-posted row is skipped durably, and spooled for the warehouse sync to read. The daemon answers `405` on any other method and any other path.
+`POST /ingest/session` and nothing else on that route. The body is one JSON row or an array of rows, keyed on the transcript's own session id and entry id, inserted conditionally so a re-posted row is skipped durably, and spooled for the warehouse sync to read. The daemon answers `405` on any other method and `404` on a `POST` to another path. The body carries `AGENT_INGEST_MAX_BODY` (default 8 MiB) and `AGENT_INGEST_MAX_ROWS` (default 10000) ceilings. A row without an identity is keyed by the SHA-256 of its canonical JSON, never by the spool line, because the sender renames the live tail to `.rm.<pid>` and a direct fold renumbers the same line on every run.
 
 ## What each protocol needs from the Java stack
 
-| Need               | Where it lands                                                                                                   |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| batch ingest       | `@Transactional` service method; the ack counts are the return value                                             |
-| NDJSON streaming   | the agent route reads a line stream and folds it in batches; the read faces stream rows out, not a list          |
-| idempotency        | `INSERT OR IGNORE` with the update count as the signal, and a tombstone table for the marks                      |
-| canonicalisation   | a port of the vendored `cannon` (MIT): domain folding, tracking-parameter stripping, trailing slash, archive.org |
-| search             | a term dictionary and posting lists with naive BM25, and a small recursive-descent parser for the dialect        |
-| PDF text           | PDFBox for `/api/add_pdf`; extraction differences from `pypdf` are accepted, the status and stored shape are not |
-| CORS and the token | one filter, one rule set, applied by surface                                                                     |
-| observability      | one structured line per request with status and duration, the daemon's shape                                     |
+| Need               | Where it lands                                                                                                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| batch ingest       | `@Transactional` service method; the ack counts are the return value                                                                                                            |
+| NDJSON streaming   | the sender reads NDJSON in row- and byte-bounded batches; the agent route reads one JSON row or array, capped by body and row count; the read faces stream rows out, not a list |
+| idempotency        | `INSERT OR IGNORE` with the update count as the signal, and a tombstone table for the marks                                                                                     |
+| canonicalisation   | a port of the vendored `cannon` (MIT): domain folding, tracking-parameter stripping, trailing slash, archive.org                                                                |
+| search             | a term dictionary and posting lists with naive BM25, and a small recursive-descent parser for the dialect                                                                       |
+| PDF text           | PDFBox for `/api/add_pdf`, in an out-of-process worker with rlimits and a timeout; extraction differences from `pypdf` are accepted, the status and stored shape are not        |
+| CORS and the token | one filter, one rule set, applied by surface                                                                                                                                    |
+| observability      | one structured line per request with status and duration, the daemon's shape                                                                                                    |
 
 ## Listener topology
 
@@ -122,7 +122,7 @@ The recommendation is the first for the port's teaching value and the second if 
 
 ## Storage
 
-SQLite for the hot store, because the daemon's schema and semantics are SQLite's: `journal_mode=WAL`, `busy_timeout=10000`, `INSERT OR IGNORE`, and one writer. Tables: `visit`, `bookmark`, `page_title`, `tombstone`, `presence`, `document`, `rule`, `click`, `stream`, `term_stats`, `posting`, `doc_length`, `meta`.
+SQLite for the hot store, because the daemon's schema and semantics are SQLite's: `journal_mode=WAL`, `busy_timeout=10000`, `INSERT OR IGNORE`, and one writer. Tables: `visit`, `bookmark`, `page_title`, `tombstone`, `presence`, `document`, `rule`, `click`, `stream`, `term_stats`, `posting`, `doc_length`, `meta`. The session leg has its own store and transport: `seen.sqlite` is the durable dedupe ledger (vacuumed and WAL-checkpointed at start), the NDJSON spool is the append tail, `<spool>.dead.ndjson` is the append-only dead-letter queue, and `<spool>.lock` serialises every sender. Store timestamps in UTC; the read faces compare them as text.
 
 This is the first workload that earns the SQLite leg of the engine matrix: the writer application pins its pool to one, the read faces get their own pool, and the WAL settings are the ones Litestream's caveats already require. The cold side — Parquet generations, ClickHouse-shaped postings, the MotherDuck fold — stays out of the port's first scope and keeps its pending items in the unit's records.
 
@@ -139,7 +139,7 @@ This is the first workload that earns the SQLite leg of the engine matrix: the w
 
 ## Conformance
 
-The conformance suite already exists and is HTTP-level, which is the reason the port is tractable. `datalakehouse/tests/browse-daemon.sh` drives both faces over a throwaway store, and `tests/slurp-contract.mjs` posts through the Firefox extension's own record builders and reads the result back from both faces. Neither needs a rewrite. Only the canonicaliser assertion inside the shell suite is Python-specific, and it becomes a golden fixture generated from the vendored `cannon` and replayed against the Java port.
+The conformance suite already exists and is HTTP-level, which is the reason the port is tractable. `datalakehouse/tests/browse-daemon.sh` drives both faces over a throwaway store, and `tests/slurp-contract.mjs` posts through the Firefox extension's own record builders and reads the result back from both faces. Neither needs a rewrite. Only the canonicaliser assertion inside the shell suite is Python-specific, and it becomes a golden fixture generated from the vendored `cannon` and replayed against the Java port. The suite now also covers a bookmark move, a history clear, an oversized body, a wide bind without a key, a failed append, a quarantined malformed line with its context, the shared sender lock, an append-only visit under a late title and a bookmark title, a PDF parser crash in its worker, an RFC 9457 problem body and the token staying out of `duckdb` argv; the Java service inherits those as the acceptance floor.
 
 The unit's Node suite for the extension stays as the producer fixture, including its fake WebExtension, so the port is tested against the real client code rather than a hand-written shape.
 
@@ -151,13 +151,41 @@ The unit's Node suite for the extension stays as the producer fixture, including
 - **The web UI and the hister root page**: neither stock extension needs them.
 - **The Firefox extension**: it is the producer and the fixture, so it does not move.
 
+## What the groundwork already guarantees
+
+The current daemons were audited against the example's persistence, observability and resource-isolation rules. The port must preserve these, not only the JSON shapes.
+
+| Guarantee                    | Groundwork mechanism                                                                                                                                                                                       | What the port must not do                                      |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| append-only archive          | every session insert is `ON CONFLICT DO NOTHING` on a natural key; first write wins                                                                                                                        | replace it with an update, or re-key a row on its file path    |
+| no lost append               | the dedupe key is recorded only after the spool append; a failed append answers 500 and is retried                                                                                                         | record the key first, or treat the in-memory ledger as durable |
+| stable identity              | a row without an id is hashed from canonical JSON, so rotation and a direct re-fold reproduce the key                                                                                                      | fall back to the spool line or `.rm.<pid>`                     |
+| one live tail                | the sender only consumes frozen `.rm.*` tails; the recreated live path is left to the next fold                                                                                                            | read and `rm` the live path in one pass                        |
+| one sender at a time         | every sender takes the same `<spool>.lock` (`flock`, or a pid-checked directory fallback); a second exits `75` and the daemon treats it as busy                                                            | rely on the daemon's in-process flag alone                     |
+| a poison line is preserved   | a malformed or unidentifiable line goes to `<spool>.dead.ndjson` with its last session header and surrounding context; the tail is then consumable                                                         | skip the line silently, or block the whole tail forever        |
+| visits are immutable         | the `visit` row is never updated; a late title or bookmark title fills `page_title`/`presence` and the read faces join it                                                                                  | `UPDATE visit SET locator_title …` for a later title           |
+| media work is out of process | PDF extraction runs in a separate interpreter with CPU/address-space/file rlimits and a timeout; `BROWSE_PDF_RUNNER` can prefix a namespace/container wrapper; a parser crash is a 500, not a daemon crash | parse an arbitrary PDF inside the appender process             |
+| errors are RFC 9457          | invalid values answer `application/problem+json` with a stable `type`, `title` and `status`                                                                                                                | answer `{"error": "…"}` with a framework or SQL string         |
+| token off argv               | the token is exported as `motherduck_token`; no `SET` literal and no connection-string parameter                                                                                                           | put the token in `duckdb` argv or SQL                          |
+| bounded allocations          | body, row, PDF, visited-URL, form-field and batch byte/row ceilings                                                                                                                                        | accept an unbounded body, form or PDF                          |
+| fail closed on a wide bind   | the session route refuses a non-loopback bind without `AGENT_INGEST_TOKEN`; the browse daemon refuses a non-loopback bind without `BROWSE_TOKEN`                                                           | bind `0.0.0.0` with writes open                                |
+| private store                | spool, ledger, lock and SQLite store are created `0600` in a `0700` directory                                                                                                                              | leave browsing history or transcripts world-readable           |
+| one log line per request     | status, duration and accepted/duplicate counts on stdout; store errors stay in the log                                                                                                                     | return a `SQLException` message to the client                  |
+| UTC storage                  | timestamps are normalised to UTC and compared as instants                                                                                                                                                  | store a numeric offset and compare the strings                 |
+| a clear is a timestamp       | `history-cleared` hides visits up to its `deleted_at`, while the presence mark stays                                                                                                                       | drop the rows, or ignore the mark                              |
+| a move is an event           | a bookmark upsert updates parent, position and title; `date_added` stays immutable                                                                                                                         | `INSERT OR IGNORE` a bookmark and keep the first walk forever  |
+
+The shared sender lock, the dead-letter queue, the immutable `visit` row and the out-of-process PDF worker are landed. The remaining gap is admission control: no route rate-limits a compromised emitter (d181 says the route _can_ rate-limit; it does not yet). The port should also decide whether `seen.sqlite` keys are pruned by age; vacuuming keeps the file compact, not the key set bounded.
+
 ## Risks
 
 - **Canonicaliser drift.** The Java port must fold the shapes the vendored Python folds, or `/visited` answers `null` for a page the extension already captured. A differential fixture over generated URLs is the guard, and it belongs in the build.
 - **SQLite writers.** Two faces plus an ingest route in one JVM is one writer process; a second process on the same file is where `SQLITE_BUSY` begins. The pool sizes and `busy_timeout` carry that risk, not the code.
 - **Query-dialect fidelity.** The naive dialect is the contract; reaching for a full-text engine would answer queries the stock extension never sends while drifting from the ones it does.
-- **PDF extraction.** `pypdf` and PDFBox disagree on text. The status code, the stored body and the index rebuild are the contract; the extracted string is not.
+- **PDF extraction.** `pypdf` and PDFBox disagree on text. The status code, the stored body and the index rebuild are the contract; the extracted string is not. Run PDFBox in the same out-of-process boundary: the PDF is the one input whose parser sees arbitrary bytes.
 - **Timestamp shape.** IXDTF with a numeric offset is trivial in Java and easy to get wrong with `toString()`; the extension's six-character slice is the test.
+- **The spool is a second store.** A Java port that adds a second writer, or reads the live path while the daemon appends, reopens the rotation race the current sender closes. The port should consume the same NDJSON spool, not invent a parallel one.
+- **Unauthenticated reads.** The browse daemon's reads stay open because the stock Promnesia client cannot carry a key. A non-loopback bind is the operator's explicit choice, not a safe default; the port must keep the refusal.
 
 ## References
 
