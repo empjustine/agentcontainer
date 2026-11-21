@@ -75,7 +75,7 @@ Run the coverage scanner, which diffs the cache against the manifest by
 filename only — no GGUF headers are read and no weights are loaded:
 
 ```sh
-./py-run.sh llm-local-inference/scan_cache_coverage.py
+uv run --script llm-local-inference/scan_cache_coverage.py
 ```
 
 It prints three sections: repos with zero manifest coverage, listed repos with
@@ -102,8 +102,8 @@ heuristic is `10-fetch-hf-manifests.py` (Step 5).
   The header — not a model card's "256K" claim — is what the generator serves:
 
   ```sh
-  ./py-run.sh llm-local-inference/gguf_context_length.py --repo ORG/REPO  # one model
-  ./py-run.sh llm-local-inference/gguf_context_length.py --facts          # rewrite the artifact
+  uv run --script llm-local-inference/gguf_context_length.py --repo ORG/REPO  # one model
+  uv run --script llm-local-inference/gguf_context_length.py --facts          # rewrite the artifact
   ```
 
   `--facts` re-reads every file the model manifest serves and is the ONLY writer of
@@ -227,11 +227,11 @@ git diff --exit-code llm-local-inference/lib/llamacpp-model-data.json    # you e
 
 # the header facts must cover every served file: re-run the writer after any
 # `model` change, then commit lib/gguf-facts.json with the model manifest (d197)
-./py-run.sh llm-local-inference/gguf_context_length.py --facts
+uv run --script llm-local-inference/gguf_context_length.py --facts
 
 # --offline audits each entry's model against llama.cpp's implicit
 # repo:quant -> file heuristic, with no network (exit 1 on mismatch)
-./py-run.sh llm-local-inference/10-fetch-hf-manifests.py --offline
+uv run --script llm-local-inference/10-fetch-hf-manifests.py --offline
 ```
 
 `10-fetch-hf-manifests.py` re-implements `find_best_model` offline and checks the
@@ -276,7 +276,7 @@ dangling `${…}` references, orphan macros, repeated flags inside one expanded
 
 llama-swap merges `config.d/` files additively at startup. Restart the
 `llm-local-inference` llama-swap service
-(`./environment.sh ./py-run.sh llm-local-inference/run.py`) so the regenerated
+(`./environment.sh uv run --script llm-local-inference/run.py`) so the regenerated
 `10-local-llm-inference.yaml` (and `00-general.yaml` if changed) is picked up.
 
 ## Naming rules / gotchas

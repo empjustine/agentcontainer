@@ -30,7 +30,7 @@ Why a separate tool and not a flag on 50-verify-cache.py: a no-flag tool must
 fail closed (d215), a preview is its own read-only tool (60-audit-snapshots.py),
 and verification and deletion are two jobs (d213).
 
-Usage: ./py-run.sh llm-local-inference/70-prune-cache.py
+Usage: uv run --script llm-local-inference/70-prune-cache.py
 Exit code 1 when a deletion or a verification failed; 0 when the cache matches
 the manifest.
 """

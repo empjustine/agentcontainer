@@ -68,7 +68,7 @@ def repo_manifest(repo):
     if not path.is_file():
         raise SystemExit(
             f"curated manifest for {repo} has no committed repo manifest ({path.name}); "
-            "run ./py-run.sh llm-local-inference/10-fetch-hf-manifests.py"
+            "run uv run --script llm-local-inference/10-fetch-hf-manifests.py"
         )
     data = json.loads(path.read_text())
     return {f["path"]: (f.get("oid"), f.get("size") or 0) for f in data["files"]}

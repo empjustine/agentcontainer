@@ -19,7 +19,7 @@ curated (partial) snapshot verifiable — never pass --fail-on-missing-files.
 Exit code 1 when any present repo fails verification. Absent repos are logged
 and skipped: not pulling them is 40-download-models.py's report to make.
 
-Usage: ./py-run.sh llm-local-inference/50-verify-cache.py
+Usage: uv run --script llm-local-inference/50-verify-cache.py
 """
 
 import json

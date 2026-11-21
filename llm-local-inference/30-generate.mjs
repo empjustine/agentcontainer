@@ -41,7 +41,7 @@
  * (vendored data only) and embeds NO keys — the single ${env.*} reference in
  * the generated config (TLALOCAYOTL_API_KEY, 00-general.yaml apiKeys) is resolved by
  * llama-swap from ITS OWN environment at load time, which the runner receives from the explicit
- * chain (./environment.sh ./py-run.sh llm-local-inference/run.py). Generation needs no
+ * chain (./environment.sh uv run --script llm-local-inference/run.py). Generation needs no
  * vault round-trip at all.
  *
  * Outputs, both from the same in-memory set so they cannot disagree:

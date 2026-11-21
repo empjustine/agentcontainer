@@ -6,7 +6,7 @@
 """run.py — llama-swap launcher for LOCAL GGUF inference (container hosts
 only; podman/docker). Entered as::
 
-    ./environment.sh ./py-run.sh llm-local-inference/run.py
+    ./environment.sh uv run --script llm-local-inference/run.py
 
 Cloud/remote relaying is served by ../estige — this launcher runs the single
 llama-swap instance that owns local llama.cpp serving.
@@ -76,7 +76,7 @@ CONFIG_D = SCRIPT_DIR / "config.d"
 # Guest path = the generator's HUB_GUEST constant — changing one means
 # changing both in the same edit. Read-only: nothing in-container writes the
 # cache anymore (no launch-time downloads); provisioning/pruning happen on
-# the host (./py-run.sh llm-local-inference/run_all.py).
+# the host (uv run --script llm-local-inference/run_all.py).
 HUB_GUEST = "/home/ubuntu/.cache/huggingface/hub"
 CONTAINER_NAME = "llama-swap"
 DEFAULT_IMAGE = "ghcr.io/mostlygeek/llama-swap:unified-vulkan"

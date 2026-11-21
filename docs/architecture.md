@@ -87,7 +87,8 @@ prohibits (and what was removed):
   `config.d/00-general.yaml` + `config.d/10-local-llm-inference.yaml`, emitted
   only on GPU-capable container hosts; snapshot paths are baked at generation
   — `docs/d029` option B), plus `llama-swap-core.json`, `config.d/` and
-  `run.py` (entered through the root `./py-run.sh`, d170). Cloud/remote
+  `run.py` (entered with `uv run --script`; d170 added the root wrapper,
+  d226 retired it). Cloud/remote
   relaying is NOT here — it moved to `estige/`; the relay layer generators, Termux
   build/serve, and peers-only mode were removed with that handoff.
 - `coding-agent/` is the **pi workload baseline generator**: it owns the
