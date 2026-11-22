@@ -1,0 +1,52 @@
+{
+	"repo": "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF",
+	"commit": "bba88856f8c3c0c9e40e45f82d05e228b814ac43",
+	"fetched_at": "2026-11-22T18:19:54+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "53cfcbd4a473d7936ba957212ef8e319b7d46f2c",
+			"size": 1835
+		},
+		{
+			"path": "IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00001-of-00002.gguf",
+			"oid": "bfa3644db4adfff072fc946c20994f2909d2cf89879d83f80a4c811d4016c211",
+			"size": 29608446496
+		},
+		{
+			"path": "IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00002-of-00002.gguf",
+			"oid": "316b46f3a2dbd68c900f43136ab9449f9dcc3725dfd8c794847c204bc161e113",
+			"size": 28800138432
+		},
+		{
+			"path": "README.md",
+			"oid": "70e52cbe5454e508c1a21df63f0b596eac53c88f",
+			"size": 11346
+		},
+		{
+			"path": "assets/banner.png",
+			"oid": "42ce97689e7497dcc46a2fe4701e70ee39ad856f9edffaae3b3220ea5628e076",
+			"size": 309501
+		},
+		{
+			"path": "assets/pelican-on-bike.svg",
+			"oid": "1bfb435697271166535cb017a66ea470a0005d3e",
+			"size": 8423
+		},
+		{
+			"path": "assets/plots/Qwen3.8-Flash-Next-Coder-coding_benchmarks.png",
+			"oid": "b3eff3aae0ce2662926a72a0043e0efa1c157434",
+			"size": 75580
+		},
+		{
+			"path": "mmproj-Qwen3.8-Flash-Next-BF16.gguf",
+			"oid": "b1a82259702816a5330d7bd7607cd9676b11780e79ff7348c21103ff3ce49bd0",
+			"size": 907543008
+		},
+		{
+			"path": "tensor-allocation/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00001-of-00002.rco-allocation.txt",
+			"oid": "8d4b7da1b5b7a15ff75f95c759896dcbdd32f852",
+			"size": 2749680
+		}
+	]
+}

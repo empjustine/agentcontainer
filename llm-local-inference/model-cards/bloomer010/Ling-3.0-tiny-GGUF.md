@@ -16,15 +16,7 @@ tags:
 GGUF conversions of [inclusionAI/Ling-3.0-tiny](https://huggingface.co/inclusionAI/Ling-3.0-tiny),
 converted directly from the released BF16 safetensors.
 
-## 🦙🚨 llama.cpp 🦙🚨
-
-Consistent agentic use (tool calling, reasoning split) currently requires two unmerged llama.cpp PRs:
-
-- Dedicated Ling parser: [#28682](https://github.com/ggml-org/llama.cpp/pull/28682) (✅ Merged as of 9/19)
-- Invalid UTF-8 handling in the PEG parser: [#29161](https://github.com/ggml-org/llama.cpp/pull/29161) (✅ Merged as of 9/20)
-
-Without both, tool calls inside an unclosed think block are dropped and some turns fail with a 500.
-Will update this note as they merge.
+## 🦙 Supported in stock llama.cpp 🦙
 
 The model does occasionally terminate its response, mid-think, without any sort of closing.  
 This is inherent in the weights, even at full precision.

@@ -4,13 +4,14 @@ base_model:
 license: apache-2.0
 tags:
   - unsloth
+  - qwen
 ---
 
 # Read our How to [Run Qwen3.8-27B Guide!](https://unsloth.ai/docs/models/qwen3.8)
 
 <div>
   <p style="margin: 0 0 0px 0; margin-top: 0px;">
-    <em><a href="https://unsloth.ai/docs/basics/dynamic-3.0-ggufs">Unsloth Dynamic 3.0</a> achieves superior accuracy & outperforms other leading quants.</em>
+    <em><a href="https://unsloth.ai/docs/basics/dynamic-3.0-ggufs">Unsloth Dynamic 3.1</a> achieves superior accuracy & outperforms other leading quants.</em>
   </p>
   <div style="display: flex; gap: 5px; align-items: center; margin-bottom: 0px;">
     <a href="https://github.com/unslothai/unsloth/">
@@ -24,18 +25,14 @@ tags:
     </a>
   </div>
     <ul style="margin: 0;">
-    <li>Introducing <a href="https://unsloth.ai/docs/basics/dynamic-3.0-ggufs">Dynamic V3.0</a> GGUFs for SOTA accuracy and quantization performance</li>
+    <li><a href="https://unsloth.ai/docs/models/qwen3.8">Nov 11 update:</a> Dynamic v3.1 GGUF is here with 5-10% more average accuracy than other frontier quants. Benchmarks: Terminal Bench, DeepSWE, LiveCodeBench & more! <a href="https://unsloth.ai/docs/models/qwen3.8">Details</a></li></li>
     <li>Run and fine-tune Qwen3.8 in <a href="https://unsloth.ai/docs/new/desktop">Unsloth Desktop</a> with <strong>Thinking toggles</strong>. <a href="https://unsloth.ai">Download</a> for Mac, Windows and Linux.</a> <a href="github.com/unslothai/unsloth">GitHub repo</a></li>
-    <li>Developer Role Support so Qwen3.8 can work in agentic tools like Codex and more!</li>
-    <li>Tool calling improvements: Makes parsing nested objects to make tool calling succeed more.</li>
-   <li>See below for 4-bit Qwen3.8-27B run inside of Unsloth Desktop:</li>
 </div>
 
+<img width="600" alt="qwen3.8 dynamic v3.1" src="https://cdn-uploads.huggingface.co/production/uploads/62ecdc18b72a69615d6bd857/4dsqjPC5agfiUudfeW_df.png" />
+
+See below for 4-bit Qwen3.8-27B run inside of Unsloth Desktop:
 <img width="600" alt="qwen3.8 unsloth desktop" src="https://3215535692-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FxhOjnexMCB3dmuQFQ2Zq%2Fuploads%2FSqxs6NjShWrLfRKhDy1m%2Fvolcano%202.gif?alt=media&token=395274a0-b437-403a-8a01-8e8502f9d225" />
-
-Analysis of best Qwen3.8 GGUF providers. Unsloth Dynamic v3.0 delivers >10% top-1% better accuracy at the same size compared to every other provider. [Read more](https://unsloth.ai/docs/basics/dynamic-3.0-ggufs)
-
-<img width="600" alt="qwen3.8 unsloth desktop" src="https://unsloth.ai/docs/~gitbook/image?url=https%3A%2F%2F3215535692-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252FxhOjnexMCB3dmuQFQ2Zq%252Fuploads%252Fl9piThTmmUsePst5w3F2%252Fimage.png%3Falt%3Dmedia%26token%3D821e88e2-ad4e-40bf-adf2-e13837228e82&width=768&dpr=3&quality=100&sign=dd5f7cb5&sv=2" />
 
 ---
 

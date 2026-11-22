@@ -1,0 +1,137 @@
+{
+	"repo": "ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF",
+	"commit": "d562806dbafae37109975e970aae91b43e73b440",
+	"fetched_at": "2026-11-22T18:19:53+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "4ddbc3a5d040c8de8d42ba1489f4b4dae14739aa",
+			"size": 2347
+		},
+		{
+			"path": "Qwen3.8-27B-GSQ-RCO-IQ2_S-mtp.gguf",
+			"oid": "e6406238a5cc0043775cd1963b6f9e5b8707400276e38d9fde742304906b1330",
+			"size": 9607981120
+		},
+		{
+			"path": "Qwen3.8-27B-GSQ-RCO-IQ2_S.gguf",
+			"oid": "16c9802111aa9ef3acde465188d6d601f8db128ee3d828ad983a5caca4135ecb",
+			"size": 9259510912
+		},
+		{
+			"path": "Qwen3.8-27B-GSQ-RCO-IQ2_XS-mtp.gguf",
+			"oid": "f3369f8d36968ab7dd12f5ff11452680aef9371aa19c9922d22ccd5e58c2d9c8",
+			"size": 8771311680
+		},
+		{
+			"path": "Qwen3.8-27B-GSQ-RCO-IQ2_XS.gguf",
+			"oid": "f0ae5006da0ce6225935339e4e989369f94de95d2263cf969519f8420c9ae02c",
+			"size": 8422841472
+		},
+		{
+			"path": "Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.gguf",
+			"oid": "58fd826723939933dc86f45b7fe04545cbc2de1c70f6fe2cdd3858c87a98c12f",
+			"size": 12120016960
+		},
+		{
+			"path": "Qwen3.8-27B-GSQ-RCO-IQ3_S.gguf",
+			"oid": "64b53b64c7aa39f20a7e54bd80582fe595b1d745624ee8a72e92508c0326d810",
+			"size": 11771546784
+		},
+		{
+			"path": "Qwen3.8-27B-GSQ-RCO-IQ3_XXS-mtp.gguf",
+			"oid": "63f29a2189a6b4cc31f81e093d3856ad293a5583114439f41ae1ed7af4093262",
+			"size": 10442827840
+		},
+		{
+			"path": "Qwen3.8-27B-GSQ-RCO-IQ3_XXS.gguf",
+			"oid": "fdfcb6a29b11188956dfbfd904223588a6c1b77eb250c3e8a36e1bd269df91f7",
+			"size": 10094357632
+		},
+		{
+			"path": "README.md",
+			"oid": "4bcd3a025766a09308f3bf23002cd270bf7ac211",
+			"size": 11620
+		},
+		{
+			"path": "assets/banner.png",
+			"oid": "42ce97689e7497dcc46a2fe4701e70ee39ad856f9edffaae3b3220ea5628e076",
+			"size": 309501
+		},
+		{
+			"path": "assets/plots/Qwen3.8-27B-aime25_vs_avg_bit_width.png",
+			"oid": "837d27ee9f87a38774c5589b0d170ce4c2225ab3",
+			"size": 60196
+		},
+		{
+			"path": "assets/plots/Qwen3.8-27B-gpqa_diamond_vs_avg_bit_width.png",
+			"oid": "f5971dfe051ac6ca1e3dcf4d7756e278e669ab15",
+			"size": 68267
+		},
+		{
+			"path": "assets/plots/Qwen3.8-27B-lcb_vs_avg_bit_width.png",
+			"oid": "8265bc4a2095c10d258f778c2e27305bbb83529b",
+			"size": 69947
+		},
+		{
+			"path": "assets/plots/Qwen3.8-27B-mtp_speculative_decoding.png",
+			"oid": "feeffaf67313fb594425c17ecb538e1c0aaaccc1954901a935fadbd46858d438",
+			"size": 153032
+		},
+		{
+			"path": "assets/plots/Qwen3.8-27B-task_avg_vs_avg_bit_width.png",
+			"oid": "fedb72d37382ba5cc6f96e626ef396f755aaf9db",
+			"size": 76859
+		},
+		{
+			"path": "imatrix-qwen3.8-27b.gguf",
+			"oid": "350684ef7a94026f7e69b533d1554387c0be505abe0674721726fe207fcf964e",
+			"size": 13642624
+		},
+		{
+			"path": "mmproj-Qwen3.8-27B-BF16.gguf",
+			"oid": "13cb7bebccbd04afc8f4090cb949ecf8937cdf7377c5799b1a0c594e7c0d3e16",
+			"size": 931146528
+		},
+		{
+			"path": "tensor-allocation/Qwen3.8-27B-GSQ-RCO-IQ2_S-mtp.rco-allocation.txt",
+			"oid": "ca46abeb4f4a4aaa0f38cbc690c575f6b56d8ac2",
+			"size": 26247
+		},
+		{
+			"path": "tensor-allocation/Qwen3.8-27B-GSQ-RCO-IQ2_S.rco-allocation.txt",
+			"oid": "d6e5231547ad8cf8148e54e0207cff240c43a7ab",
+			"size": 25659
+		},
+		{
+			"path": "tensor-allocation/Qwen3.8-27B-GSQ-RCO-IQ2_XS-mtp.rco-allocation.txt",
+			"oid": "5c23f224309a73d1f6cb3583471848a4fae79629",
+			"size": 26179
+		},
+		{
+			"path": "tensor-allocation/Qwen3.8-27B-GSQ-RCO-IQ2_XS.rco-allocation.txt",
+			"oid": "3ea38849566fbd5d3eada8bd11fb65f9b290b097",
+			"size": 25591
+		},
+		{
+			"path": "tensor-allocation/Qwen3.8-27B-GSQ-RCO-IQ3_S-mtp.rco-allocation.txt",
+			"oid": "0734b820049593c13d07dbb83fa69bd77d4b7745",
+			"size": 26164
+		},
+		{
+			"path": "tensor-allocation/Qwen3.8-27B-GSQ-RCO-IQ3_S.rco-allocation.txt",
+			"oid": "4b3b90fea32c4354b70a6552ff9b4abaabab8cde",
+			"size": 25576
+		},
+		{
+			"path": "tensor-allocation/Qwen3.8-27B-GSQ-RCO-IQ3_XXS-mtp.rco-allocation.txt",
+			"oid": "dd06a681cb203256be94463a922f9faa1086f804",
+			"size": 26203
+		},
+		{
+			"path": "tensor-allocation/Qwen3.8-27B-GSQ-RCO-IQ3_XXS.rco-allocation.txt",
+			"oid": "7b5fc4b859991b9ce92b23c6efcafc082c03f7d8",
+			"size": 25615
+		}
+	]
+}

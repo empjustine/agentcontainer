@@ -3,12 +3,13 @@ license: apache-2.0
 language:
   - en
   - zh
-library_name: transformers
+library_name: llama.cpp
 pipeline_tag: text-generation
 tags:
   - minicpm
   - minicpm5
   - llama
+  - llama.cpp
   - text-generation
   - long-context
   - tool-calling
@@ -31,7 +32,7 @@ datasets:
 
 <p align="center">
 <a href="https://arxiv.org/pdf/2506.07900" target="_blank">MiniCPM Tech Report</a> |
-<a href="https://modelbest.feishu.cn/wiki/UtWxwcERfiRIpIkBOjuc3h9tn1D" target="_blank">MiniCPM Wiki(Chinese)</a> |
+<a href="https://openbmb.cn/docs/" target="_blank">MiniCPM Wiki(Chinese)</a> |
 <a href="https://github.com/OpenBMB/MiniCPM" target="_blank">GitHub Repo</a> |
 <a href="https://ultradata.openbmb.cn/" target="_blank">UltraData</a> |
 <a href="https://huggingface.co/spaces/openbmb/MiniCPM5-2B-Demo" target="_blank">Online Demo</a>
@@ -336,14 +337,17 @@ python -m sglang.launch_server \
 
 ### Llama.cpp
 
+**One-click (macOS / Windows)** — install [Llama](https://llama.app), the desktop app from the llama.cpp team and Hugging Face (`brew install --cask llama-app`, or the Windows installer), then choose **Use this model → Llama** on this page. Llama downloads a build that fits your machine and opens the chat window.
+
 ```bash
-llama-server -m MiniCPM5-2B-F16.gguf -a MiniCPM5-2B --port 8080 -ngl 99 -c 8192 --jinja
+# `-hf` downloads Q4_K_M (1.56 GB) from the Hub; append `:Q8_0` or `:F16` for another quant
+llama serve -hf openbmb/MiniCPM5-2B-GGUF -a MiniCPM5-2B -ngl 99 -c 8192 --jinja
 ```
 
 `-c 8192` sets the context length. You can adjust this value as needed.
 
 ```bash
-curl http://localhost:8080/v1/chat/completions \
+curl http://localhost:9931/v1/chat/completions \
     -H "Content-Type: application/json" \
     -d '{
         "model": "MiniCPM5-2B",

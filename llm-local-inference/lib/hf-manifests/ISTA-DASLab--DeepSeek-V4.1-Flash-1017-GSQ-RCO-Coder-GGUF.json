@@ -1,0 +1,77 @@
+{
+	"repo": "ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF",
+	"commit": "54229d38d588a66d1c6cff08af7b281b9326c656",
+	"fetched_at": "2026-11-22T18:19:53+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "10244243d66efb2307a042d4674af54ae2144262",
+			"size": 2377
+		},
+		{
+			"path": "DeepSeek-V4.1-Flash-Engram-IQ4_NL.gguf",
+			"oid": "3dac4c54893ad7aa89103c0028500eadc78e74112cef3a2930a97e67dc9fb4f3",
+			"size": 110595290816
+		},
+		{
+			"path": "IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00001-of-00006.gguf",
+			"oid": "108e63d27240da2d99846250727a7b282e05a7fdf2448435e81904b9a98d8a4a",
+			"size": 5780704
+		},
+		{
+			"path": "IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00002-of-00006.gguf",
+			"oid": "75079999eb3a492ad695f3466fd6a068a1cf1920980eac1c7f51406363fadf7a",
+			"size": 19776064960
+		},
+		{
+			"path": "IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00003-of-00006.gguf",
+			"oid": "ea964e525922f36d3b984299c1a5bb8d896f50b9c2942364cd221c37863331f2",
+			"size": 19939989696
+		},
+		{
+			"path": "IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00004-of-00006.gguf",
+			"oid": "2d95806d186597cb0ea32635c92f0b66a9a6afae1a399ff74b13aebaa4ac7a52",
+			"size": 19682533472
+		},
+		{
+			"path": "IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00005-of-00006.gguf",
+			"oid": "3665b48c3bd46330780caf286ee40a087ac11499e5b7df8c943b098d10f426d4",
+			"size": 12719198624
+		},
+		{
+			"path": "README.md",
+			"oid": "659065bbf9034272ba3a705d36fa24115a5c5588",
+			"size": 15067
+		},
+		{
+			"path": "assets/banner.png",
+			"oid": "8887fb4880f1d8f597ba801d68210bb7d967c5c4ad5b09641760ebd800012e63",
+			"size": 1975806
+		},
+		{
+			"path": "assets/pelican.svg",
+			"oid": "6edbe5fc2ada993eefdb7ea8c51fdd52a08472c7",
+			"size": 74282
+		},
+		{
+			"path": "assets/plots/DeepSeek-V4.1-Flash-1017-Coder-coding_bars.png",
+			"oid": "be81a16f92513fb240506639ff861b617f4f0ee3b7bd848e4c6ad91ecff813c1",
+			"size": 129093
+		},
+		{
+			"path": "chat_template.jinja",
+			"oid": "8127f8d9ceaf293b3d7bc75121d279f8887f8479",
+			"size": 18509
+		},
+		{
+			"path": "expert-selection/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS.kept-experts.json",
+			"oid": "6c58cbeb46ff3f9f18dc97fa4e7bf1f70e49961a",
+			"size": 37256
+		},
+		{
+			"path": "mmproj-DeepSeek-V4.1-Flash-1017-BF16.gguf",
+			"oid": "0fdc4b7693f287e9665940cf42bd39c546ffe4f0def89c569d7d0e45d60d2df1",
+			"size": 972208096
+		}
+	]
+}

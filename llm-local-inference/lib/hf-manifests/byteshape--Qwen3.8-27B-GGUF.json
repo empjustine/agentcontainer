@@ -1,7 +1,7 @@
 {
 	"repo": "byteshape/Qwen3.8-27B-GGUF",
 	"commit": "3fdfbd9b4a618303ad36edb151e95d134ece8c18",
-	"fetched_at": "2026-11-21T03:59:25+00:00",
+	"fetched_at": "2026-11-22T18:19:57+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

@@ -1,0 +1,112 @@
+{
+	"repo": "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF",
+	"commit": "ed59f92082b1e93c0e96d60a8b11aab089b52f09",
+	"fetched_at": "2026-11-22T18:19:54+00:00",
+	"files": [
+		{
+			"path": ".gitattributes",
+			"oid": "a1d42795eb1386d78d495d569a6a80b19991909f",
+			"size": 2413
+		},
+		{
+			"path": "IQ2_XS/Qwen3.8-Flash-Next-GSQ-RCO-IQ2_XS-00001-of-00002.gguf",
+			"oid": "92cee27ae5bbadcd732416a0f7a7f0acc092399dbbe8f5a5efa707c2ec0a49d7",
+			"size": 39225954592
+		},
+		{
+			"path": "IQ2_XS/Qwen3.8-Flash-Next-GSQ-RCO-IQ2_XS-00002-of-00002.gguf",
+			"oid": "316b46f3a2dbd68c900f43136ab9449f9dcc3725dfd8c794847c204bc161e113",
+			"size": 28800138432
+		},
+		{
+			"path": "IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf",
+			"oid": "4c1eb2ceb4915e1192f4f386021897bde56a97f40a0bb78bb86465e0f7d2aca3",
+			"size": 54817524224
+		},
+		{
+			"path": "IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00002-of-00002.gguf",
+			"oid": "316b46f3a2dbd68c900f43136ab9449f9dcc3725dfd8c794847c204bc161e113",
+			"size": 28800138432
+		},
+		{
+			"path": "IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00001-of-00002.gguf",
+			"oid": "219ea929900dfa9ef091f3aa473fdba6874b65fcb36526d7d851ac9e95856d15",
+			"size": 47039860096
+		},
+		{
+			"path": "IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00002-of-00002.gguf",
+			"oid": "316b46f3a2dbd68c900f43136ab9449f9dcc3725dfd8c794847c204bc161e113",
+			"size": 28800138432
+		},
+		{
+			"path": "Q2_0/Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00001-of-00002.gguf",
+			"oid": "69820c02ec7d0b45ef2ebb19d6620299db749fe2aded7f39f93c6b88b199b720",
+			"size": 37623740192
+		},
+		{
+			"path": "Q2_0/Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00002-of-00002.gguf",
+			"oid": "316b46f3a2dbd68c900f43136ab9449f9dcc3725dfd8c794847c204bc161e113",
+			"size": 28800138432
+		},
+		{
+			"path": "README.md",
+			"oid": "5e40a3fea99859d23fe175a3d2b18065a2621833",
+			"size": 15693
+		},
+		{
+			"path": "assets/banner.png",
+			"oid": "42ce97689e7497dcc46a2fe4701e70ee39ad856f9edffaae3b3220ea5628e076",
+			"size": 309501
+		},
+		{
+			"path": "assets/plots/Qwen3.8-Flash-Next-aime25_vs_avg_bit_width.png",
+			"oid": "b49d69eee85fd9cfa0c66d27e73b3fe1d31870b1",
+			"size": 63324
+		},
+		{
+			"path": "assets/plots/Qwen3.8-Flash-Next-gpqa_diamond_vs_avg_bit_width.png",
+			"oid": "790a72bc1dba1cd50bdd116a235f01c32c5e2526",
+			"size": 70514
+		},
+		{
+			"path": "assets/plots/Qwen3.8-Flash-Next-lcb_vs_avg_bit_width.png",
+			"oid": "7d2962dea361ba840e8e00e140cad4aa7559cbc6",
+			"size": 68136
+		},
+		{
+			"path": "assets/plots/Qwen3.8-Flash-Next-prefill_throughput.png",
+			"oid": "ce56b6e105ab007dd3b7f9cc1f0fe9b6547f4fd2",
+			"size": 86320
+		},
+		{
+			"path": "assets/plots/Qwen3.8-Flash-Next-task_avg_vs_avg_bit_width.png",
+			"oid": "e2882a782a5ba0da65a4ba6df7c466af654e805a",
+			"size": 73744
+		},
+		{
+			"path": "mmproj-Qwen3.8-Flash-Next-BF16.gguf",
+			"oid": "b1a82259702816a5330d7bd7607cd9676b11780e79ff7348c21103ff3ce49bd0",
+			"size": 907543008
+		},
+		{
+			"path": "tensor-allocation/Qwen3.8-Flash-Next-GSQ-RCO-IQ2_XS-00001-of-00002.rco-allocation.txt",
+			"oid": "7c05839d6316e350643e0375b86dd3bec68fa565",
+			"size": 39556
+		},
+		{
+			"path": "tensor-allocation/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.rco-allocation.txt",
+			"oid": "8d567cadd225d8b5133a7ee2ad7ef1c1f01d33ba",
+			"size": 39368
+		},
+		{
+			"path": "tensor-allocation/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00001-of-00002.rco-allocation.txt",
+			"oid": "beb5e7c0bbe56aed2a29121a27baddc1fb89407a",
+			"size": 39445
+		},
+		{
+			"path": "tensor-allocation/Qwen3.8-Flash-Next-GSQ-RCO-Q2_0-00001-of-00002.rco-allocation.txt",
+			"oid": "12e14056630b318d14d43ce9570ffcf5490c8152",
+			"size": 39062
+		}
+	]
+}

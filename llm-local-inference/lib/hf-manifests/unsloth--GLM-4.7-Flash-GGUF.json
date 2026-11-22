@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/GLM-4.7-Flash-GGUF",
 	"commit": "0d32489ecb9db6d2a4fc93bd27ef01519f95474d",
-	"fetched_at": "2026-11-21T03:59:21+00:00",
+	"fetched_at": "2026-11-22T18:20:00+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

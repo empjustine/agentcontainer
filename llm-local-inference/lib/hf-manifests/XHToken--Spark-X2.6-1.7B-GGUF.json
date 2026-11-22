@@ -1,7 +1,7 @@
 {
 	"repo": "XHToken/Spark-X2.6-1.7B-GGUF",
 	"commit": "c4bc25be0e537d55266d90a08bdef931f4cf580a",
-	"fetched_at": "2026-11-21T03:59:25+00:00",
+	"fetched_at": "2026-11-22T18:19:55+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
