@@ -72,8 +72,8 @@ function row(repo, quant, model, extra = {}) {
  * Generate the local-inference layer in a throwaway copy of the unit and return
  * the emitted model ids. With no `fixtures`, the unit's own committed table and
  * manifests are the input.
- * @param {{table?: {models: Record<string, string>[]}, manifests?: Record<string, {path: string, size: number}[]>}} [fixtures]
- * @returns {Record<string, {cmd: string, capabilities: unknown, metadata: unknown}>} the emitted layer
+ * @param {{table?: {models: Record<string, string>[]}, manifests?: Record<string, {path: string, size: number}[]>, hubMissing?: boolean}} [fixtures]
+ * @returns {any} the emitted layer, or the failing run when hubMissing is set
  */
 function generate(fixtures = {}) {
 	const { table, manifests, hubMissing = false } = fixtures;
@@ -103,7 +103,10 @@ function generate(fixtures = {}) {
 				join(dir, "lib", "cache-scope.json"),
 				JSON.stringify(
 					Object.fromEntries(
-						table.models.map((m) => [m["hf-repo"].split(":")[0], "served"]),
+						table.models.map((m) => [
+							((m["hf-repo"] ?? "").split(":")[0] ?? ""),
+							"served",
+						]),
 					),
 				),
 			);
@@ -450,7 +453,9 @@ test("unknown: a repo publishing nothing but full precision keeps its smallest r
  * @returns {string[]} every value given to `flag`
  */
 function flagValues(cmd, flag) {
-	return [...cmd.matchAll(new RegExp(`${flag} (\\S+)`, "g"))].map((match) => match[1]);
+	return [...cmd.matchAll(new RegExp(`${flag} (\\S+)`, "g"))].map(
+		(match) => match[1] ?? "",
+	);
 }
 
 test("spec: a declared sidecar names one type and one draft path", () => {
@@ -511,7 +516,9 @@ test("model: a repo's projector decides the one mode it serves", () => {
 	assert.deepEqual(fixtureLayer[visionId].capabilities.in, ["text", "image"]);
 	assert.deepEqual(fixtureLayer[textId].capabilities.in, ["text"]);
 	// No id carries a mode segment in either layer.
-	const prefixed = (ids) => ids.filter((id) => /^(0text|1vision|2mmproj)-/.test(id));
+	/** @param {string[]} ids */
+	const prefixed = (ids) =>
+		ids.filter((id) => /^(0text|1vision|2mmproj)-/.test(id));
 	assert.deepEqual(prefixed(Object.keys(fixtureLayer)), []);
 	assert.deepEqual(prefixed(committedIds), []);
 });
@@ -701,7 +708,9 @@ test("the committed table carries a key only when it deviates", () => {
 
 test("the committed catalog never loses a repo to the rules", () => {
 	const table = JSON.parse(readFileSync(join(unitRoot, "lib", "llamacpp-model-data.json"), "utf-8"));
-	const reposInTable = new Set(table.models.map((m) => m["hf-repo"].split(":")[0]));
+	const reposInTable = new Set(
+		table.models.map((/** @type {any} */ m) => m["hf-repo"].split(":")[0]),
+	);
 	const reposEmitted = new Set(committedIds.map((id) => id.split(":")[0]));
 	assert.deepEqual([...reposInTable].filter((repo) => !reposEmitted.has(repo)), []);
 });

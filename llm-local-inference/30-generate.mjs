@@ -128,6 +128,10 @@ function writeConfigD(configDir, name, obj) {
  * macros / ctxWindows / apiKeys; the model layer must not redefine any.
  * @returns {void}
  */
+/**
+ * @param {string} scriptDir
+ * @param {string} configDir
+ */
 function generateGeneral(scriptDir, configDir) {
 	const core = loadCore(scriptDir);
 	// The models map belongs to the local-inference layer below.
@@ -593,7 +597,7 @@ const CTX_FALLBACK = 65_536;
  */
 function factsCtxNative(ggufFacts, m) {
 	const fact = ggufFacts[m["hf-repo"].split(":")[0]];
-	const perFile = fact?.files?.[m.model] ?? fact;
+	const perFile = /** @type {any} */ (fact)?.files?.[m.model] ?? fact;
 	return typeof perFile?.["ctx-native"] === "number" ? perFile["ctx-native"] : null;
 }
 
@@ -679,15 +683,17 @@ function totalParamsB(sizes) {
 			continue;
 		}
 		const tag = fullPrecisionTag(key);
-		if (tag !== null) {
-			return bytes / FULL_PRECISION_BYTES_PER_PARAM[tag] / 1e9;
+		const bytesPerParam =
+			tag === null ? undefined : FULL_PRECISION_BYTES_PER_PARAM[tag];
+		if (bytesPerParam !== undefined) {
+			return bytes / bytesPerParam / 1e9;
 		}
 		// A bare F16 build with no quant tag in the name (Spark's root upload,
 		// reported label-only by 10-fetch-hf-manifests.py): without it the small-model
 		// rules could not see that repo at all. The name must still carry no tag,
 		// or a full-precision spelling the endsWith test misses would be read as
 		// 2-byte weights whatever it is.
-		const base = key.split("/").pop().replace(/\.gguf$/i, "");
+		const base = (key.split("/").pop() ?? "").replace(/\.gguf$/i, "");
 		if (FULL_PRECISION_NAME_RE.test(base)) { continue; }
 		if (/[.-](UD-|IQ[1-4]_|Q[2-8]_|TQ[1-2]_|NVFP4|MXFP4|FP8)/i.test(base)) { continue; }
 		return bytes / 2 / 1e9;
@@ -732,7 +738,7 @@ function pruneQuantDisplay(entries, manifests, libDir, options = {}) {
 	for (const e of entries) {
 		const repo = e["hf-repo"].split(":")[0];
 		if (!byRepo.has(repo)) { byRepo.set(repo, []); }
-		byRepo.get(repo).push(e);
+		byRepo.get(repo)?.push(e);
 	}
 	const keep = new Set(entries);
 	for (const [repo, group] of byRepo) {
@@ -1254,11 +1260,17 @@ if (import.meta.main) {
 		const exitCode = exitCodeOf(error);
 		if (exitCode === undefined) {
 			logError("local-inference generation failed", {
-				error: String(error?.stack ?? error),
+				error: String(
+					error instanceof Error ? (error.stack ?? error.message) : error,
+				),
 			});
 			process.exitCode = 1;
 		} else {
-			logError(error.message, error.fields ?? {});
+			// exitCodeOf only answers for this tree's own Error construct (d045).
+			const failure = /** @type {{message: string, fields?: Record<string, unknown>}} */ (
+				error
+			);
+			logError(failure.message, failure.fields ?? {});
 			process.exitCode = exitCode;
 		}
 	}

@@ -163,10 +163,18 @@ if (import.meta.main) {
 		// One handler (docs/d225 R3): log once, set the status, return.
 		const exitCode = exitCodeOf(error);
 		if (exitCode === undefined) {
-			logError("proposal failed", { error: String(error?.stack ?? error) });
+			logError("proposal failed", {
+				error: String(
+					error instanceof Error ? (error.stack ?? error.message) : error,
+				),
+			});
 			process.exitCode = 1;
 		} else {
-			logError(error.message, error.fields ?? {});
+			// exitCodeOf only answers for this tree's own Error construct (d045).
+			const failure = /** @type {{message: string, fields?: Record<string, unknown>}} */ (
+				error
+			);
+			logError(failure.message, failure.fields ?? {});
 			process.exitCode = exitCode;
 		}
 	}
