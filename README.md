@@ -198,8 +198,11 @@ agentcontainer/
 │   ├── tests/                           #   → this folder's own tests — and the only home of its fact-table row (d118)
 │   ├── AGENTS.md / README.md            #   → folder rules (the opencode watchdog deltas) · install + provenance
 │
-├── pi-neuralwatt/                       # Neuralwatt as a pi package — an ADAPTER only (no energy/cost/quota UI): the catalog comes from /v1/models, the four compat fields from its published docs (cited per field)
-│   ├── README.md                        #   → this folder's spec node: the two doc-MCP references, live-data vs documentation split, the cited compat table, the probe list
+├── pi-neuralwatt/                       # Neuralwatt as TWO pi providers — neuralwatt-flex (service_tier=flex at the twin's prices) and neuralwatt-standard; an ADAPTER only (no energy/cost/quota UI)
+│   ├── index.mjs / package.json          #   → the entry: two registerProvider calls (docs/d100's two-registration shape) + refreshModels per tier — the folder IS the package
+│   ├── sources.mjs / merge.mjs / compat.mjs # → the ONE listing read (/v1/models) · the ONE shaping step (one listing in, both lineups out) · the documented compat + huggingface_id-keyed thinking kwargs
+│   ├── log.mjs / tests/                 #   → the folder's JSONL logger (d045) · the rules, network-free (injected fetch) — never today's lineup
+│   ├── AGENTS.md / README.md            #   → folder rules · the design record: row/tier filters, the flex pick, alias-expanded thinking levels, registered open items
 │
 ├── pi-summarized-thinking/              # end-of-turn reasoning summaries as a pi package (human-facing only): a `custom` entry per completed turn — never in the model's context
 │   ├── README.md                        #   → install + usage: the `custom` entry (not `custom_message`), the two deliveries, the model chain, the commands, the invariants
