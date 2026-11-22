@@ -64,6 +64,10 @@ HTTP, no auth):
 | `https://docs.neuralwatt.com/.well-known/mcp` | the discovery document — `{"version":"1.0.0","transport":"http","url":"https://docs.neuralwatt.com/mcp","servers":[{"name":"public","url":"https://docs.neuralwatt.com/mcp","transport":"http","authentication":"none"}]}`     |
 | `https://docs.neuralwatt.com/mcp`             | the MCP server itself (`2025-06-18`, stateless): `search_neuralwatt`, `query_docs_filesystem_neuralwatt` (read-only docs pages + `/openapi/openapi.yaml`), `submit_feedback`, plus the `mintlify://skills/neuralwatt` resource |
 
+The fleet list carries it inert (`../coding-agent/mcp.json`: `"enabled": false`
+with `"exposure": "hidden"`, docs/d061), so no session reaches it until an
+operator turns it on from `/mcp`.
+
 Every `docs.neuralwatt.com/…` URL below is a page read through that server,
 plus the vendor's own pi page (`/integrations/pi`). They are cited as
 **fixtures** for the fields the catalog cannot express — documentation, not a

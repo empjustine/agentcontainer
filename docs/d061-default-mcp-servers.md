@@ -34,6 +34,12 @@ Both hooks already existed, which is why no runner change is needed:
 The missing piece was therefore not plumbing but an install step, in the
 generator that already installs `settings.json`/`models.json` there.
 
+**Superseded in part by docs/d227.** The launcher no longer requires the
+installed `mcp.json` (or any harness config): it launches without one and lets
+pi report what it finds. The install and the merge rule stand — "every
+environment has the committed servers" is still the generated outcome, it is
+just not a launch precondition.
+
 ## Decision
 
 1. **The server list is committed source: `coding-agent/mcp.json`**, beside
@@ -145,6 +151,49 @@ empty `mcpServers`, against 2,612 with the server enabled. `exposure: hidden`
 is the second half of inert — a host that turns the entry on still reaches no
 tool until it also changes the exposure, so re-enabling is a deliberate
 two-step, never a merge that silently hands a session write access.
+
+### Amendment: the provider MCP surfaces, pre-disabled
+
+Five entries join the list, one per provider folder that documents an MCP
+surface: `openrouter` (`https://mcp.openrouter.ai/mcp`, pi-openrouter),
+`opencode-console` (`https://opencode.ai/console/mcp`, pi-opencode),
+`neuralwatt-docs` (`https://docs.neuralwatt.com/mcp`, pi-neuralwatt),
+`cline-docs` (`https://docs.cline.bot/mcp`, pi-cline-pass) and `mistral-mcp`
+(`https://api.mistral.ai/mcp`, pi-mistral). All five carry `"enabled": false`
+beside `"exposure": "hidden"` — MotherDuck's inert encoding, unchanged: it
+never connects, and a hidden entry renders no `mcp_servers` line, so
+re-enabling stays the deliberate two-step.
+
+`pi mcp list` against a directory holding only the committed file reports
+`disabled (hidden, global)` for all five, exit 0, URL shown.
+
+Two of the five are OAuth-only and account-scoped. A keyless `initialize`
+answers `401` at both: OpenRouter's mints its own dedicated key on consent,
+capped at $10 and expiring within 7 days, and exposes `send-message` and
+`generate-image`, which are billable; the console endpoint answers
+`401 realm="opencode_console"` and exposes no tool list without a console
+token. Two more are keyless documentation indexes, each announced by its own
+`.well-known/mcp` discovery document — Neuralwatt's and Cline's — carried inert
+for the same one-URL reason rather than for a credential. Cline's is decision
+7's case in the wild: its server `instructions` tell the model to prefer it
+over prior knowledge, so the static `description` is what a host that enables
+the entry gets ahead of that.
+
+`mistral-mcp` is the fifth and the first entry authenticated by a static
+header: `Authorization: Bearer ${MISTRAL_API_KEY}`. Decision 1's "holds no
+credentials" survives because that is an environment reference, resolved inside
+the sandbox where the provider key is already forwarded; the file still carries
+a name where a token would be. It is also the only one of the five that writes
+to an operator's account — redeploy/rollback, knowledge create/delete — so
+`exposure: hidden` carries the weight: a host that flips `enabled` alone still
+reaches no tool.
+
+The entries record the fleet's _known_ provider surfaces, not a recommendation
+to attach them: the file gives an operator one URL to turn on from `/mcp`, and
+decision 3's merge keeps that local choice. The trust clause stays in every
+description, including the two that render no `mcp_servers` line while hidden —
+a host that enables one gets the static line instead of the server's own
+instructions (decision 7), so the line must already be correct.
 
 ## Consequences
 

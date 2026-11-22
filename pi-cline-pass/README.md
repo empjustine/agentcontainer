@@ -112,6 +112,24 @@ generate` prints a stub line. The script stays because a unit's
 for a drift gate to compare, and the extension registers no lineup of its own
 (docs/d190).
 
+## Documentation references
+
+Cline publishes a documentation MCP server. It is a **reference for what to
+build**, not a feature of this extension: nothing here registers it, and nothing
+in this tree reads it at runtime. Both endpoints answer keyless (verified:
+`initialize` and `tools/list` over streamable HTTP, no auth):
+
+| Reference                                | What it answers                                                                                                                                                                                                                           |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `https://docs.cline.bot/.well-known/mcp` | the discovery document — `{"version":"1.0.0","transport":"http","url":"https://docs.cline.bot/mcp","servers":[{"name":"public","url":"https://docs.cline.bot/mcp","transport":"http","authentication":"none"}]}`                          |
+| `https://docs.cline.bot/mcp`             | the server itself (streamable HTTP, Mintlify-hosted): `search_cline`, `query_docs_filesystem_cline` (read-only `rg`/`cat` over a virtual filesystem of the docs pages) and `submit_feedback`, plus the `mintlify://skills/cline` resource |
+| `https://docs.cline.bot/llms.txt`        | the machine-readable docs index, including the `ClinePass` page this folder's lineup comes from                                                                                                                                           |
+
+The `clinepass.mdx` table is git-hosted in the `cline/cline` repository, which
+is what `sources.mjs` reads. The fleet list carries the MCP entry inert
+(`../coding-agent/mcp.json`: `"enabled": false` with `"exposure": "hidden"`,
+docs/d061), so an operator turns it on from `/mcp`.
+
 ## Provenance
 
 Every cross-repo reference this folder makes is either LIVE DATA or an

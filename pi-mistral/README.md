@@ -68,6 +68,24 @@ catalogs (docs/d096, d100). The general rule, tracked in docs/d097, is about
 substitution, not contribution: **a built-in provider's extension must not
 substitute its own model data for pi's**.
 
+## Documentation references
+
+Mistral publishes an MCP server over its Studio workspace. It is a **reference
+for what to build**, not a feature of this extension: nothing here registers
+it, and nothing in this tree reads it at runtime.
+
+| Reference                               | What it answers                                                                                                                                                                                                                                                                                                                                                                                |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `https://api.mistral.ai/mcp`            | the server itself — streamable HTTP, `Authorization: Bearer <MISTRAL_API_KEY>`; a keyless `initialize` answers `401 {"detail":"Invalid API Key"}`. Its tools cover the workspace, not just docs: Documentation (search docs.mistral.ai, read pages as Markdown), Apps (read, plus redeploy/rollback), Billing, Connectors, Evaluations, Knowledge (create/delete), Libraries and Observability |
+| `https://docs.mistral.ai/resources/mcp` | the vendor page: endpoint, transport, auth and the per-capability tool list                                                                                                                                                                                                                                                                                                                    |
+| `https://docs.mistral.ai/llms.txt`      | the machine-readable docs index                                                                                                                                                                                                                                                                                                                                                                |
+
+The fleet list carries the entry inert (`../coding-agent/mcp.json`:
+`"enabled": false` with `"exposure": "hidden"`, docs/d061) and its header is
+`Bearer ${MISTRAL_API_KEY}` — an environment reference, not a credential in the
+file — so a host that enables it connects only where the key is configured, at
+the workspace scope that key already has.
+
 ## Base URL override
 
 - `MISTRAL_BASE_URL` — optional upstream override, derived from the key env the way Azure OpenAI spells the pair (`MISTRAL_API_KEY` → `MISTRAL_BASE_URL`). Absolute http(s) only; a trailing slash is trimmed; it points both the registration's `baseUrl` and the freshness listing (`<base>/models`) at the override, and unset leaves pi's built-in provider untouched. A malformed value makes the extension fail to load loudly.

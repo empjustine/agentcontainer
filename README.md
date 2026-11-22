@@ -161,7 +161,6 @@ agentcontainer/
 ├── pi-opencode/                         # opencode + opencode-go as ONE pi package (d097, unified by d100): catalog FRESHNESS WATCHDOGS — no model data, because pi builds both providers in
 │   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package, and there is nothing to generate
 │   ├── tests/                           #   → this folder's own tests — and the only home of its fact-table rows (d118)
-│   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · the built-in-provider rule + install + provenance
 │
 ├── pi-cline-pass/                       # ClinePass as a pi package (d040/d189): the published docs table as the lineup (models.dev only prices it) as ONE generator + ONE loadable extension
@@ -171,7 +170,7 @@ agentcontainer/
 │   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json                      #   → GENERATED pi models.json-shaped block (canonical upstream, d070) — the drift gate's subject · no runtime reader, no seed (d190)
 │   ├── tests/                           #   → this folder's own tests
-│   ├── AGENTS.md / README.md            #   → folder rules · install + the lineup contract
+│   ├── AGENTS.md / README.md            #   → folder rules · install + the lineup contract + the docs MCP reference
 │
 ├── pi-hyper/                            # Charm Hyper as a pi package (d100): ONE generator + ONE loadable extension — the provider's /provider catalog is PUBLIC
 │   ├── sources.mjs / merge.mjs          #   → the ONE source read (the provider's /provider document) · the ONE shaping step + both projections (incl. the transcribed compat mirror, d033)
@@ -192,7 +191,11 @@ agentcontainer/
 ├── pi-mistral/                           # mistral as a pi package (d100): an AUTH-GATED watchdog — no model data (pi builds it in), silent without a key
 │   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package, and there is nothing to generate
 │   ├── tests/                           #   → this folder's own tests — and the only home of its fact-table row (d118)
-│   ├── AGENTS.md / README.md            #   → folder rules (the opencode watchdog deltas) · install + provenance
+│   ├── AGENTS.md / README.md            #   → folder rules (the opencode watchdog deltas) · install + provenance + the docs MCP reference
+│
+├── pi-openrouter/                       # OpenRouter is built INTO pi (d097/d100): REFERENCE ONLY — the vendor's MCP server (live catalog + docs lookups), no code, no model data
+│   ├── README.md                        #   → the folder's spec node: why no extension, and the MCP reference table — nothing here reads it at runtime
+│   ├── AGENTS.md                        #   → folder rules: the built-in-provider rule, the one MCP reference, the contract if code lands
 │
 ├── pi-neuralwatt/                       # Neuralwatt as TWO pi providers — neuralwatt-flex (service_tier=flex at the twin's prices) and neuralwatt-standard; an ADAPTER only (no energy/cost/quota UI)
 │   ├── index.mjs / package.json          #   → the entry: two registerProvider calls (docs/d100's two-registration shape) + refreshModels per tier — the folder IS the package

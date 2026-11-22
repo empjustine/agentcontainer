@@ -91,6 +91,14 @@ instead of hand-declared. `tests/pi-cline-pass.test.mjs` additionally IMPORTS AN
 RUNS the entry, which is the check a type pass cannot do. Keep that test
 working.
 
+## The docs MCP reference
+
+`README.md`'s "Documentation references" names Cline's keyless docs MCP
+(`https://docs.cline.bot/mcp`, discovered at `/.well-known/mcp`) and the docs
+index. It is a reference: nothing here reads it at runtime, and the fleet entry
+in `../coding-agent/mcp.json` stays `enabled: false` with `exposure: hidden`
+(docs/d061).
+
 ## The fleet seam
 
 `../coding-agent/generate-pi-coding-agent.mjs` owns the fleet artifact and

@@ -77,6 +77,22 @@ fallback on fetch failure. Contributing what can only _enrich_ pi's rows —
 freshness signals today, fresh listing ids if an additive composer hook ever
 lands — is welcome.
 
+## Documentation references
+
+OpenCode publishes an MCP surface under its console. It is a **reference for
+what to build**, not a feature of this extension: nothing here registers it, and
+nothing in this tree reads it at runtime.
+
+| Reference                                                              | What it answers                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `https://opencode.ai/console/mcp`                                      | the console's MCP endpoint — OAuth-gated: a keyless `POST` answers `401 {"error":"unauthorized","message":"Authenticate with the console (OAuth) and retry."}` with `WWW-Authenticate: Bearer realm="opencode_console", resource_metadata="…/.well-known/oauth-protected-resource/console/mcp"` |
+| `https://opencode.ai/.well-known/oauth-protected-resource/console/mcp` | the discovery document — `{"resource":"https://opencode.ai/console/mcp","authorization_servers":["https://opencode.ai/console"],"bearer_methods_supported":["header"],"resource_name":"OpenCode Console"}`                                                                                      |
+
+The tool list needs a console token, so this folder makes no claim about what
+the server answers; the two documents above are what a keyless probe sees. The
+fleet list carries the entry inert (`../coding-agent/mcp.json`: `"enabled": false`
+with `"exposure": "hidden"`, docs/d061), so an operator turns it on from `/mcp`.
+
 ## Base URL override
 
 - `OPENCODE_BASE_URL` — optional upstream override, derived from the key env the way Azure OpenAI spells the pair (`OPENCODE_API_KEY` → `OPENCODE_BASE_URL`). Both Zen surfaces share that key env, so they share the override: it retargets `opencode` AND `opencode-go` (as the generator does for both fact-table rows), and a gateway named here must serve both surfaces' listings. Absolute http(s) only; trailing slash trimmed; unset leaves pi's built-in providers untouched; a malformed value makes the extension fail to load loudly.
