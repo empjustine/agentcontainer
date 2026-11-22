@@ -267,6 +267,7 @@ final class SessionSpool {
 				// Rotation renamed the tail between the listing and the open: the keys
 				// it held were seeded on a previous start, and a warn here would
 				// report routine upkeep as a fault (docs/d228).
+				log.debug("frozen tail {} rotated before it could be seeded", tail);
 			} catch (IOException | UncheckedIOException unreadable) {
 				log.warn("cannot seed from {}: {}", tail, unreadable.getMessage());
 			}
@@ -301,6 +302,7 @@ final class SessionSpool {
 		} catch (NoSuchFileException absent) {
 			// The spool is created by the first append, and rotation may rename it at
 			// any moment: there is nothing here to repair (docs/d228).
+			log.debug("{} rotated before its partial tail could be repaired", file);
 		}
 	}
 
