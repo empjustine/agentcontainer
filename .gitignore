@@ -35,3 +35,7 @@ mise.toml
 # llm-local-bench run output (d201) — the journal, the per-step workspaces and the
 # report are measurements of one host's model, not inputs: the seed reproduces them.
 llm-local-bench/runs/
+
+# The export's default series directory (docs/d229) — derived from the commits on
+# every run and reproducible from them, so it is never an input.
+.git-patches/

@@ -4,7 +4,8 @@ type: module-design
 status: active
 title: "git — the host-side reference farm: bare mirrors, their upkeep, and search over them"
 parent: architecture
-references: [git-non-bare-issues, d043, d044, d062, d075, d076, d089, d099, d113, d121, d164, d166]
+references:
+  [git-non-bare-issues, d043, d044, d062, d075, d076, d089, d099, d113, d121, d164, d166, d229]
 tags: ["mirrors", "search", "host-side", "tooling"]
 ---
 
@@ -51,15 +52,16 @@ paths can disagree with the origins they point at (`non-bare-issues.md`).
 
 ## The pieces
 
-Three jobs, and each job's entry point is the one to read:
+Four jobs, and each job's entry point is the one to read:
 
 | job                 | entry point                                                                                                                                                                                                                                                                                                                                             | why it is shaped that way                                                                                                                                                                                                            |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Get a repo in**   | `./git/-forge-mirror.sh` (any forge, idempotent; a batch clones before any align waits on the farm `flock`, which the align step alone takes — the entry carries that wait, so it is not a shim), `./node-run.sh git/vbs-mirror-all.mjs` + `./node-run.sh git/vbs-har.mjs` (a whole VBS tenant from a captured HAR — no live session, no rolling token) | d099 for the locking, d044 for the HAR extraction path; the tenant exposes one repository under three URLs, normalized in `lib/forge-remotes.mjs`                                                                                    |
 | **Keep it healthy** | `migrate-to-bare.mjs` (full clone → bare, local hardlink or redownload), `maintain-mirrors.mjs` (align + repack/commit-graph; `--deep-optimize` adds `gc --aggressive`), `audit.mjs` (report anomalies before migrating), `local-changes.mjs` (everything a repo holds that its remotes do not — the check before anything is archived)                 | d044's "why bare", d089's maintenance passes, d076's one-job-per-host scheduler, d062's Windows port (its ps1 entries deleted per d162; the POSIX-separator-free `lib/git-core.mjs` remains), d075's non-interactive git environment |
 | **Search it**       | `./node-run.sh git/farm-tool.mjs` (+ `lib/farm-posture.mjs`) — the d099 tool surface as positional-argv CLI, one JSON object per call; `./node-run.sh git/search-references.mjs` for the wide cross-repo/cross-branch Zoekt container                                                                                                                   | d099 (capped reads, allowlisted plumbing verbs, scrubbed git env so repository config can execute nothing) and d043 (Zoekt for wide queries; `git grep` for scoped ones)                                                             |
+| **Get work out**    | `export-patches.mjs` + `apply-patches.mjs` (the commits a branch carries and its upstream does not, as git's own email-shaped patch series — `git am --empty=keep <dir>/*.git.patch` rebuilds the branch, and the apply rolls back rather than leave a half-patched one; `local-changes.mjs` says what would be lost, these hand it over)               | d229: the format is `git format-patch`/`git am`, the name carries ordinal + hash, the series is published by rename and applied under d228's transaction rules                                                                       |
 
-`lib/git-core.mjs` is the shared floor under all three: how to run git without
+`lib/git-core.mjs` is the shared floor under all four: how to run git without
 throwing a run away, how to discover a repository under a reference root, and
 the exact optimization sequence that makes pickaxe over deep history fast.
 `lib/cli.mjs` is the floor under every _entry_: the flag table, the one
