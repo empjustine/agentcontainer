@@ -290,12 +290,18 @@ function startAgent(agent, cwd) {
 function askWithDeadline(agent, step, task, ms) {
 	return new Promise((resolve) => {
 		const timer = setTimeout(() => resolve(ANSWER_TIMEOUT), ms);
-		// The timer owns the timeout path, so a rejection here is deliberately not
-		// carried: the pending promise resolves with ANSWER_TIMEOUT instead.
-		void agent.ask(step, task).then((/** @type {Answer | null} */ answer) => {
-			clearTimeout(timer);
-			resolve(answer);
-		});
+		agent.ask(step, task).then(
+			(/** @type {Answer | null} */ answer) => {
+				clearTimeout(timer);
+				resolve(answer);
+			},
+			// A rejected ask is the timeout's answer, not an unhandled rejection:
+			// the request reached no agent, which is what ANSWER_TIMEOUT says.
+			() => {
+				clearTimeout(timer);
+				resolve(ANSWER_TIMEOUT);
+			},
+		);
 	});
 }
 

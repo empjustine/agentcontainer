@@ -34,7 +34,7 @@ const ROWS = [
 ];
 
 test("parses and freezes rows, keyed by id", () => {
-	const table = parseCloudProviders(JSON.stringify(ROWS));
+	const table = /** @type {any} */ (parseCloudProviders(JSON.stringify(ROWS)));
 	assert.deepEqual(Object.keys(table), ["alpha", "beta"]);
 	assert.equal(Object.isFrozen(table), true);
 	assert.equal(Object.isFrozen(table.alpha), true);

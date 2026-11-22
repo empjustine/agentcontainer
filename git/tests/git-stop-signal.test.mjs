@@ -154,14 +154,16 @@ test("a requested stop refuses the next git invocation", () => {
   assert.equal(stopExitCode(), 130);
   assert.throws(
     () => throwIfStopRequested(),
-    (err) => err.name === "StopRequested" && err.signal === "SIGINT",
+    (err) =>
+      /** @type {any} */ (err).name === "StopRequested" &&
+      /** @type {any} */ (err).signal === "SIGINT",
   );
   const dir = mkdtempSync(join(tmpdir(), "stop-signal-"));
   try {
     const repo = makeBareRepo(dir);
     assert.throws(
       () => git(repo, ["status"]),
-      (err) => err.name === "StopRequested",
+      (err) => /** @type {any} */ (err).name === "StopRequested",
       "the refusal happens before a child exists",
     );
   } finally {

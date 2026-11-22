@@ -355,7 +355,7 @@ async function fetchModelEntries(serverUrl, headers) {
  * https probe runs at all — a credentialed probe could hand the provider key
  * to whoever answered the handshake (docs/d033).
  * @param {string} url canonical upstream base (fact table)
- * @param {Record<string, string>} [headers] the provider's real bearer when
+ * @param {Record<string, string>|undefined} headers the provider's real bearer when
  *   the caller has the key, else undefined (unauthenticated probes get
  *   401/403, which still classify the endpoint as usable)
  * @param {boolean} tlsDisabled the runtime's TLS state (tlsUnverifiable's flag)

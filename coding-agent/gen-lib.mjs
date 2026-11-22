@@ -121,7 +121,7 @@ export {
  * @property {string} [api]
  * @property {LlmCompat} [compat]
  * @property {string} [apiKey]
- * @property {PiModel[]} models
+ * @property {PiModel[]} [models]
  */
 
 /** @type {Readonly<LlmCompat>} */
@@ -253,7 +253,7 @@ export function toInput(modalities) {
  * complete the four fields, and publish nothing when no field is priced — an
  * all-zero block asserts a fact pi already assumes (docs/d057: prices are
  * absent, not zero).
- * @param {Partial<Cost>} [cost] the price block, if any
+ * @param {{input?: number|undefined, output?: number|undefined, cacheRead?: number|undefined, cacheWrite?: number|undefined}} [cost] the price block, if any
  * @returns {Cost|undefined} a complete four-field block, or undefined when
  *   nothing is priced — the caller drops the key
  */
@@ -301,6 +301,9 @@ function listingRoute(entry) {
 		return null;
 	}
 	const [dialect] = dialects;
+	if (dialect === undefined) {
+		return null;
+	}
 	const api = PI_API_BY_DIALECT[dialect];
 	const baseUrl = entry.api?.[dialect]?.base_url;
 	if (!api || !baseUrl) {
@@ -362,6 +365,7 @@ function listingCost(cost) {
 	if (thresholds.length === 0) {
 		return price;
 	}
+	/** @param {any[]} rows @param {number} limit */
 	const rowAt = (rows, limit) =>
 		rows.find((row) => row?.when?.context?.gt === limit);
 	return {

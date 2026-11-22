@@ -29,6 +29,7 @@ import { logError, logWarn } from "./log.mjs";
  * The exit status a shell reports for an interrupted command: 128 + the
  * signal's number. A stopped sweep must not look like a failed one (1).
  */
+/** @type {Record<string, number>} */
 const EXIT_CODE = { SIGINT: 130, SIGTERM: 143 };
 
 /**
@@ -71,7 +72,7 @@ export function stopRequested() {
 
 /** @returns {number} 130/143 while a stop is requested, 0 otherwise */
 export function stopExitCode() {
-  return request ? EXIT_CODE[request] : 0;
+  return request ? (EXIT_CODE[request] ?? 0) : 0;
 }
 
 /** Refuse the next unit of work while a stop is requested; return otherwise. */

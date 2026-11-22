@@ -123,15 +123,31 @@ const senderScript =
 // row's own identity (session id, then entry id), never its file path: the same
 // session has a different path inside a sandbox and on the
 // host, so a path key would fail to dedupe exactly the duplicate the route creates.
+/**
+ * A caught value's message, for the stderr lines below: a catch clause hands
+ * over unknown, and these lines exist so a failure is readable either way.
+ * @param {unknown} error
+ * @returns {string}
+ */
+function messageOf(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
 /** Canonical JSON: sorted object keys, so a re-post with a different key order
- * hashes to the same identity. Arrays keep their order; JSON has no set. */
+ * hashes to the same identity. Arrays keep their order; JSON has no set.
+ * @param {unknown} value
+ * @returns {string}
+ */
 function canonicalJson(value) {
   if (Array.isArray(value)) {
     return "[" + value.map(canonicalJson).join(",") + "]";
   }
   if (value && typeof value === "object") {
     return "{" + Object.keys(value).sort().map(
-      (key) => JSON.stringify(key) + ":" + canonicalJson(value[key]),
+      (key) =>
+        JSON.stringify(key) +
+        ":" +
+        canonicalJson(/** @type {Record<string, unknown>} */ (value)[key]),
     ).join(",") + "}";
   }
   const encoded = JSON.stringify(value);
@@ -142,10 +158,18 @@ function canonicalJson(value) {
  * stable across spool rotations and direct folds; a line-number key was not
  * (the sender renames the tail to .rm.<pid>, and a direct fold renumbers the
  * same row on every run), so the warehouse stored a new copy each time. */
+/**
+ * @param {any} row
+ * @returns {string}
+ */
 function rowHash(row) {
   return crypto.createHash("sha256").update(canonicalJson(row)).digest("hex");
 }
 
+/**
+ * @param {any} row
+ * @returns {string}
+ */
 function rowKey(row) {
   if (row && typeof row === "object") {
     // A foreign harness mints its own ids, so its key carries the source: the
@@ -166,6 +190,10 @@ function rowKey(row) {
   return JSON.stringify(["raw", rowHash(row)]);
 }
 
+/**
+ * @param {string} line
+ * @returns {string}
+ */
 function lineKey(line) {
   try {
     return rowKey(JSON.parse(line));
@@ -187,6 +215,10 @@ if (path.basename(path.resolve(path.dirname(spool))) === "agent-warehouse") {
  * a line of its own: the next append then starts cleanly and the sender reports
  * the malformed line instead of merging it into a later row.
  */
+/**
+ * @param {string} file
+ * @returns {void}
+ */
 function repairPartialTail(file) {
   let stat;
   try { stat = fs.statSync(file); } catch { return; }
@@ -204,8 +236,11 @@ function repairPartialTail(file) {
 }
 repairPartialTail(spool);
 
+/** @type {any} */
 let sqliteDb = null;
+/** @type {(key: string) => boolean} */
 let hasSeen;
+/** @type {(key: string) => void} */
 let rememberSeen;
 try {
   const { DatabaseSync } = await import("node:sqlite");
@@ -226,7 +261,7 @@ try {
   hasSeen = (key) => seen.has(key);
   rememberSeen = (key) => { seen.add(key); };
   process.stderr.write(
-    "agent-warehouse-daemon: node:sqlite unavailable (" + error.message +
+    "agent-warehouse-daemon: node:sqlite unavailable (" + messageOf(error) +
       "); dedupe is in memory and will not survive a restart\n",
   );
 }
@@ -250,7 +285,7 @@ async function seedSeen(file) {
       rememberSeen(lineKey(line));
     } catch (error) {
       process.stderr.write(
-        "agent-warehouse-daemon: cannot seed " + file + ": " + error.message + "\n",
+        "agent-warehouse-daemon: cannot seed " + file + ": " + messageOf(error) + "\n",
       );
     }
   }
@@ -284,7 +319,7 @@ if (sqliteDb !== null) {
     );
   } catch (error) {
     process.stderr.write(
-      "agent-warehouse-daemon: ledger upkeep failed (" + error.message +
+      "agent-warehouse-daemon: ledger upkeep failed (" + messageOf(error) +
         "); continuing\n",
     );
   }
@@ -328,7 +363,9 @@ function pendingTailBytes() {
 let pendingBytes = pendingTailBytes();
 let sending = false;
 let retryAt = 0;
+/** @type {NodeJS.Timeout | null} */
 let retryTimer = null;
+/** @type {import("node:child_process").ChildProcess | null} */
 let activeChild = null;
 let shuttingDown = false;
 
@@ -417,7 +454,7 @@ function sendSpool(foldAnyTail = false) {
   child.on("error", (error) => {
     process.stderr.write(
       "agent-warehouse-daemon: cannot run " + senderScript +
-        " (" + error.message + ")\n",
+        " (" + messageOf(error) + ")\n",
     );
     done(1);
   });
@@ -427,10 +464,24 @@ function sendSpool(foldAnyTail = false) {
 // RFC 9457 problem details, the same shape the browse daemon answers.
 const PROBLEM_BASE = "https://agentcontainer.example/problems/";
 
+/**
+ * @param {number} status
+ * @param {string} slug
+ * @param {string} title
+ * @param {string} detail
+ * @returns {{type: string, title: string, status: number, detail: string}}
+ */
 function problem(status, slug, title, detail) {
   return { type: PROBLEM_BASE + slug, title, status, detail };
 }
 
+/**
+ * @param {import("node:http").ServerResponse} res
+ * @param {number} code
+ * @param {unknown} obj
+ * @param {string} [contentType]
+ * @returns {void}
+ */
 function send(res, code, obj, contentType = "application/json") {
   if (res.writableEnded) { return; }
   try {
@@ -443,6 +494,10 @@ function send(res, code, obj, contentType = "application/json") {
 
 /** Timing-safe: == leaks the length and the first wrong byte to a client that
  * can measure a wide bind. */
+/**
+ * @param {string | string[] | undefined} given
+ * @returns {boolean}
+ */
 function tokenMatches(given) {
   if (!token) { return true; }
   const supplied = Buffer.from(typeof given === "string" ? given : "");
@@ -450,6 +505,13 @@ function tokenMatches(given) {
   return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
 }
 
+/**
+ * @param {import("node:http").IncomingMessage} req
+ * @param {number} code
+ * @param {number} started
+ * @param {string} detail
+ * @returns {void}
+ */
 function logRequest(req, code, started, detail) {
   process.stdout.write(
     "agent-warehouse-daemon: " + req.method + " " + (req.url || "") + " " + code +
@@ -459,12 +521,22 @@ function logRequest(req, code, started, detail) {
 
 const server = http.createServer((req, res) => {
   const started = Date.now();
-  const respond = (code, obj, detail = "", contentType = "application/json") => {
+  const respond = (
+    /** @type {number} */ code,
+    /** @type {unknown} */ obj,
+    /** @type {string} */ detail = "",
+    /** @type {string} */ contentType = "application/json",
+  ) => {
     if (res.writableEnded) { return; }
     send(res, code, obj, contentType);
     logRequest(req, code, started, detail);
   };
-  const respondProblem = (code, slug, title, detail) =>
+  const respondProblem = (
+    /** @type {number} */ code,
+    /** @type {string} */ slug,
+    /** @type {string} */ title,
+    /** @type {string} */ detail,
+  ) =>
     respond(code, problem(code, slug, title, detail), detail, "application/problem+json");
   try {
     if (req.method !== "POST") {
@@ -484,6 +556,7 @@ const server = http.createServer((req, res) => {
     }
     let size = 0;
     let tooLarge = false;
+    /** @type {Buffer[]} */
     const chunks = [];
     req.on("data", (chunk) => {
       if (tooLarge) { return; }
@@ -534,7 +607,7 @@ const server = http.createServer((req, res) => {
       } catch (error) {
         process.stderr.write(
           "agent-warehouse-daemon: cannot compute a row identity: " +
-            error.message + "\n",
+            messageOf(error) + "\n",
         );
         respondProblem(400, "interface-error", "Interface error", "unidentifiable row");
         return;
@@ -551,7 +624,7 @@ const server = http.createServer((req, res) => {
         } catch (error) {
           process.stderr.write(
             "agent-warehouse-daemon: cannot append to " + spool + ": " +
-              error.message + "\n",
+              messageOf(error) + "\n",
           );
           respondProblem(
             500, "store-error", "Store error", "cannot append to the spool",
@@ -568,7 +641,7 @@ const server = http.createServer((req, res) => {
         } catch (error) {
           process.stderr.write(
             "agent-warehouse-daemon: cannot record dedupe keys: " +
-              error.message + "\n",
+              messageOf(error) + "\n",
           );
         }
         pendingBytes += Buffer.byteLength(lines);
@@ -582,7 +655,9 @@ const server = http.createServer((req, res) => {
     });
   } catch (error) {
     process.stderr.write(
-      "agent-warehouse-daemon: handler failed: " + error.stack + "\n",
+      "agent-warehouse-daemon: handler failed: " +
+        (error instanceof Error ? (error.stack ?? messageOf(error)) : String(error)) +
+        "\n",
     );
     respondProblem(500, "internal-error", "Internal error", "the request failed");
   }
@@ -620,7 +695,7 @@ server.maxHeadersCount = 100;
 // are not free.
 server.maxConnections = 64;
 server.on("error", (error) => {
-  process.stderr.write("agent-warehouse-daemon: server error: " + error.message + "\n");
+  process.stderr.write("agent-warehouse-daemon: server error: " + messageOf(error) + "\n");
   process.exit(1);
 });
 server.listen(port, host, () => {
@@ -643,6 +718,10 @@ server.listen(port, host, () => {
   }
 });
 
+/**
+ * @param {string} signal
+ * @returns {void}
+ */
 function shutdown(signal) {
   if (shuttingDown) { return; }
   shuttingDown = true;

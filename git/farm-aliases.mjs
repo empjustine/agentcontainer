@@ -170,7 +170,7 @@ function main(argv) {
 			tool: "git/farm-aliases",
 			ok: false,
 			mode: v.apply ? "apply" : "check",
-			error: String(err?.message ? err.message : err),
+			error: String(err instanceof Error ? err.message : err),
 		});
 		process.exitCode = 1;
 		return;
@@ -179,7 +179,12 @@ function main(argv) {
 		const before = inspect(root, alias);
 		if (v.apply && (before === "missing" || before === "wrong-target")) {
 			apply(root, alias);
-			return { id: alias.id, target: alias.target, state: inspect(root, alias), was: before };
+			return {
+				id: alias.id,
+				target: alias.target,
+				state: inspect(root, alias),
+				was: /** @type {AliasState} */ (before),
+			};
 		}
 		return { id: alias.id, target: alias.target, state: before };
 	});

@@ -846,6 +846,7 @@ function toCost(cost) {
  * A models.dev model record — the subset the full mode reads.
  * @typedef {object} ModelsDevModel
  * @property {string} id
+ * @property {string} [status] the catalog lifecycle stage (catalogModelLive reads it)
  * @property {string|undefined} [name]
  * @property {string} [family]
  * @property {boolean} [reasoning]
@@ -1279,7 +1280,8 @@ function listingModels(entries, spec) {
  * @returns {import("./gen-lib.mjs").PiProvider} the entry to publish
  */
 function emitMinimalCatalogOverride(row, catalog, catwalk) {
-	const spec = row.spec;
+	// These stages only run for a cloud row: the local row carries no spec.
+	const spec = /** @type {CloudProviderSpec} */ (row.spec);
 	if (spec.mixedSurface) {
 		// The catalog carries no per-model dialect, so id-only records would
 		// replace pi's described built-ins with stubs and misroute each model.
@@ -1357,7 +1359,8 @@ async function probeRow(row, tlsDisabled) {
  * @returns {Promise<import("./gen-lib.mjs").PiProvider>} the entry to publish
  */
 async function emitOverrideOnly(row, tlsDisabled, catalog, catwalk) {
-	const spec = row.spec;
+	// These stages only run for a cloud row: the local row carries no spec.
+	const spec = /** @type {CloudProviderSpec} */ (row.spec);
 	// catalogOnly rows never probe (docs/d033): the endpoint cannot
 	// authenticate the probe's bearer, so no probe outcome means anything —
 	// "credential-gated" would be a misleading verdict for an endpoint that
@@ -1415,7 +1418,8 @@ async function emitOverrideOnly(row, tlsDisabled, catalog, catwalk) {
  * @returns {Promise<void>}
  */
 async function emitFull(row, tlsDisabled, catalog, layerDir) {
-	const spec = row.spec;
+	// These stages only run for a cloud row: the local row carries no spec.
+	const spec = /** @type {CloudProviderSpec} */ (row.spec);
 	const route = await probeRow(row, tlsDisabled);
 	if (!route.usable) {
 		logWarn(
@@ -1611,15 +1615,16 @@ async function generateOverrideLayers(rows, catalog, tlsDisabled) {
 		if (row === undefined) {
 			continue;
 		}
+		const spec = /** @type {CloudProviderSpec} */ (row.spec);
 		if (res.status === "rejected") {
 			failed++;
 			logError("provider spec failed — no layer written", {
-				provider: row.spec.id,
+				provider: spec.id,
 				error: res.reason,
 			});
 			continue;
 		}
-		providers[row.spec.id] = res.value;
+		providers[spec.id] = res.value;
 	}
 	// d063 §4: a rejected row means an omitted provider — and omission is how
 	// a direct URL gets back in (pi's built-in). One bad row fails the whole
@@ -1669,7 +1674,7 @@ async function generateFullLayers(rows, catalog, layerDir, tlsDisabled) {
 		if (res.status === "rejected") {
 			failed++;
 			logError("provider spec failed — no layer written", {
-				provider: row.spec.id,
+				provider: /** @type {CloudProviderSpec} */ (row.spec).id,
 				error: res.reason,
 			});
 		}
@@ -1724,7 +1729,7 @@ async function generateLocalLlamaSwap(row, tlsDisabled, out) {
 
 	const written = writeJsonArtifact(out, { providers });
 	const summary = Object.entries(providers)
-		.map(([id, p]) => `${id}=${p.baseUrl}(${p.models.length})`)
+		.map(([id, p]) => `${id}=${p.baseUrl}(${(p.models ?? []).length})`)
 		.join(", ");
 	logInfo("wrote models layer", { path: written, providers: summary });
 }
@@ -1965,7 +1970,9 @@ async function main() {
 	// NOT via runStage: a failed cloud stage must fail the generator — the
 	// merge after it would otherwise install the committed artifact, and an
 	// omitted provider is exactly the direct-routing fallback d063 forbids.
-	const overrideRows = rows.filter((row) => row.spec.mode !== "full");
+	const overrideRows = rows.filter(
+		(row) => /** @type {CloudProviderSpec} */ (row.spec).mode !== "full",
+	);
 	const overrides = await generateOverrideLayers(
 		overrideRows,
 		catalog,
@@ -1976,10 +1983,12 @@ async function main() {
 	// against (docs/d048); one read per run, and only when the row published.
 	const opencodeGo = overrides[OPENCODE_GO_ID];
 	if (opencodeGo) {
-		reportOpencodeGoDocsDrift(opencodeGo.models, docsModelIds(env));
+		reportOpencodeGoDocsDrift(opencodeGo.models ?? [], docsModelIds(env));
 	}
 	await generateFullLayers(
-		rows.filter((row) => row.spec.mode === "full"),
+		rows.filter(
+			(row) => /** @type {CloudProviderSpec} */ (row.spec).mode === "full",
+		),
 		catalog,
 		layerDir,
 		tlsDisabled,

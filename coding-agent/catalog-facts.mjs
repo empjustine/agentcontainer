@@ -89,7 +89,7 @@ const FACTS_TIMEOUT_MS = 8000;
  * @param {number} options.timeoutMs per-caller fetch budget
  * @param {Record<string, string>} [options.headers] provider bearer when present
  * @param {boolean} options.tlsDisabled the runtime TLS state, from the caller
- * @returns {Promise<unknown>} the payload, or undefined when every candidate
+ * @returns {Promise<unknown|undefined>} the payload, or undefined when every candidate
  *   failed — `null` stays a real payload the caller can reject on shape
  */
 async function relayFetch({
@@ -119,6 +119,7 @@ async function relayFetch({
 			logWarn(`${label} fetch failed`, { error: err, url });
 		}
 	}
+	return;
 }
 
 // --- catwalk ----------------------------------------------------------------

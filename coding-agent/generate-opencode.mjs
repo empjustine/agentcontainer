@@ -117,6 +117,8 @@ const MODEL_SCOPES = {
 	openrouter: (id) => id.endsWith(":free"),
 };
 
+/** @typedef {import("./generate-pi-coding-agent.mjs").ModelsDevModel} ModelsDevModel */
+
 /**
  * The models.dev catalog slice for a provider — the lineup fallback when the
  * route cannot list (docs/d063 §2): the d049 modality gate first, then the

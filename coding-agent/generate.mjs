@@ -566,7 +566,9 @@ async function main() {
 		// stage it died in, and still passes through the finally below.
 		throw failure(`generate failed during ${currentStage}`, 1, {
 			stage: currentStage,
-			error: String(error?.stack ?? error),
+			error: String(
+				error instanceof Error ? (error.stack ?? error.message) : error,
+			),
 		});
 	} finally {
 		rmSync(outDir, { recursive: true, force: true });

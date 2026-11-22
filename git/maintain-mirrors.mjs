@@ -282,7 +282,7 @@ function createPacing(o) {
  * @param {{ repo: string, url: string|null, host: string }} target
  * @param {Options} o
  * @param {Pacing} pacing
- * @returns {Promise<"ok"|"skipped"|"failed">}
+ * @returns {Promise<"ok"|"skipped"|"failed"|"interrupted">}
  */
 async function maintainOne(target, o, pacing) {
   const { repo, url, host } = target;

@@ -42,6 +42,7 @@
 
 /** Set by the entry point (setLogTool); resolved lazily at emit, so
  * importing this module reads no environment. */
+/** @type {string | null} */
 let tool = null;
 /**
  * @param {string} name

@@ -16,7 +16,7 @@ test("a failure is an Error whose code rides the registry symbol", () => {
 	assert.equal(exitCodeOf(refused), 91);
 	assert.equal(refused.fields?.mount, "/x");
 	assert.equal(
-		/** @type {Record<symbol, unknown>} */ (refused)[
+		/** @type {Record<symbol, unknown>} */ (/** @type {unknown} */ (refused))[
 			Symbol.for("process.exitCode")
 		],
 		91,

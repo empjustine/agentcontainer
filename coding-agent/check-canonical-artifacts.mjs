@@ -203,7 +203,7 @@ if (import.meta.main) {
 	} catch (error) {
 		// One handler (docs/d225 R3). This verifier prints to stdout/stderr
 		// directly (it is spawned with stdio inherit), so the handler does too.
-		console.error(error.message);
+		console.error(error instanceof Error ? error.message : String(error));
 		process.exitCode = exitCodeOf(error) ?? 1;
 	}
 }

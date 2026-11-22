@@ -666,10 +666,13 @@ test("grep reads a pinned rev, not HEAD", () => {
 test("an alias resolves through the read verbs without doubling the farm", () => {
 	const { env, cleanup } = farm();
 	try {
-		symlinkSync(join("alpha.git"), join(env.REFERENCES_ROOT, "acme", "old.git"));
+		symlinkSync(
+			join("alpha.git"),
+			join(env.REFERENCES_ROOT ?? "", "acme", "old.git"),
+		);
 		const read = run(["read_file", "acme/old", "HEAD", "readme.txt"], env);
 		assert.equal(read.status, 0);
-		assert.match(read.json.content, /alpha line one/);
+		assert.match(read.json.content ?? "", /alpha line one/);
 		const info = run(["repo_info", "acme/old"], env);
 		assert.equal(info.json.entry, "alias");
 		assert.equal(info.json.alias_target, "acme/alpha");
