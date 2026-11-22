@@ -216,8 +216,9 @@ which decides which container path to bake; `coding-agent/lib/workload-runtime.m
 `findOnPath` (X_OK) and its injected `Host.exists` port, whose callers in
 `run.mjs` report what they found; the `/usr/bin/podman`, `/usr/bin/docker` and
 `/dev/kfd` device probes in the three `host-capabilities.mjs` copies and
-`llm-local-inference/run.py`; `llm-local-inference/gguf_context_length.py`'s
-cached-file lookup, whose answer is the path to hand back;
+`llm-local-inference/run.py`; `llm-local-inference/gguf_context_length.py`'s and
+`llm-local-bench/roofline/extract.mjs`'s cached-file lookups, whose answer
+is the path to hand back;
 `coding-agent/run.mjs`'s credential-warning filter;
 `datalakehouse/atuin-warehouse-sync.sh`'s `atuin_config_file`,
 `atuin_data_dir` and `resolve_source`, which compute the db atuin itself would

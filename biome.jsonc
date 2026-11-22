@@ -437,6 +437,8 @@
 				"git/search-references.mjs",
 				"git/vbs-mirror-all.mjs",
 				"llm-local-inference/30-generate.mjs",
+				// the roofline extractor names the cached GGUF it prices (R4)
+				"llm-local-bench/roofline/extract.mjs",
 				// a partial copy (docs/d113) may carry no opencode generator
 				"coding-agent/generate.mjs",
 			],
