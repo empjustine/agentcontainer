@@ -3,7 +3,7 @@
  * form, plus the status line docs/d204's R10 asks for.
  *
  * WHY the DOM is typed by hand below: tsconfig's program has lib es2023 and
- * @types/node only (no DOM), and this page touches exactly five members of it.
+ * the host's Node typings only (no DOM); this page touches exactly five of them.
  * A four-line typedef is the honest description; a DOM lib in the global
  * program would describe a browser the node half of this tree does not have.
  */
