@@ -30,10 +30,6 @@
  * `NEURALWATT_BASE_URL` (optional upstream override).
  */
 
-import { logDebug, setLogTool } from "./log.mjs";
-
-setLogTool("pi-neuralwatt/sources");
-
 /**
  * The fact-table row this folder exists for (docs/d024): the ONE place the
  * upstream URL and the key env are declared. A one-row literal rather than a
@@ -50,8 +46,7 @@ const NEURALWATT = Object.freeze({
 	label: "Neuralwatt",
 	/**
 	 * @type {string} env var holding the real key — pi reads it for requests,
-	 * and this file reads it once for the listing's optional bearer; never
-	 * inlined, never logged (docs/d086).
+	 * and this file reads it once for the listing's optional bearer.
 	 */
 	apiKeyEnv: "NEURALWATT_API_KEY",
 	/** @type {string} the provider's canonical upstream (docs/d070). */
@@ -201,7 +196,6 @@ export async function fetchListing({
 } = {}) {
 	const key = process.env[NEURALWATT.apiKeyEnv]?.trim();
 	const headers = key ? { Authorization: `Bearer ${key}` } : undefined;
-	logDebug("fetching model listing", { url: NEURALWATT_BASE_URL });
 	const res = await fetchImpl(url, {
 		...(headers ? { headers } : {}),
 		signal: requestSignal(signal),
@@ -231,7 +225,6 @@ export async function fetchListing({
 	if (kept.length === 0) {
 		throw new Error("model listing carried no usable rows");
 	}
-	logDebug("model listing answered", { rows: kept.length });
 	return kept;
 }
 

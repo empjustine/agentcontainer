@@ -15,8 +15,7 @@
 	// is a published surface"; their exports are therefore not unused-export
 	// candidates. Since docs/d113 replaced the one shared lib/ with per-unit
 	// copies, the glob is per folder and the root has no lib at all; the pi
-	// extension folders carry no lib/ either, so their folder-root log.mjs is
-	// an ordinary project file reached by static import.
+	// extension folders carry no lib/ either.
 	"entry": [
 		// each unit's own build entry (docs/d083/d113: there is no root
 		// builder or generator any more)

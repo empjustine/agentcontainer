@@ -52,7 +52,6 @@ effort enums, attachment support) comes from the document.
 | `index.mjs`   | the extension entry: `registerProvider` + `refreshModels` (the listing at runtime) |
 | `sources.mjs` | the ONE source read: the provider's `/provider` catalog at the canonical upstream  |
 | `merge.mjs`   | the ONE shaping step: a catalog record becomes the registered-model entry          |
-| `log.mjs`     | the JSONL log lines `sources.mjs` emits (docs/d045)                                |
 
 Nothing is generated and nothing is committed: `./npm-run.sh pi-hyper
 generate` prints a stub line. The script stays because a unit's `package.json`

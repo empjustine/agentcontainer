@@ -32,7 +32,6 @@ and [ben-vargas/pi-packages](https://github.com/ben-vargas/pi-packages)
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `sources.mjs`                          | the ONE data source: the provider's `/models` listing, fetched from the folder's own canonical-upstream row |
 | `merge.mjs`                            | the ONE shaping step (`shapeListing`/`shapeRow`) and the projection into pi-ai's registered-model entry     |
-| `log.mjs`                              | the JSONL log lines `sources.mjs` emits (docs/d045)                                                         |
 | `index.mjs`                            | the pi extension entry (provider registration + `refreshModels`)                                            |
 | `package.json`                         | the pi package manifest (`pi.extensions` → `./index.mjs`)                                                   |
 | `AGENTS.md` / `TODO.md` / `PENDING.md` | folder rules · open items · the review that collapsed the design                                            |
@@ -142,8 +141,8 @@ The name is generated from the response, never hand-written, so it cannot go
 stale; a literal id would silently change meaning at the next rotation. The
 target comes from the listing row (`aliasTarget`) and `displayNameFor` renders
 it into the name; it is never parsed back out of one, and no committed side
-table mirrors it (docs/d190 removed `SYNTHETIC_ALIASES`). If the provider stops serving a tier, generation
-**warns** and publishes what it has; it does not invent a row.
+table mirrors it (docs/d190 removed `SYNTHETIC_ALIASES`). A tier the listing stops serving fails the refresh (pi reports a normal
+refresh error) rather than publishing a lineup with a hole; no row is invented.
 
 ## Use the extension
 

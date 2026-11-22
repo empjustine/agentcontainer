@@ -28,14 +28,9 @@
  *   - The listing is PUBLIC (verified: 200 unauthenticated). The bearer is
  *     sent when a key exists for parity with the fleet's facts refresh, not
  *     because the catalog needs it.
- *   - No fetch URL is ever recorded (docs/d086).
  *
  * Env: nothing (docs/d113).
  */
-
-import { logDebug, setLogTool } from "./log.mjs";
-
-setLogTool("pi-hyper/sources");
 
 /**
  * The provider facts this folder exists for (docs/d024): the ONE place the
@@ -175,7 +170,6 @@ export async function fetchCatalog({
 } = {}) {
 	const key = process.env[HYPER_API_KEY_ENV]?.trim();
 	const headers = key ? { Authorization: `Bearer ${key}` } : undefined;
-	logDebug("fetching provider catalog", { url: HYPER_BASE_URL });
 	const res = await fetchImpl(url, {
 		...(headers ? { headers } : {}),
 		signal: requestSignal(signal),
@@ -208,7 +202,6 @@ export async function fetchCatalog({
 	if (kept.length === 0) {
 		throw new Error("provider catalog carried no usable rows");
 	}
-	logDebug("provider catalog answered", { rows: kept.length });
 	return kept;
 }
 

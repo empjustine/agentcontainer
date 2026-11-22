@@ -105,7 +105,6 @@ execution of their code — with these caveats:
 | `index.mjs`   | the extension entry: `registerProvider` + `refreshModels` (the reconciliation at runtime) |
 | `sources.mjs` | the one source read (the docs table) and its parser                                       |
 | `merge.mjs`   | the one shaping step: a published row becomes the registered-model entry                  |
-| `log.mjs`     | the JSONL log lines `sources.mjs` emits (docs/d045)                                       |
 
 Nothing is generated and nothing is committed: `./npm-run.sh pi-cline-pass
 generate` prints a stub line. The script stays because a unit's

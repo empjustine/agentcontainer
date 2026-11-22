@@ -4,7 +4,7 @@
  * upstream) with pi, rebuilt at refresh time from the provider's own
  * `/provider` document — the only lineup source this folder has.
  *
- * This file, sources.mjs, merge.mjs, log.mjs and package.json ARE
+ * This file, sources.mjs, merge.mjs and package.json ARE
  * the pi package (docs/d096's folder contract, applied here): `pi install
  * ./pi-hyper -l`, a copy into `~/.pi/agent/extensions/pi-hyper/`, or
  * `pi -e ./pi-hyper/index.mjs`. There is no subfolder and no copy step —

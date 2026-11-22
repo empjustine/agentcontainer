@@ -397,6 +397,38 @@ test("an unreadable source is REPORTED, never a silent empty lineup (docs/d190)"
 	}
 });
 
+test("a listing that omits a contract tier fails the refresh (docs/d190)", async () => {
+	// The `syn:*` tiers are the provider's API contract: a listing without one
+	// is an endpoint fault, so the refresh THROWS and pi reports a normal error
+	// — it never publishes a lineup with a hole.
+	const realFetch = globalThis.fetch;
+	globalThis.fetch = /** @type {any} */ (
+		async () => ({ ok: true, status: 200, json: async () => ({ data: [row({})] }) })
+	);
+	try {
+		const entry = await import("../index.mjs");
+		/** @type {any} */
+		let config;
+		entry.default(
+			/** @type {any} */ ({
+				registerProvider: (/** @type {string} */ _id, /** @type {any} */ c) => {
+					config = c;
+				},
+			}),
+		);
+		await assert.rejects(
+			() =>
+				config.refreshModels({
+					allowNetwork: true,
+					signal: new AbortController().signal,
+				}),
+			/contract tier/,
+		);
+	} finally {
+		globalThis.fetch = realFetch;
+	}
+});
+
 test("the request signal composes the caller's cancellation with the deadline", async () => {
 	// Both, never either: `signal ?? AbortSignal.timeout(…)` dropped the 15 s
 	// ceiling on every real refresh, because pi always hands a concrete signal —

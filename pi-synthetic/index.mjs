@@ -4,7 +4,7 @@
  * upstream) with pi, rebuilt at refresh time from the provider's own listing
  * — the only lineup source this folder has.
  *
- * This file, sources.mjs, merge.mjs, log.mjs and package.json ARE
+ * This file, sources.mjs, merge.mjs and package.json ARE
  * the pi package (docs/d096): `pi install ./pi-synthetic -l`, a copy into
  * `~/.pi/agent/extensions/pi-synthetic/`, or `pi -e ./pi-synthetic/index.mjs`.
  * There is no subfolder and no copy step — the folder is the unit.
@@ -47,7 +47,7 @@ import {
 	SYNTHETIC_BASE_URL,
 	SYNTHETIC_PROVIDER_ID,
 	storeIsFresh,
-	warnOnMissingTiers,
+	ALIAS_TIER_IDS,
 } from "./sources.mjs";
 
 /**
@@ -91,10 +91,16 @@ async function refresh(context) {
 			const rows = shapeListing(
 				await fetchListing({ signal: context.signal }),
 			);
-			// The tier checklist only ever warned from the generator; the live read is
-			// the one place it can still fire, and a tier the listing stops serving is
-			// worth a line either way.
-			warnOnMissingTiers(rows.map((m) => m.id));
+			// The category tiers are the provider's API contract, so a listing that
+			// omits one is an endpoint fault: fail the refresh (pi renders a normal
+			// refresh error) rather than publish a lineup with a hole (docs/d190).
+			const ids = new Set(rows.map((m) => m.id));
+			const missingTiers = ALIAS_TIER_IDS.filter((tier) => !ids.has(tier));
+			if (missingTiers.length > 0) {
+				throw new Error(
+					`listing omitted the contract tier(s): ${missingTiers.join(", ")}`,
+				);
+			}
 			models = rows.map(toExtensionModel);
 		} catch (err) {
 			if (context.signal.aborted) {

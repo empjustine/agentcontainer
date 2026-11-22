@@ -244,7 +244,6 @@ silent assumption: where a rule would be invented, the field stays unset.
 | `sources.mjs` | the fact row, the base-url override, the ONE `GET /v1/models`                    |
 | `merge.mjs`   | the ONE shaping step: one listing in, both lineups out                           |
 | `compat.mjs`  | the documented compat fields and the `huggingface_id`-keyed thinking-kwarg table |
-| `log.mjs`     | the JSONL log lines `sources.mjs` emits (docs/d045)                              |
 | `tests/`      | the rules, network-free (injected `fetch`)                                       |
 
 Nothing is generated and nothing is committed as data: `generate` is a stub

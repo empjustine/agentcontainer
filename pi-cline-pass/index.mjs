@@ -4,7 +4,7 @@
  * upstream) with pi, rebuilt at refresh time from the ONE published source
  * this folder treats as a contract: Cline's docs table (docs/d189).
  *
- * This file, sources.mjs, merge.mjs, log.mjs and package.json ARE
+ * This file, sources.mjs, merge.mjs and package.json ARE
  * the pi package (docs/d096): `pi install ./pi-cline-pass -l`, a copy into
  * `~/.pi/agent/extensions/pi-cline-pass/`, or `pi -e ./pi-cline-pass/index.mjs`.
  *

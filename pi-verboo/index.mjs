@@ -4,7 +4,7 @@
  * upstream) with pi, rebuilt at refresh time from the provider's own
  * `/models` listing — the only lineup source this folder has.
  *
- * This file, sources.mjs, log.mjs, merge.mjs and package.json ARE
+ * This file, sources.mjs, merge.mjs and package.json ARE
  * the pi package (docs/d096's folder contract, applied here): `pi install
  * ./pi-verboo -l`, a copy into `~/.pi/agent/extensions/pi-verboo/`, or
  * `pi -e ./pi-verboo/index.mjs`. There is no subfolder and no copy step —

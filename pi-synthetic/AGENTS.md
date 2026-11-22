@@ -35,8 +35,9 @@ read as an alias target. So:
 - the target comes from `aliasTarget(row)` on the listing row and is rendered
   by `displayNameFor`, the one function that builds the name — there is no
   committed `SYNTHETIC_ALIASES` table (docs/d190 removed it);
-- `ALIAS_TIER_IDS` is a WARN-ONLY checklist, so a tier the listing stops
-  serving is reported rather than invented;
+- `ALIAS_TIER_IDS` is the provider's API contract: a listing that omits one
+  fails the refresh, so pi reports a normal refresh error rather than
+  publishing a lineup with a hole;
 - adding a "parse the name back" helper would reintroduce the unsound behavior
   the review deleted. Don't.
 
@@ -54,10 +55,9 @@ offline start look populated.
 
 ## The folder is the package
 
-`index.mjs`, `sources.mjs`, `merge.mjs`, `log.mjs` and
-`package.json` at this level ARE the pi package (`log.mjs` included: it is what
-`sources.mjs`, and therefore the loaded extension, writes its log lines with). If a change seems to need a subfolder, a copy step, or
-two module trees kept in sync with `cmp`, it is rebuilding machinery that was
+`index.mjs`, `sources.mjs`, `merge.mjs` and `package.json` at this level ARE
+the pi package. If a change seems to need a subfolder, a copy step, or two
+module trees kept in sync with `cmp`, it is rebuilding machinery that was
 already deleted once — find out why before doing it.
 
 `index.mjs` is INSIDE the `tsconfig.json` program: the folder carries

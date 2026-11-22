@@ -16,7 +16,7 @@
  * one vendor, one key env, one listing, and two failure surfaces that cannot
  * silence each other. The README says which tier is the operator default.
  *
- * This file, sources.mjs, merge.mjs, compat.mjs, log.mjs and package.json ARE
+ * This file, sources.mjs, merge.mjs, compat.mjs and package.json ARE
  * the pi package (docs/d096's folder contract): `pi install ./pi-neuralwatt -l`,
  * a copy into `~/.pi/agent/extensions/pi-neuralwatt/`, or
  * `pi -e ./pi-neuralwatt/index.mjs`. There is no subfolder and no copy step.

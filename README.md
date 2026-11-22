@@ -155,7 +155,6 @@ agentcontainer/
 │   ├── generate.mjs / package.json       #   → one fetch in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json                      #   → GENERATED pi models.json-shaped block (canonical upstream, d070) — the drift gate's subject · no runtime reader, no seed (d190)
-│   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md / TODO.md / PENDING.md #   → folder rules · install + open items · the review that collapsed the design
 │
@@ -171,7 +170,6 @@ agentcontainer/
 │   ├── generate.mjs / package.json       #   → two sources in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json                      #   → GENERATED pi models.json-shaped block (canonical upstream, d070) — the drift gate's subject · no runtime reader, no seed (d190)
-│   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the lineup contract
 │
@@ -180,7 +178,6 @@ agentcontainer/
 │   ├── generate.mjs / package.json       #   → one fetch in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json                      #   → GENERATED pi models.json-shaped block (canonical upstream, d070) — the drift gate's subject · no runtime reader, no seed (d190)
-│   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the behavioral-copy provenance flag
 │
@@ -189,7 +186,6 @@ agentcontainer/
 │   ├── generate.mjs / package.json       #   → one keyed fetch in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── models.json                      #   → GENERATED pi models.json-shaped block (canonical upstream, d070) — the drift gate's subject · no runtime reader, no seed (d190)
-│   ├── log.mjs                          #   → the folder's JSONL logger (d045/d060), folder-local since d118 — no lib/, no bootstrap shell
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the seeding provenance + the fleet seam
 │
@@ -201,7 +197,7 @@ agentcontainer/
 ├── pi-neuralwatt/                       # Neuralwatt as TWO pi providers — neuralwatt-flex (service_tier=flex at the twin's prices) and neuralwatt-standard; an ADAPTER only (no energy/cost/quota UI)
 │   ├── index.mjs / package.json          #   → the entry: two registerProvider calls (docs/d100's two-registration shape) + refreshModels per tier — the folder IS the package
 │   ├── sources.mjs / merge.mjs / compat.mjs # → the ONE listing read (/v1/models) · the ONE shaping step (one listing in, both lineups out) · the documented compat + huggingface_id-keyed thinking kwargs
-│   ├── log.mjs / tests/                 #   → the folder's JSONL logger (d045) · the rules, network-free (injected fetch) — never today's lineup
+│   ├── tests/                           #   → the rules, network-free (injected fetch) — never today's lineup
 │   ├── AGENTS.md / README.md            #   → folder rules · the design record: row/tier filters, the flex pick, alias-expanded thinking levels, registered open items
 │
 ├── pi-summarized-thinking/              # end-of-turn reasoning summaries as a pi package (human-facing only): a `custom` entry per completed turn — never in the model's context

@@ -28,17 +28,12 @@
  * Failure contract: the read THROWS. An unreadable table means there is
  * nothing to publish, and "ClinePass is unavailable" is the answer — never a
  * remembered list (docs/d189). The artifact a successful run wrote stays in
- * place; a failed run writes nothing. The fetch URL is never recorded in logs
- * (docs/d086).
+ * place; a failed run writes nothing.
  *
  * Env: CLINE_PASS_MDX — a plain local copy of the docs file, for a host that
  * pins the table instead of fetching it.
  */
 import { readFileSync } from "node:fs";
-
-import { logInfo, setLogTool } from "./log.mjs";
-
-setLogTool("pi-cline-pass/sources");
 
 /**
  * The provider facts this folder exists for (docs/d024): the ONE place the
@@ -226,9 +221,6 @@ export async function fetchDocsLineup({ signal, fetchImpl = fetch } = {}) {
 	if (!lineup) {
 		throw new Error("clinepass.mdx carries no ## Models table — nothing to publish");
 	}
-	logInfo("cline-pass lineup read from the published table", {
-		models: lineup.length,
-	});
 	return lineup;
 }
 

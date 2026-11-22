@@ -79,11 +79,10 @@ run, so a rotation is a live change rather than a constant edited here and in
 
 ## The folder is the package
 
-`index.mjs`, `sources.mjs`, `merge.mjs`, `log.mjs` and
-`package.json` at this level ARE the pi package (`log.mjs` included: it is what
-`sources.mjs`, and therefore the loaded extension, writes its log lines with). If a change seems to need a subfolder, a copy
-step, or two module trees kept in sync, it is rebuilding machinery that was
-already deleted once in pi-synthetic — find out why before doing it.
+`index.mjs`, `sources.mjs`, `merge.mjs` and `package.json` at this level ARE
+the pi package. If a change seems to need a subfolder, a copy step, or two
+module trees kept in sync, it is rebuilding machinery that was already deleted
+once in pi-synthetic — find out why before doing it.
 
 `index.mjs` is INSIDE the `tsconfig.json` program: the folder carries
 `@earendil-works/pi-coding-agent` as an exact devDependency (pnpm, so six

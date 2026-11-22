@@ -25,14 +25,9 @@
  *     without a key), so a regeneration needs `VERBOO_API_KEY` — unlike
  *     hyper, a keyless run cannot refresh the catalog, and the committed
  *     pair simply stands until a keyed one does.
- *   - No fetch URL is ever recorded (docs/d086).
  *
  * Env: nothing (docs/d113).
  */
-
-import { logDebug, setLogTool } from "./log.mjs";
-
-setLogTool("pi-verboo/sources");
 
 /**
  * The fact-table row this folder exists for (docs/d024): the ONE place the
@@ -175,7 +170,6 @@ export async function fetchListing({
 } = {}) {
 	const key = process.env[VERBOO_API_KEY_ENV]?.trim();
 	const headers = key ? { Authorization: `Bearer ${key}` } : undefined;
-	logDebug("fetching model listing", { url: VERBOO_BASE_URL });
 	const res = await fetchImpl(url, {
 		...(headers ? { headers } : {}),
 		signal: requestSignal(signal),
@@ -208,7 +202,6 @@ export async function fetchListing({
 	if (kept.length === 0) {
 		throw new Error("model listing carried no usable rows");
 	}
-	logDebug("model listing answered", { rows: kept.length });
 	return kept;
 }
 

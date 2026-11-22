@@ -28,16 +28,12 @@
  *     second copy: the committed artifact is the fallback for a host that
  *     cannot reach the network, and the generator's atomic write (in this
  *     folder's `generate.mjs`) means a failed run leaves it untouched.
- *   - No fetch URL is ever recorded (docs/d086): the canonical upstream is not
- *     a secret, but logs that echo a URL are how a rotatable capability ends up
- *     in a log stream. Provenance is the source id and the row counts.
+ *   - The category tiers (`syn:*`) are an API contract, not catalog data: a
+ *     listing that omits one fails the refresh rather than publishing a lineup
+ *     with a hole (docs/d190).
  *
  * Env: nothing (docs/d113).
  */
-
-import { logDebug, logWarn, setLogTool } from "./log.mjs";
-
-setLogTool("pi-synthetic/sources");
 
 /**
  * The provider facts this folder exists for (docs/d024): the ONE place the
@@ -131,14 +127,13 @@ const MODEL_STORE_TTL_MS = 4 * 60 * 60 * 1000;
  * The provider's CATEGORY TIERS: ids that never move while the model behind
  * them rotates ("the current best model for this category").
  *
- * This is an API CONTRACT, not catalog data — but it is not injected into the
- * artifact either. The listing is the only source of truth, so a tier is
- * emitted when the provider serves it; these ids are here to NAME what is
- * missing when one goes absent, which turns a silent lineup regression into a
- * warning in the generation log. Nothing is invented to fill the gap.
+ * This is the provider's API CONTRACT, not catalog data: a listing that omits
+ * one is an endpoint fault the refresh refuses (docs/d190), so pi reports a
+ * normal refresh error instead of advertising a lineup with a hole in it.
+ * Nothing is invented to fill the gap.
  * @type {readonly string[]}
  */
-const ALIAS_TIER_IDS = Object.freeze([
+export const ALIAS_TIER_IDS = Object.freeze([
 	"syn:large:text",
 	"syn:small:text",
 	"syn:large:vision",
@@ -150,7 +145,7 @@ const ALIAS_TIER_IDS = Object.freeze([
  *
  * `infinite:*` is a second routing family (the provider's print/mesh tiers)
  * that this OpenAI surface does not serve, so those rows are dropped.
- * `syn:*` rows are kept: they are the contract tiers above.
+ * `syn:*` rows are kept: they are the provider's contract tiers.
  * @type {readonly string[]}
  */
 const UNSUPPORTED_ID_PREFIXES = Object.freeze(["infinite:"]);
@@ -206,7 +201,6 @@ export async function fetchListing({
 } = {}) {
 	const key = process.env[SYNTHETIC_API_KEY_ENV]?.trim();
 	const headers = key ? { Authorization: `Bearer ${key}` } : undefined;
-	logDebug("fetching model listing", { url: SYNTHETIC_BASE_URL });
 	const res = await fetchImpl(url, {
 		...(headers ? { headers } : {}),
 		signal: requestSignal(signal),
@@ -242,25 +236,7 @@ export async function fetchListing({
 	if (kept.length === 0) {
 		throw new Error("model listing carried no usable rows");
 	}
-	logDebug("model listing answered", { rows: kept.length });
 	return kept;
-}
-
-/**
- * Warn about a contract tier the listing did not carry. The tiers are the one
- * family this folder makes a promise about, so their absence is worth a log
- * line — but it is a WARNING, not a failure and not an invented row: the
- * provider is the only source of truth here, and a tier it stops serving is a
- * tier this folder stops publishing.
- * @param {readonly string[]} ids every id in the shaped lineup
- * @returns {string[]} the missing tier ids (what was warned about)
- */
-export function warnOnMissingTiers(ids) {
-	const missing = ALIAS_TIER_IDS.filter((tier) => !ids.includes(tier));
-	if (missing.length > 0) {
-		logWarn("provider listing omitted a contract tier", { missing });
-	}
-	return missing;
 }
 
 /**
