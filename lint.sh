@@ -137,10 +137,12 @@ npm_tools_ensure "$repo_root"
 log_info "biome lint (gating — rule set in biome.jsonc; pinned by package-lock.json)"
 "$repo_root/node_modules/.bin/biome" lint . --error-on-warnings
 
-# oxlint (gating): the type-aware JS/TS lint half biome structurally cannot
-# be — biome 2.6.x has no type-inference option anywhere in its schema
-# (schema-verified), so no-floating-promises / no-base-to-string /
-# require-array-sort-compare live here, powered by oxlint-tsgolint.
+# oxlint (gating): the type-aware JS/TS lint half biome does not run here.
+# Biome 2.6.3 does build a semantic model, but its typed rules sit in the
+# NURSERY group (noFloatingPromises, noMisusedPromises, …), and this tree
+# enables no nursery rule by policy (biome.jsonc is an explicit stable list),
+# so no-floating-promises / no-base-to-string / require-array-sort-compare
+# live here, powered by oxlint-tsgolint.
 # npm-pinned pair under node_modules/.bin so linter and type provider move
 # in one lockstep (the biome posture). Config = .oxlintrc.json: typeAware
 # on; the tests override turns off no-floating-promises for **/tests/**
@@ -151,10 +153,11 @@ log_info "oxlint (gating — type-aware JS/TS lint)"
 
 # check-types (gating): the tsconfig strictness program — tsc over every .mjs
 # with checkJs and the flag set in tsconfig.json. None of the gates above can
-# stand in for it: biome 2.6.x carries no type inference at all, and oxlint's
-# typeAware enables its typed RULE subset (no-floating-promises, …) rather than
-# the compiler's diagnostics — `--type-check` is the experimental flag that
-# reports those, and the tsconfig program is the supported one. The leg was
+# stand in for it: biome reports only the nursery typed rules this tree does
+# not enable, and oxlint's typeAware enables its typed RULE subset
+# (no-floating-promises, …) rather than the compiler's diagnostics —
+# `--type-check` is the experimental flag that reports those, and the tsconfig
+# program is the supported one. The leg was
 # missing while tsconfig.json's own comment claimed the program complete, so
 # findings accumulated unchecked (pi-neuralwatt landed clean; the benchmark
 # units did not). check-types.sh installs what it reads, so it costs a stamp
