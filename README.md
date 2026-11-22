@@ -193,6 +193,10 @@ agentcontainer/
 │   ├── tests/                           #   → this folder's own tests — and the only home of its fact-table row (d118)
 │   ├── AGENTS.md / README.md            #   → folder rules (the opencode watchdog deltas) · install + provenance + the docs MCP reference
 │
+├── pi-aperture/                         # Aperture is this tailnet's AI gateway (d061): REFERENCE ONLY — its MCP endpoint (keyless, grant-gated; an inert fleet entry) and the vendor's docs table, no code, no model data
+│   ├── README.md                        #   → the folder's spec node: the keyless measurement, the documentation table, and why the Aperture CLI's own Pi launcher leaves no extension to register
+│   ├── AGENTS.md                        #   → folder rules: no model data, no credential, tailnet-only claims, the contract if code lands
+│
 ├── pi-openrouter/                       # OpenRouter is built INTO pi (d097/d100): REFERENCE ONLY — the vendor's MCP server (live catalog + docs lookups), no code, no model data
 │   ├── README.md                        #   → the folder's spec node: why no extension, and the MCP reference table — nothing here reads it at runtime
 │   ├── AGENTS.md                        #   → folder rules: the built-in-provider rule, the one MCP reference, the contract if code lands

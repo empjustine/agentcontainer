@@ -482,7 +482,7 @@ comm -23 \
   <(printf '%s\n' goal architecture coding-agent estige git llm-local-inference \
       llm-local-inference-cache estige-ci \
       pi-hyper pi-verboo pi-synthetic pi-cline-pass pi-mistral pi-opencode \
-      pi-summarized-thinking \
+      pi-aperture pi-summarized-thinking \
       | sort)
 
 # a record used as a parent — must print nothing

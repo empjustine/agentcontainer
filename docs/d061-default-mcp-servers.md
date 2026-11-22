@@ -195,6 +195,51 @@ description, including the two that render no `mcp_servers` line while hidden �
 a host that enables one gets the static line instead of the server's own
 instructions (decision 7), so the line must already be correct.
 
+### Amendment: `aperture`, the tailnet-gated gateway, closed
+
+`https://ai.coelacanth-barb.ts.net/v1/mcp` joins the list as `aperture` — the
+fleet's own Aperture gateway, and the first entry whose gate is neither a
+credential nor an OAuth consent screen but the **tailnet connection**: it takes
+no header, and it refuses nothing at the transport. A keyless `initialize`
+answers `200` with `serverInfo` `llm-proxy v1.0.0` (protocol `2025-06-18`,
+tools + resources + the `io.modelcontextprotocol/skills` extension); the
+discovery path a bearer-gated server advertises,
+`/.well-known/oauth-protected-resource`, answers `404`; a spoofed
+`Tailscale-User-Login` header changes nothing, so the identity is the connection,
+not a request field. Public DNS answers `NXDOMAIN` for the name (it resolves to
+`100.104.60.112` through MagicDNS), so the endpoint exists on this tailnet and
+nowhere else.
+
+Aperture is deny-by-default, so connecting reaches nothing: `tools/list` returns
+one tool, `aperture_request_access`, and `tools/call` on it answers "No MCP tools
+are available. The user should contact their Aperture administrator to request
+connector access grants." The inference surface behaves the same way one layer
+up: `GET /v1/models` answers keyless with 444 rows, and a
+`POST /v1/chat/completions` answers `402` `{"error":{"message":"payment method
+required to access this Aperture-provided model","source":"aperture"}}`.
+
+That measurement is why the entry ships closed — `"enabled": false` beside
+`"exposure": "hidden"`, the encoding the five provider surfaces use — and why the
+closure means something different here. There it keeps a credential request and
+a billable or writing tool away from a session; here nothing is requested and
+nothing billable exists, so the closure buys a decision instead of safety: an
+ungranted caller's whole surface is the fallback tool, and a host **off** this
+tailnet would render a `failed` server (`getaddrinfo ENOTFOUND`, non-fatal —
+Decision's launch requirement is d227's to own) in exchange for it. Recording the
+URL and the doc pointer while leaving the opening to the operator keeps both
+costs off every environment. `pi mcp list` against the committed file reports
+`disabled (hidden, global)` and exit 0; opening it from `/mcp` is deliberately
+two steps, since `exposure` has to leave `hidden` before any session reaches a
+tool.
+
+The static description carries weight a hidden entry cannot demonstrate:
+Decision's trust clause, the tailnet-only reachability, and a pointer to
+`tailscale.com/docs/aperture` — the gateway serves no documentation route
+(`GET /docs` is `404`), so the doc table lives in `../pi-aperture/README.md`,
+which also maintains the measurement above. A hidden entry renders no
+`mcp_servers` line, so nothing on the prompt side will correct a stale sentence
+before a host that opens it reads the server's own instructions instead.
+
 ## Consequences
 
 - The **host** pi gets the committed servers too, not only sandboxes: it reads
