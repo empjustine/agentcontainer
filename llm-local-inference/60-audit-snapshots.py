@@ -37,10 +37,12 @@ HERE = _pl.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE / "lib"))
 import _serving_set as serving
+import dep_log
 import log
 
 log.set_tool("llm-local-inference/audit-snapshots")
 log.set_stream(sys.stderr)
+dep_log.install()
 
 GIB = 2**30
 

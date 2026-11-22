@@ -34,12 +34,14 @@ import sys
 from gguf import GGUFReader
 
 sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
+import dep_log
 import log
 
 log.set_tool("llm-local-inference/gguf-context-length")
 # This script prints its payload (table/list/report) on stdout — logs go to
 # stderr so the two never interleave (docs/d045).
 log.set_stream(sys.stderr)
+dep_log.install()
 
 def first_cached(repo):
     if os.environ.get("HF_HUB_CACHE"):

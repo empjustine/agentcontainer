@@ -5,11 +5,10 @@
 # ///
 """run_all.py — the cache pipeline, in dependency order.
 
-  1. 10-fetch-hf-manifests.py   repo manifests, scope-driven: curation's input
+  1. 10-fetch-hf-manifests.py   repo manifests + card mirrors: curation's input
   2. 30-generate.mjs            curation: lib/curated/*.json + config.d
   3. 40-download-models.py      provision exactly the curated files
   4. upkeep.py               refresh newer revisions, prune detached, verify
-  5. fetch_model_cards.py    card mirrors
 
 WHY manifests FIRST: a curated manifest resolves each entry's files from the
 committed repo manifest, so refreshing the facts after provisioning would
@@ -45,7 +44,6 @@ log.set_stream(sys.stderr)
 
 HERE = _pl.Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
-PY_STEPS = ["10-fetch-hf-manifests.py", "40-download-models.py", "upkeep.py", "fetch_model_cards.py"]
 
 
 def die(code, message, **fields):
@@ -71,7 +69,6 @@ def main() -> int:
     run("10-fetch-hf-manifests.py", ["uv", "run", "--quiet", "--script", "10-fetch-hf-manifests.py"])
     run("40-download-models.py", ["uv", "run", "--quiet", "--script", "40-download-models.py"])
     run("upkeep.py", ["uv", "run", "--quiet", "--script", "upkeep.py"])
-    run("fetch_model_cards.py", ["uv", "run", "--quiet", "--script", "fetch_model_cards.py"])
     log.info("all done")
     return 0
 

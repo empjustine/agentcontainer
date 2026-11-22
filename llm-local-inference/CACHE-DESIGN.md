@@ -46,15 +46,15 @@ manifests first, because curation resolves each entry's files from them:
 
 0. `10-fetch-hf-manifests.py` — refresh the repo manifests of every repo
    `lib/cache-scope.json` names (the scope is closed: nothing else is
-   refreshed), then audit each served row's `:quant` label.
+   refreshed), mirror each repo's README to `model-cards/`, then audit
+   each served row's `:quant` label (docs/d230).
 1. `30-generate.mjs` — curation: the display rules, the projector each entry
    resolves from its repo manifest, and the shard fan, written as
    `lib/curated/<org>--<repo>.json` and rendered as `config.d`.
 2. `40-download-models.py` — provision exactly the curated files, after
    refusing when the oid-deduplicated missing bytes exceed free space.
 3. `upkeep.py` — refresh newer revisions, prune detached, verify.
-4. `fetch_model_cards.py` — mirror the served repos' READMEs.
-5. `50-verify-cache.py` — checksum-verify every cached served repo.
+4. `50-verify-cache.py` — checksum-verify every cached served repo.
 
 Plus the audit/prune pair (`60-audit-snapshots.py` reports;
 `70-prune-cache.py` erases the undeclared and the corrupt, docs/d218),

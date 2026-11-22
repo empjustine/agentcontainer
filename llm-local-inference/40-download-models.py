@@ -45,12 +45,17 @@ import sys
 from pathlib import Path
 
 from huggingface_hub import snapshot_download
+from huggingface_hub.utils import disable_progress_bars
 
 sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
+import dep_log
 import log
 
 log.set_tool("llm-local-inference/download-models")
 log.set_stream(sys.stderr)
+# tqdm writes to stderr, the same stream as these JSON lines (docs/d045).
+disable_progress_bars()
+dep_log.install()
 
 HERE = Path(__file__).parent
 CURATED = HERE / "lib" / "curated"

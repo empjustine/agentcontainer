@@ -23,6 +23,10 @@ references:
 > level filtering, `LOG_STREAM=stderr` when stdout carries a payload, which is
 > exactly why `--list`'s TSV stays unambiguous.
 
+> **Extended by (docs/d231).** Third-party loggers and child-process progress
+> are bridged at each unit boundary in every language; the stream contract
+> below is unchanged.
+
 **Status:** implemented
 **Date:** 2026-09-16
 **Owner:** pi-coding-agent fleet

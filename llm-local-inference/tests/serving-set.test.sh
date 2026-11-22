@@ -8,7 +8,7 @@
 set -eu
 UNIT="$(CDPATH='' cd "$(dirname "$0")/.." && pwd)"
 # The module is stdlib-only, so any python3 runs it: no uv, no network, no
-# huggingface_hub (only the two tools in the folder import that).
+# huggingface_hub (a few tools import it; the stubs keep this test stdlib-only).
 if ! command -v python3 >/dev/null 2>&1; then
 	echo "skip - no python3 (the serving set is a stdlib-only module)" >&2
 	exit 0

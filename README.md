@@ -111,7 +111,7 @@ agentcontainer/
 │
 ├── llm-local-inference/                 # llama-swap: LOCAL GGUF inference only
 │   ├── run.py                           #   → unified-vulkan image + GPU + HF mounts on :9292 (run via `uv run`; env chain ./environment.sh first)
-│   ├── *.py                             #   → the PEP 723 cache tools: run_all.py drives the chain (10-fetch-hf-manifests, 20-propose-entries.mjs, 30-generate.mjs, 40-download-models, 50-verify-cache, 60-audit-snapshots, 70-prune-cache) plus upkeep/fetch_model_cards/scan_cache_*/gguf_context_length; run via `uv run`, no shell tooling left (d212-d218)
+│   ├── *.py                             #   → the PEP 723 cache tools: run_all.py drives the chain (10-fetch-hf-manifests, 20-propose-entries.mjs, 30-generate.mjs, 40-download-models, 50-verify-cache, 60-audit-snapshots, 70-prune-cache) plus upkeep/scan_cache_*/gguf_context_length; run via `uv run`, no shell tooling left (d212-d218)
 │   ├── 20-propose-entries.mjs / 30-generate.mjs #  → config.d + curated manifests (capability-gated) · the manifest-authoring aid, docs/d212
 │   ├── build.mjs                        #   → pulls the llama-swap image (inference-endpoint gate, d087); `./node-run.sh llm-local-inference/build.mjs`
 │   ├── llama-swap-core.json             #   → general-purpose config source

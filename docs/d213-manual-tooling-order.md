@@ -60,10 +60,10 @@ everything that follows.
   entry names in one commit, because a half-rename leaves a runbook naming files
   that no longer exist.
 - A tool a runbook documents but that sits OUTSIDE the chain keeps its
-  descriptive name: the card mirrors (
-  `fetch_model_cards.py`) and the upkeep sweep (`upkeep.py`) are
-  side tasks, and a prefix would claim a position they do not have.
-  no longer exist.
+  descriptive name: the upkeep sweep (`upkeep.py`) is a side task, and
+  a prefix would claim a position it does not have. The card mirror was one
+  until d230 folded it into `10-fetch-hf-manifests.py`; the numbering
+  rule was unaffected.
 - The numeric prefix is a runbook fact, not an API: nothing imports these tools by
   module path (PEP 723 scripts and Node entries are executed by path), so the
   prefix cannot leak into a contract.

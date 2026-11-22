@@ -26,6 +26,7 @@ import json
 
 # Structured logging (JSON lines on stderr; see lib/log.py) — stdout stays
 # reserved for machine-consumed output.
+import os
 import pathlib as _pl
 import subprocess
 import sys
@@ -41,8 +42,6 @@ CURATED = HERE / "lib" / "curated"
 
 
 def hub_cache() -> _pl.Path:
-    import os
-
     home = os.environ.get("HF_HOME") or os.path.join(
         os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "huggingface"
     )
@@ -68,6 +67,9 @@ def main() -> int:
         completed = subprocess.run(
             ["uv", "tool", "run", "--quiet", "hf", "cache", "verify", "--json", repo],
             check=False,
+            # The CLI inherits this tool's stderr; its tqdm frames would sit
+            # beside the JSON lines (docs/d045).
+            env={**os.environ, "HF_HUB_DISABLE_PROGRESS_BARS": "1"},
         )
         if completed.returncode != 0:
             failures += 1

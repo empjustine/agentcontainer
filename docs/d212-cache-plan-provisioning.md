@@ -75,10 +75,13 @@ One chain, each stage a committed artifact or a single-job tool:
 - **Language follows age, not taste**: the Node family that emits configuration
   (`generate.mjs` and its authoring aid `20-propose-entries.mjs`, sharing
   `lib/model-entries.mjs`) stays Node; every new tool is Python (`run_all.py`,
-  `50-verify-cache.py`, `60-audit-snapshots.py`, `fetch_model_cards.py`,
+  `50-verify-cache.py`, `60-audit-snapshots.py`,
   `40-download-models.py`). No general-purpose tooling in POSIX shell; the shell
   tools (`run-all.sh`, `fetch-model-cards.sh`, `verify.sh`, `lib/log.sh`) are
   gone.
+- **One Hub fetcher for metadata** (d230): `10-fetch-hf-manifests.py`
+  mirrors each in-scope repo's README beside its tree manifest. The card mirror
+  side task is gone; the facts stay separate from the weights the downloader owns.
 - **Accounting is by blob, not by repo.** Repo manifests carry each file's
   `oid`, so the bytes a run still needs are the files whose oid is absent from
   the store — the number `40-download-models.py` checks against free space before

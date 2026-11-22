@@ -128,18 +128,40 @@ revision is attached, survives pruning, and is automatically kept fresh by the
 pull step. Consistency between an entry's model + mmproj files is preserved
 because `snapshot_download` resolves the branch to a single commit per call.
 
-## fetch_model_cards.py
+## Model cards
 
-Refreshes the model-card mirrors under `llm-local-inference/model-cards/<org>/<repo>.md`
-from Hugging Face (the `README.md` of each repo in
-`llamacpp-model-data.json`). File names are the repo id verbatim — the same
-value used in the derived model ids — so cards always match the ids.
+`10-fetch-hf-manifests.py` mirrors the upstream `README.md` of every
+in-scope repo to `llm-local-inference/model-cards/<org>/<repo>.md` in the
+same pass that refreshes its tree manifest (docs/d230). The repo set is
+`lib/cache-scope.json` plus the model manifest's served rows: an audit-only
+candidate needs its card before it has an entry, and a served row whose scope
+line drifted still needs one. File names are the repo id verbatim — the same
+value used in the derived model ids — so cards always match the ids. The card is
+fetched through the same `HfApi` at the manifest's commit, so gated repos
+use `HF_TOKEN` from the vault chain.
 
 The mirrors are the upstream `README.md` byte-for-byte, so their
 repo-relative image links (`./img/…`) dangle locally: images are not
 mirrored on purpose (the cards are read for content, and a picture copy would
 bloat the repo to serve nothing). A broken image in a card is that, not a
 missing fetch — read the diagrams on the Hub.
+
+## Output discipline
+
+Every Hub downloader in this unit (`10-fetch-hf-manifests.py`,
+`40-download-models.py` and `upkeep.py`) calls
+`disable_progress_bars()` at startup. `huggingface_hub` writes tqdm
+bars to stderr, the same stream that carries these tools' JSON lines; a bar
+would break the `tool 2> log.jsonl` and `jq` reads the logging
+contract expects (docs/d045). Each tool's own report still goes to stdout.
+
+The Hub downloaders, the cache audit and pruner, and the GGUF-header tool call
+`dep_log.install()` from `lib/dep_log.py`: standard `logging` records
+from `huggingface_hub`, `gguf` and `pypdf`, plus `warnings.warn`
+notices captured through `logging.captureWarnings`, are forwarded to `lib/log.py`
+with their level, logger name and exception as structured fields. Third-party
+prose is carried as the event label; its own fields stay fields. Adding a
+logging dependency means adding its root logger to that one list.
 
 ## Related
 

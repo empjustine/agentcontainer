@@ -27,6 +27,7 @@ import pathlib as _pl
 import sys
 
 sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
+import dep_log
 import log
 
 log.set_tool("llm-local-inference/upkeep")
@@ -39,6 +40,11 @@ from huggingface_hub import (
     scan_cache_dir,
     snapshot_download,
 )
+from huggingface_hub.utils import disable_progress_bars
+
+# tqdm writes to stderr, the same stream as these JSON lines (docs/d045).
+disable_progress_bars()
+dep_log.install()
 
 
 def _cache_dir() -> str:

@@ -62,7 +62,9 @@ The output is a `{"models": [...]}` fragment — one entry per servable
 quant, the filename an entry must write (shard 1), tab-indented like the
 manifest — for review and paste. Nothing writes the manifest for you: a
 promotion is a decision (which quant, which window, which macro), so the tool
-stops at the fragment.
+stops at the fragment. The repo's card under `model-cards/<org>/<repo>.md`,
+mirrored by `10-fetch-hf-manifests.py`, is where its intended use and quant
+recommendations are read before that decision.
 
 The `:quant` label is the one field only a human supplies;
 `10-fetch-hf-manifests.py --print-plan` audits it afterwards. The scope line is

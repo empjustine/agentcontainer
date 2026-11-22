@@ -44,7 +44,7 @@ llama.cpp inference. They share two design constraints:
 | `generate_layer_cards.py`   | Extract per-tensor (layer) names/sizes and render markdown "layer cards"                                                                                                                                                                                    |
 | `fit_analysis.py`           | Compute how many layers must be evicted to CPU to fit a GPU budget                                                                                                                                                                                          |
 | `estimate_active_params.py` | Measure total and per-token ACTIVE parameter counts / bytes from the GGUF header                                                                                                                                                                            |
-| `10-fetch-hf-manifests.py`  | Persist HF repo file listings (to `llm-local-inference/lib/hf-manifests/`) and audit each configured `--hf-file` against llama.cpp's implicit `repo:quant` → file heuristic                                                                                 |
+| `10-fetch-hf-manifests.py`  | Persist HF repo file listings (to `llm-local-inference/lib/hf-manifests/`), mirror each repo's README to `model-cards/`, and audit each configured `--hf-file` against llama.cpp's implicit `repo:quant` → file heuristic                                   |
 | `scan_cache_coverage.py`    | **PoC/MVP** — diff the HF cache against `llamacpp-model-data.json`: repos with zero coverage, listed repos with extra cached quants, ambiguous `bpw`/multi-quant filenames (header-free; see `llm-local-inference/refresh-llm-local-inference-manifest.md`) |
 | `gguf_context_length.py`    | read `general.architecture` / `context_length` / `general.name` from a GGUF header via the PyPI `gguf` package (no weights loaded); `--facts` rewrites `lib/gguf-facts.json`, the committed context-ceiling artifact (d197)                                 |
 
@@ -64,9 +64,8 @@ and rejected: extraction would be churn without a third independent consumer.
 The guardrail stands: single-purpose CLIs over shared code — not a mega-tool
 with subcommands (that consolidation pattern already failed once).
 
-`upkeep.py` (HF cache maintenance) and `fetch_model_cards.py` (README mirrors)
-on the serving host, driven by `run_all.py`.
-stay standalone by design: different concerns, no GGUF parsing.
+`upkeep.py` (HF cache maintenance) stays standalone by design: a
+different concern, no GGUF parsing.
 
 ### `llamacpp-model-data.json` — cross-language contract
 

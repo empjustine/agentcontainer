@@ -24,7 +24,11 @@ Q8_0.
 
 This tool caches that tree per repo as a local manifest
 (hf-manifests/<org>--<repo>.json, including the resolved commit) so the audit
-runs offline and drift against upstream's current main is caught early.
+runs offline and drift against upstream's current main is caught early. The
+same refresh mirrors the repo's root README to model-cards/<org>/<repo>.md:
+it is the other Hub fact a promotion reads before choosing a quant. Both facts
+come from one repo-driven loop, so one tool owns model metadata (docs/d230).
+--offline reads the committed copies and fetches nothing.
 
 What the audit is worth: the generator bakes each entry's `--model` from the
 HF cache (30-generate.mjs `bakeSnapshotPaths`) and 40-download-models.py fetches the
@@ -43,13 +47,13 @@ the table by id. A repo with no manifest cannot be planned or audited at all, so
 reaching it is this tool job — nothing downstream can guess a file list.
 
 Usage:
-    uv run llm-local-inference/10-fetch-hf-manifests.py                 # refresh + audit every repo
+    uv run llm-local-inference/10-fetch-hf-manifests.py                 # refresh, mirror cards, audit every repo
     uv run llm-local-inference/10-fetch-hf-manifests.py --repo ORG/REPO # one repo
     uv run llm-local-inference/10-fetch-hf-manifests.py --offline       # no network: cached manifests only
     uv run llm-local-inference/10-fetch-hf-manifests.py --print-plan    # llama.cpp's implicit pick per entry
 
-Exit code 1 if a configured model disagrees with the heuristic pick or is absent
-from the repo's tree.
+Exit code 1 if a configured model disagrees with the heuristic pick, is absent
+from the repo's tree, or if a card mirror fetch fails.
 """
 
 import argparse
@@ -65,14 +69,19 @@ from pathlib import Path
 
 from huggingface_hub import HfApi
 from huggingface_hub.hf_api import RepoFile
+from huggingface_hub.utils import disable_progress_bars
 
 sys.path.insert(0, str(_pl.Path(__file__).resolve().parent / "lib"))
+import dep_log
 import log
 
 log.set_tool("llm-local-inference/fetch-hf-manifests")
 # This script prints its payload (table/list/report) on stdout — logs go to
 # stderr so the two never interleave (docs/d045).
 log.set_stream(sys.stderr)
+# tqdm writes to stderr, the same stream as these JSON lines (docs/d045).
+disable_progress_bars()
+dep_log.install()
 
 HERE = Path(__file__).parent
 MODEL_DATA = HERE / "lib" / "llamacpp-model-data.json"
@@ -81,6 +90,7 @@ MODEL_DATA = HERE / "lib" / "llamacpp-model-data.json"
 # audit-only, or out of scope — never merely forgotten (30-generate.mjs).
 SCOPE_FILE = HERE / "lib" / "cache-scope.json"
 MANIFEST_DIR = HERE / "lib" / "hf-manifests"
+CARDS = HERE / "model-cards"
 
 SIDECAR_RE = re.compile(r"(mmproj|imatrix|mtp-|eagle3-|dflash-|dspark-)")
 SPLIT_RE = re.compile(r"-(\d{5})-of-(\d{5})\.gguf$")
@@ -115,6 +125,24 @@ def fetch_manifest(api, repo):
 
 def manifest_path(repo):
     return MANIFEST_DIR / (repo.replace("/", "--") + ".json")
+
+
+def fetch_card(api, repo, manifest):
+    """Mirror the repo's README at the path the runbook reads.
+
+    A missing README is a repo fact, not a failure; a fetch error is counted by
+    the caller, like a failed manifest refresh.
+    """
+    if not any(f["path"] == "README.md" for f in manifest["files"]):
+        return
+    # Pinned to the manifest commit: the card is a fact about this tree,
+    # and a detached README snapshot is never a provisioning input.
+    cached = api.hf_hub_download(repo_id=repo, filename="README.md",
+                                 revision=manifest["commit"])
+    out = CARDS / f"{repo}.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_bytes(Path(cached).read_bytes())
+    log.info("model card fetched", repo=repo, path=str(out), bytes=out.stat().st_size)
 
 
 def load_manifest(api, repo, offline=False):
@@ -190,7 +218,11 @@ def main():
     # is its keys and nothing else, so a repo cannot be refreshed, audited or
     # provisioned merely because some table once mentioned it.
     scope = json.loads(SCOPE_FILE.read_text()) if SCOPE_FILE.exists() else {}
-    repos = [r for r in scope if not args.repo or any(x in r for x in args.repo)]
+    # A served row whose scope line drifted still needs its facts (d212), so
+    # the table's repos join the closed inventory in the refresh set.
+    table_repos = {bare_repo(m["hf-repo"]) for m in data["models"]}
+    repos = sorted({r for r in [*scope, *table_repos]
+                    if not args.repo or any(x in r for x in args.repo)})
     for wanted in args.repo or []:
         if not any(wanted in r for r in scope):
             log.error(
@@ -198,16 +230,25 @@ def main():
                 repo=wanted,
             )
             sys.exit(1)
+    manifests = {}
+    card_failed = 0
     for repo in repos:
         try:
             manifest = load_manifest(api, repo, args.offline)
         except Exception as e:  # noqa: BLE001 — one repo failure must not stop the sweep
             log.warn("repo manifest refresh failed", repo=repo, error=e)
             continue
+        manifests[repo] = manifest
+        if not args.offline:
+            try:
+                fetch_card(api, repo, manifest)
+            except Exception as e:  # noqa: BLE001 — one card failure must not stop the sweep
+                log.warn("model card fetch failed", repo=repo, error=e)
+                card_failed += 1
         log.info(
             "repo manifest refreshed",
             repo=repo,
-            mode=scope[repo],
+            mode=scope.get(repo, "unscoped"),
             files=len(manifest["files"]) if manifest else 0,
         )
 
@@ -215,7 +256,7 @@ def main():
     label_only = 0
     print(f"{'repo:quant':52s} {'configured --model':44s} {'heuristic pick':40s} verdict")
     print("-" * 148)
-    seen = {}
+    seen = dict(manifests)
     for m in entries:
         repo = bare_repo(m["hf-repo"])
         if repo not in seen:
@@ -267,8 +308,8 @@ def main():
             print(f"{m['hf-repo']:52s} {configured:44s} {(picked or '(none)'):40s} {verdict}")
 
     log.info("manifest audit done", manifestDir=str(MANIFEST_DIR),
-             mismatches=mismatches, labelOnly=label_only)
-    sys.exit(1 if mismatches else 0)
+             mismatches=mismatches, labelOnly=label_only, cardFailures=card_failed)
+    sys.exit(1 if mismatches or card_failed else 0)
 
 
 if __name__ == "__main__":
