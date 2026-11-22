@@ -4,7 +4,7 @@
 #
 # The gate surface, in the order it runs — every leg gates except shfmt:
 #   shell sources · jq workload-filter compile (vacuous since d170) · shfmt (advisory) · oxfmt
-#   markdown · biome · oxlint (type-aware) · knip · ruff · uv sync --frozen ·
+#   markdown · biome · oxlint (type-aware) · tsc (checkJs strict) · knip · ruff · uv sync --frozen ·
 #   ty · the capability-URL, runner-copy and retired-root-lib text gates ·
 #   spec-graph contract · golangci-lint · sbex's Java static analysis.
 #
@@ -148,6 +148,21 @@ log_info "biome lint (gating — rule set in biome.jsonc; pinned by package-lock
 # a bug to flag 219 times.
 log_info "oxlint (gating — type-aware JS/TS lint)"
 ( cd "$repo_root" && "$repo_root/node_modules/.bin/oxlint" . -D warning )
+
+# check-types (gating): the tsconfig strictness program — tsc over every .mjs
+# with checkJs and the flag set in tsconfig.json. None of the gates above can
+# stand in for it: biome 2.6.x carries no type inference at all, and oxlint's
+# typeAware enables its typed RULE subset (no-floating-promises, …) rather than
+# the compiler's diagnostics — `--type-check` is the experimental flag that
+# reports those, and the tsconfig program is the supported one. The leg was
+# missing while tsconfig.json's own comment claimed the program complete, so
+# findings accumulated unchecked (pi-neuralwatt landed clean; the benchmark
+# units did not). check-types.sh installs what it reads, so it costs a stamp
+# check on a host that already has both toolchains.
+log_info "check-types (gating — tsc, checkJs, strict; tsconfig.json)"
+"${repo_root}/check-types.sh" ||
+	log_die 96 "type check failed" \
+		hint="run ./check-types.sh to see the findings; the types live in the JSDoc beside the code"
 
 # knip — the dead-code gate (unused files, unused exports). This is the
 # mechanical teeth for the fold discipline (docs/d039/d072): an export no
