@@ -166,6 +166,11 @@ arguing with the gate.
   Reaching into a sibling unit is not allowed (`docs/architecture.md`). Tests
   live in `<unit>/tests/` and read only their own folder; the repo-wide sweep
   (`test.sh`) runs them all but contributes none.
+- **A wrapped error keeps its cause chain** (docs/d045): construct the wrapper
+  with `cause`, `AggregateError.errors`, or `SuppressedError.suppressed`
+  instead of copying a message and dropping the original. A diagnostic that
+  swallows the upstream stack hides the step that failed, which the
+  maintainable/observable priority forbids.
 - **Environment/secrets are an explicit chain step**: the repo-root
   `./environment.sh <script>` does the one vault round-trip, then `exec`s the
   target. Consumers read plain env and never load secrets; there is exactly

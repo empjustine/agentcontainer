@@ -68,9 +68,10 @@ async function withEnv(values, fn) {
 
 /**
  * Load a fresh copy of the entry against capturing registerProvider and notify.
+ * @param {boolean} [hasUI]
  * @returns {Promise<{ configs: Record<string, Record<string, unknown>>, notifications: Array<{ message: string, type: string|undefined }> }>}
  */
-async function load() {
+async function load(hasUI = true) {
 	const id = ++caseNumber;
 	const { default: extension } = await import(`../index.mjs?case=${id}`);
 	/** @type {Record<string, Record<string, unknown>>} */
@@ -94,6 +95,7 @@ async function load() {
 	const start = handlers.session_start;
 	if (start) {
 		start({ type: "session_start", reason: "reload" }, {
+			hasUI,
 			ui: {
 				/** @param {string} message @param {"info"|"warning"|"error"|undefined} type */
 				notify(message, type) {
@@ -167,6 +169,17 @@ test("a reload reads the environment as it stands", async () => {
 			assert.deepEqual((await load()).configs.mistral, {
 				baseUrl: "https://two.example/v1",
 			});
+		},
+	);
+});
+
+test("no UI reports nothing", async () => {
+	await withEnv(
+		{ ...cleanEnv, ...keyed, MISTRAL_BASE_URL: "not-a-url" },
+		async () => {
+			const { configs, notifications } = await load(false);
+			assert.deepEqual(configs, {});
+			assert.deepEqual(notifications, []);
 		},
 	);
 });
