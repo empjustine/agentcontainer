@@ -50,6 +50,10 @@
 		"git/vbs-mirror-all.mjs",
 		"git/farm-tool.mjs",
 		"git/farm-aliases.mjs",
+		// the patch transport pair: run by hand at both ends, nothing imports
+		// them (docs/d229)
+		"git/export-patches.mjs",
+		"git/apply-patches.mjs",
 		"llm-local-inference/30-generate.mjs",
 		// the manifest-authoring aid: run by hand, nothing imports it
 		"llm-local-inference/20-propose-entries.mjs",
