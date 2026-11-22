@@ -47,11 +47,12 @@ FG_FARM_MUTATION_LOCK_TIMEOUT_S=${FG_FARM_MUTATION_LOCK_TIMEOUT_S:-10}
 # reader of this variable is the wrapper below.
 farm_lock_describe() {
 	printf '  lock:    %s\n' "$1" >&2
-	if [ -r "$1.status" ]; then
-		_flock_held_by=$(cat "$1.status")
-	else
+	# The substitution's own failure is the answer: a status file that is gone or
+	# unreadable leaves a holder that described itself nowhere. Testing `-r`
+	# first would ask the same question one syscall earlier and add a window
+	# (docs/d228).
+	_flock_held_by=$(cat "$1.status" 2>/dev/null) ||
 		_flock_held_by='not recorded (the holder described itself nowhere)'
-	fi
 	printf '  holder:  %s\n' "$_flock_held_by" >&2
 }
 

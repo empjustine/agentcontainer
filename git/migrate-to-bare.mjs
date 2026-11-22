@@ -57,8 +57,8 @@
  *   --exclude GLOB        skip clones whose relative path matches (repeatable)
  */
 
-import { existsSync, mkdirSync, rmSync, statSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { existsSync, mkdirSync, readdirSync, renameSync, rmSync, statSync } from "node:fs";
+import { basename, dirname, join, relative } from "node:path";
 
 import { parseFlags, runEntry } from "./lib/cli.mjs";
 import {
@@ -67,6 +67,7 @@ import {
 	DEFAULT_ROOT,
 	filterByGlobs,
 	findCloneRoots,
+	requireReadableRoot,
 	git,
 	logInfo,
 	logWarn,
@@ -230,19 +231,53 @@ async function convertOne(clone, o) {
 	const useDownload = o.redownload || shallow || !realUrl;
 
 	mkdirSync(dirname(target), { recursive: true });
-	if (o.force && existsSync(target)) {
-		rmSync(target, { recursive: true, force: true });
+
+	// Built beside the target and published by rename, so a clone that fails — or
+	// a mirror that fails verification — leaves the mirror that was already there
+	// (docs/d228 R10): `rm` before `clone` had a window in which the failure was
+	// total, the old mirror gone and the new one never arriving. The leading dot
+	// keeps a crashed build out of findBareMirrors' walk.
+	const dir = dirname(target);
+	const staging = join(dir, `.${basename(target)}.new-${process.pid}`);
+
+	// A crash between the two renames below leaves the previous mirror under the
+	// aside name with nothing at the target. The rename's own errno says which
+	// case this is — occupied means a later build published, so the aside is
+	// stale; free means it IS the previous mirror and is restored in one rename.
+	// This is the rerun-as-recovery path (docs/d228 R11, R10).
+	const asidePrefix = `.${basename(target)}.old-`;
+	const stagingPrefix = `.${basename(target)}.new-`;
+	for (const name of readdirSync(dir)) {
+		if (name.startsWith(stagingPrefix)) {
+			// A build a killed run left behind: never history, so it goes now.
+			rmSync(join(dir, name), { recursive: true, force: true });
+			continue;
+		}
+		if (!name.startsWith(asidePrefix)) {
+			continue;
+		}
+		const aside = join(dir, name);
+		try {
+			renameSync(aside, target);
+			logInfo("restored the mirror a previous run moved aside", { target, aside });
+		} catch (error) {
+			const code = /** @type {NodeJS.ErrnoException} */ (error).code;
+			if (code !== "ENOTEMPTY" && code !== "EEXIST") {
+				throw error;
+			}
+			rmSync(aside, { recursive: true, force: true });
+		}
 	}
 
 	try {
 		if (useDownload && realUrl) {
-			await git(o.root, ["clone", "--mirror", realUrl, target]);
+			await git(o.root, ["clone", "--mirror", realUrl, staging]);
 		} else {
 			// --local hardlinks objects on the same filesystem, so this is fast
 			// and near-space-free; the origin URL is corrected below.
-			await git(o.root, ["clone", "--mirror", "--local", clone, target]);
+			await git(o.root, ["clone", "--mirror", "--local", clone, staging]);
 			if (realUrl) {
-				await git(target, ["remote", "set-url", "origin", realUrl]);
+				await git(staging, ["remote", "set-url", "origin", realUrl]);
 			}
 		}
 	} catch (err) {
@@ -250,52 +285,83 @@ async function convertOne(clone, o) {
 			clone,
 			error: err,
 		});
+		rmSync(staging, { recursive: true, force: true });
 		return "failed";
 	}
 
-	const bare = await git(target, ["rev-parse", "--is-bare-repository"], {
+	const bare = await git(staging, ["rev-parse", "--is-bare-repository"], {
 		must: false,
 	});
 	if (bare.stdout.trim() !== "true") {
-		logWarn("converted target is not bare — leaving it for inspection", {
+		logWarn("converted target is not bare — the build is left beside it", {
 			target,
+			staging,
 		});
 		return "failed";
 	}
 
 	if (!(useDownload && realUrl)) {
-		const dropped = await dropRemoteTrackingRefs(target);
+		const dropped = await dropRemoteTrackingRefs(staging);
 		if (dropped) {
 			logInfo("dropped inherited remote-tracking refs", { target, dropped });
 		}
 	}
 
-	const head = await git(target, ["rev-parse", "--verify", "HEAD"], {
+	const head = await git(staging, ["rev-parse", "--verify", "HEAD"], {
 		must: false,
 	});
 	if (head.code !== 0) {
-		logWarn(
-			"mirror has an unborn HEAD (upstream empty or default branch missing)",
-			{
-				target,
-			},
-		);
+		logWarn("mirror has an unborn HEAD (upstream empty or default branch missing)", {
+			target,
+		});
 	}
 
 	// Unconditional: a mirror whose objects do not connect is not a conversion,
 	// and --delete-originals may not have a source clone left to re-derive it
 	// from (docs/d044, docs/d060).
-	const fsck = await git(target, ["fsck", "--connectivity-only"], {
+	const fsck = await git(staging, ["fsck", "--connectivity-only"], {
 		must: false,
 	});
 	if (fsck.code !== 0) {
 		logWarn("fsck --connectivity-only reported problems", {
 			target,
+			staging,
 			stderr: fsck.stderr.trim().split("\n").slice(-3).join(" | "),
 		});
 		return "failed";
 	}
 
+	// Publish. The rename's own errno says whether a mirror is already in the
+	// way, so no test precedes it: free target → one rename; occupied → the old
+	// mirror moves aside, the new one takes the name, and the old copy is dropped
+	// only once that succeeded (docs/d228 R10).
+	try {
+		renameSync(staging, target);
+	} catch (error) {
+		const code = /** @type {NodeJS.ErrnoException} */ (error).code;
+		if (code !== "ENOTEMPTY" && code !== "EEXIST") {
+			logWarn("publishing the new mirror failed", { clone, target, staging, error });
+			return "failed";
+		}
+		const aside = join(dir, `.${basename(target)}.old-${process.pid}`);
+		rmSync(aside, { recursive: true, force: true });
+		renameSync(target, aside);
+		try {
+			renameSync(staging, target);
+		} catch (publishError) {
+			renameSync(aside, target);
+			logWarn("publishing the new mirror failed — the previous mirror is back", {
+				clone,
+				target,
+				error: publishError,
+			});
+			return "failed";
+		}
+		rmSync(aside, { recursive: true, force: true });
+	}
+
+	// Last, and only once the mirror stands under its own name: the source clone
+	// is the only copy of what this mirror was made from (R10).
 	if (o.deleteOriginals) {
 		rmSync(clone, { recursive: true, force: true });
 		logInfo("removed original clone", { clone });
@@ -322,11 +388,7 @@ async function main() {
 		);
 		return;
 	}
-	if (!existsSync(o.root)) {
-		throw Object.assign(new Error("reference root not found"), {
-			root: o.root,
-		});
-	}
+	requireReadableRoot(o.root, "reference root not found");
 	// TODO(d044): this guard is asymmetric — it rejects a dest that CONTAINS
 	// root, but not a dest nested UNDER root. That is safe today only because
 	// findCloneRoots matches non-bare clones and mirrors are bare, so a nested

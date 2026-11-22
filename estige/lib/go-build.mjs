@@ -15,7 +15,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -42,9 +42,9 @@ export function goToolchainReady() {
 		return true;
 	}
 	const shims = join(process.env.HOME ?? "", ".local/share/mise/shims");
-	if (!existsSync(shims)) {
-		return false;
-	}
+	// No existence test on the shims dir: the spawn below answers the same
+	// question one syscall later, and a probe would only add a window in which
+	// the answer can go stale (docs/d228).
 	return (
 		spawnSync("go", ["version"], {
 			stdio: "ignore",

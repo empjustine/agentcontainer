@@ -49,6 +49,7 @@ import {
 	logInfo,
 	logWarn,
 	pool,
+	requireReadableRoot,
 	setLogTool,
 } from "./lib/git-core.mjs";
 
@@ -218,11 +219,7 @@ function parseIndexArgs(argv) {
  */
 async function cmdIndex(argv) {
 	const o = parseIndexArgs(argv);
-	if (!existsSync(o.root)) {
-		throw Object.assign(new Error("reference root not found"), {
-			root: o.root,
-		});
-	}
+	requireReadableRoot(o.root, "reference root not found");
 	// Indexing is OPT-IN, one interesting repo at a time (docs/d043). A blanket
 	// farm index multiplies the whole 73 GB by every branch and is almost never
 	// what is wanted — the farm is a long tail and only a few repos are ever
@@ -236,9 +233,7 @@ async function cmdIndex(argv) {
 	}
 	const tool = containerTool();
 	if (!tool) {
-		throw new Error(
-			"no podman or docker on PATH — the engine runs as a container (docs/d043)",
-		);
+		throw new Error("no podman or docker on PATH — the engine runs as a container (docs/d043)");
 	}
 	const engine = tool;
 

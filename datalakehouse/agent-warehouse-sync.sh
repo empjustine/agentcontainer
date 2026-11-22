@@ -61,7 +61,9 @@ acquire_lock() { # $1 = spool path
 		lock_dir="$dir"
 		return 0
 	fi
-	[ -f "$dir/pid" ] && pid=$(cat "$dir/pid" 2>/dev/null || true)
+	# The substitution answers absence itself (it is already tolerant), so a
+	# `-f` test in front of it can only add a window (docs/d228).
+	pid=$(cat "$dir/pid" 2>/dev/null || true)
 	if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
 		echo "agent-warehouse-sync: another sender (pid $pid) holds $dir" >&2
 		exit 75
@@ -209,8 +211,10 @@ fi
 if [ "$direct_side_effects" = 1 ]; then
 	acquire_lock "$spool_base"
 fi
-if [ "$direct_side_effects" = 1 ] && [ -f "$spool_base" ]; then
-	mv "$spool_base" "$spool_base.rm.$$"
+if [ "$direct_side_effects" = 1 ]; then
+	# The move's own ENOENT is the answer: the daemon may have rotated the tail
+	# already, and freezing a tail that is gone is freezing nothing (docs/d228).
+	mv "$spool_base" "$spool_base.rm.$$" 2>/dev/null || :
 fi
 
 # Resolution precedes the token check so --print-roots and --dry need no

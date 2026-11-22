@@ -88,7 +88,13 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { serializeArtifact, writeArtifact } from "./lib/artifact.mjs";
+import {
+	backupArtifact,
+	copyArtifact,
+	readArtifactOrNull,
+	serializeArtifact,
+	writeArtifact,
+} from "./lib/artifact.mjs";
 import { exitCodeOf, failure } from "./lib/failure.mjs";
 import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 
@@ -120,32 +126,30 @@ function runStage(script, args, env) {
 }
 
 /**
- * Read a models.json-shaped file; an unreadable/invalid layer counts as ZERO
- * providers (an empty map is a valid cascade outcome, and the count — not
- * the file's existence — is the install guard; formerly count-providers.
- * mjs's contract, absorbed here when its shell caller died — docs/d041).
- * @param {string} path
+ * The provider table of a parsed models.json; an empty map is a valid cascade
+ * outcome, and the COUNT — not the file's existence — is the install guard
+ * (formerly count-providers.mjs's contract, absorbed here when its shell caller
+ * died — docs/d041).
+ * @param {any} doc a parsed models.json-shaped document
  * @returns {Record<string, { models?: unknown[], baseUrl?: string }>}
  */
-function providersOf(path) {
-	try {
-		return JSON.parse(readFileSync(path, "utf-8")).providers ?? {};
-	} catch {
-		return {};
-	}
+function providersOf(doc) {
+	return doc?.providers ?? {};
 }
 
 /**
- * Read an mcp.json-shaped file, reporting — never throwing — an unreadable or
- * invalid one. `null` means "leave the file alone": the agent dir is shared
- * with the host pi, and a merge cannot preserve servers it cannot read
- * (docs/d061).
- * @param {string} path
+ * Parse an mcp.json-shaped document, reporting — never throwing — an invalid
+ * one. `null` means "leave the file alone": the agent dir is shared with the
+ * host pi, and a merge cannot preserve servers it cannot read (docs/d061).
+ * The read belongs to the caller, so an ABSENT file reaches here as no call at
+ * all rather than as an unreadable one (docs/d228).
+ * @param {string} text the document's content
+ * @param {string} path for the report
  * @returns {{ mcpServers?: Record<string, unknown> } | null}
  */
-function readMcpConfig(path) {
+function parseMcpConfig(text, path) {
 	try {
-		return JSON.parse(readFileSync(path, "utf-8"));
+		return JSON.parse(text);
 	} catch (err) {
 		logError("mcp.json is not valid JSON — leaving it untouched", {
 			path,
@@ -159,7 +163,9 @@ function readMcpConfig(path) {
  * Mirror the freshly generated models.json and its model-*.json layers into
  * the committed snapshot dir — identical in URL form to what the agent dir
  * gets (docs/d041/d070/d108: generation emits real upstream URLs and no
- * install-time rewrite exists). Without this copy-back
+ * install-time rewrite exists). Each copy goes through tmp + rename, so a
+ * crash cannot leave the artifact the next run seeds from torn (docs/d228 R8).
+ * Without this copy-back
  * `./npm-run.sh coding-agent generate` refreshes only the agent dir, so the
  * committed coding-agent/models.json stays frozen: the artifact a review
  * reads would keep an old generation. Container hosts only (docs/d059). A
@@ -175,10 +181,10 @@ function refreshCommittedSnapshot(modelsOut, outDir, snapshotDir) {
 	const committedModels = join(snapshotDir, "models.json");
 	try {
 		if (modelsOut !== committedModels) {
-			copyFileSync(modelsOut, committedModels);
+			copyArtifact(modelsOut, committedModels);
 			for (const name of readdirSync(outDir)) {
 				if (/^model-.*\.json$/.test(name)) {
-					copyFileSync(join(outDir, name), join(snapshotDir, name));
+					copyArtifact(join(outDir, name), join(snapshotDir, name));
 				}
 			}
 		}
@@ -192,33 +198,28 @@ function refreshCommittedSnapshot(modelsOut, outDir, snapshotDir) {
 }
 
 /**
- * Install settings.json into the agent dir, FIRST, so it lands even if every
- * generator stage fails. Best-effort pre-overwrite insurance (compare/rollback
- * a bad generate), NOT a preservation contract: the agent dir's copies are
- * generated ephemeral files and pi re-persists its runtime fields itself.
- * An incomplete generator tree (a consumer copied only some of this dir's
- * inputs) is reported at error level because it is never expected, but
- * non-fatal on purpose: the caller's staged settings.json is already in place
- * and nothing else depends on this file.
- * @param {string} from the generator tree's committed settings.json
+ * Install the staged settings.json into the agent dir — LAST, because it names
+ * the default provider the models.json install above made current, so the two
+ * publish in the order their references run: a half-commit then still names a
+ * provider that exists (docs/d228 R9). Best-effort pre-overwrite insurance
+ * (compare/rollback a bad generate), NOT a preservation contract: the agent
+ * dir's copies are generated ephemeral files and pi re-persists its runtime
+ * fields itself.
+ * @param {string} from this run's staged settings.json
  * @param {string} to the agent dir's settings.json
  * @returns {void}
  */
 function installSettings(from, to) {
-	if (!existsSync(from)) {
+	const source = readArtifactOrNull(from);
+	if (source === null) {
 		logError("settings.json source missing — keeping the agent dir's copy", {
 			path: from,
 			agentSettings: to,
 		});
 		return;
 	}
-	if (existsSync(to)) {
-		copyFileSync(
-			to,
-			`${to}.bak-${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}`,
-		);
-	}
-	writeArtifact(to, readFileSync(from, "utf-8"));
+	backupArtifact(to);
+	writeArtifact(to, source);
 	logInfo("settings.json installed", { path: to });
 }
 
@@ -234,7 +235,8 @@ function installSettings(from, to) {
  * @returns {void}
  */
 function installMcp(source, target) {
-	if (!existsSync(source)) {
+	const defaultsText = readArtifactOrNull(source);
+	if (defaultsText === null) {
 		// Same non-fatal contract as the settings source: a consumer that
 		// copied only part of this dir keeps the mcp.json already in place
 		// rather than dropping MCP config over a missing input.
@@ -244,18 +246,16 @@ function installMcp(source, target) {
 		});
 		return;
 	}
-	const defaults = readMcpConfig(source)?.mcpServers ?? {};
-	const current = existsSync(target) ? readMcpConfig(target) : {};
+	const defaults = parseMcpConfig(defaultsText, source)?.mcpServers ?? {};
+	const currentText = readArtifactOrNull(target);
+	const current = currentText === null ? {} : parseMcpConfig(currentText, target);
 	if (current === null) {
 		return;
 	}
 	const mcpServers = { ...defaults, ...current.mcpServers };
 	// Tabs so the installed copy stays byte-diffable against the committed
 	// file this repo lints (biome; d050's determinism in spirit).
-	writeArtifact(
-		target,
-		`${JSON.stringify({ ...current, mcpServers }, null, "\t")}\n`,
-	);
+	writeArtifact(target, `${JSON.stringify({ ...current, mcpServers }, null, "\t")}\n`);
 	logInfo("mcp.json installed", {
 		path: target,
 		servers: Object.keys(mcpServers),
@@ -272,27 +272,31 @@ function installMcp(source, target) {
  * byte-identical in meaning: the reverse proxy that used to require a route
  * form there is deprecated as insecure (docs/d108), so there is no
  * install-time rewrite left to run.
- * @param {string} modelsOut the generated models.json
+ * @param {string} modelsText the generated models.json, already read (an
+ *   ABSENT file is the caller's refusal, not a zero-provider cascade — docs/d228)
  * @param {string} agentDir the live pi agent dir
  * @returns {number} providers installed (0 = the caller must abort)
  */
-function installModels(modelsOut, agentDir) {
-	const providers = providersOf(modelsOut);
+function installModels(modelsText, agentDir) {
+	let installed;
+	try {
+		installed = JSON.parse(modelsText);
+	} catch (err) {
+		// A generator that emitted invalid JSON is a broken generation, not a
+		// cascade with zero providers: reporting it as "0 providers" would hide
+		// the fault in the artifact behind the one the caller expects (docs/d228).
+		throw failure("generated models.json is not valid JSON — aborting (nothing installed)", 1, {
+			error: String(err),
+		});
+	}
+	const providers = providersOf(installed);
 	if (Object.keys(providers).length === 0) {
 		return 0;
 	}
-	const installed = /** @type {any} */ (
-		JSON.parse(readFileSync(modelsOut, "utf-8"))
-	);
 	const target = join(agentDir, "models.json");
-	if (existsSync(target)) {
-		copyFileSync(
-			target,
-			`${target}.bak-${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}`,
-		);
-	}
+	backupArtifact(target);
 	writeArtifact(target, serializeArtifact(installed));
-	for (const [id, provider] of Object.entries(providersOf(target))) {
+	for (const [id, provider] of Object.entries(providers)) {
 		logInfo("provider override", {
 			provider: id,
 			models: (provider.models ?? []).length,
@@ -321,24 +325,17 @@ function installModels(modelsOut, agentDir) {
 function installOpencode(generated, hostDir, snapshotDir) {
 	// Best-effort .bak insurance, same as the settings/models installs above:
 	// generated ephemeral files, not a preservation contract.
-	const installed = /** @type {any} */ (
-		JSON.parse(readFileSync(generated, "utf-8"))
-	);
+	const installed = /** @type {any} */ (JSON.parse(readFileSync(generated, "utf-8")));
 	mkdirSync(hostDir, { recursive: true });
 	const host = join(hostDir, "opencode.json");
-	if (existsSync(host)) {
-		copyFileSync(
-			host,
-			`${host}.bak-${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}`,
-		);
-	}
+	backupArtifact(host);
 	writeArtifact(host, serializeArtifact(installed));
 	logInfo("opencode config installed", { path: host });
 
 	// The committed snapshot: warn-only on a read-only dir, like
 	// refreshCommittedSnapshot.
 	try {
-		copyFileSync(generated, join(snapshotDir, "opencode.jsonc"));
+		copyArtifact(generated, join(snapshotDir, "opencode.jsonc"));
 		logInfo("committed opencode snapshot refreshed", {
 			path: join(snapshotDir, "opencode.jsonc"),
 		});
@@ -410,12 +407,25 @@ async function main() {
 	// publishes nothing.
 	const outDir = mkdtempSync(join(runDir, "pi-models-gen-"));
 	try {
+		// --- Stage: nothing between here and "commit" touches the agent dir ------
+		// The pi generator's default stage reads a settings file, so one has to
+		// exist before generation — but it reads the STAGE, not an install: a
+		// generation that dies from here on leaves the agent dir as it was
+		// (docs/d228 R8).
+		currentStage = "settings-stage";
+		const committedSettings = readArtifactOrNull(join(scriptDir, "settings.json"));
+		if (committedSettings === null) {
+			// A consumer that copied only part of this dir (docs/d113) keeps the
+			// settings it already has; the agent dir's copy becomes the merge base.
+			logError("settings.json source missing — keeping the agent dir's copy", {
+				path: join(scriptDir, "settings.json"),
+				agentSettings: join(agentDir, "settings.json"),
+			});
+		}
+		const settingsBase = committedSettings ?? readArtifactOrNull(join(agentDir, "settings.json"));
+		const stagedSettings =
+			settingsBase === null ? null : writeArtifact(join(outDir, "settings.json"), settingsBase);
 
-		currentStage = "settings-install";
-		installSettings(join(scriptDir, "settings.json"), join(agentDir, "settings.json"));
-
-		currentStage = "mcp-install";
-		installMcp(join(scriptDir, "mcp.json"), join(agentDir, "mcp.json"));
 
 		currentStage = "models-json";
 
@@ -435,16 +445,18 @@ async function main() {
 		}
 		logInfo("models.dev catalog fetched", { path: catalogOut });
 
+
 		logInfo("generating pi config (layers + merge + default overlay)");
 		// One generator, one process: generate-pi-coding-agent.mjs runs the local
 		// GGUF layer, the cloud layers (docs/d037 override-only + full rows), the
 		// layer merge, and the operator default-model overlay internally, each
 		// stage isolated so one failure does not take the rest down (the same
 		// contract the former per-stage child processes had). Its default stage
-		// reads the settings file installed above.
+		// reads the settings file staged above — the same bytes an install would
+		// have put in the agent dir, at a path that is not public (docs/d228 R8).
 		const piEnv = {
 			...generatorEnv,
-			PI_SETTINGS: join(agentDir, "settings.json"),
+			PI_SETTINGS: stagedSettings ?? join(agentDir, "settings.json"),
 			PI_MODELS_JSON: join(outDir, "models.json"),
 			PI_DEFAULT_MODEL_JSON: join(outDir, "default-model.json"),
 		};
@@ -468,7 +480,8 @@ async function main() {
 		}
 
 		const modelsOut = join(outDir, "models.json");
-		if (!existsSync(modelsOut)) {
+		const modelsText = readArtifactOrNull(modelsOut);
+		if (modelsText === null) {
 			throw failure("pi generator produced no models.json — aborting (docs/d070 §6)", 1, {
 				path: modelsOut,
 			});
@@ -480,42 +493,37 @@ async function main() {
 		// operator's hardcoded defaultProvider/defaultModel from the settings
 		// source, as is (docs/d036 — the default is an OPERATOR DECISION, not a
 		// probed fact). It ran with the rest of the pi stages; this block merges
-		// its overlay into the installed settings.json (independent of the
-		// models.json install).
-		const overlay = join(outDir, "default-model.json");
-		if (existsSync(overlay)) {
-			const defaultModel = JSON.parse(readFileSync(overlay, "utf-8"));
-			const settings = JSON.parse(readFileSync(join(agentDir, "settings.json"), "utf-8"));
-			if (defaultModel.defaultProvider) {
-				settings.defaultProvider = defaultModel.defaultProvider;
-			}
-			if (defaultModel.defaultModel) {
-				settings.defaultModel = defaultModel.defaultModel;
-			}
-			writeArtifact(
-				join(agentDir, "settings.json"),
-				`${JSON.stringify(settings, null, 2)}\n`,
-			);
-			logInfo("settings.json updated with default model config", {
-				path: join(agentDir, "settings.json"),
-			});
-		} else {
+		// its overlay into the staged settings.json (independent of the
+		// models.json install, and before either is published).
+		const overlayText = readArtifactOrNull(join(outDir, "default-model.json"));
+		if (overlayText === null) {
 			logWarn("pi generator produced no default-model overlay");
+		} else {
+			// Merged into the STAGE, so the operator's default rides the same commit
+			// as the rest of settings instead of publishing ahead of it (R8).
+			const settingsFile = stagedSettings ?? join(agentDir, "settings.json");
+			const settingsText = readArtifactOrNull(settingsFile);
+			if (settingsText === null) {
+				logWarn("no settings.json to merge the default model into", {
+					path: settingsFile,
+				});
+			} else {
+				const defaultModel = JSON.parse(overlayText);
+				const settings = JSON.parse(settingsText);
+				if (defaultModel.defaultProvider) {
+					settings.defaultProvider = defaultModel.defaultProvider;
+				}
+				if (defaultModel.defaultModel) {
+					settings.defaultModel = defaultModel.defaultModel;
+				}
+				writeArtifact(settingsFile, `${JSON.stringify(settings, null, 2)}\n`);
+				logInfo("settings.json updated with default model config", {
+					path: settingsFile,
+				});
+			}
 		}
 
-		currentStage = "models-install";
-		const installed = installModels(modelsOut, agentDir);
-		if (installed === 0) {
-			throw failure("0 providers generated — refusing to install (docs/d063)", 1, {
-				action: "abort",
-				modelsJson: modelsOut,
-			});
-		}
-		if (!termux && modelsOut !== join(scriptDir, "models.json")) {
-			refreshCommittedSnapshot(modelsOut, outDir, scriptDir);
-		}
-
-		currentStage = "opencode-config";
+		currentStage = "opencode-generate";
 
 		// --- opencode config -----------------------------------------------------
 		// Upstream loads the provider overlay when asked. The consumer knob is
@@ -541,11 +549,12 @@ async function main() {
 		let ocOut = "";
 		if (!termux || env.OPENCODE_CONFIG_DIR) {
 			ocOut = join(outDir, "opencode.json");
-			const ocCommitted = join(scriptDir, "opencode.jsonc");
-			if (existsSync(ocCommitted)) {
-				copyFileSync(ocCommitted, ocOut);
+			const committed = readArtifactOrNull(join(scriptDir, "opencode.jsonc"));
+			if (committed !== null) {
+				writeArtifact(ocOut, committed);
 			}
 		}
+		let ocGenerated = false;
 		if (ocOut && existsSync(join(scriptDir, "generate-opencode.mjs"))) {
 			// d063 fail closed, same as the pi generator above: a half-written
 			// overlay would leave a stale provider map in the committed opencode.jsonc.
@@ -554,7 +563,41 @@ async function main() {
 					script: "generate-opencode.mjs",
 				});
 			}
+			ocGenerated = true;
+		}
+
+		// --- Commit -------------------------------------------------------------
+		// The only block that changes live state, and it runs after every stage
+		// that can abort, so a failed generation publishes nothing (docs/d228 R8).
+		// Order inside it is the order the artifacts reference each other: models
+		// first (installModels refuses, writing nothing, when it has no providers),
+		// mcp next, the opencode overlay after the models it points into, and
+		// settings.json LAST because it names the default provider — the one a
+		// reader resolves against the models installed above (R9). Every write in
+		// this block is one rename, and its backup is taken immediately before.
+		currentStage = "commit";
+		const installed = installModels(modelsText, agentDir);
+		if (installed === 0) {
+			throw failure("0 providers generated — refusing to install (docs/d063)", 1, {
+				action: "abort",
+				modelsJson: modelsOut,
+			});
+		}
+		installMcp(join(scriptDir, "mcp.json"), join(agentDir, "mcp.json"));
+
+		if (ocGenerated) {
 			installOpencode(ocOut, ocHostDir, scriptDir);
+		}
+
+		if (stagedSettings !== null) {
+			installSettings(stagedSettings, join(agentDir, "settings.json"));
+		}
+
+		// Warn-only by contract (a read-only snapshot dir is expected), so it
+		// cannot half-fail the commit — and it goes last: the live install is
+		// ahead of the review surface it leaves behind as a git diff.
+		if (!termux && modelsOut !== join(scriptDir, "models.json")) {
+			refreshCommittedSnapshot(modelsOut, outDir, scriptDir);
 		}
 
 		logInfo("done", { agentDir });
@@ -566,9 +609,7 @@ async function main() {
 		// stage it died in, and still passes through the finally below.
 		throw failure(`generate failed during ${currentStage}`, 1, {
 			stage: currentStage,
-			error: String(
-				error instanceof Error ? (error.stack ?? error.message) : error,
-			),
+			error: String(error instanceof Error ? (error.stack ?? error.message) : error),
 		});
 	} finally {
 		rmSync(outDir, { recursive: true, force: true });

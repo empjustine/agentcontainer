@@ -70,7 +70,6 @@
  * runs pace differently (docs/d060).
  */
 
-import { existsSync } from "node:fs";
 import { relative } from "node:path";
 
 import { parseFlags, runEntry } from "./lib/cli.mjs";
@@ -87,6 +86,7 @@ import {
   optimizeMirror,
   originUrl,
   pool,
+  requireReadableRoot,
   setLogTool,
 } from "./lib/git-core.mjs";
 import { parseSoftwareForgeRemote } from "./lib/forge-remotes.mjs";
@@ -359,11 +359,7 @@ async function main() {
     );
     return;
   }
-  if (!existsSync(o.root)) {
-    throw Object.assign(new Error("reference root not found"), {
-      root: o.root,
-    });
-  }
+  requireReadableRoot(o.root, "reference root not found");
   if (o.deep && !o.optimize) {
     throw new Error(
       "--deep-optimize conflicts with --no-optimize — deep implies optimize (docs/d089)",

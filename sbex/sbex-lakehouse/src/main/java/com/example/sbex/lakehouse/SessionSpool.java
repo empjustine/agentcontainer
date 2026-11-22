@@ -5,8 +5,11 @@ import jakarta.annotation.PreDestroy;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -135,14 +138,20 @@ final class SessionSpool {
 	final class Append implements AutoCloseable {
 
 		private final long start;
+		private final FileChannel channel;
 		private final BufferedWriter writer;
 		private volatile boolean rolledBack;
 
 		private Append() throws IOException {
-			long size = Files.exists(spool) ? Files.size(spool) : 0L;
-			this.start = size;
-			this.writer = Files.newBufferedWriter(spool, StandardCharsets.UTF_8,
-				StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+			// ONE handle answers both questions: `start` is the size of the very
+			// file this batch appends to, and a refused batch truncates that same
+			// handle. Sizing the path first left the two describing different files
+			// whenever rotation renamed the spool in between, and the rollback then
+			// truncated a tail it never wrote (docs/d228).
+			this.channel = FileChannel.open(spool, StandardOpenOption.CREATE,
+				StandardOpenOption.WRITE, StandardOpenOption.APPEND);
+			this.start = channel.size();
+			this.writer = new BufferedWriter(Channels.newWriter(channel, StandardCharsets.UTF_8));
 			makePrivate(spool);
 		}
 
@@ -166,13 +175,14 @@ final class SessionSpool {
 		@Override
 		public void close() {
 			try {
+				// Flush, then truncate, then close: the buffered lines must reach the
+				// channel before the truncate, and closing first would take the handle
+				// the truncate needs with it.
 				writer.flush();
-				writer.close();
 				if (rolledBack) {
-					try (var channel = Files.newByteChannel(spool, StandardOpenOption.WRITE)) {
-						channel.truncate(start);
-					}
+					channel.truncate(start);
 				}
+				writer.close();
 			} catch (IOException exception) {
 				throw new UncheckedIOException(exception);
 			}
@@ -247,15 +257,16 @@ final class SessionSpool {
 		}
 		List<String> keys = new ArrayList<>();
 		for (Path tail : tails) {
-			if (!Files.exists(tail)) {
-				continue;
-			}
 			try (var lines = Files.lines(tail, StandardCharsets.UTF_8)) {
 				lines.forEach(line -> {
 					if (!line.isBlank()) {
 						keys.add(SessionIngest.lineKey(line, mapper));
 					}
 				});
+			} catch (NoSuchFileException rotated) {
+				// Rotation renamed the tail between the listing and the open: the keys
+				// it held were seeded on a previous start, and a warn here would
+				// report routine upkeep as a fault (docs/d228).
 			} catch (IOException | UncheckedIOException unreadable) {
 				log.warn("cannot seed from {}: {}", tail, unreadable.getMessage());
 			}
@@ -271,11 +282,15 @@ final class SessionSpool {
 	}
 
 	private void repairPartialTail(Path file) throws IOException {
-		if (!Files.exists(file) || Files.size(file) == 0) {
-			return;
-		}
-		try (var channel = java.nio.channels.FileChannel.open(file, StandardOpenOption.READ)) {
-			channel.position(channel.size() - 1);
+		try (var channel = FileChannel.open(file, StandardOpenOption.READ)) {
+			// The handle answers the size, so a tail that is absent, empty or emptied
+			// between open and position is the same "nothing to repair" — no stat of
+			// the path decides it (docs/d228).
+			long size = channel.size();
+			if (size == 0) {
+				return;
+			}
+			channel.position(size - 1);
 			var last = java.nio.ByteBuffer.allocate(1);
 			channel.read(last);
 			if (last.get(0) != (byte) '\n') {
@@ -283,6 +298,9 @@ final class SessionSpool {
 				log.warn("{} ended mid-line; appended a newline so the partial row is reported",
 					file);
 			}
+		} catch (NoSuchFileException absent) {
+			// The spool is created by the first append, and rotation may rename it at
+			// any moment: there is nothing here to repair (docs/d228).
 		}
 	}
 

@@ -23,7 +23,7 @@
  *   --check compares them to disk and exits 1 on drift.
  */
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -475,7 +475,11 @@ function build(farm) {
  * @param {unknown} value
  */
 function writeCanonical(path, value) {
-	writeFileSync(path, `${JSON.stringify(value, null, "\t")}\n`);
+	// tmp + rename: a crash mid-write would otherwise leave a truncated committed
+	// taxonomy that the next enumeration reads as its input (docs/d228 R8).
+	const tmp = `${path}.tmp`;
+	writeFileSync(tmp, `${JSON.stringify(value, null, "\t")}\n`);
+	renameSync(tmp, path);
 }
 
 /**

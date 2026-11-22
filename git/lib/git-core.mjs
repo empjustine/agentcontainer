@@ -272,6 +272,24 @@ function looksBare(entries) {
 }
 
 /**
+ * The premise of a root walk, proved by the syscall the walk itself needs. The
+ * walk tolerates an unreadable LEVEL, so an unproved root scans as an empty farm
+ * and reports zero clones instead of refusing; an existence test would answer a
+ * moment and discard the errno that separates "gone" from "unreadable"
+ * (docs/d228).
+ * @param {string} root
+ * @param {string} message the refusal this caller's CLI reports
+ * @returns {void}
+ */
+export function requireReadableRoot(root, message) {
+  try {
+    readdirSync(root);
+  } catch {
+    throw Object.assign(new Error(message), { root });
+  }
+}
+
+/**
  * Walk `root` and return every non-bare clone root (depth-first, sorted). A
  * repo root is a directory directly containing `.git/`; the walk CONTINUES
  * past it (unlike a naive prune) because some reference "owners" are repos

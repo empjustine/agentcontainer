@@ -274,19 +274,31 @@ try {
  * @param {string} file
  */
 async function seedSeen(file) {
-  if (!fs.existsSync(file)) { return; }
   const lines = readline.createInterface({
     input: fs.createReadStream(file, { encoding: "utf8" }),
     crlfDelay: Number.POSITIVE_INFINITY,
   });
-  for await (const line of lines) {
-    if (line.trim() === "") { continue; }
-    try {
-      rememberSeen(lineKey(line));
-    } catch (error) {
-      process.stderr.write(
-        "agent-warehouse-daemon: cannot seed " + file + ": " + messageOf(error) + "\n",
-      );
+	try {
+		for await (const line of lines) {
+			if (line.trim() === "") {
+				continue;
+			}
+			try {
+				rememberSeen(lineKey(line));
+			} catch (error) {
+				process.stderr.write(
+					"agent-warehouse-daemon: cannot seed " + file + ": " + messageOf(error) + "\n",
+				);
+			}
+		}
+	} catch (error) {
+		// A frozen tail is rotation's to delete at any moment, so "gone" is the
+		// ordinary answer and the stream's own ENOENT is what says it: an existence
+		// test would have answered the same one syscall earlier without the
+		// guarantee (docs/d228). Anything else is a real seed failure.
+		const code = /** @type {{ code?: string } | null | undefined} */ (error)?.code;
+		if (code !== "ENOENT") {
+			throw error;
     }
   }
 }

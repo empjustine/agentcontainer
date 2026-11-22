@@ -64,7 +64,9 @@ acquire_lock() { # $1 = spool path
 		lock_dir="$dir"
 		return 0
 	fi
-	[ -f "$dir/pid" ] && pid=$(cat "$dir/pid" 2>/dev/null || true)
+	# The substitution answers absence itself (it is already tolerant), so a
+	# `-f` test in front of it can only add a window (docs/d228).
+	pid=$(cat "$dir/pid" 2>/dev/null || true)
 	if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
 		echo "agent-warehouse-spool-send: another sender (pid $pid) holds $dir" >&2
 		exit 75
@@ -181,8 +183,10 @@ if [ "$side_effects" = 1 ]; then
 fi
 # Freeze the live tail under the lock, so what this run consumes cannot race a
 # concurrent daemon append.
-if [ "$side_effects" = 1 ] && [ -f "$spool" ]; then
-	mv "$spool" "$spool.rm.$$"
+if [ "$side_effects" = 1 ]; then
+	# The move's own ENOENT is the answer: the daemon may have rotated the tail
+	# already, and freezing a tail that is gone is freezing nothing (docs/d228).
+	mv "$spool" "$spool.rm.$$" 2>/dev/null || :
 fi
 # A side-effect run consumes only the frozen tails. The live path may be
 # recreated by the daemon during this run; including it here used to read it and
@@ -398,7 +402,9 @@ json_array() {
 quarantine() { # $1 line, $2 line number, $3 reason
 	local line=$1 n=$2 reason=$3 qid before after at
 	qid=$(line_hash "$line")
-	if [ -f "$deadlog" ] && grep -qF "\"id\":\"$qid\"" "$deadlog" 2>/dev/null; then
+	# grep on an absent file already answers "not there" (exit 2), and it is the
+	# one read that has to happen anyway (docs/d228).
+	if grep -qF "\"id\":\"$qid\"" "$deadlog" 2>/dev/null; then
 		printf 'agent-warehouse-spool-send: %s:%s already quarantined\n' "$f" "$n" >&2
 		return 0
 	fi

@@ -70,23 +70,32 @@ def repo_manifest(repo):
     """The committed repo manifest: name -> (oid, size). Absent is an error —
     a curated file without facts cannot be validated or sized."""
     path = MANIFESTS / (repo.replace("/", "--") + ".json")
-    if not path.is_file():
+    try:
+        text = path.read_text()
+    except FileNotFoundError:
         raise SystemExit(
             f"curated manifest for {repo} has no committed repo manifest ({path.name}); "
             "run uv run llm-local-inference/10-fetch-hf-manifests.py"
-        )
-    data = json.loads(path.read_text())
+        ) from None
+    data = json.loads(text)
     return {f["path"]: (f.get("oid"), f.get("size") or 0) for f in data["files"]}
 
 
 def curated():
-    """Every curated manifest, repo-sorted, as the provisioning plan."""
-    if not CURATED.is_dir():
+    """Every curated manifest, repo-sorted, as the provisioning plan.
+
+    The dir is LISTED, not globbed: a glob over a path that is gone yields the
+    empty list, which is indistinguishable from "every manifest was pruned" and
+    would provision nothing while reporting success (docs/d228).
+    """
+    try:
+        names = sorted(os.listdir(CURATED))
+    except FileNotFoundError:
         raise SystemExit(
             f"{CURATED} is missing — generate it first: "
             "LOCAL_INFERENCE=1 ./node-run.sh llm-local-inference/30-generate.mjs"
-        )
-    return [json.loads(p.read_text()) for p in sorted(CURATED.glob("*.json"))]
+        ) from None
+    return [json.loads((CURATED / name).read_text()) for name in names if name.endswith(".json")]
 
 
 def hub_cache():

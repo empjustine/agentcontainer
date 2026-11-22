@@ -28,7 +28,7 @@
  * Usage: ./node-run.sh llm-local-inference/20-propose-entries.mjs
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -88,14 +88,21 @@ function shardOneName(files, key) {
  */
 function entriesFor(libDir, repo) {
 	const path = join(libDir, "hf-manifests", `${repo.replace("/", "--")}.json`);
-	if (!existsSync(path)) {
+	let text;
+	try {
+		text = readFileSync(path, "utf-8");
+	} catch (error) {
+		if (/** @type {NodeJS.ErrnoException} */ (error).code !== "ENOENT") {
+			throw error;
+		}
 		// The scope line is a declaration; without a repo manifest nothing can be
 		// proposed for it, and 10-fetch-hf-manifests.py is the fix (docs/d212).
+		// The read's own ENOENT is what says the manifest is absent (docs/d228).
 		logInfo("no committed repo manifest — run 10-fetch-hf-manifests.py --repo", { repo });
 		return [];
 	}
 	/** @type {{files: Array<{path: string, size: number}>}} */
-	const manifest = JSON.parse(readFileSync(path, "utf-8"));
+	const manifest = JSON.parse(text);
 	return [...mainGgufSizes(manifest.files).keys()].map((key) => {
 		const model = shardOneName(manifest.files, key);
 		return { "hf-repo": `${repo}:${quantLabel(key)}`, model };

@@ -271,6 +271,22 @@ if git grep -nE 'parent[.]parent|HERE[.]parent[[:space:]]*/[[:space:]]*[^[:space
 	exit 1
 fi
 
+# Existence-probe gate, namespace half (docs/d228). biome's
+# noRestrictedImports bans the named `existsSync` import — the mechanical teeth
+# for the rule, with the legitimate classifiers allow-listed in biome.jsonc —
+# but it cannot see the call reached through a namespace import (`fs.existsSync`),
+# which is the same guard wearing a different import. No site uses that form; this
+# grep is what keeps one from arriving unnoticed. Tests are exempt on the same
+# ground as the biome override: an assertion on the state a run left behind is an
+# answer, not a permission.
+log_info "existence-probe gate (gating — namespace form; docs/d228)"
+# No \b here: git grep's ERE has no word boundary (measured — it silently
+# matches nothing), so the leading class is spelled out.
+if git grep -nE '(^|[^[:alnum:]_])(fs|fsp|fsPromises)[.](existsSync|exists)[(]' -- '*.mjs' '*.ts' '*.js' ':(exclude)*/tests/*'; then
+	echo "namespace existence probe (docs/d228) — ask the act for its own ENOENT; the allowed classifiers are biome.jsonc's overrides" >&2
+	exit 1
+fi
+
 # Spec-graph contract gate (docs/d140): the frontmatter invariants
 # docs/spec-graph-standard.md states and the ThinkRail validator does not check
 # — the vocabulary, titles, id spelling, the nesting rules, and the file/edge

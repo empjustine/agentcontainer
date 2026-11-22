@@ -23,14 +23,7 @@
  * steps still reports four.
  */
 import { spawn } from "node:child_process";
-import {
-	appendFileSync,
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { appendFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { BRIEF, defectsOf, episode, probeOf } from "./episode.mjs";
@@ -139,11 +132,22 @@ function parseSeeds(text) {
 const journalOf = (out) => join(out, "journal.jsonl");
 
 /**
+ * A step's artifact, or null when the step wrote none. The read's own ENOENT is
+ * that answer: an existence test in front of it answers a moment, and it reports
+ * an unreadable artifact as one that was never written (docs/d228).
  * @param {string} path
  * @returns {string | null}
  */
-const maybeRead = (path) =>
-	existsSync(path) ? readFileSync(path, "utf8") : null;
+const maybeRead = (path) => {
+	try {
+		return readFileSync(path, "utf8");
+	} catch (error) {
+		if (/** @type {NodeJS.ErrnoException} */ (error).code !== "ENOENT") {
+			throw error;
+		}
+		return null;
+	}
+};
 
 /**
  * A crashed run leaves half a line; the rest of the journal still validates.

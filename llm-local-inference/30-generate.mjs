@@ -252,15 +252,26 @@ function bakeSnapshotPaths(hubHost, m, manifests, libDir) {
 	const snapshotsDir = join(hubHost, repoDir, "snapshots");
 
 	const candidates = [];
-	const refPath = join(hubHost, repoDir, "refs", "main");
-	if (existsSync(refPath)) {
-		const sha = readFileSync(refPath, "utf-8").trim();
+	// Both candidates lists come from a scan of the cache, and their absence is
+	// an ordinary answer (the fallback below bakes the manifest commit): the
+	// scan's own ENOENT says so, one syscall later than a probe would and
+	// without a window in between (docs/d228).
+	try {
+		const sha = readFileSync(join(hubHost, repoDir, "refs", "main"), "utf-8").trim();
 		if (sha) {
 			candidates.push(sha);
 		}
+	} catch (error) {
+		if (/** @type {NodeJS.ErrnoException} */ (error).code !== "ENOENT") {
+			throw error;
+		}
 	}
-	if (existsSync(snapshotsDir)) {
+	try {
 		candidates.push(...readdirSync(snapshotsDir).sort());
+	} catch (error) {
+		if (/** @type {NodeJS.ErrnoException} */ (error).code !== "ENOENT") {
+			throw error;
+		}
 	}
 
 	const required = allShards(m.model);
@@ -283,8 +294,7 @@ function bakeSnapshotPaths(hubHost, m, manifests, libDir) {
 		return guestPaths(sha);
 	}
 
-	const sha =
-		candidates[0] ?? repoManifest(manifests, libDir, repo).commit;
+	const sha = candidates[0] ?? repoManifest(manifests, libDir, repo).commit;
 	if (sha === null) {
 		throw new Error(
 			`no cached snapshot and no committed manifest commit to bake ${m["hf-repo"]} against`,
@@ -297,11 +307,11 @@ function bakeSnapshotPaths(hubHost, m, manifests, libDir) {
 	return guestPaths(sha);
 
 	/**
-	 * The guest-side paths of ONE snapshot — the shape both the resolved and the
-	 * unverified branch emit, so a fix to one cannot miss the other.
-	 * @param {string} sha
-	 * @returns {{ modelPath: string, shardPaths: string[], mmprojPath: string|null, draftPath: string|null }}
-	 */
+   * The guest-side paths of ONE snapshot — the shape both the resolved and the
+   * unverified branch emit, so a fix to one cannot miss the other.
+   * @param {string} sha
+   * @returns {{ modelPath: string, shardPaths: string[], mmprojPath: string|null, draftPath: string|null }}
+   */
 	function guestPaths(sha) {
 		const snapGuest = `${HUB_GUEST}/${repoDir}/snapshots/${sha}`;
 		return {
@@ -846,16 +856,28 @@ const SCOPE_MODES = new Set(["served", "audit-only"]);
  */
 function readScope(libDir) {
 	const path = join(libDir, "cache-scope.json");
-	if (!existsSync(path)) {
-		throw new Error("lib/cache-scope.json is missing — it is the closed inventory of the repos this unit keeps");
+	let text;
+	try {
+		text = readFileSync(path, "utf-8");
+	} catch (error) {
+		// The read's errno answers the question the existence test used to ask,
+		// and it can also say "unreadable", which the test reported as missing
+		// (docs/d228).
+		if (/** @type {NodeJS.ErrnoException} */ (error).code !== "ENOENT") {
+			throw Object.assign(new Error("lib/cache-scope.json could not be read"), { path });
+		}
+		throw new Error(
+			"lib/cache-scope.json is missing — it is the closed inventory of the repos this unit keeps",
+		);
 	}
 	/** @type {Record<string, string>} */
-	const declared = JSON.parse(readFileSync(path, "utf-8"));
+	const declared = JSON.parse(text);
 	for (const [repo, mode] of Object.entries(declared)) {
 		if (!SCOPE_MODES.has(mode)) {
 			throw new Error(
-				`lib/cache-scope.json: ${repo} declares unknown mode ${JSON.stringify(mode)} (known: ${[...SCOPE_MODES].join(
-)})`,
+				`lib/cache-scope.json: ${repo} declares unknown mode ${JSON.stringify(mode)} (known: ${[
+					...SCOPE_MODES,
+				].join()})`,
 			);
 		}
 	}

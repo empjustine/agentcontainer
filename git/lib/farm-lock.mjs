@@ -21,13 +21,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import {
-	existsSync,
-	readFileSync,
-	renameSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -76,9 +70,6 @@ export function probeFarmMutationLock(lockPath) {
  */
 export function readLockHolder(lockPath) {
 	const file = `${lockPath}.status`;
-	if (!existsSync(file)) {
-		return null;
-	}
 	try {
 		const parsed = JSON.parse(readFileSync(file, "utf8"));
 		return {
@@ -88,8 +79,10 @@ export function readLockHolder(lockPath) {
 			detail: typeof parsed.detail === "string" ? parsed.detail : null,
 		};
 	} catch {
-		// A half-written or hand-edited status file is not an error: the lock
-		// state above it is still the answer, only the description is missing.
+		// A half-written, hand-edited or already-removed status file is not an
+		// error: the lock state above it is still the answer, only the
+		// description is missing. The read's own ENOENT is that answer, so no
+		// existence test precedes it (docs/d228).
 		return null;
 	}
 }
@@ -113,10 +106,11 @@ export function writeLockStatus(lockPath, { tool, detail, pid = process.pid }) {
 	renameSync(tmp, file);
 }
 
-/** @param {string} lockPath */
+/**
+ * `force` already answers ENOENT, so an existence test in front of the remove
+ * would only widen the window it cannot close (docs/d228).
+ * @param {string} lockPath
+ */
 export function clearLockStatus(lockPath) {
-	const file = `${lockPath}.status`;
-	if (existsSync(file)) {
-		rmSync(file, { force: true });
-	}
+	rmSync(`${lockPath}.status`, { force: true });
 }

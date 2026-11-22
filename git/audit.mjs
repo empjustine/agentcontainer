@@ -27,6 +27,7 @@ import {
 	DEFAULT_MAX_DEPTH,
 	DEFAULT_ROOT,
 	findCloneRoots,
+	requireReadableRoot,
 	git,
 	logInfo,
 	originUrl,
@@ -83,16 +84,10 @@ function githubSlug(url) {
 async function main() {
 	const o = parseArgs(process.argv.slice(2));
 	if (o.help) {
-		process.stdout.write(
-			"usage: ./node-run.sh git/audit.mjs [--root DIR] [--max-depth N]\n",
-		);
+		process.stdout.write("usage: ./node-run.sh git/audit.mjs [--root DIR] [--max-depth N]\n");
 		return;
 	}
-	if (!existsSync(o.root)) {
-		throw Object.assign(new Error("reference root not found"), {
-			root: o.root,
-		});
-	}
+	requireReadableRoot(o.root, "reference root not found");
 
 	const repos = findCloneRoots(o.root, o.maxDepth);
 	const rels = repos.map((p) => relative(o.root, p));

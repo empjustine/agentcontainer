@@ -356,11 +356,23 @@ function isDirectory(target) {
  * @returns {any}
  */
 function loadManifest(manifestPath) {
-	if (!existsSync(manifestPath)) {
-		die(1, "manifest not found", { manifest: manifestPath });
+	let text;
+	try {
+		text = readFileSync(manifestPath, "utf8");
+	} catch (error) {
+		// The read's own errno separates "no manifest here" from "I cannot
+		// read the one that is here" — an existence test would report both as
+		// the first (docs/d228).
+		die(
+			1,
+			/** @type {NodeJS.ErrnoException} */ (error).code === "ENOENT"
+				? "manifest not found"
+				: "manifest unreadable",
+			{ manifest: manifestPath },
+		);
 	}
 	try {
-		return JSON.parse(readFileSync(manifestPath, "utf8"));
+		return JSON.parse(text);
 	} catch {
 		die(1, "could not parse manifest (shape not one the extractor knows)");
 	}

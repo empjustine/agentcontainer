@@ -29,7 +29,7 @@
  *   --only/--exclude GLOB  filter repos under --root by relative path
  */
 
-import { existsSync } from "node:fs";
+import { readdirSync } from "node:fs";
 import { relative, resolve } from "node:path";
 
 import { parseFlags, runEntry } from "./lib/cli.mjs";
@@ -37,6 +37,7 @@ import {
 	DEFAULT_MAX_DEPTH,
 	filterByGlobs,
 	findCloneRoots,
+	requireReadableRoot,
 	git,
 	logInfo,
 	pool,
@@ -489,9 +490,7 @@ async function main() {
 	/** @type {string[]} */
 	let repos;
 	if (o.root) {
-		if (!existsSync(o.root)) {
-			throw Object.assign(new Error("root not found"), { root: o.root });
-		}
+		requireReadableRoot(o.root, "root not found");
 		const discovered = findCloneRoots(o.root, o.maxDepth);
 		const rels = discovered.map((p) => relative(o.root, p));
 		const kept = new Set(filterByGlobs(rels, o.only, o.exclude));
@@ -499,24 +498,25 @@ async function main() {
 		logInfo("discovered clones", { root: o.root, count: repos.length });
 	} else {
 		const repo = resolve(o.repo);
-		if (!existsSync(repo)) {
+		// readdir again, for the errno: a repo that is present but unreadable is
+		// a different report from one that is gone (docs/d228).
+		try {
+			readdirSync(repo);
+		} catch {
 			throw Object.assign(new Error("repo not found"), { repo });
 		}
 		repos = [repo];
 	}
 
 	const infos = await pool(repos, 4, (repo) => inspectRepo(repo, o));
-	const shown =
-		o.root && !o.all ? infos.filter((info) => info.findings > 0) : infos;
+	const shown = o.root && !o.all ? infos.filter((info) => info.findings > 0) : infos;
 
 	if (o.json) {
 		process.stdout.write(`${JSON.stringify({ repos: shown }, null, 2)}\n`);
 	} else if (shown.length === 0) {
 		process.stdout.write("no repositories with local-only changes found\n");
 	} else {
-		process.stdout.write(
-			`${shown.map((info) => formatRepo(info, o)).join("\n\n")}\n`,
-		);
+		process.stdout.write(`${shown.map((info) => formatRepo(info, o)).join("\n\n")}\n`);
 	}
 
 	const dirty = infos.filter((info) => info.findings > 0).length;

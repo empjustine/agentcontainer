@@ -97,10 +97,14 @@ def cached_file(repo, filename):
     d = os.path.join(cache_root(), 'models--' + repo.replace('/', '--'))
     cands = []
     ref = os.path.join(d, 'refs', 'main')
-    if os.path.exists(ref):
+    try:
+        # The read's own ENOENT answers "no ref yet": a test in front of it would
+        # report an unreadable ref as an absent one (docs/d228).
         sha = _pl.Path(ref).read_text().strip()
-        if sha:
-            cands.append(sha)
+    except FileNotFoundError:
+        sha = ''
+    if sha:
+        cands.append(sha)
     snap = os.path.join(d, 'snapshots')
     if os.path.isdir(snap):
         cands.extend(sorted(os.listdir(snap)))

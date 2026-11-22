@@ -545,13 +545,20 @@ async function main() {
 	// Clones are lock-free, so every fresh mirror is created before any align
 	// can wait on — or give up on — the farm mutation lock: a held lock costs
 	// the fresh mirrors nothing, and the complaint about it comes last. The
-	// exists check catches the same input twice in one batch — the earlier
-	// clone in this pass already made that target (docs/d166).
+	// same input twice in one batch is one clone, and that is a fact of the
+	// plan list, not of the disk: re-stat'ing the target would answer "already
+	// there" for a mirror this run is about to create (docs/d166, d228).
+	const cloned = new Set();
 	for (const plan of plans) {
-		if (!plan.fresh || existsSync(plan.target)) {
+		if (!plan.fresh || cloned.has(plan.target)) {
 			continue;
 		}
-		await attempt(plan.input, () => cloneMirrored(plan, o));
+		// Marked only on success: a clone that failed leaves no mirror behind, so a
+		// duplicate input in the same batch still gets its attempt.
+		await attempt(plan.input, async () => {
+			await cloneMirrored(plan, o);
+			cloned.add(plan.target);
+		});
 	}
 	for (const plan of plans) {
 		if (plan.fresh) {

@@ -59,9 +59,13 @@ def curated() -> dict:
 def repo_manifest(repo: str):
     """repo -> {path: (oid, size)} from the committed repo manifest, or None."""
     path = LIB / "hf-manifests" / (repo.replace("/", "--") + ".json")
-    if not path.is_file():
+    try:
+        text = path.read_text()
+    except FileNotFoundError:
+        # None is "no committed manifest for this repo", and the read's own
+        # errno is what says so (docs/d228).
         return None
-    data = json.loads(path.read_text())
+    data = json.loads(text)
     return {f["path"]: (f.get("oid"), f.get("size") or 0) for f in data["files"]}
 
 
