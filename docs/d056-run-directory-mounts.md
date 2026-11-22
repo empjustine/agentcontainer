@@ -150,7 +150,7 @@ single mount rather than a podman duplicate-destination error.
 
 ## References
 
-- `docs/d041-unified-generate-build-entrypoints.md` — runners never generate;
+- `docs/archive/d041-unified-generate-build-entrypoints.md` — runners never generate;
   the generator tree mount was the last exception this record removes.
 - `docs/d043-cross-repo-reference-search.md` — names the
   `CODING_AGENT_REFERENCES` toggle and its ~39 s relabel cost.

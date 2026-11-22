@@ -1,7 +1,7 @@
 ---
 id: d032
 type: architecture-design
-status: active
+status: deprecated
 title: "Adding a cloud provider — the flow and its surprises (worked example: inferx)"
 parent: architecture
 depends-on: [d024, d027]
@@ -13,7 +13,7 @@ tags: [coding-agent, llm-reverse-proxy, generators, models-dev]
 
 ## Status
 
-Generator/verifier paths superseded by d037/d041/d071/d072 (mapping below).
+Deprecated by d232. Generator/verifier paths superseded by d037/d041/d071/d072 (mapping below); d232 restates the current provider contract.
 
 Worked example: **InferX** (`https://model.inferx.net/endpoints/v1`, key
 `$INFERX_API_KEY`), added as alternative-provider layer `model-017` and proxy

@@ -138,7 +138,7 @@ shell has no arrays; that constraint ends when the runner changes language.
 - [d053](d053-model-size-ordering.md) and
   [d055](d055-mmproj-offload-size-gate.md) die with the removals and move to
   `deprecated` when the code lands.
-- [d018](d018-split-config-d.md)'s layer table lists `active-b.json` as a
+- [d018](archive/d018-split-config-d.md)'s layer table lists `active-b.json` as a
   layer, and [d003](d003-llamacpp-context-windows.md) describes the active-b
   slug. Records stay history; the corrected descriptions live in the living
   docs listed under Consequences.

@@ -39,7 +39,7 @@ The two targets have different mechanics, so the system is split by concern:
 llama-swap already has the merge primitive we need: `-config-dir` loads every
 `*.yaml`/`*.yml` under a directory and **additively merges** identity-keyed
 maps (`models`, `peers`, `groups`, `profiles`, `selectors`, `matrix`), while
-concatenating `apiKeys` (see [d018](../d018-split-config-d.md)). A generator system
+concatenating `apiKeys` (see [d018](d018-split-config-d.md)). A generator system
 would emit, per concern, a small file into a host-specific `config.d/` overlay:
 
 - `00-general.yaml` — globals + macros + ctxWindows (one, canonical)

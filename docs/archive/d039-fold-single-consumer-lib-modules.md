@@ -1,7 +1,7 @@
 ---
 id: d039
 type: architecture-design
-status: active
+status: deprecated
 title: "d039 — fold single-consumer lib/ modules back to their owning runner"
 parent: architecture
 references: [d023, d037, d038, d025]
@@ -9,6 +9,10 @@ depends-on: [coding-agent, estige, d023]
 ---
 
 # d039 — fold single-consumer lib/ modules back to their owning runner
+
+## Status
+
+Deprecated by d232. d113 retired the shared lib this fold-back served; d232 states the per-unit ownership rule.
 
 **Status:** implemented
 

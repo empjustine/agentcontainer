@@ -92,7 +92,7 @@ path" is exactly the oracle the 404 policy exists to remove.
 ## The SSL-VPN transport family (docs/d073, delivered in phases)
 
 The requirements for the family grew out of the reverse-proxy era and are
-owned by [d073](../docs/d073-ssl-vpn-three-modes.md), not this file. The
+owned by [d073](../docs/archive/d073-ssl-vpn-three-modes.md), not this file. The
 feasibility verdict there is the load-bearing part: Tailscale Funnel does
 **not** support the HTTP `CONNECT` method as a general tunnel, but it does
 support the WebSocket upgrade, so the tunnel is `CONNECT`-inside-`wss`. The

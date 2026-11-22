@@ -28,7 +28,7 @@ the chain.
 ## Problem
 
 The coding agent's containers hold provider keys in their environment, which is
-what [d073](d073-ssl-vpn-three-modes.md)'s trust table says a component in the
+what [d073](archive/d073-ssl-vpn-three-modes.md)'s trust table says a component in the
 TLS path must not do. Infisical's **agent-vault** removes that: it is a
 credential-injecting MITM forward proxy, so the workload speaks plain HTTPS to
 a local proxy and the real secret is added (or swapped) on the upstream leg.
@@ -45,7 +45,7 @@ agent/container → agent-vault (MITM, credential injection)
 
 The MITM must be **innermost** (it terminates TLS between the workload and
 itself) and the tunnel **outermost** (estige must never be in the trust path —
-[d073](d073-ssl-vpn-three-modes.md), `estige/DESIGN.md`, VPN-R25). That
+[d073](archive/d073-ssl-vpn-three-modes.md), `estige/DESIGN.md`, VPN-R25). That
 ordering is what makes the pair compose at all, and it is also why the vault is
 the hop that has to learn about a chain: from the vault's position, "the
 upstream is not the internet, it is another proxy" is the only new fact.

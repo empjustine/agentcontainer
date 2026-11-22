@@ -28,7 +28,7 @@ policy applied, traffic logged).
 
 What the repo has today is the _spelling_ of that, not the boundary:
 `HTTPS_PROXY`/`ALL_PROXY`/`NO_PROXY` handed to the child
-([d001](d001-proxy-env-and-namespace.md), [d074](d074-native-node-env-proxy.md),
+([d001](archive/d001-proxy-env-and-namespace.md), [d074](d074-native-node-env-proxy.md),
 estige's `proxy-env`, [d094](d094-relay-chain-proxy.md) for the chain's own
 resolution), and `--network user` in the VM bench, which is the host's egress
 NATted with no policy at all. A client process is free to ignore every one of

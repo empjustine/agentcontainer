@@ -47,7 +47,7 @@ The image provides a pre-configured development environment including:
 
 ## Shape
 
-Since docs/d041 `generate.mjs` (run as `./npm-run.sh coding-agent generate`) IS the folder
+Under d232 `generate.mjs` (run as `./npm-run.sh coding-agent generate`) IS the folder
 driver, and since the by-agent merge it drives exactly TWO generators — one
 per coding agent (the broad merge that supersedes docs/d037's narrow
 per-concern verdict; the supersession is recorded in the
@@ -99,7 +99,7 @@ carries its `sessions/`), opencode's config and data dirs (docs/d065), Cline's
 env pin: the generator's install target, the host harness and the sandboxed
 harness are one directory. A populated `auth.json` in the pi agent dir or the
 opencode data dir aborts the run (keys resolve from forwarded env — an empty
-`{}` is ignored; d052/d054/d216). It NEVER generates (docs/d041, docs/d056):
+`{}` is ignored; d052/d054/d216). It NEVER generates (d232, docs/d056):
 the generator tree is NOT mounted into the container, so an in-container
 session works against the host-generated config mounted above. `run.mjs` takes
 `[DIRECTORY [DIRECTORY...]]` instead — CWD is the implicit first directory,
@@ -129,14 +129,13 @@ through the environment proxy.
 ## Decisions & invariants
 
 - **Layer ids carry the merge order** (`010` < `012` < `015`, zero-padded
-  lexorank); each layer source owns exactly one merge semantic
-  (`docs/d024-generators-split-and-provider-facts.md`). The merge contract
-  has a single home: the `generate-pi-coding-agent.mjs` header.
-- **By-agent, not by-concern**: docs/d037 kept the four pi stages as separate
+  lexorank); the pi generator owns every layer source (d232; d024 is history).
+  The merge contract has a single home: the `generate-pi-coding-agent.mjs` header.
+- **By-agent, not by-concern**: d037 kept the four pi stages as separate
   processes; the by-agent merge consolidated them into ONE generator process
   (stages as functions, documented order). This supersedes d037's process
-  split while keeping its per-layer merge verdicts — d037/d033 remain the
-  semantic specs for the layers themselves.
+  split while keeping its per-layer merge verdicts — d033 remains the semantic
+  spec for the layers; d037 is history (d232).
 - **Canonical URLs everywhere** (docs/d108 supersedes d063's route half;
   URL form per docs/d070): committed and installed artifacts both carry the
   fact-table canonical upstream, probes fetch each provider's canonical
@@ -205,7 +204,7 @@ through the environment proxy.
   `codemode.md`). Cost accepted: the model drives tools through codemode
   scripts and must `searchTools()`/`describeTool()` for signatures instead
   of reading declarations.
-- **Key naming / baseUrl baking / proxy env**: `docs/d001-proxy-env-and-namespace.md`; native node proxy handling: `docs/d074-native-node-env-proxy.md`.
+- **Key naming / baseUrl baking / proxy env**: d232 owns the law (d001 is history); native node proxy handling: `docs/d074-native-node-env-proxy.md`.
 - A zero-provider merge result is **kept as-is** (never clobbers a good
   `models.json` with an empty merge).
 - pi requires node ≥ 22.19; the floor is enforced by pi's own engines at

@@ -1,12 +1,16 @@
 ---
 id: d018
 type: module-design
-status: active
+status: deprecated
 title: "d018 — split llama-swap config (config.d/) per functionality"
 parent: llm-local-inference
 ---
 
 # d018 — split llama-swap config (`config.d/`) per functionality
+
+## Status
+
+Deprecated by d232. Only two layers remain after d108 and d170; d232 restates the layer-merge rule that still binds.
 
 ## Problem
 

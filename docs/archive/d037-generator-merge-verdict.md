@@ -1,7 +1,7 @@
 ---
 id: d037
 type: architecture-design
-status: active
+status: deprecated
 title: "d037 — generator merge verdict: cloud generators unify, the rest stay split"
 parent: architecture
 references:
@@ -15,6 +15,10 @@ depends-on:
 ---
 
 # d037 — generator merge verdict: cloud generators unify, the rest stay split
+
+## Status
+
+Deprecated by d232. The broad merge this record rejected is the shape in force; d232 states it.
 
 **Status:** implemented (narrow merge) · **SIMPLE.md's broad claim: rejected**
 

@@ -312,7 +312,7 @@ llama-swap merges `config.d/` files additively at startup. Restart the
 
 - `gguf-model-tooling.md` — schema contract, `10-fetch-hf-manifests.py` reference,
   and the two PoC helpers `scan_cache_coverage.py` / `gguf_context_length.py` used above.
-- `d018-split-config-d.md` — why the config is split into `00-general.yaml` /
+- `../docs/archive/d018-split-config-d.md` — why the config is split into `00-general.yaml` /
   `10-local-llm-inference.yaml` and how llama-swap merges `config.d/`.
 - `hf-cache-upkeep.md` — `upkeep.py` cache GC/pull/verify; `40-download-models.py`
   must use the `main` ref (not a pinned SHA) to survive pruning.

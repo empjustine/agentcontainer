@@ -63,7 +63,7 @@ generator (`generate.sh`; the runner mounts that dir, docs/d054).
 
 > **Deprecated:** the `OPENCODE_GO_API_KEY` name below is retired — OpenCode
 > now uses the unified `OPENCODE_API_KEY` (rationale in
-> **[d001](../d001-proxy-env-and-namespace.md)** §3).
+> **[d001](d001-proxy-env-and-namespace.md)** §3).
 
 - The default model is pinned to the opencode-go subscription (DeepSeek V4
   Flash) **only** when `OPENCODE_GO_API_KEY` is present. When the key is absent
@@ -73,7 +73,7 @@ generator (`generate.sh`; the runner mounts that dir, docs/d054).
 
 ## Related decision records
 
-- [`d001-proxy-env-and-namespace.md`](../d001-proxy-env-and-namespace.md) — proxy
+- [`d001-proxy-env-and-namespace.md`](d001-proxy-env-and-namespace.md) — proxy
   env vars, plain un-prefixed key naming, `baseUrl` baking (in force; cited
   directly by `coding-agent/route-probe.mjs`,
   `coding-agent/refresh-models-dev.mjs`, `coding-agent/gen-lib.mjs`).

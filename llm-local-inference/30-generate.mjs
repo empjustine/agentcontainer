@@ -32,7 +32,7 @@
  * llama-swap-core.json (macros).
  *
  * Layer-merge rules for the fragments (llama-swap's -config-dir loader;
- * docs/d018): identity-keyed maps merge additively and a duplicate key across
+ * d232): identity-keyed maps merge additively and a duplicate key across
  * files is a hard error, while `apiKeys` concatenates and macros/scalars must
  * be single-defined — hence each layer owns a disjoint key set and
  * 00-general.yaml is the only home of the globals.

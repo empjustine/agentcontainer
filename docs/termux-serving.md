@@ -86,9 +86,9 @@ management.
   termux and small-cloud-vm environment rows:
   hostnames, hardware, and what each host runs. The peers-only env layout
   is identical to Termux's.
-- [d018-split-config-d.md](d018-split-config-d.md) — split `config.d/` layout
+- [d018-split-config-d.md](archive/d018-split-config-d.md) — split `config.d/` layout
   (merge contract, per-layer stale-output rules).
-- [d001-proxy-env-and-namespace.md](d001-proxy-env-and-namespace.md) — plain,
+- [d001-proxy-env-and-namespace.md](archive/d001-proxy-env-and-namespace.md) — plain,
   un-prefixed and unified provider key names.
 - [d021-unreadable-models-dev-catalog.md](d021-unreadable-models-dev-catalog.md)
   — proposed (not applied): an unreadable models.dev catalog should skip only

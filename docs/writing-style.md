@@ -293,7 +293,7 @@ one stays advice:
 
 - **Descriptive link text** (`docs/docs/google-style/cross-references.md:75`–`90`,
   `:127`–`141`). The guides want a phrase, not "click here". This tree's link
-  text carries the **id** — `[d073](d073-ssl-vpn-three-modes.md)` — because the
+  text carries the **id** — `[d073](archive/d073-ssl-vpn-three-modes.md)` — because the
   id is the stable identity an agent greps and the graph resolves. A rewrite to
   phrases would trade that precision for screen-reader fluency across 194 links.
   The rule still catches the real fault: never `[this document]` or `[here]`.

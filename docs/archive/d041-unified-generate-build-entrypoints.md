@@ -1,7 +1,7 @@
 ---
 id: d041
 type: architecture-design
-status: active
+status: deprecated
 title: "d041 — unified generate/build entrypoints; runners never build or generate"
 parent: architecture
 tags: ["generators", "builders", "runners", "entrypoints"]
@@ -11,6 +11,8 @@ depends-on: [d023]
 # d041 — unified generate/build entrypoints; runners never build or generate
 
 ## Status
+
+Deprecated by d232. The root orchestrators and the launcher gate are gone; d232 states the current entrypoint boundary.
 
 DRY_RUN/BUILD_PLAN later retired by d058 · per-folder build.sh entries return as selection shims (d083) · `node_run` becomes an INVOKED command instead of a sourced function (d138).
 

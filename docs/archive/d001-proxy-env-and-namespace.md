@@ -1,12 +1,16 @@
 ---
 id: d001
 type: architecture-design
-status: active
+status: deprecated
 title: "d001 — proxy env & baseUrl policy"
 parent: architecture
 ---
 
 # d001: proxy env & baseUrl policy
+
+## Status
+
+Deprecated by d232. The proxy-edge and peer-key world this record describes is gone; d232 restates the surviving key and baseUrl law.
 
 ## Context
 

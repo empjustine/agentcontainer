@@ -141,7 +141,7 @@ independent of it. The runner was ignoring the session mechanism.
   updates (pi config host dir + per-run session stage).
 - `docs/d026-data-diode-audit.md` — the per-run session stage is its diode
   target.
-- `docs/d041-unified-generate-build-entrypoints.md` — runners never generate
+- `docs/archive/d041-unified-generate-build-entrypoints.md` — runners never generate
   (the mechanism in d041(d) is refined here).
 - `docs/d052-tombstone-credential-staging.md` — no credential file is staged;
   the `auth.json` abort enforces it.

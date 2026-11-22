@@ -35,7 +35,7 @@ simply the documented state of a superficial row.
 `lib/cloud-providers.mjs` gains a `support` field per row plus a
 `supportTier(id)` helper (`"llama-swap"` — the local learner, not a cloud
 row — is first-class; anything outside the fleet table defaults to
-superficial). One table, because [d024](d024-generators-split-and-provider-facts.md)
+superficial). One table, because [d024](archive/d024-generators-split-and-provider-facts.md)
 already made this file the single place provider facts live; per-generator
 tier lists would be the duplicated decision the repo forbids.
 

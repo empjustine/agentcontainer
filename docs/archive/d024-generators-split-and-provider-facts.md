@@ -1,13 +1,17 @@
 ---
 id: d024
 type: architecture-design
-status: active
+status: deprecated
 title: "Per-merge-semantic generator split & shared cloud provider facts"
 parent: architecture
 tags: ["generators", "provider-facts", "split"]
 ---
 
 # d024 — Per-merge-semantic generator split & shared cloud provider facts
+
+## Status
+
+Deprecated by d232. The by-agent merge reversed the generator split and d191 dissolved the shared fact caches; d232 states the current shape.
 
 This applies the two remaining follow-ups from the d022/d023 audits — the
 "d022 future refactor" (split the `generate-models.json.mjs` grab-bag by

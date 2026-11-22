@@ -22,7 +22,7 @@ Providers _without_ the `modelsDev` flag take their ids from their own live
 `/models` endpoint — today that is `openrouter`, filtered to `:free`. So a
 catalog problem should only ever cost the OpenCode peers.
 
-[`d018`](d018-split-config-d.md) already states the intended behaviour:
+[`d018`](archive/d018-split-config-d.md) already states the intended behaviour:
 
 > `peer-cloud.yaml` — **removed** when no provider answers **AND** the models.dev
 > catalog lacks the OpenCode entries; individual provider skips are granular, so
@@ -215,5 +215,5 @@ lands, anything driving these generators must treat a non-zero exit as
 "config.d/ may be stale" rather than reporting the previous peer count as
 current (see `llm-local-inference/generate.sh`).
 
-Related: [`d018-split-config-d.md`](d018-split-config-d.md) (layer + stale-output
+Related: [`d018-split-config-d.md`](archive/d018-split-config-d.md) (layer + stale-output
 rules), [`termux-serving.md`](termux-serving.md) (Termux serving environment).

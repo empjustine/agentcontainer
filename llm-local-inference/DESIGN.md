@@ -33,7 +33,7 @@ relay/proxy machinery is no longer exercised from here.
 ## Shape
 
 `30-generate.mjs` (generation — the former gen-lib.mjs + both emitters folded
-into one file, docs/d041; `./node-run.sh llm-local-inference/30-generate.mjs`
+into one file, d232; `./node-run.sh llm-local-inference/30-generate.mjs`
 runs it) and `run.py`
 (serve) are strictly separated;
 `run.py` mounts the generated `config.d/` read-only into the
@@ -54,7 +54,7 @@ own default is therefore never in play — no client, user or outside host names
 a llama-server port, and llama.cpp moving that default (to 9931) changes
 nothing visible here (docs/d224).
 
-**config.d layers** (layer-merge rules in `docs/d018-split-config-d.md` —
+**config.d layers** (layer-merge rules in d232 — d018 is history, and this is
 not pi's layered-cake merge; d072 names the two apart):
 `00-general.yaml` (globals/macros; always) · `10-local-llm-inference.yaml`
 (only when a container backend **and** GPU devices are detected; the sibling

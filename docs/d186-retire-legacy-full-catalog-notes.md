@@ -28,7 +28,7 @@ tags: [generators, retirement, provider-config, documentation]
 
 ## Status
 
-Retirement record. The code the nine notes describe had already left the tree;
+Its consequence that retired notes keep their files on the `docs/` root is superseded by d232: deprecated decisions now move to `docs/archive/`. Retirement record. The code the nine notes describe had already left the tree;
 nothing here changes behavior. It exists so the notes can move to `deprecated`
 without a reader losing the law they recorded.
 

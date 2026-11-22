@@ -32,7 +32,7 @@ In force: `estige/` implements every rule below — `targetVerdict` and
 `allowIPLiterals` config field are the two switches — and the Go suite pins
 each refusal path. The record amends two decisions it depends on: [d146](d146-subnet-routes-over-socks5.md)
 relaxes the relay's IP-literal refusal to pass-through, and this record makes
-that relaxation opt-in; VPN-R22 and VPN-R35 on [d073](d073-ssl-vpn-three-modes.md)
+that relaxation opt-in; VPN-R22 and VPN-R35 on [d073](archive/d073-ssl-vpn-three-modes.md)
 read as unconditional denials, and the Requirement deltas section below
 narrows them to the guarantee's carve-out. Its enable rule for reverse
 relaying binds [d145](d145-relay-remote-port-forwarding.md) and

@@ -11,6 +11,10 @@ depends-on: [coding-agent]
 
 # d033 — Cloud/local generator cascade & emitted layer shapes
 
+## Status
+
+The reachability rule survives in `coding-agent/route-probe.mjs`; the generator names and invocation in this body are historical (d232).
+
 The three `coding-agent/` model generators
 (`generate-local-llama-swap.mjs`, `generate-cloud-providers.mjs` —
 the d037 merge of the former pi-native + alternative generators —

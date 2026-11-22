@@ -258,12 +258,12 @@ stable today; only the provider and model orders inside the merge are not.
   `coding-agent/tests/committed-manifests.test.mjs` (docs/d113).
 - `tests/lib-staging.test.mjs` — staging-list drift guard, planned and never
   built: docs/d072/d113 retired the staging lists it guarded (see Migration).
-- `docs/d023-generators-dedup.md`, `docs/d024-generators-split-and-provider-facts.md`
+- `docs/archive/d023-generators-dedup.md`, `docs/archive/d024-generators-split-and-provider-facts.md`
   — the generator/artifact standards.
 - `docs/d033-generator-cascade.md`, `docs/d034-parallel-probing-and-multi-hop-peerBase.md`
   — the cascade and the parallel assembly that makes `model-012` key order
   nondeterministic.
-- `docs/d037-generator-merge-verdict.md`, `docs/d041-unified-generate-build-entrypoints.md`
+- `docs/archive/d037-generator-merge-verdict.md`, `docs/archive/d041-unified-generate-build-entrypoints.md`
   — which generators exist and how the merge stage runs.
 - `docs/d040-cline-pass-curated-lineup.md` — the union path whose `Set`
   insertion order ends up in the models array.

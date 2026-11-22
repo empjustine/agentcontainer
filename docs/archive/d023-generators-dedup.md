@@ -1,13 +1,17 @@
 ---
 id: d023
 type: architecture-design
-status: active
+status: deprecated
 title: "Generator code-flow audit: findings and consolidation"
 parent: architecture
 tags: ["generators", "consolidation", "audit"]
 ---
 
 # d023 — Generator code-flow audit: findings and consolidation
+
+## Status
+
+Deprecated by d232. Every file this audit names has since been merged, folded or deleted; d113 owns per-unit code ownership and d232 owns the entrypoint boundary.
 
 The generator pipelines (`llm-local-inference/generate.sh` + its `.mjs`
 generators, `coding-agent/generate.sh` + its `.mjs` generators) grew
