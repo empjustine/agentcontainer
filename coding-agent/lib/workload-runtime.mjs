@@ -398,44 +398,14 @@ function requiredMount(description, mode, host, guest) {
 
 /**
  * Pass host device paths through (`--device PATH:PATH:rw`). The serving runners
- * declare these directly when the devices are not probe-able (a container build
- * host has no /dev/kfd), which is why this exists next to the GPU probe.
+ * declare these directly, so the description stays buildable on a host whose
+ * devices are absent.
  * @param {WorkloadDescription} description
  * @param {...string} paths
  * @returns {WorkloadDescription}
  */
 export function workload_devices(description, ...paths) {
 	return { ...description, devices: [...description.devices, ...paths] };
-}
-
-/**
- * GPU passthrough: the dedicated inference devices a host actually has.
- * @param {Host} [host]
- * @returns {string[]}
- */
-export function detectGpuDevs(host = hostFs) {
-	const devices = [];
-	if (host.exists("/dev/kfd")) {
-		devices.push("/dev/kfd");
-	}
-	for (const entry of host.readdir("/dev/dri").sort()) {
-		if (entry.startsWith("renderD")) {
-			devices.push(`/dev/dri/${entry}`);
-		}
-	}
-	return devices;
-}
-
-/**
- * @param {WorkloadDescription} description
- * @param {Host} [host]
- * @returns {WorkloadDescription}
- */
-export function workload_gpu(description, host = hostFs) {
-	return {
-		...description,
-		devices: [...description.devices, ...detectGpuDevs(host)],
-	};
 }
 
 /**

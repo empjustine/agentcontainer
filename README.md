@@ -137,7 +137,7 @@ agentcontainer/
 │   ├── build.mjs / package.json         # → this folder's own image build (d083/d113) + its script table (build/generate/run/test); `./npm-run.sh coding-agent build`
 │   ├── generate-pi-coding-agent.mjs     #   → ALL pi config: model-*.json layers → models.json + default-model.json overlay
 │   ├── generate-opencode.mjs            #   → opencode overlay config (provider SINGULAR key; skipped on Termux w/o OPENCODE_CONFIG_DIR)
-│   ├── gen-lib.mjs                      #   → shared generator preamble (pi shaping folded in, d039)
+│   ├── gen-lib.mjs                      #   → pi shaping shared by both generators (d039, d233)
 │   ├── route-probe.mjs                  #   → HTTP route/probe toolkit (renamed peer-probe.mjs, d071; folded out of the root lib, d039)
 │   ├── check-canonical-artifacts.mjs    #   → committed artifacts carry canonical upstreams — a generation/test gate, no longer a launch one (d070, d227)
 │   ├── catalog-facts.mjs                #   → the two catalog reads: per-provider listings + catwalk, both fetched per run, nothing cached or committed (d191)

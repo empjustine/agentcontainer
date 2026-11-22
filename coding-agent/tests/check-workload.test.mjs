@@ -223,8 +223,7 @@ test("llm-local-inference shape, docker", () => {
 		"OPENCODE_API_KEY",
 		"TLALOCAYOTL_API_KEY",
 	);
-	// Devices are populated by workload_gpu on a real GPU host; there is no
-	// /dev/kfd here, so declare them directly.
+	// Devices are declared explicitly; the test host has no /dev/kfd.
 	description = workload_devices(
 		description,
 		"/dev/kfd",

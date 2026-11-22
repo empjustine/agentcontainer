@@ -130,7 +130,7 @@ async function relayFetch({
  * why `getCatwalkModels` returns null rather than an empty list.
  * @type {Readonly<Record<string, string>>}
  */
-export const PROVIDER_MAP = Object.freeze({
+const PROVIDER_MAP = Object.freeze({
 	openrouter: "openrouter",
 	opencode: "opencode-zen",
 	"opencode-go": "opencode-go",

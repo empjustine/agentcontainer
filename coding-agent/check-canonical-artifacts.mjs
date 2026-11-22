@@ -57,7 +57,7 @@ function carriesFactHostSegment(url, hosts) {
  * calls it `llama-swap`.
  * @type {Readonly<Record<string, string>>}
  */
-export const OPENCODE_PROVIDER_FACT_IDS = Object.freeze({
+const OPENCODE_PROVIDER_FACT_IDS = Object.freeze({
 	local: "llama-swap",
 });
 

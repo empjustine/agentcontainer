@@ -78,35 +78,35 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 import {
-	bearerHeaders,
-	catalogModelLive,
-	cloudProvidersPath,
 	fetchCatwalkFacts,
 	fetchProviderFacts,
 	getCatwalkModels,
-	logError,
-	logInfo,
-	logWarn,
+} from "./catalog-facts.mjs";
+import {
+	catalogModelLive,
+	cloudProvidersPath,
 	modalitiesEligible,
-	PI_NATIVE_CLOUD_IDS,
 	piCost,
 	piModel,
-	probeCandidates,
-	probeEndpoint,
 	providerEntry,
-	providerFacts,
 	providerReroute,
 	scriptDir,
-	setLogTool,
 	toInput,
-	writeArtifact,
-	writeJsonArtifact,
 } from "./gen-lib.mjs";
+import { writeArtifact, writeJsonArtifact } from "./lib/artifact.mjs";
 import {
+	PI_NATIVE_CLOUD_IDS,
 	providerBaseUrl,
+	providerFacts,
 	readCloudProviders,
 } from "./lib/cloud-providers.mjs";
 import { exitCodeOf, failure } from "./lib/failure.mjs";
+import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
+import {
+	bearerHeaders,
+	probeCandidates,
+	probeEndpoint,
+} from "./route-probe.mjs";
 
 /**
  * The models.dev catalog this run fetched, or null when it is absent (the

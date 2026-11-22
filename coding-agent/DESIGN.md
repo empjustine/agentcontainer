@@ -273,15 +273,14 @@ It carries what this unit actually uses:
 | `…/node-run.sh`, `…/npm-run.sh`       | NOT here: both runners are one copy each at the repo root (docs/d138), and this folder ships **no `.sh` at all** — its entries are `./node-run.sh coding-agent/run.mjs` and `./npm-run.sh coding-agent {build,generate}`. `npm-run.sh` runs this folder's `package.json` script under the same pinned node, so no `npm` lands on an entrypoint's PATH |
 | `workload-runtime.mjs`                | the workload API `run.mjs` describes the container with (`docs/container-tooling.md`) — description in, `container run` argv out. Replaced `workload-runtime.sh` + the six `workload-*.jq` filters, which is why this unit needs no `jq` on the host                                                                                                  |
 
-`gen-lib.mjs` is the shared preamble for the pi-layer stages: it carries the pi
-shaping helpers (folded from the former `lib/pi-models.mjs`, docs/d039),
-statically re-exports this folder's `lib/log.mjs` and `lib/cloud-providers.mjs`,
-and names its same-dir siblings `route-probe.mjs`, `catalog-facts.mjs`,
-`refresh-models-dev.mjs` (all single-consumer, folded out of the old repo-level
-lib by d039; the two catalog reads merged into one module in d072). Loading it
-runs nothing and reads nothing; the fact table arrives as a value from the entry
-point, and every listing is fetched per run (docs/d191). Must not reach into
-`llm-local-inference/`, `estige/` or any `pi-*` sibling.
+`gen-lib.mjs` carries the pi shaping helpers shared by the pi-layer stages
+(folded from the former `lib/pi-models.mjs`, docs/d039) and the paths both
+generators use. The generators import logging, artifacts, provider facts, catalog
+reads and route probes from their owning modules; `gen-lib.mjs` re-exports none
+of them (docs/d233). Loading it runs nothing and reads nothing: the fact table
+arrives as a value from the entry point, and every listing is fetched per run
+(docs/d191). Must not reach into `llm-local-inference/`, `estige/` or any `pi-*`
+sibling.
 
 Nothing copies this tree anywhere at generate time (docs/d072): the generators
 run from their own dir, output goes to the per-run `RUN_DIR` dir, and the

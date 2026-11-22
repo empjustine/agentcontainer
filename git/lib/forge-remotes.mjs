@@ -47,19 +47,6 @@ function stripGitSuffix(value) {
 }
 
 /**
- * The ssh URL embeds the IDCS identity as `idcs-<hex>.<email>`; the email is
- * the part a credential helper or https URL actually uses.
- * @param {SoftwareForgeRemote} remote
- * @returns {string|null}
- */
-export function softwareForgeUserEmail(remote) {
-	if (!remote.user) {
-		return null;
-	}
-	return remote.user.replace(/^idcs-[0-9a-f]+\./i, "");
-}
-
-/**
  * Recover the glass slug from `<org>_<slug>_<numeric>`. The numeric id is what
  * makes a projectId unique on the tenant; the slug is the stable name.
  * @param {string} projectId
@@ -189,7 +176,8 @@ export function parseSoftwareForgeRemote(raw) {
 /**
  * Rebuild the https fetch URL. This is the form that survives an IDCS ssh
  * identity rotation when a credential helper supplies the token, and the form
- * a human can paste into a browser after stripping the userinfo.
+ * a human can paste into a browser after stripping the userinfo. The ssh
+ * identity is `idcs-<hex>.<email>`; only the email belongs in https userinfo.
  * @param {SoftwareForgeRemote} remote
  * @param {string|null} [user] overrides the parsed user (email form)
  * @returns {string|null} null when the project id is unknown (a glass-only parse)
@@ -198,7 +186,7 @@ export function softwareForgeHttpsUrl(remote, user) {
 	if (!remote.projectId) {
 		return null;
 	}
-	const who = user ?? softwareForgeUserEmail(remote);
+	const who = user ?? remote.user?.replace(/^idcs-[0-9a-f]+\./i, "") ?? null;
 	const auth = who ? `${encodeURIComponent(who)}@` : "";
 	return `https://${auth}${remote.host}/${remote.org}/s/${remote.projectId}/scm/${remote.repo}.git`;
 }

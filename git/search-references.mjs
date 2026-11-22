@@ -60,12 +60,12 @@ setLogTool("git/search-references");
  * for the same reason `DEFAULT_DEST` is: never write into a tree the farm
  * walk or a future `--delete-originals` touches.
  */
-export const DEFAULT_INDEX =
+const DEFAULT_INDEX =
 	process.env.REFERENCES_INDEX ??
 	join(homedir(), "Downloads", "references-index");
 
 /** Multi-arch OCI image carrying zoekt-git-index / zoekt-webserver / zoekt. */
-export const DEFAULT_IMAGE =
+const DEFAULT_IMAGE =
 	process.env.ZOEKT_IMAGE ?? "ghcr.io/sourcegraph/zoekt:latest";
 
 /** Where the farm and the index are mounted inside the engine container. */

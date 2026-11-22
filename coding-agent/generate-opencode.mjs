@@ -35,22 +35,20 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
-	bearerHeaders,
 	catalogModelLive,
 	cloudProvidersPath,
-	logError,
-	logInfo,
-	logWarn,
 	modalitiesEligible,
+	scriptDir,
+} from "./gen-lib.mjs";
+import { writeJsonArtifact } from "./lib/artifact.mjs";
+import { providerFacts, readCloudProviders } from "./lib/cloud-providers.mjs";
+import { exitCodeOf } from "./lib/failure.mjs";
+import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
+import {
+	bearerHeaders,
 	probeCandidates,
 	probeEndpoint,
-	providerFacts,
-	scriptDir,
-	setLogTool,
-	writeJsonArtifact,
-} from "./gen-lib.mjs";
-import { readCloudProviders } from "./lib/cloud-providers.mjs";
-import { exitCodeOf } from "./lib/failure.mjs";
+} from "./route-probe.mjs";
 
 /**
  * A validated `/models` entry.

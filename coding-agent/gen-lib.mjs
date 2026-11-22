@@ -1,38 +1,16 @@
 /**
- * @fileoverview gen-lib.mjs — the shared preamble for the coding-agent
- * pi-layer generators: re-exports the lib/ and coding-agent/ helpers they use
- * and holds pi's driving-capability declaration — the one allowlist both
- * eligibility (modalitiesEligible) and emission (toInput) derive from
- * (docs/d049).
+ * @fileoverview gen-lib.mjs — the pi shaping shared by the two coding-agent
+ * generators: one RawModelEntry → PiModel mapping, the modality gate and
+ * projection (docs/d049), and the paths both generators need.
  *
- * IMPORTS ONLY. Every import here is static and every export is a function, a
- * frozen constant or a path string: loading this module runs nothing, reads no
- * file and emits no line. The lib/ modules are this folder's own copies
- * (docs/d113), resolved relative to THIS file so a generator run in any cwd
- * finds the same ones (docs/d072 retired the env-injected lib directory that
- * once made this dynamic).
+ * PURE BY CONTRACT. Loading this module reads no file and runs nothing; it
+ * holds only functions, frozen constants and path strings. Generators import
+ * logging, artifacts, provider facts and route probes from their owning
+ * modules rather than through this one (docs/d233).
  */
 
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-
-import { writeArtifact, writeJsonArtifact } from "./lib/artifact.mjs";
-import {
-	PI_NATIVE_CLOUD_IDS,
-	providerFacts,
-} from "./lib/cloud-providers.mjs";
-import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
-import {
-	bearerHeaders,
-	probeCandidates,
-	probeEndpoint,
-} from "./route-probe.mjs";
-
-export {
-	fetchCatwalkFacts,
-	fetchProviderFacts,
-	getCatwalkModels,
-} from "./catalog-facts.mjs";
 
 export const scriptDir = dirname(fileURLToPath(import.meta.url));
 
@@ -41,20 +19,6 @@ export const scriptDir = dirname(fileURLToPath(import.meta.url));
  * readCloudProviders and passes the record down (docs/d024/d102).
  */
 export const cloudProvidersPath = join(scriptDir, "lib", "cloud-providers.json");
-
-export {
-	bearerHeaders,
-	logError,
-	logInfo,
-	logWarn,
-	PI_NATIVE_CLOUD_IDS,
-	probeCandidates,
-	probeEndpoint,
-	providerFacts,
-	setLogTool,
-	writeArtifact,
-	writeJsonArtifact,
-};
 
 /**
  * pi shaping (folded in from the former lib/pi-models.mjs — docs/d039): shape
