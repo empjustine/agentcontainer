@@ -12,10 +12,10 @@ tags: [pi, extensions, providers, base-url]
 # pi-coding-agent-provider — one override, four providers
 
 This is the pi extension for the providers pi-coding-agent already ships:
-mistral, opencode, opencode-go and openrouter. It sets `baseUrl` when the
-operator supplies a `*_BASE_URL` override and registers the provider with
-an empty config otherwise. It covers no model data, no fetches and no catalog
-watchdog (docs/d235). A reader arriving from `pi-mistral` or
+mistral, opencode, opencode-go and openrouter. It registers a provider only when
+its key env is present and its `*_BASE_URL` override is set; the config then
+carries just that `baseUrl`. It covers no model data, no fetches and no
+catalog watchdog (docs/d235). A reader arriving from `pi-mistral` or
 `pi-opencode` finds their behavior here.
 
 | Provider    | Key env              | Override env          |

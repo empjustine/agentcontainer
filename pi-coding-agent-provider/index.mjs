@@ -38,34 +38,36 @@ export default function piCodingAgentProvider(pi) {
 	]);
 
 	/**
-	 * The override from the actual environment, or undefined when it is unset.
-	 * An absolute http(s) URL is the only accepted value; trailing slashes are
-	 * trimmed so the override is one canonical spelling.
-	 * @param {string} baseUrl the env var holding the override
-	 * @param {Record<string, string|undefined>} env
-	 * @returns {string|undefined}
+	 * The config for an env value, or undefined when it is unset. An absolute
+	 * http(s) URL is the only accepted value; trailing slashes are trimmed so
+	 * the override is one canonical spelling.
+	 * @param {string|undefined} value the override's value in the environment
+	 * @returns {ProviderConfig|undefined}
 	 */
-	const baseUrlFromEnv = (baseUrl, env) => {
-		const value = env[baseUrl]?.trim();
-		if (!value) {
+	const configBaseUrlFromEnv = (value) => {
+		const override = value?.trim();
+		if (!override) {
 			return;
 		}
 		let protocol;
 		try {
-			protocol = new URL(value).protocol;
+			protocol = new URL(override).protocol;
 		} catch {
 			protocol = "";
 		}
 		if (protocol !== "http:" && protocol !== "https:") {
-			throw new Error(`${baseUrl} is not an absolute http(s) URL: ${value}`);
+			throw new Error(`base URL is not an absolute http(s) URL: ${override}`);
 		}
-		return value.replace(/\/+$/, "");
+		return { baseUrl: override.replace(/\/+$/, "") };
 	};
 
-	for (const [provider, , baseUrl] of PROVIDERS) {
-		const override = baseUrlFromEnv(baseUrl, process.env);
-		/** @type {ProviderConfig} */
-		const config = override === undefined ? {} : { baseUrl: override };
-		pi.registerProvider(provider, config);
+	for (const [provider, apiKey, baseUrl] of PROVIDERS) {
+		if (!(apiKey in process.env)) {
+			continue;
+		}
+		const config = configBaseUrlFromEnv(process.env[baseUrl]);
+		if (config) {
+			pi.registerProvider(provider, config);
+		}
 	}
 }

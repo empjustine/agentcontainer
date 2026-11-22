@@ -1,9 +1,9 @@
 /**
  * @fileoverview pi-coding-agent-provider.test.mjs — pins the one contract this
- * extension has: the four pi-native providers are registered with NO override
- * unless the operator sets one, and a set override is the only config field.
+ * extension has: a provider is registered only when its key env is present and
+ * its base-URL override is set, and the config carries only that URL.
  *
- * The expected key envs are literals from this folder's own copy of the fact
+ * The expected env names are literals from this folder's own copy of the fact
  * table (docs/d113/d118), so a renamed key env fails here and in the generator.
  * Each registration loads a fresh copy of the entry, which also pins that a
  * reload reads the environment as it stands. No network: no fetch left to stub.
@@ -20,11 +20,20 @@ const FACT_ROWS = Object.freeze({
 	openrouter: "OPENROUTER_API_KEY",
 });
 
+const KEYS = Object.freeze([
+	"MISTRAL_API_KEY",
+	"OPENCODE_API_KEY",
+	"OPENROUTER_API_KEY",
+]);
 const OVERRIDES = Object.freeze([
 	"MISTRAL_BASE_URL",
 	"OPENCODE_BASE_URL",
 	"OPENROUTER_BASE_URL",
 ]);
+const cleanEnv = Object.fromEntries(
+	[...KEYS, ...OVERRIDES].map((name) => [name, undefined]),
+);
+const keyed = Object.fromEntries(KEYS.map((name) => [name, "dummy-key"]));
 
 let caseNumber = 0;
 
@@ -79,31 +88,29 @@ async function registrations() {
 	return configs;
 }
 
-const cleanEnv = Object.fromEntries(OVERRIDES.map((name) => [name, undefined]));
-
-test("no override leaves pi's built-in providers untouched", async () => {
+test("no override registers nothing", async () => {
 	await withEnv(cleanEnv, async () => {
-		const configs = await registrations();
-		assert.deepEqual(Object.keys(configs).sort(), Object.keys(FACT_ROWS).sort());
-		for (const config of Object.values(configs)) {
-			assert.deepEqual(config, {});
-		}
+		assert.deepEqual(await registrations(), {});
 	});
 });
 
-test("one override retargets only its own providers", async () => {
+test("a keyed provider with an override registers only baseUrl", async () => {
 	await withEnv(
-		{ ...cleanEnv, OPENCODE_BASE_URL: "https://gateway.example/zen/v1///" },
+		{ ...cleanEnv, ...keyed, OPENCODE_BASE_URL: "https://gateway.example/zen/v1///" },
 		async () => {
-			const configs = await registrations();
-			assert.deepEqual(configs.opencode, {
-				baseUrl: "https://gateway.example/zen/v1",
+			assert.deepEqual(await registrations(), {
+				opencode: { baseUrl: "https://gateway.example/zen/v1" },
+				"opencode-go": { baseUrl: "https://gateway.example/zen/v1" },
 			});
-			assert.deepEqual(configs["opencode-go"], {
-				baseUrl: "https://gateway.example/zen/v1",
-			});
-			assert.deepEqual(configs.mistral, {});
-			assert.deepEqual(configs.openrouter, {});
+		},
+	);
+});
+
+test("a provider without a key is not registered", async () => {
+	await withEnv(
+		{ ...cleanEnv, MISTRAL_BASE_URL: "https://gateway.example/v1" },
+		async () => {
+			assert.deepEqual(await registrations(), {});
 		},
 	);
 });
@@ -112,34 +119,46 @@ test("every override name follows its key env", async () => {
 	const values = Object.fromEntries(
 		OVERRIDES.map((name) => [name, `https://${name.toLowerCase()}.example/v1`]),
 	);
-	await withEnv(values, async () => {
+	await withEnv({ ...cleanEnv, ...keyed, ...values }, async () => {
 		const configs = await registrations();
+		assert.deepEqual(Object.keys(configs).sort(), Object.keys(FACT_ROWS).sort());
 		for (const [id, keyEnv] of Object.entries(FACT_ROWS)) {
 			const name = `${keyEnv.slice(0, -"_API_KEY".length)}_BASE_URL`;
 			assert.ok(OVERRIDES.includes(name));
-			assert.deepEqual(configs[id], { baseUrl: `https://${name.toLowerCase()}.example/v1` });
+			assert.deepEqual(configs[id], {
+				baseUrl: `https://${name.toLowerCase()}.example/v1`,
+			});
 		}
 	});
 });
 
 test("a reload reads the environment as it stands", async () => {
-	await withEnv({ ...cleanEnv, MISTRAL_BASE_URL: "https://one.example/v1" }, async () => {
-		assert.deepEqual((await registrations()).mistral, {
-			baseUrl: "https://one.example/v1",
-		});
-	});
-	await withEnv({ ...cleanEnv, MISTRAL_BASE_URL: "https://two.example/v1" }, async () => {
-		assert.deepEqual((await registrations()).mistral, {
-			baseUrl: "https://two.example/v1",
-		});
-	});
+	await withEnv(
+		{ ...cleanEnv, ...keyed, MISTRAL_BASE_URL: "https://one.example/v1" },
+		async () => {
+			assert.deepEqual((await registrations()).mistral, {
+				baseUrl: "https://one.example/v1",
+			});
+		},
+	);
+	await withEnv(
+		{ ...cleanEnv, ...keyed, MISTRAL_BASE_URL: "https://two.example/v1" },
+		async () => {
+			assert.deepEqual((await registrations()).mistral, {
+				baseUrl: "https://two.example/v1",
+			});
+		},
+	);
 });
 
 test("a malformed override throws at load", async () => {
 	await withEnv(
-		{ ...cleanEnv, MISTRAL_BASE_URL: "not-a-url" },
+		{ ...cleanEnv, ...keyed, MISTRAL_BASE_URL: "not-a-url" },
 		async () => {
-			await assert.rejects(registrations(), /MISTRAL_BASE_URL is not an absolute http\(s\) URL/);
+			await assert.rejects(
+				registrations(),
+				/base URL is not an absolute http\(s\) URL/,
+			);
 		},
 	);
 });
