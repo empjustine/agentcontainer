@@ -6,7 +6,8 @@
  * auth. An extension layer without `models` leaves that data untouched; a
  * returned list REPLACES it. So this entry adds nothing but the operator's
  * base-URL override, and only when the variable is set. A malformed URL throws
- * at load rather than silently retargeting traffic.
+ * at load, but as a UI error notification rather than a thrown exception: one
+ * bad override must not stop the other providers from registering.
  *
  * The rows and the lookup live inside the default export: each load reads the
  * environment as it stands then, so a reload after an env change takes effect
@@ -42,7 +43,7 @@ export default function piCodingAgentProvider(pi) {
 	 * http(s) URL is the only accepted value; trailing slashes are trimmed so
 	 * the override is one canonical spelling.
 	 * @param {string|undefined} value the override's value in the environment
-	 * @returns {ProviderConfig|undefined}
+	 * @returns {ProviderConfig|Error|undefined}
 	 */
 	const configBaseUrlFromEnv = (value) => {
 		const override = value?.trim();
@@ -56,18 +57,31 @@ export default function piCodingAgentProvider(pi) {
 			protocol = "";
 		}
 		if (protocol !== "http:" && protocol !== "https:") {
-			throw new Error(`base URL is not an absolute http(s) URL: ${override}`);
+			return new Error(`base URL is not an absolute http(s) URL: ${override}`);
 		}
 		return { baseUrl: override.replace(/\/+$/, "") };
 	};
 
+	/** @type {Error[]} */
+	const errors = [];
 	for (const [provider, apiKey, baseUrl] of PROVIDERS) {
 		if (!(apiKey in process.env)) {
 			continue;
 		}
-		const config = configBaseUrlFromEnv(process.env[baseUrl]);
-		if (config) {
-			pi.registerProvider(provider, config);
+		const result = configBaseUrlFromEnv(process.env[baseUrl]);
+		if (result instanceof Error) {
+			errors.push(new Error(`${provider}: ${result.message}`));
+		} else if (result) {
+			pi.registerProvider(provider, result);
 		}
+	}
+	if (errors.length > 0) {
+		const problem = new AggregateError(
+			errors,
+		`invalid provider base-URL overrides: ${errors.map((error) => error.message).join("; ")}`,
+		);
+		pi.on("session_start", (_event, ctx) => {
+			ctx.ui.notify(problem.message, "error");
+		});
 	}
 }

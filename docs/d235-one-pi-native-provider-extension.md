@@ -33,8 +33,11 @@ run time. A provider is registered only when its key env is present and its
 base-URL env holds a value; the resulting config carries `baseUrl` and
 nothing else. An unconfigured provider or one without an override leaves pi's
 built-in provider untouched. opencode and opencode-go share one key env and one
-override, matching the generator's fact-table rows. A malformed URL throws at
-load rather than retargeting traffic to an address the operator did not choose.
+override, matching the generator's fact-table rows. A malformed URL is returned
+as an Error by `configBaseUrlFromEnv`, collected with the others in an
+`AggregateError`, and shown through pi's session-start error notification. No
+raw throw interrupts the load, and one bad override cannot stop the other
+providers from registering.
 
 The table and the URL lookup live inside the default export. Each load reads
 the environment as it stands then, so a reload after an env change takes

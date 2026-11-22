@@ -7,6 +7,8 @@ The folder IS the pi package and `index.mjs` is its only source file.
 - Register only a provider whose key env is present AND whose baked
   `*_BASE_URL` env holds a valid URL. The config carries only `baseUrl`.
   No model data, no `refreshModels`, no fetch, no timers.
+- Never throw on a bad override. Collect errors into an `AggregateError` and
+  notify through the `session_start` handler's `ctx.ui.notify`.
 - The `PROVIDERS` tuples and the URL lookup live inside the default export,
   so each load reads the current environment.
 - A copied package must stand alone: no sibling module, no `lib/`, no

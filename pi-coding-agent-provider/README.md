@@ -27,7 +27,9 @@ catalog watchdog (docs/d235). A reader arriving from `pi-mistral` or
 
 The two opencode surfaces share a key env, so one override retargets both, as
 in the generator's fact-table rows. A value must be an absolute http(s) URL;
-trailing slashes are trimmed and a malformed value throws at load.
+trailing slashes are trimmed. Malformed values are collected into an
+`AggregateError` and reported with pi's session-start notification; a bad
+override never stops the other providers from registering.
 
 ## Why nothing else
 

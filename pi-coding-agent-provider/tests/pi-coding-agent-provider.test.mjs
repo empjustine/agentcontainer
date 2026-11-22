@@ -1,12 +1,13 @@
 /**
  * @fileoverview pi-coding-agent-provider.test.mjs — pins the one contract this
  * extension has: a provider is registered only when its key env is present and
- * its base-URL override is set, and the config carries only that URL.
+ * its base-URL override is valid, and the config carries only that URL. Bad
+ * overrides are reported through pi's UI without stopping other providers.
  *
  * The expected env names are literals from this folder's own copy of the fact
  * table (docs/d113/d118), so a renamed key env fails here and in the generator.
- * Each registration loads a fresh copy of the entry, which also pins that a
- * reload reads the environment as it stands. No network: no fetch left to stub.
+ * Each load uses a fresh copy of the entry, which also pins that a reload reads
+ * the environment as it stands. No network: no fetch left to stub.
  */
 
 import assert from "node:assert/strict";
@@ -66,31 +67,49 @@ async function withEnv(values, fn) {
 }
 
 /**
- * Load a fresh copy of the entry against a capturing registerProvider. The
- * query makes each case a distinct module, so the env for that case is read at
- * load time.
- * @returns {Promise<Record<string, Record<string, unknown>>>}
+ * Load a fresh copy of the entry against capturing registerProvider and notify.
+ * @returns {Promise<{ configs: Record<string, Record<string, unknown>>, notifications: Array<{ message: string, type: string|undefined }> }>}
  */
-async function registrations() {
+async function load() {
 	const id = ++caseNumber;
 	const { default: extension } = await import(`../index.mjs?case=${id}`);
 	/** @type {Record<string, Record<string, unknown>>} */
 	const configs = {};
-	/** @type {{ registerProvider: (name: string, config: Record<string, unknown>) => void }} */
+	/** @type {Array<{ message: string, type: string|undefined }>} */
+	const notifications = [];
+	/** @type {Record<string, (event: unknown, ctx: unknown) => void>} */
+	const handlers = {};
+	/** @type {{ registerProvider: (name: string, config: Record<string, unknown>) => void, on: (event: string, handler: (event: unknown, ctx: unknown) => void) => void }} */
 	const pi = {
 		registerProvider(name, config) {
 			configs[name] = /** @type {Record<string, unknown>} */ (config);
+		},
+		on(event, handler) {
+			handlers[event] = handler;
 		},
 	};
 	extension(/** @type {import("@earendil-works/pi-coding-agent").ExtensionAPI} */ (
 		/** @type {unknown} */ (pi)
 	));
-	return configs;
+	const start = handlers.session_start;
+	if (start) {
+		start({ type: "session_start", reason: "reload" }, {
+			ui: {
+				/** @param {string} message @param {"info"|"warning"|"error"|undefined} type */
+				notify(message, type) {
+					notifications.push({ message, type });
+				},
+			},
+		});
+	}
+	return { configs, notifications };
 }
 
 test("no override registers nothing", async () => {
 	await withEnv(cleanEnv, async () => {
-		assert.deepEqual(await registrations(), {});
+		const { configs, notifications } = await load();
+		assert.deepEqual(configs, {});
+		assert.deepEqual(notifications, []);
 	});
 });
 
@@ -98,7 +117,8 @@ test("a keyed provider with an override registers only baseUrl", async () => {
 	await withEnv(
 		{ ...cleanEnv, ...keyed, OPENCODE_BASE_URL: "https://gateway.example/zen/v1///" },
 		async () => {
-			assert.deepEqual(await registrations(), {
+			const { configs } = await load();
+			assert.deepEqual(configs, {
 				opencode: { baseUrl: "https://gateway.example/zen/v1" },
 				"opencode-go": { baseUrl: "https://gateway.example/zen/v1" },
 			});
@@ -110,7 +130,7 @@ test("a provider without a key is not registered", async () => {
 	await withEnv(
 		{ ...cleanEnv, MISTRAL_BASE_URL: "https://gateway.example/v1" },
 		async () => {
-			assert.deepEqual(await registrations(), {});
+			assert.deepEqual((await load()).configs, {});
 		},
 	);
 });
@@ -120,7 +140,7 @@ test("every override name follows its key env", async () => {
 		OVERRIDES.map((name) => [name, `https://${name.toLowerCase()}.example/v1`]),
 	);
 	await withEnv({ ...cleanEnv, ...keyed, ...values }, async () => {
-		const configs = await registrations();
+		const { configs } = await load();
 		assert.deepEqual(Object.keys(configs).sort(), Object.keys(FACT_ROWS).sort());
 		for (const [id, keyEnv] of Object.entries(FACT_ROWS)) {
 			const name = `${keyEnv.slice(0, -"_API_KEY".length)}_BASE_URL`;
@@ -136,7 +156,7 @@ test("a reload reads the environment as it stands", async () => {
 	await withEnv(
 		{ ...cleanEnv, ...keyed, MISTRAL_BASE_URL: "https://one.example/v1" },
 		async () => {
-			assert.deepEqual((await registrations()).mistral, {
+			assert.deepEqual((await load()).configs.mistral, {
 				baseUrl: "https://one.example/v1",
 			});
 		},
@@ -144,21 +164,34 @@ test("a reload reads the environment as it stands", async () => {
 	await withEnv(
 		{ ...cleanEnv, ...keyed, MISTRAL_BASE_URL: "https://two.example/v1" },
 		async () => {
-			assert.deepEqual((await registrations()).mistral, {
+			assert.deepEqual((await load()).configs.mistral, {
 				baseUrl: "https://two.example/v1",
 			});
 		},
 	);
 });
 
-test("a malformed override throws at load", async () => {
+test("malformed overrides notify once and do not stop the others", async () => {
 	await withEnv(
-		{ ...cleanEnv, ...keyed, MISTRAL_BASE_URL: "not-a-url" },
+		{
+			...cleanEnv,
+			...keyed,
+			MISTRAL_BASE_URL: "not-a-url",
+			OPENROUTER_BASE_URL: "ftp://gateway.example",
+			OPENCODE_BASE_URL: "https://gateway.example/zen/v1",
+		},
 		async () => {
-			await assert.rejects(
-				registrations(),
-				/base URL is not an absolute http\(s\) URL/,
-			);
+			const { configs, notifications } = await load();
+			assert.deepEqual(configs, {
+				opencode: { baseUrl: "https://gateway.example/zen/v1" },
+				"opencode-go": { baseUrl: "https://gateway.example/zen/v1" },
+			});
+			assert.equal(notifications.length, 1);
+			assert.equal(notifications[0]?.type, "error");
+			const message = notifications[0]?.message ?? "";
+			assert.match(message, /invalid provider base-URL overrides/);
+			assert.match(message, /mistral: base URL is not an absolute http/);
+			assert.match(message, /openrouter: base URL is not an absolute http/);
 		},
 	);
 });
