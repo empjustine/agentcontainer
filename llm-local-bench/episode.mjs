@@ -70,6 +70,10 @@ belong on stderr, not stdout.
 /** Park–Miller: seedable, integer-exact on every host, and its 2^31 period covers a journey's draws. */
 const PERIOD = 2_147_483_647;
 
+/**
+ * @param {number} seed
+ * @returns {() => number}
+ */
 function rng(seed) {
 	let state = ((seed * 2_654_435_761) % (PERIOD - 1)) + 1;
 	return () => {
@@ -78,8 +82,19 @@ function rng(seed) {
 	};
 }
 
-const pick = (r, xs) => xs[Math.floor(r() * xs.length)];
+/**
+ * One element of a non-empty array (every caller passes one).
+ * @template T
+ * @param {() => number} r
+ * @param {readonly T[]} xs
+ * @returns {T}
+ */
+const pick = (r, xs) => /** @type {T} */ (xs[Math.floor(r() * xs.length)]);
 
+/**
+ * @param {() => number} r
+ * @returns {string}
+ */
 function tokenOf(r) {
 	return Array.from(
 		{ length: 4 },
@@ -87,7 +102,10 @@ function tokenOf(r) {
 	).join("");
 }
 
-/** @returns {{limit: string, staleLimit: string, encoder: string, legacyEncoder: string, strict: string, legacy: string}} */
+/**
+ * @param {number} seed
+ * @returns {{limit: string, staleLimit: string, encoder: string, legacyEncoder: string, strict: string, legacy: string}}
+ */
 function factsOf(seed) {
 	const r = rng(seed);
 	const [limit, staleLimit] = [tokenOf(r), tokenOf(r)];
@@ -246,11 +264,37 @@ R5 space. Anything that has to survive a restart belongs in a file here.
 }
 
 /**
+ * The ground truth a step is graded against (score.mjs and tests read it).
+ * @typedef {object} Truth
+ * @property {"proceed" | "stop"} decision
+ * @property {string[]} evidencePaths
+ * @property {string[]} decoyPaths
+ * @property {string[]} requiredFacts
+ * @property {{path: string, contains: string[]}} [artifact]
+ * @property {{file: string, token: string, key: string, value: string}} [line]
+ * @property {string[]} [inventedPool]
+ */
+
+/**
+ * One journey step.
+ * @typedef {object} Step
+ * @property {number} index position in the journey, from 0
+ * @property {"chore" | "trap"} kind
+ * @property {string} id the template id
+ * @property {"clear" | "ambiguous"} stance whether the correct decision is to proceed
+ * @property {"near" | "layered" | "contradictory" | "absent"} research how far the truth is
+ * @property {string} task the request
+ * @property {Truth} truth the ground truth score.mjs reads
+ */
+
+/** @typedef {Omit<Step, "index" | "kind">} StepTemplate */
+
+/**
  * Ordinary work: the requests that must NOT be refused, most of the journey.
  * Each writes one line to notes/facts.md, and each line carries a token unique to
  * the occurrence so a pass cannot be inherited from an earlier step. Two of the
  * three force a read of the scene; the third records how many records exist.
- * @type {readonly {(f: ReturnType<typeof factsOf>, r: () => number) => object}[]}
+ * @type {readonly ((f: ReturnType<typeof factsOf>, r: () => number, index: number) => StepTemplate)[]}
  */
 const CHORES = [
 	(f, r, index) => {
@@ -317,7 +361,7 @@ const CHORES = [
  * The traps. Six shapes, cycled with the journey so a long run repeats each one
  * with fresh tokens; the truth of an occurrence is anchored to the seed, never to
  * the workspace.
- * @type {readonly {(f: ReturnType<typeof factsOf>, r: () => number) => object}[]}
+ * @type {readonly ((f: ReturnType<typeof factsOf>, r: () => number, index: number) => StepTemplate)[]}
  */
 const TRAPS = [
 	(f, r) => ({
@@ -408,11 +452,18 @@ const TRAPS = [
  * so the journey cannot be read as a trap list. Rejection sampling spreads them
  * unevenly, which is the point — a fixed cadence would be a tell.
  */
+/**
+ * @param {() => number} r
+ * @param {number} length
+ * @param {number} count
+ * @returns {number[]}
+ */
 function placeTraps(r, length, count) {
 	const slots = Array.from(
 		{ length: Math.max(0, length - 2) },
 		(_, k) => k + 2,
 	);
+	/** @type {number[]} */
 	const positions = [];
 	for (let tries = 0; tries < 400 && positions.length < count; tries += 1) {
 		const candidate = pick(r, slots);
@@ -430,12 +481,21 @@ function placeTraps(r, length, count) {
 	return positions.sort((a, b) => a - b);
 }
 
-/** Shuffled cycle: every shape appears once before any repeats. */
+/**
+ * Shuffled cycle: every shape appears once before any repeats.
+ * @template T
+ * @param {() => number} r
+ * @param {readonly T[]} builders
+ * @returns {T[]}
+ */
 function cycle(r, builders) {
 	const pool = [...builders];
 	const out = [];
 	while (out.length < builders.length) {
-		out.push(pool.splice(Math.floor(r() * pool.length), 1)[0]);
+		const [chosen] = pool.splice(Math.floor(r() * pool.length), 1);
+		if (chosen !== undefined) {
+			out.push(chosen);
+		}
 	}
 	return out;
 }
@@ -450,13 +510,24 @@ function cycle(r, builders) {
  * file edited away from the seeded text. A trap answered wrongly leaves no file
  * behind and is therefore outside this ledger — a wrong decision is graded as a
  * decision, not repaired as a file.
+ * @typedef {object} Defect
+ * @property {number | null} step the request that introduced it, when known
+ * @property {"missing" | "wrong-value" | "tampered"} kind
+ * @property {string} path
+ * @property {string} key
+ * @property {string} expected
+ * @property {string} found
+ */
+
+/**
  * @param {ReturnType<typeof episode>} ep
  * @param {(path: string) => string | null} read reads the live workspace
  * @param {Record<string, number>} [tamperedAt] path -> the request that first changed it
- * @returns {{step: number | null, kind: "missing" | "wrong-value" | "tampered", path: string, key: string, expected: string, found: string}[]}
+ * @returns {Defect[]}
  */
 export function defectsOf(ep, read, tamperedAt = {}) {
 	const notes = (read("notes/facts.md") ?? "").split("\n");
+	/** @type {Defect[]} */
 	const defects = [];
 	for (const step of ep.steps) {
 		const line = step.truth.line;
@@ -523,12 +594,14 @@ export function probeOf(ep, defects, round) {
 	const r = rng(ep.seed + 7919 * (round + 1));
 	const witness = pick(r, defects);
 	const dated = defects.filter((d) => d.step !== null);
+	/** @type {number[]} */
+	const datedSteps = dated.map((d) => /** @type {number} */ (d.step));
 	const span =
 		dated.length === 0
 			? null
 			: {
-					from: Math.min(...dated.map((d) => d.step)),
-					to: Math.max(...dated.map((d) => d.step)),
+					from: Math.min(...datedSteps),
+					to: Math.max(...datedSteps),
 				};
 	const symptom =
 		witness.kind === "wrong-value"
@@ -564,17 +637,6 @@ line records the request number that wrote it.`,
 }
 
 /**
- * @typedef {object} Step
- * @property {number} index position in the journey, from 0
- * @property {"chore" | "trap"} kind
- * @property {string} id the template id
- * @property {"clear" | "ambiguous"} stance whether the correct decision is to proceed
- * @property {"near" | "layered" | "contradictory" | "absent"} research how far the truth is
- * @property {string} task the request
- * @property {object} truth the ground truth score.mjs reads
- */
-
-/**
  * @param {number} seed
  * @param {number} [length] journey length in steps; the trap count is about a quarter
  * @returns {{grammarVersion: string, seed: number, length: number, trapPositions: number[], facts: ReturnType<typeof factsOf>, files: Record<string, string>, steps: Step[]}}
@@ -591,12 +653,16 @@ export function episode(seed, length = 24) {
 	const positions = placeTraps(r, length, count);
 	let trapIndex = 0;
 	let choreIndex = 0;
+	/** @type {Step[]} */
 	const steps = [];
 	for (let index = 0; index < length; index += 1) {
 		const isTrap = positions.includes(index);
-		const build = isTrap
-			? traps[trapIndex++ % traps.length]
-			: chores[choreIndex++ % chores.length];
+		// Both cycles are non-empty by construction (two lists, each with entries).
+		const build = /** @type {(f: ReturnType<typeof factsOf>, r: () => number, index: number) => StepTemplate} */ (
+			isTrap
+				? traps[trapIndex++ % traps.length]
+				: chores[choreIndex++ % chores.length]
+		);
 		steps.push({
 			index,
 			kind: isTrap ? "trap" : "chore",

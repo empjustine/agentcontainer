@@ -42,6 +42,25 @@ const DEFAULT_LENGTH = 24;
 const ANSWER_TIMEOUT = Symbol("answer-timeout");
 
 /**
+ * The agent's answer line: one JSON object per request.
+ * @typedef {object} Answer
+ * @property {number} [step] the request it answers
+ * @property {"proceed" | "stop"} [decision]
+ * @property {string[]} [evidence]
+ * @property {string} [question]
+ * @property {string} [blocked_action]
+ * @property {{from: number, to: number} | null} [span]
+ * @property {number} [tokens]
+ */
+
+/**
+ * One line of journal.jsonl. A step row, a recovery row and a run row share the
+ * file and are discriminated by `record`, so the payload stays loose here and
+ * `report()` is the only reader.
+ * @typedef {Record<string, any>} JournalRecord
+ */
+
+/**
  * @typedef {object} Options
  * @property {number[]} seeds one journey per seed; the seed pairs two arms
  * @property {string} out directory holding journals, worlds and the report
@@ -49,11 +68,12 @@ const ANSWER_TIMEOUT = Symbol("answer-timeout");
  * @property {number} length journey length in steps
  * @property {number} passes 1 = the journey; 2 or 3 adds that many repair passes
  * @property {"journey" | "steps" | "both"} arm one session, one process per step, or both
- * @property {string} agent shell command speaking the line protocol
+ * @property {string | null} agent shell command speaking the line protocol
  */
 
 /** @param {string[]} argv @returns {Options} */
 export function parseArgv(argv) {
+	/** @type {Options} */
 	const opts = {
 		seeds: [1],
 		out: join(HERE, "runs"),
@@ -64,33 +84,50 @@ export function parseArgv(argv) {
 		agent: null,
 	};
 	for (let i = 0; i < argv.length; i += 1) {
+		const option = argv[i];
 		const value = argv[i + 1];
-		if (argv[i] === "--seeds") {
+		if (option === undefined) {
+			break;
+		}
+		if (value === undefined) {
+			throw new Error(`unknown argument ${option}`);
+		}
+		if (option === "--seeds") {
 			opts.seeds = parseSeeds(value);
-		} else if (argv[i] === "--out") {
+		} else if (option === "--out") {
 			opts.out = value;
-		} else if (argv[i] === "--deadline-ms") {
+		} else if (option === "--deadline-ms") {
 			opts.deadlineMs = Number(value);
-		} else if (argv[i] === "--length") {
+		} else if (option === "--length") {
 			opts.length = Number(value);
-		} else if (argv[i] === "--passes") {
+		} else if (option === "--passes") {
 			opts.passes = Number(value);
-		} else if (argv[i] === "--arm") {
+		} else if (option === "--arm") {
+			if (value !== "journey" && value !== "steps" && value !== "both") {
+				throw new Error(`--arm takes journey, steps or both, not ${value}`);
+			}
 			opts.arm = value;
-		} else if (argv[i] === "--agent") {
+		} else if (option === "--agent") {
 			opts.agent = value;
 		} else {
-			throw new Error(`unknown argument ${argv[i]}`);
+			throw new Error(`unknown argument ${option}`);
 		}
 		i += 1;
 	}
 	return opts;
 }
 
-/** "3" | "1-4" | "1,4,9" — a slow host runs a handful, not a grid. */
+/**
+ * "3" | "1-4" | "1,4,9" — a slow host runs a handful, not a grid.
+ * @param {string} text
+ * @returns {number[]}
+ */
 function parseSeeds(text) {
 	return text.split(",").flatMap((part) => {
 		const [first, last] = part.split("-").map(Number);
+		if (first === undefined) {
+			return [];
+		}
 		if (last === undefined) {
 			return [first];
 		}
@@ -98,12 +135,21 @@ function parseSeeds(text) {
 	});
 }
 
+/** @param {string} out @returns {string} */
 const journalOf = (out) => join(out, "journal.jsonl");
 
+/**
+ * @param {string} path
+ * @returns {string | null}
+ */
 const maybeRead = (path) =>
 	existsSync(path) ? readFileSync(path, "utf8") : null;
 
-/** A crashed run leaves half a line; the rest of the journal still validates. */
+/**
+ * A crashed run leaves half a line; the rest of the journal still validates.
+ * @param {string} out
+ * @returns {JournalRecord[]}
+ */
 function readJournal(out) {
 	const text = maybeRead(journalOf(out));
 	if (text === null) {
@@ -121,6 +167,10 @@ function readJournal(out) {
 		});
 }
 
+/**
+ * @param {string} out
+ * @param {JournalRecord} record
+ */
 function appendRecord(out, record) {
 	appendFileSync(journalOf(out), `${JSON.stringify(record)}\n`);
 }
@@ -140,10 +190,13 @@ function startAgent(agent, cwd) {
 		detached: true,
 		stdio: ["pipe", "pipe", "pipe"],
 	});
+	/** @type {Answer[]} */
 	const queue = [];
+	/** @type {((answer: Answer | null) => void)[]} */
 	const pending = [];
 	let stderr = "";
 	let buffer = "";
+	/** @param {Answer} answer */
 	const accept = (answer) => {
 		const resolve = pending.shift();
 		if (resolve === undefined) {
@@ -179,14 +232,21 @@ function startAgent(agent, cwd) {
 	});
 	child.on("exit", () => {
 		while (pending.length > 0) {
-			pending.shift()(null);
+			const next = pending.shift();
+			if (next !== undefined) {
+				next(null);
+			}
 		}
 	});
 	// A queued line that names a different step is a late answer to an earlier
 	// request: dropping it keeps a slow model from shifting every answer by one.
+	/** @param {number} step @returns {Answer | null} */
 	const takeQueued = (step) => {
 		while (queue.length > 0) {
 			const candidate = queue.shift();
+			if (candidate === undefined) {
+				return null;
+			}
 			if (candidate.step === undefined || candidate.step === step) {
 				return candidate;
 			}
@@ -195,7 +255,7 @@ function startAgent(agent, cwd) {
 	};
 	return {
 		stderr: () => stderr,
-		ask: (step, task) =>
+		ask: (/** @type {number} */ step, /** @type {string} */ task) =>
 			new Promise((resolve) => {
 				child.stdin.write(`${JSON.stringify({ step, task })}\n`);
 				const queued = takeQueued(step);
@@ -220,11 +280,19 @@ function startAgent(agent, cwd) {
 	};
 }
 
-/** @returns {Promise<object | null | typeof ANSWER_TIMEOUT>} */
+/**
+ * @param {ReturnType<typeof startAgent>} agent
+ * @param {number} step
+ * @param {string} task
+ * @param {number} ms
+ * @returns {Promise<Answer | null | typeof ANSWER_TIMEOUT>}
+ */
 function askWithDeadline(agent, step, task, ms) {
 	return new Promise((resolve) => {
 		const timer = setTimeout(() => resolve(ANSWER_TIMEOUT), ms);
-		agent.ask(step, task).then((answer) => {
+		// The timer owns the timeout path, so a rejection here is deliberately not
+		// carried: the pending promise resolves with ANSWER_TIMEOUT instead.
+		void agent.ask(step, task).then((/** @type {Answer | null} */ answer) => {
 			clearTimeout(timer);
 			resolve(answer);
 		});
@@ -243,6 +311,7 @@ function degenerationOf(dir) {
 	if (text === null) {
 		return null;
 	}
+	/** @type {string | null} */
 	let previous = null;
 	let longestRun = 0;
 	let run = 0;
@@ -265,6 +334,10 @@ function degenerationOf(dir) {
 	return { calls, longestRun };
 }
 
+/**
+ * @param {string} dir
+ * @param {Record<string, string>} files
+ */
 function materialize(dir, files) {
 	rmSync(dir, { recursive: true, force: true });
 	for (const [path, text] of Object.entries(files)) {
@@ -274,12 +347,17 @@ function materialize(dir, files) {
 	}
 }
 
+/**
+ * @param {"journey" | "steps" | "both"} arm
+ * @returns {("journey" | "steps")[]}
+ */
 const armList = (arm) => (arm === "both" ? ["journey", "steps"] : [arm]);
 
 /**
  * One journey. Every step is journalled as it lands, so a killed run keeps the
  * distance it had already travelled.
- * @returns {Promise<object[]>} the records this attempt produced
+ * @param {{ep: ReturnType<typeof import("./episode.mjs").episode>, opts: Options, seed: number, arm: "journey" | "steps", attempt: number}} input
+ * @returns {Promise<JournalRecord[]>} the records this attempt produced
  */
 async function runEpisode({ ep, opts, seed, arm, attempt }) {
 	const dir = join(opts.out, `seed-${seed}`, arm);
@@ -290,8 +368,10 @@ async function runEpisode({ ep, opts, seed, arm, attempt }) {
 	const immutable = Object.keys(ep.files).filter(
 		(p) => !p.startsWith("notes/"),
 	);
+	/** @type {JournalRecord[]} */
 	const records = [];
 	const started = Date.now();
+	/** @type {ReturnType<typeof startAgent> | null} */
 	let agent = null;
 	let trapSeen = 0;
 	let firstFailure = null;
@@ -304,6 +384,9 @@ async function runEpisode({ ep, opts, seed, arm, attempt }) {
 			trapSeen += 1;
 		}
 		if (agent === null) {
+			if (opts.agent === null) {
+				throw new Error("--agent is required to run a journey");
+			}
 			agent = startAgent(opts.agent, dir);
 		}
 		const stepStart = Date.now();
@@ -367,7 +450,7 @@ async function runEpisode({ ep, opts, seed, arm, attempt }) {
 			break;
 		}
 		if (arm === "steps") {
-			agent.close();
+			agent?.close();
 			agent = null;
 		}
 	}
@@ -403,6 +486,12 @@ async function runEpisode({ ep, opts, seed, arm, attempt }) {
  * them: a wrong decision is a different failure from a right one with a weak
  * citation, and the report separates the two.
  */
+/**
+ * @param {import("./episode.mjs").Step} step
+ * @param {ReturnType<typeof import("./score.mjs").score>} scored
+ * @param {boolean} silent
+ * @returns {string | null}
+ */
 function failureCause(step, scored, silent) {
 	if (silent) {
 		return "no-answer";
@@ -430,7 +519,8 @@ function failureCause(step, scored, silent) {
 /**
  * One repair pass over the state a journey left behind, in a fresh session: the
  * context that produced the mistake is gone by construction, which is the point.
- * @returns {Promise<object>} the recovery record
+ * @param {{ep: ReturnType<typeof import("./episode.mjs").episode>, opts: Options, seed: number, arm: "journey" | "steps", attempt: number, round: number, tamperedAt: Record<string, number>}} input
+ * @returns {Promise<JournalRecord>} the recovery record
  */
 async function runRecovery({
 	ep,
@@ -442,6 +532,7 @@ async function runRecovery({
 	tamperedAt,
 }) {
 	const dir = join(opts.out, "seed-" + seed, arm);
+	/** @param {string} path @returns {string | null} */
 	const read = (path) => maybeRead(join(dir, path));
 	const before = defectsOf(ep, read, tamperedAt);
 	const witness = before.length === 0 ? null : probeOf(ep, before, round);
@@ -449,6 +540,9 @@ async function runRecovery({
 		witness === null
 			? null
 			: await (async () => {
+					if (opts.agent === null) {
+						throw new Error("--agent is required to run a repair pass");
+					}
 					const agent = startAgent(opts.agent, dir);
 					const outcome = await askWithDeadline(
 						agent,
@@ -484,10 +578,10 @@ async function runRecovery({
 			witness === null
 				? null
 				: {
-						step: witness.witness.step,
-						kind: witness.witness.kind,
-						path: witness.witness.path,
-						key: witness.witness.key,
+						step: /** @type {any} */ (witness.witness).step,
+						kind: /** @type {any} */ (witness.witness).kind,
+						path: /** @type {any} */ (witness.witness).path,
+						key: /** @type {any} */ (witness.witness).key,
 					},
 		span: witness?.span ?? null,
 		claimed,
@@ -496,6 +590,10 @@ async function runRecovery({
 	};
 }
 
+/**
+ * @param {Options} opts
+ * @returns {Promise<JournalRecord[]>}
+ */
 export async function run(opts) {
 	mkdirSync(opts.out, { recursive: true });
 	const records = readJournal(opts.out);
@@ -503,7 +601,7 @@ export async function run(opts) {
 	if (!records.some((r) => r.record === "header")) {
 		const header = {
 			record: "header",
-			grammarVersion: episode(opts.seeds[0], opts.length).grammarVersion,
+			grammarVersion: episode(opts.seeds[0] ?? 1, opts.length).grammarVersion,
 			seeds: opts.seeds,
 			arms,
 			length: opts.length,
@@ -537,6 +635,9 @@ export async function run(opts) {
 				)
 				.sort((x, y) => x.attempt - y.attempt)
 				.at(-1);
+			if (settled === undefined) {
+				continue;
+			}
 			// A death is a result, not an interruption: the journey that died is the
 			// journey that gets repaired.
 			for (let round = 1; round < opts.passes; round += 1) {
@@ -577,6 +678,11 @@ export async function run(opts) {
 	return records;
 }
 
+/**
+ * @param {number} k
+ * @param {number} n
+ * @returns {string}
+ */
 const percent = (k, n) => (n === 0 ? "-" : `${((k / n) * 100).toFixed(0)}%`);
 
 /**
@@ -601,6 +707,11 @@ function wilson(k, n) {
 	];
 }
 
+/**
+ * @param {number} k
+ * @param {number} n
+ * @returns {string}
+ */
 function interval(k, n) {
 	const bounds = wilson(k, n);
 	if (bounds === null) {
@@ -616,10 +727,20 @@ function interval(k, n) {
 	);
 }
 
+/**
+ * @param {JournalRecord[]} rows
+ * @param {(row: JournalRecord) => boolean} predicate
+ * @returns {number}
+ */
 const count = (rows, predicate) => rows.filter(predicate).length;
 
 /** The latest completed attempt of each (seed, arm); older attempts are superseded. */
+/**
+ * @param {JournalRecord[]} records
+ * @returns {JournalRecord[]}
+ */
 function latestEpisodes(records) {
+	/** @type {Map<string, JournalRecord>} */
 	const latest = new Map();
 	for (const record of records) {
 		if (record.record !== "episode") {
@@ -637,10 +758,11 @@ function latestEpisodes(records) {
 /**
  * The report is derived, never accumulated: every number below is a recount of
  * the journal, so an interrupted run reports what it has and nothing else.
- * @param {object[]} records
+ * @param {JournalRecord[]} records
  * @returns {string}
  */
 export function report(records) {
+	/** @type {JournalRecord} */
 	const header = records.find((r) => r.record === "header") ?? {};
 	const episodes = latestEpisodes(records);
 	const live = new Set(episodes.map((e) => `${e.seed}:${e.arm}:${e.attempt}`));
@@ -651,6 +773,7 @@ export function report(records) {
 	const armOf = [...new Set(episodes.map((e) => e.arm))].sort((a, b) =>
 		a.localeCompare(b),
 	);
+	/** @param {any[]} cells @returns {string} */
 	const row = (cells) => `| ${cells.join(" | ")} |`;
 	const lines = [
 		"# llm-local-bench",
@@ -815,6 +938,7 @@ export function report(records) {
 				"---",
 			]),
 		);
+		/** @param {{from: number, to: number} | null} span @returns {string} */
 		const spanText = (span) =>
 			span === null ? "-" : span.from + "–" + span.to;
 		for (const r of repairs) {

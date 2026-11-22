@@ -4,6 +4,7 @@ import { gradeRecovery, score } from "../score.mjs";
 
 const readNothing = () => null;
 
+/** @type {any} */
 const stopStep = {
 	truth: {
 		decision: "stop",
@@ -14,6 +15,7 @@ const stopStep = {
 	},
 };
 
+/** @type {any} */
 const proceedStep = {
 	truth: {
 		decision: "proceed",
@@ -127,6 +129,12 @@ test("citing a path that is not in the workspace is reported as phantom", () => 
 	assert.equal(result.pass, true);
 });
 
+/**
+ * @param {number | null} step
+ * @param {string} key
+ * @param {string} [path]
+ * @returns {import("../episode.mjs").Defect}
+ */
 const defect = (step, key, path = "notes/facts.md") => ({
 	step,
 	kind: "missing",

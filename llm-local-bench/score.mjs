@@ -23,7 +23,11 @@
 const WITHOUT_PREFIX = /^\.\//;
 const TRAILING_SLASH = /\/+$/;
 
-/** Paths arrive as the agent wrote them; one spelling for comparison. */
+/**
+ * Paths arrive as the agent wrote them; one spelling for comparison.
+ * @param {unknown} path
+ * @returns {string}
+ */
 function normalize(path) {
 	return String(path)
 		.trim()
@@ -31,18 +35,24 @@ function normalize(path) {
 		.replace(TRAILING_SLASH, "");
 }
 
+/**
+ * @param {unknown} value
+ * @returns {boolean}
+ */
 const isFilled = (value) =>
 	typeof value === "string" && value.trim().length > 0;
 
 /**
- * @param {object} step an episode step (episode.mjs)
+ * @param {import("./episode.mjs").Step} step an episode step (episode.mjs)
  * @param {unknown} answer the parsed $BENCH_ANSWER, or null when none was written
  * @param {(path: string) => string | null} read reads a file from the step's workspace
  * @returns {{pass: boolean, answered: boolean, decision_ok: boolean, evidence_ok: boolean, facts_ok: boolean, artifact_ok: boolean, asked: boolean, clean: boolean, wrong_source: string[], phantom_source: string[], invented: string[], missing_evidence: string[], artifact_missing: string[]}}
  */
 export function score(step, answer, read) {
 	const truth = step.truth;
-	const given = answer !== null && typeof answer === "object" ? answer : {};
+	const given = /** @type {Record<string, unknown>} */ (
+		answer !== null && typeof answer === "object" ? answer : {}
+	);
 	const answered = typeof given.decision === "string";
 	const cited = new Set(
 		(Array.isArray(given.evidence) ? given.evidence : []).map(normalize),
@@ -112,12 +122,16 @@ export function score(step, answer, read) {
  * "for how long was it wrong", which a session that only repairs the tip gets
  * wrong in one direction and a session that blames everything gets wrong in the
  * other.
- * @param {{before: object[], after: object[], claimed: {from: number, to: number} | null, span: {from: number, to: number} | null}} input
+ * @param {{before: import("./episode.mjs").Defect[], after: import("./episode.mjs").Defect[], claimed: {from: number, to: number} | null, span: {from: number, to: number} | null}} input
  * @returns {{fixed: number, remaining: number, regressions: number, span_ok: boolean, span_late_start: boolean, span_early_start: boolean, span_short_end: boolean, span_long_end: boolean}}
  */
 export function gradeRecovery({ before, after, claimed, span }) {
 	// A defect is identified by WHERE, WHAT and WHO WROTE IT: two wrong note lines
 	// about the same key are two defects, so the step is part of the identity.
+	/**
+	 * @param {import("./episode.mjs").Defect} d
+	 * @returns {string}
+	 */
 	const key = (d) => d.path + ":" + d.key + ":" + (d.step ?? "-");
 	const beforeKeys = new Set(before.map(key));
 	const afterKeys = new Set(after.map(key));

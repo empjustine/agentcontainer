@@ -31,6 +31,10 @@ const DYING = [
 	"});",
 ].join("\n");
 
+/**
+ * @param {string} source
+ * @returns {{out: string, agent: string}}
+ */
 function harness(source) {
 	const root = mkdtempSync(join(tmpdir(), "llm-local-bench-"));
 	const agent = join(root, "agent.mjs");
@@ -41,6 +45,11 @@ function harness(source) {
 	};
 }
 
+/**
+ * @param {{out: string, agent: string}} dir
+ * @param {Record<string, unknown>} [extra]
+ * @returns {any}
+ */
 const opts = (dir, extra) => ({
 	seeds: [3],
 	out: dir.out,
@@ -51,6 +60,11 @@ const opts = (dir, extra) => ({
 	...extra,
 });
 
+/**
+ * @param {any[]} records
+ * @param {string} arm
+ * @returns {any[]}
+ */
 const stepsOf = (records, arm) =>
 	records.filter((r) => r.record === "step" && r.arm === arm);
 
@@ -58,7 +72,9 @@ test("a journey answers every step and reports a distance", async () => {
 	const dir = harness(STUB);
 	const records = await run(opts(dir));
 	assert.equal(stepsOf(records, "journey").length, 8);
-	const episode = records.find((r) => r.record === "episode");
+	const episode = /** @type {any} */ (
+		records.find((r) => r.record === "episode")
+	);
 	assert.equal(episode.answered, 8);
 	assert.equal(episode.died, false);
 	assert.equal(episode.firstFailure.ordinal, 1);
@@ -95,7 +111,9 @@ test("the two arms journal side by side on one seed", async () => {
 test("a dead session leaves the rest of the journey unreached", async () => {
 	const dir = harness(DYING);
 	const records = await run(opts(dir, { deadlineMs: 400 }));
-	const episode = records.find((r) => r.record === "episode");
+	const episode = /** @type {any} */ (
+		records.find((r) => r.record === "episode")
+	);
 	assert.equal(episode.died, true);
 	assert.equal(episode.answered, 2);
 	assert.equal(stepsOf(records, "journey").length, 3);
@@ -121,7 +139,9 @@ test("the argv surface parses length and arm", () => {
 test("a repair pass runs over the state the journey left, in a fresh session", async () => {
 	const dir = harness(STUB);
 	const records = await run(opts(dir, { passes: 2 }));
-	const recovery = records.find((r) => r.record === "recovery");
+	const recovery = /** @type {any} */ (
+		records.find((r) => r.record === "recovery")
+	);
 	assert.ok(recovery.defects > 0);
 	assert.ok(recovery.span.from <= recovery.span.to);
 	assert.equal(recovery.fixed, 0);
@@ -151,18 +171,20 @@ test("a tree with nothing to repair records no witness", async () => {
 				"check " +
 				step.index +
 				" " +
-				step.truth.line.token +
+				/** @type {any} */ (step.truth.line).token +
 				": " +
-				step.truth.line.key +
+				/** @type {any} */ (step.truth.line).key +
 				" " +
-				step.truth.line.value,
+				/** @type {any} */ (step.truth.line).value,
 		);
 	writeFileSync(
 		join(dir.out, "seed-3", "journey", "notes/facts.md"),
 		lines.join("\n") + "\n",
 	);
 	const records = await run(opts(dir, { passes: 2 }));
-	const recovery = records.find((r) => r.record === "recovery");
+	const recovery = /** @type {any} */ (
+		records.find((r) => r.record === "recovery")
+	);
 	assert.equal(recovery.defects, 0);
 	assert.equal(recovery.witness, null);
 });
