@@ -70,9 +70,10 @@ Notes:
 - **Init seeding**: the launcher seeds nothing per run for pi or OpenCode anymore —
   the generator installs pi's config into `$HOME/.pi/agent` (docs/d054) and
   opencode's `opencode.json` into the host config dir, refreshing the
-  committed `coding-agent/opencode.jsonc` alongside (docs/d065). A missing
-  opencode overlay is only warned about at launch (partial config
-  tolerated); a missing pi artifact aborts. A populated
+  committed `coding-agent/opencode.jsonc` alongside (docs/d065). Launch
+  tolerates partial config from both: a missing opencode overlay is warned
+  about, and a missing or hand-edited pi artifact is not even read — the
+  artifact gate and its exit 94 retired (docs/d227). A populated
   `auth.json` in the pi agent dir or the opencode data dir aborts the run —
   an empty `{}` is ignored (pi re-creates it on every start; opencode writes
   the file only on login) (d052/d054/d216). Cline's

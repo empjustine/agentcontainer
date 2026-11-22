@@ -27,6 +27,11 @@ container default, so this record's "no credential gate is needed" invariant is
 replaced: a populated `auth.json` there aborts the launch (exit 93). The
 config-dir mount stands.
 
+**Superseded in part by docs/d227.** The partial-config rule below is the whole
+launcher's shape now: pi is not aborted on a missing `models.json` either, and
+exit 94 retired with the artifact gate. The opencode config-dir mount and the
+"warn, then launch" decision stand.
+
 ## Problem
 
 The opencode config was staged per run: `run.sh` copied the committed

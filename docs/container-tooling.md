@@ -323,9 +323,9 @@ Launches the pi coding-agent container. The ARGV/env contract — directory
 mounts and their container-side spelling (docs/d056/d068), the
 `PI_CODING_AGENT_DIR` / `PI_CODING_AGENT_SESSION_DIR` split (docs/d054),
 the opencode config-dir mount (docs/d065), the per-run audit stages
-(docs/d026), and the loud-failure policy for missing artifacts (docs/d041) —
-is owned by the run script's own header; this page carries only what a
-runbook needs:
+(docs/d026), and the no-config-gating rule (docs/d227 — the launcher reads no
+mounted config, so exit 94 is gone) — is owned by the run script's own header;
+this page carries only what a runbook needs:
 
 - **Secrets**: loaded ONCE on the HOST by the explicit chain
   (`./environment.sh ./node-run.sh coding-agent/run.mjs`, docs/d046) and forwarded

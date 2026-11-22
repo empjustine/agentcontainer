@@ -8,8 +8,10 @@
  * (docs/d108), so artifacts carry the real upstream and reachability is the
  * environment proxy's job (NODE_USE_ENV_PROXY + HTTP(S)_PROXY, docs/d074).
  * A route-form URL left behind by an older generation is now a dead endpoint
- * — which is exactly what this check catches: at launch over the agent dir's
- * models.json (the launcher) and in tests over the committed snapshots.
+ * — which is exactly what this check catches: in tests over the committed
+ * snapshots. It is deliberately NOT a launch gate any more (docs/d227): the
+ * agent dir is host state pi tolerates, and a verifier that refused startup
+ * over a hand-edited copy blocked launches for files pi itself accepts.
  *
  * The check is structural and keyed by provider id through the fact table —
  * never substring guesses over the file (docs/d070 Verification). Exit 0 =

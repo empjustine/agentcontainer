@@ -34,8 +34,10 @@
  * out to it again fails here rather than on a host without jq.
  *
  * Exit-code coverage rides along because these are the launcher's hard contract:
- * 90 (a DIRECTORY that is $HOME), 93 (auth.json holding credentials), 94 (a
- * missing generated artifact).
+ * 90 (a DIRECTORY that is $HOME), 93 (auth.json holding credentials). 94 — the
+ * missing/stale-artifact code — is gone with the artifact gate (docs/d227), so
+ * the fixture deliberately installs NO generated config: a launch must neither
+ * read nor require it.
  *
  * Run: ../node-run.sh --test tests/*.test.mjs   (from ./coding-agent)
  *      RECORD=1 … to rewrite tests/expect-run-dirs.txt (review the diff!)
@@ -107,12 +109,10 @@ function fixture() {
 		{ mode: 0o755 },
 	);
 
-	// pi's generated artifacts (the launcher aborts without them, exit 94);
-	// everything else it mkdir -p's itself.
+	// The agent dir exists but carries NO generated config (docs/d227): the
+	// launcher mkdir -p's the host state dirs and launches on whatever it finds
+	// — including nothing. A test that needs a file writes it (auth.json does).
 	mkdirSync(join(home, ".pi/agent"), { recursive: true });
-	for (const file of ["settings.json", "models.json", "mcp.json"]) {
-		writeFileSync(join(home, ".pi/agent", file), "{}\n");
-	}
 }
 
 /**
@@ -245,11 +245,24 @@ suite("the DIRECTORY argv is the d068 mount manifest", () => {
 		rmSync(authFile);
 	});
 
-	test("a missing generated artifact refuses the launch (exit 94)", () => {
-		rmSync(join(home, ".pi/agent/settings.json"));
+	// The retired artifact gate's regression guard (docs/d227). The fixture's
+	// agent dir is empty here, so this asserts the whole class at once: no
+	// settings.json, models.json or mcp.json is created, read or required.
+	test("an agent dir with no generated artifacts still launches", () => {
+		const { status, stdout, stderr } = launch([]);
+		assert.equal(status, 0, `${stdout}${stderr}`);
+		assert.match(stdout, /starting container/);
+	});
+
+	// pi reads `models.json` as JSONC and starts with a broken one anyway; the
+	// launcher used to reject both here (strict JSON.parse + the canonical-URL
+	// re-check) and must not look at the file at all now (docs/d227).
+	test("an invalid models.json does not refuse the launch", () => {
+		const models = join(home, ".pi/agent/models.json");
+		writeFileSync(models, "{\n // comment\n \"providers\": {},\n}\n");
 		const { status } = launch([]);
-		writeFileSync(join(home, ".pi/agent/settings.json"), "{}\n");
-		assert.equal(status, 94);
+		assert.equal(status, 0);
+		rmSync(models);
 	});
 
 	test("$HOME as a DIRECTORY is refused (exit 90)", () => {

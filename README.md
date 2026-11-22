@@ -138,7 +138,7 @@ agentcontainer/
 │   ├── generate-opencode.mjs            #   → opencode overlay config (provider SINGULAR key; skipped on Termux w/o OPENCODE_CONFIG_DIR)
 │   ├── gen-lib.mjs                      #   → shared generator preamble (pi shaping folded in, d039)
 │   ├── route-probe.mjs                  #   → HTTP route/probe toolkit (renamed peer-probe.mjs, d071; folded out of the root lib, d039)
-│   ├── check-canonical-artifacts.mjs    #   → committed artifacts carry canonical upstreams, installed ones carry routes (d070)
+│   ├── check-canonical-artifacts.mjs    #   → committed artifacts carry canonical upstreams — a generation/test gate, no longer a launch one (d070, d227)
 │   ├── catalog-facts.mjs                #   → the two catalog reads: per-provider listings + catwalk, both fetched per run, nothing cached or committed (d191)
 │   ├── refresh-models-dev.mjs           #   → the run's models.dev catalog fetch into its own output dir (d039/d191)
 │   ├── settings.json                    #   → static pi settings (generator installs into PI_CODING_AGENT_DIR)

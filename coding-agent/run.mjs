@@ -13,15 +13,15 @@
  * this launcher consumes env only — it never loads, fetches or caches secrets
  * itself, and the host login state never leaves the host.
  *
- * RUNNERS NEVER BUILD OR GENERATE (docs/d041): stale/missing generation is a
- * USER ISSUE. This launcher serves the generator's installed config — the host
- * agent dir and the host opencode config dir, both mounted as-is — refreshed by
- * `./npm-run.sh coding-agent generate`, which forwards the vault env
- * themselves. A missing pi artifact is a loud failure pointing at the
- * generator, never an implicit regeneration; a missing opencode overlay is a
- * TOLERATED partial config (docs/d065 — opencode runs on its built-ins). The
- * generator tree is deliberately NOT mounted (docs/d056): an in-container
- * session cannot regenerate.
+ * RUNNERS NEVER BUILD OR GENERATE (docs/d041): this launcher serves the host
+ * harness dirs as they are — the pi agent dir and the host opencode config dir,
+ * both mounted as-is — refreshed by `./npm-run.sh coding-agent generate`,
+ * which forwards the vault env themselves. It also GATES NOTHING in them
+ * (docs/d227): each harness starts on its own defaults plus whatever config it
+ * finds, so an absent, empty or hand-edited artifact is a partial config, never
+ * a refusal and never an implicit regeneration. The generator tree is
+ * deliberately NOT mounted (docs/d056): an in-container session cannot
+ * regenerate.
  *
  * ARGV: [DIRECTORY [DIRECTORY...]]
  *   Each DIRECTORY is a host directory exposed INSIDE the container at its own
@@ -86,18 +86,19 @@
  *   CLINE_DIR  Cline's dir (default ~/.cline), mounted rw
  *   THINKRAIL_DATA_DIR  ThinkRail's data dir (default ~/.thinkrail), mounted rw
  *
- * Exit codes (unchanged from the sh launcher — wrappers and docs quote them).
- * Each rides on a thrown `failure` and is set by the one handler (docs/d225):
+ * Exit codes (wrappers and docs quote them). Each rides on a thrown `failure`
+ * and is set by the one handler (docs/d225):
  *   90 a DIRECTORY is unusable or is $HOME · 91 no backend / required mount
  *   source gone · 92 the description does not render · 93 auth.json holds
- *   credentials · 94 a generated artifact is missing or stale
+ *   credentials
+ *
+ * 94 — a generated artifact missing or stale — retired with the artifact gate
+ * (docs/d227): a launch has no status to report about mounted config content.
  */
 
-import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
 import { userInfo } from "node:os";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { baseUrlEnvName } from "./lib/cloud-providers.mjs";
 import { exitCodeOf, failure } from "./lib/failure.mjs";
 import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
@@ -122,7 +123,6 @@ import {
 /** @typedef {import("./lib/workload-runtime.mjs").Host} Host */
 /** @typedef {import("./lib/workload-runtime.mjs").WorkloadDescription} WorkloadDescription */
 
-const unitDir = dirname(fileURLToPath(import.meta.url));
 const image = "localhost/empjustine/coding-agent:latest";
 
 /** Exit codes are part of the launcher's contract (see the file overview). */
@@ -130,7 +130,6 @@ const EXIT_DIRECTORY = 90;
 const EXIT_BACKEND = 91;
 const EXIT_RENDER = 92;
 const EXIT_AUTH = 93;
-const EXIT_ARTIFACT = 94;
 
 /**
  * Every provider key env the sandbox's harnesses read. Only non-empty values are
@@ -531,74 +530,21 @@ function credentialWarnings(launch) {
 }
 
 /**
- * The runtime config is the generator's output installed into the host agent
- * dir, which the sandbox mounts directly — so the committed config is still the
- * runtime config, just not re-copied per run (docs/d054 refines d041(d)).
- * Missing artifacts are a user issue: loud failure pointing at the generator,
- * never an implicit regeneration.
- * @param {Launch} launch
- * @returns {void}
- * @throws {Error} the refusal, from the step that decided it (docs/d225)
- */
-function artifactGate(launch) {
-	for (const [file, message] of /** @type {[string, string][]} */ ([
-		[
-			"settings.json",
-			"no settings.json in the agent dir — run `./npm-run.sh coding-agent generate` first",
-		],
-		[
-			"models.json",
-			"no models.json in the agent dir — run `./npm-run.sh coding-agent generate` first",
-		],
-		// mcp.json is required even though pi runs without it: "every environment
-		// has the committed servers" is the check's whole value, and the
-		// documented opt-out is `"enabled": false` on the entry (docs/d061), not a
-		// deleted file.
-		[
-			"mcp.json",
-			"no mcp.json in the agent dir — run `./npm-run.sh coding-agent generate` first",
-		],
-	])) {
-		if (!hostFs.exists(join(launch.agentDir, file))) {
-			throw failure(message, EXIT_ARTIFACT, { agentDir: launch.agentDir });
-		}
-	}
-	// The installed file must carry the fact-table upstreams (docs/d070) — the
-	// canonical form generation emits. What that catches now is a leftover from
-	// an older reverse-proxy generation: a route-form URL there points at a proxy
-	// this fleet no longer runs (docs/d108). Re-check at launch because the agent
-	// dir is host state a stale or hand-edited copy can sit in, and the fix is
-	// always the same: regenerate.
-	const check = spawnSync(
-		process.execPath,
-		[
-			join(unitDir, "check-canonical-artifacts.mjs"),
-			join(launch.agentDir, "models.json"),
-		],
-		{ stdio: ["ignore", "ignore", "inherit"] },
-	);
-	if (check.status !== 0) {
-		throw failure(
-			"installed models.json does not carry canonical provider URLs — run `./npm-run.sh coding-agent generate` (docs/d108)",
-			EXIT_ARTIFACT,
-			{ agentDir: launch.agentDir },
-		);
-	}
-}
-
-/**
  * @returns {Promise<void>}
  */
 async function main() {
 	setLogTool("coding-agent/run");
 	// The launch is argv assembly; each check below is a guard that owns its own
-	// stop or report (docs/d225).
+	// stop or report (docs/d225). No check reads the mounted config's CONTENT —
+	// the artifact gate that did (settings/models/mcp existence plus the
+	// canonical-URL re-check) is retired: mounted config is host state the
+	// harnesses tolerate, and validating it refused launches for files pi
+	// itself accepts (docs/d227).
 	const launch = buildLaunch(process.argv.slice(2), process.env);
 	const backend = requireBackend();
 	ensureHostState(launch);
 	credentialGate(launch);
 	warnCredentialFiles(launch);
-	artifactGate(launch);
 	logInfo("mounting host harness state", {
 		container: launch.containerName,
 		dirs: hostStateDirs(launch).length,
@@ -664,9 +610,12 @@ function warnCredentialFiles(launch) {
 }
 
 /**
- * PARTIAL opencode config is ACCEPTED at launch (deliberately unlike pi's
- * missing-artifact exit 94): opencode runs fine on its built-in providers, so a
- * missing installed overlay only costs the provider reroute — warn and launch.
+ * The only config file whose absence still earns a line at launch: a missing
+ * opencode overlay costs the provider reroute the generator installed, and
+ * nothing else is lost (d065's partial-config rule, now the whole launcher's
+ * shape — docs/d227). Pi's artifacts get no equivalent warning because pi
+ * starts on its bundled catalog plus whatever it finds; a hand-edited
+ * `models.json` is the operator's file, not a launch input to validate.
  * SKIP_GEN (the committed-artifact install path) is retired with d070 §6: the
  * overlay is a generate-time artifact, and regeneration is the only fix.
  * @param {Launch} launch

@@ -112,9 +112,9 @@ the former `CODING_AGENT_REFERENCES` toggle (docs/d043, docs/d056). The launcher
 container-ONLY (docs/d059): without podman/docker it refuses at the top —
 before creating anything — and names the sandbox-free path
 (`./environment.sh pi`, which spawns a bare PATH command as well as a
-script). A missing
-installed artifact is a loud failure pointing at the generator, never an
-implicit regeneration.
+script). It reads no mounted config either: an absent, empty or hand-edited
+artifact launches, and the harness reports what it makes of it (docs/d227 —
+exit 94 retired with that gate).
 
 Generation profiles (detected at runtime — generation runs on both kinds of
 host; only container hosts launch, docs/d059): **Termux** — system node (Termux's bionic
@@ -178,9 +178,10 @@ through the environment proxy.
   same contract.
 - **URL form is verified, not assumed** (docs/d070):
   `check-canonical-artifacts.mjs` is the one detector — canonical upstreams
-  over the committed artifacts (guarded by `tests/artifact-urls.test.mjs`)
-  and re-run at launch over the agent dir by the launcher (exit 94), which is
-  what catches a route-form leftover from the reverse-proxy generation.
+  over the committed artifacts (guarded by `tests/artifact-urls.test.mjs`) and
+  inside generation. It is not a launch gate (docs/d227): the agent dir is host
+  state, so a route-form leftover there is caught by a committed-snapshot
+  review or by regenerating, not by refusing the launch.
 - **Route building is gone** (docs/d027, removed as insecure by docs/d108):
   cloud routes were `<base>/<upstream-host>` on the reverse proxy; clients
   reach upstreams through the tunnel's proxy env instead (v3 transports, d104

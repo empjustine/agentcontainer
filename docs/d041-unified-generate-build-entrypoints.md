@@ -130,7 +130,12 @@ only spawns, never imports across runner folders.
 ### (d) Runners never build or generate
 
 Stale/missing artifacts are user issues; a runner's job is to fail loudly and
-point at the generator/builder, never to fix state implicitly:
+point at the generator/builder, never to fix state implicitly.
+
+**Superseded in part by docs/d227 for `coding-agent/run.mjs`.** "Never
+generate" stands; "fail loudly on a missing artifact" does not — the launcher
+gates no harness config, because a mounted agent dir is host state the harness
+itself tolerates. The other runners still fail loudly.
 
 - `coding-agent/run.sh`: the in-container launch chain no longer runs
   generate.sh — it stages the committed config (settings.json, models.json,

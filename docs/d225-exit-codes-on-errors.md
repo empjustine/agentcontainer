@@ -46,7 +46,8 @@ exit code under `Symbol.for("process.exitCode")`, thrown by the step that
 decided it.** A gate or check that generates its own refusal throws it; it does
 not hand it back for a caller to throw, which would split one decision — what
 failed and whether to stop — across two places (the launcher's `credentialGate`
-and `artifactGate` are the worked example). A predicate that answers a question
+and `requireMountSources` are the worked example; the `artifactGate` this
+record also named is retired by docs/d227). A predicate that answers a question
 still returns data — `credentialWarnings` lists the files its reporter warns
 about, `canonicalViolations` lists what the verifier prints — and the guard that
 decides to stop generates the failure (`requireMountSources` in the launcher).
@@ -115,7 +116,8 @@ record:
   `finally`, so a failed generator no longer leaves its staging directory
   behind — the first cleanup this rule protects.
 - The launcher's refusal guards (`resolveDirectories`, `requireBackend`,
-  `credentialGate`, `artifactGate`, `requireMountSources`) throw the failure they
+  `credentialGate`, `requireMountSources`; the retired `artifactGate` was one
+  of them until docs/d227) throw the failure they
   generated, so `main` reads as a sequence of statements instead of a chain of
   `if (refusal) throw refusal`; a test asserts the code by catching the value.
   The same pass moved the report-shaped steps out of `main` too
