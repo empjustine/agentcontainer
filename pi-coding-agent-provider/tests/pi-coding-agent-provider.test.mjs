@@ -5,7 +5,8 @@
  *
  * The expected key envs are literals from this folder's own copy of the fact
  * table (docs/d113/d118), so a renamed key env fails here and in the generator.
- * No network: the entry has no fetch left to stub.
+ * Each registration loads a fresh copy of the entry, which also pins that a
+ * reload reads the environment as it stands. No network: no fetch left to stub.
  */
 
 import assert from "node:assert/strict";
@@ -118,6 +119,19 @@ test("every override name follows its key env", async () => {
 			assert.ok(OVERRIDES.includes(name));
 			assert.deepEqual(configs[id], { baseUrl: `https://${name.toLowerCase()}.example/v1` });
 		}
+	});
+});
+
+test("a reload reads the environment as it stands", async () => {
+	await withEnv({ ...cleanEnv, MISTRAL_BASE_URL: "https://one.example/v1" }, async () => {
+		assert.deepEqual((await registrations()).mistral, {
+			baseUrl: "https://one.example/v1",
+		});
+	});
+	await withEnv({ ...cleanEnv, MISTRAL_BASE_URL: "https://two.example/v1" }, async () => {
+		assert.deepEqual((await registrations()).mistral, {
+			baseUrl: "https://two.example/v1",
+		});
 	});
 });
 

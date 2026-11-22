@@ -5,62 +5,67 @@
  * pi-coding-agent already ships each provider's catalog, wire dialect and
  * auth. An extension layer without `models` leaves that data untouched; a
  * returned list REPLACES it. So this entry adds nothing but the operator's
- * `*_BASE_URL` override, and only when the variable is set. A malformed URL
- * throws at load rather than silently retargeting traffic.
+ * base-URL override, and only when the variable is set. A malformed URL throws
+ * at load rather than silently retargeting traffic.
  *
- * opencode and opencode-go share one key env, so one `OPENCODE_BASE_URL`
- * overrides both, matching the generator's fact-table rows.
+ * The rows and the lookup live inside the default export: each load reads the
+ * environment as it stands then, so a reload after an env change takes effect
+ * without a fresh process.
  */
 
 /** @typedef {import("@earendil-works/pi-coding-agent").ExtensionAPI} ExtensionAPI */
 /** @typedef {import("@earendil-works/pi-coding-agent").ProviderConfig} ProviderConfig */
 
-/** Provider id → the env var holding its real key. The override name is derived. */
-const PROVIDER_KEY_ENVS = Object.freeze({
-	mistral: "MISTRAL_API_KEY",
-	opencode: "OPENCODE_API_KEY",
-	"opencode-go": "OPENCODE_API_KEY",
-	openrouter: "OPENROUTER_API_KEY",
-});
-
 /**
- * The override derived from a key env, or undefined when it is unset. The
- * spelling follows Azure's API-key/base-url pair (docs/d232), and an absolute
- * http(s) URL is the only accepted value.
- * @param {string} apiKeyEnv
- * @param {Record<string, string|undefined>} env
- * @returns {string|undefined}
+ * One row is [provider, apiKey, baseUrl], named after pi's own interface:
+ * `provider` is the id passed to `registerProvider`; `apiKey` and `baseUrl`
+ * are the env vars behind the `ProviderConfig` fields of those names. The
+ * names are baked here — nothing derives one from another at run time.
+ * @typedef {readonly [string, string, string]} ProviderEnv
  */
-function baseUrlOverride(apiKeyEnv, env) {
-	if (!apiKeyEnv.endsWith("_API_KEY")) {
-		return;
-	}
-	const name = `${apiKeyEnv.slice(0, -"_API_KEY".length)}_BASE_URL`;
-	const value = env[name]?.trim();
-	if (!value) {
-		return;
-	}
-	let protocol;
-	try {
-		protocol = new URL(value).protocol;
-	} catch {
-		protocol = "";
-	}
-	if (protocol !== "http:" && protocol !== "https:") {
-		throw new Error(`${name} is not an absolute http(s) URL: ${value}`);
-	}
-	return value.replace(/\/+$/, "");
-}
 
 /**
  * @param {ExtensionAPI} pi
  * @returns {void}
  */
 export default function piCodingAgentProvider(pi) {
-	for (const [id, apiKeyEnv] of Object.entries(PROVIDER_KEY_ENVS)) {
-		const baseUrl = baseUrlOverride(apiKeyEnv, process.env);
+	/** @type {readonly ProviderEnv[]} */
+	const PROVIDERS = Object.freeze([
+		["mistral", "MISTRAL_API_KEY", "MISTRAL_BASE_URL"],
+		["opencode", "OPENCODE_API_KEY", "OPENCODE_BASE_URL"],
+		["opencode-go", "OPENCODE_API_KEY", "OPENCODE_BASE_URL"],
+		["openrouter", "OPENROUTER_API_KEY", "OPENROUTER_BASE_URL"],
+	]);
+
+	/**
+	 * The override from the actual environment, or undefined when it is unset.
+	 * An absolute http(s) URL is the only accepted value; trailing slashes are
+	 * trimmed so the override is one canonical spelling.
+	 * @param {string} baseUrl the env var holding the override
+	 * @param {Record<string, string|undefined>} env
+	 * @returns {string|undefined}
+	 */
+	const baseUrlFromEnv = (baseUrl, env) => {
+		const value = env[baseUrl]?.trim();
+		if (!value) {
+			return;
+		}
+		let protocol;
+		try {
+			protocol = new URL(value).protocol;
+		} catch {
+			protocol = "";
+		}
+		if (protocol !== "http:" && protocol !== "https:") {
+			throw new Error(`${baseUrl} is not an absolute http(s) URL: ${value}`);
+		}
+		return value.replace(/\/+$/, "");
+	};
+
+	for (const [provider, , baseUrl] of PROVIDERS) {
+		const override = baseUrlFromEnv(baseUrl, process.env);
 		/** @type {ProviderConfig} */
-		const config = baseUrl === undefined ? {} : { baseUrl };
-		pi.registerProvider(id, config);
+		const config = override === undefined ? {} : { baseUrl: override };
+		pi.registerProvider(provider, config);
 	}
 }

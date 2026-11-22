@@ -26,12 +26,18 @@ opencode, opencode-go and openrouter; `pi-mistral/`,
 
 ### One folder, four registrations
 
-The extension table owns one fact per provider: the id and the key env from
-which `*_BASE_URL` is derived. When the override is unset the registration
-is empty, so pi's built-in provider is untouched. When it is set, `baseUrl`
-is the only config field. opencode and opencode-go share one key env and one
-override, matching the generator's fact-table rows. A malformed URL throws at
-load rather than retargeting traffic to an address the operator did not choose.
+The extension's `PROVIDERS` table bakes one tuple per provider:
+`[provider, apiKey, baseUrl]`, named after pi's `registerProvider` and
+`ProviderConfig` interface. The two env names are literals, not derived at
+run time. When the override is unset the registration is empty, so pi's
+built-in provider is untouched. When it is set, `baseUrl` is the only
+config field. opencode and opencode-go share one key env and one override,
+matching the generator's fact-table rows. A malformed URL throws at load rather
+than retargeting traffic to an address the operator did not choose.
+
+The table and the URL lookup live inside the default export. Each load reads
+the environment as it stands then, so a reload after an env change takes
+effect without a fresh process.
 
 | Provider    | Key env              | Override env          |
 | ----------- | -------------------- | --------------------- |
