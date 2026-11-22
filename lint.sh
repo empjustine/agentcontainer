@@ -148,8 +148,32 @@ log_info "biome lint (gating — rule set in biome.jsonc; pinned by package-lock
 # on; the tests override turns off no-floating-promises for **/tests/**
 # because node:test treats every handler as fire-and-forget by design, not
 # a bug to flag 219 times.
+#
+# The pinned pair cannot run on every host: @oxlint-tsgolint publishes no
+# android-arm64 build (a typeAware run dies MODULE_NOT_FOUND) and
+# @oxlint/binding-android-arm64 kills the process with SIGILL at dlopen. So the
+# pinned binary is asked first, and a host that cannot run it runs the HOST's
+# oxlint with typeAware off — every rule that needs no type checker — while
+# saying what that leaves unproven. --deny-warnings carries the gate in that
+# mode: with --config, -D warning alone no longer sets the exit status
+# (measured on 1.94, the version the host package ships).
 log_info "oxlint (gating — type-aware JS/TS lint)"
-( cd "$repo_root" && "$repo_root/node_modules/.bin/oxlint" . -D warning )
+_oxlint_pinned="$repo_root/node_modules/.bin/oxlint"
+if [ -x "$_oxlint_pinned" ] && "$_oxlint_pinned" --version >/dev/null 2>&1; then
+	( cd "$repo_root" && "$_oxlint_pinned" . -D warning )
+else
+	_oxlint_host=$(command -v oxlint || true)
+	[ -n "$_oxlint_host" ] ||
+		log_die 96 "oxlint is not runnable on this host" \
+			hint="./npm-tools.sh for the pinned pair, or the host package manager"
+	_oxlint_cfg=$(mktemp)
+	trap 'rm -f "$_oxlint_cfg"' EXIT
+	sed 's/"typeAware": *true/"typeAware": false/' "$repo_root/.oxlintrc.json" >"$_oxlint_cfg"
+	log_warn "the pinned oxlint cannot load here — the host's oxlint takes the leg with typeAware off" \
+		pinned="$_oxlint_pinned" host="$_oxlint_host" \
+		unproven="typescript/no-floating-promises, typescript/no-misused-promises, typescript/require-array-sort-compare"
+	( cd "$repo_root" && "$_oxlint_host" . -D warning --deny-warnings --config "$_oxlint_cfg" )
+fi
 
 # check-types (gating): the tsconfig strictness program — tsc over every .mjs
 # with checkJs and the flag set in tsconfig.json. None of the gates above can
