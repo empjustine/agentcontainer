@@ -26,6 +26,9 @@ d179 to d184. Mistral-vibe support is pending in both this unit and
 
 The browsing-history side has both halves. `browse-daemon.py` serves the stock
 Promnesia and hister extensions from one hot store, and
+[`sbex/sbex-lakehouse/`](../sbex/sbex-lakehouse/) is the same two protocols (plus
+the slurp ingest edge and the session route) ported to Java, with its contract in
+[`sbex/datalakehouse-port.md`](../sbex/datalakehouse-port.md).
 [`firefox-extension/`](firefox-extension/README.md) is the producer that fills
 it: a Firefox add-on that streams visits, titles, bookmarks and removals over
 `POST /ingest/slurp`. Its storage tiers are designed at d173, the clipper and
@@ -296,6 +299,16 @@ POST /ingest/slurp
 - A `schema` the daemon does not speak is a `409`, which the producer treats as
   a permanent reject: a retry of the same bytes cannot succeed.
 - The daemon canonicalises every URL; the producer sends raw ones.
+
+The envelope's six kinds are the producer's live-event vocabulary. The Java port in
+[`sbex/sbex-lakehouse/`](../sbex/sbex-lakehouse/) accepts three further kinds —
+`document`, `rule`, `click` — for importing a stored cache row as it was: its
+capture time, `add_count`, rule aliases and click timestamps survive, because the
+import path does not re-stamp what the capture path stamps. This daemon rejects an
+unknown kind, so an importer targets the Java service; the rows it writes are plain
+rows this daemon reads, and
+[`sbex/datalakehouse-port.md`](../sbex/datalakehouse-port.md) owns the contract.
+
 - `visit-removed` is page-granular, because Firefox reports no visit detail on
   removal: the mark hides that page's visits, while the visited check still
   answers yes.

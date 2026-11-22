@@ -26,6 +26,7 @@
 		<module>sbex-core</module>
 		<module>sbex-servlet</module>
 		<module>sbex-reactive</module>
+		<module>sbex-lakehouse</module>
 	</modules>
 
 	<properties>

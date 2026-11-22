@@ -35,35 +35,62 @@ pairs = [
 ]
 print(" ".join("1" if cannon.canonify(a) == b else "0" for a, b in pairs))
 PY
-if out=$(cd "$repo" && uv run "$tmp/cannon_check.py" "$unit" 2>&1); then
+if [ -n "$external" ]; then
+	# The port's canonicaliser fixture replaces this pair in external mode
+	# (sbex/sbex-lakehouse's CanonicalUrlTest) because it asserts the vendor
+	# Python module, not the wire.
+	ok 'canonicaliser pairs are asserted by the Java fixture'
+elif out=$(cd "$repo" && uv run "$tmp/cannon_check.py" "$unit" 2>&1); then
 	is 'vendored cannon folds the tracked URL shapes' "$out" '1 1 1'
 else
 	bad "vendored cannon import ($out)"
 fi
 
 port=$((20000 + ($$ % 20000)))
-export BROWSE_DB="$tmp/browse.sqlite"
+# BROWSE_TEST_EXTERNAL points this suite at a daemon someone else started (the
+# Java port in sbex/sbex-lakehouse, for one): the suite then launches nothing,
+# takes BROWSE_DB from the caller — its sqlite assertions read that file — and
+# skips the two checks that are implementation-specific (the Python
+# canonicaliser and the Python process's own wide-bind refusal). Everything
+# HTTP-level still runs unchanged.
+external=${BROWSE_TEST_EXTERNAL:-}
+if [ -n "$external" ]; then
+	[ -n "${BROWSE_DB:-}" ] || { echo "BROWSE_TEST_EXTERNAL needs BROWSE_DB" >&2; exit 2; }
+else
+	export BROWSE_DB="$tmp/browse.sqlite"
+fi
 # A POSIX TZ string, not a zoneinfo name: the Promnesia timestamp check must not
 # depend on the host shipping tzdata.
 export TZ=UTC-2
-export BROWSE_HISTER_ADDR="127.0.0.1:$port"
-export BROWSE_PROMNESIA_ADDR="127.0.0.1:$((port + 1))"
+export BROWSE_HISTER_ADDR="${BROWSE_HISTER_ADDR:-127.0.0.1:$port}"
+export BROWSE_PROMNESIA_ADDR="${BROWSE_PROMNESIA_ADDR:-127.0.0.1:$((port + 1))}"
 export BROWSE_TOKEN="secret"
 base="http://$BROWSE_HISTER_ADDR"
 pm="http://$BROWSE_PROMNESIA_ADDR"
 
-( cd "$repo" && exec uv run "$unit/browse-daemon.py" ) >"$tmp/daemon.log" 2>&1 &
-pid=$!
-trap 'kill $pid 2>/dev/null || true; wait $pid 2>/dev/null || true; rm -rf "$tmp"' EXIT
+if [ -n "$external" ]; then
+	trap 'rm -rf "$tmp"' EXIT
+	i=0
+	while [ "$i" -lt 100 ]; do
+		if curl -fsS -m 2 "$pm/status" >/dev/null 2>&1; then break; fi
+		i=$((i + 1))
+		sleep 0.1
+	done
+	curl -fsS -m 2 "$pm/status" >/dev/null || { echo "no daemon at $pm" >&2; exit 1; }
+else
+	( cd "$repo" && exec uv run "$unit/browse-daemon.py" ) >"$tmp/daemon.log" 2>&1 &
+	pid=$!
+	trap 'kill $pid 2>/dev/null || true; wait $pid 2>/dev/null || true; rm -rf "$tmp"' EXIT
 
-i=0
-while [ "$i" -lt 100 ]; do
-	if [ "$(grep -c 'listening on' "$tmp/daemon.log" 2>/dev/null)" = 2 ]; then break; fi
-	if ! kill -0 $pid 2>/dev/null; then cat "$tmp/daemon.log" >&2; exit 1; fi
-	i=$((i + 1))
-	sleep 0.1
-done
-[ "$(grep -c 'listening on' "$tmp/daemon.log")" = 2 ] || { cat "$tmp/daemon.log" >&2; exit 1; }
+	i=0
+	while [ "$i" -lt 100 ]; do
+		if [ "$(grep -c 'listening on' "$tmp/daemon.log" 2>/dev/null)" = 2 ]; then break; fi
+		if ! kill -0 $pid 2>/dev/null; then cat "$tmp/daemon.log" >&2; exit 1; fi
+		i=$((i + 1))
+		sleep 0.1
+	done
+	[ "$(grep -c 'listening on' "$tmp/daemon.log")" = 2 ] || { cat "$tmp/daemon.log" >&2; exit 1; }
+fi
 
 code() { curl -sS -m 10 -o /dev/null -w '%{http_code}' "$@"; }
 
@@ -135,7 +162,7 @@ out=$(curl -sS -m 10 -X POST -H 'X-Access-Token: secret' -H 'content-type: appli
 	  {"src":"firefox-bookmarks","kind":"bookmark","key":"b2","node_type":"bookmark","url":"https://bookmark-only.example/saved","title":"Saved Only","parent_id":"f2","position":5,"date_added":1712345600000,"date_modified":1712345800000}]}' \
 	"$base/ingest/slurp")
 has 'a bookmark move is accepted' "$out" '"accepted":1'
-moved=$(python3 - "$tmp/browse.sqlite" <<'PYINNER'
+moved=$(python3 - "$BROWSE_DB" <<'PYINNER'
 import sqlite3
 import sys
 
@@ -326,7 +353,7 @@ out=$(curl -sS -m 10 -X POST -H 'X-Access-Token: secret' -H 'content-type: appli
 	  {"src":"firefox-history","kind":"title","key":"title:append","url":"https://append.example/page","title":"Late Title","seen_at":1712345699000}]}' \
 	"$base/ingest/slurp")
 has 'a late title is accepted' "$out" '"accepted":1'
-append_state=$(python3 - "$tmp/browse.sqlite" <<'PYDB'
+append_state=$(python3 - "$BROWSE_DB" <<'PYDB'
 import sqlite3
 import sys
 
@@ -357,7 +384,7 @@ out=$(curl -sS -m 10 -X POST -H 'X-Access-Token: secret' -H 'content-type: appli
 	  {"src":"firefox-bookmarks","kind":"bookmark","key":"append-b1","node_type":"bookmark","url":"https://append2.example/page","title":"Bookmark Title","parent_id":"root________","position":9,"date_added":1712345600000}]}' \
 	"$base/ingest/slurp")
 has 'a bookmark for an untitled page is accepted' "$out" '"accepted":1'
-append_state=$(python3 - "$tmp/browse.sqlite" <<'PYDB'
+append_state=$(python3 - "$BROWSE_DB" <<'PYDB'
 import sqlite3
 import sys
 
@@ -395,8 +422,12 @@ is 'an oversized body is a 413' '413' "$(code --max-time 20 -X POST -H 'X-Access
 	-H 'content-type: application/json' --data-binary @"$tmp/big.json" "$base/ingest/slurp")"
 
 # A wide bind with no key would expose the write faces to the network; the
-# daemon must refuse to start rather than accept the first request.
-if ( cd "$repo" &&
+# daemon must refuse to start rather than accept the first request. That is a
+# property of the process's own startup, so an externally started daemon
+# reports it at ITS start, not here.
+if [ -n "$external" ]; then
+	ok 'wide-bind refusal is the external daemon start-up contract'
+elif ( cd "$repo" &&
 	BROWSE_TOKEN='' BROWSE_HISTER_ADDR="0.0.0.0:$((port + 2))" \
 	BROWSE_PROMNESIA_ADDR="127.0.0.1:$((port + 3))" \
 	exec uv run "$unit/browse-daemon.py" ) >/dev/null 2>&1; then
@@ -407,8 +438,10 @@ fi
 
 if [ "$fails" -gt 0 ]; then
 	printf '%s browse-daemon test(s) FAILED\n' "$fails" >&2
-	printf '%s\n' '--- daemon log ---' >&2
-	cat "$tmp/daemon.log" >&2
+	if [ -f "$tmp/daemon.log" ]; then
+		printf '%s\n' '--- daemon log ---' >&2
+		cat "$tmp/daemon.log" >&2
+	fi
 	exit 1
 fi
 printf 'all browse-daemon tests passed\n'

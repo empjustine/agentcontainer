@@ -79,6 +79,7 @@ DuckDB reaches S3 and compatible stores through the `httpfs` and `aws` extension
 - **Integrity is the store's job, and it is good at it.** S3 accepts and returns checksums — CRC-64/NVME, CRC32C, SHA-1, SHA-256 — and verifies them on upload and download. That is what a manifest can record per object, and what a verification job compares.
 - **Immutability is a feature.** Object lock and versioning make a generation unchangeable, which matches the SMR constraint below: generations are sealed, never edited.
 - **Costs move with requests, not only bytes.** Listing and small-object churn are the usual surprise, so a generation is a few large objects under a content-addressed prefix, not a file per day per table.
+- **Java reaches all three.** Oracle's object storage has an official SDK (`com.oracle.oci.sdk:oci-java-sdk-objectstorage`) beside its S3-compatible endpoint, which any S3 client reaches; MotherDuck is reached through `org.duckdb:duckdb_jdbc` with an `md:` database (subject to the version window above) or its Postgres endpoint with the already-pinned `postgresql` driver. The lakehouse service uses none of them directly: its only warehouse egress is the shell sender it spawns, so a Java demotion job is a new decision rather than a rewrite of an existing client.
 
 ## The host's block stack
 

@@ -10,7 +10,7 @@ tags: ["spring-boot", "java", "example", "containers", "messaging"]
 
 # sbex: a Spring Boot best-practice example
 
-sbex is a worked Spring Boot example whose subject is doing the ordinary things well: a shared persistence and messaging core, one blocking and one non-blocking application, and a deployment shaped for RAM-constrained containers. It is not a production service — authentication, schema evolution past the first migration and business depth are out of scope on purpose. The reader is an engineer picking patterns for a Spring Boot service; every claim in these files points at the vendor document that owns it. The example pins Spring Boot 4.1.2 and Java 21, and every `docs.spring.io` link carries the matching `/4.1/` path so the code and its references describe the same release; `docs/d193` records what that pin cost.
+sbex is a worked Spring Boot example whose subject is doing the ordinary things well: a shared persistence and messaging core, one blocking and one non-blocking application, a service with a real workload ported from the repository's daemons, and a deployment shaped for RAM-constrained containers. It is not a production service — authentication, schema evolution past the first migration and business depth are out of scope on purpose. The reader is an engineer picking patterns for a Spring Boot service; every claim in these files points at the vendor document that owns it. The example pins Spring Boot 4.1.2 and Java 21, and every `docs.spring.io` link carries the matching `/4.1/` path so the code and its references describe the same release; `docs/d193` records what that pin cost.
 
 ## Requirement to file
 
@@ -37,19 +37,20 @@ sbex is a worked Spring Boot example whose subject is doing the ordinary things 
 | What proves the limits, timeouts and log shape (NFR)     | `non-functional-testing.md`                                 |
 | End-to-end tracing and correlated logs                   | `observability.md`                                          |
 | SQLite backup and replication                            | `sqlite-replication.md`                                     |
-| The lakehouse workload as a port target                  | `datalakehouse-port.md`                                     |
+| The lakehouse workload as a port target                  | `datalakehouse-port.md`, `sbex-lakehouse/`                  |
 | The cold tier: Parquet, object storage and ADW           | `cold-persistence.md`, `cold-tier-platforms.md`             |
 | Backup, restore and routine maintenance without a DBA    | `db-maintenance.md`                                         |
 
 ## The modules
 
-| Module          | What it is                                                                                                                                                       |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sbex-core`     | The shared half: domain records, JdbcTemplate repositories, the vendor dialect, Flyway migrations, Rabbit topology and the after-commit publisher. No web types. |
-| `sbex-servlet`  | Tomcat, virtual threads, JdbcTemplate on the request thread, the Rabbit listener, a streaming report endpoint.                                                   |
-| `sbex-reactive` | Netty, WebClient with a bounded pool, the blocking core offloaded to the bounded-elastic scheduler.                                                              |
+| Module           | What it is                                                                                                                                                       |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sbex-core`      | The shared half: domain records, JdbcTemplate repositories, the vendor dialect, Flyway migrations, Rabbit topology and the after-commit publisher. No web types. |
+| `sbex-servlet`   | Tomcat, virtual threads, JdbcTemplate on the request thread, the Rabbit listener, a streaming report endpoint.                                                   |
+| `sbex-reactive`  | Netty, WebClient with a bounded pool, the blocking core offloaded to the bounded-elastic scheduler.                                                              |
+| `sbex-lakehouse` | The datalakehouse daemons ported: SQLite hot store, the Promnesia and hister protocols, the slurp ingest edge and the write-only session route.                  |
 
-The two applications depend on the core and nothing on each other: the point of the split is that one implementation of the domain serves both stacks, so the differences a reader compares are the stacks' and not the business logic's.
+The servlet and reactive applications depend on the core and nothing on each other: the point of the split is that one implementation of the domain serves both stacks, so the differences a reader compares are the stacks' and not the business logic's. `sbex-lakehouse` is standalone on purpose — it shares no domain with the order example, and its store, its pools and its protocols are described in `datalakehouse-port.md`.
 
 ## Build, test and run
 
@@ -69,7 +70,10 @@ Prerequisites: a JDK 21 or newer, Maven 3.9 or newer, and a container runtime fo
    ```sh
    java -jar sbex/sbex-servlet/target/sbex-servlet-1.0.0-SNAPSHOT.jar
    java -jar sbex/sbex-reactive/target/sbex-reactive-1.0.0-SNAPSHOT.jar
+   java -jar sbex/sbex-lakehouse/target/sbex-lakehouse-1.0.0-SNAPSHOT.jar
    ```
+
+   The lakehouse jar runs as it is for everything but PDF capture; `/api/add_pdf` needs the unpacked layout (or `LAKEHOUSE_PDF_CLASSPATH`) because it starts a second JVM for the parser. `datalakehouse-port.md` carries the conformance run against the daemon's own HTTP suite.
 
 4. Build the container image (the context is this folder, because `.dockerignore` and the `COPY` paths assume it):
 

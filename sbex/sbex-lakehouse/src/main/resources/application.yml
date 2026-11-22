@@ -1,0 +1,72 @@
+# Production defaults live here; every value an operator owns is an
+# environment variable with a local fallback, and the names are the daemon's
+# own (datalakehouse/README.md) so an existing host starts the Java service
+# with the environment it already exports.
+spring:
+  application:
+    name: sbex-lakehouse
+  # The writer pool is created in code (one connection, one writer); no
+  # datasource is auto-configured and no SQL is written here.
+  mvc:
+    problemdetails:
+      enabled: true
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+server:
+  shutdown: graceful
+  tomcat:
+    # Virtual threads are NOT enabled: sqlite-jdbc blocks in a native call a
+    # virtual thread cannot unmount, so a burst of readers would pin carriers.
+    # The bound is therefore the platform-thread pool, as the daemon's
+    # BROWSE_MAX_WORKERS was (browse-daemon.py).
+    threads:
+      max: ${BROWSE_MAX_WORKERS:32}
+    max-connections: 200
+    accept-count: 64
+    connection-timeout: 30s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+lakehouse:
+  hister-address: ${BROWSE_HISTER_ADDR:127.0.0.1:4433}
+  promnesia-address: ${BROWSE_PROMNESIA_ADDR:127.0.0.1:13131}
+  agent-address: ${AGENT_INGEST_ADDR:127.0.0.1:8787}
+  # The one hot store. Its directory is created 0700 and the file 0600:
+  # browsing history is private to the user.
+  store: ${BROWSE_DB:${XDG_DATA_HOME:${user.home}/.local/share}/agent-warehouse/browse.sqlite}
+  token: ${BROWSE_TOKEN:}
+  agent-token: ${AGENT_INGEST_TOKEN:}
+  max-body: ${BROWSE_MAX_BODY:8388608}
+  max-form-fields: ${BROWSE_MAX_FORM_FIELDS:10000}
+  max-pdf-bytes: ${BROWSE_MAX_PDF_BYTES:33554432}
+  max-visited-urls: ${BROWSE_MAX_VISITED_URLS:5000}
+  reader-pool-size: ${BROWSE_READER_POOL:4}
+  max-workers: ${BROWSE_MAX_WORKERS:32}
+  # PDF extraction runs in a child JVM under a heap cap and a wall clock; a
+  # parser crash stays in that child.
+  pdf-timeout: ${BROWSE_PDF_TIMEOUT:20s}
+  pdf-max-text: ${BROWSE_PDF_MAX_TEXT:8388608}
+  pdf-heap: ${BROWSE_PDF_HEAP:384m}
+  # A command prefixed to the worker, for a namespace/container wrapper
+  # (browse-daemon.py's BROWSE_PDF_RUNNER).
+  pdf-runner: ${BROWSE_PDF_RUNNER:}
+  # The session leg's append tail and durable dedupe ledger.
+  spool: ${AGENT_WAREHOUSE_SPOOL:${XDG_DATA_HOME:${user.home}/.local/share}/agent-warehouse/spool.ndjson}
+  ingest-max-body: ${AGENT_INGEST_MAX_BODY:8388608}
+  ingest-max-rows: ${AGENT_INGEST_MAX_ROWS:10000}
+  # The fold is the shell sender the sync and the Node daemon share; an unset
+  # sender disables the self-fold and the spool then waits for an operator
+  # (docs/d217).
+  sender: ${AGENT_WAREHOUSE_SENDER:}
+  warehouse-token: ${motherduck_token:${MOTHERDUCK_TOKEN:}}
+  spool-max-bytes: ${AGENT_WAREHOUSE_SPOOL_MAX_BYTES:33554432}
+  spool-send-retry: ${AGENT_WAREHOUSE_SPOOL_SEND_RETRY:60s}

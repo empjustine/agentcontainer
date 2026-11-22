@@ -27,13 +27,42 @@
 		<!-- MockMvc asserts through andExpect(...), which is not a JUnit assert
 		     call; the rule cannot see the assertion style the slice tests use. -->
 		<exclude name="UnitTestShouldIncludeAssert"/>
+		<!-- A test's value is in the assertion expression itself. A per-assert
+		     prose message restates the expected value the failure already prints,
+		     and forty of them turn a table of wire shapes into prose. -->
+		<exclude name="UnitTestAssertionsShouldIncludeMessage"/>
+		<!-- The loopback address set is the bind gate's whole meaning, and those
+		     are the hosts a browser client uses, not a service endpoint. -->
+		<exclude name="AvoidUsingHardCodedIP"/>
 	</rule>
 	<rule ref="category/java/errorprone.xml">
 		<!-- PersistenceContractTest is the abstract base and its subclasses inherit
 		     the @Test methods; PMD reads each class alone and sees none. -->
 		<exclude name="TestClassWithoutTestCases"/>
+		<!-- A JSON field name or SQL column repeated across the handlers is the
+		     wire shape; a constant per name would hide the shape a reader compares
+		     against docs/d204. -->
+		<exclude name="AvoidDuplicateLiterals"/>
 	</rule>
-	<rule ref="category/java/multithreading.xml"/>
-	<rule ref="category/java/performance.xml"/>
+	<rule ref="category/java/multithreading.xml">
+		<!-- The lakehouse's maps are JSON objects and ordered result maps, built
+		     and read on one thread: insertion order is the contract (a spec's keep
+		     order, a document's field order), so a concurrent map would be wrong
+		     as well as unnecessary. -->
+		<exclude name="UseConcurrentHashMap"/>
+		<!-- The PDF worker runs on virtual threads and the spool fold on one
+		     daemon scheduler: both are bounded and neither sits on a request path
+		     that could leak a thread per call. -->
+		<exclude name="DoNotUseThreads"/>
+		<!-- The fold flags cross two threads (the request thread and the child's
+		     exit callback); volatile is the visibility that state needs. -->
+		<exclude name="AvoidUsingVolatile"/>
+	</rule>
+	<rule ref="category/java/performance.xml">
+		<!-- The streaming ingest and the read faces build one row object per
+		     iteration on purpose: the alternative is materialising the batch or
+		     the result set, which is the heap cost the port exists to avoid. -->
+		<exclude name="AvoidInstantiatingObjectsInLoops"/>
+	</rule>
 	<rule ref="category/java/security.xml"/>
 </ruleset>

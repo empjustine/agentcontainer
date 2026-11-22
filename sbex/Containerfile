@@ -5,6 +5,7 @@
 # Build context is THIS folder:
 #   podman build -f Containerfile .                                  # sbex-servlet
 #   podman build -f Containerfile --build-arg APP=sbex-reactive .    # the reactive app
+#   podman build -f Containerfile --build-arg APP=sbex-lakehouse .   # the lakehouse service
 #   podman build -f Containerfile --target native-runtime .          # the native appliance
 
 # --- builder: one pinned toolchain for compile, package and layer extraction ----
@@ -18,6 +19,7 @@ COPY pom.xml ./
 COPY sbex-core/pom.xml sbex-core/pom.xml
 COPY sbex-servlet/pom.xml sbex-servlet/pom.xml
 COPY sbex-reactive/pom.xml sbex-reactive/pom.xml
+COPY sbex-lakehouse/pom.xml sbex-lakehouse/pom.xml
 # go-offline is best effort by nature: an artifact it misses is fetched by the
 # next goal, which is a slower build, never a wrong one.
 RUN mvn -B -ntp dependency:go-offline
@@ -25,6 +27,7 @@ RUN mvn -B -ntp dependency:go-offline
 COPY sbex-core/src sbex-core/src
 COPY sbex-servlet/src sbex-servlet/src
 COPY sbex-reactive/src sbex-reactive/src
+COPY sbex-lakehouse/src sbex-lakehouse/src
 RUN mvn -B -ntp -pl "${APP}" -am package -DskipTests
 
 # Split the repackaged jar into its layers and hand them over as directories.
@@ -32,7 +35,10 @@ RUN mvn -B -ntp -pl "${APP}" -am package -DskipTests
 # nested-jar class loading, and it is the layout CDS/AOT training runs need
 # (spring-boot reference: "Efficient Deployments" and "Dockerfiles"). The jar
 # is renamed first: the official layout keeps whatever name it is given, and
-# the runtime ENTRYPOINT below is written against application.jar.
+# the runtime ENTRYPOINT below is written against application.jar. The lakehouse
+# service also needs this layout for its PDF worker, which starts a second JVM
+# and has no plain classpath to hand it from a repackaged jar
+# (sbex/datalakehouse-port.md, Conformance).
 RUN cp "${APP}"/target/*.jar application.jar \
 	&& java -Djarmode=tools -jar application.jar extract --layers --destination extracted
 

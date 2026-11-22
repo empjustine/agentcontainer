@@ -27,4 +27,29 @@
 	<Match>
 		<Bug pattern="OBL_UNSATISFIED_OBLIGATION_EXCEPTION_EDGE"/>
 	</Match>
+
+	<!--
+	  LimitedRequest.getInputStream returns the one limited wrapper it created:
+	  returning a fresh delegate on the second call would let a handler bypass
+	  the body ceiling by calling the accessor twice, so the shared instance is
+	  the contract. The wrapper is the request's own stream, never a value the
+	  application stores.
+	-->
+	<Match>
+		<Class name="com.example.sbex.lakehouse.SurfaceFilter$LimitedRequest"/>
+		<Bug pattern="EI_EXPOSE_REP"/>
+	</Match>
+
+	<!--
+	  CORS requires echoing the extension's own origin, so the value cannot be a
+	  constant. SurfaceFilter validates it against the WebExtension origin shape
+	  and the requested header list against a token list before either reaches a
+	  response header; the analyzer does not model the regex gate, so the waiver
+	  is here rather than at the call site. An extension origin is the only
+	  origin the daemon ever grants (browse-daemon.py's _cors).
+	-->
+	<Match>
+		<Class name="com.example.sbex.lakehouse.SurfaceFilter"/>
+		<Bug pattern="HRS_REQUEST_PARAMETER_TO_HTTP_HEADER"/>
+	</Match>
 </FindBugsFilter>
