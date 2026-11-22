@@ -53,6 +53,11 @@
 		"llm-local-inference/30-generate.mjs",
 		// the manifest-authoring aid: run by hand, nothing imports it
 		"llm-local-inference/20-propose-entries.mjs",
+		// the roofline pair: extract.mjs is run by hand on the inference host (it
+		// reads the model cache) and report.mjs is the operator's table — neither
+		// is imported by anything, and both are the unit's published surface
+		"llm-local-bench/roofline/extract.mjs",
+		"llm-local-bench/roofline/report.mjs",
 		// the ingest daemon: exec'd by agent-warehouse-daemon.sh, whose tests
 		// are shell — no import graph reaches either
 		"datalakehouse/agent-warehouse-daemon.mjs",

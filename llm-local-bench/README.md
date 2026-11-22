@@ -224,6 +224,16 @@ matters. Absent trace data is reported as unavailable, never as zero.
 - **No threshold is set.** There is no passing score; a run compares settings or
   tracks one model over time.
 
+## The roofline beside it
+
+This folder also carries roofline/, a latency calculator for the rows
+llm-local-inference serves on tlalocayotl. It prices the cartesian of context
+level (32k-256k), placement (--fit on or --n-cpu-moe), the --moe-cache-mib arm and
+the MTP arm, in both phases — a decode token and a prompt — so an agentic session
+can be read as a turn's wall clock and a cold start's price. It shares the
+folder, not the harness: no unit of code is common, and its front door is
+[roofline/README.md](roofline/README.md).
+
 ## Status
 
 Draft. `episode.mjs`, `score.mjs`, `bench.mjs` and `tests/` exist and the

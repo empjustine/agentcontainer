@@ -108,6 +108,7 @@ agentcontainer/
 │   ├── score.mjs                        #   → judge-free scorer: decision · cited evidence · seeded facts · artifact · stop shape · phantom sources
 │   ├── bench.mjs                        #   → line-protocol runner: a journey (`--arm journey`, or `steps` for the context control) then repair passes (`--passes 2`); per-step deadline, journal, survival + recovery report; `./node-run.sh llm-local-bench/bench.mjs --seeds 1-4 --length 40 --passes 2 --agent "<cmd>"`
 │   └── tests/                           #   → journey determinism and placement, the defect ledger, span grading, the protocol driver, death and resume
+│   └── roofline/                        #   → what this host's bandwidth permits per served GGUF: layer pipelining, MoE expert placement, the expert-cache break-even, MTP gain (llm-local-bench/roofline/README.md)
 │
 ├── llm-local-inference/                 # llama-swap: LOCAL GGUF inference only
 │   ├── run.py                           #   → unified-vulkan image + GPU + HF mounts on :9292 (run via `uv run`; env chain ./environment.sh first)
