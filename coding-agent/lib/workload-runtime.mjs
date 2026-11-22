@@ -17,9 +17,8 @@
  * - **`render()` output order** is byte-for-byte what `workload-render.jq`
  *   emitted (`container run` is order-insensitive, but the argv is captured by
  *   tests and appears in `ps`, so it is asserted, not incidental):
- *   --init, mode flag, --restart, --name, --network, --entrypoint, --user
- *   (+ rootless podman extras), --publish, --device, hardening, -v mounts,
- *   --env, --workdir, image, cmd.
+ *   --init, mode flag, --name, --network, --user (+ rootless podman extras),
+ *   -v mounts, --env, --workdir, image, cmd.
  * - **Empty string means "not set"**: an unset scalar emits no flag, never an
  *   empty one (a bare `--env NAME` is different — it forwards the host value).
  *
@@ -48,28 +47,22 @@ import { delimiter, join } from "node:path";
 /**
  * @typedef {"ro" | "rw"} MountMode
  * @typedef {{ mode: MountMode, host: string, guest: string, required: boolean }} Mount
- * @typedef {{ host: string, guest: string }} Port
  */
 
 /**
  * The workload description. Scalars are strings with "" meaning "omit the
- * flag"; `user`, `init` and `hardening` are 0/1 flags.
+ * flag"; `user` and `init` are boolean flags.
  * @typedef {object} WorkloadDescription
  * @property {string} name container/instance name
  * @property {string} image OCI image
- * @property {"" | "detach" | "interactive"} mode
+ * @property {"" | "interactive"} mode
  * @property {string} network
- * @property {string} restart restart policy; "" emits no flag
  * @property {boolean} init pass `--init`
  * @property {boolean} user run as the invoking uid:gid (plus the rootless
  *   podman extras the backend carries)
- * @property {boolean} hardening `--cap-drop=all --security-opt no-new-privileges`
- * @property {string} entrypoint
  * @property {string} workdir
  * @property {Mount[]} mounts in declaration order — the order the argv carries
  * @property {string[]} env host variable NAMES to forward
- * @property {Port[]} ports
- * @property {string[]} devices host device paths to pass through
  * @property {string[]} cmd argv after the image
  */
 
@@ -146,16 +139,11 @@ export function emptyDescription() {
 		image: "",
 		mode: "",
 		network: "",
-		restart: "",
 		init: false,
 		user: false,
-		hardening: false,
-		entrypoint: "",
 		workdir: "",
 		mounts: [],
 		env: [],
-		ports: [],
-		devices: [],
 		cmd: [],
 	};
 }
@@ -203,28 +191,8 @@ export function workload_image(description, image) {
  * @param {WorkloadDescription} description
  * @returns {WorkloadDescription}
  */
-export function workload_detach(description) {
-	return { ...description, mode: "detach" };
-}
-
-/**
- * @param {WorkloadDescription} description
- * @returns {WorkloadDescription}
- */
 export function workload_interactive(description) {
 	return { ...description, mode: "interactive" };
-}
-
-/**
- * The restart policy earns its place because a crash-restart keeps a listener
- * address its consumer was handed alive (docs/d095) — only detached long-lived
- * services use it, and an unset policy emits no flag at all.
- * @param {WorkloadDescription} description
- * @param {string} policy
- * @returns {WorkloadDescription}
- */
-export function workload_restart(description, policy) {
-	return { ...description, restart: policy };
 }
 
 /**
@@ -255,47 +223,12 @@ export function workload_user(description) {
 }
 
 /**
- * `--cap-drop=all --security-opt no-new-privileges`. NOT for the coding-agent
- * sandbox, whose image needs its setuid sudo to install packages at runtime
- * (docs/d067) — the serving runners harden.
- * @param {WorkloadDescription} description
- * @returns {WorkloadDescription}
- */
-export function workload_hardening(description) {
-	return { ...description, hardening: true };
-}
-
-/**
  * @param {WorkloadDescription} description
  * @param {string} path
  * @returns {WorkloadDescription}
  */
 export function workload_workdir(description, path) {
 	return { ...description, workdir: path };
-}
-
-/**
- * @param {WorkloadDescription} description
- * @param {string} path
- * @returns {WorkloadDescription}
- */
-export function workload_entrypoint(description, path) {
-	return { ...description, entrypoint: path };
-}
-
-/**
- * `-p host:guest/tcp`; the `/tcp` convention lives in `render` (one place),
- * which is why the record keeps the two halves apart.
- * @param {WorkloadDescription} description
- * @param {string} hostPort
- * @param {string} guestPort
- * @returns {WorkloadDescription}
- */
-export function workload_publish(description, hostPort, guestPort) {
-	return {
-		...description,
-		ports: [...description.ports, { host: hostPort, guest: guestPort }],
-	};
 }
 
 /**
@@ -334,16 +267,6 @@ export function workload_env_allowlist(description, names, env) {
  */
 export function workload_cmd(description, ...words) {
 	return { ...description, cmd: words };
-}
-
-/**
- * @param {WorkloadDescription} description
- * @param {string} host
- * @param {string} guest
- * @returns {WorkloadDescription}
- */
-export function workload_ro(description, host, guest) {
-	return requiredMount(description, "ro", host, guest);
 }
 
 /**
@@ -397,32 +320,6 @@ function requiredMount(description, mode, host, guest) {
 }
 
 /**
- * Pass host device paths through (`--device PATH:PATH:rw`). The serving runners
- * declare these directly, so the description stays buildable on a host whose
- * devices are absent.
- * @param {WorkloadDescription} description
- * @param {...string} paths
- * @returns {WorkloadDescription}
- */
-export function workload_devices(description, ...paths) {
-	return { ...description, devices: [...description.devices, ...paths] };
-}
-
-/**
- * Is a named array of the description non-empty? The callers that gate a whole
- * config layer on it (llm-local-inference) must not reach into the internals.
- * @param {WorkloadDescription} description
- * @param {string} field
- * @returns {boolean}
- */
-export function workload_has(description, field) {
-	const value = /** @type {Record<string, unknown>} */ (
-		/** @type {unknown} */ (description)
-	)[field];
-	return Array.isArray(value) && value.length > 0;
-}
-
-/**
  * @typedef {object} RenderContext
  * @property {Backend} backend
  * @property {Record<string, string | undefined>} env the host environment the
@@ -466,23 +363,14 @@ export function render(description, context) {
 	if (description.init) {
 		words.push("--init");
 	}
-	if (description.mode === "detach") {
-		words.push("--detach");
-	}
 	if (description.mode === "interactive") {
 		words.push("-it");
-	}
-	if (description.restart) {
-		words.push(`--restart=${description.restart}`);
 	}
 	if (description.name) {
 		words.push(`--name=${description.name}`);
 	}
 	if (description.network) {
 		words.push(`--network=${description.network}`);
-	}
-	if (description.entrypoint) {
-		words.push("--entrypoint", description.entrypoint);
 	}
 	if (description.user) {
 		words.push(
@@ -491,15 +379,6 @@ export function render(description, context) {
 			`${uid}:${gid}`,
 			...backend.keepGroups,
 		);
-	}
-	for (const port of description.ports) {
-		words.push("--publish", `${port.host}:${port.guest}/tcp`);
-	}
-	for (const device of description.devices) {
-		words.push("--device", `${device}:${device}:rw`);
-	}
-	if (description.hardening) {
-		words.push("--cap-drop=all", "--security-opt", "no-new-privileges");
 	}
 	for (const mount of description.mounts) {
 		words.push(

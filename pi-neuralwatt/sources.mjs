@@ -51,7 +51,7 @@ const NEURALWATT = Object.freeze({
 	apiKeyEnv: "NEURALWATT_API_KEY",
 	/** @type {string} the provider's canonical upstream (docs/d070). */
 	baseUrl: "https://api.neuralwatt.com/v1",
-	note: "Two providers, one vendor and one key (docs/d100's two-registration shape, the pi-opencode precedent): neuralwatt-flex serves the same models at the Flex tier, neuralwatt-standard at the standard tier. /v1/models is public and keyless; the docs' own pi page configures pi against api.neuralwatt.com/v1 with NEURALWATT_API_KEY and requires supportsDeveloperRole: false.",
+	note: "Two providers, one vendor and one key (docs/d100's two-registration shape in docs/d100): neuralwatt-flex serves the same models at the Flex tier, neuralwatt-standard at the standard tier. /v1/models is public and keyless; the docs' own pi page configures pi against api.neuralwatt.com/v1 with NEURALWATT_API_KEY and requires supportsDeveloperRole: false.",
 });
 
 /**

@@ -28,7 +28,7 @@ Both publish the **standard** model id. The tier is a request field, not a name,
 so the wire model name — and the shared server-side prefix cache — is unchanged
 across a tier switch (`/guides/flex-tier#prompt-caching-and-model-names`). The
 split is the extension's own pick, not a user decision per model; two
-registrations from one entry follow the pi-opencode precedent (docs/d100).
+registrations from one entry follow the shape in docs/d100.
 
 **Is not**, deliberately, each for a reason already paid for elsewhere:
 

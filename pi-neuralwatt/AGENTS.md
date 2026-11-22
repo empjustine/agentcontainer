@@ -9,7 +9,7 @@ only what is specific here.
 `pi install ./pi-neuralwatt -l`, a copy into
 `~/.pi/agent/extensions/pi-neuralwatt/`, or `pi -e ./pi-neuralwatt/index.mjs`.
 One entry registers `neuralwatt-flex` and `neuralwatt-standard` (docs/d100's
-two-registration shape, the pi-opencode precedent) because they share the key
+two-registration shape in docs/d100) because they share the key
 env, the listing and the shaping, and differ only in the tier they request.
 
 ## One source of truth, and it is the provider

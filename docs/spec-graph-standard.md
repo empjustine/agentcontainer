@@ -481,7 +481,7 @@ comm -23 \
   <(grep -rh '^parent: ' "${SPECS[@]}" | sed 's/^parent: *//; s/"//g' | sort -u) \
   <(printf '%s\n' goal architecture coding-agent estige git llm-local-inference \
       llm-local-inference-cache estige-ci \
-      pi-hyper pi-verboo pi-synthetic pi-cline-pass pi-mistral pi-opencode \
+      pi-hyper pi-verboo pi-synthetic pi-cline-pass pi-coding-agent-provider \
       pi-aperture pi-summarized-thinking \
       | sort)
 

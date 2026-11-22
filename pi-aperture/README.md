@@ -85,11 +85,8 @@ gateway's current per-identity view (444 rows here), so a copy in this tree can
 only be a downgrade of what the caller already sees — the built-in-provider rule
 (d097, applied family-wide by d100).
 
-The one thing such a package could add is the `refreshModels`-only watchdog
-shape (`../pi-opencode/index.mjs`): probe the live listing, never return rows. It
-stays out for a measured reason. The listing exists on the tailnet only, so on a
-host off the tailnet the probe dies with `getaddrinfo ENOTFOUND` and pi surfaces
-a catalog warning about a provider that could never have served a request.
+The pi-native extension forwards only a `*_BASE_URL` override (docs/d235).
+Aperture is not built into pi, so that shape does not apply here either.
 
 ## The fleet MCP entry
 
@@ -113,5 +110,5 @@ The family contract applies unchanged (docs/d192): `package.json` with
 `pi.extensions`, an `index.mjs` entry typed through the host's JSDoc, `tests/*.test.mjs`
 importing the entry by literal specifier, the exact `@earendil-works/pi-coding-agent`
 devDependency with its own `pnpm-lock.yaml`, and the `knip.jsonc` entry in the
-same change. A provider registration carries `refreshModels` only.
-`../pi-opencode/AGENTS.md` owns the full rule set.
+same change. A pi-native registration carries `baseUrl` only (docs/d235).
+`../pi-coding-agent-provider/AGENTS.md` owns the full rule set.

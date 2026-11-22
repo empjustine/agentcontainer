@@ -12,7 +12,7 @@
  * model name — and the shared server-side prefix cache — unchanged across a
  * tier switch (/guides/flex-tier#prompt-caching-and-model-names).
  *
- * Why two registrations from one entry (the pi-opencode precedent, docs/d100):
+ * Why two registrations from one entry (docs/d100):
  * one vendor, one key env, one listing, and two failure surfaces that cannot
  * silence each other. The README says which tier is the operator default.
  *

@@ -76,9 +76,8 @@
 		"pi-synthetic/index.mjs",
 		"pi-hyper/index.mjs",
 		"pi-verboo/index.mjs",
-		"pi-mistral/index.mjs",
 		"pi-neuralwatt/index.mjs",
-		"pi-opencode/index.mjs",
+		"pi-coding-agent-provider/index.mjs",
 		"*/lib/*.mjs",
 		// the Firefox extension producer: Firefox loads background.mjs from the
 		// manifest and options.html loads options.mjs, so no import graph reaches

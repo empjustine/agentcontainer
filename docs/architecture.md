@@ -152,7 +152,7 @@ code, not its way of being started.
   real base URL), pruned per unit as above (docs/d024, amended by d113). No
   `pi-*` folder carries the loader or its JSON any more: the row is a frozen
   literal at its single consumer — `sources.mjs` in the four generating
-  folders, the folder's own test in `pi-mistral`/`pi-opencode` (docs/d118).
+  folders, the new extension's own test in `pi-coding-agent-provider` (docs/d118, d235).
 - `llamacpp-model-data.json`, `hf-manifests/` — the vendored data tables,
   each in the unit that reads it: the GGUF footprint data and HF listings live
   in `llm-local-inference/lib/`, their only consumer since docs/d113 folded the

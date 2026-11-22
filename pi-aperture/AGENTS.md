@@ -4,7 +4,7 @@
 Aperture is the fleet's gateway on the tailnet, so the folder documents where its
 MCP endpoint is, what a keyless probe of it measures, and where the vendor's
 documentation lives. The family rules bind it unchanged (docs/d100, docs/d097):
-`../pi-opencode/AGENTS.md` is the rule set to read first.
+`../pi-coding-agent-provider/AGENTS.md` is the rule set to read first.
 
 - **No model data, ever.** `/v1/models` answers keyless with 444 rows on this
   gateway, but that list is the _caller's_ view of it — grants and profiles

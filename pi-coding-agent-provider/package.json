@@ -1,12 +1,12 @@
 {
-	"name": "@agentcontainer/pi-opencode",
-	"version": "0.2.0",
+	"name": "@agentcontainer/pi-coding-agent-provider",
+	"version": "0.1.0",
 	"private": true,
 	"type": "module",
 	"scripts": {
 		"test": "node --test tests/*.test.mjs"
 	},
-	"description": "pi extension: opencode and opencode-go as catalog freshness watchdogs — no model data of their own, because pi builds both providers in; a failed listing fetch warns and pi's built-in catalogs stand (docs/d097, d100)",
+	"description": "pi extension: base-URL overrides for the providers pi builds in (mistral, opencode, opencode-go, openrouter)",
 	"keywords": [
 		"pi-package",
 		"pi-extension",
