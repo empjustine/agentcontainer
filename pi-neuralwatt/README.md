@@ -261,13 +261,18 @@ pi install ./pi-neuralwatt -l # local package from this repo
 pi -e ./pi-neuralwatt/index.mjs
 `
 
-| Var                   | Meaning                                                                                                                     |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `NEURALWATT_API_KEY`  | the key pi sends as `Authorization: Bearer`; unset leaves both providers unconfigured. The listing is read with it when set |
-| `NEURALWATT_BASE_URL` | optional upstream override, derived from the key env the way Azure OpenAI spells the pair                                   |
+| Var                   | Meaning                                                                                                                                                                                                                                                               |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEURALWATT_API_KEY`  | the key pi sends as `Authorization: Bearer` — and the gate on the refresh. pi resolves `$NEURALWATT_API_KEY` BEFORE it calls `refreshModels`, so an unset key fails both providers ("Could not refresh neuralwatt-flex") and the keyless public listing is never read |
+| `NEURALWATT_BASE_URL` | optional upstream override, read at runtime, derived from the key env the way Azure OpenAI spells the pair                                                                                                                                                            |
 
 Network rides the environment's forward proxy (`NODE_USE_ENV_PROXY=1` + the
 forwarded `HTTP(S)_PROXY`, docs/d074). No relay ladder, no route files.
+
+Both vars reach a containerized pi only through the launcher's allowlist
+(`coding-agent/run.mjs` forwards every provider key and its derived
+`<X>_BASE_URL` sibling). A key the vault holds but that list omits is dropped at
+the sandbox boundary and reappears here as the refresh error above.
 
 The vendor's pi page documents `neuralwatt/nw-flash` and
 `defaultProvider: "neuralwatt"`; this package splits the id, so the operator's

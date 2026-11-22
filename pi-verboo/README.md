@@ -26,9 +26,9 @@ pi -e ./pi-verboo/index.mjs
 
 ## Environment
 
-| Var              | Meaning                                                                                                                                                   |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VERBOO_API_KEY` | the key pi sends as `Authorization: Bearer` — and the key a regeneration needs (the listing is auth-gated; an unset key leaves the provider unconfigured) |
+| Var              | Meaning                                                                                                                                                                |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VERBOO_API_KEY` | the key pi sends as `Authorization: Bearer` — and the key a regeneration needs (the listing is auth-gated; an unset key fails the refresh before `refreshModels` runs) |
 
 Network rides the environment's forward proxy
 (`NODE_USE_ENV_PROXY=1` + the forwarded `HTTP(S)_PROXY`, docs/d074). No relay

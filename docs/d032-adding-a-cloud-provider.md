@@ -157,6 +157,21 @@ references `$INFERX_API_KEY`, the probe passes (it runs host-side, where the
 vault set the var), and pi inside the container still never sees the key.
 This was initially missed for inferx; fixed by adding it to the loop.
 
+The loop is a list plus a derivation since the pi provider packages landed
+(2026-11-22): `vaultEnv` carries the key names, and each row's
+`<X>_BASE_URL` sibling is derived through `baseUrlEnvName` rather than listed
+again — the packages read that override at runtime (`baseUrlFromEnv` in every
+`pi-*` folder), and a hand-picked subset of extension-backed rows would be one
+more list to forget. One row is not a fact-table row at all: a pi package that
+registers its own `apiKey: "$<KEY>"` names its key there too
+(`NEURALWATT_API_KEY`), and omitting it is the SAME silent shape,
+one step earlier — pi resolves the reference before it calls the extension's
+`refreshModels`, so no request leaves the sandbox and the model selector
+reports "Could not refresh <provider>" instead of hiding an unconfigured one.
+`coding-agent/tests/vault-env.test.mjs` fails when either a fact-table key, its
+sibling, or the sibling of any listed key is missing, so the next provider row
+and the next package key are guarded at the sweep rather than at a launch.
+
 ### F7 — a plain gateway needs no per-model machinery at all
 
 models.dev `reasoning_options` can be `{"type": "toggle"}` (no effort enum) —

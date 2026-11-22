@@ -18,13 +18,15 @@
  *   - A failure THROWS. There is no committed fallback: an unreadable source
  *     means this provider cannot say what it serves today (docs/d190).
  *   - The listing is documented public and keyless ("a missing key degrades to
- *     a shorter list rather than an error"), so the bearer is optional: when
- *     `NEURALWATT_API_KEY` is set the customer catalog comes back, otherwise
- *     the public one. Acting on the returned `scope` is an open item, not a
- *     rule this file invents.
+ *     a shorter list rather than an error"), so the bearer is optional HERE: pi
+ *     never reaches this call without the key (index.mjs), which leaves the
+ *     keyless path for manual probes, and a set `NEURALWATT_API_KEY` returns the
+ *     customer catalog in place of the public one. Acting on the returned
+ *     `scope` is an open item, not a rule this file invents.
  *
- * Env: `NEURALWATT_API_KEY` (optional here, mandatory at request time — pi
- * resolves `$NEURALWATT_API_KEY` for the provider) and
+ * Env: `NEURALWATT_API_KEY` (optional to this file, mandatory in practice — pi
+ * resolves `$NEURALWATT_API_KEY` before it runs any refresh, so an unset key
+ * fails the refresh instead of falling back to the public listing) and
  * `NEURALWATT_BASE_URL` (optional upstream override).
  */
 

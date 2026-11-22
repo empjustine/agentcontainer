@@ -166,9 +166,10 @@ export SYNTHETIC_API_KEY=...
 ```
 
 The key is referenced as `$SYNTHETIC_API_KEY` and read at request time — it is
-never written to an artifact or a log. With no key the provider stays
-unconfigured (pi hides its models from `/model`), while the listing stays
-fetchable — it is public.
+never written to an artifact or a log. With no key the provider's refresh fails
+instead of leaving it merely unconfigured (pi resolves the reference before
+`refreshModels` runs, so `/model` reports "Could not refresh synthetic"), while
+the listing stays fetchable — it is public.
 
 ## Two contracts that differ between the two artifacts
 

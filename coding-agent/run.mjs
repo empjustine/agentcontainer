@@ -98,6 +98,7 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { userInfo } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { baseUrlEnvName } from "./lib/cloud-providers.mjs";
 import { exitCodeOf, failure } from "./lib/failure.mjs";
 import { logError, logInfo, logWarn, setLogTool } from "./lib/log.mjs";
 import {
@@ -132,16 +133,59 @@ const EXIT_AUTH = 93;
 const EXIT_ARTIFACT = 94;
 
 /**
- * The vault keys forwarded INTO the sandbox, in the order the sh launcher used.
- * Only non-empty values are forwarded (workload_env_allowlist), so a key absent
- * from the vault simply does not appear — an omission here looks exactly like a
- * vault problem, because a host-empty var is dropped rather than passed empty.
+ * Every provider key env the sandbox's harnesses read. Only non-empty values are
+ * forwarded (workload_env_allowlist), so a key absent from the vault simply does
+ * not appear — an omission here looks exactly like a vault problem, because a
+ * host-empty var is dropped rather than passed empty.
  *
  * This list is a FOURTH place a provider's key env name has to appear (the
- * catalog `env`, lib/cloud-providers.mjs's apiKeyEnv, the pi generator spec's
+ * catalog `env`, lib/cloud-providers.json's apiKeyEnv, the pi generator spec's
  * envKey, and here) — docs/d032 F6. Add the name here whenever a provider row
- * lands in the fact table; a missing name silently starves the generated
- * models.json's "$<KEY>" reference inside the container.
+ * lands in the fact table. A missing name has two silent shapes, both measured:
+ * the generated models.json's "$<KEY>" reference starves inside the container,
+ * and a pi package registering `apiKey: "$<KEY>"` never reaches its own
+ * `refreshModels` network phase — pi resolves the key FIRST, so the refresh
+ * records "Failed to resolve API key … <KEY>" and the model selector reports
+ * "Could not refresh <provider>" while no request ever leaves the sandbox.
+ *
+ * NEURALWATT_API_KEY is the one row with no fact-table entry: it belongs to the
+ * pi-neuralwatt package alone, so no derivation reaches it.
+ * @type {readonly string[]}
+ */
+const providerKeyEnv = Object.freeze([
+	"CLINE_API_KEY",
+	"MISTRAL_API_KEY",
+	"TLALOCAYOTL_API_KEY",
+	"OPENROUTER_API_KEY",
+	"OPENCODE_API_KEY",
+	"HYPER_API_KEY",
+	"INFERX_API_KEY",
+	"VERBOO_API_KEY",
+	"SYNTHETIC_API_KEY",
+	"GEMINI_API_KEY",
+	"NVIDIA_API_KEY",
+	"NEURALWATT_API_KEY",
+]);
+
+/**
+ * Each row's `<X>_BASE_URL` sibling forwards with its key, DERIVED by the one
+ * naming rule (the Azure spelling `baseUrlEnvName` applies for the generator),
+ * never a second list. The generated artifacts bake their URL at generate time,
+ * so the pi provider packages are this override's runtime reader
+ * (`baseUrlFromEnv` in every pi-* folder): an operator retargeting a provider
+ * has to reach them. Deriving it for every key rather than picking the
+ * extension-backed rows keeps one rule — a hand-picked subset is a list to
+ * forget to extend, which is the failure this allowlist already has a history of.
+ * @type {readonly string[]}
+ */
+const providerBaseUrlEnv = Object.freeze(
+	providerKeyEnv.map(baseUrlEnvName).filter((name) => name !== null),
+);
+
+/**
+ * The names forwarded INTO the sandbox: every provider key with its base-url
+ * sibling above, the pi packages' own catalog override, the Hugging Face token,
+ * and the proxy routing below.
  *
  * The proxy vars are routing, not secrets (docs/d074): forwarded so the image's
  * NODE_USE_ENV_PROXY=1 has something to honor — node's native fetch/http proxy
@@ -160,18 +204,13 @@ const EXIT_ARTIFACT = 94;
  * value the image's ENV already defaults to.
  */
 export const vaultEnv = [
-	"CLINE_API_KEY",
-	"MISTRAL_API_KEY",
-	"TLALOCAYOTL_API_KEY",
-	"OPENROUTER_API_KEY",
-	"OPENCODE_API_KEY",
-	"HYPER_API_KEY",
-	"INFERX_API_KEY",
-	"VERBOO_API_KEY",
-	"SYNTHETIC_API_KEY",
+	...providerKeyEnv,
+	...providerBaseUrlEnv,
 	"HF_TOKEN",
-	"GEMINI_API_KEY",
-	"NVIDIA_API_KEY",
+	// pi-cline-pass reads this at runtime: a host that pins the docs table
+	// instead of fetching it must reach the sandboxed extension too, with the
+	// pinned file arriving through the DIRECTORY mounts.
+	"CLINE_PASS_MDX",
 	"HTTP_PROXY",
 	"HTTPS_PROXY",
 	"NO_PROXY",

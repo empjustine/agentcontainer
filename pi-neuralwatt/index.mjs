@@ -120,8 +120,12 @@ function register(pi, tier, name) {
 		baseUrl: NEURALWATT_BASE_URL,
 		api: "openai-completions",
 		// pi's `$NAME` reference syntax: read from the environment at request
-		// time, so no secret is ever written to disk. An unset key leaves the
-		// provider unconfigured (pi hides its models from the model picker).
+		// time, so no secret is ever written to disk. An unset key is NOT a
+		// hidden provider: pi resolves the reference BEFORE the network refresh
+		// phase, so `refresh` below never runs, the provider lands in
+		// `ModelsRefreshResult.errors`, and the selector reports "Could not
+		// refresh <provider>" (measured on pi 1.5.2). The sandbox run path has to
+		// name the env in `coding-agent/run.mjs`'s allowlist for it to arrive.
 		apiKey: `$${NEURALWATT_API_KEY_ENV}`,
 		// The endpoint authenticates with Authorization: Bearer.
 		authHeader: true,

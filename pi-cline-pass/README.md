@@ -27,9 +27,9 @@ pi -e ./pi-cline-pass/index.mjs
 
 ## Environment
 
-| Var             | Meaning                                                                                                                                   |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `CLINE_API_KEY` | the ClinePass key pi sends as `Authorization: Bearer` (an unset key leaves the provider unconfigured — pi hides its models from `/model`) |
+| Var             | Meaning                                                                                                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLINE_API_KEY` | the ClinePass key pi sends as `Authorization: Bearer` (an unset key fails the refresh instead — pi resolves `$CLINE_API_KEY` before `refreshModels` runs, so `/model` reports "Could not refresh cline-pass") |
 
 Network rides the environment's forward proxy
 (`NODE_USE_ENV_PROXY=1` + the forwarded `HTTP(S)_PROXY`, docs/d074) — the

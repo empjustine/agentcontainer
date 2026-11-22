@@ -26,9 +26,9 @@ pi -e ./pi-hyper/index.mjs
 
 ## Environment
 
-| Var             | Meaning                                                                                                                         |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `HYPER_API_KEY` | the key pi sends as `Authorization: Bearer` (an unset key leaves the provider unconfigured — pi hides its models from `/model`) |
+| Var             | Meaning                                                                                                                                                                                        |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HYPER_API_KEY` | the key pi sends as `Authorization: Bearer` (an unset key fails the refresh instead — pi resolves `$HYPER_API_KEY` before `refreshModels` runs, so `/model` reports "Could not refresh hyper") |
 
 The catalog itself is PUBLIC — reading it needs no key, so the extension's data
 path and the provider's own publication are the same request. Network rides the
