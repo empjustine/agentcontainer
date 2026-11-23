@@ -73,7 +73,7 @@ func connectReply(t *testing.T, u *url.URL, token, target string) (byte, string)
 	if err := sendFrame(ws, frameConnect, []byte(target)); err != nil {
 		t.Fatal(err)
 	}
-	_ = ws.conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	_ = ws.setReadDeadline(time.Now().Add(10 * time.Second))
 	msg, err := readTunnelFrame(ws)
 	if err != nil {
 		t.Fatalf("CONNECT reply: %v", err)

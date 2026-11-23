@@ -337,7 +337,7 @@ func applyTestV5Headers(t *testing.T, hdr http.Header) {
 	maps.Copy(hdr, testV5Headers(t))
 }
 
-func dialTunnelForTest(t *testing.T, u *url.URL, token string) (*wsConn, error) {
+func dialTunnelForTest(t *testing.T, u *url.URL, token string) (tunnelStream, error) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -345,7 +345,22 @@ func dialTunnelForTest(t *testing.T, u *url.URL, token string) (*wsConn, error) 
 	if token != "" {
 		applyTestV5Headers(t, hdr)
 	}
-	return wsDial(ctx, u, hdr, nil, false)
+	ws, err := wsDial(ctx, u, hdr, nil, false)
+	if err != nil {
+		return nil, err
+	}
+	store, err := loadRelayStore(storeRoot())
+	if err != nil {
+		_ = ws.Close()
+		return nil, err
+	}
+	local := tls.Certificate{Certificate: [][]byte{store.SelfDER}, PrivateKey: store.Private}
+	conn, err := clientChannelHandshake(ctx, ws, local, store.Exits[0].Cert)
+	if err != nil {
+		_ = ws.Close()
+		return nil, err
+	}
+	return newTLSTunnelStream(conn, ws), nil
 }
 
 // reserveLoopbackAddr picks a concrete port by binding :0 and releasing

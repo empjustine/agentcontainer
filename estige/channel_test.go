@@ -145,7 +145,7 @@ func (s *channelTestStream) protocolViolation() {
 	s.violations++
 }
 
-func (s *channelTestStream) transport() string { return carrierH2Unbounded }
+func (s *channelTestStream) transport() string { return carrierWebSocket }
 func (s *channelTestStream) sessionID() string { return "test-session" }
 
 func (s *channelTestStream) Close() error {
@@ -252,7 +252,7 @@ func (s *pairedStream) writeTunnelMsg(msg []byte) error {
 
 func (s *pairedStream) setReadDeadline(time.Time) error { return nil }
 func (s *pairedStream) protocolViolation()              {}
-func (s *pairedStream) transport() string               { return carrierH2Unbounded }
+func (s *pairedStream) transport() string               { return carrierWebSocket }
 func (s *pairedStream) sessionID() string               { return "paired" }
 func (s *pairedStream) Close() error {
 	s.once.Do(func() { close(s.closed) })
@@ -272,11 +272,11 @@ func TestInnerHandshakeOverCarrier(t *testing.T) {
 	}
 	results := make(chan outcome, 2)
 	go func() {
-		conn, err := clientChannelHandshake(clientStream, relayLocal, exitCert)
+		conn, err := clientChannelHandshake(context.Background(), clientStream, relayLocal, exitCert)
 		results <- outcome{conn, err}
 	}()
 	go func() {
-		conn, err := serverChannelHandshake(serverStream, exitLocal, []*x509.Certificate{relayCert})
+		conn, err := serverChannelHandshake(context.Background(), serverStream, exitLocal, []*x509.Certificate{relayCert})
 		results <- outcome{conn, err}
 	}()
 	connected := make([]*tls.Conn, 0, 2)

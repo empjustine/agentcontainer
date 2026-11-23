@@ -239,7 +239,7 @@ func TestTunnelHandshakeAuth(t *testing.T) {
 // openRawTunnel completes handshake + HELLO and leaves CONNECT as the next
 // frame — the low-level driver for server-side protocol tests, bypassing
 // the relay node's convenience layers on purpose.
-func openRawTunnel(t *testing.T, tunnelURL *url.URL) *wsConn {
+func openRawTunnel(t *testing.T, tunnelURL *url.URL) tunnelStream {
 	t.Helper()
 	ws, err := dialTunnelForTest(t, tunnelURL, testTunnelToken)
 	if err != nil {
@@ -264,9 +264,9 @@ func openRawTunnel(t *testing.T, tunnelURL *url.URL) *wsConn {
 	return ws
 }
 
-func connectErrReason(t *testing.T, ws *wsConn, target string) string {
+func connectErrReason(t *testing.T, ws tunnelStream, target string) string {
 	t.Helper()
-	_ = ws.conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	_ = ws.setReadDeadline(time.Now().Add(10 * time.Second))
 	if err := sendFrame(ws, frameConnect, []byte(target)); err != nil {
 		t.Fatalf("send CONNECT: %v", err)
 	}
@@ -382,7 +382,7 @@ func TestServerRequiresHelloFirst(t *testing.T) {
 	if err := sendFrame(ws, frameConnect, []byte("example.com:443")); err != nil {
 		t.Fatalf("send CONNECT: %v", err)
 	}
-	_ = ws.conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	_ = ws.setReadDeadline(time.Now().Add(10 * time.Second))
 	if _, err := readTunnelFrame(ws); err == nil {
 		t.Fatal("expected the session to die on a wrong-phase CONNECT")
 	}
@@ -428,7 +428,7 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 	if err := sendFrame(ws, frameConnect, []byte(targetAddr)); err != nil {
 		t.Fatalf("CONNECT: %v", err)
 	}
-	_ = ws.conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	_ = ws.setReadDeadline(time.Now().Add(10 * time.Second))
 	msg, err := readTunnelFrame(ws)
 	if err != nil {
 		t.Fatalf("CONNECT reply: %v", err)

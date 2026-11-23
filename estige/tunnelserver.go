@@ -19,7 +19,10 @@ package main
 
 import (
 	"context"
+	"crypto/ed25519"
 	"crypto/subtle"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -81,6 +84,8 @@ type tunnelServer struct {
 	keys      []operatorKey
 	admission admissionTrust
 	principal string
+	selfDER   []byte
+	private   ed25519.PrivateKey
 	egress    *egressPolicy
 	// sessions is the per-trace-id registry the two windowed POST carriers
 	// share (d077 §3/§4, d081's amendment, docs/d222): minted by span-1
@@ -147,6 +152,18 @@ func matchOperatorKey(r *http.Request, keys []operatorKey) *operatorKey {
 	return matched
 }
 
+// wrapChannel starts the inner session after admission. The peer's
+// certificate comes from the admission proof, so the channel is pinned to the
+// principal that was just admitted.
+func (t *tunnelServer) wrapChannel(ctx context.Context, s tunnelStream, peer *admissionResult) (tunnelStream, error) {
+	local := tls.Certificate{Certificate: [][]byte{t.selfDER}, PrivateKey: t.private}
+	conn, err := serverChannelHandshake(ctx, s, local, []*x509.Certificate{peer.Cert})
+	if err != nil {
+		return nil, err
+	}
+	return newTLSTunnelStream(conn, s), nil
+}
+
 func (t *tunnelServer) keyByName(name string) *operatorKey {
 	for i := range t.keys {
 		if t.keys[i].id == name {
@@ -210,7 +227,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2Unb
 			t.serveH1Window(w, r, key)
 			return
 		}
-		t.serveH2Unbounded(w, r, key, id, h2UnboundedRefused)
+		t.serveH2Unbounded(w, r, key, id, h2UnboundedRefused, &result)
 		return
 	}
 	// Factor 2: the request must actually be a v13 websocket upgrade with a
@@ -255,7 +272,12 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2Unb
 	// The session outlives ServeHTTP: once hijacked, nothing on this
 	// connection is net/http's business anymore.
 	ws := &wsConn{conn: conn, br: brw.Reader, bw: brw.Writer, client: false, id: id}
-	go t.runSession(context.WithoutCancel(r.Context()), ws, key)
+	channel, err := t.wrapChannel(context.WithoutCancel(r.Context()), ws, &result)
+	if err != nil {
+		_ = ws.Close()
+		return
+	}
+	go t.runSession(context.WithoutCancel(r.Context()), channel, key)
 }
 
 // serveH2Unbounded runs an h2-post-unbounded session (docs/d077 §3): the
@@ -263,7 +285,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2Unb
 // handler must stay alive for the whole session — returning would end the
 // response body that carries it. Attribution happens at the same point the
 // 101 path does it: after auth, before any session work (docs/d078 §5).
-func (t *tunnelServer) serveH2Unbounded(w http.ResponseWriter, r *http.Request, key *operatorKey, id string, refused bool) {
+func (t *tunnelServer) serveH2Unbounded(w http.ResponseWriter, r *http.Request, key *operatorKey, id string, refused bool, peer *admissionResult) {
 	lw := &loggingResponseWriter{ResponseWriter: w, start: time.Now()}
 	// The port decides, not a per-request header (docs/d222): the exit
 	// serves an edge whose connector caps a single request body, and on that
@@ -303,7 +325,13 @@ func (t *tunnelServer) serveH2Unbounded(w http.ResponseWriter, r *http.Request, 
 		logAccess(r, http.StatusInternalServerError, lw.size, lw.start)
 		return
 	}
-	t.runSession(context.WithoutCancel(r.Context()), p, key)
+	channel, err := t.wrapChannel(context.WithoutCancel(r.Context()), p, peer)
+	if err != nil {
+		logLine(sevWarn, "[estige] tunnel h2-post-unbounded: inner handshake failed: %v", err)
+		logAccess(r, http.StatusOK, lw.size, lw.start)
+		return
+	}
+	t.runSession(context.WithoutCancel(r.Context()), channel, key)
 	logAccess(r, http.StatusOK, lw.size, lw.start)
 }
 
@@ -579,6 +607,8 @@ func (s *server) enableTunnel(egress egressConfig) error {
 		keys:      keys,
 		admission: trustFromExitStore(store),
 		principal: store.Principal,
+		selfDER:   store.SelfDER,
+		private:   store.Private,
 		egress:    policy,
 		sessions:  newExchangeSessions(),
 		live:      newLiveRegistry(),

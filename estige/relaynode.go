@@ -24,6 +24,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -646,6 +647,17 @@ func (c *relayNode) openTunnel(ctx context.Context, target string) (tunnelStream
 			_ = s.Close()
 		}
 	}()
+
+	if s.transport() == carrierH2Unbounded || s.transport() == carrierWebSocket {
+		local := tls.Certificate{Certificate: [][]byte{c.cfg.selfDER}, PrivateKey: c.cfg.store.Private}
+		conn, err := clientChannelHandshake(ctx, s, local, c.cfg.store.Exits[0].Cert)
+		if err != nil {
+			logLine(sevWarn, "[vpn-relay] inner handshake failed on %s: %v", s.transport(), err)
+			c.noteError(err)
+			return nil, err
+		}
+		s = newTLSTunnelStream(conn, s)
+	}
 
 	_ = s.setReadDeadline(time.Now().Add(tunnelHandshakeTimeout))
 	hello, err := encodeHello(c.cfg.label)
