@@ -5,7 +5,7 @@ status: active
 title: "d171 — the -insecure-exit switch unifies both degraded relay→exit postures"
 parent: estige
 depends-on: [d073, d094, d169]
-references: [d088, d104, d131, d145, d163]
+references: [d088, d104, d131, d145, d163, d236]
 tags: ["estige", "relay", "tls", "degraded-mode", "v3-v4-v5"]
 ---
 
@@ -36,6 +36,9 @@ before any tunnel, and the blind doors classify their first client bytes.
 door and the guard (ClientHello passes, an HTTP request line closes); the
 existing `ws://` harnesses became `wss://` fixtures in the same change, which
 is the loud diff this record predicted.
+
+d236 amends the TOFU rejection under Alternatives rejected: a log-only
+`seen_hosts` event is an operator hint and never an acceptance path.
 
 Two consequences beyond the matrix below: rotation now drains rather than
 kills (a signal waits `drainGrace` for live sessions, so restarting to rotate

@@ -5,7 +5,7 @@ status: draft
 title: "d132 — the v4 credential's key store: role-scoped directories, helper files and the CLI"
 parent: estige
 depends-on: [d104, d131]
-references: [d073, d078, d090]
+references: [d073, d078, d090, d236]
 tags: ["serving", "proxy", "vpn", "auth", "secrets", "key-store", "mechanics"]
 ---
 
@@ -19,7 +19,8 @@ checks and rotates them.
 
 d104 owns the decision (including the store's existence, its secret-surface
 guarantee and the rotation-without-outage intent). This file is the detail you
-need to implement or audit the store itself.
+need to implement or audit the store itself. d236 retires the role directories
+below: v5 uses one merged host certificate at `prv/<principal>.der`.
 
 ## Key store — role-scoped directories and two helper files
 

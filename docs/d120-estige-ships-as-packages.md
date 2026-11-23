@@ -5,11 +5,15 @@ status: active
 title: "d120 — estige ships as OS packages, and its POSIX launchers retire"
 parent: estige
 depends-on: [d041, d083, d088, d090, d095, d102, d106, d108, d110, d113]
-references: [d046, d073, d094, d130]
+references: [d046, d073, d094, d130, d236]
 tags: ["estige", "packaging", "systemd", "runit", "shell-retirement"]
 ---
 
 # d120 — estige ships as OS packages, and its POSIX launchers retire
+
+d120 retired the POSIX launchers and kept a container image that the operator
+launched by hand. d236 re-enables container deployment as a supported target
+with Go `build.go` and `run.go` commands, and retires the Node image builder.
 
 ## Problem
 

@@ -5,7 +5,7 @@ status: draft
 title: "d169 — estige v5: inner mTLS over the tunnel — channel security for an untrusted carrier"
 parent: estige
 depends-on: [d077, d104, d108, d131, d132]
-references: [d073, d081, d085, d090, d103, d133, d136, d171, d185, d211]
+references: [d073, d081, d085, d090, d103, d133, d136, d171, d185, d211, d236]
 tags: ["estige", "tunnel", "mtls", "tls", "crypto", "channel-security"]
 ---
 
@@ -40,6 +40,11 @@ An earlier revision also minted an ephemeral leaf under a CA root. That layer
 is removed: process compromise exposes the store key at boot in either shape,
 so the leaf moved the bytes without moving the boundary. d211 records the
 front-door alternative that drops this whole channel layer.
+
+d236 closes the audit of this proposal. It supplies the settled certificate
+shape, the `e-auth` and `E-Pub` admission pair, the log-only `seen_hosts` event
+and the per-window channel rule. Where this draft disagrees with d236, d236
+binds.
 
 ## Generation numbering
 

@@ -5,7 +5,7 @@ status: draft
 title: "d211 — estige v6: front-door mTLS — one TLS 1.3 session from the start"
 parent: estige
 depends-on: [d073, d085, d104, d108, d131, d132, d169, d185]
-references: [d077, d090, d133, d136, d171, d188]
+references: [d077, d090, d133, d136, d171, d188, d236]
 tags: ["estige", "tls", "mtls", "funnel", "identity", "generation-v6"]
 ---
 
@@ -24,7 +24,8 @@ buys a single standard handshake with no custom proof machinery.
 Draft — a proposal, not in force. v4's proofs and v5's inner session stay the
 designs on record for a deployment that keeps the camouflage 404; v6 is the
 alternative cut-over for one that does not. Nothing here implements code, and
-no deployment claims this generation yet.
+no deployment claims this generation yet. d236 gives v5 the neutral `estige`
+wire name, so that choice is no longer unique to this proposal.
 
 ## Generation numbering
 

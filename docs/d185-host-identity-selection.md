@@ -5,7 +5,7 @@ status: done
 title: "d185 — naming the identity: SNI, name-based certificate selection and the ECH question"
 parent: estige
 depends-on: [d132, d169]
-references: [d073, d104, d133, d171]
+references: [d073, d104, d133, d171, d236]
 tags: ["estige", "tls", "sni", "ech", "identity", "rotation"]
 ---
 
@@ -24,7 +24,8 @@ key; ECH stays out of the design.
 
 Investigation finished. The key tooling (`estige keygen`,
 `estige public`) implements the stable-name half; ECH is deferred, and
-nothing in the tree waits on it.
+nothing in the tree waits on it. d236 pulls the neutral `estige` wire name into
+v5, so the stable-principal SAN finding below no longer names the v5 channel.
 
 ## The question
 
