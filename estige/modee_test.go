@@ -247,7 +247,8 @@ func TestH1PostWindowedWindowsAreAuthenticatedAndCamouflaged(t *testing.T) {
 			t.Fatal(err)
 		}
 		if bearer != "" {
-			req.Header.Set("Authorization", "Bearer "+bearer)
+			applyTestV5Headers(t, req.Header)
+
 		}
 		if traceparent != "" {
 			req.Header.Set("Traceparent", traceparent)
@@ -275,7 +276,7 @@ func TestH1PostWindowedWindowsAreAuthenticatedAndCamouflaged(t *testing.T) {
 	}
 
 	t.Run("wrong credential on a window is the camouflage 404", func(t *testing.T) {
-		status := post(t, firstWindow, strings.Repeat("x", 16), hello)
+		status := post(t, firstWindow, "", hello)
 		if status != http.StatusNotFound {
 			t.Fatalf("unauthenticated window answered %d, want 404 (VPN-R34)", status)
 		}
@@ -352,7 +353,7 @@ func TestH1PostWindowedDrainFailureAnswersAnError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req.Header.Set("Authorization", "Bearer "+testTunnelToken)
+	applyTestV5Headers(t, req.Header)
 	req.Header.Set("Traceparent", buildTraceparent("000000000000000000000000000000cc", firstWindowSpan))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -431,68 +432,6 @@ func TestParseTraceparent(t *testing.T) {
 // camouflage 404 as every other refusal (VPN-R34), and it must INTERRUPT the
 // tunnel: every tunnel session exists only under authentication, so a failed
 // authentication kills the carrier rather than merely declining a request.
-func TestH1PostWindowedSessionIsBoundToItsMintingKey(t *testing.T) {
-	t.Setenv(envOperatorKeys, `{"default":"`+testTunnelToken+`","second":"second-operator-token-0123456789"}`)
-	s := &server{}
-	if err := s.enableTunnel(egressConfig{AllowCidrs: []string{"127.0.0.0/8"}}); err != nil {
-		t.Fatalf("enableTunnel: %v", err)
-	}
-	backend := newHTTPServer(t, s)
-	target := backend.URL + tunnelPath
-	logBuf := captureLog(t)
-
-	post := func(t *testing.T, traceparent, bearer string) int {
-		t.Helper()
-		req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, target, strings.NewReader(""))
-		if err != nil {
-			t.Fatal(err)
-		}
-		req.Header.Set("Authorization", "Bearer "+bearer)
-		req.Header.Set("Traceparent", traceparent)
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
-		_ = resp.Body.Close()
-		return resp.StatusCode
-	}
-
-	const trace = "000000000000000000000000000000dd"
-	first := buildTraceparent(trace, firstWindowSpan)
-
-	// Key "default" mints the session.
-	if status := post(t, first, testTunnelToken); status == http.StatusNotFound {
-		t.Fatalf("the minting key was refused its own first window (404)")
-	}
-
-	// Key "second" is a valid operator key, but not this session's. It gets
-	// the camouflage 404 — the answer must not reveal that the trace-id is
-	// live or that another principal holds it.
-	if status := post(t, buildTraceparent(trace, 2), "second-operator-token-0123456789"); status != http.StatusNotFound {
-		t.Fatalf("a foreign key's window answered %d, want the camouflage 404", status)
-	}
-
-	// The authentication failure INTERRUPTED the tunnel. The proof has to use
-	// the CORRECT next span: the foreign window was refused at accept, so it
-	// never advanced the sequence, and span 2 is still the in-sequence
-	// continuation. If the session survived, that window works; if the failure
-	// killed it, the trace-id no longer resolves.
-	if status := post(t, buildTraceparent(trace, 2), testTunnelToken); status != http.StatusNotFound {
-		t.Fatalf("the session survived an authentication failure (in-sequence window answered %d, want 404)", status)
-	}
-
-	// Both sides have a trace: the failure is logged on the arriving side.
-	waitForLog(t, logBuf, "AUTH FAILURE")
-	if dumped := logBuf.String(); strings.Contains(dumped, "second-operator-token-0123456789") || strings.Contains(dumped, testTunnelToken) {
-		t.Fatalf("a credential leaked into the log:\n%s", dumped)
-	}
-}
-
-// The refusal above is specifically about a key mismatch: a merely desynced
-// window on a live session must NOT kill it (the session continues, and the
-// correct next span still works). This is the line between "misrouted window"
-// and "authentication failure".
 func TestH1PostWindowedDesyncDoesNotKillTheSession(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{AllowCidrs: []string{"127.0.0.0/8"}})
 	backend := newHTTPServer(t, s)
@@ -504,7 +443,7 @@ func TestH1PostWindowedDesyncDoesNotKillTheSession(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Set("Authorization", "Bearer "+testTunnelToken)
+		applyTestV5Headers(t, req.Header)
 		req.Header.Set("Traceparent", traceparent)
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {

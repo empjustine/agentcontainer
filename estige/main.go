@@ -71,9 +71,6 @@ const (
 // node actually READS is enforced at enable time (docs/d090): the exit node
 // refuses TOKEN-only with the migration hint, the relay node refuses in
 // relayConfig.validate().
-func operatorCredentialInEnv() bool {
-	return os.Getenv(envOperatorToken) != "" || os.Getenv(envOperatorKeys) != ""
-}
 
 // portFromEnv resolves the exit node's single-port bind (docs/d110): env
 // PORT, unset → 8080 on all interfaces. The convention's whole value is that
@@ -541,22 +538,14 @@ func main() {
 	}
 
 	s := &server{cloudflarePort: cfPort}
-	armed := operatorCredentialInEnv()
-	if armed {
-		egress, err := egressFromEnv()
-		if err != nil {
-			fatalLine("[estige] %v", err)
-		}
-		if err := s.enableTunnel(egress); err != nil {
-			fatalLine("[estige] tunnel: %v", err)
-		}
+	egress, err := egressFromEnv()
+	if err != nil {
+		fatalLine("[estige] %v", err)
 	}
-	// An exit node that is not armed would bind a port and answer 404 to
-	// everything — indistinguishable from a healthy deployment behind a broken
-	// front, and there is no other face left to serve. Fail loudly instead
-	// (docs/d084's kill-switch law, now the only boot condition, docs/d108).
-	if !armed {
-		fatalLine("[estige] nothing to serve: no operator credential in the env (docs/d084)")
+	// The store is the arming fact: a missing or broken store refuses at
+	// boot rather than binding a port that answers 404 to everything.
+	if err := s.enableTunnel(egress); err != nil {
+		fatalLine("[estige] tunnel: %v", err)
 	}
 
 	newServer := func(addr string) *http.Server {

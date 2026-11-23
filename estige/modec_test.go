@@ -196,7 +196,7 @@ func TestH2PostUnboundedArrivalIsAuthenticatedAndCamouflaged(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Set("Authorization", "Bearer "+testTunnelToken)
+		applyTestV5Headers(t, req.Header)
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			t.Fatal(err)

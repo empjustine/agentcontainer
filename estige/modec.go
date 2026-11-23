@@ -106,8 +106,13 @@ func (c *relayNode) openH2Unbounded(ctx context.Context, id string, skipVerify b
 		_ = pw.Close()
 		return nil, err
 	}
-	req.Header.Set("Authorization", "Bearer "+c.cfg.token)
-	req.Header.Set(sessionIDHeader, id)
+	hdr, err := c.cfg.channelHeaders()
+	if err != nil {
+		_ = pw.CloseWithError(err)
+		return nil, err
+	}
+	hdr.Set(sessionIDHeader, id)
+	req.Header = hdr
 
 	// A redirect must never carry the credential somewhere silently: answer
 	// with the 3xx and treat it like any other non-200.

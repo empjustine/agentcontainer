@@ -63,6 +63,11 @@ type relayConfig struct {
 	tunnelURL *url.URL
 	token     string
 	label     string
+	// store is the v5 identity and its paired exit. The token field stays
+	// only for the old boot-time shape check; it never reaches the wire.
+	store     *relayStore
+	peerName  string
+	selfDER   []byte
 	proxyAddr string      // HTTP CONNECT listener (must be loopback, VPN-R23)
 	socksAddr string      // SOCKS5 listener (must be loopback, VPN-R23)
 	chain     *chainProxy // optional upstream chain for the tunnel leg (docs/d094)
@@ -78,6 +83,15 @@ type relayConfig struct {
 	// forwards is the -L listener set (docs/d144), parsed from argv by
 	// main before this config is built. Empty means no forwarding.
 	forwards []forwardSpec
+}
+
+// channelHeaders mints one fresh blind token and pins the paired exit's
+// certificate for one HTTP exchange.
+func (c *relayConfig) channelHeaders() (http.Header, error) {
+	if c.store == nil {
+		return nil, errors.New("v5 store is not loaded")
+	}
+	return channelRequestHeaders(c.store.Private, c.store.Principal, c.peerName, c.selfDER)
 }
 
 // h2Posture values: the zero value is "not yet discovered".
@@ -128,6 +142,13 @@ func relayConfigFromEnv(proxyAddr, socksAddr string, legacyIPRelay, insecureExit
 	if u.User != nil {
 		return cfg, fmt.Errorf("%s must not carry credentials; the token has its own variable (%s)", envTunnelURL, envOperatorToken)
 	}
+	store, err := loadRelayStore(storeRoot())
+	if err != nil {
+		return cfg, fmt.Errorf("v5 store: %w", err)
+	}
+	cfg.store = store
+	cfg.peerName = store.Exits[0].Name
+	cfg.selfDER = store.SelfDER
 	cfg.tunnelURL = u
 	cfg.token = os.Getenv(envOperatorToken)
 	cfg.label = os.Getenv(envClientLabel)
@@ -271,8 +292,8 @@ func loopbackHost(host string) (netip.Addr, error) {
 // validate enforces the pre-bind invariants. Callers must treat an error as
 // fatal: binding the listeners without a working credential would expose a
 // proxy surface whose every request fails anyway (VPN-R26 fail-closed).
-func (cfg *relayConfig) validate() error {
-	if cfg.token == "" {
+func (c *relayConfig) validate() error {
+	if c.token == "" {
 		return fmt.Errorf("no operator token configured; refusing to start (%s)", envOperatorToken)
 	}
 	// The relay is the side that WRITES this token into a header — websocket's
@@ -280,28 +301,28 @@ func (cfg *relayConfig) validate() error {
 	// wsDial), so a CR/LF here would inject headers into our own request.
 	// The length floor and the control-character refusal are the same rule the
 	// exit applies to its key set (validOperatorToken, VPN-R26 fail-closed).
-	if !validOperatorToken(cfg.token) {
+	if !validOperatorToken(c.token) {
 		return fmt.Errorf("operator token must be at least 16 bytes and free of control characters — a credential may not carry header framing (%s; VPN-R26 fail-closed)", envOperatorToken)
 	}
-	if cfg.tunnelURL == nil {
+	if c.tunnelURL == nil {
 		return fmt.Errorf("no tunnel URL configured (%s)", envTunnelURL)
 	}
-	for what, addr := range map[string]string{"http proxy": cfg.proxyAddr, schemeSOCKS5: cfg.socksAddr} {
+	for what, addr := range map[string]string{"http proxy": c.proxyAddr, schemeSOCKS5: c.socksAddr} {
 		if err := requireLoopback(addr); err != nil {
 			return fmt.Errorf("%s listener: %w", what, err)
 		}
 	}
-	if cfg.label == "" {
+	if c.label == "" {
 		host, err := os.Hostname()
 		if err != nil || host == "" {
 			host = "relay"
 		}
-		cfg.label = host
+		c.label = host
 	}
 	// The label rides the HELLO and lands in this node's and the exit's log
 	// records, so its shape is checked where every other wire string is
 	// (tunnelproto.go) rather than only for length here.
-	if !validTunnelLabel(cfg.label) {
+	if !validTunnelLabel(c.label) {
 		return fmt.Errorf("client label must be 0..%d printable ASCII characters (%s)", tunnelLabelMax, envClientLabel)
 	}
 	return nil
@@ -598,8 +619,10 @@ func (c *relayNode) openH2Carrier(ctx context.Context, id string, windowed bool)
 // openWebSocket is the WebSocket rung, extracted so every ladder shares one
 // handshake spelling.
 func (c *relayNode) openWebSocket(ctx context.Context, id string) (tunnelStream, error) {
-	hdr := make(http.Header)
-	hdr.Set("Authorization", "Bearer "+c.cfg.token)
+	hdr, err := c.cfg.channelHeaders()
+	if err != nil {
+		return nil, err
+	}
 	hdr.Set(sessionIDHeader, id)
 	return wsDial(ctx, c.cfg.tunnelURL, hdr, c.tunnelDial(), c.cfg.insecureExit)
 }

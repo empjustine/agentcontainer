@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"maps"
 	"math/big"
 	"net"
 	"net/http"
@@ -118,11 +119,50 @@ func (r staticHostLookup) LookupIPAddr(_ context.Context, host string) ([]net.IP
 	return []net.IPAddr{{IP: net.ParseIP(ip)}}, nil
 }
 
+const (
+	testV5Principal = "default"
+	testAliceToken  = "alice-token-0123456789"
+	testBobToken    = "bob-token-0123456789"
+)
+
+var testV5CertDER []byte
+
+// installTestV5Store gives both roles one pinned identity. The relay and exit
+// share it in-process; production runs each role in its own home.
+func installTestV5Store() error {
+	base, err := os.MkdirTemp("", "estige-v5-store")
+	if err != nil {
+		return err
+	}
+	root := filepath.Join(base, "estige")
+	if _, _, _, err := keygen(root, testV5Principal, false); err != nil {
+		return err
+	}
+	testV5CertDER, err = os.ReadFile(filepath.Join(root, "prv", testV5Principal+keygenCertSuffix))
+	if err != nil {
+		return err
+	}
+	entry := fmt.Sprintf(`"name":%q,"public":%q`, testV5Principal, encodeEPub(testV5CertDER))
+	relayFile := fmt.Sprintf(`{"exit":[{"endpoint":%q,%s}]}`, "wss://example.invalid/vpn", entry)
+	exitFile := fmt.Sprintf(`{"relays":[{%s}]}`, entry)
+	if err := os.WriteFile(filepath.Join(root, "relay.json"), []byte(relayFile), 0o600); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(root, "exit.json"), []byte(exitFile), 0o600); err != nil {
+		return err
+	}
+	return os.Setenv("XDG_DATA_HOME", base)
+}
+
 // TestMain installs the suite TLS root before any test runs — SSL_CERT_FILE
 // must be set before x509's first root load, which any test could trigger.
 func TestMain(m *testing.M) {
 	if err := initSuiteTLSRoot(); err != nil {
 		fmt.Fprintf(os.Stderr, "suite TLS root: %v\n", err)
+		os.Exit(1)
+	}
+	if err := installTestV5Store(); err != nil {
+		fmt.Fprintf(os.Stderr, "v5 test store: %v\n", err)
 		os.Exit(1)
 	}
 	if err := os.Setenv("SSL_CERT_FILE", testRootPEMPath); err != nil {
@@ -279,13 +319,31 @@ func mustTunnelURL(t *testing.T, proxy *httptest.Server) *url.URL {
 	return u
 }
 
+func testV5Headers(t *testing.T) http.Header {
+	t.Helper()
+	store, err := loadRelayStore(storeRoot())
+	if err != nil {
+		t.Fatal(err)
+	}
+	hdr, err := channelRequestHeaders(store.Private, store.Principal, store.Exits[0].Name, store.SelfDER)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return hdr
+}
+
+func applyTestV5Headers(t *testing.T, hdr http.Header) {
+	t.Helper()
+	maps.Copy(hdr, testV5Headers(t))
+}
+
 func dialTunnelForTest(t *testing.T, u *url.URL, token string) (*wsConn, error) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	hdr := make(http.Header)
 	if token != "" {
-		hdr.Set("Authorization", "Bearer "+token)
+		applyTestV5Headers(t, hdr)
 	}
 	return wsDial(ctx, u, hdr, nil, false)
 }

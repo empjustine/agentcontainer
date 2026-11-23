@@ -78,8 +78,10 @@ func (k *operatorKey) policyOr(def *egressPolicy) *egressPolicy {
 }
 
 type tunnelServer struct {
-	keys   []operatorKey
-	egress *egressPolicy
+	keys      []operatorKey
+	admission admissionTrust
+	principal string
+	egress    *egressPolicy
 	// sessions is the per-trace-id registry the two windowed POST carriers
 	// share (d077 §3/§4, d081's amendment, docs/d222): minted by span-1
 	// windows, self-removing on session close.
@@ -145,6 +147,15 @@ func matchOperatorKey(r *http.Request, keys []operatorKey) *operatorKey {
 	return matched
 }
 
+func (t *tunnelServer) keyByName(name string) *operatorKey {
+	for i := range t.keys {
+		if t.keys[i].id == name {
+			return &t.keys[i]
+		}
+	}
+	return nil
+}
+
 // serveTunnel takes a tunnel-path request to either a live session or
 // camouflage 404 — it never returns a response that distinguishes "wrong
 // credential" from "wrong path" (VPN-R34).
@@ -159,7 +170,15 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2Unb
 	}
 	// Factor 1 first: an unknown credential must not even learn whether
 	// /<prefix>/vpn exists as a route (VPN-R12: rejected before any 101).
-	key := matchOperatorKey(r, t.keys)
+	result, err := validateRelayAdmission(r.Header.Values(eAuthHeaderName), r.Header.Values(ePubHeaderName), t.admission, t.principal)
+	if err != nil {
+		if untrusted, ok := errors.AsType[*untrustedPeerError](err); ok {
+			_ = logSeenHost(roleExit, "", untrusted.Name, untrusted.Public)
+		}
+		writeFunnel404(w, r)
+		return
+	}
+	key := t.keyByName(result.Name)
 	if key == nil {
 		writeFunnel404(w, r)
 		return
@@ -527,19 +546,42 @@ func validOperatorToken(token string) bool {
 // The egress policy is a parameter, not a lookup, so the tests drive the same
 // construction the boot does without touching the environment.
 func (s *server) enableTunnel(egress egressConfig) error {
-	keys, err := operatorKeysFromEnv()
+	store, err := loadExitStore(storeRoot())
 	if err != nil {
 		return err
+	}
+	policies := make(map[string]*egressPolicy)
+	if raw := os.Getenv(envOperatorKeys); raw != "" {
+		entries, err := parseKeyset(raw)
+		if err != nil {
+			return err
+		}
+		for id, entry := range entries {
+			if entry.egress == nil {
+				continue
+			}
+			policy, err := newEgressPolicy(*entry.egress)
+			if err != nil {
+				return err
+			}
+			policies[id] = policy
+		}
+	}
+	keys := make([]operatorKey, 0, len(store.Relays))
+	for _, entry := range store.Relays {
+		keys = append(keys, operatorKey{id: entry.Name, policy: policies[entry.Name]})
 	}
 	policy, err := newEgressPolicy(egress)
 	if err != nil {
 		return err
 	}
 	s.vpn = &tunnelServer{
-		keys:     keys,
-		egress:   policy,
-		sessions: newExchangeSessions(),
-		live:     newLiveRegistry(),
+		keys:      keys,
+		admission: trustFromExitStore(store),
+		principal: store.Principal,
+		egress:    policy,
+		sessions:  newExchangeSessions(),
+		live:      newLiveRegistry(),
 	}
 	logLine(sevInfo, "[estige] tunnel carriers: %s, %s, %s, %s (at %s)",
 		carrierH2Unbounded, carrierWebSocket, carrierH2Windowed, carrierH1Windowed, tunnelPath)

@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"strconv"
@@ -205,6 +206,7 @@ func (s *exchangeStream) flushH2Window(lw *loggingResponseWriter, drained <-chan
 type h2WindowedStream struct {
 	timerMu sync.Mutex
 	url     string
+	cfg     *relayConfig
 	token   string
 	id      string
 	bound   int64
@@ -244,6 +246,7 @@ func (c *relayNode) openH2Windowed(ctx context.Context, id string, skipVerify bo
 	sctx, cancel := context.WithCancel(context.WithoutCancel(ctx))
 	w := &h2WindowedStream{
 		url:    u.String(),
+		cfg:    &c.cfg,
 		token:  c.cfg.token,
 		id:     id,
 		bound:  h2WindowedBytes,
@@ -284,7 +287,12 @@ func (w *h2WindowedStream) openWindow() error {
 		_ = pw.Close()
 		return err
 	}
-	req.Header.Set("Authorization", "Bearer "+w.token)
+	hdr, err := w.cfg.channelHeaders()
+	if err != nil {
+		_ = pw.CloseWithError(err)
+		return err
+	}
+	maps.Copy(req.Header, hdr)
 	req.Header.Set(sessionIDHeader, w.id)
 	req.Header.Set("Traceparent", buildTraceparent(w.id, seq))
 	req.Header.Set(windowHeader, strconv.FormatInt(w.bound, 10))

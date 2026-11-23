@@ -35,6 +35,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"strconv"
@@ -149,6 +150,7 @@ func buildTraceparent(traceID string, span uint64) string {
 type h1WindowStream struct {
 	timerMu sync.Mutex
 	url     string // http(s) form of the tunnel URL — one POST target, path included
+	cfg     *relayConfig
 	token   string
 	traceID string
 	// parent is the dial context with cancel dropped — see openH1Windowed.
@@ -217,6 +219,7 @@ func (c *relayNode) openH1Windowed(ctx context.Context, id string, skipVerify bo
 	}
 	return &h1WindowStream{
 		url:          u.String(),
+		cfg:          &c.cfg,
 		token:        c.cfg.token,
 		traceID:      traceID,
 		parent:       context.WithoutCancel(ctx),
@@ -361,7 +364,11 @@ func (w *h1WindowStream) startExchangeLocked() error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Authorization", "Bearer "+w.token)
+	hdr, err := w.cfg.channelHeaders()
+	if err != nil {
+		return err
+	}
+	maps.Copy(req.Header, hdr)
 	req.Header.Set(sessionIDHeader, w.traceID)
 	req.Header.Set("Traceparent", buildTraceparent(w.traceID, w.seq))
 	resp, err := w.client.Do(req)

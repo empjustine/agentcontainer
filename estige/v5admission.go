@@ -53,8 +53,6 @@ var errAdmission = errors.New("channel admission failed")
 // validateRelayAdmission checks one request: a valid proof from a principal
 // whose certificate is pinned for this exit. The peer name is the local
 // principal the proof must bind.
-//
-//nolint:unparam // the peer name varies by deployment principal
 func validateRelayAdmission(eAuth, ePub []string, trust admissionTrust, peerName string) (admissionResult, error) {
 	cert, encoded, err := parseEPubHeader(ePub)
 	if err != nil {

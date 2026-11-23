@@ -17,6 +17,14 @@ import (
 	"strings"
 )
 
+func storeRoot() string {
+	root, err := resolveStoreDir("")
+	if err != nil {
+		return ""
+	}
+	return root
+}
+
 const (
 	storeDirPerm   os.FileMode = 0o700
 	storePrivPerm  os.FileMode = 0o600

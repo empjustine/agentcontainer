@@ -219,7 +219,7 @@ func TestH2UnboundedRefusedOnCappedPort(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Set("Authorization", "Bearer "+testTunnelToken)
+		applyTestV5Headers(t, req.Header)
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			t.Fatal(err)
@@ -239,7 +239,7 @@ func TestH2UnboundedRefusedOnCappedPort(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Set("Authorization", "Bearer "+testTunnelToken)
+		applyTestV5Headers(t, req.Header)
 		req.Header.Set("Traceparent", buildTraceparent(strings.Repeat("a", 32), firstWindowSpan))
 		req.Header.Set(windowHeader, strconv.Itoa(maxWindowBytes+1))
 		resp, err := http.DefaultClient.Do(req)
