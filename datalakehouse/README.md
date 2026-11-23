@@ -37,6 +37,11 @@ task-level requirements are d204 and d205.
 The retired tailscale+promnesia stack those records replaced is gone from the
 worktree.
 
+[`elt/`](elt/README.md) (`datalakehouse-elt`) is the landing zone the sources
+write through: a dump arrives as one immutable batch with a manifest, and the
+sqlite staging plus the zstd parquet are derived from it. No producer is wired to
+it yet — the browsing streams still reach the daemon's own spool.
+
 ## Usage
 
 ```sh

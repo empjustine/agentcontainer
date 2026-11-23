@@ -14,12 +14,15 @@ version = "0.0.0"
 # (all seven # requires-python = ">=3.11" headers); ty's target-version
 # derives from this line, so the two must stay in step.
 requires-python = ">=3.11"
-# The imports this tree actually declares (huggingface_hub, gguf, pypdf) —
-# only what the type checker must see, never a runtime the repo executes itself.
+# The imports this tree actually declares (huggingface_hub, gguf, pypdf, and
+# the elt landing zone's duckdb/zstandard) — only what the type checker must
+# see, never a runtime the repo executes itself.
 dependencies = [
     "huggingface-hub>=0.23.0",
     "gguf",
     "pypdf>=6",
+    "duckdb>=1.4,<1.6",
+    "zstandard>=0.23",
 ]
 
 # NOTE on ty: its `[tool.ty.environment]` table is schema-validated by

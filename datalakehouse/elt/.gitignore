@@ -1,0 +1,6 @@
+# Derived state (docs/datalakehouse-elt): the zone is authoritative, staging and
+# cold are rebuilt from it by transform.py, and the corpus batch is a dump of one
+# source rather than an input the tree ships.
+zone/
+staging/
+cold/
