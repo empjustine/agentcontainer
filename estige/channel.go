@@ -7,6 +7,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -155,6 +156,44 @@ func (c *channelConn) fail(err error) error {
 	c.stream.protocolViolation()
 	_ = c.stream.Close()
 	return err
+}
+
+// clientChannelHandshake wraps an admitted carrier and completes the inner
+// session. A failed handshake is a protocol violation, never a downgrade.
+func clientChannelHandshake(s tunnelStream, local tls.Certificate, peer *x509.Certificate) (*tls.Conn, error) {
+	cfg, err := clientChannelTLSConfig(local, peer)
+	if err != nil {
+		return nil, err
+	}
+	return runChannelHandshake(s, cfg, false)
+}
+
+// serverChannelHandshake is the exit side of the same session. The peer list
+// is the principal's admitted certificates from the store.
+func serverChannelHandshake(s tunnelStream, local tls.Certificate, peers []*x509.Certificate) (*tls.Conn, error) {
+	cfg, err := serverChannelTLSConfig(local, peers)
+	if err != nil {
+		return nil, err
+	}
+	return runChannelHandshake(s, cfg, true)
+}
+
+func runChannelHandshake(s tunnelStream, cfg *tls.Config, server bool) (*tls.Conn, error) {
+	streamConn := newChannelConn(s)
+	var conn *tls.Conn
+	if server {
+		conn = tls.Server(streamConn, cfg)
+	} else {
+		conn = tls.Client(streamConn, cfg)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), tunnelHandshakeTimeout)
+	defer cancel()
+	if err := conn.HandshakeContext(ctx); err != nil {
+		s.protocolViolation()
+		_ = s.Close()
+		return nil, fmt.Errorf("inner TLS handshake: %w", err)
+	}
+	return conn, nil
 }
 
 // writeChannelPing sends liveness through the TLS session, not the raw carrier.

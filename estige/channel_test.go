@@ -218,6 +218,91 @@ type recordingConn struct {
 
 func (r *recordingConn) Write(p []byte) (int, error) { return r.buf.Write(p) }
 
+type pairedStream struct {
+	in     chan []byte
+	other  *pairedStream
+	closed chan struct{}
+	once   sync.Once
+}
+
+func newPairedStreams(buffer int) (*pairedStream, *pairedStream) {
+	a := &pairedStream{in: make(chan []byte, buffer), closed: make(chan struct{})}
+	b := &pairedStream{in: make(chan []byte, buffer), closed: make(chan struct{})}
+	a.other, b.other = b, a
+	return a, b
+}
+
+func (s *pairedStream) readTunnelMsg() ([]byte, error) {
+	select {
+	case msg := <-s.in:
+		return msg, nil
+	case <-s.closed:
+		return nil, os.ErrClosed
+	}
+}
+
+func (s *pairedStream) writeTunnelMsg(msg []byte) error {
+	select {
+	case s.other.in <- bytes.Clone(msg):
+		return nil
+	case <-s.closed:
+		return os.ErrClosed
+	}
+}
+
+func (s *pairedStream) setReadDeadline(time.Time) error { return nil }
+func (s *pairedStream) protocolViolation()              {}
+func (s *pairedStream) transport() string               { return carrierH2Unbounded }
+func (s *pairedStream) sessionID() string               { return "paired" }
+func (s *pairedStream) Close() error {
+	s.once.Do(func() { close(s.closed) })
+	return nil
+}
+
+func TestInnerHandshakeOverCarrier(t *testing.T) {
+	relayLocal, relayCert := testChannelMaterial(t, testHostKey(t))
+	exitLocal, exitCert := testChannelMaterial(t, testHostKey(t))
+	clientStream, serverStream := newPairedStreams(64)
+	defer clientStream.Close()
+	defer serverStream.Close()
+
+	type outcome struct {
+		conn *tls.Conn
+		err  error
+	}
+	results := make(chan outcome, 2)
+	go func() {
+		conn, err := clientChannelHandshake(clientStream, relayLocal, exitCert)
+		results <- outcome{conn, err}
+	}()
+	go func() {
+		conn, err := serverChannelHandshake(serverStream, exitLocal, []*x509.Certificate{relayCert})
+		results <- outcome{conn, err}
+	}()
+	connected := make([]*tls.Conn, 0, 2)
+	for range 2 {
+		select {
+		case got := <-results:
+			if got.err != nil {
+				t.Fatalf("handshake: %v", got.err)
+			}
+			connected = append(connected, got.conn)
+		case <-time.After(5 * time.Second):
+			t.Fatal("handshake timed out")
+		}
+	}
+	clientConn, serverConn := connected[0], connected[1]
+	defer clientConn.Close()
+	defer serverConn.Close()
+	if _, err := clientConn.Write([]byte("hello")); err != nil {
+		t.Fatal(err)
+	}
+	buf := make([]byte, 5)
+	if _, err := serverConn.Read(buf); err != nil || string(buf) != "hello" {
+		t.Fatalf("application data = %q, %v", buf, err)
+	}
+}
+
 func TestWriteChannelPing(t *testing.T) {
 	conn := &recordingConn{}
 	if err := writeChannelPing(conn); err != nil {
