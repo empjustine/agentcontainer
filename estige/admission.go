@@ -1,0 +1,137 @@
+// admission.go — the blind token and the untrusted certificate hint (d236).
+//
+// WHY the envelope keeps four segments: d131 pinned the grammar and the signed
+// bytes, so v5 changes the header name without changing what a signature covers.
+package main
+
+import (
+	"crypto/ed25519"
+	"encoding/base64"
+	"errors"
+	"fmt"
+	"strings"
+)
+
+const (
+	eAuthHeaderName = "e-auth"
+	authToken       = "v2"
+)
+
+const (
+	dirRelayToExit = "estige/v2/relay-to-exit"
+	dirExitToRelay = "estige/v2/exit-to-relay"
+)
+
+var errEAuthCardinality = errors.New(eAuthHeaderName + " must appear exactly once")
+
+type authEnvelope struct {
+	Name  string
+	Nonce []byte
+	Sig   []byte
+}
+
+func parseEAuthHeader(values []string) (authEnvelope, error) {
+	if len(values) != 1 {
+		return authEnvelope{}, fmt.Errorf("%w: got %d", errEAuthCardinality, len(values))
+	}
+	parts := strings.Split(values[0], ".")
+	if len(parts) != 4 || parts[0] != authToken {
+		return authEnvelope{}, errors.New("malformed " + eAuthHeaderName + " envelope")
+	}
+	if err := validPrincipal(parts[1]); err != nil {
+		return authEnvelope{}, fmt.Errorf("%s name: %w", eAuthHeaderName, err)
+	}
+	nonce, err := decodeAuthField(parts[2], 16, "nonce")
+	if err != nil {
+		return authEnvelope{}, err
+	}
+	sig, err := decodeAuthField(parts[3], ed25519.SignatureSize, "signature")
+	if err != nil {
+		return authEnvelope{}, err
+	}
+	return authEnvelope{Name: parts[1], Nonce: nonce, Sig: sig}, nil
+}
+
+func decodeAuthField(value string, want int, what string) ([]byte, error) {
+	if len(value) != base64.RawURLEncoding.EncodedLen(want) {
+		return nil, fmt.Errorf("%s %s has the wrong length", eAuthHeaderName, what)
+	}
+	decoded, err := base64.RawURLEncoding.DecodeString(value)
+	if err != nil {
+		return nil, fmt.Errorf("decode %s %s: %w", eAuthHeaderName, what, err)
+	}
+	if len(decoded) != want {
+		return nil, fmt.Errorf("%s %s has the wrong byte count", eAuthHeaderName, what)
+	}
+	if got := base64.RawURLEncoding.EncodeToString(decoded); got != value {
+		return nil, fmt.Errorf("%s %s is not canonical base64url", eAuthHeaderName, what)
+	}
+	return decoded, nil
+}
+
+func encodeEAuth(name string, nonce, sig []byte) string {
+	return strings.Join([]string{
+		authToken,
+		name,
+		base64.RawURLEncoding.EncodeToString(nonce),
+		base64.RawURLEncoding.EncodeToString(sig),
+	}, ".")
+}
+
+func authMessage(label string, fields ...[]byte) []byte {
+	msg := make([]byte, 0, len(label)+64)
+	msg = append(msg, label...)
+	for _, field := range fields {
+		msg = append(msg, field...)
+	}
+	return msg
+}
+
+func mintRelayAuth(priv ed25519.PrivateKey, relayName, exitName string, nonce []byte) (string, error) {
+	if len(nonce) != 16 {
+		return "", errors.New("relay nonce must be 16 bytes")
+	}
+	msg := authMessage(dirRelayToExit, nonce, []byte(relayName), []byte(exitName))
+	return encodeEAuth(relayName, nonce, ed25519.Sign(priv, msg)), nil
+}
+
+func verifyRelayAuth(value string, pub ed25519.PublicKey, relayName, exitName string) ([]byte, error) {
+	env, err := parseEAuthHeader([]string{value})
+	if err != nil {
+		return nil, err
+	}
+	if env.Name != relayName {
+		return nil, errors.New("relay proof names another principal")
+	}
+	msg := authMessage(dirRelayToExit, env.Nonce, []byte(relayName), []byte(exitName))
+	if !ed25519.Verify(pub, msg, env.Sig) {
+		return nil, errors.New("relay proof signature failed")
+	}
+	return env.Nonce, nil
+}
+
+func mintExitAuth(priv ed25519.PrivateKey, exitName, relayName string, nonce, relayNonce []byte) (string, error) {
+	if len(nonce) != 16 || len(relayNonce) != 16 {
+		return "", errors.New("exit and relay nonces must be 16 bytes")
+	}
+	msg := authMessage(dirExitToRelay, nonce, relayNonce, []byte(exitName), []byte(relayName))
+	return encodeEAuth(exitName, nonce, ed25519.Sign(priv, msg)), nil
+}
+
+func verifyExitAuth(value string, pub ed25519.PublicKey, exitName, relayName string, relayNonce []byte) ([]byte, error) {
+	if len(relayNonce) != 16 {
+		return nil, errors.New("relay nonce must be 16 bytes")
+	}
+	env, err := parseEAuthHeader([]string{value})
+	if err != nil {
+		return nil, err
+	}
+	if env.Name != exitName {
+		return nil, errors.New("exit proof names another principal")
+	}
+	msg := authMessage(dirExitToRelay, env.Nonce, relayNonce, []byte(exitName), []byte(relayName))
+	if !ed25519.Verify(pub, msg, env.Sig) {
+		return nil, errors.New("exit proof signature failed")
+	}
+	return env.Nonce, nil
+}
