@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	eAuthHeaderName = "e-auth"
+	eAuthHeaderName = "E-Auth"
 	authToken       = "v2"
 )
 
@@ -118,6 +118,7 @@ func mintExitAuth(priv ed25519.PrivateKey, exitName, relayName string, nonce, re
 	return encodeEAuth(exitName, nonce, ed25519.Sign(priv, msg)), nil
 }
 
+//nolint:unparam // the exit name is signed and varies by deployment principal
 func verifyExitAuth(value string, pub ed25519.PublicKey, exitName, relayName string, relayNonce []byte) ([]byte, error) {
 	if len(relayNonce) != 16 {
 		return nil, errors.New("relay nonce must be 16 bytes")
