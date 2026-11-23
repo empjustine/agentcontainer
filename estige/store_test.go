@@ -37,6 +37,9 @@ func newTestStore(t *testing.T) testStore {
 	if err := writePrivateKey(path, keyDER, false); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.WriteFile(filepath.Join(root, "prv", "exit-home.crt"), der, storePrivPerm); err != nil {
+		t.Fatal(err)
+	}
 	return testStore{root: root, principal: "exit-home", private: priv, public: encodeEPub(der)}
 }
 

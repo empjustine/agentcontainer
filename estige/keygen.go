@@ -28,11 +28,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 const (
 	keygenPrvDirName = "prv"
 	keygenPrivSuffix = ".der"
+	keygenCertSuffix = ".crt"
 	keygenDirPerm    = 0o700
 	keygenPrivPerm   = 0o600
 	// principalMaxLen is d132's name grammar upper bound; the certificate SAN
@@ -112,6 +114,14 @@ func keygen(dir, principal string, force bool) (privPath string, entry principal
 		return "", principalEntry{}, "", err
 	}
 	if err := writePrivateKey(privPath, privDER, force); err != nil {
+		return "", principalEntry{}, "", err
+	}
+	certDER, err := mintPrincipalCertificate(priv, time.Now())
+	if err != nil {
+		return "", principalEntry{}, "", err
+	}
+	certPath := filepath.Join(prvDir, principal+keygenCertSuffix)
+	if err := os.WriteFile(certPath, certDER, keygenPrivPerm); err != nil {
 		return "", principalEntry{}, "", err
 	}
 	return privPath, entry, principalFingerprint(pub), nil

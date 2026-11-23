@@ -73,7 +73,21 @@ func TestKeygenWritesHostIdentity(t *testing.T) {
 	if want := "SHA256:" + base64.RawURLEncoding.EncodeToString(sum256(pub)); fingerprint != want {
 		t.Fatalf("fingerprint = %q, want %q", fingerprint, want)
 	}
+	certPath := filepath.Join(dir, keygenPrvDirName, keygenTestPrincipal+keygenCertSuffix)
+	certDER, err := os.ReadFile(certPath)
+	if err != nil {
+		t.Fatalf("read certificate: %v", err)
+	}
+	cert, err := parsePrincipalCertificate(certDER)
+	if err != nil {
+		t.Fatalf("certificate shape: %v", err)
+	}
+	certPub, ok := cert.PublicKey.(ed25519.PublicKey)
+	if !ok || !certPub.Equal(pub) {
+		t.Fatal("certificate does not carry the host key")
+	}
 	assertPerm(t, privPath, 0o600)
+	assertPerm(t, certPath, 0o600)
 	assertPerm(t, filepath.Dir(privPath), 0o700)
 }
 

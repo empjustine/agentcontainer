@@ -39,6 +39,7 @@ type relayStore struct {
 	Root      string
 	Principal string
 	Private   ed25519.PrivateKey
+	SelfDER   []byte
 	Exits     []relayExitEntry
 }
 
@@ -46,11 +47,12 @@ type exitStore struct {
 	Root      string
 	Principal string
 	Private   ed25519.PrivateKey
+	SelfDER   []byte
 	Relays    []storeKeyEntry
 }
 
 func loadRelayStore(root string) (*relayStore, error) {
-	principal, priv, err := loadStorePrivateKey(root)
+	principal, priv, selfDER, err := loadStoreIdentity(root)
 	if err != nil {
 		return nil, err
 	}
@@ -87,11 +89,11 @@ func loadRelayStore(root string) (*relayStore, error) {
 	if err := checkStagedNames(len(file.Exit), func(i int) string { return file.Exit[i].Name }); err != nil {
 		return nil, fmt.Errorf("relay.json: %w", err)
 	}
-	return &relayStore{Root: root, Principal: principal, Private: priv, Exits: file.Exit}, nil
+	return &relayStore{Root: root, Principal: principal, Private: priv, SelfDER: selfDER, Exits: file.Exit}, nil
 }
 
 func loadExitStore(root string) (*exitStore, error) {
-	principal, priv, err := loadStorePrivateKey(root)
+	principal, priv, selfDER, err := loadStoreIdentity(root)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +123,7 @@ func loadExitStore(root string) (*exitStore, error) {
 	if err := checkStagedNames(len(file.Relays), func(i int) string { return file.Relays[i].Name }); err != nil {
 		return nil, fmt.Errorf("exit.json: %w", err)
 	}
-	return &exitStore{Root: root, Principal: principal, Private: priv, Relays: file.Relays}, nil
+	return &exitStore{Root: root, Principal: principal, Private: priv, SelfDER: selfDER, Relays: file.Relays}, nil
 }
 
 func checkStagedNames(n int, name func(int) string) error {
@@ -152,18 +154,18 @@ func readStoreJSON(root, name string, out any) error {
 	return nil
 }
 
-func loadStorePrivateKey(root string) (string, ed25519.PrivateKey, error) {
+func loadStoreIdentity(root string) (string, ed25519.PrivateKey, []byte, error) {
 	info, err := os.Stat(root)
 	if err != nil {
-		return "", nil, fmt.Errorf("store %s: %w", root, err)
+		return "", nil, nil, fmt.Errorf("store %s: %w", root, err)
 	}
 	if !info.IsDir() || info.Mode().Perm()&0o077 != 0 {
-		return "", nil, fmt.Errorf("store %s must be a directory with mode 0700", root)
+		return "", nil, nil, fmt.Errorf("store %s must be a directory with mode 0700", root)
 	}
 	prvDir := filepath.Join(root, "prv")
 	entries, err := os.ReadDir(prvDir)
 	if err != nil {
-		return "", nil, fmt.Errorf("%s: %w", prvDir, err)
+		return "", nil, nil, fmt.Errorf("%s: %w", prvDir, err)
 	}
 	var keyPath string
 	for _, entry := range entries {
@@ -171,35 +173,49 @@ func loadStorePrivateKey(root string) (string, ed25519.PrivateKey, error) {
 			continue
 		}
 		if keyPath != "" {
-			return "", nil, fmt.Errorf("%s holds more than one host key", prvDir)
+			return "", nil, nil, fmt.Errorf("%s holds more than one host key", prvDir)
 		}
 		keyPath = filepath.Join(prvDir, entry.Name())
 	}
 	if keyPath == "" {
-		return "", nil, fmt.Errorf("%s holds no host key", prvDir)
+		return "", nil, nil, fmt.Errorf("%s holds no host key", prvDir)
 	}
 	info, err = os.Stat(keyPath)
 	if err != nil {
-		return "", nil, err
+		return "", nil, nil, err
 	}
 	if info.Mode().Perm()&0o077 != 0 {
-		return "", nil, fmt.Errorf("%s is group- or world-readable", keyPath)
+		return "", nil, nil, fmt.Errorf("%s is group- or world-readable", keyPath)
 	}
 	der, err := os.ReadFile(keyPath)
 	if err != nil {
-		return "", nil, err
+		return "", nil, nil, err
 	}
 	parsed, err := x509.ParsePKCS8PrivateKey(der)
 	if err != nil {
-		return "", nil, fmt.Errorf("%s: %w", keyPath, err)
+		return "", nil, nil, fmt.Errorf("%s: %w", keyPath, err)
 	}
 	priv, ok := parsed.(ed25519.PrivateKey)
 	if !ok || len(priv) != ed25519.PrivateKeySize {
-		return "", nil, fmt.Errorf("%s does not hold a PKCS#8 Ed25519 key", keyPath)
+		return "", nil, nil, fmt.Errorf("%s does not hold a PKCS#8 Ed25519 key", keyPath)
 	}
 	principal := strings.TrimSuffix(filepath.Base(keyPath), ".der")
 	if err := validPrincipal(principal); err != nil {
-		return "", nil, fmt.Errorf("%s: %w", keyPath, err)
+		return "", nil, nil, fmt.Errorf("%s: %w", keyPath, err)
 	}
-	return principal, priv, nil
+	certPath := filepath.Join(prvDir, principal+keygenCertSuffix)
+	certDER, err := os.ReadFile(certPath)
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("%s: %w", certPath, err)
+	}
+	cert, err := parsePrincipalCertificate(certDER)
+	if err != nil {
+		return "", nil, nil, fmt.Errorf("%s: %w", certPath, err)
+	}
+	certPub, ok := cert.PublicKey.(ed25519.PublicKey)
+	wantPub, pubOK := priv.Public().(ed25519.PublicKey)
+	if !ok || !pubOK || !certPub.Equal(wantPub) {
+		return "", nil, nil, fmt.Errorf("%s does not carry this host key", certPath)
+	}
+	return principal, priv, certDER, nil
 }
