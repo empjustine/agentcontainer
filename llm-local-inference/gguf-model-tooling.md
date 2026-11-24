@@ -214,9 +214,12 @@ picks a GGUF by a pure filename heuristic (`find_best_model`,
 `.` or `/`) and be followed by `.` or `-`, case-insensitively — `:F16` cannot
 select a `BF16` file, `:Q4_XS` cannot select `IQ4_XS` (#31620). An underscore
 is not a boundary: upstream added it and reverted it (#31639). Sidecars
-(`mmproj`/`imatrix`/`mtp-`/`eagle3-`/`dflash-`/`dspark-`) are excluded, sharded
-models resolve to shard `-00001-of-`, and the **first match in tree order
-wins**. No tag defaults to trying `Q4_K_M` then `Q8_0`.
+(`mmproj`/`imatrix`/`mtp-`/`eagle3-`/`dflash-`/`dspark-`, plus the
+n-gram/`engram` lookup table a Coder release publishes as `<model>-Engram-IQ4_NL.gguf`)
+are excluded, sharded models resolve to shard `-00001-of-`, and the **first
+match in tree order wins**. No tag defaults to trying `Q4_K_M` then `Q8_0`. The
+table is excluded on purpose: it carries a quant tag it never selects, so it is
+not an alternative quantization of the release it belongs to (docs/d238).
 
 Because that is fragile (duplicate quants at different bpw, tag strings that
 don't appear verbatim in filenames), this tool downloads the tree listing once

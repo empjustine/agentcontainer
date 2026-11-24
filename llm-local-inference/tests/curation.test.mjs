@@ -28,6 +28,8 @@ import { fileURLToPath } from "node:url";
 const unitRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const G = 1e9;
 
+const { mainGgufSizes } = await import("../lib/model-entries.mjs");
+
 /** @param {Record<string, number>} spec path -> GB @returns {{path: string, size: number}[]} */
 const files = (spec) =>
 	Object.entries(spec).map(([path, gb]) => ({ path, size: Math.round(gb * G) }));
@@ -247,6 +249,36 @@ test("the authoring aid proposes raw entries for audit-only repos", () => {
 	} finally {
 		rmSync(dir, { recursive: true, force: true });
 	}
+});
+
+test("a repo's n-gram table is not a quantization choice", () => {
+	// The DeepSeek Coder shape: backbone shards under IQ2_XXS plus the release's
+	// Engram lookup table, which is shard 6 and carries IQ4_NL in its name. A
+	// name-only reader reports two quants, keeps the ":quant" label d210 says a
+	// single-row repo must not have, and would propose ":IQ4_NL" as an entry that
+	// does not exist (docs/d238). The classifier counts one main GGUF group.
+	const sizes = mainGgufSizes(
+		files({
+			"IQ2_XXS/DeepSeek-Coder-IQ2_XXS-00001-of-00006.gguf": 20,
+			"IQ2_XXS/DeepSeek-Coder-IQ2_XXS-00002-of-00006.gguf": 20,
+			"DeepSeek-V4.1-Flash-Engram-IQ4_NL.gguf": 110,
+			"mmproj-DeepSeek-BF16.gguf": 1,
+		}),
+	);
+	assert.deepEqual([...sizes.keys()], [
+		"IQ2_XXS/DeepSeek-Coder-IQ2_XXS.gguf",
+	]);
+	assert.equal(
+		sizes.get("IQ2_XXS/DeepSeek-Coder-IQ2_XXS.gguf"),
+		40 * G,
+		"the shard group is summed, and the table (larger, but not a quant) is not counted",
+	);
+	// The word rule is bounded, so a model whose name merely contains the letters
+	// is still weights: "Engrammatic" is not an "Engram" sidecar.
+	assert.deepEqual(
+		[...mainGgufSizes(files({ "Engrammatic-7B-Q4_K_M.gguf": 4 })).keys()],
+		["Engrammatic-7B-Q4_K_M.gguf"],
+	);
 });
 
 test("an unknown scope mode is refused", () => {

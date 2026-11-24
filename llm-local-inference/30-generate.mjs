@@ -733,10 +733,12 @@ function totalParamsB(sizes) {
 	// the three readings that need no name at all (totals, not guesses):
 	//  - a `dflash`/`dspark`/MTP side build carries a full-precision tag but is
 	//    never the biggest file, which is the guard the name filters cannot be;
-	//  - an untagged auxiliary (an `imatrix` blob, a projector named
-	//    "<model>-mmproj-bf16.gguf", which the `mmproj-` prefix exclusion above
-	//    misses) is never read as weights — one sized a 27B repo as 0B and cut
-	//    its ladder (docs/d202);
+	//  - an untagged auxiliary (a projector named "<model>-mmproj-bf16.gguf",
+	//    which the `mmproj-` prefix exclusion misses) is never read as weights —
+	//    one sized a 27B repo as 0B and cut its ladder (docs/d202). The named
+	//    sidecars (`imatrix`, the n-gram/Engram table) never reach this loop at
+	//    all: mainGgufSizes drops them, so their size cannot even be a candidate
+	//    for "largest" (docs/d238);
 	//  - the negated quant vocabulary below cannot be complete (it never named
 	//    Q1_0), and it does not have to be: a 1-bit build is never the biggest
 	//    file in its repo.

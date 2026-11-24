@@ -108,6 +108,27 @@ check(
 # every cached file of it classifies as prunable.
 check("an audit-only repo has no keep set", "acme/audit-GGUF" in wanted, False)
 
+# The model-file vocabulary the two cache scanners share: a sidecar is not a
+# servable GGUF, and the n-gram/Engram table is a sidecar even though its name
+# carries a quant tag (the DeepSeek Coder publishes it as
+# `DeepSeek-V4.1-Flash-Engram-IQ4_NL.gguf`, shard 6 of the release). Without
+# this rule the coverage scan reports IQ4_NL as an extra quant the manifest
+# forgot, and the manifest scan would propose it as an entry (docs/d238).
+import _hf_cache as hf_cache
+
+for name, want in [
+    ("weights.gguf", True),
+    ("DeepSeek-Coder-IQ2_XXS-00001-of-00006.gguf", True),
+    ("Engrammatic-7B-Q4_K_M.gguf", True),
+    ("DeepSeek-V4.1-Flash-Engram-IQ4_NL.gguf", False),
+    ("model-ngram-Q8_0.gguf", False),
+    ("imatrix.gguf", False),
+    ("mmproj-BF16.gguf", False),
+    ("mtp-Qwen3.8-27B-Q4_0.gguf", False),
+    ("README.md", False),
+]:
+    check("is a model file: " + name, hf_cache.is_model_file(name), want)
+
 declared = serving.scope()
 for repo, name, want in [
     ("acme/served-GGUF", "mmproj-Q8_0.gguf", None),

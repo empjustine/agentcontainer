@@ -92,7 +92,14 @@ SCOPE_FILE = HERE / "lib" / "cache-scope.json"
 MANIFEST_DIR = HERE / "lib" / "hf-manifests"
 CARDS = HERE / "model-cards"
 
-SIDECAR_RE = re.compile(r"(mmproj|imatrix|mtp-|eagle3-|dflash-|dspark-)")
+# Sidecars are files beside the weights, never a quantization: the projector, the
+# drafter/side builds, the quant-recipe matrix, and the n-gram/Engram lookup
+# table (published as "<model>-Engram-IQ4_NL.gguf", the DeepSeek Coder's shard
+# 6). Without the last two a ":IQ4_NL" label would resolve to the table file —
+# an alt quant that does not exist. The matching vocabulary lives in
+# lib/model-entries.mjs (isSidecarFile) and _hf_cache.py (AUXILIARY_WORD_RE);
+# three homes because three languages, each carrying this reason.
+SIDECAR_RE = re.compile(r"(mmproj|imatrix|engram|ngram|n-gram|mtp-|eagle3-|dflash-|dspark-)", re.IGNORECASE)
 SPLIT_RE = re.compile(r"-(\d{5})-of-(\d{5})\.gguf$")
 DEFAULT_TAGS = ["Q4_K_M", "Q8_0"]
 

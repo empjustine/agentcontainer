@@ -115,12 +115,44 @@ export function mainGgufSizes(files) {
 	const sizes = new Map();
 	for (const f of files) {
 		if (!f.path.endsWith(".gguf")) { continue; }
-		// the projector, the MTP drafter, and the partial dflash/dspark artifacts
-		// some repos ship beside the main quants
-		if (/(^|\/)(mmproj|mtp|dflash|dspark)-/i.test(f.path)) { continue; }
+		if (isSidecarFile(f.path)) { continue; }
 		const key = f.path.replace(GGUF_SHARD_RE, ".gguf");
 		sizes.set(key, (sizes.get(key) ?? 0) + f.size);
 	}
 	return sizes;
+}
+
+/**
+ * A file a repo ships BESIDE its weights: never one of the quantization choices
+ * the catalog names, so it must not be counted as a main GGUF either.
+ *
+ * Two families, because their names are built differently:
+ *
+ *   - PREFIXED sidecars — the projector (`mmproj-`), the MTP drafter and the
+ *     partial dflash/dspark artifacts, plus `imatrix`: the prefix rule is the
+ *     one llama.cpp itself applies to tell a sidecar from weights.
+ *   - WORD sidecars — the quant-recipe matrix and the n-gram/Engram lookup
+ *     table, which sit mid-name and carry a quant tag they never select. The
+ *     DeepSeek Coder uploads are the case that made this explicit: their Engram
+ *     table is shard 6 of the release, published as
+ *     `DeepSeek-V4.1-Flash-Engram-IQ4_NL.gguf`, so a name-only reader reports
+ *     `IQ4_NL` as an alternative quant of a repo whose only quant is `IQ2_XXS`
+ *     — which then keeps a `:quant` label d210 says it must not have
+ *     (docs/d238).
+ *
+ * The same vocabulary lives in `_hf_cache.py`'s `is_model_file` (the python
+ * scanners) and `10-fetch-hf-manifests.py`'s `SIDECAR_RE` (tag resolution);
+ * three homes because three languages, and each carries this reason.
+ * @param {string} path repo-relative file path
+ * @returns {boolean}
+ */
+function isSidecarFile(path) {
+	if (/(^|\/)(mmproj|mtp|dflash|dspark)-/iu.test(path)) {
+		return true;
+	}
+	const base = path.split("/").pop() ?? "";
+	return /(?:^|[^a-z0-9])(?:imatrix|engram|ngram|n-gram)(?:[^a-z0-9]|$)/iu.test(
+		base,
+	);
 }
 

@@ -128,11 +128,12 @@ endpoint.
   are ~25%/50%. Context comes from the model's own GGUF header via
   `lib/gguf-facts.json` for every entry, capped at 262144 (d197), and
   `--fit on` reconciles a host too small for the window. The parameter count
-  excludes the drafter/side builds some repos ship beside the main quants
-  (mmproj, MTP, dflash/dspark) — a dflash bf16 once read a 27B blend as 1.9B —
-  and reads a repo's full-precision upload as its LARGEST main GGUF, so an
-  untagged auxiliary (an `imatrix` blob, a projector name the prefix filter
-  misses) can never size the repo (d202).
+  excludes the sidecars some repos ship beside the main quants (mmproj, MTP,
+  dflash/dspark, the `imatrix` matrix, and the n-gram/`engram` lookup table —
+  one dflash bf16 once read a 27B blend as 1.9B, and the DeepSeek Coder's Engram
+  table would read as an `IQ4_NL` alt quant) and reads a repo's full-precision
+  upload as its LARGEST main GGUF, so an untagged auxiliary (a projector name
+  the prefix filter misses) can never size the repo (d202, d238).
 - **Inbound bearer auth stays**: `apiKeys: ${env.TLALOCAYOTL_API_KEY}` in
   `00-general.yaml` demands the tlalocayotl provider row's own key — the
   fact table's local-farm row, id `llama-swap` (its former name; earlier still

@@ -49,6 +49,18 @@ otherwise have to reconstruct from a diff:
   label: each repo serves exactly one row here, and d210 drops the label where
   no choice exists. The label still names the file, in `model` and in the baked
   `--model` path.
+- **The n-gram/Engram table is a sidecar, not a second quantization.** The
+  DeepSeek Coder publishes its lookup table as
+  `DeepSeek-V4.1-Flash-Engram-IQ4_NL.gguf` — shard 6 of the release, carrying a
+  quant tag it never selects. A name-only reader therefore reported two quants
+  in a repo that has one, which is how a `:quant` label survives a repo that
+  must not have one, and how the authoring aid would propose an `:IQ4_NL`
+  entry that does not exist. The classifier now excludes the family in all
+  three of its homes — `lib/model-entries.mjs` (`isSidecarFile`, which
+  `mainGgufSizes` and the proposal aid read), `_hf_cache.py`
+  (`is_model_file`, the two cache scanners) and
+  `10-fetch-hf-manifests.py` (`SIDECAR_RE`, tag resolution) — and each home
+  carries the reason.
 - **One trailing shard may be an Engram file.** `DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder`
   ships five backbone shards plus its lookup tables under another name
   (`DeepSeek-V4.1-Flash-Engram-IQ4_NL.gguf`, the unpruned release's shard 6).
