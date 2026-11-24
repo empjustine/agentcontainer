@@ -1,0 +1,32 @@
+{
+	"name": "@agentcontainer/pi-tlalocayotl-provider",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"generate": "echo '{\"msg\": \"nothing to generate in pi-tlalocayotl-provider\"}'",
+		"test": "node --test tests/*.test.mjs"
+	},
+	"description": "pi extension: the Tlalocayotl llama-swap gateway — rebuilt from its own key-gated /v1/models listing on every refresh",
+	"keywords": [
+		"pi-package",
+		"pi-extension",
+		"pi"
+	],
+	"pi": {
+		"extensions": [
+			"./index.mjs"
+		]
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-coding-agent": ">=1.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@earendil-works/pi-coding-agent": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@earendil-works/pi-coding-agent": "1.5.2"
+	}
+}

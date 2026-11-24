@@ -37,12 +37,12 @@ npm_tools_ensure() {
 	fi
 	printf '%s\n' "$_npm_sum" > "$_npm_stamp"
 }
-# pnpm_tools_ensure <repo-root> — install what the seven pi extension folders
+# pnpm_tools_ensure <repo-root> — install what the pi extension folders
 # typecheck against: @earendil-works/pi-coding-agent, one lockfile per folder
 # because a folder is a copy unit (docs/d113), ONE store because pnpm hardlinks
-# the unpacked tree instead of copying it (docs/d107). Six entries therefore
-# cost one copy on disk — the reason pnpm rather than npm is the second manager
-# here, where npm would have written seven.
+# the unpacked tree instead of copying it (docs/d107), so the entries share one
+# copy on disk — the reason pnpm rather than npm is the second manager here,
+# where npm would have written one per folder.
 #
 # Skips a folder whose lockfile is unchanged, by the same cksum stamp idiom as
 # the npm tree above. A folder with no lockfile is skipped rather than fatal:

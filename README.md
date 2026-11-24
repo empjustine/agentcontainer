@@ -189,6 +189,12 @@ agentcontainer/
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the seeding provenance + the fleet seam
 │
+├── pi-tlalocayotl-provider/               # the operator's llama-swap gateway as a pi package (d100): ONE loadable extension, no generator — the key-gated /v1/models listing is the lineup
+│   ├── sources.mjs / merge.mjs          #   → the ONE listing read (llama-swap's data[] + meta.llamaswap) · the ONE shaping step + the host's transcribed llama.cpp compat (window, cap, modalities, reasoning)
+│   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
+│   ├── tests/                           #   → the rules, network-free (injected fetch) — never today's GGUF lineup
+│   ├── AGENTS.md / README.md            #   → folder rules · install + the field table + the verification status of the compat mirror
+│
 ├── pi-aperture/                         # Aperture is this tailnet's AI gateway (d061): REFERENCE ONLY — its MCP endpoint (keyless, grant-gated; an inert fleet entry) and the vendor's docs table, no code, no model data
 │   ├── README.md                        #   → the folder's spec node: the keyless measurement, the documentation table, and why the Aperture CLI's own Pi launcher leaves no extension to register
 │   ├── AGENTS.md                        #   → folder rules: no model data, no credential, tailnet-only claims, the contract if code lands
@@ -205,6 +211,12 @@ agentcontainer/
 │   ├── AGENTS.md / TODO.md              #   → folder rules (this extension never touches the context) · the open worklist, unbuilt
 │
 ├── pi-session-logs-dw/                  # the LLM session upload as a pi extension (d182): ASSESSMENT ONLY — no code yet; README.md is the folder's spec node and the requirements list
+├── pi-settled/                         # notification findings for pi extensions (no code): settle hooks, terminal BEL/OSC, desktop and vibration channels
+├── pi-acp/                             # ACP prior-art reference only: serve direction (adapters, native modes, JetBrains) and use direction (pi as ACP client)
+│   ├── README.md                       #   → module node: scope, boundary, reading path
+│   ├── SERVE-ACP-PRIOR-ART.md          #   → adapters, native-mode PR refs, registry and JetBrains evidence, gaps
+│   ├── USE-ACP-PRIOR-ART.md            #   → protocol precedent, external bridges, pi-side hooks, unanswered cache question
+│   └── AGENTS.md                       #   → documentation-only folder rules
 │
 ├── git/                                 # Reference-farm tooling (mirrors + search); the only shell is the flock pair (d121/d138)
 │   ├── README.md                        #   → the module doc: the farm's three jobs, boundary, entry points

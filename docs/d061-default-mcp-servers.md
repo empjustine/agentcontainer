@@ -240,6 +240,38 @@ which also maintains the measurement above. A hidden entry renders no
 `mcp_servers` line, so nothing on the prompt side will correct a stale sentence
 before a host that opens it reads the server's own instructions instead.
 
+### Amendment: `tlalocayotl`, the gateway's own MCP server, closed by a version gate
+
+`https://tlalocayotl.coelacanth-barb.ts.net/api/mcp` joins the list as
+`tlalocayotl` — llama-swap's own MCP server, served by the gateway
+`../pi-tlalocayotl-provider/` binds (`internal/server/apimcp.go`, upstream
+`github.com/mostlygeek/llama-swap`). Its gate is the gateway's `apiKeys`, and
+this deployment's `config.d/00-general.yaml` sets that to
+`${env.TLALOCAYOTL_API_KEY}`, so the entry carries
+`Authorization: Bearer ${TLALOCAYOTL_API_KEY}` — an environment reference, like
+`mistral-mcp`, resolved where the provider key is already forwarded. A keyless
+call answers `401 unauthorized: invalid or missing API key`.
+
+Measured with the key, the surface is ten tools:
+`docs__list_docs`/`get_doc`/`search_docs`/`get_config_schema`,
+`code__find`/`grep`/`ls`/`read`, `config__get_config` (the effective config,
+credentials redacted) and `sys__now`. No server instructions.
+
+The closure here is neither a credential request nor a billable tool: it is a
+**protocol revision**. llama-swap speaks MCP `2026-07-28` and nothing else — the
+revision that dropped the `initialize` handshake in favour of a stateless POST
+carrying `MCP-Protocol-Version` and `Mcp-Method` headers. An `initialize` at
+`2025-06-18`, and a bare `tools/list` with no protocol header, both answer
+`-32022 "unsupported protocol version; this server speaks MCP 2026-07-28 only"`,
+and the request carrying the header answers normally. pi 1.5.2's client offers
+`LATEST_PROTOCOL_VERSION = "2025-11-25"` and falls back to `2025-06-18`,
+`2025-03-26` or `2024-11-05`, so every revision it can name is refused: enabling
+the entry now buys a `failed` server line and no tool. It ships
+`"enabled": false` beside `"exposure": "hidden"` — the same inert encoding as
+the other provider surfaces — and the entry's `description` states the gate, so
+the reason reaches the next reader without this record. Opening it becomes worth
+the two steps once pi's MCP client speaks the revision.
+
 ## Consequences
 
 - The **host** pi gets the committed servers too, not only sandboxes: it reads
