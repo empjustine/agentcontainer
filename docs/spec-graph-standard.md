@@ -483,6 +483,7 @@ comm -23 \
       llm-local-inference-cache estige-ci \
       pi-hyper-provider pi-verboo-provider pi-synthetic-provider pi-cline-pass-provider pi-coding-agent-provider \
       pi-aperture-provider pi-summarized-thinking pi-neuralwatt-provider pi-tlalocayotl-provider \
+      pi-notify-on-settle \
       | sort)
 
 # a record used as a parent — must print nothing

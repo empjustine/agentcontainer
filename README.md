@@ -211,7 +211,11 @@ agentcontainer/
 │   ├── AGENTS.md / TODO.md              #   → folder rules (this extension never touches the context) · the open worklist, unbuilt
 │
 ├── pi-session-logs-dw/                  # the LLM session upload as a pi extension (d182): ASSESSMENT ONLY — no code yet; README.md is the folder's spec node and the requirements list
-├── pi-settled/                          # notification findings for pi extensions (no code): settle hooks, terminal BEL/OSC, desktop and vibration channels
+├── pi-notify-on-settle/                 # one alert when a pi agent loop settles (d096): ONE loadable extension, no generator — in-app notice + terminal BEL/OSC 777, outcome-aware (completed/cancelled/failed)
+│   ├── index.mjs / package.json          #   → the extension entry (the three settle handlers + the OSC 777 writer) + its pi.extensions manifest
+│   ├── tests/                           #   → a fake `pi` drives the handlers; the mode guards and the OSC sanitization are pinned
+│   ├── AGENTS.md / README.md            #   → folder rules · the design record: event table, channel table, prior art
+│
 ├── pi-acp/                              # ACP prior-art reference only: serve direction (adapters, native modes, JetBrains) and use direction (pi as ACP client)
 │   ├── README.md                       #   → module node: scope, boundary, reading path
 │   ├── SERVE-ACP-PRIOR-ART.md          #   → adapters, native-mode PR refs, registry and JetBrains evidence, gaps
