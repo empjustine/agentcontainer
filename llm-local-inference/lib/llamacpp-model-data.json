@@ -1,4 +1,6 @@
 {"models":[
+{"hf-repo":"ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF","model":"IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00001-of-00006.gguf","__argv":"${dsv41} ${SPEC_MTP}"},
+{"hf-repo":"ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF","model":"IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00001-of-00002.gguf","__argv":"${qwen38} ${SPEC_MTP}"},
 {"hf-repo":"unsloth/Muse-Glimmer-30B-GGUF:Q8_0","model":"Muse-Glimmer-30B-Q8_0.gguf","__argv":"${museglimmer} ${SPEC_MTP}"},
 {"hf-repo":"unsloth/Muse-Glimmer-30B-GGUF:UD-Q6_K_XL","model":"Muse-Glimmer-30B-UD-Q6_K_XL.gguf","__argv":"${museglimmer} ${SPEC_MTP}"},
 {"hf-repo":"unsloth/Muse-Glimmer-30B-GGUF:UD-Q8_K_XL","model":"Muse-Glimmer-30B-UD-Q8_K_XL.gguf","__argv":"${museglimmer} ${SPEC_MTP}"},

@@ -1,31 +1,26 @@
 ---
 base_model:
-  - poolside/Laguna-S-2.1
+- poolside/Laguna-S-2.1
 library_name: transformers
 inference: false
 extra_gated_description: >-
   To learn more about how we process your personal data, please read our <a
   href="https://poolside.ai/legal/privacy">Privacy Policy</a>.
 tags:
-  - laguna-s-2.1
-  - unsloth
-  - vllm
+- laguna-s-2.1
+- unsloth
+- vllm
 license: openmdw-1.1
 pipeline_tag: text-generation
 ---
 
 # You can now run Laguna-S-2.1 in Unsloth Studio or llama.cpp
-
 To run or train any LLM with a open-source UI, install [Unsloth Studio](https://github.com/unslothai/unsloth) via:
-
 #### macOS, Linux, WSL:
-
 ```bash
 curl -fsSL https://unsloth.ai/install.sh | sh
 ```
-
 #### Windows:
-
 ```powershell
 irm https://unsloth.ai/install.ps1 | iex
 ```
@@ -59,6 +54,7 @@ Or run a one-off generation with `llama-cli`:
     --model Laguna-S-2.1-GGUF/UD-Q4_K_XL/Laguna-S-2.1-UD-Q4_K_XL-00001-of-00003.gguf \
     --fit on -p "Write a Flappy Bird game in Python."
 ```
+
 
 <p align="center">
   <img alt="poolside-banner" src="https://poolside.ai/assets/laguna/laguna-s-2-1-banner.svg" width="800px">
@@ -119,17 +115,17 @@ expert, grouped-query attention, and interleaved full/sliding-window attention.
   <img alt="benchmarks" src="https://poolside.ai/assets/laguna/laguna-s-2-1-chart.svg" width="800px">
 </p>
 
-| Model               | Size       | Terminal-Bench 2.1 | SWE-bench Multilingual | SWE-Bench Pro (Public Dataset) | DeepSWE   | SWE Atlas (Codebase QnA) | Toolathlon Verified |
-| ------------------- | ---------- | ------------------ | ---------------------- | ------------------------------ | --------- | ------------------------ | ------------------- |
-| **Laguna S 2.1**    | 118B-A8B   | **70.2%**          | **78.5%**              | **59.4%**                      | **40.4%** | **46.2%**                | **49.7%**           |
-| Tencent Hy3         | 295B-A21B  | 71.7%              | 75.8%                  | 57.9%                          | -         | -                        | -                   |
-| Inkling             | 975B-A41B  | 63.8%              | -                      | 54.3%                          | -         | -                        | 45.5%*              |
-| Nemotron 3 Ultra    | 550B-A55B  | 56.4%              | 67.7%                  | -                              | -         | -                        | 34.3%*              |
-| DeepSeek-V4-Pro Max | 1.6T-A49B  | 64.0%*             | 76.2%                  | 55.4%                          | 9.0%*     | 27.2%*                   | 55.9%*              |
-| Kimi K3             | 2800B-A50B | 88.3%              | -                      | -                              | 69%       | -                        | -                   |
-| Qwen 3.7 Max        | -          | 74.5%*             | 78.3%                  | 60.6%                          | -         | -                        | -                   |
-| Muse Spark 1.1      | -          | 80%                | -                      | 61.5%                          | 53.3%     | 42.2%*                   | 75.6%               |
-| Claude Fable 5      | -          | 88%                | -                      | 80.3%                          | 70%       | -                        | -                   |
+| Model | Size | Terminal-Bench 2.1 | SWE-bench Multilingual | SWE-Bench Pro (Public Dataset) | DeepSWE | SWE Atlas (Codebase QnA) | Toolathlon Verified |
+|---|---|---|---|---|---|---|---|
+| **Laguna S 2.1** | 118B-A8B | **70.2%** | **78.5%** | **59.4%** | **40.4%** | **46.2%** | **49.7%** |
+| Tencent Hy3 | 295B-A21B | 71.7% | 75.8% | 57.9% | - | - | - |
+| Inkling | 975B-A41B | 63.8% | - | 54.3% | - | - | 45.5%* |
+| Nemotron 3 Ultra | 550B-A55B | 56.4% | 67.7% | - | - | - | 34.3%* |
+| DeepSeek-V4-Pro Max | 1.6T-A49B | 64.0%* | 76.2% | 55.4% | 9.0%* | 27.2%* | 55.9%* |
+| Kimi K3 | 2800B-A50B | 88.3% | - | - | 69% | - | - |
+| Qwen 3.7 Max | - | 74.5%* | 78.3% | 60.6% | - | - | - |
+| Muse Spark 1.1 | - | 80% | - | 61.5% | 53.3% | 42.2%* | 75.6% |
+| Claude Fable 5 | - | 88% | - | 80.3% | 70% | - | - |
 
 Benchmarks as of 21 July 2026. Laguna S 2.1 in **bold**; a dash (-) marks a benchmark a model was not evaluated on. Scores marked * are as reported by third parties: Terminal-Bench 2.1 and DeepSWE via Artificial Analysis, SWE Atlas via Scale AI's official leaderboard, and Toolathlon Verified via its official leaderboard. Full evaluation trajectories: [trajectories.poolside.ai](https://trajectories.poolside.ai).
 
@@ -204,7 +200,7 @@ cd llama.cpp && cmake -B build && cmake --build build -j
 
 ## Controlling reasoning
 
-Laguna S 2.1 has native reasoning support and works best with _preserved thinking_:
+Laguna S 2.1 has native reasoning support and works best with *preserved thinking*:
 keep `reasoning_content` from prior assistant messages in the message history.
 The model will generally reason before calling tools and between tool calls, and
 may stop reasoning in follow-up steps if prior thinking blocks are dropped.

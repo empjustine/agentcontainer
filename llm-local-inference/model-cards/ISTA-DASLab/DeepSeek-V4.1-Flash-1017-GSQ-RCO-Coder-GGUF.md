@@ -55,11 +55,11 @@ The base model has 763.2B parameters, 551.9B of them in the transformer. The Cod
 
 Removing half of a model's experts necessarily reduces its capabilities. The contribution of this release is that the reduction is directed towards **code, agentic tool use, long context and vision**, and the retained experts are therefore those that support these domains. Degradation outside this set is an accepted cost of the method. For general-purpose use, the [unpruned GSQ-RCO releases](https://huggingface.co/ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-GGUF) are the appropriate choice.
 
-|                                              | SWE-bench Verified | LiveCodeBench v6 |
-| -------------------------------------------- | ------------------ | ---------------- |
-| Base model (FP8 / FP4)                       | 81.20              | 89.71            |
-| **GSQ-RCO Coder (72.1 GB, 1 bit: 1.05 bpw)** | **77.00**          | **88.57**        |
-| retained                                     | 94.8%              | 98.7%            |
+| | SWE-bench Verified | LiveCodeBench v6 |
+|---|---|---|
+| Base model (FP8 / FP4) | 81.20 | 89.71 |
+| **GSQ-RCO Coder (72.1 GB, 1 bit: 1.05 bpw)** | **77.00** | **88.57** |
+| retained | 94.8% | 98.7% |
 
 All accuracy numbers in this card were measured at **reasoning effort 50**.
 
@@ -109,11 +109,11 @@ The Coder backbone is a GGUF in five shards in the folder `IQ2_XXS/`, named `Dee
 
 The Engram file is shard 6 of the Coder. It is the same file as in the unpruned release (also shard 6 there), so llama.cpp needs a link to it named `IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00006-of-00006.gguf` (one command, see [llama.cpp](#llamacpp)).
 
-| File                                                                                     | Size          | Notes                                                                                                                                |
-| ---------------------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-0000i-of-00006.gguf`, i = 1 to 5 | 72.12 GB      | Transformer weights, 192 of 384 experts per layer, 1.05 bits per parameter of the original transformer                               |
-| `DeepSeek-V4.1-Flash-Engram-IQ4_NL.gguf`                                                 | 110.60 GB     | Shard 6: the two Engram lookup tables (IQ4_NL, 4.50 bpw), neither pruned nor searched; identical to the file of the unpruned release |
-| **Total**                                                                                | **182.72 GB** | against 248.84 GB for the unpruned IQ2_XXS build                                                                                     |
+| File | Size | Notes |
+|---|---|---|
+| `IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-0000i-of-00006.gguf`, i = 1 to 5 | 72.12 GB | Transformer weights, 192 of 384 experts per layer, 1.05 bits per parameter of the original transformer |
+| `DeepSeek-V4.1-Flash-Engram-IQ4_NL.gguf` | 110.60 GB | Shard 6: the two Engram lookup tables (IQ4_NL, 4.50 bpw), neither pruned nor searched; identical to the file of the unpruned release |
+| **Total** | **182.72 GB** | against 248.84 GB for the unpruned IQ2_XXS build |
 
 The Engram tables are a lookup rather than a matmul weight, so they are held at a fixed 4.50 bpw and excluded from both the quantization search and the pruning. If you already downloaded the [unpruned release](https://huggingface.co/ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-GGUF), its Engram file is the same and does not need to be downloaded again. The vision projector, `mmproj-DeepSeek-V4.1-Flash-1017-BF16.gguf` (0.97 GB), is also the file of the unpruned release. GB is 10<sup>9</sup> bytes.
 
@@ -144,7 +144,6 @@ ln -s ../DeepSeek-V4.1-Flash-Engram-IQ4_NL.gguf \
 
 llama-cli -m IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00001-of-00006.gguf -ngl 99
 ```
-
 `-m` takes the first shard; llama.cpp opens shards 2 to 6 from the same directory. If you already have the Engram file of the unpruned release, leave `"*Engram*"` out of the download and point the link at your copy. On Windows, `mklink /H IQ2_XXS\DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00006-of-00006.gguf DeepSeek-V4.1-Flash-Engram-IQ4_NL.gguf` makes the link.
 
 The Engram table stays memory-mapped on disk and is read one row per token, as in the [unpruned release](https://huggingface.co/ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-GGUF#llamacpp).
@@ -160,7 +159,6 @@ hf download ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF \
 llama-server -m IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00001-of-00006.gguf \
   --mmproj mmproj-DeepSeek-V4.1-Flash-1017-BF16.gguf -ngl 99
 ```
-
 With `llama-mtmd-cli`, also pass `--jinja` so that the chat template embedded in the GGUF is used.
 
 ### Chat template and reasoning effort
@@ -176,9 +174,9 @@ llama-server -m IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00001-of-
 
 ## Method
 
-|                                                                                                |                                                                                                                                                                                                              |
-| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **GSQ** ([paper](https://arxiv.org/abs/2604.18556), [code](https://github.com/IST-DASLab/GSQ)) | Post-training scalar quantization that learns grid assignments and group scales jointly, closing most of the gap to vector quantization at low bit-widths while staying deployable in standard GGUF types.   |
+| | |
+|---|---|
+| **GSQ** ([paper](https://arxiv.org/abs/2604.18556), [code](https://github.com/IST-DASLab/GSQ)) | Post-training scalar quantization that learns grid assignments and group scales jointly, closing most of the gap to vector quantization at low bit-widths while staying deployable in standard GGUF types. |
 | **RCO** ([paper](https://arxiv.org/abs/2605.00649), [code](https://github.com/IST-DASLab/RCO)) | Budget-constrained optimization on a Riemannian manifold. Used here to choose which experts to remove under one exact budget per layer, and in the unpruned release to assign per-tensor quantization types. |
 
 Both developed at the [Deep Algorithms and Systems Lab (DASLab)](https://github.com/IST-DASLab), Institute of Science and Technology Austria.

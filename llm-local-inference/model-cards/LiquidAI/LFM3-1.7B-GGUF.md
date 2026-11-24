@@ -5,30 +5,30 @@ license_name: lfm1.0
 license_link: LICENSE
 pipeline_tag: text-generation
 tags:
-  - liquid
-  - lfm3
-  - gguf
-  - llama.cpp
+- liquid
+- lfm3
+- gguf
+- llama.cpp
 language:
-  - en
-  - ar
-  - zh
-  - fr
-  - de
-  - it
-  - ja
-  - ko
-  - pt
-  - es
-  - vi
-  - th
-  - id
-  - hi
-  - ru
-  - pl
+- en
+- ar
+- zh
+- fr
+- de
+- it
+- ja
+- ko
+- pt
+- es
+- vi
+- th
+- id
+- hi
+- ru
+- pl
 base_model:
-  - LiquidAI/LFM3-1.7B
-  - LiquidAI/LFM3-1.7B-NVFP4
+- LiquidAI/LFM3-1.7B
+- LiquidAI/LFM3-1.7B-NVFP4
 base_model_relation: quantized
 ---
 
@@ -46,6 +46,7 @@ base_model_relation: quantized
   </div>
 </div>
 
+
 # LFM3-1.7B-GGUF
 
 GGUF version of [LFM3-1.7B](https://huggingface.co/LiquidAI/LFM3-1.7B) for local inference on CPUs and GPUs.
@@ -53,7 +54,6 @@ GGUF version of [LFM3-1.7B](https://huggingface.co/LiquidAI/LFM3-1.7B) for local
 Find architecture and usage details in the [original model card](https://huggingface.co/LiquidAI/LFM3-1.7B).
 
 ## How to run LFM3-1.7B
-
 <hr style="margin: -0.7em 0 1.2em 0; border: 0; border-top: 1px solid rgba(127, 127, 127, 0.3);" />
 
 Recommended sampling: temperature 0.1, top_k 50, repeat penalty 1.1. For math and science: temperature 1.0, top_p 0.95, top_k 20.
@@ -63,7 +63,6 @@ Recommended sampling: temperature 0.1, top_k 50, repeat penalty 1.1. For math an
 - [Ollama](https://ollama.com) (`ollama run lfm3`), for macOS. Requires Ollama version [v0.40.12](https://github.com/ollama/ollama/releases/tag/v0.40.12) or newer.
 
 ## Use with llama.cpp
-
 <hr style="margin: -0.7em 0 1.2em 0; border: 0; border-top: 1px solid rgba(127, 127, 127, 0.3);" />
 
 > [!NOTE]
@@ -79,7 +78,6 @@ llama-cli -hf LiquidAI/LFM3-1.7B-GGUF:Q4_K_M \
 For math and science, use `--temp 1.0 --top-p 0.95 --top-k 20` instead. More options in the [llama.cpp guide](https://docs.liquid.ai/deployment/on-device/llama-cpp).
 
 ## NVFP4 GGUF
-
 <hr style="margin: -0.7em 0 1.2em 0; border: 0; border-top: 1px solid rgba(127, 127, 127, 0.3);" />
 
 Unlike the other files in this repository, which are converted from [LFM3-1.7B](https://huggingface.co/LiquidAI/LFM3-1.7B),
@@ -98,7 +96,6 @@ llama-cli -hf LiquidAI/LFM3-1.7B-GGUF:NVFP4 \
 ```
 
 ## QAD Q4_0 GGUF
-
 <hr style="margin: -0.7em 0 1.2em 0; border: 0; border-top: 1px solid rgba(127, 127, 127, 0.3);" />
 
 The Q4_0 build in this repository is the Quantization-Aware Distillation (QAD) checkpoint,

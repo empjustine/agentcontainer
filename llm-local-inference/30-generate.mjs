@@ -274,7 +274,7 @@ function bakeSnapshotPaths(hubHost, m, manifests, libDir) {
 		}
 	}
 
-	const required = allShards(m.model);
+	const required = entryShards(m, manifests, libDir);
 	if (m.mmproj) {
 		required.push(m.mmproj);
 	}
@@ -320,7 +320,7 @@ function bakeSnapshotPaths(hubHost, m, manifests, libDir) {
 			// stitch shards that live anywhere, and relying on the sibling-name
 			// convention turns a mis-named upload into a load failure instead of
 			// a generation check.
-			shardPaths: allShards(m.model)
+			shardPaths: entryShards(m, manifests, libDir)
 				.slice(1)
 				.map((shard) => `${snapGuest}/${shard}`),
 			mmprojPath: m.mmproj ? `${snapGuest}/${m.mmproj}` : null,
@@ -464,10 +464,55 @@ function indexImageTokens(entries) {
 }
 
 /**
+ * The shard paths an entry actually serves. Some upstreams upload the final
+ * shard under another name (the DeepSeek Coder's Engram table is shard 6); the
+ * committed manifest is still the authority, so ONE missing trailing shard
+ * falls back to that repo's single Engram GGUF. The emitted --shard is already
+ * a comma list of these paths (docs/d210), so no per-entry alias encoding or
+ * cache symlink is involved (docs/d197).
+ * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
+ * @param {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>} manifests
+ *   the run's manifest cache
+ * @param {string} libDir this folder's own lib/
+ * @returns {string[]} repo-relative shard paths in serving order
+ */
+function entryShards(m, manifests, libDir) {
+	const repo = m["hf-repo"].split(":")[0];
+	const shipped = repoManifest(manifests, libDir, repo).files.map((f) => f.path);
+	const declared = allShards(m.model);
+	if (declared.length < 2) {
+		return declared;
+	}
+	const present = new Set(shipped);
+	const missing = declared.filter((f) => !present.has(f));
+	if (missing.length === 0) {
+		return declared;
+	}
+	const last = declared.at(-1);
+	if (missing.length !== 1 || missing[0] !== last || last === undefined) {
+		throw new Error(
+			`model ${m["hf-repo"]} is missing shards ${missing.join()} from its committed hf-manifest — the Engram fallback replaces one trailing shard only`,
+		);
+	}
+	const engrams = shipped.filter((path) => {
+		const base = path.split("/").pop() ?? "";
+		return base.toLowerCase().includes("engram") && base.endsWith(".gguf");
+	});
+	const engram = engrams.at(0);
+	if (engrams.length !== 1 || engram === undefined) {
+		throw new Error(
+			`model ${m["hf-repo"]} needs exactly one Engram GGUF in its hf-manifest to replace missing shard ${last} (found ${engrams.length})`,
+		);
+	}
+	return [...declared.slice(0, -1), engram];
+}
+
+/**
  * Validate an entry against its committed manifest, then fill what the
  * manifest proves. A declared file the manifest does not carry is a HARD
- * ERROR: the manifest is committed truth, so a miss is a typo or a stale
- * entry, never a host state (docs/d197).
+ * ERROR — except for one trailing shard that entryShards resolves from the
+ * repo's Engram GGUF: the manifest is committed truth, so any other miss is a
+ * typo or a stale entry, never a host state (docs/d197).
  * @param {Record<string, any>} m one manifest entry (with DEFAULTS applied)
  * @param {Map<string, {commit: string|null, files: Array<{path: string, size: number}>}>} manifests
  *   the run's manifest cache (main owns it)
@@ -480,7 +525,15 @@ function resolveEntryFiles(m, manifests, libDir, imageTokens) {
 	const shipped = new Set(
 		repoManifest(manifests, libDir, repo).files.map((f) => f.path),
 	);
-	const declared = [...allShards(m.model)];
+	const declared = entryShards(m, manifests, libDir);
+	const expected = allShards(m.model);
+	if (declared.at(-1) !== expected.at(-1)) {
+		logWarn("missing trailing shard replaced by the repo's Engram GGUF", {
+			repo,
+			missing: expected.at(-1),
+			engram: declared.at(-1),
+		});
+	}
 	if (m.mmproj) {
 		declared.push(m.mmproj);
 	}
@@ -966,7 +1019,7 @@ function noteCurated(curated, shipped, m, baked) {
 	for (const guestPath of bakedPaths) {
 		rec.files.add(rel(guestPath));
 	}
-	const index = rel(baked.modelPath) + ".index.json";
+	const index = `${rel(baked.modelPath)}.index.json`;
 	if (shipped.has(index)) {
 		rec.optional.add(index);
 	}

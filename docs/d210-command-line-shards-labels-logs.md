@@ -66,6 +66,23 @@ server's own were a second clock on every line.
   because a fleet config that depends on a default should say so and a bump that
   changes it then shows up as a diff.
 
+### Amendment: `--lazy-mode on`, not `auto`
+
+The macro now passes `--lazy-mode on`. The original sentence above argued for
+`auto` ("on, but only for tensors larger than 4 GiB") as the documented default
+written down on purpose, and that reasoning still holds — the value changed
+because the catalog did. The two ISTA-DASLab Coder uploads now served here
+keep their lookup table in a separate shard (`Qwen3.8-Flash-Next-GSQ-RCO-Coder`
+ships it as the 28.8 GB n-gram shard, `DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder`
+as the 110.6 GB Engram file), and their cards state the requirement plainly:
+the table is "read one row per token" and "may stay on disk". The sibling
+`Qwen3.8-Flash-Next-GSQ-RCO` card spells the flag that delivers it —
+"run with `-lm mmap --lazy-mode on`". `auto` would read a table that large on
+demand too, so the table is not the difference: `on` mmaps every tensor, so
+nothing else is preloaded either, and the behaviour no longer rides a size
+heuristic a llama.cpp bump can move. The macro's other pins are unchanged, and
+`--load-mode mmap` remains the precondition either way.
+
 ## Consequences
 
 The layer keeps 356 ids; ten of them lose their `:quant` suffix, so a saved chat

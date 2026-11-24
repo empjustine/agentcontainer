@@ -1,15 +1,13 @@
 ---
 tags:
-  - unsloth
-  - deepseek
+- unsloth
+- deepseek
 base_model:
-  - deepseek-ai/DeepSeek-V4-Flash-Vision-Exp
+- deepseek-ai/DeepSeek-V4-Flash-Vision-Exp
 license: mit
 library_name: transformers
 ---
-
 ## Read our How to [Run DeepSeek-V4 Guide!](https://unsloth.ai/docs/models/deepseek-v4)
-
 <p style="margin-top: 0;margin-bottom: 0;">
     <em><a href="https://unsloth.ai/docs/basics/dynamic-3.0-ggufs">Unsloth Dynamic 3.0</a> achieves superior accuracy & outperforms other leading quants.</em>
   </p>
@@ -29,6 +27,8 @@ library_name: transformers
     <li>You can now run DeepSeek-V4-Flash-Vision-Exp in <a href="https://github.com/unslothai/unsloth/">Unsloth Studio</a> with toggles for High and Max thinking.</li>
 </div>
 <img width="600" alt="deepseek-v4-flash-0731 in unsloth studio" src="https://3215535692-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FxhOjnexMCB3dmuQFQ2Zq%2Fuploads%2FlvJqDRKlWdAVkn3HXJZA%2F1000024247.png?alt=media&token=e84fd31d-7720-40d5-aba1-ba65ac34ce97" />
+
+
 
 # DeepSeek-V4-Flash-Vision-Exp
 
@@ -72,21 +72,21 @@ Compared to DeepSeek-V4-Flash-0731, DeepSeek-V4-Flash-Vision-Exp achieves substa
 
 <div align="center">
 
-| Benchmark                         | DeepSeek-V4-Flash-Vision-Exp | DeepSeek-V4-Flash-0731 | Opus-4.8 |
-| :-------------------------------- | :--------------------------: | :--------------------: | :------: |
-| **Text Agent Capabilities**       |                              |                        |          |
-| Terminal Bench 2.1                |             83.9             |          82.7          |   85.0   |
-| NL2Repo                           |             57.7             |          54.2          |   69.7   |
-| Cybergym                          |             75.3             |          76.7          |   78.3   |
-| DeepSWE                           |             59.3             |          54.4          |   58.0   |
-| Toolathlon-Verified               |             75.9             |          70.3          |   76.2   |
-| DSBench-Hard                      |             63.6             |          59.6          |   71.7   |
-| AutomationBench (Public)          |             25.7             |          25.1          |   27.2   |
-| **Multimodal Agent Capabilities** |                              |                        |          |
-| ApexBench (Pass@1)                |             36.5             |         26.2†          |   39.4   |
-| Agents' Last Exam                 |             27.3             |         25.2†          |   25.7   |
-| Chartography                      |             64.3             |           -            |   65.0   |
-| ZeroBench (Pass@5)                |             35.0             |           -            |   34.0   |
+| Benchmark | DeepSeek-V4-Flash-Vision-Exp | DeepSeek-V4-Flash-0731 | Opus-4.8 |
+| :--- | :---: | :---: | :---: |
+| **Text Agent Capabilities** | | | |
+| Terminal Bench 2.1 | 83.9 | 82.7 | 85.0 |
+| NL2Repo | 57.7 | 54.2 | 69.7 |
+| Cybergym | 75.3 | 76.7 | 78.3 |
+| DeepSWE | 59.3 | 54.4 | 58.0 |
+| Toolathlon-Verified | 75.9 | 70.3 | 76.2 |
+| DSBench-Hard | 63.6 | 59.6 | 71.7 |
+| AutomationBench (Public) | 25.7 | 25.1 | 27.2 |
+| **Multimodal Agent Capabilities** | | | |
+| ApexBench (Pass@1) | 36.5 | 26.2† | 39.4 |
+| Agents' Last Exam | 27.3 | 25.2† | 25.7 |
+| Chartography | 64.3 | - | 65.0 |
+| ZeroBench (Pass@5) | 35.0 | - | 34.0 |
 
 </div>
 
@@ -94,6 +94,7 @@ Notes:
 
 1. For the text agent benchmarks above, DeepSeek models are evaluated with the minimal mode of DeepSeek Harness as the agent framework, using the `max` reasoning effort level with `temperature = 1.0, top_p = 0.95`.
 2. † For ApexBench and Agents' Last Exam, DeepSeek-V4-Flash-0731 ignores the multimodal elements in the input.
+
 
 ## Repository layout
 

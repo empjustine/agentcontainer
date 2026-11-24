@@ -4,34 +4,33 @@ license: other
 license_name: lfm1.0
 license_link: LICENSE
 language:
-  - en
-  - ar
-  - zh
-  - fr
-  - de
-  - ja
-  - ko
-  - es
-  - pt
-  - it
-  - vi
-  - th
-  - id
-  - hi
-  - ru
-  - pl
+- en
+- ar
+- zh
+- fr
+- de
+- ja
+- ko
+- es
+- pt
+- it
+- vi
+- th
+- id
+- hi
+- ru
+- pl
 pipeline_tag: text-generation
 tags:
-  - liquid
-  - lfm2.5
-  - edge
-  - moe
-  - unsloth
+- liquid
+- lfm2.5
+- edge
+- moe
+- unsloth
 base_model: LiquidAI/LFM2.5-24B-A2B
 ---
 
 # Run and train LFM2.5 via the [Unsloth Desktop app](https://unsloth.ai/docs/desktop)
-
 <div>
   <p style="margin: 0 0 0px 0; margin-top: 0px;">
     <em><a href="https://unsloth.ai/docs/basics/dynamic-3.0-ggufs">Unsloth Dynamic 3.0</a> achieves superior accuracy & outperforms other leading quants.</em>
@@ -76,10 +75,10 @@ Find more information about LFM2.5-24B-A2B in our [blog post](https://www.liquid
 
 ## 🗒️ Model Details
 
-| Model                                                                      | Parameters      | Description                            |
-| -------------------------------------------------------------------------- | --------------- | -------------------------------------- |
-| [LFM2.5-24B-A2B-Base](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-Base) | 24B (2B active) | Pre-trained base model for fine-tuning |
-| **[LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B)**       | 24B (2B active) | Post-trained for agentic workloads     |
+| Model                                                                        | Parameters      | Description                            |
+| ---------------------------------------------------------------------------- | --------------- | -------------------------------------- |
+| [LFM2.5-24B-A2B-Base](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-Base)   | 24B (2B active) | Pre-trained base model for fine-tuning |
+| **[LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B)**         | 24B (2B active) | Post-trained for agentic workloads     |
 
 LFM2.5-24B-A2B is a general-purpose text-only reasoning model with the following features:
 
@@ -96,14 +95,14 @@ LFM2.5-24B-A2B is a general-purpose text-only reasoning model with the following
   - `top_k: 50`
   - `repetition_penalty: 1.05`
 
-| Model                                                                                  | Description                                                                                                                                          |
-| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **[LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B)**                   | Original model checkpoint in native format. Best for fine-tuning or inference with Transformers, vLLM, and SGLang.                                   |
-| **[LFM2.5-24B-A2B-FP8](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-FP8)**           | FP8 checkpoint (block-wise FP8 weights, dynamic FP8 activations). Best for high-throughput GPU serving with vLLM and SGLang with lower memory usage. |
-| **[LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF)**         | Quantized format for llama.cpp and compatible tools. Optimized for CPU inference and local deployment with reduced memory usage.                     |
-| **[LFM2.5-24B-A2B-ONNX](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-ONNX)**         | ONNX Runtime format for cross-platform deployment. Enables hardware-accelerated inference across diverse environments (cloud, edge, mobile).         |
-| **[LFM2.5-24B-A2B-MLX-4bit](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-MLX-4bit)** | MLX format for Apple Silicon. Optimized for fast inference on Mac devices using the MLX framework.                                                   |
-| LFM2.5-24B-A2B-DSpark                                                                  | DSpark draft model for speculative decoding with SGLang, for faster generation. _Coming soon._                                                       |
+| Model                                                                              | Description                                                                                                                                  |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[LFM2.5-24B-A2B](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B)**               | Original model checkpoint in native format. Best for fine-tuning or inference with Transformers, vLLM, and SGLang.                           |
+| **[LFM2.5-24B-A2B-FP8](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-FP8)** | FP8 checkpoint (block-wise FP8 weights, dynamic FP8 activations). Best for high-throughput GPU serving with vLLM and SGLang with lower memory usage. |
+| **[LFM2.5-24B-A2B-GGUF](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-GGUF)**     | Quantized format for llama.cpp and compatible tools. Optimized for CPU inference and local deployment with reduced memory usage.             |
+| **[LFM2.5-24B-A2B-ONNX](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-ONNX)**     | ONNX Runtime format for cross-platform deployment. Enables hardware-accelerated inference across diverse environments (cloud, edge, mobile). |
+| **[LFM2.5-24B-A2B-MLX-4bit](https://huggingface.co/LiquidAI/LFM2.5-24B-A2B-MLX-4bit)** | MLX format for Apple Silicon. Optimized for fast inference on Mac devices using the MLX framework.                                           |
+| LFM2.5-24B-A2B-DSpark | DSpark draft model for speculative decoding with SGLang, for faster generation. *Coming soon.* |
 
 We recommend using it for agents that need to reason, call tools, and run reliably on your device. It is not recommended for knowledge-heavy tasks on its own: pair it with retrieval or web search, which plays to its tool-calling strength.
 

@@ -58,9 +58,9 @@ This repository provides GGUF quantizations of **Qwen3.8-27B** at four sizes, to
 
 > **Method summary.** GSQ provides accurate low-bit scalar quantization of each tensor at a given quantization type; RCO assigns the per-tensor quantization types under a size budget. Together they yield a non-uniform GGUF at the requested size.
 
-| Method                                                                                                                              | Description                                                                                                                                                                                                                                                                                                                          |
-| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **GSQ** (Gumbel-Softmax Quantization, [paper](https://arxiv.org/abs/2604.18556), [code](https://github.com/IST-DASLab/GSQ))         | Post-training scalar quantization that jointly learns the per-coordinate grid assignments and the per-group scales via a Gumbel-Softmax relaxation. GSQ closes most of the gap between scalar and vector quantization at 2 to 3 bits while remaining deployable in standard scalar formats such as GGUF.                             |
+| Method | Description |
+|---|---|
+| **GSQ** (Gumbel-Softmax Quantization, [paper](https://arxiv.org/abs/2604.18556), [code](https://github.com/IST-DASLab/GSQ)) | Post-training scalar quantization that jointly learns the per-coordinate grid assignments and the per-group scales via a Gumbel-Softmax relaxation. GSQ closes most of the gap between scalar and vector quantization at 2 to 3 bits while remaining deployable in standard scalar formats such as GGUF. |
 | **RCO** (Riemannian Constrained Optimization, [paper](https://arxiv.org/abs/2605.00649), [code](https://github.com/IST-DASLab/RCO)) | Assigns one of K quantization types to each of N tensors under a total size budget. The budget constraint is reformulated as a smooth Riemannian manifold in logit space, which permits gradient-based optimization directly on the task loss while enforcing the budget exactly, without constraint-specific hyperparameter tuning. |
 
 Both methods were developed at the [Deep Algorithms and Systems Lab (DASLab)](https://github.com/IST-DASLab), Institute of Science and Technology Austria.
@@ -73,13 +73,13 @@ Files follow the convention **`<model>-GSQ-RCO-<type>.gguf`**, where the suffix 
 
 <!-- [swap] rows below (filenames, bpw, size, notes). -->
 
-| File                               | bpw  | Size    | Notes                                          |
-| ---------------------------------- | ---- | ------- | ---------------------------------------------- |
-| `Qwen3.8-27B-GSQ-RCO-IQ2_XS.gguf`  | 2.50 | 8.4 GB  | Smallest; zero-shot above the BF16 baseline    |
-| `Qwen3.8-27B-GSQ-RCO-IQ2_S.gguf`   | 2.75 | 9.3 GB  | Matches the base model on AIME25               |
-| `Qwen3.8-27B-GSQ-RCO-IQ3_XXS.gguf` | 3.00 | 10.1 GB | Strong all-round operating point               |
-| `Qwen3.8-27B-GSQ-RCO-IQ3_S.gguf`   | 3.50 | 11.8 GB | Recommended; task-lossless                     |
-| `mmproj-Qwen3.8-27B-BF16.gguf`     | 16   | 0.9 GB  | Vision encoder + projector, for multimodal use |
+| File | bpw | Size | Notes |
+|---|---|---|---|
+| `Qwen3.8-27B-GSQ-RCO-IQ2_XS.gguf` | 2.50 | 8.4 GB | Smallest; zero-shot above the BF16 baseline |
+| `Qwen3.8-27B-GSQ-RCO-IQ2_S.gguf` | 2.75 | 9.3 GB | Matches the base model on AIME25 |
+| `Qwen3.8-27B-GSQ-RCO-IQ3_XXS.gguf` | 3.00 | 10.1 GB | Strong all-round operating point |
+| `Qwen3.8-27B-GSQ-RCO-IQ3_S.gguf` | 3.50 | 11.8 GB | Recommended; task-lossless |
+| `mmproj-Qwen3.8-27B-BF16.gguf` | 16 | 0.9 GB | Vision encoder + projector, for multimodal use |
 
 Each quantization also ships an optional **`-mtp`** build (about 0.35 GB larger) that carries the model's Multi-Token Prediction head for speculative decoding in `llama.cpp`. The weights are otherwise identical, so quality is unchanged.
 
@@ -93,16 +93,16 @@ All models are evaluated against the **BF16** base model and the Unsloth Dynamic
 
 <!-- [swap] paste the Markdown table printed by tools/make_plots.py -->
 
-| Variant             | bpw   | GB   | wiki↓    | c4↓   | fw↓  | ZS avg↑   | recovery   | AIME25↑    | GPQA-D↑   | LCB v6↑   |
-| ------------------- | ----- | ---- | -------- | ----- | ---- | --------- | ---------- | ---------- | --------- | --------- |
-| BF16                | 16.00 | 53.8 | 7.05     | 11.45 | 8.14 | 74.34     | 100.0%     | 100.00     | 89.90     | 85.71     |
-| **GSQ-RCO IQ2_XS**  | 2.50  | 8.4  | 7.69     | 12.98 | 9.19 | 74.54     | 100.3%     | 96.67      | 84.85     | 76.57     |
-| **GSQ-RCO IQ2_S**   | 2.75  | 9.3  | 7.39     | 12.40 | 8.80 | **75.70** | **101.8%** | 100.00     | 86.36     | 82.29     |
-| **GSQ-RCO IQ3_XXS** | 3.00  | 10.1 | 7.20     | 12.13 | 8.59 | 74.81     | 100.6%     | 100.00     | 88.89     | 84.57     |
-| **GSQ-RCO IQ3_S**   | 3.50  | 11.8 | **7.07** | 11.76 | 8.34 | 74.47     | 100.2%     | **100.00** | 89.39     | **85.71** |
-| UD-IQ2_S            | 2.49  | 8.4  | 8.02     | 12.78 | 9.08 | 73.80     | 99.3%      | 86.67      | 76.26     | 72.00     |
-| UD-Q2_K_XL          | 2.88  | 9.8  | 7.54     | 12.25 | 8.69 | 74.37     | 100.0%     | 100.00     | 86.87     | 82.28     |
-| UD-IQ3_S            | 3.52  | 12.0 | 7.16     | 11.75 | 8.34 | 75.49     | 101.5%     | 96.67      | **89.90** | 84.00     |
+| Variant | bpw | GB | wiki↓ | c4↓ | fw↓ | ZS avg↑ | recovery | AIME25↑ | GPQA-D↑ | LCB v6↑ |
+|---|---|---|---|---|---|---|---|---|---|---|
+| BF16 | 16.00 | 53.8 | 7.05 | 11.45 | 8.14 | 74.34 | 100.0% | 100.00 | 89.90 | 85.71 |
+| **GSQ-RCO IQ2_XS** | 2.50 | 8.4 | 7.69 | 12.98 | 9.19 | 74.54 | 100.3% | 96.67 | 84.85 | 76.57 |
+| **GSQ-RCO IQ2_S** | 2.75 | 9.3 | 7.39 | 12.40 | 8.80 | **75.70** | **101.8%** | 100.00 | 86.36 | 82.29 |
+| **GSQ-RCO IQ3_XXS** | 3.00 | 10.1 | 7.20 | 12.13 | 8.59 | 74.81 | 100.6% | 100.00 | 88.89 | 84.57 |
+| **GSQ-RCO IQ3_S** | 3.50 | 11.8 | **7.07** | 11.76 | 8.34 | 74.47 | 100.2% | **100.00** | 89.39 | **85.71** |
+| UD-IQ2_S | 2.49 | 8.4 | 8.02 | 12.78 | 9.08 | 73.80 | 99.3% | 86.67 | 76.26 | 72.00 |
+| UD-Q2_K_XL | 2.88 | 9.8 | 7.54 | 12.25 | 8.69 | 74.37 | 100.0% | 100.00 | 86.87 | 82.28 |
+| UD-IQ3_S | 3.52 | 12.0 | 7.16 | 11.75 | 8.34 | 75.49 | 101.5% | 96.67 | **89.90** | 84.00 |
 
 At 3.50 bpw, IQ3_S is task-lossless: it reproduces the base model exactly on AIME25 (100.00) and LiveCodeBench v6 (85.71) and trails it by 0.51 points on GPQA-Diamond, giving a task average of 91.70 against the base model's 91.87 (99.8%) at 11.8 GB, a 4.6x size reduction. Against UD-IQ3_S it leads by 3.33 points on AIME25 and 1.71 on LiveCodeBench while being 0.2 GB smaller, though UD holds GPQA-Diamond by 0.51. At 3.00 bpw the model already matches the base on AIME25 at 10.1 GB, and at matched file size (8.4 GB) IQ2_XS leads UD-IQ2_S by 10.00 points on AIME25, 8.59 on GPQA-Diamond, and 4.57 on LiveCodeBench v6. <!-- [swap] one-line observation -->
 
@@ -117,7 +117,6 @@ At 3.50 bpw, IQ3_S is task-lossless: it reproduces the base model exactly on AIM
 ## Usage
 
 ### llama.cpp
-
 ```bash
 # download (requires: pip install -U "huggingface_hub[cli]")
 hf download ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF Qwen3.8-27B-GSQ-RCO-IQ3_XXS.gguf --local-dir .
@@ -126,7 +125,6 @@ llama-cli -m Qwen3.8-27B-GSQ-RCO-IQ3_XXS.gguf -p "Explain mixed-precision quanti
 ```
 
 ### Vision (multimodal)
-
 ```bash
 hf download ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF mmproj-Qwen3.8-27B-BF16.gguf --local-dir .
 
@@ -134,17 +132,14 @@ llama-mtmd-cli -m Qwen3.8-27B-GSQ-RCO-IQ3_XXS.gguf \
   --mmproj mmproj-Qwen3.8-27B-BF16.gguf \
   --image photo.jpg -p "Describe this image."
 ```
-
 The projector was converted directly from the base checkpoint and verified against these quantizations.
 
 ### Ollama
-
 ```bash
 ollama run hf.co/ISTA-DASLab/Qwen3.8-27B-GSQ-RCO-GGUF   # pick the file matching your memory budget
 ```
 
 ### LM Studio
-
 Search the repo name, then pick a `GSQ-RCO-*` build from the file list.
 
 ---
@@ -161,10 +156,10 @@ Reference implementations: **GSQ** at [IST-DASLab/GSQ](https://github.com/IST-DA
 
 Each released GGUF ships the files needed to audit how it was built:
 
-| File                                           | Contents                                                                                                                                                                                                        |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| File | Contents |
+|---|---|
 | `tensor-allocation/<model>.rco-allocation.txt` | The quantization type assigned to every tensor in that file, with a quant-type histogram and the target bit-width. This is the RCO search result, so the allocation can be inspected without opening the model. |
-| `imatrix-qwen3.8-27b.gguf`                     | The importance matrix used during quantization (1000 chunks of 4096 tokens).                                                                                                                                    |
+| `imatrix-qwen3.8-27b.gguf` | The importance matrix used during quantization (1000 chunks of 4096 tokens). |
 
 The `-mtp` builds have their own allocation dumps; they list the same per-tensor assignment as the base model plus the 15 tensors of the MTP head.
 

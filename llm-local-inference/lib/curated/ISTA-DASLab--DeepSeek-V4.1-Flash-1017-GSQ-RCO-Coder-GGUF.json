@@ -1,0 +1,18 @@
+{
+  "repo": "ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF",
+  "manifestCommit": "54229d38d588a66d1c6cff08af7b281b9326c656",
+  "entries": [
+    "ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF"
+  ],
+  "files": [
+    "DeepSeek-V4.1-Flash-Engram-IQ4_NL.gguf",
+    "IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00001-of-00006.gguf",
+    "IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00002-of-00006.gguf",
+    "IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00003-of-00006.gguf",
+    "IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00004-of-00006.gguf",
+    "IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00005-of-00006.gguf",
+    "mmproj-DeepSeek-V4.1-Flash-1017-BF16.gguf"
+  ],
+  "optional": [],
+  "bytes": 183691066368
+}

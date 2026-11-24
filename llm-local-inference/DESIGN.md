@@ -1,8 +1,8 @@
 ---
 id: llm-local-inference
 type: module-design
-status: draft
-title: llm-local-inference — one llama-swap instance per GPU host, local GGUFs only (deprecated for now, d108)
+status: active
+title: llm-local-inference — one llama-swap instance per GPU host, local GGUFs only
 parent: architecture
 depends-on:
   - workload-api
@@ -15,9 +15,12 @@ tags:
 
 ## Responsibility
 
-> **Deprecated for now (docs/d108).** No new clients or features; existing
-> deployments keep working. This document stays as the description of the
-> paused shape.
+> **Un-paused (docs/d238).** d108 paused this unit as part of moving the
+> serving edge to tunnel-only; the tunnel half landed, and the local GPU farm
+> is live work again — the host's own provider, bound by
+> `../pi-tlalocayotl-provider/` and served to clients as `llama-swap`. The
+> mode-A reverse proxy that d108 deprecated as insecure stays deleted; this
+> unit never needed it.
 
 Charter: the GPU host's single llama-swap instance for **local GGUF
 inference** — generate the capability-gated `config.d/` layers for _this_

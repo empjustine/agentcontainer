@@ -1,16 +1,14 @@
 ---
 license: mit
 tags:
-  - unsloth
-  - deepseek_v4
-  - deepseek
+- unsloth
+- deepseek_v4
+- deepseek
 base_model:
-  - deepseek-ai/DeepSeek-V4-Flash-0731
+- deepseek-ai/DeepSeek-V4-Flash-0731
 base_model_relation: quantized
 ---
-
 ## Read our How to [Run DeepSeek-V4-0731 Guide!](https://unsloth.ai/docs/models/deepseek-v4)
-
 <p style="margin-top: 0;margin-bottom: 0;">
     <em><a href="https://unsloth.ai/docs/basics/unsloth-dynamic-v2.0-gguf">Unsloth Dynamic 2.0</a> achieves superior accuracy & outperforms other leading quants.</em>
   </p>
@@ -80,17 +78,17 @@ DeepSeek-V4-Flash-0731 outperforms DeepSeek-V4-Pro (Preview) on benchmarks liste
 
 <div align="center">
 
-| Benchmark              | DeepSeek-V4-Flash-0731 | DeepSeek-V4-Flash (Preview) | DeepSeek-V4-Pro (Preview) | GLM-5.2 | Opus-4.8 |
-| :--------------------- | :--------------------: | :-------------------------: | :-----------------------: | :-----: | :------: |
-| Terminal Bench 2.1     |          82.7          |            61.8             |           72.1            |  81.0   |   85.0   |
-| NL2Repo                |          54.2          |            39.4             |           38.5            |  48.9   |   69.7   |
-| Cybergym               |          76.7          |            38.7             |           52.7            |    -    |   83.1   |
-| DeepSWE                |          54.4          |             7.3             |           12.8            |  46.2   |   58.0   |
-| Toolathlon-Verified    |          70.3          |            49.7             |           55.9            |  59.9   |   76.2   |
-| Agents' Last Exam      |          25.2          |            15.8             |           16.5            |  23.8   |   25.7   |
-| AutomationBench Public |          25.1          |            10.8             |           12.8            |  12.9   |   27.2   |
-| DSBench-FullStack †    |          68.7          |            37.0             |           41.8            |  61.8   |   71.6   |
-| DSBench-Hard †         |          59.6          |            25.8             |           31.1            |  54.5   |   71.7   |
+| Benchmark | DeepSeek-V4-Flash-0731 | DeepSeek-V4-Flash (Preview) | DeepSeek-V4-Pro (Preview) | GLM-5.2 | Opus-4.8 |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| Terminal Bench 2.1 | 82.7 | 61.8 | 72.1 | 81.0 | 85.0 |
+| NL2Repo | 54.2 | 39.4 | 38.5 | 48.9 | 69.7 |
+| Cybergym | 76.7 | 38.7 | 52.7 | - | 83.1 |
+| DeepSWE | 54.4 | 7.3 | 12.8 | 46.2 | 58.0 |
+| Toolathlon-Verified | 70.3 | 49.7 | 55.9 | 59.9 | 76.2 |
+| Agents' Last Exam | 25.2 | 15.8 | 16.5 | 23.8 | 25.7 |
+| AutomationBench Public | 25.1 | 10.8 | 12.8 | 12.9 | 27.2 |
+| DSBench-FullStack † | 68.7 | 37.0 | 41.8 | 61.8 | 71.6 |
+| DSBench-Hard † | 59.6 | 25.8 | 31.1 | 54.5 | 71.7 |
 
 </div>
 

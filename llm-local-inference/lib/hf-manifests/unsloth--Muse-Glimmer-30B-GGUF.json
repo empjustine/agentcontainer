@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/Muse-Glimmer-30B-GGUF",
 	"commit": "faa5b025c584459c13febfa5c59883516710ae39",
-	"fetched_at": "2026-11-22T18:20:02+00:00",
+	"fetched_at": "2026-11-24T04:45:48+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

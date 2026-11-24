@@ -4,14 +4,12 @@ license_name: qwen-community-1.0
 license_link: LICENSE
 pipeline_tag: image-text-to-text
 base_model:
-  - Qwen/Qwen3.8-Flash-Next
+- Qwen/Qwen3.8-Flash-Next
 tags:
-  - unsloth
-  - Qwen
+- unsloth
+- Qwen
 ---
-
 # Read our How to [Run Qwen3.8-Flash-Next Guide!](https://unsloth.ai/docs/models/qwen3.8-next)
-
 <div>
   <p style="margin: 0 0 0px 0; margin-top: 0px;">
     <em><a href="https://unsloth.ai/docs/basics/dynamic-3.0-ggufs">Unsloth Dynamic v3.1</a> achieves superior accuracy & outperforms other leading quants.</em>
@@ -42,13 +40,12 @@ Run via Unsloth Desktop with browser use and more:
 ---
 
 # Qwen3.8-Flash-Next
-
-As the frontier of foundation models pushes toward ever-larger parameter counts and ever-longer context windows, the question is no longer just how much we can scale, but how efficiently we can do so. Sustainable progress toward artificial general intelligence (AGI) that benefits everyone demands architectural innovation. Today, we are sharing a concrete step in that direction: Qwen3.8-Flash-Next.
+As the frontier of foundation models pushes toward ever-larger parameter counts and ever-longer context windows, the question is no longer just how much we can scale, but how efficiently we can do so. Sustainable progress toward artificial general intelligence (AGI) that benefits everyone demands architectural innovation. Today, we are sharing a concrete step in that direction: Qwen3.8-Flash-Next. 
 
 ![Qwen3.8-Flash-Next Architecture](https://qianwen-res.oss-accelerate.aliyuncs.com/Qwen3.8-Flash-Next/architecture.png)
 
 This experimental preview of the architecture that will underpin Qwen4 is built around a fundamental rethinking of how the core components of modern large language models (LLMs) interact at scale.
-
+ 
 ## Highlights
 
 The first open-weight release under this architecture is Qwen3.8-Flash-Next, which introduces:
@@ -67,31 +64,31 @@ We are excited to embark on this next chapter with you and welcome your feedback
 - Type: Causal Language Model with Vision Encoder
 - Training Stage: Pre-training & Post-training
 - Language Model
-  - Number of Parameters: 125B with 6B activated, plus 51B n-gram embedding and 4B MTP
-  - Hidden Dimension: 2560
-  - Token Embedding: 248320 (Padded)
-  - N-gram Embedding: 20,000,000 (bigrams/trigrams at layer 2)
-  - Number of Layers: 48
-  - Hidden Layout: 12 × (3 × (Gated DeltaNet → MoE) → 1 × (Qwen Sparse Attention → MoE))
-  - Gated DeltaNet:
-    - Number of Linear Attention Heads: 48 for V and 16 for QK
-    - Head Dimension: 128
-  - Qwen Sparse Attention:
-    - Number of Attention Heads: 24 for Q and 2 for KV
-    - Head Dimension: 256
-    - Rotary Position Embedding Dimension: 64
-    - Indexer Structure: MQA with 4 Query Heads and 1 Shared Key Head
-    - Indexer Head Dimension: 128
-    - Budget: 512 blocks or 2048 tokens
-  - Mixture Of Experts
-    - Number of Experts: 512
-    - Number of Activated Experts: 10 Routed + 1 Shared
-    - Expert Intermediate Dimension: 640
-  - Gated Residual:
-    - Number of Branches: 4
-    - Bottleneck Rank: 320
-  - LM Output: 248320 (Padded)
-  - MTP: 1 layer, trained with multi-steps
+    - Number of Parameters: 125B with 6B activated, plus 51B n-gram embedding and 4B MTP
+    - Hidden Dimension: 2560
+    - Token Embedding: 248320 (Padded)
+    - N-gram Embedding: 20,000,000 (bigrams/trigrams at layer 2)
+    - Number of Layers: 48
+    - Hidden Layout: 12 × (3 × (Gated DeltaNet → MoE) → 1 × (Qwen Sparse Attention → MoE))
+    - Gated DeltaNet:
+        - Number of Linear Attention Heads: 48 for V and 16 for QK
+        - Head Dimension: 128
+    - Qwen Sparse Attention:
+        - Number of Attention Heads: 24 for Q and 2 for KV
+        - Head Dimension: 256
+        - Rotary Position Embedding Dimension: 64
+        - Indexer Structure: MQA with 4 Query Heads and 1 Shared Key Head
+        - Indexer Head Dimension: 128
+        - Budget: 512 blocks or 2048 tokens
+    - Mixture Of Experts
+        - Number of Experts: 512
+        - Number of Activated Experts: 10 Routed + 1 Shared
+        - Expert Intermediate Dimension: 640
+    - Gated Residual:
+        - Number of Branches: 4
+        - Bottleneck Rank: 320
+    - LM Output: 248320 (Padded)
+    - MTP: 1 layer, trained with multi-steps
 - Context Length: 262,144 natively and extensible up to 1,000,000 tokens.
 
 ## Benchmark Results
@@ -336,7 +333,6 @@ We are excited to embark on this next chapter with you and welcome your feedback
 
 > [!Tip]
 > We recommend using the following sets of sampling parameters for generation:
->
 > - Thinking Mode: `temperature=1.0`, `top_p=0.95`, `top_k=20`, `min_p=0.0`, `presence_penalty=0.0`, `repetition_penalty=1.0`
 > - Instruct (or non-thinking) mode: `temperature=0.7`, `top_p=0.80`, `top_k=20`, `min_p=0.0`, `presence_penalty=1.5`, `repetition_penalty=1.0`
 >
@@ -348,16 +344,16 @@ We are excited to embark on this next chapter with you and welcome your feedback
 Qwen3.8-Flash-Next supports controlling thinking behavior via `enable_thinking`, `preserve_thinking`, and `reasoning_effort`.
 
 t; supported levels are xhigh, medium, and low
-stream=True,
-stream_options={"include_usage": True},
+    stream=True,
+    stream_options={"include_usage": True},
 )
+
 
 ##### Instruct (or Non-Thinking) Mode
 
 Qwen3.8-Flash-Next will think by default before responding.
-You can obtain a direct response from the model without thinking by configuring the API parameters.
+You can obtain a direct response from the model without thinking by configuring the API parameters. 
 For example,
-
 ```python
 from openai import OpenAI
 # Configured by environment variables
@@ -390,13 +386,14 @@ chat_response = client.chat.completions.create(
     extra_body={
         "top_k": 20,
         "chat_template_kwargs": {"enable_thinking": False},
-    },
+    }, 
 )
 print("Chat response:", chat_response)
 ```
 
 > [!Note]
 > If you are using APIs from Qwen Cloud, in addition to changing `model`, please use `"enable_thinking": False` instead of `"chat_template_kwargs": {"enable_thinking": False}`.
+
 
 ##### Disable Preserved Thinking
 
@@ -423,57 +420,63 @@ print("Chat response:", chat_response)
 > [!Note]
 > If you are using APIs from Qwen Cloud, in addition to changing `model`, please use `"preserve_thinking": False` directly instead of wrapping it in `chat_template_kwargs`.
 
+
+
 ## Best Practices
 
 To achieve optimal performance, we recommend the following settings:
 
-1. **Sampling Parameters**: We suggest using the following sets of sampling parameters:
-
-   - Thinking Mode: `temperature=1.0`, `top_p=0.95`, `top_k=20`, `min_p=0.0`, `presence_penalty=0.0`, `repetition_penalty=1.0`
-   - Instruct (or non-thinking) mode: `temperature=0.7`, `top_p=0.80`, `top_k=20`, `min_p=0.0`, `presence_penalty=1.5`, `repetition_penalty=1.0`
-
-   For supported frameworks, you can adjust the `presence_penalty` parameter between 0 and 2 to reduce endless repetition. However, using a higher value may occasionally result in language mixing and a slight decrease in model performance.
+1. **Sampling Parameters**: We suggest using the following sets of sampling parameters:  
+    
+    - Thinking Mode: `temperature=1.0`, `top_p=0.95`, `top_k=20`, `min_p=0.0`, `presence_penalty=0.0`, `repetition_penalty=1.0`
+    - Instruct (or non-thinking) mode: `temperature=0.7`, `top_p=0.80`, `top_k=20`, `min_p=0.0`, `presence_penalty=1.5`, `repetition_penalty=1.0`
+    
+    For supported frameworks, you can adjust the `presence_penalty` parameter between 0 and 2 to reduce endless repetition. However, using a higher value may occasionally result in language mixing and a slight decrease in model performance.
 
 2. **Adequate Output Length**: To optimize performance on agentic tasks, we recommend allocating sufficient output length to allow the model to generate detailed and comprehensive responses. For frameworks that support separate token limits for internal reasoning and final outputs, we suggest the following configuration within the 1M context length:
+    
+    - Reasoning Content: Set the maximum output length to 262,144 tokens.
+    - Final Response: Set the maximum output length to 131,072 tokens.
 
-   - Reasoning Content: Set the maximum output length to 262,144 tokens.
-   - Final Response: Set the maximum output length to 131,072 tokens.
-
-   These settings provide the necessary capacity for complex reasoning while ensuring ample space for high-quality final deliverables.
+    These settings provide the necessary capacity for complex reasoning while ensuring ample space for high-quality final deliverables.
 
 3. **Processing Ultra-Long Texts**: Qwen3.8-Flash-Next natively supports context lengths of up to 262,144 tokens. For long-horizon tasks where the total length (including both input and output) exceeds this limit, we recommend using RoPE scaling techniques to handle long texts effectively, e.g., YaRN.
 
-   YaRN is currently supported by several inference frameworks, e.g., vLLM, SGLang, and TokenSpeed.
-   In general, there are two approaches to enabling YaRN for supported frameworks:
+    YaRN is currently supported by several inference frameworks, e.g., vLLM, SGLang, and TokenSpeed. 
+    In general, there are two approaches to enabling YaRN for supported frameworks:
 
-   - Modifying the model configuration file:
+    - Modifying the model configuration file:
+        
+        In the `config.json` file, change the `rope_parameters` fields in `text_config` to:
+        ```json
+        {
+            "mrope_interleaved": true,
+            "mrope_section": [
+                11,
+                11,
+                10
+            ],
+            "rope_type": "yarn",
+            "rope_theta": 10000000,
+            "partial_rotary_factor": 0.25,
+            "factor": 4.0,
+            "original_max_position_embeddings": 262144
+        }
+        ```
+    
+    > [!NOTE]
+    > All the notable open-source frameworks implement static YaRN, which means the scaling factor remains constant regardless of input length, **potentially impacting performance on shorter texts.**
+    > We advise modifying the `rope_parameters` configuration only when processing long contexts is required. 
+    > It is also recommended to modify the `factor` as needed. For example, if the typical context length for your application is 524,288 tokens, it would be better to set `factor` as 2.0. 
 
-     In the `config.json` file, change the `rope_parameters` fields in `text_config` to:
-
-     ```json
-     {
-       "mrope_interleaved": true,
-       "mrope_section": [11, 11, 10],
-       "rope_type": "yarn",
-       "rope_theta": 10000000,
-       "partial_rotary_factor": 0.25,
-       "factor": 4.0,
-       "original_max_position_embeddings": 262144
-     }
-     ```
-
-   > [!NOTE]
-   > All the notable open-source frameworks implement static YaRN, which means the scaling factor remains constant regardless of input length, **potentially impacting performance on shorter texts.**
-   > We advise modifying the `rope_parameters` configuration only when processing long contexts is required.
-   > It is also recommended to modify the `factor` as needed. For example, if the typical context length for your application is 524,288 tokens, it would be better to set `factor` as 2.0.
 
 4. **Long Video Understanding**: To optimize inference efficiency for plain text and images, the `size` parameter in the released `video_preprocessor_config.json` is conservatively configured. It is recommended to set the `longest_edge` parameter in the video_preprocessor_config file to 469,762,048 (corresponding to 224k video tokens) to enable higher frame-rate sampling for hour-scale videos and thereby achieve superior performance. For example,
+    ```json
+    {"longest_edge": 469762048, "shortest_edge": 4096}
+    ```
 
-   ```json
-   { "longest_edge": 469762048, "shortest_edge": 4096 }
-   ```
+    Alternatively, override the default values via engine startup parameters. For implementation details, refer to: [vLLM](https://github.com/vllm-project/vllm/pull/34330) / [SGLang](https://github.com/sgl-project/sglang/pull/18467).
 
-   Alternatively, override the default values via engine startup parameters. For implementation details, refer to: [vLLM](https://github.com/vllm-project/vllm/pull/34330) / [SGLang](https://github.com/sgl-project/sglang/pull/18467).
 
 ### Citation
 

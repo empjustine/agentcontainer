@@ -529,7 +529,9 @@ test("server: the macro pins the logging, lazy-loading and precision defaults", 
 	for (const flag of [
 		"--log-jsonl",
 		"--no-log-timestamps",
-		"--lazy-mode auto",
+		// on, not auto: the served Coder uploads keep their lookup table in a
+		// separate shard that must stay memory-mapped (docs/d210's amendment).
+		"--lazy-mode on",
 		// Precision over speed (docs/d220): one ubatch for every row, and the
 		// projector is never offloaded, so the retired presets have nothing to trade.
 		"--ubatch-size 2048",

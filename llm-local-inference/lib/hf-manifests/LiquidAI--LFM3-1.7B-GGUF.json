@@ -1,7 +1,7 @@
 {
 	"repo": "LiquidAI/LFM3-1.7B-GGUF",
 	"commit": "cd0c74c575b5c416f3011b5b4c298077f26ca8c2",
-	"fetched_at": "2026-11-22T18:19:55+00:00",
+	"fetched_at": "2026-11-24T04:45:41+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

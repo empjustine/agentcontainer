@@ -53,11 +53,11 @@ Averaged over the transformer, this corresponds to **1.89 bits per parameter of 
 
 Removing half of a model's experts necessarily reduces its capabilities. The contribution of this release is that the reduction is directed towards code, agentic tool use, vision, and spatial reasoning, and the retained experts are therefore those that support these domains. Degradation outside this set is an accepted cost of the method. For general-purpose use, the [unpruned GSQ-RCO releases](https://huggingface.co/ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF) are the appropriate choice.
 
-|                             | SWE-bench Verified | LiveCodeBench v6 |
-| --------------------------- | ------------------ | ---------------- |
-| BF16 base (354 GB)          | 82.80              | 87.43            |
-| **GSQ-RCO Coder (58.4 GB)** | **79.20**          | **87.43**        |
-| retained                    | 95.7%              | 100.0%           |
+| | SWE-bench Verified | LiveCodeBench v6 |
+|---|---|---|
+| BF16 base (354 GB) | 82.80 | 87.43 |
+| **GSQ-RCO Coder (58.4 GB)** | **79.20** | **87.43** |
+| retained | 95.7% | 100.0% |
 
 All numbers in this card were measured at **xhigh reasoning effort**.
 
@@ -105,16 +105,15 @@ The released model was searched with vision represented in the calibration mixtu
 
 Two shards, both required. `llama.cpp` loads the pair when given the first.
 
-| File                      | Size        | Must be resident | Notes                                                                                    |
-| ------------------------- | ----------- | ---------------- | ---------------------------------------------------------------------------------------- |
-| `...-00001-of-00002.gguf` | 29.6 GB     | yes              | Transformer weights, 256 of 512 experts per layer, 1.89 bpw over the original parameters |
-| `...-00002-of-00002.gguf` | 28.8 GB     | no               | Per-layer n-gram table (IQ4_NL, 4.5 bpw), neither pruned nor searched                    |
-| **Total**                 | **58.4 GB** | **29.6 GB**      | against 354 GB and 354 GB resident for BF16                                              |
+| File | Size | Must be resident | Notes |
+|---|---|---|---|
+| `...-00001-of-00002.gguf` | 29.6 GB | yes | Transformer weights, 256 of 512 experts per layer, 1.89 bpw over the original parameters |
+| `...-00002-of-00002.gguf` | 28.8 GB | no | Per-layer n-gram table (IQ4_NL, 4.5 bpw), neither pruned nor searched |
+| **Total** | **58.4 GB** | **29.6 GB** | against 354 GB and 354 GB resident for BF16 |
 
 The n-gram table is a lookup rather than a matmul weight, so it is held at a fixed 4.5 bpw and excluded from both the quantization search and the pruning.
 
 ### llama.cpp
-
 ```bash
 hf download <this-repo> --local-dir .
 llama-cli -m IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00001-of-00002.gguf \
@@ -129,10 +128,10 @@ Many users report strong results with [Strata](https://github.com/Niko1221/Strat
 
 ## Method
 
-|                                                                                                |                                                                                                                                                                                                            |
-| ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| | |
+|---|---|
 | **GSQ** ([paper](https://arxiv.org/abs/2604.18556), [code](https://github.com/IST-DASLab/GSQ)) | Post-training scalar quantization that learns grid assignments and group scales jointly, closing most of the gap to vector quantization at low bit-widths while staying deployable in standard GGUF types. |
-| **RCO** ([paper](https://arxiv.org/abs/2605.00649), [code](https://github.com/IST-DASLab/RCO)) | Budget-constrained optimization on a Riemannian manifold. Used here to choose which experts to remove under one exact budget per layer, and in the base releases to assign per-tensor quantization types.  |
+| **RCO** ([paper](https://arxiv.org/abs/2605.00649), [code](https://github.com/IST-DASLab/RCO)) | Budget-constrained optimization on a Riemannian manifold. Used here to choose which experts to remove under one exact budget per layer, and in the base releases to assign per-tensor quantization types. |
 
 Both developed at the [Deep Algorithms and Systems Lab (DASLab)](https://github.com/IST-DASLab), Institute of Science and Technology Austria.
 

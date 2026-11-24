@@ -1,12 +1,12 @@
 {
 	"repo": "bloomer010/Ling-3.0-tiny-GGUF",
-	"commit": "947514b2ea038203acb47dfc6fa4e53d2edfc9c8",
-	"fetched_at": "2026-11-22T18:19:56+00:00",
+	"commit": "1689ed175d244e05a9fb251f193f57b3e887c6e3",
+	"fetched_at": "2026-11-24T04:45:42+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
-			"oid": "d9b7503825eea2e059618747f487a1a3ad97aaf9",
-			"size": 3251
+			"oid": "d22c05b3fa4fa9e5954274fbe254ea5bd2f8846f",
+			"size": 3440
 		},
 		{
 			"path": "Ling-3.0-tiny-BF16.gguf",
@@ -99,6 +99,11 @@
 			"size": 4554886208
 		},
 		{
+			"path": "Ling-3.0-tiny-Q4_K_XL.gguf",
+			"oid": "7faee4091379ce1c644e09dd88848a8f0bc3348a216d2ee1c90a5388de6a5b13",
+			"size": 5340611552
+		},
+		{
 			"path": "Ling-3.0-tiny-Q5_0.gguf",
 			"oid": "5e6b1d493a93ff36fecce3d58bb82bce3d9573d8e550d77c398a160a3c5b0e2d",
 			"size": 5482138688
@@ -119,22 +124,17 @@
 			"size": 6499262528
 		},
 		{
+			"path": "Ling-3.0-tiny-Q6_K_XL.gguf",
+			"oid": "a31376fc9c56309046cff6c43888adf180c5c40fa48228ef644937ee9bd5d64b",
+			"size": 7274546528
+		},
+		{
 			"path": "Ling-3.0-tiny-Q8_0.gguf",
 			"oid": "ee5ecf3241602f4f8ba8486a2cb4645ab35349a616869a4fcd1bb72a4a5037e6",
 			"size": 8408187968
 		},
 		{
-			"path": "Ling-3.0-tiny-UD-Q4_K_XL.gguf",
-			"oid": "7faee4091379ce1c644e09dd88848a8f0bc3348a216d2ee1c90a5388de6a5b13",
-			"size": 5340611552
-		},
-		{
-			"path": "Ling-3.0-tiny-UD-Q6_K_XL.gguf",
-			"oid": "a31376fc9c56309046cff6c43888adf180c5c40fa48228ef644937ee9bd5d64b",
-			"size": 7274546528
-		},
-		{
-			"path": "Ling-3.0-tiny-UD-Q8_K_XL.gguf",
+			"path": "Ling-3.0-tiny-Q8_K_XL.gguf",
 			"oid": "ab041da9664d927db6594d051be6c17cffa386cf91f545eba0479fcadc9cdc9f",
 			"size": 11188839488
 		},
@@ -150,8 +150,8 @@
 		},
 		{
 			"path": "README.md",
-			"oid": "c46b2fb3e662904d788606f26e65ae21a63183ff",
-			"size": 4239
+			"oid": "6073eaff59a74d94e83ea9324751419e046c9e90",
+			"size": 4218
 		},
 		{
 			"path": "chat_template.jinja",

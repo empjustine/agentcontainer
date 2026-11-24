@@ -178,8 +178,9 @@ macro, edit `llama-swap-core.json` and re-run generation.
 
 The `LLAMA_SERVER` launcher spells out every default the fleet depends on:
 `--log-jsonl` with `--no-log-timestamps` (structured lines; the relay adds its
-own timestamps), `--lazy-mode auto` (on-demand reading of per-layer tensors over
-4 GiB, which needs the `--load-mode mmap` the macro pins), `--load-mode mmap`,
+own timestamps), `--lazy-mode on` (every tensor read on demand over the
+`--load-mode mmap` the macro pins, which is what keeps an Engram/n-gram table
+shard on disk instead of in memory — d210's amendment), `--load-mode mmap`,
 `--kv-unified`, `--cache-ram 8192`, `--flash-attn on`, `--fit on --fit-target
 1024`, `--no-context-shift` and `--reasoning-preserve`. A flag whose value is
 the server's default is written down on purpose: a build that changes the

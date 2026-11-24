@@ -1,0 +1,14 @@
+{
+  "repo": "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF",
+  "manifestCommit": "bba88856f8c3c0c9e40e45f82d05e228b814ac43",
+  "entries": [
+    "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF"
+  ],
+  "files": [
+    "IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00001-of-00002.gguf",
+    "IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00002-of-00002.gguf",
+    "mmproj-Qwen3.8-Flash-Next-BF16.gguf"
+  ],
+  "optional": [],
+  "bytes": 59316127936
+}

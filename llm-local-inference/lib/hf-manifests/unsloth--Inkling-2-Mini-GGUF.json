@@ -1,62 +1,62 @@
 {
 	"repo": "unsloth/Inkling-2-Mini-GGUF",
-	"commit": "45fd08764f2b0bf16b03a5483a80e5c7aaec8772",
-	"fetched_at": "2026-11-22T18:20:00+00:00",
+	"commit": "8078d149286eec7193795413b9e0643da6d11fa1",
+	"fetched_at": "2026-11-24T04:45:46+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
-			"oid": "d703180958de894044f74981144da803ef36b08d",
-			"size": 5495
+			"oid": "9f23c4516429ac0c876736f00888cea122ff8181",
+			"size": 8292
 		},
 		{
 			"path": "Inkling-2-Mini-UD-IQ1_M.gguf",
-			"oid": "544e0b2412ba2392272b0510b0c8f53a1ab872b73c2ba4f7488de0d5d61467d9",
-			"size": 8024441024
+			"oid": "af7b45e1c0097fb2602d4c69abf72a009cad78e54201da2265853f5ef11a514a",
+			"size": 8024442304
 		},
 		{
 			"path": "Inkling-2-Mini-UD-IQ1_S.gguf",
-			"oid": "c09c028b050c108624682baeb28ac6e0cdb936af021ac637c8c3609f923ea4b8",
-			"size": 7764291776
+			"oid": "17a7ff34acb0e1fe878309962458e0633172c7f93ffe3b1c4f5f6b317dc317db",
+			"size": 7764293056
 		},
 		{
 			"path": "Inkling-2-Mini-UD-IQ2_XXS.gguf",
-			"oid": "4fe958f73a667d8082f911a4347e52bc34696a7816cf3d5b9f7c8a81d5c5ceaa",
-			"size": 8486236352
+			"oid": "2f953a44281cf861b19ccfdb2ce65f7648e1e92bda4af3729893604fd907c544",
+			"size": 8486237632
 		},
 		{
 			"path": "Inkling-2-Mini-UD-IQ3_XXS.gguf",
-			"oid": "bd7ef0865adf119b5183e45e741c629bafa649769b33b5ebf689bb4bcc4690d6",
-			"size": 11663309504
+			"oid": "fd9ccedae17c1bb89744612fbb46730b5275f2a342133d0419776bd1ae311657",
+			"size": 11663310784
 		},
 		{
 			"path": "Inkling-2-Mini-UD-IQ4_XS.gguf",
-			"oid": "a861d21e7c6d7bc69d8cdcdfb9eb195fd37ef1cd2ab31499db61cd7d30d9b3a1",
-			"size": 15733755232
+			"oid": "374970bf6f151fc50da49419751c3e77b82e373a3b9445ded617bd386cd12163",
+			"size": 15733756512
 		},
 		{
 			"path": "Inkling-2-Mini-UD-Q2_K_XL.gguf",
-			"oid": "20292e8142b69535ca88a5d04439d0fdeb4dc698d44c002dca706dcf92901441",
-			"size": 9138715328
+			"oid": "b42841608ea380ddde5a3f1125081357128a3c71b80d006246de4e31292fc6c1",
+			"size": 9138716608
 		},
 		{
 			"path": "Inkling-2-Mini-UD-Q3_K_XL.gguf",
-			"oid": "f72f396d1b479b14d76346df80baa449c8b1f399653bff38fa4764b359a40048",
-			"size": 13631778016
+			"oid": "e2d03e8c92ac21cff0e3309b95f40dfd27d1825184f0d2bc09db249797273639",
+			"size": 13631779296
 		},
 		{
 			"path": "Inkling-2-Mini-UD-Q4_K_M.gguf",
-			"oid": "f90c5a4df44d335ac9f9eea2a15c31d6c5a377b1b3cd9ff7fc2cf123f3cdf7e1",
-			"size": 16610543328
+			"oid": "78fcedcf93c5d1bfe83e225513b71392bb52259be0eaa5f8899c856a2e5834ae",
+			"size": 16610544608
 		},
 		{
 			"path": "Inkling-2-Mini-UD-Q4_K_XL.gguf",
-			"oid": "e62d463c135ffe283df8d94b279a96ca145ac128b52ce854478613045bf4de15",
-			"size": 17629759456
+			"oid": "e64276656f072e9b2197a61723667cbdb71da66a716ffd966e572c21088f3cd3",
+			"size": 17629760736
 		},
 		{
 			"path": "Inkling-2-Mini-UD-Q8_K_XL.gguf",
-			"oid": "dfb04bf37bee457f98800989dedf93ec442ede8636dbea9433992f1e527e9a41",
-			"size": 22867451616
+			"oid": "2da51788d43a17e1f033bec420fa83ba9cb87ac1f0130dc9135a4d2ed2678b68",
+			"size": 22867452896
 		},
 		{
 			"path": "Mainline_Support/Inkling-2-Mini-UD-IQ1_M.gguf_file",
@@ -110,13 +110,93 @@
 		},
 		{
 			"path": "Mainline_Support/README.md",
-			"oid": "a19977a86bba2ab9dfd20d00f1bef49bb2cf66c9",
-			"size": 4209
+			"oid": "0027a5bf4b732800039baa98c46b930ac0c97335",
+			"size": 5733
+		},
+		{
+			"path": "Mainline_Support/dspark-Inkling-2-Mini-Q8_0.gguf_file",
+			"oid": "3da00cf7c31bbe5662b3c0d373ecf782d74d32ef43990acc158ce60c2add72e0",
+			"size": 503889952
+		},
+		{
+			"path": "Old_Support/Inkling-2-Mini-UD-IQ1_M.gguf_file",
+			"oid": "544e0b2412ba2392272b0510b0c8f53a1ab872b73c2ba4f7488de0d5d61467d9",
+			"size": 8024441024
+		},
+		{
+			"path": "Old_Support/Inkling-2-Mini-UD-IQ1_S.gguf_file",
+			"oid": "c09c028b050c108624682baeb28ac6e0cdb936af021ac637c8c3609f923ea4b8",
+			"size": 7764291776
+		},
+		{
+			"path": "Old_Support/Inkling-2-Mini-UD-IQ2_XXS.gguf_file",
+			"oid": "4fe958f73a667d8082f911a4347e52bc34696a7816cf3d5b9f7c8a81d5c5ceaa",
+			"size": 8486236352
+		},
+		{
+			"path": "Old_Support/Inkling-2-Mini-UD-IQ3_XXS.gguf_file",
+			"oid": "bd7ef0865adf119b5183e45e741c629bafa649769b33b5ebf689bb4bcc4690d6",
+			"size": 11663309504
+		},
+		{
+			"path": "Old_Support/Inkling-2-Mini-UD-IQ4_XS.gguf_file",
+			"oid": "a861d21e7c6d7bc69d8cdcdfb9eb195fd37ef1cd2ab31499db61cd7d30d9b3a1",
+			"size": 15733755232
+		},
+		{
+			"path": "Old_Support/Inkling-2-Mini-UD-Q2_K_XL.gguf_file",
+			"oid": "20292e8142b69535ca88a5d04439d0fdeb4dc698d44c002dca706dcf92901441",
+			"size": 9138715328
+		},
+		{
+			"path": "Old_Support/Inkling-2-Mini-UD-Q3_K_XL.gguf_file",
+			"oid": "f72f396d1b479b14d76346df80baa449c8b1f399653bff38fa4764b359a40048",
+			"size": 13631778016
+		},
+		{
+			"path": "Old_Support/Inkling-2-Mini-UD-Q4_K_M.gguf_file",
+			"oid": "f90c5a4df44d335ac9f9eea2a15c31d6c5a377b1b3cd9ff7fc2cf123f3cdf7e1",
+			"size": 16610543328
+		},
+		{
+			"path": "Old_Support/Inkling-2-Mini-UD-Q4_K_XL.gguf_file",
+			"oid": "e62d463c135ffe283df8d94b279a96ca145ac128b52ce854478613045bf4de15",
+			"size": 17629759456
+		},
+		{
+			"path": "Old_Support/Inkling-2-Mini-UD-Q8_K_XL.gguf_file",
+			"oid": "dfb04bf37bee457f98800989dedf93ec442ede8636dbea9433992f1e527e9a41",
+			"size": 22867451616
+		},
+		{
+			"path": "Old_Support/dspark-Inkling-2-Mini-BF16.gguf_file",
+			"oid": "b8985695c949a4e3270666b44b65959a8c3a599c6e599e0e3e5028f8c217f7b2",
+			"size": 647792800
+		},
+		{
+			"path": "Old_Support/dspark-Inkling-2-Mini-Q8_0.gguf_file",
+			"oid": "2ec78510da837e8fc3be54a14757a0c5fbd2d8d9e85a0d92853fafdf674f3773",
+			"size": 402278560
+		},
+		{
+			"path": "Old_Support/mmproj-BF16.gguf_file",
+			"oid": "2c165c78790e78a3f45a2d1e9e931083e52ee69d45ff2a0dc9c281fdf1a666e7",
+			"size": 641805760
+		},
+		{
+			"path": "Old_Support/mmproj-F16.gguf_file",
+			"oid": "3bff75ffeb2d6e0371ba7bd42e30d26a7d98aea681fa44b03b5a20891cfa2c5f",
+			"size": 639348160
+		},
+		{
+			"path": "Old_Support/mmproj-F32.gguf_file",
+			"oid": "fa6f2478812f33876e279b6fe8e9f00ea5ff4e9db40868c98c0a39277a439e25",
+			"size": 1273048512
 		},
 		{
 			"path": "README.md",
-			"oid": "4e7747851dcd9c70b09b2ab1ce197b716bdb95dd",
-			"size": 56464
+			"oid": "89111ae4ca51e1fc4de4ded62628ce7cb891ef6f",
+			"size": 56469
 		},
 		{
 			"path": "assets/size_vs_kld.png",
@@ -130,18 +210,33 @@
 		},
 		{
 			"path": "dspark-Inkling-2-Mini-Q8_0.gguf",
+			"oid": "3da00cf7c31bbe5662b3c0d373ecf782d74d32ef43990acc158ce60c2add72e0",
+			"size": 503889952
+		},
+		{
+			"path": "dspark-Inkling-2-Mini-Q8_0_Old.gguf",
 			"oid": "2ec78510da837e8fc3be54a14757a0c5fbd2d8d9e85a0d92853fafdf674f3773",
 			"size": 402278560
 		},
 		{
 			"path": "dspark/README.md",
-			"oid": "d9b8eae272f3759e1a076acc607bd9380e495006",
-			"size": 3113
+			"oid": "9756459c569a4eba5725034f97b0ad1663a072ad",
+			"size": 4144
+		},
+		{
+			"path": "dspark/dspark-Inkling-2-Mini-BF16-mainline.gguf_file",
+			"oid": "dba3d73cd7cb342460e0c12f3d46f29eb4641ad13b87526b8f262a5fa2cd157b",
+			"size": 749371936
 		},
 		{
 			"path": "dspark/dspark-Inkling-2-Mini-BF16.gguf",
 			"oid": "b8985695c949a4e3270666b44b65959a8c3a599c6e599e0e3e5028f8c217f7b2",
 			"size": 647792800
+		},
+		{
+			"path": "imatrix_unsloth.gguf_file",
+			"oid": "6f5364dd452a2c0bf4ee17f039ae3c06667c7eb34679053347e1449d67b8c44b",
+			"size": 45380640
 		},
 		{
 			"path": "mmproj-BF16.gguf",
@@ -157,6 +252,11 @@
 			"path": "mmproj-F32.gguf",
 			"oid": "fa6f2478812f33876e279b6fe8e9f00ea5ff4e9db40868c98c0a39277a439e25",
 			"size": 1273048512
+		},
+		{
+			"path": "unsloth_alternates.json",
+			"oid": "6f3578dfbda7a7d51c92f4860cd73615a3cc401d",
+			"size": 1339
 		}
 	]
 }

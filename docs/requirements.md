@@ -40,7 +40,7 @@ left answering nothing that generation asks (docs/d072).
 
 ## Scope
 
-- **Serving** — `llm-local-inference/` (deprecated for now, docs/d108; see
+- **Serving** — `llm-local-inference/` (live again per docs/d238; see
   `llm-local-inference`): local llama.cpp
   GGUF inference where the host can do it, cloud providers everywhere else
   (directly, or relayed for hosts that cannot reach them),

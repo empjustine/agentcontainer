@@ -30,7 +30,7 @@
   "selectors": {},
   "routing": {},
   "macros": {
-    "LLAMA_SERVER": "llama-server --port ${PORT} --log-verbosity 4 --threads-http 6 --log-jsonl --no-log-timestamps --no-ui --no-warmup --load-mode mmap --lazy-mode auto --cache-idle-slots --kv-unified --cache-ram 8192 --flash-attn on --fit on --fit-target 1024 --no-context-shift --reasoning-preserve --ubatch-size 2048 --no-mmproj-offload",
+    "LLAMA_SERVER": "llama-server --port ${PORT} --log-verbosity 4 --threads-http 6 --log-jsonl --no-log-timestamps --no-ui --no-warmup --load-mode mmap --lazy-mode on --cache-idle-slots --kv-unified --cache-ram 8192 --flash-attn on --fit on --fit-target 1024 --no-context-shift --reasoning-preserve --ubatch-size 2048 --no-mmproj-offload",
     "SPEC_MTP": "--spec-draft-n-max 16 --spec-draft-p-min 0.8",
     "SPEC_DFLASH": "--spec-draft-n-max 3 --spec-draft-p-min 0.8",
     "0text": "--no-mmproj",
@@ -50,6 +50,7 @@
     "lfm3": "--temp 0.1 --top-k 50 --repeat-penalty 1.1",
     "spark26": "--temp 1.0 --top-p 0.95",
     "dsv4": "--temp 1.0 --top-p 1.0",
+    "dsv41": "--temp 1.0 --top-p 1.0 --min-p 0.0 --chat-template-kwargs '{\"reasoning_effort\":50}'",
     "lfm25a2b": "--temp 0.1 --top-k 50 --repeat-penalty 1.05"
   }
 }

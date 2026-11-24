@@ -46,6 +46,10 @@ const shardedFiles = files({
 const manifests = {
 	"acme/served-GGUF": servedFiles,
 	"acme/sharded-GGUF": shardedFiles,
+	"acme/engram-GGUF": files({
+		"e-BF16-00001-of-00002.gguf": 5,
+		"e-Engram-IQ4_NL.gguf": 7,
+	}),
 	"acme/audit-GGUF": servedFiles,
 };
 
@@ -54,12 +58,14 @@ const modelData = {
 		{ "hf-repo": "acme/served-GGUF:Q4_K_M", model: "a-Q4_K_M.gguf" },
 		{ "hf-repo": "acme/served-GGUF:BF16", model: "a-BF16.gguf" },
 		{ "hf-repo": "acme/sharded-GGUF:BF16", model: "s-BF16-00001-of-00002.gguf" },
+		{ "hf-repo": "acme/engram-GGUF:BF16", model: "e-BF16-00001-of-00002.gguf" },
 	],
 };
 
 const scope = {
 	"acme/served-GGUF": "served",
 	"acme/sharded-GGUF": "served",
+	"acme/engram-GGUF": "served",
 	"acme/audit-GGUF": "audit-only",
 };
 
@@ -136,6 +142,25 @@ test("curation plans the pruned file set and the resolved projector", () => {
 
 		// an audit-only repo serves nothing, so it has no curated file
 		assert.equal(existsSync(join(dir, "lib", "curated", "acme--audit-GGUF.json")), false);
+	} finally {
+		rmSync(dir, { recursive: true, force: true });
+	}
+});
+
+test("a missing trailing shard falls back to the repo's Engram GGUF", () => {
+	const dir = fixture();
+	try {
+		const result = run(dir, "30-generate.mjs");
+		assert.equal(result.status, 0, result.stdout + result.stderr);
+		assert.match(result.stdout + result.stderr, /missing trailing shard replaced/);
+		assert.deepEqual(curated(dir, "acme/engram-GGUF").files, [
+			"e-BF16-00001-of-00002.gguf",
+			"e-Engram-IQ4_NL.gguf",
+		]);
+		const layer = JSON.parse(
+			readFileSync(join(dir, "config.d", "10-local-llm-inference.yaml"), "utf-8"),
+		);
+		assert.match(layer.models["acme/engram-GGUF:BF16"].cmd, /--shard [^ ]*e-Engram-IQ4_NL\.gguf/);
 	} finally {
 		rmSync(dir, { recursive: true, force: true });
 	}

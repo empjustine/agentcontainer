@@ -1,20 +1,20 @@
 ---
 pipeline_tag: image-text-to-text
 tags:
-  - conversational
-  - image-text-to-text
-  - moe
-  - unsloth
+- conversational
+- image-text-to-text
+- moe
+- unsloth
 license: apache-2.0
 base_model:
-  - thinkingmachines/Inkling-2-Mini
+- thinkingmachines/Inkling-2-Mini
 ---
-
-# Read our How to Run [Inkling-2-Mini Guide](https://unsloth.ai/docs/models/inkling-2-mini)
+### Run Inkling 2 Mini up to 1.9x faster with our open-source [Unsloth Desktop GUI](https://github.com/unslothai/unsloth).
+Read our How to Run [Inkling-2-Mini Guide](https://unsloth.ai/docs/models/inkling-2-mini)
 
 <div>
 <p style="margin-top: 0;margin-bottom: 0;">
-   <em>See <a href="https://unsloth.ai/docs/basics/unsloth-dynamic-v3.0-gguf">Unsloth Dynamic 3.0 GGUFs</a> for our quantization benchmarks.</em>
+   <em>See <a href="https://unsloth.ai/docs/basics/unsloth-dynamic-v3.0-gguf">Unsloth Dynamic 3.1 GGUFs</a> for our quantization benchmarks.</em>
   </p>
   <div style="display: flex; gap: 5px; align-items: center; ">
     <a href="https://github.com/unslothai/unsloth/">
@@ -29,8 +29,7 @@ base_model:
   </div>
 </div>
 
-Run the model via the latest version of [Unsloth Desktop](https://github.com/unslothai/unsloth). If running in llama.cpp or elsewhere, use our [mainline GGUFs](https://huggingface.co/unsloth/Inkling-2-Mini-GGUF/tree/main/Mainline_Support).
-
+You can also train Inkling 2 via the latest version of [Unsloth](https://github.com/unslothai/unsloth) or run via llama.cpp.
 See an example of 4-bit Inkling Mini running in Unsloth in Blender + MCP:
 
 <img width="600" alt="inkling mini in unsloth" src="https://unsloth.ai/docs/~gitbook/image?url=https%3A%2F%2F3215535692-files.gitbook.io%2F%7E%2Ffiles%2Fv0%2Fb%2Fgitbook-x-prod.appspot.com%2Fo%2Fspaces%252FxhOjnexMCB3dmuQFQ2Zq%252Fuploads%252Fbnhx2GlFHFh3fjMdbN26%252Fgta%2520example.gif%3Falt%3Dmedia%26token%3D6f9605aa-3c77-4796-a014-96214063f1b0&width=768&dpr=3&quality=100&sign=71160c985302d7cb4dc6b79a06b09add&sv=3" />
@@ -42,18 +41,18 @@ See an example of 4-bit Inkling Mini running in Unsloth in Blender + MCP:
   <img src="assets/size_vs_top1.png" alt="Inkling-2-Mini Unsloth GGUF top-1 accuracy vs size" style="width: 50%; min-width: 0; margin: 0;">
 </div>
 
-| Quant      | Size (GB) | Mean KLD vs UD-Q8_K_XL | Same top token |
-| ---------- | --------- | ---------------------- | -------------- |
-| UD-IQ1_S   | 7.76      | 0.0911                 | 89.4%          |
-| UD-IQ1_M   | 8.02      | 0.0867                 | 90.2%          |
-| UD-IQ2_XXS | 8.49      | 0.0726                 | 90.6%          |
-| UD-Q2_K_XL | 9.14      | 0.0595                 | 91.6%          |
-| UD-IQ3_XXS | 11.66     | 0.0269                 | 94.7%          |
-| UD-Q3_K_XL | 13.63     | 0.0174                 | 96.3%          |
-| UD-IQ4_XS  | 15.73     | 0.0109                 | 97.7%          |
-| UD-Q4_K_M  | 16.61     | 0.0108                 | 97.9%          |
-| UD-Q4_K_XL | 17.63     | 0.0107                 | 98.0%          |
-| UD-Q8_K_XL | 22.87     | reference              |                |
+| Quant | Size (GB) | Mean KLD vs UD-Q8_K_XL | Same top token |
+|---|---|---|---|
+| UD-IQ1_S | 7.76 | 0.0911 | 89.4% |
+| UD-IQ1_M | 8.02 | 0.0867 | 90.2% |
+| UD-IQ2_XXS | 8.49 | 0.0726 | 90.6% |
+| UD-Q2_K_XL | 9.14 | 0.0595 | 91.6% |
+| UD-IQ3_XXS | 11.66 | 0.0269 | 94.7% |
+| UD-Q3_K_XL | 13.63 | 0.0174 | 96.3% |
+| UD-IQ4_XS | 15.73 | 0.0109 | 97.7% |
+| UD-Q4_K_M | 16.61 | 0.0108 | 97.9% |
+| UD-Q4_K_XL | 17.63 | 0.0107 | 98.0% |
+| UD-Q8_K_XL | 22.87 | reference | |
 
 # Inkling 2 Mini
 
@@ -84,8 +83,8 @@ The weights are available for download through Hugging Face [here](https://huggi
 
 Developers can also access the model using the Tinker fine-tuning platform, which provides API access.
 
-- For accessing our model via Tinker, you can get started by referring to the Tinker Cookbook [here](https://github.com/thinking-machines-lab/tinker-cookbook), and installing the tml-renderers package [here](https://pypi.org/project/tml-renderers/).
-- Tinker playground also provides inference-only access to the model [here](https://tinker.thinkingmachines.ai/playground).
+* For accessing our model via Tinker, you can get started by referring to the Tinker Cookbook [here](https://github.com/thinking-machines-lab/tinker-cookbook), and installing the tml-renderers package [here](https://pypi.org/project/tml-renderers/).
+* Tinker playground also provides inference-only access to the model [here](https://tinker.thinkingmachines.ai/playground).
 
 ### Required hardware
 
@@ -93,9 +92,9 @@ The model is distributed as a single checkpoint of about 20GB, in mixed NVFP4 an
 
 Given its small size, it is possible to run this checkpoint on local AI compute for inference. We support:
 
-- 1x NVIDIA DGX Spark
-- Apple silicon devices with 32GB or more memory (MacBooks, Mac minis and Studios)
-- Other GPUs and platforms are possible, with 32GB or more of VRAM recommended
+* 1x NVIDIA DGX Spark
+* Apple silicon devices with 32GB or more memory (MacBooks, Mac minis and Studios)
+* Other GPUs and platforms are possible, with 32GB or more of VRAM recommended
 
 ## 3. Model Properties
 
@@ -119,8 +118,8 @@ NVFP4 and MXFP8
 
 ### Input modalities
 
-- Text: UTF-8 encoded text
-- Image: Any pixel-based image input. For optimal performance, each image dimension should be between 40px to 4096px.
+* Text: UTF-8 encoded text
+* Image: Any pixel-based image input. For optimal performance, each image dimension should be between 40px to 4096px.
 
 Inkling 2 Mini supports a context window of up to 1M tokens.
 
@@ -219,21 +218,21 @@ Inkling 2 Mini’s knowledge is limited to information available as of its train
 
 Inkling 2 Mini is a small model built to run on local hardware, and some limitations are specific to it:
 
-- Knowledge and factual accuracy. It is less capable than Inkling 2 Small across most of our evaluations, with the largest gaps on factual recall and knowledge-heavy questions. It is more likely than larger models to state incorrect information with confidence.
-- Repetitive reasoning. In internal testing the model sometimes became stuck in long reasoning loops, or repeatedly re-checked its own work without making progress, particularly when debugging code. We recommend setting limits on output tokens and agent turns.
-- Agentic reliability. When using tools, it is less reliable than larger models at following detailed instructions and project conventions. It may take destructive actions, such as deleting or overwriting files, without confirmation, and may not report the outcome of its work accurately.
-- Languages other than English. Output quality can be lower outside English. In testing in Chinese we observed clipped phrasing and mixed languages.
-- Sensitive topics. The model can respond with more caution than the situation calls for when a conversation touches on mental health.
-- Reasoning and compute. Setting reasoning effort to its minimum does not fully disable reasoning. Because the middle layers run three times, compute per token is higher than the active-parameter count alone suggests.
-- Local performance. Support for looped models in local runtimes is new, and speed varies by runtime and hardware.
+* Knowledge and factual accuracy. It is less capable than Inkling 2 Small across most of our evaluations, with the largest gaps on factual recall and knowledge-heavy questions. It is more likely than larger models to state incorrect information with confidence.
+* Repetitive reasoning. In internal testing the model sometimes became stuck in long reasoning loops, or repeatedly re-checked its own work without making progress, particularly when debugging code. We recommend setting limits on output tokens and agent turns.
+* Agentic reliability. When using tools, it is less reliable than larger models at following detailed instructions and project conventions. It may take destructive actions, such as deleting or overwriting files, without confirmation, and may not report the outcome of its work accurately.
+* Languages other than English. Output quality can be lower outside English. In testing in Chinese we observed clipped phrasing and mixed languages.
+* Sensitive topics. The model can respond with more caution than the situation calls for when a conversation touches on mental health.
+* Reasoning and compute. Setting reasoning effort to its minimum does not fully disable reasoning. Because the middle layers run three times, compute per token is higher than the active-parameter count alone suggests.
+* Local performance. Support for looped models in local runtimes is new, and speed varies by runtime and hardware.
 
 We recommend that downstream developers and deployers:
 
-- Apply appropriate human oversight and review for outputs used in high-stakes or safety-critical contexts, rather than relying on Inkling 2 Mini’s outputs without verification.
-- Run agentic workloads in a sandbox, and require confirmation before destructive or irreversible actions.
-- Conduct their own evaluation of Inkling 2 Mini’s performance, safety and fairness for their specific use case, language and population prior to deployment, particularly for applications involving vulnerable groups.
-- Implement additional safeguards, such as content filtering, rate limiting and monitoring, at the application layer, especially for open deployment contexts where Inkling 2 Mini’s built-in mitigations may not be sufficient on their own.
-- Avoid deploying Inkling 2 Mini in domains such as medical, legal or safety-critical decision-making without additional fine-tuning, domain-specific validation and human oversight.
+* Apply appropriate human oversight and review for outputs used in high-stakes or safety-critical contexts, rather than relying on Inkling 2 Mini’s outputs without verification.
+* Run agentic workloads in a sandbox, and require confirmation before destructive or irreversible actions.
+* Conduct their own evaluation of Inkling 2 Mini’s performance, safety and fairness for their specific use case, language and population prior to deployment, particularly for applications involving vulnerable groups.
+* Implement additional safeguards, such as content filtering, rate limiting and monitoring, at the application layer, especially for open deployment contexts where Inkling 2 Mini’s built-in mitigations may not be sufficient on their own.
+* Avoid deploying Inkling 2 Mini in domains such as medical, legal or safety-critical decision-making without additional fine-tuning, domain-specific validation and human oversight.
 
 ## 8. Legal
 

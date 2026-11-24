@@ -1,5 +1,51 @@
 {
   "models": {
+    "ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF": {
+      "cmd": "${LLAMA_SERVER} --image-min-tokens 1024 --image-max-tokens 1024 ${dsv41} ${SPEC_MTP} --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--ISTA-DASLab--DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF/snapshots/54229d38d588a66d1c6cff08af7b281b9326c656/IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00001-of-00006.gguf --shard /home/ubuntu/.cache/huggingface/hub/models--ISTA-DASLab--DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF/snapshots/54229d38d588a66d1c6cff08af7b281b9326c656/IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00002-of-00006.gguf,/home/ubuntu/.cache/huggingface/hub/models--ISTA-DASLab--DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF/snapshots/54229d38d588a66d1c6cff08af7b281b9326c656/IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00003-of-00006.gguf,/home/ubuntu/.cache/huggingface/hub/models--ISTA-DASLab--DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF/snapshots/54229d38d588a66d1c6cff08af7b281b9326c656/IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00004-of-00006.gguf,/home/ubuntu/.cache/huggingface/hub/models--ISTA-DASLab--DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF/snapshots/54229d38d588a66d1c6cff08af7b281b9326c656/IQ2_XXS/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-IQ2_XXS-00005-of-00006.gguf,/home/ubuntu/.cache/huggingface/hub/models--ISTA-DASLab--DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF/snapshots/54229d38d588a66d1c6cff08af7b281b9326c656/DeepSeek-V4.1-Flash-Engram-IQ4_NL.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--ISTA-DASLab--DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF/snapshots/54229d38d588a66d1c6cff08af7b281b9326c656/mmproj-DeepSeek-V4.1-Flash-1017-BF16.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536
+      }
+    },
+    "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF": {
+      "cmd": "${LLAMA_SERVER} --image-min-tokens 1024 --image-max-tokens 1024 ${qwen38} ${SPEC_MTP} --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF/snapshots/bba88856f8c3c0c9e40e45f82d05e228b814ac43/IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00001-of-00002.gguf --shard /home/ubuntu/.cache/huggingface/hub/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF/snapshots/bba88856f8c3c0c9e40e45f82d05e228b814ac43/IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00002-of-00002.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF/snapshots/bba88856f8c3c0c9e40e45f82d05e228b814ac43/mmproj-Qwen3.8-Flash-Next-BF16.gguf",
+      "capabilities": {
+        "in": [
+          "text",
+          "image"
+        ],
+        "out": [
+          "text"
+        ],
+        "context": 65536
+      },
+      "metadata": {
+        "id": "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF",
+        "reasoning": true,
+        "input": [
+          "text",
+          "image"
+        ],
+        "contextWindow": 65536,
+        "maxTokens": 65536
+      }
+    },
     "unsloth/Muse-Glimmer-30B-GGUF:Q8_0": {
       "cmd": "${LLAMA_SERVER} --image-min-tokens 1024 --image-max-tokens 1024 ${museglimmer} ${SPEC_MTP} --cache-type-v f16 --ctx-size 65536 --n-predict 65536 --parallel 1 --model /home/ubuntu/.cache/huggingface/hub/models--unsloth--Muse-Glimmer-30B-GGUF/snapshots/faa5b025c584459c13febfa5c59883516710ae39/Muse-Glimmer-30B-Q8_0.gguf --mmproj /home/ubuntu/.cache/huggingface/hub/models--unsloth--Muse-Glimmer-30B-GGUF/snapshots/faa5b025c584459c13febfa5c59883516710ae39/mmproj-kquant.gguf",
       "capabilities": {

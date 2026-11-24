@@ -1,7 +1,7 @@
 {
 	"repo": "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF",
 	"commit": "bba88856f8c3c0c9e40e45f82d05e228b814ac43",
-	"fetched_at": "2026-11-22T18:19:54+00:00",
+	"fetched_at": "2026-11-24T04:45:40+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

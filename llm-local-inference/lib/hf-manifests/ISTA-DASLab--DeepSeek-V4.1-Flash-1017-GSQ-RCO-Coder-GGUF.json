@@ -1,7 +1,7 @@
 {
 	"repo": "ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF",
 	"commit": "54229d38d588a66d1c6cff08af7b281b9326c656",
-	"fetched_at": "2026-11-22T18:19:53+00:00",
+	"fetched_at": "2026-11-24T04:45:39+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",
