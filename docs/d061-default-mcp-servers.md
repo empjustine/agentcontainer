@@ -157,8 +157,8 @@ two-step, never a merge that silently hands a session write access.
 Five entries join the list, one per provider folder that documents an MCP
 surface: `openrouter` (`https://mcp.openrouter.ai/mcp`, pi-openrouter),
 `opencode-console` (`https://opencode.ai/console/mcp`, pi-opencode),
-`neuralwatt-docs` (`https://docs.neuralwatt.com/mcp`, pi-neuralwatt),
-`cline-docs` (`https://docs.cline.bot/mcp`, pi-cline-pass) and `mistral-mcp`
+`neuralwatt-docs` (`https://docs.neuralwatt.com/mcp`, pi-neuralwatt-provider),
+`cline-docs` (`https://docs.cline.bot/mcp`, pi-cline-pass-provider) and `mistral-mcp`
 (`https://api.mistral.ai/mcp`, pi-mistral). All five carry `"enabled": false`
 beside `"exposure": "hidden"` — MotherDuck's inert encoding, unchanged: it
 never connects, and a hidden entry renders no `mcp_servers` line, so
@@ -235,7 +235,7 @@ tool.
 The static description carries weight a hidden entry cannot demonstrate:
 Decision's trust clause, the tailnet-only reachability, and a pointer to
 `tailscale.com/docs/aperture` — the gateway serves no documentation route
-(`GET /docs` is `404`), so the doc table lives in `../pi-aperture/README.md`,
+(`GET /docs` is `404`), so the doc table lives in `../pi-aperture-provider/README.md`,
 which also maintains the measurement above. A hidden entry renders no
 `mcp_servers` line, so nothing on the prompt side will correct a stale sentence
 before a host that opens it reads the server's own instructions instead.

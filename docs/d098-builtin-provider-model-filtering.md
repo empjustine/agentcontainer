@@ -36,7 +36,7 @@ The constraint that shapes every option below: whatever we do must not
 become a second, hand-maintained rendering of a provider catalog — that is
 the failure mode `coding-agent/generate-pi-coding-agent.mjs` carries by
 necessity (it shapes rows from raw fact-table data) and the one
-`pi-synthetic` (d096) exists to avoid. A filter that requires enumerating
+`pi-synthetic-provider` (d096) exists to avoid. A filter that requires enumerating
 and re-declaring every kept model IS that re-implementation, whatever the
 file is called.
 

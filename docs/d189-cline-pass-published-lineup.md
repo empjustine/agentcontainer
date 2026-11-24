@@ -43,7 +43,7 @@ direction. Measured on 2026-11-14, against a docs table of 15 ids:
 ## Decision
 
 One direction between the two sources, in both shapers
-(`coding-agent/generate-pi-coding-agent.mjs` and `pi-cline-pass/sources.mjs` +
+(`coding-agent/generate-pi-coding-agent.mjs` and `pi-cline-pass-provider/sources.mjs` +
 `merge.mjs`):
 
 - **The docs table is the lineup.** Cline's published `## Models` table names
@@ -61,7 +61,7 @@ One direction between the two sources, in both shapers
   not consulted for this file either: a mirror clone is a remembered table.
   `CLINE_PASS_MDX` remains the way to pin a table on a host that carries one.
 
-The committed extension seed (`pi-cline-pass/models.js`) went later: docs/d190
+The committed extension seed (`pi-cline-pass-provider/models.js`) went later: docs/d190
 retired it, so the extension registers no lineup and `refreshModels` is the
 only source here too. `models.json` stays as the drift gate's subject.
 
@@ -71,7 +71,7 @@ only source here too. `models.json` stays as the drift gate's subject.
   not a regression: the sources are the provider's published catalog, and a
   lineup nobody can check is a lineup pi should not offer.
 - A rotation costs one regenerated artifact set. The table edit plus
-  `./npm-run.sh pi-cline-pass generate` is the whole change; there is no
+  `./npm-run.sh pi-cline-pass-provider generate` is the whole change; there is no
   constant to keep in step, in this folder or the fleet's.
 - A retired id leaves the artifacts on the run after the table stops naming
   it, without waiting for models.dev to prune its slice.
@@ -85,7 +85,7 @@ only source here too. `models.json` stays as the drift gate's subject.
   "retired", and models.dev does not publish one: its slice is the lagging
   source in both directions.
 - **Wire `@cline/llms` as the metadata source for the docs-only ids.** Still the
-  best candidate named in `pi-cline-pass/README.md`, still absent: it ships its
+  best candidate named in `pi-cline-pass-provider/README.md`, still absent: it ships its
   catalog inside a minified bundle, so reading it is format-fragile parsing in
   exchange for three rows pi's defaults already cover.
 - **Keep the committed list as an offline fallback.** It is the failure mode

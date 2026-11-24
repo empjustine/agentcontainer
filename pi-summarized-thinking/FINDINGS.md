@@ -8,7 +8,7 @@ the same tree:
 
 - **pi** — `@earendil-works/pi-coding-agent`, upstream `earendil-works/pi`,
   paths `packages/coding-agent/src/…` and `packages/agent/src/…`. The container's
-  provider extensions were verified against **1.4.0** (see `../pi-synthetic/TODO.md`);
+  provider extensions were verified against **1.4.0** (see `../pi-synthetic-provider/TODO.md`);
   ThinkRail pins **1.5.0** with a local patch on `@earendil-works/pi-ai@1.5.0`.
   Re-check anything marked "unverified" against the installed version.
 - **ThinkRail** — `@thinkrail/*`, paths `packages/server/src/…`,

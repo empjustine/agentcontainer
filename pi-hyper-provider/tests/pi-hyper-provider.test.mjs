@@ -1,0 +1,440 @@
+/**
+ * @fileoverview pi-hyper-provider.test.mjs — tests for the pi-hyper-provider folder: the
+ * shaping rules (merge.mjs), the source fetch (sources.mjs), the committed
+ * artifacts, and the extension entry.
+ *
+ * Everything here either works on plain records or injects its own `fetch`,
+ * so the suite needs no network, and it pins RULES rather than today's model
+ * lineup (a lineup assertion would fail on every provider rotation and
+ * teach nothing).
+ *
+ * Run: node --test   (from this folder — discovers tests/*.test.mjs)
+ */
+import assert from "node:assert/strict";
+import test from "node:test";
+
+const {
+	compatFor,
+	effortValues,
+	piCost,
+	shapeCatalog,
+	shapeRow,
+	thinkingLevelMapFor,
+	toExtensionModel,
+} = await import("../merge.mjs");
+const {
+	catalogUrl,
+	fetchCatalog,
+	HYPER,
+	HYPER_BASE_URL,
+	HYPER_PROVIDER_ID,
+	storeIsFresh,
+} = await import("../sources.mjs");
+// The folder's own row: the one place the upstream and the key env are spelled
+// (sources.mjs), so the exports above are only believable if they match it.
+const hyper = HYPER;
+
+/**
+ * One catalog record; every field overridable so a test names only its own
+ * concern.
+ * @param {{[K in keyof import("../sources.mjs").CatalogRecord]?: import("../sources.mjs").CatalogRecord[K] | undefined}} overrides
+ * @returns {import("../sources.mjs").CatalogRecord}
+ */
+const record = (overrides) =>
+	/** @type {import("../sources.mjs").CatalogRecord} */ ({
+		id: "test-model",
+		name: "Test Model",
+		can_reason: true,
+		reasoning_levels: ["low", "high", "max"],
+		supports_attachments: false,
+		context_window: 1_000_000,
+		default_max_tokens: 16_000,
+		cost_per_1m_in: 1,
+		cost_per_1m_out: 4,
+		cost_per_1m_in_cached: 0,
+		cost_per_1m_out_cached: 0.1,
+		...overrides,
+	});
+
+/**
+ * A fetch stub that answers with one payload. Typed through `unknown`
+ * because the shape is a deliberate subset of `Response`.
+ * @param {unknown} payload
+ * @param {{ok?: boolean, status?: number, reject?: Error}} [init]
+ * @returns {typeof fetch}
+ */
+const fetchOnce =
+	(payload, init = {}) =>
+	async () => {
+		if (init.reject) {
+			throw init.reject;
+		}
+		return /** @type {Response} */ (
+			/** @type {unknown} */ ({
+				ok: init.ok ?? true,
+				status: init.status ?? 200,
+				json: async () => payload,
+			})
+		);
+	};
+
+test("the folder's row is the only place the upstream and key env are spelled", () => {
+	assert.equal(HYPER_BASE_URL, "https://hyper.charm.land/v1");
+	assert.equal(HYPER_BASE_URL, hyper.baseUrl);
+	assert.equal(HYPER_PROVIDER_ID, hyper.id);
+	assert.equal(catalogUrl(), `${HYPER_BASE_URL}/provider`);
+});
+
+test("the catalog is fetched from the canonical upstream, with no redirect surface", async () => {
+	let seen = "";
+	await fetchCatalog({
+		fetchImpl: async (url) => {
+			// Request has no own toString (base [object Request]); the pipeline
+			// hands fetchImpl URL objects, so only the Request case needs the url.
+			seen = String(url instanceof Request ? url.url : url);
+			return /** @type {Response} */ (
+				/** @type {unknown} */ ({
+					ok: true,
+					status: 200,
+					json: async () => ({ models: [record({})] }),
+				})
+			);
+		},
+	});
+	assert.equal(seen, `${hyper.baseUrl}/provider`);
+});
+
+test("a fetch failure throws instead of inventing a catalog", async () => {
+	// There is no second source and no stale-copy branch: the committed
+	// artifact is the fallback, so a failed run must not write a worse one.
+	await assert.rejects(
+		fetchCatalog({ fetchImpl: fetchOnce(null, { ok: false, status: 502 }) }),
+		/502/,
+	);
+	await assert.rejects(
+		fetchCatalog({
+			fetchImpl: fetchOnce(null, { reject: new Error("ECONNREFUSED") }),
+		}),
+		/ECONNREFUSED/,
+	);
+	await assert.rejects(
+		fetchCatalog({ fetchImpl: fetchOnce({ models: [] }) }),
+		/no usable rows/,
+	);
+});
+
+test("the catalog document is read by its models member, and only that", async () => {
+	// The document is a provider self-description; the identity fields
+	// around the catalog are upstream's, not this folder's to interpret.
+	const rows = await fetchCatalog({
+		fetchImpl: fetchOnce({
+			name: "Charm Hyper",
+			id: "hyper",
+			api_endpoint: "https://hyper.charm.land/api/v1/fantasy",
+			models: [record({ id: "a" }), record({ id: "b" })],
+		}),
+	});
+	assert.deepEqual(
+		rows.map((r) => r.id),
+		["a", "b"],
+	);
+});
+
+test("thinking levels come from the published enum only", () => {
+	const map = thinkingLevelMapFor(["none", "low", "high", "max"]);
+	assert.equal(map?.off, "none", "the provider spells pi's off as none");
+	assert.equal(map?.low, "low");
+	assert.equal(map?.max, "max");
+	assert.equal(
+		map?.medium,
+		null,
+		"an unpublished level is hidden, never invented",
+	);
+	assert.equal(thinkingLevelMapFor(undefined), null);
+	assert.equal(thinkingLevelMapFor([]), null);
+});
+
+test("a reasoning model with NO enum gets the ON_OFF map, a non-reasoning model gets none", () => {
+	// The fleet row's onOffThinking: true — the vendor extension's map, the
+	// only case where a map is rendered without a published enum.
+	const onOff = shapeRow(record({ reasoning_levels: undefined }));
+	assert.deepEqual(onOff?.thinkingLevelMap, {
+		off: "off",
+		minimal: null,
+		low: null,
+		medium: null,
+		high: null,
+		xhigh: null,
+		max: "max",
+	});
+	const quiet = shapeRow(record({ can_reason: false }));
+	assert.equal(quiet?.reasoning, false);
+	assert.equal(quiet?.thinkingLevelMap, null);
+});
+
+test("input modalities come from the attachment flag", () => {
+	const plain = shapeRow(record({}));
+	const visual = shapeRow(record({ supports_attachments: true }));
+	assert.deepEqual(plain?.input, ["text"]);
+	assert.deepEqual(visual?.input, ["text", "image"]);
+});
+
+test("the cached-price pairing looks crossed and is not", () => {
+	// cost_per_1m_in_cached is what a cached INPUT costs to have WRITTEN
+	// (cacheWrite); cost_per_1m_out_cached what a cached OUTPUT costs to
+	// READ back (cacheRead) — verified against catwalk's own schema
+	// (pi-synthetic-provider/TODO.md).
+	const [model] = shapeCatalog([
+		record({
+			cost_per_1m_in: 1,
+			cost_per_1m_out: 4,
+			cost_per_1m_in_cached: 0.5,
+			cost_per_1m_out_cached: 0.1,
+		}),
+	]);
+	assert.ok(model);
+	assert.deepEqual(model.cost, {
+		input: 1,
+		output: 4,
+		cacheRead: 0.1,
+		cacheWrite: 0.5,
+	});
+});
+
+test("a partial price block completes with zeros; an all-zero one is omitted (docs/d057)", () => {
+	assert.deepEqual(piCost({ input: 1, output: 2, cacheRead: 0.1 }), {
+		input: 1,
+		output: 2,
+		cacheRead: 0.1,
+		cacheWrite: 0,
+	});
+	assert.equal(
+		piCost({ input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }),
+		undefined,
+	);
+	assert.equal(piCost(undefined), undefined);
+});
+
+test("models are emitted in canonical id order (docs/d050)", () => {
+	const models = shapeCatalog([
+		record({ id: "z-last" }),
+		record({ id: "a-first" }),
+		record({ id: "m-middle" }),
+	]);
+	const ids = models.map((m) => m.id);
+	assert.deepEqual(
+		ids,
+		[...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
+	);
+});
+
+test("the compat mirror is the vendor transcription, with the enum deciding effort", () => {
+	// The ONE behavioral copy this folder makes (charmbracelet/
+	// pi-hyper-provider src/models.ts) — values pinned so a silent change
+	// to the transcription is caught here, not in a user's wire traffic.
+	const tiered = shapeRow(record({}));
+	const quiet = shapeRow(record({ reasoning_levels: undefined }));
+	assert.ok(tiered && quiet);
+	assert.deepEqual(compatFor(tiered), {
+		supportsStore: false,
+		supportsReasoningEffort: true,
+		thinkingFormat: "deepseek",
+		maxTokensField: "max_tokens",
+	});
+	assert.deepEqual(compatFor(quiet), {
+		supportsStore: false,
+		supportsReasoningEffort: false,
+		thinkingFormat: "deepseek",
+		maxTokensField: "max_tokens",
+	});
+	assert.equal(effortValues(record({ reasoning_levels: ["MAX"] }))?.[0], "max");
+});
+
+test("an unpublishable cost is omitted from the record; the extension fills zeros", () => {
+	const [free] = shapeCatalog([
+		record({
+			cost_per_1m_in: 0,
+			cost_per_1m_out: 0,
+			cost_per_1m_in_cached: 0,
+			cost_per_1m_out_cached: 0,
+		}),
+	]);
+	assert.ok(free);
+	assert.equal(free.cost, undefined);
+	assert.deepEqual(toExtensionModel(free).cost, {
+		input: 0,
+		output: 0,
+		cacheRead: 0,
+		cacheWrite: 0,
+	});
+});
+
+test("a registered model carries the record's own thinking map, not a fabricated one", () => {
+	// An absent map makes pi fabricate off..high, and the ON_OFF map's whole
+	// purpose is to keep that from advertising levels the provider never
+	// published (see toExtensionModel).
+	const models = shapeCatalog([
+		record({ id: "a-tiered" }),
+		record({ id: "a-onoff", reasoning_levels: undefined }),
+	]);
+	for (const model of models) {
+		assert.deepEqual(
+			toExtensionModel(model).thinkingLevelMap,
+			model.thinkingLevelMap,
+		);
+	}
+});
+
+test("every extension key is one pi defines — no folder-specific field rides along", () => {
+	const [model] = shapeCatalog([record({})]);
+	assert.ok(model);
+	const entry = toExtensionModel(model);
+	assert.deepEqual(Object.keys(entry).sort(), [
+		"compat",
+		"contextWindow",
+		"cost",
+		"id",
+		"input",
+		"maxTokens",
+		"name",
+		"reasoning",
+		"thinkingLevelMap",
+	]);
+});
+
+test("the model store TTL is the refresh gate, not an absolute clock", () => {
+	assert.equal(storeIsFresh(Date.now() - 60_000), true);
+	assert.equal(storeIsFresh(Date.now() - 5 * 60 * 60 * 1000), false);
+});
+
+test("the extension loads and registers a provider with no remembered lineup", async () => {
+	// The real entry point, imported and executed — not a textual review. the entry is part of the tsc program too
+	// (the folder carries pi's types as a devDependency), so this also pins that
+	// the shipped module graph type-checks.
+	const previousKey = process.env.HYPER_API_KEY;
+	delete process.env.HYPER_API_KEY;
+	try {
+		const entry = await import("../index.mjs");
+		/** @type {{id: string, config: any}[]} */
+		const registered = [];
+		// The shim is the ONE member this folder uses: the host interface is an
+		// overloaded registerProvider plus dozens of members, so it captures the
+		// registration rather than faking the whole surface.
+		entry.default(
+			/** @type {any} */ ({
+				registerProvider: (/** @type {string} */ id, /** @type {any} */ config) => {
+					registered.push({ id, config });
+				},
+			}),
+		);
+		assert.equal(registered.length, 1, "exactly one provider is registered");
+		const first = registered[0];
+		assert.ok(first);
+		const { id, config } = first;
+		// No dedicated seed: a list on the registration outlives the provider's
+		// own catalog, which is the remembered lineup docs/d190 removed.
+		assert.equal(
+			"models" in config,
+			false,
+			"the extension carries no lineup of its own",
+		);
+		assert.equal(typeof config.refreshModels, "function");
+		// Nothing remembered and no network wanted: nothing to offer, rather
+		// than a list the provider may already have retired.
+		assert.equal(
+			await config.refreshModels({
+				allowNetwork: false,
+				signal: new AbortController().signal,
+			}),
+			undefined,
+		);
+		assert.equal(id, HYPER_PROVIDER_ID);
+		assert.equal(config.baseUrl, hyper.baseUrl);
+	} finally {
+		if (previousKey === undefined) {
+			delete process.env.HYPER_API_KEY;
+		} else {
+			process.env.HYPER_API_KEY = previousKey;
+		}
+	}
+});
+
+test("an unreadable source is REPORTED, never a silent empty lineup (docs/d190)", async () => {
+	// The provider's own source is the only lineup, so a failure must reach the
+	// operator: pi renders a thrown refresh as "Could not refresh <provider>;
+	// showing cached models." (ModelsRefreshResult.errors). Returning undefined
+	// instead would keep the last list and say nothing.
+	const realFetch = globalThis.fetch;
+	globalThis.fetch = /** @type {any} */ (
+		async () => ({ ok: false, status: 503, json: async () => ({}) })
+	);
+	try {
+		const entry = await import("../index.mjs");
+		/** @type {any} */
+		let config;
+		entry.default(
+			/** @type {any} */ ({
+				registerProvider: (/** @type {string} */ _id, /** @type {any} */ c) => {
+					config = c;
+				},
+			}),
+		);
+		await assert.rejects(
+			() =>
+				config.refreshModels({
+					allowNetwork: true,
+					signal: new AbortController().signal,
+				}),
+			(/** @type {any} */ err) => {
+				assert.ok(err.message.includes(HYPER_PROVIDER_ID));
+				assert.ok(err.cause instanceof Error, "the cause is carried (d045)");
+				return true;
+			},
+		);
+	} finally {
+		globalThis.fetch = realFetch;
+	}
+});
+
+test("the request signal composes the caller's cancellation with the deadline", async () => {
+	// Both, never either: `signal ?? AbortSignal.timeout(…)` dropped the 15 s
+	// ceiling on every real refresh, because pi always hands a concrete signal —
+	// a revoked refresh then waited on an upstream that never answers.
+	const controller = new AbortController();
+	/** @type {AbortSignal|undefined} */
+	let seen;
+	await fetchCatalog({
+		signal: controller.signal,
+		fetchImpl: async (/** @type {any} */ _url, /** @type {any} */ init) => {
+			seen = init.signal;
+			return /** @type {any} */ ({ ok: true, status: 200, json: async () => ({ models: [{ id: "x" }] }) });
+		},
+	});
+	assert.ok(seen, "fetch was called with a signal");
+	assert.notEqual(seen, controller.signal, "composed, so the ceiling rides along");
+	assert.equal(seen.aborted, false);
+	controller.abort();
+	assert.equal(seen.aborted, true, "the caller's abort reaches the request");
+});
+
+
+// The base-url schema (coding-agent/DESIGN.md): every unit accepts
+// <KEY>_BASE_URL derived from its key env.
+const { baseUrlFromEnv } = await import("../sources.mjs");
+
+test("the base-url override derives from the key env", () => {
+	assert.equal(baseUrlFromEnv("HYPER_API_KEY", "https://hyper.charm.land/v1", {}), "https://hyper.charm.land/v1");
+	assert.equal(
+		baseUrlFromEnv("HYPER_API_KEY", "https://hyper.charm.land/v1", {
+			HYPER_BASE_URL: "https://mirror.example/v1/",
+		}),
+		"https://mirror.example/v1",
+	);
+	assert.throws(
+		() =>
+			baseUrlFromEnv("HYPER_API_KEY", "https://hyper.charm.land/v1", {
+				HYPER_BASE_URL: "ftp://mirror.example/v1",
+			}),
+		/HYPER_BASE_URL is not an absolute http\(s\) URL/,
+	);
+});

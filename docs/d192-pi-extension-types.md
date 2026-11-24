@@ -71,7 +71,7 @@ come from that package.**
   no `.d.ts` of its own, so nothing written here is skipped.
 
 **A source that cannot answer now THROWS.** The four catalog-owning extensions
-(`pi-cline-pass`, `pi-hyper`, `pi-synthetic`, `pi-verboo`) used to catch an
+(`pi-cline-pass-provider`, `pi-hyper-provider`, `pi-synthetic-provider`, `pi-verboo-provider`) used to catch an
 unreadable source and return `undefined`, which is pi's "leave this provider's
 models alone". A throw is what pi renders: it records the provider in
 `ModelsRefreshResult.errors` and the model selector shows "Could not refresh
@@ -120,4 +120,4 @@ family one policy; each of the four asserts it in its own suite.
 - **`npm link` the folders into each other.** Crosses the boundary through
   `node_modules` instead of removing it: the gates would be green only on a host
   where someone had run a global command, and a copied folder would need a
-  registry. Operator-side `pi -e ./pi-hyper` is the supported install path.
+  registry. Operator-side `pi -e ./pi-hyper-provider` is the supported install path.

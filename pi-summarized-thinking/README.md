@@ -161,5 +161,5 @@ short form, and each one is a bill:
 | `model-facing-compaction.md` | the other audience: verified pi and LLMLingua contracts for a compressor the model reads |
 | `AGENTS.md`, `TODO.md`       | folder rules · the build order, unbuilt                                                  |
 
-`index.ts` stays out of `tsconfig.json`, like `../pi-synthetic/index.ts`: it
+`index.ts` stays out of `tsconfig.json`, like `../pi-synthetic-provider/index.ts`: it
 imports `@earendil-works/pi-coding-agent`, which this repo does not vendor.

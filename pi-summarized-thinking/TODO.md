@@ -23,7 +23,7 @@ Settled: one call per turn, `coveredEntryIds` for write-once, the entry shape
 
 ## 2. The extension itself
 
-`index.ts` with `package.json`, following `../pi-synthetic/`. **Done** = a real
+`index.ts` with `package.json`, following `../pi-synthetic-provider/`. **Done** = a real
 pi turn writes a `custom` entry (`customType: "reasoning-summary"`), the TUI
 renders it through `registerEntryRenderer`, and the three commands work
 (`/reasoning-summary`, `/reasoning-summary-test`, `/reasoning-summary-model`).

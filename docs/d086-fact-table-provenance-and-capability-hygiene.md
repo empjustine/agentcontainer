@@ -83,7 +83,7 @@ skip, d021), which is why it took a committed-cache test, not a run, to see it.
 
 Verboo's body moved under the reader: the committed capture at the time the
 tier work landed was a `models`-keyed body, the refresh writes what the
-endpoint answers now (`data`), and `pi-verboo/sources.mjs` already read
+endpoint answers now (`data`), and `pi-verboo-provider/sources.mjs` already read
 `data`. The fleet side is the one that drifted.
 
 The fix is the parameter: `loadProviderFacts(id, listKey = "models")`, called

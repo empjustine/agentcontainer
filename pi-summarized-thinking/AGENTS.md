@@ -75,7 +75,7 @@ for ordinary open work, which is `TODO.md`'s job.
 ## The folder is the package
 
 `index.ts`, `package.json` and this folder's docs at this level ARE the pi
-package, like `../pi-synthetic/`. `index.ts` stays out of `tsconfig.json` for the
+package, like `../pi-synthetic-provider/`. `index.ts` stays out of `tsconfig.json` for the
 same reason it is there: it imports `@earendil-works/pi-coding-agent`, which this
 repo does not vendor.
 

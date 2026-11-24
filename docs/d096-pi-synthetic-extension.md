@@ -2,14 +2,14 @@
 id: d096
 type: module-design
 status: active
-title: "d096 — the pi-synthetic extension: catalog-derived provider config that does not need the fleet's agent dir"
+title: "d096 — the pi-synthetic-provider extension: catalog-derived provider config that does not need the fleet's agent dir"
 parent: coding-agent
 depends-on: [d024, d050, d057, d070, d092]
 references: [d028, d032, d039, d063, d071]
 tags: ["providers", "pi", "extensions", "coding-agent", "synthetic", "generators"]
 ---
 
-# d096 — the pi-synthetic extension
+# d096 — the pi-synthetic-provider extension
 
 **Status: implemented, and subsequently SIMPLIFIED.** The folder first landed with
 a three-source data ladder (live listing → vendored models.dev → vendored
@@ -43,7 +43,7 @@ listing is authoritative, an extension can carry its catalog.**
 
 ## Decision
 
-A new folder, `pi-synthetic/`, holding one generator and one loadable pi
+A new folder, `pi-synthetic-provider/`, holding one generator and one loadable pi
 extension:
 
 - `sources.mjs` — the ONE data source: the provider's `/models` listing,
@@ -161,8 +161,8 @@ The join with `coding-agent/`:
 
 - Option A: the `synthetic` `PROVIDER_SPECS` row reads this folder's merged
   list (one merge, one source of truth), and `model-019` becomes a rendering of
-  `pi-synthetic/models.json`.
-- Option B: `coding-agent/generate.mjs` runs `pi-synthetic/generate.sh` first
+  `pi-synthetic-provider/models.json`.
+- Option B: `coding-agent/generate.mjs` runs `pi-synthetic-provider/generate.sh` first
   and `model-019` is copied from the result.
 
 Either way the change lands in the repo that owns `generate-pi-coding-agent.mjs`
@@ -200,7 +200,7 @@ exists to prevent.
 
 ## Verification
 
-- `node --test pi-synthetic/tests/pi-synthetic.test.mjs` — 19 tests over the shaping rules
+- `node --test pi-synthetic-provider/tests/pi-synthetic-provider.test.mjs` — 19 tests over the shaping rules
   (modality gate, cost rule, thinking maps, canonical order, alias-name
   round-trip, the alias map, price parsing), the source (`fetchListing` against
   an injected fetch, the id-family filter, the throw-on-failure rule, the tier
@@ -218,4 +218,4 @@ exists to prevent.
   `@earendil-works/pi-ai@1.4.0`.
 - **Not** verified: a real turn. The transport is untouched by any test here
   and no pi process has loaded this extension. the host-side verification section of
-  `pi-synthetic/TODO.md` owns the rest.
+  `pi-synthetic-provider/TODO.md` owns the rest.

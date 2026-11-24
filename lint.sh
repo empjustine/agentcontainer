@@ -183,7 +183,7 @@ fi
 # `--type-check` is the experimental flag that reports those, and the tsconfig
 # program is the supported one. The leg was
 # missing while tsconfig.json's own comment claimed the program complete, so
-# findings accumulated unchecked (pi-neuralwatt landed clean; the benchmark
+# findings accumulated unchecked (pi-neuralwatt-provider landed clean; the benchmark
 # units did not). check-types.sh installs what it reads, so it costs a stamp
 # check on a host that already has both toolchains.
 log_info "check-types (gating — tsc, checkJs, strict; tsconfig.json)"

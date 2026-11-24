@@ -53,7 +53,7 @@ they are **the way a unit's node entry is started**. There are no per-entry
 ./node-run.sh ./coding-agent/run.mjs ~/Downloads/references
 ./node-run.sh git/audit.mjs --root /mnt/farm
 ./npm-run.sh coding-agent generate --check
-./npm-run.sh pi-hyper generate
+./npm-run.sh pi-hyper-provider generate
 ```
 
 Their contracts:
@@ -143,7 +143,7 @@ the record documenting the run) names the entry explicitly.
 - Entries run from a foreign working directory, in the documented spelling:
   `./node-run.sh git/audit.mjs`, `git/local-changes.mjs`, `git/farm-tool.mjs`,
   `git/vbs-mirror-all.mjs`, `coding-agent/run.mjs`, `estige/build.mjs`;
-  `./npm-run.sh coding-agent build`, `pi-hyper test`;
+  `./npm-run.sh coding-agent build`, `pi-hyper-provider test`;
   `./git/maintain.sh --help` (flock + runner).
 - `./test.sh` (264 unit tests, including the retargeted launcher test) and
   `./lint.sh` (with the runner-copy gate) green.

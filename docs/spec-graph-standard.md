@@ -113,7 +113,7 @@ goal                        goal-and-requirements — the graph root
     ├── estige
     │   └── estige-ci       submodule-design — a subsystem inside the package (estige/CI.md)
     ├── git
-    ├── pi-hyper            module-design — one node per `pi-*` package, id = its folder (d141)
+    ├── pi-hyper-provider  module-design — one node per `pi-*` package, id = its folder (d141)
     │   └── summarized-thinking.md      (pi-summarized-thinking's design note, d117)
     └── llm-local-inference
         └── llm-local-inference-cache   (the folded cache pipeline, CACHE-DESIGN.md)
@@ -481,8 +481,8 @@ comm -23 \
   <(grep -rh '^parent: ' "${SPECS[@]}" | sed 's/^parent: *//; s/"//g' | sort -u) \
   <(printf '%s\n' goal architecture coding-agent estige git llm-local-inference \
       llm-local-inference-cache estige-ci \
-      pi-hyper pi-verboo pi-synthetic pi-cline-pass pi-coding-agent-provider \
-      pi-aperture pi-summarized-thinking \
+      pi-hyper-provider pi-verboo-provider pi-synthetic-provider pi-cline-pass-provider pi-coding-agent-provider \
+      pi-aperture-provider pi-summarized-thinking pi-neuralwatt-provider pi-tlalocayotl-provider \
       | sort)
 
 # a record used as a parent — must print nothing

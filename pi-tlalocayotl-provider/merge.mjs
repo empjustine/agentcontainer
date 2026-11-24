@@ -53,7 +53,7 @@
  * `dist/extensions/llama/provider.js`, `toPiModel`) — llama-swap starts and
  * fronts llama-server backends, so the OpenAI surface pi already binds for
  * llama.cpp is this one, not a guess about a generic gateway. It is the
- * folder's ONE behavioral copy (pi-hyper's HYPER_WIRE_COMPAT is the same
+ * folder's ONE behavioral copy (pi-hyper-provider's HYPER_WIRE_COMPAT is the same
  * kind of transcription): upstream can revise the table and this mirror has
  * no tripwire, so re-read that file before changing a value here.
  *

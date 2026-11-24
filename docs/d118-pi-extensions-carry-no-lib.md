@@ -61,7 +61,7 @@ folder root, imported statically by the folder's own files.
 - **`generate.sh` is deleted; `package.json` is the entrypoint table.** A
   folder's scripts (`generate`, `test`) are the command lines, invoked through
   the repo-root `./npm-run.sh`:
-  `./npm-run.sh pi-hyper generate --check`. The wrapper only
+  `./npm-run.sh pi-hyper-provider generate --check`. The wrapper only
   supplies the pinned node — it reads the command line out of the folder's own
   `package.json`, so there is no second table to drift and no `npm` on the path
   (npm is itself a node program; letting PATH choose its interpreter would
@@ -106,10 +106,10 @@ the difference in home is the difference in copy unit, not a fork of the logic.
 - **An operator who exported `LOG_FORMAT=logfmt` loses it for these folders.**
   It had no call site here (the container runners' `log.sh` keeps it where it is
   used), and the alternative is carrying a serializer no folder exercises.
-- **Divergence inside the family is legitimate** and already visible: `pi-hyper`
+- **Divergence inside the family is legitimate** and already visible: `pi-hyper-provider`
   dropped `logWarn` (no call site there), the row literal is exported where a
   test asserts against it and inlined where the test is the only consumer, and
-  `pi-synthetic`'s row keeps `support` but drops a `note` that argued for a
+  `pi-synthetic-provider`'s row keeps `support` but drops a `note` that argued for a
   catalog cascade the folder deleted in `docs/d096`.
 
 ## Alternatives rejected

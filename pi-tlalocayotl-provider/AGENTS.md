@@ -2,7 +2,7 @@
 
 Folder-local rules. Repo-wide rules are in `../AGENTS.md`; the standalone rule
 (a folder is a copy unit) is in `../docs/architecture.md`. What follows is only
-what is specific here. The folder contract is `../pi-verboo/AGENTS.md`'s,
+what is specific here. The folder contract is `../pi-verboo-provider/AGENTS.md`'s,
 applied to this gateway — read that one first, then this.
 
 ## One source of truth, and it is the gateway

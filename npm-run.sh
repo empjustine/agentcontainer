@@ -2,7 +2,7 @@
 # npm-run.sh — run a unit's package.json script under the pinned node.
 #
 #   exec "$repo/npm-run.sh" "$unit" generate --check
-#   ./npm-run.sh pi-hyper generate
+#   ./npm-run.sh pi-hyper-provider generate
 #
 # One copy, at the repo root (docs/d138), like node-run.sh beside it: the
 # delegation is the same fact for every unit, so a per-unit copy would be a

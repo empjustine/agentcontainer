@@ -148,7 +148,7 @@ const EXIT_AUTH = 93;
  * "Could not refresh <provider>" while no request ever leaves the sandbox.
  *
  * NEURALWATT_API_KEY is the one row with no fact-table entry: it belongs to the
- * pi-neuralwatt package alone, so no derivation reaches it.
+ * pi-neuralwatt-provider package alone, so no derivation reaches it.
  * @type {readonly string[]}
  */
 const providerKeyEnv = Object.freeze([
@@ -206,7 +206,7 @@ export const vaultEnv = [
 	...providerKeyEnv,
 	...providerBaseUrlEnv,
 	"HF_TOKEN",
-	// pi-cline-pass reads this at runtime: a host that pins the docs table
+	// pi-cline-pass-provider reads this at runtime: a host that pins the docs table
 	// instead of fetching it must reach the sandboxed extension too, with the
 	// pinned file arriving through the DIRECTORY mounts.
 	"CLINE_PASS_MDX",

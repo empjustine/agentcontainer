@@ -64,7 +64,7 @@ URL is a constant pinned by the tests against the fact table
 (`lib/cloud-providers.mjs`, docs/d070).
 
 The contrast case is `docs/d096`: synthetic is NOT built into pi, so
-`pi-synthetic/` DOES carry its own generated catalog. The rule recorded
+`pi-synthetic-provider/` DOES carry its own generated catalog. The rule recorded
 here is about SUBSTITUTION, not contribution: **a built-in provider's
 extension must not substitute its own model data for pi's** — no backup
 catalog, no silent fallback when the live lineup cannot be fetched (warn

@@ -73,7 +73,7 @@ esac
 # as an unmistakable 401 rather than as silence.
 requires_secret() {
 	case $1 in
-	pi-verboo) echo VERBOO_API_KEY ;;
+	pi-verboo-provider) echo VERBOO_API_KEY ;;
 	*) echo '' ;;
 	esac
 }

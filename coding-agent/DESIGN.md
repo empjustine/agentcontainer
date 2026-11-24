@@ -240,7 +240,7 @@ committed copy — and one is a behavioral copy, the caveat worth knowing:
   are transcribed from that repo. Upstream can revise its compat table and
   this mirror has NO tripwire — a silent rot would ship wrong wire claims
   to every hyper turn. Mitigations today: the transcription is documented
-  at the spec row, and the standalone projection (pi-hyper/merge.mjs, whose
+  at the spec row, and the standalone projection (pi-hyper-provider/merge.mjs, whose
   tests pin the values) makes a divergence between the two copies visible
   as an artifact diff. The honest fix — re-deriving compat from what
   hyper's own listing publishes, or pinning a tested commit of that repo —

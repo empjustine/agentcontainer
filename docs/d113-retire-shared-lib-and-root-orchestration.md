@@ -157,15 +157,15 @@ selection layer over a root builder. A unit with nothing to generate has no
 The copies are pruned per consumer, so the inventory is part of the decision —
 it is the answer to "why does this folder have a `lib/` at all?":
 
-| Unit                                                         | Its own `lib/`                                                                                                                                                                                                                                           |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `coding-agent/`                                              | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`, `artifact.mjs`, `canonical-json.mjs`, `fact-table.mjs`, `host-capabilities.mjs`, `cloud-providers.mjs`+`.json` (the full table), `models.dev.api.json`, `catwalk-facts.json` |
-| `estige/`                                                    | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`, `go-build.mjs`, `host-capabilities.mjs`                                                                                                                                      |
-| `llm-local-inference/`                                       | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`/`log.py`, `artifact.mjs`, `canonical-json.mjs`, `host-capabilities.mjs`, `llamacpp-model-data.json`, `hf-manifests/`                                                          |
-| `pi-cline-pass/`, `pi-hyper/`, `pi-synthetic/`, `pi-verboo/` | `cloud-providers.mjs`+`.json` (its one row), `canonical-json.mjs`, `artifact.mjs`, `log.mjs`, `node-run.sh`                                                                                                                                              |
-| `pi-opencode/`, `pi-mistral/`                                | `cloud-providers.mjs`+`.json` (its rows), `node-run.sh`                                                                                                                                                                                                  |
-| `git/`                                                       | `log.mjs`/`log.sh`, `artifact.mjs`, `canonical-json.mjs`, `node-run.sh`, `node-run.ps1` (`docs/d062`)                                                                                                                                                    |
-| repo root                                                    | nothing importable: `environment.sh`, `provision-termux.sh`, `log.sh`, `node-run.sh`, `npm-tools.sh` (`docs/d107`) + the QA sweep                                                                                                                        |
+| Unit                                                                                             | Its own `lib/`                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `coding-agent/`                                                                                  | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`, `artifact.mjs`, `canonical-json.mjs`, `fact-table.mjs`, `host-capabilities.mjs`, `cloud-providers.mjs`+`.json` (the full table), `models.dev.api.json`, `catwalk-facts.json` |
+| `estige/`                                                                                        | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`, `go-build.mjs`, `host-capabilities.mjs`                                                                                                                                      |
+| `llm-local-inference/`                                                                           | `workload-runtime.sh` + `workload-*.jq`, `node-run.sh`, `log.mjs`/`log.sh`/`log.py`, `artifact.mjs`, `canonical-json.mjs`, `host-capabilities.mjs`, `llamacpp-model-data.json`, `hf-manifests/`                                                          |
+| `pi-cline-pass-provider/`, `pi-hyper-provider/`, `pi-synthetic-provider/`, `pi-verboo-provider/` | `cloud-providers.mjs`+`.json` (its one row), `canonical-json.mjs`, `artifact.mjs`, `log.mjs`, `node-run.sh`                                                                                                                                              |
+| `pi-opencode/`, `pi-mistral/`                                                                    | `cloud-providers.mjs`+`.json` (its rows), `node-run.sh`                                                                                                                                                                                                  |
+| `git/`                                                                                           | `log.mjs`/`log.sh`, `artifact.mjs`, `canonical-json.mjs`, `node-run.sh`, `node-run.ps1` (`docs/d062`)                                                                                                                                                    |
+| repo root                                                                                        | nothing importable: `environment.sh`, `provision-termux.sh`, `log.sh`, `node-run.sh`, `npm-tools.sh` (`docs/d107`) + the QA sweep                                                                                                                        |
 
 This table is the state d113 landed. Two later records thin it further without
 reopening the copy-unit rule: `docs/d118` deletes the `pi-*` family's `lib/`
@@ -206,11 +206,11 @@ inlined into its single consumer (`build.mjs`) rather than pruned in place.
 
 ## Verification
 
-- **Generated bytes**: `./pi-cline-pass/generate.sh` and `./pi-hyper/generate.sh`
-  leave `git diff` empty. `./pi-synthetic/generate.sh` reproduces exactly the
+- **Generated bytes**: `./pi-cline-pass-provider/generate.sh` and `./pi-hyper-provider/generate.sh`
+  leave `git diff` empty. `./pi-synthetic-provider/generate.sh` reproduces exactly the
   same live-catalog drift `main`'s own regeneration produces (the provider
   dropped a model since the snapshot — one diff, same 108 lines, on both
-  trees), so the move changed no bytes of its own; `./pi-verboo/generate.sh`
+  trees), so the move changed no bytes of its own; `./pi-verboo-provider/generate.sh`
   fails closed on an unkeyed listing with the committed artifacts untouched
   (its documented behaviour). The coding-agent
   run reproduces `main`'s own regeneration drift **file for file** — the live

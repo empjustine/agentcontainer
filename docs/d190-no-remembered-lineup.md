@@ -16,8 +16,8 @@ tags: ["providers", "pi", "extensions", "coding-agent", "lineup", "generation"]
 Amends d096, d189, d064, d065 and the generator records they sit on. Two
 sides, one rule:
 
-- **runtime**: the committed seed (`models.js`) is retired in pi-hyper,
-  pi-synthetic, pi-verboo and pi-cline-pass, and none of them registers a
+- **runtime**: the committed seed (`models.js`) is retired in pi-hyper-provider,
+  pi-synthetic-provider, pi-verboo-provider and pi-cline-pass-provider, and none of them registers a
   `models: [...]` field;
 - **generation**: the fleet layers for those providers take their lineup from
   the provider's own source instead of the models.dev slice, and d064's
@@ -46,11 +46,11 @@ converted the one honest signal — _this provider did not answer_ — into a
 successful-looking lineup, so an outage or a rotated key read as a healthy
 provider with a suspiciously quiet catalog.
 
-`pi-cline-pass` made the same mistake in its strongest form: a committed list
+`pi-cline-pass-provider` made the same mistake in its strongest form: a committed list
 republished ids the provider had already retired, which is the failure d189
 measured. The seeds also carried their own maintenance — a second artifact to
 write, a second agreement test between seed and manifest, and a
-hand-transcribed table of alias ids in pi-synthetic — and all of it existed to
+hand-transcribed table of alias ids in pi-synthetic-provider — and all of it existed to
 keep the fallback alive.
 
 ## Decision
@@ -135,7 +135,7 @@ not an input to the next one.
 
 ## References
 
-- d096 — the pi-synthetic single-fetch shape this record keeps.
+- d096 — the pi-synthetic-provider single-fetch shape this record keeps.
 - d189 — the cline-pass lineup contract; its committed fallback list was the
   first of these seeds to go.
 - d122 — the freshness gate, the only reader `models.json` keeps.
@@ -161,14 +161,14 @@ and `--check` compared a file against itself.
 What changed:
 
 - `generate.mjs`, `models.json` and the manifest projection (`toPiModel`) are
-  deleted in `pi-cline-pass`, `pi-hyper`, `pi-synthetic` and `pi-verboo`. The
+  deleted in `pi-cline-pass-provider`, `pi-hyper-provider`, `pi-synthetic-provider` and `pi-verboo-provider`. The
   `"generate"` script survives as `echo '{"msg":"nothing to generate in
   <unit>"}'`, so a unit's entrypoint table keeps its shape (docs/d113) and
   `./npm-run.sh <unit> generate` answers instead of failing.
 - `freshness.sh` counts a stub unit as skipped rather than checked, and asks for
   no credential it would not use (docs/d122).
 - The contract-tier warning only the generator made (`warnOnMissingTiers`) moves
-  to `refreshModels` in `pi-synthetic`, the one remaining surface that sees a
+  to `refreshModels` in `pi-synthetic-provider`, the one remaining surface that sees a
   listing.
 - The fleet's `model-*.json` layers are unchanged: they are now the only
   committed rows of these providers, and no unit keeps a second copy to drift

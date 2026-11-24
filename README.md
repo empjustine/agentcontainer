@@ -40,7 +40,7 @@ table in the pi extension family — and no `.sh` of its own, d138), and its own
 There is **no root build or generate entry point** — you invoke the unit you
 are building: `./node-run.sh estige/build.mjs`, `./npm-run.sh coding-agent generate`, and
 for the pi extensions
-`./npm-run.sh pi-hyper generate` (the wrapper only supplies the
+`./npm-run.sh pi-hyper-provider generate` (the wrapper only supplies the
 pinned node; the command line comes from the folder's own `package.json`).
 That holds because a folder has to survive being copied out of this tree on its own
 (docs/architecture.md), and a root sequencer would make every folder
@@ -86,9 +86,9 @@ cloud relay moved to estige.
 agentcontainer/
 ├── environment.sh                       # → EXPLICIT env chain: `infisical run` spawns <script-or-command> (d046; a bare command = the sandbox-free run path, d059)
 ├── provision-termux.sh                  # → termux pkg/infisical provisioning (the former root build.sh)
-├── node-run.sh / npm-run.sh # → THE interpreter runners (d138): one copy each, and THE way to start a unit — `./node-run.sh <entry> [args]`, `./npm-run.sh <unit> <script>` — no per-folder copies and no per-entry shims (the pin is one edit)
+├── node-run.sh / npm-run.sh             # → THE interpreter runners (d138): one copy each, and THE way to start a unit — `./node-run.sh <entry> [args]`, `./npm-run.sh <unit> <script>` — no per-folder copies and no per-entry shims (the pin is one edit)
 ├── log.sh / npm-tools.sh / dev-tools.sh # → operator-level shell, never imported by a unit: structured logger · on-demand npm devDependency install (d107) · the dev-host toolchain bootstrap, one pin table + mise-or-host acquisition (d139); `./dev-tools.sh` installs the profile
-├── lint.sh / check-types.sh / test.sh / vm-bench.sh # → the repo-wide QA sweep (d113): shellcheck+jq+oxfmt+biome+oxlint+knip+ruff+ty, golangci-lint and sbex's Java static analysis (d219) gates, the spec-graph contract (d140), tsc, and every unit's tests (test.sh globs `<unit>/tests/` and runs estige's Go suite explicitly, d123) — driven from the root because no unit imports them (the sweep owns no test of its own)
+├── lint.sh / check-types.sh / test.sh / vm-bench.sh# → the repo-wide QA sweep (d113): shellcheck+jq+oxfmt+biome+oxlint+knip+ruff+ty, golangci-lint and sbex's Java static analysis (d219) gates, the spec-graph contract (d140), tsc, and every unit's tests (test.sh globs `<unit>/tests/` and runs estige's Go suite explicitly, d123) — driven from the root because no unit imports them (the sweep owns no test of its own)
 ├── freshness.sh                         # → the QA sweep's one NETWORK gate (d122): every pi-* `generate --check` + the offline HF manifest audit, so a stale committed cache fails a gate instead of a review; key-gated listings skip loudly, run it via ./environment.sh to include them
 ├── docs/                                # docs tree, typed per docs/spec-graph-standard.md
 │   ├── requirements.md                  # → BRD: what the system must do (id: goal)
@@ -150,7 +150,7 @@ agentcontainer/
 │   ├── lib/                             #   → THIS FOLDER's own copy (d113), the largest: workload-runtime.mjs (the workload_* API in node, no jq on the host), log.mjs, artifact.mjs, canonical-json.mjs, host-capabilities.mjs, cloud-providers.mjs/.json (the full table); the interpreter runners are repo-root (d138)
 │   └── tests/                           #   → this folder's own tests (canonicalization, committed-manifest guard (d050), catalog ordering, URL forms, modality gate, cost map, launcher argv + workload rendering, the jq-free guard)
 │
-├── pi-synthetic/                        # Synthetic as a pi package (d096): ONE generator + ONE loadable extension, in this folder
+├── pi-synthetic-provider/               # Synthetic as a pi package (d096): ONE generator + ONE loadable extension, in this folder
 │   ├── sources.mjs                      #   → the ONE data source: the provider's /models listing, at the fact table's canonical upstream (d070)
 │   ├── merge.mjs                        #   → the ONE shaping step + both projections (pi models.json entry, pi-ai extension entry)
 │   ├── generate.mjs / package.json       #   → one fetch in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
@@ -159,12 +159,12 @@ agentcontainer/
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md / TODO.md / PENDING.md #   → folder rules · install + open items · the review that collapsed the design
 │
-├── pi-coding-agent-provider/           # the ONE pi-native provider extension (d235): mistral + opencode + opencode-go + openrouter, baseUrl overrides only
+├── pi-coding-agent-provider/            # the ONE pi-native provider extension (d235): mistral + opencode + opencode-go + openrouter, baseUrl overrides only
 │   ├── index.mjs / package.json         # → four registrations, no models, fetch or watchdog; the folder IS the package
 │   ├── tests/                           # → pins the four key envs and the override shape
 │   ├── AGENTS.md / README.md            # → folder rules + install + the vendor MCP references
 
-├── pi-cline-pass/                       # ClinePass as a pi package (d040/d189): the published docs table as the lineup (models.dev only prices it) as ONE generator + ONE loadable extension
+├── pi-cline-pass-provider/              # ClinePass as a pi package (d040/d189): the published docs table as the lineup (models.dev only prices it) as ONE generator + ONE loadable extension
 │   ├── sources.mjs                      #   → the two published sources: the docs table (which ids) + models.dev (what they cost), both throw-on-failure, the cline-pass/ billing-prefix guard
 │   ├── merge.mjs                        #   → the ONE shaping step + both projections (pi models.json entry, pi-ai extension entry)
 │   ├── generate.mjs / package.json       #   → two sources in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
@@ -173,7 +173,7 @@ agentcontainer/
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the lineup contract + the docs MCP reference
 │
-├── pi-hyper/                            # Charm Hyper as a pi package (d100): ONE generator + ONE loadable extension — the provider's /provider catalog is PUBLIC
+├── pi-hyper-provider/                   # Charm Hyper as a pi package (d100): ONE generator + ONE loadable extension — the provider's /provider catalog is PUBLIC
 │   ├── sources.mjs / merge.mjs          #   → the ONE source read (the provider's /provider document) · the ONE shaping step + both projections (incl. the transcribed compat mirror, d033)
 │   ├── generate.mjs / package.json       #   → one fetch in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
@@ -181,7 +181,7 @@ agentcontainer/
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the behavioral-copy provenance flag
 │
-├── pi-verboo/                           # Verboo as a pi package (d100): same shape against the AUTH-GATED /models listing — no prices ever asserted (d057)
+├── pi-verboo-provider/                  # Verboo as a pi package (d100): same shape against the AUTH-GATED /models listing — no prices ever asserted (d057)
 │   ├── sources.mjs / merge.mjs          #   → the ONE source read (the provider's own listing — models.dev carries no verboo row at all, d057) · the ONE shaping step + both projections
 │   ├── generate.mjs / package.json       #   → one keyed fetch in, one artifact out; --check verifies it without writing. The script table replaces generate.sh (d118): `./npm-run.sh <unit> generate`
 │   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
@@ -189,13 +189,13 @@ agentcontainer/
 │   ├── tests/                           #   → this folder's own tests
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the seeding provenance + the fleet seam
 │
-├── pi-tlalocayotl-provider/               # the operator's llama-swap gateway as a pi package (d100): ONE loadable extension, no generator — the key-gated /v1/models listing is the lineup
+├── pi-tlalocayotl-provider/             # the operator's llama-swap gateway as a pi package (d100): ONE loadable extension, no generator — the key-gated /v1/models listing is the lineup
 │   ├── sources.mjs / merge.mjs          #   → the ONE listing read (llama-swap's data[] + meta.llamaswap) · the ONE shaping step + the host's transcribed llama.cpp compat (window, cap, modalities, reasoning)
 │   ├── index.mjs / package.json          #   → the extension entry + its pi.extensions manifest — the folder IS the package
 │   ├── tests/                           #   → the rules, network-free (injected fetch) — never today's GGUF lineup
 │   ├── AGENTS.md / README.md            #   → folder rules · install + the field table + the verification status of the compat mirror
 │
-├── pi-aperture/                         # Aperture is this tailnet's AI gateway (d061): REFERENCE ONLY — its MCP endpoint (keyless, grant-gated; an inert fleet entry) and the vendor's docs table, no code, no model data
+├── pi-aperture-provider/                # Aperture is this tailnet's AI gateway (d061): REFERENCE ONLY — its MCP endpoint (keyless, grant-gated; an inert fleet entry) and the vendor's docs table, no code, no model data
 │   ├── README.md                        #   → the folder's spec node: the keyless measurement, the documentation table, and why the Aperture CLI's own Pi launcher leaves no extension to register
 │   ├── AGENTS.md                        #   → folder rules: no model data, no credential, tailnet-only claims, the contract if code lands
 │
@@ -211,8 +211,8 @@ agentcontainer/
 │   ├── AGENTS.md / TODO.md              #   → folder rules (this extension never touches the context) · the open worklist, unbuilt
 │
 ├── pi-session-logs-dw/                  # the LLM session upload as a pi extension (d182): ASSESSMENT ONLY — no code yet; README.md is the folder's spec node and the requirements list
-├── pi-settled/                         # notification findings for pi extensions (no code): settle hooks, terminal BEL/OSC, desktop and vibration channels
-├── pi-acp/                             # ACP prior-art reference only: serve direction (adapters, native modes, JetBrains) and use direction (pi as ACP client)
+├── pi-settled/                          # notification findings for pi extensions (no code): settle hooks, terminal BEL/OSC, desktop and vibration channels
+├── pi-acp/                              # ACP prior-art reference only: serve direction (adapters, native modes, JetBrains) and use direction (pi as ACP client)
 │   ├── README.md                       #   → module node: scope, boundary, reading path
 │   ├── SERVE-ACP-PRIOR-ART.md          #   → adapters, native-mode PR refs, registry and JetBrains evidence, gaps
 │   ├── USE-ACP-PRIOR-ART.md            #   → protocol precedent, external bridges, pi-side hooks, unanswered cache question
@@ -238,13 +238,13 @@ agentcontainer/
 │   ├── README.md                        #   → module doc: usage, the data-dir file assessment, verified findings, gotchas
 │   └── tests/                           #   → source-resolution, spool-send, daemon self-send and route/sync tests (no token or network)
 │
-├── codemode2/                          # A closed core-tool surface: POSIX/Windows tools reimplemented over a runtime-owned filesystem, enumerated from the living-off-the-land corpora (d194/d198)
+├── codemode2/                           # A closed core-tool surface: POSIX/Windows tools reimplemented over a runtime-owned filesystem, enumerated from the living-off-the-land corpora (d194/d198)
 │   ├── README.md                       #   → the module doc: the surface, the enumeration, what the corpora bought
 │   ├── enumerate.mjs / surface.json    #   → the generator and the table it emits
 │   ├── taxonomy.json / attack-corpus.json  # → the corpus rows the enumeration answers to
 │   ├── tests/                          #   → this folder's own tests
 │
-├── sbex/                               # Spring Boot best-practice example — unrelated to the pi workload; its own Maven reactor (Boot 3.5, Java 21)
+├── sbex/                                # Spring Boot best-practice example — unrelated to the pi workload; its own Maven reactor (Boot 3.5, Java 21)
 │   ├── pom.xml                         #   → parent: the Boot BOM, the enforcer floor, one module per stack (sbex-core, sbex-servlet, sbex-reactive)
 │   ├── README.md                       #   → module doc: requirement→file map, build/run/test, the conventions the code follows
 │   ├── *.md                            #   → this unit's own living docs (d117): memory, persistence, messaging, servlet-vs-reactive, container-image

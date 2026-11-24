@@ -3,7 +3,7 @@
  * `/v1/models` listing in the shape llama-swap serves it, plus the one-row
  * fact table that says where it lives and which key env it reads.
  *
- * Why one source (the pi-verboo verdict, docs/d096, applied here): models.dev
+ * Why one source (the pi-verboo-provider verdict, docs/d096, applied here): models.dev
  * carries no tlalocayotl row — the host is the operator's own llama-swap
  * gateway — so the listing IS the lineup, and it is the only place any of its
  * facts may come from. No second catalog, no fact cache.
@@ -17,7 +17,7 @@
  *     or missing API key` without the bearer), so the bearer rides whenever
  *     the key is set. pi resolves `$TLALOCAYOTL_API_KEY` BEFORE the network
  *     refresh phase, so an unset key fails the refresh instead of probing
- *     keylessly (the same measurement recorded in pi-neuralwatt).
+ *     keylessly (the same measurement recorded in pi-neuralwatt-provider).
  */
 
 /**

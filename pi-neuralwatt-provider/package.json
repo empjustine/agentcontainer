@@ -1,0 +1,32 @@
+{
+	"name": "@agentcontainer/pi-neuralwatt-provider",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"generate": "echo '{\"msg\": \"nothing to generate in pi-neuralwatt-provider\"}'",
+		"test": "node --test tests/*.test.mjs"
+	},
+	"description": "pi extension: Neuralwatt as two providers (neuralwatt-flex with service_tier=flex at the Flex twin's prices, neuralwatt-standard at list price) — rebuilt from /v1/models on every refresh",
+	"keywords": [
+		"pi-package",
+		"pi-extension",
+		"pi"
+	],
+	"pi": {
+		"extensions": [
+			"./index.mjs"
+		]
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-coding-agent": ">=1.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@earendil-works/pi-coding-agent": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@earendil-works/pi-coding-agent": "1.5.2"
+	}
+}

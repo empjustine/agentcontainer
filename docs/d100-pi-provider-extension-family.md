@@ -25,7 +25,7 @@ tags:
 
 ## Problem
 
-Three extension folders existed (pi-synthetic, pi-cline-pass, pi-opencode-go)
+Three extension folders existed (pi-synthetic-provider, pi-cline-pass-provider, pi-opencode-go)
 against a first-class tier of six providers — and the operator's directive
 went further than the tier: hyper, mistral, opencode (zen) and verboo were
 all named as important, with a hint that opencode might unify with the
@@ -43,13 +43,13 @@ no documented home for either.
 ## Decision
 
 The pattern split d096/d097 established is the whole design: **pi does not
-build the provider in → the folder carries its catalog** (the pi-synthetic
+build the provider in → the folder carries its catalog** (the pi-synthetic-provider
 shape: one live listing at the canonical upstream, throw-on-failure,
 committed `models.json` and no seed, `--check` drift gate — docs/d190);
 **pi builds it in → the folder is a watchdog** (the d097 shape: only
 `refreshModels`, never a model list). Four additions and one unification:
 
-- **`pi-hyper/`** (catalog-carrying): the provider's own `/provider`
+- **`pi-hyper-provider/`** (catalog-carrying): the provider's own `/provider`
   document is the one source — PUBLIC, so a keyless regeneration shapes the
   same catalog. Carries the fleet row's transcribed wire-compat mirror and
   ON_OFF thinking map (the provenance flag below), the UA client-identity
@@ -58,7 +58,7 @@ committed `models.json` and no seed, `--check` drift gate — docs/d190);
   one `deepseek-v4.1-flash` context window the LIVE listing has corrected
   since the fleet layer was last regenerated — the same drift class as
   synthetic's open seam, visible at landing.
-- **`pi-verboo/`** (catalog-carrying): the `/models` listing is the only
+- **`pi-verboo-provider/`** (catalog-carrying): the `/models` listing is the only
   lineup that can exist (models.dev carries no verboo row, the fleet's
   catalogOptional case) and it is AUTH-GATED, so regeneration needs
   `VERBOO_API_KEY`. The listing publishes capabilities but no prices and no
@@ -98,16 +98,16 @@ llm-reverse-proxy at all.
 `pi-*/README.md` and `coding-agent/DESIGN.md` carries a Provenance section
 classifying every cross-repo reference as LIVE DATA (self-correcting — fact
 table, provider listings, catalogs), ATTRIBUTION (read, credited, nothing
-copied — aliou/pi-synthetic), or BEHAVIORAL COPY — and every behavioral
+copied — aliou/pi-synthetic-provider), or BEHAVIORAL COPY — and every behavioral
 copy must be flagged with its rot risk. The tree's one behavioral copy is
 the hyper compat mirror (charmbracelet/pi-hyper-provider `src/models.ts`,
 transcribed in both the fleet generator's modelCompat and
-pi-hyper/merge.mjs): upstream can revise its table and no tripwire exists.
+pi-hyper-provider/merge.mjs): upstream can revise its table and no tripwire exists.
 Today's mitigations are documentation-at-the-copy plus the extension tests
 pinning the transcribed values (a silent LOCAL edit is caught; an upstream
 change is caught only by a human re-deriving). The honest fixes — deriving
 compat from what hyper's own listing publishes, or pinning a tested commit
-of that repo — are open. Second caveat, documented in pi-cline-pass's
+of that repo — are open. Second caveat, documented in pi-cline-pass-provider's
 section: models.dev and raw.githubusercontent.com are outside the fact
 table, reachable by design under the forward proxy (d080) and unreachable
 under mode-A-only egress (d047 allowlist) — the committed artifacts are the
@@ -132,9 +132,9 @@ mode-A state.
   same "fresh checkout ages until someone regenerates" posture d096
   adopted, with the seeding provenance recorded in its AGENTS.md.
 - What is still NOT verified, for the new folders exactly as for d096/d097:
-  a real turn. No pi process has loaded pi-hyper/pi-verboo/pi-mistral or the
+  a real turn. No pi process has loaded pi-hyper-provider/pi-verboo-provider/pi-mistral or the
   unified pi-opencode; the suites import and run the real entries, and
-  pi-hyper's artifacts were generated from the live endpoint, but the
+  pi-hyper-provider's artifacts were generated from the live endpoint, but the
   transport-through-tunnel path is exercised only by the generators.
 
 ## Alternatives rejected
@@ -155,14 +155,14 @@ mode-A state.
 ## Verification
 
 - `node --test` over the six extension suites: 100 tests, all green
-  (pi-synthetic 19→, pi-cline-pass, pi-opencode extended for both providers
+  (pi-synthetic-provider 19→, pi-cline-pass-provider, pi-opencode extended for both providers
   and per-provider interval independence, plus the three new suites).
-- `./pi-hyper/generate.sh` against the live public endpoint: 23 models,
+- `./pi-hyper-provider/generate.sh` against the live public endpoint: 23 models,
   artifacts committed, `--check` clean on rerun (byte-idempotent).
 - Landing parity diff vs model-016: identical lineup and values except the
   one live-fresh context window recorded above; compat key order aligned
   with the fleet literal so a future seam-unifying diff is clean.
-- pi-verboo's committed pair byte-equal to what the real generate path
+- pi-verboo-provider's committed pair byte-equal to what the real generate path
   produces over the seeded listing (the seeding ran that very path).
 - `./check-types.sh` and `biome check` green for the new folders (tsconfig
   and biome wiring updated; generated artifacts ignored like their

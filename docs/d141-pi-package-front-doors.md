@@ -22,7 +22,7 @@ The decision priced the family's prose and never weighed the graph. Each folder
 owns a real contract — an `index.ts` the pi host loads, in four of them a
 generator plus committed artifacts and a `--check` drift gate, a test suite, and
 an `AGENTS.md` of folder rules — and none of it was reachable by the one edge
-that answers "what belongs to this unit". Asked what governs `pi-verboo`, the
+that answers "what belongs to this unit". Asked what governs `pi-verboo-provider`, the
 graph returned the family record (d100) and stopped: right about the shape, wrong
 about the folder. The `Provenance` sections d100 made a family contract sat in
 seven READMEs that no query could land on.
@@ -45,8 +45,8 @@ genuine boundary, not per file.
 
 - **The family's edges move onto the leaves.** Each front door carries
   `references: [d100, d118]` and `depends-on` the record that owns its shape —
-  d096 for the catalog-carrying folders (`pi-synthetic`, `pi-hyper`,
-  `pi-verboo`, `pi-cline-pass`), d097 for the two watchdogs (`pi-mistral`,
+  d096 for the catalog-carrying folders (`pi-synthetic-provider`, `pi-hyper-provider`,
+  `pi-verboo-provider`, `pi-cline-pass-provider`), d097 for the two watchdogs (`pi-mistral`,
   `pi-opencode`). d100's split, which used to be prose in seven READMEs, is now
   a machine-readable edge per folder.
 - **`pi-summarized-thinking` is `draft`**, because the package has no `index.ts`
@@ -64,9 +64,41 @@ genuine boundary, not per file.
   edge into `coding-agent` would claim a dependency the code does not have. The
   family relationship is `references` to d100; the load path is d118's subject.
 
+### Amendment: the folder name carries the standard — `pi-<provider>-provider`
+
+The provider packages were named six different ways (`pi-hyper`, `pi-verboo`,
+`pi-synthetic`, `pi-cline-pass`, `pi-neuralwatt`, `pi-aperture`), while
+`pi-coding-agent-provider` and the newest package, `pi-tlalocayotl-provider`,
+already read as `pi-<what it serves>-provider`. Every one of them is a provider
+binding, so the folder name now states that: the six were renamed, and
+`id` = folder name (this record's own rule) moved with them.
+
+| before           | after                     |
+| ---------------- | ------------------------- |
+| `pi-aperture/`   | `pi-aperture-provider/`   |
+| `pi-cline-pass/` | `pi-cline-pass-provider/` |
+| `pi-hyper/`      | `pi-hyper-provider/`      |
+| `pi-neuralwatt/` | `pi-neuralwatt-provider/` |
+| `pi-synthetic/`  | `pi-synthetic-provider/`  |
+| `pi-verboo/`     | `pi-verboo-provider/`     |
+
+What moved with each folder: the README `id` and the prose that spells it, the
+package name (`@agentcontainer/pi-<provider>` → `@agentcontainer/pi-<provider>-provider`),
+the `pi install`/`pi -e` lines in the entry's `@fileoverview`, the test filename,
+knip's entry list, `freshness.sh`'s per-unit secret case, and the root
+`README.md` tree row. References in this log and in the other records were
+re-spelled rather than left to rot: a path is a pointer, not a historical claim,
+so the decision each record made is untouched.
+
+Two names that merely CONTAIN a renamed one are deliberately unchanged: the
+vendored reference extension `charmbracelet/pi-hyper-provider` (already in this
+form, and someone else's repository), and the fleet layer's
+`pi-hyper-models-layer/1` User-Agent, which names the generated layer rather
+than the folder and is written into the committed catalog.
+
 ## Consequences
 
-- "What belongs to `pi-verboo`" is one hop, and the seven folders stop being the
+- "What belongs to `pi-verboo-provider`" is one hop, and the seven folders stop being the
   one place in the tree where a unit's contract is only in prose.
 - `docs/spec-graph-standard.md` is amended in four places: the nesting rules name
   the family, the node-less-folder ruling keeps its principle and loses its

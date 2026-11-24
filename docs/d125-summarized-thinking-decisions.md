@@ -29,7 +29,7 @@ Two separate needs, and they are why this is a record rather than a longer note.
 
 The first is ordinary: a new `pi-*` package joined the family that docs/d100
 describes, and the family's members each have a decision record that argues their
-shape (docs/d096 for `pi-synthetic`, docs/d097 for `pi-opencode`). This one has a
+shape (docs/d096 for `pi-synthetic-provider`, docs/d097 for `pi-opencode`). This one has a
 harder job than its siblings, because its subject is _invisible_ when it goes
 wrong — a summary that leaked into the model context would still render
 correctly, still look right in a transcript, and only show up as an unexplained
@@ -152,7 +152,7 @@ not as the tree's current shape; `summarized-thinking.md` now sits in
 `coding-agent/summarized-thinking.md` keeps its id and its `parent: coding-agent`
 edge and stays where docs/d117 requires a single-unit living doc to sit; the new
 folder carries a plain package README, no frontmatter — the split docs/d096 uses
-for `pi-synthetic`. This record is the decision home that the note is _not_ (a
+for `pi-synthetic-provider`. This record is the decision home that the note is _not_ (a
 living doc argues; a record decides), which is why the two do not duplicate each
 other and both point here.
 

@@ -23,7 +23,7 @@ _valid_. It parses, its shape is right, its unit tests pass, biome and knip are
 happy, and `generate` (not `--check`) would happily rewrite it — the artifact is
 only wrong relative to a listing nobody looked at. So staleness was caught by
 review, or by a user, or not at all. It was in fact caught by not at all: the
-2026-11 sweep found `pi-synthetic` carrying two rows for models upstream had
+2026-11 sweep found `pi-synthetic-provider` carrying two rows for models upstream had
 already dropped (13 published vs 11 served), and llm-local-inference's cached
 manifests resolving five `byteshape/Qwen3.8-27B-GGUF` quants to nothing —
 neither of which any gate or test could have flagged.
@@ -42,7 +42,7 @@ Each unit answers with its own contract; the script knows no payload formats:
   tree. It catches the failure a refresh hides (a hand-edited entry naming a
   file that is not there) without a network call, and needs `uv`.
 
-**A key-gated listing without its key is skipped, not failed.** `pi-verboo`'s
+**A key-gated listing without its key is skipped, not failed.** `pi-verboo-provider`'s
 listing is auth-gated; a dev box without the vault is a normal state, so the
 skip names the unit and the variable, and `./environment.sh ./freshness.sh`
 includes it. A gate that fails on an absent secret teaches people to ignore it.
@@ -110,8 +110,8 @@ question that cannot.
 
 ## Verification status
 
-`./freshness.sh` → `checked 4, skipped 1` (pi-verboo), exit 0; a planted stale
-artifact in `pi-hyper/models.json` → exit 1 naming the unit, then restored to
+`./freshness.sh` → `checked 4, skipped 1` (pi-verboo-provider), exit 0; a planted stale
+artifact in `pi-hyper-provider/models.json` → exit 1 naming the unit, then restored to
 exit 0.
 
 ## Amendment: the extension leg skips a unit with nothing to compare
