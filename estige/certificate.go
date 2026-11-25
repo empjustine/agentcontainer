@@ -21,10 +21,10 @@ const (
 	channelName       = "estige"
 	channelBackdate   = 24 * time.Hour
 	channelValidYears = 15
-	ePubHeaderName    = "E-Pub"
+	ePubHeader        = "E-Pub"
 )
 
-var errEPubCardinality = errors.New(ePubHeaderName + " must appear exactly once")
+var errEPubCardinality = errors.New(ePubHeader + " must appear exactly once")
 
 // mintPrincipalCertificate derives a self-signed channel certificate from priv.
 // The subject is empty, the only name is the fixed SAN, and the private key
@@ -108,14 +108,14 @@ func parseEPubHeader(values []string) (*x509.Certificate, string, error) {
 	encoded := values[0]
 	der, err := base64.RawURLEncoding.DecodeString(encoded)
 	if err != nil {
-		return nil, "", fmt.Errorf("decode "+ePubHeaderName+": %w", err)
+		return nil, "", fmt.Errorf("decode "+ePubHeader+": %w", err)
 	}
 	if got := base64.RawURLEncoding.EncodeToString(der); got != encoded {
-		return nil, "", errors.New(ePubHeaderName + " is not canonical base64url")
+		return nil, "", errors.New(ePubHeader + " is not canonical base64url")
 	}
 	cert, err := parsePrincipalCertificate(der)
 	if err != nil {
-		return nil, "", fmt.Errorf("invalid "+ePubHeaderName+": %w", err)
+		return nil, "", fmt.Errorf("invalid "+ePubHeader+": %w", err)
 	}
 	return cert, encoded, nil
 }

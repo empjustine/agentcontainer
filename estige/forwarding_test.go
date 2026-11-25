@@ -80,7 +80,7 @@ func TestLocalForwardEndToEnd(t *testing.T) {
 	t.Setenv(envClientLabel, "forward-e2e")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false, false)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, relaySelection{}, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,10 +94,10 @@ func TestLocalForwardEndToEnd(t *testing.T) {
 	}
 	cfg.forwards = []forwardSpec{{bind: "127.0.0.1", port: uint16(listenPort), host: testTargetAlias, dest: upPort}}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	runCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	done := make(chan error, 1)
-	go func() { done <- runRelayNode(ctx, cfg) }()
+	go func() { done <- runRelayNode(runCtx, cfg) }()
 	waitForHealth(t, "http://"+httpAddr+healthPath)
 	logBuf := captureLog(t)
 

@@ -106,14 +106,14 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	t.Setenv(envClientLabel, "e2e-label")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false, false)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, relaySelection{}, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	runCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	relayDone := make(chan error, 1)
-	go func() { relayDone <- runRelayNode(ctx, cfg) }()
+	go func() { relayDone <- runRelayNode(runCtx, cfg) }()
 
 	// One process-wide log buffer covers both roles — the credential-free
 	// invariant must hold across ALL lines, not a chosen file's.
@@ -414,14 +414,14 @@ func TestCleartextForwardFailsClosedWithoutTunnel(t *testing.T) {
 	t.Setenv(envClientLabel, "dead-tunnel-fwd")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false, false)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, relaySelection{}, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	runCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	relayDone := make(chan error, 1)
-	go func() { relayDone <- runRelayNode(ctx, cfg) }()
+	go func() { relayDone <- runRelayNode(runCtx, cfg) }()
 	waitForHealth(t, "http://"+httpAddr+healthPath)
 
 	conn := rawDial(t, httpAddr)
@@ -461,13 +461,13 @@ func TestRelayLegacyIPRelaySwitch(t *testing.T) {
 		t.Helper()
 		httpAddr := freeLoopbackAddr(t)
 		socksAddr := freeLoopbackAddr(t)
-		cfg, err := relayConfigFromEnv(httpAddr, socksAddr, legacyIPRelay, false)
+		cfg, err := relayConfigFromEnv(httpAddr, socksAddr, relaySelection{}, legacyIPRelay, false)
 		if err != nil {
 			t.Fatal(err)
 		}
-		ctx, cancel := context.WithCancel(context.Background())
+		runCtx, cancel := context.WithCancel(context.Background())
 		done := make(chan error, 1)
-		go func() { done <- runRelayNode(ctx, cfg) }()
+		go func() { done <- runRelayNode(runCtx, cfg) }()
 		waitForHealth(t, "http://"+httpAddr+healthPath)
 		return httpAddr, socksAddr, func() {
 			cancel()

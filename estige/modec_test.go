@@ -79,14 +79,14 @@ func TestH2PostUnboundedEndToEndOverHTTP2Front(t *testing.T) {
 
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false, false)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, relaySelection{}, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	runCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	relayDone := make(chan error, 1)
-	go func() { relayDone <- runRelayNode(ctx, cfg) }()
+	go func() { relayDone <- runRelayNode(runCtx, cfg) }()
 
 	logBuf := captureLog(t)
 	waitForHealth(t, "http://"+httpAddr+healthPath)

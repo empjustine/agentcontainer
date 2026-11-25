@@ -138,7 +138,7 @@ func newExchangeSessions() *exchangeSessions {
 // non-nil only for the key-mismatch case: a desynced span or an unknown
 // trace-id is a misrouted window, not evidence that someone else holds the
 // carrier.
-func (t *tunnelServer) accept(ctx context.Context, traceID string, span uint64, key *operatorKey) (session *exchangeStream, compromised *exchangeStream) {
+func (t *tunnelServer) accept(runCtx context.Context, traceID string, span uint64, key *operatorKey) (session *exchangeStream, compromised *exchangeStream) {
 	t.sessions.mu.Lock()
 	defer t.sessions.mu.Unlock()
 	if s := t.sessions.byTrace[traceID]; s != nil {
@@ -170,7 +170,7 @@ func (t *tunnelServer) accept(ctx context.Context, traceID string, span uint64, 
 	// Attribution lives on the session's own open record now (docs/d106):
 	// the id and key appear there, once, instead of a second line per
 	// session that said almost nothing.
-	go t.runSession(ctx, s, key)
+	go t.runSession(runCtx, s, key)
 	return s, nil
 }
 

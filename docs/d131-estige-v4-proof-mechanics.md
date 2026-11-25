@@ -64,6 +64,18 @@ circulation. Nothing was ever deployed under the old counting on the proof
 side, and the bearer side keeps d108's name, so the renumber is in place
 rather than a generation bump.
 
+## Superseded surface, surviving mechanism (d236)
+
+This record's envelope, both signatures, the nonce tie and the single-use ring
+are what v5 ships — the mechanism below is current. Its _surface_ moved twice:
+the header names are now `e-relay-auth` (request) and `e-exit-auth`
+(response), each with an accompanying `e-pub` certificate value, and the
+credential material lives in the role store rather than the environment. The
+generation this record numbers v4 was skipped: d236 folds its proof pair into
+v5 (d108's table states what shipped). Read `X-Relay-Proof` below as
+`e-relay-auth` and `X-Exit-Proof` as `e-exit-auth`; the signed labels stay
+`estige/v2/…` because they version the envelope, not the deployment.
+
 ## Mechanism — single-flight mutual Ed25519 proofs
 
 Single-use nonce-bound signatures: no clock, no window, no TOTP-style

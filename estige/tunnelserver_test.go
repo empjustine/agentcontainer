@@ -189,9 +189,9 @@ func TestTunnelHandshakeAuth(t *testing.T) {
 		ws.Close()
 	})
 	t.Run("unauthenticated probe never reaches a 101", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		probeCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		if _, err := wsDial(ctx, tunnelURL, nil, nil, false); err == nil {
+		if _, err := wsDial(probeCtx, tunnelURL, nil, nil, false); err == nil {
 			t.Fatal("expected failure")
 		} else if !strings.Contains(err.Error(), "404") {
 			t.Fatalf("want camouflage status in error, got %v", err)
@@ -451,3 +451,72 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 // ---------------------------------------------------------------------------
 // enableTunnel input validation (NFR-2: fail loudly, never silently)
 // ---------------------------------------------------------------------------
+
+// TestSessionResponsesCarryExitProofAndForbidCaching: every authenticated
+// session response carries the exit's own proof plus the headers that keep an
+// intermediary from reusing it — on the 101 and on a window's 200 alike
+// (d236). Refusals keep the funnel 404 byte for byte (VPN-R34).
+func TestSessionResponsesCarryExitProofAndForbidCaching(t *testing.T) {
+	s := newTunnelServer(t, true, egressConfig{})
+	backend := newHTTPServer(t, s)
+	tunnelURL := mustTunnelURL(t, backend)
+	store, err := loadRelayStore(storeRoot())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assertUncacheable := func(t *testing.T, hdr http.Header) {
+		t.Helper()
+		if got := hdr.Get("Cache-Control"); got != "no-cache, private" {
+			t.Fatalf("Cache-Control = %q, want %q", got, "no-cache, private")
+		}
+		if got := hdr.Get("Vary"); got != "*" {
+			t.Fatalf("Vary = %q, want *", got)
+		}
+		if len(hdr.Values(eExitAuthHeader)) != 1 || len(hdr.Values(ePubHeader)) != 1 {
+			t.Fatalf("exit proof cardinality: auth=%v pub=%v", hdr.Values(eExitAuthHeader), hdr.Values(ePubHeader))
+		}
+	}
+
+	t.Run("the 101", func(t *testing.T) {
+		hdr, nonce, err := channelRequestHeaders(store.Private, store.Principal, store.Exits[0].Name, store.SelfDER)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ws, err := wsDial(t.Context(), tunnelURL, hdr, nil, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer ws.Close()
+		assertUncacheable(t, ws.respHeader)
+		if err := validateExitAdmission(
+			ws.respHeader.Values(eExitAuthHeader), ws.respHeader.Values(ePubHeader),
+			trustFromRelayStore(store), store.Exits[0].Name, store.Principal, nonce, newNonceRing(4),
+		); err != nil {
+			t.Fatalf("101 proof: %v", err)
+		}
+	})
+
+	t.Run("a window's 200", func(t *testing.T) {
+		hdr, _, err := channelRequestHeaders(store.Private, store.Principal, store.Exits[0].Name, store.SelfDER)
+		if err != nil {
+			t.Fatal(err)
+		}
+		hdr.Set(windowHeader, strconv.FormatInt(h2WindowedBytes, 10))
+		hdr.Set("Traceparent", buildTraceparent("000000000000000000000000000000c1", 1))
+		req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, backend.URL+tunnelPath, http.NoBody)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header = hdr
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("window answered %d", resp.StatusCode)
+		}
+		assertUncacheable(t, resp.Header)
+	})
+}

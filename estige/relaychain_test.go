@@ -162,7 +162,7 @@ func TestRelayChainBadConfigRefusesStartup(t *testing.T) {
 	writeTestRelayJSON(t, "wss://example.invalid:8443/vpn")
 	t.Setenv("SOCKS_SERVER", "gate:1080")
 	t.Setenv("SOCKS_VERSION", "4a")
-	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false, false); err == nil || !strings.Contains(err.Error(), "SOCKS_VERSION") {
+	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), relaySelection{}, false, false); err == nil || !strings.Contains(err.Error(), "SOCKS_VERSION") {
 		t.Fatalf("err=%v, want the SOCKS_VERSION refusal from relayConfigFromEnv", err)
 	}
 }
@@ -364,9 +364,9 @@ func TestALPNProbeRidesHTTPChain(t *testing.T) {
 		t.Fatal(err)
 	}
 	u.Scheme = "wss"
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	dialCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	proto, err := alpnNegotiate(ctx, u, []string{"h2", "http/1.1"}, chain.dial, false)
+	proto, err := alpnNegotiate(dialCtx, u, []string{"h2", "http/1.1"}, chain.dial, false)
 	if err != nil {
 		t.Fatalf("alpnNegotiate over chain: %v", err)
 	}
@@ -390,9 +390,9 @@ func TestSOCKS5ChainCredentials(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	dialCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	conn, err := withCreds.dial(ctx, "tcp", target)
+	conn, err := withCreds.dial(dialCtx, "tcp", target)
 	if err != nil {
 		t.Fatalf("socks5 chain with credentials: %v", err)
 	}
@@ -414,7 +414,7 @@ func TestSOCKS5ChainCredentials(t *testing.T) {
 	}
 	// The proxy refuses the no-auth offer outright (0xFF); the client must
 	// fail closed rather than downgrade — the proxy's choice is its own.
-	if _, err := withoutCreds.dial(ctx, "tcp", target); err == nil || !strings.Contains(err.Error(), "no acceptable auth method") {
+	if _, err := withoutCreds.dial(dialCtx, "tcp", target); err == nil || !strings.Contains(err.Error(), "no acceptable auth method") {
 		t.Fatalf("err=%v, want the auth-method refusal", err)
 	}
 }

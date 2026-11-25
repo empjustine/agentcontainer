@@ -40,7 +40,7 @@ the old pinned certificate under Go's verifier. Re-mint is a pin change.
 ## Iterations
 
 - The store's `public` row stays the certificate's material. The certificate
-  arrives in its own `E-Pub` header instead of being packed into the envelope,
+  arrives in its own `e-pub` header instead of being packed into the envelope,
   because reverse proxies cap header sizes and a truncated blob would deny
   service to everyone.
 - Role-scoped private keys collapse into one host key at
@@ -65,10 +65,11 @@ the old pinned certificate under Go's verifier. Re-mint is a pin change.
 v5 is the only generation in this implementation. A v3 bearer or any earlier
 wire shape fails closed. No fallback, demotion or downgrade path exists.
 
-Admission is a blind `e-auth` exchange in both directions. The four-segment
+Admission is a blind proof exchange in both directions. The four-segment
 `v2.<name>.<nonce>.<sig>` token and the signed messages
-`estige/v2/relay-to-exit` and `estige/v2/exit-to-relay` keep their bytes. Only
-the header name changes. An `e-auth` failure answers the camouflage 404.
+`estige/v2/relay-to-exit` and `estige/v2/exit-to-relay` keep their bytes. The
+headers are direction-specific — `e-relay-auth` on a request, `e-exit-auth` on
+a response — and an auth failure answers the camouflage 404.
 
 ### Store and key material
 
@@ -101,13 +102,23 @@ library's, with TLS 1.3, disabled tickets, no skip and no callback.
 
 ### Headers and refusal
 
-`E-Pub` carries the sender's whole self-signed certificate as unpadded
-base64url DER. Each request and each response carries exactly one `E-Pub`
-value. Zero values, two or more values, bad encoding, bad certificate shape,
-wrong SAN, non-empty subject, non-Ed25519 key, CA marking, bad validity or a
-bad self-signature all answer the camouflage 404 with no log line.
+The proof pair is direction-specific: a request carries `e-relay-auth`, a
+response carries `e-exit-auth`, and each is the `v2.<name>.<nonce>.<sig>`
+envelope d131 pins. One header per direction means the header set alone says
+which half an exchange holds; the signed label still binds the direction, so a
+proof cannot be reflected. `e-pub` carries the sender's whole self-signed
+certificate as unpadded base64url DER, and each request and each response
+carries exactly one of it. Zero values, two or more values, bad encoding, bad
+certificate shape, wrong SAN, non-empty subject, non-Ed25519 key, CA marking,
+bad validity or a bad self-signature all answer the camouflage 404 with no log
+line.
 
-A valid `E-Pub` that is not in the local trust set also fails the connection.
+Every admission-bearing response also carries `Vary: *` and
+`Cache-Control: no-cache, private`: the proof is bound to one exchange, so an
+intermediary must never reuse or store the response for another request. The
+camouflage 404 stays byte-identical and gains nothing (VPN-R34).
+
+A valid `e-pub` that is not in the local trust set also fails the connection.
 It emits the `seen_hosts` event unconditionally, whether the trusted set is
 empty or not. That event is a hint for an operator; it never grants trust.
 
@@ -211,8 +222,11 @@ against the old pin. Go's `crypto/tls` has no heartbeat.
 
 - **A marker header for v5 generation detection.** Mixed pairings do not exist
   when v4 is skipped.
-- **Certificate bytes inside `e-auth`.** A truncated header denies service;
-  the separate `E-Pub` value keeps the envelope's pinned grammar.
+- **Certificate bytes inside the auth envelope.** A truncated header denies
+  service; the separate `e-pub` value keeps the envelope's pinned grammar.
+- **One header for both directions (`e-auth`).** A single name made the reader
+  decode the direction from the payload; `e-relay-auth`/`e-exit-auth` say it on
+  the wire and an auditor sees which half an exchange carries.
 - **A persistent `seen_hosts` file.** Log-only events need no rotation and
   cannot accept a peer by accident.
 - **Principal names in SAN or subject.** The identity is the pinned key; the

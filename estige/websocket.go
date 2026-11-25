@@ -145,7 +145,7 @@ func headerHasToken(h http.Header, name, token string) bool {
 // rides this handshake, protected by the tunnel leg's TLS). dial is the
 // relay node's TCP leg — nil/direct, or through the chain proxy when one
 // is configured (docs/d094); TLS stays end-to-end above a chain.
-func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, dial dialFunc, skipVerify bool) (*wsConn, error) {
+func wsDial(dialCtx context.Context, tunnelURL *url.URL, extraHeaders http.Header, dial dialFunc, skipVerify bool) (*wsConn, error) {
 	var raw net.Conn
 	var err error
 	if dial == nil {
@@ -166,9 +166,9 @@ func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, d
 			// System roots, ServerName from the URL host, no override knobs:
 			// the Funnel `*.ts.net` certificate must verify as-is (VPN-R28),
 			// and nothing in this module may weaken verification (VPN-R55).
-			raw, err = dialTLS(ctx, dial, addr, tunnelURL.Hostname(), nil, skipVerify)
+			raw, err = dialTLS(dialCtx, dial, addr, tunnelURL.Hostname(), nil, skipVerify)
 		} else {
-			raw, err = dial(ctx, "tcp", addr)
+			raw, err = dial(dialCtx, "tcp", addr)
 		}
 	default:
 		return nil, fmt.Errorf("tunnel URL scheme must be ws or wss, got %q", tunnelURL.Scheme)
@@ -177,12 +177,12 @@ func wsDial(ctx context.Context, tunnelURL *url.URL, extraHeaders http.Header, d
 		return nil, err
 	}
 
-	// The handshake never outlives a bounded window even when ctx carries
+	// The handshake never outlives a bounded window even when dialCtx carries
 	// no deadline of its own (VPN-R39): a black-holed endpoint ends in an
 	// error, not a goroutine parked on a read. The context may only make
 	// the window shorter, never extend it.
 	handshakeDeadline := time.Now().Add(tunnelHandshakeTimeout)
-	if d, ok := ctx.Deadline(); ok && d.Before(handshakeDeadline) {
+	if d, ok := dialCtx.Deadline(); ok && d.Before(handshakeDeadline) {
 		handshakeDeadline = d
 	}
 	_ = raw.SetDeadline(handshakeDeadline)

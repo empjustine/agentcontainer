@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -45,7 +46,7 @@ func TestValidateRelayAdmission(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	result, err := validateRelayAdmission(headers.Values(eAuthHeaderName), headers.Values(ePubHeaderName), trust, "exit-home", newNonceRing(4))
+	result, err := validateRelayAdmission(headers.Values(eRelayAuthHeader), headers.Values(ePubHeader), trust, "exit-home", newNonceRing(4))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +58,7 @@ func TestValidateRelayAdmission(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := verifyExitAuth(response.Get(eAuthHeaderName), admissionPub(t, exitPriv), "exit-home", "relay_bazzite", result.Nonce); err != nil {
+	if _, err := verifyExitAuth(response.Get(eExitAuthHeader), admissionPub(t, exitPriv), "exit-home", "relay_bazzite", result.Nonce); err != nil {
 		t.Fatalf("exit proof: %v", err)
 	}
 }
@@ -84,9 +85,9 @@ func TestValidateRelayAdmissionFailures(t *testing.T) {
 	trust := admissionTrust{"relay_bazzite": {relayCertFromDER(t, relayDER)}}
 
 	wrongCert := make(http.Header)
-	wrongCert.Set(eAuthHeaderName, headers.Get(eAuthHeaderName))
-	wrongCert.Set(ePubHeaderName, encodeEPub(otherDER))
-	_, err = validateRelayAdmission(wrongCert.Values(eAuthHeaderName), wrongCert.Values(ePubHeaderName), trust, "exit-home", newNonceRing(4))
+	wrongCert.Set(eRelayAuthHeader, headers.Get(eRelayAuthHeader))
+	wrongCert.Set(ePubHeader, encodeEPub(otherDER))
+	_, err = validateRelayAdmission(wrongCert.Values(eRelayAuthHeader), wrongCert.Values(ePubHeader), trust, "exit-home", newNonceRing(4))
 	var untrusted *untrustedPeerError
 	if !errors.As(err, &untrusted) || untrusted.Name != "relay_bazzite" {
 		t.Fatalf("wrong certificate: %v", err)
@@ -96,13 +97,13 @@ func TestValidateRelayAdmissionFailures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = validateRelayAdmission(unknown.Values(eAuthHeaderName), unknown.Values(ePubHeaderName), trust, "exit-home", newNonceRing(4))
+	_, err = validateRelayAdmission(unknown.Values(eRelayAuthHeader), unknown.Values(ePubHeader), trust, "exit-home", newNonceRing(4))
 	if !errors.As(err, &untrusted) || untrusted.Name != "relay_laptop" {
 		t.Fatalf("unknown principal: %v", err)
 	}
 
-	tampered := strings.Replace(headers.Get(eAuthHeaderName), "v2.", "v3.", 1)
-	_, err = validateRelayAdmission([]string{tampered}, headers.Values(ePubHeaderName), trust, "exit-home", newNonceRing(4))
+	tampered := strings.Replace(headers.Get(eRelayAuthHeader), "v2.", "v3.", 1)
+	_, err = validateRelayAdmission([]string{tampered}, headers.Values(ePubHeader), trust, "exit-home", newNonceRing(4))
 	if err == nil || errors.As(err, &untrusted) {
 		t.Fatalf("tampered token: %v", err)
 	}
@@ -134,7 +135,7 @@ func TestMutualAdmissionAndSingleUseProofs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	result, err := validateRelayAdmission(headers.Values(eAuthHeaderName), headers.Values(ePubHeaderName), exitTrust, "exit", exitRing)
+	result, err := validateRelayAdmission(headers.Values(eRelayAuthHeader), headers.Values(ePubHeader), exitTrust, "exit", exitRing)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,16 +143,16 @@ func TestMutualAdmissionAndSingleUseProofs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := validateExitAdmission(response.Values(eAuthHeaderName), response.Values(ePubHeaderName), relayTrust, "exit", "relay", nonce, relayRing); err != nil {
+	if err := validateExitAdmission(response.Values(eExitAuthHeader), response.Values(ePubHeader), relayTrust, "exit", "relay", nonce, relayRing); err != nil {
 		t.Fatal(err)
 	}
 
 	// Both halves are single-use: the same bytes cannot answer a second
 	// exchange, even though their signatures and pins are still valid.
-	if _, err := validateRelayAdmission(headers.Values(eAuthHeaderName), headers.Values(ePubHeaderName), exitTrust, "exit", exitRing); err == nil {
+	if _, err := validateRelayAdmission(headers.Values(eRelayAuthHeader), headers.Values(ePubHeader), exitTrust, "exit", exitRing); err == nil {
 		t.Fatal("replayed relay proof was accepted")
 	}
-	if err := validateExitAdmission(response.Values(eAuthHeaderName), response.Values(ePubHeaderName), relayTrust, "exit", "relay", nonce, relayRing); err == nil {
+	if err := validateExitAdmission(response.Values(eExitAuthHeader), response.Values(ePubHeader), relayTrust, "exit", "relay", nonce, relayRing); err == nil {
 		t.Fatal("replayed exit proof was accepted")
 	}
 
@@ -160,10 +161,10 @@ func TestMutualAdmissionAndSingleUseProofs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := validateRelayAdmission(fresh.Values(eAuthHeaderName), fresh.Values(ePubHeaderName), exitTrust, "exit", exitRing); err != nil {
+	if _, err := validateRelayAdmission(fresh.Values(eRelayAuthHeader), fresh.Values(ePubHeader), exitTrust, "exit", exitRing); err != nil {
 		t.Fatal(err)
 	}
-	if err := validateExitAdmission(response.Values(eAuthHeaderName), response.Values(ePubHeaderName), relayTrust, "exit", "relay", freshNonce, relayRing); err == nil {
+	if err := validateExitAdmission(response.Values(eExitAuthHeader), response.Values(ePubHeader), relayTrust, "exit", "relay", freshNonce, relayRing); err == nil {
 		t.Fatal("exit proof from another exchange verified")
 	}
 }
@@ -178,7 +179,7 @@ func TestExitAdmissionRefusesWrongPin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	result, err := validateRelayAdmission(headers.Values(eAuthHeaderName), headers.Values(ePubHeaderName), admissionTrust{"relay": {relayCertFromDER(t, relayDER)}}, "exit", newNonceRing(4))
+	result, err := validateRelayAdmission(headers.Values(eRelayAuthHeader), headers.Values(ePubHeader), admissionTrust{"relay": {relayCertFromDER(t, relayDER)}}, "exit", newNonceRing(4))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,7 +187,7 @@ func TestExitAdmissionRefusesWrongPin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := validateExitAdmission(response.Values(eAuthHeaderName), response.Values(ePubHeaderName), admissionTrust{"exit": {relayCertFromDER(t, otherDER)}}, "exit", "relay", nonce, newNonceRing(4)); err == nil {
+	if err := validateExitAdmission(response.Values(eExitAuthHeader), response.Values(ePubHeader), admissionTrust{"exit": {relayCertFromDER(t, otherDER)}}, "exit", "relay", nonce, newNonceRing(4)); err == nil {
 		t.Fatal("exit proof verified against the wrong pin")
 	}
 }
@@ -224,14 +225,14 @@ func TestWrongExitPinStopsTheLadder(t *testing.T) {
 	}
 	logBuf := captureLog(t)
 	httpAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, freeLoopbackAddr(t), false, false)
+	cfg, err := relayConfigFromEnv(httpAddr, freeLoopbackAddr(t), relaySelection{}, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(t.Context())
+	runCtx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	done := make(chan error, 1)
-	go func() { done <- runRelayNode(ctx, cfg) }()
+	go func() { done <- runRelayNode(runCtx, cfg) }()
 	waitForHealth(t, "http://"+httpAddr+healthPath)
 
 	conn := rawDial(t, httpAddr)
@@ -250,7 +251,7 @@ func TestWrongExitPinStopsTheLadder(t *testing.T) {
 	if dumped := logBuf.String(); strings.Contains(dumped, "trying h2-post-windowed") {
 		t.Fatalf("a refused exit proof demoted the ladder:\n%s", dumped)
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://"+httpAddr+healthPath, nil)
+	req, err := http.NewRequestWithContext(runCtx, http.MethodGet, "http://"+httpAddr+healthPath, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -265,5 +266,101 @@ func TestWrongExitPinStopsTheLadder(t *testing.T) {
 	}
 	if last, _ := body["last_error"].(string); !strings.Contains(last, "channel admission failed") {
 		t.Fatalf("last_error = %q, want the admission refusal", last)
+	}
+}
+
+// d133's staged rotation: one exit name carrying two certificates. Admission
+// trusts either row and the inner channel must pin the same set — a relay
+// that pinned only row 0 would clear the proof and then die in the handshake
+// until the operator reordered the rows.
+func TestStagedExitRotationPinsEveryRow(t *testing.T) {
+	upstream := newHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = io.WriteString(w, "rotation-ok")
+	}))
+	upPort := portOf(t, upstream.Listener.Addr().String())
+	s := newTunnelServer(t, true, egressConfig{AllowCidrs: []string{"127.0.0.0/8"}, Ports: []uint16{upPort}})
+	exit := newHTTPSServer(t, s)
+	exitAddr := exit.Listener.Addr().String()
+
+	// A foreign certificate first, the live one second: row order must not
+	// decide whether the session works.
+	foreignDER, err := mintPrincipalCertificate(testHostKey(t), time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	relayFile := fmt.Sprintf(`{"endpoint":"wss://%s%s","exit":[{"name":%q,"public":%q},{"name":%q,"public":%q}]}`,
+		exitAddr, tunnelPath,
+		testV5Principal, encodeEPub(foreignDER),
+		testV5Principal, encodeEPub(testV5CertDER))
+	if err := os.WriteFile(filepath.Join(testV5StoreRoot, "relay.json"), []byte(relayFile), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	httpAddr := freeLoopbackAddr(t)
+	cfg, err := relayConfigFromEnv(httpAddr, freeLoopbackAddr(t), relaySelection{}, false, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.peerCerts) != 2 {
+		t.Fatalf("pinned %d certificates for a two-row exit, want both", len(cfg.peerCerts))
+	}
+	rctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { done <- runRelayNode(rctx, cfg) }()
+	waitForHealth(t, "http://"+httpAddr+healthPath)
+
+	conn := rawDial(t, httpAddr)
+	defer conn.Close()
+	mustWrite(t, conn, fmt.Sprintf("CONNECT %s:%d HTTP/1.1\r\nHost: %s\r\n\r\nGET /rot HTTP/1.1\r\nHost: local.test\r\nConnection: close\r\n\r\n",
+		testTargetAlias, upPort, testTargetAlias))
+	br := bufio.NewReader(conn)
+	status, err := br.ReadString('\n')
+	if err != nil || !strings.Contains(status, " 200 ") {
+		t.Fatalf("CONNECT: %q err=%v", status, err)
+	}
+	resp := readHTTPResponse(t, br)
+	defer resp.Body.Close()
+	if body, _ := io.ReadAll(resp.Body); string(body) != "rotation-ok" {
+		t.Fatalf("body=%q, want the tunnel to survive a staged exit rotation", body)
+	}
+}
+
+// argv may name the peer (exit row / security principal) and re-route the
+// endpoint; the store's first row is only the implicit default.
+func TestRelaySelectionNamesTheExit(t *testing.T) {
+	store, err := loadRelayStore(storeRoot())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, certs, err := store.selectExit(""); err != nil || len(certs) == 0 {
+		t.Fatalf("default selection: certs=%d err=%v", len(certs), err)
+	}
+	if _, _, err := store.selectExit("no-such-exit"); err == nil {
+		t.Fatal("an exit name the store does not pin was accepted")
+	}
+	writeTestRelayJSON(t, "wss://example.invalid/vpn")
+	t.Setenv(envClientLabel, "selection")
+	cfg, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), relaySelection{Exit: testV5Principal}, false, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.peerName != testV5Principal || len(cfg.peerCerts) == 0 {
+		t.Fatalf("selected peer = %q with %d certs", cfg.peerName, len(cfg.peerCerts))
+	}
+	override, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t),
+		relaySelection{Endpoint: "https://override.example:8443/vpn"}, false, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if override.tunnelURL.Host != "override.example:8443" || override.tunnelURL.Scheme != schemeWSS {
+		t.Fatalf("endpoint override = %s", override.tunnelURL)
+	}
+	if len(override.peerCerts) == 0 {
+		t.Fatal("the endpoint override dropped the pinned certificate set")
+	}
+	// A cleartext override still needs the degraded switch.
+	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t),
+		relaySelection{Endpoint: "ws://override.example/vpn"}, false, false); err == nil {
+		t.Fatal("a cleartext endpoint override bypassed -insecure-exit")
 	}
 }

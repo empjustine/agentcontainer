@@ -69,7 +69,7 @@ the transport carriers (h2-post-unbounded, WebSocket, h2-post-windowed) and
 [d187](d187-tunnel-family-complete-arms-by-default.md) the arming and the
 offer (the whole ladder, chosen per dial; the store is the arm signal,
 docs/d236/d085/d093). The tunnel's operator credential is the mutual
-`e-auth` proof pair plus an inner TLS channel (docs/d104, d131-d133, d169,
+`e-relay-auth`/`e-exit-auth` proof pair plus an inner TLS channel (docs/d104, d131-d133, d169,
 d236) over the bounded principal set of
 [d078](d078-ssl-vpn-operator-keys.md) (the NFR-5 exception). The h1.1 windowed
 floor retired with [d239](d239-estige-v5-carrier-coverage.md). FR-E1 is

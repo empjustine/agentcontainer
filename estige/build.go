@@ -62,19 +62,19 @@ func main() {
 		tag = "localhost/estige:" + strings.TrimSpace(string(version))
 	}
 	tool := containerTool()
-	ctx, err := os.MkdirTemp("", "estige-image")
+	buildDir, err := os.MkdirTemp("", "estige-image")
 	if err != nil {
 		fatal("build context: %v", err)
 	}
-	defer os.RemoveAll(ctx)
+	defer os.RemoveAll(buildDir)
 	binary, err := os.ReadFile(filepath.Join(pwd, "estige"))
 	if err != nil {
 		fatal("build ./estige first (go build .): %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(ctx, "estige"), binary, 0o755); err != nil {
+	if err := os.WriteFile(filepath.Join(buildDir, "estige"), binary, 0o755); err != nil {
 		fatal("stage binary: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(ctx, "Containerfile"), []byte(imageContainerfile), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(buildDir, "Containerfile"), []byte(imageContainerfile), 0o644); err != nil {
 		fatal("stage Containerfile: %v", err)
 	}
 	// Both backends take the same explicit `build` subcommand; podman's
@@ -82,7 +82,7 @@ func main() {
 	// docker's, so one spelling keeps the two from drifting.
 	args := []string{"build", "--pull", "-t", tag, "-f", "Containerfile", "."}
 	cmd := exec.Command(tool, args...)
-	cmd.Dir = ctx
+	cmd.Dir = buildDir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {

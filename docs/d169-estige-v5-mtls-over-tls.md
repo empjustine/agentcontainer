@@ -46,7 +46,7 @@ so the leaf moved the bytes without moving the boundary. d211 records the
 front-door alternative that drops this whole channel layer.
 
 d236 closes the audit of this proposal. It supplies the settled certificate
-shape, the `e-auth` and `E-Pub` admission pair, the log-only `seen_hosts` event
+shape, the `e-relay-auth`/`e-exit-auth` and `e-pub` admission pair, the log-only `seen_hosts` event
 and the per-window channel rule. Where this draft disagrees with d236, d236
 binds.
 

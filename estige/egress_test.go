@@ -156,12 +156,12 @@ func TestDialValidated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	dialCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	// The asserted property is the VOCABULARY the relay and the log key on
 	// (egressFailureReason), not a predicate name: that is what a caller can
 	// observe, and it is the one place the classification lives.
-	if _, _, err := dialValidated(ctx, p, "localhost", port); err == nil {
+	if _, _, err := dialValidated(dialCtx, p, "localhost", port); err == nil {
 		t.Fatal("default policy must refuse a loopback-resolving name")
 	} else if got := egressFailureReason(err); got != errReasonDenied {
 		t.Fatalf("expected the policy-denied reason, got %v → %s", err, got)
@@ -172,7 +172,7 @@ func TestDialValidated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	conn, pinned, err := dialValidated(ctx, p2, "localhost", port)
+	conn, pinned, err := dialValidated(dialCtx, p2, "localhost", port)
 	if err != nil {
 		t.Fatalf("allowed dial failed: %v", err)
 	}
@@ -186,7 +186,7 @@ func TestDialValidated(t *testing.T) {
 
 	// Unresolvable names are resolve-failed, NOT policy-denied — the
 	// vocabulary split the CONNECT_ERR reasons depend on.
-	if _, _, err := dialValidated(ctx, p2, "definitely-not-a-host.invalid", 443); err == nil {
+	if _, _, err := dialValidated(dialCtx, p2, "definitely-not-a-host.invalid", 443); err == nil {
 		t.Fatal("expected resolution failure")
 	} else if got := egressFailureReason(err); got != errReasonResolve {
 		t.Fatalf("expected resolve-failed vocabulary, got %v → %s", err, got)

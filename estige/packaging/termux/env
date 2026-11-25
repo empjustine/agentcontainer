@@ -1,12 +1,11 @@
 # estige exit node — Termux package env file.
 #
-# Sourced by $PREFIX/var/service/estige/run before it execs the binary. The
-# file is the env chain for a packaged service: the binary reads no file.
-# Keep it mode 0600.
+# Sourced by $PREFIX/var/service/estige/run before it execs the binary. This is
+# the service manager's env chain and it holds no configuration of its own
+# (d236); the binary is configured from the store directory at
+# $XDG_DATA_HOME/estige (default ~/.local/share/estige). Keep it mode 0600.
 #
-# NOTHING SECRET LIVES HERE (d236). The host identity, the admitted relays and
-# the egress policy are the store under $XDG_DATA_HOME/estige (default
-# ~/.local/share/estige):
+# The host identity, the admitted relays and the egress policy are files there:
 #
 #   estige keygen -principal <name>          # mint this host's key + certificate
 #   cat ~/.local/share/estige/relay.json     # paste the {name, public} row

@@ -70,11 +70,11 @@ var errAdmission = errors.New("channel admission failed")
 func validateRelayAdmission(eAuth, ePub []string, trust admissionTrust, peerName string, replay *nonceRing) (admissionResult, error) {
 	cert, encoded, err := parseEPubHeader(ePub)
 	if err != nil {
-		return admissionResult{}, fmt.Errorf("%w: E-Pub: %w", errAdmission, err)
+		return admissionResult{}, fmt.Errorf("%w: %s: %w", errAdmission, ePubHeader, err)
 	}
 	env, err := parseEAuthHeader(eAuth)
 	if err != nil {
-		return admissionResult{}, fmt.Errorf("%w: E-Auth: %w", errAdmission, err)
+		return admissionResult{}, fmt.Errorf("%w: %s: %w", errAdmission, eRelayAuthHeader, err)
 	}
 	pinned := pinnedCertificate(trust, env.Name, cert)
 	if pinned == nil {
@@ -99,11 +99,11 @@ func validateRelayAdmission(eAuth, ePub []string, trust admissionTrust, peerName
 func validateExitAdmission(eAuth, ePub []string, trust admissionTrust, exitName, relayName string, relayNonce []byte, replay *nonceRing) error {
 	cert, encoded, err := parseEPubHeader(ePub)
 	if err != nil {
-		return fmt.Errorf("%w: E-Pub: %w", errAdmission, err)
+		return fmt.Errorf("%w: %s: %w", errAdmission, ePubHeader, err)
 	}
 	env, err := parseEAuthHeader(eAuth)
 	if err != nil {
-		return fmt.Errorf("%w: E-Auth: %w", errAdmission, err)
+		return fmt.Errorf("%w: %s: %w", errAdmission, eExitAuthHeader, err)
 	}
 	pinned := pinnedCertificate(trust, env.Name, cert)
 	if pinned == nil {
@@ -134,16 +134,18 @@ func admissionResponse(priv ed25519.PrivateKey, principal string, selfDER []byte
 	return channelResponseHeaders(priv, principal, result.Name, result.Nonce, selfDER)
 }
 
-// verifyExitResponse is the relay half. A valid certificate that is not the
-// pinned exit still earns the operator hint; a malformed proof does not.
-func verifyExitResponse(hdr http.Header, store *relayStore, endpoint string, replay *nonceRing, relayNonce []byte) error {
+// verifyExitResponse is the relay half of one exchange, over the certificate
+// set of the exit this config selected (a staged rotation pins both rows). A
+// valid certificate that is not pinned still earns the operator hint; a
+// malformed proof does not.
+func (c *relayConfig) verifyExitResponse(hdr http.Header, relayNonce []byte) error {
 	err := validateExitAdmission(
-		hdr.Values(eAuthHeaderName), hdr.Values(ePubHeaderName),
-		trustFromRelayStore(store), store.Exits[0].Name, store.Principal, relayNonce, replay,
+		hdr.Values(eExitAuthHeader), hdr.Values(ePubHeader),
+		c.admission, c.peerName, c.store.Principal, relayNonce, c.replay,
 	)
 	if err != nil {
 		if untrusted, ok := errors.AsType[*untrustedPeerError](err); ok {
-			_ = logSeenHost(roleRelay, endpoint, untrusted.Name, untrusted.Public)
+			_ = logSeenHost(roleRelay, c.tunnelURL.Host, untrusted.Name, untrusted.Public)
 		}
 		return err
 	}
@@ -162,8 +164,8 @@ func channelRequestHeaders(priv ed25519.PrivateKey, principal, peerName string, 
 		return nil, nil, err
 	}
 	headers := make(http.Header)
-	headers.Set(eAuthHeaderName, token)
-	headers.Set(ePubHeaderName, encodeEPub(certDER))
+	headers.Set(eRelayAuthHeader, token)
+	headers.Set(ePubHeader, encodeEPub(certDER))
 	return headers, nonce[:], nil
 }
 
@@ -178,7 +180,7 @@ func channelResponseHeaders(priv ed25519.PrivateKey, principal, peerName string,
 		return nil, err
 	}
 	headers := make(http.Header)
-	headers.Set(eAuthHeaderName, token)
-	headers.Set(ePubHeaderName, encodeEPub(certDER))
+	headers.Set(eExitAuthHeader, token)
+	headers.Set(ePubHeader, encodeEPub(certDER))
 	return headers, nil
 }

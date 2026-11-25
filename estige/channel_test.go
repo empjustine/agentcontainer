@@ -35,13 +35,13 @@ func channelHandshake(t *testing.T, clientCfg, serverCfg *tls.Config) error {
 	deadline := time.Now().Add(3 * time.Second)
 	_ = clientSide.SetDeadline(deadline)
 	_ = serverSide.SetDeadline(deadline)
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	handshakeCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	client := tls.Client(clientSide, clientCfg)
 	server := tls.Server(serverSide, serverCfg)
 	errs := make(chan error, 2)
-	go func() { errs <- client.HandshakeContext(ctx) }()
-	go func() { errs <- server.HandshakeContext(ctx) }()
+	go func() { errs <- client.HandshakeContext(handshakeCtx) }()
+	go func() { errs <- server.HandshakeContext(handshakeCtx) }()
 	for range 2 {
 		select {
 		case err := <-errs:
@@ -60,7 +60,7 @@ func TestChannelTLSConfigs(t *testing.T) {
 	exitLocal, exitCert := testChannelMaterial(t, testHostKey(t))
 	otherLocal, otherCert := testChannelMaterial(t, testHostKey(t))
 
-	clientCfg, err := clientChannelTLSConfig(relayLocal, exitCert)
+	clientCfg, err := clientChannelTLSConfig(relayLocal, []*x509.Certificate{exitCert})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +86,7 @@ func TestChannelTLSConfigs(t *testing.T) {
 		t.Fatalf("pinned handshake: %v", err)
 	}
 
-	wrongCfg, err := clientChannelTLSConfig(relayLocal, otherCert)
+	wrongCfg, err := clientChannelTLSConfig(relayLocal, []*x509.Certificate{otherCert})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -265,7 +265,7 @@ func TestInnerHandshakeOverCarrier(t *testing.T) {
 	}
 	results := make(chan outcome, 2)
 	go func() {
-		conn, err := clientChannelHandshake(context.Background(), clientStream, relayLocal, exitCert)
+		conn, err := clientChannelHandshake(context.Background(), clientStream, relayLocal, []*x509.Certificate{exitCert})
 		results <- outcome{conn, err}
 	}()
 	go func() {
@@ -324,7 +324,7 @@ func TestChannelRefusesCertificatesOutsideTheValidityWindow(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			pinned, err := clientChannelTLSConfig(relayLocal, bad)
+			pinned, err := clientChannelTLSConfig(relayLocal, []*x509.Certificate{bad})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -351,7 +351,7 @@ func TestTamperedCarrierEndsTheSession(t *testing.T) {
 	}
 	results := make(chan outcome, 2)
 	go func() {
-		conn, err := clientChannelHandshake(context.Background(), clientStream, relayLocal, exitCert)
+		conn, err := clientChannelHandshake(context.Background(), clientStream, relayLocal, []*x509.Certificate{exitCert})
 		results <- outcome{conn, err}
 	}()
 	go func() {

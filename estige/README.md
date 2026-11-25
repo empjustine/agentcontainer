@@ -36,7 +36,7 @@ end to end and never trust the node in the middle.
 > buffering gateway, so it fails closed instead of serving unprotected bytes;
 > the websocket carrier is the h1.1 path for any edge that passes upgrades.
 > Requirements are d188's, negotiation/framing d077's, names d105's, the
-> blind `e-auth` credential d104/d131/d236's, and the inner TLS channel
+> blind `e-relay-auth`/`e-exit-auth` proof pair d104/d131/d236's, and the inner TLS channel
 > d169/d236's. v5 is the generation in this binary: every admitted exchange
 > carries a mutual single-use proof and every carrier runs an inner TLS 1.3
 > session — one per window on h2-post-windowed. The front-door mTLS of d211
@@ -257,6 +257,13 @@ the `localhost` name family (`localhost`, the whole `.localhost` TLD, and
 the `/etc/hosts` spellings like `localhost4.localdomain4`) plus
 guaranteed-bogon space before any lookup regardless (docs/d163). The relay refuses to start if the ambient proxy env already
 names its own listener (exit 94) — a self-chain would dial a loop.
+
+Which peer this relay dials is argv too: `-exit <name>` selects a `relay.json`
+exit row — its name is the peer's security principal, and every certificate
+stored under that name is pinned, so a staged rotation's two rows both verify
+(d133) — and `-endpoint <url>` re-routes the dial without changing trust (the
+pinned certificate still decides). With neither flag the store's first exit row
+and its endpoint are the defaults; row order is special nowhere else (d236).
 
 Two postures and one extra listener are argv, not env: `-insecure-exit`
 (docs/d171) is the only way to skip tunnel-leg verification or accept a

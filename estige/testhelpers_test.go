@@ -393,9 +393,9 @@ func dialTunnelForTest(t *testing.T, u *url.URL) (tunnelStream, error) {
 // can replay one proof or present a foreign certificate.
 func dialTunnelWithHeaders(t *testing.T, u *url.URL, hdr http.Header) (tunnelStream, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	dialCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	ws, err := wsDial(ctx, u, hdr, nil, false)
+	ws, err := wsDial(dialCtx, u, hdr, nil, false)
 	if err != nil {
 		return nil, err
 	}
@@ -405,7 +405,7 @@ func dialTunnelWithHeaders(t *testing.T, u *url.URL, hdr http.Header) (tunnelStr
 		return nil, err
 	}
 	local := tls.Certificate{Certificate: [][]byte{store.SelfDER}, PrivateKey: store.Private}
-	conn, err := clientChannelHandshake(ctx, ws, local, store.Exits[0].Cert)
+	conn, err := clientChannelHandshake(dialCtx, ws, local, []*x509.Certificate{store.Exits[0].Cert})
 	if err != nil {
 		_ = ws.Close()
 		return nil, err
@@ -441,13 +441,13 @@ func wireRelayNode(t *testing.T, tunnelURL string) (string, func()) {
 	t.Setenv(envClientLabel, "e2e")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
-	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, false, false)
+	cfg, err := relayConfigFromEnv(httpAddr, socksAddr, relaySelection{}, false, false)
 	if err != nil {
 		t.Fatalf("relayConfigFromEnv: %v", err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	dialCtx, cancel := context.WithCancel(context.Background())
 	relayDone := make(chan error, 1)
-	go func() { relayDone <- runRelayNode(ctx, cfg) }()
+	go func() { relayDone <- runRelayNode(dialCtx, cfg) }()
 	waitForHealth(t, "http://"+httpAddr+healthPath)
 	return httpAddr, func() {
 		cancel()

@@ -16,7 +16,7 @@ import (
 func relaysConfigFrom(t *testing.T, endpoint string) (relayConfig, error) {
 	t.Helper()
 	writeTestRelayJSON(t, endpoint)
-	cfg, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false, true)
+	cfg, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), relaySelection{}, false, true)
 	if err != nil {
 		return cfg, err
 	}
@@ -37,7 +37,7 @@ func TestRelayEndpointRefusesUserinfo(t *testing.T) {
 // (VPN-R26 fail-closed).
 func TestRelayConfigRequiresTheStore(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", t.TempDir())
-	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false, true); err == nil {
+	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), relaySelection{}, false, true); err == nil {
 		t.Fatal("a relay with no store bound anyway")
 	}
 }
@@ -49,7 +49,7 @@ func TestRelayConfigRefusesUnprintableLabel(t *testing.T) {
 		t.Run(label, func(t *testing.T) {
 			writeTestRelayJSON(t, "https://example.invalid:8443/vpn")
 			t.Setenv(envClientLabel, label)
-			cfg, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false, true)
+			cfg, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), relaySelection{}, false, true)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -81,7 +81,7 @@ func TestRelayConfigNormalizesStoreEndpoint(t *testing.T) {
 	}
 
 	writeTestRelayJSON(t, "ftp://example.invalid/vpn")
-	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false, true); err == nil || !strings.Contains(err.Error(), "must be http://, https://, ws:// or wss://") {
+	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), relaySelection{}, false, true); err == nil || !strings.Contains(err.Error(), "must be http://, https://, ws:// or wss://") {
 		t.Fatalf("non-wire scheme: err=%v, want the four-scheme contract", err)
 	}
 }
@@ -92,7 +92,7 @@ func TestRelayEndpointGrammar(t *testing.T) {
 	for _, endpoint := range []string{"https://example.invalid", "wss:///vpn", "", "https:///vpn"} {
 		t.Run(endpoint, func(t *testing.T) {
 			writeTestRelayJSON(t, endpoint)
-			if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false, true); err == nil {
+			if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), relaySelection{}, false, true); err == nil {
 				t.Fatalf("endpoint %q was accepted", endpoint)
 			}
 		})

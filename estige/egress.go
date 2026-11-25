@@ -168,7 +168,7 @@ type egressConfig struct {
 // hostLookup is the exit's one DNS path (VPN-R36): dialValidated resolves
 // through this and nothing else.
 type hostLookup interface {
-	LookupIPAddr(ctx context.Context, host string) ([]net.IPAddr, error)
+	LookupIPAddr(dialCtx context.Context, host string) ([]net.IPAddr, error)
 }
 
 // defaultHostLookup fills every new policy's resolver. Tests swap it in
@@ -318,8 +318,8 @@ func parseIPLiteral(host string) (netip.Addr, bool) {
 // the system resolver, apply the policy to EVERY returned address, pin the
 // first allowed one, and dial that pinned address (never the name — a second
 // lookup is exactly the rebinding window this closes).
-func dialValidated(ctx context.Context, p *egressPolicy, host string, port uint16) (net.Conn, netip.Addr, error) {
-	ips, err := p.resolver.LookupIPAddr(ctx, host)
+func dialValidated(dialCtx context.Context, p *egressPolicy, host string, port uint16) (net.Conn, netip.Addr, error) {
+	ips, err := p.resolver.LookupIPAddr(dialCtx, host)
 	if err != nil {
 		return nil, netip.Addr{}, resolutionError{host: host, err: err}
 	}
@@ -341,7 +341,7 @@ func dialValidated(ctx context.Context, p *egressPolicy, host string, port uint1
 	if !chosen.IsValid() {
 		return nil, netip.Addr{}, egressDeniedError{host: host}
 	}
-	conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", net.JoinHostPort(chosen.String(), strconv.Itoa(int(port))))
+	conn, err := (&net.Dialer{}).DialContext(dialCtx, "tcp", net.JoinHostPort(chosen.String(), strconv.Itoa(int(port))))
 	if err != nil {
 		return nil, chosen, dialError{addr: chosen, err: err}
 	}

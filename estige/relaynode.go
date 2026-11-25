@@ -25,6 +25,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -57,15 +58,30 @@ const (
 	socksHandshakeTimeout = 10 * time.Second
 )
 
+// relaySelection is what argv may override about the pairing. An empty field
+// means the store's own value; the relay side is the only place row order is
+// special at all (an unset exit means the first row, d236).
+type relaySelection struct {
+	Exit     string
+	Endpoint string
+}
+
 // relayConfig is the relay node's full input surface; validate() is the one
 // place that decides it is safe to bind.
 type relayConfig struct {
 	tunnelURL *url.URL
 	label     string
-	// store is the v5 identity, its paired exit and the endpoint to dial —
+	// store is the v5 identity, its paired exits and the endpoint to dial —
 	// the whole credential surface (d236).
-	store     *relayStore
+	store *relayStore
+	// peerName and peerCerts are the selected exit's principal name and every
+	// certificate its store rows pin for that name: a staged rotation overlaps
+	// two rows and either may be presented (d133).
 	peerName  string
+	peerCerts []*x509.Certificate
+	// admission is the same set as a trust map, built once so response
+	// verification does not rebuild it per window.
+	admission admissionTrust
 	selfDER   []byte
 	replay    *nonceRing  // exit proofs already consumed on this relay
 	proxyAddr string      // HTTP CONNECT listener (must be loopback, VPN-R23)
@@ -94,13 +110,6 @@ func (c *relayConfig) channelHeaders() (http.Header, []byte, error) {
 	return channelRequestHeaders(c.store.Private, c.store.Principal, c.peerName, c.selfDER)
 }
 
-// verifyExitResponse authenticates the exit's half of one exchange before
-// any tunnel frame is written. The endpoint appears only in the operator's
-// hint, never in the refusal the peer sees.
-func (c *relayConfig) verifyExitResponse(hdr http.Header, relayNonce []byte) error {
-	return verifyExitResponse(hdr, c.store, c.tunnelURL.Host, c.replay, relayNonce)
-}
-
 // h2Posture values: the zero value is "not yet discovered".
 const (
 	h2PostureUnknown int32 = iota
@@ -120,15 +129,30 @@ const (
 // is argv — the same side of the ledger as d145's relay-side flags, and a
 // switch this load-bearing must be visible in the process's own command
 // line (d163).
-func relayConfigFromEnv(proxyAddr, socksAddr string, legacyIPRelay, insecureExit bool) (relayConfig, error) {
+func relayConfigFromEnv(proxyAddr, socksAddr string, selection relaySelection, legacyIPRelay, insecureExit bool) (relayConfig, error) {
 	var cfg relayConfig
 	store, err := loadRelayStore(storeRoot())
 	if err != nil {
 		return cfg, fmt.Errorf("relay store: %w", err)
 	}
+	peerName, peerCerts, err := store.selectExit(selection.Exit)
+	if err != nil {
+		return cfg, err
+	}
+	endpoint := store.Endpoint
+	if selection.Endpoint != "" {
+		// argv may re-route the dial, but never the trust: the pinned
+		// certificates of the selected exit still decide the peer.
+		endpoint, err = parseStoreEndpoint(selection.Endpoint)
+		if err != nil {
+			return cfg, fmt.Errorf("endpoint override: %w", err)
+		}
+	}
 	cfg.store = store
-	cfg.tunnelURL = store.Endpoint
-	cfg.peerName = store.Exits[0].Name
+	cfg.tunnelURL = endpoint
+	cfg.peerName = peerName
+	cfg.peerCerts = peerCerts
+	cfg.admission = admissionTrust{peerName: peerCerts}
 	cfg.selfDER = store.SelfDER
 	cfg.replay = newNonceRing(replayRingSize)
 	cfg.label = os.Getenv(envClientLabel)
@@ -344,17 +368,17 @@ func (c *relayNode) noteError(err error) {
 	c.lastErr.Store(msg)
 }
 
-// runRelayNode binds the loopback listeners and serves until ctx is done.
-func runRelayNode(ctx context.Context, cfg relayConfig) error {
+// runRelayNode binds the loopback listeners and serves until runCtx is done.
+func runRelayNode(runCtx context.Context, cfg relayConfig) error {
 	if err := cfg.validate(); err != nil {
 		return err
 	}
 	var lc net.ListenConfig
-	proxyLn, err := lc.Listen(ctx, "tcp", cfg.proxyAddr)
+	proxyLn, err := lc.Listen(runCtx, "tcp", cfg.proxyAddr)
 	if err != nil {
 		return fmt.Errorf("http proxy listen: %w", err)
 	}
-	socksLn, err := lc.Listen(ctx, "tcp", cfg.socksAddr)
+	socksLn, err := lc.Listen(runCtx, "tcp", cfg.socksAddr)
 	if err != nil {
 		_ = proxyLn.Close()
 		return fmt.Errorf("socks5 listen: %w", err)
@@ -378,7 +402,7 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 		logLine(sevWarn, "[vpn-relay] DEGRADED: -insecure-exit is set — certificate verification is skipped and a cleartext ws:// tunnel is accepted; the identity proof and certificate are exposed to whoever terminates the leg (docs/d171)")
 	}
 
-	forwardLns, err := c.bindForwards(ctx, cfg.forwards)
+	forwardLns, err := c.bindForwards(runCtx, cfg.forwards)
 	if err != nil {
 		_ = proxyLn.Close()
 		_ = socksLn.Close()
@@ -390,18 +414,18 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 	}
 	serveErr := make(chan error, 1)
 	go func() { serveErr <- httpSrv.Serve(proxyLn) }()
-	go c.serveSOCKS(ctx, socksLn)
+	go c.serveSOCKS(runCtx, socksLn)
 	for i, spec := range cfg.forwards {
-		go c.serveForward(ctx, forwardLns[i], spec)
+		go c.serveForward(runCtx, forwardLns[i], spec)
 	}
 
 	select {
-	case <-ctx.Done():
+	case <-runCtx.Done():
 		// Drain rather than kill (docs/d171's rotation primitive): a
 		// restart is how a credential rotates, and truncating every live
 		// response to rotate one is a choice, not a requirement.
 		logLine(sevInfo, "[vpn-relay] signal received; draining %d live tunnel(s) (grace %s)", c.live.count(), drainGrace)
-		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), drainGrace)
+		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(runCtx), drainGrace)
 		defer cancel()
 		_ = socksLn.Close()
 		for _, ln := range forwardLns {
@@ -524,7 +548,7 @@ const carrierOffer = "h2-post-unbounded, websocket, h2-post-windowed"
 // A refused exit proof is NOT a carrier failure (d131): it means the peer
 // could not authenticate itself, so the dial stops there — demoting would
 // hand the session to whatever refused it.
-func (c *relayNode) dialTransport(ctx context.Context, id string) (tunnelStream, error) {
+func (c *relayNode) dialTransport(dialCtx context.Context, id string) (tunnelStream, error) {
 	var attempts []string
 	record := func(carrier string, err error) {
 		attempts = append(attempts, fmt.Sprintf("%s: %v", carrier, err))
@@ -532,7 +556,7 @@ func (c *relayNode) dialTransport(ctx context.Context, id string) (tunnelStream,
 	credentialRefused := func(err error) bool { return errors.Is(err, errAdmission) }
 	posture := c.h2Posture.Load()
 	if posture != h2PostureWindowed {
-		s, err := c.openH2Carrier(ctx, id, false)
+		s, err := c.openH2Carrier(dialCtx, id, false)
 		if err == nil {
 			c.h2Posture.Store(h2PostureUnbounded)
 			logLine(sevInfo, "[vpn-relay] tunnel carrier=%s", s.transport())
@@ -549,7 +573,7 @@ func (c *relayNode) dialTransport(ctx context.Context, id string) (tunnelStream,
 			logLine(sevWarn, "[vpn-relay] h2-post-unbounded failed (%v); trying websocket", err)
 		}
 	}
-	ws, err := c.openWebSocket(ctx, id)
+	ws, err := c.openWebSocket(dialCtx, id)
 	if err == nil {
 		logLine(sevInfo, "[vpn-relay] tunnel carrier=%s", ws.transport())
 		return ws, nil
@@ -560,7 +584,7 @@ func (c *relayNode) dialTransport(ctx context.Context, id string) (tunnelStream,
 	record(carrierWebSocket, err)
 	logLine(sevWarn, "[vpn-relay] websocket failed (%v); trying h2-post-windowed", err)
 
-	s, err := c.openH2Carrier(ctx, id, true)
+	s, err := c.openH2Carrier(dialCtx, id, true)
 	if err == nil {
 		logLine(sevInfo, "[vpn-relay] tunnel carrier=%s", s.transport())
 		return s, nil
@@ -581,8 +605,8 @@ func (c *relayNode) dialTransport(ctx context.Context, id string) (tunnelStream,
 // openH2Carrier probes ALPN and opens one of the h2 POST carriers. The probe
 // is one TLS handshake the session does not reuse — the carriers dial fresh,
 // as d077 §4 requires for carrier selection.
-func (c *relayNode) openH2Carrier(ctx context.Context, id string, windowed bool) (tunnelStream, error) {
-	proto, err := alpnNegotiate(ctx, c.cfg.tunnelURL, []string{"h2", protoHTTP11}, c.tunnelDial(), c.cfg.insecureExit)
+func (c *relayNode) openH2Carrier(dialCtx context.Context, id string, windowed bool) (tunnelStream, error) {
+	proto, err := alpnNegotiate(dialCtx, c.cfg.tunnelURL, []string{"h2", protoHTTP11}, c.tunnelDial(), c.cfg.insecureExit)
 	if err != nil {
 		return nil, fmt.Errorf("ALPN probe: %w", err)
 	}
@@ -590,20 +614,20 @@ func (c *relayNode) openH2Carrier(ctx context.Context, id string, windowed bool)
 		return nil, fmt.Errorf("h2 not offered (ALPN %q)", proto)
 	}
 	if windowed {
-		return c.openH2Windowed(ctx, id, c.cfg.insecureExit)
+		return c.openH2Windowed(dialCtx, id, c.cfg.insecureExit)
 	}
-	return c.openH2Unbounded(ctx, id, c.cfg.insecureExit)
+	return c.openH2Unbounded(dialCtx, id, c.cfg.insecureExit)
 }
 
 // openWebSocket is the WebSocket rung, extracted so every ladder shares one
 // handshake spelling.
-func (c *relayNode) openWebSocket(ctx context.Context, id string) (tunnelStream, error) {
+func (c *relayNode) openWebSocket(dialCtx context.Context, id string) (tunnelStream, error) {
 	hdr, nonce, err := c.cfg.channelHeaders()
 	if err != nil {
 		return nil, err
 	}
 	hdr.Set(sessionIDHeader, id)
-	ws, err := wsDial(ctx, c.cfg.tunnelURL, hdr, c.tunnelDial(), c.cfg.insecureExit)
+	ws, err := wsDial(dialCtx, c.cfg.tunnelURL, hdr, c.tunnelDial(), c.cfg.insecureExit)
 	if err != nil {
 		return nil, err
 	}
@@ -614,14 +638,14 @@ func (c *relayNode) openWebSocket(ctx context.Context, id string) (tunnelStream,
 	return ws, nil
 }
 
-func (c *relayNode) openTunnel(ctx context.Context, target string) (tunnelStream, error) {
+func (c *relayNode) openTunnel(dialCtx context.Context, target string) (tunnelStream, error) {
 	// One id per app connection: the demotion ladder's attempts and the
 	// carrier that finally wins share it (docs/d106).
 	id, err := newSessionID()
 	if err != nil {
 		return nil, err
 	}
-	s, err := c.dialTransport(ctx, id)
+	s, err := c.dialTransport(dialCtx, id)
 	if err != nil {
 		err = fmt.Errorf("tunnel dial: %w", err)
 		c.noteError(err)
@@ -636,7 +660,7 @@ func (c *relayNode) openTunnel(ctx context.Context, target string) (tunnelStream
 
 	if s.transport() == carrierH2Unbounded || s.transport() == carrierWebSocket {
 		local := tls.Certificate{Certificate: [][]byte{c.cfg.selfDER}, PrivateKey: c.cfg.store.Private}
-		conn, err := clientChannelHandshake(ctx, s, local, c.cfg.store.Exits[0].Cert)
+		conn, err := clientChannelHandshake(dialCtx, s, local, c.cfg.peerCerts)
 		if err != nil {
 			logLine(sevWarn, "[vpn-relay] inner handshake failed on %s: %v", s.transport(), err)
 			c.noteError(err)
@@ -880,13 +904,13 @@ func httpStatusForTunnelErr(err error) (status int, code, title string) {
 // SOCKS5 listener (VPN-R23)
 // ---------------------------------------------------------------------------
 
-func (c *relayNode) serveSOCKS(ctx context.Context, ln net.Listener) {
+func (c *relayNode) serveSOCKS(runCtx context.Context, ln net.Listener) {
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			return // listener closed on shutdown
 		}
-		go c.handleSOCKS(ctx, conn)
+		go c.handleSOCKS(runCtx, conn)
 	}
 }
 
@@ -896,7 +920,7 @@ func (c *relayNode) serveSOCKS(ctx context.Context, ln net.Listener) {
 // unresolved; every other target answers at localTargetRefusal (d163) —
 // address targets keep VPN-R22's byte-identical 0x08 default until
 // -legacy-ip-relay says otherwise, and guaranteed refusals answer first.
-func (c *relayNode) handleSOCKS(ctx context.Context, conn net.Conn) {
+func (c *relayNode) handleSOCKS(connCtx context.Context, conn net.Conn) {
 	defer func() { _ = conn.Close() }()
 	_ = conn.SetDeadline(time.Now().Add(socksHandshakeTimeout))
 
@@ -974,7 +998,7 @@ func (c *relayNode) handleSOCKS(ctx context.Context, conn net.Conn) {
 	}
 	target := net.JoinHostPort(host, strconv.FormatUint(uint64(binary.BigEndian.Uint16(portBytes[:])), 10))
 
-	ws, err := c.openTunnel(ctx, target)
+	ws, err := c.openTunnel(connCtx, target)
 	if err != nil {
 		c.refusedRecord(target, viaSOCKS, "", tunnelErrReason(err))
 		socksReply(conn, socksRepForTunnelErr(err))

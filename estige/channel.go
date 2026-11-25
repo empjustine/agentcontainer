@@ -18,12 +18,13 @@ import (
 	"time"
 )
 
-// clientChannelTLSConfig pins one peer certificate for the relay side.
-func clientChannelTLSConfig(local tls.Certificate, peer *x509.Certificate) (*tls.Config, error) {
+// clientChannelTLSConfig pins the peer's certificate set for the relay side:
+// one exit may carry two rows during a staged rotation, and either verifies.
+func clientChannelTLSConfig(local tls.Certificate, peers []*x509.Certificate) (*tls.Config, error) {
 	if err := validateLocalChannelCert(local); err != nil {
 		return nil, err
 	}
-	pool, err := channelPool([]*x509.Certificate{peer})
+	pool, err := channelPool(peers)
 	if err != nil {
 		return nil, err
 	}
@@ -177,25 +178,25 @@ func (c *channelConn) fail(err error) error {
 
 // clientChannelHandshake wraps an admitted carrier and completes the inner
 // session. A failed handshake is a protocol violation, never a downgrade.
-func clientChannelHandshake(ctx context.Context, s tunnelStream, local tls.Certificate, peer *x509.Certificate) (*tls.Conn, error) {
-	cfg, err := clientChannelTLSConfig(local, peer)
+func clientChannelHandshake(handshakeCtx context.Context, s tunnelStream, local tls.Certificate, peers []*x509.Certificate) (*tls.Conn, error) {
+	cfg, err := clientChannelTLSConfig(local, peers)
 	if err != nil {
 		return nil, err
 	}
-	return runChannelHandshake(ctx, s, cfg, false)
+	return runChannelHandshake(handshakeCtx, s, cfg, false)
 }
 
 // serverChannelHandshake is the exit side of the same session. The peer list
 // is the principal's admitted certificates from the store.
-func serverChannelHandshake(ctx context.Context, s tunnelStream, local tls.Certificate, peers []*x509.Certificate) (*tls.Conn, error) {
+func serverChannelHandshake(handshakeCtx context.Context, s tunnelStream, local tls.Certificate, peers []*x509.Certificate) (*tls.Conn, error) {
 	cfg, err := serverChannelTLSConfig(local, peers)
 	if err != nil {
 		return nil, err
 	}
-	return runChannelHandshake(ctx, s, cfg, true)
+	return runChannelHandshake(handshakeCtx, s, cfg, true)
 }
 
-func runChannelHandshake(ctx context.Context, s tunnelStream, cfg *tls.Config, server bool) (*tls.Conn, error) {
+func runChannelHandshake(handshakeCtx context.Context, s tunnelStream, cfg *tls.Config, server bool) (*tls.Conn, error) {
 	streamConn := newChannelConn(s)
 	var conn *tls.Conn
 	if server {
@@ -203,9 +204,9 @@ func runChannelHandshake(ctx context.Context, s tunnelStream, cfg *tls.Config, s
 	} else {
 		conn = tls.Client(streamConn, cfg)
 	}
-	handshakeCtx, cancel := context.WithTimeout(ctx, tunnelHandshakeTimeout)
+	deadlineCtx, cancel := context.WithTimeout(handshakeCtx, tunnelHandshakeTimeout)
 	defer cancel()
-	if err := conn.HandshakeContext(handshakeCtx); err != nil {
+	if err := conn.HandshakeContext(deadlineCtx); err != nil {
 		s.protocolViolation()
 		_ = s.Close()
 		return nil, fmt.Errorf("inner TLS handshake: %w", err)
@@ -279,15 +280,15 @@ func (w *windowCarrier) sessionID() string               { return w.session }
 // frame stream the session pump uses inside it. A new window always means a
 // new handshake: a lost window must not strand the next one on a dead record
 // layer (d236).
-func windowChannel(ctx context.Context, s tunnelStream, local tls.Certificate, peer *x509.Certificate, server bool) (tunnelStream, error) {
+func windowChannel(handshakeCtx context.Context, s tunnelStream, local tls.Certificate, peers []*x509.Certificate, server bool) (tunnelStream, error) {
 	var (
 		conn *tls.Conn
 		err  error
 	)
 	if server {
-		conn, err = serverChannelHandshake(ctx, s, local, []*x509.Certificate{peer})
+		conn, err = serverChannelHandshake(handshakeCtx, s, local, peers)
 	} else {
-		conn, err = clientChannelHandshake(ctx, s, local, peer)
+		conn, err = clientChannelHandshake(handshakeCtx, s, local, peers)
 	}
 	if err != nil {
 		return nil, err

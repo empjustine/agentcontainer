@@ -113,9 +113,9 @@ func (t *tunnelServer) isTunnelPath(path string) bool {
 // wrapChannel starts the inner session after admission. The peer's
 // certificate comes from the admission proof, so the channel is pinned to the
 // principal that was just admitted.
-func (t *tunnelServer) wrapChannel(ctx context.Context, s tunnelStream, peer *admissionResult) (tunnelStream, error) {
+func (t *tunnelServer) wrapChannel(handshakeCtx context.Context, s tunnelStream, peer *admissionResult) (tunnelStream, error) {
 	local := tls.Certificate{Certificate: [][]byte{t.selfDER}, PrivateKey: t.private}
-	conn, err := serverChannelHandshake(ctx, s, local, []*x509.Certificate{peer.Cert})
+	conn, err := serverChannelHandshake(handshakeCtx, s, local, []*x509.Certificate{peer.Cert})
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2Unb
 	}
 	// Factor 1 first: an unknown credential must not even learn whether
 	// /<prefix>/vpn exists as a route (VPN-R12: rejected before any 101).
-	result, err := validateRelayAdmission(r.Header.Values(eAuthHeaderName), r.Header.Values(ePubHeaderName), t.admission, t.principal, t.replay)
+	result, err := validateRelayAdmission(r.Header.Values(eRelayAuthHeader), r.Header.Values(ePubHeader), t.admission, t.principal, t.replay)
 	if err != nil {
 		if untrusted, ok := errors.AsType[*untrustedPeerError](err); ok {
 			_ = logSeenHost(roleExit, "", untrusted.Name, untrusted.Public)
@@ -164,6 +164,13 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2Unb
 			"Could not answer the tunnel admission", err)
 		return
 	}
+	// An admission-bearing response is never cacheable and varies on
+	// everything: `Vary: *` tells an intermediary the response cannot be
+	// reused for another request, and the Cache-Control pair does the same
+	// for caches that read only that field. A window rides these headers on
+	// every exchange, so the whole session stays uncacheable.
+	response.Set("Vary", "*")
+	response.Set("Cache-Control", "no-cache, private")
 	// The correlation id is per-session diagnostic metadata (docs/d106):
 	// the relay mints it and sends it on the session-opening request; a
 	// malformed or absent value is replaced locally, because the header is
@@ -371,7 +378,7 @@ func (p *h2UnboundedServerStream) Close() error {
 // open/close records (VPN-R16's frame set, VPN-R20's remote resolution). It
 // is carrier-agnostic (docs/d077 §5): the same session over the 101 path and
 // over a h2-post-unbounded body.
-func (t *tunnelServer) runSession(ctx context.Context, s tunnelStream, key *operatorKey) {
+func (t *tunnelServer) runSession(sessionCtx context.Context, s tunnelStream, key *operatorKey) {
 	start := time.Now()
 	var (
 		label   string
@@ -463,7 +470,7 @@ func (t *tunnelServer) runSession(ctx context.Context, s tunnelStream, key *oper
 		failConnect(reason)
 		return
 	}
-	dialCtx, cancel := context.WithTimeout(ctx, tunnelDialTimeout)
+	dialCtx, cancel := context.WithTimeout(sessionCtx, tunnelDialTimeout)
 	upConn, _, err := dialValidated(dialCtx, policy, host, port)
 	cancel()
 	if err != nil {

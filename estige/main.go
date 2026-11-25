@@ -439,6 +439,12 @@ func main() {
 	// ws:// URL. It is argv, not env, because a posture this load-bearing
 	// must be visible in the process's own command line (d163's ledger).
 	insecureExit := flag.Bool("insecure-exit", false, "relay role: allow the two degraded tunnel postures — skip TLS verification and accept a cleartext ws:// URL (docs/d171)")
+	// Which peer this relay dials (d236). The store's first exit row is the
+	// implicit default — row order is special nowhere else — and argv can name
+	// the exit (its security principal) or re-route the endpoint. Neither
+	// grants trust: the pinned certificate of the selected exit decides.
+	exitName := flag.String("exit", "", "relay role: which relay.json exit row to dial (default: the first row; d236)")
+	endpointOverride := flag.String("endpoint", "", "relay role: dial this endpoint instead of relay.json's (the pinned certificate still decides trust; d236)")
 	// ssh-style local forwarding (docs/d144): each -L is its own loopback
 	// listener and its own tunnel per accepted connection.
 	var forwardArgs forwardList
@@ -471,7 +477,8 @@ func main() {
 		if *statusListen != "" {
 			fatalLine("[vpn-relay] -status-listen belongs to the exit role; the relay's surface is its loopback /healthz (VPN-R27)")
 		}
-		relayCfg, err := relayConfigFromEnv(*proxyListen, *socksListen, *legacyIPRelay, *insecureExit)
+		relayCfg, err := relayConfigFromEnv(*proxyListen, *socksListen,
+			relaySelection{Exit: *exitName, Endpoint: *endpointOverride}, *legacyIPRelay, *insecureExit)
 		if err != nil {
 			if errors.Is(err, errSelfChained) {
 				logLine(sevError, "[vpn-relay] %v", err)
@@ -483,8 +490,8 @@ func main() {
 		if err != nil {
 			fatalLine("[vpn-relay] %v", err)
 		}
-		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-		runErr := runRelayNode(ctx, relayCfg)
+		runCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		runErr := runRelayNode(runCtx, relayCfg)
 		// stop() runs explicitly, not from a defer: fatalLine below exits
 		// without unwinding defers (gocritic's exitAfterDefer), and a pending
 		// defer is exactly what that rule forbids.
@@ -561,7 +568,7 @@ func main() {
 		logLine(sevInfo, "[estige] listening on :%s (cloudflare edge: h2-post-unbounded refused; windowed carriers only)", cfPort)
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	runCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	if *statusListen != "" {
@@ -579,7 +586,7 @@ func main() {
 	select {
 	case err := <-serveErr:
 		fatalLine("[estige] %v", err)
-	case <-ctx.Done():
+	case <-runCtx.Done():
 		// One signal drains rather than kills (docs/d171's rotation
 		// primitive): stop accepting, let live sessions finish, then close
 		// what is left at the deadline. Without this a restart — which is

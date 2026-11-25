@@ -179,6 +179,27 @@ func loadExitStore(root string) (*exitStore, error) {
 	}, nil
 }
 
+// selectExit resolves the exit a relay pins: the row name (the peer's
+// security principal), every certificate stored under that name — a staged
+// rotation overlaps two rows and either may be presented (d133) — and nothing
+// else. An empty name means the store's first row, which is the only place
+// row order is special (d236).
+func (s *relayStore) selectExit(name string) (string, []*x509.Certificate, error) {
+	if name == "" {
+		name = s.Exits[0].Name
+	}
+	var certs []*x509.Certificate
+	for _, row := range s.Exits {
+		if row.Name == name {
+			certs = append(certs, row.Cert)
+		}
+	}
+	if len(certs) == 0 {
+		return "", nil, fmt.Errorf("relay.json pins no exit named %q", name)
+	}
+	return name, certs, nil
+}
+
 // parseStoreEndpoint normalizes the store's dial URL the way the env spelling
 // was normalized once: the URL's honest wire form is accepted (http/https/ws/
 // wss) and becomes the canonical ws/wss every carrier branches on. A cleartext

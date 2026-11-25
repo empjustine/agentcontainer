@@ -159,7 +159,7 @@ func (t *tunnelServer) serveH2Window(w http.ResponseWriter, r *http.Request, key
 		carrier:    carrierH2Windowed,
 		session:    traceID,
 	}
-	channel, err := windowChannel(context.WithoutCancel(r.Context()), carrier, local, result.Cert, true)
+	channel, err := windowChannel(context.WithoutCancel(r.Context()), carrier, local, []*x509.Certificate{result.Cert}, true)
 	if err != nil {
 		logLine(sevWarn, "[estige] tunnel h2-post-windowed: inner handshake failed: %v", err)
 		_ = s.Close()
@@ -239,14 +239,14 @@ type h2WindowedStream struct {
 	// local and peer pin this window's inner session. Every window gets a
 	// fresh handshake; no TLS state survives the response body's end.
 	local tls.Certificate
-	peer  *x509.Certificate
+	peers []*x509.Certificate
 	conn  *tls.Conn // current window's inner session; nil while it rotates
-	// ctx is the SESSION lifetime, not a request value: every window derives
+	// sessionCtx is the SESSION lifetime, not a request value: every window derives
 	// its request from it and Close cancels it, which is the one way an
 	// in-flight window ends when the relay abandons the CONNECT.
 	//nolint:containedctx // session lifetime, deliberately outliving a call
-	ctx    context.Context
-	cancel context.CancelFunc
+	sessionCtx context.Context
+	cancel     context.CancelFunc
 
 	mu   sync.Mutex
 	cond *sync.Cond
@@ -264,25 +264,25 @@ type h2WindowedStream struct {
 
 // openH2Windowed starts an h2-post-windowed session and opens its first
 // window.
-func (c *relayNode) openH2Windowed(ctx context.Context, id string, skipVerify bool) (tunnelStream, error) {
+func (c *relayNode) openH2Windowed(dialCtx context.Context, id string, skipVerify bool) (tunnelStream, error) {
 	u := *c.cfg.tunnelURL
 	if u.Scheme != schemeWSS {
 		return nil, fmt.Errorf("h2-post-windowed needs a wss:// tunnel URL, got %q", u.Scheme)
 	}
 	u.Scheme = schemeHTTPS
 	tr := c.h2Transport(&u, skipVerify)
-	sctx, cancel := context.WithCancel(context.WithoutCancel(ctx))
+	sessionCtx, cancel := context.WithCancel(context.WithoutCancel(dialCtx))
 	w := &h2WindowedStream{
-		url:    u.String(),
-		local:  tls.Certificate{Certificate: [][]byte{c.cfg.selfDER}, PrivateKey: c.cfg.store.Private},
-		peer:   c.cfg.store.Exits[0].Cert,
-		cfg:    &c.cfg,
-		id:     id,
-		bound:  h2WindowedBytes,
-		tr:     tr,
-		ctx:    sctx,
-		cancel: cancel,
-		closed: make(chan struct{}),
+		url:        u.String(),
+		local:      tls.Certificate{Certificate: [][]byte{c.cfg.selfDER}, PrivateKey: c.cfg.store.Private},
+		peers:      c.cfg.peerCerts,
+		cfg:        &c.cfg,
+		id:         id,
+		bound:      h2WindowedBytes,
+		tr:         tr,
+		sessionCtx: sessionCtx,
+		cancel:     cancel,
+		closed:     make(chan struct{}),
 	}
 	w.cond = sync.NewCond(&w.mu)
 	w.client = &http.Client{Transport: tr, CheckRedirect: func(*http.Request, []*http.Request) error {
@@ -311,7 +311,7 @@ func (w *h2WindowedStream) openWindow() error {
 	w.mu.Unlock()
 
 	pr, pw := io.Pipe()
-	req, err := http.NewRequestWithContext(w.ctx, http.MethodPost, w.url, pr)
+	req, err := http.NewRequestWithContext(w.sessionCtx, http.MethodPost, w.url, pr)
 	if err != nil {
 		_ = pw.Close()
 		return err
@@ -372,7 +372,7 @@ func (w *h2WindowedStream) openWindow() error {
 		carrier: carrierH2Windowed,
 		session: w.id,
 	}
-	conn, err := clientChannelHandshake(w.ctx, carrier, w.local, w.peer)
+	conn, err := clientChannelHandshake(w.sessionCtx, carrier, w.local, w.peers)
 	if err != nil {
 		_ = pw.CloseWithError(err)
 		_ = resp.Body.Close()
