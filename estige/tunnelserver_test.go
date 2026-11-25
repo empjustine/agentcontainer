@@ -496,6 +496,38 @@ func TestSessionResponsesCarryExitProofAndForbidCaching(t *testing.T) {
 		}
 	})
 
+	t.Run("h2-post-unbounded's 200", func(t *testing.T) {
+		// The default-first rung: its 200 IS the session-open signal, so the
+		// proof must ride those headers too — a body that never sends them
+		// would hand every session on the cheapest carrier to a peer that
+		// never authenticated.
+		hdr, nonce, err := channelRequestHeaders(store.Private, store.Principal, store.Exits[0].Name, store.SelfDER)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, backend.URL+tunnelPath, http.NoBody)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header = hdr
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("body session answered %d, want the 200 open signal", resp.StatusCode)
+		}
+		assertUncacheable(t, resp.Header)
+		if err := validateExitAdmission(
+			resp.Header.Values(eExitAuthHeader), resp.Header.Values(ePubHeader),
+			admissionTrust{store.Exits[0].Name: {store.Exits[0].Cert}},
+			store.Exits[0].Name, store.Principal, nonce, newNonceRing(4),
+		); err != nil {
+			t.Fatalf("h2-post-unbounded proof: %v", err)
+		}
+	})
+
 	t.Run("a window's 200", func(t *testing.T) {
 		hdr, _, err := channelRequestHeaders(store.Private, store.Principal, store.Exits[0].Name, store.SelfDER)
 		if err != nil {

@@ -202,8 +202,7 @@ type exchangeStream struct {
 	inFlight bool
 
 	inbound  chan []byte
-	inBytes  atomic.Int64 // admitted-not-consumed bytes; the declared window bound caps the window
-	outbound chan []byte  // cap 1: one frame of backpressure (VPN-R18)
+	outbound chan []byte // cap 1: one frame of backpressure (VPN-R18)
 
 	closeOnce sync.Once
 	closed    chan struct{}
@@ -251,15 +250,14 @@ func (s *exchangeStream) endWindow() {
 	s.mu.Unlock()
 }
 
-// drain reads one window's frames off the request body into inbound until
-// the client's body ends. The push blocks (backpressure) and trips the
-// byte cap as a protocol error — never a queue that grows (VPN-R39).
-// Returns nil when the window is fully admitted; any error means the
-// session is dead.
+// readTunnelMsg pops the next admitted frame — or waits for the next window
+// to carry one. The read deadline fires through Close (the timer of
+// setReadDeadline), which is how the handshake bound and the relay's idle
+// reap reach a carrier with no socket of its own. A window's own byte budget
+// is enforced where it is read (drainBound), so no counter lives here.
 func (s *exchangeStream) readTunnelMsg() ([]byte, error) {
 	select {
 	case msg := <-s.inbound:
-		s.inBytes.Add(-int64(len(msg)))
 		return msg, nil
 	case <-s.closed:
 		if s.timedOut.Load() {
