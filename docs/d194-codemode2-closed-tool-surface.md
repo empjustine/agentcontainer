@@ -6,7 +6,16 @@ title: "d194 — spike: codemode2, a closed core-tool surface enumerated from GT
 parent: codemode2
 depends-on: [d150, d156, d176]
 references:
-  [codemode-runtime-prior-art, d152, d153, d163, d127, d113, workload-sandboxing-prior-art]
+  [
+    codemode-runtime-prior-art,
+    codemode2-prior-art,
+    d152,
+    d153,
+    d163,
+    d127,
+    d113,
+    workload-sandboxing-prior-art,
+  ]
 tags:
   [
     "spike",
@@ -349,11 +358,15 @@ review:
   shape, [codemode-runtime-prior-art](codemode-runtime-prior-art.md)) gives a memory
   bound and a hard interrupt; [d152](d152-pymode-a-python-code-mode-extension.md)
   prices the interpreter options. The surface's JSON and text responsibilities
-  decide, not taste.
+  decide, not taste. A sibling engine is the worked answer in
+  [codemode2-prior-art](../codemode2/PRIOR-ART.md): `djs` runs pi's codemode on a
+  fuel-bounded in-process wasm engine, and that survey records what it cost.
 - **Whether `awk` is needed at all.** `jq` and `cut`/`sort`/`uniq` cover the
   field-walking that a coding workflow actually does, and an `awk` subset is the
   largest interpreter this surface would carry. [d153](d153-minimal-agents-over-real-runtimes.md)'s
-  familiarity argument pushes the other way.
+  familiarity argument pushes the other way. [codemode2-prior-art](../codemode2/PRIOR-ART.md)
+  carries the one measurement that bears on it: `awk` is 1.2% of 295,401 agent
+  commands, below `cut`.
 - **What brokering still buys.** Charset conversion without a table per encoding,
   `xz`/`zstd` without a codec port, and `file`'s magic database are the three
   candidates, and each costs the OS bars instead of a parser.
@@ -370,7 +383,10 @@ review:
   way to cut this surface further — the design's own priority is terse. The same
   measurement answers the opposite question: which familiar idioms the surface has
   to keep for the model to stay in-distribution (d153). That is the fidelity half,
-  and closure alone cannot score it.
+  and closure alone cannot score it. The method is worked out elsewhere in the
+  farm: `psh` reads 295,401 commands, keeps a shape corpus of 26,234 syntax
+  skeletons with a reviewed vocabulary, and classifies on the parser it executes
+  ([codemode2-prior-art](../codemode2/PRIOR-ART.md)).
 
 ## Re-verify
 

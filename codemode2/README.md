@@ -5,7 +5,7 @@ status: draft
 title: "codemode2: a closed core-tool surface, enumerated from the living-off-the-land corpora"
 parent: architecture
 depends-on: [d194, d196, d198, d150, d152, d153, d156, d176]
-references: [codemode-runtime-prior-art, d153, d163, d127, d113]
+references: [codemode-runtime-prior-art, codemode2-prior-art, d153, d163, d127, d113]
 tags: ["tools", "sandbox", "shell", "allowlist", "gtfobins", "lolbas", "research"]
 ---
 
@@ -95,6 +95,17 @@ runtime shapes, with the farm's tips) and
 [workload-sandboxing-prior-art](../docs/workload-sandboxing-prior-art.md) (the
 backends). [d176](../docs/d176-reimplement-contracts-not-tools.md) supplies the rule
 the surface applies to them: reimplement the contracts, not the tools.
+
+## Prior art
+
+Three sibling projects are read in [PRIOR-ART.md](PRIOR-ART.md) at pinned mirror
+tips, each answering one side of that split: `djs` (a JavaScript engine that
+replaced QuickJS in pi's codemode, and the sandboxed policy engine inside
+`gondolin`), `psh` (a bash-compatible shell that keeps real processes and reaches
+85% command coverage with one external program), and `gondolin` (a micro-VM whose
+network and filesystem are mediated on the host). Their findings and open issues
+land on this unit's questions rather than on a new set: the engine under a closed
+surface, the corpus that measures a surface, and what a checkpoint leaves out.
 
 ## The artifacts
 

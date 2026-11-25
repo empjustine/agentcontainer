@@ -6,7 +6,17 @@ title: "d198 — reversible mutation: journal, checkpoint, and the surface width
 parent: codemode2
 depends-on: [d196, d194]
 references:
-  [d020, d026, d054, d162, d164, workload-api, workload-sandboxing-prior-art, bwrap-runtime-audit]
+  [
+    d020,
+    d026,
+    d054,
+    d162,
+    d164,
+    workload-api,
+    workload-sandboxing-prior-art,
+    bwrap-runtime-audit,
+    codemode2-prior-art,
+  ]
 tags: ["codemode2", "reversibility", "snapshot", "journal", "worktree", "isolation", "design"]
 ---
 
@@ -51,15 +61,16 @@ living as an implementation note.
 
 ## What the prior research covers
 
-| what                                | where                                                                                                                                                                                   | what it settles                                                                                                                                                           |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| VM-level snapshot and rollback      | [d020](d020-libvirt-qemu-sandbox.md) (`virsh snapshot-*` over qcow2)                                                                                                                    | cheap full-state reset, and the question that recurs here: decide deliberately what is inside the snapshot — a shared workspace mount survives a VM reset                 |
-| the industrial shape                | [workload-sandboxing-prior-art](workload-sandboxing-prior-art.md)'s `state_model` facet (`ephemeral / resumable / persistent / copy_apply`) and e2b's "a sandbox is a resumed snapshot" | the cost these products optimise is **restore** time; [d026](d026-data-diode-audit.md)'s per-run stage is this tree's `copy_apply`                                        |
-| the cheap primitive's price         | [d162](d162-powershell-endpoints-are-deleted.md)                                                                                                                                        | `cp --reflink=always` of 100 MiB moved `df` by **152 KiB** on the WSL2 filesystem; the same copy on an NTFS volume is 102,400 KiB of new blocks                           |
-| the mount layout that would host it | [bwrap-runtime-audit](archive/bwrap-runtime-audit.md)                                                                                                                                   | read-only binds, a private `/tmp`, fresh `/proc` and `/dev` — and no copy-on-write of the workload directory                                                              |
-| ephemerality against audit          | [d054](d054-pi-agent-and-session-dir-mounts.md)                                                                                                                                         | a tmpfs store was rejected because it costs the host-side audit trail, which is the asset the stage protects — so a rollback must leave a journal, not delete a directory |
-| micro-VM limits                     | [workload-sandboxing-prior-art](workload-sandboxing-prior-art.md) (firecracker and cloud-hypervisor ship no 9p/virtiofs)                                                                | at that tier a read-write workspace is an in-guest clone plus push-back, which is a snapshot mechanism, not a mount                                                       |
-| step boundaries                     | [d164](d164-signals-stop-at-a-step-boundary.md)                                                                                                                                         | a signal stops at a step boundary, which is where a rollback can safely begin                                                                                             |
+| what                                  | where                                                                                                                                                                                   | what it settles                                                                                                                                                           |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| VM-level snapshot and rollback        | [d020](d020-libvirt-qemu-sandbox.md) (`virsh snapshot-*` over qcow2)                                                                                                                    | cheap full-state reset, and the question that recurs here: decide deliberately what is inside the snapshot — a shared workspace mount survives a VM reset                 |
+| the industrial shape                  | [workload-sandboxing-prior-art](workload-sandboxing-prior-art.md)'s `state_model` facet (`ephemeral / resumable / persistent / copy_apply`) and e2b's "a sandbox is a resumed snapshot" | the cost these products optimise is **restore** time; [d026](d026-data-diode-audit.md)'s per-run stage is this tree's `copy_apply`                                        |
+| the cheap primitive's price           | [d162](d162-powershell-endpoints-are-deleted.md)                                                                                                                                        | `cp --reflink=always` of 100 MiB moved `df` by **152 KiB** on the WSL2 filesystem; the same copy on an NTFS volume is 102,400 KiB of new blocks                           |
+| the mount layout that would host it   | [bwrap-runtime-audit](archive/bwrap-runtime-audit.md)                                                                                                                                   | read-only binds, a private `/tmp`, fresh `/proc` and `/dev` — and no copy-on-write of the workload directory                                                              |
+| ephemerality against audit            | [d054](d054-pi-agent-and-session-dir-mounts.md)                                                                                                                                         | a tmpfs store was rejected because it costs the host-side audit trail, which is the asset the stage protects — so a rollback must leave a journal, not delete a directory |
+| micro-VM limits                       | [workload-sandboxing-prior-art](workload-sandboxing-prior-art.md) (firecracker and cloud-hypervisor ship no 9p/virtiofs)                                                                | at that tier a read-write workspace is an in-guest clone plus push-back, which is a snapshot mechanism, not a mount                                                       |
+| step boundaries                       | [d164](d164-signals-stop-at-a-step-boundary.md)                                                                                                                                         | a signal stops at a step boundary, which is where a rollback can safely begin                                                                                             |
+| what a micro-VM checkpoint leaves out | [codemode2-prior-art](../codemode2/PRIOR-ART.md) (gondolin's stated limitations: disk-only snapshots, no RAM state)                                                                     | the boundary a checkpoint's name hides: tmpfs-backed paths and VFS mounts are not in it, so a rollback cannot be assumed to cover a write that landed in either           |
 
 What is not covered anywhere in the tree: per-mutation undo, the choice between the
 mechanisms below, snapshot policy, and any latency or space measurement of them.
