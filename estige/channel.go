@@ -105,7 +105,7 @@ func newChannelConn(s tunnelStream) *channelConn {
 }
 
 func bodyCarrier(transport string) bool {
-	return transport == carrierH2Unbounded || transport == carrierH2Windowed || transport == carrierH1Windowed
+	return transport == carrierH2Unbounded || transport == carrierH2Windowed
 }
 
 func (c *channelConn) Read(p []byte) (int, error) {
@@ -255,16 +255,6 @@ func (s *tlsTunnelStream) protocolViolation()                { s.inner.protocolV
 func (s *tlsTunnelStream) transport() string                 { return s.inner.transport() }
 func (s *tlsTunnelStream) sessionID() string                 { return s.inner.sessionID() }
 func (s *tlsTunnelStream) Close() error                      { return s.conn.Close() }
-
-// writeChannelPing sends liveness through the TLS session, not the raw carrier.
-func writeChannelPing(conn net.Conn) error {
-	msg, err := encodeFrame(framePing, tunnelStreamV1, nil)
-	if err != nil {
-		return err
-	}
-	_, err = conn.Write(msg)
-	return err
-}
 
 // windowCarrier is one HTTP window's framed byte pipe. The handshake needs a
 // stream; a window has a request body, a response body and no lifetime beyond

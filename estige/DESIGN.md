@@ -81,8 +81,8 @@ path" is exactly the oracle the 404 policy exists to remove.
   inside the tunnel's TLS and are never seen by the exit node's policy layer.
 - No egress without policy: the exit node resolves and pins the target and
   enforces the egress table (default deny for RFC 1918/metadata/loopback,
-  ports 80/443; operator opt-ins arrive as `VPN_TUNNEL_EGRESS` until d104's
-  store carries them — docs/d108) before the first byte leaves.
+  ports 80/443; operator opt-ins arrive as `exit.json`'s `egress` block, and a
+  relay row may narrow its own — docs/d078/d236) before the first byte leaves.
 - No silent degradation: a node that is not armed refuses to boot rather than
   binding a port that answers 404 to everything (docs/d084's kill-switch law),
   and a degraded relay posture exists only behind `-insecure-exit` (docs/d171).

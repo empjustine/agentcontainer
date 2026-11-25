@@ -70,17 +70,13 @@ func TestLocalForwardEndToEnd(t *testing.T) {
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
 
-	armTestTunnelEnv(t)
-	s := &server{}
-	if err := s.enableTunnel(egressConfig{
+	s := newTunnelServer(t, true, egressConfig{
 		AllowCidrs: []string{"127.0.0.0/8"},
 		Ports:      []uint16{upPort},
-	}); err != nil {
-		t.Fatal(err)
-	}
+	})
 	exit := newHTTPSServer(t, s)
 
-	t.Setenv(envTunnelURL, "wss://"+exit.Listener.Addr().String()+tunnelPath)
+	writeTestRelayJSON(t, "wss://"+exit.Listener.Addr().String()+tunnelPath)
 	t.Setenv(envClientLabel, "forward-e2e")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
@@ -127,7 +123,7 @@ func TestLocalForwardEndToEnd(t *testing.T) {
 		t.Fatalf("body=%q", body)
 	}
 	waitForLog(t, logBuf, "via=forward")
-	if strings.Contains(logBuf.String(), testTunnelToken) {
+	if strings.Contains(logBuf.String(), encodeEPub(testV5CertDER)) {
 		t.Fatalf("credential leaked through the forward path:\n%s", logBuf.String())
 	}
 

@@ -159,17 +159,20 @@ func sum256(pub ed25519.PublicKey) []byte {
 }
 
 func TestKeyCheckLoadsBothRoleStores(t *testing.T) {
-	role, peers, err := checkStore(storeRoot())
+	summary, err := checkStore(storeRoot())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if role != "exit" || peers < 1 {
-		t.Fatalf("checkStore = (%q, %d), want an exit store with a peer", role, peers)
+	// The suite store carries both role files, so both must be reported.
+	for _, want := range []string{"relay: 1 pinned exit(s)", "exit: 1 admitted relay(s)"} {
+		if !strings.Contains(summary, want) {
+			t.Fatalf("checkStore = %q, want it to contain %q", summary, want)
+		}
 	}
 }
 
 func TestKeyCheckRefusesEmptyStore(t *testing.T) {
-	if _, _, err := checkStore(t.TempDir()); err == nil {
+	if _, err := checkStore(t.TempDir()); err == nil {
 		t.Fatal("key check accepted a store with no role files")
 	}
 }

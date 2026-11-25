@@ -33,27 +33,18 @@ import (
 	"time"
 )
 
-// Tunnel environment surface (carriers; docs/d073 §6.3/§7): credentials
-// arrive ONLY through this path — the ./environment.sh env chain. A file
-// would be a second, unkeyed copy of a credential (VPN-R32), and d108 removed
-// the last file the binary read rather than keep a policy-shaped exception.
-// The roles are disjoint (docs/d090): VPN_OPERATOR_KEYS is the EXIT node's
-// principal set, a JSON object {"<id>": "<token>"} (docs/d078 §2);
-// VPN_OPERATOR_TOKEN is the RELAY node's bearer and is read nowhere else.
-// VPN_TUNNEL_URL is the relay node's endpoint — http(s):// or ws(s)://, in
-// the URL's honest wire form, normalized once in relayConfigFromEnv — and
-// VPN_CLIENT_LABEL its optional identity; they identify, they do not
-// authenticate. The capability PATH is none of this env's business
-// (docs/d085): it is the Funnel mount's, and the edge strips it before a
-// request can reach us.
+// Tunnel environment surface (carriers; docs/d073 §6.3/§7): NOTHING SECRET
+// arrives this way any more. The store under $XDG_DATA_HOME/estige holds the
+// host identity, the pairing and the egress policy (d236/d132), so a file
+// holding a credential is not a second copy of one and the env chain carries
+// only non-secret runtime knobs. What is left: the bind (PORT/PORT_CLOUDFLARE,
+// docs/d110/d222) and the relay's optional log label. The capability PATH is
+// none of this env's business (docs/d085): it is the Funnel mount's, and the
+// edge strips it before a request can reach us.
 const (
-	envTunnelURL     = "VPN_TUNNEL_URL"
-	envOperatorToken = "VPN_OPERATOR_TOKEN"
-	envOperatorKeys  = "VPN_OPERATOR_KEYS"
-	envClientLabel   = "VPN_CLIENT_LABEL"
-	// envTunnelEgress is the exit node's policy half (VPN-R38): parsed by
-	// egressFromEnv, unset meaning the requirement's defaults.
-	envTunnelEgress = "VPN_TUNNEL_EGRESS"
+	// envClientLabel is the relay node's optional identity in the HELLO and
+	// its own log records. It identifies, it does not authenticate.
+	envClientLabel = "VPN_CLIENT_LABEL"
 	// envCloudflarePort is the exit node's second bind: the port whose
 	// connector (cloudflared) fronts an edge that caps one request body
 	// (docs/d222). Requests arriving on it have h2-post-unbounded refused at
@@ -61,16 +52,6 @@ const (
 	// means the exit serves one edge only.
 	envCloudflarePort = "PORT_CLOUDFLARE"
 )
-
-// operatorCredentialInEnv reports whether the env chain carries an operator
-// credential — the thing that arms the tunnel (docs/d084 as amended by d085:
-// the credential IS the capability). The file-side veto/assert is gone with
-// the file (docs/d108 slice 5): wanting the tunnel off is spelled by not
-// loading the credential, which is one spelling instead of three.
-// Either variable marks the operator's INTENT to arm; which variable each
-// node actually READS is enforced at enable time (docs/d090): the exit node
-// refuses TOKEN-only with the migration hint, the relay node refuses in
-// relayConfig.validate().
 
 // portFromEnv resolves the exit node's single-port bind (docs/d110): env
 // PORT, unset → 8080 on all interfaces. The convention's whole value is that
@@ -140,15 +121,6 @@ func writeProblem(w http.ResponseWriter, r *http.Request, status int, code, titl
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
-	writeProblemBody(w, r, status, code, title, err)
-}
-
-// writeProblemBody is the body half for handlers whose 200 is already on the
-// wire: a window opens before its frames are read, so a later failure can
-// only be reported in the body, never in a second status line.
-func writeProblemBody(w http.ResponseWriter, r *http.Request, status int, code, title string, err error) {
-	w.Header().Set("Content-Type", "application/problem+json")
-	w.Header().Set("Cache-Control", "no-store")
 	// The encode error is logged, not returned: the status line is already on
 	// the wire, so the log is the only honest signal left (NFR-2). The any-typed
 	// Details member is why errchkjson refuses a blank assignment here.
@@ -552,13 +524,9 @@ func main() {
 	}
 
 	s := &server{cloudflarePort: cfPort}
-	egress, err := egressFromEnv()
-	if err != nil {
-		fatalLine("[estige] %v", err)
-	}
 	// The store is the arming fact: a missing or broken store refuses at
 	// boot rather than binding a port that answers 404 to everything.
-	if err := s.enableTunnel(egress); err != nil {
+	if err := s.enableTunnel(); err != nil {
 		fatalLine("[estige] tunnel: %v", err)
 	}
 

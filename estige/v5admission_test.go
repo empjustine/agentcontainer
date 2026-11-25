@@ -1,10 +1,16 @@
 package main
 
 import (
+	"bufio"
+	"context"
 	"crypto/ed25519"
 	"crypto/x509"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -33,7 +39,7 @@ func TestValidateRelayAdmission(t *testing.T) {
 	relayDER := admissionMaterial(t, relayPriv)
 	exitPriv := testHostKey(t)
 	exitDER := admissionMaterial(t, exitPriv)
-	trust := admissionTrust{"relay_bazzite": relayCertFromDER(t, relayDER)}
+	trust := admissionTrust{"relay_bazzite": {relayCertFromDER(t, relayDER)}}
 
 	headers, _, err := channelRequestHeaders(relayPriv, "relay_bazzite", "exit-home", relayDER)
 	if err != nil {
@@ -43,7 +49,7 @@ func TestValidateRelayAdmission(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.Name != "relay_bazzite" || len(result.Nonce) != 16 || !result.Cert.Equal(trust["relay_bazzite"]) {
+	if result.Name != "relay_bazzite" || len(result.Nonce) != 16 || !result.Cert.Equal(trust["relay_bazzite"][0]) {
 		t.Fatalf("result = %+v", result)
 	}
 
@@ -75,7 +81,7 @@ func TestValidateRelayAdmissionFailures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	trust := admissionTrust{"relay_bazzite": relayCertFromDER(t, relayDER)}
+	trust := admissionTrust{"relay_bazzite": {relayCertFromDER(t, relayDER)}}
 
 	wrongCert := make(http.Header)
 	wrongCert.Set(eAuthHeaderName, headers.Get(eAuthHeaderName))
@@ -104,12 +110,15 @@ func TestValidateRelayAdmissionFailures(t *testing.T) {
 
 func TestTrustMapsFromStores(t *testing.T) {
 	cert := relayCertFromDER(t, admissionMaterial(t, testHostKey(t)))
-	relay := &relayStore{Exits: []relayExitEntry{{Name: "exit-home", Cert: cert}}}
-	exit := &exitStore{Relays: []storeKeyEntry{{Name: "relay_bazzite", Cert: cert}}}
-	if trustFromRelayStore(relay)["exit-home"] != cert {
+	relay := &relayStore{Exits: []storeKeyEntry{{Name: "exit-home", Cert: cert}}}
+	var relayRow relayPeerEntry
+	relayRow.Name = "relay_bazzite"
+	relayRow.Cert = cert
+	exit := &exitStore{Relays: []relayPeerEntry{relayRow}}
+	if pinnedCertificate(trustFromRelayStore(relay), "exit-home", cert) == nil {
 		t.Fatal("relay trust map lost its pinned certificate")
 	}
-	if trustFromExitStore(exit)["relay_bazzite"] != cert {
+	if pinnedCertificate(trustFromExitStore(exit), "relay_bazzite", cert) == nil {
 		t.Fatal("exit trust map lost its pinned certificate")
 	}
 }
@@ -117,8 +126,8 @@ func TestTrustMapsFromStores(t *testing.T) {
 func TestMutualAdmissionAndSingleUseProofs(t *testing.T) {
 	relayPriv, exitPriv := testHostKey(t), testHostKey(t)
 	relayDER, exitDER := admissionMaterial(t, relayPriv), admissionMaterial(t, exitPriv)
-	exitTrust := admissionTrust{"relay": relayCertFromDER(t, relayDER)}
-	relayTrust := admissionTrust{"exit": relayCertFromDER(t, exitDER)}
+	exitTrust := admissionTrust{"relay": {relayCertFromDER(t, relayDER)}}
+	relayTrust := admissionTrust{"exit": {relayCertFromDER(t, exitDER)}}
 	exitRing, relayRing := newNonceRing(4), newNonceRing(4)
 
 	headers, nonce, err := channelRequestHeaders(relayPriv, "relay", "exit", relayDER)
@@ -169,7 +178,7 @@ func TestExitAdmissionRefusesWrongPin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	result, err := validateRelayAdmission(headers.Values(eAuthHeaderName), headers.Values(ePubHeaderName), admissionTrust{"relay": relayCertFromDER(t, relayDER)}, "exit", newNonceRing(4))
+	result, err := validateRelayAdmission(headers.Values(eAuthHeaderName), headers.Values(ePubHeaderName), admissionTrust{"relay": {relayCertFromDER(t, relayDER)}}, "exit", newNonceRing(4))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +186,7 @@ func TestExitAdmissionRefusesWrongPin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := validateExitAdmission(response.Values(eAuthHeaderName), response.Values(ePubHeaderName), admissionTrust{"exit": relayCertFromDER(t, otherDER)}, "exit", "relay", nonce, newNonceRing(4)); err == nil {
+	if err := validateExitAdmission(response.Values(eAuthHeaderName), response.Values(ePubHeaderName), admissionTrust{"exit": {relayCertFromDER(t, otherDER)}}, "exit", "relay", nonce, newNonceRing(4)); err == nil {
 		t.Fatal("exit proof verified against the wrong pin")
 	}
 }
@@ -190,5 +199,71 @@ func TestNonceRingEvictsAtCapacity(t *testing.T) {
 	}
 	if !ring.consume(three) || ring.consume(two) {
 		t.Fatal("ring did not evict the oldest nonce")
+	}
+}
+
+// d131: a refused exit proof is a credential failure, not a carrier failure.
+// The dial must stop at the first rung instead of demoting — otherwise an
+// impostor that fails to answer with the pinned exit's proof simply gets the
+// session handed to it on the next rung.
+func TestWrongExitPinStopsTheLadder(t *testing.T) {
+	s := newTunnelServer(t, true, egressConfig{AllowCidrs: []string{"127.0.0.0/8"}, Ports: []uint16{1}})
+	exit := newHTTPSServer(t, s)
+	exitAddr := exit.Listener.Addr().String()
+
+	// The relay keeps the suite identity (so the exit admits it) but pins a
+	// foreign certificate for the exit.
+	foreignDER, err := mintPrincipalCertificate(testHostKey(t), time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	relayFile := fmt.Sprintf(`{"endpoint":"wss://%s%s","exit":[{"name":%q,"public":%q}]}`,
+		exitAddr, tunnelPath, testV5Principal, encodeEPub(foreignDER))
+	if err := os.WriteFile(filepath.Join(testV5StoreRoot, "relay.json"), []byte(relayFile), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	logBuf := captureLog(t)
+	httpAddr := freeLoopbackAddr(t)
+	cfg, err := relayConfigFromEnv(httpAddr, freeLoopbackAddr(t), false, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { done <- runRelayNode(ctx, cfg) }()
+	waitForHealth(t, "http://"+httpAddr+healthPath)
+
+	conn := rawDial(t, httpAddr)
+	defer conn.Close()
+	mustWrite(t, conn, "CONNECT "+testTargetAlias+":443 HTTP/1.1\r\nHost: "+testTargetAlias+"\r\n\r\n")
+	status, err := bufio.NewReader(conn).ReadString('\n')
+	if err != nil {
+		t.Fatalf("CONNECT status: %v", err)
+	}
+	if strings.Contains(status, " 200 ") {
+		t.Fatalf("the impostor exit served the session: %q", strings.TrimSpace(status))
+	}
+	// The refusal is terminal, and the relay still hands the operator the
+	// hint the certificate earned: one seen_hosts event, no next rung.
+	waitForLog(t, logBuf, `"msg":"seen_hosts"`)
+	if dumped := logBuf.String(); strings.Contains(dumped, "trying h2-post-windowed") {
+		t.Fatalf("a refused exit proof demoted the ladder:\n%s", dumped)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://"+httpAddr+healthPath, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	health, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer health.Body.Close()
+	var body map[string]any
+	if err := json.NewDecoder(health.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	if last, _ := body["last_error"].(string); !strings.Contains(last, "channel admission failed") {
+		t.Fatalf("last_error = %q, want the admission refusal", last)
 	}
 }

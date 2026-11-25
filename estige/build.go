@@ -20,10 +20,12 @@ import (
 const imageContainerfile = `FROM debian:trixie-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates busybox-static && rm -rf /var/lib/apt/lists/* \
- && mkdir -p /var/lib/estige && chown 65532:65532 /var/lib/estige
-USER 65532:65532
+ && mkdir -p /var/lib/estige/.local/share
+# The store is a bind mount from the host (run.go); the image only owns the
+# path, so the operator's provisioned keys keep their host ownership.
 ENV XDG_DATA_HOME=/var/lib/estige/.local/share
 COPY --chown=65532:65532 estige /usr/local/bin/estige
+USER 65532:65532
 ENTRYPOINT ["/usr/local/bin/estige"]
 `
 
@@ -75,11 +77,10 @@ func main() {
 	if err := os.WriteFile(filepath.Join(ctx, "Containerfile"), []byte(imageContainerfile), 0o644); err != nil {
 		fatal("stage Containerfile: %v", err)
 	}
+	// Both backends take the same explicit `build` subcommand; podman's
+	// `image build` alias is optional and its argument order differs from
+	// docker's, so one spelling keeps the two from drifting.
 	args := []string{"build", "--pull", "-t", tag, "-f", "Containerfile", "."}
-	if tool == "podman" {
-		args[0] = "image"
-		args = append([]string{"build"}, args...)
-	}
 	cmd := exec.Command(tool, args...)
 	cmd.Dir = ctx
 	cmd.Stdout = os.Stdout

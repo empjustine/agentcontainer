@@ -159,8 +159,7 @@ func TestTunnelTLSConfigIsTLS13Only(t *testing.T) {
 // surfaces through the ONE config path, before any bind.
 func TestRelayChainBadConfigRefusesStartup(t *testing.T) {
 	clearChainEnv(t)
-	armTestTunnelEnv(t)
-	t.Setenv(envTunnelURL, "wss://example.invalid:8443/vpn")
+	writeTestRelayJSON(t, "wss://example.invalid:8443/vpn")
 	t.Setenv("SOCKS_SERVER", "gate:1080")
 	t.Setenv("SOCKS_VERSION", "4a")
 	if _, err := relayConfigFromEnv(freeLoopbackAddr(t), freeLoopbackAddr(t), false, false); err == nil || !strings.Contains(err.Error(), "SOCKS_VERSION") {
@@ -264,7 +263,7 @@ func newSOCKS5ChainProxy(t *testing.T, requireAuth bool) (string, func() []strin
 }
 
 // chainFetch opens one local CONNECT and pulls one response through the
-// relay — the h1PostWindowedFetch shape with its own body string.
+// relay, with its own body string.
 func chainFetch(t *testing.T, httpAddr, targetHost string, upPort uint16) {
 	t.Helper()
 	conn := rawDial(t, httpAddr)
@@ -301,7 +300,7 @@ func newChainUpstream(t *testing.T) *httptest.Server {
 func TestRelayChainHTTPProxyCarriesTunnel(t *testing.T) {
 	upstream := newChainUpstream(t)
 	upPort := portOf(t, upstream.Listener.Addr().String())
-	backend := h1PostWindowedTestServer(t, upstream)
+	backend := tunnelTestServer(t, upstream)
 
 	proxyURL, hops := newCONNECTChainProxy(t)
 	clearChainEnv(t)
@@ -346,40 +345,6 @@ func TestRelayChainHTTPProxyCarriesTunnel(t *testing.T) {
 	}
 	if got, _ := status["chain"].(string); !strings.HasPrefix(got, "http://") || !strings.Contains(got, proxyHostOf(t, proxyURL)) {
 		t.Fatalf("health chain=%v, want the proxy host", status["chain"])
-	}
-}
-
-// TestRelayChainSOCKS5ProxyCarriesTunnelModeE: the D-refused → E demotion
-// rides a SOCKS5 chain (RFC 1928 path, name crossing unresolved), proving
-// the chain is the ROUTE — the ladder ranks transports above it unchanged
-// (docs/d093 over docs/d094).
-func TestRelayChainSOCKS5ProxyCarriesTunnelModeE(t *testing.T) {
-	upstream := newChainUpstream(t)
-	upPort := portOf(t, upstream.Listener.Addr().String())
-	backend := h1PostWindowedTestBackend(t, upstream)
-
-	socksAddr, targets := newSOCKS5ChainProxy(t, false)
-	clearChainEnv(t)
-	t.Setenv("SOCKS_SERVER", socksAddr)
-
-	front := newUpgradeRefusingTLSFront(t, backend)
-	httpAddr, stop := wireRelayNode(t, front.URL+tunnelPath)
-	defer stop()
-	logBuf := captureLog(t)
-
-	chainFetch(t, httpAddr, testTargetAlias, upPort)
-
-	waitForLog(t, logBuf, "transport=h1.1-post-windowed")
-	recorded := targets()
-	tunnelAddr := front.Listener.Addr().String()
-	found := false
-	for _, target := range recorded {
-		if target == tunnelAddr {
-			found = true
-		}
-	}
-	if !found {
-		t.Fatalf("socks chain targets=%v, want the tunnel endpoint %q", recorded, tunnelAddr)
 	}
 }
 

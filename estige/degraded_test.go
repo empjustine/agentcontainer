@@ -84,8 +84,7 @@ func TestDegradedGuardClosesARequestLineAndPassesAClientHello(t *testing.T) {
 }
 
 func TestCleartextTunnelURLRequiresTheSwitch(t *testing.T) {
-	armTestTunnelEnv(t)
-	t.Setenv(envTunnelURL, "ws://exit.example.test/vpn")
+	writeTestRelayJSON(t, "ws://exit.example.test/vpn")
 	if _, err := relayConfigFromEnv("127.0.0.1:3128", "127.0.0.1:1080", false, false); err == nil ||
 		!strings.Contains(err.Error(), "-insecure-exit") {
 		t.Fatalf("cleartext ws:// without the switch: err=%v, want the d171 refusal", err)

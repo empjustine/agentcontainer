@@ -94,8 +94,9 @@ both cases, no NDK, no extra toolchain:
   it needs no NDK. `estige-packages` cross-compiles this payload on
   any host; `build.mjs` selects the native preset ONLY via on-device
   detection (`$PREFIX` under `com.termux`), and registers
-  `estige-native` only when NO container tool exists — a
-  docker-equipped runner `noteGated`s it. The workflow invokes the
+  `estige-native` on every host with a go toolchain — the container
+  image is built FROM that binary by `go run build.go` (d236), so a
+  container-capable runner needs it too. The workflow invokes the
   target NAME, never its flags (one-build law, d041/d083/d087).
 - **arm32v5 (EN7562CT, MikroTik e50ug)** — `GOOS=linux GOARCH=arm
   GOARM=5 CGO_ENABLED=0` compiles the same trivial way. No preset or
@@ -121,8 +122,10 @@ both cases, no NDK, no extra toolchain:
 - **Buildx lands in the daemon store** under the runner's default
   docker driver (`docker buildx build` without `--load`); verify with
   `docker image ls` on the first run before adding any push step.
-- The image leg is gated on a container backend and on `go build .`
-  having produced a binary; there is no cloud-probe gate (d236).
+- The image leg is a Go command (d236): `go build .` must produce `./estige`
+  before `go run build.go`, and a container backend (podman or docker) must be
+  on PATH. Nothing is gated on outbound cloud reachability, and the Node
+  builder registers no image target.
 
 ## Optional follow-ups (not required for a green build)
 

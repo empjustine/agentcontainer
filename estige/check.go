@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func runKeyCheck(args []string) {
@@ -22,38 +23,38 @@ func runKeyCheck(args []string) {
 	if err != nil {
 		log.Fatalf("[estige] key check: %v", err)
 	}
-	role, peers, err := checkStore(resolved)
+	summary, err := checkStore(resolved)
 	if err != nil {
 		log.Fatalf("[estige] key check: %v", err)
 	}
-	fmt.Printf("[estige] key check: %s store ok (%d pinned peer(s))\n", role, peers)
+	fmt.Printf("[estige] key check: %s store ok (%s)\n", resolved, summary)
 }
 
 // checkStore validates whichever role files exist. A dual-role host carries
-// both; one file is enough for a single-role host.
-func checkStore(root string) (string, int, error) {
+// both; one file is enough for a single-role host. It reports every role it
+// loaded, so a dual-role host does not read as if only one had been checked.
+func checkStore(root string) (string, error) {
 	relayPath := filepath.Join(root, "relay.json")
 	exitPath := filepath.Join(root, "exit.json")
 	_, relayErr := os.Stat(relayPath)
 	_, exitErr := os.Stat(exitPath)
 	if errors.Is(relayErr, os.ErrNotExist) && errors.Is(exitErr, os.ErrNotExist) {
-		return "", 0, fmt.Errorf("%s holds neither relay.json nor exit.json", root)
+		return "", fmt.Errorf("%s holds neither relay.json nor exit.json", root)
 	}
-	var summary string
-	var peers int
+	var reports []string
 	if relayErr == nil {
 		store, err := loadRelayStore(root)
 		if err != nil {
-			return "", 0, err
+			return "", err
 		}
-		summary, peers = roleRelay, len(store.Exits)
+		reports = append(reports, fmt.Sprintf("%s: %d pinned exit(s)", roleRelay, len(store.Exits)))
 	}
 	if exitErr == nil {
 		store, err := loadExitStore(root)
 		if err != nil {
-			return "", 0, err
+			return "", err
 		}
-		summary, peers = roleExit, len(store.Relays)
+		reports = append(reports, fmt.Sprintf("%s: %d admitted relay(s)", roleExit, len(store.Relays)))
 	}
-	return summary, peers, nil
+	return strings.Join(reports, "; "), nil
 }

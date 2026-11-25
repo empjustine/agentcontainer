@@ -52,7 +52,7 @@ func (s testStore) write(t *testing.T, name, body string) {
 
 func TestLoadRelayStore(t *testing.T) {
 	store := newTestStore(t)
-	store.write(t, "relay.json", fmt.Sprintf(`{"exit":[{"endpoint":"https://exit.example:8443/vpn","name":"exit-home","public":"%s"}]}`, store.public))
+	store.write(t, "relay.json", fmt.Sprintf(`{"endpoint":"https://exit.example:8443/vpn","exit":[{"name":"exit-home","public":"%s"}]}`, store.public))
 	loaded, err := loadRelayStore(store.root)
 	if err != nil {
 		t.Fatal(err)
@@ -60,7 +60,10 @@ func TestLoadRelayStore(t *testing.T) {
 	if loaded.Principal != "exit-home" || len(loaded.Exits) != 1 {
 		t.Fatalf("store = %+v", loaded)
 	}
-	if loaded.Exits[0].Endpoint != "https://exit.example:8443/vpn" || loaded.Exits[0].Cert == nil {
+	if loaded.Endpoint == nil || loaded.Endpoint.Host != "exit.example:8443" || loaded.Endpoint.Path != "/vpn" {
+		t.Fatalf("endpoint = %+v", loaded.Endpoint)
+	}
+	if loaded.Exits[0].Cert == nil {
 		t.Fatalf("exit entry = %+v", loaded.Exits[0])
 	}
 	if string(loaded.Private) != string(store.private) {
@@ -82,14 +85,14 @@ func TestLoadExitStoreStagedNames(t *testing.T) {
 
 func TestStoreRefusals(t *testing.T) {
 	base := newTestStore(t)
-	goodRelay := fmt.Sprintf(`{"exit":[{"endpoint":"https://exit.example:8443/vpn","name":"exit-home","public":"%s"}]}`, base.public)
+	goodRelay := fmt.Sprintf(`{"endpoint":"https://exit.example:8443/vpn","exit":[{"name":"exit-home","public":"%s"}]}`, base.public)
 	cases := []struct {
 		name  string
 		file  string
 		body  string
 		setup func(*testing.T, string)
 	}{
-		{"unknown field", "relay.json", strings.Replace(goodRelay, `{"exit"`, `{"extra":1,"exit"`, 1), nil},
+		{"unknown field", "relay.json", strings.Replace(goodRelay, "{", `{"extra":1,`, 1), nil},
 		{"empty exit", "relay.json", `{"exit":[]}`, nil},
 		{"bad public", "exit.json", `{"relays":[{"name":"relay_bazzite","public":"bad"}]}`, nil},
 		{"missing endpoint", "relay.json", strings.Replace(goodRelay, `"endpoint":"https://exit.example:8443/vpn",`, ``, 1), nil},

@@ -51,9 +51,6 @@ import {
 	hostBuildEnv,
 	isTermux,
 } from "./lib/go-build.mjs";
-import {
-	detectContainerTool,
-} from "./lib/host-capabilities.mjs";
 
 // ---------------------------------------------------------------------------
 // Structured logging (docs/d045)
@@ -257,7 +254,6 @@ const estigeRoot = dirname(fileURLToPath(import.meta.url));
 const termux = isTermux();
 const force = process.env.FORCE === "1";
 
-const containerTool = detectContainerTool();
 
 /**
  * Defense-in-depth line sanitizer (docs/d045). The ROOT cause of tty progress
@@ -373,8 +369,7 @@ const gatedOff = new Set();
 
 /**
  * A gate said no; the name stays knowable so an explicit request gets the
- * gate's reason (the logWarn beside each call) instead of a shrug. Probes
- * themselves stay silent — lib/host-capabilities.mjs's contract.
+ * gate's reason (the logWarn beside each call) instead of a shrug.
  * @type {(...names: string[]) => void}
  */
 function noteGated(...names) {
@@ -385,12 +380,11 @@ function noteGated(...names) {
 
 // The container image is owned by go run build.go (d236): the binary is
 // compiled by the host's go toolchain first, then packaged by the Go command.
-// Node only builds the native binary and the packages here.
+// Node builds the binary itself and the packages — no target here requires a
+// container backend any more.
 
-// --- the native binary (no container backend) --------------------------------
-if (containerTool) {
-	noteGated("estige-native");
-} else {
+// --- the native binary ------------------------------------------------------
+{
 	const out = join(estigeRoot, termux ? "estige-android" : "estige");
 	targets.push({
 		name: "estige-native",
@@ -399,7 +393,7 @@ if (containerTool) {
 				logError(
 					termux
 						? "no working go toolchain (on Termux: pkg install golang)"
-						: "no working go toolchain (it compiles the host binary — the only thing this host can serve; mise hosts: mise use -g go@1.27)",
+						: "no working go toolchain (it compiles the host binary; mise hosts: mise use -g go@1.27)",
 				);
 				return false;
 			}
@@ -568,12 +562,7 @@ if (selected.length === 0) {
 	);
 	process.exit(91);
 }
-logInfo(
-	containerTool
-		? "build targets (container host)"
-		: "build targets (bare host — serialized)",
-	{ targets: selected.map((t) => t.name), force },
-);
+logInfo("build targets", { targets: selected.map((t) => t.name), force });
 
 let failed = 0;
 for (const target of selected) {

@@ -14,9 +14,9 @@ const (
 	schemeWSS    = "wss"
 	schemeSOCKS5 = "socks5"
 
-	// protoHTTP11 is the h1 ALPN token: the h2 carriers' downgrade target and
-	// the h1.1-post-windowed floor (offering h2 there would silently promote
-	// a floor session onto the h2 plane).
+	// protoHTTP11 is the h1 ALPN token: the h2 carriers' downgrade target
+	// (a probe that lands here reports "h2 not offered" and the ladder moves
+	// on), and the plane the websocket carrier rides.
 	protoHTTP11 = "http/1.1"
 
 	// Carrier names are mechanism names, never letters (docs/d105): one
@@ -25,7 +25,6 @@ const (
 	carrierH2Unbounded = "h2-post-unbounded"
 	carrierH2Windowed  = "h2-post-windowed"
 	carrierWebSocket   = "websocket"
-	carrierH1Windowed  = "h1.1-post-windowed"
 
 	// envHTTPProxy/envHTTPSProxy are the uppercase spellings the chain parser
 	// reads first and the proxy-env table exports (docs/d094, docs/d130);

@@ -103,14 +103,10 @@ func TestH2WindowedEndToEnd(t *testing.T) {
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
 
-	armTestTunnelEnv(t)
-	s := &server{}
-	if err := s.enableTunnel(egressConfig{
+	s := newTunnelServer(t, true, egressConfig{
 		AllowCidrs: []string{"127.0.0.0/8"},
 		Ports:      []uint16{upPort},
-	}); err != nil {
-		t.Fatal(err)
-	}
+	})
 	backend := newHTTPServer(t, s)
 	cappedPort(t, s, backend)
 	front := newUpgradeStrippingH2Front(t, backend)
@@ -167,14 +163,10 @@ func TestH2WindowedSlowTargetBackpressures(t *testing.T) {
 	}))
 	upPort := portOf(t, upstream.Listener.Addr().String())
 
-	armTestTunnelEnv(t)
-	s := &server{}
-	if err := s.enableTunnel(egressConfig{
+	s := newTunnelServer(t, true, egressConfig{
 		AllowCidrs: []string{"127.0.0.0/8"},
 		Ports:      []uint16{upPort},
-	}); err != nil {
-		t.Fatal(err)
-	}
+	})
 	backend := newHTTPServer(t, s)
 	cappedPort(t, s, backend)
 	front := newUpgradeStrippingH2Front(t, backend)

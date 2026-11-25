@@ -95,18 +95,14 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 
 	// Server: the tunnel through the production path — no allowlist, no
 	// second face (docs/d108).
-	armTestTunnelEnv(t)
-	s := &server{}
-	if err := s.enableTunnel(egressConfig{
+	s := newTunnelServer(t, true, egressConfig{
 		AllowCidrs: []string{"127.0.0.0/8"},
 		Ports:      []uint16{upPort},
-	}); err != nil {
-		t.Fatal(err)
-	}
+	})
 	proxy := newHTTPSServer(t, s)
 
-	// Relay node: env chain + runRelayNode, exactly as -mode relay wires it.
-	t.Setenv(envTunnelURL, "wss://"+proxy.Listener.Addr().String()+tunnelPath)
+	// Relay node: store + runRelayNode, exactly as -mode relay wires it.
+	writeTestRelayJSON(t, "wss://"+proxy.Listener.Addr().String()+tunnelPath)
 	t.Setenv(envClientLabel, "e2e-label")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
@@ -389,7 +385,7 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	t.Run("connection log carries metadata and never the credential", func(t *testing.T) {
 		waitForLog(t, logBuf, "event=close")
 		dumped := logBuf.String()
-		if strings.Contains(dumped, testTunnelToken) {
+		if strings.Contains(strings.ToLower(dumped), "e-auth") {
 			t.Fatalf("token leaked into the log:\n%s", dumped)
 		}
 		if !strings.Contains(dumped, `label="e2e-label"`) {
@@ -414,8 +410,7 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 // answer that could only come from a direct dial.
 func TestCleartextForwardFailsClosedWithoutTunnel(t *testing.T) {
 	dead := reserveLoopbackAddr() // released: connecting to it must be refused
-	t.Setenv(envTunnelURL, "wss://"+dead+tunnelPath)
-	t.Setenv(envOperatorToken, testTunnelToken)
+	writeTestRelayJSON(t, "wss://"+dead+tunnelPath)
 	t.Setenv(envClientLabel, "dead-tunnel-fwd")
 	httpAddr := freeLoopbackAddr(t)
 	socksAddr := freeLoopbackAddr(t)
@@ -457,13 +452,9 @@ func TestCleartextForwardFailsClosedWithoutTunnel(t *testing.T) {
 func TestRelayLegacyIPRelaySwitch(t *testing.T) {
 	// The exit stays at its defaults: no IP-exit switch, so a target that
 	// passes the relay must still die at the exit's VPN-R22 gate.
-	armTestTunnelEnv(t)
-	s := &server{}
-	if err := s.enableTunnel(egressConfig{}); err != nil {
-		t.Fatal(err)
-	}
+	s := newTunnelServer(t, true, egressConfig{})
 	proxy := newHTTPSServer(t, s)
-	t.Setenv(envTunnelURL, "wss://"+proxy.Listener.Addr().String()+tunnelPath)
+	writeTestRelayJSON(t, "wss://"+proxy.Listener.Addr().String()+tunnelPath)
 	t.Setenv(envClientLabel, "legacy-ip")
 
 	startRelay := func(t *testing.T, legacyIPRelay bool) (string, string, func()) {

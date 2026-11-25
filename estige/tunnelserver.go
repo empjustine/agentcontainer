@@ -20,17 +20,12 @@ package main
 import (
 	"context"
 	"crypto/ed25519"
-	"crypto/subtle"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"maps"
 	"net/http"
-	"os"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -51,23 +46,12 @@ const (
 // the proxy needs is one fixed, reserved place to dispatch on.
 const tunnelPath = "/vpn"
 
-// maxOperatorKeys bounds the principal set (docs/d078 §2): a structural
-// guard, not a performance one — the scan is linear regardless — that keeps
-// the credential model a bounded key set and out of the user-directory
-// business NFR-5 forbids.
-const maxOperatorKeys = 32
-
-// operatorKey is one security principal: an id that is a log-safe LABEL
-// (never a capability — docs/d078 §5 lets it appear in server logs) plus
-// the bearer token it authenticates (VPN-R31 as amended by docs/d078).
-//
-// policy is the principal's own egress table (docs/d078): nil means the
-// process default from VPN_TUNNEL_EGRESS, which is what a plain string
-// value in the keyset has always meant. A per-key table narrows one
-// principal without giving every relay the same blast radius.
+// operatorKey is one admitted principal: an id that is a log-safe LABEL
+// (never a capability — docs/d078 §5) and the egress table its store row
+// carries. The credential itself is the pinned certificate in the store; the
+// name only indexes the policy that travels with it.
 type operatorKey struct {
 	id     string
-	token  string
 	policy *egressPolicy
 }
 
@@ -124,34 +108,6 @@ func (l *liveSession) addDown(n int64) { l.down.Add(n) }
 // boundary stays invisible, VPN-R34).
 func (t *tunnelServer) isTunnelPath(path string) bool {
 	return path == tunnelPath
-}
-
-// matchOperatorKey returns the id of the principal whose bearer credential
-// the request carries, or "" for none (VPN-R31 as amended by docs/d078).
-// Constant-time per entry AND no early exit: the scan visits every key
-// whether or not one already matched, so neither the matched principal's
-// position nor the set's contents leak through timing (VPN-R33). The
-// "Bearer " scheme prefix is public format, not secret, so an early return
-// on its absence leaks nothing. Exactly one header is required: a second
-// spelling leaves the edge and estige free to verify different values.
-func matchOperatorKey(r *http.Request, keys []operatorKey) *operatorKey {
-	const scheme = "Bearer "
-	values := r.Header.Values("Authorization")
-	if len(values) != 1 {
-		return nil
-	}
-	auth := values[0]
-	if !strings.HasPrefix(auth, scheme) {
-		return nil
-	}
-	got := []byte(auth[len(scheme):])
-	var matched *operatorKey
-	for i := range keys {
-		if subtle.ConstantTimeCompare(got, []byte(keys[i].token)) == 1 {
-			matched = &keys[i]
-		}
-	}
-	return matched
 }
 
 // wrapChannel starts the inner session after admission. The peer's
@@ -220,19 +176,21 @@ func (t *tunnelServer) serveTunnel(w http.ResponseWriter, r *http.Request, h2Unb
 	}
 	// Body-carrier arrival (docs/d077 §4, docs/d222): an authenticated POST
 	// with no upgrade is a body session — no 101, no hijack. The window
-	// header is h2-post-windowed's discriminator and rides with traceparent,
-	// so it is checked first; traceparent alone is h1.1-post-windowed's
-	// window; neither is h2-post-unbounded's single long-lived request. The
-	// per-request bearer above is their whole auth (d077 §5: the credential
-	// rides every request, since a body session has no handshake header of
-	// its own).
+	// header is h2-post-windowed's discriminator and rides with traceparent;
+	// without it the POST is h2-post-unbounded's single long-lived request.
+	//
+	// A traceparent without a window header is h1.1-post-windowed, which v5
+	// retired (d239): its channel cannot complete behind an upgrade-stripping
+	// gateway, and serving the carrier unprotected would be a silent
+	// downgrade. It fails closed here — no carrier answer, no fallback.
 	if r.Method == http.MethodPost && !headerHasToken(r.Header, "Upgrade", "websocket") {
 		if r.Header.Get(windowHeader) != "" {
 			t.serveH2Window(w, r, key, &result, response)
 			return
 		}
 		if r.Header.Get("Traceparent") != "" {
-			t.serveH1Window(w, r, key, &result, response)
+			logLine(sevWarn, "[estige] tunnel: refusing a retired h1.1-post-windowed window (d239)")
+			writeFunnel404(w, r)
 			return
 		}
 		t.serveH2Unbounded(w, r, key, id, h2UnboundedRefused, &result, response)
@@ -534,83 +492,32 @@ func (t *tunnelServer) runSession(ctx context.Context, s tunnelStream, key *oper
 	outcome = stats.outcome
 }
 
-// validOperatorID is the label shape docs/d078 §2 promises: ids reach server
-// logs (§5), so they must be log-safe and must never be secret-shaped: an id
-// is a name, not a capability.
-func validOperatorID(id string) bool {
-	if len(id) < 1 || len(id) > 64 {
-		return false
-	}
-	for _, r := range id {
-		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9') && r != '-' && r != '_' {
-			return false
-		}
-	}
-	return true
-}
-
-// validOperatorToken rejects a credential that could not ride a header intact.
-//
-// WHY this is a load-time refusal and not an escaping problem: websocket's
-// handshake writes the Authorization header with fmt.Fprintf into a hand-rolled
-// request (websocket.go wsDial), so a token containing CR/LF closes the header
-// and opens one of the peer's choosing — the transport is being handed
-// structure it should never interpret. Modes C and E build the header through
-// net/http, which rejects such a value at Send time, so the same token would
-// fail late and inconsistently there instead of never at all.
-//
-// The rule is RFC 9110 field-value (VCHAR plus SP/HTAB): a bearer token is
-// opaque, but it is not allowed to bring framing with it. Length is a separate
-// floor — the vault owns entropy, this only catches truncated loads
-// (VPN-R31/R26).
-func validOperatorToken(token string) bool {
-	if len(token) < 16 {
-		return false
-	}
-	for i := 0; i < len(token); i++ {
-		c := token[i]
-		if c < 0x20 || c == 0x7f {
-			return false
-		}
-	}
-	return true
-}
-
-// enableTunnel wires the tunnel surface from the credential set + the caller's
-// egress policy and fails loudly on any input that would weaken an invariant
-// (NFR-2): a misconfigured capability that binds anyway is worse than one that
-// refuses to start, because it fails OPEN at the first probe instead of never.
-// The egress policy is a parameter, not a lookup, so the tests drive the same
-// construction the boot does without touching the environment.
-func (s *server) enableTunnel(egress egressConfig) error {
+// enableTunnel wires the tunnel surface from the exit store and fails loudly
+// on any input that would weaken an invariant (NFR-2): a misconfigured
+// capability that binds anyway is worse than one that refuses to start,
+// because it fails OPEN at the first probe instead of never. The store is the
+// arming fact and the only config surface — credentials, admitted relays and
+// egress all arrive from it (d236), never from the environment.
+func (s *server) enableTunnel() error {
 	store, err := loadExitStore(storeRoot())
 	if err != nil {
 		return err
 	}
-	policies := make(map[string]*egressPolicy)
-	if raw := os.Getenv(envOperatorKeys); raw != "" {
-		entries, err := parseKeyset(raw)
-		if err != nil {
-			return err
-		}
-		for id, entry := range entries {
-			if entry.egress == nil {
-				continue
-			}
-			policy, err := newEgressPolicy(*entry.egress)
-			if err != nil {
-				return err
-			}
-			policies[id] = policy
-		}
-	}
 	keys := make([]operatorKey, 0, len(store.Relays))
 	for _, entry := range store.Relays {
-		keys = append(keys, operatorKey{id: entry.Name, policy: policies[entry.Name]})
+		key := operatorKey{id: entry.Name}
+		if entry.Egress != nil {
+			policy, err := newEgressPolicy(*entry.Egress)
+			if err != nil {
+				return fmt.Errorf("exit.json relay %q egress: %w", entry.Name, err)
+			}
+			key.policy = policy
+		}
+		keys = append(keys, key)
 	}
-	policy, err := newEgressPolicy(egress)
+	policy, err := newEgressPolicy(store.Egress)
 	if err != nil {
-		return err
+		return fmt.Errorf("exit.json egress: %w", err)
 	}
 	s.vpn = &tunnelServer{
 		keys:      keys,
@@ -623,48 +530,7 @@ func (s *server) enableTunnel(egress egressConfig) error {
 		sessions:  newExchangeSessions(),
 		live:      newLiveRegistry(),
 	}
-	logLine(sevInfo, "[estige] tunnel carriers: %s, %s, %s, %s (at %s)",
-		carrierH2Unbounded, carrierWebSocket, carrierH2Windowed, carrierH1Windowed, tunnelPath)
+	logLine(sevInfo, "[estige] tunnel carriers: %s, %s, %s (at %s)",
+		carrierH2Unbounded, carrierWebSocket, carrierH2Windowed, tunnelPath)
 	return nil
-}
-
-// egressFromEnv reads the exit node's operator opt-ins (VPN-R38) off the env
-// chain: VPN_TUNNEL_EGRESS, a JSON object {"allowCidrs": [...], "ports": [...]}.
-// Unset means the requirement's own defaults — deny the RFC 1918 / metadata /
-// loopback table, allow 80 and 443 — so a plain deployment configures nothing.
-//
-// WHY env rather than the file it used to be: d108 deleted the config file
-// outright (the allowlist was the only reason a file ever existed), and the
-// policy's permanent home is d104's role store, whose exit.json carries
-// egress beside the admitted relays. Until that store lands, the env chain is
-// the whole surface, which is also where the credential already lives.
-//
-// Parsing is strict (unknown fields and trailing content refused) because a
-// typo'd "allowCidr" or "allowIpLiterals" would otherwise silently enforce
-// the default deny: the operator would believe a target is reachable while
-// every attempt at it fails (NFR-2 fail-loudly, the same rule
-// decodeOperatorKeys follows).
-func egressFromEnv() (egressConfig, error) {
-	raw := os.Getenv(envTunnelEgress)
-	if raw == "" {
-		return egressConfig{}, nil
-	}
-	var cfg egressConfig
-	dec := json.NewDecoder(strings.NewReader(raw))
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(&cfg); err != nil {
-		return egressConfig{}, fmt.Errorf("%s must be a JSON object {\"allowCidrs\": [\"10.0.0.0/8\"], \"ports\": [44w]}: %w", envTunnelEgress, err)
-	}
-	if _, err := dec.Token(); !errors.Is(err, io.EOF) {
-		return egressConfig{}, fmt.Errorf("%s has content after the JSON object", envTunnelEgress)
-	}
-	// An all-empty object decodes cleanly but configures nothing: unset already
-	// means the default deny table, so a blob that names neither a range, a
-	// port nor the IP-exit switch is a typo whose silent reading is
-	// "configured" (the same fail-loudly rule as the unknown-field check
-	// above). Naming only one half is fine — d104's defaults fill the other.
-	if len(cfg.AllowCidrs) == 0 && len(cfg.Ports) == 0 && !cfg.AllowIPLiterals {
-		return egressConfig{}, fmt.Errorf("%s names neither a CIDR, a port nor the IP-exit switch — unset it for the defaults", envTunnelEgress)
-	}
-	return cfg, nil
 }

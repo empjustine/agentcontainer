@@ -18,7 +18,7 @@ import (
 	"strings"
 )
 
-// maxForwards bounds the listener set the way maxOperatorKeys bounds the
+// maxForwards bounds the listener set the way maxStorePeers bounds the
 // principal set: a structural cap, not a performance one (docs/d144).
 const maxForwards = 32
 

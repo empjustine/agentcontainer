@@ -211,13 +211,6 @@ func TestChannelConnLifecycle(t *testing.T) {
 	}
 }
 
-type recordingConn struct {
-	net.Conn
-	buf bytes.Buffer
-}
-
-func (r *recordingConn) Write(p []byte) (int, error) { return r.buf.Write(p) }
-
 type pairedStream struct {
 	in     chan []byte
 	other  *pairedStream
@@ -303,16 +296,93 @@ func TestInnerHandshakeOverCarrier(t *testing.T) {
 	}
 }
 
-func TestWriteChannelPing(t *testing.T) {
-	conn := &recordingConn{}
-	if err := writeChannelPing(conn); err != nil {
+// d169's refusal matrix: the library's clock check is the whole guard, so a
+// certificate minted outside its own validity window must fail the handshake —
+// never widen an admission decision, never skip the check.
+func TestChannelRefusesCertificatesOutsideTheValidityWindow(t *testing.T) {
+	relayLocal, relayCert := testChannelMaterial(t, testHostKey(t))
+	priv := testHostKey(t)
+	cases := map[string]time.Time{
+		// NotAfter sits 15 years after the mint, so only a mint past that
+		// window is expired; NotBefore is 24 h back, so a mint two days ahead
+		// has not started yet.
+		"expired":       time.Now().AddDate(-channelValidYears-1, 0, 0),
+		"not yet valid": time.Now().Add(2 * channelBackdate),
+	}
+	for name, mintedAt := range cases {
+		t.Run(name, func(t *testing.T) {
+			der, err := mintPrincipalCertificate(priv, mintedAt)
+			if err != nil {
+				t.Fatal(err)
+			}
+			bad, err := parsePrincipalCertificate(der)
+			if err != nil {
+				t.Fatalf("the shape is valid; only the window is not: %v", err)
+			}
+			local := tls.Certificate{Certificate: [][]byte{der}, PrivateKey: priv}
+			serverCfg, err := serverChannelTLSConfig(local, []*x509.Certificate{relayCert})
+			if err != nil {
+				t.Fatal(err)
+			}
+			pinned, err := clientChannelTLSConfig(relayLocal, bad)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := channelHandshake(t, pinned, serverCfg); err == nil {
+				t.Fatal("a channel certificate outside its validity window was accepted")
+			}
+		})
+	}
+}
+
+// A carrier that rewrites a record cannot smuggle a frame through: the record
+// layer rejects it and the session dies, which is the "tampered carrier fails
+// the session" half of d169's matrix.
+func TestTamperedCarrierEndsTheSession(t *testing.T) {
+	relayLocal, relayCert := testChannelMaterial(t, testHostKey(t))
+	exitLocal, exitCert := testChannelMaterial(t, testHostKey(t))
+	clientStream, serverStream := newPairedStreams(64)
+	defer clientStream.Close()
+	defer serverStream.Close()
+
+	type outcome struct {
+		conn *tls.Conn
+		err  error
+	}
+	results := make(chan outcome, 2)
+	go func() {
+		conn, err := clientChannelHandshake(context.Background(), clientStream, relayLocal, exitCert)
+		results <- outcome{conn, err}
+	}()
+	go func() {
+		conn, err := serverChannelHandshake(context.Background(), serverStream, exitLocal, []*x509.Certificate{relayCert})
+		results <- outcome{conn, err}
+	}()
+	connected := make([]*tls.Conn, 0, 2)
+	for range 2 {
+		select {
+		case got := <-results:
+			if got.err != nil {
+				t.Fatalf("handshake: %v", got.err)
+			}
+			connected = append(connected, got.conn)
+		case <-time.After(5 * time.Second):
+			t.Fatal("handshake timed out")
+		}
+	}
+	clientConn, serverConn := connected[0], connected[1]
+	defer clientConn.Close()
+	defer serverConn.Close()
+
+	if _, err := clientConn.Write([]byte("hello")); err != nil {
 		t.Fatal(err)
 	}
-	typ, version, payload, err := decodeFrame(conn.buf.Bytes())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if typ != framePing || version != tunnelStreamV1 || len(payload) != 0 {
-		t.Fatalf("ping frame = %d/%d/%q", typ, version, payload)
+	// The record waits in the server stream's inbox; rewrite one byte of it.
+	record := <-serverStream.in
+	record[len(record)-1] ^= 0xff
+	serverStream.in <- record
+	_ = serverConn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	if _, err := serverConn.Read(make([]byte, 5)); err == nil {
+		t.Fatal("a tampered record was accepted")
 	}
 }

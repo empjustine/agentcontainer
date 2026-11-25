@@ -1,7 +1,10 @@
-// store.go — the strict v5 role stores (d236).
+// store.go — the v5 role stores, the whole config surface (d236).
 //
 // WHY the helpers are read only here: one parser owns the store grammar, so
-// boot and validation cannot disagree about what a trusted entry means.
+// boot and validation cannot disagree about what a trusted entry means, and
+// the credential has exactly one home (VPN-R32). Nothing secret is left in the
+// environment: the store carries the identity, the pairing and the policy, and
+// env keeps only non-secret runtime knobs (d132/d236).
 package main
 
 import (
@@ -38,9 +41,12 @@ type storeKeyEntry struct {
 	Cert   *x509.Certificate `json:"-"`
 }
 
-type relayExitEntry struct {
-	Endpoint string `json:"endpoint"`
+type relayPeerEntry struct {
 	storeKeyEntry
+	// Egress narrows this principal's target set (d078). Absent means the
+	// relay.json-level table applies, which is what a store without per-relay
+	// policy has always meant.
+	Egress *egressConfig `json:"egress,omitempty"`
 }
 
 type relayStore struct {
@@ -48,7 +54,11 @@ type relayStore struct {
 	Principal string
 	Private   ed25519.PrivateKey
 	SelfDER   []byte
-	Exits     []relayExitEntry
+	// Endpoint is the one place a relay learns where to dial (d132): the
+	// pairing line is endpoint ↔ principal ↔ pinned certificate, so the URL
+	// cannot desync from the key it was provisioned with.
+	Endpoint *url.URL
+	Exits    []storeKeyEntry
 }
 
 type exitStore struct {
@@ -56,19 +66,30 @@ type exitStore struct {
 	Principal string
 	Private   ed25519.PrivateKey
 	SelfDER   []byte
-	Relays    []storeKeyEntry
+	Relays    []relayPeerEntry
+	// Egress is the process policy (VPN-R38). Zero means the requirement's
+	// defaults — a store that says nothing about egress configures nothing.
+	Egress egressConfig
 }
 
+// loadRelayStore reads the relay role: one host identity, the endpoint to
+// dial, and the exit certificate(s) it expects. Two rows may share a name —
+// the staged-rotation overlap (d133) — and any of them verifies.
 func loadRelayStore(root string) (*relayStore, error) {
 	principal, priv, selfDER, err := loadStoreIdentity(root)
 	if err != nil {
 		return nil, err
 	}
 	var file struct {
-		Exit []relayExitEntry `json:"exit"`
+		Endpoint string          `json:"endpoint"`
+		Exit     []storeKeyEntry `json:"exit"`
 	}
 	if err := readStoreJSON(root, "relay.json", &file); err != nil {
 		return nil, err
+	}
+	endpoint, err := parseStoreEndpoint(file.Endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("relay.json: %w", err)
 	}
 	if len(file.Exit) == 0 {
 		return nil, errors.New("relay.json names no exit")
@@ -81,13 +102,6 @@ func loadRelayStore(root string) (*relayStore, error) {
 		if err := validPrincipal(entry.Name); err != nil {
 			return nil, fmt.Errorf("relay.json exit[%d]: %w", i, err)
 		}
-		if entry.Endpoint == "" {
-			return nil, fmt.Errorf("relay.json exit[%d]: endpoint is empty", i)
-		}
-		u, err := url.Parse(entry.Endpoint)
-		if err != nil || u.Scheme == "" || u.Host == "" {
-			return nil, fmt.Errorf("relay.json exit[%d]: endpoint is not a URL", i)
-		}
 		cert, _, err := parseEPubHeader([]string{entry.Public})
 		if err != nil {
 			return nil, fmt.Errorf("relay.json exit[%d]: %w", i, err)
@@ -97,16 +111,25 @@ func loadRelayStore(root string) (*relayStore, error) {
 	if err := checkStagedNames(len(file.Exit), func(i int) string { return file.Exit[i].Name }); err != nil {
 		return nil, fmt.Errorf("relay.json: %w", err)
 	}
-	return &relayStore{Root: root, Principal: principal, Private: priv, SelfDER: selfDER, Exits: file.Exit}, nil
+	return &relayStore{
+		Root: root, Principal: principal, Private: priv, SelfDER: selfDER,
+		Endpoint: endpoint, Exits: file.Exit,
+	}, nil
 }
 
+// loadExitStore reads the exit role: one host identity, the admitted relays
+// and the egress policy beside them.
 func loadExitStore(root string) (*exitStore, error) {
 	principal, priv, selfDER, err := loadStoreIdentity(root)
 	if err != nil {
 		return nil, err
 	}
 	var file struct {
-		Relays []storeKeyEntry `json:"relays"`
+		Relays []struct {
+			storeKeyEntry
+			Egress json.RawMessage `json:"egress"`
+		} `json:"relays"`
+		Egress json.RawMessage `json:"egress"`
 	}
 	if err := readStoreJSON(root, "exit.json", &file); err != nil {
 		return nil, err
@@ -117,21 +140,73 @@ func loadExitStore(root string) (*exitStore, error) {
 	if len(file.Relays) > maxStorePeers {
 		return nil, fmt.Errorf("exit.json has %d relays, cap %d", len(file.Relays), maxStorePeers)
 	}
+	relays := make([]relayPeerEntry, 0, len(file.Relays))
 	for i := range file.Relays {
-		entry := &file.Relays[i]
-		if err := validPrincipal(entry.Name); err != nil {
+		raw := &file.Relays[i]
+		if err := validPrincipal(raw.Name); err != nil {
 			return nil, fmt.Errorf("exit.json relays[%d]: %w", i, err)
 		}
-		cert, _, err := parseEPubHeader([]string{entry.Public})
+		cert, _, err := parseEPubHeader([]string{raw.Public})
 		if err != nil {
 			return nil, fmt.Errorf("exit.json relays[%d]: %w", i, err)
 		}
+		var entry relayPeerEntry
+		entry.Name = raw.Name
+		entry.Public = raw.Public
 		entry.Cert = cert
+		if len(raw.Egress) > 0 {
+			cfg, err := parseEgressConfig(string(raw.Egress), fmt.Sprintf("exit.json relays[%d].egress", i))
+			if err != nil {
+				return nil, err
+			}
+			entry.Egress = &cfg
+		}
+		relays = append(relays, entry)
 	}
-	if err := checkStagedNames(len(file.Relays), func(i int) string { return file.Relays[i].Name }); err != nil {
+	if err := checkStagedNames(len(relays), func(i int) string { return relays[i].Name }); err != nil {
 		return nil, fmt.Errorf("exit.json: %w", err)
 	}
-	return &exitStore{Root: root, Principal: principal, Private: priv, SelfDER: selfDER, Relays: file.Relays}, nil
+	var policy egressConfig
+	if len(file.Egress) > 0 {
+		policy, err = parseEgressConfig(string(file.Egress), "exit.json egress")
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &exitStore{
+		Root: root, Principal: principal, Private: priv, SelfDER: selfDER,
+		Relays: relays, Egress: policy,
+	}, nil
+}
+
+// parseStoreEndpoint normalizes the store's dial URL the way the env spelling
+// was normalized once: the URL's honest wire form is accepted (http/https/ws/
+// wss) and becomes the canonical ws/wss every carrier branches on. A cleartext
+// URL is a degraded posture the operator must state at boot (-insecure-exit),
+// and userinfo is refused because a credential has no second home (VPN-R32).
+func parseStoreEndpoint(raw string) (*url.URL, error) {
+	if raw == "" {
+		return nil, errors.New("endpoint is empty")
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("endpoint: %w", err)
+	}
+	switch u.Scheme {
+	case schemeHTTP, schemeWS:
+		u.Scheme = schemeWS
+	case schemeHTTPS, schemeWSS:
+		u.Scheme = schemeWSS
+	default:
+		return nil, fmt.Errorf("endpoint must be http://, https://, ws:// or wss://, got %q", u.Scheme)
+	}
+	if u.Host == "" || u.Path == "" {
+		return nil, errors.New("endpoint must include host and path (d073 §7)")
+	}
+	if u.User != nil {
+		return nil, errors.New("endpoint must not carry credentials; the store holds the identity (VPN-R32)")
+	}
+	return u, nil
 }
 
 func checkStagedNames(n int, name func(int) string) error {

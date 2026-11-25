@@ -2,26 +2,27 @@
 #
 # Sourced by $PREFIX/var/service/estige/run before it execs the binary. The
 # file is the env chain for a packaged service: the binary reads no file.
-# Keep it mode 0600; fill it by hand or with an operator-run chain step.
+# Keep it mode 0600.
 #
-# DEPRECATED with docs/d104's deployment generation v4: the VPN_* variables
-# below are v3's surface. v4 keeps the tunnel wire unchanged and moves the
-# credential (and egress) into the role-scoped store under
-# ~/.local/share/estige/, so this file shrinks to PORT and non-secret knobs
-# when v4 lands. Nothing here is a fallback for v4 — a mixed pair fails closed.
+# NOTHING SECRET LIVES HERE (d236). The host identity, the admitted relays and
+# the egress policy are the store under $XDG_DATA_HOME/estige (default
+# ~/.local/share/estige):
 #
-# Arm the tunnel (docs/d084/d085): a JSON object {"<id>": "<token>"}.
-# Without it the exit node refuses to start (the kill-switch law, docs/d084).
-# Single-quote JSON and any value carrying shell metacharacters.
-# VPN_OPERATOR_KEYS='{"<id>":"<token>"}'
-# Each value may instead be an object with its own egress table (docs/d078):
-#   `{"relay-a":{"token":"<token>","egress":{"allowCidrs":["10.0.0.0/8"],"ports":[443]}}}`
-# A string value inherits VPN_TUNNEL_EGRESS. Unknown members are refused.
+#   estige keygen -principal <name>          # mint this host's key + certificate
+#   cat ~/.local/share/estige/relay.json     # paste the {name, public} row
+#   estige key check                         # load both role files like boot does
+#
+# Without a store the exit node refuses to start — that is the kill switch
+# (docs/d084/d236): there is no env fallback and older env spellings fail
+# closed.
 #
 # Bind (docs/d110): a bare port number, unset = 8080 on all interfaces.
 # PORT=8080
 #
-# Egress opt-ins (VPN-R38): JSON {"allowCidrs": [...], "ports": [...]}.
-# Unset = the requirement's defaults (deny RFC 1918/metadata/loopback,
-# allow 80/443). Single-quote it: a bare JSON value loses its quotes in sh.
-# VPN_TUNNEL_EGRESS='{"allowCidrs":["10.0.0.0/8"],"ports":[443]}'
+# A second, capped-edge listener (docs/d222): the port a Cloudflare (or other
+# body-capping edge) connector points at, where h2-post-unbounded is refused at
+# request initiation and only h2-post-windowed serves.
+# PORT_CLOUDFLARE=8081
+#
+# The store root, when it is not the XDG default.
+# XDG_DATA_HOME=$HOME/.local/share

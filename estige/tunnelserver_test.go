@@ -8,81 +8,59 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 )
 
-const (
-	// This is what the ENV carries; enableTunnel is driven through t.Setenv
-	// so tests exercise the production construction path, not a shortcut.
-	testTunnelToken = "operator-token-abcdef1234567890"
-)
-
-// armTestTunnelEnv sets the credential pair exactly as the d090 migration
-// leaves it: VPN_OPERATOR_KEYS carries the token under the id "default" (the
-// exit node's credential) and the same bytes stay in VPN_OPERATOR_TOKEN (the
-// relay node's bearer — each side reads its own variable; zero-wire,
-// docs/d090).
-func armTestTunnelEnv(t *testing.T) {
-	t.Helper()
-	t.Setenv(envOperatorKeys, fmt.Sprintf(`{"default":%q}`, testTunnelToken))
-	t.Setenv(envOperatorToken, testTunnelToken)
-}
-
-// egressFromEnv is the exit node's policy input (VPN-R38), so its parsing is
-// pinned the way the wire formats are: unset means the requirement's defaults,
-// a strict object is accepted, and every near-miss a typo produces is refused
-// instead of silently enforcing default-deny under a name the operator thinks
-// they configured (NFR-2).
-func TestEgressFromEnv(t *testing.T) {
-	t.Run("unset means the defaults", func(t *testing.T) {
-		t.Setenv(envTunnelEgress, "")
-		cfg, err := egressFromEnv()
+// The egress policy is store data now (VPN-R38, d236), so its grammar is
+// pinned the way the wire formats are: an absent block means the
+// requirement's defaults, a strict object is accepted, and every near-miss a
+// typo produces is refused instead of silently enforcing default-deny under a
+// name the operator thinks they configured (NFR-2).
+func TestExitStoreEgressGrammar(t *testing.T) {
+	t.Run("absent means the defaults", func(t *testing.T) {
+		writeTestExitJSON(t, nil)
+		store, err := loadExitStore(storeRoot())
 		if err != nil {
-			t.Fatalf("egressFromEnv: %v", err)
+			t.Fatal(err)
 		}
-		if len(cfg.AllowCidrs) != 0 || len(cfg.Ports) != 0 {
-			t.Fatalf("want zero config, got %+v", cfg)
+		if len(store.Egress.AllowCidrs) != 0 || len(store.Egress.Ports) != 0 {
+			t.Fatalf("want zero config, got %+v", store.Egress)
 		}
 	})
 	t.Run("both halves", func(t *testing.T) {
-		t.Setenv(envTunnelEgress, `{"allowCidrs": ["127.0.0.0/8"], "ports": [8443]}`)
-		cfg, err := egressFromEnv()
+		writeTestExitJSON(t, &egressConfig{AllowCidrs: []string{"127.0.0.0/8"}, Ports: []uint16{8443}})
+		store, err := loadExitStore(storeRoot())
 		if err != nil {
-			t.Fatalf("egressFromEnv: %v", err)
+			t.Fatal(err)
 		}
-		if len(cfg.AllowCidrs) != 1 || cfg.AllowCidrs[0] != "127.0.0.0/8" || len(cfg.Ports) != 1 || cfg.Ports[0] != 8443 {
-			t.Fatalf("got %+v", cfg)
-		}
-	})
-	// d163's IP-exit switch is a whole config by itself: the empty-blob
-	// refusal keys on it too, and a case near-miss must not read as "on".
-	t.Run("IP-exit switch alone configures", func(t *testing.T) {
-		t.Setenv(envTunnelEgress, `{"allowIPLiterals": true}`)
-		cfg, err := egressFromEnv()
-		if err != nil {
-			t.Fatalf("egressFromEnv: %v", err)
-		}
-		if !cfg.AllowIPLiterals || len(cfg.AllowCidrs) != 0 || len(cfg.Ports) != 0 {
-			t.Fatalf("got %+v", cfg)
+		if len(store.Egress.AllowCidrs) != 1 || store.Egress.AllowCidrs[0] != "127.0.0.0/8" ||
+			len(store.Egress.Ports) != 1 || store.Egress.Ports[0] != 8443 {
+			t.Fatalf("got %+v", store.Egress)
 		}
 	})
 	// Each of these is a plausible typo whose silent reading would be
 	// "configured, and the default deny still applies".
-	for _, raw := range []string{
+	for _, block := range []string{
 		`{"allowCidr": ["127.0.0.0/8"]}`,
 		`{"allowIPLiteral": true}`,
 		`{"ports": ["443"]}`,
-		`{"allowCidrs": []} `,
+		`{"allowCidrs": []}`,
 		`{}`,
 		`not json`,
 	} {
-		t.Run("refused: "+raw, func(t *testing.T) {
-			t.Setenv(envTunnelEgress, raw)
-			if _, err := egressFromEnv(); err == nil {
-				t.Fatalf("egressFromEnv(%q) = nil error, want refusal", raw)
+		t.Run("refused: "+block, func(t *testing.T) {
+			entry := fmt.Sprintf(`"name":%q,"public":%q`, testV5Principal, encodeEPub(testV5CertDER))
+			exitFile := fmt.Sprintf(`{"relays":[{%s}],"egress":%s}`, entry, block)
+			if err := os.WriteFile(filepath.Join(testV5StoreRoot, "exit.json"), []byte(exitFile), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := loadExitStore(storeRoot()); err == nil {
+				t.Fatalf("exit.json egress %s = nil error, want refusal", block)
 			}
 		})
 	}
@@ -92,10 +70,13 @@ func TestEgressFromEnv(t *testing.T) {
 // code main() uses.
 func newTunnelServer(t *testing.T, enabled bool, egress egressConfig) *server {
 	t.Helper()
-	armTestTunnelEnv(t)
 	s := &server{}
 	if enabled {
-		if err := s.enableTunnel(egress); err != nil {
+		// The policy travels through the store because that is the only
+		// config surface v5 has (d236): the test writes what an operator
+		// writes, and enableTunnel reads it like boot does.
+		writeTestExitJSON(t, &egress)
+		if err := s.enableTunnel(); err != nil {
 			t.Fatalf("enableTunnel: %v", err)
 		}
 	}
@@ -193,28 +174,15 @@ func TestTunnelPathCamouflage(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // TestTunnelHandshakeAuth drives the REAL handshake through wsDial: the
-// credential rides the upgrade header, and only a correct one ever reaches
-// a 101.
-func TestMatchOperatorKeyRejectsDuplicateAuthorization(t *testing.T) {
-	keys := []operatorKey{{id: "default", token: testTunnelToken}}
-	req := &http.Request{Header: http.Header{}}
-	req.Header.Add("Authorization", "Bearer "+testTunnelToken)
-	if got := matchOperatorKey(req, keys); got == nil {
-		t.Fatal("a single valid header must authenticate")
-	}
-	req.Header.Add("Authorization", "Bearer "+testTunnelToken)
-	if got := matchOperatorKey(req, keys); got != nil {
-		t.Fatal("two Authorization headers must be refused, not resolved by Header.Get")
-	}
-}
-
+// blind proof rides the upgrade header, and only a fresh, pinned one ever
+// reaches a 101 (d236/d131).
 func TestTunnelHandshakeAuth(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{})
 	proxy := newHTTPServer(t, s)
 	tunnelURL := mustTunnelURL(t, proxy)
 
-	t.Run("correct token completes the handshake", func(t *testing.T) {
-		ws, err := dialTunnelForTest(t, tunnelURL, testTunnelToken)
+	t.Run("a pinned proof completes the handshake", func(t *testing.T) {
+		ws, err := dialTunnelForTest(t, tunnelURL)
 		if err != nil {
 			t.Fatalf("expected handshake success, got %v", err)
 		}
@@ -229,9 +197,30 @@ func TestTunnelHandshakeAuth(t *testing.T) {
 			t.Fatalf("want camouflage status in error, got %v", err)
 		}
 	})
-	t.Run("missing token never reaches a 101", func(t *testing.T) {
-		if _, err := dialTunnelForTest(t, tunnelURL, ""); err == nil {
-			t.Fatal("expected failure")
+	t.Run("a valid but unpinned certificate never reaches a 101", func(t *testing.T) {
+		foreignPriv := testHostKey(t)
+		foreignDER, err := mintPrincipalCertificate(foreignPriv, time.Now())
+		if err != nil {
+			t.Fatal(err)
+		}
+		hdr, _, err := channelRequestHeaders(foreignPriv, testV5Principal, testV5Principal, foreignDER)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := dialTunnelWithHeaders(t, tunnelURL, hdr); err == nil ||
+			!strings.Contains(err.Error(), "404") {
+			t.Fatalf("unpinned certificate: err=%v, want the camouflage 404", err)
+		}
+	})
+	t.Run("a replayed proof never reaches a second 101", func(t *testing.T) {
+		hdr := testV5Headers(t)
+		first, err := dialTunnelWithHeaders(t, tunnelURL, hdr)
+		if err != nil {
+			t.Fatalf("first exchange: %v", err)
+		}
+		first.Close()
+		if _, err := dialTunnelWithHeaders(t, tunnelURL, hdr); err == nil {
+			t.Fatal("a replayed relay proof was admitted")
 		}
 	})
 }
@@ -241,7 +230,7 @@ func TestTunnelHandshakeAuth(t *testing.T) {
 // the relay node's convenience layers on purpose.
 func openRawTunnel(t *testing.T, tunnelURL *url.URL) tunnelStream {
 	t.Helper()
-	ws, err := dialTunnelForTest(t, tunnelURL, testTunnelToken)
+	ws, err := dialTunnelForTest(t, tunnelURL)
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
@@ -374,7 +363,7 @@ func TestServerRefusesLoopbackResolvingTargetsByDefault(t *testing.T) {
 func TestServerRequiresHelloFirst(t *testing.T) {
 	s := newTunnelServer(t, true, egressConfig{})
 	proxy := newHTTPServer(t, s)
-	ws, err := dialTunnelForTest(t, mustTunnelURL(t, proxy), testTunnelToken)
+	ws, err := dialTunnelForTest(t, mustTunnelURL(t, proxy))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -442,8 +431,8 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 	ws.Close()
 	waitForLog(t, logBuf, "event=close")
 	dumped := logBuf.String()
-	if strings.Contains(dumped, testTunnelToken) {
-		t.Fatalf("token leaked into the log:\n%s", dumped)
+	if strings.Contains(strings.ToLower(dumped), "e-auth") || strings.Contains(dumped, "e-pub") {
+		t.Fatalf("admission material leaked into the log:\n%s", dumped)
 	}
 	if !strings.Contains(dumped, "transport=websocket") {
 		t.Fatalf("expected transport column in the lifecycle line:\n%s", dumped)
@@ -462,122 +451,3 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 // ---------------------------------------------------------------------------
 // enableTunnel input validation (NFR-2: fail loudly, never silently)
 // ---------------------------------------------------------------------------
-
-func TestOperatorKeysFromEnv(t *testing.T) {
-	var over strings.Builder
-	over.WriteString("{")
-	for i := 0; i <= maxOperatorKeys; i++ {
-		if i > 0 {
-			over.WriteString(",")
-		}
-		fmt.Fprintf(&over, `"key%02d":"token-0123456789abcdef"`, i)
-	}
-	over.WriteString("}")
-
-	cases := []struct {
-		name    string
-		keys    string
-		token   string
-		wantErr bool
-		wantIDs []string
-	}{
-		{"json set", `{"alice":"alice-token-0123456789","bob":"bob-token-0123456789"}`, "", false, []string{"alice", "bob"}},
-		{"relay token alone refuses with the migration hint", "", testTunnelToken, true, nil},
-		{"keyset wins; the relay token is ignored on an exit node", `{"alice":"alice-token-0123456789"}`, testTunnelToken, false, []string{"alice"}},
-		{"no credential at all", "", "", true, nil},
-		{"empty object is an empty set", `{}`, "", true, nil},
-		{"malformed json", `{"alice":`, "", true, nil},
-		{"not an object", `["alice-token-0123456789"]`, "", true, nil},
-		{"trailing content", `{"alice":"alice-token-0123456789"} x`, "", true, nil},
-		{"duplicate id rejected", `{"alice":"alice-token-0123456789","alice":"alice-token-9876543210"}`, "", true, nil},
-		{"non-string value", `{"alice":123}`, "", true, nil},
-		{"token below floor", `{"alice":"short"}`, "", true, nil},
-		{"token with CRLF header injection", `{"alice":"alice-token-0123\r\nX-Injected: 1"}`, "", true, nil},
-		{"token with a bare CR", `{"alice":"alice-token-0123\rX-Injected: 1"}`, "", true, nil},
-		{"token with a bare LF", `{"alice":"alice-token-0123\nX-Injected: 1"}`, "", true, nil},
-		{"token with a NUL", `{"alice":"alice-token-0123\u0000"}`, "", true, nil},
-		{"token with a DEL", `{"alice":"alice-token-0123\u007f"}`, "", true, nil},
-		{"short relay token alone still refuses", "", "short", true, nil},
-		{"id not label-shaped", `{"ali ce":"alice-token-0123456789"}`, "", true, nil},
-		{"keyset's default id untouched by the relay token", `{"default":"default-token-0123456789"}`, testTunnelToken, false, []string{"default"}},
-		{"object form without egress inherits the default", `{"alice":{"token":"alice-token-0123456789"}}`, "", false, []string{"alice"}},
-		{"object form with a per-key egress table", `{"alice":{"token":"alice-token-0123456789","egress":{"ports":[443]}}}`, "", false, []string{"alice"}},
-		{"object form requires a token", `{"alice":{"egress":{"ports":[443]}}}`, "", true, nil},
-		{"object form refuses unknown fields", `{"alice":{"token":"alice-token-0123456789","egres":{"ports":[443]}}}`, "", true, nil},
-		{"per-key egress refuses an empty object", `{"alice":{"token":"alice-token-0123456789","egress":{}}}`, "", true, nil},
-		{"per-key egress refuses an unknown field", `{"alice":{"token":"alice-token-0123456789","egress":{"allowCidr":["10.0.0.0/8"]}}}`, "", true, nil},
-		{"over the cap", over.String(), "", true, nil},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Setenv(envOperatorKeys, tc.keys)
-			t.Setenv(envOperatorToken, tc.token)
-			got, err := operatorKeysFromEnv()
-			if tc.wantErr {
-				if err == nil {
-					t.Fatalf("expected refusal, got %d key(s)", len(got))
-				}
-				return
-			}
-			if err != nil {
-				t.Fatalf("unexpected refusal: %v", err)
-			}
-			seen := make(map[string]bool, len(got))
-			for _, k := range got {
-				seen[k.id] = true
-			}
-			if len(seen) != len(tc.wantIDs) {
-				t.Fatalf("ids = %v, want %v", seen, tc.wantIDs)
-			}
-			for _, id := range tc.wantIDs {
-				if !seen[id] {
-					t.Fatalf("ids = %v, missing %q", seen, id)
-				}
-			}
-		})
-	}
-}
-
-// probeTunnel404 asks the tunnel path for a tunnel without one and renders
-// the whole response as one comparable string — status, content type, the
-// no-sniff header, and body — so two failures can be asserted BYTE-identical
-// (VPN-R34), not merely both-404.
-
-// TestPrincipalSetAcceptance walks d078 §8 end to end: both principals open
-// a real handshake on their own key; the success log carries the id and
-// never a token; revoking one principal rejects only that one; and a tampered
-// token for a real id answers byte-identically to no credential at all
-// (VPN-R34 — the response must not distinguish which check failed).
-
-// The exit authenticates itself on every admitted response, not just the
-// relay's request: the 101 carries a fresh blind proof bound to the relay's
-// nonce and the exit's pinned certificate.
-func TestTunnelResponseCarriesExitProof(t *testing.T) {
-	s := newTunnelServer(t, true, egressConfig{})
-	proxy := newHTTPServer(t, s)
-	tunnelURL := mustTunnelURL(t, proxy)
-	store, err := loadRelayStore(storeRoot())
-	if err != nil {
-		t.Fatal(err)
-	}
-	hdr, nonce, err := channelRequestHeaders(
-		store.Private, store.Principal, store.Exits[0].Name, store.SelfDER,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	hdr.Set(sessionIDHeader, "exit-proof-test")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	ws, err := wsDial(ctx, tunnelURL, hdr, nil, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer ws.Close()
-	if ws.respHeader.Get(eAuthHeaderName) == "" || ws.respHeader.Get(ePubHeaderName) == "" {
-		t.Fatalf("101 carried no exit proof: %v", ws.respHeader)
-	}
-	if err := verifyExitResponse(ws.respHeader, store, tunnelURL.Host, newNonceRing(4), nonce); err != nil {
-		t.Fatalf("exit proof on the 101 did not verify: %v", err)
-	}
-}

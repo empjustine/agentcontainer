@@ -42,12 +42,11 @@ import (
 	"time"
 )
 
-// The shared tunnel env names (envTunnelURL, envOperatorToken,
-// envClientLabel) are declared with the rest of the process env surface in
-// main.go; the relay node consumes them via relayConfigFromEnv.
-// envClientLabel keeps the tunnel protocol's own name for the HELLO label
-// (the tunnel's client end), not the node name — docs/d088 renames
-// deployments, not wire fields.
+// envClientLabel is declared with the rest of the process env surface in
+// main.go and keeps the tunnel protocol's own name for the HELLO label (the
+// tunnel's client end), not the node name — docs/d088 renames deployments,
+// not wire fields. The endpoint, identity and pairing come from the store
+// (d236), never from the environment.
 
 const (
 	healthPath   = "/healthz"
@@ -62,10 +61,9 @@ const (
 // place that decides it is safe to bind.
 type relayConfig struct {
 	tunnelURL *url.URL
-	token     string
 	label     string
-	// store is the v5 identity and its paired exit. The token field stays
-	// only for the old boot-time shape check; it never reaches the wire.
+	// store is the v5 identity, its paired exit and the endpoint to dial —
+	// the whole credential surface (d236).
 	store     *relayStore
 	peerName  string
 	selfDER   []byte
@@ -87,7 +85,7 @@ type relayConfig struct {
 	forwards []forwardSpec
 }
 
-// channelHeaders mints one fresh blind token and pins the paired exit's
+// channelHeaders mints one fresh blind proof and pins the paired exit's
 // certificate for one HTTP exchange.
 func (c *relayConfig) channelHeaders() (http.Header, []byte, error) {
 	if c.store == nil {
@@ -110,14 +108,13 @@ const (
 	h2PostureWindowed
 )
 
-// relayConfigFromEnv assembles the config from the flag values and the
-// environment. Nothing else may configure the relay node (one path, no
+// relayConfigFromEnv assembles the config from the flag values, the store and
+// the environment. Nothing else may configure the relay node (one path, no
 // scattered defaults — d072's lesson applied).
 //
-// VPN_TUNNEL_URL is accepted in the URL's honest wire form (http/https/
-// ws/wss) and normalized here — the one place — to the canonical ws/wss
-// every carrier and probe branches on; each carrier rewrites to its own
-// wire scheme itself (docs/d090 §1).
+// The endpoint comes from relay.json (`parseStoreEndpoint` normalizes it once
+// to the canonical ws/wss every carrier branches on, docs/d090 §1); the
+// environment contributes only the optional log label.
 //
 // legacyIPRelay rides as a parameter rather than the environment because it
 // is argv — the same side of the ledger as d145's relay-side flags, and a
@@ -125,42 +122,15 @@ const (
 // line (d163).
 func relayConfigFromEnv(proxyAddr, socksAddr string, legacyIPRelay, insecureExit bool) (relayConfig, error) {
 	var cfg relayConfig
-	raw := os.Getenv(envTunnelURL)
-	if raw == "" {
-		return cfg, fmt.Errorf("%s is required", envTunnelURL)
-	}
-	u, err := url.Parse(raw)
-	if err != nil {
-		return cfg, fmt.Errorf("%s: %w", envTunnelURL, err)
-	}
-	switch u.Scheme {
-	case schemeHTTP, schemeWS:
-		u.Scheme = schemeWS
-	case schemeHTTPS, schemeWSS:
-		u.Scheme = schemeWSS
-	default:
-		return cfg, fmt.Errorf("%s must be http://, https://, ws:// or wss://, got %q", envTunnelURL, u.Scheme)
-	}
-	if u.Host == "" || u.Path == "" {
-		return cfg, fmt.Errorf("%s must include host and path (d073 §7)", envTunnelURL)
-	}
-	// WHY: net/http turns URL userinfo into an Authorization header of its
-	// own, so a URL with credentials would make the exit see two — one the
-	// operator typed and one we minted. The credential has one spelling
-	// (VPN_OPERATOR_TOKEN) and the URL carries none.
-	if u.User != nil {
-		return cfg, fmt.Errorf("%s must not carry credentials; the token has its own variable (%s)", envTunnelURL, envOperatorToken)
-	}
 	store, err := loadRelayStore(storeRoot())
 	if err != nil {
-		return cfg, fmt.Errorf("v5 store: %w", err)
+		return cfg, fmt.Errorf("relay store: %w", err)
 	}
 	cfg.store = store
+	cfg.tunnelURL = store.Endpoint
 	cfg.peerName = store.Exits[0].Name
 	cfg.selfDER = store.SelfDER
 	cfg.replay = newNonceRing(replayRingSize)
-	cfg.tunnelURL = u
-	cfg.token = os.Getenv(envOperatorToken)
 	cfg.label = os.Getenv(envClientLabel)
 	cfg.proxyAddr = proxyAddr
 	cfg.socksAddr = socksAddr
@@ -171,11 +141,11 @@ func relayConfigFromEnv(proxyAddr, socksAddr string, legacyIPRelay, insecureExit
 	// fail-closed shape, and it closes the loophole where ws:// was
 	// accepted with no warning unless a chain proxy happened to be set.
 	if cfg.tunnelURL.Scheme == schemeWS && !insecureExit {
-		return relayConfig{}, fmt.Errorf("%s names a cleartext ws:// tunnel; start the relay with -insecure-exit to accept it (docs/d171)", envTunnelURL)
+		return relayConfig{}, errors.New("relay.json names a cleartext ws:// endpoint; start the relay with -insecure-exit to accept it (docs/d171)")
 	}
 	// The chain env is read HERE, with the rest of the one config path:
 	// bad proxy config must refuse startup before any bind (VPN-R26).
-	cfg.chain, err = relayChainFromEnv(u)
+	cfg.chain, err = relayChainFromEnv(cfg.tunnelURL)
 	if err != nil {
 		return relayConfig{}, err
 	}
@@ -303,19 +273,8 @@ func loopbackHost(host string) (netip.Addr, error) {
 // fatal: binding the listeners without a working credential would expose a
 // proxy surface whose every request fails anyway (VPN-R26 fail-closed).
 func (c *relayConfig) validate() error {
-	if c.token == "" {
-		return fmt.Errorf("no operator token configured; refusing to start (%s)", envOperatorToken)
-	}
-	// The relay is the side that WRITES this token into a header — websocket's
-	// hand-rolled handshake interpolates it with fmt.Fprintf (websocket.go
-	// wsDial), so a CR/LF here would inject headers into our own request.
-	// The length floor and the control-character refusal are the same rule the
-	// exit applies to its key set (validOperatorToken, VPN-R26 fail-closed).
-	if !validOperatorToken(c.token) {
-		return fmt.Errorf("operator token must be at least 16 bytes and free of control characters — a credential may not carry header framing (%s; VPN-R26 fail-closed)", envOperatorToken)
-	}
 	if c.tunnelURL == nil {
-		return fmt.Errorf("no tunnel URL configured (%s)", envTunnelURL)
+		return errors.New("no tunnel endpoint configured (relay.json)")
 	}
 	for what, addr := range map[string]string{"http proxy": c.proxyAddr, schemeSOCKS5: c.socksAddr} {
 		if err := requireLoopback(addr); err != nil {
@@ -416,7 +375,7 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 	if cfg.insecureExit {
 		// docs/d171: one warning naming the posture and pointing at the
 		// exposure table; the per-generation cost is d171's, not restated.
-		logLine(sevWarn, "[vpn-relay] DEGRADED: -insecure-exit is set — certificate verification is skipped and a cleartext ws:// tunnel is accepted; the bearer is exposed to whoever terminates the leg (docs/d171)")
+		logLine(sevWarn, "[vpn-relay] DEGRADED: -insecure-exit is set — certificate verification is skipped and a cleartext ws:// tunnel is accepted; the identity proof and certificate are exposed to whoever terminates the leg (docs/d171)")
 	}
 
 	forwardLns, err := c.bindForwards(ctx, cfg.forwards)
@@ -439,8 +398,8 @@ func runRelayNode(ctx context.Context, cfg relayConfig) error {
 	select {
 	case <-ctx.Done():
 		// Drain rather than kill (docs/d171's rotation primitive): a
-		// restart is how a v3 bearer rotates, and truncating every live
-		// response to rotate a token is a choice, not a requirement.
+		// restart is how a credential rotates, and truncating every live
+		// response to rotate one is a choice, not a requirement.
 		logLine(sevInfo, "[vpn-relay] signal received; draining %d live tunnel(s) (grace %s)", c.live.count(), drainGrace)
 		shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), drainGrace)
 		defer cancel()
@@ -543,7 +502,7 @@ func deniedReason(reason string) bool {
 // constant: selection is the relay node's per-dial ranking of what the
 // endpoint actually offers, and an operator override could only ever degrade
 // the ladder — the -modes/MODES knob retired with docs/d093.
-const carrierOffer = "h2-post-unbounded, websocket, h2-post-windowed, h1.1-post-windowed"
+const carrierOffer = "h2-post-unbounded, websocket, h2-post-windowed"
 
 // dialTransport chooses the session's carrier from what the endpoint
 // actually supports (docs/d077 §4, "negotiation, not path"): the ladder is
@@ -556,14 +515,21 @@ const carrierOffer = "h2-post-unbounded, websocket, h2-post-windowed, h1.1-post-
 // The h2 half is learned, not configured (docs/d222): the relay offers
 // h2-post-unbounded first, and an exit port serving a capped edge refuses it
 // at request initiation. One refusal switches this process to the order
-// websocket → h2-post-windowed → h1.1-post-windowed, and the posture is
-// remembered so later CONNECTs pay nothing. An uncapped edge never refuses,
-// so it keeps the lowest-overhead carrier first.
+// websocket → h2-post-windowed, and the posture is remembered so later
+// CONNECTs pay nothing. An uncapped edge never refuses, so it keeps the
+// lowest-overhead carrier first. h1.1-post-windowed retired with d239: no
+// rung below h2-post-windowed exists, so an endpoint that refuses all three
+// fails closed.
+//
+// A refused exit proof is NOT a carrier failure (d131): it means the peer
+// could not authenticate itself, so the dial stops there — demoting would
+// hand the session to whatever refused it.
 func (c *relayNode) dialTransport(ctx context.Context, id string) (tunnelStream, error) {
 	var attempts []string
 	record := func(carrier string, err error) {
 		attempts = append(attempts, fmt.Sprintf("%s: %v", carrier, err))
 	}
+	credentialRefused := func(err error) bool { return errors.Is(err, errAdmission) }
 	posture := c.h2Posture.Load()
 	if posture != h2PostureWindowed {
 		s, err := c.openH2Carrier(ctx, id, false)
@@ -571,6 +537,9 @@ func (c *relayNode) dialTransport(ctx context.Context, id string) (tunnelStream,
 			c.h2Posture.Store(h2PostureUnbounded)
 			logLine(sevInfo, "[vpn-relay] tunnel carrier=%s", s.transport())
 			return s, nil
+		}
+		if credentialRefused(err) {
+			return nil, err
 		}
 		record(carrierH2Unbounded, err)
 		if errors.Is(err, errUnboundedRefused) {
@@ -585,6 +554,9 @@ func (c *relayNode) dialTransport(ctx context.Context, id string) (tunnelStream,
 		logLine(sevInfo, "[vpn-relay] tunnel carrier=%s", ws.transport())
 		return ws, nil
 	}
+	if credentialRefused(err) {
+		return nil, err
+	}
 	record(carrierWebSocket, err)
 	logLine(sevWarn, "[vpn-relay] websocket failed (%v); trying h2-post-windowed", err)
 
@@ -593,15 +565,12 @@ func (c *relayNode) dialTransport(ctx context.Context, id string) (tunnelStream,
 		logLine(sevInfo, "[vpn-relay] tunnel carrier=%s", s.transport())
 		return s, nil
 	}
-	record(carrierH2Windowed, err)
-	logLine(sevWarn, "[vpn-relay] h2-post-windowed failed (%v); trying h1.1-post-windowed", err)
-
-	s, err = c.openH1Windowed(ctx, id, c.cfg.insecureExit)
-	if err == nil {
-		logLine(sevInfo, "[vpn-relay] tunnel carrier=%s", s.transport())
-		return s, nil
+	if credentialRefused(err) {
+		return nil, err
 	}
-	record(carrierH1Windowed, err)
+	record(carrierH2Windowed, err)
+	logLine(sevWarn, "[vpn-relay] h2-post-windowed failed (%v); no rung left", err)
+
 	if len(attempts) == 1 {
 		return nil, errors.New(attempts[0])
 	}

@@ -15,12 +15,15 @@ import (
 	"net/http"
 )
 
-type admissionTrust map[string]*x509.Certificate
+// admissionTrust is a principal's pinned certificates. It is a set, not one
+// cert: a staged rotation overlaps two entries under one name (d133) and
+// either may be presented until the old one is removed.
+type admissionTrust map[string][]*x509.Certificate
 
 func trustFromRelayStore(store *relayStore) admissionTrust {
 	trust := make(admissionTrust, len(store.Exits))
 	for _, entry := range store.Exits {
-		trust[entry.Name] = entry.Cert
+		trust[entry.Name] = append(trust[entry.Name], entry.Cert)
 	}
 	return trust
 }
@@ -28,9 +31,20 @@ func trustFromRelayStore(store *relayStore) admissionTrust {
 func trustFromExitStore(store *exitStore) admissionTrust {
 	trust := make(admissionTrust, len(store.Relays))
 	for _, entry := range store.Relays {
-		trust[entry.Name] = entry.Cert
+		trust[entry.Name] = append(trust[entry.Name], entry.Cert)
 	}
 	return trust
+}
+
+// pinnedCertificate returns the presented certificate when the named
+// principal's set holds it — the one trust decision in v5 (d236).
+func pinnedCertificate(trust admissionTrust, name string, cert *x509.Certificate) *x509.Certificate {
+	for _, pinned := range trust[name] {
+		if cert.Equal(pinned) {
+			return pinned
+		}
+	}
+	return nil
 }
 
 type untrustedPeerError struct {
@@ -62,8 +76,8 @@ func validateRelayAdmission(eAuth, ePub []string, trust admissionTrust, peerName
 	if err != nil {
 		return admissionResult{}, fmt.Errorf("%w: E-Auth: %w", errAdmission, err)
 	}
-	pinned, ok := trust[env.Name]
-	if !ok || !cert.Equal(pinned) {
+	pinned := pinnedCertificate(trust, env.Name, cert)
+	if pinned == nil {
 		return admissionResult{}, fmt.Errorf("%w: %w", errAdmission, &untrustedPeerError{Name: env.Name, Public: encoded})
 	}
 	pub, ok := pinned.PublicKey.(ed25519.PublicKey)
@@ -91,9 +105,14 @@ func validateExitAdmission(eAuth, ePub []string, trust admissionTrust, exitName,
 	if err != nil {
 		return fmt.Errorf("%w: E-Auth: %w", errAdmission, err)
 	}
-	pinned, ok := trust[exitName]
-	if !ok || !cert.Equal(pinned) || env.Name != exitName {
-		return fmt.Errorf("%w: %w", errAdmission, &untrustedPeerError{Name: exitName, Public: encoded})
+	pinned := pinnedCertificate(trust, env.Name, cert)
+	if pinned == nil {
+		// The certificate names no principal, so the hint keeps the name the
+		// envelope claimed; it grants nothing (d236).
+		return fmt.Errorf("%w: %w", errAdmission, &untrustedPeerError{Name: env.Name, Public: encoded})
+	}
+	if env.Name != exitName {
+		return fmt.Errorf("%w: exit proof names another principal", errAdmission)
 	}
 	pub, ok := pinned.PublicKey.(ed25519.PublicKey)
 	if !ok {

@@ -14,10 +14,11 @@ import (
 	"strings"
 )
 
+// forwardedEnv is every non-secret variable the binary reads (d236): the
+// identity, pairing and policy come from the store the operator mounts, never
+// from this process's environment.
 var forwardedEnv = []string{
-	"PORT", "PORT_CLOUDFLARE",
-	"VPN_OPERATOR_KEYS", "VPN_OPERATOR_TOKEN", "VPN_TUNNEL_URL",
-	"VPN_TUNNEL_EGRESS", "VPN_CLIENT_LABEL",
+	"PORT", "PORT_CLOUDFLARE", "VPN_CLIENT_LABEL", "XDG_DATA_HOME",
 }
 
 func fatal(format string, args ...any) {

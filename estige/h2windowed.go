@@ -121,7 +121,7 @@ func (t *tunnelServer) serveH2Window(w http.ResponseWriter, r *http.Request, key
 		writeFunnel404(lw, r)
 		return
 	}
-	s, compromised := t.accept(context.WithoutCancel(r.Context()), traceID, span, key, carrierH2Windowed)
+	s, compromised := t.accept(context.WithoutCancel(r.Context()), traceID, span, key)
 	if compromised != nil {
 		_ = compromised.Close()
 		writeFunnel404(lw, r)
@@ -231,7 +231,6 @@ type h2WindowedStream struct {
 	timerMu sync.Mutex
 	url     string
 	cfg     *relayConfig
-	token   string
 	id      string
 	bound   int64
 
@@ -278,7 +277,6 @@ func (c *relayNode) openH2Windowed(ctx context.Context, id string, skipVerify bo
 		local:  tls.Certificate{Certificate: [][]byte{c.cfg.selfDER}, PrivateKey: c.cfg.store.Private},
 		peer:   c.cfg.store.Exits[0].Cert,
 		cfg:    &c.cfg,
-		token:  c.cfg.token,
 		id:     id,
 		bound:  h2WindowedBytes,
 		tr:     tr,

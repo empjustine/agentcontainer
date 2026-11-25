@@ -21,8 +21,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/netip"
 	"strconv"
@@ -129,6 +131,25 @@ var guaranteedBogonNames = map[string]bool{
 	"localhost4.localdomain4": true,
 	"localhost6":              true,
 	"localhost6.localdomain6": true,
+}
+
+// parseEgressConfig is the one strict reader for an egress object, shared by
+// exit.json's process table and a relay row's own table (docs/d078/d236): a
+// second parser would be a second truth about what "empty" means.
+func parseEgressConfig(raw, what string) (egressConfig, error) {
+	var cfg egressConfig
+	dec := json.NewDecoder(strings.NewReader(raw))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&cfg); err != nil {
+		return egressConfig{}, fmt.Errorf("%s must be a JSON object {\"allowCidrs\": [\"10.0.0.0/8\"], \"ports\": [443]}: %w", what, err)
+	}
+	if _, err := dec.Token(); !errors.Is(err, io.EOF) {
+		return egressConfig{}, fmt.Errorf("%s has content after the JSON object", what)
+	}
+	if len(cfg.AllowCidrs) == 0 && len(cfg.Ports) == 0 && !cfg.AllowIPLiterals {
+		return egressConfig{}, fmt.Errorf("%s names neither a CIDR, a port nor the IP-exit switch", what)
+	}
+	return cfg, nil
 }
 
 // egressConfig is the config-data half of the policy (VPN-R38): opt-in

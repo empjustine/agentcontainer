@@ -152,6 +152,11 @@ type nonceRing struct {
 }
 
 func newNonceRing(size int) *nonceRing {
+	if size < 1 {
+		// A zero-capacity ring would panic on its first eviction; the only
+		// honest reading of "no horizon" is one entry, never none.
+		size = 1
+	}
 	return &nonceRing{seen: make(map[string]struct{}, size), order: make([]string, 0, size)}
 }
 
