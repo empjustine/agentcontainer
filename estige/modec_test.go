@@ -134,6 +134,7 @@ func TestH2PostUnboundedEndToEndOverHTTP2Front(t *testing.T) {
 		waitForLog(t, logBuf, "transport=h2-post-unbounded")
 		waitForLog(t, logBuf, "transport=h2-post-unbounded")
 		dumped := logBuf.String()
+		assertNoAdmissionMaterial(t, dumped)
 		if strings.Contains(dumped, encodeEPub(testV5CertDER)) {
 			t.Fatalf("token leaked into the log:\n%s", dumped)
 		}

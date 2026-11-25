@@ -385,9 +385,7 @@ func TestTunnelClientServerEndToEnd(t *testing.T) {
 	t.Run("connection log carries metadata and never the credential", func(t *testing.T) {
 		waitForLog(t, logBuf, "event=close")
 		dumped := logBuf.String()
-		if strings.Contains(strings.ToLower(dumped), "e-auth") {
-			t.Fatalf("token leaked into the log:\n%s", dumped)
-		}
+		assertNoAdmissionMaterial(t, dumped)
 		if !strings.Contains(dumped, `label="e2e-label"`) {
 			t.Fatalf("client label missing from the session line:\n%s", dumped)
 		}

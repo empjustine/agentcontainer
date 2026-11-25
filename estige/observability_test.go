@@ -223,3 +223,26 @@ func TestAccessURIStripsAForwardQuery(t *testing.T) {
 		t.Fatalf("non-forward origin-form URI must be logged as asked: %q", got)
 	}
 }
+
+// TestAdmissionLeakGuardCatchesEachNeedle: the guard itself must fail on a
+// leak, so every spelling an admitted exchange uses is exercised against it.
+// The earlier guard grepped "e-auth", which the shipped headers
+// (`E-Relay-Auth`/`E-Exit-Auth`) do not contain, and passed vacuously.
+func TestAdmissionLeakGuardCatchesEachNeedle(t *testing.T) {
+	proof := authToken + "." + testV5Principal + ".AAAA.BBBB"
+	for _, leaked := range []string{
+		"calling with " + eRelayAuthHeader + ": " + proof,
+		"response " + strings.ToLower(eExitAuthHeader) + ": " + proof,
+		"certificate " + strings.ToLower(ePubHeader) + ": " + encodeEPub(testV5CertDER),
+		"envelope " + proof,
+		"store row public=" + encodeEPub(testV5CertDER),
+	} {
+		if admissionMaterialIn(leaked) == "" {
+			t.Fatalf("the leak guard did not recognise %q", leaked)
+		}
+	}
+	clean := `ts=1 role=exit event=close id=00 key=default outcome=closed`
+	if found := admissionMaterialIn(clean); found != "" {
+		t.Fatalf("the leak guard flagged a clean record with %q", found)
+	}
+}

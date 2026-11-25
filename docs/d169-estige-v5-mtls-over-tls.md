@@ -196,7 +196,8 @@ in the peer's pool and the certificate sent in the handshake.
   provenance of both numbers). The backdate absorbs a day of drift; the
   forward bound sits far past any realistic skew.
 - **Trust is pinning, not public chains.** Each side holds the peer's
-  certificate in the role helper (d132's `relay.json` and `exit.json` rows).
+  certificate(s) in the role helper (d132's `relay.json` and `exit.json` rows;
+  a staged rotation is two rows under one name, and both are pinned).
   System roots never enter the inner path, and no second key is generated at
   boot.
 - **Rotation is staged, not expired.** A principal switches keys through
@@ -231,11 +232,18 @@ points, and an auditor reads the library's code rather than this record's.
 
 The trust wiring is the standard one:
 
-- **Client** — `RootCAs` is a pool holding only the pinned peer certificate
-  (system roots are never added), `ServerName` is the peer's principal name,
-  and `Certificates` carries the local self-signed certificate.
-- **Server** — `ClientCAs` is the same single-certificate pool and `ClientAuth`
-  is `RequireAndVerifyClientCert`.
+- **Client** — `RootCAs` is a pool holding the certificates pinned for the one
+  exit being dialed (system roots are never added), `ServerName` is the fixed
+  wire name, and `Certificates` carries the local self-signed certificate.
+- **Server** — `ClientCAs` is a pool holding the certificate(s) pinned for each
+  admitted relay, and `ClientAuth` is `RequireAndVerifyClientCert`.
+
+Either pool is a **set of pins, not one certificate**, because d133's staged
+rotation keeps two rows under one principal name and either must verify.
+Collapsing a pool to the first row reintroduces an outage that survives
+admission and dies in the handshake (the bug `TestStagedExitRotationPinsEveryRow`
+pins).
+
 - **No callback and no skip** — `InsecureSkipVerify` does not appear and
   `VerifyPeerCertificate` is not set; chain, key usage, extended key usage
   and the `NotBefore`/`NotAfter` window are the library's checks against
@@ -274,7 +282,8 @@ what a hand-rolled verifier would have to enforce itself:
 - **The trust pool holds certificates, not SPKIs.** `RootCAs`/`ClientCAs`
   take certificate entries, so the peer's public material in the pairing row
   is its self-signed certificate (One certificate per principal), not the bare
-  SPKI the admission keys travel as.
+  SPKI the admission keys travel as. A pool holds every such certificate the
+  store rows pin for that name.
 - **The public CA limits do not bind.** A private pinned pairing is outside
   the subscriber regime, so the 398-day cap and its shorter successors do not
   apply. The 15-year bound follows Mozilla's websites-trust horizon; it exists
@@ -294,9 +303,9 @@ its keep.
 - **Each certificate carries both usages** (`ServerAuth` and `ClientAuth`) — each
   node acts as server for its own leg of life and as client for the other,
   and one symmetric usage list keeps the config one-spelling.
-- **Verification is the library's, over a single-certificate pool** — system
-  roots are absent, `InsecureSkipVerify` is absent, and the peer's certificate
-  is the only anchor (`RootCAs` client-side, `ClientCAs` server-side).
+- **Verification is the library's, over a pool of pins** — system roots are
+  absent, `InsecureSkipVerify` is absent, and only the peer's pinned
+  certificate(s) are anchors (`RootCAs` client-side, `ClientCAs` server-side).
 - **No suite selection of our own** — AES-GCM versus ChaCha20-Poly1305 is
   the library's hardware decision; the record picks nothing.
 - **Key exchange is inherited** — TLS 1.3 mandates ephemeral DH, so forward
@@ -320,13 +329,13 @@ half-upgraded pairing continues unprotected.
 
 Nothing in this design is cryptographic code. The new surface is:
 
-| piece                                      | shape                                                                            |
-| ------------------------------------------ | -------------------------------------------------------------------------------- |
-| `net.Conn` adapter over `tunnelStream`     | Read, Write, Close and deadlines delegating to the frame-msg primitives          |
-| certificate minting                        | one `x509.CreateCertificate` call and its extension fields                       |
-| the TLS trust wiring                       | single-certificate `RootCAs`/`ClientCAs`, `ServerName`, `SessionTicketsDisabled` |
-| placement in three modes + failure posture | handshake after admission, alert mapped to teardown                              |
-| the refusal matrix                         | below — the bulk of the change                                                   |
+| piece                                      | shape                                                                                |
+| ------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `net.Conn` adapter over `tunnelStream`     | Read, Write, Close and deadlines delegating to the frame-msg primitives              |
+| certificate minting                        | one `x509.CreateCertificate` call and its extension fields                           |
+| the TLS trust wiring                       | pinned-certificate-set `RootCAs`/`ClientCAs`, `ServerName`, `SessionTicketsDisabled` |
+| placement in three modes + failure posture | handshake after admission, alert mapped to teardown                                  |
+| the refusal matrix                         | below — the bulk of the change                                                       |
 
 The bug list is mint plumbing, not math: a certificate that omits the name the
 peer dials, a validity window too tight for the skew the bounds promise, and a
@@ -478,9 +487,9 @@ failing closed.
    `estige public` re-derives the entry from an existing key, and
    `estige key check` validates the certificate like every other row.
 2. **Adapter and TLS config** — `net.Conn` over `tunnelStream` and the
-   standard `tls.Config` wiring: the single-certificate `RootCAs`/`ClientCAs`
-   pools, `ServerName`, `RequireAndVerifyClientCert`, and
-   `SessionTicketsDisabled`.
+   standard `tls.Config` wiring: the pinned-set `RootCAs`/`ClientCAs` pools
+   (every row of the selected principal, for a staged rotation), `ServerName`,
+   `RequireAndVerifyClientCert`, and `SessionTicketsDisabled`.
 3. **Placement** — handshake after admission in modes C, D and E, with the
    failure posture mapped to teardown and the camouflage vocabulary.
 4. **Refusal matrix** — the tests above, plus end-to-end cases mirroring

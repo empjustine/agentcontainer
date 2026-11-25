@@ -431,9 +431,7 @@ func TestLifecycleLogIsPayloadFreeAndRedacted(t *testing.T) {
 	ws.Close()
 	waitForLog(t, logBuf, "event=close")
 	dumped := logBuf.String()
-	if strings.Contains(strings.ToLower(dumped), "e-auth") || strings.Contains(dumped, "e-pub") {
-		t.Fatalf("admission material leaked into the log:\n%s", dumped)
-	}
+	assertNoAdmissionMaterial(t, dumped)
 	if !strings.Contains(dumped, "transport=websocket") {
 		t.Fatalf("expected transport column in the lifecycle line:\n%s", dumped)
 	}

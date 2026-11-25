@@ -381,6 +381,47 @@ func applyTestV5Headers(t *testing.T, hdr http.Header) {
 	maps.Copy(hdr, testV5Headers(t))
 }
 
+// assertNoAdmissionMaterial fails when a log dump carries anything an
+// admitted exchange proves with: a proof header name, the pinned certificate
+// in its wire spelling, or a proof envelope. Assertions grep the SHIPPED
+// names — an earlier guard matched "e-auth", which neither header contains,
+// so it passed vacuously (d131/d236).
+func assertNoAdmissionMaterial(t *testing.T, dumped string) {
+	t.Helper()
+	if found := admissionMaterialIn(dumped); found != "" {
+		t.Fatalf("admission material %q leaked into the log:\n%s", found, dumped)
+	}
+}
+
+// admissionMaterialIn returns the first admission spelling a log dump carries,
+// or "" — a finder rather than an assertion so its own test can prove each
+// needle is really searched for.
+func admissionMaterialIn(dumped string) string {
+	// Header names are case-insensitive; base64url is not, so the proof and
+	// certificate needles are matched against the dump as it stands.
+	lower := strings.ToLower(dumped)
+	for _, needle := range []string{
+		strings.ToLower(eRelayAuthHeader),
+		strings.ToLower(eExitAuthHeader),
+		strings.ToLower(ePubHeader),
+	} {
+		if strings.Contains(lower, needle) {
+			return needle
+		}
+	}
+	for _, needle := range []string{
+		// A logged envelope would carry the token and minter name.
+		authToken + "." + testV5Principal,
+		// The certificate material itself, as the store spells it.
+		encodeEPub(testV5CertDER),
+	} {
+		if strings.Contains(dumped, needle) {
+			return needle
+		}
+	}
+	return ""
+}
+
 func dialTunnelForTest(t *testing.T, u *url.URL) (tunnelStream, error) {
 	t.Helper()
 	hdr := make(http.Header)

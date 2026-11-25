@@ -123,6 +123,7 @@ func TestLocalForwardEndToEnd(t *testing.T) {
 		t.Fatalf("body=%q", body)
 	}
 	waitForLog(t, logBuf, "via=forward")
+	assertNoAdmissionMaterial(t, logBuf.String())
 	if strings.Contains(logBuf.String(), encodeEPub(testV5CertDER)) {
 		t.Fatalf("credential leaked through the forward path:\n%s", logBuf.String())
 	}
