@@ -126,3 +126,46 @@ func TestStoreRequiresHelper(t *testing.T) {
 		t.Fatal("missing relay.json accepted")
 	}
 }
+
+// TestStagedExitRowsShareOnePolicy: two rows under one name are a key
+// rotation, so they must agree on egress — admission trusts both certificates
+// but a session runs under one table, and letting the rows differ would make
+// row order decide policy. Different principals may differ freely.
+func TestStagedExitRowsShareOnePolicy(t *testing.T) {
+	two := func(first, second string) string {
+		return fmt.Sprintf(`{"relays":[{"name":"relay_bazzite","public":"%s"%s},{"name":"relay_bazzite","public":"%s"%s}],"egress":{"ports":[443]}}`,
+			testV5CertDERForTest(), first, testV5CertDERForTest(), second)
+	}
+	const (
+		narrow    = `,"egress":{"ports":[443]}`
+		none      = ""
+		reordered = `,"egress":{"ports":[443],"allowCidrs":["10.0.0.0/8"]}`
+		withCIDR  = `,"egress":{"allowCidrs":["10.0.0.0/8"],"ports":[443]}`
+	)
+	cases := []struct {
+		name    string
+		body    string
+		wantErr bool
+	}{
+		{"both rows carry the same table", two(narrow, narrow), false},
+		{"one row omits the table", two(narrow, none), true},
+		{"the tables differ", two(narrow, `,"egress":{"ports":[80]}`), true},
+		{"the same table spelled in another order", two(reordered, withCIDR), false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := newTestStore(t)
+			store.write(t, "exit.json", tc.body)
+			_, err := loadExitStore(store.root)
+			if tc.wantErr && err == nil {
+				t.Fatal("staged rows with different egress were accepted")
+			}
+			if !tc.wantErr && err != nil {
+				t.Fatalf("valid staged rows refused: %v", err)
+			}
+		})
+	}
+}
+
+// testV5CertDERForTest is the suite certificate in the store's wire spelling.
+func testV5CertDERForTest() string { return encodeEPub(testV5CertDER) }

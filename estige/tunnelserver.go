@@ -123,6 +123,10 @@ func (t *tunnelServer) wrapChannel(handshakeCtx context.Context, s tunnelStream,
 	return newTLSTunnelStream(conn, s), nil
 }
 
+// keyByName returns the admitted principal's one policy row. A staged
+// rotation may store two rows under the name, but loadExitStore refuses a pair
+// whose egress disagrees, so the first match is that principal's only answer
+// and row order cannot decide policy.
 func (t *tunnelServer) keyByName(name string) *operatorKey {
 	for i := range t.keys {
 		if t.keys[i].id == name {

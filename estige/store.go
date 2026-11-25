@@ -17,6 +17,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -166,6 +167,9 @@ func loadExitStore(root string) (*exitStore, error) {
 	if err := checkStagedNames(len(relays), func(i int) string { return relays[i].Name }); err != nil {
 		return nil, fmt.Errorf("exit.json: %w", err)
 	}
+	if err := checkStagedEgress(relays); err != nil {
+		return nil, fmt.Errorf("exit.json: %w", err)
+	}
 	var policy egressConfig
 	if len(file.Egress) > 0 {
 		policy, err = parseEgressConfig(string(file.Egress), "exit.json egress")
@@ -239,6 +243,45 @@ func checkStagedNames(n int, name func(int) string) error {
 		}
 	}
 	return nil
+}
+
+// checkStagedEgress refuses a staged pair whose egress tables disagree.
+// Admission trusts every row under one name, but a principal has ONE policy
+// (a session is admitted by either certificate and then runs under one table),
+// so two spellings of that table would make row order decide policy. Rows that
+// say the same thing are accepted; rows that differ are a config error, not a
+// merge (d132's preference: disruptive, never insecure).
+func checkStagedEgress(relays []relayPeerEntry) error {
+	byName := make(map[string]*egressConfig, len(relays))
+	for i := range relays {
+		first, staged := byName[relays[i].Name]
+		if !staged {
+			byName[relays[i].Name] = relays[i].Egress
+			continue
+		}
+		if !sameEgress(first, relays[i].Egress) {
+			return fmt.Errorf("%s has staged rows with different egress: one principal runs under one policy", relays[i].Name)
+		}
+	}
+	return nil
+}
+
+// sameEgress compares two optional tables by meaning, not spelling: the CIDR
+// and port lists are sets, so their order is not a difference.
+func sameEgress(a, b *egressConfig) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	if a.AllowIPLiterals != b.AllowIPLiterals {
+		return false
+	}
+	cidrsA, cidrsB := slices.Clone(a.AllowCidrs), slices.Clone(b.AllowCidrs)
+	portsA, portsB := slices.Clone(a.Ports), slices.Clone(b.Ports)
+	slices.Sort(cidrsA)
+	slices.Sort(cidrsB)
+	slices.Sort(portsA)
+	slices.Sort(portsB)
+	return slices.Equal(cidrsA, cidrsB) && slices.Equal(portsA, portsB)
 }
 
 func readStoreJSON(root, name string, out any) error {

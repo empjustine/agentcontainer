@@ -201,6 +201,11 @@ and `estige/run.go`:
 
 ## Amendment map
 
+- **A staged pair shares one policy.** Two `exit.json` rows under one name are
+  a key rotation, so `loadExitStore` refuses a pair whose `egress` tables
+  differ (compared by meaning, not spelling): admission trusts both
+  certificates, while a session runs under one table, so differing rows would
+  let row order decide policy.
 - **d239** amends the windowed-carrier handshake rule (it binds
   `h2-post-windowed` only) and records the `h1.1-post-windowed` retirement; it
   also carries the fail-closed ladder that follows from it.
