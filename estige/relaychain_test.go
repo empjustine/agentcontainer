@@ -526,3 +526,31 @@ func socks5FixtureHandshake(conn net.Conn, requireAuth bool, record func(string)
 	}
 	return up, true
 }
+
+// TestRelayChainSOCKS5ProxyCarriesTunnel: the SOCKS5 chain carries a real
+// tunnel, not only a dial. The websocket rung rides it here (an h1.1 TLS
+// front, so the ALPN probe reports "h2 not offered" and the session dials as
+// an upgrade), which is the shape every carrier's tunnelDial shares
+// (docs/d094).
+func TestRelayChainSOCKS5ProxyCarriesTunnel(t *testing.T) {
+	upstream := newChainUpstream(t)
+	upPort := portOf(t, upstream.Listener.Addr().String())
+	backend := tunnelTestServer(t, upstream)
+
+	socksAddr, targets := newSOCKS5ChainProxy(t, false)
+	clearChainEnv(t)
+	t.Setenv("SOCKS_SERVER", socksAddr)
+
+	front := newTLSFront(t, backend, false)
+	httpAddr, stop := wireRelayNode(t, front.URL+tunnelPath)
+	defer stop()
+	logBuf := captureLog(t)
+
+	chainFetch(t, httpAddr, testTargetAlias, upPort)
+
+	waitForLog(t, logBuf, "transport=websocket")
+	tunnelAddr := front.Listener.Addr().String()
+	if recorded := targets(); len(recorded) == 0 || recorded[0] != tunnelAddr {
+		t.Fatalf("socks chain targets=%v, want the tunnel endpoint %q", recorded, tunnelAddr)
+	}
+}

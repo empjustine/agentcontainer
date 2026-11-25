@@ -18,6 +18,14 @@ camouflage, the trust model, or the tenancy stance. It is the delta d073
 VPN-R31 gains; the deltas are restated below with their citations so this
 record is checkable without re-reading d073 (the d077 §9 convention).
 
+**Superseded surface, surviving intent (d236).** The `VPN_OPERATOR_KEYS`
+env value this record designs retires with v5: the admitted principal set is
+`exit.json`'s `relays[]` rows, and a principal authenticates with the blind
+`e-auth` proof pair (d104/d131) instead of a bearer. What survives is this
+record's intent — a bounded, named, revocable, attributable principal set,
+and a per-principal egress narrowing (now an `exit.json` relay row's own
+`egress` block). Read "keyset value" below as "the exit store's relay rows".
+
 ## 1. What "isolated" means here
 
 Each principal is an independent bearer credential with exactly two isolation

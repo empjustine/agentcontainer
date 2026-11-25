@@ -97,6 +97,19 @@ Safe order is the one d078's merge was built for, reversed: vault edit first
 (both spellings work on the old binary), then binary upgrade (TOKEN-only
 exit now refuses loudly).
 
+## Superseded by the store (d236)
+
+This record's surface is retired: v5 keeps the _laws_ it argued for (one
+spelling per fact, normalization at the one boundary function) but moves the
+facts into the role stores (d236). `VPN_TUNNEL_URL` becomes `relay.json`'s
+`endpoint`, parsed and normalized by `parseStoreEndpoint` (same four wire
+forms, same one internal spelling), and `VPN_OPERATOR_TOKEN`/
+`VPN_OPERATOR_KEYS` retire with no env replacement — the identity is the
+store key and the admission credential is the blind `e-auth` proof pair
+(d104/d131). `VPN_CLIENT_LABEL` stays because it is log metadata, not a
+credential. An operator provisioning this record's variables on a relay host
+now gets a boot refusal that names the store, not the retired variable.
+
 ## Requirement deltas (restated with citations)
 
 - **d078 §2 "Back-compat" (retired here)** — the `VPN_OPERATOR_TOKEN` →
