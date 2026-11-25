@@ -10,8 +10,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -216,9 +214,7 @@ func TestWrongExitPinStopsTheLadder(t *testing.T) {
 	}
 	relayFile := fmt.Sprintf(`{"endpoint":"wss://%s%s","exit":[{"name":%q,"public":%q}]}`,
 		exitAddr, tunnelPath, testV5Principal, encodeEPub(foreignDER))
-	if err := os.WriteFile(filepath.Join(testV5StoreRoot, "relay.json"), []byte(relayFile), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	writeTestRoleFile(t, "relay.json", relayFile)
 	logBuf := captureLog(t)
 	httpAddr := freeLoopbackAddr(t)
 	cfg, err := relayConfigFromEnv(httpAddr, freeLoopbackAddr(t), relaySelection{}, false, false)
@@ -288,9 +284,7 @@ func TestStagedExitRotationPinsEveryRow(t *testing.T) {
 		exitAddr, tunnelPath,
 		testV5Principal, encodeEPub(foreignDER),
 		testV5Principal, encodeEPub(testV5CertDER))
-	if err := os.WriteFile(filepath.Join(testV5StoreRoot, "relay.json"), []byte(relayFile), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	writeTestRoleFile(t, "relay.json", relayFile)
 	httpAddr := freeLoopbackAddr(t)
 	cfg, err := relayConfigFromEnv(httpAddr, freeLoopbackAddr(t), relaySelection{}, false, false)
 	if err != nil {

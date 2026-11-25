@@ -175,14 +175,29 @@ func egressBlock(egress *egressConfig) string {
 	return fmt.Sprintf(`,"egress":%s`, raw)
 }
 
+// writeTestRoleFile writes one role file for one test and restores what the
+// suite store held when that test first touched it. Without the restore the
+// store is process-global state that outlives a test — unlike the t.Setenv
+// this replaced — and `go test -shuffle=on` fails on whatever a previous test
+// left behind.
+func writeTestRoleFile(t *testing.T, name, body string) {
+	t.Helper()
+	path := filepath.Join(testV5StoreRoot, name)
+	if previous, err := os.ReadFile(path); err == nil {
+		t.Cleanup(func() { _ = os.WriteFile(path, previous, 0o600) })
+	} else {
+		t.Cleanup(func() { _ = os.Remove(path) })
+	}
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // writeTestRelayJSON sets the endpoint a relay dials for one test.
 func writeTestRelayJSON(t *testing.T, endpoint string) {
 	t.Helper()
 	entry := fmt.Sprintf(`"name":%q,"public":%q`, testV5Principal, encodeEPub(testV5CertDER))
-	relayFile := fmt.Sprintf(`{"endpoint":%q,"exit":[{%s}]}`, endpoint, entry)
-	if err := os.WriteFile(filepath.Join(testV5StoreRoot, "relay.json"), []byte(relayFile), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	writeTestRoleFile(t, "relay.json", fmt.Sprintf(`{"endpoint":%q,"exit":[{%s}]}`, endpoint, entry))
 }
 
 // writeTestExitJSON sets the exit's admitted relay row(s) and its egress for
@@ -191,11 +206,7 @@ func writeTestRelayJSON(t *testing.T, endpoint string) {
 func writeTestExitJSON(t *testing.T, egress *egressConfig) {
 	t.Helper()
 	entry := fmt.Sprintf(`"name":%q,"public":%q`, testV5Principal, encodeEPub(testV5CertDER))
-	egressJSON := egressBlock(egress)
-	exitFile := fmt.Sprintf(`{"relays":[{%s}]%s}`, entry, egressJSON)
-	if err := os.WriteFile(filepath.Join(testV5StoreRoot, "exit.json"), []byte(exitFile), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	writeTestRoleFile(t, "exit.json", fmt.Sprintf(`{"relays":[{%s}]%s}`, entry, egressBlock(egress)))
 }
 
 // TestMain installs the suite TLS root before any test runs — SSL_CERT_FILE

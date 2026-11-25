@@ -8,8 +8,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -55,10 +53,7 @@ func TestExitStoreEgressGrammar(t *testing.T) {
 	} {
 		t.Run("refused: "+block, func(t *testing.T) {
 			entry := fmt.Sprintf(`"name":%q,"public":%q`, testV5Principal, encodeEPub(testV5CertDER))
-			exitFile := fmt.Sprintf(`{"relays":[{%s}],"egress":%s}`, entry, block)
-			if err := os.WriteFile(filepath.Join(testV5StoreRoot, "exit.json"), []byte(exitFile), 0o600); err != nil {
-				t.Fatal(err)
-			}
+			writeTestRoleFile(t, "exit.json", fmt.Sprintf(`{"relays":[{%s}],"egress":%s}`, entry, block))
 			if _, err := loadExitStore(storeRoot()); err == nil {
 				t.Fatalf("exit.json egress %s = nil error, want refusal", block)
 			}

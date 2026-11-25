@@ -10,8 +10,6 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"os"
-	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
@@ -26,10 +24,7 @@ func writeRelayRowEgress(t *testing.T, egress *egressConfig) {
 		t.Fatal(err)
 	}
 	entry := fmt.Sprintf(`"name":%q,"public":%q,"egress":%s`, testV5Principal, encodeEPub(testV5CertDER), raw)
-	exitFile := fmt.Sprintf(`{"relays":[{%s}]}`, entry)
-	if err := os.WriteFile(filepath.Join(testV5StoreRoot, "exit.json"), []byte(exitFile), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	writeTestRoleFile(t, "exit.json", fmt.Sprintf(`{"relays":[{%s}]}`, entry))
 }
 
 func TestPerRelayEgressIsEnforced(t *testing.T) {
