@@ -1,7 +1,7 @@
 {
 	"repo": "openbmb/MiniCPM5-2B-GGUF",
 	"commit": "8ad02b786ab81e33d465e1c80562640c55ab2877",
-	"fetched_at": "2026-11-24T04:45:44+00:00",
+	"fetched_at": "2026-11-25T01:50:15+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

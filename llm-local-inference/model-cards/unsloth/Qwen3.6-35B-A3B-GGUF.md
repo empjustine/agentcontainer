@@ -4,13 +4,15 @@ license: apache-2.0
 license_link: https://huggingface.co/Qwen/Qwen3.6-35B-A3B/blob/main/LICENSE
 pipeline_tag: image-text-to-text
 base_model:
-- Qwen/Qwen3.6-35B-A3B
+  - Qwen/Qwen3.6-35B-A3B
 tags:
-- unsloth
-- qwen
-- qwen3_5_moe
+  - unsloth
+  - qwen
+  - qwen3_5_moe
 ---
+
 # Read our How to [Run Qwen3.6 Guide!](https://docs.unsloth.ai/models/qwen3.6)
+
 <div>
   <p style="margin: 0 0 0px 0; margin-top: 0px;">
     <em>See <a href="https://unsloth.ai/docs/basics/unsloth-dynamic-v2.0-gguf">Unsloth Dynamic 2.0 GGUFs</a> for our quantization benchmarks.</em>
@@ -44,7 +46,7 @@ tags:
 [![Qwen Chat](https://img.shields.io/badge/%F0%9F%92%9C%EF%B8%8F%20Qwen%20Chat%20-536af5)](https://chat.qwen.ai)
 
 > [!Note]
-> This repository contains model weights and configuration files for the post-trained model in the Hugging Face Transformers format. 
+> This repository contains model weights and configuration files for the post-trained model in the Hugging Face Transformers format.
 >
 > These artifacts are compatible with Hugging Face Transformers, vLLM, SGLang, KTransformers, etc.
 
@@ -54,8 +56,8 @@ Following the February release of the Qwen3.5 series, we're pleased to share the
 
 This release delivers substantial upgrades, particularly in
 
-- **Agentic Coding:** the model now handles frontend workflows and repository-level reasoning with greater fluency and precision. 
-- **Thinking Preservation:** we've introduced a new option to retain reasoning context from historical messages, streamlining iterative development and reducing overhead. 
+- **Agentic Coding:** the model now handles frontend workflows and repository-level reasoning with greater fluency and precision.
+- **Thinking Preservation:** we've introduced a new option to retain reasoning context from historical messages, streamlining iterative development and reducing overhead.
 
 ![Benchmark Results](https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3.6/Figures/qwen3.6_35b_a3b_score.png)
 
@@ -66,26 +68,25 @@ For more details, please refer to our blog post [Qwen3.6-35B-A3B](https://qwen.a
 - Type: Causal Language Model with Vision Encoder
 - Training Stage: Pre-training & Post-training
 - Language Model
-    - Number of Parameters: 35B in total and 3B activated
-    - Hidden Dimension: 2048
-    - Token Embedding: 248320 (Padded)
-    - Number of Layers: 40
-    - Hidden Layout: 10 × (3 × (Gated DeltaNet → MoE) → 1 × (Gated Attention → MoE))
-    - Gated DeltaNet:
-        - Number of Linear Attention Heads: 32 for V and 16 for QK
-        - Head Dimension: 128
-    - Gated Attention:
-        - Number of Attention Heads: 16 for Q and 2 for KV
-        - Head Dimension: 256
-        - Rotary Position Embedding Dimension: 64
-    - Mixture Of Experts
-        - Number of Experts: 256
-        - Number of Activated Experts: 8 Routed + 1 Shared
-        - Expert Intermediate Dimension: 512
-    - LM Output: 248320 (Padded)
-    - MTP: trained with multi-steps  
+  - Number of Parameters: 35B in total and 3B activated
+  - Hidden Dimension: 2048
+  - Token Embedding: 248320 (Padded)
+  - Number of Layers: 40
+  - Hidden Layout: 10 × (3 × (Gated DeltaNet → MoE) → 1 × (Gated Attention → MoE))
+  - Gated DeltaNet:
+    - Number of Linear Attention Heads: 32 for V and 16 for QK
+    - Head Dimension: 128
+  - Gated Attention:
+    - Number of Attention Heads: 16 for Q and 2 for KV
+    - Head Dimension: 256
+    - Rotary Position Embedding Dimension: 64
+  - Mixture Of Experts
+    - Number of Experts: 256
+    - Number of Activated Experts: 8 Routed + 1 Shared
+    - Expert Intermediate Dimension: 512
+  - LM Output: 248320 (Padded)
+  - MTP: trained with multi-steps
 - Context Length: 262,144 natively and extensible up to 1,010,000 tokens.
-
 
 ## Benchmark Results
 
@@ -351,7 +352,6 @@ For more details, please refer to our blog post [Qwen3.6-35B-A3B](https://qwen.a
 
 </div>
 
-
 ### Vision Language
 
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:1000px;margin:0 auto;padding:16px 0">
@@ -571,7 +571,7 @@ For more details, please refer to our blog post [Qwen3.6-35B-A3B](https://qwen.a
 
 ## Quickstart
 
-For streamlined integration, we recommend using Qwen3.6 via APIs. Below is a guide to use Qwen3.6 via OpenAI-compatible API. 
+For streamlined integration, we recommend using Qwen3.6 via APIs. Below is a guide to use Qwen3.6 via OpenAI-compatible API.
 
 ### Serving Qwen3.6
 
@@ -579,43 +579,45 @@ Qwen3.6 can be served via APIs with popular inference frameworks.
 In the following, we show example commands to launch OpenAI-Compatible API servers for Qwen3.6 models.
 
 > [!Important]
-> Inference efficiency and throughput vary significantly across frameworks. 
+> Inference efficiency and throughput vary significantly across frameworks.
 > We recommend using the latest framework versions to ensure optimal performance and compatibility.
 > For production workloads or high-throughput scenarios, dedicated serving engines such as SGLang, KTransformers or vLLM are strongly recommended.
 
 > [!Important]
 > The model has a default context length of 262,144 tokens.
-> If you encounter out-of-memory (OOM) errors, consider reducing the context window. 
+> If you encounter out-of-memory (OOM) errors, consider reducing the context window.
 > However, because Qwen3.6 leverages extended context for complex tasks, we advise maintaining a context length of at least 128K tokens to preserve thinking capabilities.
 
 #### SGLang
 
 [SGLang](https://github.com/sgl-project/sglang) is a fast serving framework for large language models and vision language models.
 `sglang>=0.5.10` is recommended for Qwen3.6, which can be installed using the following command in a fresh environment:
+
 ```shell
 uv pip install sglang[all]
 ```
+
 See [its documentation](https://docs.sglang.ai/get_started/install.html) for more details.
 
 The following will create API endpoints at `http://localhost:8000/v1`:
 
 - **Standard Version**: The following command can be used to create an API endpoint with maximum context length 262,144 tokens using tensor parallel on 8 GPUs.
-    
-    ```shell
-    python -m sglang.launch_server --model-path Qwen/Qwen3.6-35B-A3B --port 8000 --tp-size 8 --mem-fraction-static 0.8 --context-length 262144 --reasoning-parser qwen3
-    ```
+
+  ```shell
+  python -m sglang.launch_server --model-path Qwen/Qwen3.6-35B-A3B --port 8000 --tp-size 8 --mem-fraction-static 0.8 --context-length 262144 --reasoning-parser qwen3
+  ```
 
 - **Tool Use**: To support tool use, you can use the following command.
-    
-    ```shell
-    python -m sglang.launch_server --model-path Qwen/Qwen3.6-35B-A3B --port 8000 --tp-size 8 --mem-fraction-static 0.8 --context-length 262144 --reasoning-parser qwen3 --tool-call-parser qwen3_coder
-    ```
+
+  ```shell
+  python -m sglang.launch_server --model-path Qwen/Qwen3.6-35B-A3B --port 8000 --tp-size 8 --mem-fraction-static 0.8 --context-length 262144 --reasoning-parser qwen3 --tool-call-parser qwen3_coder
+  ```
 
 - **Multi-Token Prediction (MTP)**: The following command is recommended for MTP:
-    
-    ```shell
-    python -m sglang.launch_server --model-path Qwen/Qwen3.6-35B-A3B --port 8000 --tp-size 8 --mem-fraction-static 0.8 --context-length 262144 --reasoning-parser qwen3 --speculative-algo NEXTN --speculative-num-steps 3 --speculative-eagle-topk 1 --speculative-num-draft-tokens 4
-    ```
+
+  ```shell
+  python -m sglang.launch_server --model-path Qwen/Qwen3.6-35B-A3B --port 8000 --tp-size 8 --mem-fraction-static 0.8 --context-length 262144 --reasoning-parser qwen3 --speculative-algo NEXTN --speculative-num-steps 3 --speculative-eagle-topk 1 --speculative-num-draft-tokens 4
+  ```
 
 For detailed deployment guide, see the [SGLang Qwen3.5 Cookbook](https://lmsysorg.mintlify.app/cookbook/llm/Qwen/Qwen3.5).
 
@@ -623,55 +625,59 @@ For detailed deployment guide, see the [SGLang Qwen3.5 Cookbook](https://lmsysor
 
 [vLLM](https://github.com/vllm-project/vllm) is a high-throughput and memory-efficient inference and serving engine for LLMs.
 `vllm>=0.19.0` is recommended for Qwen3.6, which can be installed using the following command in a fresh environment:
+
 ```shell
 uv pip install vllm --torch-backend=auto
 ```
-See [its documentation](https://docs.vllm.ai/en/stable/getting_started/installation/index.html) for more details. 
 
+See [its documentation](https://docs.vllm.ai/en/stable/getting_started/installation/index.html) for more details.
 
 The following will create API endpoints at `http://localhost:8000/v1`:
 
 - **Standard Version**: The following command can be used to create an API endpoint with maximum context length 262,144 tokens using tensor parallel on 8 GPUs.
 
-    ```shell
-    vllm serve Qwen/Qwen3.6-35B-A3B --port 8000 --tensor-parallel-size 8 --max-model-len 262144 --reasoning-parser qwen3 
-    ```
+  ```shell
+  vllm serve Qwen/Qwen3.6-35B-A3B --port 8000 --tensor-parallel-size 8 --max-model-len 262144 --reasoning-parser qwen3
+  ```
 
 - **Tool Call**: To support tool use, you can use the following command.
-    
-    ```shell
-    vllm serve Qwen/Qwen3.6-35B-A3B --port 8000 --tensor-parallel-size 8 --max-model-len 262144 --reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_coder 
-    ```
+
+  ```shell
+  vllm serve Qwen/Qwen3.6-35B-A3B --port 8000 --tensor-parallel-size 8 --max-model-len 262144 --reasoning-parser qwen3 --enable-auto-tool-choice --tool-call-parser qwen3_coder
+  ```
 
 - **Multi-Token Prediction (MTP)**: The following command is recommended for MTP:
 
-    ```shell
-    vllm serve Qwen/Qwen3.6-35B-A3B --port 8000 --tensor-parallel-size 8 --max-model-len 262144 --reasoning-parser qwen3 --speculative-config '{"method":"qwen3_next_mtp","num_speculative_tokens":2}'
-    ```
+  ```shell
+  vllm serve Qwen/Qwen3.6-35B-A3B --port 8000 --tensor-parallel-size 8 --max-model-len 262144 --reasoning-parser qwen3 --speculative-config '{"method":"qwen3_next_mtp","num_speculative_tokens":2}'
+  ```
 
 - **Text-Only**: The following command skips the vision encoder and multimodal profiling to free up memory for additional KV cache:
-    
-    ```shell
-    vllm serve Qwen/Qwen3.6-35B-A3B --port 8000 --tensor-parallel-size 8 --max-model-len 262144 --reasoning-parser qwen3 --language-model-only
-    ```
+
+  ```shell
+  vllm serve Qwen/Qwen3.6-35B-A3B --port 8000 --tensor-parallel-size 8 --max-model-len 262144 --reasoning-parser qwen3 --language-model-only
+  ```
 
 For detailed deployment guide, see the [vLLM Qwen3.5 Recipe](https://docs.vllm.ai/projects/recipes/en/latest/Qwen/Qwen3.5.html).
 
 #### KTransformers
- 
+
 [KTransformers](https://github.com/kvcache-ai/ktransformers) is a flexible framework for experiencing cutting-edge LLM inference optimizations with CPU-GPU heterogeneous computing.
 For running Qwen3.6 with KTransformers, see the [KTransformers Deployment Guide](https://github.com/kvcache-ai/ktransformers/blob/main/doc/en/Qwen3.5.md).
- 
+
 #### Hugging Face Transformers
 
 Hugging Face Transformers contains a _lightweight_ server which can be used for quick testing and moderate load deployment.
 The latest `transformers` is required for Qwen3.6:
+
 ```shell
 pip install "transformers[serving]"
 ```
+
 See [its documentation](https://huggingface.co/docs/transformers/main/serving) for more details. Please also make sure torchvision and pillow are installed.
 
 Then, run `transformers serve` to launch a server with API endpoints at `http://localhost:8000/v1`; it will place the model on accelerators if available:
+
 ```shell
 transformers serve Qwen/Qwen3.6-35B-A3B --port 8000 --continuous-batching
 ```
@@ -682,6 +688,7 @@ The chat completions API is accessible via standard HTTP requests or OpenAI SDKs
 Here, we show examples using the OpenAI Python SDK.
 
 Before starting, make sure it is installed and the API key and the API base URL is configured, e.g.:
+
 ```shell
 pip install -U openai
 
@@ -692,6 +699,7 @@ export OPENAI_API_KEY="EMPTY"
 
 > [!Tip]
 > We recommend using the following set of sampling parameters for generation
+>
 > - Thinking mode for general tasks: `temperature=1.0, top_p=0.95, top_k=20, min_p=0.0, presence_penalty=1.5, repetition_penalty=1.0`
 > - Thinking mode for precise coding tasks (e.g. WebDev): `temperature=0.6, top_p=0.95, top_k=20, min_p=0.0, presence_penalty=0.0, repetition_penalty=1.0`
 > - Instruct (or non-thinking) mode for general tasks: `temperature=0.7, top_p=0.8, top_k=20, min_p=0.0, presence_penalty=1.5, repetition_penalty=1.0`
@@ -702,7 +710,6 @@ export OPENAI_API_KEY="EMPTY"
 > [!Important]
 > Qwen3.6 models operate in thinking mode by default, generating thinking content signified by `<think>\n...</think>\n\n` before producing the final responses.
 > To disable thinking content and obtain direct response, refer to the examples [here](#instruct-or-non-thinking-mode).
-
 
 #### Text-Only Input
 
@@ -724,11 +731,10 @@ chat_response = client.chat.completions.create(
     presence_penalty=1.5,
     extra_body={
         "top_k": 20,
-    }, 
+    },
 )
 print("Chat response:", chat_response)
 ```
-
 
 #### Image Input
 
@@ -764,7 +770,7 @@ response = client.chat.completions.create(
     presence_penalty=1.5,
     extra_body={
         "top_k": 20,
-    }, 
+    },
 )
 print("Chat response:", chat_response)
 ```
@@ -810,12 +816,11 @@ response = client.chat.completions.create(
     extra_body={
         "top_k": 20,
         "mm_processor_kwargs": {"fps": 2, "do_sample_frames": True},
-    }, 
+    },
 )
 
 print("Chat response:", chat_response)
 ```
-
 
 #### Instruct (or Non-Thinking) Mode
 
@@ -823,8 +828,9 @@ print("Chat response:", chat_response)
 > Qwen3.6 does not officially support the soft switch of Qwen3, i.e., `/think` and `/nothink`.
 
 Qwen3.6 will think by default before response.
-You can obtain direct response from the model without thinking by configuring the API parameters. 
+You can obtain direct response from the model without thinking by configuring the API parameters.
 For example,
+
 ```python
 from openai import OpenAI
 # Configured by environment variables
@@ -858,7 +864,7 @@ chat_response = client.chat.completions.create(
     extra_body={
         "top_k": 20,
         "chat_template_kwargs": {"enable_thinking": False},
-    }, 
+    },
 )
 print("Chat response:", chat_response)
 ```
@@ -868,9 +874,10 @@ print("Chat response:", chat_response)
 
 #### Preserve Thinking
 
-By default, only the thinking blocks generated in handling the latest user message is retained, resulting in a pattern commonly as interleaved thinking. 
+By default, only the thinking blocks generated in handling the latest user message is retained, resulting in a pattern commonly as interleaved thinking.
 Qwen3.6 has been additionally trained to preserve and leverage thinking traces from historical messages.
 You can enable this behavior by setting the `preserve_thinking` option:
+
 ```python
 from openai import OpenAI
 # Configured by environment variables
@@ -888,7 +895,7 @@ chat_response = client.chat.completions.create(
     extra_body={
         "top_k": 20,
         "chat_template_kwargs": {"preserve_thinking": True},
-    }, 
+    },
 )
 print("Chat response:", chat_response)
 ```
@@ -896,9 +903,7 @@ print("Chat response:", chat_response)
 > [!Note]
 > If you are using APIs from Alibaba Cloud Model Studio, in addition to changing `model`, please use `"preserve_thinking": True` instead of `"chat_template_kwargs": {"preserve_thinking": False}`.
 
-
 This capability is particularly beneficial for agent scenarios, where maintaining full reasoning context can enhance decision consistency and, in many cases, reduce overall token consumption by minimizing redundant reasoning. Additionally, it can improve KV cache utilization, optimizing inference efficiency in both thinking and non-thinking modes.
-
 
 ## Agentic Usage
 
@@ -906,9 +911,10 @@ Qwen3.6 excels in tool calling capabilities.
 
 ### Qwen-Agent
 
-We recommend using [Qwen-Agent](https://github.com/QwenLM/Qwen-Agent) to quickly build Agent applications with Qwen3.6. 
+We recommend using [Qwen-Agent](https://github.com/QwenLM/Qwen-Agent) to quickly build Agent applications with Qwen3.6.
 
 To define the available tools, you can use the MCP configuration file, use the integrated tool of Qwen-Agent, or integrate other tools by yourself.
+
 ```python
 import os
 from qwen_agent.agents import Assistant
@@ -980,68 +986,66 @@ print(responses)
 
 ### Qwen Code
 
-
 [Qwen Code](https://github.com/QwenLM/qwen-code) is an open-source AI agent for the terminal, optimized for Qwen models. It helps you understand large codebases, automate tedious work, and ship faster.
 
 For more information, please refer to [Qwen Code](https://qwenlm.github.io/qwen-code-docs/).
 
 ## Processing Ultra-Long Texts
 
-Qwen3.6 natively supports context lengths of up to 262,144 tokens. 
+Qwen3.6 natively supports context lengths of up to 262,144 tokens.
 For long-horizon tasks where the total length (including both input and output) exceeds this limit, we recommend using RoPE scaling techniques to handle long texts effectively., e.g., YaRN.
 
-YaRN is currently supported by several inference frameworks, e.g., `transformers`, `vllm`, `ktransformers` and `sglang`. 
+YaRN is currently supported by several inference frameworks, e.g., `transformers`, `vllm`, `ktransformers` and `sglang`.
 In general, there are two approaches to enabling YaRN for supported frameworks:
 
 - Modifying the model configuration file:
   In the `config.json` file, change the `rope_parameters` fields in `text_config` to:
-    ```json
-    {
-        "mrope_interleaved": true,
-        "mrope_section": [
-            11,
-            11,
-            10
-        ],
-        "rope_type": "yarn",
-        "rope_theta": 10000000,
-        "partial_rotary_factor": 0.25,
-        "factor": 4.0,
-        "original_max_position_embeddings": 262144,
-    }
-    ```
+
+  ```json
+  {
+    "mrope_interleaved": true,
+    "mrope_section": [11, 11, 10],
+    "rope_type": "yarn",
+    "rope_theta": 10000000,
+    "partial_rotary_factor": 0.25,
+    "factor": 4.0,
+    "original_max_position_embeddings": 262144
+  }
+  ```
 
 - Passing command line arguments:
 
   For `vllm`, you can use
-    ```shell
-    VLLM_ALLOW_LONG_MAX_MODEL_LEN=1 vllm serve ... --hf-overrides '{"text_config": {"rope_parameters": {"mrope_interleaved": true, "mrope_section": [11, 11, 10], "rope_type": "yarn", "rope_theta": 10000000, "partial_rotary_factor": 0.25, "factor": 4.0, "original_max_position_embeddings": 262144}}}' --max-model-len 1010000  
-    ```
+
+  ```shell
+  VLLM_ALLOW_LONG_MAX_MODEL_LEN=1 vllm serve ... --hf-overrides '{"text_config": {"rope_parameters": {"mrope_interleaved": true, "mrope_section": [11, 11, 10], "rope_type": "yarn", "rope_theta": 10000000, "partial_rotary_factor": 0.25, "factor": 4.0, "original_max_position_embeddings": 262144}}}' --max-model-len 1010000
+  ```
 
   For `sglang` and `ktransformers`, you can use
-    ```shell
-    SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1 python -m sglang.launch_server ... --json-model-override-args '{"text_config": {"rope_parameters": {"mrope_interleaved": true, "mrope_section": [11, 11, 10], "rope_type": "yarn", "rope_theta": 10000000, "partial_rotary_factor": 0.25, "factor": 4.0, "original_max_position_embeddings": 262144}}}' --context-length 1010000
-    ```
+
+  ```shell
+  SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1 python -m sglang.launch_server ... --json-model-override-args '{"text_config": {"rope_parameters": {"mrope_interleaved": true, "mrope_section": [11, 11, 10], "rope_type": "yarn", "rope_theta": 10000000, "partial_rotary_factor": 0.25, "factor": 4.0, "original_max_position_embeddings": 262144}}}' --context-length 1010000
+  ```
 
 > [!NOTE]
 > All the notable open-source frameworks implement static YaRN, which means the scaling factor remains constant regardless of input length, **potentially impacting performance on shorter texts.**
-> We advise modifying the `rope_parameters` configuration only when processing long contexts is required. 
-> It is also recommended to modify the `factor` as needed. For example, if the typical context length for your application is 524,288 tokens, it would be better to set `factor` as 2.0. 
+> We advise modifying the `rope_parameters` configuration only when processing long contexts is required.
+> It is also recommended to modify the `factor` as needed. For example, if the typical context length for your application is 524,288 tokens, it would be better to set `factor` as 2.0.
 
 ## Best Practices
 
 To achieve optimal performance, we recommend the following settings:
 
-1. **Sampling Parameters**:  
-   - We suggest using the following sets of sampling parameters depending on the mode and task type:  
+1. **Sampling Parameters**:
+   - We suggest using the following sets of sampling parameters depending on the mode and task type:
      - **Thinking mode for general tasks**:  
-       `temperature=1.0`, `top_p=0.95`, `top_k=20`, `min_p=0.0`, `presence_penalty=1.5`, `repetition_penalty=1.0`  
+       `temperature=1.0`, `top_p=0.95`, `top_k=20`, `min_p=0.0`, `presence_penalty=1.5`, `repetition_penalty=1.0`
      - **Thinking mode for precise coding tasks (e.g., WebDev)**:  
-       `temperature=0.6`, `top_p=0.95`, `top_k=20`, `min_p=0.0`, `presence_penalty=0.0`, `repetition_penalty=1.0`  
+       `temperature=0.6`, `top_p=0.95`, `top_k=20`, `min_p=0.0`, `presence_penalty=0.0`, `repetition_penalty=1.0`
      - **Instruct (or non-thinking) mode for general tasks**:  
-       `temperature=0.7`, `top_p=0.8`, `top_k=20`, `min_p=0.0`, `presence_penalty=1.5`, `repetition_penalty=1.0`  
+       `temperature=0.7`, `top_p=0.8`, `top_k=20`, `min_p=0.0`, `presence_penalty=1.5`, `repetition_penalty=1.0`
      - **Instruct (or non-thinking) mode for reasoning tasks**:  
-       `temperature=1.0`, `top_p=1.0`, `top_k=40`, `min_p=0.0`, `presence_penalty=2.0`, `repetition_penalty=1.0`  
+       `temperature=1.0`, `top_p=1.0`, `top_k=40`, `min_p=0.0`, `presence_penalty=2.0`, `repetition_penalty=1.0`
    - For supported frameworks, you can adjust the `presence_penalty` parameter between 0 and 2 to reduce endless repetitions. However, using a higher value may occasionally result in language mixing and a slight decrease in model performance.
 
 2. **Adequate Output Length**: We recommend using an output length of 32,768 tokens for most queries. For benchmarking on highly complex problems, such as those found in math and programming competitions, we suggest setting the max output length to 81,920 tokens. This provides the model with sufficient space to generate detailed and comprehensive responses, thereby enhancing its overall performance.
@@ -1051,12 +1055,12 @@ To achieve optimal performance, we recommend the following settings:
    - **Multiple-Choice Questions**: Add the following JSON structure to the prompt to standardize responses: "Please show your choice in the `answer` field with only the choice letter, e.g., `"answer": "C"`."
 
 4. **Long Video Understanding**: To optimize inference efficiency for plain text and images, the `size` parameter in the released `video_preprocessor_config.json` is conservatively configured. It is recommended to set the `longest_edge` parameter in the video_preprocessor_config file to 469,762,048 (corresponding to 224k video tokens) to enable higher frame-rate sampling for hour-scale videos and thereby achieve superior performance. For example,
-    ```json
-    {"longest_edge": 469762048, "shortest_edge": 4096}
-    ```
 
-    Alternatively, override the default values via engine startup parameters. For implementation details, refer to: [vLLM](https://github.com/vllm-project/vllm/pull/34330) / [SGLang](https://github.com/sgl-project/sglang/pull/18467).
+   ```json
+   { "longest_edge": 469762048, "shortest_edge": 4096 }
+   ```
 
+   Alternatively, override the default values via engine startup parameters. For implementation details, refer to: [vLLM](https://github.com/vllm-project/vllm/pull/34330) / [SGLang](https://github.com/sgl-project/sglang/pull/18467).
 
 ### Citation
 

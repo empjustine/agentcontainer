@@ -3,11 +3,11 @@ library_name: transformers
 license: apache-2.0
 pipeline_tag: text-generation
 base_model:
-- mistralai/Devstral-Small-2-24B-Instruct-2512
+  - mistralai/Devstral-Small-2-24B-Instruct-2512
 tags:
-- mistral
-- devstral
-- byteshape
+  - mistral
+  - devstral
+  - byteshape
 ---
 
 # Devstral-Small-2-24B-Instruct-2512 GGUF (ShapeLearn Quantized)
@@ -17,7 +17,6 @@ This is a GGUF-quantized version of Devstral-Small-2-24B-Instruct-2512 produced 
 To see interactive plots and benchmarks for Nvidia GPUs, please visit our [blog](https://byteshape.com/blogs/Devstral-Small-2-24B-Instruct-2512/).
 
 If you have questions or want to share feedback, reach us on [Reddit](https://www.reddit.com/r/ByteShape/).
-
 
 ## How to Pick a Model
 
@@ -32,16 +31,16 @@ Quality is measured across seven benchmarks, including function calling and visi
 
 **Table sorted by model size** (match the chart numbers to model IDs):
 
-| Model ID | Bits/Weight | Model Size |
-|---------|-------------|-----------|
-| [IQ-1](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ2_S-2.34bpw.gguf) | 2.34 | 6.9 GB |
-| [IQ-2](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ2_S-2.43bpw.gguf) | 2.43 | 7.2 GB |
-| [IQ-3](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ3_S-2.67bpw.gguf) | 2.67 | 7.9 GB |
-| [IQ-4](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ3_S-2.78bpw.gguf) | 2.78 | 8.2 GB |
-| [IQ-5](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ3_S-2.96bpw.gguf) | 2.96 | 8.7 GB |
-| [IQ-6](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ3_S-3.19bpw.gguf) | 3.19 | 9.4 GB |
-| [IQ-7](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ3_S-3.47bpw.gguf) | 3.47 | 10.2 GB |
-| [IQ-8](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ4_XS-4.04bpw.gguf) | 4.04 | 11.9 GB |
+| Model ID                                                                                                                                          | Bits/Weight | Model Size |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ---------- |
+| [IQ-1](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ2_S-2.34bpw.gguf)  | 2.34        | 6.9 GB     |
+| [IQ-2](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ2_S-2.43bpw.gguf)  | 2.43        | 7.2 GB     |
+| [IQ-3](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ3_S-2.67bpw.gguf)  | 2.67        | 7.9 GB     |
+| [IQ-4](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ3_S-2.78bpw.gguf)  | 2.78        | 8.2 GB     |
+| [IQ-5](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ3_S-2.96bpw.gguf)  | 2.96        | 8.7 GB     |
+| [IQ-6](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ3_S-3.19bpw.gguf)  | 3.19        | 9.4 GB     |
+| [IQ-7](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ3_S-3.47bpw.gguf)  | 3.47        | 10.2 GB    |
+| [IQ-8](https://huggingface.co/byteshape/Devstral-Small-2-24B-Instruct-2512-GGUF/blob/main/Devstral-Small-2-24B-Instruct-2512-IQ4_XS-4.04bpw.gguf) | 4.04        | 11.9 GB    |
 
 ## Notes on quantization labels
 
@@ -80,4 +79,5 @@ Example (server mode):
   -ngl 99 \
   --port 8080
 ```
+
 Then you can access the web interface at `http://localhost:8080`.

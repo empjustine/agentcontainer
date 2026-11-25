@@ -1,33 +1,33 @@
 ---
 base_model:
-- LiquidAI/LFM2.5-VL-3B
+  - LiquidAI/LFM2.5-VL-3B
 library_name: transformers
 license: other
 license_name: lfm1.0
 license_link: LICENSE
 language:
-- ar
-- zh
-- en
-- fr
-- de
-- hi
-- id
-- it
-- ja
-- ko
-- pl
-- pt
-- ru
-- es
-- th
-- vi
+  - ar
+  - zh
+  - en
+  - fr
+  - de
+  - hi
+  - id
+  - it
+  - ja
+  - ko
+  - pl
+  - pt
+  - ru
+  - es
+  - th
+  - vi
 pipeline_tag: image-text-to-text
 tags:
-- liquid
-- unsloth
-- lfm2.5
-- edge
+  - liquid
+  - unsloth
+  - lfm2.5
+  - edge
 ---
 
 <div align="center">
@@ -48,9 +48,9 @@ tags:
 
 LFM2.5-VL-3B is a multimodal variant of LFM2.5, a family of hybrid models designed for **on-device deployment**. It builds on LFM2-VL-3B with further mid- and post-training. LFM2.5-VL-3B can process both text and images, and uses the LFM2.5-2.6B language model as its backbone, combined with a SigLIP2 NaFlex vision encoder.
 
-* **Better grounding**: Improved grounding and object detection with natural language queries.
-* **Better OCR**: Full page OCR with layout annotation. See [layout annotation format](#layout-annotation-format) for more information.
-* **Efficient inference**: 228 tok/s on an Apple M5 Max and 116 tok/s on an AMD Ryzen AI Max+ 395, in under 3.3 GB of memory.
+- **Better grounding**: Improved grounding and object detection with natural language queries.
+- **Better OCR**: Full page OCR with layout annotation. See [layout annotation format](#layout-annotation-format) for more information.
+- **Efficient inference**: 228 tok/s on an Apple M5 Max and 116 tok/s on an AMD Ryzen AI Max+ 395, in under 3.3 GB of memory.
 
 Find more information about LFM2.5-VL-3B in our [release post](https://www.liquid.ai/blog/lfm2-5-vl-3b).
 
@@ -62,12 +62,12 @@ Find more information about LFM2.5-VL-3B in our [release post](https://www.liqui
 
 ## Model Details
 
-| Model | Description |
-|-------|-------------|
-| **[LFM2.5&#8209;VL&#8209;3B](https://huggingface.co/LiquidAI/LFM2.5-VL-3B)** | Original checkpoint in native format. Best for fine-tuning and inference with HF Transformers, vLLM and SGLang |
-| **[LFM2.5&#8209;VL&#8209;3B&#8209;GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF)** | Quantized GGUF exports of the original checkpoint. Best for CPU inference with reduced memory usage with llama.cpp |
+| Model                                                                                        | Description                                                                                                                                                                                                                 |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[LFM2.5&#8209;VL&#8209;3B](https://huggingface.co/LiquidAI/LFM2.5-VL-3B)**                 | Original checkpoint in native format. Best for fine-tuning and inference with HF Transformers, vLLM and SGLang                                                                                                              |
+| **[LFM2.5&#8209;VL&#8209;3B&#8209;GGUF](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-GGUF)** | Quantized GGUF exports of the original checkpoint. Best for CPU inference with reduced memory usage with llama.cpp                                                                                                          |
 | **[LFM2.5&#8209;VL&#8209;3B&#8209;ONNX](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-ONNX)** | Quantized ONNX exports for cross-platform deployment. Enables hardware-accelerated inference across diverse environments (cloud, edge, mobile). See the [demo](https://huggingface.co/spaces/LiquidAI/LFM2.5-VL-3B-WebGPU). |
-| **[LFM2.5-VL-3B-MLX](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-MLX-8bit)** | Quantized MLX exports for Apple Silicon. Optimized for fast inference on Mac devices using the [mlx-vlm](https://github.com/Blaizzy/mlx-vlm) framework. |
+| **[LFM2.5-VL-3B-MLX](https://huggingface.co/LiquidAI/LFM2.5-VL-3B-MLX-8bit)**                | Quantized MLX exports for Apple Silicon. Optimized for fast inference on Mac devices using the [mlx-vlm](https://github.com/Blaizzy/mlx-vlm) framework.                                                                     |
 
 - **LM Backbone**: LFM2.5-2.6B
 - **Vision encoder**: SigLIP2 NaFlex shape‑optimized 400M
@@ -104,14 +104,15 @@ You can use [`tokenizer.apply_chat_template()`](https://huggingface.co/docs/tran
 
 LFM2.5-VL is supported by many inference frameworks. See the [Inference documentation](https://docs.liquid.ai/lfm/inference/transformers) for the full list.
 
-| Name | Description | Docs | Notebook |
-|------|-------------|------|----------|
-| [Transformers](https://github.com/huggingface/transformers) | Simple inference with direct access to model internals. | <a href="https://docs.liquid.ai/lfm/inference/transformers#vision-models">Link</a>| <a href="https://colab.research.google.com/drive/1WVQpf4XrHgHFkP0FnlZfx2nK8PugvQNZ?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="110" alt="Colab link"></a> |
-| [vLLM](https://github.com/vllm-project/vllm) | High-throughput production deployments with GPU. | <a href="https://docs.liquid.ai/deployment/gpu-inference/vllm#vision-models">Link</a> | <a href="https://colab.research.google.com/drive/1sUfQlqAvuAVB4bZ6akYVQPGmHtTDUNpF?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="110" alt="Colab link"></a> |
-| [SGLang](https://github.com/sgl-project/sglang) | High-throughput production deployments with GPU. | <a href="https://docs.liquid.ai/deployment/gpu-inference/sglang#vision-models">Link</a> | <a href="https://colab.research.google.com/drive/1qJlAFag223yFOZGzuMIkYUFhybM9ao5g?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="110" alt="Colab link"></a> |
-| [llama.cpp](https://github.com/ggml-org/llama.cpp) | Cross-platform inference with CPU offloading. | <a href="https://docs.liquid.ai/lfm/inference/llama-cpp#vision-models">Link</a> | <a href="https://colab.research.google.com/drive/1q2PjE6O_AahakRlkTNJGYL32MsdUcj7b?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="110" alt="Colab link"></a> |
+| Name                                                        | Description                                             | Docs                                                                                    | Notebook                                                                                                                                                                                                                                              |
+| ----------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Transformers](https://github.com/huggingface/transformers) | Simple inference with direct access to model internals. | <a href="https://docs.liquid.ai/lfm/inference/transformers#vision-models">Link</a>      | <a href="https://colab.research.google.com/drive/1WVQpf4XrHgHFkP0FnlZfx2nK8PugvQNZ?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="110" alt="Colab link"></a> |
+| [vLLM](https://github.com/vllm-project/vllm)                | High-throughput production deployments with GPU.        | <a href="https://docs.liquid.ai/deployment/gpu-inference/vllm#vision-models">Link</a>   | <a href="https://colab.research.google.com/drive/1sUfQlqAvuAVB4bZ6akYVQPGmHtTDUNpF?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="110" alt="Colab link"></a> |
+| [SGLang](https://github.com/sgl-project/sglang)             | High-throughput production deployments with GPU.        | <a href="https://docs.liquid.ai/deployment/gpu-inference/sglang#vision-models">Link</a> | <a href="https://colab.research.google.com/drive/1qJlAFag223yFOZGzuMIkYUFhybM9ao5g?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="110" alt="Colab link"></a> |
+| [llama.cpp](https://github.com/ggml-org/llama.cpp)          | Cross-platform inference with CPU offloading.           | <a href="https://docs.liquid.ai/lfm/inference/llama-cpp#vision-models">Link</a>         | <a href="https://colab.research.google.com/drive/1q2PjE6O_AahakRlkTNJGYL32MsdUcj7b?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="110" alt="Colab link"></a> |
 
 ### Quick start
+
 Quick start with Transformers (compatible with `transformers>=5.0.0`):
 
 You will need `torch`, `transformers`, and `torchvision`.
@@ -251,16 +252,16 @@ where:
 Separate each region block with one blank line. Return only the parsed regions.
 ```
 
-*Note that the layout annotation format is still experimental: it may change, may be unreliable, and may not be trivial to parse. We encourage users to try it out and provide feedback!*
+_Note that the layout annotation format is still experimental: it may change, may be unreliable, and may not be trivial to parse. We encourage users to try it out and provide feedback!_
 
 ## Fine-Tuning
 
 We recommend fine-tuning LFM2.5-VL models for your specific use case to achieve the best results.
 
-| Notebook  | Description                                                          | Link |
-|-----------|----------------------------------------------------------------------|------|
-| SFT (Unsloth) | Supervised Fine-Tuning with LoRA using Unsloth. | <a href="https://colab.research.google.com/drive/1FaR2HSe91YDe88TG97-JVxMygl-rL6vB?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="110" alt="https://colab.research.google.com/github/Liquid4All/cookbook/blob/main/finetuning/notebooks/sft_for_vision_language_model.ipynb"></a> |
-| SFT (TRL) | Supervised Fine-Tuning with LoRA using TRL. | <a href="https://colab.research.google.com/drive/10530_jt_Joa5zH2wgYlyXosypq1R7PIz?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="110" alt="https://colab.research.google.com/github/Liquid4All/cookbook/blob/main/finetuning/notebooks/sft_for_vision_language_model_with_trl.ipynb"></a>|
+| Notebook      | Description                                     | Link                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SFT (Unsloth) | Supervised Fine-Tuning with LoRA using Unsloth. | <a href="https://colab.research.google.com/drive/1FaR2HSe91YDe88TG97-JVxMygl-rL6vB?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="110" alt="https://colab.research.google.com/github/Liquid4All/cookbook/blob/main/finetuning/notebooks/sft_for_vision_language_model.ipynb"></a>          |
+| SFT (TRL)     | Supervised Fine-Tuning with LoRA using TRL.     | <a href="https://colab.research.google.com/drive/10530_jt_Joa5zH2wgYlyXosypq1R7PIz?usp=sharing"><img src="https://cdn-uploads.huggingface.co/production/uploads/61b8e2ba285851687028d395/vlOyMEjwHa_b_LXysEu2E.png" width="110" alt="https://colab.research.google.com/github/Liquid4All/cookbook/blob/main/finetuning/notebooks/sft_for_vision_language_model_with_trl.ipynb"></a> |
 
 ## Performance
 
@@ -268,34 +269,34 @@ We recommend fine-tuning LFM2.5-VL models for your specific use case to achieve 
 
 LFM2.5-VL-3B significantly improves over LFM2-VL-3B in screen understanding, grounding, multi-image input, and tool use:
 
-| Benchmark | **LFM2.5&#8209;VL&#8209;3B (3.1B)** | LFM2&#8209;VL&#8209;3B (3.1B) | Gemma4&nbsp;E2B (5.1B) | Gemma4&nbsp;E4B (8B) | InternVL&nbsp;3.5&nbsp;4B (4.7B) | Qwen3.5-2B (2.3B) | Qwen3.5-4B (4.7B) |
-|-----------|--------------------------|--------------------|-------------------|-----------------|-------------------------|--------------------|--------------------|
-| ScreenSpot-v2 (avg) | <ins>80.7</ins> | - | 31.1 | 50.9 | **84.2** | 66.5 | 78.5 |
-| RefCOCO (Macro&nbsp;Prec@1) | <ins>87.9</ins> | 57.1<br>(<span style="color: red;">-30.8</span>) | 67.3 | 72.1 | **88.9** | 78.5 | 86.6 |
-| BLINK | <ins>61.5</ins> | 50.2<br>(<span style="color: red;">-11.3</span>) | 51.8 | 56.4 | 57.4 | 59.3 | **65.0** |
-| MuirBench | <ins>58.3</ins> | 34.9<br>(<span style="color: red;">-23.4</span>) | 40.7 | 48.9 | 53.4 | 49.0 | **67.0** |
-| ToolSandBox | 59.5 | 26.4<br>(<span style="color: red;">-33.1</span>) | 56.5 | <ins>61.6</ins> | *n/a*<a href="#fn-internvl-tools" class="footnote-ref" role="doc-noteref"><sup>1</sup></a> | 47.7 | **65.0** |
-| BFCLv4 | 32.5 | 20.5<br>(<span style="color: red;">-12.0</span>) | 33.2 | <ins>40.0</ins> | *n/a*<a href="#fn-internvl-tools" class="footnote-ref" role="doc-noteref"><sup>1</sup></a> | 33.9 | **53.6** |
+| Benchmark                   | **LFM2.5&#8209;VL&#8209;3B (3.1B)** | LFM2&#8209;VL&#8209;3B (3.1B)                    | Gemma4&nbsp;E2B (5.1B) | Gemma4&nbsp;E4B (8B) | InternVL&nbsp;3.5&nbsp;4B (4.7B)                                                           | Qwen3.5-2B (2.3B) | Qwen3.5-4B (4.7B) |
+| --------------------------- | ----------------------------------- | ------------------------------------------------ | ---------------------- | -------------------- | ------------------------------------------------------------------------------------------ | ----------------- | ----------------- |
+| ScreenSpot-v2 (avg)         | <ins>80.7</ins>                     | -                                                | 31.1                   | 50.9                 | **84.2**                                                                                   | 66.5              | 78.5              |
+| RefCOCO (Macro&nbsp;Prec@1) | <ins>87.9</ins>                     | 57.1<br>(<span style="color: red;">-30.8</span>) | 67.3                   | 72.1                 | **88.9**                                                                                   | 78.5              | 86.6              |
+| BLINK                       | <ins>61.5</ins>                     | 50.2<br>(<span style="color: red;">-11.3</span>) | 51.8                   | 56.4                 | 57.4                                                                                       | 59.3              | **65.0**          |
+| MuirBench                   | <ins>58.3</ins>                     | 34.9<br>(<span style="color: red;">-23.4</span>) | 40.7                   | 48.9                 | 53.4                                                                                       | 49.0              | **67.0**          |
+| ToolSandBox                 | 59.5                                | 26.4<br>(<span style="color: red;">-33.1</span>) | 56.5                   | <ins>61.6</ins>      | _n/a_<a href="#fn-internvl-tools" class="footnote-ref" role="doc-noteref"><sup>1</sup></a> | 47.7              | **65.0**          |
+| BFCLv4                      | 32.5                                | 20.5<br>(<span style="color: red;">-12.0</span>) | 33.2                   | <ins>40.0</ins>      | _n/a_<a href="#fn-internvl-tools" class="footnote-ref" role="doc-noteref"><sup>1</sup></a> | 33.9              | **53.6**          |
 
 A selection of benchmarks for LFM2.5-VL-3B, including multimodal reasoning, math, and OCR (see our [blog post](https://www.liquid.ai/blog/lfm2-5-vl-3b) for more benchmarks and details):
 
-| Benchmark | **LFM2.5&#8209;VL&#8209;3B (3.1B)** | LFM2&#8209;VL&#8209;3B (3.1B) | Gemma4&nbsp;E2B (5.1B) | Gemma4&nbsp;E4B (8B) | InternVL&nbsp;3.5&nbsp;2B (2.4B) | InternVL&nbsp;3.5&nbsp;4B (4.7B) | Qwen3.5-2B (2.3B) | Qwen3.5-4B (4.7B) |
-|-----------|-------------------------|-------------------|-------------------|-----------------|------------------------|------------------------|-------------------|-------------------|
-| MME | 73.1 | 73.0 | 54.9 | 68.1 | 73.3 | 80.8 | 76.4 | 79.5 |
-| MMStar | 63.3 | 57.7 | 57.9 | 61.9 | 57.5 | 65.3 | 67.9 | 73.3 |
-| RealWorldQA | 73.1 | 71.1 | 56.2 | 61.8 | 61.4 | 68.6 | 71.4 | 76.2 |
-| CountBenchQA | 87.3 | 92.2 | 70.8 | 80.1 | 70.6 | 82.5 | 83.2 | 86.9 |
-| MMMB | 83.0 | 81.9 | 75.7 | 80.5 | 76.4 | 81.5 | 73.6 | 83.4 |
-| MM-IF Eval | 60.6 | 51.4 | 64.5 | 66.7 | 48.4 | 54.6 | 52.1 | 63.8 |
-| MathVista | 68.5 | 68.5 | 62.1 | 52.9 | 56.6 | 59.1 | 68.8 | 69.7 |
-| MMMU Pro | 30.5 | 28.7 | 34.5 | 39.1 | 27.4 | 31.6 | 43.5 | 60.9 |
-| ChartQA | 81.3 | 80.4 | 43.5 | 41.9 | 81.8 | 86.5 | 78.3 | 84.2 |
-| OCRBenchv2<a href="#fn-ocrbenchv2" class="footnote-ref" role="doc-noteref"><sup>2</sup></a> | 47.5 | 43.9 | 44.7 | 48.7 | 45.5 | 49.2 | 48.0 | 58.8 |
-| POPE | 88.7 | 89.2 | 84.0 | 86.9 | 87.3 | 88.9 | 88.7 | 86.0 |
+| Benchmark                                                                                   | **LFM2.5&#8209;VL&#8209;3B (3.1B)** | LFM2&#8209;VL&#8209;3B (3.1B) | Gemma4&nbsp;E2B (5.1B) | Gemma4&nbsp;E4B (8B) | InternVL&nbsp;3.5&nbsp;2B (2.4B) | InternVL&nbsp;3.5&nbsp;4B (4.7B) | Qwen3.5-2B (2.3B) | Qwen3.5-4B (4.7B) |
+| ------------------------------------------------------------------------------------------- | ----------------------------------- | ----------------------------- | ---------------------- | -------------------- | -------------------------------- | -------------------------------- | ----------------- | ----------------- |
+| MME                                                                                         | 73.1                                | 73.0                          | 54.9                   | 68.1                 | 73.3                             | 80.8                             | 76.4              | 79.5              |
+| MMStar                                                                                      | 63.3                                | 57.7                          | 57.9                   | 61.9                 | 57.5                             | 65.3                             | 67.9              | 73.3              |
+| RealWorldQA                                                                                 | 73.1                                | 71.1                          | 56.2                   | 61.8                 | 61.4                             | 68.6                             | 71.4              | 76.2              |
+| CountBenchQA                                                                                | 87.3                                | 92.2                          | 70.8                   | 80.1                 | 70.6                             | 82.5                             | 83.2              | 86.9              |
+| MMMB                                                                                        | 83.0                                | 81.9                          | 75.7                   | 80.5                 | 76.4                             | 81.5                             | 73.6              | 83.4              |
+| MM-IF Eval                                                                                  | 60.6                                | 51.4                          | 64.5                   | 66.7                 | 48.4                             | 54.6                             | 52.1              | 63.8              |
+| MathVista                                                                                   | 68.5                                | 68.5                          | 62.1                   | 52.9                 | 56.6                             | 59.1                             | 68.8              | 69.7              |
+| MMMU Pro                                                                                    | 30.5                                | 28.7                          | 34.5                   | 39.1                 | 27.4                             | 31.6                             | 43.5              | 60.9              |
+| ChartQA                                                                                     | 81.3                                | 80.4                          | 43.5                   | 41.9                 | 81.8                             | 86.5                             | 78.3              | 84.2              |
+| OCRBenchv2<a href="#fn-ocrbenchv2" class="footnote-ref" role="doc-noteref"><sup>2</sup></a> | 47.5                                | 43.9                          | 44.7                   | 48.7                 | 45.5                             | 49.2                             | 48.0              | 58.8              |
+| POPE                                                                                        | 88.7                                | 89.2                          | 84.0                   | 86.9                 | 87.3                             | 88.9                             | 88.7              | 86.0              |
 
-*<p id="fn-internvl-tools">[1]: InternVL 3.5 doesn't support tool use.</p>*
+_<p id="fn-internvl-tools">[1]: InternVL 3.5 doesn't support tool use.</p>_
 
-*<p id="fn-ocrbenchv2">[2]: English-only subset of OCRBenchv2.</p>*
+_<p id="fn-ocrbenchv2">[2]: English-only subset of OCRBenchv2.</p>_
 
 ### On-device Inference
 

@@ -55,9 +55,9 @@ Flash-Next is a sparse mixture-of-experts model: **512 routed experts per layer 
 
 > **Method summary.** GSQ provides accurate low-bit scalar quantization of each tensor at a given quantization type; RCO assigns the per-tensor quantization types under a size budget. Together they yield a non-uniform GGUF at the requested size.
 
-| Method | Description |
-|---|---|
-| **GSQ** (Gumbel-Softmax Quantization, [paper](https://arxiv.org/abs/2604.18556), [code](https://github.com/IST-DASLab/GSQ)) | Post-training scalar quantization that jointly learns the per-coordinate grid assignments and the per-group scales via a Gumbel-Softmax relaxation. GSQ closes most of the gap between scalar and vector quantization at 2 to 3 bits while remaining deployable in standard scalar formats such as GGUF. |
+| Method                                                                                                                              | Description                                                                                                                                                                                                                                                                                                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **GSQ** (Gumbel-Softmax Quantization, [paper](https://arxiv.org/abs/2604.18556), [code](https://github.com/IST-DASLab/GSQ))         | Post-training scalar quantization that jointly learns the per-coordinate grid assignments and the per-group scales via a Gumbel-Softmax relaxation. GSQ closes most of the gap between scalar and vector quantization at 2 to 3 bits while remaining deployable in standard scalar formats such as GGUF.                             |
 | **RCO** (Riemannian Constrained Optimization, [paper](https://arxiv.org/abs/2605.00649), [code](https://github.com/IST-DASLab/RCO)) | Assigns one of K quantization types to each of N tensors under a total size budget. The budget constraint is reformulated as a smooth Riemannian manifold in logit space, which permits gradient-based optimization directly on the task loss while enforcing the budget exactly, without constraint-specific hyperparameter tuning. |
 
 Both methods were developed at the [Deep Algorithms and Systems Lab (DASLab)](https://github.com/IST-DASLab), Institute of Science and Technology Austria.
@@ -70,13 +70,13 @@ Files follow the convention **`<model>-GSQ-RCO-<type>.gguf`**, where the suffix 
 
 The `mmproj` file carries the vision encoder and projector at BF16; one copy serves all quantizations. Each quantized model ships as **two shards**. The second shard is identical across all four variants: it holds the per-layer n-gram embedding table (`per_layer_token_embd`, 51.2B parameters) at IQ4_NL. That table is a lookup, not a matmul weight, so it is held at a fixed 4.5 bpw in every build and excluded from the search. It is quantized in the evaluated models, not just the shipped ones.
 
-| Directory | bpw | Shard 1 (weights) | Shard 2 (n-gram) | Total | Notes |
-|---|---|---|---|---|---|
-| `Q2_0/` | 2.40 | 37.6 GB | 28.8 GB | **66.4 GB** | Fastest; avoids lookup-table formats |
-| `IQ2_XS/` | 2.50 | 39.2 GB | 28.8 GB | **68.0 GB** | Smallest at equal quality |
-| `IQ3_XXS/` | 3.00 | 47.0 GB | 28.8 GB | **75.8 GB** | Matches the base model on AIME25 |
-| `IQ3_S/` | 3.50 | 54.8 GB | 28.8 GB | **83.6 GB** | Recommended; matches or exceeds the base model on every task |
-| `mmproj-Qwen3.8-Flash-Next-BF16.gguf` | 16 | 0.91 GB | n/a | **0.91 GB** | Vision encoder + projector, for multimodal use |
+| Directory                             | bpw  | Shard 1 (weights) | Shard 2 (n-gram) | Total       | Notes                                                        |
+| ------------------------------------- | ---- | ----------------- | ---------------- | ----------- | ------------------------------------------------------------ |
+| `Q2_0/`                               | 2.40 | 37.6 GB           | 28.8 GB          | **66.4 GB** | Fastest; avoids lookup-table formats                         |
+| `IQ2_XS/`                             | 2.50 | 39.2 GB           | 28.8 GB          | **68.0 GB** | Smallest at equal quality                                    |
+| `IQ3_XXS/`                            | 3.00 | 47.0 GB           | 28.8 GB          | **75.8 GB** | Matches the base model on AIME25                             |
+| `IQ3_S/`                              | 3.50 | 54.8 GB           | 28.8 GB          | **83.6 GB** | Recommended; matches or exceeds the base model on every task |
+| `mmproj-Qwen3.8-Flash-Next-BF16.gguf` | 16   | 0.91 GB           | n/a              | **0.91 GB** | Vision encoder + projector, for multimodal use               |
 
 **Q2_0** is built for speed. It avoids the quantization formats that rely on large lookup tables: those formats pack more accuracy into a given bit-width, but decoding them costs real time, and on this model that cost dominates inference. Q2_0 delivers **3.4x the prompt throughput** and **1.9x lower end-to-end latency** than IQ2_XS at a slightly smaller file size, and its decode rate stays flat across workloads instead of varying with the content. The trade is a little quality: 89.07 task average against 89.16 for IQ2_XS, and 3.5 points below IQ3_XXS. Pick it when throughput matters most, and see [Performance](#performance) for the measurements.
 
@@ -86,12 +86,12 @@ The IQ3_S model is the strongest operating point: it matches the base model exac
 
 Only the first shard holds transformer weights and needs to be resident. The second shard is the n-gram lookup table: it is read sparsely, one row per token, so it can stay memory-mapped on disk and does not need to occupy VRAM. Run with `-lm mmap --lazy-mode on` to get this behaviour, plan for **shard 1 in VRAM**, and keep shard 2 on an SSD so the paging stays cheap.
 
-| Model | Must be resident (shard 1) | Can stay on disk (shard 2) | Total download |
-|---|---|---|---|
-| `Q2_0` | 37.6 GB | 28.8 GB | 66.4 GB |
-| `IQ2_XS` | 39.2 GB | 28.8 GB | 68.0 GB |
-| `IQ3_XXS` | 47.0 GB | 28.8 GB | 75.8 GB |
-| `IQ3_S` | 54.8 GB | 28.8 GB | 83.6 GB |
+| Model     | Must be resident (shard 1) | Can stay on disk (shard 2) | Total download |
+| --------- | -------------------------- | -------------------------- | -------------- |
+| `Q2_0`    | 37.6 GB                    | 28.8 GB                    | 66.4 GB        |
+| `IQ2_XS`  | 39.2 GB                    | 28.8 GB                    | 68.0 GB        |
+| `IQ3_XXS` | 47.0 GB                    | 28.8 GB                    | 75.8 GB        |
+| `IQ3_S`   | 54.8 GB                    | 28.8 GB                    | 83.6 GB        |
 
 Add headroom for the KV cache and the vision projector (0.91 GB) if used. Keeping the n-gram table in RAM rather than on disk removes the paging cost entirely and is worth it where memory allows.
 
@@ -101,10 +101,10 @@ Add headroom for the KV cache and the vision projector (0.91 GB) if used. Keepin
 
 Measured with `llama.cpp` over 55 prompts spanning eleven categories (coding, humanities, math, QA, RAG, reasoning, STEM, writing, multilingual, summarization, roleplay).
 
-| Model | Prompt t/s | Decode t/s | Avg latency |
-|---|---|---|---|
-| `Q2_0` | **367.49** | **93.79** | **6.70 s** |
-| `IQ2_XS` | 108.19 | 70.30 | 12.68 s |
+| Model    | Prompt t/s | Decode t/s | Avg latency |
+| -------- | ---------- | ---------- | ----------- |
+| `Q2_0`   | **367.49** | **93.79**  | **6.70 s**  |
+| `IQ2_XS` | 108.19     | 70.30      | 12.68 s     |
 
 ![Prefill throughput by category](assets/plots/Qwen3.8-Flash-Next-prefill_throughput.png)
 
@@ -118,13 +118,13 @@ The prefill advantage is uneven, and largest where prompts are long: 9.6x on RAG
 
 All models are evaluated against the **BF16** base model. We report the average over five zero-shot tasks (arc_easy, arc_challenge, hellaswag, winogrande, piqa), recovery (zero-shot average relative to BF16), and three reasoning and generation benchmarks: **AIME25**, **GPQA-Diamond**, and **LiveCodeBench v6**. Task average is the mean of the three. Sizes are the full download, including the n-gram shard; the bit-width column is the average over the transformer weights, which is what the search controls.
 
-| Variant | bpw | GB | ZS avg↑ | recovery | AIME25↑ | GPQA-D↑ | LCB v6↑ | Task avg↑ |
-|---|---|---|---|---|---|---|---|---|
-| BF16 | 16.00 | 354 | 76.94 | 100.0% | 100.00 | 91.92 | 87.43 | 93.12 |
-| **GSQ-RCO Q2_0** | 2.40 | 66.4 | **78.00** | **101.4%** | 96.67 | 89.39 | 81.14 | 89.07 |
-| **GSQ-RCO IQ2_XS** | 2.50 | 68.0 | 77.16 | 100.3% | 96.67 | 87.37 | 83.43 | 89.16 |
-| **GSQ-RCO IQ3_XXS** | 3.00 | 75.8 | 77.23 | 100.4% | **100.00** | 91.41 | 86.29 | 92.57 |
-| **GSQ-RCO IQ3_S** | 3.50 | 83.6 | n/a | n/a | **100.00** | **92.93** | **86.86** | **93.26** |
+| Variant             | bpw   | GB   | ZS avg↑   | recovery   | AIME25↑    | GPQA-D↑   | LCB v6↑   | Task avg↑ |
+| ------------------- | ----- | ---- | --------- | ---------- | ---------- | --------- | --------- | --------- |
+| BF16                | 16.00 | 354  | 76.94     | 100.0%     | 100.00     | 91.92     | 87.43     | 93.12     |
+| **GSQ-RCO Q2_0**    | 2.40  | 66.4 | **78.00** | **101.4%** | 96.67      | 89.39     | 81.14     | 89.07     |
+| **GSQ-RCO IQ2_XS**  | 2.50  | 68.0 | 77.16     | 100.3%     | 96.67      | 87.37     | 83.43     | 89.16     |
+| **GSQ-RCO IQ3_XXS** | 3.00  | 75.8 | 77.23     | 100.4%     | **100.00** | 91.41     | 86.29     | 92.57     |
+| **GSQ-RCO IQ3_S**   | 3.50  | 83.6 | n/a       | n/a        | **100.00** | **92.93** | **86.86** | **93.26** |
 
 All three models exceed the BF16 base on the zero-shot average (100.3% to 101.4%), which is common for careful low-bit quantization on these five tasks: the differences are within roughly one standard error and should be read as parity rather than improvement. The same applies where IQ3_S exceeds the base on GPQA-Diamond and on the task average: recoveries slightly above 100% reflect benchmark variance, not a model that is better than the one it was quantized from. The reasoning and generation benchmarks separate the models far more clearly.
 
@@ -145,6 +145,7 @@ The two sub-2.5 bpw builds land within 0.1 points of each other on task average 
 Both shards must be downloaded; `llama.cpp` loads the split automatically when given the first one.
 
 ### llama.cpp
+
 ```bash
 # download (requires: pip install -U "huggingface_hub[cli]")
 hf download <this-repo> --include "IQ3_XXS/*" --local-dir .
@@ -153,6 +154,7 @@ llama-cli -m IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00001-of-00002.gguf \
   -lm mmap --lazy-mode on \
   -p "Explain mixed-precision quantization." -ngl 99
 ```
+
 `-lm mmap --lazy-mode on` keeps the n-gram table memory-mapped on disk instead of loading it into memory, which removes 28.8 GB from the resident footprint. See [Memory requirements](#memory-requirements).
 
 ### Strata Engine
@@ -160,6 +162,7 @@ llama-cli -m IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00001-of-00002.gguf \
 Many users report strong results with [Strata](https://github.com/Niko1221/Strata), a third-party engine that runs these GGUFs on a single NVIDIA GPU from 8 GB of VRAM, with a one-click installer and an OpenAI-compatible endpoint on localhost.
 
 ### Vision (multimodal)
+
 ```bash
 hf download <this-repo> mmproj-Qwen3.8-Flash-Next-BF16.gguf --local-dir .
 
@@ -168,14 +171,17 @@ llama-mtmd-cli -m IQ3_XXS/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_XXS-00001-of-00002.gguf
   -lm mmap --lazy-mode on \
   --image photo.jpg -p "Describe this image."
 ```
+
 The projector was converted directly from the base checkpoint and is shared by all four quantizations.
 
 ### Ollama
+
 ```bash
 ollama run hf.co/<this-repo>   # pick the directory matching your memory budget
 ```
 
 ### LM Studio
+
 Search the repo name, then pick a `GSQ-RCO-*` build from the file list.
 
 ---
@@ -194,8 +200,8 @@ Reference implementations: **GSQ** at [IST-DASLab/GSQ](https://github.com/IST-DA
 
 Each released GGUF ships the files needed to audit how it was built:
 
-| File | Contents |
-|---|---|
+| File                                           | Contents                                                                                                                                                                                                        |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `tensor-allocation/<model>.rco-allocation.txt` | The quantization type assigned to every tensor in that file, with a quant-type histogram and the target bit-width. This is the RCO search result, so the allocation can be inspected without opening the model. |
 
 ---

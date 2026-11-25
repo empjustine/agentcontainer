@@ -4,14 +4,14 @@ inference: false
 extra_gated_description: To learn more about how we process your personal data, please
   read our <a href="https://poolside.ai/legal/privacy">Privacy Policy</a>.
 tags:
-- laguna-xs-2.1
-- gguf
-- llama.cpp
+  - laguna-xs-2.1
+  - gguf
+  - llama.cpp
 license: openmdw-1.1
 pipeline_tag: text-generation
 base_model_relation: quantized
 base_model:
-- poolside/Laguna-XS-2.1
+  - poolside/Laguna-XS-2.1
 ---
 
 <p align="center">
@@ -36,6 +36,7 @@ Laguna XS 2.1 is a 33B total parameter Mixture-of-Experts model with 3B activate
 > llama.cpp support is not yet upstreamed. See below.
 
 ## Highlights
+
 - **Mixed SWA and global attention layout**: Laguna XS 2.1 uses sigmoid gating with per-layer rotary scales, enabling mixed SWA (Sliding Window Attention) and global attention layers in a 3:1 ratio (across 40 total layers)
 - **KV cache in FP8**: KV cache quantized to FP8, reducing memory per token
 - **Native reasoning support**: Interleaved thinking between tool calls with support for enabling and disabling thinking per-request
@@ -58,10 +59,10 @@ Laguna XS 2.1 is a 33B total parameter Mixture-of-Experts model with 3B activate
 
 ## Files
 
-| File | Quant | Size |
-|------|-------|------|
-| `Laguna-XS-2.1-BF16.gguf` | BF16 (full precision) | 66.9 GB |
-| `Laguna-XS-2.1-Q4_K_M.gguf` | Q4_K_M | 20.3 GB |
+| File                        | Quant                 | Size    |
+| --------------------------- | --------------------- | ------- |
+| `Laguna-XS-2.1-BF16.gguf`   | BF16 (full precision) | 66.9 GB |
+| `Laguna-XS-2.1-Q4_K_M.gguf` | Q4_K_M                | 20.3 GB |
 
 `Q4_K_M` is the recommended default for local use. Use `BF16` if you want a reference full-precision baseline or intend to produce your own quantizations.
 

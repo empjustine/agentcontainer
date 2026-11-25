@@ -4,14 +4,14 @@ license: apache-2.0
 license_link: https://huggingface.co/Qwen/Qwen3.8-27B/blob/main/LICENSE
 pipeline_tag: image-text-to-text
 base_model:
-- Qwen/Qwen3.8-27B
+  - Qwen/Qwen3.8-27B
 tags:
-- qwen3.8
-- byteshape
-- shapelearn
-- mtp
-- dflash
-- agentic
+  - qwen3.8
+  - byteshape
+  - shapelearn
+  - mtp
+  - dflash
+  - agentic
 ---
 
 # Qwen3.8-27B GGUF (ShapeLearn Quantized)
@@ -30,8 +30,8 @@ Pick a model from the table below and click **Get llama.cpp command** to get a r
 
 You can also copy the **Model Tag** from the table and use it directly:
 
-| Tool | Command |
-|------|---------|
+| Tool          | Command                                                                                 |
+| ------------- | --------------------------------------------------------------------------------------- |
 | **llama.cpp** | `llama-server -hf <MODEL_TAG> --mmproj-auto --spec-type draft-mtp --spec-draft-n-max 3` |
 
 This is a **vision capable** model. llama.cpp auto-downloads the model and vision projector on first run.
@@ -59,13 +59,13 @@ Interactive plots for RTX 4090, 4080, 5060 Ti, 5090, 3090 and RTX PRO 6000 Black
 
 **Table sorted by model size** (match the chart numbers to model IDs):
 
-| Model ID | Bits/Weight | Model Size | Use This Model | Model Tag |
-|---------|-------------|-----------|-----|-----------|
-| [GPU-1](https://huggingface.co/byteshape/Qwen3.8-27B-GGUF/blob/main/Qwen3.8-27B-IQ2_XXS-2.56bpw.gguf) | 2.56 | 8.8 GB | [Get llama.cpp command](https://byteshape.com/run-hf-model/?tag=byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ2_XXS-2.56bpw&platform=llamacpp) | `byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ2_XXS-2.56bpw` |
-| [GPU-2](https://huggingface.co/byteshape/Qwen3.8-27B-GGUF/blob/main/Qwen3.8-27B-IQ3_XXS-2.88bpw.gguf) | 2.88 | 9.9 GB | [Get llama.cpp command](https://byteshape.com/run-hf-model/?tag=byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ3_XXS-2.88bpw&platform=llamacpp) | `byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ3_XXS-2.88bpw` |
-| [GPU-3](https://huggingface.co/byteshape/Qwen3.8-27B-GGUF/blob/main/Qwen3.8-27B-IQ3_XS-3.01bpw.gguf) | 3.01 | 10.4 GB | [Get llama.cpp command](https://byteshape.com/run-hf-model/?tag=byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ3_XS-3.01bpw&platform=llamacpp) | `byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ3_XS-3.01bpw` |
-| [GPU-4](https://huggingface.co/byteshape/Qwen3.8-27B-GGUF/blob/main/Qwen3.8-27B-IQ3_S-3.23bpw.gguf) | 3.23 | 11.0 GB | [Get llama.cpp command](https://byteshape.com/run-hf-model/?tag=byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ3_S-3.23bpw&platform=llamacpp) | `byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ3_S-3.23bpw` |
-| [GPU-5](https://huggingface.co/byteshape/Qwen3.8-27B-GGUF/blob/main/Qwen3.8-27B-IQ4_XS-3.84bpw.gguf) | 3.84 | 13.1 GB | [Get llama.cpp command](https://byteshape.com/run-hf-model/?tag=byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ4_XS-3.84bpw&platform=llamacpp) | `byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ4_XS-3.84bpw` |
+| Model ID                                                                                              | Bits/Weight | Model Size | Use This Model                                                                                                                            | Model Tag                                                |
+| ----------------------------------------------------------------------------------------------------- | ----------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| [GPU-1](https://huggingface.co/byteshape/Qwen3.8-27B-GGUF/blob/main/Qwen3.8-27B-IQ2_XXS-2.56bpw.gguf) | 2.56        | 8.8 GB     | [Get llama.cpp command](https://byteshape.com/run-hf-model/?tag=byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ2_XXS-2.56bpw&platform=llamacpp) | `byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ2_XXS-2.56bpw` |
+| [GPU-2](https://huggingface.co/byteshape/Qwen3.8-27B-GGUF/blob/main/Qwen3.8-27B-IQ3_XXS-2.88bpw.gguf) | 2.88        | 9.9 GB     | [Get llama.cpp command](https://byteshape.com/run-hf-model/?tag=byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ3_XXS-2.88bpw&platform=llamacpp) | `byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ3_XXS-2.88bpw` |
+| [GPU-3](https://huggingface.co/byteshape/Qwen3.8-27B-GGUF/blob/main/Qwen3.8-27B-IQ3_XS-3.01bpw.gguf)  | 3.01        | 10.4 GB    | [Get llama.cpp command](https://byteshape.com/run-hf-model/?tag=byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ3_XS-3.01bpw&platform=llamacpp)  | `byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ3_XS-3.01bpw`  |
+| [GPU-4](https://huggingface.co/byteshape/Qwen3.8-27B-GGUF/blob/main/Qwen3.8-27B-IQ3_S-3.23bpw.gguf)   | 3.23        | 11.0 GB    | [Get llama.cpp command](https://byteshape.com/run-hf-model/?tag=byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ3_S-3.23bpw&platform=llamacpp)   | `byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ3_S-3.23bpw`   |
+| [GPU-5](https://huggingface.co/byteshape/Qwen3.8-27B-GGUF/blob/main/Qwen3.8-27B-IQ4_XS-3.84bpw.gguf)  | 3.84        | 13.1 GB    | [Get llama.cpp command](https://byteshape.com/run-hf-model/?tag=byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ4_XS-3.84bpw&platform=llamacpp)  | `byteshape/Qwen3.8-27B-GGUF:Qwen3.8-27B-IQ4_XS-3.84bpw`  |
 
 **Selection rule:** Choose the largest model that fits your VRAM budget (leave room for context and, if you use it, ~1.2 GB for the DFlash2 draft), or the fastest one that still meets your required quality.
 
@@ -102,12 +102,12 @@ DFlash 2 is auto-detected from the draft GGUF's metadata; no other flags are nee
 RTX 5090 (32 GB), single stream, `-np 1 -fa on`, with the official thinking-mode sampling (temperature 1.0, top_p 0.95, top_k 20). The prompts are a mix of coding, math, instruction-following and general-knowledge requests. MTP uses 3 draft tokens and DFlash2 uses 7.
 
 | Model ID | Bits/Weight | TPS | TPS with MTP | TPS with DFlash2 |
-|---------|-------------|----:|-------------:|-----------------:|
-| GPU-1 | 2.56 | 119 | 164 (1.38x) | 176 (1.47x) |
-| GPU-2 | 2.88 | 111 | 157 (1.41x) | 176 (1.59x) |
-| GPU-3 | 3.01 | 108 | 155 (1.44x) | 172 (1.59x) |
-| GPU-4 | 3.23 | 104 | 148 (1.43x) | 170 (1.64x) |
-| GPU-5 | 3.84 |  94 | 147 (1.57x) | 167 (1.78x) |
+| -------- | ----------- | --: | -----------: | ---------------: |
+| GPU-1    | 2.56        | 119 |  164 (1.38x) |      176 (1.47x) |
+| GPU-2    | 2.88        | 111 |  157 (1.41x) |      176 (1.59x) |
+| GPU-3    | 3.01        | 108 |  155 (1.44x) |      172 (1.59x) |
+| GPU-4    | 3.23        | 104 |  148 (1.43x) |      170 (1.64x) |
+| GPU-5    | 3.84        |  94 |  147 (1.57x) |      167 (1.78x) |
 
 ![RTX 5090: NTP vs. MTP vs. DFlash2](img/RTX5090-speculative.png)
 
@@ -121,10 +121,10 @@ If you would rather skip the extra 1.1 GB download, the embedded MTP head gets y
 
 Qwen3.8 has **thinking mode on by default**; add `--reasoning off` for instruct (non-thinking) behavior. Following the official model card:
 
-| Mode | temperature | top_p | top_k | min_p | presence_penalty |
-|------|-------------|-------|-------|-------|------------------|
-| Thinking (default) | 1.0 | 0.95 | 20 | 0.0 | 0.0 |
-| Instruct (`--reasoning off`) | 0.7 | 0.80 | 20 | 0.0 | 1.5 |
+| Mode                         | temperature | top_p | top_k | min_p | presence_penalty |
+| ---------------------------- | ----------- | ----- | ----- | ----- | ---------------- |
+| Thinking (default)           | 1.0         | 0.95  | 20    | 0.0   | 0.0              |
+| Instruct (`--reasoning off`) | 0.7         | 0.80  | 20    | 0.0   | 1.5              |
 
 The **Get llama.cpp command** links above emit these automatically, along with your chosen speculative-decoding mode.
 

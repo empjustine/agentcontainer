@@ -1,21 +1,21 @@
 ---
 license: apache-2.0
 language:
-- en
-- zh
+  - en
+  - zh
 library_name: transformers
 pipeline_tag: text-generation
 tags:
-- llm
-- sparkx2_5
+  - llm
+  - sparkx2_5
 base_model:
-- XHToken/Spark-X2.6-4B
+  - XHToken/Spark-X2.6-4B
 ---
 
-
 # Spark-X2.6-4B: Advancing the Frontier of On-Device Agents for Real-World Tasks
+
 <div align="center">
-  
+
 [![Slack](https://img.shields.io/badge/Slack-Join-4A154B?logo=slack&logoColor=white)](https://join.slack.com/t/tokenspark/shared_invite/zt-432qf8l2f-5~dLyXv8uETr0P0UuC07nw)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/kTDE2Hg8aw)
 [![YouTube](https://img.shields.io/badge/YouTube-Subscribe-FF0000?logo=youtube&logoColor=white)](https://www.youtube.com/@SparkLLM)
@@ -32,33 +32,35 @@ base_model:
 </p>
 
 ## Introduction
-A little over a month has passed since Spark-X2.5. In the rapidly evolving world of AI agents, that is enough time to rethink, refine, and move the frontier forward. Building on the Spark-X2.5-4B, we introduce **Spark-X2.6-4B**, the latest generation of our compact, general-purpose language models for on-device deployment. 
+
+A little over a month has passed since Spark-X2.5. In the rapidly evolving world of AI agents, that is enough time to rethink, refine, and move the frontier forward. Building on the Spark-X2.5-4B, we introduce **Spark-X2.6-4B**, the latest generation of our compact, general-purpose language models for on-device deployment.
 
 Spark-X2.6-4B retains exactly the same architecture as Spark-X2.5-4B, achieving its capability gains through improved post-training. It delivers substantial improvements in coding, agent, long-context, multilingual, reasoning, etc. These advances enable more capable and practical on-device AI for developers and users tackling real-world tasks.
 
-
 **Technical Highlights**:
+
 - **Stronger Coding, Agentic, and Long-Context Capabilities**: The models deliver substantial improvements in agentic workflows involving complex tool use, multi-step planning, and software engineering. They achieve state-of-the-art performance among similarly sized open-source models, matching or even surpassing models with approximately 9B parameters.
 - **Controllable Thinking Budget**: The models provide three configurable thinking levels—none, low, high—allowing applications to balance reasoning quality, latency, and inference cost dynamically.
 
 ## Benchmarks
-We evaluate our models and compare them with leading on-device models of similar size across a broad range of tasks, including agent, code, math,  general and knowledge.
+
+We evaluate our models and compare them with leading on-device models of similar size across a broad range of tasks, including agent, code, math, general and knowledge.
 Spark-X2.6-4B achieves best-in-class performance among models of comparable size, while matching or exceeding the performance of larger 9B models on several benchmarks.
 
 <p align="center">
   <img src="./images/all_benchmark.svg" alt="all Spark-X2.6 benchmarks" width="1010">
 </p>
 
-
 ## Edge Inference
+
 Spark-X2.6-4B delivers inference efficiency on par with or better than comparable on-device models, including Qwen3.5-4B and Gemma-E4B. It combines this efficiency with stronger capabilities, making it a practical choice for responsive, resource-conscious on-device AI.
 
 <p align="center">
   <img src="./images/inference.svg" alt="Spark-X2.6 inference" width="1010">
 </p>
 
-
 ## Reasoning Effort Comparison
+
 We compare high and low reasoning effort across agent, code, math, long-context, and general knowledge tasks. When switching from high to low, Spark-X2.6-1.7B average score decreases by `4.0` points, while its average output length drops by `37.3%`. For Spark-X2.6-4B, the average score decreases by `1.7` points, while average output length drops by `22.0%`. This flexibility allows developers to balance task performance and generation efficiency according to their application needs.
 <p align="center">
   <img src="./images/reasoning_effort.svg" alt="Spark-X2.6 reasoning_effort" width="1010">
@@ -117,6 +119,7 @@ Use the pre-built image that tracks the Spark-X2.6 runtime:
 ```bash
 docker pull lmsysorg/sglang:nightly-dev-cu13-20260827-20621aa1
 ```
+
 ##### For Ascend NPUs:
 
 ```bash
@@ -358,13 +361,14 @@ curl -s http://127.0.0.1:30000/v1/chat/completions \
   -d '{
     "model": "spark25",
     "messages": [{"role": "user", "content": "What is the capital of Anhui Province?"}],
-    "temperature": 1.0, 
+    "temperature": 1.0,
     "top_k": -1,
     "top_p": 0.95
   }'
 ```
 
 ### MLX
+
 Spark-MLX-LLM runs the original Spark-X2.6 Hugging Face checkpoints locally. It supports Apple silicon GPU, Linux CPU, and NVIDIA CUDA on Linux. No GGUF conversion is required.
 
 #### Installation
@@ -381,7 +385,7 @@ python -m pip install -e .
 # Linux CPU
 python -m pip install -e '.[cpu]'
 # Linux with CUDA 12
-python -m pip install -e '.[cuda12]' 
+python -m pip install -e '.[cuda12]'
 # Linux with CUDA 13
 python -m pip install -e '.[cuda13]'
 ```
@@ -404,11 +408,13 @@ spark-mlx-generate \
 > Native `spark2_5` support requires [llama.cpp](https://github.com/ggml-org/llama.cpp/) `b10828` or later.
 
 Run the model in the CLI:
+
 ```bash
 llama cli -m /path/to/Spark-X2.6-4B-GGUF
 ```
 
 Launch the OpenAI-compatible API server:
+
 ```bash
 llama serve -m /path/to/Spark-X2.6-4B-GGUF
 ```
@@ -452,12 +458,12 @@ lms chat spark-x2.6
 
 We recommend using [Llama-Factory](https://github.com/XHToken/LlamaFactory) to fine-tune the model.
 
-
 ## License
 
 The Spark-X2.6 model series is licensed under the [Apache 2.0 License](https://huggingface.co/XHToken/Spark-X2.6-4B-GGUF/blob/main/LICENSE).
 
 ## Citation
+
 If you find our work helpful, feel free to give us a cite.
 
 ```bibtex

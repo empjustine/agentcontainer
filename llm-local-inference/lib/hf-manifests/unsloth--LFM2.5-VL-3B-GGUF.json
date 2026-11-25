@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/LFM2.5-VL-3B-GGUF",
 	"commit": "22f063714556bd4daa81c40dc1ff15ca37ae92ea",
-	"fetched_at": "2026-11-24T04:45:47+00:00",
+	"fetched_at": "2026-11-25T01:50:21+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

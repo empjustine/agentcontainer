@@ -1,7 +1,7 @@
 {
 	"repo": "unsloth/Laguna-S-2.1-GGUF",
 	"commit": "750f92f90cf54159c4d7a610cb7b3e74498e75c6",
-	"fetched_at": "2026-11-24T04:45:48+00:00",
+	"fetched_at": "2026-11-25T01:50:22+00:00",
 	"files": [
 		{
 			"path": ".gitattributes",

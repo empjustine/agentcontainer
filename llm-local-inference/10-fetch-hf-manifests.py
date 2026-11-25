@@ -28,7 +28,9 @@ runs offline and drift against upstream's current main is caught early. The
 same refresh mirrors the repo's root README to model-cards/<org>/<repo>.md:
 it is the other Hub fact a promotion reads before choosing a quant. Both facts
 come from one repo-driven loop, so one tool owns model metadata (docs/d230).
---offline reads the committed copies and fetches nothing.
+Every run formats the mirrored cards with the repo's pinned oxfmt, so a fetch
+never leaves the tree's markdown gate red. --offline reads the committed
+copies and fetches nothing.
 
 What the audit is worth: the generator bakes each entry's `--model` from the
 HF cache (30-generate.mjs `bakeSnapshotPaths`) and 40-download-models.py fetches the
@@ -63,6 +65,7 @@ import json
 # reserved for machine-consumed output.
 import pathlib as _pl
 import re
+import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -84,6 +87,7 @@ disable_progress_bars()
 dep_log.install()
 
 HERE = Path(__file__).parent
+ROOT = HERE.parent  # dev-tools.sh and its log.sh live at the repo root
 MODEL_DATA = HERE / "lib" / "llamacpp-model-data.json"
 # The repos this unit keeps in cache scope that the table cannot name: the
 # generator reads the same file for its plan, so a repo is either served, declared
@@ -150,6 +154,37 @@ def fetch_card(api, repo, manifest):
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(Path(cached).read_bytes())
     log.info("model card fetched", repo=repo, path=str(out), bytes=out.stat().st_size)
+
+
+def format_model_cards():
+    """Run the pinned markdown formatter over the mirrored cards.
+
+    Upstream READMEs are not oxfmt-canonical, while ./lint.sh gates every
+    markdown file. Running the formatter here keeps a refresh from landing a
+    formatting diff on top of the real upstream change. The pin stays in
+    dev-tools.sh (docs/d139); a host without oxfmt is warned, not failed,
+    because the fetch itself is still useful and the gate reports the drift.
+    """
+    cmd = (
+        ". ./log.sh && . ./dev-tools.sh && "
+        "dev_tool_run oxfmt oxfmt --write "
+        "'llm-local-inference/model-cards/**/*.md'"
+    )
+    try:
+        result = subprocess.run(
+            ["sh", "-c", cmd], cwd=ROOT, text=True, capture_output=True, check=False
+        )
+    except OSError as e:
+        log.warn("model card formatting skipped", error=e)
+        return
+    if result.returncode:
+        log.warn(
+            "model card formatting failed",
+            exitCode=result.returncode,
+            stderr=result.stderr.strip()[-512:],
+        )
+        return
+    log.info("model cards formatted", path=str(CARDS))
 
 
 def load_manifest(api, repo, offline=False):
@@ -258,6 +293,8 @@ def main():
             mode=scope.get(repo, "unscoped"),
             files=len(manifest["files"]) if manifest else 0,
         )
+
+    format_model_cards()
 
     mismatches = 0
     label_only = 0

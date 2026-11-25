@@ -22,6 +22,7 @@ The model does occasionally terminate its response, mid-think, without any sort 
 This is inherent in the weights, even at full precision.
 
 To run with `llama-server`:
+
 ```bash
 llama-server -hf bloomer010/Ling-3.0-tiny-GGUF:Q4_K_M
 ```
@@ -34,35 +35,35 @@ Generally... <BR>
 Larger files = More precision.<BR>
 Smaller files = More compression = More slop and misbehavin'.
 
-Use Q8_K_XL for near-full precision performance. 
+Use Q8_K_XL for near-full precision performance.
 
-| Quant | Size | your memory |
-| --- | ---: | --- |
-| BF16 | 15.8 GB | 16 GB+ |
-| Q8_K_XL | 11.19 GB | 12 GB+ |
-| Q8_0 | 8.41 GB | 10 GB+ |
-| Q6_K_XL | 7.27 GB | 8 GB+ |
-| Q6_K | 6.50 GB | 8 GB+ |
-| Q5_K_M | 5.64 GB | 7 GB+ |
-| Q5_K_S | 5.48 GB | 6 GB+ |
-| Q5_0 | 5.48 GB | 6 GB+ |
-| Q4_K_M | 4.82 GB | 6 GB+ |
-| Q4_K_S | 4.55 GB | 6 GB+ |
-| Q4_0 | 4.53 GB | 6 GB+ |
-| MXFP4_MOE | 4.72 GB | 6 GB+ ¹ |
-| IQ4_XS | 4.29 GB | 5 GB+ |
-| Q3_K_M | 3.84 GB | 5 GB+ |
-| Q3_K_S | 3.51 GB | 5 GB+ |
-| IQ3_S | 3.51 GB | 4 GB+ |
-| IQ3_XXS | 3.13 GB | 4 GB+ |
-| Q2_K | 2.99 GB | 4 GB+ |
-| IQ2_M | 2.70 GB | 3 GB+ |
-| IQ2_S | 2.48 GB | 3 GB+ |
-| IQ2_XS | 2.43 GB | 3 GB+ |
-| IQ2_XXS | 2.21 GB | 3 GB+ |
-| IQ1_M | 1.93 GB | 3 GB+ |
-| IQ1_S | 1.76 GB | 2 GB+ |
-| Q1_0 | 1.30 GB | 2 GB+ |
+| Quant     |     Size | your memory |
+| --------- | -------: | ----------- |
+| BF16      |  15.8 GB | 16 GB+      |
+| Q8_K_XL   | 11.19 GB | 12 GB+      |
+| Q8_0      |  8.41 GB | 10 GB+      |
+| Q6_K_XL   |  7.27 GB | 8 GB+       |
+| Q6_K      |  6.50 GB | 8 GB+       |
+| Q5_K_M    |  5.64 GB | 7 GB+       |
+| Q5_K_S    |  5.48 GB | 6 GB+       |
+| Q5_0      |  5.48 GB | 6 GB+       |
+| Q4_K_M    |  4.82 GB | 6 GB+       |
+| Q4_K_S    |  4.55 GB | 6 GB+       |
+| Q4_0      |  4.53 GB | 6 GB+       |
+| MXFP4_MOE |  4.72 GB | 6 GB+ ¹     |
+| IQ4_XS    |  4.29 GB | 5 GB+       |
+| Q3_K_M    |  3.84 GB | 5 GB+       |
+| Q3_K_S    |  3.51 GB | 5 GB+       |
+| IQ3_S     |  3.51 GB | 4 GB+       |
+| IQ3_XXS   |  3.13 GB | 4 GB+       |
+| Q2_K      |  2.99 GB | 4 GB+       |
+| IQ2_M     |  2.70 GB | 3 GB+       |
+| IQ2_S     |  2.48 GB | 3 GB+       |
+| IQ2_XS    |  2.43 GB | 3 GB+       |
+| IQ2_XXS   |  2.21 GB | 3 GB+       |
+| IQ1_M     |  1.93 GB | 3 GB+       |
+| IQ1_S     |  1.76 GB | 2 GB+       |
+| Q1_0      |  1.30 GB | 2 GB+       |
 
 ¹ `MXFP4_MOE` runs its native path on MXFP4-capable GPUs (Blackwell RTX 50-series, GB10/DGX
 Spark). Elsewhere it falls back to a slower dequant path — prefer a K-quant on older hardware.
