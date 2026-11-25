@@ -3,7 +3,7 @@
  * contract (pi's ModelCost schema: `cost` is optional, but present ⇒ all four
  * of input/output/cacheRead/cacheWrite; docs/d057: prices are absent, not
  * zero). Two halves: the projection rule itself (piCost, as piModel applies
- * it to llama-swap metadata) and the committed artifacts it must keep clean —
+ * it to a rich listing) and the committed artifacts it must keep clean —
  * an empty `cost: {}` block reached the installed models.json once and pi
  * dropped the WHOLE file for it, local lineup and all.
  *
@@ -50,37 +50,58 @@ test("a partial block is completed, never published as-is", () => {
 	);
 });
 
-test("piModel judges the served block instead of copying it", () => {
-	// llama-swap mirrors its config metadata verbatim — this is the shape
-	// that reached the artifact untouched and invalidated it.
+test("piModel reads a price only from a rich listing", () => {
+	// llama-swap's mirrored metadata carries no prices by construction
+	// (llm-local-inference/30-generate.mjs writes reasoning/input/contextWindow/
+	// maxTokens), so a block there is not a source.
+	assert.equal(
+		"cost" in
+			piModel(
+				/** @type {any} */ ({
+					id: "org/repo-GGUF:Q8_0",
+					meta: { llamaswap: { cost: { input: 0.5 } } },
+				}),
+			),
+		false,
+	);
+
+	// A first-party gateway's rich row is the one price source, and it is
+	// judged: an empty or all-zero block publishes no key.
 	const unpriced = piModel({
-		id: "org/repo-GGUF:Q8_0",
-		meta: { llamaswap: { cost: {} } },
+		id: "some-model",
+		cost: { text: { input: { price: 0 }, output: { price: 0 } } },
 	});
 	assert.equal("cost" in unpriced, false);
 
-	const free = piModel({
-		id: "org/repo-GGUF:Q8_0",
-		meta: {
-			llamaswap: { cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } },
-		},
-	});
-	assert.equal("cost" in free, false);
-
+	// A partial rich block is completed field by field, and the listing's
+	// context overrides become pi's cost.tiers.
 	const priced = piModel({
-		id: "org/repo-GGUF:Q8_0",
-		meta: { llamaswap: { cost: { input: 0.5 } } },
+		id: "some-model",
+		cost: {
+			text: {
+				input: {
+					price: 0.5,
+					overrides: [{ when: { context: { gt: 200_000 } }, price: 1 }],
+				},
+				output: { price: 2 },
+			},
+		},
 	});
 	assert.deepEqual(priced.cost, {
 		input: 0.5,
-		output: 0,
+		output: 2,
 		cacheRead: 0,
 		cacheWrite: 0,
+		tiers: [
+			{
+				inputTokensAbove: 200_000,
+				input: 1,
+				output: 2,
+				cacheRead: 0,
+				cacheWrite: 0,
+			},
+		],
 	});
-
-	// No metadata at all: same answer as "no price" — the key is absent,
-	// never null.
-	assert.equal("cost" in piModel({ id: "org/repo-GGUF:Q8_0" }), false);
 });
 
 /**

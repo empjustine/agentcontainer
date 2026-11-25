@@ -140,15 +140,15 @@ export function upstreamCandidates(upstream, pathAndQuery, envOverride) {
 
 /**
  * Per-model metadata llama-swap mirrors from its own model config (served on
- * `/v1/models` under `meta.llamaswap`, already pi-shaped). `cost` is Partial
- * because the mirror is verbatim: the config may carry an empty or partial
- * price block, which gen-lib's piCost() has to normalize on the way out.
+ * `/v1/models` under `meta.llamaswap`, already pi-shaped). It carries no
+ * prices: the serving unit writes exactly these four keys
+ * (`llm-local-inference/30-generate.mjs`), and a price reaches pi only from a
+ * rich listing (gen-lib's `listingCost`).
  * @typedef {object} LlamaSwapMeta
  * @property {number} [contextWindow]
  * @property {number} [maxTokens]
  * @property {boolean} [reasoning]
  * @property {string[]} [input]
- * @property {Partial<Cost>} [cost]
  */
 
 /**

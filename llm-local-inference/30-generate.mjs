@@ -1222,6 +1222,13 @@ function generateLocalInference(scriptDir, hubHost, ggufFacts, manifests) {
 		// context window; the "metadata" key (exact name required by llama-swap)
 		// mirrors a pi-coding-agent models.json provider.models[] entry
 		// (reasoning / input / contextWindow / maxTokens).
+		//
+		// NO cost key, and that absence is deliberate: this farm bills nothing
+		// per token, and a placeholder block is what once invalidated the whole
+		// installed models.json (pi's schema requires all four price fields the
+		// moment the key appears — docs/d057, coding-agent/tests/pi-cost.test.mjs).
+		// A consumer therefore fills zeros on its side; do not reintroduce one
+		// here to "complete" the metadata mirror.
 		models[id] = {
 			cmd,
 			capabilities: { in: modalities, out: ["text"], context: ctxSize },

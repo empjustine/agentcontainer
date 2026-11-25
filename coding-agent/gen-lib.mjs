@@ -380,9 +380,13 @@ export function piModel(entry) {
 			listingInput(entry.modalities?.input) ??
 			(entry.capabilities?.vision ? ["text", "image"] : ["text"]),
 	);
-	// Judged, never copied: an empty/all-zero upstream block becomes NO key
-	// (piCost's rule) instead of an invalid one reaching the artifact.
-	const cost = meta?.cost ? piCost(meta.cost) : listingCost(entry.cost);
+	// A price comes ONLY from a rich listing: llama-swap's mirrored metadata
+	// carries none by construction (llm-local-inference/30-generate.mjs writes
+	// reasoning/input/contextWindow/maxTokens and nothing else), so a cost
+	// block there is not a source. Which is why the block is judged rather than
+	// copied when it does arrive: an empty or all-zero listing block is the
+	// same "no price" (piCost's rule, docs/d057/d190).
+	const cost = listingCost(entry.cost);
 	// A rich listing publishes the model name; llama-swap names its models in
 	// its own metadata, so its entries keep the id-derived display fallback.
 	const name = route ? entry.name : displayName(entry.id);
