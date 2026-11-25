@@ -45,6 +45,8 @@
 import { shapeListing, toExtensionModel } from "./merge.mjs";
 import {
 	fetchListing,
+	persistLineup,
+	storedLineup,
 	storeIsFresh,
 	VERBOO_API_KEY_ENV,
 	VERBOO_BASE_URL,
@@ -52,8 +54,14 @@ import {
 } from "./sources.mjs";
 
 /**
- * The lineup, or `undefined` when pi's own snapshot is still inside this
- * folder's TTL (or the network is not wanted right now).
+ * The lineup for this refresh phase.
+ *
+ * Three ordered answers (the d190 amendment): pi's cache-only phase
+ * (`allowNetwork: false`) gets the catalog the last verified read persisted, so
+ * a process pi has not allowed onto the network still offers a lineup; a stored
+ * catalog inside this folder's TTL answers `undefined` because that phase
+ * already published it; and a read that succeeds is persisted before it is
+ * returned.
  *
  * An unreadable source is a FAILURE, not an empty lineup: the provider's own
  * listing is this folder's only source, so pi is told which provider broke and
@@ -66,34 +74,31 @@ import {
 async function refresh(context) {
 	context.signal.throwIfAborted();
 	const stored = context.stored;
-	/**
-	 * undefined is a real answer, not an empty lineup: offline init, or pi's own
-	 * snapshot is still inside this folder's TTL. An empty array would REPLACE
-	 * the catalog with nothing (docs/d190).
-	 * @type {ProviderModelConfig[]|undefined}
-	 */
-	let models;
-	if (
-		context.allowNetwork !== false &&
-		!(stored && storeIsFresh(stored.checkedAt ?? 0))
-	) {
-		try {
-			const rows = shapeListing(
-				await fetchListing({ signal: context.signal }),
-			);
-			models = rows.map(toExtensionModel);
-		} catch (err) {
-			if (context.signal.aborted) {
-				throw err;
-			}
-			throw new Error(
-				`${VERBOO_PROVIDER_ID}: source unreadable (${
-					err instanceof Error ? err.message : String(err)
-				}) — nothing to publish (docs/d190)`,
-				{ cause: err },
-			);
-		}
+	if (context.allowNetwork === false) {
+		return storedLineup(stored);
 	}
+	if (stored && storeIsFresh(stored.checkedAt ?? 0)) {
+		return;
+	}
+	/** @type {ProviderModelConfig[]} */
+	let models;
+	try {
+		const rows = shapeListing(
+			await fetchListing({ signal: context.signal }),
+		);
+		models = rows.map(toExtensionModel);
+	} catch (err) {
+		if (context.signal.aborted) {
+			throw err;
+		}
+		throw new Error(
+			`${VERBOO_PROVIDER_ID}: source unreadable (${
+				err instanceof Error ? err.message : String(err)
+			}) — nothing to publish (docs/d190)`,
+			{ cause: err },
+		);
+	}
+	await persistLineup(context, models);
 	return models;
 }
 

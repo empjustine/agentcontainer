@@ -73,6 +73,13 @@ there is no artifact to hand-edit, no `--check` drift gate, and no generated
 file in `biome.jsonc`'s ignore list. A stub rather than a deleted script keeps
 the unit's entrypoint table whole (docs/d113).
 
+**The last verified read is persisted, not remembered.** `refreshModels` answers
+pi's cache-only phase with the catalog `context.stored` holds, and stores every
+successful read through `context.publish({ persist })` (docs/d190's amendment) —
+a snapshot of what the table said when it was last read, never a seed: a failed
+read still throws and stores nothing, so an offline start shows the last
+verified table and a first run still shows nothing.
+
 The lineup is committed to neither shaper: the docs table is read on every
 run, so a rotation is a live change rather than a constant edited here and in
 `../coding-agent/generate-pi-coding-agent.mjs`.

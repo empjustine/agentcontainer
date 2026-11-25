@@ -92,3 +92,19 @@ envs, the empty registration and each override, including a malformed value.
   unit; a shared module would add indirection across units for four constants.
 - **Keeping the old folders as reference stubs.** Three READMEs saying "moved"
   cost more to read than the one short reference section in the new folder.
+
+## Amendment: the table grows to the fact table's pi-native set
+
+The four registrations above were the pi-native providers d235 landed with. The
+generator writes a canonical base-URL layer for every id in
+`coding-agent/lib/cloud-providers.json`'s `PI_NATIVE_CLOUD_IDS`, and that set has
+six members, so two providers had an override in a generated agent dir and none
+on a bare host.
+
+- `google` — `GEMINI_API_KEY` → `GEMINI_BASE_URL`.
+- `nvidia` — `NVIDIA_API_KEY` → `NVIDIA_BASE_URL`.
+
+Both are pi-native (pi ships their catalogs and dialects), both env pairs are
+pi's own provider env names, and the override-only rule above is unchanged: no
+model data, no watchdog, one `baseUrl`. The row table is now the pi-native set
+itself, and docs/d239 owns the parity rule the extension family follows.

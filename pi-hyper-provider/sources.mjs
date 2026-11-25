@@ -213,3 +213,57 @@ export async function fetchCatalog({
 export function storeIsFresh(checkedAt) {
 	return Date.now() - checkedAt < MODEL_STORE_TTL_MS;
 }
+
+/**
+ * @typedef {import("@earendil-works/pi-coding-agent").ProviderModelConfig} ProviderModelConfig
+ * @typedef {Parameters<NonNullable<import("@earendil-works/pi-coding-agent").ProviderConfig["refreshModels"]>>[0]} RefreshModelsContext
+ * @typedef {NonNullable<Parameters<RefreshModelsContext["publish"]>[0]["persist"]>} PersistedCatalog
+ */
+
+/**
+ * The lineup pi stored for this provider on its last verified read, or
+ * `undefined` when nothing usable is there.
+ *
+ * pi runs `refreshModels` twice per cycle: a cache-only phase (`allowNetwork:
+ * false`) whose whole purpose is this restore, then the network phase this
+ * folder's TTL gate guards (pi-ai's `Models.refresh` — the phase order is why
+ * nothing needs re-publishing on the TTL path). The store is a file, so the
+ * rows are re-narrowed to what a model list can render: a row without `input`
+ * crashes pi's own `--list-models` formatter, and a row without an id names
+ * nothing.
+ * @param {RefreshModelsContext["stored"]} stored
+ * @returns {ProviderModelConfig[]|undefined}
+ */
+export function storedLineup(stored) {
+	const rows = stored?.models;
+	if (!Array.isArray(rows)) {
+		return;
+	}
+	const kept = rows.filter(
+		(row) => typeof row?.id === "string" && Array.isArray(row.input),
+	);
+	return kept.length > 0
+		? /** @type {ProviderModelConfig[]} */ (/** @type {unknown} */ (kept))
+		: undefined;
+}
+
+/**
+ * Store this provider's verified lineup so the next process has something to
+ * serve during the cache-only phase (the d190 amendment).
+ *
+ * `checkedAt` is what `storeIsFresh` gates the next read on. The cast: pi types
+ * a persisted row as its own `AnyModel`, while the payload stays this folder's
+ * model config — the registration owns `api` and `baseUrl`, and both are
+ * env-overridable, so a snapshot that froze them would keep sending requests to
+ * an upstream the operator moved away from.
+ * @param {RefreshModelsContext} context
+ * @param {ProviderModelConfig[]} models
+ * @returns {Promise<void>}
+ */
+export async function persistLineup(context, models) {
+	await context.publish({
+		persist: /** @type {PersistedCatalog} */ (
+			/** @type {unknown} */ ({ models, checkedAt: Date.now() })
+		),
+	});
+}

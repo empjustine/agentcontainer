@@ -4,23 +4,30 @@ type: module-design
 status: active
 title: "pi-coding-agent-provider — one base-URL override for the providers pi builds in"
 parent: architecture
-depends-on: [d097, d100, d235]
+depends-on: [d097, d100, d235, d239]
 references: [d070, d118, d192]
 tags: [pi, extensions, providers, base-url]
 ---
 
-# pi-coding-agent-provider — one override, four providers
+# pi-coding-agent-provider — one override, every pi-native provider
 
 This is the pi extension for the providers pi-coding-agent already ships:
-mistral, opencode, opencode-go and openrouter. It registers a provider only when
-its key env is present and its `*_BASE_URL` override is set; the config then
-carries just that `baseUrl`. It covers no model data, no fetches and no
-catalog watchdog (docs/d235). A reader arriving from `pi-mistral` or
-`pi-opencode` finds their behavior here.
+google, mistral, nvidia, opencode, opencode-go and openrouter. It registers a
+provider only when its key env is present and its `*_BASE_URL` override is
+set; the config then carries just that `baseUrl`. It covers no model data,
+no fetches and no catalog watchdog (docs/d235). A reader arriving from
+`pi-mistral` or `pi-opencode` finds their behavior here.
+
+The six rows are the fleet fact table's `PI_NATIVE_CLOUD_IDS` set, copied as
+literals (docs/d113): the generator writes a canonical base-URL layer for each of
+them, so a provider missing here would reroute inside a generated agent dir and
+nowhere else (docs/d239).
 
 | Provider    | Key env              | Override env          |
 | ----------- | -------------------- | --------------------- |
+| google      | `GEMINI_API_KEY`     | `GEMINI_BASE_URL`     |
 | mistral     | `MISTRAL_API_KEY`    | `MISTRAL_BASE_URL`    |
+| nvidia      | `NVIDIA_API_KEY`     | `NVIDIA_BASE_URL`     |
 | opencode    | `OPENCODE_API_KEY`   | `OPENCODE_BASE_URL`   |
 | opencode-go | `OPENCODE_API_KEY`   | `OPENCODE_BASE_URL`   |
 | openrouter  | `OPENROUTER_API_KEY` | `OPENROUTER_BASE_URL` |

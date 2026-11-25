@@ -370,3 +370,125 @@ test("the base-url override derives from the key env", () => {
 		/CLINE_BASE_URL is not an absolute http\(s\) URL/,
 	);
 });
+
+test("pi's cache-only phase restores the catalog the last verified read stored", async () => {
+	const { default: entry } = await import("../index.mjs");
+	/** @type {any} */
+	let config;
+	entry(
+		/** @type {any} */ ({
+			registerProvider: (/** @type {string} */ _id, /** @type {any} */ c) => {
+				config = c;
+			},
+		}),
+	);
+	const realFetch = globalThis.fetch;
+	let calls = 0;
+	globalThis.fetch = /** @type {any} */ (async () => {
+		calls += 1;
+		throw new Error("the cache-only phase must not reach the network");
+	});
+	try {
+		const storedModel = {
+			id: "restored",
+			name: "Restored",
+			input: ["text"],
+			cost: { input: 1, output: 2, cacheRead: 0, cacheWrite: 0 },
+			contextWindow: 1000,
+			maxTokens: 100,
+		};
+		const restored = await config.refreshModels({
+			allowNetwork: false,
+			// Older than the TTL on purpose: pi asked for cache-only init, and a
+			// week-old snapshot still beats an empty picker.
+			stored: {
+				models: [storedModel],
+				checkedAt: Date.now() - 7 * 24 * 60 * 60 * 1000,
+			},
+			signal: new AbortController().signal,
+		});
+		assert.deepEqual(restored, [storedModel]);
+		assert.equal(calls, 0, "no network in the cache-only phase");
+	} finally {
+		globalThis.fetch = realFetch;
+	}
+});
+
+test("a stored row pi could not render is dropped, not published", async () => {
+	const { default: entry } = await import("../index.mjs");
+	/** @type {any} */
+	let config;
+	entry(
+		/** @type {any} */ ({
+			registerProvider: (/** @type {string} */ _id, /** @type {any} */ c) => {
+				config = c;
+			},
+		}),
+	);
+	assert.equal(
+		await config.refreshModels({
+			allowNetwork: false,
+			// pi's model list formatter reads `input` unconditionally, and a row
+			// without an id names nothing: neither may reach the picker.
+			stored: { models: [{ name: "no id" }, { id: "no-input" }], checkedAt: 1 },
+			signal: new AbortController().signal,
+		}),
+		undefined,
+	);
+});
+
+test("a verified read is persisted, and a failed one publishes nothing (docs/d190)", async () => {
+	const realFetch = globalThis.fetch;
+	/** @type {any[]} */
+	const published = [];
+	/** @type {any} */
+	const publish = async (/** @type {any} */ publication) => {
+		published.push(publication);
+		return true;
+	};
+	try {
+		const { default: entry } = await import("../index.mjs");
+		/** @type {any} */
+		let config;
+		entry(
+			/** @type {any} */ ({
+				registerProvider: (/** @type {string} */ _id, /** @type {any} */ c) => {
+					config = c;
+				},
+			}),
+		);
+		globalThis.fetch = /** @type {any} */ (fetchOnce(null, { text: "## Models\n\n| Model | Model ID |\n| --- | --- |\n| GLM 5.3 | `cline-pass/glm-5.3` |\n" }));
+		const before = Date.now();
+		const models = await config.refreshModels({
+			allowNetwork: true,
+			signal: new AbortController().signal,
+			publish,
+		});
+		assert.ok(models.length > 0, "the payload serves a lineup");
+		assert.equal(published.length, 1, "one publication per verified read");
+		assert.deepEqual(
+			published[0].persist.models,
+			models,
+			"what was served is what is stored",
+		);
+		assert.ok(
+			published[0].persist.checkedAt >= before,
+			"checkedAt is the read's clock, which is the TTL's input",
+		);
+
+		published.length = 0;
+		globalThis.fetch = /** @type {any} */ (
+			async () => ({ ok: false, status: 503, json: async () => ({}) })
+		);
+		await assert.rejects(() =>
+			config.refreshModels({
+				allowNetwork: true,
+				signal: new AbortController().signal,
+				publish,
+			}),
+		);
+		assert.equal(published.length, 0);
+	} finally {
+		globalThis.fetch = realFetch;
+	}
+});

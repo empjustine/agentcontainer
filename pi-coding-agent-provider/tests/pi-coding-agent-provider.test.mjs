@@ -15,19 +15,25 @@ import test from "node:test";
 
 /** @type {Readonly<Record<string, string>>} */
 const FACT_ROWS = Object.freeze({
+	google: "GEMINI_API_KEY",
 	mistral: "MISTRAL_API_KEY",
+	nvidia: "NVIDIA_API_KEY",
 	opencode: "OPENCODE_API_KEY",
 	"opencode-go": "OPENCODE_API_KEY",
 	openrouter: "OPENROUTER_API_KEY",
 });
 
 const KEYS = Object.freeze([
+	"GEMINI_API_KEY",
 	"MISTRAL_API_KEY",
+	"NVIDIA_API_KEY",
 	"OPENCODE_API_KEY",
 	"OPENROUTER_API_KEY",
 ]);
 const OVERRIDES = Object.freeze([
+	"GEMINI_BASE_URL",
 	"MISTRAL_BASE_URL",
+	"NVIDIA_BASE_URL",
 	"OPENCODE_BASE_URL",
 	"OPENROUTER_BASE_URL",
 ]);

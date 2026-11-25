@@ -47,6 +47,8 @@ import {
 	SYNTHETIC_BASE_URL,
 	SYNTHETIC_PROVIDER_ID,
 	storeIsFresh,
+	persistLineup,
+	storedLineup,
 	ALIAS_TIER_IDS,
 } from "./sources.mjs";
 
@@ -62,8 +64,14 @@ const REQUEST_HEADERS = {
 };
 
 /**
- * The lineup, or `undefined` when pi's own snapshot is still inside this
- * folder's TTL (or the network is not wanted right now).
+ * The lineup for this refresh phase.
+ *
+ * Three ordered answers (the d190 amendment): pi's cache-only phase
+ * (`allowNetwork: false`) gets the catalog the last verified read persisted, so
+ * a process pi has not allowed onto the network still offers a lineup; a stored
+ * catalog inside this folder's TTL answers `undefined` because that phase
+ * already published it; and a read that succeeds is persisted before it is
+ * returned.
  *
  * An unreadable source is a FAILURE, not an empty lineup: the provider's own
  * listing is this folder's only source, so pi is told which provider broke and
@@ -76,44 +84,41 @@ const REQUEST_HEADERS = {
 async function refresh(context) {
 	context.signal.throwIfAborted();
 	const stored = context.stored;
-	/**
-	 * undefined is a real answer, not an empty lineup: offline init, or pi's own
-	 * snapshot is still inside this folder's TTL. An empty array would REPLACE
-	 * the catalog with nothing (docs/d190).
-	 * @type {ProviderModelConfig[]|undefined}
-	 */
+	if (context.allowNetwork === false) {
+		return storedLineup(stored);
+	}
+	if (stored && storeIsFresh(stored.checkedAt ?? 0)) {
+		return;
+	}
+	/** @type {ProviderModelConfig[]} */
 	let models;
-	if (
-		context.allowNetwork !== false &&
-		!(stored && storeIsFresh(stored.checkedAt ?? 0))
-	) {
-		try {
-			const rows = shapeListing(
-				await fetchListing({ signal: context.signal }),
-			);
-			// The category tiers are the provider's API contract, so a listing that
-			// omits one is an endpoint fault: fail the refresh (pi renders a normal
-			// refresh error) rather than publish a lineup with a hole (docs/d190).
-			const ids = new Set(rows.map((m) => m.id));
-			const missingTiers = ALIAS_TIER_IDS.filter((tier) => !ids.has(tier));
-			if (missingTiers.length > 0) {
-				throw new Error(
-					`listing omitted the contract tier(s): ${missingTiers.join(", ")}`,
-				);
-			}
-			models = rows.map(toExtensionModel);
-		} catch (err) {
-			if (context.signal.aborted) {
-				throw err;
-			}
+	try {
+		const rows = shapeListing(
+			await fetchListing({ signal: context.signal }),
+		);
+		// The category tiers are the provider's API contract, so a listing that
+		// omits one is an endpoint fault: fail the refresh (pi renders a normal
+		// refresh error) rather than publish a lineup with a hole (docs/d190).
+		const ids = new Set(rows.map((m) => m.id));
+		const missingTiers = ALIAS_TIER_IDS.filter((tier) => !ids.has(tier));
+		if (missingTiers.length > 0) {
 			throw new Error(
-				`${SYNTHETIC_PROVIDER_ID}: source unreadable (${
-					err instanceof Error ? err.message : String(err)
-				}) — nothing to publish (docs/d190)`,
-				{ cause: err },
+				`listing omitted the contract tier(s): ${missingTiers.join(", ")}`,
 			);
 		}
+		models = rows.map(toExtensionModel);
+	} catch (err) {
+		if (context.signal.aborted) {
+			throw err;
+		}
+		throw new Error(
+			`${SYNTHETIC_PROVIDER_ID}: source unreadable (${
+				err instanceof Error ? err.message : String(err)
+			}) — nothing to publish (docs/d190)`,
+			{ cause: err },
+		);
 	}
+	await persistLineup(context, models);
 	return models;
 }
 

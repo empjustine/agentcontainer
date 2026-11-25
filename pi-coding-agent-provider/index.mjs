@@ -1,6 +1,11 @@
 /**
- * @fileoverview index.mjs — the ONE extension for pi-native providers:
- * mistral, opencode, opencode-go and openrouter (docs/d235).
+ * @fileoverview index.mjs — the ONE extension for pi-native providers: the
+ * six fact-table rows pi ships itself — google, mistral, nvidia, opencode,
+ * opencode-go and openrouter (docs/d235, d239). The row list mirrors
+ * `PI_NATIVE_CLOUD_IDS` in `../coding-agent/lib/cloud-providers.mjs`, copied
+ * as literals because a folder is a copy unit (docs/d113): the generator emits
+ * a base-URL override layer for every one of those ids, so a provider missing
+ * here reroutes in a generated agent dir but not on a bare host.
  *
  * pi-coding-agent already ships each provider's catalog, wire dialect and
  * auth. An extension layer without `models` leaves that data untouched; a
@@ -55,7 +60,9 @@ function configBaseUrlFromEnv(value) {
 export default function piCodingAgentProvider(pi) {
 	/** @type {readonly ProviderEnv[]} */
 	const PROVIDERS = Object.freeze([
+		["google", "GEMINI_API_KEY", "GEMINI_BASE_URL"],
 		["mistral", "MISTRAL_API_KEY", "MISTRAL_BASE_URL"],
+		["nvidia", "NVIDIA_API_KEY", "NVIDIA_BASE_URL"],
 		["opencode", "OPENCODE_API_KEY", "OPENCODE_BASE_URL"],
 		["opencode-go", "OPENCODE_API_KEY", "OPENCODE_BASE_URL"],
 		["openrouter", "OPENROUTER_API_KEY", "OPENROUTER_BASE_URL"],

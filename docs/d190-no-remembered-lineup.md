@@ -173,3 +173,40 @@ What changed:
 - The fleet's `model-*.json` layers are unchanged: they are now the only
   committed rows of these providers, and no unit keeps a second copy to drift
   from them.
+
+## Amendment: the persisted catalog is the cache-only phase's answer
+
+pi runs `refreshModels` twice per refresh cycle: a cache-only phase
+(`allowNetwork: false`) whose declared purpose is restoring `context.stored`,
+then the network phase this record's rules govern. The six catalog-owning
+folders answered the first phase with `undefined`, so every pi surface that
+never reaches the second — `pi --list-models`, `pi -p --model …`, a host whose
+catalog refresh has not landed yet — offered nothing for them, while pi's own
+built-ins restored their stored catalog before the network check. Measured on
+pi-neuralwatt-provider: 21 models from the live API and from the running
+ThinkRail host, 0 rows from `pi --list-models`.
+
+What keeps this from being the remembered lineup this record forbids:
+
+- **Nothing is committed, and the registration still carries no `models`.** No
+  seed returns, and no generator artifact comes back.
+- **The snapshot is written by a verified read.** `context.publish({ persist:
+  { models, checkedAt } })` runs after the provider answered and is overwritten
+  by the next successful read; the cache-only phase returns it, re-narrowed to
+  the rows a model list can render.
+- **A failed read still throws and still stores nothing.** The operator sees
+  pi's "Could not refresh <provider>; showing cached models", and the cached
+  models are the last catalog this provider actually answered with — not a
+  claim made on the day of generation (d021's reason for retiring the
+  stale-copy rule stands).
+- **The snapshot is the folder's model config, not pi's `AnyModel`.** The
+  registration owns `api` and `baseUrl` — both env-overridable — so a payload
+  that froze them would keep sending requests to an upstream the operator moved
+  away from.
+- **Any age is served in the cache-only phase.** pi asked for cache-only init;
+  `storeIsFresh` still gates the next network read, so a stale row is
+  superseded as soon as a read is allowed, and refusing to show it would only
+  re-open the hole this amendment closes.
+
+A first run with no successful read behind it still offers nothing, which
+remains the truth: no seed, no generator copy, no models.dev slice.

@@ -53,7 +53,9 @@ import {
 	fetchListing,
 	NEURALWATT_API_KEY_ENV,
 	NEURALWATT_BASE_URL,
+	persistLineup,
 	PROVIDER_IDS,
+	storedLineup,
 	storeIsFresh,
 } from "./sources.mjs";
 
@@ -68,14 +70,20 @@ function providerIdFor(tier) {
 }
 
 /**
- * The tier's lineup, or `undefined` when pi's own snapshot is still inside this
- * folder's TTL (or the network is not wanted right now).
+ * The tier's lineup for this refresh phase.
+ *
+ * Three ordered answers (docs/d190's amendment): the cache-only phase returns
+ * the catalog the last verified read stored, so a process pi has not allowed
+ * onto the network still offers a lineup; a stored catalog inside this folder's
+ * TTL returns `undefined` because that same phase already published it; and a
+ * read that succeeds is persisted before it is returned.
  *
  * An unreadable source is a FAILURE, not an empty lineup (docs/d190/d192): pi
  * records the provider in `ModelsRefreshResult.errors` and the model selector
  * renders "Could not refresh <provider>; showing cached models." instead of
  * silently keeping a list the provider may have stopped serving. An empty array
- * would REPLACE the catalog with nothing.
+ * would REPLACE the catalog with nothing, and a persisted one would survive the
+ * failure.
  * @param {RefreshModelsContext} context
  * @param {Tier} tier
  * @returns {Promise<ProviderModelConfig[]|undefined>}
@@ -83,18 +91,20 @@ function providerIdFor(tier) {
 async function refresh(context, tier) {
 	context.signal.throwIfAborted();
 	const stored = context.stored;
-	if (
-		context.allowNetwork === false ||
-		(stored && storeIsFresh(stored.checkedAt ?? 0))
-	) {
+	if (context.allowNetwork === false) {
+		return storedLineup(stored);
+	}
+	if (stored && storeIsFresh(stored.checkedAt ?? 0)) {
 		return;
 	}
 	const providerId = providerIdFor(tier);
+	/** @type {ProviderModelConfig[]} */
+	let models;
 	try {
 		const lineups = shapeListing(
 			await fetchListing({ signal: context.signal }),
 		);
-		return tier === "flex" ? lineups.flex : lineups.standard;
+		models = tier === "flex" ? lineups.flex : lineups.standard;
 	} catch (err) {
 		if (context.signal.aborted) {
 			throw err;
@@ -106,6 +116,8 @@ async function refresh(context, tier) {
 			{ cause: err },
 		);
 	}
+	await persistLineup(context, models);
+	return models;
 }
 
 /**

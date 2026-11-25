@@ -2,8 +2,11 @@
 
 The folder IS the pi package and `index.mjs` is its only source file.
 
-- Register only pi-native providers: mistral, opencode, opencode-go and
-  openrouter. A new provider belongs here only when pi ships its catalog.
+- Register only pi-native providers: google, mistral, nvidia, opencode,
+  opencode-go and openrouter — the fact table's `PI_NATIVE_CLOUD_IDS` set,
+  which is also the set the generator writes a base-URL layer for. A new
+  provider belongs here only when pi ships its catalog, and the row list and
+  that generator set move together (docs/d239).
 - Register only a provider whose key env is present AND whose baked
   `*_BASE_URL` env holds a valid URL. The config carries only `baseUrl`.
   No model data, no `refreshModels`, no fetch, no timers.
@@ -15,4 +18,4 @@ The folder IS the pi package and `index.mjs` is its only source file.
 - A copied package must stand alone: no sibling module, no `lib/`, no
   import from another unit. The provider table is local.
 - `tests/` imports the entry by literal specifier and swaps env per case.
-  Keep the four key-env rows pinned there.
+  Keep the six key-env rows pinned there.

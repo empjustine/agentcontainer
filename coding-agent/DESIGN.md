@@ -167,6 +167,9 @@ through the environment proxy.
   share one override. `opencode` and `opencode-go` are the one such pair
   (`OPENCODE_API_KEY` → `OPENCODE_BASE_URL`), so a gateway named there must
   serve both surfaces; the generator and the extension both apply it to both.
+  Which providers the extensions must cover, and which surfaces stay
+  generator-only (the layer cake, the catalog cascade, the default pair,
+  `mcp.json`), is docs/d239's rule.
 - **The shell surface is bootstrap only** (`node-scripts` port): every
   entrypoint is an npm script over `build.mjs`/`generate.mjs`/`run.mjs`, and the
   three `.sh` files that remain only pick the interpreter (the repo-root

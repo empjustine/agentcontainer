@@ -20,6 +20,11 @@ env, the listing and the shaping, and differ only in the tier they request.
 - **A failed read throws.** pi records the provider in
   `ModelsRefreshResult.errors`; a returned `[]` would replace the catalog with
   nothing, and a remembered list would claim what nobody verified (docs/d192).
+- **The cache-only phase serves what the last verified read stored.**
+  `refreshModels` returns `context.stored` when pi forbids the network, and
+  persists every successful listing through `context.publish({ persist })`
+  (docs/d190's amendment) — a snapshot, not a committed lineup: a failed read
+  still throws and stores nothing.
 - **Never publish a row the provider says is not chat.** `metadata.capabilities.task`
   present, `deprecated`, or `pricing_tbd` rows are dropped in `merge.mjs` before
   any shaping, because pi's chat arm cannot serve them (the docs: a `task` row

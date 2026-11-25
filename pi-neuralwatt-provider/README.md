@@ -39,7 +39,11 @@ registrations from one entry follow the shape in docs/d100.
 - **no quota command, no settings UI, no status widget.** Account reads
   (`/v1/quota`) are a UI feature, not a provider capability.
 - **no committed lineup, no seed, no fallback.** The listing is the only source
-  and an unreadable source throws (d190/d192).
+  and an unreadable source throws (d190/d192). Each successful read is
+  persisted through `context.publish({ persist })`, and pi's cache-only phase
+  serves that snapshot (d190's amendment) — which is what puts these models in
+  `pi --list-models` and in a `-p` run, neither of which is allowed a network
+  read.
 - **no decision or embedding models.** `metadata.capabilities.task` present
   means the row is not a chat model — the docs say so and that
   `/v1/chat/completions` answers it with a 400. pi has a classifier arm

@@ -54,8 +54,10 @@ enum on 6 of 15); and it could never widen the lineup, so an unreadable catalog
 cost the provider its whole catalog to protect fields nobody could check.
 
 There is no committed lineup and no fallback: both consumers read the table on
-every run, and a read that fails means ClinePass is unavailable for that run
-(`CLINE_PASS_MDX` pins a local copy). The provider's OWN `/models`
+every run, and a read that fails means pi reports "Could not refresh
+cline-pass" and keeps serving the table the last successful read persisted
+(docs/d190's amendment) — never a list this folder committed. (`CLINE_PASS_MDX`
+pins a local copy.) The provider's OWN `/models`
 listing is deliberately never consulted: at api.cline.bot it serves the
 different `cline` (usage-billing) provider (`liveSync: false`, docs/d040).
 

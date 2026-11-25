@@ -92,16 +92,16 @@ this folder otherwise answers alone.
   same endpoint, same catalog fields, the same per-model effort map. The table
   is against that package's `extensions/{config,models,index}.ts`.
 
-|                        | `@benvargas/pi-synthetic-provider`                                                                                | this folder                                                        |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| listing                | `…/openai/v1/models`, key from `SYNTHETIC_API_KEY`                                                                | the same URL, built from the frozen row (`sources.mjs`)            |
-| fields read            | `context_length`, `max_output_length`, `supported_features`, `reasoning_parameters.efforts`, price                | the same five                                                      |
-| lineup owner           | the live catalog, plus a hardcoded `getFallbackModels()` when the fetch fails or answers empty                    | the live catalog only: a failed read publishes nothing (docs/d190) |
-| thinking map           | from the advertised efforts, fail-closed; no efforts → no `reasoning_effort` sent                                 | the same map, the same rule (`merge.mjs`'s `thinkingLevelMapFor`)  |
-| per-model effort table | hardcoded `REASONING_OVERRIDES` as a startup snapshot, in a `Map` so a catalog id of `constructor` cannot resolve | none — the live enum is the only source                            |
-| compat                 | eight explicit flags, plus `supportsReasoningEffort: true` per model                                              | `compat: null`, `modelCompat: null` in the fleet row               |
-| credentials            | env var or `~/.pi/agent/auth.json`                                                                                | env var only (`$SYNTHETIC_API_KEY`)                                |
-| commands               | `/synthetic-models`, `/synthetic-quota` (`GET /v2/quotas`)                                                        | `/model` only                                                      |
+|                        | `@benvargas/pi-synthetic-provider`                                                                                | this folder                                                                                                                     |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| listing                | `…/openai/v1/models`, key from `SYNTHETIC_API_KEY`                                                                | the same URL, built from the frozen row (`sources.mjs`)                                                                         |
+| fields read            | `context_length`, `max_output_length`, `supported_features`, `reasoning_parameters.efforts`, price                | the same five                                                                                                                   |
+| lineup owner           | the live catalog, plus a hardcoded `getFallbackModels()` when the fetch fails or answers empty                    | the live catalog only: a failed read publishes nothing (docs/d190)                                                              |
+| thinking map           | from the advertised efforts, fail-closed; no efforts → no `reasoning_effort` sent                                 | the same map, the same rule (`merge.mjs`'s `thinkingLevelMapFor`)                                                               |
+| per-model effort table | hardcoded `REASONING_OVERRIDES` as a startup snapshot, in a `Map` so a catalog id of `constructor` cannot resolve | none — the live enum is the only source                                                                                         |
+| compat                 | eight explicit flags, plus `supportsReasoningEffort: true` per model                                              | `supportsReasoningEffort` only, and only when the row published an effort enum (see "The compat flag the fleet row leaves out") |
+| credentials            | env var or `~/.pi/agent/auth.json`                                                                                | env var only (`$SYNTHETIC_API_KEY`)                                                                                             |
+| commands               | `/synthetic-models`, `/synthetic-quota` (`GET /v2/quotas`)                                                        | `/model` only                                                                                                                   |
 
 What the comparison settles:
 
@@ -124,6 +124,17 @@ What the comparison settles:
 - **Nothing else is taken**: no committed catalog, no `auth.json` reader, no
   quota command — a credential store and a second endpoint are surfaces this
   container has no slot for.
+
+### The compat flag the fleet row leaves out
+
+The registration carries `compat: { supportsReasoningEffort: <the row published
+an effort enum> }`; the fleet's `model-019` row carries no compat block at all
+(`modelCompat: null`), so pi there falls back to its URL auto-detection for that
+flag. That is a real divergence between the two renderings of one shaped record,
+and the extension is the side with evidence: the listing publishes the effort
+enum, which is what the flag claims the wire accepts. It is recorded as an open
+generator-side item in docs/d239 rather than quietly copied across, because
+changing the fleet row is a regeneration, not an edit.
 
 ## The category tiers (`syn:`), and why their names carry a target
 
