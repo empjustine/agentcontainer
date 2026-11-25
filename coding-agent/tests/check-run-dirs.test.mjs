@@ -34,10 +34,11 @@
  * out to it again fails here rather than on a host without jq.
  *
  * Exit-code coverage rides along because these are the launcher's hard contract:
- * 90 (a DIRECTORY that is $HOME), 93 (auth.json holding credentials). 94 — the
- * missing/stale-artifact code — is gone with the artifact gate (docs/d227), so
- * the fixture deliberately installs NO generated config: a launch must neither
- * read nor require it.
+ * 90 (a DIRECTORY that is $HOME). 93 (auth.json holding credentials) and 94 (the
+ * missing/stale artifact) are both gone with their gates (docs/d227) — the
+ * credential cases below now assert the OPPOSITE of what they asserted before,
+ * and the fixture deliberately installs NO generated config: a launch must
+ * neither read nor require it.
  *
  * Run: ../node-run.sh --test tests/*.test.mjs   (from ./coding-agent)
  *      RECORD=1 … to rewrite tests/expect-run-dirs.txt (review the diff!)
@@ -210,39 +211,31 @@ fixture();
 after(() => rmSync(tmp, { recursive: true, force: true }));
 
 suite("the DIRECTORY argv is the d068 mount manifest", () => {
-	test("auth.json holding credentials refuses the launch (exit 93)", () => {
-		writeFileSync(
-			join(home, ".pi/agent/auth.json"),
-			'{"openai":{"key":"sk-live"}}\n',
-		);
-		const { status } = launch([]);
-		assert.equal(status, 93);
-		rmSync(join(home, ".pi/agent/auth.json"));
+	// d227's amendment retired the credential gate: the harness dirs are mounted
+	// RW and every provider key already rides the forwarded env, so a populated
+	// auth.json is one more readable file, not a refusal. Nothing reads it now.
+	test("a populated pi auth.json does not refuse the launch", () => {
+		const authFile = join(home, ".pi/agent/auth.json");
+		writeFileSync(authFile, '{"openai":{"key":"sk-live"}}\n');
+		try {
+			assert.equal(launch([]).status, 0);
+		} finally {
+			rmSync(authFile);
+		}
 	});
 
-	test("an empty auth.json is pi's own store, not a credential", () => {
-		writeFileSync(join(home, ".pi/agent/auth.json"), "{ }\n");
-		assert.equal(launch([]).status, 0);
-		rmSync(join(home, ".pi/agent/auth.json"));
-	});
-
-	// The host opencode data dir is mounted directly now (docs/d216), so its
-	// auth.json is a credential store on a RW mount — the condition d052's gate
-	// exists for. opencode writes the file only on login, so presence with
-	// content is the whole signal.
-	test("opencode's populated auth.json refuses the launch (exit 93)", () => {
+	// Opencode's store lives in the host data dir, mounted directly since
+	// docs/d216 — the same exposure, the same answer.
+	test("opencode's populated auth.json does not refuse the launch", () => {
 		const dataDir = join(home, ".local/share/opencode");
 		mkdirSync(dataDir, { recursive: true });
-		writeFileSync(join(dataDir, "auth.json"), '{"opencode":{"key":"x"}}\n');
-		assert.equal(launch([]).status, 93);
-		rmSync(join(dataDir, "auth.json"));
-	});
-
-	test("an empty opencode auth.json is not a credential", () => {
-		const authFile = join(home, ".local/share/opencode/auth.json");
-		writeFileSync(authFile, "{}\n");
-		assert.equal(launch([]).status, 0);
-		rmSync(authFile);
+		const authFile = join(dataDir, "auth.json");
+		writeFileSync(authFile, '{"opencode":{"key":"x"}}\n');
+		try {
+			assert.equal(launch([]).status, 0);
+		} finally {
+			rmSync(authFile);
+		}
 	});
 
 	// The retired artifact gate's regression guard (docs/d227). The fixture's

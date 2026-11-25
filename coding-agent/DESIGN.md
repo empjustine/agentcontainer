@@ -98,8 +98,10 @@ carries its `sessions/`), opencode's config and data dirs (docs/d065), Cline's
 `~/.cline`, ThinkRail's `~/.thinkrail`. There is no per-run stage and no
 env pin: the generator's install target, the host harness and the sandboxed
 harness are one directory. A populated `auth.json` in the pi agent dir or the
-opencode data dir aborts the run (keys resolve from forwarded env — an empty
-`{}` is ignored; d052/d054/d216). It NEVER generates (d232, docs/d056):
+opencode data dir is host state the mount exposes, not a launch refusal — it
+carries the same keys the forwarded env already does (d227's amendment). The
+Cline/ThinkRail credential-shaped files are still reported at launch. It NEVER
+generates (d232, docs/d056):
 the generator tree is NOT mounted into the container, so an in-container
 session works against the host-generated config mounted above. `run.mjs` takes
 `[DIRECTORY [DIRECTORY...]]` instead — CWD is the implicit first directory,

@@ -89,14 +89,16 @@
  * Exit codes (wrappers and docs quote them). Each rides on a thrown `failure`
  * and is set by the one handler (docs/d225):
  *   90 a DIRECTORY is unusable or is $HOME · 91 no backend / required mount
- *   source gone · 92 the description does not render · 93 auth.json holds
- *   credentials
+ *   source gone · 92 the description does not render
  *
- * 94 — a generated artifact missing or stale — retired with the artifact gate
- * (docs/d227): a launch has no status to report about mounted config content.
+ * 93 — auth.json holds credentials — retired with the credential gate, and 94 —
+ * a generated artifact missing or stale — with the artifact gate (docs/d227): a
+ * launch has no status to report about mounted config content, and a credential
+ * file in an RW-mounted harness dir is the exposure the forwarded env already
+ * carries.
  */
 
-import { mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { userInfo } from "node:os";
 import { join } from "node:path";
 import { baseUrlEnvName } from "./lib/cloud-providers.mjs";
@@ -129,7 +131,6 @@ const image = "localhost/empjustine/coding-agent:latest";
 const EXIT_DIRECTORY = 90;
 const EXIT_BACKEND = 91;
 const EXIT_RENDER = 92;
-const EXIT_AUTH = 93;
 
 /**
  * Every provider key env the sandbox's harnesses read. Only non-empty values are
@@ -472,52 +473,12 @@ function hostStateDirs(launch) {
 }
 
 /**
- * A credential store must not ride a host mount (docs/d052): pi and opencode
- * both resolve keys from the forwarded environment, so a populated auth.json is
- * dead state — and both dirs are now mounted RW, which would ship it straight
- * into the sandbox (docs/d216). WHY content, not existence: pi materialises an
- * EMPTY store ("{}") on every start, so only non-empty content is a credential;
- * opencode writes auth.json only on login, so the same empty-content test says
- * the same thing.
- * @param {Launch} launch
- * @returns {void}
- * @throws {Error} the refusal, from the step that decided it (docs/d225)
- */
-function credentialGate(launch) {
-	for (const [label, key] of /** @type {[string, "agentDir" | "opencodeDataDir"][]} */ ([
-		["agent dir", "agentDir"],
-		["opencode data dir", "opencodeDataDir"],
-	])) {
-		const authFile = join(launch[key], "auth.json");
-		let content;
-		try {
-			content = readFileSync(authFile, "utf8");
-		} catch (error) {
-			if (/** @type {NodeJS.ErrnoException} */ (error).code === "ENOENT") {
-				continue;
-			}
-			throw failure(`cannot read auth.json in the ${label}`, EXIT_AUTH, {
-				authFile,
-			});
-		}
-		const squashed = content.replace(/\s/g, "");
-		if (squashed === "" || squashed === "{}" || squashed === "[]") {
-			continue;
-		}
-		throw failure(
-			`auth.json holds credentials in the ${label} — keys resolve from the forwarded env; remove it before mounting the dir`,
-			EXIT_AUTH,
-			{ authFile },
-		);
-	}
-}
-
-/**
  * Files the sandbox can now read because the harness dir is mounted directly
- * (docs/d216), carrying credentials that have no empty form to gate on: Cline's
- * providers.json and ThinkRail's installation/environment documents. A warning,
- * not an abort — they are the operator's files, and the mount decision is the
- * one being reported.
+ * (docs/d216), carrying credentials instead of the config this launcher knows:
+ * Cline's providers.json and ThinkRail's installation/environment documents. A
+ * warning, not a stop — they are the operator's files, and the mount decision
+ * is the one being reported (auth.json left this list with its abort; docs/d227's
+ * amendment).
  * @param {Launch} launch
  * @returns {string[]}
  */
@@ -539,11 +500,12 @@ async function main() {
 	// the artifact gate that did (settings/models/mcp existence plus the
 	// canonical-URL re-check) is retired: mounted config is host state the
 	// harnesses tolerate, and validating it refused launches for files pi
-	// itself accepts (docs/d227).
+	// itself accepts (docs/d227). The credential file gate went the same way
+	// (d227's amendment) — a populated auth.json is the exposure the forwarded
+	// env keys already carry.
 	const launch = buildLaunch(process.argv.slice(2), process.env);
 	const backend = requireBackend();
 	ensureHostState(launch);
-	credentialGate(launch);
 	warnCredentialFiles(launch);
 	logInfo("mounting host harness state", {
 		container: launch.containerName,

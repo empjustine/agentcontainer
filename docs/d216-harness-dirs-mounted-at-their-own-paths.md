@@ -120,3 +120,13 @@ default is the pin).
   the last of.
 - docs/d026, docs/d180 — the per-run audit stage and its residual window.
 - The mechanics live in `coding-agent/run.mjs` and its argv test.
+
+## Amendment: the credential gate retires, the warning stays
+
+The bullet above that refuses a populated `auth.json` in the pi agent dir or
+opencode's data dir is retired (docs/d227's amendment, exit 93). These mounts
+make the file readable either way and the launch forwards the keys it holds, so
+the refusal added no protection — it refused a host whose harness had logged
+in. Nothing reads `auth.json` now. The Cline/ThinkRail credential warnings this
+record introduced stand, and they are the launcher's whole answer to a
+credential file on these mounts.

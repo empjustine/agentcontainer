@@ -158,3 +158,29 @@ This record retires the launch-time half of:
 
 The records keep their text (d072's curated history); the "Superseded in part"
 notes in d041, d065 and d225 point here.
+
+## Amendment: exit 93 retires with the credential gate
+
+R3 kept `auth.json` content as the one mounted config the launcher refused on.
+R1's reasoning reaches it: the harness dirs are mounted RW at the host's own
+paths (docs/d216) and every provider key already rides the `workload_env`
+allowlist, so a credential file inside those dirs adds no exposure an allowed
+launch does not already carry. The refusal protected nothing and cost a launch
+to any host whose harness had logged in — `~/.pi/agent/auth.json` is pi's own
+store, not stray state.
+
+What changed:
+
+- `coding-agent/run.mjs` no longer reads `auth.json` in the pi agent dir or
+  opencode's data dir, and **exit 93 retires; nothing reuses the number**, as R2
+  left 94 unused. The overview's exit table records both as retired.
+- The Cline `providers.json` and ThinkRail `installation.json` /
+  `environment.json` warnings stay: they report what the RW mounts expose and
+  never aborted, which is now the whole launcher's answer to a credential file.
+- `requireMountSources` is the shape this record's Consequences names, since it
+  is the example left beside the retired `artifactGate`.
+
+What stays true: no credential file is staged (docs/d052), keys still arrive on
+the env chain, and a host that keeps keys in these dirs still makes them
+sandbox-readable — the warning is the signal, and the launcher's job ends
+there.
