@@ -27,14 +27,18 @@ plus a `net.Conn` adapter, and verification is the library's own: no
 
 ## Status
 
-Draft — a proposal, not in force and not accepted; nothing in the tree has to
-obey it yet, and d104/d131/d132/d133 remain the credential design on record.
-The implementation would land as a separately sequenced change, the way
-d104's own implementation order sequences its steps. An earlier revision of
-this draft kept the clock out of the channel with `InsecureSkipVerify` and a
-hand-written verifier; the decision below replaces that with the library's
-own verification against a bounded validity window, and the rejected shape is
-recorded under Alternatives rejected.
+Implemented in `estige/` as deployment generation v5, through the settled
+details in d236 and the carrier correction in d239. The channel runs on the
+three carriers v5 serves (`h2-post-unbounded`, `websocket`,
+`h2-post-windowed`); `h1.1-post-windowed` could not complete a handshake
+behind an upgrade-stripping gateway and retired rather than serve unprotected
+bytes (d239). "On every rung of the ladder (modes C, D and E)" below therefore
+means the rungs that exist: C, the WebSocket and D.
+
+An earlier revision of this draft kept the clock out of the channel with
+`InsecureSkipVerify` and a hand-written verifier; the decision below replaces
+that with the library's own verification against a bounded validity window,
+and the rejected shape is recorded under Alternatives rejected.
 
 An earlier revision also minted an ephemeral leaf under a CA root. That layer
 is removed: process compromise exposes the store key at boot in either shape,
@@ -307,15 +311,10 @@ its keep.
 ### Mixed pairings
 
 The proof envelope does not change, so a v4 and a v5 node authenticate each
-other at admission. The implementing change therefore carries the channel
-requirement on the admission request: a v5 exit refuses an admission that
-declares no channel, with the camouflage 404, while a v4 exit ignores the
-marker, admits, and then treats the v5 handshake's bytes as a frame-layer
-protocol violation — a teardown, never a downgrade. No direction of a
-half-upgraded pairing continues unprotected. Since v4's implementation is
-pending, the folded option also exists — land credential and channel as one
-wire change, and the mixed state never occurs; sequencing them separately
-buys two independent review surfaces for the cost of the teardown above.
+other at admission. v5 is the only generation implemented (d236), so v4's
+implementation was skipped and no marker exists: a v3 bearer or any earlier
+wire shape simply fails admission and receives the camouflage 404. No
+half-upgraded pairing continues unprotected.
 
 ## Implementation surface
 

@@ -22,7 +22,8 @@ elsewhere.
 
 Carriers are named by mechanism, never by letters (d105): this record uses
 **h2-post-unbounded**, **websocket**, **h2-post-windowed** and
-**h1.1-post-windowed** throughout.
+**h1.1-post-windowed** throughout. d239 retires h1.1-post-windowed with v5, so
+the ladder this record ranks ends at h2-post-windowed.
 
 ## Problem
 
