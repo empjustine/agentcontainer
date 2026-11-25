@@ -90,6 +90,7 @@ agentcontainer/
 ├── log.sh / npm-tools.sh / dev-tools.sh # → operator-level shell, never imported by a unit: structured logger · on-demand npm devDependency install (d107) · the dev-host toolchain bootstrap, one pin table + mise-or-host acquisition (d139); `./dev-tools.sh` installs the profile
 ├── lint.sh / check-types.sh / test.sh / vm-bench.sh# → the repo-wide QA sweep (d113): shellcheck+jq+oxfmt+biome+oxlint+knip+ruff+ty, golangci-lint and sbex's Java static analysis (d219) gates, the spec-graph contract (d140), tsc, and every unit's tests (test.sh globs `<unit>/tests/` and runs estige's Go suite explicitly, d123) — driven from the root because no unit imports them (the sweep owns no test of its own)
 ├── freshness.sh                         # → the QA sweep's one NETWORK gate (d122): every pi-* `generate --check` + the offline HF manifest audit, so a stale committed cache fails a gate instead of a review; key-gated listings skip loudly, run it via ./environment.sh to include them
+├── cleanup/                             # → tree-agnostic reproducible-artifact cleanup (README.md = its module node): one script per type, dry-run default, three git guards; own lib/ + tests/, git-gc.sh outside run-all.sh
 ├── docs/                                # docs tree, typed per docs/spec-graph-standard.md
 │   ├── requirements.md                  # → BRD: what the system must do (id: goal)
 │   ├── spec-graph-standard.md           # → THE frontmatter/nesting contract, plus its Rulings and the gate's finding codes
